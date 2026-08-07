@@ -103,15 +103,15 @@ void NeuralNetwork::compile(const Device device)
     wire_drelu_fusions();
 }
 
-// Pair each eligible fused-ReLU Dense with its single Dense consumer so the
-// consumer's input-delta GEMM applies the ReLU derivative in its DRELU
-// epilogue instead of a separate elementwise pass (CUDA fp32 training only).
-//
-// Opt-in via OPENNN_DRELU_FUSION: on the RTX 3060 Laptop reference machine
-// the epilogue-restricted cuBLASLt kernels measured ~10% SLOWER end-to-end
-// than the float4 elementwise pass they replace (HIGGS dense contract,
-// gpu-higgs-dense-energy-20260805T141928Z vs -135245Z), so the fusion stays
-// off until a GPU where the trade-off flips is measured.
+
+
+
+
+
+
+
+
+
 void NeuralNetwork::wire_drelu_fusions()
 {
     for (auto& layer : layers)
@@ -1285,9 +1285,9 @@ NeuralNetwork::ParameterSlotTotals NeuralNetwork::for_each_parameter_slot(
 
 void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) const
 {
-    // After a BF16/INT8 inference upload `parameters` is a non-owning view
-    // over the quantized storage, but size_in_floats() still reports the FP32
-    // master size: reading it would run 2-4x past the end of the buffer.
+
+
+
     throw_if(!parameters.owns,
              "NeuralNetwork::save_parameters_binary: the fp32 parameter master "
              "was released for quantized inference; reload the model before saving.");
@@ -2020,9 +2020,9 @@ void NeuralNetwork::activate_transposed_inference_weights()
 
     for (const auto& layer : layers)
     {
-        // Quantized projections arrive as {in, out}; the decode GEMV only
-        // reaches full bandwidth on {out, in}, so flip every eligible one. The
-        // per-output-channel scale vector is indexed the same way either way.
+
+
+
         if (get_training_type() == Type::INT8 && !layer->get_tied_weight().source)
             for (Operator* op : layer->get_operators())
             {
@@ -2232,10 +2232,10 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
         }
     }
 
-    // Outside the capture scope (which forbids buffer resizes): a live graph
-    // replays against its own workspaces, so the eager thread-local set grown
-    // during warmup would double every workspace. The ensure_* helpers regrow
-    // it on demand if the graph is later invalidated.
+
+
+
+
     if (forward_propagation.inference_graph_exec)
         release_matmul_thread_workspaces();
 

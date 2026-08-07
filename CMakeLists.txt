@@ -19,10 +19,10 @@ endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-march=native>)
     if(WIN32)
-        # MinGW/Windows: -march=native enables AVX but GCC emits 32-byte-aligned
-        # YMM stack spills while the Windows x64 ABI only guarantees 16-byte stack
-        # alignment -> intermittent SIGSEGV (-mstackrealign does not fix it). Use
-        # SSE (16-byte packets), which matches the ABI. Kept in sync with nd_flags.
+
+
+
+
         add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-mno-avx>)
     endif()
 elseif(MSVC)
@@ -30,9 +30,9 @@ elseif(MSVC)
 endif()
 
 include(CheckIPOSupported)
-# MSVC 19.5x (VS 2026) crashes (C1001 in the LTCG "Generating code" pass) when
-# optimizing the YOLO gradient loop in loss.cpp under whole-program LTO, so
-# default LTO OFF there; it works on GCC/Clang. Override with -DOpenNN_ENABLE_LTO=ON.
+
+
+
 if(MSVC)
     set(_opennn_lto_default OFF)
 else()
@@ -48,10 +48,10 @@ else()
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE OFF)
 endif()
 
-# Configuración específica para macOS
+
 if(APPLE)
-    # Apple Clang's libc++ gates std::jthread / <stop_token> (used in batch.h)
-    # behind the experimental library. Enable it for compile AND link.
+
+
     add_compile_options(-fexperimental-library)
     add_link_options(-fexperimental-library)
 
@@ -79,9 +79,9 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_G
     add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-interference-size>)
 endif()
 
-# Silence noisy diagnostics that show up mainly through cudnn-frontend and
-# response_optimization switch statements. These are not bugs, just style
-# warnings that flooded the GPU build log.
+
+
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(
         $<$<COMPILE_LANGUAGE:CXX>:-Wno-switch-enum>
@@ -97,18 +97,18 @@ endif()
 
 option(OpenNN_DISABLE_CUDA "Disable CUDA even if toolkit is found" OFF)
 
-# BF16 mixed precision used to be a CMake flag (OPENNN_USE_BF16_ACTIVATIONS).
-# It is now a runtime decision: Configuration::set(Device::CUDA, Type::BF16).
-# The FP32 and BF16 paths are always compiled in when CUDA is enabled.
+
+
+
 
 include(CheckLanguage)
 check_language(CUDA)
 
 if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
-    # Default to "native" so nvcc compiles directly for the local GPU's
-    # compute capability (no JIT step on first kernel launch, tensor-core
-    # paths picked at compile time). CMake 3.24+ resolves "native" via the
-    # CUDAToolkit at configure time. User can override with -DCMAKE_CUDA_ARCHITECTURES=...
+
+
+
+
     if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
         set(CMAKE_CUDA_ARCHITECTURES "native" CACHE STRING
             "CUDA compute capabilities to target (default: native)")
@@ -119,9 +119,9 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
     find_package(CUDNN 9.0 REQUIRED)
     set(HAVE_CUDNN ON)
 
-    # cuDNN frontend (header-only C++ wrapper for the cuDNN graph API).
-    # Required for SDPA / Flash Attention. Fetched at configure time; pinned
-    # to v1.22.1 (the newest release compatible with cuDNN 9.20).
+
+
+
     include(FetchContent)
     FetchContent_Declare(
         cudnn_frontend
@@ -149,14 +149,14 @@ FetchContent_Declare(
 set(EIGEN_BUILD_DOC OFF CACHE BOOL "" FORCE)
 set(EIGEN_BUILD_TESTING OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-# Install Eigen's export set alongside OpenNN so the installed OpenNNTargets
-# (which links Eigen3::Eigen) resolves via find_dependency(Eigen3). Defaults
-# to OFF when Eigen is not the top-level project.
+
+
+
 set(EIGEN_BUILD_CMAKE_PACKAGE ON CACHE BOOL "" FORCE)
 
-# Only use a system Eigen if it is at least as new as the version we vendor
-# (see GIT_TAG above); otherwise fetch it, so we never build against an
-# incompatible Eigen that happens to be installed.
+
+
+
 find_package(Eigen3 5.0 CONFIG QUIET)
 
 if(NOT Eigen3_FOUND)
@@ -180,15 +180,15 @@ if(OpenNN_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
-# Benchmark drivers live next to their write-ups under docs/benchmarks/.
+
 option(OpenNN_BUILD_BENCHMARKS "Build OpenNN benchmark targets" OFF)
 if(OpenNN_BUILD_BENCHMARKS)
     add_subdirectory(docs/benchmarks)
 endif()
 
-# Compiles every opennn/*.h in isolation (CPU mode, -fsyntax-only) to catch
-# headers that only build thanks to the force-included pch.h. Opt-in because
-# it adds ~100 compiler invocations to the test run.
+
+
+
 option(OpenNN_CHECK_HEADERS "Add a ctest that compiles each opennn header in isolation" OFF)
 if(OpenNN_CHECK_HEADERS AND NOT MSVC)
     enable_testing()

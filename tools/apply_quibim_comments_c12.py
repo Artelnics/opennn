@@ -87,8 +87,8 @@ CLINICAL_BENEFIT_TEXT = (
 
 
 def replace_paragraph(paragraph, new_text):
-    # The affected paragraphs use a uniform Normal style. Replacing their text preserves the
-    # paragraph-level style, numbering and location while avoiding partial-run artifacts.
+
+
     paragraph.text = new_text
 
 

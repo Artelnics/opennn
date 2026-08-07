@@ -18,8 +18,8 @@
 
 set -e
 
-# TINYML_DIR can be set from the environment (needed when piping this script
-# into bash, where BASH_SOURCE is not available).
+
+
 TINYML_DIR="${TINYML_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)}"
 BUILD="${BUILD:-$HOME/opennn-build}"
 RUN_DIR="$BUILD/bin"
@@ -28,7 +28,7 @@ WORK="${WORK:-$HOME/tinyml-iris}"
 N_INPUTS=4
 N_OUTPUTS=3
 
-# Shared toolchain discovery (tr strips CRLF in case of a Windows checkout).
+
 . <(tr -d '\r' < "$TINYML_DIR/tinyml_common.sh")
 discover_tinyml_toolchains
 ARM_HARNESS_DIR="$TINYML_DIR/arm"
@@ -45,7 +45,7 @@ fi
 echo "=== 2. Generate test vectors header ==="
 python3 "$TINYML_DIR/make_test_vectors.py" "$WORK/iris_reference.csv" "$WORK/test_vectors.h" $N_INPUTS $N_OUTPUTS
 
-# Test both C backends: 'expression' (unrolled formulas) and 'tables' (CEmbedded)
+
 FAILED=0
 for VARIANT in expression tables; do
     if [ "$VARIANT" = "expression" ]; then MODEL_FILE="iris_model.c"; else MODEL_FILE="iris_model_tables.c"; fi
@@ -66,7 +66,7 @@ for VARIANT in expression tables; do
     "$AVR_BIN_DIR/avr-size" "$WORK/iris_avr_$VARIANT.elf"
 
     echo "=== 5. Run in simavr emulator ==="
-    # simavr echoes the firmware's UART on stderr (colorized), so capture both streams.
+
     timeout 120 "$SIMAVR" -m atmega328p -f 16000000 "$WORK/iris_avr_$VARIANT.elf" \
         < /dev/null > "$WORK/avr_output_$VARIANT.txt" 2>&1 || true
 

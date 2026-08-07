@@ -34,8 +34,8 @@ PY = os.environ.get("BENCH_PYTHON", sys.executable)
 OPENNN_BIN = os.path.join(HERE, "opennn_transformer_train")
 
 
-# TF needs the venv's bundled CUDA libs on LD_LIBRARY_PATH to see the GPU
-# (same mechanism as capacity/transformer-max-batch/run_transformer_maxbatch.py).
+
+
 def tf_ld_path():
     site = os.path.join(os.path.dirname(os.path.dirname(PY)),
                         "lib", "python3.12", "site-packages", "nvidia")
@@ -211,7 +211,7 @@ def main():
             else:
                 per_prec[eng] = {"error": "no samples_per_sec/tokens_per_sec parsed"}
                 print(f"  {eng:11s} FAILED")
-        # ratios vs each competitor (OpenNN / competitor) on tokens/sec
+
         if "opennn" in per_prec and "tokens_per_sec_median" in per_prec["opennn"]:
             base = per_prec["opennn"]["tokens_per_sec_median"]
             for eng in ("pytorch", "tensorflow"):

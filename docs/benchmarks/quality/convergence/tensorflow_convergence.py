@@ -82,9 +82,9 @@ def run(args: argparse.Namespace) -> None:
         for start, end in batches(x_np.shape[0], args.batch):
             train_step(x[start:end], y[start:end])
 
-    # The convergence gate is the HELD-OUT test log-loss, not the training loss.
-    # Evaluate the test set after each epoch and stop when it reaches the target.
-    # Evaluation time is excluded from the clock.
+
+
+
     def eval_log_loss() -> float:
         preds = []
         for start, end in batches(xt_np.shape[0], args.batch):

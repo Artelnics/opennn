@@ -18,7 +18,7 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 CSV = os.path.join(HERE, "data", "beijing_pm25_forecasting.csv")
 
-# id, past, future, hidden, lr, batch, max_epochs, patience, multi_target
+
 SCENARIOS = [
     ("B1", 24, 1, 32, 0.003, 128, 120, 20, False),
     ("B2", 48, 1, 48, 0.003, 128, 100, 20, False),
@@ -31,10 +31,10 @@ def _load_columns():
     rows = []
     with open(CSV, newline="") as f:
         r = csv.reader(f)
-        next(r)  # header
+        next(r)
         for line in r:
             rows.append([float(x) for x in line])
-    data = np.asarray(rows, dtype=np.float32)   # (T, 15); last col = pm2_5
+    data = np.asarray(rows, dtype=np.float32)
     return data
 
 
@@ -50,7 +50,7 @@ def make_windows(past, future, multi_target):
     T, n_feat = data.shape
     target_col = n_feat - 1
 
-    # Sequential 60/20/20 on the raw rows (windows inherit the split by start row).
+
     n_train = int(0.6 * T)
     n_val = int(0.2 * T)
 
@@ -63,8 +63,8 @@ def make_windows(past, future, multi_target):
     f_out = future if multi_target else 1
 
     def build(lo, hi):
-        # window start rows s with [s, s+past) input and [s+past, s+past+future) target,
-        # restricted so the whole window+horizon stays inside [lo, hi).
+
+
         Xs, Ys = [], []
         for s in range(lo, hi - past - future + 1):
             Xs.append(scaled[s:s + past, :])

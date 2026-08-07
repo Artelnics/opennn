@@ -10,13 +10,13 @@
 using namespace opennn;
 
 
-// RoPE with base 10000, head_dim 4 (full rotary). Position 0 leaves the input
-// unchanged (angle 0); position 1 rotates pair (0,2) by inv_freq_0 = 1 rad and
-// pair (1,3) by inv_freq_1 = 0.01 rad.
+
+
+
 TEST(RopeTest, ForwardMatchesHandComputed)
 {
     const Index batch = 1, seq = 2, head_dim = 4, rotary_dim = 4;
-    const Index model_dim = head_dim;   // one head
+    const Index model_dim = head_dim;
     const float base = 10000.0f;
 
     std::vector<float> cos(size_t(seq * rotary_dim));
@@ -25,20 +25,20 @@ TEST(RopeTest, ForwardMatchesHandComputed)
     TensorView sin_view(sin.data(), {seq, rotary_dim});
     rotary_build_tables(cos_view, sin_view, seq, rotary_dim, base);
 
-    std::vector<float> input  = {1, 2, 3, 4,   1, 0, 0, 0};   // [batch, seq, model_dim]
+    std::vector<float> input  = {1, 2, 3, 4,   1, 0, 0, 0};
     std::vector<float> output(input.size(), 0.0f);
     TensorView in_view(input.data(), {batch, seq, model_dim});
     TensorView out_view(output.data(), {batch, seq, model_dim});
 
     rotary_forward(in_view, cos_view, sin_view, out_view, head_dim, rotary_dim, 0);
 
-    // Position 0: identity.
+
     EXPECT_NEAR(output[0], 1.0f, 1.0e-5f);
     EXPECT_NEAR(output[1], 2.0f, 1.0e-5f);
     EXPECT_NEAR(output[2], 3.0f, 1.0e-5f);
     EXPECT_NEAR(output[3], 4.0f, 1.0e-5f);
 
-    // Position 1 with x = [1,0,0,0] -> [cos1, 0, sin1, 0].
+
     EXPECT_NEAR(output[4], std::cos(1.0f), 1.0e-5f);
     EXPECT_NEAR(output[5], 0.0f,           1.0e-5f);
     EXPECT_NEAR(output[6], std::sin(1.0f), 1.0e-5f);
@@ -46,7 +46,7 @@ TEST(RopeTest, ForwardMatchesHandComputed)
 }
 
 
-// A rotation preserves the L2 norm of each head's rotary block.
+
 TEST(RopeTest, PreservesNorm)
 {
     const Index batch = 2, seq = 5, num_heads = 3, head_dim = 8, rotary_dim = 8;
@@ -83,8 +83,8 @@ TEST(RopeTest, PreservesNorm)
 }
 
 
-// RoPE is an orthogonal map, so the backward (its transpose) is the inverse:
-// rotary_backward(rotary_forward(x)) == x.
+
+
 TEST(RopeTest, BackwardIsInverseRotation)
 {
     const Index batch = 2, seq = 4, num_heads = 2, head_dim = 6, rotary_dim = 6;

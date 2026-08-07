@@ -26,7 +26,7 @@ import tensorflow as tf
 
 def load_csv(path):
     data = np.loadtxt(path, delimiter=",", dtype=np.float32)
-    # x = features (all but the last column); the last column (label) is ignored.
+
     return np.ascontiguousarray(data[:, :-1])
 
 
@@ -49,7 +49,7 @@ def main():
         tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
     else:
         tf.keras.mixed_precision.set_global_policy("float32")
-    # TF32 tensor cores: on for bf16, off for strict fp32.
+
     tf.config.experimental.enable_tensor_float_32_execution(precision in ("bf16", "tf32"))
 
     act = "relu" if activation == "relu" else "tanh"
@@ -74,13 +74,13 @@ def main():
         raise SystemExit("batch larger than the test split")
 
     with tf.device("/GPU:0"):
-        # Whole batch-aligned test slice resident on the GPU once.
+
         x = tf.constant(x_np[:processed])
 
         model_layers = [tf.keras.layers.Input(shape=(features,))]
         for _ in range(hidden_layers):
             model_layers.append(tf.keras.layers.Dense(hidden, activation=act))
-        # Keep the sigmoid output in float32 even under mixed_bfloat16.
+
         model_layers.append(tf.keras.layers.Dense(1, activation="sigmoid", dtype="float32"))
         model = tf.keras.Sequential(model_layers)
         print(f"parameters={model.count_params()}")

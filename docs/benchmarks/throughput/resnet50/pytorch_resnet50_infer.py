@@ -33,7 +33,7 @@ bf16 = os.environ.get("PT_BF16") is not None
 
 assert torch.cuda.is_available(), "CUDA GPU required"
 torch.manual_seed(42)
-# PT_NOBENCH=1 -> cuDNN heuristic (memory config); default -> autotune (speed config).
+
 torch.backends.cudnn.benchmark = os.environ.get("PT_NOBENCH") is None
 if fast:
     torch.backends.cuda.matmul.allow_tf32 = True
@@ -98,7 +98,7 @@ x = (torch.from_numpy(np.load(f"{data_dir}/cifar_images.npy"))
      .permute(0, 3, 1, 2).div(255.0).contiguous().cuda())
 y = torch.from_numpy(np.load(f"{data_dir}/cifar_labels.npy")).cuda()
 if fast:
-    # NHWC / channels_last: the tensor-core-friendly layout OpenNN's convs use.
+
     x = x.to(memory_format=torch.channels_last)
 n = x.shape[0]
 batch = min(batch, n)
@@ -111,18 +111,18 @@ model = ResNet50(classes).cuda()
 print(f"parameters={sum(p.numel() for p in model.parameters())}")
 if fast:
     model = model.to(memory_format=torch.channels_last)
-    # reduce-overhead = torch.compile + CUDA graphs, PyTorch's fastest
-    # inference execution path and the same-condition counterpart of OpenNN's
-    # captured resident forward.
+
+
+
     model = torch.compile(model, mode="reduce-overhead")
 model.eval()
 
-# One GPU-resident batch, held constant so the timed loop is pure forward compute.
+
 xb = x[:batch].clone()
 
-# CUDA graph capture/replay (PT_NOGRAPH=1 disables): the same-condition
-# counterpart of OpenNN's captured resident forward. Warmup on a side stream,
-# capture the eval forward once, replay it in the timed loop.
+
+
+
 use_graph = os.environ.get("PT_NOGRAPH") is None and not fast
 
 if use_graph:
@@ -155,7 +155,7 @@ else:
         return out
 
 
-run_forward()  # warmup (traces + compiles + selects cuDNN plans)
+run_forward()
 run_forward()
 
 times = []

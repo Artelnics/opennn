@@ -130,9 +130,9 @@ def find_opennn_higgs_cpu() -> tuple[str, bool]:
     if override:
         return override, Path(override).exists()
     dirs = [
-        # The MKL build first: the CPU protocol requires OpenNN's MKL backend
-        # (see higgs/README.md). Falling back to a plain-Eigen binary silently
-        # halves OpenNN's GEMM throughput and inverts the comparison.
+
+
+
         REPO_ROOT / "build-mkl" / "bin",
         REPO_ROOT / "build-mkl" / "bin" / "Release",
         REPO_ROOT / "build-benchmarks" / "bin",
@@ -226,9 +226,9 @@ def display_command(cmd: list[str], env_over: dict[str, str]) -> str:
 def engine_cmd(engine: str, args: argparse.Namespace) -> tuple[list[str], dict[str, str]]:
     env = {"CUDA_VISIBLE_DEVICES": "", "TF_CPP_MIN_LOG_LEVEL": "2"}
     if args.threads:
-        # Same thread COUNT for every engine; affinity is per-engine best:
-        # core binding speeds up OpenNN (+12%) and PyTorch (+2%) but collapses
-        # TF ~5x (its inter-op pool fights OMP_PROC_BIND), so TF runs unbound.
+
+
+
         env["OMP_NUM_THREADS"] = str(args.threads)
         if engine in ("opennn", "pytorch"):
             env["OMP_PLACES"] = "cores"

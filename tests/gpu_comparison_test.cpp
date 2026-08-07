@@ -187,13 +187,13 @@ TEST_F(GpuComparison, DenseGeluTanhFusedGradient)
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
 }
 
-// Cross-layer dReLU fusion: with 128-wide ReLU hidden layers the consumer
-// Dense applies the producer's ReLU derivative inside its input-delta GEMM
-// (DRELU epilogue + RELU_AUX_BIAS bitmask) instead of an elementwise pass.
-// The gradient must match the unfused CPU reference exactly as before.
-// The fusion is opt-in (see NeuralNetwork::wire_drelu_fusions), so the test
-// sets OPENNN_DRELU_FUSION for the GPU network's compile; RAII keeps a failed
-// assertion from leaking the variable into sibling tests.
+
+
+
+
+
+
+
 #ifdef _WIN32
 #define setenv(name, value, overwrite) _putenv_s(name, value)
 #define unsetenv(name) _putenv_s(name, "")
@@ -214,7 +214,7 @@ TEST_F(GpuComparison, DenseDreluFusedGradient)
 
     const Index samples_number = 6;
     const Index inputs_number = 4;
-    const Index hidden_number = 128;   // fusion requires hidden % 128 == 0
+    const Index hidden_number = 128;
     const Index outputs_number = 2;
 
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -253,8 +253,8 @@ TEST_F(GpuComparison, DenseDreluFusedGradient)
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
     const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
-    // The fused path must have actually run (a cuBLASLt fallback would still
-    // produce correct numbers, but we want to know it silently disengaged).
+
+
     EXPECT_TRUE(hidden_2->drelu_fusion_ran());
     EXPECT_TRUE(output_layer->drelu_fusion_ran());
 
@@ -824,10 +824,10 @@ TEST_F(GpuComparison, TransformerForward)
     EXPECT_LT(relative_difference(cpu_flat, gpu_flat), 1.0e-3f);
 }
 
-// The SDPA path derives per-sample valid lengths from the source activation
-// content. Forward arenas are reused across batches, so the device pointer is
-// identical between calls while the padding pattern changes; the lengths must
-// be derived from the current content, never from pointer identity.
+
+
+
+
 TEST_F(GpuComparison, SdpaAttentionRefreshesPaddingBetweenBatches)
 {
     if (!AttentionOperator::sdpa_supported(Type::FP32, Device::CUDA))
@@ -850,7 +850,7 @@ TEST_F(GpuComparison, SdpaAttentionRefreshesPaddingBetweenBatches)
     network.compile();
     network.set_parameters_random();
 
-    // compile() propagates the CUDA device to the layer and re-evaluates SDPA.
+
     ASSERT_TRUE(static_cast<MultiHeadAttention*>(network.get_layer(0).get())->should_use_sdpa());
 
     const auto make_batch = [&](const std::array<Index, 2>& valid_lengths)
@@ -883,15 +883,15 @@ TEST_F(GpuComparison, SdpaAttentionRefreshesPaddingBetweenBatches)
         return host;
     };
 
-    // Reusing one ForwardPropagation keeps every device pointer stable across
-    // the two batches, which is exactly the situation that made cached lengths
-    // go stale.
+
+
+
     ForwardPropagation reused_propagation(batch_size, &network);
     forward_outputs(reused_propagation, batch_short);
     const VectorR outputs_after_reuse = forward_outputs(reused_propagation, batch_long);
 
-    // A second propagation alive at the same time is guaranteed to use
-    // different device pointers, so its lengths are freshly derived.
+
+
     ForwardPropagation fresh_propagation(batch_size, &network);
     const VectorR outputs_fresh = forward_outputs(fresh_propagation, batch_long);
 
@@ -899,9 +899,9 @@ TEST_F(GpuComparison, SdpaAttentionRefreshesPaddingBetweenBatches)
     EXPECT_LT(relative_difference(outputs_fresh, outputs_after_reuse), 1.0e-5f);
 }
 
-// Exercises apply_sdpa_backward with the delta-pool BF16 gradient scratch
-// against the CPU unfused reference. SDPA converts FP32 to BF16 internally,
-// hence the loose tolerance.
+
+
+
 TEST_F(GpuComparison, SdpaAttentionBackwardGradient)
 {
     if (!AttentionOperator::sdpa_supported(Type::FP32, Device::CUDA))

@@ -183,7 +183,7 @@ Index sample_token(VectorR& probabilities,
         }
     }
 
-    // Every candidate was filtered out: fall back to the unmodified argmax.
+
     const float total = probabilities.sum();
     if (total <= 0.0f) return maximal_index(original);
 
@@ -743,8 +743,8 @@ struct ClassicGenerationState
     Index decoder_first = -1;
     Index output_projection = -1;
 
-    // Outputs produced by the encoder prefill and read by every incremental
-    // decoder pass; the inference pool must not recycle their storage.
+
+
     vector<Index> retained_outputs;
 };
 
@@ -753,8 +753,8 @@ void prepare_classic_network(NeuralNetwork& network)
     throw_if(!network.is_gpu() || !device::is_cuda_build(),
              "ChatSession: classic text generation requires CUDA.");
     network.copy_parameters_device();
-    // Chat never trains, so the fp32 master that copy_parameters_device()
-    // leaves next to the bf16 mirror is dead weight: 6 B/parameter -> 2 B.
+
+
     network.release_bf16_fp32_parameter_master_for_inference();
     network.link_parameters();
     network.copy_states_device();
@@ -844,8 +844,8 @@ make_sequence_to_sequence_state(Transformer& network)
              || layers.back()->get_label() != "output_projection",
              "ChatSession: unsupported Transformer decoder layout.");
 
-    // Every output produced by the encoder prefill range and consumed by the
-    // per-token decoder range must survive across decode passes.
+
+
     const auto& source_layers = network.get_source_layers();
     for (Index i = state->decoder_first; i <= state->output_projection; ++i)
         for (const Index source : source_layers[size_t(i)])
@@ -1018,9 +1018,9 @@ struct ChatSession::Impl
 #ifdef OPENNN_HAS_CUDA
         if (gpu)
         {
-            // Reserve every high-water CUDA buffer before the first user
-            // send(). The real prefill starts at past=0 and overwrites this
-            // disposable cache contents.
+
+
+
             const Index warmup_tokens = prefill.get_sequence_capacity();
             fill_n(token_window.begin(), size_t(warmup_tokens), 0.0f);
             run_prefill(prefill, prefill_inputs, *network, warmup_tokens, 0);
@@ -1262,8 +1262,8 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
 
     impl->draft = move(draft);
 
-    // As for the target model, establish all draft and verification CUDA
-    // high-water marks before attach_draft_model returns.
+
+
     const Index warmup_tokens =
         impl->draft->prefill.get_sequence_capacity();
     fill_n(impl->token_window.begin(), size_t(warmup_tokens), 0.0f);
@@ -1608,8 +1608,8 @@ ChatResponse ChatSession::send(
             }
 
             {
-                // Catch the draft up with every stream token it has not seen,
-                // ending with the pending one, then chain the proposals.
+
+
                 proposals.clear();
                 for (Index i = draft_cache; i < cache_length; ++i)
                 {

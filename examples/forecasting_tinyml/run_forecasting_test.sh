@@ -19,10 +19,10 @@ HARNESS_DIR="${HARNESS_DIR:-$FORECAST_DIR/../iris_plant/tinyml}"
 BUILD="${BUILD:-$HOME/opennn-build}"
 WORK="${WORK:-$HOME/tinyml-forecasting}"
 
-N_INPUTS=12   # 6 time steps x 2 features, flattened row-major
+N_INPUTS=12
 N_OUTPUTS=1
 
-# Shared toolchain discovery (tr strips CRLF in case of a Windows checkout).
+
 . <(tr -d '\r' < "$HARNESS_DIR/tinyml_common.sh")
 discover_tinyml_toolchains
 ARM_HARNESS_DIR="$HARNESS_DIR/arm"

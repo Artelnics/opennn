@@ -12,7 +12,7 @@
 #include <string>
 #include <cstring>
 
-// OpenNN includes
+
 
 #include "opennn/chat.h"
 #include "opennn/training_strategy.h"
@@ -32,7 +32,7 @@ int main()
 
         Configuration::instance().set(Device::Auto, Type::FP32);
 
-        // Dataset
+
 
         LanguageDataset language_dataset("../data/translation/ES-EN-small.txt");
 
@@ -46,7 +46,7 @@ int main()
         if(decoder_sequence_length != target_sequence_length)
             throw runtime_error("Decoder and target sequence lengths must match.");
 
-        // Transformer
+
 
         const Index embedding_dimension = 256;
         const Index heads_number = 8;
@@ -62,7 +62,7 @@ int main()
                                 feed_forward_dimension,
                                 layers_number);
 
-        // Training strategy
+
 
         TrainingStrategy training_strategy(&transformer, &language_dataset);
 
@@ -82,7 +82,7 @@ int main()
         cout << "\nTraining on GPU..." << endl;
         training_strategy.train();
 
-        // Predictions
+
 
         cout << "\n================ TRANSFORMER PREDICTIONS ================\n";
 
@@ -94,12 +94,12 @@ int main()
                 "yo veo el gato"
             };
 
-        // The vocabularies travel with the network; inference needs no dataset.
+
         transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
         transformer.set_target_vocabulary(language_dataset.get_target_vocabulary());
         ChatSession session(transformer);
 
-        // Inference requires GPU.
+
         for(Index i = 0; i < static_cast<Index>(test_sources.size()); i++)
         {
             const string prediction =

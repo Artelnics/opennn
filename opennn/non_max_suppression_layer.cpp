@@ -9,8 +9,167 @@
 #include "non_max_suppression_layer.h"
 #include "json.h"
 
+#include "tensor_operations.h"
+#include "device_backend.h"
+#include "forward_propagation.h"
+#include <algorithm>
+
 namespace opennn
 {
+
+static float yolo_iou_xywh(const array<float, 6>& a, const array<float, 6>& b)
+{
+    const float a_left = a[0] - 0.5f * a[2];
+    const float a_top = a[1] - 0.5f * a[3];
+    const float a_right = a[0] + 0.5f * a[2];
+    const float a_bottom = a[1] + 0.5f * a[3];
+
+    const float b_left = b[0] - 0.5f * b[2];
+    const float b_top = b[1] - 0.5f * b[3];
+    const float b_right = b[0] + 0.5f * b[2];
+    const float b_bottom = b[1] + 0.5f * b[3];
+
+    const float inter_w = max(0.0f, min(a_right, b_right) - max(a_left, b_left));
+    const float inter_h = max(0.0f, min(a_bottom, b_bottom) - max(a_top, b_top));
+    const float inter = inter_w * inter_h;
+    const float area = a[2] * a[3] + b[2] * b[3] - inter;
+
+    return area > 0.0f ? inter / area : 0.0f;
+}
+
+void NonMaxSuppressionOperator::set(const Shape& input_shape,
+                              Index new_boxes_per_cell,
+                              float new_confidence_threshold,
+                              float new_iou_threshold)
+{
+    throw_if(input_shape.rank != 3,
+             "NonMaxSuppressionOperator: input shape must be rank 3.");
+    throw_if(new_boxes_per_cell <= 0,
+             "NonMaxSuppressionOperator: boxes_per_cell must be positive.");
+
+    grid_size = input_shape[0];
+    grid_width = input_shape[1];
+    boxes_per_cell = new_boxes_per_cell;
+    confidence_threshold = new_confidence_threshold;
+    iou_threshold = new_iou_threshold;
+
+    const Index channels = input_shape[2];
+    throw_if(channels % boxes_per_cell != 0,
+             "NonMaxSuppressionOperator: channels must be divisible by boxes_per_cell.");
+
+    classes_number = channels / boxes_per_cell - 5;
+    throw_if(classes_number <= 0,
+             "NonMaxSuppressionOperator: classes_number must be positive.");
+}
+
+void NonMaxSuppressionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+{
+    const TensorView& input = get_input(forward_propagation, layer);
+    TensorView& output = get_output(forward_propagation, layer);
+
+    if (is_training) return;
+
+#ifdef OPENNN_HAS_CUDA
+    if (input.is_cuda())
+    {
+        cudaStream_t stream = device::get_compute_stream();
+
+        cpu_input_staging.resize(size_t(input.size()));
+        device::copy_async(cpu_input_staging.data(), input.as<float>(),
+                           input.size() * Index(sizeof(float)),
+                           device::CopyKind::DeviceToHost, stream);
+        device::synchronize(stream);
+
+        TensorView cpu_in{cpu_input_staging.data(), input.shape};
+
+        cpu_output_staging.resize(size_t(output.size()));
+        TensorView cpu_out{cpu_output_staging.data(), output.shape};
+
+        apply(cpu_in, cpu_out);
+
+        device::copy_async(output.as<float>(), cpu_output_staging.data(),
+                           output.size() * Index(sizeof(float)),
+                           device::CopyKind::HostToDevice, stream);
+        return;
+    }
+#endif
+    apply(input, output);
+}
+
+void NonMaxSuppressionOperator::apply(const TensorView& input, TensorView& output) const
+{
+    const Index batch_size = input.shape[0];
+    const Index channels = input.shape[3];
+    const Index values_per_box = 5 + classes_number;
+    const Index max_boxes = grid_size * grid_width * boxes_per_cell;
+
+    const float* src = input.as<float>();
+    float* dst = output.as<float>();
+    fill_n(dst, output.size(), 0.0f);
+
+    #pragma omp parallel for
+    for (Index b = 0; b < batch_size; ++b)
+    {
+        vector<array<float, 6>> candidates;
+        candidates.reserve(size_t(max_boxes));
+
+        for (Index row = 0; row < grid_size; ++row)
+            for (Index col = 0; col < grid_width; ++col)
+            {
+                const Index cell = ((b * grid_size + row) * grid_width + col) * channels;
+
+                for (Index box = 0; box < boxes_per_cell; ++box)
+                {
+                    const Index base = cell + box * values_per_box;
+
+                    const float* best = max_element(src + base + 5, src + base + 5 + classes_number);
+                    const Index best_class = best - (src + base + 5);
+                    const float best_probability = *best;
+
+                    const float score = src[base + 4] * best_probability;
+                    if (score < confidence_threshold)
+                        continue;
+
+                    candidates.push_back({
+                        (float(col) + src[base]) / float(grid_width),
+                        (float(row) + src[base + 1]) / float(grid_size),
+                        src[base + 2],
+                        src[base + 3],
+                        score,
+                        float(best_class)
+                    });
+                }
+            }
+
+        ranges::sort(candidates, greater<>{}, [](const array<float, 6>& box) { return box[4]; });
+
+        Index kept_count = 0;
+        for (const array<float, 6>& candidate : candidates)
+        {
+            bool suppressed = false;
+            for (Index j = 0; j < kept_count; ++j)
+            {
+                const float* kept = dst + (b * max_boxes + j) * 6;
+                const array<float, 6> kept_box{kept[0], kept[1], kept[2], kept[3], kept[4], kept[5]};
+
+                if (Index(kept_box[5]) == Index(candidate[5])
+                &&  yolo_iou_xywh(candidate, kept_box) > iou_threshold)
+                {
+                    suppressed = true;
+                    break;
+                }
+            }
+
+            if (suppressed)
+                continue;
+
+            float* out = dst + (b * max_boxes + kept_count) * 6;
+            ranges::copy(candidate, out);
+            if (++kept_count == max_boxes)
+                break;
+        }
+    }
+}
 
 NonMaxSuppression::NonMaxSuppression(const Shape& new_input_shape,
                                      Index new_boxes_per_cell,

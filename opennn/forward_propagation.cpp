@@ -171,10 +171,10 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         for (size_t i = 0;
              i < layers_number && layers[i]->get_type() == LayerType::Scaling;
              ++i)
-            // Training inputs are pre-scaled by Dataset::fill_inputs(), and
-            // NeuralNetwork::forward_propagate() skips these leading layers.
-            // Treat them as passthroughs in the layout too, instead of
-            // reserving outputs which can never be written or consumed.
+
+
+
+
             forward_specs[i].clear();
 
     const Shape model_input_shape = neural_network->get_input_shape();
@@ -235,10 +235,10 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             recomputable_forward_slots[i] =
                 layers[i]->get_recomputable_forward_slot();
 
-    // Inference never runs the backward pass, so training-only slots (dropout
-    // copies) are dropped outright and transient slots are planned like any
-    // other short-lived slot: the pool never aliases overlapping lifetimes, so
-    // one layer's auxiliaries stay disjoint without a separate scratch block.
+
+
+
+
     if (!is_training)
         for (size_t i = 0; i < layers_number; ++i)
             for (size_t j = 0; j < forward_specs[i].size(); ++j)
@@ -264,8 +264,8 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     const size_t early_release_outputs =
         ranges::count_if(output_release_steps,
                          [](const Index step) { return step >= 0; });
-    // Layouts whose activation lifetimes really do end early leave holes in
-    // the pool, which is what a recompute scratch can be overlaid onto.
+
+
     const bool recompute_overlay_allowed =
         neural_network->supports_compact_cnn_memory_layout()
         || early_release_outputs > 0;
@@ -299,7 +299,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         }
     }
 
-    // Filled by apply_pool_plan below, in both planning modes.
+
     Index activation_pool_bytes = 0;
     Index lower_bound_live_bytes = 0;
     Index fragmentation_bytes = 0;
@@ -307,12 +307,12 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     size_t overlaid_recompute_slots = 0;
     Index overlaid_scratch_bytes = 0;
 
-    // A layer's transient slots are placed back to back inside the shared
-    // transient block, so slots that are simultaneously live within one
-    // layer's forward call (e.g. the SDPA BF16 pack feeding the FP32
-    // attention scratch) never alias each other. The block is sized by the
-    // largest per-layer sum of the slots placed here (recompute slots already
-    // overlaid into the activation pool are excluded).
+
+
+
+
+
+
     const auto place_transient_slots = [&]() -> Index
     {
         Index block_bytes = 0;
@@ -333,8 +333,8 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         return block_bytes;
     };
 
-    // Both planning modes share the same collect -> first-fit -> scatter
-    // pipeline; they differ only in each slot's lifetime policy.
+
+
     vector<pair<size_t, size_t>> pooled_slots;
     vector<MemoryPoolEntry> pooled_lifetimes;
     const auto collect_pooled_slots = [&](auto&& last_step_for)
@@ -366,12 +366,12 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     if (is_training)
     {
-        // One planning path for every layout. Lifetimes are data: the compact
-        // (CNN) case carries real early-release steps; everything else uses
-        // the conservative bound [i, 2*layers-1-i] (alive until the layer's
-        // own backward), under which all activations coexist at the
-        // forward/backward crossover and the plan degenerates to the former
-        // cursor layout's exact footprint.
+
+
+
+
+
+
         const Index backward_base = Index(2 * layers_number - 1);
         collect_pooled_slots([&](size_t i, bool is_output)
         {
@@ -380,15 +380,15 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                 : backward_base - Index(i);
         });
 
-        // Timeline: forward of layer i at step i, backward at 2*layers-1-i.
+
         memory_debug::record_pool_lifetimes(
             "forward", pooled_lifetimes,
             format("layers={},batch={}", layers_number, batch_size));
 
-        // Joint training-memory plan: the backward delta entries join the same
-        // timeline and first-fit, so deltas reuse forward regions whose
-        // lifetimes ended, and the recompute overlays below see them as
-        // occupants.
+
+
+
+
         joint_delta_plan = {};
         const size_t forward_entry_count = pooled_lifetimes.size();
         if (joint_loss)
@@ -427,10 +427,10 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                                         joint_delta_plan.layout.entries.size()));
         }
 
-        // A recompute scratch is only touched while its layer runs forward and
-        // again just before its backward, so it can live inside a pool range
-        // that holds nothing at either instant. Whatever is not overlaid falls
-        // through to the shared transient block below.
+
+
+
+
         for (size_t i = 0; i < layers_number; ++i)
         {
             const size_t slot = recomputable_forward_slots[i];
@@ -504,8 +504,8 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                 || layers[i]->get_type() == LayerType::DetectionV8)
                 externally_observable[i] = true;
 
-        // Outputs the caller can read after the pass: they must survive to the
-        // end, so they cannot be recycled by a later layer.
+
+
         const auto mark_resolved_output = [&](Index layer_index)
         {
             if (layer_index < 0 || size_t(layer_index) >= layers_number) return;
@@ -533,12 +533,12 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             return externally_observable[i] ? final_step : last_consumers[i];
         });
 
-        // Largest-first placement: inference lifetimes are short and varied,
-        // where chronological first-fit measurably fragments (12% on the
-        // transformer benchmark); training keeps its own strategy choice.
+
+
+
         apply_pool_plan(plan_memory_pool(pooled_lifetimes, MemoryPoolStrategy::Compact));
 
-        // Every slot went through the pool, so there is no transient block.
+
     }
 
     const Index total_bytes = activation_pool_bytes + transient_block_bytes;
@@ -620,10 +620,10 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     }
 }
 
-// Turns the planned offsets into the tensor views the layers actually use:
-// one view per forward slot, plus each layer's input views aliasing its
-// producers' outputs. Returns the largest single layer's byte footprint,
-// which caps the cuDNN convolution workspace.
+
+
+
+
 Index ForwardPropagation::bind_slot_views(
     const vector<vector<TensorSpec>>& forward_specs,
     const vector<vector<Index>>& slot_offsets,
@@ -658,7 +658,7 @@ Index ForwardPropagation::bind_slot_views(
             forward_slots[i][j + 1] =
                 TensorView(pool_base + offset, shape, dtype, data.device_type);
 
-            // The transient block is shared, so it is not attributed to a layer.
+
             if (!transient) layer_logical_bytes += get_aligned_bytes(specs[j]);
         }
 
@@ -682,8 +682,8 @@ Index ForwardPropagation::bind_slot_views(
                 continue;
             }
 
-            // A layer with no slots of its own passes its producer's output
-            // through, reshaped to what this consumer expects.
+
+
             const Index resolved =
                 resolve_producer(forward_specs, source_layers, source_layer);
 
@@ -816,7 +816,7 @@ void ForwardPropagation::gather_output_window()
                           / sequence * type_bytes(capacity_input.type);
     const Index window_bytes = output_window_count * row_bytes;
 
-    // Each sample's window rows are contiguous; the samples are not.
+
     for (Index sample = 0; sample < batch_size; ++sample)
         device::copy_async(
             static_cast<char*>(output_window_input.data) + sample * window_bytes,

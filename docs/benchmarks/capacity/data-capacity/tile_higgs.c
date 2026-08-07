@@ -26,14 +26,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* HIGGS rows are 29 z-scored float fields; a few hundred bytes each. This is a
- * generous ceiling for one line including its newline. */
+
+
 #define LINE_MAX_BYTES 4096
 
-/* Load the whole source file into memory as a list of line strings. The
- * prepared HIGGS train file is a few GB at most (10.5M rows of z-scored
- * features); we keep the lines so tiling is a cheap pointer walk. The tiled
- * OUTPUT — which can be far larger — is never held in RAM, it is streamed. */
+
+
+
+
 int main(int argc, char** argv)
 {
     if (argc < 4)
@@ -55,9 +55,9 @@ int main(int argc, char** argv)
     FILE* in = fopen(in_path, "rb");
     if (!in) { perror("fopen(input)"); return 1; }
 
-    /* Read every source line into a growable array of NUL-terminated strings
-     * (each still carrying its trailing newline, so we can write it back
-     * verbatim). */
+
+
+
     size_t cap = 1 << 20;
     size_t rows = 0;
     char** lines = (char**)malloc(cap * sizeof(char*));
@@ -68,9 +68,9 @@ int main(int argc, char** argv)
     {
         size_t len = strlen(line);
         if (len == 0) continue;
-        /* Guard against a line longer than the buffer: without a newline we
-         * would split a row in two, corrupting the CSV. HIGGS rows never hit
-         * this, so treat it as a hard error rather than silently mis-tiling. */
+
+
+
         if (line[len - 1] != '\n' && !feof(in))
         {
             fprintf(stderr, "line %zu exceeds %d bytes; raise LINE_MAX_BYTES\n",
@@ -93,8 +93,8 @@ int main(int argc, char** argv)
 
     if (rows == 0) { fprintf(stderr, "input has no rows: %s\n", in_path); return 1; }
 
-    /* Make sure every emitted line ends in a newline, even if the source file
-     * lacked a final one. */
+
+
     char* last = lines[rows - 1];
     size_t last_len = strlen(last);
     int last_needs_nl = (last_len == 0 || last[last_len - 1] != '\n');

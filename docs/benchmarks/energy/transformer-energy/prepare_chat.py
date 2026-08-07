@@ -38,7 +38,7 @@ def to_pairs(records: list[dict]):
         extra = (r.get("input") or "").strip()
         response = (r.get("output") or "").strip()
         prompt = f"{instruction}\n{extra}".strip() if extra else instruction
-        # tab-separated single-line pairs; drop rows that would break the format
+
         prompt = " ".join(prompt.split())
         response = " ".join(response.split())
         if prompt and response:

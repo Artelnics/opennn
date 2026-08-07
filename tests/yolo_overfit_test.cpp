@@ -80,15 +80,15 @@ struct TempDir
 
 TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
 {
-    // Train a minimal YOLO network on two 32x32 synthetic images with one box each.
-    // This is the end-to-end sanity test: if loss does not decrease, there is a
-    // systematic bug in loss → gradient → optimizer → detection chain.
-    //
-    // Network: Conv(3x3, 3→16, LeakyReLU) → Conv(1x1, 16→6, Identity) → Detection
-    // Dataset: 2 images, 1 class, grid=4, B=1, 1 anchor matching the box size.
-    // Assertions:
-    //   1. error after 200 epochs < error after 2 epochs  (loss decreases)
-    //   2. final error < 2.0                              (reasonable absolute level)
+
+
+
+
+
+
+
+
+
 
     TempDir dir;
     const std::filesystem::path images_dir = dir.path / "images";
@@ -131,7 +131,7 @@ TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
         return net;
     };
 
-    // Short run — 2 epochs
+
     float error_short;
     {
         YoloDataset ds;
@@ -148,7 +148,7 @@ TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
         error_short = adam.train().get_training_error();
     }
 
-    // Long run — 200 epochs
+
     float error_long;
     {
         YoloDataset ds;
@@ -165,12 +165,12 @@ TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
         error_long = adam.train().get_training_error();
     }
 
-    // Loss must decrease (the essential check)
+
     EXPECT_LT(error_long, error_short)
         << "Loss did not decrease: short=" << error_short << " long=" << error_long
         << " — systematic bug in YOLO loss/gradient/optimizer chain.";
 
-    // Loss must decrease by at least 5% — catches trivial non-convergence
+
     EXPECT_LT(error_long, error_short * 0.95f)
         << "Loss barely decreased (" << error_short << " → " << error_long
         << ") after 200 epochs — optimizer or gradient likely broken.";
@@ -178,11 +178,11 @@ TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
 
 TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
 {
-    // Validates the SPPF pattern: Conv → 3×MaxPool(5×5,stride=1,pad=2) → Concat → Conv → Detection.
-    // If loss decreases, backprop flows correctly through all three pooling layers and the
-    // Concatenation split — the exact path added by the SPPF block in YoloNetwork.
-    //
-    // Uses a simple 32×32 network (not full Darknet53) so this runs in ~10 seconds on CPU.
+
+
+
+
+
 
     TempDir dir;
     const auto images_dir = dir.path / "images";
@@ -201,7 +201,7 @@ TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
 
     constexpr Index H = 32, W = 32, grid = 4, B = 1, C = 1;
     const std::vector<std::array<float, 2>> anchors{{0.4f, 0.4f}};
-    constexpr Index ch = 16;    // intermediate channels
+    constexpr Index ch = 16;
     constexpr Index logit_ch = B * (5 + C);
 
     YoloDataset::AugmentationConfig no_aug; no_aug.enabled = false;
@@ -209,11 +209,11 @@ TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
     auto build_sppf_net = [&]() {
         auto net = std::make_unique<NeuralNetwork>();
 
-        // Backbone stub: one conv to produce feature map
+
         net->add_layer(std::make_unique<Convolutional>(
             Shape{H, W, 3}, Shape{3, 3, 3, ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "conv_stem"));
 
-        // SPPF: three cascaded 5×5 same-padding max-pools, then concat with pre-pool
+
         const Shape feat{H, W, ch};
         const Index stem_idx = net->get_layers_number() - 1;
 
@@ -227,13 +227,13 @@ TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
                                                   "MaxPooling", "sppf_p3"), {p2_idx});
         const Index p3_idx = net->get_layers_number() - 1;
 
-        // Concat(stem, p1, p2, p3) → 4×ch channels
+
         net->add_layer(std::make_unique<Concatenation>(feat,
                                                         std::vector<Index>{ch, ch, ch, ch}, "sppf_cat"),
                        {stem_idx, p1_idx, p2_idx, p3_idx});
         const Index cat_idx = net->get_layers_number() - 1;
 
-        // Reduce back to ch, then logits → Detection
+
         net->add_layer(std::make_unique<Convolutional>(
             Shape{H, W, 4*ch}, Shape{1,1, 4*ch, ch}, "LeakyReLU", Shape{1,1}, "Same", true, "sppf_out"), {cat_idx});
         net->add_layer(std::make_unique<Convolutional>(
@@ -273,11 +273,11 @@ TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
 
 TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
 {
-    // Validates the CSP block gradient path:
-    //   stride-2 down → split(branch1=skip, branch2=residuals) → concat → merge → Detection.
-    // Checks that backprop flows through the concat split, the skip branch, the residual
-    // Addition, and the merge conv — all the new paths added by CSPDarknet53.
-    // Uses a minimal 32×32 network (1 CSP block, 8-channel) so this runs in ~5s on CPU.
+
+
+
+
+
 
     TempDir dir;
     const auto images_dir = dir.path / "images";
@@ -303,19 +303,19 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
 
     YoloDataset::AugmentationConfig no_aug; no_aug.enabled = false;
 
-    // Build a minimal CSP network: stem → CSP-stage (1 block, no stride-2 for simplicity)
-    // → logits → Detection. Tests concat-split-skip + residual gradient paths.
+
+
     auto build_csp_net = [&]() {
         auto net = std::make_unique<NeuralNetwork>();
 
-        // Stem
+
         const Shape input{H, W, 3};
         net->add_layer(std::make_unique<Convolutional>(
             input, Shape{3, 3, 3, ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "stem"));
         const Index stem = net->get_layers_number() - 1;
         const Shape feat{H, W, ch};
 
-        // CSP split: branch1 = skip (Identity), branch2 = residual path
+
         net->add_layer(std::make_unique<Convolutional>(
             feat, Shape{1, 1, ch, half}, "Identity", Shape{1, 1}, "Same", true, "csp_s1"), {stem});
         const Index branch1 = net->get_layers_number() - 1;
@@ -324,7 +324,7 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
             feat, Shape{1, 1, ch, half}, "LeakyReLU", Shape{1, 1}, "Same", true, "csp_s2"), {stem});
         const Index b2_start = net->get_layers_number() - 1;
 
-        // 1 residual block on branch2 (half channels throughout)
+
         const Shape hfeat{H, W, half};
         net->add_layer(std::make_unique<Convolutional>(
             hfeat, Shape{1, 1, half, half}, "LeakyReLU", Shape{1, 1}, "Same", true, "csp_b1_c1"), {b2_start});
@@ -337,7 +337,7 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
         net->add_layer(std::make_unique<Activation>(hfeat, "LeakyReLU", "csp_b1_act"), {add});
         const Index branch2 = net->get_layers_number() - 1;
 
-        // Concat + merge
+
         net->add_layer(std::make_unique<Concatenation>(hfeat, std::vector<Index>{half, half}, "csp_cat"),
                        {branch1, branch2});
         const Index cat = net->get_layers_number() - 1;
@@ -345,7 +345,7 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
             feat, Shape{1, 1, ch, ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "csp_merge"), {cat});
         const Index merge = net->get_layers_number() - 1;
 
-        // Detection head
+
         net->add_layer(std::make_unique<Convolutional>(
             feat, Shape{1, 1, ch, logit_ch}, "Identity", Shape{1, 1}, "Same", false, "logits"), {merge});
         net->add_layer(std::make_unique<Detection>(Shape{grid, grid, logit_ch}, anchors, "detection"));
@@ -383,16 +383,16 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
 
 TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
 {
-    // Validates the YOLOv8 anchor-free head:
-    //   decoupled box branch (3×3→3×3→1×1 ×4) + class branch (3×3→3×3→1×1 ×C),
-    //   concatenated → DetectionV8, loss = CIoU (positive) + focal BCE (all).
-    // No objectness channel. One center-point assignment per GT per head.
-    // 32×32 input, 4×4 grid, 1 class. Should overfit in ≤200 epochs on CPU.
-    //
-    // Class lambda is kept very small (0.01) so the box regression signal dominates.
-    // With solid-color images all spatial features are identical, so class gradient
-    // cannot spatially distinguish positive from negative cells — the class branch
-    // gradient correctness is tested separately by V8*GradientMatchesNumericalGradient.
+
+
+
+
+
+
+
+
+
+
 
     TempDir dir;
     const auto images_dir = dir.path / "images";
@@ -404,12 +404,12 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
     write_bmp_24(images_dir / "b.bmp", 32, 32,  50, 200,  50);
     write_bmp_24(images_dir / "c.bmp", 32, 32,  50,  50, 200);
     write_bmp_24(images_dir / "d.bmp", 32, 32, 200, 200,  50);
-    // GT boxes sized so exactly 1 cell center (at 0.125/0.375/0.625/0.875) lies inside each
-    // box — avoids symmetric gradient cancellation with solid-color constant-feature images.
-    { std::ofstream f(labels_dir / "a.txt"); f << "0 0.375 0.375 0.18 0.18\n"; }  // cell(1,1)
-    { std::ofstream f(labels_dir / "b.txt"); f << "0 0.125 0.125 0.15 0.15\n"; }  // cell(0,0)
-    { std::ofstream f(labels_dir / "c.txt"); f << "0 0.875 0.625 0.15 0.15\n"; }  // cell(2,3)
-    { std::ofstream f(labels_dir / "d.txt"); f << "0 0.125 0.875 0.15 0.15\n"; }  // cell(3,0)
+
+
+    { std::ofstream f(labels_dir / "a.txt"); f << "0 0.375 0.375 0.18 0.18\n"; }
+    { std::ofstream f(labels_dir / "b.txt"); f << "0 0.125 0.125 0.15 0.15\n"; }
+    { std::ofstream f(labels_dir / "c.txt"); f << "0 0.875 0.625 0.15 0.15\n"; }
+    { std::ofstream f(labels_dir / "d.txt"); f << "0 0.125 0.875 0.15 0.15\n"; }
     { std::ofstream f(labels_dir / "classes.names"); f << "object\n"; }
 
     constexpr Index H = 32, W = 32, grid = 4, C = 1;
@@ -427,7 +427,7 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
         const Index stem = net->get_layers_number() - 1;
         const Shape feat{grid, grid, head_ch};
 
-        // Box branch
+
         net->add_layer(std::make_unique<Convolutional>(
             feat, Shape{3, 3, head_ch, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "box_c1"), {stem});
         const Index bc1 = net->get_layers_number() - 1;
@@ -438,7 +438,7 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
             feat, Shape{1, 1, head_ch, 4}, "Identity", Shape{1, 1}, "Same", false, "box_out"), {bc2});
         const Index box_out = net->get_layers_number() - 1;
 
-        // Class branch
+
         net->add_layer(std::make_unique<Convolutional>(
             feat, Shape{3, 3, head_ch, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "cls_c1"), {stem});
         const Index cc1 = net->get_layers_number() - 1;
@@ -449,7 +449,7 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
             feat, Shape{1, 1, head_ch, C}, "Identity", Shape{1, 1}, "Same", false, "cls_out"), {cc2});
         const Index cls_out = net->get_layers_number() - 1;
 
-        // Concat box+class → [grid, grid, 4+C]
+
         const Shape box_shape{grid, grid, 4};
         net->add_layer(std::make_unique<Concatenation>(box_shape, std::vector<Index>{4, C}, "cat"),
                        {box_out, cls_out});
@@ -463,7 +463,7 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
 
     auto run = [&](Index epochs) -> float {
         YoloDataset ds; ds.set_display(false);
-        ds.set(images_dir, labels_dir, Shape{H, W, 3}, grid, /*bpc=*/0, {});
+        ds.set(images_dir, labels_dir, Shape{H, W, 3}, grid, 0, {});
         ds.set_v8_mode(true);
         ds.set_augmentation(no_aug);
         auto net = build_v8_net();
@@ -471,7 +471,7 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
         loss.set_error(Loss::Error::Yolo);
         loss.set_regularization(Loss::Regularization::NoRegularization);
         loss.set_yolo_focal_gamma(2.0f);
-        loss.set_yolo_lambda_class(0.01f);  // solid-color images → class can't localize; box drives convergence
+        loss.set_yolo_lambda_class(0.01f);
         AdaptiveMomentEstimation adam(&loss);
         adam.set_maximum_epochs(epochs);
         adam.set_learning_rate(1e-3f);

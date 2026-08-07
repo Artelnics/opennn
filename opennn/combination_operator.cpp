@@ -133,8 +133,8 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
         }
         catch (const runtime_error&)
         {
-            // RELU_AUX_BIAS unsupported here: permanently fall back to the
-            // unfused path (the consumer reads these flags too).
+
+
             emit_relu_mask = false;
             relu_mask_fused_active = false;
         }
@@ -157,10 +157,10 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
 
     TensorView& input_delta = slot_or(backward_slots, input_delta_slots, 0);
 
-    // Cross-layer dReLU fusion: input_delta is the producer layer's output
-    // delta, so its ReLU derivative can ride the dgrad GEMM's DRELU epilogue
-    // (mask stored by the producer's RELU_AUX_BIAS forward). The producer's
-    // activation backward skips while relu_mask_fused_active holds.
+
+
+
+
     bool recover_unfused = false;
     if (drelu_source && drelu_source->relu_mask_fused_active
         && input_delta.data && !input_delta.empty())
@@ -173,10 +173,10 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
         }
         catch (const runtime_error&)
         {
-            // DRELU unsupported here: veto the fusion for good and recover
-            // this step unfused below — `input` IS the producer's ReLU output,
-            // so applying the elementwise derivative here matches exactly what
-            // the producer's activation backward would have done.
+
+
+
+
             drelu_source->relu_mask_fused_active = false;
             drelu_source->emit_relu_mask = false;
             recover_unfused = true;

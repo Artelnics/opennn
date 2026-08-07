@@ -42,13 +42,13 @@ int wmain(int argc, wchar_t** argv)
         return 1;
     }
 
-    /* Rebuild the child command line from argv[2..]. */
+
     wchar_t cmdline[32768];
     cmdline[0] = L'\0';
     for (int i = 2; i < argc; i++)
     {
         if (i > 2) wcscat_s(cmdline, 32768, L" ");
-        /* quote args that contain spaces */
+
         if (wcschr(argv[i], L' '))
         {
             wcscat_s(cmdline, 32768, L"\"");
@@ -65,7 +65,7 @@ int wmain(int argc, wchar_t** argv)
     si.cb = sizeof(si);
     memset(&pi, 0, sizeof(pi));
 
-    /* CREATE_SUSPENDED so we can assign to the job before it runs. */
+
     if (!CreateProcessW(NULL, cmdline, NULL, NULL, TRUE,
                         CREATE_SUSPENDED, NULL, NULL, &si, &pi))
     {
@@ -91,6 +91,6 @@ int wmain(int argc, wchar_t** argv)
 
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
-    CloseHandle(job);   /* KILL_ON_JOB_CLOSE cleans up any stragglers */
+    CloseHandle(job);
     return (int)code;
 }

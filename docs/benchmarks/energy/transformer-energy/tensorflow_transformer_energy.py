@@ -92,7 +92,7 @@ def build_model():
     src = L.Input(shape=(args.in_seq,), dtype="int32", name="src")
     dec = L.Input(shape=(args.dec_seq,), dtype="int32", name="dec")
 
-    # PAD keys masked out, as in OpenNN's attention (mask=True means attend).
+
     src_keys = L.Lambda(lambda t: tf.not_equal(t, 0)[:, None, :])(src)
     dec_keys = L.Lambda(lambda t: tf.not_equal(t, 0)[:, None, :])(dec)
 
@@ -117,15 +117,15 @@ def build_model():
         y = L.LayerNormalization()(y + ca)
         y = L.LayerNormalization()(y + ffn(y, d, ff_dim))
 
-    # keep the vocab logits in float32 under mixed precision (standard practice)
+
     logits = L.Dense(args.out_vocab, dtype="float32")(y)
     return tf.keras.Model([src, dec], logits)
 
 
 model = build_model()
 
-# Match OpenNN's init: Dense/MHA kernels are already glorot_uniform with zero
-# biases (Keras defaults); embeddings set above; zero the PAD embedding row.
+
+
 for layer in model.layers:
     if isinstance(layer, L.Embedding):
         w = layer.embeddings.numpy()
@@ -145,7 +145,7 @@ def train_step(src_b, dec_b, tgt_b):
         logits = model([src_b, dec_b], training=True)
         per_token = loss_fn(tgt_b, logits)
         mask = tf.cast(tgt_b > 0, per_token.dtype)
-        # mean over non-PAD targets, as OpenNN's CrossEntropyError3d
+
         loss = tf.reduce_sum(per_token * mask) / tf.reduce_sum(mask)
     grads = tape.gradient(loss, model.trainable_variables)
     opt.apply_gradients(zip(grads, model.trainable_variables))
@@ -154,8 +154,8 @@ def train_step(src_b, dec_b, tgt_b):
 
 rng = np.random.default_rng(args.seed)
 
-# The energy window starts here: it includes the XLA/graph compilation, exactly
-# as OpenNN's window includes its in-train() warmup and graph capture.
+
+
 print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
 t0 = time.perf_counter()
 
@@ -172,7 +172,7 @@ for epoch in range(args.max_epochs):
                                        tf.gather(dec_all, idx),
                                        tf.gather(tgt_all, idx)))
 
-    # single host sync per epoch (a per-step float() would stall the pipeline)
+
     mean_loss = float(tf.add_n(batch_losses)) / len(batch_losses)
     loss_history.append(mean_loss)
     epochs_run = epoch + 1

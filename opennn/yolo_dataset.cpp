@@ -20,10 +20,10 @@ namespace opennn
 namespace
 {
 
-// Saturating conversions for the image pipeline. Note these are NOT
-// std::clamp: when the value is NaN, max() keeps the lower bound, so a bad
-// pixel becomes 0 instead of propagating. That matters because casting NaN to
-// uint8_t is undefined behaviour, and augmentation arithmetic can produce it.
+
+
+
+
 float clamp_unit(const float value)
 {
     return min(1.0f, max(0.0f, value));
@@ -790,8 +790,8 @@ void make_target_multi_scale(const vector<YoloDataset::Box>& boxes,
     }
 }
 
-// YOLOv8 GT-list target: one row of 5 floats per GT box (cx, cy, w, h, class_id+1).
-// Row 0 = first GT, remaining rows zero-padded. Assignment is done at loss time via TAL.
+
+
 static void make_target_v8_gtlist(const vector<YoloDataset::Box>& boxes,
                                    Index classes_number,
                                    float* target)
@@ -807,7 +807,7 @@ static void make_target_v8_gtlist(const vector<YoloDataset::Box>& boxes,
         target[i*5 + 1] = b.y;
         target[i*5 + 2] = b.w;
         target[i*5 + 3] = b.h;
-        target[i*5 + 4] = float(b.class_id + 1);  // 0 = empty slot
+        target[i*5 + 4] = float(b.class_id + 1);
     }
 }
 
@@ -2107,17 +2107,17 @@ Index YoloDataset::load_darknet_backbone(NeuralNetwork& network,
     return loaded;
 }
 
-// Load only the 6 stride-2 downsampling convolutions from yolov4.conv.137 into a
-// CSPDarknet53v11 network. The file is stored in CSPDarknet53 conv order; C3k2 has the
-// same channel plan (32→64→128→256→512→1024) but different internal bottleneck structure.
-// We seek past each stage's CSP internal convolutions (which don't match C3k2) and load
-// only the downsampling convolutions that both architectures share.
-//
-// Skip floats after each stage's down conv (computed from CSPDarknet53 conv sizes):
-//   s1_CSP (n=1, 64ch):  6 convs = 42,368 floats
-//   s2_CSP (n=2, 64ch):  8 convs = 79,872 floats
-//   s3_CSP (n=8, 128ch): 20 convs = 811,520 floats
-//   s4_CSP (n=8, 256ch): 20 convs = 3,228,672 floats
+
+
+
+
+
+
+
+
+
+
+
 Index YoloDataset::load_darknet_backbone_v11(NeuralNetwork& network,
                                               const filesystem::path& weights_path)
 {
@@ -2136,8 +2136,8 @@ Index YoloDataset::load_darknet_backbone_v11(NeuralNetwork& network,
          << " revision=" << header[2]
          << " seen=" << seen << "\n";
 
-    // Pairs of (layer_label, floats_to_skip_BEFORE_reading_this_layer).
-    // Skip sizes are in number of float32 values.
+
+
     static const pair<const char*, size_t> targets[] = {
         {"c11_stem",    0},
         {"c11_s1_down", 0},
@@ -2147,7 +2147,7 @@ Index YoloDataset::load_darknet_backbone_v11(NeuralNetwork& network,
         {"c11_s5_down", 3228672},
     };
 
-    // Build a label → layer pointer map once.
+
     map<string, Convolutional*> label_to_conv;
     for (const auto& layer : network.get_layers())
     {

@@ -20,8 +20,8 @@ namespace opennn
 namespace
 {
 
-// A passthrough layer exposes no forward or backward slots of its own; deltas
-// and lifetimes resolve through it to its first source.
+
+
 vector<bool> find_passthrough_layers(const vector<unique_ptr<Layer>>& layers,
                                      const vector<vector<TensorSpec>>& backward_specs,
                                      Index batch_size)
@@ -99,8 +99,8 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
     for (size_t i = 0; i < layers_number; ++i)
         pointer = layers[i]->link_gradients(pointer, gradient_views[i], gradient.device_type);
 
-    // The forward arena already recorded the jointly planned delta bytes
-    // ("forward.joint_plan"); no separate delta pool exists to report.
+
+
     if (joint_forward && joint_forward->joint_delta_plan.valid)
     {
         const auto& joint = joint_forward->joint_delta_plan;
@@ -125,8 +125,8 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_entries(
     const Index first_trainable_layer_index = network.get_first_trainable_layer_index();
     const Index last_trainable_layer_index = network.get_last_trainable_layer_index();
     const auto& source_layers = network.get_source_layers();
-    // activation_dtype() is the identity here (set() rejects INT8 training),
-    // but going through it keeps every dtype decision in the library uniform.
+
+
     const Type compute_dtype = network.is_gpu()
         ? activation_dtype(network.get_training_type())
         : Type::FP32;
@@ -271,7 +271,7 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
 
     const vector<MemoryPoolEntry> lifetime_entries = to_pool_entries(delta_entries);
 
-    // Timeline: step s is the backward of layer (last_trainable - s).
+
     memory_debug::record_pool_lifetimes(
         "backward", lifetime_entries,
         format("first_trainable={},last_trainable={},layers={}",

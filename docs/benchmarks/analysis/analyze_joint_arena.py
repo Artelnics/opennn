@@ -136,18 +136,18 @@ def main():
     print(f"ledger: forward data={fwd_pool} MiB (incl transient={transient}), "
           f"delta pool={delta_pool} MiB")
 
-    # Validate the planner replica against the real pools before trusting it.
+
     fwd_peak, _ = first_fit(fwd, compact_order(fwd))
     bwd_peak_c, _ = first_fit(bwd, compact_order(bwd))
     bwd_peak_h, _ = first_fit(bwd, chrono_order(bwd))
     print(f"replica: forward pool peak={fwd_peak:.2f} MiB, "
           f"delta pool peak compact={bwd_peak_c:.2f} / chrono={bwd_peak_h:.2f} MiB")
 
-    # Unified timeline.
+
     offset = (2 * L - 1) - last_trainable
     joint = list(fwd) + [(s, f + offset, l + offset) for (s, f, l) in bwd]
     if transient:
-        joint.append((transient, 0, 2 * L - 1))   # transient block: whole step
+        joint.append((transient, 0, 2 * L - 1))
 
     lb = lower_bound(joint)
     jc, offsets_c = first_fit(joint, compact_order(joint))
@@ -157,10 +157,10 @@ def main():
     print(f"joint lower bound = {lb:.2f} MiB")
     print(f"joint first-fit: compact={jc:.2f} MiB, chrono={jh:.2f} MiB")
 
-    # Recompute scratch lives at two instants (forward of layer i, and right
-    # before its backward). Entries that overlaid holes in the forward-only
-    # plan may no longer fit once deltas occupy those holes; their fallback is
-    # the shared transient block, which grows only if they exceed it.
+
+
+
+
     correction = 0.0
     if recompute:
         displaced = [

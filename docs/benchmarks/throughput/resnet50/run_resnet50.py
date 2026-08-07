@@ -96,8 +96,8 @@ def engine_cmd(engine, data_dir, epochs, batch, bf16):
     Python engines read <data_dir>/ (npy)."""
     env = {}
     if engine == "opennn":
-        # GPU-resident data (CIFAR fits in VRAM) and the CUDA graph are enabled in
-        # the benchmark code (opennn_resnet50_speed.cpp); no env vars needed.
+
+
         cmd = [OPENNN_BIN, os.path.join(data_dir, "train"),
                str(epochs), str(batch), "bf16" if bf16 else "fp32"]
     elif engine == "pytorch":

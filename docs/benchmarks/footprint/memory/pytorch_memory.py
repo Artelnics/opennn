@@ -56,8 +56,8 @@ def current_rss_mb() -> float:
         if ctypes.windll.psapi.GetProcessMemoryInfo(handle, ctypes.byref(counters), counters.cb):
             return counters.WorkingSetSize / (1024.0 * 1024.0)
 
-    # ru_maxrss is kilobytes on Linux, bytes on macOS. The benchmark protocol
-    # is Linux, but keep the fallback readable for ad-hoc local runs.
+
+
     if resource is None:
         return 0.0
 

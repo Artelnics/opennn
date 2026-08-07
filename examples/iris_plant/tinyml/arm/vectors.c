@@ -8,7 +8,7 @@
 
 extern void _start(void);
 
-// Top of the second SRAM block of the MPS2-AN385 (0x20000000 + 4 MB).
+
 #define STACK_TOP 0x20400000u
 
 __attribute__((section(".vectors"), used))

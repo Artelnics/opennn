@@ -28,8 +28,8 @@ public:
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
 
-    // The C2PSA GEMMs run every operand (input and weights) at the input's
-    // dtype, so the parameter specs must follow the layer's compute dtype.
+
+
     void on_compute_dtype_changed() override { c2psa.compute_dtype = get_compute_dtype(); }
 
 private:

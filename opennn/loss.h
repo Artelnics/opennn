@@ -86,8 +86,8 @@ public:
 
     virtual void set_dataset(Dataset* new_dataset) { dataset = new_dataset; }
 
-    // By value: the reference-returning form would dangle the moment the
-    // lookup stops being a static table. Used by Neural Designer.
+
+
     string get_regularization_method() const { return regularization_to_string(regularization_method); }
     void set_regularization(const string& new_regularization_method) { regularization_method = string_to_regularization(new_regularization_method); }
     void set_regularization(Regularization new_regularization) { regularization_method = new_regularization; }

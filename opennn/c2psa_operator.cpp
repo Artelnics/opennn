@@ -31,7 +31,7 @@ void C2PSAOperator::set(Index new_h, Index new_w, Index new_channels)
     h        = new_h;
     w        = new_w;
     channels = new_channels;
-    output_slots = {7};   // 7 specs → forward_slots[layer][7] is the output
+    output_slots = {7};
 }
 
 vector<TensorSpec> C2PSAOperator::parameter_specs() const
@@ -39,10 +39,10 @@ vector<TensorSpec> C2PSAOperator::parameter_specs() const
     if (channels == 0) return {};
     const Index half_c = channels / 2;
     return {
-        {{half_c, half_c}, compute_dtype},     // Wq
-        {{half_c, half_c}, compute_dtype},     // Wk
-        {{half_c, half_c}, compute_dtype},     // Wv
-        {{channels, channels}, compute_dtype}, // Wout
+        {{half_c, half_c}, compute_dtype},
+        {{half_c, half_c}, compute_dtype},
+        {{half_c, half_c}, compute_dtype},
+        {{channels, channels}, compute_dtype},
     };
 }
 
@@ -76,7 +76,7 @@ void C2PSAOperator::set_parameters_glorot()
 void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
 {
     const TensorView& x = get_input(fp, layer);
-    TensorView& output  = get_output(fp, layer);   // forward_slots[layer][7]
+    TensorView& output  = get_output(fp, layer);
 
     const Index B      = x.shape[0];
     const Index tokens = Index(h) * Index(w);
@@ -102,7 +102,7 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
         void* cat_gpu  = fp.forward_slots[layer][6].data;
         void* out_gpu  = output.data;
 
-        // attn_v scratch [BT, H] at offset 0; backward temps follow.
+
         const Index scratch_needed = (Index(BT) * H
                                     + Index(BT) * C_int
                                     + Index(BT) * T
@@ -110,31 +110,31 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
         gpu_scratch.resize_bytes(scratch_needed, Device::CUDA);
         void* attn_v_gpu = gpu_scratch.data;
 
-        // 1. Split x → xa (left half), fill cat right half (identity path)
+
         c2psa_split_cuda(x.data, xa_gpu, cat_gpu, BT, C_int, H, dtype);
 
-        // 2. Q = xa @ Wq  [BT,H] = [BT,H] @ [H,H]
+
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, BT, H,
             Wq.data, dtype, H, 0LL,
             xa_gpu,  dtype, H, 0LL,
             Q_gpu,   dtype, H, 0LL, 1);
 
-        // 3. K = xa @ Wk
+
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, BT, H,
             Wk.data, dtype, H, 0LL,
             xa_gpu,  dtype, H, 0LL,
             K_gpu,   dtype, H, 0LL, 1);
 
-        // 4. V = xa @ Wv
+
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, BT, H,
             Wv.data, dtype, H, 0LL,
             xa_gpu,  dtype, H, 0LL,
             V_gpu,   dtype, H, 0LL, 1);
 
-        // 5. Attn[b] = Q[b] @ K[b]^T * scale  → [B,T,T]
+
         gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
             T, T, H,
             K_gpu,    dtype, H, (long long)T * H,
@@ -142,10 +142,10 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
             Attn_gpu, dtype, T, (long long)T * T,
             int(B), scale);
 
-        // 6. Row-wise softmax on Attn[B*T, T]
+
         c2psa_row_softmax_cuda(Attn_gpu, BT, T, dtype);
 
-        // 7. attn_v[b] = Attn[b] @ V[b]  → scratch [BT,H]
+
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, T, T,
             V_gpu,       dtype, H, (long long)T * H,
@@ -153,10 +153,10 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
             attn_v_gpu,  dtype, H, (long long)T * H,
             int(B));
 
-        // 8. Merge attn_v into left half of cat
+
         c2psa_fill_cat_left_cuda(attn_v_gpu, cat_gpu, BT, C_int, H, dtype);
 
-        // 9. output = cat @ Wout  [BT,C] = [BT,C] @ [C,C]
+
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             C_int, BT, C_int,
             Wout.data, dtype, C_int, 0LL,
@@ -236,7 +236,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
         const cudaDataType_t dtype = x.cuda_dtype();
         const Index esz  = (dtype == CUDA_R_32F) ? sizeof(float) : sizeof(uint16_t);
 
-        // Forward slots still hold Q, K, Attn, V, cat from the forward pass.
+
         const void* xa_gpu   = fp.forward_slots[layer][1].data;
         const void* Q_gpu    = fp.forward_slots[layer][2].data;
         const void* K_gpu    = fp.forward_slots[layer][3].data;
@@ -244,10 +244,10 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
         const void* V_gpu    = fp.forward_slots[layer][5].data;
         const void* cat_gpu  = fp.forward_slots[layer][6].data;
 
-        // Scratch layout: [attn_v BT*H] [d_cat BT*C] [d_A BT*T] [dQ BT*H] [dK BT*H] [dV BT*H] [d_xa BT*H]
-        // (Offsets in elements; multiply by esz for byte offsets.)
+
+
         uint8_t* scratch = static_cast<uint8_t*>(gpu_scratch.data);
-        void* compact_d_ao = scratch;                                          // [BT, H]  (reuse attn_v slot)
+        void* compact_d_ao = scratch;
         void* d_cat_gpu    = scratch + (size_t)BT * H    * esz;
         void* d_A_gpu      = scratch + (size_t)BT * (H + C_int) * esz;
         void* dQ_gpu       = scratch + (size_t)BT * (H + C_int + T) * esz;
@@ -258,14 +258,14 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
         const void* d_out_gpu = delta_out.data;
         void*       din_gpu   = delta_in.data;
 
-        // 1. d_cat = d_out @ Wout^T  [BT,C] = [BT,C] @ [C,C]^T
+
         gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
             C_int, BT, C_int,
             Wout.data, dtype, C_int, 0LL,
             d_out_gpu, dtype, C_int, 0LL,
             d_cat_gpu, dtype, C_int, 0LL, 1);
 
-        // 2. dWout += cat^T @ d_out  [C,C] += [BT,C]^T @ [BT,C]  (beta=1 to accumulate)
+
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             C_int, C_int, BT,
             d_out_gpu, dtype, C_int, 0LL,
@@ -273,12 +273,12 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             dWout.data, dtype, C_int, 0LL,
             1, 1.0f, 1.0f);
 
-        // d_cat has stride C; gemms below need compact [BT,H] view of its left half.
-        // c2psa_split_cuda extracts d_cat[:,0:H] → compact_d_ao. The right-half write
-        // into d_cat is a no-op here (same pointer), which is fine.
+
+
+
         c2psa_split_cuda(d_cat_gpu, compact_d_ao, d_cat_gpu, BT, C_int, H, dtype);
 
-        // 3. dV[b] += Attn[b]^T @ d_ao[b]  [T,H] += [T,T]^T @ [T,H]
+
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             H, T, T,
             compact_d_ao, dtype, H, (long long)T * H,
@@ -286,7 +286,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             dV_gpu,       dtype, H, (long long)T * H,
             int(B));
 
-        // 4. d_A[b] = d_ao[b] @ V[b]^T  [T,T] = [T,H] @ [T,H]^T
+
         gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
             T, T, H,
             V_gpu,        dtype, H, (long long)T * H,
@@ -294,10 +294,10 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             d_A_gpu,      dtype, T, (long long)T * T,
             int(B));
 
-        // 5. Softmax backward + scale in-place on d_A[B*T, T]
+
         c2psa_softmax_bwd_cuda(Attn_gpu, d_A_gpu, scale, BT, T, dtype);
 
-        // 6. dQ[b] = d_A_scaled[b] @ K[b]  [T,H] = [T,T] @ [T,H]
+
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, T, T,
             K_gpu,   dtype, H, (long long)T * H,
@@ -305,7 +305,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             dQ_gpu,  dtype, H, (long long)T * H,
             int(B));
 
-        // 7. dK[b] = d_A_scaled[b]^T @ Q[b]  [T,H] = [T,T]^T @ [T,H]
+
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             H, T, T,
             Q_gpu,   dtype, H, (long long)T * H,
@@ -313,7 +313,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             dK_gpu,  dtype, H, (long long)T * H,
             int(B));
 
-        // 8. dWq += xa^T @ dQ  [H,H] += [BT,H]^T @ [BT,H]  (beta=1)
+
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             H, H, BT,
             dQ_gpu,   dtype, H, 0LL,
@@ -321,7 +321,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             dWq.data, dtype, H, 0LL,
             1, 1.0f, 1.0f);
 
-        // 9. dWk += xa^T @ dK  (beta=1)
+
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             H, H, BT,
             dK_gpu,   dtype, H, 0LL,
@@ -329,7 +329,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             dWk.data, dtype, H, 0LL,
             1, 1.0f, 1.0f);
 
-        // 10. dWv += xa^T @ dV  (beta=1)
+
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             H, H, BT,
             dV_gpu,   dtype, H, 0LL,
@@ -339,7 +339,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
 
         if (din_gpu)
         {
-            // 11. d_xa = dQ @ Wq^T + dK @ Wk^T + dV @ Wv^T  [BT,H]
+
             gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
                 H, BT, H,
                 Wq.data, dtype, H, 0LL,
@@ -359,7 +359,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
                 d_xa_gpu, dtype, H, 0LL,
                 1, 1.0f, 1.0f);
 
-            // 12. Scatter: din[:, :H] = d_xa, din[:, H:] = d_cat[:, H:]
+
             c2psa_scatter_dx_cuda(d_xa_gpu, d_cat_gpu, din_gpu, BT, C_int, H, dtype);
         }
         return;
@@ -388,10 +388,10 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
     MapC cat_m (cat,  B * tokens, C);
     MapC dout_m(dout, B * tokens, C);
 
-    // dL/dWout += concat.T @ delta_out
+
     dWout_m.noalias() += cat_m.transpose() * dout_m;
 
-    // delta_concat = delta_out @ Wout.T
+
     MatF d_concat(B * tokens, C);
     d_concat.noalias() = dout_m * Wout_m.transpose();
 
@@ -411,7 +411,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
         MatF dA(tokens, tokens);
         dA.noalias() = d_ao * V_b.transpose();
 
-        // Softmax backward: dA_ij = A_ij * (dA_ij - sum_k A_ik * dA_ik)
+
         for (Index i = 0; i < tokens; ++i)
         {
             float dot = 0.0f;

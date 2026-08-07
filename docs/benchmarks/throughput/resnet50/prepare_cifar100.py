@@ -43,8 +43,8 @@ if not extracted.exists():
 raw = (extracted / "train.bin").read_bytes()
 batch = np.frombuffer(raw, dtype=np.uint8).reshape(-1, 3074)
 
-labels = batch[:, 1].astype(np.int64)  # fine label (0..99); byte 0 is coarse
-images = batch[:, 2:].reshape(-1, 3, 32, 32).transpose(0, 2, 3, 1)  # NHWC
+labels = batch[:, 1].astype(np.int64)
+images = batch[:, 2:].reshape(-1, 3, 32, 32).transpose(0, 2, 3, 1)
 
 np.save(data_dir / "cifar_images.npy", images.astype(np.float32))
 np.save(data_dir / "cifar_labels.npy", labels)

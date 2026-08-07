@@ -608,10 +608,10 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
     }
     else if (backbone == Backbone::CSPDarknet53v11)
     {
-        // YOLOv11-style backbone: replaces 1×1→3×3 residual bottlenecks with
-        // two cascaded 3×3 convs (C3k2 = Cross Stage Partial with k=3, 2 convs).
-        // Same channel plan as CSPDarknet53; the C3k2 bottleneck improves gradient
-        // flow and feature re-use vs the YOLOv8 1×1→3×3 pattern.
+
+
+
+
 
         auto add_c3k2_block = [&](Index input_index, Index ch, const string& prefix) -> Index {
             const Index mid = ch / 2;
@@ -644,25 +644,25 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             return add_conv(cat, Shape{1, 1, 2 * branch_ch, out_ch}, act, stride, true, prefix + "_merge");
         };
 
-        // Depth/width multipliers: scale bottleneck counts and channel widths.
-        // Channels are rounded to multiples of 8 to keep SIMD-friendly alignment.
+
+
         auto scale_ch = [&](Index base) -> Index {
             float w = model_size == ModelSize::n ? 0.25f
                     : model_size == ModelSize::s ? 0.50f
                     : model_size == ModelSize::m ? 0.75f
                     : model_size == ModelSize::x ? 1.25f
-                    :                              1.00f;   // l (default)
+                    :                              1.00f;
             return max(Index(8), Index(std::round(float(base) * w / 8.f) * 8));
         };
         auto scale_d = [&](Index base) -> Index {
             float d = model_size == ModelSize::n ? 0.33f
                     : model_size == ModelSize::s ? 0.33f
                     : model_size == ModelSize::m ? 0.67f
-                    :                              1.00f;   // l or x
+                    :                              1.00f;
             return max(Index(1), Index(std::round(float(base) * d)));
         };
 
-        // Base channel counts and block depths (l-size reference).
+
         const vector<pair<Index, Index>> stages = {
             {scale_ch(64),   scale_d(1)},
             {scale_ch(128),  scale_d(2)},
@@ -712,10 +712,10 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 add_layer(make_unique<DetectionV8>(get_layer(cat)->get_output_shape(), reg_max, name + "_det"), {cat});
             };
 
-            // FPN trunk: all channel sizes derived dynamically from scaled backbone outputs.
-            const Index c5_ch = get_layer(c5_index)->get_output_shape()[2];  // e.g. 1024 for l
-            const Index c4_ch = get_layer(c4_index)->get_output_shape()[2];  // e.g. 512
-            const Index c3_ch = get_layer(c3_index)->get_output_shape()[2];  // e.g. 256
+
+            const Index c5_ch = get_layer(c5_index)->get_output_shape()[2];
+            const Index c4_ch = get_layer(c4_index)->get_output_shape()[2];
+            const Index c3_ch = get_layer(c3_index)->get_output_shape()[2];
             const Index p5_small = c5_ch / 2;
             const Index p4_small = c4_ch / 2;
             const Index p3_small = c3_ch / 2;
@@ -738,7 +738,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 return {p5n, p4n, add_yolo_neck(get_layers_number() - 1, p3_small + c3_ch, p3_small, c3_ch, pfx + "neck_p3")};
             };
 
-            // Insert C2PSA after c5 (position self-attention over 1024-ch spatial feature map)
+
             add_layer(make_unique<C2PSA>(get_layer(c5_index)->get_output_shape(), "c11_c2psa"), {c5_index});
             const Index c2psa_index = get_layers_number() - 1;
             const auto [p5n, p4n, p3n] = build_fpn_trunk_c11(c2psa_index, "c11_");
@@ -752,9 +752,9 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             compile();
             set_parameters_random();
             {
-                // YOLOv8 prior bias: sigmoid(bias)≈0.01 suppresses 70k background gradient terms
-                // that dominate at init when bias=0 (sigmoid(0)=0.5 for every class×cell).
-                static constexpr float PRIOR_BIAS = -4.5951f; // -log((1-0.01)/0.01)
+
+
+                static constexpr float PRIOR_BIAS = -4.5951f;
                 for (const auto& layer : get_layers())
                 {
                     auto* conv = dynamic_cast<Convolutional*>(layer.get());
@@ -940,7 +940,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             auto add_det_head_v8 = [&](Index feat_idx, const string& name) {
                 const Index in_ch = get_layer(feat_idx)->get_output_shape()[2];
 
-                // Box branch: 3×3 → 3×3 → 1×1(4*reg_max outputs)
+
                 Index box = add_conv(feat_idx, Shape{3,3,in_ch,head_ch},        act,        stride, true,  name+"_box_c1");
                 box       = add_conv(box,      Shape{3,3,head_ch,head_ch},      act,        stride, true,  name+"_box_c2");
                 box       = add_conv(box,      Shape{1,1,head_ch,box_ch},       "Identity", stride, false, name+"_box_out");
@@ -949,7 +949,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 cls       = add_conv(cls,      Shape{3,3,head_ch,head_ch},             act,        stride, true,  name+"_cls_c2");
                 cls       = add_conv(cls,      Shape{1,1,head_ch,classes_number},      "Identity", stride, false, name+"_cls_out");
 
-                // Concat [box(4*reg_max), class(C)] → [G, G, box_ch+C]
+
                 const Shape hw = get_layer(box)->get_output_shape();
                 add_layer(make_unique<Concatenation>(hw, vector<Index>{box_ch, classes_number}, name+"_cat"),
                           {box, cls});

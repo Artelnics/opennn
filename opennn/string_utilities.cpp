@@ -183,8 +183,8 @@ void get_token_views_maybe_quoted(string_view line, char separator, bool file_ha
 
     for (const char c : line)
     {
-        // A quote only delimits a field when it opens one; anywhere else it is literal
-        // text, so a stray quote cannot swallow the separators of the rest of the line.
+
+
         if (c == '"' && (in_quote || scratch.size() == field_start))
         {
             in_quote = !in_quote;

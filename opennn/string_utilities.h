@@ -23,10 +23,10 @@ namespace opennn
 {
 
 #ifdef __APPLE__
-    // Apple Clang's libc++ leaves std::from_chars for floating-point types
-    // deleted. This opennn-scoped shim intercepts the unqualified from_chars()
-    // calls across opennn: integral parses forward to std::from_chars, floating
-    // parses fall back to strtod/strtof on a NUL-terminated copy (C locale).
+
+
+
+
     template <typename T>
     inline from_chars_result from_chars(const char* first, const char* last, T& value)
     {

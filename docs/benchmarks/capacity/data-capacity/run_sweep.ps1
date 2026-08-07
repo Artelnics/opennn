@@ -27,7 +27,7 @@ if (-not (Test-Path $HiggsCsv)) {
     throw "HIGGS training CSV not found at '$HiggsCsv'. Set OPENNN_BENCH_DATA and run ../../throughput/higgs/prepare_higgs.py first (see ../DATA_POLICY.md)."
 }
 
-# HIGGS is 28 features + 1 label; values-per-row is fixed at 29.
+
 $valuesPerRow = 29
 
 New-Item -ItemType Directory -Force -Path $WorkDir | Out-Null
@@ -57,14 +57,14 @@ foreach ($m in $Samples) {
     $csvGb = [math]::Round((Get-Item $csv).Length / 1GB, 2)
     Write-Host "  csv = $csvGb GB"
 
-    # --- OpenNN ---
+
     Write-Host "  running OpenNN..."
     $o = & $opennn $csv 2>&1
     $op = Parse-Result $o
     Write-Host "    OpenNN: $($op.result)  peak=$($op.peak) MB" -ForegroundColor Yellow
     "$m,$valuesB,$csvGb,opennn,$($op.result),$($op.peak)" | Out-File -FilePath $ResultsCsv -Append -Encoding utf8
 
-    # --- PyTorch ---
+
     Write-Host "  running PyTorch (pandas)..."
     $p = & python "$PSScriptRoot\pytorch_capacity.py" $csv 2>&1
     $pp = Parse-Result $p
@@ -74,7 +74,7 @@ foreach ($m in $Samples) {
     Remove-Item $csv -Force
     Write-Host "  deleted csv"
 
-    # Stop early once BOTH have failed — no point tiling bigger files.
+
     if ($op.result -ne "OK" -and $pp.result -ne "OK") {
         Write-Host "Both engines failed at samples=$m; stopping sweep." -ForegroundColor Red
         break

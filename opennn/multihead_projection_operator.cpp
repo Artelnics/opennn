@@ -24,9 +24,9 @@ void MultiHeadProjectionOperator::set(Index new_input_features, Index new_heads_
 
 void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-    // This overrides CombinationOperator::forward_propagate instead of
-    // extending it, so the base class's alternative paths are not inherited.
-    // They are unused by attention today; fail loudly rather than ignore them.
+
+
+
     throw_if(tied_transposed || transposed_inference_active
              || fused_activation != ActivationFunction::Identity,
              "MultiHeadProjectionOperator: tied, transposed and fused-activation "

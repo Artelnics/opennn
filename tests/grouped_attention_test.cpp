@@ -14,8 +14,8 @@
 using namespace opennn;
 
 
-// With a causal mask, query position 0 can only attend to key position 0, so its
-// softmax is trivially 1 and the output equals value[0] for that head.
+
+
 TEST(GroupedAttentionTest, CausalFirstPositionEqualsValue)
 {
     const Index batch = 1, seq = 3, q_heads = 1, kv_heads = 1, head_dim = 4;
@@ -37,15 +37,15 @@ TEST(GroupedAttentionTest, CausalFirstPositionEqualsValue)
     TensorView v(value.data(), {batch, seq, kv_heads * head_dim});
     TensorView o(output.data(),{batch, seq, q_heads * head_dim});
 
-    grouped_attention_forward(q, k, v, o, q_heads, kv_heads, head_dim, /*causal*/ true, scale);
+    grouped_attention_forward(q, k, v, o, q_heads, kv_heads, head_dim,  true, scale);
 
     for (Index d = 0; d < head_dim; ++d)
         EXPECT_NEAR(output[size_t(d)], value[size_t(d)], 1.0e-6f);
 }
 
 
-// GQA: two query heads sharing one kv head, fed identical query vectors, must
-// produce identical outputs (they attend the same key/value head).
+
+
 TEST(GroupedAttentionTest, GroupedHeadsShareKeyValue)
 {
     const Index batch = 1, seq = 2, q_heads = 2, kv_heads = 1, head_dim = 3;
@@ -65,8 +65,8 @@ TEST(GroupedAttentionTest, GroupedHeadsShareKeyValue)
         for (Index d = 0; d < head_dim; ++d)
         {
             const float val = 0.2f + 0.1f * float(t) - 0.05f * float(d);
-            query[size_t((t * q_heads + 0) * head_dim + d)] = val;   // head 0
-            query[size_t((t * q_heads + 1) * head_dim + d)] = val;   // head 1 (identical)
+            query[size_t((t * q_heads + 0) * head_dim + d)] = val;
+            query[size_t((t * q_heads + 1) * head_dim + d)] = val;
         }
 
     TensorView q(query.data(), {batch, seq, q_model});
@@ -74,7 +74,7 @@ TEST(GroupedAttentionTest, GroupedHeadsShareKeyValue)
     TensorView v(value.data(), {batch, seq, kv_model});
     TensorView o(output.data(),{batch, seq, q_model});
 
-    grouped_attention_forward(q, k, v, o, q_heads, kv_heads, head_dim, /*causal*/ true, scale);
+    grouped_attention_forward(q, k, v, o, q_heads, kv_heads, head_dim,  true, scale);
 
     for (Index t = 0; t < seq; ++t)
         for (Index d = 0; d < head_dim; ++d)
@@ -87,7 +87,7 @@ TEST(GroupedAttentionTest, GroupedHeadsShareKeyValue)
 
 
 #ifdef OPENNN_HAS_CUDA
-// The CUDA grouped-attention kernel must match the CPU reference.
+
 TEST(GroupedAttentionTest, GpuMatchesCpu)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);

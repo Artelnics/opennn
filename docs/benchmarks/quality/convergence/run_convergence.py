@@ -325,7 +325,7 @@ def main() -> None:
             print(f"  -> 0/{args.runs} converged")
         result["results"][engine] = entry
 
-    # OpenNN/competitor speedup on time-to-target (lower time is better).
+
     base = result["results"].get("opennn", {}).get("time_to_target_s_median")
     if base:
         for engine in ("pytorch", "tensorflow"):

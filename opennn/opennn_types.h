@@ -128,8 +128,8 @@ using cudnnRNNDataDescriptor_t     = void*;
 
 #endif
 
-// Non-CUDA stub bodies: `ret f(sig) OPENNN_CUDA_STUB_BODY(f)` for definitions
-// of declared functions, OPENNN_CUDA_STUB for static free-function stubs.
+
+
 #define OPENNN_CUDA_STUB_BODY(name) { throw runtime_error(#name " requires CUDA support."); }
 #define OPENNN_CUDA_STUB(ret, name, sig) static ret name sig OPENNN_CUDA_STUB_BODY(name)
 
@@ -151,10 +151,10 @@ inline float bfloat16_to_float_host(const uint16_t value)
     return result;
 }
 
-// Batch inputs are converted on the host by TRUNCATION, unlike parameters and
-// every device-side cast, which round to nearest even. Keeping the two apart
-// is deliberate: this one only has to match itself across runs, and truncation
-// is the cheaper option on the data path.
+
+
+
+
 inline void truncate_floats_to_bfloat16_host(const Index count,
                                              const float* source,
                                              uint16_t* destination)

@@ -31,7 +31,7 @@ bf16 = os.environ.get("PT_BF16") is not None
 
 assert torch.cuda.is_available(), "CUDA GPU required"
 torch.manual_seed(42)
-# PT_NOBENCH=1 -> cuDNN heuristic (memory config); default -> autotune (speed config).
+
 torch.backends.cudnn.benchmark = os.environ.get("PT_NOBENCH") is None
 if fast:
     torch.backends.cuda.matmul.allow_tf32 = True
@@ -96,7 +96,7 @@ x = (torch.from_numpy(np.load(f"{data_dir}/cifar_images.npy"))
      .permute(0, 3, 1, 2).div(255.0).contiguous().cuda())
 y = torch.from_numpy(np.load(f"{data_dir}/cifar_labels.npy")).cuda()
 if fast:
-    # NHWC / channels_last: the tensor-core-friendly layout OpenNN's convs use.
+
     x = x.to(memory_format=torch.channels_last)
 n = x.shape[0]
 classes = int(y.max().item()) + 1

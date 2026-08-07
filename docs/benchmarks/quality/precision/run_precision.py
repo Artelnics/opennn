@@ -72,20 +72,20 @@ def find_opennn_bin():
     return os.path.join(REPO_ROOT, "build", "bin", names[0]), False
 
 
-# Each engine reaches its own error floor with the optimizers it actually ships.
-# (config label, optimizer argv token, epochs, prediction file)
+
+
 ENGINE_CONFIGS = {
     "opennn": [
         ("OpenNN-LM", "LevenbergMarquardt", 1000, "pred_opennn.txt"),
         ("OpenNN-QNM", "QuasiNewtonMethod", 1000, "pred_opennn.txt"),
         ("OpenNN-Adam", "AdaptiveMomentEstimation", 10000, "pred_opennn.txt"),
     ],
-    # PyTorch's only built-in second-order optimizer is LBFGS; plus Adam.
+
     "pytorch": [
         ("PyTorch-LBFGS", "LBFGS", 1000, "pred_pytorch.txt"),
         ("PyTorch-Adam", "Adam", 10000, "pred_pytorch.txt"),
     ],
-    # TensorFlow core keras.optimizers has no second-order option: Adam only.
+
     "tensorflow": [
         ("TensorFlow-Adam", "Adam", 10000, "pred_tensorflow.txt"),
     ],
@@ -108,7 +108,7 @@ def engine_cmd(engine, opennn_bin, optimizer, seed, epochs):
 
 
 def run_once(cmd):
-    # CPU-only protocol (the blog benchmark is CPU): hide any GPU from PyTorch/TF.
+
     env = dict(os.environ)
     env["CUDA_VISIBLE_DEVICES"] = ""
     env.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")

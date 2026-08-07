@@ -578,14 +578,14 @@ vector<Index> yolo_detection_v8_layer_indices(const NeuralNetwork* nn)
     return result;
 }
 
-// TAL constants
+
 static constexpr float TAL_ALPHA = 0.5f;
 static constexpr float TAL_BETA  = 6.0f;
 static constexpr Index TAL_TOP_K = 10;
 
 struct TalResult {
-    vector<Index> assign;   // [B * G * G], 0=background, gt_idx+1 for positive
-    vector<float> iou_map;  // [B * G * G], IoU with assigned GT (0 for background)
+    vector<Index> assign;
+    vector<float> iou_map;
 };
 
 static float iou_cxcywh(float cx1, float cy1, float w1, float h1,
@@ -597,7 +597,7 @@ static float iou_cxcywh(float cx1, float cy1, float w1, float h1,
     return inter / (w1*h1 + w2*h2 - inter + 1e-7f);
 }
 
-// DFL: decode one coordinate group (reg_max logits) → expected distance in grid units.
+
 static float dfl_decode(const float* logits, Index reg_max)
 {
     float max_l = *max_element(logits, logits + reg_max);
@@ -608,7 +608,7 @@ static float dfl_decode(const float* logits, Index reg_max)
     return d;
 }
 
-// Decode DFL box logits [4*reg_max] for cell (col, row) on G×G grid → (cx, cy, w, h) normalised.
+
 static void dfl_decode_box(const float* box_logits, Index reg_max, Index col, Index row, Index G,
                             float& pred_cx, float& pred_cy, float& pred_w, float& pred_h)
 {
@@ -625,8 +625,8 @@ static void dfl_decode_box(const float* box_logits, Index reg_max, Index col, In
     pred_h  = (d_t + d_b) * inv_g;
 }
 
-// Task-Aligned Assigner. output: [B, G, G, box_ch+C]. gt_list: [B, MAX_GT_BOXES, 5].
-// reg_max=1: box channels are sigmoid(cx,cy,w,h). reg_max>1: box channels are DFL logits.
+
+
 static TalResult tal_assign_head(const TensorView& output,
                                   const float* gt_list,
                                   Index batch_size, Index G, Index C,
@@ -650,7 +650,7 @@ static TalResult tal_assign_head(const TensorView& output,
 
         for (Index gi = 0; gi < YoloDataset::MAX_GT_BOXES; ++gi)
         {
-            if (gt[gi*5 + 4] < 0.5f) continue;  // empty slot
+            if (gt[gi*5 + 4] < 0.5f) continue;
 
             const float gt_cx  = gt[gi*5 + 0];
             const float gt_cy  = gt[gi*5 + 1];
@@ -711,9 +711,9 @@ static TalResult tal_assign_head(const TensorView& output,
     return res;
 }
 
-// YOLOv8 TAL/VFL+DFL loss: CIoU+DFL on positives + Varifocal class loss.
-// output: [B,G,G,box_ch+C]. gt_list: [B, MAX_GT_BOXES, 5].
-// reg_max=1: box channels are sigmoid; reg_max>1: DFL logits (4 groups of reg_max bins).
+
+
+
 static float yolo_v8_error_kernel_tal(const TensorView& output,
                                        const float* gt_list,
                                        Index batch_size, Index G, Index C,
@@ -762,7 +762,7 @@ static float yolo_v8_error_kernel_tal(const TensorView& output,
                     const float tb[4] = {gr[0], gr[1], gr[2], gr[3]};
                     coord_loss += 1.0f - yolo_loss_giou_forward(ob, tb).giou;
 
-                    // DFL loss: bilinear cross-entropy over bin distributions
+
                     if (reg_max > 1)
                     {
                         const float gt_cx = gr[0], gt_cy = gr[1];
@@ -875,16 +875,16 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
 
                     if (reg_max > 1)
                     {
-                        // Full DFL gradient = DFL_target_grad + CIoU_chain_through_decode.
-                        //
-                        // DFL_target: d(DFL)/d(z[i]) = probs[i] - w_target[i]
-                        //
-                        // CIoU_chain: d(CIoU)/d(z[i]) = d(CIoU)/d(d_g) * d(d_g)/d(z[i])
-                        //   d(d_g)/d(z[i]) = probs[i] * (i - d_g)
-                        //   d(CIoU)/d(d_l) = cx_grad*(-inv_g*0.5) + w_grad*inv_g
-                        //   d(CIoU)/d(d_t) = cy_grad*(-inv_g*0.5) + h_grad*inv_g
-                        //   d(CIoU)/d(d_r) = cx_grad*(+inv_g*0.5) + w_grad*inv_g
-                        //   d(CIoU)/d(d_b) = cy_grad*(+inv_g*0.5) + h_grad*inv_g
+
+
+
+
+
+
+
+
+
+
 
                         const float gt_cx = gr[0], gt_cy = gr[1];
                         const float gt_w  = gr[2], gt_h  = gr[3];
@@ -898,7 +898,7 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                             clamp(((gt_cy + gt_h*0.5f) - cell_cy) * float(G), 0.0f, rm1)
                         };
 
-                        // CIoU chain coefficients per coordinate group (d_l,d_t,d_r,d_b)
+
                         const float cx_g = clamp(gr_res.cx_gradient, -grad_clip, grad_clip);
                         const float cy_g = clamp(gr_res.cy_gradient, -grad_clip, grad_clip);
                         const float w_g  = clamp(gr_res.w_gradient,  -grad_clip, grad_clip);
@@ -910,7 +910,7 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                             cy_g * (inv_g * 0.5f)  + h_g * inv_g,
                         };
 
-                        // Softmax probs and decoded distance per group
+
                         float d_g[4] = {};
                         vector<float> all_probs(size_t(4 * reg_max));
                         for (Index g = 0; g < 4; ++g)
@@ -927,10 +927,10 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                             }
                         }
 
-                        // The forward weighs the DFL cross-entropy with
-                        // lam.dfl and the CIoU term with lam.giou (see the
-                        // error kernel's return); the gradient must scale each
-                        // term with its own lambda.
+
+
+
+
                         const float dfl_s = lam.dfl * inv_batch;
                         for (Index g = 0; g < 4; ++g)
                         {
@@ -946,7 +946,7 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                                 float w_tgt = 0.0f;
                                 if (i == df) w_tgt += wl;
                                 if (i == dc) w_tgt += wu;
-                                // DFL target gradient + CIoU chain
+
                                 dlogit[i] = dfl_s * (p - w_tgt)
                                             + box_s * d_ciou_dd[g] * p * (float(i) - d_g[g]);
                             }
@@ -999,10 +999,10 @@ static Index get_v8_reg_max(const NeuralNetwork* nn, Index detection_idx)
     return layer ? layer->get_reg_max() : Index(1);
 }
 
-// Runs the host-side TAL/DFL kernels over every v8 detection head, calling
-// fn(head_output, tgt, head_delta, G, reg_max) with host views. The TAL
-// assignment is host-only, so device tensors are staged through host copies
-// and gradient runs write the staged delta back to the device afterwards.
+
+
+
+
 template<typename HeadFn>
 static void for_each_v8_head(const ForwardPropagation& forward_propagation,
                              const TensorView& target_flat,
@@ -1370,8 +1370,8 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
     const bool on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
     const YoloLambdas lam{yolo_lambda_giou, yolo_lambda_dfl, yolo_lambda_noobj, yolo_lambda_class, yolo_focal_gamma, yolo_obj_focal_gamma};
 
-    // The v8 drivers stage device tensors to the host themselves (the TAL
-    // assignment is host-only), so there is no separate GPU branch here.
+
+
     if (yolo_uses_v8(neural_network))
     {
         const vector<Index> v8_indices = yolo_detection_v8_layer_indices(neural_network);
@@ -1419,8 +1419,8 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
 
 #endif
 
-// Grows the device error workspace to the size the current error term needs
-// (CrossEntropy3d stages three per-token columns) and returns its pointer.
+
+
 float* Loss::ensure_error_workspace(const TensorView& input, Index batch_samples) const
 {
     const Index workspace_floats = (error == Error::CrossEntropy3d)
@@ -1444,7 +1444,7 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
 
     float* workspace_device = nullptr;
     const bool device_on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
-    if (device_on_gpu && error != Error::Yolo)  // the Yolo drivers stage on the host
+    if (device_on_gpu && error != Error::Yolo)
         workspace_device = ensure_error_workspace(input, batch.get_samples_number());
 
     using enum Error;
@@ -1605,9 +1605,9 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         return true;
     }
 
-    // Yolo epoch metrics run on the host (supports_device_epoch_metrics
-    // excludes Error::Yolo): the TAL/DFL loss is host-computed, and a device
-    // accumulator would diverge from the trained loss.
+
+
+
     case Yolo:
     case MinkowskiError:
         return false;

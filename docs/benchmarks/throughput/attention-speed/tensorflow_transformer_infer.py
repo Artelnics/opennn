@@ -85,8 +85,8 @@ def build():
         s = encoder_layer(s, pe)
     for _ in range(layers):
         t = decoder_layer(t, s)
-    # Softmax over the vocabulary: OpenNN's Transformer outputs probabilities,
-    # so the identical-config counterpart must too.
+
+
     out = K.Dense(vocab, activation="softmax")(t)
     return tf.keras.Model([src, tgt], out)
 
@@ -102,7 +102,7 @@ with tf.device("/GPU:0"):
     def fwd():
         return model([src, tgt], training=False)
 
-    fwd()  # warmup (trace + compile)
+    fwd()
     _ = fwd().numpy()
     t0 = time.perf_counter()
     for _ in range(iters):

@@ -895,9 +895,9 @@ TrainingResult Optimizer::train()
                       validation_batch_size,
                       has_validation);
 
-    // Joint training-memory plan: forward activations and backward deltas are
-    // planned into one arena on the unified step timeline (deltas reuse
-    // forward regions whose lifetimes ended).
+
+
+
     ForwardPropagation training_forward_propagation(
         training_batch_size,
         neural_network,

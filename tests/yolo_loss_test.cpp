@@ -146,24 +146,24 @@ void build_yolo_network(NeuralNetwork& net, const YoloLossFixture& f)
 
 TEST(YoloLoss, NoObjectGradientMatchesNumericalGradient)
 {
-    // All-background targets exercise the no-object branch (delta = 2*lambda_noobj*out[4])
-    // without the v1 paper's iou-as-constant approximation. Float32 accumulation across
-    // many cells means the max element-wise difference is ~0.1; 0.5 tolerance catches
-    // sign errors and order-of-magnitude bugs while tolerating that noise (same bound
-    // as WithObjectGradientMatchesV1Approximation which has a structural reason for looseness).
+
+
+
+
+
 
     YoloLossFixture f;
     write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
     write_bmp_24(f.images_dir / "b.bmp", f.W, f.H,  50, 200, 100);
-    { std::ofstream empty_a(f.labels_dir / "a.txt"); }  // empty file: no boxes
+    { std::ofstream empty_a(f.labels_dir / "a.txt"); }
     { std::ofstream empty_b(f.labels_dir / "b.txt"); }
 
     YoloDataset dataset;
     dataset.set_display(false);
     dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, f.B, f.anchors);
 
-    // Augmentation re-randomises inputs on every fill_inputs call, which
-    // makes the loss non-deterministic across finite-difference probes.
+
+
     YoloDataset::AugmentationConfig no_aug;
     no_aug.enabled = false;
     dataset.set_augmentation(no_aug);
@@ -183,10 +183,10 @@ TEST(YoloLoss, NoObjectGradientMatchesNumericalGradient)
 
 TEST(YoloLoss, WithObjectGradientMatchesV1Approximation)
 {
-    // With objects present, dE/d(out[0..3]) misses the chain-rule term through
-    // iou(output_box, target_box) because yolo_gradient_cpu treats iou as a
-    // constant target — the v1 paper formulation. Numerical gradient does
-    // differentiate through iou, so a generous tolerance is required.
+
+
+
+
 
     YoloLossFixture f;
     write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
@@ -212,8 +212,8 @@ TEST(YoloLoss, WithObjectGradientMatchesV1Approximation)
     const VectorR gradient = calculate_gradient(loss);
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
-    // Loose bound: catches sign errors and order-of-magnitude bugs while
-    // tolerating the missing iou-chain contribution.
+
+
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), 0.5f);
 }
 
@@ -229,7 +229,7 @@ struct YoloLossV8Fixture
     static constexpr Index H = 2;
     static constexpr Index grid = 2;
     static constexpr Index C = 1;
-    static constexpr Index ch = 4 + C;  // DetectionV8 output channels
+    static constexpr Index ch = 4 + C;
 
     YoloLossV8Fixture()
     {
@@ -259,8 +259,8 @@ void build_yolo_v8_network(NeuralNetwork& net, const YoloLossV8Fixture& f)
 
 TEST(YoloLoss, V8NoObjectGradientMatchesNumericalGradient)
 {
-    // All-background targets: only focal BCE on class channel, no box loss.
-    // Sigmoid class gradient is exact (no IoU approximation), so tolerance is tight.
+
+
 
     YoloLossV8Fixture f;
     write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
@@ -270,7 +270,7 @@ TEST(YoloLoss, V8NoObjectGradientMatchesNumericalGradient)
 
     YoloDataset dataset;
     dataset.set_display(false);
-    dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, /*bpc=*/0, {});
+    dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, 0, {});
     dataset.set_v8_mode(true);
 
     YoloDataset::AugmentationConfig no_aug;
@@ -292,9 +292,9 @@ TEST(YoloLoss, V8NoObjectGradientMatchesNumericalGradient)
 
 TEST(YoloLoss, V8WithObjectGradientMatchesNumericalGradient)
 {
-    // Objects present: CIoU box loss + focal BCE class loss on positive cells.
-    // CIoU gradient treats IoU as a constant target (same v1-paper approximation as anchor-based
-    // code), so numerical gradient differs; generous 0.5 tolerance catches sign errors.
+
+
+
 
     YoloLossV8Fixture f;
     write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
@@ -304,7 +304,7 @@ TEST(YoloLoss, V8WithObjectGradientMatchesNumericalGradient)
 
     YoloDataset dataset;
     dataset.set_display(false);
-    dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, /*bpc=*/0, {});
+    dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, 0, {});
     dataset.set_v8_mode(true);
 
     YoloDataset::AugmentationConfig no_aug;
@@ -326,9 +326,9 @@ TEST(YoloLoss, V8WithObjectGradientMatchesNumericalGradient)
 
 TEST(YoloLoss, V8DecoupledHeadGradientMatchesNumericalGradient)
 {
-    // Validates backprop through the full decoupled head:
-    //   Conv(stem) → [box branch: Conv] + [cls branch: Conv] → Concatenation → DetectionV8
-    // Tests that Concatenation backward correctly routes gradients to both branches.
+
+
+
 
     YoloLossV8Fixture f;
     write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
@@ -338,7 +338,7 @@ TEST(YoloLoss, V8DecoupledHeadGradientMatchesNumericalGradient)
 
     YoloDataset dataset;
     dataset.set_display(false);
-    dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, /*bpc=*/0, {});
+    dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, 0, {});
     dataset.set_v8_mode(true);
 
     YoloDataset::AugmentationConfig no_aug;
@@ -381,8 +381,8 @@ TEST(YoloLoss, V8DecoupledHeadGradientMatchesNumericalGradient)
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), 0.5f);
 }
 
-// GT box (0.5, 0.5, 0.6, 0.6) covers all 4 cell centers on a 2×2 grid (at 0.25/0.75).
-// TAL assigns positives, ensuring the VFL + CIoU gradient paths are exercised.
+
+
 TEST(YoloLoss, V8TALVFLGradientMatchesNumerical)
 {
     YoloLossV8Fixture f;
@@ -393,7 +393,7 @@ TEST(YoloLoss, V8TALVFLGradientMatchesNumerical)
 
     YoloDataset dataset;
     dataset.set_display(false);
-    dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, /*bpc=*/0, {});
+    dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, 0, {});
     dataset.set_v8_mode(true);
 
     YoloDataset::AugmentationConfig no_aug;
@@ -413,8 +413,8 @@ TEST(YoloLoss, V8TALVFLGradientMatchesNumerical)
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), 0.5f);
 }
 
-// DFL variant: reg_max=2 (smallest DFL > 1). Box channels are raw logits [4*2=8] + 1 class.
-// GT box covers all cell centers → TAL assigns positives → DFL gradient path exercised.
+
+
 TEST(YoloLoss, V8DFLGradientMatchesNumerical)
 {
     YoloLossV8Fixture f;
@@ -430,7 +430,7 @@ TEST(YoloLoss, V8DFLGradientMatchesNumerical)
 
     YoloDataset dataset;
     dataset.set_display(false);
-    dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, grid, /*bpc=*/0, {});
+    dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, grid, 0, {});
     dataset.set_v8_mode(true);
 
     YoloDataset::AugmentationConfig no_aug;

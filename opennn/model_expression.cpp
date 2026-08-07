@@ -1298,12 +1298,12 @@ string ModelExpression::get_expression_php() const
     apply_name_mapping(expression, input_names, fixed_input_names);
     apply_name_mapping(expression, output_names, fixed_output_names);
 
-    // Final "output = last_intermediate" assignments. The other languages get
-    // them from their emitters; the PHP branch of fix_output_names adds the $.
+
+
     const vector<string> output_assignments = fix_output_names(expression, output_names, ProgrammingLanguage::PHP);
 
-    // PHP variables need the $ sigil: the inputs and outputs, plus every
-    // assignment target of the expression (scaled_*, layer outputs, ...).
+
+
     vector<string> php_vars = fixed_input_names;
     php_vars.insert(php_vars.end(), fixed_output_names.begin(), fixed_output_names.end());
 

@@ -363,7 +363,7 @@ TEST(GenerationParserTest, IncrementalChannelsMatchAccumulatedResponse)
         tokenizer.id("B"),
         tokenizer.id("z"), tokenizer.id("w"),
         tokenizer.id("C"),
-        // A repeated close in content is control, not user-visible text.
+
         tokenizer.id("z"), tokenizer.id("w"),
         tokenizer.id("!"), tokenizer.id("?")
     };
@@ -659,9 +659,9 @@ TEST(ChatSessionTest, ReusesCudaGraphAcrossFiveTurns)
 {
     if (!device::has_cuda_device()) GTEST_SKIP();
 
-    // The greedy 3-token turns must produce visible text, which depends on the
-    // random weights: seed explicitly so the outcome does not depend on how
-    // many global-RNG draws earlier tests consumed.
+
+
+
     set_seed(42);
 
     Configuration::instance().set(Device::CUDA, Type::BF16);
@@ -740,7 +740,7 @@ TEST(ChatSessionTest, NoCudaBufferGrowthFromFirstSend)
 
     {
         device::CudaAllocationGrowthGuard no_growth(
-            true, /*forbid_matmul_plan_creation*/ false);
+            true,  false);
         EXPECT_NO_THROW(session.send("first", options));
         EXPECT_NO_THROW(session.send("a longer second turn", options));
     }
@@ -785,7 +785,7 @@ TEST(ChatSessionTest, SpeculativeGreedyFullAcceptanceMatchesBaseline)
     ChatResponse actual;
     {
         device::CudaAllocationGrowthGuard no_growth(
-            true, /*forbid_matmul_plan_creation*/ false);
+            true,  false);
         expected = baseline.send("prompt", options);
         actual = speculative.send(
             "prompt", options,

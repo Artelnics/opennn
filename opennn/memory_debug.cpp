@@ -69,9 +69,9 @@ void record(const string& category,
     ++entry.count;
 }
 
-// Raw pool-lifetime dump for offline analysis (e.g. the joint-arena study in
-// docs/benchmarks/analysis/analyze_joint_arena.py). One meta row carries the
-// timeline description; one row per entry carries bytes and [first, last].
+
+
+
 void record_pool_lifetimes(const string& category_prefix,
                            const vector<MemoryPoolEntry>& lifetime_entries,
                            const string& timeline_note)

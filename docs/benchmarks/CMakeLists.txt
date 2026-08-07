@@ -35,7 +35,7 @@ add_executable(opennn_resnet50_speed
 add_executable(opennn_resnet50_infer
     throughput/resnet50/opennn_resnet50_infer.cpp)
 
-# Transformer benchmark binaries (inference, training, and the CPU/GPU validator).
+
 add_executable(opennn_transformer_infer
     throughput/attention-speed/opennn_transformer_infer.cpp)
 
@@ -48,8 +48,8 @@ add_executable(opennn_string_processing
 add_executable(opennn_resnet50_maxbatch_trial
     capacity/resnet50-max-batch/opennn_resnet50_maxbatch_trial.cpp)
 
-# These four include <cuda_runtime.h> unconditionally, so they only exist in
-# CUDA builds; the rest of the suite guards its CUDA usage and builds CPU-only.
+
+
 if(OPENNN_HAS_CUDA)
     add_executable(opennn_transformer_resident
         throughput/attention-speed/opennn_transformer_resident.cpp)
@@ -64,7 +64,7 @@ if(OPENNN_HAS_CUDA)
         energy/transformer-energy/opennn_transformer_energy.cpp)
 endif()
 
-# CPU quality benchmarks (HIGGS classification; precision is the documented regression exception).
+
 add_executable(opennn_accuracy
     quality/accuracy/opennn_accuracy.cpp)
 
@@ -74,14 +74,14 @@ add_executable(opennn_convergence
 add_executable(opennn_precision
     quality/precision/opennn_precision.cpp)
 
-# Footprint measurement binaries.
+
 add_executable(opennn_startup
     footprint/startup/opennn_startup.cpp)
 
 add_executable(opennn_export
     footprint/export/opennn_export.cpp)
 
-# run_forecasting.py looks for this exact binary name in build/bin.
+
 add_executable(recurrent_lstm_forecasting_benchmark
     quality/recurrent-lstm-forecasting/recurrent_lstm_forecasting_benchmark.cpp)
 

@@ -1161,13 +1161,13 @@ void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorVi
 
 #ifdef OPENNN_HAS_CUDA
 
-// Scratch an INT8 matmul may spend on dequantized weights. Above it the
-// weight is either processed in slices or read straight from the GEMV kernel,
-// so a vocabulary-sized table never lands in a workspace.
+
+
+
 constexpr Index int8_dequant_budget_bytes = Index(32) * 1024 * 1024;
 
-// Weight-only INT8 GEMV. The kernel is specialized for few rows, so long
-// inputs are fed to it one row block at a time; the weight is read in place.
+
+
 static void w8a16_linear_rows(Index rows, Index in_features, Index out_features,
                               bool weights_out_major,
                               const bfloat16* x, const int8_t* weights, const float* scales,
@@ -1203,11 +1203,11 @@ void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weigh
             return;
         }
 
-        // Many rows: a GEMM beats the GEMV kernel, but the weight has to be
-        // dequantized first. Do it one output-channel slice at a time — the
-        // slice is contiguous both in the {out, in} weight and in the per-row
-        // scales — so the scratch stays within the budget instead of holding
-        // a vocabulary-sized table in BF16.
+
+
+
+
+
         const Index tile_rows = min(out_features,
             max(Index(1), int8_dequant_budget_bytes / (in_features * Index(sizeof(bfloat16)))));
         bfloat16* dequantized = ensure_int8_dequant_workspace(tile_rows * in_features);
@@ -1916,10 +1916,10 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
         throw_if(weight_scale.empty() || !input.is_bf16() || !output.is_bf16(),
                  "linear_forward: INT8 weights require BF16 activations and a per-channel scale vector.");
 
-        // The GEMV reads the weight in place, so it is the right choice both
-        // for few rows and for any weight too large to dequantize whole. It
-        // only supports the plain and bias epilogues; the dequantizing path
-        // below then only ever sees weights within the budget.
+
+
+
+
         const bool gemv_path = (total_rows <= W8A16_MAX_M
                                 || weights.byte_size() > int8_dequant_budget_bytes)
             && (epilogue == CUBLASLT_EPILOGUE_DEFAULT || epilogue == CUBLASLT_EPILOGUE_BIAS)
@@ -2025,9 +2025,9 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 
     if (drelu_mask)
     {
-        // dX = (dY · Wᵀ) ⊙ relu-mask, fused into the GEMM epilogue. The mask is
-        // the column-major bitmask the producer layer stored via RELU_AUX_BIAS;
-        // its ld (bits) equals input_columns (% 128 enforced at plan creation).
+
+
+
         run_lt_matmul_cached(
             input_columns, total_rows, output_columns,
             CUBLAS_OP_T, CUBLAS_OP_N,

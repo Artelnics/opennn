@@ -89,9 +89,9 @@ class ResNet50(nn.Module):
         return self.fc(torch.flatten(self.avgpool(x), 1))
 
 
-# Read the same image class folders OpenNN reads; decode per item in worker
-# processes so the DataLoader overlaps disk+decode with GPU compute. Plain PIL
-# Dataset (no torchvision) to match the rest of this benchmark suite.
+
+
+
 class ImageFolder(Dataset):
     EXTENSIONS = {".bmp", ".png", ".jpg", ".jpeg"}
 
@@ -117,7 +117,7 @@ class ImageFolder(Dataset):
             image = image.convert("RGB")
             if image.size != (self.size, self.size):
                 image = image.resize((self.size, self.size), Image.BILINEAR)
-            pixels = np.asarray(image, dtype=np.float32) / 255.0  # HWC
+            pixels = np.asarray(image, dtype=np.float32) / 255.0
         return torch.from_numpy(pixels).permute(2, 0, 1).contiguous(), label
 
 
@@ -158,7 +158,7 @@ def run_epoch():
     torch.cuda.synchronize()
 
 
-run_epoch()  # warmup (also primes the OS page cache for the images)
+run_epoch()
 
 times = []
 for _ in range(epochs):

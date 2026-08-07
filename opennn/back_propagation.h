@@ -22,10 +22,10 @@ struct ForwardPropagation;
 
 struct BackPropagation
 {
-    // One planned delta allocation: which layer/slot it backs and its
-    // lifetime on the backward timeline (step s = backward of layer
-    // last_trainable - s). Produced by build_delta_entries; consumed by the
-    // delta-pool planner and, later, by the joint training-memory plan.
+
+
+
+
     struct DeltaEntry
     {
         Index      layer;
@@ -48,9 +48,9 @@ struct BackPropagation
 
     virtual ~BackPropagation() = default;
 
-    // When joint_forward carries a joint training-memory plan (its set() was
-    // given the Loss), the delta views bind into the forward arena at the
-    // jointly planned offsets instead of owning a separate delta pool.
+
+
+
     void set(const Index = 0, Loss* = nullptr,
              ForwardPropagation* joint_forward = nullptr);
 

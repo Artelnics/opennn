@@ -48,8 +48,8 @@ if(OpenNN_BUILD_EXAMPLES)
         add_subdirectory(beijing_pm25_forecasting)
     endif()
 
-    # REUSE_FROM requires identical compile flags. That holds on MSVC, while
-    # Makefiles/GCC need a target-local PCH generated from the same header.
+
+
     if(MSVC)
         target_precompile_headers(yolo REUSE_FROM opennn)
     else()

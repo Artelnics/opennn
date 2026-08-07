@@ -33,14 +33,14 @@ if (-not (Test-Path $HiggsCsv)) {
     throw "HIGGS training CSV not found at '$HiggsCsv'. Set OPENNN_BENCH_DATA and run ../../throughput/higgs/prepare_higgs.py first (see ../DATA_POLICY.md)."
 }
 
-# HIGGS is 28 features + 1 label; values-per-row is fixed at 29.
+
 $valuesPerRow = 29
 
 New-Item -ItemType Directory -Force -Path $WorkDir | Out-Null
 "engine,cap_gb,samples,values_billion,result" | Out-File -FilePath $ResultsCsv -Encoding utf8
 
 function Test-Engine($engine, $csvFull) {
-    # Returns "OK" or "OOM"/"FAIL". Runs the engine under the memory cap.
+
     if ($engine -eq "opennn") {
         $out = & $capper $cap $opennn $csvFull 2>&1
     } elseif ($engine -eq "tensorflow") {
@@ -52,7 +52,7 @@ function Test-Engine($engine, $csvFull) {
     foreach ($l in $out) {
         if ($l -match 'RESULT=(\w+)') { $res = $Matches[1] }
     }
-    # If the job killed the child before it could print RESULT, treat as OOM.
+
     $childExit = ($out | Select-String 'child_exit=(\d+)' | ForEach-Object { $_.Matches[0].Groups[1].Value } | Select-Object -Last 1)
     if ($res -eq "FAIL" -and $childExit -and [uint32]$childExit -ne 0) { $res = "OOM" }
     return $res

@@ -40,7 +40,7 @@ TEST(MemoryPoolTest, AllocatesStartsBeforeReleasingEnds)
 TEST(MemoryPoolTest, KeepsFanoutProducerUntilLastConsumer)
 {
     const vector<MemoryPoolEntry> entries = {
-        {128, 0, 3},  // producer used by three later branches
+        {128, 0, 3},
         {64,  1, 4},
         {64,  2, 4},
         {64,  3, 4},
@@ -61,7 +61,7 @@ TEST(MemoryPoolTest, KeepsFanoutProducerUntilLastConsumer)
     EXPECT_FALSE(overlaps(0, 1));
     EXPECT_FALSE(overlaps(0, 2));
     EXPECT_FALSE(overlaps(0, 3));
-    EXPECT_TRUE(overlaps(0, 4));  // safe reuse after the last fanout consumer
+    EXPECT_TRUE(overlaps(0, 4));
     EXPECT_GE(plan.peak_bytes, plan.lower_bound_live_bytes);
 }
 
@@ -180,8 +180,8 @@ TEST(ForwardPropagationMemoryTest, InferenceReusesResidualAndPassthroughOutputs)
     for (Index i = 0; i < expected.size(); ++i)
         EXPECT_NEAR(expected.as<float>()[i], actual.as<float>()[i], 1.0e-6f);
 
-    // A detached/leaf output is externally observable after the full pass and
-    // therefore must not be overwritten by later layers.
+
+
     const TensorView expected_leaf = training_layout.forward_slots[3].back();
     const TensorView actual_leaf = inference_layout.forward_slots[3].back();
     ASSERT_EQ(expected_leaf.size(), actual_leaf.size());
@@ -192,8 +192,8 @@ TEST(ForwardPropagationMemoryTest, InferenceReusesResidualAndPassthroughOutputs)
 
     EXPECT_LT(inference_layout.data.bytes, training_layout.data.bytes);
 
-    // residual_add starts after stem's last direct branch has executed, so
-    // first-fit can safely recycle that block.
+
+
     EXPECT_EQ(inference_layout.forward_slots[0].back().data,
               inference_layout.forward_slots[4].back().data);
 
@@ -259,8 +259,8 @@ TEST(ForwardPropagationMemoryTest, TrainingRecomputeScratchUsesFutureActivations
 
     EXPECT_EQ(layout.data.bytes, expected_persistent_bytes);
 
-    // Each recomputed convolution writes into the still-unused persistent
-    // suffix. The last recomputed layer fits exactly in the following output.
+
+
     EXPECT_EQ(layout.forward_slots[0][1].data,
               layout.forward_slots[1][2].data);
     EXPECT_EQ(layout.forward_slots[1][1].data,

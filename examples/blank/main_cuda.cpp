@@ -46,26 +46,26 @@ int main(int argc, char** argv)
     try
     {
 
-        // --------------------------------------------------------------------
-        // 1) IMAGENET — ResNet-50 (ImageDataset)
-        //    Full ImageNet-1k needs image-net.org credentials, so this uses
-        //    Imagenette (fast.ai's public 10-class ImageNet subset) as a drop-in
-        //    proxy. ImageDataset takes the root as ONE subfolder per class (no
-        //    train/val split — split_samples_random does that), so train+val were
-        //    merged into datasets/imagenette/ (10 class folders directly) and every image was
-        //    preprocessed to a uniform 160x160 (ImageDataset adopts the first
-        //    image's size for the whole set). ResNet-50 = bottleneck blocks
-        //    {3,4,6,3}, filters {64,128,256,512}.
-        // --------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 #if 0
         cout << "OpenNN. ImageNet (Imagenette) ResNet-50 GPU FP32 benchmark." << endl;
 
-        Configuration::instance().set(Device::CUDA, Type::FP32);  // switch to Type::BF16 for the fast tensor-core path
+        Configuration::instance().set(Device::CUDA, Type::FP32);
         Backend::instance();
         set_seed(42);
 
-        // Class-per-subfolder root (10 classes). Swap for the real ImageNet-1k
-        // train root once credentials / a mirror are available.
+
+
         const filesystem::path dataset_path =
             "/home/artelnics/Documents/datasets/imagenette";
 
@@ -81,13 +81,13 @@ int main(int argc, char** argv)
              << " input="          << input_shape[0] << "x" << input_shape[1] << "x" << input_shape[2]
              << " classes="        << target_shape[0] << endl;
 
-        // ResNet-50 geometry (use_bottleneck = true). For a lighter run use
-        // ResNet-18: blocks {2,2,2,2}, use_bottleneck = false.
+
+
         ResNet network(input_shape,
                        {3, 4, 6, 3},
                        Shape{64, 128, 256, 512},
                        target_shape,
-                       /*use_bottleneck=*/true);
+true);
 
         auto* scaling = dynamic_cast<Scaling*>(network.get_first(LayerType::Scaling));
         if (!scaling) throw runtime_error("ResNet scaling layer not found.");
@@ -107,7 +107,7 @@ int main(int argc, char** argv)
 
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         if (!adam) throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
-        adam->set_batch_size(32);   // ResNet-50 @160x160; raise if VRAM allows
+        adam->set_batch_size(32);
         adam->set_learning_rate(1.0e-3f);
         adam->set_workers_number(8);
         adam->set_maximum_epochs(90);
@@ -128,17 +128,17 @@ int main(int argc, char** argv)
         return 0;
 #endif
 
-        // --------------------------------------------------------------------
-        // 2) EN -> DE TRANSLATION — Transformer (LanguageDataset)
-        //    The "Attention Is All You Need" WMT14 English->German task. The raw
-        //    WMT14 parallel corpora (Europarl + Common Crawl + News Commentary)
-        //    were combined into tab-separated "english <TAB> german" files in
-        //    datasets/wmt14_en_de/:
-        //      - wmt14_en_de.txt         full ~4.5M pairs (authentic WMT14)
-        //      - wmt14_en_de.subset.txt  100k clean News-Commentary pairs (used here)
-        //    The model below is smaller than the paper so the subset trains in
-        //    reasonable time; paper base is d_model=512, h=8, d_ff=2048, N=6.
-        // --------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 #if 0
         cout << "OpenNN. EN->DE Transformer GPU FP32 benchmark." << endl;
 
@@ -149,8 +149,8 @@ int main(int argc, char** argv)
         const filesystem::path dataset_path =
             "/home/artelnics/Documents/datasets/wmt14_en_de/wmt14_en_de.cap60.txt";
 
-        // Self-contained model (JSON topology+vocabularies, sibling .bin weights):
-        // when it exists, inference never touches the corpus or the dataset.
+
+
         const filesystem::path model_path =
             "/home/artelnics/Documents/datasets/wmt14_en_de/wmt14_en_de_model.json";
 
@@ -179,7 +179,7 @@ int main(int argc, char** argv)
         if (decoder_sequence_length != target_sequence_length)
             throw runtime_error("Decoder and target sequence lengths must match.");
 
-        // Paper-base transformer ("Attention Is All You Need"): 512/8/2048/6.
+
         const Index embedding_dimension    = 512;
         const Index heads_number           = 8;
         const Index feed_forward_dimension  = 2048;
@@ -233,15 +233,15 @@ int main(int argc, char** argv)
             cout << "Saved parameters (binary) to " << parameters_path << endl;
         }
 
-        // Hand the vocabularies to the network's tokenizer layers and save the
-        // self-contained model so future runs skip the corpus entirely.
+
+
         transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
         transformer.set_target_vocabulary(language_dataset.get_target_vocabulary());
         transformer.save(model_path);
         cout << "Saved self-contained model to " << model_path << endl;
 
-        // Inference is GPU-only: interactive EN->DE chat.
-        // Type an English sentence and press Enter; empty line or Ctrl+D exits.
+
+
         cout << "\n================ EN -> DE CHAT ================" << endl;
         ChatSession session(transformer);
         session.chat();

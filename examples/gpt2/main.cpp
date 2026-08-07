@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
             "gpt2-small-seq256.bin", "vocab.json", "merges.txt"
         };
 
-        constexpr Index vocabulary_size = 50258; // 50257 + 1 ([PAD] = 0)
+        constexpr Index vocabulary_size = 50258;
         constexpr Index hidden_size = 768;
         constexpr Index heads_number = 12;
         constexpr Index intermediate = 3072;
@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
             else args.push_back(argument);
         }
 
-        const string prompt         = args.size() > 0 ? args[0] : "";   // no prompt => interactive REPL
+        const string prompt         = args.size() > 0 ? args[0] : "";
         const Index  max_new_tokens = args.size() > 1 ? Index(stol(args[1])) : 40;
         const float  temperature    = args.size() > 2 ? stof(args[2]) : 0.8f;
         const Index  top_k          = args.size() > 3 ? Index(stol(args[3])) : 40;
@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
         const filesystem::path data_directory = "../data/gpt2";
         const filesystem::path weights_path = data_directory / "gpt2-small-seq256.bin";
 
-        // The weights .bin is FP32; --int8 quantizes it after loading.
+
         Configuration::instance().set(Device::CUDA, want_int8 ? Type::INT8 : Type::FP32);
 
         download_files_if_missing(data_directory, base_url, data_files);
@@ -76,12 +76,12 @@ int main(int argc, char* argv[])
         auto tokenizer = make_unique<BytePairTokenizer>(
             data_directory / "vocab.json", data_directory / "merges.txt");
 
-        // Neural network: the GPT-2 small architecture
+
 
         TextGenerationNetwork model(sequence_length, vocabulary_size, hidden_size,
                                     heads_number, intermediate, layers_number,
-                                    /*pre_normalization*/ true, /*scale_embedding*/ false,
-                                    /*learned_positional*/ true, /*feed_forward_activation*/ "GELUTanh");
+ true,  false,
+ true,  "GELUTanh");
         model.set_tokenizer(move(tokenizer));
 
         cout << "Loading pretrained weights..." << endl;
@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
         ChatOptions options;
         options.sampling = sampling;
 
-        // Interactive by default; a prompt argument switches to one-shot generation.
+
         const bool interactive = prompt.empty() || prompt == "--interactive" || prompt == "-i";
 
         if (interactive)

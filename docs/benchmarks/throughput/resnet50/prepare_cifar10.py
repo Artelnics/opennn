@@ -61,7 +61,7 @@ for i in range(1, 6):
 batch = np.concatenate(records)
 
 labels = batch[:, 0].astype(np.int64)
-images = batch[:, 1:].reshape(-1, 3, 32, 32).transpose(0, 2, 3, 1)  # NHWC
+images = batch[:, 1:].reshape(-1, 3, 32, 32).transpose(0, 2, 3, 1)
 
 np.save(data_dir / "cifar_images.npy", images.astype(np.float32))
 np.save(data_dir / "cifar_labels.npy", labels)

@@ -20,9 +20,9 @@ namespace opennn
 class Json;
 class JsonWriter;
 
-// Bind the leading `targets.size()` views to the given members, in order —
-// the standard body for Operator::link_parameters / link_gradients. Returns
-// false (binding nothing) when fewer views than targets were provided.
+
+
+
 inline bool link_views(span<const TensorView> views, initializer_list<TensorView*> targets)
 {
     if (views.size() < targets.size()) return false;
@@ -39,8 +39,8 @@ struct Operator
     virtual vector<TensorSpec> parameter_specs() const { return {}; }
     virtual vector<TensorSpec> state_specs()     const { return {}; }
 
-    // Per-output-channel INT8 scale metadata, parallel to parameter_specs();
-    // channels == 0 marks a non-quantized slot. axis: 0 = rows, 1 = columns.
+
+
     struct SlotQuantization { Index channels = 0; int axis = 0; };
     virtual vector<SlotQuantization> parameter_quantization() const { return {}; }
 

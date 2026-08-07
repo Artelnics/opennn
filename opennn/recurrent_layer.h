@@ -9,10 +9,99 @@
 #pragma once
 
 #include "layer.h"
-#include "recurrent_operator.h"
+#include "operator.h"
+#include "activation_operator.h"
+#include "cudnn_rnn.h"
 
 namespace opennn
 {
+
+struct RecurrentOperator : Operator, CudnnRnnState
+{
+    enum BackwardSlot
+    {
+        OutputDeltaSlot = 0,
+        InputDeltaSlot,
+        StepInputScratchSlot,
+        StepPrevHScratchSlot,
+        DeltaScratchSlot,
+        NextCarryScratchSlot,
+        StepInDeltaScratchSlot
+    };
+
+    Index input_features  = 0;
+    Index time_steps      = 0;
+    Index output_features = 0;
+    ActivationFunction activation = ActivationFunction::Tanh;
+
+    bool return_sequences = false;
+
+    TensorView bias;
+    TensorView input_weights;
+    TensorView recurrent_weights;
+
+    TensorView bias_gradient;
+    TensorView input_weight_gradient;
+    TensorView recurrent_weight_gradient;
+
+    void set(Index,
+             Index,
+             Index,
+             ActivationFunction = ActivationFunction::Tanh,
+             Type = Type::FP32);
+
+    vector<TensorSpec> parameter_specs() const override;
+    void link_parameters(span<const TensorView>) override;
+    void link_gradients (span<const TensorView>) override;
+
+    void set_parameters_random() override;
+    void set_parameters_glorot() override;
+    void set_parameters_pytorch() override;
+
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
+
+private:
+    void apply(const TensorView&,
+               TensorView&,
+               TensorView&,
+               TensorView&,
+               bool) const;
+    void apply_gpu(const TensorView&,
+                   TensorView&,
+                   TensorView&,
+                   TensorView&,
+                   bool) const;
+
+    void apply_delta(const TensorView&,
+                     const TensorView&,
+                     const TensorView&,
+                     const TensorView&,
+                     TensorView&) const;
+    void apply_delta_gpu(const TensorView&,
+                         const TensorView&,
+                         const TensorView&,
+                         const TensorView&,
+                         TensorView&,
+                         TensorView&,
+                         TensorView&,
+                         TensorView&,
+                         TensorView&,
+                         TensorView&) const;
+    mutable Buffer step_input_buf     {Device::CUDA};
+    mutable Buffer step_hidden_buf    {Device::CUDA};
+    mutable Buffer prev_hidden_buf    {Device::CUDA};
+    mutable Buffer step_derivs_buf    {Device::CUDA};
+    mutable Buffer step_seq_delta_buf {Device::CUDA};
+
+    bool cudnn_rnn_eligible_(const TensorView&) const;
+    void ensure_cudnn_setup_(Index, bool) const;
+    void pack_weights_to_cudnn_() const;
+    void unpack_gradients_from_cudnn_() const;
+    void apply_gpu_cudnn_(const TensorView&, TensorView&, TensorView&, bool) const;
+    void apply_delta_gpu_cudnn_(const TensorView&, const TensorView&,
+                                const TensorView&, TensorView&) const;
+};
 
 class Recurrent final : public Layer
 {

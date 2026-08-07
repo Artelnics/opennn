@@ -85,17 +85,17 @@ public:
 
     static float get_elapsed_time(const time_t&);
 
-    // Called at the end of every epoch, after parameter update and validation.
-    // Set from outside (e.g. main.cpp) to implement per-epoch logic such as EMA.
+
+
     function<void(Index, NeuralNetwork*)> post_epoch_callback;
 
-    // Called after every batch parameter update (inside train_epoch).
-    // Use for per-step EMA updates; receives the live network pointer.
+
+
     function<void(NeuralNetwork*)> post_batch_callback;
 
-    // Called whenever a new best validation error is recorded (inside update_best_parameters).
-    // Receives the epoch index and the new best validation error.
-    // Use for periodic best-model checkpointing without waiting for phase end.
+
+
+
     function<void(Index, float)> post_best_callback;
 
 protected:

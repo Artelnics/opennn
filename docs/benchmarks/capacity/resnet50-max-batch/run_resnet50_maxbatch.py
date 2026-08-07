@@ -23,8 +23,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.normpath(os.path.join(HERE, "..", "..", "..", ".."))
 RESULTS_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "results"))
 RESNET_SPEED_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "throughput", "resnet50"))
-# Datasets live under $OPENNN_BENCH_DATA (see ../../DATA_POLICY.md), never inside
-# a benchmark folder. The CIFAR-10 tree is prepared under $OPENNN_BENCH_DATA/cifar10.
+
+
 BENCH_DATA_ROOT = os.environ.get(
     "OPENNN_BENCH_DATA", os.path.expanduser("~/opennn-benchmark-data"))
 PY = os.environ.get("BENCH_PYTHON", sys.executable)
@@ -219,10 +219,10 @@ def command_for(engine, precision, data_dir, batch, opennn_bin, memory_fraction,
                 memory_limit_mb, opennn_workspace_mode=None):
     env = {}
     if engine in OPENNN_ENGINES:
-        # CUDA graph, shuffle and conv autotune are all set in the benchmark code.
-        # The prefetch-pool depth is the 5th positional arg: pool1 -> 1 (fewest
-        # device batch copies, largest reachable batch), default -> 0 (library auto).
-        # Precision (fp32|bf16) selects Configuration::set(Device::CUDA, ...).
+
+
+
+
         batch_pool = "1" if engine == "opennn_pool1" else "0"
         workspace_mode = opennn_workspace_mode or "16"
         cmd = [opennn_bin, data_dir, str(batch), precision, batch_pool,
@@ -276,10 +276,10 @@ def run_trial(engine, precision, batch, data_dir, args, gpu_info,
     if BENCH_LD_LIBRARY_PATHS:
         env["LD_LIBRARY_PATH"] = os.pathsep.join(BENCH_LD_LIBRARY_PATHS + [env.get("LD_LIBRARY_PATH", "")])
 
-    # nvidia-smi reports GLOBAL device memory: desktop/compositor VRAM counts
-    # too. Give the trial its cap as a delta over the idle level sampled
-    # immediately before it, so external usage cannot fabricate a capacity
-    # boundary or kill a healthy trial.
+
+
+
+
     idle_before = 0
     try:
         idle_before = current_gpu_used_mib(args.gpu_index)

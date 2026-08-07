@@ -44,18 +44,18 @@ RESULTS_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "results"))
 ATTN = os.path.normpath(os.path.join(HERE, "..", "attention-speed"))
 CORPUS = os.path.join(ATTN, "corpus_sweep.txt")
 
-# Dense workload driver: the HIGGS dense trial (a CMake target). It runs the
-# canonical 28 -> hidden -> hidden -> 1 ReLU/BCE net in infer and train modes on
-# synthetic contract-shaped data, so the sweep needs no dataset file. Override
-# the path with OPENNN_HIGGS_MAXBATCH_BIN.
+
+
+
+
 HIGGS_BIN = os.environ.get(
     "OPENNN_HIGGS_MAXBATCH_BIN",
     os.path.normpath(os.path.join(
         HERE, "..", "..", "..", "..",
         "build-benchmarks", "bin", "opennn_higgs_maxbatch_trial")))
 
-# Each cell: (cmd builder, metric token). cmd builder takes bf16:bool -> argv list.
-# Workloads use a fixed representative shape; tweak here to match the headline.
+
+
 CELLS = {
     ("transformer", "inference"): (
         lambda bf16: [os.path.join(ATTN, "opennn_transformer_resident"),
@@ -65,16 +65,16 @@ CELLS = {
         lambda bf16: [os.path.join(ATTN, "opennn_transformer_train"),
                       CORPUS, "512", "8", "2048", "6", "32", "12"],
         "samples_per_sec"),
-    # Dense HIGGS trial args: <mode> <batch> <hidden> <hidden_layers> <iters>
-    # <device> <tile>. tile == batch forces the single-tile (untiled) resident
-    # path, so both precisions run the same plain dense GEMMs.
+
+
+
     ("dense", "inference"): (
         lambda bf16: [HIGGS_BIN,
                       "infer", "8000", "4096", "2", "100", "cuda", "8000"],
         "samples_per_sec"),
-    # >=100 optimizer steps for the same reason as dense inference: the trial
-    # times train() wholesale, and at 8 steps the fixed setup (bf16 mirrors,
-    # cuBLASLt heuristics) dominates and inverts the bf16/fp32 ratio.
+
+
+
     ("dense", "training"): (
         lambda bf16: [HIGGS_BIN,
                       "train", "2000", "4096", "2", "100", "cuda", "2000"],

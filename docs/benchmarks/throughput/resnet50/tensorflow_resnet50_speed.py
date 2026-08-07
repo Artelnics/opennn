@@ -64,12 +64,12 @@ def build_resnet50(classes, hw):
             x = bottleneck(x, mid, stride, f"s{stage}b{block}")
             in_ch = mid * 4
     x = K.GlobalAveragePooling2D()(x)
-    # fp32 logits head under mixed_bfloat16 for a numerically stable loss.
+
     out = K.Dense(classes, dtype="float32")(x)
     return tf.keras.Model(inp, out)
 
 
-x = np.load(f"{data_dir}/cifar_images.npy").astype("float32") / 255.0  # NHWC already
+x = np.load(f"{data_dir}/cifar_images.npy").astype("float32") / 255.0
 y = np.load(f"{data_dir}/cifar_labels.npy").astype("int64")
 n = x.shape[0]
 hw = x.shape[1]
@@ -102,7 +102,7 @@ with tf.device("/GPU:0"):
             idx = perm[s:s + batch]
             train_step(tf.gather(xg, idx), tf.gather(yg, idx))
 
-    run_epoch()  # warmup (traces + compiles)
+    run_epoch()
     run_epoch()
 
     times = []

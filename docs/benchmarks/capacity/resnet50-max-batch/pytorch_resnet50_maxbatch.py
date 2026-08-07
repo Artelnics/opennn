@@ -102,8 +102,8 @@ def main():
     ap.add_argument("--path", choices=["compile", "eager"], default="compile")
     ap.add_argument("--precision", choices=["fp32", "bf16"], default="fp32")
     ap.add_argument("--memory-fraction", type=float, default=None)
-    # 1 = speed config (cuDNN autotune picks fastest algo, more scratch);
-    # 0 = memory config (heuristic, avoids autotune scratch dominating capacity).
+
+
     ap.add_argument("--cudnn-benchmark", type=int, default=0)
     ap.add_argument("--target", type=float, default=None,
                     help="optional training-loss target")

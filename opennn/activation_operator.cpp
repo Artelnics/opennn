@@ -37,7 +37,7 @@ void ActivationOperator::forward_propagate(ForwardPropagation& forward_propagati
 
     if (save_slot != SIZE_MAX)
     {
-        // Elided by inference-mode planning (training-only slot).
+
         TensorView& saved = forward_propagation.forward_slots[layer][save_slot];
         if (!saved.empty()) copy(output, saved);
     }

@@ -16,10 +16,10 @@ import tensorflow as tf
 def configure_gpu(memory_limit_mb):
     gpus = tf.config.list_physical_devices("GPU")
     assert gpus, "CUDA GPU required"
-    # A logical limit reserves the requested block plus CUDA-context memory.
-    # The external max-batch runner already terminates a trial at the physical
-    # cap, so pre-reserving that same cap makes even batch=1 exceed it.
-    # Growth mode lets the common nvidia-smi monitor enforce the cap uniformly.
+
+
+
+
     tf.config.experimental.set_memory_growth(gpus[0], True)
     return gpus[0].name
 

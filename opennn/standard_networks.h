@@ -103,8 +103,8 @@ public:
 
     enum class BodyActivation { ReLU, LeakyReLU };
 
-    // Depth and width multipliers for CSPDarknet53v11 scaling.
-    // n≈2.6M params, s≈9.5M, m≈21M, l≈43M (default), x≈68M.
+
+
     enum class ModelSize { n, s, m, l, x };
 
     YoloNetwork(const Shape&,

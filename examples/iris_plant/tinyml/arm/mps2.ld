@@ -50,6 +50,5 @@ SECTIONS
     end = .;
     __end__ = .;
 
-    /* Semihosting crt0 reads the stack top from __stack. */
     __stack = ORIGIN(DATA_RAM) + LENGTH(DATA_RAM);
 }

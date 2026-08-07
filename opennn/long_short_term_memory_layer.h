@@ -9,10 +9,142 @@
 #pragma once
 
 #include "layer.h"
-#include "long_short_term_memory_operator.h"
+#include "operator.h"
+#include "activation_operator.h"
+#include "cudnn_rnn.h"
 
 namespace opennn
 {
+
+struct LongShortTermMemoryOperator : Operator, CudnnRnnState
+{
+    enum ForwardSlot
+    {
+        InputSlot = 0,
+        ForgetGateSlot,
+        InputGateSlot,
+        CandidateGateSlot,
+        OutputGateSlot,
+        CellStateSlot,
+        HiddenStateSlot,
+        CellActivationSlot,
+        OutputSlot
+    };
+
+    enum BackwardSlot
+    {
+        OutputDeltaSlot = 0,
+        InputDeltaSlot,
+        HiddenDeltaScratchSlot,
+        CellDeltaScratchSlot,
+        ForgetDeltaScratchSlot,
+        InputDeltaScratchSlot,
+        CandidateDeltaScratchSlot,
+        OutputDeltaScratchSlot
+    };
+
+    Index input_features  = 0;
+    Index output_features = 0;
+    Index time_steps      = 0;
+
+    bool return_sequences = false;
+
+    ActivationFunction activation_function = ActivationFunction::Tanh;
+    ActivationFunction recurrent_activation_function = ActivationFunction::Sigmoid;
+
+    TensorView forget_bias;
+    TensorView input_bias;
+    TensorView candidate_bias;
+    TensorView output_bias;
+
+    TensorView forget_weights;
+    TensorView input_weights;
+    TensorView candidate_weights;
+    TensorView output_weights;
+
+    TensorView forget_recurrent_weights;
+    TensorView input_recurrent_weights;
+    TensorView candidate_recurrent_weights;
+    TensorView output_recurrent_weights;
+
+    TensorView forget_bias_gradient;
+    TensorView input_bias_gradient;
+    TensorView candidate_bias_gradient;
+    TensorView output_bias_gradient;
+
+    TensorView forget_weight_gradient;
+    TensorView input_weight_gradient;
+    TensorView candidate_weight_gradient;
+    TensorView output_weight_gradient;
+
+    TensorView forget_recurrent_weight_gradient;
+    TensorView input_recurrent_weight_gradient;
+    TensorView candidate_recurrent_weight_gradient;
+    TensorView output_recurrent_weight_gradient;
+
+    void set(Index,
+             Index,
+             Index,
+             ActivationFunction new_activation_function = ActivationFunction::Tanh,
+             ActivationFunction new_recurrent_activation_function = ActivationFunction::Sigmoid);
+
+    vector<TensorSpec> parameter_specs() const override;
+    void link_parameters(span<const TensorView>) override;
+    void link_gradients (span<const TensorView>) override;
+
+    void set_parameters_random() override;
+    void set_parameters_glorot() override;
+    void set_parameters_pytorch() override;
+
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
+
+private:
+    void apply(const TensorView&,
+               TensorView&,
+               TensorView&,
+               TensorView&,
+               TensorView&,
+               TensorView&,
+               TensorView&,
+               TensorView&,
+               TensorView&) const;
+
+    void apply_delta(const TensorView&,
+                     const TensorView&,
+                     TensorView&,
+                     TensorView&,
+                     TensorView&,
+                     TensorView&,
+                     TensorView&,
+                     TensorView&,
+                     TensorView&,
+                     const TensorView&,
+                     const TensorView&,
+                     const TensorView&,
+                     const TensorView&,
+                     const TensorView&,
+                     const TensorView&,
+                     const TensorView&) const;
+
+    void apply_gpu(const TensorView&,
+                   TensorView&,
+                   bool,
+                   bool) const;
+
+    void apply_delta_gpu(const TensorView&,
+                         const TensorView&,
+                         TensorView&,
+                         bool) const;
+
+    void ensure_cudnn_setup_(Index, bool) const;
+    void pack_weights_to_cudnn_() const;
+    void unpack_gradients_from_cudnn_() const;
+
+    mutable const float* y_used_ = nullptr;
+
+    mutable vector<float> grad_tls_buf_;
+};
 
 class LongShortTermMemory final : public Layer
 {

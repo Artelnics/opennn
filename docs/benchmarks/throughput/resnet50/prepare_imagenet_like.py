@@ -36,7 +36,7 @@ classes = int(sys.argv[2]) if len(sys.argv) > 2 else 1000
 size = int(sys.argv[3]) if len(sys.argv) > 3 else 224
 data_dir.mkdir(parents=True, exist_ok=True)
 
-# Source pixels: reuse CIFAR-10 (any content works; we relabel across `classes`).
+
 archive = data_dir / "cifar-10-binary.tar.gz"
 if not archive.exists():
     print(f"downloading {URL} ...")
@@ -51,11 +51,11 @@ for i in range(1, 6):
     raw = (extracted / f"data_batch_{i}.bin").read_bytes()
     records.append(np.frombuffer(raw, dtype=np.uint8).reshape(-1, 3073))
 batch = np.concatenate(records)
-images = batch[:, 1:].reshape(-1, 3, 32, 32).transpose(0, 2, 3, 1)  # NHWC, 50000
+images = batch[:, 1:].reshape(-1, 3, 32, 32).transpose(0, 2, 3, 1)
 n = images.shape[0]
 
-# Spread the 50,000 images evenly across `classes` folders so every class is
-# non-empty (ImageDataset requires every folder populated): label = i % classes.
+
+
 labels = np.arange(n, dtype=np.int64) % classes
 print(f"{n} images -> {classes} classes ({n // classes} per class), {size}x{size}")
 

@@ -33,9 +33,9 @@ torch.manual_seed(0)
 torch.backends.cuda.matmul.allow_tf32 = True
 
 
-# --- read the SAME corpus OpenNN trains on, to match shapes exactly -------------
-# OpenNN's LanguageDataset: input_seq = max(#input tokens) + 2 (START/END),
-# decoder_seq = max(#target tokens) + 1, vocab = distinct tokens + 4 reserved.
+
+
+
 def read_corpus(path):
     in_lens, tgt_lens, vocab = [], [], set()
     for line in open(path, encoding="utf-8"):
@@ -49,7 +49,7 @@ def read_corpus(path):
         vocab.update(ina); vocab.update(tgta)
     input_seq = max(in_lens) + 2
     decoder_seq = max(tgt_lens) + 1
-    vocab_size = len(vocab) + 4   # [PAD] [UNK] [START] [END]
+    vocab_size = len(vocab) + 4
     return len(in_lens), input_seq, decoder_seq, vocab_size
 
 
@@ -96,9 +96,9 @@ model = Seq2SeqTransformer().to(dev).train()
 params = sum(p.numel() for p in model.parameters())
 print(f"parameters={params}")
 
-# Synthetic data matching OpenNN's corpus shape (same #samples, seq lengths, vocab).
-# Throughput is shape/FLOP bound, so matched shapes make the comparison fair; the
-# actual token values differ but the forward+backward+optimizer cost is identical.
+
+
+
 src = torch.randint(0, vocab, (samples, input_seq), device=dev)
 dec = torch.randint(0, vocab, (samples, decoder_seq), device=dev)
 tgt = torch.randint(0, vocab, (samples, decoder_seq), device=dev)
@@ -120,20 +120,20 @@ def run_epoch():
         s = src[i:i + batch]; d = dec[i:i + batch]; y = tgt[i:i + batch]
         opt.zero_grad(set_to_none=True)
         with ctx:
-            logits = model(s, d)                       # (batch, decoder_seq, vocab)
+            logits = model(s, d)
             loss = loss_fn(logits.reshape(-1, vocab), y.reshape(-1))
         loss.backward()
         opt.step()
     return float(loss.detach())
 
 
-# warmup epoch (matches OpenNN train()'s internal CUDA warmup), excluded from timing
+
 run_epoch()
 torch.cuda.synchronize()
 
 t0 = time.perf_counter()
 last = 0.0
-timed_passes = max(1, epochs)                          # OpenNN's train() runs max(1, maximum_epochs) passes
+timed_passes = max(1, epochs)
 for _ in range(timed_passes):
     last = run_epoch()
 torch.cuda.synchronize()

@@ -131,10 +131,10 @@ double calculate_auc(const std::vector<std::pair<float, int>>& scored)
          / (double(positives) * double(negatives));
 }
 
-// Score the test CSV on the trained network. calculate_outputs dispatches to
-// the device forward automatically when Configuration is CUDA and copies the
-// results back to a host matrix, so the same host-side metric computation as the
-// CPU reference works unchanged.
+
+
+
+
 BinaryMetrics evaluate(NeuralNetwork& network,
                        const std::string& test_path,
                        Index batch)
@@ -225,13 +225,13 @@ int main(int argc, char* argv[])
         const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, training_type);
 
-        // Training split, device-resident: no per-step H2D copies, matching the
-        // PyTorch / TensorFlow protocols where the whole tensor lives on the GPU.
+
+
         TabularDataset dataset(train_path, ",", false, false);
         dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
         dataset.set_sample_roles("Training");
         if (!std::getenv("OPENNN_BENCH_SCALERS"))
-            dataset.set_variable_scalers("None");  // PyTorch/TF train on the prepared file as-is
+            dataset.set_variable_scalers("None");
         const Index samples = dataset.get_samples_number();
 
         std::cout << "engine=opennn\n";
@@ -259,17 +259,17 @@ int main(int argc, char* argv[])
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
             training_strategy.get_optimization_algorithm());
         adam->set_batch_size(batch);
-        adam->set_cuda_graph(true);          // capture/replay the training step
-        adam->set_display_period(1000000);   // silence per-epoch printing
-        adam->set_gradient_clip_norm(0.0f);  // match PyTorch/TF default (no clipping)
+        adam->set_cuda_graph(true);
+        adam->set_display_period(1000000);
+        adam->set_gradient_clip_norm(0.0f);
 
-        // Warmup: a couple of epochs to absorb kernel/cuDNN autotuning and the
-        // CUDA-graph capture. Excluded from timing.
+
+
         adam->set_maximum_epochs(2);
         training_strategy.train();
 
-        // Timed run. The TRAIN_*_UNIX markers delimit the energy-integration
-        // window for run_higgs_dense_energy.py; warmup stays outside it.
+
+
         adam->set_maximum_epochs(epochs);
         const auto unix_now = []
         {

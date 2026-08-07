@@ -52,7 +52,7 @@ n = x.shape[0]
 
 start = time.perf_counter()
 if which == "LBFGS":
-    # PyTorch's built-in second-order optimizer. Full-batch, closure-based.
+
     optimizer = torch.optim.LBFGS(net.parameters(), lr=1.0, max_iter=20,
                                   line_search_fn="strong_wolfe")
 

@@ -8,13 +8,13 @@ file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
 list(FILTER CPP_SOURCES EXCLUDE REGEX "-DESKTOP-[^/\\\\]*\\.cpp$")
 list(FILTER HEADER_FILES EXCLUDE REGEX "-DESKTOP-[^/\\\\]*\\.h$")
 
-# Vision module: YOLO, ResNet, ImageClassification, Transformer, and their
-# layers (convolutional, pooling, flatten, embedding, multihead-attention,
-# normalization_3d, detection) plus yolo_dataset.
-# image_dataset and image_processing are always compiled so tabular pipelines
-# that feed images can use ImageDataset without a full vision build. Default ON;
-# set OFF (with -DOpenNN_BUILD_VISION=OFF) for tabular-only users who hit MSVC
-# link.exe LNK1327 against the full vision lib.
+
+
+
+
+
+
+
 option(OpenNN_BUILD_VISION "Build vision/seq layers, networks, and datasets" ON)
 option(OpenNN_ENABLE_MKL "Use Intel MKL as Eigen BLAS/LAPACK backend" OFF)
 set(OpenNN_MKL_ROOT "" CACHE PATH "Intel MKL root prefix (e.g. /opt/intel/oneapi/mkl/latest or extracted /usr prefix)")
@@ -25,17 +25,17 @@ if(NOT OpenNN_BUILD_VISION)
     list(FILTER CPP_SOURCES EXCLUDE REGEX "${_opennn_vision_pattern}")
 endif()
 
-# A static lib is an archive of every TU's objects, so the heavy Eigen / STL /
-# cuDNN-frontend template instantiations are duplicated across all 72 objects
-# (the linker only dedups them when building an exe/dll). A shared lib dedups
-# at link time into one much smaller binary. Default OFF to keep the proven
-# static build; enable with -DOpenNN_BUILD_SHARED=ON.
+
+
+
+
+
 option(OpenNN_BUILD_SHARED "Build OpenNN as a shared library (DLL) instead of static" OFF)
 option(OpenNN_INSTALL "Generate install rules for the OpenNN library" ON)
 if(OpenNN_BUILD_SHARED)
     set(_opennn_lib_type SHARED)
-    # Bundled static dependencies get linked into the shared object, so they
-    # must be built as position-independent code too.
+
+
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 else()
     set(_opennn_lib_type STATIC)
@@ -50,18 +50,18 @@ if(OpenNN_BUILD_SHARED)
         SOVERSION ${PROJECT_VERSION_MAJOR})
 endif()
 
-# The headers carry no __declspec(dllexport), so let CMake auto-generate the
-# export table from every symbol when building the DLL on Windows.
+
+
 if(OpenNN_BUILD_SHARED AND WIN32)
     set_target_properties(opennn PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 
 if(NOT OpenNN_BUILD_VISION)
     target_compile_definitions(opennn PUBLIC OPENNN_NO_VISION)
-    # Distinct output name so the slim lib does not clash with the full
-    # opennn.lib (which may be locked by another VS process on the same
-    # machine). Consumers of the slim build should point their CMake
-    # OPENNN_LIB at .../Release/opennn_core.lib.
+
+
+
+
     set_target_properties(opennn PROPERTIES OUTPUT_NAME "opennn_core")
 endif()
 
@@ -69,8 +69,8 @@ target_compile_features(opennn PUBLIC cxx_std_20)
 
 include(FetchContent)
 
-# ImageDataset and ImageProcessing always need PNG and JPEG support. Pin zlib
-# for deterministic builds and install its standard CMake package with OpenNN.
+
+
 set(ZLIB_BUILD_SHARED OFF CACHE BOOL "" FORCE)
 set(ZLIB_BUILD_STATIC ON CACHE BOOL "" FORCE)
 set(ZLIB_BUILD_TESTING OFF CACHE BOOL "" FORCE)
@@ -85,8 +85,8 @@ target_link_libraries(opennn PUBLIC
     $<BUILD_INTERFACE:ZLIB::ZLIBSTATIC>
     $<INSTALL_INTERFACE:ZLIB::ZLIBSTATIC>)
 
-# libjpeg-turbo explicitly rejects add_subdirectory()/FetchContent integration,
-# so keep its pinned build isolated as required by upstream.
+
+
 include(ExternalProject)
 set(_opennn_jpeg_install_dir
     ${CMAKE_BINARY_DIR}/_deps/opennn_libjpeg_turbo-install)
@@ -142,10 +142,10 @@ target_link_libraries(opennn PUBLIC
     $<BUILD_INTERFACE:opennn_jpeg>
     $<INSTALL_INTERFACE:libjpeg-turbo::jpeg-static>)
 
-# Single public include root: the one supported spelling is
-# #include "opennn/foo.h". Library-internal bare includes ("dataset.h")
-# resolve through the quoted-include same-directory rule, not through
-# these paths, so the opennn/ dir itself is not exposed.
+
+
+
+
 target_include_directories(opennn PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
@@ -153,9 +153,9 @@ target_include_directories(opennn PUBLIC
 target_link_libraries(opennn PUBLIC Eigen3::Eigen)
 
 if(OpenNN_ENABLE_MKL)
-    # Allow OpenNN_MKL_ROOT, the MKLROOT env var (set by oneAPI's setvars), or
-    # ONEAPI_ROOT to point at the install. Single-DLL mkl_rt is used everywhere:
-    # it picks threading/interface layers at runtime, so we link one import lib.
+
+
+
     if(NOT OpenNN_MKL_ROOT)
         if(DEFINED ENV{MKLROOT})
             set(OpenNN_MKL_ROOT "$ENV{MKLROOT}")
@@ -164,13 +164,13 @@ if(OpenNN_ENABLE_MKL)
         endif()
     endif()
 
-    # Prefer oneAPI's own MKLConfig.cmake when discoverable: it resolves the
-    # correct lib/include/redist layout (which differs across oneAPI versions)
-    # and exposes MKL::MKL with the runtime DLL dir baked in.
-    # Default to the single-DLL mkl_rt (sdl) with the LP64 interface: mkl_rt
-    # picks LP64 at runtime unless told otherwise, so compiling against
-    # MKLConfig's ilp64 default while running through mkl_rt corrupts every
-    # LAPACK integer argument (e.g. geqp3 pivots used by Levenberg-Marquardt).
+
+
+
+
+
+
+
     if(NOT DEFINED MKL_LINK)
         set(MKL_LINK sdl)
     endif()
@@ -188,7 +188,7 @@ if(APPLE)
     target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
 elseif(OpenMP_FOUND)
     target_compile_options(opennn PRIVATE ${OpenMP_CXX_FLAGS})
-    # Avoid imported-target absolute paths with epoch-zero sysroot mtimes.
+
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         target_link_options(opennn PUBLIC -fopenmp)
         target_link_libraries(opennn PUBLIC gomp pthread)
@@ -215,7 +215,7 @@ if(OPENNN_HAS_CUDA)
         CUDNN::cudnn)
     target_compile_options(opennn PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
     if(MSVC)
-        # CUB/CCCL (CUDA >= 12.4) requires the standard-conforming MSVC preprocessor.
+
         target_compile_options(opennn PRIVATE
             $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/Zc:preprocessor>)
     endif()
@@ -226,25 +226,25 @@ if(OPENNN_HAS_CUDA)
             "(cudnn_frontend.h). Install from https://github.com/NVIDIA/cudnn-frontend "
             "and set CUDNN_FRONTEND_INCLUDE_DIR.")
     endif()
-    # SYSTEM include so GCC suppresses third-party warnings (-Wswitch-enum,
-    # -Wunused-parameter, etc.) from inside cudnn-frontend headers. PRIVATE:
-    # only .cpp files include cudnn-frontend, no public header exposes it.
+
+
+
     target_include_directories(opennn SYSTEM PRIVATE ${CUDNN_FRONTEND_INCLUDE_DIR})
-    # CUDA operators guard the cuDNN frontend paths with HAVE_CUDNN_FRONTEND.
-    # The top-level build fetches these headers; standalone consumers can still
-    # pass CUDNN_FRONTEND_INCLUDE_DIR explicitly.
+
+
+
 
     target_compile_definitions(opennn PRIVATE HAVE_CUDNN_FRONTEND)
 endif()
 
-# Optimization & SIMD. Without host-native ISA flags Eigen falls back to the x86-64
-# baseline (SSE2), costing 2-4x on matmul-heavy workloads. Mirrors opennn.pro.
-# Guarded to CXX so nvcc is unaffected — it forwards its own host flags separately.
-# The ISA flag is PUBLIC behind BUILD_INTERFACE: every in-tree consumer
-# (tests/examples/benchmarks) must instantiate Eigen with the same ISA and
-# alignment as the library, but the installed package must not impose a host
-# ISA on external consumers. Fetched third-party targets (gtest, zlib) no
-# longer inherit it.
+
+
+
+
+
+
+
+
 if(MSVC)
     target_compile_options(opennn PUBLIC
         $<BUILD_INTERFACE:$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:/arch:AVX2>>
@@ -267,36 +267,36 @@ else()
     )
 endif()
 
-# Disable Eigen's internal shape/index/aliasing assertions in release builds.
-# NDEBUG (auto-added by CMake for non-Debug configs) only silences <cassert>;
-# Eigen has its own eigen_assert macro controlled separately. PUBLIC so any
-# consumer of the library sees the same Eigen behavior.
+
+
+
+
 target_compile_definitions(opennn PUBLIC
     $<$<NOT:$<CONFIG:Debug>>:EIGEN_NO_DEBUG>
 )
 
-# Eigen ABI/behavior configuration. These must reach every TU that includes
-# Eigen — including consumer TUs that include Eigen BEFORE any OpenNN header,
-# where the #defines inside our headers would arrive too late. The copies in
-# opennn_types.h (#ifndef-guarded) remain for non-CMake consumers.
+
+
+
+
 target_compile_definitions(opennn PUBLIC
     EIGEN_MAX_ALIGN_BYTES=64
     EIGEN_USE_THREADS
 )
 
-# Precompiled header: binary PCH on every compiler. The historical GCC
-# failure — headers textually including pch.h while the binary PCH and the
-# textual include kept separate #pragma once bookkeeping — is gone: no header
-# includes pch.h anymore (they include opennn_types.h), and both files carry
-# classic include guards, so any re-inclusion is macro-guarded.
+
+
+
+
+
 target_precompile_headers(opennn PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/pch.h>
 )
 
-# On MSVC, these TUs use SKIP_PRECOMPILE_HEADERS to avoid the half/bfloat16
-# conflict. On GCC (-include pch.h) the CUDA headers pulled in by pch.h define
-# __half/__nv_bfloat16 before the cudnn-frontend include, so no disambiguation
-# is needed — but the include order inside those three files is load-bearing.
+
+
+
+
 if(MSVC AND OPENNN_HAS_CUDA)
     set_source_files_properties(
         ${CMAKE_CURRENT_SOURCE_DIR}/attention_operator.cpp
@@ -306,18 +306,18 @@ if(MSVC AND OPENNN_HAS_CUDA)
     )
 endif()
 
-# Safe subset of -ffast-math: lets sqrt/exp/log/sin/cos vectorize without
-# preserving errno or trapping FP exceptions. Excludes -ffinite-math-only
-# (would break NaN handling in correlations.cpp / statistics.cpp) and
-# -funsafe-math-optimizations (would reorder reductions).
+
+
+
+
 if(NOT MSVC)
     target_compile_options(opennn PRIVATE
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:Debug>>>:-fno-math-errno -fno-trapping-math>
     )
 endif()
 
-# Install rules: library + headers + a relocatable CMake package so external
-# projects can `find_package(OpenNN CONFIG)` and link OpenNN::opennn.
+
+
 if(OpenNN_INSTALL)
     include(CMakePackageConfigHelpers)
 
@@ -330,8 +330,8 @@ if(OpenNN_INSTALL)
     install(FILES ${HEADER_FILES}
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/opennn)
 
-    # ExternalProject installs libjpeg-turbo into the build tree; mirror its
-    # unmodified package into the OpenNN prefix.
+
+
     install(DIRECTORY ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_INCLUDEDIR}/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
     install(DIRECTORY ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_LIBDIR}/
@@ -342,8 +342,8 @@ if(OpenNN_INSTALL)
         NAMESPACE OpenNN::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenNN)
 
-    # Which dependencies the exported target references as imported targets,
-    # so OpenNNConfig.cmake only find_dependency()s what it actually needs.
+
+
     set(_opennn_needs_openmp OFF)
     if(NOT APPLE AND OpenMP_FOUND AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set(_opennn_needs_openmp ON)
@@ -352,8 +352,8 @@ if(OpenNN_INSTALL)
     if(OPENNN_HAS_CUDA AND HAVE_CUDNN)
         set(_opennn_needs_cudnn ON)
     endif()
-    # Only when MKLConfig.cmake provided MKL::MKL; the manual-discovery branch
-    # exports the mkl_rt path directly and needs no find_dependency.
+
+
     set(_opennn_needs_mkl OFF)
     if(OpenNN_ENABLE_MKL AND MKL_FOUND)
         set(_opennn_needs_mkl ON)

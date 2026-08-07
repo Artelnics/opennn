@@ -34,13 +34,13 @@ int main()
         const Index neurons_number = 12;
         const float regularization_weight = float(0.001);
 
-        // DataSet
+
 
         TabularDataset dataset("../data/airfoil_self_noise/airfoil_self_noise.csv", ";", true, false);
 
         dataset.split_samples_random(float(0.8), float(0.0), float(0.2));
 
-        // Neural Network
+
 
         ApproximationNetwork approximation_network(dataset.get_input_shape(), {neurons_number}, dataset.get_target_shape());
 
@@ -49,7 +49,7 @@ int main()
         if(bounding_layer)
             bounding_layer->set_bounding_method("NoBounding");
 
-        // Training strategy
+
 
         TrainingStrategy training_strategy(&approximation_network, &dataset);
 
@@ -65,7 +65,7 @@ int main()
 
         TrainingResult training_results = training_strategy.train();
 
-        // Testing analysis
+
 
         TestingAnalysis testing_analysis(&approximation_network, &dataset);
         testing_analysis.print_goodness_of_fit_analysis();

@@ -186,7 +186,7 @@ def main():
                 else:
                     per_seq[eng] = {"error": "no tokens_per_sec parsed"}
                     print(f"  {eng:11s} FAILED")
-            # ratios vs each competitor (OpenNN / competitor)
+
             if "opennn" in per_seq and "tokens_per_sec_median" in per_seq["opennn"]:
                 base = per_seq["opennn"]["tokens_per_sec_median"]
                 for eng in ("pytorch", "tensorflow"):

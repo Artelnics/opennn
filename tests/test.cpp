@@ -14,8 +14,8 @@ using namespace opennn;
 namespace
 {
 
-// Owns the per-test baseline: CPU/FP32 configuration and a deterministic RNG
-// state, so no test depends on how many random draws its predecessors made.
+
+
 class CpuConfigurationListener : public ::testing::EmptyTestEventListener
 {
 public:

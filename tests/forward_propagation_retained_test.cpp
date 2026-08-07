@@ -84,11 +84,11 @@ TEST(ForwardPropagationRetainedOutputsTest,
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
 
-    // Without retention the encoder output's planned lifetime ends at its
-    // last encoder-side consumer, so whether a decoder-only re-run actually
-    // clobbers its bytes depends on the pool's placement strategy. The
-    // contract under test is placement-independent: WITH retention the
-    // encoder output must stay disjoint from every re-run slot.
+
+
+
+
+
     Transformer network(4, 5, 12, 14, 8, 2, 16, 1);
     const Seq2SeqLayout layout = find_layout(network);
 
@@ -299,8 +299,8 @@ TEST(ForwardPropagationRetainedOutputsTest, OutputWindowMatchesFullForwardForEve
 
     const Tensor3 reference = network.calculate_outputs(decoder_inputs, encoder_inputs);
 
-    // Keep only the last decoder position: the projection output shrinks from
-    // (batch, decoder_length, vocabulary) to (batch, 1, vocabulary).
+
+
     InferenceShapePolicy policy;
     policy.sequence_capacity = decoder_length;
     policy.final_output_capacity = 1;

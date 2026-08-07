@@ -51,8 +51,8 @@ vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>&,
                                                  float confidence_threshold = 0.25f,
                                                  float iou_threshold = 0.45f);
 
-// Anchor-free variant: boxes_per_cell unused, confidence = max class score.
-// reg_max=1: box channels are post-sigmoid (cx,cy,w,h). reg_max>1: DFL logits.
+
+
 vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>&,
                                                      Index,
                                                      Index,
@@ -102,9 +102,9 @@ public:
     void set_multi_scale_heads(const vector<Index>&,
                                const vector<vector<array<float, 2>>>&);
 
-    // YOLOv8 anchor-free mode: target is a flat GT list [MAX_GT_BOXES * 5] per sample.
-    // Each row: (cx, cy, w, h, class_id+1). Zero rows = empty slot.
-    // Assignment (TAL) happens at loss time using current predictions.
+
+
+
     static constexpr Index MAX_GT_BOXES = 100;
 
     void set_v8_mode(bool enabled);
@@ -155,9 +155,9 @@ public:
                                        const filesystem::path&,
                                        Index);
 
-    // Loads only the 6 stride-2 downsampling convolutions from yolov4.conv.137 into a
-    // CSPDarknet53v11 network. The CSP / C3k2 internal convolutions differ in structure
-    // so only the shared downsampling convolutions (stem + 5 stage downs) are transferred.
+
+
+
     static Index load_darknet_backbone_v11(NeuralNetwork&,
                                            const filesystem::path&);
 

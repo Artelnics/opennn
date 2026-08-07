@@ -533,8 +533,8 @@ static float* get_pooling_scratch(size_t floats_needed)
     checked_host_condition(
         floats_needed > static_cast<size_t>(std::numeric_limits<Index>::max()),
         "pooling scratch size exceeds Index range.");
-    // Immortal on purpose: a static destructor would free device memory after
-    // the CUDA context may already be gone; the driver reclaims it at exit.
+
+
     static PoolingScratch& scratch = *new PoolingScratch();
     return scratch.ensure(Index(floats_needed));
 }
@@ -648,8 +648,8 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
     launch_elementwise_strided(n, average_pooling_3d_backward_kernel<T>, delta, in_gradient, S, F, valid_mask, counts);
 }
 
-// Forward gathers each sample's first-token features; backward scatters the
-// delta back into the first token's slot.
+
+
 template<typename T, bool Gather>
 __global__ void first_token_3d_kernel(const int n, const int S, const int F, const T* __restrict__ src, T* __restrict__ dst)
 {
@@ -830,7 +830,7 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
                        epsilon, apply_relu ? 1 : 0, y);
 }
 
-// Folds BN into pointwise (1x1) conv weights, transposing to {kernel_size, kernels} GEMM layout.
+
 __global__ void conv_bn_fold_kernel(const Index total, const int kernel_size, const int kernels,
                                     const float* __restrict__ weights,
                                     const float* __restrict__ gamma,
@@ -1454,11 +1454,11 @@ __global__ void grouped_attention_decode_combine_kernel(const int group, const i
     O[size_t(hq) * head_dim + d] = static_cast<T>(out / L);
 }
 
-// Both sampling kernels launch with exactly SAMPLING_BLOCK_THREADS threads.
+
 constexpr int SAMPLING_BLOCK_THREADS = 256;
 using BlockArgMaxReduce = cub::BlockReduce<cub::KeyValuePair<int, float>, SAMPLING_BLOCK_THREADS>;
 
-// cub::ArgMax resolves ties toward the lower index; broadcast the winner to all threads.
+
 __device__ __forceinline__ void block_argmax(float& v, int& i,
                                              typename BlockArgMaxReduce::TempStorage& temp,
                                              cub::KeyValuePair<int, float>& winner)
@@ -1850,7 +1850,7 @@ void dropout_backward_cuda(const Index n, const T* output_delta, T* input_delta,
     launch_elementwise(n, dropout_backward_kernel<T>, output_delta, input_delta, mask, 1.0f / (1.0f - rate));
 }
 
-// Gather: dst[b,f] = src[b,t,f]. Scatter: dst[b,t,f] = src[b,f].
+
 template<typename T, bool Gather>
 __global__ void time_slice_kernel(const int n,
                                   const int time_steps,
@@ -2352,8 +2352,8 @@ void detection_backward_cuda(const Index batch_size,
 __global__ void detection_v8_forward_kernel(const int batch_size,
                                             const int grid_size,
                                             const int grid_width,
-                                            const int channels,  // = 4*reg_max + classes_number
-                                            const int box_ch,    // = 4*reg_max (pass-through when >4)
+                                            const int channels,
+                                            const int box_ch,
                                             const float* __restrict__ src,
                                             float* __restrict__ dst)
 {
@@ -2427,7 +2427,7 @@ __global__ void detection_v8_backward_kernel(const int batch_size,
             }
             else
             {
-                in_delta[base + ch] = delta[base + ch];  // DFL: identity
+                in_delta[base + ch] = delta[base + ch];
             }
         }
         for (int ch = box_ch; ch < channels; ++ch)
@@ -2524,8 +2524,8 @@ void upsample_backward_cuda(const int batch, const int in_h, const int in_w, con
                        out_delta, in_delta, in_h, in_w, in_h * scale, in_w * scale, channels, scale);
 }
 
-// Forward scatters a slice's channels into the concatenated tensor; backward
-// gathers the slice's delta back out of it.
+
+
 template<bool Scatter>
 __global__ void concat_slice_kernel(
     const int n,
@@ -2562,10 +2562,10 @@ void concat_backward_slice_cuda(const int batch, const int H, const int W,
                        out_delta, in_delta, H, W, slice_ch, total_ch, ch_offset);
 }
 
-// WARPS_PER_ROW warps cooperate on one output row; a 256-thread block covers
-// 8 / WARPS_PER_ROW rows. One warp per row keeps the most rows in flight and
-// needs no block-wide reduction; wide outputs (lm_head) stream better when a
-// whole block walks a single contiguous row.
+
+
+
+
 template<typename T, int WARPS_PER_ROW>
 __global__ void w8a16_linear_out_major_kernel(
     const int m, const int in_features, const int out_features,
@@ -2704,10 +2704,10 @@ void w8a16_linear_cuda(const int m, const int in_features, const int out_feature
                 m, in_features, out_features, x, w, scales, bias, y)));
 }
 
-// The row index comes from blockIdx.y, so the scale lookup needs no integer
-// division: one per element dominated this kernel before. Rows are walked
-// grid-strided because a vocabulary table has more rows than gridDim.y can
-// address.
+
+
+
+
 template<typename T, bool SCALE_BY_ROW>
 __global__ void w8_dequant_kernel(const int rows,
                                   const int row_length,
@@ -2830,8 +2830,8 @@ void embedding_forward_w8_cuda(const Index n, const float* inputs, const int8_t*
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
 
-// Quantized weights are transposed once at upload so decode always runs the
-// out-major GEMV.
+
+
 template void transpose_2d_cuda<int8_t>(const Index, const Index, const int8_t*, int8_t*);
 
 #define INSTANTIATE(TIn, TOut) \

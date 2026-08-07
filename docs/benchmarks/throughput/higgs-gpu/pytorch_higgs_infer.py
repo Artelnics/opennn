@@ -25,7 +25,7 @@ import torch
 
 def load_csv(path):
     data = np.loadtxt(path, delimiter=",", dtype=np.float32)
-    # x = features (all but the last column); y (last column) is ignored for speed.
+
     x = np.ascontiguousarray(data[:, :-1])
     return x
 
@@ -81,18 +81,18 @@ def main():
     model = torch.nn.Sequential(*layers).to(device).eval()
     print(f"parameters={sum(p.numel() for p in model.parameters())}")
 
-    # Whole batch-aligned test slice resident on the GPU once (no host<->device
-    # copy per step): the fast inference protocol.
+
+
     x = torch.from_numpy(x_np[:processed]).to(device).contiguous()
     n_batches = processed // batch
 
     ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
            if use_autocast else contextlib.nullcontext())
 
-    # CUDA graph capture/replay (PT_NOGRAPH=1 disables): same-condition
-    # counterpart of OpenNN's captured resident forward. Each batch is staged
-    # into the static capture buffer with a device-to-device copy, matching the
-    # OpenNN driver.
+
+
+
+
     use_graph = os.environ.get("PT_NOGRAPH") is None
 
     if use_graph:
@@ -120,7 +120,7 @@ def main():
                 for s in range(0, processed, batch):
                     model(x[s:s + batch])
 
-    # Warmup: cuDNN autotuning, workspace allocation.
+
     run_pass()
     run_pass()
     torch.cuda.synchronize()

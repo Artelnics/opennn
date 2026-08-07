@@ -32,7 +32,7 @@ struct C2PSAOperator : Operator
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
 private:
-    // GPU scratch: attn_v + backward temporaries in one flat allocation.
+
     Buffer gpu_scratch;
 };
 

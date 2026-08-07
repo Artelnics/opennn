@@ -173,7 +173,7 @@ struct Scenario
     float   learning_rate;
     Index   batch_size;
     Index   max_epochs;
-    Index   patience;   // per-scenario early-stop patience
+    Index   patience;
 };
 
 const vector<Scenario>& scenarios()
@@ -228,8 +228,8 @@ unique_ptr<TimeSeriesDataset> load_dataset(const Scenario& s)
 {
     auto ds = make_unique<TimeSeriesDataset>(forecasting_data_dir() + DATA_FILE,
                                              ",",
-                                             /*has_header=*/true,
-                                             /*has_sample_ids=*/false);
+true,
+false);
     ds->set_past_time_steps(s.past);
     ds->set_future_time_steps(s.future);
     ds->set_multi_target(s.multi_target);
@@ -428,7 +428,7 @@ struct ScenarioVerdict
     string id;
     AggregatedResult rec;
     AggregatedResult lstm;
-    string winner = "n/a";   // best test_rmse: "Recurrent" / "LSTM" / "n/a"
+    string winner = "n/a";
 };
 
 auto build_recurrent(const Scenario& s)
@@ -467,7 +467,7 @@ ScenarioVerdict run_scenario(const Scenario& s)
               << "  seeds="   << forecasting_seed_count()
               << "  lr="      << s.learning_rate << "\n";
 
-    g_bar.start(/*total_runs=*/ 2 * forecasting_seed_count());
+    g_bar.start( 2 * forecasting_seed_count());
 
     auto rec_agg  = run_multi_seed(s, "Recurrent", build_recurrent(s));
     auto lstm_agg = run_multi_seed(s, "LSTM",      build_lstm(s));
@@ -496,7 +496,7 @@ ScenarioVerdict run_scenario(const Scenario& s)
     return v;
 }
 
-// Per-phase recap (one device at a time).
+
 void print_phase_summary(const vector<ScenarioVerdict>& vs, const string& phase)
 {
     std::cout << "\n\n";
@@ -538,7 +538,7 @@ void print_phase_summary(const vector<ScenarioVerdict>& vs, const string& phase)
     }
 }
 
-// CPU vs GPU comparison across the two phases.
+
 void print_combined_summary(const vector<ScenarioVerdict>& cpu_vs,
                             const vector<ScenarioVerdict>& gpu_vs)
 {
@@ -585,7 +585,7 @@ void print_combined_summary(const vector<ScenarioVerdict>& cpu_vs,
     std::cout << "\nSpeedup = CPU mean time / GPU mean time. Both networks use cuDNN RNN\n"
                  "on GPU (CUDNN_RNN_TANH / CUDNN_LSTM).\n";
 
-    // Accuracy side-by-side (CPU rmse vs GPU rmse for each architecture).
+
     std::cout << "\n";
     std::cout << "===============================================================================================\n";
     std::cout << "      A C C U R A C Y   ( test_rmse mean over " << forecasting_seed_count()
@@ -627,7 +627,7 @@ void print_combined_summary(const vector<ScenarioVerdict>& cpu_vs,
     std::cout << "LSTM wins on GPU: " << lstm_wins_gpu << " / " << total << "\n";
 }
 
-} // namespace
+}
 
 int main()
 {

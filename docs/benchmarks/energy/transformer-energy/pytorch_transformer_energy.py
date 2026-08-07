@@ -107,17 +107,17 @@ class Seq2SeqTransformer(nn.Module):
 
 model = Seq2SeqTransformer().to(dev).train()
 
-# Match OpenNN's initialization exactly (set_parameters_glorot): every weight
-# matrix uniform +/-sqrt(6/(fan_in+fan_out)), biases zero, PAD embedding row
-# zero (nn.Embedding padding_idx already keeps row 0 at zero), LayerNorm 1/0.
+
+
+
 with torch.no_grad():
     for name, p in model.named_parameters():
         if p.dim() >= 2:
             nn.init.xavier_uniform_(p)
         elif "bias" in name:
             nn.init.zeros_(p)
-    # OpenNN draws Q/K/V as three separate d x d Glorot matrices; PyTorch fuses
-    # them into one (3d, d) in_proj whose joint fan would halve the limit.
+
+
     for m in model.modules():
         if isinstance(m, nn.MultiheadAttention):
             d = m.embed_dim
@@ -128,14 +128,14 @@ with torch.no_grad():
 
 print(f"parameters={sum(p.numel() for p in model.parameters())}", flush=True)
 
-# eps matches OpenNN's Adam (EPSILON = FLT_EPSILON)
+
 ADAM_EPS = 1.1920929e-07
 try:
     opt = torch.optim.Adam(model.parameters(), lr=args.lr, eps=ADAM_EPS, fused=True)
 except (RuntimeError, ValueError):
     opt = torch.optim.Adam(model.parameters(), lr=args.lr, eps=ADAM_EPS)
 
-# ignore_index=0: OpenNN's CrossEntropyError3d averages over non-PAD targets.
+
 loss_fn = nn.CrossEntropyLoss(ignore_index=0)
 
 step_fn = model
@@ -145,13 +145,13 @@ if use_compile:
 ctx = torch.autocast("cuda", dtype=torch.bfloat16) if use_bf16 \
     else torch.autocast("cuda", enabled=False)
 
-# bool masks throughout (same type as the key-padding masks -> SDPA fast path)
+
 causal = torch.triu(torch.ones(args.dec_seq, args.dec_seq, dtype=torch.bool, device=dev),
                     diagonal=1)
 gen = torch.Generator(device="cpu").manual_seed(args.seed)
 
-# The energy window starts here: it includes any compile/warmup work, exactly
-# as OpenNN's window includes its in-train() warmup and graph capture.
+
+
 print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
 t0 = time.perf_counter()
 

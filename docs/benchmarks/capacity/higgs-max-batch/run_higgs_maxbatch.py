@@ -43,7 +43,7 @@ DEFAULT_BIN = os.path.join(REPO, "build", "bin", "opennn_higgs_maxbatch_trial")
 RESULTS_DIR = os.path.join(REPO, "docs", "benchmarks", "results")
 
 
-# TF needs the venv's bundled CUDA libs on LD_LIBRARY_PATH to see the GPU.
+
 def tf_ld_path():
     site = os.path.join(os.path.dirname(os.path.dirname(VENV_PY)),
                         "lib", "python3.12", "site-packages", "nvidia")
@@ -83,8 +83,8 @@ def cmd_env(engine, precision, mode, batch):
     env = dict(os.environ)
     env["CUDA_VISIBLE_DEVICES"] = "" if on_cpu else "0"
     if args.higgs_bin:
-        env["OPENNN_HIGGS_BIN"] = args.higgs_bin   # opennn trial
-        env["HIGGS_BIN"] = args.higgs_bin          # pytorch / tensorflow trials
+        env["OPENNN_HIGGS_BIN"] = args.higgs_bin
+        env["HIGGS_BIN"] = args.higgs_bin
     else:
         env.pop("OPENNN_HIGGS_BIN", None)
         env.pop("HIGGS_BIN", None)
@@ -116,10 +116,10 @@ def cmd_env(engine, precision, mode, batch):
 
 
 def rlimit_preexec(cap_bytes):
-    # Hard data cap for the child: brk + anonymous mmap (tensor allocations)
-    # past the cap fail (bad_alloc / MemoryError) instead of swapping, so the
-    # boundary is deterministic. File-backed library mappings are not charged
-    # (see module docstring). Linux only.
+
+
+
+
     def fn():
         import resource
         resource.setrlimit(resource.RLIMIT_DATA, (cap_bytes, cap_bytes))
@@ -137,10 +137,10 @@ def run_trial(engine, precision, mode, batch, cap_mib):
                                   timeout=args.timeout_s, preexec_fn=preexec)
             peak = None
         else:
-            # nvidia-smi reports GLOBAL device memory: desktop/compositor VRAM
-            # counts too. Judge the trial by its delta over the idle level
-            # sampled immediately before it, so external usage cannot fabricate
-            # a capacity boundary (it did: the 20260805 opennn train search).
+
+
+
+
             try:
                 idle_before = nvidia_used_mib()
             except Exception:
@@ -165,7 +165,7 @@ def run_trial(engine, precision, mode, batch, cap_mib):
     rss = re.search(r"peak_rss_mib=(\d+)", raw)
     vmp = re.search(r"vm_peak_mib=(\d+)", raw)
     if on_cpu and rss:
-        peak = int(rss.group(1))   # CPU mode: peak = process RSS high-water mark
+        peak = int(rss.group(1))
     return {"ok": ok, "peak": peak,
             "idle_before_mib": idle_before,
             "peak_delta_mib": peak_delta,
@@ -201,8 +201,8 @@ def search_max_batch(engine, precision, mode, cap_mib):
         lo = hi; hi *= 2
     left, right = lo + 1, min(hi - 1, args.max_limit)
     while left <= right:
-        # --min-step trades boundary precision for search time; useful when
-        # single trials take minutes (e.g. tiled CPU runs at 10^7+ samples).
+
+
         if right - left + 1 < args.min_step: break
         mid = (left + right) // 2
         if trial(mid): lo, left = mid, mid + 1

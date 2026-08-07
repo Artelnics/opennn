@@ -32,9 +32,9 @@ TEST(GroupedQueryAttentionTest, GeneralConstructor)
 namespace
 {
 
-// Layer through the network's arena vs the same math via the free tensor ops.
-// Dims deliberately decoupled: head_dim (16) != hidden/heads (8) and
-// q_dim (64) != hidden (32), with rectangular GQA (q_heads=4 > kv_heads=2).
+
+
+
 float layer_vs_recipe_max_diff(bool use_qk_norm)
 {
     const Index batch = 1, seq = 6, hidden = 32;
@@ -61,7 +61,7 @@ float layer_vs_recipe_max_diff(bool use_qk_norm)
     for (auto& x : nq) x = 1.0f + nd(rng);
     for (auto& x : nk) x = 1.0f + nd(rng);
 
-    // Parameter view order: q, k, v, o [, q_norm, k_norm].
+
     auto& views = neural_network.get_layer(Index(0))->get_parameter_views();
     EXPECT_EQ(views.size(), use_qk_norm ? size_t(6) : size_t(4));
     auto put = [&](TensorView& tv, const std::vector<float>& s) { std::copy(s.begin(), s.end(), tv.as<float>()); };
@@ -120,19 +120,19 @@ float layer_vs_recipe_max_diff(bool use_qk_norm)
 
 TEST(GroupedQueryAttentionTest, ForwardMatchesFreeOpRecipe)
 {
-    EXPECT_LT(layer_vs_recipe_max_diff(/*use_qk_norm*/ true), 1.0e-5f);
+    EXPECT_LT(layer_vs_recipe_max_diff( true), 1.0e-5f);
 }
 
 
 TEST(GroupedQueryAttentionTest, ForwardWithoutQKNormMatchesFreeOpRecipe)
 {
-    EXPECT_LT(layer_vs_recipe_max_diff(/*use_qk_norm*/ false), 1.0e-5f);
+    EXPECT_LT(layer_vs_recipe_max_diff( false), 1.0e-5f);
 }
 
 
-// Multi-turn chat contract: after a prefill + several single-token decode
-// passes, a NEW prefill with past_length == 0 must restart the cache, giving
-// the same output as a fresh network fed the second prompt directly.
+
+
+
 TEST(GroupedQueryAttentionTest, PrefillAfterDecodeRestartsCache)
 {
     const Index max_seq = 8, hidden = 16;

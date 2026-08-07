@@ -72,7 +72,7 @@ def main():
         tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
     else:
         tf.keras.mixed_precision.set_global_policy("float32")
-    # TF32 tensor cores: on for bf16, off for strict fp32.
+
     tf.config.experimental.enable_tensor_float_32_execution(precision in ("bf16", "tf32"))
 
     act = "relu" if activation == "relu" else "tanh"
@@ -93,14 +93,14 @@ def main():
     print(f"precision={precision} shuffle={shuffle}")
 
     with tf.device("/GPU:0"):
-        # Whole training set resident on the GPU once.
+
         x = tf.constant(x_np)
         y = tf.constant(y_np)
 
         model_layers = [tf.keras.layers.Input(shape=(features,))]
         for _ in range(hidden_layers):
             model_layers.append(tf.keras.layers.Dense(hidden, activation=act))
-        # Keep the sigmoid output in float32 even under mixed_bfloat16.
+
         model_layers.append(tf.keras.layers.Dense(1, activation="sigmoid", dtype="float32"))
         model = tf.keras.Sequential(model_layers)
         print(f"parameters={model.count_params()}")
@@ -123,7 +123,7 @@ def main():
         def run_epoch():
             last = None
             if shuffle:
-                # Fresh permutation each epoch, resident on the GPU.
+
                 perm = tf.random.shuffle(tf.range(n))
                 for s in starts:
                     idx = perm[s:s + batch]
@@ -137,9 +137,9 @@ def main():
         run_epoch()
         run_epoch()
 
-        # TRAIN_*_UNIX markers delimit the energy-integration window for
-        # run_higgs_dense_energy.py; warmup stays outside it. TF dispatches ops
-        # asynchronously, so materialize the last loss before the end marker.
+
+
+
         print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
         times = []
         last_loss = None
@@ -151,7 +151,7 @@ def main():
             float(last_loss)
         print(f"TRAIN_END_UNIX={time.time():.3f}", flush=True)
 
-        # Score the test set: whole batch-aligned slice on the GPU, forward-only.
+
         processed = (xt_np.shape[0] // batch) * batch
         xt = tf.constant(xt_np[:processed])
         preds = []

@@ -104,9 +104,9 @@ int main(int argc, char* argv[])
         const Type inference_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, inference_type);
 
-        // Load the test CSV once (features then last-column label). The label is
-        // not needed for the speed measurement; only the feature columns feed the
-        // forward pass.
+
+
+
         TabularDataset dataset(test_path, ",", false, false);
         dataset.set_sample_roles("Testing");
         const MatrixR& all = dataset.get_data();
@@ -138,10 +138,10 @@ int main(int argc, char* argv[])
 
         const Index batches = processed / batch;
 
-        // Device-resident inputs: upload the whole (batch-aligned) test slice
-        // once, then index device batch views each pass. Matches the PyTorch /
-        // TensorFlow protocol where the tensor is already on the GPU and only the
-        // forward is timed.
+
+
+
+
         Buffer inputs_device(Device::CUDA);
         const Index input_bytes =
             get_aligned_bytes(processed * inputs_number, Type::FP32);
@@ -157,11 +157,11 @@ int main(int argc, char* argv[])
         cudaStreamSynchronize(stream);
 #endif
 
-        // One persistent ForwardPropagation, reused across passes: activations
-        // are allocated once, parameters uploaded once (upload_parameters=true on
-        // the first call only). The forward is captured into a CUDA graph, which
-        // needs a stable input pointer, so each batch is staged with a device-to-
-        // device copy into one fixed buffer (~us against a launch-bound forward).
+
+
+
+
+
         ForwardPropagation forward_propagation(batch, network.get());
         forward_propagation.set_cuda_graph(true);
 
@@ -194,8 +194,8 @@ int main(int argc, char* argv[])
             }
         };
 
-        // Warmup: selects cuBLAS/cuDNN plans, allocates the workspaces, uploads
-        // parameters. Excluded from timing.
+
+
         run_pass();
 #ifdef OPENNN_HAS_CUDA
         cudaDeviceSynchronize();
@@ -214,8 +214,8 @@ int main(int argc, char* argv[])
             times.push_back(std::chrono::duration<double>(t1 - t0).count());
         }
 
-        // Sanity probe: read a couple of outputs back so a silently-broken
-        // forward is caught (mirrors the max-batch trial).
+
+
 #ifdef OPENNN_HAS_CUDA
         if (last_outputs)
         {

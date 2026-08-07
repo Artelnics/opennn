@@ -80,9 +80,9 @@ std::vector<float> logits_row(const ForwardPropagation& forward_propagation, Ind
     return row;
 }
 
-// The chat flow: turn-1 prefill + decodes, then a turn-2 prefill with past = 0
-// must give the same logits as a network that never ran turn 1. bf16_upload
-// mimics the example's upload_parameters_bf16_inference().
+
+
+
 float multi_turn_max_logit_diff(const Dims& d, bool bf16_upload = false)
 {
     Qwen3 used(d.seq, d.vocab, d.hidden, d.layers, d.q_heads, d.kv_heads, d.head_dim, d.intermediate, 1000000.0f, 1.0e-6f);
@@ -287,8 +287,8 @@ void write_logical_bf16_parameters(
     output.write(reinterpret_cast<const char*>(bf16.data()),
                  streamsize(bf16.size() * sizeof(uint16_t)));
     ASSERT_TRUE(output.good());
-    // Close before removing: Windows refuses to delete a file with an open
-    // handle (sharing violation), which aborted the test via filesystem_error.
+
+
     input.close();
     error_code remove_error;
     filesystem::remove(fp32_path, remove_error);
@@ -407,18 +407,18 @@ TEST(Qwen3NetworkTest, DirectLogicalBf16WeightsMatchRoundedCpu)
 TEST(Qwen3NetworkTest, MultiTurnPrefillRestartsCacheGpu)
 {
     Configuration::instance().set(Device::CUDA, Type::BF16);
-    // Both sides run BF16, so they must agree tightly unless cross-turn state leaks.
+
     EXPECT_LT(multi_turn_max_logit_diff(TINY), 1.0e-2f);
     Configuration::instance().set();
 }
 
 
-// Same, but through the example's large-model upload path
-// (upload_parameters_bf16_inference: bf16 mirror + compact fp32, master released).
+
+
 TEST(Qwen3NetworkTest, MultiTurnPrefillRestartsCacheGpuBf16Upload)
 {
     Configuration::instance().set(Device::CUDA, Type::BF16);
-    EXPECT_LT(multi_turn_max_logit_diff(TINY, /*bf16_upload*/ true), 1.0e-2f);
+    EXPECT_LT(multi_turn_max_logit_diff(TINY,  true), 1.0e-2f);
     Configuration::instance().set();
 }
 
@@ -474,10 +474,10 @@ TEST(Qwen3NetworkTest, ChunkedPrefillAndDecodeEqualFullPassGpuBf16)
 }
 
 
-// Regression for the stale cuDNN tensor-descriptor bug: descriptors cached on
-// arena views froze the first pass's sequence length, so a later LONGER prefill
-// only added the first rows of the residual adds (multi-turn chat answered every
-// turn like the first). Wide hidden with a growing second prefill reproduces it.
+
+
+
+
 TEST(Qwen3NetworkTest, MultiTurnGrowingPrefillGpu)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
@@ -487,10 +487,10 @@ TEST(Qwen3NetworkTest, MultiTurnGrowingPrefillGpu)
 }
 
 
-// Regression for decode graphs capturing the thread-global cuBLASLt scratch:
-// a later suffix prefill can introduce a larger GEMM plan and move that global
-// buffer. Decode must instead keep using its ForwardPropagation-owned stable
-// workspaces, without recapturing between chat turns.
+
+
+
+
 TEST(Qwen3NetworkTest, DecodeGraphSurvivesFiveSuffixPrefillsGpu)
 {
     Configuration::instance().set(Device::CUDA, Type::BF16);
@@ -530,8 +530,8 @@ TEST(Qwen3NetworkTest, DecodeGraphSurvivesFiveSuffixPrefillsGpu)
         return network.calculate_outputs_resident(decode_inputs, decode, false);
     };
 
-    decode_token(17);  // measured warmup 1
-    decode_token(19);  // measured warmup 2 + capture
+    decode_token(17);
+    decode_token(19);
     ASSERT_TRUE(static_cast<bool>(decode.inference_graph_exec));
     ASSERT_FALSE(decode.cuda_graph_workspaces_need_growth());
     auto* const graph_identity = decode.inference_graph_exec.get();
@@ -554,9 +554,9 @@ TEST(Qwen3NetworkTest, DecodeGraphSurvivesFiveSuffixPrefillsGpu)
         const vector<float> graph_logits = logits_row(decode, 0);
         ASSERT_EQ(graph_view.data, decode.get_outputs().data);
 
-        // Re-run the same position eagerly. It overwrites the same KV row with
-        // the same values and gives a direct numerical reference while leaving
-        // the instantiated graph intact.
+
+
+
         --position;
         decode.past_length = position;
         network.forward_propagate(decode_inputs, decode, false);

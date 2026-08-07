@@ -90,7 +90,7 @@ def find_opennn_speed() -> tuple[str, bool]:
 OPENNN_BIN, OPENNN_BIN_FOUND = find_opennn_speed()
 
 
-# TF needs the venv's bundled CUDA libs on LD_LIBRARY_PATH to see the GPU.
+
 def tensorflow_library_dirs(py: str) -> list[str]:
     override = os.environ.get("TF_NV_LIBS")
     if override:
@@ -188,7 +188,7 @@ def integrate(samples, idle_w, t_lo=None, t_hi=None):
         if prev is not None:
             pt, pw = prev
             dt = t - pt
-            if 0 < dt < 2:  # ignore logger startup/teardown gaps
+            if 0 < dt < 2:
                 e_total += 0.5 * (w + pw) * dt
                 e_active += 0.5 * ((w - idle_w) + (pw - idle_w)) * dt
                 span += dt
@@ -300,9 +300,9 @@ def run_one(engine, precision, idle_w, trace_path):
     m["process_energy_total_j"] = round(et, 1)
     m["process_energy_active_j"] = round(ea, 1)
 
-    # Reject runs whose power trace is too sparse to integrate honestly
-    # (nvidia-smi can stall while the engine process starts): nominal rate is
-    # 20 Hz, require at least 5 Hz across the train window.
+
+
+
     sparse_trace = (m.get("train_window_s") or 0) > 0 and (
         m.get("window_power_samples", 0) / m["train_window_s"] < 5.0)
     if sparse_trace:

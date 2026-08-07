@@ -26,7 +26,7 @@ import argparse, os, time
 import torch
 import torch.nn as nn
 
-INPUTS = 28   # HIGGS contract: 28 features, 1 target
+INPUTS = 28
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--mode", choices=["train", "infer"], default="train")
@@ -69,7 +69,7 @@ width = INPUTS
 for _ in range(args.layers):
     layers += [nn.Linear(width, args.hidden), nn.ReLU()]
     width = args.hidden
-layers.append(nn.Linear(width, 1))   # logits; sigmoid fused into the loss
+layers.append(nn.Linear(width, 1))
 model = nn.Sequential(*layers).to(dev)
 model.train(args.mode == "train")
 print(f"parameters={sum(p.numel() for p in model.parameters())}")
@@ -81,9 +81,9 @@ if use_compile:
 ctx = torch.autocast("cuda", dtype=torch.bfloat16) if use_bf16 \
     else torch.autocast("cuda", enabled=False)
 
-# Real HIGGS rows (float32 bin, rows x 29: features then label) when
-# HIGGS_BIN is set; rows repeat modulo beyond the file (np.resize), the same
-# convention as the ResNet-50 capacity runner. Synthetic otherwise.
+
+
+
 higgs_bin = os.environ.get("HIGGS_BIN")
 if higgs_bin:
     import numpy as np
@@ -169,7 +169,7 @@ else:
 
 completed_steps = len(loss_history) if args.mode == "train" and args.target is not None else args.steps
 samples_per_s = completed_steps * args.batch / wall_s
-try:   # peak memory for the CPU-capped runs (POSIX only)
+try:
     import resource
     print(f"peak_rss_mib={resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024}")
     with open("/proc/self/status") as f:

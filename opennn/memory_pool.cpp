@@ -14,8 +14,8 @@ namespace opennn
 namespace
 {
 
-// Lowest offset where `bytes` fit without overlapping any occupied block.
-// `occupied` holds [begin, end) ranges sorted by begin.
+
+
 Index lowest_free_offset(const vector<pair<Index, Index>>& occupied, Index bytes)
 {
     Index offset = 0;
@@ -23,7 +23,7 @@ Index lowest_free_offset(const vector<pair<Index, Index>>& occupied, Index bytes
     {
         throw_if(offset > numeric_limits<Index>::max() - bytes,
                  "memory pool: address space exhausted.");
-        if (begin >= offset + bytes) break;   // the gap before this block fits
+        if (begin >= offset + bytes) break;
         if (end > offset) offset = end;
     }
 
@@ -138,13 +138,13 @@ Index find_memory_pool_overlay(const vector<MemoryPoolEntry>& entries,
     for (size_t i = 0; i < entries.size(); ++i)
     {
         const MemoryPoolEntry& entry = entries[i];
-        if (entry.bytes == 0) continue;   // never placed: byte_offsets[i] is -1
+        if (entry.bytes == 0) continue;
         if (!live_at(entry, first_step) && !live_at(entry, second_step)) continue;
         occupied.push_back({plan.byte_offsets[i], plan.byte_offsets[i] + entry.bytes});
     }
     ranges::sort(occupied);
 
-    // The overlay has to fit inside the plan; growing the pool would defeat it.
+
     const Index offset = lowest_free_offset(occupied, bytes);
     return offset + bytes <= plan.peak_bytes ? offset : Index(-1);
 }

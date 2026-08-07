@@ -212,14 +212,14 @@ TEST(Normalization3dTest, FusedResidualAddAliasesSafeBranchDelta)
         back_propagation.backward_slots[size_t(normalization_index)][1].data,
         back_propagation.backward_slots[size_t(normalization_index)][2].data);
 
-    // The aliased fused path must produce the same gradients as an unfused
-    // reference (explicit Addition + plain LayerNorm) with identical
-    // parameters — the two graphs compute the same function, so this check is
-    // exact. A finite-difference comparison is deliberately NOT used here:
-    // with 3 features and one sequence position the LN curvature makes the
-    // central-difference estimate diverge from the true gradient by far more
-    // than any reasonable tolerance (verified: the FD estimate converges
-    // monotonically to the analytical value as h shrinks).
+
+
+
+
+
+
+
+
     const VectorR gradient = calculate_gradient(loss);
 
     NeuralNetwork reference_network;
@@ -270,7 +270,7 @@ TEST(Normalization3dTest, RMSGeneralConstructor)
     EXPECT_EQ(rms_normalization_3d.get_method(), NormalizationMethod::RMS);
     EXPECT_EQ(rms_normalization_3d.get_sequence_length(), sequence_length);
     EXPECT_EQ(rms_normalization_3d.get_embedding_dimension(), embedding_dimension);
-    EXPECT_EQ(rms_normalization_3d.get_parameters_number(), embedding_dimension);   // weight only, no beta
+    EXPECT_EQ(rms_normalization_3d.get_parameters_number(), embedding_dimension);
 }
 
 
@@ -283,7 +283,7 @@ TEST(Normalization3dTest, RMSFuseAddRejected)
 }
 
 
-// For x = [1,2,3,4]: mean(x^2) = 7.5, so y = x / sqrt(7.5) (no mean subtraction).
+
 TEST(Normalization3dTest, RMSForwardMatchesHandComputedRMSNorm)
 {
     const Index batch_size = 1;
@@ -296,7 +296,7 @@ TEST(Normalization3dTest, RMSForwardMatchesHandComputedRMSNorm)
     NeuralNetwork neural_network;
     neural_network.add_layer(move(norm));
     neural_network.compile();
-    neural_network.set_parameters_random();   // RMSNorm weight initializes to ones
+    neural_network.set_parameters_random();
 
     Tensor3 inputs(batch_size, seq, dim);
     inputs.data()[0] = type(1);

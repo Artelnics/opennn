@@ -26,17 +26,17 @@ enum class ForwardPropagationMode
     Inference
 };
 
-// Optional inference-only capacity policy. A zero value preserves the network
-// shapes verbatim, which is the historical behaviour used by training and by
-// the public calculate_outputs APIs.
-//
-// retained_output_layers lists layers whose outputs must survive until the end
-// of the activation pool plan. By default the pool recycles an output's bytes
-// after its last consumer, which is only valid within a single forward pass;
-// callers that run partial layer ranges and read a producer's output on a
-// later pass (e.g. sequence-to-sequence decoding, which prefills the encoder
-// once and then re-runs only the decoder per token) must retain that output
-// here or it will be overwritten.
+
+
+
+
+
+
+
+
+
+
+
 struct InferenceShapePolicy
 {
     Index sequence_capacity = 0;
@@ -59,18 +59,18 @@ struct ForwardPropagation
     ForwardPropagation(const ForwardPropagation&) = delete;
     ForwardPropagation& operator=(const ForwardPropagation&) = delete;
 
-    // With joint_loss, the backward delta entries are planned into this
-    // arena on the unified step timeline (forward of layer i at step i,
-    // backward at 2L-1-i); BackPropagation::set then binds its delta views
-    // here instead of owning a separate pool.
+
+
+
+
     void set(Index, NeuralNetwork*, Buffer* external_storage = nullptr,
              ForwardPropagationMode = ForwardPropagationMode::Training,
              InferenceShapePolicy = {},
              bool inputs_pre_scaled = false,
              Loss* joint_loss = nullptr);
 
-    // Second half of set(): turns planned offsets into tensor views. Returns
-    // the largest layer's byte footprint.
+
+
     Index bind_slot_views(const vector<vector<TensorSpec>>& forward_specs,
                           const vector<vector<Index>>& slot_offsets,
                           const vector<vector<Index>>& transient_slot_offsets);
@@ -88,12 +88,12 @@ struct ForwardPropagation
 
     void set_active_sequence_length(Index length);
 
-    // Restricts the final layer to `count` sequence positions starting at
-    // `start`, so its output tensor only holds that window (for a vocabulary
-    // projection this is the largest tensor in the net). With one sample the
-    // window rows are contiguous and are aliased in place; with more, each
-    // sample's rows sit `sequence` rows apart, so they are gathered into
-    // `output_window_input` before the layer runs.
+
+
+
+
+
+
     void set_output_sequence_window(Index start, Index count);
     void gather_output_window();
 
@@ -144,8 +144,8 @@ struct ForwardPropagation
     Index final_output_capacity = 0;
     Index final_output_layer = -1;
 
-    // Empty unless the output window has to be gathered (see
-    // set_output_sequence_window).
+
+
     Buffer output_window_input;
     Index output_window_start = 0;
     Index output_window_count = 0;

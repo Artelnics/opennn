@@ -26,19 +26,19 @@ struct CombinationOperator : Operator
 
     bool  tied_transposed = false;
 
-    // Inference-only fast path: the BF16 upload physically transposes this
-    // weight to (out, in) so the decode GEMV runs with contiguous output rows.
+
+
     bool  transposed_inference_preferred = false;
     bool  transposed_inference_active    = false;
 
-    // Cross-layer dReLU fusion (CUDA fp32): when emit_relu_mask is set, the
-    // training forward stores a ReLU bitmask via the RELU_AUX_BIAS epilogue,
-    // and the consumer layer's input-delta GEMM applies the derivative via
-    // DRELU instead of a separate elementwise pass. relu_mask_fused_active is
-    // the runtime state both sides read: the producer's activation backward
-    // skips only while it is true. On the first cuBLASLt failure either side
-    // clears both flags (mutable: the consumer holds a const pointer) so the
-    // unfused math takes over everywhere and no retry happens.
+
+
+
+
+
+
+
+
     mutable bool emit_relu_mask = false;
     mutable bool relu_mask_fused_active = false;
     Buffer relu_mask{Device::CUDA};

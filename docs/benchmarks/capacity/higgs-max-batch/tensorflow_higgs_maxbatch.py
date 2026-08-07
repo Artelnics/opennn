@@ -26,7 +26,7 @@ os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
 import numpy as np
 import tensorflow as tf
 
-INPUTS = 28   # HIGGS contract: 28 features, 1 target
+INPUTS = 28
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--mode", choices=["train", "infer"], default="train")
@@ -61,16 +61,16 @@ inp = L.Input(shape=(INPUTS,), dtype="float32")
 h = inp
 for _ in range(args.layers):
     h = L.Dense(args.hidden, activation="relu")(h)
-# logits kept in float32 under mixed precision (standard practice)
+
 logits = L.Dense(1, dtype="float32")(h)
 model = tf.keras.Model(inp, logits)
 print(f"parameters={model.count_params()}")
 
 rng = np.random.default_rng(args.seed)
 
-# Real HIGGS rows (float32 bin, rows x 29: features then label) when
-# HIGGS_BIN is set; rows repeat modulo beyond the file (np.resize), the same
-# convention as the ResNet-50 capacity runner. Synthetic otherwise.
+
+
+
 higgs_bin = os.environ.get("HIGGS_BIN")
 if higgs_bin:
     raw = np.fromfile(higgs_bin, dtype=np.float32).reshape(-1, INPUTS + 1)
@@ -101,7 +101,7 @@ if args.mode == "train":
     if args.target is None:
         for _ in range(args.warmup):
             last = train_step(x, y)
-        _ = last.numpy()   # force sync after warmup
+        _ = last.numpy()
 
     if args.target is not None:
         print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
@@ -116,7 +116,7 @@ if args.mode == "train":
             if loss_value <= args.target:
                 reached = True
                 break
-    last_host = last.numpy()   # force sync
+    last_host = last.numpy()
     wall_s = time.perf_counter() - t0
     if args.target is not None:
         print(f"TRAIN_END_UNIX={time.time():.3f}", flush=True)
@@ -139,19 +139,19 @@ else:
     probe = None
     for _ in range(args.warmup):
         probe = infer_step(x)
-    _ = probe.numpy()   # force sync after warmup
+    _ = probe.numpy()
 
     t0 = time.perf_counter()
     for _ in range(args.steps):
         probe = infer_step(x)
-    probe_host = probe.numpy()   # force sync
+    probe_host = probe.numpy()
     wall_s = time.perf_counter() - t0
 
     assert np.isfinite(np.asarray(probe_host, dtype=np.float32)).all(), "non-finite outputs"
 
 completed_steps = len(loss_history) if args.mode == "train" and args.target is not None else args.steps
 samples_per_s = completed_steps * args.batch / wall_s
-try:   # peak memory for the CPU-capped runs (POSIX only)
+try:
     import resource
     print(f"peak_rss_mib={resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024}")
     with open("/proc/self/status") as f:

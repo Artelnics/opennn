@@ -52,9 +52,9 @@ int main(int argc, char* argv[])
         const Index batch = argc > 2 ? Index(std::stoll(argv[2])) : 128;
         const Index timed_runs = argc > 3 ? Index(std::stoll(argv[3])) : 5;
         const std::string precision = argc > 4 ? argv[4] : "fp32";
-        // A negative image_size resizes to |image_size| AND keeps the set device
-        // resident (fits smaller crops in VRAM so BF16/FP32 both take the gather
-        // path). Positive stays host-staged (large-image ImageNet path).
+
+
+
         const Index image_size_arg = argc > 5 ? Index(std::stoll(argv[5])) : 0;
         const Index image_size = image_size_arg < 0 ? -image_size_arg : image_size_arg;
         const bool force_resident = image_size_arg < 0;
@@ -66,17 +66,17 @@ int main(int argc, char* argv[])
         const Type inference_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, inference_type);
 
-        // Autotuned conv engines with the workspace cap off, matching the
-        // training driver and PyTorch's cudnn.benchmark=True: the cuDNN
-        // heuristic alone picks large-tile kernels that lose ~15% on CIFAR's
-        // small spatial shapes.
+
+
+
+
         device::set_conv_autotune(true);
         device::set_conv_workspace_cap(0);
 
-        // A custom image-cache directory is no longer configurable from OpenNN
-        // (the setter was removed when backend toggles became code-only). The
-        // cache always lands in <data_path>/.cache, which stays outside the repo
-        // because datasets live under $OPENNN_BENCH_DATA.
+
+
+
+
         if (!cache_dir.empty())
             std::cerr << "note: custom cache dir ignored (OpenNN caches in "
                          "<data_path>/.cache): " << cache_dir << "\n";
@@ -88,9 +88,9 @@ int main(int argc, char* argv[])
         ImageDataset& dataset = *dataset_ptr;
         dataset.set_sample_roles("Training");
 
-        // CIFAR (image_size==0) fits in VRAM: keep it GPU-resident so each batch is
-        // a device-side gather. The 224px ImageNet path is too large, so it stays
-        // host-staged. Enabled in code; there is no environment switch.
+
+
+
         const bool gpu_resident = (image_size == 0) || force_resident;
         if (gpu_resident)
             dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
@@ -110,14 +110,14 @@ int main(int argc, char* argv[])
                        {3, 4, 6, 3},
                        Shape{64, 128, 256, 512},
                        dataset.get_shape("Target"),
-                       /*use_bottleneck=*/true);
+true);
 
         std::cout << "layers=" << network.get_layers_number()
                   << " parameters=" << network.get_parameters_size() << "\n";
 
-        // One GPU-resident batch of real CIFAR images, gathered ONCE. The dataset
-        // fill path is the same one training uses; here it is done a single time so
-        // the timed loop is pure forward compute with the input already on device.
+
+
+
         const vector<Index> input_feature_indices = dataset.get_feature_indices("Input");
         const vector<Index> decoder_feature_indices = dataset.get_feature_indices("Decoder");
         const vector<Index> target_feature_indices = dataset.get_feature_indices("Target");
@@ -135,22 +135,22 @@ int main(int argc, char* argv[])
 
         const vector<TensorView>& inputs = batch_data.get_inputs();
 
-        // ForwardPropagation (activation buffers) built ONCE; parameters uploaded
-        // on the first resident call only. The forward is captured into a CUDA
-        // graph during the two warmup calls and replayed by the timed loop.
+
+
+
         ForwardPropagation forward_propagation(
             effective_batch, &network, ForwardPropagationMode::Inference);
         forward_propagation.set_cuda_graph(true);
         std::cout << "cuda_graph=on\n";
 
-        network.calculate_outputs_resident(inputs, forward_propagation, /*upload=*/true);
+        network.calculate_outputs_resident(inputs, forward_propagation, true);
 #ifdef OPENNN_HAS_CUDA
         device::synchronize();
 #endif
 
-        // Warmup: selects the cuDNN/cuBLAS plans and pages the activation arena;
-        // excluded from timing.
-        network.calculate_outputs_resident(inputs, forward_propagation, /*upload=*/false);
+
+
+        network.calculate_outputs_resident(inputs, forward_propagation, false);
 #ifdef OPENNN_HAS_CUDA
         device::synchronize();
 #endif
@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
         for (Index run = 0; run < timed_runs; ++run)
         {
             const auto t0 = clock_type::now();
-            network.calculate_outputs_resident(inputs, forward_propagation, /*upload=*/false);
+            network.calculate_outputs_resident(inputs, forward_propagation, false);
 #ifdef OPENNN_HAS_CUDA
             device::synchronize();
 #endif
@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
             times.push_back(std::chrono::duration<double>(t1 - t0).count());
         }
 
-        // Sanity check on the (device-resident) outputs.
+
         const TensorView outputs = forward_propagation.get_outputs();
 #ifdef OPENNN_HAS_CUDA
         float probe[4] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -181,21 +181,21 @@ int main(int argc, char* argv[])
                 throw std::runtime_error("non-finite outputs");
 #endif
 
-        // OPENNN_PROFILE=1: after the official timing, rerun the forward with the
-        // library profiler on. Every PROFILE_SCOPE syncs the GPU, so the profiled
-        // pass is slower than the timed one — use it for the % split, not the
-        // absolute throughput.
+
+
+
+
         if (const char* profile_env = std::getenv("OPENNN_PROFILE");
             profile_env && profile_env[0] == '1')
         {
-            // The per-op scopes need the eager forward (each one syncs the GPU).
+
             forward_propagation.set_cuda_graph(false);
             const Index profile_runs = 20;
             ::opennn::enabled() = true;
             ::opennn::global_stats().clear();
             const auto p0 = clock_type::now();
             for (Index run = 0; run < profile_runs; ++run)
-                network.calculate_outputs_resident(inputs, forward_propagation, /*upload=*/false);
+                network.calculate_outputs_resident(inputs, forward_propagation, false);
 #ifdef OPENNN_HAS_CUDA
             device::synchronize();
 #endif
@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
         }
 
         std::sort(times.begin(), times.end());
-        const double batch_s = times[times.size() / 2];   // median forward pass
+        const double batch_s = times[times.size() / 2];
         const double ms_per_batch = batch_s * 1000.0;
 
         std::cout << "ms_per_batch=" << ms_per_batch << "\n";

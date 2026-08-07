@@ -78,9 +78,9 @@ def run(args: argparse.Namespace) -> None:
             loss.backward()
             optimizer.step()
 
-    # The convergence gate is the HELD-OUT test log-loss, not the training loss.
-    # Evaluate the test set after each epoch and stop when it reaches the target.
-    # Evaluation time is excluded from the clock.
+
+
+
     def eval_log_loss() -> float:
         model.eval()
         total = 0.0

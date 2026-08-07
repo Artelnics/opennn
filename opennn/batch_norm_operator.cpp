@@ -31,10 +31,10 @@ namespace opennn
 namespace
 {
 
-// The cuDNN batch-norm graphs run in FP32, so BF16 tensors are staged through
-// the shared workspace. It is handed out as equal slices of `count` floats:
-// `read` fills one from a BF16 tensor, `write` reserves one for the graph to
-// fill (see store_as_bfloat16 for the way back).
+
+
+
+
 struct Fp32Staging
 {
     Fp32Staging(Index count, Index slices)
@@ -462,9 +462,9 @@ void build_bn_backward(BatchNormalizationOperator::BatchNormalizationGraphCache:
         shared_ptr<graph::Tensor_attributes> relu_reference;
         if (fork_residual_delta)
         {
-            // For ReLU, the final activated output has the same positive mask
-            // as the pre-activation. Using Y avoids reconstructing BN(X)+R and
-            // removes the backward dependency on the residual values.
+
+
+
             entry.bwd_Y = nhwc_tensor(*graph, "Y", batch, channels, spatial, 1);
             relu_reference = entry.bwd_Y;
         }
@@ -673,7 +673,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
         optional<Fp32Staging> staging;
         if (bf16)
         {
-            // The graph writes dX over dY, so both share one slice.
+
             staging.emplace(delta.size(), 2);
             x_ptr   = staging->read(input.data);
             dx_fp32 = staging->read(delta.data);

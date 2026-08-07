@@ -66,12 +66,12 @@ def build_resnet50(classes, hw):
             x = bottleneck(x, mid, stride, f"s{stage}b{block}")
             in_ch = mid * 4
     x = K.GlobalAveragePooling2D()(x)
-    # fp32 logits head under mixed_bfloat16 for a numerically stable head.
+
     out = K.Dense(classes, dtype="float32")(x)
     return tf.keras.Model(inp, out)
 
 
-x = np.load(f"{data_dir}/cifar_images.npy").astype("float32") / 255.0  # NHWC already
+x = np.load(f"{data_dir}/cifar_images.npy").astype("float32") / 255.0
 y = np.load(f"{data_dir}/cifar_labels.npy").astype("int64")
 n = x.shape[0]
 hw = x.shape[1]
@@ -90,17 +90,17 @@ with tf.device("/GPU:0"):
     def infer_step(xb):
         return model(xb, training=False)
 
-    # One GPU-resident batch, held constant so the timed loop is pure forward.
+
     xb = tf.gather(xg, tf.range(batch))
 
-    infer_step(xb)  # warmup (traces + compiles)
+    infer_step(xb)
     infer_step(xb)
 
     times = []
     for _ in range(runs):
         t0 = time.perf_counter()
         out = infer_step(xb)
-        _ = out.numpy()  # force the device forward to complete before stopping the clock
+        _ = out.numpy()
         times.append(time.perf_counter() - t0)
 
 times.sort()

@@ -20,9 +20,9 @@ namespace opennn
 namespace
 {
 
-// Batch::fill only writes host memory; on the GPU the device buffers are
-// populated exclusively by upload_to_device_batch_async. Skipping this step
-// makes every loss/gradient evaluation read uninitialized device targets.
+
+
+
 void upload_batch_if_gpu(Batch& batch, const NeuralNetwork& neural_network)
 {
 #ifdef OPENNN_HAS_CUDA

@@ -60,12 +60,12 @@ void Batch::set(const Index new_samples_number,
     input_views_cache.clear();
     target_view_cache = {};
 
-    // Not uses_cuda(): that now reads input.buffer.device_type, which the
-    // setup_buffer calls below have yet to set -- on a fresh Batch it is still
-    // the default Device::CPU, so asking here would report "no GPU" and every
-    // slot would be allocated on the host. The device is known from the
-    // configuration at this point; uses_cuda() is correct only once the buffers
-    // exist.
+
+
+
+
+
+
     const bool on_gpu = new_config.device == Device::CUDA && device::is_cuda_build();
     const Device batch_device = on_gpu ? Device::CUDA : Device::CPU;
     input_is_bf16 = on_gpu
@@ -365,9 +365,9 @@ void Batch::wait_h2d_on_compute_stream()
 
 ThreadSafeQueue<Batch*>& BatchPools::validation_queue()
 {
-    // Derived rather than cached: setup_batch_pools() fills validation_pool only
-    // when validation does NOT reuse the training pool, so an empty pool is
-    // exactly the condition the removed validation_uses_training_pool flag held.
+
+
+
     return validation_pool.empty()
         ? training_empty_queue
         : validation_empty_queue;

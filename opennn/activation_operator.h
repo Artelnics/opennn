@@ -26,9 +26,9 @@ struct ActivationOperator : Operator
     bool forward_fused = false;
     bool backward_fused = false;
 
-    // Cross-layer dReLU fusion: when set, backward skips only while the flag
-    // it points to (the owning combination's relu_mask_fused_active) is true,
-    // so a consumer-side cuBLASLt fallback re-enables the elementwise path.
+
+
+
     const bool* backward_fused_by_consumer = nullptr;
 
     void set_activation_function(ActivationFunction new_function) { activation_function = new_function; }

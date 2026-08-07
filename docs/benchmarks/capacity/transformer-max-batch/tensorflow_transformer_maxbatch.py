@@ -93,7 +93,7 @@ def build_model():
         y = L.LayerNormalization()(y + ca)
         y = L.LayerNormalization()(y + ffn(y, d, ff))
 
-    # keep the vocab logits in float32 under mixed precision (standard practice)
+
     logits = L.Dense(args.out_vocab, dtype="float32")(y)
     return tf.keras.Model([src, dec], logits)
 
@@ -128,17 +128,17 @@ if args.mode == "train":
     for i in range(args.warmup):
         one(i)
     last = one(0)
-    _ = last.numpy()   # force sync after warmup
+    _ = last.numpy()
 
     t0 = time.perf_counter()
     for i in range(args.steps):
         last = one(args.warmup + i)
-    _ = last.numpy()   # force sync
+    _ = last.numpy()
     wall_s = time.perf_counter() - t0
     print(f"final_loss={float(last):.5f}")
 else:
-    # Forward-only: no GradientTape, no optimizer state. The tiny logits slice
-    # returned per step forces execution and gives the finiteness probe.
+
+
     @tf.function
     def infer_step(src_b, dec_b):
         logits = model([src_b, dec_b], training=False)
@@ -151,12 +151,12 @@ else:
     probe = None
     for i in range(args.warmup):
         probe = one(i)
-    _ = probe.numpy()   # force sync after warmup
+    _ = probe.numpy()
 
     t0 = time.perf_counter()
     for i in range(args.steps):
         probe = one(args.warmup + i)
-    probe_host = probe.numpy()   # force sync
+    probe_host = probe.numpy()
     wall_s = time.perf_counter() - t0
 
     assert np.isfinite(np.asarray(probe_host, dtype=np.float32)).all(), "non-finite logits"

@@ -332,8 +332,8 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
         << " num=" << numerical_gradient(worst_idx);
 }
 
-// Verify that CSPDarknet53v11 + FPNv8 builds at all 5 model sizes without crashing,
-// and that parameter counts scale monotonically with model size.
+
+
 TEST(YoloFPN, C3k2ScalingParameterCountsMonotonic)
 {
     const Shape input_shape{320, 320, 3};

@@ -78,7 +78,7 @@ struct Qwen3Config
           head_dim = 0, intermediate = 0, vocabulary = 0;
     float rope_theta = 1000000.0f, rms_epsilon = 1.0e-6f;
 
-    // Reads the first 9 fields of qwen3_meta.txt (any trailing fields are ignored).
+
     void load(const string& path)
     {
         ifstream file(path);
@@ -96,13 +96,13 @@ int main(int argc, char* argv[])
 {
     try
     {
-        // Options (all optional, so a plain "qwen3" just works):
-        //   --auto | --think | --no-think   reasoning mode   default auto
-        //   --temp T | --top-k K | --top-p P                 model defaults
-        //   --max N   maximum total reasoning + answer tokens default 640
-        //   --cpu | --gpu   compute device                   default gpu (if CUDA)
-        //   --int8 | --bf16   GPU weight precision           default bf16
-        //   --data DIR (or a bare path)   data directory
+
+
+
+
+
+
+
 #ifdef OPENNN_HAS_CUDA
         bool want_gpu = true;
 #else
@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
             else if (a == "--data" && i + 1 < argc)         data_arg = argv[++i];
             else if (a == "--draft")                        use_draft = true;
             else if (a == "--draft-k" && i + 1 < argc)      { use_draft = true; draft_tokens = Index(stol(argv[++i])); }
-            else if (a.rfind("--", 0) != 0)                 data_arg = a;   // bare argument = data dir
+            else if (a.rfind("--", 0) != 0)                 data_arg = a;
             else throw runtime_error("Unknown option: " + a);
         }
         throw_if(max_new <= 0, "--max must be greater than zero.");

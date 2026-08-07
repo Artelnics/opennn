@@ -133,13 +133,13 @@ TensorSpec AttentionOperator::backward_scratch_spec(Index batch_size) const
             compute_dtype};
 }
 
-// BF16 conversion scratch for the FP32-via-BF16 SDPA backward: dO/dQ/dK/dV
-// plus rematerialized Q/K/V/O (re-cast from the retained FP32 forward views,
-// which is bit-exact). Declared as backward specs so the delta-pool planner
-// shares one region across all attention layers (each is live only during its
-// own layer's backward step). O is cast flat from the retained merged (B,S,E)
-// output, so its BF16 copy is in BSHD order; the backward graph declares
-// matching strides.
+
+
+
+
+
+
+
 vector<TensorSpec> AttentionOperator::sdpa_gradient_scratch_specs(Index batch_size) const
 {
     if (!use_sdpa || compute_dtype != Type::FP32)
@@ -149,22 +149,22 @@ vector<TensorSpec> AttentionOperator::sdpa_gradient_scratch_specs(Index batch_si
     const Shape source_shape = {batch_size, heads_number, source_sequence_length, head_dimension};
 
     return {
-        {query_shape,  Type::BF16},   // dO
-        {query_shape,  Type::BF16},   // dQ
-        {source_shape, Type::BF16},   // dK
-        {source_shape, Type::BF16},   // dV
-        {query_shape,  Type::BF16},   // Q remat
-        {source_shape, Type::BF16},   // K remat
-        {source_shape, Type::BF16},   // V remat
-        {query_shape,  Type::BF16},   // O remat (BSHD order)
+        {query_shape,  Type::BF16},
+        {query_shape,  Type::BF16},
+        {source_shape, Type::BF16},
+        {source_shape, Type::BF16},
+        {query_shape,  Type::BF16},
+        {source_shape, Type::BF16},
+        {source_shape, Type::BF16},
+        {query_shape,  Type::BF16},
     };
 }
 
-// Forward-transient pack holding the BF16 casts of Q, K and V plus the graph's
-// BF16 O output while the SDPA forward graph runs. It lives in the shared
-// transient block next to TransposeScratch (one layer's transient slots never
-// alias), so the post-graph BF16->FP32 cast can read the pack's O section
-// while writing the FP32 attention scratch.
+
+
+
+
+
 TensorSpec AttentionOperator::sdpa_qkv_pack_spec(Index batch_size) const
 {
     if (!use_sdpa || compute_dtype != Type::FP32)
@@ -315,8 +315,8 @@ void refresh_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
     throw_if(!ok,
              "SDPA padding mask: source_input must be a rank-3 CUDA tensor with supported dtype.");
 
-    // Recompute every batch: forward arenas are reused, so a stable pointer
-    // does not imply the padding pattern is unchanged.
+
+
     source_input.dispatch([&](auto tag) {
         using T = decltype(tag);
         attention_sequence_lengths_cuda<T>(to_int(k.batch_size),
@@ -418,9 +418,9 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
     entry.bwd_SeqLenQ  = cudnn_frontend::seq_len_scalar(*graph, "SeqLenQ_bwd",  k.batch_size);
     entry.bwd_SeqLenKV = cudnn_frontend::seq_len_scalar(*graph, "SeqLenKV_bwd", k.batch_size);
 
-    // O is read back from the layer's retained merged (B,S,H*D) output (or its
-    // flat BF16 re-cast), so it is declared with BSHD strides instead of the
-    // packed BHSD layout the other operands use.
+
+
+
     entry.bwd_O = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
                                 .set_name("O_bwd")
                                 .set_dim({k.batch_size, k.heads, k.q_seq, k.head_dim})
@@ -516,9 +516,9 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
     merge_output_heads(forward_propagation, layer);
 }
 
-// Attention works in (batch, heads, sequence, head_dim); its consumer, the
-// output projection, reads (batch, sequence, heads * head_dim). The two
-// permutations below are the forward and backward halves of that relayout.
+
+
+
 void AttentionOperator::merge_output_heads(ForwardPropagation& forward_propagation, size_t layer) const
 {
     const Index batch_size = forward_propagation.batch_size;
@@ -568,8 +568,8 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
     TensorView& value_delta            = get_output_delta(back_propagation, layer, 3);
 
 #ifdef OPENNN_HAS_CUDA
-    // Mirror the forward dispatch: explicit valid lengths route forward through
-    // the unfused path, so backward must not consume the SDPA cache.
+
+
     const bool sdpa_ran_forward = use_sdpa
         && forward_propagation.attention_valid_lengths.empty();
 
@@ -1154,9 +1154,9 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
     void* bk  = key.data;
     void* bv  = value.data;
 
-    // The graph's O input has BSHD strides: in pure-BF16 mode the retained
-    // merged (B,S,H*D) output is read directly; in FP32 mode its flat BF16
-    // re-cast is (both are bit-exact images of the forward graph's O).
+
+
+
     void* bo  = attention_output.data;
     void* bdo = output_delta.data;
     void* bdq = query_delta.data;
@@ -1181,9 +1181,9 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
                  "SDPA backward: BF16 scratch views were not planned "
                  "(BackPropagation::set ran without the SDPA backward specs).");
 
-        // Rematerialize the BF16 Q/K/V/O from the retained FP32 forward views:
-        // FP32 -> BF16 rounding is deterministic, so these casts reproduce the
-        // forward-pass tensors bit-exactly.
+
+
+
         cudaStream_t cstream = Backend::get_compute_stream();
         cast_fp32_to_bf16(query.size(), query.as<float>(), query_bf16.as<bfloat16>(), cstream);
         cast_fp32_to_bf16(key.size(),   key.as<float>(),   key_bf16.as<bfloat16>(), cstream);

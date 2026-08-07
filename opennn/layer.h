@@ -138,11 +138,11 @@ public:
         return {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
     }
 
-    // How a forward slot is planned. Pooled slots get an arena range sized by
-    // their lifetime; Transient slots share the training scratch block (in
-    // inference they are pooled like any other short-lived slot); TrainingOnly
-    // slots are written solely for the backward pass and do not exist in
-    // inference.
+
+
+
+
+
     virtual ForwardSlotKind get_forward_slot_kind(size_t) const
     {
         return ForwardSlotKind::Pooled;
@@ -203,7 +203,7 @@ public:
         weights_dtype = new_compute_dtype;
         compute_dtype = activation_dtype(new_compute_dtype);
         on_compute_dtype_changed();
-        // After on_compute_dtype_changed(): layer configure calls reset Operator::compute_dtype.
+
         for (Operator* op : operators)
             op->set_weights_dtype(weights_dtype);
     }
@@ -218,10 +218,10 @@ public:
 
 protected:
 
-    // Shared by state-holding non-trainable layers (Scaling, Bounding): keeps
-    // a columns x features FP32 block staged in `storage`. Returns true when
-    // the block was restaged and the caller must rebind its views; fill()
-    // writes the host-side staging (only called when features > 0).
+
+
+
+
     static bool refresh_feature_storage(Buffer& storage, bool& dirty, Device device,
                                         Index features, Index columns,
                                         const function<void(float*)>& fill);

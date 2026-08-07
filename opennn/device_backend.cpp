@@ -867,9 +867,9 @@ namespace
         set_desc(CUBLASLT_MATMUL_DESC_EPILOGUE, epilogue);
         set_desc(CUBLASLT_MATMUL_DESC_BIAS_DATA_TYPE, out_dtype);
 
-        // Aux-buffer epilogues: GELU stores pre-activation values, the ReLU
-        // pair stores/consumes a column-major bitmask whose ld (in bits) must
-        // be a multiple of 128.
+
+
+
         if (epilogue == CUBLASLT_EPILOGUE_RELU_AUX_BIAS
             || epilogue == CUBLASLT_EPILOGUE_DRELU)
             throw_if(m % 128 != 0,
@@ -982,9 +982,9 @@ const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
 
 const void* bias_for_gemm_bf16(const TensorView& bias)
 {
-    // Borrows the gradient workspace: a forward bias cast and a weight
-    // gradient cast are never live at the same time, and a bias is small
-    // enough that it never drives the buffer's size.
+
+
+
     bfloat16* dst = ensure_bf16_gradient_workspace(bias.size());
     cast_fp32_to_bf16(bias.size(), bias.as<float>(), dst);
     return dst;

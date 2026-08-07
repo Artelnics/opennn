@@ -6,21 +6,21 @@
 using namespace opennn;
 using namespace std;
 
-// The incremental decode path in GenerationParser engages only for tokenizers
-// with supports_incremental_decode() == true (BytePairTokenizer). The pinned
-// GenerationParserTest cases use a test tokenizer that takes the full-redecode
-// fallback, so these tests cover the incremental path against the fallback's
-// contract: emitted deltas concatenate to exactly decode() of the data ids.
+
+
+
+
+
 
 namespace
 {
 
-// [PAD]=0, he=1, llo=2, " wor"=3, ld=4, C3=5, A9=6, <s>=7, </s>=8, !=9, ?=10
-// Byte-level BPE vocab entries are byte-encoded: each raw byte b is stored as
-// the UTF-8 encoding of the codepoint byte_encoder[b]. Bytes 0xC3 and 0xA9 map
-// to themselves, so their entries are the UTF-8 of U+00C3 and U+00A9. Decoding
-// ids {5, 6} therefore yields the raw bytes C3 A9 — one "é" split across two
-// tokens, which is what the withholding test needs.
+
+
+
+
+
+
 BytePairTokenizer make_tokenizer()
 {
     BytePairTokenizer tokenizer;
@@ -91,9 +91,9 @@ TEST(GenerationParserIncremental, WithholdsIncompleteUtf8AcrossTokens)
 
     parser.push(1, callback);
     const size_t before_partial = deltas.size();
-    parser.push(5, callback);                  // lone lead byte 0xC3: withheld
+    parser.push(5, callback);
     EXPECT_EQ(deltas.size(), before_partial);
-    parser.push(6, callback);                  // 0xA9 completes U+00E9
+    parser.push(6, callback);
     parser.finish(callback);
 
     EXPECT_EQ(parser.get_content(), tokenizer.decode({1, 5, 6}));

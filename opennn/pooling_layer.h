@@ -9,10 +9,49 @@
 #pragma once
 
 #include "layer.h"
-#include "pool_operator.h"
+#include "operator.h"
 
 namespace opennn
 {
+
+struct PoolOperator : Operator
+{
+    enum Method { Max, Average };
+
+    Index input_height = 0;
+    Index input_width = 0;
+    Index input_channels = 0;
+
+    Index pool_height = 1;
+    Index pool_width = 1;
+    Index row_stride = 1;
+    Index column_stride = 1;
+    Index padding_height = 0;
+    Index padding_width = 0;
+
+    Method method = Max;
+
+    void set(Index, Index, Index,
+             Index, Index,
+             Index, Index,
+             Index, Index,
+             Method);
+
+    PoolOperator() = default;
+    PoolOperator(const PoolOperator&) = delete;
+    PoolOperator& operator=(const PoolOperator&) = delete;
+
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
+
+#ifdef OPENNN_HAS_CUDA
+    cudnnPoolingDescriptor_t get_pooling_descriptor() const;
+
+private:
+
+    mutable shared_ptr<cudnnPoolingStruct> pooling_descriptor;
+#endif
+};
 
 enum class PoolingMethod
 {

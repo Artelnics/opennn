@@ -219,13 +219,13 @@ def engine_command(engine, train_dir, data_arg, epochs, batch, precision, worker
         env["CUDA_VISIBLE_DEVICES"] = str(gpu_index)
 
     if engine == "opennn":
-        # CUDA graph is driven by the benchmark's own positional arg (1/0), not by
-        # an env var. The 224px ImageNet data is too large to stay GPU-resident, so
-        # opennn_resnet50_speed.cpp leaves residency off for image_size>0 anyway.
+
+
+
         cmd = [opennn_bin, str(train_dir), str(epochs), str(batch), precision,
                str(image_size), "1" if cuda_graph else "0"]
-        # Image-cache dir is passed as a positional arg (set in code via
-        # set_image_cache_dir), not as an environment variable.
+
+
         if opennn_cache_dir:
             cmd.append(str(opennn_cache_dir))
         if Path("/usr/lib/wsl/lib").exists():

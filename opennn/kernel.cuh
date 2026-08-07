@@ -319,24 +319,24 @@ void transpose_2d_cuda(const Index rows, const Index cols,
 
 inline constexpr int W8A16_MAX_M = 16;
 
-// Warps cooperating on one output row. One warp keeps the most rows in flight;
-// vocabulary-sized outputs stream better with a whole block per row.
+
+
 inline int w8a16_out_major_warps(const Index out_features)
 {
     return out_features >= 32768 ? 8 : 1;
 }
 
-// Weight-only INT8 linear: y = scale[j] * (x @ Wq) + bias, FP32 accumulate.
-// weights_out_major: W is {out, in} (row per output channel) — the fast path;
-// else {in, out}, which only reaches a fraction of the bandwidth.
+
+
+
 template<typename T>
 void w8a16_linear_cuda(const int m, const int in_features, const int out_features,
                        const bool weights_out_major,
                        const T* x, const int8_t* w, const float* scales,
                        const T* bias, T* y);
 
-// Dequantizes a {rows, row_length} INT8 matrix. scale_by_row picks scales[row]
-// (out-major weights, conv kernels) versus scales[column] (in-major weights).
+
+
 template<typename T>
 void w8_dequant_cuda(const Index rows, const Index row_length, const bool scale_by_row,
                      const int8_t* q, const float* scales, T* out);
@@ -441,7 +441,7 @@ void yolo_assemble_head_target_cuda(const float* target_flat, float* head_target
                                     Index batch, Index per_sample_floats,
                                     Index head_offset, Index head_floats);
 
-// kernel_c2psa.cu
+
 void c2psa_split_cuda(const void* x, void* xa, void* cat, int BT, int C, int H, cudaDataType_t dtype);
 void c2psa_fill_cat_left_cuda(const void* attn_v, void* cat, int BT, int C, int H, cudaDataType_t dtype);
 void c2psa_row_softmax_cuda(void* A, int rows, int T_sz, cudaDataType_t dtype);

@@ -42,7 +42,7 @@ assert torch.cuda.is_available(), "CUDA GPU required"
 dev = torch.device("cuda")
 torch.manual_seed(0)
 
-# --- most-optimized fp32/bf16 knobs -------------------------------------------
+
 torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True
 torch.backends.cudnn.benchmark = True
@@ -100,7 +100,7 @@ if use_compile:
 ctx = torch.autocast("cuda", dtype=torch.bfloat16) if use_bf16 \
     else torch.autocast("cuda", enabled=False)
 
-# Small pool of distinct random batches (matched shape); cycle through it.
+
 pool = max(8, args.warmup + args.steps)
 src = torch.randint(0, args.in_vocab, (pool, args.batch, args.in_seq), device=dev)
 dec = torch.randint(0, args.out_vocab, (pool, args.batch, args.dec_seq), device=dev)
@@ -136,8 +136,8 @@ if args.mode == "train":
     wall_s = time.perf_counter() - t0
     print(f"final_loss={float(last):.5f}")
 else:
-    # Forward-only: no autograd graph, no optimizer state -- the inference
-    # footprint is parameters + activations, like OpenNN's resident path.
+
+
     def forward(i):
         j = i % pool
         with ctx:

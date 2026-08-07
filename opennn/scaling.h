@@ -13,7 +13,7 @@
 
 namespace opennn
 {
-    // Shared ScalerMethod formulas; x is a float or an Eigen array expression.
+
     template<typename X>
     auto scale_minimum_maximum_formula(const X& x, const Descriptives& d, float min_range, float max_range)
     {
@@ -26,7 +26,7 @@ namespace opennn
         return (x - d.mean) / d.standard_deviation;
     }
 
-    // Scalar core: degenerate denominators guard to zero; minmax maps to [min_range, max_range].
+
     inline float scale_value(ScalerMethod method, const Descriptives& desc, float value,
                              float min_range = -1.0f, float max_range = 1.0f)
     {
@@ -51,7 +51,7 @@ namespace opennn
         return value;
     }
 
-    // Affine (scale, offset) core with +EPSILON denominators instead of degenerate guards (image pipeline).
+
     inline pair<float, float> scaling_affine(ScalerMethod scaler,
                                              const Descriptives& descriptives,
                                              float min_range,

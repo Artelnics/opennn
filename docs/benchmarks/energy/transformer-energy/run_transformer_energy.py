@@ -49,7 +49,7 @@ DEFAULT_BIN = os.path.join(REPO, "build", "bin", "opennn_transformer_energy")
 D, H, FF, LAYERS = 512, 8, 2048, 6
 
 
-# TF needs the venv's bundled CUDA libs on LD_LIBRARY_PATH to see the GPU.
+
 def tf_ld_path():
     site = os.path.join(os.path.dirname(os.path.dirname(VENV_PY)),
                         "lib", "python3.12", "site-packages", "nvidia")
@@ -175,7 +175,7 @@ def integrate(samples, idle_w, t_lo=None, t_hi=None):
         if prev is not None:
             pt, pw = prev
             dt = t - pt
-            if 0 < dt < 2:  # ignore logger startup/teardown gaps
+            if 0 < dt < 2:
                 e_total += 0.5 * (w + pw) * dt
                 e_active += 0.5 * ((w - idle_w) + (pw - idle_w)) * dt
                 span += dt
@@ -217,7 +217,7 @@ def gpu_state():
 
 
 def parse_marker(pattern, text, cast=float):
-    # anchored to line start so e.g. "epochs=" cannot match inside "max_epochs="
+
     m = re.search(pattern, text, re.MULTILINE)
     return cast(m.group(1)) if m else None
 
@@ -310,7 +310,7 @@ def cooldown(idle_w, seconds=20, mib_threshold=1200):
 
 def derive_shape():
     cmd = [args.opennn_bin, CORPUS, "probe"]
-    # probe mode never trains, so the seed is irrelevant here
+
     out = subprocess.run(cmd, capture_output=True, text=True, timeout=900).stdout
     if "RESULT=OK" not in out:
         raise RuntimeError(f"OpenNN probe failed:\n{out[-2000:]}")
@@ -362,8 +362,8 @@ def main():
     ap.add_argument("--batches", default="",
                     help="optional per-engine batches, e.g. "
                          "opennn=32,pytorch=24,tensorflow=20")
-    # lr 1e-4: 5e-4 (the ChatGPT example default) parks all three engines on the
-    # unigram plateau (~6.77) at batch 128; 1e-4 descends steadily (calibrated).
+
+
     ap.add_argument("--lr", type=float, default=1e-4)
     ap.add_argument("--max-epochs", type=int, default=20)
     ap.add_argument("--runs", type=int, default=3)

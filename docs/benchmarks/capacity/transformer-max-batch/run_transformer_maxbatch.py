@@ -34,11 +34,11 @@ DEFAULT_CORPUS = os.environ.get(
     "CHAT_CORPUS",
     os.path.join(os.environ.get("OPENNN_BENCH_DATA", os.path.expanduser("~/opennn-benchmark-data")),
                  "chat", "chat_pairs.txt"))
-CORPUS = DEFAULT_CORPUS   # overridden by --corpus in main()
+CORPUS = DEFAULT_CORPUS
 DEFAULT_BIN = os.path.join(REPO, "build", "bin", "opennn_transformer_maxbatch_trial")
 D, H, FF, LAYERS = 512, 8, 2048, 6
 
-# TF needs the venv's bundled CUDA libs on LD_LIBRARY_PATH to see the GPU.
+
 def tf_ld_path():
     site = os.path.join(os.path.dirname(os.path.dirname(VENV_PY)),
                         "lib", "python3.12", "site-packages", "nvidia")
@@ -79,12 +79,12 @@ def cmd_env(engine, precision, batch, steps, shape, mode="train"):
     env["CUDA_VISIBLE_DEVICES"] = "0"
     if engine == "opennn":
         if mode == "train":
-            # steps encoded as train_samples = steps*batch, epochs=0 (one pass).
+
             cmd = [args.opennn_bin, CORPUS, str(D), str(H), str(FF), str(LAYERS),
                    str(batch), str(steps * batch), "0", "train"]
         else:
-            # infer: epochs is reused as the timed forward-iteration count;
-            # train_samples only bounds the (unused) training split.
+
+
             cmd = [args.opennn_bin, CORPUS, str(D), str(H), str(FF), str(LAYERS),
                    str(batch), str(batch), str(steps), "infer"]
             if args.opennn_infer_cuda_graph:
@@ -117,9 +117,9 @@ def cmd_env(engine, precision, batch, steps, shape, mode="train"):
 
 def run_trial(engine, precision, batch, steps, shape, cap_mib, mode="train"):
     cmd, env = cmd_env(engine, precision, batch, steps, shape, mode)
-    # nvidia-smi reports GLOBAL device memory: desktop/compositor VRAM counts
-    # too. Judge the trial by its delta over the idle level sampled immediately
-    # before it, so external usage cannot fabricate a capacity boundary.
+
+
+
     idle_before = None
     try:
         idle_before = nvidia_used_mib()
@@ -183,14 +183,14 @@ def search_max_batch(engine, precision, shape, cap_mib, mode="train"):
 
 
 def measure_speed(engine, precision, batch, shape, cap_mib, mode="train"):
-    # Steady-state throughput. PyTorch/TF time only their bare step loop, but
-    # OpenNN's TRAIN wall_s covers the whole train() call, which includes a
-    # fixed warmup (cuDNN plan selection, allocations) and teardown (parameter
-    # D2H, frees) inside the timed window. Two-point differencing -- run 1x and
-    # 4x the steps and divide the extra samples by the extra wall time --
-    # cancels that fixed cost exactly, so all engines report the same quantity.
-    # The OpenNN INFER trial times only its resident forward loop (warmup and
-    # plan selection excluded in-process), so it needs no differencing.
+
+
+
+
+
+
+
+
     long_steps = args.speed_steps * 4
     if engine == "opennn" and mode == "train":
         short = run_trial(engine, precision, batch, args.speed_steps, shape, cap_mib, mode)
@@ -206,7 +206,7 @@ def measure_speed(engine, precision, batch, shape, cap_mib, mode="train"):
 
 
 def derive_shape():
-    # Run the OpenNN trial tiny to read the model shape (vocab/seq) it builds.
+
     cmd, env = cmd_env("opennn", "fp32", 8, 1, (0, 0, 0, 0, 0))
     out = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=600).stdout
     def g(k): return int(re.search(rf"{k}=(\d+)", out).group(1))

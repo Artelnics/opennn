@@ -60,8 +60,8 @@ class Seq2SeqTransformer(nn.Module):
     def forward(self, src, tgt):
         s = self.pos(self.src_emb(src) * self.scale)
         t = self.pos(self.tgt_emb(tgt) * self.scale)
-        # Softmax over the vocabulary: OpenNN's Transformer outputs
-        # probabilities, so the identical-config counterpart must too.
+
+
         return torch.softmax(self.out(self.transformer(s, t)), dim=-1)
 
 
@@ -73,14 +73,14 @@ print(f"parameters={params}")
 src = torch.randint(0, vocab, (batch, seq), device=dev)
 tgt = torch.randint(0, vocab, (batch, seq), device=dev)
 
-# OPENNN_BF16-equivalent: autocast to bf16 (flash-attention, like OpenNN's bf16 SDPA path).
+
 import os
 use_bf16 = os.environ.get("PT_BF16") is not None
 print(f"precision={'bf16' if use_bf16 else 'fp32'}")
 ctx = torch.autocast("cuda", dtype=torch.bfloat16) if use_bf16 else torch.autocast("cuda", enabled=False)
 
-# CUDA graph capture/replay (PT_NOGRAPH=1 disables): same-condition counterpart
-# of OpenNN's captured resident forward.
+
+
 use_graph = os.environ.get("PT_NOGRAPH") is None
 
 if use_graph:
@@ -97,7 +97,7 @@ if use_graph:
         model(src, tgt)
     print("cuda_graph=on")
 
-    graph.replay()  # warmup replay
+    graph.replay()
     torch.cuda.synchronize()
     t0 = time.perf_counter()
     for _ in range(iters):
@@ -106,7 +106,7 @@ if use_graph:
     per = (time.perf_counter() - t0) / iters
 else:
     with torch.no_grad(), ctx:
-        model(src, tgt)  # warmup
+        model(src, tgt)
         torch.cuda.synchronize()
         t0 = time.perf_counter()
         for _ in range(iters):

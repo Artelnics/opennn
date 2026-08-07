@@ -185,7 +185,7 @@ def parse_metrics(raw, metrics, speedups, default_engine="opennn"):
             net = fields.pop("net", None)
             seed = fields.get("seed", None)
             if seed not in (None, "aggregate"):
-                continue  # per-seed line; the aggregate row is the headline
+                continue
             if not phase or not scenario or not net:
                 continue
             scenario_entry = (metrics.setdefault(engine, {})
@@ -234,7 +234,7 @@ def run_python_engine(name, gpu_index, force_cpu, timeout):
     try:
         proc = subprocess.run(command, cwd=HERE, env=env, capture_output=True,
                               text=True, timeout=timeout)
-    except Exception as exc:  # noqa: BLE001 - report and continue
+    except Exception as exc:
         print(f"{name} failed to launch: {exc}", file=sys.stderr)
         return None
     if proc.returncode != 0:

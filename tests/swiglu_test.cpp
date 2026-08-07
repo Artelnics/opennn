@@ -56,7 +56,7 @@ TEST(SiLUTest, ActivationGradientMatchesNumerical)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    // SiLU fused inside Dense (the realistic path; exercises the needs_input backward).
+
     neural_network.add_layer(make_unique<opennn::Dense>(Shape{features}, Shape{hidden}, "SiLU"), {-1});
     neural_network.add_layer(make_unique<opennn::Dense>(Shape{hidden}, Shape{targets_number}, "Identity"));
     neural_network.compile();
@@ -121,8 +121,8 @@ TEST(GatedDenseTest, ForwardMatchesHandComputed)
 namespace
 {
 
-// Exercises both weight gradients and the accumulated input delta of the two
-// projections sharing one input.
+
+
 float gated_dense_max_gradient_error(bool use_bias)
 {
     const Index samples_number = 5;
@@ -165,13 +165,13 @@ float gated_dense_max_gradient_error(bool use_bias)
 
 TEST(GatedDenseTest, GradientMatchesNumerical)
 {
-    EXPECT_LT(gated_dense_max_gradient_error(/*use_bias*/ false), type(2.0e-3));
+    EXPECT_LT(gated_dense_max_gradient_error( false), type(2.0e-3));
 }
 
 
 TEST(GatedDenseTest, GradientMatchesNumericalWithBias)
 {
-    EXPECT_LT(gated_dense_max_gradient_error(/*use_bias*/ true), type(2.0e-3));
+    EXPECT_LT(gated_dense_max_gradient_error( true), type(2.0e-3));
 }
 
 

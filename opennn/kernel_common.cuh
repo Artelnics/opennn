@@ -22,8 +22,8 @@ cudaStream_t get_compute_stream();
 
 static constexpr int block_size = 256;
 
-// Integer ids handed to kernels, derived from the shared enum in
-// configuration.h so host and device can never drift.
+
+
 static constexpr int activation_identity   = int(opennn::ActivationFunction::Identity);
 static constexpr int activation_sigmoid    = int(opennn::ActivationFunction::Sigmoid);
 static constexpr int activation_tanh       = int(opennn::ActivationFunction::Tanh);
@@ -126,15 +126,15 @@ static inline bool are_float4_aligned(const Ptrs*... ptrs)
     return (is_float4_aligned(ptrs) && ...);
 }
 
-// A null-or-4-byte-aligned pointer can take paired __nv_bfloat162 stores.
+
 static inline bool is_bfloat162_aligned(const void* ptr)
 {
     return ptr == nullptr || (reinterpret_cast<std::uintptr_t>(ptr) & 0x3) == 0;
 }
 
-// Launch a float4-vectorized kernel of shape (n_vec, n, args...): the kernel
-// processes n_vec float4 packets plus a scalar tail. When aligned is false the
-// whole range runs through the tail loop (n_vec = 0).
+
+
+
 template<typename K, typename... Args>
 static inline void launch_vec4_on(cudaStream_t stream, Index n, bool aligned, K kernel, Args... args)
 {
@@ -156,7 +156,7 @@ __device__ __forceinline__ float sigmoid_f(float x)
     return 1.0f / (1.0f + expf(-x));
 }
 
-// A token row counts as padding when every feature is (near) zero.
+
 static constexpr float padding_epsilon = 1e-7f;
 
 template<typename T>

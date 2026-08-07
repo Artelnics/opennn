@@ -31,8 +31,8 @@ def batches(n: int, batch: int):
 
 
 def run_tensorflow(args: argparse.Namespace) -> None:
-    # Thread pinning must happen before TF initializes; oneDNN also honors
-    # OMP_NUM_THREADS, which the orchestrator sets alongside --threads.
+
+
     if args.threads:
         os.environ.setdefault("OMP_NUM_THREADS", str(args.threads))
 

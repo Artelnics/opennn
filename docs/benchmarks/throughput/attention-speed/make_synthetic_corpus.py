@@ -33,22 +33,22 @@ def main():
     if len(sys.argv) < 5:
         sys.exit(__doc__)
     out_path = sys.argv[1]
-    vocab = int(sys.argv[2])          # distinct content words in the pool
-    seq_len = int(sys.argv[3])        # desired model input sequence length L
+    vocab = int(sys.argv[2])
+    seq_len = int(sys.argv[3])
     n_samples = int(sys.argv[4])
     seed = int(sys.argv[5]) if len(sys.argv) > 5 else 1234
 
-    # tokens per line so OpenNN derives exactly seq_len for input and target.
-    in_tokens = seq_len - 2           # +2 for START/END -> seq_len
-    tgt_tokens = seq_len - 1          # +1 -> seq_len
+
+    in_tokens = seq_len - 2
+    tgt_tokens = seq_len - 1
     if in_tokens < 1 or tgt_tokens < 1:
         sys.exit("seq_len too small (need >= 3)")
 
     pool = [f"w{i}" for i in range(vocab)]
     rng = lcg(seed)
 
-    # One flat token stream: first `vocab` tokens are the pool in order (so every
-    # word appears -> stable vocabulary across regenerations), the rest random.
+
+
     per_line = in_tokens + tgt_tokens
     total = n_samples * per_line
     tokens = pool + [pool[next(rng) % vocab] for _ in range(total - vocab)]

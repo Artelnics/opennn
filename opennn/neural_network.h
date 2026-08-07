@@ -129,9 +129,9 @@ public:
     Index get_first_trainable_layer_index() const;
     Index get_last_trainable_layer_index() const;
 
-    // Resets the first/last-trainable index cache so the getters recompute it.
-    // Needed after changing a layer's trainable flag (e.g. YOLO transfer learning
-    // freezes backbone layers), otherwise the cache baked in from_JSON is stale.
+
+
+
     void invalidate_trainable_layer_cache() { first_trainable_cache_ = -1; last_trainable_cache_ = -1; }
 
     Index get_inputs_number() const;
@@ -177,8 +177,8 @@ public:
 
     void load(const filesystem::path&);
     void load_parameters_binary(const filesystem::path&);
-    // Logical parameter-buffer order, one BF16 value per FP32 master slot.
-    // CUDA inference streams BF16 weights directly into compact device storage.
+
+
     void load_parameters_bf16_inference_binary(const filesystem::path&);
     void load_states_binary(const filesystem::path&);
 
@@ -204,8 +204,8 @@ public:
 
     void upload_parameters_bf16_inference();
 
-    // Quantizes the host FP32 master to per-output-channel symmetric INT8
-    // compact device storage; requires an INT8-configured network.
+
+
     void upload_parameters_int8_inference();
 
     bfloat16* get_parameters_bf16_mirror_data()
@@ -275,9 +275,9 @@ private:
 
     void activate_transposed_inference_weights();
 
-    // One canonical walk over every parameter slot, shared by sizing, the
-    // inference loaders/uploads and link_parameters() so their compact-storage
-    // offsets can never drift. Offsets in the slot are the slot's own start.
+
+
+
     struct ParameterSlot
     {
         Layer* layer = nullptr;

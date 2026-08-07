@@ -284,8 +284,8 @@ TEST_F(ModelExpressionTest, SaveThrowsOnUnwritablePath)
 }
 
 
-// Pins the per-language numerically stable softmax blocks of the exported
-// models (max-shift, exp call, normalize) for a softmax classification network.
+
+
 class ModelExpressionSoftmaxTest : public ::testing::Test
 {
 protected:

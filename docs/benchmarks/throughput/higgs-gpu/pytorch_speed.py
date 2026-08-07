@@ -86,15 +86,15 @@ def main():
     print(f"activation={activation}")
     print(f"precision={precision} autocast={use_autocast} tf32={allow_tf32} shuffle={shuffle}")
 
-    # Whole training set resident on the GPU once (no host<->device copy per step).
+
     x = torch.from_numpy(x_np).to(device).contiguous()
     y = torch.from_numpy(y_np).to(device).contiguous()
 
-    # The model emits a single raw logit; the sigmoid of the canonical
-    # (28 -> hidden -> hidden -> 1, sigmoid output) contract is folded into
-    # BCEWithLogitsLoss for training and applied explicitly to the logits for
-    # the reported probabilities. Keeping the loss on logits is what makes bf16
-    # autocast safe -- BCELoss / sigmoid-probabilities are unsafe to autocast.
+
+
+
+
+
     act_layer = torch.nn.ReLU if activation == "relu" else torch.nn.Tanh
     layers = []
     current = features
@@ -127,8 +127,8 @@ def main():
     def run_epoch():
         model.train()
         if shuffle:
-            # Fresh permutation each epoch, resident on the GPU. Per-batch index
-            # gather is PyTorch's fast shuffle path.
+
+
             perm = torch.randperm(n, device=device)
             for s in starts:
                 idx = perm[s:s + batch]
@@ -138,14 +138,14 @@ def main():
                 train_step(x[s:s + batch], y[s:s + batch])
         torch.cuda.synchronize()
 
-    # Warmup: cuDNN autotuning, workspace allocation.
+
     print("warmup...")
     run_epoch()
     run_epoch()
 
-    # TRAIN_*_UNIX markers delimit the energy-integration window for
-    # run_higgs_dense_energy.py; warmup stays outside it. run_epoch ends with a
-    # torch.cuda.synchronize(), so the end marker is GPU-complete.
+
+
+
     print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
     times = []
     for _ in range(epochs):
@@ -158,7 +158,7 @@ def main():
     median_epoch_s = times[len(times) // 2]
     samples_per_sec = samples / median_epoch_s
 
-    # Score the test set: whole batch-aligned slice on the GPU, forward-only.
+
     processed = (xt_np.shape[0] // batch) * batch
     xt = torch.from_numpy(xt_np[:processed]).to(device).contiguous()
     model.eval()
@@ -167,8 +167,8 @@ def main():
         for s in range(0, processed, batch):
             with ctx:
                 logits = model(xt[s:s + batch])
-            # Sigmoid outside autocast, on fp32 logits, so the reported
-            # probabilities match the sigmoid-output contract exactly.
+
+
             probs = torch.sigmoid(logits.float())
             preds.append(probs.cpu().numpy())
     pred_np = np.vstack(preds) if preds else np.empty((0, 1), dtype=np.float32)

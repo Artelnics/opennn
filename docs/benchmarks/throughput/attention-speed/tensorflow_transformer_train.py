@@ -48,9 +48,9 @@ if use_bf16:
     tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
 
 
-# --- read the SAME corpus OpenNN trains on, to match shapes exactly -------------
-# OpenNN's LanguageDataset: input_seq = max(#input tokens) + 2 (START/END),
-# decoder_seq = max(#target tokens) + 1, vocab = distinct tokens + 4 reserved.
+
+
+
 def read_corpus(path):
     in_lens, tgt_lens, vocab = [], [], set()
     for line in open(path, encoding="utf-8"):
@@ -64,7 +64,7 @@ def read_corpus(path):
         vocab.update(ina); vocab.update(tgta)
     input_seq = max(in_lens) + 2
     decoder_seq = max(tgt_lens) + 1
-    vocab_size = len(vocab) + 4   # [PAD] [UNK] [START] [END]
+    vocab_size = len(vocab) + 4
     return len(in_lens), input_seq, decoder_seq, vocab_size
 
 
@@ -119,8 +119,8 @@ def build():
         s = encoder_layer(s)
     for _ in range(layers):
         t = decoder_layer(t, s, causal)
-    # logits kept in fp32 so cross-entropy/softmax is numerically identical to
-    # the fp32 path even under the bf16 policy (Keras mixed-precision convention).
+
+
     out = K.Dense(vocab, dtype="float32")(t)
     return tf.keras.Model([src, tgt], out)
 
@@ -130,9 +130,9 @@ with tf.device("/GPU:0"):
     params = model.count_params()
     print(f"parameters={params}")
 
-    # Synthetic data matching OpenNN's corpus shape (same #samples, seq lengths,
-    # vocab). Throughput is shape/FLOP bound, so matched shapes make the
-    # comparison fair; the token values differ but fwd+bwd+optimizer cost is equal.
+
+
+
     src = tf.random.uniform((samples, input_seq), 0, vocab, dtype=tf.int32)
     dec = tf.random.uniform((samples, decoder_seq), 0, vocab, dtype=tf.int32)
     tgt = tf.random.uniform((samples, decoder_seq), 0, vocab, dtype=tf.int32)
@@ -145,7 +145,7 @@ with tf.device("/GPU:0"):
     @tf.function(jit_compile=True)
     def train_step(s, d, y):
         with tf.GradientTape() as tape:
-            logits = model([s, d], training=True)     # (batch, decoder_seq, vocab)
+            logits = model([s, d], training=True)
             loss = loss_fn(y, logits)
         grads = tape.gradient(loss, model.trainable_variables)
         opt.apply_gradients(zip(grads, model.trainable_variables))
@@ -160,13 +160,13 @@ with tf.device("/GPU:0"):
             last = train_step(src[i:i + batch], dec[i:i + batch], tgt[i:i + batch])
         return float(last)
 
-    # warmup epoch (traces + XLA-compiles the step, matches OpenNN train()'s
-    # internal CUDA warmup and PyTorch's warmup epoch), excluded from timing.
+
+
     run_epoch()
 
     t0 = time.perf_counter()
     last = 0.0
-    timed_passes = max(1, epochs)                      # OpenNN's train() runs max(1, maximum_epochs) passes
+    timed_passes = max(1, epochs)
     for _ in range(timed_passes):
         last = run_epoch()
     wall_s = time.perf_counter() - t0

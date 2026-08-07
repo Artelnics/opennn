@@ -40,8 +40,8 @@ def _mem_counters():
     pmc.cb = ctypes.sizeof(PMC)
     kernel32 = ctypes.windll.kernel32
     handle = kernel32.GetCurrentProcess()
-    # K32GetProcessMemoryInfo is exported by kernel32 on modern Windows and
-    # avoids the psapi.dll vs kernel32 forwarding confusion.
+
+
     get_mem = getattr(kernel32, "K32GetProcessMemoryInfo", None)
     if get_mem is None:
         get_mem = ctypes.WinDLL("psapi").GetProcessMemoryInfo
@@ -67,9 +67,9 @@ def main():
         return 2
 
     csv_path = sys.argv[1]
-    # Optional 2nd arg: pandas read dtype. Default float64 is what pd.read_csv
-    # does with no dtype= argument — the realistic out-of-the-box path. Pass
-    # "float32" to measure the leaner best case.
+
+
+
     read_dtype = sys.argv[2] if len(sys.argv) > 2 else "float64"
 
     try:
@@ -81,18 +81,18 @@ def main():
 
         np_read = np.float32 if read_dtype == "float32" else np.float64
 
-        # The standard load path: pandas parses the entire CSV into a DataFrame.
-        # This is the allocation that runs out of memory on large files.
+
+
         frame = pd.read_csv(csv_path, header=None, dtype=np_read)
         print(f"read_dtype={read_dtype}")
         print(f"loaded_samples={len(frame)}")
 
-        # HIGGS layout: 28 feature columns then the label column last, matching
-        # OpenNN's "target is the final column" convention.
+
+
         input_variables = frame.shape[1] - 1
 
-        # Training in float32 regardless, matching OpenNN; the read dtype above
-        # is what determines the pandas-side load footprint.
+
+
         values = torch.from_numpy(frame.to_numpy(dtype=np.float32))
         del frame
         import gc
@@ -110,7 +110,7 @@ def main():
         loss_fn = torch.nn.MSELoss()
         optimizer = torch.optim.Adam(model.parameters())
 
-        # One epoch over batches of 1000 — enough to allocate the training buffers.
+
         batch_size = 1000
         n = inputs.shape[0]
         model.train()
@@ -131,7 +131,7 @@ def main():
         print(f"peak_mb={peak_working_set_mb():.3f}")
         print("RESULT=OOM")
         return 1
-    except Exception as exc:  # noqa: BLE001 - report and continue the sweep
+    except Exception as exc:
         sys.stderr.write(f"{type(exc).__name__}: {exc}\n")
         print(f"peak_mb={peak_working_set_mb():.3f}")
         print("RESULT=ERROR")

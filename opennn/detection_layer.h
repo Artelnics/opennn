@@ -9,10 +9,29 @@
 #pragma once
 
 #include "layer.h"
-#include "detection_operator.h"
+#include "operator.h"
 
 namespace opennn
 {
+
+struct DetectionOperator : Operator
+{
+    enum class ClassActivation { Softmax, Sigmoid };
+
+    Index grid_size = 0;
+    Index grid_width = 0;
+    Index boxes_per_cell = 0;
+    Index classes_number = 0;
+    ClassActivation class_activation = ClassActivation::Softmax;
+
+    vector<array<float, 2>> anchors;
+    mutable Buffer device_anchors;
+
+    void set(const Shape&, const vector<array<float, 2>>&);
+
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
+};
 
 class Detection final : public Layer
 {

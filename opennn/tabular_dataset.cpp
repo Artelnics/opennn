@@ -577,10 +577,10 @@ vector<string> TabularDataset::unuse_least_correlated_variables(const Index inpu
     return unused_variables;
 }
 
-// Removes redundant inputs that are highly correlated WITH EACH OTHER (collinear),
-// as opposed to unuse_uncorrelated_variables which drops inputs weakly correlated
-// with the target. Backs the "Unuse collinear variables" task; the caller handles
-// the network/input-shape rebuild, so this only flips the redundant variables to None.
+
+
+
+
 vector<string> TabularDataset::unuse_collinear_variables(const float maximum_correlation)
 {
     const Tensor<Correlation, 2> correlations = calculate_input_variable_pearson_correlations();

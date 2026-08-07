@@ -16,19 +16,19 @@
 
 using namespace opennn;
 
-// The CPU LSTM in long_short_term_memory_operator.cpp keeps two
-// implementations switched on hidden size H: scalar loops (H < 64) and a
-// GEMM-fused path (H >= 64). These tests prove fused-path correctness on CPU
-// and time both sides of the boundary, so the scalar path can be deleted if
-// fused latency at small H is acceptable. There is no seam to force one H
-// through both paths (the H >= 64 gate is the only switch), so each path is
-// checked against the same library-independent references: a closed-form
-// constant-parameter recurrence and finite-difference gradients.
+
+
+
+
+
+
+
+
 
 namespace {
 
-// With every parameter equal to c and every input equal to 1, all hidden
-// units are identical and the layer reduces to a scalar recurrence.
+
+
 vector<double> reference_constant_outputs(const Index features,
                                           const Index neurons,
                                           const Index time_steps,
@@ -102,8 +102,8 @@ void check_constant_forward(const Index neurons, const string& cell_activation)
 }
 
 
-// Constant parameters would hide gate-packing mistakes in the fused path
-// (all [f|i|g|o] blocks identical), so use a deterministic varied pattern.
+
+
 void set_varied_parameters(NeuralNetwork& neural_network)
 {
     float* parameters = neural_network.get_parameters_data();
@@ -114,7 +114,7 @@ void set_varied_parameters(NeuralNetwork& neural_network)
 }
 
 
-// Same methodology and tolerance as LongShortTermMemoryLayerTest.BackPropagate.
+
 void check_gradient(const Index neurons, const bool return_sequences)
 {
     const Index samples_number = 4;
@@ -148,14 +148,14 @@ void check_gradient(const Index neurons, const bool return_sequences)
         << "H=" << neurons << " return_sequences=" << return_sequences;
 }
 
-} // namespace
+}
 
 
 TEST(LstmFusedPath, ForwardMatchesAcrossBoundary)
 {
     check_constant_forward(64, "Tanh");
     check_constant_forward(96, "Tanh");
-    check_constant_forward(64, "Identity"); // fused generic-gates branch
+    check_constant_forward(64, "Identity");
 
     check_gradient(64, false);
     check_gradient(64, true);
@@ -165,8 +165,8 @@ TEST(LstmFusedPath, ForwardMatchesAcrossBoundary)
 
 TEST(LstmFusedPath, ScalarAndFusedAgree)
 {
-    // Identical config on both sides of the H >= 64 switch, each checked
-    // against the same references; no seam allows one H through both paths.
+
+
     check_constant_forward(63, "Tanh");
     check_constant_forward(64, "Tanh");
 
@@ -175,16 +175,16 @@ TEST(LstmFusedPath, ScalarAndFusedAgree)
 }
 
 
-// Manual benchmark: run with --gtest_also_run_disabled_tests
-// --gtest_filter=LstmFusedPath.DISABLED_BenchmarkBoundary
-//
-// Forecasting-representative shape: batch 32, T = 24, F = 8. Rows with H < 64
-// use the scalar path, H >= 64 the fused path. fwd_us / bwd_us are
-// microseconds per call. To decide whether the scalar path can be deleted:
-// the fused path's per-call fixed cost (gate packing + GEMM/OMP setup) is
-// roughly its H = 64 time minus the scalar H = 48 time; small-H shapes would
-// inherit that cost if the gate were lowered. If the H = 64 fused times are
-// within budget for the scalar rows' use cases, the scalar path can go.
+
+
+
+
+
+
+
+
+
+
 TEST(LstmFusedPath, DISABLED_BenchmarkBoundary)
 {
     const Index samples_number = 32;

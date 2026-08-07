@@ -10,7 +10,7 @@
 using namespace opennn;
 
 
-// A bias-free Dense exposes only the weight parameter: input*output, no +output.
+
 TEST(DenseNoBiasTest, ParameterCountExcludesBias)
 {
     NeuralNetwork with_bias;
@@ -28,9 +28,9 @@ TEST(DenseNoBiasTest, ParameterCountExcludesBias)
 }
 
 
-// Forward of a bias-free Dense is exactly x * W (no bias term). With an
-// all-ones weight, output[j] = sum_i(input_i) for every j (independent of the
-// weight storage order); a stray bias would shift this away from sum(input).
+
+
+
 TEST(DenseNoBiasTest, ForwardIsPureMatmul)
 {
     NeuralNetwork neural_network;
@@ -51,7 +51,7 @@ TEST(DenseNoBiasTest, ForwardIsPureMatmul)
     neural_network.forward_propagate(input_views, forward_propagation, false);
 
     const float* output = forward_propagation.get_outputs().as<type>();
-    EXPECT_NEAR(output[0], type(3), 1.0e-5f);   // 1 + 2, no bias
+    EXPECT_NEAR(output[0], type(3), 1.0e-5f);
     EXPECT_NEAR(output[1], type(3), 1.0e-5f);
     EXPECT_NEAR(output[2], type(3), 1.0e-5f);
 }

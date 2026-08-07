@@ -23,7 +23,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "benchmark_manifest.json"
 
-# Admin/guide docs that live at the top level and are not per-benchmark folders.
+
 ADMIN_DOCS = {
     "README.md",
     "DATA_POLICY.md",
@@ -196,7 +196,7 @@ def validate_benchmark_ids(data: dict[str, Any]) -> tuple[list[str], list[str]]:
             add_error(errors, f'{rel}: result JSON uses key "benchmark" (must be "benchmark_id")')
         for match in re.finditer(r'"benchmark_id"\s*:\s*f?"([^"]*)"', text):
             value = match.group(1)
-            if "{" in value:  # f-string with a mode interpolation: check the prefix
+            if "{" in value:
                 prefix = value.split("{", 1)[0]
                 if not any(i.startswith(prefix) for i in ids):
                     add_error(errors, f"{rel}: benchmark_id prefix {prefix!r} matches no manifest id")

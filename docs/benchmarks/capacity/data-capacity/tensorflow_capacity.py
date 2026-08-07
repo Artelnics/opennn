@@ -22,7 +22,7 @@ import os
 import sys
 
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
-os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")  # CPU memory benchmark
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
 
 
 def _mem_counters():
@@ -76,12 +76,12 @@ def main():
         tf.random.set_seed(42)
         np_read = np.float32 if read_dtype == "float32" else np.float64
 
-        # The standard load path: pandas parses the entire CSV into a DataFrame.
+
         frame = pd.read_csv(csv_path, header=None, dtype=np_read)
         print(f"read_dtype={read_dtype}")
         print(f"loaded_samples={len(frame)}")
 
-        # HIGGS layout: 28 feature columns then the label column last.
+
         input_variables = frame.shape[1] - 1
 
         values = tf.convert_to_tensor(frame.to_numpy(dtype=np.float32))
@@ -122,7 +122,7 @@ def main():
         print(f"peak_mb={peak_working_set_mb():.3f}")
         print("RESULT=OOM")
         return 1
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         sys.stderr.write(f"{type(exc).__name__}: {exc}\n")
         print(f"peak_mb={peak_working_set_mb():.3f}")
         print("RESULT=ERROR")
