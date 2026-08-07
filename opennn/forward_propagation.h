@@ -69,6 +69,12 @@ struct ForwardPropagation
              bool inputs_pre_scaled = false,
              Loss* joint_loss = nullptr);
 
+    // Second half of set(): turns planned offsets into tensor views. Returns
+    // the largest layer's byte footprint.
+    Index bind_slot_views(const vector<vector<TensorSpec>>& forward_specs,
+                          const vector<vector<Index>>& slot_offsets,
+                          const vector<vector<Index>>& transient_slot_offsets);
+
     struct JointDeltaPlan
     {
         BackPropagation::DeltaLayout layout;
@@ -81,7 +87,15 @@ struct ForwardPropagation
     void stage_position(cudaStream_t stream);
 
     void set_active_sequence_length(Index length);
+
+    // Restricts the final layer to `count` sequence positions starting at
+    // `start`, so its output tensor only holds that window (for a vocabulary
+    // projection this is the largest tensor in the net). With one sample the
+    // window rows are contiguous and are aliased in place; with more, each
+    // sample's rows sit `sequence` rows apart, so they are gathered into
+    // `output_window_input` before the layer runs.
     void set_output_sequence_window(Index start, Index count);
+    void gather_output_window();
 
     Index get_sequence_capacity() const noexcept { return sequence_capacity; }
     Index get_final_output_capacity() const noexcept { return final_output_capacity; }
@@ -129,6 +143,12 @@ struct ForwardPropagation
     Index active_sequence_length = 0;
     Index final_output_capacity = 0;
     Index final_output_layer = -1;
+
+    // Empty unless the output window has to be gathered (see
+    // set_output_sequence_window).
+    Buffer output_window_input;
+    Index output_window_start = 0;
+    Index output_window_count = 0;
 
     bool use_cuda_graph = false;
     bool cuda_graph_failed = false;

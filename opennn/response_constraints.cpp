@@ -608,16 +608,16 @@ AstPtr clone(const Ast& node)
     return copy;
 }
 
-bool is_const(const Ast& node, float& value)
+optional<float> constant_value(const Ast& node)
 {
-    if (node.kind == Ast::Kind::Const) { value = node.constant; return true; }
-    return false;
+    if (node.kind == Ast::Kind::Const) return node.constant;
+    return nullopt;
 }
 
 AstPtr make_neg(AstPtr a)
 {
-    float av;
-    if (is_const(*a, av)) return make_const(-av);
+    if (const optional<float> value = constant_value(*a))
+        return make_const(-*value);
 
     auto node = make_unique<Ast>();
     node->kind = Ast::Kind::UnaryNeg;
@@ -627,60 +627,57 @@ AstPtr make_neg(AstPtr a)
 
 AstPtr make_add(AstPtr a, AstPtr b)
 {
-    float av, bv;
-    const bool a_c = is_const(*a, av);
-    const bool b_c = is_const(*b, bv);
-    if (a_c && b_c) return make_const(av + bv);
-    if (a_c && av == 0.0f) return b;
-    if (b_c && bv == 0.0f) return a;
+    const optional<float> av = constant_value(*a);
+    const optional<float> bv = constant_value(*b);
+    if (av && bv) return make_const(*av + *bv);
+    if (av && *av == 0.0f) return b;
+    if (bv && *bv == 0.0f) return a;
     return make_binary(Ast::Kind::Add, move(a), move(b));
 }
 
 AstPtr make_sub(AstPtr a, AstPtr b)
 {
-    float av, bv;
-    const bool a_c = is_const(*a, av);
-    const bool b_c = is_const(*b, bv);
-    if (a_c && b_c) return make_const(av - bv);
-    if (b_c && bv == 0.0f) return a;
-    if (a_c && av == 0.0f) return make_neg(move(b));
+    const optional<float> av = constant_value(*a);
+    const optional<float> bv = constant_value(*b);
+    if (av && bv) return make_const(*av - *bv);
+    if (bv && *bv == 0.0f) return a;
+    if (av && *av == 0.0f) return make_neg(move(b));
     return make_binary(Ast::Kind::Sub, move(a), move(b));
 }
 
 AstPtr make_mul(AstPtr a, AstPtr b)
 {
-    float av, bv;
-    const bool a_c = is_const(*a, av);
-    const bool b_c = is_const(*b, bv);
-    if (a_c && av == 0.0f) return make_const(0.0f);
-    if (b_c && bv == 0.0f) return make_const(0.0f);
-    if (a_c && b_c) return make_const(av * bv);
-    if (a_c && av == 1.0f) return b;
-    if (b_c && bv == 1.0f) return a;
+    const optional<float> av = constant_value(*a);
+    const optional<float> bv = constant_value(*b);
+    if (av && *av == 0.0f) return make_const(0.0f);
+    if (bv && *bv == 0.0f) return make_const(0.0f);
+    if (av && bv) return make_const(*av * *bv);
+    if (av && *av == 1.0f) return b;
+    if (bv && *bv == 1.0f) return a;
     return make_binary(Ast::Kind::Mul, move(a), move(b));
 }
 
 AstPtr make_div(AstPtr a, AstPtr b)
 {
-    float av, bv;
-    const bool a_c = is_const(*a, av);
-    const bool b_c = is_const(*b, bv);
-    if (a_c && av == 0.0f) return make_const(0.0f);
-    if (b_c && bv == 1.0f) return a;
-    if (a_c && b_c && bv != 0.0f) return make_const(av / bv);
+    const optional<float> av = constant_value(*a);
+    const optional<float> bv = constant_value(*b);
+    if (av && *av == 0.0f) return make_const(0.0f);
+    if (bv && *bv == 1.0f) return a;
+    if (av && bv && *bv != 0.0f) return make_const(*av / *bv);
     return make_binary(Ast::Kind::Div, move(a), move(b));
 }
 
 AstPtr make_pow(AstPtr a, AstPtr b)
 {
-    float bv;
-    if (is_const(*b, bv))
+    const optional<float> bv = constant_value(*b);
+    if (bv)
     {
-        if (bv == 0.0f) return make_const(1.0f);
-        if (bv == 1.0f) return a;
+        if (*bv == 0.0f) return make_const(1.0f);
+        if (*bv == 1.0f) return a;
     }
-    float av;
-    if (is_const(*a, av) && is_const(*b, bv)) return make_const(pow(av, bv));
+
+    const optional<float> av = constant_value(*a);
+    if (av && bv) return make_const(pow(*av, *bv));
     return make_binary(Ast::Kind::Pow, move(a), move(b));
 }
 
@@ -747,20 +744,18 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
 
     case Pow:
     {
-        float exponent;
-        if (is_const(*node.children[1], exponent))
+        if (const optional<float> exponent = constant_value(*node.children[1]))
         {
             AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
-            AstPtr power = make_pow(clone(*node.children[0]), make_const(exponent - 1.0f));
-            return make_mul(make_mul(make_const(exponent), move(power)), move(da));
+            AstPtr power = make_pow(clone(*node.children[0]), make_const(*exponent - 1.0f));
+            return make_mul(make_mul(make_const(*exponent), move(power)), move(da));
         }
 
-        float base;
-        if (is_const(*node.children[0], base))
+        if (const optional<float> base = constant_value(*node.children[0]))
         {
             AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
-            AstPtr value = make_pow(make_const(base), clone(*node.children[1]));
-            return make_mul(make_mul(move(value), make_const(log(base))), move(db));
+            AstPtr value = make_pow(make_const(*base), clone(*node.children[1]));
+            return make_mul(make_mul(move(value), make_const(log(*base))), move(db));
         }
 
         AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
@@ -1120,7 +1115,7 @@ bool all_formula_constraints_are_linear(const vector<MultivariateConstraint>& fo
     return !formula_constraints.empty()
         && ranges::all_of(formula_constraints, [](const MultivariateConstraint& formula_constraint)
            {
-               return !formula_constraint.uses_callback
+               return !formula_constraint.callback
                    && formula_constraint.compiled.shape == FormulaShape::Affine;
            });
 }
@@ -1187,7 +1182,7 @@ bool constraint_is_satisfied(const MultivariateConstraint& constraint,
                              const VectorR& input_row,
                              const VectorR& output_row)
 {
-    const float value = constraint.uses_callback
+    const float value = constraint.callback
         ? constraint.callback(input_row, output_row)
         : constraint.compiled.evaluate(input_row, output_row);
 
@@ -1206,7 +1201,7 @@ ConstraintKind classify(const MultivariateConstraint& constraint)
     if (constraint.comparison_operator == ComparisonOperator::None)
         return ConstraintKind::Unrepairable;
 
-    if (constraint.uses_callback)
+    if (constraint.callback)
         return ConstraintKind::Callback;
 
     const CompiledFormula& formula = constraint.compiled;
@@ -1234,20 +1229,20 @@ void snap_to_lattice(MatrixR& inputs, const Index column, const float minimum, c
 namespace
 {
 
-bool constraint_residual(const ComparisonOperator comparison, const float low, const float up,
-                         const float value, float& residual)
+optional<float> constraint_residual(const ComparisonOperator comparison,
+                                    const float low,
+                                    const float up,
+                                    const float value)
 {
-    residual = 0.0f;
-
-    if (comparison == ComparisonOperator::EqualTo) { residual = value - low; return true; }
+    if (comparison == ComparisonOperator::EqualTo) return value - low;
 
     float interval_low, interval_up;
     if (!interval_from_comparison(comparison, low, up, interval_low, interval_up))
-        return false;
+        return nullopt;
 
-    if (value < interval_low) { residual = value - interval_low; return true; }
-    if (value > interval_up)  { residual = value - interval_up;  return true; }
-    return false;
+    if (value < interval_low) return value - interval_low;
+    if (value > interval_up)  return value - interval_up;
+    return nullopt;
 }
 
 bool gauss_newton_project_row(const MatrixR& jacobian, const VectorR& rhs,
@@ -1312,11 +1307,14 @@ bool collect_violations(const vector<const MultivariateConstraint*>& constraints
     for (const MultivariateConstraint* constraint : constraints)
     {
         const float value = constraint->compiled.evaluate(point, output);
-        float residual;
-        if (constraint_residual(constraint->comparison_operator, constraint->low_bound, constraint->up_bound, value, residual))
+        if (const optional<float> residual =
+                constraint_residual(constraint->comparison_operator,
+                                    constraint->low_bound,
+                                    constraint->up_bound,
+                                    value))
         {
             active.push_back(constraint);
-            residuals.push_back(residual);
+            residuals.push_back(*residual);
         }
     }
 
@@ -1591,10 +1589,11 @@ void repair_single_affine(MatrixR& random_inputs,
         for (const auto& [column, coefficient] : shuffled)
             expression += coefficient * random_inputs(r, column);
 
-        float residual;
-        if (!constraint_residual(constraint.comparison_operator, low, up, expression, residual))
+        const optional<float> constraint_violation =
+            constraint_residual(constraint.comparison_operator, low, up, expression);
+        if (!constraint_violation)
             continue;
-        residual = -residual;
+        float residual = -*constraint_violation;
 
         partial_shuffle(shuffled, terms_number);
 

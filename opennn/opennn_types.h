@@ -151,6 +151,19 @@ inline float bfloat16_to_float_host(const uint16_t value)
     return result;
 }
 
+// Batch inputs are converted on the host by TRUNCATION, unlike parameters and
+// every device-side cast, which round to nearest even. Keeping the two apart
+// is deliberate: this one only has to match itself across runs, and truncation
+// is the cheaper option on the data path.
+inline void truncate_floats_to_bfloat16_host(const Index count,
+                                             const float* source,
+                                             uint16_t* destination)
+{
+    #pragma omp parallel for if(count > 4096)
+    for (Index i = 0; i < count; ++i)
+        destination[i] = uint16_t(bit_cast<uint32_t>(source[i]) >> 16);
+}
+
 using type = float;
 
 class Json;

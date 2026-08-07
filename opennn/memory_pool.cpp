@@ -11,6 +11,29 @@
 namespace opennn
 {
 
+namespace
+{
+
+// Lowest offset where `bytes` fit without overlapping any occupied block.
+// `occupied` holds [begin, end) ranges sorted by begin.
+Index lowest_free_offset(const vector<pair<Index, Index>>& occupied, Index bytes)
+{
+    Index offset = 0;
+    for (const auto& [begin, end] : occupied)
+    {
+        throw_if(offset > numeric_limits<Index>::max() - bytes,
+                 "memory pool: address space exhausted.");
+        if (begin >= offset + bytes) break;   // the gap before this block fits
+        if (end > offset) offset = end;
+    }
+
+    throw_if(offset > numeric_limits<Index>::max() - bytes,
+             "memory pool: address space exhausted.");
+    return offset;
+}
+
+}
+
 MemoryPoolPlan plan_memory_pool(const vector<MemoryPoolEntry>& entries,
                                 MemoryPoolStrategy strategy)
 {
@@ -86,18 +109,7 @@ MemoryPoolPlan plan_memory_pool(const vector<MemoryPoolEntry>& entries,
         }
         ranges::sort(occupied_blocks);
 
-        Index offset = 0;
-        for (const auto& [begin, end] : occupied_blocks)
-        {
-            throw_if(offset > numeric_limits<Index>::max() - bytes,
-                     "plan_memory_pool: address space exhausted.");
-            if (begin >= offset + bytes) break;
-            if (end > offset) offset = end;
-        }
-
-        throw_if(offset > numeric_limits<Index>::max() - bytes,
-                 "plan_memory_pool: address space exhausted.");
-
+        const Index offset = lowest_free_offset(occupied_blocks, bytes);
         plan.byte_offsets[entry_index] = offset;
         plan.peak_bytes = max(plan.peak_bytes, offset + bytes);
         placed_entries.push_back(entry_index);
@@ -116,44 +128,25 @@ Index find_memory_pool_overlay(const vector<MemoryPoolEntry>& entries,
              "find_memory_pool_overlay: entries and offsets must have equal size.");
     if (bytes <= 0 || bytes > plan.peak_bytes) return Index(-1);
 
-    vector<Index> candidates{0};
-    candidates.reserve(entries.size() * 2 + 1);
+    const auto live_at = [](const MemoryPoolEntry& entry, Index step)
+    {
+        return entry.first_step <= step && step <= entry.last_step;
+    };
+
+    vector<pair<Index, Index>> occupied;
+    occupied.reserve(entries.size());
     for (size_t i = 0; i < entries.size(); ++i)
     {
-        if (entries[i].bytes == 0) continue;
-        candidates.push_back(plan.byte_offsets[i]);
-        candidates.push_back(plan.byte_offsets[i] + entries[i].bytes);
+        const MemoryPoolEntry& entry = entries[i];
+        if (entry.bytes == 0) continue;   // never placed: byte_offsets[i] is -1
+        if (!live_at(entry, first_step) && !live_at(entry, second_step)) continue;
+        occupied.push_back({plan.byte_offsets[i], plan.byte_offsets[i] + entry.bytes});
     }
-    ranges::sort(candidates);
-    candidates.erase(ranges::unique(candidates).begin(), candidates.end());
+    ranges::sort(occupied);
 
-    for (const Index candidate : candidates)
-    {
-        if (candidate < 0 || candidate > plan.peak_bytes - bytes)
-            continue;
-
-        bool available = true;
-        for (size_t i = 0; i < entries.size(); ++i)
-        {
-            const MemoryPoolEntry& entry = entries[i];
-            const Index begin = plan.byte_offsets[i];
-            const bool overlaps = candidate < begin + entry.bytes
-                && begin < candidate + bytes;
-            const bool live = (entry.first_step <= first_step
-                               && first_step <= entry.last_step)
-                || (entry.first_step <= second_step
-                    && second_step <= entry.last_step);
-            if (overlaps && live)
-            {
-                available = false;
-                break;
-            }
-        }
-
-        if (available) return candidate;
-    }
-
-    return Index(-1);
+    // The overlay has to fit inside the plan; growing the pool would defeat it.
+    const Index offset = lowest_free_offset(occupied, bytes);
+    return offset + bytes <= plan.peak_bytes ? offset : Index(-1);
 }
 
 }

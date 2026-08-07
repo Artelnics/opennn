@@ -144,9 +144,11 @@ void ResponseOptimization::set_formula_constraint(function<float(const VectorR&,
                                                   const float low,
                                                   const float up)
 {
+    throw_if(!callback,
+             "ResponseOptimization: formula constraint callback cannot be empty.");
+
     MultivariateConstraint formula_constraint;
     formula_constraint.callback = move(callback);
-    formula_constraint.uses_callback = true;
     formula_constraint.comparison_operator = comparison;
     formula_constraint.low_bound = low;
     formula_constraint.up_bound = up;
@@ -172,7 +174,6 @@ void ResponseOptimization::set_formula_constraint(const string& expression, cons
     formula_constraint.expression = expression;
     formula_constraint.comparison_operator = ComparisonOperator::AllowedSet;
     formula_constraint.allowed_values = allowed_values;
-    formula_constraint.uses_callback = false;
 
     const vector<NamedColumn> input_columns = build_input_columns(neural_network->get_input_variables());
     const vector<NamedColumn> output_columns = build_output_columns(neural_network->get_output_variables());
@@ -1350,7 +1351,7 @@ void ResponseOptimization::promote_single_variable_constraints()
     {
         const CompiledFormula& compiled = formula_constraint.compiled;
 
-        const bool promotable = !formula_constraint.uses_callback
+        const bool promotable = !formula_constraint.callback
             && formula_constraint.comparison_operator != ComparisonOperator::None
             && formula_constraint.comparison_operator != ComparisonOperator::AllowedSet
             && compiled.shape == FormulaShape::Affine
@@ -1988,7 +1989,7 @@ void ResponseOptimization::initialize_network_differential() const
     const auto has_output_constraint = [](const vector<MultivariateConstraint>& list)
     {
         return ranges::any_of(list, [](const MultivariateConstraint& c){
-            return !c.uses_callback
+            return !c.callback
                 && c.comparison_operator != ComparisonOperator::None
                 && c.compiled.scope != FormulaScope::InputsOnly;
         });
@@ -2223,7 +2224,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
     const vector<NamedColumn> input_columns = build_input_columns(input_variables);
 
     const bool any_callback_formula = ranges::any_of(constraint_set.multivariate,
-        [](const MultivariateConstraint& formula_constraint) { return formula_constraint.uses_callback; });
+        [](const MultivariateConstraint& formula_constraint) { return bool(formula_constraint.callback); });
 
     auto input_column_of = [&](const string& name) -> Index
     {

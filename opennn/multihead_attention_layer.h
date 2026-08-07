@@ -44,10 +44,13 @@ public:
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
 
-    bool is_forward_slot_transient(size_t spec) const override
+    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
     {
-        return spec == size_t(TransposeScratch) - 1
-            || spec == size_t(SdpaQkvPack) - 1;
+        if (spec == size_t(TransposeScratch) - 1 || spec == size_t(SdpaQkvPack) - 1)
+            return ForwardSlotKind::Transient;
+        if (spec == size_t(AttentionWeightsDropped) - 1)
+            return ForwardSlotKind::TrainingOnly;
+        return ForwardSlotKind::Pooled;
     }
     bool backward_uses_forward_output() const noexcept override { return false; }
     bool preserves_output_delta_during_backward() const noexcept override { return true; }

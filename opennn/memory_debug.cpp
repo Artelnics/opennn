@@ -34,11 +34,6 @@ mutex& entries_mutex()
     return m;
 }
 
-string key_for(const string& category, const string& name, const string& note)
-{
-    return category + "\t" + name + "\t" + note;
-}
-
 }
 
 bool enabled()
@@ -61,7 +56,7 @@ void record(const string& category,
     if (!enabled() || bytes <= 0) return;
 
     lock_guard lock(entries_mutex());
-    const string key = key_for(category, name, note);
+    const string key = category + "\t" + name + "\t" + note;
     Entry& entry = entries()[key];
     if (entry.count == 0)
     {

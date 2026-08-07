@@ -98,7 +98,6 @@ struct MultivariateConstraint
 {
     string expression;
     function<float(const VectorR&, const VectorR&)> callback;
-    bool uses_callback = false;
 
     ComparisonOperator comparison_operator = ComparisonOperator::None;
     float low_bound = 0.0f;

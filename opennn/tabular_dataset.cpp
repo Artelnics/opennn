@@ -1397,12 +1397,10 @@ void TabularDataset::read_csv()
 {
     const string separator_string = get_separator_string();
 
-    CsvReader::Configuration configuration;
-    configuration.separator = separator_string.empty() ? ',' : separator_string[0];
-    configuration.line_validator = [this](string_view line) { check_separators(line); };
-
-    CsvReader::Result parsed = CsvReader(configuration).read(data_path);
-    const char file_separator = parsed.separator;
+    const char file_separator = separator_string.empty() ? ',' : separator_string[0];
+    CsvReader::Result parsed = CsvReader(
+        file_separator,
+        [this](string_view line) { check_separators(line); }).read(data_path);
     const bool has_quotes = parsed.has_quotes;
     vector<string_view>& lines = parsed.lines;
 
@@ -1416,7 +1414,7 @@ void TabularDataset::read_csv()
     const vector<string_view> header_tokens = get_token_views_maybe_quoted(lines[0], file_separator, has_quotes, header_scratch);
     if (has_header)
     {
-        throw_if(has_numbers(header_tokens),
+        throw_if(ranges::any_of(header_tokens, is_numeric_string),
                  "Some header names are numeric.");
 
         lines.erase(lines.begin());

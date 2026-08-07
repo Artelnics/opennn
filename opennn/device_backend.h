@@ -50,6 +50,12 @@ enum class GraphWorkspaceKind
     Count
 };
 
+// Ledger names, indexed by kind. They live next to the enum so that adding a
+// workspace means editing one place, not two files.
+inline constexpr std::array<const char*, size_t(GraphWorkspaceKind::Count)>
+graph_workspace_labels = {"shared_scratch", "bf16_input", "bf16_gradient",
+                          "bf16_to_fp32", "int8_dequant"};
+
 using GraphWorkspaceRequirements = std::array<Index, size_t(GraphWorkspaceKind::Count)>;
 
 struct GraphWorkspaceView
@@ -277,6 +283,11 @@ bfloat16* ensure_int8_dequant_workspace(Index);
 float* ensure_bf16_to_fp32_workspace(Index);
 
 void* ensure_cudnn_conv_workspace(size_t);
+
+// After a CUDA-graph capture the graph owns same-sized workspace buffers, so
+// the eager thread-local set is redundant until the graph is invalidated (the
+// ensure_* helpers regrow it on demand).
+void release_matmul_thread_workspaces();
 
 const void* data_for_gemm_dtype(const TensorView&, Type);
 

@@ -8,6 +8,7 @@
 
 #include "training_result.h"
 #include "memory_debug.h"
+#include "statistics.h"
 
 namespace opennn
 {
@@ -76,13 +77,9 @@ void TrainingResult::print(const string &message) const
     const Index epochs_number = training_error_history.size();
     const Index final_epoch = epochs_number - 1;
 
-    Index best_epoch = final_epoch;
-    if (validation_error_history.size() > 0)
-    {
-        Eigen::Index best_validation_index;
-        validation_error_history.minCoeff(&best_validation_index);
-        best_epoch = Index(best_validation_index);
-    }
+    const Index best_epoch = validation_error_history.size() > 0
+        ? minimal_index(validation_error_history)
+        : final_epoch;
 
     const bool restored_best_epoch = restored_best_parameters
         && restored_epoch >= 0

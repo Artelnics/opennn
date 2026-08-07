@@ -94,7 +94,7 @@ void BertDataset::build(const filesystem::path& text_file,
     throw_if(tokenizer.token_to_id("[PAD]") != 0,
              "BertDataset: [PAD] must be token id 0.");
 
-    const CsvReader reader({'\t', {}});
+    const CsvReader reader('\t');
     const CsvReader::Result source = reader.read(text_file);
 
     vector<pair<string_view, string_view>> rows;

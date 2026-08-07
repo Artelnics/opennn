@@ -1055,7 +1055,6 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     context.neural_network = neural_network;
-    context.has_validation = dataset->has_validation();
     context.training_samples_number = dataset->get_samples_number(SampleRole::Training);
     context.validation_samples_number = dataset->get_samples_number(SampleRole::Validation);
 
@@ -1088,13 +1087,13 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
             InferenceShapePolicy{},
             true);
 
-    if (context.has_validation
+    if (context.validation_samples_number > 0
         && context.validation_samples_number != context.training_samples_number)
         context.validation_forward_propagation =
             make_unique<ForwardPropagation>(context.validation_samples_number, neural_network,
                                             ForwardPropagationMode::Inference);
 
-    context.validation_fp = context.has_validation
+    context.validation_fp = context.validation_samples_number > 0
         ? (context.validation_forward_propagation ? context.validation_forward_propagation.get()
                                                   : context.training_forward_propagation.get())
         : nullptr;
@@ -1109,7 +1108,7 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
     TrainingResult results(maximum_epochs + 1);
 
     NeuralNetwork* neural_network = context.neural_network;
-    const bool has_validation = context.has_validation;
+    const bool has_validation = context.validation_fp != nullptr;
 
     Index validation_failures = 0;
     reset_best_parameters();

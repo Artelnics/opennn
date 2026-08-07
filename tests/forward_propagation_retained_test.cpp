@@ -84,32 +84,17 @@ TEST(ForwardPropagationRetainedOutputsTest,
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
 
+    // Without retention the encoder output's planned lifetime ends at its
+    // last encoder-side consumer, so whether a decoder-only re-run actually
+    // clobbers its bytes depends on the pool's placement strategy. The
+    // contract under test is placement-independent: WITH retention the
+    // encoder output must stay disjoint from every re-run slot.
     Transformer network(4, 5, 12, 14, 8, 2, 16, 1);
     const Seq2SeqLayout layout = find_layout(network);
 
     vector<Index> rerun_layers = {layout.decoder_embedding};
     for (Index i = layout.decoder_first; i <= layout.output_projection; ++i)
         rerun_layers.push_back(i);
-
-    ForwardPropagation default_propagation(
-        1, &network, ForwardPropagationMode::Inference);
-    const TensorView& unretained =
-        default_propagation.forward_slots[size_t(layout.encoder_last)].back();
-    const auto [unretained_low, unretained_high] =
-        slot_range(default_propagation, unretained);
-
-    bool default_plan_aliases = false;
-    for (const Index i : rerun_layers)
-        for (const TensorView& slot :
-             default_propagation.forward_slots[size_t(i)])
-        {
-            if (!slot.data || slot.byte_size() == 0) continue;
-            const auto [low, high] = slot_range(default_propagation, slot);
-            if (high > unretained_low && low < unretained_high)
-                default_plan_aliases = true;
-        }
-    ASSERT_TRUE(default_plan_aliases)
-        << "fixture geometry no longer exercises encoder-output aliasing";
 
     InferenceShapePolicy policy;
     policy.retained_output_layers = {layout.encoder_last};
@@ -272,6 +257,71 @@ TEST(ForwardPropagationRetainedOutputsTest,
         decoder_inputs(0, position, 0) = float(best);
         target(0, position) = float(best);
     }
+
+    Configuration::instance().set();
+}
+
+TEST(ForwardPropagationRetainedOutputsTest, OutputWindowMatchesFullForwardForEverySample)
+{
+    set_seed(7);
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    const Index batch_size = 3;
+    const Index input_length = 4;
+    const Index decoder_length = 5;
+    const Index input_vocabulary = 12;
+    const Index target_vocabulary = 14;
+
+    Transformer network(input_length, decoder_length,
+                        input_vocabulary, target_vocabulary, 8, 2, 16, 1);
+    network.set_parameters_random();
+
+    Tensor2 target(batch_size, decoder_length);
+    Tensor2 source(batch_size, input_length);
+    Tensor3 decoder_inputs(batch_size, decoder_length, 1);
+    Tensor3 encoder_inputs(batch_size, input_length, 1);
+
+    for (Index sample = 0; sample < batch_size; ++sample)
+    {
+        for (Index i = 0; i < decoder_length; ++i)
+        {
+            const float token = float(1 + (sample * 5 + i * 3) % (target_vocabulary - 1));
+            target(sample, i) = token;
+            decoder_inputs(sample, i, 0) = token;
+        }
+        for (Index i = 0; i < input_length; ++i)
+        {
+            const float token = float(1 + (sample * 7 + i * 2) % (input_vocabulary - 1));
+            source(sample, i) = token;
+            encoder_inputs(sample, i, 0) = token;
+        }
+    }
+
+    const Tensor3 reference = network.calculate_outputs(decoder_inputs, encoder_inputs);
+
+    // Keep only the last decoder position: the projection output shrinks from
+    // (batch, decoder_length, vocabulary) to (batch, 1, vocabulary).
+    InferenceShapePolicy policy;
+    policy.sequence_capacity = decoder_length;
+    policy.final_output_capacity = 1;
+
+    ForwardPropagation windowed(
+        batch_size, &network, ForwardPropagationMode::Inference, policy);
+
+    const vector<TensorView> inputs = {
+        TensorView(target.data(), {batch_size, decoder_length}),
+        TensorView(source.data(), {batch_size, input_length})};
+
+    network.forward_propagate(inputs, windowed, false);
+
+    const TensorView outputs = windowed.get_outputs();
+    ASSERT_EQ(outputs.size(), batch_size * target_vocabulary);
+
+    for (Index sample = 0; sample < batch_size; ++sample)
+        for (Index v = 0; v < target_vocabulary; ++v)
+            EXPECT_NEAR(outputs.as<float>()[sample * target_vocabulary + v],
+                        reference(sample, decoder_length - 1, v), 1.0e-5)
+                << "sample " << sample << " vocabulary index " << v;
 
     Configuration::instance().set();
 }

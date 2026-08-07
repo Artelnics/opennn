@@ -15,8 +15,10 @@
 
 #include "device_backend.h"
 #include "forward_propagation.h"
+#include "parallel_algorithms.h"
 #include "random_utilities.h"
 #include "standard_networks.h"
+#include "statistics.h"
 #include "tensor_operations.h"
 #include "tokenizer_operator.h"
 
@@ -32,9 +34,8 @@ bool is_prefix(const vector<Index>& candidate, const vector<Index>& sequence)
         && equal(candidate.begin(), candidate.end(), sequence.begin());
 }
 
-bool is_complete_utf8_prefix(string_view text, size_t& complete_bytes)
+size_t complete_utf8_prefix_size(string_view text)
 {
-    complete_bytes = 0;
     size_t i = 0;
 
     while (i < text.size())
@@ -42,7 +43,7 @@ bool is_complete_utf8_prefix(string_view text, size_t& complete_bytes)
         size_t length =
             utf8_sequence_length(static_cast<unsigned char>(text[i]));
 
-        if (i + length > text.size()) return false;
+        if (i + length > text.size()) break;
 
         bool valid = length > 1;
         for (size_t j = 1; j < length; ++j)
@@ -52,10 +53,9 @@ bool is_complete_utf8_prefix(string_view text, size_t& complete_bytes)
         if (length > 1 && !valid) length = 1;
 
         i += length;
-        complete_bytes = i;
     }
 
-    return true;
+    return i;
 }
 
 vector<Index> encode_required(const TokenizerOperator& tokenizer,
@@ -68,7 +68,7 @@ vector<Index> encode_required(const TokenizerOperator& tokenizer,
     return ids;
 }
 
-string role_name(ChatRole role)
+string_view role_name(ChatRole role)
 {
     switch (role)
     {
@@ -99,10 +99,10 @@ bool descending_first(const pair<float, Index>& left,
 
 void top_k_partition(vector<pair<float, Index>>& values, Index top_k)
 {
-    nth_element(values.begin(),
-                values.begin() + top_k,
-                values.end(),
-                descending_first);
+    nth_element_parallel_if_large(values.begin(),
+                                  values.begin() + top_k,
+                                  values.end(),
+                                  descending_first);
 }
 
 }
@@ -118,11 +118,7 @@ Index sample_token(VectorR& probabilities,
     const SamplingConfig config = clamp_sampling(sampling_config);
 
     if (config.temperature == 0.0f)
-    {
-        Index best;
-        probabilities.maxCoeff(&best);
-        return best;
-    }
+        return maximal_index(probabilities);
 
     static thread_local VectorR original;
     static thread_local vector<pair<float, Index>> ranked;
@@ -142,12 +138,16 @@ Index sample_token(VectorR& probabilities,
                 pow(max(probabilities(i), 0.0f), inverse_temperature);
     }
 
-    if (config.top_k > 0 && config.top_k < vocabulary_size)
+    const bool top_k_applied =
+        config.top_k > 0 && config.top_k < vocabulary_size;
+
+    if (top_k_applied)
     {
         ranked.resize(size_t(vocabulary_size));
         for (Index i = 0; i < vocabulary_size; ++i)
             ranked[size_t(i)] = {probabilities(i), i};
         top_k_partition(ranked, config.top_k);
+        ranked.resize(size_t(config.top_k));
 
         keep.assign(size_t(vocabulary_size), 0);
         for (Index i = 0; i < config.top_k; ++i)
@@ -158,14 +158,18 @@ Index sample_token(VectorR& probabilities,
 
     if (config.top_p > 0.0f && config.top_p < 1.0f)
     {
-        ranked.resize(size_t(vocabulary_size));
+        if (!top_k_applied)
+        {
+            ranked.resize(size_t(vocabulary_size));
+            for (Index i = 0; i < vocabulary_size; ++i)
+                ranked[size_t(i)] = {probabilities(i), i};
+        }
+
         const float total = probabilities.sum();
-        for (Index i = 0; i < vocabulary_size; ++i)
-            ranked[size_t(i)] = {probabilities(i), i};
 
         if (total > 0.0f)
         {
-            ranges::sort(ranked, descending_first);
+            sort_parallel_if_large(ranked.begin(), ranked.end(), descending_first);
             float cumulative = 0.0f;
             keep.assign(size_t(vocabulary_size), 0);
             for (const auto& [probability, token] : ranked)
@@ -179,13 +183,9 @@ Index sample_token(VectorR& probabilities,
         }
     }
 
+    // Every candidate was filtered out: fall back to the unmodified argmax.
     const float total = probabilities.sum();
-    if (total <= 0.0f)
-    {
-        Index best;
-        original.maxCoeff(&best);
-        return best;
-    }
+    if (total <= 0.0f) return maximal_index(original);
 
     const float threshold = random_uniform(0.0f, total);
     float cumulative = 0.0f;
@@ -386,11 +386,10 @@ void GenerationParser::emit_stable_delta(const GenerationChannel output_channel,
     if (incremental)
     {
 
-        size_t stable_bytes = 0;
-        const bool complete = is_complete_utf8_prefix(state.tail, stable_bytes);
+        const size_t stable_bytes = complete_utf8_prefix_size(state.tail);
         if (stable_bytes == 0) return;
 
-        if (complete)
+        if (stable_bytes == state.tail.size())
         {
             delta = move(state.tail);
             state.tail.clear();
@@ -404,8 +403,7 @@ void GenerationParser::emit_stable_delta(const GenerationChannel output_channel,
     else
     {
         const string decoded = tokenizer->decode(state.ids);
-        size_t stable_bytes = 0;
-        is_complete_utf8_prefix(decoded, stable_bytes);
+        const size_t stable_bytes = complete_utf8_prefix_size(decoded);
 
         throw_if(stable_bytes < state.text.size()
                  || decoded.compare(0, state.text.size(), state.text) != 0,
@@ -431,13 +429,11 @@ public:
     DecoderSampler(Index new_output_vocabulary,
                    Index new_sample_vocabulary,
                    unsigned long long new_seed,
-                   bool new_gpu,
                    Buffer* new_token_device)
         : output_vocabulary(new_output_vocabulary),
           vocabulary(new_sample_vocabulary),
           generator(new_seed),
           seed(new_seed),
-          gpu(new_gpu),
           token_device(new_token_device),
           logits(size_t(new_sample_vocabulary)),
           bf16_logits(size_t(new_sample_vocabulary))
@@ -446,7 +442,7 @@ public:
                  "ChatSession: output vocabulary must contain at least two tokens.");
 
 #ifdef OPENNN_HAS_CUDA
-        if (gpu)
+        if (token_device)
         {
             pinned_id = static_cast<int*>(
                 device::allocate_pinned_host(Index(sizeof(int))));
@@ -519,7 +515,7 @@ public:
         const Index sampled = sample_host(config, history);
 
 #ifdef OPENNN_HAS_CUDA
-        if (gpu && token_device)
+        if (token_device)
         {
             const float token_value = float(sampled);
             device::copy_async(token_device->data,
@@ -613,7 +609,7 @@ private:
             candidates.resize(size_t(config.top_k));
         }
 
-        ranges::sort(candidates, descending_first);
+        sort_parallel_if_large(candidates.begin(), candidates.end(), descending_first);
 
         const float maximum = candidates.front().first;
         double probability_sum = 0.0;
@@ -660,7 +656,6 @@ private:
     mt19937_64 generator;
     unsigned long long seed = 0;
     unsigned long long step = 0;
-    bool gpu = false;
     Buffer* token_device = nullptr;
 
     vector<float> logits;
@@ -758,6 +753,9 @@ void prepare_classic_network(NeuralNetwork& network)
     throw_if(!network.is_gpu() || !device::is_cuda_build(),
              "ChatSession: classic text generation requires CUDA.");
     network.copy_parameters_device();
+    // Chat never trains, so the fp32 master that copy_parameters_device()
+    // leaves next to the bf16 mirror is dead weight: 6 B/parameter -> 2 B.
+    network.release_bf16_fp32_parameter_master_for_inference();
     network.link_parameters();
     network.copy_states_device();
     network.link_states();
@@ -991,12 +989,7 @@ struct ChatSession::Impl
         if (gpu)
         {
             token_device.resize_bytes(Index(sizeof(float)), Device::CUDA);
-            prefill.device_input_buffers.resize(1);
-            prefill.device_input_views.resize(1);
-            prefill.host_bf16_input_scratch.resize(1);
-            prefill.device_input_buffers[0].resize_bytes(
-                prefill.get_sequence_capacity() * Index(sizeof(float)),
-                Device::CUDA);
+            initialize_cuda_input(prefill);
             decode.set(1, network, &prefill.data,
                        ForwardPropagationMode::Inference,
                        {.sequence_capacity = 1,
@@ -1020,8 +1013,7 @@ struct ChatSession::Impl
             : new_seed;
         sampler = make_unique<DecoderSampler>(
             vocabulary, tokenizer->get_vocabulary_size(),
-            effective_seed, gpu,
-            gpu ? &token_device : nullptr);
+            effective_seed, gpu ? &token_device : nullptr);
 
 #ifdef OPENNN_HAS_CUDA
         if (gpu)
@@ -1106,6 +1098,16 @@ struct ChatSession::Impl
         device::synchronize(device::get_compute_stream());
     }
 
+    static void initialize_cuda_input(ForwardPropagation& propagation)
+    {
+        propagation.device_input_buffers.resize(1);
+        propagation.device_input_views.resize(1);
+        propagation.host_bf16_input_scratch.resize(1);
+        propagation.device_input_buffers[0].resize_bytes(
+            propagation.get_sequence_capacity() * Index(sizeof(float)),
+            Device::CUDA);
+    }
+
     ForwardPropagation& run_target_verify(Index count, Index past)
     {
         throw_if(!draft || count < 1
@@ -1127,12 +1129,11 @@ struct ChatSession::Impl
         return draft->target_verify;
     }
 
-    ForwardPropagation& run_draft_decode(Index past)
+    void run_draft_decode(Index past)
     {
         draft->decode.past_length = past;
         draft->network->calculate_outputs_resident(
             draft->decode_inputs, draft->decode, false);
-        return draft->decode;
     }
 
     ForwardPropagation& run_decode(Index token, Index past)
@@ -1197,7 +1198,7 @@ ChatSession::~ChatSession() = default;
 
 void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_tokens)
 {
-    throw_if(static_cast<bool>(impl->classic),
+    throw_if(impl->classic != nullptr,
              "ChatSession::attach_draft_model: unsupported session type.");
     throw_if(!impl->gpu,
              "ChatSession::attach_draft_model: speculative decoding requires the GPU session.");
@@ -1228,12 +1229,7 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
                         .retained_output_layers = {}});
     draft->token_device.resize_bytes(Index(sizeof(float)), Device::CUDA);
     draft->prefill_inputs.resize(1);
-    draft->prefill.device_input_buffers.resize(1);
-    draft->prefill.device_input_views.resize(1);
-    draft->prefill.host_bf16_input_scratch.resize(1);
-    draft->prefill.device_input_buffers[0].resize_bytes(
-        draft->prefill.get_sequence_capacity() * Index(sizeof(float)),
-        Device::CUDA);
+    Impl::initialize_cuda_input(draft->prefill);
     draft->decode.set(1, &draft_network, &draft->prefill.data,
                       ForwardPropagationMode::Inference,
                       {.sequence_capacity = 1,
@@ -1249,11 +1245,7 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
          .final_output_capacity = verify_capacity,
          .retained_output_layers = {}});
     draft->target_verify_inputs.resize(1);
-    draft->target_verify.device_input_buffers.resize(1);
-    draft->target_verify.device_input_views.resize(1);
-    draft->target_verify.host_bf16_input_scratch.resize(1);
-    draft->target_verify.device_input_buffers[0].resize_bytes(
-        verify_capacity * Index(sizeof(float)), Device::CUDA);
+    Impl::initialize_cuda_input(draft->target_verify);
 
     const cudaStream_t stream = device::get_compute_stream();
     draft->prefill.stage_position(stream);
@@ -1265,7 +1257,7 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
     };
     draft->sampler = make_unique<DecoderSampler>(
         impl->vocabulary, impl->tokenizer->get_vocabulary_size(),
-        1ull, true, &draft->token_device);
+        1ull, &draft->token_device);
     draft->proposals.reserve(size_t(draft_tokens));
 
     impl->draft = move(draft);
@@ -1507,13 +1499,9 @@ ChatResponse ChatSession::send(
         ? sampling.maximum_tokens
         : impl->context_length;
 
-    vector<ChatMessage> candidate;
-    vector<Index> prompt;
-    {
-        candidate = impl->messages;
-        candidate.push_back({ChatRole::User, string(user_message)});
-        prompt = impl->render_fitting_prompt(candidate, mode);
-    }
+    vector<ChatMessage> candidate = impl->messages;
+    candidate.push_back({ChatRole::User, string(user_message)});
+    vector<Index> prompt = impl->render_fitting_prompt(candidate, mode);
 
     Index prefix = 0;
     const Index reusable =
@@ -1530,7 +1518,6 @@ ChatResponse ChatSession::send(
             float(prompt[size_t(past + i)]);
 
     const bool speculative = impl->draft
-        && impl->gpu
         && sampling.temperature == 0.0f
         && sampling.repetition_penalty == 1.0f;
 
@@ -1570,29 +1557,30 @@ ChatResponse ChatSession::send(
         chrono::duration<double, milli>(prefill_end - prefill_start).count();
 
     const auto decode_start = Clock::now();
+
+    // Emits one accepted token; false means generation must stop.
+    const auto emit = [&](Index token)
+    {
+        ++response.generated_tokens;
+        sampling_history.push_back(token);
+
+        if (parser.push(token, callback))
+        {
+            response.finish_reason = FinishReason::Stop;
+            return false;
+        }
+        if (response.generated_tokens >= maximum_tokens)
+        {
+            response.finish_reason = FinishReason::MaximumTokens;
+            return false;
+        }
+        return true;
+    };
+
     if (speculative)
     {
         Index draft_cache = ssize(prompt);
         vector<Index>& proposals = impl->draft->proposals;
-
-        // Emits one accepted token; false means generation must stop.
-        const auto emit = [&](Index token)
-        {
-            ++response.generated_tokens;
-            sampling_history.push_back(token);
-
-            if (parser.push(token, callback))
-            {
-                response.finish_reason = FinishReason::Stop;
-                return false;
-            }
-            if (response.generated_tokens >= maximum_tokens)
-            {
-                response.finish_reason = FinishReason::MaximumTokens;
-                return false;
-            }
-            return true;
-        };
 
         while (true)
         {
@@ -1611,12 +1599,12 @@ ChatResponse ChatSession::send(
             if (propose < 1)
             {
                 Impl::stage_token(impl->token_device, next);
-                const ForwardPropagation* decoded =
-                    &impl->run_decode(next, cache_length);
+                const ForwardPropagation& decoded =
+                    impl->run_decode(next, cache_length);
                 impl->cached_tokens.push_back(next);
                 ++cache_length;
                 next = impl->sampler->sample_row(
-                    *decoded, 0, sampling, sampling_history);
+                    decoded, 0, sampling, sampling_history);
                 continue;
             }
 
@@ -1687,22 +1675,9 @@ ChatResponse ChatSession::send(
     }
     else
     {
-        for (Index generated = 0; generated < maximum_tokens; ++generated)
+        while (true)
         {
-            ++response.generated_tokens;
-            sampling_history.push_back(next);
-
-            if (parser.push(next, callback))
-            {
-                response.finish_reason = FinishReason::Stop;
-                break;
-            }
-
-            if (generated + 1 >= maximum_tokens)
-            {
-                response.finish_reason = FinishReason::MaximumTokens;
-                break;
-            }
+            if (!emit(next)) break;
 
             if (cache_length >= impl->context_length)
             {
@@ -1710,12 +1685,12 @@ ChatResponse ChatSession::send(
                 break;
             }
 
-            const ForwardPropagation* decoded =
-                &impl->run_decode(next, cache_length);
+            const ForwardPropagation& decoded =
+                impl->run_decode(next, cache_length);
             impl->cached_tokens.push_back(next);
             ++cache_length;
             next = impl->sampler->sample_row(
-                *decoded, 0, sampling, sampling_history);
+                decoded, 0, sampling, sampling_history);
         }
     }
     const auto decode_end = Clock::now();
@@ -1789,7 +1764,7 @@ void ChatSession::chat(const ChatOptions& options)
 void ChatSession::set_messages(
     const vector<ChatMessage>& messages)
 {
-    throw_if(static_cast<bool>(impl->classic),
+    throw_if(impl->classic != nullptr,
              "ChatSession::set_messages: this session has no "
              "semantic conversation history.");
     throw_if(!valid_complete_history(messages),

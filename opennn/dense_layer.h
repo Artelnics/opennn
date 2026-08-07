@@ -42,6 +42,15 @@ public:
     bool backward_uses_forward_output() const noexcept override { return gated || batch_norm.active() || activation_operator.activation_function != ActivationFunction::Identity; }
     bool preserves_output_delta_during_backward() const noexcept override { return !backward_uses_forward_output() && !dropout.active(); }
 
+    // The pre-dropout activation copy exists only for the backward pass; the
+    // gated path reuses that slot as a real forward tensor.
+    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    {
+        return !gated && spec == size_t(ActivationView) - 1
+            ? ForwardSlotKind::TrainingOnly
+            : ForwardSlotKind::Pooled;
+    }
+
     void set(const Shape& = {},
              const Shape& = {},
              const string& = "Tanh",

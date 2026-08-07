@@ -125,8 +125,10 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_entries(
     const Index first_trainable_layer_index = network.get_first_trainable_layer_index();
     const Index last_trainable_layer_index = network.get_last_trainable_layer_index();
     const auto& source_layers = network.get_source_layers();
+    // activation_dtype() is the identity here (set() rejects INT8 training),
+    // but going through it keeps every dtype decision in the library uniform.
     const Type compute_dtype = network.is_gpu()
-        ? network.get_training_type()
+        ? activation_dtype(network.get_training_type())
         : Type::FP32;
 
     DeltaLayout layout;

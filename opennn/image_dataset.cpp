@@ -43,11 +43,6 @@ static Index sample_augmentation_shift(float minimum, float maximum)
     return static_cast<Index>(lround(sample_augmentation_value(minimum, maximum)));
 }
 
-static filesystem::path image_cache_path(const filesystem::path& data_path)
-{
-    return data_path / ".cache" / "images.bin";
-}
-
 static string image_cache_signature(Index samples, Index height, Index width, Index channels,
                                     const vector<filesystem::path>& class_folders,
                                     const filesystem::file_time_type& newest_write_time)
@@ -402,7 +397,7 @@ void ImageDataset::read_images()
     else
     {
         cache_path = cache_directory.empty()
-            ? image_cache_path(data_path)
+            ? data_path / ".cache" / "images.bin"
             : cache_directory / (data_path.filename().string() + ".cache") / "images.bin";
 
         const string signature = image_cache_signature(samples_number, height, width, channels,

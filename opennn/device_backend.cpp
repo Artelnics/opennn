@@ -92,9 +92,8 @@ CudaGraphWorkspaceScope::~CudaGraphWorkspaceScope() noexcept
 namespace
 {
 
-bool graph_workspace_override(GraphWorkspaceKind kind,
-                              Index minimum_bytes,
-                              void*& pointer)
+optional<void*> graph_workspace_override(GraphWorkspaceKind kind,
+                                         Index minimum_bytes)
 {
     if (active_graph_workspace_requirements)
     {
@@ -103,7 +102,7 @@ bool graph_workspace_override(GraphWorkspaceKind kind,
         high_water = max(high_water, minimum_bytes);
     }
 
-    if (!active_graph_workspace_views) return false;
+    if (!active_graph_workspace_views) return nullopt;
 
     const GraphWorkspaceView view =
         (*active_graph_workspace_views)[size_t(kind)];
@@ -112,8 +111,7 @@ bool graph_workspace_override(GraphWorkspaceKind kind,
                     "capture buffer has {} bytes.",
                     minimum_bytes, view.bytes);
 
-    pointer = view.data;
-    return true;
+    return view.data;
 }
 
 }
@@ -804,9 +802,9 @@ namespace
                         device::GraphWorkspaceKind kind)
     {
         const Index minimum_bytes = n * Index(sizeof(T));
-        void* graph_workspace = nullptr;
-        if (device::graph_workspace_override(kind, minimum_bytes, graph_workspace))
-            return static_cast<T*>(graph_workspace);
+        if (const optional<void*> graph_workspace =
+                device::graph_workspace_override(kind, minimum_bytes))
+            return static_cast<T*>(*graph_workspace);
 
         if (minimum_bytes > workspace_buffer.bytes && workspace_buffer.data)
         {
@@ -950,6 +948,17 @@ void* ensure_cudnn_conv_workspace(size_t min_bytes)
     return ensure_shared_scratch(min_bytes);
 }
 
+void release_matmul_thread_workspaces()
+{
+    device::synchronize(Backend::get_compute_stream());
+    CudaMatmulThreadState& state = thread_state();
+    state.workspace.resize_bytes(0, Device::CUDA);
+    state.bf16_input.resize_bytes(0, Device::CUDA);
+    state.bf16_gradient.resize_bytes(0, Device::CUDA);
+    state.bf16_to_fp32.resize_bytes(0, Device::CUDA);
+    state.int8_dequant.resize_bytes(0, Device::CUDA);
+}
+
 const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
 {
     if (input.type == target_type) return input.data;
@@ -973,6 +982,9 @@ const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
 
 const void* bias_for_gemm_bf16(const TensorView& bias)
 {
+    // Borrows the gradient workspace: a forward bias cast and a weight
+    // gradient cast are never live at the same time, and a bias is small
+    // enough that it never drives the buffer's size.
     bfloat16* dst = ensure_bf16_gradient_workspace(bias.size());
     cast_fp32_to_bf16(bias.size(), bias.as<float>(), dst);
     return dst;

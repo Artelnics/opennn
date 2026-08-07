@@ -80,7 +80,6 @@ public:
 private:
     filesystem::path tmp_path_;
     ofstream stream_;
-    bool finalized_ = false;
 };
 
 template <typename T>
@@ -144,24 +143,18 @@ class CsvReader
 {
 public:
 
-    struct Configuration
-    {
-        char separator = ',';
-        function<void(string_view)> line_validator;
-    };
-
     struct Result
     {
         FileMapping         mapping;
         string              buffer;
-        string_view         content;
         vector<string_view> lines;
-        char                separator = ',';
         bool                has_quotes = false;
     };
 
-    explicit CsvReader(Configuration new_configuration)
-        : configuration(std::move(new_configuration))
+    explicit CsvReader(char new_separator = ',',
+                       function<void(string_view)> new_line_validator = {})
+        : separator(new_separator),
+          line_validator(std::move(new_line_validator))
     {
     }
 
@@ -169,16 +162,14 @@ public:
 
 private:
 
-    Configuration configuration;
+    char separator;
+    function<void(string_view)> line_validator;
 
-    void parse(Result&) const;
+    void parse(Result&, string_view) const;
 };
 
 bool is_numeric_string(string_view);
 bool is_date_time_string(string_view);
-
-bool has_numbers(const vector<string>&);
-bool has_numbers(const vector<string_view>&);
 
 extern const vector<string> positive_words;
 extern const vector<string> negative_words;

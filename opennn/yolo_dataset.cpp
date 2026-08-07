@@ -20,6 +20,20 @@ namespace opennn
 namespace
 {
 
+// Saturating conversions for the image pipeline. Note these are NOT
+// std::clamp: when the value is NaN, max() keeps the lower bound, so a bad
+// pixel becomes 0 instead of propagating. That matters because casting NaN to
+// uint8_t is undefined behaviour, and augmentation arithmetic can produce it.
+float clamp_unit(const float value)
+{
+    return min(1.0f, max(0.0f, value));
+}
+
+uint8_t round_to_byte(const float value)
+{
+    return uint8_t(min(255.0f, max(0.0f, value + 0.5f)));
+}
+
 #pragma pack(push, 1)
 struct YoloImageCacheHeader
 {
@@ -502,12 +516,12 @@ void apply_color_jitter(uint8_t* rgb, Index height, Index width, Index channels,
         float h, s, v;
         rgb_to_hsv(r, g, b, h, s, v);
         h += p.hue_shift;
-        s = min(1.0f, max(0.0f, s * p.saturation_mul));
-        v = min(1.0f, max(0.0f, v * p.exposure_mul));
+        s = clamp_unit(s * p.saturation_mul);
+        v = clamp_unit(v * p.exposure_mul);
         hsv_to_rgb(h, s, v, r, g, b);
-        rgb[base + 0] = uint8_t(min(255.0f, max(0.0f, r * 255.0f + 0.5f)));
-        rgb[base + 1] = uint8_t(min(255.0f, max(0.0f, g * 255.0f + 0.5f)));
-        rgb[base + 2] = uint8_t(min(255.0f, max(0.0f, b * 255.0f + 0.5f)));
+        rgb[base + 0] = round_to_byte(r * 255.0f);
+        rgb[base + 1] = round_to_byte(g * 255.0f);
+        rgb[base + 2] = round_to_byte(b * 255.0f);
     }
 }
 
@@ -550,8 +564,7 @@ void apply_geometric_to_image(const uint8_t* src, uint8_t* dst,
                 const float v = bilinear_blend(sample(x0, y0, c), sample(x1, y0, c),
                                                sample(x0, y1, c), sample(x1, y1, c),
                                                ax, ay);
-                dst[(dy * width + out_x) * channels + c] =
-                    uint8_t(min(255.0f, max(0.0f, v + 0.5f)));
+                dst[(dy * width + out_x) * channels + c] = round_to_byte(v);
             }
         }
     }
@@ -596,7 +609,7 @@ void bilinear_resize_uint8(const uint8_t* src,
             for (Index c = 0; c < channels; ++c)
             {
                 const float v = bilinear_blend(p00[c], p01[c], p10[c], p11[c], dx, dy);
-                dst_pixel[c] = uint8_t(min(255.0f, max(0.0f, v + 0.5f)));
+                dst_pixel[c] = round_to_byte(v);
             }
         }
     }
@@ -930,11 +943,10 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
             const auto it = class_index.find(box.class_name);
             if (it == class_index.end())
                 continue;
-            auto clamp01 = [](float v) { return min(1.0f, max(0.0f, v)); };
-            const float cx = clamp01(0.5f * (box.xmin + box.xmax) / ann.width);
-            const float cy = clamp01(0.5f * (box.ymin + box.ymax) / ann.height);
-            const float bw = clamp01((box.xmax - box.xmin) / ann.width);
-            const float bh = clamp01((box.ymax - box.ymin) / ann.height);
+            const float cx = clamp_unit(0.5f * (box.xmin + box.xmax) / ann.width);
+            const float cy = clamp_unit(0.5f * (box.ymin + box.ymax) / ann.height);
+            const float bw = clamp_unit((box.xmax - box.xmin) / ann.width);
+            const float bh = clamp_unit((box.ymax - box.ymin) / ann.height);
             kept_boxes.push_back({it->second, {cx, cy, bw, bh}});
         }
 
@@ -1702,7 +1714,7 @@ void blit_resized_into_canvas(const uint8_t* src, Index src_h, Index src_w,
                                                src[(sy1 * src_w + sx0) * channels + c],
                                                src[(sy1 * src_w + sx1) * channels + c],
                                                dx, dy);
-                canvas[dst_off + c] = uint8_t(min(255.f, max(0.f, v + 0.5f)));
+                canvas[dst_off + c] = round_to_byte(v);
             }
         }
     }

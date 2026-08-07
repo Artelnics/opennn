@@ -328,6 +328,22 @@ TEST(TabularDataset, ReadCSV_Basic)
     remove(temp_csv_file_path.c_str());
 }
 
+TEST(TabularDataset, ReadCSV_RejectsNumericHeader)
+{
+    const string temp_csv_file_path = "temp_data_numeric_header.csv";
+    create_temp_csv_file(temp_csv_file_path, "1,feature\n10,20\n");
+
+    TabularDataset dataset;
+    dataset.set_data_path(temp_csv_file_path);
+    dataset.set_separator(Dataset::Separator::Comma);
+    dataset.set_has_header(true);
+    dataset.set_display(false);
+
+    EXPECT_THROW(dataset.read_csv(), runtime_error);
+
+    remove(temp_csv_file_path.c_str());
+}
+
 
 TEST(TabularDataset, ReadCSV_SpaceSeparator)
 {

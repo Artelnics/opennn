@@ -293,11 +293,7 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
     {
         if (input.host_bf16)
         {
-            const float* src = input.host;
-            uint16_t* dst = input.host_bf16;
-            #pragma omp parallel for if(input_values_count > 4096)
-            for (Index i = 0; i < input_values_count; ++i)
-                dst[i] = static_cast<uint16_t>(bit_cast<uint32_t>(src[i]) >> 16);
+            truncate_floats_to_bfloat16_host(input_values_count, input.host, input.host_bf16);
 
             copy_to_device_async(destination.input.buffer.as<bfloat16>(),
                                  input.host_bf16,

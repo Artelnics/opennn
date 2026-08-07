@@ -28,32 +28,6 @@
 namespace opennn
 {
 
-namespace
-{
-
-void atomic_rename(const filesystem::path& source_path, const filesystem::path& destination_path)
-{
-#if defined(_WIN32)
-    if (!::MoveFileExW(source_path.wstring().c_str(),
-                       destination_path.wstring().c_str(),
-                       MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
-        throw runtime_error(format("atomic_rename: MoveFileExW failed for {} -> {} (GetLastError={}).",
-                                   source_path.string(), destination_path.string(), ::GetLastError()));
-#else
-    throw_if(::rename(source_path.c_str(), destination_path.c_str()) != 0,
-             "atomic_rename: rename failed for {} -> {} (errno={}).",
-                    source_path.string(), destination_path.string(), errno);
-#endif
-}
-
-bool has_bom(string_view s)
-{
-    constexpr string_view bom = "\xEF\xBB\xBF";
-    return s.starts_with(bom);
-}
-
-}
-
 void download_if_missing(const filesystem::path& path, const string& url)
 {
     if (filesystem::exists(path)) return;
@@ -360,12 +334,10 @@ void read_int32_batch(const FileReader& reader,
     throw_if(record_values == 0,
              "{} record width must be greater than zero.", context);
     throw_if(source_offset < 0 || values_number < 0
-          || (source_offset >= 0 && values_number >= 0
-           && uint64_t(source_offset) + uint64_t(values_number) > record_values),
+          || uint64_t(source_offset) + uint64_t(values_number) > record_values,
              "{} record range is invalid.", context);
     throw_if(output_offset < 0 || output_stride < 0
-          || (output_offset >= 0 && values_number >= 0
-           && uint64_t(output_stride) < uint64_t(output_offset) + uint64_t(values_number)),
+          || uint64_t(output_stride) < uint64_t(output_offset) + uint64_t(values_number),
              "{} output range is invalid.", context);
     if (sample_indices.empty()) return;
 
@@ -416,7 +388,7 @@ void read_int32_batch(const FileReader& reader,
 FileWriter::~FileWriter()
 {
     if (stream_.is_open()) stream_.close();
-    if (!finalized_ && !tmp_path_.empty())
+    if (!tmp_path_.empty())
     {
         error_code ec;
         filesystem::remove(tmp_path_, ec);
@@ -426,7 +398,6 @@ FileWriter::~FileWriter()
 void FileWriter::open(const filesystem::path& tmp_path)
 {
     tmp_path_ = tmp_path;
-    finalized_ = false;
 
     filesystem::create_directories(tmp_path.parent_path());
 
@@ -449,16 +420,23 @@ void FileWriter::finish_with_rename(const filesystem::path& final_path)
     stream_.close();
     throw_if(stream_.fail(), "FileWriter::finish: flush/close failed.");
 
-    atomic_rename(tmp_path_, final_path);
-    finalized_ = true;
+#if defined(_WIN32)
+    if (!::MoveFileExW(tmp_path_.wstring().c_str(),
+                       final_path.wstring().c_str(),
+                       MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+        throw runtime_error(format("FileWriter::finish_with_rename: MoveFileExW failed for {} -> {} (GetLastError={}).",
+                                   tmp_path_.string(), final_path.string(), ::GetLastError()));
+#else
+    throw_if(::rename(tmp_path_.c_str(), final_path.c_str()) != 0,
+             "FileWriter::finish_with_rename: rename failed for {} -> {} (errno={}).",
+             tmp_path_.string(), final_path.string(), errno);
+#endif
+
     tmp_path_.clear();
 }
 
-void CsvReader::parse(Result& out) const
+void CsvReader::parse(Result& out, const string_view content) const
 {
-    out.separator = configuration.separator;
-
-    const string_view content = out.content;
     out.lines.reserve(ranges::count(content, '\n') + 1);
 
     size_t line_start = 0;
@@ -476,7 +454,7 @@ void CsvReader::parse(Result& out) const
 
         if (line.empty()) continue;
 
-        if (configuration.line_validator) configuration.line_validator(line);
+        if (line_validator) line_validator(line);
 
         out.lines.push_back(line);
     }
@@ -488,48 +466,33 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
              "Data path is empty.\n");
 
     Result result;
+    string_view content;
+    const bool mapped = result.mapping.map(path);
 
-    if (result.mapping.map(path))
+    if (mapped)
     {
-        string_view mapped(result.mapping.data(), result.mapping.size());
-
-        if (has_bom(mapped)) mapped.remove_prefix(3);
-        result.content = mapped;
-        result.has_quotes = mapped.find('"') != string_view::npos;
-        parse(result);
-        return result;
+        content = string_view(result.mapping.data(), result.mapping.size());
+    }
+    else
+    {
+        result.buffer = read_text_file(path);
+        content = result.buffer;
     }
 
-    ifstream input_file(path, ios::binary | ios::ate);
-
-    throw_if(!input_file.is_open(),
-             "Cannot open file {}\n", path.string());
-
-    const streamoff file_byte_count = input_file.tellg();
-    throw_if(file_byte_count < 0,
-             "Cannot determine size for file {}\n", path.string());
-    throw_if(file_byte_count > streamoff(numeric_limits<streamsize>::max()),
-             "File {} is too large to read into memory\n", path.string());
-
-    input_file.seekg(0);
-    throw_if(!input_file.good(),
-             "Cannot seek file {}\n", path.string());
-
-    result.buffer.resize(static_cast<size_t>(file_byte_count), '\0');
-    if (file_byte_count > 0)
+    constexpr string_view bom = "\xEF\xBB\xBF";
+    if (content.starts_with(bom))
     {
-        input_file.read(result.buffer.data(), static_cast<streamsize>(file_byte_count));
-        throw_if(!input_file,
-                 "Cannot read file {}\n", path.string());
+        if (mapped)
+            content.remove_prefix(bom.size());
+        else
+        {
+            result.buffer.erase(0, bom.size());
+            content = result.buffer;
+        }
     }
 
-    if (has_bom(result.buffer))
-        result.buffer.erase(0, 3);
-
-    result.has_quotes = result.buffer.find('"') != string::npos;
-
-    result.content = result.buffer;
-    parse(result);
+    result.has_quotes = content.find('"') != string_view::npos;
+    parse(result, content);
     return result;
 }
 
@@ -543,15 +506,13 @@ bool is_numeric_string(string_view text)
     double value;
     const char* const first = text.data();
     const char* const last  = first + text.size();
-    const auto [ptr, ec] = from_chars(first, last, value);
+    const auto [end, error] = from_chars(first, last, value);
 
-    if (ec != errc{} || ptr == first) return false;
-
-    const size_t consumed = static_cast<size_t>(ptr - first);
-
-    return consumed == text.size()
-        || (text.find('%') != string_view::npos && consumed + 1 == text.size());
+    return error == errc{}
+        && (end == last || (end + 1 == last && *end == '%'));
 }
+
+enum class Meridiem {None, Am, Pm};
 
 struct ParsedDateTime
 {
@@ -559,154 +520,140 @@ struct ParsedDateTime
     std::array<int, 4> time{};
     size_t date_count = 0;
     size_t time_count = 0;
-    size_t first_date_digits = 0;
-    size_t last_date_digits = 0;
-    bool pm = false;
-    bool am = false;
+    int year_index = -1;
+    Meridiem meridiem = Meridiem::None;
 };
 
-static bool parse_fields(string_view text,
-                         string_view separators,
-                         std::array<int, 4>& values,
-                         size_t& count,
-                         size_t* first_digits = nullptr,
-                         size_t* last_digits = nullptr)
+static size_t parse_fields(string_view text,
+                           string_view separators,
+                           std::array<int, 4>& values,
+                           int* year_index = nullptr)
 {
-    count = 0;
-    size_t position = 0;
+    if (year_index) *year_index = -1;
 
-    while (position < text.size())
+    size_t count = 0;
+    const char* current = text.data();
+    const char* const text_end = current + text.size();
+
+    while (current < text_end)
     {
-        if (count == values.size()) return false;
+        if (count == values.size()
+            || !isdigit(static_cast<unsigned char>(*current)))
+            return 0;
 
-        const size_t start = position;
-        while (position < text.size()
-            && isdigit(static_cast<unsigned char>(text[position])))
-            ++position;
+        const auto [field_end, error] = from_chars(current, text_end, values[count]);
+        if (error != errc{}) return 0;
 
-        if (position == start) return false;
-
-        if (count == 0 && first_digits) *first_digits = position - start;
-        if (last_digits) *last_digits = position - start;
-
-        const auto [end, error] =
-            from_chars(text.data() + start, text.data() + position, values[count]);
-        if (error != errc{} || end != text.data() + position) return false;
+        if (year_index && *year_index < 0 && field_end - current == 4)
+            *year_index = int(count);
 
         ++count;
-        if (position == text.size()) return true;
-        if (separators.find(text[position]) == string_view::npos) return false;
-        ++position;
+        if (field_end == text_end) break;
+        if (separators.find(*field_end) == string_view::npos) return 0;
+        current = field_end + 1;
     }
 
-    return count > 0;
+    return count;
 }
 
-static bool parse_date_time(string_view text, ParsedDateTime& parsed)
+static optional<ParsedDateTime> parse_date_time(string_view text)
 {
     text = trim_view(text);
-    if (text.empty()) return false;
+    if (text.empty()) return nullopt;
 
-    if (text.size() >= 3 && text[text.size() - 3] == ' ')
-    {
-        const string_view suffix = text.substr(text.size() - 2);
-        parsed.am = suffix == "AM";
-        parsed.pm = suffix == "PM";
-        if (parsed.am || parsed.pm)
-            text.remove_suffix(3);
-    }
+    ParsedDateTime parsed;
+
+    if (text.ends_with(" AM"))
+        parsed.meridiem = Meridiem::Am;
+    else if (text.ends_with(" PM"))
+        parsed.meridiem = Meridiem::Pm;
+
+    if (parsed.meridiem != Meridiem::None)
+        text.remove_suffix(3);
 
     const size_t space = text.find(' ');
-    const bool time_only = space == string_view::npos
-                        && text.find(':') != string_view::npos;
+    if (space == string_view::npos)
+    {
+        if (text.find(':') != string_view::npos)
+        {
+            parsed.time_count = parse_fields(text, ":", parsed.time);
+            if (parsed.time_count != 3) return nullopt;
+        }
+        else
+        {
+            parsed.date_count = parse_fields(text, "-/.", parsed.date, &parsed.year_index);
+            if (parsed.date_count < 2 || parsed.date_count > 3) return nullopt;
+        }
 
-    if (time_only)
-        return parse_fields(text, ":", parsed.time, parsed.time_count)
-            && parsed.time_count == 3;
+        return parsed;
+    }
 
-    const string_view date_text =
-        space == string_view::npos ? text : text.substr(0, space);
+    parsed.date_count =
+        parse_fields(text.substr(0, space), "-/.", parsed.date, &parsed.year_index);
+    if (parsed.date_count < 2 || parsed.date_count > 3)
+        return nullopt;
 
-    if (!parse_fields(date_text, "-/.", parsed.date, parsed.date_count,
-                      &parsed.first_date_digits, &parsed.last_date_digits)
-        || parsed.date_count < 2 || parsed.date_count > 3)
-        return false;
+    parsed.time_count = parse_fields(text.substr(space + 1), ":.", parsed.time);
+    if (parsed.time_count < 2 || parsed.time_count > 4)
+        return nullopt;
 
-    if (space == string_view::npos) return true;
-
-    const string_view time_text = text.substr(space + 1);
-    return parse_fields(time_text, ":.", parsed.time, parsed.time_count)
-        && parsed.time_count >= 2 && parsed.time_count <= 4;
+    return parsed;
 }
 
 bool is_date_time_string(string_view text)
 {
     if (is_numeric_string(text)) return false;
-    ParsedDateTime parsed;
-    return parse_date_time(text, parsed);
-}
-
-bool has_numbers(const vector<string>& string_list)
-{
-    return ranges::any_of(string_list, is_numeric_string);
-}
-
-bool has_numbers(const vector<string_view>& string_list)
-{
-    return ranges::any_of(string_list, is_numeric_string);
+    return parse_date_time(text).has_value();
 }
 
 DateFormat detect_date_format(string_view text)
 {
-    ParsedDateTime parsed;
-    if (!parse_date_time(text, parsed) || parsed.date_count != 3) return Auto;
-    if (parsed.first_date_digits == 4) return Ymd;
-    if (parsed.date[0] > 12) return Dmy;
-    if (parsed.date[1] > 12) return Mdy;
+    const optional<ParsedDateTime> parsed = parse_date_time(text);
+    if (!parsed || parsed->date_count != 3) return Auto;
+    if (parsed->year_index == 0) return Ymd;
+    if (parsed->date[0] > 12) return Dmy;
+    if (parsed->date[1] > 12) return Mdy;
     return Auto;
 }
 
 time_t date_to_timestamp(string_view text, Index gmt, DateFormat format)
 {
-    ParsedDateTime parsed;
-    if (!parse_date_time(text, parsed)) return -1;
+    const optional<ParsedDateTime> parsed = parse_date_time(text);
+    if (!parsed) return -1;
+    if (parsed->date_count == 0 && format != Auto) return -1;
 
     tm time_components{};
 
-    if (parsed.date_count == 0)
-    {
-        if (format != Auto || parsed.time_count != 3) return -1;
-    }
-    else if (parsed.first_date_digits == 4)
+    if (parsed->date_count > 0 && parsed->year_index == 0)
     {
         if (format != Auto && format != Ymd) return -1;
-        time_components.tm_year = parsed.date[0] - 1900;
-        time_components.tm_mon = parsed.date[1] - 1;
-        time_components.tm_mday = parsed.date_count == 3 ? parsed.date[2] : 1;
+        time_components.tm_year = parsed->date[0] - 1900;
+        time_components.tm_mon = parsed->date[1] - 1;
+        time_components.tm_mday = parsed->date_count == 3 ? parsed->date[2] : 1;
     }
-    else
+    else if (parsed->date_count > 0)
     {
-        if (parsed.date_count != 3 || format == Ymd || parsed.last_date_digits != 4)
+        if (parsed->date_count != 3
+            || format == Ymd
+            || parsed->year_index != int(parsed->date_count - 1))
             return -1;
 
         const bool month_first = format == Mdy
-            || (format == Auto && parsed.date[0] <= 12 && parsed.date[1] > 12);
-        time_components.tm_mday = month_first ? parsed.date[1] : parsed.date[0];
-        time_components.tm_mon = (month_first ? parsed.date[0] : parsed.date[1]) - 1;
-        time_components.tm_year = parsed.date[2] - 1900;
+            || (format == Auto && parsed->date[0] <= 12 && parsed->date[1] > 12);
+        time_components.tm_mday = month_first ? parsed->date[1] : parsed->date[0];
+        time_components.tm_mon = (month_first ? parsed->date[0] : parsed->date[1]) - 1;
+        time_components.tm_year = parsed->date[2] - 1900;
     }
 
-    if (parsed.time_count > 0)
+    if (parsed->time_count > 0)
     {
-        if (parsed.time_count < 2) return -1;
-
-        int hour = parsed.time[0];
-        if (parsed.pm && hour < 12) hour += 12;
-        if (parsed.am && hour == 12) hour = 0;
+        int hour = parsed->time[0];
+        if (parsed->meridiem == Meridiem::Pm && hour < 12) hour += 12;
+        if (parsed->meridiem == Meridiem::Am && hour == 12) hour = 0;
 
         time_components.tm_hour = hour - int(gmt);
-        time_components.tm_min = parsed.time[1];
-        time_components.tm_sec = parsed.time_count >= 3 ? parsed.time[2] : 0;
+        time_components.tm_min = parsed->time[1];
+        time_components.tm_sec = parsed->time_count >= 3 ? parsed->time[2] : 0;
     }
 
     return mktime(&time_components);

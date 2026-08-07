@@ -332,7 +332,7 @@ void LanguageDataset::load_documents(vector<vector<string>>& input_documents,
     const string separator_string = get_separator_string();
     const char field_separator = separator_string.empty() ? '\t' : separator_string[0];
 
-    const CsvReader reader({field_separator, {}});
+    const CsvReader reader(field_separator);
     const CsvReader::Result result = reader.read(data_path);
 
     const size_t first_line = has_header ? 1 : 0;

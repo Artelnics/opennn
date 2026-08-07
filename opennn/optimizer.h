@@ -184,7 +184,6 @@ protected:
     struct FullBatchContext
     {
         NeuralNetwork* neural_network = nullptr;
-        bool has_validation = false;
         Index training_samples_number = 0;
         Index validation_samples_number = 0;
         unique_ptr<Batch> training_batch;

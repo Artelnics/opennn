@@ -2705,9 +2705,12 @@ void w8a16_linear_cuda(const int m, const int in_features, const int out_feature
 }
 
 // The row index comes from blockIdx.y, so the scale lookup needs no integer
-// division: one per element dominated this kernel before.
+// division: one per element dominated this kernel before. Rows are walked
+// grid-strided because a vocabulary table has more rows than gridDim.y can
+// address.
 template<typename T, bool SCALE_BY_ROW>
-__global__ void w8_dequant_kernel(const int row_length,
+__global__ void w8_dequant_kernel(const int rows,
+                                  const int row_length,
                                   const int8_t* __restrict__ q,
                                   const float* __restrict__ scales,
                                   T* __restrict__ out)
@@ -2715,9 +2718,12 @@ __global__ void w8_dequant_kernel(const int row_length,
     const int column = blockIdx.x * blockDim.x + threadIdx.x;
     if (column >= row_length) return;
 
-    const Index i = Index(blockIdx.y) * row_length + column;
-    const float scale = SCALE_BY_ROW ? scales[blockIdx.y] : scales[column];
-    out[i] = static_cast<T>(float(q[i]) * scale);
+    for (int row = blockIdx.y; row < rows; row += gridDim.y)
+    {
+        const Index i = Index(row) * row_length + column;
+        const float scale = SCALE_BY_ROW ? scales[row] : scales[column];
+        out[i] = static_cast<T>(float(q[i]) * scale);
+    }
 }
 
 template<typename T>
@@ -2725,14 +2731,16 @@ void w8_dequant_cuda(const Index rows, const Index row_length, const bool scale_
                      const int8_t* q, const float* scales, T* out)
 {
     if (rows == 0 || row_length == 0) return;
-    const dim3 grid(unsigned(grid_size_for(checked_int(row_length))), unsigned(checked_int(rows)));
+    constexpr int max_grid_y = 65535;
+    const dim3 grid(unsigned(grid_size_for(checked_int(row_length))),
+                    unsigned(min(checked_int(rows), max_grid_y)));
     cudaStream_t stream = opennn::device::get_compute_stream();
     if (scale_by_row)
         OPENNN_CUDA_LAUNCH((w8_dequant_kernel<T, true>
-            <<<grid, block_size, 0, stream>>>(checked_int(row_length), q, scales, out)));
+            <<<grid, block_size, 0, stream>>>(checked_int(rows), checked_int(row_length), q, scales, out)));
     else
         OPENNN_CUDA_LAUNCH((w8_dequant_kernel<T, false>
-            <<<grid, block_size, 0, stream>>>(checked_int(row_length), q, scales, out)));
+            <<<grid, block_size, 0, stream>>>(checked_int(rows), checked_int(row_length), q, scales, out)));
 }
 
 template<typename T>

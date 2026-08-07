@@ -1159,6 +1159,29 @@ void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorVi
     }
 }
 
+#ifdef OPENNN_HAS_CUDA
+
+// Scratch an INT8 matmul may spend on dequantized weights. Above it the
+// weight is either processed in slices or read straight from the GEMV kernel,
+// so a vocabulary-sized table never lands in a workspace.
+constexpr Index int8_dequant_budget_bytes = Index(32) * 1024 * 1024;
+
+// Weight-only INT8 GEMV. The kernel is specialized for few rows, so long
+// inputs are fed to it one row block at a time; the weight is read in place.
+static void w8a16_linear_rows(Index rows, Index in_features, Index out_features,
+                              bool weights_out_major,
+                              const bfloat16* x, const int8_t* weights, const float* scales,
+                              const bfloat16* bias, bfloat16* y)
+{
+    for (Index row = 0; row < rows; row += W8A16_MAX_M)
+        w8a16_linear_cuda<bfloat16>(to_int(min(Index(W8A16_MAX_M), rows - row)),
+                                    to_int(in_features), to_int(out_features), weights_out_major,
+                                    x + row * in_features, weights, scales, bias,
+                                    y + row * out_features);
+}
+
+#endif
+
 void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weight, TensorView& output,
                           const TensorView& weight_scale)
 {
@@ -1171,28 +1194,37 @@ void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weigh
         const Index in_features  = embed_weight.shape.back();
         const Index out_features = embed_weight.size() / in_features;
         const Index rows = input.size() / in_features;
-        constexpr Index large_weight_bytes = Index(256) * 1024 * 1024;
 
-        if (rows <= W8A16_MAX_M || embed_weight.byte_size() > large_weight_bytes)
+        if (rows <= W8A16_MAX_M)
         {
-            // Chunked GEMV: never dequantize a vocab-sized table into a scratch.
-            for (Index row = 0; row < rows; row += W8A16_MAX_M)
-            {
-                const Index m = min(Index(W8A16_MAX_M), rows - row);
-                w8a16_linear_cuda<bfloat16>(to_int(m), to_int(in_features), to_int(out_features), true,
-                                            input.as<bfloat16>() + row * in_features,
-                                            embed_weight.as<int8_t>(), weight_scale.as<float>(),
-                                            nullptr,
-                                            output.as<bfloat16>() + row * out_features);
-            }
+            w8a16_linear_rows(rows, in_features, out_features, true,
+                              input.as<bfloat16>(), embed_weight.as<int8_t>(),
+                              weight_scale.as<float>(), nullptr, output.as<bfloat16>());
             return;
         }
 
-        bfloat16* dequantized = ensure_int8_dequant_workspace(embed_weight.size());
-        w8_dequant_cuda<bfloat16>(out_features, in_features, true, embed_weight.as<int8_t>(),
-                                  weight_scale.as<float>(), dequantized);
-        const TensorView dequantized_weights(dequantized, embed_weight.shape, Type::BF16, Device::CUDA);
-        multiply(input, false, dequantized_weights, true, output, 1.0f, 0.0f);
+        // Many rows: a GEMM beats the GEMV kernel, but the weight has to be
+        // dequantized first. Do it one output-channel slice at a time — the
+        // slice is contiguous both in the {out, in} weight and in the per-row
+        // scales — so the scratch stays within the budget instead of holding
+        // a vocabulary-sized table in BF16.
+        const Index tile_rows = min(out_features,
+            max(Index(1), int8_dequant_budget_bytes / (in_features * Index(sizeof(bfloat16)))));
+        bfloat16* dequantized = ensure_int8_dequant_workspace(tile_rows * in_features);
+
+        for (Index j0 = 0; j0 < out_features; j0 += tile_rows)
+        {
+            const Index tile = min(tile_rows, out_features - j0);
+            w8_dequant_cuda<bfloat16>(tile, in_features, true,
+                                      embed_weight.as<int8_t>() + j0 * in_features,
+                                      weight_scale.as<float>() + j0, dequantized);
+            gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
+                                      to_int(tile), to_int(rows), to_int(in_features),
+                                      dequantized, CUDA_R_16BF, to_int(in_features), 0,
+                                      input.data, CUDA_R_16BF, to_int(in_features), 0,
+                                      output.as<bfloat16>() + j0, CUDA_R_16BF, to_int(out_features), 0,
+                                      1);
+        }
         return;
     }
 #endif
@@ -1884,18 +1916,22 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
         throw_if(weight_scale.empty() || !input.is_bf16() || !output.is_bf16(),
                  "linear_forward: INT8 weights require BF16 activations and a per-channel scale vector.");
 
-        const bool gemv_path = total_rows <= W8A16_MAX_M
+        // The GEMV reads the weight in place, so it is the right choice both
+        // for few rows and for any weight too large to dequantize whole. It
+        // only supports the plain and bias epilogues; the dequantizing path
+        // below then only ever sees weights within the budget.
+        const bool gemv_path = (total_rows <= W8A16_MAX_M
+                                || weights.byte_size() > int8_dequant_budget_bytes)
             && (epilogue == CUBLASLT_EPILOGUE_DEFAULT || epilogue == CUBLASLT_EPILOGUE_BIAS)
             && (!bias.data || bias.is_bf16());
 
         if (gemv_path)
         {
-            const bfloat16* gemv_bias =
-                epilogue == CUBLASLT_EPILOGUE_BIAS && bias.data ? bias.as<bfloat16>() : nullptr;
-            w8a16_linear_cuda<bfloat16>(total_rows, input_columns, output_columns, false,
-                                        input.as<bfloat16>(), weights.as<int8_t>(),
-                                        weight_scale.as<float>(), gemv_bias,
-                                        output.as<bfloat16>());
+            w8a16_linear_rows(total_rows, input_columns, output_columns, false,
+                              input.as<bfloat16>(), weights.as<int8_t>(), weight_scale.as<float>(),
+                              epilogue == CUBLASLT_EPILOGUE_BIAS && bias.data
+                                  ? bias.as<bfloat16>() : nullptr,
+                              output.as<bfloat16>());
             return;
         }
 

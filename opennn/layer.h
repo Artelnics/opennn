@@ -19,6 +19,8 @@
 namespace opennn
 {
 
+enum class ForwardSlotKind { Pooled, Transient, TrainingOnly };
+
 enum class LayerType
 {
     Activation,
@@ -136,7 +138,15 @@ public:
         return {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
     }
 
-    virtual bool is_forward_slot_transient(size_t) const { return false; }
+    // How a forward slot is planned. Pooled slots get an arena range sized by
+    // their lifetime; Transient slots share the training scratch block (in
+    // inference they are pooled like any other short-lived slot); TrainingOnly
+    // slots are written solely for the backward pass and do not exist in
+    // inference.
+    virtual ForwardSlotKind get_forward_slot_kind(size_t) const
+    {
+        return ForwardSlotKind::Pooled;
+    }
     virtual size_t get_recomputable_forward_slot() const noexcept { return SIZE_MAX; }
     virtual void recompute_forward_slot(ForwardPropagation&, size_t) {}
     virtual bool backward_uses_forward_output() const noexcept { return true; }

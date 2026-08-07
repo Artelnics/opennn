@@ -26,6 +26,51 @@
 namespace opennn
 {
 
+#ifdef OPENNN_HAS_CUDA
+
+namespace
+{
+
+// The cuDNN batch-norm graphs run in FP32, so BF16 tensors are staged through
+// the shared workspace. It is handed out as equal slices of `count` floats:
+// `read` fills one from a BF16 tensor, `write` reserves one for the graph to
+// fill (see store_as_bfloat16 for the way back).
+struct Fp32Staging
+{
+    Fp32Staging(Index count, Index slices)
+        : elements(count), base(ensure_bf16_to_fp32_workspace(slices * count))
+    {
+    }
+
+    float* read(const void* bfloat16_source)
+    {
+        float* const slice = next();
+        cast_bf16_to_fp32(elements, static_cast<const bfloat16*>(bfloat16_source), slice);
+        return slice;
+    }
+
+    float* write() { return next(); }
+
+    Index elements = 0;
+
+private:
+
+    float* next() { return base + used++ * elements; }
+
+    float* base = nullptr;
+    Index used = 0;
+};
+
+void store_as_bfloat16(const Fp32Staging& staging, const float* slice, void* bfloat16_target)
+{
+    cast_fp32_to_bf16(staging.elements, slice, static_cast<bfloat16*>(bfloat16_target),
+                      Backend::get_compute_stream());
+}
+
+}
+
+#endif
+
 void BatchNormalizationOperator::set(Index new_features, float new_momentum)
 {
     throw_if(new_momentum < 0.0f || new_momentum >= 1.0f,
@@ -511,20 +556,14 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
         void* residual_ptr = fuse_add ? residual.data : nullptr;
         void* y_ptr        = output.data;
         float* y_fp32      = nullptr;
+        optional<Fp32Staging> staging;
         if (bf16)
         {
-            const Index n = input.size();
-            float* scratch = ensure_bf16_to_fp32_workspace((fuse_add ? 3 : 2) * n);
-            y_fp32 = scratch + n;
-            cast_bf16_to_fp32(n, static_cast<const bfloat16*>(input.data), scratch);
-            x_ptr = scratch;
-            y_ptr = y_fp32;
-            if (fuse_add)
-            {
-                float* r_fp32 = scratch + 2 * n;
-                cast_bf16_to_fp32(n, static_cast<const bfloat16*>(residual.data), r_fp32);
-                residual_ptr = r_fp32;
-            }
+            staging.emplace(input.size(), fuse_add ? 3 : 2);
+            x_ptr  = staging->read(input.data);
+            y_fp32 = staging->write();
+            y_ptr  = y_fp32;
+            if (fuse_add) residual_ptr = staging->read(residual.data);
         }
 
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
@@ -550,9 +589,7 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
                                 ? format("bn_fwd c{} r{}", features, input.size() / features)
                                 : string());
 
-        if (bf16)
-            cast_fp32_to_bf16(output.size(), y_fp32, static_cast<bfloat16*>(output.data),
-                              Backend::get_compute_stream());
+        if (bf16) store_as_bfloat16(*staging, y_fp32, output.data);
     });
 
     if (!ran)
@@ -629,15 +666,14 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
         void* x_ptr    = input.data;
         void* dy_ptr   = delta.data;
         float* dx_fp32 = nullptr;
+        optional<Fp32Staging> staging;
         if (bf16)
         {
-            const Index n = delta.size();
-            float* scratch = ensure_bf16_to_fp32_workspace(2 * n);
-            dx_fp32 = scratch + n;
-            cast_bf16_to_fp32(n, static_cast<const bfloat16*>(input.data), scratch);
-            cast_bf16_to_fp32(n, static_cast<const bfloat16*>(delta.data), dx_fp32);
-            x_ptr  = scratch;
-            dy_ptr = dx_fp32;
+            // The graph writes dX over dY, so both share one slice.
+            staging.emplace(delta.size(), 2);
+            x_ptr   = staging->read(input.data);
+            dx_fp32 = staging->read(delta.data);
+            dy_ptr  = dx_fp32;
         }
 
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
@@ -664,9 +700,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                                 ? format("bn_bwd c{} r{}", features, input.size() / features)
                                 : string());
 
-        if (bf16)
-            cast_fp32_to_bf16(delta.size(), dx_fp32, static_cast<bfloat16*>(delta.data),
-                              Backend::get_compute_stream());
+        if (bf16) store_as_bfloat16(*staging, dx_fp32, delta.data);
     });
 
     if (!ran)

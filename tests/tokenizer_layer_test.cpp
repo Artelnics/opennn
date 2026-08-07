@@ -61,6 +61,20 @@ TEST(SampleToken, TopKOneKeepsOnlyArgmax)
 }
 
 
+TEST(SampleToken, LargeTopKAndTopPCompose)
+{
+    constexpr Index vocabulary_size = 65537;
+    VectorR probabilities = VectorR::LinSpaced(vocabulary_size, 0.0f, 1.0f);
+
+    SamplingConfig config;
+    config.temperature = 1.0f;
+    config.top_k = 1;
+    config.top_p = 0.5f;
+
+    EXPECT_EQ(sample_token(probabilities, config, {}), vocabulary_size - 1);
+}
+
+
 TEST(SampleToken, TopPKeepsDominantToken)
 {
     VectorR probabilities(3);

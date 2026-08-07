@@ -8,6 +8,7 @@
 
 #include "tensor_types.h"
 #include "correlations.h"
+#include "parallel_algorithms.h"
 #include "tabular_dataset.h"
 #include "scaling_layer.h"
 #include "dense_layer.h"
@@ -338,8 +339,9 @@ VectorR calculate_spearman_ranks(const VectorR& x)
 
     iota(sorted_indices.data(), sorted_indices.data() + size, 0);
 
-    sort(sorted_indices.data(), sorted_indices.data() + size,
-         [&](Index i, Index j) { return x(i) < x(j); });
+    sort_parallel_if_large(
+        sorted_indices.data(), sorted_indices.data() + size,
+        [&](Index i, Index j) { return x(i) < x(j); });
 
     VectorR ranks(size);
 

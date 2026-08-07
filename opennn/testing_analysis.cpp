@@ -9,6 +9,7 @@
 #include "testing_analysis.h"
 #include "dataset.h"
 #include "correlations.h"
+#include "parallel_algorithms.h"
 #include "standard_networks.h"
 #include "statistics.h"
 #include "unscaling_layer.h"
@@ -559,8 +560,9 @@ MatrixR TestingAnalysis::calculate_cumulative_gain(const MatrixR& targets, const
     vector<Index> sorted_indices(static_cast<size_t>(testing_samples_number));
     iota(sorted_indices.begin(), sorted_indices.end(), Index(0));
 
-    ranges::stable_sort(sorted_indices,
-                        [&outputs](Index i, Index j) { return outputs(i, 0) > outputs(j, 0); });
+    stable_sort_parallel_if_large(
+        sorted_indices.begin(), sorted_indices.end(),
+        [&outputs](Index i, Index j) { return outputs(i, 0) > outputs(j, 0); });
 
     VectorR sorted_targets(testing_samples_number);
 

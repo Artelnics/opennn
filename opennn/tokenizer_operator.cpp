@@ -10,6 +10,7 @@
 
 #include "tokenizer_operator.h"
 #include "io_utilities.h"
+#include "parallel_algorithms.h"
 #include "string_utilities.h"
 #include "json.h"
 
@@ -62,13 +63,14 @@ vector<string> make_vocabulary(const unordered_map<string_view, size_t>& token_c
 {
     vector<pair<string_view, size_t>> sorted_tokens(token_count.begin(), token_count.end());
 
-    ranges::sort(sorted_tokens,
-                 [](const auto& first, const auto& second)
-                 {
-                     return first.second != second.second
-                         ? first.second > second.second
-                         : first.first < second.first;
-                 });
+    sort_parallel_if_large(
+        sorted_tokens.begin(), sorted_tokens.end(),
+        [](const auto& first, const auto& second)
+        {
+            return first.second != second.second
+                ? first.second > second.second
+                : first.first < second.first;
+        });
 
     vector<string> result(reserved.begin(), reserved.end());
 
@@ -318,20 +320,20 @@ vector<Index> WordLevelTokenizer::encode(string_view text) const
 namespace
 {
 
-bool next_utf8_codepoint(string_view text, size_t& position, uint32_t& codepoint)
+optional<uint32_t> next_utf8_codepoint(string_view text, size_t& position)
 {
-    if (position >= text.size()) return false;
+    if (position >= text.size()) return nullopt;
 
     const size_t start = position;
     const unsigned char lead = static_cast<unsigned char>(text[position]);
     const size_t length = utf8_sequence_length(lead);
 
-    codepoint = length == 1 ? lead : (lead & (0xFFu >> (length + 1)));
+    uint32_t codepoint = length == 1 ? lead : (lead & (0xFFu >> (length + 1)));
 
     if (length == 1 || start + length > text.size())
     {
         ++position;
-        return true;
+        return codepoint;
     }
 
     for (size_t k = 1; k < length; ++k)
@@ -341,13 +343,13 @@ bool next_utf8_codepoint(string_view text, size_t& position, uint32_t& codepoint
         {
             codepoint = lead;
             ++position;
-            return true;
+            return codepoint;
         }
         codepoint = (codepoint << 6) | (continuation & 0x3F);
     }
 
     position += length;
-    return true;
+    return codepoint;
 }
 
 vector<uint32_t> utf8_to_codepoints(string_view text)
@@ -356,9 +358,8 @@ vector<uint32_t> utf8_to_codepoints(string_view text)
     codepoints.reserve(text.size());
 
     size_t position = 0;
-    uint32_t codepoint = 0;
-    while (next_utf8_codepoint(text, position, codepoint))
-        codepoints.push_back(codepoint);
+    while (const optional<uint32_t> codepoint = next_utf8_codepoint(text, position))
+        codepoints.push_back(*codepoint);
 
     return codepoints;
 }
@@ -456,11 +457,10 @@ vector<string> split_codepoints(string_view text)
 {
     vector<string> characters;
     size_t position = 0;
-    uint32_t codepoint = 0;
-    while (next_utf8_codepoint(text, position, codepoint))
+    while (const optional<uint32_t> codepoint = next_utf8_codepoint(text, position))
     {
         characters.emplace_back();
-        append_utf8(characters.back(), codepoint);
+        append_utf8(characters.back(), *codepoint);
     }
     return characters;
 }
@@ -536,9 +536,9 @@ vector<string> WordPieceTokenizer::basic_tokenize(string_view text) const
     };
 
     size_t position = 0;
-    uint32_t codepoint = 0;
-    while (next_utf8_codepoint(text, position, codepoint))
+    while (const optional<uint32_t> parsed_codepoint = next_utf8_codepoint(text, position))
     {
+        uint32_t codepoint = *parsed_codepoint;
         if (codepoint == 0 || codepoint == 0xFFFD || is_control(codepoint)) continue;
 
         if (is_whitespace(codepoint)) { flush(); continue; }
@@ -572,8 +572,7 @@ void WordPieceTokenizer::wordpiece(const string& word,
     offsets.reserve(word.size() + 1);
 
     size_t position = 0;
-    uint32_t codepoint = 0;
-    while (next_utf8_codepoint(word, position, codepoint))
+    while (next_utf8_codepoint(word, position))
         offsets.push_back(position);
 
     const size_t characters = offsets.size() - 1;
@@ -1082,10 +1081,9 @@ string BytePairTokenizer::decode_token(Index id) const
     string bytes;
     const string& token = id_to_token(id);
     size_t position = 0;
-    uint32_t codepoint = 0;
-    while (next_utf8_codepoint(token, position, codepoint))
+    while (const optional<uint32_t> codepoint = next_utf8_codepoint(token, position))
     {
-        const auto it = byte_decoder.find(codepoint);
+        const auto it = byte_decoder.find(*codepoint);
         if (it != byte_decoder.end()) bytes += static_cast<char>(it->second);
     }
 

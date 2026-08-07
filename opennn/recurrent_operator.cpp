@@ -559,10 +559,7 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
             step_seq_delta_buf.grow_to(batch_size * output_features *
                                        Index(sizeof(Scalar)));
 
-        const cudaDataType_t axpy_dtype =
-            (output_delta.is_fp32()) ? CUDA_R_32F :
-            (output_delta.is_bf16()) ? CUDA_R_16BF :
-                                                 CUDA_R_32F;
+        const cudaDataType_t axpy_dtype = output_delta.cuda_dtype();
 
         for (Index t = time_steps; t-- > 0;)
         {

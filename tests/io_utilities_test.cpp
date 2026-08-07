@@ -70,21 +70,6 @@ TEST(IoUtilitiesTest, IsDateTimeString)
     EXPECT_FALSE(is_date_time_string(""));
 }
 
-TEST(IoUtilitiesTest, HasNumbers)
-{
-    const vector<string> with_number = {"alpha", "beta", "7", "gamma"};
-    const vector<string> without_number = {"alpha", "beta", "gamma"};
-
-    EXPECT_TRUE(has_numbers(with_number));
-    EXPECT_FALSE(has_numbers(without_number));
-
-    const vector<string_view> views_with = {"x", "9.5"};
-    const vector<string_view> views_without = {"x", "y"};
-
-    EXPECT_TRUE(has_numbers(views_with));
-    EXPECT_FALSE(has_numbers(views_without));
-}
-
 TEST(IoUtilitiesTest, DateToTimestampRoundTrip)
 {
     const time_t timestamp = date_to_timestamp("2020-06-15 12:30:45", 0, Ymd);
@@ -119,6 +104,24 @@ TEST(IoUtilitiesTest, DateToTimestampRoundTrip)
 TEST(IoUtilitiesTest, DateToTimestampInvalid)
 {
     EXPECT_EQ(date_to_timestamp("not a date", 0, Auto), time_t(-1));
+}
+
+TEST(IoUtilitiesTest, DateToTimestampMeridiem)
+{
+    const auto expected_timestamp = [](int hour)
+    {
+        struct tm expected = {};
+        expected.tm_year = 2020 - 1900;
+        expected.tm_mon = 6 - 1;
+        expected.tm_mday = 15;
+        expected.tm_hour = hour;
+        expected.tm_isdst = 0;
+        return mktime(&expected);
+    };
+
+    EXPECT_EQ(date_to_timestamp("2020-06-15 12:00 AM", 0, Ymd), expected_timestamp(0));
+    EXPECT_EQ(date_to_timestamp("2020-06-15 12:00 PM", 0, Ymd), expected_timestamp(12));
+    EXPECT_EQ(date_to_timestamp("2020-06-15 1:00 PM", 0, Ymd), expected_timestamp(13));
 }
 
 TEST(IoUtilitiesTest, FileWriterReaderRoundTrip)
@@ -256,17 +259,25 @@ TEST(IoUtilitiesTest, CsvReaderCommaSeparated)
 
     write_text_file(path, "a,b,c\n1,2,3\n4,5,6\n");
 
-    CsvReader::Configuration configuration;
-    configuration.separator = ',';
-
-    CsvReader reader(configuration);
+    CsvReader reader(',');
     const CsvReader::Result result = reader.read(path);
 
-    EXPECT_EQ(result.separator, ',');
     ASSERT_EQ(result.lines.size(), size_t(3));
     EXPECT_EQ(string(result.lines[0]), "a,b,c");
     EXPECT_EQ(string(result.lines[1]), "1,2,3");
     EXPECT_EQ(string(result.lines[2]), "4,5,6");
+
+    remove_quietly(path);
+}
+
+TEST(IoUtilitiesTest, CsvReaderEmptyFile)
+{
+    const filesystem::path path = make_temp_path("empty.csv");
+    remove_quietly(path);
+    write_text_file(path, "");
+
+    const CsvReader::Result result = CsvReader().read(path);
+    EXPECT_TRUE(result.lines.empty());
 
     remove_quietly(path);
 }
@@ -278,10 +289,7 @@ TEST(IoUtilitiesTest, CsvReaderSkipsBlankLinesAndCarriageReturns)
 
     write_text_file(path, "x,y\r\n\r\n1,2\r\n   \n3,4\r\n");
 
-    CsvReader::Configuration configuration;
-    configuration.separator = ',';
-
-    CsvReader reader(configuration);
+    CsvReader reader(',');
     const CsvReader::Result result = reader.read(path);
 
     ASSERT_EQ(result.lines.size(), size_t(3));
@@ -299,10 +307,7 @@ TEST(IoUtilitiesTest, CsvReaderPreservesQuotedFieldsForTokenizer)
 
     write_text_file(path, "name,note\n\"hello, world\",ok\n\"a;b\",plain\n");
 
-    CsvReader::Configuration configuration;
-    configuration.separator = ',';
-
-    CsvReader reader(configuration);
+    CsvReader reader(',');
     const CsvReader::Result result = reader.read(path);
 
     ASSERT_EQ(result.lines.size(), size_t(3));
@@ -320,10 +325,7 @@ TEST(IoUtilitiesTest, CsvReaderStripsBom)
 
     write_text_file(path, "\xEF\xBB\xBF" "h1,h2\n10,20\n");
 
-    CsvReader::Configuration configuration;
-    configuration.separator = ',';
-
-    CsvReader reader(configuration);
+    CsvReader reader(',');
     const CsvReader::Result result = reader.read(path);
 
     ASSERT_EQ(result.lines.size(), size_t(2));
@@ -340,13 +342,9 @@ TEST(IoUtilitiesTest, CsvReaderSemicolonSeparator)
 
     write_text_file(path, "a;b;c\n7;8;9\n");
 
-    CsvReader::Configuration configuration;
-    configuration.separator = ';';
-
-    CsvReader reader(configuration);
+    CsvReader reader(';');
     const CsvReader::Result result = reader.read(path);
 
-    EXPECT_EQ(result.separator, ';');
     ASSERT_EQ(result.lines.size(), size_t(2));
     EXPECT_EQ(string(result.lines[0]), "a;b;c");
     EXPECT_EQ(string(result.lines[1]), "7;8;9");
@@ -363,11 +361,7 @@ TEST(IoUtilitiesTest, CsvReaderLineValidatorRuns)
 
     Index validated_count = 0;
 
-    CsvReader::Configuration configuration;
-    configuration.separator = ',';
-    configuration.line_validator = [&validated_count](string_view) { ++validated_count; };
-
-    CsvReader reader(configuration);
+    CsvReader reader(',', [&validated_count](string_view) { ++validated_count; });
     const CsvReader::Result result = reader.read(path);
 
     ASSERT_EQ(result.lines.size(), size_t(3));
@@ -378,8 +372,7 @@ TEST(IoUtilitiesTest, CsvReaderLineValidatorRuns)
 
 TEST(IoUtilitiesTest, CsvReaderEmptyPathThrows)
 {
-    CsvReader::Configuration configuration;
-    CsvReader reader(configuration);
+    CsvReader reader;
 
     EXPECT_THROW((void)reader.read(filesystem::path()), runtime_error);
 }

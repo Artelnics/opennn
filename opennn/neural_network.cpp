@@ -775,11 +775,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                 const Index n = source.size();
                 vector<uint16_t>& bf16_cpu = forward_propagation.host_bf16_input_scratch[i];
                 bf16_cpu.resize(size_t(n));
-                const float* src = source.as<float>();
-                uint16_t* dst = bf16_cpu.data();
-                #pragma omp parallel for if(n > 4096)
-                for (Index j = 0; j < n; ++j)
-                    dst[j] = static_cast<uint16_t>(bit_cast<uint32_t>(src[j]) >> 16);
+                truncate_floats_to_bfloat16_host(n, source.as<float>(), bf16_cpu.data());
                 ensure_cuda_capacity(n * Index(sizeof(uint16_t)));
                 device::copy_async(input_buffer.data,
                                    bf16_cpu.data(),
@@ -852,6 +848,9 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                      && source_layer < first_layer_index)
                 input_slot[source_index] = pick_input(source_index);
         }
+
+        if (i == forward_propagation.final_output_layer)
+            forward_propagation.gather_output_window();
 
         PROFILE_SCOPE("fwd:" + layers[i]->get_name());
         layers[i]->forward_propagate(forward_propagation, i, is_training);
@@ -1286,6 +1285,13 @@ NeuralNetwork::ParameterSlotTotals NeuralNetwork::for_each_parameter_slot(
 
 void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) const
 {
+    // After a BF16/INT8 inference upload `parameters` is a non-owning view
+    // over the quantized storage, but size_in_floats() still reports the FP32
+    // master size: reading it would run 2-4x past the end of the buffer.
+    throw_if(!parameters.owns,
+             "NeuralNetwork::save_parameters_binary: the fp32 parameter master "
+             "was released for quantized inference; reload the model before saving.");
+
     ofstream file = open_binary_output(file_name);
 
     if (parameters.device_type == Device::CUDA && parameters.data)
@@ -2225,6 +2231,13 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
                     "unavailable (" << capture_error.what() << "); continuing eager.\n";
         }
     }
+
+    // Outside the capture scope (which forbids buffer resizes): a live graph
+    // replays against its own workspaces, so the eager thread-local set grown
+    // during warmup would double every workspace. The ensure_* helpers regrow
+    // it on demand if the graph is later invalidated.
+    if (forward_propagation.inference_graph_exec)
+        release_matmul_thread_workspaces();
 
     ::opennn::enabled() = profiler_was_enabled;
 

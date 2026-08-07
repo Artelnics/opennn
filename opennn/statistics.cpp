@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "statistics.h"
+#include "parallel_algorithms.h"
 #include "tensor_types.h"
 #include "random_utilities.h"
 
@@ -748,9 +749,9 @@ VectorI calculate_rank(const VectorR& vector, bool ascending)
     VectorI rank(size);
     iota(rank.data(), rank.data() + rank.size(), 0);
 
-    sort(rank.data(),
-         rank.data() + rank.size(),
-         [&](Index i, Index j) { return ascending ? vector[i] < vector[j] : vector[i] > vector[j]; });
+    sort_parallel_if_large(
+        rank.data(), rank.data() + rank.size(),
+        [&](Index i, Index j) { return ascending ? vector[i] < vector[j] : vector[i] > vector[j]; });
 
     return rank;
 }
