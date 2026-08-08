@@ -65,10 +65,9 @@ __global__ void scale_kernel(const int n, const int features,
                 y = (stds[f] > FLT_EPSILON) ? (x - means[f]) / stds[f] : 0.0f;
             break;
         case 3:
-            // Neutral multiplier on a feature with no spread, matching scale_cpu:
-            // unscaling must not annihilate the value it was handed.
+            // Degenerate feature: recover the constant it held, as scale_cpu does.
             if constexpr (Inverse)
-                y = (fabsf(stds[f]) < FLT_EPSILON) ? x : x * stds[f];
+                y = (stds[f] > FLT_EPSILON) ? x * stds[f] : means[f];
             else
                 y = (stds[f] > FLT_EPSILON) ? x / stds[f] : 0.0f;
             break;

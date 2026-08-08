@@ -18,6 +18,8 @@
 #include "opennn/tensor_operations.h"
 #include "opennn/device_backend.h"
 #include "opennn/variable.h"
+#include "opennn/statistics.h"
+#include "opennn/unscaling_layer.h"
 
 using namespace opennn;
 
@@ -224,7 +226,6 @@ TEST(ScalerParity, MatchesBetweenCpuAndGpuOnAsymmetricRange)
 
 // Runs in every build: a round trip through scale then unscale must return the
 // original values for the features that carry enough information to invert.
-// A feature with no spread cannot, by definition, be recovered.
 TEST(ScalerParity, CpuRoundTripRecoversInvertibleFeatures)
 {
     const ScalerInputs in;
@@ -239,24 +240,50 @@ TEST(ScalerParity, CpuRoundTripRecoversInvertibleFeatures)
         {
             const Feature& feature = features_under_test[size_t(f)];
 
-            const bool has_spread = feature.scaler == ScalerMethod::MinimumMaximum
-                ? feature.maximum - feature.minimum >= EPSILON
-                : feature.standard_deviation >= EPSILON;
-
             // Logarithm clamps at EPSILON, so inputs at or below it are lost.
             if (feature.scaler == ScalerMethod::Logarithm && row_values[size_t(r)] <= EPSILON)
                 continue;
 
-            if (!has_spread && feature.scaler != ScalerMethod::None
-                            && feature.scaler != ScalerMethod::Logarithm
-                            && feature.scaler != ScalerMethod::ImageMinMax)
-                continue;
+            const bool has_spread = feature.scaler == ScalerMethod::MinimumMaximum
+                ? feature.maximum - feature.minimum >= EPSILON
+                : feature.standard_deviation >= EPSILON;
+
+            // A feature with no spread held exactly one value, so that value -
+            // not the input - is what a round trip must produce.
+            const bool degenerate = !has_spread
+                && (feature.scaler == ScalerMethod::MinimumMaximum
+                    || feature.scaler == ScalerMethod::MeanStandardDeviation
+                    || feature.scaler == ScalerMethod::StandardDeviation);
+
+            const float original = row_values[size_t(r)];
+            const float expected = degenerate
+                ? (feature.scaler == ScalerMethod::MinimumMaximum ? feature.minimum : feature.mean)
+                : original;
 
             const size_t i = size_t(r * in.features + f);
-            const float original = row_values[size_t(r)];
-            EXPECT_NEAR(original, recovered[i], 1e-3f * max(1.0f, abs(original)))
+            EXPECT_NEAR(expected, recovered[i], 1e-3f * max(1.0f, abs(expected)))
                 << "round trip lost feature '" << feature.name << "'";
         }
+}
+
+// An exported model has to agree with the library it was exported from, so the
+// emitters need the same degenerate-feature rule the numeric paths use. Nothing
+// else checks this: the emitters write source text, so they cannot share the
+// formulas and can only be kept in step deliberately.
+TEST(ScalerParity, EmittedExpressionRecoversDegenerateConstant)
+{
+    const float constant = 7.0f;
+
+    Unscaling layer(Shape{1});
+    layer.set_scalers("StandardDeviation");
+    layer.set_descriptives({Descriptives(constant, constant, constant, 0.0f)});
+
+    const string expression = layer.write_expression({"x"}, {"y"});
+
+    EXPECT_NE(expression.find(to_string(int(constant))), string::npos)
+        << "expected the constant in: " << expression;
+    EXPECT_EQ(expression.find("x*0"), string::npos)
+        << "must not multiply by a zero standard deviation: " << expression;
 }
 
 // OpenNN: Open Neural Networks Library.

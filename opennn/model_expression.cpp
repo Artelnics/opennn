@@ -955,7 +955,15 @@ string ModelExpression::get_expression_c_embedded() const
                         {
                             if(is_unscaling)
                             {
-                                slope = d.standard_deviation;
+                                if(d.standard_deviation < EPSILON)
+                                {
+                                    slope = 0.0f;
+                                    offset = d.mean;
+                                }
+                                else
+                                {
+                                    slope = d.standard_deviation;
+                                }
                             }
                             else if(d.standard_deviation > EPSILON)
                             {

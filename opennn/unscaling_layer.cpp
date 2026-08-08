@@ -134,7 +134,10 @@ string Unscaling::write_expression(const vector<string>& input_names,
             buffer << output_names[i] << "=" << input_names[i] << "*" << descriptive.standard_deviation << "+" << descriptive.mean << ";\n";
             break;
         case StandardDeviation:
-            buffer << output_names[i] << "=" << input_names[i] << "*" << descriptive.standard_deviation << ";\n";
+            if (descriptive.standard_deviation < EPSILON)
+                buffer << output_names[i] << "=" << descriptive.mean << ";\n";
+            else
+                buffer << output_names[i] << "=" << input_names[i] << "*" << descriptive.standard_deviation << ";\n";
             break;
         case Logarithm:
             buffer << output_names[i] << "=" << "exp(" << input_names[i] << ");\n";

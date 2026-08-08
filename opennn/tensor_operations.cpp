@@ -309,17 +309,20 @@ static void scale_cpu(const TensorView& input,
                 column = unscale_mean_standard_deviation_formula(column, descriptives);
             break;
         case StandardDeviation:
+        {
+            // A feature with no spread held one value, and scaling mapped it to
+            // zero. Unscaling recovers that value - which is the mean - exactly
+            // as the two scalers above recover theirs.
+            const float sd = descriptives.standard_deviation;
+
             if (!inverse)
-            {
-                const float sd = descriptives.standard_deviation;
                 column *= (sd > EPSILON) ? (1.0f / sd) : 0.0f;
-            }
+            else if (sd > EPSILON)
+                column *= sd;
             else
-            {
-                const float sd = descriptives.standard_deviation;
-                column *= (abs(sd) < EPSILON) ? 1.0f : sd;
-            }
+                column.setConstant(descriptives.mean);
             break;
+        }
         case Logarithm:
             if (inverse) column = column.exp();
             else         column = column.max(EPSILON).log();
