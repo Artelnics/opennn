@@ -136,7 +136,7 @@ void Upsample::set(const Shape& new_input_shape,
     configure_operator();
 }
 
-void Upsample::set_input_shape(const Shape& new_input_shape)
+void Upsample::apply_input_shape(const Shape& new_input_shape)
 {
     set(new_input_shape, upsample.scale_factor, label);
 }

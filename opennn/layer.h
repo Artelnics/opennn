@@ -127,7 +127,18 @@ public:
     // it cannot honour.
     virtual bool accepts_input_rank(Index) const { return false; }
 
-    virtual void set_input_shape(const Shape&) {}
+    // Validation lives here and nowhere else, so no layer can omit it. What a
+    // layer does with an accepted shape is its own business - apply_input_shape
+    // below - but whether the shape is acceptable at all is answered uniformly.
+    void set_input_shape(const Shape& new_input_shape)
+    {
+        throw_if(!new_input_shape.empty() && !accepts_input_rank(new_input_shape.rank),
+                 "{} layer does not accept an input of rank {}.",
+                 get_name(), new_input_shape.rank);
+
+        apply_input_shape(new_input_shape);
+    }
+
     virtual void set_output_shape(const Shape&) {}
 
     void set_label(string new_label) { label = move(new_label); }
@@ -219,6 +230,15 @@ public:
     float* link_gradients(float*, Device);
 
 protected:
+
+    // The layer's own reaction to an input shape that has already been
+    // accepted. Assigning input_shape suits most layers; those that decompose
+    // the shape or rebuild operators from it override this.
+    virtual void apply_input_shape(const Shape& new_input_shape)
+    {
+        input_shape = new_input_shape;
+    }
+
 
     static bool refresh_feature_storage(Buffer& storage, bool& dirty, Device device,
                                         Index features, Index columns,

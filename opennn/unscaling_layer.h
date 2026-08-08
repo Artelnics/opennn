@@ -21,7 +21,7 @@ public:
 
     void set(Index = 0, const string& = "unscaling_layer");
 
-    void set_input_shape(const Shape&) override;
+    void apply_input_shape(const Shape&) override;
 
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;

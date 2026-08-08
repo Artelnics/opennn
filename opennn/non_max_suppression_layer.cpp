@@ -210,7 +210,7 @@ void NonMaxSuppression::set(const Shape& new_input_shape,
     configure_operator();
 }
 
-void NonMaxSuppression::set_input_shape(const Shape& new_input_shape)
+void NonMaxSuppression::apply_input_shape(const Shape& new_input_shape)
 {
     set(new_input_shape, nms.boxes_per_cell, nms.confidence_threshold,
         nms.iou_threshold, label);

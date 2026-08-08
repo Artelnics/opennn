@@ -196,7 +196,7 @@ void MultiHeadAttention::set_sdpa_min_sequence_length(Index new_threshold)
     attention.use_sdpa = should_use_sdpa();
 }
 
-void MultiHeadAttention::set_input_shape(const Shape& new_input_shape)
+void MultiHeadAttention::apply_input_shape(const Shape& new_input_shape)
 {
     throw_if(new_input_shape.rank != 2,
              "MultiHeadAttention input shape must have rank 2.");

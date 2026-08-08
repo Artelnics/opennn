@@ -39,7 +39,7 @@ public:
     void set(const Shape&, const vector<Index>&, const string&);
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 3); }
 
-    void set_input_shape(const Shape&) override;
+    void apply_input_shape(const Shape&) override;
 
     void from_JSON(const JsonDocument&) override;
     void load_state_from_JSON(const JsonDocument&) override;

@@ -245,7 +245,7 @@ void Convolutional::set(const Shape& new_input_shape,
     update_convolution_operator();
 }
 
-void Convolutional::set_input_shape(const Shape& new_input_shape)
+void Convolutional::apply_input_shape(const Shape& new_input_shape)
 {
     throw_if(new_input_shape.rank != 3, "Input shape rank must be 3.");
 

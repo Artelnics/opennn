@@ -32,7 +32,7 @@ void C2PSA::set(const Shape& new_input_shape, const string& new_label)
     configure_operator();
 }
 
-void C2PSA::set_input_shape(const Shape& new_input_shape)
+void C2PSA::apply_input_shape(const Shape& new_input_shape)
 {
     set(new_input_shape, label);
 }

@@ -108,7 +108,7 @@ public:
 
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 3); }
 
-    void set_input_shape(const Shape&) override;
+    void apply_input_shape(const Shape&) override;
     void set_pooling_method(const string&);
 
     void read_JSON_body(const Json*) override;

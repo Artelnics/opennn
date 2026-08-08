@@ -63,7 +63,7 @@ public:
 
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 2); }
 
-    void set_input_shape(const Shape&) override;
+    void apply_input_shape(const Shape&) override;
     void on_compute_dtype_changed() override;
 
     void set_dropout_rate(float new_dropout_rate) { attention.dropout.set_rate(new_dropout_rate); }

@@ -98,7 +98,7 @@ void Normalization3d::set(Index new_sequence_length,
     layer_normalization.set(sequence_length, embedding_dimension);
 }
 
-void Normalization3d::set_input_shape(const Shape& new_input_shape)
+void Normalization3d::apply_input_shape(const Shape& new_input_shape)
 {
     if (new_input_shape.rank < 2) return;
     set(new_input_shape[0], new_input_shape[1], label);

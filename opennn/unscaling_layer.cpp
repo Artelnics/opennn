@@ -32,7 +32,7 @@ void Unscaling::set(Index new_neurons_number, const string& new_label)
     op_storage_dirty = true;
 }
 
-void Unscaling::set_input_shape(const Shape& new_input_shape)
+void Unscaling::apply_input_shape(const Shape& new_input_shape)
 {
     set(new_input_shape.dim_or_zero(0));
 }

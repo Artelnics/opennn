@@ -1064,7 +1064,7 @@ void LongShortTermMemory::set(const Shape& new_input_shape,
     configure_operators();
 }
 
-void LongShortTermMemory::set_input_shape(const Shape& new_input_shape)
+void LongShortTermMemory::apply_input_shape(const Shape& new_input_shape)
 {
     check_rank(new_input_shape, {2}, "LongShortTermMemory", "input");
     input_shape = new_input_shape;

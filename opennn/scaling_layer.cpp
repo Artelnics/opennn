@@ -70,7 +70,7 @@ void Scaling::set(const Shape& new_input_shape)
     check_rank(input_shape, {1, 2, 3}, "Scaling", "input");
 }
 
-void Scaling::set_input_shape(const Shape& new_input_shape)
+void Scaling::apply_input_shape(const Shape& new_input_shape)
 {
     set(new_input_shape);
 }

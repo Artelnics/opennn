@@ -661,7 +661,7 @@ void GroupedQueryAttention::set(const Shape& new_input_shape,
                   rope_theta, rms_epsilon, use_qk_norm);
 }
 
-void GroupedQueryAttention::set_input_shape(const Shape& new_input_shape)
+void GroupedQueryAttention::apply_input_shape(const Shape& new_input_shape)
 {
     if (new_input_shape.rank < 2) return;
     set({new_input_shape[0], new_input_shape[1]},

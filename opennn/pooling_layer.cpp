@@ -325,7 +325,7 @@ void Pooling::set(const Shape& new_input_shape,
     update_pool_operator();
 }
 
-void Pooling::set_input_shape(const Shape& new_input_shape)
+void Pooling::apply_input_shape(const Shape& new_input_shape)
 {
     throw_if(new_input_shape.rank != 3, "Input shape must be 3");
 

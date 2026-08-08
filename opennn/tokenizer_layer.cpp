@@ -22,7 +22,7 @@ Tokenizer::Tokenizer(const Shape& new_input_shape, const string& new_label)
     check_rank(input_shape, {1}, "Tokenizer", "input");
 }
 
-void Tokenizer::set_input_shape(const Shape& new_input_shape)
+void Tokenizer::apply_input_shape(const Shape& new_input_shape)
 {
     input_shape = new_input_shape;
 

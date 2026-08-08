@@ -76,7 +76,7 @@ void Bounding::set(const Shape& new_output_shape, const string& new_label)
     op_storage_dirty = true;
 }
 
-void Bounding::set_input_shape(const Shape& new_input_shape)
+void Bounding::apply_input_shape(const Shape& new_input_shape)
 {
     set(new_input_shape, label);
 }

@@ -54,7 +54,7 @@ public:
     void set(const Shape& = {});
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 1, 2, 3); }
 
-    void set_input_shape(const Shape&) override;
+    void apply_input_shape(const Shape&) override;
 
     void set_descriptives(const vector<Descriptives>&);
     void set_scalers(const vector<string>&);

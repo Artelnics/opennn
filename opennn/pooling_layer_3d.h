@@ -37,7 +37,7 @@ public:
 
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 2); }
 
-    void set_input_shape(const Shape& new_input_shape) override
+    void apply_input_shape(const Shape& new_input_shape) override
     {
         set(new_input_shape, pooling_method, get_label());
     }

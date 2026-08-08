@@ -276,7 +276,7 @@ void Detection::set(const Shape& new_input_shape,
     configure_operator();
 }
 
-void Detection::set_input_shape(const Shape& new_input_shape)
+void Detection::apply_input_shape(const Shape& new_input_shape)
 {
     set(new_input_shape, detection.anchors, label);
 }
