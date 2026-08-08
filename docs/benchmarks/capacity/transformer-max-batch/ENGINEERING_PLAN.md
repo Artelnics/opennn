@@ -8,7 +8,7 @@ pieces are dropped. Estimates remain hypotheses until measured.
 
 ## Key code facts driving the simplification
 
-1. `BackPropagation::setup_delta_pool` already performs lifetime-based
+1. `BackPropagation::setup_arena` already performs lifetime-based
    planning: every backward spec gets a `[first_step, last_step]` range and
    `plan_memory_pool` places entries so that only overlapping lifetimes exclude
    each other. Scratch specs (index >= source count) get a lifetime confined to
@@ -17,7 +17,7 @@ pieces are dropped. Estimates remain hypotheses until measured.
    differ only in placement order.
 2. `ForwardPropagation::set` already accepts optional external storage.
 3. Specs carry their own dtype (`TensorSpec{shape, dtype}`), so BF16 scratch
-   can live in the FP32 delta pool without planner changes.
+   can live in the FP32 backward arena without planner changes.
 4. `AttentionOperator::SDPACache` keys entries by batch size and shape. Any
    batch-size change (e.g. a final partial batch) duplicates the full private
    buffer set per layer. Pool-planned specs are re-planned per batch instead.
@@ -51,7 +51,7 @@ Reference config: `chat_pairs_bounded_4096_p16_r32.txt`, 512/8/2048/6,
 input_seq 71, decoder_seq 128. Archived baseline (commit 2ad3ee706):
 max batch 80 under the 5632 MiB cap.
 
-After phases 0-1 (shared dO/dQ/dK/dV scratch in the delta pool):
+After phases 0-1 (shared dO/dQ/dK/dV scratch in the backward arena):
 
 | Batch | Result | Peak VRAM (1 Hz sampling) |
 | ---: | --- | ---: |
@@ -60,7 +60,7 @@ After phases 0-1 (shared dO/dQ/dK/dV scratch in the delta pool):
 | 92 | OK | 5,941 MiB |
 | 96 | OK | 5,943 MiB |
 
-Ledger at batch 80: delta pool 215.5 -> 255.5 MiB (+40 MiB, the planned SDPA
+Ledger at batch 80: backward arena 215.5 -> 255.5 MiB (+40 MiB, the planned SDPA
 scratch), forward arena unchanged at 3,527.3 MiB.
 
 After phase 2 (Q/K/V rematerialization):
@@ -72,7 +72,7 @@ After phase 2 (Q/K/V rematerialization):
 | 104 | OK | 5,985 MiB |
 | 112 | OK | 5,985 MiB |
 
-Ledger at batch 80: delta pool 285.5 MiB (+30, remat specs), forward arena
+Ledger at batch 80: backward arena 285.5 MiB (+30, remat specs), forward arena
 3,537.3 MiB (+10, transient pack). Batch-80 peak dropped 5,289 -> 5,149 MiB.
 Micro-run wall time at batch 80 was 1.63 s -> 1.67 s (within noise for a
 256-sample run; the accepted A/B is the full time/energy-to-target benchmark).
@@ -150,7 +150,7 @@ use SDPA instead of the unfused fallback.
 
 Gate: convergence benchmarks are only valid after this phase.
 
-## Phase 1 - SDPA backward gradient scratch into the delta pool (implemented)
+## Phase 1 - SDPA backward gradient scratch into the backward arena (implemented)
 
 `apply_sdpa_backward` allocated private per-layer, per-shape BF16 buffers for
 dO/dQ/dK/dV (~560 MiB total at batch 80). They are live only during one
@@ -163,7 +163,7 @@ overlaps them across layers automatically; the views are passed into
 `apply_sdpa_backward`, which no longer allocates.
 
 Expected effect: ~560 MiB of private allocations replaced by ~30 MiB inside
-the delta pool (largest attention layer). Time-neutral: no operations added.
+the backward arena (largest attention layer). Time-neutral: no operations added.
 
 Gate: identical outputs/loss/gradients; VRAM peak drop of roughly the
 predicted size; no step-time regression at fixed batch; HIGGS and ResNet-50
@@ -230,7 +230,7 @@ state).
   see them as occupants — the ordering hazard is structurally gone), storing
   the delta offsets in `joint_delta_plan`;
   `BackPropagation::set(..., ForwardPropagation*)` binds its delta views
-  into the forward arena via the shared `bind_delta_views`. Standalone FP/BP
+  into the forward arena via the shared `bind_deltas`. Standalone FP/BP
   degenerate to today's behavior; `Optimizer::train` passes the Loss and the
   FP. Both test suites fully green with the joint arena live.
 

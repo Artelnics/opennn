@@ -348,8 +348,7 @@ TEST(BertTest, SaveLoadRoundTrip)
     }
 
     const Index parameters_size = bert.get_parameters_buffer_size();
-    const vector<float> parameters_before(bert.get_parameters_data(),
-                                               bert.get_parameters_data() + parameters_size);
+    const VectorR parameters_before = bert.get_parameters_map();
 
     const string path = (filesystem::temp_directory_path() / "opennn_bert_roundtrip.json").string();
     bert.save(path);

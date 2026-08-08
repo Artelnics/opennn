@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "opennn/tensor_types.h"
 #include "opennn/concatenation_layer.h"
 #include "opennn/concatenation_layer.h"
@@ -51,16 +51,16 @@ TEST(ConcatenationOperatoreratorTest, ForwardConcatenatesChannels)
     output.setConstant(-1.0f);
 
     ForwardPropagation fp;
-    fp.input_views.resize(1);
-    fp.forward_slots.resize(1);
+    fp.inputs.resize(1);
+    fp.slots.resize(1);
 
-    fp.input_views[0] = {
+    fp.inputs[0] = {
         TensorView(input_a.data(), {batch_size, height, width, 2}),
         TensorView(input_b.data(), {batch_size, height, width, 3})
     };
 
-    fp.forward_slots[0].resize(2);
-    fp.forward_slots[0][1] = TensorView(output.data(), {batch_size, height, width, total_channels});
+    fp.slots[0].resize(2);
+    fp.slots[0][1] = TensorView(output.data(), {batch_size, height, width, total_channels});
 
     op.forward_propagate(fp, 0, false);
 
@@ -97,16 +97,16 @@ TEST(ConcatenationOperatoreratorTest, ForwardSpatialLayout)
     output.setConstant(-1.0f);
 
     ForwardPropagation fp;
-    fp.input_views.resize(1);
-    fp.forward_slots.resize(1);
+    fp.inputs.resize(1);
+    fp.slots.resize(1);
 
-    fp.input_views[0] = {
+    fp.inputs[0] = {
         TensorView(input_a.data(), {batch_size, height, width, 1}),
         TensorView(input_b.data(), {batch_size, height, width, 1})
     };
 
-    fp.forward_slots[0].resize(2);
-    fp.forward_slots[0][1] = TensorView(output.data(), {batch_size, height, width, total_channels});
+    fp.slots[0].resize(2);
+    fp.slots[0][1] = TensorView(output.data(), {batch_size, height, width, total_channels});
 
     op.forward_propagate(fp, 0, false);
 
@@ -144,11 +144,11 @@ TEST(ConcatenationOperatoreratorTest, BackwardSplitsDelta)
 
     BackPropagation bp(batch_size, &loss);
 
-    bp.layer_output_deltas[0] = TensorView(output_delta.data(), {batch_size, height, width, total_channels});
+    bp.output_deltas[0] = TensorView(output_delta.data(), {batch_size, height, width, total_channels});
 
-    bp.backward_slots[0].assign(3, TensorView());
-    bp.backward_slots[0][1] = TensorView(delta_a.data(), {batch_size, height, width, 2});
-    bp.backward_slots[0][2] = TensorView(delta_b.data(), {batch_size, height, width, 3});
+    bp.slots[0].assign(3, TensorView());
+    bp.slots[0][1] = TensorView(delta_a.data(), {batch_size, height, width, 2});
+    bp.slots[0][2] = TensorView(delta_b.data(), {batch_size, height, width, 3});
 
     ForwardPropagation fp;
     op.back_propagate(fp, bp, 0);
@@ -191,11 +191,11 @@ TEST(ConcatenationOperatoreratorTest, BackwardSkipsEmptyInputDelta)
 
     BackPropagation bp(batch_size, &loss);
 
-    bp.layer_output_deltas[0] = TensorView(output_delta.data(), {batch_size, height, width, total_channels});
+    bp.output_deltas[0] = TensorView(output_delta.data(), {batch_size, height, width, total_channels});
 
-    bp.backward_slots[0].assign(3, TensorView());
-    bp.backward_slots[0][1] = TensorView();
-    bp.backward_slots[0][2] = TensorView(delta_b.data(), {batch_size, height, width, 2});
+    bp.slots[0].assign(3, TensorView());
+    bp.slots[0][1] = TensorView();
+    bp.slots[0][2] = TensorView(delta_b.data(), {batch_size, height, width, 2});
 
     ForwardPropagation fp;
     op.back_propagate(fp, bp, 0);

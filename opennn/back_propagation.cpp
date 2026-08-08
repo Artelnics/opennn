@@ -33,7 +33,8 @@ vector<bool> find_passthrough_layers(const vector<unique_ptr<Layer>>& layers,
 
 }
 
-BackPropagation::BackPropagation(const Index new_batch_size, Loss* new_loss,
+BackPropagation::BackPropagation(const Index new_batch_size,
+                                 Loss* new_loss,
                                  ForwardPropagation* forward_propagation)
 {
     set(new_batch_size, new_loss, forward_propagation);
@@ -91,28 +92,24 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
     memory_debug::record("backward", "BackPropagation::gradient", gradient_bytes,
                          format("batch={}", batch_size));
 
-    gradient_views.resize(layers_number);
-
     float* pointer = gradient.as<float>();
     for (size_t i = 0; i < layers_number; ++i)
-        pointer = layers[i]->link_gradients(pointer, gradient_views[i], gradient.device_type);
+        pointer = layers[i]->link_gradients(pointer, gradient.device_type);
 
-    // Deterministic from these inputs, so it matches the entry order the caller
-    // handed to ForwardPropagation when co-planning.
     const DeltaLayout layout = build_delta_entries(
         *neural_network, *loss, batch_size, backward_specs, consumer_edges);
 
-    if (forward_propagation && forward_propagation->co_planned_block.valid)
+    if (forward_propagation && !forward_propagation->co_planned_offsets.empty())
     {
-        delta_pool.resize_bytes(0, neural_network->get_device());
-        bind_delta_views(layout, forward_propagation->co_planned_block.offsets,
-                         forward_propagation->data.as<uint8_t>(),
-                         forward_propagation->data.device_type,
-                         backward_specs);
+        arena.resize_bytes(0, neural_network->get_device());
+        bind_deltas(layout, forward_propagation->co_planned_offsets,
+                    forward_propagation->arena.as<uint8_t>(),
+                    forward_propagation->arena.device_type,
+                    backward_specs);
         return;
     }
 
-    setup_delta_pool(backward_specs, layout);
+    setup_arena(backward_specs, layout);
 }
 
 BackPropagation::DeltaLayout BackPropagation::build_delta_entries(
@@ -134,7 +131,9 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_entries(
 
     DeltaLayout layout;
     vector<DeltaEntry>& delta_entries = layout.entries;
+    vector<bool>& passthrough = layout.passthrough_layers;
     vector<bool>& aliases_residual_delta = layout.aliases_residual_delta;
+    passthrough = find_passthrough_layers(layers, backward_specs, batch_size);
     aliases_residual_delta.assign(layers.size(), false);
 
     for (Index layer_index = first_trainable_layer_index;
@@ -165,8 +164,6 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_entries(
         layout.aliased_residual_delta_bytes += get_aligned_bytes(specs[1]);
     }
 
-    const vector<bool> passthrough =
-        find_passthrough_layers(layers, backward_specs, batch_size);
     const auto resolve_through_passthrough = [&](Index layer_index)
     {
         while (layer_index >= 0 && passthrough[size_t(layer_index)]
@@ -285,7 +282,7 @@ vector<MemoryPoolEntry> BackPropagation::make_co_planned_lifetimes(
     return to_pool_entries(layout.entries, step_offset);
 }
 
-void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backward_specs,
+void BackPropagation::setup_arena(const vector<vector<TensorSpec>>& backward_specs,
                                        const DeltaLayout& layout)
 {
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
@@ -310,28 +307,28 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         compact_pool_supported
             ? MemoryPoolStrategy::Compact
             : MemoryPoolStrategy::Chronological);
-    delta_pool.resize_bytes(pool_plan.peak_bytes, neural_network->get_device());
-    delta_pool.setZero();
-    memory_debug::record("backward", "BackPropagation::delta_pool", pool_plan.peak_bytes,
+    arena.resize_bytes(pool_plan.peak_bytes, neural_network->get_device());
+    arena.setZero();
+    memory_debug::record("backward", "BackPropagation::arena", pool_plan.peak_bytes,
                          format("batch={},planner={}",
                                 batch_size,
                                 compact_pool_supported ? "compact" : "chronological"));
-    memory_debug::record("backward.delta_pool_analysis", "live_bytes_lower_bound",
+    memory_debug::record("backward.arena_analysis", "live_bytes_lower_bound",
                          pool_plan.lower_bound_live_bytes,
                          format("batch={},entries={}", batch_size, delta_entries.size()));
-    memory_debug::record("backward.delta_pool_analysis", "allocator_fragmentation_overhead",
+    memory_debug::record("backward.arena_analysis", "allocator_fragmentation_overhead",
                          pool_plan.fragmentation_bytes(),
                          format("batch={},entries={}", batch_size, delta_entries.size()));
 
-    bind_delta_views(layout, pool_plan.byte_offsets,
-                     delta_pool.as<uint8_t>(), delta_pool.device_type,
-                     backward_specs);
+    bind_deltas(layout, pool_plan.byte_offsets,
+                arena.as<uint8_t>(), arena.device_type,
+                backward_specs);
 }
 
-void BackPropagation::bind_delta_views(const DeltaLayout& layout,
-                                       const vector<Index>& byte_offsets,
-                                       uint8_t* base, Device device,
-                                       const vector<vector<TensorSpec>>& backward_specs)
+void BackPropagation::bind_deltas(const DeltaLayout& layout,
+                                  const vector<Index>& byte_offsets,
+                                  uint8_t* base, Device device,
+                                  const vector<vector<TensorSpec>>& backward_specs)
 {
     const auto& layers = neural_network->get_layers();
     const Index layers_number = neural_network->get_layers_number();
@@ -342,14 +339,12 @@ void BackPropagation::bind_delta_views(const DeltaLayout& layout,
     const vector<bool>& aliases_residual_delta = layout.aliases_residual_delta;
     const Index aliased_residual_delta_bytes = layout.aliased_residual_delta_bytes;
     const vector<pair<size_t, size_t>>& reusable_consumer_deltas = layout.reusable_consumer_deltas;
+    const vector<bool>& passthrough = layout.passthrough_layers;
 
-    const vector<bool> passthrough =
-        find_passthrough_layers(layers, backward_specs, batch_size);
-
-    layer_output_deltas.assign(size_t(layers_number), TensorView{});
-    backward_slots.assign(size_t(layers_number), {});
+    output_deltas.assign(size_t(layers_number), TensorView{});
+    slots.assign(size_t(layers_number), {});
     for (Index i = 0; i < layers_number; ++i)
-        backward_slots[i].assign(backward_specs[i].size() + 1, TensorView{});
+        slots[i].assign(backward_specs[i].size() + 1, TensorView{});
 
     for (size_t i = 0; i < delta_entries.size(); ++i)
     {
@@ -360,17 +355,17 @@ void BackPropagation::bind_delta_views(const DeltaLayout& layout,
                               device);
 
         if (entry.slot == 0)
-            layer_output_deltas[entry.layer] = delta_view;
+            output_deltas[entry.layer] = delta_view;
         else
-            backward_slots[entry.layer][entry.slot] = delta_view;
+            slots[entry.layer][entry.slot] = delta_view;
     }
 
     for (Index layer_index = first_trainable_layer_index;
          layer_index <= last_trainable_layer_index;
          ++layer_index)
         if (aliases_residual_delta[size_t(layer_index)])
-            backward_slots[size_t(layer_index)][2] =
-                backward_slots[size_t(layer_index)][1];
+            slots[size_t(layer_index)][2] =
+                slots[size_t(layer_index)][1];
 
     if (aliased_residual_delta_bytes > 0)
         memory_debug::record(
@@ -391,8 +386,8 @@ void BackPropagation::bind_delta_views(const DeltaLayout& layout,
             if (consumer_layer == SIZE_MAX) continue;
 
             const size_t slot = input_position + 1;
-            layer_output_deltas[i] =
-                backward_slots[consumer_layer][slot];
+            output_deltas[i] =
+                slots[consumer_layer][slot];
             continue;
         }
 
@@ -406,17 +401,17 @@ void BackPropagation::bind_delta_views(const DeltaLayout& layout,
         }
 
         const size_t slot = input_position + 1;
-        const auto& consumer_deltas = backward_slots[consumer_layer];
+        const auto& consumer_deltas = slots[consumer_layer];
 
         if (slot < consumer_deltas.size() && !consumer_deltas[slot].empty())
-            layer_output_deltas[i] = consumer_deltas[slot];
+            output_deltas[i] = consumer_deltas[slot];
         else if (passthrough[consumer_layer]
-                 && !layer_output_deltas[consumer_layer].empty())
-            layer_output_deltas[i] = layer_output_deltas[consumer_layer];
+                 && !output_deltas[consumer_layer].empty())
+            output_deltas[i] = output_deltas[consumer_layer];
         else
             continue;
 
-        layer_output_deltas[i].shape =
+        output_deltas[i].shape =
             Shape{batch_size}.append(layers[i]->get_output_shape());
     }
 }
@@ -426,14 +421,14 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     const auto& edges = consumer_edges[layer_index];
     if (edges.size() <= 1) return;
 
-    TensorView& destination = layer_output_deltas[layer_index];
+    TensorView& destination = output_deltas[layer_index];
     if (!destination.data) return;
 
     const TensorView* first_source = nullptr;
     bool destination_is_source = false;
     for (const auto& [consumer_layer, input_position] : edges)
     {
-        const TensorView& source = backward_slots[consumer_layer][1 + input_position];
+        const TensorView& source = slots[consumer_layer][1 + input_position];
         if (source.data && source.size() == destination.size())
         {
             if (!first_source) first_source = &source;
@@ -445,7 +440,7 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     if (!destination_is_source) copy(*first_source, destination);
     for (const auto& [consumer_layer, input_position] : edges)
     {
-        const TensorView& source = backward_slots[consumer_layer][1 + input_position];
+        const TensorView& source = slots[consumer_layer][1 + input_position];
         if (!source.data || source.size() != destination.size()
             || source.data == destination.data
             || (!destination_is_source && &source == first_source))
@@ -460,12 +455,12 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
 
 TensorView& BackPropagation::get_output_delta()
 {
-    return layer_output_deltas[neural_network->get_last_trainable_layer_index()];
+    return output_deltas[neural_network->get_last_trainable_layer_index()];
 }
 
 const TensorView& BackPropagation::get_output_delta() const
 {
-    return layer_output_deltas[neural_network->get_last_trainable_layer_index()];
+    return output_deltas[neural_network->get_last_trainable_layer_index()];
 }
 
 }

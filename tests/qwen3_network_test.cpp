@@ -171,7 +171,7 @@ float compact_last_row_max_diff(const Dims& d, bool bf16_upload)
     run(*network, compact, window, ids, 0);
 
     EXPECT_EQ(compact.get_outputs().shape[1], 1);
-    EXPECT_LT(compact.data.bytes, full.data.bytes);
+    EXPECT_LT(compact.arena.bytes, full.arena.bytes);
     return max_difference(expected, logits_row(compact, 0));
 }
 
@@ -326,7 +326,7 @@ TEST(Qwen3NetworkTest, CompactPoolDependsOnBlockNotModelContext)
     ForwardPropagation long_compact(
         1, long_network.get(), ForwardPropagationMode::Inference, {4, 1});
 
-    EXPECT_EQ(short_compact.data.bytes, long_compact.data.bytes);
+    EXPECT_EQ(short_compact.arena.bytes, long_compact.arena.bytes);
     EXPECT_EQ(short_compact.get_sequence_capacity(), 4);
     EXPECT_EQ(long_compact.get_sequence_capacity(), 4);
     EXPECT_EQ(short_compact.get_final_output_capacity(), 1);
@@ -486,7 +486,7 @@ TEST(Qwen3NetworkTest, DecodeGraphSurvivesFiveSuffixPrefillsGpu)
     ForwardPropagation prefill(
         1, &network, ForwardPropagationMode::Inference);
     ForwardPropagation decode;
-    decode.set(1, &network, &prefill.data, ForwardPropagationMode::Inference);
+    decode.set(1, &network, &prefill.arena, ForwardPropagationMode::Inference);
     decode.set_active_sequence_length(1);
     decode.set_cuda_graph(true);
 

@@ -133,7 +133,7 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
     neural_network.add_layer(make_unique<Detection>(
         Shape{input_H, input_W, head_channels}, anchors, "detection"));
     neural_network.compile();
-    VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_buffer_size()).setConstant(0.05f);
+    neural_network.get_parameters_map().setConstant(0.05f);
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::Yolo);
@@ -152,7 +152,7 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
         BackPropagation bp_diag(sn, &loss);
         const float L0 = loss.calculate_error(batch_diag, fp_diag).error;
 
-        VectorMap params(neural_network.get_parameters_data(), neural_network.get_parameters_buffer_size());
+        VectorMap params = neural_network.get_parameters_map();
         VectorR perturbed = params;
         const float h = calculate_h(params(0));
         perturbed(0) += h;
@@ -179,7 +179,7 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
         }
         {VectorR r = VectorR(params); neural_network.forward_propagate(batch_diag.get_inputs(), r, fp_diag);}
     }
-    VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_buffer_size()).setConstant(0.05f);
+    neural_network.get_parameters_map().setConstant(0.05f);
     const VectorR gradient = calculate_gradient(loss);
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
@@ -305,7 +305,7 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
         Shape{input_H, input_W, head_channels}, anchors_small, "detection_small"));
 
     neural_network.compile();
-    VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_buffer_size()).setConstant(0.05f);
+    neural_network.get_parameters_map().setConstant(0.05f);
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::Yolo);

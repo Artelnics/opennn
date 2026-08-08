@@ -69,7 +69,7 @@ void ConcatenationOperator::back_propagate(ForwardPropagation&, BackPropagation&
 {
     const TensorView& output_delta = get_output_delta(back_propagation, layer);
 
-    const auto& backward_slots = back_propagation.backward_slots[layer];
+    const auto& backward_slots = back_propagation.slots[layer];
     const bool needs_input_delta = ranges::any_of(input_delta_slots, [&](size_t slot)
     {
         return slot < backward_slots.size() && !backward_slots[slot].empty();

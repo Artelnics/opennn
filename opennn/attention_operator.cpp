@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   A T T E N T I O N   O P E R A T O R   S O U R C E
@@ -235,26 +235,23 @@ struct AttentionOperator::SDPACache
 
     mutable Entry*   last_entry_ = nullptr;
     mutable CacheKey last_key_;
-    mutable bool     last_valid_ = false;
 
     Entry& get_or_create_entry(const CacheKey& key)
     {
-        if (last_valid_ && key == last_key_) return *last_entry_;
+        if (last_entry_ && key == last_key_) return *last_entry_;
         Entry& e = entries[key];
         last_entry_ = &e;
         last_key_   = key;
-        last_valid_ = true;
         return e;
     }
 
     Entry* find_entry(const CacheKey& key) const
     {
-        if (last_valid_ && key == last_key_) return last_entry_;
+        if (last_entry_ && key == last_key_) return last_entry_;
         const auto it = entries.find(key);
         if (it == entries.end()) return nullptr;
         last_entry_ = const_cast<Entry*>(&it->second);
         last_key_   = key;
-        last_valid_ = true;
         return last_entry_;
     }
 
@@ -472,7 +469,7 @@ AttentionOperator& AttentionOperator::operator=(AttentionOperator&&) noexcept = 
 
 void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-    auto& forward_slots = forward_propagation.forward_slots[layer];
+    auto& forward_slots = forward_propagation.slots[layer];
 
     const auto& src_views = get_inputs(forward_propagation, layer);
     const TensorView& source_input = src_views[min(size_t{1}, src_views.size() - 1)];
@@ -502,7 +499,7 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
 void AttentionOperator::merge_output_heads(ForwardPropagation& forward_propagation, size_t layer) const
 {
     const Index batch_size = forward_propagation.batch_size;
-    auto& forward_slots = forward_propagation.forward_slots[layer];
+    auto& forward_slots = forward_propagation.slots[layer];
 
     const TensorView heads = forward_slots[scratch_slot].reshape(
         {batch_size, heads_number, query_sequence_length, head_dimension});
@@ -519,9 +516,9 @@ void AttentionOperator::split_output_delta(ForwardPropagation& forward_propagati
     const Index batch_size = forward_propagation.batch_size;
 
     const TensorView merged_delta =
-        back_propagation.backward_slots[layer][merged_output_delta_slot].reshape(
+        back_propagation.slots[layer][merged_output_delta_slot].reshape(
             {batch_size, query_sequence_length, heads_number, head_dimension});
-    TensorView heads_delta = forward_propagation.forward_slots[layer][scratch_slot].reshape(
+    TensorView heads_delta = forward_propagation.slots[layer][scratch_slot].reshape(
         {batch_size, heads_number, query_sequence_length, head_dimension});
 
     split_heads(merged_delta, heads_delta);
@@ -531,7 +528,7 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
 {
     split_output_delta(forward_propagation, back_propagation, layer);
 
-    auto& forward_slots = forward_propagation.forward_slots[layer];
+    auto& forward_slots = forward_propagation.slots[layer];
 
     const TensorView& query             = get_input(forward_propagation, layer);
     const TensorView& key               = get_input(forward_propagation, layer, 1);
@@ -556,9 +553,9 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
     {
         throw_if(sdpa_gradient_slot == 0,
                  "AttentionOperator: use_sdpa is set but the owning layer did not "
-                 "assign sdpa_gradient_slot (gradient scratch comes from the delta pool).");
+                 "assign sdpa_gradient_slot (gradient scratch comes from the backward arena).");
 
-        const auto& slots = back_propagation.backward_slots[layer];
+        const auto& slots = back_propagation.slots[layer];
         apply_sdpa_backward(query, key, value, forward_slots[attention_output_slot],
                             output_delta,
                             query_delta, key_delta, value_delta,

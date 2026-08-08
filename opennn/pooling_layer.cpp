@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   P O O L I N G   L A Y E R   C L A S S
@@ -66,7 +66,7 @@ cudnnPoolingDescriptor_t PoolOperator::get_pooling_descriptor() const
 
 void PoolOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-    auto& forward_slots = forward_propagation.forward_slots[layer];
+    auto& forward_slots = forward_propagation.slots[layer];
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);
 
@@ -94,7 +94,7 @@ void PoolOperator::forward_propagate(ForwardPropagation& forward_propagation, si
 
 void PoolOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
-    auto& forward_slots = forward_propagation.forward_slots[layer];
+    auto& forward_slots = forward_propagation.slots[layer];
 
     const TensorView& output_delta = get_output_delta(back_propagation, layer);
     TensorView& input_delta        = get_input_delta(back_propagation, layer);

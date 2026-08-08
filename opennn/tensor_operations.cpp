@@ -560,17 +560,17 @@ static void dropout_forward_cpu(TensorView& output, Buffer& mask, float rate)
 
     const float keep_scale = 1.0f / (1.0f - rate);
     float* output_data = output.as<float>();
-    float* mask_values = mask.as<float>();
+    VectorMap mask_values = mask.as_vector();
 
-    set_random_uniform(VectorMap(mask_values, element_count), 0.0f, 1.0f);
+    set_random_uniform(mask_values, 0.0f, 1.0f);
 
     const bool parallel = element_count >= 65536;
 
     #pragma omp parallel for schedule(static) if(parallel)
     for (Index i = 0; i < element_count; ++i)
     {
-        const float keep_value = mask_values[i] < rate ? 0.0f : keep_scale;
-        mask_values[i] = keep_value;
+        const float keep_value = mask_values(i) < rate ? 0.0f : keep_scale;
+        mask_values(i) = keep_value;
         output_data[i] *= keep_value;
     }
 }
@@ -586,8 +586,7 @@ void dropout_backward(TensorView& delta, const Buffer& mask, float rate)
 {
     if (rate <= 0.0f) return;
     if (delta.is_cuda()) { dropout_backward_gpu(delta, mask, rate); return; }
-    Map<const VectorR, AlignedMax> mask_view(mask.as<float>(), delta.size());
-    delta.as_vector().array() *= mask_view.array();
+    delta.as_vector().array() *= mask.as_vector().array();
 }
 
 static void linear_forward_cpu(const TensorView& input, const TensorView& weights, const TensorView& bias,

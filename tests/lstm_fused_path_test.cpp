@@ -58,8 +58,7 @@ void check_constant_forward(const Index neurons, const string& cell_activation)
     neural_network.add_layer(move(layer));
     neural_network.compile();
 
-    VectorMap(neural_network.get_parameters_data(),
-              neural_network.get_parameters_buffer_size()).setConstant(c);
+    neural_network.get_parameters_map().setConstant(c);
 
     Tensor3 inputs(samples_number, time_steps, features);
     inputs.setConstant(type(1));
@@ -91,11 +90,10 @@ void check_constant_forward(const Index neurons, const string& cell_activation)
 
 void set_varied_parameters(NeuralNetwork& neural_network)
 {
-    float* parameters = neural_network.get_parameters_data();
-    const Index parameters_number = neural_network.get_parameters_buffer_size();
+    VectorMap parameters = neural_network.get_parameters_map();
 
-    for (Index i = 0; i < parameters_number; ++i)
-        parameters[i] = 0.05f * std::sin(0.7f * float(i) + 0.3f);
+    for (Index i = 0; i < parameters.size(); ++i)
+        parameters(i) = 0.05f * sin(0.7f * float(i) + 0.3f);
 }
 
 void check_gradient(const Index neurons, const bool return_sequences)

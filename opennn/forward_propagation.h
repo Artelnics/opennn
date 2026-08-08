@@ -53,20 +53,13 @@ struct ForwardPropagation
              bool inputs_pre_scaled = false,
              span<const MemoryPoolEntry> co_planned_lifetimes = {});
 
-    Index bind_slot_views(const vector<vector<TensorSpec>>& forward_specs,
-                          const vector<vector<Index>>& slot_offsets,
-                          const vector<vector<Index>>& transient_slot_offsets);
+    Index bind_slots(const vector<vector<TensorSpec>>& forward_specs,
+                     const vector<vector<Index>>& slot_offsets,
+                     const vector<vector<Index>>& transient_slot_offsets);
 
-    // Byte offsets, inside `data`, for lifetimes a caller asked to be planned
-    // alongside the forward activations. ForwardPropagation neither knows nor
-    // cares what they are; BackPropagation supplies its delta lifetimes here.
-    struct CoPlannedBlock
-    {
-        vector<Index> offsets;
-        Index bytes = 0;
-        bool valid = false;
-    };
-    CoPlannedBlock co_planned_block;
+    // Byte offsets inside `arena` for lifetimes planned alongside the forward
+    // activations. An empty vector means that no joint plan is active.
+    vector<Index> co_planned_offsets;
 
     void stage_position(cudaStream_t stream);
 
@@ -99,22 +92,22 @@ struct ForwardPropagation
 
     NeuralNetwork* neural_network = nullptr;
 
-    Buffer data;
-    vector<Buffer> device_input_buffers;
-    vector<TensorView> device_input_views;
+    Buffer arena;
+    vector<Buffer> staged_input_storage;
+    vector<TensorView> staged_inputs;
 
     vector<vector<uint16_t>> host_bf16_input_scratch;
 
     Buffer position_device{Device::CUDA};
     void* position_pinned = nullptr;
 
-    vector<vector<TensorView>> input_views;
-    vector<vector<TensorView>> forward_slots;
-    vector<vector<TensorView>> capacity_input_views;
-    vector<vector<TensorView>> capacity_forward_slots;
+    vector<vector<TensorView>> inputs;
+    vector<vector<TensorView>> slots;
+    vector<vector<TensorView>> capacity_inputs;
+    vector<vector<TensorView>> capacity_slots;
     vector<tuple<size_t, size_t, size_t>> passthrough_overrides;
     vector<Index> attention_valid_lengths;
-    vector<size_t> recomputable_forward_slots;
+    vector<size_t> recomputable_slots;
 
     InferenceShapePolicy inference_shape_policy;
     Index sequence_capacity = 0;

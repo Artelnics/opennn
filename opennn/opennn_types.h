@@ -219,7 +219,14 @@ using VectorI = Eigen::Matrix<Index, Eigen::Dynamic, 1>;
 using VectorB = Eigen::Matrix<bool, Eigen::Dynamic, 1>;
 
 using VectorMap = Eigen::Map<VectorR, Eigen::AlignedMax>;
+using ConstVectorMap = Eigen::Map<const VectorR, Eigen::AlignedMax>;
+using ConstUnalignedVectorMap = Eigen::Map<const VectorR>;
 using MatrixMap = Eigen::Map<MatrixR, Eigen::AlignedMax>;
+
+inline ConstUnalignedVectorMap as_vector_map(const span<const float> values)
+{
+    return ConstUnalignedVectorMap(values.data(), Index(values.size()));
+}
 
 using Tensor0 = Eigen::Tensor<float, 0, Layout | Eigen::AlignedMax>;
 using Tensor1 = Eigen::Tensor<float, 1, Layout | Eigen::AlignedMax>;

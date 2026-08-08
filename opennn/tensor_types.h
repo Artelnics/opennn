@@ -284,6 +284,20 @@ struct Buffer
     Index size_in_floats() const noexcept { return bytes / Index(sizeof(float)); }
     bool  empty() const noexcept { return bytes == 0; }
 
+    VectorMap as_vector() &
+    {
+        throw_if(!empty() && device_type != Device::CPU,
+                 "Buffer::as_vector requires host storage.");
+        return VectorMap(as<float>(), size_in_floats());
+    }
+
+    ConstVectorMap as_vector() const &
+    {
+        throw_if(!empty() && device_type != Device::CPU,
+                 "Buffer::as_vector requires host storage.");
+        return ConstVectorMap(as<float>(), size_in_floats());
+    }
+
     void resize_bytes(Index byte_count, Device allocation_device)
     {
         if (byte_count == bytes && device_type == allocation_device) return;

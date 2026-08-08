@@ -35,8 +35,7 @@ struct NetworkDifferential
 
     vector<LayerSnapshot> layers;
 
-    mutable bool tape_valid = false;
-    mutable VectorR tape_x;
+    mutable optional<VectorR> tape_x;
     mutable vector<VectorR> layer_inputs;
     mutable vector<VectorR> layer_outputs;
 
@@ -158,13 +157,13 @@ struct NetworkDifferential
         }
 
         tape_x = x;
-        tape_valid = true;
         return activation;
     }
 
     VectorR vjp(const VectorR& x, const VectorR& cotangent) const
     {
-        if (!tape_valid || tape_x.size() != x.size() || !(tape_x.array() == x.array()).all())
+        if (!tape_x || tape_x->size() != x.size()
+            || !(tape_x->array() == x.array()).all())
             forward(x);
 
         VectorR carried = cotangent;

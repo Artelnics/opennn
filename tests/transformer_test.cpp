@@ -116,7 +116,7 @@ TEST(Transformer, TrainingArenaReusesResidualBranchOutputs)
 
     ForwardPropagation forward_propagation(batch_size, &transformer);
 
-    EXPECT_LT(forward_propagation.data.bytes, chronological_bytes);
+    EXPECT_LT(forward_propagation.arena.bytes, chronological_bytes);
 }
 
 // OpenNN: Open Neural Networks Library.

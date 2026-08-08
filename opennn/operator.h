@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   O P E R A T O R   H E A D E R
@@ -70,28 +70,28 @@ struct Operator
     TensorView& get_input(ForwardPropagation& forward_propagation, size_t layer, size_t slot_index = 0) const noexcept
     {
         const size_t slot = input_slots[slot_index];
-        return slot == 0 ? forward_propagation.input_views[layer][0] : forward_propagation.forward_slots[layer][slot];
+        return slot == 0 ? forward_propagation.inputs[layer][0] : forward_propagation.slots[layer][slot];
     }
 
     vector<TensorView>& get_inputs(ForwardPropagation& forward_propagation, size_t layer) const noexcept
     {
-        return forward_propagation.input_views[layer];
+        return forward_propagation.inputs[layer];
     }
 
     TensorView& get_output(ForwardPropagation& forward_propagation, size_t layer, size_t slot_index = 0) const noexcept
     {
-        return forward_propagation.forward_slots[layer][output_slots[slot_index]];
+        return forward_propagation.slots[layer][output_slots[slot_index]];
     }
 
     TensorView& get_output_delta(BackPropagation& back_propagation, size_t layer, size_t slot_index = 0) const noexcept
     {
         const size_t slot = output_delta_slots[slot_index];
-        return slot == 0 ? back_propagation.layer_output_deltas[layer] : back_propagation.backward_slots[layer][slot];
+        return slot == 0 ? back_propagation.output_deltas[layer] : back_propagation.slots[layer][slot];
     }
 
     TensorView& get_input_delta(BackPropagation& back_propagation, size_t layer, size_t slot_index = 0) const noexcept
     {
-        return back_propagation.backward_slots[layer][input_delta_slots[slot_index]];
+        return back_propagation.slots[layer][input_delta_slots[slot_index]];
     }
 };
 

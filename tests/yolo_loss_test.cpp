@@ -139,7 +139,7 @@ void build_yolo_network(NeuralNetwork& net, const YoloLossFixture& f)
                                              "yolo_logits"));
     net.add_layer(make_unique<Detection>(Shape{f.grid, f.grid, f.channels}, f.anchors, "detection"));
     net.compile();
-    VectorMap(net.get_parameters_data(), net.get_parameters_buffer_size()).setConstant(0.1f);
+    net.get_parameters_map().setConstant(0.1f);
 }
 
 }
@@ -239,7 +239,7 @@ void build_yolo_v8_network(NeuralNetwork& net, const YoloLossV8Fixture& f)
                                              "v8_logits"));
     net.add_layer(make_unique<DetectionV8>(Shape{f.grid, f.grid, f.ch}, "detection_v8"));
     net.compile();
-    VectorMap(net.get_parameters_data(), net.get_parameters_buffer_size()).setConstant(0.1f);
+    net.get_parameters_map().setConstant(0.1f);
 }
 
 }
@@ -348,7 +348,7 @@ TEST(YoloLoss, V8DecoupledHeadGradientMatchesNumericalGradient)
     net.add_layer(make_unique<DetectionV8>(Shape{f.grid, f.grid, f.ch}, "det_v8"), {cat});
 
     net.compile();
-    VectorMap(net.get_parameters_data(), net.get_parameters_buffer_size()).setConstant(0.1f);
+    net.get_parameters_map().setConstant(0.1f);
 
     Loss loss(&net, &dataset);
     loss.set_error(Loss::Error::Yolo);
@@ -418,7 +418,7 @@ TEST(YoloLoss, V8DFLGradientMatchesNumerical)
                                              "Identity", Shape{1, 1}, "Same", false, "v8_logits"));
     net.add_layer(make_unique<DetectionV8>(Shape{grid, grid, dfl_ch}, rm, "detection_v8"));
     net.compile();
-    VectorMap(net.get_parameters_data(), net.get_parameters_buffer_size()).setConstant(0.1f);
+    net.get_parameters_map().setConstant(0.1f);
 
     Loss loss_fn(&net, &dataset);
     loss_fn.set_error(Loss::Error::Yolo);

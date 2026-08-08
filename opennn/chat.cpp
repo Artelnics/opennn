@@ -978,7 +978,7 @@ struct ChatSession::Impl
         {
             token_device.resize_bytes(Index(sizeof(float)), Device::CUDA);
             initialize_cuda_input(prefill);
-            decode.set(1, network, &prefill.data,
+            decode.set(1, network, &prefill.arena,
                        ForwardPropagationMode::Inference,
                        {.sequence_capacity = 1,
                         .final_output_capacity = 1,
@@ -1086,9 +1086,9 @@ struct ChatSession::Impl
 
     static void initialize_cuda_input(ForwardPropagation& propagation)
     {
-        propagation.device_input_buffers.resize(1);
-        propagation.device_input_views.resize(1);
-        propagation.device_input_buffers[0].resize_bytes(
+        propagation.staged_input_storage.resize(1);
+        propagation.staged_inputs.resize(1);
+        propagation.staged_input_storage[0].resize_bytes(
             propagation.get_sequence_capacity() * Index(sizeof(float)),
             Device::CUDA);
     }
@@ -1215,7 +1215,7 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
     draft->token_device.resize_bytes(Index(sizeof(float)), Device::CUDA);
     draft->prefill_inputs.resize(1);
     Impl::initialize_cuda_input(draft->prefill);
-    draft->decode.set(1, &draft_network, &draft->prefill.data,
+    draft->decode.set(1, &draft_network, &draft->prefill.arena,
                       ForwardPropagationMode::Inference,
                       {.sequence_capacity = 1,
                        .final_output_capacity = 1,

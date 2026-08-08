@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C O N V O L U T I O N A L   L A Y E R   C L A S S
@@ -453,7 +453,7 @@ bool Convolutional::forward_propagate_folded(ForwardPropagation& forward_propaga
     {
         convolution.apply_gpu_folded(input, folded_weights, folded_bias, false, output);
 
-        const TensorView& residual_view = forward_propagation.input_views[layer][1];
+        const TensorView& residual_view = forward_propagation.inputs[layer][1];
         add_relu_cuda(output.size(), output.as<float>(), residual_view.as<float>(),
                       relu, output.as<float>());
     }

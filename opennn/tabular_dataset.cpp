@@ -941,9 +941,7 @@ void TabularDataset::apply_scaler(Index feature_index, const string& scaler, con
     if (method == ScalerMethod::None)
         return;
 
-    MatrixMap map(data.data(), data.rows(), data.cols());
-
-    auto column = map.col(feature_index);
+    auto column = data.col(feature_index);
 
     constexpr float min_range = -1.0f;
     constexpr float max_range = 1.0f;

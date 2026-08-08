@@ -152,9 +152,10 @@ bool Layer::refresh_feature_storage(Buffer& storage, bool& dirty, Device device,
     return true;
 }
 
-float* Layer::link_gradients(float* pointer, vector<TensorView>& gradient_views, Device device)
+float* Layer::link_gradients(float* pointer, Device device)
 {
-    return link_views_to_operators(gradient_views, pointer,
+    vector<TensorView> gradients;
+    return link_views_to_operators(gradients, pointer,
                                    &Operator::parameter_specs,
                                    &Operator::link_gradients,
                                    device);

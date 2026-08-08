@@ -111,9 +111,9 @@ TEST(BackPropagationMemoryTest, FanoutAccumulationReusesConsumerDelta)
     Loss loss(&network, nullptr);
     BackPropagation back_propagation(batch, &loss);
 
-    TensorView& branch_a_delta = back_propagation.backward_slots[1][1];
-    TensorView& branch_b_delta = back_propagation.backward_slots[2][1];
-    TensorView& stem_output_delta = back_propagation.layer_output_deltas[0];
+    TensorView& branch_a_delta = back_propagation.slots[1][1];
+    TensorView& branch_b_delta = back_propagation.slots[2][1];
+    TensorView& stem_output_delta = back_propagation.output_deltas[0];
 
     ASSERT_FALSE(branch_a_delta.empty());
     ASSERT_FALSE(branch_b_delta.empty());
@@ -180,18 +180,18 @@ TEST(ForwardPropagationMemoryTest, InferenceReusesResidualAndPassthroughOutputs)
     for (Index i = 0; i < expected.size(); ++i)
         EXPECT_NEAR(expected.as<float>()[i], actual.as<float>()[i], 1.0e-6f);
 
-    const TensorView expected_leaf = training_layout.forward_slots[3].back();
-    const TensorView actual_leaf = inference_layout.forward_slots[3].back();
+    const TensorView expected_leaf = training_layout.slots[3].back();
+    const TensorView actual_leaf = inference_layout.slots[3].back();
     ASSERT_EQ(expected_leaf.size(), actual_leaf.size());
     for (Index i = 0; i < expected_leaf.size(); ++i)
         EXPECT_NEAR(expected_leaf.as<float>()[i],
                     actual_leaf.as<float>()[i],
                     1.0e-6f);
 
-    EXPECT_LT(inference_layout.data.bytes, training_layout.data.bytes);
+    EXPECT_LT(inference_layout.arena.bytes, training_layout.arena.bytes);
 
-    EXPECT_EQ(inference_layout.forward_slots[0].back().data,
-              inference_layout.forward_slots[4].back().data);
+    EXPECT_EQ(inference_layout.slots[0].back().data,
+              inference_layout.slots[4].back().data);
 
     Configuration::instance().set();
 }
@@ -210,7 +210,7 @@ TEST(ForwardPropagationMemoryTest, SameLayerAuxiliariesNeverAlias)
     ForwardPropagation inference_layout(
         2, &network, ForwardPropagationMode::Inference);
 
-    const auto& slots = inference_layout.forward_slots.front();
+    const auto& slots = inference_layout.slots.front();
     ASSERT_FALSE(slots[1].empty());
     ASSERT_FALSE(slots[4].empty());
     ASSERT_FALSE(slots[5].empty());
@@ -253,12 +253,12 @@ TEST(ForwardPropagationMemoryTest, TrainingRecomputeScratchUsesFutureActivations
             if (slot != network.get_layers()[layer]->get_recomputable_forward_slot())
                 expected_persistent_bytes += get_aligned_bytes(specs[layer][slot]);
 
-    EXPECT_EQ(layout.data.bytes, expected_persistent_bytes);
+    EXPECT_EQ(layout.arena.bytes, expected_persistent_bytes);
 
-    EXPECT_EQ(layout.forward_slots[0][1].data,
-              layout.forward_slots[1][2].data);
-    EXPECT_EQ(layout.forward_slots[1][1].data,
-              layout.forward_slots[2].back().data);
+    EXPECT_EQ(layout.slots[0][1].data,
+              layout.slots[1][2].data);
+    EXPECT_EQ(layout.slots[1][1].data,
+              layout.slots[2].back().data);
 
     Configuration::instance().set();
 }
@@ -285,9 +285,9 @@ TEST(ForwardPropagationMemoryTest, TrainingDoesNotAllocateSkippedLeadingScaling)
     ForwardPropagation layout(
         batch, &network, ForwardPropagationMode::Training, {}, true);
 
-    ASSERT_EQ(layout.forward_slots[0].size(), 1);
-    EXPECT_TRUE(layout.forward_slots[0].back().empty());
-    EXPECT_EQ(layout.data.bytes,
+    ASSERT_EQ(layout.slots[0].size(), 1);
+    EXPECT_TRUE(layout.slots[0].back().empty());
+    EXPECT_EQ(layout.arena.bytes,
               get_aligned_bytes(network.get_forward_specs(batch)[1]));
 
     MatrixR inputs = MatrixR::Random(batch, feature_shape.size());
@@ -296,8 +296,8 @@ TEST(ForwardPropagationMemoryTest, TrainingDoesNotAllocateSkippedLeadingScaling)
         layout,
         true);
 
-    ASSERT_FALSE(layout.input_views[1].empty());
-    EXPECT_EQ(layout.input_views[1][0].data, inputs.data());
+    ASSERT_FALSE(layout.inputs[1].empty());
+    EXPECT_EQ(layout.inputs[1][0].data, inputs.data());
 
     Configuration::instance().set();
 }
@@ -340,13 +340,13 @@ TEST(ForwardPropagationMemoryTest, TrainingReusesProjectionResidualOutput)
     ForwardPropagation layout(
         batch, &network, ForwardPropagationMode::Training);
 
-    const TensorView& projection_output = layout.forward_slots[2].back();
-    const TensorView& later_output = layout.forward_slots[4].back();
+    const TensorView& projection_output = layout.slots[2].back();
+    const TensorView& later_output = layout.slots[4].back();
     ASSERT_FALSE(projection_output.empty());
     ASSERT_FALSE(later_output.empty());
     EXPECT_EQ(projection_output.byte_size(), later_output.byte_size());
     EXPECT_EQ(projection_output.data, later_output.data);
-    EXPECT_EQ(layout.input_views[3][1].data, projection_output.data);
+    EXPECT_EQ(layout.inputs[3][1].data, projection_output.data);
 
     Configuration::instance().set();
 }

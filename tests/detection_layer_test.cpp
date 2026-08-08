@@ -179,7 +179,7 @@ TEST(Detection, SigmoidClassBackwardGradientMatchesNumerical)
 
     neural_network.compile();
 
-    VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_buffer_size()).setConstant(0.1f);
+    neural_network.get_parameters_map().setConstant(0.1f);
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);

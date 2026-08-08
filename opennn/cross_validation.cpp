@@ -118,8 +118,8 @@ FoldEvaluation evaluate_folds(TrainingStrategy* training_strategy, const vector<
         if (!isfinite(validation_error)) validation_error = MAX;
         if (!isfinite(training_error))   training_error   = MAX;
 
-        const Index fold_epochs = training_results.restored_best_parameters
-            ? training_results.restored_epoch + 1
+        const Index fold_epochs = training_results.restored_epoch
+            ? *training_results.restored_epoch + 1
             : training_results.get_epochs_number();
 
         validation_error_sum += validation_error;

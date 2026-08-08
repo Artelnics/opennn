@@ -185,8 +185,8 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&  ,
     }
 
     {
-        const size_t output_slot = forward_propagation.forward_slots[last_layer].size() - 1;
-        const MatrixMap outputs = forward_propagation.forward_slots[last_layer][output_slot].as_matrix();
+        const size_t output_slot = forward_propagation.slots[last_layer].size() - 1;
+        const MatrixMap outputs = forward_propagation.slots[last_layer][output_slot].as_matrix();
 
         MatrixR& act_deriv = activation_derivatives[layers_count - 1];
         lm_activation_derivative(
@@ -208,7 +208,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&  ,
 
         const Index neurons = dense->get_outputs_number();
         const Index inputs_number = dense->get_input_shape()[0];
-        const MatrixMap inputs = forward_propagation.input_views[layer_index][0].as_matrix();
+        const MatrixMap inputs = forward_propagation.inputs[layer_index][0].as_matrix();
 
         const Index bias_offset = parameter_offsets[n];
         const Index weight_offset = bias_offset + get_aligned_size(neurons);
@@ -334,8 +334,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
     if (damping_parameter <= 0.0f)
         damping_parameter = initial_damping_parameter;
 
-    VectorMap parameters(neural_network->get_parameters_data(),
-                         neural_network->get_parameters_buffer_size());
+    VectorMap parameters = neural_network->get_parameters_map();
 
     float& error = back_propagation_lm.error;
     float& regularization = back_propagation_lm.regularization;

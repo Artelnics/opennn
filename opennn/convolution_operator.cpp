@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C O N V O L U T I O N   O P E R A T O R   S O U R C E
@@ -305,7 +305,7 @@ void ConvolutionOperator::forward_propagate(ForwardPropagation& forward_propagat
 
 void ConvolutionOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
-    auto& backward_slots = back_propagation.backward_slots[layer];
+    auto& backward_slots = back_propagation.slots[layer];
 
     const TensorView& input        = get_input(forward_propagation, layer);
     const TensorView& output_delta = get_output_delta(back_propagation, layer);
@@ -517,8 +517,7 @@ void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
         }
     }
 
-    Map<VectorR>(weight_gradient.as<float>(), kernels_number * patch_size) =
-        weight_gradient_partials.colwise().sum().transpose();
+    weight_gradient.as_vector() = weight_gradient_partials.colwise().sum().transpose();
 
     if (use_bias)
         bias_gradient.as_vector() = bias_gradient_partials.colwise().sum().transpose();

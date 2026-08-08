@@ -142,6 +142,7 @@ void ForwardPropagation::set(
              "training keeps every activation alive for the backward pass.");
 
     reset_cuda_graph();
+    co_planned_offsets.clear();
 
     batch_size = new_batch_size;
     neural_network = new_neural_network;
@@ -152,13 +153,13 @@ void ForwardPropagation::set(
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
 
-    device_input_buffers.clear();
-    device_input_views.clear();
+    staged_input_storage.clear();
+    staged_inputs.clear();
     host_bf16_input_scratch.clear();
     passthrough_overrides.clear();
 
-    input_views.resize(layers_number);
-    forward_slots.resize(layers_number);
+    inputs.resize(layers_number);
+    slots.resize(layers_number);
 
     auto forward_specs = neural_network->get_forward_specs(batch_size);
 
@@ -259,14 +260,14 @@ void ForwardPropagation::set(
     const bool is_training =
         mode == ForwardPropagationMode::Training;
 
-    recomputable_forward_slots.assign(layers_number, SIZE_MAX);
+    recomputable_slots.assign(layers_number, SIZE_MAX);
 
     if(is_training
        && neural_network->get_training_activation_recomputation())
     {
         ranges::transform(
             layers,
-            recomputable_forward_slots.begin(),
+            recomputable_slots.begin(),
             [](const auto& layer)
             {
                 return layer->get_recomputable_forward_slot();
@@ -294,7 +295,7 @@ void ForwardPropagation::set(
         return is_training
             && (layers[layer]->get_forward_slot_kind(slot)
                     == ForwardSlotKind::Transient
-                || recomputable_forward_slots[layer] == slot);
+                || recomputable_slots[layer] == slot);
     };
 
     Index early_release_logical_bytes = 0;
@@ -336,8 +337,8 @@ void ForwardPropagation::set(
             forward_specs[i].size(),
             Index(-1));
 
-        throw_if(recomputable_forward_slots[i] != SIZE_MAX
-                 && recomputable_forward_slots[i] >= forward_specs[i].size(),
+        throw_if(recomputable_slots[i] != SIZE_MAX
+                 && recomputable_slots[i] >= forward_specs[i].size(),
                  "ForwardPropagation::set: invalid recomputable slot for layer {}.",
                  i);
 
@@ -464,13 +465,8 @@ void ForwardPropagation::set(
                    layers_number,
                    batch_size));
 
-        co_planned_block = {};
-
         const size_t forward_entry_count =
             pooled_lifetimes.size();
-
-        for(const MemoryPoolEntry& entry : co_planned_lifetimes)
-            co_planned_block.bytes += entry.bytes;
 
         pooled_lifetimes.insert(
             pooled_lifetimes.end(),
@@ -499,17 +495,19 @@ void ForwardPropagation::set(
 
         if(!co_planned_lifetimes.empty())
         {
-            co_planned_block.offsets.assign(
+            co_planned_offsets.assign(
                 persistent_plan.byte_offsets.begin()
                     + forward_entry_count,
                 persistent_plan.byte_offsets.end());
 
-            co_planned_block.valid = true;
+            Index co_planned_bytes = 0;
+            for(const MemoryPoolEntry& entry : co_planned_lifetimes)
+                co_planned_bytes += entry.bytes;
 
             memory_debug::record(
                 "forward.joint_plan",
                 "delta_entries_in_arena",
-                co_planned_block.bytes,
+                co_planned_bytes,
                 format("batch={},entries={}",
                        batch_size,
                        co_planned_lifetimes.size()));
@@ -518,7 +516,7 @@ void ForwardPropagation::set(
         for(size_t i = 0; i < layers_number; ++i)
         {
             const size_t slot =
-                recomputable_forward_slots[i];
+                recomputable_slots[i];
 
             if(slot == SIZE_MAX
                || forward_specs[i][slot].shape.empty())
@@ -703,24 +701,24 @@ void ForwardPropagation::set(
               == neural_network->get_device()
        && external_storage->bytes >= total_bytes)
     {
-        data.set_view(
+        arena.set_view(
             external_storage->data,
             total_bytes,
             external_storage->device_type);
     }
     else
     {
-        data.resize_bytes(
+        arena.resize_bytes(
             total_bytes,
             neural_network->get_device());
     }
 
-    data.setZero();
+    arena.setZero();
 
     memory_debug::record(
-        data.owns ? "forward" : "forward.aliased",
-        "ForwardPropagation::data",
-        data.owns ? total_bytes : 0,
+        arena.owns ? "forward" : "forward.aliased",
+        "ForwardPropagation::arena",
+        arena.owns ? total_bytes : 0,
         format("batch={},mode={}",
                batch_size,
                is_training ? "training" : "inference"));
@@ -747,7 +745,7 @@ void ForwardPropagation::set(
 
     const size_t recomputed_layers =
         ranges::count_if(
-            recomputable_forward_slots,
+            recomputable_slots,
             [](const size_t slot)
             {
                 return slot != SIZE_MAX;
@@ -803,13 +801,13 @@ void ForwardPropagation::set(
     }
 
     device::set_conv_workspace_auto_limit_bytes(
-        bind_slot_views(
+        bind_slots(
             forward_specs,
             slot_offsets,
             transient_slot_offsets));
 
-    capacity_input_views = input_views;
-    capacity_forward_slots = forward_slots;
+    capacity_inputs = inputs;
+    capacity_slots = slots;
     active_sequence_length = sequence_capacity;
 
     if(new_shape_policy.sequence_capacity > 0)
@@ -826,14 +824,14 @@ void ForwardPropagation::set(
     }
 }
 
-Index ForwardPropagation::bind_slot_views(
+Index ForwardPropagation::bind_slots(
     const vector<vector<TensorSpec>>& forward_specs,
     const vector<vector<Index>>& slot_offsets,
     const vector<vector<Index>>& transient_slot_offsets)
 {
     const auto& layers = neural_network->get_layers();
     const auto& source_layers = neural_network->get_source_layers();
-    uint8_t* const pool_base = data.as<uint8_t>();
+    uint8_t* const arena_base = arena.as<uint8_t>();
 
     Index max_layer_bytes = 0;
 
@@ -842,7 +840,7 @@ Index ForwardPropagation::bind_slot_views(
         const auto& specs = forward_specs[i];
         max_layer_bytes = max(max_layer_bytes, get_aligned_bytes(specs));
 
-        forward_slots[i].assign(specs.size() + 1, TensorView{});
+        slots[i].assign(specs.size() + 1, TensorView{});
 
         Index layer_logical_bytes = 0;
         for (size_t j = 0; j < specs.size(); ++j)
@@ -857,8 +855,8 @@ Index ForwardPropagation::bind_slot_views(
                      "ForwardPropagation::set: no planned offset for layer {} slot {}.",
                      i, j);
 
-            forward_slots[i][j + 1] =
-                TensorView(pool_base + offset, shape, dtype, data.device_type);
+            slots[i][j + 1] =
+                TensorView(arena_base + offset, shape, dtype, arena.device_type);
 
             if (!transient) layer_logical_bytes += get_aligned_bytes(specs[j]);
         }
@@ -870,7 +868,7 @@ Index ForwardPropagation::bind_slot_views(
                                  format("batch={}", batch_size));
 
         const vector<Index>& sources = source_layers[i];
-        input_views[i].resize(sources.size());
+        inputs[i].resize(sources.size());
 
         for (size_t j = 0; j < sources.size(); ++j)
         {
@@ -879,7 +877,7 @@ Index ForwardPropagation::bind_slot_views(
 
             if (!forward_specs[source_layer].empty())
             {
-                input_views[i][j] = forward_slots[source_layer].back();
+                inputs[i][j] = slots[source_layer].back();
                 continue;
             }
 
@@ -892,11 +890,11 @@ Index ForwardPropagation::bind_slot_views(
                 continue;
             }
 
-            TensorView view = forward_slots[resolved].back();
+            TensorView view = slots[resolved].back();
             if (!view.empty())
                 view.shape = Shape{view.shape[0]}
                     .append(layers[source_layer]->get_output_shape());
-            input_views[i][j] = view;
+            inputs[i][j] = view;
         }
     }
 
@@ -906,8 +904,8 @@ Index ForwardPropagation::bind_slot_views(
 void ForwardPropagation::recompute_for_backward(Index layer_index)
 {
     if (layer_index < 0
-        || size_t(layer_index) >= recomputable_forward_slots.size()
-        || recomputable_forward_slots[size_t(layer_index)] == SIZE_MAX)
+        || size_t(layer_index) >= recomputable_slots.size()
+        || recomputable_slots[size_t(layer_index)] == SIZE_MAX)
         return;
 
     neural_network->get_layers()[size_t(layer_index)]
@@ -923,8 +921,8 @@ void ForwardPropagation::set_active_sequence_length(Index length)
 
     reset_cuda_graph();
 
-    input_views = capacity_input_views;
-    forward_slots = capacity_forward_slots;
+    inputs = capacity_inputs;
+    slots = capacity_slots;
     active_sequence_length = length;
 
     const auto shrink_sequence = [this, length](TensorView& view)
@@ -934,10 +932,10 @@ void ForwardPropagation::set_active_sequence_length(Index length)
             view.shape[1] = length;
     };
 
-    for (auto& layer_slots : forward_slots)
+    for (auto& layer_slots : slots)
         for (auto& slot : layer_slots) shrink_sequence(slot);
 
-    for (auto& layer_inputs : input_views)
+    for (auto& layer_inputs : inputs)
         for (auto& view : layer_inputs) shrink_sequence(view);
 
     if (inference_shape_policy.final_output_capacity > 0)
@@ -962,16 +960,16 @@ void ForwardPropagation::set_output_sequence_window(Index start, Index count)
              "the final output capacity {}.",
              count, final_output_capacity);
     throw_if(final_output_layer < 0
-             || size_t(final_output_layer) >= input_views.size()
-             || input_views[size_t(final_output_layer)].empty(),
+             || size_t(final_output_layer) >= inputs.size()
+             || inputs[size_t(final_output_layer)].empty(),
              "ForwardPropagation::set_output_sequence_window: final layer has "
              "no input view.");
 
     reset_cuda_graph();
 
-    TensorView& input = input_views[size_t(final_output_layer)].front();
+    TensorView& input = inputs[size_t(final_output_layer)].front();
     const TensorView& capacity_input =
-        capacity_input_views[size_t(final_output_layer)].front();
+        capacity_inputs[size_t(final_output_layer)].front();
     throw_if(capacity_input.empty() || capacity_input.get_rank() < 2,
              "ForwardPropagation::set_output_sequence_window: final layer "
              "input is not sequence-shaped.");
@@ -998,8 +996,8 @@ void ForwardPropagation::set_output_sequence_window(Index start, Index count)
         input.data = output_window_input.data;
     }
 
-    TensorView& output = forward_slots[size_t(final_output_layer)].back();
-    output = capacity_forward_slots[size_t(final_output_layer)].back();
+    TensorView& output = slots[size_t(final_output_layer)].back();
+    output = capacity_slots[size_t(final_output_layer)].back();
     output.shape[1] = count;
 }
 
@@ -1008,7 +1006,7 @@ void ForwardPropagation::gather_output_window()
     if (output_window_input.empty()) return;
 
     const TensorView& capacity_input =
-        capacity_input_views[size_t(final_output_layer)].front();
+        capacity_inputs[size_t(final_output_layer)].front();
 
     const Index sequence = capacity_input.shape[1];
     const Index row_bytes = capacity_input.shape.size() / capacity_input.shape[0]
@@ -1029,17 +1027,17 @@ static TensorView get_layer_outputs(const ForwardPropagation& propagation,
                                     const Index layer)
 {
     if (!propagation.neural_network || layer < 0
-        || size_t(layer) >= propagation.forward_slots.size())
+        || size_t(layer) >= propagation.slots.size())
         return {};
 
-    const auto& slots = propagation.forward_slots[size_t(layer)];
+    const auto& slots = propagation.slots[size_t(layer)];
     if (!slots.empty() && !slots.back().empty()) return slots.back();
 
-    if (size_t(layer) >= propagation.input_views.size()
-        || propagation.input_views[size_t(layer)].empty())
+    if (size_t(layer) >= propagation.inputs.size()
+        || propagation.inputs[size_t(layer)].empty())
         return {};
 
-    TensorView input = propagation.input_views[size_t(layer)].front();
+    TensorView input = propagation.inputs[size_t(layer)].front();
     if (!input.empty())
         input.shape = Shape{input.shape[0]}.append(
             propagation.neural_network->get_layers()[size_t(layer)]

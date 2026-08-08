@@ -69,8 +69,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagate)
         neural_network.add_layer(move(layer));
         neural_network.compile();
 
-        VectorMap(neural_network.get_parameters_data(),
-                  neural_network.get_parameters_buffer_size()).setConstant(type(0.1));
+        neural_network.get_parameters_map().setConstant(type(0.1));
 
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
@@ -109,8 +108,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
         neural_network.add_layer(move(layer));
         neural_network.compile();
 
-        VectorMap(neural_network.get_parameters_data(),
-                  neural_network.get_parameters_buffer_size()).setConstant(type(0.1));
+        neural_network.get_parameters_map().setConstant(type(0.1));
 
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
@@ -141,8 +139,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
         neural_network.add_layer(move(layer));
         neural_network.compile();
 
-        VectorMap(neural_network.get_parameters_data(),
-                  neural_network.get_parameters_buffer_size()).setConstant(type(0.1));
+        neural_network.get_parameters_map().setConstant(type(0.1));
 
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
@@ -187,8 +184,7 @@ TEST(LongShortTermMemoryLayerTest, BackPropagate)
         Shape{time_steps, inputs_number}, Shape{targets_number}));
     neural_network.compile();
 
-    VectorMap(neural_network.get_parameters_data(),
-              neural_network.get_parameters_buffer_size()).setConstant(type(0.05));
+    neural_network.get_parameters_map().setConstant(type(0.05));
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
@@ -221,8 +217,7 @@ TEST(LongShortTermMemoryLayerTest, BackPropagateReturnSequences)
     neural_network.add_layer(move(layer));
     neural_network.compile();
 
-    VectorMap(neural_network.get_parameters_data(),
-              neural_network.get_parameters_buffer_size()).setConstant(type(0.05));
+    neural_network.get_parameters_map().setConstant(type(0.05));
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);

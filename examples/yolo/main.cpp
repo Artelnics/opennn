@@ -873,8 +873,7 @@ int main()
                       << " (val=" << val_error << ")\n";
 
             if (ema_updated_this_run) {
-                VectorR ema_vec = Eigen::Map<const VectorR>(ema_params.data(), n_params);
-                yolo_network.set_parameters(ema_vec);
+                yolo_network.set_parameters(as_vector_map(ema_params));
                 yolo_network.save_parameters_binary(ema_weights_path);
                 yolo_network.load_parameters_binary(weights_path);
                 if (filesystem::exists(states_path))
@@ -895,7 +894,7 @@ int main()
                 yolo_network.load_parameters_binary(ema_weights_path);
                 const float* saved_ema = yolo_network.get_parameters_data();
                 copy(saved_ema, saved_ema + n_params, ema_params.begin());
-                yolo_network.set_parameters(Eigen::Map<const VectorR>(live_snapshot.data(), n_params));
+                yolo_network.set_parameters(as_vector_map(live_snapshot));
                 cout << "Resumed EMA weights from \"" << ema_weights_path.string() << "\".\n";
             }
 
@@ -932,8 +931,7 @@ int main()
                 cout << "Checkpoint saved: " << epochs_done << " total epochs.\n";
 
                 {
-                    VectorR ema_vec = Eigen::Map<const VectorR>(ema_params.data(), n_params);
-                    yolo_network.set_parameters(ema_vec);
+                    yolo_network.set_parameters(as_vector_map(ema_params));
                     yolo_network.save_parameters_binary(ema_weights_path);
 
                     yolo_network.load_parameters_binary(weights_path);
@@ -1038,7 +1036,7 @@ int main()
                         ( is_v8_head && layers[li]->get_type() == LayerType::DetectionV8));
                     if (!is_det) continue;
                     const Shape head_shape = layers[li]->get_output_shape();
-                    const TensorView view = forward_propagation.forward_slots[li].back();
+                    const TensorView view = forward_propagation.slots[li].back();
                     const Index channels = head_shape[2];
                     const Index classes_n = Index(dataset.get_classes_number());
 
@@ -1381,8 +1379,7 @@ input_shape[1]);
 
         if (ema_updated_this_run)
         {
-            VectorR ema_vec = Eigen::Map<const VectorR>(ema_params.data(), n_params);
-            yolo_network.set_parameters(ema_vec);
+            yolo_network.set_parameters(as_vector_map(ema_params));
             cout << "Using in-memory EMA weights for final mAP evaluation.\n";
         }
         else
@@ -1504,7 +1501,7 @@ input_shape[1]);
                             ( is_v8_map && all_layers[li]->get_type() == LayerType::DetectionV8));
                         if (!is_det) continue;
                         const Shape hs = all_layers[li]->get_output_shape();
-                        const TensorView view = fp_m.forward_slots[li].back();
+                        const TensorView view = fp_m.slots[li].back();
                         const Index classes_n = Index(N_cls);
                         const Index bph = is_v8_map ? 1 : hs[2] / (5 + classes_n);
                         const float* ptr = view.as<float>();

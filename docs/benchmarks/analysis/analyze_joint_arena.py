@@ -7,11 +7,11 @@ Usage:
 Parses the [MEMORY_DEBUG] ledger emitted by any training trial (the
 `forward.lifetime_entry` / `backward.lifetime_entry` rows recorded by
 memory_debug::record_pool_lifetimes) and computes the peak of a hypothetical
-single arena holding both the forward activation pool and the backward delta
-pool, using the same first-fit placement as opennn/memory_pool.cpp.
+single arena holding both the forward activations and the backward deltas,
+using the same first-fit placement as opennn/memory_pool.cpp.
 
 Timeline: forward of layer i at step i, backward of layer i at 2L-1-i.
-Backward-pool step s maps to global step (2L-1-last_trainable) + s.
+Backward-arena step s maps to global step (2L-1-last_trainable) + s.
 
 Ledger rows repeat when a process constructs the propagation objects more than
 once (e.g. a warmup train followed by the timed train); sizes are normalized
@@ -27,7 +27,7 @@ import sys
 def parse(path):
     fwd, bwd, recompute = [], [], []
     L = last_trainable = None
-    fwd_pool = delta_pool = transient = None
+    forward_arena = backward_arena = transient = None
     for line in open(path, encoding="utf-8", errors="replace"):
         m = re.search(r"forward\.recompute_entry,[\d:]+,(\d+),([\d.]+),"
                       r"first=(-?\d+),second=(-?\d+),overlaid=(\d)", line)
@@ -49,13 +49,13 @@ def parse(path):
                       r"first=(-?\d+),last=(-?\d+)", line)
         if m: bwd.append((float(m.group(2)) / int(m.group(1)),
                           int(m.group(3)), int(m.group(4))))
-        m = re.search(r"forward,ForwardPropagation::data,(\d+),([\d.]+)", line)
-        if m: fwd_pool = float(m.group(2)) / int(m.group(1))
-        m = re.search(r"backward,BackPropagation::delta_pool,(\d+),([\d.]+)", line)
-        if m: delta_pool = float(m.group(2)) / int(m.group(1))
+        m = re.search(r"forward,ForwardPropagation::arena,(\d+),([\d.]+)", line)
+        if m: forward_arena = float(m.group(2)) / int(m.group(1))
+        m = re.search(r"backward,BackPropagation::arena,(\d+),([\d.]+)", line)
+        if m: backward_arena = float(m.group(2)) / int(m.group(1))
         m = re.search(r"forward\.transient_pool,shared_block,(\d+),([\d.]+)", line)
         if m: transient = float(m.group(2)) / int(m.group(1))
-    return fwd, bwd, recompute, L, last_trainable, fwd_pool, delta_pool, transient
+    return fwd, bwd, recompute, L, last_trainable, forward_arena, backward_arena, transient
 
 def first_fit(entries, order):
     """entries: list of (mib, first, last). order: index permutation.
@@ -120,20 +120,20 @@ def chrono_order(entries):
 
 def main():
     path = sys.argv[1]
-    fwd, bwd, recompute, L, last_trainable, fwd_pool, delta_pool, transient = parse(path)
+    fwd, bwd, recompute, L, last_trainable, forward_arena, backward_arena, transient = parse(path)
     if not fwd or not bwd or L is None or last_trainable is None:
         sys.exit("no lifetime dump found: run the trial with OPENNN_MEMORY_DEBUG=1")
     print(f"forward entries={len(fwd)} backward entries={len(bwd)} "
           f"recompute entries={len(recompute)} "
           f"layers={L} last_trainable={last_trainable}")
-    print(f"ledger: forward data={fwd_pool} MiB (incl transient={transient}), "
-          f"delta pool={delta_pool} MiB")
+    print(f"ledger: forward arena={forward_arena} MiB (incl transient={transient}), "
+          f"backward arena={backward_arena} MiB")
 
     fwd_peak, _ = first_fit(fwd, compact_order(fwd))
     bwd_peak_c, _ = first_fit(bwd, compact_order(bwd))
     bwd_peak_h, _ = first_fit(bwd, chrono_order(bwd))
-    print(f"replica: forward pool peak={fwd_peak:.2f} MiB, "
-          f"delta pool peak compact={bwd_peak_c:.2f} / chrono={bwd_peak_h:.2f} MiB")
+    print(f"replica: forward arena peak={fwd_peak:.2f} MiB, "
+          f"backward arena peak compact={bwd_peak_c:.2f} / chrono={bwd_peak_h:.2f} MiB")
 
     offset = (2 * L - 1) - last_trainable
     joint = list(fwd) + [(s, f + offset, l + offset) for (s, f, l) in bwd]
@@ -143,7 +143,7 @@ def main():
     lb = lower_bound(joint)
     jc, offsets_c = first_fit(joint, compact_order(joint))
     jh, offsets_h = first_fit(joint, chrono_order(joint))
-    current = (fwd_pool or 0.0) + (delta_pool or 0.0)
+    current = (forward_arena or 0.0) + (backward_arena or 0.0)
     best, best_offsets = (jc, offsets_c) if jc <= jh else (jh, offsets_h)
     print(f"joint lower bound = {lb:.2f} MiB")
     print(f"joint first-fit: compact={jc:.2f} MiB, chrono={jh:.2f} MiB")
@@ -164,7 +164,7 @@ def main():
               f" (transient-block growth = {correction:.2f} MiB)")
     best += correction
 
-    print(f"current separate pools = {current:.2f} MiB")
+    print(f"current separate arenas = {current:.2f} MiB")
     print(f"saving = {current - best:.2f} MiB "
           f"({100.0 * (current - best) / current:.1f}% of the pooled memory)")
 

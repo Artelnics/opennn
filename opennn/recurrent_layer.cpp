@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   R E C U R R E N T   L A Y E R   C L A S S
@@ -81,7 +81,7 @@ void RecurrentOperator::set_parameters_pytorch()
 
 void RecurrentOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-    auto& forward_slots = forward_propagation.forward_slots[layer];
+    auto& forward_slots = forward_propagation.slots[layer];
     const TensorView& input             = get_input(forward_propagation, layer);
     TensorView& output                  = forward_slots[output_slots[0]];
     TensorView& hidden_states           = forward_slots[output_slots[1]];
@@ -97,8 +97,8 @@ void RecurrentOperator::forward_propagate(ForwardPropagation& forward_propagatio
 
 void RecurrentOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
-    auto& forward_slots = forward_propagation.forward_slots[layer];
-    auto& backward_slots = back_propagation.backward_slots[layer];
+    auto& forward_slots = forward_propagation.slots[layer];
+    auto& backward_slots = back_propagation.slots[layer];
 
     const TensorView& input                    = get_input(forward_propagation, layer);
     const TensorView& hidden_states            = forward_slots[output_slots[1]];

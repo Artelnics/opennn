@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C O M B I N A T I O N   O P E R A T O R   S O U R C E
@@ -108,7 +108,7 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
         && output_slots.size() > 1
         && output.is_cuda())
     {
-        TensorView& activated = forward_propagation.forward_slots[layer][output_slots[1]];
+        TensorView& activated = forward_propagation.slots[layer][output_slots[1]];
         linear_forward(get_input(forward_propagation, layer), weights, bias,
                        activated, CUBLASLT_EPILOGUE_GELU_AUX_BIAS, &output, weight_scale);
         return;
@@ -149,7 +149,7 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
 {
     PROFILE_SCOPE("op:combination_bwd");
     throw_if(tied_transposed, "CombinationOperator: a tied projection is inference-only.");
-    auto& backward_slots = back_propagation.backward_slots[layer];
+    auto& backward_slots = back_propagation.slots[layer];
 
     const TensorView& input        = get_input(forward_propagation, layer);
     const TensorView& output_delta = get_output_delta(back_propagation, layer);

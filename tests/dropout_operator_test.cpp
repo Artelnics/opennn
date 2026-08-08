@@ -194,10 +194,7 @@ TEST(DropoutLayerTest, InferencePassIsIdentityWithDropout)
     const Index parameters_size = dropout_network.get_parameters_buffer_size();
     ASSERT_EQ(parameters_size, reference_network.get_parameters_buffer_size());
 
-    VectorR parameters(parameters_size);
-    const float* parameters_data = dropout_network.get_parameters_data();
-    for (Index i = 0; i < parameters_size; ++i)
-        parameters[i] = parameters_data[i];
+    const VectorR parameters = dropout_network.get_parameters_map();
 
     reference_network.set_parameters(parameters);
 

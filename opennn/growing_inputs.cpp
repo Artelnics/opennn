@@ -191,9 +191,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
                     input_selection_results.optimal_input_variables_indices = dataset->get_variable_indices(VariableRole::Input);
                     input_selection_results.optimal_input_variable_names = dataset->get_variable_names(VariableRole::Input);
                     neural_network->copy_parameters_host();
-                    input_selection_results.optimal_parameters =
-                        Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
-                                                  neural_network->get_parameters_buffer_size());
+                    input_selection_results.optimal_parameters = neural_network->get_parameters_map();
                     input_selection_results.optimum_training_error = training_error;
                     input_selection_results.optimum_validation_error = validation_error;
                 }

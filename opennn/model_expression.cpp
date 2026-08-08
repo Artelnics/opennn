@@ -327,11 +327,10 @@ void ModelExpression::check_parameters_are_finite() const
     if (neural_network->get_parameters_device() != Device::CPU)
         return;
 
-    const float* parameters_data = neural_network->get_parameters_data();
-    const Index parameters_size = neural_network->get_parameters_buffer_size();
+    const ConstVectorMap parameters = neural_network->get_parameters_map();
 
-    for (Index i = 0; i < parameters_size; ++i)
-        throw_if(!isfinite(parameters_data[i]),
+    for (Index i = 0; i < parameters.size(); ++i)
+        throw_if(!isfinite(parameters(i)),
                  "ModelExpression: network parameters contain NaN or Inf; cannot export a valid model.");
 }
 

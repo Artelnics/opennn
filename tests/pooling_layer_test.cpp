@@ -163,7 +163,7 @@ TEST(PoolingLayerTest, UnitWindowIsPassthrough)
     const TensorView outputs = forward_propagation.get_outputs();
     EXPECT_EQ(outputs.data, inputs.data());
     EXPECT_EQ(outputs.shape, Shape({batch_size}).append(input_shape));
-    EXPECT_EQ(forward_propagation.data.bytes, 0);
+    EXPECT_EQ(forward_propagation.arena.bytes, 0);
 }
 
 TEST(PoolingLayerTest, JsonRejectsPoolLargerThanPaddedInput)

@@ -94,12 +94,12 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
         const cudaDataType_t dtype = x.cuda_dtype();
         const Index esz  = (dtype == CUDA_R_32F) ? sizeof(float) : sizeof(uint16_t);
 
-        void* xa_gpu   = fp.forward_slots[layer][1].data;
-        void* Q_gpu    = fp.forward_slots[layer][2].data;
-        void* K_gpu    = fp.forward_slots[layer][3].data;
-        void* Attn_gpu = fp.forward_slots[layer][4].data;
-        void* V_gpu    = fp.forward_slots[layer][5].data;
-        void* cat_gpu  = fp.forward_slots[layer][6].data;
+        void* xa_gpu   = fp.slots[layer][1].data;
+        void* Q_gpu    = fp.slots[layer][2].data;
+        void* K_gpu    = fp.slots[layer][3].data;
+        void* Attn_gpu = fp.slots[layer][4].data;
+        void* V_gpu    = fp.slots[layer][5].data;
+        void* cat_gpu  = fp.slots[layer][6].data;
         void* out_gpu  = output.data;
 
         const Index scratch_needed = (Index(BT) * H
@@ -157,17 +157,17 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
 #endif
 
     const float* x_ptr = x.as<float>();
-    float* xa  = fp.forward_slots[layer][1].as<float>();
-    float* Q   = fp.forward_slots[layer][2].as<float>();
-    float* K   = fp.forward_slots[layer][3].as<float>();
-    float* A   = fp.forward_slots[layer][4].as<float>();
-    float* V   = fp.forward_slots[layer][5].as<float>();
-    float* cat = fp.forward_slots[layer][6].as<float>();
+    float* xa  = fp.slots[layer][1].as<float>();
+    float* Q   = fp.slots[layer][2].as<float>();
+    float* K   = fp.slots[layer][3].as<float>();
+    float* A   = fp.slots[layer][4].as<float>();
+    float* V   = fp.slots[layer][5].as<float>();
+    float* cat = fp.slots[layer][6].as<float>();
 
-    MapC Wq_m  (Wq  .as<float>(), half_c, half_c);
-    MapC Wk_m  (Wk  .as<float>(), half_c, half_c);
-    MapC Wv_m  (Wv  .as<float>(), half_c, half_c);
-    MapC Wout_m(Wout.as<float>(), C, C);
+    const MatrixMap Wq_m   = Wq.as_matrix();
+    const MatrixMap Wk_m   = Wk.as_matrix();
+    const MatrixMap Wv_m   = Wv.as_matrix();
+    const MatrixMap Wout_m = Wout.as_matrix();
 
     for (Index b = 0; b < B; ++b)
     {
@@ -200,7 +200,7 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
     }
 
     MapC cat_m(cat, B * tokens, C);
-    MapM out_m(output.as<float>(), B * tokens, C);
+    MatrixMap out_m = output.as_flat_matrix();
     out_m.noalias() = cat_m * Wout_m;
 }
 
@@ -226,12 +226,12 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
         const cudaDataType_t dtype = x.cuda_dtype();
         const Index esz  = (dtype == CUDA_R_32F) ? sizeof(float) : sizeof(uint16_t);
 
-        const void* xa_gpu   = fp.forward_slots[layer][1].data;
-        const void* Q_gpu    = fp.forward_slots[layer][2].data;
-        const void* K_gpu    = fp.forward_slots[layer][3].data;
-        const void* Attn_gpu = fp.forward_slots[layer][4].data;
-        const void* V_gpu    = fp.forward_slots[layer][5].data;
-        const void* cat_gpu  = fp.forward_slots[layer][6].data;
+        const void* xa_gpu   = fp.slots[layer][1].data;
+        const void* Q_gpu    = fp.slots[layer][2].data;
+        const void* K_gpu    = fp.slots[layer][3].data;
+        const void* Attn_gpu = fp.slots[layer][4].data;
+        const void* V_gpu    = fp.slots[layer][5].data;
+        const void* cat_gpu  = fp.slots[layer][6].data;
 
         uint8_t* scratch = static_cast<uint8_t*>(gpu_scratch.data);
         void* compact_d_ao = scratch;
@@ -339,24 +339,24 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
     }
 #endif
 
-    const float* xa  = fp.forward_slots[layer][1].as<float>();
-    const float* Q   = fp.forward_slots[layer][2].as<float>();
-    const float* K   = fp.forward_slots[layer][3].as<float>();
-    const float* A   = fp.forward_slots[layer][4].as<float>();
-    const float* V   = fp.forward_slots[layer][5].as<float>();
-    const float* cat = fp.forward_slots[layer][6].as<float>();
+    const float* xa  = fp.slots[layer][1].as<float>();
+    const float* Q   = fp.slots[layer][2].as<float>();
+    const float* K   = fp.slots[layer][3].as<float>();
+    const float* A   = fp.slots[layer][4].as<float>();
+    const float* V   = fp.slots[layer][5].as<float>();
+    const float* cat = fp.slots[layer][6].as<float>();
 
     const float* dout = delta_out.as<float>();
     float*       din  = delta_in.data ? delta_in.as<float>() : nullptr;
 
-    MapC Wq_m  (Wq  .as<float>(), half_c, half_c);
-    MapC Wk_m  (Wk  .as<float>(), half_c, half_c);
-    MapC Wv_m  (Wv  .as<float>(), half_c, half_c);
-    MapC Wout_m(Wout.as<float>(), C, C);
-    MapM dWq_m  (dWq  .as<float>(), half_c, half_c);
-    MapM dWk_m  (dWk  .as<float>(), half_c, half_c);
-    MapM dWv_m  (dWv  .as<float>(), half_c, half_c);
-    MapM dWout_m(dWout.as<float>(), C, C);
+    const MatrixMap Wq_m   = Wq.as_matrix();
+    const MatrixMap Wk_m   = Wk.as_matrix();
+    const MatrixMap Wv_m   = Wv.as_matrix();
+    const MatrixMap Wout_m = Wout.as_matrix();
+    MatrixMap dWq_m        = dWq.as_matrix();
+    MatrixMap dWk_m        = dWk.as_matrix();
+    MatrixMap dWv_m        = dWv.as_matrix();
+    MatrixMap dWout_m      = dWout.as_matrix();
 
     MapC cat_m (cat,  B * tokens, C);
     MapC dout_m(dout, B * tokens, C);

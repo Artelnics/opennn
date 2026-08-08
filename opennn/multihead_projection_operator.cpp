@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   M U L T I H E A D   P R O J E C T I O N   O P E R A T O R   S O U R C E
@@ -30,7 +30,7 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
              "MultiHeadProjectionOperator: tied, transposed and fused-activation "
              "projections are not supported.");
 
-    auto& forward_slots = forward_propagation.forward_slots[layer];
+    auto& forward_slots = forward_propagation.slots[layer];
     const auto& input_views = get_inputs(forward_propagation, layer);
     const TensorView& input = input_views[min(input_view_index, input_views.size() - 1)];
     TensorView& head_output = get_output(forward_propagation, layer);
@@ -53,8 +53,8 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
 
 void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
-    auto& forward_slots = forward_propagation.forward_slots[layer];
-    auto& backward_slots = back_propagation.backward_slots[layer];
+    auto& forward_slots = forward_propagation.slots[layer];
+    auto& backward_slots = back_propagation.slots[layer];
 
     const auto& input_views = get_inputs(forward_propagation, layer);
     const TensorView& input = input_views[min(input_view_index, input_views.size() - 1)];

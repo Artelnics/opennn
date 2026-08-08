@@ -81,11 +81,11 @@ void TrainingResult::print(const string &message) const
         ? minimal_index(validation_error_history)
         : final_epoch;
 
-    const bool restored_best_epoch = restored_best_parameters
-        && restored_epoch >= 0
-        && restored_epoch < epochs_number;
+    const bool restored_best_epoch = restored_epoch
+        && *restored_epoch >= 0
+        && *restored_epoch < epochs_number;
 
-    const Index reported_epoch = restored_best_epoch ? restored_epoch : final_epoch;
+    const Index reported_epoch = restored_best_epoch ? *restored_epoch : final_epoch;
 
     cout << message << "\n"
          << "Training results" << "\n"
@@ -96,7 +96,7 @@ void TrainingResult::print(const string &message) const
     if (validation_error_history.size() > 0 && best_epoch != final_epoch)
     {
         if (restored_best_epoch)
-            cout << "Best epoch: " << restored_epoch
+            cout << "Best epoch: " << *restored_epoch
                  << " (restored parameters and states correspond to this epoch)\n";
         else
             cout << "Best validation epoch: " << best_epoch

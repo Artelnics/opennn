@@ -208,7 +208,7 @@ public:
 
     virtual float* link_states(float*, Device);
 
-    float* link_gradients(float*, vector<TensorView>&, Device);
+    float* link_gradients(float*, Device);
 
 protected:
 

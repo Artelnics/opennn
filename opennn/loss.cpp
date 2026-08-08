@@ -494,7 +494,7 @@ void for_each_yolo_head(const ForwardPropagation& forward_propagation,
         [&](Index detection_idx, const Shape& head_shape, Index channels,
             Index per_sample_floats, Index head_offset, Index head_floats)
         {
-            const TensorView head_output = forward_propagation.forward_slots[size_t(detection_idx)].back();
+            const TensorView head_output = forward_propagation.slots[size_t(detection_idx)].back();
 
             vector<float> head_target = assemble_head_target(tgt, batch_size, per_sample_floats,
                                                              head_offset, head_floats);
@@ -552,7 +552,7 @@ void yolo_gradient_cpu_multi(const ForwardPropagation& forward_propagation,
                        target_flat.as<float>(), batch_size, 0,
         [&](Index detection_idx, const TensorView& head_output, const TensorView& head_target)
         {
-            TensorView& head_delta = back_propagation.layer_output_deltas[size_t(detection_idx)];
+            TensorView& head_delta = back_propagation.output_deltas[size_t(detection_idx)];
             yolo_gradient_kernel(head_output, head_target, head_delta, boxes_per_head,
                                  classes_number, sigmoid_classes, inv_batch, lam);
         });
@@ -1000,7 +1000,7 @@ static void for_each_v8_head(const ForwardPropagation& forward_propagation,
 
     for (Index detection_idx : detection_indices)
     {
-        const TensorView head_view = forward_propagation.forward_slots[size_t(detection_idx)].back();
+        const TensorView head_view = forward_propagation.slots[size_t(detection_idx)].back();
         const Index G       = nn->get_layer(detection_idx)->get_output_shape()[0];
         const Index reg_max = get_v8_reg_max(nn, detection_idx);
 
@@ -1021,7 +1021,7 @@ static void for_each_v8_head(const ForwardPropagation& forward_propagation,
 #endif
         if (back_propagation)
         {
-            TensorView& device_delta = back_propagation->layer_output_deltas[size_t(detection_idx)];
+            TensorView& device_delta = back_propagation->output_deltas[size_t(detection_idx)];
             if (on_device)
             {
                 delta_cpu.assign(size_t(head_view.size()), 0.0f);
@@ -1036,7 +1036,7 @@ static void for_each_v8_head(const ForwardPropagation& forward_propagation,
 
 #ifdef OPENNN_HAS_CUDA
         if (back_propagation && on_device)
-            cudaMemcpy(back_propagation->layer_output_deltas[size_t(detection_idx)].as<float>(),
+            cudaMemcpy(back_propagation->output_deltas[size_t(detection_idx)].as<float>(),
                        delta_cpu.data(),
                        size_t(head_view.size()) * sizeof(float), cudaMemcpyHostToDevice);
 #endif
@@ -1112,7 +1112,7 @@ void for_each_yolo_head_gpu(const ForwardPropagation& forward_propagation,
                 }
 
                 fn(detection_idx,
-                   forward_propagation.forward_slots[size_t(detection_idx)].back(),
+                   forward_propagation.slots[size_t(detection_idx)].back(),
                    TensorView(const_cast<float*>(head_target),
                               Shape({batch_size, head_shape[0], head_shape[1], channels}),
                               Type::FP32, Device::CUDA));
@@ -1214,7 +1214,7 @@ void yolo_gradient_gpu_multi(const ForwardPropagation& forward_propagation,
     for_each_yolo_head_gpu(forward_propagation, nn, detection_indices, target_flat, 0, target_device,
         [&](Index detection_idx, const TensorView& head_output, const TensorView& head_target)
         {
-            TensorView& head_delta = back_propagation.layer_output_deltas[size_t(detection_idx)];
+            TensorView& head_delta = back_propagation.output_deltas[size_t(detection_idx)];
             const Index grid_size = head_target.shape[1];
             yolo_gradient_cuda(head_output.as<float>(), head_target.as<float>(),
                                head_delta.as<float>(),

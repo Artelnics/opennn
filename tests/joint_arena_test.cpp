@@ -75,10 +75,10 @@ Index count_delta_views_outside(const BackPropagation& back_propagation,
 {
     Index outside = 0;
 
-    for (const TensorView& delta : back_propagation.layer_output_deltas)
+    for (const TensorView& delta : back_propagation.output_deltas)
         if (!lies_within(delta, arena)) ++outside;
 
-    for (const vector<TensorView>& slots : back_propagation.backward_slots)
+    for (const vector<TensorView>& slots : back_propagation.slots)
         for (const TensorView& slot : slots)
             if (!lies_within(slot, arena)) ++outside;
 
@@ -97,17 +97,15 @@ TEST(JointArenaTest, CoPlanningEngagesOnlyWhenLifetimesAreSupplied)
 
     ForwardPropagation separate(batch_size, &model.neural_network,
                                 ForwardPropagationMode::Training);
-    EXPECT_FALSE(separate.co_planned_block.valid);
+    EXPECT_TRUE(separate.co_planned_offsets.empty());
 
     const vector<MemoryPoolEntry> lifetimes = model.delta_lifetimes(batch_size);
     ForwardPropagation joint(batch_size, &model.neural_network,
                              ForwardPropagationMode::Training, {}, false,
                              lifetimes);
 
-    ASSERT_TRUE(joint.co_planned_block.valid);
-    EXPECT_GT(joint.co_planned_block.bytes, 0);
     EXPECT_FALSE(lifetimes.empty());
-    EXPECT_EQ(joint.co_planned_block.offsets.size(), lifetimes.size());
+    EXPECT_EQ(joint.co_planned_offsets.size(), lifetimes.size());
 }
 
 // With the joint plan active BackPropagation must own no delta memory of its own,
@@ -123,15 +121,15 @@ TEST(JointArenaTest, BackPropagationBindsIntoTheForwardArena)
     ForwardPropagation joint(batch_size, &model.neural_network,
                              ForwardPropagationMode::Training, {}, false,
                              lifetimes);
-    ASSERT_TRUE(joint.co_planned_block.valid);
+    ASSERT_FALSE(joint.co_planned_offsets.empty());
 
     BackPropagation back_propagation(batch_size, model.loss.get(), &joint);
 
-    EXPECT_EQ(back_propagation.delta_pool.bytes, 0)
-        << "joint planning is active, so BackPropagation must not allocate a delta pool";
+    EXPECT_EQ(back_propagation.arena.bytes, 0)
+        << "joint planning is active, so BackPropagation must not allocate an arena";
 
-    ASSERT_GT(joint.data.bytes, 0);
-    EXPECT_EQ(count_delta_views_outside(back_propagation, joint.data), 0)
+    ASSERT_GT(joint.arena.bytes, 0);
+    EXPECT_EQ(count_delta_views_outside(back_propagation, joint.arena), 0)
         << "every delta view must point inside the forward arena";
 }
 
@@ -146,14 +144,14 @@ TEST(JointArenaTest, SeparatePoolIsUsedWithoutTheJointPlan)
 
     ForwardPropagation separate(batch_size, &model.neural_network,
                                 ForwardPropagationMode::Training);
-    ASSERT_FALSE(separate.co_planned_block.valid);
+    ASSERT_TRUE(separate.co_planned_offsets.empty());
 
     BackPropagation back_propagation(batch_size, model.loss.get(), &separate);
 
-    EXPECT_GT(back_propagation.delta_pool.bytes, 0)
-        << "without a joint plan BackPropagation owns its delta pool";
+    EXPECT_GT(back_propagation.arena.bytes, 0)
+        << "without a joint plan BackPropagation owns its arena";
     EXPECT_EQ(count_delta_views_outside(back_propagation,
-                                        back_propagation.delta_pool), 0);
+                                        back_propagation.arena), 0);
 }
 
 // A first-fit over the union should in principle never need more than the two
@@ -176,7 +174,7 @@ TEST(JointArenaTest, JointArenaOverheadStaysBounded)
                                 ForwardPropagationMode::Training);
     BackPropagation separate_back(batch_size, model.loss.get(), &separate);
 
-    const Index separate_bytes = separate.data.bytes + separate_back.delta_pool.bytes;
+    const Index separate_bytes = separate.arena.bytes + separate_back.arena.bytes;
 
     const vector<MemoryPoolEntry> lifetimes = model.delta_lifetimes(batch_size);
     ForwardPropagation joint(batch_size, &model.neural_network,
@@ -184,9 +182,9 @@ TEST(JointArenaTest, JointArenaOverheadStaysBounded)
                              lifetimes);
     BackPropagation joint_back(batch_size, model.loss.get(), &joint);
 
-    const Index joint_bytes = joint.data.bytes + joint_back.delta_pool.bytes;
+    const Index joint_bytes = joint.arena.bytes + joint_back.arena.bytes;
 
-    ASSERT_TRUE(joint.co_planned_block.valid);
+    ASSERT_FALSE(joint.co_planned_offsets.empty());
 
     const Index known_gap = batch_size * targets_number * Index(sizeof(float));
 

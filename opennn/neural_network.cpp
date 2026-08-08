@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   N E U R A L   N E T W O R K   C L A S S
@@ -729,10 +729,10 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
         self->copy_states_device();
 
-        vector<TensorView>& input_views_device =
-            forward_propagation.device_input_views;
-        input_views_device.assign(input_view.begin(), input_view.end());
-        forward_propagation.device_input_buffers.resize(input_view.size());
+        vector<TensorView>& device_inputs =
+            forward_propagation.staged_inputs;
+        device_inputs.assign(input_view.begin(), input_view.end());
+        forward_propagation.staged_input_storage.resize(input_view.size());
 
         const bool uses_bf16_activations =
             activation_dtype(config.training_type) == Type::BF16;
@@ -754,7 +754,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
         };
 
         cudaStream_t stream = Backend::get_compute_stream();
-        bool staged_inputs = false;
+        bool inputs_staged = false;
 
         if (has(LayerType::GroupedQueryAttention))
             forward_propagation.stage_position(stream);
@@ -772,7 +772,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                          && source.is_fp32()
                                          && !input_feeds_token_ids(i);
 
-            Buffer& input_buffer = forward_propagation.device_input_buffers[i];
+            Buffer& input_buffer = forward_propagation.staged_input_storage[i];
             const auto ensure_cuda_capacity = [&](Index required_bytes)
             {
                 if (input_buffer.device_type != Device::CUDA)
@@ -793,7 +793,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                    size_t(n) * sizeof(uint16_t),
                                    device::CopyKind::HostToDevice,
                                    stream);
-                input_views_device[i].type = Type::BF16;
+                device_inputs[i].type = Type::BF16;
             }
             else
             {
@@ -805,14 +805,14 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                    stream);
             }
 
-            input_views_device[i].data = input_buffer.data;
-            input_views_device[i].device = Device::CUDA;
-            staged_inputs = true;
+            device_inputs[i].data = input_buffer.data;
+            device_inputs[i].device = Device::CUDA;
+            inputs_staged = true;
         }
 
-        forward_propagate(input_views_device, forward_propagation, is_training, first_layer_index, last_layer_index);
+        forward_propagate(device_inputs, forward_propagation, is_training, first_layer_index, last_layer_index);
 
-        if (staged_inputs)
+        if (inputs_staged)
             device::synchronize(stream);
 
         return;
@@ -835,19 +835,19 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
     const auto pick_input = [&](size_t input_index) -> const TensorView& {
         throw_if(input_index >= input_view.size(),
-                 "NeuralNetwork::forward_propagate: input index {} out of range (have {} input views). Network wiring expects more inputs than were provided.",
+                 "NeuralNetwork::forward_propagate: input index {} out of range (have {} inputs). Network wiring expects more inputs than were provided.",
                         input_index, input_view.size());
         return input_view[input_index];
     };
 
     for (const auto& [layer_i, source_j, ext_idx] : forward_propagation.passthrough_overrides)
         if (Index(layer_i) >= first_layer_index)
-            forward_propagation.input_views[layer_i][source_j] = pick_input(ext_idx);
+            forward_propagation.inputs[layer_i][source_j] = pick_input(ext_idx);
 
     for (Index i = first_layer_index; i <= last_layer_index; ++i)
     {
         const vector<Index>& sources = source_layers[i];
-        auto& input_slot = forward_propagation.input_views[i];
+        auto& input_slot = forward_propagation.inputs[i];
 
         for (size_t source_index = 0; source_index < sources.size(); ++source_index)
         {

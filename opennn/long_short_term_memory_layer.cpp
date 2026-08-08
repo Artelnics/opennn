@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L O N G   S H O R T   T E R M   M E M O R Y   L A Y E R
@@ -151,7 +151,7 @@ void LongShortTermMemoryOperator::set_parameters_pytorch()
 
 void LongShortTermMemoryOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-    auto& forward_slots = forward_propagation.forward_slots[layer];
+    auto& forward_slots = forward_propagation.slots[layer];
 
     TensorView& input = get_input(forward_propagation, layer);
     TensorView& output = forward_slots[OutputSlot];
@@ -398,10 +398,10 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
 
 void LongShortTermMemoryOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
-    auto& backward_slots = back_propagation.backward_slots[layer];
+    auto& backward_slots = back_propagation.slots[layer];
     if (backward_slots.size() <= OutputDeltaScratchSlot) return;
 
-    const auto& forward_slots = forward_propagation.forward_slots[layer];
+    const auto& forward_slots = forward_propagation.slots[layer];
 
     TensorView& input_delta = backward_slots[InputDeltaSlot];
     TensorView& hidden_delta = backward_slots[HiddenDeltaScratchSlot];

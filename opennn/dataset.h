@@ -72,7 +72,7 @@ public:
     const vector<SampleRole>& get_sample_roles() const noexcept { return sample_roles; }
 
     void set_fold_split(const vector<Index>& training, const vector<Index>& validation);
-    void clear_fold_split() noexcept { fold_split_active = false; }
+    void clear_fold_split() noexcept { fold_split_roles.reset(); }
 
     Index get_variables_number() const noexcept { return variables.size(); }
     Index get_variables_number(VariableRole) const;
@@ -312,11 +312,10 @@ protected:
     vector<SampleRole> sample_roles;
     vector<string> sample_ids;
 
-    bool fold_split_active = false;
-    vector<SampleRole> fold_split_roles;
+    optional<vector<SampleRole>> fold_split_roles;
 
     const vector<SampleRole>& active_sample_roles() const noexcept
-    { return fold_split_active ? fold_split_roles : sample_roles; }
+    { return fold_split_roles ? *fold_split_roles : sample_roles; }
 
     vector<Variable> variables;
 

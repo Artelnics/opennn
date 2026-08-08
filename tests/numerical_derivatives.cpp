@@ -96,8 +96,7 @@ VectorR calculate_gradient(Loss& loss)
 
     back_propagation.gradient.migrate_to(Device::CPU);
 
-    return Map<const VectorR, AlignedMax>(back_propagation.gradient.as<float>(),
-                                          back_propagation.gradient.size_in_floats());
+    return back_propagation.gradient.as_vector();
 }
 
 VectorR calculate_numerical_gradient(Loss& loss)
@@ -124,8 +123,7 @@ VectorR calculate_numerical_gradient(Loss& loss)
 
     neural_network->copy_parameters_host();
 
-    VectorMap parameters(neural_network->get_parameters_data(),
-                         neural_network->get_parameters_buffer_size());
+    VectorMap parameters = neural_network->get_parameters_map();
 
     const Index parameters_number = parameters.size();
 

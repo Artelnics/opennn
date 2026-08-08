@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
     static_cast<Unscaling*>(network.get_first(LayerType::Unscaling))->set_scalers("None");
     static_cast<Bounding*>(network.get_first(LayerType::Bounding))->set_bounding_method("NoBounding");
 
-    VectorMap parameters(network.get_parameters_data(), network.get_parameters_buffer_size());
+    VectorMap parameters = network.get_parameters_map();
     set_random_uniform(parameters, -1.0f, 1.0f);
 
     TrainingStrategy training_strategy(&network, &dataset);

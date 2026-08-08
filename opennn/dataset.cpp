@@ -66,9 +66,9 @@ vector<Index> Dataset::get_sample_indices(SampleRole role_type) const
 void Dataset::set_fold_split(const vector<Index>& training, const vector<Index>& validation)
 {
     fold_split_roles = sample_roles;
-    for (const Index i : training)   fold_split_roles[size_t(i)] = SampleRole::Training;
-    for (const Index i : validation) fold_split_roles[size_t(i)] = SampleRole::Validation;
-    fold_split_active = true;
+    vector<SampleRole>& roles = *fold_split_roles;
+    for (const Index i : training)   roles[size_t(i)] = SampleRole::Training;
+    for (const Index i : validation) roles[size_t(i)] = SampleRole::Validation;
 }
 
 vector<Index> Dataset::get_used_sample_indices() const

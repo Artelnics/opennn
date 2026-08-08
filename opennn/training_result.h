@@ -74,9 +74,7 @@ struct TrainingResult
 
     float loss = QUIET_NAN;
 
-    bool restored_best_parameters = false;
-
-    Index restored_epoch = -1;
+    optional<Index> restored_epoch;
 };
 
 }

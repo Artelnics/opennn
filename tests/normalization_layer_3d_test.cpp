@@ -200,11 +200,11 @@ TEST(Normalization3dTest, FusedResidualAddAliasesSafeBranchDelta)
     BackPropagation back_propagation(samples_number, &loss);
 
     ASSERT_EQ(
-        back_propagation.backward_slots[size_t(normalization_index)].size(),
+        back_propagation.slots[size_t(normalization_index)].size(),
         size_t(3));
     EXPECT_EQ(
-        back_propagation.backward_slots[size_t(normalization_index)][1].data,
-        back_propagation.backward_slots[size_t(normalization_index)][2].data);
+        back_propagation.slots[size_t(normalization_index)][1].data,
+        back_propagation.slots[size_t(normalization_index)][2].data);
 
     const VectorR gradient = calculate_gradient(loss);
 
@@ -227,10 +227,7 @@ TEST(Normalization3dTest, FusedResidualAddAliasesSafeBranchDelta)
             reference_network.get_output_shape(), Shape{2}, "Identity"));
     reference_network.compile();
 
-    const float* parameter_data = neural_network.get_parameters_data();
-    VectorR parameters(neural_network.get_parameters_buffer_size());
-    for (Index i = 0; i < parameters.size(); ++i)
-        parameters(i) = parameter_data[i];
+    const VectorR parameters = neural_network.get_parameters_map();
     reference_network.set_parameters(parameters);
 
     Loss reference_loss(&reference_network, &dataset);

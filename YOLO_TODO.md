@@ -182,7 +182,7 @@ Phase 5a implemented and validated end-to-end (CPU). §21 (anchor-free detection
 
 **BackPropagation fix (`opennn/back_propagation.cpp`):**
 
-`is_detached_detection_layer` now covers both `LayerType::Detection` AND `LayerType::DetectionV8` in delta pool allocation. Required for multi-head v8 delta writes.
+`is_detached_detection_layer` now covers both `LayerType::Detection` AND `LayerType::DetectionV8` in backward-arena allocation. Required for multi-head v8 delta writes.
 
 **Example wiring (`examples/yolo/main.cpp`):**
 
@@ -470,7 +470,7 @@ Both layers build cleanly into `libopennn.a`. The `yolo` example links unchanged
 
 Started the day with the prep already shipped (Upsample + Concatenate layers landed in commit `e1e079281`). Pushed through the rest of §14 end-to-end in one session.
 
-**back_propagation.cpp delta pool extension.** The framework's `setup_delta_pool` only allocates output-delta slot 0 for the *last trainable layer*. With FPN's 3 Detection leaf heads, the other two heads' slot 0 had no backing memory — the Loss couldn't write per-head deltas. Surgical fix: after the main spec loop, scan all layers and additionally allocate slot 0 for any `LayerType::Detection` layer that has zero consumers (i.e., a leaf head). Lifetime: born at step 0 (Loss writes all heads at once at the start of backward), dies when that layer is walked during back_propagate_layers. ~15 LOC; doesn't touch any non-YOLO code path.
+**back_propagation.cpp backward-arena extension.** The framework's `setup_arena` only allocates output-delta slot 0 for the *last trainable layer*. With FPN's 3 Detection leaf heads, the other two heads' slot 0 had no backing memory — the Loss couldn't write per-head deltas. Surgical fix: after the main spec loop, scan all layers and additionally allocate slot 0 for any `LayerType::Detection` layer that has zero consumers (i.e., a leaf head). Lifetime: born at step 0 (Loss writes all heads at once at the start of backward), dies when that layer is walked during back_propagate_layers. ~15 LOC; doesn't touch any non-YOLO code path.
 
 **YoloNetwork FPN constructor.** New `HeadStyle::FPN` enum on `YoloNetwork`. When active (requires `Backbone::DarknetTiny` and exactly 9 anchors):
 - Backbone stages 2/3/4 captured as `c3_index` / `c4_index` / `c5_index` (the post-residual-block outputs at strides 8 / 16 / 32 for a 416×416 input).
@@ -493,7 +493,7 @@ Started the day with the prep already shipped (Upsample + Concatenate layers lan
 - Confirms: forward pass through 3-scale FPN body, backward pass through Upsample + Concatenate + FPN convs + 3 detection heads, multi-head loss + per-head delta writes, gradient flow back to the backbone — all work.
 
 **Files touched 2026-05-29 cont. (currently uncommitted):**
-- `opennn/back_propagation.cpp` — leaf-Detection delta pool allocation.
+- `opennn/back_propagation.cpp` — leaf-Detection backward-arena allocation.
 - `opennn/standard_networks.{h,cpp}` — `HeadStyle` enum + FPN ctor.
 - `opennn/yolo_dataset.{h,cpp}` — `set_multi_scale_heads`, `make_target_multi_scale`, fill_targets dispatch.
 - `opennn/loss.cpp` — kernel extraction + multi-head helpers + dispatch in `calculate_error` / `calculate_output_deltas`.

@@ -58,7 +58,7 @@ OPENNN_CUDA_STUB(void, update_parameters_cuda,
 
 #endif
 
-static void accumulate_scaled_gradient(Buffer& accumulator, Buffer& gradient, float alpha)
+static void accumulate_scaled_gradient(Buffer& accumulator, const Buffer& gradient, float alpha)
 {
 #ifdef OPENNN_HAS_CUDA
     if (accumulator.device_type == Device::CUDA)
@@ -70,8 +70,7 @@ static void accumulate_scaled_gradient(Buffer& accumulator, Buffer& gradient, fl
         return;
     }
 #endif
-    VectorMap(accumulator.as<float>(), accumulator.size_in_floats()).noalias()
-        += alpha * VectorMap(gradient.as<float>(), gradient.size_in_floats());
+    accumulator.as_vector().noalias() += alpha * gradient.as_vector();
 }
 
 AdaptiveMomentEstimation::AdaptiveMomentEstimation(Loss* new_loss)
@@ -169,14 +168,12 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
         return;
     }
 
-    VectorMap parameters(neural_network->get_parameters_data(),
-                         neural_network->get_parameters_buffer_size());
+    VectorMap parameters = neural_network->get_parameters_map();
 
     VectorMap gradient_exponential_decay = optimization_data.views[GradientMoment].as_vector();
     VectorMap square_gradient_exponential_decay = optimization_data.views[SquareGradientMoment].as_vector();
 
-    VectorMap gradient(back_propagation.gradient.as<float>(),
-                       back_propagation.gradient.size_in_floats());
+    VectorMap gradient = back_propagation.gradient.as_vector();
 
     const Index parameters_size = parameters.size();
     const float one_minus_beta_1 = 1.0f - beta_1;

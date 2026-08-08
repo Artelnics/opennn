@@ -167,7 +167,7 @@ TEST(Dataset, BatchFill)
                    type(0),
                    type(1);
 
-    MatrixMap inputs(batch.get_inputs()[0].as<type>(), 3, 2);
+    MatrixMap inputs = batch.get_inputs()[0].as_matrix();
 
     ASSERT_EQ(inputs.rows(), input_data.rows());
     ASSERT_EQ(inputs.cols(), input_data.cols());
@@ -176,7 +176,7 @@ TEST(Dataset, BatchFill)
         for(Index j = 0; j < inputs.cols(); ++j)
             EXPECT_NEAR(inputs(i, j), input_data(i, j), 1e-6);
 
-    MatrixMap targets(batch.get_targets().as<type>(), 3, 1);
+    MatrixMap targets = batch.get_targets().as_matrix();
 
     ASSERT_EQ(targets.rows(), target_data.rows());
     ASSERT_EQ(targets.cols(), target_data.cols());

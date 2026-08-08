@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   B A T C H   N O R M   O P E R A T O R   S O U R C E
@@ -180,7 +180,7 @@ void BatchNormalizationOperator::forward_propagate(ForwardPropagation& forward_p
 
     const TensorView& input    = get_input(forward_propagation, layer);
     TensorView& output         = get_output(forward_propagation, layer);
-    const TensorView& residual = fuse_add ? forward_propagation.input_views[layer][1] : empty;
+    const TensorView& residual = fuse_add ? forward_propagation.inputs[layer][1] : empty;
 
     if (!is_training)
     {
@@ -218,7 +218,7 @@ void BatchNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
     const TensorView& inverse_variance = get_output(forward_propagation, layer, 2);
     TensorView& delta                  = get_output_delta(back_propagation, layer);
     TensorView& residual_delta         = residual_delta_slot
-        ? back_propagation.backward_slots[layer][residual_delta_slot] : empty;
+        ? back_propagation.slots[layer][residual_delta_slot] : empty;
 
     if (!delta.is_cuda())
     {

@@ -189,7 +189,7 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
         parameters.test_name));
     neural_network.compile();
 
-    VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_buffer_size()).setConstant(type(0.5));
+    neural_network.get_parameters_map().setConstant(type(0.5));
 
     const Index batch_size = 2;
 

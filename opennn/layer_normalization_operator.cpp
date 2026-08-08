@@ -78,7 +78,7 @@ void LayerNormalizationOperator::forward_propagate(ForwardPropagation& forward_p
     if (fuse_add)
     {
 
-        const TensorView& residual = forward_propagation.input_views[layer][1];
+        const TensorView& residual = forward_propagation.inputs[layer][1];
         layer_normalization_add_forward(input, residual, gamma, beta, means, stds, normalized, normalized, output);
         return;
     }
@@ -112,7 +112,7 @@ void LayerNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
 
     if (fuse_add)
     {
-        TensorView& residual_delta = back_propagation.backward_slots[layer][2];
+        TensorView& residual_delta = back_propagation.slots[layer][2];
         if (residual_delta.data && residual_delta.data != input_delta.data)
             copy(input_delta, residual_delta);
     }

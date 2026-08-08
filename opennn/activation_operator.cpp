@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   A C T I V A T I O N   O P E R A T O R   S O U R C E
@@ -38,7 +38,7 @@ void ActivationOperator::forward_propagate(ForwardPropagation& forward_propagati
     if (save_slot != SIZE_MAX)
     {
 
-        TensorView& saved = forward_propagation.forward_slots[layer][save_slot];
+        TensorView& saved = forward_propagation.slots[layer][save_slot];
         if (!saved.empty()) copy(output, saved);
     }
 }
@@ -58,7 +58,7 @@ void ActivationOperator::back_propagate(ForwardPropagation& forward_propagation,
 
     const TensorView& outputs = needs_input
         ? get_input(forward_propagation, layer)
-        : forward_propagation.forward_slots[layer][read_slot];
+        : forward_propagation.slots[layer][read_slot];
 
     if (!input_slots.empty() && input_slots[0] != output_slots[0])
     {

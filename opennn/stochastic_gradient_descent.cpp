@@ -100,11 +100,9 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         return;
     }
 
-    VectorMap parameters(neural_network->get_parameters_data(),
-                         neural_network->get_parameters_buffer_size());
+    VectorMap parameters = neural_network->get_parameters_map();
 
-    VectorMap gradient(back_propagation.gradient.as<float>(),
-                       back_propagation.gradient.size_in_floats());
+    VectorMap gradient = back_propagation.gradient.as_vector();
 
     const Index parameters_size = parameters.size();
 

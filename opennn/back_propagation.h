@@ -35,6 +35,7 @@ struct BackPropagation
     struct DeltaLayout
     {
         vector<DeltaEntry> entries;
+        vector<bool> passthrough_layers;
         vector<bool> aliases_residual_delta;
         Index aliased_residual_delta_bytes = 0;
         vector<pair<size_t, size_t>> reusable_consumer_deltas;
@@ -69,11 +70,10 @@ struct BackPropagation
     const NeuralNetwork* neural_network = nullptr;
 
     Buffer gradient;
-    vector<vector<TensorView>> gradient_views;
 
-    Buffer delta_pool;
-    vector<TensorView> layer_output_deltas;
-    vector<vector<TensorView>> backward_slots;
+    Buffer arena;
+    vector<TensorView> output_deltas;
+    vector<vector<TensorView>> slots;
 
     vector<vector<pair<size_t, size_t>>> consumer_edges;
 
@@ -92,11 +92,11 @@ struct BackPropagation
 
 private:
 
-    void setup_delta_pool(const vector<vector<TensorSpec>>&, const DeltaLayout&);
+    void setup_arena(const vector<vector<TensorSpec>>&, const DeltaLayout&);
 
-    void bind_delta_views(const DeltaLayout&, const vector<Index>& byte_offsets,
-                          uint8_t* base, Device device,
-                          const vector<vector<TensorSpec>>&);
+    void bind_deltas(const DeltaLayout&, const vector<Index>& byte_offsets,
+                     uint8_t* base, Device device,
+                     const vector<vector<TensorSpec>>&);
 };
 
 }

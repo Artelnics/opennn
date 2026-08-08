@@ -86,10 +86,8 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 {
     NeuralNetwork* neural_network = forward_propagation.neural_network;
 
-    VectorMap parameters(neural_network->get_parameters_data(),
-                         neural_network->get_parameters_buffer_size());
-    VectorMap gradient(back_propagation.gradient.as<float>(),
-                       back_propagation.gradient.size_in_floats());
+    VectorMap parameters = neural_network->get_parameters_map();
+    VectorMap gradient = back_propagation.gradient.as_vector();
 
     VectorMap old_parameters = optimization_data.views[OldParameters].as_vector();
     VectorMap parameter_differences = optimization_data.views[ParameterDifferences].as_vector();
@@ -210,8 +208,7 @@ TrainingResult QuasiNewtonMethod::train()
         optimization_data.potential_parameters.resize(parameters_number);
         optimization_data.training_direction.resize(parameters_number);
 
-        optimization_data.views[OldParameters].as_vector() =
-            VectorMap(neural_network->get_parameters_data(), parameters_number);
+        optimization_data.views[OldParameters].as_vector() = neural_network->get_parameters_map();
 
         optimization_data.views[InverseHessian].as_matrix().setIdentity();
         optimization_data.views[OldInverseHessian].as_matrix().setIdentity();
@@ -284,8 +281,7 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
     const float previous_error = back_propagation.error;
     const float previous_regularization = back_propagation.regularization;
 
-    Map<const VectorR, AlignedMax> parameters(neural_network->get_parameters_data(),
-                                               neural_network->get_parameters_buffer_size());
+    const VectorMap parameters = neural_network->get_parameters_map();
     const VectorR& training_direction = optimization_data.training_direction;
     VectorR& potential_parameters = optimization_data.potential_parameters;
 

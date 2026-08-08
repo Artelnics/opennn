@@ -87,6 +87,15 @@ public:
 
     float* get_parameters_data() { return parameters.as<float>(); }
     const float* get_parameters_data() const noexcept { return parameters.as<float>(); }
+    // Non-owning Eigen views over the full aligned parameter buffer.
+    VectorMap get_parameters_map() &
+    {
+        return parameters.as_vector();
+    }
+    ConstVectorMap get_parameters_map() const &
+    {
+        return parameters.as_vector();
+    }
     // Floats in the parameter buffer, including the per-layer alignment padding.
     // This is >= get_parameters_number(), which is the logical sum over layers;
     // index buffers with this one, count parameters with that one.

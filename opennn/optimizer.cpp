@@ -1022,7 +1022,7 @@ TrainingResult Optimizer::train()
     {
         validation_forward_propagation = make_unique<ForwardPropagation>();
         validation_forward_propagation->set(validation_batch_size, neural_network,
-                                            &training_forward_propagation.data,
+                                            &training_forward_propagation.arena,
                                             ForwardPropagationMode::Inference);
     }
 
@@ -1397,7 +1397,6 @@ void Optimizer::restore_best_parameters(NeuralNetwork* neural_network,
         neural_network->set_states(Map<const VectorR>(best_model.states.data(),
                                                       Index(best_model.states.size())));
 
-    results.restored_best_parameters = true;
     results.restored_epoch = best_model.epoch;
 }
 
@@ -1490,7 +1489,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
         clip_gradient_norm_device(gradient, gradient_size, max_norm);
     else
     {
-        VectorMap gradient_view(gradient.as<float>(), gradient_size);
+        VectorMap gradient_view = gradient.as_vector();
         const float gradient_norm = gradient_view.norm();
         if (gradient_norm > max_norm)
             gradient_view *= max_norm / (gradient_norm + GRADIENT_NORM_EPS);

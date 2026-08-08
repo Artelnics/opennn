@@ -88,7 +88,7 @@ must not be presented as the capacity of the revised runner.
 On an RTX 3060 Laptop GPU, the revised fp32 trial reduced the forward activation
 allocation at batch 128 from 226.21 MiB to 123.46 MiB while preserving the
 training error (`4.81168`). Reusing one consumer delta as the residual fan-out
-accumulator then reduced the backward delta pool from 37 MiB to 29 MiB. A
+accumulator then reduced the backward arena from 37 MiB to 29 MiB. A
 compact offline placement for supported CNN graphs eliminates the remaining
 fragmentation, reaching the 26 MiB live-memory lower bound. At batch 4,400
 this lowered monitored peak VRAM from 5,775 MiB to 5,671 MiB. Batch 4,560

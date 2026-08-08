@@ -50,7 +50,7 @@ Seq2SeqLayout find_layout(NeuralNetwork& network)
 pair<ptrdiff_t, ptrdiff_t> slot_range(ForwardPropagation& propagation,
                                       const TensorView& view)
 {
-    const char* base = propagation.data.as<char>();
+    const char* base = propagation.arena.as<char>();
     const ptrdiff_t low = static_cast<const char*>(view.data) - base;
     return {low, low + view.byte_size()};
 }
@@ -58,17 +58,17 @@ pair<ptrdiff_t, ptrdiff_t> slot_range(ForwardPropagation& propagation,
 void expect_identical_plans(ForwardPropagation& left,
                             ForwardPropagation& right)
 {
-    ASSERT_EQ(left.data.bytes, right.data.bytes);
-    ASSERT_EQ(left.forward_slots.size(), right.forward_slots.size());
+    ASSERT_EQ(left.arena.bytes, right.arena.bytes);
+    ASSERT_EQ(left.slots.size(), right.slots.size());
 
-    for (size_t i = 0; i < left.forward_slots.size(); ++i)
+    for (size_t i = 0; i < left.slots.size(); ++i)
     {
-        ASSERT_EQ(left.forward_slots[i].size(), right.forward_slots[i].size());
+        ASSERT_EQ(left.slots[i].size(), right.slots[i].size());
 
-        for (size_t j = 0; j < left.forward_slots[i].size(); ++j)
+        for (size_t j = 0; j < left.slots[i].size(); ++j)
         {
-            const TensorView& left_slot = left.forward_slots[i][j];
-            const TensorView& right_slot = right.forward_slots[i][j];
+            const TensorView& left_slot = left.slots[i][j];
+            const TensorView& right_slot = right.slots[i][j];
             EXPECT_EQ(left_slot.byte_size(), right_slot.byte_size());
             if (!left_slot.data || !right_slot.data) continue;
             EXPECT_EQ(slot_range(left, left_slot),
@@ -97,12 +97,12 @@ TEST(ForwardPropagationRetainedOutputsTest,
         1, &network, ForwardPropagationMode::Inference, policy);
 
     const TensorView& retained =
-        propagation.forward_slots[size_t(layout.encoder_last)].back();
+        propagation.slots[size_t(layout.encoder_last)].back();
     ASSERT_GT(retained.byte_size(), 0);
     const auto [retained_low, retained_high] = slot_range(propagation, retained);
 
     for (const Index i : rerun_layers)
-        for (const TensorView& slot : propagation.forward_slots[size_t(i)])
+        for (const TensorView& slot : propagation.slots[size_t(i)])
         {
             if (!slot.data || slot.byte_size() == 0) continue;
             const auto [low, high] = slot_range(propagation, slot);
@@ -135,9 +135,9 @@ TEST(ForwardPropagationRetainedOutputsTest, EmptyPolicyKeepsDefaultPlan)
         1, &network, ForwardPropagationMode::Inference, retained_policy);
 
     const TensorView& retained =
-        retained_propagation.forward_slots[size_t(layout.encoder_last)].back();
-    EXPECT_LE(retained_propagation.data.bytes,
-              default_propagation.data.bytes
+        retained_propagation.slots[size_t(layout.encoder_last)].back();
+    EXPECT_LE(retained_propagation.arena.bytes,
+              default_propagation.arena.bytes
                   + get_aligned_bytes(retained.byte_size()));
 
     Configuration::instance().set();

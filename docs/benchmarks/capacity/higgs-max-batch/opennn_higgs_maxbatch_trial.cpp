@@ -214,11 +214,11 @@ TensorView maybe_alias_bf16_input_cast(const TensorView& fp32_input,
     // layer 1's output slot is still dead. Reusing that future activation for
     // the fp32->bf16 input cast removes the persistent thread-local cast
     // workspace while preserving the same GEMM path and resident fp32 input.
-    if (propagation.forward_slots.size() < 2
-        || propagation.forward_slots[1].empty())
+    if (propagation.slots.size() < 2
+        || propagation.slots[1].empty())
         return fp32_input;
 
-    TensorView& future_activation = propagation.forward_slots[1].back();
+    TensorView& future_activation = propagation.slots[1].back();
     if (!future_activation.is_bf16()
         || future_activation.size() < fp32_input.size())
         return fp32_input;
