@@ -38,6 +38,8 @@ public:
     Shape get_output_shape() const override;
 
     void set(const Shape&, Index, const string&);
+    bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 3); }
+
     void set_input_shape(const Shape&) override;
     void set_scale_factor(Index);
 

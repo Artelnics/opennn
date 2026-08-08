@@ -31,6 +31,8 @@ public:
     vector<TensorSpec> get_backward_specs(Index) const override;
 
     void set(const Shape&, const string&, Index);
+    bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 2, 3); }
+
     void set_input_shape(const Shape& shape) override { set(shape, label, inputs_number); }
 
     Index get_sources_number() const noexcept { return inputs_number; }

@@ -5,12 +5,73 @@
 #include "opennn/tabular_dataset.h"
 #include "opennn/standard_networks.h"
 #include "opennn/growing_neurons.h"
+#include "opennn/dense_layer.h"
+#include "opennn/normalization_layer_3d.h"
 
 using namespace opennn;
 
 TEST(GrowingNeuronsTest, DefaultConstructor)
 {
     GrowingNeurons growing_neurons;
+}
+
+// Selection hands the last trainable layer a rank-1 shape. A layer that cannot
+// take one used to keep its previous shape and say nothing, so selection ran its
+// whole loop against a network it never changed and reported the result as if
+// the neuron count had varied. It must refuse instead.
+TEST(GrowingNeuronsTest, RefusesALastLayerThatCannotTakeANeuronCount)
+{
+    const Index samples = 8;
+
+    TabularDataset dataset(samples, {1}, {1});
+    MatrixR data(samples, 2);
+    for (Index i = 0; i < samples; i++)
+    {
+        const type x = type(i) / type(samples);
+        data(i, 0) = x;
+        data(i, 1) = x;
+    }
+    dataset.set_data(data);
+    dataset.split_samples_random();
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{2}, "Linear"));
+    neural_network.add_layer(make_unique<Normalization3d>(Shape{2, 2}));
+    neural_network.compile();
+
+    TrainingStrategy training_strategy(&neural_network, &dataset);
+
+    GrowingNeurons growing_neurons(&training_strategy);
+    growing_neurons.set_display(false);
+    growing_neurons.set_maximum_neurons(3);
+
+    try
+    {
+        growing_neurons.perform_neurons_selection();
+        FAIL() << "selection accepted a layer that cannot take a neuron count";
+    }
+    catch (const exception& error)
+    {
+        // Assert the reason, not merely that something threw: this test is only
+        // worth anything if it is the rank guard that stopped it.
+        EXPECT_NE(string(error.what()).find("does not accept a rank-1 input shape"),
+                  string::npos)
+            << "threw, but not for the reason under test: " << error.what();
+    }
+}
+
+// The rank a layer declares has to be the rank it actually enforces, or the
+// question selection asks is worthless.
+TEST(GrowingNeuronsTest, DeclaredInputRanksMatchWhatLayersAccept)
+{
+    const opennn::Dense dense(Shape{1}, Shape{2}, "Linear");
+    EXPECT_TRUE(dense.accepts_input_rank(1));
+    EXPECT_TRUE(dense.accepts_input_rank(2));
+    EXPECT_FALSE(dense.accepts_input_rank(3));
+
+    const Normalization3d normalization(Shape{2, 2});
+    EXPECT_FALSE(normalization.accepts_input_rank(1));
+    EXPECT_TRUE(normalization.accepts_input_rank(2));
 }
 
 TEST(GrowingNeuronsTest, GeneralConstructor)

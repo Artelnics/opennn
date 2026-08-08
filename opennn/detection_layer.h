@@ -48,6 +48,8 @@ public:
     ClassActivation get_class_activation() const { return detection.class_activation; }
 
     void set(const Shape&, const vector<array<float, 2>>&, const string&);
+    bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 3); }
+
     void set_input_shape(const Shape&) override;
     void set_class_activation(ClassActivation new_class_activation) { detection.class_activation = new_class_activation; }
 

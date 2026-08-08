@@ -43,6 +43,8 @@ public:
 
     void set_fuse_add(bool);
 
+    bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 2, 3); }
+
     void set_input_shape(const Shape&) override;
 
     void read_JSON_body(const Json*) override;

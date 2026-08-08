@@ -119,6 +119,14 @@ public:
 
     LayerType get_type() const noexcept { return layer_type; }
 
+    // Which input ranks this layer can represent. Callers that build a shape
+    // rather than receive one - neuron selection, for instance - must ask before
+    // setting it, because set_input_shape below throws on a rank a layer cannot
+    // take. The base refuses everything so a layer that forgets to declare its
+    // ranks fails loudly the first time one is set, instead of accepting a shape
+    // it cannot honour.
+    virtual bool accepts_input_rank(Index) const { return false; }
+
     virtual void set_input_shape(const Shape&) {}
     virtual void set_output_shape(const Shape&) {}
 

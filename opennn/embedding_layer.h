@@ -23,6 +23,8 @@ public:
               Index = 0,
               const string& = "embedding_layer");
 
+    bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 1); }
+
     Shape get_input_shape() const noexcept override { return {sequence_length}; }
     Shape get_output_shape() const override;
 

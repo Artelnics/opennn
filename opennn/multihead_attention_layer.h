@@ -61,6 +61,8 @@ public:
              bool = false,
              const string& = "multihead_attention_layer");
 
+    bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 2); }
+
     void set_input_shape(const Shape&) override;
     void on_compute_dtype_changed() override;
 

@@ -40,6 +40,8 @@ public:
 
     void set(const Shape&, const string&);
     void set(const Shape&, Index reg_max, const string&);
+    bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 3); }
+
     void set_input_shape(const Shape&) override;
 
     void read_JSON_body(const Json*) override;

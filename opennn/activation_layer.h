@@ -26,6 +26,8 @@ public:
     ActivationFunction get_output_activation() const override { return activation_operator.activation_function; }
 
     void set(const Shape&, const string&, const string&);
+    bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 1, 2, 3); }
+
     void set_input_shape(const Shape&) override;
 
 private:

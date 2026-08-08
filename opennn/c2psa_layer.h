@@ -23,6 +23,8 @@ public:
     Shape get_output_shape() const override;
 
     void set(const Shape&, const string&);
+    bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 3); }
+
     void set_input_shape(const Shape&) override;
 
     vector<TensorSpec> get_forward_specs(Index) const override;

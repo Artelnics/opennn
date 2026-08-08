@@ -22,6 +22,8 @@ public:
 
     Shape get_output_shape() const noexcept override { return input_shape; }
 
+    bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 1); }
+
     void set_input_shape(const Shape&) override;
 
     vector<TensorSpec> get_forward_specs(Index) const override { return {}; }

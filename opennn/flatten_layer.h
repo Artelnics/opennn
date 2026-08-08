@@ -27,6 +27,8 @@ public:
 
     void set(const Shape&);
 
+    bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 1, 2, 3); }
+
     void set_input_shape(const Shape& new_input_shape) override { set(new_input_shape); }
 };
 

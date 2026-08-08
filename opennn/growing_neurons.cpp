@@ -17,6 +17,25 @@
 namespace opennn
 {
 
+namespace
+{
+
+// Neuron selection builds a rank-1 shape and hands it to the last trainable
+// layer. Only layers that accept rank 1 can honour that. Layers which cannot
+// used to react in three different ways - a throw, or silently keeping their
+// previous shape while selection went on to report results for a network it
+// never actually changed. Ask first, and say plainly what is wrong.
+void require_grows_by_neurons(const Layer& layer)
+{
+    throw_if(!layer.accepts_input_rank(1),
+             "GrowingNeurons: the last trainable layer is {}, which does not accept a "
+             "rank-1 input shape. Neuron selection needs a Dense-like layer there.",
+             layer.get_name());
+}
+
+}
+
+
 GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy)
 {
     set(new_training_strategy);
@@ -99,6 +118,8 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
         neurons_number = minimum_neurons + epoch*neurons_increment;
 
         const Shape neurons_shape = { neurons_number };
+        require_grows_by_neurons(*neural_network->get_layer(last_trainable_layer_index));
+
         neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape(neurons_shape);
         neural_network->get_layer(last_trainable_layer_index)->set_input_shape(neurons_shape);
 
@@ -205,6 +226,8 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
     if (display)
         cout << "Parameters number: " << neuron_selection_results.optimal_parameters.size() << "\n";
+
+    require_grows_by_neurons(*neural_network->get_layer(last_trainable_layer_index));
 
     const Shape optimal_shape = { neuron_selection_results.optimal_neurons_number };
     neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape(optimal_shape);

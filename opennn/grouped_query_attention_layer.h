@@ -76,6 +76,8 @@ public:
     bool  get_use_qk_norm() const { return use_qk_norm; }
 
     void set(const Shape&, Index, Index, Index, float, float, bool, const string&);
+    bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 2, 3); }
+
     void set_input_shape(const Shape&) override;
 
     void on_compute_dtype_changed() override { attention.compute_dtype = get_compute_dtype(); }
