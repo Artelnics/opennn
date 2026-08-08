@@ -10,6 +10,7 @@
 #include "device_backend.h"
 #include "operator.h"
 #include "random_utilities.h"
+#include "scaling.h"
 #include "profiler.h"
 #include "kernel.cuh"
 
@@ -262,64 +263,72 @@ static void scale_cpu(const TensorView& input,
 
     output_matrix.noalias() = input_matrix;
 
+    using enum ScalerMethod;
+
     const Index cols = output_matrix.cols();
     for (Index col = 0; col < cols; ++col)
     {
         const Index feature_index = col % features;
-        const int code = static_cast<int>(scalers_vector(feature_index));
+        const auto method = static_cast<ScalerMethod>(static_cast<int>(scalers_vector(feature_index)));
         auto column = output_matrix.col(col).array();
 
-        switch (code)
+        // Same Descriptives the scalar path uses, so both share scaling.h's
+        // formulas instead of restating them.
+        const Descriptives descriptives(minimums_vector(feature_index),
+                                        maximums_vector(feature_index),
+                                        means_vector(feature_index),
+                                        standard_deviations_vector(feature_index));
+
+        switch (method)
         {
-        case 1:
+        case MinimumMaximum:
             if (!inverse)
             {
-                const float range = maximums_vector(feature_index) - minimums_vector(feature_index);
-                if (range < EPSILON)
+                if (descriptives.maximum - descriptives.minimum < EPSILON)
                     column.setZero();
                 else
-                    column = (column - minimums_vector(feature_index)) / range
-                           * (max_range - min_range) + min_range;
+                    column = scale_minimum_maximum_formula(column, descriptives,
+                                                           min_range, max_range);
             }
             else
             {
                 throw_if(max_range - min_range < EPSILON, "The range values are not valid.");
-                column = (column - min_range) / (max_range - min_range)
-                       * (maximums_vector(feature_index) - minimums_vector(feature_index)) + minimums_vector(feature_index);
+                column = unscale_minimum_maximum_formula(column, descriptives,
+                                                         min_range, max_range);
             }
             break;
-        case 2:
+        case MeanStandardDeviation:
             if (!inverse)
             {
-                const float sd = standard_deviations_vector(feature_index);
-                if (sd > EPSILON)
-                    column = (column - means_vector(feature_index)) / sd;
+                if (descriptives.standard_deviation > EPSILON)
+                    column = scale_mean_standard_deviation_formula(column, descriptives);
                 else
                     column.setZero();
             }
             else
-                column = means_vector(feature_index) + column * standard_deviations_vector(feature_index);
+                column = unscale_mean_standard_deviation_formula(column, descriptives);
             break;
-        case 3:
+        case StandardDeviation:
             if (!inverse)
             {
-                const float sd = standard_deviations_vector(feature_index);
+                const float sd = descriptives.standard_deviation;
                 column *= (sd > EPSILON) ? (1.0f / sd) : 0.0f;
             }
             else
             {
-                const float sd = standard_deviations_vector(feature_index);
+                const float sd = descriptives.standard_deviation;
                 column *= (abs(sd) < EPSILON) ? 1.0f : sd;
             }
             break;
-        case 4:
+        case Logarithm:
             if (inverse) column = column.exp();
             else         column = column.max(EPSILON).log();
             break;
-        case 5:
+        case ImageMinMax:
             if (inverse) column *= 255.0f;
             else         column /= 255.0f;
             break;
+        case None:
         default:
             break;
         }

@@ -957,8 +957,8 @@ void TabularDataset::apply_scaler(Index feature_index, const string& scaler, con
     case MinimumMaximum:
         if (unscale)
         {
-            column.array() = (column.array() - min_range) / (max_range - min_range)
-                           * (desc.maximum - desc.minimum) + desc.minimum;
+            column.array() =
+                unscale_minimum_maximum_formula(column.array(), desc, min_range, max_range);
             break;
         }
 
@@ -981,7 +981,7 @@ void TabularDataset::apply_scaler(Index feature_index, const string& scaler, con
         if (desc.standard_deviation < EPSILON)
             column.setConstant(desc.mean);
         else
-            column.array() = desc.mean + column.array() * desc.standard_deviation;
+            column.array() = unscale_mean_standard_deviation_formula(column.array(), desc);
         break;
 
     case StandardDeviation:

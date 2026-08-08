@@ -26,6 +26,20 @@ namespace opennn
         return (x - d.mean) / d.standard_deviation;
     }
 
+    // Inverses of the two above. Every caller that unscales used to write these
+    // out by hand, so the forward and backward directions could drift apart.
+    template<typename X>
+    auto unscale_minimum_maximum_formula(const X& x, const Descriptives& d, float min_range, float max_range)
+    {
+        return (x - min_range) / (max_range - min_range) * (d.maximum - d.minimum) + d.minimum;
+    }
+
+    template<typename X>
+    auto unscale_mean_standard_deviation_formula(const X& x, const Descriptives& d)
+    {
+        return d.mean + x * d.standard_deviation;
+    }
+
     inline float scale_value(ScalerMethod method, const Descriptives& desc, float value,
                              float min_range = -1.0f, float max_range = 1.0f)
     {
