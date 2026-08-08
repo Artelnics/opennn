@@ -77,7 +77,7 @@ string read_file(const filesystem::path& path)
 // Feeds each row to the exported model and returns whatever it printed.
 // The emitted module guards its own main with __name__, so importing it runs
 // nothing; the driver drives it explicitly.
-string run_exported_model(const filesystem::path& directory,
+string run_exported_python_model(const filesystem::path& directory,
                           const ModelExpression& model_expression,
                           const MatrixR& inputs)
 {
@@ -271,26 +271,72 @@ MatrixR sample_inputs()
     return inputs;
 }
 
+// A feature with no spread is the case the scalers kept getting wrong, so the
+// exported model has to reproduce that constant too.
+unique_ptr<ApproximationNetwork> build_degenerate_network()
+{
+    auto network = make_unique<ApproximationNetwork>(Shape{2}, Shape{3}, Shape{1});
+
+    network->set_input_variables(vector<Variable>(network->get_inputs_number()));
+    network->set_output_variables(vector<Variable>(network->get_outputs_number()));
+    network->set_input_names({"flat", "spread"});
+    network->set_output_names({"result"});
+
+    Scaling* scaling = static_cast<Scaling*>(network->get_first("Scaling"));
+    scaling->set_scalers(vector<string>{"StandardDeviation", "MinimumMaximum"});
+    scaling->set_descriptives({Descriptives(3.0f, 3.0f, 3.0f, 0.0f),
+                               Descriptives(-1.0f, 1.0f, 0.0f, 1.0f)});
+
+    Unscaling* unscaling = static_cast<Unscaling*>(network->get_first("Unscaling"));
+    unscaling->set_scalers(vector<string>{"StandardDeviation"});
+    unscaling->set_descriptives({Descriptives(7.0f, 7.0f, 7.0f, 0.0f)});
+
+    network->set_parameters_random();
+
+    return network;
 }
 
-TEST(ExpressionExecution, PythonModelMatchesTheNetworkItCameFrom)
+MatrixR degenerate_inputs()
 {
-    if (!python_is_available()) GTEST_SKIP() << "python is not on PATH.";
+    MatrixR inputs(2, 2);
+    inputs << 5.0f,  0.5f,
+             -2.0f, -0.5f;
+    return inputs;
+}
 
-    const unique_ptr<ApproximationNetwork> network = build_network();
-    const MatrixR inputs = sample_inputs();
+// The languages differ only in how the export is run, so every check below is
+// written once and pointed at either.
+enum class Target { Python, C };
 
-    const MatrixR expected = network->calculate_outputs(inputs);
+bool target_available(Target target)
+{
+    return target == Target::Python ? python_is_available() : !find_c_compiler().empty();
+}
 
-    const ModelExpression model_expression(network.get());
+const char* target_missing(Target target)
+{
+    return target == Target::Python ? "python is not on PATH." : "no C compiler on PATH.";
+}
 
-    const filesystem::path directory =
-        filesystem::temp_directory_path() / "opennn_expression_execution";
+// Exports the network, runs it, and compares row by row. The tolerance is loose
+// on purpose: the emitters write constants at stream precision, so the target is
+// a structurally wrong formula, not the last ulp.
+void expect_export_matches(Target target, const string& directory_name,
+                           const NeuralNetwork& network, const MatrixR& inputs,
+                           const MatrixR& expected)
+{
+    const ModelExpression model_expression(&network);
+
+    const filesystem::path directory = filesystem::temp_directory_path() / directory_name;
     filesystem::create_directories(directory);
 
-    const string output = run_exported_model(directory, model_expression, inputs);
+    const string output = target == Target::Python
+        ? run_exported_python_model(directory, model_expression, inputs)
+        : run_exported_c_model(directory, model_expression, inputs, expected.cols());
 
-    ASSERT_EQ(output.find("PYTHON FAILED"), string::npos) << output;
+    for (const char* failure : {"PYTHON FAILED", "COMPILE FAILED", "RUN FAILED"})
+        ASSERT_EQ(output.find(failure), string::npos) << output;
+
     ASSERT_FALSE(output.empty()) << "the exported model printed nothing";
 
     const MatrixR actual = parse_output(output, expected.rows(), expected.cols());
@@ -308,58 +354,17 @@ TEST(ExpressionExecution, PythonModelMatchesTheNetworkItCameFrom)
     filesystem::remove_all(directory, error);
 }
 
-// A feature with no spread is the case the scalers kept getting wrong, so pin
-// it through the exported model too: it must come back as the constant.
-TEST(ExpressionExecution, PythonModelReproducesDegenerateScaling)
+}
+
+TEST(ExpressionExecution, PythonModelMatchesTheNetworkItCameFrom)
 {
-    if (!python_is_available()) GTEST_SKIP() << "python is not on PATH.";
+    if (!target_available(Target::Python)) GTEST_SKIP() << target_missing(Target::Python);
 
-    auto network = make_unique<ApproximationNetwork>(Shape{2}, Shape{3}, Shape{1});
+    const unique_ptr<ApproximationNetwork> network = build_network();
+    const MatrixR inputs = sample_inputs();
 
-    network->set_input_variables(vector<Variable>(network->get_inputs_number()));
-    network->set_output_variables(vector<Variable>(network->get_outputs_number()));
-    network->set_input_names({"flat", "spread"});
-    network->set_output_names({"result"});
-
-    Scaling* scaling = static_cast<Scaling*>(network->get_first("Scaling"));
-    scaling->set_scalers(vector<string>{"StandardDeviation", "MinimumMaximum"});
-    scaling->set_descriptives({Descriptives(3.0f, 3.0f, 3.0f, 0.0f),
-                               Descriptives(-1.0f, 1.0f, 0.0f, 1.0f)});
-
-    Unscaling* unscaling = static_cast<Unscaling*>(network->get_first("Unscaling"));
-    unscaling->set_scalers(vector<string>{"StandardDeviation"});
-    unscaling->set_descriptives({Descriptives(7.0f, 7.0f, 7.0f, 0.0f)});
-
-    network->set_parameters_random();
-
-    MatrixR inputs(2, 2);
-    inputs << 5.0f,  0.5f,
-             -2.0f, -0.5f;
-
-    const MatrixR expected = network->calculate_outputs(inputs);
-
-    const ModelExpression model_expression(network.get());
-
-    const filesystem::path directory =
-        filesystem::temp_directory_path() / "opennn_expression_degenerate";
-    filesystem::create_directories(directory);
-
-    const string output = run_exported_model(directory, model_expression, inputs);
-
-    ASSERT_EQ(output.find("PYTHON FAILED"), string::npos) << output;
-
-    const MatrixR actual = parse_output(output, expected.rows(), expected.cols());
-
-    // The output feature had no spread, so both paths owe the same constant.
-    for (Index row = 0; row < expected.rows(); ++row)
-    {
-        EXPECT_NEAR(7.0f, expected(row, 0), 1e-4f) << "the library lost the constant";
-        EXPECT_NEAR(expected(row, 0), actual(row, 0), 1e-3f)
-            << "exported model disagrees\n--- it printed ---\n" << output;
-    }
-
-    error_code error;
-    filesystem::remove_all(directory, error);
+    expect_export_matches(Target::Python, "opennn_expression_python",
+                          *network, inputs, network->calculate_outputs(inputs));
 }
 
 // C is the language customers embed, and it does not share the Python emitter's
@@ -367,94 +372,45 @@ TEST(ExpressionExecution, PythonModelReproducesDegenerateScaling)
 // body underneath. Running it is what covers that half.
 TEST(ExpressionExecution, CModelMatchesTheNetworkItCameFrom)
 {
-    if (find_c_compiler().empty()) GTEST_SKIP() << "no C compiler on PATH.";
+    if (!target_available(Target::C)) GTEST_SKIP() << target_missing(Target::C);
 
     const unique_ptr<ApproximationNetwork> network = build_network();
     const MatrixR inputs = sample_inputs();
 
-    const MatrixR expected = network->calculate_outputs(inputs);
-
-    const ModelExpression model_expression(network.get());
-
-    const filesystem::path directory =
-        filesystem::temp_directory_path() / "opennn_expression_execution_c";
-    filesystem::create_directories(directory);
-
-    const string output =
-        run_exported_c_model(directory, model_expression, inputs, expected.cols());
-
-    ASSERT_EQ(output.find("COMPILE FAILED"), string::npos) << output;
-    ASSERT_EQ(output.find("RUN FAILED"), string::npos) << output;
-    ASSERT_FALSE(output.empty()) << "the exported model printed nothing";
-
-    const MatrixR actual = parse_output(output, expected.rows(), expected.cols());
-
-    for (Index row = 0; row < expected.rows(); ++row)
-        for (Index column = 0; column < expected.cols(); ++column)
-        {
-            const float reference = expected(row, column);
-            EXPECT_NEAR(reference, actual(row, column), 1e-3f * max(1.0f, abs(reference)))
-                << "exported C model disagrees at row " << row << ", output " << column
-                << "\n--- it printed ---\n" << output;
-        }
-
-    error_code error;
-    filesystem::remove_all(directory, error);
+    expect_export_matches(Target::C, "opennn_expression_c",
+                          *network, inputs, network->calculate_outputs(inputs));
 }
 
-// The degenerate scaler rule has to survive into C as well: the emitters are
+// The degenerate scaler rule has to survive into both exports: the emitters are
 // separate code from the numeric paths and from each other.
-TEST(ExpressionExecution, CModelReproducesDegenerateScaling)
+TEST(ExpressionExecution, PythonModelReproducesDegenerateScaling)
 {
-    if (find_c_compiler().empty()) GTEST_SKIP() << "no C compiler on PATH.";
+    if (!target_available(Target::Python)) GTEST_SKIP() << target_missing(Target::Python);
 
-    auto network = make_unique<ApproximationNetwork>(Shape{2}, Shape{3}, Shape{1});
-
-    network->set_input_variables(vector<Variable>(network->get_inputs_number()));
-    network->set_output_variables(vector<Variable>(network->get_outputs_number()));
-    network->set_input_names({"flat", "spread"});
-    network->set_output_names({"result"});
-
-    Scaling* scaling = static_cast<Scaling*>(network->get_first("Scaling"));
-    scaling->set_scalers(vector<string>{"StandardDeviation", "MinimumMaximum"});
-    scaling->set_descriptives({Descriptives(3.0f, 3.0f, 3.0f, 0.0f),
-                               Descriptives(-1.0f, 1.0f, 0.0f, 1.0f)});
-
-    Unscaling* unscaling = static_cast<Unscaling*>(network->get_first("Unscaling"));
-    unscaling->set_scalers(vector<string>{"StandardDeviation"});
-    unscaling->set_descriptives({Descriptives(7.0f, 7.0f, 7.0f, 0.0f)});
-
-    network->set_parameters_random();
-
-    MatrixR inputs(2, 2);
-    inputs << 5.0f,  0.5f,
-             -2.0f, -0.5f;
-
+    const unique_ptr<ApproximationNetwork> network = build_degenerate_network();
+    const MatrixR inputs = degenerate_inputs();
     const MatrixR expected = network->calculate_outputs(inputs);
 
-    const ModelExpression model_expression(network.get());
+    for (Index row = 0; row < expected.rows(); ++row)
+        EXPECT_NEAR(7.0f, expected(row, 0), 1e-4f) << "the library lost the constant";
 
-    const filesystem::path directory =
-        filesystem::temp_directory_path() / "opennn_expression_degenerate_c";
-    filesystem::create_directories(directory);
+    expect_export_matches(Target::Python, "opennn_degenerate_python",
+                          *network, inputs, expected);
+}
 
-    const string output =
-        run_exported_c_model(directory, model_expression, inputs, expected.cols());
+TEST(ExpressionExecution, CModelReproducesDegenerateScaling)
+{
+    if (!target_available(Target::C)) GTEST_SKIP() << target_missing(Target::C);
 
-    ASSERT_EQ(output.find("COMPILE FAILED"), string::npos) << output;
-    ASSERT_EQ(output.find("RUN FAILED"), string::npos) << output;
-
-    const MatrixR actual = parse_output(output, expected.rows(), expected.cols());
+    const unique_ptr<ApproximationNetwork> network = build_degenerate_network();
+    const MatrixR inputs = degenerate_inputs();
+    const MatrixR expected = network->calculate_outputs(inputs);
 
     for (Index row = 0; row < expected.rows(); ++row)
-    {
         EXPECT_NEAR(7.0f, expected(row, 0), 1e-4f) << "the library lost the constant";
-        EXPECT_NEAR(expected(row, 0), actual(row, 0), 1e-3f)
-            << "exported C model disagrees\n--- it printed ---\n" << output;
-    }
 
-    error_code error;
-    filesystem::remove_all(directory, error);
+    expect_export_matches(Target::C, "opennn_degenerate_c",
+                          *network, inputs, expected);
 }
 
 // OpenNN: Open Neural Networks Library.

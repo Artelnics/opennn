@@ -60,8 +60,6 @@ public:
 
     bool is_passthrough() const;
 
-    string affine_line(const string&, ScalerMethod, const Descriptives&) const;
-
     vector<TensorSpec> get_forward_specs(Index) const override;
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
 

@@ -30,6 +30,10 @@ using namespace opennn;
 namespace
 {
 
+// Each platform supplies the same two things - how much this process has
+// committed, and an RAII cap on that figure - so the test itself needs no
+// conditionals.
+
 #ifdef __linux__
 
 long long committed_bytes()
@@ -41,6 +45,37 @@ long long committed_bytes()
             return stoll(line.substr(7)) * 1024LL;
     return -1;
 }
+
+// Past RLIMIT_DATA an allocation fails, so a materialized temporary throws
+// bad_alloc. The limit is restored however the scope exits.
+class CommitCap
+{
+public:
+
+    explicit CommitCap(long long bytes)
+    {
+        if (getrlimit(RLIMIT_DATA, &previous) != 0) return;
+
+        rlimit capped = previous;
+        capped.rlim_cur = rlim_t(bytes);
+        if (previous.rlim_max != RLIM_INFINITY && capped.rlim_cur > previous.rlim_max)
+            capped.rlim_cur = previous.rlim_max;
+
+        applied = setrlimit(RLIMIT_DATA, &capped) == 0;
+    }
+
+    ~CommitCap() { if (applied) setrlimit(RLIMIT_DATA, &previous); }
+
+    bool active() const { return applied; }
+
+    CommitCap(const CommitCap&) = delete;
+    CommitCap& operator=(const CommitCap&) = delete;
+
+private:
+
+    rlimit previous {};
+    bool applied = false;
+};
 
 #elif defined(_WIN32)
 
@@ -119,15 +154,24 @@ private:
     bool assigned = false;
 };
 
+#else
+
+// Anywhere else the pair still exists but reports itself unavailable, so the
+// test skips through its normal path instead of a second set of conditionals.
+long long committed_bytes() { return 0; }
+
+struct CommitCap
+{
+    explicit CommitCap(long long) {}
+    bool active() const { return false; }
+};
+
 #endif
 
 }
 
 TEST(LinearForwardMemoryTest, SteadyStateForwardAllocatesNoLargeTemporaries)
 {
-#if !defined(__linux__) && !defined(_WIN32)
-    GTEST_SKIP() << "needs per-process memory accounting";
-#else
     Configuration::instance().set(Device::CPU, Type::FP32);
 
     const Index batch = 32768;
@@ -152,7 +196,9 @@ TEST(LinearForwardMemoryTest, SteadyStateForwardAllocatesNoLargeTemporaries)
     // Both warmups are done, so the arena and the allocator are settled: any
     // growth from here is the forward itself asking for new memory.
     const long long baseline = committed_bytes();
-    ASSERT_GT(baseline, 0);
+
+    if (baseline <= 0)
+        GTEST_SKIP() << "no per-process memory accounting on this platform";
 
     const long long slack = 64LL * 1024 * 1024;
 
@@ -174,26 +220,6 @@ TEST(LinearForwardMemoryTest, SteadyStateForwardAllocatesNoLargeTemporaries)
         "the memory cap is not in force, so this test could not detect a "
         "large temporary even if the forward allocated one";
 
-#ifdef __linux__
-
-    rlimit old_limit {};
-    ASSERT_EQ(getrlimit(RLIMIT_DATA, &old_limit), 0);
-
-    rlimit capped = old_limit;
-    capped.rlim_cur = rlim_t(baseline) + rlim_t(slack);
-    if (old_limit.rlim_max != RLIM_INFINITY && capped.rlim_cur > old_limit.rlim_max)
-        capped.rlim_cur = old_limit.rlim_max;
-    ASSERT_EQ(setrlimit(RLIMIT_DATA, &capped), 0);
-
-    EXPECT_THROW(oversized_allocation(), bad_alloc) << instrument_broken;
-
-    EXPECT_NO_THROW(network.forward_propagate(inputs, forward_propagation, false))
-        << diagnosis;
-
-    setrlimit(RLIMIT_DATA, &old_limit);
-
-#else
-
     {
         const CommitCap cap(baseline + slack);
 
@@ -206,9 +232,6 @@ TEST(LinearForwardMemoryTest, SteadyStateForwardAllocatesNoLargeTemporaries)
             << diagnosis;
     }
 
-#endif
-
     const MatrixMap outputs = forward_propagation.get_outputs().as_matrix();
     EXPECT_TRUE(isfinite(outputs(0, 0)));
-#endif
 }

@@ -246,19 +246,18 @@ string expression_literal(float value)
     return text;
 }
 
-}
-
 // Folded through scaling_affine, the same map the numeric paths use, so the
 // exported model cannot drift away from what the layer computes.
-string Scaling::affine_line(const string& input_name,
-                            ScalerMethod scaler,
-                            const Descriptives& descriptives) const
+string affine_line(const string& input_name, ScalerMethod scaler,
+                   const Descriptives& descriptives, float min_range, float max_range)
 {
     const auto [scale, offset] = scaling_affine(scaler, descriptives, min_range, max_range);
 
     return "scaled_" + input_name + " = " + input_name
          + "*" + expression_literal(scale)
          + "+" + expression_literal(offset) + ";\n";
+}
+
 }
 
 string Scaling::write_expression(const vector<string>& input_names,
@@ -287,17 +286,17 @@ string Scaling::write_expression(const vector<string>& input_names,
             if (d.maximum - d.minimum < EPSILON)
                 buffer << "scaled_" << input_names[i] << " = 0;\n";
             else
-                buffer << affine_line(input_names[i], MinimumMaximum, d);
+                buffer << affine_line(input_names[i], MinimumMaximum, d, min_range, max_range);
             break;
         case MeanStandardDeviation:
             if (d.standard_deviation > EPSILON)
-                buffer << affine_line(input_names[i], MeanStandardDeviation, d);
+                buffer << affine_line(input_names[i], MeanStandardDeviation, d, min_range, max_range);
             else
                 buffer << "scaled_" << input_names[i] << " = 0;\n";
             break;
         case StandardDeviation:
             if (d.standard_deviation > EPSILON)
-                buffer << affine_line(input_names[i], StandardDeviation, d);
+                buffer << affine_line(input_names[i], StandardDeviation, d, min_range, max_range);
             else
                 buffer << "scaled_" << input_names[i] << " = 0;\n";
             break;
