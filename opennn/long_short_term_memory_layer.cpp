@@ -423,7 +423,8 @@ void LongShortTermMemoryOperator::back_propagate(ForwardPropagation& forward_pro
 
     if (input.is_cuda())
     {
-        apply_delta_gpu(input, output_delta, input_delta, return_sequences);
+        apply_delta_gpu(input, forward_slots[OutputSlot], output_delta,
+                        input_delta, return_sequences);
         return;
     }
 
@@ -642,13 +643,15 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
     const Index u_sz    = 4 * H * H;
     const Index per_thread_sz = bias_sz + w_sz + u_sz;
 
-    grad_tls_buf_.assign(size_t(nthreads) * size_t(per_thread_sz), 0.0f);
+    vector<float> gradient_thread_scratch(
+        size_t(nthreads) * size_t(per_thread_sz), 0.0f);
 
     #pragma omp parallel for
     for (Index b = 0; b < batch_size; ++b)
     {
         const int tid = omp_get_thread_num();
-        float* tls_base = grad_tls_buf_.data() + size_t(tid) * size_t(per_thread_sz);
+        float* tls_base = gradient_thread_scratch.data()
+                        + size_t(tid) * size_t(per_thread_sz);
 
         float* tls_gbf = tls_base;
         float* tls_gbi = tls_gbf + H;
@@ -769,7 +772,8 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
 
     for (int tid = 0; tid < nthreads; ++tid)
     {
-        const float* base = grad_tls_buf_.data() + size_t(tid) * size_t(per_thread_sz);
+        const float* base = gradient_thread_scratch.data()
+                          + size_t(tid) * size_t(per_thread_sz);
 
         const float* t_gbf = base;
         const float* t_gbi = t_gbf + H;
@@ -880,7 +884,6 @@ void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
 
     float* y_target = return_seq ? output.as<float>()
                                  : static_cast<float*>(y_buf.data);
-    y_used_ = y_target;
 
     cudnn_rnn_forward_(is_training,  true,
                        input.data, y_target,
@@ -898,6 +901,7 @@ void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
 }
 
 void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
+                                            const TensorView& output,
                                             const TensorView& output_delta,
                                             TensorView& input_delta,
                                             bool return_seq) const
@@ -923,8 +927,8 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
         dy_data = static_cast<const float*>(dy_buf.data);
     }
 
-    const float* y_data = y_used_ ? y_used_
-                                  : static_cast<const float*>(y_buf.data);
+    const float* y_data = return_seq ? output.as<float>()
+                                     : static_cast<const float*>(y_buf.data);
 
     void* dx_data = input_delta.data;
     if (!dx_data || input_delta.empty())
@@ -943,7 +947,7 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
 
 void LongShortTermMemoryOperator::apply_gpu(const TensorView&, TensorView&, bool, bool) const OPENNN_CUDA_STUB_BODY(apply_gpu)
 
-void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&, bool) const OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
+void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, bool) const OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
 
 #endif
 

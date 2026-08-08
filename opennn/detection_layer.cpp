@@ -59,7 +59,7 @@ void DetectionOperator::forward_propagate(ForwardPropagation& forward_propagatio
             device_anchors.resize_bytes(anchor_bytes, Device::CUDA);
             vector<float> flat;
             flat.reserve(anchors.size() * 2);
-            for (const auto& a : anchors) { flat.push_back(a[0]); flat.push_back(a[1]); }
+            ranges::copy(anchors | views::join, back_inserter(flat));
             cudaMemcpyAsync(device_anchors.as<float>(), flat.data(), size_t(anchor_bytes),
                             cudaMemcpyHostToDevice, device::get_compute_stream());
         }
@@ -170,9 +170,8 @@ void DetectionOperator::back_propagate(ForwardPropagation& forward_propagation, 
                     }
                     else
                     {
-                        float dot = 0.0f;
-                        for (Index c = 0; c < classes_number; ++c)
-                            dot += delta[base + 5 + c] * out[base + 5 + c];
+                        const float dot = inner_product(delta + base + 5, delta + base + 5 + classes_number,
+                                                        out + base + 5, 0.0f);
 
                         for (Index c = 0; c < classes_number; ++c)
                             in_delta[base + 5 + c] = out[base + 5 + c] * (delta[base + 5 + c] - dot);

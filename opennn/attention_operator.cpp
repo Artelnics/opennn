@@ -635,8 +635,7 @@ const int* stage_attention_lengths(const vector<Index>& lengths)
     else copy_done.create();
 
     int* host_slot = staging.pinned + staging.slot * staging.capacity;
-    for (Index i = 0; i < batch_size; ++i)
-        host_slot[i] = int(lengths[i]);
+    ranges::transform(lengths, host_slot, [](Index length) { return int(length); });
 
     device::copy_async(staging.device_lengths.data, host_slot,
                        batch_size * Index(sizeof(int)),
@@ -682,8 +681,8 @@ void AttentionOperator::apply_unfused(const TensorView& query,
         {
             valid_lengths = *explicit_lengths;
             have_lengths = true;
-            for (const Index length : valid_lengths)
-                if (length < source_input.shape[1]) { has_padding = true; break; }
+            has_padding = ranges::any_of(valid_lengths,
+                [&](const Index length) { return length < source_input.shape[1]; });
         }
         else
         {

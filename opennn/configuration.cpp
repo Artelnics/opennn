@@ -38,23 +38,35 @@ unsigned Configuration::get_generation() const
 Configuration::Resolved Configuration::resolve() const
 {
     const lock_guard<mutex> lock(configuration_mutex);
+    return resolve_unlocked(device);
+}
 
+Configuration::Resolved Configuration::resolve_for(const Device requested_device) const
+{
+    const lock_guard<mutex> lock(configuration_mutex);
+
+    if (requested_device == Device::CPU)
+        return {Device::CPU, Type::FP32, generation};
+
+    return resolve_unlocked(requested_device);
+}
+
+Configuration::Resolved Configuration::resolve_unlocked(const Device requested_device) const
+{
     Resolved resolved;
     resolved.generation = generation;
-    bool cuda_available = false;
 
-    switch (device)
+    switch (requested_device)
     {
     case Device::Auto:
-        cuda_available = device::has_cuda_device();
-        resolved.device = cuda_available ? Device::CUDA : Device::CPU;
+        resolved.device = device::has_cuda_device() ? Device::CUDA : Device::CPU;
         break;
     case Device::CPU:
         resolved.device = Device::CPU;
         break;
     case Device::CUDA:
-        cuda_available = device::has_cuda_device();
-        throw_if(!cuda_available, "Configuration: CUDA requested but no GPU detected.");
+        throw_if(!device::has_cuda_device(),
+                 "Configuration: CUDA requested but no GPU detected.");
         resolved.device = Device::CUDA;
         break;
     }
@@ -74,17 +86,17 @@ Configuration::Resolved Configuration::resolve() const
         resolved.training_type = Type::FP32;
         break;
     case Type::BF16:
-        throw_if(resolved.device != Device::CUDA, "Configuration: BF16 requires CUDA.");
-        throw_if(compute_capability < 80,
-                 "Configuration: BF16 requires CUDA compute capability >= 8.0 (Ampere+).");
-        resolved.training_type = Type::BF16;
-        break;
     case Type::INT8:
-        throw_if(resolved.device != Device::CUDA, "Configuration: INT8 requires CUDA.");
+    {
+        const char* const type_name = training_type == Type::BF16 ? "BF16" : "INT8";
+        throw_if(resolved.device != Device::CUDA,
+                 "Configuration: {} requires CUDA.", type_name);
         throw_if(compute_capability < 80,
-                 "Configuration: INT8 requires CUDA compute capability >= 8.0 (Ampere+).");
-        resolved.training_type = Type::INT8;
+                 "Configuration: {} requires CUDA compute capability >= 8.0 (Ampere+).",
+                 type_name);
+        resolved.training_type = training_type;
         break;
+    }
     }
 
     return resolved;

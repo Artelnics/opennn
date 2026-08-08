@@ -32,9 +32,9 @@ static void update_parameters_cuda(NeuralNetwork* neural_network,
 {
     const Index parameters_number = neural_network->get_parameters_size();
 
-    float* const velocity_ptr = optimizer_data.views.empty()
-        ? nullptr
-        : optimizer_data.views[StochasticGradientDescent::Velocity].as<float>();
+    float* const velocity_ptr = momentum > 0.0f
+        ? optimizer_data.views[StochasticGradientDescent::Velocity].as<float>()
+        : nullptr;
 
     PROFILE_SCOPE("optim:sgd_update_cuda");
     sgd_update_cuda(
@@ -84,8 +84,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    optimizer_data.iteration++;
-
+    const float current_learning_rate = optimizer_data.current_learning_rate;
     if (current_learning_rate == 0.0f)
         return;
 
@@ -140,16 +139,16 @@ void StochasticGradientDescent::update_parameters_capturable(BackPropagation& ba
 
     clip_gradient_norm(back_propagation.gradient, gradient_clip_norm);
 
-    float* const velocity_ptr = optimizer_data.views.empty()
-        ? nullptr
-        : optimizer_data.views[Velocity].as<float>();
+    float* const velocity_ptr = momentum > 0.0f
+        ? optimizer_data.views[Velocity].as<float>()
+        : nullptr;
 
     sgd_update_capturable_cuda(
         neural_network->get_parameters_size(),
         neural_network->get_parameters_data(),
         velocity_ptr,
         back_propagation.gradient.as<float>(),
-        optimizer_data.graph_effective_lr.as<float>(),
+        optimizer_data.views[GraphLearningRate].as<float>(),
         momentum,
         nesterov,
         neural_network->get_parameters_bf16_mirror_data(),
@@ -162,37 +161,26 @@ OPENNN_CUDA_STUB_BODY(update_parameters_capturable)
 
 void StochasticGradientDescent::setup_optimizer_data(OptimizerData& optimizer_data,
                                                      Index parameters_number,
-                                                     Device device,
-                                                     [[maybe_unused]] bool on_gpu)
+                                                     Device device)
 {
-    if (momentum > 0.0f)
-        optimizer_data.set({Shape{parameters_number}}, device);
+    const bool use_graph = can_use_cuda_graph();
+    if (momentum > 0.0f || use_graph)
+        optimizer_data.set({momentum > 0.0f ? Shape{parameters_number} : Shape{},
+                            use_graph ? Shape{1} : Shape{}}, device);
 
-    optimizer_data.iteration = 1;
+    optimizer_data.current_learning_rate = initial_learning_rate;
 
-    current_learning_rate = initial_learning_rate;
-
-#ifdef OPENNN_HAS_CUDA
-    if (on_gpu && use_cuda_graph)
-    {
-        optimizer_data.graph_effective_lr.resize_bytes(Index(sizeof(float)), Device::CUDA);
-        optimizer_data.graph_effective_lr.setZero();
-
-        graph_update = [this, &optimizer_data](BackPropagation& back_propagation) {
-            update_parameters_capturable(back_propagation, optimizer_data);
-        };
-    }
-#endif
 }
 
-void StochasticGradientDescent::on_epoch_begin(Index epoch, [[maybe_unused]] OptimizerData& optimizer_data)
+void StochasticGradientDescent::on_epoch_begin(Index epoch, OptimizerData& optimizer_data)
 {
-    current_learning_rate = initial_learning_rate / (1.0f + float(epoch) * initial_decay);
+    optimizer_data.current_learning_rate =
+        initial_learning_rate / (1.0f + float(epoch) * initial_decay);
 
 #ifdef OPENNN_HAS_CUDA
-    if (graph_update)
-        set_scalar_device_cuda(optimizer_data.graph_effective_lr.as<float>(),
-                               current_learning_rate,
+    if (can_use_cuda_graph())
+        set_scalar_device_cuda(optimizer_data.views[GraphLearningRate].as<float>(),
+                               optimizer_data.current_learning_rate,
                                Backend::get_compute_stream());
 #endif
 }

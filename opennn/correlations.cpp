@@ -236,7 +236,7 @@ VectorR cross_correlations(const VectorR& x,
 Correlation exponential_correlation(const VectorR& x, const VectorR& y)
 {
     if ((y.array() <= 0.0f).any())
-        return {.coefficient = NAN};
+        return {.coefficient = QUIET_NAN};
 
     const VectorR log_y = y.array().log().matrix();
 
@@ -377,7 +377,7 @@ Correlation logarithmic_correlation(const VectorR& x,
                                     const VectorR& y)
 {
     if ((x.array() <= 0.0f).any())
-        return {.coefficient = NAN};
+        return {.coefficient = QUIET_NAN};
 
     const VectorR log_x = x.array().log().matrix();
 
@@ -474,7 +474,7 @@ Correlation logistic_correlation(const VectorR& x, const VectorR& y)
     if (x_filter.size() < 2 || is_constant(x_filter) || is_constant(y_filter))
     {
         Correlation correlation;
-        correlation.coefficient = NAN;
+        correlation.coefficient = QUIET_NAN;
         correlation.form = Correlation::Form::Sigmoid;
         return correlation;
     }
@@ -489,7 +489,7 @@ Correlation logistic_correlation_spearman(const VectorR& x, const VectorR& y)
     if (x_filter.size() < 2)
     {
         Correlation correlation;
-        correlation.coefficient = NAN;
+        correlation.coefficient = QUIET_NAN;
         correlation.form = Correlation::Form::Sigmoid;
         return correlation;
     }
@@ -516,13 +516,13 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
     {
         cerr << "Warning: One variable has too many categories.\n";
 
-        correlation.coefficient = NAN;
+        correlation.coefficient = QUIET_NAN;
         return correlation;
     }
 
     if (x_filter.size() == 0 && y_filter.size() == 0)
     {
-        correlation.coefficient = NAN;
+        correlation.coefficient = QUIET_NAN;
         return correlation;
     }
 
@@ -534,7 +534,7 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
 Correlation power_correlation(const VectorR& x, const VectorR& y)
 {
     if ((x.array() <= 0.0f).any() || (y.array() <= 0.0f).any())
-        return {.coefficient = NAN};
+        return {.coefficient = QUIET_NAN};
 
     const VectorR log_x = x.array().log().matrix();
     const VectorR log_y = y.array().log().matrix();

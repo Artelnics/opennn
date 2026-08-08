@@ -20,7 +20,7 @@ class StochasticGradientDescent final : public Optimizer
 
 public:
 
-    enum DataSlot { Velocity };
+    enum DataSlot { Velocity, GraphLearningRate };
 
     explicit StochasticGradientDescent(Loss* = nullptr);
 
@@ -35,7 +35,7 @@ public:
     void set_nesterov(bool new_nesterov_momentum) { nesterov = new_nesterov_momentum; }
 
     void update_parameters(BackPropagation&, OptimizerData&) override;
-    void update_parameters_capturable(BackPropagation&, OptimizerData&) const;
+    void update_parameters_capturable(BackPropagation&, OptimizerData&) const override;
 
     void from_JSON(const JsonDocument&) override;
 
@@ -44,7 +44,8 @@ public:
 private:
 
     string get_display_name() const override { return "stochastic gradient descent (SGD)"; }
-    void setup_optimizer_data(OptimizerData&, Index, Device, bool) override;
+    bool supports_cuda_graph() const noexcept override { return true; }
+    void setup_optimizer_data(OptimizerData&, Index, Device) override;
     void on_epoch_begin(Index, OptimizerData&) override;
 
     float initial_learning_rate;
@@ -54,8 +55,6 @@ private:
     float momentum = 0.0f;
 
     bool nesterov = false;
-
-    float current_learning_rate = 0.0f;
 };
 
 }

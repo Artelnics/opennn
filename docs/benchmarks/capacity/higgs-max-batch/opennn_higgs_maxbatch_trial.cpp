@@ -78,21 +78,21 @@ constexpr Index inputs_number = 28;   // HIGGS contract: 28 features, 1 target
 // the trial falls back to synthetic contract-shaped data.
 bool load_higgs_rows(MatrixR& destination)
 {
-    const char* path = std::getenv("OPENNN_HIGGS_BIN");
+    const char* path = getenv("OPENNN_HIGGS_BIN");
     if (!path) return false;
 
     constexpr Index row_floats = inputs_number + 1;
 
-    std::ifstream file(path, std::ios::binary | std::ios::ate);
-    if (!file) throw std::runtime_error(std::string("cannot open OPENNN_HIGGS_BIN: ") + path);
+    ifstream file(path, ios::binary | ios::ate);
+    if (!file) throw runtime_error(string("cannot open OPENNN_HIGGS_BIN: ") + path);
 
     const Index rows_available = Index(file.tellg()) / (row_floats * Index(sizeof(float)));
-    if (rows_available <= 0) throw std::runtime_error("OPENNN_HIGGS_BIN is empty");
+    if (rows_available <= 0) throw runtime_error("OPENNN_HIGGS_BIN is empty");
 
-    std::vector<float> rows(size_t(rows_available) * row_floats);
+    vector<float> rows(size_t(rows_available) * row_floats);
     file.seekg(0);
     file.read(reinterpret_cast<char*>(rows.data()),
-              std::streamsize(rows.size() * sizeof(float)));
+              streamsize(rows.size() * sizeof(float)));
 
     const Index columns = destination.cols();   // 28 (infer) or 29 (train)
     for (Index r = 0; r < destination.rows(); ++r)
@@ -100,7 +100,7 @@ bool load_higgs_rows(MatrixR& destination)
                rows.data() + size_t(r % rows_available) * row_floats,
                size_t(columns) * sizeof(float));
 
-    std::cout << "data=higgs_bin rows=" << rows_available << "\n";
+    cout << "data=higgs_bin rows=" << rows_available << "\n";
     return true;
 }
 
@@ -112,15 +112,15 @@ void print_peak_memory()
 #ifndef _WIN32
     struct rusage usage {};
     if (getrusage(RUSAGE_SELF, &usage) == 0)
-        std::cout << "peak_rss_mib=" << usage.ru_maxrss / 1024 << "\n";
+        cout << "peak_rss_mib=" << usage.ru_maxrss / 1024 << "\n";
 
-    std::ifstream status("/proc/self/status");
-    std::string line;
-    while (std::getline(status, line))
+    ifstream status("/proc/self/status");
+    string line;
+    while (getline(status, line))
         if (line.rfind("VmPeak:", 0) == 0)
         {
-            const long kib = std::stol(line.substr(7));
-            std::cout << "vm_peak_mib=" << kib / 1024 << "\n";
+            const long kib = stol(line.substr(7));
+            cout << "vm_peak_mib=" << kib / 1024 << "\n";
             break;
         }
 #endif
@@ -132,8 +132,8 @@ public:
 #ifdef OPENNN_HAS_CUDA
     void release_bf16_fp32_parameter_master_for_inference()
     {
-        if (const char* flag = std::getenv("OPENNN_HIGGS_RELEASE_BF16_FP32_MASTER");
-            flag && std::string(flag) == "0")
+        if (const char* flag = getenv("OPENNN_HIGGS_RELEASE_BF16_FP32_MASTER");
+            flag && string(flag) == "0")
             return;
 
         if (config.training_type != Type::BF16
@@ -155,23 +155,23 @@ public:
 #endif
 };
 
-std::unique_ptr<HiggsBenchmarkNetwork> make_network(Index hidden, Index hidden_layers)
+unique_ptr<HiggsBenchmarkNetwork> make_network(Index hidden, Index hidden_layers)
 {
-    auto network = std::make_unique<HiggsBenchmarkNetwork>();
+    auto network = make_unique<HiggsBenchmarkNetwork>();
     Shape current = Shape{inputs_number};
 
     for (Index i = 0; i < hidden_layers; ++i)
     {
-        network->add_layer(std::make_unique<opennn::Dense>(
+        network->add_layer(make_unique<opennn::Dense>(
             current,
             Shape{hidden},
             "ReLU",
             false,
-            "higgs_dense_" + std::to_string(i + 1)));
+            "higgs_dense_" + to_string(i + 1)));
         current = network->get_output_shape();
     }
 
-    network->add_layer(std::make_unique<opennn::Dense>(
+    network->add_layer(make_unique<opennn::Dense>(
         current,
         Shape{1},
         "Sigmoid",
@@ -186,8 +186,8 @@ std::unique_ptr<HiggsBenchmarkNetwork> make_network(Index hidden, Index hidden_l
 #ifdef OPENNN_HAS_CUDA
 bool bf16_resident_input_enabled()
 {
-    if (const char* flag = std::getenv("OPENNN_HIGGS_BF16_RESIDENT_INPUT");
-        flag && std::string(flag) == "0")
+    if (const char* flag = getenv("OPENNN_HIGGS_BF16_RESIDENT_INPUT");
+        flag && string(flag) == "0")
         return false;
 
     return true;
@@ -203,8 +203,8 @@ uint16_t fp32_to_bf16_bits(float value)
 TensorView maybe_alias_bf16_input_cast(const TensorView& fp32_input,
                                        ForwardPropagation& propagation)
 {
-    if (const char* flag = std::getenv("OPENNN_HIGGS_ALIAS_BF16_INPUT");
-        flag && std::string(flag) == "0")
+    if (const char* flag = getenv("OPENNN_HIGGS_ALIAS_BF16_INPUT");
+        flag && string(flag) == "0")
         return fp32_input;
 
     if (!fp32_input.is_fp32() || !fp32_input.is_cuda())
@@ -244,33 +244,33 @@ TensorView maybe_alias_bf16_input_cast(const TensorView& fp32_input,
 
 int main(int argc, char* argv[])
 {
-    std::cout << std::unitbuf;
-    std::cerr << std::unitbuf;
+    cout << unitbuf;
+    cerr << unitbuf;
 
-    const std::string mode  = argc > 1 ? argv[1] : "train";
-    const Index batch       = argc > 2 ? Index(std::stoll(argv[2])) : 1024;
-    const Index hidden      = argc > 3 ? Index(std::stoll(argv[3])) : 1024;
-    const Index layers      = argc > 4 ? Index(std::stoll(argv[4])) : 2;
-    const Index iterations  = argc > 5 ? std::max<Index>(Index(1), Index(std::stoll(argv[5]))) : 1;
-    const std::string device = argc > 6 ? argv[6] : "cuda";
-    const Index tile_raw     = argc > 7 ? Index(std::stoll(argv[7])) : Index(-1);
+    const string mode  = argc > 1 ? argv[1] : "train";
+    const Index batch       = argc > 2 ? Index(stoll(argv[2])) : 1024;
+    const Index hidden      = argc > 3 ? Index(stoll(argv[3])) : 1024;
+    const Index layers      = argc > 4 ? Index(stoll(argv[4])) : 2;
+    const Index iterations  = argc > 5 ? max<Index>(Index(1), Index(stoll(argv[5]))) : 1;
+    const string device = argc > 6 ? argv[6] : "cuda";
+    const Index tile_raw     = argc > 7 ? Index(stoll(argv[7])) : Index(-1);
     const Index tile_arg     = tile_raw >= 0 ? tile_raw
                              : (device == "cpu" ? Index(131072) : Index(65536));
 
     try
     {
-        const char* seed_env = std::getenv("OPENNN_BENCH_SEED");
-        set_seed(seed_env && *seed_env ? std::stoi(seed_env) : 0);
+        const char* seed_env = getenv("OPENNN_BENCH_SEED");
+        set_seed(seed_env && *seed_env ? stoi(seed_env) : 0);
         const bool use_cpu = device == "cpu";
 #ifndef OPENNN_HAS_CUDA
         if (!use_cpu)
-            throw std::runtime_error("built without CUDA; use device \"cpu\"");
+            throw runtime_error("built without CUDA; use device \"cpu\"");
 #endif
-        const bool use_bf16 = !use_cpu && std::getenv("OPENNN_BF16") != nullptr;
+        const bool use_bf16 = !use_cpu && getenv("OPENNN_BF16") != nullptr;
         Configuration::instance().set(use_cpu ? Device::CPU : Device::CUDA,
                                       use_bf16 ? Type::BF16 : Type::FP32);
 
-        std::cout << "precision=" << (use_bf16 ? "bf16" : "fp32")
+        cout << "precision=" << (use_bf16 ? "bf16" : "fp32")
                   << " mode=" << mode
                   << " device=" << device
                   << " inputs=" << inputs_number
@@ -279,7 +279,7 @@ int main(int argc, char* argv[])
 
         auto network = make_network(hidden, layers);
 
-        std::cout << "parameters=" << network->get_parameters_number() << "\n";
+        cout << "parameters=" << network->get_parameters_number() << "\n";
 
         if (mode == "infer" && use_cpu)
         {
@@ -288,28 +288,28 @@ int main(int argc, char* argv[])
             // protocol -- one-shot calculate_outputs would re-fault its
             // arena every call). Activation memory is O(tile); the memory
             // ceiling is the input + output data.
-            const Index tile_rows = tile_arg > 0 ? std::min<Index>(batch, tile_arg) : batch;
+            const Index tile_rows = tile_arg > 0 ? min<Index>(batch, tile_arg) : batch;
             const Index tail_rows = batch % tile_rows;
-            std::cout << "tile_rows=" << tile_rows << "\n";
+            cout << "tile_rows=" << tile_rows << "\n";
 
             MatrixR inputs_host(batch, inputs_number);
             if (!load_higgs_rows(inputs_host))
             {
                 inputs_host = MatrixR::Random(batch, inputs_number);
-                std::cout << "data=synthetic\n";
+                cout << "data=synthetic\n";
             }
             MatrixR outputs(batch, 1);
 
             ForwardPropagation tile_propagation(tile_rows, network.get());
-            std::unique_ptr<ForwardPropagation> tail_propagation;
+            unique_ptr<ForwardPropagation> tail_propagation;
             if (tail_rows > 0)
-                tail_propagation = std::make_unique<ForwardPropagation>(tail_rows, network.get());
+                tail_propagation = make_unique<ForwardPropagation>(tail_rows, network.get());
 
             auto run_pass = [&]()
             {
                 for (Index start = 0; start < batch; start += tile_rows)
                 {
-                    const Index rows = std::min<Index>(tile_rows, batch - start);
+                    const Index rows = min<Index>(tile_rows, batch - start);
                     ForwardPropagation& propagation =
                         rows == tile_rows ? tile_propagation : *tail_propagation;
 
@@ -327,22 +327,22 @@ int main(int argc, char* argv[])
 
             run_pass();   // warmup: pages workspaces and BLAS scratch in
 
-            const auto t0 = std::chrono::high_resolution_clock::now();
+            const auto t0 = chrono::high_resolution_clock::now();
             for (Index i = 0; i < iterations; ++i)
                 run_pass();
-            const auto t1 = std::chrono::high_resolution_clock::now();
+            const auto t1 = chrono::high_resolution_clock::now();
 
-            if (!std::isfinite(outputs(0, 0)))
-                throw std::runtime_error("non-finite outputs");
+            if (!isfinite(outputs(0, 0)))
+                throw runtime_error("non-finite outputs");
 
-            const double wall_s = std::chrono::duration<double>(t1 - t0).count();
+            const double wall_s = chrono::duration<double>(t1 - t0).count();
 
-            memory_debug::print(std::cout);
+            memory_debug::print(cout);
             print_peak_memory();
 
-            std::cout << "wall_s=" << wall_s << "\n";
-            std::cout << "samples_per_sec=" << double(batch) * double(iterations) / wall_s << "\n";
-            std::cout << "RESULT=OK\n";
+            cout << "wall_s=" << wall_s << "\n";
+            cout << "samples_per_sec=" << double(batch) * double(iterations) / wall_s << "\n";
+            cout << "RESULT=OK\n";
             return 0;
         }
 
@@ -353,15 +353,15 @@ int main(int argc, char* argv[])
             // the input and the assembled outputs stay device-resident (the
             // honest data footprint), tile workspaces are reused across
             // iterations, and activations are O(tile) instead of O(batch).
-            const Index tile_rows = tile_arg > 0 ? std::min<Index>(batch, tile_arg) : batch;
+            const Index tile_rows = tile_arg > 0 ? min<Index>(batch, tile_arg) : batch;
             const Index tail_rows = batch % tile_rows;
-            std::cout << "tile_rows=" << tile_rows << "\n";
+            cout << "tile_rows=" << tile_rows << "\n";
 
             MatrixR inputs_host(batch, inputs_number);
             if (!load_higgs_rows(inputs_host))
             {
                 inputs_host = MatrixR::Random(batch, inputs_number);
-                std::cout << "data=synthetic\n";
+                cout << "data=synthetic\n";
             }
 
             // The output slot is bf16 in bf16 mode: reserving it at its real
@@ -370,7 +370,7 @@ int main(int argc, char* argv[])
             // propagation's own output slot is the result).
             const bool bf16_resident_input = use_bf16 && bf16_resident_input_enabled();
             const Type input_type = bf16_resident_input ? Type::BF16 : Type::FP32;
-            std::cout << "input_type=" << (input_type == Type::BF16 ? "bf16" : "fp32") << "\n";
+            cout << "input_type=" << (input_type == Type::BF16 ? "bf16" : "fp32") << "\n";
 
             const Type expected_output_type = use_bf16 ? Type::BF16 : Type::FP32;
             const Index input_bytes  = get_aligned_bytes(batch * inputs_number, input_type);
@@ -416,10 +416,10 @@ int main(int argc, char* argv[])
             // instead of owning a second one: the two never run concurrently
             // and the tail arena is strictly smaller, so this frees up to a
             // full tile of activations at the capacity boundary.
-            std::unique_ptr<ForwardPropagation> tail_propagation;
+            unique_ptr<ForwardPropagation> tail_propagation;
             if (tail_rows > 0)
             {
-                tail_propagation = std::make_unique<ForwardPropagation>();
+                tail_propagation = make_unique<ForwardPropagation>();
                 tail_propagation->set(tail_rows, network.get(), &tile_propagation.data);
             }
 
@@ -435,7 +435,7 @@ int main(int argc, char* argv[])
             {
                 for (Index start = 0; start < batch; start += tile_rows)
                 {
-                    const Index rows = std::min<Index>(tile_rows, batch - start);
+                    const Index rows = min<Index>(tile_rows, batch - start);
                     ForwardPropagation& propagation =
                         rows == tile_rows ? tile_propagation : *tail_propagation;
 
@@ -462,7 +462,7 @@ int main(int argc, char* argv[])
 
                     const Index element_bytes = Index(type_bytes(tile_outputs.type));
                     if (element_bytes > Index(type_bytes(expected_output_type)))
-                        throw std::runtime_error("output dtype wider than reserved");
+                        throw runtime_error("output dtype wider than reserved");
                     device::copy_async(output_base + start * element_bytes,
                                        tile_outputs.data, rows * element_bytes,
                                        device::CopyKind::DeviceToDevice, stream);
@@ -475,28 +475,28 @@ int main(int argc, char* argv[])
             run_pass();
             cudaDeviceSynchronize();
 
-            const auto t0 = std::chrono::high_resolution_clock::now();
+            const auto t0 = chrono::high_resolution_clock::now();
             for (Index i = 0; i < iterations; ++i)
                 run_pass();
             cudaDeviceSynchronize();
-            const auto t1 = std::chrono::high_resolution_clock::now();
+            const auto t1 = chrono::high_resolution_clock::now();
 
             float probe[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-            const Index probe_size = std::min<Index>(Index(4), batch);
+            const Index probe_size = min<Index>(Index(4), batch);
             copy_device_to_host_float(probe_source, output_type, probe_size, probe, stream);
             cudaStreamSynchronize(stream);
             for (Index i = 0; i < probe_size; ++i)
-                if (!std::isfinite(probe[i]))
-                    throw std::runtime_error("non-finite outputs");
+                if (!isfinite(probe[i]))
+                    throw runtime_error("non-finite outputs");
 
-            const double wall_s = std::chrono::duration<double>(t1 - t0).count();
+            const double wall_s = chrono::duration<double>(t1 - t0).count();
 
-            memory_debug::print(std::cout);
+            memory_debug::print(cout);
             print_peak_memory();
 
-            std::cout << "wall_s=" << wall_s << "\n";
-            std::cout << "samples_per_sec=" << double(batch) * double(iterations) / wall_s << "\n";
-            std::cout << "RESULT=OK\n";
+            cout << "wall_s=" << wall_s << "\n";
+            cout << "samples_per_sec=" << double(batch) * double(iterations) / wall_s << "\n";
+            cout << "RESULT=OK\n";
             return 0;
         }
 #endif // OPENNN_HAS_CUDA
@@ -509,10 +509,10 @@ int main(int argc, char* argv[])
         // The virtual batch rounds up to a tile multiple so tiles stay equal;
         // rows repeat modulo, and passing at the rounded batch implies the
         // requested one fits.
-        const Index train_tile = tile_arg > 0 ? std::min<Index>(batch, tile_arg) : batch;
+        const Index train_tile = tile_arg > 0 ? min<Index>(batch, tile_arg) : batch;
         const Index update_period = (batch + train_tile - 1) / train_tile;
         const Index samples = update_period * train_tile;
-        std::cout << "tile_rows=" << train_tile
+        cout << "tile_rows=" << train_tile
                   << " update_period=" << update_period
                   << " effective_batch=" << samples << "\n";
 
@@ -523,7 +523,7 @@ int main(int argc, char* argv[])
         {
             data = MatrixR::Random(samples, inputs_number + 1);
             data.col(inputs_number) = (data.col(inputs_number).array() > 0.0f).cast<float>();
-            std::cout << "data=synthetic\n";
+            cout << "data=synthetic\n";
         }
         dataset.set_data(data);
         data.resize(0, 0);   // free the staging copy: the dataset owns the rows now
@@ -536,7 +536,7 @@ int main(int argc, char* argv[])
 
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
             training_strategy.get_optimization_algorithm());
-        if (!adam) throw std::runtime_error("Adam optimizer not found.");
+        if (!adam) throw runtime_error("Adam optimizer not found.");
 
         adam->set_batch_size(train_tile);
         adam->set_update_period(update_period);
@@ -545,9 +545,9 @@ int main(int argc, char* argv[])
         adam->set_gradient_clip_norm(0.0f);
         adam->set_batch_pool_size(1);   // capacity: one device batch copy, not three
 
-        const char* target_env = std::getenv("OPENNN_TARGET_LOSS");
+        const char* target_env = getenv("OPENNN_TARGET_LOSS");
         const bool target_mode = target_env && *target_env;
-        const float target = target_mode ? std::stof(target_env) : 0.0f;
+        const float target = target_mode ? stof(target_env) : 0.0f;
         if (target_mode)
         {
             adam->set_maximum_epochs(iterations);
@@ -556,54 +556,54 @@ int main(int argc, char* argv[])
 
         const auto unix_now = []
         {
-            return std::chrono::duration<double>(
-                std::chrono::system_clock::now().time_since_epoch()).count();
+            return chrono::duration<double>(
+                chrono::system_clock::now().time_since_epoch()).count();
         };
         if (target_mode)
-            std::cout << "TRAIN_START_UNIX=" << std::fixed << std::setprecision(3)
-                      << unix_now() << "\n" << std::defaultfloat;
-        const auto t0 = std::chrono::high_resolution_clock::now();
+            cout << "TRAIN_START_UNIX=" << fixed << setprecision(3)
+                      << unix_now() << "\n" << defaultfloat;
+        const auto t0 = chrono::high_resolution_clock::now();
         const TrainingResult result = training_strategy.train();
 #ifdef OPENNN_HAS_CUDA
         if (!use_cpu) cudaDeviceSynchronize();
 #endif
-        const auto t1 = std::chrono::high_resolution_clock::now();
+        const auto t1 = chrono::high_resolution_clock::now();
         if (target_mode)
-            std::cout << "TRAIN_END_UNIX=" << std::fixed << std::setprecision(3)
-                      << unix_now() << "\n" << std::defaultfloat;
+            cout << "TRAIN_END_UNIX=" << fixed << setprecision(3)
+                      << unix_now() << "\n" << defaultfloat;
 
-        if (!std::isfinite(result.loss))
-            throw std::runtime_error("non-finite loss");
+        if (!isfinite(result.loss))
+            throw runtime_error("non-finite loss");
 
-        const double wall_s = std::chrono::duration<double>(t1 - t0).count();
+        const double wall_s = chrono::duration<double>(t1 - t0).count();
 
-        memory_debug::print(std::cout);
+        memory_debug::print(cout);
         print_peak_memory();
 
-        std::cout << "final_loss=" << result.loss << "\n";
+        cout << "final_loss=" << result.loss << "\n";
         if (target_mode)
         {
             const Index epochs_run = result.get_epochs_number();
             const bool reached = result.get_training_error() <= target;
-            std::cout << "target=" << target << "\n";
-            std::cout << "epochs_run=" << epochs_run << "\n";
-            std::cout << "final_error=" << result.get_training_error() << "\n";
-            std::cout << "reached_goal=" << (reached ? 1 : 0) << "\n";
-            std::cout << "loss_history=";
+            cout << "target=" << target << "\n";
+            cout << "epochs_run=" << epochs_run << "\n";
+            cout << "final_error=" << result.get_training_error() << "\n";
+            cout << "reached_goal=" << (reached ? 1 : 0) << "\n";
+            cout << "loss_history=";
             for (Index epoch = 0; epoch < result.training_error_history.size(); ++epoch)
-                std::cout << (epoch ? "," : "") << result.training_error_history(epoch);
-            std::cout << "\n";
+                cout << (epoch ? "," : "") << result.training_error_history(epoch);
+            cout << "\n";
         }
-        std::cout << "wall_s=" << wall_s << "\n";
+        cout << "wall_s=" << wall_s << "\n";
         const Index completed = target_mode ? result.get_epochs_number() : iterations;
-        std::cout << "samples_per_sec=" << double(samples) * double(completed) / wall_s << "\n";
-        std::cout << "RESULT=OK\n";
+        cout << "samples_per_sec=" << double(samples) * double(completed) / wall_s << "\n";
+        cout << "RESULT=OK\n";
         return 0;
     }
-    catch (const std::exception& e)
+    catch (const exception& e)
     {
-        std::cout << "FAIL: " << e.what() << "\n";
-        std::cout << "RESULT=ERROR\n";
+        cout << "FAIL: " << e.what() << "\n";
+        cout << "RESULT=ERROR\n";
         return 1;
     }
 }

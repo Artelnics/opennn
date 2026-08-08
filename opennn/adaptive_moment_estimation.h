@@ -20,7 +20,7 @@ class AdaptiveMomentEstimation final : public Optimizer
 
 public:
 
-    enum DataSlot { GradientMoment, SquareGradientMoment };
+    enum DataSlot { GradientMoment, SquareGradientMoment, GraphScalars };
 
     explicit AdaptiveMomentEstimation(Loss* = nullptr);
 
@@ -41,7 +41,7 @@ public:
 
     void update_parameters(BackPropagation&, OptimizerData&) override;
 
-    void update_parameters_capturable(BackPropagation&, OptimizerData&) const;
+    void update_parameters_capturable(BackPropagation&, OptimizerData&) const override;
 
     void from_JSON(const JsonDocument&) override;
 
@@ -50,7 +50,8 @@ public:
 private:
 
     string get_display_name() const override { return "adaptive moment estimation \"Adam\""; }
-    void setup_optimizer_data(OptimizerData&, Index, Device, bool) override;
+    bool supports_cuda_graph() const noexcept override { return true; }
+    void setup_optimizer_data(OptimizerData&, Index, Device) override;
 
     float learning_rate = 0.001f;
 
@@ -59,9 +60,6 @@ private:
     float beta_2 = 0.999f;
 
     Index update_period = 1;
-
-    Buffer gradient_accumulator;
-    Index accumulated_batches = 0;
 };
 
 }

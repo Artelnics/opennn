@@ -22,9 +22,6 @@ enum class StoppingCondition {MinimumLossDecrease,
 
 struct OptimizerData
 {
-    OptimizerData() = default;
-    virtual ~OptimizerData() = default;
-
     void set(const vector<Shape>&, Device device = Device::CPU);
 
     Buffer data;
@@ -35,9 +32,13 @@ struct OptimizerData
     float initial_learning_rate = 0.0f;
     Index iteration = 0;
 
-    Buffer graph_step{Device::CUDA};
-    Buffer graph_effective_lr{Device::CUDA};
-    Buffer graph_effective_eps{Device::CUDA};
+    Buffer gradient_accumulator;
+    Index accumulated_batches = 0;
+    float current_learning_rate = 0.0f;
+    float training_slope = 0.0f;
+    float learning_rate = 0.0f;
+    float old_learning_rate = 0.0f;
+    float damping_parameter = 0.0f;
 };
 
 struct TrainingResult
@@ -71,7 +72,7 @@ struct TrainingResult
 
     string elapsed_time;
 
-    float loss = NAN;
+    float loss = QUIET_NAN;
 
     bool restored_best_parameters = false;
 

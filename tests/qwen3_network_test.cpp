@@ -26,8 +26,8 @@ constexpr Dims TINY { 16, 50, 32, 2, 4, 2, 8, 64, 5, 2, 8 };
 
 void fill_parameters(NeuralNetwork& network)
 {
-    std::mt19937 rng(21);
-    std::normal_distribution<float> nd(0.0f, 0.05f);
+    mt19937 rng(21);
+    normal_distribution<float> nd(0.0f, 0.05f);
     for (auto& layer : network.get_layers())
         for (auto& view : layer->get_parameter_views())
             for (Index i = 0; i < view.size(); ++i)
@@ -35,7 +35,7 @@ void fill_parameters(NeuralNetwork& network)
 }
 
 void run(NeuralNetwork& network, ForwardPropagation& forward_propagation,
-         std::vector<float>& window, const std::vector<Index>& ids, Index past)
+         vector<float>& window, const vector<Index>& ids, Index past)
 {
     const Index count = Index(ids.size());
     for (Index i = 0; i < count; ++i) window[size_t(i)] = float(ids[size_t(i)]);
@@ -45,14 +45,14 @@ void run(NeuralNetwork& network, ForwardPropagation& forward_propagation,
     network.forward_propagate(inputs, forward_propagation, false);
 }
 
-std::vector<float> logits_row(const ForwardPropagation& forward_propagation, Index pos)
+vector<float> logits_row(const ForwardPropagation& forward_propagation, Index pos)
 {
     const TensorView output = forward_propagation.get_outputs();
     const Index vocabulary = output.shape.back();
-    std::vector<float> row(size_t(vocabulary), 0.0f);
+    vector<float> row(size_t(vocabulary), 0.0f);
 
     const Index elem = Index(type_bytes(output.type));
-    std::vector<char> host(size_t(vocabulary) * size_t(elem));
+    vector<char> host(size_t(vocabulary) * size_t(elem));
     const char* src = static_cast<const char*>(output.data) + size_t(pos) * vocabulary * elem;
 
 #ifdef OPENNN_HAS_CUDA
@@ -64,17 +64,17 @@ std::vector<float> logits_row(const ForwardPropagation& forward_propagation, Ind
     }
     else
 #endif
-        std::memcpy(host.data(), src, host.size());
+        memcpy(host.data(), src, host.size());
 
     if (output.is_fp32())
-        std::memcpy(row.data(), host.data(), size_t(vocabulary) * sizeof(float));
+        memcpy(row.data(), host.data(), size_t(vocabulary) * sizeof(float));
     else
     {
         const uint16_t* bf16 = reinterpret_cast<const uint16_t*>(host.data());
         for (Index i = 0; i < vocabulary; ++i)
         {
             const uint32_t bits = uint32_t(bf16[size_t(i)]) << 16;
-            std::memcpy(&row[size_t(i)], &bits, sizeof(float));
+            memcpy(&row[size_t(i)], &bits, sizeof(float));
         }
     }
     return row;
@@ -97,16 +97,16 @@ float multi_turn_max_logit_diff(const Dims& d, bool bf16_upload = false)
     (void)bf16_upload;
 #endif
 
-    std::vector<float> window(size_t(d.seq), 0.0f);
+    vector<float> window(size_t(d.seq), 0.0f);
 
-    std::mt19937 id_rng(3);
+    mt19937 id_rng(3);
     auto random_ids = [&](Index count) {
-        std::vector<Index> ids(size_t(count), Index(0));
+        vector<Index> ids(size_t(count), Index(0));
         for (auto& id : ids) id = 1 + Index(id_rng() % uint32_t(d.vocab - 1));
         return ids;
     };
-    const std::vector<Index> prompt1 = random_ids(d.prompt1);
-    const std::vector<Index> prompt2 = random_ids(d.prompt2);
+    const vector<Index> prompt1 = random_ids(d.prompt1);
+    const vector<Index> prompt2 = random_ids(d.prompt2);
 
     ForwardPropagation fp_used(1, &used);
     run(used, fp_used, window, prompt1, 0);
@@ -114,20 +114,20 @@ float multi_turn_max_logit_diff(const Dims& d, bool bf16_upload = false)
         run(used, fp_used, window, { 1 + Index(id_rng() % uint32_t(d.vocab - 1)) }, d.prompt1 + i);
 
     run(used, fp_used, window, prompt2, 0);
-    const std::vector<float> got = logits_row(fp_used, d.prompt2 - 1);
+    const vector<float> got = logits_row(fp_used, d.prompt2 - 1);
 
     ForwardPropagation fp_fresh(1, &fresh);
     run(fresh, fp_fresh, window, prompt2, 0);
-    const std::vector<float> expected = logits_row(fp_fresh, d.prompt2 - 1);
+    const vector<float> expected = logits_row(fp_fresh, d.prompt2 - 1);
 
     float max_diff = 0.0f;
     for (size_t i = 0; i < expected.size(); ++i)
-        max_diff = std::max(max_diff, std::abs(got[i] - expected[i]));
+        max_diff = max(max_diff, abs(got[i] - expected[i]));
     return max_diff;
 }
 
-float max_difference(const std::vector<float>& a,
-                     const std::vector<float>& b)
+float max_difference(const vector<float>& a,
+                     const vector<float>& b)
 {
     EXPECT_EQ(a.size(), b.size());
     float result = 0.0f;
@@ -236,7 +236,7 @@ float chunked_prefill_and_decode_max_diff(const Dims& d,
 uint16_t to_bfloat16(const float value)
 {
     uint32_t bits;
-    std::memcpy(&bits, &value, sizeof(bits));
+    memcpy(&bits, &value, sizeof(bits));
     bits += 0x7FFFu + ((bits >> 16) & 1u);
     return uint16_t(bits >> 16);
 }
@@ -245,7 +245,7 @@ float from_bfloat16(const uint16_t value)
 {
     const uint32_t bits = uint32_t(value) << 16;
     float result;
-    std::memcpy(&result, &bits, sizeof(result));
+    memcpy(&result, &bits, sizeof(result));
     return result;
 }
 

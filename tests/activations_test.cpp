@@ -20,7 +20,7 @@ namespace
 {
 double gelu_ref(double x)
 {
-    return 0.5 * x * (1.0 + std::erf(x * 0.70710678118654752440));
+    return 0.5 * x * (1.0 + erf(x * 0.70710678118654752440));
 }
 
 double gelu_tanh_ref(double x)
@@ -423,17 +423,17 @@ TEST(ActivationsTest, GeluDenseFusedGradientCheck)
 
 TEST(ActivationsTest, GeluDenseFusedRejectsBatchNorm)
 {
-    EXPECT_THROW(opennn::Dense(Shape{4}, Shape{5}, "GELU", true), std::exception);
+    EXPECT_THROW(opennn::Dense(Shape{4}, Shape{5}, "GELU", true), exception);
 }
 
 TEST(ActivationsTest, ConvolutionalRejectsInputDerivativeActivations)
 {
-    EXPECT_THROW(Convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "GELU"), std::exception);
-    EXPECT_THROW(Convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "GELUTanh"), std::exception);
-    EXPECT_THROW(Convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "SiLU"), std::exception);
+    EXPECT_THROW(Convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "GELU"), exception);
+    EXPECT_THROW(Convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "GELUTanh"), exception);
+    EXPECT_THROW(Convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "SiLU"), exception);
 
     Convolutional convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "ReLU");
-    EXPECT_THROW(convolutional.set_activation_function("SiLU"), std::exception);
+    EXPECT_THROW(convolutional.set_activation_function("SiLU"), exception);
 }
 
 TEST(ActivationsTest, GeluTanhDenseGradientCheck)

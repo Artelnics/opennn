@@ -564,10 +564,7 @@ MatrixR TestingAnalysis::calculate_cumulative_gain(const MatrixR& targets, const
         sorted_indices.begin(), sorted_indices.end(),
         [&outputs](Index i, Index j) { return outputs(i, 0) > outputs(j, 0); });
 
-    VectorR sorted_targets(testing_samples_number);
-
-    for (Index i = 0; i < testing_samples_number; ++i)
-        sorted_targets(i) = targets(sorted_indices[size_t(i)], 0);
+    const VectorR sorted_targets = targets(sorted_indices, 0);
 
     const Index points_number = 21;
     const float percentage_increment = 0.05f;

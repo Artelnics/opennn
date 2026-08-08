@@ -134,6 +134,7 @@ private:
 
     void apply_delta_gpu(const TensorView&,
                          const TensorView&,
+                         const TensorView&,
                          TensorView&,
                          bool) const;
 
@@ -141,9 +142,6 @@ private:
     void pack_weights_to_cudnn_() const;
     void unpack_gradients_from_cudnn_() const;
 
-    mutable const float* y_used_ = nullptr;
-
-    mutable vector<float> grad_tls_buf_;
 };
 
 class LongShortTermMemory final : public Layer

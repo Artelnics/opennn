@@ -816,7 +816,7 @@ TEST_F(GpuComparison, SdpaAttentionRefreshesPaddingBetweenBatches)
     attention->set_sdpa_min_sequence_length(1);
 
     NeuralNetwork network;
-    network.add_layer(std::move(attention));
+    network.add_layer(move(attention));
     network.compile();
     network.set_parameters_random();
 
@@ -897,7 +897,7 @@ TEST_F(GpuComparison, SdpaAttentionBackwardGradient)
     NeuralNetwork gpu_network;
     auto gpu_attention = make_unique<MultiHeadAttention>(input_shape, heads_number);
     gpu_attention->set_sdpa_min_sequence_length(1);
-    gpu_network.add_layer(std::move(gpu_attention));
+    gpu_network.add_layer(move(gpu_attention));
     gpu_network.add_layer(make_unique<Flatten>(gpu_network.get_output_shape()));
     gpu_network.compile();
     gpu_network.set_parameters(parameters);

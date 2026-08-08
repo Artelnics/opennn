@@ -37,35 +37,35 @@
 #include "opennn/tensor_types.h"
 
 using namespace opennn;
-using clock_type = std::chrono::steady_clock;
+using clock_type = chrono::steady_clock;
 
 namespace
 {
 
-std::unique_ptr<NeuralNetwork> make_network(const Shape& input_shape,
+unique_ptr<NeuralNetwork> make_network(const Shape& input_shape,
                                             const Shape& target_shape,
                                             Index hidden,
                                             Index hidden_layers,
-                                            const std::string& activation)
+                                            const string& activation)
 {
-    auto network = std::make_unique<NeuralNetwork>();
+    auto network = make_unique<NeuralNetwork>();
     Shape current = input_shape;
-    const std::string hidden_activation = (activation == "relu" || activation == "ReLU")
+    const string hidden_activation = (activation == "relu" || activation == "ReLU")
         ? "ReLU"
         : "Tanh";
 
     for (Index i = 0; i < hidden_layers; ++i)
     {
-        network->add_layer(std::make_unique<opennn::Dense>(
+        network->add_layer(make_unique<opennn::Dense>(
             current,
             Shape{hidden},
             hidden_activation,
             false,
-            "higgs_dense_" + std::to_string(i + 1)));
+            "higgs_dense_" + to_string(i + 1)));
         current = network->get_output_shape();
     }
 
-    network->add_layer(std::make_unique<opennn::Dense>(
+    network->add_layer(make_unique<opennn::Dense>(
         current,
         target_shape,
         "Sigmoid",
@@ -81,24 +81,24 @@ std::unique_ptr<NeuralNetwork> make_network(const Shape& input_shape,
 
 int main(int argc, char* argv[])
 {
-    std::cout << std::unitbuf;
+    cout << unitbuf;
 
     try
     {
         if (argc < 2)
         {
-            std::cerr << "usage: opennn_higgs_infer <test_csv> [batch] [runs] [fp32|bf16]"
+            cerr << "usage: opennn_higgs_infer <test_csv> [batch] [runs] [fp32|bf16]"
                          " [hidden] [hidden_layers] [activation]\n";
             return 2;
         }
 
-        const std::string test_path = argv[1];
-        const Index batch = argc > 2 ? Index(std::stoll(argv[2])) : 8192;
-        const Index runs  = argc > 3 ? std::max<Index>(Index(1), Index(std::stoll(argv[3]))) : 5;
-        const std::string precision = argc > 4 ? argv[4] : "fp32";
-        const Index hidden = argc > 5 ? Index(std::stoll(argv[5])) : 1024;
-        const Index hidden_layers = argc > 6 ? Index(std::stoll(argv[6])) : 2;
-        const std::string activation = argc > 7 ? argv[7] : "relu";
+        const string test_path = argv[1];
+        const Index batch = argc > 2 ? Index(stoll(argv[2])) : 8192;
+        const Index runs  = argc > 3 ? max<Index>(Index(1), Index(stoll(argv[3]))) : 5;
+        const string precision = argc > 4 ? argv[4] : "fp32";
+        const Index hidden = argc > 5 ? Index(stoll(argv[5])) : 1024;
+        const Index hidden_layers = argc > 6 ? Index(stoll(argv[6])) : 2;
+        const string activation = argc > 7 ? argv[7] : "relu";
 
         set_seed(42);
         const Type inference_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
@@ -112,26 +112,26 @@ int main(int argc, char* argv[])
         const Index processed = (samples / batch) * batch;
         const MatrixR inputs = all.leftCols(inputs_number);
 
-        std::cout << "engine=opennn\n";
-        std::cout << "mode=infer\n";
-        std::cout << "device=cuda\n";
-        std::cout << "samples=" << processed << "\n";
-        std::cout << "batch=" << batch << "\n";
-        std::cout << "runs=" << runs << "\n";
-        std::cout << "hidden=" << hidden << "\n";
-        std::cout << "hidden_layers=" << hidden_layers << "\n";
-        std::cout << "activation=" << activation << "\n";
-        std::cout << "precision=" << precision << "\n";
+        cout << "engine=opennn\n";
+        cout << "mode=infer\n";
+        cout << "device=cuda\n";
+        cout << "samples=" << processed << "\n";
+        cout << "batch=" << batch << "\n";
+        cout << "runs=" << runs << "\n";
+        cout << "hidden=" << hidden << "\n";
+        cout << "hidden_layers=" << hidden_layers << "\n";
+        cout << "activation=" << activation << "\n";
+        cout << "precision=" << precision << "\n";
 
         if (processed <= 0)
-            throw std::runtime_error("batch larger than the test split");
+            throw runtime_error("batch larger than the test split");
 
         auto network = make_network(dataset.get_input_shape(),
                                     dataset.get_target_shape(),
                                     hidden,
                                     hidden_layers,
                                     activation);
-        std::cout << "parameters=" << network->get_parameters_number() << "\n";
+        cout << "parameters=" << network->get_parameters_number() << "\n";
 
         const Index batches = processed / batch;
 
@@ -187,7 +187,7 @@ int main(int argc, char* argv[])
         cudaDeviceSynchronize();
 #endif
 
-        std::vector<double> times;
+        vector<double> times;
         times.reserve(size_t(runs));
         for (Index r = 0; r < runs; ++r)
         {
@@ -197,38 +197,38 @@ int main(int argc, char* argv[])
             cudaDeviceSynchronize();
 #endif
             const auto t1 = clock_type::now();
-            times.push_back(std::chrono::duration<double>(t1 - t0).count());
+            times.push_back(chrono::duration<double>(t1 - t0).count());
         }
 
 #ifdef OPENNN_HAS_CUDA
         if (last_outputs)
         {
             float probe[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-            const Index probe_size = std::min<Index>(Index(4), batch);
+            const Index probe_size = min<Index>(Index(4), batch);
             copy_device_to_host_float(last_outputs->data, last_outputs->type,
                                       probe_size, probe, stream);
             cudaStreamSynchronize(stream);
             for (Index i = 0; i < probe_size; ++i)
-                if (!std::isfinite(probe[i]))
-                    throw std::runtime_error("non-finite outputs");
+                if (!isfinite(probe[i]))
+                    throw runtime_error("non-finite outputs");
         }
 #endif
 
-        std::sort(times.begin(), times.end());
+        sort(times.begin(), times.end());
         const double median_pass_s = times[times.size() / 2];
         const double samples_per_sec = double(processed) / median_pass_s;
         const double ms_per_batch = median_pass_s * 1000.0 / double(batches);
 
-        std::cout << "median_pass_s=" << median_pass_s << "\n";
-        std::cout << "samples_per_sec=" << long(samples_per_sec) << "\n";
-        std::cout << "ms_per_batch=" << ms_per_batch << "\n";
-        std::cout << "RESULT=OK\n";
+        cout << "median_pass_s=" << median_pass_s << "\n";
+        cout << "samples_per_sec=" << long(samples_per_sec) << "\n";
+        cout << "ms_per_batch=" << ms_per_batch << "\n";
+        cout << "RESULT=OK\n";
         return 0;
     }
-    catch (const std::exception& e)
+    catch (const exception& e)
     {
-        std::cerr << e.what() << "\n";
-        std::cout << "RESULT=ERROR\n";
+        cerr << e.what() << "\n";
+        cout << "RESULT=ERROR\n";
         return 1;
     }
 }

@@ -494,8 +494,8 @@ AffineForm analyze_affine(const Ast& node)
 }
 
 void collect_variable_references(const Ast& node,
-                                 set<Index>& input_references,
-                                 set<Index>& output_references)
+                                 std::set<Index>& input_references,
+                                 std::set<Index>& output_references)
 {
     if (node.kind == Ast::Kind::Input)  { input_references.insert(node.index);  return; }
     if (node.kind == Ast::Kind::Output) { output_references.insert(node.index); return; }
@@ -874,8 +874,8 @@ CompiledFormula compile_ast(const Ast& ast)
 
     CompiledFormula result;
 
-    set<Index> input_references;
-    set<Index> output_references;
+    std::set<Index> input_references;
+    std::set<Index> output_references;
     collect_variable_references(ast, input_references, output_references);
 
     throw_if(input_references.empty() && output_references.empty(),
@@ -1128,8 +1128,8 @@ LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstra
 
     LinearConstraintSet linear_set;
     linear_set.A     = MatrixR::Zero(m, n_in + n_out);
-    linear_set.lower = VectorR::Constant(m, -numeric_limits<float>::infinity());
-    linear_set.upper = VectorR::Constant(m,  numeric_limits<float>::infinity());
+    linear_set.lower = VectorR::Constant(m, NEG_INFINITY);
+    linear_set.upper = VectorR::Constant(m,  POS_INFINITY);
 
     for (Index i = 0; i < m; ++i)
     {
@@ -1709,8 +1709,7 @@ partition_input_constraints_by_variable(const vector<MultivariateConstraint>& fo
 
     vector<vector<MultivariateConstraint>> result;
     result.reserve(blocks.size());
-    for (auto& [root, block] : blocks)
-        result.push_back(move(block));
+    ranges::move(blocks | views::values, back_inserter(result));
 
     return result;
 }
@@ -1845,7 +1844,7 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
     for (size_t c = 0; c < lattice.columns.size(); ++c)
         snap_to_lattice(inputs, lattice.columns[c], lattice.min[c], lattice.max[c]);
 
-    set<Index> cardinality_set;
+    std::set<Index> cardinality_set;
     for (const vector<Index>& group : cardinality_columns)
         cardinality_set.insert(group.begin(), group.end());
 
@@ -1857,7 +1856,7 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
         bool all_free_discrete = true;
         for (const pair<Index, float>& term : constraint.compiled.affine_input_terms)
             if (term.first >= ssize(fixed_mask)
-                || !fixed_mask[term.first] || cardinality_set.count(term.first))
+                || !fixed_mask[term.first] || cardinality_set.contains(term.first))
             { all_free_discrete = false; break; }
 
         if (all_free_discrete)

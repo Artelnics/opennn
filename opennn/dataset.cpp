@@ -469,9 +469,9 @@ vector<string> Dataset::get_variable_names(VariableRole role_type) const
     vector<string> names;
     names.reserve(get_variables_number(role_type));
 
-    for (const Variable& variable : variables)
-        if (role_applies_to(variable.role, role_type))
-            names.push_back(variable.name);
+    ranges::transform(variables | views::filter([role_type](const Variable& variable)
+                                                { return role_applies_to(variable.role, role_type); }),
+                      back_inserter(names), &Variable::name);
 
     return names;
 }
@@ -971,11 +971,8 @@ pair<Index, Index> Dataset::count_binary_targets(const string& sample_role) cons
     Index negatives = 0;
     Index positives = 0;
 
-    for (const float value : targets)
-    {
-        if (isnan(value)) continue;
+    for (const float value : targets | views::filter([](float target) { return !isnan(target); }))
         ++(value >= 0.5f ? positives : negatives);
-    }
 
     return {negatives, positives};
 }
@@ -997,8 +994,8 @@ void Dataset::fill_batch(Batch& batch,
     {
         batch.device_gather = true;
         batch.gather_row_indices.resize(sample_indices.size());
-        for (size_t i = 0; i < sample_indices.size(); ++i)
-            batch.gather_row_indices[i] = int(sample_indices[i]);
+        ranges::transform(sample_indices, batch.gather_row_indices.begin(),
+                          [](Index sample_index) { return int(sample_index); });
         batch.input_col_offset  = input_indices.empty()  ? 0 : input_indices.front();
         batch.target_col_offset = target_indices.empty() ? 0 : target_indices.front();
         batch.needs_device_copy = true;

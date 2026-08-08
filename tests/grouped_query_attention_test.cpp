@@ -43,11 +43,11 @@ float layer_vs_recipe_max_diff(bool use_qk_norm)
     neural_network.compile();
     neural_network.set_parameters_random();
 
-    std::mt19937 rng(123);
-    std::normal_distribution<float> nd(0.0f, 0.05f);
-    auto fill = [&](std::vector<float>& v, size_t n) { v.resize(n); for (auto& x : v) x = nd(rng); };
+    mt19937 rng(123);
+    normal_distribution<float> nd(0.0f, 0.05f);
+    auto fill = [&](vector<float>& v, size_t n) { v.resize(n); for (auto& x : v) x = nd(rng); };
 
-    std::vector<float> wq, wk, wv, wo, nq, nk;
+    vector<float> wq, wk, wv, wo, nq, nk;
     fill(wq, size_t(qd) * hidden);
     fill(wk, size_t(kd) * hidden);
     fill(wv, size_t(kd) * hidden);
@@ -58,11 +58,11 @@ float layer_vs_recipe_max_diff(bool use_qk_norm)
 
     auto& views = neural_network.get_layer(Index(0))->get_parameter_views();
     EXPECT_EQ(views.size(), use_qk_norm ? size_t(6) : size_t(4));
-    auto put = [&](TensorView& tv, const std::vector<float>& s) { std::copy(s.begin(), s.end(), tv.as<float>()); };
+    auto put = [&](TensorView& tv, const vector<float>& s) { copy(s.begin(), s.end(), tv.as<float>()); };
     put(views[0], wq); put(views[1], wk); put(views[2], wv); put(views[3], wo);
     if (use_qk_norm) { put(views[4], nq); put(views[5], nk); }
 
-    std::vector<float> x(size_t(batch) * seq * hidden);
+    vector<float> x(size_t(batch) * seq * hidden);
     for (auto& e : x) e = nd(rng);
 
     ForwardPropagation forward_propagation(batch, &neural_network);
@@ -71,12 +71,12 @@ float layer_vs_recipe_max_diff(bool use_qk_norm)
     const TensorView output = forward_propagation.get_outputs();
     const float* got = output.as<float>();
 
-    std::vector<float> cos(size_t(seq) * head_dim), sin(size_t(seq) * head_dim);
+    vector<float> cos(size_t(seq) * head_dim), sin(size_t(seq) * head_dim);
     TensorView cv(cos.data(), {seq, head_dim}), sv(sin.data(), {seq, head_dim});
     rotary_build_tables(cv, sv, seq, head_dim, theta);
 
-    std::vector<float> q(size_t(seq) * qd), k(size_t(seq) * kd), v(size_t(seq) * kd);
-    std::vector<float> qr(size_t(seq) * qd), kr(size_t(seq) * kd), attn(size_t(seq) * qd), ref(size_t(seq) * hidden);
+    vector<float> q(size_t(seq) * qd), k(size_t(seq) * kd), v(size_t(seq) * kd);
+    vector<float> qr(size_t(seq) * qd), kr(size_t(seq) * kd), attn(size_t(seq) * qd), ref(size_t(seq) * hidden);
 
     TensorView xv(x.data(), {1, seq, hidden});
     TensorView Wq(wq.data(), {qd, hidden}), Wk(wk.data(), {kd, hidden}), Wv(wv.data(), {kd, hidden}), Wo(wo.data(), {hidden, qd});
@@ -104,7 +104,7 @@ float layer_vs_recipe_max_diff(bool use_qk_norm)
 
     float max_diff = 0.0f;
     for (size_t i = 0; i < ref.size(); ++i)
-        max_diff = std::max(max_diff, std::abs(got[i] - ref[i]));
+        max_diff = max(max_diff, abs(got[i] - ref[i]));
 
     return max_diff;
 }
@@ -126,8 +126,8 @@ TEST(GroupedQueryAttentionTest, PrefillAfterDecodeRestartsCache)
     const Index max_seq = 8, hidden = 16;
     const Index q_heads = 2, kv_heads = 1, head_dim = 8;
 
-    std::mt19937 rng(11);
-    std::normal_distribution<float> nd(0.0f, 0.1f);
+    mt19937 rng(11);
+    normal_distribution<float> nd(0.0f, 0.1f);
 
     auto build = [&](NeuralNetwork& net) {
         net.add_layer(make_unique<GroupedQueryAttention>(
@@ -136,8 +136,8 @@ TEST(GroupedQueryAttentionTest, PrefillAfterDecodeRestartsCache)
         net.set_parameters_random();
     };
     auto fill_parameters = [&](NeuralNetwork& net) {
-        std::mt19937 weight_rng(7);
-        std::normal_distribution<float> wd(0.0f, 0.1f);
+        mt19937 weight_rng(7);
+        normal_distribution<float> wd(0.0f, 0.1f);
         for (auto& view : net.get_layer(Index(0))->get_parameter_views())
             for (Index i = 0; i < view.size(); ++i)
                 view.as<float>()[i] = wd(weight_rng);
@@ -151,7 +151,7 @@ TEST(GroupedQueryAttentionTest, PrefillAfterDecodeRestartsCache)
 
     ForwardPropagation fp_used(1, &used);
 
-    std::vector<float> tokens(size_t(max_seq) * hidden);
+    vector<float> tokens(size_t(max_seq) * hidden);
     for (auto& v : tokens) v = nd(rng);
 
     auto run = [&](NeuralNetwork& net, ForwardPropagation& fp, float* data, Index count, Index past) {
@@ -165,11 +165,11 @@ TEST(GroupedQueryAttentionTest, PrefillAfterDecodeRestartsCache)
     run(used, fp_used, tokens.data() + 4 * hidden, 1, 4);
     run(used, fp_used, tokens.data() + 5 * hidden, 1, 5);
 
-    std::vector<float> prompt2(size_t(6) * hidden);
+    vector<float> prompt2(size_t(6) * hidden);
     for (auto& v : prompt2) v = nd(rng);
     run(used, fp_used, prompt2.data(), 6, 0);
     const TensorView out_used = fp_used.get_outputs();
-    const std::vector<float> got(out_used.as<float>(), out_used.as<float>() + out_used.size());
+    const vector<float> got(out_used.as<float>(), out_used.as<float>() + out_used.size());
 
     ForwardPropagation fp_fresh(1, &fresh);
     run(fresh, fp_fresh, prompt2.data(), 6, 0);

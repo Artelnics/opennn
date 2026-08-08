@@ -136,10 +136,10 @@ Shape Concatenation::get_output_shape() const
 
 vector<TensorSpec> Concatenation::get_backward_specs(Index batch_size) const
 {
-    vector<TensorSpec> specs;
-    specs.reserve(concatenation.input_channels.size());
-    for (const Index channels : concatenation.input_channels)
-        specs.push_back({ Shape{batch_size, input_shape[0], input_shape[1], channels}, compute_dtype });
+    vector<TensorSpec> specs(concatenation.input_channels.size());
+    ranges::transform(concatenation.input_channels, specs.begin(),
+                      [&](const Index channels) -> TensorSpec
+                      { return { Shape{batch_size, input_shape[0], input_shape[1], channels}, compute_dtype }; });
     return specs;
 }
 

@@ -110,7 +110,7 @@ TEST(ScalingTest, ScaleDataLogarithmic)
     solution_matrix.resize(matrix.rows(),1);
 
     for(Index i = 0; i < matrix.size(); i++)
-        solution_matrix(i) = log(matrix(i));
+        solution_matrix(i) = std::log(matrix(i));
 
     EXPECT_LT((scaled_matrix - solution_matrix).array().abs().maxCoeff(), type(1e-4));
 }
@@ -344,7 +344,7 @@ TEST(ScalingTest, ScalingAffineAddsEpsilonToDenominators)
     const auto [flat_scale, flat_offset] =
         scaling_affine(ScalerMethod::MinimumMaximum, constant, type(-1), type(1));
     EXPECT_NEAR(flat_scale, type(2) / EPSILON, type(1));
-    EXPECT_TRUE(std::isfinite(flat_scale) && std::isfinite(flat_offset));
+    EXPECT_TRUE(isfinite(flat_scale) && isfinite(flat_offset));
 
     const auto [zero_deviation_scale, zero_deviation_offset] =
         scaling_affine(ScalerMethod::StandardDeviation, constant, type(0), type(1));

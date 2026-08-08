@@ -41,6 +41,8 @@ struct GIoUResult
     float h_gradient  = 0.0f;
 };
 
+constexpr float INV_PI2 = 4.0f / (numbers::pi_v<float> * numbers::pi_v<float>);
+
 GIoUResult yolo_loss_giou_forward(const float* pred, const float* gt)
 {
     const float predicted_left = pred[0] - 0.5f * pred[2];
@@ -74,7 +76,6 @@ GIoUResult yolo_loss_giou_forward(const float* pred, const float* gt)
     const float c2   = enclosing_width*enclosing_width + enclosing_height*enclosing_height + EPSILON;
 
     const float v_diff = atan2f(gt[2], gt[3]) - atan2f(pred[2], pred[3]);
-    constexpr float INV_PI2 = 4.0f / (3.14159265f * 3.14159265f);
     const float v     = INV_PI2 * v_diff * v_diff;
     const float alpha = (r.iou > 0.0f) ? v / (1.0f - r.iou + v + EPSILON) : 0.0f;
 
@@ -176,7 +177,6 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
     r.h_gradient  += -rho2 * 2.0f*enclosing_height*deh_dh * ic4;
 
     const float v_diff = atan2f(gt[2], gt[3]) - atan2f(pred[2], pred[3]);
-    constexpr float INV_PI2 = 4.0f / (3.14159265f * 3.14159265f);
     const float v     = INV_PI2 * v_diff * v_diff;
     const float alpha = (union_area > 0.0f) ? v / (1.0f - r.iou + v + EPSILON) : 0.0f;
     const float wh2   = predicted_width*predicted_width + predicted_height*predicted_height + EPSILON;
@@ -561,10 +561,10 @@ void yolo_gradient_cpu_multi(const ForwardPropagation& forward_propagation,
 bool yolo_uses_v8(const NeuralNetwork* nn)
 {
     if (!nn) return false;
-    for (const auto& layer : nn->get_layers())
-        if (layer && layer->get_type() == LayerType::DetectionV8)
-            return true;
-    return false;
+    return ranges::any_of(nn->get_layers(), [](const unique_ptr<Layer>& layer)
+    {
+        return layer && layer->get_type() == LayerType::DetectionV8;
+    });
 }
 
 vector<Index> yolo_detection_v8_layer_indices(const NeuralNetwork* nn)
@@ -687,7 +687,7 @@ static TalResult tal_assign_head(const TensorView& output,
                     cands.push_back({score, row*G + col, iou});
                 }
 
-            sort(cands.begin(), cands.end(), [](const CellScore& a, const CellScore& b){ return a.score > b.score; });
+            ranges::sort(cands, greater<>{}, &CellScore::score);
 
             const Index k = min<Index>(TAL_TOP_K, ssize(cands));
             for (Index i = 0; i < k; ++i)
@@ -1844,12 +1844,6 @@ void Loss::regularization_to_JSON(JsonWriter& file_stream) const
         {"RegularizationWeight", regularization_weight}
     });
     file_stream.close_element();
-}
-
-float Loss::calculate_h(const float x)
-{
-    constexpr float finite_difference_step = 1e-3f;
-    return finite_difference_step * (1.0f + abs(x));
 }
 
 void Loss::to_JSON(JsonWriter& printer) const

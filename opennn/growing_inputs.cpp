@@ -111,8 +111,8 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     vector<Index> correlation_indices(original_input_variables_number);
     iota(correlation_indices.begin(), correlation_indices.end(), 0);
 
-    ranges::sort(correlation_indices,
-                 [&](Index i, Index j) {return total_correlations[i] > total_correlations[j]; });
+    ranges::sort(correlation_indices, greater<>{},
+                 [&total_correlations](Index index) { return total_correlations[index]; });
 
     const vector<Index> input_variable_indices = dataset->get_variable_indices(VariableRole::Input);
 
@@ -131,7 +131,6 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     Index validation_failures = 0;
 
     time_t beginning_time;
-    time_t current_time;
     float elapsed_time = 0.0f;
     time(&beginning_time);
 
@@ -268,8 +267,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
         }
 
         ++variable_index;
-        time(&current_time);
-        elapsed_time = float(difftime(current_time, beginning_time));
+        elapsed_time = get_elapsed_time(beginning_time);
 
         const Index current_inputs = dataset->get_variables_number(VariableRole::Input);
 

@@ -34,6 +34,12 @@ void upload_batch_if_gpu(Batch& batch, const NeuralNetwork& neural_network)
 
 }
 
+float calculate_h(const float x)
+{
+    constexpr float finite_difference_step = 1e-3f;
+    return finite_difference_step * (1.0f + abs(x));
+}
+
 float calculate_numerical_error(Loss& loss)
 {
     NeuralNetwork* neural_network = loss.get_neural_network();
@@ -128,7 +134,7 @@ VectorR calculate_numerical_gradient(Loss& loss)
 
     for (Index i = 0; i < parameters_number; ++i)
     {
-        const float h = Loss::calculate_h(parameters(i));
+        const float h = calculate_h(parameters(i));
 
         perturbed(i) += h;
         neural_network->forward_propagate(batch.get_inputs(), perturbed, forward_propagation);
@@ -176,7 +182,7 @@ VectorR calculate_numerical_input_deltas(Loss& loss)
 
     for (Index i = 0; i < values_number; ++i)
     {
-        const float h = Loss::calculate_h(inputs_vector(i));
+        const float h = calculate_h(inputs_vector(i));
 
         input_views[0].as<float>()[i] += h;
         neural_network->forward_propagate(input_views, forward_propagation);

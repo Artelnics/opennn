@@ -1311,7 +1311,7 @@ string ModelExpression::get_expression_php() const
             php_vars.push_back(lhs);
     }
 
-    ranges::sort(php_vars, [](const string& a, const string& b) { return a.length() > b.length(); });
+    ranges::sort(php_vars, greater<>{}, [](const string& php_var) { return php_var.length(); });
     for (const string& var_name : php_vars)
         replace_all_word_appearances(expression, var_name, "$" + var_name);
 
@@ -1717,7 +1717,7 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
         {
             string processed_line = process_body_line(l, input_names, python_mapped);
 
-            for (const auto& [name, _] : activation_table())
+            for (const string& name : activation_table() | views::keys)
                 replace_all_word_appearances(processed_line, name, "self." + name);
 
             replace(processed_line, ";", "");

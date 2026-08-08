@@ -126,9 +126,7 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_entries(
             && layer_index <= last_trainable_layer_index;
     };
 
-    const Type compute_dtype = network.is_gpu()
-        ? activation_dtype(network.get_training_type())
-        : Type::FP32;
+    const Type compute_dtype = activation_dtype(network.get_training_type());
 
     DeltaLayout layout;
     vector<DeltaEntry>& delta_entries = layout.entries;

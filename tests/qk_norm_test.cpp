@@ -13,10 +13,10 @@ TEST(QKNormTest, PerHeadUnitRootMeanSquare)
     const Index heads = 2, head_dim = 4;
     const float eps = 1.0e-6f;
 
-    std::vector<float> weight(size_t(head_dim), 1.0f);
+    vector<float> weight(size_t(head_dim), 1.0f);
 
-    std::vector<float> input = { 0.1f, 0.2f, 0.3f, 0.4f,   10.0f, -20.0f, 30.0f, -40.0f };
-    std::vector<float> output(input.size(), 0.0f);
+    vector<float> input = { 0.1f, 0.2f, 0.3f, 0.4f,   10.0f, -20.0f, 30.0f, -40.0f };
+    vector<float> output(input.size(), 0.0f);
 
     TensorView in(input.data(), {1, 1, heads * head_dim});
     TensorView w(weight.data(), {head_dim});
@@ -41,9 +41,9 @@ TEST(QKNormTest, WeightScalesOutput)
     const Index head_dim = 4;
     const float eps = 1.0e-6f;
 
-    std::vector<float> weight = { 2.0f, 0.5f, 1.0f, 3.0f };
-    std::vector<float> input  = { 1.0f, 2.0f, 3.0f, 4.0f };
-    std::vector<float> output(input.size(), 0.0f);
+    vector<float> weight = { 2.0f, 0.5f, 1.0f, 3.0f };
+    vector<float> input  = { 1.0f, 2.0f, 3.0f, 4.0f };
+    vector<float> output(input.size(), 0.0f);
 
     TensorView in(input.data(), {1, 1, head_dim});
     TensorView w(weight.data(), {head_dim});

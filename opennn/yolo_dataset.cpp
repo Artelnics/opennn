@@ -465,8 +465,8 @@ AugmentationParams derive_augmentation_params(uint64_t epoch_counter,
 
 void rgb_to_hsv(float r, float g, float b, float& h, float& s, float& v)
 {
-    const float mx = max(max(r, g), b);
-    const float mn = min(min(r, g), b);
+    const float mx = max({r, g, b});
+    const float mn = min({r, g, b});
     v = mx;
     const float d = mx - mn;
     s = mx > 0.0f ? d / mx : 0.0f;
@@ -1044,24 +1044,21 @@ vector<YoloDetection> nms_and_unwarp(vector<array<float, 6>>& candidates,
     kept.reserve(candidates.size());
     for (const array<float, 6>& candidate : candidates)
     {
-        bool suppressed = false;
-        for (const array<float, 6>& k : kept)
-            if (Index(k[5]) == Index(candidate[5])
-            &&  candidate_iou(candidate, k) > iou_threshold)
-            {
-                suppressed = true;
-                break;
-            }
+        const bool suppressed = ranges::any_of(kept, [&](const array<float, 6>& kept_candidate)
+        {
+            return Index(kept_candidate[5]) == Index(candidate[5])
+                && candidate_iou(candidate, kept_candidate) > iou_threshold;
+        });
         if (!suppressed) kept.push_back(candidate);
     }
 
     const LetterboxUnwarp unwarp = make_letterbox_unwarp(original_height, original_width,
                                                          network_height, network_width);
 
-    vector<YoloDetection> detections;
-    detections.reserve(kept.size());
-    for (const array<float, 6>& k : kept)
-        detections.push_back(unwarp_candidate(k.data(), unwarp));
+    vector<YoloDetection> detections(kept.size());
+    ranges::transform(kept, detections.begin(),
+                      [&unwarp](const array<float, 6>& candidate)
+                      { return unwarp_candidate(candidate.data(), unwarp); });
 
     return detections;
 }
@@ -1083,12 +1080,14 @@ vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>& head
 
     for (const YoloFpnHead& head : heads)
     {
-        if (!head.data || head.grid_size <= 0 || head.boxes_per_cell <= 0
+        if (head.data.empty() || head.grid_size <= 0 || head.boxes_per_cell <= 0
         ||  head.classes_number <= 0)
             continue;
 
         const Index values_per_box = 5 + head.classes_number;
         const Index channels = head.boxes_per_cell * values_per_box;
+        throw_if(head.data.size() < size_t(head.grid_size * head.grid_size * channels),
+                 "decode_yolo_fpn_detections: head data is smaller than its shape.");
         const float inv_grid = 1.0f / float(head.grid_size);
 
         for (Index row = 0; row < head.grid_size; ++row)
@@ -1156,10 +1155,12 @@ vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>& h
 
     for (const YoloFpnHead& head : heads)
     {
-        if (!head.data || head.grid_size <= 0 || head.classes_number <= 0) continue;
+        if (head.data.empty() || head.grid_size <= 0 || head.classes_number <= 0) continue;
 
         const Index G  = head.grid_size;
         const Index ch = box_ch + head.classes_number;
+        throw_if(head.data.size() < size_t(G * G * ch),
+                 "decode_yolo_v8_fpn_detections: head data is smaller than its shape.");
         const float inv_grid = 1.0f / float(G);
 
         for (Index row = 0; row < G; ++row)
@@ -1183,10 +1184,10 @@ vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>& h
                 {
                     const float cell_cx = (float(col) + 0.5f) * inv_grid;
                     const float cell_cy = (float(row) + 0.5f) * inv_grid;
-                    const float d_l = v8_dfl_decode(head.data + base + 0            , reg_max);
-                    const float d_t = v8_dfl_decode(head.data + base + reg_max       , reg_max);
-                    const float d_r = v8_dfl_decode(head.data + base + 2 * reg_max   , reg_max);
-                    const float d_b = v8_dfl_decode(head.data + base + 3 * reg_max   , reg_max);
+                    const float d_l = v8_dfl_decode(head.data.data() + base, reg_max);
+                    const float d_t = v8_dfl_decode(head.data.data() + base + reg_max, reg_max);
+                    const float d_r = v8_dfl_decode(head.data.data() + base + 2 * reg_max, reg_max);
+                    const float d_b = v8_dfl_decode(head.data.data() + base + 3 * reg_max, reg_max);
                     pred_cx = cell_cx + (d_r - d_l) * inv_grid * 0.5f;
                     pred_cy = cell_cy + (d_b - d_t) * inv_grid * 0.5f;
                     pred_w  = (d_l + d_r) * inv_grid;
@@ -1208,8 +1209,7 @@ vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>& h
                           network_height, network_width, iou_threshold);
 }
 
-vector<YoloDetection> decode_yolo_detections(const float* nms_output,
-                                             Index max_boxes,
+vector<YoloDetection> decode_yolo_detections(span<const float> nms_output,
                                              Index original_height,
                                              Index original_width,
                                              Index network_height,
@@ -1217,6 +1217,10 @@ vector<YoloDetection> decode_yolo_detections(const float* nms_output,
 {
     if (!valid_decode_dimensions(original_height, original_width, network_height, network_width))
         throw runtime_error("decode_yolo_detections: dimensions must be positive.");
+    throw_if(nms_output.size() % 6 != 0,
+             "decode_yolo_detections: output size must be a multiple of 6.");
+
+    const Index max_boxes = Index(nms_output.size() / 6);
 
     const LetterboxUnwarp unwarp = make_letterbox_unwarp(original_height, original_width,
                                                          network_height, network_width);
@@ -1226,7 +1230,7 @@ vector<YoloDetection> decode_yolo_detections(const float* nms_output,
 
     for (Index i = 0; i < max_boxes; ++i)
     {
-        const float* row = nms_output + i * 6;
+        const float* row = nms_output.data() + i * 6;
 
         if (row[4] <= 0.0f) break;
 
@@ -1319,8 +1323,8 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
 
         YoloImageCacheHeader image_header{};
         YoloTargetCacheHeader target_header{};
-        image_cache_reader.read_at(&image_header, sizeof(image_header), 0);
-        target_cache_reader.read_at(&target_header, sizeof(target_header), 0);
+        image_cache_reader.read_at(span(&image_header, 1), 0);
+        target_cache_reader.read_at(span(&target_header, 1), 0);
 
         if (memcmp(image_header.magic, YOLO_IMAGE_MAGIC, 8) != 0
         ||  memcmp(target_header.magic, YOLO_TARGET_MAGIC, 8) != 0
@@ -1340,8 +1344,7 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
             return false;
 
         vector<array<float, 2>> cached_anchors(static_cast<size_t>(boxes_per_cell));
-        target_cache_reader.read_at(cached_anchors.data(),
-                                    cached_anchors.size() * sizeof(array<float, 2>),
+        target_cache_reader.read_at(span(cached_anchors),
                                     target_header.anchors_offset);
 
         const uint64_t cached_hash = hash_anchors(cached_anchors);
@@ -1368,15 +1371,14 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
         target_data_offset = target_header.targets_offset;
 
         YoloBoxesCacheHeader boxes_header{};
-        boxes_cache_reader.read_at(&boxes_header, sizeof(boxes_header), 0);
+        boxes_cache_reader.read_at(span(&boxes_header, 1), 0);
         if (memcmp(boxes_header.magic, YOLO_BOXES_MAGIC, 8) != 0
         ||  boxes_header.version != YOLO_CACHE_VERSION
         ||  boxes_header.samples != image_header.samples)
             return false;
 
         boxes_offsets.assign(size_t(boxes_header.samples + 1), 0);
-        boxes_cache_reader.read_at(boxes_offsets.data(),
-                                   boxes_offsets.size() * sizeof(uint64_t),
+        boxes_cache_reader.read_at(span(boxes_offsets),
                                    boxes_header.offsets_byte_offset);
         if (boxes_offsets.empty()
         ||  boxes_offsets.front() != 0
@@ -1430,7 +1432,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     image_header.samples = uint64_t(image_paths.size());
     image_header.record_bytes = uint64_t(image_record_bytes);
     image_header.sources_hash = hash_sources(images_directory, labels_directory);
-    image_writer.write(&image_header, sizeof(image_header));
+    image_writer.write(span(&image_header, 1));
 
     vector<uint8_t> pixels(static_cast<size_t>(image_record_bytes));
 
@@ -1469,7 +1471,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
             (Map<const Array<float, Dynamic, 1>>(prepared.data(), image_record_bytes)
                 .max(0.0f).min(255.0f) + 0.5f).cast<uint8_t>();
 
-        image_writer.write(pixels.data(), pixels.size());
+        image_writer.write(span(pixels));
 
         if (display && (i % 1000 == 0 || i + 1 == image_paths.size()))
             display_progress_bar(Index(i + 1), Index(image_paths.size()));
@@ -1509,14 +1511,14 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     target_header.targets_offset = target_header.anchors_offset
         + uint64_t(anchors.size() * sizeof(array<float, 2>));
 
-    target_writer.write(&target_header, sizeof(target_header));
-    target_writer.write(anchors.data(), anchors.size() * sizeof(array<float, 2>));
+    target_writer.write(span(&target_header, 1));
+    target_writer.write(span(anchors));
 
     vector<float> target(static_cast<size_t>(target_record_floats));
     for (const auto& sample_boxes : labels)
     {
         make_target(sample_boxes, anchors, grid_size, boxes_per_cell, classes_number, target.data());
-        target_writer.write(target.data(), target.size() * sizeof(float));
+        target_writer.write(span(target));
     }
 
     target_writer.finish_with_rename(target_cache_path);
@@ -1537,18 +1539,18 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     boxes_header.boxes_byte_offset = boxes_header.offsets_byte_offset
         + (boxes_header.samples + 1) * sizeof(uint64_t);
 
-    boxes_writer.write(&boxes_header, sizeof(boxes_header));
+    boxes_writer.write(span(&boxes_header, 1));
 
     vector<uint64_t> offsets(image_paths.size() + 1, 0);
     for (size_t i = 0; i < image_paths.size(); ++i)
         offsets[i + 1] = offsets[i] + labels[i].size();
-    boxes_writer.write(offsets.data(), offsets.size() * sizeof(uint64_t));
+    boxes_writer.write(span(offsets));
 
     for (const auto& sample_boxes : labels)
         for (const auto& box : sample_boxes)
         {
             const YoloBoxRecord rec{int32_t(box.class_id), box.x, box.y, box.w, box.h};
-            boxes_writer.write(&rec, sizeof(rec));
+            boxes_writer.write(span(&rec, 1));
         }
 
     boxes_writer.finish_with_rename(boxes_cache_path);
@@ -1618,10 +1620,8 @@ void YoloDataset::set_multi_scale_heads(const vector<Index>& grid_sizes,
     boxes_per_head = per_head;
 
     const Index values_per_box = 5 + classes_number;
-    Index total_floats = 0;
-    for (Index g : grid_sizes)
-        total_floats += g * g * boxes_per_head * values_per_box;
-    target_record_floats = total_floats;
+    target_record_floats = transform_reduce(grid_sizes.begin(), grid_sizes.end(), Index(0), plus<>{},
+                                            [&](Index g) { return g * g * boxes_per_head * values_per_box; });
     target_shape = {target_record_floats};
 }
 
@@ -1653,7 +1653,7 @@ void YoloDataset::read_sample_boxes(Index sample_index, vector<Box>& out) const
 
     thread_local vector<YoloBoxRecord> records;
     records.resize(size_t(count));
-    boxes_cache_reader.read_at(records.data(), records.size() * sizeof(YoloBoxRecord),
+    boxes_cache_reader.read_at(span(records),
                                boxes_data_offset + begin * sizeof(YoloBoxRecord));
 
     for (size_t i = 0; i < records.size(); ++i)
@@ -1669,7 +1669,7 @@ void YoloDataset::load_images_to_ram() const
              "YoloDataset::load_images_to_ram: image cache is not open.");
 
     images_ram.resize(size_t(samples_number) * size_t(cache_image_record_bytes));
-    image_cache_reader.read_at(images_ram.data(), images_ram.size(), sizeof(YoloImageCacheHeader));
+    image_cache_reader.read_at(span(images_ram), sizeof(YoloImageCacheHeader));
 }
 
 void YoloDataset::load_targets_to_ram() const
@@ -1680,8 +1680,7 @@ void YoloDataset::load_targets_to_ram() const
              "YoloDataset::load_targets_to_ram: target cache is not open.");
 
     targets_ram.resize(size_t(samples_number) * size_t(cache_target_record_floats));
-    target_cache_reader.read_at(targets_ram.data(),
-                                targets_ram.size() * sizeof(float),
+    target_cache_reader.read_at(span(targets_ram),
                                 target_data_offset);
 }
 
@@ -1802,7 +1801,7 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
             copy_n(images_ram.data() + size_t(sample) * size_t(cache_image_record_bytes),
                    size_t(cache_image_record_bytes), destination);
         else
-            image_cache_reader.read_at(destination, size_t(cache_image_record_bytes),
+            image_cache_reader.read_at(span(destination, size_t(cache_image_record_bytes)),
                                        sizeof(YoloImageCacheHeader)
                                        + uint64_t(sample) * uint64_t(cache_image_record_bytes));
     };
@@ -2015,8 +2014,9 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
             }
             else
             {
-                target_cache_reader.read_at(target_data + i * target_record_floats,
-                                            size_t(cache_target_record_floats) * sizeof(float),
+                target_cache_reader.read_at(
+                                            span(target_data + i * target_record_floats,
+                                                 size_t(cache_target_record_floats)),
                                             target_data_offset
                                             + uint64_t(sample_index) * uint64_t(cache_target_record_floats) * sizeof(float));
             }

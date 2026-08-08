@@ -99,8 +99,8 @@ TEST(BertDatasetTest, FeedsBertClassifierForward)
     const Index labels = dataset.get_features_number("Target");
     const MatrixR& data = dataset.get_data();
 
-    std::vector<float> input_ids(size_t(batch * seq));
-    std::vector<float> token_type(size_t(batch * seq));
+    vector<float> input_ids(size_t(batch * seq));
+    vector<float> token_type(size_t(batch * seq));
     for (Index b = 0; b < batch; ++b)
         for (Index s = 0; s < seq; ++s)
         {
@@ -114,7 +114,7 @@ TEST(BertDatasetTest, FeedsBertClassifierForward)
     model.set_parameters_random();
 
     ForwardPropagation forward_propagation(batch, &model);
-    std::vector<TensorView> inputs = {
+    vector<TensorView> inputs = {
         TensorView(input_ids.data(),  {batch, seq}),
         TensorView(token_type.data(), {batch, seq})
     };
@@ -127,7 +127,7 @@ TEST(BertDatasetTest, FeedsBertClassifierForward)
 
     const float* values = output.as<float>();
     for (Index i = 0; i < output.size(); ++i)
-        EXPECT_TRUE(std::isfinite(values[i])) << "non-finite output at " << i;
+        EXPECT_TRUE(isfinite(values[i])) << "non-finite output at " << i;
 
     clean_up(vocab_path, text_path, seq);
     Configuration::instance().set();

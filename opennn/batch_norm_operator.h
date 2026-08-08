@@ -67,8 +67,6 @@ private:
 
     void update_inference_cache();
 
-    mutable VectorR delta_scale_scratch;
-
     void apply_inference_cpu(const TensorView&, TensorView&);
     void apply_inference_gpu(const TensorView&, TensorView&,
                              const TensorView&);

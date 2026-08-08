@@ -38,7 +38,6 @@ size_t available_memory();
 string gpu_info_string() noexcept;
 bool cuda_allocation_growth_forbidden() noexcept;
 void set_cuda_allocation_growth_forbidden(bool) noexcept;
-bool cuda_matmul_plan_creation_forbidden() noexcept;
 
 enum class GraphWorkspaceKind
 {
@@ -54,14 +53,13 @@ inline constexpr std::array<const char*, size_t(GraphWorkspaceKind::Count)>
 graph_workspace_labels = {"shared_scratch", "bf16_input", "bf16_gradient",
                           "bf16_to_fp32", "int8_dequant"};
 
-using GraphWorkspaceRequirements = std::array<Index, size_t(GraphWorkspaceKind::Count)>;
-
 struct GraphWorkspaceView
 {
     void* data = nullptr;
     Index bytes = 0;
 };
 
+using GraphWorkspaceRequirements = std::array<Index, size_t(GraphWorkspaceKind::Count)>;
 using GraphWorkspaceViews = std::array<GraphWorkspaceView, size_t(GraphWorkspaceKind::Count)>;
 
 class CudaGraphWorkspaceScope
@@ -153,13 +151,12 @@ void record_event(cudaEvent_t, cudaStream_t);
 void synchronize_event(cudaEvent_t);
 void stream_wait_event(cudaStream_t, cudaEvent_t);
 
-void destroy_graph(cudaGraph_t) noexcept;
-void destroy_graph_exec(cudaGraphExec_t) noexcept;
+#ifdef OPENNN_HAS_CUDA
+struct GraphExecDeleter { void operator()(cudaGraphExec_t exec) const noexcept { cudaGraphExecDestroy(exec); } };
+#else
+struct GraphExecDeleter { void operator()(void*) const noexcept {} };
+#endif
 
-struct GraphDeleter     { void operator()(remove_pointer_t<cudaGraph_t>* graph)    const noexcept { destroy_graph(graph); } };
-struct GraphExecDeleter { void operator()(remove_pointer_t<cudaGraphExec_t>* exec) const noexcept { destroy_graph_exec(exec); } };
-
-using GraphHandle     = unique_ptr<remove_pointer_t<cudaGraph_t>,     GraphDeleter>;
 using GraphExecHandle = unique_ptr<remove_pointer_t<cudaGraphExec_t>, GraphExecDeleter>;
 
 class StreamCapture
@@ -171,14 +168,13 @@ public:
     StreamCapture(const StreamCapture&) = delete;
     StreamCapture& operator=(const StreamCapture&) = delete;
 
-    GraphHandle end();
+    void end(GraphExecHandle&);
 
 private:
     cudaStream_t stream = nullptr;
     bool finished = false;
 };
 
-void instantiate_or_update(GraphExecHandle&, cudaGraph_t);
 void launch_graph(const GraphExecHandle&, cudaStream_t);
 
 cudaStream_t get_compute_stream();
@@ -198,25 +194,12 @@ struct CudaEvent
     CudaEvent(const CudaEvent&) = delete;
     CudaEvent& operator=(const CudaEvent&) = delete;
 
-    CudaEvent(CudaEvent&& other) noexcept : handle(other.handle) { other.handle = nullptr; }
-    CudaEvent& operator=(CudaEvent&& other) noexcept
-    {
-        if (this != &other) { destroy(); handle = other.handle; other.handle = nullptr; }
-        return *this;
-    }
-
     ~CudaEvent() { destroy(); }
 
     void create()
     {
         destroy();
         handle = device::create_event();
-    }
-
-    void create(unsigned flags)
-    {
-        destroy();
-        handle = device::create_event(flags);
     }
 
     void destroy() noexcept

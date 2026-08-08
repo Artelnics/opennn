@@ -20,6 +20,22 @@
 namespace opennn
 {
 
+// Visits each variable together with the feature column it starts at, so callers never
+// have to carry the running offset themselves.
+template <typename Body>
+static void for_each_feature_block(const vector<Variable>& variables,
+                                   const vector<Index>& dimensions,
+                                   Body&& body)
+{
+    Index feature = 0;
+
+    for (size_t i = 0; i < variables.size(); ++i)
+    {
+        body(i, feature);
+        feature += dimensions[i];
+    }
+}
+
 ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
 {
     set(new_neural_network);
@@ -210,7 +226,7 @@ UnivariateConstraint ResponseOptimization::get_constraint(const string& name) co
 
 bool ResponseOptimization::is_objective(const string& name) const
 {
-    return objectives.find(name) != objectives.end();
+    return objectives.contains(name);
 }
 
 ResponseOptimization::Sense ResponseOptimization::get_sense(const string& name) const
@@ -337,7 +353,7 @@ const pair<vector<Variable>, vector<Descriptives>>& ResponseOptimization::get_va
         }
     }
 
-    const auto inserted = variables_descriptives.emplace(role, make_pair(move(filtered_variables), move(filtered_descriptives)));
+    const auto inserted = variables_descriptives.emplace(role, pair(move(filtered_variables), move(filtered_descriptives)));
     return inserted.first->second;
 }
 
@@ -388,11 +404,9 @@ ResponseOptimization::Domain ResponseOptimization::get_original_domain(string_vi
     throw_if(descriptives.size() != variables_number,
              "ResponseOptimization: Descriptives count ({}) does not match variables count ({}) for {}", descriptives.size(), variables_number, role);
 
-    vector<UnivariateConstraint> applicable_constraints;
-    applicable_constraints.reserve(variables_number);
-
-    for (const Variable& variable : variables)
-        applicable_constraints.push_back(get_constraint(variable.name));
+    vector<UnivariateConstraint> applicable_constraints(variables_number);
+    ranges::transform(variables, applicable_constraints.begin(),
+                      [this](const Variable& variable) { return get_constraint(variable.name); });
 
     Domain original_domain(variables, descriptives, deformation_domain_factor);
 
@@ -517,9 +531,9 @@ void ResponseOptimization::Domain::bound(const vector<Variable>& variables, cons
             }
             else if (constraint.comparison == ComparisonOperator::AllowedSet && !constraint.allowed_values.empty())
             {
-                const auto [lo, hi] = minmax_element(constraint.allowed_values.begin(), constraint.allowed_values.end());
-                inferior = max(inferior, *lo);
-                superior = min(superior, *hi);
+                const auto [lo, hi] = ranges::minmax(constraint.allowed_values);
+                inferior = max(inferior, lo);
+                superior = min(superior, hi);
             }
         }
         else if(constraint.comparison == ComparisonOperator::EqualTo)
@@ -555,9 +569,7 @@ static void round_discrete_inputs(MatrixR& inputs,
 {
     const vector<Index> feature_dimensions = get_feature_dimensions(variables);
 
-    Index feature_index = 0;
-
-    for(size_t i = 0; i < variables.size(); ++i)
+    for_each_feature_block(variables, feature_dimensions, [&](size_t i, Index feature_index)
     {
         const VariableType type = variables[i].type;
 
@@ -566,9 +578,7 @@ static void round_discrete_inputs(MatrixR& inputs,
         else if(type == VariableType::Integer)
             snap_to_lattice(inputs, feature_index,
                             ceil(inferior_frontier(feature_index)), floor(superior_frontier(feature_index)));
-
-        feature_index += feature_dimensions[i];
-    }
+    });
 }
 
 Lattice ResponseOptimization::build_input_lattice(const vector<Variable>& variables,
@@ -577,24 +587,20 @@ Lattice ResponseOptimization::build_input_lattice(const vector<Variable>& variab
                                                   map<string, Index>& scalar_column_of) const
 {
     Lattice lattice;
-    Index feature = 0;
 
-    for (size_t i = 0; i < variables.size(); ++i)
+    for_each_feature_block(variables, feature_dimensions, [&](size_t i, Index feature)
     {
-        if (feature_dimensions[i] == 1)
+        if (feature_dimensions[i] != 1) return;
+
+        scalar_column_of[variables[i].name] = feature;
+
+        if (is_one_of(variables[i].type, VariableType::Binary, VariableType::Integer))
         {
-            scalar_column_of[variables[i].name] = feature;
-
-            if (is_one_of(variables[i].type, VariableType::Binary, VariableType::Integer))
-            {
-                lattice.columns.push_back(feature);
-                lattice.min.push_back(ceil(input_domain.inferior_frontier(feature)));
-                lattice.max.push_back(floor(input_domain.superior_frontier(feature)));
-            }
+            lattice.columns.push_back(feature);
+            lattice.min.push_back(ceil(input_domain.inferior_frontier(feature)));
+            lattice.max.push_back(floor(input_domain.superior_frontier(feature)));
         }
-
-        feature += feature_dimensions[i];
-    }
+    });
 
     return lattice;
 }
@@ -761,17 +767,18 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 
         vector<float> candidates;
         candidates.reserve(allowed_values.size());
-        for (const float value : allowed_values)
-            if (value >= inferior - EPSILON && value <= superior + EPSILON)
-                candidates.push_back(value);
+        ranges::copy_if(allowed_values, back_inserter(candidates),
+            [&](const float value)
+            {
+                return value >= inferior - EPSILON && value <= superior + EPSILON;
+            });
 
         if (candidates.empty())
         {
             const float center = 0.5f * (inferior + superior);
-            float nearest = allowed_values.front();
-            for (const float value : allowed_values)
-                if (abs(value - center) < abs(nearest - center)) nearest = value;
-            candidates.push_back(nearest);
+            const auto nearest = ranges::min_element(allowed_values, {},
+                [center](const float value) { return abs(value - center); });
+            candidates.push_back(*nearest);
         }
 
         MatrixR picks(effective_evaluations, 1);
@@ -885,7 +892,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 
     Lattice free_lattice;
     for (size_t c = 0; c < lattice.columns.size(); ++c)
-        if (!grouped_columns.count(lattice.columns[c]))
+        if (!grouped_columns.contains(lattice.columns[c]))
         {
             free_lattice.columns.push_back(lattice.columns[c]);
             free_lattice.min.push_back(lattice.min[c]);
@@ -1376,8 +1383,8 @@ void ResponseOptimization::promote_single_variable_constraints()
                                  formula_constraint.low_bound, formula_constraint.up_bound,
                                  value_lo, value_hi);
 
-        float implied_lo = -numeric_limits<float>::infinity();
-        float implied_hi =  numeric_limits<float>::infinity();
+        float implied_lo = NEG_INFINITY;
+        float implied_hi =  POS_INFINITY;
 
         if (isfinite(value_lo) && isfinite(value_hi))
         {
@@ -1396,8 +1403,8 @@ void ResponseOptimization::promote_single_variable_constraints()
         const auto existing = constraint_set.univariate.find(name);
         if (existing == constraint_set.univariate.end())
         {
-            existing_lo = -numeric_limits<float>::infinity();
-            existing_hi =  numeric_limits<float>::infinity();
+            existing_lo = NEG_INFINITY;
+            existing_hi =  POS_INFINITY;
         }
         else if (!interval_from_comparison(existing->second.comparison,
                                            existing->second.low_bound, existing->second.up_bound,
@@ -1436,16 +1443,13 @@ vector<char> ResponseOptimization::discrete_column_mask(const vector<Variable>& 
 
     vector<char> mask(get_features_number(variables), 0);
 
-    Index feature = 0;
-    for (size_t i = 0; i < variables.size(); ++i)
+    for_each_feature_block(variables, dimensions, [&](size_t i, Index feature)
     {
         const VariableType type = variables[i].type;
         if (is_one_of(type, VariableType::Binary, VariableType::Integer, VariableType::Categorical)
             || dimensions[i] > 1)
-            for (Index j = 0; j < dimensions[i]; ++j)
-                mask[feature + j] = 1;
-        feature += dimensions[i];
-    }
+            fill_n(mask.begin() + feature, dimensions[i], char(1));
+    });
 
     return mask;
 }
@@ -1461,13 +1465,11 @@ void ResponseOptimization::restore_cardinality_columns(Domain& domain, const Dom
         const vector<Index> dimensions = get_feature_dimensions(variables);
 
         map<string, Index> column_of;
-        Index feature = 0;
-        for (size_t i = 0; i < variables.size(); ++i)
+        for_each_feature_block(variables, dimensions, [&](size_t i, Index feature)
         {
             if (dimensions[i] == 1)
                 column_of[variables[i].name] = feature;
-            feature += dimensions[i];
-        }
+        });
 
         for (const CardinalityConstraint& group : constraint_set.cardinality)
             for (const string& name : group.variable_names)
@@ -1576,9 +1578,8 @@ static MatrixR stack_rows(const vector<MatrixR>& blocks)
     if (blocks.empty())
         return MatrixR();
 
-    Index total_rows = 0;
-    for (const MatrixR& block : blocks)
-        total_rows += block.rows();
+    const Index total_rows = transform_reduce(blocks.begin(), blocks.end(), Index(0), plus<>{},
+                                              [](const MatrixR& block) { return block.rows(); });
 
     MatrixR result(total_rows, blocks.front().cols());
 
@@ -1620,11 +1621,8 @@ static vector<Index> pareto_front_indices(const MatrixR& objective_matrix)
         if (!objective_matrix.row(i).allFinite())
             continue;
 
-        bool dominated = false;
-        for (const Index j : front)
-            if (pareto_dominates(objective_matrix, j, i)) { dominated = true; break; }
-
-        if (dominated)
+        if (ranges::any_of(front,
+            [&](const Index j) { return pareto_dominates(objective_matrix, j, i); }))
             continue;
 
         erase_if(front, [&](const Index j) { return pareto_dominates(objective_matrix, i, j); });
@@ -2139,15 +2137,14 @@ void ResponseOptimization::expand_fixed_objectives()
     const vector<Variable>& input_variables = neural_network->get_input_variables();
 
     const auto is_input_name = [&](const string& name)
-    {
-        return ranges::any_of(input_variables, [&](const Variable& v){ return v.name == name; });
-    };
+    { return ranges::find(input_variables, name, &Variable::name) != input_variables.end(); };
 
     map<string, float> output_range;
     const bool any_output_fixed = ranges::any_of(fixed_values, [&](const auto& entry)
     {
         const string& name = entry.first;
-        return objectives.count(name) && objectives.at(name) == Sense::Fixed && !is_input_name(name);
+        const auto objective = objectives.find(name);
+        return objective != objectives.end() && objective->second == Sense::Fixed && !is_input_name(name);
     });
 
     if (any_output_fixed)
@@ -2162,7 +2159,8 @@ void ResponseOptimization::expand_fixed_objectives()
 
     for (const auto& [name, target] : fixed_values)
     {
-        if (objectives.find(name) == objectives.end() || objectives.at(name) != Sense::Fixed)
+        const auto objective = objectives.find(name);
+        if (objective == objectives.end() || objective->second != Sense::Fixed)
             continue;
 
         if (is_input_name(name))
@@ -2228,18 +2226,19 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
     auto input_column_of = [&](const string& name) -> Index
     {
-        for (const NamedColumn& column : input_columns)
-            if (column.name == name) return column.column_index;
-        return -1;
+        const auto column = ranges::find(input_columns, name, &NamedColumn::name);
+        return column != input_columns.end() ? column->column_index : -1;
     };
 
     auto input_referenced_by_formula = [&](const Index column) -> bool
     {
         if (any_callback_formula) return true;
-        for (const MultivariateConstraint& formula_constraint : constraint_set.multivariate)
-            for (const Index referenced : formula_constraint.compiled.input_indices)
-                if (referenced == column) return true;
-        return false;
+        return ranges::any_of(constraint_set.multivariate,
+            [&](const MultivariateConstraint& formula_constraint)
+            {
+                return ranges::find(formula_constraint.compiled.input_indices, column)
+                    != formula_constraint.compiled.input_indices.end();
+            });
     };
 
     auto feature_count_of = [&](const string& name) -> Index
@@ -2249,9 +2248,8 @@ MatrixR ResponseOptimization::perform_response_optimization()
         return 1;
     };
 
-    auto is_input_name = [&](const string& name) {
-        return ranges::any_of(input_variables, [&](const Variable& v) { return v.name == name; });
-    };
+    auto is_input_name = [&](const string& name)
+    { return ranges::find(input_variables, name, &Variable::name) != input_variables.end(); };
 
     vector<BranchAxis> axes;
 
@@ -2402,7 +2400,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
     const Index reduction_factor = 3;
 
     Index rounds_number = 1;
-    for (Index remaining = branches_number; remaining > 1; remaining = (remaining + reduction_factor - 1) / reduction_factor)
+    for (Index remaining = branches_number; remaining > 1; remaining = ceil_div(remaining, reduction_factor))
         ++rounds_number;
 
     const Index notional_total = branches_number * evaluations_number * max(Index(1), max_iterations);
@@ -2448,16 +2446,15 @@ MatrixR ResponseOptimization::perform_response_optimization()
             if (feasible[i] && !branch_is_dominated(round_objective[i], incumbent_objective, objectives_number, drop_margin))
                 survivors.push_back(i);
 
-        ranges::sort(survivors, [&](const size_t a, const size_t b) { return reward[a] > reward[b]; });
+        ranges::sort(survivors, greater<>{}, [&reward](const size_t survivor) { return reward[survivor]; });
 
-        const Index keep = max(Index(1), (ssize(survivors) + reduction_factor - 1) / reduction_factor);
+        const Index keep = max(Index(1), ceil_div(ssize(survivors), reduction_factor));
         if (ssize(survivors) > keep)
             survivors.resize(static_cast<size_t>(keep));
 
-        vector<Index> next_live;
-        next_live.reserve(survivors.size());
-        for (const size_t i : survivors)
-            next_live.push_back(live[i]);
+        vector<Index> next_live(survivors.size());
+        ranges::transform(survivors, next_live.begin(),
+                          [&live](const size_t survivor) { return live[survivor]; });
 
         live = move(next_live);
         drop_margin *= 0.5f;

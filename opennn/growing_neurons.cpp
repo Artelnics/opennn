@@ -81,7 +81,6 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
     Index validation_failures = 0;
 
     time_t beginning_time;
-    time_t current_time;
 
     float elapsed_time = 0.0f;
 
@@ -182,9 +181,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
         else
             previous_validation_error = minimum_validation_error;
 
-        time(&current_time);
-
-        elapsed_time = float(difftime(current_time,beginning_time));
+        elapsed_time = get_elapsed_time(beginning_time);
 
         neuron_selection_results.stopping_condition = first_stopping_condition<StoppingCondition>(display,
         {

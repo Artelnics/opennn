@@ -41,10 +41,10 @@ struct Image24
 {
     int width = 0;
     int height = 0;
-    std::vector<uint8_t> rgb;
+    vector<uint8_t> rgb;
 };
 
-void write_bmp24_top_down(const std::filesystem::path& path, const Image24& img)
+void write_bmp24_top_down(const filesystem::path& path, const Image24& img)
 {
     const int row_bytes_unpadded = img.width * 3;
     const int row_pad = (4 - row_bytes_unpadded % 4) % 4;
@@ -52,7 +52,7 @@ void write_bmp24_top_down(const std::filesystem::path& path, const Image24& img)
     const int pixel_data_size = row_stride * img.height;
     const int file_size = 54 + pixel_data_size;
 
-    std::vector<uint8_t> file(size_t(file_size), 0);
+    vector<uint8_t> file(size_t(file_size), 0);
 
     file[0] = 'B'; file[1] = 'M';
     file[2] = uint8_t(file_size & 0xff);
@@ -84,17 +84,17 @@ void write_bmp24_top_down(const std::filesystem::path& path, const Image24& img)
         }
     }
 
-    std::ofstream out(path, std::ios::binary);
+    ofstream out(path, ios::binary);
     out.write(reinterpret_cast<const char*>(file.data()), file.size());
 }
 
-Image24 read_bmp24(const std::filesystem::path& path)
+Image24 read_bmp24(const filesystem::path& path)
 {
-    std::ifstream in(path, std::ios::binary);
-    std::vector<char> buf((std::istreambuf_iterator<char>(in)),
-                          std::istreambuf_iterator<char>());
+    ifstream in(path, ios::binary);
+    vector<char> buf((istreambuf_iterator<char>(in)),
+                          istreambuf_iterator<char>());
     if (buf.size() < 54 || buf[0] != 'B' || buf[1] != 'M')
-        throw std::runtime_error("not a 24-bit BMP: " + path.string());
+        throw runtime_error("not a 24-bit BMP: " + path.string());
 
     auto u16 = [&](int off) { return uint16_t(uint8_t(buf[off]) | (uint8_t(buf[off+1]) << 8)); };
     auto u32 = [&](int off) {
@@ -109,10 +109,10 @@ Image24 read_bmp24(const std::filesystem::path& path)
     const int32_t width = s32(18);
     const int32_t height_signed = s32(22);
     if (u16(28) != 24)
-        throw std::runtime_error("only 24-bit BMP supported: " + path.string());
+        throw runtime_error("only 24-bit BMP supported: " + path.string());
 
     const bool top_down = height_signed < 0;
-    const int height = std::abs(height_signed);
+    const int height = abs(height_signed);
     const int row_stride = ((width * 3 + 3) / 4) * 4;
 
     Image24 img;
@@ -137,10 +137,10 @@ Image24 read_bmp24(const std::filesystem::path& path)
 
 void draw_rect_outline(Image24& img,
                        int x0, int y0, int x1, int y1,
-                       std::array<uint8_t, 3> color, int thickness = 2)
+                       array<uint8_t, 3> color, int thickness = 2)
 {
-    if (x1 < x0) std::swap(x0, x1);
-    if (y1 < y0) std::swap(y0, y1);
+    if (x1 < x0) swap(x0, x1);
+    if (y1 < y0) swap(y0, y1);
 
     auto put = [&](int x, int y)
     {
@@ -158,10 +158,10 @@ void draw_rect_outline(Image24& img,
     }
 }
 
-void write_synthetic_bmp(const std::filesystem::path& path,
+void write_synthetic_bmp(const filesystem::path& path,
                          int width, int height,
-                         std::array<uint8_t, 3> background,
-                         std::array<uint8_t, 3> foreground,
+                         array<uint8_t, 3> background,
+                         array<uint8_t, 3> foreground,
                          int top_x, int top_y, int block)
 {
     Image24 img;
@@ -193,31 +193,31 @@ void write_synthetic_bmp(const std::filesystem::path& path,
     write_bmp24_top_down(path, img);
 }
 
-void write_label(const std::filesystem::path& path,
+void write_label(const filesystem::path& path,
                  int class_id, float cx, float cy, float w, float h)
 {
-    std::ofstream out(path);
+    ofstream out(path);
     out << class_id << ' ' << cx << ' ' << cy << ' ' << w << ' ' << h << '\n';
 }
 
-void generate_synthetic_dataset(const std::filesystem::path& images_dir,
-                                const std::filesystem::path& labels_dir,
+void generate_synthetic_dataset(const filesystem::path& images_dir,
+                                const filesystem::path& labels_dir,
                                 int samples_per_class)
 {
-    std::filesystem::create_directories(images_dir);
-    std::filesystem::create_directories(labels_dir);
+    filesystem::create_directories(images_dir);
+    filesystem::create_directories(labels_dir);
 
     constexpr int image_size = 128;
     constexpr int block = 32;
-    constexpr std::array<uint8_t, 3> background{255, 255, 255};
-    const std::array<std::array<uint8_t, 3>, 3> colors{{
+    constexpr array<uint8_t, 3> background{255, 255, 255};
+    const array<array<uint8_t, 3>, 3> colors{{
         {220,  40,  40},
         { 40,  60, 220},
         { 40, 200,  40},
     }};
 
-    std::mt19937 rng(0xC0FFEE);
-    std::uniform_int_distribution<int> pos_dist(0, image_size - block);
+    mt19937 rng(0xC0FFEE);
+    uniform_int_distribution<int> pos_dist(0, image_size - block);
 
     int index = 0;
     for (int c = 0; c < 3; ++c)
@@ -227,9 +227,9 @@ void generate_synthetic_dataset(const std::filesystem::path& images_dir,
             const int top_x = pos_dist(rng);
             const int top_y = pos_dist(rng);
 
-            const std::string name = "sample_" + std::to_string(index);
-            const std::filesystem::path image_path = images_dir / (name + ".bmp");
-            const std::filesystem::path label_path = labels_dir / (name + ".txt");
+            const string name = "sample_" + to_string(index);
+            const filesystem::path image_path = images_dir / (name + ".bmp");
+            const filesystem::path label_path = labels_dir / (name + ".txt");
 
             write_synthetic_bmp(image_path, image_size, image_size,
                                 background, colors[size_t(c)],
@@ -245,7 +245,7 @@ void generate_synthetic_dataset(const std::filesystem::path& images_dir,
         }
     }
 
-    std::ofstream classes(labels_dir / "classes.names");
+    ofstream classes(labels_dir / "classes.names");
     classes << "red\n" << "blue\n" << "green\n";
 }
 
@@ -255,7 +255,7 @@ int main()
 {
     try
     {
-        std::cout << "OpenNN. YOLO Example." << std::endl;
+        cout << "OpenNN. YOLO Example." << endl;
 
         set_seed(42);
 
@@ -293,47 +293,47 @@ int main()
 
         const auto body_activation = YoloNetwork::BodyActivation::LeakyReLU;
 
-        const std::filesystem::path voc_root = []() -> std::filesystem::path {
-            if (const char* env = std::getenv("VOC_ROOT")) return env;
+        const filesystem::path voc_root = []() -> filesystem::path {
+            if (const char* env = getenv("VOC_ROOT")) return env;
             for (const char* c : {"/home/alvaromartin/VOCdevkit/VOC2007",
                                    "/home/artelnics/VOCdevkit/VOC2007",
                                    "VOCdevkit/VOC2007"})
-                if (std::filesystem::is_directory(c)) return c;
+                if (filesystem::is_directory(c)) return c;
             return "/home/alvaromartin/VOCdevkit/VOC2007";
         }();
-        const std::string voc_image_set = "trainval";
+        const string voc_image_set = "trainval";
 
-        const std::vector<std::string> voc_class_filter = {};
+        const vector<string> voc_class_filter = {};
 
-        const std::filesystem::path data_dir = use_voc     ? "yolo_voc_data"
+        const filesystem::path data_dir = use_voc     ? "yolo_voc_data"
                                              : use_raccoon ? "yolo_raccoon_data"
                                              : use_coco   ? "yolo_coco_data"
                                              :               "yolo_data";
-        std::filesystem::create_directories(data_dir);
+        filesystem::create_directories(data_dir);
 
-        const std::filesystem::path log_path = data_dir / "training_log.txt";
-        std::ofstream log_file(log_path, std::ios::app);
-        struct TeeBuf : std::streambuf {
-            TeeBuf(std::streambuf* a, std::streambuf* b) : a(a), b(b) {}
+        const filesystem::path log_path = data_dir / "training_log.txt";
+        ofstream log_file(log_path, ios::app);
+        struct TeeBuf : streambuf {
+            TeeBuf(streambuf* a, streambuf* b) : a(a), b(b) {}
             int overflow(int c) override { a->sputc(char(c)); b->sputc(char(c)); return c; }
-            std::streamsize xsputn(const char* s, std::streamsize n) override { a->sputn(s,n); b->sputn(s,n); return n; }
-            std::streambuf *a, *b;
-        } tee_buf(std::cout.rdbuf(), log_file.rdbuf());
-        auto* old_rdbuf = std::cout.rdbuf(&tee_buf);
-        std::cout << "\n[Log file: " << log_path << "]\n";
+            streamsize xsputn(const char* s, streamsize n) override { a->sputn(s,n); b->sputn(s,n); return n; }
+            streambuf *a, *b;
+        } tee_buf(cout.rdbuf(), log_file.rdbuf());
+        auto* old_rdbuf = cout.rdbuf(&tee_buf);
+        cout << "\n[Log file: " << log_path << "]\n";
 
-        std::filesystem::path images_dir;
-        std::filesystem::path labels_dir;
+        filesystem::path images_dir;
+        filesystem::path labels_dir;
         Index grid_size;
         Index boxes_per_cell;
         Shape input_shape;
-        std::vector<std::array<float, 2>> anchors;
+        vector<array<float, 2>> anchors;
 
         if (use_voc)
         {
 
-            const std::filesystem::path voc12_root = []() -> std::filesystem::path {
-                if (const char* env = std::getenv("VOC12_ROOT")) return env;
+            const filesystem::path voc12_root = []() -> filesystem::path {
+                if (const char* env = getenv("VOC12_ROOT")) return env;
                 for (const char* c : {
                         "/home/alvaromartin/VOCdevkit/VOC2012",
                         "/home/artelnics/VOCdevkit/VOC2012",
@@ -341,12 +341,12 @@ int main()
                         "/home/alvaromartin/VOCdevkit/VOCdevkit/VOC2012",
                         "VOCdevkit/VOC2012",
                         "VOCdevkit/VOCdevkit/VOC2012"})
-                    if (std::filesystem::is_directory(c)) return c;
+                    if (filesystem::is_directory(c)) return c;
                 return {};
             }();
             const bool use_voc12 = !voc12_root.empty();
             if (!use_voc12)
-                std::cout << "VOC2012 not found — training on VOC2007 only.\n"
+                cout << "VOC2012 not found — training on VOC2007 only.\n"
                           << "  Set VOC12_ROOT=/path/to/VOC2012 or place it at ~/VOCdevkit/VOC2012\n"
                           << "  (if you extracted inside ~/VOCdevkit, move it: "
                           << "mv ~/VOCdevkit/VOCdevkit/VOC2012 ~/VOCdevkit/VOC2012)\n";
@@ -360,46 +360,46 @@ int main()
                 YoloDataset::convert_voc_to_yolo(voc12_root, voc_image_set, labels12, voc_class_filter);
 
                 labels_dir = data_dir / (voc_class_filter.empty() ? "voc_combined_labels" : "voc_combined_labels_filtered");
-                std::filesystem::create_directories(labels_dir);
+                filesystem::create_directories(labels_dir);
 
-                auto link_dir = [](const std::filesystem::path& src,
-                                   const std::filesystem::path& dst_dir,
-                                   const std::string& prefix) {
-                    for (const auto& e : std::filesystem::directory_iterator(src)) {
+                auto link_dir = [](const filesystem::path& src,
+                                   const filesystem::path& dst_dir,
+                                   const string& prefix) {
+                    for (const auto& e : filesystem::directory_iterator(src)) {
                         const auto ext = e.path().extension().string();
                         if (ext != ".txt" && ext != ".names") continue;
-                        const std::string dst_name = (ext == ".names")
+                        const string dst_name = (ext == ".names")
                             ? e.path().filename().string()
                             : prefix + e.path().filename().string();
                         const auto dst = dst_dir / dst_name;
-                        if (!std::filesystem::exists(dst))
-                            std::filesystem::create_symlink(
-                                std::filesystem::absolute(e.path()), dst);
+                        if (!filesystem::exists(dst))
+                            filesystem::create_symlink(
+                                filesystem::absolute(e.path()), dst);
                     }
                 };
                 link_dir(labels07, labels_dir, "07_");
                 link_dir(labels12, labels_dir, "12_");
 
                 images_dir = data_dir / "voc_combined_images";
-                std::filesystem::create_directories(images_dir);
-                auto link_images = [](const std::filesystem::path& src,
-                                      const std::filesystem::path& dst_dir,
-                                      const std::string& prefix) {
-                    if (!std::filesystem::is_directory(src)) return;
-                    for (const auto& e : std::filesystem::directory_iterator(src)) {
+                filesystem::create_directories(images_dir);
+                auto link_images = [](const filesystem::path& src,
+                                      const filesystem::path& dst_dir,
+                                      const string& prefix) {
+                    if (!filesystem::is_directory(src)) return;
+                    for (const auto& e : filesystem::directory_iterator(src)) {
                         if (!e.is_regular_file()) continue;
                         const auto ext = e.path().extension().string();
                         if (ext != ".jpg" && ext != ".jpeg" && ext != ".JPG"
                          && ext != ".JPEG" && ext != ".png" && ext != ".PNG") continue;
                         const auto dst = dst_dir / (prefix + e.path().filename().string());
-                        if (!std::filesystem::exists(dst))
-                            std::filesystem::create_symlink(
-                                std::filesystem::absolute(e.path()), dst);
+                        if (!filesystem::exists(dst))
+                            filesystem::create_symlink(
+                                filesystem::absolute(e.path()), dst);
                     }
                 };
                 link_images(voc_root   / "JPEGImages", images_dir, "07_");
                 link_images(voc12_root / "JPEGImages", images_dir, "12_");
-                std::cout << "Using VOC2007+VOC2012 combined dataset in " << images_dir << "\n";
+                cout << "Using VOC2007+VOC2012 combined dataset in " << images_dir << "\n";
             }
             else
             {
@@ -408,35 +408,35 @@ int main()
                 labels_dir = data_dir / (voc_class_filter.empty() ? "voc_labels" : "voc_labels_filtered");
                 const Index converted =
                     YoloDataset::convert_voc_to_yolo(voc_root, voc_image_set, labels_dir, voc_class_filter);
-                std::cout << "Converted " << converted
+                cout << "Converted " << converted
                           << " VOC2007 samples to YOLO format in " << labels_dir << "\n";
             }
 
             if (!voc_class_filter.empty())
             {
-                const std::filesystem::path filtered_images_dir = data_dir / "voc_images_filtered";
-                std::filesystem::create_directories(filtered_images_dir);
+                const filesystem::path filtered_images_dir = data_dir / "voc_images_filtered";
+                filesystem::create_directories(filtered_images_dir);
                 Index linked = 0;
-                for (const auto& entry : std::filesystem::directory_iterator(labels_dir))
+                for (const auto& entry : filesystem::directory_iterator(labels_dir))
                 {
                     if (entry.path().extension() != ".txt") continue;
                     if (entry.path().stem().string() == "voc") continue;
-                    const std::string stem = entry.path().stem().string();
+                    const string stem = entry.path().stem().string();
                     for (const char* ext : {".jpg", ".jpeg", ".JPG", ".JPEG"})
                     {
                         const auto src = images_dir / (stem + ext);
-                        if (std::filesystem::exists(src))
+                        if (filesystem::exists(src))
                         {
                             const auto dst = filtered_images_dir / (stem + ext);
-                            if (!std::filesystem::exists(dst))
-                                std::filesystem::create_symlink(src, dst);
+                            if (!filesystem::exists(dst))
+                                filesystem::create_symlink(src, dst);
                             ++linked;
                             break;
                         }
                     }
                 }
                 images_dir = filtered_images_dir;
-                std::cout << "Filtered to " << linked << " images containing the requested classes.\n";
+                cout << "Filtered to " << linked << " images containing the requested classes.\n";
             }
 
             grid_size = use_v8 ? 20 : 13;
@@ -452,19 +452,19 @@ int main()
 
             labels_dir = "/home/alvaromartin/coco_mini_data/train2017_labels";
             images_dir = data_dir / "labeled_images";
-            std::filesystem::create_directories(images_dir);
-            const std::filesystem::path src_images =
+            filesystem::create_directories(images_dir);
+            const filesystem::path src_images =
                 "/home/alvaromartin/coco_mini_data/train2017";
-            for (const auto& entry : std::filesystem::directory_iterator(labels_dir))
+            for (const auto& entry : filesystem::directory_iterator(labels_dir))
             {
                 if (entry.path().extension() != ".txt") continue;
-                if (entry.path().stem().string().find("coco_mini") != std::string::npos) continue;
+                if (entry.path().stem().string().find("coco_mini") != string::npos) continue;
                 for (const char* ext : {".jpg", ".jpeg", ".png"})
                 {
                     const auto src = src_images / (entry.path().stem().string() + ext);
                     const auto dst = images_dir / src.filename();
-                    if (std::filesystem::exists(src) && !std::filesystem::exists(dst))
-                        std::filesystem::create_symlink(src, dst);
+                    if (filesystem::exists(src) && !filesystem::exists(dst))
+                        filesystem::create_symlink(src, dst);
                 }
             }
 
@@ -547,10 +547,10 @@ int main()
             boxes_per_cell = 3;
         }
 
-        const std::vector<std::array<float, 2>> ctor_anchors = use_v8
-            ? std::vector<std::array<float, 2>>{}
+        const vector<array<float, 2>> ctor_anchors = use_v8
+            ? vector<array<float, 2>>{}
             : (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
-                ? std::vector<std::array<float, 2>>{anchors[0], anchors[1], anchors[2]}
+                ? vector<array<float, 2>>{anchors[0], anchors[1], anchors[2]}
                 : anchors;
         const Index ctor_bpc = use_v8 ? 0 : boxes_per_cell;
 
@@ -560,9 +560,9 @@ int main()
         if (head_style == YoloNetwork::HeadStyle::FPNv8)
         {
 
-            const std::vector<Index> head_grids = {grid_size, grid_size * 2, grid_size * 4};
-            const std::array<float, 2> dummy{{0.5f, 0.5f}};
-            const std::vector<std::vector<std::array<float, 2>>> dummy_anchors(3, {dummy});
+            const vector<Index> head_grids = {grid_size, grid_size * 2, grid_size * 4};
+            const array<float, 2> dummy{{0.5f, 0.5f}};
+            const vector<vector<array<float, 2>>> dummy_anchors(3, {dummy});
             dataset.set_multi_scale_heads(head_grids, dummy_anchors);
             dataset.set_v8_mode(true);
         }
@@ -571,11 +571,11 @@ int main()
             if (is_v3std)
             {
 
-                const std::vector<Index> head_grids = {
+                const vector<Index> head_grids = {
                     grid_size,
                     grid_size * 2,
                 };
-                const std::vector<std::vector<std::array<float, 2>>> head_anchors = {
+                const vector<vector<array<float, 2>>> head_anchors = {
                     {anchors[3], anchors[4], anchors[5]},
                     {anchors[0], anchors[1], anchors[2]},
                 };
@@ -584,12 +584,12 @@ int main()
             else
             {
 
-                const std::vector<Index> head_grids = {
+                const vector<Index> head_grids = {
                     grid_size,
                     grid_size * 2,
                     grid_size * 4
                 };
-                const std::vector<std::vector<std::array<float, 2>>> head_anchors = {
+                const vector<vector<array<float, 2>>> head_anchors = {
                     {anchors[6], anchors[7], anchors[8]},
                     {anchors[3], anchors[4], anchors[5]},
                     {anchors[0], anchors[1], anchors[2]},
@@ -628,7 +628,7 @@ int main()
         const double val_frac   = use_raccoon ? 0.2 : (use_voc ? 0.15 : 0.3);
         dataset.split_samples_random(train_frac, val_frac, 0.0);
 
-        const std::vector<std::array<float, 2>>& network_anchors = use_v8
+        const vector<array<float, 2>>& network_anchors = use_v8
             ? anchors
             : (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
                 ? anchors : dataset.get_anchors();
@@ -649,9 +649,9 @@ int main()
                                  use_v8 ? reg_max : Index(1),
                                  model_size);
 
-        std::cout << "Device: " << (yolo_network.is_gpu() ? "GPU" : "CPU")
+        cout << "Device: " << (yolo_network.is_gpu() ? "GPU" : "CPU")
                   << "  " << device::gpu_info_string() << "\n";
-        std::cout << "Network: backbone="
+        cout << "Network: backbone="
                   << (backbone == YoloNetwork::Backbone::Vgg              ? "Vgg"
                     : backbone == YoloNetwork::Backbone::DarknetTinyV3    ? "DarknetTinyV3"
                     : backbone == YoloNetwork::Backbone::Darknet53        ? "Darknet53"
@@ -709,10 +709,10 @@ int main()
 
         const bool resume_training = true;
 
-        const std::string dataset_tag  = use_voc ? "voc" : use_raccoon ? "raccoon" : use_coco ? "coco" : "synth";
-        const std::string filter_tag   = voc_class_filter.empty() ? "" :
-            "_" + std::to_string(voc_class_filter.size()) + "cls";
-        const std::string weights_filename = std::string("yolo_weights_") + dataset_tag + "_" +
+        const string dataset_tag  = use_voc ? "voc" : use_raccoon ? "raccoon" : use_coco ? "coco" : "synth";
+        const string filter_tag   = voc_class_filter.empty() ? "" :
+            "_" + to_string(voc_class_filter.size()) + "cls";
+        const string weights_filename = string("yolo_weights_") + dataset_tag + "_" +
             (backbone == YoloNetwork::Backbone::Vgg              ? "vgg"
            : backbone == YoloNetwork::Backbone::DarknetTinyV3    ? "darknet_v3std"
            : backbone == YoloNetwork::Backbone::CSPDarknet53     ? "csp53"
@@ -728,25 +728,25 @@ int main()
             (use_v8 && reg_max > 1 ? "_dfl" : "") +
             (model_size == YoloNetwork::ModelSize::s ? "_s" : "") +
             filter_tag +
-            std::string("_bce_ig_bgfocal.bin");
-        std::filesystem::path weights_path = data_dir / weights_filename;
+            string("_bce_ig_bgfocal.bin");
+        filesystem::path weights_path = data_dir / weights_filename;
 
-        const std::filesystem::path legacy_weights = data_dir / "yolo_weights.bin";
+        const filesystem::path legacy_weights = data_dir / "yolo_weights.bin";
         if (backbone == YoloNetwork::Backbone::Vgg
-        &&  !std::filesystem::exists(weights_path)
-        &&   std::filesystem::exists(legacy_weights))
+        &&  !filesystem::exists(weights_path)
+        &&   filesystem::exists(legacy_weights))
             weights_path = legacy_weights;
 
-        std::filesystem::path states_path = weights_path;
+        filesystem::path states_path = weights_path;
         states_path.replace_extension(".states.bin");
 
-        const bool weights_exist = std::filesystem::exists(weights_path);
+        const bool weights_exist = filesystem::exists(weights_path);
         if (weights_exist)
         {
             yolo_network.load_parameters_binary(weights_path);
-            if (std::filesystem::exists(states_path))
+            if (filesystem::exists(states_path))
                 yolo_network.load_states_binary(states_path);
-            std::cout << "\nLoaded weights from \"" << weights_path.string() << "\".\n";
+            cout << "\nLoaded weights from \"" << weights_path.string() << "\".\n";
         }
 
         const bool needs_darknet_backbone =
@@ -761,14 +761,14 @@ int main()
             const bool iscsp   = (backbone == YoloNetwork::Backbone::CSPDarknet53);
             const bool isv11   = (backbone == YoloNetwork::Backbone::CSPDarknet53v11);
 
-            const std::string darknet_filename = is53 ? "darknet53.conv.74"
+            const string darknet_filename = is53 ? "darknet53.conv.74"
                                                : (iscsp || isv11) ? "yolov4.conv.137"
                                                : "yolov3-tiny.weights";
 
-            std::filesystem::path darknet_weights = data_dir / darknet_filename;
-            if (!std::filesystem::exists(darknet_weights))
-                darknet_weights = std::filesystem::path("yolo_voc_data") / darknet_filename;
-            if (std::filesystem::exists(darknet_weights))
+            filesystem::path darknet_weights = data_dir / darknet_filename;
+            if (!filesystem::exists(darknet_weights))
+                darknet_weights = filesystem::path("yolo_voc_data") / darknet_filename;
+            if (filesystem::exists(darknet_weights))
             {
                 Index loaded = 0;
                 if (isv11)
@@ -782,28 +782,28 @@ int main()
                     loaded = YoloDataset::load_darknet_backbone(
                         yolo_network, darknet_weights, n_backbone_convs);
                 }
-                std::cout << "Loaded " << loaded
+                cout << "Loaded " << loaded
                           << " backbone layers from " << darknet_weights << "\n";
                 backbone_pretrained_loaded = true;
             }
             else
             {
-                std::cout << "Darknet pretrained weights not found at " << darknet_weights << ".\n";
+                cout << "Darknet pretrained weights not found at " << darknet_weights << ".\n";
                 if (is53)
-                    std::cout << "Download darknet53.conv.74 from "
+                    cout << "Download darknet53.conv.74 from "
                               << "https://pjreddie.com/media/files/darknet53.conv.74 "
                               << "and place it in " << data_dir << "\n";
                 else
-                    std::cout << "Download yolov4.conv.137 from "
+                    cout << "Download yolov4.conv.137 from "
                               << "https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.conv.137 "
                               << "and place it in " << data_dir << "\n";
-                std::cout << "Training from scratch instead.\n";
+                cout << "Training from scratch instead.\n";
             }
         }
 
         bool backbone_frozen = false;
         auto set_backbone_trainable = [&](bool trainable) {
-            const std::string prefix = (backbone == YoloNetwork::Backbone::Darknet53)      ? "dn53_"  :
+            const string prefix = (backbone == YoloNetwork::Backbone::Darknet53)      ? "dn53_"  :
                                        (backbone == YoloNetwork::Backbone::CSPDarknet53)   ? "csp53_" :
                                        (backbone == YoloNetwork::Backbone::CSPDarknet53v11)? "c11_"   :
                                        (backbone == YoloNetwork::Backbone::DarknetTinyV3)  ? "dntv3_" : "";
@@ -811,43 +811,43 @@ int main()
             for (auto& layer : yolo_network.get_layers())
                 if (layer && layer->get_label().rfind(prefix, 0) == 0)
                     layer->set_is_trainable(trainable);
-            std::cout << (trainable ? "Unfreezing" : "Freezing") << " backbone layers (" << prefix << "*).\n";
+            cout << (trainable ? "Unfreezing" : "Freezing") << " backbone layers (" << prefix << "*).\n";
         };
 
         struct TrainingRound { float lr; int epochs; };
 
-        const std::vector<TrainingRound> lr_schedule =
-            use_coco                      ? std::vector<TrainingRound>{{1e-4f, 300}, {3e-5f, 200}}                     :
-            (use_voc && is_csp53)         ? std::vector<TrainingRound>{{1.25e-4f, 200}, {2.5e-5f, 150}, {1e-5f, 100}} :
-            (use_voc && is_csp53v11)      ? std::vector<TrainingRound>{{2.5e-5f, 5}, {2.5e-4f, 150}, {5e-5f, 100}, {1e-5f, 50}} :
-            (use_voc && is_darknet53)     ? std::vector<TrainingRound>{{1.25e-4f, 150}, {2.5e-5f, 150}, {1e-5f, 100}} :
-            use_voc                       ? std::vector<TrainingRound>{{5e-4f, 150}, {1e-4f, 150}, {3e-5f, 100}}      :
-            use_raccoon                   ? std::vector<TrainingRound>{{5e-4f, 400}, {1e-4f, 300}}                     :
-                                            std::vector<TrainingRound>{{1e-3f, 200}};
+        const vector<TrainingRound> lr_schedule =
+            use_coco                      ? vector<TrainingRound>{{1e-4f, 300}, {3e-5f, 200}}                     :
+            (use_voc && is_csp53)         ? vector<TrainingRound>{{1.25e-4f, 200}, {2.5e-5f, 150}, {1e-5f, 100}} :
+            (use_voc && is_csp53v11)      ? vector<TrainingRound>{{2.5e-5f, 5}, {2.5e-4f, 150}, {5e-5f, 100}, {1e-5f, 50}} :
+            (use_voc && is_darknet53)     ? vector<TrainingRound>{{1.25e-4f, 150}, {2.5e-5f, 150}, {1e-5f, 100}} :
+            use_voc                       ? vector<TrainingRound>{{5e-4f, 150}, {1e-4f, 150}, {3e-5f, 100}}      :
+            use_raccoon                   ? vector<TrainingRound>{{5e-4f, 400}, {1e-4f, 300}}                     :
+                                            vector<TrainingRound>{{1e-3f, 200}};
 
-        const std::filesystem::path epochs_file =
+        const filesystem::path epochs_file =
             data_dir / (weights_filename.substr(0, weights_filename.size() - 4) + "_epochs.txt");
         int epochs_done = 0;
-        if (std::filesystem::exists(epochs_file))
+        if (filesystem::exists(epochs_file))
         {
-            std::ifstream ef(epochs_file);
+            ifstream ef(epochs_file);
             ef >> epochs_done;
         }
-        std::cout << "Epochs completed so far: " << epochs_done << "\n";
+        cout << "Epochs completed so far: " << epochs_done << "\n";
 
-        const std::filesystem::path ema_weights_path = [&] {
+        const filesystem::path ema_weights_path = [&] {
             auto p = weights_path;
             p.replace_filename(weights_path.stem().string() + "_ema.bin");
             return p;
         }();
         const Index n_params = yolo_network.get_parameters_size();
 
-        std::vector<float> ema_params(static_cast<size_t>(n_params));
+        vector<float> ema_params(static_cast<size_t>(n_params));
         bool ema_updated_this_run = false;
 
         constexpr float EMA_DECAY = 0.9999f;
 
-        std::vector<float> ema_live_cpu(static_cast<size_t>(n_params));
+        vector<float> ema_live_cpu(static_cast<size_t>(n_params));
         adam->post_batch_callback = [&](NeuralNetwork* nn) {
             const float* src = nn->get_parameters_data();
 #ifdef OPENNN_HAS_CUDA
@@ -867,8 +867,8 @@ int main()
         adam->post_best_callback = [&](Index epoch, float val_error) {
             yolo_network.save_parameters_binary(weights_path);
             yolo_network.save_states_binary(states_path);
-            { std::ofstream ef(epochs_file); ef << (epochs_done + static_cast<int>(epoch) + 1); }
-            std::cout << "Best checkpoint saved at epoch "
+            { ofstream ef(epochs_file); ef << (epochs_done + static_cast<int>(epoch) + 1); }
+            cout << "Best checkpoint saved at epoch "
                       << (epochs_done + static_cast<int>(epoch) + 1)
                       << " (val=" << val_error << ")\n";
 
@@ -877,26 +877,26 @@ int main()
                 yolo_network.set_parameters(ema_vec);
                 yolo_network.save_parameters_binary(ema_weights_path);
                 yolo_network.load_parameters_binary(weights_path);
-                if (std::filesystem::exists(states_path))
+                if (filesystem::exists(states_path))
                     yolo_network.load_states_binary(states_path);
             }
         };
 
-        if (resume_training || !std::filesystem::exists(weights_path))
+        if (resume_training || !filesystem::exists(weights_path))
         {
 
             {
                 const float* live = yolo_network.get_parameters_data();
-                std::copy(live, live + n_params, ema_params.begin());
+                copy(live, live + n_params, ema_params.begin());
             }
-            if (std::filesystem::exists(ema_weights_path))
+            if (filesystem::exists(ema_weights_path))
             {
-                std::vector<float> live_snapshot(ema_params);
+                vector<float> live_snapshot(ema_params);
                 yolo_network.load_parameters_binary(ema_weights_path);
                 const float* saved_ema = yolo_network.get_parameters_data();
-                std::copy(saved_ema, saved_ema + n_params, ema_params.begin());
+                copy(saved_ema, saved_ema + n_params, ema_params.begin());
                 yolo_network.set_parameters(Eigen::Map<const VectorR>(live_snapshot.data(), n_params));
-                std::cout << "Resumed EMA weights from \"" << ema_weights_path.string() << "\".\n";
+                cout << "Resumed EMA weights from \"" << ema_weights_path.string() << "\".\n";
             }
 
             int cumulative = 0;
@@ -916,10 +916,10 @@ int main()
 
                 {
                     const float* live = yolo_network.get_parameters_data();
-                    std::copy(live, live + n_params, ema_params.begin());
+                    copy(live, live + n_params, ema_params.begin());
                 }
 
-                std::cout << "\nTraining: lr=" << rnd.lr
+                cout << "\nTraining: lr=" << rnd.lr
                           << " for " << to_run << " epochs"
                           << " (target epoch " << round_end << ").\n";
                 const auto train_result = training_strategy.train();
@@ -928,8 +928,8 @@ int main()
 
                 yolo_network.save_parameters_binary(weights_path);
                 yolo_network.save_states_binary(states_path);
-                { std::ofstream ef(epochs_file); ef << epochs_done; }
-                std::cout << "Checkpoint saved: " << epochs_done << " total epochs.\n";
+                { ofstream ef(epochs_file); ef << epochs_done; }
+                cout << "Checkpoint saved: " << epochs_done << " total epochs.\n";
 
                 {
                     VectorR ema_vec = Eigen::Map<const VectorR>(ema_params.data(), n_params);
@@ -937,52 +937,51 @@ int main()
                     yolo_network.save_parameters_binary(ema_weights_path);
 
                     yolo_network.load_parameters_binary(weights_path);
-                    if (std::filesystem::exists(states_path))
+                    if (filesystem::exists(states_path))
                         yolo_network.load_states_binary(states_path);
                 }
-                std::cout << "EMA checkpoint saved: \"" << ema_weights_path.string() << "\".\n";
+                cout << "EMA checkpoint saved: \"" << ema_weights_path.string() << "\".\n";
             }
-            std::cout << "Training complete (" << epochs_done << " total epochs).\n";
+            cout << "Training complete (" << epochs_done << " total epochs).\n";
         }
 
         const bool is_fpn = (head_style == YoloNetwork::HeadStyle::FPN ||
                               head_style == YoloNetwork::HeadStyle::PANet ||
                               head_style == YoloNetwork::HeadStyle::FPNv8);
 
-        const std::filesystem::path output_dir = data_dir / "annotated";
+        const filesystem::path output_dir = data_dir / "annotated";
 
-        if (std::filesystem::exists(output_dir))
-            for (const auto& entry : std::filesystem::directory_iterator(output_dir))
-                std::filesystem::remove(entry.path());
-        std::filesystem::create_directories(output_dir);
+        if (filesystem::exists(output_dir))
+            for (const auto& entry : filesystem::directory_iterator(output_dir))
+                filesystem::remove(entry.path());
+        filesystem::create_directories(output_dir);
 
         const Index image_floats = input_shape[0] * input_shape[1] * input_shape[2];
-        std::vector<float> input_buffer(size_t(image_floats), 0.0f);
+        vector<float> input_buffer(size_t(image_floats), 0.0f);
         Tensor4 input(1, input_shape[0], input_shape[1], input_shape[2]);
 
-        const Index max_boxes = grid_size * grid_size * boxes_per_cell;
-        const std::vector<std::string>& class_names = dataset.get_class_names();
-        const std::array<std::array<uint8_t, 3>, 2> box_color_by_role{{
+        const vector<string>& class_names = dataset.get_class_names();
+        const array<array<uint8_t, 3>, 2> box_color_by_role{{
             { 30, 200,  30},
             {220,  40,  40},
         }};
 
-        const std::vector<Index> selection_indices = dataset.get_sample_indices("Validation");
+        const vector<Index> selection_indices = dataset.get_sample_indices("Validation");
         const Index num_classes = dataset.get_classes_number();
-        std::vector<Index> vis_indices;
+        vector<Index> vis_indices;
         const bool is_synthetic = !use_voc && !use_raccoon && !use_coco;
         const Index max_vis = is_synthetic ? num_classes : Index(9);
         if (is_synthetic)
         {
 
-            std::vector<bool> class_found(size_t(num_classes), false);
+            vector<bool> class_found(size_t(num_classes), false);
             constexpr int spc = 256;
             for (Index idx : selection_indices)
             {
-                const std::string stem = dataset.get_image_path(idx).stem().string();
+                const string stem = dataset.get_image_path(idx).stem().string();
                 const auto under = stem.rfind('_');
-                if (under == std::string::npos) continue;
-                const int n = std::stoi(stem.substr(under + 1));
+                if (under == string::npos) continue;
+                const int n = stoi(stem.substr(under + 1));
                 const int c = n / spc;
                 if (c >= 0 && c < int(num_classes) && !class_found[size_t(c)])
                 {
@@ -1002,7 +1001,7 @@ int main()
             }
         }
         const Index samples_to_visualize = Index(vis_indices.size());
-        std::cout << "\nVisualizing " << samples_to_visualize
+        cout << "\nVisualizing " << samples_to_visualize
                   << " held-out (validation) samples — model has never seen these. "
                   << "Annotated BMPs in " << output_dir << ":\n";
 
@@ -1011,9 +1010,9 @@ int main()
             const Index s = vis_indices[size_t(k)];
 
             dataset.fill_inputs({s}, {}, input_buffer.data(), FillMode::Inference);
-            std::copy(input_buffer.begin(), input_buffer.end(), input.data());
+            copy(input_buffer.begin(), input_buffer.end(), input.data());
 
-            std::vector<YoloDetection> detections;
+            vector<YoloDetection> detections;
 
             if (is_fpn)
             {
@@ -1021,15 +1020,15 @@ int main()
                 ForwardPropagation forward_propagation(
 1, &yolo_network,
                     ForwardPropagationMode::Inference);
-                const std::vector<TensorView> input_views = {
+                const vector<TensorView> input_views = {
                     TensorView(input.data(),
                                {1, input.dimension(1), input.dimension(2), input.dimension(3)},
                                Type::FP32)
                 };
                 yolo_network.forward_propagate(input_views, forward_propagation, false);
 
-                std::vector<YoloFpnHead> fpn_heads;
-                std::vector<std::vector<float>> fpn_cpu_buffers;
+                vector<YoloFpnHead> fpn_heads;
+                vector<vector<float>> fpn_cpu_buffers;
                 const auto& layers = yolo_network.get_layers();
                 const bool is_v8_head = (head_style == YoloNetwork::HeadStyle::FPNv8);
                 for (size_t li = 0; li < layers.size(); ++li)
@@ -1055,7 +1054,10 @@ int main()
                         data_ptr = fpn_cpu_buffers.back().data();
                     }
 #endif
-                    fpn_heads.push_back({ data_ptr, head_shape[0], boxes_per_head, classes_n });
+                    fpn_heads.push_back({
+                        span<const float>(data_ptr, size_t(view.size())),
+                        head_shape[0], boxes_per_head, classes_n
+                    });
                 }
 
                 {
@@ -1073,8 +1075,8 @@ int main()
                                 const Index base = (r * h.grid_size + c) * ch;
                                 float best_p = 0.f;
                                 for (Index cl = 0; cl < h.classes_number; ++cl)
-                                    best_p = std::max(best_p, h.data[base + box_ch + cl]);
-                                max_score = std::max(max_score, best_p);
+                                    best_p = max(best_p, h.data[base + box_ch + cl]);
+                                max_score = max(max_score, best_p);
                                 if (best_p >= 0.01f)  ++above_001;
                                 if (best_p >= 0.1f)   ++above_01;
                                 if (best_p >= 0.25f)  ++above_025;
@@ -1092,16 +1094,16 @@ int main()
                                 const float obj = h.data[base + 4];
                                 float best_p = 0.f;
                                 for (Index cl = 0; cl < h.classes_number; ++cl)
-                                    best_p = std::max(best_p, h.data[base + 5 + cl]);
+                                    best_p = max(best_p, h.data[base + 5 + cl]);
                                 const float score = obj * best_p;
-                                max_score = std::max(max_score, score);
+                                max_score = max(max_score, score);
                                 if (score >= 0.01f)  ++above_001;
                                 if (score >= 0.1f)   ++above_01;
                                 if (score >= 0.25f)  ++above_025;
                             }
                         }
                     }
-                    std::cout << "  Raw : max_score=" << max_score
+                    cout << "  Raw : max_score=" << max_score
                               << " boxes≥0.01:" << above_001
                               << " ≥0.1:" << above_01
                               << " ≥0.25:" << above_025 << "\n";
@@ -1130,22 +1132,22 @@ input_shape[1],
             {
                 const MatrixR outputs = yolo_network.calculate_outputs(input);
                 detections = decode_yolo_detections(
-                    outputs.data(), max_boxes,
+                    span<const float>(outputs.data(), size_t(outputs.size())),
 input_shape[0],
 input_shape[1],
 input_shape[0],
 input_shape[1]);
             }
 
-            const std::filesystem::path image_path = dataset.get_image_path(s);
-            const std::string name = image_path.stem().string();
-            std::filesystem::path label_path = labels_dir / image_path.filename();
+            const filesystem::path image_path = dataset.get_image_path(s);
+            const string name = image_path.stem().string();
+            filesystem::path label_path = labels_dir / image_path.filename();
             label_path.replace_extension(".txt");
 
             struct GtBox { int cls; float cx, cy, w, h; };
-            std::vector<GtBox> gt_boxes;
+            vector<GtBox> gt_boxes;
             {
-                std::ifstream lf(label_path);
+                ifstream lf(label_path);
                 int c; float cx, cy, w, h;
                 while (lf >> c >> cx >> cy >> w >> h)
                     gt_boxes.push_back({c, cx, cy, w, h});
@@ -1177,14 +1179,14 @@ input_shape[1]);
                 const auto raw = opennn::load_image(image_path);
                 orig_H  = int(raw.dimension(0));
                 orig_W  = int(raw.dimension(1));
-                lb_scale = std::min(float(canvas_W) / float(orig_W),
+                lb_scale = min(float(canvas_W) / float(orig_W),
                                     float(canvas_H) / float(orig_H));
                 lb_pad_x = (float(canvas_W) - float(orig_W) * lb_scale) * 0.5f;
                 lb_pad_y = (float(canvas_H) - float(orig_H) * lb_scale) * 0.5f;
-                const int scaled_W = int(std::round(float(orig_W) * lb_scale));
-                const int scaled_H = int(std::round(float(orig_H) * lb_scale));
-                const int off_x    = int(std::round(lb_pad_x));
-                const int off_y    = int(std::round(lb_pad_y));
+                const int scaled_W = int(round(float(orig_W) * lb_scale));
+                const int scaled_H = int(round(float(orig_H) * lb_scale));
+                const int off_x    = int(round(lb_pad_x));
+                const int off_y    = int(round(lb_pad_y));
 
                 img.width = canvas_W; img.height = canvas_H;
                 img.rgb.assign(size_t(canvas_W * canvas_H * 3), 128);
@@ -1192,19 +1194,19 @@ input_shape[1]);
                 const int ch = int(raw.dimension(2));
                 for (int py = 0; py < scaled_H; ++py)
                 {
-                    const int src_y = std::min(int(float(py) / lb_scale + 0.5f), orig_H - 1);
+                    const int src_y = min(int(float(py) / lb_scale + 0.5f), orig_H - 1);
                     for (int px = 0; px < scaled_W; ++px)
                     {
-                        const int src_x = std::min(int(float(px) / lb_scale + 0.5f), orig_W - 1);
+                        const int src_x = min(int(float(px) / lb_scale + 0.5f), orig_W - 1);
                         const int dst_y = py + off_y, dst_x = px + off_x;
                         if (dst_y < 0 || dst_y >= canvas_H || dst_x < 0 || dst_x >= canvas_W) continue;
                         const float r = raw(src_y, src_x, 0);
                         const float g = ch > 1 ? raw(src_y, src_x, 1) : r;
                         const float b = ch > 2 ? raw(src_y, src_x, 2) : r;
                         const size_t idx = size_t((dst_y * canvas_W + dst_x) * 3);
-                        img.rgb[idx]     = uint8_t(std::clamp(int(r), 0, 255));
-                        img.rgb[idx + 1] = uint8_t(std::clamp(int(g), 0, 255));
-                        img.rgb[idx + 2] = uint8_t(std::clamp(int(b), 0, 255));
+                        img.rgb[idx]     = uint8_t(clamp(int(r), 0, 255));
+                        img.rgb[idx + 1] = uint8_t(clamp(int(g), 0, 255));
+                        img.rgb[idx + 2] = uint8_t(clamp(int(b), 0, 255));
                     }
                 }
             }
@@ -1216,10 +1218,10 @@ input_shape[1]);
                 const float cy_px = cy * float(orig_H) * lb_scale + lb_pad_y;
                 const float hw    = w * float(orig_W) * lb_scale * 0.5f;
                 const float hh    = h * float(orig_H) * lb_scale * 0.5f;
-                x0 = int(std::round(cx_px - hw));
-                y0 = int(std::round(cy_px - hh));
-                x1 = int(std::round(cx_px + hw)) - 1;
-                y1 = int(std::round(cy_px + hh)) - 1;
+                x0 = int(round(cx_px - hw));
+                y0 = int(round(cy_px - hh));
+                x1 = int(round(cx_px + hw)) - 1;
+                y1 = int(round(cy_px + hh)) - 1;
             };
 
             int gt_x0, gt_y0, gt_x1, gt_y1;
@@ -1232,50 +1234,50 @@ input_shape[1]);
                 draw_rect_outline(img, x0, y0, x1, y1, box_color_by_role[0], 2);
             }
 
-            std::sort(detections.begin(), detections.end(),
+            sort(detections.begin(), detections.end(),
                       [](const YoloDetection& a, const YoloDetection& b)
                       { return a.score > b.score; });
 
-            const std::string gt_class_name =
+            const string gt_class_name =
                 (gt_class >= 0 && size_t(gt_class) < class_names.size())
-                    ? class_names[size_t(gt_class)] : std::to_string(gt_class);
+                    ? class_names[size_t(gt_class)] : to_string(gt_class);
 
-            const int gt_col_cell = std::min(int(grid_size) - 1,
-                                              std::max(0, int(gt_cx * float(grid_size))));
-            const int gt_row_cell = std::min(int(grid_size) - 1,
-                                              std::max(0, int(gt_cy * float(grid_size))));
+            const int gt_col_cell = min(int(grid_size) - 1,
+                                              max(0, int(gt_cx * float(grid_size))));
+            const int gt_row_cell = min(int(grid_size) - 1,
+                                              max(0, int(gt_cy * float(grid_size))));
             const float cell_w_px = float(W) / float(grid_size);
             const float cell_h_px = float(H) / float(grid_size);
 
-            std::cout << "\nSample " << s << " (" << name << ".bmp)\n"
+            cout << "\nSample " << s << " (" << name << ".bmp)\n"
                       << "  GT   : class=" << gt_class_name
                       << " box=(" << gt_x0 << "," << gt_y0 << ")-("
                       << gt_x1 << "," << gt_y1 << ")\n";
 
             auto iou_with_gt = [&](int x0, int y0, int x1, int y1) -> float
             {
-                const int ix0 = std::max(x0, gt_x0);
-                const int iy0 = std::max(y0, gt_y0);
-                const int ix1 = std::min(x1, gt_x1);
-                const int iy1 = std::min(y1, gt_y1);
+                const int ix0 = max(x0, gt_x0);
+                const int iy0 = max(y0, gt_y0);
+                const int ix1 = min(x1, gt_x1);
+                const int iy1 = min(y1, gt_y1);
                 if (ix1 <= ix0 || iy1 <= iy0) return 0.0f;
                 const float inter = float(ix1 - ix0) * float(iy1 - iy0);
                 const float a = float(x1 - x0) * float(y1 - y0);
                 const float b = float(gt_x1 - gt_x0) * float(gt_y1 - gt_y0);
-                return inter / std::max(a + b - inter, 1e-6f);
+                return inter / max(a + b - inter, 1e-6f);
             };
 
-            const std::array<std::array<uint8_t, 3>, 3> rank_colors{{
+            const array<array<uint8_t, 3>, 3> rank_colors{{
                 {220,  40,  40},
                 {255, 140,   0},
                 {235, 200,   0},
             }};
-            const std::array<uint8_t, 3> best_iou_color{ 40, 200, 220};
+            const array<uint8_t, 3> best_iou_color{ 40, 200, 220};
 
-            const Index shown = std::min(Index(detections.size()), Index(5));
+            const Index shown = min(Index(detections.size()), Index(5));
             if (shown == 0)
             {
-                std::cout << "  Pred : (no boxes survived NMS)\n";
+                cout << "  Pred : (no boxes survived NMS)\n";
             }
 
             Index best_iou_rank = -1;
@@ -1283,10 +1285,10 @@ input_shape[1]);
             for (Index r = 0; r < Index(detections.size()); ++r)
             {
                 const auto& d = detections[size_t(r)];
-                const int x0 = int(std::round(d.center_x - d.width  * 0.5f));
-                const int y0 = int(std::round(d.center_y - d.height * 0.5f));
-                const int x1 = int(std::round(d.center_x + d.width  * 0.5f)) - 1;
-                const int y1 = int(std::round(d.center_y + d.height * 0.5f)) - 1;
+                const int x0 = int(round(d.center_x - d.width  * 0.5f));
+                const int y0 = int(round(d.center_y - d.height * 0.5f));
+                const int x1 = int(round(d.center_x + d.width  * 0.5f)) - 1;
+                const int y1 = int(round(d.center_y + d.height * 0.5f)) - 1;
                 const float iou = iou_with_gt(x0, y0, x1, y1);
                 if (iou > best_iou_value && d.class_id == gt_class)
                 {
@@ -1298,41 +1300,41 @@ input_shape[1]);
             for (Index r = 0; r < shown; ++r)
             {
                 const auto& d = detections[size_t(r)];
-                const int x0 = int(std::round(d.center_x - d.width  * 0.5f));
-                const int y0 = int(std::round(d.center_y - d.height * 0.5f));
-                const int x1 = int(std::round(d.center_x + d.width  * 0.5f)) - 1;
-                const int y1 = int(std::round(d.center_y + d.height * 0.5f)) - 1;
+                const int x0 = int(round(d.center_x - d.width  * 0.5f));
+                const int y0 = int(round(d.center_y - d.height * 0.5f));
+                const int x1 = int(round(d.center_x + d.width  * 0.5f)) - 1;
+                const int y1 = int(round(d.center_y + d.height * 0.5f)) - 1;
                 const float iou = iou_with_gt(x0, y0, x1, y1);
 
-                const std::string pr_class_name =
+                const string pr_class_name =
                     (d.class_id >= 0 && size_t(d.class_id) < class_names.size())
-                        ? class_names[size_t(d.class_id)] : std::to_string(d.class_id);
+                        ? class_names[size_t(d.class_id)] : to_string(d.class_id);
 
                 if (r < Index(rank_colors.size()))
                     draw_rect_outline(img, x0, y0, x1, y1, rank_colors[size_t(r)], 2);
 
-                std::cout << "  Top-" << (r + 1) << ": class=" << pr_class_name
+                cout << "  Top-" << (r + 1) << ": class=" << pr_class_name
                           << " score=" << d.score
                           << " iou=" << iou
                           << " box=(" << x0 << "," << y0 << ")-("
                           << x1 << "," << y1 << ")\n";
             }
 
-            std::cout << "  GT cell: (col=" << gt_col_cell << ", row=" << gt_row_cell << ")\n";
+            cout << "  GT cell: (col=" << gt_col_cell << ", row=" << gt_row_cell << ")\n";
             int gt_cell_hits = 0;
             for (Index r = 0; r < Index(detections.size()); ++r)
             {
                 const auto& d = detections[size_t(r)];
-                const int det_col = std::min(int(grid_size) - 1,
-                                              std::max(0, int(d.center_x / cell_w_px)));
-                const int det_row = std::min(int(grid_size) - 1,
-                                              std::max(0, int(d.center_y / cell_h_px)));
+                const int det_col = min(int(grid_size) - 1,
+                                              max(0, int(d.center_x / cell_w_px)));
+                const int det_row = min(int(grid_size) - 1,
+                                              max(0, int(d.center_y / cell_h_px)));
                 if (det_col == gt_col_cell && det_row == gt_row_cell)
                 {
-                    const std::string nm =
+                    const string nm =
                         (d.class_id >= 0 && size_t(d.class_id) < class_names.size())
-                            ? class_names[size_t(d.class_id)] : std::to_string(d.class_id);
-                    std::cout << "    rank=" << (r + 1) << " in GT cell: class=" << nm
+                            ? class_names[size_t(d.class_id)] : to_string(d.class_id);
+                    cout << "    rank=" << (r + 1) << " in GT cell: class=" << nm
                               << " score=" << d.score
                               << " center=(" << d.center_x << ", " << d.center_y << ")"
                               << " size=(" << d.width << " x " << d.height << ")\n";
@@ -1340,56 +1342,56 @@ input_shape[1]);
                 }
             }
             if (gt_cell_hits == 0)
-                std::cout << "    (no detections in GT cell — model never fired the responsible cell)\n";
+                cout << "    (no detections in GT cell — model never fired the responsible cell)\n";
 
             if (best_iou_rank >= 0
                 && best_iou_rank >= Index(rank_colors.size())
                 && best_iou_value > 0.0f)
             {
                 const auto& d = detections[size_t(best_iou_rank)];
-                const int x0 = int(std::round(d.center_x - d.width  * 0.5f));
-                const int y0 = int(std::round(d.center_y - d.height * 0.5f));
-                const int x1 = int(std::round(d.center_x + d.width  * 0.5f)) - 1;
-                const int y1 = int(std::round(d.center_y + d.height * 0.5f)) - 1;
+                const int x0 = int(round(d.center_x - d.width  * 0.5f));
+                const int y0 = int(round(d.center_y - d.height * 0.5f));
+                const int x1 = int(round(d.center_x + d.width  * 0.5f)) - 1;
+                const int y1 = int(round(d.center_y + d.height * 0.5f)) - 1;
                 draw_rect_outline(img, x0, y0, x1, y1, best_iou_color, 2);
 
-                std::cout << "  Best-IoU box is rank " << (best_iou_rank + 1)
+                cout << "  Best-IoU box is rank " << (best_iou_rank + 1)
                           << " (iou=" << best_iou_value << ", score=" << d.score
                           << ") — drawn in cyan\n";
             }
             else if (best_iou_rank >= 0)
             {
-                std::cout << "  Best-IoU box is also top-" << (best_iou_rank + 1)
+                cout << "  Best-IoU box is also top-" << (best_iou_rank + 1)
                           << " (iou=" << best_iou_value << ")\n";
             }
 
-            const std::string class_label =
+            const string class_label =
                 (gt_class >= 0 && size_t(gt_class) < class_names.size())
-                    ? class_names[size_t(gt_class)] : std::to_string(gt_class);
-            const std::string out_stem = is_synthetic
+                    ? class_names[size_t(gt_class)] : to_string(gt_class);
+            const string out_stem = is_synthetic
                 ? ("annotated_" + class_label)
                 : ("annotated_" + image_path.stem().string());
-            const std::filesystem::path out_path = output_dir / (out_stem + ".bmp");
+            const filesystem::path out_path = output_dir / (out_stem + ".bmp");
             write_bmp24_top_down(out_path, img);
-            std::cout << "  -> " << out_path << "\n";
+            cout << "  -> " << out_path << "\n";
         }
 
-        std::cout << "\nLegend: green = GT, red = top-1, orange = top-2, "
+        cout << "\nLegend: green = GT, red = top-1, orange = top-2, "
                   << "yellow = top-3, cyan = best-IoU-vs-GT (if outside top-3).\n";
 
         if (ema_updated_this_run)
         {
             VectorR ema_vec = Eigen::Map<const VectorR>(ema_params.data(), n_params);
             yolo_network.set_parameters(ema_vec);
-            std::cout << "Using in-memory EMA weights for final mAP evaluation.\n";
+            cout << "Using in-memory EMA weights for final mAP evaluation.\n";
         }
         else
         {
-            std::cout << "Using live (best-epoch checkpoint) weights for final mAP evaluation.\n";
+            cout << "Using live (best-epoch checkpoint) weights for final mAP evaluation.\n";
         }
 
         {
-            std::cout << "\nComputing VOC mAP@0.5 on "
+            cout << "\nComputing VOC mAP@0.5 on "
                       << selection_indices.size() << " validation images...\n";
 
             struct GtBox { int cls; float cx, cy, w, h; };
@@ -1398,16 +1400,16 @@ input_shape[1]);
             const int N_cls = int(dataset.get_classes_number());
             const int N_val = int(selection_indices.size());
 
-            auto read_image_dims = [](const std::filesystem::path& p) -> std::pair<int,int> {
-                std::ifstream f(p, std::ios::binary);
+            auto read_image_dims = [](const filesystem::path& p) -> pair<int,int> {
+                ifstream f(p, ios::binary);
                 unsigned char h[30] = {};
                 f.read(reinterpret_cast<char*>(h), 30);
                 if (!f.gcount()) return {0, 0};
 
                 if (h[0] == 'B' && h[1] == 'M') {
                     int w = 0, ht = 0;
-                    std::memcpy(&w,  h + 18, 4);
-                    std::memcpy(&ht, h + 22, 4);
+                    memcpy(&w,  h + 18, 4);
+                    memcpy(&ht, h + 22, 4);
                     if (ht < 0) ht = -ht;
                     return {ht, w};
                 }
@@ -1424,7 +1426,7 @@ input_shape[1]);
                         unsigned char m[2];
                         f.read(reinterpret_cast<char*>(m), 2);
                         if (f.gcount() < 2) break;
-                        if (m[0] != 0xFF) { f.seekg(-1, std::ios::cur); continue; }
+                        if (m[0] != 0xFF) { f.seekg(-1, ios::cur); continue; }
                         if (m[1] == 0xC0 || m[1] == 0xC2) {
                             unsigned char seg[7];
                             f.read(reinterpret_cast<char*>(seg), 7);
@@ -1435,24 +1437,24 @@ input_shape[1]);
                         f.read(reinterpret_cast<char*>(len), 2);
                         if (f.gcount() < 2) break;
                         int skip = ((int(len[0])<<8)|len[1]) - 2;
-                        if (skip > 0) f.seekg(skip, std::ios::cur);
+                        if (skip > 0) f.seekg(skip, ios::cur);
                     }
                 }
                 return {0, 0};
             };
 
-            std::vector<std::vector<GtBox>> val_gt(N_val);
+            vector<vector<GtBox>> val_gt(N_val);
             for (int k = 0; k < N_val; ++k)
             {
                 const Index s = selection_indices[size_t(k)];
-                const std::filesystem::path img_path = dataset.get_image_path(s);
-                std::filesystem::path lbl = labels_dir / img_path.filename();
+                const filesystem::path img_path = dataset.get_image_path(s);
+                filesystem::path lbl = labels_dir / img_path.filename();
                 lbl.replace_extension(".txt");
 
                 const auto [orig_H, orig_W] = read_image_dims(img_path);
                 float lb_scale = 1.0f, lb_off_x = 0.0f, lb_off_y = 0.0f;
                 if (orig_H > 0 && orig_W > 0) {
-                    lb_scale = std::min(float(input_shape[0]) / float(orig_H),
+                    lb_scale = min(float(input_shape[0]) / float(orig_H),
                                         float(input_shape[1]) / float(orig_W));
                     lb_off_x = (float(input_shape[1]) - float(orig_W) * lb_scale) * 0.5f;
                     lb_off_y = (float(input_shape[0]) - float(orig_H) * lb_scale) * 0.5f;
@@ -1460,7 +1462,7 @@ input_shape[1]);
                 const float inv_iW = 1.0f / float(input_shape[1]);
                 const float inv_iH = 1.0f / float(input_shape[0]);
 
-                std::ifstream f(lbl);
+                ifstream f(lbl);
                 int c; float cx, cy, w, h;
                 while (f >> c >> cx >> cy >> w >> h) {
 
@@ -1472,27 +1474,27 @@ input_shape[1]);
                 }
             }
 
-            std::vector<std::vector<Pred>> cls_preds(N_cls);
+            vector<vector<Pred>> cls_preds(N_cls);
             for (int k = 0; k < N_val; ++k)
             {
                 const Index s = selection_indices[size_t(k)];
                 dataset.fill_inputs({s}, {}, input_buffer.data(), FillMode::Inference);
-                std::copy(input_buffer.begin(), input_buffer.end(), input.data());
+                copy(input_buffer.begin(), input_buffer.end(), input.data());
 
-                std::vector<YoloDetection> dets;
+                vector<YoloDetection> dets;
                 if (is_fpn)
                 {
                     ForwardPropagation fp_m(1, &yolo_network,
                                             ForwardPropagationMode::Inference);
-                    const std::vector<TensorView> iv = {
+                    const vector<TensorView> iv = {
                         TensorView(input.data(),
                                    {1, input.dimension(1), input.dimension(2), input.dimension(3)},
                                    Type::FP32)
                     };
                     yolo_network.forward_propagate(iv, fp_m, false);
 
-                    std::vector<YoloFpnHead> heads;
-                    std::vector<std::vector<float>> cpu_bufs;
+                    vector<YoloFpnHead> heads;
+                    vector<vector<float>> cpu_bufs;
                     const auto& all_layers = yolo_network.get_layers();
                     const bool is_v8_map = (head_style == YoloNetwork::HeadStyle::FPNv8);
                     for (size_t li = 0; li < all_layers.size(); ++li)
@@ -1516,7 +1518,8 @@ input_shape[1]);
                             ptr = cpu_bufs.back().data();
                         }
 #endif
-                        heads.push_back({ptr, hs[0], bph, classes_n});
+                        heads.push_back({span<const float>(ptr, size_t(view.size())),
+                                         hs[0], bph, classes_n});
                     }
                     dets = is_v8_map
                         ? decode_yolo_v8_fpn_detections(heads,
@@ -1531,7 +1534,8 @@ input_shape[1]);
                 else
                 {
                     const MatrixR outputs = yolo_network.calculate_outputs(input);
-                    dets = decode_yolo_detections(outputs.data(), max_boxes,
+                    dets = decode_yolo_detections(
+                               span<const float>(outputs.data(), size_t(outputs.size())),
                                input_shape[0], input_shape[1],
                                input_shape[0], input_shape[1]);
                 }
@@ -1549,12 +1553,12 @@ input_shape[1]);
             auto iou_box = [](float cx1, float cy1, float w1, float h1,
                               float cx2, float cy2, float w2, float h2) -> float
             {
-                const float lx = std::max(cx1 - w1 * 0.5f, cx2 - w2 * 0.5f);
-                const float ly = std::max(cy1 - h1 * 0.5f, cy2 - h2 * 0.5f);
-                const float rx = std::min(cx1 + w1 * 0.5f, cx2 + w2 * 0.5f);
-                const float ry = std::min(cy1 + h1 * 0.5f, cy2 + h2 * 0.5f);
-                const float inter = std::max(0.f, rx - lx) * std::max(0.f, ry - ly);
-                return inter / std::max(w1 * h1 + w2 * h2 - inter, 1e-6f);
+                const float lx = max(cx1 - w1 * 0.5f, cx2 - w2 * 0.5f);
+                const float ly = max(cy1 - h1 * 0.5f, cy2 - h2 * 0.5f);
+                const float rx = min(cx1 + w1 * 0.5f, cx2 + w2 * 0.5f);
+                const float ry = min(cy1 + h1 * 0.5f, cy2 + h2 * 0.5f);
+                const float inter = max(0.f, rx - lx) * max(0.f, ry - ly);
+                return inter / max(w1 * h1 + w2 * h2 - inter, 1e-6f);
             };
 
             float total_ap = 0.f;
@@ -1568,15 +1572,15 @@ input_shape[1]);
                 ++classes_with_gt;
 
                 auto& preds = cls_preds[c];
-                std::sort(preds.begin(), preds.end(),
+                sort(preds.begin(), preds.end(),
                           [](const Pred& a, const Pred& b){ return a.score > b.score; });
 
-                std::vector<std::vector<bool>> matched(N_val);
+                vector<vector<bool>> matched(N_val);
                 for (int k = 0; k < N_val; ++k)
                     matched[k].assign(val_gt[k].size(), false);
 
                 float cum_tp = 0.f, cum_fp = 0.f;
-                std::vector<float> prec, rec;
+                vector<float> prec, rec;
                 for (const auto& p : preds)
                 {
                     float best_iou = 0.5f;
@@ -1607,32 +1611,32 @@ input_shape[1]);
                     const float r = float(ri) * 0.1f;
                     float max_p = 0.f;
                     for (size_t pi = 0; pi < prec.size(); ++pi)
-                        if (rec[pi] >= r) max_p = std::max(max_p, prec[pi]);
+                        if (rec[pi] >= r) max_p = max(max_p, prec[pi]);
                     ap += max_p;
                 }
                 ap /= 11.f;
                 total_ap += ap;
-                std::cout << "  " << std::left << std::setw(14)
+                cout << "  " << left << setw(14)
                           << class_names[size_t(c)]
-                          << "AP=" << std::fixed << std::setprecision(3) << ap
+                          << "AP=" << fixed << setprecision(3) << ap
                           << "  (GT=" << n_gt << " pred=" << preds.size() << ")\n";
             }
 
             const float mAP = classes_with_gt > 0
                 ? total_ap / float(classes_with_gt) : 0.f;
-            std::cout << "mAP@0.5: " << std::fixed << std::setprecision(3) << mAP
+            cout << "mAP@0.5: " << fixed << setprecision(3) << mAP
                       << "  (" << classes_with_gt << "/" << N_cls
                       << " classes with GT in validation set)\n";
         }
 
-        std::cout << "Bye!" << std::endl;
+        cout << "Bye!" << endl;
 
-        std::cout.rdbuf(old_rdbuf);
+        cout.rdbuf(old_rdbuf);
         return 0;
     }
-    catch (const std::exception& e)
+    catch (const exception& e)
     {
-        std::cerr << e.what() << std::endl;
+        cerr << e.what() << endl;
         return 1;
     }
 }

@@ -22,26 +22,22 @@ struct EnumMap
 
     const string& to_string(Enum value) const
     {
-        for (const auto& [enum_value, name] : entries)
-            if (enum_value == value)
-                return name;
-        throw runtime_error("Unknown enum value");
+        const auto entry = ranges::find(entries, value, &Entry::first);
+        throw_if(entry == entries.end(), "Unknown enum value");
+        return entry->second;
     }
 
     Enum from_string(string_view name) const
     {
-        for (const auto& [enum_value, entry_name] : entries)
-            if (entry_name == name)
-                return enum_value;
-        throw runtime_error(format("Unknown enum string: {}", name));
+        const auto entry = ranges::find(entries, name, &Entry::second);
+        throw_if(entry == entries.end(), "Unknown enum string: {}", name);
+        return entry->first;
     }
 
     Enum from_string(string_view name, Enum fallback) const
     {
-        for (const auto& [enum_value, entry_name] : entries)
-            if (entry_name == name)
-                return enum_value;
-        return fallback;
+        const auto entry = ranges::find(entries, name, &Entry::second);
+        return entry != entries.end() ? entry->first : fallback;
     }
 };
 

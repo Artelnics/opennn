@@ -31,8 +31,6 @@ struct BatchSlot
 
     float* host = nullptr;
     Index  host_allocated_size = 0;
-    uint16_t* host_bf16 = nullptr;
-    Index     host_bf16_allocated_size = 0;
 };
 
 bool bf16_host_input_cast_enabled() noexcept;
@@ -100,6 +98,8 @@ struct Batch
 
     void record_h2d_done(cudaStream_t);
 
+    uint16_t* input_host_bf16 = nullptr;
+    Index input_host_bf16_allocated_size = 0;
     Buffer fp32_staging{Device::CUDA};
 
     CudaEvent h2d_done_event;
@@ -137,8 +137,6 @@ struct BatchPools
 
     vector<unique_ptr<Batch>> training_pool;
     vector<unique_ptr<Batch>> validation_pool;
-    unique_ptr<Batch> fixed_training_batch;
-    vector<unique_ptr<Batch>> graph_slot_pool;
 
     ThreadSafeQueue<Batch*>& validation_queue();
 };

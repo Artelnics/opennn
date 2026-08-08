@@ -24,6 +24,11 @@ namespace
 atomic_bool cuda_allocation_growth_forbidden_runtime{false};
 atomic_bool cuda_matmul_plan_creation_forbidden_runtime{false};
 
+bool cuda_matmul_plan_creation_forbidden() noexcept
+{
+    return cuda_matmul_plan_creation_forbidden_runtime.load(memory_order_relaxed);
+}
+
 constexpr int64_t conv_workspace_auto_ceiling = int64_t(256) * 1024 * 1024;
 atomic<int64_t> conv_workspace_cap_mode{-1};
 atomic<int64_t> conv_workspace_auto_bytes{conv_workspace_auto_ceiling};
@@ -104,8 +109,7 @@ optional<void*> graph_workspace_override(GraphWorkspaceKind kind,
 
     if (!active_graph_workspace_views) return nullopt;
 
-    const GraphWorkspaceView view =
-        (*active_graph_workspace_views)[size_t(kind)];
+    const auto view = (*active_graph_workspace_views)[size_t(kind)];
     throw_if(minimum_bytes > view.bytes,
              "CUDA graph workspace needs {} bytes, but the stable "
                     "capture buffer has {} bytes.",
@@ -195,12 +199,6 @@ bool cuda_allocation_growth_forbidden() noexcept
 void set_cuda_allocation_growth_forbidden(bool forbidden) noexcept
 {
     cuda_allocation_growth_forbidden_runtime.store(forbidden, memory_order_relaxed);
-}
-
-bool cuda_matmul_plan_creation_forbidden() noexcept
-{
-    return cuda_matmul_plan_creation_forbidden_runtime.load(
-        memory_order_relaxed);
 }
 
 int64_t conv_workspace_limit_bytes() noexcept
@@ -520,29 +518,12 @@ void stream_wait_event(cudaStream_t stream, cudaEvent_t event)
 
 #ifdef OPENNN_HAS_CUDA
 
-StreamCapture::StreamCapture(cudaStream_t new_stream)
-    : stream(new_stream)
+namespace
 {
-    CHECK_CUDA(cudaStreamBeginCapture(stream, cudaStreamCaptureModeThreadLocal));
-}
 
-GraphHandle StreamCapture::end()
-{
-    cudaGraph_t graph = nullptr;
-    CHECK_CUDA(cudaStreamEndCapture(stream, &graph));
-    finished = true;
-    return GraphHandle(graph);
-}
+struct GraphDeleter { void operator()(cudaGraph_t graph) const noexcept { cudaGraphDestroy(graph); } };
 
-StreamCapture::~StreamCapture() noexcept
-{
-    if (finished) return;
-
-    cudaGraph_t orphan = nullptr;
-    cudaStreamEndCapture(stream, &orphan);
-    if (orphan) cudaGraphDestroy(orphan);
-    cudaGetLastError();
-}
+using GraphHandle = unique_ptr<remove_pointer_t<cudaGraph_t>, GraphDeleter>;
 
 void instantiate_or_update(GraphExecHandle& exec, cudaGraph_t graph)
 {
@@ -561,30 +542,45 @@ void instantiate_or_update(GraphExecHandle& exec, cudaGraph_t graph)
     exec.reset(raw);
 }
 
+}
+
+StreamCapture::StreamCapture(cudaStream_t new_stream)
+    : stream(new_stream)
+{
+    CHECK_CUDA(cudaStreamBeginCapture(stream, cudaStreamCaptureModeThreadLocal));
+}
+
+void StreamCapture::end(GraphExecHandle& exec)
+{
+    cudaGraph_t raw_graph = nullptr;
+    CHECK_CUDA(cudaStreamEndCapture(stream, &raw_graph));
+    finished = true;
+
+    const GraphHandle graph(raw_graph);
+    instantiate_or_update(exec, graph.get());
+}
+
+StreamCapture::~StreamCapture() noexcept
+{
+    if (finished) return;
+
+    cudaGraph_t orphan = nullptr;
+    cudaStreamEndCapture(stream, &orphan);
+    if (orphan) cudaGraphDestroy(orphan);
+    cudaGetLastError();
+}
+
 void launch_graph(const GraphExecHandle& exec, cudaStream_t stream)
 {
     CHECK_CUDA(cudaGraphLaunch(exec.get(), stream));
-}
-
-void destroy_graph(cudaGraph_t graph) noexcept
-{
-    if (graph) cudaGraphDestroy(graph);
-}
-
-void destroy_graph_exec(cudaGraphExec_t exec) noexcept
-{
-    if (exec) cudaGraphExecDestroy(exec);
 }
 
 #else
 
 StreamCapture::StreamCapture(cudaStream_t) { throw_cuda_unavailable(); }
 StreamCapture::~StreamCapture() noexcept {}
-GraphHandle StreamCapture::end() { throw_cuda_unavailable(); }
-void instantiate_or_update(GraphExecHandle&, cudaGraph_t) { throw_cuda_unavailable(); }
+void StreamCapture::end(GraphExecHandle&) { throw_cuda_unavailable(); }
 void launch_graph(const GraphExecHandle&, cudaStream_t) { throw_cuda_unavailable(); }
-void destroy_graph(cudaGraph_t) noexcept {}
-void destroy_graph_exec(cudaGraphExec_t) noexcept {}
 
 #endif
 

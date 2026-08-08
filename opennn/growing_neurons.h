@@ -34,6 +34,10 @@ public:
     const TrainingStrategy* get_training_strategy() const noexcept { return training_strategy; }
 
     void set(TrainingStrategy*);
+    void set_training_strategy(TrainingStrategy* new_training_strategy) noexcept
+    {
+        training_strategy = new_training_strategy;
+    }
 
     void set_default();
 

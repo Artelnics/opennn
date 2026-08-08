@@ -133,9 +133,7 @@ Index sample_token(VectorR& probabilities,
     if (config.temperature != 1.0f)
     {
         const float inverse_temperature = 1.0f / config.temperature;
-        for (Index i = 0; i < vocabulary_size; ++i)
-            probabilities(i) =
-                pow(max(probabilities(i), 0.0f), inverse_temperature);
+        probabilities = probabilities.array().max(0.0f).pow(inverse_temperature).matrix();
     }
 
     const bool top_k_applied =
@@ -310,14 +308,14 @@ bool GenerationParser::process_pending(const ChatCallback& callback,
 {
     while (!pending.empty())
     {
-        for (const vector<Index>& stop : spec.stop_sequences)
-            if (pending == stop)
-            {
-                control_tokens += Index(stop.size());
-                pending.clear();
-                stopped = true;
-                return true;
-            }
+        if (const auto stop = ranges::find(spec.stop_sequences, pending);
+            stop != spec.stop_sequences.end())
+        {
+            control_tokens += Index(stop->size());
+            pending.clear();
+            stopped = true;
+            return true;
+        }
 
         if (!spec.reasoning_start.empty() && pending == spec.reasoning_start)
         {
@@ -405,7 +403,7 @@ void GenerationParser::emit_stable_delta(const GenerationChannel output_channel,
         const size_t stable_bytes = complete_utf8_prefix_size(decoded);
 
         throw_if(stable_bytes < state.text.size()
-                 || decoded.compare(0, state.text.size(), state.text) != 0,
+                 || !decoded.starts_with(state.text),
                  "GenerationParser: tokenizer decoding is not prefix-stable.");
 
         if (stable_bytes <= state.text.size()) return;
@@ -577,7 +575,7 @@ private:
                       const vector<Index>& history)
     {
         adjusted = logits;
-        adjusted[0] = -numeric_limits<float>::infinity();
+        adjusted[0] = NEG_INFINITY;
 
         if (config.repetition_penalty != 1.0f)
             for (const Index token : history)
@@ -816,15 +814,12 @@ make_sequence_to_sequence_state(Transformer& network)
     state->decoder_embedding =
         network.get_layer_index("decoder_embedding");
 
-    Index first_cross_attention = -1;
-    for (Index i = 0; i < ssize(layers); ++i)
-        if (layers[size_t(i)]->get_label().starts_with("cross_attention_"))
-        {
-            first_cross_attention = i;
-            break;
-        }
-    throw_if(first_cross_attention < 0,
+    const auto cross_attention = ranges::find_if(layers, [](const unique_ptr<Layer>& layer)
+                                                 { return layer->get_label().starts_with("cross_attention_"); });
+    throw_if(cross_attention == layers.end(),
              "ChatSession: Transformer has no cross-attention layer.");
+
+    const Index first_cross_attention = ranges::distance(layers.begin(), cross_attention);
 
     const vector<Index>& cross_sources =
         network.get_source_layers()[size_t(first_cross_attention)];
@@ -904,9 +899,8 @@ void read_classic_distribution(ClassicGenerationState& state,
                            device::CopyKind::DeviceToHost,
                            device::get_compute_stream());
         device::synchronize(device::get_compute_stream());
-        for (Index i = 0; i < vocabulary; ++i)
-            state.distribution(i) =
-                bfloat16_to_float_host(state.bf16_staging[size_t(i)]);
+        ranges::transform(state.bf16_staging | views::take(vocabulary),
+                          state.distribution.data(), bfloat16_to_float_host);
         return;
     }
 
@@ -1094,7 +1088,6 @@ struct ChatSession::Impl
     {
         propagation.device_input_buffers.resize(1);
         propagation.device_input_views.resize(1);
-        propagation.host_bf16_input_scratch.resize(1);
         propagation.device_input_buffers[0].resize_bytes(
             propagation.get_sequence_capacity() * Index(sizeof(float)),
             Device::CUDA);

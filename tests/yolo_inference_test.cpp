@@ -24,7 +24,7 @@ TEST(YoloInference, DecodeDetectionsRoundTripsThroughLetterbox)
     };
 
     const vector<YoloDetection> detections = decode_yolo_detections(
-        nms_output,               2,
+        nms_output,
         original_height, original_width,
         network_height, network_width);
 
@@ -48,7 +48,7 @@ TEST(YoloInference, DecodeDetectionsStopsAtFirstZeroScore)
     };
 
     const vector<YoloDetection> detections = decode_yolo_detections(
-        nms_output,               3,
+        nms_output,
                   100,           100,          100,          100);
 
     ASSERT_EQ(detections.size(), 2u);
@@ -62,7 +62,7 @@ TEST(YoloInference, DecodeDetectionsSquareImageNoPadding)
     const float nms_output[6] = { 0.5f, 0.25f, 0.4f, 0.2f, 1.0f, 0.0f };
 
     const vector<YoloDetection> detections = decode_yolo_detections(
-        nms_output,               1,
+        nms_output,
                   256,           256,          256,          256);
 
     ASSERT_EQ(detections.size(), 1u);
@@ -109,7 +109,7 @@ TEST(YoloInference, DecodeFpnSingleHeadRoundTripsThroughLetterbox)
                            0,        0.5f,        0.5f,       0.2f,       0.4f,
                           0.85f,           1);
 
-    YoloFpnHead head{ head_buffer.data(), grid, boxes_per_cell, classes };
+    YoloFpnHead head{ head_buffer, grid, boxes_per_cell, classes };
 
     const vector<YoloDetection> detections = decode_yolo_fpn_detections(
         { head },
@@ -143,8 +143,8 @@ TEST(YoloInference, DecodeFpnSuppressesOverlappingSameClassAcrossScales)
                           0.7f,           0);
 
     const vector<YoloFpnHead> heads = {
-        { head_a.data(), grid_a, 1, classes },
-        { head_b.data(), grid_b, 1, classes },
+        { head_a, grid_a, 1, classes },
+        { head_b, grid_b, 1, classes },
     };
 
     const vector<YoloDetection> detections = decode_yolo_fpn_detections(
@@ -173,8 +173,8 @@ TEST(YoloInference, DecodeFpnKeepsOverlappingDifferentClassesAcrossScales)
                           0.7f,           1);
 
     const vector<YoloFpnHead> heads = {
-        { head_a.data(), grid_a, 1, classes },
-        { head_b.data(), grid_b, 1, classes },
+        { head_a, grid_a, 1, classes },
+        { head_b, grid_b, 1, classes },
     };
 
     const vector<YoloDetection> detections = decode_yolo_fpn_detections(
@@ -201,7 +201,7 @@ TEST(YoloInference, DecodeFpnConfidenceThresholdFiltersLowScores)
                          0.875f,        0.875f,       0.2f,       0.2f,
                           0.3f,           1);
 
-    YoloFpnHead h{ head.data(), grid, 1, classes };
+    YoloFpnHead h{ head, grid, 1, classes };
 
     const vector<YoloDetection> detections = decode_yolo_fpn_detections(
         { h },            100,            100,           100,           100,

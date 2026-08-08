@@ -144,6 +144,10 @@ public:
     virtual void enable_device_residency();
     void disable_device_residency() { data_device.resize_bytes(0, Device::CUDA); }
     bool is_device_resident() const noexcept { return data_device.data != nullptr; }
+    bool uses_device_residency() const noexcept
+    {
+        return is_device_resident() || storage_mode == StorageMode::GPUPersistantData;
+    }
     const float* get_device_data() const { return data_device.as<float>(); }
     Index get_device_data_columns() const noexcept { return device_data_columns; }
 
@@ -204,9 +208,8 @@ public:
 
     bool has_categorical_variables() const
     {
-        for(const auto& v : get_variables())
-            if(v.type == VariableType::Categorical) return true;
-        return false;
+        return ranges::any_of(get_variables(),
+            [](const Variable& variable) { return variable.type == VariableType::Categorical; });
     }
 
     void set_separator(const Separator& new_separator) { separator = new_separator; }

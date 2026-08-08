@@ -68,7 +68,7 @@ void read_image_file(const filesystem::path& path, vector<uint8_t>& buffer)
              "File too small to be an image: {}", path.string());
 
     buffer.resize(size_t(size));
-    file.read_at(buffer.data(), size_t(size), 0);
+    file.read_at(span(buffer), 0);
 }
 
 bool has_png_signature(const vector<uint8_t>& buffer)

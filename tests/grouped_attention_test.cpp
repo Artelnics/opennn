@@ -18,10 +18,10 @@ TEST(GroupedAttentionTest, CausalFirstPositionEqualsValue)
     const Index batch = 1, seq = 3, q_heads = 1, kv_heads = 1, head_dim = 4;
     const float scale = 0.5f;
 
-    std::vector<float> query(size_t(seq * head_dim));
-    std::vector<float> key(size_t(seq * head_dim));
-    std::vector<float> value(size_t(seq * head_dim));
-    std::vector<float> output(size_t(seq * head_dim), 0.0f);
+    vector<float> query(size_t(seq * head_dim));
+    vector<float> key(size_t(seq * head_dim));
+    vector<float> value(size_t(seq * head_dim));
+    vector<float> output(size_t(seq * head_dim), 0.0f);
     for (size_t i = 0; i < query.size(); ++i)
     {
         query[i] = std::sin(0.1f * float(i));
@@ -48,10 +48,10 @@ TEST(GroupedAttentionTest, GroupedHeadsShareKeyValue)
     const Index q_model = q_heads * head_dim;
     const Index kv_model = kv_heads * head_dim;
 
-    std::vector<float> query(size_t(seq * q_model));
-    std::vector<float> key(size_t(seq * kv_model));
-    std::vector<float> value(size_t(seq * kv_model));
-    std::vector<float> output(size_t(seq * q_model), 0.0f);
+    vector<float> query(size_t(seq * q_model));
+    vector<float> key(size_t(seq * kv_model));
+    vector<float> value(size_t(seq * kv_model));
+    vector<float> output(size_t(seq * q_model), 0.0f);
 
     for (size_t i = 0; i < key.size(); ++i)   key[i]   = std::sin(0.3f * float(i) + 0.1f);
     for (size_t i = 0; i < value.size(); ++i) value[i] = std::cos(0.15f * float(i));
@@ -89,14 +89,14 @@ TEST(GroupedAttentionTest, GpuMatchesCpu)
     const float scale = 1.0f / std::sqrt(float(head_dim));
     const Index q_model = q_heads * head_dim, kv_model = kv_heads * head_dim;
 
-    std::vector<float> Q(size_t(batch * seq * q_model));
-    std::vector<float> K(size_t(batch * seq * kv_model));
-    std::vector<float> V(size_t(batch * seq * kv_model));
+    vector<float> Q(size_t(batch * seq * q_model));
+    vector<float> K(size_t(batch * seq * kv_model));
+    vector<float> V(size_t(batch * seq * kv_model));
     for (size_t i = 0; i < Q.size(); ++i) Q[i] = std::sin(0.017f * float(i)) + 0.2f;
     for (size_t i = 0; i < K.size(); ++i) K[i] = std::cos(0.013f * float(i));
     for (size_t i = 0; i < V.size(); ++i) V[i] = std::sin(0.009f * float(i)) - 0.1f;
 
-    std::vector<float> out_cpu(Q.size(), 0.0f);
+    vector<float> out_cpu(Q.size(), 0.0f);
     {
         TensorView q(Q.data(), {batch, seq, q_model}), k(K.data(), {batch, seq, kv_model}),
                    v(V.data(), {batch, seq, kv_model}), o(out_cpu.data(), {batch, seq, q_model});
@@ -104,9 +104,9 @@ TEST(GroupedAttentionTest, GpuMatchesCpu)
     }
 
     cudaStream_t stream = Backend::get_compute_stream();
-    auto to_device = [&](const std::vector<float>& h, Buffer& buf) {
+    auto to_device = [&](const vector<float>& h, Buffer& buf) {
         buf.resize_bytes(Index(h.size()) * Index(sizeof(float)), Device::CPU);
-        std::memcpy(buf.data, h.data(), h.size() * sizeof(float));
+        memcpy(buf.data, h.data(), h.size() * sizeof(float));
         buf.migrate_to(Device::CUDA, stream);
     };
     Buffer qb(Device::CPU), kb(Device::CPU), vb(Device::CPU), ob(Device::CUDA);
@@ -126,7 +126,7 @@ TEST(GroupedAttentionTest, GpuMatchesCpu)
     const float* out_gpu = ob.as<float>();
     double max_abs = 0.0;
     for (size_t i = 0; i < Q.size(); ++i)
-        max_abs = std::max(max_abs, std::abs(double(out_gpu[i]) - double(out_cpu[i])));
+        max_abs = max(max_abs, abs(double(out_gpu[i]) - double(out_cpu[i])));
     EXPECT_LT(max_abs, 1.0e-4);
 
 }

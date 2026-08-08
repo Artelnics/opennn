@@ -49,7 +49,7 @@ vector<vector<Index>> build_fold_partition(TrainingStrategy* training_strategy, 
 
     if (dynamic_cast<TimeSeriesDataset*>(dataset))
     {
-        sort(development.begin(), development.end());
+        ranges::sort(development);
         deal_blocks(development);
         return folds;
     }
@@ -101,12 +101,12 @@ FoldEvaluation evaluate_folds(TrainingStrategy* training_strategy, const vector<
     for (Index f = 0; f < k; ++f)
     {
         const vector<Index>& validation_indices = fold_partition[size_t(f)];
-        const set<Index> validation_set(validation_indices.begin(), validation_indices.end());
+        const std::set<Index> validation_set(validation_indices.begin(), validation_indices.end());
 
         vector<Index> training_indices;
         training_indices.reserve(development.size());
-        for (const Index s : development)
-            if (!validation_set.count(s)) training_indices.push_back(s);
+        ranges::copy_if(development, back_inserter(training_indices),
+                        [&validation_set](const Index sample) { return !validation_set.contains(sample); });
 
         FoldScope scope(*dataset, training_indices, validation_indices);
 
@@ -115,8 +115,8 @@ FoldEvaluation evaluate_folds(TrainingStrategy* training_strategy, const vector<
 
         float validation_error = training_results.get_validation_error();
         float training_error = training_results.get_training_error();
-        if (!isfinite(validation_error)) validation_error = numeric_limits<float>::max();
-        if (!isfinite(training_error))   training_error   = numeric_limits<float>::max();
+        if (!isfinite(validation_error)) validation_error = MAX;
+        if (!isfinite(training_error))   training_error   = MAX;
 
         const Index fold_epochs = training_results.restored_best_parameters
             ? training_results.restored_epoch + 1

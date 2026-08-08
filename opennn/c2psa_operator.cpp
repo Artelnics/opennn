@@ -384,11 +384,8 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
 
         for (Index i = 0; i < tokens; ++i)
         {
-            float dot = 0.0f;
-            for (Index j = 0; j < tokens; ++j)
-                dot += A_b(i, j) * dA(i, j);
-            for (Index j = 0; j < tokens; ++j)
-                dA(i, j) = A_b(i, j) * (dA(i, j) - dot);
+            const float dot = A_b.row(i).dot(dA.row(i));
+            dA.row(i) = (A_b.row(i).array() * (dA.row(i).array() - dot)).matrix();
         }
         dA *= scale;
 

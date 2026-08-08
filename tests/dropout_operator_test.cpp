@@ -25,9 +25,9 @@ TEST(DropoutOperatoreratorTest, SetRateRejectsOutOfRange)
 {
     DropoutOperator dropout;
 
-    EXPECT_THROW(dropout.set_rate(-0.1f), std::exception);
-    EXPECT_THROW(dropout.set_rate(1.0f), std::exception);
-    EXPECT_THROW(dropout.set_rate(1.5f), std::exception);
+    EXPECT_THROW(dropout.set_rate(-0.1f), exception);
+    EXPECT_THROW(dropout.set_rate(1.0f), exception);
+    EXPECT_THROW(dropout.set_rate(1.5f), exception);
 
     EXPECT_NO_THROW(dropout.set_rate(0.999f));
 }
@@ -69,7 +69,7 @@ TEST(DropoutForwardTest, MaskValuesAreZeroOrKeepScale)
     for (Index i = 0; i < element_count; ++i)
     {
         const bool is_zero = mask_values[i] == 0.0f;
-        const bool is_scale = std::abs(mask_values[i] - keep_scale) < 1e-5f;
+        const bool is_scale = abs(mask_values[i] - keep_scale) < 1e-5f;
         EXPECT_TRUE(is_zero || is_scale);
 
         if (is_zero)
@@ -181,7 +181,7 @@ TEST(DropoutLayerTest, InferencePassIsIdentityWithDropout)
     NeuralNetwork dropout_network;
     auto dense_with_dropout = make_unique<opennn::Dense>(Shape{inputs_number}, Shape{outputs_number}, "Identity");
     dense_with_dropout->set_dropout_rate(0.5f);
-    dropout_network.add_layer(std::move(dense_with_dropout));
+    dropout_network.add_layer(move(dense_with_dropout));
     dropout_network.compile();
 
     NeuralNetwork reference_network;
@@ -224,7 +224,7 @@ TEST(DropoutLayerTest, TrainingPassDiffersFromInference)
     NeuralNetwork neural_network;
     auto dense = make_unique<opennn::Dense>(Shape{inputs_number}, Shape{outputs_number}, "Identity");
     dense->set_dropout_rate(0.5f);
-    neural_network.add_layer(std::move(dense));
+    neural_network.add_layer(move(dense));
     neural_network.compile();
 
     set_seed(5u);

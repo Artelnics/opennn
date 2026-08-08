@@ -251,20 +251,19 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
         if (!contiguous)
         {
             const uint64_t offset = uint64_t(row) * uint64_t(columns_number) * sizeof(float);
-            cache_reader.read_at(row_buffer.data(), size_t(columns_number) * sizeof(float), offset);
+            cache_reader.read_at(span(row_buffer), offset);
 
-            for (Index j = 0; j < features_number; ++j)
+            ranges::transform(feature_indices, dst, [&](const Index column)
             {
-                const Index column = feature_indices[size_t(j)];
                 const float value = row_buffer[size_t(column)];
-                dst[j] = isnan(value) ? cache_feature_replacement[size_t(column)] : value;
-            }
+                return isnan(value) ? cache_feature_replacement[size_t(column)] : value;
+            });
             continue;
         }
 
         const uint64_t offset =
             (uint64_t(row) * uint64_t(columns_number) + uint64_t(first_column)) * sizeof(float);
-        cache_reader.read_at(dst, size_t(features_number) * sizeof(float), offset);
+        cache_reader.read_at(span(dst, size_t(features_number)), offset);
 
         for (Index j = 0; j < features_number; ++j)
             if (isnan(dst[j])) dst[j] = cache_feature_replacement[size_t(first_column + j)];
@@ -302,8 +301,8 @@ vector<Descriptives> TabularDataset::compute_descriptives_streaming(const vector
 {
     const Index columns_number = cache_columns_number;
 
-    vector<float> minimums(size_t(columns_number), numeric_limits<float>::infinity());
-    vector<float> maximums(size_t(columns_number), -numeric_limits<float>::infinity());
+    vector<float> minimums(size_t(columns_number), POS_INFINITY);
+    vector<float> maximums(size_t(columns_number), NEG_INFINITY);
     vector<double> sums(size_t(columns_number), 0.0);
     vector<double> squared_sums(size_t(columns_number), 0.0);
     vector<Index> counts(size_t(columns_number), 0);
@@ -312,7 +311,7 @@ vector<Descriptives> TabularDataset::compute_descriptives_streaming(const vector
 
     for (const Index sample_index : sample_indices)
     {
-        cache_reader.read_at(row.data(), size_t(columns_number) * sizeof(float),
+        cache_reader.read_at(span(row),
                              uint64_t(sample_index) * uint64_t(columns_number) * sizeof(float));
 
         for (Index j = 0; j < columns_number; ++j)
@@ -496,18 +495,12 @@ vector<string> TabularDataset::unuse_uncorrelated_variables(const float minimum_
     {
         const Index input_variable_index = input_variable_indices[i];
 
-        bool has_significant_correlation = false;
-
-        for (Index j = 0; j < target_variables_number; ++j)
-        {
-            const float correlation_value = correlations(i, j).coefficient;
-
-            if (!isnan(correlation_value) && abs(correlation_value) >= minimum_correlation)
+        const bool has_significant_correlation =
+            ranges::any_of(views::iota(Index(0), target_variables_number), [&](Index j)
             {
-                has_significant_correlation = true;
-                break;
-            }
-        }
+                const float correlation_value = correlations(i, j).coefficient;
+                return !isnan(correlation_value) && abs(correlation_value) >= minimum_correlation;
+            });
 
         Variable& variable = variables[input_variable_index];
 
@@ -556,9 +549,8 @@ vector<string> TabularDataset::unuse_least_correlated_variables(const Index inpu
         ranking[i] = { best_correlation, i };
     }
 
-    stable_sort(ranking.begin(), ranking.end(),
-                [](const pair<float, Index>& a, const pair<float, Index>& b)
-                { return a.first > b.first; });
+    ranges::stable_sort(ranking, greater<>{},
+                        [](const auto& item) { return item.first; });
 
     for (Index rank = inputs_to_keep; rank < input_variables_number; ++rank)
     {
@@ -669,10 +661,7 @@ vector<Histogram> TabularDataset::calculate_variable_distributions(const Index b
         case Integer:
         case Constant:
         {
-            VectorR variable_data(used_samples_number);
-
-            for (Index j = 0; j < used_samples_number; ++j)
-                variable_data(j) = data(used_sample_indices[j], feature_index);
+            const VectorR variable_data = data(used_sample_indices, feature_index);
 
             histograms[used_variable_index++] = histogram(variable_data, bins_number);
 
@@ -779,9 +768,8 @@ vector<Descriptives> TabularDataset::calculate_feature_descriptives(const string
         const vector<Index> feature_indices = get_feature_indices(variable_role);
 
         vector<Descriptives> result(feature_indices.size());
-
-        for (size_t i = 0; i < feature_indices.size(); ++i)
-            result[i] = cache_feature_descriptives[size_t(feature_indices[i])];
+        ranges::transform(feature_indices, result.begin(),
+                          [this](Index feature_index) { return cache_feature_descriptives[size_t(feature_index)]; });
 
         return result;
     }
@@ -1056,8 +1044,8 @@ vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
             cache_feature_transforms[size_t(feature_indices[i])] = string_to_scaler_method(scalers[i]);
 
         vector<Descriptives> feature_descriptives(feature_indices.size());
-        for (size_t i = 0; i < feature_indices.size(); ++i)
-            feature_descriptives[i] = cache_transform_descriptives[size_t(feature_indices[i])];
+        ranges::transform(feature_indices, feature_descriptives.begin(),
+                          [this](Index feature_index) { return cache_transform_descriptives[size_t(feature_index)]; });
 
         return feature_descriptives;
     }
@@ -1292,7 +1280,7 @@ static float parse_float_or_nan(string_view token)
 {
     float value;
     const auto [ptr, ec] = from_chars(token.data(), token.data() + token.size(), value);
-    return (ec == errc{} && ptr == token.data() + token.size()) ? value : NAN;
+    return (ec == errc{} && ptr == token.data() + token.size()) ? value : QUIET_NAN;
 }
 
 static bool is_missing_token(string_view token, string_view missing_label)
@@ -1303,7 +1291,7 @@ static bool is_missing_token(string_view token, string_view missing_label)
 static void parse_numeric_token(float* row, Index feature_index,
                          string_view token, string_view missing_label)
 {
-    row[feature_index] = is_missing_token(token, missing_label) ? NAN : parse_float_or_nan(token);
+    row[feature_index] = is_missing_token(token, missing_label) ? QUIET_NAN : parse_float_or_nan(token);
 }
 
 static void parse_datetime_token(float* row, Index feature_index,
@@ -1312,7 +1300,7 @@ static void parse_datetime_token(float* row, Index feature_index,
 {
     if (is_missing_token(token, missing_label))
     {
-        row[feature_index] = NAN;
+        row[feature_index] = QUIET_NAN;
         return;
     }
 
@@ -1327,7 +1315,7 @@ static void parse_categorical_token(float* row, const vector<Index>& feature_ind
 {
     if (is_missing_token(token, missing_label))
         for (const Index cat_index : feature_indices)
-            row[cat_index] = NAN;
+            row[cat_index] = QUIET_NAN;
     else
     {
         const auto it = category_map.find(token);
@@ -1345,7 +1333,7 @@ static void parse_binary_token(float* row, Index feature_index,
     else
     {
         if (is_missing_token(token, missing_label))
-            row[feature_index] = NAN;
+            row[feature_index] = QUIET_NAN;
         else if (!categories.empty() && token == categories[0])
             row[feature_index] = 0;
         else if (categories.size() > 1 && token == categories[1])
@@ -1496,8 +1484,7 @@ void TabularDataset::read_csv()
             variable.type = VariableType::Binary;
 
     vector<Index> variable_token_indices(variables.size());
-    for (Index i = 0; i < ssize(variables); ++i)
-        variable_token_indices[i] = i + id_offset;
+    iota(variable_token_indices.begin(), variable_token_indices.end(), id_offset);
 
     for (Index i = ssize(variables) - 1; i >= 0; --i)
         if (looks_like_id_variable(variables[i], samples_number))
@@ -1780,7 +1767,7 @@ void TabularDataset::read_csv()
 
             parse_rows(base, end, chunk_buffer.data());
 
-            cache_writer.write(chunk_buffer.data(), size_t(n) * feature_columns_number * sizeof(float));
+            cache_writer.write(span(chunk_buffer));
         }
     }
     else
@@ -1973,13 +1960,11 @@ void TabularDataset::reuse_input_incomplete_rows_binary()
 
     for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
     {
-        cache_reader.read_at(row.data(),
-                             size_t(columns_number) * sizeof(float),
+        cache_reader.read_at(span(row),
                              uint64_t(sample_index) * uint64_t(columns_number) * sizeof(float));
 
-        bool target_missing = false;
-        for (const Index target_index : target_feature_indices)
-            if (isnan(row[size_t(target_index)])) { target_missing = true; break; }
+        const bool target_missing = ranges::any_of(target_feature_indices,
+            [&](const Index target_index) { return isnan(row[size_t(target_index)]); });
 
         if (target_missing)
             set_sample_role(sample_index, "None");

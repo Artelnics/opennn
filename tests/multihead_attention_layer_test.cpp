@@ -133,7 +133,7 @@ TEST(MultiHeadAttentionTest, CausalMaskForward)
     mha->set(sequence_length, sequence_length, embedding_dimension, heads_number, true);
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(std::move(mha));
+    neural_network.add_layer(move(mha));
     neural_network.compile();
 
     set_identity_projections(neural_network.get_layer(0).get(), embedding_dimension);

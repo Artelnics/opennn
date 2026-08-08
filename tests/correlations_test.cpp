@@ -117,7 +117,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
     EXPECT_LE(correlation.coefficient, type(1));
 
     for (Index i = 0; i < size; i++)
-        y[i] = exp(type(2.5) * x[i] + type(1.4));
+        y[i] = std::exp(type(2.5) * x[i] + type(1.4));
 
     for (Index i = 0; i < size / 2; i++) y[i] = 1.0;
 
@@ -159,7 +159,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
     EXPECT_LE(correlation.coefficient, type(1));
 
     for (Index i = 0; i < size; i++)
-        y[i] = exp(type(2.5) * x[i] + type(1.4));
+        y[i] = std::exp(type(2.5) * x[i] + type(1.4));
 
     for (Index i = 0; i < size / 2; i++) y[i] = 1.0;
 
@@ -193,7 +193,7 @@ TEST_F(CorrelationsTest, LogarithmicCorrelation)
     x << type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10);
     for (Index i = 0; i < size; i++)
     {
-        y[i] = type(4) * log(x[i]);
+        y[i] = type(4) * std::log(x[i]);
     }
 
     correlation = logarithmic_correlation(x, y);
@@ -220,7 +220,7 @@ TEST_F(CorrelationsTest, ExponentialCorrelation)
     for (Index i = 0; i < size; i++)
     {
         x[i] = i;
-        y[i] = type(1) * exp(type(0.5) * x[i]);
+        y[i] = type(1) * std::exp(type(0.5) * x[i]);
     }
 
     correlation = exponential_correlation(x, y);
@@ -237,7 +237,7 @@ TEST_F(CorrelationsTest, ExponentialCorrelation)
     x << type(1),type(2),type(3),type(4),type(NAN);
     for(Index i = 0; i < size; i++)
     {
-        y[i] = type(1.4) * exp(type(2.5) * x[i]);
+        y[i] = type(1.4) * std::exp(type(2.5) * x[i]);
     }
 
     correlation = exponential_correlation(x, y);
@@ -264,7 +264,7 @@ TEST_F(CorrelationsTest, PowerCorrelation)
     for(Index i = 0; i < size; i++)
     {
         x[i] = type(i + 1);
-        y[i] = type(1) * pow(x[i], type(2));
+        y[i] = type(1) * std::pow(x[i], type(2));
     }
 
     correlation = power_correlation(x, y);

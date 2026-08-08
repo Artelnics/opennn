@@ -159,11 +159,9 @@ vector<Index> TokenizerOperator::encode(string_view text) const
 {
     const vector<string> tokens = tokenize(text);
 
-    vector<Index> ids;
-    ids.reserve(tokens.size());
-
-    for (const string& token : tokens)
-        ids.push_back(token_to_id(token));
+    vector<Index> ids(tokens.size());
+    ranges::transform(tokens, ids.begin(),
+                      [this](const string& token) { return token_to_id(token); });
 
     return ids;
 }
@@ -294,11 +292,9 @@ vector<Index> WordLevelTokenizer::encode(string_view text) const
     const string lowered = ascii_lowercase(text);
 
     const vector<string_view> views = tokenize_views(lowered);
-    vector<Index> ids;
-    ids.reserve(views.size());
-
-    for (const string_view view : views)
-        ids.push_back(token_to_id(view));
+    vector<Index> ids(views.size());
+    ranges::transform(views, ids.begin(),
+                      [this](const string_view view) { return token_to_id(view); });
 
     return ids;
 }
@@ -433,8 +429,8 @@ uint32_t fold_uncased(uint32_t cp)
     if (cp >= 'A' && cp <= 'Z') return cp + 32;
     if (cp < 0x00C0 || cp > 0x017E) return cp;
 
-    const auto it = lower_bound(case_fold_table.begin(), case_fold_table.end(), cp,
-                                [](const pair<uint32_t, uint32_t>& e, uint32_t value) { return e.first < value; });
+    const auto it = ranges::lower_bound(case_fold_table, cp, {},
+                                        [](const auto& entry) { return entry.first; });
     return (it != case_fold_table.end() && it->first == cp) ? it->second : cp;
 }
 
@@ -718,19 +714,15 @@ void BytePairTokenizer::load(const filesystem::path& vocabulary_json,
 
 vector<string> BytePairTokenizer::get_merges() const
 {
-    vector<pair<int, string>> ranked;
-    ranked.reserve(merge_ranks.size());
-
-    for (const auto& [line, rank] : merge_ranks)
-        ranked.emplace_back(rank, line);
+    vector<pair<int, string>> ranked(merge_ranks.size());
+    ranges::transform(merge_ranks, ranked.begin(),
+                      [](const auto& entry) { return pair<int, string>(entry.second, entry.first); });
 
     ranges::sort(ranked);
 
-    vector<string> merges;
-    merges.reserve(ranked.size());
-
-    for (auto& ranked_merge : ranked)
-        merges.push_back(move(ranked_merge.second));
+    vector<string> merges(ranked.size());
+    ranges::transform(ranked, merges.begin(),
+                      [](pair<int, string>& ranked_merge) { return move(ranked_merge.second); });
 
     return merges;
 }
@@ -768,11 +760,7 @@ void BytePairTokenizer::set_special_tokens(const vector<string>& new_special_tok
             special_strings.push_back(token);
     }
 
-    ranges::sort(special_strings,
-                 [](const string& first, const string& second)
-                 {
-                     return first.size() > second.size();
-                 });
+    ranges::sort(special_strings, greater<>{}, [](const string& special) { return special.size(); });
 }
 
 Index BytePairTokenizer::get_special_token_id(string_view token) const

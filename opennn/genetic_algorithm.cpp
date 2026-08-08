@@ -223,8 +223,8 @@ void GeneticAlgorithm::evaluate_population()
             individual_parameters(i) = VectorR();
         }
 
-        if (!isfinite(training_errors(i)))   training_errors(i)   = numeric_limits<float>::max();
-        if (!isfinite(validation_errors(i))) validation_errors(i) = numeric_limits<float>::max();
+        if (!isfinite(training_errors(i)))   training_errors(i)   = MAX;
+        if (!isfinite(validation_errors(i))) validation_errors(i) = MAX;
 
         if (display)
             cout << "Training error: " << training_errors(i) << "\n"
@@ -481,7 +481,7 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
 
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    time_t beginning_time, current_time;
+    time_t beginning_time;
     float elapsed_time = 0.0f;
     Index best_generation = 0;
 
@@ -527,9 +527,7 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
             input_selection_results.optimum_validation_error = optimal_validation_error;
         }
 
-        time(&current_time);
-
-        elapsed_time = float(difftime(current_time, beginning_time));
+        elapsed_time = get_elapsed_time(beginning_time);
 
         if (display)
             cout << "\n"

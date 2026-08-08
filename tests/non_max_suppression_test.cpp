@@ -12,7 +12,7 @@ constexpr float tol = 1e-5f;
 
 void write_box(float* cell, Index box, Index values_per_box,
                float x_cell_rel, float y_cell_rel, float w_abs, float h_abs,
-               float obj, std::initializer_list<float> class_probs)
+               float obj, initializer_list<float> class_probs)
 {
     float* base = cell + box * values_per_box;
     base[0] = x_cell_rel;

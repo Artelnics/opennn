@@ -126,6 +126,11 @@ inline Index align_up(Index value, Index alignment)
     return value == 0 ? 0 : (value + alignment - 1) & ~(alignment - 1);
 }
 
+inline Index ceil_div(Index value, Index divisor)
+{
+    return (value + divisor - 1) / divisor;
+}
+
 inline Index get_aligned_size(Index size)     { return align_up(size,    ALIGN_ELEMENTS); }
 inline Index get_aligned_bytes(Index n_bytes) { return align_up(n_bytes, ALIGN_BYTES); }
 inline Index get_aligned_bytes(Index count, Type dtype) { return get_aligned_bytes(count * type_bytes(dtype)); }
@@ -366,6 +371,7 @@ struct Buffer
 
     void swap(Buffer& other) noexcept
     {
+        // std:: is required: the member `swap` hides the namespace-scope one.
         std::swap(data, other.data);
         std::swap(bytes, other.bytes);
         std::swap(device_type, other.device_type);

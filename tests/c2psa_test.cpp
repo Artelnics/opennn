@@ -102,7 +102,7 @@ TEST(C2PSA, CpuAndGpuForwardOutputsMatch)
         TensorView out = fp.get_outputs();
         const Index n = out.size();
         vector<float> cpu_out(n);
-        std::copy_n(out.as<float>(), n, cpu_out.data());
+        copy_n(out.as<float>(), n, cpu_out.data());
 
         Configuration::instance().set(Device::CUDA, Type::FP32);
         Batch batch_gpu(batch_size, &net.dataset, net.nn.get_config());
@@ -119,7 +119,7 @@ TEST(C2PSA, CpuAndGpuForwardOutputsMatch)
 
         float max_diff = 0.0f;
         for (Index i = 0; i < n; ++i)
-            max_diff = std::max(max_diff, std::abs(cpu_out[i] - gpu_out[i]));
+            max_diff = max(max_diff, abs(cpu_out[i] - gpu_out[i]));
 
         EXPECT_LT(max_diff, 1e-4f)
             << "Max CPU vs GPU forward output diff: " << max_diff;

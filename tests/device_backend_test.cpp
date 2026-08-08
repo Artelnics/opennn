@@ -127,7 +127,7 @@ TEST(DeviceBackendTest, SetZeroAsyncClearsHostBuffer)
     void* device_buffer = device::allocate(Device::CUDA, byte_count);
     ASSERT_NE(device_buffer, nullptr);
 
-    std::vector<unsigned char> host(static_cast<size_t>(byte_count), 0xFF);
+    vector<unsigned char> host(static_cast<size_t>(byte_count), 0xFF);
     device::copy_async(device_buffer, host.data(), byte_count,
                        device::CopyKind::HostToDevice, nullptr);
     device::set_zero_async(device_buffer, byte_count, nullptr);
@@ -159,8 +159,8 @@ TEST(DeviceBackendTest, CopyHostToHostCopiesBytes)
     const Index count = 5;
     const Index byte_count = count * static_cast<Index>(sizeof(float));
 
-    std::vector<float> source = { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
-    std::vector<float> destination(static_cast<size_t>(count), 0.0f);
+    vector<float> source = { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    vector<float> destination(static_cast<size_t>(count), 0.0f);
 
     device::copy_async(destination.data(), source.data(), byte_count,
                        device::CopyKind::HostToHost, nullptr);
@@ -174,8 +174,8 @@ TEST(DeviceBackendTest, CopyCpuToCpuCopiesBytes)
     const Index count = 4;
     const Index byte_count = count * static_cast<Index>(sizeof(int));
 
-    std::vector<int> source = { 10, 20, 30, 40 };
-    std::vector<int> destination(static_cast<size_t>(count), 0);
+    vector<int> source = { 10, 20, 30, 40 };
+    vector<int> destination(static_cast<size_t>(count), 0);
 
     device::copy_async(destination.data(), source.data(), byte_count,
                        Device::CPU, Device::CPU, nullptr);
@@ -202,8 +202,8 @@ TEST(DeviceBackendTest, CopyDeviceKindMatchesBuild)
     const Index count = 6;
     const Index byte_count = count * static_cast<Index>(sizeof(float));
 
-    const std::vector<float> source = { 1.5f, -2.0f, 3.25f, 0.0f, 42.0f, -7.5f };
-    std::vector<float> destination(static_cast<size_t>(count), 0.0f);
+    const vector<float> source = { 1.5f, -2.0f, 3.25f, 0.0f, 42.0f, -7.5f };
+    vector<float> destination(static_cast<size_t>(count), 0.0f);
 
     void* device_buffer = device::allocate(Device::CUDA, byte_count);
     ASSERT_NE(device_buffer, nullptr);

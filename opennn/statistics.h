@@ -16,9 +16,9 @@ namespace opennn
 
 struct Descriptives
 {
-    Descriptives(const float = NAN, float = NAN, float = NAN, float = NAN);
+    Descriptives(const float = QUIET_NAN, float = QUIET_NAN, float = QUIET_NAN, float = QUIET_NAN);
 
-    void set(const float = NAN, float = NAN, float = NAN, float = NAN);
+    void set(const float = QUIET_NAN, float = QUIET_NAN, float = QUIET_NAN, float = QUIET_NAN);
 
     string name = "Descriptives";
 
@@ -43,21 +43,21 @@ inline VectorR descriptives_field(const vector<Descriptives>& descriptives,
 
 struct BoxPlot
 {
-    BoxPlot(const float = NAN,
-            float = NAN,
-            float = NAN,
-            float = NAN,
-            float = NAN);
+    BoxPlot(const float = QUIET_NAN,
+            float = QUIET_NAN,
+            float = QUIET_NAN,
+            float = QUIET_NAN,
+            float = QUIET_NAN);
 
-    float minimum = NAN;
+    float minimum = QUIET_NAN;
 
-    float first_quartile = NAN;
+    float first_quartile = QUIET_NAN;
 
-    float median = NAN;
+    float median = QUIET_NAN;
 
-    float third_quartile = NAN;
+    float third_quartile = QUIET_NAN;
 
-    float maximum = NAN;
+    float maximum = QUIET_NAN;
 };
 
 struct Histogram

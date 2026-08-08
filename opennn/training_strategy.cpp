@@ -26,7 +26,34 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_datas
     neural_network = new_neural_network;
     dataset = new_dataset;
 
+    if (!neural_network)
+    {
+        optimizer.reset();
+        loss.reset();
+        return;
+    }
+
     set_default();
+}
+
+void TrainingStrategy::set_dataset(Dataset* new_dataset)
+{
+    dataset = new_dataset;
+    if (loss) loss->set_dataset(new_dataset);
+}
+
+void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
+{
+    neural_network = new_neural_network;
+    if (!neural_network)
+    {
+        optimizer.reset();
+        loss.reset();
+    }
+    else if (loss)
+        loss->set_neural_network(new_neural_network);
+    else
+        set_default();
 }
 
 void TrainingStrategy::set_loss(const string& new_loss)
@@ -50,8 +77,7 @@ void TrainingStrategy::set_default()
     if (!get_neural_network())
         return;
 
-    if (neural_network->has(LayerType::Recurrent)
-        || neural_network->has(LayerType::LongShortTermMemory))
+    if (neural_network->has_recurrent_layers())
     {
         set_loss("MeanSquaredError");
         set_optimization_algorithm("AdaptiveMomentEstimation");

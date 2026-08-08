@@ -141,7 +141,6 @@ public:
     void regularization_to_JSON(JsonWriter&) const;
 
     const string& get_name() const noexcept { return name; }
-    static float calculate_h(const float);
 
     void set_yolo_lambda_noobj(float v)     { yolo_lambda_noobj     = v; }
     void set_yolo_lambda_class(float v)     { yolo_lambda_class     = v; }

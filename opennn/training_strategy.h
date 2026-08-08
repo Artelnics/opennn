@@ -40,8 +40,8 @@ public:
     void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
     void set_default();
 
-    void set_dataset(Dataset* new_dataset) { dataset = new_dataset; }
-    void set_neural_network(NeuralNetwork* new_neural_network) { neural_network = new_neural_network; }
+    void set_dataset(Dataset*);
+    void set_neural_network(NeuralNetwork*);
 
     void set_loss(const string&);
     void set_optimization_algorithm(const string&);

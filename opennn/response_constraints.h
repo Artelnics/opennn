@@ -74,8 +74,8 @@ inline bool interval_from_comparison(ComparisonOperator comparison,
                                      float low_bound, float up_bound,
                                      float& low, float& up)
 {
-    low = -numeric_limits<float>::infinity();
-    up  =  numeric_limits<float>::infinity();
+    low = NEG_INFINITY;
+    up  =  POS_INFINITY;
 
     switch (comparison)
     {

@@ -19,7 +19,7 @@ using namespace opennn;
 
 namespace {
 
-void write_bmp_24(const std::filesystem::path& path, int width, int height, uint8_t r, uint8_t g, uint8_t b)
+void write_bmp_24(const filesystem::path& path, int width, int height, uint8_t r, uint8_t g, uint8_t b)
 {
     const int row_bytes_unpadded = width * 3;
     const int row_pad = (4 - row_bytes_unpadded % 4) % 4;
@@ -27,7 +27,7 @@ void write_bmp_24(const std::filesystem::path& path, int width, int height, uint
     const int pixel_data_size = row_stride * height;
     const int file_size = 54 + pixel_data_size;
 
-    std::vector<uint8_t> file(static_cast<size_t>(file_size), 0);
+    vector<uint8_t> file(static_cast<size_t>(file_size), 0);
 
     file[0] = 'B'; file[1] = 'M';
     file[2] = static_cast<uint8_t>(file_size & 0xff);
@@ -53,46 +53,46 @@ void write_bmp_24(const std::filesystem::path& path, int width, int height, uint
         }
     }
 
-    std::ofstream out(path, std::ios::binary);
+    ofstream out(path, ios::binary);
     out.write(reinterpret_cast<const char*>(file.data()), file.size());
 }
 
-void write_label(const std::filesystem::path& path, int class_id, float cx, float cy, float w, float h)
+void write_label(const filesystem::path& path, int class_id, float cx, float cy, float w, float h)
 {
-    std::ofstream out(path);
+    ofstream out(path);
     out << class_id << ' ' << cx << ' ' << cy << ' ' << w << ' ' << h << '\n';
 }
 
-void write_classes(const std::filesystem::path& path, std::initializer_list<const char*> names)
+void write_classes(const filesystem::path& path, initializer_list<const char*> names)
 {
-    std::ofstream out(path);
+    ofstream out(path);
     for (auto* n : names) out << n << '\n';
 }
 
 struct TempDir
 {
-    std::filesystem::path path;
+    filesystem::path path;
 
     TempDir()
     {
-        const auto base = std::filesystem::temp_directory_path();
+        const auto base = filesystem::temp_directory_path();
         for (int i = 0; i < 10000; ++i)
         {
-            std::filesystem::path candidate = base / ("opennn_yolo_loss_test_" + std::to_string(i));
-            std::error_code ec;
-            if (std::filesystem::create_directories(candidate, ec) && !ec)
+            filesystem::path candidate = base / ("opennn_yolo_loss_test_" + to_string(i));
+            error_code ec;
+            if (filesystem::create_directories(candidate, ec) && !ec)
             {
                 path = candidate;
                 return;
             }
         }
-        throw std::runtime_error("Could not create temp dir for YOLO loss test");
+        throw runtime_error("Could not create temp dir for YOLO loss test");
     }
 
     ~TempDir()
     {
-        std::error_code ec;
-        std::filesystem::remove_all(path, ec);
+        error_code ec;
+        filesystem::remove_all(path, ec);
     }
 
     TempDir(const TempDir&) = delete;
@@ -106,8 +106,8 @@ namespace {
 struct YoloLossFixture
 {
     TempDir dir;
-    std::filesystem::path images_dir;
-    std::filesystem::path labels_dir;
+    filesystem::path images_dir;
+    filesystem::path labels_dir;
 
     static constexpr Index W = 2;
     static constexpr Index H = 2;
@@ -116,14 +116,14 @@ struct YoloLossFixture
     static constexpr Index C = 1;
     static constexpr Index channels = B * (5 + C);
 
-    const std::vector<std::array<float, 2>> anchors{{0.2f, 0.2f}, {0.5f, 0.5f}};
+    const vector<std::array<float, 2>> anchors{{0.2f, 0.2f}, {0.5f, 0.5f}};
 
     YoloLossFixture()
     {
         images_dir = dir.path / "images";
         labels_dir = dir.path / "labels";
-        std::filesystem::create_directories(images_dir);
-        std::filesystem::create_directories(labels_dir);
+        filesystem::create_directories(images_dir);
+        filesystem::create_directories(labels_dir);
         write_classes(labels_dir / "classes.names", {"only"});
     }
 };
@@ -150,8 +150,8 @@ TEST(YoloLoss, NoObjectGradientMatchesNumericalGradient)
     YoloLossFixture f;
     write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
     write_bmp_24(f.images_dir / "b.bmp", f.W, f.H,  50, 200, 100);
-    { std::ofstream empty_a(f.labels_dir / "a.txt"); }
-    { std::ofstream empty_b(f.labels_dir / "b.txt"); }
+    { ofstream empty_a(f.labels_dir / "a.txt"); }
+    { ofstream empty_b(f.labels_dir / "b.txt"); }
 
     YoloDataset dataset;
     dataset.set_display(false);
@@ -209,8 +209,8 @@ namespace {
 struct YoloLossV8Fixture
 {
     TempDir dir;
-    std::filesystem::path images_dir;
-    std::filesystem::path labels_dir;
+    filesystem::path images_dir;
+    filesystem::path labels_dir;
 
     static constexpr Index W = 2;
     static constexpr Index H = 2;
@@ -222,8 +222,8 @@ struct YoloLossV8Fixture
     {
         images_dir = dir.path / "images";
         labels_dir = dir.path / "labels";
-        std::filesystem::create_directories(images_dir);
-        std::filesystem::create_directories(labels_dir);
+        filesystem::create_directories(images_dir);
+        filesystem::create_directories(labels_dir);
         write_classes(labels_dir / "classes.names", {"only"});
     }
 };
@@ -250,8 +250,8 @@ TEST(YoloLoss, V8NoObjectGradientMatchesNumericalGradient)
     YoloLossV8Fixture f;
     write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
     write_bmp_24(f.images_dir / "b.bmp", f.W, f.H,  50, 200, 100);
-    { std::ofstream empty_a(f.labels_dir / "a.txt"); }
-    { std::ofstream empty_b(f.labels_dir / "b.txt"); }
+    { ofstream empty_a(f.labels_dir / "a.txt"); }
+    { ofstream empty_b(f.labels_dir / "b.txt"); }
 
     YoloDataset dataset;
     dataset.set_display(false);

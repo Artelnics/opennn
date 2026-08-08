@@ -67,16 +67,19 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& sour
 
 void NeuralNetwork::compile()
 {
-    compile(Configuration::instance().resolve().device);
+    if (get_layers_number() == 0) return;
+    compile(Configuration::instance().resolve());
 }
 
 void NeuralNetwork::compile(const Device device)
 {
     if (get_layers_number() == 0) return;
+    compile(Configuration::instance().resolve_for(device));
+}
 
-    config = Configuration::instance().resolve();
-    config.device = device;
-    if (device != Device::CUDA) config.training_type = Type::FP32;
+void NeuralNetwork::compile(Configuration::Resolved new_config)
+{
+    config = new_config;
 
     stale_configuration_warned = false;
 
@@ -89,9 +92,7 @@ void NeuralNetwork::compile(const Device device)
     parameters.resize_bytes(get_aligned_bytes(get_parameter_specs(), Type::FP32), Device::CPU);
     parameters.setZero();
 
-    parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
-    parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
-    parameters_int8_storage.resize_bytes(0, Device::CUDA);
+    clear_low_precision_parameter_storage();
 
     link_parameters();
 
@@ -101,6 +102,14 @@ void NeuralNetwork::compile(const Device device)
     link_states();
 
     wire_drelu_fusions();
+}
+
+void NeuralNetwork::clear_low_precision_parameter_storage()
+{
+    parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
+    parameters_bf16_mirror_compact = false;
+    parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
+    parameters_int8_storage.resize_bytes(0, Device::CUDA);
 }
 
 void NeuralNetwork::wire_drelu_fusions()
@@ -162,6 +171,15 @@ bool NeuralNetwork::has(LayerType type) const
 {
     return ranges::any_of(layers,
                           [type](const unique_ptr<Layer>& layer) {return layer->get_type() == type;});
+}
+
+bool NeuralNetwork::has_recurrent_layers() const
+{
+    return ranges::any_of(layers, [](const unique_ptr<Layer>& layer)
+    {
+        return is_one_of(layer->get_type(), LayerType::Recurrent,
+                         LayerType::LongShortTermMemory);
+    });
 }
 
 bool NeuralNetwork::supports_compact_cnn_memory_layout() const noexcept
@@ -358,12 +376,9 @@ void NeuralNetwork::steal_from(NeuralNetwork& src)
 
 static void validate_source_indices(const vector<Index>& sources, Index layer_index, Index layers_count)
 {
-    for (const Index src : sources)
-    {
-        if (src < 0) continue;
+    for (const Index src : sources | views::filter([](Index source) { return source >= 0; }))
         throw_if(src >= layers_count || src >= layer_index,
                  "NeuralNetwork: source index {} is not a previous layer for layer {}.", src, layer_index);
-    }
 }
 
 static void validate_source_arity(const Layer& layer,
@@ -609,14 +624,14 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
                                       Index(16), Index(65536));
 
     const bool tileable = batch_size > tile_rows_max
-        && all_of(input_views.begin(), input_views.end(),
-                  [batch_size](const TensorView& view)
-                  {
-                      return view.shape.rank >= 2
-                          && view.shape[0] == batch_size
-                          && view.is_fp32()
-                          && !view.is_cuda();
-                  });
+        && ranges::all_of(input_views,
+            [batch_size](const TensorView& view)
+            {
+                return view.shape.rank >= 2
+                    && view.shape[0] == batch_size
+                    && view.is_fp32()
+                    && !view.is_cuda();
+            });
 
     if (!tileable)
     {
@@ -718,7 +733,11 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
             forward_propagation.device_input_views;
         input_views_device.assign(input_view.begin(), input_view.end());
         forward_propagation.device_input_buffers.resize(input_view.size());
-        forward_propagation.host_bf16_input_scratch.resize(input_view.size());
+
+        const bool uses_bf16_activations =
+            activation_dtype(config.training_type) == Type::BF16;
+        if (uses_bf16_activations)
+            forward_propagation.host_bf16_input_scratch.resize(input_view.size());
 
         const auto input_feeds_token_ids = [&](size_t input_index)
         {
@@ -749,7 +768,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
             throw_if(source.device == Device::Auto,
                      "NeuralNetwork::forward_propagate: input device must be CPU or CUDA.");
 
-            const bool cast_input_to_bf16 = activation_dtype(config.training_type) == Type::BF16
+            const bool cast_input_to_bf16 = uses_bf16_activations
                                          && source.is_fp32()
                                          && !input_feeds_token_ids(i);
 
@@ -1211,6 +1230,7 @@ NeuralNetwork::ParameterSlotTotals NeuralNetwork::for_each_parameter_slot(
     const function<void(Layer&)>& begin_layer) const
 {
     ParameterSlotTotals totals;
+    Index master_elements = 0;
 
     for (const auto& layer : layers)
     {
@@ -1226,15 +1246,13 @@ NeuralNetwork::ParameterSlotTotals NeuralNetwork::for_each_parameter_slot(
 
             ParameterSlot slot;
             slot.layer = layer.get();
-            slot.spec_index = spec_index;
             slot.shape = shape;
             slot.dtype = dtype;
             slot.tied = tie.source && spec_index == tie.spec_index;
-            slot.master_offset = totals.master_elements;
+            slot.master_offset = master_elements;
             slot.bf16_offset = totals.bf16_elements;
             slot.int8_offset = totals.int8_elements;
             slot.fp32_offset = totals.fp32_elements;
-            slot.scale_offset = totals.fp32_elements;
 
             if (shape.empty())
             {
@@ -1258,7 +1276,7 @@ NeuralNetwork::ParameterSlotTotals NeuralNetwork::for_each_parameter_slot(
             if (visit) visit(slot);
 
             const Index aligned = get_aligned_size(shape.size());
-            totals.master_elements += aligned;
+            master_elements += aligned;
             if (slot.tied) continue;
 
             if (slot.dtype == Type::INT8)
@@ -1275,6 +1293,36 @@ NeuralNetwork::ParameterSlotTotals NeuralNetwork::for_each_parameter_slot(
 
     return totals;
 }
+
+void NeuralNetwork::allocate_compact_parameter_storage(const ParameterSlotTotals& totals)
+{
+    parameters_bf16_mirror.resize_bytes(
+        totals.bf16_elements * Index(sizeof(bfloat16)), Device::CUDA);
+    parameters_fp32_inference_storage.resize_bytes(
+        totals.fp32_elements * Index(sizeof(float)), Device::CUDA);
+    parameters_int8_storage.resize_bytes(totals.int8_elements, Device::CUDA);
+    parameters_bf16_mirror_compact = true;
+}
+
+#ifdef OPENNN_HAS_CUDA
+
+void NeuralNetwork::use_compact_parameter_storage()
+{
+    void* compact_storage = parameters_bf16_mirror.data;
+    if (!compact_storage) compact_storage = parameters_int8_storage.data;
+    if (!compact_storage) compact_storage = parameters_fp32_inference_storage.data;
+
+    throw_if(!compact_storage,
+             "NeuralNetwork: compact inference parameter storage is empty.");
+
+    const Index master_bytes = parameters.bytes;
+    parameters.resize_bytes(0, Device::CPU);
+    parameters.set_view(compact_storage, master_bytes, Device::CUDA);
+    link_parameters();
+    activate_transposed_inference_weights();
+}
+
+#endif
 
 void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) const
 {
@@ -1382,37 +1430,18 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
     vector<float> fp32_chunk(bf16_chunk.size());
 
 #ifdef OPENNN_HAS_CUDA
-    const bool direct_cuda =
-        config.device == Device::CUDA
-        && is_one_of(config.training_type, Type::BF16, Type::INT8);
     if (config.device == Device::CUDA)
-        throw_if(!direct_cuda,
+    {
+        throw_if(!is_one_of(config.training_type, Type::BF16, Type::INT8),
                  "NeuralNetwork::load_parameters_bf16_inference_binary: "
                  "CUDA direct loading requires BF16 or INT8 configuration.");
 
-    if (direct_cuda)
-    {
         const ParameterSlotTotals totals = for_each_parameter_slot({});
+        allocate_compact_parameter_storage(totals);
 
-        parameters_bf16_mirror.resize_bytes(
-            totals.bf16_elements * Index(sizeof(bfloat16)), Device::CUDA);
-        parameters_fp32_inference_storage.resize_bytes(
-            totals.fp32_elements * Index(sizeof(float)), Device::CUDA);
-        parameters_int8_storage.resize_bytes(totals.int8_elements, Device::CUDA);
-        parameters_bf16_mirror_compact = true;
-
-        uint16_t* const mirror =
-            totals.bf16_elements > 0
-                ? parameters_bf16_mirror.as<uint16_t>()
-                : nullptr;
-        float* const fp32_compact =
-            totals.fp32_elements > 0
-                ? parameters_fp32_inference_storage.as<float>()
-                : nullptr;
-        int8_t* const int8_storage =
-            totals.int8_elements > 0
-                ? parameters_int8_storage.as<int8_t>()
-                : nullptr;
+        uint16_t* const mirror = parameters_bf16_mirror.as<uint16_t>();
+        float* const fp32_compact = parameters_fp32_inference_storage.as<float>();
+        int8_t* const int8_storage = parameters_int8_storage.as<int8_t>();
         cudaStream_t stream = Backend::get_compute_stream();
 
         const auto skip = [&](const Index count)
@@ -1462,9 +1491,8 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
                 throw_if(!file,
                          "Error reading BF16 parameter file: {}",
                          file_name.string());
-                for (Index i = 0; i < chunk; ++i)
-                    fp32_chunk[size_t(i)] =
-                        bfloat16_to_float_host(bf16_chunk[size_t(i)]);
+                ranges::transform(bf16_chunk | views::take(chunk), fp32_chunk.begin(),
+                                  bfloat16_to_float_host);
                 device::copy_async(
                     destination + copied, fp32_chunk.data(),
                     chunk * Index(sizeof(float)),
@@ -1515,9 +1543,8 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
                           streamsize(chunk * Index(sizeof(uint16_t))));
                 throw_if(!file, "Error reading BF16 parameter file: {}",
                          file_name.string());
-                for (Index i = 0; i < chunk; ++i)
-                    fp32_chunk[size_t(i)] =
-                        bfloat16_to_float_host(bf16_chunk[size_t(i)]);
+                ranges::transform(bf16_chunk | views::take(chunk), fp32_chunk.begin(),
+                                  bfloat16_to_float_host);
                 quantize_int8_host(fp32_chunk.data(), chunk, processed,
                                    row_length, channels, axis,
                                    scales.data(), int8_chunk.data());
@@ -1550,7 +1577,7 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
             if (slot.dtype == Type::INT8)
                 read_bf16_quantize_int8_to_device(
                     int8_storage + slot.int8_offset,
-                    fp32_compact + slot.scale_offset,
+                    fp32_compact + slot.fp32_offset,
                     size, slot.scale_channels, slot.scale_axis);
             else if (slot.dtype == Type::BF16)
                 read_bf16_to_device(mirror + slot.bf16_offset, size);
@@ -1566,14 +1593,7 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
                  "unconsumed data remains in {}.",
                  file_name.string());
 
-        const Index master_bytes = parameters.bytes;
-        parameters.resize_bytes(0, Device::CPU);
-        parameters.set_view(
-            !parameters_bf16_mirror.empty() ? parameters_bf16_mirror.data
-                                            : parameters_int8_storage.data,
-            master_bytes, Device::CUDA);
-        link_parameters();
-        activate_transposed_inference_weights();
+        use_compact_parameter_storage();
         return;
     }
 #endif
@@ -1589,9 +1609,8 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
         throw_if(!file,
                  "Error reading BF16 parameter file: {}",
                  file_name.string());
-        for (Index i = 0; i < chunk; ++i)
-            host_parameters[converted + i] =
-                bfloat16_to_float_host(bf16_chunk[size_t(i)]);
+        ranges::transform(bf16_chunk | views::take(chunk), host_parameters + converted,
+                          bfloat16_to_float_host);
         converted += chunk;
     }
     link_parameters();
@@ -1706,7 +1725,7 @@ void NeuralNetwork::link_parameters()
             slot_ptr = int8_base + slot.int8_offset;
             view_type = Type::INT8;
             view_device = Device::CUDA;
-            scale_view = TensorView(fp32_inference_base + slot.scale_offset,
+            scale_view = TensorView(fp32_inference_base + slot.fp32_offset,
                                     Shape{slot.scale_channels}, Type::FP32, Device::CUDA);
         }
         else if (slot.dtype == Type::BF16 && bf16_mirror_base != nullptr)
@@ -1769,9 +1788,7 @@ void NeuralNetwork::copy_parameters_device()
 {
     if (parameters.empty())
     {
-        parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
-        parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
-        parameters_int8_storage.resize_bytes(0, Device::CUDA);
+        clear_low_precision_parameter_storage();
         return;
     }
 
@@ -1801,23 +1818,19 @@ void NeuralNetwork::copy_parameters_device()
     {
         parameters_bf16_mirror.resize_bytes(parameters.size_in_floats() * Index(sizeof(bfloat16)), Device::CUDA);
         parameters_bf16_mirror_compact = false;
+        parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
+        parameters_int8_storage.resize_bytes(0, Device::CUDA);
         cast_parameters_to_bf16();
     }
     else
-    {
-        parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
-        parameters_bf16_mirror_compact = false;
-    }
-    parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
+        clear_low_precision_parameter_storage();
 
     link_parameters();
 }
 
 void NeuralNetwork::cast_parameters_to_bf16()
 {
-    if (parameters_bf16_mirror.empty()) return;
-    if (parameters.empty())      return;
-    if (parameters.device_type == Device::CUDA && !parameters.owns) return;
+    if (parameters_bf16_mirror.empty() || parameters.empty() || !parameters.owns) return;
 
     cast_fp32_to_bf16(parameters.size_in_floats(),
                            parameters.as<float>(),
@@ -1893,7 +1906,6 @@ void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
 
 void NeuralNetwork::upload_parameters_bf16_inference()
 {
-#ifdef OPENNN_HAS_CUDA
     const bool can_upload_low_precision_parameters =
         config.device == Device::CUDA
         && is_one_of(config.training_type, Type::BF16, Type::INT8)
@@ -1911,14 +1923,10 @@ void NeuralNetwork::upload_parameters_bf16_inference()
     const float* const host_fp32 = parameters.as<float>();
 
     const ParameterSlotTotals totals = for_each_parameter_slot({});
-
-    parameters_bf16_mirror.resize_bytes(totals.bf16_elements * Index(sizeof(bfloat16)), Device::CUDA);
-    parameters_fp32_inference_storage.resize_bytes(totals.fp32_elements * Index(sizeof(float)), Device::CUDA);
-    parameters_int8_storage.resize_bytes(totals.int8_elements, Device::CUDA);
-    parameters_bf16_mirror_compact = true;
-    uint16_t* const mirror = totals.bf16_elements > 0 ? parameters_bf16_mirror.as<uint16_t>() : nullptr;
-    float* const fp32_compact = totals.fp32_elements > 0 ? parameters_fp32_inference_storage.as<float>() : nullptr;
-    int8_t* const int8_storage = totals.int8_elements > 0 ? parameters_int8_storage.as<int8_t>() : nullptr;
+    allocate_compact_parameter_storage(totals);
+    uint16_t* const mirror = parameters_bf16_mirror.as<uint16_t>();
+    float* const fp32_compact = parameters_fp32_inference_storage.as<float>();
+    int8_t* const int8_storage = parameters_int8_storage.as<int8_t>();
 
     vector<uint16_t> host_bf16;
     vector<int8_t> host_int8;
@@ -1950,15 +1958,15 @@ void NeuralNetwork::upload_parameters_bf16_inference()
 
             device::copy_async(int8_storage + slot.int8_offset, host_int8.data(),
                                size, Device::CPU, Device::CUDA, stream);
-            device::copy_async(fp32_compact + slot.scale_offset, host_scales.data(),
+            device::copy_async(fp32_compact + slot.fp32_offset, host_scales.data(),
                                channels * Index(sizeof(float)), Device::CPU, Device::CUDA, stream);
             device::synchronize(stream);
         }
         else if (slot.dtype == Type::BF16 && mirror)
         {
             host_bf16.resize(static_cast<size_t>(size));
-            for (Index i = 0; i < size; ++i)
-                host_bf16[static_cast<size_t>(i)] = float_to_bfloat16_host(source[i]);
+            ranges::transform(span<const float>(source, static_cast<size_t>(size)),
+                              host_bf16.begin(), float_to_bfloat16_host);
             device::copy_async(mirror + slot.bf16_offset, host_bf16.data(),
                                size * Index(sizeof(uint16_t)), Device::CPU, Device::CUDA, stream);
             device::synchronize(stream);
@@ -1969,15 +1977,7 @@ void NeuralNetwork::upload_parameters_bf16_inference()
     });
     device::synchronize(stream);
 
-    const Index master_bytes = parameters.bytes;
-    parameters.resize_bytes(0, Device::CPU);
-    parameters.set_view(!parameters_bf16_mirror.empty() ? parameters_bf16_mirror.data
-                                                        : parameters_int8_storage.data,
-                        master_bytes, Device::CUDA);
-
-    link_parameters();
-    activate_transposed_inference_weights();
-#endif
+    use_compact_parameter_storage();
 }
 
 void NeuralNetwork::upload_parameters_int8_inference()
@@ -1990,7 +1990,6 @@ void NeuralNetwork::upload_parameters_int8_inference()
 
 void NeuralNetwork::activate_transposed_inference_weights()
 {
-#ifdef OPENNN_HAS_CUDA
     cudaStream_t stream = Backend::get_compute_stream();
 
     const auto transpose_in_place = [&](const TensorView& weight)
@@ -2048,16 +2047,13 @@ void NeuralNetwork::activate_transposed_inference_weights()
         transpose_in_place(weight);
         dense->set_transposed_inference_active(true);
     }
-#endif
 }
 
 void NeuralNetwork::copy_parameters_host()
 {
     if (parameters.empty())
     {
-        parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
-        parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
-        parameters_int8_storage.resize_bytes(0, Device::CUDA);
+        clear_low_precision_parameter_storage();
         return;
     }
 
@@ -2066,10 +2062,7 @@ void NeuralNetwork::copy_parameters_host()
              "was released for quantized inference and cannot be copied back.");
 
     parameters.migrate_to(Device::CPU, Backend::get_compute_stream());
-    parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
-    parameters_bf16_mirror_compact = false;
-    parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
-    parameters_int8_storage.resize_bytes(0, Device::CUDA);
+    clear_low_precision_parameter_storage();
 
     for (const auto& layer : layers)
         if (auto* dense = dynamic_cast<Dense*>(layer.get()))
@@ -2202,12 +2195,11 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
 
         forward_propagate(gpu_inputs, forward_propagation, false);
 
-        const device::GraphHandle graph = capture.end();
-        device::instantiate_or_update(forward_propagation.inference_graph_exec, graph.get());
+        capture.end(forward_propagation.inference_graph_exec);
 
         forward_propagation.captured_input_pointers.resize(gpu_inputs.size());
-        for (size_t i = 0; i < gpu_inputs.size(); ++i)
-            forward_propagation.captured_input_pointers[i] = gpu_inputs[i].data;
+        ranges::transform(gpu_inputs, forward_propagation.captured_input_pointers.begin(),
+                          [](const auto& gpu_input) { return gpu_input.data; });
     }
     catch (const exception& capture_error)
     {

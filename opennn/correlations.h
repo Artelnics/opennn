@@ -21,12 +21,12 @@ struct Correlation
 
     void set_perfect();
 
-    float intercept = NAN;
-    float slope = NAN;
-    float coefficient = NAN;
+    float intercept = QUIET_NAN;
+    float slope = QUIET_NAN;
+    float coefficient = QUIET_NAN;
 
-    float lower_confidence = NAN;
-    float upper_confidence = NAN;
+    float lower_confidence = QUIET_NAN;
+    float upper_confidence = QUIET_NAN;
 
     Method method = Method::Pearson;
     Form form = Form::Identity;

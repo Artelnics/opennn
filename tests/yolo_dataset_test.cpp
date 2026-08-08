@@ -13,7 +13,7 @@ using namespace opennn;
 
 namespace {
 
-void write_bmp_24(const std::filesystem::path& path, int width, int height, uint8_t r, uint8_t g, uint8_t b)
+void write_bmp_24(const filesystem::path& path, int width, int height, uint8_t r, uint8_t g, uint8_t b)
 {
     const int row_bytes_unpadded = width * 3;
     const int row_pad = (4 - row_bytes_unpadded % 4) % 4;
@@ -21,7 +21,7 @@ void write_bmp_24(const std::filesystem::path& path, int width, int height, uint
     const int pixel_data_size = row_stride * height;
     const int file_size = 54 + pixel_data_size;
 
-    std::vector<uint8_t> file(static_cast<size_t>(file_size), 0);
+    vector<uint8_t> file(static_cast<size_t>(file_size), 0);
 
     file[0] = 'B'; file[1] = 'M';
     file[2] = static_cast<uint8_t>(file_size & 0xff);
@@ -49,46 +49,46 @@ void write_bmp_24(const std::filesystem::path& path, int width, int height, uint
         }
     }
 
-    std::ofstream out(path, std::ios::binary);
+    ofstream out(path, ios::binary);
     out.write(reinterpret_cast<const char*>(file.data()), file.size());
 }
 
-void write_label(const std::filesystem::path& path, int class_id, float cx, float cy, float w, float h)
+void write_label(const filesystem::path& path, int class_id, float cx, float cy, float w, float h)
 {
-    std::ofstream out(path);
+    ofstream out(path);
     out << class_id << ' ' << cx << ' ' << cy << ' ' << w << ' ' << h << '\n';
 }
 
-void write_classes(const std::filesystem::path& path, std::initializer_list<const char*> names)
+void write_classes(const filesystem::path& path, initializer_list<const char*> names)
 {
-    std::ofstream out(path);
+    ofstream out(path);
     for (auto* n : names) out << n << '\n';
 }
 
 struct TempDir
 {
-    std::filesystem::path path;
+    filesystem::path path;
 
     TempDir()
     {
-        const auto base = std::filesystem::temp_directory_path();
+        const auto base = filesystem::temp_directory_path();
         for (int i = 0; i < 10000; ++i)
         {
-            std::filesystem::path candidate = base / ("opennn_yolo_test_" + std::to_string(i));
-            std::error_code ec;
-            if (std::filesystem::create_directories(candidate, ec) && !ec)
+            filesystem::path candidate = base / ("opennn_yolo_test_" + to_string(i));
+            error_code ec;
+            if (filesystem::create_directories(candidate, ec) && !ec)
             {
                 path = candidate;
                 return;
             }
         }
-        throw std::runtime_error("Could not create temp dir for YoloDataset test");
+        throw runtime_error("Could not create temp dir for YoloDataset test");
     }
 
     ~TempDir()
     {
-        std::error_code ec;
-        std::filesystem::remove_all(path, ec);
+        error_code ec;
+        filesystem::remove_all(path, ec);
     }
 
     TempDir(const TempDir&) = delete;
@@ -100,10 +100,10 @@ struct TempDir
 TEST(YoloDataset, EncodesTargetsIntoExpectedGridCellAndAnchor)
 {
     TempDir dir;
-    const std::filesystem::path images_dir = dir.path / "images";
-    const std::filesystem::path labels_dir = dir.path / "labels";
-    std::filesystem::create_directories(images_dir);
-    std::filesystem::create_directories(labels_dir);
+    const filesystem::path images_dir = dir.path / "images";
+    const filesystem::path labels_dir = dir.path / "labels";
+    filesystem::create_directories(images_dir);
+    filesystem::create_directories(labels_dir);
 
     constexpr int W = 16;
     constexpr int H = 16;
@@ -117,7 +117,7 @@ TEST(YoloDataset, EncodesTargetsIntoExpectedGridCellAndAnchor)
 
     write_classes(labels_dir / "classes.names", {"cat", "dog"});
 
-    const std::vector<std::array<float, 2>> anchors{{0.2f, 0.2f}, {0.5f, 0.5f}};
+    const vector<std::array<float, 2>> anchors{{0.2f, 0.2f}, {0.5f, 0.5f}};
 
     constexpr Index grid_size = 4;
     constexpr Index B = 2;
@@ -141,7 +141,7 @@ TEST(YoloDataset, EncodesTargetsIntoExpectedGridCellAndAnchor)
     const Index channels = B * values_per_box;
     const Index target_floats_per_sample = grid_size * grid_size * channels;
 
-    std::vector<float> targets(static_cast<size_t>(2 * target_floats_per_sample), 0.0f);
+    vector<float> targets(static_cast<size_t>(2 * target_floats_per_sample), 0.0f);
     dataset.fill_targets({0, 1}, {}, targets.data(), FillMode::Inference);
 
     {
@@ -196,10 +196,10 @@ TEST(YoloDataset, EncodesTargetsIntoExpectedGridCellAndAnchor)
 TEST(YoloDataset, FillsInputsWithExpectedShapeAndPixelValues)
 {
     TempDir dir;
-    const std::filesystem::path images_dir = dir.path / "images";
-    const std::filesystem::path labels_dir = dir.path / "labels";
-    std::filesystem::create_directories(images_dir);
-    std::filesystem::create_directories(labels_dir);
+    const filesystem::path images_dir = dir.path / "images";
+    const filesystem::path labels_dir = dir.path / "labels";
+    filesystem::create_directories(images_dir);
+    filesystem::create_directories(labels_dir);
 
     constexpr int W = 8;
     constexpr int H = 8;
@@ -207,7 +207,7 @@ TEST(YoloDataset, FillsInputsWithExpectedShapeAndPixelValues)
     write_label(labels_dir / "solid.txt", 0, 0.5f, 0.5f, 0.4f, 0.4f);
     write_classes(labels_dir / "classes.names", {"only"});
 
-    const std::vector<std::array<float, 2>> anchors{{0.2f, 0.2f}};
+    const vector<std::array<float, 2>> anchors{{0.2f, 0.2f}};
 
     YoloDataset dataset;
     dataset.set_display(false);
@@ -218,7 +218,7 @@ TEST(YoloDataset, FillsInputsWithExpectedShapeAndPixelValues)
     dataset.set_augmentation(no_aug);
 
     const Index pixels = H * W * 3;
-    std::vector<float> inputs(static_cast<size_t>(pixels), -1.0f);
+    vector<float> inputs(static_cast<size_t>(pixels), -1.0f);
 
     dataset.fill_inputs({0}, {}, inputs.data(), FillMode::Training);
 
@@ -238,10 +238,10 @@ TEST(YoloDataset, MultiScaleTargetsRouteBoxesToCorrectHead)
 {
 
     TempDir dir;
-    const std::filesystem::path images_dir = dir.path / "images";
-    const std::filesystem::path labels_dir = dir.path / "labels";
-    std::filesystem::create_directories(images_dir);
-    std::filesystem::create_directories(labels_dir);
+    const filesystem::path images_dir = dir.path / "images";
+    const filesystem::path labels_dir = dir.path / "labels";
+    filesystem::create_directories(images_dir);
+    filesystem::create_directories(labels_dir);
     write_classes(labels_dir / "classes.names", {"only"});
 
     constexpr int W = 16;
@@ -249,13 +249,13 @@ TEST(YoloDataset, MultiScaleTargetsRouteBoxesToCorrectHead)
     write_bmp_24(images_dir / "a.bmp", W, H, 128, 128, 128);
 
     {
-        std::ofstream lf(labels_dir / "a.txt");
+        ofstream lf(labels_dir / "a.txt");
         lf << "0 0.25 0.25 0.6 0.6\n";
         lf << "0 0.875 0.875 0.1 0.1\n";
     }
 
-    const std::vector<std::array<float, 2>> anchors_large{{0.6f, 0.6f}, {0.7f, 0.7f}};
-    const std::vector<std::array<float, 2>> anchors_small{{0.1f, 0.1f}, {0.2f, 0.2f}};
+    const vector<std::array<float, 2>> anchors_large{{0.6f, 0.6f}, {0.7f, 0.7f}};
+    const vector<std::array<float, 2>> anchors_small{{0.1f, 0.1f}, {0.2f, 0.2f}};
 
     constexpr Index C = 1;
     constexpr Index B = 2;
@@ -273,7 +273,7 @@ TEST(YoloDataset, MultiScaleTargetsRouteBoxesToCorrectHead)
                               grid0,                    B, anchors_large);
     dataset.set_multi_scale_heads({grid0, grid1}, {anchors_large, anchors_small});
 
-    std::vector<float> target(static_cast<size_t>(total_floats), -99.0f);
+    vector<float> target(static_cast<size_t>(total_floats), -99.0f);
     dataset.fill_targets({0}, {}, target.data(), FillMode::Inference);
 
     {

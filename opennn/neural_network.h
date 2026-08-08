@@ -80,6 +80,7 @@ public:
     void compile(Device device);
     bool has(const string&) const;
     bool has(LayerType) const;
+    bool has_recurrent_layers() const;
     bool supports_compact_cnn_memory_layout() const noexcept;
 
     bool is_empty() const noexcept { return layers.empty(); }
@@ -204,10 +205,7 @@ public:
 
     bfloat16* get_parameters_bf16_mirror_data()
     {
-        return parameters.device_type == Device::CUDA
-            && config.training_type == Type::BF16
-            && !parameters.empty()
-            && !parameters_bf16_mirror.empty()
+        return config.training_type == Type::BF16 && parameters.owns
             ? parameters_bf16_mirror.as<bfloat16>()
             : nullptr;
     }
@@ -219,6 +217,8 @@ public:
     void copy_states_host();
 
 private:
+
+    void compile(Configuration::Resolved);
 
     MatrixR calculate_outputs_device(const vector<TensorView>&, ForwardPropagation&);
 
@@ -267,12 +267,12 @@ private:
 
     void initialize_parameters(void (Operator::*)());
 
+    void clear_low_precision_parameter_storage();
     void activate_transposed_inference_weights();
 
     struct ParameterSlot
     {
         Layer* layer = nullptr;
-        size_t spec_index = 0;
         Shape shape;
         Type dtype = Type::FP32;
         bool tied = false;
@@ -282,12 +282,10 @@ private:
         Index bf16_offset = 0;
         Index int8_offset = 0;
         Index fp32_offset = 0;
-        Index scale_offset = 0;
     };
 
     struct ParameterSlotTotals
     {
-        Index master_elements = 0;
         Index bf16_elements = 0;
         Index int8_elements = 0;
         Index fp32_elements = 0;
@@ -296,6 +294,9 @@ private:
     ParameterSlotTotals for_each_parameter_slot(
         const function<void(const ParameterSlot&)>& visit,
         const function<void(Layer&)>& begin_layer = {}) const;
+
+    void allocate_compact_parameter_storage(const ParameterSlotTotals&);
+    void use_compact_parameter_storage();
 
     void validate_type(LayerType) const;
 

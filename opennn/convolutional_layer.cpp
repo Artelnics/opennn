@@ -100,14 +100,14 @@ Shape Convolutional::get_output_shape() const
 Index Convolutional::get_output_height() const
 {
     return use_padding
-        ? (input_height + row_stride - 1) / row_stride
+        ? ceil_div(input_height, row_stride)
         : (input_height - kernel_height) / row_stride + 1;
 }
 
 Index Convolutional::get_output_width() const
 {
     return use_padding
-        ? (input_width + column_stride - 1) / column_stride
+        ? ceil_div(input_width, column_stride)
         : (input_width - kernel_width) / column_stride + 1;
 }
 

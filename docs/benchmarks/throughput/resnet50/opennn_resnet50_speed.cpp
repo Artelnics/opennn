@@ -28,24 +28,24 @@
 #include "opennn/memory_debug.h"
 
 using namespace opennn;
-using clock_type = std::chrono::steady_clock;
+using clock_type = chrono::steady_clock;
 
 int main(int argc, char* argv[])
 {
-    std::cout << std::unitbuf;
-    std::cerr << std::unitbuf;
+    cout << unitbuf;
+    cerr << unitbuf;
     try
     {
-        const std::string data_path = argc > 1 ? argv[1] : "cifar10/train";
-        const Index timed_epochs = argc > 2 ? Index(std::stoll(argv[2])) : 5;
-        const Index batch = argc > 3 ? Index(std::stoll(argv[3])) : 128;
-        const std::string precision = argc > 4 ? argv[4] : "fp32";
-        const Index image_size_arg = argc > 5 ? Index(std::stoll(argv[5])) : 0;
+        const string data_path = argc > 1 ? argv[1] : "cifar10/train";
+        const Index timed_epochs = argc > 2 ? Index(stoll(argv[2])) : 5;
+        const Index batch = argc > 3 ? Index(stoll(argv[3])) : 128;
+        const string precision = argc > 4 ? argv[4] : "fp32";
+        const Index image_size_arg = argc > 5 ? Index(stoll(argv[5])) : 0;
         const Index image_size = image_size_arg < 0 ? -image_size_arg : image_size_arg;
         const bool force_resident = image_size_arg < 0;
-        const bool cuda_graph = argc > 6 ? (std::stoi(argv[6]) != 0) : true;
-        const std::string cache_dir = argc > 7 ? argv[7] : "";
-        const std::string workspace_arg = argc > 8 ? argv[8] : "off";
+        const bool cuda_graph = argc > 6 ? (stoi(argv[6]) != 0) : true;
+        const string cache_dir = argc > 7 ? argv[7] : "";
+        const string workspace_arg = argc > 8 ? argv[8] : "off";
 
         memory_debug::reset();
 
@@ -60,17 +60,17 @@ int main(int argc, char* argv[])
         else if (workspace_arg == "auto")
             device::set_conv_workspace_cap(-1);
         else
-            device::set_conv_workspace_cap(std::stoll(workspace_arg) * 1024 * 1024);
-        std::cout << "workspace_mode=" << workspace_arg << "\n";
+            device::set_conv_workspace_cap(stoll(workspace_arg) * 1024 * 1024);
+        cout << "workspace_mode=" << workspace_arg << "\n";
 
         if (!cache_dir.empty())
-            std::cerr << "note: custom cache dir ignored (OpenNN caches in "
+            cerr << "note: custom cache dir ignored (OpenNN caches in "
                          "<data_path>/.cache): " << cache_dir << "\n";
 
-        std::unique_ptr<ImageDataset> dataset_ptr =
+        unique_ptr<ImageDataset> dataset_ptr =
             image_size > 0
-                ? std::make_unique<ImageDataset>(data_path, Shape{image_size, image_size, 3})
-                : std::make_unique<ImageDataset>(data_path);
+                ? make_unique<ImageDataset>(data_path, Shape{image_size, image_size, 3})
+                : make_unique<ImageDataset>(data_path);
         ImageDataset& dataset = *dataset_ptr;
         dataset.set_sample_roles("Training");
 
@@ -82,11 +82,11 @@ int main(int argc, char* argv[])
 
         const Index samples = dataset.get_samples_number();
 
-        std::cout << "samples=" << samples << " batch=" << batch
+        cout << "samples=" << samples << " batch=" << batch
                   << " epochs=" << timed_epochs << " precision=" << precision
                   << " cuda_graph=" << cuda_graph << " gpu_resident=" << gpu_resident;
-        if (image_size > 0) std::cout << " image_size=" << image_size;
-        std::cout << "\n";
+        if (image_size > 0) cout << " image_size=" << image_size;
+        cout << "\n";
 
         ResNet network(dataset.get_shape("Input"),
                        {3, 4, 6, 3},
@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
                        dataset.get_shape("Target"),
                                           true);
 
-        std::cout << "layers=" << network.get_layers_number()
+        cout << "layers=" << network.get_layers_number()
                   << " parameters=" << network.get_parameters_size() << "\n";
 
         TrainingStrategy training_strategy(&network, &dataset);
@@ -114,8 +114,8 @@ int main(int argc, char* argv[])
             adam->set_display(false);
             adam->set_maximum_epochs(0);
             training_strategy.train();
-            memory_debug::print(std::cout);
-            std::cout << "RESULT=OK\n";
+            memory_debug::print(cout);
+            cout << "RESULT=OK\n";
             return 0;
         }
 
@@ -127,20 +127,20 @@ int main(int argc, char* argv[])
         const TrainingResult results = training_strategy.train();
         const auto t1 = clock_type::now();
 
-        const double total_s = std::chrono::duration<double>(t1 - t0).count();
+        const double total_s = chrono::duration<double>(t1 - t0).count();
         const double epoch_s = total_s / double(timed_epochs);
 
-        std::cerr << "final_training_error " << results.get_training_error() << "\n";
-        std::cout << "epoch_s=" << epoch_s << "\n";
-        std::cout << "samples_per_sec=" << long(double(samples) / epoch_s) << "\n";
-        memory_debug::print(std::cout);
-        std::cout << "RESULT=OK\n";
+        cerr << "final_training_error " << results.get_training_error() << "\n";
+        cout << "epoch_s=" << epoch_s << "\n";
+        cout << "samples_per_sec=" << long(double(samples) / epoch_s) << "\n";
+        memory_debug::print(cout);
+        cout << "RESULT=OK\n";
         return 0;
     }
-    catch (const std::exception& e)
+    catch (const exception& e)
     {
-        std::cerr << e.what() << "\n";
-        std::cout << "RESULT=ERROR\n";
+        cerr << e.what() << "\n";
+        cout << "RESULT=ERROR\n";
         return 1;
     }
 }

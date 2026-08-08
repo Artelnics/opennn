@@ -236,6 +236,51 @@ TEST_F(AdaptiveMomentEstimationTest, TrainApproximationGPU)
 
     EXPECT_LT(error_long, error_short);
 }
+
+TEST_F(AdaptiveMomentEstimationTest, CudaGraphGroupedHostStagingReplay)
+{
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    set_seed(1);
+    TabularDataset dataset(16, {2}, {1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    ApproximationNetwork network({2}, {6}, {1});
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    AdaptiveMomentEstimation adam(&loss);
+    adam.set_batch_size(1);
+    adam.set_cuda_graph(true);
+    adam.set_maximum_epochs(1);
+    adam.set_display(false);
+
+    EXPECT_TRUE(isfinite(adam.train().get_training_error()));
+}
+
+TEST_F(AdaptiveMomentEstimationTest, CudaGraphGroupedResidentBf16Replay)
+{
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+
+    set_seed(1);
+    TabularDataset dataset(16, {2}, {1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+    dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+
+    ApproximationNetwork network({2}, {6}, {1});
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    AdaptiveMomentEstimation adam(&loss);
+    adam.set_batch_size(1);
+    adam.set_cuda_graph(true);
+    adam.set_maximum_epochs(1);
+    adam.set_display(false);
+
+    EXPECT_TRUE(isfinite(adam.train().get_training_error()));
+}
 #endif
 
 TEST_F(AdaptiveMomentEstimationTest, TrainClassificationCPU)

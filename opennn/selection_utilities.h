@@ -67,12 +67,12 @@ template <typename Condition>
 optional<Condition> first_stopping_condition(const bool display,
                                              initializer_list<StoppingCheck<Condition>> checks)
 {
-    for (const auto& check : checks)
-        if (check.fired)
-        {
-            if (display) cout << check.message;
-            return check.condition;
-        }
+    const auto check = ranges::find(checks, true, &StoppingCheck<Condition>::fired);
+    if (check != checks.end())
+    {
+        if (display) cout << check->message;
+        return check->condition;
+    }
 
     return nullopt;
 }

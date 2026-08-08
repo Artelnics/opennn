@@ -33,33 +33,33 @@ namespace
         net.compile();
         net.set_parameters_random();
 
-        std::vector<float> ids(size_t(batch * seq));
+        vector<float> ids(size_t(batch * seq));
         for (Index i = 0; i < batch * seq; ++i)
             ids[size_t(i)] = float(1 + i % (vocab - 1));
 
-        auto make_inputs = [&]() { return std::vector<TensorView>{ TensorView(ids.data(), {batch, seq}) }; };
+        auto make_inputs = [&]() { return vector<TensorView>{ TensorView(ids.data(), {batch, seq}) }; };
 
         ForwardPropagation forward_before(batch, &net);
-        std::vector<TensorView> inputs_before = make_inputs();
+        vector<TensorView> inputs_before = make_inputs();
         net.forward_propagate(inputs_before, forward_before, false);
         const TensorView out_before = forward_before.get_outputs();
-        const std::vector<float> expected(out_before.as<float>(), out_before.as<float>() + out_before.size());
+        const vector<float> expected(out_before.as<float>(), out_before.as<float>() + out_before.size());
 
-        const std::string path = (filesystem::temp_directory_path() / "opennn_emb_roundtrip.json").string();
+        const string path = (filesystem::temp_directory_path() / "opennn_emb_roundtrip.json").string();
         net.save(path);
 
         NeuralNetwork loaded;
         loaded.load(path);
 
         ForwardPropagation forward_after(batch, &loaded);
-        std::vector<TensorView> inputs_after = make_inputs();
+        vector<TensorView> inputs_after = make_inputs();
         loaded.forward_propagate(inputs_after, forward_after, false);
         const TensorView out_after = forward_after.get_outputs();
 
         Index mismatches = 0;
         const float* values = out_after.as<float>();
         for (Index i = 0; i < out_after.size(); ++i)
-            if (std::fabs(values[i] - expected[size_t(i)]) > 1e-5f) ++mismatches;
+            if (fabs(values[i] - expected[size_t(i)]) > 1e-5f) ++mismatches;
 
         error_code error;
         filesystem::remove(path, error);
@@ -90,32 +90,32 @@ TEST(BertTest, SaveLoadRoundTripSegmentZero)
     Bert bert(seq, vocab, hidden, heads, intermediate, layers);
     bert.set_parameters_random();
 
-    std::vector<float> input_ids(size_t(batch * seq));
-    std::vector<float> token_type_ids(size_t(batch * seq), 0.0f);
+    vector<float> input_ids(size_t(batch * seq));
+    vector<float> token_type_ids(size_t(batch * seq), 0.0f);
     for (Index i = 0; i < batch * seq; ++i)
         input_ids[size_t(i)] = float(1 + i % (vocab - 1));
 
     auto make_inputs = [&]() {
-        return std::vector<TensorView>{
+        return vector<TensorView>{
             TensorView(input_ids.data(),      {batch, seq}),
             TensorView(token_type_ids.data(), {batch, seq})
         };
     };
 
     ForwardPropagation forward_before(batch, &bert);
-    std::vector<TensorView> inputs_before = make_inputs();
+    vector<TensorView> inputs_before = make_inputs();
     bert.forward_propagate(inputs_before, forward_before, false);
     const TensorView out_before = forward_before.get_outputs();
-    const std::vector<float> expected(out_before.as<float>(), out_before.as<float>() + out_before.size());
+    const vector<float> expected(out_before.as<float>(), out_before.as<float>() + out_before.size());
 
-    const std::string path = (filesystem::temp_directory_path() / "opennn_bert_seg0.json").string();
+    const string path = (filesystem::temp_directory_path() / "opennn_bert_seg0.json").string();
     bert.save(path);
 
     NeuralNetwork loaded;
     loaded.load(path);
 
     ForwardPropagation forward_after(batch, &loaded);
-    std::vector<TensorView> inputs_after = make_inputs();
+    vector<TensorView> inputs_after = make_inputs();
     loaded.forward_propagate(inputs_after, forward_after, false);
     const TensorView out_after = forward_after.get_outputs();
 
@@ -123,7 +123,7 @@ TEST(BertTest, SaveLoadRoundTripSegmentZero)
     Index mismatches = 0;
     const float* values = out_after.as<float>();
     for (Index i = 0; i < out_after.size(); ++i)
-        if (std::fabs(values[i] - expected[size_t(i)]) > 1e-5f) ++mismatches;
+        if (fabs(values[i] - expected[size_t(i)]) > 1e-5f) ++mismatches;
     EXPECT_EQ(mismatches, 0);
 
     error_code error;
@@ -144,26 +144,26 @@ TEST(BertTest, AttentionSaveLoad)
     net.compile();
     net.set_parameters_random();
 
-    std::vector<float> ids(size_t(batch * seq));
+    vector<float> ids(size_t(batch * seq));
     for (Index i = 0; i < batch * seq; ++i)
         ids[size_t(i)] = float(1 + i % (vocab - 1));
 
-    auto make_inputs = [&]() { return std::vector<TensorView>{ TensorView(ids.data(), {batch, seq}) }; };
+    auto make_inputs = [&]() { return vector<TensorView>{ TensorView(ids.data(), {batch, seq}) }; };
 
     ForwardPropagation forward_before(batch, &net);
-    std::vector<TensorView> inputs_before = make_inputs();
+    vector<TensorView> inputs_before = make_inputs();
     net.forward_propagate(inputs_before, forward_before, false);
     const TensorView out_before = forward_before.get_outputs();
-    const std::vector<float> expected(out_before.as<float>(), out_before.as<float>() + out_before.size());
+    const vector<float> expected(out_before.as<float>(), out_before.as<float>() + out_before.size());
 
-    const std::string path = (filesystem::temp_directory_path() / "opennn_attn_roundtrip.json").string();
+    const string path = (filesystem::temp_directory_path() / "opennn_attn_roundtrip.json").string();
     net.save(path);
 
     NeuralNetwork loaded;
     loaded.load(path);
 
     ForwardPropagation forward_after(batch, &loaded);
-    std::vector<TensorView> inputs_after = make_inputs();
+    vector<TensorView> inputs_after = make_inputs();
     loaded.forward_propagate(inputs_after, forward_after, false);
     const TensorView out_after = forward_after.get_outputs();
 
@@ -171,7 +171,7 @@ TEST(BertTest, AttentionSaveLoad)
     Index mismatches = 0;
     const float* values = out_after.as<float>();
     for (Index i = 0; i < out_after.size(); ++i)
-        if (std::fabs(values[i] - expected[size_t(i)]) > 1e-5f) ++mismatches;
+        if (fabs(values[i] - expected[size_t(i)]) > 1e-5f) ++mismatches;
     EXPECT_EQ(mismatches, 0);
 
     error_code error;
@@ -194,8 +194,8 @@ TEST(BertTest, ForwardShapeAndFinite)
 
     Bert bert(seq, vocab, hidden, heads, intermediate, layers);
 
-    std::vector<float> input_ids(size_t(batch * seq));
-    std::vector<float> token_type_ids(size_t(batch * seq));
+    vector<float> input_ids(size_t(batch * seq));
+    vector<float> token_type_ids(size_t(batch * seq));
     for (Index b = 0; b < batch; ++b)
         for (Index s = 0; s < seq; ++s)
         {
@@ -204,7 +204,7 @@ TEST(BertTest, ForwardShapeAndFinite)
         }
 
     ForwardPropagation forward_propagation(batch, &bert);
-    std::vector<TensorView> inputs = {
+    vector<TensorView> inputs = {
         TensorView(input_ids.data(),      {batch, seq}),
         TensorView(token_type_ids.data(), {batch, seq})
     };
@@ -218,7 +218,7 @@ TEST(BertTest, ForwardShapeAndFinite)
 
     const float* values = output.as<float>();
     for (Index i = 0; i < output.size(); ++i)
-        EXPECT_TRUE(std::isfinite(values[i])) << "non-finite output at " << i;
+        EXPECT_TRUE(isfinite(values[i])) << "non-finite output at " << i;
 
     Configuration::instance().set();
 }
@@ -232,8 +232,8 @@ TEST(BertTest, ForSequenceClassificationForward)
 
     BertForSequenceClassification model(seq, vocab, hidden, heads, intermediate, layers, labels);
 
-    std::vector<float> input_ids(size_t(batch * seq));
-    std::vector<float> token_type_ids(size_t(batch * seq));
+    vector<float> input_ids(size_t(batch * seq));
+    vector<float> token_type_ids(size_t(batch * seq));
     for (Index b = 0; b < batch; ++b)
         for (Index s = 0; s < seq; ++s)
         {
@@ -242,7 +242,7 @@ TEST(BertTest, ForSequenceClassificationForward)
         }
 
     ForwardPropagation forward_propagation(batch, &model);
-    std::vector<TensorView> inputs = {
+    vector<TensorView> inputs = {
         TensorView(input_ids.data(),      {batch, seq}),
         TensorView(token_type_ids.data(), {batch, seq})
     };
@@ -260,7 +260,7 @@ TEST(BertTest, ForSequenceClassificationForward)
         for (Index c = 0; c < labels; ++c)
         {
             const float v = p[b * labels + c];
-            EXPECT_TRUE(std::isfinite(v));
+            EXPECT_TRUE(isfinite(v));
             EXPECT_GE(v, -1e-6f);
             EXPECT_LE(v, 1.0f + 1e-6f);
             row_sum += v;
@@ -313,8 +313,8 @@ TEST(BertTest, SaveLoadRoundTrip)
     Bert bert(seq, vocab, hidden, heads, intermediate, layers);
     bert.set_parameters_random();
 
-    std::vector<float> input_ids(size_t(batch * seq));
-    std::vector<float> token_type_ids(size_t(batch * seq));
+    vector<float> input_ids(size_t(batch * seq));
+    vector<float> token_type_ids(size_t(batch * seq));
     for (Index b = 0; b < batch; ++b)
         for (Index s = 0; s < seq; ++s)
         {
@@ -323,22 +323,22 @@ TEST(BertTest, SaveLoadRoundTrip)
         }
 
     auto make_inputs = [&]() {
-        return std::vector<TensorView>{
+        return vector<TensorView>{
             TensorView(input_ids.data(),      {batch, seq}),
             TensorView(token_type_ids.data(), {batch, seq})
         };
     };
 
     ForwardPropagation forward_before(batch, &bert);
-    std::vector<TensorView> inputs_before = make_inputs();
+    vector<TensorView> inputs_before = make_inputs();
     bert.forward_propagate(inputs_before, forward_before, false);
     const TensorView output_before = forward_before.get_outputs();
-    const std::vector<float> expected(output_before.as<float>(),
+    const vector<float> expected(output_before.as<float>(),
                                       output_before.as<float>() + output_before.size());
 
     {
         ForwardPropagation forward_again(batch, &bert);
-        std::vector<TensorView> inputs_again = make_inputs();
+        vector<TensorView> inputs_again = make_inputs();
         bert.forward_propagate(inputs_again, forward_again, false);
         const TensorView output_again = forward_again.get_outputs();
         ASSERT_EQ(output_again.size(), output_before.size());
@@ -348,21 +348,21 @@ TEST(BertTest, SaveLoadRoundTrip)
     }
 
     const Index parameters_size = bert.get_parameters_size();
-    const std::vector<float> parameters_before(bert.get_parameters_data(),
+    const vector<float> parameters_before(bert.get_parameters_data(),
                                                bert.get_parameters_data() + parameters_size);
 
-    const std::string path = (filesystem::temp_directory_path() / "opennn_bert_roundtrip.json").string();
+    const string path = (filesystem::temp_directory_path() / "opennn_bert_roundtrip.json").string();
     bert.save(path);
 
     NeuralNetwork loaded;
     loaded.load(path);
 
     ASSERT_EQ(loaded.get_parameters_size(), parameters_size);
-    EXPECT_EQ(0, std::memcmp(loaded.get_parameters_data(), parameters_before.data(),
+    EXPECT_EQ(0, memcmp(loaded.get_parameters_data(), parameters_before.data(),
                              size_t(parameters_size) * sizeof(float)));
 
     ForwardPropagation forward_after(batch, &loaded);
-    std::vector<TensorView> inputs_after = make_inputs();
+    vector<TensorView> inputs_after = make_inputs();
     loaded.forward_propagate(inputs_after, forward_after, false);
     const TensorView output_after = forward_after.get_outputs();
 

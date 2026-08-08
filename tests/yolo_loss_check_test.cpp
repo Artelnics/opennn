@@ -17,9 +17,9 @@ TEST(YoloLossCheck, GradientMatchesFiniteDifferences)
     constexpr int gc_vpb  = 5 + gc_ncls;
     constexpr int gc_N    = gc_grid * gc_grid * gc_bpc * gc_vpb;
 
-    std::vector<float> gc_out(gc_N, 0.0f);
-    std::vector<float> gc_tgt(gc_N, 0.0f);
-    std::vector<float> gc_grad(gc_N, 0.0f);
+    vector<float> gc_out(gc_N, 0.0f);
+    vector<float> gc_tgt(gc_N, 0.0f);
+    vector<float> gc_grad(gc_N, 0.0f);
 
     for (int i = 0; i < gc_N; ++i)
         gc_out[i] = 0.5f;
@@ -70,8 +70,8 @@ true, gc_lam);
 
         const float num_grad = (lp - lm) / (2.0f * gc_eps);
         const float ana_grad = gc_grad[i];
-        const float denom    = std::max(std::abs(num_grad), std::abs(ana_grad)) + 1e-8f;
-        const float rel      = std::abs(num_grad - ana_grad) / denom;
+        const float denom    = max(abs(num_grad), abs(ana_grad)) + 1e-8f;
+        const float rel      = abs(num_grad - ana_grad) / denom;
         if (rel > max_rel_err) max_rel_err = rel;
     }
 
@@ -90,8 +90,8 @@ TEST(YoloLossCheck, ForwardMatchesExpectedValues)
     const float ev_conf=0.7f, ev_p0=0.8f, ev_p1=0.2f;
     const YoloLambdas ev_lam{5.0f, 0.5f, 2.0f, 0.0f};
 
-    std::vector<float> ev_out_A(ev_vpb, 0.0f);
-    std::vector<float> ev_tgt_A(ev_vpb, 0.0f);
+    vector<float> ev_out_A(ev_vpb, 0.0f);
+    vector<float> ev_tgt_A(ev_vpb, 0.0f);
     ev_out_A[0]=ev_cx; ev_out_A[1]=ev_cy; ev_out_A[2]=ev_w; ev_out_A[3]=ev_h;
     ev_out_A[4]=ev_conf; ev_out_A[5]=ev_p0; ev_out_A[6]=ev_p1;
     ev_tgt_A[0]=ev_cx; ev_tgt_A[1]=ev_cy; ev_tgt_A[2]=ev_w; ev_tgt_A[3]=ev_h;
@@ -110,13 +110,13 @@ TEST(YoloLossCheck, ForwardMatchesExpectedValues)
     const float gotA = yolo_error_kernel(ev_out_tv_A, ev_tgt_tv_A,
                                          Index(ev_bpc), Index(ev_ncls),
 true, ev_lam);
-    const float errA = std::abs(gotA - expA);
+    const float errA = abs(gotA - expA);
 
     const float ev_px=0.1f, ev_gx=0.9f, ev_py=0.5f, ev_gy=0.5f;
     const float ev_pw=0.1f, ev_gw=0.1f, ev_ph=0.1f, ev_gh=0.1f;
 
-    std::vector<float> ev_out_B(ev_vpb, 0.0f);
-    std::vector<float> ev_tgt_B(ev_vpb, 0.0f);
+    vector<float> ev_out_B(ev_vpb, 0.0f);
+    vector<float> ev_tgt_B(ev_vpb, 0.0f);
     ev_out_B[0]=ev_px; ev_out_B[1]=ev_py; ev_out_B[2]=ev_pw; ev_out_B[3]=ev_ph;
     ev_out_B[4]=0.5f; ev_out_B[5]=0.6f; ev_out_B[6]=0.4f;
     ev_tgt_B[0]=ev_gx; ev_tgt_B[1]=ev_gy; ev_tgt_B[2]=ev_gw; ev_tgt_B[3]=ev_gh;
@@ -140,11 +140,11 @@ true, ev_lam);
     const float gotB = yolo_error_kernel(ev_out_tv_B, ev_tgt_tv_B,
                                          Index(ev_bpc), Index(ev_ncls),
 true, ev_lam);
-    const float errB = std::abs(gotB - expB);
+    const float errB = abs(gotB - expB);
 
-    std::vector<float> ev_out_C = ev_out_A;
+    vector<float> ev_out_C = ev_out_A;
     ev_out_C[4] = 0.1f;
-    std::vector<float> ev_grad_C(ev_vpb, 0.0f);
+    vector<float> ev_grad_C(ev_vpb, 0.0f);
     TensorView ev_out_tv_C(ev_out_C.data(), ev_shape_A, Type::FP32);
     TensorView ev_grad_tv_C(ev_grad_C.data(), ev_shape_A, Type::FP32);
     yolo_gradient_kernel(ev_out_tv_C, ev_tgt_tv_A, ev_grad_tv_C,
@@ -154,10 +154,10 @@ true, ev_lam);
 
     const float errC = (ev_raw_logit_grad_obj < 0.0f) ? 0.0f : 1.0f;
 
-    std::vector<float> ev_out_D(ev_vpb, 0.0f);
-    std::vector<float> ev_tgt_D(ev_vpb, 0.0f);
+    vector<float> ev_out_D(ev_vpb, 0.0f);
+    vector<float> ev_tgt_D(ev_vpb, 0.0f);
     ev_out_D[4] = 0.9f;
-    std::vector<float> ev_grad_D(ev_vpb, 0.0f);
+    vector<float> ev_grad_D(ev_vpb, 0.0f);
     TensorView ev_out_tv_D(ev_out_D.data(), ev_shape_A, Type::FP32);
     TensorView ev_tgt_tv_D(ev_tgt_D.data(), ev_shape_A, Type::FP32);
     TensorView ev_grad_tv_D(ev_grad_D.data(), ev_shape_A, Type::FP32);
@@ -171,7 +171,7 @@ true, ev_lam);
     EXPECT_LT(ev_raw_logit_grad_obj, 0.0f) << "foreground obj gradient direction";
     EXPECT_GT(ev_raw_logit_grad_bg, 0.0f) << "background obj gradient direction";
 
-    EXPECT_LT(std::max({errA, errB, errC, errD}), 1e-4f);
+    EXPECT_LT(max({errA, errB, errC, errD}), 1e-4f);
 }
 
 #endif

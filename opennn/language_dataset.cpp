@@ -49,7 +49,7 @@ VectorI LanguageDataset::calculate_target_distribution() const
             for (Index j = 0; j < targets_number; ++j)
                 tokens[size_t(j)] = int32_t(data(sample, maximum_input_sequence_length + j));
         else
-            cache_reader.read_at(tokens.data(), size_t(targets_number) * sizeof(int32_t),
+            cache_reader.read_at(span(tokens.data(), size_t(targets_number)),
                                  (uint64_t(sample) * record_tokens
                                   + uint64_t(maximum_input_sequence_length)) * sizeof(int32_t));
 
@@ -100,8 +100,8 @@ void LanguageDataset::read_txt()
     load_documents(input_document_tokens, target_document_tokens);
 
     const auto get_maximum_size = [](const auto& nested_values) {
-        const auto it = ranges::max_element(nested_values,
-                                            [](const auto& a, const auto& b) { return a.size() < b.size(); });
+        const auto it = ranges::max_element(nested_values, {},
+                                            [](const auto& values) { return values.size(); });
         return it == nested_values.end() ? size_t(0) : it->size();
     };
 
@@ -303,7 +303,7 @@ void LanguageDataset::save_cache_metadata(const filesystem::path& metadata_path,
     FileWriter writer;
     writer.open(metadata_path.string() + ".tmp");
 
-    writer.write(LANGUAGE_CACHE_MAGIC.data(), LANGUAGE_CACHE_MAGIC.size());
+    writer.write(span(LANGUAGE_CACHE_MAGIC));
     write_binary_value(writer, LANGUAGE_CACHE_VERSION);
     write_binary_value(writer, int64_t(maximum_input_sequence_length));
     write_binary_value(writer, int64_t(maximum_target_sequence_length));
@@ -552,7 +552,7 @@ void LanguageDataset::write_binary_cache(const vector<vector<Index>>& input_indi
         for (Index j = 0; j < tgt_n; ++j)
             record[size_t(maximum_input_sequence_length + j)] = int32_t(tgt[size_t(j)]);
 
-        writer.write(record.data(), record.size() * sizeof(int32_t));
+        writer.write(span(record));
     }
 
     writer.finish_with_rename(cache_path);

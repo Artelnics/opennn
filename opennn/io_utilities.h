@@ -9,6 +9,8 @@
 
 #include "opennn_types.h"
 
+#include <type_traits>
+
 namespace opennn
 {
 
@@ -37,7 +39,14 @@ public:
     void close();
     bool is_open() const;
 
-    void read_at(void*, size_t, uint64_t offset) const;
+    void read_at(span<byte>, uint64_t offset) const;
+
+    template <typename T, size_t Extent>
+        requires (!is_const_v<T> && is_trivially_copyable_v<T>)
+    void read_at(const span<T, Extent> buffer, const uint64_t offset) const
+    {
+        read_at(span<byte>(as_writable_bytes(buffer)), offset);
+    }
 
     uint64_t file_size() const;
 
@@ -73,7 +82,14 @@ public:
 
     void open(const filesystem::path&);
 
-    void write(const void*, size_t);
+    void write(span<const byte>);
+
+    template <typename T, size_t Extent>
+        requires is_trivially_copyable_v<remove_const_t<T>>
+    void write(const span<T, Extent> buffer)
+    {
+        write(span<const byte>(as_bytes(buffer)));
+    }
 
     void finish_with_rename(const filesystem::path&);
 
@@ -82,22 +98,24 @@ private:
     ofstream stream_;
 };
 
+// These copy the object representation verbatim, so anything with indirection
+// (string, vector, ...) would serialize a pointer instead of its contents.
 template <typename T>
-bool read_binary_value(istream& stream, T& value)
+concept RawStorable = is_trivially_copyable_v<T>;
+
+bool read_binary_value(istream& stream, RawStorable auto& value)
 {
     return bool(stream.read(reinterpret_cast<char*>(&value), sizeof(value)));
 }
 
-template <typename... Values>
-bool read_binary_values(istream& stream, Values&... values)
+bool read_binary_values(istream& stream, RawStorable auto&... values)
 {
     return (read_binary_value(stream, values) && ...);
 }
 
-template <typename T>
-void write_binary_value(FileWriter& writer, const T& value)
+void write_binary_value(FileWriter& writer, const RawStorable auto& value)
 {
-    writer.write(&value, sizeof(value));
+    writer.write(span(&value, 1));
 }
 
 inline bool read_binary_string(istream& stream, string& value)
@@ -114,7 +132,7 @@ inline bool read_binary_string(istream& stream, string& value)
 inline void write_binary_string(FileWriter& writer, const string& value)
 {
     write_binary_value(writer, uint64_t(value.size()));
-    writer.write(value.data(), value.size());
+    writer.write(span(value));
 }
 
 class FileMapping

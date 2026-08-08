@@ -189,7 +189,7 @@ void BertDataset::save_cache(const filesystem::path& bert_cache_path,
     FileWriter writer;
     writer.open(bert_cache_path.string() + ".tmp");
 
-    writer.write(BERT_CACHE_MAGIC.data(), BERT_CACHE_MAGIC.size());
+    writer.write(span(BERT_CACHE_MAGIC));
     write_binary_value(writer, BERT_CACHE_VERSION);
     write_binary_value(writer, int64_t(sequence_length));
     write_binary_value(writer, int64_t(data.rows()));
@@ -198,7 +198,7 @@ void BertDataset::save_cache(const filesystem::path& bert_cache_path,
     for (const string& label : labels)
         write_binary_string(writer, label);
 
-    writer.write(data.data(), size_t(data.size()) * sizeof(float));
+    writer.write(span(data.data(), size_t(data.size())));
     writer.finish_with_rename(bert_cache_path);
 }
 

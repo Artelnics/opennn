@@ -113,37 +113,38 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
     training_direction.noalias() = -(inverse_hessian.selfadjointView<Lower>() * gradient);
 
-    training_slope = gradient.dot(training_direction);
+    optimization_data.training_slope = gradient.dot(training_direction);
 
     bool is_gradient_direction = false;
 
-    if (training_slope >= 0.0f)
+    if (optimization_data.training_slope >= 0.0f)
     {
         training_direction = -gradient;
-        training_slope = gradient.dot(training_direction);
+        optimization_data.training_slope = gradient.dot(training_direction);
         is_gradient_direction = true;
     }
 
     optimization_data.initial_learning_rate = is_gradient_direction
-        ? ((old_learning_rate > 0.0f) ? old_learning_rate : first_learning_rate)
+        ? ((optimization_data.old_learning_rate > 0.0f)
+            ? optimization_data.old_learning_rate : first_learning_rate)
         : 1.0f;
 
-    tie(learning_rate, back_propagation.loss_value) = calculate_directional_point(
+    tie(optimization_data.learning_rate, back_propagation.loss_value) = calculate_directional_point(
         batch,
         forward_propagation,
         back_propagation,
         optimization_data,
         back_propagation.loss_value);
 
-    if (learning_rate == 0.0f && !is_gradient_direction)
+    if (optimization_data.learning_rate == 0.0f && !is_gradient_direction)
     {
         inverse_hessian.setIdentity();
         optimization_data.views[OldInverseHessian].as_matrix().setIdentity();
 
         training_direction = -gradient;
-        training_slope = gradient.dot(training_direction);
+        optimization_data.training_slope = gradient.dot(training_direction);
 
-        tie(learning_rate, back_propagation.loss_value) = calculate_directional_point(
+        tie(optimization_data.learning_rate, back_propagation.loss_value) = calculate_directional_point(
             batch,
             forward_propagation,
             back_propagation,
@@ -151,21 +152,21 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
             back_propagation.loss_value);
     }
 
-    if (abs(learning_rate) > 0.0f)
+    if (abs(optimization_data.learning_rate) > 0.0f)
     {
-        parameter_updates = training_direction * learning_rate;
+        parameter_updates = training_direction * optimization_data.learning_rate;
     }
     else
     {
         parameter_updates = (gradient.array().abs() >= EPSILON)
                                 .select(-gradient.array().sign() * EPSILON, 0.0f);
-        learning_rate = optimization_data.initial_learning_rate;
+        optimization_data.learning_rate = optimization_data.initial_learning_rate;
     }
     parameters += parameter_updates;
 
     old_gradient = gradient;
     swap(optimization_data.views[InverseHessian], optimization_data.views[OldInverseHessian]);
-    old_learning_rate = learning_rate;
+    optimization_data.old_learning_rate = optimization_data.learning_rate;
 }
 
 TrainingResult QuasiNewtonMethod::train()
@@ -184,10 +185,6 @@ TrainingResult QuasiNewtonMethod::train()
     BackPropagation validation_back_propagation(context.validation_samples_number, loss);
 
     BackPropagation training_back_propagation(context.training_samples_number, loss);
-
-    old_learning_rate = 0.0f;
-    learning_rate = 0.0f;
-    training_slope = 0.0f;
 
     const Index parameters_number = neural_network->get_parameters_size();
 
@@ -247,7 +244,7 @@ TrainingResult QuasiNewtonMethod::train()
         return validation_back_propagation.error;
     };
 
-    hooks.display_extra = [&]{ cout << "Learning rate: " << learning_rate << "\n"; };
+    hooks.display_extra = [&]{ cout << "Learning rate: " << optimization_data.learning_rate << "\n"; };
 
     return train_full_batch(context, hooks);
 }
@@ -301,7 +298,7 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
         const float candidate_regularization = loss->calculate_regularization(potential_parameters);
         const float new_loss = evaluation_result.error + candidate_regularization;
 
-        if (new_loss <= current_loss + armijo_constant * alpha * training_slope)
+        if (new_loss <= current_loss + armijo_constant * alpha * optimization_data.training_slope)
         {
             back_propagation.error = evaluation_result.error;
             back_propagation.regularization = candidate_regularization;

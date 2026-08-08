@@ -80,8 +80,6 @@ private:
 
    float initial_damping_parameter = 0.0f;
 
-   float damping_parameter = 0.0f;
-
    float minimum_damping_parameter = 0.0f;
 
    float maximum_damping_parameter = 0.0f;

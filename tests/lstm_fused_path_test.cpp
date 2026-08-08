@@ -55,7 +55,7 @@ void check_constant_forward(const Index neurons, const string& cell_activation)
     layer->set_activation_function(cell_activation);
     layer->set_recurrent_activation_function("Sigmoid");
     layer->set_return_sequences(true);
-    neural_network.add_layer(std::move(layer));
+    neural_network.add_layer(move(layer));
     neural_network.compile();
 
     VectorMap(neural_network.get_parameters_data(),
@@ -81,8 +81,8 @@ void check_constant_forward(const Index neurons, const string& cell_activation)
     for (Index b = 0; b < samples_number; ++b)
         for (Index t = 0; t < time_steps; ++t)
             for (Index h = 0; h < neurons; ++h)
-                max_difference = std::max(max_difference,
-                    std::abs(double(outputs[(b * time_steps + t) * neurons + h])
+                max_difference = max(max_difference,
+                    abs(double(outputs[(b * time_steps + t) * neurons + h])
                              - reference[t]));
 
     EXPECT_LT(max_difference, 1.0e-4)
@@ -115,7 +115,7 @@ void check_gradient(const Index neurons, const bool return_sequences)
     auto layer = make_unique<LongShortTermMemory>(
         Shape{time_steps, inputs_number}, Shape{neurons});
     layer->set_return_sequences(return_sequences);
-    neural_network.add_layer(std::move(layer));
+    neural_network.add_layer(move(layer));
     neural_network.compile();
     set_varied_parameters(neural_network);
 
@@ -162,10 +162,10 @@ TEST(LstmFusedPath, DISABLED_BenchmarkBoundary)
     const int   warmup         = 5;
     const int   iterations     = 50;
 
-    std::printf("batch=%lld T=%lld F=%lld iterations=%d\n",
+    printf("batch=%lld T=%lld F=%lld iterations=%d\n",
                 (long long)samples_number, (long long)time_steps,
                 (long long)features, iterations);
-    std::printf("%6s  %-6s  %10s  %10s\n", "H", "path", "fwd_us", "bwd_us");
+    printf("%6s  %-6s  %10s  %10s\n", "H", "path", "fwd_us", "bwd_us");
 
     for (const Index neurons : {8, 16, 32, 48, 64, 96, 128})
     {
@@ -197,25 +197,25 @@ TEST(LstmFusedPath, DISABLED_BenchmarkBoundary)
             loss.back_propagate(batch, forward_propagation, back_propagation);
         }
 
-        const auto t0 = std::chrono::steady_clock::now();
+        const auto t0 = chrono::steady_clock::now();
         for (int i = 0; i < iterations; ++i)
             neural_network.forward_propagate(batch.get_inputs(), forward_propagation, true);
-        const auto t1 = std::chrono::steady_clock::now();
+        const auto t1 = chrono::steady_clock::now();
         for (int i = 0; i < iterations; ++i)
             loss.back_propagate(batch, forward_propagation, back_propagation);
-        const auto t2 = std::chrono::steady_clock::now();
+        const auto t2 = chrono::steady_clock::now();
 
         const double forward_us =
-            std::chrono::duration<double, std::micro>(t1 - t0).count() / iterations;
+            chrono::duration<double, micro>(t1 - t0).count() / iterations;
         const double backward_us =
-            std::chrono::duration<double, std::micro>(t2 - t1).count() / iterations;
+            chrono::duration<double, micro>(t2 - t1).count() / iterations;
 
-        std::printf("%6lld  %-6s  %10.1f  %10.1f\n",
+        printf("%6lld  %-6s  %10.1f  %10.1f\n",
                     (long long)neurons, neurons < 64 ? "scalar" : "fused",
                     forward_us, backward_us);
     }
 
-    std::fflush(stdout);
+    fflush(stdout);
 }
 
 // OpenNN: Open Neural Networks Library.

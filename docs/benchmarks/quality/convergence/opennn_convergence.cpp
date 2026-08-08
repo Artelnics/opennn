@@ -33,7 +33,7 @@
 #include "opennn/training_strategy.h"
 
 using namespace opennn;
-using clock_type = std::chrono::steady_clock;
+using clock_type = chrono::steady_clock;
 
 namespace
 {
@@ -45,26 +45,26 @@ float clamp_probability(float value)
     return value;
 }
 
-std::unique_ptr<NeuralNetwork> make_network(const Shape& input_shape,
+unique_ptr<NeuralNetwork> make_network(const Shape& input_shape,
                                             const Shape& target_shape,
                                             Index hidden,
                                             Index hidden_layers)
 {
-    auto network = std::make_unique<NeuralNetwork>();
+    auto network = make_unique<NeuralNetwork>();
     Shape current = input_shape;
 
     for (Index i = 0; i < hidden_layers; ++i)
     {
-        network->add_layer(std::make_unique<opennn::Dense>(
+        network->add_layer(make_unique<opennn::Dense>(
             current,
             Shape{hidden},
             "ReLU",
             false,
-            "higgs_dense_" + std::to_string(i + 1)));
+            "higgs_dense_" + to_string(i + 1)));
         current = network->get_output_shape();
     }
 
-    network->add_layer(std::make_unique<opennn::Dense>(
+    network->add_layer(make_unique<opennn::Dense>(
         current,
         target_shape,
         "Sigmoid",
@@ -100,8 +100,8 @@ double evaluate_log_loss(NeuralNetwork& network,
             const float probability = clamp_probability(outputs(r, 0));
             const int label = all(i + r, inputs_number) >= 0.5f ? 1 : 0;
             log_loss += label
-                ? -std::log(double(probability))
-                : -std::log(double(1.0f - probability));
+                ? -log(double(probability))
+                : -log(double(1.0f - probability));
         }
         processed += batch;
     }
@@ -117,18 +117,18 @@ int main(int argc, char* argv[])
     {
         if (argc < 3)
         {
-            std::cerr << "usage: opennn_convergence <train_csv> <test_csv> "
+            cerr << "usage: opennn_convergence <train_csv> <test_csv> "
                          "[target_log_loss] [max_epochs] [batch] [hidden] [hidden_layers]\n";
             return 2;
         }
 
-        const std::string train_path    = argv[1];
-        const std::string test_path     = argv[2];
-        const float target_log_loss     = argc > 3 ? std::stof(argv[3])          : 0.60f;
-        const Index max_epochs          = argc > 4 ? Index(std::stoll(argv[4]))  : 50;
-        const Index batch               = argc > 5 ? Index(std::stoll(argv[5]))  : 1024;
-        const Index hidden              = argc > 6 ? Index(std::stoll(argv[6]))  : 1024;
-        const Index hidden_layers       = argc > 7 ? Index(std::stoll(argv[7]))  : 2;
+        const string train_path    = argv[1];
+        const string test_path     = argv[2];
+        const float target_log_loss     = argc > 3 ? stof(argv[3])          : 0.60f;
+        const Index max_epochs          = argc > 4 ? Index(stoll(argv[4]))  : 50;
+        const Index batch               = argc > 5 ? Index(stoll(argv[5]))  : 1024;
+        const Index hidden              = argc > 6 ? Index(stoll(argv[6]))  : 1024;
+        const Index hidden_layers       = argc > 7 ? Index(stoll(argv[7]))  : 2;
 
         set_seed(42);
         Configuration::instance().set(Device::CPU, Type::FP32);
@@ -172,34 +172,34 @@ int main(int argc, char* argv[])
         {
             const auto t0 = clock_type::now();
             training_strategy.train();
-            train_s += std::chrono::duration<double>(clock_type::now() - t0).count();
+            train_s += chrono::duration<double>(clock_type::now() - t0).count();
             epochs += chunk;
 
             test_log_loss = evaluate_log_loss(*network, test_all, inputs_number, batch);
             if (test_log_loss <= target_log_loss) { reached = true; break; }
         }
 
-        std::cout.precision(10);
-        std::cout << "engine=opennn\n";
-        std::cout << "device=cpu\n";
-        std::cout << "dataset=HIGGS\n";
-        std::cout << "train_samples=" << samples << "\n";
-        std::cout << "batch=" << batch << "\n";
-        std::cout << "hidden=" << hidden << "\n";
-        std::cout << "hidden_layers=" << hidden_layers << "\n";
-        std::cout << "target_log_loss=" << target_log_loss << "\n";
-        std::cout << "reached_goal=" << (reached ? 1 : 0) << "\n";
-        std::cout << "epochs_to_target=" << epochs << "\n";
-        std::cout << "test_log_loss=" << test_log_loss << "\n";
-        std::cout << "time_to_target_s=" << train_s << "\n";
-        std::cout << "RESULT=" << (reached ? "OK" : "DID_NOT_CONVERGE") << "\n";
+        cout.precision(10);
+        cout << "engine=opennn\n";
+        cout << "device=cpu\n";
+        cout << "dataset=HIGGS\n";
+        cout << "train_samples=" << samples << "\n";
+        cout << "batch=" << batch << "\n";
+        cout << "hidden=" << hidden << "\n";
+        cout << "hidden_layers=" << hidden_layers << "\n";
+        cout << "target_log_loss=" << target_log_loss << "\n";
+        cout << "reached_goal=" << (reached ? 1 : 0) << "\n";
+        cout << "epochs_to_target=" << epochs << "\n";
+        cout << "test_log_loss=" << test_log_loss << "\n";
+        cout << "time_to_target_s=" << train_s << "\n";
+        cout << "RESULT=" << (reached ? "OK" : "DID_NOT_CONVERGE") << "\n";
 
         return reached ? 0 : 1;
     }
-    catch (const std::exception& e)
+    catch (const exception& e)
     {
-        std::cerr << e.what() << "\n";
-        std::cout << "RESULT=ERROR\n";
+        cerr << e.what() << "\n";
+        cout << "RESULT=ERROR\n";
         return 1;
     }
 }

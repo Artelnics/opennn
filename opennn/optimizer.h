@@ -1,7 +1,7 @@
 ﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   O P T I M I Z A T I O N   A L G O R I T H M   C L A S S   H E A D E R
+//   O P T I M I Z E R   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -83,8 +83,6 @@ public:
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
-    static float get_elapsed_time(const time_t&);
-
     function<void(Index, NeuralNetwork*)> post_epoch_callback;
 
     function<void(NeuralNetwork*)> post_batch_callback;
@@ -92,6 +90,41 @@ public:
     function<void(Index, float)> post_best_callback;
 
 protected:
+
+    struct TrainingSession
+    {
+        static constexpr int group_size = 8;
+        static constexpr int slots_count = 2 * group_size;
+        static constexpr int pipelines_count = 2;
+
+        struct GraphPipeline
+        {
+            array<unique_ptr<Batch>, group_size> slots;
+            device::GraphExecHandle exec;
+            CudaEvent fork_event;
+            array<CudaEvent, group_size> copy_done_events;
+        };
+
+        Batch* fixed_batch() const { return pipelines[0].slots[0].get(); }
+
+        bool has_graph_batches() const
+        {
+            return pipelines[0].slots[1] || pipelines[1].slots[0];
+        }
+
+        void disable_cuda_graph_capture()
+        {
+            for (GraphPipeline& pipeline : pipelines)
+                pipeline.exec.reset();
+            cuda_graph_capture_allowed = false;
+        }
+
+        array<GraphPipeline, pipelines_count> pipelines;
+        Buffer device_metrics{Device::CUDA};
+        array<CudaEvent, 4> throttle_events;
+        size_t throttle_cursor = 0;
+        bool cuda_graph_capture_allowed = false;
+    };
 
     void set_names();
     void set_scaling();
@@ -101,12 +134,23 @@ protected:
                                    float, Index,
                                    float, bool) const;
 
-    void update_best_parameters(NeuralNetwork*, float,
-                                Index, Index&);
+    struct BestModelSnapshot
+    {
+        float validation_error = MAX;
+        Index epoch = -1;
+        vector<float> parameters;
+        vector<float> states;
+    };
 
-    void restore_best_parameters(NeuralNetwork*, TrainingResult&);
+    void update_best_parameters(NeuralNetwork*,
+                                float,
+                                Index,
+                                Index&,
+                                BestModelSnapshot&);
 
-    void reset_best_parameters();
+    void restore_best_parameters(NeuralNetwork*,
+                                 TrainingResult&,
+                                 const BestModelSnapshot&);
 
     static void mark_validation_propagation(ForwardPropagation* validation_propagation)
     {
@@ -127,15 +171,15 @@ protected:
                                 const vector<Index>&,
                                 const vector<Index>&,
                                 const vector<Index>&,
-                                const function<void(BackPropagation&)>&,
+                                TrainingSession&,
+                                OptimizerData&,
                                 ForwardPropagation* validation_forward_propagation = nullptr,
                                 ThreadSafeQueue<Batch*>* validation_empty_queue = nullptr,
-                                const vector<vector<Index>>* validation_batches = nullptr,
-                                Batch* fixed_training_batch = nullptr);
+                                const vector<vector<Index>>* validation_batches = nullptr);
 
     void prefetch_batch(Batch&);
 
-    void sync_device(bool);
+    void sync_device(bool on_gpu, bool has_recurrent_layers, TrainingSession&);
 
     static void clip_gradient_norm(Buffer&, float);
 
@@ -155,7 +199,8 @@ protected:
                            NeuralNetwork&,
                            Index,
                            Index,
-                           bool);
+                           bool,
+                           TrainingSession&);
 
     struct WorkerProfileCounters;
 
@@ -200,30 +245,38 @@ protected:
         function<float()> validation_error;
         function<void()> display_extra;
         function<void()> post_step;
-        float minimum_loss_decrease = -numeric_limits<float>::max();
+        float minimum_loss_decrease = -MAX;
     };
 
     void prepare_full_batch_training(FullBatchContext&, const char* banner);
     TrainingResult train_full_batch(FullBatchContext&, const FullBatchHooks&);
 
     virtual string get_display_name() const { return name; }
-    virtual void setup_optimizer_data(OptimizerData&, Index, Device, bool) {}
+    virtual void setup_optimizer_data(OptimizerData&, Index, Device) {}
     virtual void update_parameters(BackPropagation&, OptimizerData&)
     { throw runtime_error("train() requires a mini-batch optimizer (SGD or Adam)."); }
+    virtual void update_parameters_capturable(BackPropagation&, OptimizerData&) const
+    { throw runtime_error("This optimizer does not support CUDA graph capture."); }
+    virtual bool supports_cuda_graph() const noexcept { return false; }
+    bool can_use_cuda_graph() const
+    {
+        return use_cuda_graph
+            && supports_cuda_graph()
+            && device::is_cuda_build()
+            && loss
+            && loss->supports_device_epoch_metrics();
+    }
     virtual void on_epoch_begin(Index, OptimizerData&) {}
 
-    void reset_graph_capture();
-
-    bool cuda_graph_requested() const { return use_cuda_graph; }
-    bool graph_epoch_enabled(bool, Batch*) const;
-    Loss::EvaluationResult run_graph_epoch(ForwardPropagation&,
+    Loss::EvaluationResult run_graph_epoch(TrainingSession&,
+                                           OptimizerData&,
+                                           ForwardPropagation&,
                                            BackPropagation&,
                                            ThreadSafeQueue<Batch*>&,
                                            const vector<vector<Index>>&,
                                            const vector<Index>&,
                                            const vector<Index>&,
-                                           const vector<Index>&,
-                                           Batch*);
+                                           const vector<Index>&);
 
     Loss::EvaluationResult train_epoch(ForwardPropagation&,
                                        BackPropagation&,
@@ -232,15 +285,16 @@ protected:
                                        const vector<Index>&,
                                        const vector<Index>&,
                                        const vector<Index>&,
-                                       const function<void(BackPropagation&)>&,
-                                       Batch* fixed_device_batch = nullptr);
+                                       TrainingSession&,
+                                       OptimizerData&);
 
     Loss::EvaluationResult evaluate_epoch(ForwardPropagation&,
                                           ThreadSafeQueue<Batch*>&,
                                           const vector<vector<Index>>&,
                                           const vector<Index>&,
                                           const vector<Index>&,
-                                          const vector<Index>&);
+                                          const vector<Index>&,
+                                          TrainingSession&);
 
     Loss* loss = nullptr;
 
@@ -252,11 +306,6 @@ protected:
     float gradient_clip_norm = 0.0f;
 
     bool restore_best = true;
-
-    float best_validation_error = numeric_limits<float>::max();
-    Index best_epoch = -1;
-    vector<float> best_parameters;
-    vector<float> best_states;
 
     Index maximum_epochs = 10000;
 
@@ -276,18 +325,6 @@ protected:
 
     int workers_number = 2;
 
-    bool has_recurrent_layers_ = false;
-
-    array<CudaEvent, 4> batch_throttle_events_;
-    size_t batch_throttle_cursor_ = 0;
-
-    static constexpr int graph_group_size = 8;
-    static constexpr int graph_slots_count = 2 * graph_group_size;
-    array<device::GraphExecHandle, 2> training_graph_execs;
-    array<Batch*, graph_slots_count> graph_slots{};
-    array<CudaEvent, 2> graph_fork_events;
-    array<CudaEvent, graph_slots_count> graph_copy_done_events;
-    function<void(BackPropagation&)> graph_update;
     bool use_cuda_graph = false;
 };
 

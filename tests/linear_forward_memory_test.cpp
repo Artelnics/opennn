@@ -23,11 +23,11 @@ namespace
 
 long vm_data_bytes()
 {
-    std::ifstream status("/proc/self/status");
-    std::string line;
-    while (std::getline(status, line))
+    ifstream status("/proc/self/status");
+    string line;
+    while (getline(status, line))
         if (line.rfind("VmData:", 0) == 0)
-            return std::stol(line.substr(7)) * 1024L;
+            return stol(line.substr(7)) * 1024L;
     return -1;
 }
 
@@ -44,9 +44,9 @@ TEST(LinearForwardMemoryTest, SteadyStateForwardAllocatesNoLargeTemporaries)
     const Index batch = 32768;
 
     NeuralNetwork network;
-    network.add_layer(std::make_unique<opennn::Dense>(Shape{28}, Shape{1024}, "ReLU"));
-    network.add_layer(std::make_unique<opennn::Dense>(Shape{1024}, Shape{1024}, "ReLU"));
-    network.add_layer(std::make_unique<opennn::Dense>(Shape{1024}, Shape{1}, "Sigmoid"));
+    network.add_layer(make_unique<opennn::Dense>(Shape{28}, Shape{1024}, "ReLU"));
+    network.add_layer(make_unique<opennn::Dense>(Shape{1024}, Shape{1024}, "ReLU"));
+    network.add_layer(make_unique<opennn::Dense>(Shape{1024}, Shape{1}, "Sigmoid"));
     network.compile();
     network.set_parameters_glorot();
 
@@ -55,7 +55,7 @@ TEST(LinearForwardMemoryTest, SteadyStateForwardAllocatesNoLargeTemporaries)
     const MatrixR inputs_host = MatrixR::Random(batch, 28);
     const TensorView input_view(const_cast<float*>(inputs_host.data()),
                                 Shape{batch, 28}, Type::FP32);
-    const std::vector<TensorView> inputs = {input_view};
+    const vector<TensorView> inputs = {input_view};
 
     network.forward_propagate(inputs, forward_propagation, false);
     network.forward_propagate(inputs, forward_propagation, false);
@@ -83,6 +83,6 @@ TEST(LinearForwardMemoryTest, SteadyStateForwardAllocatesNoLargeTemporaries)
     setrlimit(RLIMIT_DATA, &old_limit);
 
     const MatrixMap outputs = forward_propagation.get_outputs().as_matrix();
-    EXPECT_TRUE(std::isfinite(outputs(0, 0)));
+    EXPECT_TRUE(isfinite(outputs(0, 0)));
 #endif
 }

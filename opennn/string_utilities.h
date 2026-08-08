@@ -149,6 +149,8 @@ namespace opennn
 
     void display_progress_bar(int, int);
 
+    float get_elapsed_time(const time_t& beginning_time);
+
     string get_time(float);
 
     string get_first_word(const string&);

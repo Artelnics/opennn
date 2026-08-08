@@ -13,6 +13,8 @@
 namespace opennn
 {
 
+using namespace std;
+
 enum class Device { Auto, CPU, CUDA };
 enum class Type { Auto, FP32, BF16, INT8 };
 
@@ -39,6 +41,7 @@ public:
              Type   new_training_type = Type::Auto);
 
     Resolved resolve() const;
+    Resolved resolve_for(Device) const;
 
     unsigned get_generation() const;
 
@@ -48,7 +51,9 @@ private:
 
     Configuration() = default;
 
-    mutable std::mutex configuration_mutex;
+    Resolved resolve_unlocked(Device) const;
+
+    mutable mutex configuration_mutex;
 
     Device device         = Device::Auto;
     Type   training_type  = Type::Auto;

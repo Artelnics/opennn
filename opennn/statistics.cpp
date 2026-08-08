@@ -22,8 +22,8 @@ namespace
 template <typename Sum>
 struct MaskedMoments
 {
-    float minimum = numeric_limits<float>::infinity();
-    float maximum = -numeric_limits<float>::infinity();
+    float minimum = POS_INFINITY;
+    float maximum = NEG_INFINITY;
     Sum sum = 0;
     Sum squared_sum = 0;
     Index count = 0;
@@ -32,8 +32,8 @@ struct MaskedMoments
 template <typename Sum, typename Addend, typename GetValue>
 MaskedMoments<Sum> masked_moments(Index size,
                                   GetValue&& value_at,
-                                  float minimum_start = numeric_limits<float>::infinity(),
-                                  float maximum_start = -numeric_limits<float>::infinity())
+                                  float minimum_start = POS_INFINITY,
+                                  float maximum_start = NEG_INFINITY)
 {
     MaskedMoments<Sum> moments;
     moments.minimum = minimum_start;
@@ -177,27 +177,27 @@ Histogram::Histogram(const VectorR& data, Index bins_number)
 
 float minimum(const MatrixR& matrix)
 {
-    return matrix.size() == 0 ? NAN : matrix.minCoeff();
+    return matrix.size() == 0 ? QUIET_NAN : matrix.minCoeff();
 }
 
 float maximum(const MatrixR& matrix)
 {
-    return matrix.size() == 0 ? NAN : matrix.maxCoeff();
+    return matrix.size() == 0 ? QUIET_NAN : matrix.maxCoeff();
 }
 
 float minimum(const VectorR& vector)
 {
-    return vector.size() == 0 ? NAN : vector.minCoeff();
+    return vector.size() == 0 ? QUIET_NAN : vector.minCoeff();
 }
 
 float maximum(const VectorR& vector)
 {
-    return vector.size() == 0 ? NAN : vector.maxCoeff();
+    return vector.size() == 0 ? QUIET_NAN : vector.maxCoeff();
 }
 
 float minimum(const VectorR& data, const vector<Index>& indices)
 {
-    if (indices.empty()) return NAN;
+    if (indices.empty()) return QUIET_NAN;
 
     return masked_moments<float, float>(ssize(indices),
                                         [&](Index i) { return data(indices[i]); },
@@ -206,7 +206,7 @@ float minimum(const VectorR& data, const vector<Index>& indices)
 
 float maximum(const VectorR& data, const vector<Index>& indices)
 {
-    if (indices.empty()) return NAN;
+    if (indices.empty()) return QUIET_NAN;
 
     return masked_moments<float, float>(ssize(indices),
                                         [&](Index i) { return data(indices[i]); },
@@ -218,7 +218,7 @@ float mean(const VectorR& vector)
     const auto is_finite = vector.array().isFinite();
     const Index count = is_finite.count();
 
-    if (count == 0) return NAN;
+    if (count == 0) return QUIET_NAN;
 
     return is_finite.select(vector.array(), 0.0f).sum() / static_cast<float>(count);
 }
@@ -262,7 +262,7 @@ float median(const VectorR& input_vector)
     VectorR valid = filter_missing_values(input_vector);
     const Index size = valid.size();
 
-    if (size == 0) return NAN;
+    if (size == 0) return QUIET_NAN;
 
     sort(valid.data(), valid.data() + size);
 
@@ -591,7 +591,7 @@ VectorR mean(const MatrixR& matrix)
     const VectorR sums   = finite.select(matrix.array(), 0.0f).colwise().sum();
     const VectorR counts = finite.cast<float>().colwise().sum();
 
-    return (counts.array() > 0.0f).select(sums.array() / counts.array(), NAN);
+    return (counts.array() > 0.0f).select(sums.array() / counts.array(), QUIET_NAN);
 }
 
 VectorR mean(const MatrixR& matrix, const vector<Index>& row_indices, const vector<Index>& column_indices)
@@ -610,7 +610,7 @@ VectorR mean(const MatrixR& matrix, const vector<Index>& row_indices, const vect
         const auto moments = masked_moments<float, float>(row_indices_size,
             [&](Index i) { return matrix(row_indices[i], column_index); });
 
-        means(j) = (moments.count > 0) ? moments.sum / float(moments.count) : NAN;
+        means(j) = (moments.count > 0) ? moments.sum / float(moments.count) : QUIET_NAN;
     }
 
     return means;
@@ -618,13 +618,13 @@ VectorR mean(const MatrixR& matrix, const vector<Index>& row_indices, const vect
 
 float mean(const MatrixR& matrix, Index column_index)
 {
-    if (matrix.size() == 0) return NAN;
+    if (matrix.size() == 0) return QUIET_NAN;
 
     const VectorR col = matrix.col(column_index);
     const auto finite = col.array().isFinite();
     const Index count = finite.count();
 
-    if (count == 0) return NAN;
+    if (count == 0) return QUIET_NAN;
 
     return finite.select(col.array(), 0.0f).sum() / float(count);
 }
@@ -643,7 +643,7 @@ VectorR median(const MatrixR& matrix,
     VectorR medians(column_indices_size);
 
     for (Index j = 0; j < column_indices_size; ++j)
-        medians(j) = median(slice_rows(VectorR(matrix.col(column_indices[j])), row_indices));
+        medians(j) = median(VectorR(matrix(row_indices, column_indices[j])));
 
     return medians;
 }

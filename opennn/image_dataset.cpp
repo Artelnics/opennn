@@ -414,7 +414,7 @@ void ImageDataset::read_images()
             if (total_bytes > pixel_bytes && total_bytes - pixel_bytes == signature.size())
             {
                 string trailer(signature.size(), '\0');
-                cache_reader.read_at(trailer.data(), signature.size(), pixel_bytes);
+                cache_reader.read_at(span(trailer), pixel_bytes);
                 cache_valid = (trailer == signature);
             }
 
@@ -474,13 +474,13 @@ void ImageDataset::write_image_cache(const vector<filesystem::path>& paths, cons
             (Map<const Array<float, Dynamic, 1>>(tmp.data(), pixels_number)
                 .max(0.0f).min(255.0f) + 0.5f).cast<uint8_t>();
 
-        writer.write(pixels.data(), pixels.size());
+        writer.write(span(pixels));
 
         if (display && (i % 1000 == 0 || i + 1 == samples_number))
             display_progress_bar(i + 1, samples_number);
     }
 
-    writer.write(trailer.data(), trailer.size());
+    writer.write(span(trailer));
 
     writer.finish_with_rename(cache_path);
 }
@@ -544,7 +544,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
                          "ImageDataset input sample index is out of range.");
 
                 const uint64_t off = uint64_t(sample_index) * pixel_number;
-                cache_reader.read_at(buf.data(), size_t(pixels_per_image), off);
+                cache_reader.read_at(span(buf), off);
 
                 float* dst = input_data + i * pixels_per_image;
                 Map<Array<float, Dynamic, 1>>(dst, pixels_per_image) =
@@ -600,8 +600,8 @@ void ImageDataset::fill_targets(const vector<Index>& sample_indices,
 
     if (targets_number == 1)
     {
-        for (Index i = 0; i < batch_size; ++i)
-            target_data[i] = float(sample_labels[size_t(sample_indices[size_t(i)])]);
+        ranges::transform(sample_indices, target_data,
+                          [this](Index sample_index) { return float(sample_labels[size_t(sample_index)]); });
     }
     else
     {

@@ -40,23 +40,23 @@
 #endif
 
 using namespace opennn;
-using clock_type = std::chrono::steady_clock;
+using clock_type = chrono::steady_clock;
 
 int main(int argc, char* argv[])
 {
-    std::cout << std::unitbuf;
-    std::cerr << std::unitbuf;
+    cout << unitbuf;
+    cerr << unitbuf;
     try
     {
-        const std::string data_path = argc > 1 ? argv[1] : "cifar10/train";
-        const Index batch = argc > 2 ? Index(std::stoll(argv[2])) : 128;
-        const Index timed_runs = argc > 3 ? Index(std::stoll(argv[3])) : 5;
-        const std::string precision = argc > 4 ? argv[4] : "fp32";
+        const string data_path = argc > 1 ? argv[1] : "cifar10/train";
+        const Index batch = argc > 2 ? Index(stoll(argv[2])) : 128;
+        const Index timed_runs = argc > 3 ? Index(stoll(argv[3])) : 5;
+        const string precision = argc > 4 ? argv[4] : "fp32";
 
-        const Index image_size_arg = argc > 5 ? Index(std::stoll(argv[5])) : 0;
+        const Index image_size_arg = argc > 5 ? Index(stoll(argv[5])) : 0;
         const Index image_size = image_size_arg < 0 ? -image_size_arg : image_size_arg;
         const bool force_resident = image_size_arg < 0;
-        const std::string cache_dir = argc > 6 ? argv[6] : "";
+        const string cache_dir = argc > 6 ? argv[6] : "";
 
         memory_debug::reset();
 
@@ -68,13 +68,13 @@ int main(int argc, char* argv[])
         device::set_conv_workspace_cap(0);
 
         if (!cache_dir.empty())
-            std::cerr << "note: custom cache dir ignored (OpenNN caches in "
+            cerr << "note: custom cache dir ignored (OpenNN caches in "
                          "<data_path>/.cache): " << cache_dir << "\n";
 
-        std::unique_ptr<ImageDataset> dataset_ptr =
+        unique_ptr<ImageDataset> dataset_ptr =
             image_size > 0
-                ? std::make_unique<ImageDataset>(data_path, Shape{image_size, image_size, 3})
-                : std::make_unique<ImageDataset>(data_path);
+                ? make_unique<ImageDataset>(data_path, Shape{image_size, image_size, 3})
+                : make_unique<ImageDataset>(data_path);
         ImageDataset& dataset = *dataset_ptr;
         dataset.set_sample_roles("Training");
 
@@ -85,13 +85,13 @@ int main(int argc, char* argv[])
             dataset.set_storage_mode(Dataset::StorageMode::BinaryFile);
 
         const Index samples = dataset.get_samples_number();
-        const Index effective_batch = std::min<Index>(batch, samples);
+        const Index effective_batch = min<Index>(batch, samples);
 
-        std::cout << "samples=" << samples << " batch=" << effective_batch
+        cout << "samples=" << samples << " batch=" << effective_batch
                   << " runs=" << timed_runs << " precision=" << precision
                   << " gpu_resident=" << gpu_resident;
-        if (image_size > 0) std::cout << " image_size=" << image_size;
-        std::cout << "\n";
+        if (image_size > 0) cout << " image_size=" << image_size;
+        cout << "\n";
 
         ResNet network(dataset.get_shape("Input"),
                        {3, 4, 6, 3},
@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
                        dataset.get_shape("Target"),
 true);
 
-        std::cout << "layers=" << network.get_layers_number()
+        cout << "layers=" << network.get_layers_number()
                   << " parameters=" << network.get_parameters_size() << "\n";
 
         const vector<Index> input_feature_indices = dataset.get_feature_indices("Input");
@@ -122,7 +122,7 @@ true);
         ForwardPropagation forward_propagation(
             effective_batch, &network, ForwardPropagationMode::Inference);
         forward_propagation.set_cuda_graph(true);
-        std::cout << "cuda_graph=on\n";
+        cout << "cuda_graph=on\n";
 
         network.calculate_outputs_resident(inputs, forward_propagation, true);
 #ifdef OPENNN_HAS_CUDA
@@ -134,7 +134,7 @@ true);
         device::synchronize();
 #endif
 
-        std::vector<double> times;
+        vector<double> times;
         times.reserve(size_t(timed_runs));
         for (Index run = 0; run < timed_runs; ++run)
         {
@@ -144,22 +144,22 @@ true);
             device::synchronize();
 #endif
             const auto t1 = clock_type::now();
-            times.push_back(std::chrono::duration<double>(t1 - t0).count());
+            times.push_back(chrono::duration<double>(t1 - t0).count());
         }
 
         const TensorView outputs = forward_propagation.get_outputs();
 #ifdef OPENNN_HAS_CUDA
         float probe[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-        const Index probe_size = std::min<Index>(Index(4), outputs.size());
+        const Index probe_size = min<Index>(Index(4), outputs.size());
         copy_device_to_host_float(outputs.data, outputs.type, probe_size,
                                   probe, Backend::get_compute_stream());
         cudaStreamSynchronize(Backend::get_compute_stream());
         for (Index i = 0; i < probe_size; ++i)
-            if (!std::isfinite(probe[i]))
-                throw std::runtime_error("non-finite outputs");
+            if (!isfinite(probe[i]))
+                throw runtime_error("non-finite outputs");
 #endif
 
-        if (const char* profile_env = std::getenv("OPENNN_PROFILE");
+        if (const char* profile_env = getenv("OPENNN_PROFILE");
             profile_env && profile_env[0] == '1')
         {
 
@@ -174,27 +174,27 @@ true);
             device::synchronize();
 #endif
             const double profile_ms =
-                std::chrono::duration<double, std::milli>(clock_type::now() - p0).count();
+                chrono::duration<double, milli>(clock_type::now() - p0).count();
             ::opennn::enabled() = false;
-            ::opennn::global_stats().print(std::cout, "ResNet-50 inference forward breakdown",
+            ::opennn::global_stats().print(cout, "ResNet-50 inference forward breakdown",
                                            profile_ms);
-            std::cout << "profile_ms_per_batch=" << profile_ms / double(profile_runs) << "\n";
+            cout << "profile_ms_per_batch=" << profile_ms / double(profile_runs) << "\n";
         }
 
-        std::sort(times.begin(), times.end());
+        sort(times.begin(), times.end());
         const double batch_s = times[times.size() / 2];
         const double ms_per_batch = batch_s * 1000.0;
 
-        std::cout << "ms_per_batch=" << ms_per_batch << "\n";
-        std::cout << "samples_per_sec=" << long(double(effective_batch) / batch_s) << "\n";
-        memory_debug::print(std::cout);
-        std::cout << "RESULT=OK\n";
+        cout << "ms_per_batch=" << ms_per_batch << "\n";
+        cout << "samples_per_sec=" << long(double(effective_batch) / batch_s) << "\n";
+        memory_debug::print(cout);
+        cout << "RESULT=OK\n";
         return 0;
     }
-    catch (const std::exception& e)
+    catch (const exception& e)
     {
-        std::cerr << e.what() << "\n";
-        std::cout << "RESULT=ERROR\n";
+        cerr << e.what() << "\n";
+        cout << "RESULT=ERROR\n";
         return 1;
     }
 }

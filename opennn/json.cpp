@@ -584,10 +584,9 @@ vector<string> read_json_strings(const Json* root, string_view field)
     if (!value) return {};
     if (!value->is_array()) return get_tokens(value->as_string(), "\n");
 
-    vector<string> values;
-    values.reserve(value->array_value.size());
-    for (const Json& item : value->array_value)
-        values.push_back(item.as_string());
+    vector<string> values(value->array_value.size());
+    ranges::transform(value->array_value, values.begin(),
+                      [](const Json& item) { return item.as_string(); });
     return values;
 }
 

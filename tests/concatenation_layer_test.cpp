@@ -196,14 +196,14 @@ TEST_F(ConcatenationLayerTest, LegacyConcatenateTagLoads)
     neural_network.save(path);
 
     {
-        std::ifstream in(path);
-        std::stringstream buffer;
+        ifstream in(path);
+        stringstream buffer;
         buffer << in.rdbuf();
         string text = buffer.str();
         const size_t at = text.find("\"Concatenation\"");
         ASSERT_NE(at, string::npos);
         text.replace(at, string("\"Concatenation\"").size(), "\"Concatenate\"");
-        std::ofstream out(path);
+        ofstream out(path);
         out << text;
     }
 

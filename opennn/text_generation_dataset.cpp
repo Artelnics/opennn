@@ -250,7 +250,7 @@ void TextGenerationDataset::save_cache_metadata(const filesystem::path& metadata
     FileWriter writer;
     writer.open(metadata_path.string() + ".tmp");
 
-    writer.write(TEXT_CACHE_MAGIC.data(), TEXT_CACHE_MAGIC.size());
+    writer.write(span(TEXT_CACHE_MAGIC));
     write_binary_value(writer, TEXT_CACHE_VERSION);
     write_binary_value(writer, int64_t(sequence_length));
     write_binary_value(writer, int64_t(samples_number));
@@ -310,7 +310,7 @@ void TextGenerationDataset::write_binary_cache(const vector<Index>& token_indice
         for (Index j = 0; j < record_tokens; ++j)
             record[size_t(j)] = int32_t(token_indices[size_t(block_start + j)]);
 
-        writer.write(record.data(), record.size() * sizeof(int32_t));
+        writer.write(span(record));
     }
 
     writer.finish_with_rename(cache_path);

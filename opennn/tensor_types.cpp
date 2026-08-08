@@ -200,8 +200,7 @@ void copy_device_to_host_float(const void* device_src, Type src_dtype,
                            device::CopyKind::DeviceToHost,
                            stream);
         device::synchronize(stream);
-        for (Index i = 0; i < element_count; ++i)
-            host_dst[i] = bfloat16_to_float_host(staging[size_t(i)]);
+        ranges::transform(staging, host_dst, bfloat16_to_float_host);
     }
     else
         throw runtime_error("copy_device_to_host_float: unsupported dtype.");

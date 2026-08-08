@@ -71,8 +71,8 @@ void Bounding::set(const Shape& new_output_shape, const string& new_label)
     const Index features = output_shape.dim_or_zero(0);
     bound.method = BoundingMethod::Bounding;
 
-    lower_bounds.assign(size_t(features), -numeric_limits<float>::max());
-    upper_bounds.assign(size_t(features),  numeric_limits<float>::max());
+    lower_bounds.assign(size_t(features), -MAX);
+    upper_bounds.assign(size_t(features),  MAX);
     op_storage_dirty = true;
 }
 

@@ -15,14 +15,14 @@ TEST(RopeTest, ForwardMatchesHandComputed)
     const Index model_dim = head_dim;
     const float base = 10000.0f;
 
-    std::vector<float> cos(size_t(seq * rotary_dim));
-    std::vector<float> sin(size_t(seq * rotary_dim));
+    vector<float> cos(size_t(seq * rotary_dim));
+    vector<float> sin(size_t(seq * rotary_dim));
     TensorView cos_view(cos.data(), {seq, rotary_dim});
     TensorView sin_view(sin.data(), {seq, rotary_dim});
     rotary_build_tables(cos_view, sin_view, seq, rotary_dim, base);
 
-    std::vector<float> input  = {1, 2, 3, 4,   1, 0, 0, 0};
-    std::vector<float> output(input.size(), 0.0f);
+    vector<float> input  = {1, 2, 3, 4,   1, 0, 0, 0};
+    vector<float> output(input.size(), 0.0f);
     TensorView in_view(input.data(), {batch, seq, model_dim});
     TensorView out_view(output.data(), {batch, seq, model_dim});
 
@@ -45,13 +45,13 @@ TEST(RopeTest, PreservesNorm)
     const Index model_dim = num_heads * head_dim;
     const float base = 1.0e6f;
 
-    std::vector<float> cos(size_t(seq * rotary_dim)), sin(size_t(seq * rotary_dim));
+    vector<float> cos(size_t(seq * rotary_dim)), sin(size_t(seq * rotary_dim));
     TensorView cos_view(cos.data(), {seq, rotary_dim});
     TensorView sin_view(sin.data(), {seq, rotary_dim});
     rotary_build_tables(cos_view, sin_view, seq, rotary_dim, base);
 
     const size_t total = size_t(batch * seq * model_dim);
-    std::vector<float> input(total), output(total, 0.0f);
+    vector<float> input(total), output(total, 0.0f);
     for (size_t i = 0; i < total; ++i)
         input[i] = std::sin(0.017f * float(i)) + 0.3f * std::cos(0.004f * float(i));
 
@@ -80,13 +80,13 @@ TEST(RopeTest, BackwardIsInverseRotation)
     const Index model_dim = num_heads * head_dim;
     const float base = 1.0e6f;
 
-    std::vector<float> cos(size_t(seq * rotary_dim)), sin(size_t(seq * rotary_dim));
+    vector<float> cos(size_t(seq * rotary_dim)), sin(size_t(seq * rotary_dim));
     TensorView cos_view(cos.data(), {seq, rotary_dim});
     TensorView sin_view(sin.data(), {seq, rotary_dim});
     rotary_build_tables(cos_view, sin_view, seq, rotary_dim, base);
 
     const size_t total = size_t(batch * seq * model_dim);
-    std::vector<float> input(total), rotated(total, 0.0f), recovered(total, 0.0f);
+    vector<float> input(total), rotated(total, 0.0f), recovered(total, 0.0f);
     for (size_t i = 0; i < total; ++i)
         input[i] = std::cos(0.011f * float(i)) - 0.5f * std::sin(0.003f * float(i));
 
@@ -99,6 +99,6 @@ TEST(RopeTest, BackwardIsInverseRotation)
 
     double max_abs = 0.0;
     for (size_t i = 0; i < total; ++i)
-        max_abs = std::max(max_abs, std::abs(double(recovered[i]) - double(input[i])));
+        max_abs = max(max_abs, abs(double(recovered[i]) - double(input[i])));
     EXPECT_LT(max_abs, 1.0e-4);
 }

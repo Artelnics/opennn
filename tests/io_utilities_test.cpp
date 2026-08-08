@@ -137,7 +137,7 @@ TEST(IoUtilitiesTest, FileWriterReaderRoundTrip)
     {
         FileWriter writer;
         writer.open(tmp);
-        writer.write(payload.data(), payload.size());
+        writer.write(span(payload));
         writer.finish_with_rename(final);
     }
 
@@ -151,7 +151,7 @@ TEST(IoUtilitiesTest, FileWriterReaderRoundTrip)
         EXPECT_EQ(reader.file_size(), uint64_t(payload.size()));
 
         vector<uint8_t> read_back(payload.size(), 0);
-        reader.read_at(read_back.data(), read_back.size(), 0);
+        reader.read_at(span(read_back), 0);
         EXPECT_EQ(read_back, payload);
 
         reader.close();
@@ -175,7 +175,7 @@ TEST(IoUtilitiesTest, FileReaderReadAtOffset)
     EXPECT_EQ(reader.file_size(), uint64_t(content.size()));
 
     std::array<char, 3> chunk = {0, 0, 0};
-    reader.read_at(chunk.data(), chunk.size(), 4);
+    reader.read_at(span(chunk), 4);
     EXPECT_EQ(string(chunk.data(), chunk.size()), "EFG");
 
     reader.close();
@@ -215,7 +215,7 @@ TEST(IoUtilitiesTest, FileWriterDiscardsTmpWhenNotFinalized)
         FileWriter writer;
         writer.open(tmp);
         const char data[] = "partial";
-        writer.write(data, sizeof(data));
+        writer.write(span(data));
     }
 
     EXPECT_FALSE(filesystem::exists(tmp));

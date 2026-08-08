@@ -109,31 +109,30 @@ void Batch::set(const Index new_samples_number,
                                   format("samples={}", samples_number));
         }
 
-        const bool wants_bf16_host = role == "Input" && host_bf16_input_cast;
-        if (wants_bf16_host && host_values > slot.host_bf16_allocated_size)
-        {
-            device::deallocate_pinned_host(slot.host_bf16);
-            slot.host_bf16 = nullptr;
-            slot.host_bf16_allocated_size = 0;
-            slot.host_bf16 = static_cast<uint16_t*>(
-                device::allocate_pinned_host(host_values * Index(sizeof(uint16_t))));
-            slot.host_bf16_allocated_size = host_values;
-            memory_debug::record("batch.pinned_host",
-                                 format("Batch::{}.host_bf16", role),
-                                 host_values * Index(sizeof(uint16_t)),
-                                 format("samples={}", samples_number));
-        }
-        else if (!wants_bf16_host && slot.host_bf16)
-        {
-            device::deallocate_pinned_host(slot.host_bf16);
-            slot.host_bf16 = nullptr;
-            slot.host_bf16_allocated_size = 0;
-        }
     };
 
     setup_buffer("Input",   input,   input_device_bytes);
     setup_buffer("Target",  target,  Index(sizeof(float)));
     setup_buffer("Decoder", decoder, Index(sizeof(float)));
+
+    const Index input_host_values = samples_number * input.features_number;
+    if (host_bf16_input_cast
+        && input_host_values > input_host_bf16_allocated_size)
+    {
+        device::deallocate_pinned_host(input_host_bf16);
+        input_host_bf16 = static_cast<uint16_t*>(
+            device::allocate_pinned_host(input_host_values * Index(sizeof(uint16_t))));
+        input_host_bf16_allocated_size = input_host_values;
+        memory_debug::record("batch.pinned_host", "Batch::input_host_bf16",
+                             input_host_values * Index(sizeof(uint16_t)),
+                             format("samples={}", samples_number));
+    }
+    else if (!host_bf16_input_cast && input_host_bf16)
+    {
+        device::deallocate_pinned_host(input_host_bf16);
+        input_host_bf16 = nullptr;
+        input_host_bf16_allocated_size = 0;
+    }
 
     if (!decoder.shape.empty() && decoder.buffer.data)
         input_views_host_cache.emplace_back(decoder.buffer.as<float>(), decoder.shape, Type::FP32, Device::CPU);
@@ -147,7 +146,7 @@ void Batch::set(const Index new_samples_number,
     const bool needs_fp32_staging = input_is_bf16
         && !host_bf16_input_cast
         && !new_prefetch_only
-        && !dataset->is_device_resident();
+        && !dataset->uses_device_residency();
     const Index fp32_staging_bytes = needs_fp32_staging
         ? samples_number * input.features_number * Index(sizeof(float))
         : Index(0);
@@ -155,9 +154,7 @@ void Batch::set(const Index new_samples_number,
     memory_debug::record("batch.device", "Batch::fp32_staging", fp32_staging_bytes,
                          format("samples={}", samples_number));
 
-    const bool may_use_device_gather = on_gpu
-        && (dataset->is_device_resident()
-            || dataset->get_storage_mode() == Dataset::StorageMode::GPUPersistantData);
+    const bool may_use_device_gather = on_gpu && dataset->uses_device_residency();
 
     const Index gather_indices_bytes =
         may_use_device_gather ? samples_number * Index(sizeof(int)) : Index(0);
@@ -207,11 +204,9 @@ Batch::~Batch()
 {
     wait_h2d_complete();
     device::deallocate_pinned_host(input.host);
-    device::deallocate_pinned_host(input.host_bf16);
+    device::deallocate_pinned_host(input_host_bf16);
     device::deallocate_pinned_host(decoder.host);
-    device::deallocate_pinned_host(decoder.host_bf16);
     device::deallocate_pinned_host(target.host);
-    device::deallocate_pinned_host(target.host_bf16);
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -281,12 +276,12 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
 
     if (destination.input_is_bf16)
     {
-        if (input.host_bf16)
+        if (input_host_bf16)
         {
-            truncate_floats_to_bfloat16_host(input_values_count, input.host, input.host_bf16);
+            truncate_floats_to_bfloat16_host(input_values_count, input.host, input_host_bf16);
 
             copy_to_device_async(destination.input.buffer.as<bfloat16>(),
-                                 input.host_bf16,
+                                 input_host_bf16,
                                  input_values_count * Index(sizeof(uint16_t)));
         }
         else
@@ -361,6 +356,15 @@ ThreadSafeQueue<Batch*>& BatchPools::validation_queue()
         : validation_empty_queue;
 }
 
+// Non-null marker published into still-idle ready slots when a worker fails. A consumer
+// parked in atomic::wait() only unblocks on a value change, so the failure has to change
+// the value it is waiting on; without this it would sleep through the error.
+static Batch* aborted_slot()
+{
+    static int marker = 0;
+    return reinterpret_cast<Batch*>(&marker);
+}
+
 BatchPrefetchSession::BatchPrefetchSession(ThreadSafeQueue<Batch*>& queue, const Index batches_number)
     : empty_queue(queue),
       ready_batches(size_t(batches_number))
@@ -383,22 +387,40 @@ BatchPrefetchSession::~BatchPrefetchSession()
 
 Batch* BatchPrefetchSession::wait(const Index iteration)
 {
-    Batch* batch = nullptr;
-    while (!(batch = ready_batches[size_t(iteration)].load(memory_order_acquire)))
-    {
-        rethrow_if_error();
-        this_thread::yield();
-    }
+    atomic<Batch*>& ready = ready_batches[size_t(iteration)];
 
-    return batch;
+    while (true)
+    {
+        Batch* const batch = ready.load(memory_order_acquire);
+
+        rethrow_if_error();
+
+        throw_if(batch == aborted_slot(),
+                 "BatchPrefetchSession: prefetch worker aborted without an exception.");
+
+        if (batch) return batch;
+
+        ready.wait(nullptr, memory_order_acquire);
+    }
 }
 
 void BatchPrefetchSession::capture_current_exception()
 {
-    lock_guard<mutex> elock(error_mutex);
-    if (!worker_error)
-        worker_error = current_exception();
-    error_pending.store(true, memory_order_release);
+    {
+        lock_guard<mutex> elock(error_mutex);
+        if (!worker_error)
+            worker_error = current_exception();
+        error_pending.store(true, memory_order_release);
+    }
+
+    // Publish the abort marker before waking, so a consumer that parks between its error
+    // check and its wait() still sees a changed value and cannot miss the notification.
+    for (atomic<Batch*>& ready : ready_batches)
+    {
+        Batch* idle = nullptr;
+        ready.compare_exchange_strong(idle, aborted_slot(), memory_order_release, memory_order_relaxed);
+        ready.notify_all();
+    }
 }
 
 void BatchPrefetchSession::rethrow_if_error()

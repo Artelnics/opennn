@@ -39,7 +39,6 @@ void LevenbergMarquardtAlgorithm::set_default()
     display_period = 10;
 
     initial_damping_parameter = 1.0e-3f;
-    damping_parameter = initial_damping_parameter;
 
     damping_parameter_factor = 10.0f;
 
@@ -224,9 +223,8 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&  ,
             {
                 const Index row = sample * outputs_number + j;
 
-                for (Index i = 0; i < inputs_number; ++i)
-                    for (Index k = 0; k < neurons; ++k)
-                        jacobian(row, weight_offset + i * neurons + k) = inputs(sample, i) * delta(row, k);
+                Map<MatrixR>(&jacobian(row, weight_offset), inputs_number, neurons).noalias()
+                    = inputs.row(sample).transpose() * delta.row(row);
             }
 
         if (n == 0) break;
@@ -247,8 +245,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&  ,
             {
                 const Index row = sample * outputs_number + j;
 
-                for (Index k = 0; k < inputs_number; ++k)
-                    previous_delta(row, k) *= previous_act_deriv(sample, k);
+                previous_delta.row(row).array() *= previous_act_deriv.row(sample).array();
             }
     }
 }
@@ -271,8 +268,6 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
     throw_if(loss_name == "WeightedSquaredError",
              "Levenberg-Marquardt algorithm is not implemented with weighted squared error.");
 
-    damping_parameter = initial_damping_parameter;
-
     FullBatchContext context;
     prepare_full_batch_training(context, "Training with Levenberg-Marquardt algorithm...");
 
@@ -282,6 +277,7 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
     const Index parameters_number = neural_network->get_parameters_size();
 
     OptimizerData optimization_data;
+    optimization_data.damping_parameter = initial_damping_parameter;
 
     FullBatchHooks hooks;
     hooks.minimum_loss_decrease = minimum_loss_decrease;
@@ -312,7 +308,10 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
         return validation_back_propagation_lm.error;
     };
 
-    hooks.display_extra = [&]{ cout << "Damping parameter: " << damping_parameter << "\n"; };
+    hooks.display_extra = [&]
+    {
+        cout << "Damping parameter: " << optimization_data.damping_parameter << "\n";
+    };
 
     hooks.post_step = [&]
     {
@@ -331,6 +330,9 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                                     OptimizerData& optimization_data)
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
+    float& damping_parameter = optimization_data.damping_parameter;
+    if (damping_parameter <= 0.0f)
+        damping_parameter = initial_damping_parameter;
 
     VectorMap parameters(neural_network->get_parameters_data(),
                          neural_network->get_parameters_size());

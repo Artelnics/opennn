@@ -37,8 +37,8 @@ unique_ptr<Qwen3> make_qwen(const Dims& d)
 
 void fill_parameters(NeuralNetwork& network)
 {
-    std::mt19937 rng(21);
-    std::normal_distribution<float> nd(0.0f, 0.05f);
+    mt19937 rng(21);
+    normal_distribution<float> nd(0.0f, 0.05f);
     for (auto& layer : network.get_layers())
         for (auto& view : layer->get_parameter_views())
             for (Index i = 0; i < view.size(); ++i)
@@ -46,7 +46,7 @@ void fill_parameters(NeuralNetwork& network)
 }
 
 void run(NeuralNetwork& network, ForwardPropagation& forward_propagation,
-         std::vector<float>& window, const std::vector<Index>& ids, Index past)
+         vector<float>& window, const vector<Index>& ids, Index past)
 {
     const Index count = Index(ids.size());
     for (Index i = 0; i < count; ++i) window[size_t(i)] = float(ids[size_t(i)]);
@@ -56,14 +56,14 @@ void run(NeuralNetwork& network, ForwardPropagation& forward_propagation,
     network.forward_propagate(inputs, forward_propagation, false);
 }
 
-std::vector<float> logits_row(const ForwardPropagation& forward_propagation, Index pos)
+vector<float> logits_row(const ForwardPropagation& forward_propagation, Index pos)
 {
     const TensorView output = forward_propagation.get_outputs();
     const Index vocabulary = output.shape.back();
-    std::vector<float> row(size_t(vocabulary), 0.0f);
+    vector<float> row(size_t(vocabulary), 0.0f);
 
     const Index elem = Index(type_bytes(output.type));
-    std::vector<char> host(size_t(vocabulary) * size_t(elem));
+    vector<char> host(size_t(vocabulary) * size_t(elem));
     const char* src = static_cast<const char*>(output.data) + size_t(pos) * vocabulary * elem;
 
 #ifdef OPENNN_HAS_CUDA
@@ -75,24 +75,24 @@ std::vector<float> logits_row(const ForwardPropagation& forward_propagation, Ind
     }
     else
 #endif
-        std::memcpy(host.data(), src, host.size());
+        memcpy(host.data(), src, host.size());
 
     if (output.is_fp32())
-        std::memcpy(row.data(), host.data(), size_t(vocabulary) * sizeof(float));
+        memcpy(row.data(), host.data(), size_t(vocabulary) * sizeof(float));
     else
     {
         const uint16_t* bf16 = reinterpret_cast<const uint16_t*>(host.data());
         for (Index i = 0; i < vocabulary; ++i)
         {
             const uint32_t bits = uint32_t(bf16[size_t(i)]) << 16;
-            std::memcpy(&row[size_t(i)], &bits, sizeof(float));
+            memcpy(&row[size_t(i)], &bits, sizeof(float));
         }
     }
     return row;
 }
 
-float max_difference(const std::vector<float>& a,
-                     const std::vector<float>& b)
+float max_difference(const vector<float>& a,
+                     const vector<float>& b)
 {
     EXPECT_EQ(a.size(), b.size());
     float result = 0.0f;
@@ -104,7 +104,7 @@ float max_difference(const std::vector<float>& a,
 uint16_t to_bfloat16(const float value)
 {
     uint32_t bits;
-    std::memcpy(&bits, &value, sizeof(bits));
+    memcpy(&bits, &value, sizeof(bits));
     bits += 0x7FFFu + ((bits >> 16) & 1u);
     return uint16_t(bits >> 16);
 }
@@ -113,7 +113,7 @@ float from_bfloat16(const uint16_t value)
 {
     const uint32_t bits = uint32_t(value) << 16;
     float result;
-    std::memcpy(&result, &bits, sizeof(result));
+    memcpy(&result, &bits, sizeof(result));
     return result;
 }
 
@@ -203,7 +203,7 @@ void fake_quantize_parameters(NeuralNetwork& network)
 TEST(Int8InferenceTest, Int8CpuConfigurationThrows)
 {
     Configuration::instance().set(Device::CPU, Type::INT8);
-    EXPECT_THROW(make_qwen(TINY), std::exception);
+    EXPECT_THROW(make_qwen(TINY), exception);
     Configuration::instance().set();
 }
 
@@ -214,7 +214,7 @@ TEST(Int8InferenceTest, Int8TrainingThrowsGpu)
     Configuration::instance().set(Device::CUDA, Type::INT8);
     unique_ptr<Qwen3> network = make_qwen(TINY);
     Loss loss(network.get());
-    EXPECT_THROW(BackPropagation(1, &loss), std::exception);
+    EXPECT_THROW(BackPropagation(1, &loss), exception);
     Configuration::instance().set();
 }
 
@@ -259,9 +259,9 @@ TEST(Int8InferenceTest, Int8MultiTurnPrefillRestartsCacheGpu)
     fresh->upload_parameters_int8_inference();
 
     vector<float> window(size_t(TINY.seq), 0.0f);
-    std::mt19937 id_rng(3);
+    mt19937 id_rng(3);
     auto random_ids = [&](Index count) {
-        std::vector<Index> ids(size_t(count), Index(0));
+        vector<Index> ids(size_t(count), Index(0));
         for (auto& id : ids) id = 1 + Index(id_rng() % uint32_t(TINY.vocab - 1));
         return ids;
     };

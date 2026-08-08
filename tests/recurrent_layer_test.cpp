@@ -112,7 +112,7 @@ TEST(RecurrentLayerTest, ReturnSequences)
     EXPECT_EQ(layer->get_output_shape(), Shape({time_steps, outputs_number}));
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(std::move(layer));
+    neural_network.add_layer(move(layer));
     neural_network.compile();
 
     VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_size()).setConstant(type(0.1));

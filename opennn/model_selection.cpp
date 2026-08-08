@@ -19,6 +19,13 @@ ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy)
     set_default();
 }
 
+void ModelSelection::set(TrainingStrategy* new_training_strategy)
+{
+    training_strategy = new_training_strategy;
+    neurons_selection.set_training_strategy(new_training_strategy);
+    if (inputs_selection) inputs_selection->set(new_training_strategy);
+}
+
 void ModelSelection::set_default()
 {
     neurons_selection.set(training_strategy);

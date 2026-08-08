@@ -103,7 +103,7 @@ TEST(StatisticsTest, StandardDeviation)
     vector.resize(4);
     vector <<  type(2),type(4),type(8),type(10);
 
-    EXPECT_NEAR(opennn::standard_deviation(vector), sqrt(type(40)/type(3)), EPSILON);
+    EXPECT_NEAR(opennn::standard_deviation(vector), std::sqrt(type(40)/type(3)), EPSILON);
 
     vector.resize(4);
     vector.setConstant(type(-11));
@@ -127,7 +127,7 @@ TEST(StatisticsTest, StandardDeviation)
 
     standard_deviation = opennn::standard_deviation(vector);
 
-    EXPECT_NEAR(standard_deviation, sqrt(type(2)), EPSILON);
+    EXPECT_NEAR(standard_deviation, std::sqrt(type(2)), EPSILON);
 
     vector.resize(1);
     vector[0] = type(NAN);

@@ -105,36 +105,24 @@ void AdaptiveMomentEstimation::set_default()
 
 void AdaptiveMomentEstimation::setup_optimizer_data(OptimizerData& optimization_data,
                                                     Index parameters_number,
-                                                    Device device,
-                                                    [[maybe_unused]] bool on_gpu)
+                                                    Device device)
 {
-    optimization_data.set({Shape{parameters_number}, Shape{parameters_number}}, device);
-
-    optimization_data.iteration = 0;
-
-    throw_if(update_period > 1 && use_cuda_graph,
+    const bool use_graph = can_use_cuda_graph();
+    throw_if(update_period > 1 && use_graph,
              "gradient accumulation is not supported with the CUDA graph.");
 
-    accumulated_batches = 0;
+    optimization_data.set({Shape{parameters_number},
+                           Shape{parameters_number},
+                           use_graph ? Shape{3} : Shape{}}, device);
+    optimization_data.iteration = 0;
+    optimization_data.accumulated_batches = 0;
     if (update_period > 1)
     {
-        gradient_accumulator.resize_bytes(parameters_number * Index(sizeof(float)), device);
-        gradient_accumulator.setZero();
+        optimization_data.gradient_accumulator.resize_bytes(
+            parameters_number * Index(sizeof(float)), device);
+        optimization_data.gradient_accumulator.setZero();
     }
 
-#ifdef OPENNN_HAS_CUDA
-    if (on_gpu && use_cuda_graph)
-    {
-        optimization_data.graph_step.resize_bytes(Index(sizeof(int)), Device::CUDA);
-        optimization_data.graph_step.setZero();
-        optimization_data.graph_effective_lr.resize_bytes(Index(sizeof(float)), Device::CUDA);
-        optimization_data.graph_effective_eps.resize_bytes(Index(sizeof(float)), Device::CUDA);
-
-        graph_update = [this, &optimization_data](BackPropagation& back_propagation) {
-            update_parameters_capturable(back_propagation, optimization_data);
-        };
-    }
-#endif
 }
 
 void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
@@ -144,17 +132,19 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     if (period > 1)
     {
-        accumulate_scaled_gradient(gradient_accumulator, back_propagation.gradient,
+        accumulate_scaled_gradient(optimization_data.gradient_accumulator,
+                                   back_propagation.gradient,
                                    1.0f / float(period));
 
-        if (++accumulated_batches < period) return;
+        if (++optimization_data.accumulated_batches < period) return;
 
-        device::copy_async(back_propagation.gradient.data, gradient_accumulator.data,
-                           gradient_accumulator.bytes,
-                           gradient_accumulator.device_type, gradient_accumulator.device_type,
-                           gradient_accumulator.device_type == Device::CUDA ? Backend::get_compute_stream() : nullptr);
-        gradient_accumulator.setZero();
-        accumulated_batches = 0;
+        Buffer& accumulator = optimization_data.gradient_accumulator;
+        device::copy_async(back_propagation.gradient.data, accumulator.data,
+                           accumulator.bytes,
+                           accumulator.device_type, accumulator.device_type,
+                           accumulator.device_type == Device::CUDA ? Backend::get_compute_stream() : nullptr);
+        accumulator.setZero();
+        optimization_data.accumulated_batches = 0;
     }
 
     NeuralNetwork* neural_network = loss->get_neural_network();
@@ -219,6 +209,11 @@ void AdaptiveMomentEstimation::update_parameters_capturable(BackPropagation& bac
 
     clip_gradient_norm(back_propagation.gradient, gradient_clip_norm);
 
+    float* const graph_scalars = optimization_data.views[GraphScalars].as<float>();
+    int* const graph_step = reinterpret_cast<int*>(graph_scalars);
+    float* const graph_learning_rate = graph_scalars + 1;
+    float* const graph_epsilon = graph_scalars + 2;
+
     adam_update_capturable_cuda(
         neural_network->get_parameters_size(),
         neural_network->get_parameters_data(),
@@ -226,9 +221,9 @@ void AdaptiveMomentEstimation::update_parameters_capturable(BackPropagation& bac
         optimization_data.views[SquareGradientMoment].as<float>(),
         back_propagation.gradient.as<float>(),
         beta_1, beta_2, learning_rate, EPSILON,
-        optimization_data.graph_step.as<int>(),
-        optimization_data.graph_effective_lr.as<float>(),
-        optimization_data.graph_effective_eps.as<float>(),
+        graph_step,
+        graph_learning_rate,
+        graph_epsilon,
         neural_network->get_parameters_bf16_mirror_data(),
         Backend::get_compute_stream());
 }

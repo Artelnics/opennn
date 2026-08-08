@@ -28,6 +28,41 @@ TEST(TrainingStrategy, GeneralConstructor)
     EXPECT_EQ(training_strategy_1.get_dataset(), &dataset);
 }
 
+TEST(TrainingStrategy, RebindsLossDependencies)
+{
+    TabularDataset first_dataset(10, {2}, {1});
+    TabularDataset second_dataset(10, {2}, {1});
+    ApproximationNetwork first_network({2}, {3}, {1});
+    ApproximationNetwork second_network({2}, {3}, {1});
+
+    TrainingStrategy training_strategy(&first_network, &first_dataset);
+    training_strategy.set_neural_network(&second_network);
+    training_strategy.set_dataset(&second_dataset);
+
+    ASSERT_NE(training_strategy.get_loss(), nullptr);
+    EXPECT_EQ(training_strategy.get_loss()->get_neural_network(), &second_network);
+    EXPECT_EQ(training_strategy.get_loss()->get_dataset(), &second_dataset);
+
+    training_strategy.set();
+    EXPECT_EQ(training_strategy.get_loss(), nullptr);
+    EXPECT_EQ(training_strategy.get_optimization_algorithm(), nullptr);
+}
+
+TEST(TrainingStrategy, InitializesWhenNetworkIsSetLater)
+{
+    TabularDataset dataset(10, {2}, {1});
+    ApproximationNetwork neural_network({2}, {3}, {1});
+
+    TrainingStrategy training_strategy;
+    training_strategy.set_dataset(&dataset);
+    training_strategy.set_neural_network(&neural_network);
+
+    ASSERT_NE(training_strategy.get_loss(), nullptr);
+    ASSERT_NE(training_strategy.get_optimization_algorithm(), nullptr);
+    EXPECT_EQ(training_strategy.get_loss()->get_neural_network(), &neural_network);
+    EXPECT_EQ(training_strategy.get_loss()->get_dataset(), &dataset);
+}
+
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2025 Artificial Intelligence Techniques, SL.
 //

@@ -110,22 +110,8 @@ vector<string> get_tokens(string_view text, string_view separator)
 
     vector<string> tokens;
 
-    const size_t sep_len = separator.length();
-    size_t start = 0;
-
-    while (start <= text.length())
-    {
-        const size_t end = text.find(separator, start);
-
-        tokens.emplace_back((end == string_view::npos)
-                                ? text.substr(start)
-                                : text.substr(start, end - start));
-
-        if (end == string_view::npos)
-            break;
-
-        start = end + sep_len;
-    }
+    for (const auto token : text | views::split(separator))
+        tokens.emplace_back(token.begin(), token.end());
 
     return tokens;
 }
@@ -290,19 +276,9 @@ void append_utf8(string& output, uint32_t codepoint)
 
 vector<string> convert_string_vector(const vector<vector<string>>& input_vector, const string& separator)
 {
-    vector<string> vector_result;
-    vector_result.reserve(input_vector.size());
-
-    for (const auto& subvec : input_vector)
-    {
-        string joined;
-        for (size_t i = 0; i < subvec.size(); ++i)
-        {
-            if (i) joined += separator;
-            joined += subvec[i];
-        }
-        vector_result.push_back(move(joined));
-    }
+    vector<string> vector_result(input_vector.size());
+    ranges::transform(input_vector, vector_result.begin(),
+                      [&separator](const vector<string>& values) { return join_strings(values, separator); });
 
     return vector_result;
 }
@@ -398,6 +374,11 @@ void replace(string& source, const string& find_what, const string& replace_with
 string get_first_word(const string& line)
 {
     return line.substr(0, line.find_first_of(" ="));
+}
+
+float get_elapsed_time(const time_t& beginning_time)
+{
+    return float(difftime(time(nullptr), beginning_time));
 }
 
 string get_time(float time)

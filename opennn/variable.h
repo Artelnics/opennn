@@ -168,10 +168,9 @@ vector<string> get_variable_feature_names(const vector<Variable>&);
 
 inline vector<Index> get_feature_dimensions(const vector<Variable>& variables)
 {
-    vector<Index> dimensions;
-    dimensions.reserve(variables.size());
-    for (const Variable& variable : variables)
-        dimensions.push_back(variable.get_feature_count());
+    vector<Index> dimensions(variables.size());
+    ranges::transform(variables, dimensions.begin(),
+                      [](const Variable& variable) { return variable.get_feature_count(); });
     return dimensions;
 }
 

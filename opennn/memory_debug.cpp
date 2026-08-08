@@ -91,14 +91,13 @@ void print(ostream& os)
     vector<Entry> rows;
     {
         lock_guard lock(entries_mutex());
-        for (const auto& [_, entry] : entries())
-            rows.push_back(entry);
+        ranges::copy(entries() | views::values, back_inserter(rows));
     }
 
     ranges::sort(rows, greater<>{}, &Entry::bytes);
 
-    Index total = 0;
-    for (const Entry& row : rows) total += row.bytes;
+    const Index total = transform_reduce(rows.begin(), rows.end(), Index(0), plus<>{},
+                                         [](const Entry& row) { return row.bytes; });
 
     os << "[MEMORY_DEBUG] rows=" << rows.size()
        << " total_recorded_mib=" << fixed << setprecision(2)

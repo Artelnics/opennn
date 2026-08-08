@@ -680,12 +680,12 @@ static void layer_normalization_forward_cpu(const TensorView& input, const Tenso
         means_data[row] = mean;
         stds_data[row]  = std_val;
 
-        for (Index dim = 0; dim < embedding_dimension; ++dim)
-        {
-            const float x_hat = (input_row[dim] - mean) * inv_std;
-            norm_row[dim] = x_hat;
-            out_row[dim]  = gamma_data[dim] * x_hat + beta_data[dim];
-        }
+        Map<Array<float, Dynamic, 1>> norm_map(norm_row, embedding_dimension);
+        norm_map = (input_map - mean) * inv_std;
+
+        Map<Array<float, Dynamic, 1>>(out_row, embedding_dimension) =
+            Map<const Array<float, Dynamic, 1>>(gamma_data, embedding_dimension) * norm_map
+            + Map<const Array<float, Dynamic, 1>>(beta_data, embedding_dimension);
     }
 }
 
@@ -815,12 +815,11 @@ static void rms_normalization_forward_cpu(const TensorView& input, const TensorV
 
         inverse_rms_data[row] = inverse;
 
-        for (Index dim = 0; dim < embedding_dimension; ++dim)
-        {
-            const float x_hat = input_row[dim] * inverse;
-            norm_row[dim] = x_hat;
-            out_row[dim]  = weight_data[dim] * x_hat;
-        }
+        Map<Array<float, Dynamic, 1>> norm_map(norm_row, embedding_dimension);
+        norm_map = input_map * inverse;
+
+        Map<Array<float, Dynamic, 1>>(out_row, embedding_dimension) =
+            Map<const Array<float, Dynamic, 1>>(weight_data, embedding_dimension) * norm_map;
     }
 }
 
@@ -1096,36 +1095,26 @@ void grouped_attention_forward(const TensorView& query, const TensorView& key, c
             {
 
                 const Index valid = causal ? min(query_position_offset + i + 1, key_seq) : key_seq;
-                const float* q_vec = Q + q_off(b, i, hq);
+                const Map<const VectorR> q_map(Q + q_off(b, i, hq), head_dim);
 
-                float max_score = -numeric_limits<float>::infinity();
+                float max_score = NEG_INFINITY;
                 for (Index j = 0; j < valid; ++j)
                 {
-                    const float* k_vec = K + kv_off(b, j, hkv);
-                    float dot = 0.0f;
-                    for (Index d = 0; d < head_dim; ++d) dot += q_vec[d] * k_vec[d];
-                    dot *= scale;
+                    const float dot =
+                        q_map.dot(Map<const VectorR>(K + kv_off(b, j, hkv), head_dim)) * scale;
                     scores[size_t(j)] = dot;
                     max_score = max(max_score, dot);
                 }
 
-                float sum = 0.0f;
-                for (Index j = 0; j < valid; ++j)
-                {
-                    const float e = expf(scores[size_t(j)] - max_score);
-                    scores[size_t(j)] = e;
-                    sum += e;
-                }
-                const float inv_sum = 1.0f / sum;
+                Map<Array<float, Dynamic, 1>> score_map(scores.data(), valid);
+                score_map = (score_map - max_score).exp();
+                const float inv_sum = 1.0f / score_map.sum();
 
-                float* o_vec = O + q_off(b, i, hq);
-                for (Index d = 0; d < head_dim; ++d) o_vec[d] = 0.0f;
+                Map<VectorR> o_map(O + q_off(b, i, hq), head_dim);
+                o_map.setZero();
                 for (Index j = 0; j < valid; ++j)
-                {
-                    const float p = scores[size_t(j)] * inv_sum;
-                    const float* v_vec = V + kv_off(b, j, hkv);
-                    for (Index d = 0; d < head_dim; ++d) o_vec[d] += p * v_vec[d];
-                }
+                    o_map += (scores[size_t(j)] * inv_sum)
+                           * Map<const VectorR>(V + kv_off(b, j, hkv), head_dim);
             }
         }
 }
@@ -1152,8 +1141,8 @@ void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorVi
         const float mean_square = x_map.square().sum() * inv_D;
         const float inverse     = 1.0f / sqrt(mean_square + epsilon);
 
-        for (Index d = 0; d < head_dim; ++d)
-            o_row[d] = w[d] * x_row[d] * inverse;
+        Map<Array<float, Dynamic, 1>>(o_row, head_dim) =
+            Map<const Array<float, Dynamic, 1>>(w, head_dim) * x_map * inverse;
     }
 }
 
@@ -2585,22 +2574,12 @@ MatrixR append_columns(const MatrixR& first_matrix, const MatrixR& second_matrix
 
 VectorR slice_rows(const VectorR& values, const vector<Index>& indices)
 {
-    VectorR result(ssize(indices));
-
-    for (Index i = 0; i < ssize(indices); ++i)
-        result(i) = values(indices[i]);
-
-    return result;
+    return values(indices);
 }
 
 MatrixR slice_rows(const MatrixR& matrix, const vector<Index>& indices)
 {
-    MatrixR result(ssize(indices), matrix.cols());
-
-    for (Index i = 0; i < ssize(indices); ++i)
-        result.row(i) = matrix.row(indices[i]);
-
-    return result;
+    return matrix(indices, Eigen::placeholders::all);
 }
 
 VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int neighbors_number)

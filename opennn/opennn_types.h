@@ -81,13 +81,15 @@
 #include <cudnn.h>
 #include <cuda_bf16.h>
 
+using namespace std;
+
 template <typename T>
 void check_cuda_status(T status, const char* msg,
-                       std::source_location loc = std::source_location::current())
+                       source_location loc = source_location::current())
 {
     if (status != 0)
-        throw std::runtime_error(std::string(msg) + " Error: " + std::to_string(static_cast<int>(status)) +
-                                 " in " + loc.file_name() + ":" + std::to_string(loc.line()));
+        throw runtime_error(string(msg) + " Error: " + to_string(static_cast<int>(status)) +
+                                 " in " + loc.file_name() + ":" + to_string(loc.line()));
 }
 
 #define CHECK_CUDA(x)   check_cuda_status(x, "CUDA")
@@ -187,6 +189,7 @@ constexpr bool is_one_of(const T& value, const Candidates&... candidates)
 
 constexpr float EPSILON = numeric_limits<float>::epsilon();
 constexpr float MAX = numeric_limits<float>::max();
+constexpr float POS_INFINITY = numeric_limits<float>::infinity();
 constexpr float NEG_INFINITY = -numeric_limits<float>::infinity();
 constexpr float QUIET_NAN = numeric_limits<float>::quiet_NaN();
 constexpr float SOFTMAX_MASK_VALUE = float(-1e9f);

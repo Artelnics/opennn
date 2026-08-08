@@ -14,6 +14,9 @@
 namespace opennn
 {
 
+// Finite-difference step for a value: scaled so it stays meaningful for large x.
+float   calculate_h(float x);
+
 float   calculate_numerical_error(Loss& loss);
 VectorR calculate_gradient(Loss& loss);
 VectorR calculate_numerical_gradient(Loss& loss);

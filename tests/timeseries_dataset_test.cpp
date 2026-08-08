@@ -106,7 +106,7 @@ TEST(TimeSeriesDataset, test_transform_time_series)
 
     dataset.set_data(data);
 
-    std::vector<string> variable_names = { "x", "y" };
+    vector<string> variable_names = { "x", "y" };
 
     dataset.set_variable_names(variable_names);
 
@@ -122,8 +122,8 @@ TEST(TimeSeriesDataset, test_transform_time_series)
     EXPECT_EQ(dataset.get_variables_number("Target"), 1);
     EXPECT_EQ(dataset.get_variables_number("None"), 0);
 
-    std::vector<string> input_variable_names = dataset.get_variable_names("Input");
-    std::vector<string> target_variable_names = dataset.get_variable_names("Target");
+    vector<string> input_variable_names = dataset.get_variable_names("Input");
+    vector<string> target_variable_names = dataset.get_variable_names("Target");
 
     EXPECT_EQ(input_variable_names[0], "x");
     EXPECT_EQ(target_variable_names[0], "y");

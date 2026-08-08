@@ -28,8 +28,7 @@ struct YoloDetection
     Index class_id = 0;
 };
 
-vector<YoloDetection> decode_yolo_detections(const float*,
-                                             Index,
+vector<YoloDetection> decode_yolo_detections(span<const float>,
                                              Index,
                                              Index,
                                              Index,
@@ -37,7 +36,7 @@ vector<YoloDetection> decode_yolo_detections(const float*,
 
 struct YoloFpnHead
 {
-    const float* data = nullptr;
+    span<const float> data;
     Index grid_size = 0;
     Index boxes_per_cell = 0;
     Index classes_number = 0;

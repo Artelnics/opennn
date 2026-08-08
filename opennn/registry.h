@@ -14,13 +14,15 @@
 namespace opennn
 {
 
+using namespace std;
+
 class Layer;
 class Optimizer;
 class InputsSelection;
 
-std::unique_ptr<Layer> create_layer(const std::string& name);
-std::unique_ptr<Optimizer> create_optimizer(const std::string& name);
-std::unique_ptr<InputsSelection> create_inputs_selection(const std::string& name);
+unique_ptr<Layer> create_layer(const string& name);
+unique_ptr<Optimizer> create_optimizer(const string& name);
+unique_ptr<InputsSelection> create_inputs_selection(const string& name);
 
 }
 

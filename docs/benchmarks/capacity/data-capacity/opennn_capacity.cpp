@@ -11,7 +11,7 @@
 //   ../../throughput/higgs/README.md for the dataset contract.
 //
 //   A "successful" run loads the file and trains; if the dataset does not fit
-//   in RAM the allocation throws std::bad_alloc (caught -> exit 1) or the OS
+//   in RAM the allocation throws bad_alloc (caught -> exit 1) or the OS
 //   terminates the process. The driver script sweeps sample counts to find the
 //   largest one that still succeeds.
 //
@@ -56,12 +56,12 @@ int main(int argc, char* argv[])
     {
         if (argc < 2)
         {
-            std::cerr << "usage: opennn_capacity <csv_path> [hidden_neurons]\n";
+            cerr << "usage: opennn_capacity <csv_path> [hidden_neurons]\n";
             return 2;
         }
 
-        const std::string csv_path = argv[1];
-        const Index hidden_neurons = (argc > 2) ? Index(std::stoll(argv[2])) : Index(1024);
+        const string csv_path = argv[1];
+        const Index hidden_neurons = (argc > 2) ? Index(stoll(argv[2])) : Index(1024);
 
         set_seed(42);
         Configuration::instance().set(Device::Auto, Type::FP32);
@@ -69,9 +69,9 @@ int main(int argc, char* argv[])
         TabularDataset dataset(csv_path, ",", false, false);
 
         const Index samples = dataset.get_samples_number();
-        std::cout << "loaded_samples=" << samples << "\n";
-        std::cout << "sustained_after_load_mb=" << current_working_set_mb() << "\n";
-        std::cout << "after_load_peak_mb=" << peak_working_set_mb() << "\n";
+        cout << "loaded_samples=" << samples << "\n";
+        cout << "sustained_after_load_mb=" << current_working_set_mb() << "\n";
+        cout << "after_load_peak_mb=" << peak_working_set_mb() << "\n";
 
         dataset.split_samples_random(1.0f, 0.0f, 0.0f);
 
@@ -91,22 +91,22 @@ int main(int argc, char* argv[])
 
         training_strategy.train();
 
-        std::cout << "trained=1\n";
-        std::cout << "peak_mb=" << peak_working_set_mb() << "\n";
-        std::cout << "RESULT=OK\n";
+        cout << "trained=1\n";
+        cout << "peak_mb=" << peak_working_set_mb() << "\n";
+        cout << "RESULT=OK\n";
         return 0;
     }
-    catch (const std::bad_alloc&)
+    catch (const bad_alloc&)
     {
-        std::cout << "peak_mb=" << peak_working_set_mb() << "\n";
-        std::cout << "RESULT=OOM\n";
+        cout << "peak_mb=" << peak_working_set_mb() << "\n";
+        cout << "RESULT=OOM\n";
         return 1;
     }
-    catch (const std::exception& e)
+    catch (const exception& e)
     {
-        std::cerr << e.what() << "\n";
-        std::cout << "peak_mb=" << peak_working_set_mb() << "\n";
-        std::cout << "RESULT=ERROR\n";
+        cerr << e.what() << "\n";
+        cout << "peak_mb=" << peak_working_set_mb() << "\n";
+        cout << "RESULT=ERROR\n";
         return 1;
     }
 }

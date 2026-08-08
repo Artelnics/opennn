@@ -48,54 +48,54 @@ constexpr Index kClasses = 10;
 
 struct TempImageTree
 {
-    std::filesystem::path root;
+    filesystem::path root;
 
     ~TempImageTree()
     {
         if (!root.empty())
         {
-            std::error_code ec;
-            std::filesystem::remove_all(root, ec);
+            error_code ec;
+            filesystem::remove_all(root, ec);
         }
     }
 };
 
-std::vector<std::pair<std::filesystem::path, std::string>>
-collect_cifar_images(const std::filesystem::path& train_dir)
+vector<pair<filesystem::path, string>>
+collect_cifar_images(const filesystem::path& train_dir)
 {
-    namespace fs = std::filesystem;
+    namespace fs = filesystem;
 
     throw_if(!fs::is_directory(train_dir), "Missing CIFAR-10 train directory: " + train_dir.string());
 
-    std::vector<fs::path> class_dirs;
+    vector<fs::path> class_dirs;
     for (const fs::directory_entry& entry : fs::directory_iterator(train_dir))
         if (entry.is_directory() && !entry.path().filename().string().starts_with('.'))
             class_dirs.push_back(entry.path());
-    std::ranges::sort(class_dirs);
+    ranges::sort(class_dirs);
 
     throw_if(ssize(class_dirs) != kClasses,
              "Expected 10 CIFAR-10 class folders under: " + train_dir.string());
 
-    std::vector<std::pair<fs::path, std::string>> samples;
+    vector<pair<fs::path, string>> samples;
     for (const fs::path& class_dir : class_dirs)
     {
-        std::vector<fs::path> files;
+        vector<fs::path> files;
         for (const fs::directory_entry& entry : fs::directory_iterator(class_dir))
             if (entry.is_regular_file() || entry.is_symlink())
                 files.push_back(entry.path());
-        std::ranges::sort(files, [](const fs::path& left, const fs::path& right)
+        ranges::sort(files, [](const fs::path& left, const fs::path& right)
         {
             const auto sample_index = [](const fs::path& path)
             {
-                const std::string stem = path.stem().string();
+                const string stem = path.stem().string();
                 const size_t separator = stem.rfind('_');
-                return separator == std::string::npos
-                    ? Index(0) : Index(std::stoll(stem.substr(separator + 1)));
+                return separator == string::npos
+                    ? Index(0) : Index(stoll(stem.substr(separator + 1)));
             };
             return sample_index(left) < sample_index(right);
         });
 
-        const std::string class_name = class_dir.filename().string();
+        const string class_name = class_dir.filename().string();
         for (const fs::path& file : files)
             samples.emplace_back(file, class_name);
     }
@@ -104,28 +104,28 @@ collect_cifar_images(const std::filesystem::path& train_dir)
     return samples;
 }
 
-std::filesystem::path make_repeated_image_tree(const std::string& data_dir,
+filesystem::path make_repeated_image_tree(const string& data_dir,
                                                Index batch,
                                                TempImageTree& temp)
 {
-    namespace fs = std::filesystem;
+    namespace fs = filesystem;
 
     const fs::path train_dir = fs::path(data_dir) / "train";
     const auto samples = collect_cifar_images(train_dir);
-    std::vector<std::vector<std::pair<fs::path, std::string>>> by_class(kClasses);
-    std::vector<std::string> class_names;
+    vector<vector<pair<fs::path, string>>> by_class(kClasses);
+    vector<string> class_names;
     for (const auto& sample : samples)
     {
         if (class_names.empty() || class_names.back() != sample.second)
             class_names.push_back(sample.second);
-        const auto class_it = std::ranges::find(class_names, sample.second);
+        const auto class_it = ranges::find(class_names, sample.second);
         by_class[size_t(class_it - class_names.begin())].push_back(sample);
     }
 
     temp.root = fs::temp_directory_path()
               / ("opennn_resnet50_maxbatch_"
-                 + std::to_string(static_cast<long long>(current_pid()))
-                 + "_" + std::to_string(static_cast<long long>(batch)));
+                 + to_string(static_cast<long long>(current_pid()))
+                 + "_" + to_string(static_cast<long long>(batch)));
 
     fs::create_directories(temp.root);
 
@@ -139,9 +139,9 @@ std::filesystem::path make_repeated_image_tree(const std::string& data_dir,
                                   % by_class[class_index].size();
         const auto& [source, class_name] = by_class[class_index][within_class];
         const fs::path link = temp.root / class_name
-            / ("sample_" + std::to_string(static_cast<long long>(i)) + source.extension().string());
+            / ("sample_" + to_string(static_cast<long long>(i)) + source.extension().string());
 
-        std::error_code ec;
+        error_code ec;
         fs::create_symlink(fs::absolute(source), link, ec);
         if (ec)
             fs::copy_file(source, link, fs::copy_options::overwrite_existing);
@@ -154,22 +154,22 @@ std::filesystem::path make_repeated_image_tree(const std::string& data_dir,
 
 int main(int argc, char* argv[])
 {
-    std::cout << std::unitbuf;
-    std::cerr << std::unitbuf;
+    cout << unitbuf;
+    cerr << unitbuf;
 
-    const char* bench_data_env = std::getenv("OPENNN_BENCH_DATA");
-    const char* home_env = std::getenv("HOME");
-    const std::string default_data_dir =
+    const char* bench_data_env = getenv("OPENNN_BENCH_DATA");
+    const char* home_env = getenv("HOME");
+    const string default_data_dir =
         (bench_data_env && *bench_data_env
-             ? std::string(bench_data_env)
-             : std::string(home_env ? home_env : ".") + "/opennn-benchmark-data")
+             ? string(bench_data_env)
+             : string(home_env ? home_env : ".") + "/opennn-benchmark-data")
         + "/cifar10";
-    const std::string data_dir = argc > 1 ? argv[1] : default_data_dir;
-    const Index batch = argc > 2 ? Index(std::stoll(argv[2])) : 128;
-    const std::string precision = argc > 3 ? argv[3] : "fp32";
-    const int batch_pool = argc > 4 ? std::stoi(argv[4]) : 0;
-    const std::string workspace_arg = argc > 5 ? argv[5] : "16";
-    const bool recompute_activations = argc <= 6 || std::stoi(argv[6]) != 0;
+    const string data_dir = argc > 1 ? argv[1] : default_data_dir;
+    const Index batch = argc > 2 ? Index(stoll(argv[2])) : 128;
+    const string precision = argc > 3 ? argv[3] : "fp32";
+    const int batch_pool = argc > 4 ? stoi(argv[4]) : 0;
+    const string workspace_arg = argc > 5 ? argv[5] : "16";
+    const bool recompute_activations = argc <= 6 || stoi(argv[6]) != 0;
 
     try
     {
@@ -179,8 +179,8 @@ int main(int argc, char* argv[])
         throw_if(precision != "fp32" && precision != "bf16",
                  "Precision must be fp32 or bf16.");
 
-        const char* seed_env = std::getenv("OPENNN_BENCH_SEED");
-        set_seed(seed_env && *seed_env ? std::stoi(seed_env) : 42);
+        const char* seed_env = getenv("OPENNN_BENCH_SEED");
+        set_seed(seed_env && *seed_env ? stoi(seed_env) : 42);
         const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, training_type);
 
@@ -191,14 +191,14 @@ int main(int argc, char* argv[])
         else if (workspace_arg == "auto")
             device::set_conv_workspace_cap(-1);
         else
-            device::set_conv_workspace_cap(std::stoll(workspace_arg) * 1024 * 1024);
-        std::cout << "workspace_mode=" << workspace_arg << "\n";
-        std::cout << "workspace_cap_mib="
+            device::set_conv_workspace_cap(stoll(workspace_arg) * 1024 * 1024);
+        cout << "workspace_mode=" << workspace_arg << "\n";
+        cout << "workspace_cap_mib="
                   << device::conv_workspace_limit_bytes() / (1024 * 1024) << "\n";
-        std::cout << "conv_autotune=" << (device::conv_autotune_enabled() ? 1 : 0) << "\n";
+        cout << "conv_autotune=" << (device::conv_autotune_enabled() ? 1 : 0) << "\n";
 
         TempImageTree temp_images;
-        const std::filesystem::path trial_data_path =
+        const filesystem::path trial_data_path =
             make_repeated_image_tree(data_dir, batch, temp_images);
 
         ImageDataset dataset(trial_data_path);
@@ -238,12 +238,12 @@ int main(int argc, char* argv[])
         adam->set_shuffle(false);
         adam->set_batch_pool_size(batch_pool);
 
-        const char* target_env = std::getenv("OPENNN_TARGET_LOSS");
+        const char* target_env = getenv("OPENNN_TARGET_LOSS");
         const bool target_mode = target_env && *target_env;
-        const float target = target_mode ? std::stof(target_env) : 0.0f;
-        const char* steps_env = std::getenv("OPENNN_MAX_STEPS");
+        const float target = target_mode ? stof(target_env) : 0.0f;
+        const char* steps_env = getenv("OPENNN_MAX_STEPS");
         const Index max_steps = steps_env && *steps_env
-            ? std::max<Index>(Index(1), Index(std::stoll(steps_env)))
+            ? max<Index>(Index(1), Index(stoll(steps_env)))
             : Index(1);
         if (target_mode)
         {
@@ -253,58 +253,58 @@ int main(int argc, char* argv[])
 
         const auto unix_now = []
         {
-            return std::chrono::duration<double>(
-                std::chrono::system_clock::now().time_since_epoch()).count();
+            return chrono::duration<double>(
+                chrono::system_clock::now().time_since_epoch()).count();
         };
         if (target_mode)
-            std::cout << "TRAIN_START_UNIX=" << std::fixed << std::setprecision(3)
-                      << unix_now() << "\n" << std::defaultfloat;
-        const auto train_start = std::chrono::steady_clock::now();
+            cout << "TRAIN_START_UNIX=" << fixed << setprecision(3)
+                      << unix_now() << "\n" << defaultfloat;
+        const auto train_start = chrono::steady_clock::now();
         const TrainingResult result = training_strategy.train();
-        const auto train_end = std::chrono::steady_clock::now();
+        const auto train_end = chrono::steady_clock::now();
         if (target_mode)
-            std::cout << "TRAIN_END_UNIX=" << std::fixed << std::setprecision(3)
-                      << unix_now() << "\n" << std::defaultfloat;
+            cout << "TRAIN_END_UNIX=" << fixed << setprecision(3)
+                      << unix_now() << "\n" << defaultfloat;
         const float training_error = result.get_training_error();
-        throw_if(!std::isfinite(training_error), "Training error is not finite.");
+        throw_if(!isfinite(training_error), "Training error is not finite.");
 
-        std::cout << "engine=opennn\n";
-        std::cout << "model=ResNet-50-v1.5-CIFAR\n";
-        std::cout << "samples=" << batch << " batch=" << batch
+        cout << "engine=opennn\n";
+        cout << "model=ResNet-50-v1.5-CIFAR\n";
+        cout << "samples=" << batch << " batch=" << batch
                   << " precision=" << precision << "\n";
-        std::cout << "storage=ImageDataset GPU-persistent cache\n";
-        std::cout << "gpu_resident_data=1\n";
-        std::cout << "training_activation_recomputation="
+        cout << "storage=ImageDataset GPU-persistent cache\n";
+        cout << "gpu_resident_data=1\n";
+        cout << "training_activation_recomputation="
                   << (recompute_activations ? 1 : 0) << "\n";
-        std::cout << "parameters=" << network.get_parameters_size() << "\n";
-        std::cout << "training_error=" << training_error << "\n";
+        cout << "parameters=" << network.get_parameters_size() << "\n";
+        cout << "training_error=" << training_error << "\n";
         if (target_mode)
         {
             const Index steps_run = result.get_epochs_number();
             const double wall_s =
-                std::chrono::duration<double>(train_end - train_start).count();
-            std::cout << "target=" << target << "\n";
-            std::cout << "steps_run=" << steps_run << "\n";
-            std::cout << "epochs_run=" << steps_run << "\n";
-            std::cout << "final_error=" << training_error << "\n";
-            std::cout << "reached_goal=" << (training_error <= target ? 1 : 0) << "\n";
-            std::cout << "loss_history=";
+                chrono::duration<double>(train_end - train_start).count();
+            cout << "target=" << target << "\n";
+            cout << "steps_run=" << steps_run << "\n";
+            cout << "epochs_run=" << steps_run << "\n";
+            cout << "final_error=" << training_error << "\n";
+            cout << "reached_goal=" << (training_error <= target ? 1 : 0) << "\n";
+            cout << "loss_history=";
             for (Index step = 0; step < result.training_error_history.size(); ++step)
-                std::cout << (step ? "," : "") << result.training_error_history(step);
-            std::cout << "\n";
-            std::cout << "wall_s=" << wall_s << "\n";
-            std::cout << "samples_per_sec="
+                cout << (step ? "," : "") << result.training_error_history(step);
+            cout << "\n";
+            cout << "wall_s=" << wall_s << "\n";
+            cout << "samples_per_sec="
                       << double(batch) * double(steps_run) / wall_s << "\n";
         }
-        memory_debug::print(std::cout);
-        std::cout << "RESULT=OK\n";
+        memory_debug::print(cout);
+        cout << "RESULT=OK\n";
         return 0;
     }
-    catch (const std::exception& e)
+    catch (const exception& e)
     {
-        std::cerr << "FAIL batch=" << batch << " : " << e.what() << "\n";
-        memory_debug::print(std::cout);
-        std::cout << "RESULT=ERROR\n";
+        cerr << "FAIL batch=" << batch << " : " << e.what() << "\n";
+        memory_debug::print(cout);
+        cout << "RESULT=ERROR\n";
         return 1;
     }
 }

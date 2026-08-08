@@ -34,32 +34,39 @@ namespace
 struct Fp32Staging
 {
     Fp32Staging(Index count, Index slices)
-        : elements(count), base(ensure_bf16_to_fp32_workspace(slices * count))
+        : elements(count),
+          workspace(ensure_bf16_to_fp32_workspace(slices * count), size_t(slices * count))
     {
     }
 
-    float* read(const void* bfloat16_source)
+    span<float> read(const void* bfloat16_source)
     {
-        float* const slice = next();
-        cast_bf16_to_fp32(elements, static_cast<const bfloat16*>(bfloat16_source), slice);
+        const span<float> slice = next();
+        cast_bf16_to_fp32(elements, static_cast<const bfloat16*>(bfloat16_source), slice.data());
         return slice;
     }
 
-    float* write() { return next(); }
+    span<float> write() { return next(); }
 
     Index elements = 0;
 
 private:
 
-    float* next() { return base + used++ * elements; }
+    span<float> next()
+    {
+        const size_t offset = size_t(used++) * size_t(elements);
+        return workspace.subspan(offset, size_t(elements));
+    }
 
-    float* base = nullptr;
+    span<float> workspace;
     Index used = 0;
 };
 
-void store_as_bfloat16(const Fp32Staging& staging, const float* slice, void* bfloat16_target)
+void store_as_bfloat16(const Fp32Staging& staging,
+                       const span<const float> slice,
+                       void* bfloat16_target)
 {
-    cast_fp32_to_bf16(staging.elements, slice, static_cast<bfloat16*>(bfloat16_target),
+    cast_fp32_to_bf16(staging.elements, slice.data(), static_cast<bfloat16*>(bfloat16_target),
                       Backend::get_compute_stream());
 }
 
@@ -300,9 +307,10 @@ void BatchNormalizationOperator::apply_delta_cpu(const TensorView& input,
                                     * inverse_variances_t)
                                 ).matrix().colwise().sum();
 
-    delta_scale_scratch = (gammas.array() * inverse_variances.array() * inv_N).matrix();
+    const VectorR delta_scale =
+        (gammas.array() * inverse_variances.array() * inv_N).matrix();
 
-    const auto delta_scale_t   = delta_scale_scratch.transpose().array();
+    const auto delta_scale_t       = delta_scale.transpose().array();
     const auto beta_gradient_t     = beta_gradients.transpose().array();
     const auto gamma_gradient_t    = gamma_gradients.transpose().array();
 
@@ -553,15 +561,15 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
         void* x_ptr        = input.data;
         void* residual_ptr = fuse_add ? residual.data : nullptr;
         void* y_ptr        = output.data;
-        float* y_fp32      = nullptr;
+        span<float> y_fp32;
         optional<Fp32Staging> staging;
         if (bf16)
         {
             staging.emplace(input.size(), fuse_add ? 3 : 2);
-            x_ptr  = staging->read(input.data);
+            x_ptr  = staging->read(input.data).data();
             y_fp32 = staging->write();
-            y_ptr  = y_fp32;
-            if (fuse_add) residual_ptr = staging->read(residual.data);
+            y_ptr  = y_fp32.data();
+            if (fuse_add) residual_ptr = staging->read(residual.data).data();
         }
 
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
@@ -663,15 +671,15 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
 
         void* x_ptr    = input.data;
         void* dy_ptr   = delta.data;
-        float* dx_fp32 = nullptr;
+        span<float> dx_fp32;
         optional<Fp32Staging> staging;
         if (bf16)
         {
 
             staging.emplace(delta.size(), 2);
-            x_ptr   = staging->read(input.data);
+            x_ptr   = staging->read(input.data).data();
             dx_fp32 = staging->read(delta.data);
-            dy_ptr  = dx_fp32;
+            dy_ptr  = dx_fp32.data();
         }
 
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;

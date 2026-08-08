@@ -122,7 +122,7 @@ void seed_parameters_from_snapshot(NeuralNetwork* neural_network,
 
             if (view.shape == block.shape)
             {
-                copy(block.values.begin(), block.values.end(), view.as_float());
+                ranges::copy(block.values, view.as_float());
                 continue;
             }
 

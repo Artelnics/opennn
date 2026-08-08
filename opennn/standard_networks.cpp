@@ -534,19 +534,30 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
     else if (backbone == Backbone::DarknetTinyV3)
     {
 
-        const vector<Index> channels_seq = {16, 32, 64, 128, 256, 512, 1024, 256};
-        const vector<bool>  has_pool     = {true, true, true, true, true, false, false, false};
-        const vector<bool>  use_1x1      = {false, false, false, false, false, false, false, true};
+        struct DarknetStage { Index channels = 0; bool pool = false; bool one_by_one = false; };
+
+        static constexpr array stages = {
+            DarknetStage{.channels =   16, .pool = true},
+            DarknetStage{.channels =   32, .pool = true},
+            DarknetStage{.channels =   64, .pool = true},
+            DarknetStage{.channels =  128, .pool = true},
+            DarknetStage{.channels =  256, .pool = true},
+            DarknetStage{.channels =  512},
+            DarknetStage{.channels = 1024},
+            DarknetStage{.channels =  256, .one_by_one = true},
+        };
 
         Index c3_index = -1;
         Index last_index = -1;
 
-        for (size_t i = 0; i < channels_seq.size(); ++i)
+        for (size_t i = 0; i < stages.size(); ++i)
         {
+            const DarknetStage& stage = stages[i];
+
             const Shape in_shape  = (i == 0) ? input_shape : get_layer(last_index)->get_output_shape();
             const Index  in_ch    = in_shape[2];
-            const Index  out_ch   = channels_seq[i];
-            const Index  ksize    = use_1x1[i] ? 1 : 3;
+            const Index  out_ch   = stage.channels;
+            const Index  ksize    = stage.one_by_one ? 1 : 3;
 
             add_layer(make_unique<Convolutional>(in_shape,
                                                  Shape{ksize, ksize, in_ch, out_ch},
@@ -554,7 +565,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                                                  format("dntv3_conv_{}", i + 1)));
             last_index = get_layers_number() - 1;
 
-            if (has_pool[i])
+            if (stage.pool)
             {
                 add_layer(make_unique<Pooling>(get_layer(last_index)->get_output_shape(),
                                                pool, pool_stride, no_padding,
@@ -563,7 +574,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 last_index = get_layers_number() - 1;
             }
 
-            if (i == 4) c3_index = get_layers_number() - 1 - (has_pool[i] ? 1 : 0);
+            if (i == 4) c3_index = get_layers_number() - 1 - (stage.pool ? 1 : 0);
 
         }
 

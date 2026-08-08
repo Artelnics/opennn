@@ -39,7 +39,7 @@
 #include "opennn/random_utilities.h"
 
 using namespace opennn;
-using namespace std::chrono;
+using namespace chrono;
 
 int main(int argc, char** argv)
 {
