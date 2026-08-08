@@ -10,7 +10,6 @@
 #include "memory_pool.h"
 #include "loss.h"
 #include "neural_network.h"
-#include "forward_propagation.h"
 #include "tensor_operations.h"
 #include "memory_debug.h"
 
@@ -35,9 +34,10 @@ vector<bool> find_passthrough_layers(const vector<unique_ptr<Layer>>& layers,
 
 BackPropagation::BackPropagation(const Index new_batch_size,
                                  Loss* new_loss,
-                                 ForwardPropagation* forward_propagation)
+                                 Buffer* external_arena,
+                                 span<const Index> arena_offsets)
 {
-    set(new_batch_size, new_loss, forward_propagation);
+    set(new_batch_size, new_loss, external_arena, arena_offsets);
 }
 
 vector<vector<pair<size_t, size_t>>> BackPropagation::make_consumer_edges(
@@ -59,7 +59,8 @@ vector<vector<pair<size_t, size_t>>> BackPropagation::make_consumer_edges(
 }
 
 void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
-                          ForwardPropagation* forward_propagation)
+                          Buffer* external_arena,
+                          span<const Index> arena_offsets)
 {
     batch_size = new_batch_size;
     loss = new_loss;
@@ -99,12 +100,14 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
     const DeltaLayout layout = build_delta_entries(
         *neural_network, *loss, batch_size, backward_specs, consumer_edges);
 
-    if (forward_propagation && !forward_propagation->co_planned_offsets.empty())
+    // The offsets are read here and never kept, so they may point into a
+    // container the caller owns.
+    if (external_arena && !arena_offsets.empty())
     {
         arena.resize_bytes(0, neural_network->get_device());
-        bind_deltas(layout, forward_propagation->co_planned_offsets,
-                    forward_propagation->arena.as<uint8_t>(),
-                    forward_propagation->arena.device_type,
+        bind_deltas(layout, arena_offsets,
+                    external_arena->as<uint8_t>(),
+                    external_arena->device_type,
                     backward_specs);
         return;
     }
@@ -326,7 +329,7 @@ void BackPropagation::setup_arena(const vector<vector<TensorSpec>>& backward_spe
 }
 
 void BackPropagation::bind_deltas(const DeltaLayout& layout,
-                                  const vector<Index>& byte_offsets,
+                                  span<const Index> byte_offsets,
                                   uint8_t* base, Device device,
                                   const vector<vector<TensorSpec>>& backward_specs)
 {

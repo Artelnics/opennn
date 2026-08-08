@@ -1015,7 +1015,8 @@ TrainingResult Optimizer::train()
     loss->set_normalization_coefficient();
 
     BackPropagation training_back_propagation(training_batch_size, loss,
-                                              &training_forward_propagation);
+                                              &training_forward_propagation.arena,
+                                              training_forward_propagation.co_planned_offsets);
 
     unique_ptr<ForwardPropagation> validation_forward_propagation;
     if (has_validation)

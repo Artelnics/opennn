@@ -18,7 +18,6 @@ namespace opennn
 
 class Loss;
 class NeuralNetwork;
-struct ForwardPropagation;
 
 struct BackPropagation
 {
@@ -41,13 +40,20 @@ struct BackPropagation
         vector<pair<size_t, size_t>> reusable_consumer_deltas;
     };
 
+    // The deltas either live in memory somebody else planned - pass that arena
+    // and the byte offsets for this layout - or in an arena of our own. This is
+    // the same choice ForwardPropagation::set offers through its external_storage,
+    // and deliberately not spelled as a ForwardPropagation: what is wanted here is
+    // a region and a list of offsets, not a forward pass.
     BackPropagation(const Index = 0, Loss* = nullptr,
-                    ForwardPropagation* forward_propagation = nullptr);
+                    Buffer* external_arena = nullptr,
+                    span<const Index> arena_offsets = {});
 
     virtual ~BackPropagation() = default;
 
     void set(const Index = 0, Loss* = nullptr,
-             ForwardPropagation* forward_propagation = nullptr);
+             Buffer* external_arena = nullptr,
+             span<const Index> arena_offsets = {});
 
     static vector<vector<pair<size_t, size_t>>> make_consumer_edges(const NeuralNetwork&);
 
@@ -94,7 +100,7 @@ private:
 
     void setup_arena(const vector<vector<TensorSpec>>&, const DeltaLayout&);
 
-    void bind_deltas(const DeltaLayout&, const vector<Index>& byte_offsets,
+    void bind_deltas(const DeltaLayout&, span<const Index> byte_offsets,
                      uint8_t* base, Device device,
                      const vector<vector<TensorSpec>>&);
 };
