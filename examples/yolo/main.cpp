@@ -137,7 +137,7 @@ Image24 read_bmp24(const filesystem::path& path)
 
 void draw_rect_outline(Image24& img,
                        int x0, int y0, int x1, int y1,
-                       array<uint8_t, 3> color, int thickness = 2)
+                       std::array<uint8_t, 3> color, int thickness = 2)
 {
     if (x1 < x0) swap(x0, x1);
     if (y1 < y0) swap(y0, y1);
@@ -160,8 +160,8 @@ void draw_rect_outline(Image24& img,
 
 void write_synthetic_bmp(const filesystem::path& path,
                          int width, int height,
-                         array<uint8_t, 3> background,
-                         array<uint8_t, 3> foreground,
+                         std::array<uint8_t, 3> background,
+                         std::array<uint8_t, 3> foreground,
                          int top_x, int top_y, int block)
 {
     Image24 img;
@@ -209,8 +209,8 @@ void generate_synthetic_dataset(const filesystem::path& images_dir,
 
     constexpr int image_size = 128;
     constexpr int block = 32;
-    constexpr array<uint8_t, 3> background{255, 255, 255};
-    const array<array<uint8_t, 3>, 3> colors{{
+    constexpr std::array<uint8_t, 3> background{255, 255, 255};
+    const std::array<std::array<uint8_t, 3>, 3> colors{{
         {220,  40,  40},
         { 40,  60, 220},
         { 40, 200,  40},
@@ -291,6 +291,13 @@ int main()
                                   : YoloNetwork::HeadStyle::FPN)
             : YoloNetwork::HeadStyle::Single;
 
+        // use_v8 only reaches the head through the ternary above, which the
+        // synthetic configuration never takes - it always gets the anchor-based
+        // Single head. Everything downstream must therefore follow the head that
+        // was actually chosen: asking for v8 geometry (no anchors, no boxes per
+        // cell, DFL with reg_max 16) around a Single head trains straight to NaN.
+        const bool is_v8_head = (head_style == YoloNetwork::HeadStyle::FPNv8);
+
         const auto body_activation = YoloNetwork::BodyActivation::LeakyReLU;
 
         const filesystem::path voc_root = []() -> filesystem::path {
@@ -327,7 +334,7 @@ int main()
         Index grid_size;
         Index boxes_per_cell;
         Shape input_shape;
-        vector<array<float, 2>> anchors;
+        vector<std::array<float, 2>> anchors;
 
         if (use_voc)
         {
@@ -547,12 +554,12 @@ int main()
             boxes_per_cell = 3;
         }
 
-        const vector<array<float, 2>> ctor_anchors = use_v8
-            ? vector<array<float, 2>>{}
+        const vector<std::array<float, 2>> ctor_anchors = is_v8_head
+            ? vector<std::array<float, 2>>{}
             : (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
-                ? vector<array<float, 2>>{anchors[0], anchors[1], anchors[2]}
+                ? vector<std::array<float, 2>>{anchors[0], anchors[1], anchors[2]}
                 : anchors;
-        const Index ctor_bpc = use_v8 ? 0 : boxes_per_cell;
+        const Index ctor_bpc = is_v8_head ? 0 : boxes_per_cell;
 
         YoloDataset dataset(images_dir, labels_dir, input_shape,
                             grid_size, ctor_bpc, ctor_anchors);
@@ -561,8 +568,8 @@ int main()
         {
 
             const vector<Index> head_grids = {grid_size, grid_size * 2, grid_size * 4};
-            const array<float, 2> dummy{{0.5f, 0.5f}};
-            const vector<vector<array<float, 2>>> dummy_anchors(3, {dummy});
+            const std::array<float, 2> dummy{{0.5f, 0.5f}};
+            const vector<vector<std::array<float, 2>>> dummy_anchors(3, {dummy});
             dataset.set_multi_scale_heads(head_grids, dummy_anchors);
             dataset.set_v8_mode(true);
         }
@@ -575,7 +582,7 @@ int main()
                     grid_size,
                     grid_size * 2,
                 };
-                const vector<vector<array<float, 2>>> head_anchors = {
+                const vector<vector<std::array<float, 2>>> head_anchors = {
                     {anchors[3], anchors[4], anchors[5]},
                     {anchors[0], anchors[1], anchors[2]},
                 };
@@ -589,7 +596,7 @@ int main()
                     grid_size * 2,
                     grid_size * 4
                 };
-                const vector<vector<array<float, 2>>> head_anchors = {
+                const vector<vector<std::array<float, 2>>> head_anchors = {
                     {anchors[6], anchors[7], anchors[8]},
                     {anchors[3], anchors[4], anchors[5]},
                     {anchors[0], anchors[1], anchors[2]},
@@ -628,7 +635,7 @@ int main()
         const double val_frac   = use_raccoon ? 0.2 : (use_voc ? 0.15 : 0.3);
         dataset.split_samples_random(train_frac, val_frac, 0.0);
 
-        const vector<array<float, 2>>& network_anchors = use_v8
+        const vector<std::array<float, 2>>& network_anchors = is_v8_head
             ? anchors
             : (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
                 ? anchors : dataset.get_anchors();
@@ -646,7 +653,7 @@ int main()
                                  head_style,
                                  body_activation,
                                  use_sppf && is_large_backbone,
-                                 use_v8 ? reg_max : Index(1),
+                                 is_v8_head ? reg_max : Index(1),
                                  model_size);
 
         cout << "Device: " << (yolo_network.is_gpu() ? "GPU" : "CPU")
@@ -725,7 +732,7 @@ int main()
             (use_sppf && is_large_backbone ? "_sppf" : "") +
             (body_activation == YoloNetwork::BodyActivation::LeakyReLU ? "_leaky" : "") +
             (class_activation == YoloNetwork::ClassActivation::Sigmoid ? "_sigmoid" : "") +
-            (use_v8 && reg_max > 1 ? "_dfl" : "") +
+            (is_v8_head && reg_max > 1 ? "_dfl" : "") +
             (model_size == YoloNetwork::ModelSize::s ? "_s" : "") +
             filter_tag +
             string("_bce_ig_bgfocal.bin");
@@ -959,7 +966,7 @@ int main()
         Tensor4 input(1, input_shape[0], input_shape[1], input_shape[2]);
 
         const vector<string>& class_names = dataset.get_class_names();
-        const array<array<uint8_t, 3>, 2> box_color_by_role{{
+        const std::array<std::array<uint8_t, 3>, 2> box_color_by_role{{
             { 30, 200,  30},
             {220,  40,  40},
         }};
@@ -1028,7 +1035,6 @@ int main()
                 vector<YoloFpnHead> fpn_heads;
                 vector<vector<float>> fpn_cpu_buffers;
                 const auto& layers = yolo_network.get_layers();
-                const bool is_v8_head = (head_style == YoloNetwork::HeadStyle::FPNv8);
                 for (size_t li = 0; li < layers.size(); ++li)
                 {
                     const bool is_det = layers[li] && (
@@ -1265,12 +1271,12 @@ input_shape[1]);
                 return inter / max(a + b - inter, 1e-6f);
             };
 
-            const array<array<uint8_t, 3>, 3> rank_colors{{
+            const std::array<std::array<uint8_t, 3>, 3> rank_colors{{
                 {220,  40,  40},
                 {255, 140,   0},
                 {235, 200,   0},
             }};
-            const array<uint8_t, 3> best_iou_color{ 40, 200, 220};
+            const std::array<uint8_t, 3> best_iou_color{ 40, 200, 220};
 
             const Index shown = min(Index(detections.size()), Index(5));
             if (shown == 0)

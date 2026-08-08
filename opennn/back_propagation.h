@@ -88,8 +88,6 @@ struct BackPropagation
 
     Index batch_size = 0;
 
-    Loss* loss = nullptr;
-
     float error = 0.0f;
     float accuracy = 0.0f;
     float regularization = 0.0f;

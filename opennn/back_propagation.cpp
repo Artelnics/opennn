@@ -63,7 +63,8 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
                           span<const Index> arena_offsets)
 {
     batch_size = new_batch_size;
-    loss = new_loss;
+    // Only needed to build the layout below; nothing afterwards reads it.
+    Loss* const loss = new_loss;
 
     throw_if(!loss, "loss is not set.");
 

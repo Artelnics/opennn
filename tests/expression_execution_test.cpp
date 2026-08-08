@@ -151,10 +151,11 @@ string find_c_compiler()
 string run_exported_c_model(const filesystem::path& directory,
                             const ModelExpression& model_expression,
                             const MatrixR& inputs,
-                            Index outputs_number)
+                            Index outputs_number,
+                            ModelExpression::ProgrammingLanguage language)
 {
     const filesystem::path model_path = directory / "opennn_exported_model.c";
-    model_expression.save(model_path, ModelExpression::ProgrammingLanguage::C);
+    model_expression.save(model_path, language);
 
     ostringstream driver;
     driver << setprecision(9);
@@ -304,9 +305,9 @@ MatrixR degenerate_inputs()
     return inputs;
 }
 
-// The languages differ only in how the export is run, so every check below is
-// written once and pointed at either.
-enum class Target { Python, C };
+// The targets differ only in how the export is run, so every check below is
+// written once and pointed at any of them.
+enum class Target { Python, C, CEmbedded };
 
 bool target_available(Target target)
 {
@@ -316,6 +317,18 @@ bool target_available(Target target)
 const char* target_missing(Target target)
 {
     return target == Target::Python ? "python is not on PATH." : "no C compiler on PATH.";
+}
+
+ModelExpression::ProgrammingLanguage target_language(Target target)
+{
+    using enum ModelExpression::ProgrammingLanguage;
+    switch (target)
+    {
+    case Target::Python:    return Python;
+    case Target::C:         return C;
+    case Target::CEmbedded: return CEmbedded;
+    }
+    return C;
 }
 
 // Exports the network, runs it, and compares row by row. The tolerance is loose
@@ -332,7 +345,8 @@ void expect_export_matches(Target target, const string& directory_name,
 
     const string output = target == Target::Python
         ? run_exported_python_model(directory, model_expression, inputs)
-        : run_exported_c_model(directory, model_expression, inputs, expected.cols());
+        : run_exported_c_model(directory, model_expression, inputs, expected.cols(),
+                               target_language(target));
 
     for (const char* failure : {"PYTHON FAILED", "COMPILE FAILED", "RUN FAILED"})
         ASSERT_EQ(output.find(failure), string::npos) << output;
@@ -410,6 +424,45 @@ TEST(ExpressionExecution, CModelReproducesDegenerateScaling)
         EXPECT_NEAR(7.0f, expected(row, 0), 1e-4f) << "the library lost the constant";
 
     expect_export_matches(Target::C, "opennn_degenerate_c",
+                          *network, inputs, expected);
+}
+
+// The embedded export is a separate emitter again - weight tables and its own
+// nn_dense_forward rather than one expression per neuron - and it is the one
+// documented as going into firmware, where a wrong number is hardest to recall.
+TEST(ExpressionExecution, EmbeddedModelMatchesTheNetworkItCameFrom)
+{
+    if (!target_available(Target::CEmbedded)) GTEST_SKIP() << target_missing(Target::CEmbedded);
+
+    const unique_ptr<ApproximationNetwork> network = build_network();
+    const MatrixR inputs = sample_inputs();
+
+    // Both C dialects compile and run the same way, so confirm this really is
+    // the embedded one: a silent fall back to plain C would pass identically.
+    const filesystem::path probe =
+        filesystem::temp_directory_path() / "opennn_embedded_probe.c";
+    ModelExpression(network.get()).save(probe, ModelExpression::ProgrammingLanguage::CEmbedded);
+    const string emitted = read_file(probe);
+    EXPECT_NE(emitted.find("NN_FLASH"), string::npos) << "not the embedded emitter";
+    EXPECT_NE(emitted.find("nn_dense_forward"), string::npos) << "not the embedded emitter";
+    filesystem::remove(probe);
+
+    expect_export_matches(Target::CEmbedded, "opennn_expression_embedded",
+                          *network, inputs, network->calculate_outputs(inputs));
+}
+
+TEST(ExpressionExecution, EmbeddedModelReproducesDegenerateScaling)
+{
+    if (!target_available(Target::CEmbedded)) GTEST_SKIP() << target_missing(Target::CEmbedded);
+
+    const unique_ptr<ApproximationNetwork> network = build_degenerate_network();
+    const MatrixR inputs = degenerate_inputs();
+    const MatrixR expected = network->calculate_outputs(inputs);
+
+    for (Index row = 0; row < expected.rows(); ++row)
+        EXPECT_NEAR(7.0f, expected(row, 0), 1e-4f) << "the library lost the constant";
+
+    expect_export_matches(Target::CEmbedded, "opennn_degenerate_embedded",
                           *network, inputs, expected);
 }
 
