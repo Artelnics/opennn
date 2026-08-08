@@ -20,6 +20,13 @@ void download_files_if_missing(const filesystem::path& directory,
                                const vector<string_view>& filenames);
 
 string read_text_file(const filesystem::path&);
+
+// Entries matching the predicate, sorted. Callers rely on the ordering being
+// deterministic: it is what fixes dataset sample order and class-label indices.
+vector<filesystem::path> list_files(const filesystem::path& directory,
+                                    bool (*predicate)(const filesystem::path&));
+vector<filesystem::path> list_directories(const filesystem::path& directory,
+                                          bool (*predicate)(const filesystem::path&));
 bool is_file_current(const filesystem::path& file,
                      const vector<filesystem::path>& sources,
                      uintmax_t expected_size = 0);

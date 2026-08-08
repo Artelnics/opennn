@@ -90,21 +90,9 @@ constexpr char YOLO_IMAGE_MAGIC[8] = {'O','P','E','N','N','Y','I','M'};
 constexpr char YOLO_TARGET_MAGIC[8] = {'O','P','E','N','N','Y','T','G'};
 constexpr char YOLO_BOXES_MAGIC[8] = {'O','P','E','N','N','Y','B','X'};
 
-vector<filesystem::path> list_files(const filesystem::path& directory,
-                                    bool (*predicate)(const filesystem::path&))
-{
-    vector<filesystem::path> paths;
-    for (const auto& entry : filesystem::directory_iterator(directory))
-        if (entry.is_regular_file() && predicate(entry.path()))
-            paths.push_back(entry.path());
-
-    ranges::sort(paths);
-    return paths;
-}
 
 vector<string> read_yolo_classes(const filesystem::path& labels_directory)
 {
-
     vector<filesystem::path> search_dirs = { labels_directory };
     if (labels_directory.has_parent_path())
         search_dirs.push_back(labels_directory.parent_path());

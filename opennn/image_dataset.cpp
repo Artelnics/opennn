@@ -279,14 +279,9 @@ void ImageDataset::read_images()
     data.resize(0, 0);
     cache_reader.close();
 
-    vector<filesystem::path> candidate_folders;
-
-    for (const filesystem::directory_entry& current_directory : filesystem::directory_iterator(data_path))
-        if (current_directory.is_directory()
-            && !current_directory.path().filename().string().starts_with('.'))
-            candidate_folders.emplace_back(current_directory.path());
-
-    ranges::sort(candidate_folders);
+    const vector<filesystem::path> candidate_folders =
+        list_directories(data_path, [](const filesystem::path& folder)
+                         { return !folder.filename().string().starts_with('.'); });
 
     vector<filesystem::path> directory_path;
     vector<filesystem::path> paths;
@@ -295,6 +290,8 @@ void ImageDataset::read_images()
 
     for (const filesystem::path& folder : candidate_folders)
     {
+        // Not list_files: this pass also folds newest_write_time, and splitting it
+        // would cost a second last_write_time() stat per image.
         vector<filesystem::path> folder_files;
         for (const filesystem::directory_entry& current_directory : filesystem::directory_iterator(folder))
             if (current_directory.is_regular_file() && is_supported_image_file(current_directory.path()))

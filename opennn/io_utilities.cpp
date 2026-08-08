@@ -79,6 +79,42 @@ string read_text_file(const filesystem::path& path)
     return contents;
 }
 
+namespace
+{
+
+template <typename Kind>
+vector<filesystem::path> list_entries(const filesystem::path& directory,
+                                      Kind is_wanted_kind,
+                                      bool (*predicate)(const filesystem::path&))
+{
+    vector<filesystem::path> paths;
+
+    for (const filesystem::directory_entry& entry : filesystem::directory_iterator(directory))
+        if (is_wanted_kind(entry) && predicate(entry.path()))
+            paths.push_back(entry.path());
+
+    ranges::sort(paths);
+    return paths;
+}
+
+}
+
+vector<filesystem::path> list_files(const filesystem::path& directory,
+                                    bool (*predicate)(const filesystem::path&))
+{
+    return list_entries(directory,
+                        [](const filesystem::directory_entry& e) { return e.is_regular_file(); },
+                        predicate);
+}
+
+vector<filesystem::path> list_directories(const filesystem::path& directory,
+                                          bool (*predicate)(const filesystem::path&))
+{
+    return list_entries(directory,
+                        [](const filesystem::directory_entry& e) { return e.is_directory(); },
+                        predicate);
+}
+
 bool is_file_current(const filesystem::path& file,
                      const vector<filesystem::path>& sources,
                      const uintmax_t expected_size)
