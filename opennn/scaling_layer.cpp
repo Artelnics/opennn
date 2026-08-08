@@ -8,6 +8,7 @@
 
 #include "device_backend.h"
 #include "scaling_layer.h"
+#include "scaling.h"
 #include "string_utilities.h"
 #include "json.h"
 #include "tensor_operations.h"
@@ -220,6 +221,46 @@ void Scaling::write_JSON_body(JsonWriter& printer) const
     });
 }
 
+namespace
+{
+
+// Emitted numbers always carry a decimal point, and constants are folded before
+// they are written rather than left as arithmetic over literals.
+//
+// The expression body is shared by every target language, so the same text has
+// to mean the same thing in all of them. It did not: this layer used to emit
+// the min-max offset as "-2*(1+1)/(6+2)", which Python and JavaScript evaluate
+// to 0.5 but C evaluates as integer division to 0, silently shifting every
+// exported C model whose inputs were min-max scaled.
+string expression_literal(float value)
+{
+    ostringstream stream;
+    stream.precision(10);
+    stream << value;
+
+    string text = stream.str();
+
+    if (text.find_first_of(".eE") == string::npos)
+        text += ".0";
+
+    return text;
+}
+
+}
+
+// Folded through scaling_affine, the same map the numeric paths use, so the
+// exported model cannot drift away from what the layer computes.
+string Scaling::affine_line(const string& input_name,
+                            ScalerMethod scaler,
+                            const Descriptives& descriptives) const
+{
+    const auto [scale, offset] = scaling_affine(scaler, descriptives, min_range, max_range);
+
+    return "scaled_" + input_name + " = " + input_name
+         + "*" + expression_literal(scale)
+         + "+" + expression_literal(offset) + ";\n";
+}
+
 string Scaling::write_expression(const vector<string>& input_names,
                                  const vector<string>&) const
 {
@@ -246,23 +287,17 @@ string Scaling::write_expression(const vector<string>& input_names,
             if (d.maximum - d.minimum < EPSILON)
                 buffer << "scaled_" << input_names[i] << " = 0;\n";
             else
-                buffer << "scaled_" << input_names[i]
-                       << " = " << input_names[i] << "*(" << max_range << "-" << min_range << ")/("
-                       << d.maximum << "-(" << d.minimum << "))-" << d.minimum << "*("
-                       << max_range << "-" << min_range << ")/("
-                       << d.maximum << "-" << d.minimum << ")+" << min_range << ";\n";
+                buffer << affine_line(input_names[i], MinimumMaximum, d);
             break;
         case MeanStandardDeviation:
             if (d.standard_deviation > EPSILON)
-                buffer << "scaled_" << input_names[i] << " = (" << input_names[i] << "-"
-                       << d.mean << ")/" << d.standard_deviation << ";\n";
+                buffer << affine_line(input_names[i], MeanStandardDeviation, d);
             else
                 buffer << "scaled_" << input_names[i] << " = 0;\n";
             break;
         case StandardDeviation:
             if (d.standard_deviation > EPSILON)
-                buffer << "scaled_" << input_names[i] << " = " << input_names[i]
-                       << "/(" << d.standard_deviation << ");\n";
+                buffer << affine_line(input_names[i], StandardDeviation, d);
             else
                 buffer << "scaled_" << input_names[i] << " = 0;\n";
             break;

@@ -31,6 +31,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 #include <filesystem>
 
 using namespace opennn;
@@ -113,6 +114,100 @@ string run_exported_model(const filesystem::path& directory,
 
     if (system(command.c_str()) != 0)
         return "PYTHON FAILED: " + read_file(output_path);
+
+    return read_file(output_path);
+}
+
+// clang and gcc both link the emitted C without any MSVC environment set up, so
+// this does not depend on the toolchain that built the library being reachable.
+string find_c_compiler()
+{
+    static const string compiler = []() -> string
+    {
+        for (const char* candidate : {"clang", "gcc", "cc"})
+        {
+            const filesystem::path probe =
+                filesystem::temp_directory_path() / "opennn_c_compiler_probe.txt";
+            const string command =
+                string(candidate) + " --version > " + quoted_path(probe) + " 2>&1";
+
+            const bool ran = system(command.c_str()) == 0;
+
+            error_code error;
+            filesystem::remove(probe, error);
+
+            if (ran) return candidate;
+        }
+
+        return {};
+    }();
+
+    return compiler;
+}
+
+// Same idea as the Python path, but the emitted C has to be compiled first.
+// OPENNN_EXPORT_NO_MAIN is the emitter's own switch for dropping its
+// placeholder main, which exists so the code can be linked into something else.
+string run_exported_c_model(const filesystem::path& directory,
+                            const ModelExpression& model_expression,
+                            const MatrixR& inputs,
+                            Index outputs_number)
+{
+    const filesystem::path model_path = directory / "opennn_exported_model.c";
+    model_expression.save(model_path, ModelExpression::ProgrammingLanguage::C);
+
+    ostringstream driver;
+    driver << setprecision(9);
+    driver << "#include <stdio.h>\n\n"
+           << "float* calculate_outputs(const float* inputs);\n\n"
+           << "int main(void)\n{\n"
+           << "\tstatic const float rows[" << inputs.rows()
+           << "][" << inputs.cols() << "] = {\n";
+
+    for (Index row = 0; row < inputs.rows(); ++row)
+    {
+        driver << "\t\t{";
+        for (Index column = 0; column < inputs.cols(); ++column)
+            driver << (column ? ", " : "") << inputs(row, column);
+        driver << "},\n";
+    }
+
+    driver << "\t};\n\n"
+           << "\tfor (int row = 0; row < " << inputs.rows() << "; ++row)\n\t{\n"
+           << "\t\tconst float* outputs = calculate_outputs(rows[row]);\n"
+           << "\t\tfor (int i = 0; i < " << outputs_number << "; ++i)\n"
+           << "\t\t\tprintf(\"%s%.9g\", i ? \" \" : \"\", (double)outputs[i]);\n"
+           << "\t\tprintf(\"\\n\");\n"
+           << "\t}\n\n\treturn 0;\n}\n";
+
+    const filesystem::path driver_path = directory / "opennn_exported_driver.c";
+    write_file(driver_path, driver.str());
+
+    const filesystem::path program_path = directory / "opennn_exported_model.exe";
+    const filesystem::path build_log = directory / "opennn_exported_build.txt";
+
+    string build = find_c_compiler() + " -DOPENNN_EXPORT_NO_MAIN "
+                 + quoted_path(model_path) + " " + quoted_path(driver_path)
+                 + " -o " + quoted_path(program_path);
+#ifndef _WIN32
+    build += " -lm";
+#endif
+    build += " > " + quoted_path(build_log) + " 2>&1";
+
+    if (system(build.c_str()) != 0)
+        return "COMPILE FAILED: " + read_file(build_log);
+
+    const filesystem::path output_path = directory / "opennn_exported_output.txt";
+
+    string run = quoted_path(program_path) + " > " + quoted_path(output_path) + " 2>&1";
+#ifdef _WIN32
+    // cmd.exe strips the outer quotes of a command line that begins with one,
+    // which breaks the redirect. Wrapping the whole line gives it a pair to eat.
+    run = "\"" + run + "\"";
+#endif
+
+    if (system(run.c_str()) != 0)
+        return "RUN FAILED: " + read_file(output_path);
 
     return read_file(output_path);
 }
@@ -261,6 +356,101 @@ TEST(ExpressionExecution, PythonModelReproducesDegenerateScaling)
         EXPECT_NEAR(7.0f, expected(row, 0), 1e-4f) << "the library lost the constant";
         EXPECT_NEAR(expected(row, 0), actual(row, 0), 1e-3f)
             << "exported model disagrees\n--- it printed ---\n" << output;
+    }
+
+    error_code error;
+    filesystem::remove_all(directory, error);
+}
+
+// C is the language customers embed, and it does not share the Python emitter's
+// prelude, activation table or float-literal formatting - only the expression
+// body underneath. Running it is what covers that half.
+TEST(ExpressionExecution, CModelMatchesTheNetworkItCameFrom)
+{
+    if (find_c_compiler().empty()) GTEST_SKIP() << "no C compiler on PATH.";
+
+    const unique_ptr<ApproximationNetwork> network = build_network();
+    const MatrixR inputs = sample_inputs();
+
+    const MatrixR expected = network->calculate_outputs(inputs);
+
+    const ModelExpression model_expression(network.get());
+
+    const filesystem::path directory =
+        filesystem::temp_directory_path() / "opennn_expression_execution_c";
+    filesystem::create_directories(directory);
+
+    const string output =
+        run_exported_c_model(directory, model_expression, inputs, expected.cols());
+
+    ASSERT_EQ(output.find("COMPILE FAILED"), string::npos) << output;
+    ASSERT_EQ(output.find("RUN FAILED"), string::npos) << output;
+    ASSERT_FALSE(output.empty()) << "the exported model printed nothing";
+
+    const MatrixR actual = parse_output(output, expected.rows(), expected.cols());
+
+    for (Index row = 0; row < expected.rows(); ++row)
+        for (Index column = 0; column < expected.cols(); ++column)
+        {
+            const float reference = expected(row, column);
+            EXPECT_NEAR(reference, actual(row, column), 1e-3f * max(1.0f, abs(reference)))
+                << "exported C model disagrees at row " << row << ", output " << column
+                << "\n--- it printed ---\n" << output;
+        }
+
+    error_code error;
+    filesystem::remove_all(directory, error);
+}
+
+// The degenerate scaler rule has to survive into C as well: the emitters are
+// separate code from the numeric paths and from each other.
+TEST(ExpressionExecution, CModelReproducesDegenerateScaling)
+{
+    if (find_c_compiler().empty()) GTEST_SKIP() << "no C compiler on PATH.";
+
+    auto network = make_unique<ApproximationNetwork>(Shape{2}, Shape{3}, Shape{1});
+
+    network->set_input_variables(vector<Variable>(network->get_inputs_number()));
+    network->set_output_variables(vector<Variable>(network->get_outputs_number()));
+    network->set_input_names({"flat", "spread"});
+    network->set_output_names({"result"});
+
+    Scaling* scaling = static_cast<Scaling*>(network->get_first("Scaling"));
+    scaling->set_scalers(vector<string>{"StandardDeviation", "MinimumMaximum"});
+    scaling->set_descriptives({Descriptives(3.0f, 3.0f, 3.0f, 0.0f),
+                               Descriptives(-1.0f, 1.0f, 0.0f, 1.0f)});
+
+    Unscaling* unscaling = static_cast<Unscaling*>(network->get_first("Unscaling"));
+    unscaling->set_scalers(vector<string>{"StandardDeviation"});
+    unscaling->set_descriptives({Descriptives(7.0f, 7.0f, 7.0f, 0.0f)});
+
+    network->set_parameters_random();
+
+    MatrixR inputs(2, 2);
+    inputs << 5.0f,  0.5f,
+             -2.0f, -0.5f;
+
+    const MatrixR expected = network->calculate_outputs(inputs);
+
+    const ModelExpression model_expression(network.get());
+
+    const filesystem::path directory =
+        filesystem::temp_directory_path() / "opennn_expression_degenerate_c";
+    filesystem::create_directories(directory);
+
+    const string output =
+        run_exported_c_model(directory, model_expression, inputs, expected.cols());
+
+    ASSERT_EQ(output.find("COMPILE FAILED"), string::npos) << output;
+    ASSERT_EQ(output.find("RUN FAILED"), string::npos) << output;
+
+    const MatrixR actual = parse_output(output, expected.rows(), expected.cols());
+
+    for (Index row = 0; row < expected.rows(); ++row)
+    {
+        EXPECT_NEAR(7.0f, expected(row, 0), 1e-4f) << "the library lost the constant";
+        EXPECT_NEAR(expected(row, 0), actual(row, 0), 1e-3f)
+            << "exported C model disagrees\n--- it printed ---\n" << output;
     }
 
     error_code error;
