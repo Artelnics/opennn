@@ -381,132 +381,173 @@ int Optimizer::get_batch_pool_size(const NeuralNetwork& neural_network) const
 
 Index Optimizer::get_maximum_batch_size() const
 {
-    throw_if(!loss, "Optimizer::get_maximum_batch_size: loss is not set.");
+    throw_if(!loss,
+             "Optimizer::get_maximum_batch_size: loss is not set.");
 
     const Dataset* dataset = loss->get_dataset();
     const NeuralNetwork* neural_network = loss->get_neural_network();
 
-    throw_if(!dataset, "Optimizer::get_maximum_batch_size: dataset is not set.");
-    throw_if(!neural_network, "Optimizer::get_maximum_batch_size: neural network is not set.");
+    throw_if(!dataset,
+             "Optimizer::get_maximum_batch_size: dataset is not set.");
+    throw_if(!neural_network,
+             "Optimizer::get_maximum_batch_size: neural network is not set.");
 
-    const Index training_samples_number = dataset->get_samples_number(SampleRole::Training);
-    if (training_samples_number <= 0) return 0;
-    const Index validation_samples_number = dataset->get_samples_number(SampleRole::Validation);
+    const Index training_samples_number =
+        dataset->get_samples_number(SampleRole::Training);
+
+    if(training_samples_number <= 0) return 0;
+
+    const Index validation_samples_number =
+        dataset->get_samples_number(SampleRole::Validation);
 
     const bool on_gpu = neural_network->is_gpu();
 
-    Index available_bytes = 0;
-    if (on_gpu)
+    Index available_bytes;
+
+    if(on_gpu)
     {
         available_bytes = Index(device::available_memory());
     }
     else
     {
 #if defined(__linux__) || defined(__unix__)
+
         const long pages = sysconf(_SC_AVPHYS_PAGES);
         const long page_size = sysconf(_SC_PAGE_SIZE);
+
         throw_if(pages <= 0 || page_size <= 0,
                  "Optimizer::get_maximum_batch_size: sysconf failed to query available RAM.");
+
         available_bytes = Index(pages) * Index(page_size);
+
 #elif defined(_WIN32)
-        MEMORYSTATUSEX status;
+
+        MEMORYSTATUSEX status{};
         status.dwLength = sizeof(status);
+
         throw_if(!GlobalMemoryStatusEx(&status),
                  "Optimizer::get_maximum_batch_size: GlobalMemoryStatusEx failed.");
+
         available_bytes = Index(status.ullAvailPhys);
+
 #else
-        throw runtime_error("Optimizer::get_maximum_batch_size: no portable API to query available RAM on this platform.");
+
+        throw runtime_error(
+            "Optimizer::get_maximum_batch_size: no portable API to query available RAM on this platform.");
+
 #endif
     }
 
-    const bool recurrent_net = neural_network->has_recurrent_layers();
-    const Index budget = Index(double(available_bytes) * (recurrent_net ? 0.6 : 0.8));
+    const double memory_fraction =
+        neural_network->has_recurrent_layers() ? 0.6 : 0.8;
 
-    const Index parameters_number       = neural_network->get_parameters_number();
-    const Index parameters_aligned_size = get_aligned_size(neural_network->get_parameter_specs());
-    const Index slot_aligned_size       = get_aligned_size(parameters_number);
+    const Index budget = Index(double(available_bytes) * memory_fraction);
 
-    const bool bf16_train = neural_network->get_training_type() == Type::BF16;
-    const bool bf16_input = bf16_train && dataset->supports_bf16_inputs();
-    const bool bf16_input_needs_fp32_staging =
+    const Index parameters_number = neural_network->get_parameters_number();
+    const Index parameters_size =
+        get_aligned_size(neural_network->get_parameter_specs());
+    const Index slot_size = get_aligned_size(parameters_number);
+
+    const bool bf16_train =
+        neural_network->get_training_type() == Type::BF16;
+
+    const bool bf16_input =
+        bf16_train && dataset->supports_bf16_inputs();
+
+    const bool fp32_input_staging =
         bf16_input
         && !bf16_host_input_cast_enabled()
         && !dataset->uses_device_residency();
 
-    Index fixed_bytes = (neural_network->get_states_size()
-                      + 2 * parameters_aligned_size
-                      + 2 * slot_aligned_size) * Index(sizeof(float));
+    Index fixed_bytes =
+        (neural_network->get_states_size()
+         + 2 * parameters_size
+         + 2 * slot_size) * Index(sizeof(float));
 
-    if (bf16_train) fixed_bytes += parameters_aligned_size * Index(sizeof(bfloat16));
+    if(bf16_train)
+        fixed_bytes += parameters_size * Index(sizeof(bfloat16));
 
     throw_if(fixed_bytes >= budget,
-             "Fixed memory ({} MiB) exceeds 80% GPU budget ({} MiB).",
-                    fixed_bytes / (1ull << 20), budget / (1ull << 20));
+             "Fixed memory ({} MiB) exceeds memory budget ({} MiB).",
+             fixed_bytes / (1ull << 20),
+             budget / (1ull << 20));
 
     const Index dynamic_budget = budget - fixed_bytes;
 
-    const int batch_pool_size = get_batch_pool_size(*neural_network);
-    const Shape input_shape   = dataset->get_shape(VariableRole::Input);
-    const Shape target_shape  = dataset->get_shape(VariableRole::Target);
+    const Shape input_shape = dataset->get_shape(VariableRole::Input);
+    const Shape target_shape = dataset->get_shape(VariableRole::Target);
     const Shape decoder_shape = dataset->get_shape(VariableRole::Decoder);
-
     const Shape output_shape = neural_network->get_output_shape();
+
     const Type compute_dtype = bf16_train ? Type::BF16 : Type::FP32;
+    const Index batch_copies = on_gpu ? 1 : get_batch_pool_size(*neural_network);
 
-    auto pool_bytes_for_batch = [&](Index b) -> Index {
-        Index single_batch = 0;
-        if (!input_shape.empty())
-            single_batch += b * input_shape.size() * (bf16_input ? Index(sizeof(bfloat16))
-                                                                 : Index(sizeof(float)));
-        if (!target_shape.empty())
-            single_batch += b * target_shape.size() * Index(sizeof(float));
-        if (!decoder_shape.empty())
-            single_batch += b * decoder_shape.size() * Index(sizeof(float));
+    const auto batch_data_bytes = [&](const Index batch)
+    {
+        Index bytes = 0;
 
-        const Index device_batch_copies = on_gpu ? Index(1) : Index(batch_pool_size);
-        return device_batch_copies * single_batch;
+        if(!input_shape.empty())
+            bytes += batch * input_shape.size()
+                   * (bf16_input ? Index(sizeof(bfloat16))
+                                 : Index(sizeof(float)));
+
+        if(!target_shape.empty())
+            bytes += batch * target_shape.size() * Index(sizeof(float));
+
+        if(!decoder_shape.empty())
+            bytes += batch * decoder_shape.size() * Index(sizeof(float));
+
+        return batch_copies * bytes;
     };
 
-    auto bytes_for_run = [&](Index b) -> Index {
-        if (b <= 0) return 0;
+    const auto run_bytes = [&](const Index batch)
+    {
+        if(batch <= 0) return Index(0);
 
-        const auto forward_specs  = neural_network->get_forward_specs(b);
-        const auto backward_specs = neural_network->get_backward_specs(b);
+        Index bytes =
+            get_aligned_bytes(neural_network->get_forward_specs(batch))
+            + get_aligned_bytes(neural_network->get_backward_specs(batch))
+            + batch_data_bytes(batch);
 
-        Index total = 0;
-        total += get_aligned_bytes(forward_specs);
-        total += get_aligned_bytes(backward_specs);
+        if(!output_shape.empty())
+            bytes += get_aligned_bytes(batch * output_shape.size(),
+                                       compute_dtype);
 
-        if (!output_shape.empty())
+        if(fp32_input_staging && !input_shape.empty())
+            bytes += get_aligned_bytes(batch * input_shape.size(),
+                                       Type::FP32);
+
+        return bytes;
+    };
+
+    const auto batch_bytes = [&](const Index batch)
+    {
+        Index bytes = run_bytes(batch);
+
+        if(validation_samples_number > 0
+           && batch > validation_samples_number)
         {
-            const Index out_elems = b * output_shape.size();
-            total += get_aligned_bytes(out_elems, compute_dtype);
+            bytes += run_bytes(validation_samples_number);
         }
 
-        total += pool_bytes_for_batch(b);
-
-        if (bf16_input_needs_fp32_staging && !input_shape.empty())
-            total += get_aligned_bytes(b * input_shape.size(), Type::FP32);
-
-        return total;
+        return bytes;
     };
 
-    auto bytes_for_batch = [&](Index b) -> Index {
-        Index total = bytes_for_run(b);
+    const Index minimum_bytes = batch_bytes(1);
 
-        if (validation_samples_number > 0 && b > validation_samples_number)
-            total += bytes_for_run(validation_samples_number);
+    throw_if(minimum_bytes > dynamic_budget,
+             "Not enough memory for batch_size=1: need {} MiB, have {} MiB.",
+             minimum_bytes / (1ull << 20),
+             dynamic_budget / (1ull << 20));
 
-        return total;
-    };
+    const auto batches =
+        views::iota(Index(1), training_samples_number + 1);
 
-    throw_if(bytes_for_batch(1) > dynamic_budget,
-             "Not enough GPU memory for batch_size=1: need {} MiB, have {} MiB.",
-                    bytes_for_batch(1) / (1ull << 20), dynamic_budget / (1ull << 20));
-
-    const auto candidate_sizes = views::iota(Index(1), training_samples_number + 1);
-    const auto first_too_large = ranges::partition_point(
-        candidate_sizes, [&](Index batch) { return bytes_for_batch(batch) <= dynamic_budget; });
+    const auto first_too_large =
+        ranges::partition_point(batches, [&](const Index batch)
+        {
+            return batch_bytes(batch) <= dynamic_budget;
+        });
 
     return *ranges::prev(first_too_large);
 }
@@ -529,108 +570,130 @@ void Optimizer::set_scaling()
     Dataset* dataset = loss->get_dataset();
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    vector<Descriptives> input_variable_descriptives;
-    vector<string> input_variable_scalers;
+    vector<Descriptives> input_descriptives;
+    vector<string> input_scalers;
 
-    if (auto* scaling_layer = dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling)))
+    Scaling* scaling_layer =
+        dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling));
+
+    if(scaling_layer)
     {
-        switch (scaling_layer->get_input_shape().rank)
+        const Index rank = scaling_layer->get_input_shape().rank;
+
+        if(rank <= 2)
         {
-            case 1:
-            case 2:
-            {
-                auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
-                throw_if(!tabular_dataset, "Expected TabularDataset.");
-                input_variable_scalers = tabular_dataset->get_feature_scalers("Input");
-                input_variable_descriptives = tabular_dataset->scale_features("Input");
-                scaling_layer->set_descriptives(input_variable_descriptives);
-                scaling_layer->set_scalers(input_variable_scalers);
-                break;
-            }
+            TabularDataset* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
+            throw_if(!tabular_dataset, "Expected TabularDataset.");
 
-            case 3:
-            {
-                auto* image_dataset = dynamic_cast<ImageDataset*>(dataset);
-                throw_if(!image_dataset, "Expected ImageDataset.");
+            input_scalers = tabular_dataset->get_feature_scalers("Input");
+            input_descriptives = tabular_dataset->scale_features("Input");
 
-                image_dataset->set_input_scaling(scaling_layer->get_descriptives(),
-                                                 scaling_layer->get_scalers(),
-                                                 scaling_layer->get_min_range(),
-                                                 scaling_layer->get_max_range());
-                break;
-            }
+            scaling_layer->set_descriptives(input_descriptives);
+            scaling_layer->set_scalers(input_scalers);
+        }
+        else if(rank == 3)
+        {
+            ImageDataset* image_dataset = dynamic_cast<ImageDataset*>(dataset);
+            throw_if(!image_dataset, "Expected ImageDataset.");
 
-            default:
-                throw runtime_error(format("Unexpected Scaling input rank: {}",
-                                           scaling_layer->get_input_shape().rank));
+            image_dataset->set_input_scaling(scaling_layer->get_descriptives(),
+                                             scaling_layer->get_scalers(),
+                                             scaling_layer->get_min_range(),
+                                             scaling_layer->get_max_range());
+        }
+        else
+        {
+            throw runtime_error(
+                format("Unexpected Scaling input rank: {}", rank));
         }
     }
 
-    if (!neural_network->has(LayerType::Unscaling))
-        return;
+    Unscaling* unscaling_layer =
+        dynamic_cast<Unscaling*>(neural_network->get_first(LayerType::Unscaling));
 
-    const vector<Index> input_feature_indices = dataset->get_feature_indices(VariableRole::Input);
-    const vector<Index> target_feature_indices = dataset->get_feature_indices(VariableRole::Target);
+    if(!unscaling_layer) return;
 
-    const bool has_pure_targets = ranges::any_of(target_feature_indices,
-        [&](Index target_index) { return ranges::find(input_feature_indices, target_index) == input_feature_indices.end(); });
+    const vector<Index> input_indices =
+        dataset->get_feature_indices(VariableRole::Input);
 
-    vector<Descriptives> target_variable_descriptives;
-    vector<string> target_variable_scalers;
+    const vector<Index> target_indices =
+        dataset->get_feature_indices(VariableRole::Target);
 
-    if (has_pure_targets)
+    const bool has_pure_targets = ranges::any_of(target_indices, [&](const Index target)
     {
-        auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
-        throw_if(!tabular_dataset, "Expected TabularDataset for target unscaling.");
-        target_variable_descriptives = tabular_dataset->scale_features("Target");
-        target_variable_scalers = tabular_dataset->get_feature_scalers("Target");
+        return ranges::find(input_indices, target) == input_indices.end();
+    });
+
+    vector<Descriptives> target_descriptives;
+    vector<string> target_scalers;
+
+    if(has_pure_targets)
+    {
+        TabularDataset* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
+
+        throw_if(!tabular_dataset,
+                 "Expected TabularDataset for target unscaling.");
+
+        target_descriptives = tabular_dataset->scale_features("Target");
+        target_scalers = tabular_dataset->get_feature_scalers("Target");
     }
 
     vector<Descriptives> unscaling_descriptives;
     vector<string> unscaling_scalers;
 
-    for (size_t i = 0; i < target_feature_indices.size(); ++i)
+    unscaling_descriptives.reserve(target_indices.size());
+    unscaling_scalers.reserve(target_indices.size());
+
+    for(size_t i = 0; i < target_indices.size(); ++i)
     {
-        auto it = ranges::find(input_feature_indices, target_feature_indices[i]);
-        if (it != input_feature_indices.end())
+        const vector<Index>::const_iterator input =
+            ranges::find(input_indices, target_indices[i]);
+
+        if(input == input_indices.end())
         {
-            const Index p = distance(input_feature_indices.begin(), it);
-            unscaling_descriptives.push_back(input_variable_descriptives[p]);
-            unscaling_scalers.push_back(input_variable_scalers[p]);
+            unscaling_descriptives.push_back(target_descriptives[i]);
+            unscaling_scalers.push_back(target_scalers[i]);
+            continue;
         }
-        else
-        {
-            unscaling_descriptives.push_back(target_variable_descriptives[i]);
-            unscaling_scalers.push_back(target_variable_scalers[i]);
-        }
+
+        const Index index = distance(input_indices.begin(), input);
+
+        unscaling_descriptives.push_back(input_descriptives[size_t(index)]);
+        unscaling_scalers.push_back(input_scalers[size_t(index)]);
     }
 
-    auto* unscaling_layer = dynamic_cast<Unscaling*>(neural_network->get_first(LayerType::Unscaling));
-    throw_if(!unscaling_layer, "Expected Unscaling layer.");
+    const Index outputs_number = unscaling_layer->get_outputs_number();
+    const Index targets_number = ssize(unscaling_descriptives);
 
-    const Index unscaling_outputs = unscaling_layer->get_outputs_number();
-    const Index n = ssize(unscaling_descriptives);
+    TimeSeriesDataset* time_series = dynamic_cast<TimeSeriesDataset*>(dataset);
 
-    if (auto* ts = dynamic_cast<TimeSeriesDataset*>(dataset);
-        ts && ts->get_multi_target() && n > 0
-        && unscaling_outputs == n * ts->get_future_time_steps())
+    if(time_series
+       && time_series->get_multi_target()
+       && targets_number > 0
+       && outputs_number == targets_number * time_series->get_future_time_steps())
     {
-        const Index steps = ts->get_future_time_steps();
-        vector<Descriptives> expanded_desc;
+        const Index steps = time_series->get_future_time_steps();
+
+        vector<Descriptives> expanded_descriptives;
         vector<string> expanded_scalers;
-        expanded_desc.reserve(unscaling_outputs);
-        expanded_scalers.reserve(unscaling_outputs);
-        for (Index i = 0; i < n; ++i)
-            for (Index j = 0; j < steps; ++j)
+
+        expanded_descriptives.reserve(size_t(outputs_number));
+        expanded_scalers.reserve(size_t(outputs_number));
+
+        for(Index i = 0; i < targets_number; ++i)
+        {
+            for(Index step = 0; step < steps; ++step)
             {
-                expanded_desc.push_back(unscaling_descriptives[i]);
-                expanded_scalers.push_back(unscaling_scalers[i]);
+                expanded_descriptives.push_back(unscaling_descriptives[size_t(i)]);
+                expanded_scalers.push_back(unscaling_scalers[size_t(i)]);
             }
-        unscaling_descriptives = move(expanded_desc);
-        unscaling_scalers      = move(expanded_scalers);
+        }
+
+        unscaling_descriptives = move(expanded_descriptives);
+        unscaling_scalers = move(expanded_scalers);
     }
 
-    throw_if(ssize(unscaling_descriptives) != unscaling_outputs,
+    throw_if(ssize(unscaling_descriptives) != outputs_number,
              "Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
 
     unscaling_layer->set_descriptives(unscaling_descriptives);
@@ -640,63 +703,76 @@ void Optimizer::set_scaling()
 void Optimizer::set_unscaling()
 {
     Dataset* dataset = loss->get_dataset();
-    auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
+    TabularDataset* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    auto reconstruct_descriptives = [](const VectorR& minimums, const VectorR& maximums,
-                                       const VectorR& means, const VectorR& std_devs)
+    const auto reconstruct_descriptives =
+        [](const VectorR& minimums,
+           const VectorR& maximums,
+           const VectorR& means,
+           const VectorR& standard_deviations)
     {
         vector<Descriptives> descriptives;
         descriptives.reserve(minimums.size());
-        for (Index i = 0; i < minimums.size(); ++i)
-            descriptives.emplace_back(minimums[i], maximums[i], means[i], std_devs[i]);
+
+        for(Index i = 0; i < minimums.size(); ++i)
+            descriptives.emplace_back(minimums[i],
+                                      maximums[i],
+                                      means[i],
+                                      standard_deviations[i]);
+
         return descriptives;
     };
 
-    if (auto* layer = dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling)))
-    {
-        switch (layer->get_input_shape().rank)
-        {
-            case 1:
-            case 2:
-                throw_if(!tabular_dataset, "Expected TabularDataset.");
-                tabular_dataset->unscale_features("Input",
-                    reconstruct_descriptives(layer->get_minimums(), layer->get_maximums(),
-                                              layer->get_means(), layer->get_standard_deviations()));
-                break;
-        }
-    }
+    Scaling* scaling_layer =
+        dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling));
 
-    if (!neural_network->has(LayerType::Unscaling))
-        return;
-
-    auto* unscaling_layer = dynamic_cast<Unscaling*>(neural_network->get_first(LayerType::Unscaling));
-    if (!unscaling_layer) return;
-
-    const vector<Descriptives> all_target_descriptives = reconstruct_descriptives(
-        unscaling_layer->get_minimums(),
-        unscaling_layer->get_maximums(),
-        unscaling_layer->get_means(),
-        unscaling_layer->get_standard_deviations());
-
-    const vector<Index> input_indices = dataset->get_feature_indices(VariableRole::Input);
-    const vector<Index> target_indices = dataset->get_feature_indices(VariableRole::Target);
-
-    vector<Descriptives> unscaled_targets_descriptives;
-
-    for (size_t i = 0; i < target_indices.size(); ++i)
-    {
-        const bool is_input = ranges::find(input_indices, target_indices[i]) != input_indices.end();
-
-        if (!is_input && i < all_target_descriptives.size())
-            unscaled_targets_descriptives.push_back(all_target_descriptives[i]);
-    }
-
-    if (!unscaled_targets_descriptives.empty())
+    if(scaling_layer && scaling_layer->get_input_shape().rank <= 2)
     {
         throw_if(!tabular_dataset, "Expected TabularDataset.");
-        tabular_dataset->unscale_features("Target", unscaled_targets_descriptives);
+
+        tabular_dataset->unscale_features(
+            "Input",
+            reconstruct_descriptives(scaling_layer->get_minimums(),
+                                     scaling_layer->get_maximums(),
+                                     scaling_layer->get_means(),
+                                     scaling_layer->get_standard_deviations()));
     }
+
+    Unscaling* unscaling_layer =
+        dynamic_cast<Unscaling*>(neural_network->get_first(LayerType::Unscaling));
+
+    if(!unscaling_layer) return;
+
+    const vector<Descriptives> target_descriptives =
+        reconstruct_descriptives(unscaling_layer->get_minimums(),
+                                 unscaling_layer->get_maximums(),
+                                 unscaling_layer->get_means(),
+                                 unscaling_layer->get_standard_deviations());
+
+    const vector<Index> input_indices =
+        dataset->get_feature_indices(VariableRole::Input);
+
+    const vector<Index> target_indices =
+        dataset->get_feature_indices(VariableRole::Target);
+
+    vector<Descriptives> unscaled_descriptives;
+    unscaled_descriptives.reserve(target_indices.size());
+
+    for(size_t i = 0; i < target_indices.size(); ++i)
+    {
+        if(ranges::find(input_indices, target_indices[i]) != input_indices.end())
+            continue;
+
+        if(i < target_descriptives.size())
+            unscaled_descriptives.push_back(target_descriptives[i]);
+    }
+
+    if(unscaled_descriptives.empty()) return;
+
+    throw_if(!tabular_dataset, "Expected TabularDataset.");
+
+    tabular_dataset->unscale_features("Target", unscaled_descriptives);
 }
 
 void Optimizer::warmup_device_training(
@@ -714,47 +790,67 @@ void Optimizer::warmup_device_training(
     const vector<vector<Index>>* validation_batches)
 {
     NeuralNetwork* neural_network = loss ? loss->get_neural_network() : nullptr;
-    if (!device::is_cuda_build()
-        || !neural_network
-        || !neural_network->is_gpu()
-        || training_batches.empty())
+
+    if(!device::is_cuda_build()
+       || !neural_network
+       || !neural_network->is_gpu()
+       || training_batches.empty())
         return;
 
     const cudaStream_t stream = Backend::get_compute_stream();
 
-    const Index parameters_bytes = neural_network->get_parameters_size() * Index(sizeof(float));
-    const Index states_bytes = neural_network->get_states_buffer_size() * Index(sizeof(float));
+    const Index parameters_bytes =
+        neural_network->get_parameters_size() * Index(sizeof(float));
+
+    const Index states_bytes =
+        neural_network->get_states_buffer_size() * Index(sizeof(float));
 
     Buffer parameters_snapshot{Device::CPU};
     Buffer states_snapshot{Device::CPU};
 
-    const tuple<Buffer&, const float*, Index> snapshots[] = {
-        {parameters_snapshot, neural_network->get_parameters_data(), parameters_bytes},
-        {states_snapshot,     neural_network->get_states_data(),     states_bytes}
-    };
-
-    for (const auto& [snapshot, source, bytes] : snapshots)
+    if(parameters_bytes > 0)
     {
-        if (bytes <= 0) continue;
+        parameters_snapshot.resize_bytes(parameters_bytes, Device::CPU);
 
-        snapshot.resize_bytes(bytes, Device::CPU);
-        device::copy_async(snapshot.data, source, bytes,
-                           device::CopyKind::DeviceToHost, stream);
+        device::copy_async(parameters_snapshot.data,
+                           neural_network->get_parameters_data(),
+                           parameters_bytes,
+                           device::CopyKind::DeviceToHost,
+                           stream);
     }
 
-    auto restore_model_state = [&]()
+    if(states_bytes > 0)
     {
-        if (parameters_bytes > 0)
+        states_snapshot.resize_bytes(states_bytes, Device::CPU);
+
+        device::copy_async(states_snapshot.data,
+                           neural_network->get_states_data(),
+                           states_bytes,
+                           device::CopyKind::DeviceToHost,
+                           stream);
+    }
+
+    // The warmup runs a real training step, so undoing it means the optimizer
+    // state as well as the model: train_epoch advances Adam's moments and its
+    // bias-correction counter, and SGD's momentum buffer. setup_optimizer_data
+    // clears all of them -- it zeroes the slot buffer unconditionally, not only
+    // when the buffer is resized. Resetting here rather than after the call
+    // keeps the invariant on the throwing path too, and stops a future optimizer
+    // from silently opting out.
+    const auto restore_pre_warmup_state = [&]()
+    {
+        if(parameters_bytes > 0)
         {
             device::copy_async(neural_network->get_parameters_data(),
                                parameters_snapshot.data,
                                parameters_bytes,
                                device::CopyKind::HostToDevice,
                                stream);
+
             neural_network->cast_parameters_to_bf16();
         }
 
-        if (states_bytes > 0)
+        if(states_bytes > 0)
         {
             device::copy_async(neural_network->get_states_data(),
                                states_snapshot.data,
@@ -764,40 +860,49 @@ void Optimizer::warmup_device_training(
         }
 
         device::synchronize(stream);
+
+        setup_optimizer_data(optimizer_data,
+                             neural_network->get_parameters_size(),
+                             neural_network->get_device());
     };
 
-    const bool has_validation_warmup = validation_forward_propagation
-                                    && validation_empty_queue
-                                    && validation_batches
-                                    && !validation_batches->empty();
+    const vector<vector<Index>> training_warmup_batch{training_batches.front()};
 
     try
     {
+        if(validation_forward_propagation
+           && validation_empty_queue
+           && validation_batches
+           && !validation_batches->empty())
+        {
+            const vector<vector<Index>> validation_warmup_batch{
+                validation_batches->front()
+            };
 
-        if (has_validation_warmup)
             evaluate_epoch(*validation_forward_propagation,
                            *validation_empty_queue,
-                           vector<vector<Index>>{validation_batches->front()},
+                           validation_warmup_batch,
                            input_feature_indices,
                            decoder_feature_indices,
                            target_feature_indices,
                            training_session);
+        }
 
         train_epoch(training_forward_propagation,
                     training_back_propagation,
                     training_empty_queue,
-                    vector<vector<Index>>{training_batches.front()},
+                    training_warmup_batch,
                     input_feature_indices,
                     decoder_feature_indices,
                     target_feature_indices,
                     training_session,
                     optimizer_data);
 
-        restore_model_state();
+        restore_pre_warmup_state();
     }
-    catch (...)
+    catch(...)
     {
-        restore_model_state();
+        restore_pre_warmup_state();
         throw;
     }
 }
@@ -960,8 +1065,6 @@ TrainingResult Optimizer::train()
                                validation_fp,
                                has_validation ? &batch_pools.validation_queue() : nullptr,
                                has_validation ? &validation_batches : nullptr);
-
-        setup_optimizer_data(optimizer_data, parameters_number, device);
     }
 
     training_session.cuda_graph_capture_allowed = training_session.has_graph_batches();
@@ -1842,45 +1945,44 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
     NeuralNetwork* neural_network = loss->get_neural_network();
     const Index batches_number = Index(batches.size());
-    if (batches_number == 0) return epoch_result;
+
+    if(batches_number == 0) return epoch_result;
+
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
-
     const bool on_gpu = neural_network->is_gpu();
+    const bool use_graph_batches = training_session.has_graph_batches();
 
-    auto set_epoch_loss = [&]()
+    static const bool profile_this = env_flag_enabled("OPENNN_PROFILE");
+
+    if(profile_this)
+    {
+        ::opennn::enabled() = true;
+        ::opennn::global_stats().clear();
+    }
+
+    const chrono::steady_clock::time_point epoch_t0 = chrono::steady_clock::now();
+    WorkerProfileCounters worker_profile;
+
+    const auto finalize_epoch = [&](Loss::EvaluationResult& result)
     {
         const TensorView parameters(neural_network->get_parameters_data(),
                                     {neural_network->get_parameters_size()},
                                     Type::FP32,
                                     neural_network->get_device());
+
         back_propagation.regularization = loss->calculate_regularization(parameters);
-        back_propagation.loss_value = epoch_result.error + back_propagation.regularization;
+        back_propagation.loss_value = result.error + back_propagation.regularization;
     };
 
-    const bool use_device_metrics = on_gpu && loss->supports_device_epoch_metrics();
-    const bool use_graph_batches = training_session.has_graph_batches();
-    DeviceEpochMetricSums device_metrics(training_session.device_metrics);
-    if (use_device_metrics && !use_graph_batches)
-        device_metrics.reset();
-
-    static const bool profile_this = env_flag_enabled("OPENNN_PROFILE");
-    if (profile_this)
-    {
-        ::opennn::enabled() = true;
-        ::opennn::global_stats().clear();
-    }
-    const auto epoch_t0 = chrono::steady_clock::now();
-    WorkerProfileCounters worker_profile;
-
-    if (!on_gpu)
+    if(!on_gpu)
     {
         Batch* batch = empty_queue.pop();
 
-        for (Index iteration = 0; iteration < batches_number; ++iteration)
+        for(Index iteration = 0; iteration < batches_number; ++iteration)
         {
             {
                 PROFILE_SCOPE_HOST("step:fill");
-                batch->fill(batches[iteration],
+                batch->fill(batches[size_t(iteration)],
                             input_feature_indices,
                             decoder_feature_indices,
                             target_feature_indices,
@@ -1889,7 +1991,9 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
             {
                 PROFILE_SCOPE("step:fwd_total");
-                neural_network->forward_propagate(batch->get_inputs(), forward_propagation, true);
+                neural_network->forward_propagate(batch->get_inputs(),
+                                                  forward_propagation,
+                                                  true);
             }
 
             {
@@ -1898,7 +2002,9 @@ Loss::EvaluationResult Optimizer::train_epoch(
             }
 
             epoch_result.error += back_propagation.error;
-            if (tracks_accuracy) epoch_result.accuracy += back_propagation.accuracy;
+
+            if(tracks_accuracy)
+                epoch_result.accuracy += back_propagation.accuracy;
 
             {
                 PROFILE_SCOPE("step:optim_total");
@@ -1908,60 +2014,93 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
         empty_queue.push(batch);
 
-        epoch_result = average_epoch_metrics(epoch_result, batches_number, tracks_accuracy);
-        set_epoch_loss();
+        epoch_result =
+            average_epoch_metrics(epoch_result, batches_number, tracks_accuracy);
 
-        if (profile_this)
+        finalize_epoch(epoch_result);
+
+        if(profile_this)
             worker_profile.print_epoch(epoch_t0, "Epoch breakdown (training)", 0);
 
         return epoch_result;
     }
 
-    if (use_graph_batches)
+    if(use_graph_batches)
     {
-        epoch_result = run_graph_epoch(training_session, optimizer_data,
-                                        forward_propagation, back_propagation,
-                                        empty_queue, batches,
-                                        input_feature_indices, decoder_feature_indices,
-                                        target_feature_indices);
-        set_epoch_loss();
+        epoch_result = run_graph_epoch(training_session,
+                                       optimizer_data,
+                                       forward_propagation,
+                                       back_propagation,
+                                       empty_queue,
+                                       batches,
+                                       input_feature_indices,
+                                       decoder_feature_indices,
+                                       target_feature_indices);
+
+        finalize_epoch(epoch_result);
         return epoch_result;
     }
 
-    EpochLoopContext context{&empty_queue, &batches,
-                             &input_feature_indices, &decoder_feature_indices, &target_feature_indices,
-                             FillMode::Training, on_gpu, neural_network->has_recurrent_layers(),
-                             &training_session, training_session.fixed_batch(),
-                             profile_this ? &worker_profile : nullptr};
+    const bool use_device_metrics = loss->supports_device_epoch_metrics();
 
-    context.step = [&](Batch& compute_batch, Loss::EvaluationResult& host_result)
+    DeviceEpochMetricSums device_metrics(training_session.device_metrics);
+
+    if(use_device_metrics)
+        device_metrics.reset();
+
+    EpochLoopContext context{
+        &empty_queue,
+        &batches,
+        &input_feature_indices,
+        &decoder_feature_indices,
+        &target_feature_indices,
+        FillMode::Training,
+        true,
+        neural_network->has_recurrent_layers(),
+        &training_session,
+        training_session.fixed_batch(),
+        profile_this ? &worker_profile : nullptr
+    };
+
+    context.step = [&](Batch& batch, Loss::EvaluationResult& result)
     {
         {
             PROFILE_SCOPE("step:fwd_total");
-            neural_network->forward_propagate(compute_batch.get_inputs(), forward_propagation, true);
+            neural_network->forward_propagate(batch.get_inputs(),
+                                              forward_propagation,
+                                              true);
         }
 
         {
             PROFILE_SCOPE("step:bwd_total");
-            if (use_device_metrics)
+
+            if(use_device_metrics)
             {
-                if (!loss->back_propagate_device_metrics(compute_batch,
-                                                          forward_propagation,
-                                                          back_propagation,
-                                                          device_metrics.error_sum(),
-                                                          tracks_accuracy ? device_metrics.accuracy_sum() : nullptr))
-                    throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
+                if(!loss->back_propagate_device_metrics(
+                       batch,
+                       forward_propagation,
+                       back_propagation,
+                       device_metrics.error_sum(),
+                       tracks_accuracy ? device_metrics.accuracy_sum() : nullptr))
+                {
+                    throw runtime_error(
+                        "Device epoch metrics unexpectedly unsupported for this loss.");
+                }
             }
             else
             {
-                loss->back_propagate(compute_batch, forward_propagation, back_propagation);
+                loss->back_propagate(batch,
+                                     forward_propagation,
+                                     back_propagation);
             }
         }
 
-        if (!use_device_metrics)
+        if(!use_device_metrics)
         {
-            host_result.error += back_propagation.error;
-            if (tracks_accuracy) host_result.accuracy += back_propagation.accuracy;
+            result.error += back_propagation.error;
+
+            if(tracks_accuracy)
+                result.accuracy += back_propagation.accuracy;
         }
 
         {
@@ -1969,24 +2108,32 @@ Loss::EvaluationResult Optimizer::train_epoch(
             update_parameters(back_propagation, optimizer_data);
         }
 
-        if (post_batch_callback)
+        if(post_batch_callback)
             post_batch_callback(neural_network);
     };
 
     epoch_result = run_epoch_loop(context);
 
-    epoch_result = average_epoch_metrics(use_device_metrics ? device_metrics.read() : epoch_result,
-                                         batches_number, tracks_accuracy);
-    if (use_device_metrics)
+    if(use_device_metrics)
+        epoch_result = device_metrics.read();
+
+    epoch_result =
+        average_epoch_metrics(epoch_result, batches_number, tracks_accuracy);
+
+    if(use_device_metrics)
     {
         back_propagation.error = epoch_result.error;
         back_propagation.accuracy = epoch_result.accuracy;
     }
-    set_epoch_loss();
 
-    if (profile_this)
-        worker_profile.print_epoch(epoch_t0, "Epoch breakdown (training)",
+    finalize_epoch(epoch_result);
+
+    if(profile_this)
+    {
+        worker_profile.print_epoch(epoch_t0,
+                                   "Epoch breakdown (training)",
                                    get_batch_workers_number(*neural_network));
+    }
 
     return epoch_result;
 }
@@ -2004,69 +2151,97 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
     NeuralNetwork* neural_network = loss->get_neural_network();
     const Index batches_number = Index(batches.size());
-    if (batches_number == 0) return epoch_result;
+
+    if(batches_number == 0) return epoch_result;
+
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
 
-    const bool on_gpu = neural_network->is_gpu();
-
-    const bool use_device_metrics = on_gpu && loss->supports_device_epoch_metrics();
-    DeviceEpochMetricSums device_metrics(training_session.device_metrics);
-    if (use_device_metrics) device_metrics.reset();
-
-    if (!on_gpu)
+    if(!neural_network->is_gpu())
     {
         Batch* batch = empty_queue.pop();
 
-        for (Index iteration = 0; iteration < batches_number; ++iteration)
+        for(Index iteration = 0; iteration < batches_number; ++iteration)
         {
-            batch->fill(batches[iteration],
+            batch->fill(batches[size_t(iteration)],
                         input_feature_indices,
                         decoder_feature_indices,
                         target_feature_indices,
                         FillMode::Validation);
 
-            neural_network->forward_propagate(batch->get_inputs(), forward_propagation, false);
+            neural_network->forward_propagate(batch->get_inputs(),
+                                              forward_propagation,
+                                              false);
 
-            const Loss::EvaluationResult evaluation_result = loss->calculate_error(*batch, forward_propagation);
+            const Loss::EvaluationResult result =
+                loss->calculate_error(*batch, forward_propagation);
 
-            epoch_result.error += evaluation_result.error;
-            if (tracks_accuracy) epoch_result.accuracy += evaluation_result.accuracy;
+            epoch_result.error += result.error;
+
+            if(tracks_accuracy)
+                epoch_result.accuracy += result.accuracy;
         }
 
         empty_queue.push(batch);
 
-        return average_epoch_metrics(epoch_result, batches_number, tracks_accuracy);
+        return average_epoch_metrics(epoch_result,
+                                     batches_number,
+                                     tracks_accuracy);
     }
 
-    EpochLoopContext context{&empty_queue, &batches,
-                             &input_feature_indices, &decoder_feature_indices, &target_feature_indices,
-                             FillMode::Validation, on_gpu, neural_network->has_recurrent_layers(),
-                             &training_session};
+    const bool use_device_metrics = loss->supports_device_epoch_metrics();
 
-    context.step = [&](Batch& compute_batch, Loss::EvaluationResult& host_result)
+    DeviceEpochMetricSums device_metrics(training_session.device_metrics);
+
+    if(use_device_metrics)
+        device_metrics.reset();
+
+    EpochLoopContext context{
+        &empty_queue,
+        &batches,
+        &input_feature_indices,
+        &decoder_feature_indices,
+        &target_feature_indices,
+        FillMode::Validation,
+        true,
+        neural_network->has_recurrent_layers(),
+        &training_session
+    };
+
+    context.step = [&](Batch& batch, Loss::EvaluationResult& result)
     {
-        neural_network->forward_propagate(compute_batch.get_inputs(), forward_propagation, false);
+        neural_network->forward_propagate(batch.get_inputs(),
+                                          forward_propagation,
+                                          false);
 
-        if (use_device_metrics)
+        if(use_device_metrics)
         {
-            if (!loss->calculate_error_device_metrics(compute_batch,
-                                                      forward_propagation,
-                                                      device_metrics.error_sum(),
-                                                      tracks_accuracy ? device_metrics.accuracy_sum() : nullptr))
-                throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
+            throw_if(!loss->calculate_error_device_metrics(
+                        batch,
+                        forward_propagation,
+                        device_metrics.error_sum(),
+                        tracks_accuracy ? device_metrics.accuracy_sum() : nullptr),
+                    "Device epoch metrics unexpectedly unsupported for this loss.");
+
+            return;        
         }
-        else
-        {
-            const Loss::EvaluationResult evaluation_result = loss->calculate_error(compute_batch, forward_propagation);
-            host_result.error += evaluation_result.error;
-            if (tracks_accuracy) host_result.accuracy += evaluation_result.accuracy;
-        }
+
+        const Loss::EvaluationResult evaluation =
+            loss->calculate_error(batch, forward_propagation);
+
+        result.error += evaluation.error;
+
+        if(tracks_accuracy)
+            result.accuracy += evaluation.accuracy;
     };
 
     epoch_result = run_epoch_loop(context);
 
-    return average_epoch_metrics(use_device_metrics ? device_metrics.read() : epoch_result,
-                                 batches_number, tracks_accuracy);
+    if(use_device_metrics)
+        epoch_result = device_metrics.read();
+
+    return average_epoch_metrics(epoch_result,
+                                 batches_number,
+                                 tracks_accuracy);
 }
 
 }
