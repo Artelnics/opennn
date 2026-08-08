@@ -42,78 +42,112 @@ void DetectionOperator::set(const Shape& input_shape, const vector<array<float, 
              "DetectionOperator: classes_number must be positive.");
 }
 
-void DetectionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void DetectionOperator::forward_propagate(ForwardPropagation& forward_propagation,
+                                          size_t layer,
+                                          bool)
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output = get_output(forward_propagation, layer);
 
 #ifdef OPENNN_HAS_CUDA
-    if (input.is_cuda())
+
+    if(input.is_cuda())
     {
         throw_if(grid_size != grid_width,
                  "DetectionOperator GPU: non-square grids not supported.");
 
-        const Index anchor_bytes = Index(anchors.size()) * 2 * Index(sizeof(float));
-        if (device_anchors.bytes < anchor_bytes)
+        const Index anchor_bytes = Index(anchors.size() * 2 * sizeof(float));
+
+        if(device_anchors.bytes < anchor_bytes)
         {
             device_anchors.resize_bytes(anchor_bytes, Device::CUDA);
+
             vector<float> flat;
             flat.reserve(anchors.size() * 2);
             ranges::copy(anchors | views::join, back_inserter(flat));
-            cudaMemcpyAsync(device_anchors.as<float>(), flat.data(), size_t(anchor_bytes),
-                            cudaMemcpyHostToDevice, device::get_compute_stream());
+
+            cudaMemcpyAsync(device_anchors.as<float>(),
+                            flat.data(),
+                            size_t(anchor_bytes),
+                            cudaMemcpyHostToDevice,
+                            device::get_compute_stream());
         }
-        detection_forward_cuda(input.shape[0], grid_size, boxes_per_cell, classes_number,
-                               input.shape[3], static_cast<int>(class_activation),
-                               device_anchors.as<float>(), input.as<float>(), output.as<float>());
+
+        detection_forward_cuda(input.shape[0],
+                               grid_size,
+                               boxes_per_cell,
+                               classes_number,
+                               input.shape[3],
+                               static_cast<int>(class_activation),
+                               device_anchors.as<float>(),
+                               input.as<float>(),
+                               output.as<float>());
+
         return;
     }
+
 #endif
 
     const Index batch_size = input.shape[0];
+    const Index channels = input.shape[3];
     const Index values_per_box = 5 + classes_number;
 
     const float* src = input.as<float>();
     float* dst = output.as<float>();
 
-    #pragma omp parallel for collapse(3)
-    for (Index b = 0; b < batch_size; ++b)
-        for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_width; ++col)
-            {
-                const Index cell = ((b * grid_size + row) * grid_width + col) * input.shape[3];
+    const auto sigmoid = [](const float x)
+    {
+        return 1.0f / (1.0f + expf(-x));
+    };
 
-                for (Index box = 0; box < boxes_per_cell; ++box)
+#pragma omp parallel for collapse(3)
+    for(Index b = 0; b < batch_size; ++b)
+        for(Index row = 0; row < grid_size; ++row)
+            for(Index col = 0; col < grid_width; ++col)
+            {
+                const Index cell =
+                    ((b * grid_size + row) * grid_width + col) * channels;
+
+                for(Index box = 0; box < boxes_per_cell; ++box)
                 {
                     const Index base = cell + box * values_per_box;
+                    const float* box_src = src + base;
+                    float* box_dst = dst + base;
 
-                    dst[base]     = 1.0f / (1.0f + expf(-src[base]));
-                    dst[base + 1] = 1.0f / (1.0f + expf(-src[base + 1]));
-                    dst[base + 2] = expf(clamp(src[base + 2], -4.0f, 4.0f)) * anchors[size_t(box)][0];
-                    dst[base + 3] = expf(clamp(src[base + 3], -4.0f, 4.0f)) * anchors[size_t(box)][1];
-                    dst[base + 4] = 1.0f / (1.0f + expf(-src[base + 4]));
+                    box_dst[0] = sigmoid(box_src[0]);
+                    box_dst[1] = sigmoid(box_src[1]);
+                    box_dst[2] = expf(clamp(box_src[2], -4.0f, 4.0f))
+                               * anchors[size_t(box)][0];
+                    box_dst[3] = expf(clamp(box_src[3], -4.0f, 4.0f))
+                               * anchors[size_t(box)][1];
+                    box_dst[4] = sigmoid(box_src[4]);
 
-                    if (class_activation == ClassActivation::Sigmoid)
+                    if(class_activation == ClassActivation::Sigmoid)
                     {
-                        for (Index c = 0; c < classes_number; ++c)
-                            dst[base + 5 + c] = 1.0f / (1.0f + expf(-src[base + 5 + c]));
+                        for(Index c = 0; c < classes_number; ++c)
+                            box_dst[5 + c] = sigmoid(box_src[5 + c]);
+
+                        continue;
                     }
-                    else
+
+                    const float* logits = box_src + 5;
+                    float* probabilities = box_dst + 5;
+
+                    const float max_logit =
+                        *max_element(logits, logits + classes_number);
+
+                    float sum = 0.0f;
+
+                    for(Index c = 0; c < classes_number; ++c)
                     {
-                        const float max_logit = *max_element(src + base + 5, src + base + 5 + classes_number);
-
-                        float sum = 0.0f;
-                        for (Index c = 0; c < classes_number; ++c)
-                        {
-                            const float exp_value = expf(src[base + 5 + c] - max_logit);
-                            dst[base + 5 + c] = exp_value;
-                            sum += exp_value;
-                        }
-
-                        const float inv_sum = 1.0f / (sum + EPSILON);
-                        for (Index c = 0; c < classes_number; ++c)
-                            dst[base + 5 + c] *= inv_sum;
+                        probabilities[c] = expf(logits[c] - max_logit);
+                        sum += probabilities[c];
                     }
+
+                    const float inv_sum = 1.0f / (sum + EPSILON);
+
+                    for(Index c = 0; c < classes_number; ++c)
+                        probabilities[c] *= inv_sum;
                 }
             }
 }
