@@ -29,6 +29,12 @@ struct Model
     NeuralNetwork neural_network;
     unique_ptr<Loss> loss;
 
+    // What Optimizer hands to ForwardPropagation: opaque lifetimes, no Loss.
+    vector<MemoryPoolEntry> delta_lifetimes(Index batch) const
+    {
+        return BackPropagation::make_co_planned_lifetimes(neural_network, *loss, batch);
+    }
+
     Model(Index samples_number, Index inputs_number, Index targets_number, Index width = 64)
         : dataset(samples_number, Shape{inputs_number}, Shape{targets_number})
     {
@@ -81,9 +87,8 @@ Index count_delta_views_outside(const BackPropagation& back_propagation,
 
 }
 
-// The joint plan must actually engage when a Loss is handed to ForwardPropagation,
-// and must stay disengaged when one is not.
-TEST(JointArenaTest, JointPlanEngagesOnlyWithALoss)
+// Co-planning must engage when lifetimes are supplied and stay disengaged otherwise.
+TEST(JointArenaTest, CoPlanningEngagesOnlyWhenLifetimesAreSupplied)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
 
@@ -92,17 +97,17 @@ TEST(JointArenaTest, JointPlanEngagesOnlyWithALoss)
 
     ForwardPropagation separate(batch_size, &model.neural_network,
                                 ForwardPropagationMode::Training);
-    EXPECT_FALSE(separate.joint_delta_plan.valid);
+    EXPECT_FALSE(separate.co_planned_block.valid);
 
+    const vector<MemoryPoolEntry> lifetimes = model.delta_lifetimes(batch_size);
     ForwardPropagation joint(batch_size, &model.neural_network,
                              ForwardPropagationMode::Training, {}, false,
-                             model.loss.get());
+                             &lifetimes);
 
-    ASSERT_TRUE(joint.joint_delta_plan.valid);
-    EXPECT_GT(joint.joint_delta_plan.delta_bytes, 0);
-    EXPECT_FALSE(joint.joint_delta_plan.layout.entries.empty());
-    EXPECT_EQ(joint.joint_delta_plan.offsets.size(),
-              joint.joint_delta_plan.layout.entries.size());
+    ASSERT_TRUE(joint.co_planned_block.valid);
+    EXPECT_GT(joint.co_planned_block.bytes, 0);
+    EXPECT_FALSE(lifetimes.empty());
+    EXPECT_EQ(joint.co_planned_block.offsets.size(), lifetimes.size());
 }
 
 // With the joint plan active BackPropagation must own no delta memory of its own,
@@ -114,10 +119,11 @@ TEST(JointArenaTest, BackPropagationBindsIntoTheForwardArena)
     const Index batch_size = 64;
     Model model(batch_size, 32, 4);
 
+    const vector<MemoryPoolEntry> lifetimes = model.delta_lifetimes(batch_size);
     ForwardPropagation joint(batch_size, &model.neural_network,
                              ForwardPropagationMode::Training, {}, false,
-                             model.loss.get());
-    ASSERT_TRUE(joint.joint_delta_plan.valid);
+                             &lifetimes);
+    ASSERT_TRUE(joint.co_planned_block.valid);
 
     BackPropagation back_propagation(batch_size, model.loss.get(), &joint);
 
@@ -129,8 +135,8 @@ TEST(JointArenaTest, BackPropagationBindsIntoTheForwardArena)
         << "every delta view must point inside the forward arena";
 }
 
-// Without a Loss, BackPropagation falls back to owning its own pool. This is the
-// other half of the branch in BackPropagation::set and must keep working.
+// Without co-planned lifetimes, BackPropagation falls back to owning its own pool.
+// This is the other half of the branch in BackPropagation::set and must keep working.
 TEST(JointArenaTest, SeparatePoolIsUsedWithoutTheJointPlan)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -140,7 +146,7 @@ TEST(JointArenaTest, SeparatePoolIsUsedWithoutTheJointPlan)
 
     ForwardPropagation separate(batch_size, &model.neural_network,
                                 ForwardPropagationMode::Training);
-    ASSERT_FALSE(separate.joint_delta_plan.valid);
+    ASSERT_FALSE(separate.co_planned_block.valid);
 
     BackPropagation back_propagation(batch_size, model.loss.get(), &separate);
 
@@ -172,14 +178,15 @@ TEST(JointArenaTest, JointArenaOverheadStaysBounded)
 
     const Index separate_bytes = separate.data.bytes + separate_back.delta_pool.bytes;
 
+    const vector<MemoryPoolEntry> lifetimes = model.delta_lifetimes(batch_size);
     ForwardPropagation joint(batch_size, &model.neural_network,
                              ForwardPropagationMode::Training, {}, false,
-                             model.loss.get());
+                             &lifetimes);
     BackPropagation joint_back(batch_size, model.loss.get(), &joint);
 
     const Index joint_bytes = joint.data.bytes + joint_back.delta_pool.bytes;
 
-    ASSERT_TRUE(joint.joint_delta_plan.valid);
+    ASSERT_TRUE(joint.co_planned_block.valid);
 
     const Index known_gap = batch_size * targets_number * Index(sizeof(float));
 

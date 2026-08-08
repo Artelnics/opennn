@@ -89,10 +89,10 @@ ForwardPropagation::ForwardPropagation(const Index new_batch_size,
                                        const ForwardPropagationMode new_mode,
                                        const InferenceShapePolicy new_shape_policy,
                                        const bool new_inputs_pre_scaled,
-                                       Loss* joint_loss)
+                                       const vector<MemoryPoolEntry>* co_planned_lifetimes)
 {
     set(new_batch_size, new_neural_network, nullptr, new_mode,
-        new_shape_policy, new_inputs_pre_scaled, joint_loss);
+        new_shape_policy, new_inputs_pre_scaled, co_planned_lifetimes);
 }
 
 ForwardPropagation::~ForwardPropagation()
@@ -125,7 +125,7 @@ void ForwardPropagation::set(const Index new_batch_size,
                              const ForwardPropagationMode new_mode,
                              const InferenceShapePolicy new_shape_policy,
                              const bool new_inputs_pre_scaled,
-                             Loss* joint_loss)
+                             const vector<MemoryPoolEntry>* co_planned_lifetimes)
 {
     throw_if(!new_neural_network, "neural network is not set.");
     throw_if(new_mode != ForwardPropagationMode::Inference
@@ -361,23 +361,14 @@ void ForwardPropagation::set(const Index new_batch_size,
             "forward", pooled_lifetimes,
             format("layers={},batch={}", layers_number, batch_size));
 
-        joint_delta_plan = {};
+        co_planned_block = {};
         const size_t forward_entry_count = pooled_lifetimes.size();
-        if (joint_loss)
-        {
-            const auto backward_specs = neural_network->get_backward_specs(batch_size);
-            joint_delta_plan.layout = BackPropagation::build_delta_entries(
-                *neural_network, *joint_loss, batch_size, backward_specs,
-                BackPropagation::make_consumer_edges(*neural_network));
-            const Index delta_step_offset =
-                backward_base - neural_network->get_last_trainable_layer_index();
-            for (const MemoryPoolEntry& entry : BackPropagation::to_pool_entries(
-                     joint_delta_plan.layout.entries, delta_step_offset))
+        if (co_planned_lifetimes)
+            for (const MemoryPoolEntry& entry : *co_planned_lifetimes)
             {
-                joint_delta_plan.delta_bytes += entry.bytes;
+                co_planned_block.bytes += entry.bytes;
                 pooled_lifetimes.push_back(entry);
             }
-        }
 
         // Chronological is load-bearing here, not a default. Activation
         // recomputation relies on a scratch slot landing on top of a future
@@ -397,16 +388,16 @@ void ForwardPropagation::set(const Index new_batch_size,
 
         apply_pool_plan(persistent_plan);
 
-        if (joint_loss)
+        if (co_planned_lifetimes)
         {
-            joint_delta_plan.offsets.assign(
+            co_planned_block.offsets.assign(
                 persistent_plan.byte_offsets.begin() + forward_entry_count,
                 persistent_plan.byte_offsets.end());
-            joint_delta_plan.valid = true;
+            co_planned_block.valid = true;
             memory_debug::record("forward.joint_plan", "delta_entries_in_arena",
-                                 joint_delta_plan.delta_bytes,
+                                 co_planned_block.bytes,
                                  format("batch={},entries={}", batch_size,
-                                        joint_delta_plan.layout.entries.size()));
+                                        co_planned_lifetimes->size()));
         }
 
         for (size_t i = 0; i < layers_number; ++i)

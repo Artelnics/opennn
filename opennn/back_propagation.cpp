@@ -97,11 +97,15 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
     for (size_t i = 0; i < layers_number; ++i)
         pointer = layers[i]->link_gradients(pointer, gradient_views[i], gradient.device_type);
 
-    if (forward_propagation && forward_propagation->joint_delta_plan.valid)
+    if (forward_propagation && forward_propagation->co_planned_block.valid)
     {
-        const auto& joint = forward_propagation->joint_delta_plan;
+        // Deterministic from the same inputs, so it matches the entry order the
+        // caller handed to ForwardPropagation.
+        const DeltaLayout layout = build_delta_entries(
+            *neural_network, *loss, batch_size, backward_specs, consumer_edges);
+
         delta_pool.resize_bytes(0, neural_network->get_device());
-        bind_delta_views(joint.layout, joint.offsets,
+        bind_delta_views(layout, forward_propagation->co_planned_block.offsets,
                          forward_propagation->data.as<uint8_t>(),
                          forward_propagation->data.device_type,
                          backward_specs);
@@ -262,6 +266,23 @@ vector<MemoryPoolEntry> BackPropagation::to_pool_entries(const vector<DeltaEntry
                                     entry.first_step + step_offset,
                                     entry.last_step + step_offset});
     return lifetime_entries;
+}
+
+vector<MemoryPoolEntry> BackPropagation::make_co_planned_lifetimes(
+    const NeuralNetwork& neural_network, const Loss& loss, const Index batch_size)
+{
+    const auto backward_specs = neural_network.get_backward_specs(batch_size);
+
+    const DeltaLayout layout = build_delta_entries(
+        neural_network, loss, batch_size, backward_specs,
+        make_consumer_edges(neural_network));
+
+    // Forward steps run 0..2N-1; shift the delta lifetimes onto that timeline.
+    const Index backward_base = Index(2 * neural_network.get_layers_number() - 1);
+    const Index step_offset =
+        backward_base - neural_network.get_last_trainable_layer_index();
+
+    return to_pool_entries(layout.entries, step_offset);
 }
 
 void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backward_specs)

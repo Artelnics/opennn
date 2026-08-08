@@ -58,6 +58,12 @@ struct BackPropagation
     static vector<MemoryPoolEntry> to_pool_entries(const vector<DeltaEntry>&,
                                                    Index step_offset = 0);
 
+    // Delta lifetimes expressed on the forward timeline, so ForwardPropagation can
+    // co-plan them without knowing what they are.
+    static vector<MemoryPoolEntry> make_co_planned_lifetimes(const NeuralNetwork&,
+                                                             const Loss&,
+                                                             Index batch_size);
+
     void accumulate_output_deltas(size_t);
 
     const NeuralNetwork* neural_network = nullptr;

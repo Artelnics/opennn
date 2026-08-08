@@ -10,7 +10,7 @@
 
 #include "tensor_types.h"
 #include "device_backend.h"
-#include "back_propagation.h"
+#include "memory_pool.h"
 
 #include <tuple>
 
@@ -18,7 +18,6 @@ namespace opennn
 {
 
 class NeuralNetwork;
-class Loss;
 
 enum class ForwardPropagationMode
 {
@@ -41,7 +40,7 @@ struct ForwardPropagation
                        ForwardPropagationMode = ForwardPropagationMode::Training,
                        InferenceShapePolicy = {},
                        bool inputs_pre_scaled = false,
-                       Loss* loss = nullptr);
+                       const vector<MemoryPoolEntry>* co_planned_lifetimes = nullptr);
 
     ~ForwardPropagation();
 
@@ -52,20 +51,22 @@ struct ForwardPropagation
              ForwardPropagationMode = ForwardPropagationMode::Training,
              InferenceShapePolicy = {},
              bool inputs_pre_scaled = false,
-             Loss* loss = nullptr);
+             const vector<MemoryPoolEntry>* co_planned_lifetimes = nullptr);
 
     Index bind_slot_views(const vector<vector<TensorSpec>>& forward_specs,
                           const vector<vector<Index>>& slot_offsets,
                           const vector<vector<Index>>& transient_slot_offsets);
 
-    struct JointDeltaPlan
+    // Byte offsets, inside `data`, for lifetimes a caller asked to be planned
+    // alongside the forward activations. ForwardPropagation neither knows nor
+    // cares what they are; BackPropagation supplies its delta lifetimes here.
+    struct CoPlannedBlock
     {
-        BackPropagation::DeltaLayout layout;
         vector<Index> offsets;
-        Index delta_bytes = 0;
+        Index bytes = 0;
         bool valid = false;
     };
-    JointDeltaPlan joint_delta_plan;
+    CoPlannedBlock co_planned_block;
 
     void stage_position(cudaStream_t stream);
 

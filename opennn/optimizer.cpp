@@ -893,13 +893,19 @@ TrainingResult Optimizer::train()
                       has_validation,
                       training_session);
 
+    // BackPropagation owns the delta layout; ForwardPropagation only co-plans the
+    // lifetimes, so it never needs to see the Loss.
+    const vector<MemoryPoolEntry> delta_lifetimes =
+        BackPropagation::make_co_planned_lifetimes(*neural_network, *loss,
+                                                   training_batch_size);
+
     ForwardPropagation training_forward_propagation(
         training_batch_size,
         neural_network,
         ForwardPropagationMode::Training,
         {},
         true,
-        loss);
+        &delta_lifetimes);
 
     loss->set_normalization_coefficient();
 
