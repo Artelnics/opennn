@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C H A T
@@ -18,19 +18,6 @@ class TextGenerationNetwork;
 class TokenizerOperator;
 class Transformer;
 struct ForwardPropagation;
-
-struct SamplingConfig
-{
-    float temperature = 1.0f;
-    Index top_k = 0;
-    float top_p = 1.0f;
-    float repetition_penalty = 1.0f;
-    Index maximum_tokens = 0;
-};
-
-Index sample_token(VectorR& probabilities,
-                   const SamplingConfig&,
-                   const vector<Index>& history);
 
 enum class ReasoningMode
 {
@@ -58,6 +45,19 @@ enum class ChatRole
     User,
     Assistant
 };
+
+struct SamplingConfig
+{
+    float temperature = 1.0f;
+    Index top_k = 0;
+    float top_p = 1.0f;
+    float repetition_penalty = 1.0f;
+    Index maximum_tokens = 0;
+};
+
+Index sample_token(VectorR& probabilities,
+                   const SamplingConfig&,
+                   const vector<Index>& history);
 
 struct ChatMessage
 {

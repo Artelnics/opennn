@@ -13,6 +13,12 @@
 namespace opennn
 {
 
+enum class MemoryPoolStrategy
+{
+    Chronological,
+    Compact
+};
+
 struct MemoryPoolEntry
 {
     Index bytes = 0;
@@ -30,12 +36,6 @@ struct MemoryPoolPlan
     {
         return peak_bytes - lower_bound_live_bytes;
     }
-};
-
-enum class MemoryPoolStrategy
-{
-    Chronological,
-    Compact
 };
 
 MemoryPoolPlan plan_memory_pool(
