@@ -58,9 +58,10 @@ namespace opennn
         // Guards must match scale_value above: a feature with no spread scales to
         // zero. Adding EPSILON to the denominator instead would turn a constant
         // image channel into a ~1.7e7 multiplier, and nothing downstream checks it.
+        using enum ScalerMethod;
         switch (scaler)
         {
-        case ScalerMethod::MinimumMaximum:
+        case MinimumMaximum:
         {
             const float range = descriptives.maximum - descriptives.minimum;
             if (range < EPSILON) return {0.0f, 0.0f};
@@ -68,24 +69,24 @@ namespace opennn
             const float scale = (max_range - min_range) / range;
             return {scale, min_range - descriptives.minimum * scale};
         }
-        case ScalerMethod::MeanStandardDeviation:
+        case MeanStandardDeviation:
         {
             if (descriptives.standard_deviation <= EPSILON) return {0.0f, 0.0f};
 
             const float scale = 1.0f / descriptives.standard_deviation;
             return {scale, -descriptives.mean * scale};
         }
-        case ScalerMethod::StandardDeviation:
+        case StandardDeviation:
             if (descriptives.standard_deviation <= EPSILON) return {0.0f, 0.0f};
             return {1.0f / descriptives.standard_deviation, 0.0f};
-        case ScalerMethod::ImageMinMax:
+        case ImageMinMax:
             return {1.0f / 255.0f, 0.0f};
-        case ScalerMethod::None:
-        case ScalerMethod::Logarithm:
+        case None:
+        case Logarithm:
             return {1.0f, 0.0f};
         }
 
-        throw runtime_error("ImageDataset: invalid scaler method.");
+        throw runtime_error("scaling_affine: invalid scaler method.");
     }
 
 }

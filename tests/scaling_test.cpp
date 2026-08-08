@@ -387,15 +387,13 @@ TEST(ScalerDegenerateAgreement, ScalarAndTensorPathsBothCollapseToZero)
     EXPECT_NEAR(scale_value(ScalerMethod::MinimumMaximum, descriptives, type(3)), type(0), 1e-6);
     EXPECT_NEAR(scale_value(ScalerMethod::MeanStandardDeviation, descriptives, type(3)), type(0), 1e-6);
 
-    MatrixR values(2, 1);
-    values << type(3), type(3);
+    MatrixR values = MatrixR::Constant(2, 1, type(3));
 
-    VectorR minimums(1), maximums(1), means(1), deviations(1), scalers(1);
-    minimums << descriptives.minimum;
-    maximums << descriptives.maximum;
-    means << descriptives.mean;
-    deviations << descriptives.standard_deviation;
-    scalers << float(int(ScalerMethod::MinimumMaximum));
+    VectorR minimums   = VectorR::Constant(1, descriptives.minimum);
+    VectorR maximums   = VectorR::Constant(1, descriptives.maximum);
+    VectorR means      = VectorR::Constant(1, descriptives.mean);
+    VectorR deviations = VectorR::Constant(1, descriptives.standard_deviation);
+    VectorR scalers    = VectorR::Constant(1, float(int(ScalerMethod::MinimumMaximum)));
 
     MatrixR scaled = values;
 
