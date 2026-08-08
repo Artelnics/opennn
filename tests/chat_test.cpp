@@ -210,7 +210,7 @@ void make_constant_tiny_decoder(NeuralNetwork& network,
     make_tiny_decoder(network, sequence_length, vocabulary_size);
 
     VectorMap(network.get_parameters_data(),
-              network.get_parameters_size()).setZero();
+              network.get_parameters_buffer_size()).setZero();
 
     vector<TensorView>& dense_parameters =
         network.get_layer(1)->get_parameter_views();

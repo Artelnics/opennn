@@ -167,7 +167,7 @@ void finalize_selected_model(TrainingStrategy* training_strategy,
                              const bool display,
                              const char* selected_label)
 {
-    if (optimal_parameters.size() == neural_network->get_parameters_size())
+    if (optimal_parameters.size() == neural_network->get_parameters_buffer_size())
     {
         neural_network->set_parameters(optimal_parameters);
     }

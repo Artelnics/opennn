@@ -840,7 +840,7 @@ int main()
             p.replace_filename(weights_path.stem().string() + "_ema.bin");
             return p;
         }();
-        const Index n_params = yolo_network.get_parameters_size();
+        const Index n_params = yolo_network.get_parameters_buffer_size();
 
         vector<float> ema_params(static_cast<size_t>(n_params));
         bool ema_updated_this_run = false;

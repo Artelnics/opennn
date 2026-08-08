@@ -129,7 +129,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
                         neural_network->copy_parameters_host();
                         neuron_selection_results.optimal_parameters =
                             Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
-                                                      neural_network->get_parameters_size());
+                                                      neural_network->get_parameters_buffer_size());
                         neuron_selection_results.optimum_training_error = training_error;
                         neuron_selection_results.optimum_validation_error = validation_error;
                     }

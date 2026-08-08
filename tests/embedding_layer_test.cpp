@@ -103,7 +103,7 @@ TEST(Embedding, ForwardValuesMatchExpected)
                               1.0f, 2.0f, 3.0f,
                               4.0f, 5.0f, 6.0f,
                               7.0f, 8.0f, 9.0f };
-    VectorR table = VectorR::Zero(neural_network.get_parameters_size());
+    VectorR table = VectorR::Zero(neural_network.get_parameters_buffer_size());
     for (Index i = 0; i < vocabulary_size * embedding_dimension; ++i)
         table(i) = weights[i];
     neural_network.set_parameters(table);
@@ -149,7 +149,7 @@ TEST(Embedding, ScaleEmbeddingForwardValues)
                               1.0f, 2.0f, 3.0f, 4.0f,
                               5.0f, 6.0f, 7.0f, 8.0f,
                               9.0f, 10.0f, 11.0f, 12.0f };
-    VectorR table = VectorR::Zero(neural_network.get_parameters_size());
+    VectorR table = VectorR::Zero(neural_network.get_parameters_buffer_size());
     for (Index i = 0; i < vocabulary_size * embedding_dimension; ++i)
         table(i) = weights[i];
     neural_network.set_parameters(table);
@@ -197,7 +197,7 @@ TEST(Embedding, PositionalEncodingForwardValues)
                               1.0f, 2.0f, 3.0f, 4.0f,
                               5.0f, 6.0f, 7.0f, 8.0f,
                               9.0f, 10.0f, 11.0f, 12.0f };
-    VectorR table = VectorR::Zero(neural_network.get_parameters_size());
+    VectorR table = VectorR::Zero(neural_network.get_parameters_buffer_size());
     for (Index i = 0; i < vocabulary_size * embedding_dimension; ++i)
         table(i) = weights[i];
     neural_network.set_parameters(table);

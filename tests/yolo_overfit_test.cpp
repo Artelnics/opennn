@@ -118,7 +118,7 @@ TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
             Shape{H, W, 16}, Shape{1, 1, 16, channels}, "Identity", Shape{1, 1}, "Same", false, "logits"));
         net->add_layer(make_unique<Detection>(Shape{grid, grid, channels}, anchors, "detection"));
         net->compile();
-        VectorMap(net->get_parameters_data(), net->get_parameters_size()).setConstant(0.05f);
+        VectorMap(net->get_parameters_data(), net->get_parameters_buffer_size()).setConstant(0.05f);
         return net;
     };
 
@@ -219,7 +219,7 @@ TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
         net->add_layer(make_unique<Detection>(Shape{grid, grid, logit_ch}, anchors, "detection"));
 
         net->compile();
-        VectorMap(net->get_parameters_data(), net->get_parameters_size()).setConstant(0.05f);
+        VectorMap(net->get_parameters_data(), net->get_parameters_buffer_size()).setConstant(0.05f);
         return net;
     };
 
@@ -317,7 +317,7 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
         net->add_layer(make_unique<Detection>(Shape{grid, grid, logit_ch}, anchors, "detection"));
 
         net->compile();
-        VectorMap(net->get_parameters_data(), net->get_parameters_size()).setConstant(0.05f);
+        VectorMap(net->get_parameters_data(), net->get_parameters_buffer_size()).setConstant(0.05f);
         return net;
     };
 
@@ -409,7 +409,7 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
         net->add_layer(make_unique<DetectionV8>(Shape{grid, grid, det_ch}, "det"));
 
         net->compile();
-        VectorMap(net->get_parameters_data(), net->get_parameters_size()).setConstant(0.05f);
+        VectorMap(net->get_parameters_data(), net->get_parameters_buffer_size()).setConstant(0.05f);
         return net;
     };
 

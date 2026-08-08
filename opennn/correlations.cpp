@@ -452,7 +452,7 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     set_confidence_interval(correlation, sample_count);
 
     const VectorR coefficients = Map<const VectorR, AlignedMax>(
-        neural_network.get_parameters_data(), neural_network.get_parameters_size());
+        neural_network.get_parameters_data(), neural_network.get_parameters_buffer_size());
     correlation.intercept = coefficients(0);
     correlation.slope = coefficients(1);
 

@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
 true);
 
         cout << "layers=" << network.get_layers_number()
-                  << " parameters=" << network.get_parameters_size() << "\n";
+                  << " parameters=" << network.get_parameters_buffer_size() << "\n";
 
         const vector<Index> input_feature_indices = dataset.get_feature_indices("Input");
         const vector<Index> decoder_feature_indices = dataset.get_feature_indices("Decoder");

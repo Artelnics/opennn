@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 
         cout << "sdpa_min_sequence_length="
                   << benchmark::configure_transformer_sdpa(transformer) << "\n";
-        cout << "parameters=" << transformer.get_parameters_size() << "\n";
+        cout << "parameters=" << transformer.get_parameters_buffer_size() << "\n";
 
         TrainingStrategy training_strategy(&transformer, &dataset);
         training_strategy.set_loss("CrossEntropyError3d");

@@ -125,7 +125,7 @@ VectorR calculate_numerical_gradient(Loss& loss)
     neural_network->copy_parameters_host();
 
     VectorMap parameters(neural_network->get_parameters_data(),
-                         neural_network->get_parameters_size());
+                         neural_network->get_parameters_buffer_size());
 
     const Index parameters_number = parameters.size();
 

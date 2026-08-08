@@ -30,7 +30,7 @@ static Tensor3 run_on(Device device,
 
     Transformer transformer(seq, seq, vocab, vocab, d_model, heads, ff, layers);
 
-    VectorR params(transformer.get_parameters_size());
+    VectorR params(transformer.get_parameters_buffer_size());
     params.setConstant(0.02f);
     transformer.set_parameters(params);
 

@@ -191,8 +191,8 @@ TEST(DropoutLayerTest, InferencePassIsIdentityWithDropout)
     set_seed(99u);
     dropout_network.set_parameters_random();
 
-    const Index parameters_size = dropout_network.get_parameters_size();
-    ASSERT_EQ(parameters_size, reference_network.get_parameters_size());
+    const Index parameters_size = dropout_network.get_parameters_buffer_size();
+    ASSERT_EQ(parameters_size, reference_network.get_parameters_buffer_size());
 
     VectorR parameters(parameters_size);
     const float* parameters_data = dropout_network.get_parameters_data();

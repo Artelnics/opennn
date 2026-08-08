@@ -213,7 +213,7 @@ int main(int argc, char* argv[])
                        true);
         network.set_training_activation_recomputation(recompute_activations);
         memory_debug::record("model", "NeuralNetwork::parameters",
-                             network.get_parameters_size() * Index(sizeof(float)),
+                             network.get_parameters_buffer_size() * Index(sizeof(float)),
                              "planned");
         memory_debug::record("model", "NeuralNetwork::states",
                              network.get_states_buffer_size() * Index(sizeof(float)),
@@ -276,7 +276,7 @@ int main(int argc, char* argv[])
         cout << "gpu_resident_data=1\n";
         cout << "training_activation_recomputation="
                   << (recompute_activations ? 1 : 0) << "\n";
-        cout << "parameters=" << network.get_parameters_size() << "\n";
+        cout << "parameters=" << network.get_parameters_buffer_size() << "\n";
         cout << "training_error=" << training_error << "\n";
         if (target_mode)
         {

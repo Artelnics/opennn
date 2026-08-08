@@ -513,7 +513,7 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
     throw_if(new_parameters.size() == 0,
              "NeuralNetwork::set_parameters: refusing to apply an empty parameter vector.");
 
-    const Index expected_size = get_parameters_size();
+    const Index expected_size = get_parameters_buffer_size();
     throw_if(expected_size > 0 && new_parameters.size() != expected_size,
              "NeuralNetwork::set_parameters: size mismatch (got {}, expected {}). Make sure the network is compiled with the same architecture as the one that produced this snapshot.", new_parameters.size(), expected_size);
 
@@ -874,7 +874,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 {
 
     const Device original_parameters_device = parameters.device_type;
-    const Index parameters_size = get_parameters_size();
+    const Index parameters_size = get_parameters_buffer_size();
     VectorR saved_parameters(parameters_size);
     if (parameters.device_type == Device::CUDA)
     {

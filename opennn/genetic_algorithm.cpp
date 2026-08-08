@@ -210,7 +210,7 @@ void GeneticAlgorithm::evaluate_population()
             [&](Index, float training_error, float validation_error, bool)
             {
                 individual_parameters(i) = VectorMap(neural_network->get_parameters_data(),
-                                                     neural_network->get_parameters_size());
+                                                     neural_network->get_parameters_buffer_size());
 
                 training_errors(i) = training_error;
                 validation_errors(i) = validation_error;

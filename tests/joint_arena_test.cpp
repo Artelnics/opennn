@@ -102,7 +102,7 @@ TEST(JointArenaTest, CoPlanningEngagesOnlyWhenLifetimesAreSupplied)
     const vector<MemoryPoolEntry> lifetimes = model.delta_lifetimes(batch_size);
     ForwardPropagation joint(batch_size, &model.neural_network,
                              ForwardPropagationMode::Training, {}, false,
-                             &lifetimes);
+                             lifetimes);
 
     ASSERT_TRUE(joint.co_planned_block.valid);
     EXPECT_GT(joint.co_planned_block.bytes, 0);
@@ -122,7 +122,7 @@ TEST(JointArenaTest, BackPropagationBindsIntoTheForwardArena)
     const vector<MemoryPoolEntry> lifetimes = model.delta_lifetimes(batch_size);
     ForwardPropagation joint(batch_size, &model.neural_network,
                              ForwardPropagationMode::Training, {}, false,
-                             &lifetimes);
+                             lifetimes);
     ASSERT_TRUE(joint.co_planned_block.valid);
 
     BackPropagation back_propagation(batch_size, model.loss.get(), &joint);
@@ -181,7 +181,7 @@ TEST(JointArenaTest, JointArenaOverheadStaysBounded)
     const vector<MemoryPoolEntry> lifetimes = model.delta_lifetimes(batch_size);
     ForwardPropagation joint(batch_size, &model.neural_network,
                              ForwardPropagationMode::Training, {}, false,
-                             &lifetimes);
+                             lifetimes);
     BackPropagation joint_back(batch_size, model.loss.get(), &joint);
 
     const Index joint_bytes = joint.data.bytes + joint_back.delta_pool.bytes;

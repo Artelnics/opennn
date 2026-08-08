@@ -87,7 +87,10 @@ public:
 
     float* get_parameters_data() { return parameters.as<float>(); }
     const float* get_parameters_data() const noexcept { return parameters.as<float>(); }
-    Index get_parameters_size() const noexcept { return parameters.size_in_floats(); }
+    // Floats in the parameter buffer, including the per-layer alignment padding.
+    // This is >= get_parameters_number(), which is the logical sum over layers;
+    // index buffers with this one, count parameters with that one.
+    Index get_parameters_buffer_size() const noexcept { return parameters.size_in_floats(); }
     Device get_parameters_device() const noexcept { return parameters.device_type; }
     float* get_states_data() { return states.as<float>(); }
     const float* get_states_data() const noexcept { return states.as<float>(); }
@@ -139,6 +142,7 @@ public:
     Shape get_output_shape() const;
 
     ActivationFunction get_output_activation() const;
+    // Logical parameter count, summed over layers, without alignment padding.
     Index get_parameters_number() const;
 
     void set_parameters(const VectorR&);

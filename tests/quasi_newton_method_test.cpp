@@ -77,7 +77,7 @@ TEST_F(QuasiNewtonMethodTest, BFGS_Update)
 
     VectorR gradient_k = calculate_gradient(loss);
 
-    EXPECT_EQ(gradient_k.size(), neural_network.get_parameters_size());
+    EXPECT_EQ(gradient_k.size(), neural_network.get_parameters_buffer_size());
 
     MatrixR numerical_inverse_hessian = calculate_inverse_hessian(loss);
 

@@ -800,7 +800,7 @@ void Optimizer::warmup_device_training(
     const cudaStream_t stream = Backend::get_compute_stream();
 
     const Index parameters_bytes =
-        neural_network->get_parameters_size() * Index(sizeof(float));
+        neural_network->get_parameters_buffer_size() * Index(sizeof(float));
 
     const Index states_bytes =
         neural_network->get_states_buffer_size() * Index(sizeof(float));
@@ -862,7 +862,7 @@ void Optimizer::warmup_device_training(
         device::synchronize(stream);
 
         setup_optimizer_data(optimizer_data,
-                             neural_network->get_parameters_size(),
+                             neural_network->get_parameters_buffer_size(),
                              neural_network->get_device());
     };
 
@@ -1010,7 +1010,7 @@ TrainingResult Optimizer::train()
         ForwardPropagationMode::Training,
         {},
         true,
-        &delta_lifetimes);
+        delta_lifetimes);
 
     loss->set_normalization_coefficient();
 
@@ -1031,7 +1031,7 @@ TrainingResult Optimizer::train()
 
     setup_device_training();
 
-    const Index parameters_number = neural_network->get_parameters_size();
+    const Index parameters_buffer_size = neural_network->get_parameters_buffer_size();
     const Device device = neural_network->get_device();
 
     float training_error = 0.0f;
@@ -1043,7 +1043,7 @@ TrainingResult Optimizer::train()
 
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
-    setup_optimizer_data(optimizer_data, parameters_number, device);
+    setup_optimizer_data(optimizer_data, parameters_buffer_size, device);
 
     const bool needs_cuda_warmup = on_gpu && device::is_cuda_build() && training_batches_number > 0;
 
@@ -1353,7 +1353,7 @@ void Optimizer::update_best_parameters(NeuralNetwork* neural_network,
         post_best_callback(epoch, validation_error);
 
     const tuple<vector<float>&, const float*, Index> snapshots[] = {
-        {best_model.parameters, neural_network->get_parameters_data(), neural_network->get_parameters_size()},
+        {best_model.parameters, neural_network->get_parameters_data(), neural_network->get_parameters_buffer_size()},
         {best_model.states,     neural_network->get_states_data(),     neural_network->get_states_buffer_size()}
     };
 
@@ -1383,7 +1383,7 @@ void Optimizer::restore_best_parameters(NeuralNetwork* neural_network,
 {
     if (!restore_best
         || best_model.parameters.empty()
-        || Index(best_model.parameters.size()) != neural_network->get_parameters_size())
+        || Index(best_model.parameters.size()) != neural_network->get_parameters_buffer_size())
         return;
 
     if (display)
@@ -1966,7 +1966,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
     const auto finalize_epoch = [&](Loss::EvaluationResult& result)
     {
         const TensorView parameters(neural_network->get_parameters_data(),
-                                    {neural_network->get_parameters_size()},
+                                    {neural_network->get_parameters_buffer_size()},
                                     Type::FP32,
                                     neural_network->get_device());
 

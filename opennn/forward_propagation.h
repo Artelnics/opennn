@@ -40,7 +40,7 @@ struct ForwardPropagation
                        ForwardPropagationMode = ForwardPropagationMode::Training,
                        InferenceShapePolicy = {},
                        bool inputs_pre_scaled = false,
-                       const vector<MemoryPoolEntry>* co_planned_lifetimes = nullptr);
+                       span<const MemoryPoolEntry> co_planned_lifetimes = {});
 
     ~ForwardPropagation();
 
@@ -51,7 +51,7 @@ struct ForwardPropagation
              ForwardPropagationMode = ForwardPropagationMode::Training,
              InferenceShapePolicy = {},
              bool inputs_pre_scaled = false,
-             const vector<MemoryPoolEntry>* co_planned_lifetimes = nullptr);
+             span<const MemoryPoolEntry> co_planned_lifetimes = {});
 
     Index bind_slot_views(const vector<vector<TensorSpec>>& forward_specs,
                           const vector<vector<Index>>& slot_offsets,

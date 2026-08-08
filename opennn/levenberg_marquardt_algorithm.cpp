@@ -68,7 +68,7 @@ void LevenbergMarquardtAlgorithm::back_propagate(const Batch& batch,
     back_propagation_lm.hessian.noalias() = factor * J.transpose() * J;
 
     const TensorView parameters(loss->get_neural_network()->get_parameters_data(),
-                                {loss->get_neural_network()->get_parameters_size()},
+                                {loss->get_neural_network()->get_parameters_buffer_size()},
                                 Type::FP32,
                                 loss->get_neural_network()->get_device());
     back_propagation_lm.regularization = loss->calculate_regularization(parameters);
@@ -154,7 +154,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&  ,
 
     if (dense_indices.empty()) return;
 
-    throw_if(offset != neural_network->get_parameters_size(),
+    throw_if(offset != neural_network->get_parameters_buffer_size(),
              "LevenbergMarquardtAlgorithm: unsupported parameter layout (only plain Dense "
              "layers without batch normalization are supported). Use AdaptiveMomentEstimation, "
              "SGD, or QuasiNewtonMethod instead.");
@@ -274,7 +274,7 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
     BackPropagationLM training_back_propagation_lm(context.training_samples_number, loss);
     BackPropagationLM validation_back_propagation_lm(context.validation_samples_number, loss);
 
-    const Index parameters_number = neural_network->get_parameters_size();
+    const Index parameters_number = neural_network->get_parameters_buffer_size();
 
     OptimizerData optimization_data;
     optimization_data.damping_parameter = initial_damping_parameter;
@@ -335,7 +335,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
         damping_parameter = initial_damping_parameter;
 
     VectorMap parameters(neural_network->get_parameters_data(),
-                         neural_network->get_parameters_size());
+                         neural_network->get_parameters_buffer_size());
 
     float& error = back_propagation_lm.error;
     float& regularization = back_propagation_lm.regularization;
@@ -453,7 +453,7 @@ void BackPropagationLM::set(const Index new_samples_number, Loss* new_loss)
     const NeuralNetwork* neural_network = new_loss->get_neural_network();
 
     const Index outputs_number = neural_network->get_outputs_number();
-    const Index parameters_number = neural_network->get_parameters_size();
+    const Index parameters_number = neural_network->get_parameters_buffer_size();
     const Index total_error_terms = new_samples_number * outputs_number;
 
     errors                  = VectorR::Zero(total_error_terms);

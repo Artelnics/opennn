@@ -30,7 +30,7 @@ static void update_parameters_cuda(NeuralNetwork* neural_network,
                                    float momentum,
                                    bool nesterov)
 {
-    const Index parameters_number = neural_network->get_parameters_size();
+    const Index parameters_number = neural_network->get_parameters_buffer_size();
 
     float* const velocity_ptr = momentum > 0.0f
         ? optimizer_data.views[StochasticGradientDescent::Velocity].as<float>()
@@ -101,7 +101,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     }
 
     VectorMap parameters(neural_network->get_parameters_data(),
-                         neural_network->get_parameters_size());
+                         neural_network->get_parameters_buffer_size());
 
     VectorMap gradient(back_propagation.gradient.as<float>(),
                        back_propagation.gradient.size_in_floats());
@@ -144,7 +144,7 @@ void StochasticGradientDescent::update_parameters_capturable(BackPropagation& ba
         : nullptr;
 
     sgd_update_capturable_cuda(
-        neural_network->get_parameters_size(),
+        neural_network->get_parameters_buffer_size(),
         neural_network->get_parameters_data(),
         velocity_ptr,
         back_propagation.gradient.as<float>(),

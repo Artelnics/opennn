@@ -228,7 +228,7 @@ TEST(Normalization3dTest, FusedResidualAddAliasesSafeBranchDelta)
     reference_network.compile();
 
     const float* parameter_data = neural_network.get_parameters_data();
-    VectorR parameters(neural_network.get_parameters_size());
+    VectorR parameters(neural_network.get_parameters_buffer_size());
     for (Index i = 0; i < parameters.size(); ++i)
         parameters(i) = parameter_data[i];
     reference_network.set_parameters(parameters);

@@ -29,7 +29,7 @@ namespace
 
 VectorR read_host_parameters(const NeuralNetwork& network)
 {
-    const Index size = network.get_parameters_size();
+    const Index size = network.get_parameters_buffer_size();
     VectorR parameters(size);
     const float* data = network.get_parameters_data();
     for (Index i = 0; i < size; ++i)

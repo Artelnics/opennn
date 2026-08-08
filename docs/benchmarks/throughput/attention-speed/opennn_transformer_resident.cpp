@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
                   << " ff=" << ff << " layers=" << layers << " vocab=" << vocab
                   << " batch=" << batch
                   << " sdpa_min=" << sdpa_min_sequence_length << "\n";
-        cout << "parameters=" << transformer.get_parameters_size() << "\n";
+        cout << "parameters=" << transformer.get_parameters_buffer_size() << "\n";
 
         Tensor3 host_in(batch, seq, 1), host_ctx(batch, seq, 1);
         for (Index b = 0; b < batch; ++b)

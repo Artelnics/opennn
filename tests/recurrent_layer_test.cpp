@@ -47,7 +47,7 @@ TEST(RecurrentLayerTest, ForwardPropagateValues)
         neural_network.add_layer(make_unique<Recurrent>(Shape{time_steps, inputs_number}, Shape{outputs_number}, "Identity"));
         neural_network.compile();
 
-        VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_size()).setConstant(type(0.1));
+        VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_buffer_size()).setConstant(type(0.1));
 
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
@@ -77,7 +77,7 @@ TEST(RecurrentLayerTest, ForwardPropagateValues)
         neural_network.add_layer(make_unique<Recurrent>(Shape{time_steps, inputs_number}, Shape{outputs_number}, "Tanh"));
         neural_network.compile();
 
-        VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_size()).setConstant(type(0.1));
+        VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_buffer_size()).setConstant(type(0.1));
 
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
@@ -115,7 +115,7 @@ TEST(RecurrentLayerTest, ReturnSequences)
     neural_network.add_layer(move(layer));
     neural_network.compile();
 
-    VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_size()).setConstant(type(0.1));
+    VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_buffer_size()).setConstant(type(0.1));
 
     Tensor3 inputs(samples_number, time_steps, inputs_number);
     inputs.setConstant(type(1));

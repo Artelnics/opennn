@@ -347,7 +347,7 @@ TEST(BertTest, SaveLoadRoundTrip)
             EXPECT_NEAR(again[i], expected[size_t(i)], 1e-5f) << "NON-DETERMINISTIC forward at " << i;
     }
 
-    const Index parameters_size = bert.get_parameters_size();
+    const Index parameters_size = bert.get_parameters_buffer_size();
     const vector<float> parameters_before(bert.get_parameters_data(),
                                                bert.get_parameters_data() + parameters_size);
 
@@ -357,7 +357,7 @@ TEST(BertTest, SaveLoadRoundTrip)
     NeuralNetwork loaded;
     loaded.load(path);
 
-    ASSERT_EQ(loaded.get_parameters_size(), parameters_size);
+    ASSERT_EQ(loaded.get_parameters_buffer_size(), parameters_size);
     EXPECT_EQ(0, memcmp(loaded.get_parameters_data(), parameters_before.data(),
                              size_t(parameters_size) * sizeof(float)));
 

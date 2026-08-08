@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
                   << " ff=" << ff << " layers=" << layers << " vocab=" << vocab
                   << " batch=" << batch
                   << " sdpa_min=" << sdpa_min_sequence_length << "\n";
-        cout << "parameters=" << transformer.get_parameters_size() << "\n";
+        cout << "parameters=" << transformer.get_parameters_buffer_size() << "\n";
 
         Tensor3 inputs(batch, seq, 1);
         Tensor3 context(batch, seq, 1);

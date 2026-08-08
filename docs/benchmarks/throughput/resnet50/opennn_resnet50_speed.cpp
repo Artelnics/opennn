@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
                                           true);
 
         cout << "layers=" << network.get_layers_number()
-                  << " parameters=" << network.get_parameters_size() << "\n";
+                  << " parameters=" << network.get_parameters_buffer_size() << "\n";
 
         TrainingStrategy training_strategy(&network, &dataset);
         training_strategy.set_loss("CrossEntropy");

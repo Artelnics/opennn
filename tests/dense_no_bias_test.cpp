@@ -33,7 +33,7 @@ TEST(DenseNoBiasTest, ForwardIsPureMatmul)
     neural_network.add_layer(move(dense));
     neural_network.compile();
 
-    VectorR parameters = VectorR::Ones(neural_network.get_parameters_size());
+    VectorR parameters = VectorR::Ones(neural_network.get_parameters_buffer_size());
     neural_network.set_parameters(parameters);
 
     Tensor2 inputs(1, 2);

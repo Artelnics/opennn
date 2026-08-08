@@ -33,7 +33,7 @@ static void update_parameters_cuda(NeuralNetwork* neural_network,
                                    float bias_correction_2)
 {
     PROFILE_SCOPE("optim:adam_update_cuda");
-    const Index parameters_number = neural_network->get_parameters_size();
+    const Index parameters_number = neural_network->get_parameters_buffer_size();
 
     adam_update_cuda(
         parameters_number,
@@ -170,7 +170,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     }
 
     VectorMap parameters(neural_network->get_parameters_data(),
-                         neural_network->get_parameters_size());
+                         neural_network->get_parameters_buffer_size());
 
     VectorMap gradient_exponential_decay = optimization_data.views[GradientMoment].as_vector();
     VectorMap square_gradient_exponential_decay = optimization_data.views[SquareGradientMoment].as_vector();
@@ -215,7 +215,7 @@ void AdaptiveMomentEstimation::update_parameters_capturable(BackPropagation& bac
     float* const graph_epsilon = graph_scalars + 2;
 
     adam_update_capturable_cuda(
-        neural_network->get_parameters_size(),
+        neural_network->get_parameters_buffer_size(),
         neural_network->get_parameters_data(),
         optimization_data.views[GradientMoment].as<float>(),
         optimization_data.views[SquareGradientMoment].as<float>(),

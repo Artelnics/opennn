@@ -44,11 +44,11 @@ static void recompile_if_specs_changed(NeuralNetwork& network,
         return;
 
     VectorR parameters_snapshot;
-    if (network.get_parameters_size() > 0)
+    if (network.get_parameters_buffer_size() > 0)
     {
         network.copy_parameters_host();
         parameters_snapshot = Eigen::Map<const VectorR>(network.get_parameters_data(),
-                                                        network.get_parameters_size());
+                                                        network.get_parameters_buffer_size());
     }
 
     network.compile();

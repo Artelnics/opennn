@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
             benchmark::configure_transformer_sdpa(transformer);
 
         cout << "sdpa_min_sequence_length=" << sdpa_min_sequence_length << "\n";
-        cout << "parameters=" << transformer.get_parameters_size() << "\n";
+        cout << "parameters=" << transformer.get_parameters_buffer_size() << "\n";
 
         if (mode == "infer")
         {

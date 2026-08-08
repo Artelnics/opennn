@@ -1726,7 +1726,7 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
     check_neural_network();
 
     const TensorView parameters(neural_network->get_parameters_data(),
-                                {neural_network->get_parameters_size()},
+                                {neural_network->get_parameters_buffer_size()},
                                 Type::FP32,
                                 neural_network->get_parameters_device());
 
@@ -1804,7 +1804,7 @@ void Loss::add_regularization_gradient(const TensorView& gradient) const
         neural_network->copy_parameters_host();
 
     const TensorView parameters(neural_network->get_parameters_data(),
-                                { neural_network->get_parameters_size() },
+                                { neural_network->get_parameters_buffer_size() },
                                 Type::FP32,
                                 gradient_device);
 
@@ -1821,7 +1821,7 @@ void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
     check_neural_network();
 
     add_regularization_gradient(TensorView(back_propagation.gradient.as<float>(),
-                                           { neural_network->get_parameters_size() },
+                                           { neural_network->get_parameters_buffer_size() },
                                            Type::FP32,
                                            back_propagation.gradient.device_type));
 }

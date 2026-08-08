@@ -70,7 +70,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagate)
         neural_network.compile();
 
         VectorMap(neural_network.get_parameters_data(),
-                  neural_network.get_parameters_size()).setConstant(type(0.1));
+                  neural_network.get_parameters_buffer_size()).setConstant(type(0.1));
 
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
@@ -110,7 +110,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
         neural_network.compile();
 
         VectorMap(neural_network.get_parameters_data(),
-                  neural_network.get_parameters_size()).setConstant(type(0.1));
+                  neural_network.get_parameters_buffer_size()).setConstant(type(0.1));
 
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
@@ -142,7 +142,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
         neural_network.compile();
 
         VectorMap(neural_network.get_parameters_data(),
-                  neural_network.get_parameters_size()).setConstant(type(0.1));
+                  neural_network.get_parameters_buffer_size()).setConstant(type(0.1));
 
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
@@ -188,7 +188,7 @@ TEST(LongShortTermMemoryLayerTest, BackPropagate)
     neural_network.compile();
 
     VectorMap(neural_network.get_parameters_data(),
-              neural_network.get_parameters_size()).setConstant(type(0.05));
+              neural_network.get_parameters_buffer_size()).setConstant(type(0.05));
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
@@ -222,7 +222,7 @@ TEST(LongShortTermMemoryLayerTest, BackPropagateReturnSequences)
     neural_network.compile();
 
     VectorMap(neural_network.get_parameters_data(),
-              neural_network.get_parameters_size()).setConstant(type(0.05));
+              neural_network.get_parameters_buffer_size()).setConstant(type(0.05));
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
