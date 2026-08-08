@@ -150,11 +150,14 @@ TEST(JointArenaTest, SeparatePoolIsUsedWithoutTheJointPlan)
                                         back_propagation.delta_pool), 0);
 }
 
-// A first-fit over the union of forward and delta lifetimes should never need more
-// than the two independent peaks (you can always stack deltas above the forward
-// block). Today it needs slightly MORE: exactly batch * outputs * sizeof(float),
-// i.e. one output-delta tensor, measured constant across widths 64..1024 and
-// batches 32..1024. Pin that gap so it cannot grow unnoticed; the target is zero.
+// A first-fit over the union should in principle never need more than the two
+// independent peaks. With no early-release outputs it needs exactly
+// batch * outputs * sizeof(float) more -- one output-delta tensor, constant across
+// widths 64..1024 and batches 32..1024. That is the price of the Chronological
+// ordering that activation recomputation depends on; see the comment at the
+// plan_memory_pool call in ForwardPropagation::set. Architectures with early
+// releases do not pay it: ResNet-50 measured -9.8% and a Transformer -6.3%
+// against separate pools. Pin the gap so it cannot grow unnoticed.
 TEST(JointArenaTest, JointArenaOverheadStaysBounded)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);

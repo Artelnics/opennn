@@ -379,6 +379,16 @@ void ForwardPropagation::set(const Index new_batch_size,
             }
         }
 
+        // Chronological is load-bearing here, not a default. Activation
+        // recomputation relies on a scratch slot landing on top of a future
+        // activation, which first_step ordering produces and largest-first does
+        // not. Forcing Compact was measured: the joint arena gets strictly smaller
+        // (an MLP drops batch * outputs * sizeof(float); ResNet-50 and Transformer
+        // are byte-identical, already taking that branch), but it breaks the
+        // recompute aliasing pinned by
+        // ForwardPropagationMemoryTest.TrainingRecomputeScratchUsesFutureActivations
+        // and YoloOverfit.CSPGradientFlowsAndLossDecreases then stops learning.
+        // Do not simplify this to always-Compact.
         const MemoryPoolPlan persistent_plan = plan_memory_pool(
             pooled_lifetimes,
             early_release_outputs > 0
