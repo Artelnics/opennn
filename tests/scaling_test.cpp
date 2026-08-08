@@ -5,6 +5,8 @@
 #include "opennn/tabular_dataset.h"
 #include "opennn/scaling.h"
 #include "opennn/statistics.h"
+#include "opennn/tensor_operations.h"
+#include "opennn/network_differential.h"
 
 using namespace opennn;
 
@@ -350,4 +352,116 @@ TEST(ScalingTest, ScalingAffineAddsEpsilonToDenominators)
         scaling_affine(ScalerMethod::StandardDeviation, constant, type(0), type(1));
     EXPECT_NEAR(zero_deviation_scale, type(1) / EPSILON, type(1));
     EXPECT_NEAR(zero_deviation_offset, type(0), 1e-9);
+}
+
+// ---------------------------------------------------------------------------
+// Degenerate-range agreement.
+//
+// Six places in the library divide by a range that can be zero, and they do not
+// agree on what a constant feature means. The tests above pin each behaviour on
+// its own; these pin the RELATIONSHIP between them, which is what any future
+// consolidation has to preserve or deliberately change.
+// ---------------------------------------------------------------------------
+
+namespace
+{
+
+Descriptives constant_feature()
+{
+    Descriptives descriptives;
+    descriptives.minimum = type(3);
+    descriptives.maximum = type(3);
+    descriptives.mean = type(3);
+    descriptives.standard_deviation = type(0);
+    return descriptives;
+}
+
+}
+
+// scale_value and the tensor path agree: a constant feature scales to zero.
+TEST(ScalerDegenerateAgreement, ScalarAndTensorPathsBothCollapseToZero)
+{
+    const Descriptives descriptives = constant_feature();
+
+    EXPECT_NEAR(scale_value(ScalerMethod::MinimumMaximum, descriptives, type(3)), type(0), 1e-6);
+    EXPECT_NEAR(scale_value(ScalerMethod::MeanStandardDeviation, descriptives, type(3)), type(0), 1e-6);
+
+    MatrixR values(2, 1);
+    values << type(3), type(3);
+
+    VectorR minimums(1), maximums(1), means(1), deviations(1), scalers(1);
+    minimums << descriptives.minimum;
+    maximums << descriptives.maximum;
+    means << descriptives.mean;
+    deviations << descriptives.standard_deviation;
+    scalers << float(int(ScalerMethod::MinimumMaximum));
+
+    MatrixR scaled = values;
+
+    TensorView input(values.data(), Shape{2, 1});
+    TensorView output(scaled.data(), Shape{2, 1});
+    TensorView minimums_view(minimums.data(), Shape{1});
+    TensorView maximums_view(maximums.data(), Shape{1});
+    TensorView means_view(means.data(), Shape{1});
+    TensorView deviations_view(deviations.data(), Shape{1});
+    TensorView scalers_view(scalers.data(), Shape{1});
+
+    scale(input, minimums_view, maximums_view, means_view, deviations_view,
+          scalers_view, type(-1), type(1), output);
+
+    EXPECT_NEAR(scaled(0, 0), type(0), 1e-6);
+    EXPECT_NEAR(scaled(1, 0), type(0), 1e-6);
+}
+
+// scaling_affine does NOT agree: it adds EPSILON to the denominator instead of
+// guarding, so the same constant feature yields a ~1.7e7 multiplier rather than
+// zero. Only image_dataset.cpp uses this path, so a constant image channel is
+// amplified where a constant tabular column is zeroed.
+TEST(ScalerDegenerateAgreement, AffinePathDivergesFromScaleValue)
+{
+    const Descriptives descriptives = constant_feature();
+
+    const auto [affine_scale, affine_offset] =
+        scaling_affine(ScalerMethod::MinimumMaximum, descriptives, type(-1), type(1));
+
+    EXPECT_GT(affine_scale, type(1e6));
+
+    // At x == minimum the two agree, but only by accident: offset is
+    // min_range - minimum * scale, and at this magnitude float32 cannot hold the
+    // min_range term, so the product cancels to exactly zero.
+    const float at_minimum_scalar =
+        scale_value(ScalerMethod::MinimumMaximum, descriptives, type(3), type(-1), type(1));
+    const float at_minimum_affine = type(3) * affine_scale + affine_offset;
+
+    EXPECT_NEAR(at_minimum_scalar, type(0), 1e-6);
+    EXPECT_NEAR(at_minimum_affine, type(0), 1e-6);
+
+    // One step away the accident disappears and the paths diverge by ~1.7e7:
+    // scale_value still guards to zero, the affine path amplifies.
+    const float away_scalar =
+        scale_value(ScalerMethod::MinimumMaximum, descriptives, type(4), type(-1), type(1));
+    const float away_affine = type(4) * affine_scale + affine_offset;
+
+    EXPECT_NEAR(away_scalar, type(0), 1e-6);
+    EXPECT_GT(away_affine, type(1e6));
+    EXPECT_TRUE(isfinite(away_affine));
+}
+
+// NetworkDifferential floors the divisor at 1e-12 while the forward paths guard
+// at EPSILON (~1.19e-7) -- about five orders of magnitude apart. For a constant
+// feature the forward output is 0 (derivative 0), but the analytic Jacobian uses
+// 1/1e-12. Pinned so the mismatch is visible if the Jacobian is ever checked
+// against the forward pass on degenerate inputs.
+TEST(ScalerDegenerateAgreement, JacobianGuardFloorDiffersFromForwardGuard)
+{
+    EXPECT_NEAR(NetworkDifferential::guarded(type(0)), type(1e-12), type(1e-18));
+
+    const float jacobian_slope = type(1) / NetworkDifferential::guarded(type(0));
+    EXPECT_GT(jacobian_slope, type(1e11));
+
+    const Descriptives descriptives = constant_feature();
+    EXPECT_NEAR(scale_value(ScalerMethod::MinimumMaximum, descriptives, type(4)), type(0), 1e-6);
+
+    EXPECT_LT(EPSILON / type(1e-12), type(1e6));
+    EXPECT_GT(EPSILON / type(1e-12), type(1e4));
 }
