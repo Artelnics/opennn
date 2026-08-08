@@ -18,8 +18,6 @@
 #include "opennn/tensor_operations.h"
 #include "opennn/device_backend.h"
 #include "opennn/variable.h"
-#include "opennn/statistics.h"
-#include "opennn/unscaling_layer.h"
 
 using namespace opennn;
 
@@ -264,26 +262,6 @@ TEST(ScalerParity, CpuRoundTripRecoversInvertibleFeatures)
             EXPECT_NEAR(expected, recovered[i], 1e-3f * max(1.0f, abs(expected)))
                 << "round trip lost feature '" << feature.name << "'";
         }
-}
-
-// An exported model has to agree with the library it was exported from, so the
-// emitters need the same degenerate-feature rule the numeric paths use. Nothing
-// else checks this: the emitters write source text, so they cannot share the
-// formulas and can only be kept in step deliberately.
-TEST(ScalerParity, EmittedExpressionRecoversDegenerateConstant)
-{
-    const float constant = 7.0f;
-
-    Unscaling layer(Shape{1});
-    layer.set_scalers("StandardDeviation");
-    layer.set_descriptives({Descriptives(constant, constant, constant, 0.0f)});
-
-    const string expression = layer.write_expression({"x"}, {"y"});
-
-    EXPECT_NE(expression.find(to_string(int(constant))), string::npos)
-        << "expected the constant in: " << expression;
-    EXPECT_EQ(expression.find("x*0"), string::npos)
-        << "must not multiply by a zero standard deviation: " << expression;
 }
 
 // OpenNN: Open Neural Networks Library.

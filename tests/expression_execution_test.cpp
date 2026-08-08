@@ -74,6 +74,24 @@ string read_file(const filesystem::path& path)
     return stream.str();
 }
 
+// Runs a command, returning whatever it printed. Failures come back tagged so
+// the assertion that spots them can show the compiler or interpreter output
+// rather than an empty string.
+string run_capturing(const string& command, const filesystem::path& output_path,
+                     const char* failure_tag)
+{
+    string line = command + " > " + quoted_path(output_path) + " 2>&1";
+#ifdef _WIN32
+    // cmd.exe strips the outer quotes of a command line that begins with one,
+    // which breaks the redirect. Wrapping the whole line gives it a pair to eat.
+    if (!line.empty() && line.front() == '"') line = "\"" + line + "\"";
+#endif
+
+    const string output = system(line.c_str()) == 0 ? string() : string(failure_tag) + ": ";
+
+    return output + read_file(output_path);
+}
+
 // Feeds each row to the exported model and returns whatever it printed.
 // The emitted module guards its own main with __name__, so importing it runs
 // nothing; the driver drives it explicitly.
@@ -109,13 +127,8 @@ string run_exported_python_model(const filesystem::path& directory,
     const filesystem::path output_path = directory / "opennn_exported_output.txt";
     write_file(driver_path, driver.str());
 
-    const string command = "python " + quoted_path(driver_path)
-                         + " > " + quoted_path(output_path) + " 2>&1";
-
-    if (system(command.c_str()) != 0)
-        return "PYTHON FAILED: " + read_file(output_path);
-
-    return read_file(output_path);
+    return run_capturing("python " + quoted_path(driver_path),
+                         output_path, "PYTHON FAILED");
 }
 
 // clang and gcc both link the emitted C without any MSVC environment set up, so
@@ -193,24 +206,14 @@ string run_exported_c_model(const filesystem::path& directory,
 #ifndef _WIN32
     build += " -lm";
 #endif
-    build += " > " + quoted_path(build_log) + " 2>&1";
-
-    if (system(build.c_str()) != 0)
-        return "COMPILE FAILED: " + read_file(build_log);
+    // A successful compile still prints warnings, so test the tag rather than
+    // whether anything was written.
+    const string build_output = run_capturing(build, build_log, "COMPILE FAILED");
+    if (build_output.starts_with("COMPILE FAILED")) return build_output;
 
     const filesystem::path output_path = directory / "opennn_exported_output.txt";
 
-    string run = quoted_path(program_path) + " > " + quoted_path(output_path) + " 2>&1";
-#ifdef _WIN32
-    // cmd.exe strips the outer quotes of a command line that begins with one,
-    // which breaks the redirect. Wrapping the whole line gives it a pair to eat.
-    run = "\"" + run + "\"";
-#endif
-
-    if (system(run.c_str()) != 0)
-        return "RUN FAILED: " + read_file(output_path);
-
-    return read_file(output_path);
+    return run_capturing(quoted_path(program_path), output_path, "RUN FAILED");
 }
 
 MatrixR parse_output(const string& text, Index rows, Index columns)
@@ -464,6 +467,25 @@ TEST(ExpressionExecution, EmbeddedModelReproducesDegenerateScaling)
 
     expect_export_matches(Target::CEmbedded, "opennn_degenerate_embedded",
                           *network, inputs, expected);
+}
+
+// The layer emitters are reached through the executed exports above, but this
+// one runs without an interpreter or a compiler - so the degenerate-scaler rule
+// stays covered on a machine that has neither.
+TEST(ExpressionExecution, UnscalingEmitsTheDegenerateConstantWithoutRunningAnything)
+{
+    const float constant = 7.0f;
+
+    Unscaling layer(Shape{1});
+    layer.set_scalers("StandardDeviation");
+    layer.set_descriptives({Descriptives(constant, constant, constant, 0.0f)});
+
+    const string expression = layer.write_expression({"x"}, {"y"});
+
+    EXPECT_NE(expression.find(to_string(int(constant))), string::npos)
+        << "expected the constant in: " << expression;
+    EXPECT_EQ(expression.find("x*0"), string::npos)
+        << "must not multiply by a zero standard deviation: " << expression;
 }
 
 // OpenNN: Open Neural Networks Library.

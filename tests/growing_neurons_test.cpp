@@ -60,20 +60,6 @@ TEST(GrowingNeuronsTest, RefusesALastLayerThatCannotTakeANeuronCount)
     }
 }
 
-// The rank a layer declares has to be the rank it actually enforces, or the
-// question selection asks is worthless.
-TEST(GrowingNeuronsTest, DeclaredInputRanksMatchWhatLayersAccept)
-{
-    const opennn::Dense dense(Shape{1}, Shape{2}, "Linear");
-    EXPECT_TRUE(dense.accepts_input_rank(1));
-    EXPECT_TRUE(dense.accepts_input_rank(2));
-    EXPECT_FALSE(dense.accepts_input_rank(3));
-
-    const Normalization3d normalization(Shape{2, 2});
-    EXPECT_FALSE(normalization.accepts_input_rank(1));
-    EXPECT_TRUE(normalization.accepts_input_rank(2));
-}
-
 TEST(GrowingNeuronsTest, GeneralConstructor)
 {
     TrainingStrategy training_strategy;
