@@ -1706,8 +1706,8 @@ void BertForSequenceClassification::set_dropout_rate(const float new_dropout_rat
 #endif
 
 Index load_darknet_backbone(NeuralNetwork& network,
-                                          const filesystem::path& weights_path,
-                                          Index n_backbone_convs)
+                            const filesystem::path& weights_path,
+                            Index n_backbone_convs)
 {
     FILE* f = fopen(weights_path.string().c_str(), "rb");
     throw_if(!f, "load_darknet_backbone: cannot open file: " + weights_path.string());
@@ -1720,9 +1720,9 @@ Index load_darknet_backbone(NeuralNetwork& network,
              "load_darknet_backbone: failed to read header seen.");
 
     cout << "Darknet weights header: major=" << header[0]
-              << " minor=" << header[1]
-              << " revision=" << header[2]
-              << " seen=" << seen << "\n";
+         << " minor=" << header[1]
+         << " revision=" << header[2]
+         << " seen=" << seen << "\n";
 
     Index loaded = 0;
     const auto& layers = network.get_layers();
@@ -1741,7 +1741,7 @@ Index load_darknet_backbone(NeuralNetwork& network,
 }
 
 Index load_darknet_backbone_v11(NeuralNetwork& network,
-                                              const filesystem::path& weights_path)
+                                const filesystem::path& weights_path)
 {
     FILE* f = fopen(weights_path.string().c_str(), "rb");
     throw_if(!f, "load_darknet_backbone_v11: cannot open file: " + weights_path.string());
