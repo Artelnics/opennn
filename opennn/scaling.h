@@ -55,21 +55,29 @@ namespace opennn
                                              float min_range,
                                              float max_range)
     {
+        // Guards must match scale_value above: a feature with no spread scales to
+        // zero. Adding EPSILON to the denominator instead would turn a constant
+        // image channel into a ~1.7e7 multiplier, and nothing downstream checks it.
         switch (scaler)
         {
         case ScalerMethod::MinimumMaximum:
         {
-            const float scale = (max_range - min_range)
-                              / ((descriptives.maximum - descriptives.minimum) + EPSILON);
+            const float range = descriptives.maximum - descriptives.minimum;
+            if (range < EPSILON) return {0.0f, 0.0f};
+
+            const float scale = (max_range - min_range) / range;
             return {scale, min_range - descriptives.minimum * scale};
         }
         case ScalerMethod::MeanStandardDeviation:
         {
-            const float scale = 1.0f / (descriptives.standard_deviation + EPSILON);
+            if (descriptives.standard_deviation <= EPSILON) return {0.0f, 0.0f};
+
+            const float scale = 1.0f / descriptives.standard_deviation;
             return {scale, -descriptives.mean * scale};
         }
         case ScalerMethod::StandardDeviation:
-            return {1.0f / (descriptives.standard_deviation + EPSILON), 0.0f};
+            if (descriptives.standard_deviation <= EPSILON) return {0.0f, 0.0f};
+            return {1.0f / descriptives.standard_deviation, 0.0f};
         case ScalerMethod::ImageMinMax:
             return {1.0f / 255.0f, 0.0f};
         case ScalerMethod::None:

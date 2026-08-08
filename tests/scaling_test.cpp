@@ -315,7 +315,7 @@ TEST(ScalingTest, ScaleValueGuardsDegenerateDeviationToZero)
     EXPECT_NEAR(scale_value(ScalerMethod::None, descriptives, type(7)), type(7), 1e-6);
 }
 
-TEST(ScalingTest, ScalingAffineAddsEpsilonToDenominators)
+TEST(ScalingTest, ScalingAffineMatchesScaleValue)
 {
     Descriptives descriptives;
     descriptives.minimum = type(0);
@@ -325,13 +325,13 @@ TEST(ScalingTest, ScalingAffineAddsEpsilonToDenominators)
 
     const auto [minmax_scale, minmax_offset] =
         scaling_affine(ScalerMethod::MinimumMaximum, descriptives, type(0), type(1));
-    EXPECT_NEAR(minmax_scale, type(1) / (type(255) + EPSILON), 1e-9);
+    EXPECT_NEAR(minmax_scale, type(1) / type(255), 1e-9);
     EXPECT_NEAR(minmax_offset, type(0), 1e-9);
 
     const auto [meanstd_scale, meanstd_offset] =
         scaling_affine(ScalerMethod::MeanStandardDeviation, descriptives, type(0), type(1));
-    EXPECT_NEAR(meanstd_scale, type(1) / (type(50) + EPSILON), 1e-9);
-    EXPECT_NEAR(meanstd_offset, type(-100) / (type(50) + EPSILON), 1e-6);
+    EXPECT_NEAR(meanstd_scale, type(1) / type(50), 1e-9);
+    EXPECT_NEAR(meanstd_offset, type(-100) / type(50), 1e-6);
 
     const auto [image_scale, image_offset] =
         scaling_affine(ScalerMethod::ImageMinMax, descriptives, type(0), type(1));
@@ -343,14 +343,15 @@ TEST(ScalingTest, ScalingAffineAddsEpsilonToDenominators)
     constant.maximum = type(3);
     constant.standard_deviation = type(0);
 
+    // A feature with no spread collapses to zero, exactly as scale_value does.
     const auto [flat_scale, flat_offset] =
         scaling_affine(ScalerMethod::MinimumMaximum, constant, type(-1), type(1));
-    EXPECT_NEAR(flat_scale, type(2) / EPSILON, type(1));
-    EXPECT_TRUE(isfinite(flat_scale) && isfinite(flat_offset));
+    EXPECT_NEAR(flat_scale, type(0), 1e-9);
+    EXPECT_NEAR(flat_offset, type(0), 1e-9);
 
     const auto [zero_deviation_scale, zero_deviation_offset] =
         scaling_affine(ScalerMethod::StandardDeviation, constant, type(0), type(1));
-    EXPECT_NEAR(zero_deviation_scale, type(1) / EPSILON, type(1));
+    EXPECT_NEAR(zero_deviation_scale, type(0), 1e-9);
     EXPECT_NEAR(zero_deviation_offset, type(0), 1e-9);
 }
 
@@ -413,38 +414,31 @@ TEST(ScalerDegenerateAgreement, ScalarAndTensorPathsBothCollapseToZero)
     EXPECT_NEAR(scaled(1, 0), type(0), 1e-6);
 }
 
-// scaling_affine does NOT agree: it adds EPSILON to the denominator instead of
-// guarding, so the same constant feature yields a ~1.7e7 multiplier rather than
-// zero. Only image_dataset.cpp uses this path, so a constant image channel is
-// amplified where a constant tabular column is zeroed.
-TEST(ScalerDegenerateAgreement, AffinePathDivergesFromScaleValue)
+// All three forward paths now agree on a constant feature. scaling_affine used to
+// add EPSILON to the denominator instead of guarding, which turned a constant image
+// channel into a ~1.7e7 multiplier -- and nothing downstream checked it, unlike the
+// NetworkDifferential surrogate, which at least has a validation gate.
+TEST(ScalerDegenerateAgreement, AffinePathAgreesWithScaleValue)
 {
     const Descriptives descriptives = constant_feature();
 
     const auto [affine_scale, affine_offset] =
         scaling_affine(ScalerMethod::MinimumMaximum, descriptives, type(-1), type(1));
 
-    EXPECT_GT(affine_scale, type(1e6));
+    EXPECT_NEAR(affine_scale, type(0), 1e-9);
+    EXPECT_NEAR(affine_offset, type(0), 1e-9);
 
-    // At x == minimum the two agree, but only by accident: offset is
-    // min_range - minimum * scale, and at this magnitude float32 cannot hold the
-    // min_range term, so the product cancels to exactly zero.
-    const float at_minimum_scalar =
-        scale_value(ScalerMethod::MinimumMaximum, descriptives, type(3), type(-1), type(1));
-    const float at_minimum_affine = type(3) * affine_scale + affine_offset;
+    // Agreement must hold away from the minimum too. The old behaviour only looked
+    // correct at x == minimum, where float cancellation hid the divergence.
+    for (const float x : {type(3), type(4), type(-2)})
+    {
+        const float scalar_result =
+            scale_value(ScalerMethod::MinimumMaximum, descriptives, x, type(-1), type(1));
+        const float affine_result = x * affine_scale + affine_offset;
 
-    EXPECT_NEAR(at_minimum_scalar, type(0), 1e-6);
-    EXPECT_NEAR(at_minimum_affine, type(0), 1e-6);
-
-    // One step away the accident disappears and the paths diverge by ~1.7e7:
-    // scale_value still guards to zero, the affine path amplifies.
-    const float away_scalar =
-        scale_value(ScalerMethod::MinimumMaximum, descriptives, type(4), type(-1), type(1));
-    const float away_affine = type(4) * affine_scale + affine_offset;
-
-    EXPECT_NEAR(away_scalar, type(0), 1e-6);
-    EXPECT_GT(away_affine, type(1e6));
-    EXPECT_TRUE(isfinite(away_affine));
+        EXPECT_NEAR(scalar_result, type(0), 1e-6);
+        EXPECT_NEAR(affine_result, scalar_result, 1e-6);
+    }
 }
 
 // NetworkDifferential floors the divisor at 1e-12 while the forward paths guard
