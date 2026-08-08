@@ -53,23 +53,6 @@ void InputsSelection::configure_neural_network_inputs(NeuralNetwork* neural_netw
     neural_network->compile();
 }
 
-InputsSelection::InputScaling InputsSelection::capture_input_scaling(Dataset* dataset)
-{
-    auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
-
-    return {tabular_dataset ? tabular_dataset->get_feature_scalers("Input") : vector<string>{},
-            tabular_dataset ? tabular_dataset->calculate_feature_descriptives("Input") : vector<Descriptives>{}};
-}
-
-void InputsSelection::apply_input_scaling(NeuralNetwork* neural_network, const InputScaling& input_scaling)
-{
-    if (auto* scaling_layer = dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling)))
-    {
-        scaling_layer->set_descriptives(input_scaling.descriptives);
-        scaling_layer->set_scalers(input_scaling.scalers);
-    }
-}
-
 InputsSelectionResult::InputsSelectionResult(const Index maximum_epochs)
 {
     set(maximum_epochs);

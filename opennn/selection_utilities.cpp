@@ -11,6 +11,8 @@
 #include "training_result.h"
 #include "training_strategy.h"
 #include "cross_validation.h"
+#include "tabular_dataset.h"
+#include "scaling_layer.h"
 #include "selection_utilities.h"
 
 namespace opennn
@@ -190,6 +192,23 @@ float read_json_float_alias(const Json* root, const string_view primary, const s
 long long read_json_index_alias(const Json* root, const string_view primary, const string_view legacy)
 {
     return read_json_index(root, root->has(primary) ? primary : legacy);
+}
+
+InputScaling capture_input_scaling(Dataset* dataset)
+{
+    auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
+
+    return {tabular_dataset ? tabular_dataset->get_feature_scalers("Input") : vector<string>{},
+            tabular_dataset ? tabular_dataset->calculate_feature_descriptives("Input") : vector<Descriptives>{}};
+}
+
+void apply_input_scaling(NeuralNetwork* neural_network, const InputScaling& input_scaling)
+{
+    if (auto* scaling_layer = dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling)))
+    {
+        scaling_layer->set_descriptives(input_scaling.descriptives);
+        scaling_layer->set_scalers(input_scaling.scalers);
+    }
 }
 
 }

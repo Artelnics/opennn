@@ -16,8 +16,6 @@
 namespace opennn
 {
 
-class NeuralNetwork;
-
 struct YoloDetection
 {
     float center_x = 0.0f;
@@ -144,13 +142,6 @@ public:
                                      const string&,
                                      const filesystem::path&,
                                      const vector<string>& class_filter = {});
-
-    static Index load_darknet_backbone(NeuralNetwork&,
-                                       const filesystem::path&,
-                                       Index);
-
-    static Index load_darknet_backbone_v11(NeuralNetwork&,
-                                           const filesystem::path&);
 
 private:
 

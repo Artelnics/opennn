@@ -774,12 +774,12 @@ int main()
                 if (isv11)
                 {
 
-                    loaded = YoloDataset::load_darknet_backbone_v11(yolo_network, darknet_weights);
+                    loaded = load_darknet_backbone_v11(yolo_network, darknet_weights);
                 }
                 else
                 {
                     const Index n_backbone_convs = is53 ? 52 : iscsp ? 72 : 8;
-                    loaded = YoloDataset::load_darknet_backbone(
+                    loaded = load_darknet_backbone(
                         yolo_network, darknet_weights, n_backbone_convs);
                 }
                 cout << "Loaded " << loaded

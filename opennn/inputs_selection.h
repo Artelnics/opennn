@@ -71,15 +71,6 @@ protected:
 
     void configure_neural_network_inputs(NeuralNetwork*, Dataset*, Index) const;
 
-    struct InputScaling
-    {
-        vector<string> scalers;
-        vector<Descriptives> descriptives;
-    };
-
-    static InputScaling capture_input_scaling(Dataset*);
-    static void apply_input_scaling(NeuralNetwork*, const InputScaling&);
-
     TrainingStrategy* training_strategy = nullptr;
 
     Index trials_number = 1;

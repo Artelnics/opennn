@@ -10,12 +10,14 @@
 
 #include "opennn_types.h"
 #include "tensor_types.h"
+#include "statistics.h"
 
 namespace opennn
 {
 
 class TrainingStrategy;
 class NeuralNetwork;
+class Dataset;
 
 struct CandidateEvaluation
 {
@@ -38,6 +40,16 @@ struct ParameterSnapshot
     vector<vector<Block>> layers;
     bool empty() const noexcept { return layers.empty(); }
 };
+
+struct InputScaling
+{
+    vector<string> scalers;
+    vector<Descriptives> descriptives;
+};
+
+InputScaling capture_input_scaling(Dataset*);
+
+void apply_input_scaling(NeuralNetwork*, const InputScaling&);
 
 ParameterSnapshot capture_parameter_snapshot(NeuralNetwork*);
 
