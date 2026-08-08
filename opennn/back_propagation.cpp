@@ -97,13 +97,13 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
     for (size_t i = 0; i < layers_number; ++i)
         pointer = layers[i]->link_gradients(pointer, gradient_views[i], gradient.device_type);
 
+    // Deterministic from these inputs, so it matches the entry order the caller
+    // handed to ForwardPropagation when co-planning.
+    const DeltaLayout layout = build_delta_entries(
+        *neural_network, *loss, batch_size, backward_specs, consumer_edges);
+
     if (forward_propagation && forward_propagation->co_planned_block.valid)
     {
-        // Deterministic from the same inputs, so it matches the entry order the
-        // caller handed to ForwardPropagation.
-        const DeltaLayout layout = build_delta_entries(
-            *neural_network, *loss, batch_size, backward_specs, consumer_edges);
-
         delta_pool.resize_bytes(0, neural_network->get_device());
         bind_delta_views(layout, forward_propagation->co_planned_block.offsets,
                          forward_propagation->data.as<uint8_t>(),
@@ -112,7 +112,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
         return;
     }
 
-    setup_delta_pool(backward_specs);
+    setup_delta_pool(backward_specs, layout);
 }
 
 BackPropagation::DeltaLayout BackPropagation::build_delta_entries(
@@ -285,14 +285,13 @@ vector<MemoryPoolEntry> BackPropagation::make_co_planned_lifetimes(
     return to_pool_entries(layout.entries, step_offset);
 }
 
-void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backward_specs)
+void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backward_specs,
+                                       const DeltaLayout& layout)
 {
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
     const Index layers_number = neural_network->get_layers_number();
 
-    const DeltaLayout layout = build_delta_entries(
-        *neural_network, *loss, batch_size, backward_specs, consumer_edges);
     const vector<DeltaEntry>& delta_entries = layout.entries;
 
     const vector<MemoryPoolEntry> lifetime_entries = to_pool_entries(delta_entries);

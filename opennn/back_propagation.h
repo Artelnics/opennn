@@ -92,7 +92,7 @@ struct BackPropagation
 
 private:
 
-    void setup_delta_pool(const vector<vector<TensorSpec>>&);
+    void setup_delta_pool(const vector<vector<TensorSpec>>&, const DeltaLayout&);
 
     void bind_delta_views(const DeltaLayout&, const vector<Index>& byte_offsets,
                           uint8_t* base, Device device,
