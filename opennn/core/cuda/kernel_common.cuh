@@ -185,4 +185,44 @@ __device__ inline void rnn_activation(int activation_id, float z, float& h, floa
     }
 }
 
+
+// Block-wide reduction of two accumulators at once. Shared because the
+// normalization and rotary kernels both fold two sums in one pass.
+__device__ __forceinline__ void warp_reduce_sum2(float& a, float& b)
+{
+    #pragma unroll
+    for (int offset = 16; offset > 0; offset >>= 1)
+    {
+        a += __shfl_down_sync(0xffffffff, a, offset);
+        b += __shfl_down_sync(0xffffffff, b, offset);
+    }
+}
+
+__device__ __forceinline__ bool block_reduce_sum2(float& a, float& b)
+{
+    warp_reduce_sum2(a, b);
+
+    __shared__ float warp_a[32];
+    __shared__ float warp_b[32];
+
+    const int lane    = threadIdx.x & 31;
+    const int warp_id = threadIdx.x >> 5;
+
+    if (lane == 0)
+    {
+        warp_a[warp_id] = a;
+        warp_b[warp_id] = b;
+    }
+    __syncthreads();
+
+    const int num_warps = (blockDim.x + 31) >> 5;
+    if (warp_id == 0)
+    {
+        a = (threadIdx.x < num_warps) ? warp_a[threadIdx.x] : 0.0f;
+        b = (threadIdx.x < num_warps) ? warp_b[threadIdx.x] : 0.0f;
+        warp_reduce_sum2(a, b);
+    }
+    return threadIdx.x == 0;
+}
+
 #endif
