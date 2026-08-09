@@ -995,8 +995,7 @@ void ResponseOptimization::Domain::reshape(const float zoom_factor,
     VectorR categories_to_save = points_inputs.colwise().maxCoeff();
 
     for(Index i = 0; i < categories_to_save.size(); ++i)
-        if(center(i) > categories_to_save(i))
-            categories_to_save(i) = center(i);
+        categories_to_save(i) = std::max(categories_to_save(i), center(i));
 
     Index current_feature_index = 0;
 

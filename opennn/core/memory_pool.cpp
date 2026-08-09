@@ -22,7 +22,7 @@ Index lowest_free_offset(const vector<pair<Index, Index>>& occupied, Index bytes
         throw_if(offset > numeric_limits<Index>::max() - bytes,
                  "memory pool: address space exhausted.");
         if (begin >= offset + bytes) break;
-        if (end > offset) offset = end;
+        offset = std::max(offset, end);
     }
 
     throw_if(offset > numeric_limits<Index>::max() - bytes,

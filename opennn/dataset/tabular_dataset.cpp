@@ -320,8 +320,8 @@ vector<Descriptives> TabularDataset::compute_descriptives_streaming(const vector
 
             if (isnan(value)) continue;
 
-            if (value < minimums[size_t(j)]) minimums[size_t(j)] = value;
-            if (value > maximums[size_t(j)]) maximums[size_t(j)] = value;
+            minimums[size_t(j)] = std::min(minimums[size_t(j)], value);
+            maximums[size_t(j)] = std::max(maximums[size_t(j)], value);
 
             sums[size_t(j)] += value;
             squared_sums[size_t(j)] += double(value) * double(value);

@@ -230,13 +230,10 @@ void Dataset::set_sample_roles(const vector<Index>& indices, SampleRole role_typ
 
 VectorI Dataset::filter_data(const VectorR& minimums, const VectorR& maximums)
 {
-
     const vector<Index> used_feature_indices = get_used_feature_indices();
     const vector<Index> used_sample_indices = get_used_sample_indices();
 
-    Index bound = Index(used_feature_indices.size());
-    if (Index(minimums.size()) < bound) bound = Index(minimums.size());
-    if (Index(maximums.size()) < bound) bound = Index(maximums.size());
+    const Index bound = std::min({Index(used_feature_indices.size()), minimums.size(), maximums.size()});
 
     vector<Index> filtered;
 
@@ -254,10 +251,7 @@ VectorI Dataset::filter_data(const VectorR& minimums, const VectorR& maximums)
              || abs(value - maximums(i)) <= EPSILON)
                 continue;
 
-            if (minimums(i) == maximums(i))
-                out_of_range = (value != minimums(i));
-            else
-                out_of_range = (value < minimums(i) || value > maximums(i));
+            out_of_range = value < minimums(i) || value > maximums(i);
         }
 
         if (out_of_range)
