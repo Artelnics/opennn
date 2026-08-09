@@ -17,6 +17,166 @@
 namespace opennn
 {
 
+namespace {
+
+struct PoolWindow
+{
+    Index batch, channel, out_row, out_col;
+    Index in_row_start, pr_start, pr_end;
+    Index in_col_start, pc_start, pc_end;
+};
+
+template<typename Visit>
+void for_each_pool_window(Index batch_size, Index input_channels,
+                          Index input_height, Index input_width,
+                          Index output_height, Index output_width,
+                          Index pool_height, Index pool_width,
+                          Index row_stride, Index column_stride,
+                          Index padding_height, Index padding_width,
+                          Visit&& visit)
+{
+    #pragma omp parallel for collapse(2) schedule(static)
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index c = 0; c < input_channels; ++c)
+            for (Index out_row = 0; out_row < output_height; ++out_row)
+            {
+                const Index in_row_start = out_row * row_stride - padding_height;
+                const Index pr_start = max(Index(0), -in_row_start);
+                const Index pr_end   = min(pool_height, input_height - in_row_start);
+
+                for (Index out_col = 0; out_col < output_width; ++out_col)
+                {
+                    const Index in_col_start = out_col * column_stride - padding_width;
+                    const Index pc_start = max(Index(0), -in_col_start);
+                    const Index pc_end   = min(pool_width, input_width - in_col_start);
+
+                    visit(PoolWindow{b, c, out_row, out_col,
+                                     in_row_start, pr_start, pr_end,
+                                     in_col_start, pc_start, pc_end});
+                }
+            }
+}
+
+template<typename Visit>
+void for_each_pool_element(const PoolWindow& window, Visit&& visit)
+{
+    for (Index pool_row = window.pr_start; pool_row < window.pr_end; ++pool_row)
+        for (Index pool_column = window.pc_start; pool_column < window.pc_end; ++pool_column)
+            visit(pool_row, pool_column);
+}
+
+}
+
+void pooling_2d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices,
+                        Index input_height, Index input_width, Index input_channels,
+                        Index pool_height, Index pool_width,
+                        Index row_stride, Index column_stride,
+                        Index padding_height, Index padding_width,
+                        bool max_pooling)
+{
+    const TensorMap4 inputs = input.as_tensor<4>();
+    TensorMap4 outputs      = output.as_tensor<4>();
+
+    const Index batch_size    = inputs.dimension(0);
+    const Index output_height = outputs.dimension(1);
+    const Index output_width  = outputs.dimension(2);
+
+    const bool write_indices = max_pooling && !maximal_indices.empty();
+    TensorMap4 indices_map = write_indices
+                           ? maximal_indices.as_tensor<4>()
+                           : TensorMap4(nullptr, 0, 0, 0, 0);
+
+    const auto max_pool_window = [&](const PoolWindow& window) {
+        float best = NEG_INFINITY;
+        Index argmax = 0;
+
+        for_each_pool_element(window, [&](Index pool_row, Index pool_column) {
+            const float value = inputs(window.batch, window.in_row_start + pool_row,
+                                       window.in_col_start + pool_column, window.channel);
+            if (value > best)
+            {
+                best = value;
+                argmax = pool_row * pool_width + pool_column;
+            }
+        });
+
+        outputs(window.batch, window.out_row, window.out_col, window.channel) = best;
+        if (write_indices)
+            indices_map(window.batch, window.out_row, window.out_col, window.channel) = argmax;
+    };
+
+    const float inv_pool_size = 1.0f / (pool_height * pool_width);
+    const auto average_pool_window = [&](const PoolWindow& window) {
+        float sum = 0;
+        for_each_pool_element(window, [&](Index pool_row, Index pool_column) {
+            sum += inputs(window.batch, window.in_row_start + pool_row,
+                          window.in_col_start + pool_column, window.channel);
+        });
+        outputs(window.batch, window.out_row, window.out_col, window.channel) = sum * inv_pool_size;
+    };
+
+    if (max_pooling)
+        for_each_pool_window(batch_size, input_channels, input_height, input_width,
+                             output_height, output_width, pool_height, pool_width,
+                             row_stride, column_stride, padding_height, padding_width,
+                             max_pool_window);
+    else
+        for_each_pool_window(batch_size, input_channels, input_height, input_width,
+                             output_height, output_width, pool_height, pool_width,
+                             row_stride, column_stride, padding_height, padding_width,
+                             average_pool_window);
+}
+
+void pooling_2d_backward(const TensorView& output_delta, const TensorView& maximal_indices,
+                         TensorView& input_delta,
+                         Index input_height, Index input_width, Index input_channels,
+                         Index pool_height, Index pool_width,
+                         Index row_stride, Index column_stride,
+                         Index padding_height, Index padding_width,
+                         bool max_pooling)
+{
+    const TensorMap4 output_deltas = output_delta.as_tensor<4>();
+    TensorMap4       input_deltas  = input_delta.as_tensor<4>().setZero();
+
+    const Index batch_size    = output_deltas.dimension(0);
+    const Index output_height = output_deltas.dimension(1);
+    const Index output_width  = output_deltas.dimension(2);
+
+    if (max_pooling)
+    {
+        const TensorMap4 max_indices = maximal_indices.as_tensor<4>();
+        for_each_pool_window(batch_size, input_channels, input_height, input_width,
+                             output_height, output_width, pool_height, pool_width,
+                             row_stride, column_stride, padding_height, padding_width,
+            [&](const PoolWindow& window) {
+                const Index argmax = static_cast<Index>(max_indices(
+                    window.batch, window.out_row, window.out_col, window.channel));
+                const Index in_row = window.in_row_start + argmax / pool_width;
+                const Index in_col = window.in_col_start + argmax % pool_width;
+
+                if (in_row < 0 || in_row >= input_height || in_col < 0 || in_col >= input_width)
+                    return;
+
+                input_deltas(window.batch, in_row, in_col, window.channel)
+                    += output_deltas(window.batch, window.out_row, window.out_col, window.channel);
+            });
+        return;
+    }
+
+    const float inv_pool_size = 1.0f / (pool_height * pool_width);
+    for_each_pool_window(batch_size, input_channels, input_height, input_width,
+                         output_height, output_width, pool_height, pool_width,
+                         row_stride, column_stride, padding_height, padding_width,
+        [&](const PoolWindow& window) {
+            const float avg_delta = output_deltas(window.batch, window.out_row, window.out_col, window.channel) * inv_pool_size;
+            for_each_pool_element(window, [&](Index pool_row, Index pool_column) {
+                input_deltas(window.batch, window.in_row_start + pool_row,
+                             window.in_col_start + pool_column, window.channel) += avg_delta;
+            });
+        });
+}
+
+
 void PoolOperator::set(Index input_h, Index input_w, Index input_c,
                Index pool_h, Index pool_w,
                Index new_row_stride, Index new_column_stride,

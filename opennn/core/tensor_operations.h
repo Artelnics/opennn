@@ -172,19 +172,6 @@ void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weigh
 
 
 
-void pooling_2d_forward(const TensorView&, TensorView&, TensorView&,
-                        Index, Index, Index,
-                        Index, Index,
-                        Index, Index,
-                        Index, Index,
-                        bool);
-void pooling_2d_backward(const TensorView&, const TensorView&,
-                         TensorView&,
-                         Index, Index, Index,
-                         Index, Index,
-                         Index, Index,
-                         Index, Index,
-                         bool);
 
 void split_heads(const TensorView&, TensorView&);
 void merge_heads(const TensorView&, TensorView&);

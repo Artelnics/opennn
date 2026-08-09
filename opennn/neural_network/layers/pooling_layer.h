@@ -14,6 +14,22 @@
 namespace opennn
 {
 
+// 2D pooling itself. Pooling is the only caller; the 3D family is a
+// separate implementation despite the shared name.
+void pooling_2d_forward(const TensorView&, TensorView&, TensorView&,
+                        Index, Index, Index,
+                        Index, Index,
+                        Index, Index,
+                        Index, Index,
+                        bool);
+void pooling_2d_backward(const TensorView&, const TensorView&,
+                         TensorView&,
+                         Index, Index, Index,
+                         Index, Index,
+                         Index, Index,
+                         Index, Index,
+                         bool);
+
 struct PoolOperator : Operator
 {
     enum Method { Max, Average };
