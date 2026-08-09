@@ -6,6 +6,7 @@
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/random_utilities.h"
+#include "opennn/neural_network/layers/grouped_query_attention_layer.h"
 
 using namespace opennn;
 

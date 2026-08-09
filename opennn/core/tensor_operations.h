@@ -154,26 +154,10 @@ void linear_backward(const TensorView&, const TensorView&, const TensorView&,
 
 
 
-void rotary_build_tables(TensorView&, TensorView&, Index sequence_length, Index rotary_dim, float base);
-void rotary_forward(const TensorView&, const TensorView&, const TensorView&,
-                    TensorView&, Index head_dim, Index rotary_dim, Index position_offset);
-void rotary_backward(const TensorView&, const TensorView&, const TensorView&,
-                     TensorView&, Index head_dim, Index rotary_dim, Index position_offset);
 
 
-void grouped_attention_forward(const TensorView& query, const TensorView& key, const TensorView& value,
-                               TensorView& output, Index n_query_heads, Index n_kv_heads, Index head_dim,
-                               bool causal, float scale, Index query_position_offset = 0,
-                               float* decode_partials = nullptr, const int* position_device = nullptr);
 
-Index grouped_attention_decode_scratch_floats(Index n_query_heads, Index head_dim);
 
-void qk_rope_cache_append(const TensorView& qkv_row, const TensorView& q_norm_weight,
-                          const TensorView& k_norm_weight, const TensorView& cos_table,
-                          const TensorView& sin_table, TensorView& q_out,
-                          TensorView& key_cache, TensorView& value_cache,
-                          Index n_query_heads, Index n_kv_heads, Index head_dim,
-                          float epsilon, const int* position_device);
 
 void sample_logits_row(const TensorView& logits_row, float temperature, Index top_k, float top_p,
                        unsigned long long seed, unsigned long long step,
@@ -181,8 +165,6 @@ void sample_logits_row(const TensorView& logits_row, float temperature, Index to
 
 Index sample_logits_scratch_floats();
 
-void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorView& output,
-                     Index head_dim, float epsilon);
 
 void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weight, TensorView& output,
                           const TensorView& weight_scale = {});
