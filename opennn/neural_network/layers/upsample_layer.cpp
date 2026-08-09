@@ -88,14 +88,17 @@ void UpsampleOperator::back_propagate(ForwardPropagation&, BackPropagation& back
     const float* delta = output_delta.as<float>();
     float* in_delta = input_delta.as<float>();
 
-    fill_n(in_delta, input_delta.size(), 0.0f);
-
+    // The loop visits every input pixel exactly once, so each one clears its own
+    // channels before accumulating into them. Zeroing the whole gradient up front
+    // instead would be a serial pass over memory the parallel loop rewrites.
     #pragma omp parallel for collapse(2)
     for (Index b = 0; b < batch_size; ++b)
         for (Index ih = 0; ih < input_height; ++ih)
             for (Index iw = 0; iw < input_width; ++iw)
             {
                 float* in_ptr = in_delta + ((b * input_height + ih) * input_width + iw) * channels;
+                fill_n(in_ptr, channels, 0.0f);
+
                 for (Index dh = 0; dh < scale_factor; ++dh)
                     for (Index dw = 0; dw < scale_factor; ++dw)
                     {

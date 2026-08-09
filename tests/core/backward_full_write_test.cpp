@@ -22,6 +22,16 @@
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/device_backend.h"
+#include "opennn/dataset/batch.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/neural_network/back_propagation.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/neural_network/layers/convolutional_layer.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/layers/flatten_layer.h"
+#include "opennn/neural_network/layers/upsample_layer.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/training_strategy/loss.h"
 
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/cuda/kernel.cuh"
@@ -162,6 +172,99 @@ vector<float> pooling_backward_on_gpu(const PoolingCase& test_case)
 
 #endif
 
+}
+
+// The CPU upsample gradient is not reachable on its own - it lives inside
+// UpsampleOperator::back_propagate - so instead of poisoning one buffer this
+// stamps the whole delta arena and asks for the gradient twice. A layer that
+// accumulates into a delta it never cleared reads the stamp and produces a
+// different answer, which makes this a check on every layer in the network, not
+// just the one that prompted it.
+namespace
+{
+
+VectorR gradient_with_stamped_arena(Loss& loss, float stamp)
+{
+    NeuralNetwork* neural_network = loss.get_neural_network();
+    Dataset* dataset = loss.get_dataset();
+
+    const Index samples_number = dataset->get_samples_number("Training");
+
+    Batch batch(samples_number, dataset, neural_network->get_config());
+    batch.fill(dataset->get_sample_indices("Training"),
+               dataset->get_feature_indices("Input"),
+               dataset->get_feature_indices("Decoder"),
+               dataset->get_feature_indices("Target"));
+
+    ForwardPropagation forward_propagation(samples_number, neural_network);
+    BackPropagation back_propagation(samples_number, &loss);
+
+    // Without a joint plan BackPropagation owns the delta arena, which is the
+    // configuration this harness builds.
+    if (!back_propagation.arena.empty())
+        fill_n(back_propagation.arena.as<float>(),
+               size_t(back_propagation.arena.size_in_floats()), stamp);
+
+    neural_network->forward_propagate(batch.get_inputs(), forward_propagation, true);
+    loss.back_propagate(batch, forward_propagation, back_propagation);
+
+    back_propagation.gradient.migrate_to(Device::CPU);
+
+    return back_propagation.gradient.as_vector();
+}
+
+}
+
+TEST(BackwardFullWrite, UpsampleGradientIgnoresPriorArenaContents)
+{
+    const Index samples_number = 5;
+    const Index height = 2, width = 2, channels = 2, kernels = 2, scale = 2, targets = 2;
+    const Shape spatial_shape{height, width, channels};
+
+    TabularDataset dataset(samples_number, spatial_shape, {targets});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<Convolutional>(spatial_shape,
+                                                        Shape{3, 3, channels, kernels},
+                                                        "Identity", Shape{1, 1}, "Same"),
+                             {-1});
+    const Index convolutional_index = neural_network.get_layers_number() - 1;
+
+    // Upsample must sit above a trainable layer, or its input delta never
+    // reaches a gradient and the stamp cannot show up in the comparison.
+    neural_network.add_layer(make_unique<Upsample>(
+                                 neural_network.get_layer(convolutional_index)->get_output_shape(),
+                                 scale, "upsample"),
+                             {convolutional_index});
+    const Index upsample_index = neural_network.get_layers_number() - 1;
+
+    neural_network.add_layer(make_unique<Flatten>(
+                                 neural_network.get_layer(upsample_index)->get_output_shape()),
+                             {upsample_index});
+    const Index flatten_index = neural_network.get_layers_number() - 1;
+
+    neural_network.add_layer(make_unique<opennn::Dense>(
+                                 neural_network.get_layer(flatten_index)->get_output_shape(),
+                                 dataset.get_target_shape()),
+                             {flatten_index});
+    neural_network.compile();
+
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    const VectorR clean = gradient_with_stamped_arena(loss, 0.0f);
+    const VectorR stamped = gradient_with_stamped_arena(loss, 7.5f);
+
+    ASSERT_EQ(clean.size(), stamped.size());
+
+    const float max_abs_diff = (clean - stamped).array().abs().maxCoeff();
+    const float scale_factor = max(1.0f, clean.array().abs().maxCoeff());
+
+    EXPECT_LT(max_abs_diff / scale_factor, 1e-6f)
+        << "the gradient changed when the delta arena was pre-filled, so some "
+           "layer accumulates into a delta it never cleared";
 }
 
 TEST(BackwardFullWrite, AveragePoolingCpuWritesEveryElement)
