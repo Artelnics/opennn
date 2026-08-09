@@ -1,0 +1,104 @@
+#include "tests/pch.h"
+
+#include <cmath>
+#include <vector>
+
+#include "opennn/core/tensor_types.h"
+#include "opennn/core/tensor_operations.h"
+#include "opennn/core/random_utilities.h"
+
+using namespace opennn;
+
+TEST(RopeTest, ForwardMatchesHandComputed)
+{
+    const Index batch = 1, seq = 2, head_dim = 4, rotary_dim = 4;
+    const Index model_dim = head_dim;
+    const float base = 10000.0f;
+
+    vector<float> cos(size_t(seq * rotary_dim));
+    vector<float> sin(size_t(seq * rotary_dim));
+    TensorView cos_view(cos.data(), {seq, rotary_dim});
+    TensorView sin_view(sin.data(), {seq, rotary_dim});
+    rotary_build_tables(cos_view, sin_view, seq, rotary_dim, base);
+
+    vector<float> input  = {1, 2, 3, 4,   1, 0, 0, 0};
+    vector<float> output(input.size(), 0.0f);
+    TensorView in_view(input.data(), {batch, seq, model_dim});
+    TensorView out_view(output.data(), {batch, seq, model_dim});
+
+    rotary_forward(in_view, cos_view, sin_view, out_view, head_dim, rotary_dim, 0);
+
+    EXPECT_NEAR(output[0], 1.0f, 1.0e-5f);
+    EXPECT_NEAR(output[1], 2.0f, 1.0e-5f);
+    EXPECT_NEAR(output[2], 3.0f, 1.0e-5f);
+    EXPECT_NEAR(output[3], 4.0f, 1.0e-5f);
+
+    EXPECT_NEAR(output[4], std::cos(1.0f), 1.0e-5f);
+    EXPECT_NEAR(output[5], 0.0f,           1.0e-5f);
+    EXPECT_NEAR(output[6], std::sin(1.0f), 1.0e-5f);
+    EXPECT_NEAR(output[7], 0.0f,           1.0e-5f);
+}
+
+TEST(RopeTest, PreservesNorm)
+{
+    const Index batch = 2, seq = 5, num_heads = 3, head_dim = 8, rotary_dim = 8;
+    const Index model_dim = num_heads * head_dim;
+    const float base = 1.0e6f;
+
+    vector<float> cos(size_t(seq * rotary_dim)), sin(size_t(seq * rotary_dim));
+    TensorView cos_view(cos.data(), {seq, rotary_dim});
+    TensorView sin_view(sin.data(), {seq, rotary_dim});
+    rotary_build_tables(cos_view, sin_view, seq, rotary_dim, base);
+
+    const size_t total = size_t(batch * seq * model_dim);
+    vector<float> input(total), output(total, 0.0f);
+    for (size_t i = 0; i < total; ++i)
+        input[i] = std::sin(0.017f * float(i)) + 0.3f * std::cos(0.004f * float(i));
+
+    TensorView in_view(input.data(), {batch, seq, model_dim});
+    TensorView out_view(output.data(), {batch, seq, model_dim});
+    rotary_forward(in_view, cos_view, sin_view, out_view, head_dim, rotary_dim, 0);
+
+    const Index rows = batch * seq;
+    for (Index row = 0; row < rows; ++row)
+        for (Index h = 0; h < num_heads; ++h)
+        {
+            double norm_in = 0.0, norm_out = 0.0;
+            const Index base_i = row * model_dim + h * head_dim;
+            for (Index j = 0; j < head_dim; ++j)
+            {
+                norm_in  += double(input[size_t(base_i + j)])  * input[size_t(base_i + j)];
+                norm_out += double(output[size_t(base_i + j)]) * output[size_t(base_i + j)];
+            }
+            EXPECT_NEAR(std::sqrt(norm_out), std::sqrt(norm_in), 1.0e-4f);
+        }
+}
+
+TEST(RopeTest, BackwardIsInverseRotation)
+{
+    const Index batch = 2, seq = 4, num_heads = 2, head_dim = 6, rotary_dim = 6;
+    const Index model_dim = num_heads * head_dim;
+    const float base = 1.0e6f;
+
+    vector<float> cos(size_t(seq * rotary_dim)), sin(size_t(seq * rotary_dim));
+    TensorView cos_view(cos.data(), {seq, rotary_dim});
+    TensorView sin_view(sin.data(), {seq, rotary_dim});
+    rotary_build_tables(cos_view, sin_view, seq, rotary_dim, base);
+
+    const size_t total = size_t(batch * seq * model_dim);
+    vector<float> input(total), rotated(total, 0.0f), recovered(total, 0.0f);
+    for (size_t i = 0; i < total; ++i)
+        input[i] = std::cos(0.011f * float(i)) - 0.5f * std::sin(0.003f * float(i));
+
+    TensorView in_view(input.data(), {batch, seq, model_dim});
+    TensorView rot_view(rotated.data(), {batch, seq, model_dim});
+    TensorView rec_view(recovered.data(), {batch, seq, model_dim});
+
+    rotary_forward(in_view, cos_view, sin_view, rot_view, head_dim, rotary_dim, 0);
+    rotary_backward(rot_view, cos_view, sin_view, rec_view, head_dim, rotary_dim, 0);
+
+    double max_abs = 0.0;
+    for (size_t i = 0; i < total; ++i)
+        max_abs = max(max_abs, abs(double(recovered[i]) - double(input[i])));
+    EXPECT_LT(max_abs, 1.0e-4);
+}

@@ -1,4 +1,4 @@
-#include "pch.h"
+#include "tests/pch.h"
 
 #include "opennn/registry.h"
 #include "opennn/neural_network/layers/layer.h"

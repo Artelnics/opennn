@@ -3,7 +3,7 @@
 //
 //   N U M E R I C A L   D E R I V A T I V E S   ( T E S T   H E L P E R )
 
-#include "numerical_derivatives.h"
+#include "tests/numerical_derivatives.h"
 
 #include "opennn/dataset/dataset.h"
 #include "opennn/neural_network/neural_network.h"
