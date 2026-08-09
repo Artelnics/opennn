@@ -12,9 +12,229 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
+#include "opennn/core/device_backend.h"
+#ifdef OPENNN_HAS_CUDA
+#include "opennn/core/cuda/kernel.cuh"
+#endif
 
 namespace opennn
 {
+
+// Defined below: against the CUDA kernels, or as throwing stubs.
+static void embedding_lookup_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, bool, const TensorView&);
+static void embedding_lookup_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, Index, Index, Index, bool);
+
+static void embedding_lookup_forward_cpu(const TensorView& indices, const TensorView& weights,
+                                  const TensorView& positional_encoding, TensorView& output,
+                                  Index sequence_length, Index embedding_dimension, Index vocabulary_size,
+                                  bool scale_embedding, bool add_positional_encoding)
+{
+    const Index total_tokens = indices.size();
+
+    MatrixMap output_mat        = output.as_flat_matrix();
+    const MatrixMap weights_mat = weights.as_matrix();
+    const float* input_indices  = indices.as<float>();
+
+    static atomic<bool> out_of_range_warned{false};
+
+    #pragma omp parallel for schedule(static)
+    for (Index i = 0; i < total_tokens; ++i)
+    {
+        const Index token_id = static_cast<Index>(input_indices[i]);
+
+        if (token_id == 0)
+        {
+            output_mat.row(i).setZero();
+            continue;
+        }
+
+        if (token_id < 0 || token_id >= vocabulary_size)
+        {
+            if (!out_of_range_warned.exchange(true))
+                cerr << format("EmbeddingLookup warning: token id {} out of range [0, {}); zeroing row. Further warnings suppressed.\n", token_id, vocabulary_size);
+            output_mat.row(i).setZero();
+            continue;
+        }
+
+        output_mat.row(i).noalias() = weights_mat.row(token_id);
+
+        if (scale_embedding)
+            output_mat.row(i) *= sqrt(to_type(embedding_dimension));
+
+        if (add_positional_encoding)
+            output_mat.row(i) += positional_encoding.as_matrix().row(i % sequence_length);
+    }
+}
+
+static void embedding_lookup_backward_cpu(const TensorView& indices, const TensorView& output_delta,
+                                   const TensorView& weight_gradient, const TensorView& positional_gradient,
+                                   Index sequence_length, Index embedding_dimension, Index vocabulary_size,
+                                   bool scale_embedding)
+{
+    const Index total_elements = indices.size();
+
+    MatrixMap output_delta_map = output_delta.as_flat_matrix();
+    MatrixMap weight_gradients = weight_gradient.as_matrix().setZero();
+    const float scale = scale_embedding ? sqrt(to_type(embedding_dimension)) : 1.0f;
+
+    const bool accumulate_positional = !positional_gradient.empty() && positional_gradient.data != nullptr;
+
+    for (Index token_index = 0; token_index < total_elements; ++token_index)
+    {
+        const Index vocabulary_index = static_cast<Index>(indices.as<float>()[token_index]);
+
+        if (vocabulary_index <= 0 || vocabulary_index >= vocabulary_size)
+            continue;
+
+        weight_gradients.row(vocabulary_index).noalias() += scale * output_delta_map.row(token_index);
+    }
+
+    if (accumulate_positional)
+    {
+        MatrixMap positional_gradients = positional_gradient.as_matrix();
+        positional_gradients.setZero();
+        for (Index token_index = 0; token_index < total_elements; ++token_index)
+        {
+            const Index vocabulary_index = static_cast<Index>(indices.as<float>()[token_index]);
+            if (vocabulary_index <= 0 || vocabulary_index >= vocabulary_size)
+                continue;
+            positional_gradients.row(token_index % sequence_length).noalias() += output_delta_map.row(token_index);
+        }
+    }
+}
+
+void embedding_lookup_forward(const TensorView& indices, const TensorView& weights,
+                              const TensorView& positional_encoding, TensorView& output,
+                              Index sequence_length, Index embedding_dimension, Index vocabulary_size,
+                              bool scale_embedding, bool add_positional_encoding,
+                              const TensorView& weight_scale)
+{
+    if (output.is_cuda())
+    {
+        embedding_lookup_forward_gpu(indices, weights, positional_encoding, output,
+                                     sequence_length, embedding_dimension, vocabulary_size,
+                                     scale_embedding, add_positional_encoding, weight_scale);
+        return;
+    }
+    throw_if(weights.is_int8(), "embedding_lookup_forward: INT8 weights are CUDA-only.");
+    embedding_lookup_forward_cpu(indices, weights, positional_encoding, output,
+                                 sequence_length, embedding_dimension, vocabulary_size,
+                                 scale_embedding, add_positional_encoding);
+}
+
+void embedding_lookup_backward(const TensorView& indices, const TensorView& output_delta,
+                               const TensorView& weight_gradient, const TensorView& positional_gradient,
+                               Index sequence_length, Index embedding_dimension, Index vocabulary_size,
+                               bool scale_embedding)
+{
+    if (output_delta.is_cuda())
+    {
+        embedding_lookup_backward_gpu(indices, output_delta, weight_gradient, positional_gradient,
+                                      sequence_length, embedding_dimension, vocabulary_size, scale_embedding);
+        return;
+    }
+    embedding_lookup_backward_cpu(indices, output_delta, weight_gradient, positional_gradient,
+                                  sequence_length,
+                                  embedding_dimension, vocabulary_size, scale_embedding);
+}
+
+void compute_token_valid_lengths(const TensorView& indices, Index sequence_length, vector<Index>& valid_lengths)
+{
+    const Index total = indices.size();
+    const Index batch_size = sequence_length > 0 ? total / sequence_length : 0;
+
+    valid_lengths.assign(batch_size, sequence_length);
+    if (batch_size == 0) return;
+
+    const float* ids = indices.as<float>();
+    vector<float> host;
+#ifdef OPENNN_HAS_CUDA
+    if (indices.is_cuda())
+    {
+        host.resize(size_t(total));
+        copy_device_to_host_float(indices.data, indices.type, total, host.data(), Backend::get_compute_stream());
+        ids = host.data();
+    }
+#endif
+
+    for (Index b = 0; b < batch_size; ++b)
+    {
+        Index count = 0;
+        const float* row = ids + b * sequence_length;
+        for (Index s = 0; s < sequence_length; ++s)
+            if (static_cast<Index>(row[s]) != 0) ++count;
+        valid_lengths[b] = count;
+    }
+}
+
+#ifdef OPENNN_HAS_CUDA
+
+static void embedding_lookup_forward_gpu(const TensorView& indices, const TensorView& weights,
+                                  const TensorView& positional_encoding, TensorView& output,
+                                  Index sequence_length, Index embedding_dimension, Index vocabulary_size,
+                                  bool scale_embedding, bool add_positional_encoding,
+                                  const TensorView& weight_scale)
+{
+    if (weights.is_int8())
+    {
+        throw_if(weight_scale.empty(),
+                 "embedding_lookup_forward: INT8 weights require a per-row scale vector.");
+        output.dispatch([&]<typename T>() {
+            embedding_forward_w8_cuda<T>(
+                output.size(),
+                indices.as<float>(),
+                weights.as<int8_t>(),
+                weight_scale.as<float>(),
+                add_positional_encoding ? positional_encoding.as<float>() : nullptr,
+                output.as<T>(),
+                to_int(sequence_length), to_int(embedding_dimension), to_int(vocabulary_size),
+                scale_embedding);
+        });
+        return;
+    }
+
+    output.dispatch([&]<typename T>() {
+        weights.dispatch([&]<typename TW>() {
+            embedding_forward_cuda<TW, T>(
+                output.size(),
+                indices.as<float>(),
+                weights.as<TW>(),
+                add_positional_encoding ? positional_encoding.as<float>() : nullptr,
+                output.as<T>(),
+                to_int(sequence_length), to_int(embedding_dimension), to_int(vocabulary_size),
+                scale_embedding);
+        });
+    });
+}
+
+static void embedding_lookup_backward_gpu(const TensorView& indices, const TensorView& output_delta,
+                                   const TensorView& weight_gradient, const TensorView& positional_gradient,
+                                   Index sequence_length, Index embedding_dimension, Index vocabulary_size,
+                                   bool scale_embedding)
+{
+    weight_gradient.set_zero_async();
+
+    const bool accumulate_positional = !positional_gradient.empty() && positional_gradient.data != nullptr;
+    if (accumulate_positional) positional_gradient.set_zero_async();
+
+    output_delta.dispatch([&]<typename T>() {
+        embedding_backward_cuda<T>(
+            output_delta.size(),
+            indices.as<float>(),
+            output_delta.as<T>(),
+            weight_gradient.as<float>(),
+            accumulate_positional ? positional_gradient.as<float>() : nullptr,
+            to_int(sequence_length), to_int(embedding_dimension), to_int(vocabulary_size), scale_embedding);
+    });
+}
+
+#else
+
+static void embedding_lookup_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, bool, const TensorView&) { throw runtime_error("embedding_lookup_forward_gpu: CUDA support not compiled in."); }
+static void embedding_lookup_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, Index, Index, Index, bool) { throw runtime_error("embedding_lookup_backward_gpu: CUDA support not compiled in."); }
+
+#endif
+
 
 void EmbeddingLookupOperator::set(Index new_vocabulary_size, Index new_sequence_length, Index new_embedding_dimension)
 {

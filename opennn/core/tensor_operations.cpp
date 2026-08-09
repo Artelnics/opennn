@@ -190,12 +190,8 @@ ActivationFunction activation_function_from_string(const string& name)
     X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool, const TensorView*)) \
     X(rope_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index)) \
     X(rope_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index)) \
-    X(swiglu_forward_gpu, (const TensorView&, const TensorView&, TensorView&)) \
-    X(swiglu_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&)) \
     X(grouped_attention_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, float, Index, float*, const int*)) \
     X(qk_norm_gpu, (const TensorView&, const TensorView&, TensorView&, Index, float)) \
-    X(embedding_lookup_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, bool, const TensorView&)) \
-    X(embedding_lookup_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, Index, Index, Index, bool)) \
     X(split_heads_gpu, (const TensorView&, TensorView&)) \
     X(merge_heads_gpu, (const TensorView&, TensorView&))
 
@@ -773,60 +769,6 @@ void rotary_backward(const TensorView& output_delta, const TensorView& cos_table
     rotary_backward_cpu(output_delta, cos_table, sin_table, input_delta, head_dim, rotary_dim, position_offset);
 }
 
-static void swiglu_forward_cpu(const TensorView& gate, const TensorView& up, TensorView& output)
-{
-    const Index n = gate.size();
-    const float* g = gate.as<float>();
-    const float* u = up.as<float>();
-    float* o       = output.as<float>();
-
-    const bool parallel = n >= 65536;
-
-    #pragma omp parallel for schedule(static) if(parallel)
-    for (Index i = 0; i < n; ++i)
-    {
-        const float gi = g[i];
-        const float silu = gi / (1.0f + expf(-gi));
-        o[i] = silu * u[i];
-    }
-}
-
-static void swiglu_backward_cpu(const TensorView& output_delta, const TensorView& gate, const TensorView& up,
-                         TensorView& gate_delta, TensorView& up_delta)
-{
-    const Index n = output_delta.size();
-    const float* d = output_delta.as<float>();
-    const float* g = gate.as<float>();
-    const float* u = up.as<float>();
-    float* dg = gate_delta.empty() ? nullptr : gate_delta.as<float>();
-    float* du = up_delta.empty()   ? nullptr : up_delta.as<float>();
-
-    const bool parallel = n >= 65536;
-
-    #pragma omp parallel for schedule(static) if(parallel)
-    for (Index i = 0; i < n; ++i)
-    {
-        const float gi  = g[i];
-        const float sig = 1.0f / (1.0f + expf(-gi));
-        const float silu = gi * sig;
-        if (du) du[i] = d[i] * silu;
-
-        if (dg) dg[i] = d[i] * u[i] * sig * (1.0f + gi * (1.0f - sig));
-    }
-}
-
-void swiglu_forward(const TensorView& gate, const TensorView& up, TensorView& output)
-{
-    if (gate.is_cuda()) { swiglu_forward_gpu(gate, up, output); return; }
-    swiglu_forward_cpu(gate, up, output);
-}
-
-void swiglu_backward(const TensorView& output_delta, const TensorView& gate, const TensorView& up,
-                     TensorView& gate_delta, TensorView& up_delta)
-{
-    if (output_delta.is_cuda()) { swiglu_backward_gpu(output_delta, gate, up, gate_delta, up_delta); return; }
-    swiglu_backward_cpu(output_delta, gate, up, gate_delta, up_delta);
-}
 
 void grouped_attention_forward(const TensorView& query, const TensorView& key, const TensorView& value,
                                TensorView& output, Index n_query_heads, Index n_kv_heads, Index head_dim,
@@ -996,120 +938,6 @@ void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weigh
         input.as_flat_matrix() * embed_weight.as_matrix().transpose();
 }
 
-static void embedding_lookup_forward_cpu(const TensorView& indices, const TensorView& weights,
-                                  const TensorView& positional_encoding, TensorView& output,
-                                  Index sequence_length, Index embedding_dimension, Index vocabulary_size,
-                                  bool scale_embedding, bool add_positional_encoding)
-{
-    const Index total_tokens = indices.size();
-
-    MatrixMap output_mat        = output.as_flat_matrix();
-    const MatrixMap weights_mat = weights.as_matrix();
-    const float* input_indices  = indices.as<float>();
-
-    static atomic<bool> out_of_range_warned{false};
-
-    #pragma omp parallel for schedule(static)
-    for (Index i = 0; i < total_tokens; ++i)
-    {
-        const Index token_id = static_cast<Index>(input_indices[i]);
-
-        if (token_id == 0)
-        {
-            output_mat.row(i).setZero();
-            continue;
-        }
-
-        if (token_id < 0 || token_id >= vocabulary_size)
-        {
-            if (!out_of_range_warned.exchange(true))
-                cerr << format("EmbeddingLookup warning: token id {} out of range [0, {}); zeroing row. Further warnings suppressed.\n", token_id, vocabulary_size);
-            output_mat.row(i).setZero();
-            continue;
-        }
-
-        output_mat.row(i).noalias() = weights_mat.row(token_id);
-
-        if (scale_embedding)
-            output_mat.row(i) *= sqrt(to_type(embedding_dimension));
-
-        if (add_positional_encoding)
-            output_mat.row(i) += positional_encoding.as_matrix().row(i % sequence_length);
-    }
-}
-
-static void embedding_lookup_backward_cpu(const TensorView& indices, const TensorView& output_delta,
-                                   const TensorView& weight_gradient, const TensorView& positional_gradient,
-                                   Index sequence_length, Index embedding_dimension, Index vocabulary_size,
-                                   bool scale_embedding)
-{
-    const Index total_elements = indices.size();
-
-    MatrixMap output_delta_map = output_delta.as_flat_matrix();
-    MatrixMap weight_gradients = weight_gradient.as_matrix().setZero();
-    const float scale = scale_embedding ? sqrt(to_type(embedding_dimension)) : 1.0f;
-
-    const bool accumulate_positional = !positional_gradient.empty() && positional_gradient.data != nullptr;
-
-    for (Index token_index = 0; token_index < total_elements; ++token_index)
-    {
-        const Index vocabulary_index = static_cast<Index>(indices.as<float>()[token_index]);
-
-        if (vocabulary_index <= 0 || vocabulary_index >= vocabulary_size)
-            continue;
-
-        weight_gradients.row(vocabulary_index).noalias() += scale * output_delta_map.row(token_index);
-    }
-
-    if (accumulate_positional)
-    {
-        MatrixMap positional_gradients = positional_gradient.as_matrix();
-        positional_gradients.setZero();
-        for (Index token_index = 0; token_index < total_elements; ++token_index)
-        {
-            const Index vocabulary_index = static_cast<Index>(indices.as<float>()[token_index]);
-            if (vocabulary_index <= 0 || vocabulary_index >= vocabulary_size)
-                continue;
-            positional_gradients.row(token_index % sequence_length).noalias() += output_delta_map.row(token_index);
-        }
-    }
-}
-
-void embedding_lookup_forward(const TensorView& indices, const TensorView& weights,
-                              const TensorView& positional_encoding, TensorView& output,
-                              Index sequence_length, Index embedding_dimension, Index vocabulary_size,
-                              bool scale_embedding, bool add_positional_encoding,
-                              const TensorView& weight_scale)
-{
-    if (output.is_cuda())
-    {
-        embedding_lookup_forward_gpu(indices, weights, positional_encoding, output,
-                                     sequence_length, embedding_dimension, vocabulary_size,
-                                     scale_embedding, add_positional_encoding, weight_scale);
-        return;
-    }
-    throw_if(weights.is_int8(), "embedding_lookup_forward: INT8 weights are CUDA-only.");
-    embedding_lookup_forward_cpu(indices, weights, positional_encoding, output,
-                                 sequence_length, embedding_dimension, vocabulary_size,
-                                 scale_embedding, add_positional_encoding);
-}
-
-void embedding_lookup_backward(const TensorView& indices, const TensorView& output_delta,
-                               const TensorView& weight_gradient, const TensorView& positional_gradient,
-                               Index sequence_length, Index embedding_dimension, Index vocabulary_size,
-                               bool scale_embedding)
-{
-    if (output_delta.is_cuda())
-    {
-        embedding_lookup_backward_gpu(indices, output_delta, weight_gradient, positional_gradient,
-                                      sequence_length, embedding_dimension, vocabulary_size, scale_embedding);
-        return;
-    }
-    embedding_lookup_backward_cpu(indices, output_delta, weight_gradient, positional_gradient,
-                                  sequence_length,
-                                  embedding_dimension, vocabulary_size, scale_embedding);
-}
-
 
 namespace {
 
@@ -1270,35 +1098,6 @@ void pooling_2d_backward(const TensorView& output_delta, const TensorView& maxim
         });
 }
 
-
-void compute_token_valid_lengths(const TensorView& indices, Index sequence_length, vector<Index>& valid_lengths)
-{
-    const Index total = indices.size();
-    const Index batch_size = sequence_length > 0 ? total / sequence_length : 0;
-
-    valid_lengths.assign(batch_size, sequence_length);
-    if (batch_size == 0) return;
-
-    const float* ids = indices.as<float>();
-    vector<float> host;
-#ifdef OPENNN_HAS_CUDA
-    if (indices.is_cuda())
-    {
-        host.resize(size_t(total));
-        copy_device_to_host_float(indices.data, indices.type, total, host.data(), Backend::get_compute_stream());
-        ids = host.data();
-    }
-#endif
-
-    for (Index b = 0; b < batch_size; ++b)
-    {
-        Index count = 0;
-        const float* row = ids + b * sequence_length;
-        for (Index s = 0; s < sequence_length; ++s)
-            if (static_cast<Index>(row[s]) != 0) ++count;
-        valid_lengths[b] = count;
-    }
-}
 
 static void transpose_middle_axes(const float* src, float* dst,
                                   Index batch_size, Index src_m1, Index src_m2, Index D)
@@ -1671,25 +1470,6 @@ static void rope_backward_gpu(const TensorView& output_delta, const TensorView& 
     });
 }
 
-static void swiglu_forward_gpu(const TensorView& gate, const TensorView& up, TensorView& output)
-{
-    const int n = to_int(gate.size());
-    output.dispatch([&]<typename T>() {
-        swiglu_forward_cuda<T>(n, gate.as<T>(), up.as<T>(), output.as<T>());
-    });
-}
-
-static void swiglu_backward_gpu(const TensorView& output_delta, const TensorView& gate, const TensorView& up,
-                                TensorView& gate_delta, TensorView& up_delta)
-{
-    const int n = to_int(output_delta.size());
-    output_delta.dispatch([&]<typename T>() {
-        T* gate_delta_data = gate_delta.empty() ? nullptr : gate_delta.as<T>();
-        T* up_delta_data   = up_delta.empty()   ? nullptr : up_delta.as<T>();
-        swiglu_backward_cuda<T>(n, output_delta.as<T>(), gate.as<T>(), up.as<T>(),
-                                gate_delta_data, up_delta_data);
-    });
-}
 
 Index grouped_attention_decode_scratch_floats(Index n_query_heads, Index head_dim)
 {
@@ -1909,65 +1689,6 @@ static void qk_norm_gpu(const TensorView& input, const TensorView& weight, Tenso
     output.dispatch([&]<typename T>() {
         rmsnorm_forward_cuda<T>(rows, to_int(head_dim), input.as<T>(), output.as<T>(),
                                 nullptr, weight.as<float>(), epsilon);
-    });
-}
-
-static void embedding_lookup_forward_gpu(const TensorView& indices, const TensorView& weights,
-                                  const TensorView& positional_encoding, TensorView& output,
-                                  Index sequence_length, Index embedding_dimension, Index vocabulary_size,
-                                  bool scale_embedding, bool add_positional_encoding,
-                                  const TensorView& weight_scale)
-{
-    if (weights.is_int8())
-    {
-        throw_if(weight_scale.empty(),
-                 "embedding_lookup_forward: INT8 weights require a per-row scale vector.");
-        output.dispatch([&]<typename T>() {
-            embedding_forward_w8_cuda<T>(
-                output.size(),
-                indices.as<float>(),
-                weights.as<int8_t>(),
-                weight_scale.as<float>(),
-                add_positional_encoding ? positional_encoding.as<float>() : nullptr,
-                output.as<T>(),
-                to_int(sequence_length), to_int(embedding_dimension), to_int(vocabulary_size),
-                scale_embedding);
-        });
-        return;
-    }
-
-    output.dispatch([&]<typename T>() {
-        weights.dispatch([&]<typename TW>() {
-            embedding_forward_cuda<TW, T>(
-                output.size(),
-                indices.as<float>(),
-                weights.as<TW>(),
-                add_positional_encoding ? positional_encoding.as<float>() : nullptr,
-                output.as<T>(),
-                to_int(sequence_length), to_int(embedding_dimension), to_int(vocabulary_size),
-                scale_embedding);
-        });
-    });
-}
-
-static void embedding_lookup_backward_gpu(const TensorView& indices, const TensorView& output_delta,
-                                   const TensorView& weight_gradient, const TensorView& positional_gradient,
-                                   Index sequence_length, Index embedding_dimension, Index vocabulary_size,
-                                   bool scale_embedding)
-{
-    weight_gradient.set_zero_async();
-
-    const bool accumulate_positional = !positional_gradient.empty() && positional_gradient.data != nullptr;
-    if (accumulate_positional) positional_gradient.set_zero_async();
-
-    output_delta.dispatch([&]<typename T>() {
-        embedding_backward_cuda<T>(
-            output_delta.size(),
-            indices.as<float>(),
-            output_delta.as<T>(),
-            weight_gradient.as<float>(),
-            accumulate_positional ? positional_gradient.as<float>() : nullptr,
-            to_int(sequence_length), to_int(embedding_dimension), to_int(vocabulary_size), scale_embedding);
     });
 }
 

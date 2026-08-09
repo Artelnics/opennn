@@ -160,9 +160,6 @@ void rotary_forward(const TensorView&, const TensorView&, const TensorView&,
 void rotary_backward(const TensorView&, const TensorView&, const TensorView&,
                      TensorView&, Index head_dim, Index rotary_dim, Index position_offset);
 
-void swiglu_forward(const TensorView&, const TensorView&, TensorView&);
-void swiglu_backward(const TensorView&, const TensorView&, const TensorView&,
-                     TensorView&, TensorView&);
 
 void grouped_attention_forward(const TensorView& query, const TensorView& key, const TensorView& value,
                                TensorView& output, Index n_query_heads, Index n_kv_heads, Index head_dim,
@@ -190,18 +187,8 @@ void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorVi
 void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weight, TensorView& output,
                           const TensorView& weight_scale = {});
 
-void embedding_lookup_forward(const TensorView&, const TensorView&,
-                              const TensorView&, TensorView&,
-                              Index, Index, Index,
-                              bool, bool,
-                              const TensorView& weight_scale = {});
-void embedding_lookup_backward(const TensorView&, const TensorView&,
-                               const TensorView&, const TensorView&,
-                               Index, Index, Index,
-                               bool);
 
 
-void compute_token_valid_lengths(const TensorView&, Index, vector<Index>&);
 
 void pooling_2d_forward(const TensorView&, TensorView&, TensorView&,
                         Index, Index, Index,
