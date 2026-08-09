@@ -152,24 +152,7 @@ void linear_backward(const TensorView&, const TensorView&, const TensorView&,
                      TensorView&, bool accumulate_input_delta = false,
                      const TensorView* drelu_mask = nullptr);
 
-void layer_normalization_forward(const TensorView&, const TensorView&, const TensorView&,
-                        TensorView&, TensorView&,
-                        TensorView&, TensorView&);
-void layer_normalization_add_forward(const TensorView&, const TensorView&,
-                            const TensorView&, const TensorView&,
-                            TensorView&, TensorView&,
-                            TensorView&, TensorView&, TensorView&);
-void layer_normalization_backward(const TensorView&, const TensorView&,
-                         const TensorView&, const TensorView&,
-                         const TensorView&, const TensorView&,
-                         const TensorView&, const TensorView&,
-                         TensorView&);
 
-void rms_normalization_forward(const TensorView&, const TensorView&,
-                      TensorView&, TensorView&, TensorView&, float);
-void rms_normalization_backward(const TensorView&, const TensorView&,
-                       const TensorView&, const TensorView&, const TensorView&,
-                       const TensorView&, TensorView&);
 
 void rotary_build_tables(TensorView&, TensorView&, Index sequence_length, Index rotary_dim, float base);
 void rotary_forward(const TensorView&, const TensorView&, const TensorView&,

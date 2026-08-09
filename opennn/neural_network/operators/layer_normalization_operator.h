@@ -15,6 +15,26 @@ namespace opennn
 
 enum class NormalizationMethod { LayerNorm, RMS };
 
+// The normalization kernels. LayerNormalizationOperator is their only
+// caller, so they live beside it rather than in core.
+void layer_normalization_forward(const TensorView&, const TensorView&, const TensorView&,
+                        TensorView&, TensorView&,
+                        TensorView&, TensorView&);
+void layer_normalization_add_forward(const TensorView&, const TensorView&,
+                            const TensorView&, const TensorView&,
+                            TensorView&, TensorView&,
+                            TensorView&, TensorView&, TensorView&);
+void layer_normalization_backward(const TensorView&, const TensorView&,
+                         const TensorView&, const TensorView&,
+                         const TensorView&, const TensorView&,
+                         const TensorView&, const TensorView&,
+                         TensorView&);
+void rms_normalization_forward(const TensorView&, const TensorView&,
+                      TensorView&, TensorView&, TensorView&, float);
+void rms_normalization_backward(const TensorView&, const TensorView&,
+                       const TensorView&, const TensorView&, const TensorView&,
+                       const TensorView&, TensorView&);
+
 struct LayerNormalizationOperator : Operator
 {
     Index sequence_length     = 0;
