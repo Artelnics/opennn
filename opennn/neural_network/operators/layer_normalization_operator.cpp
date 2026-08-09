@@ -10,7 +10,6 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
-#include "opennn/core/device_backend.h"
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/cuda/kernel.cuh"
 #endif
