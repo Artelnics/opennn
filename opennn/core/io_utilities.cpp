@@ -280,13 +280,13 @@ void FileReader::open(const filesystem::path& path)
     }
 }
 
-void FileReader::read_at(const span<byte> buffer, const uint64_t offset) const
+void FileReader::read_at(const span<std::byte> buffer, const uint64_t offset) const
 {
     throw_if(!is_open(), "FileReader::read_at: file not open.");
 
     const size_t bytes = buffer.size_bytes();
     size_t total = 0;
-    byte* const dst = buffer.data();
+    std::byte* const dst = buffer.data();
     while (total < bytes)
     {
         const uint64_t current_offset = offset + total;
@@ -317,13 +317,13 @@ void FileReader::open(const filesystem::path& path)
                     path.string(), errno);
 }
 
-void FileReader::read_at(const span<byte> buffer, const uint64_t offset) const
+void FileReader::read_at(const span<std::byte> buffer, const uint64_t offset) const
 {
     throw_if(!is_open(), "FileReader::read_at: file not open.");
 
     const size_t bytes = buffer.size_bytes();
     size_t total = 0;
-    byte* const dst = buffer.data();
+    std::byte* const dst = buffer.data();
     while (total < bytes)
     {
         const ssize_t n = ::pread(fd_, dst + total, bytes - total, off_t(offset + total));
@@ -442,7 +442,7 @@ void FileWriter::open(const filesystem::path& tmp_path)
              "FileWriter: cannot open {}", tmp_path.string());
 }
 
-void FileWriter::write(const span<const byte> buffer)
+void FileWriter::write(const span<const std::byte> buffer)
 {
     throw_if(!stream_.is_open(), "FileWriter::write: not open.");
     if (buffer.empty()) return;

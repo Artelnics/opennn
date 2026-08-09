@@ -266,7 +266,7 @@ RunResult train_one(NeuralNetwork* nn,
         r.train_err     = results.get_training_error();
         r.val_err       = results.get_validation_error();
         r.seconds       = chrono::duration<double>(t1 - t0).count();
-        r.restored_best = results.restored_best_parameters;
+        r.restored_best = results.restored_epoch.has_value();
 
         const Index target_width = ds->get_target_shape().size();
 

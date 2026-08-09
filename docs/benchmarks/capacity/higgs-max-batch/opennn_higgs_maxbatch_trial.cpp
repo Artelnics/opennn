@@ -420,7 +420,7 @@ int main(int argc, char* argv[])
             if (tail_rows > 0)
             {
                 tail_propagation = make_unique<ForwardPropagation>();
-                tail_propagation->set(tail_rows, network.get(), &tile_propagation.data);
+                tail_propagation->set(tail_rows, network.get(), &tile_propagation.arena);
             }
 
             // Single-tile (untiled) runs read the outputs straight from the

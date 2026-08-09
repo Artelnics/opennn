@@ -46,13 +46,13 @@ public:
     void close();
     bool is_open() const;
 
-    void read_at(span<byte>, uint64_t offset) const;
+    void read_at(span<std::byte>, uint64_t offset) const;
 
     template <typename T, size_t Extent>
         requires (!is_const_v<T> && is_trivially_copyable_v<T>)
     void read_at(const span<T, Extent> buffer, const uint64_t offset) const
     {
-        read_at(span<byte>(as_writable_bytes(buffer)), offset);
+        read_at(span<std::byte>(as_writable_bytes(buffer)), offset);
     }
 
     uint64_t file_size() const;
@@ -89,13 +89,13 @@ public:
 
     void open(const filesystem::path&);
 
-    void write(span<const byte>);
+    void write(span<const std::byte>);
 
     template <typename T, size_t Extent>
         requires is_trivially_copyable_v<remove_const_t<T>>
     void write(const span<T, Extent> buffer)
     {
-        write(span<const byte>(as_bytes(buffer)));
+        write(span<const std::byte>(as_bytes(buffer)));
     }
 
     void finish_with_rename(const filesystem::path&);

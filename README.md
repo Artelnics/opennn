@@ -37,7 +37,8 @@ OpenNN is a high-performance C++ library for neural networks, deep learning, and
 
 - `opennn/` - core library sources, public headers, and CMake package export rules
 - `examples/` - example applications and bundled small example datasets
-- `tests/` - GoogleTest-based unit and validation tests
+- `tests/` - GoogleTest-based unit and validation tests, in folders mirroring
+  the library so each test sits beside what it exercises
 - `docs/benchmarks/` - reproducible benchmark suite and benchmark methodology
 
 The library itself is split by responsibility, and every include spells out the
@@ -53,7 +54,10 @@ folder it comes from — `#include "opennn/neural_network/layers/dense_layer.h"`
 - `opennn/testing_analysis/` - testing analysis
 
 They depend on each other in that order, top to bottom: `core` knows nothing
-about the rest, and `testing_analysis` may use everything above it.
+about the rest, and `testing_analysis` may use everything above it. Datasets
+sit above the network because the language datasets tokenize and the YOLO
+dataset builds detection targets, while nothing in `neural_network/` includes
+a dataset.
 
 ## Quick start
 

@@ -169,8 +169,7 @@ int main(int argc, char* argv[])
                     device::synchronize(stream);
                     device::StreamCapture capture(stream);
                     transformer.calculate_outputs_resident(inputs, forward_propagation, false);
-                    const device::GraphHandle graph = capture.end();
-                    device::instantiate_or_update(infer_graph, graph.get());
+                    capture.end(infer_graph);
                     cudaDeviceSynchronize();
                     cout << "cuda_graph=1\n";
                 }

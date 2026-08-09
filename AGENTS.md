@@ -14,16 +14,18 @@ To get a working MSVC environment (`cl`, `link`, `INCLUDE`/`LIB`), source one of
 
 ### Existing build directories
 
-| Dir | Generator | Config | Tests | Notes |
-|---|---|---|---|---|
-| `build` | Visual Studio 18 2026 | multi-config | OFF | needs `--config Release` on every `cmake --build` |
-| `build-ninja` | Ninja | Release | ON | has a working `bin/run_tests.exe` already built; single-config, no `--config` flag needed |
-| `build-fresh` | Ninja | Release | OFF | |
-| `build-codex-tests` | Visual Studio | — | — | has a `RUN_TESTS` project but no `CMakeCache.txt` found; treat as possibly stale before relying on it |
-| `build-cpu-audit`, `build-cuda-audit` | — | — | — | not inspected; audit/benchmark builds, check before assuming purpose |
+Two, both Ninja + Release + single-config, so `cmake --build <dir>` needs no
+`--config` flag, and both have `bin/opennn_tests.exe`:
 
-Prefer `build-ninja` when you need both tests and a single-config build. The
-`run-examples` skill assumes this directory.
+| Dir | CUDA | Also builds | Use it for |
+| --- | --- | --- | --- |
+| `build-consolidated` | OFF | tests, examples | the fast CPU check |
+| `build-resnet-capacity` | ON | tests, examples, benchmarks | anything touching GPU paths |
+
+A library change should be built and run in **both** before you call it done.
+Older directories (`build-ninja`, `build-fresh`, `build-cpu-audit`,
+`build-std-cleanup`, `build_cmake`, ...) referred to here in the past no longer
+exist; do not go looking for them.
 
 ## Project-local skills
 
@@ -57,9 +59,17 @@ nothing under `neural_network/` includes a dataset.
 `registry.{h,cpp}` stays at the root because it constructs `Layer`, `Optimizer`
 and `InputsSelection` — it spans three folders and belongs above all of them.
 
+`tests/` mirrors those folders one for one, so a test sits at the same
+relative path as what it exercises — `dense_layer.cpp` is tested by
+`tests/neural_network/layers/dense_layer_test.cpp`. Only the harness stays at
+`tests/`: `pch`, `numerical_derivatives`, `test.cpp`, and `registry_test.cpp`
+beside the `registry` it covers. A new test goes in the folder of the thing it
+tests; CMake globs recursively, so nothing else needs touching.
+
 Every include names its folder, from the repo root, with no exceptions:
-`#include "opennn/neural_network/layers/dense_layer.h"`. Bare neighbour
-includes do not resolve — only the repo root is on the include path.
+`#include "opennn/neural_network/layers/dense_layer.h"`, and
+`#include "tests/pch.h"` for the harness. Bare neighbour includes do not
+resolve — only the repo root is on the include path.
 
 Two known upward includes remain, both `.cpp`-only, both deliberate:
 `back_propagation.cpp` needs `Loss` (its header only forward-declares it), and
