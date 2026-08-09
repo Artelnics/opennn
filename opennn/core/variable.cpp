@@ -90,5 +90,4 @@ vector<string> get_variable_feature_names(const vector<Variable>& variables)
 
     return feature_names;
 }
-
 }

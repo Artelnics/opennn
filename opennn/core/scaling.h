@@ -13,7 +13,6 @@
 
 namespace opennn
 {
-
     template<typename X>
     auto scale_minimum_maximum_formula(const X& x, const Descriptives& d, float min_range, float max_range)
     {

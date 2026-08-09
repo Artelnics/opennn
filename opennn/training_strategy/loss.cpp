@@ -1512,9 +1512,8 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     {
     case MeanSquaredError:
     case NormalizedSquaredError:
-        input.dispatch([&](auto tag)
+        input.dispatch([&]<typename TIn>()
         {
-            using TIn = decltype(tag);
             scaled_diff_cuda_typed<TIn, float>(input.size(), input.as<TIn>(), target.as_float(),
                                                1.0f, workspace);
         });
@@ -1525,9 +1524,8 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         return true;
 
     case WeightedSquaredError:
-        input.dispatch([&](auto tag)
+        input.dispatch([&]<typename T>()
         {
-            using T = decltype(tag);
             weighted_squared_error_cuda<T>(input.size(), workspace, target.as<float>(), input.as<T>(),
                                            positives_weight, negatives_weight);
         });
@@ -1535,9 +1533,8 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         return true;
 
     case CrossEntropy:
-        input.dispatch([&](auto tag)
+        input.dispatch([&]<typename T>()
         {
-            using T = decltype(tag);
             if (input.shape.back() == 1)
                 binary_cross_entropy_cuda<T>(input.size(), workspace, target.as<float>(), input.as<T>(), EPSILON);
             else
@@ -1554,9 +1551,8 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         float* valid_mask_device = workspace + token_count;
         float* correct_mask_device = workspace + 2 * token_count;
 
-        input.dispatch([&](auto tag)
+        input.dispatch([&]<typename T>()
         {
-            using T = decltype(tag);
             cross_entropy_3d_multiple_forward_cuda<T>(token_count, to_int(vocabulary_size),
                 input.as<T>(), target.as<float>(), workspace, valid_mask_device, correct_mask_device, EPSILON);
         });

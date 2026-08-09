@@ -518,9 +518,8 @@ void BatchNormalizationOperator::apply_inference_gpu(const TensorView& input, Te
 {
     PROFILE_SCOPE("op:bn_infer_fwd");
 
-    input.dispatch([&](auto tag)
+    input.dispatch([&]<typename T>()
     {
-        using T = decltype(tag);
         batchnorm_inference_cuda<T>(input.size(), features,
                                     input.as<T>(),
                                     fuse_add ? residual.as<T>() : nullptr,

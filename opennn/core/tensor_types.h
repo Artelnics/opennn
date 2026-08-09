@@ -52,7 +52,7 @@ void visit_type(Type t, F&& f)
     {
         if (!matched && t == Supported)
         {
-            f(TypeInfo<Supported>{});
+            f.template operator()<typename TypeInfo<Supported>::type>();
             matched = true;
         }
     }(), ...);
@@ -62,11 +62,11 @@ void visit_type(Type t, F&& f)
 template<Type... Supported, typename F>
 void visit_type_pair(Type t_in, Type t_out, F&& f)
 {
-    visit_type<Supported...>(t_in, [&](auto in_info)
+    visit_type<Supported...>(t_in, [&]<typename TIn>()
     {
-        visit_type<Supported...>(t_out, [&](auto out_info)
+        visit_type<Supported...>(t_out, [&]<typename TOut>()
         {
-            f(in_info, out_info);
+            f.template operator()<TIn, TOut>();
         });
     });
 }
@@ -445,10 +445,7 @@ struct TensorView
     template<typename F>
     void dispatch(F&& fn) const
     {
-        visit_type<Type::FP32, Type::BF16>(type, [&](auto info)
-        {
-            fn(typename decltype(info)::type{});
-        });
+        visit_type<Type::FP32, Type::BF16>(type, fn);
     }
 
     TensorView reshape(const Shape& new_shape) const

@@ -1999,9 +1999,8 @@ void NeuralNetwork::activate_transposed_inference_weights()
             transpose_2d_cuda<int8_t>(weight.shape[0], weight.shape[1],
                                       weight.as<int8_t>(), scratch.as<int8_t>());
         else
-            weight.dispatch([&](auto tag)
+            weight.dispatch([&]<typename T>()
             {
-                using T = decltype(tag);
                 transpose_2d_cuda<T>(weight.shape[0], weight.shape[1],
                                      weight.as<T>(), scratch.as<T>());
             });

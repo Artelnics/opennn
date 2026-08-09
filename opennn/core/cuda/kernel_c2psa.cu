@@ -92,16 +92,15 @@ __global__ void c2psa_scatter_dx_kernel(
 template<typename F>
 static void c2psa_dispatch(cudaDataType_t dtype, F&& f)
 {
-    if (dtype == CUDA_R_32F) f(float{});
-    else                     f(__nv_bfloat16{});
+    if (dtype == CUDA_R_32F) f.template operator()<float>();
+    else                     f.template operator()<__nv_bfloat16>();
 }
 
 void c2psa_split_cuda(
     const void* x, void* xa, void* cat,
     int BT, int C, int H, cudaDataType_t dtype)
 {
-    c2psa_dispatch(dtype, [&](auto tag) {
-        using T = decltype(tag);
+    c2psa_dispatch(dtype, [&]<typename T>() {
         launch_elementwise_strided(Index(BT) * H, c2psa_split_kernel<T>,
             (const T*)x, (T*)xa, (T*)cat, C, H);
     });
@@ -111,8 +110,7 @@ void c2psa_fill_cat_left_cuda(
     const void* attn_v, void* cat,
     int BT, int C, int H, cudaDataType_t dtype)
 {
-    c2psa_dispatch(dtype, [&](auto tag) {
-        using T = decltype(tag);
+    c2psa_dispatch(dtype, [&]<typename T>() {
         launch_elementwise_strided(Index(BT) * H, c2psa_fill_cat_left_kernel<T>,
             (const T*)attn_v, (T*)cat, C, H);
     });
@@ -120,16 +118,14 @@ void c2psa_fill_cat_left_cuda(
 
 void c2psa_row_softmax_cuda(void* A, int rows, int T_sz, cudaDataType_t dtype)
 {
-    c2psa_dispatch(dtype, [&](auto tag) {
-        using T = decltype(tag);
+    c2psa_dispatch(dtype, [&]<typename T>() {
         launch_elementwise(Index(rows), c2psa_row_softmax_kernel<T>, (T*)A, T_sz);
     });
 }
 
 void c2psa_softmax_bwd_cuda(const void* A, void* dA, float scale, int rows, int T_sz, cudaDataType_t dtype)
 {
-    c2psa_dispatch(dtype, [&](auto tag) {
-        using T = decltype(tag);
+    c2psa_dispatch(dtype, [&]<typename T>() {
         launch_elementwise(Index(rows), c2psa_softmax_bwd_kernel<T>, (const T*)A, (T*)dA, scale, T_sz);
     });
 }
@@ -138,8 +134,7 @@ void c2psa_scatter_dx_cuda(
     const void* d_xa, const void* d_cat, void* din,
     int BT, int C, int H, cudaDataType_t dtype)
 {
-    c2psa_dispatch(dtype, [&](auto tag) {
-        using T = decltype(tag);
+    c2psa_dispatch(dtype, [&]<typename T>() {
         launch_elementwise_strided(Index(BT) * C, c2psa_scatter_dx_kernel<T>,
             (const T*)d_xa, (const T*)d_cat, (T*)din, C, H);
     });

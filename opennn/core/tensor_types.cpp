@@ -18,7 +18,6 @@ namespace opennn
 
 cudnnTensorDescriptor_t TensorView::get_descriptor() const
 {
-
     if (!shape.empty())
         set_descriptor(shape);
     return descriptor_handle.get();

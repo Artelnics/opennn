@@ -764,7 +764,7 @@ VectorR filter_missing_values(const VectorR& x)
     for (Index i = 0; i < x.size(); ++i)
         if (isfinite(x(i))) valid.push_back(i);
 
-    return slice_rows(x, valid);
+    return x(valid);
 }
 
 }

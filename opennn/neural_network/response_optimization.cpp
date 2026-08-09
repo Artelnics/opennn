@@ -1078,8 +1078,8 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
             const Index inputs_number = inputs.cols();
             const Index outputs_number = outputs.cols();
 
-            const MatrixR feasible_inputs = slice_rows(inputs, feasible_indices);
-            const MatrixR feasible_outputs = slice_rows(outputs, feasible_indices);
+            const MatrixR feasible_inputs = inputs(feasible_indices, Eigen::placeholders::all);
+            const MatrixR feasible_outputs = outputs(feasible_indices, Eigen::placeholders::all);
 
             const LinearConstraintSet linear_set = build_linear_constraint_set(constraint_set.multivariate, inputs_number, outputs_number);
 
@@ -1113,7 +1113,8 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
     if (feasible_indices.empty())
         return {MatrixR(), MatrixR()};
 
-    return {slice_rows(inputs, feasible_indices), slice_rows(outputs, feasible_indices)};
+    return {inputs(feasible_indices, Eigen::placeholders::all),
+            outputs(feasible_indices, Eigen::placeholders::all)};
 }
 
 pair<MatrixR, MatrixR> ResponseOptimization::sample_feasible_points(const Domain& input_domain,
@@ -1641,7 +1642,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inp
 
     const vector<Index> front = pareto_front_indices(objective_matrix);
 
-    return {slice_rows(inputs, front), slice_rows(outputs, front)};
+    return {inputs(front, Eigen::placeholders::all), outputs(front, Eigen::placeholders::all)};
 }
 
 pair<float, float> ResponseOptimization::calculate_quality_metrics(const MatrixR& inputs,
@@ -1850,8 +1851,8 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 
             const vector<Index> selection = reselect_pareto_front(pareto_objectives, max_pareto_number);
 
-            global_pareto_inputs = slice_rows(global_pareto_inputs, selection);
-            global_pareto_outputs = slice_rows(global_pareto_outputs, selection);
+            global_pareto_inputs = global_pareto_inputs(selection, Eigen::placeholders::all).eval();
+            global_pareto_outputs = global_pareto_outputs(selection, Eigen::placeholders::all).eval();
 
             cout << "  - Pareto front reselected to " << global_pareto_inputs.rows() << " representatives." << "\n";
         }

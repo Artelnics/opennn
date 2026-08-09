@@ -300,8 +300,7 @@ void refresh_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
     throw_if(!ok,
              "SDPA padding mask: source_input must be a rank-3 CUDA tensor with supported dtype.");
 
-    source_input.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    source_input.dispatch([&]<typename T>() {
         attention_sequence_lengths_cuda<T>(to_int(k.batch_size),
                                            to_int(k.q_seq),
                                            to_int(k.src_seq),
@@ -740,8 +739,7 @@ void AttentionOperator::apply_unfused(const TensorView& query,
         && Index(explicit_lengths->size()) == batch_size)
     {
         const int* device_lengths = stage_attention_lengths(*explicit_lengths);
-        attention_weights.dispatch([&](auto tag) {
-            using T = decltype(tag);
+        attention_weights.dispatch([&]<typename T>() {
             attention_length_masked_softmax_cuda<T>(to_int(batch_size),
                                           to_int(heads_number),
                                           to_int(query_length),
@@ -754,8 +752,7 @@ void AttentionOperator::apply_unfused(const TensorView& query,
         });
     }
     else if (attention_weights.is_cuda())
-        attention_weights.dispatch([&](auto tag) {
-            using T = decltype(tag);
+        attention_weights.dispatch([&]<typename T>() {
             attention_masked_softmax_cuda<T>(to_int(batch_size),
                                     to_int(heads_number),
                                     to_int(query_length),

@@ -146,7 +146,7 @@ pair<InputType, TargetType> filter_missing_values(const InputType& x, const Targ
         if (row_finite(x, i) && row_finite(y, i))
             valid.push_back(i);
 
-    return { slice_rows(x, valid), slice_rows(y, valid) };
+    return {x(valid, Eigen::placeholders::all), y(valid, Eigen::placeholders::all)};
 }
 
 template <typename T>

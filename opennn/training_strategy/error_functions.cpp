@@ -19,8 +19,7 @@ static float sum_squared_diff_cuda(const TensorView& input, const TensorView& ta
 {
     const int total_size = to_int(input.size());
 
-    input.dispatch([&](auto tag) {
-        using TIn = decltype(tag);
+    input.dispatch([&]<typename TIn>() {
         scaled_diff_cuda_typed<TIn, float>(input.size(), input.as<TIn>(), target.as_float(),
                                            1.0f, workspace);
     });
@@ -33,9 +32,7 @@ static float sum_squared_diff_cuda(const TensorView& input, const TensorView& ta
 
 static void scaled_diff_cuda(const TensorView& input, const TensorView& target, float scale, const TensorView& output)
 {
-    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
-        using TIn  = typename decltype(in)::type;
-        using TOut = typename decltype(out)::type;
+    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&]<typename TIn, typename TOut>() {
         scaled_diff_cuda_typed<TIn, TOut>(input.size(),
                                           input.as<TIn>(),
                                           target.as_float(),
@@ -66,8 +63,7 @@ static void cross_entropy_3d_gradient_device_count_cuda(const TensorView& input,
 {
     const Index vocabulary_size = input.shape.back();
 
-    input.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    input.dispatch([&]<typename T>() {
         cross_entropy_3d_multiple_backward_device_count_cuda<T>(
             static_cast<size_t>(input.size()), to_int(vocabulary_size),
             input.as<T>(), target.as<float>(), input_delta.as<T>(),
@@ -169,8 +165,7 @@ void weighted_squared_error(const TensorView& input, const TensorView& target, f
                             [[maybe_unused]] float* workspace_device)
 {
     if (input.is_cuda()) {
-        input.dispatch([&](auto tag) {
-            using T = decltype(tag);
+        input.dispatch([&]<typename T>() {
             weighted_squared_error_cuda<T>(input.size(),
                                            workspace_device,
                                            target.as<float>(),
@@ -192,8 +187,7 @@ void weighted_squared_error(const TensorView& input, const TensorView& target, f
 void weighted_squared_error_gradient(const TensorView& input, const TensorView& target, float positive_weight, float negative_weight, float coefficient, const TensorView& input_delta)
 {
     if (input.is_cuda()) {
-        input.dispatch([&](auto tag) {
-            using T = decltype(tag);
+        input.dispatch([&]<typename T>() {
             weighted_squared_error_gradient_cuda<T>(input.size(),
                 input_delta.as<T>(), target.as<float>(), input.as<T>(), positive_weight, negative_weight, coefficient);
         });
@@ -211,8 +205,7 @@ void binary_cross_entropy(const TensorView& input, const TensorView& target, flo
                           [[maybe_unused]] float* workspace_device)
 {
     if (input.is_cuda()) {
-        input.dispatch([&](auto tag) {
-            using T = decltype(tag);
+        input.dispatch([&]<typename T>() {
             binary_cross_entropy_cuda<T>(input.size(),
                 workspace_device, target.as<float>(), input.as<T>(), EPSILON);
             error = sum_abs_cuda(workspace_device, input.size()) / input.shape[0];
@@ -236,8 +229,7 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
                                [[maybe_unused]] float* workspace_device)
 {
     if (input.is_cuda()) {
-        input.dispatch([&](auto tag) {
-            using T = decltype(tag);
+        input.dispatch([&]<typename T>() {
             categorical_cross_entropy_cuda<T>(input.size(),
                 workspace_device, target.as<float>(), input.as<T>(), EPSILON);
             error = sum_abs_cuda(workspace_device, input.size()) / input.shape[0];
@@ -266,8 +258,7 @@ void cross_entropy(const TensorView& input, const TensorView& target, float& err
 void cross_entropy_gradient(const TensorView& input, const TensorView& target, const TensorView& input_delta)
 {
     if (input.is_cuda()) {
-        input.dispatch([&](auto tag) {
-            using T = decltype(tag);
+        input.dispatch([&]<typename T>() {
             const Index num_classes = input.shape.back();
             const float scale = 1.0f / static_cast<float>(input.shape[0]);
             if (num_classes == 1)
@@ -328,8 +319,7 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
 
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda()) {
-        input.dispatch([&](auto tag) {
-            using T = decltype(tag);
+        input.dispatch([&]<typename T>() {
             const size_t token_count = static_cast<size_t>(input.size() / vocabulary_size);
 
             float* valid_mask_device   = errors_device + token_count;
@@ -407,8 +397,7 @@ void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target
     const Index vocabulary_size = input.shape.back();
 
     if (input.is_cuda()) {
-        input.dispatch([&](auto tag) {
-            using T = decltype(tag);
+        input.dispatch([&]<typename T>() {
             const float scale = active_tokens_count > 0 ? 1.0f / static_cast<float>(active_tokens_count) : 0.0f;
             cross_entropy_3d_multiple_backward_cuda<T>(static_cast<size_t>(input.size()), to_int(vocabulary_size),
                 input.as<T>(), target.as<float>(), input_delta.as<T>(), scale);

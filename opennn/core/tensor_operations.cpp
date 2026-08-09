@@ -241,6 +241,78 @@ void bound(const TensorView& input,
     bound_cpu(input, lower_bounds, upper_bounds, output);
 }
 
+template<typename Column>
+static void scale_column_cpu(Column& column, ScalerMethod method,
+                             const Descriptives& descriptives,
+                             float min_range, float max_range)
+{
+    using enum ScalerMethod;
+
+    switch (method)
+    {
+    case MinimumMaximum:
+        if (descriptives.maximum - descriptives.minimum < EPSILON)
+            column.setZero();
+        else
+            column = scale_minimum_maximum_formula(column, descriptives, min_range, max_range);
+        break;
+    case MeanStandardDeviation:
+        if (descriptives.standard_deviation > EPSILON)
+            column = scale_mean_standard_deviation_formula(column, descriptives);
+        else
+            column.setZero();
+        break;
+    case StandardDeviation:
+        column *= descriptives.standard_deviation > EPSILON
+                ? 1.0f / descriptives.standard_deviation
+                : 0.0f;
+        break;
+    case Logarithm:
+        column = column.max(EPSILON).log();
+        break;
+    case ImageMinMax:
+        column /= 255.0f;
+        break;
+    case None:
+    default:
+        break;
+    }
+}
+
+template<typename Column>
+static void unscale_column_cpu(Column& column, ScalerMethod method,
+                               const Descriptives& descriptives,
+                               float min_range, float max_range)
+{
+    using enum ScalerMethod;
+
+    switch (method)
+    {
+    case MinimumMaximum:
+        throw_if(max_range - min_range < EPSILON, "The range values are not valid.");
+        column = unscale_minimum_maximum_formula(column, descriptives, min_range, max_range);
+        break;
+    case MeanStandardDeviation:
+        column = unscale_mean_standard_deviation_formula(column, descriptives);
+        break;
+    case StandardDeviation:
+        if (descriptives.standard_deviation > EPSILON)
+            column *= descriptives.standard_deviation;
+        else
+            column.setConstant(descriptives.mean);
+        break;
+    case Logarithm:
+        column = column.exp();
+        break;
+    case ImageMinMax:
+        column *= 255.0f;
+        break;
+    case None:
+    default:
+        break;
+    }
+}
+
 static void scale_cpu(const TensorView& input,
                const TensorView& minimums, const TensorView& maximums,
                const TensorView& means, const TensorView& standard_deviations,
@@ -262,8 +334,6 @@ static void scale_cpu(const TensorView& input,
 
     output_matrix.noalias() = input_matrix;
 
-    using enum ScalerMethod;
-
     const Index cols = output_matrix.cols();
     for (Index col = 0; col < cols; ++col)
     {
@@ -271,69 +341,15 @@ static void scale_cpu(const TensorView& input,
         const auto method = static_cast<ScalerMethod>(static_cast<int>(scalers_vector(feature_index)));
         auto column = output_matrix.col(col).array();
 
-        // Same Descriptives the scalar path uses, so both share scaling.h's
-        // formulas instead of restating them.
         const Descriptives descriptives(minimums_vector(feature_index),
                                         maximums_vector(feature_index),
                                         means_vector(feature_index),
                                         standard_deviations_vector(feature_index));
 
-        switch (method)
-        {
-        case MinimumMaximum:
-            if (!inverse)
-            {
-                if (descriptives.maximum - descriptives.minimum < EPSILON)
-                    column.setZero();
-                else
-                    column = scale_minimum_maximum_formula(column, descriptives,
-                                                           min_range, max_range);
-            }
-            else
-            {
-                throw_if(max_range - min_range < EPSILON, "The range values are not valid.");
-                column = unscale_minimum_maximum_formula(column, descriptives,
-                                                         min_range, max_range);
-            }
-            break;
-        case MeanStandardDeviation:
-            if (!inverse)
-            {
-                if (descriptives.standard_deviation > EPSILON)
-                    column = scale_mean_standard_deviation_formula(column, descriptives);
-                else
-                    column.setZero();
-            }
-            else
-                column = unscale_mean_standard_deviation_formula(column, descriptives);
-            break;
-        case StandardDeviation:
-        {
-            // A feature with no spread held one value, and scaling mapped it to
-            // zero. Unscaling recovers that value - which is the mean - exactly
-            // as the two scalers above recover theirs.
-            const float sd = descriptives.standard_deviation;
-
-            if (!inverse)
-                column *= (sd > EPSILON) ? (1.0f / sd) : 0.0f;
-            else if (sd > EPSILON)
-                column *= sd;
-            else
-                column.setConstant(descriptives.mean);
-            break;
-        }
-        case Logarithm:
-            if (inverse) column = column.exp();
-            else         column = column.max(EPSILON).log();
-            break;
-        case ImageMinMax:
-            if (inverse) column *= 255.0f;
-            else         column /= 255.0f;
-            break;
-        case None:
-        default:
-            break;
-        }
+        if (inverse)
+            unscale_column_cpu(column, method, descriptives, min_range, max_range);
+        else
+            scale_column_cpu(column, method, descriptives, min_range, max_range);
     }
 }
 
@@ -766,8 +782,7 @@ void layer_normalization_add_forward(const TensorView& input, const TensorView& 
     {
         const int rows = to_int(input.size() / input.shape.back());
         const int cols = to_int(input.shape.back());
-        output.dispatch([&](auto tag) {
-            using T = decltype(tag);
+        output.dispatch([&]<typename T>() {
             layernorm_add_forward_cuda<T>(rows, cols,
                                           input.as<T>(), residual.as<T>(),
                                           sum.as<T>(), output.as<T>(),
@@ -1089,44 +1104,59 @@ void grouped_attention_forward(const TensorView& query, const TensorView& key, c
     const float* V = value.as<float>();
     float* O       = output.as<float>();
 
-    auto q_off = [&](Index b, Index t, Index h) { return ((b * query_seq + t) * n_query_heads + h) * head_dim; };
-    auto kv_off = [&](Index b, Index t, Index h) { return ((b * key_seq + t) * n_kv_heads + h) * head_dim; };
+    const auto q_off = [&](Index b, Index t, Index h) {
+        return ((b * query_seq + t) * n_query_heads + h) * head_dim;
+    };
+    const auto kv_off = [&](Index b, Index t, Index h) {
+        return ((b * key_seq + t) * n_kv_heads + h) * head_dim;
+    };
+
+    const auto calculate_weights = [&](Index b, Index i, Index hq, Index hkv,
+                                       Index valid, vector<float>& scores) {
+        const Map<const VectorR> q_map(Q + q_off(b, i, hq), head_dim);
+
+        float max_score = NEG_INFINITY;
+        for (Index j = 0; j < valid; ++j)
+        {
+            const float dot =
+                q_map.dot(Map<const VectorR>(K + kv_off(b, j, hkv), head_dim)) * scale;
+            scores[size_t(j)] = dot;
+            max_score = max(max_score, dot);
+        }
+
+        Map<Array<float, Dynamic, 1>> score_map(scores.data(), valid);
+        score_map = (score_map - max_score).exp();
+        return 1.0f / score_map.sum();
+    };
+
+    const auto write_output = [&](Index b, Index i, Index hq, Index hkv,
+                                  Index valid, const vector<float>& scores, float inv_sum) {
+        Map<VectorR> o_map(O + q_off(b, i, hq), head_dim);
+        o_map.setZero();
+        for (Index j = 0; j < valid; ++j)
+            o_map += (scores[size_t(j)] * inv_sum)
+                   * Map<const VectorR>(V + kv_off(b, j, hkv), head_dim);
+    };
+
+    const auto attend_head = [&](Index b, Index hq) {
+        const Index hkv = hq / group;
+
+        thread_local vector<float> scores;
+        if (scores.size() < size_t(key_seq))
+            scores.resize(size_t(key_seq));
+
+        for (Index i = 0; i < query_seq; ++i)
+        {
+            const Index valid = causal ? min(query_position_offset + i + 1, key_seq) : key_seq;
+            const float inv_sum = calculate_weights(b, i, hq, hkv, valid, scores);
+            write_output(b, i, hq, hkv, valid, scores, inv_sum);
+        }
+    };
 
     #pragma omp parallel for collapse(2) schedule(static)
     for (Index b = 0; b < batch; ++b)
         for (Index hq = 0; hq < n_query_heads; ++hq)
-        {
-            const Index hkv = hq / group;
-
-            thread_local vector<float> scores;
-            if (scores.size() < size_t(key_seq)) scores.resize(size_t(key_seq));
-
-            for (Index i = 0; i < query_seq; ++i)
-            {
-
-                const Index valid = causal ? min(query_position_offset + i + 1, key_seq) : key_seq;
-                const Map<const VectorR> q_map(Q + q_off(b, i, hq), head_dim);
-
-                float max_score = NEG_INFINITY;
-                for (Index j = 0; j < valid; ++j)
-                {
-                    const float dot =
-                        q_map.dot(Map<const VectorR>(K + kv_off(b, j, hkv), head_dim)) * scale;
-                    scores[size_t(j)] = dot;
-                    max_score = max(max_score, dot);
-                }
-
-                Map<Array<float, Dynamic, 1>> score_map(scores.data(), valid);
-                score_map = (score_map - max_score).exp();
-                const float inv_sum = 1.0f / score_map.sum();
-
-                Map<VectorR> o_map(O + q_off(b, i, hq), head_dim);
-                o_map.setZero();
-                for (Index j = 0; j < valid; ++j)
-                    o_map += (scores[size_t(j)] * inv_sum)
-                           * Map<const VectorR>(V + kv_off(b, j, hkv), head_dim);
-            }
-        }
+            attend_head(b, hq);
 }
 
 void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorView& output,
@@ -1498,6 +1528,14 @@ void for_each_pool_window(Index batch_size, Index input_channels,
             }
 }
 
+template<typename Visit>
+void for_each_pool_element(const PoolWindow& window, Visit&& visit)
+{
+    for (Index pool_row = window.pr_start; pool_row < window.pr_end; ++pool_row)
+        for (Index pool_column = window.pc_start; pool_column < window.pc_end; ++pool_column)
+            visit(pool_row, pool_column);
+}
+
 }
 
 void pooling_2d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices,
@@ -1514,42 +1552,50 @@ void pooling_2d_forward(const TensorView& input, TensorView& output, TensorView&
     const Index output_height = outputs.dimension(1);
     const Index output_width  = outputs.dimension(2);
 
+    const bool write_indices = max_pooling && !maximal_indices.empty();
+    TensorMap4 indices_map = write_indices
+                           ? maximal_indices.as_tensor<4>()
+                           : TensorMap4(nullptr, 0, 0, 0, 0);
+
+    const auto max_pool_window = [&](const PoolWindow& window) {
+        float best = NEG_INFINITY;
+        Index argmax = 0;
+
+        for_each_pool_element(window, [&](Index pool_row, Index pool_column) {
+            const float value = inputs(window.batch, window.in_row_start + pool_row,
+                                       window.in_col_start + pool_column, window.channel);
+            if (value > best)
+            {
+                best = value;
+                argmax = pool_row * pool_width + pool_column;
+            }
+        });
+
+        outputs(window.batch, window.out_row, window.out_col, window.channel) = best;
+        if (write_indices)
+            indices_map(window.batch, window.out_row, window.out_col, window.channel) = argmax;
+    };
+
+    const float inv_pool_size = 1.0f / (pool_height * pool_width);
+    const auto average_pool_window = [&](const PoolWindow& window) {
+        float sum = 0;
+        for_each_pool_element(window, [&](Index pool_row, Index pool_column) {
+            sum += inputs(window.batch, window.in_row_start + pool_row,
+                          window.in_col_start + pool_column, window.channel);
+        });
+        outputs(window.batch, window.out_row, window.out_col, window.channel) = sum * inv_pool_size;
+    };
+
     if (max_pooling)
-    {
-        const bool write_indices = !maximal_indices.empty();
-        TensorMap4 indices_map = write_indices ? maximal_indices.as_tensor<4>() : TensorMap4(nullptr, 0, 0, 0, 0);
         for_each_pool_window(batch_size, input_channels, input_height, input_width,
                              output_height, output_width, pool_height, pool_width,
                              row_stride, column_stride, padding_height, padding_width,
-            [&](const PoolWindow& window) {
-                float best = NEG_INFINITY;
-                Index argmax = 0;
-                for (Index pr = window.pr_start; pr < window.pr_end; ++pr)
-                    for (Index pc = window.pc_start; pc < window.pc_end; ++pc)
-                    {
-                        const float value = inputs(window.batch, window.in_row_start + pr,
-                                                window.in_col_start + pc, window.channel);
-                        if (value > best) { best = value; argmax = pr * pool_width + pc; }
-                    }
-                outputs(window.batch, window.out_row, window.out_col, window.channel) = best;
-                if (write_indices)
-                    indices_map(window.batch, window.out_row, window.out_col, window.channel) = argmax;
-            });
-        return;
-    }
-
-    const float inv_pool_size = 1.0f / (pool_height * pool_width);
-    for_each_pool_window(batch_size, input_channels, input_height, input_width,
-                         output_height, output_width, pool_height, pool_width,
-                         row_stride, column_stride, padding_height, padding_width,
-        [&](const PoolWindow& window) {
-            float sum = 0;
-            for (Index pr = window.pr_start; pr < window.pr_end; ++pr)
-                for (Index pc = window.pc_start; pc < window.pc_end; ++pc)
-                    sum += inputs(window.batch, window.in_row_start + pr,
-                                  window.in_col_start + pc, window.channel);
-            outputs(window.batch, window.out_row, window.out_col, window.channel) = sum * inv_pool_size;
-        });
+                             max_pool_window);
+    else
+        for_each_pool_window(batch_size, input_channels, input_height, input_width,
+                             output_height, output_width, pool_height, pool_width,
+                             row_stride, column_stride, padding_height, padding_width,
+                             average_pool_window);
 }
 
 void pooling_2d_backward(const TensorView& output_delta, const TensorView& maximal_indices,
@@ -1570,25 +1616,21 @@ void pooling_2d_backward(const TensorView& output_delta, const TensorView& maxim
     if (max_pooling)
     {
         const TensorMap4 max_indices = maximal_indices.as_tensor<4>();
+        for_each_pool_window(batch_size, input_channels, input_height, input_width,
+                             output_height, output_width, pool_height, pool_width,
+                             row_stride, column_stride, padding_height, padding_width,
+            [&](const PoolWindow& window) {
+                const Index argmax = static_cast<Index>(max_indices(
+                    window.batch, window.out_row, window.out_col, window.channel));
+                const Index in_row = window.in_row_start + argmax / pool_width;
+                const Index in_col = window.in_col_start + argmax % pool_width;
 
-        #pragma omp parallel for collapse(2) schedule(static)
-        for (Index b = 0; b < batch_size; ++b)
-            for (Index c = 0; c < input_channels; ++c)
-                for (Index out_row = 0; out_row < output_height; ++out_row)
-                {
-                    const Index in_row_start = out_row * row_stride - padding_height;
-                    for (Index out_col = 0; out_col < output_width; ++out_col)
-                    {
-                        const Index in_col_start = out_col * column_stride - padding_width;
-                        const Index argmax = static_cast<Index>(max_indices(b, out_row, out_col, c));
-                        const Index in_row = in_row_start + argmax / pool_width;
-                        const Index in_col = in_col_start + argmax % pool_width;
-                        if (in_row < 0 || in_row >= input_height || in_col < 0 || in_col >= input_width)
-                            continue;
-                        input_deltas(b, in_row, in_col, c)
-                            += output_deltas(b, out_row, out_col, c);
-                    }
-                }
+                if (in_row < 0 || in_row >= input_height || in_col < 0 || in_col >= input_width)
+                    return;
+
+                input_deltas(window.batch, in_row, in_col, window.channel)
+                    += output_deltas(window.batch, window.out_row, window.out_col, window.channel);
+            });
         return;
     }
 
@@ -1598,10 +1640,10 @@ void pooling_2d_backward(const TensorView& output_delta, const TensorView& maxim
                          row_stride, column_stride, padding_height, padding_width,
         [&](const PoolWindow& window) {
             const float avg_delta = output_deltas(window.batch, window.out_row, window.out_col, window.channel) * inv_pool_size;
-            for (Index pr = window.pr_start; pr < window.pr_end; ++pr)
-                for (Index pc = window.pc_start; pc < window.pc_end; ++pc)
-                    input_deltas(window.batch, window.in_row_start + pr,
-                                 window.in_col_start + pc, window.channel) += avg_delta;
+            for_each_pool_element(window, [&](Index pool_row, Index pool_column) {
+                input_deltas(window.batch, window.in_row_start + pool_row,
+                             window.in_col_start + pool_column, window.channel) += avg_delta;
+            });
         });
 }
 
@@ -1719,9 +1761,7 @@ static void bound_gpu(const TensorView& input,
 {
     const Index features = lower_bounds.size();
 
-    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
-        using TIn  = typename decltype(in)::type;
-        using TOut = typename decltype(out)::type;
+    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&]<typename TIn, typename TOut>() {
         bounding_cuda<TIn, TOut>(output.size(), to_int(features),
                                  input.as<TIn>(),
                                  lower_bounds.as_float(),
@@ -1739,9 +1779,7 @@ static void scale_gpu(const TensorView& input,
 {
     const Index features = scalers.size();
 
-    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
-        using TIn  = typename decltype(in)::type;
-        using TOut = typename decltype(out)::type;
+    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&]<typename TIn, typename TOut>() {
         if (inverse)
         {
             unscale_cuda<TIn, TOut>(output.size(), to_int(features),
@@ -1845,9 +1883,8 @@ static void softmax_gpu(TensorView& output)
 
 static void activation_forward_gpu(TensorView& output, ActivationFunction function)
 {
-    output.dispatch([&](auto tag)
+    output.dispatch([&]<typename T>()
     {
-        using T = decltype(tag);
         activation_forward_cuda<T>(output.size(), output.as<T>(), static_cast<int>(function));
     });
     device::check_last_error();
@@ -1855,9 +1892,8 @@ static void activation_forward_gpu(TensorView& output, ActivationFunction functi
 
 static void activation_backward_gpu(const TensorView& outputs, TensorView& delta, ActivationFunction function)
 {
-    delta.dispatch([&](auto tag)
+    delta.dispatch([&]<typename T>()
     {
-        using T = decltype(tag);
         activation_backward_cuda<T>(delta.size(), outputs.as<T>(), delta.as<T>(), static_cast<int>(function));
     });
     device::check_last_error();
@@ -1871,9 +1907,8 @@ static void dropout_forward_gpu(TensorView& output, Buffer& mask, float rate)
 
     const unsigned long long seed = static_cast<unsigned long long>(random_integer(0, 1 << 30));
 
-    output.dispatch([&](auto tag)
+    output.dispatch([&]<typename T>()
     {
-        using T = decltype(tag);
         dropout_forward_cuda<T>(element_count, output.as<T>(), mask.as<uint8_t>(), rate, seed);
     });
 }
@@ -1882,48 +1917,19 @@ static void dropout_backward_gpu(TensorView& delta, const Buffer& mask, float ra
 {
     const Index element_count = delta.size();
 
-    delta.dispatch([&](auto tag)
+    delta.dispatch([&]<typename T>()
     {
-        using T = decltype(tag);
         dropout_backward_cuda<T>(element_count, delta.as<T>(), delta.as<T>(), mask.as<uint8_t>(), rate);
     });
 }
 
-static void linear_forward_gpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
-                        TensorView& output, cublasLtEpilogue_t epilogue, TensorView* pre_activation,
-                        const TensorView& weight_scale)
+static void linear_forward_lt_gpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
+                                  TensorView& output, cublasLtEpilogue_t epilogue,
+                                  TensorView* pre_activation)
 {
     const int input_columns  = to_int(input.shape.back());
     const int output_columns = to_int(weights.shape.back());
     const int total_rows     = to_int(input.size() / input.shape.back());
-
-    if (weights.is_int8())
-    {
-        throw_if(weight_scale.empty() || !input.is_bf16() || !output.is_bf16(),
-                 "linear_forward: INT8 weights require BF16 activations and a per-channel scale vector.");
-
-        const bool gemv_path = (total_rows <= W8A16_MAX_M
-                                || weights.byte_size() > int8_dequant_budget_bytes)
-            && (epilogue == CUBLASLT_EPILOGUE_DEFAULT || epilogue == CUBLASLT_EPILOGUE_BIAS)
-            && (!bias.data || bias.is_bf16());
-
-        if (gemv_path)
-        {
-            w8a16_linear_rows(total_rows, input_columns, output_columns, false,
-                              input.as<bfloat16>(), weights.as<int8_t>(), weight_scale.as<float>(),
-                              epilogue == CUBLASLT_EPILOGUE_BIAS && bias.data
-                                  ? bias.as<bfloat16>() : nullptr,
-                              output.as<bfloat16>());
-            return;
-        }
-
-        bfloat16* dequantized = ensure_int8_dequant_workspace(weights.size());
-        w8_dequant_cuda<bfloat16>(input_columns, output_columns, false, weights.as<int8_t>(),
-                                  weight_scale.as<float>(), dequantized);
-        const TensorView dequantized_weights(dequantized, weights.shape, Type::BF16, Device::CUDA);
-        linear_forward_gpu(input, dequantized_weights, bias, output, epilogue, pre_activation, {});
-        return;
-    }
 
     const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
     const cudaDataType_t io_type = output.cuda_dtype();
@@ -1946,7 +1952,8 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     {
         if (epilogue == CUBLASLT_EPILOGUE_GELU_AUX_BIAS && pre_activation)
         {
-            linear_forward_gpu(input, weights, bias, *pre_activation, CUBLASLT_EPILOGUE_BIAS, nullptr, {});
+            linear_forward_lt_gpu(input, weights, bias, *pre_activation,
+                                  CUBLASLT_EPILOGUE_BIAS, nullptr);
             copy_gpu(*pre_activation, output);
             activation_forward_gpu(output, ActivationFunction::GELUTanh);
             return;
@@ -1956,6 +1963,45 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
                                    output_columns, total_rows, input_columns,
                                    output.is_bf16() ? "bf16" : "fp32", e.what()));
     }
+}
+
+static void linear_forward_gpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
+                               TensorView& output, cublasLtEpilogue_t epilogue,
+                               TensorView* pre_activation, const TensorView& weight_scale)
+{
+    if (!weights.is_int8())
+    {
+        linear_forward_lt_gpu(input, weights, bias, output, epilogue, pre_activation);
+        return;
+    }
+
+    throw_if(weight_scale.empty() || !input.is_bf16() || !output.is_bf16(),
+             "linear_forward: INT8 weights require BF16 activations and a per-channel scale vector.");
+
+    const int input_columns  = to_int(input.shape.back());
+    const int output_columns = to_int(weights.shape.back());
+    const int total_rows     = to_int(input.size() / input.shape.back());
+
+    const bool gemv_path = (total_rows <= W8A16_MAX_M
+                            || weights.byte_size() > int8_dequant_budget_bytes)
+        && (epilogue == CUBLASLT_EPILOGUE_DEFAULT || epilogue == CUBLASLT_EPILOGUE_BIAS)
+        && (!bias.data || bias.is_bf16());
+
+    if (gemv_path)
+    {
+        w8a16_linear_rows(total_rows, input_columns, output_columns, false,
+                          input.as<bfloat16>(), weights.as<int8_t>(), weight_scale.as<float>(),
+                          epilogue == CUBLASLT_EPILOGUE_BIAS && bias.data
+                              ? bias.as<bfloat16>() : nullptr,
+                          output.as<bfloat16>());
+        return;
+    }
+
+    bfloat16* dequantized = ensure_int8_dequant_workspace(weights.size());
+    w8_dequant_cuda<bfloat16>(input_columns, output_columns, false, weights.as<int8_t>(),
+                              weight_scale.as<float>(), dequantized);
+    const TensorView dequantized_weights(dequantized, weights.shape, Type::BF16, Device::CUDA);
+    linear_forward_lt_gpu(input, dequantized_weights, bias, output, epilogue, pre_activation);
 }
 
 static void linear_backward_gpu(const TensorView& output_delta, const TensorView& input, const TensorView& weights,
@@ -2028,8 +2074,7 @@ static void layer_normalization_forward_gpu(const TensorView& input, const Tenso
     const int rows = to_int(input.size() / input.shape.back());
     const int cols = to_int(input.shape.back());
 
-    output.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    output.dispatch([&]<typename T>() {
         layernorm_forward_cuda<T>(rows, cols,
                                   input.as<T>(), output.as<T>(),
                                   means.as<float>(), standard_deviations.as<float>(),
@@ -2046,8 +2091,7 @@ static void layer_normalization_backward_gpu(const TensorView& input, const Tens
     const int rows = to_int(input.size() / input.shape.back());
     const int cols = to_int(input.shape.back());
 
-    input.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    input.dispatch([&]<typename T>() {
         T* input_delta_data = input_delta.empty() ? nullptr : input_delta.as<T>();
 
         layernorm_backward_cuda<T>(rows, cols,
@@ -2065,8 +2109,7 @@ static void rms_normalization_forward_gpu(const TensorView& input, const TensorV
     const int rows = to_int(input.size() / input.shape.back());
     const int cols = to_int(input.shape.back());
 
-    output.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    output.dispatch([&]<typename T>() {
         rmsnorm_forward_cuda<T>(rows, cols,
                                 input.as<T>(), output.as<T>(),
                                 inverse_rms.as<float>(),
@@ -2081,8 +2124,7 @@ static void rms_normalization_backward_gpu(const TensorView& input, const Tensor
     const int rows = to_int(input.size() / input.shape.back());
     const int cols = to_int(input.shape.back());
 
-    input.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    input.dispatch([&]<typename T>() {
         T* input_delta_data = input_delta.empty() ? nullptr : input_delta.as<T>();
 
         rmsnorm_backward_cuda<T>(rows, cols,
@@ -2099,8 +2141,7 @@ static void rope_forward_gpu(const TensorView& input, const TensorView& cos_tabl
     const int model_dim = to_int(input.shape.back());
     const int rows      = to_int(input.size() / input.shape.back());
 
-    output.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    output.dispatch([&]<typename T>() {
         rope_forward_cuda<T>(rows, seq, model_dim, to_int(head_dim), to_int(rotary_dim), to_int(position_offset),
                              input.as<T>(), output.as<T>(),
                              cos_table.as<float>(), sin_table.as<float>());
@@ -2114,8 +2155,7 @@ static void rope_backward_gpu(const TensorView& output_delta, const TensorView& 
     const int model_dim = to_int(output_delta.shape.back());
     const int rows      = to_int(output_delta.size() / output_delta.shape.back());
 
-    input_delta.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    input_delta.dispatch([&]<typename T>() {
         rope_backward_cuda<T>(rows, seq, model_dim, to_int(head_dim), to_int(rotary_dim), to_int(position_offset),
                               output_delta.as<T>(), input_delta.as<T>(),
                               cos_table.as<float>(), sin_table.as<float>());
@@ -2125,8 +2165,7 @@ static void rope_backward_gpu(const TensorView& output_delta, const TensorView& 
 static void swiglu_forward_gpu(const TensorView& gate, const TensorView& up, TensorView& output)
 {
     const int n = to_int(gate.size());
-    output.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    output.dispatch([&]<typename T>() {
         swiglu_forward_cuda<T>(n, gate.as<T>(), up.as<T>(), output.as<T>());
     });
 }
@@ -2135,8 +2174,7 @@ static void swiglu_backward_gpu(const TensorView& output_delta, const TensorView
                                 TensorView& gate_delta, TensorView& up_delta)
 {
     const int n = to_int(output_delta.size());
-    output_delta.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    output_delta.dispatch([&]<typename T>() {
         T* gate_delta_data = gate_delta.empty() ? nullptr : gate_delta.as<T>();
         T* up_delta_data   = up_delta.empty()   ? nullptr : up_delta.as<T>();
         swiglu_backward_cuda<T>(n, output_delta.as<T>(), gate.as<T>(), up.as<T>(),
@@ -2181,7 +2219,20 @@ static void grouped_attention_gemm(cublasOperation_t transa, cublasOperation_t t
                                             &beta,
                                             C, c_type, ldc, stride_c,
                                             batch_count,
-                                            CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT));
+                                             CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT));
+}
+
+template<typename T>
+static void zero_grouped_attention_value_tail(T* values, int batch_heads,
+                                              int key_seq, int valid_key_seq, int head_dim)
+{
+    if (valid_key_seq >= key_seq)
+        return;
+
+    const size_t tail_bytes = size_t(key_seq - valid_key_seq) * head_dim * sizeof(T);
+    for (int i = 0; i < batch_heads; ++i)
+        CHECK_CUDA(cudaMemsetAsync(values + (Index(i) * key_seq + valid_key_seq) * head_dim,
+                                   0, tail_bytes, device::get_compute_stream()));
 }
 
 template<typename T>
@@ -2230,6 +2281,7 @@ static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, con
         T* Vt         = reinterpret_cast<T*>(base + scores_bytes + probs_bytes + 2 * q_bytes + kv_bytes);
 
         const int mq = group * query_seq;
+        const int valid_key_seq = causal ? min(query_position_offset + query_seq, key_seq) : key_seq;
 
         for (int b0 = 0; b0 < batch; b0 += chunk)
         {
@@ -2243,14 +2295,8 @@ static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, con
             split_heads_cuda<T>(Index(bc) * kv_elems, V + Index(b0) * kv_elems, Vt,
                                 key_seq, n_kv_heads, head_dim);
 
-            const int kv_valid = causal ? min(query_position_offset + query_seq, key_seq) : key_seq;
-            if (kv_valid < key_seq)
-            {
-                const size_t tail_bytes = size_t(key_seq - kv_valid) * head_dim * sizeof(T);
-                for (int i = 0; i < bc * n_kv_heads; ++i)
-                    CHECK_CUDA(cudaMemsetAsync(Vt + (Index(i) * key_seq + kv_valid) * head_dim,
-                                               0, tail_bytes, device::get_compute_stream()));
-            }
+            zero_grouped_attention_value_tail(Vt, bc * n_kv_heads,
+                                              key_seq, valid_key_seq, head_dim);
 
             grouped_attention_gemm(CUBLAS_OP_T, CUBLAS_OP_N, key_seq, mq, head_dim, scale,
                                    Kt, dtype, head_dim, Index(key_seq) * head_dim,
@@ -2293,8 +2339,7 @@ static void grouped_attention_gpu(const TensorView& query, const TensorView& key
     const bool decode = batch == 1 && query_seq == 1 && causal && decode_partials
                      && grouped_attention_decode_supported(to_int(head_dim), group);
 
-    output.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    output.dispatch([&]<typename T>() {
 
         if (batch * query_seq * to_int(n_query_heads) > 0 && !decode
             && grouped_attention_gemm_gpu<T>(batch, query_seq, key_seq,
@@ -2319,8 +2364,7 @@ void qk_rope_cache_append(const TensorView& qkv_row, const TensorView& q_norm_we
 {
     throw_if(!qkv_row.is_cuda() || !position_device, "qk_rope_cache_append: GPU tensors and a device position are required.");
 
-    q_out.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    q_out.dispatch([&]<typename T>() {
         qk_rope_cache_append_cuda<T>(to_int(n_query_heads), to_int(n_kv_heads), to_int(head_dim),
                                      epsilon, position_device, qkv_row.as<T>(),
                                      q_norm_weight.empty() ? nullptr : q_norm_weight.as<float>(),
@@ -2337,8 +2381,7 @@ void sample_logits_row(const TensorView& logits_row, float temperature, Index to
     throw_if(!logits_row.is_cuda() || !candidates_scratch || !id_device,
              "sample_logits_row: a GPU logits row, device scratch and a device id are required.");
 
-    logits_row.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    logits_row.dispatch([&]<typename T>() {
         sample_logits_row_cuda<T>(to_int(logits_row.size()), temperature, to_int(top_k), top_p,
                                   seed, step, logits_row.as<T>(),
                                   static_cast<float2*>(candidates_scratch), id_device, token_device);
@@ -2354,8 +2397,7 @@ static void qk_norm_gpu(const TensorView& input, const TensorView& weight, Tenso
                         Index head_dim, float epsilon)
 {
     const int rows = to_int(input.size() / head_dim);
-    output.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    output.dispatch([&]<typename T>() {
         rmsnorm_forward_cuda<T>(rows, to_int(head_dim), input.as<T>(), output.as<T>(),
                                 nullptr, weight.as<float>(), epsilon);
     });
@@ -2371,8 +2413,7 @@ static void embedding_lookup_forward_gpu(const TensorView& indices, const Tensor
     {
         throw_if(weight_scale.empty(),
                  "embedding_lookup_forward: INT8 weights require a per-row scale vector.");
-        output.dispatch([&](auto out_tag) {
-            using T = decltype(out_tag);
+        output.dispatch([&]<typename T>() {
             embedding_forward_w8_cuda<T>(
                 output.size(),
                 indices.as<float>(),
@@ -2386,10 +2427,8 @@ static void embedding_lookup_forward_gpu(const TensorView& indices, const Tensor
         return;
     }
 
-    output.dispatch([&](auto out_tag) {
-        using T = decltype(out_tag);
-        weights.dispatch([&](auto weight_tag) {
-            using TW = decltype(weight_tag);
+    output.dispatch([&]<typename T>() {
+        weights.dispatch([&]<typename TW>() {
             embedding_forward_cuda<TW, T>(
                 output.size(),
                 indices.as<float>(),
@@ -2412,8 +2451,7 @@ static void embedding_lookup_backward_gpu(const TensorView& indices, const Tenso
     const bool accumulate_positional = !positional_gradient.empty() && positional_gradient.data != nullptr;
     if (accumulate_positional) positional_gradient.set_zero_async();
 
-    output_delta.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    output_delta.dispatch([&]<typename T>() {
         embedding_backward_cuda<T>(
             output_delta.size(),
             indices.as<float>(),
@@ -2426,8 +2464,7 @@ static void embedding_lookup_backward_gpu(const TensorView& indices, const Tenso
 
 static void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool  )
 {
-    output.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    output.dispatch([&]<typename T>() {
         max_pooling_3d_forward_cuda<T>(to_int(input.shape[0]) * to_int(input.shape[2]),
                                        input.as<T>(), output.as<T>(),
                                        maximal_indices.as<float>(),
@@ -2438,8 +2475,7 @@ static void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& outp
 
 static void average_pooling_3d_forward_gpu(const TensorView& input, TensorView& output)
 {
-    output.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    output.dispatch([&]<typename T>() {
         average_pooling_3d_forward_cuda<T>(to_int(input.shape[0]) * to_int(input.shape[2]),
                                            input.as<T>(), output.as<T>(),
                                            to_int(input.shape[1]),
@@ -2449,8 +2485,7 @@ static void average_pooling_3d_forward_gpu(const TensorView& input, TensorView& 
 
 static void max_pooling_3d_backward_gpu(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta)
 {
-    input_delta.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    input_delta.dispatch([&]<typename T>() {
         input_delta.set_zero_async();
         max_pooling_3d_backward_cuda<T>(to_int(output_delta.shape[0]) * to_int(output_delta.shape[1]),
                                         output_delta.as<T>(), input_delta.as<T>(),
@@ -2464,9 +2499,8 @@ static void average_pooling_3d_backward_gpu(const TensorView& input,
                                      const TensorView& output_delta,
                                      TensorView& input_delta)
 {
-    input_delta.dispatch([&](auto tag) {
-        using T = decltype(tag);
-        input_delta.set_zero_async();
+    input_delta.dispatch([&]<typename T>() {
+        // No pre-zeroing: the kernel writes every element of input_delta.
         average_pooling_3d_backward_cuda<T>(to_int(input.shape[0]) * to_int(input.shape[2]),
                                             input.as<T>(), output_delta.as<T>(),
                                             input_delta.as<T>(),
@@ -2477,8 +2511,7 @@ static void average_pooling_3d_backward_gpu(const TensorView& input,
 
 static void first_token_3d_forward_gpu(const TensorView& input, TensorView& output)
 {
-    output.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    output.dispatch([&]<typename T>() {
         first_token_3d_forward_cuda<T>(to_int(input.shape[0]), to_int(input.shape[1]), to_int(input.shape[2]),
                                        input.as<T>(), output.as<T>());
     });
@@ -2486,8 +2519,7 @@ static void first_token_3d_forward_gpu(const TensorView& input, TensorView& outp
 
 static void first_token_3d_backward_gpu(const TensorView& output_delta, TensorView& input_delta)
 {
-    input_delta.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    input_delta.dispatch([&]<typename T>() {
         input_delta.set_zero_async();
         first_token_3d_backward_cuda<T>(to_int(input_delta.shape[0]), to_int(input_delta.shape[1]), to_int(input_delta.shape[2]),
                                         output_delta.as<T>(), input_delta.as<T>());
@@ -2500,8 +2532,7 @@ static void split_heads_gpu(const TensorView& source, TensorView& destination)
     const Index heads_number = source.shape[2];
     const Index head_dimension = source.shape[3];
 
-    destination.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    destination.dispatch([&]<typename T>() {
         split_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
                             to_int(sequence_length),
                             to_int(heads_number),
@@ -2515,8 +2546,7 @@ static void merge_heads_gpu(const TensorView& source, TensorView& destination)
     const Index sequence_length = source.shape[2];
     const Index head_dimension = source.shape[3];
 
-    destination.dispatch([&](auto tag) {
-        using T = decltype(tag);
+    destination.dispatch([&]<typename T>() {
         merge_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
                             to_int(sequence_length),
                             to_int(heads_number),
@@ -2582,16 +2612,6 @@ MatrixR append_columns(const MatrixR& first_matrix, const MatrixR& second_matrix
     return result;
 }
 
-VectorR slice_rows(const VectorR& values, const vector<Index>& indices)
-{
-    return values(indices);
-}
-
-MatrixR slice_rows(const MatrixR& matrix, const vector<Index>& indices)
-{
-    return matrix(indices, Eigen::placeholders::all);
-}
-
 VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int neighbors_number)
 {
     const Index rows = matrix.rows();
@@ -2603,8 +2623,7 @@ VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int neig
     for (Index i = 0; i < rows; ++i)
         pairs[i] = {distances(i), i};
 
-    if (neighbors_number > rows)
-        neighbors_number = rows;
+    neighbors_number = std::min(neighbors_number, to_int(rows));
 
     partial_sort(pairs.begin(), pairs.begin() + neighbors_number, pairs.end());
 

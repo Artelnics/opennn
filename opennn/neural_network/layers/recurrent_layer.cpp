@@ -445,10 +445,8 @@ void RecurrentOperator::apply_gpu(const TensorView& input,
         {&recurrent_weights, "recurrent_weights"}
     });
 
-    output.dispatch([&](auto tag)
+    output.dispatch([&]<typename Scalar>()
     {
-        using Scalar = decltype(tag);
-
         const Index batch_size = input.shape[0];
         const Shape step_input_shape{batch_size, input_features};
         const Shape step_hidden_shape{batch_size, output_features};
@@ -545,10 +543,8 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
         {&step_in_delta_scratch, "step_in_delta_scratch"}
     });
 
-    output_delta.dispatch([&](auto tag)
+    output_delta.dispatch([&]<typename Scalar>()
     {
-        using Scalar = decltype(tag);
-
         const Index batch_size = input.shape[0];
 
         zero_device_view(bias_gradient);
