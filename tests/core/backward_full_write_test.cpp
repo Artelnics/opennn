@@ -31,6 +31,7 @@
 #include "opennn/neural_network/layers/flatten_layer.h"
 #include "opennn/neural_network/layers/upsample_layer.h"
 #include "opennn/neural_network/neural_network.h"
+#include "opennn/neural_network/operators/pool3d_operator.h"
 #include "opennn/training_strategy/loss.h"
 
 #ifdef OPENNN_HAS_CUDA

@@ -13,6 +13,15 @@
 namespace opennn
 {
 
+// The pooling kernels themselves. Pool3dOperator selects one per Method;
+// they live here rather than in core because it is their only caller.
+void max_pooling_3d_forward(const TensorView&, TensorView&, TensorView&, bool);
+void average_pooling_3d_forward(const TensorView&, TensorView&);
+void max_pooling_3d_backward(const TensorView&, const TensorView&, TensorView&);
+void average_pooling_3d_backward(const TensorView&, const TensorView&, TensorView&);
+void first_token_3d_forward(const TensorView&, TensorView&);
+void first_token_3d_backward(const TensorView&, TensorView&);
+
 struct Pool3dOperator : Operator
 {
     enum Method { Max, Average, First };

@@ -217,12 +217,6 @@ void embedding_lookup_backward(const TensorView&, const TensorView&,
                                Index, Index, Index,
                                bool);
 
-void max_pooling_3d_forward(const TensorView&, TensorView&, TensorView&, bool);
-void average_pooling_3d_forward(const TensorView&, TensorView&);
-void max_pooling_3d_backward(const TensorView&, const TensorView&, TensorView&);
-void average_pooling_3d_backward(const TensorView&, const TensorView&, TensorView&);
-void first_token_3d_forward(const TensorView&, TensorView&);
-void first_token_3d_backward(const TensorView&, TensorView&);
 
 void compute_token_valid_lengths(const TensorView&, Index, vector<Index>&);
 
