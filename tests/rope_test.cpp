@@ -3,9 +3,9 @@
 #include <cmath>
 #include <vector>
 
-#include "opennn/tensor_types.h"
-#include "opennn/tensor_operations.h"
-#include "opennn/random_utilities.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/core/tensor_operations.h"
+#include "opennn/core/random_utilities.h"
 
 using namespace opennn;
 

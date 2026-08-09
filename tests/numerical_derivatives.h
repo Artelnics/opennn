@@ -9,7 +9,7 @@
 #pragma once
 
 #include "opennn/pch.h"
-#include "opennn/loss.h"
+#include "opennn/training_strategy/loss.h"
 
 namespace opennn
 {

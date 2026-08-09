@@ -4,9 +4,9 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "opennn/configuration.h"
-#include "opennn/device_backend.h"
-#include "opennn/random_utilities.h"
+#include "opennn/core/configuration.h"
+#include "opennn/core/device_backend.h"
+#include "opennn/core/random_utilities.h"
 
 using namespace std;
 using namespace opennn;

@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "opennn/tokenizer_operator.h"
+#include "opennn/neural_network/operators/tokenizer_operator.h"
 
 using namespace opennn;
 

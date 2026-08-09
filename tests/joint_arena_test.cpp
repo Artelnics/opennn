@@ -9,14 +9,14 @@
 
 #include "pch.h"
 
-#include "opennn/back_propagation.h"
-#include "opennn/configuration.h"
-#include "opennn/dense_layer.h"
-#include "opennn/forward_propagation.h"
-#include "opennn/loss.h"
-#include "opennn/neural_network.h"
-#include "opennn/tabular_dataset.h"
-#include "opennn/tensor_types.h"
+#include "opennn/neural_network/back_propagation.h"
+#include "opennn/core/configuration.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/training_strategy/loss.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/core/tensor_types.h"
 
 using namespace opennn;
 

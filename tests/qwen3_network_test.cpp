@@ -3,12 +3,12 @@
 #include <random>
 #include <vector>
 
-#include "opennn/tensor_types.h"
-#include "opennn/standard_networks.h"
-#include "opennn/neural_network.h"
-#include "opennn/configuration.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/core/configuration.h"
 #ifdef OPENNN_HAS_CUDA
-#include "opennn/device_backend.h"
+#include "opennn/core/device_backend.h"
 #endif
 
 using namespace opennn;

@@ -6,44 +6,44 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
+#include "opennn/registry.h"
 
 #include <format>
 #include <stdexcept>
 #include <string_view>
 #include <unordered_map>
 
-#include "activation_layer.h"
-#include "addition_layer.h"
-#include "bounding_layer.h"
-#include "c2psa_layer.h"
-#include "concatenation_layer.h"
-#include "dense_layer.h"
-#include "long_short_term_memory_layer.h"
-#include "non_max_suppression_layer.h"
-#include "recurrent_layer.h"
-#include "scaling_layer.h"
-#include "tokenizer_layer.h"
-#include "unscaling_layer.h"
-#include "upsample_layer.h"
+#include "opennn/neural_network/layers/activation_layer.h"
+#include "opennn/neural_network/layers/addition_layer.h"
+#include "opennn/neural_network/layers/bounding_layer.h"
+#include "opennn/neural_network/layers/c2psa_layer.h"
+#include "opennn/neural_network/layers/concatenation_layer.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/layers/long_short_term_memory_layer.h"
+#include "opennn/neural_network/layers/non_max_suppression_layer.h"
+#include "opennn/neural_network/layers/recurrent_layer.h"
+#include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/neural_network/layers/tokenizer_layer.h"
+#include "opennn/neural_network/layers/unscaling_layer.h"
+#include "opennn/neural_network/layers/upsample_layer.h"
 #ifndef OPENNN_NO_VISION
-#include "convolutional_layer.h"
-#include "detection_layer.h"
-#include "detection_v8_layer.h"
-#include "embedding_layer.h"
-#include "flatten_layer.h"
-#include "grouped_query_attention_layer.h"
-#include "multihead_attention_layer.h"
-#include "normalization_layer_3d.h"
-#include "pooling_layer.h"
-#include "pooling_layer_3d.h"
+#include "opennn/neural_network/layers/convolutional_layer.h"
+#include "opennn/neural_network/layers/detection_layer.h"
+#include "opennn/neural_network/layers/detection_v8_layer.h"
+#include "opennn/neural_network/layers/embedding_layer.h"
+#include "opennn/neural_network/layers/flatten_layer.h"
+#include "opennn/neural_network/layers/grouped_query_attention_layer.h"
+#include "opennn/neural_network/layers/multihead_attention_layer.h"
+#include "opennn/neural_network/layers/normalization_layer_3d.h"
+#include "opennn/neural_network/layers/pooling_layer.h"
+#include "opennn/neural_network/layers/pooling_layer_3d.h"
 #endif
-#include "adaptive_moment_estimation.h"
-#include "levenberg_marquardt_algorithm.h"
-#include "quasi_newton_method.h"
-#include "stochastic_gradient_descent.h"
-#include "genetic_algorithm.h"
-#include "growing_inputs.h"
+#include "opennn/training_strategy/adaptive_moment_estimation.h"
+#include "opennn/training_strategy/levenberg_marquardt_algorithm.h"
+#include "opennn/training_strategy/quasi_newton_method.h"
+#include "opennn/training_strategy/stochastic_gradient_descent.h"
+#include "opennn/model_selection/genetic_algorithm.h"
+#include "opennn/model_selection/growing_inputs.h"
 
 namespace opennn
 {

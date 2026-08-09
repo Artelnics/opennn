@@ -8,15 +8,15 @@
 
 #include "pch.h"
 
-#include "opennn/response_optimization.h"
-#include "opennn/response_constraints.h"
-#include "opennn/neural_network.h"
-#include "opennn/random_utilities.h"
-#include "opennn/scaling_layer.h"
-#include "opennn/standard_networks.h"
-#include "opennn/statistics.h"
-#include "opennn/unscaling_layer.h"
-#include "opennn/variable.h"
+#include "opennn/neural_network/response_optimization.h"
+#include "opennn/neural_network/response_constraints.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/core/random_utilities.h"
+#include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/core/statistics.h"
+#include "opennn/neural_network/layers/unscaling_layer.h"
+#include "opennn/core/variable.h"
 
 using namespace opennn;
 

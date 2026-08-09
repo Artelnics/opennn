@@ -1,17 +1,17 @@
 #include "pch.h"
-#include "opennn/random_utilities.h"
-#include "opennn/tabular_dataset.h"
+#include "opennn/core/random_utilities.h"
+#include "opennn/dataset/tabular_dataset.h"
 #include "numerical_derivatives.h"
 
-#include "opennn/loss.h"
-#include "opennn/tensor_types.h"
-#include "opennn/language_dataset.h"
-#include "opennn/dense_layer.h"
-#include "opennn/convolutional_layer.h"
-#include "opennn/neural_network.h"
-#include "opennn/batch.h"
-#include "opennn/forward_propagation.h"
-#include "opennn/back_propagation.h"
+#include "opennn/training_strategy/loss.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/dataset/language_dataset.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/layers/convolutional_layer.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/dataset/batch.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/neural_network/back_propagation.h"
 
 using namespace opennn;
 

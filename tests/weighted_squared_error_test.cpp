@@ -1,11 +1,11 @@
 #include "pch.h"
-#include "opennn/random_utilities.h"
+#include "opennn/core/random_utilities.h"
 #include "numerical_derivatives.h"
 
-#include "opennn/dataset.h"
-#include "opennn/standard_networks.h"
-#include "opennn/tabular_dataset.h"
-#include "opennn/loss.h"
+#include "opennn/dataset/dataset.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/training_strategy/loss.h"
 
 using namespace opennn;
 

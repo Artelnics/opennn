@@ -5,17 +5,17 @@
 #include <cstring>
 #include <vector>
 
-#include "opennn/tensor_types.h"
-#include "opennn/configuration.h"
-#include "opennn/standard_networks.h"
-#include "opennn/neural_network.h"
-#include "opennn/forward_propagation.h"
-#include "opennn/tabular_dataset.h"
-#include "opennn/dense_layer.h"
-#include "opennn/pooling_layer_3d.h"
-#include "opennn/embedding_layer.h"
-#include "opennn/multihead_attention_layer.h"
-#include "opennn/loss.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/core/configuration.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/layers/pooling_layer_3d.h"
+#include "opennn/neural_network/layers/embedding_layer.h"
+#include "opennn/neural_network/layers/multihead_attention_layer.h"
+#include "opennn/training_strategy/loss.h"
 
 using namespace opennn;
 

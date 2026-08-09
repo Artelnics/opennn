@@ -1,13 +1,13 @@
 #include "pch.h"
 #include "numerical_derivatives.h"
 
-#include "opennn/yolo_dataset.h"
-#include "opennn/detection_layer.h"
-#include "opennn/detection_v8_layer.h"
-#include "opennn/convolutional_layer.h"
-#include "opennn/concatenation_layer.h"
-#include "opennn/neural_network.h"
-#include "opennn/loss.h"
+#include "opennn/dataset/yolo_dataset.h"
+#include "opennn/neural_network/layers/detection_layer.h"
+#include "opennn/neural_network/layers/detection_v8_layer.h"
+#include "opennn/neural_network/layers/convolutional_layer.h"
+#include "opennn/neural_network/layers/concatenation_layer.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/training_strategy/loss.h"
 
 #include <cstdint>
 #include <filesystem>

@@ -1,16 +1,16 @@
 #include "pch.h"
 
-#include "opennn/yolo_dataset.h"
-#include "opennn/detection_layer.h"
-#include "opennn/detection_v8_layer.h"
-#include "opennn/convolutional_layer.h"
-#include "opennn/pooling_layer.h"
-#include "opennn/concatenation_layer.h"
-#include "opennn/addition_layer.h"
-#include "opennn/activation_layer.h"
-#include "opennn/neural_network.h"
-#include "opennn/loss.h"
-#include "opennn/adaptive_moment_estimation.h"
+#include "opennn/dataset/yolo_dataset.h"
+#include "opennn/neural_network/layers/detection_layer.h"
+#include "opennn/neural_network/layers/detection_v8_layer.h"
+#include "opennn/neural_network/layers/convolutional_layer.h"
+#include "opennn/neural_network/layers/pooling_layer.h"
+#include "opennn/neural_network/layers/concatenation_layer.h"
+#include "opennn/neural_network/layers/addition_layer.h"
+#include "opennn/neural_network/layers/activation_layer.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/training_strategy/loss.h"
+#include "opennn/training_strategy/adaptive_moment_estimation.h"
 
 #include <cstdint>
 #include <filesystem>

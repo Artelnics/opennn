@@ -4,10 +4,10 @@
 #include <random>
 #include <vector>
 
-#include "opennn/tensor_types.h"
-#include "opennn/tensor_operations.h"
-#include "opennn/grouped_query_attention_layer.h"
-#include "opennn/neural_network.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/core/tensor_operations.h"
+#include "opennn/neural_network/layers/grouped_query_attention_layer.h"
+#include "opennn/neural_network/neural_network.h"
 
 using namespace opennn;
 

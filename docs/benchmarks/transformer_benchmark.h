@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <string>
 
-#include "opennn/standard_networks.h"
+#include "opennn/neural_network/standard_networks.h"
 
 namespace opennn::benchmark
 {

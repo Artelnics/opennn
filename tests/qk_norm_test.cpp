@@ -3,8 +3,8 @@
 #include <cmath>
 #include <vector>
 
-#include "opennn/tensor_types.h"
-#include "opennn/tensor_operations.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/core/tensor_operations.h"
 
 using namespace opennn;
 

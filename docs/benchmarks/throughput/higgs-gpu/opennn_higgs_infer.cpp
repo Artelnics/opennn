@@ -25,16 +25,16 @@
 
 #ifdef OPENNN_HAS_CUDA
 #include <cuda_runtime.h>
-#include "opennn/device_backend.h"
+#include "opennn/core/device_backend.h"
 #endif
 
-#include "opennn/configuration.h"
-#include "opennn/dense_layer.h"
-#include "opennn/forward_propagation.h"
-#include "opennn/neural_network.h"
-#include "opennn/random_utilities.h"
-#include "opennn/tabular_dataset.h"
-#include "opennn/tensor_types.h"
+#include "opennn/core/configuration.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/core/random_utilities.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/core/tensor_types.h"
 
 using namespace opennn;
 using clock_type = chrono::steady_clock;

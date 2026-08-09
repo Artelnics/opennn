@@ -1,7 +1,7 @@
 #include "pch.h"
 
-#include "opennn/configuration.h"
-#include "opennn/device_backend.h"
+#include "opennn/core/configuration.h"
+#include "opennn/core/device_backend.h"
 
 using namespace opennn;
 

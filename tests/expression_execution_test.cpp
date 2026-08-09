@@ -21,12 +21,12 @@
 
 #include "pch.h"
 
-#include "opennn/model_expression.h"
-#include "opennn/neural_network.h"
-#include "opennn/standard_networks.h"
-#include "opennn/scaling_layer.h"
-#include "opennn/unscaling_layer.h"
-#include "opennn/statistics.h"
+#include "opennn/neural_network/model_expression.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/neural_network/layers/unscaling_layer.h"
+#include "opennn/core/statistics.h"
 
 #include <cstdlib>
 #include <fstream>

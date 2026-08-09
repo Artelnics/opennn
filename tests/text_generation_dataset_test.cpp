@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "opennn/text_generation_dataset.h"
+#include "opennn/dataset/text_generation_dataset.h"
 
 using namespace opennn;
 

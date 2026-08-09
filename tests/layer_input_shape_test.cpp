@@ -17,12 +17,12 @@
 
 #include "pch.h"
 
-#include "opennn/layer.h"
-#include "opennn/dense_layer.h"
-#include "opennn/bounding_layer.h"
-#include "opennn/embedding_layer.h"
-#include "opennn/normalization_layer_3d.h"
-#include "opennn/scaling_layer.h"
+#include "opennn/neural_network/layers/layer.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/layers/bounding_layer.h"
+#include "opennn/neural_network/layers/embedding_layer.h"
+#include "opennn/neural_network/layers/normalization_layer_3d.h"
+#include "opennn/neural_network/layers/scaling_layer.h"
 
 using namespace opennn;
 

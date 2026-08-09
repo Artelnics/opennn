@@ -1,6 +1,6 @@
-#include "opennn/json.h"
-#include "opennn/string_utilities.h"
-#include "opennn/tokenizer_operator.h"
+#include "opennn/core/json.h"
+#include "opennn/core/string_utilities.h"
+#include "opennn/neural_network/operators/tokenizer_operator.h"
 
 #include <chrono>
 

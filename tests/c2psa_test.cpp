@@ -1,14 +1,14 @@
 #include "pch.h"
 #include "numerical_derivatives.h"
 
-#include "opennn/c2psa_layer.h"
-#include "opennn/flatten_layer.h"
-#include "opennn/dense_layer.h"
-#include "opennn/neural_network.h"
-#include "opennn/tabular_dataset.h"
-#include "opennn/loss.h"
-#include "opennn/configuration.h"
-#include "opennn/device_backend.h"
+#include "opennn/neural_network/layers/c2psa_layer.h"
+#include "opennn/neural_network/layers/flatten_layer.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/training_strategy/loss.h"
+#include "opennn/core/configuration.h"
+#include "opennn/core/device_backend.h"
 
 using namespace opennn;
 

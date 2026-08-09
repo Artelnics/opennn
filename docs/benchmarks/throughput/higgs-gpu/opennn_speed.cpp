@@ -34,15 +34,15 @@
 #include <string>
 #include <vector>
 
-#include "opennn/adaptive_moment_estimation.h"
-#include "opennn/configuration.h"
-#include "opennn/dense_layer.h"
-#include "opennn/forward_propagation.h"
-#include "opennn/neural_network.h"
-#include "opennn/random_utilities.h"
-#include "opennn/tabular_dataset.h"
-#include "opennn/tensor_types.h"
-#include "opennn/training_strategy.h"
+#include "opennn/training_strategy/adaptive_moment_estimation.h"
+#include "opennn/core/configuration.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/core/random_utilities.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/training_strategy/training_strategy.h"
 
 using namespace opennn;
 using clock_type = chrono::steady_clock;

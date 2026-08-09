@@ -15,9 +15,9 @@
 #include <iostream>
 #include <vector>
 
-#include "opennn/standard_networks.h"
-#include "opennn/configuration.h"
-#include "opennn/random_utilities.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/core/configuration.h"
+#include "opennn/core/random_utilities.h"
 
 using namespace opennn;
 

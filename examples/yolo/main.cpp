@@ -21,17 +21,17 @@
 #ifdef OPENNN_HAS_CUDA
 #  include <cuda_runtime.h>
 #endif
-#include "opennn/image_processing.h"
-#include "opennn/adaptive_moment_estimation.h"
-#include "opennn/configuration.h"
-#include "opennn/forward_propagation.h"
-#include "opennn/layer.h"
-#include "opennn/non_max_suppression_layer.h"
-#include "opennn/random_utilities.h"
-#include "opennn/standard_networks.h"
-#include "opennn/loss.h"
-#include "opennn/training_strategy.h"
-#include "opennn/yolo_dataset.h"
+#include "opennn/dataset/image_processing.h"
+#include "opennn/training_strategy/adaptive_moment_estimation.h"
+#include "opennn/core/configuration.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/neural_network/layers/layer.h"
+#include "opennn/neural_network/layers/non_max_suppression_layer.h"
+#include "opennn/core/random_utilities.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/training_strategy/loss.h"
+#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/dataset/yolo_dataset.h"
 
 using namespace opennn;
 

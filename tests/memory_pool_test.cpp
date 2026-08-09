@@ -4,17 +4,17 @@
 
 #include "pch.h"
 
-#include "opennn/addition_layer.h"
-#include "opennn/back_propagation.h"
-#include "opennn/configuration.h"
-#include "opennn/convolutional_layer.h"
-#include "opennn/dense_layer.h"
-#include "opennn/flatten_layer.h"
-#include "opennn/forward_propagation.h"
-#include "opennn/loss.h"
-#include "opennn/memory_pool.h"
-#include "opennn/neural_network.h"
-#include "opennn/scaling_layer.h"
+#include "opennn/neural_network/layers/addition_layer.h"
+#include "opennn/neural_network/back_propagation.h"
+#include "opennn/core/configuration.h"
+#include "opennn/neural_network/layers/convolutional_layer.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/layers/flatten_layer.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/training_strategy/loss.h"
+#include "opennn/core/memory_pool.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/neural_network/layers/scaling_layer.h"
 
 using namespace opennn;
 

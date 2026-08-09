@@ -22,14 +22,14 @@
 #include <string>
 #include <vector>
 
-#include "opennn/bert_dataset.h"
-#include "opennn/io_utilities.h"
-#include "opennn/standard_networks.h"
-#include "opennn/training_strategy.h"
-#include "opennn/adaptive_moment_estimation.h"
-#include "opennn/testing_analysis.h"
-#include "opennn/neural_network.h"
-#include "opennn/configuration.h"
+#include "opennn/dataset/bert_dataset.h"
+#include "opennn/core/io_utilities.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training_strategy/adaptive_moment_estimation.h"
+#include "opennn/testing_analysis/testing_analysis.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/core/configuration.h"
 
 using namespace opennn;
 

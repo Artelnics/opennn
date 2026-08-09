@@ -1,0 +1,1063 @@
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   D A T A   S E T   C L A S S
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
+#include "opennn/dataset/dataset.h"
+#include "opennn/dataset/batch.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/core/random_utilities.h"
+
+namespace opennn
+{
+
+namespace
+{
+
+template<typename Item, typename Predicate>
+vector<Index> filter_indices(const vector<Item>& items, Index reserve_size, Predicate include)
+{
+    vector<Index> indices;
+    indices.reserve(reserve_size);
+
+    for (Index i = 0; i < ssize(items); ++i)
+        if (include(items[i]))
+            indices.push_back(i);
+
+    return indices;
+}
+
+template<typename Predicate>
+vector<Index> collect_feature_indices(const vector<Variable>& variables, Index count, Predicate include)
+{
+    vector<Index> indices(count);
+
+    Index feature_index = 0;
+    Index output_index = 0;
+
+    for (const Variable& variable : variables)
+    {
+        const Index features = variable.get_feature_count();
+
+        if (!include(variable))
+        {
+            feature_index += features;
+            continue;
+        }
+
+        for (Index j = 0; j < features; ++j)
+            indices[output_index++] = feature_index++;
+    }
+
+    return indices;
+}
+
+}
+
+vector<Index> Dataset::get_sample_indices(SampleRole role_type) const
+{
+    return filter_indices(active_sample_roles(), get_samples_number(role_type),
+                          [role_type](SampleRole role) { return role == role_type; });
+}
+
+void Dataset::set_fold_split(const vector<Index>& training, const vector<Index>& validation)
+{
+    fold_split_roles = sample_roles;
+    vector<SampleRole>& roles = *fold_split_roles;
+    for (const Index i : training)   roles[size_t(i)] = SampleRole::Training;
+    for (const Index i : validation) roles[size_t(i)] = SampleRole::Validation;
+}
+
+vector<Index> Dataset::get_used_sample_indices() const
+{
+    const Index samples_number = get_samples_number();
+
+    vector<Index> used_indices;
+    used_indices.reserve(samples_number - get_samples_number(SampleRole::None));
+
+    for (Index i = 0; i < samples_number; ++i)
+        if (sample_roles[i] != SampleRole::None)
+            used_indices.push_back(i);
+
+    return used_indices;
+}
+
+void Dataset::get_batches(const vector<Index>& sample_indices,
+                          Index batch_size,
+                          bool shuffle,
+                          vector<vector<Index>>& batches) const
+{
+    const Index samples_number = sample_indices.size();
+
+    if (samples_number == 0) { batches.clear(); return; }
+
+    if (batch_size <= 0 || batch_size > samples_number)
+        batch_size = samples_number;
+
+    const Index batches_number = samples_number / batch_size;
+
+    if (ssize(batches) != batches_number)
+        batches.resize(batches_number);
+
+    vector<Index> shuffled_indices;
+
+    if (shuffle)
+    {
+        shuffled_indices = sample_indices;
+        shuffle_vector(shuffled_indices);
+    }
+
+    const vector<Index>& indices = shuffle ? shuffled_indices : sample_indices;
+
+    #pragma omp parallel for if (batches_number > 64)
+    for (Index i = 0; i < batches_number; ++i)
+    {
+        const Index start = i * batch_size;
+
+        batches[i].assign(indices.begin() + start, indices.begin() + start + batch_size);
+    }
+}
+
+void Dataset::set_storage_mode(StorageMode new_storage_mode)
+{
+    storage_mode = new_storage_mode;
+
+    if (new_storage_mode == StorageMode::BinaryFile)
+        data.resize(0, 0);
+}
+
+static const EnumMap<Dataset::StorageMode>& storage_mode_map()
+{
+    static const vector<pair<Dataset::StorageMode, string>> entries = {
+        {Dataset::StorageMode::Matrix,            "Matrix"},
+        {Dataset::StorageMode::BinaryFile,        "BinaryFile"},
+        {Dataset::StorageMode::GPUPersistantData, "GPUPersistantData"}
+    };
+    static const EnumMap<Dataset::StorageMode> map{entries};
+    return map;
+}
+
+string Dataset::get_storage_mode_string() const
+{
+    return storage_mode_map().to_string(storage_mode);
+}
+
+void Dataset::set_storage_mode(const string& new_storage_mode)
+{
+    set_storage_mode(storage_mode_map().from_string(new_storage_mode));
+}
+
+void Dataset::set_data(const MatrixR& new_data)
+{
+    throw_if(new_data.rows() != get_samples_number(),
+             "Rows number is not equal to samples number");
+    throw_if(new_data.cols() != get_features_number(),
+             "Columns number is not equal to variables number");
+
+    data = new_data;
+    set_storage_mode(StorageMode::Matrix);
+}
+
+void Dataset::set_data(MatrixR&& new_data)
+{
+    throw_if(new_data.rows() != get_samples_number(),
+             "Rows number is not equal to samples number");
+    throw_if(new_data.cols() != get_features_number(),
+             "Columns number is not equal to variables number");
+
+    data = move(new_data);
+    set_storage_mode(StorageMode::Matrix);
+}
+
+void Dataset::enable_device_residency()
+{
+    if (!device::is_cuda_build()) return;
+    if (data.size() == 0) return;
+    if (is_device_resident()) return;
+
+    upload_device_matrix(data);
+}
+
+void Dataset::upload_device_matrix(const MatrixR& matrix)
+{
+    device_data_columns = matrix.cols();
+
+    const Index bytes = Index(matrix.size()) * Index(sizeof(float));
+    data_device.resize_bytes(bytes, Device::CUDA);
+    device::copy_async(data_device.data, matrix.data(), bytes,
+                       device::CopyKind::HostToDevice, Backend::get_compute_stream());
+    device::synchronize(Backend::get_compute_stream());
+}
+
+void Dataset::set_data_constant(float new_value)
+{
+    data.setConstant(new_value);
+}
+
+Index Dataset::get_samples_number(SampleRole role_type) const
+{
+    return ranges::count(active_sample_roles(), role_type);
+}
+
+Index Dataset::get_used_samples_number() const
+{
+    return get_samples_number() - get_samples_number(SampleRole::None);
+}
+
+void Dataset::set_sample_roles(SampleRole role_type)
+{
+    ranges::fill(sample_roles, role_type);
+}
+
+void Dataset::set_sample_role(const Index index, SampleRole new_role)
+{
+    sample_roles[index] = new_role;
+}
+
+void Dataset::set_sample_roles(const vector<string>& new_roles)
+{
+    ranges::transform(new_roles, sample_roles.begin(), string_to_sample_role);
+}
+
+void Dataset::set_sample_roles(const vector<Index>& indices, SampleRole role_type)
+{
+    for (const auto& i : indices)
+        sample_roles[i] = role_type;
+}
+
+VectorI Dataset::filter_data(const VectorR& minimums, const VectorR& maximums)
+{
+
+    const vector<Index> used_feature_indices = get_used_feature_indices();
+    const vector<Index> used_sample_indices = get_used_sample_indices();
+
+    Index bound = Index(used_feature_indices.size());
+    if (Index(minimums.size()) < bound) bound = Index(minimums.size());
+    if (Index(maximums.size()) < bound) bound = Index(maximums.size());
+
+    vector<Index> filtered;
+
+    for (const Index sample_index : used_sample_indices)
+    {
+        bool out_of_range = false;
+
+        for (Index i = 0; i < bound && !out_of_range; i++)
+        {
+            const type value = data(sample_index, used_feature_indices[size_t(i)]);
+
+            if (isnan(value)) continue;
+
+            if (abs(value - minimums(i)) <= EPSILON
+             || abs(value - maximums(i)) <= EPSILON)
+                continue;
+
+            if (minimums(i) == maximums(i))
+                out_of_range = (value != minimums(i));
+            else
+                out_of_range = (value < minimums(i) || value > maximums(i));
+        }
+
+        if (out_of_range)
+            filtered.push_back(sample_index);
+    }
+
+    if (!filtered.empty())
+        set_sample_roles(filtered, "None");
+
+    VectorI filtered_samples_indices(Index(filtered.size()));
+    for (Index i = 0; i < Index(filtered.size()); i++)
+        filtered_samples_indices(i) = filtered[size_t(i)];
+
+    return filtered_samples_indices;
+}
+
+void Dataset::split_samples(const float training_samples_ratio,
+                            float validation_samples_ratio,
+                            float testing_samples_ratio,
+                            bool shuffle)
+{
+    const Index used_samples_number = get_used_samples_number();
+
+    if (used_samples_number == 0) return;
+
+    const float total_ratio = training_samples_ratio + validation_samples_ratio + testing_samples_ratio;
+
+    const Index validation_samples_number = Index((validation_samples_ratio * used_samples_number) / total_ratio);
+    const Index testing_samples_number = Index((testing_samples_ratio * used_samples_number) / total_ratio);
+    const Index training_samples_number = used_samples_number - validation_samples_number - testing_samples_number;
+
+    const Index samples_number = get_samples_number();
+
+    vector<Index> indices(samples_number);
+    iota(indices.begin(), indices.end(), 0);
+
+    if (shuffle)
+        shuffle_vector(indices);
+
+    const auto assign_role = [this, &indices](SampleRole role, Index count, Index& i)
+    {
+        Index assigned = 0;
+
+        while (assigned < count)
+        {
+            if (const Index idx = indices[i++]; sample_roles[idx] != SampleRole::None)
+            {
+                sample_roles[idx] = role;
+                ++assigned;
+            }
+        }
+    };
+
+    Index index = 0;
+
+    assign_role(SampleRole::Training, training_samples_number, index);
+    assign_role(SampleRole::Validation, validation_samples_number, index);
+    assign_role(SampleRole::Testing, testing_samples_number, index);
+}
+
+void Dataset::split_samples_random(const float training_ratio,
+                                   float validation_ratio,
+                                   float testing_ratio)
+{
+    split_samples(training_ratio, validation_ratio, testing_ratio, true);
+}
+
+void Dataset::split_samples_sequential(const float training_ratio,
+                                       float validation_ratio,
+                                       float testing_ratio)
+{
+    split_samples(training_ratio, validation_ratio, testing_ratio, false);
+}
+
+void Dataset::set_default_variable_roles()
+{
+    set_default_variable_roles_implementation(false);
+}
+
+void Dataset::set_default_variable_roles_implementation(bool forecasting)
+{
+    const Index variables_number = variables.size();
+
+    if (variables_number == 0)
+        return;
+
+    if (variables_number == 1)
+    {
+        variables[0].set_role("None");
+        return;
+    }
+
+    set_variable_roles(VariableRole::Input);
+
+    bool target = false;
+    bool time_variable = false;
+
+    for (Index i = variables_number - 1; i >= 0; i--)
+    {
+        if (forecasting)
+        {
+            if (variables[i].type == VariableType::DateTime && !time_variable)
+            {
+                variables[i].set_role("Time");
+                time_variable = true;
+            }
+            else if (variables[i].type == VariableType::Constant)
+            {
+                variables[i].set_role("None");
+            }
+            else if (!target)
+            {
+                variables[i].set_role("Target");
+                target = true;
+            }
+        }
+        else
+        {
+            Variable& variable = variables[i];
+
+            if (is_one_of(variable.type, VariableType::Constant, VariableType::DateTime))
+            {
+                variable.set_role("None");
+            }
+            else
+            {
+                variable.set_role("Target");
+                break;
+            }
+        }
+    }
+}
+
+void Dataset::set_default_variable_roles_forecasting()
+{
+    set_default_variable_roles_implementation(true);
+}
+
+void Dataset::set_default_variable_names()
+{
+    const Index variables_number = variables.size();
+
+    for (Index i = 0; i < variables_number; ++i)
+        variables[i].name = format("variable_{}", 1 + i);
+}
+
+vector<string> Dataset::get_feature_names() const
+{
+    return get_variable_feature_names(variables);
+}
+
+vector<string> Dataset::get_feature_names(VariableRole variable_role) const
+{
+    return get_variable_feature_names(get_variables(variable_role));
+}
+
+Shape Dataset::get_shape(VariableRole role) const
+{
+    if (role == VariableRole::Input)   return input_shape;
+    if (role == VariableRole::Target)  return target_shape;
+    if (role == VariableRole::Decoder) return decoder_shape;
+
+    throw runtime_error(format("Invalid variable role: {}", variable_role_to_string(role)));
+}
+
+void Dataset::set_shape(VariableRole role, const Shape& new_shape)
+{
+    if (role == VariableRole::Input)
+        input_shape = new_shape;
+    else if (role == VariableRole::Target)
+        target_shape = new_shape;
+    else if (role == VariableRole::Decoder)
+        decoder_shape = new_shape;
+    else
+        throw runtime_error(format("Invalid variable role: {}", variable_role_to_string(role)));
+
+}
+
+vector<Index> Dataset::get_feature_indices(VariableRole role_type) const
+{
+    return collect_feature_indices(variables, get_features_number(role_type),
+        [role_type](const Variable& variable) { return role_applies_to(variable.role, role_type); });
+}
+
+vector<Index> Dataset::get_variable_indices(VariableRole role_type) const
+{
+    return filter_indices(variables, get_variables_number(role_type),
+        [role_type](const Variable& variable) { return role_applies_to(variable.role, role_type); });
+}
+
+vector<Index> Dataset::get_used_variables_indices() const
+{
+    return filter_indices(variables, get_used_variables_number(),
+                          [](const Variable& variable) { return variable.is_used(); });
+}
+
+vector<string> Dataset::get_variable_names() const
+{
+    vector<string> variable_names(variables.size());
+
+    ranges::transform(variables, variable_names.begin(),
+                      [](const Variable& var) { return var.name; });
+
+    return variable_names;
+}
+
+vector<string> Dataset::get_variable_names(VariableRole role_type) const
+{
+    vector<string> names;
+    names.reserve(get_variables_number(role_type));
+
+    ranges::transform(variables | views::filter([role_type](const Variable& variable)
+                                                { return role_applies_to(variable.role, role_type); }),
+                      back_inserter(names), &Variable::name);
+
+    return names;
+}
+
+Index Dataset::get_variables_number(VariableRole role_type) const
+{
+    return ranges::count_if(variables,
+                            [role_type](const Variable& v) { return role_applies_to(v.role, role_type); });
+}
+
+Index Dataset::get_used_variables_number() const
+{
+    return ranges::count_if(variables,
+                            [](const Variable& var) {
+                                  return var.is_used();
+                            });
+}
+
+vector<Variable> Dataset::get_variables(VariableRole role_type) const
+{
+    vector<Variable> this_variables;
+    this_variables.reserve(get_variables_number(role_type));
+
+    ranges::copy_if(variables, back_inserter(this_variables),
+                    [role_type](const Variable& var) { return role_applies_to(var.role, role_type); });
+
+    return this_variables;
+}
+
+Index Dataset::get_features_number() const
+{
+    return accumulate(variables.begin(), variables.end(), 0,
+                      [](Index sum, const Variable& var) { return sum + var.get_feature_count(); });
+}
+
+Index Dataset::get_features_number(VariableRole role_type) const
+{
+    return transform_reduce(variables.begin(), variables.end(), Index(0), plus<>{},
+        [&](const Variable& v) { return role_applies_to(v.role, role_type) ? v.get_feature_count() : Index(0); });
+}
+
+vector<Index> Dataset::get_used_feature_indices() const
+{
+    return collect_feature_indices(variables,
+        get_features_number() - get_features_number(VariableRole::None) - get_features_number(VariableRole::Time),
+        [](const Variable& variable)
+        { return variable.role != VariableRole::None && variable.role != VariableRole::Time; });
+}
+
+void Dataset::set_variable_roles(const vector<string>& new_variables_roles)
+{
+    const size_t new_variables_roles_size = new_variables_roles.size();
+
+    throw_if(new_variables_roles_size != variables.size(),
+             "Size of variables uses ({}) must be equal to variables size ({}).\n",
+                    new_variables_roles_size, variables.size());
+
+    for (size_t i = 0; i < new_variables_roles.size(); ++i)
+        variables[i].set_role(new_variables_roles[i]);
+
+}
+
+void Dataset::set_variable_indices(const vector<Index>& input_variables,
+                                       const vector<Index>& target_variables)
+{
+    set_variable_roles(VariableRole::None);
+
+    for (const Index index : input_variables)
+        set_variable_role(index, VariableRole::Input);
+
+    for (const Index index : target_variables)
+        set_variable_role(index, variables[index].role == VariableRole::Input
+            ? VariableRole::InputTarget : VariableRole::Target);
+
+    set_shape(VariableRole::Input, {get_features_number(VariableRole::Input)});
+    set_shape(VariableRole::Target, {get_features_number(VariableRole::Target)});
+}
+
+void Dataset::set_input_variables_unused()
+{
+    const Index variables_number = get_variables_number();
+
+    for (Index i = 0; i < variables_number; ++i)
+        if (variables[i].role == VariableRole::Input)
+            set_variable_role(i, VariableRole::None);
+}
+
+void Dataset::set_variable_role(const Index index, VariableRole new_role)
+{
+    throw_if(index < 0 || index >= ssize(variables),
+             "Dataset::set_variable_role: index {} out of range [0, {}).",
+                    index, variables.size());
+    variables[index].role = new_role;
+}
+
+void Dataset::set_variable_role(const string& name, VariableRole new_role)
+{
+    set_variable_role(get_variable_index(name), new_role);
+}
+
+void Dataset::set_variable_type(const Index index, const VariableType& new_type)
+{
+    throw_if(index < 0 || index >= ssize(variables),
+             "Dataset::set_variable_type: index {} out of range [0, {}).",
+                    index, variables.size());
+    variables[index].type = new_type;
+}
+
+void Dataset::set_variable_type(const string& name, const VariableType& new_type)
+{
+    set_variable_type(get_variable_index(name), new_type);
+}
+
+void Dataset::set_variable_names(const vector<string>& new_names)
+{
+    const Index new_names_size = new_names.size();
+    const Index variables_number = get_variables_number();
+
+    throw_if(new_names_size != variables_number,
+             "Size of names ({}) is not equal to variables number ({}).\n",
+                    new_names.size(), variables_number);
+
+    for (Index i = 0; i < variables_number; ++i)
+        variables[i].name = trim_view(new_names[i]);
+}
+
+void Dataset::set_variables_number(const Index new_size)
+{
+    variables.resize(new_size);
+}
+
+void Dataset::set_variable_roles(VariableRole variable_role)
+{
+    for (Variable& variable : variables)
+        variable.role = is_one_of(variable.type, VariableType::Constant, VariableType::DateTime)
+                      ? VariableRole::None
+                      : variable_role;
+
+}
+
+static const vector<tuple<Dataset::Separator, string, string>> separator_map = {
+    {Dataset::Separator::Space,     " ",  "Space"},
+    {Dataset::Separator::Tab,       "\t", "Tab"},
+    {Dataset::Separator::Comma,     ",",  "Comma"},
+    {Dataset::Separator::Semicolon, ";",  "Semicolon"}
+};
+
+string Dataset::get_separator_string() const
+{
+    for (const auto& [sep, str, name] : separator_map)
+        if (sep == separator) return str;
+
+    return {};
+}
+
+string Dataset::get_separator_name() const
+{
+    for (const auto& [sep, str, name] : separator_map)
+        if (sep == separator) return name;
+
+    return {};
+}
+
+static const EnumMap<Dataset::Codification>& codification_map()
+{
+    static const vector<pair<Dataset::Codification, string>> entries = {
+        {Dataset::Codification::UTF8,      "UTF-8"},
+        {Dataset::Codification::SHIFT_JIS, "SHIFT_JIS"}
+    };
+    static const EnumMap<Dataset::Codification> map{entries};
+    return map;
+}
+
+string Dataset::get_codification_string() const
+{
+    return codification_map().to_string(codification);
+}
+
+Index Dataset::get_variable_index(const string& variable_name) const
+{
+    const auto it = ranges::find_if(variables,
+                              [&](const Variable& v) { return v.name == variable_name; });
+
+    throw_if(it == variables.end(),
+             "Cannot find {}\n", variable_name);
+
+    return distance(variables.begin(), it);
+}
+
+Index Dataset::get_variable_index(const Index feature_index) const
+{
+    const Index variables_number = get_variables_number();
+
+    Index features_seen = 0;
+
+    for (Index i = 0; i < variables_number; ++i)
+    {
+        features_seen += variables[i].get_feature_count();
+
+        if (feature_index < features_seen)
+            return i;
+    }
+
+    throw runtime_error(format("Cannot find variable index: {}.\n", feature_index));
+}
+
+vector<vector<Index>> Dataset::get_feature_indices() const
+{
+    const Index variables_number = get_variables_number();
+
+    vector<vector<Index>> indices(variables_number);
+
+    Index offset = 0;
+    for (Index i = 0; i < variables_number; ++i)
+    {
+        const Index count = variables[i].get_feature_count();
+        indices[i].resize(count);
+        iota(indices[i].begin(), indices[i].end(), offset);
+        offset += count;
+    }
+
+    return indices;
+}
+
+vector<Index> Dataset::get_feature_indices(const Index variable_index) const
+{
+    const Index index = transform_reduce(variables.begin(), variables.begin() + variable_index,
+        Index(0), plus<>{}, [](const Variable& v) { return v.get_feature_count(); });
+
+    vector<Index> indices(variables[variable_index].get_feature_count());
+    iota(indices.begin(), indices.end(), index);
+
+    return indices;
+}
+
+void Dataset::set_separator_string(const string& new_separator_string)
+{
+    for (const auto& [sep, str, name] : separator_map)
+        if (str == new_separator_string) { separator = sep; return; }
+
+    throw runtime_error(format("Unknown separator: {}", new_separator_string));
+}
+
+void Dataset::set_separator_name(const string& new_separator_name)
+{
+    for (const auto& [sep, str, name] : separator_map)
+        if (name == new_separator_name) { separator = sep; return; }
+
+    throw runtime_error(format("Unknown separator: {}.\n", new_separator_name));
+}
+
+void Dataset::set_codification(const string& new_codification_string)
+{
+    codification = codification_map().from_string(new_codification_string);
+}
+
+void Dataset::variables_to_JSON(JsonWriter &printer) const
+{
+    const Index variables_number = get_variables_number();
+
+    printer.open_element("Variables");
+    add_json_field(printer, "VariablesNumber", variables_number);
+
+    printer.begin_array("Variable");
+    for (Index i = 0; i < variables_number; ++i)
+    {
+        printer.begin_array_object();
+        variables[i].to_JSON(printer);
+        printer.end_array_object();
+    }
+    printer.end_array();
+
+    printer.close_element();
+}
+
+void Dataset::samples_to_JSON(JsonWriter &printer) const
+{
+    printer.open_element("Samples");
+
+    add_json_field(printer, "SamplesNumber", get_samples_number());
+
+    if (has_sample_ids)
+        add_json_field(printer, "SamplesId", vector_to_string(sample_ids, get_separator_string()));
+
+    vector<Index> sample_roles_vector(get_samples_number());
+    ranges::transform(sample_roles, sample_roles_vector.begin(),
+                      [](SampleRole r) { return static_cast<Index>(r); });
+
+    add_json_field(printer, "SampleRoles", vector_to_string(sample_roles_vector));
+    printer.close_element();
+}
+
+void Dataset::preview_data_to_JSON(JsonWriter &printer) const
+{
+    printer.open_element("PreviewData");
+
+    add_json_field(printer, "PreviewSize", data_file_preview.size());
+
+    const vector<string> vector_data_file_preview = convert_string_vector(data_file_preview, ",");
+
+    printer.begin_array("Row");
+    for (const string& row_text : vector_data_file_preview)
+    {
+        printer.begin_array_object();
+        add_json_field(printer, "Text", row_text);
+        printer.end_array_object();
+    }
+    printer.end_array();
+
+    printer.close_element();
+}
+
+void Dataset::variables_from_JSON(const Json *variables_element)
+{
+    throw_if(!variables_element,
+             "Variables element is nullptr.\n");
+
+    set_variables_number(read_json_index(variables_element, "VariablesNumber"));
+
+    for_json_items(variables_element, "Variable", variables.size(), [&](Index i, const Json* el)
+    {
+        Variable& variable = variables[i];
+
+        variable.name = read_json_string(el, "Name");
+        variable.set_scaler(read_json_string(el, "Scaler"));
+        variable.set_role(read_json_string(el, "Role"));
+        variable.set_type(read_json_string(el, "Type"));
+        variable.features = el->find("Features") ? read_json_index(el, "Features") : 1;
+
+        if (variable.is_categorical() || variable.is_binary())
+        {
+            const Json* const categories_element = el->find("Categories");
+
+            if (categories_element)
+                variable.categories = get_tokens(read_json_string(el, "Categories"), ";");
+            else if (variable.is_binary())
+                variable.categories = { "0", "1" };
+            else
+                throw runtime_error("Categorical Variable Element is nullptr: Categories");
+        }
+    });
+}
+
+void Dataset::preview_data_from_JSON(const Json *preview_data_element)
+{
+    throw_if(!preview_data_element,
+             "Preview data element is nullptr.\n ");
+
+    const Index preview_size = read_json_index(preview_data_element, "PreviewSize");
+    if (preview_size <= 0) return;
+
+    data_file_preview.resize(preview_size);
+
+    for_json_items(preview_data_element, "Row", preview_size, [&](Index i, const Json* row)
+    {
+        const string text = read_json_string(row, "Text");
+        if (!text.empty())
+            data_file_preview[i] = get_tokens(text, ",");
+    });
+}
+
+void Dataset::write_json_header(JsonWriter& printer,
+                                initializer_list<pair<const char*, Json>> data_source_fields) const
+{
+    printer.open_element("Dataset");
+
+    printer.open_element("DataSource");
+    write_json(printer, data_source_fields);
+    printer.close_element();
+
+    variables_to_JSON(printer);
+    samples_to_JSON(printer);
+}
+
+void Dataset::write_json_footer(JsonWriter& printer) const
+{
+    add_json_field(printer, "Display", display);
+
+    printer.close_element();
+}
+
+void Dataset::read_json_blocks(const Json* dataset_element)
+{
+    if (const Json* variables_element = dataset_element->find("Variables"))
+        variables_from_JSON(variables_element);
+    if (const Json* samples_element = dataset_element->find("Samples"))
+        samples_from_JSON(samples_element);
+    if (const Json* missing_values_element = dataset_element->find("MissingValues"))
+        missing_values_from_JSON(missing_values_element);
+    if (const Json* preview_data_element = dataset_element->find("PreviewData"))
+        preview_data_from_JSON(preview_data_element);
+}
+
+void Dataset::save(const filesystem::path& file_name) const
+{
+    save_json_file(file_name, *this);
+}
+
+void Dataset::load(const filesystem::path& file_name)
+{
+    from_JSON(load_json_file(file_name));
+}
+
+void Dataset::read_data_file_preview(const vector<string_view>& all_lines, char file_separator, bool has_quotes)
+{
+    if (all_lines.empty())
+        return;
+
+    const Index num_first_rows_to_show = 3;
+
+    data_file_preview.clear();
+
+    const Index first_rows = Index(min(static_cast<size_t>(num_first_rows_to_show), all_lines.size()));
+
+    string scratch;
+
+    for (Index i = 0; i < first_rows; ++i)
+    {
+        const vector<string_view> tokens = get_token_views_maybe_quoted(all_lines[i], file_separator, has_quotes, scratch);
+        data_file_preview.emplace_back(tokens.begin(), tokens.end());
+    }
+
+    if (all_lines.size() > num_first_rows_to_show)
+    {
+        const vector<string_view> tokens = get_token_views_maybe_quoted(all_lines.back(), file_separator, has_quotes, scratch);
+        data_file_preview.emplace_back(tokens.begin(), tokens.end());
+    }
+}
+
+void Dataset::check_separators(string_view line) const
+{
+    const string separator_string = get_separator_string();
+    const string separator_name = get_separator_name();
+    const char sep_char = separator_string.empty() ? ',' : separator_string[0];
+
+    bool in_quote = false;
+    bool found_expected = false;
+    char found_other = 0;
+    string_view found_other_name;
+
+    for (const char c : line)
+    {
+        if (c == '"') { in_quote = !in_quote; continue; }
+        if (in_quote) continue;
+
+        if (c == sep_char) { found_expected = true; continue; }
+
+        if (found_other == 0)
+            for (const auto& [sep, str, name] : separator_map)
+            {
+                if (sep == separator || sep == Separator::Space) continue;
+                if (!str.empty() && str[0] == c) { found_other = c; found_other_name = name; break; }
+            }
+    }
+
+    if (!found_expected)
+    {
+        throw_if(found_other != 0,
+                 "Separator '{}' not found in line {}.\n", separator_string, line);
+        return;
+    }
+
+    throw_if(found_other != 0,
+             "Found {} ('{}') in data file {}, but separator is {} ('{}').",
+                    found_other_name, found_other, data_path.string(), separator_name, separator_string);
+}
+
+bool Dataset::has_validation() const
+{
+    return get_samples_number(SampleRole::Validation) != 0;
+}
+
+void Dataset::fill_inputs(const vector<Index>&, const vector<Index>&, float*, FillMode, int) const
+{
+    throw runtime_error("Dataset::fill_inputs must be implemented by a concrete dataset.");
+}
+
+void Dataset::fill_decoder(const vector<Index>&, const vector<Index>&, float*, FillMode, int) const
+{
+    throw runtime_error("Dataset::fill_decoder must be implemented by a concrete dataset.");
+}
+
+void Dataset::fill_targets(const vector<Index>&, const vector<Index>&, float*, FillMode, int) const
+{
+    throw runtime_error("Dataset::fill_targets must be implemented by a concrete dataset.");
+}
+
+pair<Index, Index> Dataset::count_binary_targets(const string& sample_role) const
+{
+    vector<Index> sample_indices = get_sample_indices(sample_role);
+    if (sample_indices.empty()) sample_indices = get_used_sample_indices();
+    if (sample_indices.empty()) return {0, 0};
+
+    vector<float> targets(sample_indices.size());
+    fill_targets(sample_indices, get_feature_indices(VariableRole::Target), targets.data(), FillMode::Inference);
+
+    Index negatives = 0;
+    Index positives = 0;
+
+    for (const float value : targets | views::filter([](float target) { return !isnan(target); }))
+        ++(value >= 0.5f ? positives : negatives);
+
+    return {negatives, positives};
+}
+
+void Dataset::fill_batch(Batch& batch,
+                         const vector<Index>& sample_indices,
+                         const vector<Index>& input_indices,
+                         const vector<Index>& decoder_indices,
+                         const vector<Index>& target_indices,
+                         FillMode mode) const
+{
+    throw_if(Index(sample_indices.size()) != batch.samples_number,
+             "fill_batch sample count does not match the batch size.");
+
+    const bool on_gpu = batch.uses_cuda();
+
+    if (on_gpu && is_device_resident() && batch.decoder.shape.empty()
+        && is_contiguous(input_indices) && is_contiguous(target_indices))
+    {
+        batch.device_gather = true;
+        batch.gather_row_indices.resize(sample_indices.size());
+        ranges::transform(sample_indices, batch.gather_row_indices.begin(),
+                          [](Index sample_index) { return int(sample_index); });
+        batch.input_col_offset  = input_indices.empty()  ? 0 : input_indices.front();
+        batch.target_col_offset = target_indices.empty() ? 0 : target_indices.front();
+        batch.needs_device_copy = true;
+        return;
+    }
+
+    fill_batch_host(batch, sample_indices, input_indices, decoder_indices,
+                    target_indices, mode);
+}
+
+void Dataset::fill_batch_host(Batch& batch,
+                              const vector<Index>& sample_indices,
+                              const vector<Index>& input_indices,
+                              const vector<Index>& decoder_indices,
+                              const vector<Index>& target_indices,
+                              FillMode mode) const
+{
+    const bool on_gpu = batch.uses_cuda();
+
+    batch.device_gather = false;
+
+    float* const input_buffer   = on_gpu ? batch.input.host   : batch.input.buffer.as<float>();
+    float* const decoder_buffer = on_gpu ? batch.decoder.host : batch.decoder.buffer.as<float>();
+    float* const target_buffer  = on_gpu ? batch.target.host  : batch.target.buffer.as<float>();
+
+    if (batch.input_contiguous < 0 && !input_indices.empty())
+        batch.input_contiguous = is_contiguous(input_indices) ? 1 : 0;
+    if (batch.decoder_contiguous < 0 && !decoder_indices.empty())
+        batch.decoder_contiguous = is_contiguous(decoder_indices) ? 1 : 0;
+    if (batch.target_contiguous < 0 && !target_indices.empty())
+        batch.target_contiguous = is_contiguous(target_indices) ? 1 : 0;
+
+    fill_inputs(sample_indices, input_indices, input_buffer, mode, batch.input_contiguous);
+
+    if (!batch.decoder.shape.empty())
+        fill_decoder(sample_indices, decoder_indices, decoder_buffer, mode, batch.decoder_contiguous);
+
+    fill_targets(sample_indices, target_indices, target_buffer, mode, batch.target_contiguous);
+
+    batch.needs_device_copy = true;
+}
+
+void Dataset::samples_from_JSON(const Json *samples_element)
+{
+    throw_if(!samples_element,
+             "Samples element is nullptr.\n");
+
+    const Index samples_number = read_json_index(samples_element, "SamplesNumber");
+
+    if (has_sample_ids)
+        sample_ids = get_tokens(read_json_string(samples_element, "SamplesId"), get_separator_string());
+
+    sample_roles.resize(samples_number, SampleRole::Training);
+
+    if (!variables.empty())
+        set_sample_roles(get_tokens(read_json_string(samples_element, "SampleRoles"), " "));
+
+    resize_data_from_JSON(samples_number);
+}
+
+}
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "opennn/training_result.h"
+#include "opennn/training_strategy/training_result.h"
 
 using namespace opennn;
 

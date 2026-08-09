@@ -1,12 +1,12 @@
 #include "pch.h"
 
-#include "opennn/training_strategy.h"
-#include "opennn/dataset.h"
-#include "opennn/tabular_dataset.h"
-#include "opennn/standard_networks.h"
-#include "opennn/growing_neurons.h"
-#include "opennn/dense_layer.h"
-#include "opennn/normalization_layer_3d.h"
+#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/dataset/dataset.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/model_selection/growing_neurons.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/layers/normalization_layer_3d.h"
 
 using namespace opennn;
 

@@ -1,8 +1,8 @@
 #include "pch.h"
 
-#include "opennn/batch.h"
-#include "opennn/configuration.h"
-#include "opennn/tabular_dataset.h"
+#include "opennn/dataset/batch.h"
+#include "opennn/core/configuration.h"
+#include "opennn/dataset/tabular_dataset.h"
 
 using namespace opennn;
 

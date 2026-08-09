@@ -18,14 +18,14 @@
 #include <memory>
 #include <string>
 
-#include "opennn/image_dataset.h"
-#include "opennn/standard_networks.h"
-#include "opennn/training_strategy.h"
-#include "opennn/adaptive_moment_estimation.h"
-#include "opennn/random_utilities.h"
-#include "opennn/configuration.h"
-#include "opennn/device_backend.h"
-#include "opennn/memory_debug.h"
+#include "opennn/dataset/image_dataset.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training_strategy/adaptive_moment_estimation.h"
+#include "opennn/core/random_utilities.h"
+#include "opennn/core/configuration.h"
+#include "opennn/core/device_backend.h"
+#include "opennn/core/memory_debug.h"
 
 using namespace opennn;
 using clock_type = chrono::steady_clock;

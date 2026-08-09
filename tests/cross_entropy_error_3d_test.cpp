@@ -1,10 +1,10 @@
 #include "pch.h"
-#include "opennn/tensor_types.h"
-#include "opennn/error_functions.h"
-#include "opennn/loss.h"
-#include "opennn/dense_layer.h"
-#include "opennn/dataset.h"
-#include "opennn/tabular_dataset.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/training_strategy/error_functions.h"
+#include "opennn/training_strategy/loss.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/dataset/dataset.h"
+#include "opennn/dataset/tabular_dataset.h"
 #include "gtest/gtest.h"
 
 using namespace opennn;

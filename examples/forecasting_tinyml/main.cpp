@@ -15,12 +15,12 @@
 //   initialization. What the pipeline verifies is that the exported C code
 //   reproduces OpenNN outputs exactly on another target (emulated MCU).
 
-#include "opennn/standard_networks.h"
-#include "opennn/scaling_layer.h"
-#include "opennn/unscaling_layer.h"
-#include "opennn/model_expression.h"
-#include "opennn/configuration.h"
-#include "opennn/variable.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/neural_network/layers/unscaling_layer.h"
+#include "opennn/neural_network/model_expression.h"
+#include "opennn/core/configuration.h"
+#include "opennn/core/variable.h"
 
 #include <cmath>
 #include <fstream>

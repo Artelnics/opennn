@@ -1,12 +1,12 @@
 #include "pch.h"
 #include "numerical_derivatives.h"
 
-#include "opennn/tensor_types.h"
-#include "opennn/multihead_attention_layer.h"
-#include "opennn/flatten_layer.h"
-#include "opennn/tabular_dataset.h"
-#include "opennn/neural_network.h"
-#include "opennn/loss.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/neural_network/layers/multihead_attention_layer.h"
+#include "opennn/neural_network/layers/flatten_layer.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/training_strategy/loss.h"
 #include <cmath>
 
 using namespace opennn;

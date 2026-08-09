@@ -40,6 +40,21 @@ OpenNN is a high-performance C++ library for neural networks, deep learning, and
 - `tests/` - GoogleTest-based unit and validation tests
 - `docs/benchmarks/` - reproducible benchmark suite and benchmark methodology
 
+The library itself is split by responsibility, and every include spells out the
+folder it comes from — `#include "opennn/neural_network/layers/dense_layer.h"`:
+
+- `opennn/core/` - tensor types and operations, device backend, memory, generic
+  utilities; `core/cuda/` holds the CUDA kernels
+- `opennn/neural_network/` - the network, its `layers/` and `operators/`,
+  forward and back propagation, expression export
+- `opennn/dataset/` - tabular, image, language, time series and YOLO datasets
+- `opennn/training_strategy/` - losses and optimization algorithms
+- `opennn/model_selection/` - inputs and neurons selection, genetic algorithm
+- `opennn/testing_analysis/` - testing analysis
+
+They depend on each other in that order, top to bottom: `core` knows nothing
+about the rest, and `testing_analysis` may use everything above it.
+
 ## Quick start
 
 ### Requirements

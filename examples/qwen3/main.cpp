@@ -31,12 +31,12 @@
 #include <string>
 #include <vector>
 
-#include "opennn/chat.h"
-#include "opennn/io_utilities.h"
-#include "opennn/standard_networks.h"
-#include "opennn/neural_network.h"
-#include "opennn/tokenizer_operator.h"
-#include "opennn/configuration.h"
+#include "opennn/neural_network/chat.h"
+#include "opennn/core/io_utilities.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/neural_network/operators/tokenizer_operator.h"
+#include "opennn/core/configuration.h"
 
 using namespace opennn;
 using namespace std;

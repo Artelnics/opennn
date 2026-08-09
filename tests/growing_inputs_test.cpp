@@ -1,11 +1,11 @@
 #include "pch.h"
 
-#include "opennn/growing_inputs.h"
-#include "opennn/training_strategy.h"
-#include "opennn/dataset.h"
-#include "opennn/tabular_dataset.h"
-#include "opennn/dense_layer.h"
-#include "opennn/standard_networks.h"
+#include "opennn/model_selection/growing_inputs.h"
+#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/dataset/dataset.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/standard_networks.h"
 
 using namespace opennn;
 

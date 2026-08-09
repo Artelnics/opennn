@@ -13,30 +13,30 @@
 #include <vector>
 #include <filesystem>
 
-#include "opennn/configuration.h"
-#include "opennn/device_backend.h"
-#include "opennn/memory_debug.h"
-#include "opennn/neural_network.h"
-#include "opennn/chat.h"
-#include "opennn/standard_networks.h"
+#include "opennn/core/configuration.h"
+#include "opennn/core/device_backend.h"
+#include "opennn/core/memory_debug.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/neural_network/chat.h"
+#include "opennn/neural_network/standard_networks.h"
 
-#include "opennn/tabular_dataset.h"
-#include "opennn/time_series_dataset.h"
-#include "opennn/image_dataset.h"
-#include "opennn/language_dataset.h"
-#include "opennn/text_generation_dataset.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/dataset/time_series_dataset.h"
+#include "opennn/dataset/image_dataset.h"
+#include "opennn/dataset/language_dataset.h"
+#include "opennn/dataset/text_generation_dataset.h"
 
-#include "opennn/scaling_layer.h"
-#include "opennn/dense_layer.h"
-#include "opennn/long_short_term_memory_layer.h"
-#include "opennn/recurrent_layer.h"
+#include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/layers/long_short_term_memory_layer.h"
+#include "opennn/neural_network/layers/recurrent_layer.h"
 
-#include "opennn/loss.h"
-#include "opennn/training_strategy.h"
-#include "opennn/testing_analysis.h"
-#include "opennn/stochastic_gradient_descent.h"
-#include "opennn/adaptive_moment_estimation.h"
-#include "opennn/random_utilities.h"
+#include "opennn/training_strategy/loss.h"
+#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/testing_analysis/testing_analysis.h"
+#include "opennn/training_strategy/stochastic_gradient_descent.h"
+#include "opennn/training_strategy/adaptive_moment_estimation.h"
+#include "opennn/core/random_utilities.h"
 
 using namespace opennn;
 using namespace chrono;

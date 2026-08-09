@@ -2,7 +2,7 @@
 
 #ifndef OPENNN_NO_VISION
 
-#include "opennn/loss.h"
+#include "opennn/training_strategy/loss.h"
 
 #include <cmath>
 #include <vector>

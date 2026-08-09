@@ -3,12 +3,12 @@
 #include <cmath>
 #include <vector>
 
-#include "opennn/tensor_types.h"
-#include "opennn/tensor_operations.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/core/tensor_operations.h"
 
 #ifdef OPENNN_HAS_CUDA
-#include "opennn/configuration.h"
-#include "opennn/device_backend.h"
+#include "opennn/core/configuration.h"
+#include "opennn/core/device_backend.h"
 #endif
 
 using namespace opennn;

@@ -1,9 +1,9 @@
 #include "pch.h"
 
-#include "opennn/image_dataset.h"
-#include "opennn/dataset.h"
-#include "opennn/variable.h"
-#include "opennn/statistics.h"
+#include "opennn/dataset/image_dataset.h"
+#include "opennn/dataset/dataset.h"
+#include "opennn/core/variable.h"
+#include "opennn/core/statistics.h"
 
 #include <filesystem>
 #include <fstream>

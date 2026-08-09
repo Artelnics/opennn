@@ -10,7 +10,7 @@
 #ifndef OPENNN_PCH_H_
 #define OPENNN_PCH_H_
 
-#include "opennn_types.h"
+#include "opennn/core/opennn_types.h"
 
 #include <bit>
 #include <charconv>
@@ -22,7 +22,7 @@
 
 #include <omp.h>
 
-#include "json.h"
+#include "opennn/core/json.h"
 
 #endif
 

@@ -251,9 +251,9 @@ target_precompile_headers(opennn PRIVATE
 
 if(MSVC AND OPENNN_HAS_CUDA)
     set_source_files_properties(
-        ${CMAKE_CURRENT_SOURCE_DIR}/attention_operator.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/batch_norm_operator.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/convolution_operator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/neural_network/operators/attention_operator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/neural_network/operators/batch_norm_operator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/neural_network/operators/convolution_operator.cpp
         PROPERTIES SKIP_PRECOMPILE_HEADERS ON
     )
 endif()
@@ -273,8 +273,15 @@ if(OpenNN_INSTALL)
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-    install(FILES ${HEADER_FILES}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/opennn)
+    # Headers live in folders now, and every #include spells that folder out, so
+    # the installed tree has to mirror the source tree instead of being flattened.
+    foreach(_opennn_header IN LISTS HEADER_FILES)
+        file(RELATIVE_PATH _opennn_header_relative
+            ${CMAKE_CURRENT_SOURCE_DIR} ${_opennn_header})
+        get_filename_component(_opennn_header_folder ${_opennn_header_relative} DIRECTORY)
+        install(FILES ${_opennn_header}
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/opennn/${_opennn_header_folder})
+    endforeach()
 
     install(DIRECTORY ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_INCLUDEDIR}/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

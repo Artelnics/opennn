@@ -1,10 +1,10 @@
 #include "pch.h"
 
-#include "opennn/statistics.h"
-#include "opennn/tensor_types.h"
-#include "opennn/unscaling_layer.h"
-#include "opennn/scaling_layer.h"
-#include "opennn/neural_network.h"
+#include "opennn/core/statistics.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/neural_network/layers/unscaling_layer.h"
+#include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/neural_network/neural_network.h"
 
 using namespace opennn;
 

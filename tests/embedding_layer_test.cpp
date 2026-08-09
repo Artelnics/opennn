@@ -1,9 +1,9 @@
 #include "pch.h"
 
-#include "opennn/tensor_types.h"
-#include "opennn/embedding_layer.h"
-#include "opennn/neural_network.h"
-#include "opennn/random_utilities.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/neural_network/layers/embedding_layer.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/core/random_utilities.h"
 #include <cmath>
 #include <iostream>
 

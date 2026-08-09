@@ -1,0 +1,60 @@
+﻿//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   U P S A M P L E   L A Y E R   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
+#pragma once
+
+#include "opennn/neural_network/layers/layer.h"
+#include "opennn/neural_network/operators/operator.h"
+
+namespace opennn
+{
+
+struct UpsampleOperator : Operator
+{
+    Index input_height = 0;
+    Index input_width = 0;
+    Index channels = 0;
+    Index scale_factor = 2;
+
+    void set(Index, Index, Index, Index);
+
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
+};
+
+class Upsample final : public Layer
+{
+public:
+
+    Upsample(const Shape& = {},
+             Index scale_factor = 2,
+             const string& = "upsample_layer");
+
+    Shape get_output_shape() const override;
+
+    void set(const Shape&, Index, const string&);
+    bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 3); }
+
+    void apply_input_shape(const Shape&) override;
+    void set_scale_factor(Index);
+
+    void read_JSON_body(const Json*) override;
+    void write_JSON_body(JsonWriter&) const override;
+
+private:
+
+    UpsampleOperator upsample;
+
+    void configure_operator();
+};
+
+}
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
+// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,9 +1,9 @@
 #include "pch.h"
 
 #include "opennn/registry.h"
-#include "opennn/layer.h"
-#include "opennn/optimizer.h"
-#include "opennn/inputs_selection.h"
+#include "opennn/neural_network/layers/layer.h"
+#include "opennn/training_strategy/optimizer.h"
+#include "opennn/model_selection/inputs_selection.h"
 
 using namespace opennn;
 

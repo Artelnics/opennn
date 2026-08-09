@@ -1,14 +1,14 @@
 #include "pch.h"
-#include "opennn/random_utilities.h"
+#include "opennn/core/random_utilities.h"
 #include "numerical_derivatives.h"
 
-#include "opennn/tensor_types.h"
-#include "opennn/dataset.h"
-#include "opennn/tabular_dataset.h"
-#include "opennn/dense_layer.h"
-#include "opennn/neural_network.h"
-#include "opennn/standard_networks.h"
-#include "opennn/loss.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/dataset/dataset.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/training_strategy/loss.h"
 
 using namespace opennn;
 

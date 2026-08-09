@@ -14,10 +14,10 @@
 
 #include "pch.h"
 
-#include "opennn/tensor_types.h"
-#include "opennn/tensor_operations.h"
-#include "opennn/device_backend.h"
-#include "opennn/variable.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/core/tensor_operations.h"
+#include "opennn/core/device_backend.h"
+#include "opennn/core/variable.h"
 
 using namespace opennn;
 

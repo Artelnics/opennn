@@ -32,6 +32,39 @@ Prefer `build-ninja` when you need both tests and a single-config build. The
 
 ## Code organization
 
+### Folder layout
+
+The library is split by responsibility, and the folders are ordered by
+dependency — each one may include the ones above it, never the ones below:
+
+```text
+opennn/core/                    types, tensors, device backend, memory, utilities
+opennn/core/cuda/               .cu/.cuh kernels
+opennn/neural_network/          network, propagation, expression export
+opennn/neural_network/layers/
+opennn/neural_network/operators/
+opennn/dataset/                 tabular, image, language, time series, YOLO
+opennn/training_strategy/       losses and optimizers
+opennn/model_selection/
+opennn/testing_analysis/
+opennn/                         pch.h and registry.{h,cpp} only
+```
+
+Datasets sit *above* the network on purpose: the language datasets need
+`tokenizer_operator.h` and `yolo_dataset` needs the convolutional layer, while
+nothing under `neural_network/` includes a dataset.
+
+`registry.{h,cpp}` stays at the root because it constructs `Layer`, `Optimizer`
+and `InputsSelection` — it spans three folders and belongs above all of them.
+
+Every include names its folder, from the repo root, with no exceptions:
+`#include "opennn/neural_network/layers/dense_layer.h"`. Bare neighbour
+includes do not resolve — only the repo root is on the include path.
+
+Two known upward includes remain, both `.cpp`-only, both deliberate:
+`back_propagation.cpp` needs `Loss` (its header only forward-declares it), and
+`correlations.cpp` trains a small network to get a nonlinear correlation.
+
 One ordering rule, so a reader meets concepts in the same sequence in every file.
 
 ### Header layout

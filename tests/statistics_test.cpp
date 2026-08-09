@@ -1,9 +1,9 @@
 #include "pch.h"
 
-#include "opennn/statistics.h"
-#include "opennn/string_utilities.h"
-#include "opennn/random_utilities.h"
-#include "opennn/io_utilities.h"
+#include "opennn/core/statistics.h"
+#include "opennn/core/string_utilities.h"
+#include "opennn/core/random_utilities.h"
+#include "opennn/core/io_utilities.h"
 
 using namespace opennn;
 

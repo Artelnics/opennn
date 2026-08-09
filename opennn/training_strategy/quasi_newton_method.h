@@ -1,0 +1,60 @@
+﻿//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
+#pragma once
+
+#include "opennn/training_strategy/optimizer.h"
+
+namespace opennn
+{
+
+class QuasiNewtonMethod final : public Optimizer
+{
+
+public:
+
+    enum DataSlot {
+        OldParameters,
+        ParameterDifferences,
+        ParameterUpdates,
+        OldGradient,
+        GradientDifference,
+        OldInverseHessianDotGradientDifference,
+        BFGS,
+        InverseHessian,
+        OldInverseHessian
+    };
+
+    explicit QuasiNewtonMethod(Loss* = nullptr);
+    void set_default();
+    void set_minimum_loss_decrease(const float new_minimum_loss_decrease) { minimum_loss_decrease = new_minimum_loss_decrease; }
+    void update_parameters(const Batch&, ForwardPropagation&, BackPropagation&, OptimizerData&);
+    TrainingResult train() override;
+    void from_JSON(const JsonDocument&) override;
+
+    void to_JSON(JsonWriter&) const override;
+
+private:
+
+    void calculate_inverse_hessian(OptimizerData&) const;
+
+    pair<float, float> calculate_directional_point(const Batch&,
+                                                 ForwardPropagation&,
+                                                 BackPropagation&,
+                                                 OptimizerData&,
+                                                 float) const;
+
+    float first_learning_rate = 0.01f;
+
+    float minimum_loss_decrease = EPSILON;
+};
+
+}
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
+// Licensed under the GNU Lesser General Public License v2.1 or later.

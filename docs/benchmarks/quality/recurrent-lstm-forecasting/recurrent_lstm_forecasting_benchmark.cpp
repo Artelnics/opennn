@@ -6,15 +6,15 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/time_series_dataset.h"
-#include "opennn/neural_network.h"
-#include "opennn/standard_networks.h"
-#include "opennn/loss.h"
-#include "opennn/training_strategy.h"
-#include "opennn/configuration.h"
-#include "opennn/adaptive_moment_estimation.h"
-#include "opennn/testing_analysis.h"
-#include "opennn/random_utilities.h"
+#include "opennn/dataset/time_series_dataset.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/training_strategy/loss.h"
+#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/core/configuration.h"
+#include "opennn/training_strategy/adaptive_moment_estimation.h"
+#include "opennn/testing_analysis/testing_analysis.h"
+#include "opennn/core/random_utilities.h"
 
 #include <algorithm>
 #include <cctype>

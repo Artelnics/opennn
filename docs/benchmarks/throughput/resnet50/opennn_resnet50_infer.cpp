@@ -25,15 +25,15 @@
 #include <string>
 #include <vector>
 
-#include "opennn/image_dataset.h"
-#include "opennn/standard_networks.h"
-#include "opennn/batch.h"
-#include "opennn/forward_propagation.h"
-#include "opennn/random_utilities.h"
-#include "opennn/configuration.h"
-#include "opennn/device_backend.h"
-#include "opennn/memory_debug.h"
-#include "opennn/profiler.h"
+#include "opennn/dataset/image_dataset.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/dataset/batch.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/core/random_utilities.h"
+#include "opennn/core/configuration.h"
+#include "opennn/core/device_backend.h"
+#include "opennn/core/memory_debug.h"
+#include "opennn/core/profiler.h"
 
 #ifdef OPENNN_HAS_CUDA
 #include <cuda_runtime.h>

@@ -1,12 +1,12 @@
 #include "pch.h"
 
-#include "opennn/tensor_types.h"
-#include "opennn/dataset.h"
-#include "opennn/tabular_dataset.h"
-#include "opennn/scaling.h"
-#include "opennn/statistics.h"
-#include "opennn/tensor_operations.h"
-#include "opennn/network_differential.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/dataset/dataset.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/core/scaling.h"
+#include "opennn/core/statistics.h"
+#include "opennn/core/tensor_operations.h"
+#include "opennn/neural_network/network_differential.h"
 
 using namespace opennn;
 

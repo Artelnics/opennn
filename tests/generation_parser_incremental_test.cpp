@@ -1,5 +1,5 @@
-#include "opennn/chat.h"
-#include "opennn/tokenizer_operator.h"
+#include "opennn/neural_network/chat.h"
+#include "opennn/neural_network/operators/tokenizer_operator.h"
 
 #include <gtest/gtest.h>
 
