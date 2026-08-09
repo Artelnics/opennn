@@ -621,10 +621,14 @@ __global__ void average_pooling_3d_backward_kernel(const int n, const T* __restr
         const int f = idx % F;
         const int b = idx / F;
 
+        // A fully padded row has nothing to divide by. Zeroing the gradient
+        // instead of skipping the row keeps every element of in_gradient
+        // written here, so the caller does not have to pre-zero the tensor.
         const float count = counts[b];
-        if (count == 0.0f) continue;
+        const float gradient_val = count > 0.0f
+                                 ? static_cast<float>(delta[idx]) / count
+                                 : 0.0f;
 
-        const float gradient_val = static_cast<float>(delta[idx]) / count;
         for (int s = 0; s < S; ++s)
         {
             const int64_t bs = int64_t(b) * S + s;
@@ -2513,7 +2517,7 @@ void upsample_backward_cuda(const int batch, const int in_h, const int in_w, con
 {
     const int n = batch * in_h * in_w * channels;
     if (n == 0) return;
-    cudaMemsetAsync(in_delta, 0, size_t(n) * sizeof(float), opennn::device::get_compute_stream());
+    // No pre-zeroing: the kernel assigns in_delta[i] for every i below n.
     launch_elementwise_strided(n, upsample_backward_kernel,
                        out_delta, in_delta, in_h, in_w, in_h * scale, in_w * scale, channels, scale);
 }
