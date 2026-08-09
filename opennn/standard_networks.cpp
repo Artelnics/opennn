@@ -66,7 +66,7 @@ static void add_dense_stack(NeuralNetwork& network,
                             const Shape& complexity_dimensions,
                             const string& hidden_activation)
 {
-    for (Index i = 0; i < complexity_dimensions.rank; ++i)
+    for (size_t i = 0; i < complexity_dimensions.rank; ++i)
         network.add_layer(make_unique<Dense>(network.get_output_shape(),
                                              Shape{ complexity_dimensions[i] },
                                              hidden_activation,
@@ -1704,96 +1704,96 @@ void BertForSequenceClassification::set_dropout_rate(const float new_dropout_rat
 
 #endif
 
-Index load_darknet_backbone(NeuralNetwork& network,
-                            const filesystem::path& weights_path,
-                            Index n_backbone_convs)
-{
-    FILE* f = fopen(weights_path.string().c_str(), "rb");
-    throw_if(!f, "load_darknet_backbone: cannot open file: " + weights_path.string());
-
-    int32_t header[3];
-    int64_t seen;
-    throw_if(fread(header, sizeof(int32_t), 3, f) != 3,
-             "load_darknet_backbone: failed to read header int32s.");
-    throw_if(fread(&seen, sizeof(int64_t), 1, f) != 1,
-             "load_darknet_backbone: failed to read header seen.");
-
-    cout << "Darknet weights header: major=" << header[0]
-         << " minor=" << header[1]
-         << " revision=" << header[2]
-         << " seen=" << seen << "\n";
-
-    Index loaded = 0;
-    const auto& layers = network.get_layers();
-    for (size_t li = 0; li < layers.size() && loaded < n_backbone_convs; ++li)
-    {
-        auto* conv = dynamic_cast<Convolutional*>(layers[li].get());
-        if (!conv) continue;
-
-        conv->load_darknet_weights(f);
-        ++loaded;
-        cout << format("Loaded backbone conv {}/{} from {}\n", loaded, n_backbone_convs, weights_path.string());
-    }
-
-    fclose(f);
-    return loaded;
-}
-
-Index load_darknet_backbone_v11(NeuralNetwork& network,
-                                const filesystem::path& weights_path)
-{
-    FILE* f = fopen(weights_path.string().c_str(), "rb");
-    throw_if(!f, "load_darknet_backbone_v11: cannot open file: " + weights_path.string());
-
-    int32_t header[3];
-    int64_t seen;
-    throw_if(fread(header, sizeof(int32_t), 3, f) != 3,
-             "load_darknet_backbone_v11: failed to read header.");
-    throw_if(fread(&seen, sizeof(int64_t), 1, f) != 1,
-             "load_darknet_backbone_v11: failed to read header seen.");
-
-    cout << "Darknet weights header: major=" << header[0]
-         << " minor=" << header[1]
-         << " revision=" << header[2]
-         << " seen=" << seen << "\n";
-
-    static const pair<const char*, size_t> targets[] = {
-        {"c11_stem",    0},
-        {"c11_s1_down", 0},
-        {"c11_s2_down", 42368},
-        {"c11_s3_down", 79872},
-        {"c11_s4_down", 811520},
-        {"c11_s5_down", 3228672},
-    };
-
-    map<string, Convolutional*> label_to_conv;
-    for (const auto& layer : network.get_layers())
-    {
-        auto* conv = dynamic_cast<Convolutional*>(layer.get());
-        if (conv) label_to_conv[conv->get_label()] = conv;
-    }
-
-    Index loaded = 0;
-    for (const auto& [label, skip_floats] : targets)
-    {
-        if (skip_floats > 0)
-            fseek(f, long(skip_floats) * long(sizeof(float)), SEEK_CUR);
-
-        auto it = label_to_conv.find(label);
-        if (it == label_to_conv.end())
-        {
-            cout << "load_darknet_backbone_v11: layer \"" << label << "\" not found — skipping.\n";
-            continue;
-        }
-
-        it->second->load_darknet_weights(f);
-        ++loaded;
-        cout << "Loaded pretrained downsampling conv \"" << label << "\" from yolov4.conv.137\n";
-    }
-
-    fclose(f);
-    return loaded;
-}
+Index load_darknet_backbone(NeuralNetwork& network,
+                            const filesystem::path& weights_path,
+                            Index n_backbone_convs)
+{
+    FILE* f = fopen(weights_path.string().c_str(), "rb");
+    throw_if(!f, "load_darknet_backbone: cannot open file: " + weights_path.string());
+
+    int32_t header[3];
+    int64_t seen;
+    throw_if(fread(header, sizeof(int32_t), 3, f) != 3,
+             "load_darknet_backbone: failed to read header int32s.");
+    throw_if(fread(&seen, sizeof(int64_t), 1, f) != 1,
+             "load_darknet_backbone: failed to read header seen.");
+
+    cout << "Darknet weights header: major=" << header[0]
+         << " minor=" << header[1]
+         << " revision=" << header[2]
+         << " seen=" << seen << "\n";
+
+    Index loaded = 0;
+    const auto& layers = network.get_layers();
+    for (size_t li = 0; li < layers.size() && loaded < n_backbone_convs; ++li)
+    {
+        auto* conv = dynamic_cast<Convolutional*>(layers[li].get());
+        if (!conv) continue;
+
+        conv->load_darknet_weights(f);
+        ++loaded;
+        cout << format("Loaded backbone conv {}/{} from {}\n", loaded, n_backbone_convs, weights_path.string());
+    }
+
+    fclose(f);
+    return loaded;
+}
+
+Index load_darknet_backbone_v11(NeuralNetwork& network,
+                                const filesystem::path& weights_path)
+{
+    FILE* f = fopen(weights_path.string().c_str(), "rb");
+    throw_if(!f, "load_darknet_backbone_v11: cannot open file: " + weights_path.string());
+
+    int32_t header[3];
+    int64_t seen;
+    throw_if(fread(header, sizeof(int32_t), 3, f) != 3,
+             "load_darknet_backbone_v11: failed to read header.");
+    throw_if(fread(&seen, sizeof(int64_t), 1, f) != 1,
+             "load_darknet_backbone_v11: failed to read header seen.");
+
+    cout << "Darknet weights header: major=" << header[0]
+         << " minor=" << header[1]
+         << " revision=" << header[2]
+         << " seen=" << seen << "\n";
+
+    static const pair<const char*, size_t> targets[] = {
+        {"c11_stem",    0},
+        {"c11_s1_down", 0},
+        {"c11_s2_down", 42368},
+        {"c11_s3_down", 79872},
+        {"c11_s4_down", 811520},
+        {"c11_s5_down", 3228672},
+    };
+
+    map<string, Convolutional*> label_to_conv;
+    for (const auto& layer : network.get_layers())
+    {
+        auto* conv = dynamic_cast<Convolutional*>(layer.get());
+        if (conv) label_to_conv[conv->get_label()] = conv;
+    }
+
+    Index loaded = 0;
+    for (const auto& [label, skip_floats] : targets)
+    {
+        if (skip_floats > 0)
+            fseek(f, long(skip_floats) * long(sizeof(float)), SEEK_CUR);
+
+        auto it = label_to_conv.find(label);
+        if (it == label_to_conv.end())
+        {
+            cout << "load_darknet_backbone_v11: layer \"" << label << "\" not found — skipping.\n";
+            continue;
+        }
+
+        it->second->load_darknet_weights(f);
+        ++loaded;
+        cout << "Loaded pretrained downsampling conv \"" << label << "\" from yolov4.conv.137\n";
+    }
+
+    fclose(f);
+    return loaded;
+}
 
 }
 

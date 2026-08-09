@@ -254,7 +254,7 @@ float variance(const VectorR& vector, const VectorI& indices)
 
 float standard_deviation(const VectorR& vector)
 {
-    return vector.size() == 0 ? 0.0f : sqrt(variance(vector));
+    return sqrt(variance(vector));
 }
 
 float median(const VectorR& input_vector)
@@ -306,7 +306,7 @@ VectorR quartiles(const VectorR& data)
         const Index half_size = new_size / 2;
 
         quartiles(0) = median(VectorR(valid_data.head(half_size)));
-        quartiles(1) = median(VectorR(valid_data));
+        quartiles(1) = median(valid_data);
         quartiles(2) = median(VectorR(valid_data.tail(half_size)));
     }
 
@@ -330,8 +330,6 @@ VectorR quartiles(const VectorR& data, const vector<Index>& indices)
 BoxPlot box_plot(const VectorR& vector)
 {
     BoxPlot box_plot;
-    if (vector.size() == 0)
-        return box_plot;
 
     const VectorR valid = filter_missing_values(vector);
 
@@ -509,14 +507,11 @@ Descriptives vector_descriptives(const VectorR& x)
         return Descriptives();
 
     const VectorR valid = filter_missing_values(x);
-    const Index count = valid.size();
 
-    const float min = (count > 0) ? valid.minCoeff() : 0.0f;
-    const float max = (count > 0) ? valid.maxCoeff() : 0.0f;
+    if (valid.size() == 0)
+        return Descriptives(0.0f, 0.0f, 0.0f, 0.0f);
 
-    const float mean = (count > 0) ? valid.mean() : 0.0f;
-
-    return Descriptives(min, max, mean, standard_deviation(valid));
+    return Descriptives(valid.minCoeff(), valid.maxCoeff(), valid.mean(), standard_deviation(valid));
 }
 
 vector<Descriptives> descriptives(const MatrixR& matrix)

@@ -189,8 +189,6 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
     throw_if(testing_samples_number == 0,
              "Number of testing samples is zero.\n");
 
-    const Index outputs_number = neural_network->get_outputs_number();
-
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
     const auto* unscaling_layer = dynamic_cast<const Unscaling*>(neural_network->get_first("Unscaling"));
@@ -203,9 +201,7 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
 
     const VectorR ranges = (output_maximums - output_minimums).cwiseAbs();
     const MatrixR errors = targets - outputs;
-    MatrixR error_data(testing_samples_number, outputs_number);
-
-    error_data = ((errors.array() * 100.0f).rowwise() / ranges.transpose().array()).matrix();
+    MatrixR error_data = ((errors.array() * 100.0f).rowwise() / ranges.transpose().array()).matrix();
     error_data = error_data.array().isFinite().select(error_data.array(), 0.0f).matrix();
 
     return error_data;

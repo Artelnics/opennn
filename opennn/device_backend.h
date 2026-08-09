@@ -226,7 +226,12 @@ public:
     static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn(); }
     static cudaStream_t get_compute_stream()                       { return instance().compute_stream; }
     static cudaStream_t get_transfer_stream()                      { return instance().transfer_stream; }
-    static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { instance().cudnn(); return instance().operator_sum_descriptor; }
+    static cudnnOpTensorDescriptor_t get_op_tensor_add_descriptor()
+    {
+        Backend& backend = instance();
+        backend.cudnn();
+        return backend.op_tensor_add_descriptor;
+    }
 
 private:
     Backend();
@@ -238,14 +243,17 @@ private:
     unique_ptr<ThreadPool> thread_pool;
     unique_ptr<ThreadPoolDevice> thread_pool_device;
 
-    cublasHandle_t cublas_handle = nullptr;
     cublasLtHandle_t cublas_lt_handle = nullptr;
+
+    cublasHandle_t cublas_handle = nullptr;
+    once_flag cublas_init_once;
+
     cudnnHandle_t cudnn_handle = nullptr;
+    cudnnOpTensorDescriptor_t op_tensor_add_descriptor = nullptr;
+    once_flag cudnn_init_once;
+
     cudaStream_t compute_stream = nullptr;
     cudaStream_t transfer_stream = nullptr;
-    cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
-    once_flag cublas_init_once;
-    once_flag cudnn_init_once;
 };
 
 inline ThreadPoolDevice& get_device()
@@ -261,7 +269,7 @@ bfloat16* ensure_int8_dequant_workspace(Index);
 
 float* ensure_bf16_to_fp32_workspace(Index);
 
-void* ensure_cudnn_conv_workspace(size_t);
+void* ensure_shared_scratch(size_t);
 
 void release_matmul_thread_workspaces();
 

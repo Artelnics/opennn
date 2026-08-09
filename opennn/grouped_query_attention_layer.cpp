@@ -366,8 +366,7 @@ void gqa_sdpa_build(GroupedAttentionSDPA& s, Index max_q, Index max_kv,
 
     cudnn_frontend::finalize_attention(*graph, "gqa sdpa");
 
-    int64_t workspace_bytes = 0;
-    graph->get_workspace_size(workspace_bytes);
+    const int64_t workspace_bytes = graph->get_workspace_size();
     device::deallocate(Device::CUDA, s.workspace, 0);
     s.workspace = workspace_bytes > 0 ? device::allocate(Device::CUDA, Index(workspace_bytes)) : nullptr;
 

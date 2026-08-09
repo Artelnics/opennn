@@ -217,8 +217,7 @@ void set_conv_workspace_cap(int64_t mode) noexcept
 void set_conv_workspace_auto_limit_bytes(int64_t bytes) noexcept
 {
     if (bytes > 0)
-        conv_workspace_auto_bytes.store(bytes < conv_workspace_auto_ceiling ? bytes : conv_workspace_auto_ceiling,
-                                        memory_order_relaxed);
+        conv_workspace_auto_bytes.store(min(bytes, conv_workspace_auto_ceiling), memory_order_relaxed);
 }
 
 bool conv_autotune_enabled() noexcept
@@ -596,7 +595,6 @@ namespace opennn
 
 Backend::Backend()
 {
-
     const char* const threads_env = getenv("OPENNN_THREADS");
     set_threads_number(threads_env ? atoi(threads_env) : 0);
 
@@ -644,8 +642,8 @@ cudnnHandle_t Backend::cudnn()
         CHECK_CUDNN(cudnnCreate(&cudnn_handle));
         CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
 
-        CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
-        CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor,
+        CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&op_tensor_add_descriptor));
+        CHECK_CUDNN(cudnnSetOpTensorDescriptor(op_tensor_add_descriptor,
                                                CUDNN_OP_TENSOR_ADD,
                                                CUDNN_DATA_FLOAT,
                                                CUDNN_NOT_PROPAGATE_NAN));
@@ -657,7 +655,7 @@ cudnnHandle_t Backend::cudnn()
 Backend::~Backend()
 {
 #ifdef OPENNN_HAS_CUDA
-    if (operator_sum_descriptor) { cudnnDestroyOpTensorDescriptor(operator_sum_descriptor); operator_sum_descriptor = nullptr; }
+    if (op_tensor_add_descriptor) { cudnnDestroyOpTensorDescriptor(op_tensor_add_descriptor); op_tensor_add_descriptor = nullptr; }
     if (cublas_lt_handle)        { cublasLtDestroy(cublas_lt_handle);                       cublas_lt_handle = nullptr; }
     if (cublas_handle)           { cublasDestroy(cublas_handle);                             cublas_handle = nullptr; }
     if (cudnn_handle)            { cudnnDestroy(cudnn_handle);                               cudnn_handle = nullptr; }
@@ -768,7 +766,7 @@ namespace
 
     struct CudaMatmulThreadState
     {
-        Buffer workspace{Device::CUDA};
+        Buffer shared_scratch{Device::CUDA};
 
         Buffer bf16_input{Device::CUDA};
         Buffer bf16_gradient{Device::CUDA};
@@ -794,7 +792,8 @@ namespace
     }
 
     template <typename T>
-    T* ensure_workspace(Buffer& workspace_buffer, Index n,
+    T* ensure_workspace(Buffer& workspace_buffer, 
+                        Index n,
                         device::GraphWorkspaceKind kind)
     {
         const Index minimum_bytes = n * Index(sizeof(T));
@@ -810,18 +809,6 @@ namespace
         }
 
         return workspace_buffer.ensure<T>(n);
-    }
-
-    void* ensure_shared_scratch(size_t min_bytes)
-    {
-        Buffer& buffer = thread_state().workspace;
-        const Index before = buffer.bytes;
-        void* pointer = ensure_workspace<uint8_t>(
-            buffer, Index(min_bytes), device::GraphWorkspaceKind::SharedScratch);
-        if (buffer.bytes > before)
-            memory_debug::record("workspace.cudnn_frontend", "shared_scratch",
-                                 buffer.bytes - before, "high_water");
-        return pointer;
     }
 
     bfloat16* ensure_bf16_input_workspace(Index n)
@@ -936,16 +923,23 @@ bfloat16* ensure_int8_dequant_workspace(Index n)
         device::GraphWorkspaceKind::Int8Dequant);
 }
 
-void* ensure_cudnn_conv_workspace(size_t min_bytes)
+void* ensure_shared_scratch(size_t min_bytes)
 {
-    return ensure_shared_scratch(min_bytes);
+    Buffer& buffer = thread_state().shared_scratch;
+    const Index before = buffer.bytes;
+    void* pointer = ensure_workspace<uint8_t>(
+        buffer, Index(min_bytes), device::GraphWorkspaceKind::SharedScratch);
+    if (buffer.bytes > before)
+        memory_debug::record("workspace.shared_scratch", "shared_scratch",
+                             buffer.bytes - before, "high_water");
+    return pointer;
 }
 
 void release_matmul_thread_workspaces()
 {
     device::synchronize(Backend::get_compute_stream());
     CudaMatmulThreadState& state = thread_state();
-    state.workspace.resize_bytes(0, Device::CUDA);
+    state.shared_scratch.resize_bytes(0, Device::CUDA);
     state.bf16_input.resize_bytes(0, Device::CUDA);
     state.bf16_gradient.resize_bytes(0, Device::CUDA);
     state.bf16_to_fp32.resize_bytes(0, Device::CUDA);
@@ -1010,7 +1004,8 @@ void run_lt_matmul_cached(
                                 c_data, plan.output_matrix_layout,
                                 c_data, plan.output_matrix_layout,
                                 plan.has_algorithm ? &plan.algorithm : nullptr,
-                                ensure_shared_scratch(plan.workspace_bytes), plan.workspace_bytes,
+                                ensure_shared_scratch(plan.workspace_bytes), 
+                                plan.workspace_bytes,
                                 Backend::get_compute_stream()));
 }
 
@@ -1045,9 +1040,13 @@ namespace opennn
 
 bfloat16* ensure_bf16_gradient_workspace(Index) OPENNN_CUDA_STUB_BODY(ensure_bf16_gradient_workspace)
 
+bfloat16* ensure_int8_dequant_workspace(Index) OPENNN_CUDA_STUB_BODY(ensure_int8_dequant_workspace)
+
 float* ensure_bf16_to_fp32_workspace(Index) OPENNN_CUDA_STUB_BODY(ensure_bf16_to_fp32_workspace)
 
-void* ensure_cudnn_conv_workspace(size_t) OPENNN_CUDA_STUB_BODY(ensure_cudnn_conv_workspace)
+void* ensure_shared_scratch(size_t) OPENNN_CUDA_STUB_BODY(ensure_shared_scratch)
+
+void release_matmul_thread_workspaces() OPENNN_CUDA_STUB_BODY(release_matmul_thread_workspaces)
 
 const void* data_for_gemm_dtype(const TensorView&, Type) OPENNN_CUDA_STUB_BODY(data_for_gemm_dtype)
 

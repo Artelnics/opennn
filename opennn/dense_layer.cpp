@@ -169,10 +169,8 @@ void Dense::configure_operators()
     {
         activation_operator.input_slots        = {CombinationView};
         activation_operator.output_slots       = {Output};
-        activation_operator.output_delta_slots = {0};
         activation_operator.input_delta_slots  = {2};
         combination.output_delta_slots         = {2};
-        combination.input_delta_slots          = {1};
     }
     else
     {

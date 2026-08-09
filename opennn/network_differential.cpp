@@ -64,10 +64,10 @@ void NetworkDifferential::build(const NeuralNetwork& network)
 
             for (Index j = 0; j < features; ++j)
             {
-                snapshot.minimum(j)   = static_cast<float>((*descriptives)[j].minimum);
-                snapshot.maximum(j)   = static_cast<float>((*descriptives)[j].maximum);
-                snapshot.mean(j)      = static_cast<float>((*descriptives)[j].mean);
-                snapshot.deviation(j) = static_cast<float>((*descriptives)[j].standard_deviation);
+                snapshot.minimum(j)   = (*descriptives)[j].minimum;
+                snapshot.maximum(j)   = (*descriptives)[j].maximum;
+                snapshot.mean(j)      = (*descriptives)[j].mean;
+                snapshot.deviation(j) = (*descriptives)[j].standard_deviation;
             }
             break;
         }

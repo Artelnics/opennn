@@ -15,7 +15,6 @@
 #include "tensor_types.h"
 #include "device_backend.h"
 #include "string_utilities.h"
-#include "memory_debug.h"
 
 namespace opennn::cudnn_frontend
 {
@@ -75,8 +74,11 @@ inline map<string, pair<double, long>>& graph_times()
 }
 
 template<typename TensorMap>
-inline void execute_graph(graph::Graph& graph, TensorMap& tensors,
-                          void* workspace, const string& what, const string& timing_label)
+inline void execute_graph(graph::Graph& graph, 
+                          TensorMap& tensors,
+                          void* workspace, 
+                          const string& what, 
+                          const string& timing_label)
 {
     if (timing_label.empty())
     {
@@ -103,7 +105,7 @@ inline void execute_graph(graph::Graph& graph, TensorMap& tensors,
 
 inline void* shared_workspace(int64_t bytes)
 {
-    return bytes > 0 ? ensure_cudnn_conv_workspace(size_t(bytes)) : nullptr;
+    return bytes > 0 ? ensure_shared_scratch(size_t(bytes)) : nullptr;
 }
 
 template<typename GraphCache, typename Body>

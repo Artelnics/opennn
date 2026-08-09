@@ -531,7 +531,7 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
         if (display)
             cout << "\n"
                  << "Epoch number: " << epoch << "\n"
-                 << "Generation mean training error: " << training_errors.mean() << "\n"
+                 << "Generation mean training error: " << input_selection_results.mean_training_error_history(epoch) << "\n"
                  << "Generation mean validation error: " << input_selection_results.mean_validation_error_history(epoch) << "\n"
                  << "Generation minimum training error: " << optimal_training_error << "\n"
                  << "Generation minimum validation error: " << optimal_validation_error << "\n"

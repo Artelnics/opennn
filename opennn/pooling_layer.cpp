@@ -73,7 +73,6 @@ void PoolOperator::forward_propagate(ForwardPropagation& forward_propagation, si
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
-        const float one = 1.0f, zero = 0.0f;
         CHECK_CUDNN(cudnnPoolingForward(Backend::get_cudnn_handle(),
             get_pooling_descriptor(),
             &one,  input.get_descriptor(),  input.data,
@@ -106,7 +105,6 @@ void PoolOperator::back_propagate(ForwardPropagation& forward_propagation, BackP
         const TensorView& input  = get_input(forward_propagation, layer);
         const TensorView& output = get_output(forward_propagation, layer);
 
-        const float one = 1.0f, zero = 0.0f;
         CHECK_CUDNN(cudnnPoolingBackward(Backend::get_cudnn_handle(),
             get_pooling_descriptor(),
             &one,  output.get_descriptor(),       output.data,

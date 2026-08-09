@@ -127,7 +127,7 @@ void mean_squared_error(const TensorView& input, const TensorView& target, float
     const Index batch_size = input.shape[0];
     if (input.is_cuda())
     {
-        error = sum_squared_diff_cuda(input, target, workspace_device) / to_int(2 * batch_size);
+        error = sum_squared_diff_cuda(input, target, workspace_device) / to_type(2 * batch_size);
         return;
     }
     error = (input.as_vector() - target.as_vector()).squaredNorm() / to_type(2 * batch_size);
@@ -159,7 +159,7 @@ void normalized_squared_error_gradient(const TensorView& input, const TensorView
 {
     if (input.is_cuda())
     {
-        scaled_diff_cuda(input, target, 2.0f / (static_cast<float>(coefficient) + EPSILON), input_delta);
+        scaled_diff_cuda(input, target, 2.0f / (coefficient + EPSILON), input_delta);
         return;
     }
     input_delta.as_vector().noalias() = 2.0f * (input.as_vector() - target.as_vector()) / (coefficient + EPSILON);
@@ -300,7 +300,7 @@ void minkowski_error(const TensorView& input, const TensorView& target, float po
              "minkowski_error: GPU implementation not available.");
 
     const Index batch_size = input.shape[0];
-    error = (input.as_vector() - target.as_vector()).array().abs().pow(power).sum() / to_type(power * batch_size);
+    error = (input.as_vector() - target.as_vector()).array().abs().pow(power).sum() / (power * to_type(batch_size));
 }
 
 void minkowski_error_gradient(const TensorView& input,
@@ -447,13 +447,15 @@ void cross_entropy_3d_gradient_device_count(const TensorView& input, const Tenso
         return;
     }
 
+    const Index vocabulary_size = input.shape.back();
+
     Index active_tokens_count = 0;
-    const Index token_count = (input.size() / input.shape.back());
+    const Index token_count = input.size() / vocabulary_size;
     const VectorMap targets_flat = target.as_vector();
     for (Index token_index = 0; token_index < token_count; ++token_index)
     {
         const Index target_index = static_cast<Index>(targets_flat(token_index));
-        if (target_index > 0 && target_index < input.shape.back()) ++active_tokens_count;
+        if (target_index > 0 && target_index < vocabulary_size) ++active_tokens_count;
     }
 
     cross_entropy_3d_gradient(input, target, input_delta, active_tokens_count);

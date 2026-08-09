@@ -149,14 +149,7 @@ void get_token_views_maybe_quoted(string_view line, char separator, bool file_ha
 
     if (!file_has_quotes || line.find('"') == string_view::npos)
     {
-        size_t start = 0;
-        while (true)
-        {
-            const size_t end = line.find(separator, start);
-            if (end == string_view::npos) { out.emplace_back(line.substr(start)); break; }
-            out.emplace_back(line.substr(start, end - start));
-            start = end + 1;
-        }
+        split_views(line, separator, out);
         return;
     }
 

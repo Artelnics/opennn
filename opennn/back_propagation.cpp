@@ -84,7 +84,6 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
     const size_t layers_number = layers.size();
     const auto parameter_specs = neural_network->get_parameter_specs();
     const auto backward_specs  = neural_network->get_backward_specs(batch_size);
-    const auto& source_layers = neural_network->get_source_layers();
 
     consumer_edges = make_consumer_edges(*neural_network);
 

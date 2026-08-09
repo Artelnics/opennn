@@ -92,15 +92,18 @@ void TrainingResult::print(const string &message) const
          << "Epochs number: " << epochs_number << "\n"
          << "Training error: " << training_error_history(reported_epoch) << "\n";
     if (validation_error_history.size() > 0)
-        cout << "Validation error: " << validation_error_history(reported_epoch) << "\n";
-    if (validation_error_history.size() > 0 && best_epoch != final_epoch)
     {
-        if (restored_best_epoch)
-            cout << "Best epoch: " << *restored_epoch
-                 << " (restored parameters and states correspond to this epoch)\n";
-        else
-            cout << "Best validation epoch: " << best_epoch
-                 << " (final parameters correspond to epoch " << final_epoch << ")\n";
+        cout << "Validation error: " << validation_error_history(reported_epoch) << "\n";
+
+        if (best_epoch != final_epoch)
+        {
+            if (restored_best_epoch)
+                cout << "Best epoch: " << *restored_epoch
+                     << " (restored parameters and states correspond to this epoch)\n";
+            else
+                cout << "Best validation epoch: " << best_epoch
+                     << " (final parameters correspond to epoch " << final_epoch << ")\n";
+        }
     }
     cout << "Stopping condition: " << write_stopping_condition() << "\n";
 }

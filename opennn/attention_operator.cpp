@@ -374,8 +374,7 @@ static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
 
     cudnn_frontend::finalize_attention(*graph, "sdpa fwd");
 
-    int64_t ws = 0;
-    graph->get_workspace_size(ws);
+    const int64_t ws = graph->get_workspace_size();
     if (ws > 0)
         entry.fwd_workspace_buf = device::allocate(Device::CUDA, Index(ws));
 
@@ -448,8 +447,7 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
 
     cudnn_frontend::finalize_attention(*graph, "sdpa bwd");
 
-    int64_t ws = 0;
-    graph->get_workspace_size(ws);
+    const int64_t ws = graph->get_workspace_size();
     if (ws > 0)
         entry.bwd_workspace_buf = device::allocate(Device::CUDA, Index(ws));
 

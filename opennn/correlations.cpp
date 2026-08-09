@@ -42,21 +42,10 @@ float output_target_correlation(NeuralNetwork& neural_network, TabularDataset& d
     return linear_correlation(outputs.reshaped(), targets.reshaped()).coefficient;
 }
 
-struct SoftmaxFitOptions
-{
-    Shape hidden_shape;
-    bool set_binary_and_default_scalers = false;
-    bool set_feature_shapes = false;
-    const char* error_type = "MeanSquaredError";
-    Index maximum_epochs = -1;
-    Index display_period = -1;
-    Index confidence_sample_count = -1;
-};
-
 Correlation fit_softmax_correlation(const MatrixR& x_filter,
                                     const MatrixR& y_filter,
                                     Correlation correlation,
-                                    const SoftmaxFitOptions& options)
+                                    Index maximum_epochs)
 {
     MatrixR data(x_filter.rows(), x_filter.cols() + y_filter.cols());
     data << x_filter, y_filter;
@@ -72,24 +61,12 @@ Correlation fit_softmax_correlation(const MatrixR& x_filter,
     dataset.set_data(data);
     dataset.set_variable_indices(input_columns_indices, target_columns_indices);
 
-    if (options.set_binary_and_default_scalers)
-    {
-        dataset.set_binary_variables();
-        dataset.set_default_variable_scalers();
-    }
-
     dataset.set_sample_roles(SampleRole::Training);
 
     const Index input_features_number = dataset.get_features_number(VariableRole::Input);
     const Index target_features_number = dataset.get_features_number(VariableRole::Target);
 
-    if (options.set_feature_shapes)
-    {
-        dataset.set_shape(VariableRole::Input, { input_features_number });
-        dataset.set_shape(VariableRole::Target, { target_features_number });
-    }
-
-    ClassificationNetwork neural_network({ input_features_number }, options.hidden_shape, { target_features_number });
+    ClassificationNetwork neural_network({ input_features_number }, Shape{}, { target_features_number });
 
     neural_network.compile(Device::CPU);
     neural_network.set_parameters_glorot();
@@ -100,13 +77,12 @@ Correlation fit_softmax_correlation(const MatrixR& x_filter,
     dense_2d->set_activation_function("Softmax");
 
     Loss loss(&neural_network, &dataset);
-    loss.set_error(options.error_type);
+    loss.set_error("MeanSquaredError");
     loss.set_regularization("None");
 
     QuasiNewtonMethod quasi_newton_method(&loss);
-    if (options.maximum_epochs >= 0) quasi_newton_method.set_maximum_epochs(options.maximum_epochs);
+    quasi_newton_method.set_maximum_epochs(maximum_epochs);
     quasi_newton_method.set_display(false);
-    if (options.display_period >= 0) quasi_newton_method.set_display_period(options.display_period);
 
     try
     {
@@ -121,8 +97,7 @@ Correlation fit_softmax_correlation(const MatrixR& x_filter,
     Index sample_count = 0;
     correlation.coefficient = output_target_correlation(neural_network, dataset, sample_count);
 
-    set_confidence_interval(correlation,
-                            options.confidence_sample_count >= 0 ? options.confidence_sample_count : sample_count);
+    set_confidence_interval(correlation, sample_count);
 
     return correlation;
 }
@@ -525,9 +500,7 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
         return correlation;
     }
 
-    return fit_softmax_correlation(x_filter, y_filter, correlation,
-                                   {.error_type = "MeanSquaredError",
-                                    .maximum_epochs = 500});
+    return fit_softmax_correlation(x_filter, y_filter, correlation, 500);
 }
 
 Correlation power_correlation(const VectorR& x, const VectorR& y)

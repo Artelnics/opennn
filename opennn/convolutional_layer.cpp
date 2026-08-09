@@ -355,12 +355,8 @@ void Convolutional::load_darknet_weights(FILE* f)
     else
     {
         const size_t n_out = static_cast<size_t>(O);
-        const auto read_bias = [&](TensorView& tv)
-        {
-            throw_if(fread(tv.as<float>(), sizeof(float), n_out, f) != n_out,
-                     "load_darknet_weights: short read on bias.");
-        };
-        read_bias(convolution.bias);
+        throw_if(fread(convolution.bias.as<float>(), sizeof(float), n_out, f) != n_out,
+                 "load_darknet_weights: short read on bias.");
     }
 
     const size_t n_weights = static_cast<size_t>(total_weights);

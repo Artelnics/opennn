@@ -189,6 +189,8 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
                      << "-fold CV validation error " << minimum_validation_error << "\n";
         }
 
+        elapsed_time = get_elapsed_time(beginning_time);
+
         if (display)
             cout << "Neurons number: " << neurons_number << "\n"
                  << "Training error: " << minimum_training_error << "\n"
@@ -199,8 +201,6 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
             ++validation_failures;
         else
             previous_validation_error = minimum_validation_error;
-
-        elapsed_time = get_elapsed_time(beginning_time);
 
         neuron_selection_results.stopping_condition = first_stopping_condition<StoppingCondition>(display,
         {

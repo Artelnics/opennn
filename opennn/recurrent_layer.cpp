@@ -13,8 +13,6 @@
 #include "device_backend.h"
 #include "random_utilities.h"
 #include "tensor_operations.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 #include "kernel.cuh"
 
 namespace opennn

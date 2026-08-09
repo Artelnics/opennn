@@ -415,40 +415,31 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
 
     const Index variables_number = get_variables_number();
 
-    const vector<Index> input_variable_indices = get_variable_indices(VariableRole::Input);
-    const vector<Index> target_variable_indices = get_variable_indices(VariableRole::Target);
+    vector<Index> numeric_variable_indices;
 
-    const Index extra_targets = ranges::count_if(target_variable_indices,
-        [&](Index index) { return variables[index].role != VariableRole::InputTarget; });
+    for (Index i = 0; i < variables_number; ++i)
+        if (variables[i].role != VariableRole::None && variables[i].type == VariableType::Numeric)
+            numeric_variable_indices.push_back(i);
 
-    const Index input_target_numeric_variables_number =
-        ranges::count_if(input_variable_indices,
-                         [&](Index index) { return variables[index].type == VariableType::Numeric; })
-      + count_if(target_variable_indices.begin(),
-                 target_variable_indices.begin() + extra_targets,
-                 [&](Index index) { return variables[index].type == VariableType::Numeric; });
+    const Index numeric_variables_number = ssize(numeric_variable_indices);
 
     const Index new_past_time_steps =
         ((samples_number <= past_time_steps) && past_time_steps > 2) ? past_time_steps - 2 :
          (samples_number == past_time_steps + 1 && past_time_steps > 1) ? past_time_steps - 1 :
          past_time_steps;
 
-    MatrixR autocorrelations(input_target_numeric_variables_number, new_past_time_steps);
-    Index counter_i = 0;
+    MatrixR autocorrelations(numeric_variables_number, new_past_time_steps);
 
-    for (Index i = 0; i < variables_number; ++i)
+    for (Index i = 0; i < numeric_variables_number; ++i)
     {
-        if (variables[i].role == VariableRole::None || variables[i].type != VariableType::Numeric)
-            continue;
+        const Index variable_index = numeric_variable_indices[i];
 
-        const MatrixR input_i = get_variable_data(i);
-        cout << "Calculating " << variables[i].name << " autocorrelations" << "\n";
+        const MatrixR input_i = get_variable_data(variable_index);
+        if (display) cout << "Calculating " << variables[variable_index].name << " autocorrelations" << "\n";
 
         const Map<const VectorR> current_input_i(input_i.data(), input_i.rows());
 
-        autocorrelations.row(counter_i) = opennn::autocorrelations(current_input_i, new_past_time_steps).transpose();
-
-        ++counter_i;
+        autocorrelations.row(i) = opennn::autocorrelations(current_input_i, new_past_time_steps).transpose();
     }
 
     return autocorrelations;
@@ -464,16 +455,6 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
 
     const Index variables_number = get_variables_number();
 
-    const vector<Index> input_variable_indices = get_variable_indices(VariableRole::Input);
-    const vector<Index> target_variable_indices = get_variable_indices(VariableRole::Target);
-
-    const Index input_target_numeric_variables_number =
-        ranges::count_if(input_variable_indices,
-                         [&](Index index) { return variables[index].type == VariableType::Numeric; })
-      + ranges::count_if(target_variable_indices,
-                         [&](Index index) { return variables[index].type == VariableType::Numeric
-                                                && variables[index].role != VariableRole::InputTarget; });
-
     const Index new_past_time_steps = (samples_number == past_time_steps) ? (past_time_steps - 2)
                                 : (samples_number == past_time_steps + 1) ? (past_time_steps - 1)
                                 : past_time_steps;
@@ -484,10 +465,10 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
         if (variables[i].role != VariableRole::None && variables[i].type == VariableType::Numeric)
             numeric_variable_indices.push_back(i);
 
-    const Index numeric_variables_number = numeric_variable_indices.size();
+    const Index numeric_variables_number = ssize(numeric_variable_indices);
 
-    Tensor3 cross_correlations(input_target_numeric_variables_number,
-                               input_target_numeric_variables_number,
+    Tensor3 cross_correlations(numeric_variables_number,
+                               numeric_variables_number,
                                new_past_time_steps);
 
     VectorR cross_correlations_vector(new_past_time_steps);

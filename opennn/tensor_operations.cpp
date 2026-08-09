@@ -1788,7 +1788,7 @@ static void add_gpu(const TensorView& input_1,
     }
 
     CHECK_CUDNN(cudnnOpTensor(Backend::get_cudnn_handle(),
-                              Backend::get_operator_sum_descriptor(),
+                              Backend::get_op_tensor_add_descriptor(),
                               &one, input_1.get_descriptor(), input_1.data,
                               &one, input_2.get_descriptor(), input_2.data,
                               &zero, output.get_descriptor(), output.data));
