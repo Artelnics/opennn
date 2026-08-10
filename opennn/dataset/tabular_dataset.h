@@ -12,6 +12,7 @@
 #include "opennn/dataset/correlations.h"
 #include "opennn/core/statistics.h"
 #include "opennn/core/io_utilities.h"
+#include "opennn/dataset/field_parsing.h"
 
 namespace opennn
 {
