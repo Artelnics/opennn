@@ -75,8 +75,11 @@ void store_as_bfloat16(const Fp32Staging& staging,
 
 #endif
 
+// One epsilon for both paths. Batch norm is only meaningful if inference
+// reproduces what training computed, and that identity holds only when the two
+// use the same epsilon; a larger one at inference silently rescales every
+// channel whose variance is near or below it.
 static constexpr float BN_EPSILON = 1e-5f;
-static constexpr float BN_INFER_EPS = 1e-2f;
 
 void BatchNormalizationOperator::set(Index new_features, float new_momentum)
 {
@@ -169,7 +172,7 @@ void BatchNormalizationOperator::update_inference_cache()
     if (!inference_cache_dirty || !gamma.data || !beta.data || !running_mean.data || !running_variance.data) return;
 
     inference_scale = gamma.as_vector().array()
-                    / (running_variance.as_vector().array().max(0.0f) + BN_INFER_EPS).sqrt();
+                    / (running_variance.as_vector().array().max(0.0f) + BN_EPSILON).sqrt();
     inference_shift = beta.as_vector().array()
                     - inference_scale.array() * running_mean.as_vector().array();
 
@@ -529,7 +532,7 @@ void BatchNormalizationOperator::apply_inference_gpu(const TensorView& input, Te
                                     fuse_add ? residual.as<T>() : nullptr,
                                     gamma.as<float>(), beta.as<float>(),
                                     running_mean.as<float>(), running_variance.as<float>(),
-                                    BN_INFER_EPS, fuse_relu,
+                                    BN_EPSILON, fuse_relu,
                                     output.as<T>());
     });
 }
