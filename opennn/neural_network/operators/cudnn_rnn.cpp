@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/neural_network/cudnn_rnn.h"
+#include "opennn/neural_network/operators/cudnn_rnn.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/cuda/kernel.cuh"
 
