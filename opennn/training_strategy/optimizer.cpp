@@ -1105,7 +1105,12 @@ TrainingResult Optimizer::train()
             training_accuracy = training_evaluation_result.accuracy;
             results.training_error_history(epoch) = training_error;
 
-            const bool val_fresh = has_validation && (epoch % display_period == 0);
+            // validation_period, not display_period: this gate decides whether validation
+            // is *computed*, and everything downstream reads the result. Gating it on the
+            // printing cadence left validation_error_history at its -1 sentinel on every
+            // epoch that was not a multiple of display_period, which get_validation_error()
+            // and the minimal_index() best-epoch search then consumed as real values.
+            const bool val_fresh = has_validation && (epoch % validation_period == 0);
 
             if (val_fresh)
             {

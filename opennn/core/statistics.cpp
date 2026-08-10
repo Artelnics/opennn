@@ -643,11 +643,14 @@ VectorR median(const MatrixR& matrix,
     return medians;
 }
 
+// PropagateNumbers so NaN entries are skipped rather than compared against. Callers use
+// NaN to mark "no value here" (an unevaluated epoch, a missing sample), and plain
+// minCoeff/maxCoeff give implementation-defined results once a NaN is in the range.
 Index minimal_index(const VectorR& vector)
 {
     Index index = 0;
     if (vector.size() > 0)
-        vector.minCoeff(&index);
+        vector.minCoeff<PropagateNumbers>(&index);
     return index;
 }
 
@@ -655,7 +658,7 @@ Index maximal_index(const VectorR& vector)
 {
     Index index = 0;
     if (vector.size() > 0)
-        vector.maxCoeff(&index);
+        vector.maxCoeff<PropagateNumbers>(&index);
     return index;
 }
 

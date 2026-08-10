@@ -145,7 +145,11 @@ TEST(BatchNormalizationOperatoreratorTest, ForwardTrainingNormalizesPerFeature)
 
     EXPECT_LT(feature_mean.cwiseAbs().maxCoeff(), 1.0e-4f);
 
-    EXPECT_LT((feature_variance.array() - 1.0f).abs().maxCoeff(), 1.0e-3f);
+    // Batch norm divides by sqrt(var + BN_EPSILON), so the normalized variance is
+    // var/(var + BN_EPSILON) and falls short of 1 by about BN_EPSILON/var. This layer's
+    // pre-normalization feature variances are O(1e-3), which puts the shortfall near
+    // 2e-3. The bound tracks BN_EPSILON: raise it if that constant grows again.
+    EXPECT_LT((feature_variance.array() - 1.0f).abs().maxCoeff(), 5.0e-3f);
 }
 
 TEST(BatchNormalizationOperatoreratorTest, ForwardInferenceUsesRunningStatistics)

@@ -15,8 +15,11 @@ namespace opennn
 
 TrainingResult::TrainingResult(const Index epochs_number)
 {
-    training_error_history = VectorR::Constant(epochs_number, -1.0f);
-    validation_error_history = VectorR::Constant(epochs_number, -1.0f);
+    // NaN, not -1: with validation_period > 1 some epochs are never evaluated, and the
+    // marker for those is read back by minimum searches. -1 sorts below every real error,
+    // so an unevaluated epoch always won; NaN is skipped instead of preferred.
+    training_error_history = VectorR::Constant(epochs_number, QUIET_NAN);
+    validation_error_history = VectorR::Constant(epochs_number, QUIET_NAN);
 }
 
 string TrainingResult::write_stopping_condition() const
@@ -40,9 +43,13 @@ float TrainingResult::get_training_error() const
 
 float TrainingResult::get_validation_error() const
 {
-    if (validation_error_history.size() == 0) return 0.0f;
+    // The final epoch is not necessarily a validation epoch, so walk back to the last one
+    // that produced a number rather than handing back the not-evaluated marker.
+    for (Index i = validation_error_history.size() - 1; i >= 0; --i)
+        if (isfinite(validation_error_history(i)))
+            return validation_error_history(i);
 
-    return validation_error_history(validation_error_history.size() - 1);
+    return 0.0f;
 }
 
 Index TrainingResult::get_epochs_number() const
