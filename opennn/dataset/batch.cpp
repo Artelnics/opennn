@@ -10,7 +10,7 @@
 #include "opennn/dataset/dataset.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/memory_debug.h"
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/core/cuda/kernel_optimizers.cuh"
 
 namespace opennn
 {

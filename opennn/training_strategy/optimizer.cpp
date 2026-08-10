@@ -21,7 +21,7 @@
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/core/profiler.h"
 #include "opennn/core/string_utilities.h"
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/core/cuda/kernel_optimizers.cuh"
 #include <atomic>
 #include <chrono>
 #include <mutex>

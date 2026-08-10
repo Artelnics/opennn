@@ -9,6 +9,7 @@
 // attention: heads, masks, softmax, rotary and decode sampling
 
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/core/cuda/kernel_attention.cuh"
 #include <curand_kernel.h>
 #include <cub/block/block_reduce.cuh>
 

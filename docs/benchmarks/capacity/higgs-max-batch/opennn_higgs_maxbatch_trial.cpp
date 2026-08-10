@@ -47,7 +47,7 @@
 #ifdef OPENNN_HAS_CUDA
 #include <cuda_runtime.h>
 #include "opennn/core/device_backend.h"
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/core/cuda/kernel_optimizers.cuh"
 #endif
 
 #include "opennn/training_strategy/adaptive_moment_estimation.h"

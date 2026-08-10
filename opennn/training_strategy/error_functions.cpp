@@ -8,7 +8,7 @@
 
 #include "opennn/training_strategy/error_functions.h"
 #include "opennn/core/device_backend.h"
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/training_strategy/kernel_losses.cuh"
 
 namespace opennn
 {

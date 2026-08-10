@@ -8,7 +8,7 @@
 
 #include "opennn/neural_network/operators/cudnn_rnn.h"
 #include "opennn/core/device_backend.h"
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/neural_network/layers/kernel_recurrent.cuh"
 
 #ifdef OPENNN_HAS_CUDA
 

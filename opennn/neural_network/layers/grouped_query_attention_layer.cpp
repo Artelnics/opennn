@@ -19,7 +19,8 @@
 #include "opennn/core/cuda/cudnn_frontend_utilities.h"
 #include "opennn/core/device_backend.h"
 #ifdef OPENNN_HAS_CUDA
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/core/cuda/kernel_attention.cuh"
+#include "opennn/core/cuda/kernel_normalization.cuh"
 #endif
 #endif
 

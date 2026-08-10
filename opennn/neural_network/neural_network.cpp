@@ -25,7 +25,8 @@
 #include "opennn/core/memory_debug.h"
 
 #include <algorithm>
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/core/cuda/kernel_optimizers.cuh"
+#include "opennn/core/cuda/kernel_tensor.cuh"
 
 namespace opennn
 {

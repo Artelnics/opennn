@@ -9,6 +9,7 @@
 // pooling, first-token reduction, upsampling and concatenation
 
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/core/cuda/kernel_pooling.cuh"
 
 struct PoolingScratch
 {

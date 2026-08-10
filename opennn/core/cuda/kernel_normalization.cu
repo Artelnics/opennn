@@ -9,6 +9,7 @@
 // layer, RMS and batch normalization
 
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/core/cuda/kernel_normalization.cuh"
 
 template<typename T, bool FuseResidual, bool HasMean>
 __global__ void norm_forward_kernel(const int N, const int D, const T* __restrict__ X, const T* __restrict__ R, T* __restrict__ sum, T* __restrict__ Y, float* __restrict__ means, float* __restrict__ inv_vars, const float* __restrict__ gamma, const float* __restrict__ beta, const float eps)

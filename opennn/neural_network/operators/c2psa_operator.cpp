@@ -15,7 +15,7 @@
 #ifdef OPENNN_HAS_CUDA
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/neural_network/operators/kernel_c2psa.cuh"
 #endif
 
 namespace opennn

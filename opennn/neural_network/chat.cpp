@@ -22,7 +22,7 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/operators/tokenizer_operator.h"
 #ifdef OPENNN_HAS_CUDA
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/core/cuda/kernel_attention.cuh"
 #endif
 
 namespace opennn

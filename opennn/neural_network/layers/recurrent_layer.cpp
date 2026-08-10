@@ -13,7 +13,8 @@
 #include "opennn/core/device_backend.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/tensor_operations.h"
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/neural_network/layers/kernel_recurrent.cuh"
+#include "opennn/core/cuda/kernel_tensor.cuh"
 
 namespace opennn
 {

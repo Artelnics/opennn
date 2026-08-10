@@ -13,7 +13,7 @@
 
 #include <atomic>
 #include <cstdlib>
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/core/cuda/kernel_optimizers.cuh"
 
 namespace opennn::device
 {

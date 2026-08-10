@@ -9,7 +9,11 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/profiler.h"
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/core/cuda/kernel_activation.cuh"
+#include "opennn/core/cuda/kernel_normalization.cuh"
+#include "opennn/core/cuda/kernel_optimizers.cuh"
+#include "opennn/core/cuda/kernel_quantization.cuh"
+#include "opennn/core/cuda/kernel_tensor.cuh"
 
 #include <atomic>
 

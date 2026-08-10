@@ -10,7 +10,7 @@
 #include "opennn/core/string_utilities.h"
 
 #ifdef OPENNN_HAS_CUDA
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/core/cuda/kernel_normalization.cuh"
 #endif
 
 namespace opennn

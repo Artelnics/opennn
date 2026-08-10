@@ -9,6 +9,7 @@
 // recurrent and LSTM steps, time-slice gather/scatter
 
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/neural_network/layers/kernel_recurrent.cuh"
 
 struct RnnCopyParams
 {

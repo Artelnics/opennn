@@ -1,4 +1,5 @@
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/neural_network/operators/kernel_c2psa.cuh"
 #include "opennn/core/device_backend.h"
 
 template<typename T>

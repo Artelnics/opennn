@@ -12,6 +12,7 @@
 // recurrent kernels, whose callers they never had in common.
 
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/core/cuda/kernel_tensor.cuh"
 
 template<typename T>
 __global__ void transpose_2d_kernel(const int rows,

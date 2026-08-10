@@ -22,7 +22,7 @@
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/core/statistics.h"
 #include <Eigen/LU>
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/training_strategy/kernel_losses.cuh"
 
 namespace opennn
 {

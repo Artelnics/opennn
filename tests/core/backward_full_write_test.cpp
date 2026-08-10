@@ -35,7 +35,7 @@
 #include "opennn/training_strategy/loss.h"
 
 #ifdef OPENNN_HAS_CUDA
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/core/cuda/kernel_pooling.cuh"
 #endif
 
 using namespace opennn;

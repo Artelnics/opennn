@@ -1,4 +1,5 @@
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/core/cuda/kernel_optimizers.cuh"
 
 __device__ __forceinline__ void adam_update_one(
     float& p,

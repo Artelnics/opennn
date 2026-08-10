@@ -9,6 +9,7 @@
 // YOLO detection heads, anchor-based and anchor-free
 
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/neural_network/layers/kernel_detection.cuh"
 
 __global__ void detection_forward_kernel(const int batch_size,
                                          const int grid_size,
