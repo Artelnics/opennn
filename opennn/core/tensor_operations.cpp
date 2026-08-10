@@ -11,7 +11,7 @@
 #include "opennn/core/profiler.h"
 #include "opennn/core/cuda/kernel_activation.cuh"
 #include "opennn/core/cuda/kernel_normalization.cuh"
-#include "opennn/core/cuda/kernel_optimizers.cuh"
+#include "opennn/core/cuda/kernel_cast.cuh"
 #include "opennn/core/cuda/kernel_quantization.cuh"
 #include "opennn/core/cuda/kernel_tensor.cuh"
 
@@ -452,14 +452,14 @@ static void w8a16_linear_rows(Index rows, Index in_features, Index out_features,
 
 #endif
 
-void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weight, TensorView& output,
+void linear_forward_transposed(const TensorView& input, const TensorView& embed_weight, TensorView& output,
                           const TensorView& weight_scale)
 {
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda() && embed_weight.is_int8())
     {
         throw_if(weight_scale.empty() || !input.is_bf16() || !output.is_bf16(),
-                 "tied_lm_head_forward: INT8 weights require BF16 activations and a per-channel scale vector.");
+                 "linear_forward_transposed: INT8 weights require BF16 activations and a per-channel scale vector.");
 
         const Index in_features  = embed_weight.shape.back();
         const Index out_features = embed_weight.size() / in_features;

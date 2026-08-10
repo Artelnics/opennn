@@ -140,7 +140,7 @@ void linear_backward(const TensorView&, const TensorView&, const TensorView&,
 
 
 
-void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weight, TensorView& output,
+void linear_forward_transposed(const TensorView& input, const TensorView& embed_weight, TensorView& output,
                           const TensorView& weight_scale = {});
 
 

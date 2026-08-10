@@ -83,9 +83,9 @@ float layer_vs_recipe_max_diff(bool use_qk_norm)
     TensorView Nq(nq.data(), {head_dim}), Nk(nk.data(), {head_dim});
     TensorView qv(q.data(), {1, seq, qd}), kv(k.data(), {1, seq, kd}), vv(v.data(), {1, seq, kd});
 
-    tied_lm_head_forward(xv, Wq, qv);
-    tied_lm_head_forward(xv, Wk, kv);
-    tied_lm_head_forward(xv, Wv, vv);
+    linear_forward_transposed(xv, Wq, qv);
+    linear_forward_transposed(xv, Wk, kv);
+    linear_forward_transposed(xv, Wv, vv);
     if (use_qk_norm)
     {
         qk_norm_forward(qv, Nq, qv, head_dim, eps);
@@ -100,7 +100,7 @@ float layer_vs_recipe_max_diff(bool use_qk_norm)
     grouped_attention_forward(qrv, krv, vv, av, q_heads, kv_heads, head_dim, true, 1.0f / std::sqrt(float(head_dim)), 0);
 
     TensorView rv(ref.data(), {1, seq, hidden});
-    tied_lm_head_forward(av, Wo, rv);
+    linear_forward_transposed(av, Wo, rv);
 
     float max_diff = 0.0f;
     for (size_t i = 0; i < ref.size(); ++i)

@@ -7,7 +7,7 @@
 
 using namespace opennn;
 
-TEST(TiedLmHeadTest, LogitsAreInputTimesEmbeddingTransposed)
+TEST(LinearForwardTransposedTest, LogitsAreInputTimesEmbeddingTransposed)
 {
     const Index batch = 1, seq = 2, hidden = 4, vocab = 3;
 
@@ -23,7 +23,7 @@ TEST(TiedLmHeadTest, LogitsAreInputTimesEmbeddingTransposed)
     TensorView in(input.data(), {batch, seq, hidden});
     TensorView e(embed.data(), {vocab, hidden});
     TensorView out(output.data(), {batch, seq, vocab});
-    tied_lm_head_forward(in, e, out);
+    linear_forward_transposed(in, e, out);
 
     EXPECT_NEAR(output[0], 1.0f, 1.0e-5f);
     EXPECT_NEAR(output[1], 5.0f, 1.0e-5f);
