@@ -19,7 +19,7 @@
 #include "opennn/training_strategy/error_functions.h"
 #include "opennn/core/profiler.h"
 #include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
+#include "opennn/training_strategy/back_propagation.h"
 #include "opennn/core/statistics.h"
 #include <Eigen/LU>
 #include "opennn/training_strategy/kernel_losses.cuh"

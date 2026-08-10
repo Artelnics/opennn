@@ -9,7 +9,7 @@
 
 #include "tests/pch.h"
 
-#include "opennn/neural_network/back_propagation.h"
+#include "opennn/training_strategy/back_propagation.h"
 #include "opennn/core/configuration.h"
 #include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/forward_propagation.h"

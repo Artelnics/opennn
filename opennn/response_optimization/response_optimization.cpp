@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/neural_network/response_optimization.h"
+#include "opennn/response_optimization/response_optimization.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/statistics.h"

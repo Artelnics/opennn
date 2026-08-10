@@ -9,7 +9,7 @@
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/core/configuration.h"
 #include "opennn/training_strategy/loss.h"
-#include "opennn/neural_network/back_propagation.h"
+#include "opennn/training_strategy/back_propagation.h"
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/device_backend.h"
 #endif

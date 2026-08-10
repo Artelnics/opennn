@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/pch.h"
-#include "opennn/neural_network/response_constraints.h"
+#include "opennn/response_optimization/response_constraints.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/random_utilities.h"
 

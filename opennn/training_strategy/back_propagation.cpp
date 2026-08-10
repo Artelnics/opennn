@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/neural_network/back_propagation.h"
+#include "opennn/training_strategy/back_propagation.h"
 #include "opennn/core/memory_pool.h"
 #include "opennn/training_strategy/loss.h"
 #include "opennn/neural_network/neural_network.h"

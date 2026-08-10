@@ -11,8 +11,8 @@
 #include "opennn/core/opennn_types.h"
 #include "opennn/core/statistics.h"
 #include "opennn/core/variable.h"
-#include "opennn/neural_network/response_constraints.h"
-#include "opennn/neural_network/network_differential.h"
+#include "opennn/response_optimization/response_constraints.h"
+#include "opennn/response_optimization/network_differential.h"
 
 namespace opennn
 {

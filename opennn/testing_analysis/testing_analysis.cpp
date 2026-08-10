@@ -15,7 +15,7 @@
 #include "opennn/neural_network/layers/unscaling_layer.h"
 #include "opennn/training_strategy/error_functions.h"
 #include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
+#include "opennn/training_strategy/back_propagation.h"
 #include "opennn/dataset/batch.h"
 
 namespace opennn

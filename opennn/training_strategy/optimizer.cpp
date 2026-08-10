@@ -15,7 +15,7 @@
 #include "opennn/training_strategy/optimizer.h"
 #include "opennn/core/variable.h"
 #include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
+#include "opennn/training_strategy/back_propagation.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/neural_network/neural_network.h"

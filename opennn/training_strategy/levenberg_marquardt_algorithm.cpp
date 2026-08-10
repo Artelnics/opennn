@@ -14,7 +14,7 @@
 #include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/training_strategy/levenberg_marquardt_algorithm.h"
 #include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
+#include "opennn/training_strategy/back_propagation.h"
 
 #include <Eigen/QR>
 

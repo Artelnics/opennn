@@ -20,7 +20,7 @@
 #include "opennn/core/variable.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
+#include "opennn/training_strategy/back_propagation.h"
 #include "opennn/neural_network/model_expression.h"
 #include "opennn/core/memory_debug.h"
 
