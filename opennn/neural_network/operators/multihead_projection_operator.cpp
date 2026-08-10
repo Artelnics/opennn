@@ -10,9 +10,81 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
+#ifdef OPENNN_HAS_CUDA
+#include "opennn/core/cuda/kernel.cuh"
+#endif
 
 namespace opennn
 {
+
+// Defined below: against the CUDA kernels, or as throwing stubs.
+static void split_heads_gpu(const TensorView&, TensorView&);
+static void merge_heads_gpu(const TensorView&, TensorView&);
+
+static void transpose_middle_axes(const float* src, float* dst,
+                                  Index batch_size, Index src_m1, Index src_m2, Index D)
+{
+    #pragma omp parallel for collapse(3) schedule(static)
+    for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
+        for (Index i = 0; i < src_m2; ++i)
+            for (Index j = 0; j < src_m1; ++j)
+                memcpy(dst + ((batch_index * src_m2 + i) * src_m1 + j) * D,
+                       src + ((batch_index * src_m1 + j) * src_m2 + i) * D,
+                       D * sizeof(float));
+}
+
+void split_heads(const TensorView& source, TensorView& destination)
+{
+    if (source.is_cuda()) { split_heads_gpu(source, destination); return; }
+
+    transpose_middle_axes(source.as<float>(), destination.as<float>(),
+                          source.shape[0], source.shape[1], source.shape[2], source.shape[3]);
+}
+
+void merge_heads(const TensorView& source, TensorView& destination)
+{
+    if (source.is_cuda()) { merge_heads_gpu(source, destination); return; }
+
+    transpose_middle_axes(source.as<float>(), destination.as<float>(),
+                          source.shape[0], source.shape[1], source.shape[2], source.shape[3]);
+}
+
+#ifdef OPENNN_HAS_CUDA
+
+static void split_heads_gpu(const TensorView& source, TensorView& destination)
+{
+    const Index sequence_length = source.shape[1];
+    const Index heads_number = source.shape[2];
+    const Index head_dimension = source.shape[3];
+
+    destination.dispatch([&]<typename T>() {
+        split_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
+                            to_int(sequence_length),
+                            to_int(heads_number),
+                            to_int(head_dimension));
+    });
+}
+
+static void merge_heads_gpu(const TensorView& source, TensorView& destination)
+{
+    const Index heads_number = source.shape[1];
+    const Index sequence_length = source.shape[2];
+    const Index head_dimension = source.shape[3];
+
+    destination.dispatch([&]<typename T>() {
+        merge_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
+                            to_int(sequence_length),
+                            to_int(heads_number),
+                            to_int(head_dimension));
+    });
+}
+
+#else
+
+static void split_heads_gpu(const TensorView&, TensorView&) { throw runtime_error("split_heads_gpu: CUDA support not compiled in."); }
+static void merge_heads_gpu(const TensorView&, TensorView&) { throw runtime_error("merge_heads_gpu: CUDA support not compiled in."); }
+
+#endif
 
 void MultiHeadProjectionOperator::set(Index new_input_features, Index new_heads_number,
                               Index new_head_dimension, Type new_compute_dtype)

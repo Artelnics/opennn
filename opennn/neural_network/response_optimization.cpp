@@ -20,6 +20,135 @@
 namespace opennn
 {
 
+MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
+{
+    if (starting_matrix.size() == 0)
+        return block;
+    if (block.size() == 0)
+        return starting_matrix;
+
+    throw_if(starting_matrix.cols() != block.cols(),
+             "append_rows: Column mismatch ({} vs {})",
+                    starting_matrix.cols(), block.cols());
+
+    MatrixR final_matrix(starting_matrix.rows() + block.rows(), starting_matrix.cols());
+
+    final_matrix.topRows(starting_matrix.rows()) = starting_matrix;
+    final_matrix.bottomRows(block.rows()) = block;
+
+    return final_matrix;
+}
+
+MatrixR append_columns(const MatrixR& first_matrix, const MatrixR& second_matrix)
+{
+    MatrixR result(first_matrix.rows(), first_matrix.cols() + second_matrix.cols());
+    result.leftCols(first_matrix.cols()) = first_matrix;
+    result.rightCols(second_matrix.cols()) = second_matrix;
+    return result;
+}
+
+VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int neighbors_number)
+{
+    const Index rows = matrix.rows();
+
+    const VectorR distances = (matrix.rowwise() - point.transpose()).rowwise().norm();
+
+    vector<Index> indices(rows);
+    iota(indices.begin(), indices.end(), Index(0));
+
+    neighbors_number = std::min(neighbors_number, to_int(rows));
+
+    partial_sort(indices.begin(), indices.begin() + neighbors_number, indices.end(),
+                 [&distances](Index i, Index j) {
+                     return pair{distances(i), i} < pair{distances(j), j};
+                 });
+
+    return Map<VectorI>(indices.data(), neighbors_number);
+}
+
+MatrixR calculate_distances(const MatrixR& points)
+{
+    const VectorR squared_norms = points.rowwise().squaredNorm();
+
+    MatrixR squared_distances = -2.0f * points * points.transpose();
+    squared_distances.colwise() += squared_norms;
+    squared_distances.rowwise() += squared_norms.transpose();
+
+    return squared_distances.cwiseMax(0.0f).cwiseSqrt();
+}
+
+vector<Index> filter_selected_indices_by_column(const MatrixR& matrix,
+                                                const vector<Index>& selected_indices,
+                                                const Index column_index,
+                                                const float minimum,
+                                                const float maximum)
+{
+    vector<Index> filtered;
+    filtered.reserve(selected_indices.size());
+    for (const Index row_index : selected_indices)
+    {
+        const float value = matrix(row_index, column_index);
+        if (isfinite(value) && value >= (minimum - 1e-6f) && value <= (maximum + 1e-6f))
+            filtered.push_back(row_index);
+    }
+    return filtered;
+}
+
+VectorR local_outlier_factor(const MatrixR& points, Index neighbors_number)
+{
+    const Index points_number = points.rows();
+
+    if (points_number <= 1 || neighbors_number <= 0)
+        return VectorR::Ones(points_number);
+
+    neighbors_number = min(neighbors_number, points_number - 1);
+
+    const MatrixR distances = calculate_distances(points);
+
+    vector<vector<Index>> neighbors(points_number);
+    VectorR neighbor_distance(points_number);
+
+    for (Index i = 0; i < points_number; i++)
+    {
+        VectorR row = distances.row(i).transpose();
+        row(i) = MAX;
+        const VectorI nearest = maximal_indices(-row, neighbors_number);
+        neighbor_distance(i) = row(nearest(neighbors_number - 1));
+
+        const float tie_tolerance = EPSILON * max(1.0f, abs(neighbor_distance(i)));
+        neighbors[i].reserve(static_cast<size_t>(neighbors_number));
+        for (Index j = 0; j < points_number; ++j)
+            if (j != i && distances(i, j) <= neighbor_distance(i) + tie_tolerance)
+                neighbors[i].push_back(j);
+    }
+
+    VectorR reachability_density(points_number);
+
+    for (Index i = 0; i < points_number; i++)
+    {
+        float reachability_sum = 0.0f;
+        for (const Index neighbor : neighbors[i])
+            reachability_sum += max(neighbor_distance(neighbor), distances(i, neighbor));
+        reachability_density(i) = reachability_sum > EPSILON
+            ? float(neighbors[i].size()) / reachability_sum
+            : MAX;
+    }
+
+    VectorR outlier_factor(points_number);
+
+    for (Index i = 0; i < points_number; i++)
+    {
+        float density_sum = 0.0f;
+        for (const Index neighbor : neighbors[i])
+            density_sum += reachability_density(neighbor);
+        outlier_factor(i) = reachability_density(i) > EPSILON
+            ? density_sum / (float(neighbors[i].size()) * reachability_density(i))
+            : 1.0f;
+    }
+
+    return outlier_factor;
+}
+
 // Visits each variable together with the feature column it starts at, so callers never
 // have to carry the running offset themselves.
 template <typename Body>

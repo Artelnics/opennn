@@ -6,6 +6,7 @@
 #include "opennn/core/scaling.h"
 #include "opennn/core/statistics.h"
 #include "opennn/core/tensor_operations.h"
+#include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/network_differential.h"
 
 using namespace opennn;

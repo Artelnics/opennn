@@ -14,9 +14,213 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
+#ifdef OPENNN_HAS_CUDA
+#include "opennn/core/cuda/kernel.cuh"
+#endif
 
 namespace opennn
 {
+
+// Defined below: against the CUDA kernels, or as a throwing stub. Both directions
+// share one entry point so the forward and inverse paths cannot drift apart.
+static void scale_gpu(const TensorView&, const TensorView&, const TensorView&,
+                      const TensorView&, const TensorView&, const TensorView&,
+                      float, float, TensorView&, bool);
+
+template<typename Column>
+static void scale_column_cpu(Column& column, ScalerMethod method,
+                             const Descriptives& descriptives,
+                             float min_range, float max_range)
+{
+    using enum ScalerMethod;
+
+    switch (method)
+    {
+    case MinimumMaximum:
+        if (descriptives.maximum - descriptives.minimum < EPSILON)
+            column.setZero();
+        else
+            column = scale_minimum_maximum_formula(column, descriptives, min_range, max_range);
+        break;
+    case MeanStandardDeviation:
+        if (descriptives.standard_deviation > EPSILON)
+            column = scale_mean_standard_deviation_formula(column, descriptives);
+        else
+            column.setZero();
+        break;
+    case StandardDeviation:
+        column *= descriptives.standard_deviation > EPSILON
+                ? 1.0f / descriptives.standard_deviation
+                : 0.0f;
+        break;
+    case Logarithm:
+        column = column.max(EPSILON).log();
+        break;
+    case ImageMinMax:
+        column /= 255.0f;
+        break;
+    case None:
+    default:
+        break;
+    }
+}
+
+template<typename Column>
+static void unscale_column_cpu(Column& column, ScalerMethod method,
+                               const Descriptives& descriptives,
+                               float min_range, float max_range)
+{
+    using enum ScalerMethod;
+
+    switch (method)
+    {
+    case MinimumMaximum:
+        throw_if(max_range - min_range < EPSILON, "The range values are not valid.");
+        column = unscale_minimum_maximum_formula(column, descriptives, min_range, max_range);
+        break;
+    case MeanStandardDeviation:
+        column = unscale_mean_standard_deviation_formula(column, descriptives);
+        break;
+    case StandardDeviation:
+        if (descriptives.standard_deviation > EPSILON)
+            column *= descriptives.standard_deviation;
+        else
+            column.setConstant(descriptives.mean);
+        break;
+    case Logarithm:
+        column = column.exp();
+        break;
+    case ImageMinMax:
+        column *= 255.0f;
+        break;
+    case None:
+    default:
+        break;
+    }
+}
+
+static void scale_cpu(const TensorView& input,
+               const TensorView& minimums, const TensorView& maximums,
+               const TensorView& means, const TensorView& standard_deviations,
+               const TensorView& scalers,
+               float min_range, float max_range,
+               TensorView& output, bool inverse)
+{
+    const Index features = scalers.size();
+    if (features == 0) { output.as_matrix().noalias() = input.as_matrix(); return; }
+
+    const MatrixMap input_matrix = input.as_flat_matrix();
+    const VectorMap minimums_vector = minimums.as_vector();
+    const VectorMap maximums_vector = maximums.as_vector();
+    const VectorMap means_vector  = means.as_vector();
+    const VectorMap standard_deviations_vector  = standard_deviations.as_vector();
+    const VectorMap scalers_vector   = scalers.as_vector();
+
+    MatrixMap output_matrix = output.as_flat_matrix();
+
+    output_matrix.noalias() = input_matrix;
+
+    const Index cols = output_matrix.cols();
+    for (Index col = 0; col < cols; ++col)
+    {
+        const Index feature_index = col % features;
+        const auto method = static_cast<ScalerMethod>(static_cast<int>(scalers_vector(feature_index)));
+        auto column = output_matrix.col(col).array();
+
+        const Descriptives descriptives(minimums_vector(feature_index),
+                                        maximums_vector(feature_index),
+                                        means_vector(feature_index),
+                                        standard_deviations_vector(feature_index));
+
+        if (inverse)
+            unscale_column_cpu(column, method, descriptives, min_range, max_range);
+        else
+            scale_column_cpu(column, method, descriptives, min_range, max_range);
+    }
+}
+
+void scale(const TensorView& input,
+           const TensorView& minimums, const TensorView& maximums,
+           const TensorView& means, const TensorView& standard_deviations,
+           const TensorView& scalers,
+           float min_range, float max_range,
+           TensorView& output)
+{
+    if (input.is_cuda())
+    {
+        scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
+                  min_range, max_range, output, false);
+        return;
+    }
+    scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
+              min_range, max_range, output, false);
+}
+
+void unscale(const TensorView& input,
+             const TensorView& minimums, const TensorView& maximums,
+             const TensorView& means, const TensorView& standard_deviations,
+             const TensorView& scalers,
+             float min_range, float max_range,
+             TensorView& output)
+{
+    if (input.is_cuda())
+    {
+        scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
+                  min_range, max_range, output, true);
+        return;
+    }
+
+    scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
+              min_range, max_range, output, true);
+}
+
+#ifdef OPENNN_HAS_CUDA
+
+static void scale_gpu(const TensorView& input,
+               const TensorView& minimums, const TensorView& maximums,
+               const TensorView& means, const TensorView& standard_deviations,
+               const TensorView& scalers,
+               float min_range, float max_range,
+               TensorView& output, bool inverse)
+{
+    const Index features = scalers.size();
+
+    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&]<typename TIn, typename TOut>() {
+        if (inverse)
+        {
+            unscale_cuda<TIn, TOut>(output.size(), to_int(features),
+                                    input.as<TIn>(),
+                                    minimums.as_float(),
+                                    maximums.as_float(),
+                                    means.as_float(),
+                                    standard_deviations.as_float(),
+                                    scalers.as_float(),
+                                    min_range, max_range,
+                                    output.as<TOut>());
+            return;
+        }
+        scale_cuda<TIn, TOut>(output.size(), to_int(features),
+                              input.as<TIn>(),
+                              minimums.as_float(),
+                              maximums.as_float(),
+                              means.as_float(),
+                              standard_deviations.as_float(),
+                              scalers.as_float(),
+                              min_range, max_range,
+                              output.as<TOut>());
+    });
+}
+
+#else
+
+static void scale_gpu(const TensorView&, const TensorView&, const TensorView&,
+                      const TensorView&, const TensorView&, const TensorView&,
+                      float, float, TensorView&, bool)
+{
+    throw runtime_error("scale_gpu: CUDA support not compiled in.");
+}
+
+#endif
 
 void ScaleOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {

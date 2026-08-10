@@ -14,6 +14,8 @@
 namespace opennn
 {
 
+void bound(const TensorView&, const TensorView&, const TensorView&, TensorView&);
+
 struct BoundOperator : Operator
 {
     enum class Method { NoBounding, Bounding };

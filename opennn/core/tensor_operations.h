@@ -113,22 +113,6 @@ typename TensorType::PlainObject activation_derivative_from_output_values(Activa
     return values.unaryExpr([function](float value) { return activation_derivative_from_output_value(function, value); });
 }
 
-void bound(const TensorView&, const TensorView&, const TensorView&, TensorView&);
-
-void scale(const TensorView&,
-           const TensorView&, const TensorView&,
-           const TensorView&, const TensorView&,
-           const TensorView&,
-           float, float,
-           TensorView&);
-
-void unscale(const TensorView&,
-             const TensorView&, const TensorView&,
-             const TensorView&, const TensorView&,
-             const TensorView&,
-             float, float,
-             TensorView&);
-
 void copy(const TensorView&, TensorView&);
 
 void add(const TensorView&, const TensorView&, TensorView&);
@@ -139,9 +123,6 @@ void softmax(TensorView&);
 
 void activation_forward(TensorView&, ActivationFunction);
 void activation_backward(const TensorView&, TensorView&, ActivationFunction);
-
-void dropout_forward(TensorView&, Buffer&, float);
-void dropout_backward(TensorView&, const Buffer&, float);
 
 void linear_forward(const TensorView&, const TensorView&, const TensorView&,
                     TensorView&, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS,
@@ -159,28 +140,9 @@ void linear_backward(const TensorView&, const TensorView&, const TensorView&,
 
 
 
-void sample_logits_row(const TensorView& logits_row, float temperature, Index top_k, float top_p,
-                       unsigned long long seed, unsigned long long step,
-                       void* candidates_scratch, int* id_device, float* token_device);
-
-Index sample_logits_scratch_floats();
-
-
 void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weight, TensorView& output,
                           const TensorView& weight_scale = {});
 
-
-
-
-
-void split_heads(const TensorView&, TensorView&);
-void merge_heads(const TensorView&, TensorView&);
-
-MatrixR append_rows(const MatrixR&, const MatrixR&);
-MatrixR append_columns(const MatrixR&, const MatrixR&);
-VectorI get_nearest_points(const MatrixR&, const VectorR&, int = 1);
-MatrixR calculate_distances(const MatrixR&);
-vector<Index> filter_selected_indices_by_column(const MatrixR&, const vector<Index>&, Index, float, float);
 
 }
 

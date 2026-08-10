@@ -13,6 +13,9 @@
 namespace opennn
 {
 
+void dropout_forward(TensorView&, Buffer&, float);
+void dropout_backward(TensorView&, const Buffer&, float);
+
 struct DropoutOperator : Operator
 {
     float rate = 0.0f;

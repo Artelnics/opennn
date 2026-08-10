@@ -17,6 +17,15 @@
 namespace opennn
 {
 
+// Host-matrix helpers for the Pareto search below: candidate sets get appended,
+// ranked by distance to a reference point, and thinned by outlier score.
+MatrixR append_rows(const MatrixR&, const MatrixR&);
+MatrixR append_columns(const MatrixR&, const MatrixR&);
+VectorI get_nearest_points(const MatrixR&, const VectorR&, int = 1);
+MatrixR calculate_distances(const MatrixR&);
+vector<Index> filter_selected_indices_by_column(const MatrixR&, const vector<Index>&, Index, float, float);
+VectorR local_outlier_factor(const MatrixR&, Index);
+
 class NeuralNetwork;
 
 class ResponseOptimization

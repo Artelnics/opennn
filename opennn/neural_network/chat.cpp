@@ -21,12 +21,41 @@
 #include "opennn/core/statistics.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/operators/tokenizer_operator.h"
+#ifdef OPENNN_HAS_CUDA
+#include "opennn/core/cuda/kernel.cuh"
+#endif
 
 namespace opennn
 {
 
 namespace
 {
+
+#ifdef OPENNN_HAS_CUDA
+
+// Draws one token from a logits row entirely on the device, so the sampled id
+// never has to round-trip through the host. Only the CUDA path uses it; the
+// callers below are guarded, so there is no host fallback to keep in sync.
+void sample_logits_row(const TensorView& logits_row, float temperature, Index top_k, float top_p,
+                       unsigned long long seed, unsigned long long step,
+                       void* candidates_scratch, int* id_device, float* token_device)
+{
+    throw_if(!logits_row.is_cuda() || !candidates_scratch || !id_device,
+             "sample_logits_row: a GPU logits row, device scratch and a device id are required.");
+
+    logits_row.dispatch([&]<typename T>() {
+        sample_logits_row_cuda<T>(to_int(logits_row.size()), temperature, to_int(top_k), top_p,
+                                  seed, step, logits_row.as<T>(),
+                                  static_cast<float2*>(candidates_scratch), id_device, token_device);
+    });
+}
+
+Index sample_logits_scratch_floats()
+{
+    return Index(LOGITS_SAMPLE_BLOCKS) * 32 * 2;
+}
+
+#endif
 
 bool is_prefix(const vector<Index>& candidate, const vector<Index>& sequence)
 {

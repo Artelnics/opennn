@@ -16,6 +16,8 @@
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
 
+#include <Eigen/QR>
+
 namespace opennn
 {
 
@@ -356,7 +358,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
     {
         hessian.diagonal().array() += damping_parameter;
 
-        parameter_updates = perform_Householder_QR_decomposition(hessian, neg_gradient);
+        parameter_updates = hessian.colPivHouseholderQr().solve(neg_gradient);
 
         potential_parameters = parameters + parameter_updates;
 
