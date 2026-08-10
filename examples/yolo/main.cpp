@@ -249,6 +249,33 @@ void generate_synthetic_dataset(const filesystem::path& images_dir,
     classes << "red\n" << "blue\n" << "green\n";
 }
 
+// Dataset locations differ per machine, so none of them may be a bare absolute
+// path: an explicit environment variable wins, then the first candidate that
+// exists on disk, and only failing both do we return the leading candidate so the
+// error message names something concrete.
+filesystem::path resolve_data_path(const char* variable,
+                                   initializer_list<const char*> candidates)
+{
+    if (const char* value = getenv(variable); value && *value)
+        return value;
+
+    for (const char* candidate : candidates)
+        if (filesystem::is_directory(candidate))
+            return candidate;
+
+    return candidates.size() ? filesystem::path(*candidates.begin()) : filesystem::path();
+}
+
+// getenv("HOME") is empty on Windows; the equivalent there is USERPROFILE.
+filesystem::path home_directory()
+{
+    for (const char* variable : {"HOME", "USERPROFILE"})
+        if (const char* value = getenv(variable); value && *value)
+            return value;
+
+    return {};
+}
+
 }
 
 int main(int argc, char* argv[])
@@ -314,14 +341,10 @@ int main(int argc, char* argv[])
 
         const auto body_activation = YoloNetwork::BodyActivation::LeakyReLU;
 
-        const filesystem::path voc_root = []() -> filesystem::path {
-            if (const char* env = getenv("VOC_ROOT")) return env;
-            for (const char* c : {"/home/alvaromartin/VOCdevkit/VOC2007",
-                                   "/home/artelnics/VOCdevkit/VOC2007",
-                                   "VOCdevkit/VOC2007"})
-                if (filesystem::is_directory(c)) return c;
-            return "/home/alvaromartin/VOCdevkit/VOC2007";
-        }();
+        const filesystem::path voc_root =
+            resolve_data_path("VOC_ROOT", {"VOCdevkit/VOC2007",
+                                           "/home/alvaromartin/VOCdevkit/VOC2007",
+                                           "/home/artelnics/VOCdevkit/VOC2007"});
         const string voc_image_set = "trainval";
 
         const vector<string> voc_class_filter = {};
@@ -471,11 +494,14 @@ int main(int argc, char* argv[])
         else if (use_coco)
         {
 
-            labels_dir = "/home/alvaromartin/coco_mini_data/train2017_labels";
+            labels_dir = resolve_data_path("COCO_LABELS",
+                {"coco_mini_data/train2017_labels",
+                 "/home/alvaromartin/coco_mini_data/train2017_labels"});
             images_dir = data_dir / "labeled_images";
             filesystem::create_directories(images_dir);
-            const filesystem::path src_images =
-                "/home/alvaromartin/coco_mini_data/train2017";
+            const filesystem::path src_images = resolve_data_path("COCO_IMAGES",
+                {"coco_mini_data/train2017",
+                 "/home/alvaromartin/coco_mini_data/train2017"});
             for (const auto& entry : filesystem::directory_iterator(labels_dir))
             {
                 if (entry.path().extension() != ".txt") continue;
@@ -500,8 +526,12 @@ int main(int argc, char* argv[])
         else if (use_raccoon)
         {
 
-            images_dir = "/home/artelnics/Documents/opennn/raccoon_dataset/images";
-            labels_dir = "/home/artelnics/Documents/opennn/raccoon_data/labels";
+            images_dir = resolve_data_path("RACCOON_IMAGES",
+                {"raccoon_dataset/images",
+                 "/home/artelnics/Documents/opennn/raccoon_dataset/images"});
+            labels_dir = resolve_data_path("RACCOON_LABELS",
+                {"raccoon_data/labels",
+                 "/home/artelnics/Documents/opennn/raccoon_data/labels"});
 
             grid_size      = 13;
             boxes_per_cell = 3;
@@ -512,8 +542,10 @@ int main(int argc, char* argv[])
         else
         {
             // External synthetic dataset: 416×416 JPGs, 3 classes (circle/square/triangle).
-            images_dir = "/home/alvaromartin/synthetic_yolo/images";
-            labels_dir = "/home/alvaromartin/synthetic_yolo/labels";
+            images_dir = resolve_data_path("SYNTHETIC_YOLO_IMAGES",
+                {"synthetic_yolo/images", "/home/alvaromartin/synthetic_yolo/images"});
+            labels_dir = resolve_data_path("SYNTHETIC_YOLO_LABELS",
+                {"synthetic_yolo/labels", "/home/alvaromartin/synthetic_yolo/labels"});
 
             // Grid 13×13 over 416×416 input (stride 32).
             grid_size      = 13;
@@ -800,8 +832,7 @@ int main(int argc, char* argv[])
             if (!std::filesystem::exists(darknet_weights))
                 darknet_weights = std::filesystem::path("yolo_voc_data") / darknet_filename;
             if (!std::filesystem::exists(darknet_weights))
-                darknet_weights = std::filesystem::path(std::getenv("HOME") ? std::getenv("HOME") : "")
-                                / ".neuraldesigner/weights" / darknet_filename;
+                darknet_weights = home_directory() / ".neuraldesigner/weights" / darknet_filename;
             if (std::filesystem::exists(darknet_weights))
             {
                 Index loaded = 0;
