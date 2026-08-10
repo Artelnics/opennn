@@ -285,8 +285,8 @@ NeuronsSelectionResult::NeuronsSelectionResult(const Index maximum_epochs)
 {
     neurons_number_history = VectorI::Zero(maximum_epochs);
 
-    training_error_history = VectorR::Constant(maximum_epochs, -1.0f);
-    validation_error_history = VectorR::Constant(maximum_epochs, -1.0f);
+    training_error_history = VectorR::Constant(maximum_epochs, QUIET_NAN);
+    validation_error_history = VectorR::Constant(maximum_epochs, QUIET_NAN);
 
     optimum_training_error = MAX;
     optimum_validation_error = MAX;
