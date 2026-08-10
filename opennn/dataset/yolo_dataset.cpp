@@ -2032,7 +2032,15 @@ void YoloDataset::to_JSON(JsonWriter& printer) const
         {"Width", input_shape[1]},
         {"Channels", input_shape[2]},
         {"GridSize", grid_size},
-        {"BoxesPerCell", boxes_per_cell}
+        {"BoxesPerCell", boxes_per_cell},
+        {"DisplayConfidenceThreshold", display_confidence_threshold},
+        {"AugEnabled",    augmentation.enabled    ? 1 : 0},
+        {"AugJitter",     augmentation.jitter},
+        {"AugExposure",   augmentation.exposure},
+        {"AugSaturation", augmentation.saturation},
+        {"AugHue",        augmentation.hue},
+        {"AugFlip",       augmentation.flip    ? 1 : 0},
+        {"AugMosaic",     augmentation.mosaic  ? 1 : 0}
     });
     printer.close_element();
     variables_to_JSON(printer);
@@ -2056,6 +2064,25 @@ void YoloDataset::from_JSON(const JsonDocument& document)
     set_storage_mode(source->has("StorageMode")
                    ? read_json_string(source, "StorageMode")
                    : "BinaryFile");
+
+    if (source->has("DisplayConfidenceThreshold"))
+        display_confidence_threshold = read_json_float(source, "DisplayConfidenceThreshold");
+
+    AugmentationConfig aug;
+    aug.enabled    = source->has("AugEnabled")    ? (read_json_index(source, "AugEnabled")    != 0) : true;
+    aug.jitter     = source->has("AugJitter")     ? read_json_float(source, "AugJitter")     : 0.2f;
+    aug.exposure   = source->has("AugExposure")   ? read_json_float(source, "AugExposure")   : 1.5f;
+    aug.saturation = source->has("AugSaturation") ? read_json_float(source, "AugSaturation") : 1.5f;
+    aug.hue        = source->has("AugHue")        ? read_json_float(source, "AugHue")        : 0.1f;
+    aug.flip       = source->has("AugFlip")       ? (read_json_index(source, "AugFlip")      != 0) : true;
+    aug.mosaic     = source->has("AugMosaic")     ? (read_json_index(source, "AugMosaic")    != 0) : false;
+    set_augmentation(aug);
+
+    // Restore saved sample roles (train/val/test assignments set by user via "Set Roles").
+    // set() unconditionally calls split_samples_random(), so we must overwrite its result here.
+    const Json* samples_element = yolo_element->find("Samples");
+    if (samples_element)
+        samples_from_JSON(samples_element);
 }
 
 

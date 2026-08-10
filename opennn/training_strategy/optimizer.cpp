@@ -913,6 +913,7 @@ void Optimizer::display_epoch_results(const Index epoch,
                                       const float validation_error,
                                       const float validation_accuracy,
                                       const bool has_validation,
+                                      const bool validation_fresh,
                                       const bool is_token_cross_entropy,
                                       const float elapsed_time) const
 {
@@ -924,11 +925,16 @@ void Optimizer::display_epoch_results(const Index epoch,
         cout << "Training accuracy: " << training_accuracy << "\n";
     }
     if (has_validation) {
-        cout << "Validation error: " << validation_error << "\n";
-        if (is_token_cross_entropy) {
-            cout << "Validation perplexity: " << exp(validation_error) << "\n";
-            cout << "Validation accuracy: " << validation_accuracy << "\n";
+        if (validation_fresh)
+        {
+            cout << "Validation error: " << validation_error << "\n";
+            if (is_token_cross_entropy) {
+                cout << "Validation perplexity: " << exp(validation_error) << "\n";
+                cout << "Validation accuracy: " << validation_accuracy << "\n";
+            }
         }
+        else
+            cout << "Validation error: ---\n";
     }
     cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
 }
@@ -1099,7 +1105,9 @@ TrainingResult Optimizer::train()
             training_accuracy = training_evaluation_result.accuracy;
             results.training_error_history(epoch) = training_error;
 
-            if (has_validation && (epoch % validation_period == 0))
+            const bool val_fresh = has_validation && (epoch % display_period == 0);
+
+            if (val_fresh)
             {
                 dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
 
@@ -1123,10 +1131,10 @@ TrainingResult Optimizer::train()
 
             display_epoch_results(epoch, training_error, training_accuracy,
                                   validation_error, validation_accuracy,
-                                  has_validation, is_token_cross_entropy, elapsed_time);
+                                  has_validation, val_fresh, is_token_cross_entropy, elapsed_time);
 
             if (post_epoch_callback)
-                post_epoch_callback(epoch, neural_network);
+                post_epoch_callback(epoch, training_error, validation_error, neural_network);
 
             if (check_stopping_condition(results, epoch, elapsed_time,
                                          results.training_error_history(epoch),
@@ -1339,6 +1347,9 @@ void Optimizer::update_best_parameters(NeuralNetwork* neural_network,
                                        BestModelSnapshot& best_model)
 {
     constexpr float MIN_DELTA = 1e-7f;
+
+    if (std::isnan(validation_error))
+        return;
 
     if (validation_error >= best_model.validation_error - MIN_DELTA)
     {
@@ -2001,14 +2012,17 @@ Loss::EvaluationResult Optimizer::train_epoch(
                 loss->back_propagate(*batch, forward_propagation, back_propagation);
             }
 
-            epoch_result.error += back_propagation.error;
-
-            if(tracks_accuracy)
-                epoch_result.accuracy += back_propagation.accuracy;
-
+            if (!std::isnan(back_propagation.error))
             {
-                PROFILE_SCOPE("step:optim_total");
-                update_parameters(back_propagation, optimizer_data);
+                epoch_result.error += back_propagation.error;
+
+                if(tracks_accuracy)
+                    epoch_result.accuracy += back_propagation.accuracy;
+
+                {
+                    PROFILE_SCOPE("step:optim_total");
+                    update_parameters(back_propagation, optimizer_data);
+                }
             }
         }
 
@@ -2095,7 +2109,9 @@ Loss::EvaluationResult Optimizer::train_epoch(
             }
         }
 
-        if(!use_device_metrics)
+        const bool batch_ok = use_device_metrics || !std::isnan(back_propagation.error);
+
+        if (!use_device_metrics && batch_ok)
         {
             result.error += back_propagation.error;
 
@@ -2103,6 +2119,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
                 result.accuracy += back_propagation.accuracy;
         }
 
+        if (batch_ok)
         {
             PROFILE_SCOPE("step:optim_total");
             update_parameters(back_propagation, optimizer_data);

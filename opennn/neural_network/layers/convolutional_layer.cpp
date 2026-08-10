@@ -351,6 +351,12 @@ void Convolutional::load_darknet_weights(FILE* f)
         read_bn(batch_norm.gamma);
         read_bn(batch_norm.running_mean);
         read_bn(batch_norm.running_variance);
+        // Reset running stats to neutral: COCO-pretrained statistics don't match
+        // the target domain and cause inference NaN on the first validation pass.
+        // gamma/beta remain as loaded. EMA adapts running_mean/var from first epoch.
+        batch_norm.running_mean.as_vector().setZero();
+        batch_norm.running_variance.as_vector().setOnes();
+        batch_norm.invalidate_inference_cache();
     }
     else
     {

@@ -74,6 +74,9 @@ void store_as_bfloat16(const Fp32Staging& staging,
 
 #endif
 
+static constexpr float BN_EPSILON = 1e-5f;
+static constexpr float BN_INFER_EPS = 1e-2f;
+
 void BatchNormalizationOperator::set(Index new_features, float new_momentum)
 {
     throw_if(new_momentum < 0.0f || new_momentum >= 1.0f,
@@ -165,7 +168,7 @@ void BatchNormalizationOperator::update_inference_cache()
     if (!inference_cache_dirty || !gamma.data || !beta.data || !running_mean.data || !running_variance.data) return;
 
     inference_scale = gamma.as_vector().array()
-                    / (running_variance.as_vector().array().max(0.0f) + EPSILON).sqrt();
+                    / (running_variance.as_vector().array().max(0.0f) + BN_INFER_EPS).sqrt();
     inference_shift = beta.as_vector().array()
                     - inference_scale.array() * running_mean.as_vector().array();
 
@@ -266,7 +269,7 @@ void BatchNormalizationOperator::apply_training_cpu(const TensorView& input,
     running_means     = running_means     * (1.0f - momentum) + means             * momentum;
     running_variances = running_variances * (1.0f - momentum) + inverse_variances * momentum;
 
-    inverse_variances.array() = 1.0f / (inverse_variances.array().max(0.0f) + EPSILON).sqrt();
+    inverse_variances.array() = 1.0f / (inverse_variances.array().max(0.0f) + BN_EPSILON).sqrt();
     const VectorR scale = inverse_variances.array() * gamma.as_vector().array();
     const VectorMap betas = beta.as_vector();
 
@@ -407,7 +410,7 @@ void build_bn_forward(BatchNormalizationOperator::BatchNormalizationGraphCache::
     entry.fwd_Bias     = per_channel_tensor(*graph, "BIAS", channels);
     entry.fwd_PrevMean = per_channel_tensor(*graph, "PREV_MEAN", channels);
     entry.fwd_PrevVar  = per_channel_tensor(*graph, "PREV_VAR", channels);
-    entry.fwd_Eps      = scalar_tensor(*graph, "EPSILON");
+    entry.fwd_Eps      = scalar_tensor(*graph, "BN_EPSILON");
     entry.fwd_Mom      = scalar_tensor(*graph, "MOMENTUM");
 
     auto attributes = graph::Batchnorm_attributes()
@@ -525,7 +528,7 @@ void BatchNormalizationOperator::apply_inference_gpu(const TensorView& input, Te
                                     fuse_add ? residual.as<T>() : nullptr,
                                     gamma.as<float>(), beta.as<float>(),
                                     running_mean.as<float>(), running_variance.as<float>(),
-                                    EPSILON, fuse_relu,
+                                    BN_INFER_EPS, fuse_relu,
                                     output.as<T>());
     });
 }
@@ -554,7 +557,7 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
             cudnn_frontend::build_bn_forward(entry, batch, features, spatial, fuse_relu, fuse_add, graph_dtype);
         }
 
-        float epsilon_value = EPSILON;
+        float epsilon_value = BN_EPSILON;
         float momentum_value = momentum;
 
         void* x_ptr        = input.data;
@@ -609,7 +612,7 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
             gamma.get_descriptor(),  gamma.data, beta.data,
             double(momentum),
             running_mean.data, running_variance.data,
-            EPSILON,
+            BN_EPSILON,
             mean.data,
             inverse_variance.data));
         if (fuse_add)  add(output, residual, output);
@@ -723,7 +726,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
             gamma.get_descriptor(),  gamma.data,
             gamma_gradient.data,
             beta_gradient.data,
-            EPSILON,
+            BN_EPSILON,
             mean.data,
             inverse_variance.data));
     }

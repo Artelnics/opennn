@@ -59,6 +59,9 @@ public:
 
     void apply_input_shape(const Shape&) override;
 
+    float get_confidence_threshold() const { return nms.confidence_threshold; }
+    void  set_confidence_threshold(float t) { nms.confidence_threshold = t; }
+
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
 

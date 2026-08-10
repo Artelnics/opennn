@@ -83,7 +83,9 @@ public:
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
-    function<void(Index, NeuralNetwork*)> post_epoch_callback;
+    // Called at the end of every epoch, after parameter update and validation.
+    // Parameters: epoch, training_error, validation_error, network pointer.
+    function<void(Index, float, float, NeuralNetwork*)> post_epoch_callback;
 
     function<void(NeuralNetwork*)> post_batch_callback;
 
@@ -187,7 +189,7 @@ protected:
 
     void display_epoch_results(Index, float, float,
                                float, float,
-                               bool, bool,
+                               bool, bool, bool,
                                float) const;
 
     void warn_dropped_samples(Index,

@@ -219,8 +219,9 @@ float yolo_error_kernel(const TensorView& output,
 
     const Index values_per_box = 5 + classes_number;
     const Index batch_size = output.shape[0];
-    const Index grid_size = output.shape[1];
-    const Index channels = output.shape[3];
+    const Index grid_size  = output.shape[1];
+    const Index grid_width = output.shape[2];
+    const Index channels   = output.shape[3];
 
     const float* out = output.as<float>();
     const float* tgt = target.as<float>();
@@ -232,9 +233,9 @@ float yolo_error_kernel(const TensorView& output,
 
     for (Index n = 0; n < batch_size; ++n)
         for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_size; ++col)
+            for (Index col = 0; col < grid_width; ++col)
             {
-                const Index cell = ((n * grid_size + row) * grid_size + col) * channels;
+                const Index cell = ((n * grid_size + row) * grid_width + col) * channels;
 
                 for (Index box = 0; box < boxes_per_cell; ++box)
                 {
@@ -329,8 +330,9 @@ void yolo_gradient_kernel(const TensorView& output,
 
     const Index values_per_box = 5 + classes_number;
     const Index batch_size = output.shape[0];
-    const Index grid_size = output.shape[1];
-    const Index channels = output.shape[3];
+    const Index grid_size  = output.shape[1];
+    const Index grid_width = output.shape[2];
+    const Index channels   = output.shape[3];
 
     const float* out = output.as<float>();
     const float* tgt = target.as<float>();
@@ -340,9 +342,9 @@ void yolo_gradient_kernel(const TensorView& output,
 
     for (Index n = 0; n < batch_size; ++n)
         for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_size; ++col)
+            for (Index col = 0; col < grid_width; ++col)
             {
-                const Index cell = ((n * grid_size + row) * grid_size + col) * channels;
+                const Index cell = ((n * grid_size + row) * grid_width + col) * channels;
 
                 for (Index box = 0; box < boxes_per_cell; ++box)
                 {
@@ -840,8 +842,9 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                 const Index gt_id1 = tal.assign [size_t(n * cells + cell)];
                 const float q      = tal.iou_map[size_t(n * cells + cell)];
 
-                const float cls_s = lam.cls * inv_batch;
+                const float cls_s = lam.cls  * inv_batch;
                 const float box_s = lam.giou * inv_batch;
+                const float dfl_s = lam.dfl  * inv_batch;
                 const float gam   = lam.focal_gamma;
 
                 if (gt_id1 > 0)
@@ -921,9 +924,9 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                                 float w_tgt = 0.0f;
                                 if (i == df) w_tgt += wl;
                                 if (i == dc) w_tgt += wu;
-
+                                // DFL target gradient (scaled by lam.dfl) + CIoU chain (scaled by lam.giou)
                                 dlogit[i] = dfl_s * (p - w_tgt)
-                                            + box_s * d_ciou_dd[g] * p * (float(i) - d_g[g]);
+                                          + box_s * d_ciou_dd[g] * p * (float(i) - d_g[g]);
                             }
                         }
                     }
