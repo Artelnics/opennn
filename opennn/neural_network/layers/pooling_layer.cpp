@@ -12,7 +12,7 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/neural_network/forward_propagation.h"
-#include "opennn/training_strategy/back_propagation.h"
+#include "opennn/neural_network/back_propagation.h"
 
 namespace opennn
 {

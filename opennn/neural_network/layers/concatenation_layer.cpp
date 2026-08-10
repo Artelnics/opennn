@@ -12,7 +12,7 @@
 
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/forward_propagation.h"
-#include "opennn/training_strategy/back_propagation.h"
+#include "opennn/neural_network/back_propagation.h"
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/neural_network/layers/kernel_concat.cuh"
 #endif

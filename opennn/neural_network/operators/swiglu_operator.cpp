@@ -9,7 +9,7 @@
 #include "opennn/neural_network/operators/swiglu_operator.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/forward_propagation.h"
-#include "opennn/training_strategy/back_propagation.h"
+#include "opennn/neural_network/back_propagation.h"
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/cuda/kernel_activation.cuh"
 #endif

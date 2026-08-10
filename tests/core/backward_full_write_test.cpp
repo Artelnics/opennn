@@ -24,7 +24,7 @@
 #include "opennn/core/device_backend.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/training_strategy/back_propagation.h"
+#include "opennn/neural_network/back_propagation.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/neural_network/layers/dense_layer.h"

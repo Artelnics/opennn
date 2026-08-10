@@ -9,7 +9,7 @@
 #pragma once
 
 #include "opennn/neural_network/neural_network.h"
-#include "opennn/training_strategy/back_propagation.h"
+#include "opennn/neural_network/back_propagation.h"
 
 namespace opennn
 {

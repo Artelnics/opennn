@@ -9,7 +9,7 @@
 #include "opennn/neural_network/layers/addition_layer.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/neural_network/neural_network.h"
-#include "opennn/training_strategy/back_propagation.h"
+#include "opennn/neural_network/back_propagation.h"
 #include "opennn/training_strategy/loss.h"
 
 using namespace opennn;
