@@ -27,10 +27,25 @@ struct BatchSlot
 {
     Buffer buffer;
     Shape  shape;
-    Index  features_number = 0;
+    Type   type = Type::FP32;
+    optional<bool> contiguous;
 
     float* host = nullptr;
     Index  host_allocated_size = 0;
+};
+
+struct DeviceGather
+{
+    vector<int> row_indices;
+    Index input_col_offset = 0;
+    Index target_col_offset = 0;
+
+    Index window_past = 0;
+    Index window_future = 0;
+    Index window_features = 0;
+    Index window_target_cols = 0;
+    Index window_matrix_rows = 0;
+    bool window_multi_target = false;
 };
 
 bool bf16_host_input_cast_enabled() noexcept;
@@ -76,23 +91,16 @@ struct Batch
         return input.buffer.device_type == Device::CUDA && device::is_cuda_build();
     }
 
-    Index get_samples_number() const { return samples_number; }
+    Index get_batch_size() const { return batch_size; }
 
     bool is_empty() const;
 
-    Index samples_number = 0;
-    bool needs_device_copy = true;
-    bool input_is_bf16 = false;
-
+    Index batch_size = 0;
     const Dataset* dataset = nullptr;
 
     BatchSlot input;
     BatchSlot decoder;
     BatchSlot target;
-
-    int input_contiguous = -1;
-    int decoder_contiguous = -1;
-    int target_contiguous = -1;
 
     void upload_to_device_batch_async(Batch&, cudaStream_t);
 
@@ -103,7 +111,7 @@ struct Batch
     Buffer fp32_staging{Device::CUDA};
 
     CudaEvent h2d_done_event;
-    bool        h2d_done_recorded = false;
+    bool h2d_done_recorded = false;
 
     void wait_h2d_complete();
     void wait_h2d_on_compute_stream();
@@ -114,20 +122,9 @@ struct Batch
     vector<TensorView> input_views_cache;
     TensorView target_view_cache;
 
-    bool        device_gather = false;
-    vector<int> gather_row_indices;
-    Buffer      gather_indices_host{Device::CPU};
-    Buffer      gather_indices_device{Device::CUDA};
-    Index       input_col_offset = 0;
-    Index       target_col_offset = 0;
-
-    Index window_past = 0;
-    Index window_future = 0;
-    Index window_features = 0;
-    Index window_target_cols = 0;
-    Index window_matrix_rows = 0;
-    bool  window_multi_target = false;
-
+    optional<DeviceGather> device_gather;
+    Buffer gather_indices_host{Device::CPU};
+    Buffer gather_indices_device{Device::CUDA};
 };
 
 struct BatchPools

@@ -233,7 +233,8 @@ TrainingResult QuasiNewtonMethod::train()
     hooks.validation_error = [&]
     {
         const Loss::EvaluationResult evaluation_result =
-            loss->calculate_error(*context.validation_batch, *context.validation_fp);
+            loss->calculate_error(*context.validation_batch,
+                                  *context.validation_forward_propagation);
         validation_back_propagation.error = evaluation_result.error;
         validation_back_propagation.accuracy = evaluation_result.accuracy;
         validation_back_propagation.active_tokens_count = evaluation_result.active_tokens_count;

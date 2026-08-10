@@ -267,7 +267,7 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
             const bool grouped_batches =
                 training_batches >= TrainingSession::group_size
                 && (dataset.uses_device_residency()
-                    || !training_session.fixed_batch()->input_is_bf16);
+                    || training_session.fixed_batch()->input.type != Type::BF16);
 
             if (training_batches > 0 && !grouped_batches)
                 training_session.pipelines[1].slots[0] = make_device_batch();
@@ -1007,8 +1007,7 @@ TrainingResult Optimizer::train()
     // BackPropagation owns the delta layout; ForwardPropagation only co-plans the
     // lifetimes, so it never needs to see the Loss.
     const vector<MemoryPoolEntry> delta_lifetimes =
-        BackPropagation::make_co_planned_lifetimes(*neural_network, *loss,
-                                                   training_batch_size);
+        BackPropagation::make_co_planned_lifetimes(*loss, training_batch_size);
 
     ForwardPropagation training_forward_propagation(
         training_batch_size,
@@ -1201,18 +1200,12 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
             InferenceShapePolicy{},
             true);
 
-    if (context.validation_samples_number > 0
-        && context.validation_samples_number != context.training_samples_number)
+    if (context.validation_samples_number > 0)
         context.validation_forward_propagation =
             make_unique<ForwardPropagation>(context.validation_samples_number, neural_network,
                                             ForwardPropagationMode::Inference);
 
-    context.validation_fp = context.validation_samples_number > 0
-        ? (context.validation_forward_propagation ? context.validation_forward_propagation.get()
-                                                  : context.training_forward_propagation.get())
-        : nullptr;
-
-    mark_validation_propagation(context.validation_fp);
+    mark_validation_propagation(context.validation_forward_propagation.get());
 
     loss->set_normalization_coefficient();
 }
@@ -1222,7 +1215,7 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
     TrainingResult results(maximum_epochs + 1);
 
     NeuralNetwork* neural_network = context.neural_network;
-    const bool has_validation = context.validation_fp != nullptr;
+    const bool has_validation = context.validation_forward_propagation != nullptr;
 
     Index validation_failures = 0;
     BestModelSnapshot best_model;
@@ -1253,7 +1246,7 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
         if (has_validation)
         {
             neural_network->forward_propagate(context.validation_batch->get_inputs(),
-                                              *context.validation_fp,
+                                              *context.validation_forward_propagation,
                                               false);
 
             validation_error = hooks.validation_error();
@@ -1472,7 +1465,7 @@ void Optimizer::teardown_device_training()
 
 void Optimizer::prefetch_batch(Batch& batch)
 {
-    if (!batch.uses_cuda() || !batch.needs_device_copy) return;
+    if (!batch.uses_cuda()) return;
 
     batch.upload_to_device_batch_async(batch, Backend::get_transfer_stream());
 }
@@ -1552,18 +1545,15 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                                         profile_this ? &worker_profile : nullptr);
 
     const bool staged_h2d = !loss->get_dataset()->is_device_resident()
-                         && !training_session.fixed_batch()->input_is_bf16;
+                         && training_session.fixed_batch()->input.type != Type::BF16;
 
     const auto stage_into_slot = [](const Batch& source, Batch& slot)
     {
-        const Index samples = source.samples_number;
-        slot.needs_device_copy = false;
-
         const auto copy_section = [&](const BatchSlot& from, BatchSlot& to)
         {
-            if (!from.host || !to.host || from.features_number <= 0) return;
-            memcpy(to.host, from.host,
-                   size_t(samples) * size_t(from.features_number) * sizeof(float));
+            const Index values_count = from.shape.size();
+            if (!from.host || !to.host || values_count <= 0) return;
+            memcpy(to.host, from.host, size_t(values_count) * sizeof(float));
         };
 
         copy_section(source.input,   slot.input);
@@ -1575,9 +1565,10 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     {
         const auto copy_section = [&](BatchSlot& section)
         {
-            if (!section.host || !section.buffer.data || section.features_number <= 0) return;
+            const Index values_count = section.shape.size();
+            if (!section.host || !section.buffer.data || values_count <= 0) return;
             device::copy_async(section.buffer.data, section.host,
-                               slot.samples_number * section.features_number * Index(sizeof(float)),
+                               values_count * Index(sizeof(float)),
                                device::CopyKind::HostToDevice, stream);
         };
 
@@ -1588,17 +1579,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
 
     const auto stage_gather_indices = [](const Batch& source, Batch& slot)
     {
-        slot.device_gather        = source.device_gather;
-        slot.input_col_offset     = source.input_col_offset;
-        slot.target_col_offset    = source.target_col_offset;
-        slot.gather_row_indices   = source.gather_row_indices;
-        slot.window_past          = source.window_past;
-        slot.window_future        = source.window_future;
-        slot.window_features      = source.window_features;
-        slot.window_target_cols   = source.window_target_cols;
-        slot.window_multi_target  = source.window_multi_target;
-        slot.window_matrix_rows   = source.window_matrix_rows;
-        slot.needs_device_copy    = false;
+        slot.device_gather = source.device_gather;
     };
 
     const auto run_compute_step = [&](Batch& slot)
@@ -1610,7 +1591,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                                                  device_metrics.error_sum(),
                                                  tracks_accuracy ? device_metrics.accuracy_sum() : nullptr))
             throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
-        update_parameters_capturable(back_propagation, optimizer_data);
+        update_parameters(back_propagation, optimizer_data, UpdateMode::Capturable);
     };
 
     const auto capture_or_run = [&](device::GraphExecHandle& exec,

@@ -26,15 +26,15 @@ bool bf16_host_input_cast_enabled() noexcept
     return enabled;
 }
 
-Batch::Batch(const Index new_samples_number,
+Batch::Batch(const Index new_batch_size,
              const Dataset* new_dataset,
              const Configuration::Resolved& new_config,
              const bool new_prefetch_only)
 {
-    set(new_samples_number, new_dataset, new_config, new_prefetch_only);
+    set(new_batch_size, new_dataset, new_config, new_prefetch_only);
 }
 
-void Batch::set(const Index new_samples_number,
+void Batch::set(const Index new_batch_size,
                 const Dataset* new_dataset,
                 const Configuration::Resolved& new_config,
                 const bool new_prefetch_only)
@@ -43,17 +43,17 @@ void Batch::set(const Index new_samples_number,
 
     wait_h2d_complete();
 
-    samples_number = new_samples_number;
-    needs_device_copy = true;
+    batch_size = new_batch_size;
 
     dataset = new_dataset;
 
     input.shape.clear();
     decoder.shape.clear();
     target.shape.clear();
-    input.features_number = 0;
-    decoder.features_number = 0;
-    target.features_number = 0;
+    input.contiguous.reset();
+    decoder.contiguous.reset();
+    target.contiguous.reset();
+    device_gather.reset();
     input_views_host_cache.clear();
     target_view_host_cache = {};
 
@@ -62,15 +62,18 @@ void Batch::set(const Index new_samples_number,
 
     const bool on_gpu = new_config.device == Device::CUDA && device::is_cuda_build();
     const Device batch_device = on_gpu ? Device::CUDA : Device::CPU;
-    input_is_bf16 = on_gpu
-                 && activation_dtype(new_config.training_type) == Type::BF16
-                 && dataset->supports_bf16_inputs();
-    const Index input_device_bytes = input_is_bf16 ? Index(sizeof(bfloat16)) : Index(sizeof(float));
+    const Type input_type = on_gpu
+                         && activation_dtype(new_config.training_type) == Type::BF16
+                         && dataset->supports_bf16_inputs()
+        ? Type::BF16
+        : Type::FP32;
 
-    const bool host_bf16_input_cast = input_is_bf16 && bf16_host_input_cast_enabled();
+    const bool host_bf16_input_cast = input_type == Type::BF16
+                                   && bf16_host_input_cast_enabled();
 
-    const auto setup_buffer = [&](const string& role, BatchSlot& slot, Index device_elem_bytes)
+    const auto setup_buffer = [&](const string& role, BatchSlot& slot, Type type)
     {
+        slot.type = type;
         const Shape& dataset_shape = dataset->get_shape(role);
 
         if (dataset_shape.empty())
@@ -79,10 +82,9 @@ void Batch::set(const Index new_samples_number,
             return;
         }
 
-        slot.shape = Shape({samples_number}).append(dataset_shape);
-        slot.features_number = dataset_shape.size();
+        slot.shape = Shape({batch_size}).append(dataset_shape);
 
-        const Index element_bytes = on_gpu ? device_elem_bytes : Index(sizeof(float));
+        const Index element_bytes = on_gpu ? type_bytes(type) : Index(sizeof(float));
         const Index device_bytes = slot.shape.size() * element_bytes;
 
         const Index allocated_device_bytes = (on_gpu && new_prefetch_only) ? Index(0) : device_bytes;
@@ -90,11 +92,11 @@ void Batch::set(const Index new_samples_number,
         memory_debug::record("batch.device",
                              format("Batch::{}.buffer", role),
                              allocated_device_bytes,
-                             format("samples={}", samples_number));
+                             format("samples={}", batch_size));
 
         if (!on_gpu) return;
 
-        const Index host_values = samples_number * slot.features_number;
+        const Index host_values = slot.shape.size();
         if (host_values > slot.host_allocated_size)
         {
             device::deallocate_pinned_host(slot.host);
@@ -106,16 +108,16 @@ void Batch::set(const Index new_samples_number,
             memory_debug::record("batch.pinned_host",
                                   format("Batch::{}.host", role),
                                   host_values * Index(sizeof(float)),
-                                  format("samples={}", samples_number));
+                                  format("samples={}", batch_size));
         }
 
     };
 
-    setup_buffer("Input",   input,   input_device_bytes);
-    setup_buffer("Target",  target,  Index(sizeof(float)));
-    setup_buffer("Decoder", decoder, Index(sizeof(float)));
+    setup_buffer("Input",   input,   input_type);
+    setup_buffer("Target",  target,  Type::FP32);
+    setup_buffer("Decoder", decoder, Type::FP32);
 
-    const Index input_host_values = samples_number * input.features_number;
+    const Index input_host_values = input.shape.size();
     if (host_bf16_input_cast
         && input_host_values > input_host_bf16_allocated_size)
     {
@@ -125,7 +127,7 @@ void Batch::set(const Index new_samples_number,
         input_host_bf16_allocated_size = input_host_values;
         memory_debug::record("batch.pinned_host", "Batch::input_host_bf16",
                              input_host_values * Index(sizeof(uint16_t)),
-                             format("samples={}", samples_number));
+                             format("samples={}", batch_size));
     }
     else if (!host_bf16_input_cast && input_host_bf16)
     {
@@ -143,39 +145,39 @@ void Batch::set(const Index new_samples_number,
     if (!target.shape.empty() && target.buffer.data)
         target_view_host_cache = TensorView(target.buffer.as<float>(), target.shape, Type::FP32, Device::CPU);
 
-    const bool needs_fp32_staging = input_is_bf16
+    const bool needs_fp32_staging = input.type == Type::BF16
         && !host_bf16_input_cast
         && !new_prefetch_only
         && !dataset->uses_device_residency();
     const Index fp32_staging_bytes = needs_fp32_staging
-        ? samples_number * input.features_number * Index(sizeof(float))
+        ? input.shape.size() * Index(sizeof(float))
         : Index(0);
     fp32_staging.resize_bytes(fp32_staging_bytes, Device::CUDA);
     memory_debug::record("batch.device", "Batch::fp32_staging", fp32_staging_bytes,
-                         format("samples={}", samples_number));
+                         format("samples={}", batch_size));
 
     const bool may_use_device_gather = on_gpu && dataset->uses_device_residency();
 
     const Index gather_indices_bytes =
-        may_use_device_gather ? samples_number * Index(sizeof(int)) : Index(0);
+        may_use_device_gather ? batch_size * Index(sizeof(int)) : Index(0);
     gather_indices_host.resize_bytes(gather_indices_bytes, Device::CPU);
     gather_indices_device.resize_bytes(gather_indices_bytes, Device::CUDA);
 
     if (may_use_device_gather)
         memory_debug::record("batch.device", "Batch::gather_indices_device",
                               gather_indices_bytes,
-                              format("samples={}", samples_number));
+                              format("samples={}", batch_size));
 
     if (on_gpu && !input.shape.empty() && input.buffer.data)
     {
         if (!decoder.shape.empty() && decoder.buffer.data)
-            input_views_cache.emplace_back(decoder.buffer.data, decoder.shape, Type::FP32, Device::CUDA);
+            input_views_cache.emplace_back(decoder.buffer.data, decoder.shape, decoder.type, Device::CUDA);
 
-        input_views_cache.emplace_back(input.buffer.data, input.shape, input_is_bf16 ? Type::BF16 : Type::FP32, Device::CUDA);
+        input_views_cache.emplace_back(input.buffer.data, input.shape, input.type, Device::CUDA);
     }
 
     if (on_gpu && !target.shape.empty() && target.buffer.data)
-        target_view_cache = TensorView(target.buffer.data, target.shape, Type::FP32, Device::CUDA);
+        target_view_cache = TensorView(target.buffer.data, target.shape, target.type, Device::CUDA);
 
     if (on_gpu && !h2d_done_event)
         h2d_done_event.create();
@@ -213,58 +215,67 @@ Batch::~Batch()
 
 void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream)
 {
-    const Index current_batch_size = samples_number;
+    const Index current_batch_size = batch_size;
 
     throw_if(!uses_cuda() || !destination.uses_cuda(),
              "Batch::upload_to_device_batch_async requires CUDA batches.");
-    throw_if(current_batch_size > destination.samples_number,
+    throw_if(current_batch_size > destination.batch_size,
              "Batch::upload_to_device_batch_async destination batch is too small.");
 
-    needs_device_copy = false;
-    destination.needs_device_copy = false;
-
-    const Index input_values_count  = current_batch_size * input.features_number;
-    const Index target_values_count = current_batch_size * target.features_number;
+    const Index input_values_count = input.shape.size();
+    const Index target_values_count = target.shape.size();
+    const Index input_values_per_sample = current_batch_size > 0
+        ? input_values_count / current_batch_size
+        : 0;
+    const Index target_values_per_sample = current_batch_size > 0
+        ? target_values_count / current_batch_size
+        : 0;
 
     if (device_gather && dataset && dataset->is_device_resident())
     {
+        const DeviceGather& gather = *device_gather;
         const float* matrix = dataset->get_device_data();
         const Index matrix_cols = dataset->get_device_data_columns();
 
         const Index index_bytes = current_batch_size * Index(sizeof(int));
-        memcpy(gather_indices_host.data, gather_row_indices.data(), size_t(index_bytes));
+        memcpy(gather_indices_host.data, gather.row_indices.data(), size_t(index_bytes));
         device::copy_async(gather_indices_device.data, gather_indices_host.data,
                            index_bytes,
                            device::CopyKind::HostToDevice, stream);
 
         const int* idx = gather_indices_device.as<int>();
 
-        if (window_past > 0)
+        if (gather.window_past > 0)
         {
             gather_window_rows_cuda(matrix, idx, destination.input.buffer.as<float>(),
-                                    current_batch_size, window_past, window_features,
-                                    matrix_cols, window_matrix_rows, input_col_offset, stream);
+                                    current_batch_size, gather.window_past, gather.window_features,
+                                    matrix_cols, gather.window_matrix_rows,
+                                    gather.input_col_offset, stream);
             gather_window_targets_cuda(matrix, idx, destination.target.buffer.as<float>(),
-                                       current_batch_size, window_past, window_future,
-                                       window_target_cols, window_multi_target,
-                                       matrix_cols, window_matrix_rows, target_col_offset, stream);
+                                       current_batch_size, gather.window_past, gather.window_future,
+                                       gather.window_target_cols, gather.window_multi_target,
+                                       matrix_cols, gather.window_matrix_rows,
+                                       gather.target_col_offset, stream);
             record_h2d_done(stream);
             return;
         }
 
-        if (destination.input_is_bf16)
+        if (destination.input.type == Type::BF16)
         {
             gather_rows_bf16_cuda(matrix, idx, destination.input.buffer.as<bfloat16>(),
-                                  current_batch_size, input.features_number, matrix_cols, input_col_offset, stream);
+                                  current_batch_size, input_values_per_sample,
+                                  matrix_cols, gather.input_col_offset, stream);
         }
         else
         {
             gather_rows_cuda(matrix, idx, destination.input.buffer.as<float>(),
-                             current_batch_size, input.features_number, matrix_cols, input_col_offset, stream);
+                             current_batch_size, input_values_per_sample,
+                             matrix_cols, gather.input_col_offset, stream);
         }
 
         gather_rows_cuda(matrix, idx, destination.target.buffer.as<float>(),
-                         current_batch_size, target.features_number, matrix_cols, target_col_offset, stream);
+                         current_batch_size, target_values_per_sample,
+                         matrix_cols, gather.target_col_offset, stream);
 
         record_h2d_done(stream);
         return;
@@ -274,7 +285,7 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
         device::copy_async(destination, source, bytes, device::CopyKind::HostToDevice, stream);
     };
 
-    if (destination.input_is_bf16)
+    if (destination.input.type == Type::BF16)
     {
         if (input_host_bf16)
         {
@@ -309,7 +320,7 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
 
     if (!decoder.shape.empty())
     {
-        const Index decoder_values_count = current_batch_size * decoder.features_number;
+        const Index decoder_values_count = decoder.shape.size();
         copy_to_device_async(destination.decoder.buffer.as<float>(), decoder.host, decoder_values_count * sizeof(float));
     }
 

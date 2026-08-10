@@ -30,6 +30,13 @@ vector<bool> find_passthrough_layers(const vector<unique_ptr<Layer>>& layers,
     return passthrough;
 }
 
+const NeuralNetwork& require_neural_network(const Loss& loss)
+{
+    const NeuralNetwork* const neural_network = loss.get_neural_network();
+    throw_if(!neural_network, "neural network is not set.");
+    return *neural_network;
+}
+
 }
 
 BackPropagation::BackPropagation(const Index new_batch_size,
@@ -41,8 +48,9 @@ BackPropagation::BackPropagation(const Index new_batch_size,
 }
 
 vector<vector<pair<size_t, size_t>>> BackPropagation::make_consumer_edges(
-    const NeuralNetwork& network)
+    const Loss& loss)
 {
+    const NeuralNetwork& network = require_neural_network(loss);
     const auto& source_layers = network.get_source_layers();
     const size_t layers_number = network.get_layers().size();
 
@@ -85,7 +93,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
     const auto parameter_specs = neural_network->get_parameter_specs();
     const auto backward_specs  = neural_network->get_backward_specs(batch_size);
 
-    consumer_edges = make_consumer_edges(*neural_network);
+    consumer_edges = make_consumer_edges(*loss);
 
     const Index gradient_bytes = get_aligned_bytes(parameter_specs, Type::FP32);
     gradient.resize_bytes(gradient_bytes, neural_network->get_device());
@@ -98,7 +106,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
         pointer = layers[i]->link_gradients(pointer, gradient.device_type);
 
     const DeltaLayout layout = build_delta_entries(
-        *neural_network, *loss, batch_size, backward_specs, consumer_edges);
+        *loss, batch_size, backward_specs, consumer_edges);
 
     // The offsets are read here and never kept, so they may point into a
     // container the caller owns.
@@ -116,10 +124,11 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
 }
 
 BackPropagation::DeltaLayout BackPropagation::build_delta_entries(
-    const NeuralNetwork& network, const Loss& loss_function, Index batch_size,
+    const Loss& loss, Index batch_size,
     const vector<vector<TensorSpec>>& backward_specs,
     const vector<vector<pair<size_t, size_t>>>& consumer_edges)
 {
+    const NeuralNetwork& network = require_neural_network(loss);
     const auto& layers = network.get_layers();
     const Index first_trainable_layer_index = network.get_first_trainable_layer_index();
     const Index last_trainable_layer_index = network.get_last_trainable_layer_index();
@@ -179,7 +188,7 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_entries(
 
     const Index loss_delta_consumer = resolve_through_passthrough(last_trainable_layer_index);
 
-    if (output_delta_shape.size() > 0 && !loss_function.output_delta_overwrites_outputs())
+    if (output_delta_shape.size() > 0 && !loss.output_delta_overwrites_outputs())
         delta_entries.push_back({last_trainable_layer_index, 0, {output_delta_shape, compute_dtype}, 0,
                                  last_trainable_layer_index - loss_delta_consumer});
 
@@ -269,13 +278,13 @@ vector<MemoryPoolEntry> BackPropagation::to_pool_entries(const vector<DeltaEntry
 }
 
 vector<MemoryPoolEntry> BackPropagation::make_co_planned_lifetimes(
-    const NeuralNetwork& neural_network, const Loss& loss, const Index batch_size)
+    const Loss& loss, const Index batch_size)
 {
+    const NeuralNetwork& neural_network = require_neural_network(loss);
     const auto backward_specs = neural_network.get_backward_specs(batch_size);
 
     const DeltaLayout layout = build_delta_entries(
-        neural_network, loss, batch_size, backward_specs,
-        make_consumer_edges(neural_network));
+        loss, batch_size, backward_specs, make_consumer_edges(loss));
 
     // Forward steps run 0..2N-1; shift the delta lifetimes onto that timeline.
     const Index backward_base = Index(2 * neural_network.get_layers_number() - 1);

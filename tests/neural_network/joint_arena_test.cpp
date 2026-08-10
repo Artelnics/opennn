@@ -32,7 +32,7 @@ struct Model
     // What Optimizer hands to ForwardPropagation: opaque lifetimes, no Loss.
     vector<MemoryPoolEntry> delta_lifetimes(Index batch) const
     {
-        return BackPropagation::make_co_planned_lifetimes(neural_network, *loss, batch);
+        return BackPropagation::make_co_planned_lifetimes(*loss, batch);
     }
 
     Model(Index samples_number, Index inputs_number, Index targets_number, Index width = 64)

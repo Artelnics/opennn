@@ -378,26 +378,25 @@ void TimeSeriesDataset::fill_batch(Batch& batch,
                                    const vector<Index>& target_indices,
                                    FillMode mode) const
 {
-    throw_if(Index(sample_indices.size()) != batch.samples_number,
+    throw_if(Index(sample_indices.size()) != batch.batch_size,
              "fill_batch sample count does not match the batch size.");
 
-    if (batch.uses_cuda() && is_device_resident() && !batch.input_is_bf16
+    if (batch.uses_cuda() && is_device_resident() && batch.input.type != Type::BF16
         && batch.decoder.shape.empty()
         && is_contiguous(input_indices) && is_contiguous(target_indices))
     {
-        batch.device_gather = true;
-        batch.gather_row_indices.resize(sample_indices.size());
-        ranges::transform(sample_indices, batch.gather_row_indices.begin(),
+        DeviceGather& gather = batch.device_gather.emplace();
+        gather.row_indices.resize(sample_indices.size());
+        ranges::transform(sample_indices, gather.row_indices.begin(),
                           [](Index sample_index) { return int(sample_index); });
-        batch.input_col_offset    = input_indices.empty()  ? 0 : input_indices.front();
-        batch.target_col_offset   = target_indices.empty() ? 0 : target_indices.front();
-        batch.window_past         = past_time_steps;
-        batch.window_future       = future_time_steps;
-        batch.window_features     = ssize(input_indices);
-        batch.window_target_cols  = ssize(target_indices);
-        batch.window_multi_target = multi_target;
-        batch.window_matrix_rows  = data.rows();
-        batch.needs_device_copy   = true;
+        gather.input_col_offset = input_indices.empty() ? 0 : input_indices.front();
+        gather.target_col_offset = target_indices.empty() ? 0 : target_indices.front();
+        gather.window_past = past_time_steps;
+        gather.window_future = future_time_steps;
+        gather.window_features = ssize(input_indices);
+        gather.window_target_cols = ssize(target_indices);
+        gather.window_multi_target = multi_target;
+        gather.window_matrix_rows = data.rows();
         return;
     }
 

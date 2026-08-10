@@ -34,8 +34,8 @@ public:
     void set_momentum(const float new_momentum) { momentum = new_momentum; }
     void set_nesterov(bool new_nesterov_momentum) { nesterov = new_nesterov_momentum; }
 
-    void update_parameters(BackPropagation&, OptimizerData&) override;
-    void update_parameters_capturable(BackPropagation&, OptimizerData&) const override;
+    void update_parameters(BackPropagation&, OptimizerData&,
+                           UpdateMode = UpdateMode::Standard) override;
 
     void from_JSON(const JsonDocument&) override;
 

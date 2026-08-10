@@ -303,9 +303,9 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
 
     hooks.validation_error = [&]
     {
-        calculate_errors(*context.validation_batch, *context.validation_fp, validation_back_propagation_lm);
-        calculate_squared_errors(*context.validation_batch, *context.validation_fp, validation_back_propagation_lm);
-        calculate_error(*context.validation_batch, *context.validation_fp, validation_back_propagation_lm);
+        calculate_errors(*context.validation_batch, *context.validation_forward_propagation, validation_back_propagation_lm);
+        calculate_squared_errors(*context.validation_batch, *context.validation_forward_propagation, validation_back_propagation_lm);
+        calculate_error(*context.validation_batch, *context.validation_forward_propagation, validation_back_propagation_lm);
 
         return validation_back_propagation_lm.error;
     };

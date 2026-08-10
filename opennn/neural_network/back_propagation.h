@@ -55,10 +55,9 @@ struct BackPropagation
              Buffer* external_arena = nullptr,
              span<const Index> arena_offsets = {});
 
-    static vector<vector<pair<size_t, size_t>>> make_consumer_edges(const NeuralNetwork&);
+    static vector<vector<pair<size_t, size_t>>> make_consumer_edges(const Loss&);
 
-    static DeltaLayout build_delta_entries(const NeuralNetwork&, const Loss&,
-                                           Index batch_size,
+    static DeltaLayout build_delta_entries(const Loss&, Index batch_size,
                                            const vector<vector<TensorSpec>>&,
                                            const vector<vector<pair<size_t, size_t>>>&);
 
@@ -67,8 +66,7 @@ struct BackPropagation
 
     // Delta lifetimes expressed on the forward timeline, so ForwardPropagation can
     // co-plan them without knowing what they are.
-    static vector<MemoryPoolEntry> make_co_planned_lifetimes(const NeuralNetwork&,
-                                                             const Loss&,
+    static vector<MemoryPoolEntry> make_co_planned_lifetimes(const Loss&,
                                                              Index batch_size);
 
     void accumulate_output_deltas(size_t);

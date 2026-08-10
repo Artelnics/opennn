@@ -917,9 +917,13 @@ int main(int argc, char* argv[])
 
         // Per-epoch CSV log: epoch,train_error,val_error
         const auto csv_path = data_dir / "training_errors.csv";
+        
         std::ofstream csv_log(csv_path, std::ios::app);
+        
         csv_log << "epoch,train_error,val_error\n";
-        adam->post_epoch_callback = [&](Index epoch, float train_err, float val_err, NeuralNetwork*) {
+
+        adam->post_epoch_callback = [&](Index epoch, float train_err, float val_err, NeuralNetwork*) 
+        {
             csv_log << (epochs_done + static_cast<int>(epoch)) << ","
                     << train_err << "," << val_err << "\n";
             csv_log.flush();

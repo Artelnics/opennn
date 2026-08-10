@@ -1329,8 +1329,8 @@ float Loss::get_weighted_coefficient(const Batch& batch) const
 {
     const Index total = weighted_samples_number > 0 ? weighted_samples_number
                       : dataset                     ? dataset->get_samples_number()
-                                                    : batch.get_samples_number();
-    const Index samples = batch.get_samples_number();
+                                                    : batch.get_batch_size();
+    const Index samples = batch.get_batch_size();
     return float(total) / (float(samples) * (normalization_coefficient + EPSILON));
 }
 
@@ -1415,7 +1415,7 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
     float* workspace_device = nullptr;
     const bool device_on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
     if (device_on_gpu && error != Error::Yolo)
-        workspace_device = ensure_error_workspace(input, batch.get_samples_number());
+        workspace_device = ensure_error_workspace(input, batch.get_batch_size());
 
     using enum Error;
     switch (error)
@@ -1479,13 +1479,13 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     const TensorView target = batch.get_targets();
     if (input.empty() || target.empty()) return false;
 
-    ensure_error_workspace(input, batch.get_samples_number());
+    ensure_error_workspace(input, batch.get_batch_size());
     metric_results_device.grow_to(Index(3 * sizeof(float)));
     if (memory_debug::enabled())
     {
         memory_debug::record("loss", "Loss::metric_results_device",
                              Index(3 * sizeof(float)),
-                             format("batch={}", batch.get_samples_number()));
+                             format("batch={}", batch.get_batch_size()));
     }
 
     float* const workspace = errors_device.as<float>();
