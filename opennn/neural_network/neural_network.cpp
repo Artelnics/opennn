@@ -453,8 +453,11 @@ Index NeuralNetwork::get_first_trainable_layer_index() const
     auto it = ranges::find_if(layers,
                               [](const unique_ptr<Layer>& layer) { return layer->get_is_trainable(); });
 
-    throw_if(it == layers.end(),
-             "The neural network has no trainable layers: get_first_trainable_layer_index.");
+    // No trainable layers yet: return the -1 sentinel instead of throwing.
+    // Callers guard with < 0 (e.g. get_output_activation here, and the Neural
+    // Designer engine's resync); throwing turned that guard into dead code and
+    // broke TrainingStrategy::set_default() on a not-yet-built network.
+    if (it == layers.end()) return -1;
 
     first_trainable_cache_ = distance(layers.begin(), it);
     return first_trainable_cache_;
@@ -469,7 +472,9 @@ Index NeuralNetwork::get_last_trainable_layer_index() const
         if (layers[i]->get_is_trainable())
             return last_trainable_cache_ = i;
 
-    throw runtime_error("The neural network has no trainable layers: get_last_trainable_layer_index");
+    // No trainable layers yet: return the -1 sentinel instead of throwing.
+    // Callers guard with < 0 (get_output_activation, the ND engine's resync).
+    return -1;
 }
 
 Index NeuralNetwork::get_layers_number(const string& name) const
