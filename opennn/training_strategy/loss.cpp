@@ -1310,15 +1310,15 @@ void Loss::back_propagate(const Batch& batch,
     {
         PROFILE_SCOPE("loss:calculate_error");
         const EvaluationResult evaluation_result = calculate_error(batch, forward_propagation);
-        back_propagation.error                = evaluation_result.error;
-        back_propagation.accuracy             = evaluation_result.accuracy;
-        back_propagation.active_tokens_count  = evaluation_result.active_tokens_count;
+        back_propagation.metrics.error                = evaluation_result.error;
+        back_propagation.metrics.accuracy             = evaluation_result.accuracy;
+        back_propagation.metrics.active_tokens_count  = evaluation_result.active_tokens_count;
     }
 
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
-    back_propagation.regularization = 0.0f;
-    back_propagation.loss_value = back_propagation.error;
+    back_propagation.metrics.regularization = 0.0f;
+    back_propagation.metrics.loss_value = back_propagation.metrics.error;
 
     add_regularization(back_propagation);
 
@@ -1607,11 +1607,7 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
         calculate_output_deltas(batch, forward_propagation, back_propagation);
     }
 
-    back_propagation.error = 0.0f;
-    back_propagation.accuracy = 0.0f;
-    back_propagation.active_tokens_count = 0;
-    back_propagation.regularization = 0.0f;
-    back_propagation.loss_value = 0.0f;
+    back_propagation.metrics.reset();
 
     back_propagate_layers(forward_propagation, back_propagation);
     add_regularization_gradient(back_propagation);
@@ -1676,7 +1672,7 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
         cross_entropy_gradient(input, target, input_delta);
         break;
     case CrossEntropy3d:
-        cross_entropy_3d_gradient(input, target, input_delta, back_propagation.active_tokens_count);
+        cross_entropy_3d_gradient(input, target, input_delta, back_propagation.metrics.active_tokens_count);
         break;
     case MinkowskiError:
         minkowski_error_gradient(input, target, minkowski_parameter, input_delta,
@@ -1729,8 +1725,8 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
                                 Type::FP32,
                                 neural_network->get_parameters_device());
 
-    back_propagation.regularization = calculate_regularization(parameters);
-    back_propagation.loss_value += back_propagation.regularization;
+    back_propagation.metrics.regularization = calculate_regularization(parameters);
+    back_propagation.metrics.loss_value += back_propagation.metrics.regularization;
 }
 
 float Loss::calculate_regularization(const VectorR& parameters_vec) const

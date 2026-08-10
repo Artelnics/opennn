@@ -1143,7 +1143,7 @@ TrainingResult Optimizer::train()
             if (check_stopping_condition(results, epoch, elapsed_time,
                                          results.training_error_history(epoch),
                                          validation_failures,
-                                         training_back_propagation.loss_value,
+                                         training_back_propagation.metrics.loss_value,
                                          has_validation))
                 break;
         }
@@ -1820,8 +1820,8 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
 
     Loss::EvaluationResult epoch_result =
         average_epoch_metrics(device_metrics.read(), batches_number, tracks_accuracy);
-    back_propagation.error = epoch_result.error;
-    back_propagation.accuracy = epoch_result.accuracy;
+    back_propagation.metrics.error = epoch_result.error;
+    back_propagation.metrics.accuracy = epoch_result.accuracy;
 
     if (profile_this)
         worker_profile.print_epoch(epoch_t0, "Epoch breakdown (graph training)",
@@ -1967,8 +1967,8 @@ Loss::EvaluationResult Optimizer::train_epoch(
                                     Type::FP32,
                                     neural_network->get_device());
 
-        back_propagation.regularization = loss->calculate_regularization(parameters);
-        back_propagation.loss_value = result.error + back_propagation.regularization;
+        back_propagation.metrics.regularization = loss->calculate_regularization(parameters);
+        back_propagation.metrics.loss_value = result.error + back_propagation.metrics.regularization;
     };
 
     if(!on_gpu)
@@ -1998,12 +1998,12 @@ Loss::EvaluationResult Optimizer::train_epoch(
                 loss->back_propagate(*batch, forward_propagation, back_propagation);
             }
 
-            if (!std::isnan(back_propagation.error))
+            if (!std::isnan(back_propagation.metrics.error))
             {
-                epoch_result.error += back_propagation.error;
+                epoch_result.error += back_propagation.metrics.error;
 
                 if(tracks_accuracy)
-                    epoch_result.accuracy += back_propagation.accuracy;
+                    epoch_result.accuracy += back_propagation.metrics.accuracy;
 
                 {
                     PROFILE_SCOPE("step:optim_total");
@@ -2095,14 +2095,14 @@ Loss::EvaluationResult Optimizer::train_epoch(
             }
         }
 
-        const bool batch_ok = use_device_metrics || !std::isnan(back_propagation.error);
+        const bool batch_ok = use_device_metrics || !std::isnan(back_propagation.metrics.error);
 
         if (!use_device_metrics && batch_ok)
         {
-            result.error += back_propagation.error;
+            result.error += back_propagation.metrics.error;
 
             if(tracks_accuracy)
-                result.accuracy += back_propagation.accuracy;
+                result.accuracy += back_propagation.metrics.accuracy;
         }
 
         if (batch_ok)
@@ -2125,8 +2125,8 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
     if(use_device_metrics)
     {
-        back_propagation.error = epoch_result.error;
-        back_propagation.accuracy = epoch_result.accuracy;
+        back_propagation.metrics.error = epoch_result.error;
+        back_propagation.metrics.accuracy = epoch_result.accuracy;
     }
 
     finalize_epoch(epoch_result);

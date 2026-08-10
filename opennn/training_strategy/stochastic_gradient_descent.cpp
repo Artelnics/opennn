@@ -23,13 +23,14 @@ namespace opennn
 
 #ifdef OPENNN_HAS_CUDA
 
-static void update_parameters_cuda(NeuralNetwork* neural_network,
-                                   BackPropagation& back_propagation,
+static void update_parameters_cuda(BackPropagation& back_propagation,
                                    OptimizerData& optimizer_data,
                                    float current_learning_rate,
                                    float momentum,
                                    bool nesterov)
 {
+    NeuralNetwork* const neural_network = back_propagation.get_neural_network();
+
     const Index parameters_number = neural_network->get_parameters_buffer_size();
 
     float* const velocity_ptr = momentum > 0.0f
@@ -51,7 +52,7 @@ static void update_parameters_cuda(NeuralNetwork* neural_network,
 #else
 
 OPENNN_CUDA_STUB(void, update_parameters_cuda,
-                 (NeuralNetwork*, BackPropagation&, OptimizerData&,
+                 (BackPropagation&, OptimizerData&,
                   float, float, bool))
 
 #endif
@@ -121,7 +122,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
     if (neural_network->is_gpu())
     {
-        update_parameters_cuda(neural_network, back_propagation, optimizer_data,
+        update_parameters_cuda(back_propagation, optimizer_data,
                                current_learning_rate, momentum, nesterov);
         return;
     }

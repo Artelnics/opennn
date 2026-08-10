@@ -23,8 +23,7 @@ namespace opennn
 
 #ifdef OPENNN_HAS_CUDA
 
-static void update_parameters_cuda(NeuralNetwork* neural_network,
-                                   BackPropagation& back_propagation,
+static void update_parameters_cuda(BackPropagation& back_propagation,
                                    OptimizerData& optimization_data,
                                    float beta_1,
                                    float beta_2,
@@ -32,6 +31,8 @@ static void update_parameters_cuda(NeuralNetwork* neural_network,
                                    float bias_correction_1,
                                    float bias_correction_2)
 {
+    NeuralNetwork* const neural_network = back_propagation.get_neural_network();
+
     PROFILE_SCOPE("optim:adam_update_cuda");
     const Index parameters_number = neural_network->get_parameters_buffer_size();
 
@@ -53,7 +54,7 @@ static void update_parameters_cuda(NeuralNetwork* neural_network,
 #else
 
 OPENNN_CUDA_STUB(void, update_parameters_cuda,
-                 (NeuralNetwork*, BackPropagation&, OptimizerData&,
+                 (BackPropagation&, OptimizerData&,
                   float, float, float, float, float))
 
 #endif
@@ -191,7 +192,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     if (neural_network->is_gpu())
     {
-        update_parameters_cuda(neural_network, back_propagation, optimization_data,
+        update_parameters_cuda(back_propagation, optimization_data,
                                beta_1, beta_2, learning_rate,
                                bias_correction_1, bias_correction_2);
         return;
