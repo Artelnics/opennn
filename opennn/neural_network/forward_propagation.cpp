@@ -147,8 +147,8 @@ void ForwardPropagation::set(
     batch_size = new_batch_size;
     neural_network = new_neural_network;
     mode = new_mode;
-    inference_shape_policy = new_shape_policy;
     inputs_pre_scaled = new_inputs_pre_scaled;
+    past_length = 0;
 
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
@@ -157,6 +157,8 @@ void ForwardPropagation::set(
     staged_inputs.clear();
     host_bf16_input_scratch.clear();
     passthrough_overrides.clear();
+    attention_valid_lengths.clear();
+    output_window.reset();
 
     inputs.resize(layers_number);
     slots.resize(layers_number);
@@ -663,7 +665,7 @@ void ForwardPropagation::set(
             neural_network->get_last_trainable_layer_index());
 
         for(const Index retained :
-            inference_shape_policy.retained_output_layers)
+            new_shape_policy.retained_output_layers)
         {
             throw_if(
                 retained < 0
@@ -810,18 +812,11 @@ void ForwardPropagation::set(
     capacity_slots = slots;
     active_sequence_length = sequence_capacity;
 
+    if(new_shape_policy.final_output_capacity > 0)
+        output_window.emplace();
+
     if(new_shape_policy.sequence_capacity > 0)
-    {
         set_active_sequence_length(sequence_capacity);
-
-        const Index count =
-            min(final_output_capacity,
-                sequence_capacity);
-
-        set_output_sequence_window(
-            sequence_capacity - count,
-            count);
-    }
 }
 
 Index ForwardPropagation::bind_slots(
@@ -938,7 +933,7 @@ void ForwardPropagation::set_active_sequence_length(Index length)
     for (auto& layer_inputs : inputs)
         for (auto& view : layer_inputs) shrink_sequence(view);
 
-    if (inference_shape_policy.final_output_capacity > 0)
+    if (output_window)
     {
         const Index count = min(final_output_capacity, length);
         set_output_sequence_window(length - count, count);
@@ -947,7 +942,7 @@ void ForwardPropagation::set_active_sequence_length(Index length)
 
 void ForwardPropagation::set_output_sequence_window(Index start, Index count)
 {
-    throw_if(inference_shape_policy.final_output_capacity <= 0,
+    throw_if(!output_window,
              "ForwardPropagation::set_output_sequence_window requires a "
              "compact final output capacity.");
     throw_if(start < 0 || count < 1
@@ -978,22 +973,23 @@ void ForwardPropagation::set_output_sequence_window(Index start, Index count)
         capacity_input.shape.size() / capacity_input.shape[0]
         / capacity_input.shape[1] * type_bytes(capacity_input.type);
 
-    output_window_start = start;
-    output_window_count = count;
+    OutputWindow& window = *output_window;
+    window.start = start;
+    window.count = count;
 
     input = capacity_input;
     input.shape[1] = count;
 
     if (batch_size == 1)
     {
-        output_window_input.resize_bytes(0, capacity_input.device);
+        window.input.resize_bytes(0, capacity_input.device);
         input.data = static_cast<char*>(capacity_input.data) + start * row_bytes;
     }
     else
     {
-        output_window_input.resize_bytes(batch_size * count * row_bytes,
-                                         capacity_input.device);
-        input.data = output_window_input.data;
+        window.input.resize_bytes(batch_size * count * row_bytes,
+                                  capacity_input.device);
+        input.data = window.input.data;
     }
 
     TensorView& output = slots[size_t(final_output_layer)].back();
@@ -1003,7 +999,9 @@ void ForwardPropagation::set_output_sequence_window(Index start, Index count)
 
 void ForwardPropagation::gather_output_window()
 {
-    if (output_window_input.empty()) return;
+    if (!output_window || output_window->input.empty()) return;
+
+    const OutputWindow& window = *output_window;
 
     const TensorView& capacity_input =
         capacity_inputs[size_t(final_output_layer)].front();
@@ -1011,45 +1009,41 @@ void ForwardPropagation::gather_output_window()
     const Index sequence = capacity_input.shape[1];
     const Index row_bytes = capacity_input.shape.size() / capacity_input.shape[0]
                           / sequence * type_bytes(capacity_input.type);
-    const Index window_bytes = output_window_count * row_bytes;
+    const Index window_bytes = window.count * row_bytes;
 
     for (Index sample = 0; sample < batch_size; ++sample)
         device::copy_async(
-            static_cast<char*>(output_window_input.data) + sample * window_bytes,
+            static_cast<char*>(window.input.data) + sample * window_bytes,
             static_cast<const char*>(capacity_input.data)
-                + (sample * sequence + output_window_start) * row_bytes,
+                + (sample * sequence + window.start) * row_bytes,
             window_bytes,
             capacity_input.device, capacity_input.device,
             device::get_compute_stream());
 }
 
-static TensorView get_layer_outputs(const ForwardPropagation& propagation,
-                                    const Index layer)
+TensorView ForwardPropagation::get_layer_outputs(const Index layer) const
 {
-    if (!propagation.neural_network || layer < 0
-        || size_t(layer) >= propagation.slots.size())
+    if (!neural_network || layer < 0 || size_t(layer) >= slots.size())
         return {};
 
-    const auto& slots = propagation.slots[size_t(layer)];
-    if (!slots.empty() && !slots.back().empty()) return slots.back();
+    const auto& layer_slots = slots[size_t(layer)];
+    if (!layer_slots.empty() && !layer_slots.back().empty())
+        return layer_slots.back();
 
-    if (size_t(layer) >= propagation.inputs.size()
-        || propagation.inputs[size_t(layer)].empty())
+    if (size_t(layer) >= inputs.size() || inputs[size_t(layer)].empty())
         return {};
 
-    TensorView input = propagation.inputs[size_t(layer)].front();
+    TensorView input = inputs[size_t(layer)].front();
     if (!input.empty())
         input.shape = Shape{input.shape[0]}.append(
-            propagation.neural_network->get_layers()[size_t(layer)]
-                ->get_output_shape());
+            neural_network->get_layers()[size_t(layer)]->get_output_shape());
     return input;
 }
 
 TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
 {
     return neural_network
-        ? get_layer_outputs(*this,
-                            neural_network->get_last_trainable_layer_index())
+        ? get_layer_outputs(neural_network->get_last_trainable_layer_index())
         : TensorView{};
 }
 
@@ -1058,7 +1052,7 @@ TensorView ForwardPropagation::get_outputs() const
     if (!neural_network) return {};
 
     const Index last = Index(neural_network->get_layers_number()) - 1;
-    TensorView output = get_layer_outputs(*this, last);
+    TensorView output = get_layer_outputs(last);
     return output.empty() ? get_last_trainable_layer_outputs() : output;
 }
 

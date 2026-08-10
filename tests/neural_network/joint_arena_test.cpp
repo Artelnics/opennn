@@ -123,7 +123,7 @@ TEST(JointArenaTest, BackPropagationBindsIntoTheForwardArena)
                              lifetimes);
     ASSERT_FALSE(joint.co_planned_offsets.empty());
 
-    BackPropagation back_propagation(batch_size, model.loss.get(),
+    BackPropagation back_propagation(batch_size, *model.loss,
                                      &joint.arena, joint.co_planned_offsets);
 
     EXPECT_EQ(back_propagation.arena.bytes, 0)
@@ -147,7 +147,7 @@ TEST(JointArenaTest, SeparatePoolIsUsedWithoutTheJointPlan)
                                 ForwardPropagationMode::Training);
     ASSERT_TRUE(separate.co_planned_offsets.empty());
 
-    BackPropagation back_propagation(batch_size, model.loss.get(),
+    BackPropagation back_propagation(batch_size, *model.loss,
                                      &separate.arena, separate.co_planned_offsets);
 
     EXPECT_GT(back_propagation.arena.bytes, 0)
@@ -174,7 +174,7 @@ TEST(JointArenaTest, JointArenaOverheadStaysBounded)
 
     ForwardPropagation separate(batch_size, &model.neural_network,
                                 ForwardPropagationMode::Training);
-    BackPropagation separate_back(batch_size, model.loss.get(),
+    BackPropagation separate_back(batch_size, *model.loss,
                                   &separate.arena, separate.co_planned_offsets);
 
     const Index separate_bytes = separate.arena.bytes + separate_back.arena.bytes;
@@ -183,7 +183,7 @@ TEST(JointArenaTest, JointArenaOverheadStaysBounded)
     ForwardPropagation joint(batch_size, &model.neural_network,
                              ForwardPropagationMode::Training, {}, false,
                              lifetimes);
-    BackPropagation joint_back(batch_size, model.loss.get(),
+    BackPropagation joint_back(batch_size, *model.loss,
                                &joint.arena, joint.co_planned_offsets);
 
     const Index joint_bytes = joint.arena.bytes + joint_back.arena.bytes;

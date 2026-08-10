@@ -40,7 +40,7 @@ const NeuralNetwork& require_neural_network(const Loss& loss)
 }
 
 BackPropagation::BackPropagation(const Index new_batch_size,
-                                 Loss* new_loss,
+                                 const Loss& new_loss,
                                  Buffer* external_arena,
                                  span<const Index> arena_offsets)
 {
@@ -48,9 +48,8 @@ BackPropagation::BackPropagation(const Index new_batch_size,
 }
 
 vector<vector<pair<size_t, size_t>>> BackPropagation::make_consumer_edges(
-    const Loss& loss)
+    const NeuralNetwork& network)
 {
-    const NeuralNetwork& network = require_neural_network(loss);
     const auto& source_layers = network.get_source_layers();
     const size_t layers_number = network.get_layers().size();
 
@@ -66,37 +65,32 @@ vector<vector<pair<size_t, size_t>>> BackPropagation::make_consumer_edges(
     return edges;
 }
 
-void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
+void BackPropagation::set(const Index new_batch_size, const Loss& new_loss,
                           Buffer* external_arena,
                           span<const Index> arena_offsets)
 {
     batch_size = new_batch_size;
-    // Only needed to build the layout below; nothing afterwards reads it.
-    Loss* const loss = new_loss;
 
-    throw_if(!loss, "loss is not set.");
+    const NeuralNetwork& neural_network = require_neural_network(new_loss);
 
-    neural_network = loss->get_neural_network();
-
-    throw_if(!neural_network, "neural network is not set.");
-
-    throw_if(neural_network->get_training_type() == Type::INT8,
+    throw_if(neural_network.get_training_type() == Type::INT8,
              "INT8 is inference-only; training requires FP32 or BF16.");
+
+    output_delta_layer_index = neural_network.get_last_trainable_layer_index();
 
     error = 0.0f;
     accuracy = 0.0f;
     regularization = 0.0f;
     loss_value = 0.0f;
 
-    const auto& layers = neural_network->get_layers();
+    const auto& layers = neural_network.get_layers();
     const size_t layers_number = layers.size();
-    const auto parameter_specs = neural_network->get_parameter_specs();
-    const auto backward_specs  = neural_network->get_backward_specs(batch_size);
-
-    consumer_edges = make_consumer_edges(*loss);
+    const auto parameter_specs = neural_network.get_parameter_specs();
+    DeltaPlan plan = build_delta_plan(new_loss, batch_size);
+    consumer_edges = move(plan.consumer_edges);
 
     const Index gradient_bytes = get_aligned_bytes(parameter_specs, Type::FP32);
-    gradient.resize_bytes(gradient_bytes, neural_network->get_device());
+    gradient.resize_bytes(gradient_bytes, neural_network.get_device());
     gradient.setZero();
     memory_debug::record("backward", "BackPropagation::gradient", gradient_bytes,
                          format("batch={}", batch_size));
@@ -105,25 +99,22 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
     for (size_t i = 0; i < layers_number; ++i)
         pointer = layers[i]->link_gradients(pointer, gradient.device_type);
 
-    const DeltaLayout layout = build_delta_entries(
-        *loss, batch_size, backward_specs, consumer_edges);
-
     // The offsets are read here and never kept, so they may point into a
     // container the caller owns.
     if (external_arena && !arena_offsets.empty())
     {
-        arena.resize_bytes(0, neural_network->get_device());
-        bind_deltas(layout, arena_offsets,
+        arena.resize_bytes(0, neural_network.get_device());
+        bind_deltas(neural_network, plan.layout, arena_offsets,
                     external_arena->as<uint8_t>(),
                     external_arena->device_type,
-                    backward_specs);
+                    plan.backward_specs);
         return;
     }
 
-    setup_arena(backward_specs, layout);
+    setup_arena(neural_network, plan.backward_specs, plan.layout);
 }
 
-BackPropagation::DeltaLayout BackPropagation::build_delta_entries(
+BackPropagation::DeltaLayout BackPropagation::build_delta_layout(
     const Loss& loss, Index batch_size,
     const vector<vector<TensorSpec>>& backward_specs,
     const vector<vector<pair<size_t, size_t>>>& consumer_edges)
@@ -281,25 +272,36 @@ vector<MemoryPoolEntry> BackPropagation::make_co_planned_lifetimes(
     const Loss& loss, const Index batch_size)
 {
     const NeuralNetwork& neural_network = require_neural_network(loss);
-    const auto backward_specs = neural_network.get_backward_specs(batch_size);
+    const DeltaPlan plan = build_delta_plan(loss, batch_size);
 
-    const DeltaLayout layout = build_delta_entries(
-        loss, batch_size, backward_specs, make_consumer_edges(loss));
-
-    // Forward steps run 0..2N-1; shift the delta lifetimes onto that timeline.
     const Index backward_base = Index(2 * neural_network.get_layers_number() - 1);
     const Index step_offset =
         backward_base - neural_network.get_last_trainable_layer_index();
 
-    return to_pool_entries(layout.entries, step_offset);
+    return to_pool_entries(plan.layout.entries, step_offset);
 }
 
-void BackPropagation::setup_arena(const vector<vector<TensorSpec>>& backward_specs,
-                                       const DeltaLayout& layout)
+BackPropagation::DeltaPlan BackPropagation::build_delta_plan(const Loss& loss,
+                                                             const Index batch_size)
 {
-    const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-    const Index layers_number = neural_network->get_layers_number();
+    const NeuralNetwork& neural_network = require_neural_network(loss);
+
+    DeltaPlan plan;
+    plan.backward_specs = neural_network.get_backward_specs(batch_size);
+    plan.consumer_edges = make_consumer_edges(neural_network);
+    plan.layout = build_delta_layout(loss, batch_size,
+                                     plan.backward_specs,
+                                     plan.consumer_edges);
+    return plan;
+}
+
+void BackPropagation::setup_arena(const NeuralNetwork& neural_network,
+                                  const vector<vector<TensorSpec>>& backward_specs,
+                                  const DeltaLayout& layout)
+{
+    const Index first_trainable_layer_index = neural_network.get_first_trainable_layer_index();
+    const Index last_trainable_layer_index = neural_network.get_last_trainable_layer_index();
+    const Index layers_number = neural_network.get_layers_number();
 
     const vector<DeltaEntry>& delta_entries = layout.entries;
 
@@ -313,13 +315,13 @@ void BackPropagation::setup_arena(const vector<vector<TensorSpec>>& backward_spe
                layers_number));
 
     const bool compact_pool_supported =
-        neural_network->supports_compact_cnn_memory_layout();
+        neural_network.supports_compact_cnn_memory_layout();
     const MemoryPoolPlan pool_plan = plan_memory_pool(
         lifetime_entries,
         compact_pool_supported
             ? MemoryPoolStrategy::Compact
             : MemoryPoolStrategy::Chronological);
-    arena.resize_bytes(pool_plan.peak_bytes, neural_network->get_device());
+    arena.resize_bytes(pool_plan.peak_bytes, neural_network.get_device());
     arena.setZero();
     memory_debug::record("backward", "BackPropagation::arena", pool_plan.peak_bytes,
                          format("batch={},planner={}",
@@ -332,20 +334,21 @@ void BackPropagation::setup_arena(const vector<vector<TensorSpec>>& backward_spe
                          pool_plan.fragmentation_bytes(),
                          format("batch={},entries={}", batch_size, delta_entries.size()));
 
-    bind_deltas(layout, pool_plan.byte_offsets,
+    bind_deltas(neural_network, layout, pool_plan.byte_offsets,
                 arena.as<uint8_t>(), arena.device_type,
                 backward_specs);
 }
 
-void BackPropagation::bind_deltas(const DeltaLayout& layout,
+void BackPropagation::bind_deltas(const NeuralNetwork& neural_network,
+                                  const DeltaLayout& layout,
                                   span<const Index> byte_offsets,
                                   uint8_t* base, Device device,
                                   const vector<vector<TensorSpec>>& backward_specs)
 {
-    const auto& layers = neural_network->get_layers();
-    const Index layers_number = neural_network->get_layers_number();
-    const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
+    const auto& layers = neural_network.get_layers();
+    const Index layers_number = neural_network.get_layers_number();
+    const Index first_trainable_layer_index = neural_network.get_first_trainable_layer_index();
+    const Index last_trainable_layer_index = neural_network.get_last_trainable_layer_index();
 
     const vector<DeltaEntry>& delta_entries = layout.entries;
     const vector<bool>& aliases_residual_delta = layout.aliases_residual_delta;
@@ -467,12 +470,12 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
 
 TensorView& BackPropagation::get_output_delta()
 {
-    return output_deltas[neural_network->get_last_trainable_layer_index()];
+    return output_deltas[output_delta_layer_index];
 }
 
 const TensorView& BackPropagation::get_output_delta() const
 {
-    return output_deltas[neural_network->get_last_trainable_layer_index()];
+    return output_deltas[output_delta_layer_index];
 }
 
 }

@@ -1019,7 +1019,7 @@ TrainingResult Optimizer::train()
 
     loss->set_normalization_coefficient();
 
-    BackPropagation training_back_propagation(training_batch_size, loss,
+    BackPropagation training_back_propagation(training_batch_size, *loss,
                                               &training_forward_propagation.arena,
                                               training_forward_propagation.co_planned_offsets);
 

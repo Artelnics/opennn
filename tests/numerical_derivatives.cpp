@@ -62,7 +62,7 @@ float calculate_numerical_error(Loss& loss)
     ForwardPropagation forward_propagation(samples_number, neural_network);
     neural_network->forward_propagate(batch.get_inputs(), forward_propagation);
 
-    BackPropagation back_propagation(samples_number, &loss);
+    BackPropagation back_propagation(samples_number, loss);
     back_propagation.error = loss.calculate_error(batch, forward_propagation).error;
 
     return back_propagation.error;
@@ -88,7 +88,7 @@ VectorR calculate_gradient(Loss& loss)
     upload_batch_if_gpu(batch, *neural_network);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
-    BackPropagation    back_propagation(samples_number, &loss);
+    BackPropagation    back_propagation(samples_number, loss);
 
     neural_network->forward_propagate(batch.get_inputs(), forward_propagation, true);
 
@@ -119,7 +119,7 @@ VectorR calculate_numerical_gradient(Loss& loss)
     upload_batch_if_gpu(batch, *neural_network);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
-    BackPropagation    back_propagation(samples_number, &loss);
+    BackPropagation    back_propagation(samples_number, loss);
 
     neural_network->copy_parameters_host();
 
@@ -171,7 +171,7 @@ VectorR calculate_numerical_input_deltas(Loss& loss)
     batch.fill(sample_indices, input_feature_indices, {}, target_feature_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
-    BackPropagation    back_propagation(samples_number, &loss);
+    BackPropagation    back_propagation(samples_number, loss);
 
     VectorR numerical_inputs_gradients = VectorR::Zero(values_number);
 

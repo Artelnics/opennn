@@ -198,7 +198,7 @@ VectorR gradient_with_stamped_arena(Loss& loss, float stamp)
                dataset->get_feature_indices("Target"));
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
-    BackPropagation back_propagation(samples_number, &loss);
+    BackPropagation back_propagation(samples_number, loss);
 
     // Without a joint plan BackPropagation owns the delta arena, which is the
     // configuration this harness builds.

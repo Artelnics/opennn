@@ -864,7 +864,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                 input_slot[source_index] = pick_input(source_index);
         }
 
-        if (i == forward_propagation.final_output_layer)
+        if (i == forward_propagation.get_final_output_layer())
             forward_propagation.gather_output_window();
 
         PROFILE_SCOPE("fwd:" + layers[i]->get_name());

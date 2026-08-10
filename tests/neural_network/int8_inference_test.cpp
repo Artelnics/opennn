@@ -214,7 +214,7 @@ TEST(Int8InferenceTest, Int8TrainingThrowsGpu)
     Configuration::instance().set(Device::CUDA, Type::INT8);
     unique_ptr<Qwen3> network = make_qwen(TINY);
     Loss loss(network.get());
-    EXPECT_THROW(BackPropagation(1, &loss), exception);
+    EXPECT_THROW(BackPropagation(1, loss), exception);
     Configuration::instance().set();
 }
 

@@ -84,7 +84,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
                                           BackPropagation& back_propagation,
                                           OptimizerData& optimization_data)
 {
-    NeuralNetwork* neural_network = forward_propagation.neural_network;
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     VectorMap parameters = neural_network->get_parameters_map();
     VectorMap gradient = back_propagation.gradient.as_vector();
@@ -180,9 +180,9 @@ TrainingResult QuasiNewtonMethod::train()
     FullBatchContext context;
     prepare_full_batch_training(context, "Training with quasi-Newton method...");
 
-    BackPropagation validation_back_propagation(context.validation_samples_number, loss);
+    BackPropagation validation_back_propagation(context.validation_samples_number, *loss);
 
-    BackPropagation training_back_propagation(context.training_samples_number, loss);
+    BackPropagation training_back_propagation(context.training_samples_number, *loss);
 
     const Index parameters_number = neural_network->get_parameters_buffer_size();
 
