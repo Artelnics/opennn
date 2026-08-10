@@ -9,6 +9,7 @@
 // bounding, scaling and unscaling
 
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/neural_network/layers/kernel_scaling.cuh"
 
 template<typename TIn, typename TOut>
 __global__ void bounding_kernel(const int n, const int features,
@@ -121,32 +122,10 @@ void unscale_cuda(const Index n, const int features,
                        min_range, max_range, output);
 }
 
-template<typename TIn, typename TOut>
-__global__ void scaled_diff_kernel(const int n,
-                                   const TIn* __restrict__ input,
-                                   const float* __restrict__ target,
-                                   const float scale,
-                                   TOut* __restrict__ output)
-{
-    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
-    {
-        const float d = static_cast<float>(input[i]) - target[i];
-        output[i] = static_cast<TOut>(scale * d);
-    }
-}
-
-template<typename TIn, typename TOut>
-void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target,
-                            const float scale, TOut* output)
-{
-    launch_elementwise_strided(n, scaled_diff_kernel<TIn, TOut>, input, target, scale, output);
-}
-
 #define INSTANTIATE(TIn, TOut) \
     template void bounding_cuda<TIn, TOut>(const Index, const int, const TIn*, const float*, const float*, TOut*); \
     template void scale_cuda<TIn, TOut>(const Index, const int, const TIn*, const float*, const float*, const float*, const float*, const float*, float, float, TOut*); \
-    template void unscale_cuda<TIn, TOut>(const Index, const int, const TIn*, const float*, const float*, const float*, const float*, const float*, float, float, TOut*); \
-    template void scaled_diff_cuda_typed<TIn, TOut>(const Index, const TIn*, const float*, float, TOut*);
+    template void unscale_cuda<TIn, TOut>(const Index, const int, const TIn*, const float*, const float*, const float*, const float*, const float*, float, float, TOut*);
 
 OPENNN_INSTANTIATE_FLOAT_BF16_2(INSTANTIATE)
 #undef INSTANTIATE
