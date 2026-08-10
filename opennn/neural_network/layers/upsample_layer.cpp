@@ -12,7 +12,7 @@
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
 #ifdef OPENNN_HAS_CUDA
-#  include "opennn/core/cuda/kernel_pooling.cuh"
+#include "opennn/neural_network/layers/kernel_upsample.cuh"
 #endif
 
 namespace opennn

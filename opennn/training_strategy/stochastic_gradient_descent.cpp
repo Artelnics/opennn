@@ -16,7 +16,7 @@
 #include "opennn/dataset/batch.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/training_strategy/stochastic_gradient_descent.h"
-#include "opennn/core/cuda/kernel_optimizers.cuh"
+#include "opennn/training_strategy/kernel_optimizers.cuh"
 
 namespace opennn
 {

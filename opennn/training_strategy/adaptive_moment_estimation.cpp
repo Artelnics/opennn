@@ -16,7 +16,7 @@
 #include "opennn/core/configuration.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
-#include "opennn/core/cuda/kernel_optimizers.cuh"
+#include "opennn/training_strategy/kernel_optimizers.cuh"
 
 namespace opennn
 {

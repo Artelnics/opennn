@@ -1,5 +1,5 @@
-#ifndef KERNEL_POOLING_CUH
-#define KERNEL_POOLING_CUH
+#ifndef KERNEL_POOL3D_CUH
+#define KERNEL_POOL3D_CUH
 
 #ifdef OPENNN_HAS_CUDA
 
@@ -22,18 +22,6 @@ void first_token_3d_forward_cuda(const int B, const int S, const int F, const T*
 
 template<typename T>
 void first_token_3d_backward_cuda(const int B, const int S, const int F, const T* delta, T* in_gradient);
-
-void upsample_forward_cuda(int batch, int in_h, int in_w, int channels, int scale,
-                           const float* src, float* dst);
-void upsample_backward_cuda(int batch, int in_h, int in_w, int channels, int scale,
-                            const float* out_delta, float* in_delta);
-
-void concat_forward_slice_cuda(int batch, int H, int W,
-                               int slice_ch, int total_ch, int ch_offset,
-                               const float* src, float* dst);
-void concat_backward_slice_cuda(int batch, int H, int W,
-                                int slice_ch, int total_ch, int ch_offset,
-                                const float* out_delta, float* in_delta);
 
 #endif
 

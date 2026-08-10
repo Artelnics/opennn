@@ -13,7 +13,7 @@
 #include "opennn/neural_network/operators/convolution_operator.h"
 #include "opennn/core/device_backend.h"
 #ifdef OPENNN_HAS_CUDA
-#include "opennn/core/cuda/kernel_optimizers.cuh"
+#include "opennn/core/cuda/kernel_cast.cuh"
 #include "opennn/core/cuda/kernel_quantization.cuh"
 #endif
 #include "opennn/core/random_utilities.h"
