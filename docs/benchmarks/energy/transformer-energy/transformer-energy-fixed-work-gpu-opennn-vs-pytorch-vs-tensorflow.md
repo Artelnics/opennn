@@ -1,11 +1,11 @@
 # Transformer fixed-work GPU energy: OpenNN vs PyTorch vs TensorFlow
 
-*Last updated 2026-08-10. Linux x86_64, NVIDIA GeForce RTX 4080 (16 GB), driver 595.84, CUDA 13.3, cuDNN 9.23.1. Artifact: [`results/gpu-transformer-energy-fixed-work-20260810T131926Z.json`](../../results/).*
+*Last updated 2026-08-11. Linux x86_64, NVIDIA GeForce RTX 4080 (16 GB), driver 595.84, CUDA 13.3, cuDNN 9.23.1. Artifact: [`results/gpu-transformer-energy-fixed-work-20260811T133516Z.json`](../../results/) (confirms the 2026-08-10 run within measurement dispersion).*
 
 OpenNN spends **25.6 Wh** to train the 84.8M-parameter chat Transformer for 10
-epochs where PyTorch spends 34.8 Wh and TensorFlow 39.7 Wh — **1.36× and 1.55×
+epochs where PyTorch spends 34.9 Wh and TensorFlow 39.8 Wh — **1.36× and 1.55×
 less electricity for identical work**, finishing the same workload 1.45× and
-1.74× sooner.
+1.75× sooner.
 
 ## The result
 
@@ -20,14 +20,14 @@ subtracted for the active figures. Median of 3 runs (seeds 42-44):
 
 | Engine | Energy total | Energy active | Train window | Avg power | µJ / epoch-sample |
 |---|---:|---:|---:|---:|---:|
-| **OpenNN** | **25.6 Wh** | **23.1 Wh** | **309 s** | 298 W | **194,250** |
-| PyTorch | 34.8 Wh | 31.2 Wh | 449 s | 279 W | 263,797 |
-| TensorFlow | 39.7 Wh | 35.4 Wh | 537 s | 266 W | 300,851 |
+| **OpenNN** | **25.6 Wh** | **21.2 Wh** | **309 s** | 299 W | **194,448** |
+| PyTorch | 34.9 Wh | 28.4 Wh | 449 s | 280 W | 264,398 |
+| TensorFlow | 39.8 Wh | 32.0 Wh | 540 s | 266 W | 301,873 |
 
 | Comparison | Energy ratio | Time ratio |
 |---|---:|---:|
 | PyTorch vs OpenNN | 1.36× | 1.45× |
-| TensorFlow vs OpenNN | 1.55× | 1.74× |
+| TensorFlow vs OpenNN | 1.55× | 1.75× |
 
 OpenNN draws the *highest* average power (298 W — it keeps the GPU busiest)
 but finishes the same work so much sooner that it spends the least energy.

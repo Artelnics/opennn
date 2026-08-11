@@ -45,6 +45,7 @@ OOM_MARKERS = (
     "out of memory", "OOM", "RESOURCE_EXHAUSTED", "CUDA_ERROR_OUT_OF_MEMORY",
     "cudaErrorMemoryAllocation", "bad_alloc", "Not enough memory",
     "CUDNN_STATUS_ALLOC_FAILED", "CUBLAS_STATUS_ALLOC_FAILED",
+    "CUDA Error: 2 ", "cudaMalloc(",
 )
 
 def run_text(cmd: list[str]) -> str:

@@ -1,0 +1,389 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "gpu-higgs-peak-batch-speed",
+  "run_id": "20260811T153230Z",
+  "git": {
+    "commit": "6a721ddc87a629790493c4da64a168eb02eef4e2",
+    "branch": "dev",
+    "dirty": true,
+    "status_short_count": 5
+  },
+  "protocol": {
+    "style": "throughput_at_own_best_batch",
+    "benchmark_class": "training_throughput_saturation",
+    "measurement_rule": {
+      "ladder": [
+        7000,
+        14000,
+        28000,
+        56000,
+        112000,
+        224000,
+        448000,
+        896000,
+        1792000,
+        3584000,
+        7168000,
+        10500000
+      ],
+      "timed_epochs_per_point": 3,
+      "isolation": "one fresh process per (engine, precision, batch) point",
+      "stop_rule": "first oom/error/timeout ends that engine's ascent",
+      "quality_rule": "not gated (saturation benchmark; see quality/convergence)"
+    }
+  },
+  "configuration": {
+    "family": "higgs",
+    "engines": [
+      "opennn",
+      "pytorch",
+      "tensorflow"
+    ],
+    "precisions": [
+      "bf16",
+      "fp32"
+    ],
+    "epochs": 3,
+    "start_batch": 7000,
+    "max_batch": 10500000,
+    "timeout_s": 900
+  },
+  "machine": {
+    "python": "3.12.3",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "torch": "2.13.0+cu130",
+    "tensorflow": "2.21.0"
+  },
+  "results": {
+    "bf16": {
+      "opennn": {
+        "curve": [
+          {
+            "batch": 7000,
+            "status": "ok",
+            "samples_per_sec": 11019635.0
+          },
+          {
+            "batch": 14000,
+            "status": "ok",
+            "samples_per_sec": 11134868.0
+          },
+          {
+            "batch": 28000,
+            "status": "ok",
+            "samples_per_sec": 10382641.0
+          },
+          {
+            "batch": 56000,
+            "status": "ok",
+            "samples_per_sec": 9738857.0
+          },
+          {
+            "batch": 112000,
+            "status": "ok",
+            "samples_per_sec": 9634986.0
+          },
+          {
+            "batch": 224000,
+            "status": "ok",
+            "samples_per_sec": 9726734.0
+          },
+          {
+            "batch": 448000,
+            "status": "ok",
+            "samples_per_sec": 9515925.0
+          },
+          {
+            "batch": 896000,
+            "status": "ok",
+            "samples_per_sec": 9917243.0
+          },
+          {
+            "batch": 1792000,
+            "status": "oom"
+          }
+        ],
+        "peak_samples_per_sec": 11134868.0,
+        "peak_batch": 14000,
+        "max_ok_batch": 896000,
+        "frontier": {
+          "batch": 1792000,
+          "status": "oom",
+          "raw_tail": "engine=opennn\nmode=train\ndevice=cuda\nsamples=10500000\nbatch=1792000\nepochs=3\nhidden=1024\nhidden_layers=2\nactivation=relu\nprecision=bf16\nparameters=1080321\nTraining with adaptive moment estimation \"Adam\" CUDA...\nWarning: training batch_size 1792000 does not divide 10500000 samples. 1540000 sample(s) (14.67 % of total) dropped per epoch.\nRESULT=ERROR\nCUDA Error: 2 in /home/artelnics/Documents/opennn/opennn/core/device_backend.cpp:63 \u2014 cudaMalloc(1218000000 bytes = 1161 MiB)\n"
+        }
+      },
+      "pytorch": {
+        "curve": [
+          {
+            "batch": 7000,
+            "status": "ok",
+            "samples_per_sec": 8872766.0
+          },
+          {
+            "batch": 14000,
+            "status": "ok",
+            "samples_per_sec": 9082058.0
+          },
+          {
+            "batch": 28000,
+            "status": "ok",
+            "samples_per_sec": 8513338.0
+          },
+          {
+            "batch": 56000,
+            "status": "ok",
+            "samples_per_sec": 8375173.0
+          },
+          {
+            "batch": 112000,
+            "status": "ok",
+            "samples_per_sec": 8495301.0
+          },
+          {
+            "batch": 224000,
+            "status": "ok",
+            "samples_per_sec": 8626109.0
+          },
+          {
+            "batch": 448000,
+            "status": "ok",
+            "samples_per_sec": 8581985.0
+          },
+          {
+            "batch": 896000,
+            "status": "ok",
+            "samples_per_sec": 9050083.0
+          },
+          {
+            "batch": 1792000,
+            "status": "oom"
+          }
+        ],
+        "peak_samples_per_sec": 9082058.0,
+        "peak_batch": 14000,
+        "max_ok_batch": 896000,
+        "frontier": {
+          "batch": 1792000,
+          "status": "oom",
+          "raw_tail": "/opennn/docs/benchmarks/throughput/higgs-gpu/pytorch_speed.py\", line 128, in run_epoch\n    train_step(x[idx], y[idx])\n  File \"/home/artelnics/Documents/opennn/docs/benchmarks/throughput/higgs-gpu/pytorch_speed.py\", line 114, in train_step\n    loss.backward()\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/torch/_tensor.py\", line 623, in backward\n    torch.autograd.backward(\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/torch/autograd/__init__.py\", line 395, in backward\n    _engine_run_backward(\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/torch/autograd/graph.py\", line 979, in _engine_run_backward\n    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch.OutOfMemoryError: CUDA out of memory. Tried to allocate 3.42 GiB. GPU 0 has a total capacity of 15.54 GiB of which 3.00 GiB is free. Including non-PyTorch memory, this process has 12.13 GiB memory in use. Of the allocated memory 11.78 GiB is allocated by PyTorch, and 61.50 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)\n"
+        }
+      },
+      "tensorflow": {
+        "curve": [
+          {
+            "batch": 7000,
+            "status": "ok",
+            "samples_per_sec": 7508491.0
+          },
+          {
+            "batch": 14000,
+            "status": "ok",
+            "samples_per_sec": 8300121.0
+          },
+          {
+            "batch": 28000,
+            "status": "ok",
+            "samples_per_sec": 8280353.0
+          },
+          {
+            "batch": 56000,
+            "status": "ok",
+            "samples_per_sec": 8016019.0
+          },
+          {
+            "batch": 112000,
+            "status": "ok",
+            "samples_per_sec": 8224826.0
+          },
+          {
+            "batch": 224000,
+            "status": "ok",
+            "samples_per_sec": 8702984.0
+          },
+          {
+            "batch": 448000,
+            "status": "ok",
+            "samples_per_sec": 8939523.0
+          },
+          {
+            "batch": 896000,
+            "status": "ok",
+            "samples_per_sec": 9775584.0
+          },
+          {
+            "batch": 1792000,
+            "status": "error"
+          }
+        ],
+        "peak_samples_per_sec": 9775584.0,
+        "peak_batch": 896000,
+        "max_ok_batch": 896000,
+        "frontier": {
+          "batch": 1792000,
+          "status": "error",
+          "raw_tail": "e \"/home/artelnics/Documents/opennn/docs/benchmarks/throughput/higgs-gpu/tensorflow_speed.py\", line 130, in run_epoch\n    last = train_step(tf.gather(x, idx), tf.gather(y, idx))\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/tensorflow/python/util/traceback_utils.py\", line 167, in error_handler\n    raise e.with_traceback(filtered_tb) from None\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/tensorflow/python/eager/execute.py\", line 53, in quick_execute\n    tensors = pywrap_tfe.TFE_Py_Execute(ctx._handle, device_name, op_name,\n  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntensorflow.python.framework.errors_impl.InternalError: Autotuning failed for HLO: %gemm_fusion_MatMul.20 = bf16[1792000,1024]{1,0} fusion(%ReluGrad.11, %Cast.11), kind=kCustom, calls=%gemm_fusion_MatMul.20_computation, frontend_attributes={grad_x=\"true\",grad_y=\"false\"}, metadata={op_type=\"MatMul\" op_name=\"gradient_tape/sequential_1/dense_1_2/MatMul/MatMul\" source_file=\"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/tensorflow/python/framework/ops.py\" source_line=1221}, backend_config={\"operation_queue_id\":\"0\",\"wait_on_operation_queues\":[],\"fusion_backend_config\":{\"kind\":\"__triton_gemm\"},\"force_earliest_schedule\":false,\"reification_cost\":[],\"device_type\":\"DEVICE_TYPE_INVALID\"} with error: NOT_FOUND: No valid config found! [Op:__inference_train_step_1109]\n"
+        }
+      },
+      "opennn_vs_pytorch": 1.226,
+      "opennn_vs_tensorflow": 1.139
+    },
+    "fp32": {
+      "opennn": {
+        "curve": [
+          {
+            "batch": 7000,
+            "status": "ok",
+            "samples_per_sec": 5137141.0
+          },
+          {
+            "batch": 14000,
+            "status": "ok",
+            "samples_per_sec": 4527937.0
+          },
+          {
+            "batch": 28000,
+            "status": "ok",
+            "samples_per_sec": 4363577.0
+          },
+          {
+            "batch": 56000,
+            "status": "ok",
+            "samples_per_sec": 4375991.0
+          },
+          {
+            "batch": 112000,
+            "status": "ok",
+            "samples_per_sec": 4344722.0
+          },
+          {
+            "batch": 224000,
+            "status": "ok",
+            "samples_per_sec": 4323284.0
+          },
+          {
+            "batch": 448000,
+            "status": "ok",
+            "samples_per_sec": 4312706.0
+          },
+          {
+            "batch": 896000,
+            "status": "oom"
+          }
+        ],
+        "peak_samples_per_sec": 5137141.0,
+        "peak_batch": 7000,
+        "max_ok_batch": 448000,
+        "frontier": {
+          "batch": 896000,
+          "status": "oom",
+          "raw_tail": "engine=opennn\nmode=train\ndevice=cuda\nsamples=10500000\nbatch=896000\nepochs=3\nhidden=1024\nhidden_layers=2\nactivation=relu\nprecision=fp32\nparameters=1080321\nTraining with adaptive moment estimation \"Adam\" CUDA...\nWarning: training batch_size 896000 does not divide 10500000 samples. 644000 sample(s) (6.13 % of total) dropped per epoch.\nRESULT=ERROR\nCUDA Error: 2 in /home/artelnics/Documents/opennn/opennn/core/device_backend.cpp:63 \u2014 cudaMalloc(1218000000 bytes = 1161 MiB)\n"
+        }
+      },
+      "pytorch": {
+        "curve": [
+          {
+            "batch": 7000,
+            "status": "ok",
+            "samples_per_sec": 4842373.0
+          },
+          {
+            "batch": 14000,
+            "status": "ok",
+            "samples_per_sec": 4311448.0
+          },
+          {
+            "batch": 28000,
+            "status": "ok",
+            "samples_per_sec": 4236050.0
+          },
+          {
+            "batch": 56000,
+            "status": "ok",
+            "samples_per_sec": 4239383.0
+          },
+          {
+            "batch": 112000,
+            "status": "ok",
+            "samples_per_sec": 4307476.0
+          },
+          {
+            "batch": 224000,
+            "status": "ok",
+            "samples_per_sec": 4393213.0
+          },
+          {
+            "batch": 448000,
+            "status": "ok",
+            "samples_per_sec": 4397837.0
+          },
+          {
+            "batch": 896000,
+            "status": "oom"
+          }
+        ],
+        "peak_samples_per_sec": 4842373.0,
+        "peak_batch": 7000,
+        "max_ok_batch": 448000,
+        "frontier": {
+          "batch": 896000,
+          "status": "oom",
+          "raw_tail": "/opennn/docs/benchmarks/throughput/higgs-gpu/pytorch_speed.py\", line 128, in run_epoch\n    train_step(x[idx], y[idx])\n  File \"/home/artelnics/Documents/opennn/docs/benchmarks/throughput/higgs-gpu/pytorch_speed.py\", line 114, in train_step\n    loss.backward()\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/torch/_tensor.py\", line 623, in backward\n    torch.autograd.backward(\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/torch/autograd/__init__.py\", line 395, in backward\n    _engine_run_backward(\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/torch/autograd/graph.py\", line 979, in _engine_run_backward\n    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch.OutOfMemoryError: CUDA out of memory. Tried to allocate 3.42 GiB. GPU 0 has a total capacity of 15.54 GiB of which 3.20 GiB is free. Including non-PyTorch memory, this process has 11.94 GiB memory in use. Of the allocated memory 11.59 GiB is allocated by PyTorch, and 66.92 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)\n"
+        }
+      },
+      "tensorflow": {
+        "curve": [
+          {
+            "batch": 7000,
+            "status": "ok",
+            "samples_per_sec": 4310989.0
+          },
+          {
+            "batch": 14000,
+            "status": "ok",
+            "samples_per_sec": 4429141.0
+          },
+          {
+            "batch": 28000,
+            "status": "ok",
+            "samples_per_sec": 4605980.0
+          },
+          {
+            "batch": 56000,
+            "status": "ok",
+            "samples_per_sec": 4751434.0
+          },
+          {
+            "batch": 112000,
+            "status": "ok",
+            "samples_per_sec": 4909609.0
+          },
+          {
+            "batch": 224000,
+            "status": "ok",
+            "samples_per_sec": 5038393.0
+          },
+          {
+            "batch": 448000,
+            "status": "ok",
+            "samples_per_sec": 5188852.0
+          },
+          {
+            "batch": 896000,
+            "status": "error"
+          }
+        ],
+        "peak_samples_per_sec": 5188852.0,
+        "peak_batch": 448000,
+        "max_ok_batch": 448000,
+        "frontier": {
+          "batch": 896000,
+          "status": "error",
+          "raw_tail": " File \"/home/artelnics/Documents/opennn/docs/benchmarks/throughput/higgs-gpu/tensorflow_speed.py\", line 130, in run_epoch\n    last = train_step(tf.gather(x, idx), tf.gather(y, idx))\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/tensorflow/python/util/traceback_utils.py\", line 167, in error_handler\n    raise e.with_traceback(filtered_tb) from None\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/tensorflow/python/eager/execute.py\", line 53, in quick_execute\n    tensors = pywrap_tfe.TFE_Py_Execute(ctx._handle, device_name, op_name,\n  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntensorflow.python.framework.errors_impl.InternalError: Autotuning failed for HLO: %gemm_fusion_MatMul.14 = f32[896000,1024]{1,0} fusion(%gemm_fusion_MatMul.12, %arg3.1, %arg4.1), kind=kCustom, calls=%gemm_fusion_MatMul.14_computation, frontend_attributes={grad_x=\"false\",grad_y=\"false\"}, metadata={op_type=\"MatMul\" op_name=\"sequential_1/dense_1_2/MatMul\" source_file=\"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/tensorflow/python/framework/ops.py\" source_line=1221}, backend_config={\"operation_queue_id\":\"0\",\"wait_on_operation_queues\":[],\"fusion_backend_config\":{\"kind\":\"__triton_gemm\"},\"force_earliest_schedule\":false,\"reification_cost\":[],\"device_type\":\"DEVICE_TYPE_INVALID\"} with error: NOT_FOUND: No valid config found! [Op:__inference_train_step_1087]\n"
+        }
+      },
+      "opennn_vs_pytorch": 1.061,
+      "opennn_vs_tensorflow": 0.99
+    }
+  },
+  "git_commit": "6a721ddc87a629790493c4da64a168eb02eef4e2"
+}

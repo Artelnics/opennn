@@ -74,6 +74,7 @@ trials). `--precisions bf16` halves it; `--engines`, `--max-batch`, and
 
 ## Status
 
-Benchmark scaffolding added 2026-08-11; **not yet executed** — no result
-artifact or note exists yet. First full run pending after the throughput
-drivers' 5-run re-measurement pass.
+First full execution 2026-08-11 — results, curves, and the identified
+ResNet-50 bf16 follow-up are in
+[the results note](peak-batch-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md).
+Artifacts: `gpu-{higgs,resnet50,transformer}-peak-batch-speed-20260811T*.json`.

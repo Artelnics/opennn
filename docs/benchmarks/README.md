@@ -33,7 +33,7 @@ multi-run refresh):
 | Transformer bf16 inference max batch (GPU) | **2,015** | 951 | 563 |
 | ResNet-50 fp32 training max batch (GPU) | **18,085** | 9,216 | 11,036 |
 | HIGGS CPU training (MKL) | **107,121 samples/s** | 99,923 | 102,040 |
-| Transformer fixed-work energy, 10 epochs (GPU) | **25.6 Wh** | 34.8 Wh | 39.7 Wh |
+| Transformer fixed-work energy, 10 epochs (GPU) | **25.6 Wh** | 34.9 Wh | 39.8 Wh |
 | Baseline RAM | **235.6 MB** | 816.0 MB | 982.5 MB |
 
 Notes on the 2026-08-11 state: "fp32" on the GPU means TF32 tensor-core
@@ -43,8 +43,10 @@ honest three-way tie at the GEMM roofline). The former CUDA-graph training
 regression is resolved — the correct graph path plus asynchronous batch
 preparation now lead every GPU training cell. The former ResNet-50 max-batch
 deficit (4,752 vs TensorFlow's 2.47× lead, June 2026) is also resolved —
-OpenNN leads every capacity cell. The energy row predates the 2026-08-11
-speed work and is queued for a re-run.
+OpenNN leads every capacity cell. The 2026-08-11 energy re-run confirms
+OpenNN leads every energy cell too (HIGGS bf16 1.12×/1.28×, ResNet-50
+1.32-1.44×, Transformer 1.36×/1.55×), with the HIGGS fp32 gap narrowing to
+1.06×/1.10× under the aligned TF32 policy.
 
 ## What is measured
 
@@ -104,7 +106,12 @@ One benchmark crosses the Training and Max-batch columns:
 [peak-batch-speed](throughput/peak-batch-speed/README.md) sweeps the batch
 upward per engine and reports training throughput at **each engine's own best
 batch** (curve, peak, OOM frontier) for all three GPU families, reusing the
-matrix's speed drivers. Scaffolding added 2026-08-11; not yet executed.
+matrix's speed drivers. First execution 2026-08-11
+([results note](throughput/peak-batch-speed/peak-batch-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md)):
+OpenNN takes 4 of 6 cells (HIGGS bf16 1.23×/1.14×, Transformer bf16
+1.23×/1.36× and fp32 1.78×/1.90×, ResNet-50 fp32 1.22×/1.35×); HIGGS fp32 is
+a three-way tie, and ResNet-50 bf16 is an honest loss (0.94×/0.88× — the fast
+path's workspace pressure past batch 1,024 is the identified follow-up).
 
 ### quality/
 | Benchmark | What it runs |

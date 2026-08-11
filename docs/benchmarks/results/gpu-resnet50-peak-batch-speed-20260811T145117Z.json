@@ -1,0 +1,367 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "gpu-resnet50-peak-batch-speed",
+  "run_id": "20260811T145117Z",
+  "git": {
+    "commit": "6a721ddc87a629790493c4da64a168eb02eef4e2",
+    "branch": "dev",
+    "dirty": true,
+    "status_short_count": 4
+  },
+  "protocol": {
+    "style": "throughput_at_own_best_batch",
+    "benchmark_class": "training_throughput_saturation",
+    "measurement_rule": {
+      "ladder": [
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096,
+        8192,
+        16384,
+        32768,
+        50000
+      ],
+      "timed_epochs_per_point": 3,
+      "isolation": "one fresh process per (engine, precision, batch) point",
+      "stop_rule": "first oom/error/timeout ends that engine's ascent",
+      "quality_rule": "not gated (saturation benchmark; see quality/convergence)"
+    }
+  },
+  "configuration": {
+    "family": "resnet50",
+    "engines": [
+      "opennn",
+      "pytorch",
+      "tensorflow"
+    ],
+    "precisions": [
+      "bf16",
+      "fp32"
+    ],
+    "epochs": 3,
+    "start_batch": 128,
+    "max_batch": 50000,
+    "timeout_s": 900
+  },
+  "machine": {
+    "python": "3.12.3",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "torch": "2.13.0+cu130",
+    "tensorflow": "2.21.0"
+  },
+  "results": {
+    "bf16": {
+      "opennn": {
+        "curve": [
+          {
+            "batch": 128,
+            "status": "ok",
+            "samples_per_sec": 31067.0
+          },
+          {
+            "batch": 256,
+            "status": "ok",
+            "samples_per_sec": 45609.0
+          },
+          {
+            "batch": 512,
+            "status": "ok",
+            "samples_per_sec": 56044.0
+          },
+          {
+            "batch": 1024,
+            "status": "ok",
+            "samples_per_sec": 57533.0
+          },
+          {
+            "batch": 2048,
+            "status": "ok",
+            "samples_per_sec": 52349.0
+          },
+          {
+            "batch": 4096,
+            "status": "ok",
+            "samples_per_sec": 10457.0
+          },
+          {
+            "batch": 8192,
+            "status": "ok",
+            "samples_per_sec": 6811.0
+          },
+          {
+            "batch": 16384,
+            "status": "error"
+          }
+        ],
+        "peak_samples_per_sec": 57533.0,
+        "peak_batch": 1024,
+        "max_ok_batch": 8192,
+        "frontier": {
+          "batch": 16384,
+          "status": "error",
+          "raw_tail": "workspace_mode=off\n\nImage dataset loaded from cache in: 0 minutes, 0 seconds, 106 milliseconds.\nsamples=50000 batch=16384 epochs=3 precision=bf16 cuda_graph=1 gpu_resident=1\nlayers=58 parameters=23528528\nTraining with adaptive moment estimation \"Adam\" CUDA...\nWarning: training batch_size 16384 does not divide 50000 samples. 848 sample(s) (1.70 % of total) dropped per epoch.\nRESULT=ERROR\nConvolutionOperator: cudnn-frontend path unavailable (CUDA Error: 2 in /home/artelnics/Documents/opennn/opennn/core/device_backend.cpp:63 \u2014 cudaMalloc(1073741824 bytes = 1024 MiB)).\nCUDA Error: 2 in /home/artelnics/Documents/opennn/opennn/core/device_backend.cpp:397\n"
+        }
+      },
+      "pytorch": {
+        "curve": [
+          {
+            "batch": 128,
+            "status": "ok",
+            "samples_per_sec": 21431.0
+          },
+          {
+            "batch": 256,
+            "status": "ok",
+            "samples_per_sec": 35834.0
+          },
+          {
+            "batch": 512,
+            "status": "ok",
+            "samples_per_sec": 50296.0
+          },
+          {
+            "batch": 1024,
+            "status": "ok",
+            "samples_per_sec": 59558.0
+          },
+          {
+            "batch": 2048,
+            "status": "ok",
+            "samples_per_sec": 61380.0
+          },
+          {
+            "batch": 4096,
+            "status": "ok",
+            "samples_per_sec": 59743.0
+          },
+          {
+            "batch": 8192,
+            "status": "ok",
+            "samples_per_sec": 56950.0
+          },
+          {
+            "batch": 16384,
+            "status": "ok",
+            "samples_per_sec": 58605.0
+          },
+          {
+            "batch": 32768,
+            "status": "oom"
+          }
+        ],
+        "peak_samples_per_sec": 61380.0,
+        "peak_batch": 2048,
+        "max_ok_batch": 16384,
+        "frontier": {
+          "batch": 32768,
+          "status": "oom",
+          "raw_tail": "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/torch/_compile.py\", line 54, in inner\n    return disable_fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1446, in _fn\n    return fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py\", line 432, in __torch_dispatch__\n    res = func(*args, **kwargs)\n          ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/torch/_ops.py\", line 875, in __call__\n    return self._op(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch.OutOfMemoryError: CUDA out of memory. Tried to allocate 512.00 MiB. GPU 0 has a total capacity of 15.54 GiB of which 383.44 MiB is free. Including non-PyTorch memory, this process has 14.76 GiB memory in use. Of the allocated memory 14.35 GiB is allocated by PyTorch, and 131.17 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)\n"
+        }
+      },
+      "tensorflow": {
+        "curve": [
+          {
+            "batch": 128,
+            "status": "ok",
+            "samples_per_sec": 20798.0
+          },
+          {
+            "batch": 256,
+            "status": "ok",
+            "samples_per_sec": 32469.0
+          },
+          {
+            "batch": 512,
+            "status": "ok",
+            "samples_per_sec": 51351.0
+          },
+          {
+            "batch": 1024,
+            "status": "ok",
+            "samples_per_sec": 60641.0
+          },
+          {
+            "batch": 2048,
+            "status": "ok",
+            "samples_per_sec": 65752.0
+          },
+          {
+            "batch": 4096,
+            "status": "ok",
+            "samples_per_sec": 64208.0
+          },
+          {
+            "batch": 8192,
+            "status": "ok",
+            "samples_per_sec": 63728.0
+          },
+          {
+            "batch": 16384,
+            "status": "ok",
+            "samples_per_sec": 60207.0
+          },
+          {
+            "batch": 32768,
+            "status": "oom"
+          }
+        ],
+        "peak_samples_per_sec": 65752.0,
+        "peak_batch": 2048,
+        "max_ok_batch": 16384,
+        "frontier": {
+          "batch": 32768,
+          "status": "oom",
+          "raw_tail": "31c  tsl::BFCAllocator::DeallocateRawInternal()\n    @     0x7918ab781f7c  tsl::BFCAllocator::DeallocateRaw()\n    @     0x79189873a1b9  tensorflow::(anonymous namespace)::MlirTensorBuffer::~MlirTensorBuffer()\n    @     0x7918ac2f212c  tensorflow::Tensor::~Tensor()\n    @     0x7918ac141f03  tensorflow::Var::~Var()\n    @     0x7918ac3442d2  tensorflow::ResourceHandle::~ResourceHandle()\n    @     0x7918ac30a638  tensorflow::(anonymous namespace)::Buffer<>::~Buffer()\n    @     0x7918ac30a6ce  tensorflow::(anonymous namespace)::Buffer<>::~Buffer()\n    @     0x7918ac2f212c  tensorflow::Tensor::~Tensor()\n    @     0x7918a2dd0050  tensorflow::TensorHandle::~TensorHandle()\n    @     0x7918a2dd029e  tensorflow::TensorHandle::~TensorHandle()\n    @     0x79189fefe755  TFE_DeleteTensorHandle\n    @     0x79186fc8bfcf  EagerTensor_dealloc\n    @           0x59120a  (unknown)\n    @           0x55b694  (unknown)\n    @           0x5793e2  (unknown)\n    @           0x59ec59  (unknown)\n    @           0x5758ae  (unknown)\n    @           0x5755fc  (unknown)\n    @     0x79186f4180c8  MakeTfObjectType<>()::{lambda()#2}::operator()()\n    @     0x79186f418074  MakeTfObjectType<>()::{lambda()#2}::__invoke()\n    @           0x61d09d  (unknown)\n    @           0x6bd119  (unknown)\n    @           0x6b114d  Py_FinalizeEx\n    @           0x6bcb01  Py_RunMain\n    @           0x6bc71d  Py_BytesMain\n    @     0x7918ec22a1ca  (unknown)\n    @     0x7918ec22a28b  __libc_start_main\n    @           0x657bc5  _start\n"
+        }
+      },
+      "opennn_vs_pytorch": 0.937,
+      "opennn_vs_tensorflow": 0.875
+    },
+    "fp32": {
+      "opennn": {
+        "curve": [
+          {
+            "batch": 128,
+            "status": "ok",
+            "samples_per_sec": 22840.0
+          },
+          {
+            "batch": 256,
+            "status": "ok",
+            "samples_per_sec": 32469.0
+          },
+          {
+            "batch": 512,
+            "status": "ok",
+            "samples_per_sec": 38159.0
+          },
+          {
+            "batch": 1024,
+            "status": "ok",
+            "samples_per_sec": 38116.0
+          },
+          {
+            "batch": 2048,
+            "status": "ok",
+            "samples_per_sec": 1197.0
+          },
+          {
+            "batch": 4096,
+            "status": "error"
+          }
+        ],
+        "peak_samples_per_sec": 38159.0,
+        "peak_batch": 512,
+        "max_ok_batch": 2048,
+        "frontier": {
+          "batch": 4096,
+          "status": "error",
+          "raw_tail": "workspace_mode=off\n\nImage dataset loaded from cache in: 0 minutes, 0 seconds, 105 milliseconds.\nsamples=50000 batch=4096 epochs=3 precision=fp32 cuda_graph=1 gpu_resident=1\nlayers=58 parameters=23528528\nTraining with adaptive moment estimation \"Adam\" CUDA...\nWarning: training batch_size 4096 does not divide 50000 samples. 848 sample(s) (1.70 % of total) dropped per epoch.\nRESULT=ERROR\nConvolutionOperator: cudnn-frontend path unavailable (CUDA Error: 2 in /home/artelnics/Documents/opennn/opennn/core/device_backend.cpp:63 \u2014 cudaMalloc(19331547136 bytes = 18436 MiB)).\nConvolutionOperator: GPU convolution requires SM 8.0+ (Ampere). [at /home/artelnics/Documents/opennn/opennn/neural_network/operators/convolution_operator.cpp:567]\n"
+        }
+      },
+      "pytorch": {
+        "curve": [
+          {
+            "batch": 128,
+            "status": "ok",
+            "samples_per_sec": 16825.0
+          },
+          {
+            "batch": 256,
+            "status": "ok",
+            "samples_per_sec": 23929.0
+          },
+          {
+            "batch": 512,
+            "status": "ok",
+            "samples_per_sec": 29729.0
+          },
+          {
+            "batch": 1024,
+            "status": "ok",
+            "samples_per_sec": 31107.0
+          },
+          {
+            "batch": 2048,
+            "status": "ok",
+            "samples_per_sec": 31204.0
+          },
+          {
+            "batch": 4096,
+            "status": "ok",
+            "samples_per_sec": 29827.0
+          },
+          {
+            "batch": 8192,
+            "status": "ok",
+            "samples_per_sec": 29940.0
+          },
+          {
+            "batch": 16384,
+            "status": "oom"
+          }
+        ],
+        "peak_samples_per_sec": 31204.0,
+        "peak_batch": 2048,
+        "max_ok_batch": 8192,
+        "frontier": {
+          "batch": 16384,
+          "status": "oom",
+          "raw_tail": "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/torch/_compile.py\", line 54, in inner\n    return disable_fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1446, in _fn\n    return fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py\", line 432, in __torch_dispatch__\n    res = func(*args, **kwargs)\n          ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/artelnics/.venvs/opennn-bench/lib/python3.12/site-packages/torch/_ops.py\", line 875, in __call__\n    return self._op(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch.OutOfMemoryError: CUDA out of memory. Tried to allocate 512.00 MiB. GPU 0 has a total capacity of 15.54 GiB of which 511.44 MiB is free. Including non-PyTorch memory, this process has 14.63 GiB memory in use. Of the allocated memory 13.91 GiB is allocated by PyTorch, and 459.83 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)\n"
+        }
+      },
+      "tensorflow": {
+        "curve": [
+          {
+            "batch": 128,
+            "status": "ok",
+            "samples_per_sec": 15112.0
+          },
+          {
+            "batch": 256,
+            "status": "ok",
+            "samples_per_sec": 22033.0
+          },
+          {
+            "batch": 512,
+            "status": "ok",
+            "samples_per_sec": 27219.0
+          },
+          {
+            "batch": 1024,
+            "status": "ok",
+            "samples_per_sec": 28214.0
+          },
+          {
+            "batch": 2048,
+            "status": "ok",
+            "samples_per_sec": 27451.0
+          },
+          {
+            "batch": 4096,
+            "status": "ok",
+            "samples_per_sec": 27026.0
+          },
+          {
+            "batch": 8192,
+            "status": "oom"
+          }
+        ],
+        "peak_samples_per_sec": 28214.0,
+        "peak_batch": 1024,
+        "max_ok_batch": 4096,
+        "frontier": {
+          "batch": 8192,
+          "status": "oom",
+          "raw_tail": "31c  tsl::BFCAllocator::DeallocateRawInternal()\n    @     0x7a2e95181f7c  tsl::BFCAllocator::DeallocateRaw()\n    @     0x7a2e8213a1b9  tensorflow::(anonymous namespace)::MlirTensorBuffer::~MlirTensorBuffer()\n    @     0x7a2e95cf212c  tensorflow::Tensor::~Tensor()\n    @     0x7a2e95b41f03  tensorflow::Var::~Var()\n    @     0x7a2e95d442d2  tensorflow::ResourceHandle::~ResourceHandle()\n    @     0x7a2e95d0a638  tensorflow::(anonymous namespace)::Buffer<>::~Buffer()\n    @     0x7a2e95d0a6ce  tensorflow::(anonymous namespace)::Buffer<>::~Buffer()\n    @     0x7a2e95cf212c  tensorflow::Tensor::~Tensor()\n    @     0x7a2e8c7d0050  tensorflow::TensorHandle::~TensorHandle()\n    @     0x7a2e8c7d029e  tensorflow::TensorHandle::~TensorHandle()\n    @     0x7a2e898fe755  TFE_DeleteTensorHandle\n    @     0x7a2e5968bfcf  EagerTensor_dealloc\n    @           0x59120a  (unknown)\n    @           0x55b694  (unknown)\n    @           0x5793e2  (unknown)\n    @           0x59ec59  (unknown)\n    @           0x5758ae  (unknown)\n    @           0x5755fc  (unknown)\n    @     0x7a2e58dc70c8  MakeTfObjectType<>()::{lambda()#2}::operator()()\n    @     0x7a2e58dc7074  MakeTfObjectType<>()::{lambda()#2}::__invoke()\n    @           0x61d09d  (unknown)\n    @           0x6bd119  (unknown)\n    @           0x6b114d  Py_FinalizeEx\n    @           0x6bcb01  Py_RunMain\n    @           0x6bc71d  Py_BytesMain\n    @     0x7a2ed5c2a1ca  (unknown)\n    @     0x7a2ed5c2a28b  __libc_start_main\n    @           0x657bc5  _start\n"
+        }
+      },
+      "opennn_vs_pytorch": 1.223,
+      "opennn_vs_tensorflow": 1.352
+    }
+  },
+  "git_commit": "6a721ddc87a629790493c4da64a168eb02eef4e2"
+}
