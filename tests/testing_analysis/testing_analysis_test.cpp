@@ -190,16 +190,17 @@ TEST(TestingAnalysis, RocCurve)
     EXPECT_EQ(roc_curve.cols(), 3);
     EXPECT_EQ(roc_curve.rows(), 101);
 
-    EXPECT_LT(roc_curve(0, 0), type(EPSILON));
-    EXPECT_LT(roc_curve(0, 1), type(EPSILON));
-    EXPECT_LT(roc_curve(1, 0), type(EPSILON));
-    EXPECT_LT(roc_curve(1, 1) - type(1), type(EPSILON));
-    EXPECT_LT(roc_curve(2, 0), type(EPSILON));
-    EXPECT_LT(roc_curve(2, 1) - type(1), type(EPSILON));
-    EXPECT_LT(roc_curve(3, 0), type(EPSILON));
-    EXPECT_LT(roc_curve(3, 1) - type(1), type(EPSILON));
-    EXPECT_LT(roc_curve(4, 0) - type(1), type(EPSILON));
-    EXPECT_LT(roc_curve(4, 1) - type(1), type(EPSILON));
+    // Standard coordinates: column 0 = FPR, column 1 = TPR.
+    // Endpoints: threshold 0 -> (1,1); threshold 1 -> (0,0).
+    EXPECT_NEAR(roc_curve(0, 0), type(1), type(EPSILON));
+    EXPECT_NEAR(roc_curve(0, 1), type(1), type(EPSILON));
+    // Perfect classifier: every interior threshold sits at (0,1).
+    EXPECT_NEAR(roc_curve(1, 0), type(0), type(EPSILON));
+    EXPECT_NEAR(roc_curve(1, 1), type(1), type(EPSILON));
+    EXPECT_NEAR(roc_curve(50, 0), type(0), type(EPSILON));
+    EXPECT_NEAR(roc_curve(50, 1), type(1), type(EPSILON));
+    EXPECT_NEAR(roc_curve(100, 0), type(0), type(EPSILON));
+    EXPECT_NEAR(roc_curve(100, 1), type(0), type(EPSILON));
 
     targets.resize(4,1);
 
@@ -220,16 +221,17 @@ TEST(TestingAnalysis, RocCurve)
     EXPECT_EQ(roc_curve.cols(), 3);
     EXPECT_EQ(roc_curve.rows(), 101);
 
-    EXPECT_LT(roc_curve(0, 0), type(EPSILON));
-    EXPECT_LT(roc_curve(0, 1), type(EPSILON));
-    EXPECT_LT(roc_curve(1, 0), type(EPSILON));
-    EXPECT_LT(roc_curve(1, 1) - type(0.5), type(EPSILON));
-    EXPECT_LT(roc_curve(2, 0) - type(0.5), type(EPSILON));
-    EXPECT_LT(roc_curve(2, 1) - type(0.5), type(EPSILON));
-    EXPECT_LT(roc_curve(3, 0) - type(1), type(EPSILON));
-    EXPECT_LT(roc_curve(3, 1) - type(0.5), type(EPSILON));
-    EXPECT_LT(roc_curve(4, 0) - type(1), type(EPSILON));
-    EXPECT_LT(roc_curve(4, 1) - type(1), type(EPSILON));
+    // Thresholds at or below 0.12 predict all four samples positive: (1,1).
+    EXPECT_NEAR(roc_curve(1, 0), type(1), type(EPSILON));
+    EXPECT_NEAR(roc_curve(1, 1), type(1), type(EPSILON));
+    // Threshold 0.5: positives 0.78 and 0.84 detected, negative 0.99 misfires: (0.5, 1).
+    EXPECT_NEAR(roc_curve(50, 0), type(0.5), type(EPSILON));
+    EXPECT_NEAR(roc_curve(50, 1), type(1), type(EPSILON));
+    // Threshold 0.9: only the 0.99 negative fires: (0.5, 0).
+    EXPECT_NEAR(roc_curve(90, 0), type(0.5), type(EPSILON));
+    EXPECT_NEAR(roc_curve(90, 1), type(0), type(EPSILON));
+    EXPECT_NEAR(roc_curve(100, 0), type(0), type(EPSILON));
+    EXPECT_NEAR(roc_curve(100, 1), type(0), type(EPSILON));
 }
 
 TEST(TestingAnalysis, AreaUnderCurve)

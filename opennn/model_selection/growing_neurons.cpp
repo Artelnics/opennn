@@ -200,7 +200,10 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
         if (previous_validation_error < minimum_validation_error)
             ++validation_failures;
         else
+        {
+            validation_failures = 0;
             previous_validation_error = minimum_validation_error;
+        }
 
         neuron_selection_results.stopping_condition = first_stopping_condition<StoppingCondition>(display,
         {

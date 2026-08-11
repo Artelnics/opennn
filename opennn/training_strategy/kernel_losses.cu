@@ -367,7 +367,8 @@ __device__ __forceinline__ float yolo_giou_forward(const float* pred, const floa
     const float v_diff = atan2f(gt[2], gt[3]) - atan2f(pred[2], pred[3]);
     constexpr float INV_PI2 = 4.0f / (3.14159265f * 3.14159265f);
     const float v     = INV_PI2 * v_diff * v_diff;
-    const float alpha = (iou > 0.0f) ? v / (1.0f - iou + v + YOLO_EPSILON) : 0.0f;
+    // Guard on uni (not iou) to match the gradient kernel for disjoint boxes.
+    const float alpha = (uni > 0.0f) ? v / (1.0f - iou + v + YOLO_EPSILON) : 0.0f;
 
     return giou - rho2/c2 - alpha*v;
 }

@@ -18,14 +18,15 @@ namespace opennn
 {
 
 // Defined below: against the CUDA kernels, or as throwing stubs.
-static void layer_normalization_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&);
+static void layer_normalization_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&, float);
 static void layer_normalization_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&);
 static void rms_normalization_forward_gpu(const TensorView&, const TensorView&, TensorView&, TensorView&, float);
 static void rms_normalization_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&);
 
 static void layer_normalization_forward_cpu(const TensorView& input, const TensorView& gamma, const TensorView& beta,
                             TensorView& means, TensorView& standard_deviations,
-                            TensorView& normalized, TensorView& output)
+                            TensorView& normalized, TensorView& output,
+                            float epsilon)
 {
     const Index embedding_dimension = input.shape.back();
     const Index total_rows = input.size() / embedding_dimension;
@@ -53,7 +54,7 @@ static void layer_normalization_forward_cpu(const TensorView& input, const Tenso
         const float mean    = sum * inv_D;
 
         const float variance = max(sum_sq * inv_D - mean * mean, 0.0f);
-        const float std_val = sqrt(variance + EPSILON);
+        const float std_val = sqrt(variance + epsilon);
         const float inv_std = 1.0f / std_val;
 
         means_data[row] = mean;
@@ -119,16 +120,16 @@ static void layer_normalization_backward_cpu(const TensorView& output_delta,
 
 void layer_normalization_forward(const TensorView& input, const TensorView& gamma, const TensorView& beta,
                         TensorView& means, TensorView& standard_deviations,
-                        TensorView& normalized, TensorView& output)
+                        TensorView& normalized, TensorView& output, float epsilon)
 {
-    if (input.is_cuda()) { layer_normalization_forward_gpu(input, gamma, beta, means, standard_deviations, output); return; }
-    layer_normalization_forward_cpu(input, gamma, beta, means, standard_deviations, normalized, output);
+    if (input.is_cuda()) { layer_normalization_forward_gpu(input, gamma, beta, means, standard_deviations, output, epsilon); return; }
+    layer_normalization_forward_cpu(input, gamma, beta, means, standard_deviations, normalized, output, epsilon);
 }
 
 void layer_normalization_add_forward(const TensorView& input, const TensorView& residual,
                             const TensorView& gamma, const TensorView& beta,
                             TensorView& means, TensorView& standard_deviations,
-                            TensorView& normalized, TensorView& sum, TensorView& output)
+                            TensorView& normalized, TensorView& sum, TensorView& output, float epsilon)
 {
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
@@ -140,13 +141,13 @@ void layer_normalization_add_forward(const TensorView& input, const TensorView& 
                                           input.as<T>(), residual.as<T>(),
                                           sum.as<T>(), output.as<T>(),
                                           means.as<float>(), standard_deviations.as<float>(),
-                                          gamma.as<float>(), beta.as<float>(), EPSILON);
+                                          gamma.as<float>(), beta.as<float>(), epsilon);
         });
         return;
     }
 #endif
     add(input, residual, sum);
-    layer_normalization_forward_cpu(sum, gamma, beta, means, standard_deviations, normalized, output);
+    layer_normalization_forward_cpu(sum, gamma, beta, means, standard_deviations, normalized, output, epsilon);
 }
 
 void layer_normalization_backward(const TensorView& input, const TensorView& output_delta,
@@ -272,7 +273,7 @@ void rms_normalization_backward(const TensorView& input, const TensorView& outpu
 #ifdef OPENNN_HAS_CUDA
 
 static void layer_normalization_forward_gpu(const TensorView& input, const TensorView& gamma, const TensorView& beta,
-                            TensorView& means, TensorView& standard_deviations, TensorView& output)
+                            TensorView& means, TensorView& standard_deviations, TensorView& output, float epsilon)
 {
     const int rows = to_int(input.size() / input.shape.back());
     const int cols = to_int(input.shape.back());
@@ -281,7 +282,7 @@ static void layer_normalization_forward_gpu(const TensorView& input, const Tenso
         layernorm_forward_cuda<T>(rows, cols,
                                   input.as<T>(), output.as<T>(),
                                   means.as<float>(), standard_deviations.as<float>(),
-                                  gamma.as<float>(), beta.as<float>(), EPSILON);
+                                  gamma.as<float>(), beta.as<float>(), epsilon);
     });
 }
 
@@ -339,7 +340,7 @@ static void rms_normalization_backward_gpu(const TensorView& input, const Tensor
 
 #else
 
-static void layer_normalization_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&) { throw runtime_error("layer_normalization_forward_gpu: CUDA support not compiled in."); }
+static void layer_normalization_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&, float) { throw runtime_error("layer_normalization_forward_gpu: CUDA support not compiled in."); }
 static void layer_normalization_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&) { throw runtime_error("layer_normalization_backward_gpu: CUDA support not compiled in."); }
 static void rms_normalization_forward_gpu(const TensorView&, const TensorView&, TensorView&, TensorView&, float) { throw runtime_error("rms_normalization_forward_gpu: CUDA support not compiled in."); }
 static void rms_normalization_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&) { throw runtime_error("rms_normalization_backward_gpu: CUDA support not compiled in."); }
@@ -412,11 +413,11 @@ void LayerNormalizationOperator::forward_propagate(ForwardPropagation& forward_p
     {
 
         const TensorView& residual = forward_propagation.inputs[layer][1];
-        layer_normalization_add_forward(input, residual, gamma, beta, means, stds, normalized, normalized, output);
+        layer_normalization_add_forward(input, residual, gamma, beta, means, stds, normalized, normalized, output, epsilon);
         return;
     }
 
-    layer_normalization_forward(input, gamma, beta, means, stds, normalized, output);
+    layer_normalization_forward(input, gamma, beta, means, stds, normalized, output, epsilon);
 }
 
 void LayerNormalizationOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const

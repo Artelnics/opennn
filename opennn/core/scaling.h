@@ -46,8 +46,9 @@ namespace opennn
         switch (method)
         {
         case None:
-        case ImageMinMax:
             return value;
+        case ImageMinMax:
+            return value / 255.0f;
         case MinimumMaximum:
             return desc.maximum - desc.minimum < EPSILON
                 ? 0.0f

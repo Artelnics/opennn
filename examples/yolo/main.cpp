@@ -980,16 +980,43 @@ int main(int argc, char* argv[])
                 cout << "Resumed EMA weights from \"" << ema_weights_path.string() << "\".\n";
             }
 
+            // Backbone warmup: with freshly loaded pretrained backbone weights, train the
+            // randomly initialized neck and heads alone for the first few epochs so their
+            // large early gradients do not destroy the pretrained features. Resumed runs
+            // (epochs_done > 0 from a saved checkpoint) skip this.
+            constexpr int backbone_freeze_epochs = 5;
+            if (backbone_pretrained_loaded && epochs_done < backbone_freeze_epochs && !lr_schedule.empty())
+            {
+                set_backbone_trainable(false);
+                backbone_frozen = true;
+
+                adam->set_learning_rate(lr_schedule.front().lr);
+                adam->set_maximum_epochs(backbone_freeze_epochs - epochs_done);
+
+                {
+                    const float* live = yolo_network.get_parameters_data();
+                    copy(live, live + n_params, ema_params.begin());
+                }
+
+                cout << "\nTraining with frozen backbone: lr=" << lr_schedule.front().lr
+                          << " for " << (backbone_freeze_epochs - epochs_done) << " epochs.\n";
+                const auto warmup_result = training_strategy.train();
+                epochs_done += static_cast<int>(warmup_result.get_epochs_number());
+
+                set_backbone_trainable(true);
+                backbone_frozen = false;
+
+                yolo_network.save_parameters_binary(weights_path);
+                yolo_network.save_states_binary(states_path);
+                { ofstream ef(epochs_file); ef << epochs_done; }
+                cout << "Checkpoint saved: " << epochs_done << " total epochs.\n";
+            }
+
             int cumulative = 0;
             for (const TrainingRound& rnd : lr_schedule)
             {
                 const int round_end = cumulative + rnd.epochs;
                 if (epochs_done >= round_end) { cumulative = round_end; continue; }
-
-                if (backbone_frozen && cumulative >= 5) {
-                    set_backbone_trainable(true);
-                    backbone_frozen = false;
-                }
 
                 const int to_run = round_end - epochs_done;
                 adam->set_learning_rate(rnd.lr);

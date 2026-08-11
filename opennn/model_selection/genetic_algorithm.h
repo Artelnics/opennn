@@ -74,13 +74,13 @@ private:
     VectorB selected;
 
     Index minimum_inputs_number = 1;
-    Index maximum_inputs_number;
+    Index maximum_inputs_number = 0;
 
-    float mutation_rate;
+    float mutation_rate = 0.05f;
 
-    Index elitism_size;
+    Index elitism_size = 10;
 
-    string initialization_method;
+    string initialization_method = "Correlations";
 };
 
 }

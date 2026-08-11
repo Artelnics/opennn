@@ -142,6 +142,12 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
         training_direction = -gradient;
         optimization_data.training_slope = gradient.dot(training_direction);
 
+        // The retry follows the negative gradient, whose natural trial rate is the
+        // previously accepted one (or the small first rate), not the unit step.
+        optimization_data.initial_learning_rate = (optimization_data.old_learning_rate > 0.0f)
+            ? optimization_data.old_learning_rate
+            : first_learning_rate;
+
         tie(optimization_data.learning_rate, back_propagation.metrics.loss_value) = calculate_directional_point(
             batch,
             forward_propagation,
@@ -158,13 +164,15 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     {
         parameter_updates = (gradient.array().abs() >= EPSILON)
                                 .select(-gradient.array().sign() * EPSILON, 0.0f);
-        optimization_data.learning_rate = optimization_data.initial_learning_rate;
     }
     parameters += parameter_updates;
 
     old_gradient = gradient;
     swap(optimization_data.views[InverseHessian], optimization_data.views[OldInverseHessian]);
-    optimization_data.old_learning_rate = optimization_data.learning_rate;
+
+    // Record only genuinely accepted rates; the epsilon fallback keeps the previous one.
+    if (optimization_data.learning_rate > 0.0f)
+        optimization_data.old_learning_rate = optimization_data.learning_rate;
 }
 
 TrainingResult QuasiNewtonMethod::train()

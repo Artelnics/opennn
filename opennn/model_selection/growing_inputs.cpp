@@ -244,6 +244,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
         }
         else
         {
+            validation_failures = 0;
             previous_validation_error = minimum_validation_error;
 
             if (warm_start && !candidate_snapshot.empty())

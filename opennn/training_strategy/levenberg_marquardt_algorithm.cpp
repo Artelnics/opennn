@@ -411,8 +411,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                 .select(-gradient.array().sign() * EPSILON, 0.0f);
         parameters += parameter_updates;
     }
-
-    neural_network->set_parameters(parameters);
+    // parameters is a map aliasing the network's own buffer; no copy-back is needed.
 }
 
 void LevenbergMarquardtAlgorithm::to_JSON(JsonWriter& printer) const

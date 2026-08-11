@@ -76,7 +76,11 @@ static void unscale_column_cpu(Column& column, ScalerMethod method,
     {
     case MinimumMaximum:
         throw_if(max_range - min_range < EPSILON, "The range values are not valid.");
-        column = unscale_minimum_maximum_formula(column, descriptives, min_range, max_range);
+        // Constant feature: the forward scaling produced zeros, so invert to the constant.
+        if (descriptives.maximum - descriptives.minimum < EPSILON)
+            column.setConstant(descriptives.minimum);
+        else
+            column = unscale_minimum_maximum_formula(column, descriptives, min_range, max_range);
         break;
     case MeanStandardDeviation:
         column = unscale_mean_standard_deviation_formula(column, descriptives);

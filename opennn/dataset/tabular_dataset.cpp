@@ -999,6 +999,7 @@ void TabularDataset::apply_scaler(Index feature_index, const string& scaler, con
 
     case ImageMinMax:
         if (unscale) column *= 255.0f;
+        else         column /= 255.0f;
         break;
     }
 }

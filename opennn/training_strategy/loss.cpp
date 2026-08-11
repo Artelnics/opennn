@@ -77,7 +77,9 @@ GIoUResult yolo_loss_giou_forward(const float* pred, const float* gt)
 
     const float v_diff = atan2f(gt[2], gt[3]) - atan2f(pred[2], pred[3]);
     const float v     = INV_PI2 * v_diff * v_diff;
-    const float alpha = (r.iou > 0.0f) ? v / (1.0f - r.iou + v + EPSILON) : 0.0f;
+    // Guard on union_area (not iou) so the aspect-ratio term matches the gradient
+    // for disjoint boxes; the CIoU definition keeps alpha = v/(1-iou+v) at iou = 0.
+    const float alpha = (union_area > 0.0f) ? v / (1.0f - r.iou + v + EPSILON) : 0.0f;
 
     r.giou -= rho2/c2 + alpha*v;
     return r;
@@ -375,6 +377,10 @@ void yolo_gradient_kernel(const TensorView& output,
                                 const float p = out[base + 5 + c];
                                 const float t = tgt[base + 5 + c];
                                 const float p_t   = (t > 0.5f) ? p : (1.0f - p);
+                                // Deliberate approximation: the focal weight (1-p_t)^gamma is
+                                // treated as a constant modulating factor rather than
+                                // differentiated (unlike the background objectness term, which
+                                // uses the full derivative). Exact at the default gamma = 0.
                                 const float focal = pow(1.0f - p_t, lam.focal_gamma);
                                 delta[base + 5 + c] = lambda_class * focal * (p - t) / (p * (1.0f - p) + EPSILON) * inv_batch;
                             }
@@ -1299,6 +1305,18 @@ void Loss::set_normalization_coefficient()
 
         normalization_coefficient = (mean_model_error < EPSILON) ? 1.0f : mean_model_error;
     }
+
+    if (error == Error::CrossEntropy && neural_network
+        && dataset->get_features_number(VariableRole::Target) > 1)
+    {
+        // The multi-class cross-entropy gradient is emitted in the fused softmax form
+        // (y - t)/B and the softmax backward step is a no-op, so any other output
+        // activation would train on a silently wrong gradient.
+        const auto& layers = neural_network->get_layers();
+        const Index last_trainable = neural_network->get_last_trainable_layer_index();
+        throw_if(layers[last_trainable]->get_output_activation() != ActivationFunction::Softmax,
+                 "Cross-entropy error with multiple target features requires a softmax output layer.");
+    }
 }
 
 void Loss::back_propagate(const Batch& batch,
@@ -1328,7 +1346,7 @@ void Loss::back_propagate(const Batch& batch,
 float Loss::get_weighted_coefficient(const Batch& batch) const
 {
     const Index total = weighted_samples_number > 0 ? weighted_samples_number
-                      : dataset                     ? dataset->get_samples_number()
+                      : dataset                     ? dataset->get_samples_number("Training")
                                                     : batch.get_batch_size();
     const Index samples = batch.get_batch_size();
     return float(total) / (float(samples) * (normalization_coefficient + EPSILON));

@@ -327,6 +327,11 @@ void validate_pooling_configuration(const Shape& input_shape,
     throw_if(padding_shape[0] < 0 || padding_shape[1] < 0,
              "Pooling layer '{}': padding cannot be negative, read {}.",
              label, shape_to_string(padding_shape));
+    // Padding >= pool size would let a max-pooling window sit entirely inside the
+    // padding, producing -infinity outputs.
+    throw_if(padding_shape[0] >= pool_shape[0] || padding_shape[1] >= pool_shape[1],
+             "Pooling layer '{}': padding {} must be smaller than the pool size {}.",
+             label, shape_to_string(padding_shape), shape_to_string(pool_shape));
 
     const Index padded_height = input_shape[0] + 2 * padding_shape[0];
     const Index padded_width  = input_shape[1] + 2 * padding_shape[1];

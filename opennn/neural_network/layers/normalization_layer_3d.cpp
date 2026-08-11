@@ -125,7 +125,8 @@ void Normalization3d::write_JSON_body(JsonWriter& printer) const
         });
     else
         write_json(printer, {
-            {"FuseAdd", layer_normalization.fuse_add}
+            {"FuseAdd", layer_normalization.fuse_add},
+            {"Epsilon", layer_normalization.epsilon}
         });
 }
 

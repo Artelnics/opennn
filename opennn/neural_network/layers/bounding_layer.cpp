@@ -37,10 +37,17 @@ static void bound_cpu(const TensorView& input,
 
     MatrixMap output_matrix = output.as_flat_matrix();
 
-    for (Index feature_index = 0; feature_index < features; ++feature_index)
-        output_matrix.col(feature_index) = input_matrix.col(feature_index)
+    // Write every flattened column, cycling the per-feature bounds, so no column
+    // is left uninitialized when the flattened width exceeds the feature count.
+    const Index columns = output_matrix.cols();
+
+    for (Index column_index = 0; column_index < columns; ++column_index)
+    {
+        const Index feature_index = column_index % features;
+        output_matrix.col(column_index) = input_matrix.col(column_index)
                                                         .cwiseMax(lower_bounds_vector(feature_index))
                                                         .cwiseMin(upper_bounds_vector(feature_index));
+    }
 }
 
 void bound(const TensorView& input,

@@ -455,8 +455,9 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
             else                                         ++true_negative;
         }
 
-        roc_curve(i,0) = 1.0f - float(true_positive)/float(true_positive + false_negative);
-        roc_curve(i,1) = float(true_negative)/float(true_negative + false_positive);
+        // Standard ROC coordinates: (false positive rate, true positive rate).
+        roc_curve(i,0) = float(false_positive)/float(false_positive + true_negative);
+        roc_curve(i,1) = float(true_positive)/float(true_positive + false_negative);
         roc_curve(i,2) = threshold;
 
         if (isnan(roc_curve(i,0)))
@@ -466,8 +467,13 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
             roc_curve(i,1) = 0.0f;
     }
 
-    roc_curve.row(0).setZero();
-    roc_curve.row(points_number).setOnes();
+    // Threshold 0 predicts everything positive (1,1); threshold 1 predicts everything negative (0,0).
+    roc_curve(0,0) = 1.0f;
+    roc_curve(0,1) = 1.0f;
+    roc_curve(0,2) = 0.0f;
+    roc_curve(points_number,0) = 0.0f;
+    roc_curve(points_number,1) = 0.0f;
+    roc_curve(points_number,2) = 1.0f;
 
     return roc_curve;
 }
@@ -479,7 +485,8 @@ float TestingAnalysis::calculate_area_under_curve(const MatrixR& roc_curve) cons
     for (Index i = 1; i < roc_curve.rows(); ++i)
         area_under_curve += (roc_curve(i,0) - roc_curve(i-1,0))*(roc_curve(i,1) + roc_curve(i-1,1));
 
-    return area_under_curve/ 2.0f;
+    // The curve runs from (1,1) to (0,0), so the signed trapezoidal sum is negative.
+    return fabs(area_under_curve) / 2.0f;
 }
 
 float TestingAnalysis::calculate_area_under_curve_confidence_limit(const MatrixR& targets, const MatrixR& outputs) const

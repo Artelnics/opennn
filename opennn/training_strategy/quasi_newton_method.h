@@ -50,7 +50,7 @@ private:
 
     float first_learning_rate = 0.01f;
 
-    float minimum_loss_decrease = EPSILON;
+    float minimum_loss_decrease = 1.0e-6f;
 };
 
 }
