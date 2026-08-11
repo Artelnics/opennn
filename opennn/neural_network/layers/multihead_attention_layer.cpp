@@ -173,6 +173,7 @@ bool MultiHeadAttention::should_use_sdpa() const
     if (!AttentionOperator::sdpa_supported(compute_dtype, compute_device)) return false;
 
     if (attention.zero_padded_queries) return false;
+    if (attention.expects_valid_lengths) return false;
 
     const Index shorter = min(query_sequence_length, source_sequence_length);
     return shorter >= sdpa_min_sequence_length;
@@ -181,6 +182,12 @@ bool MultiHeadAttention::should_use_sdpa() const
 void MultiHeadAttention::set_zero_padded_queries(bool new_zero_padded_queries)
 {
     attention.zero_padded_queries = new_zero_padded_queries;
+    attention.use_sdpa = should_use_sdpa();
+}
+
+void MultiHeadAttention::set_expects_valid_lengths(bool new_expects_valid_lengths)
+{
+    attention.expects_valid_lengths = new_expects_valid_lengths;
     attention.use_sdpa = should_use_sdpa();
 }
 

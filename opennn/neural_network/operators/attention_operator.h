@@ -25,6 +25,11 @@ struct AttentionOperator : Operator
 
     bool zero_padded_queries = false;
 
+    // Set at NeuralNetwork::compile when an Embedding in the network exports
+    // valid lengths: those arrive at runtime and force the unfused path, so the
+    // layer must plan (scratch) and dispatch (no SDPA) for it from the start.
+    bool expects_valid_lengths = false;
+
     MatrixR causal_mask;
 
     DropoutOperator dropout;

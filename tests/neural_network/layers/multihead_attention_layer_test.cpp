@@ -3,6 +3,7 @@
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/layers/multihead_attention_layer.h"
+#include "opennn/neural_network/layers/embedding_layer.h"
 #include "opennn/neural_network/layers/flatten_layer.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/neural_network/neural_network.h"
@@ -79,7 +80,62 @@ TEST(MultiHeadAttentionTest, SdpaMinimumSequenceLengthIsInclusive)
     attention.set_sdpa_min_sequence_length(129);
     EXPECT_FALSE(attention.should_use_sdpa());
 }
+
+// Dropout runs inside the cuDNN SDPA graph, so it must not bring back the
+// batch x heads x seq x seq scratch: with SDPA active, the forward specs of a
+// layer with dropout are byte-identical to the same layer without it.
+TEST(MultiHeadAttentionTest, SdpaElidesUnfusedScratchEvenWithDropout)
+{
+    const Index batch_size = 4;
+
+    const auto make_layer = [](const float dropout_rate)
+    {
+        auto layer = make_unique<MultiHeadAttention>(Shape{192, 64}, 8);
+        layer->set_compute_device(Device::CUDA);
+        layer->set_dropout_rate(dropout_rate);
+        layer->set_compute_dtype(Type::FP32); // refreshes use_sdpa, as compile does
+        return layer;
+    };
+
+    const auto layer_with_dropout = make_layer(0.1f);
+    const auto layer_without_dropout = make_layer(0.0f);
+
+    ASSERT_TRUE(layer_with_dropout->should_use_sdpa());
+
+    EXPECT_EQ(get_aligned_bytes(layer_with_dropout->get_forward_specs(batch_size)),
+              get_aligned_bytes(layer_without_dropout->get_forward_specs(batch_size)));
+}
 #endif
+
+// An Embedding exporting valid lengths forces the unfused attention path at
+// runtime, so compile must mark every attention layer: SDPA off, scratch
+// planned. Without the export nothing changes.
+TEST(MultiHeadAttentionTest, CompileWiresExpectsValidLengthsFromEmbeddings)
+{
+    const auto build = [](const bool export_valid_lengths)
+    {
+        auto network = make_unique<NeuralNetwork>();
+
+        auto embedding = make_unique<Embedding>(Shape{100, 16}, 32, "embedding");
+        embedding->set_export_valid_lengths(export_valid_lengths);
+        network->add_layer(move(embedding), {-1});
+
+        network->add_layer(make_unique<MultiHeadAttention>(Shape{16, 32}, 4), {0});
+        network->compile(Device::CPU);
+        return network;
+    };
+
+    const auto exporting = build(true);
+    const auto* marked =
+        static_cast<const MultiHeadAttention*>(exporting->get_layer(1).get());
+    EXPECT_TRUE(marked->get_expects_valid_lengths());
+    EXPECT_FALSE(marked->should_use_sdpa());
+
+    const auto plain = build(false);
+    const auto* unmarked =
+        static_cast<const MultiHeadAttention*>(plain->get_layer(1).get());
+    EXPECT_FALSE(unmarked->get_expects_valid_lengths());
+}
 
 TEST(MultiHeadAttentionTest, ForwardSelfAttentionMatchesHandComputed)
 {
