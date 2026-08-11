@@ -16,6 +16,7 @@
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/neural_network/layers/addition_layer.h"
 #include "opennn/neural_network/layers/embedding_layer.h"
+#include "opennn/neural_network/layers/multihead_attention_layer.h"
 #include "opennn/neural_network/layers/tokenizer_layer.h"
 #include "opennn/core/variable.h"
 #include "opennn/core/string_utilities.h"
@@ -102,6 +103,25 @@ void NeuralNetwork::compile(Configuration::Resolved new_config)
     link_states();
 
     wire_drelu_fusions();
+    wire_attention_valid_lengths();
+}
+
+// attention_valid_lengths is a network-wide channel: any Embedding that
+// exports lengths writes into the ForwardPropagation, and every attention
+// layer running after it reads them. Planning must match that dispatch, so an
+// exporting embedding anywhere marks every MultiHeadAttention in the network.
+void NeuralNetwork::wire_attention_valid_lengths()
+{
+    const bool valid_lengths_exported =
+        ranges::any_of(layers, [](const unique_ptr<Layer>& layer)
+        {
+            const auto* embedding = dynamic_cast<const Embedding*>(layer.get());
+            return embedding && embedding->get_export_valid_lengths();
+        });
+
+    for (auto& layer : layers)
+        if (auto* attention = dynamic_cast<MultiHeadAttention*>(layer.get()))
+            attention->set_expects_valid_lengths(valid_lengths_exported);
 }
 
 void NeuralNetwork::clear_low_precision_parameter_storage()

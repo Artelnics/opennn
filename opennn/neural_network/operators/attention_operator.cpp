@@ -114,7 +114,10 @@ Index AttentionOperator::infer_attention_prefix_length(const TensorView& attenti
 
 vector<TensorSpec> AttentionOperator::forward_scratch_specs(Index batch_size) const
 {
-    if (use_sdpa && !dropout.active())
+    // SDPA never touches these buffers: dropout runs inside the cuDNN graph
+    // (seed/offset in apply_sdpa_forward), and valid-length batches are ruled
+    // out at compile time via expects_valid_lengths, which turns use_sdpa off.
+    if (use_sdpa)
         return vector<TensorSpec>(2, {Shape{}, compute_dtype});
 
     const Shape attention_shape = {batch_size, heads_number,
@@ -481,6 +484,15 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
 
     const vector<Index>* explicit_lengths =
         forward_propagation.attention_valid_lengths.empty() ? nullptr : &forward_propagation.attention_valid_lengths;
+
+    // With use_sdpa the unfused scratch was never allocated, so falling back
+    // here would write through empty views. Compile marks the layer with
+    // expects_valid_lengths (turning use_sdpa off) when lengths can arrive;
+    // reaching this state means the network was rewired without recompiling.
+    throw_if(use_sdpa && explicit_lengths,
+             "AttentionOperator: valid lengths arrived at runtime but the layer "
+             "was planned for SDPA (no unfused scratch). Recompile the network "
+             "so expects_valid_lengths reaches this attention layer.");
 
 #ifdef OPENNN_HAS_CUDA
     if (use_sdpa && query.is_cuda() && !explicit_lengths)
