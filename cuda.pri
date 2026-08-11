@@ -77,15 +77,31 @@ if(!isEmpty(CUDA_PATH)) {
             NVCC_FLAGS += --expt-relaxed-constexpr
             # CUDA <=12.9 rejects MSVC > VS2022; allow newer host compilers (VS2026).
             win32: NVCC_FLAGS += -allow-unsupported-compiler
-            NVCC_FLAGS += -gencode arch=compute_61,code=sm_61
-            NVCC_FLAGS += -gencode arch=compute_75,code=sm_75
-            NVCC_FLAGS += -gencode arch=compute_86,code=sm_86
+            NVCC_GPU_ARCHS = $$system($$shell_quote($$NVCC_EXECUTABLE) --list-gpu-arch)
+
+            isEmpty(NVCC_GPU_ARCHS): message("    -> Could not query nvcc for architectures. Leaving the nvcc default.")
+
+            contains(NVCC_GPU_ARCHS, compute_61): NVCC_FLAGS += -gencode arch=compute_61,code=sm_61
+            contains(NVCC_GPU_ARCHS, compute_75): NVCC_FLAGS += -gencode arch=compute_75,code=sm_75
+            contains(NVCC_GPU_ARCHS, compute_86): NVCC_FLAGS += -gencode arch=compute_86,code=sm_86
+
+            contains(NVCC_GPU_ARCHS, compute_120) {
+                message("    -> nvcc supports compute_120 (Blackwell). Adding sm_120 + PTX.")
+                NVCC_FLAGS += -gencode arch=compute_120,code=sm_120
+                NVCC_FLAGS += -gencode arch=compute_120,code=compute_120
+            } else {
+                message("    -> nvcc has no compute_120. Adding compute_86 PTX as the forward fallback.")
+                NVCC_FLAGS += -gencode arch=compute_86,code=compute_86
+            }
 
             win32: NVCC_FLAGS += -Xcompiler "/MD"
             unix: NVCC_FLAGS += -Xcompiler -fPIC
 
-            debug:   NVCC_FLAGS_DEBUG   = -g -G
-            release: NVCC_FLAGS_RELEASE = --ptxas-options=-v
+            CONFIG(debug, debug|release) {
+                NVCC_FLAGS_DEBUG = -g -G
+            } else {
+                NVCC_FLAGS_RELEASE = --ptxas-options=-v
+            }
 
             cuda.commands = $$NVCC_EXECUTABLE -c $$NVCC_FLAGS \
                             $$join(NVCC_FLAGS_RELEASE, " ", "", " ") \
