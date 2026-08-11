@@ -20,9 +20,14 @@ Each cell runs N times; reports median +/- stdev of time-to-target over the runs
 that reached the target. A run that fails to converge within --max-epochs is
 recorded (reached_goal=0) and excluded from the timing median.
 
-  usage: run_convergence.py [--target 0.60] [--max-epochs 50] [--runs 5]
+All three engines run under the suite's fair CPU thread protocol (default
+--threads 8: OMP_NUM_THREADS + OMP_PLACES=cores + OMP_PROC_BIND=close, plus
+MKL/OPENNN_THREADS for OpenNN and intra/inter-op threads for TensorFlow),
+matching ../../throughput/higgs/run_higgs_cpu.py.
+
+  usage: run_convergence.py [--target 0.47] [--max-epochs 50] [--runs 5]
                             [--batch 1024] [--hidden 1024] [--hidden-layers 2]
-                            [--engines opennn,pytorch,tensorflow]
+                            [--engines opennn,pytorch,tensorflow] [--threads 8]
                             [--train TRAIN.csv] [--test TEST.csv]
 """
 
@@ -32,6 +37,7 @@ import argparse
 import json
 import os
 import platform
+import shlex
 import statistics
 import subprocess
 import sys
@@ -80,7 +86,16 @@ def find_opennn_bin() -> tuple[str, bool]:
     fallback = REPO_ROOT / "build-benchmarks" / "bin" / candidate_names("opennn_convergence")[0]
     return str(fallback), False
 
-def engine_cmd(engine: str, args: argparse.Namespace) -> list[str]:
+def engine_cmd(engine: str, args: argparse.Namespace) -> tuple[list[str], dict[str, str]]:
+    env = {"CUDA_VISIBLE_DEVICES": "", "TF_CPP_MIN_LOG_LEVEL": "2"}
+    if args.threads:
+        env["OMP_NUM_THREADS"] = str(args.threads)
+        if engine in ("opennn", "pytorch"):
+            env["OMP_PLACES"] = "cores"
+            env["OMP_PROC_BIND"] = "close"
+        if engine == "opennn":
+            env["OPENNN_THREADS"] = str(args.threads)
+            env["MKL_NUM_THREADS"] = str(args.threads)
     if engine == "opennn":
         binary, _ = find_opennn_bin()
         return [
@@ -92,7 +107,7 @@ def engine_cmd(engine: str, args: argparse.Namespace) -> list[str]:
             str(args.batch),
             str(args.hidden),
             str(args.hidden_layers),
-        ]
+        ], env
     script = "pytorch_convergence.py" if engine == "pytorch" else "tensorflow_convergence.py"
     cmd = [
         PY,
@@ -107,14 +122,18 @@ def engine_cmd(engine: str, args: argparse.Namespace) -> list[str]:
     ]
     if args.threads:
         cmd += ["--threads", str(args.threads)]
-    return cmd
+    return cmd, env
 
-def run_once(cmd: list[str]) -> tuple[dict[str, str], str]:
+def run_once(cmd: list[str], env_over: dict[str, str], timeout_s: int) -> tuple[dict[str, str], str]:
     env = dict(os.environ)
-    env.setdefault("CUDA_VISIBLE_DEVICES", "")
-    env.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
-    out = subprocess.run(cmd, env=env, capture_output=True, text=True, check=False)
-    raw = out.stdout + out.stderr
+    env.update(env_over)
+    try:
+        out = subprocess.run(cmd, env=env, capture_output=True, text=True,
+                             check=False, timeout=timeout_s)
+        raw = out.stdout + out.stderr
+    except subprocess.TimeoutExpired as e:
+        raw = ((e.stdout or "") + (e.stderr or "")
+               + f"\nreached_goal=0\nRESULT=TIMEOUT after {timeout_s}s\n")
     fields: dict[str, str] = {}
     for line in raw.splitlines():
         if "=" in line:
@@ -167,15 +186,19 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--train", type=Path, default=DEFAULT_HIGGS_DIR / "higgs_train.csv")
     parser.add_argument("--test", type=Path, default=DEFAULT_HIGGS_DIR / "higgs_test.csv")
-    parser.add_argument("--target", type=float, default=0.60,
+    parser.add_argument("--target", type=float, default=0.47,
                         help="held-out test log-loss target (lower is better)")
     parser.add_argument("--max-epochs", type=int, default=50)
+    parser.add_argument("--timeout-s", type=int, default=1800,
+                        help="per-run process timeout; a timed-out run counts as not converged")
     parser.add_argument("--batch", type=int, default=1024)
     parser.add_argument("--hidden", type=int, default=1024)
     parser.add_argument("--hidden-layers", type=int, default=2)
     parser.add_argument("--runs", type=int, default=5)
     parser.add_argument("--engines", default="opennn,pytorch,tensorflow")
-    parser.add_argument("--threads", type=int, default=0)
+    parser.add_argument("--threads", type=int, default=8,
+                        help="threads per engine, applied to all three engines "
+                             "(the suite's fair CPU protocol); 0 = engine defaults")
     parser.add_argument("--run-id")
     parser.add_argument("--output", type=Path)
     return parser.parse_args()
@@ -227,6 +250,7 @@ def main() -> None:
                 "runs": args.runs,
                 "aggregation": "median over runs that reached the target",
                 "timed_region": "training epochs until the held-out target is reached",
+                "per_run_timeout_s": args.timeout_s,
             },
         },
         "configuration": {
@@ -261,15 +285,16 @@ def main() -> None:
 
     for engine in engines:
         print(f"\n=== {engine} ===")
-        cmd = engine_cmd(engine, args)
-        result["commands"][engine] = " ".join(cmd)
+        cmd, env_over = engine_cmd(engine, args)
+        env_bits = [f"{key}={value}" for key, value in sorted(env_over.items())]
+        result["commands"][engine] = " ".join(env_bits + [shlex.join(cmd)])
         times: list[float] = []
         log_losses: list[float] = []
         epochs_list: list[int] = []
         runs: list[dict[str, Any]] = []
         n_reached = 0
         for index in range(1, args.runs + 1):
-            fields, raw = run_once(cmd)
+            fields, raw = run_once(cmd, env_over, args.timeout_s)
             reached = fields.get("reached_goal") == "1"
             try:
                 t = float(fields["time_to_target_s"])

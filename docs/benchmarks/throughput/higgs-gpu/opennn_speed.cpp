@@ -253,29 +253,43 @@ int main(int argc, char* argv[])
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
             training_strategy.get_optimization_algorithm());
         adam->set_batch_size(batch);
-        adam->set_cuda_graph(true);
+        adam->set_cuda_graph(getenv("OPENNN_SPEED_NO_GRAPH") == nullptr);
         adam->set_display_period(1000000);
         adam->set_gradient_clip_norm(0.0f);
 
-        adam->set_maximum_epochs(2);
-        training_strategy.train();
+        const Index warmup_epochs = 2;
+        adam->set_maximum_epochs(warmup_epochs + epochs);
 
-        adam->set_maximum_epochs(epochs);
         const auto unix_now = []
         {
             return chrono::duration<double>(
                 chrono::system_clock::now().time_since_epoch()).count();
         };
-        cout << "TRAIN_START_UNIX=" << fixed << setprecision(3)
-                  << unix_now() << "\n" << defaultfloat;
-        const auto t0 = clock_type::now();
-        training_strategy.train();
-        const auto t1 = clock_type::now();
-        cout << "TRAIN_END_UNIX=" << fixed << setprecision(3)
-                  << unix_now() << "\n" << defaultfloat;
 
-        const double total_s = chrono::duration<double>(t1 - t0).count();
-        const double median_epoch_s = total_s / double(epochs);
+        vector<double> epoch_seconds;
+        auto previous_mark = clock_type::now();
+        adam->post_epoch_callback = [&](Index epoch, NeuralNetwork*)
+        {
+            const auto now = clock_type::now();
+            const double elapsed = chrono::duration<double>(now - previous_mark).count();
+            previous_mark = now;
+
+            if (epoch == warmup_epochs - 1)
+                cout << "TRAIN_START_UNIX=" << fixed << setprecision(3)
+                     << unix_now() << "\n" << defaultfloat;
+            else if (epoch >= warmup_epochs)
+                epoch_seconds.push_back(elapsed);
+
+            if (epoch == warmup_epochs + epochs - 1)
+                cout << "TRAIN_END_UNIX=" << fixed << setprecision(3)
+                     << unix_now() << "\n" << defaultfloat;
+        };
+
+        training_strategy.train();
+
+        throw_if(Index(epoch_seconds.size()) != epochs, "epoch timing marks missing");
+        sort(epoch_seconds.begin(), epoch_seconds.end());
+        const double median_epoch_s = epoch_seconds[epoch_seconds.size() / 2];
         const double samples_per_sec = double(samples) / median_epoch_s;
 
         const BinaryMetrics metrics = evaluate(*network, test_path, batch);

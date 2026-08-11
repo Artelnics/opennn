@@ -1,5 +1,11 @@
 # Application lines of code: OpenNN vs PyTorch vs TensorFlow
 
+*Counts re-verified 2026-08-11 with `count_lsloc.py`: OpenNN 14, PyTorch 39, TensorFlow 23.
+2026-08-11 fairness pass: the OpenNN snippet was refreshed to the current API (`TabularDataset`,
+`MatrixR`, JSON model save) and now compiles against HEAD verbatim — same 14 logical lines; the
+PyTorch snippet dropped padding no other engine carried (a duplicate ONNX export next to the
+TorchScript save, plus two progress prints), 43 → 39.*
+
 This note compares the amount of user application code needed to implement the same small Iris
 classification workflow in OpenNN, PyTorch, and TensorFlow/Keras. It is a developer-experience
 metric, not a runtime-size or speed benchmark.
@@ -22,10 +28,10 @@ the trained model.
 | Framework | Language/API path | Logical source lines of code |
 | --- | --- | ---: |
 | OpenNN | C++ | 14 |
-| PyTorch | Python | 43 |
+| PyTorch | Python | 39 |
 | TensorFlow | Python / Keras | 23 |
 
-OpenNN is the most concise of the three on this workflow: about **67% fewer logical instructions
+OpenNN is the most concise of the three on this workflow: about **64% fewer logical instructions
 than PyTorch** and **39% fewer than TensorFlow/Keras**.
 
 ## What is counted
@@ -61,7 +67,7 @@ Current output:
 ```json
 {
   "opennn_cpp": 14,
-  "pytorch_python": 43,
+  "pytorch_python": 39,
   "tensorflow_python": 23
 }
 ```

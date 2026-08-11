@@ -13,10 +13,13 @@
 //
 //   usage:  opennn_resnet50_speed <data_path> [epochs] [batch] [fp32|bf16] [image_size] [cuda_graph 0|1] [cache_dir]
 
+#include <algorithm>
 #include <chrono>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "opennn/dataset/image_dataset.h"
 #include "opennn/neural_network/standard_networks.h"
@@ -119,16 +122,39 @@ int main(int argc, char* argv[])
             return 0;
         }
 
-        adam->set_maximum_epochs(2);
-        training_strategy.train();
+        const Index warmup_epochs = 2;
+        adam->set_maximum_epochs(warmup_epochs + timed_epochs);
 
-        adam->set_maximum_epochs(timed_epochs);
-        const auto t0 = clock_type::now();
+        const auto unix_now = []
+        {
+            return chrono::duration<double>(
+                chrono::system_clock::now().time_since_epoch()).count();
+        };
+
+        vector<double> epoch_seconds;
+        auto previous_mark = clock_type::now();
+        adam->post_epoch_callback = [&](Index epoch, NeuralNetwork*)
+        {
+            const auto now = clock_type::now();
+            const double elapsed = chrono::duration<double>(now - previous_mark).count();
+            previous_mark = now;
+
+            if (epoch == warmup_epochs - 1)
+                cout << "TRAIN_START_UNIX=" << fixed << setprecision(3)
+                     << unix_now() << "\n" << defaultfloat;
+            else if (epoch >= warmup_epochs)
+                epoch_seconds.push_back(elapsed);
+
+            if (epoch == warmup_epochs + timed_epochs - 1)
+                cout << "TRAIN_END_UNIX=" << fixed << setprecision(3)
+                     << unix_now() << "\n" << defaultfloat;
+        };
+
         const TrainingResult results = training_strategy.train();
-        const auto t1 = clock_type::now();
 
-        const double total_s = chrono::duration<double>(t1 - t0).count();
-        const double epoch_s = total_s / double(timed_epochs);
+        throw_if(Index(epoch_seconds.size()) != timed_epochs, "epoch timing marks missing");
+        sort(epoch_seconds.begin(), epoch_seconds.end());
+        const double epoch_s = epoch_seconds[epoch_seconds.size() / 2];
 
         cerr << "final_training_error " << results.get_training_error() << "\n";
         cout << "epoch_s=" << epoch_s << "\n";

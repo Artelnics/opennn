@@ -54,3 +54,20 @@ aggregate metrics, framework versions, GPU state, git commit, and dirty status.
 | `avg_power_w`, `sm_clock_median_mhz` | Where the energy went: power level and sustained SM clock |
 | `train_window_s`, `samples_per_sec` | Fixed-work wall time and throughput |
 | `test_accuracy`, `test_log_loss`, `test_roc_auc` | Quality gate: proof the fixed work trained a real classifier |
+
+## Latest result (2026-08-10, RTX 4080, commit 52e21e15d)
+
+20 epochs × 10.5M rows, batch 7000, median of 3 runs
+(artifact `results/gpu-higgs-dense-energy-20260810T125413Z.json`):
+
+| Precision | Engine | Energy (J) | µJ/sample | Avg power | Train window |
+|---|---|---:|---:|---:|---:|
+| fp32 | **OpenNN** | **10,839** | **51.6** | 243 W | 44.5 s |
+| fp32 | PyTorch | 19,786 | 94.2 | 320 W | 61.9 s |
+| fp32 | TensorFlow | 19,991 | 95.2 | 297 W | 67.4 s |
+| bf16 | **OpenNN** | **5,232** | **24.9** | 232 W | 22.6 s |
+| bf16 | PyTorch | 5,590 | 26.6 | 234 W | 23.9 s |
+| bf16 | TensorFlow | 6,347 | 30.2 | 225 W | 28.2 s |
+
+OpenNN spends **1.83× less energy than either engine in fp32** and 1.07×/1.21×
+less in bf16 for the identical fixed workload.

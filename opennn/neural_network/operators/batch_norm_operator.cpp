@@ -31,6 +31,9 @@ namespace opennn
 namespace
 {
 
+// cuDNN has no engine configs for a BF16-IO batchnorm *backward* graph, so the
+// backward stages X/DY through an FP32 workspace. The forward runs with native
+// BF16 IO (stats and scale/bias stay FP32 either way).
 struct Fp32Staging
 {
     Fp32Staging(Index count, Index slices)
@@ -45,8 +48,6 @@ struct Fp32Staging
         cast_bf16_to_fp32(elements, static_cast<const bfloat16*>(bfloat16_source), slice.data());
         return slice;
     }
-
-    span<float> write() { return next(); }
 
     Index elements = 0;
 
@@ -538,7 +539,7 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
     PROFILE_SCOPE("op:bn_fwd");
 
     const bool bf16 = input.is_bf16();
-    const Type graph_dtype = bf16 ? Type::FP32 : input.type;
+    const Type graph_dtype = input.type;
 
     throw_if(!input.is_fp32() && !bf16,
              "BatchNormalizationOperator: GPU training forward requires FP32 or BF16.");
@@ -560,16 +561,6 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
         void* x_ptr        = input.data;
         void* residual_ptr = fuse_add ? residual.data : nullptr;
         void* y_ptr        = output.data;
-        span<float> y_fp32;
-        optional<Fp32Staging> staging;
-        if (bf16)
-        {
-            staging.emplace(input.size(), fuse_add ? 3 : 2);
-            x_ptr  = staging->read(input.data).data();
-            y_fp32 = staging->write();
-            y_ptr  = y_fp32.data();
-            if (fuse_add) residual_ptr = staging->read(residual.data).data();
-        }
 
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
         if (fuse_add) tensors[entry.fwd_Residual] = residual_ptr;
@@ -593,8 +584,6 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
                                 cudnn_frontend::graph_timing_enabled()
                                 ? format("bn_fwd c{} r{}", features, input.size() / features)
                                 : string());
-
-        if (bf16) store_as_bfloat16(*staging, y_fp32, output.data);
     });
 
     if (!ran)

@@ -21,6 +21,7 @@
 #include <chrono>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <cuda_runtime.h>
 
@@ -88,27 +89,39 @@ int main(int argc, char* argv[])
         if (!adam) throw runtime_error("Adam optimizer not found.");
 
         adam->set_batch_size(batch);
+        adam->set_cuda_graph(getenv("OPENNN_TRANSFORMER_TRAIN_NO_GRAPH") == nullptr);
         const float lr = getenv("OPENNN_LR") ? stof(getenv("OPENNN_LR")) : 0.0001f;
         adam->set_learning_rate(lr);
         adam->set_display(getenv("OPENNN_BENCH_DISPLAY") != nullptr);
         adam->set_display_period(1);
         cout << "learning_rate=" << lr << "\n";
 
-        adam->set_maximum_epochs(0);
-        training_strategy.train();
-        cudaDeviceSynchronize();
+        const Index warmup_epochs = 1;
+        adam->set_maximum_epochs(warmup_epochs + epochs);
 
-        adam->set_maximum_epochs(epochs);
+        vector<double> epoch_seconds;
+        auto previous_mark = chrono::high_resolution_clock::now();
+        adam->post_epoch_callback = [&](Index epoch, NeuralNetwork*)
+        {
+            const auto now = chrono::high_resolution_clock::now();
+            const double elapsed = chrono::duration<double>(now - previous_mark).count();
+            previous_mark = now;
+            if (epoch >= warmup_epochs) epoch_seconds.push_back(elapsed);
+        };
 
-        const auto t0 = chrono::high_resolution_clock::now();
         const TrainingResult result = training_strategy.train();
         cudaDeviceSynchronize();
-        const auto t1 = chrono::high_resolution_clock::now();
 
-        const double wall_s = chrono::duration<double>(t1 - t0).count();
-        const double timed_passes = double(max<Index>(Index(1), epochs));
-        const double total_samples = double(samples) * timed_passes;
-        const double samples_per_s = total_samples / wall_s;
+        if (Index(epoch_seconds.size()) != epochs)
+            throw runtime_error("epoch timing marks missing");
+        vector<double> sorted_epochs = epoch_seconds;
+        sort(sorted_epochs.begin(), sorted_epochs.end());
+        const double median_epoch_s = sorted_epochs[sorted_epochs.size() / 2];
+
+        double wall_s = 0.0;
+        for (const double value : epoch_seconds) wall_s += value;
+
+        const double samples_per_s = double(samples) / median_epoch_s;
         const double tokens_per_s  = samples_per_s * double(input_seq + decoder_seq);
 
         cout << "final_loss=" << result.loss << "\n";

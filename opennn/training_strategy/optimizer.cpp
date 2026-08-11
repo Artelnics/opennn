@@ -24,6 +24,7 @@
 #include "opennn/core/cuda/kernel.cuh"
 #include <atomic>
 #include <chrono>
+#include <future>
 #include <mutex>
 #include <stop_token>
 #include <thread>
@@ -1077,11 +1078,32 @@ TrainingResult Optimizer::train()
     {
         device::CudaAllocationGrowthGuard steady_state_guard(needs_cuda_warmup);
 
+        // Shuffling and slicing 10M+ sample indices costs a visible fraction of a
+        // fast GPU epoch, so the next epoch's batches are built on a helper thread
+        // while the GPU trains the current one. The shared RNG draw order is
+        // unchanged (one shuffle per epoch, same sequence), so batch composition
+        // stays identical to the synchronous path.
+        vector<vector<Index>> next_training_batches;
+        future<void> next_training_batches_ready;
+
         for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
         {
             if (should_display(epoch)) cout << "Epoch: " << epoch << "\n";
 
-            dataset->get_batches(training_sample_indices, training_batch_size, shuffle_samples, training_batches);
+            if (next_training_batches_ready.valid())
+            {
+                next_training_batches_ready.get();
+                training_batches.swap(next_training_batches);
+            }
+            else
+                dataset->get_batches(training_sample_indices, training_batch_size, shuffle_samples, training_batches);
+
+            if (on_gpu && epoch + 1 < maximum_epochs)
+                next_training_batches_ready = async(launch::async, [&]
+                {
+                    dataset->get_batches(training_sample_indices, training_batch_size,
+                                         shuffle_samples, next_training_batches);
+                });
 
             on_epoch_begin(epoch, optimizer_data);
 

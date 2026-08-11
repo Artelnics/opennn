@@ -1,10 +1,14 @@
-# Energy to target: chat Transformer trained to a fixed quality (GPU) — OpenNN vs PyTorch vs TensorFlow
+# Transformer fixed-work GPU energy — OpenNN vs PyTorch vs TensorFlow
 
-MLPerf-style `training_time_to_quality` benchmark with **energy** as the headline
-metric: every engine trains the same model on the same data until it reaches the
-same quality target, and we integrate GPU power over exactly that training window.
-The question it answers: *how much electricity does each framework need to produce
-the same trained model?*
+Fixed-work energy benchmark: every engine trains the same model on the same
+data for the **same number of epochs**, and we integrate GPU power over exactly
+that training window. The question it answers: *how much electricity does each
+framework spend on identical work?* Same semantics as
+[`../higgs-dense-energy/`](../higgs-dense-energy/) and
+[`../resnet50-energy/`](../resnet50-energy/), so the three families compare
+like-for-like. (The runner's earlier energy-to-target mode — train until an
+epoch-mean CE gate — was retired in 2026-08; a run that misses the gate wastes
+its full budget and the discarded runs made the aggregate unstable.)
 
 ## Workload
 
@@ -30,10 +34,11 @@ response`, Stanford Alpaca 47,487 pairs, vocab 19,443 in / 30,000 out, sequences
 - **Identical convergence hyperparameters**: batch 128, plain Adam lr 1e-4
   (no weight decay, no clipping, no dropout, no LR schedule), shuffled epochs,
   all samples in the training split, partial last batch kept.
-- **Identical gate**: epoch-mean token cross-entropy over non-PAD targets
-  ≤ target, checked at every epoch end. This is the same quantity OpenNN's
-  `CrossEntropyError3d` reports and its `set_loss_goal` stops on; PyTorch uses
-  `CrossEntropyLoss(ignore_index=0)`, TensorFlow masks PAD tokens explicitly.
+- **Identical work**: every engine runs exactly `--epochs` epochs (the wrapper
+  passes an unreachable CE target so max-epochs is the only stopping
+  condition); the per-run check verifies the executed epoch count. The
+  epoch-mean token CE over non-PAD targets is still recorded per epoch, so
+  convergence equivalence stays auditable.
 - **Per-engine fastest execution** (this is what the benchmark compares):
   OpenNN bf16 tensor-core path + CUDA graph; PyTorch autocast(bf16) + fused
   Adam + SDPA; TensorFlow `mixed_bfloat16` + `@tf.function(jit_compile=True)`
@@ -65,7 +70,7 @@ GPU energy only (board sensor; sampled power, not a hardware joule counter).
 
 | File | Purpose |
 |------|---------|
-| `opennn_transformer_energy.cpp` | OpenNN driver (bf16 + CUDA graph, `set_loss_goal` gate); also `probe` mode to derive the shared shapes |
+| `opennn_transformer_energy.cpp` | OpenNN driver (bf16 + CUDA graph); also `probe` mode to derive the shared shapes |
 | `pytorch_transformer_energy.py` | PyTorch counterpart (bf16 autocast, fused Adam, SDPA, matched masks/init/gate) |
 | `tensorflow_transformer_energy.py` | TensorFlow counterpart (`mixed_bfloat16`, XLA, matched masks/init/gate) |
 | `run_transformer_energy.py` | Orchestrator: idle baseline, 20 Hz power logging, windowed integration, immutable JSON to `../../results/` |
@@ -82,9 +87,10 @@ nvidia-smi pmon -c 5
 # 3. Full comparison (torch + TF live in the ml venv; TF gets its bundled CUDA
 #    libs on LD_LIBRARY_PATH automatically).
 python docs/benchmarks/energy/transformer-energy/run_transformer_energy.py \
-    --target 3.5 --batch 128 --lr 1e-4 --runs 4
+    --epochs 10 --batch 128 --lr 1e-4 --runs 3
 ```
 
-Writes `../../results/gpu-transformer-energy-to-target-<run_id>.json` with per-run
-and aggregate energy (Wh, total and active), training-window wall time, epochs
-to target, per-epoch loss histories, versions, commit and GPU state.
+Writes `../../results/gpu-transformer-energy-fixed-work-<run_id>.json` with
+per-run and aggregate energy (Wh, total and active), µJ per nominal
+epoch-sample, training-window wall time, per-epoch loss histories, versions,
+commit and GPU state.

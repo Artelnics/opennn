@@ -60,8 +60,7 @@ from the training-speed suite, not from this one.
   feature, not a capacity one) and CUDA graph off.
 - **CPU mode** (`--device cpu`, fp32 only): the same matrix on the CPU, with
   each trial process under a hard `RLIMIT_DATA` cap (`--mem-cap-gib`,
-  default 8 — the same budget as the
-  [data-capacity benchmark](../data-capacity/README.md)), so the out-of-memory
+  default 8 GiB), so the out-of-memory
   boundary is deterministic instead of swap-dependent. `RLIMIT_DATA` charges
   brk + anonymous mmap (the tensor allocations) but not file-backed library
   mappings — PyTorch/TF map several GiB of runtime libraries, so an `RLIMIT_AS`

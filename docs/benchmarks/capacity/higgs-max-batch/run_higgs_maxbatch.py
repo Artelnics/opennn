@@ -20,21 +20,19 @@ off (set in the trial binary): this is a capacity benchmark.
 
 --device cpu runs the same matrix CPU-only (fp32; bf16 is skipped): each
 trial process is capped with a hard RLIMIT_DATA limit (--mem-cap-gib,
-default 8 -- the same budget as the published data-capacity benchmark),
-which makes the out-of-memory boundary deterministic. RLIMIT_DATA counts
-brk + anonymous mmap (the tensor/data allocations) but NOT file-backed
-library mappings -- PyTorch/TF map several GiB of runtime libraries, so an
-address-space cap (RLIMIT_AS) would charge them for code, not data, and the
-Windows data-capacity benchmark's Job Object cap is committed memory, which
-RLIMIT_DATA approximates far better. CPU mode requires Linux (kernel >= 4.7
-for mmap accounting in RLIMIT_DATA); on Windows use a Job Object wrapper as
-in docs/benchmarks/capacity/data-capacity/.
+default 8), which makes the out-of-memory boundary deterministic.
+RLIMIT_DATA counts brk + anonymous mmap (the tensor/data allocations) but
+NOT file-backed library mappings -- PyTorch/TF map several GiB of runtime
+libraries, so an address-space cap (RLIMIT_AS) would charge them for code,
+not data. CPU mode requires Linux (kernel >= 4.7 for mmap accounting in
+RLIMIT_DATA); on Windows a Job Object committed-memory cap is the
+equivalent.
 
 A JSON artifact is written to docs/benchmarks/results/ by default
 (--result-json to override, --no-result-json to skip).
 """
 
-import argparse, json, os, re, subprocess, threading, time
+import argparse, json, os, re, subprocess, sys, threading, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.normpath(os.path.join(HERE, "..", "..", "..", ".."))
@@ -223,15 +221,18 @@ def main():
     ap.add_argument("--reserve-mib", type=int, default=512)
     ap.add_argument("--mem-cap-gib", type=float, default=8.0,
                     help="CPU mode: hard RLIMIT_DATA cap per trial process")
-    ap.add_argument("--timeout-s", type=int, default=600)
+    ap.add_argument("--timeout-s", type=int, default=None,
+                    help="per-trial timeout (default 600 on GPU, 1800 on CPU)")
     ap.add_argument("--result-json", default=None)
     ap.add_argument("--no-result-json", action="store_true")
     args = ap.parse_args()
+    if args.timeout_s is None:
+        args.timeout_s = 1800 if args.device == "cpu" else 600
 
     if args.device == "cpu":
         if os.name != "posix":
             raise SystemExit("--device cpu needs Linux (RLIMIT_DATA); on Windows "
-                             "use a Job Object wrapper as in docs/benchmarks/capacity/data-capacity/.")
+                             "use a Job Object committed-memory cap instead.")
         total_mib = None
         cap_mib = int(args.mem_cap_gib * 1024)
         print(f"CPU mode, RLIMIT_DATA cap={args.mem_cap_gib} GiB per trial, "
@@ -281,20 +282,42 @@ def main():
                 return subprocess.run(cmd, capture_output=True, text=True, timeout=10).stdout.strip() or None
             except Exception:
                 return None
+        on_cpu = args.device == "cpu"
+        machine = {"python": sys.version.split()[0]}
+        try:
+            machine["cpu"] = next(
+                (line.split(":", 1)[1].strip()
+                 for line in open("/proc/cpuinfo") if line.startswith("model name")),
+                None)
+            machine["host_ram_gib"] = round(os.sysconf("SC_PHYS_PAGES")
+                                            * os.sysconf("SC_PAGE_SIZE") / 2**30, 1)
+        except Exception:
+            pass
+        if not on_cpu:
+            machine["gpu"] = _cap(["nvidia-smi",
+                                   "--query-gpu=name,driver_version",
+                                   "--format=csv,noheader"])
         artifact = {
-            "benchmark_id": "gpu-higgs-max-batch",
+            "schema_version": 1,
+            "benchmark_id": "cpu-higgs-max-batch" if on_cpu else "gpu-higgs-max-batch",
             "provenance": {
                 "generated_utc": stamp,
                 "git_commit": _cap(["git", "rev-parse", "HEAD"]),
                 "git_dirty": bool(_cap(["git", "status", "--porcelain"])),
-                "gpu_name": _cap(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"]),
+                "gpu_name": None if on_cpu else
+                    _cap(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"]),
             },
             "device": args.device,
+            "machine": machine,
+            "runner": {"path": os.path.relpath(__file__, os.path.join(HERE, "..", "..", "..", "..")),
+                       "argv": sys.argv},
             "model": {"inputs": 28, "hidden": args.hidden,
                       "hidden_layers": args.layers, "outputs": 1,
                       "activation": "relu", "loss": "binary_cross_entropy",
                       "optimizer": "adam"},
             "gpu_total_mib": total_mib,
+            "rlimit_data_gib": args.mem_cap_gib if on_cpu else None,
+            "peak_metric": "peak_rss_mib" if on_cpu else "nvidia_smi_peak_mib",
             "memory_cap_mib": cap_mib,
             "search_min_step": args.min_step,
             "data": (f"higgs_bin:{args.higgs_bin} (rows repeat modulo beyond the file)"

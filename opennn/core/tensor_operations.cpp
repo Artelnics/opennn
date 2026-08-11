@@ -865,13 +865,43 @@ static void multiply_gpu(const TensorView& input_a, bool transpose_a,
 
 static void softmax_gpu(TensorView& output)
 {
-    CHECK_CUDNN(cudnnSoftmaxForward(Backend::get_cudnn_handle(),
-                                    CUDNN_SOFTMAX_ACCURATE,
-                                    CUDNN_SOFTMAX_MODE_CHANNEL,
-                                    &one,
-                                    output.get_descriptor(), output.data,
-                                    &zero,
-                                    output.get_descriptor(), output.data));
+    // cuDNN 4d descriptors hold at most INT32_MAX elements; larger tensors run row-chunked.
+    constexpr Index max_descriptor_elements = numeric_limits<int>::max();
+
+    if (output.size() <= max_descriptor_elements)
+    {
+        CHECK_CUDNN(cudnnSoftmaxForward(Backend::get_cudnn_handle(),
+                                        CUDNN_SOFTMAX_ACCURATE,
+                                        CUDNN_SOFTMAX_MODE_CHANNEL,
+                                        &one,
+                                        output.get_descriptor(), output.data,
+                                        &zero,
+                                        output.get_descriptor(), output.data));
+        return;
+    }
+
+    const Index channels = output.shape.back();
+    const Index total_rows = output.size() / channels;
+    const Index max_rows = max_descriptor_elements / channels;
+    char* const base = static_cast<char*>(output.data);
+    const Index row_bytes = channels * type_bytes(output.type);
+
+    for (Index row = 0; row < total_rows; row += max_rows)
+    {
+        const Index chunk_rows = min(max_rows, total_rows - row);
+
+        const TensorView chunk(base + row * row_bytes,
+                               Shape{chunk_rows, channels},
+                               output.type, output.device);
+
+        CHECK_CUDNN(cudnnSoftmaxForward(Backend::get_cudnn_handle(),
+                                        CUDNN_SOFTMAX_ACCURATE,
+                                        CUDNN_SOFTMAX_MODE_CHANNEL,
+                                        &one,
+                                        chunk.get_descriptor(), chunk.data,
+                                        &zero,
+                                        chunk.get_descriptor(), chunk.data));
+    }
 }
 
 static void activation_forward_gpu(TensorView& output, ActivationFunction function)

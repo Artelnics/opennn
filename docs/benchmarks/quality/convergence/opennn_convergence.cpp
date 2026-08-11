@@ -2,15 +2,17 @@
 //
 // MLPerf-style metric: WALL-CLOCK TIME TO REACH A FIXED QUALITY TARGET, not
 // throughput at a fixed epoch count. Trains the canonical HIGGS dense classifier
-// (28 -> 1024 -> 1024 -> 1, ReLU, sigmoid, BCE, Adam) and, after each short
-// training chunk, evaluates the HELD-OUT (test) log-loss. When the held-out
-// log-loss reaches the target, the clock stops and we report the wall-clock
-// time, the epochs taken, and the final held-out metric.
+// (28 -> 1024 -> 1024 -> 1, ReLU, sigmoid, BCE, Adam) in a single train() call
+// and, after each epoch (via the optimizer's post-epoch callback, so Adam state
+// persists across epochs exactly as in the PyTorch/TF drivers), evaluates the
+// HELD-OUT (test) log-loss. When the held-out log-loss reaches the target,
+// training stops and we report the wall-clock time, the epochs taken, and the
+// final held-out metric.
 //
 // This answers the reviewer question "are you fast because you do not actually
 // learn?": every engine must reach the same held-out quality, and we time how
 // long that takes. Same data, arch, optimizer, and target as the PyTorch/TF
-// drivers. Per-chunk evaluation is excluded from the clock.
+// drivers. Per-epoch evaluation is excluded from the clock.
 //
 //   usage: opennn_convergence <train_csv> <test_csv> [target_log_loss]
 //                             [max_epochs] [batch] [hidden] [hidden_layers]
@@ -160,24 +162,34 @@ int main(int argc, char* argv[])
         adam->set_gradient_clip_norm(0.0f);
         adam->set_loss_goal(0.0f);
 
-        const Index chunk = 1;
-        adam->set_maximum_epochs(chunk);
+        adam->set_maximum_epochs(max_epochs);
 
         bool reached = false;
         Index epochs = 0;
         double test_log_loss = NAN;
-        double train_s = 0.0;
+        double evaluation_s = 0.0;
 
-        while (epochs < max_epochs)
+        adam->post_epoch_callback = [&](Index epoch, NeuralNetwork* trained_network)
         {
-            const auto t0 = clock_type::now();
-            training_strategy.train();
-            train_s += chrono::duration<double>(clock_type::now() - t0).count();
-            epochs += chunk;
+            const auto evaluation_start = clock_type::now();
 
-            test_log_loss = evaluate_log_loss(*network, test_all, inputs_number, batch);
-            if (test_log_loss <= target_log_loss) { reached = true; break; }
-        }
+            test_log_loss = evaluate_log_loss(*trained_network, test_all, inputs_number, batch);
+            epochs = epoch + 1;
+
+            if (test_log_loss <= target_log_loss)
+            {
+                reached = true;
+                adam->set_maximum_epochs(0);
+            }
+
+            evaluation_s +=
+                chrono::duration<double>(clock_type::now() - evaluation_start).count();
+        };
+
+        const auto t0 = clock_type::now();
+        training_strategy.train();
+        const double train_s =
+            chrono::duration<double>(clock_type::now() - t0).count() - evaluation_s;
 
         cout.precision(10);
         cout << "engine=opennn\n";

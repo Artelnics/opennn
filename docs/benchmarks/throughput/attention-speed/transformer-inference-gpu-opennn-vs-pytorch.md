@@ -1,13 +1,14 @@
-# GPU Transformer inference: OpenNN vs PyTorch ("Attention Is All You Need")
+# GPU Transformer inference: OpenNN vs PyTorch vs TensorFlow ("Attention Is All You Need")
 
-*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-14. Linux x86_64 (WSL2), NVIDIA RTX 3060 Laptop GPU (6 GB), CUDA 12.9, cuDNN 9.23.*
+*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-08-10. Linux x86_64, NVIDIA GeForce RTX 4080 (16 GB), driver 595.84, CUDA 13.3, cuDNN 9.23.1. Artifact: [`results/gpu-transformer-inference-20260810T074158Z.json`](../../results/).*
 
-**Status:** current WSL2 laptop GPU inference result. Before using this as a
-flagship public claim, keep repeated-run statistics and exact cross-framework
-correctness/quality gates with the published numbers.
+**Status:** current desktop-GPU result on commit `52e21e15d`, median of 5 runs
+per cell. Supersedes both the 2026-06 WSL2 laptop numbers and the 2026-07-14
+figures published on the blog (see the note below the table on why the long-seq
+numbers moved).
 
-The [dense-MLP note](../../capacity/rosenbrock-max-batch/rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md) and
-the [ResNet note](../resnet50-training-speed/resnet50-training-speed-gpu-opennn-vs-pytorch.md) cover fully
+The [dense benchmark](../higgs-gpu/README.md) and
+the [ResNet benchmark](../resnet50/README.md) cover fully
 connected and convolutional networks. This note covers the third major
 architecture: the **Transformer** from *Attention Is All You Need* — token
 embeddings, sinusoidal positional encoding, a stack of encoder and decoder
@@ -18,35 +19,34 @@ forward pass) against PyTorch's `nn.Transformer`, in both bf16 and fp32.
 ## The result
 
 Inference throughput (tokens/sec) of the encoder-decoder Transformer on one
-RTX 3060 Laptop, at the *Attention Is All You Need* base shape (d_model 512,
-8 heads, feed-forward 2048, 6+6 layers), batch 32, measured after warmup. Each
-figure is the **median of 5 runs (± population stdev)**; raw per-run data,
-versions, and ratios are in [`results/`](results/)
+RTX 4080, at the *Attention Is All You Need* base shape (d_model 512,
+8 heads, feed-forward 2048, 6+6 layers), batch 32, 30 timed iterations after
+warmup. Each figure is the **median of 5 runs (± population stdev)**; raw
+per-run data, versions, and ratios are in [`results/`](../../results/)
 (`gpu-transformer-inference-*.json`). Transformers run in **bf16** in practice,
 and that is the headline — each engine on its fused fast path: OpenNN's
 device-resident fused flash-attention, PyTorch `torch.autocast(bf16)`,
 TensorFlow `@tf.function(jit_compile=True)` (XLA) + mixed-precision.
 
-| Config (d512/h8/ff2048/6L) | OpenNN bf16 | TensorFlow bf16 | PyTorch bf16 | OpenNN / TF | OpenNN / PyTorch |
+| Config (d512/h8/ff2048/6L) | OpenNN bf16 | PyTorch bf16 | TensorFlow bf16 | OpenNN / PyTorch | OpenNN / TF |
 |---|---:|---:|---:|---|---|
-| seq 128, batch 32 | 150,096 ± 725   | 136,667 ± 5,946  | 109,885 ± 4,039  | **1.10×** | 1.37× |
-| seq 256, batch 32 | 168,366 ± 4,167 | 129,976 ± 5,334  | 111,085 ± 4,657  | **1.30×** | 1.52× |
-| seq 512, batch 32 | 160,128 ± 2,700 | 101,400 ± 16,893 | 84,511 ± 13,561  | **1.58×** | 1.89× |
+| seq 128, batch 32 | 643,871 ± 12,738 | 480,888 ± 7,195 | 453,306 ± 7,350 | **1.34×** | 1.42× |
+| seq 256, batch 32 | 645,515 ± 55     | 449,672 ± 188   | 429,666 ± 3,358 | **1.44×** | 1.50× |
+| seq 512, batch 32 | 588,435 ± 381    | 429,233 ± 90    | 308,685 ± 440   | **1.37×** | 1.91× |
 
 **In bf16 — the precision transformers actually run in — OpenNN's Transformer
-inference is the fastest of the three, beating both TensorFlow and PyTorch, and
-the lead grows with sequence length** — from 1.10× over TF at seq 128 to **1.58×
-at seq 512** (1.37–1.89× over PyTorch). That is the regime that matters: long
-sequences are where real LLM / long-context inference lives, and OpenNN's fused
-cuDNN flash-attention scales there in a way XLA's whole-graph fusion does not.
-The bf16 output is validated against the fp32 CPU reference (no NaN, within bf16
-tolerance).
+inference is the fastest of the three at every sequence length**, 1.34–1.44×
+over PyTorch and up to 1.91× over TensorFlow at seq 512. Long sequences are
+where real LLM / long-context inference lives, and OpenNN's fused cuDNN
+flash-attention holds its lead there. The bf16 output is validated against the
+fp32 CPU reference (no NaN, within bf16 tolerance).
 
-*(Earlier OpenNN-vs-PyTorch-only runs reported 1.21–1.37×; adding a fairly
-configured TensorFlow (XLA) and 5-run medians gives the table above. All three
-were measured under WSL2, which is known to penalize OpenNN's bf16 tensor-core
-path — see the [dense note](../../capacity/rosenbrock-max-batch/rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md)
-— so native-Windows re-measurement should only widen OpenNN's lead.)*
+*(The 2026-07-14 blog figures were ~5–9% higher at seq 256/512. That gap is the
+cost of a correctness fix: the SDPA padding-mask cache was keyed by input-buffer
+pointer and could reuse stale sequence lengths, so it was removed and the
+valid-length scan now runs on every forward. PyTorch and TensorFlow reproduce
+their July figures within ±1.7% on the same day, which isolates the delta to
+that fix rather than the machine.)*
 
 ### bf16 is the headline; fp32 now wins too
 
@@ -59,7 +59,7 @@ the result matches the fp32 CPU reference to ~1e-5). This replaced the old fp32
 *fallback* that materialized the full O(seq²) attention matrix and collapsed past
 seq 384. With the fused path engaged in both precisions, **OpenNN wins in fp32 as
 well as bf16** — and because flash-attention stays flat across sequence length,
-the fp32 win *grows* with sequence (1.03× at seq 128 → 1.29× at seq 512).
+the fp32 win *grows* with sequence (1.03× at seq 128 → 1.19× at seq 512).
 
 ## Two things make this work
 
@@ -71,7 +71,7 @@ runs at a fraction of the resident path. The benchmark uses the **device-residen
 path** (`calculate_outputs_resident`): both token inputs live on the GPU, the
 parameters are uploaded once, the activation workspace is built once, and the
 output is left on the GPU (3–4× faster than the convenience API). The lesson
-matches the [dense-MLP note](../../capacity/rosenbrock-max-batch/rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md):
+matches the dense benchmarks:
 for a repeated-inference loop, the resident path is the right thing to measure.
 
 **2. The fused flash-attention path, engaged in both precisions.** OpenNN's fused
@@ -81,36 +81,30 @@ for inference. Both effects together are why OpenNN wins.
 
 ## fp32 result
 
-With the fp32-via-bf16 fused path, **OpenNN wins fp32 too** (paper config, configs
-that fit in 6 GB VRAM):
+With the fp32-via-bf16 fused path, **OpenNN wins fp32 too** (paper config,
+batch 32, median of 5):
 
-| seq | batch | OpenNN fp32 (tok/s) | PyTorch fp32 (tok/s) | ratio |
-|----:|------:|--------------------:|---------------------:|------:|
-| 128 | 16    | 71,682              | 69,278               | 1.03× |
-| 256 | 16    | 76,964              | 74,433               | 1.03× |
-| 384 | 16    | 73,691              | 68,325               | 1.08× |
-| 512 | 16    | 76,498              | 60,734               | 1.26× |
-| 512 |  8    | 74,941              | 57,942               | 1.29× |
+| seq | OpenNN fp32 (tok/s) | PyTorch fp32 (tok/s) | TensorFlow fp32 (tok/s) | OpenNN / PyTorch |
+|----:|--------------------:|---------------------:|------------------------:|------:|
+| 128 | 335,911 ± 183 | 324,731 ± 308 | 256,539 ± 1,332 | 1.03× |
+| 256 | 318,411 ± 229 | 286,615 ± 131 | 212,704 ± 895   | 1.11× |
+| 512 | 280,329 ± 118 | 235,763 ± 246 | 167,666 ± 391   | 1.19× |
 
 The win grows with sequence length because flash-attention stays flat while
 PyTorch's fp32 SDPA slows down. The fp32 output is validated against the fp32 CPU
 reference (max abs diff ≈ 1e-5, RESULT=MATCH). OpenNN's forward pass is
-GPU-kernel-bound (per-step host overhead ~0%, so CUDA-graph capture does not apply
+GPU-kernel-bound (per-step host overhead ~0%, so CUDA-graph capture adds <1%
 here — unlike the dense-MLP and ResNet notes).
-
-**VRAM note:** on the 6 GB card, fp32 at batch 32 / seq ≥ 384 hits the memory
-ceiling (~6.0 GB, 97%) and the driver thrashes — throughput collapses there, but
-that is the card running out of memory, not the attention path. At batch ≤ 16 all
-sequence lengths fit and run flat at ~70–77 K tok/s.
 
 ## Energy and max batch
 
-* **Energy** (bf16, paper config): both engines draw similar average power
-  (≈95 W), so energy per token tracks throughput — OpenNN's ~1.2–1.4× speed lead
-  carries directly into ~1.2–1.4× **lower energy per token**.
-* **Max inference batch** (VRAM-bound on 6 GB): bf16 roughly halves the
-  activation footprint versus fp32, so both engines fit substantially larger
-  batches than the fp32 ceilings; the resident OpenNN path benefits the same way.
+* **Energy**: measured separately with the fixed-work protocol in
+  [`energy/transformer-energy/`](../../energy/transformer-energy/).
+* **Max inference batch** (VRAM-bound on 16 GB, chat corpus shape): measured in
+  [`capacity/transformer-max-batch/`](../../capacity/transformer-max-batch/) —
+  OpenNN fits batch **1,987 in bf16 / 985 in fp32** vs PyTorch 951 / 435 and
+  TensorFlow 563 / 563 (TensorFlow stops at an internal INT32 descriptor limit,
+  not at the VRAM cap; OpenNN removed the same limit in 2026-08).
 
 ## Correctness
 
@@ -134,9 +128,9 @@ and GPU paths.
 | OpenNN path | device-resident inference (`calculate_outputs_resident`); both token inputs GPU-resident, parameters uploaded once |
 | Protocol | warmup excluded; steady-state tokens/sec; tokens = batch × sequence length |
 
-Hardware/software: NVIDIA GeForce RTX 3060 Laptop GPU (6 GB, driver 555.42)
-under WSL2 Ubuntu 24.04 on Windows 11 (i7-12700H). OpenNN built with g++ 13.3 +
-CUDA 12.9.86 + cuDNN 9.23; PyTorch 2.6.0 (cu124 wheels) on CPython 3.12.
+Hardware/software: NVIDIA GeForce RTX 4080 (16 GB, driver 595.84), Intel Core
+i9-12900K, Linux x86_64. OpenNN built with g++ 13.3 + CUDA 13.3 + cuDNN 9.23.1;
+PyTorch 2.13.0+cu130 and TensorFlow 2.21.0 on CPython 3.12.3.
 
 ## Caveats
 
@@ -153,10 +147,10 @@ CUDA 12.9.86 + cuDNN 9.23; PyTorch 2.6.0 (cu124 wheels) on CPython 3.12.
   `calculate_outputs` API is 3–4× slower and is the wrong thing to time in a loop.
 * Output is validated against the fp32 CPU reference in both precisions: no NaN,
   within tolerance (bf16 ~5e-7, fp32-via-bf16 ~1e-5 at the tested configs).
-* Single consumer laptop GPU under WSL2. The library's GPU test-suite failure set
-  is unchanged versus the pre-change baseline. The fp32 win required a small
-  library change (the fp32-via-bf16 SDPA path in `attention_operator.cpp`); the
-  bf16 win needs no change beyond running through the resident path.
+* Single consumer desktop GPU. Absolute numbers on this desktop drift a few
+  percent between sessions (ambient/boost behavior); the honest comparison is
+  the three engines measured back-to-back in the same session, which is what
+  the harness does.
 
 ## Reproducing
 
@@ -168,7 +162,10 @@ forward-correctness probe, and the build scripts are in
 ./build.sh   # builds all benchmarks (paths inside are machine-specific)
 
 # OpenNN bf16 device-resident inference — the headline (args: seq d_model heads ff layers vocab batch iters)
-OPENNN_BF16=1 LD_LIBRARY_PATH=/usr/lib/wsl/lib ./opennn_transformer_resident 256 512 8 2048 6 10000 32 50
+OPENNN_BF16=1 ./opennn_transformer_resident 256 512 8 2048 6 10000 32 50
+
+# Or the full 3-way harness (writes the results/ artifact):
+python run_transformer.py --seqs 128,256,512 --batch 32 --iters 30 --runs 5 --precision both
 
 # PyTorch bf16 counterpart (torch.autocast)
 PT_BF16=1 python pytorch_transformer_infer.py 256 512 8 2048 6 10000 32 50

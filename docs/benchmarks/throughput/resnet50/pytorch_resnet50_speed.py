@@ -127,10 +127,12 @@ run_epoch()
 run_epoch()
 
 times = []
+print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
 for _ in range(epochs):
     t0 = time.perf_counter()
     run_epoch()
     times.append(time.perf_counter() - t0)
+print(f"TRAIN_END_UNIX={time.time():.3f}", flush=True)
 
 times.sort()
 median = times[len(times) // 2]

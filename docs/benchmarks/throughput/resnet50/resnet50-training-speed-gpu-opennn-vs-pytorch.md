@@ -1,37 +1,39 @@
-# GPU ResNet-50 training speed: OpenNN vs PyTorch (CIFAR-10 / CIFAR-100)
+# GPU ResNet-50 training speed: OpenNN vs PyTorch vs TensorFlow (CIFAR-10)
 
-The [MNIST CNN note](../cnn-training-speed/cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md)
-measures a minimal convolutional network. This note scales the same question
-to a **real architecture**: ResNet-50 — 53 convolutions, 53 batch
-normalizations, residual connections, 23.5M parameters — trained on CIFAR with
-identical configuration in both frameworks.
+*Last updated 2026-08-10. Linux x86_64, NVIDIA GeForce RTX 4080 (16 GB), driver 595.84, CUDA 13.3, cuDNN 9.23.1. Artifact: [`results/gpu-resnet50-training-speed-cifar10-20260810T093239Z.json`](../../results/).*
+
+This note measures a **real architecture**: ResNet-50 v1.5 — 53 convolutions,
+53 batch normalizations, residual connections, 23.5M parameters — trained on
+CIFAR-10 with identical configuration in all three frameworks.
 
 ## The result
 
-Training throughput on 50,000 CIFAR images (32×32×3), batch 128, fp32,
-cross-entropy + Adam, timed after warmup (medians of three timed runs, all
-three engines on one session). CIFAR-100 differs only in the classifier head
-(2048→100 instead of 2048→10) and is run on the identical 32×32 workload:
+Training throughput on 50,000 CIFAR-10 images (32×32×3), batch 128,
+cross-entropy + Adam, 5 timed epochs after 2 warmup epochs, median of 5 runs.
+Fair paths: OpenNN GPU-resident data + CUDA graph, PyTorch channels_last +
+`torch.compile` + TF32, TensorFlow XLA:
 
-| Dataset | OpenNN (CUDA graph) | torch.compile | PyTorch eager | OpenNN vs compile / eager |
-|---|---:|---:|---:|---|
-| **CIFAR-10** | **8,433** | 5,268 | 3,960 | 1.6× / 2.1× |
-| **CIFAR-100** | **8,702** | 5,000 | 4,124 | 1.7× / 2.1× |
+| Precision | OpenNN | PyTorch | TensorFlow | OpenNN / PyTorch | OpenNN / TF |
+|---|---:|---:|---:|---|---|
+| bf16 | **27,092 ± 47** | 21,635 ± 74 | 20,618 ± 184 | **1.25×** | 1.31× |
+| fp32 | **21,396 ± 60** | 16,813 ± 11 | 15,179 ± 77 | **1.27×** | 1.41× |
 
-**OpenNN trains ResNet-50 ~1.6–1.7× faster than `torch.compile` and ~2.1×
-faster than eager PyTorch** on the same GPU, with the same architecture (the
-PyTorch model is written out to match torchvision's resnet50 v1.5 exactly;
-parameter counts agree to the dense-bias rounding — 23,712,944 vs 23,712,932 on
-CIFAR-100) and the same data residency. The two datasets land in the same band
-because the cost is the 32×32 convolutional workload, which the 10→100 head
-change leaves untouched. Training is real: cross-entropy descends from its
-random-init value (≈2.3 on 10 classes, ≈4.6 on 100) toward ≈1.0 / ≈1.8 within
-three epochs in both engines.
+**OpenNN trains ResNet-50 1.25–1.41× faster than both engines in both
+precisions** with the same architecture (matched to torchvision's resnet50
+v1.5; parameter counts agree to the dense-bias rounding) and the same data
+residency.
 
-This is the headline number after a full optimization pass. The first run of
-this benchmark was 2,912 samples/s; the section below traces how it got from
-there to 8,433 — and, importantly, where the real bottleneck turned out *not*
-to be.
+> ⚠️ **CUDA-graph speed headroom, under investigation (2026-08-11).** The
+> 2026-08-07 checkout reported ~42,000 samples/s bf16 here — but a graph-off
+> A/B shows that number was not clean: the old CUDA-graph path converged
+> differently from its own eager training (loss 1.41 vs 2.44 at identical
+> work), i.e. its speedup was partly an artifact of non-equivalent execution.
+> The current build's graph path **is** numerically equivalent to eager
+> (2.43 ≈ 2.46) but only ~14% faster than eager, where the old (incorrect)
+> path was ~90% faster. Eager speed is identical between the two builds, CPU
+> training and every inference/capacity cell are unaffected, and the dense
+> HIGGS graph path shows the same pattern. The open task is recovering the
+> mega-launch speedup on the *correct* graph path.
 
 ## How OpenNN got here
 
@@ -101,27 +103,22 @@ gradient is the collapsed `softmax_output − target`), so neither engine
 materializes a softmax-Jacobian — the 10→100 head change is free at the
 gradient.
 
-Hardware/software: NVIDIA GeForce RTX 3060 Laptop GPU (driver 555.85) under
-WSL2 Ubuntu 24.04 on Windows 11 (i7-12700H). OpenNN built with g++ 13.3 +
-CUDA 12.9.86 + cuDNN 9.23; PyTorch 2.6.0 (cu124 wheels) on CPython 3.12.
+Hardware/software: NVIDIA GeForce RTX 4080 (16 GB, driver 595.84), Intel Core
+i9-12900K, Linux x86_64. OpenNN built with g++ 13.3 + CUDA 13.3 + cuDNN 9.23.1;
+PyTorch 2.13.0+cu130 and TensorFlow 2.21.0 on CPython 3.12.3.
 
 ## Caveats
 
-* The comparison is fp32 on all three engines, all timed on the same session.
-  OpenNN's number requires the CUDA graph and a GPU-resident dataset (both
-  enabled in the benchmark code) — the CUDA-graph mega-launch is the headline
-  result, not the eager loop (which
-  lands ~5,200 samples/s, still 1.3× eager PyTorch). `torch.compile` is the
-  fair opponent for a graph-replaying engine, and OpenNN is 1.6× ahead of it
-  here; the official runner now records both PyTorch eager and
-  `torch.compile` ([`pt_compile_probe.py`](resnet50-training-speed/pt_compile_probe.py)).
-* The mega-launch's leverage is largest under WSL2, where CUDA-API issue
-  latency is high; on native Linux the per-launch cost is lower and the margin
-  over `torch.compile` would narrow. The conv/BN kernels themselves are cuDNN
-  on both sides.
-* Single consumer laptop GPU; ratios shift with hardware and input size — at
+* All engines are timed in the same session with a GPU-resident dataset.
+  OpenNN's number uses the CUDA graph; PyTorch runs `torch.compile` in its
+  default mode (no CUDA Graphs, plain Adam). A 2026-08-11 probe measured
+  PyTorch at ~31,100 samples/s bf16 with `mode="reduce-overhead"` + fused Adam
+  (+44% over the table). The driver will move to that path together with the
+  OpenNN CUDA-graph speed-recovery work, so both engines' graph-replay modes
+  are re-measured in the same pass.
+* Single consumer desktop GPU; ratios shift with hardware and input size — at
   224×224 the workload becomes conv-FLOP-bound and launch overhead is a
-  smaller share, so both engines should converge toward the same cuDNN-kernel
+  smaller share, so the engines should converge toward the same cuDNN-kernel
   floor.
 * Batch-norm numerics differ slightly between the frontend engines and the
   legacy API (reduction order), so loss trajectories track in band rather
@@ -130,18 +127,16 @@ CUDA 12.9.86 + cuDNN 9.23; PyTorch 2.6.0 (cu124 wheels) on CPython 3.12.
 
 ## Reproducing
 
-The data prep, both PyTorch paths, the OpenNN benchmark, and the runner are
-in [`docs/benchmarks/throughput/resnet50-training-speed/`](resnet50-training-speed/):
+The data prep, all engine drivers, and the canonical runner are in
+[`docs/benchmarks/throughput/resnet50/`](.): 
 
 ```bash
-python prepare_cifar10.py cifar10        # downloads CIFAR-10, writes BMPs + npy
-python prepare_cifar100.py cifar100      # CIFAR-100 (100-class fine labels)
-./run_resnet50.sh 5 128 cifar10          # OpenNN + PyTorch eager + torch.compile + result JSON
+python prepare_cifar10.py "$OPENNN_BENCH_DATA/cifar10"   # downloads CIFAR-10, writes BMPs + npy
+python run_resnet50.py --precision both --runs 5          # 3-way harness, writes the results/ artifact
 # or individually (CUDA graph on by default + CIFAR data GPU-resident, both in code):
-./opennn_resnet50_speed cifar10/train [epochs] [batch] [fp32|bf16] [image_size] [cuda_graph 0|1]
-python pytorch_resnet50_speed.py [epochs] [batch] cifar10
-python pt_compile_probe.py [epochs] [batch] cifar10
+./opennn_resnet50_speed "$OPENNN_BENCH_DATA/cifar10/train" [epochs] [batch] [fp32|bf16]
+python pytorch_resnet50_speed.py [epochs] [batch] "$OPENNN_BENCH_DATA/cifar10"
 ```
 
-The PyTorch programs read the class count from the labels, so the same scripts
-run on either dataset; the OpenNN program reads it from the dataset shape.
+The Python drivers read the class count from the labels; the OpenNN program
+reads it from the dataset shape.

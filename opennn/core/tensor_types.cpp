@@ -35,6 +35,10 @@ void TensorView::set_descriptor(const Shape& descriptor_shape) const
     if (batch_count <= 0 || channels <= 0 || height <= 0 || width <= 0)
         return;
 
+    throw_if(Index(batch_count) * channels * height * width > Index(numeric_limits<int>::max()),
+             "TensorView descriptor: {}x{}x{}x{} exceeds the cuDNN 4d descriptor limit of INT32_MAX elements.",
+             batch_count, channels, height, width);
+
     if (!descriptor_handle)
     {
         cudnnTensorDescriptor_t raw_desc;

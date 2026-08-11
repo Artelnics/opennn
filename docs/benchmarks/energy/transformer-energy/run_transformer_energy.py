@@ -61,9 +61,6 @@ def tf_ld_path():
 
 TF_LD = tf_ld_path()
 
-def engine_batch(engine):
-    return args.batch_map.get(engine, args.batch)
-
 def tokens_bin_for_shape(shape):
     cache_dir = CORPUS + ".cache"
     legacy = os.path.join(cache_dir, "tokens.bin")
@@ -85,19 +82,21 @@ def tokens_bin_for_shape(shape):
 
 def cmd_env(engine, shape, seed):
     tokens_bin = tokens_bin_for_shape(shape)
-    batch = engine_batch(engine)
+    batch = args.batch
     env = dict(os.environ)
     env["CUDA_VISIBLE_DEVICES"] = "0"
+    # Fixed work: an unreachable CE target (-1) leaves max-epochs as the only
+    # stopping condition, so every engine runs exactly args.epochs epochs.
     common = ["--tokens-bin", tokens_bin,
               "--in-seq", str(shape["input_seq"]), "--dec-seq", str(shape["decoder_seq"]),
               "--in-vocab", str(shape["input_vocab"]), "--out-vocab", str(shape["output_vocab"]),
-              "--target", str(args.target), "--batch", str(batch),
-              "--max-epochs", str(args.max_epochs), "--lr", str(args.lr),
+              "--target", "-1", "--batch", str(batch),
+              "--max-epochs", str(args.epochs), "--lr", str(args.lr),
               "--d", str(D), "--h", str(H), "--ff", str(FF), "--layers", str(LAYERS),
               "--seed", str(seed)]
     if engine == "opennn":
-        cmd = [args.opennn_bin, CORPUS, str(args.target), str(batch),
-               str(args.max_epochs), str(args.lr), str(D), str(H), str(FF), str(LAYERS),
+        cmd = [args.opennn_bin, CORPUS, "-1", str(batch),
+               str(args.epochs), str(args.lr), str(D), str(H), str(FF), str(LAYERS),
                str(seed)]
         if args.precision == "bf16":
             env["OPENNN_BF16"] = "1"
@@ -252,8 +251,6 @@ def run_one(engine, shape, idle_w, trace_path, seed):
     }
     lh = re.search(r"^loss_history=([0-9.,eE+-]+)", out, re.MULTILINE)
     m["loss_history"] = [round(float(v), 5) for v in lh.group(1).split(",")] if lh else None
-    if m["loss_history"]:
-        m["epochs"] = len(m["loss_history"]) - 1
 
     if train_start and train_end and samples:
         t_lo = unix_to_trace_time(train_start, samples)
@@ -269,12 +266,16 @@ def run_one(engine, shape, idle_w, trace_path, seed):
             "energy_total_wh": round(e_total / 3600, 3),
             "energy_active_wh": round(e_active / 3600, 3),
         })
+        nominal = shape["samples"] * args.epochs
+        m["uj_per_sample_total"] = round(e_total / nominal * 1e6, 2)
+        m["uj_per_sample_active"] = round(e_active / nominal * 1e6, 2)
     et, ea, aw, _, _ = integrate(samples, idle_w)
     m["process_energy_total_j"] = round(et, 1)
     m["process_energy_active_j"] = round(ea, 1)
 
-    ok = (m["reached_goal"] == 1 and "RESULT=OK" in out
-          and m.get("energy_total_j") is not None)
+    ok = ("RESULT=OK" in out
+          and m.get("energy_total_j") is not None
+          and m.get("epochs") == args.epochs)
     return ok, m, out
 
 def cooldown(idle_w, seconds=20, mib_threshold=1200):
@@ -338,15 +339,10 @@ def versions():
 def main():
     global args
     ap = argparse.ArgumentParser()
-    ap.add_argument("--target", type=float, required=True,
-                    help="epoch-mean token CE gate (same for every engine)")
+    ap.add_argument("--epochs", type=int, default=10,
+                    help="fixed workload: every engine trains exactly this many epochs")
     ap.add_argument("--batch", type=int, default=128)
-    ap.add_argument("--batches", default="",
-                    help="optional per-engine batches, e.g. "
-                         "opennn=32,pytorch=24,tensorflow=20")
-
     ap.add_argument("--lr", type=float, default=1e-4)
-    ap.add_argument("--max-epochs", type=int, default=20)
     ap.add_argument("--runs", type=int, default=3)
     ap.add_argument("--seed-base", type=int, default=42,
                     help="run r uses seed seed_base + r (per-seed runs, MLPerf-style)")
@@ -358,11 +354,6 @@ def main():
     ap.add_argument("--timeout-s", type=int, default=7200)
     ap.add_argument("--idle", type=float, default=None, help="override idle W (else measured)")
     args = ap.parse_args()
-    args.batch_map = {}
-    if args.batches:
-        for item in args.batches.split(","):
-            engine, value = item.split("=", 1)
-            args.batch_map[engine.strip()] = int(value)
 
     os.makedirs(RESULTS_DIR, exist_ok=True)
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -375,22 +366,18 @@ def main():
 
     result = {
         "schema_version": 1,
-        "benchmark_id": "gpu-transformer-energy-to-target",
+        "benchmark_id": "gpu-transformer-energy-fixed-work",
         "run_id": run_id,
         "git_commit": git_commit(),
         "configuration": {
-            "task": "chat Transformer (Stanford Alpaca pairs) trained to a fixed "
-                    "epoch-mean token cross-entropy",
+            "task": "chat Transformer (Stanford Alpaca pairs), fixed work: "
+                    "identical epochs for every engine, no quality gate",
             "model": f"encoder-decoder Transformer d{D}/h{H}/ff{FF}/{LAYERS}L",
             "shape": shape,
-            "target_epoch_mean_token_ce": args.target,
             "batch": args.batch,
-            "batches_by_engine": {
-                engine: engine_batch(engine) for engine in engines
-            },
             "lr": args.lr,
             "precision": args.precision,
-            "max_epochs": args.max_epochs,
+            "epochs": args.epochs,
             "runs": args.runs,
             "opennn_cuda_graph": not args.no_graph,
             "tensorflow_xla": not args.no_xla,
@@ -406,8 +393,8 @@ def main():
     }
 
     for eng in engines:
-        print(f"\n=== {eng} ({args.runs} runs, target {args.target}, "
-              f"batch {engine_batch(eng)}) ===")
+        print(f"\n=== {eng} ({args.runs} runs, {args.epochs} epochs, "
+              f"batch {args.batch}) ===")
         per_run, fails = [], []
         for r in range(args.runs):
             cooldown(idle_w)
@@ -417,8 +404,7 @@ def main():
             m["seed"] = seed
             os.remove(trace)
             if not ok:
-                print(f"  run {r}: FAILED rc={m['rc']} reached={m['reached_goal']} "
-                      f"epochs={m['epochs']}")
+                print(f"  run {r}: FAILED rc={m['rc']} epochs={m['epochs']}")
                 fails.append({"metrics": m, "tail": out[-1500:]})
                 continue
             per_run.append(m)
@@ -430,7 +416,7 @@ def main():
         agg = {"n_ok": len(per_run), "per_run": per_run, "failed": fails}
         if per_run:
             for key in ("energy_total_wh", "energy_active_wh", "train_window_s",
-                        "avg_power_w", "epochs"):
+                        "avg_power_w", "uj_per_sample_total", "uj_per_sample_active"):
                 vals = [m[key] for m in per_run]
                 agg[f"{key}_median"] = round(statistics.median(vals), 3)
                 agg[f"{key}_stdev"] = (round(statistics.pstdev(vals), 3)
@@ -438,7 +424,7 @@ def main():
             print(f"  => median {agg['energy_total_wh_median']} Wh total, "
                   f"{agg['energy_active_wh_median']} Wh active, "
                   f"{agg['train_window_s_median']:.0f}s, "
-                  f"{agg['epochs_median']:.0f} epochs")
+                  f"{agg['uj_per_sample_total_median']:.1f} uJ/sample")
         result["results"][eng] = agg
 
     base = result["results"].get("opennn", {})
@@ -454,7 +440,7 @@ def main():
                 r["train_window_s_median"] / base["train_window_s_median"], 3)
 
     out_path = os.path.join(RESULTS_DIR,
-                            f"gpu-transformer-energy-to-target-{run_id}.json")
+                            f"gpu-transformer-energy-fixed-work-{run_id}.json")
     with open(out_path, "w") as f:
         json.dump(result, f, indent=2)
     print(f"\nwrote {out_path}")

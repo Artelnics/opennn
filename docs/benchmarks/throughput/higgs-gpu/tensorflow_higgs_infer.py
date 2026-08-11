@@ -48,7 +48,9 @@ def main():
     else:
         tf.keras.mixed_precision.set_global_policy("float32")
 
-    tf.config.experimental.enable_tensor_float_32_execution(precision in ("bf16", "tf32"))
+    # fp32 runs with TF32 tensor cores in every engine of this benchmark
+    # (OpenNN's fp32 GEMMs are CUBLAS_COMPUTE_32F_FAST_TF32); "strict" disables it.
+    tf.config.experimental.enable_tensor_float_32_execution(precision != "strict")
 
     act = "relu" if activation == "relu" else "tanh"
     x_np = load_csv(test_csv)

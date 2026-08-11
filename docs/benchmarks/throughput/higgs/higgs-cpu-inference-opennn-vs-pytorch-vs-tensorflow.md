@@ -3,9 +3,9 @@
 This benchmark measures repeated CPU inference passes for the same dense binary
 classifier shape on the prepared UCI HIGGS test split.
 
-**Status:** internal WSL2 subset result. Use it for migration checks and
-presentation drafts, not as a public headline. It is not the full 500k-row
-publication test split.
+**Status:** full 500k-row publication test split, native Linux, i9-12900K
+(8 P-core threads), MKL-linked OpenNN. Last updated 2026-08-10, commit
+52e21e15d. Artifact: `results/cpu-dense-higgs-infer-20260810T150333Z.json`.
 
 ## Result
 
@@ -13,12 +13,13 @@ Higher is better.
 
 | Framework | Inference speed (samples/s) | Median pass (s) |
 |---|---:|---:|
-| OpenNN | **209,774** | **0.0927** |
-| PyTorch | 166,003 | 0.1172 |
-| TensorFlow | 153,281 | 0.1269 |
+| OpenNN | **416,825** | **1.199** |
+| PyTorch | 340,279 | 1.469 |
+| TensorFlow | 356,244 | 1.403 |
 
-OpenNN delivered **1.26x PyTorch speed** and **1.37x TensorFlow speed** on this
-CPU inference run, using the MKL-linked OpenNN binary. A smaller batch-256 probe
+OpenNN delivered **1.23x PyTorch speed** and **1.17x TensorFlow speed** on this
+CPU inference run (median of 5 runs, 10 passes each), using the MKL-linked
+OpenNN binary. A smaller batch-256 probe
 was overhead-sensitive and put PyTorch ahead; the current row uses batch 1024 and
 five timed runs.
 

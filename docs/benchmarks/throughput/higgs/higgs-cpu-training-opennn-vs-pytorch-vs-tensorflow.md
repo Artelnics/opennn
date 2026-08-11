@@ -3,9 +3,10 @@
 This benchmark measures one CPU training epoch for the same dense binary
 classifier on a prepared UCI HIGGS subset.
 
-**Status:** internal WSL2 subset result. Use it for migration checks and
-presentation drafts, not as a public headline. It is not the full 10.5M-row
-publication split.
+**Status:** full 10.5M-row publication split, native Linux, i9-12900K
+(8 P-core threads, `OMP_PLACES=cores OMP_PROC_BIND=close`), MKL-linked OpenNN.
+Last updated 2026-08-10, commit 52e21e15d. Artifact:
+`results/cpu-dense-higgs-train-20260810T145227Z.json`.
 
 ## Result
 
@@ -13,13 +14,13 @@ Higher is better.
 
 | Framework | Training speed (samples/s) | Median epoch (s) | Accuracy | Log loss | ROC AUC |
 |---|---:|---:|---:|---:|---:|
-| OpenNN | 59,372 | 1.6843 | 0.6903 | 0.5874 | 0.7547 |
-| PyTorch | 25,651 | 3.8985 | 0.6729 | 0.6003 | 0.7396 |
-| TensorFlow | 49,101 | 2.0366 | 0.6803 | 0.5952 | 0.7443 |
+| OpenNN | **107,121** | **98.02** | 0.7715 | 0.4677 | 0.8565 |
+| PyTorch | 99,923 | 105.08 | 0.7695 | 0.4714 | 0.8539 |
+| TensorFlow | 102,040 | 102.90 | 0.7720 | 0.4674 | 0.8566 |
 
-OpenNN trained at **2.32x PyTorch speed** and **1.21x TensorFlow speed** on
-this CPU run, using the MKL-linked OpenNN binary. OpenNN also reached the
-highest one-epoch quality metrics in this single run.
+OpenNN trained at **1.07x PyTorch speed** and **1.05x TensorFlow speed** on
+this full-split CPU run, using the MKL-linked OpenNN binary, with held-out
+quality in the same band as the best engine.
 
 ## Setup
 

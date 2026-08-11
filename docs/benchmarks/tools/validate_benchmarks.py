@@ -124,13 +124,26 @@ def validate_runner_readmes(strict: bool) -> tuple[list[str], list[str]]:
 
     return errors, warnings
 
+def validate_folders_in_manifest(data: dict[str, Any]) -> tuple[list[str], list[str]]:
+    errors: list[str] = []
+    warnings: list[str] = []
+    listed = {bench.get("folder") for bench in data.get("benchmarks", []) if isinstance(bench, dict)}
+    skip = {"results", "tools", "analysis", "__pycache__"}
+
+    for pattern in ("run_*.py", "run_*.sh", "*.ps1"):
+        for runner in ROOT.rglob(pattern):
+            rel = runner.parent.relative_to(ROOT)
+            if any(part in skip for part in rel.parts):
+                continue
+            if str(rel) not in listed:
+                add_error(errors, f"{rel}: contains runner(s) but has no benchmark_manifest.json entry")
+    return errors, warnings
+
 def committed_artifact_reason(rel: str) -> str | None:
     """Classify a git-tracked path that should never be committed."""
     name = rel.rsplit("/", 1)[-1]
     lower = name.lower()
     if rel.startswith("results/") and lower.endswith(".json"):
-        return None
-    if rel == "capacity/data-capacity/capacity_results.csv":
         return None
     if lower.endswith((".csv", ".onnx", ".npy", ".nsys-rep", ".sqlite", ".log")):
         return "generated data/result artifact"
@@ -240,6 +253,7 @@ def main() -> int:
     errors, warnings = validate_manifest(data)
     for check in (
         lambda: validate_runner_readmes(args.strict_readmes),
+        lambda: validate_folders_in_manifest(data),
         validate_no_committed_artifacts,
         lambda: validate_benchmark_ids(data),
         validate_no_data_in_benchmark_folders,

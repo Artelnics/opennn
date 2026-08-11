@@ -1,10 +1,10 @@
-# Transformer training on the GPU: OpenNN vs PyTorch
+# Transformer training on the GPU: OpenNN vs PyTorch vs TensorFlow
 
-*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-14. Linux x86_64 (WSL2), NVIDIA RTX 3060 Laptop GPU (6 GB), CUDA 12.9, cuDNN 9.23.*
+*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-08-10. Linux x86_64, NVIDIA GeForce RTX 4080 (16 GB), driver 595.84, CUDA 13.3, cuDNN 9.23.1. Artifact: [`results/gpu-transformer-training-speed-20260810T075000Z.json`](../../results/).*
 
-**Status:** current WSL2 laptop GPU result. Before using this as a flagship
-public claim, keep repeated-run statistics, raw logs, and a cross-framework
-quality/correctness gate with the published numbers.
+**Status:** current desktop-GPU result on commit `52e21e15d`. Supersedes the
+2026-06 WSL2 laptop numbers and refreshes the 2026-07-10 blog figures (all
+three engines measure faster on the current driver; the ratios hold).
 
 This is the training counterpart to the
 [transformer inference benchmark](transformer-inference-gpu-opennn-vs-pytorch.md).
@@ -12,41 +12,26 @@ Same architecture — the encoder-decoder **Transformer** from *Attention Is All
 You Need* (token embeddings + sinusoidal positional encoding, N encoder + N
 decoder layers of multi-head attention and position-wise feed-forward, a linear
 projection to the vocabulary) — but here we measure the **training** step:
-forward + backward + Adam optimizer update, in fp32, against PyTorch's
-`nn.Transformer` trained with `torch.optim.Adam` and token cross-entropy.
+forward + backward + Adam optimizer update, against PyTorch's `nn.Transformer`
+(autocast bf16 / TF32 fp32, fused Adam) and TensorFlow (mixed_bfloat16, XLA).
 
 ## The result
 
-**OpenNN trains faster than PyTorch at every sequence length, and the lead grows
-with sequence length** (paper-style shape: d_model 256, heads 8, feed-forward
-1024, 2 encoder + 2 decoder layers, batch 16, learning rate 1e-4):
+**OpenNN trains faster than both PyTorch and TensorFlow in both precisions**
+(d_model 256, heads 8, feed-forward 1024, 2 encoder + 2 decoder layers,
+vocab 256, seq 256, 4,096 samples, batch 32, 9 epochs):
 
-| sequence length | OpenNN (samples/s) | PyTorch (samples/s) | ratio |
-|----------------:|-------------------:|--------------------:|------:|
-|  64             | 1,653              | 1,363               | **1.21×** |
-| 128             |   999              |   963               | **1.04×** |
-| 256             |   512              |   347               | **1.48×** |
-| 384             |   400              |   236               | **1.69×** |
+| Precision | OpenNN (tok/s) | PyTorch (tok/s) | TensorFlow (tok/s) | OpenNN / PyTorch | OpenNN / TF |
+|---|---:|---:|---:|---|---|
+| bf16 | **2,827,190** | 2,528,316 | 2,287,020 | **1.12×** | 1.24× |
+| fp32 | **1,724,350** | 1,019,754 |   962,684 | **1.69×** | 1.79× |
 
-The lead grows with sequence length because at longer sequences the attention
-computation dominates the step, and OpenNN's fused flash-attention (forward **and
-backward**) scales better than PyTorch's attention there. At seq 384 OpenNN
-trains **1.69× faster**.
-
-### Energy per sample
-
-Integrating GPU power over the run (20 Hz `nvidia-smi` sampling) at seq 256:
-
-| | OpenNN | PyTorch |
-|---|---:|---:|
-| Average power | 93.2 W | 74.1 W |
-| Total energy | 3,637 J | 4,723 J |
-| **Energy per sample** | **0.169 J** | **0.220 J** |
-
-OpenNN spends **23% less energy per sample**. It draws *more* instantaneous power
-(it keeps the GPU busier — higher utilization) but finishes the same work 1.48×
-sooner, so total energy per sample is lower. As with inference, the speed lead
-carries straight into an energy lead.
+In samples/s: bf16 5,521.9 vs 4,938.1 vs 4,466.8; fp32 3,367.9 vs 1,991.7 vs
+1,880.2. The fp32 gap is the striking one — OpenNN's fp32 path routes attention
+through the same fused flash-attention kernel as bf16 (cast-down/cast-back),
+while PyTorch and TensorFlow fall back to slower fp32 attention. Energy for
+this family is measured separately with the fixed-work protocol in
+[`energy/transformer-energy/`](../../energy/transformer-energy/).
 
 ## What made training win: fixing fp32 fused-attention backward
 
@@ -94,46 +79,45 @@ just the benchmark. Throughput is unaffected — the initialization changes the
 ## Why the device-resident training path
 
 OpenNN's `TrainingStrategy::train()` keeps parameters, gradients, optimizer
-moments, and activation workspaces resident on the GPU across the whole run, does
-one CUDA warmup epoch before the timed region, and uses CUDA-graph capture for the
-optimizer step. That is what makes a fair training-loop comparison — the steady
-state is forward+backward+update with no per-step host round-trips, exactly what
-PyTorch's loop also does.
+moments, and activation workspaces resident on the GPU across the whole run and
+does one untimed warmup `train()` pass before the timed region. **CUDA-graph
+capture is deliberately OFF in this benchmark** (the driver never calls
+`set_cuda_graph`): for the transformer's large GEMMs the launch overhead a
+graph amortizes is already negligible (<1%), and the graph-epoch training path
+has a known convergence caveat under investigation. That keeps the comparison
+eager-fair — the steady state is forward+backward+update with no per-step host
+round-trips, exactly what PyTorch's eager loop also does.
 
 ## Setup
 
 | | Value |
 |---|---|
 | Network | encoder-decoder Transformer: scaled token embeddings + sinusoidal positional encoding → N encoder + N decoder layers (MHA + FFN, post-LayerNorm) → Linear to vocab |
-| Shape | d_model 256, heads 8, feed-forward 1024, 2 encoder + 2 decoder layers |
-| Data | synthetic tab-separated corpus (`make_synthetic_corpus.py`), 1024 samples, vocab 256; PyTorch reads the SAME corpus to match sequence lengths / vocab / sample count token-for-token |
+| Shape | d_model 256, heads 8, feed-forward 1024, 2 encoder + 2 decoder layers, vocab 256, seq 256 |
+| Data | synthetic tab-separated corpus (`make_synthetic_corpus.py`), 4,096 samples; PyTorch and TensorFlow read the SAME corpus to match sequence lengths / vocab / sample count token-for-token |
 | Optimizer / loss | Adam (lr 1e-4) / token cross-entropy over the vocabulary |
-| Precision | fp32 (fused attention via the fp32-via-bf16 path) |
-| Protocol | warmup epoch excluded; samples/sec over 20+1 epochs; energy by integrating 20 Hz power |
-| Parameters | OpenNN 951,888 vs PyTorch 952,388 at the small shape — 0.05% apart, equivalent architectures |
+| Precision | bf16 and fp32 (fused attention in both; fp32 via the fp32-via-bf16 path) |
+| Protocol | warmup excluded; median samples/sec over 9 timed epochs, batch 32 |
 
-Hardware/software: NVIDIA GeForce RTX 3060 Laptop GPU (6 GB) under WSL2 Ubuntu
-24.04 on Windows 11 (i7-12700H). OpenNN built with g++ 13.3 + CUDA 12.9 + cuDNN
-9.23; PyTorch 2.6.0 (cu124 wheels) on CPython 3.12.
+Hardware/software: NVIDIA GeForce RTX 4080 (16 GB, driver 595.84), Intel Core
+i9-12900K, Linux x86_64. OpenNN built with g++ 13.3 + CUDA 13.3 + cuDNN 9.23.1;
+PyTorch 2.13.0+cu130 and TensorFlow 2.21.0 on CPython 3.12.3.
 
 ## Caveats
 
-* **fp32, fused attention.** The win uses the fused flash-attention path in both
-  forward and backward (the fp32-via-bf16 fix above). At very short sequences
-  (≤128) the attention kernel isn't yet the bottleneck, so the lead is smallest
-  there (1.04× at seq 128); it widens as sequence length grows.
-* **Throughput is the metric.** With Glorot initialization the loss now behaves
+* **Fused attention in both precisions.** The fp32 win uses the fused
+  flash-attention path in both forward and backward (the fp32-via-bf16 fix
+  above) — that is where the 1.69×/1.79× fp32 lead comes from.
+* **Throughput is the metric.** With Glorot initialization the loss behaves
   correctly (starts near ln(vocab), descends); absolute loss values still differ
   across frameworks because of independent random init and the synthetic data, but
   what is matched is the architecture, the per-step FLOPs, the optimizer, and the
-  data shape. Convergence is confirmed by a decreasing loss on both sides.
-* **VRAM ceiling.** On the 6 GB card, fp32 training fits comfortably at batch 16
-  for these sequence lengths; larger batch × long sequence can hit the memory
-  ceiling and thrash (the same ceiling noted in the inference benchmark).
-* Single consumer laptop GPU under WSL2. The library's GPU test-suite failure set
-  is unchanged versus the pre-change baseline. Two library changes support this
-  result: the fp32 fused-attention backward fix in `attention_operator.cpp`, and
-  the Glorot initialization for the Transformer in `standard_networks.cpp`.
+  data shape. Convergence is confirmed by a decreasing loss on every engine.
+* **Training runs at a fixed sequence length** (256). The inference note sweeps
+  128/256/512; a training seq sweep was considered and skipped to keep the cell's
+  runtime bounded.
+* Single consumer desktop GPU; the honest comparison is the three engines
+  measured back-to-back in the same session, which is what the harness does.
 
 ## Reproducing
 
@@ -141,16 +125,13 @@ The corpus generator, the OpenNN training driver, the PyTorch counterpart, and t
 build script are in [`docs/benchmarks/throughput/attention-speed/`](attention-speed/):
 
 ```bash
-# 1. synthetic corpus (vocab, sequence length, sample count)
-python make_synthetic_corpus.py corpus.txt 256 256 1024 1234
+# Full 3-way harness (generates the corpus if missing, writes the results/ artifact):
+python run_transformer_train.py --batch 32 --epochs 9 --runs 1 --precision both
 
-# 2. OpenNN training (args: corpus d_model heads ff layers batch epochs)
-./build.sh opennn_transformer_train   # or ./build.sh for all
-LD_LIBRARY_PATH=/usr/lib/wsl/lib ./opennn_transformer_train corpus.txt 256 8 1024 2 16 20
+# Or one engine by hand (args: corpus d_model heads ff layers batch epochs):
+./build.sh opennn_transformer_train
+./opennn_transformer_train synthetic_corpus.txt 256 8 1024 2 32 9
+python pytorch_transformer_train.py synthetic_corpus.txt 256 8 1024 2 32 9
 
-# 3. PyTorch counterpart (reads the same corpus for matching shapes)
-python pytorch_transformer_train.py corpus.txt 256 8 1024 2 16 20
-
-# OPENNN_LR overrides the learning rate on both sides; OPENNN_BF16=1 / PT_BF16=1 train in bf16.
-# Energy: docs/benchmarks/capacity/rosenbrock-max-batch/energy_measure.sh <samples> <label> -- <command>
+# OPENNN_LR overrides the learning rate; OPENNN_BF16=1 / PT_BF16=1 / TF_BF16=1 train in bf16.
 ```

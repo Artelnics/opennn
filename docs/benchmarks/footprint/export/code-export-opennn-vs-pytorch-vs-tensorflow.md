@@ -1,5 +1,7 @@
 # Model export to standalone code: OpenNN vs PyTorch vs TensorFlow
 
+*Export re-verified 2026-08-10 (commit 52e21e15d): `opennn_export` trains and emits `model.c` (260,060 bytes) and `model.py`; `gcc -O2 model.c` compiles and the binary predicts.*
+
 The previous notes measured what it costs to *run* a model with each library. This one is about a
 different question: once a model is trained, **can you ship it as code that runs with no
 machine-learning runtime at all?** On targets where you cannot install a framework — a

@@ -28,30 +28,25 @@ BENCH_DATA_ROOT = os.environ.get(
     "OPENNN_BENCH_DATA", os.path.expanduser("~/opennn-benchmark-data"))
 PY = os.environ.get("BENCH_PYTHON", sys.executable)
 
-def existing_python_sites():
-    candidates = [
-        Path.home() / "benchenv" / "lib" / "python3.12" / "site-packages",
-        Path.home() / ".venvs" / "ml" / "lib" / "python3.12" / "site-packages",
-    ]
-    return [str(path) for path in candidates if path.exists()]
-
-def nvidia_library_paths(site_packages):
-    paths = []
-    for site in site_packages:
-        nvidia_root = Path(site) / "nvidia"
-        if not nvidia_root.exists():
-            continue
-        paths.extend(str(path) for path in nvidia_root.glob("*/lib") if path.is_dir())
-    if Path("/usr/lib/wsl/lib").exists():
-        paths.insert(0, "/usr/lib/wsl/lib")
-    return paths
-
-BENCH_SITE_PACKAGES = existing_python_sites()
-for site_path in reversed(BENCH_SITE_PACKAGES):
-    if site_path not in sys.path:
-        sys.path.insert(0, site_path)
-
-BENCH_LD_LIBRARY_PATHS = nvidia_library_paths(BENCH_SITE_PACKAGES)
+def tensorflow_library_dirs(py):
+    """TF loads its CUDA runtime from the nvidia-* pip wheels of the target
+    interpreter; their lib/ dirs must be on LD_LIBRARY_PATH or TF sees no GPU."""
+    override = os.environ.get("TF_NV_LIBS")
+    if override:
+        return [p for p in override.split(os.pathsep) if p]
+    code = ("import json, site\nfrom pathlib import Path\n"
+            "roots = []\n"
+            "for base in list(site.getsitepackages()) + [site.getusersitepackages()]:\n"
+            "    nv = Path(base) / 'nvidia'\n"
+            "    if nv.exists():\n"
+            "        roots.extend(str(p) for p in nv.rglob('lib') if p.is_dir())\n"
+            "print(json.dumps(roots))")
+    try:
+        out = subprocess.run([py, "-c", code], capture_output=True, text=True, check=False)
+        lines = [l for l in out.stdout.splitlines() if l.strip()]
+        return json.loads(lines[-1]) if lines else []
+    except Exception:
+        return []
 
 CAPACITY_FAILURE_REASONS = {"oom", "vram_cap_exceeded"}
 OPENNN_ENGINES = {"opennn_pool1", "opennn_default"}
@@ -253,10 +248,10 @@ def run_trial(engine, precision, batch, data_dir, args, gpu_info,
     env = dict(os.environ)
     env.update(env_over)
     env["CUDA_VISIBLE_DEVICES"] = str(args.gpu_index)
-    if BENCH_SITE_PACKAGES:
-        env["PYTHONPATH"] = os.pathsep.join(BENCH_SITE_PACKAGES + [env.get("PYTHONPATH", "")])
-    if BENCH_LD_LIBRARY_PATHS:
-        env["LD_LIBRARY_PATH"] = os.pathsep.join(BENCH_LD_LIBRARY_PATHS + [env.get("LD_LIBRARY_PATH", "")])
+    if engine == "tensorflow":
+        libs = tensorflow_library_dirs(PY)
+        if libs:
+            env["LD_LIBRARY_PATH"] = os.pathsep.join(libs + [env.get("LD_LIBRARY_PATH", "")])
 
     idle_before = 0
     try:

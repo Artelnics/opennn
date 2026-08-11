@@ -25,29 +25,31 @@ This benchmark now measures two footprint states:
 
 ## The numbers
 
-Run date: 2026-07-05, WSL2 Ubuntu on an NVIDIA GeForce RTX 3060 Laptop GPU
-(6 GB, driver 555.85). OpenNN was built with CUDA 12.0 and cuDNN 9.24; PyTorch
-was CUDA-enabled (`2.5.1+cu121`) and TensorFlow was `2.21.0`.
+Run date: 2026-08-10, native Linux on an NVIDIA GeForce RTX 4080 (driver
+595.84), commit 52e21e15d; the previous 2026-07-05 WSL2/RTX 3060 figures are
+kept in the history below. OpenNN was built with g++ 13.3 + CUDA 13.3 +
+cuDNN 9.23.1; PyTorch was CUDA-enabled (`2.13.0+cu130`) and TensorFlow was
+`2.21.0`.
 
 |  | OpenNN | PyTorch | TensorFlow |
 | --- | --- | --- | --- |
-| **Baseline RAM** | **195.2 MB** | 516.2 MB | 871.2 MB |
-| **GPU-ready VRAM** | **119.0 MB** | 155.0 MB | 121.0 MB |
+| **Baseline RAM** | **235.6 MB** | 816.0 MB | 982.5 MB |
+| **GPU-ready VRAM** | **250.0 MB** | 306.0 MB | 252.0 MB |
 
 Raw runner output:
 
 ```
 OpenNN
-baseline_ram_mb 195.2
-gpu_ready_vram_mb 119.0
+baseline_ram_mb 235.6
+gpu_ready_vram_mb 250.0
 
 PyTorch
-baseline_ram_mb 516.2
-gpu_ready_vram_mb 155.0
+baseline_ram_mb 816.0
+gpu_ready_vram_mb 306.0
 
 TensorFlow
-baseline_ram_mb 871.2
-gpu_ready_vram_mb 121.0
+baseline_ram_mb 982.5
+gpu_ready_vram_mb 252.0
 ```
 
 The old training-peak RSS table has been retired because it mixed framework

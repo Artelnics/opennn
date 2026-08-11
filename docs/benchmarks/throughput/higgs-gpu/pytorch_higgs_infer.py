@@ -42,7 +42,9 @@ def main():
     torch.manual_seed(42)
 
     use_autocast = precision == "bf16"
-    allow_tf32 = precision in ("bf16", "tf32")
+    # fp32 runs with TF32 tensor cores in every engine of this benchmark
+    # (OpenNN's fp32 GEMMs are CUBLAS_COMPUTE_32F_FAST_TF32); "strict" disables it.
+    allow_tf32 = precision != "strict"
     torch.backends.cuda.matmul.allow_tf32 = allow_tf32
     torch.backends.cudnn.allow_tf32 = allow_tf32
     torch.backends.cudnn.benchmark = True

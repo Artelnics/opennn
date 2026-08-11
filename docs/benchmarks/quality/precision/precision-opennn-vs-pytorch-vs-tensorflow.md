@@ -1,24 +1,43 @@
-# Precision of TensorFlow, PyTorch, and Neural Designer
+# Optimizer precision on Rosenbrock: OpenNN vs PyTorch vs TensorFlow
 
-This post compares the training precision of TensorFlow, PyTorch, and Neural Designer for an
-approximation benchmark.
+*Last updated 2026-08-10, commit 52e21e15d. Linux x86_64, Intel Core i9-12900K (CPU, fp32). Artifact: [`results/precision-rosenbrock-20260810T190732Z.json`](../../results/).*
 
-[TensorFlow](https://tensorflow.org/), [PyTorch](https://pytorch.org/) and [Neural
-Designer](https://www.neuraldesigner.com/) are three popular machine learning platforms developed by
-[Google](https://research.google/teams/brain/), [Facebook](https://ai.facebook.com/research/) and
-[Artelnics](https://www.artelnics.com/), respectively.
+This benchmark measures the **error floor each framework's own optimizers can
+reach** on the 10-input Rosenbrock regression (10,000 samples, 10 -> 50 tanh ->
+50 tanh -> 1): second-order methods (OpenNN Levenberg-Marquardt and
+quasi-Newton, PyTorch LBFGS) at 1,000 epochs against each engine's Adam at
+10,000 epochs, 10 seeds per cell.
 
-Although all those frameworks implement neural networks, they present some important differences in
-functionality, usability, performance, etc.
+## Current result (10 seeds per cell)
 
-As we will see, the training accuracy of Neural Designer using the Levenberg-Marquardt algorithm is
-**x1.91** higher than that of TensorFlow and **x1.21** times higher than that of PyTorch using Adam.
+| Cell | Best MSE | Mean MSE | Mean time |
+|---|---:|---:|---:|
+| **OpenNN QNM** | 0.1084 | 0.1203 | **0.28 s** |
+| OpenNN LM | 0.1138 | 0.1208 | 6.54 s |
+| OpenNN Adam | 0.1339 | 0.1712 | 69.2 s |
+| PyTorch LBFGS | **0.1081** | **0.1118** | 11.00 s |
+| PyTorch Adam | 0.1245 | 0.1622 | 78.3 s |
+| TensorFlow Adam | 0.1349 | 0.1562 | 201.3 s |
 
-Moreover, Neural Designer trains this neural network **x5.71** times faster than TensorFlow and
-**x8.21** times faster than PyTorch.
+Second-order methods dominate: every second-order cell beats every Adam cell
+on best MSE. PyTorch's LBFGS reaches the lowest floor (0.1081), with OpenNN's
+quasi-Newton statistically at its side (0.1084) while running **39× faster**
+(0.28 s vs 11.0 s per seed). OpenNN exposes LM and QNM as one-line options;
+PyTorch's LBFGS needs a closure loop, and core Keras has no second-order path
+at all — TensorFlow's best available floor here is Adam's 0.1349 at 201 s.
 
-In this article, we outline all the steps required to reproduce the results using Neural Designer
-([download](https://www.neuraldesigner.com/downloads/))
+The task is deliberately small-parameter CPU least-squares — the documented
+regression exception to the HIGGS contract — because that is where
+second-order methods apply; do not generalize these ratios to deep-learning
+scale.
+
+---
+
+## Historical article (Neural Designer era, different configuration)
+
+> The section below predates the OpenNN benchmark suite and used a different
+> setup (Neural Designer UI, 3 runs, other hardware); its absolute numbers are
+> not comparable to the table above. Kept as engineering history.
 
 ### Contents
 

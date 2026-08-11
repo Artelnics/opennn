@@ -37,11 +37,8 @@ def closure():
     loss.backward()
     return loss
 
-print("Starting PyTorch training with L-BFGS...")
-
 for epoch in range(15):
-    loss = opt.step(closure)
-    print(f"Epoch {epoch + 1}, Loss: {loss.item()}")
+    opt.step(closure)
 
 with torch.no_grad():
     preds = model(X_test).softmax(dim=1).argmax(dim=1)
@@ -63,11 +60,4 @@ with torch.no_grad():
 
 print("Predicted class:", y.item())
 
-example = torch.randn(1, 4)
-torch.jit.trace(model, example).save("iris_model.pt")
-
-torch.onnx.export(
-    model, example, "iris_model.onnx",
-    input_names=["input"], output_names=["logits"],
-    opset_version=17
-)
+torch.jit.trace(model, torch.randn(1, 4)).save("iris_model.pt")

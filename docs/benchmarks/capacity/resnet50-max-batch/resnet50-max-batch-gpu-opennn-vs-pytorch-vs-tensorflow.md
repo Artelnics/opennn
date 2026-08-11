@@ -1,12 +1,9 @@
 # ResNet-50 max training batch: OpenNN vs PyTorch vs TensorFlow
 
-> **Historical regression baseline.** This RTX 4080 run predates the bounded
-> cuDNN-workspace search now implemented by `run_resnet50_maxbatch.py`.
-> Preserve these numbers for comparison, but replace the headline only with a
-> new provenance-rich artifact from the revised runner.
+*Last updated 2026-08-10. Artifact: [`results/gpu-resnet50-max-batch-cifar10-20260810T120959Z.json`](../../results/).*
 
 This benchmark asks a capacity question, not a speed question: what is the
-largest fp32 training batch that completes one real ResNet-50/CIFAR-10 training
+largest training batch that completes one real ResNet-50/CIFAR-10 training
 step on the same GPU?
 
 Each engine is run in a fresh process. A candidate batch counts only if it
@@ -17,32 +14,28 @@ search, then records both the largest passing batch and the next failing batch.
 
 ## The result
 
-On this RTX 4080 run, TensorFlow XLA fits the largest batch, PyTorch
-`torch.compile` is second, and OpenNN with prefetch-pool depth 1
-(`set_batch_pool_size(1)`) is third. The
-OpenNN number below is the corrected BinaryFile-cache run; PyTorch and
-TensorFlow are from the same-machine full 3-way run because their protocol did
-not change.
+**OpenNN fits the largest training batch in every cell** — 1.96× PyTorch's
+best path and 1.64× TensorFlow XLA in fp32:
 
-| Engine | Max batch | Peak VRAM at max | Next batch | Result |
-|---|---:|---:|---:|---|
-| OpenNN, BinaryFile cache, batch pool 1 | 4,752 | 15,865 MiB | 4,753 | failed |
-| PyTorch torch.compile | 9,216 | 15,820 MiB | 9,217 | failed |
-| PyTorch eager | 8,704 | 15,856 MiB | 8,705 | failed |
-| TensorFlow XLA | 11,760 | 15,239 MiB | 11,761 | failed |
+| Engine | fp32 max batch | bf16 max batch | Peak VRAM at fp32 max |
+|---|---:|---:|---:|
+| **OpenNN, batch pool 1** | **18,050** | **24,455** | 15,875 MiB |
+| PyTorch torch.compile | 9,216 | 18,112 | 15,840 MiB |
+| PyTorch eager | 8,704 | 16,896 | 15,856 MiB |
+| TensorFlow XLA | 11,036 | 23,296 | 14,426 MiB |
 
-The headline is therefore:
+| Comparison | fp32 | bf16 |
+|---|---:|---:|
+| OpenNN vs PyTorch best | **1.96×** | **1.35×** |
+| OpenNN vs TensorFlow XLA | **1.64×** | **1.05×** |
 
-| Comparison | Ratio |
-|---|---:|
-| TensorFlow XLA vs OpenNN | 2.47x larger batch |
-| PyTorch best vs OpenNN | 1.94x larger batch |
-| TensorFlow XLA vs PyTorch best | 1.28x larger batch |
-
-This is useful evidence, but it is not an OpenNN marketing win. It shows that
-for this exact ResNet-50/CIFAR-10 fp32 one-step capacity workload, TensorFlow's
-XLA path and PyTorch's compiled path fit larger batches on the same GPU than
-the current OpenNN implementation.
+Every boundary is a genuine out-of-memory limit (next batch fails, peak at the
+budget). This same workload measured **4,752 for OpenNN in 2026-06** — a 2.47×
+deficit against TensorFlow at the time. The June result is preserved below as
+the regression baseline; the turnaround came from the shared cuDNN workspace
+buffer, the bounded workspace-policy search, and the memory-planning work of
+2026-07/08 (training activation recomputation trades step time for batch
+state, which is exactly the right trade for a capacity benchmark).
 
 ## What is measured
 
@@ -51,7 +44,7 @@ the current OpenNN implementation.
 | Dataset | CIFAR-10 geometry, 32x32x3 images, 10 classes |
 | Network | ResNet-50 v1.5 bottleneck, stages 3-4-6-3 |
 | Loss / optimizer | Cross-entropy, Adam, learning rate 0.001 |
-| Precision | fp32 |
+| Precision | fp32 and bf16 |
 | Capacity rule | Largest batch that completes forward, backward, and Adam update |
 | Search rule | Fresh process per candidate, exponential search plus binary search |
 | VRAM rule | Physical GPU memory cap with 256 MiB reserved |
@@ -70,17 +63,15 @@ data, so the whole dataset is not staged as a GPU-resident matrix.
 | Item | Value |
 |---|---|
 | GPU | NVIDIA GeForce RTX 4080 |
-| Driver | 595.71.05 |
+| Driver | 595.84 |
 | GPU memory | 16,376 MiB |
 | Python | 3.12.3 |
-| PyTorch | 2.12.0+cu130 |
-| PyTorch CUDA / cuDNN | 13.0 / 92000 |
+| PyTorch | 2.13.0+cu130 |
 | TensorFlow | 2.21.0 |
-| TensorFlow build CUDA / cuDNN | 12.5.1 / 9 |
 | CUDA nvcc | 13.3 |
-| OpenNN commit | b7d4255ca23d |
-| Full 3-way result JSON | results/gpu-resnet50-max-batch-cifar10-20260622T133809Z.json |
-| OpenNN BinaryFile rerun JSON | results/gpu-resnet50-max-batch-cifar10-20260622T135753Z.json |
+| OpenNN commit | 52e21e15d |
+| Result JSON | results/gpu-resnet50-max-batch-cifar10-20260810T120959Z.json |
+| June 2026 baseline (OpenNN 4,752) | results/gpu-resnet50-max-batch-cifar10-20260622T133809Z.json |
 
 ## Why the result matters
 
@@ -90,12 +81,13 @@ can hold while doing the real training work. That includes activations,
 gradients, optimizer state, framework workspaces, graph/capture overhead, and
 any allocator reserve that is needed for the step.
 
-OpenNN's current result fails just above 4,752 samples because cuDNN workspace
-allocation or graph capture runs out of usable device memory in the convolution
-path. PyTorch and TensorFlow both keep going to larger batches on this card.
-That makes this benchmark a good regression target for future OpenNN memory
-work: the runner can be rerun after changing convolution workspaces, graph
-capture strategy, batch buffering, or allocator behavior.
+The June 2026 run failed just above 4,752 samples because cuDNN workspace
+allocation ran out of usable device memory in the convolution path while both
+Python engines kept going. The 2026-08 result flips that: bounding the cuDNN
+workspace policy per candidate, sharing one scratch buffer across graphs, and
+planning the forward/backward arena jointly (with training activation
+recomputation) almost quadrupled OpenNN's ceiling on the same card. The
+benchmark remains the regression target for that memory work.
 
 ## Caveats
 

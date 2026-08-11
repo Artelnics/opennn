@@ -17,27 +17,37 @@ restored alongside their benchmark folders. The central claim/status matrix is
 [`PRESENTATION_CLAIMS.md`](PRESENTATION_CLAIMS.md), and the machine-readable
 artifacts are under [`results/`](results/).
 
-Headline historical comparisons include:
+Headline results from the 2026-08-10 full-matrix run (RTX 4080 / i9-12900K,
+commit 52e21e15d; every number backed by an artifact in `results/`):
 
 | Area | OpenNN | PyTorch | TensorFlow |
 |---|---:|---:|---:|
-| ResNet-50 CIFAR-10 training | 8,433 samples/s | 5,268 compiled | — |
-| Transformer bf16 inference, seq 512 | 160,128 tok/s | 84,511 | 101,400 |
-| HIGGS CPU training | 59,372 samples/s | 25,651 | 49,101 |
-| Baseline RAM | 195.2 MB | 516.2 MB | 871.2 MB |
-| Transformer GPU energy to target | 24.1 Wh | 33.2 Wh | 39.8 Wh |
+| Transformer bf16 inference, seq 512 (GPU) | **588,435 tok/s** | 429,233 | 308,685 |
+| Transformer bf16 inference max batch (GPU) | **1,987** | 951 | 563 |
+| ResNet-50 fp32 training max batch (GPU) | **18,050** | 9,216 | 11,036 |
+| ResNet-50 bf16 inference (GPU) | **185,903 samples/s** | 125,592 | 83,683 |
+| HIGGS bf16 inference (GPU) | **34.6M samples/s** | 31.9M | 32.4M |
+| HIGGS CPU training (MKL) | **107,121 samples/s** | 99,923 | 102,040 |
+| Transformer fixed-work energy, 10 epochs (GPU) | **25.6 Wh** | 34.8 Wh | 39.7 Wh |
+| Baseline RAM | **235.6 MB** | 816.0 MB | 982.5 MB |
 
-The restored ResNet-50 maximum-batch report records the former 4,752 OpenNN
-batch result as a regression baseline. The current runner uses bounded cuDNN
-workspace policies and must write a new artifact before that number is replaced.
+Known open issue: the CUDA-graph *training* path currently adds only ~14%
+over eager (the pre-2026-08-09 graph path was ~90% faster but a graph-off A/B
+proved it numerically non-equivalent to eager — its speedup was partly
+artifact; the current graph path is correct). Eager training, CPU training,
+and every inference/capacity/energy cell are unaffected. The open task is
+recovering the mega-launch speedup on the correct path. The former ResNet-50
+max-batch deficit (4,752 vs TensorFlow's 2.47× lead, June 2026) is resolved —
+OpenNN now leads every capacity cell.
 
 ## What is measured
 
-The suite compares deployment and performance characteristics across three
-frameworks on matched tasks: quality (accuracy, precision, convergence),
-throughput (CPU/GPU training and inference), capacity (largest batch / most data
-under a memory cap), energy, and footprint (application code size, startup,
-memory, standalone export).
+The core of the suite is a **matrix of three model families times four
+metrics**, every cell comparing OpenNN vs PyTorch vs TensorFlow on the
+identical model, data, and workload. Energy cells all use the same fixed-work
+semantics: identical epochs for every engine, GPU board power integrated over
+each engine's timed training window. Around the matrix sit the quality
+benchmarks (same HIGGS contract, CPU) and the footprint benchmarks.
 
 ## How to run
 
@@ -68,8 +78,27 @@ memory, standalone export).
 
 ## Benchmark index
 
-Benchmarks live one level below these metric buckets. Open the folder `README.md`
-for the runner and command.
+### The matrix — three model families × four metrics
+
+Folders stay grouped by metric bucket; the table maps every cell to its folder.
+Open the folder `README.md` for the runner and command.
+
+| | Training | Inference | Max batch | Energy (fixed work) |
+|---|---|---|---|---|
+| **Dense MLP — HIGGS, CPU** | [higgs](throughput/higgs/README.md) | [higgs](throughput/higgs/README.md) | [higgs-max-batch `--device cpu`](capacity/higgs-max-batch/README.md) | — |
+| **Dense MLP — HIGGS, GPU** | [higgs-gpu](throughput/higgs-gpu/README.md) | [higgs-gpu](throughput/higgs-gpu/README.md) | [higgs-max-batch](capacity/higgs-max-batch/README.md) | [higgs-dense-energy](energy/higgs-dense-energy/README.md) |
+| **CNN — ResNet-50, GPU** | [resnet50](throughput/resnet50/README.md) | [resnet50](throughput/resnet50/README.md) | [resnet50-max-batch](capacity/resnet50-max-batch/README.md) | [resnet50-energy](energy/resnet50-energy/README.md) |
+| **Transformer, GPU** | [attention-speed](throughput/attention-speed/README.md) | [attention-speed](throughput/attention-speed/README.md) (seq 128/256/512) | [transformer-max-batch](capacity/transformer-max-batch/README.md) | [transformer-energy](energy/transformer-energy/README.md) |
+
+GPU cells measure fp32 and bf16; CPU cells measure fp32. CPU is not measured
+for ResNet-50 or the Transformer (impractically slow), and CPU energy is not
+measured (GPU board power is the only clean sensor available to all engines).
+
+One benchmark crosses the Training and Max-batch columns:
+[peak-batch-speed](throughput/peak-batch-speed/README.md) sweeps the batch
+upward per engine and reports training throughput at **each engine's own best
+batch** (curve, peak, OOM frontier) for all three GPU families, reusing the
+matrix's speed drivers. Scaffolding added 2026-08-11; not yet executed.
 
 ### quality/
 | Benchmark | What it runs |
@@ -79,32 +108,6 @@ for the runner and command.
 | [convergence](quality/convergence/README.md) | Wall-clock time to a fixed held-out quality target on the HIGGS dense classifier |
 | [recurrent-lstm-forecasting](quality/recurrent-lstm-forecasting/README.md) | Recurrent vs LSTM forecasting on UCI Beijing PM2.5 |
 
-### throughput/
-Each folder hosts a training and an inference benchmark for one model. GPU folders measure fp32 and bf16; the CPU folder measures fp32. All compare OpenNN vs PyTorch vs TensorFlow.
-
-| Benchmark folder | What it runs |
-|---|---|
-| [attention-speed](throughput/attention-speed/README.md) | Encoder-decoder Transformer training and inference (GPU) |
-| [resnet50](throughput/resnet50/README.md) | ResNet-50 training and inference on CIFAR (GPU) |
-| [higgs-gpu](throughput/higgs-gpu/README.md) | HIGGS dense training and inference (GPU) |
-| [higgs](throughput/higgs/README.md) | HIGGS dense training and inference (CPU) |
-| [precision-sweep](throughput/precision-sweep/README.md) | OpenNN fp32-vs-bf16 sweep (supporting/internal) |
-
-### capacity/
-| Benchmark | What it runs |
-|---|---|
-| [data-capacity](capacity/data-capacity/README.md) | Most tabular samples that fit and train under a fixed RAM cap |
-| [higgs-max-batch](capacity/higgs-max-batch/README.md) | Largest HIGGS dense batch that completes one step (GPU + CPU) |
-| [resnet50-max-batch](capacity/resnet50-max-batch/README.md) | Largest ResNet-50 training batch that fits |
-| [transformer-max-batch](capacity/transformer-max-batch/README.md) | Largest Transformer batch that fits (train + infer) |
-
-### energy/
-| Benchmark | What it runs |
-|---|---|
-| [transformer-energy](energy/transformer-energy/README.md) | GPU energy to train a Transformer to a fixed quality target |
-| [higgs-dense-energy](energy/higgs-dense-energy/README.md) | GPU energy for fixed-work training of the HIGGS dense classifier |
-| [max-batch-to-target](energy/max-batch-to-target/README.md) | Maximum training batch, time, and GPU energy to a fixed loss for HIGGS, ResNet-50, and Transformer |
-
 ### footprint/
 | Benchmark | What it runs |
 |---|---|
@@ -112,6 +115,10 @@ Each folder hosts a training and an inference benchmark for one model. GPU folde
 | [export](footprint/export/README.md) | Exporting a trained model as standalone source code |
 | [memory](footprint/memory/README.md) | Baseline RAM and GPU-ready VRAM after empty objects |
 | [startup](footprint/startup/README.md) | Time-to-first-prediction / import-startup overhead |
+
+The static capability/size notes (`footprint/gpu-on-windows-…`, `size-…`,
+`loc-…`, `dependencies-…`) are prose comparisons with no runner; they live
+alongside the executable footprint benchmarks.
 
 ## Files in this directory
 
