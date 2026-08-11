@@ -33,12 +33,6 @@ public:
     void set_beta_1(const float);
     void set_beta_2(const float);
 
-    void set_update_period(const Index new_period)
-    {
-        throw_if(new_period < 1, "update period must be >= 1.");
-        update_period = new_period;
-    }
-
     void update_parameters(BackPropagation&, OptimizerData&,
                            UpdateMode = UpdateMode::Standard) override;
 
@@ -57,8 +51,6 @@ private:
     float beta_1 = 0.9f;
 
     float beta_2 = 0.999f;
-
-    Index update_period = 1;
 };
 
 }

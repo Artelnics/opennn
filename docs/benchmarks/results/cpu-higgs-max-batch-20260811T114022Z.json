@@ -1,0 +1,72 @@
+{
+ "schema_version": 1,
+ "benchmark_id": "cpu-higgs-max-batch",
+ "provenance": {
+  "generated_utc": "20260811T114022Z",
+  "git_commit": "3872b29e27b0aaba3b8c2c62afb3bf446f0b0215",
+  "git_dirty": true,
+  "gpu_name": null
+ },
+ "device": "cpu",
+ "machine": {
+  "python": "3.12.3",
+  "cpu": "12th Gen Intel(R) Core(TM) i9-12900K",
+  "host_ram_gib": 62.6
+ },
+ "runner": {
+  "path": "docs/benchmarks/capacity/higgs-max-batch/run_higgs_maxbatch.py",
+  "argv": [
+   "run_higgs_maxbatch.py",
+   "--device",
+   "cpu",
+   "--engines",
+   "opennn",
+   "--modes",
+   "train,infer",
+   "--mem-cap-gib",
+   "8",
+   "--min-step",
+   "1024"
+  ]
+ },
+ "model": {
+  "inputs": 28,
+  "hidden": 1024,
+  "hidden_layers": 2,
+  "outputs": 1,
+  "activation": "relu",
+  "loss": "binary_cross_entropy",
+  "optimizer": "adam"
+ },
+ "gpu_total_mib": null,
+ "rlimit_data_gib": 8.0,
+ "peak_metric": "peak_rss_mib",
+ "memory_cap_mib": 8192,
+ "search_min_step": 1024,
+ "data": "synthetic contract-shaped",
+ "protocol": "fresh process per candidate; exponential + binary search; largest batch completing one step under the memory cap (GPU: physical VRAM minus reserve; CPU: hard RLIMIT_DATA on brk+anonymous mmap); OpenNN pool=1, CUDA graph off; synthetic contract-shaped data",
+ "results": [
+  {
+   "engine": "opennn",
+   "precision": "fp32",
+   "mode": "train",
+   "max_batch": 488448,
+   "peak_at_max": 7990,
+   "idle_before_at_max_mib": null,
+   "peak_delta_at_max_mib": null,
+   "next_batch_failed": null,
+   "vm_peak_at_max_mib": 10439
+  },
+  {
+   "engine": "opennn",
+   "precision": "fp32",
+   "mode": "infer",
+   "max_batch": 980992,
+   "peak_at_max": 7991,
+   "idle_before_at_max_mib": null,
+   "peak_delta_at_max_mib": null,
+   "next_batch_failed": null,
+   "vm_peak_at_max_mib": 10380
+  }
+ ]
+}

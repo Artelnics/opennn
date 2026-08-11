@@ -84,8 +84,6 @@ def cmd_env(engine, precision, mode, batch):
     if engine == "opennn":
         cmd = [args.opennn_bin, mode, str(batch),
                str(args.hidden), str(args.layers), "1", args.device]
-        if args.tile is not None:
-            cmd.append(str(args.tile))
         if precision == "bf16" and not on_cpu: env["OPENNN_BF16"] = "1"
         else: env.pop("OPENNN_BF16", None)
     elif engine == "pytorch":
@@ -210,9 +208,6 @@ def main():
     ap.add_argument("--min-step", type=int, default=1,
                     help="stop the binary search when the bracket is narrower "
                          "than this (coarser boundary, fewer long trials)")
-    ap.add_argument("--tile", type=int, default=None,
-                    help="opennn infer tile rows (0 = untiled protocol; "
-                         "default: the trial's built-in tile)")
     ap.add_argument("--higgs-bin", default=None,
                     help="prepared HIGGS float32 binary (rows x 29, features "
                          "then label; see README): trials use these real rows, "

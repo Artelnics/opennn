@@ -59,21 +59,6 @@ OPENNN_CUDA_STUB(void, update_parameters_cuda,
 
 #endif
 
-static void accumulate_scaled_gradient(Buffer& accumulator, const Buffer& gradient, float alpha)
-{
-#ifdef OPENNN_HAS_CUDA
-    if (accumulator.device_type == Device::CUDA)
-    {
-        CHECK_CUBLAS(cublasSaxpy(Backend::get_cublas_handle(),
-                                 int(gradient.size_in_floats()), &alpha,
-                                 gradient.as<float>(), 1,
-                                 accumulator.as<float>(), 1));
-        return;
-    }
-#endif
-    accumulator.as_vector().noalias() += alpha * gradient.as_vector();
-}
-
 AdaptiveMomentEstimation::AdaptiveMomentEstimation(Loss* new_loss)
     : Optimizer(new_loss)
 {
@@ -108,21 +93,11 @@ void AdaptiveMomentEstimation::setup_optimizer_data(OptimizerData& optimization_
                                                     Device device)
 {
     const bool use_graph = can_use_cuda_graph();
-    throw_if(update_period > 1 && use_graph,
-             "gradient accumulation is not supported with the CUDA graph.");
 
     optimization_data.set({Shape{parameters_number},
                            Shape{parameters_number},
                            use_graph ? Shape{3} : Shape{}}, device);
     optimization_data.iteration = 0;
-    optimization_data.accumulated_batches = 0;
-    if (update_period > 1)
-    {
-        optimization_data.gradient_accumulator.resize_bytes(
-            parameters_number * Index(sizeof(float)), device);
-        optimization_data.gradient_accumulator.setZero();
-    }
-
 }
 
 void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
@@ -157,25 +132,6 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 #else
         throw runtime_error("Capturable Adam parameter updates require CUDA support.");
 #endif
-    }
-
-    const Index period = max(Index(1), update_period);
-
-    if (period > 1)
-    {
-        accumulate_scaled_gradient(optimization_data.gradient_accumulator,
-                                   back_propagation.gradient,
-                                   1.0f / float(period));
-
-        if (++optimization_data.accumulated_batches < period) return;
-
-        Buffer& accumulator = optimization_data.gradient_accumulator;
-        device::copy_async(back_propagation.gradient.data, accumulator.data,
-                           accumulator.bytes,
-                           accumulator.device_type, accumulator.device_type,
-                           accumulator.device_type == Device::CUDA ? Backend::get_compute_stream() : nullptr);
-        accumulator.setZero();
-        optimization_data.accumulated_batches = 0;
     }
 
     optimization_data.iteration++;

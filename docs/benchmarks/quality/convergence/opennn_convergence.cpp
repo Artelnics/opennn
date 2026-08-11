@@ -169,7 +169,7 @@ int main(int argc, char* argv[])
         double test_log_loss = NAN;
         double evaluation_s = 0.0;
 
-        adam->post_epoch_callback = [&](Index epoch, NeuralNetwork* trained_network)
+        adam->post_epoch_callback = [&](Index epoch, float, float, NeuralNetwork* trained_network)
         {
             const auto evaluation_start = clock_type::now();
 

@@ -7,6 +7,10 @@
 //   driver (run_higgs_maxbatch.py) does the exponential-grow + binary-search
 //   by spawning this repeatedly.
 //
+//   Both modes run the batch MONOLITHICALLY -- one optimizer step / one
+//   forward over the whole batch with activations O(batch) -- the same
+//   protocol as the PyTorch and TensorFlow trials.
+//
 //   mode "train" runs one full-batch training step (forward + backward + Adam
 //   update) with prefetch-pool depth 1 (this is a capacity benchmark; the
 //   default pool of 3 holds extra device batch copies) and CUDA graph off.
@@ -27,12 +31,8 @@
 //
 //   usage: opennn_higgs_maxbatch_trial <train|infer> <batch>
 //                                      [hidden] [hidden_layers] [iterations]
-//                                      [cuda|cpu] [tile_rows]
+//                                      [cuda|cpu]
 //   env:   OPENNN_BF16=1  -> bf16 (CUDA only; else fp32)
-//   tile_rows: infer tile size. -1 (default) = auto: 131072 on CPU (the
-//   measured MKL speed-parity point) and 65536 on CUDA (measured faster than
-//   untiled in fp32, parity in bf16; 32768 loses 21% fp32 -- cuBLASLt
-//   algorithm cliff). 0 = whole batch, i.e. the untiled protocol.
 
 #include <algorithm>
 #include <chrono>
@@ -253,9 +253,6 @@ int main(int argc, char* argv[])
     const Index layers      = argc > 4 ? Index(stoll(argv[4])) : 2;
     const Index iterations  = argc > 5 ? max<Index>(Index(1), Index(stoll(argv[5]))) : 1;
     const string device = argc > 6 ? argv[6] : "cuda";
-    const Index tile_raw     = argc > 7 ? Index(stoll(argv[7])) : Index(-1);
-    const Index tile_arg     = tile_raw >= 0 ? tile_raw
-                             : (device == "cpu" ? Index(131072) : Index(65536));
 
     try
     {
@@ -283,46 +280,26 @@ int main(int argc, char* argv[])
 
         if (mode == "infer" && use_cpu)
         {
-            // Row-tiled resident inference: caller-owned tile workspaces
-            // reused across iterations (the CPU analogue of the GPU resident
-            // protocol -- one-shot calculate_outputs would re-fault its
-            // arena every call). Activation memory is O(tile); the memory
-            // ceiling is the input + output data.
-            const Index tile_rows = tile_arg > 0 ? min<Index>(batch, tile_arg) : batch;
-            const Index tail_rows = batch % tile_rows;
-            cout << "tile_rows=" << tile_rows << "\n";
-
+            // Monolithic resident inference with a caller-owned, reused
+            // ForwardPropagation (one-shot calculate_outputs would re-fault
+            // its arena every call). Activation memory is O(batch), the same
+            // protocol as the PyTorch/TensorFlow trials.
             MatrixR inputs_host(batch, inputs_number);
             if (!load_higgs_rows(inputs_host))
             {
                 inputs_host = MatrixR::Random(batch, inputs_number);
                 cout << "data=synthetic\n";
             }
-            MatrixR outputs(batch, 1);
 
-            ForwardPropagation tile_propagation(tile_rows, network.get());
-            unique_ptr<ForwardPropagation> tail_propagation;
-            if (tail_rows > 0)
-                tail_propagation = make_unique<ForwardPropagation>(tail_rows, network.get());
+            ForwardPropagation propagation(batch, network.get());
+
+            const TensorView input_view(
+                const_cast<float*>(inputs_host.data()),
+                Shape{batch, inputs_number}, Type::FP32);
 
             auto run_pass = [&]()
             {
-                for (Index start = 0; start < batch; start += tile_rows)
-                {
-                    const Index rows = min<Index>(tile_rows, batch - start);
-                    ForwardPropagation& propagation =
-                        rows == tile_rows ? tile_propagation : *tail_propagation;
-
-                    const TensorView tile_view(
-                        const_cast<float*>(inputs_host.data()) + start * inputs_number,
-                        Shape{rows, inputs_number}, Type::FP32);
-
-                    network->forward_propagate({tile_view}, propagation, false);
-
-                    const TensorView tile_outputs = propagation.get_outputs();
-                    memcpy(outputs.data() + start, tile_outputs.data,
-                           size_t(rows) * sizeof(float));
-                }
+                network->forward_propagate({input_view}, propagation, false);
             };
 
             run_pass();   // warmup: pages workspaces and BLAS scratch in
@@ -332,7 +309,8 @@ int main(int argc, char* argv[])
                 run_pass();
             const auto t1 = chrono::high_resolution_clock::now();
 
-            if (!isfinite(outputs(0, 0)))
+            const TensorView outputs = propagation.get_outputs();
+            if (!isfinite(outputs.as<float>()[0]))
                 throw runtime_error("non-finite outputs");
 
             const double wall_s = chrono::duration<double>(t1 - t0).count();
@@ -349,14 +327,10 @@ int main(int argc, char* argv[])
 #ifdef OPENNN_HAS_CUDA
         if (mode == "infer")
         {
-            // Row-tiled resident inference, the GPU twin of the CPU protocol:
-            // the input and the assembled outputs stay device-resident (the
-            // honest data footprint), tile workspaces are reused across
-            // iterations, and activations are O(tile) instead of O(batch).
-            const Index tile_rows = tile_arg > 0 ? min<Index>(batch, tile_arg) : batch;
-            const Index tail_rows = batch % tile_rows;
-            cout << "tile_rows=" << tile_rows << "\n";
-
+            // Monolithic resident inference, the GPU twin of the CPU protocol:
+            // the input stays device-resident, the propagation (activations
+            // O(batch)) is reused across iterations, and the output is read
+            // from the propagation's own slot.
             MatrixR inputs_host(batch, inputs_number);
             if (!load_higgs_rows(inputs_host))
             {
@@ -364,23 +338,14 @@ int main(int argc, char* argv[])
                 cout << "data=synthetic\n";
             }
 
-            // The output slot is bf16 in bf16 mode: reserving it at its real
-            // width (not an fp32 upper bound) is worth ~2 B/sample of batch.
-            // Single-tile runs need no assembly region at all (the
-            // propagation's own output slot is the result).
             const bool bf16_resident_input = use_bf16 && bf16_resident_input_enabled();
             const Type input_type = bf16_resident_input ? Type::BF16 : Type::FP32;
             cout << "input_type=" << (input_type == Type::BF16 ? "bf16" : "fp32") << "\n";
 
-            const Type expected_output_type = use_bf16 ? Type::BF16 : Type::FP32;
-            const Index input_bytes  = get_aligned_bytes(batch * inputs_number, input_type);
-            const Index output_bytes = tile_rows >= batch
-                ? Index(0) : get_aligned_bytes(batch, expected_output_type);
-
             Buffer arena(Device::CUDA);
-            arena.resize_bytes(input_bytes + output_bytes, Device::CUDA);
+            arena.resize_bytes(get_aligned_bytes(batch * inputs_number, input_type),
+                               Device::CUDA);
             char* const base = arena.as<char>();
-            char* const output_base = base + input_bytes;
 
             cudaStream_t stream = Backend::get_compute_stream();
             if (bf16_resident_input)
@@ -411,67 +376,32 @@ int main(int argc, char* argv[])
                 parameters_uploaded = true;
             }
 
-            ForwardPropagation tile_propagation(tile_rows, network.get());
-            // The tail (batch % tile) propagation OVERLAYS the tile arena
-            // instead of owning a second one: the two never run concurrently
-            // and the tail arena is strictly smaller, so this frees up to a
-            // full tile of activations at the capacity boundary.
-            unique_ptr<ForwardPropagation> tail_propagation;
-            if (tail_rows > 0)
-            {
-                tail_propagation = make_unique<ForwardPropagation>();
-                tail_propagation->set(tail_rows, network.get(), &tile_propagation.arena);
-            }
-
-            // Single-tile (untiled) runs read the outputs straight from the
-            // propagation slot; assembling them into the arena would hold the
-            // output twice.
-            const bool single_tile = tile_rows >= batch;
+            ForwardPropagation propagation(batch, network.get());
 
             Type output_type = Type::FP32;
             const void* probe_source = nullptr;
 
             auto run_pass = [&]()
             {
-                for (Index start = 0; start < batch; start += tile_rows)
-                {
-                    const Index rows = min<Index>(tile_rows, batch - start);
-                    ForwardPropagation& propagation =
-                        rows == tile_rows ? tile_propagation : *tail_propagation;
+                const TensorView input_view(base, Shape{batch, inputs_number},
+                                            input_type, Device::CUDA);
+                const TensorView compute_view = use_bf16 && input_view.is_fp32()
+                    ? maybe_alias_bf16_input_cast(input_view, propagation)
+                    : input_view;
 
-                    const TensorView tile_view(base + start * inputs_number * Index(type_bytes(input_type)),
-                                               Shape{rows, inputs_number}, input_type, Device::CUDA);
-                    const TensorView compute_tile_view = use_bf16 && tile_view.is_fp32()
-                        ? maybe_alias_bf16_input_cast(tile_view, propagation)
-                        : tile_view;
+                const bool upload_parameters = !parameters_uploaded;
+                const TensorView outputs = network->calculate_outputs_resident(
+                    {compute_view}, propagation, upload_parameters);
+                if (use_bf16 && upload_parameters)
+                    network->release_bf16_fp32_parameter_master_for_inference();
 
-                    const bool upload_parameters = !parameters_uploaded;
-                    const TensorView tile_outputs = network->calculate_outputs_resident(
-                        {compute_tile_view}, propagation, upload_parameters);
-                    if (use_bf16 && upload_parameters)
-                        network->release_bf16_fp32_parameter_master_for_inference();
-
-                    parameters_uploaded = true;
-                    output_type = tile_outputs.type;
-
-                    if (single_tile)
-                    {
-                        probe_source = tile_outputs.data;
-                        continue;
-                    }
-
-                    const Index element_bytes = Index(type_bytes(tile_outputs.type));
-                    if (element_bytes > Index(type_bytes(expected_output_type)))
-                        throw runtime_error("output dtype wider than reserved");
-                    device::copy_async(output_base + start * element_bytes,
-                                       tile_outputs.data, rows * element_bytes,
-                                       device::CopyKind::DeviceToDevice, stream);
-                    probe_source = output_base;
-                }
+                parameters_uploaded = true;
+                output_type = outputs.type;
+                probe_source = outputs.data;
             };
 
-            // Warmup selects the cuDNN/cuBLAS plans, allocates the tile
-            // workspaces, and uploads the parameters; excluded from timing.
+            // Warmup selects the cuDNN/cuBLAS plans, allocates the workspaces,
+            // and uploads the parameters; excluded from timing.
             run_pass();
             cudaDeviceSynchronize();
 
@@ -501,27 +431,15 @@ int main(int argc, char* argv[])
         }
 #endif // OPENNN_HAS_CUDA
 
-        // train: one optimizer step over the batch. With a tile size (the
-        // default) the step runs as gradient accumulation over equal tiles:
-        // activation memory is O(tile) and the accumulated update equals the
-        // full-batch step (sub-batch gradients are per-batch means, averaged
-        // with weight 1/period). tile 0 = the monolithic untiled protocol.
-        // The virtual batch rounds up to a tile multiple so tiles stay equal;
-        // rows repeat modulo, and passing at the rounded batch implies the
-        // requested one fits.
-        const Index train_tile = tile_arg > 0 ? min<Index>(batch, tile_arg) : batch;
-        const Index update_period = (batch + train_tile - 1) / train_tile;
-        const Index samples = update_period * train_tile;
-        cout << "tile_rows=" << train_tile
-                  << " update_period=" << update_period
-                  << " effective_batch=" << samples << "\n";
+        // train: one monolithic optimizer step over the batch -- forward,
+        // backward, and Adam update with activations O(batch), the same
+        // protocol as the PyTorch/TensorFlow trials.
+        TabularDataset dataset(batch, Shape{inputs_number}, Shape{1});
 
-        TabularDataset dataset(samples, Shape{inputs_number}, Shape{1});
-
-        MatrixR data(samples, inputs_number + 1);
+        MatrixR data(batch, inputs_number + 1);
         if (!load_higgs_rows(data))
         {
-            data = MatrixR::Random(samples, inputs_number + 1);
+            data = MatrixR::Random(batch, inputs_number + 1);
             data.col(inputs_number) = (data.col(inputs_number).array() > 0.0f).cast<float>();
             cout << "data=synthetic\n";
         }
@@ -538,8 +456,7 @@ int main(int argc, char* argv[])
             training_strategy.get_optimization_algorithm());
         if (!adam) throw runtime_error("Adam optimizer not found.");
 
-        adam->set_batch_size(train_tile);
-        adam->set_update_period(update_period);
+        adam->set_batch_size(batch);
         adam->set_maximum_epochs(iterations);
         adam->set_display(false);
         adam->set_gradient_clip_norm(0.0f);
@@ -596,7 +513,7 @@ int main(int argc, char* argv[])
         }
         cout << "wall_s=" << wall_s << "\n";
         const Index completed = target_mode ? result.get_epochs_number() : iterations;
-        cout << "samples_per_sec=" << double(samples) * double(completed) / wall_s << "\n";
+        cout << "samples_per_sec=" << double(batch) * double(completed) / wall_s << "\n";
         cout << "RESULT=OK\n";
         return 0;
     }

@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "convergence-higgs",
+  "run_id": "20260811T064906Z",
+  "git_commit": "52e21e15d04c75aeda0b157b73c6e93f3f3d40a1",
+  "git": {
+    "commit": "52e21e15d04c75aeda0b157b73c6e93f3f3d40a1",
+    "branch": "dev",
+    "dirty": true,
+    "status_short_count": 62
+  },
+  "dataset": "HIGGS",
+  "dataset_files": {
+    "train": {
+      "path": "/home/artelnics/opennn-benchmark-data/higgs/higgs_train.csv",
+      "exists": true,
+      "bytes": 3329145331,
+      "mtime": 1783596186.6870246
+    },
+    "test": {
+      "path": "/home/artelnics/opennn-benchmark-data/higgs/higgs_test.csv",
+      "exists": true,
+      "bytes": 158532324,
+      "mtime": 1783596186.6870246
+    },
+    "metadata": {
+      "path": "/home/artelnics/opennn-benchmark-data/higgs/higgs_metadata.json",
+      "exists": true,
+      "bytes": 2551,
+      "mtime": 1783596186.6886463
+    }
+  },
+  "protocol": {
+    "style": "mlperf_inspired",
+    "official_mlperf": false,
+    "benchmark_class": "time_to_target_quality",
+    "quality_rule": {
+      "metric": "test_log_loss",
+      "direction": "<=",
+      "target": 0.47,
+      "evaluated_on": "held-out test split, after each epoch (OpenNN: after each training chunk)",
+      "excluded_from_clock": "per-epoch/per-chunk held-out evaluation"
+    },
+    "measurement_rule": {
+      "runs": 5,
+      "aggregation": "median over runs that reached the target",
+      "timed_region": "training epochs until the held-out target is reached",
+      "per_run_timeout_s": 1800
+    }
+  },
+  "configuration": {
+    "task": "HIGGS binary classification, dense MLP 28 -> hidden -> hidden -> 1, ReLU, sigmoid, BCE, Adam",
+    "device": "cpu",
+    "precision": "fp32",
+    "target_test_log_loss": 0.47,
+    "max_epochs": 50,
+    "batch": 1024,
+    "hidden": 1024,
+    "hidden_layers": 2,
+    "runs": 5,
+    "threads_argument": 8,
+    "engines": [
+      "opennn",
+      "pytorch",
+      "tensorflow"
+    ],
+    "metric": "wall-clock seconds to reach target held-out log-loss (median over runs)",
+    "gate": "held-out test log-loss; a non-generalizing fit cannot pass"
+  },
+  "machine": {
+    "python": "3.12.3",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "torch": "2.13.0+cu130",
+    "tensorflow": "2.21.0"
+  },
+  "runner": {
+    "path": "docs/benchmarks/quality/convergence/run_convergence.py",
+    "cwd": "/home/artelnics/Documents/opennn/docs/benchmarks/quality/convergence",
+    "argv": [
+      "run_convergence.py"
+    ],
+    "python": "/home/artelnics/.venvs/opennn-bench/bin/python",
+    "opennn_binary": "/home/artelnics/Documents/opennn/build-mkl-head/bin/opennn_convergence",
+    "opennn_binary_found": true
+  },
+  "commands": {
+    "opennn": "CUDA_VISIBLE_DEVICES= MKL_NUM_THREADS=8 OMP_NUM_THREADS=8 OMP_PLACES=cores OMP_PROC_BIND=close OPENNN_THREADS=8 TF_CPP_MIN_LOG_LEVEL=2 /home/artelnics/Documents/opennn/build-mkl-head/bin/opennn_convergence /home/artelnics/opennn-benchmark-data/higgs/higgs_train.csv /home/artelnics/opennn-benchmark-data/higgs/higgs_test.csv 0.47 50 1024 1024 2",
+    "pytorch": "CUDA_VISIBLE_DEVICES= OMP_NUM_THREADS=8 OMP_PLACES=cores OMP_PROC_BIND=close TF_CPP_MIN_LOG_LEVEL=2 /home/artelnics/.venvs/opennn-bench/bin/python /home/artelnics/Documents/opennn/docs/benchmarks/quality/convergence/pytorch_convergence.py --train /home/artelnics/opennn-benchmark-data/higgs/higgs_train.csv --test /home/artelnics/opennn-benchmark-data/higgs/higgs_test.csv --target 0.47 --max-epochs 50 --batch 1024 --hidden 1024 --hidden-layers 2 --threads 8",
+    "tensorflow": "CUDA_VISIBLE_DEVICES= OMP_NUM_THREADS=8 TF_CPP_MIN_LOG_LEVEL=2 /home/artelnics/.venvs/opennn-bench/bin/python /home/artelnics/Documents/opennn/docs/benchmarks/quality/convergence/tensorflow_convergence.py --train /home/artelnics/opennn-benchmark-data/higgs/higgs_train.csv --test /home/artelnics/opennn-benchmark-data/higgs/higgs_test.csv --target 0.47 --max-epochs 50 --batch 1024 --hidden 1024 --hidden-layers 2 --threads 8"
+  },
+  "results": {
+    "opennn": {
+      "n_reached": 5,
+      "n_runs": 5,
+      "runs": [
+        {
+          "run_index": 1,
+          "reached_goal": true,
+          "time_to_target_s": 210.8339527,
+          "test_log_loss": 0.4680399846,
+          "epochs_to_target": 2,
+          "result": "OK"
+        },
+        {
+          "run_index": 2,
+          "reached_goal": true,
+          "time_to_target_s": 202.4830211,
+          "test_log_loss": 0.4680399846,
+          "epochs_to_target": 2,
+          "result": "OK"
+        },
+        {
+          "run_index": 3,
+          "reached_goal": true,
+          "time_to_target_s": 199.712426,
+          "test_log_loss": 0.4680399846,
+          "epochs_to_target": 2,
+          "result": "OK"
+        },
+        {
+          "run_index": 4,
+          "reached_goal": true,
+          "time_to_target_s": 198.6240353,
+          "test_log_loss": 0.4680399846,
+          "epochs_to_target": 2,
+          "result": "OK"
+        },
+        {
+          "run_index": 5,
+          "reached_goal": true,
+          "time_to_target_s": 200.0292478,
+          "test_log_loss": 0.4680399846,
+          "epochs_to_target": 2,
+          "result": "OK"
+        }
+      ],
+      "time_to_target_s_median": 200.0292,
+      "time_to_target_s_stdev": 4.4321,
+      "test_log_loss_median": 0.46804,
+      "epochs_to_target_median": 2
+    },
+    "pytorch": {
+      "n_reached": 5,
+      "n_runs": 5,
+      "runs": [
+        {
+          "run_index": 1,
+          "reached_goal": true,
+          "time_to_target_s": 355.676183,
+          "test_log_loss": 0.4659528473,
+          "epochs_to_target": 3,
+          "result": "OK"
+        },
+        {
+          "run_index": 2,
+          "reached_goal": true,
+          "time_to_target_s": 362.78092,
+          "test_log_loss": 0.4659528473,
+          "epochs_to_target": 3,
+          "result": "OK"
+        },
+        {
+          "run_index": 3,
+          "reached_goal": true,
+          "time_to_target_s": 317.508534,
+          "test_log_loss": 0.4659528473,
+          "epochs_to_target": 3,
+          "result": "OK"
+        },
+        {
+          "run_index": 4,
+          "reached_goal": true,
+          "time_to_target_s": 319.333541,
+          "test_log_loss": 0.4659528473,
+          "epochs_to_target": 3,
+          "result": "OK"
+        },
+        {
+          "run_index": 5,
+          "reached_goal": true,
+          "time_to_target_s": 323.782068,
+          "test_log_loss": 0.4659528473,
+          "epochs_to_target": 3,
+          "result": "OK"
+        }
+      ],
+      "time_to_target_s_median": 323.7821,
+      "time_to_target_s_stdev": 19.3555,
+      "test_log_loss_median": 0.465953,
+      "epochs_to_target_median": 3
+    },
+    "tensorflow": {
+      "n_reached": 5,
+      "n_runs": 5,
+      "runs": [
+        {
+          "run_index": 1,
+          "reached_goal": true,
+          "time_to_target_s": 215.661578,
+          "test_log_loss": 0.4673832059,
+          "epochs_to_target": 2,
+          "result": "OK"
+        },
+        {
+          "run_index": 2,
+          "reached_goal": true,
+          "time_to_target_s": 231.448887,
+          "test_log_loss": 0.4667516053,
+          "epochs_to_target": 2,
+          "result": "OK"
+        },
+        {
+          "run_index": 3,
+          "reached_goal": true,
+          "time_to_target_s": 247.735627,
+          "test_log_loss": 0.4676500261,
+          "epochs_to_target": 2,
+          "result": "OK"
+        },
+        {
+          "run_index": 4,
+          "reached_goal": true,
+          "time_to_target_s": 225.278947,
+          "test_log_loss": 0.467810154,
+          "epochs_to_target": 2,
+          "result": "OK"
+        },
+        {
+          "run_index": 5,
+          "reached_goal": true,
+          "time_to_target_s": 206.496861,
+          "test_log_loss": 0.4673680365,
+          "epochs_to_target": 2,
+          "result": "OK"
+        }
+      ],
+      "time_to_target_s_median": 225.2789,
+      "time_to_target_s_stdev": 14.0543,
+      "test_log_loss_median": 0.467383,
+      "epochs_to_target_median": 2
+    },
+    "opennn_speedup_vs_pytorch": 1.619,
+    "opennn_speedup_vs_tensorflow": 1.126
+  }
+}

@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
 
         vector<double> epoch_seconds;
         auto previous_mark = chrono::high_resolution_clock::now();
-        adam->post_epoch_callback = [&](Index epoch, NeuralNetwork*)
+        adam->post_epoch_callback = [&](Index epoch, float, float, NeuralNetwork*)
         {
             const auto now = chrono::high_resolution_clock::now();
             const double elapsed = chrono::duration<double>(now - previous_mark).count();

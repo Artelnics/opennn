@@ -32,8 +32,6 @@ struct OptimizerData
     float initial_learning_rate = 0.0f;
     Index iteration = 0;
 
-    Buffer gradient_accumulator;
-    Index accumulated_batches = 0;
     float current_learning_rate = 0.0f;
     float training_slope = 0.0f;
     float learning_rate = 0.0f;
