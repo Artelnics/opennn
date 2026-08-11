@@ -102,7 +102,7 @@ here — unlike the dense-MLP and ResNet notes).
   [`energy/transformer-energy/`](../../energy/transformer-energy/).
 * **Max inference batch** (VRAM-bound on 16 GB, chat corpus shape): measured in
   [`capacity/transformer-max-batch/`](../../capacity/transformer-max-batch/) —
-  OpenNN fits batch **1,987 in bf16 / 985 in fp32** vs PyTorch 951 / 435 and
+  OpenNN fits batch **2,015 in bf16 / 1,003 in fp32** vs PyTorch 951 / 435 and
   TensorFlow 563 / 563 (TensorFlow stops at an internal INT32 descriptor limit,
   not at the VRAM cap; OpenNN removed the same limit in 2026-08).
 

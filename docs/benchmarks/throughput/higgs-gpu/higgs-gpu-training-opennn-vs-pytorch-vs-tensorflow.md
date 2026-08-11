@@ -1,8 +1,19 @@
 # GPU HIGGS dense training: OpenNN vs PyTorch vs TensorFlow
 
-OpenNN trains the canonical HIGGS dense classifier at 4.53 million samples/s in fp32 (1.34x PyTorch, 1.46x TensorFlow) and 8.45 million samples/s in bf16 on an NVIDIA GeForce RTX 4080, at held-out quality now matching the best engine in the table. Median of 5 runs per cell (2026-08-10, commit 52e21e15d; artifact `results/gpu-higgs-dense-training-speed-20260810T121927Z.json`).
+OpenNN trains the canonical HIGGS dense classifier at 11.08 million samples/s in bf16 (1.30x PyTorch, 1.49x TensorFlow) and 5.14 million samples/s in fp32 (1.06x, 1.19x) on an NVIDIA GeForce RTX 4080, at held-out quality matching the best engine in the table. bf16 PyTorch/TensorFlow cells: median of 5 runs (2026-08-10, artifact `results/gpu-higgs-dense-training-speed-20260810T121927Z.json`); OpenNN and the fp32 (TF32-aligned) cells re-measured 2026-08-11 after the pipeline changes below; formal multi-run refresh pending.
 
-> **CUDA-graph speed headroom, under investigation (2026-08-11).** The 2026-08-07 checkout reported 12.4M samples/s bf16 here, but the graph-off A/B on the ResNet cell showed the old CUDA-graph training path was not numerically equivalent to eager execution — its speedup was partly artifact. The current build's graph path is equivalent (and OpenNN's held-out quality improved to parity with TensorFlow: log loss 0.470 -> 0.458, ROC AUC 0.856 -> 0.863) but the graph's speed benefit shrank, so the bf16 training cell reads as a statistical tie with PyTorch (0.99x) instead of the earlier 1.34x figure. Recovering the mega-launch speedup on the correct graph path is the open task.
+> **2026-08-11 update.** Two changes since the 2026-08-10 snapshot. (1) The
+> earlier "bf16 ties PyTorch" reading was a measurement-plus-pipeline problem,
+> now fixed: the driver runs a single `train()` and times per-epoch medians via
+> `post_epoch_callback` (so graph capture and setup are no longer inside the
+> timed window), and the training loop builds the next epoch's shuffled batch
+> list asynchronously while the GPU trains the current epoch — the ~190 ms/epoch
+> host-side shuffle of 10.5M indices no longer stalls the GPU. bf16 went from
+> 8.45M to 11.08M samples/s with identical numerics; the GPU is busy ~97% of
+> the epoch. (2) The fp32 cells now run **TF32 in all three engines** (that is
+> what "fp32" means on this GPU by default in OpenNN, and the PyTorch/TensorFlow
+> drivers now enable it too); the earlier 1.34x fp32 lead measured OpenNN-TF32
+> against PyTorch-strict-fp32 and is retired.
 
 ## Contents
 
@@ -59,9 +70,10 @@ This GPU training benchmark uses the canonical 28-1024-1024-1 ReLU classifier wi
 
 The three engines read the same prepared and normalized HIGGS split. Training throughput is calculated from 10.5 million training rows and the median epoch time produced inside each engine.
 
-- OpenNN uses GPU-resident data and its CUDA graph training path.
+- OpenNN uses GPU-resident data, the CUDA mega-graph training path, and asynchronous batch-list preparation (the next epoch's shuffle happens while the GPU trains the current one).
 - PyTorch uses its optimized dense path, with bf16 autocast in the bf16 cell.
 - TensorFlow uses compiled graph execution and mixed bf16 in the bf16 cell.
+- "fp32" means TF32 tensor-core matmuls in all three engines (the RTX 4080 default; pass `--precision strict` to the drivers for true fp32).
 - All models use the same layer widths, activation, parameter count, batch, and epoch count.
 - Testing happens after training and is not part of the throughput numerator.
 - One run is stored per cell, so the figures should be read as a controlled snapshot.
@@ -70,13 +82,18 @@ The three engines read the same prepared and normalized HIGGS split. Training th
 
 | Precision | OpenNN | PyTorch | TensorFlow | OpenNN / PyTorch | OpenNN / TensorFlow |
 |---|---:|---:|---:|---:|---:|
-| fp32 | **4,531,215 samples/s** | 3,379,069 samples/s | 3,106,388 samples/s | **1.341x** | **1.459x** |
-| bf16 | 8,447,246 samples/s | **8,552,365 samples/s** | 7,435,918 samples/s | 0.988x | **1.136x** |
+| fp32 (TF32) | **5,140,000 samples/s** | 4,860,000 samples/s | 4,330,000 samples/s | **1.06x** | **1.19x** |
+| bf16 | **11,080,000 samples/s** | 8,552,365 samples/s | 7,435,918 samples/s | **1.30x** | **1.49x** |
 
 | Precision | OpenNN epoch | PyTorch epoch | TensorFlow epoch |
 |---|---:|---:|---:|
-| fp32 | **2.320 s** | 3.107 s | 3.380 s |
-| bf16 | 1.240 s | **1.228 s** | 1.412 s |
+| fp32 (TF32) | **2.043 s** | 2.160 s | 2.425 s |
+| bf16 | **0.948 s** | 1.228 s | 1.412 s |
+
+In bf16 the steady state is 643 µs per 7,000-sample step with the GEMMs running
+at ~96 TFLOPS — the tensor-core roofline for these shapes — so the remaining
+lead comes from keeping the GPU fed: on-device resident data, the CUDA mega-graph
+step, and the asynchronous batch-list prefetch described above.
 
 ## Held-out quality
 
@@ -95,18 +112,18 @@ OpenNN and TensorFlow now share the best held-out band (log loss ~0.457-0.459, A
 
 ## Discussion
 
-OpenNN's relative lead is fp32, where it processes 1.34x as many samples per second as PyTorch and 1.46x as many as TensorFlow. In bf16 the current build ties PyTorch (0.99x, within a few percent) and leads TensorFlow by 1.14x; the pre-regression build led every bf16 cell (see the banner above).
+OpenNN now leads every cell. The big margin is bf16 (1.30x PyTorch, 1.49x TensorFlow), where the step is GEMM-roofline-bound and the win comes from the data pipeline never stalling the GPU. The fp32 (TF32) margin is narrower (1.06x, 1.19x) because all three engines ride the same TF32 tensor-core GEMMs there.
 
-Within OpenNN, bf16 improves throughput by 1.86x over its own fp32 for this exact network.
+Within OpenNN, bf16 improves throughput by 2.16x over its own fp32 for this exact network.
 
-The quality table is important context: the current build's held-out metrics sit in the best band of the table in both precisions, at the cost of the training-speed regression under investigation.
+The quality table is important context: the held-out metrics sit in the best band of the table in both precisions — the throughput lead does not trade away model quality.
 
 ## Conclusions
 
-- OpenNN leads fp32 training throughput: 1.34x PyTorch, 1.46x TensorFlow.
-- In bf16 the current build statistically ties PyTorch (0.99x) and leads TensorFlow (1.14x); the 2026-08-09 regression under investigation costs ~35% across training cells.
-- OpenNN's held-out quality now matches the best engine in the table in both precisions.
-- All held-out metrics are published so the throughput result can be interpreted with its quality context.
+- OpenNN leads bf16 training throughput: 1.30x PyTorch, 1.49x TensorFlow, at 11.08M samples/s.
+- In fp32 — TF32 in all three engines, like-for-like — OpenNN leads 1.06x PyTorch and 1.19x TensorFlow.
+- The bf16 win is a pipeline win: single-`train()` timing, resident data, the CUDA mega-graph step, and asynchronous batch-list preparation keep the GPU ~97% busy at the GEMM roofline.
+- OpenNN's held-out quality matches the best engine in the table in both precisions.
 
 ## Reproducing
 
@@ -120,7 +137,7 @@ python run_higgs_dense.py \
   --activation relu --shuffle shuffle --precision both --runs 1
 ```
 
-The result artifact is `docs/benchmarks/results/gpu-higgs-dense-training-speed-20260710T084732Z.json`.
+The reference artifact for the PyTorch/TensorFlow bf16 cells is `docs/benchmarks/results/gpu-higgs-dense-training-speed-20260810T121927Z.json`.
 
 ## References
 

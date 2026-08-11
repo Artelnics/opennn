@@ -229,33 +229,35 @@ __global__ void attention_sequence_lengths_kernel(const int batch_size,
     const int batch = blockIdx.x;
     if (batch >= batch_size) return;
 
-    __shared__ int stop;
-    if (threadIdx.x == 0)
-    {
-        stop = 0;
-        query_lengths[batch] = query_sequence_length;
-        source_lengths[batch] = 1;
-    }
-    __syncthreads();
+    const T* sequence = source_input + int64_t(batch) * source_sequence_length * embedding_dimension;
 
-    const T* sequence = source_input + batch * source_sequence_length * embedding_dimension;
+    const int lane = threadIdx.x & 31;
+    const int warp = threadIdx.x >> 5;
+    const int warps = blockDim.x >> 5;
 
-    for (int s = 0; s < source_sequence_length; ++s)
+    // length = index of the first all-zero token (padding is a suffix), clamped to [1, seq]
+    int first_padded = source_sequence_length;
+
+    for (int s = warp; s < source_sequence_length; s += warps)
     {
         bool nonzero = false;
-        const T* token = sequence + s * embedding_dimension;
-        for (int e = threadIdx.x; e < embedding_dimension; e += blockDim.x)
+        const T* token = sequence + int64_t(s) * embedding_dimension;
+        for (int e = lane; e < embedding_dimension; e += 32)
             if (fabsf(static_cast<float>(token[e])) > padding_epsilon) { nonzero = true; break; }
 
-        const int token_is_valid = __syncthreads_or(nonzero);
+        if (!__any_sync(0xffffffffu, nonzero)) first_padded = min(first_padded, s);
+    }
 
-        if (threadIdx.x == 0)
-        {
-            if (token_is_valid) source_lengths[batch] = s + 1;
-            else stop = 1;
-        }
-        __syncthreads();
-        if (stop) break;
+    __shared__ int warp_first_padded[32];
+    if (lane == 0) warp_first_padded[warp] = first_padded;
+    __syncthreads();
+
+    if (threadIdx.x == 0)
+    {
+        int m = source_sequence_length;
+        for (int w = 0; w < warps; ++w) m = min(m, warp_first_padded[w]);
+        query_lengths[batch] = query_sequence_length;
+        source_lengths[batch] = max(1, m);
     }
 }
 

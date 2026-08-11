@@ -1,11 +1,11 @@
 # GPU Transformer max batch: OpenNN vs PyTorch vs TensorFlow
 
-*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-08-10. Linux x86_64, NVIDIA GeForce RTX 4080 (16 GB), driver 595.84, CUDA 13.3, cuDNN 9.23.1. Artifacts: [`results/gpu-transformer-max-batch-chat-20260810T080429Z.json`](../../results/) (3-way sweep) and [`gpu-transformer-max-batch-chat-infer-20260810T093025Z.json`](../../results/) (OpenNN inference cells after the INT32 descriptor fix).*
+*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-08-11. Linux x86_64, NVIDIA GeForce RTX 4080 (16 GB), driver 595.84, CUDA 13.3, cuDNN 9.23.1. Artifacts: [`results/gpu-transformer-max-batch-chat-20260811T123217Z.json`](../../results/) (OpenNN cells, current checkout) and [`results/gpu-transformer-max-batch-chat-20260810T080429Z.json`](../../results/) (PyTorch/TensorFlow cells and the batch-64 speed table — their binaries are unchanged).*
 
 OpenNN trains the 84.8M-parameter *Attention Is All You Need* base Transformer
-at batch **490** in bf16 where PyTorch fits **178** and TensorFlow **272** —
-**2.75× PyTorch's training batch** — and runs inference at batch **1,987**
-versus PyTorch's 951 and TensorFlow's 563 (**2.09×** and 3.53×). Every OpenNN
+at batch **497** in bf16 where PyTorch fits **178** and TensorFlow **272** —
+**2.79× PyTorch's training batch** — and runs inference at batch **2,015**
+versus PyTorch's 951 and TensorFlow's 563 (**2.12×** and 3.58×). Every OpenNN
 and PyTorch ceiling is a genuine VRAM limit; TensorFlow's inference ceiling is
 an internal INT32 limit it hits long before memory runs out.
 
@@ -17,10 +17,16 @@ exponential growth + binary search to step 1:
 
 | Mode | Precision | OpenNN | PyTorch | TensorFlow | OpenNN / PyTorch | OpenNN / TF |
 |---|---|---:|---:|---:|---|---|
-| train | fp32 | **248** | 128 | 220 | **1.94×** | 1.13× |
-| train | bf16 | **490** | 178 | 272 | **2.75×** | 1.80× |
-| infer | fp32 | **985** | 435 | 563 † | **2.26×** | 1.75× |
-| infer | bf16 | **1,987** | 951 | 563 † | **2.09×** | 3.53× |
+| train | fp32 | **252** | 128 | 220 | **1.97×** | 1.15× |
+| train | bf16 | **497** | 178 | 272 | **2.79×** | 1.83× |
+| infer | fp32 | **1,003** | 435 | 563 † | **2.31×** | 1.78× |
+| infer | bf16 | **2,015** | 951 | 563 † | **2.12×** | 3.58× |
+
+OpenNN's cells were re-searched on the 2026-08-11 checkout (the arena-layout
+rework moved every ceiling up 1–2% over the 2026-08-10 sweep: 248→252,
+490→497, 985→1,003, 1,987→2,015). The frontier carries a few-samples
+run-to-run jitter from ambient desktop VRAM, so reproduce via the runner's
+search rather than single trials at the exact boundary.
 
 † TensorFlow aborts at batch 564 with an internal error while using only
 14.4 GiB of the 15.9 GiB budget: 564 × 127 × 30,000 logits exceed the 2³¹−1
@@ -31,7 +37,8 @@ tensors above INT32_MAX elements ([`tensor_operations.cpp`](../../../../opennn/c
 (peak 15,873 MiB at the max, next batch fails). PyTorch indexes with 64-bit
 sizes and never hits the wall.
 
-Throughput at a common batch of 64, measured in the same sweep (samples/s):
+Throughput at a common batch of 64, from the 2026-08-10 three-way sweep
+(samples/s):
 
 | Mode | Precision | OpenNN | PyTorch | TensorFlow |
 |---|---|---:|---:|---:|
@@ -66,7 +73,8 @@ PyTorch's caching allocator or TensorFlow's BFC allocator manage for this graph.
 | Execution | like-for-like eager: OpenNN CUDA graph off, PyTorch eager + SDPA + fused Adam, TensorFlow graph mode XLA off |
 
 Hardware/software: RTX 4080 (16 GB, driver 595.84), i9-12900K, Linux x86_64;
-OpenNN commit `52e21e15d` + the softmax chunking fix, g++ 13.3, CUDA 13.3,
+OpenNN commit `c63275648` (OpenNN cells; PyTorch/TensorFlow cells from the
+2026-08-10 sweep at `52e21e15d`), g++ 13.3, CUDA 13.3,
 cuDNN 9.23.1; PyTorch 2.13.0+cu130, TensorFlow 2.21.0, CPython 3.12.3.
 
 ## Caveats

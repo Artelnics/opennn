@@ -1,6 +1,6 @@
 # ResNet-50 max training batch: OpenNN vs PyTorch vs TensorFlow
 
-*Last updated 2026-08-10. Artifact: [`results/gpu-resnet50-max-batch-cifar10-20260810T120959Z.json`](../../results/).*
+*Last updated 2026-08-11. OpenNN cells: [`results/gpu-resnet50-max-batch-cifar10-20260811T100851Z.json`](../../results/); PyTorch/TensorFlow cells: [`results/gpu-resnet50-max-batch-cifar10-20260810T120959Z.json`](../../results/) (their binaries are unchanged).*
 
 This benchmark asks a capacity question, not a speed question: what is the
 largest training batch that completes one real ResNet-50/CIFAR-10 training
@@ -19,15 +19,19 @@ best path and 1.64× TensorFlow XLA in fp32:
 
 | Engine | fp32 max batch | bf16 max batch | Peak VRAM at fp32 max |
 |---|---:|---:|---:|
-| **OpenNN, batch pool 1** | **18,050** | **24,455** | 15,875 MiB |
+| **OpenNN, batch pool 1** | **18,085** | **27,306** | 15,873 MiB |
 | PyTorch torch.compile | 9,216 | 18,112 | 15,840 MiB |
 | PyTorch eager | 8,704 | 16,896 | 15,856 MiB |
 | TensorFlow XLA | 11,036 | 23,296 | 14,426 MiB |
 
 | Comparison | fp32 | bf16 |
 |---|---:|---:|
-| OpenNN vs PyTorch best | **1.96×** | **1.35×** |
-| OpenNN vs TensorFlow XLA | **1.64×** | **1.05×** |
+| OpenNN vs PyTorch best | **1.96×** | **1.51×** |
+| OpenNN vs TensorFlow XLA | **1.64×** | **1.17×** |
+
+The bf16 ceiling rose from 24,455 (2026-08-10) to 27,306 (+12%): the hybrid
+batch-norm forward now runs native bf16 tensor IO in the cuDNN graph, which
+frees the fp32 staging workspace that used to shadow every BN call.
 
 Every boundary is a genuine out-of-memory limit (next batch fails, peak at the
 budget). This same workload measured **4,752 for OpenNN in 2026-06** — a 2.47×
@@ -69,8 +73,9 @@ data, so the whole dataset is not staged as a GPU-resident matrix.
 | PyTorch | 2.13.0+cu130 |
 | TensorFlow | 2.21.0 |
 | CUDA nvcc | 13.3 |
-| OpenNN commit | 52e21e15d |
-| Result JSON | results/gpu-resnet50-max-batch-cifar10-20260810T120959Z.json |
+| OpenNN commit | c63275648 |
+| Result JSON (OpenNN cells) | results/gpu-resnet50-max-batch-cifar10-20260811T100851Z.json |
+| Result JSON (PyTorch/TensorFlow cells) | results/gpu-resnet50-max-batch-cifar10-20260810T120959Z.json |
 | June 2026 baseline (OpenNN 4,752) | results/gpu-resnet50-max-batch-cifar10-20260622T133809Z.json |
 
 ## Why the result matters

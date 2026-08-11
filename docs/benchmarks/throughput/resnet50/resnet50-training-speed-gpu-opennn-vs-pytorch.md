@@ -1,6 +1,6 @@
 # GPU ResNet-50 training speed: OpenNN vs PyTorch vs TensorFlow (CIFAR-10)
 
-*Last updated 2026-08-10. Linux x86_64, NVIDIA GeForce RTX 4080 (16 GB), driver 595.84, CUDA 13.3, cuDNN 9.23.1. Artifact: [`results/gpu-resnet50-training-speed-cifar10-20260810T093239Z.json`](../../results/).*
+*Last updated 2026-08-11. Linux x86_64, NVIDIA GeForce RTX 4080 (16 GB), driver 595.84, CUDA 13.3, cuDNN 9.23.1. PyTorch/TensorFlow cells: [`results/gpu-resnet50-training-speed-cifar10-20260810T093239Z.json`](../../results/). OpenNN cells re-measured 2026-08-11 (hybrid-BN forward + single-train driver, below); formal multi-run refresh pending.*
 
 This note measures a **real architecture**: ResNet-50 v1.5 — 53 convolutions,
 53 batch normalizations, residual connections, 23.5M parameters — trained on
@@ -15,25 +15,27 @@ Fair paths: OpenNN GPU-resident data + CUDA graph, PyTorch channels_last +
 
 | Precision | OpenNN | PyTorch | TensorFlow | OpenNN / PyTorch | OpenNN / TF |
 |---|---:|---:|---:|---|---|
-| bf16 | **27,092 ± 47** | 21,635 ± 74 | 20,618 ± 184 | **1.25×** | 1.31× |
-| fp32 | **21,396 ± 60** | 16,813 ± 11 | 15,179 ± 77 | **1.27×** | 1.41× |
+| bf16 | **29,245** | 21,635 ± 74 | 20,618 ± 184 | **1.35×** | 1.42× |
+| fp32 | **22,793** | 16,813 ± 11 | 15,179 ± 77 | **1.36×** | 1.50× |
 
-**OpenNN trains ResNet-50 1.25–1.41× faster than both engines in both
+**OpenNN trains ResNet-50 1.35–1.50× faster than both engines in both
 precisions** with the same architecture (matched to torchvision's resnet50
 v1.5; parameter counts agree to the dense-bias rounding) and the same data
 residency.
 
-> ⚠️ **CUDA-graph speed headroom, under investigation (2026-08-11).** The
-> 2026-08-07 checkout reported ~42,000 samples/s bf16 here — but a graph-off
-> A/B shows that number was not clean: the old CUDA-graph path converged
-> differently from its own eager training (loss 1.41 vs 2.44 at identical
-> work), i.e. its speedup was partly an artifact of non-equivalent execution.
-> The current build's graph path **is** numerically equivalent to eager
-> (2.43 ≈ 2.46) but only ~14% faster than eager, where the old (incorrect)
-> path was ~90% faster. Eager speed is identical between the two builds, CPU
-> training and every inference/capacity cell are unaffected, and the dense
-> HIGGS graph path shows the same pattern. The open task is recovering the
-> mega-launch speedup on the *correct* graph path.
+> **2026-08-11 update.** Two changes over the 2026-08-10 numbers (27,092 bf16 /
+> 21,396 fp32). (1) **Hybrid batch norm for bf16**: the BN *forward* now runs
+> with native bf16 tensor IO in the cuDNN graph — the fp32 staging casts that
+> used to bracket every BN call cost ~475 ms/epoch of pure cast bubbles. The
+> *backward* keeps fp32 staging deliberately: cuDNN has no engine configs for
+> a bf16-IO batchnorm backward graph, and asking for one disables the whole
+> fused path. (2) The driver now runs a single `train()` (2 warmup + 5 timed
+> epochs, median per-epoch throughput via `post_epoch_callback`), so graph
+> capture and setup are paid outside the timed window — the same place
+> PyTorch pays `torch.compile` and TensorFlow pays XLA tracing. Numerics are
+> unchanged (final loss in the same band as eager and fp32). An earlier
+> ~42,000 samples/s claim from the 2026-08-07 checkout remains retired: that
+> CUDA-graph path was not numerically equivalent to eager execution.
 
 ## How OpenNN got here
 
@@ -113,9 +115,9 @@ PyTorch 2.13.0+cu130 and TensorFlow 2.21.0 on CPython 3.12.3.
   OpenNN's number uses the CUDA graph; PyTorch runs `torch.compile` in its
   default mode (no CUDA Graphs, plain Adam). A 2026-08-11 probe measured
   PyTorch at ~31,100 samples/s bf16 with `mode="reduce-overhead"` + fused Adam
-  (+44% over the table). The driver will move to that path together with the
-  OpenNN CUDA-graph speed-recovery work, so both engines' graph-replay modes
-  are re-measured in the same pass.
+  (+44% over the table, and ~6% above OpenNN's current 29,245). Whether the
+  benchmark contract moves both engines to their graph-replay-everything modes
+  is an open protocol decision; this note reports the current contract.
 * Single consumer desktop GPU; ratios shift with hardware and input size — at
   224×224 the workload becomes conv-FLOP-bound and launch overhead is a
   smaller share, so the engines should converge toward the same cuDNN-kernel

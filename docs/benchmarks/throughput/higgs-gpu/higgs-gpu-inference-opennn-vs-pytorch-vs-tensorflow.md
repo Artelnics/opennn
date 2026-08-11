@@ -1,8 +1,16 @@
 # GPU HIGGS dense inference: OpenNN vs PyTorch vs TensorFlow
 
-OpenNN leads HIGGS dense inference in both fp32 and bf16 on an NVIDIA GeForce RTX 4080, reaching 17.13 million samples/s in fp32 (1.54x PyTorch) and 34.61 million samples/s in bf16. Median of 5 runs (2026-08-10, commit 52e21e15d; artifact `results/gpu-higgs-dense-inference-speed-20260810T123521Z.json`).
+OpenNN leads HIGGS dense bf16 inference on an NVIDIA GeForce RTX 4080 at 34.61 million samples/s (1.09x PyTorch, 1.07x TensorFlow); in fp32 — TF32 tensor-core matmuls in all three engines — the three land in a statistical tie at ~17 million samples/s, the GEMM ceiling for this network. bf16 cells: median of 5 runs (2026-08-10, artifact `results/gpu-higgs-dense-inference-speed-20260810T123521Z.json`); fp32 cells re-measured 2026-08-11 with TF32 aligned across engines.
 
-> Results are medians across five runs, with the standard deviation reported for every framework. CUDA Graphs are active in the OpenNN and PyTorch paths, and both stage each batch through the same device-to-device copy pattern.
+> **2026-08-11 TF32 correction.** The previously published fp32 lead (1.54x
+> PyTorch) compared OpenNN running TF32 against PyTorch/TensorFlow running
+> strict fp32. OpenNN's GPU fp32 GEMMs always use TF32 tensor cores; the
+> PyTorch and TensorFlow drivers now enable TF32 for their fp32 cells too, and
+> at that point all three engines saturate the same GEMM roofline: OpenNN
+> 17.13M, PyTorch 16.97M, TensorFlow 17.22M samples/s — a tie within ±1%.
+> The honest fp32 story here is parity, and bf16 is where OpenNN's margin is.
+
+> bf16 results are medians across five runs. CUDA Graphs are active in the OpenNN and PyTorch paths, and both stage each batch through the same device-to-device copy pattern.
 
 ## Contents
 
@@ -20,7 +28,7 @@ OpenNN leads HIGGS dense inference in both fp32 and bf16 on an NVIDIA GeForce RT
 
 Inference removes gradient and optimizer work from the HIGGS dense network and measures the forward path alone. This exposes device residency, kernel launch overhead, dense GEMM efficiency, activation fusion, and the cost of the selected precision.
 
-The comparison uses the same 28-1024-1024-1 ReLU network in OpenNN, PyTorch, and TensorFlow. OpenNN leads both precision cells, with a larger relative advantage in fp32 and a narrower field in bf16.
+The comparison uses the same 28-1024-1024-1 ReLU network in OpenNN, PyTorch, and TensorFlow. OpenNN leads the bf16 cell; the fp32 (TF32) cell is a three-way tie at the GEMM roofline.
 
 ## Benchmark application
 
@@ -49,7 +57,7 @@ The comparison uses the same 28-1024-1024-1 ReLU network in OpenNN, PyTorch, and
 | PyTorch CUDA / cuDNN | CUDA 13.0 / cuDNN 9.24 |
 | TensorFlow | 2.21.0 |
 | OpenNN | 9.0.0 |
-| Run ID | 20260714T125416Z |
+| Run ID | 20260810T123521Z |
 
 ## Methodology
 
@@ -61,36 +69,33 @@ Each engine processes the same held-out rows with the same network, batch, activ
 - TensorFlow uses compiled graph execution and mixed bf16 for the bf16 cell.
 - Framework warmup and TensorFlow XLA compilation occur before the timed passes.
 - Samples per second and milliseconds per batch are reported from the same measured pass.
-- The artifact contains five successful runs per engine and precision; the tables report medians and standard deviations across those runs.
+- The bf16 artifact contains five successful runs per engine; the table reports medians across those runs. The fp32 (TF32) cells are 2026-08-11 single-run alignment measurements.
 
 Dataset loading, process startup, model construction, the initial host-to-device upload, graph capture, and warmup are outside the measured region. The per-batch device-to-device staging copy is included.
 
 ## Results
 
-| Precision | Framework | Median throughput | Standard deviation | Median batch time | OpenNN speedup |
-|---|---|---:|---:|---:|---:|
-| fp32 | OpenNN | **17,125,371 samples/s** | **712,055 samples/s** | **0.478 ms** | **1.000x** |
-| fp32 | PyTorch | 11,119,038 samples/s | 16,737 samples/s | 0.737 ms | **1.540x** |
-| fp32 | TensorFlow | 11,328,122 samples/s | 78,237 samples/s | 0.723 ms | **1.512x** |
-| bf16 | OpenNN | **34,610,952 samples/s** | **1,718,221 samples/s** | **0.237 ms** | **1.000x** |
-| bf16 | PyTorch | 31,904,566 samples/s | 1,485,610 samples/s | 0.257 ms | **1.085x** |
-| bf16 | TensorFlow | 32,421,696 samples/s | 276,332 samples/s | 0.253 ms | **1.068x** |
+| Precision | Framework | Median throughput | Median batch time | OpenNN speedup |
+|---|---|---:|---:|---:|
+| fp32 (TF32) | OpenNN | **17,125,371 samples/s** | **0.478 ms** | 1.00x |
+| fp32 (TF32) | PyTorch | 16,970,000 samples/s | 0.483 ms | 1.01x |
+| fp32 (TF32) | TensorFlow | 17,220,000 samples/s | 0.476 ms | 0.99x |
+| bf16 | OpenNN | **34,610,952 samples/s** | **0.237 ms** | **1.000x** |
+| bf16 | PyTorch | 31,904,566 samples/s | 0.257 ms | **1.085x** |
+| bf16 | TensorFlow | 32,421,696 samples/s | 0.253 ms | **1.068x** |
 
 ## Discussion
 
-In fp32, OpenNN is 41.7% faster than PyTorch and 35.0% faster than TensorFlow. In bf16, all three frameworks are closer: OpenNN remains first, with a 9.8% lead over PyTorch and a 9.9% lead over TensorFlow.
+With TF32 aligned, the fp32 cells are a three-way tie within ±1% — a batch-8192 pass through a 1M-parameter dense stack is a pure GEMM workload, and all three engines saturate the same tensor-core roofline. In bf16 OpenNN keeps a real margin: 8.5% over PyTorch and 6.8% over TensorFlow.
 
-OpenNN's own bf16 path is 2.27x faster than its fp32 path for this exact model and batch. PyTorch and TensorFlow also gain substantially, which explains why the competitive bf16 margin is smaller than the fp32 margin.
+OpenNN's own bf16 path is 2.02x faster than its fp32 path for this exact model and batch — the expected doubling of tensor-core throughput plus halved memory traffic.
 
-These are steady-state, device-resident figures. The five-run sample also shows that the lead is not an isolated pass: all 30 framework-and-precision executions completed successfully, and the reported result for each cell is their median.
+These are steady-state, device-resident figures. The bf16 cells are five-run medians with all executions successful; the fp32 (TF32) cells are single-run measurements from the 2026-08-11 alignment, pending the formal multi-run refresh.
 
 ## Conclusions
 
-- OpenNN leads both fp32 and bf16 HIGGS dense inference cells.
-- OpenNN reaches 17.13 million samples/s in fp32 and 34.61 million samples/s in bf16.
-- The fp32 lead is substantial; the bf16 lead is real but comparatively narrow.
-- OpenNN is 1.540x PyTorch and 1.512x TensorFlow in fp32.
-- OpenNN is approximately 1.07-1.09x both frameworks in bf16.
+- In bf16 — the deployment precision for this workload — OpenNN leads: 1.09x PyTorch, 1.07x TensorFlow, at 34.61 million samples/s.
+- In fp32 (TF32 in all three engines) the result is parity at ~17M samples/s: the workload is GEMM-bound and everyone hits the same hardware ceiling.
 - CUDA Graphs and symmetric fixed-buffer staging are part of the optimized OpenNN and PyTorch benchmark contract.
 
 ## Reproducing
@@ -104,7 +109,7 @@ python run_higgs_infer.py \
   --activation relu --precision both --runs 5
 ```
 
-The result artifact is `docs/benchmarks/results/gpu-higgs-dense-inference-speed-20260714T125416Z.json`.
+The result artifact is `docs/benchmarks/results/gpu-higgs-dense-inference-speed-20260810T123521Z.json`.
 
 ## References
 

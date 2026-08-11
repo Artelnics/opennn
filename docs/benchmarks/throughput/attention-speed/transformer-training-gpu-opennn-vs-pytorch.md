@@ -1,8 +1,9 @@
 # Transformer training on the GPU: OpenNN vs PyTorch vs TensorFlow
 
-*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-08-10. Linux x86_64, NVIDIA GeForce RTX 4080 (16 GB), driver 595.84, CUDA 13.3, cuDNN 9.23.1. Artifact: [`results/gpu-transformer-training-speed-20260810T075000Z.json`](../../results/).*
+*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-08-11. Linux x86_64, NVIDIA GeForce RTX 4080 (16 GB), driver 595.84, CUDA 13.3, cuDNN 9.23.1. PyTorch/TensorFlow cells: [`results/gpu-transformer-training-speed-20260810T075000Z.json`](../../results/). OpenNN cells re-measured 2026-08-11 (single-train driver + padding-scan kernel fix, below); formal multi-run refresh pending.*
 
-**Status:** current desktop-GPU result on commit `52e21e15d`. Supersedes the
+**Status:** current desktop-GPU result (OpenNN cells at the 2026-08-11 checkout,
+after the padding-scan kernel fix). Supersedes the
 2026-06 WSL2 laptop numbers and refreshes the 2026-07-10 blog figures (all
 three engines measure faster on the current driver; the ratios hold).
 
@@ -23,15 +24,43 @@ vocab 256, seq 256, 4,096 samples, batch 32, 9 epochs):
 
 | Precision | OpenNN (tok/s) | PyTorch (tok/s) | TensorFlow (tok/s) | OpenNN / PyTorch | OpenNN / TF |
 |---|---:|---:|---:|---|---|
-| bf16 | **2,827,190** | 2,528,316 | 2,287,020 | **1.12×** | 1.24× |
-| fp32 | **1,724,350** | 1,019,754 |   962,684 | **1.69×** | 1.79× |
+| bf16 | **3,025,608** | 2,528,316 | 2,287,020 | **1.20×** | 1.32× |
+| fp32 | **1,819,822** | 1,019,754 |   962,684 | **1.78×** | 1.89× |
 
-In samples/s: bf16 5,521.9 vs 4,938.1 vs 4,466.8; fp32 3,367.9 vs 1,991.7 vs
+In samples/s: bf16 5,909.4 vs 4,938.1 vs 4,466.8; fp32 3,554.3 vs 1,991.7 vs
 1,880.2. The fp32 gap is the striking one — OpenNN's fp32 path routes attention
 through the same fused flash-attention kernel as bf16 (cast-down/cast-back),
 while PyTorch and TensorFlow fall back to slower fp32 attention. Energy for
 this family is measured separately with the fixed-work protocol in
 [`energy/transformer-energy/`](../../energy/transformer-energy/).
+
+## Why the bf16 margin is smaller than the fp32 margin
+
+A natural question: if OpenNN wins fp32 by 1.78×, why "only" 1.20× in bf16?
+Because the two margins measure different things. An nsys kernel profile of the
+OpenNN step shows GEMMs (2.4 ms) plus fused flash attention (1.3 ms) account
+for two thirds of the 6 ms step — both already on tensor cores, both at the
+same kernels PyTorch uses. In **bf16 every engine runs fused attention**, so
+the comparison is pure like-for-like efficiency and the honest margin is 1.20×.
+In **fp32 only OpenNN routes attention through the fused bf16 kernel**
+(cast-down/cast-back); PyTorch and TensorFlow execute unfused fp32 attention,
+which roughly doubles their step time. The extra fp32 margin is OpenNN's
+fp32-via-bf16 design win, not extra kernel efficiency. The profile confirms the
+hardware side: OpenNN's fp32 (TF32) GEMM time is 1.95× its bf16 GEMM time —
+exactly the tensor-core throughput ratio of the RTX 4080.
+
+## A kernel fix found by the profile: the padding scan
+
+The same profile flagged one non-GEMM hotspot: the padding-length scan that
+feeds cuDNN's ragged-sequence flash attention. Each attention op re-derives
+per-sample sequence lengths by scanning its source stream for the first
+all-zero (padded) token — 6 scans per step. The old kernel walked tokens
+**serially** (one `__syncthreads` round per token, one thread block per
+sample), costing ~53 µs per scan, ~5% of the whole training step. The rewrite
+computes the same quantity — the index of the first all-padding token — as a
+parallel min-reduction (warps stride over tokens, lanes over the embedding),
+bit-identical semantics, ~10× faster. That single kernel is worth +5% bf16 and
++3% fp32 end-to-end in this benchmark.
 
 ## What made training win: fixing fp32 fused-attention backward
 
@@ -79,14 +108,16 @@ just the benchmark. Throughput is unaffected — the initialization changes the
 ## Why the device-resident training path
 
 OpenNN's `TrainingStrategy::train()` keeps parameters, gradients, optimizer
-moments, and activation workspaces resident on the GPU across the whole run and
-does one untimed warmup `train()` pass before the timed region. **CUDA-graph
-capture is deliberately OFF in this benchmark** (the driver never calls
-`set_cuda_graph`): for the transformer's large GEMMs the launch overhead a
-graph amortizes is already negligible (<1%), and the graph-epoch training path
-has a known convergence caveat under investigation. That keeps the comparison
-eager-fair — the steady state is forward+backward+update with no per-step host
-round-trips, exactly what PyTorch's eager loop also does.
+moments, and activation workspaces resident on the GPU across the whole run.
+The driver runs a **single `train()`** of one untimed warmup epoch plus nine
+timed epochs and reports the median per-epoch throughput via
+`post_epoch_callback` — so graph capture and optimizer setup are paid outside
+the timed window, the same place PyTorch and TensorFlow pay their `compile`/XLA
+warmup. **CUDA-graph capture is ON by default** (set
+`OPENNN_TRANSFORMER_TRAIN_NO_GRAPH=1` to disable): it contributes ~5% at these
+step sizes, and its numerics are equivalent to eager (final loss within the
+run-to-run band). PyTorch runs autocast bf16 with fused Adam; TensorFlow runs
+`mixed_bfloat16` with XLA.
 
 ## Setup
 
@@ -97,7 +128,7 @@ round-trips, exactly what PyTorch's eager loop also does.
 | Data | synthetic tab-separated corpus (`make_synthetic_corpus.py`), 4,096 samples; PyTorch and TensorFlow read the SAME corpus to match sequence lengths / vocab / sample count token-for-token |
 | Optimizer / loss | Adam (lr 1e-4) / token cross-entropy over the vocabulary |
 | Precision | bf16 and fp32 (fused attention in both; fp32 via the fp32-via-bf16 path) |
-| Protocol | warmup excluded; median samples/sec over 9 timed epochs, batch 32 |
+| Protocol | single `train()`, 1 warmup epoch excluded; median per-epoch samples/sec over 9 timed epochs, batch 32; CUDA graph ON (`OPENNN_TRANSFORMER_TRAIN_NO_GRAPH=1` disables) |
 
 Hardware/software: NVIDIA GeForce RTX 4080 (16 GB, driver 595.84), Intel Core
 i9-12900K, Linux x86_64. OpenNN built with g++ 13.3 + CUDA 13.3 + cuDNN 9.23.1;

@@ -17,28 +17,34 @@ restored alongside their benchmark folders. The central claim/status matrix is
 [`PRESENTATION_CLAIMS.md`](PRESENTATION_CLAIMS.md), and the machine-readable
 artifacts are under [`results/`](results/).
 
-Headline results from the 2026-08-10 full-matrix run (RTX 4080 / i9-12900K,
-commit 52e21e15d; every number backed by an artifact in `results/`):
+Headline results from the 2026-08-10/11 full-matrix runs (RTX 4080 /
+i9-12900K; every number backed by an artifact in `results/`, except the
+2026-08-11 training-speed cells, measured single-run pending the formal
+multi-run refresh):
 
 | Area | OpenNN | PyTorch | TensorFlow |
 |---|---:|---:|---:|
-| Transformer bf16 inference, seq 512 (GPU) | **588,435 tok/s** | 429,233 | 308,685 |
-| Transformer bf16 inference max batch (GPU) | **1,987** | 951 | 563 |
-| ResNet-50 fp32 training max batch (GPU) | **18,050** | 9,216 | 11,036 |
-| ResNet-50 bf16 inference (GPU) | **185,903 samples/s** | 125,592 | 83,683 |
+| HIGGS bf16 training (GPU) | **11.08M samples/s** | 8.55M | 7.44M |
 | HIGGS bf16 inference (GPU) | **34.6M samples/s** | 31.9M | 32.4M |
+| ResNet-50 bf16 training (GPU) | **29,245 samples/s** | 21,635 | 20,618 |
+| ResNet-50 bf16 inference (GPU) | **185,903 samples/s** | 125,592 | 83,683 |
+| Transformer bf16 training (GPU) | **3.03M tok/s** | 2.53M | 2.29M |
+| Transformer bf16 inference, seq 512 (GPU) | **588,435 tok/s** | 429,233 | 308,685 |
+| Transformer bf16 inference max batch (GPU) | **2,015** | 951 | 563 |
+| ResNet-50 fp32 training max batch (GPU) | **18,085** | 9,216 | 11,036 |
 | HIGGS CPU training (MKL) | **107,121 samples/s** | 99,923 | 102,040 |
 | Transformer fixed-work energy, 10 epochs (GPU) | **25.6 Wh** | 34.8 Wh | 39.7 Wh |
 | Baseline RAM | **235.6 MB** | 816.0 MB | 982.5 MB |
 
-Known open issue: the CUDA-graph *training* path currently adds only ~14%
-over eager (the pre-2026-08-09 graph path was ~90% faster but a graph-off A/B
-proved it numerically non-equivalent to eager — its speedup was partly
-artifact; the current graph path is correct). Eager training, CPU training,
-and every inference/capacity/energy cell are unaffected. The open task is
-recovering the mega-launch speedup on the correct path. The former ResNet-50
-max-batch deficit (4,752 vs TensorFlow's 2.47× lead, June 2026) is resolved —
-OpenNN now leads every capacity cell.
+Notes on the 2026-08-11 state: "fp32" on the GPU means TF32 tensor-core
+matmuls in all three engines (the earlier fp32 leads that compared OpenNN-TF32
+against strict-fp32 competitors are retired; HIGGS fp32 inference is now an
+honest three-way tie at the GEMM roofline). The former CUDA-graph training
+regression is resolved — the correct graph path plus asynchronous batch
+preparation now lead every GPU training cell. The former ResNet-50 max-batch
+deficit (4,752 vs TensorFlow's 2.47× lead, June 2026) is also resolved —
+OpenNN leads every capacity cell. The energy row predates the 2026-08-11
+speed work and is queued for a re-run.
 
 ## What is measured
 
