@@ -1073,8 +1073,8 @@ void LongShortTermMemory::apply_input_shape(const Shape& new_input_shape)
 
 void LongShortTermMemory::set_output_shape(const Shape& new_output_shape)
 {
-    check_rank(new_output_shape, {1}, "LongShortTermMemory", "output");
-    output_features = new_output_shape[0];
+    check_rank(new_output_shape, {1, 2}, "LongShortTermMemory", "output");
+    output_features = new_output_shape[new_output_shape.rank - 1];
     configure_operators();
 }
 
@@ -1105,6 +1105,7 @@ void LongShortTermMemory::read_JSON_body(const Json* lstm_layer_element)
 {
     set_activation_function(read_json_string(lstm_layer_element, "Activation"));
     set_recurrent_activation_function(read_json_string(lstm_layer_element, "RecurrentActivation"));
+    return_sequences = read_json_bool(lstm_layer_element, "ReturnSequences");
     configure_operators();
 }
 
@@ -1112,6 +1113,7 @@ void LongShortTermMemory::write_JSON_body(JsonWriter& printer) const
 {
     add_json_field(printer, "Activation", ActivationOperator::to_string(lstm_op.activation_function));
     add_json_field(printer, "RecurrentActivation", ActivationOperator::to_string(lstm_op.recurrent_activation_function));
+    add_json_field(printer, "ReturnSequences", return_sequences);
 }
 
 string LongShortTermMemory::write_expression(const vector<string>& feature_names,

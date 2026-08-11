@@ -256,3 +256,35 @@ TEST(LongShortTermMemoryLayerTest, ForgetBiasInitialisedToOne)
     for (Index i = 0; i < bf.shape.size(); ++i)
         EXPECT_FLOAT_EQ(bf_data[i], 1.0f);
 }
+
+TEST(LongShortTermMemoryLayerTest, StackedReturnSequencesSurvivesSaveLoad)
+{
+    const filesystem::path path =
+        filesystem::temp_directory_path() / "opennn_lstm_return_sequences_test.json";
+
+    NeuralNetwork neural_network;
+
+    auto first = make_unique<LongShortTermMemory>(Shape{5, 3}, Shape{6}, "Tanh", "Sigmoid", "lstm_1");
+    first->set_return_sequences(true);
+    neural_network.add_layer(std::move(first));
+
+    neural_network.add_layer(make_unique<LongShortTermMemory>(Shape{5, 6}, Shape{4}, "Tanh", "Sigmoid", "lstm_2"));
+    neural_network.compile();
+    neural_network.save(path);
+
+    NeuralNetwork loaded;
+    loaded.load(path);
+    loaded.compile();
+
+    const auto* loaded_first = dynamic_cast<const LongShortTermMemory*>(loaded.get_layer(0).get());
+    const auto* loaded_second = dynamic_cast<const LongShortTermMemory*>(loaded.get_layer(1).get());
+    ASSERT_NE(loaded_first, nullptr);
+    ASSERT_NE(loaded_second, nullptr);
+
+    EXPECT_TRUE(loaded_first->get_return_sequences());
+    EXPECT_FALSE(loaded_second->get_return_sequences());
+    EXPECT_EQ(loaded_first->get_output_shape(), Shape({5, 6}));
+    EXPECT_EQ(loaded_second->get_output_shape(), Shape({4}));
+
+    filesystem::remove(path);
+}
