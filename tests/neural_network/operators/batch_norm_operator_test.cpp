@@ -145,7 +145,11 @@ TEST(BatchNormalizationOperatoreratorTest, ForwardTrainingNormalizesPerFeature)
 
     EXPECT_LT(feature_mean.cwiseAbs().maxCoeff(), 1.0e-4f);
 
-    EXPECT_LT((feature_variance.array() - 1.0f).abs().maxCoeff(), 1.0e-3f);
+    // Batch norm divides by sqrt(var + BN_EPSILON), so the normalized variance is
+    // var/(var + BN_EPSILON) and falls short of 1 by about BN_EPSILON/var. This layer's
+    // pre-normalization feature variances are O(1e-3), which puts the shortfall near
+    // 2e-3. The bound tracks BN_EPSILON: raise it if that constant grows again.
+    EXPECT_LT((feature_variance.array() - 1.0f).abs().maxCoeff(), 5.0e-3f);
 }
 
 TEST(BatchNormalizationOperatoreratorTest, ForwardInferenceUsesRunningStatistics)
@@ -174,6 +178,43 @@ TEST(BatchNormalizationOperatoreratorTest, ForwardInferenceUsesRunningStatistics
     const MatrixMap output = output_view.as_flat_matrix();
 
     EXPECT_TRUE(output.allFinite());
+}
+
+// Batch norm only means anything if inference reproduces training. Drive the
+// running statistics onto a fixed batch, and the two modes must then agree: the
+// batch statistics they each normalize by are the same numbers. This caught an
+// inference epsilon of 1e-2 against training's 1e-5, which shrank every channel
+// whose variance was near or below it - here to 50-66% of its trained value.
+TEST(BatchNormalizationOperatoreratorTest, InferenceMatchesTrainingOnConvergedStatistics)
+{
+    const Index batch_size = 32, inputs_number = 5, outputs_number = 4;
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<opennn::Dense>(
+        Shape{inputs_number}, Shape{outputs_number}, "Identity", true));
+    neural_network.compile();
+    neural_network.set_parameters_random();
+
+    MatrixR input_data(batch_size, inputs_number);
+    input_data.setRandom();
+
+    ForwardPropagation forward_propagation(batch_size, &neural_network);
+    vector<TensorView> inputs = { TensorView(input_data.data(), {batch_size, inputs_number}) };
+
+    for (int i = 0; i < 2000; ++i)
+        neural_network.forward_propagate(inputs, forward_propagation, true);
+
+    const MatrixR training_output = forward_propagation.get_outputs().as_flat_matrix();
+
+    neural_network.forward_propagate(inputs, forward_propagation, false);
+    const MatrixR inference_output = forward_propagation.get_outputs().as_flat_matrix();
+
+    const float scale = training_output.cwiseAbs().maxCoeff();
+    ASSERT_GT(scale, 0.0f);
+
+    const float divergence = (inference_output - training_output).cwiseAbs().maxCoeff() / scale;
+
+    EXPECT_LT(divergence, 1.0e-2f);
 }
 
 TEST(BatchNormalizationOperatoreratorTest, InferenceIsDeterministicAcrossRows)

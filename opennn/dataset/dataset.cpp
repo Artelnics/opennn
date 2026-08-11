@@ -978,7 +978,7 @@ void Dataset::fill_batch(Batch& batch,
                          const vector<Index>& target_indices,
                          FillMode mode) const
 {
-    throw_if(Index(sample_indices.size()) != batch.samples_number,
+    throw_if(Index(sample_indices.size()) != batch.batch_size,
              "fill_batch sample count does not match the batch size.");
 
     const bool on_gpu = batch.uses_cuda();
@@ -986,13 +986,12 @@ void Dataset::fill_batch(Batch& batch,
     if (on_gpu && is_device_resident() && batch.decoder.shape.empty()
         && is_contiguous(input_indices) && is_contiguous(target_indices))
     {
-        batch.device_gather = true;
-        batch.gather_row_indices.resize(sample_indices.size());
-        ranges::transform(sample_indices, batch.gather_row_indices.begin(),
+        DeviceGather& gather = batch.device_gather.emplace();
+        gather.row_indices.resize(sample_indices.size());
+        ranges::transform(sample_indices, gather.row_indices.begin(),
                           [](Index sample_index) { return int(sample_index); });
-        batch.input_col_offset  = input_indices.empty()  ? 0 : input_indices.front();
-        batch.target_col_offset = target_indices.empty() ? 0 : target_indices.front();
-        batch.needs_device_copy = true;
+        gather.input_col_offset = input_indices.empty() ? 0 : input_indices.front();
+        gather.target_col_offset = target_indices.empty() ? 0 : target_indices.front();
         return;
     }
 
@@ -1009,27 +1008,31 @@ void Dataset::fill_batch_host(Batch& batch,
 {
     const bool on_gpu = batch.uses_cuda();
 
-    batch.device_gather = false;
+    batch.device_gather.reset();
 
     float* const input_buffer   = on_gpu ? batch.input.host   : batch.input.buffer.as<float>();
     float* const decoder_buffer = on_gpu ? batch.decoder.host : batch.decoder.buffer.as<float>();
     float* const target_buffer  = on_gpu ? batch.target.host  : batch.target.buffer.as<float>();
 
-    if (batch.input_contiguous < 0 && !input_indices.empty())
-        batch.input_contiguous = is_contiguous(input_indices) ? 1 : 0;
-    if (batch.decoder_contiguous < 0 && !decoder_indices.empty())
-        batch.decoder_contiguous = is_contiguous(decoder_indices) ? 1 : 0;
-    if (batch.target_contiguous < 0 && !target_indices.empty())
-        batch.target_contiguous = is_contiguous(target_indices) ? 1 : 0;
+    if (!batch.input.contiguous && !input_indices.empty())
+        batch.input.contiguous = is_contiguous(input_indices);
+    if (!batch.decoder.contiguous && !decoder_indices.empty())
+        batch.decoder.contiguous = is_contiguous(decoder_indices);
+    if (!batch.target.contiguous && !target_indices.empty())
+        batch.target.contiguous = is_contiguous(target_indices);
 
-    fill_inputs(sample_indices, input_indices, input_buffer, mode, batch.input_contiguous);
+    const auto hint = [](const optional<bool>& contiguous)
+    {
+        return contiguous ? int(*contiguous) : -1;
+    };
+
+    fill_inputs(sample_indices, input_indices, input_buffer, mode, hint(batch.input.contiguous));
 
     if (!batch.decoder.shape.empty())
-        fill_decoder(sample_indices, decoder_indices, decoder_buffer, mode, batch.decoder_contiguous);
+        fill_decoder(sample_indices, decoder_indices, decoder_buffer, mode, hint(batch.decoder.contiguous));
 
-    fill_targets(sample_indices, target_indices, target_buffer, mode, batch.target_contiguous);
+    fill_targets(sample_indices, target_indices, target_buffer, mode, hint(batch.target.contiguous));
 
-    batch.needs_device_copy = true;
 }
 
 void Dataset::samples_from_JSON(const Json *samples_element)

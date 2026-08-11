@@ -16,6 +16,20 @@
 namespace opennn
 {
 
+void scale(const TensorView&,
+           const TensorView&, const TensorView&,
+           const TensorView&, const TensorView&,
+           const TensorView&,
+           float, float,
+           TensorView&);
+
+void unscale(const TensorView&,
+             const TensorView&, const TensorView&,
+             const TensorView&, const TensorView&,
+             const TensorView&,
+             float, float,
+             TensorView&);
+
 struct ScaleOperator : Operator
 {
     bool invert = false;

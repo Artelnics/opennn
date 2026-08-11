@@ -9,12 +9,15 @@
 #include "opennn/neural_network/operators/attention_operator.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/tensor_operations.h"
+#include "opennn/neural_network/operators/dropout_operator.h"
+#include "opennn/neural_network/operators/multihead_projection_operator.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
 
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/cuda/cudnn_frontend_utilities.h"
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/core/cuda/kernel_attention.cuh"
+#include "opennn/core/cuda/kernel_cast.cuh"
 #endif
 
 namespace opennn

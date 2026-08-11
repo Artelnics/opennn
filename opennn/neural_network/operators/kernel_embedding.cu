@@ -9,6 +9,7 @@
 // embedding lookup forward and backward
 
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/neural_network/operators/kernel_embedding.cuh"
 
 template<typename TW, typename T>
 __global__ void embedding_forward_kernel(const int n, const float* __restrict__ inputs, const TW* __restrict__ weights, const float* __restrict__ positional_encoding, T* __restrict__ outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)

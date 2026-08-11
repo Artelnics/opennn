@@ -65,10 +65,10 @@ Index InputsSelectionResult::get_epochs_number() const
 
 void InputsSelectionResult::set(const Index maximum_epochs)
 {
-    training_error_history = VectorR::Constant(maximum_epochs, -1.0f);
-    validation_error_history = VectorR::Constant(maximum_epochs, -1.0f);
-    mean_validation_error_history = VectorR::Constant(maximum_epochs, -1.0f);
-    mean_training_error_history = VectorR::Constant(maximum_epochs, -1.0f);
+    training_error_history = VectorR::Constant(maximum_epochs, QUIET_NAN);
+    validation_error_history = VectorR::Constant(maximum_epochs, QUIET_NAN);
+    mean_validation_error_history = VectorR::Constant(maximum_epochs, QUIET_NAN);
+    mean_training_error_history = VectorR::Constant(maximum_epochs, QUIET_NAN);
 }
 
 void InputsSelectionResult::resize_history(const Index new_size)

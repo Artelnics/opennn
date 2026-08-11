@@ -249,9 +249,36 @@ void generate_synthetic_dataset(const filesystem::path& images_dir,
     classes << "red\n" << "blue\n" << "green\n";
 }
 
+// Dataset locations differ per machine, so none of them may be a bare absolute
+// path: an explicit environment variable wins, then the first candidate that
+// exists on disk, and only failing both do we return the leading candidate so the
+// error message names something concrete.
+filesystem::path resolve_data_path(const char* variable,
+                                   initializer_list<const char*> candidates)
+{
+    if (const char* value = getenv(variable); value && *value)
+        return value;
+
+    for (const char* candidate : candidates)
+        if (filesystem::is_directory(candidate))
+            return candidate;
+
+    return candidates.size() ? filesystem::path(*candidates.begin()) : filesystem::path();
 }
 
-int main()
+// getenv("HOME") is empty on Windows; the equivalent there is USERPROFILE.
+filesystem::path home_directory()
+{
+    for (const char* variable : {"HOME", "USERPROFILE"})
+        if (const char* value = getenv(variable); value && *value)
+            return value;
+
+    return {};
+}
+
+}
+
+int main(int argc, char* argv[])
 {
     try
     {
@@ -263,33 +290,47 @@ int main()
 
         const auto class_activation = YoloNetwork::ClassActivation::Sigmoid;
 
-        const bool use_voc     = true;
+        // Experiment selection — pass as first command-line argument:
+        //   v3-pretrained  YOLOv3 + Darknet53 backbone loaded from darknet53.conv.74
+        //   v3-scratch     YOLOv3 + Darknet53 random init
+        //   v8-pretrained  YOLOv8 + CSPDarknet53v11 partial backbone (yolov4.conv.137)
+        //   v8-scratch     YOLOv8 + CSPDarknet53v11 random init
+        const std::string experiment = (argc >= 2) ? argv[1] : "v3-pretrained";
+        const bool from_scratch  = (experiment.find("scratch") != std::string::npos);
+        const bool use_v8_exp    = (experiment.find("v8")      != std::string::npos);
+
+        const bool quick_test  = false;   // ← 5-epoch smoke test; set false for full run
+        const bool use_voc     = false;   // ← VOC PASCAL training
         const bool use_raccoon = false;
         const bool use_coco    = false;
 
+        // ── MODE SELECT ──────────────────────────────────────────────────────
+        // YOLOv3 (anchor-based FPN):  use_v8=false, use_c11=false, use_csp=false
+        //                             → Darknet53 + 3-head FPN, ~61M params
+        //                             → loads darknet53.conv.74 pretrained backbone
+        //                             → VOC benchmark: ~54.9% mAP@0.5
+        //
+        // YOLOv8 (anchor-free FPNv8): use_v8=true, use_c11=true
+        //                             → CSPDarknet53v11 + FPNv8 + DFL, ~50M params
+        //                             → trains from scratch (no pretrained weights)
+        //                             → VOC benchmark: Phase 5b, expected ≥54%
+        // ─────────────────────────────────────────────────────────────────────
+        const bool use_v8      = use_v8_exp;  // set by experiment arg
+        const bool use_c11     = use_v8;  // CSPDarknet53v11 backbone for YOLOv8; Darknet53 for v3
+        const bool use_csp     = use_c11; // use_c11 implies CSP
         const bool use_panet   = false;
-
-        const bool use_csp     = false;
-
-        const bool use_c11     = true;
-
+        // SPPF: tested on VOC 2007 — 48.9% mAP vs 54.9% plain FPN (-6pp). Disabled.
         const bool use_sppf    = false;
-
-        const bool use_v8      = true;
-
+        // reg_max=1: sigmoid box (Phase 5a). reg_max=16: DFL (Phase 5b, default).
         const Index reg_max    = 16;
 
-        const auto backbone = (use_coco || use_voc)
-            ? (use_c11 ? YoloNetwork::Backbone::CSPDarknet53v11
-             : use_csp ? YoloNetwork::Backbone::CSPDarknet53
-             :           YoloNetwork::Backbone::Darknet53)
-            : YoloNetwork::Backbone::Vgg;
+        const auto backbone = use_c11 ? YoloNetwork::Backbone::CSPDarknet53v11
+                           : use_csp ? YoloNetwork::Backbone::CSPDarknet53
+                           :           YoloNetwork::Backbone::Darknet53;
 
-        const auto head_style = (use_coco || use_voc)
-            ? (use_panet ? YoloNetwork::HeadStyle::PANet
-                         : use_v8 ? YoloNetwork::HeadStyle::FPNv8
-                                  : YoloNetwork::HeadStyle::FPN)
-            : YoloNetwork::HeadStyle::Single;
+        const auto head_style = use_panet ? YoloNetwork::HeadStyle::PANet
+                              : use_v8    ? YoloNetwork::HeadStyle::FPNv8
+                              :             YoloNetwork::HeadStyle::FPN;
 
         // use_v8 only reaches the head through the ternary above, which the
         // synthetic configuration never takes - it always gets the anchor-based
@@ -300,14 +341,10 @@ int main()
 
         const auto body_activation = YoloNetwork::BodyActivation::LeakyReLU;
 
-        const filesystem::path voc_root = []() -> filesystem::path {
-            if (const char* env = getenv("VOC_ROOT")) return env;
-            for (const char* c : {"/home/alvaromartin/VOCdevkit/VOC2007",
-                                   "/home/artelnics/VOCdevkit/VOC2007",
-                                   "VOCdevkit/VOC2007"})
-                if (filesystem::is_directory(c)) return c;
-            return "/home/alvaromartin/VOCdevkit/VOC2007";
-        }();
+        const filesystem::path voc_root =
+            resolve_data_path("VOC_ROOT", {"VOCdevkit/VOC2007",
+                                           "/home/alvaromartin/VOCdevkit/VOC2007",
+                                           "/home/artelnics/VOCdevkit/VOC2007"});
         const string voc_image_set = "trainval";
 
         const vector<string> voc_class_filter = {};
@@ -315,8 +352,8 @@ int main()
         const filesystem::path data_dir = use_voc     ? "yolo_voc_data"
                                              : use_raccoon ? "yolo_raccoon_data"
                                              : use_coco   ? "yolo_coco_data"
-                                             :               "yolo_data";
-        filesystem::create_directories(data_dir);
+                                             :               ("yolo_data_" + experiment);
+        std::filesystem::create_directories(data_dir);
 
         const filesystem::path log_path = data_dir / "training_log.txt";
         ofstream log_file(log_path, ios::app);
@@ -457,11 +494,14 @@ int main()
         else if (use_coco)
         {
 
-            labels_dir = "/home/alvaromartin/coco_mini_data/train2017_labels";
+            labels_dir = resolve_data_path("COCO_LABELS",
+                {"coco_mini_data/train2017_labels",
+                 "/home/alvaromartin/coco_mini_data/train2017_labels"});
             images_dir = data_dir / "labeled_images";
             filesystem::create_directories(images_dir);
-            const filesystem::path src_images =
-                "/home/alvaromartin/coco_mini_data/train2017";
+            const filesystem::path src_images = resolve_data_path("COCO_IMAGES",
+                {"coco_mini_data/train2017",
+                 "/home/alvaromartin/coco_mini_data/train2017"});
             for (const auto& entry : filesystem::directory_iterator(labels_dir))
             {
                 if (entry.path().extension() != ".txt") continue;
@@ -486,8 +526,12 @@ int main()
         else if (use_raccoon)
         {
 
-            images_dir = "/home/artelnics/Documents/opennn/raccoon_dataset/images";
-            labels_dir = "/home/artelnics/Documents/opennn/raccoon_data/labels";
+            images_dir = resolve_data_path("RACCOON_IMAGES",
+                {"raccoon_dataset/images",
+                 "/home/artelnics/Documents/opennn/raccoon_dataset/images"});
+            labels_dir = resolve_data_path("RACCOON_LABELS",
+                {"raccoon_data/labels",
+                 "/home/artelnics/Documents/opennn/raccoon_data/labels"});
 
             grid_size      = 13;
             boxes_per_cell = 3;
@@ -497,15 +541,17 @@ int main()
         }
         else
         {
+            // External synthetic dataset: 416×416 JPGs, 3 classes (circle/square/triangle).
+            images_dir = resolve_data_path("SYNTHETIC_YOLO_IMAGES",
+                {"synthetic_yolo/images", "/home/alvaromartin/synthetic_yolo/images"});
+            labels_dir = resolve_data_path("SYNTHETIC_YOLO_LABELS",
+                {"synthetic_yolo/labels", "/home/alvaromartin/synthetic_yolo/labels"});
 
-            images_dir = data_dir / "images";
-            labels_dir = data_dir / "labels";
-            generate_synthetic_dataset(images_dir, labels_dir, 256);
-
-            grid_size      = 4;
-            boxes_per_cell = 2;
-            input_shape    = Shape{128, 128, 3};
-            anchors        = {{0.25f, 0.25f}, {0.5f, 0.5f}};
+            // Grid 13×13 over 416×416 input (stride 32).
+            grid_size      = 13;
+            boxes_per_cell = 3;
+            input_shape    = Shape{416, 416, 3};
+            anchors        = {{0.15f, 0.15f}, {0.35f, 0.35f}, {0.60f, 0.60f}};
         }
 
         const bool is_v3std     = (backbone == YoloNetwork::Backbone::DarknetTinyV3);
@@ -685,7 +731,7 @@ int main()
                 yolo_network.get_layer("non_max_suppression_layer").get());
             if (nms_layer)
                 nms_layer->set(yolo_network.get_layer(yolo_network.get_layers_number() - 2)->get_output_shape(),
-                               boxes_per_cell, 0.0f, 0.4f,
+                               boxes_per_cell, /*confidence=*/0.25f, /*iou=*/0.4f,
                                "non_max_suppression_layer");
         }
 
@@ -697,22 +743,31 @@ int main()
 
         if (is_csp53v11 && use_voc)
             training_strategy.get_loss()->set_regularization_weight(0.0005f);
-        training_strategy.get_loss()->set_yolo_lambda_noobj(0.5f);
-        training_strategy.get_loss()->set_yolo_lambda_class(0.5f);
-        training_strategy.get_loss()->set_yolo_lambda_giou(7.5f);
-        training_strategy.get_loss()->set_yolo_lambda_dfl(1.5f);
-        training_strategy.get_loss()->set_yolo_focal_gamma(0.5f);
-        training_strategy.get_loss()->set_yolo_obj_focal_gamma(0.0f);
+        if (use_voc || use_coco || use_raccoon)
+        {
+            // YOLOv8 reference tuning — only for real-image datasets.
+            training_strategy.get_loss()->set_yolo_lambda_noobj(0.5f);
+            training_strategy.get_loss()->set_yolo_lambda_class(0.5f);      // YOLOv8 ref: cls_gain=0.5
+            training_strategy.get_loss()->set_yolo_lambda_giou(7.5f);       // YOLOv8 ref: box_gain=7.5
+            training_strategy.get_loss()->set_yolo_lambda_dfl(1.5f);        // YOLOv8 ref: dfl_gain=1.5
+            training_strategy.get_loss()->set_yolo_focal_gamma(0.5f);       // YOLOv8 ref: fl_gamma=0.5
+            training_strategy.get_loss()->set_yolo_obj_focal_gamma(0.0f);
+        }
 
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
             training_strategy.get_optimization_algorithm());
-
-        const int batch_size = is_csp53v11 ? 8 : (is_large_backbone ? 4 : 16);
+        // Raccoon/VOC: real photos need a smaller batch (GPU memory) and more
+        // patience before early stop fires (loss is noisier on small real datasets).
+        // Darknet53 is 7x larger than TinyV3 — batch 4 keeps it within 7.7 GB VRAM.
+        // c11 s-size at 640×640: ~8GB activations at batch=16 — exceeds RTX 2080/5060 budget.
+        // batch=8 halves activation memory to ~4GB (fits in 7.7GB with model+gradients).
+        const int batch_size = is_csp53v11 ? 8 : (is_large_backbone ? 4 : (use_voc || use_coco || use_raccoon) ? 16 : 4);
         adam->set_batch_size(batch_size);
-        adam->set_display_period(1);
-        adam->set_gradient_clip_norm(10.0f);
+        adam->set_display_period(5);
+        // VOC/COCO: YOLOv8 ref clip=10.0 (pretrained backbone keeps gradients bounded).
+        // Synthetic: train from scratch → exp(tw) can explode; clip at 1.0 to stabilize.
+        adam->set_gradient_clip_norm((use_voc || use_coco || use_raccoon) ? 10.0f : 1.0f);
         adam->set_maximum_validation_failures(use_coco ? 50 : (use_voc && is_large_backbone) ? 40 : use_voc ? 25 : use_raccoon ? 25 : 15);
-        adam->set_validation_period(5);
 
         const bool resume_training = true;
 
@@ -757,6 +812,7 @@ int main()
         }
 
         const bool needs_darknet_backbone =
+            !from_scratch &&
             (backbone == YoloNetwork::Backbone::DarknetTinyV3 ||
              backbone == YoloNetwork::Backbone::Darknet53 ||
              backbone == YoloNetwork::Backbone::CSPDarknet53 ||
@@ -771,11 +827,13 @@ int main()
             const string darknet_filename = is53 ? "darknet53.conv.74"
                                                : (iscsp || isv11) ? "yolov4.conv.137"
                                                : "yolov3-tiny.weights";
-
-            filesystem::path darknet_weights = data_dir / darknet_filename;
-            if (!filesystem::exists(darknet_weights))
-                darknet_weights = filesystem::path("yolo_voc_data") / darknet_filename;
-            if (filesystem::exists(darknet_weights))
+            // Look in data_dir first, then in yolo_voc_data (where it was originally downloaded).
+            std::filesystem::path darknet_weights = data_dir / darknet_filename;
+            if (!std::filesystem::exists(darknet_weights))
+                darknet_weights = std::filesystem::path("yolo_voc_data") / darknet_filename;
+            if (!std::filesystem::exists(darknet_weights))
+                darknet_weights = home_directory() / ".neuraldesigner/weights" / darknet_filename;
+            if (std::filesystem::exists(darknet_weights))
             {
                 Index loaded = 0;
                 if (isv11)
@@ -888,7 +946,24 @@ int main()
             }
         };
 
-        if (resume_training || !filesystem::exists(weights_path))
+        // Per-epoch CSV log: epoch,train_error,val_error
+        const auto csv_path = data_dir / "training_errors.csv";
+        
+        std::ofstream csv_log(csv_path, std::ios::app);
+        
+        csv_log << "epoch,train_error,val_error\n";
+
+        adam->post_epoch_callback = [&](Index epoch, float train_err, float val_err, NeuralNetwork*) 
+        {
+            csv_log << (epochs_done + static_cast<int>(epoch)) << ","
+                    << train_err << "," << val_err << "\n";
+            csv_log.flush();
+        };
+
+        // 10-minute cap per experiment.
+        adam->set_maximum_time(600.0f);
+
+        if (resume_training || !std::filesystem::exists(weights_path))
         {
 
             {
@@ -1137,10 +1212,15 @@ input_shape[1],
                 const MatrixR outputs = yolo_network.calculate_outputs(input);
                 detections = decode_yolo_detections(
                     span<const float>(outputs.data(), size_t(outputs.size())),
-input_shape[0],
-input_shape[1],
-input_shape[0],
-input_shape[1]);
+                    input_shape[0],
+                    input_shape[1],
+                    input_shape[0],
+                    input_shape[1]);
+                // NMS conf is applied inside the layer (set above); also prune anything
+                // that slipped through with score below the visualization threshold.
+                detections.erase(std::remove_if(detections.begin(), detections.end(),
+                    [](const YoloDetection& d){ return d.score < 0.25f; }),
+                    detections.end());
             }
 
             const filesystem::path image_path = dataset.get_image_path(s);
@@ -1383,7 +1463,12 @@ input_shape[1]);
         cout << "\nLegend: green = GT, red = top-1, orange = top-2, "
                   << "yellow = top-3, cyan = best-IoU-vs-GT (if outside top-3).\n";
 
-        if (ema_updated_this_run)
+        // Use EMA weights for mAP only when training ran this session (post_batch_callback
+        // fired at least once), so we never evaluate with a stale or corrupt EMA file.
+        // Skip EMA for small datasets or quick tests: 0.9999^N stays close to initial weights
+        // until N >> 10k batches. With prior bias and EMA≈init, all scores ≈ 0.0001 < mAP threshold.
+        const bool use_ema_for_map = ema_updated_this_run && !is_synthetic && !quick_test;
+        if (use_ema_for_map)
         {
             yolo_network.set_parameters(as_vector_map(ema_params));
             cout << "Using in-memory EMA weights for final mAP evaluation.\n";
@@ -1394,7 +1479,16 @@ input_shape[1]);
         }
 
         {
-            cout << "\nComputing VOC mAP@0.5 on "
+            // For single-head, lower NMS conf to 0.001 during mAP so the full precision-recall
+            // curve is captured (visualization uses 0.25, which cuts low-confidence TPs).
+            // FPN path bypasses NMS entirely via forward_slots, so no change needed there.
+            auto* map_nms = !is_fpn
+                ? dynamic_cast<NonMaxSuppression*>(
+                    yolo_network.get_layer("non_max_suppression_layer").get())
+                : nullptr;
+            const float vis_conf = map_nms ? map_nms->get_confidence_threshold() : 0.25f;
+            if (map_nms) map_nms->set_confidence_threshold(0.001f);
+            std::cout << "\nComputing VOC mAP@0.5 on "
                       << selection_indices.size() << " validation images...\n";
 
             struct GtBox { int cls; float cx, cy, w, h; };
@@ -1541,6 +1635,12 @@ input_shape[1]);
                                span<const float>(outputs.data(), size_t(outputs.size())),
                                input_shape[0], input_shape[1],
                                input_shape[0], input_shape[1]);
+                    // NMS layer is configured with conf=0.0 for visualization, so filter here
+                    // at the same threshold the FPN path uses.
+                    constexpr float MAP_CONF_THR = 0.001f;
+                    dets.erase(std::remove_if(dets.begin(), dets.end(),
+                        [](const YoloDetection& d){ return d.score < MAP_CONF_THR; }),
+                        dets.end());
                 }
 
                 const float IW = float(input_shape[1]), IH = float(input_shape[0]);
@@ -1563,6 +1663,13 @@ input_shape[1]);
                 const float inter = max(0.f, rx - lx) * max(0.f, ry - ly);
                 return inter / max(w1 * h1 + w2 * h2 - inter, 1e-6f);
             };
+
+            struct ClassStats {
+                std::string name;
+                int tp = 0, fp = 0, fn = 0;
+                float precision = 0.f, recall = 0.f, f1 = 0.f, ap = 0.f;
+            };
+            std::vector<ClassStats> class_stats;
 
             float total_ap = 0.f;
             int classes_with_gt = 0;
@@ -1619,9 +1726,22 @@ input_shape[1]);
                 }
                 ap /= 11.f;
                 total_ap += ap;
-                cout << "  " << left << setw(14)
+
+                // TP/FP/FN at end of sweep (conf=0.001 → all preds included).
+                const int tp = int(cum_tp);
+                const int fp = int(cum_fp);
+                const int fn = n_gt - tp;
+                const float precision = (cum_tp + cum_fp > 0.f) ? cum_tp / (cum_tp + cum_fp) : 0.f;
+                const float recall    = n_gt > 0 ? cum_tp / float(n_gt) : 0.f;
+                const float f1 = (precision + recall > 0.f) ? 2.f * precision * recall / (precision + recall) : 0.f;
+                class_stats.push_back({class_names[size_t(c)], tp, fp, fn, precision, recall, f1, ap});
+
+                std::cout << "  " << std::left << std::setw(14)
                           << class_names[size_t(c)]
-                          << "AP=" << fixed << setprecision(3) << ap
+                          << "AP=" << std::fixed << std::setprecision(3) << ap
+                          << "  TP=" << tp << "  FP=" << fp << "  FN=" << fn
+                          << "  P=" << std::setprecision(3) << precision
+                          << "  R=" << recall
                           << "  (GT=" << n_gt << " pred=" << preds.size() << ")\n";
             }
 
@@ -1630,6 +1750,17 @@ input_shape[1]);
             cout << "mAP@0.5: " << fixed << setprecision(3) << mAP
                       << "  (" << classes_with_gt << "/" << N_cls
                       << " classes with GT in validation set)\n";
+
+            // CSV table (same format the user expects, conf=0.001 operating point).
+            std::cout << "\n,TP,FP,FN,Precision,Recall,F1,AP@0.5\n";
+            for (const auto& s : class_stats)
+                std::cout << s.name
+                          << "," << s.tp << "," << s.fp << "," << s.fn
+                          << "," << std::fixed << std::setprecision(3)
+                          << s.precision << "," << s.recall << "," << s.f1 << "," << s.ap << "\n";
+
+            // Restore visualization confidence threshold.
+            if (map_nms) map_nms->set_confidence_threshold(vis_conf);
         }
 
         cout << "Bye!" << endl;

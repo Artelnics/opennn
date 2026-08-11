@@ -19,7 +19,7 @@
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/core/device_backend.h"
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/core/cuda/kernel_prelude.cuh"
 #include "opennn/core/random_utilities.h"
 
 using namespace opennn;

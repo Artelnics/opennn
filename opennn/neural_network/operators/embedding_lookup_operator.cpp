@@ -14,7 +14,8 @@
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/core/device_backend.h"
 #ifdef OPENNN_HAS_CUDA
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/neural_network/operators/kernel_embedding.cuh"
+#include "opennn/core/cuda/kernel_quantization.cuh"
 #endif
 
 namespace opennn

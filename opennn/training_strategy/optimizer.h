@@ -83,13 +83,13 @@ public:
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
-    function<void(Index, NeuralNetwork*)> post_epoch_callback;
-
+    function<void(Index, float, float, NeuralNetwork*)> post_epoch_callback;
     function<void(NeuralNetwork*)> post_batch_callback;
-
     function<void(Index, float)> post_best_callback;
 
 protected:
+
+    enum class UpdateMode { Standard, Capturable };
 
     struct TrainingSession
     {
@@ -130,9 +130,8 @@ protected:
     void set_scaling();
     void set_unscaling();
 
-    bool check_stopping_condition(TrainingResult&, Index, float,
-                                   float, Index,
-                                   float, bool) const;
+    bool check_stopping_condition(TrainingResult&, 
+        Index, float, float, Index, float, bool) const;
 
     struct BestModelSnapshot
     {
@@ -187,7 +186,7 @@ protected:
 
     void display_epoch_results(Index, float, float,
                                float, float,
-                               bool, bool,
+                               bool, bool, bool,
                                float) const;
 
     void warn_dropped_samples(Index,
@@ -228,7 +227,6 @@ protected:
         unique_ptr<Batch> validation_batch;
         unique_ptr<ForwardPropagation> training_forward_propagation;
         unique_ptr<ForwardPropagation> validation_forward_propagation;
-        ForwardPropagation* validation_fp = nullptr;
     };
 
     struct FullBatchStep
@@ -253,10 +251,9 @@ protected:
 
     virtual string get_display_name() const { return name; }
     virtual void setup_optimizer_data(OptimizerData&, Index, Device) {}
-    virtual void update_parameters(BackPropagation&, OptimizerData&)
+    virtual void update_parameters(BackPropagation&, OptimizerData&,
+                                   UpdateMode = UpdateMode::Standard)
     { throw runtime_error("train() requires a mini-batch optimizer (SGD or Adam)."); }
-    virtual void update_parameters_capturable(BackPropagation&, OptimizerData&) const
-    { throw runtime_error("This optimizer does not support CUDA graph capture."); }
     virtual bool supports_cuda_graph() const noexcept { return false; }
     bool can_use_cuda_graph() const
     {

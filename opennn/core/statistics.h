@@ -173,11 +173,7 @@ inline bool is_constant(const T& tensor)
                   [reference_value](float value) { return isnan(value) || abs(reference_value - value) <= numeric_limits<float>::min(); });
 }
 
-VectorR local_outlier_factor(const MatrixR&, Index);
-
 VectorI calculate_rank(const VectorR&, bool ascending = true);
-
-VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
 
 }
 

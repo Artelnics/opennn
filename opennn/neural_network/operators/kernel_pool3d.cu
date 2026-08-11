@@ -1,14 +1,13 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   P O O L I N G   K E R N E L S
+//   P O O L 3 D   K E R N E L S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// pooling, first-token reduction, upsampling and concatenation
-
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/neural_network/operators/kernel_pool3d.cuh"
 
 struct PoolingScratch
 {
@@ -222,108 +221,6 @@ void first_token_3d_backward_cuda(const int B, const int S, const int F, const T
     launch_elementwise_strided(Index(B) * F, first_token_3d_kernel<T, false>, S, F, delta, in_gradient);
 }
 
-__global__ void upsample_forward_kernel(
-    const int n,
-    const float* __restrict__ src,
-    float* __restrict__ dst,
-    const int in_h, const int in_w,
-    const int out_h, const int out_w,
-    const int channels, const int scale)
-{
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
-    {
-        const int c  = i % channels;
-        const int ow = (i / channels) % out_w;
-        const int oh = (i / channels / out_w) % out_h;
-        const int b  =  i / channels / out_w / out_h;
-
-        const int iw = ow / scale;
-        const int ih = oh / scale;
-        dst[i] = src[((b * in_h + ih) * in_w + iw) * channels + c];
-    }
-}
-
-__global__ void upsample_backward_kernel(
-    const int n,
-    const float* __restrict__ out_delta,
-    float* __restrict__ in_delta,
-    const int in_h, const int in_w,
-    const int out_h, const int out_w,
-    const int channels, const int scale)
-{
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
-    {
-        const int c  = i % channels;
-        const int iw = (i / channels) % in_w;
-        const int ih = (i / channels / in_w) % in_h;
-        const int b  =  i / channels / in_w / in_h;
-
-        float acc = 0.0f;
-        for (int dh = 0; dh < scale; ++dh)
-            for (int dw = 0; dw < scale; ++dw)
-            {
-                const int oh = ih * scale + dh;
-                const int ow = iw * scale + dw;
-                acc += out_delta[((b * out_h + oh) * out_w + ow) * channels + c];
-            }
-        in_delta[i] = acc;
-    }
-}
-
-void upsample_forward_cuda(const int batch, const int in_h, const int in_w, const int channels, const int scale,
-                           const float* src, float* dst)
-{
-    const int n = batch * (in_h * scale) * (in_w * scale) * channels;
-    launch_elementwise_strided(n, upsample_forward_kernel,
-                       src, dst, in_h, in_w, in_h * scale, in_w * scale, channels, scale);
-}
-
-void upsample_backward_cuda(const int batch, const int in_h, const int in_w, const int channels, const int scale,
-                            const float* out_delta, float* in_delta)
-{
-    const int n = batch * in_h * in_w * channels;
-    if (n == 0) return;
-    // No pre-zeroing: the kernel assigns in_delta[i] for every i below n.
-    launch_elementwise_strided(n, upsample_backward_kernel,
-                       out_delta, in_delta, in_h, in_w, in_h * scale, in_w * scale, channels, scale);
-}
-
-template<bool Scatter>
-__global__ void concat_slice_kernel(
-    const int n,
-    const float* __restrict__ src,
-    float* __restrict__ dst,
-    const int H, const int W,
-    const int slice_ch, const int total_ch, const int ch_offset)
-{
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
-    {
-        const int c  = i % slice_ch;
-        const int w  = (i / slice_ch) % W;
-        const int h  = (i / slice_ch / W) % H;
-        const int b  =  i / slice_ch / W / H;
-        const int strided = ((b * H + h) * W + w) * total_ch + ch_offset + c;
-        if constexpr (Scatter) dst[strided] = src[i];
-        else                   dst[i] = src[strided];
-    }
-}
-
-void concat_forward_slice_cuda(const int batch, const int H, const int W,
-                               const int slice_ch, const int total_ch, const int ch_offset,
-                               const float* src, float* dst)
-{
-    launch_elementwise_strided(Index(batch) * H * W * slice_ch, concat_slice_kernel<true>,
-                       src, dst, H, W, slice_ch, total_ch, ch_offset);
-}
-
-void concat_backward_slice_cuda(const int batch, const int H, const int W,
-                                const int slice_ch, const int total_ch, const int ch_offset,
-                                const float* out_delta, float* in_delta)
-{
-    launch_elementwise_strided(Index(batch) * H * W * slice_ch, concat_slice_kernel<false>,
-                       out_delta, in_delta, H, W, slice_ch, total_ch, ch_offset);
-}
-
 #define INSTANTIATE(T) \
     template void max_pooling_3d_forward_cuda<T>(const Index, const T*, T*, float*, const int, const int); \
     template void max_pooling_3d_backward_cuda<T>(const Index, const T*, T*, const float*, const int, const int); \
@@ -334,7 +231,6 @@ void concat_backward_slice_cuda(const int batch, const int H, const int W,
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence, SL.

@@ -6,7 +6,7 @@
 #include <limits>
 #include <stdexcept>
 
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/core/cuda/kernel_prelude.cuh"
 #include "opennn/core/configuration.h"
 
 namespace opennn::device

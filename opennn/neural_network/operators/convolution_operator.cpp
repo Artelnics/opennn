@@ -13,7 +13,8 @@
 #include "opennn/neural_network/operators/convolution_operator.h"
 #include "opennn/core/device_backend.h"
 #ifdef OPENNN_HAS_CUDA
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/core/cuda/kernel_cast.cuh"
+#include "opennn/core/cuda/kernel_quantization.cuh"
 #endif
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/tensor_operations.h"
@@ -557,7 +558,7 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
         if (use_bias) tensors[entry.fwd_B] = bias.data;
         tensors[entry.fwd_Y] = output.data;
 
-        cudnn_frontend::autotune_now(entry.fwd_autotune, *entry.fwd, tensors, entry.fwd_workspace_bytes);
+        cudnn_frontend::autotune_with_scratch(entry.fwd_autotune, *entry.fwd, tensors, entry.fwd_workspace_bytes);
 
         cudnn_frontend::execute_graph(*entry.fwd, tensors, cudnn_frontend::shared_workspace(entry.fwd_workspace_bytes),
                                 "forward execute", cudnn_frontend::timing_label(*this, "conv_fwd"));

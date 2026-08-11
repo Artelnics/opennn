@@ -16,15 +16,14 @@
 #include "opennn/core/configuration.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/training_strategy/kernel_optimizers.cuh"
 
 namespace opennn
 {
 
 #ifdef OPENNN_HAS_CUDA
 
-static void update_parameters_cuda(NeuralNetwork* neural_network,
-                                   BackPropagation& back_propagation,
+static void update_parameters_cuda(BackPropagation& back_propagation,
                                    OptimizerData& optimization_data,
                                    float beta_1,
                                    float beta_2,
@@ -32,6 +31,8 @@ static void update_parameters_cuda(NeuralNetwork* neural_network,
                                    float bias_correction_1,
                                    float bias_correction_2)
 {
+    NeuralNetwork* const neural_network = back_propagation.get_neural_network();
+
     PROFILE_SCOPE("optim:adam_update_cuda");
     const Index parameters_number = neural_network->get_parameters_buffer_size();
 
@@ -53,7 +54,7 @@ static void update_parameters_cuda(NeuralNetwork* neural_network,
 #else
 
 OPENNN_CUDA_STUB(void, update_parameters_cuda,
-                 (NeuralNetwork*, BackPropagation&, OptimizerData&,
+                 (BackPropagation&, OptimizerData&,
                   float, float, float, float, float))
 
 #endif
@@ -125,8 +126,39 @@ void AdaptiveMomentEstimation::setup_optimizer_data(OptimizerData& optimization_
 }
 
 void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
-                                                 OptimizerData& optimization_data)
+                                                 OptimizerData& optimization_data,
+                                                 UpdateMode mode)
 {
+    NeuralNetwork* neural_network = loss->get_neural_network();
+
+    if (mode == UpdateMode::Capturable)
+    {
+#ifdef OPENNN_HAS_CUDA
+        clip_gradient_norm(back_propagation.gradient, gradient_clip_norm);
+
+        float* const graph_scalars = optimization_data.views[GraphScalars].as<float>();
+        int* const graph_step = reinterpret_cast<int*>(graph_scalars);
+        float* const graph_learning_rate = graph_scalars + 1;
+        float* const graph_epsilon = graph_scalars + 2;
+
+        adam_update_capturable_cuda(
+            neural_network->get_parameters_buffer_size(),
+            neural_network->get_parameters_data(),
+            optimization_data.views[GradientMoment].as<float>(),
+            optimization_data.views[SquareGradientMoment].as<float>(),
+            back_propagation.gradient.as<float>(),
+            beta_1, beta_2, learning_rate, EPSILON,
+            graph_step,
+            graph_learning_rate,
+            graph_epsilon,
+            neural_network->get_parameters_bf16_mirror_data(),
+            Backend::get_compute_stream());
+        return;
+#else
+        throw runtime_error("Capturable Adam parameter updates require CUDA support.");
+#endif
+    }
+
     const Index period = max(Index(1), update_period);
 
     if (period > 1)
@@ -146,8 +178,6 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
         optimization_data.accumulated_batches = 0;
     }
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
-
     optimization_data.iteration++;
 
     {
@@ -162,7 +192,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     if (neural_network->is_gpu())
     {
-        update_parameters_cuda(neural_network, back_propagation, optimization_data,
+        update_parameters_cuda(back_propagation, optimization_data,
                                beta_1, beta_2, learning_rate,
                                bias_correction_1, bias_correction_2);
         return;
@@ -197,37 +227,6 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
         parameters(i) -= effective_learning_rate * first_moment / (sqrt(second_moment) + effective_epsilon);
     }
 }
-
-#ifdef OPENNN_HAS_CUDA
-void AdaptiveMomentEstimation::update_parameters_capturable(BackPropagation& back_propagation,
-                                                            OptimizerData& optimization_data) const
-{
-    NeuralNetwork* neural_network = loss->get_neural_network();
-
-    clip_gradient_norm(back_propagation.gradient, gradient_clip_norm);
-
-    float* const graph_scalars = optimization_data.views[GraphScalars].as<float>();
-    int* const graph_step = reinterpret_cast<int*>(graph_scalars);
-    float* const graph_learning_rate = graph_scalars + 1;
-    float* const graph_epsilon = graph_scalars + 2;
-
-    adam_update_capturable_cuda(
-        neural_network->get_parameters_buffer_size(),
-        neural_network->get_parameters_data(),
-        optimization_data.views[GradientMoment].as<float>(),
-        optimization_data.views[SquareGradientMoment].as<float>(),
-        back_propagation.gradient.as<float>(),
-        beta_1, beta_2, learning_rate, EPSILON,
-        graph_step,
-        graph_learning_rate,
-        graph_epsilon,
-        neural_network->get_parameters_bf16_mirror_data(),
-        Backend::get_compute_stream());
-}
-#else
-void AdaptiveMomentEstimation::update_parameters_capturable(BackPropagation&, OptimizerData&) const
-OPENNN_CUDA_STUB_BODY(update_parameters_capturable)
-#endif
 
 void AdaptiveMomentEstimation::to_JSON(JsonWriter& printer) const
 {

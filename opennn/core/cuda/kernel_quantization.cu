@@ -9,6 +9,7 @@
 // INT8 weight-only quantized linear, dequantization and embedding
 
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/core/cuda/kernel_quantization.cuh"
 
 template<typename T, int WARPS_PER_ROW>
 __global__ void w8a16_linear_out_major_kernel(

@@ -9,6 +9,7 @@
 // elementwise activations, SwiGLU and dropout
 
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/core/cuda/kernel_activation.cuh"
 #include <curand_kernel.h>
 
 template<typename T>

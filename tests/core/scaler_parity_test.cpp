@@ -18,6 +18,7 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/variable.h"
+#include "opennn/neural_network/layers/scaling_layer.h"
 
 using namespace opennn;
 

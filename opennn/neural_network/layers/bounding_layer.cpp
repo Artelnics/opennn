@@ -14,9 +14,68 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
+#ifdef OPENNN_HAS_CUDA
+#include "opennn/neural_network/layers/kernel_scaling.cuh"
+#endif
 
 namespace opennn
 {
+
+// Defined below: against the CUDA kernel, or as a throwing stub.
+static void bound_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&);
+
+static void bound_cpu(const TensorView& input,
+               const TensorView& lower_bounds,
+               const TensorView& upper_bounds,
+               TensorView& output)
+{
+    const Index features = lower_bounds.size();
+
+    const MatrixMap input_matrix = input.as_flat_matrix();
+    const VectorMap lower_bounds_vector = lower_bounds.as_vector();
+    const VectorMap upper_bounds_vector = upper_bounds.as_vector();
+
+    MatrixMap output_matrix = output.as_flat_matrix();
+
+    for (Index feature_index = 0; feature_index < features; ++feature_index)
+        output_matrix.col(feature_index) = input_matrix.col(feature_index)
+                                                        .cwiseMax(lower_bounds_vector(feature_index))
+                                                        .cwiseMin(upper_bounds_vector(feature_index));
+}
+
+void bound(const TensorView& input,
+           const TensorView& lower_bounds,
+           const TensorView& upper_bounds,
+           TensorView& output)
+{
+    if (input.is_cuda()) { bound_gpu(input, lower_bounds, upper_bounds, output); return; }
+    bound_cpu(input, lower_bounds, upper_bounds, output);
+}
+
+#ifdef OPENNN_HAS_CUDA
+
+static void bound_gpu(const TensorView& input,
+               const TensorView& lower_bounds,
+               const TensorView& upper_bounds,
+               TensorView& output)
+{
+    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&]<typename TIn, typename TOut>() {
+        bounding_cuda<TIn, TOut>(output.size(), to_int(lower_bounds.size()),
+                                 input.as<TIn>(),
+                                 lower_bounds.as_float(),
+                                 upper_bounds.as_float(),
+                                 output.as<TOut>());
+    });
+}
+
+#else
+
+static void bound_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&)
+{
+    throw runtime_error("bound_gpu: CUDA support not compiled in.");
+}
+
+#endif
 
 void BoundOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {

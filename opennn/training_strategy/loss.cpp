@@ -22,7 +22,7 @@
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/core/statistics.h"
 #include <Eigen/LU>
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/training_strategy/kernel_losses.cuh"
 
 namespace opennn
 {
@@ -219,8 +219,9 @@ float yolo_error_kernel(const TensorView& output,
 
     const Index values_per_box = 5 + classes_number;
     const Index batch_size = output.shape[0];
-    const Index grid_size = output.shape[1];
-    const Index channels = output.shape[3];
+    const Index grid_size  = output.shape[1];
+    const Index grid_width = output.shape[2];
+    const Index channels   = output.shape[3];
 
     const float* out = output.as<float>();
     const float* tgt = target.as<float>();
@@ -232,9 +233,9 @@ float yolo_error_kernel(const TensorView& output,
 
     for (Index n = 0; n < batch_size; ++n)
         for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_size; ++col)
+            for (Index col = 0; col < grid_width; ++col)
             {
-                const Index cell = ((n * grid_size + row) * grid_size + col) * channels;
+                const Index cell = ((n * grid_size + row) * grid_width + col) * channels;
 
                 for (Index box = 0; box < boxes_per_cell; ++box)
                 {
@@ -329,8 +330,9 @@ void yolo_gradient_kernel(const TensorView& output,
 
     const Index values_per_box = 5 + classes_number;
     const Index batch_size = output.shape[0];
-    const Index grid_size = output.shape[1];
-    const Index channels = output.shape[3];
+    const Index grid_size  = output.shape[1];
+    const Index grid_width = output.shape[2];
+    const Index channels   = output.shape[3];
 
     const float* out = output.as<float>();
     const float* tgt = target.as<float>();
@@ -340,9 +342,9 @@ void yolo_gradient_kernel(const TensorView& output,
 
     for (Index n = 0; n < batch_size; ++n)
         for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_size; ++col)
+            for (Index col = 0; col < grid_width; ++col)
             {
-                const Index cell = ((n * grid_size + row) * grid_size + col) * channels;
+                const Index cell = ((n * grid_size + row) * grid_width + col) * channels;
 
                 for (Index box = 0; box < boxes_per_cell; ++box)
                 {
@@ -840,8 +842,9 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                 const Index gt_id1 = tal.assign [size_t(n * cells + cell)];
                 const float q      = tal.iou_map[size_t(n * cells + cell)];
 
-                const float cls_s = lam.cls * inv_batch;
+                const float cls_s = lam.cls  * inv_batch;
                 const float box_s = lam.giou * inv_batch;
+                const float dfl_s = lam.dfl  * inv_batch;
                 const float gam   = lam.focal_gamma;
 
                 if (gt_id1 > 0)
@@ -921,9 +924,9 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                                 float w_tgt = 0.0f;
                                 if (i == df) w_tgt += wl;
                                 if (i == dc) w_tgt += wu;
-
+                                // DFL target gradient (scaled by lam.dfl) + CIoU chain (scaled by lam.giou)
                                 dlogit[i] = dfl_s * (p - w_tgt)
-                                            + box_s * d_ciou_dd[g] * p * (float(i) - d_g[g]);
+                                          + box_s * d_ciou_dd[g] * p * (float(i) - d_g[g]);
                             }
                         }
                     }
@@ -1307,15 +1310,15 @@ void Loss::back_propagate(const Batch& batch,
     {
         PROFILE_SCOPE("loss:calculate_error");
         const EvaluationResult evaluation_result = calculate_error(batch, forward_propagation);
-        back_propagation.error                = evaluation_result.error;
-        back_propagation.accuracy             = evaluation_result.accuracy;
-        back_propagation.active_tokens_count  = evaluation_result.active_tokens_count;
+        back_propagation.metrics.error                = evaluation_result.error;
+        back_propagation.metrics.accuracy             = evaluation_result.accuracy;
+        back_propagation.metrics.active_tokens_count  = evaluation_result.active_tokens_count;
     }
 
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
-    back_propagation.regularization = 0.0f;
-    back_propagation.loss_value = back_propagation.error;
+    back_propagation.metrics.regularization = 0.0f;
+    back_propagation.metrics.loss_value = back_propagation.metrics.error;
 
     add_regularization(back_propagation);
 
@@ -1326,8 +1329,8 @@ float Loss::get_weighted_coefficient(const Batch& batch) const
 {
     const Index total = weighted_samples_number > 0 ? weighted_samples_number
                       : dataset                     ? dataset->get_samples_number()
-                                                    : batch.get_samples_number();
-    const Index samples = batch.get_samples_number();
+                                                    : batch.get_batch_size();
+    const Index samples = batch.get_batch_size();
     return float(total) / (float(samples) * (normalization_coefficient + EPSILON));
 }
 
@@ -1412,7 +1415,7 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
     float* workspace_device = nullptr;
     const bool device_on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
     if (device_on_gpu && error != Error::Yolo)
-        workspace_device = ensure_error_workspace(input, batch.get_samples_number());
+        workspace_device = ensure_error_workspace(input, batch.get_batch_size());
 
     using enum Error;
     switch (error)
@@ -1476,13 +1479,13 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     const TensorView target = batch.get_targets();
     if (input.empty() || target.empty()) return false;
 
-    ensure_error_workspace(input, batch.get_samples_number());
+    ensure_error_workspace(input, batch.get_batch_size());
     metric_results_device.grow_to(Index(3 * sizeof(float)));
     if (memory_debug::enabled())
     {
         memory_debug::record("loss", "Loss::metric_results_device",
                              Index(3 * sizeof(float)),
-                             format("batch={}", batch.get_samples_number()));
+                             format("batch={}", batch.get_batch_size()));
     }
 
     float* const workspace = errors_device.as<float>();
@@ -1604,11 +1607,7 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
         calculate_output_deltas(batch, forward_propagation, back_propagation);
     }
 
-    back_propagation.error = 0.0f;
-    back_propagation.accuracy = 0.0f;
-    back_propagation.active_tokens_count = 0;
-    back_propagation.regularization = 0.0f;
-    back_propagation.loss_value = 0.0f;
+    back_propagation.metrics.reset();
 
     back_propagate_layers(forward_propagation, back_propagation);
     add_regularization_gradient(back_propagation);
@@ -1673,7 +1672,7 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
         cross_entropy_gradient(input, target, input_delta);
         break;
     case CrossEntropy3d:
-        cross_entropy_3d_gradient(input, target, input_delta, back_propagation.active_tokens_count);
+        cross_entropy_3d_gradient(input, target, input_delta, back_propagation.metrics.active_tokens_count);
         break;
     case MinkowskiError:
         minkowski_error_gradient(input, target, minkowski_parameter, input_delta,
@@ -1726,8 +1725,8 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
                                 Type::FP32,
                                 neural_network->get_parameters_device());
 
-    back_propagation.regularization = calculate_regularization(parameters);
-    back_propagation.loss_value += back_propagation.regularization;
+    back_propagation.metrics.regularization = calculate_regularization(parameters);
+    back_propagation.metrics.loss_value += back_propagation.metrics.regularization;
 }
 
 float Loss::calculate_regularization(const VectorR& parameters_vec) const

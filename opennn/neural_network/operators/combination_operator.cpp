@@ -92,7 +92,7 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
 
     if (tied_transposed)
     {
-        tied_lm_head_forward(get_input(forward_propagation, layer), weights, output, weight_scale);
+        linear_forward_transposed(get_input(forward_propagation, layer), weights, output, weight_scale);
         return;
     }
 
@@ -100,7 +100,7 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
     {
         const TensorView transposed(weights.data, {output_features, input_features},
                                     weights.type, weights.device);
-        tied_lm_head_forward(get_input(forward_propagation, layer), transposed, output, weight_scale);
+        linear_forward_transposed(get_input(forward_propagation, layer), transposed, output, weight_scale);
         return;
     }
 

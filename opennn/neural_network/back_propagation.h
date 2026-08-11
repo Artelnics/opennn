@@ -21,14 +21,56 @@ class NeuralNetwork;
 
 struct BackPropagation
 {
+    BackPropagation(Index, Loss&,
+                    Buffer* external_arena = nullptr,
+                    span<const Index> arena_offsets = {});
+
+    ~BackPropagation() = default;
+
+    void set(Index, Loss&,
+             Buffer* external_arena = nullptr,
+             span<const Index> arena_offsets = {});
+
+    Loss* get_loss() const noexcept { return loss; }
+    NeuralNetwork* get_neural_network() const;
+
+    static vector<MemoryPoolEntry> make_co_planned_lifetimes(Loss&, Index batch_size);
+
+    void accumulate_output_deltas(size_t);
+
+    TensorView& get_output_delta();
+    const TensorView& get_output_delta() const;
+
+    Buffer gradient;
+
+    Buffer arena;
+    vector<TensorView> output_deltas;
+    vector<vector<TensorView>> slots;
+
+    Index batch_size = 0;
+
+    struct Metrics
+    {
+        float error = 0.0f;
+        float accuracy = 0.0f;
+        float regularization = 0.0f;
+        float loss_value = 0.0f;
+        Index active_tokens_count = 0;
+
+        void reset() { *this = Metrics{}; }
+    };
+
+    Metrics metrics;
+
+private:
 
     struct DeltaEntry
     {
-        Index      layer;
-        size_t     slot;
+        Index layer;
+        size_t slot;
         TensorSpec spec;
-        Index      first_step;
-        Index      last_step;
+        Index first_step;
+        Index last_step;
     };
 
     struct DeltaLayout
@@ -40,67 +82,36 @@ struct BackPropagation
         vector<pair<size_t, size_t>> reusable_consumer_deltas;
     };
 
-    // The deltas either live in memory somebody else planned - pass that arena
-    // and the byte offsets for this layout - or in an arena of our own. This is
-    // the same choice ForwardPropagation::set offers through its external_storage,
-    // and deliberately not spelled as a ForwardPropagation: what is wanted here is
-    // a region and a list of offsets, not a forward pass.
-    BackPropagation(const Index = 0, Loss* = nullptr,
-                    Buffer* external_arena = nullptr,
-                    span<const Index> arena_offsets = {});
+    struct DeltaPlan
+    {
+        vector<vector<TensorSpec>> backward_specs;
+        DeltaLayout layout;
+    };
 
-    virtual ~BackPropagation() = default;
+    BackPropagation() = default;
 
-    void set(const Index = 0, Loss* = nullptr,
-             Buffer* external_arena = nullptr,
-             span<const Index> arena_offsets = {});
-
-    static vector<vector<pair<size_t, size_t>>> make_consumer_edges(const NeuralNetwork&);
-
-    static DeltaLayout build_delta_entries(const NeuralNetwork&, const Loss&,
-                                           Index batch_size,
-                                           const vector<vector<TensorSpec>>&,
-                                           const vector<vector<pair<size_t, size_t>>>&);
-
+    vector<vector<pair<size_t, size_t>>> make_consumer_edges() const;
+    DeltaLayout build_delta_layout(const vector<vector<TensorSpec>>&) const;
+    DeltaPlan build_delta_plan();
     static vector<MemoryPoolEntry> to_pool_entries(const vector<DeltaEntry>&,
                                                    Index step_offset = 0);
 
-    // Delta lifetimes expressed on the forward timeline, so ForwardPropagation can
-    // co-plan them without knowing what they are.
-    static vector<MemoryPoolEntry> make_co_planned_lifetimes(const NeuralNetwork&,
-                                                             const Loss&,
-                                                             Index batch_size);
+    const NeuralNetwork& require_network() const;
 
-    void accumulate_output_deltas(size_t);
+    void setup_gradient();
 
-    const NeuralNetwork* neural_network = nullptr;
-
-    Buffer gradient;
-
-    Buffer arena;
-    vector<TensorView> output_deltas;
-    vector<vector<TensorView>> slots;
-
-    vector<vector<pair<size_t, size_t>>> consumer_edges;
-
-    TensorView& get_output_delta();
-    const TensorView& get_output_delta() const;
-
-    Index batch_size = 0;
-
-    float error = 0.0f;
-    float accuracy = 0.0f;
-    float regularization = 0.0f;
-    float loss_value = 0.0f;
-    Index active_tokens_count = 0;
-
-private:
-
-    void setup_arena(const vector<vector<TensorSpec>>&, const DeltaLayout&);
+    void setup_arena(const vector<vector<TensorSpec>>&,
+                     const DeltaLayout&);
 
     void bind_deltas(const DeltaLayout&, span<const Index> byte_offsets,
                      uint8_t* base, Device device,
                      const vector<vector<TensorSpec>>&);
+
+    vector<vector<pair<size_t, size_t>>> consumer_edges;
+
+    Index output_delta_layer_index = 0;
+
+    Loss* loss = nullptr;
 };
 
 }

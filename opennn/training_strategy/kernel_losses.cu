@@ -1,4 +1,5 @@
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/training_strategy/kernel_losses.cuh"
 
 template<typename T>
 __global__ void binary_cross_entropy_kernel(const int n, float* __restrict__ term_results, const float* __restrict__ targets, const T* __restrict__ outputs, const float epsilon)
@@ -692,3 +693,33 @@ void yolo_gradient_cuda(const float* output, const float* target, float* delta,
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
+
+// Scaled elementwise difference, the shared front half of the squared-error
+// family. It lived in kernel_scaling.cu, whose other kernels serve the Scaling and
+// Bounding layers, while its own callers are loss.cpp and error_functions.cpp.
+template<typename TIn, typename TOut>
+__global__ void scaled_diff_kernel(const int n,
+                                   const TIn* __restrict__ input,
+                                   const float* __restrict__ target,
+                                   const float scale,
+                                   TOut* __restrict__ output)
+{
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
+    {
+        const float d = static_cast<float>(input[i]) - target[i];
+        output[i] = static_cast<TOut>(scale * d);
+    }
+}
+
+template<typename TIn, typename TOut>
+void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target,
+                            const float scale, TOut* output)
+{
+    launch_elementwise_strided(n, scaled_diff_kernel<TIn, TOut>, input, target, scale, output);
+}
+
+#define INSTANTIATE2(TIn, TOut) \
+    template void scaled_diff_cuda_typed<TIn, TOut>(const Index, const TIn*, const float*, float, TOut*);
+
+OPENNN_INSTANTIATE_FLOAT_BF16_2(INSTANTIATE2)
+#undef INSTANTIATE2

@@ -109,7 +109,7 @@ TEST(BackPropagationMemoryTest, FanoutAccumulationReusesConsumerDelta)
     network.compile();
 
     Loss loss(&network, nullptr);
-    BackPropagation back_propagation(batch, &loss);
+    BackPropagation back_propagation(batch, loss);
 
     TensorView& branch_a_delta = back_propagation.slots[1][1];
     TensorView& branch_b_delta = back_propagation.slots[2][1];

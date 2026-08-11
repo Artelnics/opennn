@@ -11,11 +11,20 @@
 #include "opennn/core/opennn_types.h"
 #include "opennn/core/statistics.h"
 #include "opennn/core/variable.h"
-#include "opennn/neural_network/response_constraints.h"
-#include "opennn/neural_network/network_differential.h"
+#include "opennn/response_optimization/response_constraints.h"
+#include "opennn/response_optimization/network_differential.h"
 
 namespace opennn
 {
+
+// Host-matrix helpers for the Pareto search below: candidate sets get appended,
+// ranked by distance to a reference point, and thinned by outlier score.
+MatrixR append_rows(const MatrixR&, const MatrixR&);
+MatrixR append_columns(const MatrixR&, const MatrixR&);
+VectorI get_nearest_points(const MatrixR&, const VectorR&, int = 1);
+MatrixR calculate_distances(const MatrixR&);
+vector<Index> filter_selected_indices_by_column(const MatrixR&, const vector<Index>&, Index, float, float);
+VectorR local_outlier_factor(const MatrixR&, Index);
 
 class NeuralNetwork;
 

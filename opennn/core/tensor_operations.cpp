@@ -8,10 +8,12 @@
 
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/device_backend.h"
-#include "opennn/core/random_utilities.h"
-#include "opennn/core/scaling.h"
 #include "opennn/core/profiler.h"
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/core/cuda/kernel_activation.cuh"
+#include "opennn/core/cuda/kernel_normalization.cuh"
+#include "opennn/core/cuda/kernel_cast.cuh"
+#include "opennn/core/cuda/kernel_quantization.cuh"
+#include "opennn/core/cuda/kernel_tensor.cuh"
 
 #include <atomic>
 
@@ -176,199 +178,18 @@ ActivationFunction activation_function_from_string(const string& name)
 }
 
 #define OPENNN_GPU_OPS(X) \
-    X(bound_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&)) \
-    X(scale_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, float, float, TensorView&, bool)) \
     X(copy_gpu, (const TensorView&, TensorView&)) \
     X(add_gpu, (const TensorView&, const TensorView&, TensorView&)) \
     X(multiply_gpu, (const TensorView&, bool, const TensorView&, bool, TensorView&, float, float)) \
     X(softmax_gpu, (TensorView&)) \
     X(activation_forward_gpu, (TensorView&, ActivationFunction)) \
     X(activation_backward_gpu, (const TensorView&, TensorView&, ActivationFunction)) \
-    X(dropout_forward_gpu, (TensorView&, Buffer&, float)) \
-    X(dropout_backward_gpu, (TensorView&, const Buffer&, float)) \
     X(linear_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cublasLtEpilogue_t, TensorView*, const TensorView&)) \
-    X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool, const TensorView*)) \
-    X(split_heads_gpu, (const TensorView&, TensorView&)) \
-    X(merge_heads_gpu, (const TensorView&, TensorView&))
+    X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool, const TensorView*))
 
 #define OPENNN_DECLARE_GPU_OP(name, sig) static void name sig;
 OPENNN_GPU_OPS(OPENNN_DECLARE_GPU_OP)
 #undef OPENNN_DECLARE_GPU_OP
-
-static void bound_cpu(const TensorView& input,
-               const TensorView& lower_bounds,
-               const TensorView& upper_bounds,
-               TensorView& output)
-{
-    const Index features = lower_bounds.size();
-
-    const MatrixMap input_matrix = input.as_flat_matrix();
-    const VectorMap lower_bounds_vector = lower_bounds.as_vector();
-    const VectorMap upper_bounds_vector = upper_bounds.as_vector();
-
-    MatrixMap output_matrix = output.as_flat_matrix();
-
-    for (Index feature_index = 0; feature_index < features; ++feature_index)
-        output_matrix.col(feature_index) = input_matrix.col(feature_index)
-                                                        .cwiseMax(lower_bounds_vector(feature_index))
-                                                        .cwiseMin(upper_bounds_vector(feature_index));
-}
-
-void bound(const TensorView& input,
-           const TensorView& lower_bounds,
-           const TensorView& upper_bounds,
-           TensorView& output)
-{
-    if (input.is_cuda()) { bound_gpu(input, lower_bounds, upper_bounds, output); return; }
-    bound_cpu(input, lower_bounds, upper_bounds, output);
-}
-
-template<typename Column>
-static void scale_column_cpu(Column& column, ScalerMethod method,
-                             const Descriptives& descriptives,
-                             float min_range, float max_range)
-{
-    using enum ScalerMethod;
-
-    switch (method)
-    {
-    case MinimumMaximum:
-        if (descriptives.maximum - descriptives.minimum < EPSILON)
-            column.setZero();
-        else
-            column = scale_minimum_maximum_formula(column, descriptives, min_range, max_range);
-        break;
-    case MeanStandardDeviation:
-        if (descriptives.standard_deviation > EPSILON)
-            column = scale_mean_standard_deviation_formula(column, descriptives);
-        else
-            column.setZero();
-        break;
-    case StandardDeviation:
-        column *= descriptives.standard_deviation > EPSILON
-                ? 1.0f / descriptives.standard_deviation
-                : 0.0f;
-        break;
-    case Logarithm:
-        column = column.max(EPSILON).log();
-        break;
-    case ImageMinMax:
-        column /= 255.0f;
-        break;
-    case None:
-    default:
-        break;
-    }
-}
-
-template<typename Column>
-static void unscale_column_cpu(Column& column, ScalerMethod method,
-                               const Descriptives& descriptives,
-                               float min_range, float max_range)
-{
-    using enum ScalerMethod;
-
-    switch (method)
-    {
-    case MinimumMaximum:
-        throw_if(max_range - min_range < EPSILON, "The range values are not valid.");
-        column = unscale_minimum_maximum_formula(column, descriptives, min_range, max_range);
-        break;
-    case MeanStandardDeviation:
-        column = unscale_mean_standard_deviation_formula(column, descriptives);
-        break;
-    case StandardDeviation:
-        if (descriptives.standard_deviation > EPSILON)
-            column *= descriptives.standard_deviation;
-        else
-            column.setConstant(descriptives.mean);
-        break;
-    case Logarithm:
-        column = column.exp();
-        break;
-    case ImageMinMax:
-        column *= 255.0f;
-        break;
-    case None:
-    default:
-        break;
-    }
-}
-
-static void scale_cpu(const TensorView& input,
-               const TensorView& minimums, const TensorView& maximums,
-               const TensorView& means, const TensorView& standard_deviations,
-               const TensorView& scalers,
-               float min_range, float max_range,
-               TensorView& output, bool inverse)
-{
-    const Index features = scalers.size();
-    if (features == 0) { output.as_matrix().noalias() = input.as_matrix(); return; }
-
-    const MatrixMap input_matrix = input.as_flat_matrix();
-    const VectorMap minimums_vector = minimums.as_vector();
-    const VectorMap maximums_vector = maximums.as_vector();
-    const VectorMap means_vector  = means.as_vector();
-    const VectorMap standard_deviations_vector  = standard_deviations.as_vector();
-    const VectorMap scalers_vector   = scalers.as_vector();
-
-    MatrixMap output_matrix = output.as_flat_matrix();
-
-    output_matrix.noalias() = input_matrix;
-
-    const Index cols = output_matrix.cols();
-    for (Index col = 0; col < cols; ++col)
-    {
-        const Index feature_index = col % features;
-        const auto method = static_cast<ScalerMethod>(static_cast<int>(scalers_vector(feature_index)));
-        auto column = output_matrix.col(col).array();
-
-        const Descriptives descriptives(minimums_vector(feature_index),
-                                        maximums_vector(feature_index),
-                                        means_vector(feature_index),
-                                        standard_deviations_vector(feature_index));
-
-        if (inverse)
-            unscale_column_cpu(column, method, descriptives, min_range, max_range);
-        else
-            scale_column_cpu(column, method, descriptives, min_range, max_range);
-    }
-}
-
-void scale(const TensorView& input,
-           const TensorView& minimums, const TensorView& maximums,
-           const TensorView& means, const TensorView& standard_deviations,
-           const TensorView& scalers,
-           float min_range, float max_range,
-           TensorView& output)
-{
-    if (input.is_cuda())
-    {
-        scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
-                  min_range, max_range, output, false);
-        return;
-    }
-    scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
-              min_range, max_range, output, false);
-}
-
-void unscale(const TensorView& input,
-             const TensorView& minimums, const TensorView& maximums,
-             const TensorView& means, const TensorView& standard_deviations,
-             const TensorView& scalers,
-             float min_range, float max_range,
-             TensorView& output)
-{
-    if (input.is_cuda())
-    {
-        scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
-                  min_range, max_range, output, true);
-        return;
-    }
-
-    scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
-              min_range, max_range, output, true);
-}
 
 void copy(const TensorView& source, TensorView& destination)
 {
@@ -485,11 +306,9 @@ static void activation_forward_cpu(TensorView& output, ActivationFunction functi
         a = a.unaryExpr([](float x) { return gelu_value(x); });
         return;
     case GELUTanh:
-
         a = 0.5f * a * (1.0f + (SQRT_2_OVER_PI * (a + GELU_TANH_CUBIC * a * a * a)).tanh());
         return;
     case SiLU:
-
         a = a / (1.0f + (-a).exp());
         return;
     }
@@ -518,7 +337,6 @@ static void activation_backward_cpu(const TensorView& outputs, TensorView& delta
     case LeakyReLU:
         d = (y >= 0.0f).select(d, d * LEAKY_RELU_SLOPE);
         return;
-
     case GELU:
         d *= y.unaryExpr([](float x) { return gelu_derivative(x); });
         return;
@@ -547,43 +365,6 @@ void activation_backward(const TensorView& outputs, TensorView& delta, Activatio
 
     if (outputs.is_cuda()) { activation_backward_gpu(outputs, delta, function); return; }
     activation_backward_cpu(outputs, delta, function);
-}
-
-static void dropout_forward_cpu(TensorView& output, Buffer& mask, float rate)
-{
-    const Index element_count = output.size();
-    mask.resize_bytes(element_count * Index(sizeof(float)), Device::CPU);
-    if (element_count == 0) return;
-
-    const float keep_scale = 1.0f / (1.0f - rate);
-    float* output_data = output.as<float>();
-    VectorMap mask_values = mask.as_vector();
-
-    set_random_uniform(mask_values, 0.0f, 1.0f);
-
-    const bool parallel = element_count >= 65536;
-
-    #pragma omp parallel for schedule(static) if(parallel)
-    for (Index i = 0; i < element_count; ++i)
-    {
-        const float keep_value = mask_values(i) < rate ? 0.0f : keep_scale;
-        mask_values(i) = keep_value;
-        output_data[i] *= keep_value;
-    }
-}
-
-void dropout_forward(TensorView& output, Buffer& mask, float rate)
-{
-    if (rate <= 0.0f) return;
-    if (output.is_cuda()) { dropout_forward_gpu(output, mask, rate); return; }
-    dropout_forward_cpu(output, mask, rate);
-}
-
-void dropout_backward(TensorView& delta, const Buffer& mask, float rate)
-{
-    if (rate <= 0.0f) return;
-    if (delta.is_cuda()) { dropout_backward_gpu(delta, mask, rate); return; }
-    delta.as_vector().array() *= mask.as_vector().array();
 }
 
 static void linear_forward_cpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
@@ -671,14 +452,14 @@ static void w8a16_linear_rows(Index rows, Index in_features, Index out_features,
 
 #endif
 
-void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weight, TensorView& output,
+void linear_forward_transposed(const TensorView& input, const TensorView& embed_weight, TensorView& output,
                           const TensorView& weight_scale)
 {
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda() && embed_weight.is_int8())
     {
         throw_if(weight_scale.empty() || !input.is_bf16() || !output.is_bf16(),
-                 "tied_lm_head_forward: INT8 weights require BF16 activations and a per-channel scale vector.");
+                 "linear_forward_transposed: INT8 weights require BF16 activations and a per-channel scale vector.");
 
         const Index in_features  = embed_weight.shape.back();
         const Index out_features = embed_weight.size() / in_features;
@@ -719,84 +500,7 @@ void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weigh
 }
 
 
-static void transpose_middle_axes(const float* src, float* dst,
-                                  Index batch_size, Index src_m1, Index src_m2, Index D)
-{
-    #pragma omp parallel for collapse(3) schedule(static)
-    for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        for (Index i = 0; i < src_m2; ++i)
-            for (Index j = 0; j < src_m1; ++j)
-                memcpy(dst + ((batch_index * src_m2 + i) * src_m1 + j) * D,
-                       src + ((batch_index * src_m1 + j) * src_m2 + i) * D,
-                       D * sizeof(float));
-}
-
-void split_heads(const TensorView& source, TensorView& destination)
-{
-    if (source.is_cuda()) { split_heads_gpu(source, destination); return; }
-    transpose_middle_axes(source.as<float>(), destination.as<float>(),
-                          source.shape[0], source.shape[1], source.shape[2], source.shape[3]);
-}
-
-void merge_heads(const TensorView& source, TensorView& destination)
-{
-    if (source.is_cuda()) { merge_heads_gpu(source, destination); return; }
-    transpose_middle_axes(source.as<float>(), destination.as<float>(),
-                          source.shape[0], source.shape[1], source.shape[2], source.shape[3]);
-}
-
 #ifdef OPENNN_HAS_CUDA
-
-static void bound_gpu(const TensorView& input,
-               const TensorView& lower_bounds,
-               const TensorView& upper_bounds,
-               TensorView& output)
-{
-    const Index features = lower_bounds.size();
-
-    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&]<typename TIn, typename TOut>() {
-        bounding_cuda<TIn, TOut>(output.size(), to_int(features),
-                                 input.as<TIn>(),
-                                 lower_bounds.as_float(),
-                                 upper_bounds.as_float(),
-                                 output.as<TOut>());
-    });
-}
-
-static void scale_gpu(const TensorView& input,
-               const TensorView& minimums, const TensorView& maximums,
-               const TensorView& means, const TensorView& standard_deviations,
-               const TensorView& scalers,
-               float min_range, float max_range,
-               TensorView& output, bool inverse)
-{
-    const Index features = scalers.size();
-
-    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&]<typename TIn, typename TOut>() {
-        if (inverse)
-        {
-            unscale_cuda<TIn, TOut>(output.size(), to_int(features),
-                                    input.as<TIn>(),
-                                    minimums.as_float(),
-                                    maximums.as_float(),
-                                    means.as_float(),
-                                    standard_deviations.as_float(),
-                                    scalers.as_float(),
-                                    min_range, max_range,
-                                    output.as<TOut>());
-            return;
-        }
-        scale_cuda<TIn, TOut>(output.size(), to_int(features),
-                              input.as<TIn>(),
-                              minimums.as_float(),
-                              maximums.as_float(),
-                              means.as_float(),
-                              standard_deviations.as_float(),
-                              scalers.as_float(),
-                              min_range, max_range,
-                              output.as<TOut>());
-    });
-}
 
 static void copy_gpu(const TensorView& source, TensorView& destination)
 {
@@ -838,9 +542,7 @@ static void multiply_gpu(const TensorView& input_a, bool transpose_a,
     const int cols_b = to_int(input_b.shape[rank_b - 1]);
 
     if (rank_b == 2 && rank_a > 2)
-    {
         rows_a = to_int(input_a.size() / cols_a);
-    }
 
     const int cols_out = transpose_b ? rows_b : cols_b;
     const int rows_out = transpose_a ? cols_a : rows_a;
@@ -919,31 +621,8 @@ static void activation_backward_gpu(const TensorView& outputs, TensorView& delta
     {
         activation_backward_cuda<T>(delta.size(), outputs.as<T>(), delta.as<T>(), static_cast<int>(function));
     });
+
     device::check_last_error();
-}
-
-static void dropout_forward_gpu(TensorView& output, Buffer& mask, float rate)
-{
-    const Index element_count = output.size();
-    if (mask.device_type != Device::CUDA || mask.bytes < element_count)
-        mask.resize_bytes(element_count, Device::CUDA);
-
-    const unsigned long long seed = static_cast<unsigned long long>(random_integer(0, 1 << 30));
-
-    output.dispatch([&]<typename T>()
-    {
-        dropout_forward_cuda<T>(element_count, output.as<T>(), mask.as<uint8_t>(), rate, seed);
-    });
-}
-
-static void dropout_backward_gpu(TensorView& delta, const Buffer& mask, float rate)
-{
-    const Index element_count = delta.size();
-
-    delta.dispatch([&]<typename T>()
-    {
-        dropout_backward_cuda<T>(element_count, delta.as<T>(), delta.as<T>(), mask.as<uint8_t>(), rate);
-    });
 }
 
 static void linear_forward_lt_gpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
@@ -1092,54 +771,6 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 }
 
 
-void sample_logits_row(const TensorView& logits_row, float temperature, Index top_k, float top_p,
-                       unsigned long long seed, unsigned long long step,
-                       void* candidates_scratch, int* id_device, float* token_device)
-{
-    throw_if(!logits_row.is_cuda() || !candidates_scratch || !id_device,
-             "sample_logits_row: a GPU logits row, device scratch and a device id are required.");
-
-    logits_row.dispatch([&]<typename T>() {
-        sample_logits_row_cuda<T>(to_int(logits_row.size()), temperature, to_int(top_k), top_p,
-                                  seed, step, logits_row.as<T>(),
-                                  static_cast<float2*>(candidates_scratch), id_device, token_device);
-    });
-}
-
-Index sample_logits_scratch_floats()
-{
-    return Index(LOGITS_SAMPLE_BLOCKS) * 32 * 2;
-}
-
-
-static void split_heads_gpu(const TensorView& source, TensorView& destination)
-{
-    const Index sequence_length = source.shape[1];
-    const Index heads_number = source.shape[2];
-    const Index head_dimension = source.shape[3];
-
-    destination.dispatch([&]<typename T>() {
-        split_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
-                            to_int(sequence_length),
-                            to_int(heads_number),
-                            to_int(head_dimension));
-    });
-}
-
-static void merge_heads_gpu(const TensorView& source, TensorView& destination)
-{
-    const Index heads_number = source.shape[1];
-    const Index sequence_length = source.shape[2];
-    const Index head_dimension = source.shape[3];
-
-    destination.dispatch([&]<typename T>() {
-        merge_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
-                            to_int(sequence_length),
-                            to_int(heads_number),
-                            to_int(head_dimension));
-    });
-}
-
 #else
 
 #define OPENNN_STUB_GPU_OP(name, sig) static void name sig { throw runtime_error(#name ": CUDA support not compiled in."); }
@@ -1147,92 +778,7 @@ OPENNN_GPU_OPS(OPENNN_STUB_GPU_OP)
 #undef OPENNN_STUB_GPU_OP
 
 
-void sample_logits_row(const TensorView&, float, Index, float, unsigned long long, unsigned long long,
-                       void*, int*, float*)
-{
-    throw runtime_error("sample_logits_row: CUDA support not compiled in.");
-}
-
-Index sample_logits_scratch_floats()
-{
-    return 0;
-}
-
 #endif
-
-MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
-{
-    if (starting_matrix.size() == 0)
-        return block;
-    if (block.size() == 0)
-        return starting_matrix;
-
-    throw_if(starting_matrix.cols() != block.cols(),
-             "append_rows: Column mismatch ({} vs {})",
-                    starting_matrix.cols(), block.cols());
-
-    MatrixR final_matrix(starting_matrix.rows() + block.rows(), starting_matrix.cols());
-
-    final_matrix.topRows(starting_matrix.rows()) = starting_matrix;
-    final_matrix.bottomRows(block.rows()) = block;
-
-    return final_matrix;
-}
-
-MatrixR append_columns(const MatrixR& first_matrix, const MatrixR& second_matrix)
-{
-    MatrixR result(first_matrix.rows(), first_matrix.cols() + second_matrix.cols());
-    result.leftCols(first_matrix.cols()) = first_matrix;
-    result.rightCols(second_matrix.cols()) = second_matrix;
-    return result;
-}
-
-VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int neighbors_number)
-{
-    const Index rows = matrix.rows();
-
-    const VectorR distances = (matrix.rowwise() - point.transpose()).rowwise().norm();
-
-    vector<Index> indices(rows);
-    iota(indices.begin(), indices.end(), Index(0));
-
-    neighbors_number = std::min(neighbors_number, to_int(rows));
-
-    partial_sort(indices.begin(), indices.begin() + neighbors_number, indices.end(),
-                 [&distances](Index i, Index j) {
-                     return pair{distances(i), i} < pair{distances(j), j};
-                 });
-
-    return Map<VectorI>(indices.data(), neighbors_number);
-}
-
-MatrixR calculate_distances(const MatrixR& points)
-{
-    const VectorR squared_norms = points.rowwise().squaredNorm();
-
-    MatrixR squared_distances = -2.0f * points * points.transpose();
-    squared_distances.colwise() += squared_norms;
-    squared_distances.rowwise() += squared_norms.transpose();
-
-    return squared_distances.cwiseMax(0.0f).cwiseSqrt();
-}
-
-vector<Index> filter_selected_indices_by_column(const MatrixR& matrix,
-                                                const vector<Index>& selected_indices,
-                                                const Index column_index,
-                                                const float minimum,
-                                                const float maximum)
-{
-    vector<Index> filtered;
-    filtered.reserve(selected_indices.size());
-    for (const Index row_index : selected_indices)
-    {
-        const float value = matrix(row_index, column_index);
-        if (isfinite(value) && value >= (minimum - 1e-6f) && value <= (maximum + 1e-6f))
-            filtered.push_back(row_index);
-    }
-    return filtered;
-}
 
 }
 

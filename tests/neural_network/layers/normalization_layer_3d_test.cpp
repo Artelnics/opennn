@@ -197,7 +197,7 @@ TEST(Normalization3dTest, FusedResidualAddAliasesSafeBranchDelta)
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
-    BackPropagation back_propagation(samples_number, &loss);
+    BackPropagation back_propagation(samples_number, loss);
 
     ASSERT_EQ(
         back_propagation.slots[size_t(normalization_index)].size(),

@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/pch.h"
-#include "opennn/neural_network/network_differential.h"
+#include "opennn/response_optimization/network_differential.h"
 #include "opennn/core/statistics.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/neural_network/layers/dense_layer.h"

@@ -142,7 +142,7 @@ TEST(ConcatenationOperatoreratorTest, BackwardSplitsDelta)
 
     Loss loss(&neural_network, nullptr);
 
-    BackPropagation bp(batch_size, &loss);
+    BackPropagation bp(batch_size, loss);
 
     bp.output_deltas[0] = TensorView(output_delta.data(), {batch_size, height, width, total_channels});
 
@@ -189,7 +189,7 @@ TEST(ConcatenationOperatoreratorTest, BackwardSkipsEmptyInputDelta)
 
     Loss loss(&neural_network, nullptr);
 
-    BackPropagation bp(batch_size, &loss);
+    BackPropagation bp(batch_size, loss);
 
     bp.output_deltas[0] = TensorView(output_delta.data(), {batch_size, height, width, total_channels});
 

@@ -6,9 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// recurrent and LSTM steps, time-slice gather/scatter, transpose
+// recurrent and LSTM steps, time-slice gather/scatter
 
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/neural_network/layers/kernel_recurrent.cuh"
 
 struct RnnCopyParams
 {
@@ -138,36 +139,6 @@ void rnn_copy_regions_cuda(const RnnCopySpec* specs, int count,
 }
 
 template<typename T>
-__global__ void transpose_2d_kernel(const int rows,
-                                    const int cols,
-                                    const T* __restrict__ src,
-                                    T* __restrict__ dst)
-{
-    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    const int total = rows * cols;
-    if (idx >= total) return;
-
-    const int r = idx / cols;
-    const int c = idx - r * cols;
-    dst[c * rows + r] = src[r * cols + c];
-}
-
-template<typename T>
-void transpose_2d_cuda(const Index rows,
-                       const Index cols,
-                       const T* src,
-                       T* dst)
-{
-    if (rows == 0 || cols == 0) return;
-    const int total = checked_int(rows * cols);
-    OPENNN_CUDA_LAUNCH(transpose_2d_kernel<T><<<grid_size_for(total), block_size, 0,
-                             opennn::device::get_compute_stream()>>>(
-        checked_int(rows),
-        checked_int(cols),
-        src, dst));
-}
-
-template<typename T>
 __global__ void rnn_step_fused_forward_kernel(const int batch,
                                               const int in_features,
                                               const int out_features,
@@ -247,37 +218,6 @@ void rnn_step_fused_forward_cuda(const Index batch,
 }
 
 template<typename T>
-__global__ void bias_grad_sum_kernel(const int batch, const int features, const int chunk,
-                                     const T* __restrict__ delta, float* __restrict__ bias_grad)
-{
-    const int f = blockIdx.x * blockDim.x + threadIdx.x;
-    if (f >= features) return;
-    const long long b0 = (long long)blockIdx.y * chunk;
-    const long long b1 = min((long long)batch, b0 + chunk);
-    float acc = 0.0f;
-    for (long long b = b0; b < b1; ++b)
-        acc += static_cast<float>(delta[b * features + f]);
-    atomicAdd(bias_grad + f, acc);
-}
-
-template<typename T>
-void bias_grad_sum_cuda(const Index batch, const Index features, const T* delta, float* bias_grad)
-{
-    if (batch == 0 || features == 0) return;
-    const int f = checked_int(features);
-
-    const int f_blocks = ceil_div(f, block_size);
-    const int desired_chunks = f_blocks < 256 ? 256 / f_blocks : 1;
-    int chunk = checked_int((batch + desired_chunks - 1) / desired_chunks);
-    if (chunk < 64) chunk = 64;
-    const int n_chunks = int((batch + chunk - 1) / chunk);
-    const dim3 grid(f_blocks, n_chunks);
-    OPENNN_CUDA_LAUNCH(bias_grad_sum_kernel<T><<<grid, block_size, 0,
-                                         opennn::device::get_compute_stream()>>>(
-        checked_int(batch), f, chunk, delta, bias_grad));
-}
-
-template<typename T>
 __global__ void rnn_step_fused_backward_pre_kernel(const int batch,
                                                    const int out_features,
                                                    const int time_steps,
@@ -339,15 +279,11 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
 #define INSTANTIATE(T) \
     template void gather_time_slice_cuda<T>(const Index, const Index, const Index, const Index, const T*, T*); \
     template void scatter_time_slice_cuda<T>(const Index, const Index, const Index, const Index, const T*, T*); \
-    template void transpose_2d_cuda<T>(const Index, const Index, const T*, T*); \
     template void rnn_step_fused_forward_cuda<T>(const Index, const Index, const Index, const T*, const T*, const T*, const T*, const T*, T*, T*, const int); \
-    template void bias_grad_sum_cuda<T>(const Index, const Index, const T*, float*); \
     template void rnn_step_fused_backward_pre_cuda<T>(const Index, const Index, const Index, const Index, const bool, const T*, const T*, const T*, T*);
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
-
-template void transpose_2d_cuda<int8_t>(const Index, const Index, const int8_t*, int8_t*);
 
 
 // OpenNN: Open Neural Networks Library.

@@ -256,6 +256,33 @@ TEST(ForwardPropagationRetainedOutputsTest,
     Configuration::instance().set();
 }
 
+TEST(ForwardPropagationRetainedOutputsTest,
+     SequenceCapacityDoesNotRequireCompactFinalOutput)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    Qwen3 network(64, 32, 32, 1, 4, 2, 8, 64);
+
+    InferenceShapePolicy policy;
+    policy.sequence_capacity = 4;
+
+    ForwardPropagation propagation(
+        1, &network, ForwardPropagationMode::Inference, policy);
+
+    EXPECT_EQ(propagation.get_sequence_capacity(), 4);
+    EXPECT_EQ(propagation.get_final_output_capacity(), 4);
+
+    propagation.past_length = 3;
+    propagation.attention_valid_lengths = {2};
+    propagation.set(1, &network, nullptr,
+                    ForwardPropagationMode::Inference, policy);
+
+    EXPECT_EQ(propagation.past_length, 0);
+    EXPECT_TRUE(propagation.attention_valid_lengths.empty());
+
+    Configuration::instance().set();
+}
+
 TEST(ForwardPropagationRetainedOutputsTest, OutputWindowMatchesFullForwardForEverySample)
 {
     set_seed(7);

@@ -187,7 +187,7 @@ TEST(LstmFusedPath, DISABLED_BenchmarkBoundary)
                    dataset.get_feature_indices("Target"));
 
         ForwardPropagation forward_propagation(samples_number, &neural_network);
-        BackPropagation back_propagation(samples_number, &loss);
+        BackPropagation back_propagation(samples_number, loss);
 
         for (int i = 0; i < warmup; ++i)
         {

@@ -11,7 +11,7 @@
 #include "opennn/neural_network/layers/layer.h"
 #include "opennn/neural_network/operators/operator.h"
 #include "opennn/neural_network/operators/activation_operator.h"
-#include "opennn/neural_network/cudnn_rnn.h"
+#include "opennn/neural_network/operators/cudnn_rnn.h"
 
 namespace opennn
 {

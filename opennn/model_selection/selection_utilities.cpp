@@ -48,7 +48,7 @@ CandidateEvaluation evaluate_candidate(TrainingStrategy* training_strategy,
 
         const float validation_error =
             use_validation_history_minimum && training_results.validation_error_history.size() > 0
-                ? training_results.validation_error_history.minCoeff()
+                ? training_results.validation_error_history.minCoeff<PropagateNumbers>()
                 : training_results.get_validation_error();
 
         const bool improved = validation_error < evaluation.validation_error;

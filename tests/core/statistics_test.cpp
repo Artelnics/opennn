@@ -1,6 +1,7 @@
 #include "tests/pch.h"
 
 #include "opennn/core/statistics.h"
+#include "opennn/response_optimization/response_optimization.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/io_utilities.h"

@@ -19,7 +19,8 @@
 #include "opennn/core/cuda/cudnn_frontend_utilities.h"
 #include "opennn/core/device_backend.h"
 #ifdef OPENNN_HAS_CUDA
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/core/cuda/kernel_attention.cuh"
+#include "opennn/core/cuda/kernel_normalization.cuh"
 #endif
 #endif
 
@@ -691,9 +692,9 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
         TensorView v_slot(vcache + size_t(past) * kd, {1, seq, kd});
         TensorView k_slot(kcache + size_t(past) * kd, {1, seq, kd});
 
-        tied_lm_head_forward(x_b, q_proj, q_v);
-        tied_lm_head_forward(x_b, k_proj, k_v);
-        tied_lm_head_forward(x_b, v_proj, v_slot);
+        linear_forward_transposed(x_b, q_proj, q_v);
+        linear_forward_transposed(x_b, k_proj, k_v);
+        linear_forward_transposed(x_b, v_proj, v_slot);
 
         if (use_qk_norm)
         {
@@ -710,7 +711,7 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
         grouped_attention_forward(qr_v, key_all, val_all, attn_v, q_heads, kv_heads, head_dim, true, scale, past);
 
         TensorView o_b(o_all, {1, seq, hidden});
-        tied_lm_head_forward(attn_v, o_proj, o_b);
+        linear_forward_transposed(attn_v, o_proj, o_b);
         return;
     }
 
@@ -729,9 +730,9 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
         TensorView x_b(x_all + size_t(b) * seq * hidden, {1, seq, hidden});
         TensorView q_v(q, {1, seq, qd}), k_v(k, {1, seq, kd}), v_v(v, {1, seq, kd});
 
-        tied_lm_head_forward(x_b, q_proj, q_v);
-        tied_lm_head_forward(x_b, k_proj, k_v);
-        tied_lm_head_forward(x_b, v_proj, v_v);
+        linear_forward_transposed(x_b, q_proj, q_v);
+        linear_forward_transposed(x_b, k_proj, k_v);
+        linear_forward_transposed(x_b, v_proj, v_v);
 
         if (use_qk_norm)
         {
@@ -747,7 +748,7 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
         grouped_attention_forward(qr_v, kr_v, v_v, attn_v, q_heads, kv_heads, head_dim, true, scale, 0);
 
         TensorView o_b(o_all + size_t(b) * seq * hidden, {1, seq, hidden});
-        tied_lm_head_forward(attn_v, o_proj, o_b);
+        linear_forward_transposed(attn_v, o_proj, o_b);
     }
 }
 
@@ -962,7 +963,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
             TensorView qkv_row(s.qkv.data, {1, 1, qd + 2 * kd}, act, Device::CUDA);
             {
                 TensorView qkv_w(q_proj.data, {qd + 2 * kd, hidden}, q_proj.type, Device::CUDA);
-                tied_lm_head_forward(x_b, qkv_w, qkv_row, qkv_scale);
+                linear_forward_transposed(x_b, qkv_w, qkv_row, qkv_scale);
             }
 
             TensorView key_cache(kv_key.data,   {1, table_len, kd}, act, Device::CUDA);
@@ -977,7 +978,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                                           static_cast<float*>(s.partials.data), position_device);
             }
             {
-                tied_lm_head_forward(attn_v, o_proj, o_b, o_scale);
+                linear_forward_transposed(attn_v, o_proj, o_b, o_scale);
             }
             return;
         }
@@ -986,7 +987,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         {
             TensorView qkv_row(s.qkv.data, {1, 1, qd + 2 * kd}, act, Device::CUDA);
             TensorView qkv_w(q_proj.data, {qd + 2 * kd, hidden}, q_proj.type, Device::CUDA);
-            tied_lm_head_forward(x_b, qkv_w, qkv_row, qkv_scale);
+            linear_forward_transposed(x_b, qkv_w, qkv_row, qkv_scale);
             q_v = TensorView(s.qkv.data, {1, 1, qd}, act, Device::CUDA);
             k_v = TensorView(static_cast<char*>(s.qkv.data) + size_t(qd) * elem, {1, 1, kd}, act, Device::CUDA);
             device::copy_async(v_at, static_cast<char*>(s.qkv.data) + size_t(qd + kd) * elem,
@@ -994,9 +995,9 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         }
         else
         {
-            tied_lm_head_forward(x_b, q_proj, q_v, q_scale);
-            tied_lm_head_forward(x_b, k_proj, k_v, k_scale);
-            tied_lm_head_forward(x_b, v_proj, v_slot, v_scale);
+            linear_forward_transposed(x_b, q_proj, q_v, q_scale);
+            linear_forward_transposed(x_b, k_proj, k_v, k_scale);
+            linear_forward_transposed(x_b, v_proj, v_slot, v_scale);
         }
 
         {
@@ -1050,7 +1051,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                         "gqa sdpa execute");
                 }
                 {
-                    tied_lm_head_forward(attn_v, o_proj, o_b, o_scale);
+                    linear_forward_transposed(attn_v, o_proj, o_b, o_scale);
                 }
                 return;
             }
@@ -1063,7 +1064,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                                       static_cast<float*>(s.partials.data));
         }
         {
-            tied_lm_head_forward(attn_v, o_proj, o_b, o_scale);
+            linear_forward_transposed(attn_v, o_proj, o_b, o_scale);
         }
         return;
     }
@@ -1084,9 +1085,9 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         TensorView x_b(in_b,  {1, seq, hidden}, act, Device::CUDA);
         TensorView o_b(out_b, {1, seq, hidden}, act, Device::CUDA);
 
-        tied_lm_head_forward(x_b, q_proj, q_v, q_scale);
-        tied_lm_head_forward(x_b, k_proj, k_v, k_scale);
-        tied_lm_head_forward(x_b, v_proj, v_v, v_scale);
+        linear_forward_transposed(x_b, q_proj, q_v, q_scale);
+        linear_forward_transposed(x_b, k_proj, k_v, k_scale);
+        linear_forward_transposed(x_b, v_proj, v_v, v_scale);
 
         if (use_qk_norm)
         {
@@ -1099,7 +1100,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
         grouped_attention_forward(qr_v, kr_v, v_v, attn_v, q_heads, kv_heads, head_dim, true, scale, 0);
 
-        tied_lm_head_forward(attn_v, o_proj, o_b, o_scale);
+        linear_forward_transposed(attn_v, o_proj, o_b, o_scale);
     }
 }
 

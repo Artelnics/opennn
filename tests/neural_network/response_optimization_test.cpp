@@ -8,8 +8,8 @@
 
 #include "tests/pch.h"
 
-#include "opennn/neural_network/response_optimization.h"
-#include "opennn/neural_network/response_constraints.h"
+#include "opennn/response_optimization/response_optimization.h"
+#include "opennn/response_optimization/response_constraints.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/neural_network/layers/scaling_layer.h"

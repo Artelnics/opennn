@@ -39,9 +39,8 @@ public:
         update_period = new_period;
     }
 
-    void update_parameters(BackPropagation&, OptimizerData&) override;
-
-    void update_parameters_capturable(BackPropagation&, OptimizerData&) const override;
+    void update_parameters(BackPropagation&, OptimizerData&,
+                           UpdateMode = UpdateMode::Standard) override;
 
     void from_JSON(const JsonDocument&) override;
 

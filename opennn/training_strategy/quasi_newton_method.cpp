@@ -84,7 +84,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
                                           BackPropagation& back_propagation,
                                           OptimizerData& optimization_data)
 {
-    NeuralNetwork* neural_network = forward_propagation.neural_network;
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     VectorMap parameters = neural_network->get_parameters_map();
     VectorMap gradient = back_propagation.gradient.as_vector();
@@ -127,12 +127,12 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
             ? optimization_data.old_learning_rate : first_learning_rate)
         : 1.0f;
 
-    tie(optimization_data.learning_rate, back_propagation.loss_value) = calculate_directional_point(
+    tie(optimization_data.learning_rate, back_propagation.metrics.loss_value) = calculate_directional_point(
         batch,
         forward_propagation,
         back_propagation,
         optimization_data,
-        back_propagation.loss_value);
+        back_propagation.metrics.loss_value);
 
     if (optimization_data.learning_rate == 0.0f && !is_gradient_direction)
     {
@@ -142,12 +142,12 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
         training_direction = -gradient;
         optimization_data.training_slope = gradient.dot(training_direction);
 
-        tie(optimization_data.learning_rate, back_propagation.loss_value) = calculate_directional_point(
+        tie(optimization_data.learning_rate, back_propagation.metrics.loss_value) = calculate_directional_point(
             batch,
             forward_propagation,
             back_propagation,
             optimization_data,
-            back_propagation.loss_value);
+            back_propagation.metrics.loss_value);
     }
 
     if (abs(optimization_data.learning_rate) > 0.0f)
@@ -180,9 +180,9 @@ TrainingResult QuasiNewtonMethod::train()
     FullBatchContext context;
     prepare_full_batch_training(context, "Training with quasi-Newton method...");
 
-    BackPropagation validation_back_propagation(context.validation_samples_number, loss);
+    BackPropagation validation_back_propagation(context.validation_samples_number, *loss);
 
-    BackPropagation training_back_propagation(context.training_samples_number, loss);
+    BackPropagation training_back_propagation(context.training_samples_number, *loss);
 
     const Index parameters_number = neural_network->get_parameters_buffer_size();
 
@@ -220,25 +220,26 @@ TrainingResult QuasiNewtonMethod::train()
                              *context.training_forward_propagation,
                              training_back_propagation);
 
-        const float training_error = training_back_propagation.error;
+        const float training_error = training_back_propagation.metrics.error;
 
         update_parameters(*context.training_batch,
                           *context.training_forward_propagation,
                           training_back_propagation,
                           optimization_data);
 
-        return {training_error, training_back_propagation.error, training_back_propagation.loss_value};
+        return {training_error, training_back_propagation.metrics.error, training_back_propagation.metrics.loss_value};
     };
 
     hooks.validation_error = [&]
     {
         const Loss::EvaluationResult evaluation_result =
-            loss->calculate_error(*context.validation_batch, *context.validation_fp);
-        validation_back_propagation.error = evaluation_result.error;
-        validation_back_propagation.accuracy = evaluation_result.accuracy;
-        validation_back_propagation.active_tokens_count = evaluation_result.active_tokens_count;
+            loss->calculate_error(*context.validation_batch,
+                                  *context.validation_forward_propagation);
+        validation_back_propagation.metrics.error = evaluation_result.error;
+        validation_back_propagation.metrics.accuracy = evaluation_result.accuracy;
+        validation_back_propagation.metrics.active_tokens_count = evaluation_result.active_tokens_count;
 
-        return validation_back_propagation.error;
+        return validation_back_propagation.metrics.error;
     };
 
     hooks.display_extra = [&]{ cout << "Learning rate: " << optimization_data.learning_rate << "\n"; };
@@ -278,8 +279,8 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
         : 1.0f;
     const float rho = 0.5f;
     const float armijo_constant = 1e-4f;
-    const float previous_error = back_propagation.error;
-    const float previous_regularization = back_propagation.regularization;
+    const float previous_error = back_propagation.metrics.error;
+    const float previous_regularization = back_propagation.metrics.regularization;
 
     const VectorMap parameters = neural_network->get_parameters_map();
     const VectorR& training_direction = optimization_data.training_direction;
@@ -296,16 +297,16 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
 
         if (new_loss <= current_loss + armijo_constant * alpha * optimization_data.training_slope)
         {
-            back_propagation.error = evaluation_result.error;
-            back_propagation.regularization = candidate_regularization;
+            back_propagation.metrics.error = evaluation_result.error;
+            back_propagation.metrics.regularization = candidate_regularization;
             return {alpha, new_loss};
         }
 
         alpha *= rho;
     }
 
-    back_propagation.error = previous_error;
-    back_propagation.regularization = previous_regularization;
+    back_propagation.metrics.error = previous_error;
+    back_propagation.metrics.regularization = previous_regularization;
 
     return {0.0f, current_loss};
 }

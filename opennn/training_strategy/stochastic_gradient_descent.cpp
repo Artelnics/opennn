@@ -16,20 +16,21 @@
 #include "opennn/dataset/batch.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/training_strategy/stochastic_gradient_descent.h"
-#include "opennn/core/cuda/kernel.cuh"
+#include "opennn/training_strategy/kernel_optimizers.cuh"
 
 namespace opennn
 {
 
 #ifdef OPENNN_HAS_CUDA
 
-static void update_parameters_cuda(NeuralNetwork* neural_network,
-                                   BackPropagation& back_propagation,
+static void update_parameters_cuda(BackPropagation& back_propagation,
                                    OptimizerData& optimizer_data,
                                    float current_learning_rate,
                                    float momentum,
                                    bool nesterov)
 {
+    NeuralNetwork* const neural_network = back_propagation.get_neural_network();
+
     const Index parameters_number = neural_network->get_parameters_buffer_size();
 
     float* const velocity_ptr = momentum > 0.0f
@@ -51,7 +52,7 @@ static void update_parameters_cuda(NeuralNetwork* neural_network,
 #else
 
 OPENNN_CUDA_STUB(void, update_parameters_cuda,
-                 (NeuralNetwork*, BackPropagation&, OptimizerData&,
+                 (BackPropagation&, OptimizerData&,
                   float, float, bool))
 
 #endif
@@ -80,9 +81,35 @@ void StochasticGradientDescent::set_default()
 }
 
 void StochasticGradientDescent::update_parameters(BackPropagation& back_propagation,
-                                                  OptimizerData& optimizer_data)
+                                                  OptimizerData& optimizer_data,
+                                                  UpdateMode mode)
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
+
+    if (mode == UpdateMode::Capturable)
+    {
+#ifdef OPENNN_HAS_CUDA
+        clip_gradient_norm(back_propagation.gradient, gradient_clip_norm);
+
+        float* const velocity_ptr = momentum > 0.0f
+            ? optimizer_data.views[Velocity].as<float>()
+            : nullptr;
+
+        sgd_update_capturable_cuda(
+            neural_network->get_parameters_buffer_size(),
+            neural_network->get_parameters_data(),
+            velocity_ptr,
+            back_propagation.gradient.as<float>(),
+            optimizer_data.views[GraphLearningRate].as<float>(),
+            momentum,
+            nesterov,
+            neural_network->get_parameters_bf16_mirror_data(),
+            Backend::get_compute_stream());
+        return;
+#else
+        throw runtime_error("Capturable SGD parameter updates require CUDA support.");
+#endif
+    }
 
     const float current_learning_rate = optimizer_data.current_learning_rate;
     if (current_learning_rate == 0.0f)
@@ -95,7 +122,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
     if (neural_network->is_gpu())
     {
-        update_parameters_cuda(neural_network, back_propagation, optimizer_data,
+        update_parameters_cuda(back_propagation, optimizer_data,
                                current_learning_rate, momentum, nesterov);
         return;
     }
@@ -128,34 +155,6 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         }
     }
 }
-
-#ifdef OPENNN_HAS_CUDA
-void StochasticGradientDescent::update_parameters_capturable(BackPropagation& back_propagation,
-                                                             OptimizerData& optimizer_data) const
-{
-    NeuralNetwork* neural_network = loss->get_neural_network();
-
-    clip_gradient_norm(back_propagation.gradient, gradient_clip_norm);
-
-    float* const velocity_ptr = momentum > 0.0f
-        ? optimizer_data.views[Velocity].as<float>()
-        : nullptr;
-
-    sgd_update_capturable_cuda(
-        neural_network->get_parameters_buffer_size(),
-        neural_network->get_parameters_data(),
-        velocity_ptr,
-        back_propagation.gradient.as<float>(),
-        optimizer_data.views[GraphLearningRate].as<float>(),
-        momentum,
-        nesterov,
-        neural_network->get_parameters_bf16_mirror_data(),
-        Backend::get_compute_stream());
-}
-#else
-void StochasticGradientDescent::update_parameters_capturable(BackPropagation&, OptimizerData&) const
-OPENNN_CUDA_STUB_BODY(update_parameters_capturable)
-#endif
 
 void StochasticGradientDescent::setup_optimizer_data(OptimizerData& optimizer_data,
                                                      Index parameters_number,

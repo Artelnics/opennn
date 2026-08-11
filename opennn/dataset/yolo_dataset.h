@@ -92,6 +92,9 @@ public:
     const filesystem::path& get_labels_directory() const { return labels_directory; }
     const Shape& get_input_shape() const { return cache_input_shape; }
 
+    float get_display_confidence_threshold() const noexcept { return display_confidence_threshold; }
+    void  set_display_confidence_threshold(float t) { display_confidence_threshold = t; }
+
     bool is_multi_scale() const noexcept { return !head_grid_sizes.empty(); }
     Index get_boxes_per_head() const noexcept { return boxes_per_head; }
     void set_multi_scale_heads(const vector<Index>&,
@@ -99,6 +102,7 @@ public:
 
     static constexpr Index MAX_GT_BOXES = 100;
 
+    bool is_v8_mode() const noexcept { return v8_mode; }
     void set_v8_mode(bool enabled);
 
     void set(const filesystem::path&,
@@ -137,6 +141,7 @@ public:
     };
 
     void set_augmentation(const AugmentationConfig& cfg) { augmentation = cfg; }
+    const AugmentationConfig& get_augmentation() const { return augmentation; }
 
     static Index convert_voc_to_yolo(const filesystem::path&,
                                      const string&,
@@ -172,6 +177,8 @@ private:
 
     AugmentationConfig augmentation{};
     mutable atomic<uint64_t> augmentation_counter{0};
+
+    float display_confidence_threshold = 0.25f;
 
     vector<filesystem::path> image_filenames;
     vector<array<float, 2>> anchors;

@@ -53,10 +53,6 @@ struct ForwardPropagation
              bool inputs_pre_scaled = false,
              span<const MemoryPoolEntry> co_planned_lifetimes = {});
 
-    Index bind_slots(const vector<vector<TensorSpec>>& forward_specs,
-                     const vector<vector<Index>>& slot_offsets,
-                     const vector<vector<Index>>& transient_slot_offsets);
-
     // Byte offsets inside `arena` for lifetimes planned alongside the forward
     // activations. An empty vector means that no joint plan is active.
     vector<Index> co_planned_offsets;
@@ -70,6 +66,7 @@ struct ForwardPropagation
 
     Index get_sequence_capacity() const noexcept { return sequence_capacity; }
     Index get_final_output_capacity() const noexcept { return final_output_capacity; }
+    Index get_final_output_layer() const noexcept { return final_output_layer; }
 
     TensorView get_last_trainable_layer_outputs() const;
 
@@ -90,8 +87,6 @@ struct ForwardPropagation
 
     bool inputs_pre_scaled = false;
 
-    NeuralNetwork* neural_network = nullptr;
-
     Buffer arena;
     vector<Buffer> staged_input_storage;
     vector<TensorView> staged_inputs;
@@ -103,21 +98,8 @@ struct ForwardPropagation
 
     vector<vector<TensorView>> inputs;
     vector<vector<TensorView>> slots;
-    vector<vector<TensorView>> capacity_inputs;
-    vector<vector<TensorView>> capacity_slots;
     vector<tuple<size_t, size_t, size_t>> passthrough_overrides;
     vector<Index> attention_valid_lengths;
-    vector<size_t> recomputable_slots;
-
-    InferenceShapePolicy inference_shape_policy;
-    Index sequence_capacity = 0;
-    Index active_sequence_length = 0;
-    Index final_output_capacity = 0;
-    Index final_output_layer = -1;
-
-    Buffer output_window_input;
-    Index output_window_start = 0;
-    Index output_window_count = 0;
 
     bool use_cuda_graph = false;
     bool cuda_graph_failed = false;
@@ -129,6 +111,31 @@ struct ForwardPropagation
     array<Buffer, size_t(device::GraphWorkspaceKind::Count)> inference_graph_workspaces{
         Buffer{Device::CUDA}, Buffer{Device::CUDA}, Buffer{Device::CUDA},
         Buffer{Device::CUDA}, Buffer{Device::CUDA}};
+
+private:
+
+    struct OutputWindow
+    {
+        Buffer input;
+        Index start = 0;
+        Index count = 0;
+    };
+
+    Index bind_slots(const vector<vector<TensorSpec>>& forward_specs,
+                     const vector<vector<Index>>& slot_offsets,
+                     const vector<vector<Index>>& transient_slot_offsets);
+
+    TensorView get_layer_outputs(Index layer) const;
+
+    NeuralNetwork* neural_network = nullptr;
+    vector<vector<TensorView>> capacity_inputs;
+    vector<vector<TensorView>> capacity_slots;
+    vector<size_t> recomputable_slots;
+    Index sequence_capacity = 0;
+    Index active_sequence_length = 0;
+    Index final_output_capacity = 0;
+    Index final_output_layer = -1;
+    optional<OutputWindow> output_window;
 };
 
 }

@@ -452,6 +452,27 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
         return get_layers_number() - 1;
     };
 
+    // Prior bias for anchor-based fused detection heads ("yolo_logits*"):
+    // Each fused conv bias has layout [tx,ty,tw,th,obj,c0..cN] × bpc.
+    // Set objectness (pos 4) and class (pos 5..4+C) biases to -4.5951 per anchor.
+    // Box coord biases (pos 0..3 per anchor) stay at 0.
+    auto apply_yolo_prior_bias = [&](Index n_classes) {
+        static constexpr float PRIOR_BIAS = -4.5951f;
+        const Index vpb = 5 + n_classes;
+        for (const auto& layer : get_layers())
+        {
+            auto* conv = dynamic_cast<Convolutional*>(layer.get());
+            if (!conv) continue;
+            if (conv->get_label().rfind("yolo_logits", 0) != 0) continue;
+            auto& views = conv->get_parameter_views();
+            if (views.empty() || views[0].empty()) continue;
+            float* b = views[0].as<float>();
+            const Index n = conv->get_kernels_number();
+            for (Index k = 0; k * vpb <= n - vpb; ++k)
+                std::fill(b + k * vpb + 4, b + (k + 1) * vpb, PRIOR_BIAS);
+        }
+    };
+
     auto add_det_head = [&](Index feature_index,
                             const vector<array<float, 2>>& head_anchors,
                             const string& name) -> Index {
@@ -602,6 +623,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             compile();
             set_parameters_random();
+            apply_yolo_prior_bias(classes_number);
             return;
         }
     }
@@ -916,6 +938,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             compile();
             set_parameters_random();
+            apply_yolo_prior_bias(classes_number);
             return;
         }
 
@@ -1039,6 +1062,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             compile();
             set_parameters_random();
+            apply_yolo_prior_bias(classes_number);
             return;
         }
     }
@@ -1049,6 +1073,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                                          Shape{1, 1, get_output_shape()[2], detection_channels},
                                          "Identity", stride, "Same", false,
                                          "yolo_logits"));
+    // Note: prior bias for this single-head path is applied below after set_parameters_random().
 
     add_layer(make_unique<Detection>(get_output_shape(), anchors, "detection_layer"));
     static_cast<Detection&>(*get_layers().back()).set_class_activation(
@@ -1064,6 +1089,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
     compile();
     set_parameters_random();
+    apply_yolo_prior_bias(classes_number);
 }
 
 TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,

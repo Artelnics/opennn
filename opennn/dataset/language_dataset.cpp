@@ -10,6 +10,7 @@
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/io_utilities.h"
+#include "opennn/dataset/field_parsing.h"
 
 namespace opennn
 {
