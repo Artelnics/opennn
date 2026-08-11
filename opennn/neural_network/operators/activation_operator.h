@@ -15,7 +15,6 @@ namespace opennn
 
 struct ActivationOperator : Operator
 {
-    static const EnumMap<ActivationFunction>& map() { return activation_function_map(); }
     static ActivationFunction from_string(const string& name) { return activation_function_from_string(name); }
     static const string& to_string(ActivationFunction function) { return activation_function_to_string(function); }
 

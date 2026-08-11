@@ -248,33 +248,24 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
 
         if (gather.window_past > 0)
         {
-            gather_window_rows_cuda(matrix, idx, destination.input.buffer.as<float>(),
-                                    current_batch_size, gather.window_past, gather.window_features,
-                                    matrix_cols, gather.window_matrix_rows,
-                                    gather.input_col_offset, stream);
-            gather_window_targets_cuda(matrix, idx, destination.target.buffer.as<float>(),
-                                       current_batch_size, gather.window_past, gather.window_future,
-                                       gather.window_target_cols, gather.window_multi_target,
-                                       matrix_cols, gather.window_matrix_rows,
-                                       gather.target_col_offset, stream);
+            const WindowLayout window{current_batch_size, gather.window_past,
+                                      matrix_cols, gather.window_matrix_rows};
+
+            gather_window_inputs_cuda(matrix, idx, destination.input.buffer.as<float>(), window,
+                                      gather.window_features, gather.input_col_offset, stream);
+            gather_window_targets_cuda(matrix, idx, destination.target.buffer.as<float>(), window,
+                                       gather.window_future, gather.window_target_cols,
+                                       gather.window_multi_target, gather.target_col_offset, stream);
             record_h2d_done(stream);
             return;
         }
 
-        if (destination.input.type == Type::BF16)
-        {
-            gather_rows_bf16_cuda(matrix, idx, destination.input.buffer.as<bfloat16>(),
-                                  current_batch_size, input_values_per_sample,
-                                  matrix_cols, gather.input_col_offset, stream);
-        }
-        else
-        {
-            gather_rows_cuda(matrix, idx, destination.input.buffer.as<float>(),
-                             current_batch_size, input_values_per_sample,
-                             matrix_cols, gather.input_col_offset, stream);
-        }
+        gather_rows_cuda(matrix, idx, destination.input.buffer.data,
+                         destination.input.type == Type::BF16,
+                         current_batch_size, input_values_per_sample,
+                         matrix_cols, gather.input_col_offset, stream);
 
-        gather_rows_cuda(matrix, idx, destination.target.buffer.as<float>(),
+        gather_rows_cuda(matrix, idx, destination.target.buffer.data, false,
                          current_batch_size, target_values_per_sample,
                          matrix_cols, gather.target_col_offset, stream);
 
@@ -282,19 +273,16 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
         return;
     }
 
-    const auto copy_to_device_async = [&](void* destination, const void* source, Index bytes) {
-        device::copy_async(destination, source, bytes, device::CopyKind::HostToDevice, stream);
-    };
-
     if (destination.input.type == Type::BF16)
     {
         if (input_host_bf16)
         {
-            truncate_floats_to_bfloat16_host(input_values_count, input.host, input_host_bf16);
+            float_2_bfloat16_host(input_values_count, input.host, input_host_bf16);
 
-            copy_to_device_async(destination.input.buffer.as<bfloat16>(),
-                                 input_host_bf16,
-                                 input_values_count * Index(sizeof(uint16_t)));
+            device::copy_async(destination.input.buffer.as<bfloat16>(),
+                               input_host_bf16,
+                               input_values_count * Index(sizeof(uint16_t)),
+                               device::CopyKind::HostToDevice, stream);
         }
         else
         {
@@ -307,7 +295,9 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
                                      destination.fp32_staging.bytes - before,
                                      format("samples={}", current_batch_size));
             }
-            copy_to_device_async(destination.fp32_staging.as<float>(), input.host, input_values_count * sizeof(float));
+            device::copy_async(destination.fp32_staging.as<float>(), input.host, input_values_count * sizeof(float),
+                               device::CopyKind::HostToDevice, stream);
+
             cast_fp32_to_bf16(input_values_count,
                               destination.fp32_staging.as<float>(),
                               destination.input.buffer.as<bfloat16>(),
@@ -316,16 +306,19 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
     }
     else
     {
-        copy_to_device_async(destination.input.buffer.as<float>(), input.host, input_values_count * sizeof(float));
+        device::copy_async(destination.input.buffer.as<float>(), input.host, input_values_count * sizeof(float),
+                           device::CopyKind::HostToDevice, stream);
     }
 
     if (!decoder.shape.empty())
     {
         const Index decoder_values_count = decoder.shape.size();
-        copy_to_device_async(destination.decoder.buffer.as<float>(), decoder.host, decoder_values_count * sizeof(float));
+        device::copy_async(destination.decoder.buffer.as<float>(), decoder.host, decoder_values_count * sizeof(float),
+                           device::CopyKind::HostToDevice, stream);
     }
 
-    copy_to_device_async(destination.target.buffer.as<float>(), target.host, target_values_count * sizeof(float));
+    device::copy_async(destination.target.buffer.as<float>(), target.host, target_values_count * sizeof(float),
+                       device::CopyKind::HostToDevice, stream);
 
     record_h2d_done(stream);
 }

@@ -5,26 +5,31 @@
 
 #include "opennn/core/cuda/kernel_prelude.cuh"
 
-void gather_rows_cuda(const float* matrix, const int* row_indices, float* out,
+// out points to __nv_bfloat16 when out_bf16 is set, to float otherwise.
+void gather_rows_cuda(const float* matrix, const int* row_indices, void* out, const bool out_bf16,
                       const Index n_rows, const Index n_cols,
                       const Index matrix_cols, const Index col_offset,
                       cudaStream_t stream = nullptr);
 
-void gather_rows_bf16_cuda(const float* matrix, const int* row_indices, __nv_bfloat16* out,
-                           const Index n_rows, const Index n_cols,
-                           const Index matrix_cols, const Index col_offset,
-                           cudaStream_t stream = nullptr);
+// Source matrix shape and the window over it, shared by both window gathers.
+struct WindowLayout
+{
+    Index batch = 0;
+    Index past = 0;
+    Index matrix_cols = 0;
+    Index matrix_rows = 0;
+};
 
-void gather_window_rows_cuda(const float* matrix, const int* start_rows, float* out,
-                             const Index batch, const Index past, const Index features,
-                             const Index matrix_cols, const Index matrix_rows,
-                             const Index col_offset, cudaStream_t stream = nullptr);
+void gather_window_inputs_cuda(const float* matrix, const int* start_rows, float* out,
+                               const WindowLayout& window,
+                               const Index features, const Index col_offset,
+                               cudaStream_t stream = nullptr);
 
 void gather_window_targets_cuda(const float* matrix, const int* start_rows, float* out,
-                                const Index batch, const Index past, const Index future,
-                                const Index target_cols, const bool multi_target,
-                                const Index matrix_cols, const Index matrix_rows,
-                                const Index col_offset, cudaStream_t stream = nullptr);
+                                const WindowLayout& window,
+                                const Index future, const Index target_cols,
+                                const bool multi_target, const Index col_offset,
+                                cudaStream_t stream = nullptr);
 
 #endif
 

@@ -811,7 +811,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                 const Index n = source.size();
                 vector<uint16_t>& bf16_cpu = forward_propagation.host_bf16_input_scratch[i];
                 bf16_cpu.resize(size_t(n));
-                truncate_floats_to_bfloat16_host(n, source.as<float>(), bf16_cpu.data());
+                float_2_bfloat16_host(n, source.as<float>(), bf16_cpu.data());
                 ensure_cuda_capacity(n * Index(sizeof(uint16_t)));
                 device::copy_async(input_buffer.data,
                                    bf16_cpu.data(),

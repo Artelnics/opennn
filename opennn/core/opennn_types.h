@@ -151,9 +151,9 @@ inline float bfloat16_to_float_host(const uint16_t value)
     return result;
 }
 
-inline void truncate_floats_to_bfloat16_host(const Index count,
-                                             const float* source,
-                                             uint16_t* destination)
+inline void float_2_bfloat16_host(const Index count,
+                                  const float* source,
+                                  uint16_t* destination)
 {
     #pragma omp parallel for if(count > 4096)
     for (Index i = 0; i < count; ++i)

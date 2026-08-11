@@ -9,6 +9,13 @@
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/dataset/kernel_gather.cuh"
 
+// One block per output row, threads striding its columns: round to a full warp
+// while the row is narrower than a block.
+static inline int row_threads(const int cols)
+{
+    return cols < block_size ? ((cols + 31) / 32) * 32 : block_size;
+}
+
 template<typename TDst>
 __global__ void gather_rows_kernel(const float* __restrict__ matrix,
                                    const int* __restrict__ row_indices,
@@ -39,37 +46,33 @@ static void gather_rows_launch(const float* matrix, const int* row_indices, TDst
 
     const int rows = checked_int(n_rows);
     const int cols = checked_int(n_cols);
-    const int threads = cols < block_size ? ((cols + 31) / 32) * 32 : block_size;
 
-    OPENNN_CUDA_LAUNCH(gather_rows_kernel<TDst><<<rows, threads, 0, stream>>>(
+    OPENNN_CUDA_LAUNCH(gather_rows_kernel<TDst><<<rows, row_threads(cols), 0, stream>>>(
         matrix, row_indices, out, rows, cols, checked_int(matrix_cols), checked_int(col_offset)));
 }
 
-void gather_rows_cuda(const float* matrix, const int* row_indices, float* out,
+void gather_rows_cuda(const float* matrix, const int* row_indices, void* out, const bool out_bf16,
                       const Index n_rows, const Index n_cols,
                       const Index matrix_cols, const Index col_offset,
                       cudaStream_t stream)
 {
-    gather_rows_launch<float>(matrix, row_indices, out, n_rows, n_cols, matrix_cols, col_offset, stream);
+    if (out_bf16)
+        gather_rows_launch<__nv_bfloat16>(matrix, row_indices, static_cast<__nv_bfloat16*>(out),
+                                          n_rows, n_cols, matrix_cols, col_offset, stream);
+    else
+        gather_rows_launch<float>(matrix, row_indices, static_cast<float*>(out),
+                                  n_rows, n_cols, matrix_cols, col_offset, stream);
 }
 
-void gather_rows_bf16_cuda(const float* matrix, const int* row_indices, __nv_bfloat16* out,
-                           const Index n_rows, const Index n_cols,
-                           const Index matrix_cols, const Index col_offset,
-                           cudaStream_t stream)
-{
-    gather_rows_launch<__nv_bfloat16>(matrix, row_indices, out, n_rows, n_cols, matrix_cols, col_offset, stream);
-}
-
-__global__ void gather_window_rows_kernel(const float* __restrict__ matrix,
-                                          const int* __restrict__ start_rows,
-                                          float* __restrict__ out,
-                                          const int batch,
-                                          const int past,
-                                          const int features,
-                                          const int matrix_cols,
-                                          const int matrix_rows,
-                                          const int col_offset)
+__global__ void gather_window_inputs_kernel(const float* __restrict__ matrix,
+                                            const int* __restrict__ start_rows,
+                                            float* __restrict__ out,
+                                            const int batch,
+                                            const int past,
+                                            const int features,
+                                            const int matrix_cols,
+                                            const int matrix_rows,
+                                            const int col_offset)
 {
     const int s = blockIdx.x;
     const int t = blockIdx.y;
@@ -89,21 +92,21 @@ __global__ void gather_window_rows_kernel(const float* __restrict__ matrix,
         dst[f] = src[f];
 }
 
-void gather_window_rows_cuda(const float* matrix, const int* start_rows, float* out,
-                             const Index batch, const Index past, const Index features,
-                             const Index matrix_cols, const Index matrix_rows,
-                             const Index col_offset, cudaStream_t stream)
+void gather_window_inputs_cuda(const float* matrix, const int* start_rows, float* out,
+                               const WindowLayout& window,
+                               const Index features, const Index col_offset,
+                               cudaStream_t stream)
 {
-    if (batch == 0 || past == 0 || features == 0) return;
+    if (window.batch == 0 || window.past == 0 || features == 0) return;
     if (stream == nullptr) stream = opennn::device::get_compute_stream();
 
+    const int batch = checked_int(window.batch);
+    const int past = checked_int(window.past);
     const int cols = checked_int(features);
-    const int threads = cols < block_size ? ((cols + 31) / 32) * 32 : block_size;
-    const dim3 grid(checked_int(batch), checked_int(past));
 
-    OPENNN_CUDA_LAUNCH(gather_window_rows_kernel<<<grid, threads, 0, stream>>>(
-        matrix, start_rows, out, checked_int(batch), checked_int(past), cols,
-        checked_int(matrix_cols), checked_int(matrix_rows), checked_int(col_offset)));
+    OPENNN_CUDA_LAUNCH(gather_window_inputs_kernel<<<dim3(batch, past), row_threads(cols), 0, stream>>>(
+        matrix, start_rows, out, batch, past, cols,
+        checked_int(window.matrix_cols), checked_int(window.matrix_rows), checked_int(col_offset)));
 }
 
 __global__ void gather_window_targets_kernel(const float* __restrict__ matrix,
@@ -129,11 +132,9 @@ __global__ void gather_window_targets_kernel(const float* __restrict__ matrix,
         float* __restrict__ dst = out + size_t(s) * width;
         for (int i = threadIdx.x; i < width; i += blockDim.x)
         {
-            const int j = i / future;
-            const int k = i % future;
-            const long long row = base + k;
-            dst[j * future + k] = (row < matrix_rows)
-                ? matrix[size_t(row) * matrix_cols + col_offset + j]
+            const long long row = base + i % future;
+            dst[i] = (row < matrix_rows)
+                ? matrix[size_t(row) * matrix_cols + col_offset + i / future]
                 : 0.0f;
         }
     }
@@ -149,21 +150,21 @@ __global__ void gather_window_targets_kernel(const float* __restrict__ matrix,
 }
 
 void gather_window_targets_cuda(const float* matrix, const int* start_rows, float* out,
-                                const Index batch, const Index past, const Index future,
-                                const Index target_cols, const bool multi_target,
-                                const Index matrix_cols, const Index matrix_rows,
-                                const Index col_offset, cudaStream_t stream)
+                                const WindowLayout& window,
+                                const Index future, const Index target_cols,
+                                const bool multi_target, const Index col_offset,
+                                cudaStream_t stream)
 {
-    if (batch == 0 || future == 0 || target_cols == 0) return;
+    if (window.batch == 0 || future == 0 || target_cols == 0) return;
     if (stream == nullptr) stream = opennn::device::get_compute_stream();
 
+    const int batch = checked_int(window.batch);
     const int width = checked_int(multi_target ? target_cols * future : target_cols);
-    const int threads = width < block_size ? ((width + 31) / 32) * 32 : block_size;
 
-    OPENNN_CUDA_LAUNCH(gather_window_targets_kernel<<<checked_int(batch), threads, 0, stream>>>(
-        matrix, start_rows, out, checked_int(batch), checked_int(past), checked_int(future),
+    OPENNN_CUDA_LAUNCH(gather_window_targets_kernel<<<batch, row_threads(width), 0, stream>>>(
+        matrix, start_rows, out, batch, checked_int(window.past), checked_int(future),
         checked_int(target_cols), multi_target,
-        checked_int(matrix_cols), checked_int(matrix_rows), checked_int(col_offset)));
+        checked_int(window.matrix_cols), checked_int(window.matrix_rows), checked_int(col_offset)));
 }
 
 // OpenNN: Open Neural Networks Library.

@@ -288,6 +288,15 @@ protected:
                          const vector<Index>&,
                          FillMode) const;
 
+    bool can_device_gather(const Batch&,
+                           const vector<Index>& input_indices,
+                           const vector<Index>& target_indices) const;
+
+    DeviceGather& start_device_gather(Batch&,
+                                      const vector<Index>& sample_indices,
+                                      const vector<Index>& input_indices,
+                                      const vector<Index>& target_indices) const;
+
     void set_default_variable_roles_forecasting();
     void set_default_variable_roles_implementation(bool);
 

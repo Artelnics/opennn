@@ -112,11 +112,11 @@ void adam_update_cuda(
     const bool aligned = are_float4_aligned(parameters, m, v, gradients)
         && is_bfloat162_aligned(parameters_bf16_mirror);
 
-    launch_vec4(n, aligned, adam_update_kernel,
-                parameters, m, v, gradients, parameters_bf16_mirror,
-                beta_1, 1.0f - beta_1, beta_2, 1.0f - beta_2,
-                effective_lr, effective_eps,
-                static_cast<const float*>(nullptr), static_cast<const float*>(nullptr));
+    launch_vec4_on(opennn::device::get_compute_stream(), n, aligned, adam_update_kernel,
+                   parameters, m, v, gradients, parameters_bf16_mirror,
+                   beta_1, 1.0f - beta_1, beta_2, 1.0f - beta_2,
+                   effective_lr, effective_eps,
+                   static_cast<const float*>(nullptr), static_cast<const float*>(nullptr));
 }
 
 __global__ void adam_prepare_kernel(int* __restrict__ step,
@@ -283,9 +283,9 @@ void sgd_update_cuda(
         && (velocity == nullptr || is_float4_aligned(velocity))
         && is_bfloat162_aligned(parameters_bf16_mirror);
 
-    launch_vec4(n, aligned, sgd_update_kernel,
-                parameters, velocity, gradients, parameters_bf16_mirror,
-                learning_rate, static_cast<const float*>(nullptr), momentum, nesterov);
+    launch_vec4_on(opennn::device::get_compute_stream(), n, aligned, sgd_update_kernel,
+                   parameters, velocity, gradients, parameters_bf16_mirror,
+                   learning_rate, static_cast<const float*>(nullptr), momentum, nesterov);
 }
 
 __global__ void set_scalar_kernel(float* __restrict__ dst, const float value)

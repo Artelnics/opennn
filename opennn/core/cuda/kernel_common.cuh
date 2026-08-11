@@ -139,12 +139,6 @@ static inline void launch_vec4_on(cudaStream_t stream, Index n, bool aligned, K 
                        stream>>>(n_vec, total, args...));
 }
 
-template<typename K, typename... Args>
-static inline void launch_vec4(Index n, bool aligned, K kernel, Args... args)
-{
-    launch_vec4_on(opennn::device::get_compute_stream(), n, aligned, kernel, args...);
-}
-
 __device__ __forceinline__ float sigmoid_f(float x)
 {
     return 1.0f / (1.0f + expf(-x));

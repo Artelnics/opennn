@@ -97,7 +97,6 @@ BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str
 
     const auto read_u16 = [&](int offset) { return static_cast<uint16_t>(buffer[offset] | (buffer[offset+1] << 8)); };
     const auto read_u32 = [&](int offset) { return static_cast<uint32_t>(buffer[offset] | (buffer[offset+1] << 8) | (buffer[offset+2] << 16) | (buffer[offset+3] << 24)); };
-    const auto read_s32 = [&](int offset) { return static_cast<int32_t>(read_u32(offset)); };
 
     throw_if(read_u16(0) != 0x4D42,
              "Not a BMP file (invalid signature 'BM'): {}", path_str);
@@ -109,8 +108,8 @@ BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str
     throw_if(biSize != 40,
              "Unsupported BMP DIB header size in file: {}", path_str);
 
-    const int32_t biWidth = read_s32(18);
-    const int32_t biHeight_signed = read_s32(22);
+    const int32_t biWidth = static_cast<int32_t>(read_u32(18));
+    const int32_t biHeight_signed = static_cast<int32_t>(read_u32(22));
     const uint16_t biPlanes = read_u16(26);
     h.biBitCount = read_u16(28);
     const uint32_t biCompression = read_u32(30);

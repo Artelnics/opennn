@@ -1424,11 +1424,6 @@ void TabularDataset::read_csv()
 
     const Index samples_number = ssize(lines);
 
-    const auto is_missing = [&](const string_view token)
-    {
-        return is_missing_token(token, missing_values_label);
-    };
-
     if(!has_sample_ids)
     {
         unordered_set<string> unique_elements;
@@ -1457,7 +1452,7 @@ void TabularDataset::read_csv()
             }
 
             if(is_numeric_column
-               && !is_missing(token)
+               && !is_missing_token(token, missing_values_label)
                && !is_numeric_string(token))
             {
                 is_numeric_column = false;
@@ -1465,7 +1460,7 @@ void TabularDataset::read_csv()
 
             if(is_date_column
                && date_check_count < max_date_checks
-               && !is_missing(token))
+               && !is_missing_token(token, missing_values_label))
             {
                 if(!is_date_time_string(token))
                     is_date_column = false;
@@ -1817,7 +1812,7 @@ void TabularDataset::read_csv()
             if(token_index >= row_tokens.size())
                 break;
 
-            if(!is_missing(row_tokens[token_index]))
+            if(!is_missing_token(row_tokens[token_index], missing_values_label))
                 continue;
 
             row_has_missing = true;

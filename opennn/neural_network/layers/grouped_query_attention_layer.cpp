@@ -917,17 +917,13 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
         if (s.query_capacity < query_capacity)
         {
-            const auto grow = [&](Index n, Buffer& b)
-            {
-                b.grow_to(n * elem);
-            };
-            grow(query_capacity * qd, s.q);
-            grow(query_capacity * kd, s.k);
-            grow(query_capacity * kd, s.v);
-            grow(query_capacity * qd, s.qr);
-            grow(query_capacity * kd, s.kr);
-            grow(query_capacity * qd, s.attn);
-            grow(qd + 2 * kd, s.qkv);
+            s.q.grow_to(query_capacity * qd * elem);
+            s.k.grow_to(query_capacity * kd * elem);
+            s.v.grow_to(query_capacity * kd * elem);
+            s.qr.grow_to(query_capacity * qd * elem);
+            s.kr.grow_to(query_capacity * kd * elem);
+            s.attn.grow_to(query_capacity * qd * elem);
+            s.qkv.grow_to((qd + 2 * kd) * elem);
             s.query_capacity = query_capacity;
         }
 

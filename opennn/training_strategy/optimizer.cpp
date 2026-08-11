@@ -255,10 +255,7 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
 
     if (neural_network.is_gpu() && device::is_cuda_build())
     {
-        const auto make_device_batch = [&] {
-            return make_unique<Batch>(training_batch_size, &dataset, config);
-        };
-        training_session.pipelines[0].slots[0] = make_device_batch();
+        training_session.pipelines[0].slots[0] = make_unique<Batch>(training_batch_size, &dataset, config);
 
         if (can_use_cuda_graph())
         {
@@ -271,16 +268,16 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
                     || training_session.fixed_batch()->input.type != Type::BF16);
 
             if (training_batches > 0 && !grouped_batches)
-                training_session.pipelines[1].slots[0] = make_device_batch();
+                training_session.pipelines[1].slots[0] = make_unique<Batch>(training_batch_size, &dataset, config);
 
             if (grouped_batches)
                 for (int i = 1; i < TrainingSession::group_size; ++i)
-                    training_session.pipelines[0].slots[size_t(i)] = make_device_batch();
+                    training_session.pipelines[0].slots[size_t(i)] = make_unique<Batch>(training_batch_size, &dataset, config);
 
             if (grouped_batches
                 && training_batches >= TrainingSession::slots_count)
                 for (int i = 0; i < TrainingSession::group_size; ++i)
-                    training_session.pipelines[1].slots[size_t(i)] = make_device_batch();
+                    training_session.pipelines[1].slots[size_t(i)] = make_unique<Batch>(training_batch_size, &dataset, config);
         }
     }
 
@@ -1599,11 +1596,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         copy_section(slot.target);
     };
 
-    const auto stage_gather_indices = [](const Batch& source, Batch& slot)
-    {
-        slot.device_gather = source.device_gather;
-    };
-
     const auto run_compute_step = [&](Batch& slot)
     {
         neural_network->forward_propagate(slot.get_inputs(),
@@ -1710,7 +1702,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                 [&](Batch& slot)
                 {
                     PROFILE_SCOPE_HOST("step:gather_issue");
-                    stage_gather_indices(*host_batch, slot);
+                    slot.device_gather = host_batch->device_gather;
                     empty_queue.push(host_batch);
                     host_batch = nullptr;
 
@@ -1727,7 +1719,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                 },
                 [&](Batch& slot)
                 {
-                    stage_gather_indices(*host_batch, slot);
+                    slot.device_gather = host_batch->device_gather;
                     empty_queue.push(host_batch);
                     host_batch = nullptr;
                     slot.upload_to_device_batch_async(slot, transfer);
