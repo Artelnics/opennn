@@ -428,12 +428,12 @@ string ModelExpression::process_body_line(const string& line, const vector<strin
         const string& raw = input_names[i];
         const string& fix = fixed_input_names[i];
         if (raw == fix) continue;
-        replace_all_appearances(processed, "scaled_" + raw, "scaled_" + fix);
+        replace_all_word_appearances(processed, "scaled_" + raw, "scaled_" + fix);
         string space_to_underscore = raw;
         ranges::replace(space_to_underscore, ' ', '_');
         if (space_to_underscore != raw)
-            replace_all_appearances(processed, "scaled_" + space_to_underscore,
-                                    "scaled_" + fix);
+            replace_all_word_appearances(processed, "scaled_" + space_to_underscore,
+                                         "scaled_" + fix);
     }
     apply_name_mapping(processed, input_names, fixed_input_names);
     return processed;
@@ -2173,10 +2173,36 @@ string ModelExpression::replace_reserved_keywords(const string& input)
         {'?', "_ntrgtn_"}, {'<', "_lower_"},  {'>', "_higher_"}
     };
 
-    static const unordered_map<string, string> special_words = {
-        {"min", "mi_n"}, {"max", "ma_x"}, {"exp", "ex_p"}, {"tanh", "ta_nh"},
-        {"yield", "yield_"}, {"class", "class_"}, {"return", "return_"},
-        {"lambda", "lambda_"}, {"global", "global_"}
+    static const unordered_set<string> reserved_words = {
+        // C / C++
+        "alignas", "alignof", "asm", "auto", "bitand", "bitor", "bool", "case", "catch",
+        "char", "char8_t", "char16_t", "char32_t", "compl", "concept", "const", "consteval",
+        "constexpr", "constinit", "const_cast", "decltype", "default", "delete", "do",
+        "double", "dynamic_cast", "enum", "explicit", "export", "extern", "float", "friend",
+        "goto", "inline", "int", "long", "mutable", "namespace", "new", "noexcept",
+        "nullptr", "operator", "private", "protected", "public", "register",
+        "reinterpret_cast", "requires", "restrict", "short", "signed", "sizeof", "static",
+        "static_assert", "static_cast", "struct", "switch", "template", "this",
+        "thread_local", "throw", "typedef", "typeid", "typename", "union", "unsigned",
+        "using", "virtual", "void", "volatile", "wchar_t", "xor",
+        // Python
+        "False", "None", "True", "and", "as", "assert", "async", "await", "break", "class",
+        "continue", "def", "del", "elif", "else", "except", "finally", "for", "from",
+        "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass",
+        "print", "raise", "return", "try", "while", "with", "yield",
+        // JavaScript
+        "Infinity", "NaN", "arguments", "debugger", "eval", "extends", "function",
+        "implements", "instanceof", "interface", "let", "null", "package", "super",
+        "typeof", "undefined", "var",
+        // PHP
+        "array", "clone", "die", "echo", "elseif", "empty", "enddeclare", "endfor",
+        "endforeach", "endif", "endswitch", "endwhile", "exit", "final", "fn", "foreach",
+        "include", "include_once", "isset", "list", "match", "readonly", "require",
+        "require_once", "trait", "unset", "use",
+        // Identifiers emitted by the exporters themselves
+        "abs", "calculate_batch_output", "calculate_outputs", "exp", "input_batch",
+        "inputs", "log", "main", "max", "max_out", "min", "nn", "np", "out",
+        "output_batch", "outputs", "params", "pd", "pow", "self", "sum", "sum_val", "tanh"
     };
 
     string out;
@@ -2193,11 +2219,14 @@ string ModelExpression::replace_reserved_keywords(const string& input)
             out += character;
     }
 
-    if (!out.empty() && isdigit(static_cast<unsigned char>(out[0])))
+    if (out.empty())
+        out = "variable";
+
+    if (isdigit(static_cast<unsigned char>(out[0])))
         out = '_' + out;
 
-    for (const auto& [search, replace_val] : special_words)
-        replace_all_word_appearances(out, search, replace_val);
+    while (reserved_words.contains(out))
+        out += "_";
 
     return out;
 }
