@@ -245,6 +245,77 @@ TEST(BatchNormalizationOperatoreratorTest, InferenceIsDeterministicAcrossRows)
     }
 }
 
+// The running variance takes the BIASED batch variance, with no Bessel
+// correction. Most frameworks apply M/(M-1) here and OpenNN does not, so the
+// convention is easy to "correct" by mistake - and since inference reproduces
+// training only when both sides agree, changing it silently rescales the output
+// of every model already saved to disk. Nothing else in the suite pinned it.
+TEST(BatchNormalizationOperatoreratorTest, RunningVarianceUsesBiasedEstimate)
+{
+    const Index batch_size = 8;
+    const Index features   = 3;
+    const float momentum   = 0.1f;   // Dense's batch-norm default.
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{features}, Shape{features}, "Identity", true));
+    neural_network.compile();
+    neural_network.set_parameters_random();
+
+    // Scaled up so the two conventions separate well clear of float noise: they
+    // differ by momentum * variance * (M/(M-1) - 1), which at a Glorot-scale
+    // variance of ~3e-3 is only 5e-5 and cannot be told apart reliably.
+    MatrixR input_data(batch_size, features);
+    input_data.setRandom();
+    input_data *= 50.0f;
+
+    // The state buffer is aligned per spec, so the running variances are not
+    // simply the second block. Locate them: init_defaults is the only thing that
+    // writes exactly 1.0, so those slots are the variances.
+    const VectorMap states_before(neural_network.get_states_data(), neural_network.get_states_size());
+    vector<Index> variance_slots;
+    for (Index i = 0; i < states_before.size(); ++i)
+        if (states_before(i) == 1.0f) variance_slots.push_back(i);
+
+    ASSERT_EQ(Index(variance_slots.size()), features)
+        << "could not locate the running variances in the state buffer";
+
+    ForwardPropagation forward_propagation(batch_size, &neural_network);
+    vector<TensorView> inputs = { TensorView(input_data.data(), {batch_size, features}) };
+    neural_network.forward_propagate(inputs, forward_propagation, true);
+
+    // Recover the variance the forward pass actually normalized by, rather than
+    // recomputing it from the inputs: slot 2 holds inverse_variance, which is
+    // rsqrt(var + BN_EPSILON) over the batch. That variance is biased by
+    // definition - it is what normalization divides by - so comparing the running
+    // statistic against it isolates the one question this test asks, and does so
+    // without depending on the parameter layout or on what the layer computes.
+    // Slot 3 is inverse_variance: the layer's forward slots carry one leading
+    // entry ahead of get_forward_specs, so the two per-channel statistic slots
+    // land at 2 (mean) and 3, not 1 and 2.
+    constexpr float bn_epsilon = 1.0e-5f;
+    const VectorMap inverse_variance = forward_propagation.slots[0][3].as_vector();
+    ASSERT_EQ(inverse_variance.size(), features);
+
+    const VectorMap states(neural_network.get_states_data(), neural_network.get_states_size());
+
+    for (Index i = 0; i < features; ++i)
+    {
+        const float normalizing_variance =
+            1.0f / (inverse_variance(i) * inverse_variance(i)) - bn_epsilon;
+
+        // Running variance starts at 1, so one update leaves
+        // (1 - momentum) + momentum * variance.
+        const float observed = states(variance_slots[size_t(i)]);
+        const float biased   = (1.0f - momentum) + momentum * normalizing_variance;
+        const float bessel   = (1.0f - momentum) + momentum * normalizing_variance
+                             * float(batch_size) / float(batch_size - 1);
+
+        EXPECT_NEAR(observed, biased, 1.0e-3f);
+        ASSERT_GT(abs(bessel - biased), 1.0e-2f) << "variance too small to tell the conventions apart";
+        EXPECT_GT(abs(observed - bessel), 1.0e-2f) << "running variance is Bessel-corrected";
+    }
+}
+
 TEST(BatchNormalizationOperatoreratorTest, GradientMatchesFiniteDifferences)
 {
     const Index samples_number = 16;
