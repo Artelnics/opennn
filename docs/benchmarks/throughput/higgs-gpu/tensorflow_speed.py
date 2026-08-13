@@ -156,7 +156,10 @@ def main():
 
     times.sort()
     median_epoch_s = times[len(times) // 2]
-    samples_per_sec = samples / median_epoch_s
+    # An epoch runs whole batches only; dividing the full split by the epoch time
+    # overstates throughput by up to one batch, which is 6.5% at batch 896,000.
+    samples_per_epoch = len(starts) * batch
+    samples_per_sec = samples_per_epoch / median_epoch_s
 
     pred_np = np.vstack(preds) if preds else np.empty((0, 1), dtype=np.float32)
     metrics = binary_metrics(yt_np[: pred_np.shape[0]], pred_np)

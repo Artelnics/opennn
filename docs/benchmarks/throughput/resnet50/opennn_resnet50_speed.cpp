@@ -65,6 +65,8 @@ int main(int argc, char* argv[])
         else
             device::set_conv_workspace_cap(stoll(workspace_arg) * 1024 * 1024);
         cout << "workspace_mode=" << workspace_arg << "\n";
+        cout << "workspace_cap_mib=" << device::conv_workspace_limit_bytes() / (1024 * 1024) << "\n";
+        cout << "conv_autotune=" << (device::conv_autotune_enabled() ? 1 : 0) << "\n";
 
         if (!cache_dir.empty())
             cerr << "note: custom cache dir ignored (OpenNN caches in "

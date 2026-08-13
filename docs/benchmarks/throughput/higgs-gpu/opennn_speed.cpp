@@ -290,10 +290,16 @@ int main(int argc, char* argv[])
         throw_if(Index(epoch_seconds.size()) != epochs, "epoch timing marks missing");
         sort(epoch_seconds.begin(), epoch_seconds.end());
         const double median_epoch_s = epoch_seconds[epoch_seconds.size() / 2];
-        const double samples_per_sec = double(samples) / median_epoch_s;
+
+        // An epoch runs whole batches only; the remainder is dropped. Dividing the
+        // full split by the epoch time overstates throughput by up to the size of
+        // one batch, which is 6.5% at batch 896,000.
+        const Index samples_per_epoch = (samples / batch) * batch;
+        const double samples_per_sec = double(samples_per_epoch) / median_epoch_s;
 
         const BinaryMetrics metrics = evaluate(*network, test_path, batch);
 
+        cout << "samples_per_epoch=" << samples_per_epoch << "\n";
         cout << "median_epoch_s=" << median_epoch_s << "\n";
         cout << "samples_per_sec=" << long(samples_per_sec) << "\n";
         cout << "test_samples=" << metrics.samples << "\n";

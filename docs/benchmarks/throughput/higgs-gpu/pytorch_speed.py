@@ -145,7 +145,10 @@ def main():
 
     times.sort()
     median_epoch_s = times[len(times) // 2]
-    samples_per_sec = samples / median_epoch_s
+    # An epoch runs whole batches only; dividing the full split by the epoch time
+    # overstates throughput by up to one batch, which is 6.5% at batch 896,000.
+    samples_per_epoch = len(starts) * batch
+    samples_per_sec = samples_per_epoch / median_epoch_s
 
     processed = (xt_np.shape[0] // batch) * batch
     xt = torch.from_numpy(xt_np[:processed]).to(device).contiguous()
