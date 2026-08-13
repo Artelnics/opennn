@@ -558,13 +558,14 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
         if (use_bias) tensors[entry.fwd_B] = bias.data;
         tensors[entry.fwd_Y] = output.data;
 
-        cudnn_frontend::autotune_with_scratch(entry.fwd_autotune, *entry.fwd, tensors, entry.fwd_workspace_bytes);
+        cudnn_frontend::autotune_with_scratch(entry.fwd_autotune, *entry.fwd, tensors,
+                                              entry.fwd_workspace_bytes, "ConvolutionOperator fwd");
 
         cudnn_frontend::execute_graph(*entry.fwd, tensors, cudnn_frontend::shared_workspace(entry.fwd_workspace_bytes),
                                 "forward execute", cudnn_frontend::timing_label(*this, "conv_fwd"));
     });
 
-    throw_if(!ran, "ConvolutionOperator: GPU convolution requires SM 8.0+ (Ampere).");
+    if (!ran) cudnn_frontend::throw_frontend_unavailable("ConvolutionOperator: GPU convolution");
 }
 
 void ConvolutionOperator::apply_gpu_folded(const TensorView& input,
@@ -606,7 +607,8 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
         tensors[entry.wgrad_X]  = input.data;
         tensors[entry.wgrad_DW] = wgrad_bf16 ? static_cast<void*>(dw_bf16) : weight_gradient.data;
 
-        cudnn_frontend::autotune_now(entry.wgrad_autotune, *entry.wgrad, tensors, entry.wgrad_workspace_bytes);
+        cudnn_frontend::autotune_now(entry.wgrad_autotune, *entry.wgrad, tensors,
+                                     entry.wgrad_workspace_bytes, "ConvolutionOperator wgrad");
 
         cudnn_frontend::execute_graph(*entry.wgrad, tensors, cudnn_frontend::shared_workspace(entry.wgrad_workspace_bytes),
                                 "wgrad execute", cudnn_frontend::timing_label(*this, "conv_wgrad"));
@@ -622,7 +624,8 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
             bgrad_tensors[entry.bgrad_DY] = output_delta.data;
             bgrad_tensors[entry.bgrad_DB] = bias_gradient.data;
 
-            cudnn_frontend::autotune_now(entry.bgrad_autotune, *entry.bgrad, bgrad_tensors, entry.bgrad_workspace_bytes);
+            cudnn_frontend::autotune_now(entry.bgrad_autotune, *entry.bgrad, bgrad_tensors,
+                                         entry.bgrad_workspace_bytes, "ConvolutionOperator bgrad");
 
             cudnn_frontend::execute_graph(*entry.bgrad, bgrad_tensors, cudnn_frontend::shared_workspace(entry.bgrad_workspace_bytes),
                                     "bgrad execute", cudnn_frontend::timing_label(*this, "conv_bgrad"));
@@ -637,14 +640,15 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
             dgrad_tensors[entry.dgrad_W]  = weights.data;
             dgrad_tensors[entry.dgrad_DX] = input_delta.data;
 
-            cudnn_frontend::autotune_now(entry.dgrad_autotune, *entry.dgrad, dgrad_tensors, entry.dgrad_workspace_bytes);
+            cudnn_frontend::autotune_now(entry.dgrad_autotune, *entry.dgrad, dgrad_tensors,
+                                         entry.dgrad_workspace_bytes, "ConvolutionOperator dgrad");
 
             cudnn_frontend::execute_graph(*entry.dgrad, dgrad_tensors, cudnn_frontend::shared_workspace(entry.dgrad_workspace_bytes),
                                     "dgrad execute", cudnn_frontend::timing_label(*this, "conv_dgrad"));
         }
     });
 
-    throw_if(!ran, "ConvolutionOperator: GPU convolution backward requires SM 8.0+ (Ampere).");
+    if (!ran) cudnn_frontend::throw_frontend_unavailable("ConvolutionOperator: GPU convolution backward");
 }
 
 #else

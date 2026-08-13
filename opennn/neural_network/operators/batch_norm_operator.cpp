@@ -584,7 +584,8 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
         tensors[entry.fwd_NextMean] = running_mean.data;
         tensors[entry.fwd_NextVar]  = running_variance.data;
 
-        cudnn_frontend::autotune_with_scratch(entry.fwd_autotune, *entry.fwd, tensors, entry.fwd_workspace_bytes);
+        cudnn_frontend::autotune_with_scratch(entry.fwd_autotune, *entry.fwd, tensors,
+                                              entry.fwd_workspace_bytes, "BatchNormOperator fwd");
 
         cudnn_frontend::execute_graph(*entry.fwd, tensors, cudnn_frontend::shared_workspace(entry.fwd_workspace_bytes),
                                 "batchnorm forward execute",
@@ -693,7 +694,8 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
         tensors[entry.bwd_DScale] = gamma_gradient.data;
         tensors[entry.bwd_DBias]  = beta_gradient.data;
 
-        cudnn_frontend::autotune_with_scratch(entry.bwd_autotune, *entry.bwd, tensors, entry.bwd_workspace_bytes);
+        cudnn_frontend::autotune_with_scratch(entry.bwd_autotune, *entry.bwd, tensors,
+                                              entry.bwd_workspace_bytes, "BatchNormOperator bwd");
 
         cudnn_frontend::execute_graph(*entry.bwd, tensors, cudnn_frontend::shared_workspace(entry.bwd_workspace_bytes),
                                 "batchnorm backward execute",

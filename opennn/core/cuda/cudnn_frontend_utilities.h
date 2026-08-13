@@ -127,6 +127,22 @@ bool run_frontend(unique_ptr<GraphCache>& cache, const char* label, Body&& body)
     }
 }
 
+// The frontend path can be unavailable for two unrelated reasons: the GPU really
+// lacks the required compute capability, or a plan, workspace or autotune
+// allocation failed at runtime. Reporting the former when it is the latter sends
+// the reader after a hardware problem that does not exist.
+[[noreturn]] inline void throw_frontend_unavailable(const string& what)
+{
+    if (!frontend_enabled())
+        throw runtime_error(what + " requires a GPU of compute capability 7.0 or higher.");
+
+    throw runtime_error(
+        what + ": no usable cuDNN plan for this shape. The cudnn-frontend message above "
+        "names the cause; under memory pressure it is normally a failed workspace or "
+        "autotune allocation. Reduce the batch size, or cap the convolution workspace "
+        "with device::set_conv_workspace_cap().");
+}
+
 inline DataType_t to_dtype(Type t)
 {
     switch (t)
@@ -205,6 +221,13 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
     if (conv_workspace_cap > 0)
         graph.deselect_workspace_greater_than(conv_workspace_cap);
 
+    // Autotuning requires an uncapped workspace. Combining
+    // deselect_workspace_greater_than with BuildPlanPolicy_t::ALL crashes with an
+    // access violation in this cudnn-frontend version, but only once the cap
+    // actually removes plans: measured on sm_120, ResNet-50 batch 512, a 512 MiB
+    // cap faults while 4 GiB and 1 TiB caps (which filter nothing) run clean.
+    // Tuned-plans-within-a-budget therefore needs a different mechanism — tune
+    // unbounded, then rebuild over budget — not simply dropping this condition.
     const bool autotune = request_autotune && conv_workspace_cap == 0
         && graph.build_plans(handle, BuildPlanPolicy_t::ALL).is_good();
 
@@ -217,9 +240,20 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
     return false;
 }
 
+// Autotuning is best-effort: on failure the graph keeps the plan the heuristics
+// already chose. The attempt is made once per graph, so reporting a failure here
+// costs at most one line per shape and is the only signal that a slower plan is
+// now pinned for the rest of the process.
+inline void report_autotune_skipped(const char* tag, const char* reason)
+{
+    cerr << (tag ? tag : "autotune")
+         << ": autotune skipped, keeping the heuristic plan (" << reason << ").\n";
+}
+
 template<typename TensorMap>
 inline void autotune_now(bool& pending, graph::Graph& graph,
-                         TensorMap& tensors, int64_t& workspace_bytes)
+                         TensorMap& tensors, int64_t& workspace_bytes,
+                         const char* tag = nullptr)
 {
     if (!pending) return;
     pending = false;
@@ -231,7 +265,14 @@ inline void autotune_now(bool& pending, graph::Graph& graph,
         if (tune_bytes > 0) tune_workspace.resize_bytes(Index(tune_bytes), Device::CUDA);
         check_status(graph.autotune(Backend::get_cudnn_handle(), tensors, tune_workspace.data), "autotune");
     }
-    catch (...) {}
+    catch (const exception& e)
+    {
+        report_autotune_skipped(tag, e.what());
+    }
+    catch (...)
+    {
+        report_autotune_skipped(tag, "unknown error");
+    }
 
 #ifdef OPENNN_HAS_CUDA
     cudaGetLastError();
@@ -242,7 +283,8 @@ inline void autotune_now(bool& pending, graph::Graph& graph,
 
 template<typename TensorMap>
 inline void autotune_with_scratch(bool& pending, graph::Graph& graph,
-                                  const TensorMap& tensors, int64_t& workspace_bytes)
+                                  const TensorMap& tensors, int64_t& workspace_bytes,
+                                  const char* tag = nullptr)
 {
     if (!pending) return;
 
@@ -250,19 +292,37 @@ inline void autotune_with_scratch(bool& pending, graph::Graph& graph,
     vector<Buffer> buffers;
     buffers.reserve(scratch.size());
 
-    for (auto& [tensor, pointer] : scratch)
+    // The scratch duplicates every tensor in the graph, so it is the largest
+    // transient allocation the conv path makes. Failing to get it must not take
+    // the whole cudnn-frontend path down with it: drop back to the heuristic
+    // plan and keep training.
+    try
     {
-        if (tensor->get_is_pass_by_value()) continue;
+        for (auto& [tensor, pointer] : scratch)
+        {
+            if (tensor->get_is_pass_by_value()) continue;
 
-        int64_t elements = 1;
-        for (const int64_t dimension : tensor->get_dim()) elements *= dimension;
+            int64_t elements = 1;
+            for (const int64_t dimension : tensor->get_dim()) elements *= dimension;
 
-        Buffer& buffer = buffers.emplace_back(Device::CUDA);
-        buffer.resize_bytes(Index(elements * sizeof(float)), Device::CUDA);
-        pointer = buffer.data;
+            Buffer& buffer = buffers.emplace_back(Device::CUDA);
+            buffer.resize_bytes(Index(elements * int64_t(sizeof(float))), Device::CUDA);
+            pointer = buffer.data;
+        }
+    }
+    catch (const exception& e)
+    {
+        pending = false;
+        buffers.clear();
+#ifdef OPENNN_HAS_CUDA
+        cudaGetLastError();
+#endif
+        report_autotune_skipped(tag, e.what());
+        workspace_bytes = graph.get_workspace_size();
+        return;
     }
 
-    autotune_now(pending, graph, scratch, workspace_bytes);
+    autotune_now(pending, graph, scratch, workspace_bytes, tag);
 }
 
 }

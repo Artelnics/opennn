@@ -327,6 +327,53 @@ TEST_F(GpuComparison, ImageClassificationForward)
     EXPECT_LT(relative_difference(cpu_outputs, gpu_outputs), 1.0e-3f);
 }
 
+TEST_F(GpuComparison, ImageClassificationForwardUnderWorkspaceCap)
+{
+    // Requesting autotune together with a workspace cap must stay safe. Dropping
+    // the cap-is-zero condition in cudnn_frontend_utilities::finalize so that both
+    // apply at once faults with an access violation once the cap actually removes
+    // plans (sm_120, ResNet-50 batch 512, 512 MiB cap), so the library skips
+    // tuning under a cap. This asserts that combination still runs and still
+    // agrees with the CPU reference.
+    struct RestoreConvolutionSettings
+    {
+        bool autotune;
+        ~RestoreConvolutionSettings()
+        {
+            device::set_conv_workspace_cap(-1);
+            device::set_conv_autotune(autotune);
+        }
+    } restore{device::conv_autotune_enabled()};
+
+    const Index samples_number = 3;
+    const Index height = 12;
+    const Index width = 12;
+    const Index channels = 3;
+    const Index classes_number = 4;
+
+    Tensor4 inputs(samples_number, height, width, channels);
+    inputs.setRandom();
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    ImageClassificationNetwork cpu_network({height, width, channels}, {4, 8}, {classes_number});
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+    const MatrixR cpu_outputs = cpu_network.calculate_outputs(inputs);
+
+    device::set_conv_workspace_cap(int64_t(16) * 1024 * 1024);
+    device::set_conv_autotune(true);
+    ASSERT_EQ(device::conv_workspace_limit_bytes(), int64_t(16) * 1024 * 1024);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    ImageClassificationNetwork gpu_network({height, width, channels}, {4, 8}, {classes_number});
+    gpu_network.set_parameters(parameters);
+    const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
+
+    ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
+    ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
+    EXPECT_LT(relative_difference(cpu_outputs, gpu_outputs), 1.0e-3f);
+}
+
 TEST_F(GpuComparison, ImageClassificationGradient)
 {
     const Index samples_number = 4;
