@@ -295,6 +295,7 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
                                      destination.fp32_staging.bytes - before,
                                      format("samples={}", current_batch_size));
             }
+            
             device::copy_async(destination.fp32_staging.as<float>(), input.host, input_values_count * sizeof(float),
                                device::CopyKind::HostToDevice, stream);
 

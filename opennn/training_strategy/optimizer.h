@@ -253,7 +253,10 @@ protected:
     virtual void setup_optimizer_data(OptimizerData&, Index, Device) {}
     virtual void update_parameters(BackPropagation&, OptimizerData&,
                                    UpdateMode = UpdateMode::Standard)
-    { throw runtime_error("train() requires a mini-batch optimizer (SGD or Adam)."); }
+    { 
+        throw runtime_error("train() requires a mini-batch optimizer (SGD or Adam)."); 
+    }
+
     virtual bool supports_cuda_graph() const noexcept { return false; }
     bool can_use_cuda_graph() const
     {
@@ -318,11 +321,11 @@ protected:
 
     int batch_pool_size_override = 0;
 
-    string name;
-
     int workers_number = 2;
 
     bool use_cuda_graph = false;
+
+    string name;
 };
 
 }
