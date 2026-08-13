@@ -106,7 +106,7 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
     FetchContent_Declare(
         cudnn_frontend
         GIT_REPOSITORY https://github.com/NVIDIA/cudnn-frontend.git
-        GIT_TAG        v1.22.1
+        GIT_TAG        v1.27.0
         GIT_SHALLOW    TRUE
     )
     set(CUDNN_FRONTEND_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
