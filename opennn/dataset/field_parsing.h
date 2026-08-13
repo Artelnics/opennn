@@ -48,7 +48,35 @@ private:
     void parse(Result&, string_view) const;
 };
 
-bool is_numeric_string(string_view);
+struct NumberFormat
+{
+    char decimal_separator = '.';
+    char group_separator = '\0';
+
+    bool is_default() const
+    {
+        return decimal_separator == '.' && group_separator == '\0';
+    }
+};
+
+struct NumberFormatVotes
+{
+    Index point_decimal = 0;
+    Index comma_decimal = 0;
+    Index point_group = 0;
+    Index comma_group = 0;
+};
+
+void vote_number_format(string_view, NumberFormatVotes&);
+NumberFormat decide_number_format(const NumberFormatVotes&);
+
+string number_format_name(char);
+char number_format_separator(const string&, string_view);
+
+bool parse_real(string_view, float&, const NumberFormat& = {});
+bool parse_real(string_view, double&, const NumberFormat& = {});
+
+bool is_numeric_string(string_view, const NumberFormat& = {});
 bool is_date_time_string(string_view);
 
 extern const vector<string> positive_words;

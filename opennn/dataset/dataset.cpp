@@ -906,19 +906,46 @@ void Dataset::check_separators(string_view line) const
     char found_other = 0;
     string_view found_other_name;
 
-    for (const char c : line)
+    char found_in_number = 0;
+    string_view found_in_number_name;
+
+    for (size_t position = 0; position < line.size(); ++position)
     {
+        const char c = line[position];
+
         if (c == '"') { in_quote = !in_quote; continue; }
         if (in_quote) continue;
 
         if (c == sep_char) { found_expected = true; continue; }
 
-        if (found_other == 0)
-            for (const auto& [sep, str, name] : separator_map)
+        if (found_other != 0 && found_in_number != 0) continue;
+
+        const bool between_digits =
+            c == ','
+            && position > 0
+            && position + 1 < line.size()
+            && isdigit(static_cast<unsigned char>(line[position - 1]))
+            && isdigit(static_cast<unsigned char>(line[position + 1]));
+
+        for (const auto& [sep, str, name] : separator_map)
+        {
+            if (sep == separator || sep == Separator::Space) continue;
+            if (str.empty() || str[0] != c) continue;
+
+            if (between_digits)
             {
-                if (sep == separator || sep == Separator::Space) continue;
-                if (!str.empty() && str[0] == c) { found_other = c; found_other_name = name; break; }
+                if (found_in_number == 0) { found_in_number = c; found_in_number_name = name; }
             }
+            else if (found_other == 0) { found_other = c; found_other_name = name; }
+
+            break;
+        }
+    }
+
+    if (found_other == 0 && !found_expected)
+    {
+        found_other = found_in_number;
+        found_other_name = found_in_number_name;
     }
 
     if (!found_expected)

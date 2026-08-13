@@ -319,6 +319,117 @@ TEST(TabularDataset, ReadCSV_Basic)
     remove(temp_csv_file_path.c_str());
 }
 
+TEST(TabularDataset, ReadCSV_DecimalComma)
+{
+    const string temp_csv_file_path = "temp_data_decimal_comma.csv";
+
+    const string csv_content =
+        "gender;age;height;weight;calories;obesity_level\n"
+        "Female;24,443011;1,699998;81,66995;2.150,75;Overweight\n"
+        "Male;18,0;1,56;57,0;1.980,5;Normal\n"
+        "Male;56,0;1,7;131,274;3.010,25;Obesity\n"
+        "Female;22,0;1,62;64,0;1.750,0;Normal\n"
+        "Male;31,5;1,8;99,5;2.640,5;Obesity\n";
+
+    create_temp_csv_file(temp_csv_file_path, csv_content);
+
+    TabularDataset dataset;
+
+    dataset.set_data_path(temp_csv_file_path);
+    dataset.set_separator(Dataset::Separator::Semicolon);
+    dataset.set_has_header(true);
+    dataset.set_has_ids(false);
+    dataset.set_missing_values_label("NA");
+    dataset.set_codification(Dataset::Codification::UTF8);
+    dataset.set_display(false);
+
+    ASSERT_NO_THROW(dataset.read_csv());
+
+    EXPECT_EQ(dataset.get_number_format().decimal_separator, ',');
+    EXPECT_EQ(dataset.get_number_format().group_separator, '.');
+
+    EXPECT_EQ(dataset.get_samples_number(), 5);
+    ASSERT_EQ(dataset.get_variables_number(), 6);
+
+    const auto& raw_vars = dataset.get_variables();
+
+    EXPECT_EQ(raw_vars[0].type, VariableType::Binary);
+    EXPECT_EQ(raw_vars[1].type, VariableType::Numeric);
+    EXPECT_EQ(raw_vars[2].type, VariableType::Numeric);
+    EXPECT_EQ(raw_vars[3].type, VariableType::Numeric);
+    EXPECT_EQ(raw_vars[4].type, VariableType::Numeric);
+    EXPECT_EQ(raw_vars[5].type, VariableType::Categorical);
+
+    EXPECT_EQ(raw_vars[5].categories.size(), 3);
+
+    const MatrixR& data = dataset.get_data();
+    ASSERT_EQ(data.rows(), 5);
+
+    EXPECT_NEAR(data(0, 1), 24.443011f, 1e-4);
+    EXPECT_NEAR(data(0, 2), 1.699998f, 1e-5);
+    EXPECT_NEAR(data(0, 3), 81.66995f, 1e-4);
+    EXPECT_NEAR(data(0, 4), 2150.75f, 1e-2);
+
+    EXPECT_NEAR(data(2, 1), 56.0f, 1e-5);
+    EXPECT_NEAR(data(2, 3), 131.274f, 1e-3);
+    EXPECT_NEAR(data(4, 4), 2640.5f, 1e-2);
+
+    EXPECT_EQ(dataset.get_missing_values_number(), 0);
+    EXPECT_FALSE(dataset.has_nan());
+
+    remove(temp_csv_file_path.c_str());
+}
+
+TEST(TabularDataset, ReadCSV_DecimalCommaCanBeForced)
+{
+    const string temp_csv_file_path = "temp_data_forced_number_format.csv";
+
+    const string csv_content =
+        "variable_1;variable_2;target\n"
+        "1,234;5,678;0\n"
+        "2,345;6,789;1\n"
+        "1,234;5,678;0\n"
+        "3,456;7,890;1\n"
+        "2,345;6,789;0\n"
+        "3,456;7,890;1\n"
+        "1,234;5,678;0\n"
+        "2,345;6,789;1\n";
+
+    create_temp_csv_file(temp_csv_file_path, csv_content);
+
+    TabularDataset detected;
+    detected.set_data_path(temp_csv_file_path);
+    detected.set_separator(Dataset::Separator::Semicolon);
+    detected.set_has_header(true);
+    detected.set_display(false);
+
+    ASSERT_NO_THROW(detected.read_csv());
+
+    EXPECT_TRUE(detected.get_number_format().is_default());
+    EXPECT_EQ(detected.get_variables()[0].type, VariableType::Categorical);
+
+    TabularDataset forced;
+    forced.set_data_path(temp_csv_file_path);
+    forced.set_separator(Dataset::Separator::Semicolon);
+    forced.set_has_header(true);
+    forced.set_display(false);
+    forced.set_number_format({',', '.'});
+
+    ASSERT_NO_THROW(forced.read_csv());
+
+    EXPECT_EQ(forced.get_number_format().decimal_separator, ',');
+    ASSERT_EQ(forced.get_variables_number(), 3);
+    EXPECT_EQ(forced.get_variables()[0].type, VariableType::Numeric);
+    EXPECT_EQ(forced.get_variables()[1].type, VariableType::Numeric);
+
+    const MatrixR& data = forced.get_data();
+    ASSERT_EQ(data.rows(), 8);
+    EXPECT_NEAR(data(0, 0), 1.234f, 1e-5);
+    EXPECT_NEAR(data(3, 1), 7.890f, 1e-5);
+
+    remove(temp_csv_file_path.c_str());
+}
+
 TEST(TabularDataset, ReadCSV_RejectsNumericHeader)
 {
     const string temp_csv_file_path = "temp_data_numeric_header.csv";

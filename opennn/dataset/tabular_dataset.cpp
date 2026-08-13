@@ -1107,6 +1107,23 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
     if (src->has("StorageMode"))
         set_storage_mode(read_json_string(src, "StorageMode"));
 
+    const string decimal_separator_name =
+        src->has("DecimalSeparator") ? read_json_string(src, "DecimalSeparator") : "Auto";
+
+    if (decimal_separator_name == "Auto")
+        set_number_format_auto();
+    else
+    {
+        const string group_separator_name =
+            src->has("ThousandsSeparator") ? read_json_string(src, "ThousandsSeparator") : "None";
+
+        set_number_format(
+            {number_format_separator(decimal_separator_name, "DecimalSeparator"),
+             group_separator_name == "Auto"
+                 ? '\0'
+                 : number_format_separator(group_separator_name, "ThousandsSeparator")});
+    }
+
     read_json_blocks(root);
 
     set_display(read_json_bool(root, "Display"));
@@ -1275,11 +1292,10 @@ void TabularDataset::set_data_binary_classification()
 
 }
 
-static float parse_float_or_nan(string_view token)
+static float parse_float_or_nan(string_view token, const NumberFormat& number_format)
 {
     float value;
-    const auto [ptr, ec] = from_chars(token.data(), token.data() + token.size(), value);
-    return (ec == errc{} && ptr == token.data() + token.size()) ? value : QUIET_NAN;
+    return parse_real(token, value, number_format) ? value : QUIET_NAN;
 }
 
 static bool is_missing_token(string_view token, string_view missing_label)
@@ -1288,9 +1304,12 @@ static bool is_missing_token(string_view token, string_view missing_label)
 }
 
 static void parse_numeric_token(float* row, Index feature_index,
-                         string_view token, string_view missing_label)
+                         string_view token, string_view missing_label,
+                         const NumberFormat& number_format)
 {
-    row[feature_index] = is_missing_token(token, missing_label) ? QUIET_NAN : parse_float_or_nan(token);
+    row[feature_index] = is_missing_token(token, missing_label)
+                       ? QUIET_NAN
+                       : parse_float_or_nan(token, number_format);
 }
 
 static void parse_datetime_token(float* row, Index feature_index,
@@ -1325,7 +1344,8 @@ static void parse_categorical_token(float* row, const vector<Index>& feature_ind
 
 static void parse_binary_token(float* row, Index feature_index,
                         string_view token, string_view missing_label,
-                        const vector<string>& categories)
+                        const vector<string>& categories,
+                        const NumberFormat& number_format)
 {
     row[feature_index] =
         contains(positive_words, token) ? 1.0f :
@@ -1333,7 +1353,7 @@ static void parse_binary_token(float* row, Index feature_index,
         is_missing_token(token, missing_label) ? QUIET_NAN :
         !categories.empty() && token == categories[0] ? 0.0f :
         categories.size() > 1 && token == categories[1] ? 1.0f :
-        parse_float_or_nan(token);
+        parse_float_or_nan(token, number_format);
 }
 
 static DateFormat infer_dataset_date_format(const vector<Variable>& variables,
@@ -1379,6 +1399,39 @@ static DateFormat infer_dataset_date_format(const vector<Variable>& variables,
     return Auto;
 }
 
+static NumberFormat detect_number_format(const vector<string_view>& lines,
+                                         const char file_separator,
+                                         const bool has_quotes)
+{
+    constexpr size_t maximum_rows_to_check = 100;
+
+    const size_t total_rows = lines.size();
+
+    if (total_rows == 0) return {};
+
+    const size_t rows_to_check = min(maximum_rows_to_check, total_rows);
+
+    NumberFormatVotes votes;
+
+    string scratch;
+    vector<string_view> tokens;
+
+    for (size_t i = 0; i < rows_to_check; ++i)
+    {
+        get_token_views_maybe_quoted(
+            lines[i * total_rows / rows_to_check],
+            file_separator,
+            has_quotes,
+            scratch,
+            tokens);
+
+        for (const string_view token : tokens)
+            vote_number_format(token, votes);
+    }
+
+    return decide_number_format(votes);
+}
+
 void TabularDataset::read_csv()
 {
     const string separator_string = get_separator_string();
@@ -1413,7 +1466,12 @@ void TabularDataset::read_csv()
 
     if(has_header)
     {
-        throw_if(ranges::any_of(header_tokens, is_numeric_string),
+        const auto is_number = [](const string_view token)
+        {
+            return is_numeric_string(token);
+        };
+
+        throw_if(ranges::any_of(header_tokens, is_number),
                  "Some header names are numeric.");
 
         lines.erase(lines.begin());
@@ -1423,6 +1481,19 @@ void TabularDataset::read_csv()
              "Data file only contains a header.");
 
     const Index samples_number = ssize(lines);
+
+    if(number_format_automatic)
+        number_format = detect_number_format(lines, file_separator, has_quotes);
+
+    if(display && !number_format.is_default())
+    {
+        cout << "Reading numbers in " << data_path.string()
+             << " with decimal separator "
+             << number_format_name(number_format.decimal_separator)
+             << " and thousands separator "
+             << number_format_name(number_format.group_separator)
+             << ".\n";
+    }
 
     if(!has_sample_ids)
     {
@@ -1453,7 +1524,7 @@ void TabularDataset::read_csv()
 
             if(is_numeric_column
                && !is_missing_token(token, missing_values_label)
-               && !is_numeric_string(token))
+               && !is_numeric_string(token, number_format))
             {
                 is_numeric_column = false;
             }
@@ -1722,7 +1793,8 @@ void TabularDataset::read_csv()
                         row,
                         feature_indices[0],
                         token,
-                        missing_values_label);
+                        missing_values_label,
+                        number_format);
                     break;
 
                 case DateTime:
@@ -1749,7 +1821,8 @@ void TabularDataset::read_csv()
                         feature_indices[0],
                         token,
                         missing_values_label,
-                        variable.categories);
+                        variable.categories,
+                        number_format);
                     break;
             }
         }
@@ -2381,7 +2454,7 @@ DateFormat TabularDataset::infer_column_types(
 
             ++checked_tokens;
 
-            const bool numeric = is_numeric_string(token);
+            const bool numeric = is_numeric_string(token, number_format);
 
             if(numeric)
             {
@@ -2630,6 +2703,16 @@ void TabularDataset::set_default_variable_scalers()
 
 void TabularDataset::to_JSON(JsonWriter& printer) const
 {
+    const string decimal_separator_name =
+        number_format_automatic
+        ? "Auto"
+        : number_format_name(number_format.decimal_separator);
+
+    const string group_separator_name =
+        number_format_automatic
+        ? "Auto"
+        : number_format_name(number_format.group_separator);
+
     write_json_header(printer, {
         {"FileType", "csv"},
         {"Path", data_path.string()},
@@ -2637,6 +2720,8 @@ void TabularDataset::to_JSON(JsonWriter& printer) const
         {"HasHeader", has_header},
         {"HasSamplesId", has_sample_ids},
         {"MissingValuesLabel", missing_values_label},
+        {"DecimalSeparator", decimal_separator_name},
+        {"ThousandsSeparator", group_separator_name},
         {"Codification", get_codification_string()},
         {"StorageMode", get_storage_mode_string()}
     });

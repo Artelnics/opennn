@@ -79,17 +79,198 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
 const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
 const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
 
-bool is_numeric_string(string_view text)
-{
-    if (text.empty()) return false;
+constexpr size_t maximum_number_length = 64;
 
-    double value;
+template <typename T>
+static bool parse_point_decimal(const string_view text, T& value)
+{
     const char* const first = text.data();
     const char* const last  = first + text.size();
     const auto [end, error] = from_chars(first, last, value);
 
-    return error == errc{}
-        && (end == last || (end + 1 == last && *end == '%'));
+    return error == errc{} && end == last;
+}
+
+static bool has_digit_groups(const string_view integer_part, const char group_separator)
+{
+    if (integer_part.empty()) return false;
+
+    size_t group_start = 0;
+
+    for (bool first_group = true; ; first_group = false)
+    {
+        const size_t separator = integer_part.find(group_separator, group_start);
+
+        const size_t group_end = separator == string_view::npos
+                               ? integer_part.size()
+                               : separator;
+
+        const size_t group_size = group_end - group_start;
+
+        if (first_group ? (group_size < 1 || group_size > 3) : group_size != 3)
+            return false;
+
+        for (size_t i = group_start; i < group_end; ++i)
+            if (!isdigit(static_cast<unsigned char>(integer_part[i])))
+                return false;
+
+        if (separator == string_view::npos) return true;
+
+        group_start = separator + 1;
+    }
+}
+
+template <typename T>
+static bool parse_real_value(const string_view text, T& value, const NumberFormat& format)
+{
+    if (text.empty()) return false;
+
+    const bool has_groups = format.group_separator != '\0'
+                         && format.group_separator != format.decimal_separator
+                         && text.find(format.group_separator) != string_view::npos;
+
+    const bool has_foreign_mark = format.decimal_separator != '.'
+                               && text.find(format.decimal_separator) != string_view::npos;
+
+    if (!has_groups && !has_foreign_mark)
+        return parse_point_decimal(text, value);
+
+    if (text.size() > maximum_number_length) return false;
+
+    const size_t decimal_mark = text.find(format.decimal_separator);
+
+    if (has_groups
+        && decimal_mark != string_view::npos
+        && text.find(format.group_separator, decimal_mark) != string_view::npos)
+        return false;
+
+    if (has_groups)
+    {
+        const size_t sign_length = text.front() == '+' || text.front() == '-' ? 1 : 0;
+
+        const size_t integer_end = decimal_mark == string_view::npos
+                                 ? text.size()
+                                 : decimal_mark;
+
+        if (integer_end < sign_length
+            || !has_digit_groups(text.substr(sign_length, integer_end - sign_length),
+                                 format.group_separator))
+            return false;
+    }
+
+    char buffer[maximum_number_length];
+    size_t length = 0;
+
+    for (const char character : text)
+    {
+        if (has_groups && character == format.group_separator) continue;
+
+        buffer[length++] = character == format.decimal_separator
+                         ? '.'
+                         : character;
+    }
+
+    return parse_point_decimal(string_view(buffer, length), value);
+}
+
+bool parse_real(const string_view text, float& value, const NumberFormat& format)
+{
+    return parse_real_value(text, value, format);
+}
+
+bool parse_real(const string_view text, double& value, const NumberFormat& format)
+{
+    return parse_real_value(text, value, format);
+}
+
+bool is_numeric_string(const string_view text, const NumberFormat& format)
+{
+    if (text.empty()) return false;
+
+    const string_view number = text.back() == '%'
+                             ? text.substr(0, text.size() - 1)
+                             : text;
+
+    double value;
+
+    return parse_real_value(number, value, format);
+}
+
+void vote_number_format(const string_view text, NumberFormatVotes& votes)
+{
+    if (text.empty() || text.size() > maximum_number_length) return;
+
+    size_t digits = 0;
+    size_t commas = 0;
+    size_t points = 0;
+
+    size_t last_comma = 0;
+    size_t last_point = 0;
+
+    for (size_t position = 0; position < text.size(); ++position)
+    {
+        const char character = text[position];
+
+        if (isdigit(static_cast<unsigned char>(character)))
+            ++digits;
+        else if (character == ',')
+            ++commas, last_comma = position;
+        else if (character == '.')
+            ++points, last_point = position;
+        else if (position > 0 || (character != '+' && character != '-'))
+            return;
+    }
+
+    if (digits == 0 || commas + points == 0) return;
+
+    const auto marks_a_decimal = [&](const size_t mark)
+    {
+        return text.size() - mark - 1 != 3;
+    };
+
+    if (commas > 0 && points > 0)
+    {
+        if (last_comma > last_point && commas == 1)
+            ++votes.comma_decimal, ++votes.point_group;
+        else if (last_point > last_comma && points == 1)
+            ++votes.point_decimal, ++votes.comma_group;
+    }
+    else if (commas > 1)
+        ++votes.comma_group;
+    else if (points > 1)
+        ++votes.point_group;
+    else if (commas == 1 && marks_a_decimal(last_comma))
+        ++votes.comma_decimal;
+    else if (points == 1 && marks_a_decimal(last_point))
+        ++votes.point_decimal;
+}
+
+NumberFormat decide_number_format(const NumberFormatVotes& votes)
+{
+    if (votes.point_decimal == 0 && (votes.comma_decimal > 0 || votes.point_group > 0))
+        return {',', '.'};
+
+    if (votes.comma_decimal == 0 && votes.comma_group > 0)
+        return {'.', ','};
+
+    return {};
+}
+
+string number_format_name(const char separator)
+{
+    return separator == ','  ? "Comma"
+         : separator == '.'  ? "Point"
+         : separator == '\0' ? "None"
+                             : string(1, separator);
+}
+
+char number_format_separator(const string& name, const string_view context)
+{
+    if (name == "Comma") return ',';
+    if (name == "Point") return '.';
+    if (name == "None")  return '\0';
+
+    throw runtime_error(format("{}: unknown number separator \"{}\".", context, name));
 }
 
 enum class Meridiem {None, Am, Pm};

@@ -74,6 +74,16 @@ public:
     const string& get_missing_values_label() const { return missing_values_label; }
     Index get_missing_values_number() const { return missing_values_number; }
 
+    const NumberFormat& get_number_format() const { return number_format; }
+
+    void set_number_format(const NumberFormat& new_number_format)
+    {
+        number_format = new_number_format;
+        number_format_automatic = false;
+    }
+
+    void set_number_format_auto() { number_format = {}; number_format_automatic = true; }
+
     void set_missing_values_label(string label) { missing_values_label = move(label); }
     void set_missing_values_method(const MissingValuesMethod& method) { missing_values_method = method; }
     void set_missing_values_method(const string&);
@@ -159,6 +169,8 @@ public:
 protected:
 
     string missing_values_label = "NA";
+    NumberFormat number_format;
+    bool number_format_automatic = true;
     MissingValuesMethod missing_values_method = MissingValuesMethod::Mean;
     Index missing_values_number = 0;
     VectorI variables_missing_values_number;

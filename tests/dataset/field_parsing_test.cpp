@@ -57,6 +57,116 @@ TEST(FieldParsingTest, IsNumericStringPercent)
     EXPECT_FALSE(is_numeric_string("5%5"));
 }
 
+TEST(FieldParsingTest, ParseRealDefaultFormat)
+{
+    float value = 0.0f;
+
+    EXPECT_TRUE(parse_real("3.14159", value));
+    EXPECT_NEAR(value, 3.14159f, 1e-5f);
+
+    EXPECT_TRUE(parse_real("-2.5e-3", value));
+    EXPECT_NEAR(value, -0.0025f, 1e-9f);
+
+    EXPECT_FALSE(parse_real("24,44", value));
+    EXPECT_FALSE(parse_real("50%", value));
+    EXPECT_FALSE(parse_real("", value));
+}
+
+TEST(FieldParsingTest, ParseRealDecimalComma)
+{
+    const NumberFormat european{',', '.'};
+
+    float value = 0.0f;
+
+    EXPECT_TRUE(parse_real("24,44", value, european));
+    EXPECT_NEAR(value, 24.44f, 1e-4f);
+
+    EXPECT_TRUE(parse_real("-0,5", value, european));
+    EXPECT_NEAR(value, -0.5f, 1e-6f);
+
+    EXPECT_TRUE(parse_real("1.234,56", value, european));
+    EXPECT_NEAR(value, 1234.56f, 1e-2f);
+
+    EXPECT_TRUE(parse_real("1.234.567,89", value, european));
+    EXPECT_NEAR(value, 1234567.89f, 1.0f);
+
+    EXPECT_TRUE(parse_real("81", value, european));
+    EXPECT_NEAR(value, 81.0f, 1e-6f);
+
+    EXPECT_FALSE(parse_real("1.23,4", value, european));
+    EXPECT_FALSE(parse_real("1.2345,6", value, european));
+    EXPECT_FALSE(parse_real("1,234.5", value, european));
+    EXPECT_FALSE(parse_real("24,4,4", value, european));
+}
+
+TEST(FieldParsingTest, ParseRealThousandsComma)
+{
+    const NumberFormat grouped{'.', ','};
+
+    float value = 0.0f;
+
+    EXPECT_TRUE(parse_real("1,234.56", value, grouped));
+    EXPECT_NEAR(value, 1234.56f, 1e-2f);
+
+    EXPECT_TRUE(parse_real("1,234,567", value, grouped));
+    EXPECT_NEAR(value, 1234567.0f, 1.0f);
+
+    EXPECT_TRUE(parse_real("12.5", value, grouped));
+    EXPECT_NEAR(value, 12.5f, 1e-6f);
+
+    EXPECT_FALSE(parse_real("1,23.4", value, grouped));
+}
+
+TEST(FieldParsingTest, IsNumericStringHonoursNumberFormat)
+{
+    const NumberFormat european{',', '.'};
+
+    EXPECT_FALSE(is_numeric_string("24,44"));
+    EXPECT_TRUE(is_numeric_string("24,44", european));
+    EXPECT_TRUE(is_numeric_string("24,4%", european));
+    EXPECT_TRUE(is_numeric_string("1.699", european));
+    EXPECT_FALSE(is_numeric_string("abc", european));
+}
+
+TEST(FieldParsingTest, DetectNumberFormat)
+{
+    const auto detect = [](const vector<string>& fields)
+    {
+        NumberFormatVotes votes;
+        for (const string& field : fields) vote_number_format(field, votes);
+        return decide_number_format(votes);
+    };
+
+    const NumberFormat european = detect({"Female", "24,443011", "1,699998", "81,66995", "no"});
+    EXPECT_EQ(european.decimal_separator, ',');
+    EXPECT_EQ(european.group_separator, '.');
+
+    EXPECT_TRUE(detect({"Female", "24.443011", "1.699998", "81.66995"}).is_default());
+    EXPECT_TRUE(detect({"a", "1", "2", "3"}).is_default());
+    EXPECT_TRUE(detect({}).is_default());
+    EXPECT_TRUE(detect({"1.5", "2.5"}).is_default());
+    EXPECT_TRUE(detect({"2020-01-15", "12:30:45"}).is_default());
+    EXPECT_TRUE(detect({"1,234", "5,678"}).is_default());
+    EXPECT_TRUE(detect({"24,44", "3.14"}).is_default());
+
+    EXPECT_EQ(detect({"1.234.567", "2.345.678"}).decimal_separator, ',');
+    EXPECT_EQ(detect({"1,234,567", "2,345,678"}).group_separator, ',');
+    EXPECT_EQ(detect({"1,234.5", "9,876.5"}).group_separator, ',');
+}
+
+TEST(FieldParsingTest, NumberFormatNames)
+{
+    EXPECT_EQ(number_format_name(','), "Comma");
+    EXPECT_EQ(number_format_name('.'), "Point");
+    EXPECT_EQ(number_format_name('\0'), "None");
+
+    EXPECT_EQ(number_format_separator("Comma", "test"), ',');
+    EXPECT_EQ(number_format_separator("Point", "test"), '.');
+    EXPECT_EQ(number_format_separator("None", "test"), '\0');
+
+    EXPECT_THROW(number_format_separator("Dot", "test"), runtime_error);
+}
+
 TEST(FieldParsingTest, IsDateTimeString)
 {
     EXPECT_TRUE(is_date_time_string("2020-01-15"));
