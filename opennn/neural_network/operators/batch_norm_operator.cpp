@@ -32,9 +32,11 @@ namespace opennn
 namespace
 {
 
-// cuDNN has no engine configs for a BF16-IO batchnorm *backward* graph, so the
-// backward stages X/DY through an FP32 workspace. The forward runs with native
-// BF16 IO (stats and scale/bias stay FP32 either way).
+// Fallback staging for the backward pass: when cuDNN has no engine config for a
+// BF16-IO batchnorm *backward* graph, X/DY go through an FP32 workspace. The
+// backward prefers a native BF16 graph and only stages when that finds no plan.
+// The forward always runs with native BF16 IO (stats and scale/bias stay FP32
+// either way).
 struct Fp32Staging
 {
     Fp32Staging(Index count, Index slices)
@@ -359,6 +361,8 @@ struct BatchNormalizationOperator::BatchNormalizationGraphCache
         int64_t bwd_workspace_bytes = 0;
 
         bool bwd_forked = false;
+        bool bwd_native_dtype = false;
+        bool bwd_fused_relu = false;
         bool fwd_autotune = false;
         bool bwd_autotune = false;
     };
@@ -624,12 +628,10 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
     PROFILE_SCOPE("op:bn_bwd");
 
     const bool bf16 = input.is_bf16();
-    const Type graph_dtype = bf16 ? Type::FP32 : input.type;
-    const bool want_fork =
+    const bool fork_capable =
         fuse_add
         && fuse_relu
-        && !residual_delta.empty()
-        && !bf16;
+        && !residual_delta.empty();
 
     throw_if(!input.is_fp32() && !bf16,
              "BatchNormalizationOperator: GPU backward requires FP32 or BF16.");
@@ -643,33 +645,70 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
             const int64_t batch   = input.shape[0];
             const int64_t spatial = int64_t(input.size()) / (batch * features);
 
-            if (want_fork)
+            // cuDNN's engine coverage for a BF16-IO batchnorm backward is partial:
+            // measured on sm_120 / cuDNN 9.25, only 8 of ResNet-50's 24 shapes have
+            // an engine for the ReLU-fused graph. Give up one thing at a time —
+            // first the residual fork, then the fused ReLU (which then runs as its
+            // own kernel), and only then the IO precision, since staging through
+            // FP32 pays both the wider math and three full-tensor casts. The staged
+            // graph cannot fork: DPre would be written as FP32 into a BF16 buffer.
+            struct Attempt { Type dtype; bool fuse_relu; bool fork; };
+
+            vector<Attempt> attempts;
+            if (fork_capable)
+                attempts.push_back({input.type, true, true});
+            attempts.push_back({input.type, fuse_relu && !fuse_add, false});
+            // No un-fused BF16 rung. cuDNN does have plain batchnorm_backward
+            // engines for the shapes whose ReLU-fused graph has none, and taking
+            // them reaches 69,247 samples/s, but the gradients come out wrong: the
+            // 5-epoch loss lands at 1.223 against 0.656 fused. The split-out ReLU
+            // mask is not the cause — forced through the FP32 path it reproduces the
+            // fused loss to 0.703 vs 0.699902 — so the fault is in the un-fused BF16
+            // batchnorm_backward itself, and it is not worth 15% to ship bad math.
+            if (bf16)
+                attempts.push_back({Type::FP32, fuse_relu && !fuse_add, false});
+
+            for (size_t attempt_index = 0; attempt_index < attempts.size(); attempt_index++)
+            {
+                const Attempt& attempt = attempts[attempt_index];
+
                 try
                 {
-                    cudnn_frontend::build_bn_backward(entry, batch, features, spatial, true, graph_dtype, true);
-                    entry.bwd_forked = true;
+                    cudnn_frontend::build_bn_backward(entry, batch, features, spatial,
+                                                      attempt.fuse_relu, attempt.dtype, attempt.fork);
                 }
                 catch (const exception&)
                 {
+                    // build_bn_backward assigns entry.bwd last, so a throw leaves the
+                    // tensor handles it already overwrote pointing at a dead graph.
                     entry.bwd_Y    = nullptr;
                     entry.bwd_DPre = nullptr;
+
+                    if (attempt_index + 1 == attempts.size()) throw;
+                    continue;
                 }
 
-            if (!entry.bwd)
-                cudnn_frontend::build_bn_backward(entry, batch, features, spatial, fuse_relu && !fuse_add, graph_dtype);
+                entry.bwd_forked       = attempt.fork;
+                entry.bwd_fused_relu   = attempt.fuse_relu;
+                entry.bwd_native_dtype = attempt.dtype == input.type;
+                break;
+            }
         }
 
-        if (fuse_add && !entry.bwd_forked)
-        {
-            if (fuse_relu) activation_backward(output, delta, ActivationFunction::ReLU);
-            if (!residual_delta.empty()) copy(delta, residual_delta);
-        }
+        // Whatever the chosen graph does not fuse runs here instead, ahead of it.
+        if (fuse_relu && !entry.bwd_fused_relu)
+            activation_backward(output, delta, ActivationFunction::ReLU);
+
+        if (fuse_add && !entry.bwd_forked && !residual_delta.empty())
+            copy(delta, residual_delta);
+
+        const bool stage_fp32 = bf16 && !entry.bwd_native_dtype;
 
         void* x_ptr    = input.data;
         void* dy_ptr   = delta.data;
         span<float> dx_fp32;
         optional<Fp32Staging> staging;
-        if (bf16)
+        if (stage_fp32)
         {
 
             staging.emplace(delta.size(), 2);
@@ -703,7 +742,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                                 ? format("bn_bwd c{} r{}", features, input.size() / features)
                                 : string());
 
-        if (bf16) store_as_bfloat16(*staging, dx_fp32, delta.data);
+        if (stage_fp32) store_as_bfloat16(*staging, dx_fp32, delta.data);
     });
 
     if (!ran)

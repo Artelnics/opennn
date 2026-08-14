@@ -92,8 +92,14 @@ def engine_cmd(engine, data_dir, epochs, batch, bf16):
     env = {}
     if engine == "opennn":
 
+        # Trailing args are <image_size> <cuda_graph> <cache_dir> <workspace>.
+        # The workspace cap has to be "auto": the binary defaults to "off", which
+        # autotunes uncapped and asks cuDNN for ~11.5 GiB at batch 2048, so large
+        # batches OOM instead of reporting a number. Capping is free (256 MiB and
+        # 8 GiB measured within noise of each other).
         cmd = [OPENNN_BIN, os.path.join(data_dir, "train"),
-               str(epochs), str(batch), "bf16" if bf16 else "fp32"]
+               str(epochs), str(batch), "bf16" if bf16 else "fp32",
+               "0", "1", "", "auto"]
     elif engine == "pytorch":
         cmd = [PY, os.path.join(HERE, "pytorch_resnet50_speed.py"),
                str(epochs), str(batch), data_dir]
