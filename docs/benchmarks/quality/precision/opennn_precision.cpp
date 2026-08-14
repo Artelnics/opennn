@@ -12,6 +12,7 @@
 #include <fstream>
 #include <iostream>
 
+#include "opennn/registry.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/neural_network/standard_networks.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
