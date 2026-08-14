@@ -10,8 +10,10 @@
 #include "opennn/dataset/time_series_dataset.h"
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/layers/embedding_layer.h"
 #include "opennn/neural_network/layers/flatten_layer.h"
 #include "opennn/neural_network/layers/multihead_attention_layer.h"
+#include "opennn/neural_network/layers/normalization_layer_3d.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/neural_network/standard_networks.h"
 #include "opennn/training_strategy/loss.h"
@@ -952,6 +954,117 @@ TEST_F(GpuComparison, SdpaAttentionBackwardGradient)
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 2.0e-2f);
+}
+
+// The padding an activation scan cannot see. An Embedding zeroes the row of a
+// padding token, which is what lets the scan behind the fused path recover the
+// sequence lengths -- but only for an attention layer reading the Embedding
+// directly. BERT normalizes first, and a normalization turns a zero row into its
+// own bias, so from the first encoder block onwards the only surviving record of
+// where a sequence ends is the length the Embedding exports. The normalization
+// here puts the attention layer in that position. Masking with those exported
+// lengths must land on the same numbers as the hand-written mask that consumes
+// them today, in the gradients as well as the outputs, because the backward
+// graph masks with the same two tensors the forward filled.
+TEST_F(GpuComparison, SdpaAttentionMatchesUnfusedOnExportedValidLengths)
+{
+    if (!AttentionOperator::sdpa_supported(Type::FP32, Device::CUDA))
+        GTEST_SKIP() << "SDPA is not available in this build.";
+
+    const Index samples_number = 4;
+    const Index sequence_length = 16;
+    const Index embedding_dimension = 32;
+    const Index heads_number = 2;
+    const Index vocabulary_size = 24;
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    TabularDataset dataset(samples_number, Shape{sequence_length},
+                           {sequence_length * embedding_dimension});
+    set_seed(13);
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    // Token id 0 is padding, so a shorter prefix of nonzero ids is a shorter
+    // sequence. One full row keeps an unpadded sample in the batch and one row
+    // of length 1 exercises the shortest sequence the mask has to survive.
+    const std::array<Index, 4> valid_lengths{sequence_length, 11, 5, 1};
+    MatrixR data = dataset.get_data();
+    for (Index sample = 0; sample < samples_number; ++sample)
+        for (Index position = 0; position < sequence_length; ++position)
+            data(sample, position) = position < valid_lengths[size_t(sample)]
+                ? float(1 + (sample * sequence_length + position) % (vocabulary_size - 1))
+                : 0.0f;
+    dataset.set_data(move(data));
+
+    const auto build = [&](const bool fused)
+    {
+        auto network = make_unique<NeuralNetwork>();
+
+        auto embedding = make_unique<Embedding>(Shape{vocabulary_size, sequence_length},
+                                                embedding_dimension, "embedding");
+        embedding->set_add_positional_encoding(true);
+        embedding->set_export_valid_lengths(true);
+        network->add_layer(move(embedding), {-1});
+
+        network->add_layer(make_unique<Normalization3d>(
+                               Shape{sequence_length, embedding_dimension}, "normalization"),
+                           {0});
+
+        auto attention = make_unique<MultiHeadAttention>(
+            Shape{sequence_length, embedding_dimension}, heads_number);
+        attention->set_sdpa_min_sequence_length(1);
+        attention->set_sdpa_auto(fused);
+        network->add_layer(move(attention), {1});
+
+        network->add_layer(make_unique<Flatten>(network->get_output_shape()));
+        network->compile();
+        return network;
+    };
+
+    const auto gradient_of = [&](NeuralNetwork& network)
+    {
+        Loss loss(&network, &dataset);
+        loss.set_error(Loss::Error::MeanSquaredError);
+        return calculate_gradient(loss);
+    };
+
+    const auto cpu_network = build(false);
+    cpu_network->set_parameters_random();
+
+    // A normalization starts at gamma = 1, beta = 0, which maps a zero row to
+    // zero and so leaves the padding visible to the scan after all. Training
+    // moves the shift off zero, and that is the state this test needs: with a
+    // nonzero beta the padded rows are ordinary values and the exported lengths
+    // are the only thing that still knows they are padding.
+    cpu_network->get_layer(1)->get_parameter_views()[1].as_vector().setConstant(0.25f);
+
+    const VectorR parameters = read_host_parameters(*cpu_network);
+    const VectorR cpu_gradient = gradient_of(*cpu_network);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    const auto unfused_network = build(false);
+    unfused_network->set_parameters(parameters);
+    ASSERT_FALSE(static_cast<MultiHeadAttention*>(unfused_network->get_layer(2).get())->should_use_sdpa());
+
+    const auto fused_network = build(true);
+    fused_network->set_parameters(parameters);
+    ASSERT_TRUE(static_cast<MultiHeadAttention*>(fused_network->get_layer(2).get())->should_use_sdpa());
+
+    const VectorR unfused_gradient = gradient_of(*unfused_network);
+    const VectorR fused_gradient   = gradient_of(*fused_network);
+
+    ASSERT_EQ(cpu_gradient.size(), fused_gradient.size());
+
+    // Both GPU paths are held to the tolerance SdpaAttentionBackwardGradient
+    // already uses, which is set by the BF16 cast cuDNN's fused attention forces
+    // on an FP32 network, not by the mask. Ignoring the exported lengths would
+    // leave the fused path attending over the padding -- and the positional
+    // encoding makes those rows nonzero, so nothing else would mask them -- for
+    // a disagreement of order one rather than of order the tolerance.
+    EXPECT_LT(relative_difference(cpu_gradient, unfused_gradient), 2.0e-2f);
+    EXPECT_LT(relative_difference(cpu_gradient, fused_gradient), 2.0e-2f);
 }
 
 #endif

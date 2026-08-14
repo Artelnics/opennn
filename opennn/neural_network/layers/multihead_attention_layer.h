@@ -70,11 +70,6 @@ public:
 
     void set_zero_padded_queries(bool);
 
-    // Wired by NeuralNetwork::compile: true when an Embedding in the network
-    // exports valid lengths, which forces the unfused attention path.
-    void set_expects_valid_lengths(bool);
-    bool get_expects_valid_lengths() const { return attention.expects_valid_lengths; }
-
     static constexpr Index default_sdpa_min_sequence_length = 192;
 
     void set_sdpa_auto(bool);

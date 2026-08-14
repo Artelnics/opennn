@@ -107,36 +107,6 @@ TEST(MultiHeadAttentionTest, SdpaElidesUnfusedScratchEvenWithDropout)
 }
 #endif
 
-// An Embedding exporting valid lengths forces the unfused attention path at
-// runtime, so compile must mark every attention layer: SDPA off, scratch
-// planned. Without the export nothing changes.
-TEST(MultiHeadAttentionTest, CompileWiresExpectsValidLengthsFromEmbeddings)
-{
-    const auto build = [](const bool export_valid_lengths)
-    {
-        auto network = make_unique<NeuralNetwork>();
-
-        auto embedding = make_unique<Embedding>(Shape{100, 16}, 32, "embedding");
-        embedding->set_export_valid_lengths(export_valid_lengths);
-        network->add_layer(move(embedding), {-1});
-
-        network->add_layer(make_unique<MultiHeadAttention>(Shape{16, 32}, 4), {0});
-        network->compile(Device::CPU);
-        return network;
-    };
-
-    const auto exporting = build(true);
-    const auto* marked =
-        static_cast<const MultiHeadAttention*>(exporting->get_layer(1).get());
-    EXPECT_TRUE(marked->get_expects_valid_lengths());
-    EXPECT_FALSE(marked->should_use_sdpa());
-
-    const auto plain = build(false);
-    const auto* unmarked =
-        static_cast<const MultiHeadAttention*>(plain->get_layer(1).get());
-    EXPECT_FALSE(unmarked->get_expects_valid_lengths());
-}
-
 TEST(MultiHeadAttentionTest, ForwardSelfAttentionMatchesHandComputed)
 {
     const Index batch_size = 1;

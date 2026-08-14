@@ -115,8 +115,8 @@ Index AttentionOperator::infer_attention_prefix_length(const TensorView& attenti
 vector<TensorSpec> AttentionOperator::forward_scratch_specs(Index batch_size) const
 {
     // SDPA never touches these buffers: dropout runs inside the cuDNN graph
-    // (seed/offset in apply_sdpa_forward), and valid-length batches are ruled
-    // out at compile time via expects_valid_lengths, which turns use_sdpa off.
+    // (seed/offset in apply_sdpa_forward), and padding is a mask on the graph
+    // rather than a scratch matrix to write the mask into.
     if (use_sdpa)
         return vector<TensorSpec>(2, {Shape{}, compute_dtype});
 
@@ -485,19 +485,11 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
     const vector<Index>* explicit_lengths =
         forward_propagation.attention_valid_lengths.empty() ? nullptr : &forward_propagation.attention_valid_lengths;
 
-    // With use_sdpa the unfused scratch was never allocated, so falling back
-    // here would write through empty views. Compile marks the layer with
-    // expects_valid_lengths (turning use_sdpa off) when lengths can arrive;
-    // reaching this state means the network was rewired without recompiling.
-    throw_if(use_sdpa && explicit_lengths,
-             "AttentionOperator: valid lengths arrived at runtime but the layer "
-             "was planned for SDPA (no unfused scratch). Recompile the network "
-             "so expects_valid_lengths reaches this attention layer.");
-
 #ifdef OPENNN_HAS_CUDA
-    if (use_sdpa && query.is_cuda() && !explicit_lengths)
+    if (use_sdpa && query.is_cuda())
         apply_sdpa_forward(query, get_input(forward_propagation, layer, 1), get_input(forward_propagation, layer, 2), source_input,
-                           attention_out, forward_slots[sdpa_qkv_pack_slot], is_training);
+                           attention_out, forward_slots[sdpa_qkv_pack_slot], is_training,
+                           explicit_lengths);
     else
 #endif
     apply_unfused(query, get_input(forward_propagation, layer, 1), get_input(forward_propagation, layer, 2), source_input,
@@ -558,10 +550,9 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
 
 #ifdef OPENNN_HAS_CUDA
 
-    const bool sdpa_ran_forward = use_sdpa
-        && forward_propagation.attention_valid_lengths.empty();
-
-    if (output_delta.is_cuda() && sdpa_ran_forward)
+    // The backward graph reuses the length tensors the forward filled, so it
+    // masks with whatever the forward masked with, derived or exported alike.
+    if (output_delta.is_cuda() && use_sdpa)
     {
         throw_if(sdpa_gradient_slot == 0,
                  "AttentionOperator: use_sdpa is set but the owning layer did not "
@@ -606,15 +597,38 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
 namespace
 {
 
+// Valid lengths are known on the host, and both masking paths need them on the
+// device before the work that masks with them runs. Staging through pinned
+// memory keeps that copy asynchronous; the ring of slots stops a slot being
+// refilled while the copy that reads it is still in flight, so one batch's
+// upload overlaps the previous batch's compute instead of serializing on it.
 struct AttentionLengthsStaging
 {
     static constexpr int slots = 4;
 
-    Buffer device_lengths{Device::CUDA};
     int* pinned = nullptr;
     Index capacity = 0;
     int slot = 0;
     CudaEvent copy_done[slots];
+
+    int* acquire(Index count)
+    {
+        if (count > capacity)
+        {
+            device::synchronize(device::get_compute_stream());
+            if (pinned) device::deallocate_pinned_host(pinned);
+            pinned = static_cast<int*>(device::allocate_pinned_host(slots * count * Index(sizeof(int))));
+            capacity = count;
+        }
+
+        slot = (slot + 1) % slots;
+        if (copy_done[slot]) device::synchronize_event(copy_done[slot]);
+        else copy_done[slot].create();
+
+        return pinned + slot * capacity;
+    }
+
+    void mark_copied() { device::record_event(copy_done[slot], device::get_compute_stream()); }
 
     ~AttentionLengthsStaging() { if (pinned) device::deallocate_pinned_host(pinned); }
 };
@@ -622,36 +636,58 @@ struct AttentionLengthsStaging
 const int* stage_attention_lengths(const vector<Index>& lengths)
 {
     thread_local AttentionLengthsStaging staging;
+    thread_local Buffer device_lengths{Device::CUDA};
 
     const Index batch_size = Index(lengths.size());
     if (batch_size == 0) return nullptr;
 
-    cudaStream_t stream = device::get_compute_stream();
+    device_lengths.grow_to(batch_size * Index(sizeof(int)));
 
-    if (batch_size > staging.capacity)
-    {
-        device::synchronize(stream);
-        if (staging.pinned) device::deallocate_pinned_host(staging.pinned);
-        staging.pinned = static_cast<int*>(device::allocate_pinned_host(
-            AttentionLengthsStaging::slots * batch_size * Index(sizeof(int))));
-        staging.device_lengths.grow_to(batch_size * Index(sizeof(int)));
-        staging.capacity = batch_size;
-    }
-
-    staging.slot = (staging.slot + 1) % AttentionLengthsStaging::slots;
-    CudaEvent& copy_done = staging.copy_done[staging.slot];
-    if (copy_done) device::synchronize_event(copy_done);
-    else copy_done.create();
-
-    int* host_slot = staging.pinned + staging.slot * staging.capacity;
+    int* host_slot = staging.acquire(batch_size);
     ranges::transform(lengths, host_slot, [](Index length) { return int(length); });
 
-    device::copy_async(staging.device_lengths.data, host_slot,
+    device::copy_async(device_lengths.data, host_slot,
                        batch_size * Index(sizeof(int)),
-                       device::CopyKind::HostToDevice, stream);
-    device::record_event(copy_done, stream);
+                       device::CopyKind::HostToDevice, device::get_compute_stream());
+    staging.mark_copied();
 
-    return staging.device_lengths.as<int>();
+    return device_lengths.as<int>();
+}
+
+// Fills the two length tensors the SDPA graph masks with from lengths an
+// Embedding already knows exactly. Only the key lengths carry padding: the query
+// side stays at the full sequence because the unfused path also computes every
+// query row, masking keys alone.
+void upload_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
+                                  const AttentionOperator::SDPACache::CacheKey& k,
+                                  const vector<Index>& lengths)
+{
+    throw_if(Index(lengths.size()) != k.batch_size,
+             "SDPA padding mask: {} valid lengths for a batch of {}.",
+             lengths.size(), k.batch_size);
+
+    thread_local AttentionLengthsStaging staging;
+
+    int* const query_slot  = staging.acquire(2 * k.batch_size);
+    int* const source_slot = query_slot + k.batch_size;
+
+    for (Index batch_index = 0; batch_index < k.batch_size; ++batch_index)
+    {
+        query_slot[batch_index] = int(k.q_seq);
+
+        // cuDNN reads a key length of zero as "skip this batch entry", which
+        // leaves that sample's output unwritten. A sample of nothing but padding
+        // has no meaningful attention output either way, so floor the length at
+        // one to keep the buffer defined -- the same floor the scan applies.
+        source_slot[batch_index] =
+            int(clamp(lengths[size_t(batch_index)], Index(1), k.src_seq));
+    }
+
+    cudaStream_t stream = device::get_compute_stream();
+    const Index bytes = k.batch_size * Index(sizeof(int));
+    device::copy_async(entry.query_lengths,  query_slot,  bytes, device::CopyKind::HostToDevice, stream);
+    device::copy_async(entry.source_lengths, source_slot, bytes, device::CopyKind::HostToDevice, stream);
+    staging.mark_copied();
 }
 
 }
@@ -855,7 +891,8 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
                                const TensorView& source_input,
                                TensorView& output,
                                const TensorView& qkv_pack_bf16,
-                               bool is_training)
+                               bool is_training,
+                               const vector<Index>* explicit_lengths)
 {
     throw_if(!sdpa_supported(query.type, query.device),
              "AttentionOperator: SDPA backend selected by the layer "
@@ -882,7 +919,17 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
     if (!entry.fwd_graph)
         build_sdpa_forward_graph(entry, cache_key, dropout.rate);
 
-    refresh_sdpa_sequence_lengths(entry, cache_key, source_input);
+    // Where the lengths come from decides whether padding is visible at all.
+    // The scan reads them back out of the activations, which works only while a
+    // padded row is still the zero row the Embedding wrote: one normalization
+    // downstream turns that row into the normalization's own shift, and every
+    // attention layer past the first sees padding it cannot distinguish from
+    // data. Lengths an Embedding exports are exact and stay exact, so they are
+    // preferred wherever they are available.
+    if (explicit_lengths)
+        upload_sdpa_sequence_lengths(entry, cache_key, *explicit_lengths);
+    else
+        refresh_sdpa_sequence_lengths(entry, cache_key, source_input);
 
     if (dropout_in_graph)
     {
