@@ -8,6 +8,7 @@
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/layers/grouped_query_attention_layer.h"
+#include "opennn/registry.h"
 
 #include <cmath>
 #include <cstring>
@@ -1248,7 +1249,7 @@ GroupedQueryAttention::GroupedQueryAttention(const Shape& new_input_shape,
                                              float new_rope_theta, float new_rms_epsilon,
                                              bool new_use_qk_norm,
                                              const string& new_name)
-    : Layer("GroupedQueryAttention")
+    : Layer(LayerType::GroupedQueryAttention)
 {
     operators = {&attention};
 

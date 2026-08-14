@@ -7,12 +7,13 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/flatten_layer.h"
+#include "opennn/registry.h"
 
 namespace opennn
 {
 
 Flatten::Flatten(const Shape& new_input_shape)
-    : Layer("Flatten")
+    : Layer(LayerType::Flatten)
 {
     set(new_input_shape);
 }

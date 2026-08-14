@@ -217,6 +217,12 @@ endif()
 if(MSVC)
     target_compile_options(opennn PUBLIC
         $<BUILD_INTERFACE:$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:/arch:AVX2>>
+        # The cudnn-frontend graph API instantiates enough templates in one
+        # translation unit to pass COFF's section limit: attention_operator.cpp
+        # stopped fitting at frontend v1.27.0 with "fatal error C1128". The
+        # limit is an object file format detail, not a sign of anything wrong
+        # with the code, and raising it costs nothing.
+        $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:/bigobj>>
     )
 elseif(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
     target_compile_options(opennn PRIVATE

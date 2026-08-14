@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/concatenation_layer.h"
+#include "opennn/registry.h"
 #include "opennn/core/json.h"
 #include "opennn/core/string_utilities.h"
 
@@ -121,7 +122,7 @@ void ConcatenationOperator::back_propagate(ForwardPropagation&, BackPropagation&
 Concatenation::Concatenation(const Shape& new_input_shape,
                              const vector<Index>& per_input_channels,
                              const string& new_label)
-    : Layer("Concatenation")
+    : Layer(LayerType::Concatenation)
 {
     operators = {&concatenation};
     set(new_input_shape, per_input_channels, new_label);

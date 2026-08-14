@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/upsample_layer.h"
+#include "opennn/registry.h"
 #include "opennn/core/json.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/forward_propagation.h"
@@ -112,7 +113,7 @@ void UpsampleOperator::back_propagate(ForwardPropagation&, BackPropagation& back
 Upsample::Upsample(const Shape& new_input_shape,
                    Index new_scale_factor,
                    const string& new_label)
-    : Layer("Upsample")
+    : Layer(LayerType::Upsample)
 {
     operators = {&upsample};
     set(new_input_shape, new_scale_factor, new_label);

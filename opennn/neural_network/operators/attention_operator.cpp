@@ -482,8 +482,12 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
     TensorView attention_out = forward_slots[scratch_slot].reshape(
         {forward_propagation.batch_size, query.shape[1], query.shape[2], query.shape[3]});
 
+    // Keys and values come from the last of the layer's inputs: its own, for
+    // self-attention, and the encoder's for cross-attention. That is the
+    // sequence the mask has to describe, and in an encoder-decoder it is not
+    // the one the queries came from.
     const vector<Index>* explicit_lengths =
-        forward_propagation.attention_valid_lengths.empty() ? nullptr : &forward_propagation.attention_valid_lengths;
+        forward_propagation.input_valid_lengths(layer, forward_propagation.inputs[layer].size() - 1);
 
 #ifdef OPENNN_HAS_CUDA
     if (use_sdpa && query.is_cuda())

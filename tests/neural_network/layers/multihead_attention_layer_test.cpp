@@ -48,12 +48,17 @@ TEST(MultiHeadAttentionTest, GeneralConstructors)
     EXPECT_EQ(mha_self_config.get_source_sequence_length(), 10);
     EXPECT_EQ(mha_self_config.get_embedding_dimension(), 32);
     EXPECT_EQ(mha_self_config.get_heads_number(), 4);
+    EXPECT_EQ(mha_self_config.get_sources_number(), 1);
 
     MultiHeadAttention mha_cross({ 5, 16 }, { 8, 16 }, 2);
     EXPECT_EQ(mha_cross.get_query_sequence_length(), 5);
     EXPECT_EQ(mha_cross.get_source_sequence_length(), 8);
     EXPECT_EQ(mha_cross.get_embedding_dimension(), 16);
     EXPECT_EQ(mha_cross.get_heads_number(), 2);
+    EXPECT_EQ(mha_cross.get_sources_number(), 2);
+
+    MultiHeadAttention mha_equal_length_cross({ 5, 16 }, { 5, 16 }, 2);
+    EXPECT_EQ(mha_equal_length_cross.get_sources_number(), 2);
 }
 
 TEST(MultiHeadAttentionTest, GeneralConstructorOutputAndInputShape)

@@ -114,9 +114,9 @@ LayerType string_to_layer_type(const string& name)
     return layer_type_map().from_string(name);
 }
 
-LayerType Layer::get_type() const noexcept
+const string& Layer::get_name() const
 {
-    return string_to_layer_type(layer_type);
+    return layer_type_to_string(layer_type);
 }
 
 unique_ptr<Layer> create_layer(const string& name)

@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/non_max_suppression_layer.h"
+#include "opennn/registry.h"
 #include "opennn/core/json.h"
 
 #include "opennn/core/tensor_operations.h"
@@ -176,7 +177,7 @@ NonMaxSuppression::NonMaxSuppression(const Shape& new_input_shape,
                                      float new_confidence_threshold,
                                      float new_iou_threshold,
                                      const string& new_label)
-    : Layer("NonMaxSuppression", false)
+    : Layer(LayerType::NonMaxSuppression, false)
 {
     operators = {&nms};
 

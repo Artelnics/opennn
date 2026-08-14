@@ -348,7 +348,8 @@ void EmbeddingLookupOperator::forward_propagate(ForwardPropagation& forward_prop
     TensorView& output        = get_output(forward_propagation, layer);
 
     if (export_valid_lengths)
-        compute_token_valid_lengths(indices, sequence_length, forward_propagation.attention_valid_lengths);
+        compute_token_valid_lengths(indices, sequence_length,
+                                    forward_propagation.valid_lengths[layer]);
 
     embedding_lookup_forward(indices, weights, positional_encoding, output,
                              sequence_length, embedding_dimension, vocabulary_size,

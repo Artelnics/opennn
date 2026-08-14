@@ -50,7 +50,11 @@ TEST(RegistryTest, AllComponentNamesConstruct)
     };
 
     for (const string& name : layer_names)
-        EXPECT_NE(create_layer(name), nullptr) << name;
+    {
+        const unique_ptr<Layer> layer = create_layer(name);
+        ASSERT_NE(layer, nullptr) << name;
+        EXPECT_EQ(layer->get_name(), layer_type_to_string(layer->get_type())) << name;
+    }
 
     for (const string& name : optimizer_names)
         EXPECT_NE(create_optimizer(name), nullptr) << name;

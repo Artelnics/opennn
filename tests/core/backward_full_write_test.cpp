@@ -112,7 +112,9 @@ vector<float> pooling_backward_on_cpu(const PoolingCase& test_case)
     const TensorView output_delta_view(output_delta.data(), delta_shape);
     TensorView input_delta_view(input_delta.data(), input_shape);
 
-    average_pooling_3d_backward(input_view, output_delta_view, input_delta_view);
+    // No exported lengths: this test is about the kernel writing every element,
+    // so it stays on the path that reads the padding off the data.
+    average_pooling_3d_backward(input_view, output_delta_view, input_delta_view, nullptr);
 
     return input_delta;
 }
@@ -165,7 +167,9 @@ vector<float> pooling_backward_on_gpu(const PoolingCase& test_case)
     const TensorView output_delta_view(output_delta_device.data, delta_shape, Type::FP32, Device::CUDA);
     TensorView input_delta_view(input_delta_device.data, input_shape, Type::FP32, Device::CUDA);
 
-    average_pooling_3d_backward(input_view, output_delta_view, input_delta_view);
+    // No exported lengths: this test is about the kernel writing every element,
+    // so it stays on the path that reads the padding off the data.
+    average_pooling_3d_backward(input_view, output_delta_view, input_delta_view, nullptr);
     device::synchronize();
 
     return input_delta_device.to_host();

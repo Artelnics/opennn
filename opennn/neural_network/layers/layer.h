@@ -45,9 +45,9 @@ public:
 
     const string& get_label() const noexcept { return label; }
 
-    const string& get_name() const noexcept { return layer_type; }
+    const string& get_name() const;
 
-    LayerType get_type() const noexcept;
+    LayerType get_type() const noexcept { return layer_type; }
 
     // Which input ranks this layer can represent. Callers that build a shape
     // rather than receive one - neuron selection, for instance - must ask before
@@ -104,6 +104,8 @@ public:
 
     virtual ActivationFunction get_output_activation() const { return ActivationFunction::Identity; }
 
+    virtual Index get_sources_number() const noexcept { return 1; }
+
     Index get_inputs_number() const noexcept { return get_input_shape().size(); }
 
     Index get_outputs_number() const { return get_output_shape().size(); }
@@ -159,23 +161,6 @@ public:
 
     float* link_gradients(float*, Device);
 
-protected:
-
-    // The layer's own reaction to an input shape that has already been
-    // accepted. Assigning input_shape suits most layers; those that decompose
-    // the shape or rebuild operators from it override this.
-    virtual void apply_input_shape(const Shape& new_input_shape)
-    {
-        input_shape = new_input_shape;
-    }
-
-
-    static bool refresh_feature_storage(Buffer& storage, bool& dirty, Device device,
-                                        Index features, Index columns,
-                                        const function<void(float*)>& fill);
-
-public:
-
     vector<TensorView>& get_parameter_views() { return parameters; }
     const vector<TensorView>& get_parameter_views() const noexcept { return parameters; }
 
@@ -191,16 +176,27 @@ public:
 
 protected:
 
-    Layer() = default;
+    // The layer's own reaction to an input shape that has already been
+    // accepted. Assigning input_shape suits most layers; those that decompose
+    // the shape or rebuild operators from it override this.
+    virtual void apply_input_shape(const Shape& new_input_shape)
+    {
+        input_shape = new_input_shape;
+    }
 
-    Layer(string type, bool trainable = true)
-        : layer_type(move(type)), is_trainable(trainable) {}
+
+    static bool refresh_feature_storage(Buffer& storage, bool& dirty, Device device,
+                                        Index features, Index columns,
+                                        const function<void(float*)>& fill);
+
+    Layer(LayerType type, bool trainable = true)
+        : layer_type(type), is_trainable(trainable) {}
 
     enum Forward {Input, Output};
 
     string label = "my_layer";
 
-    string layer_type = "Dense";
+    LayerType layer_type;
 
     bool is_trainable = true;
 

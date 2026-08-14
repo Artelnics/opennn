@@ -16,6 +16,18 @@ TEST(NeuralNetworkTest, DefaultConstructor)
     EXPECT_EQ(neural_network.get_layers_number(), 0);
 }
 
+TEST(NeuralNetworkTest, RejectsWrongSourceCount)
+{
+    NeuralNetwork neural_network;
+
+    EXPECT_THROW(neural_network.add_layer(
+                     make_unique<opennn::Dense>(Shape{2}, Shape{2}, "Identity"),
+                     {-1, -2}),
+                 runtime_error);
+
+    EXPECT_THROW(neural_network.add_layer(nullptr), runtime_error);
+}
+
 TEST(NeuralNetworkTest, ApproximationConstructor)
 {
     ApproximationNetwork neural_network({ 1 }, { 4 }, { 2 });

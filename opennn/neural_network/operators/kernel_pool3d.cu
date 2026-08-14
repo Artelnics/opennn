@@ -26,18 +26,41 @@ struct PoolingScratch
     }
 };
 
+// Where a sequence ends, clamped to what this tensor actually holds. A null
+// lengths pointer means no record was exported, and every row counts.
+__device__ inline int clamped_length(const int* __restrict__ lengths, const int b, const int S)
+{
+    if (lengths == nullptr) return S;
+    const int length = lengths[b];
+    if (length < 0) return 0;
+    return length < S ? length : S;
+}
+
 template<typename T>
-__global__ void max_pooling_3d_forward_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, float* __restrict__ indices, const int S, const int F)
+__global__ void max_pooling_3d_forward_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, float* __restrict__ indices, const int S, const int F,
+                                              const int* __restrict__ lengths)
 {
     for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
     {
         const int f = idx % F;
         const int b = idx / F;
 
+        const int steps = clamped_length(lengths, b, S);
+
+        // Nothing to take a maximum over. Zero matches what the average does
+        // with a fully padded sequence, and keeps the recorded index in range
+        // for the backward pass.
+        if (steps == 0)
+        {
+            out[idx] = static_cast<T>(0.0f);
+            if (indices != nullptr) indices[idx] = 0.0f;
+            continue;
+        }
+
         float max_val = -1e20f;
         int max_index = 0;
 
-        for (int s = 0; s < S; ++s)
+        for (int s = 0; s < steps; ++s)
         {
             const float val = static_cast<float>(in[(int64_t(b) * S + s) * F + f]);
             if (val > max_val) { max_val = val; max_index = s; }
@@ -49,9 +72,10 @@ __global__ void max_pooling_3d_forward_kernel(const int n, const T* __restrict__
 }
 
 template<typename T>
-void max_pooling_3d_forward_cuda(const Index n, const T* in, T* out, float* indices, const int S, const int F)
+void max_pooling_3d_forward_cuda(const Index n, const T* in, T* out, float* indices, const int S, const int F,
+                                 const int* valid_lengths)
 {
-    launch_elementwise_strided(n, max_pooling_3d_forward_kernel<T>, in, out, indices, S, F);
+    launch_elementwise_strided(n, max_pooling_3d_forward_kernel<T>, in, out, indices, S, F, valid_lengths);
 }
 
 template<typename T>
@@ -124,8 +148,29 @@ __global__ void average_pooling_3d_forward_kernel(const int n, const T* __restri
     }
 }
 
+// Exact lengths make the mask a prefix, so it can be written straight out
+// rather than reduced into: one thread per row decides that row, and the thread
+// holding the first row of a sequence writes the count the whole sequence
+// divides by.
+__global__ void pooling_3d_length_mask_kernel(const int BS, const int S,
+                                              const int* __restrict__ lengths,
+                                              float* __restrict__ valid_mask,
+                                              float* __restrict__ counts)
+{
+    const int bs = blockIdx.x * blockDim.x + threadIdx.x;
+    if (bs >= BS) return;
+
+    const int b = bs / S;
+    const int s = bs - b * S;
+    const int length = clamped_length(lengths, b, S);
+
+    valid_mask[bs] = s < length ? 1.0f : 0.0f;
+    if (s == 0) counts[b] = static_cast<float>(length);
+}
+
 template<typename T>
 static void prepare_pooling_valid_mask(const int B, const int S, const int F, const T* in,
+                                       const int* device_lengths,
                                        float*& valid_mask, float*& counts)
 {
     const int BS = checked_int(Index(B) * S);
@@ -134,13 +179,21 @@ static void prepare_pooling_valid_mask(const int B, const int S, const int F, co
     float* const scratch = get_pooling_scratch(static_cast<size_t>(BS) + B);
     valid_mask = scratch;
     counts     = scratch + BS;
+
+    if (device_lengths != nullptr)
+    {
+        launch_elementwise(BS, pooling_3d_length_mask_kernel, S, device_lengths, valid_mask, counts);
+        return;
+    }
+
     opennn::device::set_zero_async(counts, Index(B) * Index(sizeof(float)), stream);
 
     launch_elementwise(BS, pooling_3d_valid_mask_kernel<T>, S, F, in, valid_mask, counts);
 }
 
 template<typename T>
-void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const int S, const int F)
+void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const int S, const int F,
+                                     const int* valid_lengths)
 {
     if (n == 0) return;
 
@@ -149,7 +202,7 @@ void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const i
 
     float* valid_mask = nullptr;
     float* counts     = nullptr;
-    prepare_pooling_valid_mask(B, S, F, in, valid_mask, counts);
+    prepare_pooling_valid_mask(B, S, F, in, valid_lengths, valid_mask, counts);
 
     launch_elementwise_strided(n, average_pooling_3d_forward_kernel<T>, in, out, S, F, valid_mask, counts);
 }
@@ -182,7 +235,8 @@ __global__ void average_pooling_3d_backward_kernel(const int n, const T* __restr
 }
 
 template<typename T>
-void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta, T* in_gradient, const int S, const int F)
+void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta, T* in_gradient, const int S, const int F,
+                                      const int* valid_lengths)
 {
     if (n == 0) return;
 
@@ -191,7 +245,7 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
 
     float* valid_mask = nullptr;
     float* counts     = nullptr;
-    prepare_pooling_valid_mask(B, S, F, in, valid_mask, counts);
+    prepare_pooling_valid_mask(B, S, F, in, valid_lengths, valid_mask, counts);
 
     launch_elementwise_strided(n, average_pooling_3d_backward_kernel<T>, delta, in_gradient, S, F, valid_mask, counts);
 }
@@ -222,10 +276,10 @@ void first_token_3d_backward_cuda(const int B, const int S, const int F, const T
 }
 
 #define INSTANTIATE(T) \
-    template void max_pooling_3d_forward_cuda<T>(const Index, const T*, T*, float*, const int, const int); \
+    template void max_pooling_3d_forward_cuda<T>(const Index, const T*, T*, float*, const int, const int, const int*); \
     template void max_pooling_3d_backward_cuda<T>(const Index, const T*, T*, const float*, const int, const int); \
-    template void average_pooling_3d_forward_cuda<T>(const Index, const T*, T*, const int, const int); \
-    template void average_pooling_3d_backward_cuda<T>(const Index, const T*, const T*, T*, const int, const int); \
+    template void average_pooling_3d_forward_cuda<T>(const Index, const T*, T*, const int, const int, const int*); \
+    template void average_pooling_3d_backward_cuda<T>(const Index, const T*, const T*, T*, const int, const int, const int*); \
     template void first_token_3d_forward_cuda<T>(const int, const int, const int, const T*, T*); \
     template void first_token_3d_backward_cuda<T>(const int, const int, const int, const T*, T*);
 

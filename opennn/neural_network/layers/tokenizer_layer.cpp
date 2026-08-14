@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/tokenizer_layer.h"
+#include "opennn/registry.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/json.h"
 
@@ -14,7 +15,7 @@ namespace opennn
 {
 
 Tokenizer::Tokenizer(const Shape& new_input_shape, const string& new_label)
-    : Layer("Tokenizer", false)
+    : Layer(LayerType::Tokenizer, false)
 {
     input_shape = new_input_shape;
     set_label(new_label);

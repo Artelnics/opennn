@@ -7,12 +7,13 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/c2psa_layer.h"
+#include "opennn/registry.h"
 
 namespace opennn
 {
 
 C2PSA::C2PSA(const Shape& new_input_shape, const string& new_label)
-    : Layer("C2PSA", true)
+    : Layer(LayerType::C2PSA, true)
 {
     operators = {&c2psa};
     set(new_input_shape, new_label);

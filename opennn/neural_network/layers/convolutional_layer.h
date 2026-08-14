@@ -52,6 +52,7 @@ public:
     bool get_batch_normalization() const { return batch_norm.active(); }
 
     bool get_residual() const noexcept { return residual; }
+    Index get_sources_number() const noexcept override { return residual ? 2 : 1; }
     void set_residual(bool);
 
     vector<TensorSpec> get_forward_specs(Index) const override;

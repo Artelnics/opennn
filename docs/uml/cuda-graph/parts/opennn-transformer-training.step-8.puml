@@ -1,0 +1,454 @@
+@startuml
+!pragma layout smetana
+title Captured training step 8 — exact induced CUDA subgraph (nodes 1529..1743)
+top to bottom direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam linetype ortho
+skinparam nodesep 8
+skinparam ranksep 12
+skinparam packageStyle rectangle
+skinparam packageBorderColor #1E5374
+skinparam packageBackgroundColor #F8FBFD
+skinparam ArrowColor #5F6368
+skinparam defaultFontName Monospaced
+skinparam defaultFontSize 9
+hide stereotype
+legend right
+  Nodes: 215
+  Dependencies: 214
+  Every rectangle is one CUDA graph node.
+  Every arrow is one dependency emitted by CUDA.
+endlegend
+' CUDA graph: CUDA nodes 1529..1743
+rectangle "CUDA node 1529\nKERNEL\ntopoId=214\n_Z24embedding_forward_kernelI13__nv_bfloat16EviPKfS2_S2_PT_iiib&lt;&lt;&lt;4096,256,0&gt;&gt;&gt;" as N1529 #EAF3F9
+rectangle "CUDA node 1530\nKERNEL\ntopoId=213\n_Z24embedding_forward_kernelI13__nv_bfloat16EviPKfS2_S2_PT_iiib&lt;&lt;&lt;4096,256,0&gt;&gt;&gt;" as N1530 #EAF3F9
+rectangle "CUDA node 1531\nKERNEL\ntopoId=212\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_nn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1531 #EAF3F9
+rectangle "CUDA node 1532\nKERNEL\ntopoId=211\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1532 #EAF3F9
+rectangle "CUDA node 1533\nKERNEL\ntopoId=210\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_nn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1533 #EAF3F9
+rectangle "CUDA node 1534\nKERNEL\ntopoId=209\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1534 #EAF3F9
+rectangle "CUDA node 1535\nKERNEL\ntopoId=208\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_nn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1535 #EAF3F9
+rectangle "CUDA node 1536\nKERNEL\ntopoId=207\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1536 #EAF3F9
+rectangle "CUDA node 1537\nKERNEL\ntopoId=206\ncudnn_generated_fort_native_sdpa_sm80_flash_fprop_wmma_f16_knob_1_64x64x64_4x1x1_cga1x1x1_kernel0_0&lt;&lt;&lt;{2,4,128},256,40960&gt;&gt;&gt;" as N1537 #EAF3F9
+rectangle "CUDA node 1538\nKERNEL\ntopoId=205\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1538 #EAF3F9
+rectangle "CUDA node 1539\nKERNEL\ntopoId=204\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_nn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1539 #EAF3F9
+rectangle "CUDA node 1540\nKERNEL\ntopoId=203\n_Z28layernorm_add_forward_kernelI13__nv_bfloat16EviiPKT_S3_PS1_S4_PfS5_PKfS7_f&lt;&lt;&lt;32768,32,0&gt;&gt;&gt;" as N1540 #EAF3F9
+rectangle "CUDA node 1541\nKERNEL\ntopoId=202\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_nn_align8EEvNT_6ParamsE&lt;&lt;&lt;2048,128,5120&gt;&gt;&gt;" as N1541 #EAF3F9
+rectangle "CUDA node 1542\nKERNEL\ntopoId=201\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_64x1_nn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,9728&gt;&gt;&gt;" as N1542 #EAF3F9
+rectangle "CUDA node 1543\nKERNEL\ntopoId=200\n_Z28layernorm_add_forward_kernelI13__nv_bfloat16EviiPKT_S3_PS1_S4_PfS5_PKfS7_f&lt;&lt;&lt;32768,32,0&gt;&gt;&gt;" as N1543 #EAF3F9
+rectangle "CUDA node 1544\nKERNEL\ntopoId=199\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_nn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1544 #EAF3F9
+rectangle "CUDA node 1545\nKERNEL\ntopoId=198\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1545 #EAF3F9
+rectangle "CUDA node 1546\nKERNEL\ntopoId=197\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_nn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1546 #EAF3F9
+rectangle "CUDA node 1547\nKERNEL\ntopoId=196\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1547 #EAF3F9
+rectangle "CUDA node 1548\nKERNEL\ntopoId=195\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_nn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1548 #EAF3F9
+rectangle "CUDA node 1549\nKERNEL\ntopoId=194\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1549 #EAF3F9
+rectangle "CUDA node 1550\nKERNEL\ntopoId=193\ncudnn_generated_fort_native_sdpa_sm80_flash_fprop_wmma_f16_knob_1_64x64x64_4x1x1_cga1x1x1_kernel0_0&lt;&lt;&lt;{2,4,128},256,40960&gt;&gt;&gt;" as N1550 #EAF3F9
+rectangle "CUDA node 1551\nKERNEL\ntopoId=192\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1551 #EAF3F9
+rectangle "CUDA node 1552\nKERNEL\ntopoId=191\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_nn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1552 #EAF3F9
+rectangle "CUDA node 1553\nKERNEL\ntopoId=190\n_Z28layernorm_add_forward_kernelI13__nv_bfloat16EviiPKT_S3_PS1_S4_PfS5_PKfS7_f&lt;&lt;&lt;32768,32,0&gt;&gt;&gt;" as N1553 #EAF3F9
+rectangle "CUDA node 1554\nKERNEL\ntopoId=189\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_nn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1554 #EAF3F9
+rectangle "CUDA node 1555\nKERNEL\ntopoId=188\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1555 #EAF3F9
+rectangle "CUDA node 1556\nKERNEL\ntopoId=187\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_nn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1556 #EAF3F9
+rectangle "CUDA node 1557\nKERNEL\ntopoId=186\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1557 #EAF3F9
+rectangle "CUDA node 1558\nKERNEL\ntopoId=185\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_nn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1558 #EAF3F9
+rectangle "CUDA node 1559\nKERNEL\ntopoId=184\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1559 #EAF3F9
+rectangle "CUDA node 1560\nKERNEL\ntopoId=183\ncudnn_generated_fort_native_sdpa_sm80_flash_fprop_wmma_f16_knob_1_64x64x64_4x1x1_cga1x1x1_kernel0_0&lt;&lt;&lt;{2,4,128},256,40960&gt;&gt;&gt;" as N1560 #EAF3F9
+rectangle "CUDA node 1561\nKERNEL\ntopoId=182\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1561 #EAF3F9
+rectangle "CUDA node 1562\nKERNEL\ntopoId=181\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_nn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1562 #EAF3F9
+rectangle "CUDA node 1563\nKERNEL\ntopoId=180\n_Z28layernorm_add_forward_kernelI13__nv_bfloat16EviiPKT_S3_PS1_S4_PfS5_PKfS7_f&lt;&lt;&lt;32768,32,0&gt;&gt;&gt;" as N1563 #EAF3F9
+rectangle "CUDA node 1564\nKERNEL\ntopoId=179\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_nn_align8EEvNT_6ParamsE&lt;&lt;&lt;2048,128,5120&gt;&gt;&gt;" as N1564 #EAF3F9
+rectangle "CUDA node 1565\nKERNEL\ntopoId=178\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_64x1_nn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,9728&gt;&gt;&gt;" as N1565 #EAF3F9
+rectangle "CUDA node 1566\nKERNEL\ntopoId=177\n_Z28layernorm_add_forward_kernelI13__nv_bfloat16EviiPKT_S3_PS1_S4_PfS5_PKfS7_f&lt;&lt;&lt;32768,32,0&gt;&gt;&gt;" as N1566 #EAF3F9
+rectangle "CUDA node 1567\nKERNEL\ntopoId=176\n_ZN7cutlass7Kernel2I56cutlass_75_tensorop_bf16_s1688gemm_bf16_128x64_nn_align1EEvNT_6ParamsE&lt;&lt;&lt;2048,128,24576&gt;&gt;&gt;" as N1567 #EAF3F9
+rectangle "CUDA node 1568\nKERNEL\ntopoId=175\n_Z23softmax_fw_small_kernelI13__nv_bfloat16fLi1ELi16ELi32ELi1EEvPT_PKS1_iiiT0_S5_&lt;&lt;&lt;8192,{32,4},0&gt;&gt;&gt;" as N1568 #EAF3F9
+rectangle "CUDA node 1569\nKERNEL\ntopoId=174\n_Z40cross_entropy_3d_multiple_forward_kernelI13__nv_bfloat16EviiPKT_PKfPfS6_S6_f&lt;&lt;&lt;128,256,0&gt;&gt;&gt;" as N1569 #EAF3F9
+rectangle "CUDA node 1570\nMEM_ALLOC\ntopoId=173\nbytes=1684\ndptr=0x0000000302000000" as N1570 #F2EAF9
+rectangle "CUDA node 1571\nKERNEL\ntopoId=172\n_Z11asum_kernelIiffEv16cublasAsumParamsIT0_T1_E&lt;&lt;&lt;420,256,1024&gt;&gt;&gt;" as N1571 #EAF3F9
+rectangle "CUDA node 1572\nKERNEL\ntopoId=171\n_Z11asum_kernelIiffEv16cublasAsumParamsIT0_T1_E&lt;&lt;&lt;1,256,1024&gt;&gt;&gt;" as N1572 #EAF3F9
+rectangle "CUDA node 1573\nMEM_FREE\ntopoId=170\ndptr=0x0000000302000000" as N1573 #F8E8EE
+rectangle "CUDA node 1574\nMEM_ALLOC\ntopoId=169\nbytes=1684\ndptr=0x0000000302000000" as N1574 #F2EAF9
+rectangle "CUDA node 1575\nKERNEL\ntopoId=168\n_Z11asum_kernelIiffEv16cublasAsumParamsIT0_T1_E&lt;&lt;&lt;420,256,1024&gt;&gt;&gt;" as N1575 #EAF3F9
+rectangle "CUDA node 1576\nKERNEL\ntopoId=167\n_Z11asum_kernelIiffEv16cublasAsumParamsIT0_T1_E&lt;&lt;&lt;1,256,1024&gt;&gt;&gt;" as N1576 #EAF3F9
+rectangle "CUDA node 1577\nMEM_FREE\ntopoId=166\ndptr=0x0000000302000000" as N1577 #F8E8EE
+rectangle "CUDA node 1578\nMEM_ALLOC\ntopoId=165\nbytes=1684\ndptr=0x0000000302000000" as N1578 #F2EAF9
+rectangle "CUDA node 1579\nKERNEL\ntopoId=164\n_Z11asum_kernelIiffEv16cublasAsumParamsIT0_T1_E&lt;&lt;&lt;420,256,1024&gt;&gt;&gt;" as N1579 #EAF3F9
+rectangle "CUDA node 1580\nKERNEL\ntopoId=163\n_Z11asum_kernelIiffEv16cublasAsumParamsIT0_T1_E&lt;&lt;&lt;1,256,1024&gt;&gt;&gt;" as N1580 #EAF3F9
+rectangle "CUDA node 1581\nMEM_FREE\ntopoId=162\ndptr=0x0000000302000000" as N1581 #F8E8EE
+rectangle "CUDA node 1582\nKERNEL\ntopoId=161\n_Z42accumulate_cross_entropy_3d_metrics_kernelPKfPfS1_&lt;&lt;&lt;1,1,0&gt;&gt;&gt;" as N1582 #EAF3F9
+rectangle "CUDA node 1583\nKERNEL\ntopoId=160\n_Z41cross_entropy_3d_multiple_backward_kernelI13__nv_bfloat16EviiPKT_PKfPS1_fS5_&lt;&lt;&lt;33280,256,0&gt;&gt;&gt;" as N1583 #EAF3F9
+rectangle "CUDA node 1584\nKERNEL\ntopoId=159\n_ZN7cutlass7Kernel2I57cutlass_80_tensorop_s16816gemm_bf16_128x64_64x3_nt_align2EEvNT_6ParamsE&lt;&lt;&lt;{4,1,23},128,73728&gt;&gt;&gt;" as N1584 #EAF3F9
+rectangle "CUDA node 1585\nKERNEL\ntopoId=158\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{9,2},{32,16},0&gt;&gt;&gt;" as N1585 #EAF3F9
+rectangle "CUDA node 1586\nKERNEL\ntopoId=157\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;33,256,0&gt;&gt;&gt;" as N1586 #EAF3F9
+rectangle "CUDA node 1587\nMEMSET\ntopoId=156\ndptr=0x0000797ADF445200 value=0\nelement=0 width=1 height=1040" as N1587 #E8F6EC
+rectangle "CUDA node 1588\nKERNEL\ntopoId=155\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{2,16},256,0&gt;&gt;&gt;" as N1588 #EAF3F9
+rectangle "CUDA node 1589\nKERNEL\ntopoId=154\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_64x1_tn_align2EEvNT_6ParamsE&lt;&lt;&lt;1024,128,9216&gt;&gt;&gt;" as N1589 #EAF3F9
+rectangle "CUDA node 1590\nKERNEL\ntopoId=153\n_Z25layernorm_backward_kernelI13__nv_bfloat16EviiPKT_S3_PKfS5_S5_PS1_&lt;&lt;&lt;32768,32,0&gt;&gt;&gt;" as N1590 #EAF3F9
+rectangle "CUDA node 1591\nKERNEL\ntopoId=152\n_Z46layernorm_gamma_beta_gradient_coalesced_kernelI13__nv_bfloat16Li8EEviiPKT_S3_PKfS5_PfS6_&lt;&lt;&lt;1,{32,8},0&gt;&gt;&gt;" as N1591 #EAF3F9
+rectangle "CUDA node 1592\nMEMCPY\ntopoId=151\nDtoD (DEVICE to DEVICE)\nextent=2097152x1x1" as N1592 #FFF1D6
+rectangle "CUDA node 1593\nKERNEL\ntopoId=150\n_ZN7cutlass7Kernel2I57cutlass_80_tensorop_s16816gemm_bf16_64x64_32x10_nt_align8EEvNT_6ParamsE&lt;&lt;&lt;{1,1,70},128,81920&gt;&gt;&gt;" as N1593 #EAF3F9
+rectangle "CUDA node 1594\nKERNEL\ntopoId=149\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{1,4},{32,16},0&gt;&gt;&gt;" as N1594 #EAF3F9
+rectangle "CUDA node 1595\nKERNEL\ntopoId=148\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;8,256,0&gt;&gt;&gt;" as N1595 #EAF3F9
+rectangle "CUDA node 1596\nMEMSET\ntopoId=147\ndptr=0x0000797ADF443080 value=0\nelement=0 width=1 height=128" as N1596 #E8F6EC
+rectangle "CUDA node 1597\nKERNEL\ntopoId=146\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{1,16},256,0&gt;&gt;&gt;" as N1597 #EAF3F9
+rectangle "CUDA node 1598\nKERNEL\ntopoId=145\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_tn_align8EEvNT_6ParamsE&lt;&lt;&lt;2048,128,5120&gt;&gt;&gt;" as N1598 #EAF3F9
+rectangle "CUDA node 1599\nKERNEL\ntopoId=144\n_Z32activation_backward_kernel_bf162iPK14__nv_bfloat162PS_i&lt;&lt;&lt;4096,256,0&gt;&gt;&gt;" as N1599 #EAF3F9
+rectangle "CUDA node 1600\nKERNEL\ntopoId=143\n_ZN7cutlass7Kernel2I67cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x128_64x3_nt_align8EEvNT_6ParamsE&lt;&lt;&lt;{1,1,70},128,73728&gt;&gt;&gt;" as N1600 #EAF3F9
+rectangle "CUDA node 1601\nKERNEL\ntopoId=142\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Ei13__nv_bfloat16S1_fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{2,2},{32,16},0&gt;&gt;&gt;" as N1601 #EAF3F9
+rectangle "CUDA node 1602\nKERNEL\ntopoId=141\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;8,256,0&gt;&gt;&gt;" as N1602 #EAF3F9
+rectangle "CUDA node 1603\nMEMSET\ntopoId=140\ndptr=0x0000797ADF440F80 value=0\nelement=0 width=1 height=256" as N1603 #E8F6EC
+rectangle "CUDA node 1604\nKERNEL\ntopoId=139\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{1,16},256,0&gt;&gt;&gt;" as N1604 #EAF3F9
+rectangle "CUDA node 1605\nKERNEL\ntopoId=138\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_64x1_tn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,9216&gt;&gt;&gt;" as N1605 #EAF3F9
+rectangle "CUDA node 1606\nKERNEL\ntopoId=137\n_Z24op_generic_tensor_kernelILi1E13__nv_bfloat16fS0_Li256EL16cudnnGenericOp_t0EL21cudnnNanPropagation_t0ELi0EEv17cudnnTensorStructPT2_S3_PKT0_S3_S8_T1_S9_S9_21cudnnActivationStruct19reducedDivisorArrayi&lt;&lt;&lt;1024,256,0&gt;&gt;&gt;" as N1606 #EAF3F9
+rectangle "CUDA node 1607\nKERNEL\ntopoId=136\n_Z25layernorm_backward_kernelI13__nv_bfloat16EviiPKT_S3_PKfS5_S5_PS1_&lt;&lt;&lt;32768,32,0&gt;&gt;&gt;" as N1607 #EAF3F9
+rectangle "CUDA node 1608\nKERNEL\ntopoId=135\n_Z46layernorm_gamma_beta_gradient_coalesced_kernelI13__nv_bfloat16Li8EEviiPKT_S3_PKfS5_PfS6_&lt;&lt;&lt;1,{32,8},0&gt;&gt;&gt;" as N1608 #EAF3F9
+rectangle "CUDA node 1609\nMEMCPY\ntopoId=134\nDtoD (DEVICE to DEVICE)\nextent=2097152x1x1" as N1609 #FFF1D6
+rectangle "CUDA node 1610\nKERNEL\ntopoId=133\n_ZN7cutlass7Kernel2I66cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8EEvNT_6ParamsE&lt;&lt;&lt;{1,1,70},128,49152&gt;&gt;&gt;" as N1610 #EAF3F9
+rectangle "CUDA node 1611\nKERNEL\ntopoId=132\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Ei13__nv_bfloat16S1_fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{1,2},{32,16},0&gt;&gt;&gt;" as N1611 #EAF3F9
+rectangle "CUDA node 1612\nKERNEL\ntopoId=131\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;4,256,0&gt;&gt;&gt;" as N1612 #EAF3F9
+rectangle "CUDA node 1613\nMEMSET\ntopoId=130\ndptr=0x0000797ADF43FE00 value=0\nelement=0 width=1 height=128" as N1613 #E8F6EC
+rectangle "CUDA node 1614\nKERNEL\ntopoId=129\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{1,16},256,0&gt;&gt;&gt;" as N1614 #EAF3F9
+rectangle "CUDA node 1615\nKERNEL\ntopoId=128\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_tn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1615 #EAF3F9
+rectangle "CUDA node 1616\nKERNEL\ntopoId=127\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1616 #EAF3F9
+rectangle "CUDA node 1617\nMEMSET\ntopoId=126\ndptr=0x0000797ADFA80000 value=0\nelement=0 width=1 height=4194304" as N1617 #E8F6EC
+rectangle "CUDA node 1618\nKERNEL\ntopoId=125\n_ZN5cudnn6fusion16compute_dot_do_oILb1EEEvPKvS3_PvS4_jjjjjjjjjjjjjjjjjfS3_S3_S3_S3_S3_bS3_S4_S3_iiiiiiiiiPfS5_S5_&lt;&lt;&lt;{8,128,4},128,0&gt;&gt;&gt;" as N1618 #EAF3F9
+rectangle "CUDA node 1619\nKERNEL\ntopoId=124\ncudnn_generated_fort_native_sdpa_sm80_flash_bprop_wmma_f16_knob_2_64x64x64_1x4x1_cga1x1x1_kernel0_0&lt;&lt;&lt;{4,4,128},256,57344&gt;&gt;&gt;" as N1619 #EAF3F9
+rectangle "CUDA node 1620\nKERNEL\ntopoId=123\n_ZN5cudnn6fusion22rearrange_n_convert_dqILb1EEEvPKvPvS4_jjjjjjjjjjS3_S4_S4_b15cudnnDataType_t&lt;&lt;&lt;{32,4,128},128,512&gt;&gt;&gt;" as N1620 #EAF3F9
+rectangle "CUDA node 1621\nKERNEL\ntopoId=122\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1621 #EAF3F9
+rectangle "CUDA node 1622\nKERNEL\ntopoId=121\n_ZN7cutlass7Kernel2I66cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8EEvNT_6ParamsE&lt;&lt;&lt;{1,1,70},128,49152&gt;&gt;&gt;" as N1622 #EAF3F9
+rectangle "CUDA node 1623\nKERNEL\ntopoId=120\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Ei13__nv_bfloat16S1_fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{1,2},{32,16},0&gt;&gt;&gt;" as N1623 #EAF3F9
+rectangle "CUDA node 1624\nKERNEL\ntopoId=119\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;4,256,0&gt;&gt;&gt;" as N1624 #EAF3F9
+rectangle "CUDA node 1625\nMEMSET\ntopoId=118\ndptr=0x0000797ADF43ED80 value=0\nelement=0 width=1 height=128" as N1625 #E8F6EC
+rectangle "CUDA node 1626\nKERNEL\ntopoId=117\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{1,16},256,0&gt;&gt;&gt;" as N1626 #EAF3F9
+rectangle "CUDA node 1627\nKERNEL\ntopoId=116\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_tn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1627 #EAF3F9
+rectangle "CUDA node 1628\nKERNEL\ntopoId=115\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1628 #EAF3F9
+rectangle "CUDA node 1629\nKERNEL\ntopoId=114\n_ZN7cutlass7Kernel2I66cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8EEvNT_6ParamsE&lt;&lt;&lt;{1,1,70},128,49152&gt;&gt;&gt;" as N1629 #EAF3F9
+rectangle "CUDA node 1630\nKERNEL\ntopoId=113\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Ei13__nv_bfloat16S1_fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{1,2},{32,16},0&gt;&gt;&gt;" as N1630 #EAF3F9
+rectangle "CUDA node 1631\nKERNEL\ntopoId=112\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;4,256,0&gt;&gt;&gt;" as N1631 #EAF3F9
+rectangle "CUDA node 1632\nMEMSET\ntopoId=111\ndptr=0x0000797ADF43DD00 value=0\nelement=0 width=1 height=128" as N1632 #E8F6EC
+rectangle "CUDA node 1633\nKERNEL\ntopoId=110\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{1,16},256,0&gt;&gt;&gt;" as N1633 #EAF3F9
+rectangle "CUDA node 1634\nKERNEL\ntopoId=109\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_tn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1634 #EAF3F9
+rectangle "CUDA node 1635\nKERNEL\ntopoId=108\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1635 #EAF3F9
+rectangle "CUDA node 1636\nKERNEL\ntopoId=107\n_ZN7cutlass7Kernel2I66cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8EEvNT_6ParamsE&lt;&lt;&lt;{1,1,70},128,49152&gt;&gt;&gt;" as N1636 #EAF3F9
+rectangle "CUDA node 1637\nKERNEL\ntopoId=106\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Ei13__nv_bfloat16S1_fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{1,2},{32,16},0&gt;&gt;&gt;" as N1637 #EAF3F9
+rectangle "CUDA node 1638\nKERNEL\ntopoId=105\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;4,256,0&gt;&gt;&gt;" as N1638 #EAF3F9
+rectangle "CUDA node 1639\nMEMSET\ntopoId=104\ndptr=0x0000797ADF43CC80 value=0\nelement=0 width=1 height=128" as N1639 #E8F6EC
+rectangle "CUDA node 1640\nKERNEL\ntopoId=103\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{1,16},256,0&gt;&gt;&gt;" as N1640 #EAF3F9
+rectangle "CUDA node 1641\nKERNEL\ntopoId=102\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_tn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1641 #EAF3F9
+rectangle "CUDA node 1642\nKERNEL\ntopoId=101\n_Z24op_generic_tensor_kernelILi1E13__nv_bfloat16fS0_Li256EL16cudnnGenericOp_t0EL21cudnnNanPropagation_t0ELi0EEv17cudnnTensorStructPT2_S3_PKT0_S3_S8_T1_S9_S9_21cudnnActivationStruct19reducedDivisorArrayi&lt;&lt;&lt;1024,256,0&gt;&gt;&gt;" as N1642 #EAF3F9
+rectangle "CUDA node 1643\nKERNEL\ntopoId=100\n_Z25layernorm_backward_kernelI13__nv_bfloat16EviiPKT_S3_PKfS5_S5_PS1_&lt;&lt;&lt;32768,32,0&gt;&gt;&gt;" as N1643 #EAF3F9
+rectangle "CUDA node 1644\nKERNEL\ntopoId=99\n_Z46layernorm_gamma_beta_gradient_coalesced_kernelI13__nv_bfloat16Li8EEviiPKT_S3_PKfS5_PfS6_&lt;&lt;&lt;1,{32,8},0&gt;&gt;&gt;" as N1644 #EAF3F9
+rectangle "CUDA node 1645\nMEMCPY\ntopoId=98\nDtoD (DEVICE to DEVICE)\nextent=2097152x1x1" as N1645 #FFF1D6
+rectangle "CUDA node 1646\nKERNEL\ntopoId=97\n_ZN7cutlass7Kernel2I66cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8EEvNT_6ParamsE&lt;&lt;&lt;{1,1,70},128,49152&gt;&gt;&gt;" as N1646 #EAF3F9
+rectangle "CUDA node 1647\nKERNEL\ntopoId=96\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Ei13__nv_bfloat16S1_fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{1,2},{32,16},0&gt;&gt;&gt;" as N1647 #EAF3F9
+rectangle "CUDA node 1648\nKERNEL\ntopoId=95\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;4,256,0&gt;&gt;&gt;" as N1648 #EAF3F9
+rectangle "CUDA node 1649\nMEMSET\ntopoId=94\ndptr=0x0000797ADF43BB00 value=0\nelement=0 width=1 height=128" as N1649 #E8F6EC
+rectangle "CUDA node 1650\nKERNEL\ntopoId=93\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{1,16},256,0&gt;&gt;&gt;" as N1650 #EAF3F9
+rectangle "CUDA node 1651\nKERNEL\ntopoId=92\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_tn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1651 #EAF3F9
+rectangle "CUDA node 1652\nKERNEL\ntopoId=91\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1652 #EAF3F9
+rectangle "CUDA node 1653\nMEMSET\ntopoId=90\ndptr=0x0000797A8E480000 value=0\nelement=0 width=1 height=4194304" as N1653 #E8F6EC
+rectangle "CUDA node 1654\nKERNEL\ntopoId=89\n_ZN5cudnn6fusion16compute_dot_do_oILb1EEEvPKvS3_PvS4_jjjjjjjjjjjjjjjjjfS3_S3_S3_S3_S3_bS3_S4_S3_iiiiiiiiiPfS5_S5_&lt;&lt;&lt;{8,128,4},128,0&gt;&gt;&gt;" as N1654 #EAF3F9
+rectangle "CUDA node 1655\nKERNEL\ntopoId=88\ncudnn_generated_fort_native_sdpa_sm80_flash_bprop_wmma_f16_knob_2_64x64x64_1x4x1_cga1x1x1_kernel0_0&lt;&lt;&lt;{4,4,128},256,57344&gt;&gt;&gt;" as N1655 #EAF3F9
+rectangle "CUDA node 1656\nKERNEL\ntopoId=87\n_ZN5cudnn6fusion22rearrange_n_convert_dqILb1EEEvPKvPvS4_jjjjjjjjjjS3_S4_S4_b15cudnnDataType_t&lt;&lt;&lt;{32,4,128},128,512&gt;&gt;&gt;" as N1656 #EAF3F9
+rectangle "CUDA node 1657\nKERNEL\ntopoId=86\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1657 #EAF3F9
+rectangle "CUDA node 1658\nKERNEL\ntopoId=85\n_ZN7cutlass7Kernel2I66cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8EEvNT_6ParamsE&lt;&lt;&lt;{1,1,70},128,49152&gt;&gt;&gt;" as N1658 #EAF3F9
+rectangle "CUDA node 1659\nKERNEL\ntopoId=84\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Ei13__nv_bfloat16S1_fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{1,2},{32,16},0&gt;&gt;&gt;" as N1659 #EAF3F9
+rectangle "CUDA node 1660\nKERNEL\ntopoId=83\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;4,256,0&gt;&gt;&gt;" as N1660 #EAF3F9
+rectangle "CUDA node 1661\nMEMSET\ntopoId=82\ndptr=0x0000797ADF43AA80 value=0\nelement=0 width=1 height=128" as N1661 #E8F6EC
+rectangle "CUDA node 1662\nKERNEL\ntopoId=81\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{1,16},256,0&gt;&gt;&gt;" as N1662 #EAF3F9
+rectangle "CUDA node 1663\nKERNEL\ntopoId=80\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_tn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1663 #EAF3F9
+rectangle "CUDA node 1664\nKERNEL\ntopoId=79\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1664 #EAF3F9
+rectangle "CUDA node 1665\nKERNEL\ntopoId=78\n_ZN7cutlass7Kernel2I66cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8EEvNT_6ParamsE&lt;&lt;&lt;{1,1,70},128,49152&gt;&gt;&gt;" as N1665 #EAF3F9
+rectangle "CUDA node 1666\nKERNEL\ntopoId=77\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Ei13__nv_bfloat16S1_fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{1,2},{32,16},0&gt;&gt;&gt;" as N1666 #EAF3F9
+rectangle "CUDA node 1667\nKERNEL\ntopoId=76\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;4,256,0&gt;&gt;&gt;" as N1667 #EAF3F9
+rectangle "CUDA node 1668\nMEMSET\ntopoId=75\ndptr=0x0000797ADF439A00 value=0\nelement=0 width=1 height=128" as N1668 #E8F6EC
+rectangle "CUDA node 1669\nKERNEL\ntopoId=74\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{1,16},256,0&gt;&gt;&gt;" as N1669 #EAF3F9
+rectangle "CUDA node 1670\nKERNEL\ntopoId=73\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_tn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1670 #EAF3F9
+rectangle "CUDA node 1671\nKERNEL\ntopoId=72\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1671 #EAF3F9
+rectangle "CUDA node 1672\nKERNEL\ntopoId=71\n_ZN7cutlass7Kernel2I66cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8EEvNT_6ParamsE&lt;&lt;&lt;{1,1,70},128,49152&gt;&gt;&gt;" as N1672 #EAF3F9
+rectangle "CUDA node 1673\nKERNEL\ntopoId=70\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Ei13__nv_bfloat16S1_fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{1,2},{32,16},0&gt;&gt;&gt;" as N1673 #EAF3F9
+rectangle "CUDA node 1674\nKERNEL\ntopoId=69\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;4,256,0&gt;&gt;&gt;" as N1674 #EAF3F9
+rectangle "CUDA node 1675\nMEMSET\ntopoId=68\ndptr=0x0000797ADF438980 value=0\nelement=0 width=1 height=128" as N1675 #E8F6EC
+rectangle "CUDA node 1676\nKERNEL\ntopoId=67\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{1,16},256,0&gt;&gt;&gt;" as N1676 #EAF3F9
+rectangle "CUDA node 1677\nKERNEL\ntopoId=66\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_tn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1677 #EAF3F9
+rectangle "CUDA node 1678\nKERNEL\ntopoId=65\n_Z25layernorm_backward_kernelI13__nv_bfloat16EviiPKT_S3_PKfS5_S5_PS1_&lt;&lt;&lt;32768,32,0&gt;&gt;&gt;" as N1678 #EAF3F9
+rectangle "CUDA node 1679\nKERNEL\ntopoId=64\n_Z46layernorm_gamma_beta_gradient_coalesced_kernelI13__nv_bfloat16Li8EEviiPKT_S3_PKfS5_PfS6_&lt;&lt;&lt;1,{32,8},0&gt;&gt;&gt;" as N1679 #EAF3F9
+rectangle "CUDA node 1680\nMEMCPY\ntopoId=63\nDtoD (DEVICE to DEVICE)\nextent=2097152x1x1" as N1680 #FFF1D6
+rectangle "CUDA node 1681\nKERNEL\ntopoId=62\n_ZN7cutlass7Kernel2I57cutlass_80_tensorop_s16816gemm_bf16_64x64_32x10_nt_align8EEvNT_6ParamsE&lt;&lt;&lt;{1,1,70},128,81920&gt;&gt;&gt;" as N1681 #EAF3F9
+rectangle "CUDA node 1682\nKERNEL\ntopoId=61\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Eif13__nv_bfloat16fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{1,4},{32,16},0&gt;&gt;&gt;" as N1682 #EAF3F9
+rectangle "CUDA node 1683\nKERNEL\ntopoId=60\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;8,256,0&gt;&gt;&gt;" as N1683 #EAF3F9
+rectangle "CUDA node 1684\nMEMSET\ntopoId=59\ndptr=0x0000797ADF436800 value=0\nelement=0 width=1 height=128" as N1684 #E8F6EC
+rectangle "CUDA node 1685\nKERNEL\ntopoId=58\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{1,16},256,0&gt;&gt;&gt;" as N1685 #EAF3F9
+rectangle "CUDA node 1686\nKERNEL\ntopoId=57\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_tn_align8EEvNT_6ParamsE&lt;&lt;&lt;2048,128,5120&gt;&gt;&gt;" as N1686 #EAF3F9
+rectangle "CUDA node 1687\nKERNEL\ntopoId=56\n_Z32activation_backward_kernel_bf162iPK14__nv_bfloat162PS_i&lt;&lt;&lt;4096,256,0&gt;&gt;&gt;" as N1687 #EAF3F9
+rectangle "CUDA node 1688\nKERNEL\ntopoId=55\n_ZN7cutlass7Kernel2I67cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x128_64x3_nt_align8EEvNT_6ParamsE&lt;&lt;&lt;{1,1,70},128,73728&gt;&gt;&gt;" as N1688 #EAF3F9
+rectangle "CUDA node 1689\nKERNEL\ntopoId=54\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Ei13__nv_bfloat16S1_fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{2,2},{32,16},0&gt;&gt;&gt;" as N1689 #EAF3F9
+rectangle "CUDA node 1690\nKERNEL\ntopoId=53\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;8,256,0&gt;&gt;&gt;" as N1690 #EAF3F9
+rectangle "CUDA node 1691\nMEMSET\ntopoId=52\ndptr=0x0000797ADF434700 value=0\nelement=0 width=1 height=256" as N1691 #E8F6EC
+rectangle "CUDA node 1692\nKERNEL\ntopoId=51\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{1,16},256,0&gt;&gt;&gt;" as N1692 #EAF3F9
+rectangle "CUDA node 1693\nKERNEL\ntopoId=50\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_64x1_tn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,9216&gt;&gt;&gt;" as N1693 #EAF3F9
+rectangle "CUDA node 1694\nKERNEL\ntopoId=49\n_Z24op_generic_tensor_kernelILi1E13__nv_bfloat16fS0_Li256EL16cudnnGenericOp_t0EL21cudnnNanPropagation_t0ELi0EEv17cudnnTensorStructPT2_S3_PKT0_S3_S8_T1_S9_S9_21cudnnActivationStruct19reducedDivisorArrayi&lt;&lt;&lt;1024,256,0&gt;&gt;&gt;" as N1694 #EAF3F9
+rectangle "CUDA node 1695\nKERNEL\ntopoId=48\n_Z25layernorm_backward_kernelI13__nv_bfloat16EviiPKT_S3_PKfS5_S5_PS1_&lt;&lt;&lt;32768,32,0&gt;&gt;&gt;" as N1695 #EAF3F9
+rectangle "CUDA node 1696\nKERNEL\ntopoId=47\n_Z46layernorm_gamma_beta_gradient_coalesced_kernelI13__nv_bfloat16Li8EEviiPKT_S3_PKfS5_PfS6_&lt;&lt;&lt;1,{32,8},0&gt;&gt;&gt;" as N1696 #EAF3F9
+rectangle "CUDA node 1697\nMEMCPY\ntopoId=46\nDtoD (DEVICE to DEVICE)\nextent=2097152x1x1" as N1697 #FFF1D6
+rectangle "CUDA node 1698\nKERNEL\ntopoId=45\n_ZN7cutlass7Kernel2I66cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8EEvNT_6ParamsE&lt;&lt;&lt;{1,1,70},128,49152&gt;&gt;&gt;" as N1698 #EAF3F9
+rectangle "CUDA node 1699\nKERNEL\ntopoId=44\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Ei13__nv_bfloat16S1_fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{1,2},{32,16},0&gt;&gt;&gt;" as N1699 #EAF3F9
+rectangle "CUDA node 1700\nKERNEL\ntopoId=43\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;4,256,0&gt;&gt;&gt;" as N1700 #EAF3F9
+rectangle "CUDA node 1701\nMEMSET\ntopoId=42\ndptr=0x0000797ADF433580 value=0\nelement=0 width=1 height=128" as N1701 #E8F6EC
+rectangle "CUDA node 1702\nKERNEL\ntopoId=41\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{1,16},256,0&gt;&gt;&gt;" as N1702 #EAF3F9
+rectangle "CUDA node 1703\nKERNEL\ntopoId=40\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_tn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1703 #EAF3F9
+rectangle "CUDA node 1704\nKERNEL\ntopoId=39\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1704 #EAF3F9
+rectangle "CUDA node 1705\nMEMSET\ntopoId=38\ndptr=0x0000797A8EE80000 value=0\nelement=0 width=1 height=4194304" as N1705 #E8F6EC
+rectangle "CUDA node 1706\nKERNEL\ntopoId=37\n_ZN5cudnn6fusion16compute_dot_do_oILb1EEEvPKvS3_PvS4_jjjjjjjjjjjjjjjjjfS3_S3_S3_S3_S3_bS3_S4_S3_iiiiiiiiiPfS5_S5_&lt;&lt;&lt;{8,128,4},128,0&gt;&gt;&gt;" as N1706 #EAF3F9
+rectangle "CUDA node 1707\nKERNEL\ntopoId=36\ncudnn_generated_fort_native_sdpa_sm80_flash_bprop_wmma_f16_knob_2_64x64x64_1x4x1_cga1x1x1_kernel0_0&lt;&lt;&lt;{4,4,128},256,57344&gt;&gt;&gt;" as N1707 #EAF3F9
+rectangle "CUDA node 1708\nKERNEL\ntopoId=35\n_ZN5cudnn6fusion22rearrange_n_convert_dqILb1EEEvPKvPvS4_jjjjjjjjjjS3_S4_S4_b15cudnnDataType_t&lt;&lt;&lt;{32,4,128},128,512&gt;&gt;&gt;" as N1708 #EAF3F9
+rectangle "CUDA node 1709\nKERNEL\ntopoId=34\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1709 #EAF3F9
+rectangle "CUDA node 1710\nKERNEL\ntopoId=33\n_ZN7cutlass7Kernel2I66cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8EEvNT_6ParamsE&lt;&lt;&lt;{1,1,70},128,49152&gt;&gt;&gt;" as N1710 #EAF3F9
+rectangle "CUDA node 1711\nKERNEL\ntopoId=32\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Ei13__nv_bfloat16S1_fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{1,2},{32,16},0&gt;&gt;&gt;" as N1711 #EAF3F9
+rectangle "CUDA node 1712\nKERNEL\ntopoId=31\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;4,256,0&gt;&gt;&gt;" as N1712 #EAF3F9
+rectangle "CUDA node 1713\nMEMSET\ntopoId=30\ndptr=0x0000797ADF432500 value=0\nelement=0 width=1 height=128" as N1713 #E8F6EC
+rectangle "CUDA node 1714\nKERNEL\ntopoId=29\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{1,16},256,0&gt;&gt;&gt;" as N1714 #EAF3F9
+rectangle "CUDA node 1715\nKERNEL\ntopoId=28\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_tn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1715 #EAF3F9
+rectangle "CUDA node 1716\nKERNEL\ntopoId=27\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1716 #EAF3F9
+rectangle "CUDA node 1717\nKERNEL\ntopoId=26\n_ZN7cutlass7Kernel2I66cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8EEvNT_6ParamsE&lt;&lt;&lt;{1,1,70},128,49152&gt;&gt;&gt;" as N1717 #EAF3F9
+rectangle "CUDA node 1718\nKERNEL\ntopoId=25\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Ei13__nv_bfloat16S1_fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{1,2},{32,16},0&gt;&gt;&gt;" as N1718 #EAF3F9
+rectangle "CUDA node 1719\nKERNEL\ntopoId=24\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;4,256,0&gt;&gt;&gt;" as N1719 #EAF3F9
+rectangle "CUDA node 1720\nMEMSET\ntopoId=23\ndptr=0x0000797ADF431480 value=0\nelement=0 width=1 height=128" as N1720 #E8F6EC
+rectangle "CUDA node 1721\nKERNEL\ntopoId=22\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{1,16},256,0&gt;&gt;&gt;" as N1721 #EAF3F9
+rectangle "CUDA node 1722\nKERNEL\ntopoId=21\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_tn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1722 #EAF3F9
+rectangle "CUDA node 1723\nKERNEL\ntopoId=20\n_Z21swap_heads_vec_kernelI13__nv_bfloat16EviPKT_PS1_iii&lt;&lt;&lt;512,256,0&gt;&gt;&gt;" as N1723 #EAF3F9
+rectangle "CUDA node 1724\nKERNEL\ntopoId=19\n_ZN7cutlass7Kernel2I66cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8EEvNT_6ParamsE&lt;&lt;&lt;{1,1,70},128,49152&gt;&gt;&gt;" as N1724 #EAF3F9
+rectangle "CUDA node 1725\nKERNEL\ntopoId=18\n_ZN8cublasLt19splitKreduce_kernelILi32ELi16Ei13__nv_bfloat16S1_fS1_Lb0ES1_S1_S1_Lb1ELb0ELb0ELb0EEEvNS_18cublasSplitKParamsIT4_EEPKT2_PKT8_PT7_PT3_PKS3_SG_PKT9_S7_PSH_PvlPS3_PiSM_SM_SG_SG_SG_SG_SG_&lt;&lt;&lt;{1,2},{32,16},0&gt;&gt;&gt;" as N1725 #EAF3F9
+rectangle "CUDA node 1726\nKERNEL\ntopoId=17\n_Z24cast_bf16_to_fp32_kerneliPK13__nv_bfloat16Pf&lt;&lt;&lt;4,256,0&gt;&gt;&gt;" as N1726 #EAF3F9
+rectangle "CUDA node 1727\nMEMSET\ntopoId=16\ndptr=0x0000797ADF430400 value=0\nelement=0 width=1 height=128" as N1727 #E8F6EC
+rectangle "CUDA node 1728\nKERNEL\ntopoId=15\n_Z20bias_grad_sum_kernelI13__nv_bfloat16EviiiPKT_Pf&lt;&lt;&lt;{1,16},256,0&gt;&gt;&gt;" as N1728 #EAF3F9
+rectangle "CUDA node 1729\nKERNEL\ntopoId=14\n_ZN7cutlass7Kernel2I67cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_32x1_tn_align8EEvNT_6ParamsE&lt;&lt;&lt;1024,128,5120&gt;&gt;&gt;" as N1729 #EAF3F9
+rectangle "CUDA node 1730\nKERNEL\ntopoId=13\n_Z24op_generic_tensor_kernelILi1E13__nv_bfloat16fS0_Li256EL16cudnnGenericOp_t0EL21cudnnNanPropagation_t0ELi0EEv17cudnnTensorStructPT2_S3_PKT0_S3_S8_T1_S9_S9_21cudnnActivationStruct19reducedDivisorArrayi&lt;&lt;&lt;1024,256,0&gt;&gt;&gt;" as N1730 #EAF3F9
+rectangle "CUDA node 1731\nMEMSET\ntopoId=12\ndptr=0x0000797ADF428200 value=0\nelement=0 width=1 height=33280" as N1731 #E8F6EC
+rectangle "CUDA node 1732\nKERNEL\ntopoId=11\n_Z25embedding_backward_kernelI13__nv_bfloat16EviPKfPKT_Pfiib&lt;&lt;&lt;4096,256,0&gt;&gt;&gt;" as N1732 #EAF3F9
+rectangle "CUDA node 1733\nKERNEL\ntopoId=10\n_Z24op_generic_tensor_kernelILi1E13__nv_bfloat16fS0_Li256EL16cudnnGenericOp_t0EL21cudnnNanPropagation_t0ELi0EEv17cudnnTensorStructPT2_S3_PKT0_S3_S8_T1_S9_S9_21cudnnActivationStruct19reducedDivisorArrayi&lt;&lt;&lt;1024,256,0&gt;&gt;&gt;" as N1733 #EAF3F9
+rectangle "CUDA node 1734\nMEMSET\ntopoId=9\ndptr=0x0000797ADF420000 value=0\nelement=0 width=1 height=33280" as N1734 #E8F6EC
+rectangle "CUDA node 1735\nKERNEL\ntopoId=8\n_Z25embedding_backward_kernelI13__nv_bfloat16EviPKfPKT_Pfiib&lt;&lt;&lt;4096,256,0&gt;&gt;&gt;" as N1735 #EAF3F9
+rectangle "CUDA node 1736\nKERNEL\ntopoId=7\n_Z15axpy_kernel_valIffEv19cublasAxpyParamsValIT_S1_T0_E&lt;&lt;&lt;183,256,0&gt;&gt;&gt;" as N1736 #EAF3F9
+rectangle "CUDA node 1737\nMEM_ALLOC\ntopoId=6\nbytes=1460\ndptr=0x0000000302000000" as N1737 #F2EAF9
+rectangle "CUDA node 1738\nKERNEL\ntopoId=5\n_Z10dot_kernelIfLi128ELi0E15cublasDotParamsI16cublasGemvTensorIKfE30cublasGemvTensorStridedBatchedIfEEEvT2_&lt;&lt;&lt;365,128,0&gt;&gt;&gt;" as N1738 #EAF3F9
+rectangle "CUDA node 1739\nKERNEL\ntopoId=4\n_Z20reduce_1Block_kernelIfLi128ELi7E30cublasGemvTensorStridedBatchedIfE16cublasGemvTensorIfES3_EvPKT_S4_T2_iS6_S4_T3_T4_19cublasPointerMode_t18cublasLtEpilogue_tS0_IKN8biasTypeINS9_10value_typeES4_E4typeEE&lt;&lt;&lt;1,128,0&gt;&gt;&gt;" as N1739 #EAF3F9
+rectangle "CUDA node 1740\nMEM_FREE\ntopoId=3\ndptr=0x0000000302000000" as N1740 #F8E8EE
+rectangle "CUDA node 1741\nKERNEL\ntopoId=2\n_Z17clip_apply_kerneliPKfffPf&lt;&lt;&lt;183,256,0&gt;&gt;&gt;" as N1741 #EAF3F9
+rectangle "CUDA node 1742\nKERNEL\ntopoId=1\n_Z19adam_prepare_kernelPiffffPfS0_&lt;&lt;&lt;1,1,0&gt;&gt;&gt;" as N1742 #EAF3F9
+rectangle "CUDA node 1743\nKERNEL\ntopoId=0\n_Z18adam_update_kerneliiPfS_S_PKfP13__nv_bfloat16ffffffS1_S1_&lt;&lt;&lt;46,256,0&gt;&gt;&gt;" as N1743 #EAF3F9
+N1529 --> N1530 : 0
+N1530 --> N1531 : 0
+N1531 --> N1532 : 0
+N1532 --> N1533 : 0
+N1533 --> N1534 : 0
+N1534 --> N1535 : 0
+N1535 --> N1536 : 0
+N1536 --> N1537 : 0
+N1537 --> N1538 : 0
+N1538 --> N1539 : 0
+N1539 --> N1540 : 0
+N1540 --> N1541 : 0
+N1541 --> N1542 : 0
+N1542 --> N1543 : 0
+N1543 --> N1544 : 0
+N1544 --> N1545 : 0
+N1545 --> N1546 : 0
+N1546 --> N1547 : 0
+N1547 --> N1548 : 0
+N1548 --> N1549 : 0
+N1549 --> N1550 : 0
+N1550 --> N1551 : 0
+N1551 --> N1552 : 0
+N1552 --> N1553 : 0
+N1553 --> N1554 : 0
+N1554 --> N1555 : 0
+N1555 --> N1556 : 0
+N1556 --> N1557 : 0
+N1557 --> N1558 : 0
+N1558 --> N1559 : 0
+N1559 --> N1560 : 0
+N1560 --> N1561 : 0
+N1561 --> N1562 : 0
+N1562 --> N1563 : 0
+N1563 --> N1564 : 0
+N1564 --> N1565 : 0
+N1565 --> N1566 : 0
+N1566 --> N1567 : 0
+N1567 --> N1568 : 0
+N1568 --> N1569 : 0
+N1569 --> N1570 : 0
+N1570 --> N1571 : 0
+N1571 --> N1572 : 0
+N1572 --> N1573 : 0
+N1573 --> N1574 : 0
+N1574 --> N1575 : 0
+N1575 --> N1576 : 0
+N1576 --> N1577 : 0
+N1577 --> N1578 : 0
+N1578 --> N1579 : 0
+N1579 --> N1580 : 0
+N1580 --> N1581 : 0
+N1581 --> N1582 : 0
+N1582 --> N1583 : 0
+N1583 --> N1584 : 0
+N1584 --> N1585 : 0
+N1585 --> N1586 : 0
+N1586 --> N1587 : 0
+N1587 --> N1588 : 0
+N1588 --> N1589 : 0
+N1589 --> N1590 : 0
+N1590 --> N1591 : 0
+N1591 --> N1592 : 0
+N1592 --> N1593 : 0
+N1593 --> N1594 : 0
+N1594 --> N1595 : 0
+N1595 --> N1596 : 0
+N1596 --> N1597 : 0
+N1597 --> N1598 : 0
+N1598 --> N1599 : 0
+N1599 --> N1600 : 0
+N1600 --> N1601 : 0
+N1601 --> N1602 : 0
+N1602 --> N1603 : 0
+N1603 --> N1604 : 0
+N1604 --> N1605 : 0
+N1605 --> N1606 : 0
+N1606 --> N1607 : 0
+N1607 --> N1608 : 0
+N1608 --> N1609 : 0
+N1609 --> N1610 : 0
+N1610 --> N1611 : 0
+N1611 --> N1612 : 0
+N1612 --> N1613 : 0
+N1613 --> N1614 : 0
+N1614 --> N1615 : 0
+N1615 --> N1616 : 0
+N1616 --> N1617 : 0
+N1617 --> N1618 : 0
+N1618 --> N1619 : 0
+N1619 --> N1620 : 0
+N1620 --> N1621 : 0
+N1621 --> N1622 : 0
+N1622 --> N1623 : 0
+N1623 --> N1624 : 0
+N1624 --> N1625 : 0
+N1625 --> N1626 : 0
+N1626 --> N1627 : 0
+N1627 --> N1628 : 0
+N1628 --> N1629 : 0
+N1629 --> N1630 : 0
+N1630 --> N1631 : 0
+N1631 --> N1632 : 0
+N1632 --> N1633 : 0
+N1633 --> N1634 : 0
+N1634 --> N1635 : 0
+N1635 --> N1636 : 0
+N1636 --> N1637 : 0
+N1637 --> N1638 : 0
+N1638 --> N1639 : 0
+N1639 --> N1640 : 0
+N1640 --> N1641 : 0
+N1641 --> N1642 : 0
+N1642 --> N1643 : 0
+N1643 --> N1644 : 0
+N1644 --> N1645 : 0
+N1645 --> N1646 : 0
+N1646 --> N1647 : 0
+N1647 --> N1648 : 0
+N1648 --> N1649 : 0
+N1649 --> N1650 : 0
+N1650 --> N1651 : 0
+N1651 --> N1652 : 0
+N1652 --> N1653 : 0
+N1653 --> N1654 : 0
+N1654 --> N1655 : 0
+N1655 --> N1656 : 0
+N1656 --> N1657 : 0
+N1657 --> N1658 : 0
+N1658 --> N1659 : 0
+N1659 --> N1660 : 0
+N1660 --> N1661 : 0
+N1661 --> N1662 : 0
+N1662 --> N1663 : 0
+N1663 --> N1664 : 0
+N1664 --> N1665 : 0
+N1665 --> N1666 : 0
+N1666 --> N1667 : 0
+N1667 --> N1668 : 0
+N1668 --> N1669 : 0
+N1669 --> N1670 : 0
+N1670 --> N1671 : 0
+N1671 --> N1672 : 0
+N1672 --> N1673 : 0
+N1673 --> N1674 : 0
+N1674 --> N1675 : 0
+N1675 --> N1676 : 0
+N1676 --> N1677 : 0
+N1677 --> N1678 : 0
+N1678 --> N1679 : 0
+N1679 --> N1680 : 0
+N1680 --> N1681 : 0
+N1681 --> N1682 : 0
+N1682 --> N1683 : 0
+N1683 --> N1684 : 0
+N1684 --> N1685 : 0
+N1685 --> N1686 : 0
+N1686 --> N1687 : 0
+N1687 --> N1688 : 0
+N1688 --> N1689 : 0
+N1689 --> N1690 : 0
+N1690 --> N1691 : 0
+N1691 --> N1692 : 0
+N1692 --> N1693 : 0
+N1693 --> N1694 : 0
+N1694 --> N1695 : 0
+N1695 --> N1696 : 0
+N1696 --> N1697 : 0
+N1697 --> N1698 : 0
+N1698 --> N1699 : 0
+N1699 --> N1700 : 0
+N1700 --> N1701 : 0
+N1701 --> N1702 : 0
+N1702 --> N1703 : 0
+N1703 --> N1704 : 0
+N1704 --> N1705 : 0
+N1705 --> N1706 : 0
+N1706 --> N1707 : 0
+N1707 --> N1708 : 0
+N1708 --> N1709 : 0
+N1709 --> N1710 : 0
+N1710 --> N1711 : 0
+N1711 --> N1712 : 0
+N1712 --> N1713 : 0
+N1713 --> N1714 : 0
+N1714 --> N1715 : 0
+N1715 --> N1716 : 0
+N1716 --> N1717 : 0
+N1717 --> N1718 : 0
+N1718 --> N1719 : 0
+N1719 --> N1720 : 0
+N1720 --> N1721 : 0
+N1721 --> N1722 : 0
+N1722 --> N1723 : 0
+N1723 --> N1724 : 0
+N1724 --> N1725 : 0
+N1725 --> N1726 : 0
+N1726 --> N1727 : 0
+N1727 --> N1728 : 0
+N1728 --> N1729 : 0
+N1729 --> N1730 : 0
+N1730 --> N1731 : 0
+N1731 --> N1732 : 0
+N1732 --> N1733 : 0
+N1733 --> N1734 : 0
+N1734 --> N1735 : 0
+N1735 --> N1736 : 0
+N1736 --> N1737 : 0
+N1737 --> N1738 : 0
+N1738 --> N1739 : 0
+N1739 --> N1740 : 0
+N1740 --> N1741 : 0
+N1741 --> N1742 : 0
+N1742 --> N1743 : 0
+@enduml

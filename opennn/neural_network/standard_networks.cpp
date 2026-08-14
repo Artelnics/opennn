@@ -1155,6 +1155,10 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                                   "embedding_layer");
     embedding_layer->set_scale_embedding(true);
     embedding_layer->set_add_positional_encoding(true);
+    // The pooling below has to know where each sequence ends, and the positional
+    // encoding this Embedding adds already means a padded row is not the zero
+    // row anyone downstream could recognise it by.
+    embedding_layer->set_export_valid_lengths(true);
     add_layer(move(embedding_layer));
 
     auto attention_layer = make_unique<MultiHeadAttention>(
@@ -1162,7 +1166,12 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
         heads_number,
         "multihead_attention_layer");
 
-    attention_layer->set_zero_padded_queries(true);
+    // No set_zero_padded_queries here. It asked attention to write exactly-zero
+    // rows at padded query positions, and paid for them by vetoing cuDNN's
+    // fused attention for the whole network. The only reader of those zeros was
+    // the pooling below, recovering the sequence length by looking for them;
+    // it reads the Embedding's exported lengths now, so the demand is gone and
+    // this network's attention can be fused.
     add_layer(move(attention_layer));
 
     add_layer(make_unique<Pooling3d>(get_output_shape(), pooling_method));
@@ -1235,6 +1244,11 @@ Transformer::Transformer(Index input_sequence_length,
         embedding_dimension, "decoder_embedding");
     decoder_embedding->set_scale_embedding(true);
     decoder_embedding->set_add_positional_encoding(true);
+    // Both embeddings export, and the two records stay apart because they are
+    // held per layer. The normalizations between the blocks shift a padded row
+    // off zero as soon as training moves their bias, and from there no layer
+    // downstream can recover where a sequence ended by looking at it.
+    decoder_embedding->set_export_valid_lengths(true);
     add_layer(move(decoder_embedding), {decoder_tokenizer_index});
     Index current_decoder_index = get_layers_number() - 1;
 
@@ -1246,6 +1260,7 @@ Transformer::Transformer(Index input_sequence_length,
         embedding_dimension, "encoder_embedding");
     encoder_embedding->set_scale_embedding(true);
     encoder_embedding->set_add_positional_encoding(true);
+    encoder_embedding->set_export_valid_lengths(true);
     add_layer(move(encoder_embedding), {encoder_tokenizer_index});
     Index current_encoder_index = get_layers_number() - 1;
 

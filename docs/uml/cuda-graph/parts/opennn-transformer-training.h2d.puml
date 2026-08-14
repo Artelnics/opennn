@@ -1,0 +1,72 @@
+@startuml
+!pragma layout smetana
+title Captured H2D staging — exact induced CUDA subgraph (nodes 0..23)
+top to bottom direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam linetype ortho
+skinparam nodesep 8
+skinparam ranksep 12
+skinparam packageStyle rectangle
+skinparam packageBorderColor #1E5374
+skinparam packageBackgroundColor #F8FBFD
+skinparam ArrowColor #5F6368
+skinparam defaultFontName Monospaced
+skinparam defaultFontSize 9
+hide stereotype
+legend right
+  Nodes: 24
+  Dependencies: 23
+  Every rectangle is one CUDA graph node.
+  Every arrow is one dependency emitted by CUDA.
+endlegend
+' CUDA graph: CUDA nodes 0..23
+rectangle "CUDA node 0\nMEMCPY\ntopoId=262\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N0 #FFF1D6
+rectangle "CUDA node 1\nMEMCPY\ntopoId=260\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N1 #FFF1D6
+rectangle "CUDA node 2\nMEMCPY\ntopoId=258\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N2 #FFF1D6
+rectangle "CUDA node 3\nMEMCPY\ntopoId=256\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N3 #FFF1D6
+rectangle "CUDA node 4\nMEMCPY\ntopoId=254\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N4 #FFF1D6
+rectangle "CUDA node 5\nMEMCPY\ntopoId=252\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N5 #FFF1D6
+rectangle "CUDA node 6\nMEMCPY\ntopoId=250\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N6 #FFF1D6
+rectangle "CUDA node 7\nMEMCPY\ntopoId=248\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N7 #FFF1D6
+rectangle "CUDA node 8\nMEMCPY\ntopoId=246\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N8 #FFF1D6
+rectangle "CUDA node 9\nMEMCPY\ntopoId=244\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N9 #FFF1D6
+rectangle "CUDA node 10\nMEMCPY\ntopoId=242\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N10 #FFF1D6
+rectangle "CUDA node 11\nMEMCPY\ntopoId=240\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N11 #FFF1D6
+rectangle "CUDA node 12\nMEMCPY\ntopoId=238\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N12 #FFF1D6
+rectangle "CUDA node 13\nMEMCPY\ntopoId=236\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N13 #FFF1D6
+rectangle "CUDA node 14\nMEMCPY\ntopoId=234\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N14 #FFF1D6
+rectangle "CUDA node 15\nMEMCPY\ntopoId=232\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N15 #FFF1D6
+rectangle "CUDA node 16\nMEMCPY\ntopoId=230\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N16 #FFF1D6
+rectangle "CUDA node 17\nMEMCPY\ntopoId=228\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N17 #FFF1D6
+rectangle "CUDA node 18\nMEMCPY\ntopoId=226\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N18 #FFF1D6
+rectangle "CUDA node 19\nMEMCPY\ntopoId=224\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N19 #FFF1D6
+rectangle "CUDA node 20\nMEMCPY\ntopoId=222\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N20 #FFF1D6
+rectangle "CUDA node 21\nMEMCPY\ntopoId=220\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N21 #FFF1D6
+rectangle "CUDA node 22\nMEMCPY\ntopoId=218\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N22 #FFF1D6
+rectangle "CUDA node 23\nMEMCPY\ntopoId=216\nHtoD (HOST PINNED to DEVICE)\nextent=131072x1x1" as N23 #FFF1D6
+N0 --> N1 : 0
+N1 --> N2 : 0
+N2 --> N3 : 0
+N3 --> N4 : 0
+N4 --> N5 : 0
+N5 --> N6 : 0
+N6 --> N7 : 0
+N7 --> N8 : 0
+N8 --> N9 : 0
+N9 --> N10 : 0
+N10 --> N11 : 0
+N11 --> N12 : 0
+N12 --> N13 : 0
+N13 --> N14 : 0
+N14 --> N15 : 0
+N15 --> N16 : 0
+N16 --> N17 : 0
+N17 --> N18 : 0
+N18 --> N19 : 0
+N19 --> N20 : 0
+N20 --> N21 : 0
+N21 --> N22 : 0
+N22 --> N23 : 0
+@enduml

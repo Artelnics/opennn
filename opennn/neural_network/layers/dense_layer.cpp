@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/registry.h"
 
 namespace opennn
 {
@@ -16,7 +17,7 @@ Dense::Dense(const Shape& new_input_shape,
              const string& new_activation_function,
              bool new_batch_normalization,
              const string& new_label)
-    : Layer("Dense")
+    : Layer(LayerType::Dense)
 {
     operators = {&combination, &batch_norm, &activation_operator, &dropout};
 

@@ -8,13 +8,14 @@
 
 #include "opennn/core/string_utilities.h"
 #include "opennn/neural_network/layers/unscaling_layer.h"
+#include "opennn/registry.h"
 #include "opennn/core/json.h"
 
 namespace opennn
 {
 
 Unscaling::Unscaling(const Shape& new_input_shape, const string& new_label)
-    : Scaling("Unscaling", true)
+    : Scaling(LayerType::Unscaling, true)
 {
     set(new_input_shape.dim_or_zero(0), new_label);
 }

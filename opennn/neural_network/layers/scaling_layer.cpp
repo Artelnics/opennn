@@ -8,6 +8,7 @@
 
 #include "opennn/core/device_backend.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/registry.h"
 #include "opennn/core/scaling.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/json.h"
@@ -246,13 +247,13 @@ void ScaleOperator::forward_propagate(ForwardPropagation& forward_propagation, s
 }
 
 Scaling::Scaling(const Shape& new_input_shape)
-    : Scaling("Scaling", false)
+    : Scaling(LayerType::Scaling, false)
 {
     set(new_input_shape);
 }
 
-Scaling::Scaling(string type, bool invert)
-    : Layer(move(type), false)
+Scaling::Scaling(LayerType type, bool invert)
+    : Layer(type, false)
 {
     scale_op.invert = invert;
     operators = {&scale_op};

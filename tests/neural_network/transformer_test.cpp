@@ -13,6 +13,99 @@ TEST(Transformer, ConstructorCreatesNetwork)
     EXPECT_EQ(transformer.get_layers_number(), 17);
 }
 
+// Attention can only mask padding it can find. Recovering it from the data --
+// a padded token is an all-zero row -- holds exactly until something shifts
+// that row, and every block here ends in a normalization whose bias does
+// precisely that as soon as training moves it off zero. Measured before the
+// Embeddings exported their lengths: of the six attention layers, only the two
+// reading an Embedding directly could still see the padding. The other four,
+// both cross-attentions among them, were attending over it.
+//
+// The encoder and the decoder are padded differently on purpose. Each
+// attention layer has to end up with the lengths of the sequence its keys came
+// from, which for cross-attention is the encoder's while its queries are the
+// decoder's. One record for the whole forward pass would satisfy neither.
+TEST(Transformer, EveryAttentionLayerKnowsWhereItsSourceSequenceEnds)
+{
+    const Index batch = 2;
+    const Index input_sequence_length = 8;
+    const Index decoder_sequence_length = 8;
+    const Index vocabulary_size = 32;
+    const Index embedding_dimension = 16;
+    const Index heads_number = 2;
+    const Index feed_forward_dimension = 32;
+    const Index layers_number = 2;
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    Transformer transformer(input_sequence_length, decoder_sequence_length,
+                            vocabulary_size, vocabulary_size,
+                            embedding_dimension, heads_number,
+                            feed_forward_dimension, layers_number);
+    transformer.set_parameters_random();
+
+    // A normalization starts at gamma = 1, beta = 0, which maps a zero row back
+    // to zero and leaves the padding visible after all. Training moves the
+    // shift, and that is the state this test needs.
+    for (Index i = 0; i < transformer.get_layers_number(); ++i)
+    {
+        auto& layer = transformer.get_layer(i);
+        if (layer->get_name() != "Normalization3d") continue;
+
+        auto views = layer->get_parameter_views();
+        if (views.size() > 1) views[1].as_vector().setConstant(0.25f);
+    }
+
+    const vector<Index> encoder_lengths{3, 6};
+    const vector<Index> decoder_lengths{5, 2};
+
+    MatrixR encoder_ids(batch, input_sequence_length);
+    MatrixR decoder_ids(batch, decoder_sequence_length);
+
+    for (Index b = 0; b < batch; ++b)
+        for (Index s = 0; s < input_sequence_length; ++s)
+        {
+            encoder_ids(b, s) = s < encoder_lengths[size_t(b)] ? float(1 + (b * 8 + s) % 20) : 0.0f;
+            decoder_ids(b, s) = s < decoder_lengths[size_t(b)] ? float(1 + (b * 8 + s) % 20) : 0.0f;
+        }
+
+    ForwardPropagation forward_propagation(batch, &transformer);
+    vector<TensorView> inputs{
+        TensorView(decoder_ids.data(), {batch, decoder_sequence_length}),
+        TensorView(encoder_ids.data(), {batch, input_sequence_length})};
+
+    transformer.forward_propagate(inputs, forward_propagation, false);
+
+    Index attention_layers = 0;
+
+    for (Index i = 0; i < transformer.get_layers_number(); ++i)
+    {
+        const auto& layer = transformer.get_layer(i);
+        if (layer->get_name() != "MultiHeadAttention") continue;
+
+        ++attention_layers;
+
+        const string label = layer->get_label();
+        const size_t source_ordinal = forward_propagation.inputs[size_t(i)].size() - 1;
+
+        const vector<Index>* lengths =
+            forward_propagation.input_valid_lengths(size_t(i), source_ordinal);
+
+        ASSERT_NE(lengths, nullptr) << label << " cannot tell padding from data";
+
+        // Cross-attention takes its keys from the encoder while its queries
+        // come from the decoder, so it is the encoder's lengths it needs.
+        const bool reads_decoder = label.starts_with("decoder_self_attention");
+
+        EXPECT_EQ(*lengths, reads_decoder ? decoder_lengths : encoder_lengths)
+            << label << " has the wrong sequence's lengths";
+    }
+
+    EXPECT_EQ(attention_layers, 3 * layers_number);
+
+    Configuration::instance().set();
+}
+
 TEST(Transformer, GeneralConstructor)
 {
     const Index input_sequence_length = 5;

@@ -119,6 +119,7 @@ TEST(Normalization3dTest, FusedResidualAddForward)
 
     auto norm = make_unique<Normalization3d>(Shape{seq, dim}, "fused_norm");
     norm->set_fuse_add(true);
+    EXPECT_EQ(norm->get_sources_number(), 2);
 
     NeuralNetwork neural_network;
     neural_network.add_layer(move(norm), {-1, -2});

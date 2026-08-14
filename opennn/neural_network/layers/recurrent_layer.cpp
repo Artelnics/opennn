@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/recurrent_layer.h"
+#include "opennn/registry.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
 
@@ -648,7 +649,7 @@ Recurrent::Recurrent(const Shape& new_input_shape,
                      const Shape& new_output_shape,
                      const string& new_activation_function,
                      const string& new_label)
-    : Layer("Recurrent")
+    : Layer(LayerType::Recurrent)
 {
     operators = {&recurrent_op};
     set(new_input_shape, new_output_shape, new_activation_function, new_label);

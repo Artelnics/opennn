@@ -150,36 +150,6 @@ public:
     void set_yolo_focal_gamma(float v)      { yolo_focal_gamma      = v; }
     void set_yolo_obj_focal_gamma(float v)  { yolo_obj_focal_gamma  = v; }
 
-private:
-
-    void check_neural_network() const
-    {
-        throw_if(!neural_network, "Loss error: neural network is not set.");
-    }
-
-    void add_regularization(BackPropagation&) const;
-
-    float* ensure_error_workspace(const TensorView&, Index batch_samples) const;
-
-    float get_weighted_coefficient(const Batch&) const;
-
-    void calculate_layers_error_gradient(const Batch&,
-                                         ForwardPropagation&,
-                                         BackPropagation&) const;
-
-    void back_propagate_layers(ForwardPropagation&,
-                               BackPropagation&) const;
-
-    void calculate_output_deltas(const Batch&,
-                                    const ForwardPropagation&,
-                                    BackPropagation&) const;
-
-#ifndef OPENNN_NO_VISION
-    EvaluationResult calculate_yolo(const ForwardPropagation&,
-                                    const TensorView& target,
-                                    BackPropagation*) const;
-#endif
-
 protected:
 
     Error error = Error::MeanSquaredError;
@@ -208,6 +178,36 @@ protected:
     Dataset* dataset = nullptr;
 
     string name = "Loss";
+
+private:
+
+    void check_neural_network() const
+    {
+        throw_if(!neural_network, "Loss error: neural network is not set.");
+    }
+
+    void add_regularization(BackPropagation&) const;
+
+    float* ensure_error_workspace(const TensorView&, Index batch_samples) const;
+
+    float get_weighted_coefficient(const Batch&) const;
+
+    void calculate_layers_error_gradient(const Batch&,
+                                         ForwardPropagation&,
+                                         BackPropagation&) const;
+
+    void back_propagate_layers(ForwardPropagation&,
+                               BackPropagation&) const;
+
+    void calculate_output_deltas(const Batch&,
+                                 const ForwardPropagation&,
+                                 BackPropagation&) const;
+
+#ifndef OPENNN_NO_VISION
+    EvaluationResult calculate_yolo(const ForwardPropagation&,
+                                    const TensorView& target,
+                                    BackPropagation*) const;
+#endif
 };
 
 #ifndef OPENNN_NO_VISION

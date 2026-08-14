@@ -158,11 +158,12 @@ void ForwardPropagation::set(
     staged_inputs.clear();
     host_bf16_input_scratch.clear();
     passthrough_overrides.clear();
-    attention_valid_lengths.clear();
+    valid_lengths.clear();
     output_window.reset();
 
     inputs.resize(layers_number);
     slots.resize(layers_number);
+    valid_lengths.resize(layers_number);
 
     auto forward_specs = neural_network->get_forward_specs(batch_size);
 
@@ -1046,6 +1047,52 @@ TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
     return neural_network
         ? get_layer_outputs(neural_network->get_last_trainable_layer_index())
         : TensorView{};
+}
+
+const vector<Index>* ForwardPropagation::input_valid_lengths(const size_t layer,
+                                                             const size_t input_ordinal) const
+{
+    if (!neural_network) return nullptr;
+
+    const auto& source_layers = neural_network->get_source_layers();
+    if (layer >= source_layers.size()) return nullptr;
+
+    const vector<Index>& sources = source_layers[layer];
+    if (input_ordinal >= sources.size()) return nullptr;
+
+    // A negative source is one of the network's own inputs: raw token ids that
+    // nothing has had the chance to describe yet.
+    const Index source = sources[input_ordinal];
+    if (source < 0 || size_t(source) >= valid_lengths.size()) return nullptr;
+
+    const vector<Index>& lengths = valid_lengths[size_t(source)];
+
+    return lengths.empty() ? nullptr : &lengths;
+}
+
+void ForwardPropagation::inherit_valid_lengths(const size_t layer)
+{
+    if (layer >= valid_lengths.size()) return;
+
+    // An Embedding writes its own record while it runs; nothing overwrites it.
+    if (!valid_lengths[layer].empty()) return;
+
+    const vector<Index>* source_lengths = input_valid_lengths(layer, 0);
+    if (!source_lengths) return;
+
+    // The record travels only as far as the sequence it describes. A layer that
+    // pools the sequence away, or reshapes it, ends the record here rather than
+    // handing on lengths for something that no longer exists.
+    const auto& layers = neural_network->get_layers();
+    const Index source = neural_network->get_source_layers()[layer][0];
+
+    const Shape output_shape = layers[layer]->get_output_shape();
+    const Shape source_shape = layers[size_t(source)]->get_output_shape();
+
+    if (output_shape.rank < 2 || source_shape.rank < 2) return;
+    if (output_shape[0] != source_shape[0]) return;
+
+    valid_lengths[layer] = *source_lengths;
 }
 
 TensorView ForwardPropagation::get_outputs() const

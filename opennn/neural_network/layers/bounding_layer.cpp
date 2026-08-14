@@ -9,6 +9,7 @@
 #include "opennn/core/device_backend.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/layers/bounding_layer.h"
+#include "opennn/registry.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/json.h"
 #include "opennn/core/tensor_operations.h"
@@ -99,7 +100,7 @@ void BoundOperator::forward_propagate(ForwardPropagation& forward_propagation, s
 }
 
 Bounding::Bounding(const Shape& new_output_shape, const string& new_name)
-    : Layer("Bounding", false)
+    : Layer(LayerType::Bounding, false)
 {
     operators = {&bound};
     set(new_output_shape, new_name);

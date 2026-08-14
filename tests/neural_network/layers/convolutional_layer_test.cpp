@@ -332,6 +332,7 @@ TEST(ConvolutionalLayerTest, ProjectionResidualReuseGradientMatchesNumerical)
         Shape{2, 2, 4}, Shape{1, 1, 4, 4}, "ReLU",
         Shape{1, 1}, "Same", true, "residual");
     residual->set_residual(true);
+    EXPECT_EQ(residual->get_sources_number(), 2);
     network.add_layer(move(residual), {1, 2});
 
     network.add_layer(make_unique<Convolutional>(

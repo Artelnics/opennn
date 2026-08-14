@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/activation_layer.h"
+#include "opennn/registry.h"
 
 namespace opennn
 {
@@ -14,7 +15,7 @@ namespace opennn
 Activation::Activation(const Shape& new_input_shape,
                        const string& new_activation,
                        const string& new_name)
-    : Layer("Activation")
+    : Layer(LayerType::Activation)
 {
     operators = {&activation_operator};
 

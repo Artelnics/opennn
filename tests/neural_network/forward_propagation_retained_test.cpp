@@ -273,12 +273,17 @@ TEST(ForwardPropagationRetainedOutputsTest,
     EXPECT_EQ(propagation.get_final_output_capacity(), 4);
 
     propagation.past_length = 3;
-    propagation.attention_valid_lengths = {2};
+    propagation.valid_lengths.assign(1, vector<Index>{2});
     propagation.set(1, &network, nullptr,
                     ForwardPropagationMode::Inference, policy);
 
     EXPECT_EQ(propagation.past_length, 0);
-    EXPECT_TRUE(propagation.attention_valid_lengths.empty());
+
+    // Reset leaves a record per layer, every one of them empty: the lengths of
+    // the batch just processed must not be read as the next batch's.
+    EXPECT_EQ(Index(propagation.valid_lengths.size()), network.get_layers_number());
+    EXPECT_TRUE(ranges::all_of(propagation.valid_lengths,
+                               [](const vector<Index>& lengths) { return lengths.empty(); }));
 
     Configuration::instance().set();
 }

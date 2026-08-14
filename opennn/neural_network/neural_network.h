@@ -162,7 +162,6 @@ public:
     void link_parameters();
     void link_states();
     void link_states(Device);
-    void wire_drelu_fusions();
     MatrixR calculate_outputs(const vector<TensorView>&);
 
     TensorView calculate_outputs_resident(const vector<TensorView>&,
@@ -206,8 +205,6 @@ public:
                           const VectorR&,
                           ForwardPropagation&);
 
-public:
-
     void cast_parameters_to_bf16();
 
     void release_bf16_fp32_parameter_master_for_inference();
@@ -229,17 +226,40 @@ public:
     void copy_states_device();
     void copy_states_host();
 
+    vector<string> get_layer_labels() const;
+
+protected:
+
+    vector<Variable> input_variables;
+    vector<Variable> output_variables;
+
+    vector<unique_ptr<Layer>> layers;
+
+    vector<vector<Index>> source_layers;
+
+    Buffer parameters;
+    Buffer parameters_bf16_mirror{Device::CUDA};
+    Buffer parameters_fp32_inference_storage{Device::CUDA};
+    Buffer parameters_int8_storage{Device::CUDA};
+
+    bool parameters_bf16_mirror_compact = false;
+
+    Buffer states;
+
+    Configuration::Resolved config;
+
+    bool training_activation_recomputation = false;
+
+    mutable bool stale_configuration_warned = false;
+
+    mutable Index first_trainable_cache_ = -1;
+    mutable Index last_trainable_cache_  = -1;
+
 private:
 
     void compile(Configuration::Resolved);
 
     MatrixR calculate_outputs_device(const vector<TensorView>&, ForwardPropagation&);
-
-public:
-
-    vector<string> get_layer_labels() const;
-
-private:
 
     struct HostParametersGuard
     {
@@ -326,33 +346,6 @@ private:
                           [&](const unique_ptr<Layer>& layer) { return fn(*layer); });
         return out;
     }
-
-protected:
-
-    vector<Variable> input_variables;
-    vector<Variable> output_variables;
-
-    vector<unique_ptr<Layer>> layers;
-
-    vector<vector<Index>> source_layers;
-
-    Buffer parameters;
-    Buffer parameters_bf16_mirror{Device::CUDA};
-    Buffer parameters_fp32_inference_storage{Device::CUDA};
-    Buffer parameters_int8_storage{Device::CUDA};
-
-    bool parameters_bf16_mirror_compact = false;
-
-    Buffer states;
-
-    Configuration::Resolved config;
-
-    bool training_activation_recomputation = false;
-
-    mutable bool stale_configuration_warned = false;
-
-    mutable Index first_trainable_cache_ = -1;
-    mutable Index last_trainable_cache_  = -1;
 };
 
 }

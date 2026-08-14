@@ -89,7 +89,7 @@ public:
 
 protected:
 
-    Scaling(string, bool invert);
+    Scaling(LayerType, bool invert);
 
     vector<Descriptives> descriptives;
     vector<ScalerMethod> scalers;

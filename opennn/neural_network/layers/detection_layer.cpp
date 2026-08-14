@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/detection_layer.h"
+#include "opennn/registry.h"
 #include "opennn/core/enum_map.h"
 #include "opennn/core/json.h"
 #include "opennn/core/string_utilities.h"
@@ -256,7 +257,7 @@ vector<array<float, 2>> string_to_anchors(string_view text)
 Detection::Detection(const Shape& new_input_shape,
                      const vector<array<float, 2>>& new_anchors,
                      const string& new_label)
-    : Layer("Detection")
+    : Layer(LayerType::Detection)
 {
     operators = {&detection};
 

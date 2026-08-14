@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/addition_layer.h"
+#include "opennn/registry.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
@@ -37,7 +38,7 @@ void AdditionOperator::back_propagate(ForwardPropagation&, BackPropagation& back
 }
 
 Addition::Addition(const Shape& new_input_shape, const string& new_name, Index new_inputs_number)
-    : Layer("Addition")
+    : Layer(LayerType::Addition)
 {
     operators = {&add};
 

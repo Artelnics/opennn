@@ -14,6 +14,7 @@
 #include "opennn/neural_network/layers/flatten_layer.h"
 #include "opennn/neural_network/layers/multihead_attention_layer.h"
 #include "opennn/neural_network/layers/normalization_layer_3d.h"
+#include "opennn/neural_network/layers/pooling_layer_3d.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/neural_network/standard_networks.h"
 #include "opennn/training_strategy/loss.h"
@@ -1063,6 +1064,108 @@ TEST_F(GpuComparison, SdpaAttentionMatchesUnfusedOnExportedValidLengths)
     // leave the fused path attending over the padding -- and the positional
     // encoding makes those rows nonzero, so nothing else would mask them -- for
     // a disagreement of order one rather than of order the tolerance.
+    EXPECT_LT(relative_difference(cpu_gradient, unfused_gradient), 2.0e-2f);
+    EXPECT_LT(relative_difference(cpu_gradient, fused_gradient), 2.0e-2f);
+}
+
+// zero_padded_queries asks attention for exactly-zero output rows at padded
+// query positions, and vetoes fused attention to get them, because cuDNN does
+// not document what it writes outside the valid region. The only reason anyone
+// wanted those zeros was that average pooling used to recover the sequence
+// length by looking for zero rows. It reads the exported lengths now, so the
+// padded rows are read by nobody and what cuDNN leaves in them stops being a
+// question that has to be answered.
+//
+// This is the network that made the demand -- an Embedding, attention, and an
+// averaging pool -- with the demand withdrawn. Fused and unfused have to reach
+// the same gradient through it. Note what is NOT claimed: that the two agree
+// row by row inside attention. They do not, and need not. Even unfused, a
+// padded query row is a weighted average of the valid values rather than zero,
+// because zeroing it is exactly the thing this network no longer asks for.
+TEST_F(GpuComparison, SdpaMatchesUnfusedThroughAveragePoolingOnPaddedBatches)
+{
+    if (!AttentionOperator::sdpa_supported(Type::FP32, Device::CUDA))
+        GTEST_SKIP() << "SDPA is not available in this build.";
+
+    const Index samples_number = 4;
+    const Index sequence_length = 16;
+    const Index embedding_dimension = 32;
+    const Index heads_number = 2;
+    const Index vocabulary_size = 24;
+    const Index targets_number = 2;
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    TabularDataset dataset(samples_number, Shape{sequence_length}, Shape{targets_number});
+    set_seed(29);
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    const std::array<Index, 4> valid_lengths{sequence_length, 11, 5, 1};
+    MatrixR data = dataset.get_data();
+    for (Index sample = 0; sample < samples_number; ++sample)
+        for (Index position = 0; position < sequence_length; ++position)
+            data(sample, position) = position < valid_lengths[size_t(sample)]
+                ? float(1 + (sample * sequence_length + position) % (vocabulary_size - 1))
+                : 0.0f;
+    dataset.set_data(move(data));
+
+    const auto build = [&](const bool fused)
+    {
+        auto network = make_unique<NeuralNetwork>();
+
+        auto embedding = make_unique<Embedding>(Shape{vocabulary_size, sequence_length},
+                                                embedding_dimension, "embedding");
+        embedding->set_add_positional_encoding(true);
+        embedding->set_export_valid_lengths(true);
+        network->add_layer(move(embedding), {-1});
+
+        auto attention = make_unique<MultiHeadAttention>(
+            Shape{sequence_length, embedding_dimension}, heads_number);
+        attention->set_sdpa_min_sequence_length(1);
+        attention->set_sdpa_auto(fused);
+        network->add_layer(move(attention), {0});
+
+        network->add_layer(make_unique<Pooling3d>(Shape{sequence_length, embedding_dimension},
+                                                  PoolingMethod::AveragePooling, "pool"), {1});
+
+        network->add_layer(make_unique<opennn::Dense>(network->get_layer(2)->get_output_shape(),
+                                                      dataset.get_target_shape()), {2});
+        network->compile();
+        return network;
+    };
+
+    const auto gradient_of = [&](NeuralNetwork& network)
+    {
+        Loss loss(&network, &dataset);
+        loss.set_error(Loss::Error::MeanSquaredError);
+        return calculate_gradient(loss);
+    };
+
+    const auto cpu_network = build(false);
+    cpu_network->set_parameters_random();
+
+    const VectorR parameters = read_host_parameters(*cpu_network);
+    const VectorR cpu_gradient = gradient_of(*cpu_network);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    const auto unfused_network = build(false);
+    unfused_network->set_parameters(parameters);
+    ASSERT_FALSE(static_cast<MultiHeadAttention*>(unfused_network->get_layer(1).get())->should_use_sdpa());
+
+    const auto fused_network = build(true);
+    fused_network->set_parameters(parameters);
+
+    // The veto is what this test is about: with no zero_padded_queries asked
+    // for, a padded batch is allowed to reach cuDNN's fused attention at all.
+    ASSERT_TRUE(static_cast<MultiHeadAttention*>(fused_network->get_layer(1).get())->should_use_sdpa());
+
+    const VectorR unfused_gradient = gradient_of(*unfused_network);
+    const VectorR fused_gradient   = gradient_of(*fused_network);
+
+    ASSERT_EQ(cpu_gradient.size(), fused_gradient.size());
+
     EXPECT_LT(relative_difference(cpu_gradient, unfused_gradient), 2.0e-2f);
     EXPECT_LT(relative_difference(cpu_gradient, fused_gradient), 2.0e-2f);
 }

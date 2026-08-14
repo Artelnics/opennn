@@ -40,6 +40,7 @@ public:
     {
         return (heads_number == 0) ? 0 : Index(embedding_dimension / heads_number);
     }
+    Index get_sources_number() const noexcept override { return cross_attention ? 2 : 1; }
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
 
@@ -89,6 +90,7 @@ private:
 
     bool  sdpa_auto = true;
     Index sdpa_min_sequence_length = default_sdpa_min_sequence_length;
+    bool  cross_attention = false;
 
     MultiHeadProjectionOperator query_projection;
     MultiHeadProjectionOperator key_projection;

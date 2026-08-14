@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/long_short_term_memory_layer.h"
+#include "opennn/registry.h"
 
 #include "opennn/core/device_backend.h"
 #include "opennn/core/random_utilities.h"
@@ -956,7 +957,7 @@ LongShortTermMemory::LongShortTermMemory(const Shape& new_input_shape,
                                          const string& new_activation_function,
                                          const string& new_recurrent_activation_function,
                                          const string& new_label)
-    : Layer("LongShortTermMemory")
+    : Layer(LayerType::LongShortTermMemory)
 {
     operators = {&lstm_op};
 

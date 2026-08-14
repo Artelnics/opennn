@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/multihead_attention_layer.h"
+#include "opennn/registry.h"
 
 namespace opennn
 {
@@ -16,14 +17,17 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_input_shape,
                                        const string& new_name)
     : MultiHeadAttention(new_input_shape, new_input_shape, new_heads_number, new_name)
 {
+    cross_attention = false;
 }
 
 MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
                                        const Shape& new_source_dimensions,
                                        Index new_heads_number,
                                        const string& new_name)
-    : Layer("MultiHeadAttention")
+    : Layer(LayerType::MultiHeadAttention)
 {
+    cross_attention = true;
+
     operators = {&value_projection, &key_projection, &query_projection,
                  &attention, &output_projection};
 
@@ -236,6 +240,10 @@ void MultiHeadAttention::read_JSON_body(const Json* root_element)
     const Index new_heads_number = read_json_index(root_element, "HeadsNumber");
     const bool  new_use_causal_mask = read_json_bool(root_element, "CausalMask");
 
+    cross_attention = root_element->has("CrossAttention")
+        ? read_json_bool(root_element, "CrossAttention")
+        : new_source_sequence_length != new_input_shape.dim_or_zero(0);
+
     set(new_input_shape.dim_or_zero(0),
         new_source_sequence_length,
         new_input_shape.dim_or_zero(1),
@@ -249,6 +257,7 @@ void MultiHeadAttention::write_JSON_body(JsonWriter& printer) const
 {
     write_json(printer, {
         {"SourceSequenceLength", source_sequence_length},
+        {"CrossAttention", cross_attention},
         {"HeadsNumber", heads_number},
         {"CausalMask", attention.use_causal_mask},
         {"ZeroPaddedQueries", attention.zero_padded_queries}

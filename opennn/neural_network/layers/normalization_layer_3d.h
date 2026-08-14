@@ -34,6 +34,8 @@ public:
     float get_epsilon() const { return layer_normalization.epsilon; }
     void set_epsilon(float new_epsilon) { layer_normalization.epsilon = new_epsilon; }
 
+    Index get_sources_number() const noexcept override { return layer_normalization.fuse_add ? 2 : 1; }
+
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
     bool backward_uses_input(size_t) const noexcept override { return !layer_normalization.fuse_add; }

@@ -8,6 +8,7 @@
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/layers/embedding_layer.h"
+#include "opennn/registry.h"
 
 namespace opennn
 {
@@ -15,7 +16,7 @@ namespace opennn
 Embedding::Embedding(const Shape& new_input_shape,
                      Index new_embedding_dimension,
                      const string& new_label)
-    : Layer("Embedding")
+    : Layer(LayerType::Embedding)
 {
     operators = {&embedding_lookup, &dropout};
     set(new_input_shape[0], new_input_shape[1], new_embedding_dimension, new_label);

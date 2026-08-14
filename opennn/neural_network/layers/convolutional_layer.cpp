@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/convolutional_layer.h"
+#include "opennn/registry.h"
 #include "opennn/core/string_utilities.h"
 
 #ifdef OPENNN_HAS_CUDA
@@ -79,7 +80,7 @@ Convolutional::Convolutional(const Shape& new_input_shape,
                              const string& new_convolution_type,
                              bool new_batch_normalization,
                              const string& new_label)
-    : Layer("Convolutional")
+    : Layer(LayerType::Convolutional)
 {
     operators = {&convolution, &batch_norm, &activation_operator};
 

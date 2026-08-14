@@ -11,8 +11,6 @@
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/core/profiler.h"
 #include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/layers/convolutional_layer.h"
-#include "opennn/neural_network/layers/addition_layer.h"
 #include "opennn/neural_network/layers/tokenizer_layer.h"
 #include "opennn/neural_network/operators/combination_operator.h"
 #include "opennn/core/variable.h"
@@ -29,6 +27,45 @@
 namespace opennn
 {
 
+namespace
+{
+
+void wire_drelu_fusions(vector<unique_ptr<Layer>>& layers,
+                        const vector<vector<Index>>& source_layers,
+                        Device device,
+                        Type training_type)
+{
+    for (auto& layer : layers)
+        if (auto* dense = dynamic_cast<Dense*>(layer.get()))
+            dense->reset_drelu_fusion();
+
+    if (device != Device::CUDA || training_type != Type::FP32)
+        return;
+
+    if (!env_flag_enabled("OPENNN_DRELU_FUSION"))
+        return;
+
+    vector<Index> consumer_count(layers.size(), 0);
+    for (const auto& layer_sources : source_layers)
+        for (Index source : layer_sources)
+            if (source >= 0) ++consumer_count[size_t(source)];
+
+    for (size_t i = 0; i < source_layers.size(); ++i)
+    {
+        const auto& sources = source_layers[i];
+        if (sources.size() != 1 || sources[0] < 0) continue;
+        if (consumer_count[size_t(sources[0])] != 1) continue;
+
+        auto* consumer = dynamic_cast<Dense*>(layers[i].get());
+        auto* producer = dynamic_cast<Dense*>(layers[size_t(sources[0])].get());
+
+        if (consumer && producer)
+            consumer->try_wire_drelu_fusion(*producer);
+    }
+}
+
+}
+
 static void validate_source_indices(const vector<Index>&, Index, Index);
 static void validate_source_arity(const Layer&, const vector<Index>&, Index);
 
@@ -44,6 +81,8 @@ NeuralNetwork::NeuralNetwork(const filesystem::path& file_name)
 
 void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& sources)
 {
+    throw_if(!layer, "NeuralNetwork: cannot add a null layer.");
+
     const Index old_layers_number = get_layers_number() - 1;
 
     if (!layers.empty())
@@ -101,7 +140,7 @@ void NeuralNetwork::compile(Configuration::Resolved new_config)
 
     link_states();
 
-    wire_drelu_fusions();
+    wire_drelu_fusions(layers, source_layers, get_device(), get_training_type());
 }
 
 void NeuralNetwork::clear_low_precision_parameter_storage()
@@ -110,37 +149,6 @@ void NeuralNetwork::clear_low_precision_parameter_storage()
     parameters_bf16_mirror_compact = false;
     parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
     parameters_int8_storage.resize_bytes(0, Device::CUDA);
-}
-
-void NeuralNetwork::wire_drelu_fusions()
-{
-    for (auto& layer : layers)
-        if (auto* dense = dynamic_cast<Dense*>(layer.get()))
-            dense->reset_drelu_fusion();
-
-    if (get_device() != Device::CUDA || get_training_type() != Type::FP32)
-        return;
-
-    if (!env_flag_enabled("OPENNN_DRELU_FUSION"))
-        return;
-
-    vector<Index> consumer_count(layers.size(), 0);
-    for (const auto& layer_sources : source_layers)
-        for (Index s : layer_sources)
-            if (s >= 0) ++consumer_count[size_t(s)];
-
-    for (size_t i = 0; i < source_layers.size(); ++i)
-    {
-        const auto& layer_sources = source_layers[i];
-        if (layer_sources.size() != 1 || layer_sources[0] < 0) continue;
-        if (consumer_count[size_t(layer_sources[0])] != 1) continue;
-
-        auto* consumer = dynamic_cast<Dense*>(layers[i].get());
-        auto* producer = dynamic_cast<Dense*>(layers[size_t(layer_sources[0])].get());
-
-        if (consumer && producer)
-            consumer->try_wire_drelu_fusion(*producer);
-    }
 }
 
 void NeuralNetwork::warn_if_stale_configuration() const
@@ -379,13 +387,11 @@ static void validate_source_arity(const Layer& layer,
                                   const vector<Index>& sources,
                                   Index layer_index)
 {
-    if (const auto* addition = dynamic_cast<const Addition*>(&layer);
-        addition && ssize(sources) != addition->get_sources_number())
-        throw runtime_error(format("NeuralNetwork: Addition layer {} expects {} sources, got {}.", layer_index, addition->get_sources_number(), sources.size()));
+    const Index expected_sources = layer.get_sources_number();
 
-    if (const auto* convolutional = dynamic_cast<const Convolutional*>(&layer);
-        convolutional && convolutional->get_residual() && ssize(sources) != 2)
-        throw runtime_error(format("NeuralNetwork: residual Convolutional layer {} expects 2 sources, got {}.", layer_index, sources.size()));
+    throw_if(ssize(sources) != expected_sources,
+             "NeuralNetwork: {} layer {} expects {} sources, got {}.",
+             layer.get_name(), layer_index, expected_sources, sources.size());
 }
 
 Index NeuralNetwork::get_inputs_number() const
@@ -864,6 +870,8 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
         PROFILE_SCOPE("fwd:" + layers[i]->get_name());
         layers[i]->forward_propagate(forward_propagation, i, is_training);
+
+        forward_propagation.inherit_valid_lengths(size_t(i));
     }
 }
 

@@ -99,7 +99,26 @@ struct ForwardPropagation
     vector<vector<TensorView>> inputs;
     vector<vector<TensorView>> slots;
     vector<tuple<size_t, size_t, size_t>> passthrough_overrides;
-    vector<Index> attention_valid_lengths;
+
+    // Where each sequence in the batch ends, one record per layer, describing
+    // the sequence that layer outputs. Empty means no record: the Embedding
+    // behind that sequence exported none, and whoever needs to tell padding
+    // from data falls back to reading it off the data.
+    //
+    // Per layer rather than one for the whole pass, because a network can carry
+    // more than one sequence at a time. An encoder-decoder holds two, of
+    // different lengths and padded differently, and cross-attention reads the
+    // encoder's while decoder self-attention reads the decoder's. A single
+    // record cannot say which is which, and the two would overwrite each other.
+    vector<vector<Index>> valid_lengths;
+
+    // The record for whatever feeds one of a layer's inputs. Null when that
+    // input carries no record.
+    const vector<Index>* input_valid_lengths(size_t layer, size_t input_ordinal) const;
+
+    // Carries a record forward: a layer that keeps the sequence dimension keeps
+    // its first input's record. Called once per layer, after it has run.
+    void inherit_valid_lengths(size_t layer);
 
     bool use_cuda_graph = false;
     bool cuda_graph_failed = false;

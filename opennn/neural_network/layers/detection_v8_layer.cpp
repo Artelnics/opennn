@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/detection_v8_layer.h"
+#include "opennn/registry.h"
 #include "opennn/core/json.h"
 
 #include "opennn/core/tensor_operations.h"
@@ -117,14 +118,14 @@ void DetectionV8Operator::back_propagate(ForwardPropagation& forward_propagation
 }
 
 DetectionV8::DetectionV8(const Shape& new_input_shape, const string& new_label)
-    : Layer("DetectionV8")
+    : Layer(LayerType::DetectionV8)
 {
     operators = {&detection};
     set(new_input_shape, new_label);
 }
 
 DetectionV8::DetectionV8(const Shape& new_input_shape, Index reg_max, const string& new_label)
-    : Layer("DetectionV8")
+    : Layer(LayerType::DetectionV8)
 {
     operators = {&detection};
     set(new_input_shape, reg_max, new_label);
