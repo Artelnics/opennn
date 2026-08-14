@@ -28,13 +28,13 @@ if(OpenNN_BUILD_EXAMPLES)
 
     set(examples_with_data
         airfoil_self_noise amazon_reviews bert breast_cancer emotion_analysis
-        iris_plant melanoma_cancer mnist translation
+        ecg5000_anomaly_detection iris_plant melanoma_cancer mnist translation
     )
 
     foreach(example IN ITEMS
         airfoil_self_noise amazon_reviews bert breast_cancer emotion_analysis
-        gpt2 qwen3 forecasting_tinyml iris_plant mnist melanoma_cancer translation
-        yolo
+        ecg5000_anomaly_detection forecasting_tinyml gpt2 iris_plant
+        melanoma_cancer mnist qwen3 translation yolo
     )
         if(example IN_LIST examples_with_data)
             opennn_example(${example} COPY_DATA)

@@ -210,6 +210,51 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
     finalize_build(*this);
 }
 
+AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
+                                               const Shape& encoder_dimensions,
+                                               const string& hidden_activation,
+                                               const string& output_activation) : NeuralNetwork()
+{
+    throw_if(input_shape.empty(),
+             "AutoAssociationNetwork: input shape cannot be empty.");
+    throw_if(encoder_dimensions.empty(),
+             "AutoAssociationNetwork: encoder dimensions cannot be empty.");
+
+    add_layer(make_unique<Scaling>(input_shape));
+
+    for (size_t i = 0; i < encoder_dimensions.rank; ++i)
+    {
+        throw_if(encoder_dimensions[i] <= 0,
+                 "AutoAssociationNetwork: encoder dimensions must be positive.");
+
+        const bool bottleneck = i == encoder_dimensions.rank - 1;
+        add_layer(make_unique<Dense>(get_output_shape(),
+                                     Shape{encoder_dimensions[i]},
+                                     hidden_activation,
+                                     false,
+                                     bottleneck ? "bottleneck_layer"
+                                                : format("encoder_layer_{}", i + 1)));
+    }
+
+    Index decoder = 1;
+    for (Index i = Index(encoder_dimensions.rank) - 2; i >= 0; --i, ++decoder)
+        add_layer(make_unique<Dense>(get_output_shape(),
+                                     Shape{encoder_dimensions[i]},
+                                     hidden_activation,
+                                     false,
+                                     format("decoder_layer_{}", decoder)));
+
+    add_layer(make_unique<Dense>(get_output_shape(),
+                                 input_shape,
+                                 output_activation,
+                                 false,
+                                 "output_layer"));
+
+    add_layer(make_unique<Unscaling>(input_shape));
+
+    finalize_build(*this);
+}
+
 #ifndef OPENNN_NO_VISION
 
 ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,

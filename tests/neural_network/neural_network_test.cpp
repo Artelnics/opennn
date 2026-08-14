@@ -75,6 +75,45 @@ TEST(NeuralNetworkTest, AutoAssociationConstructor)
     EXPECT_EQ(neural_network.get_layer(5)->get_name(), "Unscaling");
 }
 
+TEST(NeuralNetworkTest, AutoAssociationSymmetricEncoderConstructor)
+{
+    AutoAssociationNetwork neural_network({140}, {32, 16, 8}, "ReLU", "Sigmoid");
+
+    ASSERT_EQ(neural_network.get_layers_number(), 8);
+    EXPECT_EQ(neural_network.get_input_shape(), Shape({140}));
+    EXPECT_EQ(neural_network.get_output_shape(), Shape({140}));
+
+    const vector<Shape> expected_shapes = {
+        {140}, {32}, {16}, {8}, {16}, {32}, {140}, {140}
+    };
+
+    for (Index i = 0; i < neural_network.get_layers_number(); ++i)
+        EXPECT_EQ(neural_network.get_layer(i)->get_output_shape(), expected_shapes[size_t(i)]);
+
+    EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Dense");
+    EXPECT_EQ(neural_network.get_layer(3)->get_label(), "bottleneck_layer");
+
+    for (Index i = 1; i <= 5; ++i)
+    {
+        const opennn::Dense* dense =
+            dynamic_cast<const opennn::Dense*>(neural_network.get_layer(i).get());
+        ASSERT_NE(dense, nullptr);
+        EXPECT_EQ(dense->get_activation_function(), ActivationFunction::ReLU);
+        EXPECT_TRUE(dense->get_use_bias());
+    }
+
+    const opennn::Dense* output =
+        dynamic_cast<const opennn::Dense*>(neural_network.get_layer(6).get());
+    ASSERT_NE(output, nullptr);
+    EXPECT_EQ(output->get_activation_function(), ActivationFunction::Sigmoid);
+    EXPECT_TRUE(output->get_use_bias());
+}
+
+TEST(NeuralNetworkTest, AutoAssociationSymmetricEncoderRejectsEmptyEncoder)
+{
+    EXPECT_THROW(AutoAssociationNetwork({140}, {}, "ReLU", "Sigmoid"), runtime_error);
+}
+
 TEST(NeuralNetworkTest, ImageClassificationConstructor)
 {
     const Index height = 3;
@@ -138,4 +177,3 @@ TEST(NeuralNetworkTest, CalculateOutputsEmpty)
 
     EXPECT_EQ(outputs.size(), 0);
 }
-

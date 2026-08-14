@@ -2,6 +2,32 @@
 #include "opennn/training_strategy/kernel_losses.cuh"
 
 template<typename T>
+__global__ void mean_absolute_error_gradient_kernel(
+    const int n,
+    T* __restrict__ deltas,
+    const float* __restrict__ targets,
+    const T* __restrict__ outputs,
+    const float scale)
+{
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
+    {
+        const float difference = static_cast<float>(outputs[i]) - targets[i];
+        const float sign = difference > 0.0f ? 1.0f : (difference < 0.0f ? -1.0f : 0.0f);
+        deltas[i] = static_cast<T>(scale * sign);
+    }
+}
+
+template<typename T>
+void mean_absolute_error_gradient_cuda(const Index n,
+                                       T* deltas,
+                                       const float* targets,
+                                       const T* outputs,
+                                       const float scale)
+{
+    launch_elementwise(n, mean_absolute_error_gradient_kernel<T>, deltas, targets, outputs, scale);
+}
+
+template<typename T>
 __global__ void binary_cross_entropy_kernel(const int n, float* __restrict__ term_results, const float* __restrict__ targets, const T* __restrict__ outputs, const float epsilon)
 {
     for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
@@ -724,3 +750,9 @@ void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target
 
 OPENNN_INSTANTIATE_FLOAT_BF16_2(INSTANTIATE2)
 #undef INSTANTIATE2
+
+#define INSTANTIATE(T) \
+    template void mean_absolute_error_gradient_cuda<T>(const Index, T*, const float*, const T*, float);
+
+OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
+#undef INSTANTIATE

@@ -98,6 +98,74 @@ TEST(TestingAnalysis, ErrorDataHistograms)
     EXPECT_EQ(error_data_histograms.size(), 1);
 }
 
+TEST(TestingAnalysis, ReconstructionErrors)
+{
+    MatrixR targets(2, 2);
+    targets << 1.0f, 2.0f,
+               3.0f, 4.0f;
+
+    MatrixR reconstructions(2, 2);
+    reconstructions << 1.0f, 4.0f,
+                       2.0f, 4.0f;
+
+    TestingAnalysis testing_analysis;
+    const VectorR errors = testing_analysis.calculate_reconstruction_errors(targets, reconstructions);
+
+    ASSERT_EQ(errors.size(), 2);
+    EXPECT_FLOAT_EQ(errors(0), 1.0f);
+    EXPECT_FLOAT_EQ(errors(1), 0.5f);
+}
+
+TEST(TestingAnalysis, ReconstructionErrorStatisticsUsePopulationDeviation)
+{
+    VectorR errors(4);
+    errors << 1.0f, 2.0f, 3.0f, 4.0f;
+
+    TestingAnalysis testing_analysis;
+    const TestingAnalysis::ReconstructionErrorStatistics statistics =
+        testing_analysis.calculate_reconstruction_error_statistics(errors);
+
+    EXPECT_FLOAT_EQ(statistics.minimum, 1.0f);
+    EXPECT_FLOAT_EQ(statistics.maximum, 4.0f);
+    EXPECT_FLOAT_EQ(statistics.mean, 2.5f);
+    EXPECT_NEAR(statistics.population_standard_deviation, sqrt(1.25f), 1.0e-6f);
+    EXPECT_NEAR(testing_analysis.calculate_anomaly_threshold(statistics),
+                2.5f + sqrt(1.25f),
+                1.0e-6f);
+}
+
+TEST(TestingAnalysis, AnomalyPredictionIncludesThresholdEquality)
+{
+    VectorR errors(3);
+    errors << 0.9f, 1.0f, 1.1f;
+
+    TestingAnalysis testing_analysis;
+    const VectorI predictions = testing_analysis.calculate_anomaly_predictions(errors, 1.0f);
+
+    ASSERT_EQ(predictions.size(), 3);
+    EXPECT_EQ(predictions(0), 0);
+    EXPECT_EQ(predictions(1), 1);
+    EXPECT_EQ(predictions(2), 1);
+}
+
+TEST(TestingAnalysis, BinaryClassificationTestsFromData)
+{
+    MatrixR targets(4, 1);
+    targets << 1.0f, 1.0f, 0.0f, 0.0f;
+
+    MatrixR predictions(4, 1);
+    predictions << 1.0f, 0.0f, 1.0f, 0.0f;
+
+    TestingAnalysis testing_analysis;
+    const VectorR tests = testing_analysis.calculate_binary_classification_tests(targets, predictions);
+
+    EXPECT_FLOAT_EQ(tests(0), 0.5f);
+    EXPECT_FLOAT_EQ(tests(2), 0.5f);
+    EXPECT_FLOAT_EQ(tests(3), 0.5f);
+    EXPECT_FLOAT_EQ(tests(4), 0.5f);
+    EXPECT_FLOAT_EQ(tests(7), 0.5f);
+}
+
 TEST(TestingAnalysis, Confusion)
 {
     MatrixR actual(4, 3);

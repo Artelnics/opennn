@@ -61,6 +61,20 @@ TEST(Dataset, SampleRoles)
     EXPECT_EQ(ssize(dataset.get_sample_indices("Training")), 10);
 }
 
+TEST(Dataset, GetBatchesIncludesRemainder)
+{
+    TabularDataset dataset(5, { 1 }, { 1 });
+    const vector<Index> sample_indices = { 0, 1, 2, 3, 4 };
+    vector<vector<Index>> batches;
+
+    dataset.get_batches(sample_indices, 2, false, batches);
+
+    ASSERT_EQ(batches.size(), 3);
+    EXPECT_EQ(batches[0], (vector<Index>{ 0, 1 }));
+    EXPECT_EQ(batches[1], (vector<Index>{ 2, 3 }));
+    EXPECT_EQ(batches[2], (vector<Index>{ 4 }));
+}
+
 TEST(Dataset, SetSampleRoleIndividual)
 {
     TabularDataset tabular(10, { 2 }, { 1 });

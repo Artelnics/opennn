@@ -279,6 +279,71 @@ VectorR TestingAnalysis::calculate_errors(const string& sample_role) const
     return calculate_errors(targets, outputs);
 }
 
+VectorR TestingAnalysis::calculate_reconstruction_errors(const MatrixR& targets,
+                                                         const MatrixR& reconstructions) const
+{
+    throw_if(targets.rows() == 0 || targets.cols() == 0,
+             "TestingAnalysis::calculate_reconstruction_errors: matrices cannot be empty.");
+    throw_if(targets.rows() != reconstructions.rows() || targets.cols() != reconstructions.cols(),
+             "TestingAnalysis::calculate_reconstruction_errors: target and reconstruction shapes must match.");
+    throw_if(!targets.array().isFinite().all() || !reconstructions.array().isFinite().all(),
+             "TestingAnalysis::calculate_reconstruction_errors: matrices must contain finite values.");
+
+    return (targets - reconstructions).array().abs().rowwise().mean();
+}
+
+VectorR TestingAnalysis::calculate_reconstruction_errors(const string& sample_role) const
+{
+    const auto [targets, reconstructions] = get_targets_and_outputs(sample_role);
+    return calculate_reconstruction_errors(targets, reconstructions);
+}
+
+TestingAnalysis::ReconstructionErrorStatistics
+TestingAnalysis::calculate_reconstruction_error_statistics(const VectorR& errors) const
+{
+    throw_if(errors.size() == 0,
+             "TestingAnalysis::calculate_reconstruction_error_statistics: errors cannot be empty.");
+    throw_if(!errors.array().isFinite().all(),
+             "TestingAnalysis::calculate_reconstruction_error_statistics: errors must be finite.");
+
+    ReconstructionErrorStatistics statistics;
+    statistics.minimum = errors.minCoeff();
+    statistics.maximum = errors.maxCoeff();
+
+    const auto errors_double = errors.cast<double>();
+    const double mean = errors_double.mean();
+    const double variance = (errors_double.array() - mean).square().mean();
+
+    statistics.mean = static_cast<float>(mean);
+    statistics.population_standard_deviation = static_cast<float>(sqrt(variance));
+
+    return statistics;
+}
+
+float TestingAnalysis::calculate_anomaly_threshold(
+    const ReconstructionErrorStatistics& statistics,
+    const float standard_deviations) const
+{
+    throw_if(standard_deviations < 0.0f,
+             "TestingAnalysis::calculate_anomaly_threshold: standard deviations cannot be negative.");
+    throw_if(!isfinite(statistics.mean)
+             || !isfinite(statistics.population_standard_deviation),
+             "TestingAnalysis::calculate_anomaly_threshold: statistics must be finite.");
+
+    return statistics.mean + standard_deviations * statistics.population_standard_deviation;
+}
+
+VectorI TestingAnalysis::calculate_anomaly_predictions(const VectorR& errors,
+                                                       const float threshold) const
+{
+    throw_if(!isfinite(threshold),
+             "TestingAnalysis::calculate_anomaly_predictions: threshold must be finite.");
+    throw_if(!errors.array().isFinite().all(),
+             "TestingAnalysis::calculate_anomaly_predictions: errors must be finite.");
+
+    return (errors.array() >= threshold).cast<Index>().matrix();
+}
+
 VectorR TestingAnalysis::calculate_classification_errors(const string& sample_role, const bool binary) const
 {
     const auto [targets, outputs] = get_targets_and_outputs(sample_role);
@@ -722,7 +787,15 @@ Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates(cons
 
 VectorR TestingAnalysis::calculate_binary_classification_tests(const float decision_threshold) const
 {
-    const MatrixI confusion = calculate_confusion(decision_threshold);
+    const auto [targets, outputs] = get_targets_and_outputs("Testing");
+    return calculate_binary_classification_tests(targets, outputs, decision_threshold);
+}
+
+VectorR TestingAnalysis::calculate_binary_classification_tests(const MatrixR& targets,
+                                                               const MatrixR& outputs,
+                                                               const float decision_threshold) const
+{
+    const MatrixI confusion = calculate_confusion(targets, outputs, decision_threshold);
 
     const Index true_positive = confusion(0,0);
     const Index false_positive = confusion(1,0);

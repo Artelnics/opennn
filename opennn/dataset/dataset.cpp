@@ -97,7 +97,7 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
     if (batch_size <= 0 || batch_size > samples_number)
         batch_size = samples_number;
 
-    const Index batches_number = samples_number / batch_size;
+    const Index batches_number = (samples_number + batch_size - 1) / batch_size;
 
     if (ssize(batches) != batches_number)
         batches.resize(batches_number);
@@ -116,8 +116,9 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
     for (Index i = 0; i < batches_number; ++i)
     {
         const Index start = i * batch_size;
+        const Index end = min(start + batch_size, samples_number);
 
-        batches[i].assign(indices.begin() + start, indices.begin() + start + batch_size);
+        batches[i].assign(indices.begin() + start, indices.begin() + end);
     }
 }
 

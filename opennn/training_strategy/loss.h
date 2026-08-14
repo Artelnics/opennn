@@ -25,6 +25,7 @@ class Loss
 public:
 
     enum class Error{MeanSquaredError,
+                     MeanAbsoluteError,
                      NormalizedSquaredError,
                      WeightedSquaredError,
                      CrossEntropy,

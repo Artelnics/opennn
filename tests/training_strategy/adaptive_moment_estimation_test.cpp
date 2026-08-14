@@ -205,6 +205,30 @@ TEST_F(AdaptiveMomentEstimationTest, TrainApproximationCPU)
     EXPECT_LT(error_long, error_short);
 }
 
+TEST_F(AdaptiveMomentEstimationTest, TrainsRemainderBatchCPU)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    TabularDataset dataset(5, { 2 }, { 1 });
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    ApproximationNetwork network({ 2 }, { 3 }, { 1 });
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    AdaptiveMomentEstimation adam(&loss);
+    adam.set_batch_size(2);
+    adam.set_maximum_epochs(0);
+    adam.set_display(false);
+
+    Index batches_processed = 0;
+    adam.post_batch_callback = [&](NeuralNetwork*) { ++batches_processed; };
+
+    EXPECT_TRUE(isfinite(adam.train().get_training_error()));
+    EXPECT_EQ(batches_processed, 3);
+}
+
 #ifdef OPENNN_HAS_CUDA
 TEST_F(AdaptiveMomentEstimationTest, TrainApproximationGPU)
 {
@@ -235,6 +259,31 @@ TEST_F(AdaptiveMomentEstimationTest, TrainApproximationGPU)
     const type error_long = adam_long.train().get_training_error();
 
     EXPECT_LT(error_long, error_short);
+}
+
+TEST_F(AdaptiveMomentEstimationTest, TrainsRemainderBatchGPU)
+{
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    TabularDataset dataset(5, { 2 }, { 1 });
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    ApproximationNetwork network({ 2 }, { 3 }, { 1 });
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    AdaptiveMomentEstimation adam(&loss);
+    adam.set_batch_size(2);
+    adam.set_cuda_graph(true);
+    adam.set_maximum_epochs(0);
+    adam.set_display(false);
+
+    Index batches_processed = 0;
+    adam.post_batch_callback = [&](NeuralNetwork*) { ++batches_processed; };
+
+    EXPECT_TRUE(isfinite(adam.train().get_training_error()));
+    EXPECT_EQ(batches_processed, 3);
 }
 
 TEST_F(AdaptiveMomentEstimationTest, CudaGraphGroupedHostStagingReplay)

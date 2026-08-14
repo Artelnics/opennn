@@ -65,6 +65,11 @@ public:
     AutoAssociationNetwork(const Shape&,
                            const Shape&,
                            const Shape&);
+
+    AutoAssociationNetwork(const Shape&,
+                           const Shape&,
+                           const string&,
+                           const string&);
 };
 
 #ifndef OPENNN_NO_VISION

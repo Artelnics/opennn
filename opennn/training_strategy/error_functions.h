@@ -16,6 +16,9 @@ namespace opennn
 void mean_squared_error(const TensorView&, const TensorView&, float&, float*);
 void mean_squared_error_gradient(const TensorView&, const TensorView&, const TensorView&);
 
+void mean_absolute_error(const TensorView&, const TensorView&, float&, float*);
+void mean_absolute_error_gradient(const TensorView&, const TensorView&, const TensorView&);
+
 void normalized_squared_error(const TensorView&, const TensorView&, float, float&, float*);
 void normalized_squared_error_gradient(const TensorView&, const TensorView&, float, const TensorView&);
 

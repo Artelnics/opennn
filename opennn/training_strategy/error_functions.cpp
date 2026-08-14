@@ -87,6 +87,14 @@ template<typename T>
 static void weighted_squared_error_cuda(Index, float*, const float*, const T*, float, float)
 { throw runtime_error("weighted_squared_error_cuda requires CUDA support."); }
 
+template<typename TIn, typename TOut>
+static void scaled_diff_cuda_typed(Index, const TIn*, const float*, float, TOut*)
+{ throw runtime_error("scaled_diff_cuda_typed requires CUDA support."); }
+
+template<typename T>
+static void mean_absolute_error_gradient_cuda(Index, T*, const float*, const T*, float)
+{ throw runtime_error("mean_absolute_error_gradient_cuda requires CUDA support."); }
+
 template<typename T>
 static void weighted_squared_error_gradient_cuda(Index, T*, const float*, const T*, float, float, float)
 { throw runtime_error("weighted_squared_error_gradient_cuda requires CUDA support."); }
@@ -138,6 +146,58 @@ void mean_squared_error_gradient(const TensorView& input, const TensorView& targ
         return;
     }
     input_delta.as_vector().noalias() = (input.as_vector() - target.as_vector()) / to_type(batch_size);
+}
+
+void mean_absolute_error(const TensorView& input,
+                         const TensorView& target,
+                         float& error,
+                         float* workspace_device)
+{
+    throw_if(input.shape != target.shape,
+             "mean_absolute_error: input and target shapes must match.");
+
+    if (input.empty())
+    {
+        error = 0.0f;
+        return;
+    }
+
+    if (input.is_cuda())
+    {
+        input.dispatch([&]<typename TIn>()
+        {
+            scaled_diff_cuda_typed<TIn, float>(input.size(), input.as<TIn>(), target.as_float(),
+                                               1.0f, workspace_device);
+        });
+        error = sum_abs_cuda(workspace_device, input.size()) / to_type(input.size());
+        return;
+    }
+
+    error = (input.as_vector() - target.as_vector()).array().abs().mean();
+}
+
+void mean_absolute_error_gradient(const TensorView& input,
+                                  const TensorView& target,
+                                  const TensorView& input_delta)
+{
+    throw_if(input.shape != target.shape || input.shape != input_delta.shape,
+             "mean_absolute_error_gradient: input, target and delta shapes must match.");
+
+    if (input.empty()) return;
+
+    const float scale = 1.0f / to_type(input.size());
+
+    if (input.is_cuda())
+    {
+        input.dispatch([&]<typename T>()
+        {
+            mean_absolute_error_gradient_cuda<T>(input.size(), input_delta.as<T>(),
+                                                 target.as<float>(), input.as<T>(), scale);
+        });
+        return;
+    }
+
+    input_delta.as_vector().array() = scale * (input.as_vector() - target.as_vector()).array().sign();
 }
 
 void normalized_squared_error(const TensorView& input, const TensorView& target, float coefficient, float& error,

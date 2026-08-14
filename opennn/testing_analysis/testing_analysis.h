@@ -64,6 +64,15 @@ public:
 
         vector<Index> true_negatives_indices;
     };
+
+    struct ReconstructionErrorStatistics
+    {
+        float minimum = 0.0f;
+        float maximum = 0.0f;
+        float mean = 0.0f;
+        float population_standard_deviation = 0.0f;
+    };
+
     const NeuralNetwork* get_neural_network() const { return neural_network; }
     const Dataset* get_dataset() const { return dataset; }
     void set_neural_network(NeuralNetwork* new_neural_network) { neural_network = new_neural_network; }
@@ -90,6 +99,13 @@ public:
     Tensor<GoodnessOfFitAnalysis, 1> perform_goodness_of_fit_analysis() const;
     void print_goodness_of_fit_analysis() const;
     VectorR calculate_binary_classification_tests(const float = 0.50) const;
+    VectorR calculate_binary_classification_tests(const MatrixR&, const MatrixR&, float = 0.50) const;
+
+    VectorR calculate_reconstruction_errors(const MatrixR&, const MatrixR&) const;
+    VectorR calculate_reconstruction_errors(const string&) const;
+    ReconstructionErrorStatistics calculate_reconstruction_error_statistics(const VectorR&) const;
+    float calculate_anomaly_threshold(const ReconstructionErrorStatistics&, float = 1.0f) const;
+    VectorI calculate_anomaly_predictions(const VectorR&, float) const;
 
     void print_binary_classification_tests() const;
     MatrixI calculate_confusion(const MatrixR&, const MatrixR&, float = 0.50) const;

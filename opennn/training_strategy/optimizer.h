@@ -189,10 +189,6 @@ protected:
                                bool, bool, bool,
                                float) const;
 
-    void warn_dropped_samples(Index,
-                              Index,
-                              const char*) const;
-
     void setup_batch_pools(BatchPools&,
                            Dataset&,
                            NeuralNetwork&,

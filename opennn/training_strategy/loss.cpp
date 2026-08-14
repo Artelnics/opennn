@@ -1441,6 +1441,9 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
     case MeanSquaredError:
         mean_squared_error(input, target, result.error, workspace_device);
         break;
+    case MeanAbsoluteError:
+        mean_absolute_error(input, target, result.error, workspace_device);
+        break;
     case NormalizedSquaredError:
         normalized_squared_error(input, target, normalization_coefficient, result.error, workspace_device);
         break;
@@ -1531,6 +1534,15 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     using enum Error;
     switch (error)
     {
+    case MeanAbsoluteError:
+        input.dispatch([&]<typename TIn>()
+        {
+            scaled_diff_cuda_typed<TIn, float>(input.size(), input.as<TIn>(), target.as_float(),
+                                               1.0f, workspace);
+        });
+        reduce_abs_and_accumulate(input.size(), 1.0f / static_cast<float>(input.size()));
+        return true;
+
     case MeanSquaredError:
     case NormalizedSquaredError:
         input.dispatch([&]<typename TIn>()
@@ -1680,6 +1692,9 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
     case MeanSquaredError:
         mean_squared_error_gradient(input, target, input_delta);
         break;
+    case MeanAbsoluteError:
+        mean_absolute_error_gradient(input, target, input_delta);
+        break;
     case NormalizedSquaredError:
         normalized_squared_error_gradient(input, target, normalization_coefficient, input_delta);
         break;
@@ -1781,6 +1796,7 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
 
 static const vector<pair<Loss::Error, string>> error_entries = {
     {Loss::Error::MeanSquaredError,       "MeanSquaredError"},
+    {Loss::Error::MeanAbsoluteError,      "MeanAbsoluteError"},
     {Loss::Error::NormalizedSquaredError, "NormalizedSquaredError"},
     {Loss::Error::WeightedSquaredError,   "WeightedSquaredError"},
     {Loss::Error::CrossEntropy,           "CrossEntropy"},

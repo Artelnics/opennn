@@ -10,6 +10,9 @@ void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target
                             float scale, TOut* output);
 
 template<typename T>
+void mean_absolute_error_gradient_cuda(const Index, T*, const float*, const T*, float);
+
+template<typename T>
 void binary_cross_entropy_cuda(const Index, float*, const float*, const T*, const float);
 
 template<typename T>

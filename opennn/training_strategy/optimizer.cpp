@@ -201,24 +201,6 @@ void Optimizer::load(const filesystem::path& file_name)
     from_JSON(load_json_file(file_name));
 }
 
-void Optimizer::warn_dropped_samples(Index batch_size,
-                                      Index samples_number,
-                                      const char* context) const
-{
-    if (!display
-        || batch_size <= 0
-        || samples_number <= 0
-        || batch_size >= samples_number
-        || samples_number % batch_size == 0)
-        return;
-
-    const Index lost = samples_number % batch_size;
-    cout << format("Warning: {} batch_size {} does not divide {} samples. "
-                   "{} sample(s) ({:.2f} % of total) dropped per epoch.\n",
-                   context, batch_size, samples_number,
-                   lost, 100.0 * double(lost) / double(samples_number));
-}
-
 void Optimizer::setup_batch_pools(BatchPools& pools,
                                   Dataset& dataset,
                                   NeuralNetwork& neural_network,
@@ -865,6 +847,8 @@ void Optimizer::warmup_device_training(
     };
 
     const vector<vector<Index>> training_warmup_batch{training_batches.front()};
+    const function<void(NeuralNetwork*)> saved_post_batch_callback = post_batch_callback;
+    post_batch_callback = {};
 
     try
     {
@@ -897,10 +881,12 @@ void Optimizer::warmup_device_training(
                     optimizer_data);
 
         restore_pre_warmup_state();
+        post_batch_callback = saved_post_batch_callback;
     }
     catch(...)
     {
         restore_pre_warmup_state();
+        post_batch_callback = saved_post_batch_callback;
         throw;
     }
 }
@@ -977,12 +963,8 @@ TrainingResult Optimizer::train()
         ? validation_samples_number
         : effective_batch_size;
     const Index training_batches_number = (training_batch_size > 0)
-        ? training_samples_number / training_batch_size
+        ? (training_samples_number + training_batch_size - 1) / training_batch_size
         : 0;
-
-    warn_dropped_samples(training_batch_size, training_samples_number, "training");
-    if (has_validation)
-        warn_dropped_samples(validation_batch_size, validation_samples_number, "validation");
 
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> validation_batches;
@@ -1071,14 +1053,22 @@ TrainingResult Optimizer::train()
                                has_validation ? &validation_batches : nullptr);
     }
 
-    training_session.cuda_graph_capture_allowed = training_session.has_graph_batches();
+    const bool has_training_tail = training_batch_size > 0
+        && training_samples_number % training_batch_size != 0;
+    const bool has_validation_tail = has_validation
+        && validation_batch_size > 0
+        && validation_samples_number % validation_batch_size != 0;
+
+    training_session.cuda_graph_capture_allowed = training_session.has_graph_batches()
+        && !has_training_tail;
 
     time_t beginning_time;
     time(&beginning_time);
     float elapsed_time = 0.0f;
 
     {
-        device::CudaAllocationGrowthGuard steady_state_guard(needs_cuda_warmup);
+        device::CudaAllocationGrowthGuard steady_state_guard(
+            needs_cuda_warmup && !has_training_tail && !has_validation_tail);
 
         // Shuffling and slicing 10M+ sample indices costs a visible fraction of a
         // fast GPU epoch, so the next epoch's batches are built on a helper thread
@@ -1955,13 +1945,22 @@ Loss::EvaluationResult Optimizer::train_epoch(
     Loss::EvaluationResult epoch_result;
 
     NeuralNetwork* neural_network = loss->get_neural_network();
-    const Index batches_number = Index(batches.size());
+    const Index all_batches_number = Index(batches.size());
 
-    if(batches_number == 0) return epoch_result;
+    if(all_batches_number == 0) return epoch_result;
+
+    const bool has_tail = Index(batches.back().size()) != forward_propagation.batch_size;
+    vector<vector<Index>> complete_batches;
+    if(has_tail)
+        complete_batches.assign(batches.begin(), batches.end() - 1);
+
+    const vector<vector<Index>>& epoch_batches = has_tail ? complete_batches : batches;
+    const Index batches_number = Index(epoch_batches.size());
 
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
     const bool on_gpu = neural_network->is_gpu();
-    const bool use_graph_batches = training_session.has_graph_batches();
+    const bool use_graph_batches = training_session.cuda_graph_capture_allowed
+        && training_session.has_graph_batches();
 
     static const bool profile_this = env_flag_enabled("OPENNN_PROFILE");
 
@@ -1985,6 +1984,94 @@ Loss::EvaluationResult Optimizer::train_epoch(
         back_propagation.metrics.loss_value = result.error + back_propagation.metrics.regularization;
     };
 
+    const auto train_tail = [&]
+    {
+        Loss::EvaluationResult result;
+        if(!has_tail) return result;
+
+        const vector<Index>& sample_indices = batches.back();
+        const Index tail_size = Index(sample_indices.size());
+
+        Batch batch(tail_size, loss->get_dataset(), neural_network->get_config());
+        batch.fill(sample_indices,
+                   input_feature_indices,
+                   decoder_feature_indices,
+                   target_feature_indices,
+                   FillMode::Training);
+
+        if(on_gpu)
+        {
+            prefetch_batch(batch);
+            batch.wait_h2d_on_compute_stream();
+        }
+
+        const vector<MemoryPoolEntry> delta_lifetimes =
+            BackPropagation::make_co_planned_lifetimes(*loss, tail_size);
+        ForwardPropagation tail_forward_propagation(
+            tail_size,
+            neural_network,
+            ForwardPropagationMode::Training,
+            {},
+            false,
+            delta_lifetimes);
+        BackPropagation tail_back_propagation(
+            tail_size,
+            *loss,
+            &tail_forward_propagation.arena,
+            tail_forward_propagation.co_planned_offsets);
+
+        neural_network->forward_propagate(batch.get_inputs(),
+                                          tail_forward_propagation,
+                                          true);
+        loss->back_propagate(batch,
+                             tail_forward_propagation,
+                             tail_back_propagation);
+
+        if(!std::isnan(tail_back_propagation.metrics.error))
+        {
+            result.error = tail_back_propagation.metrics.error;
+            result.accuracy = tail_back_propagation.metrics.accuracy;
+            result.active_tokens_count = tail_back_propagation.metrics.active_tokens_count;
+            update_parameters(tail_back_propagation, optimizer_data);
+        }
+
+        if(post_batch_callback)
+            post_batch_callback(neural_network);
+
+        if(on_gpu)
+            device::synchronize(Backend::get_compute_stream());
+
+        // Constructing a BackPropagation links every layer's gradient view to
+        // its buffer. Restore those views before the temporary tail context dies.
+        back_propagation.set(forward_propagation.batch_size,
+                             *loss,
+                             &forward_propagation.arena,
+                             forward_propagation.co_planned_offsets);
+
+        return result;
+    };
+
+    const auto merge_tail = [&](Loss::EvaluationResult& result)
+    {
+        if(!has_tail) return;
+
+        const Loss::EvaluationResult tail_result = train_tail();
+        const Index complete_samples = batches_number * forward_propagation.batch_size;
+        const Index tail_samples = Index(batches.back().size());
+        const float total_samples = float(complete_samples + tail_samples);
+
+        result.error = (result.error * float(complete_samples)
+                        + tail_result.error * float(tail_samples)) / total_samples;
+        if(tracks_accuracy)
+            result.accuracy = (result.accuracy * float(complete_samples)
+                               + tail_result.accuracy * float(tail_samples)) / total_samples;
+        result.active_tokens_count += tail_result.active_tokens_count;
+
+        back_propagation.metrics.error = result.error;
+        back_propagation.metrics.accuracy = result.accuracy;
+        back_propagation.metrics.active_tokens_count = result.active_tokens_count;
+    };
+
     if(!on_gpu)
     {
         Batch* batch = empty_queue.pop();
@@ -1993,7 +2080,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
         {
             {
                 PROFILE_SCOPE_HOST("step:fill");
-                batch->fill(batches[size_t(iteration)],
+                batch->fill(epoch_batches[size_t(iteration)],
                             input_feature_indices,
                             decoder_feature_indices,
                             target_feature_indices,
@@ -2024,6 +2111,9 @@ Loss::EvaluationResult Optimizer::train_epoch(
                     update_parameters(back_propagation, optimizer_data);
                 }
             }
+
+            if(post_batch_callback)
+                post_batch_callback(neural_network);
         }
 
         empty_queue.push(batch);
@@ -2031,6 +2121,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
         epoch_result =
             average_epoch_metrics(epoch_result, batches_number, tracks_accuracy);
 
+        merge_tail(epoch_result);
         finalize_epoch(epoch_result);
 
         if(profile_this)
@@ -2046,11 +2137,12 @@ Loss::EvaluationResult Optimizer::train_epoch(
                                        forward_propagation,
                                        back_propagation,
                                        empty_queue,
-                                       batches,
+                                       epoch_batches,
                                        input_feature_indices,
                                        decoder_feature_indices,
                                        target_feature_indices);
 
+        merge_tail(epoch_result);
         finalize_epoch(epoch_result);
         return epoch_result;
     }
@@ -2064,7 +2156,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
     EpochLoopContext context{
         &empty_queue,
-        &batches,
+        &epoch_batches,
         &input_feature_indices,
         &decoder_feature_indices,
         &target_feature_indices,
@@ -2129,7 +2221,8 @@ Loss::EvaluationResult Optimizer::train_epoch(
             post_batch_callback(neural_network);
     };
 
-    epoch_result = run_epoch_loop(context);
+    if(batches_number > 0)
+        epoch_result = run_epoch_loop(context);
 
     if(use_device_metrics)
         epoch_result = device_metrics.read();
@@ -2143,6 +2236,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
         back_propagation.metrics.accuracy = epoch_result.accuracy;
     }
 
+    merge_tail(epoch_result);
     finalize_epoch(epoch_result);
 
     if(profile_this)
@@ -2167,19 +2261,83 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     Loss::EvaluationResult epoch_result;
 
     NeuralNetwork* neural_network = loss->get_neural_network();
-    const Index batches_number = Index(batches.size());
+    const Index all_batches_number = Index(batches.size());
 
-    if(batches_number == 0) return epoch_result;
+    if(all_batches_number == 0) return epoch_result;
+
+    const bool has_tail = Index(batches.back().size()) != forward_propagation.batch_size;
+    vector<vector<Index>> complete_batches;
+    if(has_tail)
+        complete_batches.assign(batches.begin(), batches.end() - 1);
+
+    const vector<vector<Index>>& epoch_batches = has_tail ? complete_batches : batches;
+    const Index batches_number = Index(epoch_batches.size());
 
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
+    const bool on_gpu = neural_network->is_gpu();
 
-    if(!neural_network->is_gpu())
+    const auto evaluate_tail = [&]
+    {
+        Loss::EvaluationResult result;
+        if(!has_tail) return result;
+
+        const vector<Index>& sample_indices = batches.back();
+        const Index tail_size = Index(sample_indices.size());
+
+        Batch batch(tail_size, loss->get_dataset(), neural_network->get_config());
+        batch.fill(sample_indices,
+                   input_feature_indices,
+                   decoder_feature_indices,
+                   target_feature_indices,
+                   FillMode::Validation);
+
+        if(on_gpu)
+        {
+            prefetch_batch(batch);
+            batch.wait_h2d_on_compute_stream();
+        }
+
+        ForwardPropagation tail_forward_propagation(
+            tail_size,
+            neural_network,
+            ForwardPropagationMode::Inference,
+            {},
+            true);
+        neural_network->forward_propagate(batch.get_inputs(),
+                                          tail_forward_propagation,
+                                          false);
+        result = loss->calculate_error(batch, tail_forward_propagation);
+
+        if(on_gpu)
+            device::synchronize(Backend::get_compute_stream());
+
+        return result;
+    };
+
+    const auto merge_tail = [&](Loss::EvaluationResult& result)
+    {
+        if(!has_tail) return;
+
+        const Loss::EvaluationResult tail_result = evaluate_tail();
+        const Index complete_samples = batches_number * forward_propagation.batch_size;
+        const Index tail_samples = Index(batches.back().size());
+        const float total_samples = float(complete_samples + tail_samples);
+
+        result.error = (result.error * float(complete_samples)
+                        + tail_result.error * float(tail_samples)) / total_samples;
+        if(tracks_accuracy)
+            result.accuracy = (result.accuracy * float(complete_samples)
+                               + tail_result.accuracy * float(tail_samples)) / total_samples;
+        result.active_tokens_count += tail_result.active_tokens_count;
+    };
+
+    if(!on_gpu)
     {
         Batch* batch = empty_queue.pop();
 
         for(Index iteration = 0; iteration < batches_number; ++iteration)
         {
-            batch->fill(batches[size_t(iteration)],
+            batch->fill(epoch_batches[size_t(iteration)],
                         input_feature_indices,
                         decoder_feature_indices,
                         target_feature_indices,
@@ -2200,9 +2358,11 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
         empty_queue.push(batch);
 
-        return average_epoch_metrics(epoch_result,
-                                     batches_number,
-                                     tracks_accuracy);
+        epoch_result = average_epoch_metrics(epoch_result,
+                                             batches_number,
+                                             tracks_accuracy);
+        merge_tail(epoch_result);
+        return epoch_result;
     }
 
     const bool use_device_metrics = loss->supports_device_epoch_metrics();
@@ -2214,7 +2374,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
     EpochLoopContext context{
         &empty_queue,
-        &batches,
+        &epoch_batches,
         &input_feature_indices,
         &decoder_feature_indices,
         &target_feature_indices,
@@ -2251,14 +2411,17 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
             result.accuracy += evaluation.accuracy;
     };
 
-    epoch_result = run_epoch_loop(context);
+    if(batches_number > 0)
+        epoch_result = run_epoch_loop(context);
 
     if(use_device_metrics)
         epoch_result = device_metrics.read();
 
-    return average_epoch_metrics(epoch_result,
-                                 batches_number,
-                                 tracks_accuracy);
+    epoch_result = average_epoch_metrics(epoch_result,
+                                         batches_number,
+                                         tracks_accuracy);
+    merge_tail(epoch_result);
+    return epoch_result;
 }
 
 }
