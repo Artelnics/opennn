@@ -40,6 +40,9 @@ if(OPENNN_HAS_CUDA)
     add_executable(opennn_transformer_resident
         throughput/attention-speed/opennn_transformer_resident.cpp)
 
+    add_executable(opennn_qwen3_resident
+        throughput/attention-speed/opennn_qwen3_resident.cpp)
+
     add_executable(opennn_transformer_train
         throughput/attention-speed/opennn_transformer_train.cpp)
 
@@ -89,6 +92,7 @@ set(_benchmark_targets
 if(OPENNN_HAS_CUDA)
     list(APPEND _benchmark_targets
         opennn_transformer_resident
+        opennn_qwen3_resident
         opennn_transformer_train
         opennn_transformer_maxbatch_trial
         opennn_transformer_energy)
