@@ -106,6 +106,105 @@ TEST(Transformer, EveryAttentionLayerKnowsWhereItsSourceSequenceEnds)
     Configuration::instance().set();
 }
 
+// The lengths reaching every attention layer is plumbing; this is the outcome.
+// If the encoder's padding is masked exactly, then padding it is a no-op: the
+// same tokens through an encoder sized to hold them, and through one sized
+// larger with the remainder padded, have to produce the same answer. Nothing
+// else tests cross-attention, whose queries and keys have different lengths and
+// come from different sequences, and which reads encoder states no zero-row
+// scan could describe once a normalization has shifted them.
+TEST(Transformer, EncoderPaddingDoesNotChangeTheOutput)
+{
+    const Index batch = 1;
+    const Index padded_length = 8;
+    const Index exact_length = 3;
+    const Index decoder_sequence_length = 4;
+    const Index vocabulary_size = 32;
+    const Index embedding_dimension = 16;
+    const Index heads_number = 2;
+    const Index feed_forward_dimension = 32;
+    const Index layers_number = 2;
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    const auto build = [&](const Index input_sequence_length)
+    {
+        auto network = make_unique<Transformer>(input_sequence_length, decoder_sequence_length,
+                                                vocabulary_size, vocabulary_size,
+                                                embedding_dimension, heads_number,
+                                                feed_forward_dimension, layers_number);
+
+        // Off-zero shifts, as training leaves them: the state in which the
+        // padded rows stop being recognisable as padding.
+        for (Index i = 0; i < network->get_layers_number(); ++i)
+        {
+            auto& layer = network->get_layer(i);
+            if (layer->get_name() != "Normalization3d") continue;
+
+            auto views = layer->get_parameter_views();
+            if (views.size() > 1) views[1].as_vector().setConstant(0.25f);
+        }
+
+        return network;
+    };
+
+    const auto padded_network = build(padded_length);
+    const auto exact_network  = build(exact_length);
+
+    padded_network->set_parameters_random();
+
+    // The sinusoidal positional encoding is computed per position rather than
+    // stored, so shortening the encoder does not change what any parameter
+    // means, and the two networks take the same vector.
+    const VectorR parameters = padded_network->get_parameters_map();
+    ASSERT_EQ(parameters.size(), exact_network->get_parameters_map().size());
+    exact_network->set_parameters(parameters);
+
+    const auto token = [&](const Index position) { return float(1 + position % (vocabulary_size - 1)); };
+
+    MatrixR decoder_ids(batch, decoder_sequence_length);
+    for (Index s = 0; s < decoder_sequence_length; ++s) decoder_ids(0, s) = token(s + 5);
+
+    MatrixR padded_ids(batch, padded_length);
+    for (Index s = 0; s < padded_length; ++s)
+        padded_ids(0, s) = s < exact_length ? token(s) : 0.0f;
+
+    MatrixR exact_ids(batch, exact_length);
+    for (Index s = 0; s < exact_length; ++s) exact_ids(0, s) = token(s);
+
+    const auto outputs_of = [&](Transformer& network, MatrixR& encoder_ids, const Index length)
+    {
+        ForwardPropagation forward_propagation(batch, &network);
+        vector<TensorView> inputs{
+            TensorView(decoder_ids.data(), {batch, decoder_sequence_length}),
+            TensorView(encoder_ids.data(), {batch, length})};
+
+        network.forward_propagate(inputs, forward_propagation, false);
+
+        const TensorView output = forward_propagation.get_outputs();
+        return VectorR(Map<const VectorR>(output.as<type>(), output.size()));
+    };
+
+    const VectorR padded_outputs = outputs_of(*padded_network, padded_ids, padded_length);
+    const VectorR exact_outputs  = outputs_of(*exact_network,  exact_ids,  exact_length);
+
+    ASSERT_EQ(padded_outputs.size(), exact_outputs.size());
+
+    // Measured with the encoder's exported lengths withheld, so that the five
+    // padded rows are attended over rather than masked: 7.5e-4, against the
+    // 1e-4 here. A modest margin, and worth knowing it is modest -- the padded
+    // rows all carry the same normalization bias, so what they add to the
+    // attention output is small and uniform rather than obviously wrong. This
+    // is a bug that hides in the fourth decimal place, not one that announces
+    // itself.
+    const type difference = (padded_outputs - exact_outputs).array().abs().maxCoeff();
+    const type scale = max(type(1), exact_outputs.array().abs().maxCoeff());
+
+    EXPECT_LT(difference / scale, type(1.0e-4));
+
+    Configuration::instance().set();
+}
+
 TEST(Transformer, GeneralConstructor)
 {
     const Index input_sequence_length = 5;
