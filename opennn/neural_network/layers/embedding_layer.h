@@ -34,6 +34,13 @@ public:
 
     vector<TensorSpec> get_backward_specs(Index) const override { return {}; }
 
+    LayerGraphFeatures get_exported_graph_features() const noexcept override
+    {
+        return embedding_lookup.export_valid_lengths
+            ? graph_feature(LayerGraphFeature::AttentionValidLengths)
+            : 0;
+    }
+
     void set(Index = 0,
              Index = 0,
              Index = 0,

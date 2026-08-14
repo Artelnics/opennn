@@ -60,6 +60,7 @@ public:
     void apply_input_shape(const Shape&) override;
     void set_output_shape(const Shape&) override;
     void on_compute_dtype_changed() override { configure_operators(); }
+    void configure_graph(const LayerGraphContext&) override;
 
     void set_activation_function(const string&);
     void set_batch_normalization(bool);

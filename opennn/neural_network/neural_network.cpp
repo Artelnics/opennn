@@ -15,8 +15,6 @@
 #include "opennn/neural_network/layers/flatten_layer.h"
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/neural_network/layers/addition_layer.h"
-#include "opennn/neural_network/layers/embedding_layer.h"
-#include "opennn/neural_network/layers/multihead_attention_layer.h"
 #include "opennn/neural_network/layers/tokenizer_layer.h"
 #include "opennn/core/variable.h"
 #include "opennn/core/string_utilities.h"
@@ -102,26 +100,35 @@ void NeuralNetwork::compile(Configuration::Resolved new_config)
 
     link_states();
 
-    wire_drelu_fusions();
-    wire_attention_valid_lengths();
+    configure_layer_graph();
 }
 
-// attention_valid_lengths is a network-wide channel: any Embedding that
-// exports lengths writes into the ForwardPropagation, and every attention
-// layer running after it reads them. Planning must match that dispatch, so an
-// exporting embedding anywhere marks every MultiHeadAttention in the network.
-void NeuralNetwork::wire_attention_valid_lengths()
+void NeuralNetwork::configure_layer_graph()
 {
-    const bool valid_lengths_exported =
-        ranges::any_of(layers, [](const unique_ptr<Layer>& layer)
-        {
-            const auto* embedding = dynamic_cast<const Embedding*>(layer.get());
-            return embedding && embedding->get_export_valid_lengths();
-        });
+    LayerGraphFeatures features = 0;
+    for (const auto& layer : layers)
+        features |= layer->get_exported_graph_features();
 
-    for (auto& layer : layers)
-        if (auto* attention = dynamic_cast<MultiHeadAttention*>(layer.get()))
-            attention->set_expects_valid_lengths(valid_lengths_exported);
+    vector<Index> consumer_counts(layers.size(), 0);
+    for (const auto& layer_sources : source_layers)
+        for (const Index source : layer_sources)
+            if (source >= 0) ++consumer_counts[size_t(source)];
+
+    for (size_t i = 0; i < source_layers.size(); ++i)
+    {
+        vector<Layer*> sources;
+        vector<Index> source_consumer_counts;
+        sources.reserve(source_layers[i].size());
+        source_consumer_counts.reserve(source_layers[i].size());
+
+        for (const Index source : source_layers[i])
+        {
+            sources.push_back(source < 0 ? nullptr : layers[size_t(source)].get());
+            source_consumer_counts.push_back(source < 0 ? 0 : consumer_counts[size_t(source)]);
+        }
+
+        layers[i]->configure_graph({features, sources, source_consumer_counts});
+    }
 }
 
 void NeuralNetwork::clear_low_precision_parameter_storage()
@@ -130,37 +137,6 @@ void NeuralNetwork::clear_low_precision_parameter_storage()
     parameters_bf16_mirror_compact = false;
     parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
     parameters_int8_storage.resize_bytes(0, Device::CUDA);
-}
-
-void NeuralNetwork::wire_drelu_fusions()
-{
-    for (auto& layer : layers)
-        if (auto* dense = dynamic_cast<Dense*>(layer.get()))
-            dense->reset_drelu_fusion();
-
-    if (get_device() != Device::CUDA || get_training_type() != Type::FP32)
-        return;
-
-    if (!env_flag_enabled("OPENNN_DRELU_FUSION"))
-        return;
-
-    vector<Index> consumer_count(layers.size(), 0);
-    for (const auto& layer_sources : source_layers)
-        for (Index s : layer_sources)
-            if (s >= 0) ++consumer_count[size_t(s)];
-
-    for (size_t i = 0; i < source_layers.size(); ++i)
-    {
-        const auto& layer_sources = source_layers[i];
-        if (layer_sources.size() != 1 || layer_sources[0] < 0) continue;
-        if (consumer_count[size_t(layer_sources[0])] != 1) continue;
-
-        auto* consumer = dynamic_cast<Dense*>(layers[i].get());
-        auto* producer = dynamic_cast<Dense*>(layers[size_t(layer_sources[0])].get());
-
-        if (consumer && producer)
-            consumer->try_wire_drelu_fusion(*producer);
-    }
 }
 
 void NeuralNetwork::validate_type(LayerType type) const

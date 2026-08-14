@@ -8,6 +8,8 @@
 
 #include "opennn/neural_network/layers/dense_layer.h"
 
+#include "opennn/core/string_utilities.h"
+
 namespace opennn
 {
 
@@ -224,6 +226,25 @@ bool Dense::try_wire_drelu_fusion(Dense& producer)
         &producer.combination.relu_mask_fused_active;
     combination.drelu_source = &producer.combination;
     return true;
+}
+
+void Dense::configure_graph(const LayerGraphContext& context)
+{
+    reset_drelu_fusion();
+
+    if (get_compute_device() != Device::CUDA || get_compute_dtype() != Type::FP32)
+        return;
+
+    if (!env_flag_enabled("OPENNN_DRELU_FUSION"))
+        return;
+
+    if (context.sources.size() != 1
+        || context.source_consumer_counts.size() != 1
+        || context.source_consumer_counts.front() != 1)
+        return;
+
+    if (auto* producer = dynamic_cast<Dense*>(context.sources.front()))
+        try_wire_drelu_fusion(*producer);
 }
 
 void Dense::reset_drelu_fusion()

@@ -21,6 +21,24 @@ namespace opennn
 
 enum class ForwardSlotKind { Pooled, Transient, TrainingOnly };
 
+enum class LayerGraphFeature : unsigned int
+{
+    AttentionValidLengths = 1U << 0
+};
+
+using LayerGraphFeatures = unsigned int;
+
+constexpr LayerGraphFeatures graph_feature(const LayerGraphFeature feature) noexcept
+{
+    return static_cast<LayerGraphFeatures>(feature);
+}
+
+constexpr bool has_graph_feature(const LayerGraphFeatures features,
+                                 const LayerGraphFeature feature) noexcept
+{
+    return (features & graph_feature(feature)) != 0;
+}
+
 enum class LayerType
 {
     Activation,
@@ -105,6 +123,15 @@ inline void check_rank(const Shape& shape, initializer_list<int> allowed,
     throw runtime_error(format("{} layer supports {} rank {} (got {}).",
                                layer, what, allowed_str, shape.rank));
 }
+
+class Layer;
+
+struct LayerGraphContext
+{
+    LayerGraphFeatures network_features = 0;
+    span<Layer* const> sources;
+    span<const Index> source_consumer_counts;
+};
 
 class Layer
 {
@@ -224,6 +251,9 @@ public:
     void set_compute_device(Device new_compute_device) { compute_device = new_compute_device; }
 
     virtual void on_compute_dtype_changed() {}
+
+    virtual LayerGraphFeatures get_exported_graph_features() const noexcept { return 0; }
+    virtual void configure_graph(const LayerGraphContext&) {}
 
     virtual float* link_states(float*, Device);
 

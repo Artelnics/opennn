@@ -65,13 +65,12 @@ public:
 
     void apply_input_shape(const Shape&) override;
     void on_compute_dtype_changed() override;
+    void configure_graph(const LayerGraphContext&) override;
 
     void set_dropout_rate(float new_dropout_rate) { attention.dropout.set_rate(new_dropout_rate); }
 
     void set_zero_padded_queries(bool);
 
-    // Wired by NeuralNetwork::compile: true when an Embedding in the network
-    // exports valid lengths, which forces the unfused attention path.
     void set_expects_valid_lengths(bool);
     bool get_expects_valid_lengths() const { return attention.expects_valid_lengths; }
 
