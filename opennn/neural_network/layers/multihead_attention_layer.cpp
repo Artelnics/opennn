@@ -179,12 +179,6 @@ bool MultiHeadAttention::should_use_sdpa() const
     return shorter >= sdpa_min_sequence_length;
 }
 
-void MultiHeadAttention::configure_graph(const LayerGraphContext& context)
-{
-    set_expects_valid_lengths(
-        has_graph_feature(context.network_features, LayerGraphFeature::AttentionValidLengths));
-}
-
 void MultiHeadAttention::set_zero_padded_queries(bool new_zero_padded_queries)
 {
     attention.zero_padded_queries = new_zero_padded_queries;

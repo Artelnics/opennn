@@ -11,11 +11,12 @@
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/core/profiler.h"
 #include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/neural_network/layers/flatten_layer.h"
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/neural_network/layers/addition_layer.h"
+#include "opennn/neural_network/layers/embedding_layer.h"
+#include "opennn/neural_network/layers/multihead_attention_layer.h"
 #include "opennn/neural_network/layers/tokenizer_layer.h"
+#include "opennn/neural_network/operators/combination_operator.h"
 #include "opennn/core/variable.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/neural_network/forward_propagation.h"
@@ -47,7 +48,9 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& sour
 {
     const Index old_layers_number = get_layers_number() - 1;
 
-    if (!layers.empty()) validate_type(layers.back()->get_type());
+    if (!layers.empty())
+        throw_if(layers.back()->get_type() == LayerType::Bounding,
+                 "No layers can be added after a bounding layer.\n");
 
     const vector<Index> resolved_sources = sources.empty()
         ? vector<Index>{old_layers_number}
@@ -100,35 +103,22 @@ void NeuralNetwork::compile(Configuration::Resolved new_config)
 
     link_states();
 
-    configure_layer_graph();
+    wire_drelu_fusions();
+    wire_attention_valid_lengths();
 }
 
-void NeuralNetwork::configure_layer_graph()
+void NeuralNetwork::wire_attention_valid_lengths()
 {
-    LayerGraphFeatures features = 0;
-    for (const auto& layer : layers)
-        features |= layer->get_exported_graph_features();
-
-    vector<Index> consumer_counts(layers.size(), 0);
-    for (const auto& layer_sources : source_layers)
-        for (const Index source : layer_sources)
-            if (source >= 0) ++consumer_counts[size_t(source)];
-
-    for (size_t i = 0; i < source_layers.size(); ++i)
-    {
-        vector<Layer*> sources;
-        vector<Index> source_consumer_counts;
-        sources.reserve(source_layers[i].size());
-        source_consumer_counts.reserve(source_layers[i].size());
-
-        for (const Index source : source_layers[i])
+    const bool valid_lengths_exported =
+        ranges::any_of(layers, [](const unique_ptr<Layer>& layer)
         {
-            sources.push_back(source < 0 ? nullptr : layers[size_t(source)].get());
-            source_consumer_counts.push_back(source < 0 ? 0 : consumer_counts[size_t(source)]);
-        }
+            const auto* embedding = dynamic_cast<const Embedding*>(layer.get());
+            return embedding && embedding->get_export_valid_lengths();
+        });
 
-        layers[i]->configure_graph({features, sources, source_consumer_counts});
-    }
+    for (auto& layer : layers)
+        if (auto* attention = dynamic_cast<MultiHeadAttention*>(layer.get()))
+            attention->set_expects_valid_lengths(valid_lengths_exported);
 }
 
 void NeuralNetwork::clear_low_precision_parameter_storage()
@@ -139,10 +129,35 @@ void NeuralNetwork::clear_low_precision_parameter_storage()
     parameters_int8_storage.resize_bytes(0, Device::CUDA);
 }
 
-void NeuralNetwork::validate_type(LayerType type) const
+void NeuralNetwork::wire_drelu_fusions()
 {
-    throw_if(type == LayerType::Bounding,
-             "No layers can be added after a bounding layer.\n");
+    for (auto& layer : layers)
+        if (auto* dense = dynamic_cast<Dense*>(layer.get()))
+            dense->reset_drelu_fusion();
+
+    if (get_device() != Device::CUDA || get_training_type() != Type::FP32)
+        return;
+
+    if (!env_flag_enabled("OPENNN_DRELU_FUSION"))
+        return;
+
+    vector<Index> consumer_count(layers.size(), 0);
+    for (const auto& layer_sources : source_layers)
+        for (Index s : layer_sources)
+            if (s >= 0) ++consumer_count[size_t(s)];
+
+    for (size_t i = 0; i < source_layers.size(); ++i)
+    {
+        const auto& layer_sources = source_layers[i];
+        if (layer_sources.size() != 1 || layer_sources[0] < 0) continue;
+        if (consumer_count[size_t(layer_sources[0])] != 1) continue;
+
+        auto* consumer = dynamic_cast<Dense*>(layers[i].get());
+        auto* producer = dynamic_cast<Dense*>(layers[size_t(layer_sources[0])].get());
+
+        if (consumer && producer)
+            consumer->try_wire_drelu_fusion(*producer);
+    }
 }
 
 void NeuralNetwork::warn_if_stale_configuration() const
@@ -998,7 +1013,7 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
     printer.close_element();
 
     printer.open_element("Outputs");
-    const Index outputs_count = has(LayerType::Embedding)
+    const Index outputs_count = output_variables.empty()
                               ? outputs_number
                               : get_features_number(output_variables);
     add_json_field(printer, "OutputsNumber", outputs_count);
