@@ -13,6 +13,7 @@
 
 #include <atomic>
 #include <cstdlib>
+#include <utility>
 #include "opennn/core/cuda/kernel_cast.cuh"
 
 namespace opennn::device
@@ -898,7 +899,7 @@ namespace
             ensure_shared_scratch(plan.workspace_bytes);
         }
 
-        return plans.emplace(key, move(plan)).first->second;
+        return plans.emplace(key, std::move(plan)).first->second;
     }
 }
 

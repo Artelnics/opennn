@@ -15,6 +15,7 @@
 #include "opennn/neural_network/back_propagation.h"
 
 #include <ranges>
+#include <utility>
 
 namespace opennn
 {
@@ -71,7 +72,7 @@ public:
 
     virtual void set_output_shape(const Shape&) {}
 
-    void set_label(string new_label) { label = move(new_label); }
+    void set_label(string new_label) { label = std::move(new_label); }
 
     Index get_parameters_number() const;
     const vector<Operator*>& get_operators() const noexcept { return operators; }

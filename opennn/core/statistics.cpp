@@ -11,6 +11,8 @@
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/random_utilities.h"
 
+#include <utility>
+
 #include <Eigen/Dense>
 
 namespace opennn
@@ -405,7 +407,7 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
 
         centers = tensor_unique;
         minimums = tensor_unique;
-        maximums = move(tensor_unique);
+        maximums = std::move(tensor_unique);
 
         frequencies = VectorR::Zero(unique_values_number);
 

@@ -10,6 +10,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <utility>
 
 #if defined(_WIN32)
     #ifndef WIN32_LEAN_AND_MEAN
@@ -141,7 +142,7 @@ bool is_file_current(const filesystem::path& file,
 
 FileMapping::~FileMapping() { reset(); }
 
-FileMapping::FileMapping(FileMapping&& other) noexcept { *this = move(other); }
+FileMapping::FileMapping(FileMapping&& other) noexcept { *this = std::move(other); }
 
 FileMapping& FileMapping::operator=(FileMapping&& other) noexcept
 {

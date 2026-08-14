@@ -6,23 +6,23 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/layers/grouped_query_attention_layer.h"
-#include "opennn/registry.h"
 
 #include <cmath>
 #include <cstring>
+#include <utility>
 #include <vector>
+
 #include "opennn/core/tensor_operations.h"
+#include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/forward_propagation.h"
+#include "opennn/registry.h"
+
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/device_backend.h"
 #include "opennn/core/cuda/cudnn_frontend_utilities.h"
-#include "opennn/core/device_backend.h"
-#ifdef OPENNN_HAS_CUDA
 #include "opennn/core/cuda/kernel_attention.cuh"
 #include "opennn/core/cuda/kernel_normalization.cuh"
-#endif
 #endif
 
 namespace opennn
@@ -995,7 +995,7 @@ void gqa_sdpa_build(GroupedAttentionSDPA& s, Index max_q, Index max_kv,
     if (!s.seq_device) s.seq_device = static_cast<int32_t*>(device::allocate(Device::CUDA, Index(2 * sizeof(int32_t))));
     if (!s.seq_pinned) s.seq_pinned = static_cast<int32_t*>(device::allocate_pinned_host(Index(2 * sizeof(int32_t))));
 
-    s.graph = move(graph);
+    s.graph = std::move(graph);
     s.tensors.clear();
     s.tensors.reserve(6);
     s.max_q = max_q;

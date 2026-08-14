@@ -7,7 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "opennn/core/string_utilities.h"
+
 #include <cctype>
+#include <utility>
 
 namespace opennn
 {
@@ -59,7 +61,7 @@ vector<string> tokenize(const string& document)
         {
             if (!current_token.empty())
             {
-                tokens.emplace_back(move(current_token));
+                tokens.emplace_back(std::move(current_token));
                 current_token.clear();
             }
 
@@ -69,7 +71,7 @@ vector<string> tokenize(const string& document)
     }
 
     if (!current_token.empty())
-        tokens.emplace_back(move(current_token));
+        tokens.emplace_back(std::move(current_token));
 
     return tokens;
 }

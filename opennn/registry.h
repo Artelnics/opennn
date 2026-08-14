@@ -16,8 +16,6 @@
 namespace opennn
 {
 
-using namespace std;
-
 enum class LayerType
 {
     Activation,
@@ -51,12 +49,12 @@ class Optimizer;
 class InputsSelection;
 
 const EnumMap<LayerType>& layer_type_map();
-const string& layer_type_to_string(LayerType);
-LayerType string_to_layer_type(const string&);
+const std::string& layer_type_to_string(LayerType);
+LayerType string_to_layer_type(const std::string&);
 
-unique_ptr<Layer> create_layer(const string& name);
-unique_ptr<Optimizer> create_optimizer(const string& name);
-unique_ptr<InputsSelection> create_inputs_selection(const string& name);
+std::unique_ptr<Layer> create_layer(const std::string& name);
+std::unique_ptr<Optimizer> create_optimizer(const std::string& name);
+std::unique_ptr<InputsSelection> create_inputs_selection(const std::string& name);
 
 }
 

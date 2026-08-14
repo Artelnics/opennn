@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "opennn/core/device_backend.h"
@@ -77,7 +78,7 @@ class ScopedTimer
 
 public:
     ScopedTimer(string key, bool sync_gpu = true)
-        : key_(move(key))
+        : key_(std::move(key))
         , sync_gpu_(sync_gpu)
     {
         if (!enabled()) return;

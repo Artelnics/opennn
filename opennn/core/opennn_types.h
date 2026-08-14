@@ -178,7 +178,7 @@ template <typename... Args>
 inline void throw_if(bool condition, format_string<Args...> message, Args&&... args)
 {
     if (condition)
-        throw runtime_error(format(message, forward<Args>(args)...));
+        throw runtime_error(format(message, std::forward<Args>(args)...));
 }
 
 template <typename T, typename... Candidates>

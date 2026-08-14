@@ -11,6 +11,8 @@
 #include "opennn/core/opennn_types.h"
 #include "opennn/core/io_utilities.h"
 
+#include <utility>
+
 namespace opennn
 {
 
@@ -34,7 +36,7 @@ public:
     explicit CsvReader(char new_separator = ',',
                        function<void(string_view)> new_line_validator = {})
         : separator(new_separator),
-          line_validator(move(new_line_validator))
+          line_validator(std::move(new_line_validator))
     {
     }
 

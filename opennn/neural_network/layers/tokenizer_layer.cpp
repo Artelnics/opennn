@@ -7,6 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/tokenizer_layer.h"
+
+#include <utility>
+
 #include "opennn/registry.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/json.h"
@@ -32,7 +35,7 @@ void Tokenizer::apply_input_shape(const Shape& new_input_shape)
 
 void Tokenizer::set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
 {
-    tokenizer = move(new_tokenizer);
+    tokenizer = std::move(new_tokenizer);
 
     operators.clear();
     if (tokenizer) operators = {tokenizer.get()};

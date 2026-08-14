@@ -14,6 +14,8 @@
 #include "opennn/core/io_utilities.h"
 #include "opennn/dataset/field_parsing.h"
 
+#include <utility>
+
 namespace opennn
 {
 
@@ -84,7 +86,7 @@ public:
 
     void set_number_format_auto() { number_format = {}; number_format_automatic = true; }
 
-    void set_missing_values_label(string label) { missing_values_label = move(label); }
+    void set_missing_values_label(string label) { missing_values_label = std::move(label); }
     void set_missing_values_method(const MissingValuesMethod& method) { missing_values_method = method; }
     void set_missing_values_method(const string&);
 
