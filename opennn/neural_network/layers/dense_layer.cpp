@@ -16,7 +16,7 @@ Dense::Dense(const Shape& new_input_shape,
              const string& new_activation_function,
              bool new_batch_normalization,
              const string& new_label)
-    : Layer(LayerType::Dense)
+    : Layer("Dense")
 {
     operators = {&combination, &batch_norm, &activation_operator, &dropout};
 

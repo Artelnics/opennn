@@ -362,7 +362,7 @@ Pooling::Pooling(const Shape& new_input_shape,
                  const Shape& new_padding_dimensions,
                  const string& new_pooling_method,
                  const string& new_name)
-    : Layer(LayerType::Pooling)
+    : Layer("Pooling")
 {
     operators = {&pool};
     set(new_input_shape,

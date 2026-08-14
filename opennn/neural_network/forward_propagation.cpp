@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/forward_propagation.h"
+#include "opennn/registry.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/core/memory_debug.h"
 #include "opennn/core/device_backend.h"

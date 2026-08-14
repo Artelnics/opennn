@@ -956,7 +956,7 @@ LongShortTermMemory::LongShortTermMemory(const Shape& new_input_shape,
                                          const string& new_activation_function,
                                          const string& new_recurrent_activation_function,
                                          const string& new_label)
-    : Layer(LayerType::LongShortTermMemory)
+    : Layer("LongShortTermMemory")
 {
     operators = {&lstm_op};
 

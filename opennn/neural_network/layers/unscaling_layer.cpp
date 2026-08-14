@@ -14,9 +14,8 @@ namespace opennn
 {
 
 Unscaling::Unscaling(const Shape& new_input_shape, const string& new_label)
-    : Scaling(LayerType::Unscaling)
+    : Scaling("Unscaling", true)
 {
-    scale_op.invert = true;
     set(new_input_shape.dim_or_zero(0), new_label);
 }
 

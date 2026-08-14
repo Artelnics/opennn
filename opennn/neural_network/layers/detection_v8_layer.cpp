@@ -117,14 +117,14 @@ void DetectionV8Operator::back_propagate(ForwardPropagation& forward_propagation
 }
 
 DetectionV8::DetectionV8(const Shape& new_input_shape, const string& new_label)
-    : Layer(LayerType::DetectionV8)
+    : Layer("DetectionV8")
 {
     operators = {&detection};
     set(new_input_shape, new_label);
 }
 
 DetectionV8::DetectionV8(const Shape& new_input_shape, Index reg_max, const string& new_label)
-    : Layer(LayerType::DetectionV8)
+    : Layer("DetectionV8")
 {
     operators = {&detection};
     set(new_input_shape, reg_max, new_label);

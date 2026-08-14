@@ -648,7 +648,7 @@ Recurrent::Recurrent(const Shape& new_input_shape,
                      const Shape& new_output_shape,
                      const string& new_activation_function,
                      const string& new_label)
-    : Layer(LayerType::Recurrent)
+    : Layer("Recurrent")
 {
     operators = {&recurrent_op};
     set(new_input_shape, new_output_shape, new_activation_function, new_label);

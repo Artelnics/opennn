@@ -121,7 +121,7 @@ void ConcatenationOperator::back_propagate(ForwardPropagation&, BackPropagation&
 Concatenation::Concatenation(const Shape& new_input_shape,
                              const vector<Index>& per_input_channels,
                              const string& new_label)
-    : Layer(LayerType::Concatenation)
+    : Layer("Concatenation")
 {
     operators = {&concatenation};
     set(new_input_shape, per_input_channels, new_label);

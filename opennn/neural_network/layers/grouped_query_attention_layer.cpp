@@ -1107,7 +1107,7 @@ GroupedQueryAttention::GroupedQueryAttention(const Shape& new_input_shape,
                                              float new_rope_theta, float new_rms_epsilon,
                                              bool new_use_qk_norm,
                                              const string& new_name)
-    : Layer(LayerType::GroupedQueryAttention)
+    : Layer("GroupedQueryAttention")
 {
     operators = {&attention};
 

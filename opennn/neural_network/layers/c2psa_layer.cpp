@@ -12,7 +12,7 @@ namespace opennn
 {
 
 C2PSA::C2PSA(const Shape& new_input_shape, const string& new_label)
-    : Layer(LayerType::C2PSA, true)
+    : Layer("C2PSA", true)
 {
     operators = {&c2psa};
     set(new_input_shape, new_label);

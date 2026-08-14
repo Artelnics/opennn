@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/model_expression.h"
+#include "opennn/registry.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/layers/unscaling_layer.h"
 #include "opennn/neural_network/layers/bounding_layer.h"

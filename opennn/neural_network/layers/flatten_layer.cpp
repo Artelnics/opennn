@@ -12,7 +12,7 @@ namespace opennn
 {
 
 Flatten::Flatten(const Shape& new_input_shape)
-    : Layer(LayerType::Flatten)
+    : Layer("Flatten")
 {
     set(new_input_shape);
 }

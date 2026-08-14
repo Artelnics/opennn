@@ -99,7 +99,7 @@ void BoundOperator::forward_propagate(ForwardPropagation& forward_propagation, s
 }
 
 Bounding::Bounding(const Shape& new_output_shape, const string& new_name)
-    : Layer(LayerType::Bounding, false)
+    : Layer("Bounding", false)
 {
     operators = {&bound};
     set(new_output_shape, new_name);

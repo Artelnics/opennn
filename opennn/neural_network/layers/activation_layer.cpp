@@ -14,7 +14,7 @@ namespace opennn
 Activation::Activation(const Shape& new_input_shape,
                        const string& new_activation,
                        const string& new_name)
-    : Layer(LayerType::Activation)
+    : Layer("Activation")
 {
     operators = {&activation_operator};
 

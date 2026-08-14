@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/core/tensor_types.h"
+#include "opennn/registry.h"
 #include "opennn/dataset/correlations.h"
 #include "opennn/core/parallel_algorithms.h"
 #include "opennn/dataset/tabular_dataset.h"

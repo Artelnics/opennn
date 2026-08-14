@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/dataset/image_dataset.h"
+#include "opennn/registry.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/dataset/time_series_dataset.h"
 #include "opennn/neural_network/layers/scaling_layer.h"

@@ -14,6 +14,7 @@
 #include <filesystem>
 
 #include "opennn/core/configuration.h"
+#include "opennn/registry.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/memory_debug.h"
 #include "opennn/neural_network/neural_network.h"

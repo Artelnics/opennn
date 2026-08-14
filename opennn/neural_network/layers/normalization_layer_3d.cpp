@@ -14,7 +14,7 @@ namespace opennn
 
 Normalization3d::Normalization3d(const Shape& new_input_shape,
                                  const string& new_name)
-    : Layer(LayerType::Normalization3d)
+    : Layer("Normalization3d")
 {
     operators = {&layer_normalization};
 
@@ -72,8 +72,8 @@ void Normalization3d::set_method(NormalizationMethod new_method)
     layer_normalization.method = new_method;
 
     layer_type = (new_method == NormalizationMethod::RMS)
-        ? LayerType::RMSNormalization3d
-        : LayerType::Normalization3d;
+        ? "RMSNormalization3d"
+        : "Normalization3d";
 }
 
 void Normalization3d::set_fuse_add(bool on)

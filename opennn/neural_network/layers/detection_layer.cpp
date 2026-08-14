@@ -256,7 +256,7 @@ vector<array<float, 2>> string_to_anchors(string_view text)
 Detection::Detection(const Shape& new_input_shape,
                      const vector<array<float, 2>>& new_anchors,
                      const string& new_label)
-    : Layer(LayerType::Detection)
+    : Layer("Detection")
 {
     operators = {&detection};
 

@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/core/json.h"
+#include "opennn/registry.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/training_strategy/training_result.h"
 #include "opennn/training_strategy/training_strategy.h"

@@ -246,14 +246,15 @@ void ScaleOperator::forward_propagate(ForwardPropagation& forward_propagation, s
 }
 
 Scaling::Scaling(const Shape& new_input_shape)
-    : Scaling(LayerType::Scaling)
+    : Scaling("Scaling", false)
 {
     set(new_input_shape);
 }
 
-Scaling::Scaling(LayerType layer_type)
-    : Layer(layer_type, false)
+Scaling::Scaling(string type, bool invert)
+    : Layer(move(type), false)
 {
+    scale_op.invert = invert;
     operators = {&scale_op};
 }
 

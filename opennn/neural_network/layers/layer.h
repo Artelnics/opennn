@@ -20,77 +20,7 @@ namespace opennn
 {
 
 enum class ForwardSlotKind { Pooled, Transient, TrainingOnly };
-
-enum class LayerType
-{
-    Activation,
-    Addition,
-    Bounding,
-    Concatenation,
-    Convolutional,
-    Dense,
-    Detection,
-    DetectionV8,
-    Embedding,
-    Flatten,
-    LongShortTermMemory,
-    MultiHeadAttention,
-    Normalization3d,
-    RMSNormalization3d,
-    GroupedQueryAttention,
-    NonMaxSuppression,
-    Pooling,
-    Pooling3d,
-    Recurrent,
-    Scaling,
-    Tokenizer,
-    Unscaling,
-    Upsample,
-    C2PSA
-};
-
-inline const EnumMap<LayerType>& layer_type_map()
-{
-    static const vector<pair<LayerType, string>> entries = {
-        {LayerType::Activation,         "Activation"},
-        {LayerType::Addition,           "Addition"},
-        {LayerType::Bounding,           "Bounding"},
-        {LayerType::Concatenation,      "Concatenation"},
-        {LayerType::Concatenation,      "Concatenate"},
-        {LayerType::Convolutional,      "Convolutional"},
-        {LayerType::Dense,              "Dense"},
-        {LayerType::Detection,          "Detection"},
-        {LayerType::DetectionV8,        "DetectionV8"},
-        {LayerType::Embedding,          "Embedding"},
-        {LayerType::Flatten,            "Flatten"},
-        {LayerType::LongShortTermMemory, "LongShortTermMemory"},
-        {LayerType::MultiHeadAttention, "MultiHeadAttention"},
-        {LayerType::Normalization3d,    "Normalization3d"},
-        {LayerType::RMSNormalization3d, "RMSNormalization3d"},
-        {LayerType::GroupedQueryAttention, "GroupedQueryAttention"},
-        {LayerType::NonMaxSuppression,  "NonMaxSuppression"},
-        {LayerType::Pooling,            "Pooling"},
-        {LayerType::Pooling3d,          "Pooling3d"},
-        {LayerType::Recurrent,          "Recurrent"},
-        {LayerType::Scaling,            "Scaling"},
-        {LayerType::Tokenizer,          "Tokenizer"},
-        {LayerType::Unscaling,          "Unscaling"},
-        {LayerType::Upsample,           "Upsample"},
-        {LayerType::C2PSA,              "C2PSA"}
-    };
-    static const EnumMap<LayerType> map{entries};
-    return map;
-}
-
-inline const string& layer_type_to_string(LayerType type)
-{
-    return layer_type_map().to_string(type);
-}
-
-inline LayerType string_to_layer_type(const string& name)
-{
-    return layer_type_map().from_string(name);
-}
+enum class LayerType;
 
 inline void check_rank(const Shape& shape, initializer_list<int> allowed,
                        const char* layer, const char* what)
@@ -115,9 +45,9 @@ public:
 
     const string& get_label() const noexcept { return label; }
 
-    const string& get_name() const { return layer_type_to_string(layer_type); }
+    const string& get_name() const noexcept { return layer_type; }
 
-    LayerType get_type() const noexcept { return layer_type; }
+    LayerType get_type() const noexcept;
 
     // Which input ranks this layer can represent. Callers that build a shape
     // rather than receive one - neuron selection, for instance - must ask before
@@ -263,14 +193,14 @@ protected:
 
     Layer() = default;
 
-    Layer(LayerType t, bool trainable = true)
-        : layer_type(t), is_trainable(trainable) {}
+    Layer(string type, bool trainable = true)
+        : layer_type(move(type)), is_trainable(trainable) {}
 
     enum Forward {Input, Output};
 
     string label = "my_layer";
 
-    LayerType layer_type = LayerType::Dense;
+    string layer_type = "Dense";
 
     bool is_trainable = true;
 

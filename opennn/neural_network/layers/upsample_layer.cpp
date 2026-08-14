@@ -112,7 +112,7 @@ void UpsampleOperator::back_propagate(ForwardPropagation&, BackPropagation& back
 Upsample::Upsample(const Shape& new_input_shape,
                    Index new_scale_factor,
                    const string& new_label)
-    : Layer(LayerType::Upsample)
+    : Layer("Upsample")
 {
     operators = {&upsample};
     set(new_input_shape, new_scale_factor, new_label);

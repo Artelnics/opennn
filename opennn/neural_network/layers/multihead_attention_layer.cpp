@@ -22,7 +22,7 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
                                        const Shape& new_source_dimensions,
                                        Index new_heads_number,
                                        const string& new_name)
-    : Layer(LayerType::MultiHeadAttention)
+    : Layer("MultiHeadAttention")
 {
     operators = {&value_projection, &key_projection, &query_projection,
                  &attention, &output_projection};

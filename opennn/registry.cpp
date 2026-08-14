@@ -71,6 +71,54 @@ unique_ptr<Base> create(const unordered_map<string_view, unique_ptr<Base>(*)()>&
 
 }
 
+const EnumMap<LayerType>& layer_type_map()
+{
+    static const vector<pair<LayerType, string>> entries = {
+        {LayerType::Activation,         "Activation"},
+        {LayerType::Addition,           "Addition"},
+        {LayerType::Bounding,           "Bounding"},
+        {LayerType::Concatenation,      "Concatenation"},
+        {LayerType::Concatenation,      "Concatenate"},
+        {LayerType::Convolutional,      "Convolutional"},
+        {LayerType::Dense,              "Dense"},
+        {LayerType::Detection,          "Detection"},
+        {LayerType::DetectionV8,        "DetectionV8"},
+        {LayerType::Embedding,          "Embedding"},
+        {LayerType::Flatten,            "Flatten"},
+        {LayerType::LongShortTermMemory, "LongShortTermMemory"},
+        {LayerType::MultiHeadAttention, "MultiHeadAttention"},
+        {LayerType::Normalization3d,    "Normalization3d"},
+        {LayerType::RMSNormalization3d, "RMSNormalization3d"},
+        {LayerType::GroupedQueryAttention, "GroupedQueryAttention"},
+        {LayerType::NonMaxSuppression,  "NonMaxSuppression"},
+        {LayerType::Pooling,            "Pooling"},
+        {LayerType::Pooling3d,          "Pooling3d"},
+        {LayerType::Recurrent,          "Recurrent"},
+        {LayerType::Scaling,            "Scaling"},
+        {LayerType::Tokenizer,          "Tokenizer"},
+        {LayerType::Unscaling,          "Unscaling"},
+        {LayerType::Upsample,           "Upsample"},
+        {LayerType::C2PSA,              "C2PSA"}
+    };
+    static const EnumMap<LayerType> map{entries};
+    return map;
+}
+
+const string& layer_type_to_string(LayerType type)
+{
+    return layer_type_map().to_string(type);
+}
+
+LayerType string_to_layer_type(const string& name)
+{
+    return layer_type_map().from_string(name);
+}
+
+LayerType Layer::get_type() const noexcept
+{
+    return string_to_layer_type(layer_type);
+}
+
 unique_ptr<Layer> create_layer(const string& name)
 {
     static const unordered_map<string_view, unique_ptr<Layer>(*)()> factories = {

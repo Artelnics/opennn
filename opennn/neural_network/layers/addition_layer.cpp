@@ -37,7 +37,7 @@ void AdditionOperator::back_propagate(ForwardPropagation&, BackPropagation& back
 }
 
 Addition::Addition(const Shape& new_input_shape, const string& new_name, Index new_inputs_number)
-    : Layer(LayerType::Addition)
+    : Layer("Addition")
 {
     operators = {&add};
 
