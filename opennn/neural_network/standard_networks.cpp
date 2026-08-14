@@ -7,30 +7,31 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/standard_networks.h"
+
+#include "opennn/core/string_utilities.h"
 #include "opennn/neural_network/layers/activation_layer.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/neural_network/layers/unscaling_layer.h"
-#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/layers/addition_layer.h"
 #include "opennn/neural_network/layers/bounding_layer.h"
-#include "opennn/neural_network/layers/recurrent_layer.h"
-#include "opennn/neural_network/layers/long_short_term_memory_layer.h"
-#include "opennn/neural_network/layers/embedding_layer.h"
-#include "opennn/neural_network/layers/tokenizer_layer.h"
+#include "opennn/neural_network/layers/c2psa_layer.h"
+#include "opennn/neural_network/layers/concatenation_layer.h"
 #include "opennn/neural_network/layers/convolutional_layer.h"
+#include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/layers/detection_layer.h"
 #include "opennn/neural_network/layers/detection_v8_layer.h"
+#include "opennn/neural_network/layers/embedding_layer.h"
+#include "opennn/neural_network/layers/flatten_layer.h"
+#include "opennn/neural_network/layers/grouped_query_attention_layer.h"
+#include "opennn/neural_network/layers/long_short_term_memory_layer.h"
+#include "opennn/neural_network/layers/multihead_attention_layer.h"
+#include "opennn/neural_network/layers/non_max_suppression_layer.h"
+#include "opennn/neural_network/layers/normalization_layer_3d.h"
 #include "opennn/neural_network/layers/pooling_layer.h"
 #include "opennn/neural_network/layers/pooling_layer_3d.h"
-#include "opennn/neural_network/layers/non_max_suppression_layer.h"
-#include "opennn/neural_network/layers/flatten_layer.h"
-#include "opennn/neural_network/layers/addition_layer.h"
+#include "opennn/neural_network/layers/recurrent_layer.h"
+#include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/neural_network/layers/tokenizer_layer.h"
+#include "opennn/neural_network/layers/unscaling_layer.h"
 #include "opennn/neural_network/layers/upsample_layer.h"
-#include "opennn/neural_network/layers/concatenation_layer.h"
-#include "opennn/neural_network/layers/c2psa_layer.h"
-#include "opennn/neural_network/layers/normalization_layer_3d.h"
-#include "opennn/neural_network/layers/grouped_query_attention_layer.h"
-#include "opennn/neural_network/layers/multihead_attention_layer.h"
-#include "opennn/core/string_utilities.h"
 
 namespace opennn
 {
@@ -114,7 +115,8 @@ static void add_regression_output(NeuralNetwork& network,
 ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
                                            const Shape& complexity_dimensions,
                                            const Shape& output_shape,
-                                           const string& hidden_activation) : NeuralNetwork()
+                                           const string& hidden_activation)
+    : NeuralNetwork(NetworkTask::Approximation)
 {
     add_layer(make_unique<Scaling>(input_shape));
 
@@ -127,7 +129,8 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
 
 ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
                                              const Shape& complexity_dimensions,
-                                             const Shape& output_shape) : NeuralNetwork()
+                                             const Shape& output_shape)
+    : NeuralNetwork(NetworkTask::Classification)
 {
     add_layer(make_unique<Scaling>(input_shape));
 
@@ -144,7 +147,8 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
 
 ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
                                        const Shape& complexity_dimensions,
-                                       const Shape& output_shape) : NeuralNetwork()
+                                       const Shape& output_shape)
+    : NeuralNetwork(NetworkTask::Forecasting)
 {
     add_layer(make_unique<Scaling>(input_shape));
 
@@ -159,7 +163,8 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
 
 ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
                                                const Shape& complexity_dimensions,
-                                               const Shape& output_shape) : NeuralNetwork()
+                                               const Shape& output_shape)
+    : NeuralNetwork(NetworkTask::Forecasting)
 {
     add_layer(make_unique<Scaling>(input_shape));
 
@@ -174,7 +179,8 @@ ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
 
 AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
                                                const Shape& complexity_dimensions,
-                                               const Shape& output_shape) : NeuralNetwork()
+                                               const Shape& output_shape)
+    : NeuralNetwork(NetworkTask::AutoAssociation)
 {
     add_layer(make_unique<Scaling>(input_shape));
 
@@ -213,7 +219,8 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
 AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
                                                const Shape& encoder_dimensions,
                                                const string& hidden_activation,
-                                               const string& output_activation) : NeuralNetwork()
+                                               const string& output_activation)
+    : NeuralNetwork(NetworkTask::AutoAssociation)
 {
     throw_if(input_shape.empty(),
              "AutoAssociationNetwork: input shape cannot be empty.");
@@ -259,7 +266,8 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
 
 ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                                        const Shape& complexity_dimensions,
-                                                       const Shape& output_shape) : NeuralNetwork()
+                                                       const Shape& output_shape)
+    : NeuralNetwork(NetworkTask::ImageClassification)
 {
     throw_if(input_shape.rank != 3, "Input shape size is not 3.");
 
@@ -318,7 +326,8 @@ ResNet::ResNet(const Shape& input_shape,
                const vector<Index>& blocks_per_stage,
                const Shape& initial_filters,
                const Shape& output_shape,
-               bool use_bottleneck) : NeuralNetwork()
+               bool use_bottleneck)
+    : NeuralNetwork(NetworkTask::ImageClassification)
 {
     throw_if(input_shape.rank != 3, "ResNet: input shape must be rank 3 (H, W, C).");
     throw_if(Index(blocks_per_stage.size()) != Index(initial_filters.rank),
@@ -455,7 +464,8 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                          BodyActivation body_activation,
                          bool use_sppf,
                          Index reg_max,
-                         ModelSize model_size) : NeuralNetwork()
+                         ModelSize model_size)
+    : NeuralNetwork(NetworkTask::ObjectDetection)
 {
     throw_if(input_shape.rank != 3, "YoloNetwork: input shape must be rank 3 (H, W, C).");
     throw_if(classes_number <= 0 || anchors.empty(),
@@ -1140,7 +1150,8 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                                      const Shape& complexity_dimensions,
                                                      const Shape& output_shape,
-                                                     PoolingMethod pooling_method) : NeuralNetwork()
+                                                     PoolingMethod pooling_method)
+    : NeuralNetwork(NetworkTask::TextClassification)
 {
     const Index vocabulary_size = input_shape[0];
     const Index sequence_length = input_shape[1];
@@ -1213,6 +1224,11 @@ static Index add_feed_forward(NeuralNetwork& network,
     return network.get_layers_number() - 1;
 }
 
+Transformer::Transformer()
+    : NeuralNetwork(NetworkTask::LanguageModeling)
+{
+}
+
 Transformer::Transformer(Index input_sequence_length,
                          Index decoder_sequence_length,
                          Index input_vocabulary_size,
@@ -1221,7 +1237,7 @@ Transformer::Transformer(Index input_sequence_length,
                          Index heads_number,
                          Index feed_forward_dimension,
                          Index layers_number)
-    : NeuralNetwork()
+    : NeuralNetwork(NetworkTask::LanguageModeling)
 {
     throw_if(input_sequence_length == 0 ||
              decoder_sequence_length == 0 ||
@@ -1385,6 +1401,11 @@ Index Transformer::get_decoder_sequence_length() const
     return get_layer("decoder_embedding")->get_input_shape()[0];
 }
 
+TextGenerationNetwork::TextGenerationNetwork()
+    : NeuralNetwork(NetworkTask::LanguageModeling)
+{
+}
+
 TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
                                              Index vocabulary_size,
                                              Index embedding_dimension,
@@ -1395,7 +1416,7 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
                                              bool scale_embedding,
                                              bool learned_positional,
                                              const string& feed_forward_activation)
-    : NeuralNetwork()
+    : NeuralNetwork(NetworkTask::LanguageModeling)
 {
     throw_if(sequence_length == 0 ||
              vocabulary_size == 0 ||
@@ -1543,6 +1564,11 @@ static Index add_bert_encoder(NeuralNetwork& net,
     return current;
 }
 
+Bert::Bert()
+    : NeuralNetwork(NetworkTask::LanguageModeling)
+{
+}
+
 Bert::Bert(Index sequence_length,
            Index vocabulary_size,
            Index hidden_size,
@@ -1550,11 +1576,16 @@ Bert::Bert(Index sequence_length,
            Index intermediate_size,
            Index layers_number,
            Index type_vocabulary_size)
-    : NeuralNetwork()
+    : NeuralNetwork(NetworkTask::LanguageModeling)
 {
     add_bert_encoder(*this, sequence_length, vocabulary_size, hidden_size, heads_number,
                      intermediate_size, layers_number, type_vocabulary_size);
     finalize_build(*this);
+}
+
+Qwen3::Qwen3()
+    : NeuralNetwork(NetworkTask::LanguageModeling)
+{
 }
 
 Qwen3::Qwen3(Index sequence_length,
@@ -1567,7 +1598,7 @@ Qwen3::Qwen3(Index sequence_length,
              Index intermediate_size,
              float rope_theta,
              float rms_epsilon)
-    : NeuralNetwork()
+    : NeuralNetwork(NetworkTask::LanguageModeling)
 {
     throw_if(sequence_length == 0 || vocabulary_size == 0 || hidden_size == 0 ||
              layers_number == 0 || query_heads == 0 || key_value_heads == 0 ||
@@ -1685,7 +1716,7 @@ Tokenizer& get_tokenizer_layer(const NeuralNetwork& network,
 }
 
 Transformer::Transformer(const filesystem::path& path)
-    : NeuralNetwork(path)
+    : NeuralNetwork(path, NetworkTask::LanguageModeling)
 {
 }
 
@@ -1722,7 +1753,7 @@ const vector<string>& Transformer::get_target_vocabulary() const
 }
 
 TextGenerationNetwork::TextGenerationNetwork(const filesystem::path& path)
-    : NeuralNetwork(path)
+    : NeuralNetwork(path, NetworkTask::LanguageModeling)
 {
 }
 
@@ -1754,6 +1785,11 @@ const TokenizerOperator* TextClassificationNetwork::get_tokenizer() const
     return get_tokenizer_layer(*this, "tokenizer", "TextClassificationNetwork::get_tokenizer").get_tokenizer();
 }
 
+BertForSequenceClassification::BertForSequenceClassification()
+    : NeuralNetwork(NetworkTask::TextClassification)
+{
+}
+
 BertForSequenceClassification::BertForSequenceClassification(Index sequence_length,
                                                              Index vocabulary_size,
                                                              Index hidden_size,
@@ -1762,7 +1798,7 @@ BertForSequenceClassification::BertForSequenceClassification(Index sequence_leng
                                                              Index layers_number,
                                                              Index labels_number,
                                                              Index type_vocabulary_size)
-    : NeuralNetwork()
+    : NeuralNetwork(NetworkTask::TextClassification)
 {
     throw_if(labels_number == 0, "BertForSequenceClassification: labels_number must be > 0.");
 

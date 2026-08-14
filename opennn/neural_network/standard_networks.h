@@ -141,7 +141,7 @@ class Transformer final : public NeuralNetwork
 {
 public:
 
-    Transformer() = default;
+    Transformer();
 
     Transformer(Index,
                 Index,
@@ -173,7 +173,7 @@ class TextGenerationNetwork final : public NeuralNetwork
 {
 public:
 
-    TextGenerationNetwork() = default;
+    TextGenerationNetwork();
 
     TextGenerationNetwork(Index,
                           Index,
@@ -203,7 +203,7 @@ class Qwen3 final : public NeuralNetwork
 {
 public:
 
-    Qwen3() = default;
+    Qwen3();
 
     Qwen3(Index sequence_length,
           Index vocabulary_size,
@@ -221,7 +221,7 @@ class Bert final : public NeuralNetwork
 {
 public:
 
-    Bert() = default;
+    Bert();
 
     Bert(Index sequence_length,
          Index vocabulary_size,
@@ -236,7 +236,7 @@ class BertForSequenceClassification final : public NeuralNetwork
 {
 public:
 
-    BertForSequenceClassification() = default;
+    BertForSequenceClassification();
 
     BertForSequenceClassification(Index sequence_length,
                                   Index vocabulary_size,

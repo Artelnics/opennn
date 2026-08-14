@@ -14,11 +14,6 @@
 namespace opennn
 {
 
-class Loss;
-class Optimizer;
-
-struct TrainingResult;
-
 class TrainingStrategy
 {
 

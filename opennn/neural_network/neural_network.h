@@ -8,15 +8,28 @@
 
 #pragma once
 
+#include <functional>
+
 #include "opennn/core/configuration.h"
-#include "opennn/neural_network/layers/layer.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/variable.h"
-
-#include <functional>
+#include "opennn/neural_network/layers/layer.h"
 
 namespace opennn
 {
+
+enum class NetworkTask
+{
+    Generic,
+    Approximation,
+    Classification,
+    Forecasting,
+    AutoAssociation,
+    ImageClassification,
+    ObjectDetection,
+    TextClassification,
+    LanguageModeling
+};
 
 class NeuralNetwork
 {
@@ -28,6 +41,9 @@ public:
     virtual ~NeuralNetwork() = default;
 
     NeuralNetwork(const filesystem::path&);
+
+    NetworkTask get_task() const noexcept { return task; }
+    void set_task(NetworkTask new_task) noexcept { task = new_task; }
 
     void add_layer(unique_ptr<Layer>,
                   const vector<Index>& = {});
@@ -229,6 +245,11 @@ public:
     vector<string> get_layer_labels() const;
 
 protected:
+
+    explicit NeuralNetwork(NetworkTask);
+    NeuralNetwork(const filesystem::path&, NetworkTask);
+
+    NetworkTask task = NetworkTask::Generic;
 
     vector<Variable> input_variables;
     vector<Variable> output_variables;

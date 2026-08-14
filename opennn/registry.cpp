@@ -57,6 +57,84 @@ unique_ptr<Base> construct()
     return make_unique<Class>();
 }
 
+using LayerFactory = unique_ptr<Layer>(*)();
+
+struct LayerRegistration
+{
+    LayerType type;
+    string_view name;
+    LayerFactory factory;
+};
+
+template<typename Class>
+unique_ptr<Layer> construct_layer()
+{
+    return make_unique<Class>();
+}
+
+#ifndef OPENNN_NO_VISION
+
+unique_ptr<Layer> construct_rms_normalization()
+{
+    auto layer = make_unique<Normalization3d>();
+    layer->set_method(NormalizationMethod::RMS);
+    return layer;
+}
+
+#define OPENNN_VISION_FACTORY(factory) factory
+
+#else
+
+#define OPENNN_VISION_FACTORY(factory) nullptr
+
+#endif
+
+const vector<LayerRegistration>& layer_registrations()
+{
+    static const vector<LayerRegistration> registrations = {
+        {LayerType::Activation,             "Activation",             construct_layer<Activation>},
+        {LayerType::Addition,               "Addition",               construct_layer<Addition>},
+        {LayerType::Bounding,               "Bounding",               construct_layer<Bounding>},
+        {LayerType::Concatenation,          "Concatenation",          construct_layer<Concatenation>},
+        {LayerType::Concatenation,          "Concatenate",            construct_layer<Concatenation>},
+        {LayerType::Convolutional,          "Convolutional",
+         OPENNN_VISION_FACTORY(construct_layer<Convolutional>)},
+        {LayerType::Dense,                  "Dense",                  construct_layer<Dense>},
+        {LayerType::Detection,              "Detection",
+         OPENNN_VISION_FACTORY(construct_layer<Detection>)},
+        {LayerType::DetectionV8,            "DetectionV8",
+         OPENNN_VISION_FACTORY(construct_layer<DetectionV8>)},
+        {LayerType::Embedding,              "Embedding",
+         OPENNN_VISION_FACTORY(construct_layer<Embedding>)},
+        {LayerType::Flatten,                "Flatten",
+         OPENNN_VISION_FACTORY(construct_layer<Flatten>)},
+        {LayerType::LongShortTermMemory,    "LongShortTermMemory",    construct_layer<LongShortTermMemory>},
+        {LayerType::MultiHeadAttention,     "MultiHeadAttention",
+         OPENNN_VISION_FACTORY(construct_layer<MultiHeadAttention>)},
+        {LayerType::Normalization3d,        "Normalization3d",
+         OPENNN_VISION_FACTORY(construct_layer<Normalization3d>)},
+        {LayerType::RMSNormalization3d,     "RMSNormalization3d",
+         OPENNN_VISION_FACTORY(construct_rms_normalization)},
+        {LayerType::GroupedQueryAttention,  "GroupedQueryAttention",
+         OPENNN_VISION_FACTORY(construct_layer<GroupedQueryAttention>)},
+        {LayerType::NonMaxSuppression,      "NonMaxSuppression",      construct_layer<NonMaxSuppression>},
+        {LayerType::Pooling,                "Pooling",
+         OPENNN_VISION_FACTORY(construct_layer<Pooling>)},
+        {LayerType::Pooling3d,              "Pooling3d",
+         OPENNN_VISION_FACTORY(construct_layer<Pooling3d>)},
+        {LayerType::Recurrent,              "Recurrent",              construct_layer<Recurrent>},
+        {LayerType::Scaling,                "Scaling",                construct_layer<Scaling>},
+        {LayerType::Tokenizer,              "Tokenizer",              construct_layer<Tokenizer>},
+        {LayerType::Unscaling,              "Unscaling",              construct_layer<Unscaling>},
+        {LayerType::Upsample,               "Upsample",               construct_layer<Upsample>},
+        {LayerType::C2PSA,                  "C2PSA",                  construct_layer<C2PSA>}
+    };
+
+    return registrations;
+}
+
+#undef OPENNN_VISION_FACTORY
+
 template<typename Base>
 unique_ptr<Base> create(const unordered_map<string_view, unique_ptr<Base>(*)()>& factories,
                         const string& name)
@@ -73,33 +151,17 @@ unique_ptr<Base> create(const unordered_map<string_view, unique_ptr<Base>(*)()>&
 
 const EnumMap<LayerType>& layer_type_map()
 {
-    static const vector<pair<LayerType, string>> entries = {
-        {LayerType::Activation,         "Activation"},
-        {LayerType::Addition,           "Addition"},
-        {LayerType::Bounding,           "Bounding"},
-        {LayerType::Concatenation,      "Concatenation"},
-        {LayerType::Concatenation,      "Concatenate"},
-        {LayerType::Convolutional,      "Convolutional"},
-        {LayerType::Dense,              "Dense"},
-        {LayerType::Detection,          "Detection"},
-        {LayerType::DetectionV8,        "DetectionV8"},
-        {LayerType::Embedding,          "Embedding"},
-        {LayerType::Flatten,            "Flatten"},
-        {LayerType::LongShortTermMemory, "LongShortTermMemory"},
-        {LayerType::MultiHeadAttention, "MultiHeadAttention"},
-        {LayerType::Normalization3d,    "Normalization3d"},
-        {LayerType::RMSNormalization3d, "RMSNormalization3d"},
-        {LayerType::GroupedQueryAttention, "GroupedQueryAttention"},
-        {LayerType::NonMaxSuppression,  "NonMaxSuppression"},
-        {LayerType::Pooling,            "Pooling"},
-        {LayerType::Pooling3d,          "Pooling3d"},
-        {LayerType::Recurrent,          "Recurrent"},
-        {LayerType::Scaling,            "Scaling"},
-        {LayerType::Tokenizer,          "Tokenizer"},
-        {LayerType::Unscaling,          "Unscaling"},
-        {LayerType::Upsample,           "Upsample"},
-        {LayerType::C2PSA,              "C2PSA"}
-    };
+    static const vector<EnumMap<LayerType>::Entry> entries = []
+    {
+        vector<EnumMap<LayerType>::Entry> result;
+        result.reserve(layer_registrations().size());
+
+        for (const LayerRegistration& registration : layer_registrations())
+            result.emplace_back(registration.type, string(registration.name));
+
+        return result;
+    }();
+
     static const EnumMap<LayerType> map{entries};
     return map;
 }
@@ -121,42 +183,14 @@ const string& Layer::get_name() const
 
 unique_ptr<Layer> create_layer(const string& name)
 {
-    static const unordered_map<string_view, unique_ptr<Layer>(*)()> factories = {
-        {"Activation", construct<Layer, Activation>},
-        {"Addition", construct<Layer, Addition>},
-        {"Bounding", construct<Layer, Bounding>},
-        {"C2PSA", construct<Layer, C2PSA>},
-        {"Concatenation", construct<Layer, Concatenation>},
-        {"Concatenate", construct<Layer, Concatenation>},
-        {"Dense", construct<Layer, Dense>},
-        {"LongShortTermMemory", construct<Layer, LongShortTermMemory>},
-        {"NonMaxSuppression", construct<Layer, NonMaxSuppression>},
-        {"Recurrent", construct<Layer, Recurrent>},
-        {"Scaling", construct<Layer, Scaling>},
-        {"Tokenizer", construct<Layer, Tokenizer>},
-        {"Unscaling", construct<Layer, Unscaling>},
-        {"Upsample", construct<Layer, Upsample>},
-#ifndef OPENNN_NO_VISION
-        {"Convolutional", construct<Layer, Convolutional>},
-        {"Detection", construct<Layer, Detection>},
-        {"DetectionV8", construct<Layer, DetectionV8>},
-        {"Embedding", construct<Layer, Embedding>},
-        {"Flatten", construct<Layer, Flatten>},
-        {"GroupedQueryAttention", construct<Layer, GroupedQueryAttention>},
-        {"MultiHeadAttention", construct<Layer, MultiHeadAttention>},
-        {"Normalization3d", construct<Layer, Normalization3d>},
-        {"RMSNormalization3d", []() -> unique_ptr<Layer>
-            {
-                auto layer = make_unique<Normalization3d>();
-                layer->set_method(NormalizationMethod::RMS);
-                return layer;
-            }},
-        {"Pooling", construct<Layer, Pooling>},
-        {"Pooling3d", construct<Layer, Pooling3d>},
-#endif
-    };
+    const vector<LayerRegistration>& registrations = layer_registrations();
+    const auto registration = ranges::find(registrations, name,
+                                           &LayerRegistration::name);
 
-    return create(factories, name);
+    if (registration == registrations.end() || !registration->factory)
+        throw runtime_error(format("Component not found: {}", name));
+
+    return registration->factory();
 }
 
 unique_ptr<Optimizer> create_optimizer(const string& name)

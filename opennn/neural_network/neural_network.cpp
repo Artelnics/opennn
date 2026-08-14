@@ -6,29 +6,49 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/registry.h"
-#include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/neural_network.h"
-#include "opennn/core/profiler.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/layers/tokenizer_layer.h"
-#include "opennn/neural_network/operators/combination_operator.h"
-#include "opennn/core/variable.h"
-#include "opennn/core/string_utilities.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
-#include "opennn/neural_network/model_expression.h"
-#include "opennn/core/memory_debug.h"
 
 #include <algorithm>
+
 #include "opennn/core/cuda/kernel_cast.cuh"
 #include "opennn/core/cuda/kernel_tensor.cuh"
+#include "opennn/core/enum_map.h"
+#include "opennn/core/memory_debug.h"
+#include "opennn/core/profiler.h"
+#include "opennn/core/string_utilities.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/core/variable.h"
+#include "opennn/neural_network/back_propagation.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/layers/tokenizer_layer.h"
+#include "opennn/neural_network/model_expression.h"
+#include "opennn/neural_network/operators/combination_operator.h"
+#include "opennn/registry.h"
 
 namespace opennn
 {
 
 namespace
 {
+
+const EnumMap<NetworkTask>& network_task_map()
+{
+    static const vector<EnumMap<NetworkTask>::Entry> entries = {
+        {NetworkTask::Generic,             "Generic"},
+        {NetworkTask::Approximation,       "Approximation"},
+        {NetworkTask::Classification,      "Classification"},
+        {NetworkTask::Forecasting,         "Forecasting"},
+        {NetworkTask::AutoAssociation,     "AutoAssociation"},
+        {NetworkTask::ImageClassification, "ImageClassification"},
+        {NetworkTask::ObjectDetection,     "ObjectDetection"},
+        {NetworkTask::TextClassification,  "TextClassification"},
+        {NetworkTask::LanguageModeling,    "LanguageModeling"}
+    };
+
+    static const EnumMap<NetworkTask> map{entries};
+    return map;
+}
 
 void wire_drelu_fusions(vector<unique_ptr<Layer>>& layers,
                         const vector<vector<Index>>& source_layers,
@@ -70,11 +90,23 @@ static void validate_source_indices(const vector<Index>&, Index, Index);
 static void validate_source_arity(const Layer&, const vector<Index>&, Index);
 
 NeuralNetwork::NeuralNetwork()
+    : NeuralNetwork(NetworkTask::Generic)
+{
+}
+
+NeuralNetwork::NeuralNetwork(NetworkTask new_task)
+    : task(new_task)
 {
     clear();
 }
 
 NeuralNetwork::NeuralNetwork(const filesystem::path& file_name)
+    : NeuralNetwork(file_name, NetworkTask::Generic)
+{
+}
+
+NeuralNetwork::NeuralNetwork(const filesystem::path& file_name, NetworkTask new_task)
+    : NeuralNetwork(new_task)
 {
     load(file_name);
 }
@@ -365,6 +397,7 @@ void NeuralNetwork::clear()
 void NeuralNetwork::steal_from(NeuralNetwork& src)
 {
     clear();
+    task             = src.task;
     layers           = move(src.layers);
     source_layers    = move(src.source_layers);
     input_variables  = move(src.input_variables);
@@ -972,6 +1005,8 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
 
     printer.open_element("NeuralNetwork");
 
+    add_json_field(printer, "Task", network_task_map().to_string(task));
+
     printer.open_element("Inputs");
     add_json_field(printer, "InputsNumber", inputs_number);
     write_variables_array(input_variables, "Input");
@@ -1016,6 +1051,9 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
 void NeuralNetwork::from_JSON(const JsonDocument& document)
 {
     const Json* neural_network_element = get_json_root(document, "NeuralNetwork");
+
+    if (neural_network_element->find("Task"))
+        task = network_task_map().from_string(read_json_string(neural_network_element, "Task"));
 
     const auto read_variables_array = [](const Json* parent, const char* tag,
                                          vector<Variable>& variables, const char* role)

@@ -1,5 +1,6 @@
 #include "tests/pch.h"
 
+#include "opennn/core/json.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/neural_network/standard_networks.h"
 #include "opennn/neural_network/layers/dense_layer.h"
@@ -14,6 +15,7 @@ TEST(NeuralNetworkTest, DefaultConstructor)
 
     EXPECT_EQ(neural_network.is_empty(), true);
     EXPECT_EQ(neural_network.get_layers_number(), 0);
+    EXPECT_EQ(neural_network.get_task(), NetworkTask::Generic);
 }
 
 TEST(NeuralNetworkTest, RejectsWrongSourceCount)
@@ -28,6 +30,23 @@ TEST(NeuralNetworkTest, RejectsWrongSourceCount)
     EXPECT_THROW(neural_network.add_layer(nullptr), runtime_error);
 }
 
+TEST(NeuralNetworkTest, SerializesNetworkTask)
+{
+    NeuralNetwork neural_network;
+    neural_network.set_task(NetworkTask::TextClassification);
+
+    JsonWriter writer;
+    neural_network.to_JSON(writer);
+
+    JsonDocument document;
+    document.root = Json::parse(writer.c_str());
+
+    NeuralNetwork loaded;
+    loaded.from_JSON(document);
+
+    EXPECT_EQ(loaded.get_task(), NetworkTask::TextClassification);
+}
+
 TEST(NeuralNetworkTest, ApproximationConstructor)
 {
     ApproximationNetwork neural_network({ 1 }, { 4 }, { 2 });
@@ -38,6 +57,7 @@ TEST(NeuralNetworkTest, ApproximationConstructor)
     EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Dense");
     EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Unscaling");
     EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Bounding");
+    EXPECT_EQ(neural_network.get_task(), NetworkTask::Approximation);
 }
 
 TEST(NeuralNetworkTest, ClassificationConstructor)
@@ -48,6 +68,7 @@ TEST(NeuralNetworkTest, ClassificationConstructor)
     EXPECT_EQ(neural_network.get_layer(0)->get_name(), "Scaling");
     EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Dense");
     EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Dense");
+    EXPECT_EQ(neural_network.get_task(), NetworkTask::Classification);
 }
 
 TEST(NeuralNetworkTest, AproximationConstructor)
@@ -72,6 +93,7 @@ TEST(NeuralNetworkTest, ForecastingConstructor)
     EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Dense");
     EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Unscaling");
     EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Bounding");
+    EXPECT_EQ(neural_network.get_task(), NetworkTask::Forecasting);
 }
 
 TEST(NeuralNetworkTest, AutoAssociationConstructor)
@@ -85,6 +107,7 @@ TEST(NeuralNetworkTest, AutoAssociationConstructor)
     EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Dense");
     EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Dense");
     EXPECT_EQ(neural_network.get_layer(5)->get_name(), "Unscaling");
+    EXPECT_EQ(neural_network.get_task(), NetworkTask::AutoAssociation);
 }
 
 TEST(NeuralNetworkTest, AutoAssociationSymmetricEncoderConstructor)
@@ -147,6 +170,7 @@ TEST(NeuralNetworkTest, ImageClassificationConstructor)
     EXPECT_EQ(neural_network.get_layer(4)->get_label(), "dense_2d_layer_1");
     EXPECT_EQ(neural_network.get_layer(5)->get_name(), "Dense");
     EXPECT_EQ(neural_network.get_layer(5)->get_label(), "classification_layer");
+    EXPECT_EQ(neural_network.get_task(), NetworkTask::ImageClassification);
 }
 
 TEST(NeuralNetworkTest, ForwardPropagate)

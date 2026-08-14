@@ -53,6 +53,7 @@ TEST(RegistryTest, AllComponentNamesConstruct)
     {
         const unique_ptr<Layer> layer = create_layer(name);
         ASSERT_NE(layer, nullptr) << name;
+        EXPECT_EQ(string_to_layer_type(name), layer->get_type()) << name;
         EXPECT_EQ(layer->get_name(), layer_type_to_string(layer->get_type())) << name;
     }
 

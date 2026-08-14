@@ -1,9 +1,11 @@
 #include "tests/pch.h"
 
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/standard_networks.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
+#include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/training_strategy/training_strategy.h"
-#include "opennn/neural_network/standard_networks.h"
 
 using namespace opennn;
 
@@ -26,6 +28,63 @@ TEST(TrainingStrategy, GeneralConstructor)
 
     EXPECT_EQ(training_strategy_1.get_neural_network(), &neural_network);
     EXPECT_EQ(training_strategy_1.get_dataset(), &dataset);
+    EXPECT_EQ(neural_network.get_task(), NetworkTask::Approximation);
+    EXPECT_EQ(training_strategy_1.get_loss()->get_name(), "MeanSquaredError");
+    EXPECT_EQ(training_strategy_1.get_optimization_algorithm()->get_name(),
+              "AdaptiveMomentEstimation");
+}
+
+TEST(TrainingStrategy, UsesExplicitNetworkTask)
+{
+    TabularDataset dataset(10, {2}, {1});
+    NeuralNetwork neural_network;
+    neural_network.set_task(NetworkTask::LanguageModeling);
+
+    TrainingStrategy training_strategy(&neural_network, &dataset);
+
+    EXPECT_EQ(training_strategy.get_loss()->get_name(), "CrossEntropyError3d");
+    EXPECT_EQ(training_strategy.get_optimization_algorithm()->get_name(),
+              "AdaptiveMomentEstimation");
+
+    const auto* adam = dynamic_cast<const AdaptiveMomentEstimation*>(
+        training_strategy.get_optimization_algorithm());
+    ASSERT_NE(adam, nullptr);
+    EXPECT_FLOAT_EQ(adam->get_learning_rate(), 0.0001f);
+}
+
+TEST(TrainingStrategy, DoesNotInferTaskFromTopology)
+{
+    TabularDataset dataset(10, {2}, {2});
+    NeuralNetwork neural_network;
+    neural_network.add_layer(
+        make_unique<opennn::Dense>(Shape{2}, Shape{2}, "Softmax"));
+
+    TrainingStrategy training_strategy(&neural_network, &dataset);
+
+    EXPECT_EQ(neural_network.get_task(), NetworkTask::Generic);
+    EXPECT_EQ(training_strategy.get_loss()->get_name(), "MeanSquaredError");
+    EXPECT_EQ(training_strategy.get_optimization_algorithm()->get_name(),
+              "AdaptiveMomentEstimation");
+}
+
+TEST(TrainingStrategy, ClassificationDefaultsUseDeclaredTask)
+{
+    TabularDataset binary_dataset(10, {2}, {1});
+    ClassificationNetwork binary_network({2}, {3}, {1});
+    TrainingStrategy binary_strategy(&binary_network, &binary_dataset);
+
+    EXPECT_EQ(binary_network.get_task(), NetworkTask::Classification);
+    EXPECT_EQ(binary_strategy.get_loss()->get_name(), "WeightedSquaredError");
+    EXPECT_EQ(binary_strategy.get_optimization_algorithm()->get_name(),
+              "QuasiNewtonMethod");
+
+    TabularDataset multiclass_dataset(10, {2}, {3});
+    ClassificationNetwork multiclass_network({2}, {3}, {3});
+    TrainingStrategy multiclass_strategy(&multiclass_network, &multiclass_dataset);
+
+    EXPECT_EQ(multiclass_strategy.get_loss()->get_name(), "CrossEntropy");
+    EXPECT_EQ(multiclass_strategy.get_optimization_algorithm()->get_name(),
+              "QuasiNewtonMethod");
 }
 
 TEST(TrainingStrategy, RebindsLossDependencies)

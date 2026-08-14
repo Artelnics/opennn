@@ -6,12 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/registry.h"
-#include "opennn/training_strategy/loss.h"
-#include "opennn/training_strategy/optimizer.h"
 #include "opennn/training_strategy/training_strategy.h"
+
+#include "opennn/registry.h"
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
-#include "opennn/neural_network/layers/dense_layer.h"
 
 namespace opennn
 {
@@ -74,63 +72,57 @@ void TrainingStrategy::set_optimization_algorithm(const string& new_optimization
 
 void TrainingStrategy::set_default()
 {
+    static constexpr Index classification_epochs = 100;
+    static constexpr float language_model_learning_rate = 0.0001f;
+
     if (!get_neural_network())
         return;
 
-    if (neural_network->has_recurrent_layers())
+    const char* loss_name = "MeanSquaredError";
+    const char* optimizer_name = "AdaptiveMomentEstimation";
+    bool limit_epochs = false;
+    bool lower_adam_learning_rate = false;
+
+    switch (neural_network->get_task())
     {
-        set_loss("MeanSquaredError");
-        set_optimization_algorithm("AdaptiveMomentEstimation");
-        return;
+        case NetworkTask::Classification:
+            loss_name = neural_network->get_outputs_number() == 1
+                      ? "WeightedSquaredError"
+                      : "CrossEntropy";
+            optimizer_name = "QuasiNewtonMethod";
+            break;
+
+        case NetworkTask::ImageClassification:
+        case NetworkTask::ObjectDetection:
+        case NetworkTask::TextClassification:
+            loss_name = "CrossEntropy";
+            limit_epochs = true;
+            break;
+
+        case NetworkTask::LanguageModeling:
+            loss_name = "CrossEntropyError3d";
+            lower_adam_learning_rate = true;
+            break;
+
+        case NetworkTask::Generic:
+        case NetworkTask::Approximation:
+        case NetworkTask::Forecasting:
+        case NetworkTask::AutoAssociation:
+            break;
     }
 
-    if (neural_network->has(LayerType::Convolutional))
+    set_loss(loss_name);
+    set_optimization_algorithm(optimizer_name);
+
+    if (limit_epochs)
+        optimizer->set_maximum_epochs(classification_epochs);
+
+    if (lower_adam_learning_rate)
     {
-        set_loss("CrossEntropy");
-        set_optimization_algorithm("AdaptiveMomentEstimation");
-        dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_maximum_epochs(100);
-        return;
+        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get());
+        throw_if(!adam, "Language-model defaults require AdaptiveMomentEstimation.");
+        adam->set_learning_rate(language_model_learning_rate);
     }
-
-    const auto& layers = neural_network->get_layers();
-    const bool has_seq_dense = ranges::any_of(layers, [](const auto& layer) {
-        const auto* dense = dynamic_cast<const Dense*>(layer.get());
-        return dense && dense->get_input_shape().rank == 2;
-    });
-    if (has_seq_dense)
-    {
-        set_loss("CrossEntropyError3d");
-        set_optimization_algorithm("AdaptiveMomentEstimation");
-        dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_learning_rate(0.0001f);
-        return;
-    }
-
-    if (neural_network->has(LayerType::Embedding) || neural_network->has(LayerType::MultiHeadAttention))
-    {
-        set_loss("CrossEntropy");
-        set_optimization_algorithm("AdaptiveMomentEstimation");
-        dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_maximum_epochs(100);
-        return;
-    }
-
-    const ActivationFunction output_activation = neural_network->get_output_activation();
-
-    if (output_activation == ActivationFunction::Softmax)
-    {
-        set_loss("CrossEntropy");
-        set_optimization_algorithm("QuasiNewtonMethod");
-        return;
-    }
-
-    if (output_activation == ActivationFunction::Sigmoid)
-    {
-        set_loss("WeightedSquaredError");
-        set_optimization_algorithm("QuasiNewtonMethod");
-        return;
-    }
-
-    set_loss("MeanSquaredError");
-    set_optimization_algorithm("AdaptiveMomentEstimation");
 }
 
 TrainingResult TrainingStrategy::train()
