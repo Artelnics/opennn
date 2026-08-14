@@ -9,10 +9,11 @@
 #include "opennn/neural_network/operators/attention_operator.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/tensor_operations.h"
+#include "opennn/neural_network/back_propagation.h"
+#include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/operators/dropout_operator.h"
 #include "opennn/neural_network/operators/multihead_projection_operator.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
+#include "opennn/neural_network/operators/sequence_length_staging.h"
 
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/cuda/cudnn_frontend_utilities.h"
@@ -601,61 +602,11 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
 namespace
 {
 
-// Valid lengths are known on the host, and both masking paths need them on the
-// device before the work that masks with them runs. Staging through pinned
-// memory keeps that copy asynchronous; the ring of slots stops a slot being
-// refilled while the copy that reads it is still in flight, so one batch's
-// upload overlaps the previous batch's compute instead of serializing on it.
-struct AttentionLengthsStaging
-{
-    static constexpr int slots = 4;
-
-    int* pinned = nullptr;
-    Index capacity = 0;
-    int slot = 0;
-    CudaEvent copy_done[slots];
-
-    int* acquire(Index count)
-    {
-        if (count > capacity)
-        {
-            device::synchronize(device::get_compute_stream());
-            if (pinned) device::deallocate_pinned_host(pinned);
-            pinned = static_cast<int*>(device::allocate_pinned_host(slots * count * Index(sizeof(int))));
-            capacity = count;
-        }
-
-        slot = (slot + 1) % slots;
-        if (copy_done[slot]) device::synchronize_event(copy_done[slot]);
-        else copy_done[slot].create();
-
-        return pinned + slot * capacity;
-    }
-
-    void mark_copied() { device::record_event(copy_done[slot], device::get_compute_stream()); }
-
-    ~AttentionLengthsStaging() { if (pinned) device::deallocate_pinned_host(pinned); }
-};
-
 const int* stage_attention_lengths(const vector<Index>& lengths)
 {
-    thread_local AttentionLengthsStaging staging;
-    thread_local Buffer device_lengths{Device::CUDA};
+    thread_local SequenceLengthStaging staging;
 
-    const Index batch_size = Index(lengths.size());
-    if (batch_size == 0) return nullptr;
-
-    device_lengths.grow_to(batch_size * Index(sizeof(int)));
-
-    int* host_slot = staging.acquire(batch_size);
-    ranges::transform(lengths, host_slot, [](Index length) { return int(length); });
-
-    device::copy_async(device_lengths.data, host_slot,
-                       batch_size * Index(sizeof(int)),
-                       device::CopyKind::HostToDevice, device::get_compute_stream());
-    staging.mark_copied();
-
-    return device_lengths.as<int>();
+    return staging.stage(lengths);
 }
 
 // Fills the two length tensors the SDPA graph masks with from lengths an
@@ -670,7 +621,7 @@ void upload_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
              "SDPA padding mask: {} valid lengths for a batch of {}.",
              lengths.size(), k.batch_size);
 
-    thread_local AttentionLengthsStaging staging;
+    thread_local SequenceLengthStaging staging;
 
     int* const query_slot  = staging.acquire(2 * k.batch_size);
     int* const source_slot = query_slot + k.batch_size;

@@ -9,8 +9,9 @@
 #include "opennn/neural_network/operators/pool3d_operator.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/tensor_operations.h"
-#include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/neural_network/operators/sequence_length_staging.h"
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/neural_network/operators/kernel_pool3d.cuh"
 #endif
@@ -263,62 +264,13 @@ void first_token_3d_backward(const TensorView& output_delta, TensorView& input_d
 
 #ifdef OPENNN_HAS_CUDA
 
-// The lengths are known on the host and the kernels that mask with them need
-// them on the device first. Staging through pinned memory keeps that copy
-// asynchronous; the ring of slots stops a slot being refilled while the copy
-// that reads it is still in flight. Attention stages its own masks the same
-// way, and the two are worth collapsing into one helper once this side settles.
-struct PoolingLengthsStaging
-{
-    static constexpr int slots = 4;
-
-    int* pinned = nullptr;
-    Index capacity = 0;
-    int slot = 0;
-    CudaEvent copy_done[slots];
-
-    int* acquire(Index count)
-    {
-        if (count > capacity)
-        {
-            device::synchronize(device::get_compute_stream());
-            if (pinned) device::deallocate_pinned_host(pinned);
-            pinned = static_cast<int*>(device::allocate_pinned_host(slots * count * Index(sizeof(int))));
-            capacity = count;
-        }
-
-        slot = (slot + 1) % slots;
-        if (copy_done[slot]) device::synchronize_event(copy_done[slot]);
-        else copy_done[slot].create();
-
-        return pinned + slot * capacity;
-    }
-
-    void mark_copied() { device::record_event(copy_done[slot], device::get_compute_stream()); }
-
-    ~PoolingLengthsStaging() { if (pinned) device::deallocate_pinned_host(pinned); }
-};
-
 static const int* stage_pooling_lengths(const vector<Index>* valid_lengths)
 {
-    if (!valid_lengths || valid_lengths->empty()) return nullptr;
+    if (!valid_lengths) return nullptr;
 
-    thread_local PoolingLengthsStaging staging;
-    thread_local Buffer device_lengths{Device::CUDA};
+    thread_local SequenceLengthStaging staging;
 
-    const Index batch_size = Index(valid_lengths->size());
-
-    device_lengths.grow_to(batch_size * Index(sizeof(int)));
-
-    int* host_slot = staging.acquire(batch_size);
-    ranges::transform(*valid_lengths, host_slot, [](Index length) { return int(length); });
-
-    device::copy_async(device_lengths.data, host_slot,
-                       batch_size * Index(sizeof(int)),
-                       device::CopyKind::HostToDevice, device::get_compute_stream());
-    staging.mark_copied();
-
-    return device_lengths.as<int>();
+    return staging.stage(*valid_lengths);
 }
 
 static void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool  ,
