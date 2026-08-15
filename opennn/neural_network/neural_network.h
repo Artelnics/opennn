@@ -193,7 +193,6 @@ public:
 
     Tensor3 calculate_outputs(const Tensor3&, const Tensor3&);
 
-    MatrixR calculate_text_outputs(const Tensor<string, 1>&);
     void from_JSON(const JsonDocument&);
 
     void to_JSON(JsonWriter&) const;

@@ -1787,6 +1787,33 @@ const TokenizerOperator* TextClassificationNetwork::get_tokenizer() const
     return get_tokenizer_layer(*this, "tokenizer", "TextClassificationNetwork::get_tokenizer").get_tokenizer();
 }
 
+MatrixR TextClassificationNetwork::calculate_text_outputs(
+    const Tensor<string, 1>& input_documents)
+{
+    const Tokenizer& tokenizer_layer = get_tokenizer_layer(
+        *this, "tokenizer", "TextClassificationNetwork::calculate_text_outputs");
+    const TokenizerOperator* tokenizer = tokenizer_layer.get_tokenizer();
+
+    throw_if(!tokenizer || tokenizer->get_vocabulary_size() == 0,
+             "TextClassificationNetwork::calculate_text_outputs: the tokenizer "
+             "has no vocabulary; call set_tokenizer() first.");
+
+    const Index sequence_length = tokenizer_layer.get_output_shape()[0];
+    const Index batch_size = input_documents.size();
+    MatrixR inputs = MatrixR::Zero(batch_size, sequence_length);
+
+    for (Index i = 0; i < batch_size; ++i)
+    {
+        const vector<Index> ids =
+            tokenizer->encode_sequence(input_documents.data()[i], sequence_length);
+
+        for (Index j = 0; j < min(ssize(ids), sequence_length); ++j)
+            inputs(i, j) = float(ids[size_t(j)]);
+    }
+
+    return calculate_outputs(inputs);
+}
+
 BertForSequenceClassification::BertForSequenceClassification()
     : NeuralNetwork(NetworkTask::TextClassification)
 {

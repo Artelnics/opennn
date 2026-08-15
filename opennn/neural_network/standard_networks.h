@@ -133,6 +133,8 @@ public:
                               const Shape&,
                               PoolingMethod pooling_method = PoolingMethod::AveragePooling);
 
+    MatrixR calculate_text_outputs(const Tensor<string, 1>&);
+
     void set_tokenizer(unique_ptr<TokenizerOperator>);
     const TokenizerOperator* get_tokenizer() const;
 };

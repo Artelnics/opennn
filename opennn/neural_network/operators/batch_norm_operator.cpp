@@ -692,6 +692,20 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                 entry.bwd_forked       = attempt.fork;
                 entry.bwd_fused_relu   = attempt.fuse_relu;
                 entry.bwd_native_dtype = attempt.dtype == input.type;
+
+                // Once per shape: which rung this backward runs on. A rung below
+                // the first costs extra full-tensor passes (a standalone dReLU, a
+                // residual-delta copy, three FP32 staging casts), and this is the
+                // only signal of it.
+                if (attempt_index > 0 || !entry.bwd_native_dtype)
+                    cerr << "BatchNormalizationOperator backward c" << features
+                         << " r" << input.size() / features << " batch " << batch
+                         << ": rung " << attempt_index
+                         << (entry.bwd_native_dtype ? " (native " : " (FP32-staged ")
+                         << (entry.bwd_forked ? "fused ReLU + residual fork)"
+                             : entry.bwd_fused_relu ? "fused ReLU)"
+                             : "plain; ReLU/copy run separately)")
+                         << ".\n";
                 break;
             }
         }

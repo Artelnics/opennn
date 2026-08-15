@@ -1,0 +1,192 @@
+# Plan: beating PyTorch and TensorFlow at large batch (ResNet-50 GPU training)
+
+*2026-08-15. Grounded in per-step measurements on the audit machine (RTX 3060
+Laptop 6 GB, WSL2, cuDNN 9.10.2) — OpenNN `OPENNN_GRAPH_TIMING` /
+`OPENNN_PROFILE` versus PyTorch `torch.profiler`, both at batch 2048, plus a
+per-shape census of the batch-norm backward path. Companion to
+`resnet50-training-kernel-fusion-audit.md`.*
+
+## 1. Where the deficit is — measured, per training step at batch 2048
+
+**bf16** (OpenNN autotuned; PyTorch `cudnn.benchmark` + `torch.compile`):
+
+| component | OpenNN ms | PyTorch ms | verdict |
+|---|---:|---:|---|
+| convolutions (fwd + wgrad + dgrad, cuDNN graphs) | **55** | 64 | we are faster |
+| batch-norm graphs (fwd 11 + bwd 18) | 29 | 31 | parity |
+| **BN-backward work *around* the graph** (fp32 staging casts, standalone dReLU, residual-delta copies) | **~15–20** | 0 | **the leak** |
+| **residual-join adds** (`accumulate_output_deltas`, 16/step) | **5.6** | 0 (fused into Triton BN-bwd) | **the leak** |
+| Adam | 2.3 | 5.3 | we are faster |
+| pooling | 2.8 | ~5 (Inductor maxpool bwd) | we are faster |
+| **step** | **~117** | **~100** | 0.85× |
+
+**fp32**: same shape, larger numbers — conv ≈ 137–148 vs 137 (parity once the
+timing mode's per-graph sync overhead, ~10 ms/step, is discounted; the
+workspace budget is *not* a factor, see §6), BN 72 vs 57 (the 16 residual
+layers' separate dReLU + delta copy ≈ 15–19 ms at 4-byte tensors),
+residual-join adds 11 vs 0, Adam/pooling in our favour; step ≈ 245 vs 199
+(0.81×).
+
+*Measurement caveat:* GRAPH_TIMING event-times each cuDNN graph with a sync
+(~160 syncs/step), OPENNN_PROFILE syncs per scope, and this laptop drifts
+thermally by ±7% between runs, so single components carry ±10% slop. The
+conclusions below rest on the components that are large and reproduced across
+runs: BN-backward degradation, the residual adds, conv parity-or-better.
+
+**The census** (`BatchNormalizationOperator backward … rung` lines, now printed
+once per shape): at bf16/2048 on cuDNN 9.10, **49 of 53 BN layers run
+degraded** — 33 through **FP32 staging** (three full-tensor casts + fp32 math at
+2× bytes; includes the largest tensor in the network, the 67 MB stem output),
+and all **16 residual layers on the un-fused bf16 engine** with a separate dReLU
+kernel and a residual-delta copy. Only 4 layers get the fully fused native
+engine. In fp32 nothing stages, but the same 16 residual layers run un-fused
+(+ dReLU + copy). PyTorch runs all 53 as two fused Triton passes.
+
+## 2. Why this only bites at large batch
+
+Our structural advantage — CUDA graphs bundling 8 steps, GPU-resident gather,
+~zero host work — is a **fixed cost per step**: worth 2× at batch 128 (PyTorch
+spends ~13 ms/step in dispatch + WSL launch latency), ~1% at 2048. What is left
+at large batch is bytes moved per sample. The extra passes above scale
+linearly with the tensors, and at 128 they partly live near L2 (4 MB
+activations) while at 2048 every pass hits DRAM (64 MB). Same code, opposite
+regime: the fixed advantage shrinks exactly as the linear disadvantage grows.
+Nothing about large batches is wrong in our code any more (that was the
+workspace cliff, fixed) — our kernels simply move more bytes per sample than
+PyTorch's.
+
+## 3. The plan
+
+Ordered by (throughput won) / (effort × risk). Each phase has a validation gate;
+none is merged without it.
+
+### Phase 0 — configuration and cheap wins (days)
+
+- **0a. Autotune everywhere it counts, and make it cheap.** Autotune cuts our
+  wgrad time 39% at 2048 versus the heuristic (conv 69 → 55 ms/step). It is the
+  harness default now, but costs ~5 min of plan *building* per point (every
+  candidate engine compiled). Tune only the heuristic's top-K candidates
+  (`build_plan_at_index` for K≈8–16, then `autotune()` skips the unbuilt slots)
+  → expected <1 min/point with most of the gain. Gate: 1024/2048 throughput
+  within 2% of full autotune.
+- **0b. Workspace budget under autotune — measured, dropped.** fp32/2048 with a
+  1 GiB budget: conv 155 ms/step, 7,799 samples/s; with the auto 256 MiB
+  budget: 148 ms/step, 8,569 samples/s. A larger budget does not help; the
+  auto ceiling stays. (Kept here so nobody re-runs it.)
+- **0c. Census on the benchmarks machine** (RTX 4080, cuDNN 9.23): run the same
+  binary and read the rung lines. The in-source note says 16/24 shapes stage
+  there; this decides how much of Phase 1 the canonical numbers get.
+- **0d. Gradient check of the un-fused bf16 engine.** The 16 residual layers
+  *already* run the configuration the code comment calls "bad math"
+  (`batch_norm_operator.cpp:661` vs `:662-668`); on this cuDNN the 3-epoch loss
+  is 3% higher when it is forced everywhere. Compare per-layer dscale/dbias/dx
+  against the fp32 reference for one residual shape. Either the comment is
+  stale (then Phase 1 can lean on that engine where it is fastest) or we are
+  shipping wrong gradients on every residual block today (then Phase 1 is also
+  a correctness fix). Half a day; decides Phase 1's design.
+
+### Phase 1 — a fused NHWC batch-norm backward of our own (1–2 weeks)
+
+Used on every shape where cuDNN lacks the fully fused native engine (49/53 here;
+the 4 native shapes keep cuDNN). bf16 IO, fp32 math, dReLU and the residual
+fork fused. Two kernels:
+
+1. **Reduce**: per channel `Σ dy'` and `Σ dy'·x̂` with `dy' = dy ⊙ [y > 0]`
+   (residual layers read the saved Y; non-residual ones can rebuild the mask
+   from X, mean, invvar, scale, bias). NHWC → coalesced along C; block-level
+   partials over N·H·W with a two-level (per-block → global) sum, deterministic
+   order. Reads DY, Y|X (+X for x̂): 2–3 passes.
+2. **Apply**: `dx = scale·invvar·(dy' − mean(dy') − x̂·mean(dy'·x̂))` written
+   in place over DY, and `dPre = dy'` written to the residual branch **with
+   `+=` into the block-input delta when it already holds conv1's dgrad** (see
+   Phase 2). Reads DY, Y|X, X; writes DX, DPre: 3–4 passes.
+
+≈ 5–6 tensor passes versus today's staged path (~11: three casts × 2 passes,
+fp32 BN at 2× bytes, dReLU 3, copy 2) or un-fused path (~8). Expected at 2048:
+**bf16 −15…20 ms/step, fp32 −15…19 ms/step**. That alone takes bf16 from 0.85×
+to ≈1.0× and fp32 to ≈0.9×. The 2026-08-11 note discarded hand BN kernels
+because cuDNN was near roofline — true for the *native fused* path, which we
+keep; this replaces the *staged/un-fused* paths, which are far from it.
+Gate: per-layer gradient match to the fp32 reference (rel. 1e-2 in bf16, 1e-4
+fp32) in `gpu_comparison_test`; loss trajectory in-band; the cuDNN native rung
+kept and A/B'd per shape; census shows 0 staged / 0 copy shapes.
+
+### Phase 2 — fuse the residual-join add (days)
+
+The block-input delta is `dgrad(conv1) + dPre` (16 adds/step, 3 passes each:
+5.6 ms bf16, 11 ms fp32). In backward order dPre is produced first (conv3's BN
+backward), conv1's dgrad last. Two equivalent fixes: (a) Phase 1's apply kernel
+writes dPre straight into the block-input delta and conv1's `conv_dgrad` graph
+gets a `pointwise ADD` of that buffer as its epilogue (runtime fusion, in-place
+same-index aliasing) — no extra pass; or (b) dgrad writes first and the fork
+`+=`. (a) needs no ordering change. Also make `allows_input_delta_alias()` true
+for `Convolutional` where the planner can prove it. Expected: **−5.6 ms bf16,
+−11 ms fp32** at 2048. Gate: loss identical (pure reordering of adds), the
+`bwd:accumulate_output_deltas` scope at ~0.
+
+**After Phases 0–2 at 2048 on this GPU:** bf16 ≈ 92–96 ms/step vs PyTorch
+100 (**≈1.05–1.09×**); fp32 ≈ 215–219 vs 199 (**≈0.92×** — fp32 needs Phase 3
+to pass PyTorch outright, its residual-add and BN-copy passes being 4-byte).
+On the RTX 4080 the same fixes clear TensorFlow's 65,752 bf16 peak (the
+in-source +21% measurement of the un-staged path is this same win).
+
+### Phase 3 — the MLPerf fusion architecture (3–5 weeks) — to win clearly
+
+All patterns exist in our cudnn-frontend 1.27 / cuDNN ≥ 9.8 on Ampere+ (samples
+`SBRCS`, `CSBR`, `bn_finalize`, `Dgrad Drelu DBNweight`):
+
+- **Forward**: `scale·x + bias → ReLU → conv → genstats` per layer (the previous
+  layer's BN *applied in the conv prologue*, this layer's BN statistics computed
+  in the conv epilogue), then a per-channel `bn_finalize`. The standalone BN
+  forward pass — and the `ConvolutionView` slot — disappear: the conv output is
+  written once and read once. Expected −10 ms bf16 / −25 ms fp32 at 2048, and
+  ~30% less activation memory (raises max batch).
+- **Backward**: `dgrad + dReLU + dbn_weight` (DBAR) fuses the next layer's dReLU
+  and this layer's dscale/dbias reductions into the dgrad, leaving one apply
+  pass. Replaces most of what Phase 1 does with cuDNN engines where they exist;
+  Phase 1's kernel remains the fallback per shape.
+
+Risks: per-shape engine coverage (ladders as today), Ada (sm_89) support of
+DBAR (the sample gates on Ampere/Hopper — verify on the 4080), and a real
+refactor of `Convolutional`'s slot layout. Expected end state at 2048: bf16
+≈ 75–80 ms/step (**≈1.25× PyTorch**), fp32 ≈ 165–175 (**≈1.15×**).
+
+### Phase 4 — parallel small items
+
+Keep the small-batch lead (graphs, resident gather); move the resident gather
+inside the graph (small-batch only); vectorize `cast_bf16_to_fp32`; the
+protocol question of PyTorch `reduce-overhead` + fused Adam (≈+30% for PyTorch
+at 128 per the 2026-08-11 note) — decide it explicitly rather than inherit it.
+
+## 4. Projected trajectory (batch 2048, ms/step; lower is better)
+
+| | bf16 OpenNN | bf16 PyTorch | fp32 OpenNN | fp32 PyTorch |
+|---|---:|---:|---:|---:|
+| today (autotuned) | 117 | 100 | 245 | 199 |
+| + Phase 1 (own BN bwd) | 97–102 | | 226–230 | |
+| + Phase 2 (fused join) | 92–96 | | 215–219 | |
+| + Phase 3 (MLPerf fusion) | 75–80 | 100 | 165–175 | 199 |
+
+## 5. Validation gates (all phases)
+
+Per-layer gradient tests against the fp32 reference; 5-epoch loss trajectory
+in-band with the current path; the BN census printing 0 degraded shapes on the
+target GPU; the peak-batch sweep on both machines (this one and the RTX 4080)
+with the corrected sample counts; no regression at batch 128/256.
+
+## 6. Closed measurement: workspace budget under autotune
+
+fp32/2048, autotune on, RTX 3060: 1 GiB budget → conv 155 ms/step
+(wgrad 68.5, fwd 46.2, dgrad 40.2), 7,799 samples/s; auto 256 MiB budget →
+conv 148 ms/step (63.0 / 45.0 / 40.5), 8,569 samples/s. Not a lever.
+
+## 7. Diagnostics added for this plan (in the tree)
+
+- `BatchNormalizationOperator backward c<C> r<rows> batch <N>: rung <k> (...)`
+  — printed once per shape whenever the backward is not on the fully fused
+  native rung. Run any training and count: the target of Phase 1 is zero lines.
+- `ConvolutionOperator wgrad ...: no FP32-store engine` — once per shape when
+  the BF16-in/FP32-out wgrad store is unavailable (it is, on cuDNN 9.10).
+- `PT_PROFILE=1 [PT_PROFILE_STEPS=n]` in `pytorch_resnet50_speed.py` — kernel
+  time by category and top kernels for the same configuration, so the two
+  engines can be compared component by component.

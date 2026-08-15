@@ -25,7 +25,6 @@
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/layers/tokenizer_layer.h"
 #include "opennn/neural_network/model_expression.h"
 #include "opennn/neural_network/operators/combination_operator.h"
 #include "opennn/registry.h"
@@ -464,8 +463,9 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& sour
     const Index old_layers_number = get_layers_number() - 1;
 
     if (!layers.empty())
-        throw_if(layers.back()->get_type() == LayerType::Bounding,
-                 "No layers can be added after a bounding layer.\n");
+        throw_if(!layers.back()->allows_successors(),
+                 "No layers can be added after a {} layer.\n",
+                 layers.back()->get_name());
 
     const vector<Index> resolved_sources = sources.empty()
         ? vector<Index>{old_layers_number}
@@ -1325,34 +1325,6 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
         else if (original_parameters_device == Device::CUDA)
             copy_parameters_device();
     }
-}
-
-MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_documents)
-{
-    const auto* tokenizer_layer = dynamic_cast<const Tokenizer*>(get_first(LayerType::Tokenizer));
-
-    throw_if(!tokenizer_layer,
-             "calculate_text_outputs: network has no Tokenizer layer.\n");
-
-    const TokenizerOperator* tokenizer = tokenizer_layer->get_tokenizer();
-
-    throw_if(!tokenizer || tokenizer->get_vocabulary_size() == 0,
-             "calculate_text_outputs: the Tokenizer layer has no vocabulary; call set_tokenizer() first.\n");
-
-    const Index sequence_length = tokenizer_layer->get_output_shape()[0];
-    const Index batch_size = input_documents.size();
-
-    MatrixR inputs = MatrixR::Zero(batch_size, sequence_length);
-
-    for (Index i = 0; i < batch_size; ++i)
-    {
-        const vector<Index> ids = tokenizer->encode_sequence(input_documents.data()[i], sequence_length);
-
-        for (Index j = 0; j < min(ssize(ids), sequence_length); ++j)
-            inputs(i, j) = float(ids[size_t(j)]);
-    }
-
-    return calculate_outputs(inputs);
 }
 
 void NeuralNetwork::to_JSON(JsonWriter& printer) const
@@ -2556,36 +2528,29 @@ void NeuralNetwork::activate_transposed_inference_weights()
     for (const auto& layer : layers)
     {
         const bool has_tied_weight = bool(layer->get_tied_weight().source);
+        vector<CombinationOperator*> combinations;
 
-        if (int8_training && !has_tied_weight)
-            for (Operator* op : layer->get_operators())
-            {
-                auto* combination = dynamic_cast<CombinationOperator*>(op);
-                if (!combination
-                    || combination->transposed_inference_active
-                    || combination->tied_transposed
-                    || combination->use_bias
-                    || combination->fused_activation != ActivationFunction::Identity)
-                    continue;
+        for (Operator* op : layer->get_operators())
+            if (auto* combination = dynamic_cast<CombinationOperator*>(op))
+                combinations.push_back(combination);
 
-                const TensorView& weight = combination->weights;
-                if (!weight.is_int8() || !weight.is_cuda() || weight.get_rank() != 2) continue;
+        for (CombinationOperator* combination : combinations)
+        {
+            const TensorView& weight = combination->weights;
+            const bool automatic_int8 = int8_training && weight.is_int8()
+                && combination->fused_activation == ActivationFunction::Identity;
+            const bool configured = combinations.size() == 1
+                && combination->transposed_inference_preferred && !weight.is_int8();
 
-                transpose_in_place(weight);
-                combination->transposed_inference_active = true;
-            }
+            if (has_tied_weight || combination->transposed_inference_active
+                || combination->tied_transposed || combination->use_bias
+                || (!automatic_int8 && !configured)
+                || !weight.is_cuda() || weight.get_rank() != 2)
+                continue;
 
-        if (has_tied_weight) continue;
-
-        auto* dense = dynamic_cast<Dense*>(layer.get());
-        if (!dense || !dense->get_transposed_inference()
-            || dense->get_gated() || dense->get_use_bias()) continue;
-
-        const TensorView& weight = layer->get_parameter_views().back();
-        if (!weight.is_cuda() || weight.get_rank() != 2 || weight.is_int8()) continue;
-
-        transpose_in_place(weight);
-        dense->set_transposed_inference_active(true);
+            transpose_in_place(weight);
+            combination->transposed_inference_active = true;
+        }
     }
 }
 
@@ -2605,8 +2570,9 @@ void NeuralNetwork::copy_parameters_host()
     clear_low_precision_parameter_storage();
 
     for (const auto& layer : layers)
-        if (auto* dense = dynamic_cast<Dense*>(layer.get()))
-            dense->set_transposed_inference_active(false);
+        for (Operator* op : layer->get_operators())
+            if (auto* combination = dynamic_cast<CombinationOperator*>(op))
+                combination->transposed_inference_active = false;
 
     link_parameters();
 }

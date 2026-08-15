@@ -268,3 +268,23 @@ TEST(TransformerInference, DecoderOnlySessionRequiresGpu)
         },
         runtime_error);
 }
+
+TEST(TextClassificationNetworkTest, CalculatesOutputsFromDocuments)
+{
+    TextClassificationNetwork network(Shape{4, 3, 2}, Shape{1, 2}, Shape{2});
+
+    Tensor<string, 1> documents(2);
+    documents(0) = "alpha beta";
+    documents(1) = "beta";
+
+    EXPECT_THROW(network.calculate_text_outputs(documents), runtime_error);
+
+    auto tokenizer = make_unique<WordLevelTokenizer>();
+    tokenizer->set_vocabulary({"[PAD]", "[UNK]", "alpha", "beta"});
+    network.set_tokenizer(std::move(tokenizer));
+
+    const MatrixR outputs = network.calculate_text_outputs(documents);
+    EXPECT_EQ(outputs.rows(), 2);
+    EXPECT_EQ(outputs.cols(), 2);
+    EXPECT_TRUE(outputs.allFinite());
+}

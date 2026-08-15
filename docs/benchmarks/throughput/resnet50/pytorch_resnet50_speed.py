@@ -131,6 +131,68 @@ def run_epoch():
 run_epoch()
 run_epoch()
 
+# PT_PROFILE=1: after warm-up, profile a few steps and print GPU kernel time by
+# category. Diagnostic only; not part of the timed protocol.
+if os.environ.get("PT_PROFILE"):
+    from torch.profiler import profile, ProfilerActivity
+    steps = int(os.environ.get("PT_PROFILE_STEPS", "10"))
+    perm = torch.randperm(n, device="cuda")
+    model.train()
+    torch.cuda.synchronize()
+    with profile(activities=[ProfilerActivity.CUDA]) as prof:
+        for s in starts[:steps]:
+            idx = perm[s:s + batch]
+            optimizer.zero_grad(set_to_none=True)
+            with torch.autocast("cuda", dtype=torch.bfloat16, enabled=bf16):
+                loss = loss_fn(model(x[idx]), y[idx])
+            loss.backward()
+            optimizer.step()
+        torch.cuda.synchronize()
+    cats = {}
+    total = 0.0
+    for e in prof.key_averages():
+        if e.device_type != torch.autograd.DeviceType.CUDA and getattr(e, "self_device_time_total", 0) == 0:
+            continue
+        t = getattr(e, "self_device_time_total", None)
+        if t is None:
+            t = getattr(e, "self_cuda_time_total", 0)
+        if t <= 0:
+            continue
+        k = e.key.lower()
+        if "wgrad" in k or ("conv" in k and "dgrad" not in k and "bwd" in k and "filter" in k) or "backward_weight" in k or "cudnn::bn_bw" in k and False:
+            c = "conv_wgrad"
+        elif "dgrad" in k or ("conv" in k and "backward_data" in k):
+            c = "conv_dgrad"
+        elif "conv" in k or "implicit_gemm" in k or "cutlass" in k or "xmma" in k or "sm86_xmma" in k or "sm80_xmma" in k or "nchw" in k or "nhwc" in k:
+            c = "conv_other(fwd?)"
+        elif "gemm" in k or "cublas" in k or "sgemm" in k or "hgemm" in k:
+            c = "gemm"
+        elif "batch_norm" in k or "bn_" in k or "batchnorm" in k:
+            c = "batchnorm"
+        elif "adam" in k or "foreach" in k or "multi_tensor" in k:
+            c = "adam"
+        elif "triton" in k or "fused" in k or "elementwise" in k or "vectorized" in k:
+            c = "triton/elementwise"
+        elif "reduce" in k:
+            c = "reduce"
+        elif "memcpy" in k or "memset" in k or "copy" in k:
+            c = "memcpy/memset"
+        else:
+            c = "other"
+        cats[c] = cats.get(c, 0.0) + t
+        total += t
+    print(f"PROFILE steps={steps} batch={batch} total_gpu_ms={total/1000:.1f} ms_per_step={total/1000/steps:.2f}")
+    for c, t in sorted(cats.items(), key=lambda kv: -kv[1]):
+        print(f"PROFILE {c:<22} {t/1000:9.1f} ms  {100*t/total:5.1f}%")
+    print("PROFILE_TOP_KERNELS")
+    rows = []
+    for e in prof.key_averages():
+        t = getattr(e, "self_device_time_total", None)
+        if t is None: t = getattr(e, "self_cuda_time_total", 0)
+        if t > 0: rows.append((t, e.key, e.count))
+    for t, k, cnt in sorted(rows, reverse=True)[:25]:
+        print(f"PROFILE   {t/1000:8.1f} ms  x{cnt:<5} {k[:110]}")
+
 times = []
 print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
 for _ in range(epochs):

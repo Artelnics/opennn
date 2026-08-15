@@ -114,6 +114,8 @@ public:
 
     virtual Index get_sources_number() const noexcept { return 1; }
 
+    virtual bool allows_successors() const noexcept { return true; }
+
     Index get_inputs_number() const noexcept { return get_input_shape().size(); }
 
     Index get_outputs_number() const { return get_output_shape().size(); }
@@ -186,6 +188,10 @@ public:
 
     void redistribute_parameters_to_operators();
 
+private:
+
+    const LayerType layer_type;
+
 protected:
 
     // The layer's own reaction to an input shape that has already been
@@ -207,8 +213,6 @@ protected:
     enum Forward {Input, Output};
 
     string label = "my_layer";
-
-    LayerType layer_type;
 
     bool is_trainable = true;
 

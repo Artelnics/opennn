@@ -2,6 +2,7 @@
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/layers/bounding_layer.h"
+#include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/neural_network.h"
 
 using namespace opennn;
@@ -26,6 +27,20 @@ TEST(BoundingTest, GeneralConstructor)
     EXPECT_EQ(bounding_layer.get_input_shape(), Shape{features});
     EXPECT_EQ(bounding_layer.get_output_shape(), Shape{features});
     EXPECT_EQ(bounding_layer.get_bounding_method(), Bounding::BoundingMethod::Bounding);
+}
+
+TEST(BoundingTest, RejectsSuccessors)
+{
+    NeuralNetwork neural_network;
+    auto bounding = make_unique<Bounding>(Shape{2});
+    auto dense = make_unique<opennn::Dense>(Shape{2}, Shape{1}, "Identity");
+
+    EXPECT_FALSE(bounding->allows_successors());
+    EXPECT_TRUE(dense->allows_successors());
+
+    neural_network.add_layer(std::move(bounding));
+    EXPECT_THROW(neural_network.add_layer(std::move(dense)), runtime_error);
+    EXPECT_EQ(neural_network.get_layers_number(), 1);
 }
 
 TEST(BoundingTest, ForwardPropagate)
