@@ -101,56 +101,52 @@ void DetectionOperator::forward_propagate(ForwardPropagation& forward_propagatio
         return 1.0f / (1.0f + expf(-x));
     };
 
-#pragma omp parallel for collapse(3)
-    for(Index b = 0; b < batch_size; ++b)
-        for(Index row = 0; row < grid_size; ++row)
-            for(Index col = 0; col < grid_width; ++col)
+    const Index cells_count = batch_size * grid_size * grid_width;
+
+    #pragma omp parallel for
+    for (Index cell_index = 0; cell_index < cells_count; ++cell_index)
+    {
+        const Index cell = cell_index * channels;
+
+        for (Index box = 0; box < boxes_per_cell; ++box)
+        {
+            const Index base = cell + box * values_per_box;
+            const float* box_src = src + base;
+            float* box_dst = dst + base;
+
+            box_dst[0] = sigmoid(box_src[0]);
+            box_dst[1] = sigmoid(box_src[1]);
+            box_dst[2] = expf(clamp(box_src[2], -4.0f, 4.0f)) * anchors[size_t(box)][0];
+            box_dst[3] = expf(clamp(box_src[3], -4.0f, 4.0f)) * anchors[size_t(box)][1];
+            box_dst[4] = sigmoid(box_src[4]);
+
+            if (class_activation == ClassActivation::Sigmoid)
             {
-                const Index cell =
-                    ((b * grid_size + row) * grid_width + col) * channels;
+                for (Index c = 0; c < classes_number; ++c)
+                    box_dst[5 + c] = sigmoid(box_src[5 + c]);
 
-                for(Index box = 0; box < boxes_per_cell; ++box)
-                {
-                    const Index base = cell + box * values_per_box;
-                    const float* box_src = src + base;
-                    float* box_dst = dst + base;
-
-                    box_dst[0] = sigmoid(box_src[0]);
-                    box_dst[1] = sigmoid(box_src[1]);
-                    box_dst[2] = expf(clamp(box_src[2], -4.0f, 4.0f))
-                               * anchors[size_t(box)][0];
-                    box_dst[3] = expf(clamp(box_src[3], -4.0f, 4.0f))
-                               * anchors[size_t(box)][1];
-                    box_dst[4] = sigmoid(box_src[4]);
-
-                    if(class_activation == ClassActivation::Sigmoid)
-                    {
-                        for(Index c = 0; c < classes_number; ++c)
-                            box_dst[5 + c] = sigmoid(box_src[5 + c]);
-
-                        continue;
-                    }
-
-                    const float* logits = box_src + 5;
-                    float* probabilities = box_dst + 5;
-
-                    const float max_logit =
-                        *max_element(logits, logits + classes_number);
-
-                    float sum = 0.0f;
-
-                    for(Index c = 0; c < classes_number; ++c)
-                    {
-                        probabilities[c] = expf(logits[c] - max_logit);
-                        sum += probabilities[c];
-                    }
-
-                    const float inv_sum = 1.0f / (sum + EPSILON);
-
-                    for(Index c = 0; c < classes_number; ++c)
-                        probabilities[c] *= inv_sum;
-                }
+                continue;
             }
+
+            const float* logits = box_src + 5;
+            float* probabilities = box_dst + 5;
+
+            const float max_logit = *max_element(logits, logits + classes_number);
+
+            float sum = 0.0f;
+
+            for (Index c = 0; c < classes_number; ++c)
+            {
+                probabilities[c] = expf(logits[c] - max_logit);
+                sum += probabilities[c];
+            }
+
+            const float inv_sum = 1.0f / (sum + EPSILON);
+
+            for (Index c = 0; c < classes_number; ++c)
+                probabilities[c] *= inv_sum;
+        }
+    }
 }
 
 void DetectionOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
@@ -178,41 +174,41 @@ void DetectionOperator::back_propagate(ForwardPropagation& forward_propagation, 
     const float* delta = output_delta.as<float>();
     float* in_delta = input_delta.as<float>();
 
-    #pragma omp parallel for collapse(3)
-    for (Index b = 0; b < batch_size; ++b)
-        for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_width; ++col)
+    const Index cells_count = batch_size * grid_size * grid_width;
+
+    #pragma omp parallel for
+    for (Index cell_index = 0; cell_index < cells_count; ++cell_index)
+    {
+        const Index cell = cell_index * output.shape[3];
+
+        for (Index box = 0; box < boxes_per_cell; ++box)
+        {
+            const Index base = cell + box * values_per_box;
+
+            in_delta[base] = delta[base] * out[base] * (1.0f - out[base]);
+            in_delta[base + 1] = delta[base + 1] * out[base + 1] * (1.0f - out[base + 1]);
+            in_delta[base + 2] = delta[base + 2] * out[base + 2];
+            in_delta[base + 3] = delta[base + 3] * out[base + 3];
+            in_delta[base + 4] = delta[base + 4] * out[base + 4] * (1.0f - out[base + 4]);
+
+            if (class_activation == ClassActivation::Sigmoid)
             {
-                const Index cell = ((b * grid_size + row) * grid_width + col) * output.shape[3];
-
-                for (Index box = 0; box < boxes_per_cell; ++box)
+                for (Index c = 0; c < classes_number; ++c)
                 {
-                    const Index base = cell + box * values_per_box;
-
-                    in_delta[base]     = delta[base] * out[base] * (1.0f - out[base]);
-                    in_delta[base + 1] = delta[base + 1] * out[base + 1] * (1.0f - out[base + 1]);
-                    in_delta[base + 2] = delta[base + 2] * out[base + 2];
-                    in_delta[base + 3] = delta[base + 3] * out[base + 3];
-                    in_delta[base + 4] = delta[base + 4] * out[base + 4] * (1.0f - out[base + 4]);
-
-                    if (class_activation == ClassActivation::Sigmoid)
-                    {
-                        for (Index c = 0; c < classes_number; ++c)
-                        {
-                            const float s = out[base + 5 + c];
-                            in_delta[base + 5 + c] = delta[base + 5 + c] * s * (1.0f - s);
-                        }
-                    }
-                    else
-                    {
-                        const float dot = inner_product(delta + base + 5, delta + base + 5 + classes_number,
-                                                        out + base + 5, 0.0f);
-
-                        for (Index c = 0; c < classes_number; ++c)
-                            in_delta[base + 5 + c] = out[base + 5 + c] * (delta[base + 5 + c] - dot);
-                    }
+                    const float s = out[base + 5 + c];
+                    in_delta[base + 5 + c] = delta[base + 5 + c] * s * (1.0f - s);
                 }
             }
+            else
+            {
+                const float dot =
+                    inner_product(delta + base + 5, delta + base + 5 + classes_number, out + base + 5, 0.0f);
+
+                for (Index c = 0; c < classes_number; ++c)
+                    in_delta[base + 5 + c] = out[base + 5 + c] * (delta[base + 5 + c] - dot);
+            }
+        }
+    }
 }
 
 namespace

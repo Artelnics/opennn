@@ -13,6 +13,8 @@
 #include <charconv>
 #include <cctype>
 #include <initializer_list>
+#include <limits>
+#include <type_traits>
 #ifdef __APPLE__
 #include <cstdlib>
 #include <cerrno>
@@ -160,6 +162,9 @@ namespace opennn
     {
         ostringstream buffer;
 
+        if constexpr (is_floating_point_v<T>)
+            buffer.precision(numeric_limits<T>::max_digits10);
+
         for (size_t i = 0; i < values.size(); ++i)
         {
             buffer << values[i];
@@ -179,6 +184,11 @@ namespace opennn
     inline string vector_to_string(const Eigen::DenseBase<Derived>& values, const string& separator = " ")
     {
         ostringstream buffer;
+
+        using Scalar = typename Derived::Scalar;
+        if constexpr (is_floating_point_v<Scalar>)
+            buffer.precision(numeric_limits<Scalar>::max_digits10);
+
         for (Index i = 0; i < values.size(); ++i) buffer << values(i) << separator;
         return buffer.str();
     }

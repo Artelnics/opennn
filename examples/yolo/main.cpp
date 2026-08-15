@@ -678,9 +678,9 @@ int main(int argc, char* argv[])
         dataset.set_augmentation(aug);
         dataset.set_storage_mode(Dataset::StorageMode::Matrix);
 
-        const double train_frac = use_raccoon ? 0.8 : (use_voc ? 0.85 : 0.7);
-        const double val_frac   = use_raccoon ? 0.2 : (use_voc ? 0.15 : 0.3);
-        dataset.split_samples_random(train_frac, val_frac, 0.0);
+        const float train_frac = use_raccoon ? 0.8f : (use_voc ? 0.85f : 0.7f);
+        const float val_frac   = use_raccoon ? 0.2f : (use_voc ? 0.15f : 0.3f);
+        dataset.split_samples_random(train_frac, val_frac, 0.0f);
 
         const vector<std::array<float, 2>>& network_anchors = is_v8_head
             ? anchors

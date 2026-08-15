@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <functional>
 
 #include "opennn/core/configuration.h"
@@ -320,6 +321,9 @@ private:
     };
 
     void initialize_parameters(void (Operator::*)());
+
+    uint64_t parameter_layout_fingerprint() const;
+    uint64_t state_layout_fingerprint() const;
 
     void clear_low_precision_parameter_storage();
     void activate_transposed_inference_weights();

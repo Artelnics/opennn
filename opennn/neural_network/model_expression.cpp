@@ -18,6 +18,7 @@
 #include "opennn/neural_network/layers/recurrent_layer.h"
 #include "opennn/neural_network/layers/long_short_term_memory_layer.h"
 #include "opennn/core/string_utilities.h"
+#include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/core/variable.h"
 
@@ -475,44 +476,64 @@ void ModelExpression::rename_spaced_var_definitions(vector<string>& lines)
     }
 }
 
-const vector<pair<string, ModelExpression::ActivationBodies>>& ModelExpression::activation_table()
+const vector<pair<ActivationFunction, ModelExpression::ActivationBodies>>& ModelExpression::activation_table()
 {
-    static const vector<pair<string, ActivationBodies>> table = {
-        {"Identity", {
+    using enum ActivationFunction;
+
+    static const vector<pair<ActivationFunction, ActivationBodies>> table = {
+        {Identity, {
             "float Identity (float x) {\n\treturn x;\n}\n\n",
             "\nfunction Identity(x) {\n\treturn x;\n}\n",
             "\t@staticmethod\n\tdef Identity(x):\n\t\treturn x\n\n",
             "function Identity($x) { return $x; }\n"
         }},
-        {"Sigmoid", {
+        {Sigmoid, {
             "float Sigmoid(float x) {\n\tfloat z = 1.0f / (1.0f + expf(-x));\n\treturn z;\n}\n\n",
             "function Sigmoid(x) {\n\tvar z = 1/(1+Math.exp(-x));\n\treturn z;\n}\n",
             "\t@staticmethod\n\tdef Sigmoid (x):\n\t\tz = 1/(1+np.exp(-x))\n\t\treturn z\n\n",
             "function Sigmoid($x) { return 1 / (1 + exp(-$x)); }\n"
         }},
-        {"ReLU", {
-            "float ReLU(float x) {\n\tfloat z = fmaxf(0.0f, x);\n\treturn z;\n}\n\n",
-            "function ReLU(x) {\n\tvar z = Math.max(0, x);\n\treturn z;\n}\n",
-            "\t@staticmethod\n\tdef ReLU (x):\n\t\tz = np.maximum(0, x)\n\t\treturn z\n\n",
-            "function ReLU($x) { return max(0, $x); }\n"
-        }},
-        {"ExponentialLinear", {
-            "float ExponentialLinear(float x) {\n\tfloat z;\n\tconst float alpha = 1.67326f;\n\tif (x > 0.0f) {\n\t\tz = x;\n\t} else {\n\t\tz = alpha * (expf(x) - 1.0f);\n\t}\n\treturn z;\n}\n\n",
-            "function ExponentialLinear(x) {\n\tvar alpha = 1.67326;\n\tif(x>0) {\n\t\tvar z = x;\n\t} else {\n\t\tvar z = alpha*(Math.exp(x)-1);\n\t}\n\treturn z;\n}\n",
-            "\t@staticmethod\n\tdef ExponentialLinear (x):\n\t\talpha = 1.67326\n\t\treturn np.where(x > 0, x, alpha * (np.exp(x) - 1))\n\n",
-            "function ExponentialLinear($x) { $alpha = 1.67326; return ($x > 0) ? $x : $alpha * (exp($x) - 1); }\n"
-        }},
-        {"Tanh", {
+        {Tanh, {
             "float Tanh(float x) {\n\treturn tanhf(x);\n}\n\n",
             "function Tanh(x) {\n\treturn Math.tanh(x);\n}\n",
             "\t@staticmethod\n\tdef Tanh(x):\n\t\treturn np.tanh(x)\n\n",
             "function Tanh($x) { return tanh($x); }\n"
         }},
-        {"Softmax", {
+        {ReLU, {
+            "float ReLU(float x) {\n\tfloat z = fmaxf(0.0f, x);\n\treturn z;\n}\n\n",
+            "function ReLU(x) {\n\tvar z = Math.max(0, x);\n\treturn z;\n}\n",
+            "\t@staticmethod\n\tdef ReLU (x):\n\t\tz = np.maximum(0, x)\n\t\treturn z\n\n",
+            "function ReLU($x) { return max(0, $x); }\n"
+        }},
+        {Softmax, {
             "// Returns the raw logit: the numerically stable softmax is applied over the whole output vector afterwards.\nfloat Softmax(float x) {\n\treturn x;\n}\n\n",
             "// Returns the raw logit: the numerically stable softmax is applied over the whole output vector afterwards.\nfunction Softmax(x) {\n\treturn x;\n}\n",
             "\t@staticmethod\n\tdef Softmax(x):\n\t\t# Raw logit: the stable softmax is applied over the whole output vector afterwards\n\t\treturn x\n\n",
             "// Returns the raw logit: the numerically stable softmax is applied over the whole output vector afterwards.\nfunction Softmax($x) { return $x; }\n"
+        }},
+        {LeakyReLU, {
+            "float LeakyReLU(float x) {\n\treturn x >= 0.0f ? x : 0.1f * x;\n}\n\n",
+            "function LeakyReLU(x) {\n\treturn x >= 0 ? x : 0.1 * x;\n}\n",
+            "\t@staticmethod\n\tdef LeakyReLU(x):\n\t\treturn x if x >= 0 else 0.1 * x\n\n",
+            "function LeakyReLU($x) { return $x >= 0 ? $x : 0.1 * $x; }\n"
+        }},
+        {GELU, {
+            "float GELU(float x) {\n\treturn 0.5f * x * (1.0f + erff(0.7071067811865475f * x));\n}\n\n",
+            "function GELU(x) {\n\tconst sign = x < 0 ? -1 : 1;\n\tconst a = Math.abs(x) * 0.7071067811865475;\n\tconst t = 1 / (1 + 0.3275911 * a);\n\tconst erf = sign * (1 - (((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-a * a)));\n\treturn 0.5 * x * (1 + erf);\n}\n",
+            "\t@staticmethod\n\tdef GELU(x):\n\t\treturn 0.5 * x * (1 + math.erf(x / np.sqrt(2)))\n\n",
+            "function GELU($x) { $sign = $x < 0 ? -1 : 1; $a = abs($x) * 0.7071067811865475; $t = 1 / (1 + 0.3275911 * $a); $erf = $sign * (1 - (((((1.061405429 * $t - 1.453152027) * $t + 1.421413741) * $t - 0.284496736) * $t + 0.254829592) * $t * exp(-$a * $a))); return 0.5 * $x * (1 + $erf); }\n"
+        }},
+        {GELUTanh, {
+            "float GELUTanh(float x) {\n\treturn 0.5f * x * (1.0f + tanhf(0.7978845608028654f * (x + 0.044715f * x * x * x)));\n}\n\n",
+            "function GELUTanh(x) {\n\treturn 0.5 * x * (1 + Math.tanh(0.7978845608028654 * (x + 0.044715 * x * x * x)));\n}\n",
+            "\t@staticmethod\n\tdef GELUTanh(x):\n\t\treturn 0.5 * x * (1 + np.tanh(0.7978845608028654 * (x + 0.044715 * x * x * x)))\n\n",
+            "function GELUTanh($x) { return 0.5 * $x * (1 + tanh(0.7978845608028654 * ($x + 0.044715 * $x * $x * $x))); }\n"
+        }},
+        {SiLU, {
+            "float SiLU(float x) {\n\treturn x / (1.0f + expf(-x));\n}\n\n",
+            "function SiLU(x) {\n\treturn x / (1 + Math.exp(-x));\n}\n",
+            "\t@staticmethod\n\tdef SiLU(x):\n\t\treturn x / (1 + np.exp(-x))\n\n",
+            "function SiLU($x) { return $x / (1 + exp(-$x)); }\n"
         }}
     };
     return table;
@@ -523,11 +544,19 @@ ModelExpression::LanguageSyntax ModelExpression::language_syntax(ProgrammingLang
     using enum ProgrammingLanguage;
     switch (language)
     {
-    case C:          return {"\t", "double ", true, false, "float ", "int", "0.0f", "expf", to_string(outputs_number)};
+    case C:
+    case CEmbedded:  return {"\t", "double ", true, false, "float ", "int", "0.0f", "expf", to_string(outputs_number)};
     case JavaScript: return {"\t", "var ", false, true, "var ", "var", "0", "Math.exp", "out.length"};
-    case Python:     return {"\t\t"};
-    default:         return {};
+    case Python:
+    {
+        LanguageSyntax syntax;
+        syntax.body_indent = "\t\t";
+        return syntax;
     }
+    case PHP:        return {};
+    }
+
+    throw runtime_error("ModelExpression: unknown programming language.");
 }
 
 void ModelExpression::emit_body_lines(ostringstream& buffer,
@@ -610,9 +639,12 @@ void ModelExpression::emit_c_prelude(ostringstream& buffer) const
 
 void ModelExpression::emit_c_activations(ostringstream& buffer, const string& expression) const
 {
-    for (const auto& [name, bodies] : activation_table())
-        if (name == "Identity" || expression.find(name) != string::npos)
+    for (const auto& [activation, bodies] : activation_table())
+    {
+        const string& name = activation_function_to_string(activation);
+        if (name == "Identity" || expression.find(name + "(") != string::npos)
             buffer << bodies.c;
+    }
 }
 
 void ModelExpression::emit_c_calculate_outputs(ostringstream& buffer,
@@ -759,11 +791,15 @@ string ModelExpression::get_expression_c_embedded() const
                 case Tanh:      return "NN_TANH";
                 case ReLU:      return "NN_RELU";
                 case LeakyReLU: return "NN_LEAKY_RELU";
-
-                default:
+                case GELU:      return "NN_GELU";
+                case GELUTanh:  return "NN_GELU_TANH";
+                case SiLU:      return "NN_SILU";
+                case Softmax:
                     throw runtime_error(
-                        "ModelExpression: activation function not supported in embedded export.");
+                        "ModelExpression: Softmax must be applied to the complete output vector.");
             }
+
+            throw runtime_error("ModelExpression: unknown activation function.");
         };
 
         const auto emit_float_array =
@@ -1469,7 +1505,7 @@ string ModelExpression::get_expression_c_embedded() const
         if(uses_dense || uses_recurrent || uses_lstm)
         {
             buffer
-                << "typedef enum { NN_IDENTITY, NN_SIGMOID, NN_TANH, NN_RELU, NN_LEAKY_RELU } nn_activation;\n\n"
+                << "typedef enum { NN_IDENTITY, NN_SIGMOID, NN_TANH, NN_RELU, NN_LEAKY_RELU, NN_GELU, NN_GELU_TANH, NN_SILU } nn_activation;\n\n"
                    "static float nn_activation_forward(nn_activation activation, float x)\n{\n"
                    "\tswitch (activation)\n\t{\n"
                    "\tcase NN_SIGMOID:    return 1.0f / (1.0f + expf(-x));\n"
@@ -1478,6 +1514,9 @@ string ModelExpression::get_expression_c_embedded() const
                    "\tcase NN_LEAKY_RELU: return x >= 0.0f ? x : x * "
                 << c_float_literal(LEAKY_RELU_SLOPE)
                 << ";\n"
+                   "\tcase NN_GELU:       return 0.5f * x * (1.0f + erff(0.7071067811865475f * x));\n"
+                   "\tcase NN_GELU_TANH:  return 0.5f * x * (1.0f + tanhf(0.7978845608028654f * (x + 0.044715f * x * x * x)));\n"
+                   "\tcase NN_SILU:       return x / (1.0f + expf(-x));\n"
                    "\tdefault:            return x;\n"
                    "\t}\n}\n\n";
         }
@@ -1728,9 +1767,12 @@ void ModelExpression::emit_php_prelude(ostringstream& buffer) const
 
 void ModelExpression::emit_php_activations(ostringstream& buffer, const string& expression) const
 {
-    for (const auto& [name, bodies] : activation_table())
-        if (expression.find(name) != string::npos)
+    for (const auto& [activation, bodies] : activation_table())
+    {
+        const string& name = activation_function_to_string(activation);
+        if (expression.find(name + "(") != string::npos)
             buffer << bodies.php;
+    }
 }
 
 void ModelExpression::emit_php_inputs_setup(ostringstream& buffer) const
@@ -1954,9 +1996,12 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
         buffer << "}\n\n";
     }
 
-    for (const auto& [name, bodies] : activation_table())
-        if (contains({"Identity", "Tanh"}, name) || expression.find(name) != string::npos)
+    for (const auto& [activation, bodies] : activation_table())
+    {
+        const string& name = activation_function_to_string(activation);
+        if (contains({"Identity", "Tanh"}, name) || expression.find(name + "(") != string::npos)
             buffer << bodies.javascript;
+    }
     buffer << "\n";
 
     buffer << "function neuralNetwork()\n{\n\tvar inputs = [];\n";
@@ -2051,7 +2096,8 @@ void ModelExpression::emit_python_class_header(ostringstream& buffer) const
 {
     const vector<string> input_names = get_flat_input_names();
 
-    buffer << "import numpy as np\n"
+    buffer << "import math\n"
+              "import numpy as np\n"
               "import pandas as pd\n\n"
               "class NeuralNetwork:\n\n";
 
@@ -2069,9 +2115,12 @@ void ModelExpression::emit_python_class_header(ostringstream& buffer) const
 
 void ModelExpression::emit_python_activations(ostringstream& buffer, const string& expression) const
 {
-    for (const auto& [name, bodies] : activation_table())
-        if (name == "Identity" || expression.find(name) != string::npos)
+    for (const auto& [activation, bodies] : activation_table())
+    {
+        const string& name = activation_function_to_string(activation);
+        if (name == "Identity" || expression.find(name + "(") != string::npos)
             buffer << bodies.python;
+    }
 }
 
 void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
@@ -2098,8 +2147,11 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
         {
             string processed_line = process_body_line(l, input_names, python_mapped);
 
-            for (const string& name : activation_table() | views::keys)
+            for (const ActivationFunction activation : activation_table() | views::keys)
+            {
+                const string& name = activation_function_to_string(activation);
                 replace_all_word_appearances(processed_line, name, "self." + name);
+            }
 
             replace(processed_line, ";", "");
             return processed_line;
@@ -2280,6 +2332,7 @@ vector<string> ModelExpression::fix_output_names(const string& str,
     switch (programming_language)
     {
     case C:
+    case CEmbedded:
         lhs_prefix = "double ";
         suffix = ";";
         break;
@@ -2323,20 +2376,21 @@ vector<string> ModelExpression::fix_names(const vector<string>& names, const str
 
 void ModelExpression::save(const filesystem::path& file_name, ProgrammingLanguage language) const
 {
-    ofstream file(file_name);
-
-    throw_if(!file.is_open(),
-             "Cannot open file: {}", file_name.string());
-
+    string expression;
     using enum ProgrammingLanguage;
     switch (language)
     {
-    case C:          file << get_expression_c();          break;
-    case CEmbedded:  file << get_expression_c_embedded(); break;
-    case Python:     file << get_expression_python();     break;
-    case JavaScript: file << get_expression_javascript(); break;
-    case PHP:        file << get_expression_php();        break;
+    case C:          expression = get_expression_c();          break;
+    case CEmbedded:  expression = get_expression_c_embedded(); break;
+    case Python:     expression = get_expression_python();     break;
+    case JavaScript: expression = get_expression_javascript(); break;
+    case PHP:        expression = get_expression_php();        break;
+    default:         throw runtime_error("ModelExpression: unknown programming language.");
     }
+
+    ofstream file(file_name);
+    throw_if(!file.is_open(), "Cannot open file: {}", file_name.string());
+    file << expression;
 }
 
 }

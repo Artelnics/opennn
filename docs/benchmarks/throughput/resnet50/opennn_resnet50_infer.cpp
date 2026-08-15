@@ -64,8 +64,11 @@ int main(int argc, char* argv[])
         const Type inference_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, inference_type);
 
+        // Autotune within the library's auto workspace budget. Unbounded (cap 0)
+        // lets cuDNN's first heuristic choice take a scratch that grows with the
+        // batch and is slower than the budgeted plan; see opennn_resnet50_speed.cpp.
         device::set_conv_autotune(true);
-        device::set_conv_workspace_cap(0);
+        device::set_conv_workspace_cap(-1);
 
         if (!cache_dir.empty())
             cerr << "note: custom cache dir ignored (OpenNN caches in "

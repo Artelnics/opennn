@@ -119,9 +119,15 @@ void adam_update_cuda(
                    static_cast<const float*>(nullptr), static_cast<const float*>(nullptr));
 }
 
+// The learning rate is read from device memory, not baked into the kernel
+// arguments: this kernel is captured into the training CUDA graph once and
+// replayed for the rest of the run, so a by-value rate would freeze whatever
+// schedule the optimizer applies afterwards. The optimizer refreshes the device
+// scalar at each epoch start (same arrangement as SGD's GraphLearningRate).
 __global__ void adam_prepare_kernel(int* __restrict__ step,
                                     float beta_1, float beta_2,
-                                    float learning_rate, float epsilon,
+                                    const float* __restrict__ learning_rate,
+                                    float epsilon,
                                     float* __restrict__ effective_lr,
                                     float* __restrict__ effective_eps)
 {
@@ -134,7 +140,7 @@ __global__ void adam_prepare_kernel(int* __restrict__ step,
     const float bias_correction_2 = 1.0f - powf(beta_2, float(t));
     const float sqrt_bc2 = sqrtf(bias_correction_2);
 
-    *effective_lr = learning_rate * sqrt_bc2 / bias_correction_1;
+    *effective_lr = (*learning_rate) * sqrt_bc2 / bias_correction_1;
     *effective_eps = epsilon * sqrt_bc2;
 }
 
@@ -142,7 +148,7 @@ void adam_update_capturable_cuda(
     const Index n,
     float* parameters, float* m, float* v, const float* gradients,
     const float beta_1, const float beta_2,
-    const float learning_rate, const float epsilon,
+    const float* learning_rate_device, const float epsilon,
     int* step_device, float* effective_lr_device, float* effective_eps_device,
     __nv_bfloat16* parameters_bf16_mirror,
     cudaStream_t stream)
@@ -151,7 +157,7 @@ void adam_update_capturable_cuda(
     if (stream == nullptr) stream = opennn::device::get_compute_stream();
 
     OPENNN_CUDA_LAUNCH(adam_prepare_kernel<<<1, 1, 0, stream>>>(
-        step_device, beta_1, beta_2, learning_rate, epsilon,
+        step_device, beta_1, beta_2, learning_rate_device, epsilon,
         effective_lr_device, effective_eps_device));
 
     const bool aligned = are_float4_aligned(parameters, m, v, gradients)

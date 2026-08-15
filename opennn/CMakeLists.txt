@@ -211,7 +211,9 @@ if(OPENNN_HAS_CUDA)
 
     target_include_directories(opennn SYSTEM PRIVATE ${CUDNN_FRONTEND_INCLUDE_DIR})
 
-    target_compile_definitions(opennn PRIVATE HAVE_CUDNN_FRONTEND)
+    set_property(
+        SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/neural_network/operators/attention_operator.cpp
+        APPEND PROPERTY COMPILE_DEFINITIONS HAVE_CUDNN_FRONTEND)
 endif()
 
 if(MSVC)

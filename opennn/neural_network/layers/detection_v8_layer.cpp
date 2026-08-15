@@ -57,18 +57,18 @@ void DetectionV8Operator::forward_propagate(ForwardPropagation& forward_propagat
     const float* src = input.as<float>();
     float*       dst = output.as<float>();
 
-    #pragma omp parallel for collapse(3)
-    for (Index b = 0; b < batch_size; ++b)
-        for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_width; ++col)
-            {
-                const Index base = ((b * grid_size + row) * grid_width + col) * channels;
+    const Index cells_count = batch_size * grid_size * grid_width;
 
-                for (Index ch = 0; ch < sig_start; ++ch)
-                    dst[base + ch] = src[base + ch];
-                for (Index ch = sig_start; ch < channels; ++ch)
-                    dst[base + ch] = 1.0f / (1.0f + expf(-src[base + ch]));
-            }
+    #pragma omp parallel for
+    for (Index cell = 0; cell < cells_count; ++cell)
+    {
+        const Index base = cell * channels;
+
+        for (Index ch = 0; ch < sig_start; ++ch)
+            dst[base + ch] = src[base + ch];
+        for (Index ch = sig_start; ch < channels; ++ch)
+            dst[base + ch] = 1.0f / (1.0f + expf(-src[base + ch]));
+    }
 }
 
 void DetectionV8Operator::back_propagate(ForwardPropagation& forward_propagation,
@@ -100,21 +100,21 @@ void DetectionV8Operator::back_propagate(ForwardPropagation& forward_propagation
     const float* delta    = output_delta.as<float>();
     float*       in_delta = input_delta.as<float>();
 
-    #pragma omp parallel for collapse(3)
-    for (Index b = 0; b < batch_size; ++b)
-        for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_width; ++col)
-            {
-                const Index base = ((b * grid_size + row) * grid_width + col) * channels;
+    const Index cells_count = batch_size * grid_size * grid_width;
 
-                for (Index ch = 0; ch < sig_start; ++ch)
-                    in_delta[base + ch] = delta[base + ch];
-                for (Index ch = sig_start; ch < channels; ++ch)
-                {
-                    const float s = out[base + ch];
-                    in_delta[base + ch] = delta[base + ch] * s * (1.0f - s);
-                }
-            }
+    #pragma omp parallel for
+    for (Index cell = 0; cell < cells_count; ++cell)
+    {
+        const Index base = cell * channels;
+
+        for (Index ch = 0; ch < sig_start; ++ch)
+            in_delta[base + ch] = delta[base + ch];
+        for (Index ch = sig_start; ch < channels; ++ch)
+        {
+            const float s = out[base + ch];
+            in_delta[base + ch] = delta[base + ch] * s * (1.0f - s);
+        }
+    }
 }
 
 DetectionV8::DetectionV8(const Shape& new_input_shape, const string& new_label)

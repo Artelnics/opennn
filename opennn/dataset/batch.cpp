@@ -161,7 +161,13 @@ void Batch::set(const Index new_batch_size,
 
     const Index gather_indices_bytes =
         may_use_device_gather ? batch_size * Index(sizeof(int)) : Index(0);
-    gather_indices_host.resize_bytes(gather_indices_bytes, Device::CPU);
+    if (gather_indices_bytes > gather_indices_host_allocated_bytes)
+    {
+        device::deallocate_pinned_host(gather_indices_host);
+        gather_indices_host = static_cast<int*>(
+            device::allocate_pinned_host(gather_indices_bytes));
+        gather_indices_host_allocated_bytes = gather_indices_bytes;
+    }
     gather_indices_device.resize_bytes(gather_indices_bytes, Device::CUDA);
 
     if (may_use_device_gather)
@@ -210,6 +216,7 @@ Batch::~Batch()
     device::deallocate_pinned_host(input_host_bf16);
     device::deallocate_pinned_host(decoder.host);
     device::deallocate_pinned_host(target.host);
+    device::deallocate_pinned_host(gather_indices_host);
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -239,8 +246,8 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
         const Index matrix_cols = dataset->get_device_data_columns();
 
         const Index index_bytes = current_batch_size * Index(sizeof(int));
-        memcpy(gather_indices_host.data, gather.row_indices.data(), size_t(index_bytes));
-        device::copy_async(gather_indices_device.data, gather_indices_host.data,
+        memcpy(gather_indices_host, gather.row_indices.data(), size_t(index_bytes));
+        device::copy_async(gather_indices_device.data, gather_indices_host,
                            index_bytes,
                            device::CopyKind::HostToDevice, stream);
 

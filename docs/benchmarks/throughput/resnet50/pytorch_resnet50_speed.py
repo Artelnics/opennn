@@ -110,6 +110,11 @@ if fast:
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 starts = list(range(0, n - batch + 1, batch))
+# An epoch runs whole batches and drops the remainder (50,000 CIFAR rows at
+# batch 16,384 leave 17,232 unprocessed), so throughput must divide the rows
+# actually processed by the epoch time, not the training-set size.
+processed = len(starts) * batch
+print(f"processed_samples={processed}")
 
 def run_epoch():
     model.train()
@@ -137,5 +142,5 @@ print(f"TRAIN_END_UNIX={time.time():.3f}", flush=True)
 times.sort()
 median = times[len(times) // 2]
 print(f"epoch_s={median:.4f}")
-print(f"samples_per_sec={n / median:.0f}")
+print(f"samples_per_sec={processed / median:.0f}")
 print("RESULT=OK")

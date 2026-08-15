@@ -233,61 +233,30 @@ float chunked_prefill_and_decode_max_diff(const Dims& d,
                               logits_row(chunked_decode, 0)));
 }
 
-uint16_t to_bfloat16(const float value)
-{
-    uint32_t bits;
-    memcpy(&bits, &value, sizeof(bits));
-    bits += 0x7FFFu + ((bits >> 16) & 1u);
-    return uint16_t(bits >> 16);
-}
-
-float from_bfloat16(const uint16_t value)
-{
-    const uint32_t bits = uint32_t(value) << 16;
-    float result;
-    memcpy(&result, &bits, sizeof(result));
-    return result;
-}
-
 void round_parameters_to_bf16(NeuralNetwork& network)
 {
     for (auto& layer : network.get_layers())
         for (TensorView& view : layer->get_parameter_views())
             for (Index i = 0; i < view.size(); ++i)
                 view.as<float>()[i] =
-                    from_bfloat16(to_bfloat16(view.as<float>()[i]));
+                    bfloat16_to_float_host(float_to_bfloat16_host(view.as<float>()[i]));
 }
 
 void write_logical_bf16_parameters(
     const NeuralNetwork& network,
     const filesystem::path& path)
 {
-    filesystem::path fp32_path = path;
-    fp32_path += ".fp32";
-    network.save_parameters_binary(fp32_path);
+    ASSERT_EQ(network.get_parameters_device(), Device::CPU);
+    const Index parameters_number = network.get_parameters_buffer_size();
+    const float* fp32 = network.get_parameters_data();
 
-    ifstream input(fp32_path, ios::binary | ios::ate);
-    ASSERT_TRUE(input.is_open());
-    const streamoff bytes = input.tellg();
-    ASSERT_GE(bytes, 0);
-    ASSERT_EQ(bytes % streamoff(sizeof(float)), 0);
-    input.seekg(0);
-
-    vector<float> fp32(size_t(bytes / streamoff(sizeof(float))));
-    input.read(reinterpret_cast<char*>(fp32.data()), bytes);
-    ASSERT_TRUE(input.good());
-
-    vector<uint16_t> bf16(fp32.size());
-    transform(fp32.begin(), fp32.end(), bf16.begin(), to_bfloat16);
+    vector<uint16_t> bf16(static_cast<size_t>(parameters_number));
+    transform(fp32, fp32 + parameters_number, bf16.begin(), float_to_bfloat16_host);
     ofstream output(path, ios::binary | ios::trunc);
     ASSERT_TRUE(output.is_open());
     output.write(reinterpret_cast<const char*>(bf16.data()),
                  streamsize(bf16.size() * sizeof(uint16_t)));
     ASSERT_TRUE(output.good());
-
-    input.close();
-    error_code remove_error;
-    filesystem::remove(fp32_path, remove_error);
 }
 
 }

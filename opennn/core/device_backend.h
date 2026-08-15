@@ -171,8 +171,10 @@ public:
     void end(GraphExecHandle&);
 
 private:
+#ifdef OPENNN_HAS_CUDA
     cudaStream_t stream = nullptr;
     bool finished = false;
+#endif
 };
 
 void launch_graph(const GraphExecHandle&, cudaStream_t);

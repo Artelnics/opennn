@@ -717,9 +717,49 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 
     const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
 
-    if (output_delta.type == Type::BF16)
-    {
+    const bool has_bias = bias_gradient.size() > 0;
 
+    // The weight gradient is FP32 and accumulated in FP32 whatever the IO type,
+    // so the GEMM stores it as FP32 directly (BF16 A/B, FP32 D) with the bias
+    // gradient in the same epilogue - for BF16 that replaces a BF16 store, a
+    // widening cast and a separate zero + column reduction, and stops rounding
+    // the gradient to 8 mantissa bits on the way to the optimizer. cuBLASLt
+    // support for that BF16-in/FP32-out epilogue is checked once; the first
+    // failure pins the old staged path for the rest of the process.
+    static atomic<bool> bf16_fp32_store_supported{true};
+
+    const bool direct_fp32_store = output_delta.type != Type::BF16
+        || bf16_fp32_store_supported.load(memory_order_relaxed);
+
+    bool stored = false;
+    if (direct_fp32_store)
+    {
+        try
+        {
+            run_lt_matmul_cached(
+                output_columns, input_columns, total_rows,
+                CUBLAS_OP_N, CUBLAS_OP_T,
+                has_bias ? CUBLASLT_EPILOGUE_BGRADA : CUBLASLT_EPILOGUE_DEFAULT,
+                output_delta.data, input_for_gemm, weight_gradient.data,
+                has_bias ? bias_gradient.as<float>() : nullptr,
+                output_delta.cuda_dtype(),
+                CUDA_R_32F);
+            stored = true;
+        }
+        catch (const exception&)
+        {
+            if (output_delta.type != Type::BF16) throw;
+            bf16_fp32_store_supported.store(false, memory_order_relaxed);
+            cerr << "linear_backward: cuBLASLt has no BF16-in/FP32-out weight-gradient "
+                    "epilogue here; using BF16 store + cast for the rest of the process.\n";
+#ifdef OPENNN_HAS_CUDA
+            cudaGetLastError();
+#endif
+        }
+    }
+
+    if (!stored)
+    {
         bfloat16* dw_bf16 = ensure_bf16_gradient_workspace(weight_gradient.size());
         run_lt_matmul_cached(
             output_columns, input_columns, total_rows,
@@ -730,25 +770,13 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
             CUDA_R_16BF);
         cast_bf16_to_fp32(weight_gradient.size(), dw_bf16, weight_gradient.as<float>());
 
-        if (bias_gradient.size() > 0)
+        if (has_bias)
         {
             device::set_zero_async(bias_gradient.data, bias_gradient.size() * Index(sizeof(float)),
                                    Backend::get_compute_stream());
             bias_grad_sum_cuda<bfloat16>(total_rows, output_columns,
                                          output_delta.as<bfloat16>(), bias_gradient.as<float>());
         }
-    }
-    else
-    {
-        const bool has_bias = bias_gradient.size() > 0;
-        run_lt_matmul_cached(
-            output_columns, input_columns, total_rows,
-            CUBLAS_OP_N, CUBLAS_OP_T,
-            has_bias ? CUBLASLT_EPILOGUE_BGRADA : CUBLASLT_EPILOGUE_DEFAULT,
-            output_delta.data, input_for_gemm, weight_gradient.data,
-            has_bias ? bias_gradient.as<float>() : nullptr,
-            output_delta.cuda_dtype(),
-            CUDA_R_32F);
     }
 
     if (!input_delta.data || input_delta.empty()) return;

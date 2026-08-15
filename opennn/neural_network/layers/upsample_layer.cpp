@@ -52,19 +52,22 @@ void UpsampleOperator::forward_propagate(ForwardPropagation& forward_propagation
 
     const size_t ch_bytes = size_t(channels) * sizeof(float);
 
-    #pragma omp parallel for collapse(2)
-    for (Index b = 0; b < batch_size; ++b)
-        for (Index oh = 0; oh < out_h; ++oh)
+    const Index rows_count = batch_size * out_h;
+
+    #pragma omp parallel for
+    for (Index row = 0; row < rows_count; ++row)
+    {
+        const Index b = row / out_h;
+        const Index oh = row % out_h;
+        const Index ih = oh / scale_factor;
+        for (Index ow = 0; ow < out_w; ++ow)
         {
-            const Index ih = oh / scale_factor;
-            for (Index ow = 0; ow < out_w; ++ow)
-            {
-                const Index iw = ow / scale_factor;
-                memcpy(dst + (b * out_h + oh) * out_w * channels + ow * channels,
-                       src + (b * input_height + ih) * input_width * channels + iw * channels,
-                       ch_bytes);
-            }
+            const Index iw = ow / scale_factor;
+            memcpy(dst + (b * out_h + oh) * out_w * channels + ow * channels,
+                   src + (b * input_height + ih) * input_width * channels + iw * channels,
+                   ch_bytes);
         }
+    }
 }
 
 void UpsampleOperator::back_propagate(ForwardPropagation&, BackPropagation& back_propagation, size_t layer) const
@@ -92,27 +95,31 @@ void UpsampleOperator::back_propagate(ForwardPropagation&, BackPropagation& back
     // The loop visits every input pixel exactly once, so each one clears its own
     // channels before accumulating into them. Zeroing the whole gradient up front
     // instead would be a serial pass over memory the parallel loop rewrites.
-    #pragma omp parallel for collapse(2)
-    for (Index b = 0; b < batch_size; ++b)
-        for (Index ih = 0; ih < input_height; ++ih)
-            for (Index iw = 0; iw < input_width; ++iw)
-            {
-                float* in_ptr = in_delta + ((b * input_height + ih) * input_width + iw) * channels;
-                fill_n(in_ptr, channels, 0.0f);
+    const Index rows_count = batch_size * input_height;
 
-                for (Index dh = 0; dh < scale_factor; ++dh)
-                    for (Index dw = 0; dw < scale_factor; ++dw)
-                    {
-                        const float* out_ptr = delta + ((b * out_h + ih * scale_factor + dh) * out_w + iw * scale_factor + dw) * channels;
-                        for (Index c = 0; c < channels; ++c)
-                            in_ptr[c] += out_ptr[c];
-                    }
-            }
+    #pragma omp parallel for
+    for (Index row = 0; row < rows_count; ++row)
+    {
+        const Index b = row / input_height;
+        const Index ih = row % input_height;
+        for (Index iw = 0; iw < input_width; ++iw)
+        {
+            float* in_ptr = in_delta + ((b * input_height + ih) * input_width + iw) * channels;
+            fill_n(in_ptr, channels, 0.0f);
+
+            for (Index dh = 0; dh < scale_factor; ++dh)
+                for (Index dw = 0; dw < scale_factor; ++dw)
+                {
+                    const float* out_ptr =
+                        delta + ((b * out_h + ih * scale_factor + dh) * out_w + iw * scale_factor + dw) * channels;
+                    for (Index c = 0; c < channels; ++c)
+                        in_ptr[c] += out_ptr[c];
+                }
+        }
+    }
 }
 
-Upsample::Upsample(const Shape& new_input_shape,
-                   Index new_scale_factor,
-                   const string& new_label)
+Upsample::Upsample(const Shape& new_input_shape, Index new_scale_factor, const string& new_label)
     : Layer(LayerType::Upsample)
 {
     operators = {&upsample};

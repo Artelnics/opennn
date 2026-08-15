@@ -252,6 +252,13 @@ void Dense::set_tied_weight_source(const Layer* source)
     combination.tied_transposed = source != nullptr;
 }
 
+void Dense::set_tied_weight(const TiedWeight& tied_weight)
+{
+    throw_if(tied_weight.spec_index != 0 || tied_weight.source_spec_index != 0,
+             "Dense::set_tied_weight: Dense only supports tying weight specification 0 to source specification 0.");
+    set_tied_weight_source(tied_weight.source);
+}
+
 void Dense::set(const Shape& new_input_shape,
                 const Shape& new_output_shape,
                 const string& new_activation_function,
@@ -370,6 +377,9 @@ void Dense::read_JSON_body(const Json* dense_layer_element)
 
     if (dense_layer_element->has("Gated"))
         set_gated(read_json_bool(dense_layer_element, "Gated"));
+
+    if (dense_layer_element->has("TransposedInference"))
+        set_transposed_inference(read_json_bool(dense_layer_element, "TransposedInference"));
 }
 
 void Dense::write_JSON_body(JsonWriter& printer) const
@@ -378,7 +388,8 @@ void Dense::write_JSON_body(JsonWriter& printer) const
         {"BatchNormalization", batch_norm.active()},
         {"UseBias", combination.use_bias},
         {"Activation", ActivationOperator::to_string(get_activation_function())},
-        {"Gated", gated}
+        {"Gated", gated},
+        {"TransposedInference", combination.transposed_inference_preferred}
     });
 }
 

@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "opennn/core/configuration.h"
 #include "opennn/core/opennn_types.h"
 
 namespace opennn
@@ -101,7 +102,7 @@ private:
         const char* php;
     };
 
-    static const vector<pair<string, ActivationBodies>>& activation_table();
+    static const vector<pair<ActivationFunction, ActivationBodies>>& activation_table();
 };
 
 }

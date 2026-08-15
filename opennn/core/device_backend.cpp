@@ -25,10 +25,12 @@ namespace
 atomic_bool cuda_allocation_growth_forbidden_runtime{false};
 atomic_bool cuda_matmul_plan_creation_forbidden_runtime{false};
 
+#ifdef OPENNN_HAS_CUDA
 bool cuda_matmul_plan_creation_forbidden() noexcept
 {
     return cuda_matmul_plan_creation_forbidden_runtime.load(memory_order_relaxed);
 }
+#endif
 
 constexpr int64_t conv_workspace_auto_ceiling = int64_t(256) * 1024 * 1024;
 atomic<int64_t> conv_workspace_cap_mode{-1};
@@ -98,6 +100,7 @@ CudaGraphWorkspaceScope::~CudaGraphWorkspaceScope() noexcept
 namespace
 {
 
+#ifdef OPENNN_HAS_CUDA
 optional<void*> graph_workspace_override(GraphWorkspaceKind kind,
                                          Index minimum_bytes)
 {
@@ -118,6 +121,7 @@ optional<void*> graph_workspace_override(GraphWorkspaceKind kind,
 
     return view.data;
 }
+#endif
 
 }
 

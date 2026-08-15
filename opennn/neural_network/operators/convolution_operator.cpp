@@ -54,6 +54,7 @@ struct ConvolutionOperator::ConvGraphCache
         bool wgrad_autotune = false;
         bool bgrad_autotune = false;
         bool dgrad_autotune = false;
+        bool wgrad_fp32_output = false;
     };
 
     unordered_map<Index, Entry> entries;
@@ -148,7 +149,15 @@ void build_forward(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims
     entry.fwd = graph;
 }
 
-void build_wgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& d, Type dtype)
+// The weight gradient is accumulated in FP32 whatever the IO type (new_graph sets
+// the compute and intermediate types to FLOAT), so a BF16 graph can store it as
+// FLOAT directly - the same per-tensor override bgrad_DB already uses - instead
+// of narrowing it to 8 mantissa bits and paying a cast per convolution per step
+// to widen it again. Whether cuDNN has an engine for that store is per shape,
+// so the caller asks for it and falls back to the BF16 store when the build
+// throws.
+void build_wgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& d, Type dtype,
+                 bool fp32_output = false)
 {
     auto graph = new_graph(dtype);
 
@@ -160,6 +169,9 @@ void build_wgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
     entry.wgrad_DW->set_output(true)
                    .set_dim({d.kernels, d.channels, d.kernel_height, d.kernel_width})
                    .set_stride(krsc_strides(d));
+
+    if (fp32_output)
+        entry.wgrad_DW->set_data_type(DataType_t::FLOAT);
 
     entry.wgrad_autotune = finalize(
         *graph, entry.wgrad_workspace_bytes, "wgrad",
@@ -598,9 +610,41 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
         auto& entry = cache.entries[input.shape[0]];
         const auto dims = cudnn_frontend::make_dims(*this, input.shape[0]);
 
-        if (!entry.wgrad) cudnn_frontend::build_wgrad(entry, dims, input.type);
+        if (!entry.wgrad)
+        {
+            // BF16 IO: try the FP32 gradient store first; the BF16 store + cast is
+            // the fallback for shapes without an engine. build_wgrad assigns
+            // entry.wgrad last, so a throw leaves the tensor handles it already
+            // overwrote pointing at a dead graph - reset them before retrying.
+            if (input.is_bf16())
+            {
+                try
+                {
+                    cudnn_frontend::build_wgrad(entry, dims, input.type, true);
+                    entry.wgrad_fp32_output = true;
+                }
+                catch (const exception& e)
+                {
+                    entry.wgrad = nullptr;
+                    entry.wgrad_DY = entry.wgrad_X = entry.wgrad_DW = nullptr;
+                    entry.wgrad_workspace_bytes = 0;
+                    entry.wgrad_autotune = false;
+                    entry.wgrad_fp32_output = false;
+                    // Once per shape: the only signal that this convolution keeps
+                    // paying the BF16 store + widening cast per step.
+                    cerr << "ConvolutionOperator wgrad " << input_height << "x" << input_width
+                         << "x" << kernel_channels << " k" << kernel_height << "x" << kernel_width
+                         << "x" << kernels_number << " batch " << input.shape[0]
+                         << ": no FP32-store engine (" << e.what()
+                         << "); using BF16 store + cast.\n";
+                    cudnn_frontend::build_wgrad(entry, dims, input.type, false);
+                }
+            }
+            else
+                cudnn_frontend::build_wgrad(entry, dims, input.type, false);
+        }
 
-        const bool wgrad_bf16 = input.is_bf16();
+        const bool wgrad_bf16 = input.is_bf16() && !entry.wgrad_fp32_output;
         bfloat16* dw_bf16 = wgrad_bf16 ? ensure_bf16_gradient_workspace(weight_gradient.size()) : nullptr;
 
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;

@@ -823,7 +823,7 @@ void Dataset::preview_data_from_JSON(const Json *preview_data_element)
 
     data_file_preview.resize(preview_size);
 
-    for_json_items(preview_data_element, "Row", preview_size, [&](Index i, const Json* row)
+    for_json_items(preview_data_element, "Row", size_t(preview_size), [&](Index i, const Json* row)
     {
         const string text = read_json_string(row, "Text");
         if (!text.empty())

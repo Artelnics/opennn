@@ -24,13 +24,20 @@ static void merge_heads_gpu(const TensorView&, TensorView&);
 static void transpose_middle_axes(const float* src, float* dst,
                                   Index batch_size, Index src_m1, Index src_m2, Index D)
 {
-    #pragma omp parallel for collapse(3) schedule(static)
-    for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        for (Index i = 0; i < src_m2; ++i)
-            for (Index j = 0; j < src_m1; ++j)
-                memcpy(dst + ((batch_index * src_m2 + i) * src_m1 + j) * D,
-                       src + ((batch_index * src_m1 + j) * src_m2 + i) * D,
-                       D * sizeof(float));
+    const Index blocks_count = batch_size * src_m2 * src_m1;
+
+    #pragma omp parallel for schedule(static)
+    for (Index block = 0; block < blocks_count; ++block)
+    {
+        const Index j = block % src_m1;
+        const Index batch_i = block / src_m1;
+        const Index i = batch_i % src_m2;
+        const Index batch_index = batch_i / src_m2;
+
+        memcpy(dst + block * D,
+               src + ((batch_index * src_m1 + j) * src_m2 + i) * D,
+               D * sizeof(float));
+    }
 }
 
 void split_heads(const TensorView& source, TensorView& destination)

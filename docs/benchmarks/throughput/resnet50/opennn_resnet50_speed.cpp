@@ -11,7 +11,17 @@
 //   --no-cuda-graph). Data is kept GPU-resident automatically for the small CIFAR
 //   path (image_size==0); the 224px ImageNet path is too large and stays host-staged.
 //
-//   usage:  opennn_resnet50_speed <data_path> [epochs] [batch] [fp32|bf16] [image_size] [cuda_graph 0|1] [cache_dir]
+//   The optional [workspace] argument selects how cuDNN convolution plans are
+//   chosen (an A/B knob; the default is the library's own configuration):
+//     auto  (default)  auto workspace budget (<= 256 MiB), plans autotuned
+//                      within it
+//     heur             auto workspace budget, heuristic plan (no autotune)
+//     <N>              explicit N MiB budget, plans autotuned within it
+//     off | 0          NO budget: expert-only. cuDNN's first choice for these
+//                      shapes then takes ~4 MiB of scratch per sample, is slower
+//                      than the budgeted plan, and OOMs past batch ~2048.
+//
+//   usage:  opennn_resnet50_speed <data_path> [epochs] [batch] [fp32|bf16] [image_size] [cuda_graph 0|1] [cache_dir] [workspace]
 
 #include <algorithm>
 #include <chrono>
@@ -48,7 +58,7 @@ int main(int argc, char* argv[])
         const bool force_resident = image_size_arg < 0;
         const bool cuda_graph = argc > 6 ? (stoi(argv[6]) != 0) : true;
         const string cache_dir = argc > 7 ? argv[7] : "";
-        const string workspace_arg = argc > 8 ? argv[8] : "off";
+        const string workspace_arg = argc > 8 ? argv[8] : "auto";
 
         memory_debug::reset();
 
@@ -56,14 +66,14 @@ int main(int argc, char* argv[])
         const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, training_type);
 
-        if (workspace_arg == "off" || workspace_arg == "0")
-            { device::set_conv_autotune(true);  device::set_conv_workspace_cap(0); }
+        if (workspace_arg == "auto")
+            { device::set_conv_autotune(true);  device::set_conv_workspace_cap(-1); }
         else if (workspace_arg == "heur")
-            { device::set_conv_autotune(false); device::set_conv_workspace_cap(0); }
-        else if (workspace_arg == "auto")
-            device::set_conv_workspace_cap(-1);
+            { device::set_conv_autotune(false); device::set_conv_workspace_cap(-1); }
+        else if (workspace_arg == "off" || workspace_arg == "0")
+            { device::set_conv_autotune(true);  device::set_conv_workspace_cap(0); }
         else
-            device::set_conv_workspace_cap(stoll(workspace_arg) * 1024 * 1024);
+            { device::set_conv_autotune(true);  device::set_conv_workspace_cap(stoll(workspace_arg) * 1024 * 1024); }
         cout << "workspace_mode=" << workspace_arg << "\n";
         cout << "workspace_cap_mib=" << device::conv_workspace_limit_bytes() / (1024 * 1024) << "\n";
         cout << "conv_autotune=" << (device::conv_autotune_enabled() ? 1 : 0) << "\n";
@@ -79,15 +89,27 @@ int main(int argc, char* argv[])
         ImageDataset& dataset = *dataset_ptr;
         dataset.set_sample_roles("Training");
 
+        // Whole batches only, like the PyTorch and TensorFlow drivers
+        // (range(0, n - batch + 1, batch)): the remainder is left out of the
+        // epoch rather than trained as a smaller tail batch. A tail batch would
+        // change what is being measured — the library trains it eagerly, outside
+        // the CUDA graph, and disables graph capture for the whole run — and
+        // 50,000 CIFAR rows leave a tail at every power-of-two batch. Throughput
+        // is then rows processed / epoch time, the same count the other drivers
+        // report.
+        const Index all_samples = dataset.get_samples_number();
+        const Index samples = batch > 0 ? (all_samples / batch) * batch : all_samples;
+        for (Index sample = samples; sample < all_samples; ++sample)
+            dataset.set_sample_role(sample, SampleRole::None);
+
         const bool gpu_resident = (image_size == 0) || force_resident;
         if (gpu_resident)
             dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
         else
             dataset.set_storage_mode(Dataset::StorageMode::BinaryFile);
 
-        const Index samples = dataset.get_samples_number();
-
-        cout << "samples=" << samples << " batch=" << batch
+        cout << "processed_samples=" << samples << "\n";
+        cout << "samples=" << all_samples << " batch=" << batch
                   << " epochs=" << timed_epochs << " precision=" << precision
                   << " cuda_graph=" << cuda_graph << " gpu_resident=" << gpu_resident;
         if (image_size > 0) cout << " image_size=" << image_size;

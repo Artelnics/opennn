@@ -129,6 +129,12 @@ namespace
 using StridedMap      = Eigen::Map<MatrixR, 0, Eigen::OuterStride<>>;
 using ConstStridedMap = Eigen::Map<const MatrixR, 0, Eigen::OuterStride<>>;
 
+constexpr bool supports_recurrent_activation(const ActivationFunction activation) noexcept
+{
+    using enum ActivationFunction;
+    return is_one_of(activation, Identity, Sigmoid, Tanh, ReLU);
+}
+
 void activate_in_place(ActivationFunction activation,
                        StridedMap& values, StridedMap* derivatives)
 {
@@ -150,7 +156,11 @@ void activate_in_place(ActivationFunction activation,
     case Identity:
         if (derivatives) derivatives->setOnes();
         break;
-    default:
+    case Softmax:
+    case LeakyReLU:
+    case GELU:
+    case GELUTanh:
+    case SiLU:
         throw runtime_error("RecurrentOperator: unsupported activation.");
     }
 }
@@ -744,8 +754,7 @@ void Recurrent::set_output_shape(const Shape& new_output_shape)
 void Recurrent::set_activation_function(const string& name)
 {
     const ActivationFunction fn = ActivationOperator::from_string(name);
-    using enum ActivationFunction;
-    throw_if(fn != Identity && fn != Sigmoid && fn != Tanh && fn != ReLU,
+    throw_if(!supports_recurrent_activation(fn),
              "Recurrent: unsupported activation (use Tanh, Sigmoid, ReLU or Identity).");
     recurrent_op.activation = fn;
 }

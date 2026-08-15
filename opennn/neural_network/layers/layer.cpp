@@ -171,6 +171,8 @@ void Layer::from_JSON(const JsonDocument& document)
     set_input_shape(string_to_shape(read_json_string(root, "InputDimensions")));
     set_output_shape(string_to_shape(read_json_string(root, "OutputDimensions")));
     set_label(json_label);
+    if (root->has("Trainable"))
+        set_is_trainable(read_json_bool(root, "Trainable"));
 
     read_JSON_body(root);
     for (Operator* op : get_operators())
@@ -193,6 +195,7 @@ void Layer::to_JSON(JsonWriter& writer) const
     add_json_field(writer, "Label", label);
     add_json_field(writer, "InputDimensions", shape_to_string(get_input_shape()));
     add_json_field(writer, "OutputDimensions", shape_to_string(get_output_shape()));
+    add_json_field(writer, "Trainable", is_trainable);
 
     write_JSON_body(writer);
 

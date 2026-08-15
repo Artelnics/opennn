@@ -450,6 +450,8 @@ void save_json_file(const std::filesystem::path& file_name, const JsonWriter& wr
     throw_if(!file.is_open(), "Cannot open file: {}", file_name.string());
 
     file << writer.c_str();
+    file.close();
+    throw_if(!file, "Cannot write file: {}", file_name.string());
 }
 
 const Json* JsonDocument::first_child(std::string_view name) const

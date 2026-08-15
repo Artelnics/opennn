@@ -92,7 +92,7 @@ static void fill_cuda(const TensorView&, float)
 
 #endif
 
-void TensorView::fill(float value)
+void TensorView::fill(float value) const
 {
     if (!data) return;
 

@@ -23,14 +23,9 @@ namespace opennn
 namespace
 {
 
-void zero_if_linked(TensorView& view)
-{
-    if (view.data) view.setZero();
-}
-
 void zero_if_linked(const TensorView& view)
 {
-    if (view.data) const_cast<TensorView&>(view).setZero();
+    if (view.data) view.setZero();
 }
 
 void zero_linked(initializer_list<const TensorView*> views)

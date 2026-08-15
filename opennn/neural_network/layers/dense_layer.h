@@ -75,6 +75,7 @@ public:
     void set_transposed_inference_active(bool v) { combination.transposed_inference_active = v; }
 
     void set_tied_weight_source(const Layer*);
+    void set_tied_weight(const TiedWeight&) override;
     TiedWeight get_tied_weight() const override
     {
         return tied_source ? TiedWeight{tied_source, 0, 0} : TiedWeight{};

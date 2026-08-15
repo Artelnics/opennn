@@ -36,26 +36,31 @@ void for_each_pool_window(Index batch_size, Index input_channels,
                           Index padding_height, Index padding_width,
                           Visit&& visit)
 {
-    #pragma omp parallel for collapse(2) schedule(static)
-    for (Index b = 0; b < batch_size; ++b)
-        for (Index c = 0; c < input_channels; ++c)
-            for (Index out_row = 0; out_row < output_height; ++out_row)
+    const Index slices_count = batch_size * input_channels;
+
+    #pragma omp parallel for schedule(static)
+    for (Index slice = 0; slice < slices_count; ++slice)
+    {
+        const Index b = slice / input_channels;
+        const Index c = slice % input_channels;
+        for (Index out_row = 0; out_row < output_height; ++out_row)
+        {
+            const Index in_row_start = out_row * row_stride - padding_height;
+            const Index pr_start = max(Index(0), -in_row_start);
+            const Index pr_end = min(pool_height, input_height - in_row_start);
+
+            for (Index out_col = 0; out_col < output_width; ++out_col)
             {
-                const Index in_row_start = out_row * row_stride - padding_height;
-                const Index pr_start = max(Index(0), -in_row_start);
-                const Index pr_end   = min(pool_height, input_height - in_row_start);
+                const Index in_col_start = out_col * column_stride - padding_width;
+                const Index pc_start = max(Index(0), -in_col_start);
+                const Index pc_end = min(pool_width, input_width - in_col_start);
 
-                for (Index out_col = 0; out_col < output_width; ++out_col)
-                {
-                    const Index in_col_start = out_col * column_stride - padding_width;
-                    const Index pc_start = max(Index(0), -in_col_start);
-                    const Index pc_end   = min(pool_width, input_width - in_col_start);
-
-                    visit(PoolWindow{b, c, out_row, out_col,
-                                     in_row_start, pr_start, pr_end,
-                                     in_col_start, pc_start, pc_end});
-                }
+                visit(PoolWindow{b, c, out_row, out_col,
+                                 in_row_start, pr_start, pr_end,
+                                 in_col_start, pc_start, pc_end});
             }
+        }
+    }
 }
 
 template<typename Visit>

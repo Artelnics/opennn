@@ -24,7 +24,7 @@ void set_scalar_device_cuda(float* dst, const float value, cudaStream_t stream =
 void adam_update_capturable_cuda(
     const Index n, float* parameters, float* m, float* v, const float* gradients,
     const float beta_1, const float beta_2,
-    const float learning_rate, const float epsilon,
+    const float* learning_rate_device, const float epsilon,
     int* step_device, float* effective_lr_device, float* effective_eps_device,
     __nv_bfloat16* parameters_bf16_mirror = nullptr, cudaStream_t stream = nullptr);
 

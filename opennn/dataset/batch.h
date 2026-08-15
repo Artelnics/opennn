@@ -123,7 +123,11 @@ struct Batch
     TensorView target_view_cache;
 
     optional<DeviceGather> device_gather;
-    Buffer gather_indices_host{Device::CPU};
+    // Pinned, like every other host staging buffer here: the per-step index
+    // upload behind the device gather is a cudaMemcpyAsync, and from pageable
+    // memory that goes through a driver bounce buffer and blocks the host.
+    int* gather_indices_host = nullptr;
+    Index gather_indices_host_allocated_bytes = 0;
     Buffer gather_indices_device{Device::CUDA};
 };
 

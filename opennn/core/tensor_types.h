@@ -525,8 +525,8 @@ struct TensorView
         return TensorMapR<Rank>(reinterpret_cast<float*>(data) + batch_index * slice_element_count, dims);
     }
 
-    void fill(float);
-    void setZero() { fill(0.0f); }
+    void fill(float) const;
+    void setZero() const { fill(0.0f); }
     void set_zero_async() const;
 
     mutable shared_ptr<cudnnTensorStruct> descriptor_handle = nullptr;

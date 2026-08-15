@@ -24,15 +24,19 @@
 #include "opennn/neural_network/model_expression.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/neural_network/standard_networks.h"
+#include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/layers/unscaling_layer.h"
 #include "opennn/core/statistics.h"
 
+#include <array>
+#include <chrono>
 #include <cstdlib>
 #include <fstream>
-#include <sstream>
-#include <iomanip>
 #include <filesystem>
+#include <iomanip>
+#include <random>
+#include <sstream>
 
 using namespace opennn;
 
@@ -322,6 +326,17 @@ const char* target_missing(Target target)
     return target == Target::Python ? "python is not on PATH." : "no C compiler on PATH.";
 }
 
+const char* target_name(Target target)
+{
+    switch (target)
+    {
+    case Target::Python:    return "python";
+    case Target::C:         return "c";
+    case Target::CEmbedded: return "embedded";
+    }
+    return "unknown";
+}
+
 ModelExpression::ProgrammingLanguage target_language(Target target)
 {
     using enum ModelExpression::ProgrammingLanguage;
@@ -343,7 +358,10 @@ void expect_export_matches(Target target, const string& directory_name,
 {
     const ModelExpression model_expression(&network);
 
-    const filesystem::path directory = filesystem::temp_directory_path() / directory_name;
+    const auto timestamp = chrono::high_resolution_clock::now().time_since_epoch().count();
+    const unsigned random_suffix = random_device{}();
+    const filesystem::path directory = filesystem::temp_directory_path()
+        / (directory_name + "_" + to_string(timestamp) + "_" + to_string(random_suffix));
     filesystem::create_directories(directory);
 
     const string output = target == Target::Python
@@ -371,6 +389,53 @@ void expect_export_matches(Target target, const string& directory_name,
     filesystem::remove_all(directory, error);
 }
 
+}
+
+TEST(ExpressionExecution, EveryDenseActivationMatchesEveryExecutableTarget)
+{
+    constexpr std::array<const char*, 9> activations = {
+        "Identity", "Sigmoid", "Tanh", "ReLU", "Softmax",
+        "LeakyReLU", "GELU", "GELUTanh", "SiLU"
+    };
+    constexpr std::array<Target, 3> targets = {Target::Python, Target::C, Target::CEmbedded};
+
+    MatrixR inputs(4, 2);
+    inputs << -2.0f,  1.0f,
+              -0.5f, -1.5f,
+               0.0f,  2.0f,
+               1.5f,  0.25f;
+
+    bool ran_target = false;
+
+    for (const Target target : targets)
+    {
+        if (!target_available(target)) continue;
+
+        ran_target = true;
+
+        for (const char* activation : activations)
+        {
+            SCOPED_TRACE(string(target_name(target)) + ": " + activation);
+
+            NeuralNetwork network;
+            network.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{2}, activation));
+            network.compile();
+            network.set_input_variables(vector<Variable>(2));
+            network.set_output_variables(vector<Variable>(2));
+            network.set_input_names({"input_0", "input_1"});
+            network.set_output_names({"output_0", "output_1"});
+
+            VectorR parameters = VectorR::LinSpaced(
+                network.get_parameters_buffer_size(), -0.75f, 0.85f);
+            network.set_parameters(parameters);
+
+            expect_export_matches(target,
+                string("opennn_activation_") + target_name(target) + "_" + activation,
+                network, inputs, network.calculate_outputs(inputs));
+        }
+    }
+
+    if (!ran_target) GTEST_SKIP() << "Neither Python nor a C compiler is available.";
 }
 
 TEST(ExpressionExecution, PythonModelMatchesTheNetworkItCameFrom)

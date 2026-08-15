@@ -334,12 +334,15 @@ void EmbeddingLookupOperator::init_positional_encoding()
     for (Index j = 0; j < embedding_dimension; ++j)
         divisors(j) = pow(10000.0f, (j < half ? j : j - half) / half_f);
 
-    #pragma omp parallel for collapse(2)
-    for (Index i = 0; i < sequence_length; ++i)
-        for (Index j = 0; j < embedding_dimension; ++j)
-            table[i * embedding_dimension + j] = (j < half)
-                ? sin(i / divisors(j))
-                : cos(i / divisors(j));
+    const Index values_count = sequence_length * embedding_dimension;
+
+    #pragma omp parallel for
+    for (Index value = 0; value < values_count; ++value)
+    {
+        const Index i = value / embedding_dimension;
+        const Index j = value % embedding_dimension;
+        table[value] = (j < half) ? sin(i / divisors(j)) : cos(i / divisors(j));
+    }
 }
 
 void EmbeddingLookupOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )

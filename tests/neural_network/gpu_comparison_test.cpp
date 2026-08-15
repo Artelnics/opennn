@@ -334,12 +334,14 @@ TEST_F(GpuComparison, ImageClassificationForward)
 
 TEST_F(GpuComparison, ImageClassificationForwardUnderWorkspaceCap)
 {
-    // Requesting autotune together with a workspace cap must stay safe. Dropping
-    // the cap-is-zero condition in cudnn_frontend_utilities::finalize so that both
-    // apply at once faults with an access violation once the cap actually removes
-    // plans (sm_120, ResNet-50 batch 512, 512 MiB cap), so the library skips
-    // tuning under a cap. This asserts that combination still runs and still
-    // agrees with the CPU reference.
+    // Autotune now runs *within* the workspace cap: over-budget plans are barred
+    // and left unbuilt, and the tuner only measures the survivors. The access
+    // violation this combination used to fault with (sm_120, ResNet-50 batch 512,
+    // 512 MiB cap) was Graph::get_autotune_workspace_size() dereferencing the
+    // barred nullptr slots; cudnn_frontend_utilities::autotune_workspace_bytes
+    // sizes the tuning scratch through the null-safe per-index query instead.
+    // A 16 MiB cap on these shapes does remove plans, so this asserts the tuned-
+    // under-cap path runs and still agrees with the CPU reference.
     struct RestoreConvolutionSettings
     {
         bool autotune;

@@ -460,8 +460,10 @@ public:
         : output_vocabulary(new_output_vocabulary),
           vocabulary(new_sample_vocabulary),
           generator(new_seed),
+#ifdef OPENNN_HAS_CUDA
           seed(new_seed),
           token_device(new_token_device),
+#endif
           logits(size_t(new_sample_vocabulary)),
           bf16_logits(size_t(new_sample_vocabulary))
     {
@@ -681,18 +683,22 @@ private:
     Index output_vocabulary = 0;
     Index vocabulary = 0;
     mt19937_64 generator;
+#ifdef OPENNN_HAS_CUDA
     unsigned long long seed = 0;
     unsigned long long step = 0;
     Buffer* token_device = nullptr;
+#endif
 
     vector<float> logits;
     vector<uint16_t> bf16_logits;
 
     vector<float> adjusted;
     vector<pair<float, Index>> candidates;
+#ifdef OPENNN_HAS_CUDA
     int* pinned_id = nullptr;
     Buffer gpu_candidates{Device::CUDA};
     Buffer gpu_id{Device::CUDA};
+#endif
 };
 
 bool valid_complete_history(const vector<ChatMessage>& messages)

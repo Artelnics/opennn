@@ -8,6 +8,8 @@
 
 #include "opennn/registry.h"
 
+#include <algorithm>
+#include <array>
 #include <format>
 #include <stdexcept>
 #include <string_view>
@@ -89,51 +91,95 @@ unique_ptr<Layer> construct_rms_normalization()
 
 #endif
 
-const vector<LayerRegistration>& layer_registrations()
-{
-    static const vector<LayerRegistration> registrations = {
-        {LayerType::Activation,             "Activation",             construct_layer<Activation>},
-        {LayerType::Addition,               "Addition",               construct_layer<Addition>},
-        {LayerType::Bounding,               "Bounding",               construct_layer<Bounding>},
-        {LayerType::Concatenation,          "Concatenation",          construct_layer<Concatenation>},
-        {LayerType::Concatenation,          "Concatenate",            construct_layer<Concatenation>},
-        {LayerType::Convolutional,          "Convolutional",
-         OPENNN_VISION_FACTORY(construct_layer<Convolutional>)},
-        {LayerType::Dense,                  "Dense",                  construct_layer<Dense>},
-        {LayerType::Detection,              "Detection",
-         OPENNN_VISION_FACTORY(construct_layer<Detection>)},
-        {LayerType::DetectionV8,            "DetectionV8",
-         OPENNN_VISION_FACTORY(construct_layer<DetectionV8>)},
-        {LayerType::Embedding,              "Embedding",
-         OPENNN_VISION_FACTORY(construct_layer<Embedding>)},
-        {LayerType::Flatten,                "Flatten",
-         OPENNN_VISION_FACTORY(construct_layer<Flatten>)},
-        {LayerType::LongShortTermMemory,    "LongShortTermMemory",    construct_layer<LongShortTermMemory>},
-        {LayerType::MultiHeadAttention,     "MultiHeadAttention",
-         OPENNN_VISION_FACTORY(construct_layer<MultiHeadAttention>)},
-        {LayerType::Normalization3d,        "Normalization3d",
-         OPENNN_VISION_FACTORY(construct_layer<Normalization3d>)},
-        {LayerType::RMSNormalization3d,     "RMSNormalization3d",
-         OPENNN_VISION_FACTORY(construct_rms_normalization)},
-        {LayerType::GroupedQueryAttention,  "GroupedQueryAttention",
-         OPENNN_VISION_FACTORY(construct_layer<GroupedQueryAttention>)},
-        {LayerType::NonMaxSuppression,      "NonMaxSuppression",      construct_layer<NonMaxSuppression>},
-        {LayerType::Pooling,                "Pooling",
-         OPENNN_VISION_FACTORY(construct_layer<Pooling>)},
-        {LayerType::Pooling3d,              "Pooling3d",
-         OPENNN_VISION_FACTORY(construct_layer<Pooling3d>)},
-        {LayerType::Recurrent,              "Recurrent",              construct_layer<Recurrent>},
-        {LayerType::Scaling,                "Scaling",                construct_layer<Scaling>},
-        {LayerType::Tokenizer,              "Tokenizer",              construct_layer<Tokenizer>},
-        {LayerType::Unscaling,              "Unscaling",              construct_layer<Unscaling>},
-        {LayerType::Upsample,               "Upsample",               construct_layer<Upsample>},
-        {LayerType::C2PSA,                  "C2PSA",                  construct_layer<C2PSA>}
-    };
+constexpr size_t layer_types_number = static_cast<size_t>(LayerType::Count);
 
-    return registrations;
-}
+constexpr std::array<LayerRegistration, layer_types_number> layer_registrations = {{
+    {LayerType::Activation,             "Activation",             construct_layer<Activation>},
+    {LayerType::Addition,               "Addition",               construct_layer<Addition>},
+    {LayerType::Bounding,               "Bounding",               construct_layer<Bounding>},
+    {LayerType::Concatenation,          "Concatenation",          construct_layer<Concatenation>},
+    {LayerType::Convolutional,          "Convolutional",
+     OPENNN_VISION_FACTORY(construct_layer<Convolutional>)},
+    {LayerType::Dense,                  "Dense",                  construct_layer<Dense>},
+    {LayerType::Detection,              "Detection",
+     OPENNN_VISION_FACTORY(construct_layer<Detection>)},
+    {LayerType::DetectionV8,            "DetectionV8",
+     OPENNN_VISION_FACTORY(construct_layer<DetectionV8>)},
+    {LayerType::Embedding,              "Embedding",
+     OPENNN_VISION_FACTORY(construct_layer<Embedding>)},
+    {LayerType::Flatten,                "Flatten",
+     OPENNN_VISION_FACTORY(construct_layer<Flatten>)},
+    {LayerType::LongShortTermMemory,    "LongShortTermMemory",    construct_layer<LongShortTermMemory>},
+    {LayerType::MultiHeadAttention,     "MultiHeadAttention",
+     OPENNN_VISION_FACTORY(construct_layer<MultiHeadAttention>)},
+    {LayerType::Normalization3d,        "Normalization3d",
+     OPENNN_VISION_FACTORY(construct_layer<Normalization3d>)},
+    {LayerType::RMSNormalization3d,     "RMSNormalization3d",
+     OPENNN_VISION_FACTORY(construct_rms_normalization)},
+    {LayerType::GroupedQueryAttention,  "GroupedQueryAttention",
+     OPENNN_VISION_FACTORY(construct_layer<GroupedQueryAttention>)},
+    {LayerType::NonMaxSuppression,      "NonMaxSuppression",      construct_layer<NonMaxSuppression>},
+    {LayerType::Pooling,                "Pooling",
+     OPENNN_VISION_FACTORY(construct_layer<Pooling>)},
+    {LayerType::Pooling3d,              "Pooling3d",
+     OPENNN_VISION_FACTORY(construct_layer<Pooling3d>)},
+    {LayerType::Recurrent,              "Recurrent",              construct_layer<Recurrent>},
+    {LayerType::Scaling,                "Scaling",                construct_layer<Scaling>},
+    {LayerType::Tokenizer,              "Tokenizer",              construct_layer<Tokenizer>},
+    {LayerType::Unscaling,              "Unscaling",              construct_layer<Unscaling>},
+    {LayerType::Upsample,               "Upsample",               construct_layer<Upsample>},
+    {LayerType::C2PSA,                  "C2PSA",                  construct_layer<C2PSA>}
+}};
+
+constexpr std::array<pair<string_view, LayerType>, 1> layer_aliases = {{
+    {"Concatenate", LayerType::Concatenation}
+}};
 
 #undef OPENNN_VISION_FACTORY
+
+constexpr bool valid_layer_registrations()
+{
+    for (size_t i = 0; i < layer_registrations.size(); ++i)
+    {
+        if (layer_registrations[i].type != static_cast<LayerType>(i)
+            || layer_registrations[i].name.empty())
+            return false;
+
+        for (size_t j = 0; j < i; ++j)
+            if (layer_registrations[i].name == layer_registrations[j].name)
+                return false;
+    }
+
+    for (size_t i = 0; i < layer_aliases.size(); ++i)
+    {
+        const auto& [alias, type] = layer_aliases[i];
+        if (alias.empty() || static_cast<size_t>(type) >= layer_types_number)
+            return false;
+
+        for (const LayerRegistration& registration : layer_registrations)
+            if (alias == registration.name) return false;
+
+        for (size_t j = 0; j < i; ++j)
+            if (alias == layer_aliases[j].first) return false;
+    }
+
+    return true;
+}
+
+static_assert(valid_layer_registrations(),
+              "Layer registrations must cover LayerType once, in enum order, with unique names and aliases.");
+
+const LayerRegistration* find_layer_registration(const string_view name)
+{
+    const auto registration = ranges::find(layer_registrations, name,
+                                           &LayerRegistration::name);
+    if (registration != layer_registrations.end()) return &*registration;
+
+    const auto alias = ranges::find(layer_aliases, name, &pair<string_view, LayerType>::first);
+    if (alias == layer_aliases.end()) return nullptr;
+
+    return &layer_registrations[static_cast<size_t>(alias->second)];
+}
 
 template<typename Base>
 unique_ptr<Base> create(const unordered_map<string_view, unique_ptr<Base>(*)()>& factories,
@@ -154,9 +200,9 @@ const EnumMap<LayerType>& layer_type_map()
     static const vector<EnumMap<LayerType>::Entry> entries = []
     {
         vector<EnumMap<LayerType>::Entry> result;
-        result.reserve(layer_registrations().size());
+        result.reserve(layer_registrations.size());
 
-        for (const LayerRegistration& registration : layer_registrations())
+        for (const LayerRegistration& registration : layer_registrations)
             result.emplace_back(registration.type, string(registration.name));
 
         return result;
@@ -173,7 +219,9 @@ const string& layer_type_to_string(LayerType type)
 
 LayerType string_to_layer_type(const string& name)
 {
-    return layer_type_map().from_string(name);
+    const LayerRegistration* registration = find_layer_registration(name);
+    throw_if(!registration, "Unknown layer type: {}", name);
+    return registration->type;
 }
 
 const string& Layer::get_name() const
@@ -183,14 +231,16 @@ const string& Layer::get_name() const
 
 unique_ptr<Layer> create_layer(const string& name)
 {
-    const vector<LayerRegistration>& registrations = layer_registrations();
-    const auto registration = ranges::find(registrations, name,
-                                           &LayerRegistration::name);
+    const LayerRegistration* registration = find_layer_registration(name);
 
-    if (registration == registrations.end() || !registration->factory)
+    if (!registration || !registration->factory)
         throw runtime_error(format("Component not found: {}", name));
 
-    return registration->factory();
+    unique_ptr<Layer> layer = registration->factory();
+    throw_if(layer->get_type() != registration->type,
+             "Layer factory for {} produced {} instead of {}.",
+             registration->name, layer->get_name(), layer_type_to_string(registration->type));
+    return layer;
 }
 
 unique_ptr<Optimizer> create_optimizer(const string& name)

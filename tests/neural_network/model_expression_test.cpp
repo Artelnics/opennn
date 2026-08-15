@@ -2,10 +2,14 @@
 #include "opennn/neural_network/model_expression.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/neural_network/standard_networks.h"
+#include "opennn/neural_network/layers/dense_layer.h"
 
-#include <fstream>
-#include <sstream>
+#include <array>
+#include <chrono>
 #include <filesystem>
+#include <fstream>
+#include <random>
+#include <sstream>
 
 using namespace opennn;
 
@@ -23,6 +27,15 @@ string read_whole_file(const filesystem::path& path)
 bool contains_token(const string& text, const string& token)
 {
     return text.find(token) != string::npos;
+}
+
+filesystem::path unique_model_expression_path(const string& file_name)
+{
+    const auto timestamp = chrono::high_resolution_clock::now()
+        .time_since_epoch().count();
+    const unsigned random_suffix = random_device{}();
+    return filesystem::temp_directory_path()
+        / (to_string(timestamp) + "_" + to_string(random_suffix) + "_" + file_name);
 }
 
 }
@@ -368,4 +381,93 @@ TEST_F(ModelExpressionSoftmaxTest, SavePhpExpressionContainsSoftmaxBlock)
     EXPECT_TRUE(contains_token(source, "$setosa = exp($setosa - $max_out);"));
     EXPECT_TRUE(contains_token(source, "$sum += $virginica;"));
     EXPECT_TRUE(contains_token(source, "$versicolor /= $sum;"));
+}
+
+TEST(ModelExpressionActivationTest, ExportsEveryActivationToEveryLanguage)
+{
+    struct ActivationCase
+    {
+        const char* name;
+        const char* embedded_constant;
+    };
+
+    const std::array<ActivationCase, 9> activations = {{
+        {"Identity", "NN_IDENTITY"},
+        {"Sigmoid", "NN_SIGMOID"},
+        {"Tanh", "NN_TANH"},
+        {"ReLU", "NN_RELU"},
+        {"Softmax", nullptr},
+        {"LeakyReLU", "NN_LEAKY_RELU"},
+        {"GELU", "NN_GELU"},
+        {"GELUTanh", "NN_GELU_TANH"},
+        {"SiLU", "NN_SILU"}
+    }};
+
+    struct LanguageCase
+    {
+        ModelExpression::ProgrammingLanguage language;
+        const char* suffix;
+        const char* definition_prefix;
+    };
+
+    using enum ModelExpression::ProgrammingLanguage;
+    const std::array<LanguageCase, 4> languages = {{
+        {C, "c", "float "},
+        {Python, "py", "def "},
+        {JavaScript, "html", "function "},
+        {PHP, "php", "function "}
+    }};
+
+    for (const ActivationCase& activation : activations)
+    {
+        SCOPED_TRACE(activation.name);
+
+        NeuralNetwork network;
+        network.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{2}, activation.name));
+        network.compile();
+        network.set_input_variables(vector<Variable>(2));
+        network.set_output_variables(vector<Variable>(2));
+        network.set_input_names({"input_0", "input_1"});
+        network.set_output_names({"output_0", "output_1"});
+
+        const ModelExpression model_expression(&network);
+        EXPECT_TRUE(contains_token(model_expression.build_expression(),
+                                   string(activation.name) + "("));
+
+        for (const LanguageCase& language : languages)
+        {
+            SCOPED_TRACE(language.suffix);
+
+            const filesystem::path path = unique_model_expression_path(
+                string("activation_") + activation.name + "." + language.suffix);
+            model_expression.save(path, language.language);
+            const string source = read_whole_file(path);
+            filesystem::remove(path);
+
+            EXPECT_TRUE(contains_token(source,
+                string(language.definition_prefix) + activation.name));
+        }
+
+        const filesystem::path embedded_path = unique_model_expression_path(
+            string("embedded_") + activation.name + ".c");
+        model_expression.save(embedded_path, CEmbedded);
+        const string embedded_source = read_whole_file(embedded_path);
+        filesystem::remove(embedded_path);
+
+        if (activation.embedded_constant)
+            EXPECT_TRUE(contains_token(embedded_source,
+                string(", ") + activation.embedded_constant + ", "));
+        else
+            EXPECT_TRUE(contains_token(embedded_source, "nn_softmax_inplace"));
+    }
+}
+
+TEST_F(ModelExpressionTest, RejectsUnknownProgrammingLanguage)
+{
+    const ModelExpression model_expression(neural_network.get());
+    const filesystem::path path = unique_model_expression_path("unknown_language.txt");
+
+    EXPECT_THROW(model_expression.save(
+        path, static_cast<ModelExpression::ProgrammingLanguage>(999)), runtime_error);
+    EXPECT_FALSE(filesystem::exists(path));
 }

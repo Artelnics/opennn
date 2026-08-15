@@ -145,10 +145,17 @@ using bfloat16 = __nv_bfloat16;
 
 inline float bfloat16_to_float_host(const uint16_t value)
 {
-    const uint32_t bits = uint32_t(value) << 16;
-    float result;
-    memcpy(&result, &bits, sizeof(result));
-    return result;
+    return bit_cast<float>(uint32_t(value) << 16);
+}
+
+inline uint16_t float_to_bfloat16_host(const float value)
+{
+    uint32_t bits = bit_cast<uint32_t>(value);
+    if ((bits & 0x7FFFFFFFu) > 0x7F800000u)
+        return uint16_t((bits >> 16) | 0x0040u);
+
+    bits += 0x7FFFu + ((bits >> 16) & 1u);
+    return uint16_t(bits >> 16);
 }
 
 inline void float_2_bfloat16_host(const Index count,
@@ -157,7 +164,7 @@ inline void float_2_bfloat16_host(const Index count,
 {
     #pragma omp parallel for if(count > 4096)
     for (Index i = 0; i < count; ++i)
-        destination[i] = uint16_t(bit_cast<uint32_t>(source[i]) >> 16);
+        destination[i] = float_to_bfloat16_host(source[i]);
 }
 
 using type = float;

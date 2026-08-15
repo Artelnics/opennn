@@ -36,6 +36,8 @@ public:
     void update_parameters(BackPropagation&, OptimizerData&,
                            UpdateMode = UpdateMode::Standard) override;
 
+    void on_epoch_begin(Index, OptimizerData&) override;
+
     void from_JSON(const JsonDocument&) override;
 
     void to_JSON(JsonWriter&) const override;

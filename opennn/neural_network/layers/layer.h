@@ -42,6 +42,13 @@ class Layer
 
 public:
 
+    struct TiedWeight
+    {
+        const Layer* source = nullptr;
+        size_t spec_index = 0;
+        size_t source_spec_index = 0;
+    };
+
     virtual ~Layer() = default;
 
     const string& get_label() const noexcept { return label; }
@@ -170,8 +177,12 @@ public:
 
     vector<Operator::SlotQuantization> get_parameter_quantization() const;
 
-    struct TiedWeight { const Layer* source = nullptr; size_t spec_index = 0; size_t source_spec_index = 0; };
     virtual TiedWeight get_tied_weight() const { return {}; }
+    virtual void set_tied_weight(const TiedWeight& tied_weight)
+    {
+        throw_if(tied_weight.source,
+                 "{} layer does not support tied weights.", get_name());
+    }
 
     void redistribute_parameters_to_operators();
 

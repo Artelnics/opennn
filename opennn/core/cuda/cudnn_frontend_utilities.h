@@ -243,10 +243,12 @@ inline std::filesystem::path plan_cache_file(const graph::Graph& graph)
     graph.serialize(structure);
     structure.erase("gid");
 
-    // The workspace cap changes which plans survive selection, so two runs with
-    // different caps must not share a cached plan for the same graph.
+    // The workspace cap changes which plans survive selection, and autotune
+    // changes which survivor wins, so runs that differ in either must not share
+    // a cached plan for the same graph.
     const size_t key = std::hash<json>{}(structure)
-        ^ (std::hash<int64_t>{}(device::conv_workspace_limit_bytes()) << 1);
+        ^ (std::hash<int64_t>{}(device::conv_workspace_limit_bytes()) << 1)
+        ^ (std::hash<bool>{}(device::conv_autotune_enabled()) << 2);
 
     return plan_cache_directory() / format("{:016x}.plan", key);
 }
@@ -357,18 +359,23 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
     check_status(graph.create_execution_plans({HeurMode_t::A, HeurMode_t::FALLBACK}),
                  tag + " create_execution_plans");
 
+    // The workspace budget is applied in every mode, autotune included. Left
+    // unbounded, cuDNN's first heuristic choice for these NHWC shapes needs a
+    // scratch that grows with the batch (~4 MiB per sample on sm_86: 2 GiB at
+    // batch 512, 16 GiB at 4096) and is not even the fastest engine: capping to
+    // the auto budget picks a plan needing ~16 KiB per sample and measured
+    // 1.5-2x faster at every batch on an RTX 3060, while the unbounded plan
+    // collapsed throughput 5-30x once its scratch spilled and then OOMed.
     const int64_t conv_workspace_cap = device::conv_workspace_limit_bytes();
     if (conv_workspace_cap > 0)
         graph.deselect_workspace_greater_than(conv_workspace_cap);
 
-    // Autotuning requires an uncapped workspace. Combining
-    // deselect_workspace_greater_than with BuildPlanPolicy_t::ALL crashes with an
-    // access violation in this cudnn-frontend version, but only once the cap
-    // actually removes plans: measured on sm_120, ResNet-50 batch 512, a 512 MiB
-    // cap faults while 4 GiB and 1 TiB caps (which filter nothing) run clean.
-    // Tuned-plans-within-a-budget therefore needs a different mechanism — tune
-    // unbounded, then rebuild over budget — not simply dropping this condition.
-    const bool autotune = request_autotune && conv_workspace_cap == 0
+    // Plans over budget are barred and left unbuilt (nullptr) by
+    // BuildPlanPolicy_t::ALL; autotune() skips those slots. The access violation
+    // once attributed to "cap + ALL" is Graph::get_autotune_workspace_size(),
+    // which dereferences every slot including the barred ones — see
+    // autotune_workspace_bytes() below, which is why that accessor is not used.
+    const bool autotune = request_autotune
         && graph.build_plans(handle, BuildPlanPolicy_t::ALL).is_good();
 
     // An autotuned graph is measured against real data by the caller before a plan
@@ -394,6 +401,26 @@ inline void report_autotune_skipped(const char* tag, const char* reason)
          << ": autotune skipped, keeping the heuristic plan (" << reason << ").\n";
 }
 
+// Largest workspace any *executable* candidate needs. Graph::get_autotune_workspace_size()
+// computes the same maximum but dereferences every plan slot, and a workspace cap
+// leaves the barred plans as nullptr — that is the crash that used to force
+// autotune to run unbounded. The per-index query goes through
+// is_plan_index_executable() first, so it is safe under a cap.
+inline int64_t autotune_workspace_bytes(const graph::Graph& graph)
+{
+    int64_t maximum = 0;
+    const int64_t count = graph.get_execution_plan_count();
+
+    for (int64_t index = 0; index < count; ++index)
+    {
+        int64_t bytes = 0;
+        if (graph.get_workspace_size_plan_at_index(index, bytes).is_good())
+            maximum = max(maximum, bytes);
+    }
+
+    return maximum;
+}
+
 template<typename TensorMap>
 inline void autotune_now(bool& pending, graph::Graph& graph,
                          TensorMap& tensors, int64_t& workspace_bytes,
@@ -405,9 +432,14 @@ inline void autotune_now(bool& pending, graph::Graph& graph,
     Buffer tune_workspace{Device::CUDA};
     try
     {
-        const int64_t tune_bytes = graph.get_autotune_workspace_size();
+        const int64_t tune_bytes = autotune_workspace_bytes(graph);
         if (tune_bytes > 0) tune_workspace.resize_bytes(Index(tune_bytes), Device::CUDA);
         check_status(graph.autotune(Backend::get_cudnn_handle(), tensors, tune_workspace.data), "autotune");
+
+        // The winner is now the candidate; persist it so the next process loads
+        // the tuned plan instead of re-tuning (or, worse, settling for the
+        // heuristic one under the same key).
+        store_cached_plan(graph);
     }
     catch (const exception& e)
     {

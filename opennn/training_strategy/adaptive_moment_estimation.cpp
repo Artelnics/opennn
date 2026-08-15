@@ -95,10 +95,32 @@ void AdaptiveMomentEstimation::setup_optimizer_data(OptimizerData& optimization_
 {
     const bool use_graph = can_use_cuda_graph();
 
+    // Graph scalars: [step (int bits), effective lr, effective eps, base lr].
+    // The base learning rate lives on the device so the captured update reads
+    // the current schedule instead of the value it was captured with.
     optimization_data.set({Shape{parameters_number},
                            Shape{parameters_number},
-                           use_graph ? Shape{3} : Shape{}}, device);
+                           use_graph ? Shape{4} : Shape{}}, device);
     optimization_data.iteration = 0;
+
+#ifdef OPENNN_HAS_CUDA
+    if (use_graph)
+        set_scalar_device_cuda(optimization_data.views[GraphScalars].as<float>() + 3,
+                               learning_rate,
+                               Backend::get_compute_stream());
+#endif
+}
+
+void AdaptiveMomentEstimation::on_epoch_begin(Index, OptimizerData& optimization_data)
+{
+#ifdef OPENNN_HAS_CUDA
+    if (can_use_cuda_graph() && optimization_data.views[GraphScalars].size() >= 4)
+        set_scalar_device_cuda(optimization_data.views[GraphScalars].as<float>() + 3,
+                               learning_rate,
+                               Backend::get_compute_stream());
+#else
+    (void)optimization_data;
+#endif
 }
 
 void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
@@ -116,6 +138,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
         int* const graph_step = reinterpret_cast<int*>(graph_scalars);
         float* const graph_learning_rate = graph_scalars + 1;
         float* const graph_epsilon = graph_scalars + 2;
+        const float* const graph_base_learning_rate = graph_scalars + 3;
 
         adam_update_capturable_cuda(
             neural_network->get_parameters_buffer_size(),
@@ -123,7 +146,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
             optimization_data.views[GradientMoment].as<float>(),
             optimization_data.views[SquareGradientMoment].as<float>(),
             back_propagation.gradient.as<float>(),
-            beta_1, beta_2, learning_rate, EPSILON,
+            beta_1, beta_2, graph_base_learning_rate, EPSILON,
             graph_step,
             graph_learning_rate,
             graph_epsilon,

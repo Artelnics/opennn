@@ -27,6 +27,17 @@ TEST(Tensors, Fill)
     EXPECT_LT((submatrix.array() - type(3.1416)).abs().maxCoeff(), type(1e-6));
 }
 
+TEST(Tensors, HostBfloat16ConversionUsesRoundToNearestEven)
+{
+    EXPECT_EQ(float_to_bfloat16_host(bit_cast<float>(0x3F808000u)), 0x3F80u);
+    EXPECT_EQ(float_to_bfloat16_host(bit_cast<float>(0x3F818000u)), 0x3F82u);
+    EXPECT_EQ(float_to_bfloat16_host(bit_cast<float>(0x3F808001u)), 0x3F81u);
+
+    const uint16_t nan = float_to_bfloat16_host(bit_cast<float>(0x7F800001u));
+    EXPECT_EQ(nan & 0x7F80u, 0x7F80u);
+    EXPECT_NE(nan & 0x007Fu, 0u);
+}
+
 TEST(Tensors, IsContiguous)
 {
     EXPECT_TRUE(is_contiguous(vector<Index>{ 0, 1, 2, 3 }));

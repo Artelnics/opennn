@@ -48,6 +48,7 @@ if(OpenNN_BUILD_EXAMPLES)
     endif()
 
     if(MSVC)
+        target_compile_options(yolo PRIVATE /W4 /w14061)
         target_precompile_headers(yolo REUSE_FROM opennn)
     else()
         target_precompile_headers(yolo PRIVATE "${CMAKE_SOURCE_DIR}/opennn/pch.h")

@@ -41,7 +41,8 @@ enum class LayerType
     Tokenizer,
     Unscaling,
     Upsample,
-    C2PSA
+    C2PSA,
+    Count
 };
 
 class Layer;

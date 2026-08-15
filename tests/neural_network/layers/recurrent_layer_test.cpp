@@ -37,6 +37,21 @@ TEST(RecurrentLayerTest, GeneralConstructor)
     EXPECT_EQ(recurrent_layer.get_output_shape(), Shape({ neurons_number }));
 }
 
+TEST(RecurrentLayerTest, ActivationContract)
+{
+    for (const char* activation : {"Identity", "Sigmoid", "Tanh", "ReLU"})
+    {
+        SCOPED_TRACE(activation);
+        EXPECT_NO_THROW(Recurrent(Shape{2, 2}, Shape{2}, activation));
+    }
+
+    for (const char* activation : {"Softmax", "LeakyReLU", "GELU", "GELUTanh", "SiLU"})
+    {
+        SCOPED_TRACE(activation);
+        EXPECT_THROW(Recurrent(Shape{2, 2}, Shape{2}, activation), runtime_error);
+    }
+}
+
 TEST(RecurrentLayerTest, ForwardPropagateValues)
 {
     const Index samples_number = 1;

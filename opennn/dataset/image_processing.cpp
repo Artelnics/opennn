@@ -15,6 +15,7 @@
 #include <cctype>
 #include <csetjmp>
 #include <cstdio>
+#include <limits>
 #include <zlib.h>
 extern "C" {
 #include <jpeglib.h>
@@ -422,7 +423,7 @@ struct JpegErrorManager
     char message[JMSG_LENGTH_MAX] = {0};
 };
 
-void jpeg_error_exit_throw(j_common_ptr cinfo)
+void jpeg_error_exit(j_common_ptr cinfo)
 {
     JpegErrorManager* err = reinterpret_cast<JpegErrorManager*>(cinfo->err);
     (*cinfo->err->format_message)(cinfo, err->message);
@@ -440,14 +441,24 @@ void decode_jpeg_pixels(const vector<uint8_t>& buffer,
                         Tensor3& image,
                         const string& path_for_error)
 {
+    throw_if(buffer.size() > size_t(numeric_limits<unsigned long>::max()),
+             "JPEG input is too large to decode: {}", path_for_error);
+    const unsigned long buffer_size = static_cast<unsigned long>(buffer.size());
+
     jpeg_decompress_struct cinfo{};
     JpegErrorManager err{};
     cinfo.err = jpeg_std_error(&err.pub);
-    err.pub.error_exit = jpeg_error_exit_throw;
+    err.pub.error_exit = jpeg_error_exit;
     err.pub.output_message = jpeg_output_silent;
 
     volatile bool header_read = false;
 
+#ifdef _MSC_VER
+    // libjpeg reports fatal errors through longjmp. No destructible automatic
+    // objects are kept live across this boundary.
+#pragma warning(push)
+#pragma warning(disable: 4611)
+#endif
     if (setjmp(err.jmp))
     {
         jpeg_destroy_decompress(&cinfo);
@@ -455,32 +466,55 @@ void decode_jpeg_pixels(const vector<uint8_t>& buffer,
             ? format("JPEG decode failed for {}: {}", path_for_error, err.message)
             : format("JPEG header read failed for {}: {}", path_for_error, err.message));
     }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
     jpeg_create_decompress(&cinfo);
-    jpeg_mem_src(&cinfo, buffer.data(), buffer.size());
+    jpeg_mem_src(&cinfo, buffer.data(), buffer_size);
 
-    throw_if(jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK,
-             "JPEG: missing or corrupt header in {}", path_for_error);
+    if (jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK)
+    {
+        jpeg_destroy_decompress(&cinfo);
+        throw runtime_error(format("JPEG: missing or corrupt header in {}", path_for_error));
+    }
 
     header_read = true;
 
     cinfo.out_color_space = (cinfo.num_components == 1) ? JCS_GRAYSCALE : JCS_RGB;
     jpeg_start_decompress(&cinfo);
 
-    image.resize(Index(cinfo.output_height), Index(cinfo.output_width), Index(cinfo.output_components));
+    try
+    {
+        image.resize(Index(cinfo.output_height), Index(cinfo.output_width), Index(cinfo.output_components));
+    }
+    catch (...)
+    {
+        jpeg_destroy_decompress(&cinfo);
+        throw;
+    }
+
     float* dst = image.data();
 
-    const size_t row_bytes = size_t(cinfo.output_width) * size_t(cinfo.output_components);
-    vector<uint8_t> row(row_bytes);
-    JSAMPROW row_ptr = row.data();
+    if (cinfo.output_components <= 0
+        || cinfo.output_width > numeric_limits<JDIMENSION>::max() / JDIMENSION(cinfo.output_components))
+    {
+        jpeg_destroy_decompress(&cinfo);
+        throw runtime_error(format("JPEG row is too large to decode: {}", path_for_error));
+    }
+
+    const JDIMENSION row_samples = cinfo.output_width * JDIMENSION(cinfo.output_components);
+    const size_t row_bytes = size_t(row_samples);
+    JSAMPARRAY row = (*cinfo.mem->alloc_sarray)(
+        reinterpret_cast<j_common_ptr>(&cinfo), JPOOL_IMAGE, row_samples, 1);
 
     while (cinfo.output_scanline < cinfo.output_height)
     {
         const Index y = cinfo.output_scanline;
-        jpeg_read_scanlines(&cinfo, &row_ptr, 1);
+        jpeg_read_scanlines(&cinfo, row, 1);
         float* dst_row = dst + y * row_bytes;
         Map<Array<float, Dynamic, 1>>(dst_row, Index(row_bytes)) =
-            Map<const Array<uint8_t, Dynamic, 1>>(row.data(), Index(row_bytes)).cast<float>();
+            Map<const Array<uint8_t, Dynamic, 1>>(row[0], Index(row_bytes)).cast<float>();
     }
 
     jpeg_finish_decompress(&cinfo);
@@ -622,26 +656,29 @@ Tensor3 resize_image(const Tensor3& input_image,
         x_weight[x] = in_x - static_cast<float>(x0[x]);
     }
 
-    #pragma omp parallel for collapse(2)
-    for (Index y = 0; y < output_height; ++y)
-        for (Index x = 0; x < output_width; ++x)
-        {
-            const float in_y = y * scale_y;
-            const Index y0 = min<Index>(static_cast<Index>(in_y), input_height - 1);
-            const Index y1 = min<Index>(y0 + 1, input_height - 1);
-            const float y_weight = in_y - static_cast<float>(y0);
+    const Index pixels_count = output_height * output_width;
 
-            const Index x0_value = x0[x];
-            const Index x1_value = x1[x];
-            const float x_weight_value = x_weight[x];
+    #pragma omp parallel for
+    for (Index pixel = 0; pixel < pixels_count; ++pixel)
+    {
+        const Index y = pixel / output_width;
+        const Index x = pixel % output_width;
+        const float in_y = y * scale_y;
+        const Index y0 = min<Index>(static_cast<Index>(in_y), input_height - 1);
+        const Index y1 = min<Index>(y0 + 1, input_height - 1);
+        const float y_weight = in_y - static_cast<float>(y0);
 
-            for (Index c = 0; c < channels; ++c)
-                output_image(y, x, c) = bilinear_blend(input_image(y0, x0_value, c),
-                                                       input_image(y0, x1_value, c),
-                                                       input_image(y1, x0_value, c),
-                                                       input_image(y1, x1_value, c),
-                                                       x_weight_value, y_weight);
-        }
+        const Index x0_value = x0[x];
+        const Index x1_value = x1[x];
+        const float x_weight_value = x_weight[x];
+
+        for (Index c = 0; c < channels; ++c)
+            output_image(y, x, c) = bilinear_blend(input_image(y0, x0_value, c),
+                                                   input_image(y0, x1_value, c),
+                                                   input_image(y1, x0_value, c),
+                                                   input_image(y1, x1_value, c),
+                                                   x_weight_value, y_weight);
+    }
 
     return output_image;
 }

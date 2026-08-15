@@ -400,13 +400,13 @@ void TimeSeriesDataset::fill_batch(Batch& batch,
                     target_indices, mode);
 }
 
-MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_steps) const
+MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index lags_number) const
 {
     const Index samples_number = get_samples_number();
 
-    throw_if(past_time_steps > samples_number,
-             "Past time steps ({}) is greater than samples number ({}) \n",
-                    past_time_steps, samples_number);
+    throw_if(lags_number > samples_number,
+             "Lag count ({}) is greater than samples number ({}) \n",
+             lags_number, samples_number);
 
     const Index variables_number = get_variables_number();
 
@@ -418,12 +418,12 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
 
     const Index numeric_variables_number = ssize(numeric_variable_indices);
 
-    const Index new_past_time_steps =
-        ((samples_number <= past_time_steps) && past_time_steps > 2) ? past_time_steps - 2 :
-         (samples_number == past_time_steps + 1 && past_time_steps > 1) ? past_time_steps - 1 :
-         past_time_steps;
+    const Index effective_lags_number =
+        ((samples_number <= lags_number) && lags_number > 2) ? lags_number - 2 :
+         (samples_number == lags_number + 1 && lags_number > 1) ? lags_number - 1 :
+         lags_number;
 
-    MatrixR autocorrelations(numeric_variables_number, new_past_time_steps);
+    MatrixR autocorrelations(numeric_variables_number, effective_lags_number);
 
     for (Index i = 0; i < numeric_variables_number; ++i)
     {
@@ -434,25 +434,25 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
 
         const Map<const VectorR> current_input_i(input_i.data(), input_i.rows());
 
-        autocorrelations.row(i) = opennn::autocorrelations(current_input_i, new_past_time_steps).transpose();
+        autocorrelations.row(i) = opennn::autocorrelations(current_input_i, effective_lags_number).transpose();
     }
 
     return autocorrelations;
 }
 
-Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_steps) const
+Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index lags_number) const
 {
     const Index samples_number = get_samples_number();
 
-    throw_if(past_time_steps > samples_number,
-             "Past time steps ({}) is greater than samples number ({}) \n",
-                    past_time_steps, samples_number);
+    throw_if(lags_number > samples_number,
+             "Lag count ({}) is greater than samples number ({}) \n",
+             lags_number, samples_number);
 
     const Index variables_number = get_variables_number();
 
-    const Index new_past_time_steps = (samples_number == past_time_steps) ? (past_time_steps - 2)
-                                : (samples_number == past_time_steps + 1) ? (past_time_steps - 1)
-                                : past_time_steps;
+    const Index effective_lags_number = (samples_number == lags_number) ? (lags_number - 2)
+                                      : (samples_number == lags_number + 1) ? (lags_number - 1)
+                                      : lags_number;
 
     vector<Index> numeric_variable_indices;
 
@@ -464,9 +464,9 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
 
     Tensor3 cross_correlations(numeric_variables_number,
                                numeric_variables_number,
-                               new_past_time_steps);
+                               effective_lags_number);
 
-    VectorR cross_correlations_vector(new_past_time_steps);
+    VectorR cross_correlations_vector(effective_lags_number);
 
     for (Index i = 0; i < numeric_variables_number; ++i)
     {
@@ -487,9 +487,10 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
             const Map<const VectorR> current_input_i(input_i.data(), input_i.rows());
             const Map<const VectorR> current_input_j(input_j.data(), input_j.rows());
 
-            cross_correlations_vector = opennn::cross_correlations(current_input_i, current_input_j, new_past_time_steps);
+            cross_correlations_vector =
+                opennn::cross_correlations(current_input_i, current_input_j, effective_lags_number);
 
-            for (Index k = 0; k < new_past_time_steps; ++k)
+            for (Index k = 0; k < effective_lags_number; ++k)
                 cross_correlations(i, j, k) = cross_correlations_vector(k);
         }
     }

@@ -156,17 +156,17 @@ Json json_array(const Range& values)
 }
 
 template<typename Func>
-void for_json_items(const Json* parent, const char* tag, long count, Func func)
+void for_json_items(const Json* parent, const char* tag, std::size_t count, Func func)
 {
     if (!parent || !parent->is_object())
         throw std::runtime_error(std::format("Missing JSON parent for: {}", tag));
 
     const Json* const arr = parent->find(tag);
-    if (!arr || !arr->is_array() || long(arr->array_value.size()) != count)
+    if (!arr || !arr->is_array() || arr->array_value.size() != count)
         throw std::runtime_error(std::format("Missing or wrong-size JSON array: {}", tag));
 
-    for (long i = 0; i < count; i++)
-        func(i, &arr->array_value[std::size_t(i)]);
+    for (std::size_t i = 0; i < count; ++i)
+        func(i, &arr->array_value[i]);
 }
 
 JsonDocument load_json_file(const std::filesystem::path&);
