@@ -72,10 +72,6 @@ void Normalization3d::set_method(NormalizationMethod new_method)
              "Normalization3d: fuse_add is not supported with the RMS method.");
 
     layer_normalization.method = new_method;
-
-    layer_type = (new_method == NormalizationMethod::RMS)
-        ? LayerType::RMSNormalization3d
-        : LayerType::Normalization3d;
 }
 
 void Normalization3d::set_fuse_add(bool on)
@@ -112,6 +108,15 @@ void Normalization3d::read_JSON_body(const Json* element)
 
     set(new_input_shape.dim_or_zero(0), new_input_shape.dim_or_zero(1), get_label());
 
+    if (element->has("Method"))
+    {
+        const string method = read_json_string(element, "Method");
+        throw_if(!is_one_of(method, "LayerNorm", "RMS"),
+                 "Normalization3d: unknown normalization method '{}'.", method);
+        set_method(method == "RMS" ? NormalizationMethod::RMS
+                                    : NormalizationMethod::LayerNorm);
+    }
+
     if (element->has("FuseAdd"))
         set_fuse_add(read_json_bool(element, "FuseAdd"));
 
@@ -121,12 +126,16 @@ void Normalization3d::read_JSON_body(const Json* element)
 
 void Normalization3d::write_JSON_body(JsonWriter& printer) const
 {
+    const char* method = get_method() == NormalizationMethod::RMS ? "RMS" : "LayerNorm";
+
     if (get_method() == NormalizationMethod::RMS)
         write_json(printer, {
+            {"Method", method},
             {"Epsilon", layer_normalization.epsilon}
         });
     else
         write_json(printer, {
+            {"Method", method},
             {"FuseAdd", layer_normalization.fuse_add},
             {"Epsilon", layer_normalization.epsilon}
         });

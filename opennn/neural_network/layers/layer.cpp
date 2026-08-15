@@ -10,9 +10,30 @@
 
 #include "opennn/core/json.h"
 #include "opennn/core/device_backend.h"
+#include "opennn/registry.h"
 
 namespace opennn
 {
+
+namespace
+{
+
+const Json* get_layer_json_root(const JsonDocument& document, const Layer& layer)
+{
+    if (const Json* root = document.first_child(layer.get_name()))
+        return root;
+
+    if (document.root.is_object() && document.root.object_value.size() == 1)
+    {
+        const auto& [serialized_name, value] = document.root.object_value.front();
+        if (string_to_layer_type(serialized_name) == layer.get_type())
+            return &value;
+    }
+
+    return get_json_root(document, layer.get_name());
+}
+
+}
 
 vector<TensorSpec> Layer::get_parameter_specs() const
 {
@@ -163,8 +184,7 @@ float* Layer::link_gradients(float* pointer, Device device)
 
 void Layer::from_JSON(const JsonDocument& document)
 {
-    const Json* root = get_json_root(document, get_name());
-    if (!root) return;
+    const Json* root = get_layer_json_root(document, *this);
 
     const string json_label = read_json_string(root, "Label");
 
@@ -183,9 +203,9 @@ void Layer::from_JSON(const JsonDocument& document)
 
 void Layer::load_state_from_JSON(const JsonDocument& document)
 {
-    if (const Json* root = get_json_root(document, get_name()))
-        for (Operator* op : get_operators())
-            op->load_state_from_JSON(root);
+    const Json* root = get_layer_json_root(document, *this);
+    for (Operator* op : get_operators())
+        op->load_state_from_JSON(root);
 }
 
 void Layer::to_JSON(JsonWriter& writer) const

@@ -114,8 +114,6 @@ constexpr std::array<LayerRegistration, layer_types_number> layer_registrations 
      OPENNN_VISION_FACTORY(construct_layer<MultiHeadAttention>)},
     {LayerType::Normalization3d,        "Normalization3d",
      OPENNN_VISION_FACTORY(construct_layer<Normalization3d>)},
-    {LayerType::RMSNormalization3d,     "RMSNormalization3d",
-     OPENNN_VISION_FACTORY(construct_rms_normalization)},
     {LayerType::GroupedQueryAttention,  "GroupedQueryAttention",
      OPENNN_VISION_FACTORY(construct_layer<GroupedQueryAttention>)},
     {LayerType::NonMaxSuppression,      "NonMaxSuppression",      construct_layer<NonMaxSuppression>},
@@ -131,8 +129,10 @@ constexpr std::array<LayerRegistration, layer_types_number> layer_registrations 
     {LayerType::C2PSA,                  "C2PSA",                  construct_layer<C2PSA>}
 }};
 
-constexpr std::array<pair<string_view, LayerType>, 1> layer_aliases = {{
-    {"Concatenate", LayerType::Concatenation}
+constexpr std::array<LayerRegistration, 2> layer_aliases = {{
+    {LayerType::Concatenation,   "Concatenate",        construct_layer<Concatenation>},
+    {LayerType::Normalization3d, "RMSNormalization3d",
+     OPENNN_VISION_FACTORY(construct_rms_normalization)}
 }};
 
 #undef OPENNN_VISION_FACTORY
@@ -152,15 +152,15 @@ constexpr bool valid_layer_registrations()
 
     for (size_t i = 0; i < layer_aliases.size(); ++i)
     {
-        const auto& [alias, type] = layer_aliases[i];
-        if (alias.empty() || static_cast<size_t>(type) >= layer_types_number)
+        const LayerRegistration& alias = layer_aliases[i];
+        if (alias.name.empty() || static_cast<size_t>(alias.type) >= layer_types_number)
             return false;
 
         for (const LayerRegistration& registration : layer_registrations)
-            if (alias == registration.name) return false;
+            if (alias.name == registration.name) return false;
 
         for (size_t j = 0; j < i; ++j)
-            if (alias == layer_aliases[j].first) return false;
+            if (alias.name == layer_aliases[j].name) return false;
     }
 
     return true;
@@ -175,10 +175,10 @@ const LayerRegistration* find_layer_registration(const string_view name)
                                            &LayerRegistration::name);
     if (registration != layer_registrations.end()) return &*registration;
 
-    const auto alias = ranges::find(layer_aliases, name, &pair<string_view, LayerType>::first);
+    const auto alias = ranges::find(layer_aliases, name, &LayerRegistration::name);
     if (alias == layer_aliases.end()) return nullptr;
 
-    return &layer_registrations[static_cast<size_t>(alias->second)];
+    return &*alias;
 }
 
 template<typename Base>

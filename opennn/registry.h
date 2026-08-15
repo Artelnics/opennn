@@ -31,7 +31,6 @@ enum class LayerType
     LongShortTermMemory,
     MultiHeadAttention,
     Normalization3d,
-    RMSNormalization3d,
     GroupedQueryAttention,
     NonMaxSuppression,
     Pooling,

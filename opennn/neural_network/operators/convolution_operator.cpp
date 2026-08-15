@@ -612,24 +612,20 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
 
         if (!entry.wgrad)
         {
-            // BF16 IO: try the FP32 gradient store first; the BF16 store + cast is
-            // the fallback for shapes without an engine. build_wgrad assigns
-            // entry.wgrad last, so a throw leaves the tensor handles it already
-            // overwrote pointing at a dead graph - reset them before retrying.
-            if (input.is_bf16())
-            {
+            // Prefer an FP32 weight-gradient store (see build_wgrad); fall back to
+            // the BF16 store + widening cast on shapes with no FP32-store engine.
+            // The fallback rebuilds every handle, so the failed attempt leaves
+            // nothing to undo.
+            bool fp32_store = input.is_bf16();
+
+            if (fp32_store)
                 try
                 {
                     cudnn_frontend::build_wgrad(entry, dims, input.type, true);
-                    entry.wgrad_fp32_output = true;
                 }
                 catch (const exception& e)
                 {
-                    entry.wgrad = nullptr;
-                    entry.wgrad_DY = entry.wgrad_X = entry.wgrad_DW = nullptr;
-                    entry.wgrad_workspace_bytes = 0;
-                    entry.wgrad_autotune = false;
-                    entry.wgrad_fp32_output = false;
+                    fp32_store = false;
                     // Once per shape: the only signal that this convolution keeps
                     // paying the BF16 store + widening cast per step.
                     cerr << "ConvolutionOperator wgrad " << input_height << "x" << input_width
@@ -637,11 +633,12 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
                          << "x" << kernels_number << " batch " << input.shape[0]
                          << ": no FP32-store engine (" << e.what()
                          << "); using BF16 store + cast.\n";
-                    cudnn_frontend::build_wgrad(entry, dims, input.type, false);
                 }
-            }
-            else
+
+            if (!fp32_store)
                 cudnn_frontend::build_wgrad(entry, dims, input.type, false);
+
+            entry.wgrad_fp32_output = fp32_store;
         }
 
         const bool wgrad_bf16 = input.is_bf16() && !entry.wgrad_fp32_output;

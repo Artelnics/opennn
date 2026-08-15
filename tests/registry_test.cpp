@@ -133,14 +133,6 @@ unique_ptr<Layer> make_serializable_layer(LayerType type)
         return layer;
     }
 
-    case RMSNormalization3d:
-    {
-        auto layer = make_unique<opennn::Normalization3d>(Shape{4, 8}, "rms_normalization_roundtrip");
-        layer->set_method(NormalizationMethod::RMS);
-        layer->set_epsilon(0.003f);
-        return layer;
-    }
-
     case GroupedQueryAttention:
         return make_unique<opennn::GroupedQueryAttention>(
             Shape{5, 8}, 4, 2, 2, 500000.0f, 0.0002f, false, "gqa_roundtrip");
@@ -297,8 +289,43 @@ TEST(RegistryTest, AliasesConstructConfiguredComponents)
     EXPECT_EQ(concatenation->get_name(), "Concatenation");
 
     const unique_ptr<Layer> rms_normalization = create_layer("RMSNormalization3d");
-    EXPECT_EQ(rms_normalization->get_type(), LayerType::RMSNormalization3d);
-    EXPECT_EQ(rms_normalization->get_name(), "RMSNormalization3d");
+    EXPECT_EQ(string_to_layer_type("RMSNormalization3d"), LayerType::Normalization3d);
+    EXPECT_EQ(rms_normalization->get_type(), LayerType::Normalization3d);
+    EXPECT_EQ(rms_normalization->get_name(), "Normalization3d");
+
+    const auto* configured_normalization =
+        dynamic_cast<const Normalization3d*>(rms_normalization.get());
+    ASSERT_NE(configured_normalization, nullptr);
+    EXPECT_EQ(configured_normalization->get_method(), NormalizationMethod::RMS);
+
+    const string rms_json = serialize_layer(*rms_normalization);
+    JsonDocument rms_document;
+    rms_document.root = Json::parse(rms_json);
+
+    EXPECT_EQ(rms_document.first_child("RMSNormalization3d"), nullptr);
+    const Json* rms_root = rms_document.first_child("Normalization3d");
+    ASSERT_NE(rms_root, nullptr);
+    EXPECT_EQ(read_json_string(rms_root, "Method"), "RMS");
+
+    const unique_ptr<Layer> restored = create_layer("Normalization3d");
+    restored->from_JSON(rms_document);
+    const auto* restored_normalization =
+        dynamic_cast<const Normalization3d*>(restored.get());
+    ASSERT_NE(restored_normalization, nullptr);
+    EXPECT_EQ(restored_normalization->get_method(), NormalizationMethod::RMS);
+
+    Json legacy_body = *rms_root;
+    erase_if(legacy_body.object_value,
+             [](const auto& field) { return field.first == "Method"; });
+    const JsonDocument legacy_document =
+        JsonDocument::wrap("RMSNormalization3d", std::move(legacy_body));
+
+    const unique_ptr<Layer> legacy_restored = create_layer("RMSNormalization3d");
+    legacy_restored->from_JSON(legacy_document);
+    const auto* legacy_normalization =
+        dynamic_cast<const Normalization3d*>(legacy_restored.get());
+    ASSERT_NE(legacy_normalization, nullptr);
+    EXPECT_EQ(legacy_normalization->get_method(), NormalizationMethod::RMS);
 }
 
 TEST(RegistryTest, EveryLayerStateRoundTripsThroughJSONAndTheFactory)

@@ -5,6 +5,7 @@
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/random_utilities.h"
+#include "opennn/registry.h"
 #include "opennn/neural_network/layers/normalization_layer_3d.h"
 #include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/layers/flatten_layer.h"
@@ -250,7 +251,7 @@ TEST(Normalization3dTest, RMSGeneralConstructor)
     Normalization3d rms_normalization_3d({sequence_length, embedding_dimension}, "decoder_norm");
     rms_normalization_3d.set_method(NormalizationMethod::RMS);
 
-    EXPECT_EQ(rms_normalization_3d.get_name(), "RMSNormalization3d");
+    EXPECT_EQ(rms_normalization_3d.get_name(), "Normalization3d");
     EXPECT_EQ(rms_normalization_3d.get_label(), "decoder_norm");
     EXPECT_EQ(rms_normalization_3d.get_method(), NormalizationMethod::RMS);
     EXPECT_EQ(rms_normalization_3d.get_sequence_length(), sequence_length);
@@ -393,6 +394,44 @@ TEST(Normalization3dTest, RMSSaveLoadRoundTrip)
     error_code file_error;
     filesystem::remove(path, file_error);
     filesystem::remove(filesystem::path(path).replace_extension(".bin"), file_error);
+}
+
+TEST(Normalization3dTest, LoadsLegacyRMSLayerName)
+{
+    auto norm = make_unique<Normalization3d>(Shape{3, 4}, "legacy_rms_norm");
+    norm->set_method(NormalizationMethod::RMS);
+    norm->set_epsilon(0.002f);
+
+    NeuralNetwork original;
+    original.add_layer(std::move(norm));
+    original.compile();
+
+    JsonWriter writer;
+    original.to_JSON(writer);
+
+    JsonDocument legacy_document;
+    legacy_document.root = Json::parse(writer.c_str());
+
+    Json& layers = legacy_document.root["NeuralNetwork"]["Layers"];
+    Json& item = layers["Items"].array_value.front();
+    ASSERT_EQ(item.object_value.front().first, "Normalization3d");
+
+    item.object_value.front().first = "RMSNormalization3d";
+    Json& body = item.object_value.front().second;
+    erase_if(body.object_value,
+             [](const auto& field) { return field.first == "Method"; });
+
+    NeuralNetwork restored;
+    restored.from_JSON(legacy_document);
+
+    ASSERT_EQ(restored.get_layers_number(), 1);
+    const auto* restored_norm =
+        dynamic_cast<const Normalization3d*>(restored.get_layer(0).get());
+    ASSERT_NE(restored_norm, nullptr);
+    EXPECT_EQ(restored_norm->get_type(), LayerType::Normalization3d);
+    EXPECT_EQ(restored_norm->get_name(), "Normalization3d");
+    EXPECT_EQ(restored_norm->get_method(), NormalizationMethod::RMS);
+    EXPECT_NEAR(restored_norm->get_epsilon(), 0.002f, 1.0e-9f);
 }
 
 TEST(Normalization3dTest, FusedResidualAddGradientMatchesNumerical)
