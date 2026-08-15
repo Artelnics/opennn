@@ -6,24 +6,26 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "opennn/training_strategy/loss.h"
+
+#include <Eigen/LU>
+
+#include "opennn/core/memory_debug.h"
+#include "opennn/core/profiler.h"
+#include "opennn/core/statistics.h"
 #include "opennn/core/tensor_types.h"
-#include "opennn/registry.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/training_strategy/loss.h"
-#include "opennn/core/memory_debug.h"
 #include "opennn/dataset/yolo_dataset.h"
+#include "opennn/neural_network/back_propagation.h"
+#include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/layers/detection_layer.h"
 #include "opennn/neural_network/layers/detection_v8_layer.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/training_strategy/error_functions.h"
-#include "opennn/core/profiler.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
-#include "opennn/core/statistics.h"
-#include <Eigen/LU>
 #include "opennn/training_strategy/kernel_losses.cuh"
+#include "opennn/registry.h"
 
 namespace opennn
 {
@@ -851,7 +853,6 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
 
                 const float cls_s = lam.cls  * inv_batch;
                 const float box_s = lam.giou * inv_batch;
-                const float dfl_s = lam.dfl  * inv_batch;
                 const float gam   = lam.focal_gamma;
 
                 if (gt_id1 > 0)
@@ -1360,7 +1361,6 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
                                             BackPropagation* back_propagation) const
 {
     const bool is_gradient = back_propagation != nullptr;
-    const bool on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
     const YoloLambdas lam{yolo_lambda_giou, yolo_lambda_dfl, yolo_lambda_noobj, yolo_lambda_class, yolo_focal_gamma, yolo_obj_focal_gamma};
 
     if (yolo_uses_v8(neural_network))
@@ -1378,6 +1378,7 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
     const vector<Index> detection_indices = yolo_detection_layer_indices(neural_network);
     const bool sigmoid = yolo_uses_sigmoid_classes(neural_network);
 #ifdef OPENNN_HAS_CUDA
+    const bool on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
     if (on_gpu)
     {
 

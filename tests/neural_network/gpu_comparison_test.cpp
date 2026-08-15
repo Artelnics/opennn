@@ -1,6 +1,8 @@
 #include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
+#include <utility>
+
 #ifdef OPENNN_HAS_CUDA
 
 #include "opennn/core/configuration.h"
@@ -438,7 +440,7 @@ TEST_F(GpuComparison, ProjectionResidualGradient)
             Shape{2, 2, 64}, Shape{1, 1, 64, 64}, "ReLU",
             Shape{1, 1}, "Same", true, "residual");
         residual->set_residual(true);
-        network.add_layer(move(residual), {1, 2});
+        network.add_layer(std::move(residual), {1, 2});
 
         network.add_layer(make_unique<Convolutional>(
                               Shape{2, 2, 64}, Shape{1, 1, 64, 8}, "ReLU",
@@ -861,7 +863,7 @@ TEST_F(GpuComparison, SdpaAttentionRefreshesPaddingBetweenBatches)
     attention->set_sdpa_min_sequence_length(1);
 
     NeuralNetwork network;
-    network.add_layer(move(attention));
+    network.add_layer(std::move(attention));
     network.compile();
     network.set_parameters_random();
 
@@ -942,7 +944,7 @@ TEST_F(GpuComparison, SdpaAttentionBackwardGradient)
     NeuralNetwork gpu_network;
     auto gpu_attention = make_unique<MultiHeadAttention>(input_shape, heads_number);
     gpu_attention->set_sdpa_min_sequence_length(1);
-    gpu_network.add_layer(move(gpu_attention));
+    gpu_network.add_layer(std::move(gpu_attention));
     gpu_network.add_layer(make_unique<Flatten>(gpu_network.get_output_shape()));
     gpu_network.compile();
     gpu_network.set_parameters(parameters);
@@ -996,7 +998,7 @@ TEST_F(GpuComparison, SdpaAttentionMatchesUnfusedOnExportedValidLengths)
             data(sample, position) = position < valid_lengths[size_t(sample)]
                 ? float(1 + (sample * sequence_length + position) % (vocabulary_size - 1))
                 : 0.0f;
-    dataset.set_data(move(data));
+    dataset.set_data(std::move(data));
 
     const auto build = [&](const bool fused)
     {
@@ -1006,7 +1008,7 @@ TEST_F(GpuComparison, SdpaAttentionMatchesUnfusedOnExportedValidLengths)
                                                 embedding_dimension, "embedding");
         embedding->set_add_positional_encoding(true);
         embedding->set_export_valid_lengths(true);
-        network->add_layer(move(embedding), {-1});
+        network->add_layer(std::move(embedding), {-1});
 
         network->add_layer(make_unique<Normalization3d>(
                                Shape{sequence_length, embedding_dimension}, "normalization"),
@@ -1016,7 +1018,7 @@ TEST_F(GpuComparison, SdpaAttentionMatchesUnfusedOnExportedValidLengths)
             Shape{sequence_length, embedding_dimension}, heads_number);
         attention->set_sdpa_min_sequence_length(1);
         attention->set_sdpa_auto(fused);
-        network->add_layer(move(attention), {1});
+        network->add_layer(std::move(attention), {1});
 
         network->add_layer(make_unique<Flatten>(network->get_output_shape()));
         network->compile();
@@ -1108,7 +1110,7 @@ TEST_F(GpuComparison, SdpaMatchesUnfusedThroughAveragePoolingOnPaddedBatches)
             data(sample, position) = position < valid_lengths[size_t(sample)]
                 ? float(1 + (sample * sequence_length + position) % (vocabulary_size - 1))
                 : 0.0f;
-    dataset.set_data(move(data));
+    dataset.set_data(std::move(data));
 
     const auto build = [&](const bool fused)
     {
@@ -1118,13 +1120,13 @@ TEST_F(GpuComparison, SdpaMatchesUnfusedThroughAveragePoolingOnPaddedBatches)
                                                 embedding_dimension, "embedding");
         embedding->set_add_positional_encoding(true);
         embedding->set_export_valid_lengths(true);
-        network->add_layer(move(embedding), {-1});
+        network->add_layer(std::move(embedding), {-1});
 
         auto attention = make_unique<MultiHeadAttention>(
             Shape{sequence_length, embedding_dimension}, heads_number);
         attention->set_sdpa_min_sequence_length(1);
         attention->set_sdpa_auto(fused);
-        network->add_layer(move(attention), {0});
+        network->add_layer(std::move(attention), {0});
 
         network->add_layer(make_unique<Pooling3d>(Shape{sequence_length, embedding_dimension},
                                                   PoolingMethod::AveragePooling, "pool"), {1});

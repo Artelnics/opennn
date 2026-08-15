@@ -6,15 +6,16 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/core/device_backend.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/registry.h"
+
+#include "opennn/core/device_backend.h"
+#include "opennn/core/json.h"
 #include "opennn/core/scaling.h"
 #include "opennn/core/string_utilities.h"
-#include "opennn/core/json.h"
 #include "opennn/core/tensor_operations.h"
-#include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/registry.h"
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/neural_network/layers/kernel_scaling.cuh"
 #endif

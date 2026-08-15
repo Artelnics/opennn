@@ -1,6 +1,9 @@
 #include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
+#include <cmath>
+#include <utility>
+
 #include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/layers/multihead_attention_layer.h"
 #include "opennn/neural_network/layers/embedding_layer.h"
@@ -8,7 +11,6 @@
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/training_strategy/loss.h"
-#include <cmath>
 
 using namespace opennn;
 
@@ -164,7 +166,7 @@ TEST(MultiHeadAttentionTest, CausalMaskForward)
     mha->set(sequence_length, sequence_length, embedding_dimension, heads_number, true);
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(move(mha));
+    neural_network.add_layer(std::move(mha));
     neural_network.compile();
 
     set_identity_projections(neural_network.get_layer(0).get(), embedding_dimension);

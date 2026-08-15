@@ -139,9 +139,11 @@ private:
 
     mutable unique_ptr<SDPACache> sdpa_cache;
 
+#ifdef OPENNN_HAS_CUDA
     uint64_t sdpa_dropout_seed   = 0x9E3779B97F4A7C15ULL;
     uint64_t sdpa_dropout_offset = 0;
     mutable uint64_t sdpa_last_used_offset = 0;
+#endif
 };
 
 }

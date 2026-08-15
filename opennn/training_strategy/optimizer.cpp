@@ -6,29 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/dataset/image_dataset.h"
-#include "opennn/registry.h"
-#include "opennn/dataset/tabular_dataset.h"
-#include "opennn/dataset/time_series_dataset.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/neural_network/layers/unscaling_layer.h"
-#include "opennn/training_strategy/loss.h"
 #include "opennn/training_strategy/optimizer.h"
-#include "opennn/core/variable.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
-#include "opennn/dataset/batch.h"
-#include "opennn/core/device_backend.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/core/profiler.h"
-#include "opennn/core/string_utilities.h"
-#include "opennn/training_strategy/kernel_optimizers.cuh"
-#include <atomic>
-#include <chrono>
-#include <future>
-#include <mutex>
-#include <stop_token>
-#include <thread>
 
 #if defined(__linux__) || defined(__unix__)
 #include <unistd.h>
@@ -37,6 +15,31 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
+
+#include <atomic>
+#include <chrono>
+#include <future>
+#include <mutex>
+#include <stop_token>
+#include <thread>
+#include <utility>
+
+#include "opennn/core/device_backend.h"
+#include "opennn/core/profiler.h"
+#include "opennn/core/string_utilities.h"
+#include "opennn/core/variable.h"
+#include "opennn/dataset/batch.h"
+#include "opennn/dataset/image_dataset.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/dataset/time_series_dataset.h"
+#include "opennn/neural_network/back_propagation.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/neural_network/layers/unscaling_layer.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/registry.h"
+#include "opennn/training_strategy/kernel_optimizers.cuh"
+#include "opennn/training_strategy/loss.h"
 
 namespace opennn
 {
@@ -670,8 +673,8 @@ void Optimizer::set_scaling()
             }
         }
 
-        unscaling_descriptives = move(expanded_descriptives);
-        unscaling_scalers = move(expanded_scalers);
+        unscaling_descriptives = std::move(expanded_descriptives);
+        unscaling_scalers = std::move(expanded_scalers);
     }
 
     throw_if(ssize(unscaling_descriptives) != outputs_number,

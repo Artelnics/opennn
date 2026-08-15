@@ -2,6 +2,8 @@
 #include "opennn/core/random_utilities.h"
 #include "tests/numerical_derivatives.h"
 
+#include <utility>
+
 #include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/layers/long_short_term_memory_layer.h"
 #include "opennn/dataset/tabular_dataset.h"
@@ -66,7 +68,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagate)
             Shape{time_steps, inputs_number}, Shape{outputs_number});
         layer->set_activation_function(act);
         layer->set_recurrent_activation_function("Sigmoid");
-        neural_network.add_layer(move(layer));
+        neural_network.add_layer(std::move(layer));
         neural_network.compile();
 
         neural_network.get_parameters_map().setConstant(type(0.1));
@@ -105,7 +107,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
             Shape{time_steps, inputs_number}, Shape{outputs_number});
         layer->set_activation_function("Tanh");
         layer->set_recurrent_activation_function("Sigmoid");
-        neural_network.add_layer(move(layer));
+        neural_network.add_layer(std::move(layer));
         neural_network.compile();
 
         neural_network.get_parameters_map().setConstant(type(0.1));
@@ -136,7 +138,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
         layer->set_activation_function("Tanh");
         layer->set_recurrent_activation_function("Sigmoid");
         layer->set_return_sequences(true);
-        neural_network.add_layer(move(layer));
+        neural_network.add_layer(std::move(layer));
         neural_network.compile();
 
         neural_network.get_parameters_map().setConstant(type(0.1));
@@ -214,7 +216,7 @@ TEST(LongShortTermMemoryLayerTest, BackPropagateReturnSequences)
     NeuralNetwork neural_network;
     auto layer = make_unique<LongShortTermMemory>(input_shape, Shape{neurons_number});
     layer->set_return_sequences(true);
-    neural_network.add_layer(move(layer));
+    neural_network.add_layer(std::move(layer));
     neural_network.compile();
 
     neural_network.get_parameters_map().setConstant(type(0.05));

@@ -6,13 +6,16 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/training_strategy/optimizer.h"
-#include "opennn/training_strategy/training_strategy.h"
 #include "opennn/model_selection/growing_neurons.h"
+
+#include <utility>
+
 #include "opennn/core/string_utilities.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/model_selection/selection_utilities.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/training_strategy/optimizer.h"
+#include "opennn/training_strategy/training_strategy.h"
 
 namespace opennn
 {
@@ -164,7 +167,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
         if (warm_start && !candidate_snapshot.empty())
         {
-            warm_snapshot = move(candidate_snapshot);
+            warm_snapshot = std::move(candidate_snapshot);
             candidate_snapshot = {};
         }
 

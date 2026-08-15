@@ -6,15 +6,18 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/pch.h"
 #include "opennn/response_optimization/response_constraints.h"
-#include "opennn/core/string_utilities.h"
-#include "opennn/core/random_utilities.h"
 
+#include <algorithm>
 #include <cctype>
 #include <set>
+#include <utility>
 
 #include <Eigen/Cholesky>
+
+#include "opennn/core/random_utilities.h"
+#include "opennn/core/string_utilities.h"
+#include "opennn/pch.h"
 
 namespace opennn
 {
@@ -79,7 +82,7 @@ struct Lexer
                 token.kind = Token::Kind::Number;
                 token.text = source.substr(token_start, position - token_start);
                 token.number = parse_float(token.text, "FormulaParser: numeric literal");
-                tokens.push_back(move(token));
+                tokens.push_back(std::move(token));
                 continue;
             }
 
@@ -93,7 +96,7 @@ struct Lexer
 
                 token.kind = Token::Kind::Identifier;
                 token.text = source.substr(token_start, position - token_start);
-                tokens.push_back(move(token));
+                tokens.push_back(std::move(token));
                 continue;
             }
 
@@ -113,13 +116,13 @@ struct Lexer
                                            character, position - 1));
             }
 
-            tokens.push_back(move(token));
+            tokens.push_back(std::move(token));
         }
 
         Token end_token;
         end_token.kind = Token::Kind::End;
         end_token.position = source.size();
-        tokens.push_back(move(end_token));
+        tokens.push_back(std::move(end_token));
     }
 
     const Token& peek() const { return tokens[cursor]; }
@@ -161,8 +164,8 @@ AstPtr make_binary(const Ast::Kind kind, AstPtr left, AstPtr right)
     auto node = make_unique<Ast>();
     node->kind = kind;
     node->children.reserve(2);
-    node->children.push_back(move(left));
-    node->children.push_back(move(right));
+    node->children.push_back(std::move(left));
+    node->children.push_back(std::move(right));
     return node;
 }
 
@@ -197,7 +200,7 @@ struct Parser
             AstPtr right_node = parse_term();
 
             left_node = make_binary((operator_text == "+") ? Ast::Kind::Add : Ast::Kind::Sub,
-                                    move(left_node), move(right_node));
+                                    std::move(left_node), std::move(right_node));
         }
 
         return left_node;
@@ -219,7 +222,7 @@ struct Parser
             AstPtr right_node = parse_factor();
 
             left_node = make_binary((operator_text == "*") ? Ast::Kind::Mul : Ast::Kind::Div,
-                                    move(left_node), move(right_node));
+                                    std::move(left_node), std::move(right_node));
         }
 
         return left_node;
@@ -237,7 +240,7 @@ struct Parser
 
             AstPtr right_node = parse_factor();
 
-            return make_binary(Ast::Kind::Pow, move(left_node), move(right_node));
+            return make_binary(Ast::Kind::Pow, std::move(left_node), std::move(right_node));
         }
 
         return left_node;
@@ -255,7 +258,7 @@ struct Parser
 
             auto negation_node = make_unique<Ast>();
             negation_node->kind = Ast::Kind::UnaryNeg;
-            negation_node->children.push_back(move(child_node));
+            negation_node->children.push_back(std::move(child_node));
             return negation_node;
         }
 
@@ -392,8 +395,8 @@ AffineForm analyze_affine(const Ast& node)
         result.constant = -child_form.constant;
         scale_terms_in_place(child_form.input_terms, -1.0f);
         scale_terms_in_place(child_form.output_terms, -1.0f);
-        result.input_terms = move(child_form.input_terms);
-        result.output_terms = move(child_form.output_terms);
+        result.input_terms = std::move(child_form.input_terms);
+        result.output_terms = std::move(child_form.output_terms);
         return result;
     }
 
@@ -406,8 +409,8 @@ AffineForm analyze_affine(const Ast& node)
 
         const float sign = (node.kind == Ast::Kind::Add) ? 1.0f : -1.0f;
         result.constant = left_form.constant + sign * right_form.constant;
-        result.input_terms = move(left_form.input_terms);
-        result.output_terms = move(left_form.output_terms);
+        result.input_terms = std::move(left_form.input_terms);
+        result.output_terms = std::move(left_form.output_terms);
         accumulate_into(result.input_terms, right_form.input_terms, sign);
         accumulate_into(result.output_terms, right_form.output_terms, sign);
         return result;
@@ -433,8 +436,8 @@ AffineForm analyze_affine(const Ast& node)
         result.constant = product;
         scale_terms_in_place(right_form.input_terms, left_form.constant);
         scale_terms_in_place(right_form.output_terms, left_form.constant);
-        result.input_terms = move(right_form.input_terms);
-        result.output_terms = move(right_form.output_terms);
+        result.input_terms = std::move(right_form.input_terms);
+        result.output_terms = std::move(right_form.output_terms);
         return result;
     }
 
@@ -454,8 +457,8 @@ AffineForm analyze_affine(const Ast& node)
         result.constant = left_form.constant * inverse;
         scale_terms_in_place(left_form.input_terms, inverse);
         scale_terms_in_place(left_form.output_terms, inverse);
-        result.input_terms = move(left_form.input_terms);
-        result.output_terms = move(left_form.output_terms);
+        result.input_terms = std::move(left_form.input_terms);
+        result.output_terms = std::move(left_form.output_terms);
         return result;
     }
 
@@ -621,7 +624,7 @@ AstPtr make_neg(AstPtr a)
 
     auto node = make_unique<Ast>();
     node->kind = Ast::Kind::UnaryNeg;
-    node->children.push_back(move(a));
+    node->children.push_back(std::move(a));
     return node;
 }
 
@@ -632,7 +635,7 @@ AstPtr make_add(AstPtr a, AstPtr b)
     if (av && bv) return make_const(*av + *bv);
     if (av && *av == 0.0f) return b;
     if (bv && *bv == 0.0f) return a;
-    return make_binary(Ast::Kind::Add, move(a), move(b));
+    return make_binary(Ast::Kind::Add, std::move(a), std::move(b));
 }
 
 AstPtr make_sub(AstPtr a, AstPtr b)
@@ -641,8 +644,8 @@ AstPtr make_sub(AstPtr a, AstPtr b)
     const optional<float> bv = constant_value(*b);
     if (av && bv) return make_const(*av - *bv);
     if (bv && *bv == 0.0f) return a;
-    if (av && *av == 0.0f) return make_neg(move(b));
-    return make_binary(Ast::Kind::Sub, move(a), move(b));
+    if (av && *av == 0.0f) return make_neg(std::move(b));
+    return make_binary(Ast::Kind::Sub, std::move(a), std::move(b));
 }
 
 AstPtr make_mul(AstPtr a, AstPtr b)
@@ -654,7 +657,7 @@ AstPtr make_mul(AstPtr a, AstPtr b)
     if (av && bv) return make_const(*av * *bv);
     if (av && *av == 1.0f) return b;
     if (bv && *bv == 1.0f) return a;
-    return make_binary(Ast::Kind::Mul, move(a), move(b));
+    return make_binary(Ast::Kind::Mul, std::move(a), std::move(b));
 }
 
 AstPtr make_div(AstPtr a, AstPtr b)
@@ -664,7 +667,7 @@ AstPtr make_div(AstPtr a, AstPtr b)
     if (av && *av == 0.0f) return make_const(0.0f);
     if (bv && *bv == 1.0f) return a;
     if (av && bv && *bv != 0.0f) return make_const(*av / *bv);
-    return make_binary(Ast::Kind::Div, move(a), move(b));
+    return make_binary(Ast::Kind::Div, std::move(a), std::move(b));
 }
 
 AstPtr make_pow(AstPtr a, AstPtr b)
@@ -678,7 +681,7 @@ AstPtr make_pow(AstPtr a, AstPtr b)
 
     const optional<float> av = constant_value(*a);
     if (av && bv) return make_const(pow(*av, *bv));
-    return make_binary(Ast::Kind::Pow, move(a), move(b));
+    return make_binary(Ast::Kind::Pow, std::move(a), std::move(b));
 }
 
 AstPtr make_func(const string& name, AstPtr argument)
@@ -686,7 +689,7 @@ AstPtr make_func(const string& name, AstPtr argument)
     auto node = make_unique<Ast>();
     node->kind = Ast::Kind::Func;
     node->function_name = name;
-    node->children.push_back(move(argument));
+    node->children.push_back(std::move(argument));
     return node;
 }
 
@@ -728,18 +731,18 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
     {
         AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
         AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
-        return make_add(make_mul(move(da), clone(*node.children[1])),
-                        make_mul(clone(*node.children[0]), move(db)));
+        return make_add(make_mul(std::move(da), clone(*node.children[1])),
+                        make_mul(clone(*node.children[0]), std::move(db)));
     }
 
     case Div:
     {
         AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
         AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
-        AstPtr numerator = make_sub(make_mul(move(da), clone(*node.children[1])),
-                                    make_mul(clone(*node.children[0]), move(db)));
+        AstPtr numerator = make_sub(make_mul(std::move(da), clone(*node.children[1])),
+                                    make_mul(clone(*node.children[0]), std::move(db)));
         AstPtr denominator = make_mul(clone(*node.children[1]), clone(*node.children[1]));
-        return make_div(move(numerator), move(denominator));
+        return make_div(std::move(numerator), std::move(denominator));
     }
 
     case Pow:
@@ -748,23 +751,23 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
         {
             AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
             AstPtr power = make_pow(clone(*node.children[0]), make_const(*exponent - 1.0f));
-            return make_mul(make_mul(make_const(*exponent), move(power)), move(da));
+            return make_mul(make_mul(make_const(*exponent), std::move(power)), std::move(da));
         }
 
         if (const optional<float> base = constant_value(*node.children[0]))
         {
             AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
             AstPtr value = make_pow(make_const(*base), clone(*node.children[1]));
-            return make_mul(make_mul(move(value), make_const(log(*base))), move(db));
+            return make_mul(make_mul(std::move(value), make_const(log(*base))), std::move(db));
         }
 
         AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
         AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
-        AstPtr term1 = make_mul(move(db), make_func("log", clone(*node.children[0])));
-        AstPtr term2 = make_div(make_mul(clone(*node.children[1]), move(da)),
+        AstPtr term1 = make_mul(std::move(db), make_func("log", clone(*node.children[0])));
+        AstPtr term2 = make_div(make_mul(clone(*node.children[1]), std::move(da)),
                                 clone(*node.children[0]));
         AstPtr value = make_pow(clone(*node.children[0]), clone(*node.children[1]));
-        return make_mul(move(value), make_add(move(term1), move(term2)));
+        return make_mul(std::move(value), make_add(std::move(term1), std::move(term2)));
     }
 
     case Func:
@@ -774,19 +777,19 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
         AstPtr du = differentiate(u, wrt_is_output, wrt_index);
 
         if (name == "sqrt")
-            return make_div(move(du), make_mul(make_const(2.0f), make_func("sqrt", clone(u))));
+            return make_div(std::move(du), make_mul(make_const(2.0f), make_func("sqrt", clone(u))));
         if (name == "exp")
-            return make_mul(make_func("exp", clone(u)), move(du));
+            return make_mul(make_func("exp", clone(u)), std::move(du));
         if (name == "log")
-            return make_div(move(du), clone(u));
+            return make_div(std::move(du), clone(u));
         if (name == "abs")
-            return make_mul(make_div(clone(u), make_func("abs", clone(u))), move(du));
+            return make_mul(make_div(clone(u), make_func("abs", clone(u))), std::move(du));
         if (name == "sin")
-            return make_mul(make_func("cos", clone(u)), move(du));
+            return make_mul(make_func("cos", clone(u)), std::move(du));
         if (name == "cos")
-            return make_neg(make_mul(make_func("sin", clone(u)), move(du)));
+            return make_neg(make_mul(make_func("sin", clone(u)), std::move(du)));
         if (name == "tan")
-            return make_div(move(du), make_pow(make_func("cos", clone(u)), make_const(2.0f)));
+            return make_div(std::move(du), make_pow(make_func("cos", clone(u)), make_const(2.0f)));
 
         return make_const(0.0f);
     }
@@ -919,7 +922,7 @@ CompiledFormula compile_ast(const Ast& ast)
                 const AstPtr partial = differentiate(ast, false, input_column);
                 vector<RpnOp> program;
                 emit_bytecode(*partial, program);
-                result.input_gradient.emplace_back(input_column, move(program));
+                result.input_gradient.emplace_back(input_column, std::move(program));
             }
 
             result.output_gradient.reserve(result.output_indices.size());
@@ -928,7 +931,7 @@ CompiledFormula compile_ast(const Ast& ast)
                 const AstPtr partial = differentiate(ast, true, output_column);
                 vector<RpnOp> program;
                 emit_bytecode(*partial, program);
-                result.output_gradient.emplace_back(output_column, move(program));
+                result.output_gradient.emplace_back(output_column, std::move(program));
             }
         }
     }
@@ -997,7 +1000,7 @@ AstPtr resolve_smooth(const Ast& node, const map<const Ast*, int>& modes)
         if (node.function_name == "abs")
         {
             AstPtr child = resolve_smooth(*node.children[0], modes);
-            return (mode == 0) ? move(child) : make_neg(move(child));
+            return (mode == 0) ? std::move(child) : make_neg(std::move(child));
         }
         return resolve_smooth(*node.children[mode], modes);
     }
@@ -1034,7 +1037,7 @@ MultivariateConstraint region_constraint(const Ast& selector, const int mode, co
                                  resolve_smooth(*selector.children[1], modes));
 
     const bool less_equal = (selector.function_name == "min") ? (mode == 0) : (mode == 1);
-    return make_smooth_constraint(move(difference),
+    return make_smooth_constraint(std::move(difference),
                                   less_equal ? ComparisonOperator::LessEqualTo : ComparisonOperator::GreaterEqualTo, 0.0f, 0.0f);
 }
 
@@ -1057,7 +1060,7 @@ vector<vector<MultivariateConstraint>> enumerate_regions(const Ast& root,
         for (int i = 0; i < count; ++i)
             branch.push_back(region_constraint(*selectors[i], modes.at(selectors[i]), modes));
 
-        branches.push_back(move(branch));
+        branches.push_back(std::move(branch));
     }
 
     return branches;
@@ -1083,7 +1086,7 @@ vector<vector<MultivariateConstraint>> expand_ast(const Ast& root,
             vector<MultivariateConstraint> branch;
             for (const AstPtr& child : root.children)
                 branch.push_back(make_smooth_constraint(clone(*child), comparison, low, up));
-            return { move(branch) };
+            return { std::move(branch) };
         }
         if (name == "abs" && le)
             return { { make_smooth_constraint(clone(*root.children[0]), ComparisonOperator::Between, -up, up) } };
@@ -1709,7 +1712,7 @@ partition_input_constraints_by_variable(const vector<MultivariateConstraint>& fo
 
     vector<vector<MultivariateConstraint>> result;
     result.reserve(blocks.size());
-    ranges::move(blocks | views::values, back_inserter(result));
+    std::ranges::move(blocks | views::values, back_inserter(result));
 
     return result;
 }

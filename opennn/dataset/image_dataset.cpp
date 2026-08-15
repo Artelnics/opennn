@@ -7,13 +7,16 @@
 //   artelnics@artelnics.com
 
 #include "opennn/dataset/image_dataset.h"
+
+#include <utility>
+
 #include "opennn/core/device_backend.h"
-#include "opennn/dataset/image_processing.h"
-#include "opennn/core/scaling.h"
-#include "opennn/core/tensor_types.h"
-#include "opennn/core/string_utilities.h"
-#include "opennn/core/random_utilities.h"
 #include "opennn/core/io_utilities.h"
+#include "opennn/core/random_utilities.h"
+#include "opennn/core/scaling.h"
+#include "opennn/core/string_utilities.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/dataset/image_processing.h"
 
 namespace opennn
 {
@@ -308,7 +311,7 @@ void ImageDataset::read_images()
         directory_path.push_back(folder);
         for (auto& p : folder_files)
         {
-            paths.emplace_back(move(p));
+            paths.emplace_back(std::move(p));
             labels.push_back(class_index);
         }
     }
@@ -371,7 +374,7 @@ void ImageDataset::read_images()
     target_variable.set_categories(categories);
     target_variable.scaler = ScalerMethod::None;
 
-    sample_labels = move(labels);
+    sample_labels = std::move(labels);
 
     sample_roles.assign(samples_number, SampleRole::Training);
 

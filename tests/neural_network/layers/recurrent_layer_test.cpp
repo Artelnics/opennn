@@ -2,6 +2,8 @@
 #include "opennn/core/random_utilities.h"
 #include "tests/numerical_derivatives.h"
 
+#include <utility>
+
 #include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/layers/recurrent_layer.h"
 #include "opennn/neural_network/layers/dense_layer.h"
@@ -112,7 +114,7 @@ TEST(RecurrentLayerTest, ReturnSequences)
     EXPECT_EQ(layer->get_output_shape(), Shape({time_steps, outputs_number}));
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(move(layer));
+    neural_network.add_layer(std::move(layer));
     neural_network.compile();
 
     neural_network.get_parameters_map().setConstant(type(0.1));

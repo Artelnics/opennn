@@ -6,8 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/registry.h"
 #include "opennn/model_selection/model_selection.h"
+
+#include "opennn/registry.h"
 
 namespace opennn
 {

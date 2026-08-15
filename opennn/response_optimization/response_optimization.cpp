@@ -7,15 +7,17 @@
 //   artelnics@artelnics.com
 
 #include "opennn/response_optimization/response_optimization.h"
+
+#include <set>
+#include <utility>
+
 #include "opennn/core/random_utilities.h"
-#include "opennn/core/tensor_operations.h"
 #include "opennn/core/statistics.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/core/tensor_operations.h"
 #include "opennn/core/variable.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/layers/unscaling_layer.h"
-
-#include <set>
+#include "opennn/neural_network/neural_network.h"
 
 namespace opennn
 {
@@ -191,7 +193,7 @@ void ResponseOptimization::set_constraint(const string& name, const vector<float
 
     UnivariateConstraint constraint(ComparisonOperator::AllowedSet);
     constraint.allowed_values = allowed_values;
-    constraint_set.univariate[name] = move(constraint);
+    constraint_set.univariate[name] = std::move(constraint);
 }
 
 void ResponseOptimization::set_cardinality_constraint(const vector<string>& variable_names, const Index k, const bool force_nonzero)
@@ -272,14 +274,14 @@ void ResponseOptimization::set_formula_constraint(const string& expression,
         constraint.up_bound = up;
         constraint.compiled = compile_formula(expression, input_columns, output_columns);
         constraint.kind = classify(constraint);
-        branches = { { move(constraint) } };
+        branches = { { std::move(constraint) } };
     }
 
     if (branches.size() == 1)
         for (MultivariateConstraint& constraint : branches[0])
-            constraint_set.multivariate.push_back(move(constraint));
+            constraint_set.multivariate.push_back(std::move(constraint));
     else
-        constraint_set.disjunctive.push_back(move(branches));
+        constraint_set.disjunctive.push_back(std::move(branches));
 
     network_jacobian.ready = false;
 }
@@ -293,7 +295,7 @@ void ResponseOptimization::set_formula_constraint(function<float(const VectorR&,
              "ResponseOptimization: formula constraint callback cannot be empty.");
 
     MultivariateConstraint formula_constraint;
-    formula_constraint.callback = move(callback);
+    formula_constraint.callback = std::move(callback);
     formula_constraint.comparison_operator = comparison;
     formula_constraint.low_bound = low;
     formula_constraint.up_bound = up;
@@ -302,7 +304,7 @@ void ResponseOptimization::set_formula_constraint(function<float(const VectorR&,
     formula_constraint.compiled.scope = FormulaScope::Mixed;
     formula_constraint.kind = classify(formula_constraint);
 
-    constraint_set.multivariate.push_back(move(formula_constraint));
+    constraint_set.multivariate.push_back(std::move(formula_constraint));
 
     network_jacobian.ready = false;
 }
@@ -326,7 +328,7 @@ void ResponseOptimization::set_formula_constraint(const string& expression, cons
     formula_constraint.compiled = compile_formula(expression, input_columns, output_columns);
     formula_constraint.kind = classify(formula_constraint);
 
-    constraint_set.multivariate.push_back(move(formula_constraint));
+    constraint_set.multivariate.push_back(std::move(formula_constraint));
 
     network_jacobian.ready = false;
 }
@@ -482,7 +484,9 @@ const pair<vector<Variable>, vector<Descriptives>>& ResponseOptimization::get_va
         }
     }
 
-    const auto inserted = variables_descriptives.emplace(role, pair(move(filtered_variables), move(filtered_descriptives)));
+    const auto inserted = variables_descriptives.emplace(
+        role,
+        pair(std::move(filtered_variables), std::move(filtered_descriptives)));
     return inserted.first->second;
 }
 
@@ -845,7 +849,7 @@ vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Do
             }
         }
 
-        cardinality_columns.push_back(move(columns));
+        cardinality_columns.push_back(std::move(columns));
     }
 
     return cardinality_columns;
@@ -1235,7 +1239,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
             }
         }
 
-        feasible_indices = move(formula_feasible_indices);
+        feasible_indices = std::move(formula_feasible_indices);
     }
 
     if (feasible_indices.empty())
@@ -1495,14 +1499,14 @@ void ResponseOptimization::promote_single_variable_constraints()
             && compiled.affine_input_terms.size() == 1
             && compiled.affine_output_terms.empty();
 
-        if (!promotable) { kept.push_back(move(formula_constraint)); continue; }
+        if (!promotable) { kept.push_back(std::move(formula_constraint)); continue; }
 
         const Index column = compiled.affine_input_terms.front().first;
         const float coefficient = compiled.affine_input_terms.front().second;
         const auto found = name_of_column.find(column);
 
         if (found == name_of_column.end() || coefficient == 0.0f)
-        { kept.push_back(move(formula_constraint)); continue; }
+        { kept.push_back(std::move(formula_constraint)); continue; }
 
         const float constant = compiled.affine_constant;
         const auto solve = [&](const float bound) { return (bound - constant) / coefficient; };
@@ -1538,7 +1542,7 @@ void ResponseOptimization::promote_single_variable_constraints()
         else if (!interval_from_comparison(existing->second.comparison,
                                            existing->second.low_bound, existing->second.up_bound,
                                            existing_lo, existing_hi))
-        { kept.push_back(move(formula_constraint)); continue; }
+        { kept.push_back(std::move(formula_constraint)); continue; }
 
         const float new_lo = max(implied_lo, existing_lo);
         const float new_hi = min(implied_hi, existing_hi);
@@ -1563,7 +1567,7 @@ void ResponseOptimization::promote_single_variable_constraints()
              << "' to a box on '" << name << "'." << "\n";
     }
 
-    constraint_set.multivariate = move(kept);
+    constraint_set.multivariate = std::move(kept);
 }
 
 vector<char> ResponseOptimization::discrete_column_mask(const vector<Variable>& variables) const
@@ -1948,8 +1952,8 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 
             auto [local_pareto_input, local_pareto_output] = calculate_pareto(local_feasible_inputs, local_feasible_outputs, local_objective_matrix );
 
-            candidate_input_blocks.push_back(move(local_pareto_input));
-            candidate_output_blocks.push_back(move(local_pareto_output));
+            candidate_input_blocks.push_back(std::move(local_pareto_input));
+            candidate_output_blocks.push_back(std::move(local_pareto_output));
         }
 
         const MatrixR candidate_inputs = stack_rows(candidate_input_blocks);
@@ -2585,7 +2589,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
         ranges::transform(survivors, next_live.begin(),
                           [&live](const size_t survivor) { return live[survivor]; });
 
-        live = move(next_live);
+        live = std::move(next_live);
         drop_margin *= 0.5f;
     }
 

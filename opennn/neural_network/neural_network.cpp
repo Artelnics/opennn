@@ -9,6 +9,7 @@
 #include "opennn/neural_network/neural_network.h"
 
 #include <algorithm>
+#include <utility>
 
 #include "opennn/core/cuda/kernel_cast.cuh"
 #include "opennn/core/cuda/kernel_tensor.cuh"
@@ -128,7 +129,7 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& sour
     validate_source_indices(resolved_sources, ssize(layers), ssize(layers));
     validate_source_arity(*layer, resolved_sources, ssize(layers));
 
-    layers.push_back(move(layer));
+    layers.push_back(std::move(layer));
 
     source_layers.push_back(resolved_sources);
 
@@ -398,10 +399,10 @@ void NeuralNetwork::steal_from(NeuralNetwork& src)
 {
     clear();
     task             = src.task;
-    layers           = move(src.layers);
-    source_layers    = move(src.source_layers);
-    input_variables  = move(src.input_variables);
-    output_variables = move(src.output_variables);
+    layers           = std::move(src.layers);
+    source_layers    = std::move(src.source_layers);
+    input_variables  = std::move(src.input_variables);
+    output_variables = std::move(src.output_variables);
     first_trainable_cache_ = src.first_trainable_cache_;
     last_trainable_cache_  = src.last_trainable_cache_;
     src.first_trainable_cache_ = -1;
@@ -1109,7 +1110,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
             layer_doc.root = item;
             layer->from_JSON(layer_doc);
 
-            layers.push_back(move(layer));
+            layers.push_back(std::move(layer));
         }
     }
 

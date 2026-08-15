@@ -6,17 +6,18 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/dataset/dataset.h"
-#include "opennn/training_strategy/error_functions.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
-#include "opennn/training_strategy/loss.h"
+#include "opennn/training_strategy/stochastic_gradient_descent.h"
+
+#include "opennn/core/device_backend.h"
 #include "opennn/core/profiler.h"
 #include "opennn/dataset/batch.h"
-#include "opennn/core/device_backend.h"
-#include "opennn/training_strategy/stochastic_gradient_descent.h"
+#include "opennn/dataset/dataset.h"
+#include "opennn/neural_network/back_propagation.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/training_strategy/error_functions.h"
 #include "opennn/training_strategy/kernel_optimizers.cuh"
+#include "opennn/training_strategy/loss.h"
 
 namespace opennn
 {

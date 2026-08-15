@@ -5,18 +5,19 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/core/tensor_types.h"
-#include "opennn/core/tensor_operations.h"
-#include "opennn/core/statistics.h"
-#include "opennn/dataset/dataset.h"
-#include "opennn/training_strategy/loss.h"
-#include "opennn/dataset/batch.h"
-#include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/training_strategy/levenberg_marquardt_algorithm.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
 
 #include <Eigen/QR>
+
+#include "opennn/core/statistics.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/core/tensor_operations.h"
+#include "opennn/dataset/batch.h"
+#include "opennn/dataset/dataset.h"
+#include "opennn/neural_network/back_propagation.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/training_strategy/loss.h"
 
 namespace opennn
 {
@@ -167,10 +168,10 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&  ,
                  "LevenbergMarquardtAlgorithm: trainable Dense layers must form a sequential "
                  "chain. Use AdaptiveMomentEstimation, SGD, or QuasiNewtonMethod instead.");
 
-    const Index batch_size = forward_propagation.batch_size;
+    const Index current_batch_size = forward_propagation.batch_size;
     const Index last_layer = dense_indices.back();
     const Index outputs_number = static_cast<const Dense*>(layers[last_layer].get())->get_outputs_number();
-    const Index rows = batch_size * outputs_number;
+    const Index rows = current_batch_size * outputs_number;
 
     const size_t layers_count = dense_indices.size();
 
@@ -183,7 +184,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&  ,
     {
         const Index neurons = static_cast<const Dense*>(layers[dense_indices[n]].get())->get_outputs_number();
         deltas[n].resize(rows, neurons);
-        activation_derivatives[n].resize(batch_size, neurons);
+        activation_derivatives[n].resize(current_batch_size, neurons);
     }
 
     {
@@ -198,7 +199,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&  ,
         delta.setZero();
 
         #pragma omp parallel for
-        for (Index sample = 0; sample < batch_size; ++sample)
+        for (Index sample = 0; sample < current_batch_size; ++sample)
             for (Index j = 0; j < outputs_number; ++j)
                 delta(sample * outputs_number + j, j) = act_deriv(sample, j);
     }
@@ -220,7 +221,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&  ,
         jacobian.block(0, bias_offset, rows, neurons) = delta;
 
         #pragma omp parallel for
-        for (Index sample = 0; sample < batch_size; ++sample)
+        for (Index sample = 0; sample < current_batch_size; ++sample)
             for (Index j = 0; j < outputs_number; ++j)
             {
                 const Index row = sample * outputs_number + j;
@@ -242,7 +243,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&  ,
         previous_delta.noalias() = delta * weights.transpose();
 
         #pragma omp parallel for
-        for (Index sample = 0; sample < batch_size; ++sample)
+        for (Index sample = 0; sample < current_batch_size; ++sample)
             for (Index j = 0; j < outputs_number; ++j)
             {
                 const Index row = sample * outputs_number + j;
@@ -317,19 +318,19 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
 
     hooks.post_step = [&]
     {
-        update_parameters(*context.training_batch,
-                          *context.training_forward_propagation,
-                          training_back_propagation_lm,
-                          optimization_data);
+        update_full_batch_parameters(*context.training_batch,
+                                     *context.training_forward_propagation,
+                                     training_back_propagation_lm,
+                                     optimization_data);
     };
 
     return train_full_batch(context, hooks);
 }
 
-void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
-                                                    ForwardPropagation& forward_propagation,
-                                                    BackPropagationLM& back_propagation_lm,
-                                                    OptimizerData& optimization_data)
+void LevenbergMarquardtAlgorithm::update_full_batch_parameters(const Batch& batch,
+                                                               ForwardPropagation& forward_propagation,
+                                                               BackPropagationLM& back_propagation_lm,
+                                                               OptimizerData& optimization_data)
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
     float& damping_parameter = optimization_data.damping_parameter;

@@ -150,10 +150,13 @@ inline DataType_t to_dtype(Type t)
 {
     switch (t)
     {
+        case Type::Auto:
         case Type::FP32: return DataType_t::FLOAT;
         case Type::BF16: return DataType_t::BFLOAT16;
-        default:         return DataType_t::FLOAT;
+        case Type::INT8: return DataType_t::INT8;
     }
+
+    throw invalid_argument("Unsupported data type for a cuDNN graph.");
 }
 
 inline vector<int64_t> nhwc_strides(int64_t c, int64_t h, int64_t w)

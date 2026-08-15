@@ -1,6 +1,8 @@
 #include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
+#include <utility>
+
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/configuration.h"
 #include "opennn/dataset/tabular_dataset.h"
@@ -32,7 +34,7 @@ TEST(LearnedPositionalTest, EmbeddingGradientCheck)
     ASSERT_TRUE(embedding->get_learned_positional());
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(move(embedding));
+    neural_network.add_layer(std::move(embedding));
     neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(0)->get_output_shape()));
     neural_network.add_layer(make_unique<opennn::Dense>(Shape{flattened}, Shape{targets_number}));
     neural_network.compile();

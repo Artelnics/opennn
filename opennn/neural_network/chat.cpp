@@ -12,6 +12,7 @@
 #include <cmath>
 #include <cstring>
 #include <random>
+#include <utility>
 
 #include "opennn/core/device_backend.h"
 #include "opennn/neural_network/forward_propagation.h"
@@ -417,7 +418,7 @@ void GenerationParser::emit_stable_delta(const GenerationChannel output_channel,
 
         if (stable_bytes == state.tail.size())
         {
-            delta = move(state.tail);
+            delta = std::move(state.tail);
             state.tail.clear();
         }
         else
@@ -973,7 +974,7 @@ struct ChatSession::Impl
          unsigned long long new_seed)
         : network(&new_network),
           tokenizer(&new_tokenizer),
-          chat_template(move(new_template)),
+          chat_template(std::move(new_template)),
           gpu(new_network.is_gpu() && device::is_cuda_build()),
           context_length(new_network.get_input_shape().empty()
                              ? Index(0)
@@ -1204,7 +1205,7 @@ ChatSession::ChatSession(
     unique_ptr<ChatTemplate> chat_template,
     const unsigned long long seed)
     : impl(make_unique<Impl>(network, tokenizer,
-                             move(chat_template), seed))
+                             std::move(chat_template), seed))
 {
 }
 
@@ -1274,7 +1275,7 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
         1ull, &draft->token_device);
     draft->proposals.reserve(size_t(draft_tokens));
 
-    impl->draft = move(draft);
+    impl->draft = std::move(draft);
 
     const Index warmup_tokens =
         impl->draft->prefill.get_sequence_capacity();
@@ -1340,7 +1341,7 @@ struct ClassicDecodeLoop
         response.content = parser.get_content();
         response.content_tokens = parser.get_content_tokens();
         response.control_tokens += parser.get_control_tokens();
-        return move(response);
+        return response;
     }
 
     ClassicGenerationState& state;
@@ -1715,7 +1716,7 @@ ChatResponse ChatSession::send(
     response.decode_milliseconds =
         chrono::duration<double, milli>(decode_end - decode_start).count();
 
-    impl->messages = move(candidate);
+    impl->messages = std::move(candidate);
     impl->messages.push_back({
         ChatRole::Assistant,
         response.content

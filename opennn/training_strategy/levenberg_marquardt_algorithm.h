@@ -47,6 +47,8 @@ class LevenbergMarquardtAlgorithm final : public Optimizer
 
 public:
 
+   enum DataSlot { ParameterUpdate };
+
    explicit LevenbergMarquardtAlgorithm(Loss* = nullptr);
    void set_default();
 
@@ -54,14 +56,6 @@ public:
 
    void set_minimum_loss_decrease(const float new_minimum_loss_decrease) { minimum_loss_decrease = new_minimum_loss_decrease; }
    TrainingResult train() override;
-
-   enum DataSlot { ParameterUpdate };
-
-   void update_parameters(
-           const Batch&,
-           ForwardPropagation&,
-           BackPropagationLM&,
-           OptimizerData&);
    void from_JSON(const JsonDocument&) override;
 
    void to_JSON(JsonWriter&) const override;
@@ -69,6 +63,11 @@ public:
 private:
 
    void back_propagate(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
+
+   void update_full_batch_parameters(const Batch&,
+                                     ForwardPropagation&,
+                                     BackPropagationLM&,
+                                     OptimizerData&);
 
    void calculate_errors(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
    void calculate_squared_errors(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;

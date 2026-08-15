@@ -1,5 +1,7 @@
 #include "tests/pch.h"
 
+#include <utility>
+
 #include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/layers/embedding_layer.h"
 #include "opennn/neural_network/neural_network.h"
@@ -61,7 +63,7 @@ TEST_P(EmbeddingLayerTest, ForwardPropagate)
         parameters.embedding_dimension);
     layer->set_scale_embedding(parameters.scale_embedding);
     layer->set_add_positional_encoding(parameters.add_positional_encoding);
-    neural_network.add_layer(move(layer));
+    neural_network.add_layer(std::move(layer));
     neural_network.compile();
     neural_network.set_parameters_random();
 
@@ -96,7 +98,7 @@ TEST(Embedding, ForwardValuesMatchExpected)
         Shape{vocabulary_size, sequence_length}, embedding_dimension);
     layer->set_scale_embedding(false);
     layer->set_add_positional_encoding(false);
-    neural_network.add_layer(move(layer));
+    neural_network.add_layer(std::move(layer));
     neural_network.compile();
 
     const float weights[] = { 0.0f, 0.0f, 0.0f,
@@ -142,7 +144,7 @@ TEST(Embedding, ScaleEmbeddingForwardValues)
         Shape{vocabulary_size, sequence_length}, embedding_dimension);
     layer->set_scale_embedding(true);
     layer->set_add_positional_encoding(false);
-    neural_network.add_layer(move(layer));
+    neural_network.add_layer(std::move(layer));
     neural_network.compile();
 
     const float weights[] = { 0.0f, 0.0f, 0.0f, 0.0f,
@@ -190,7 +192,7 @@ TEST(Embedding, PositionalEncodingForwardValues)
         Shape{vocabulary_size, sequence_length}, embedding_dimension);
     layer->set_scale_embedding(false);
     layer->set_add_positional_encoding(true);
-    neural_network.add_layer(move(layer));
+    neural_network.add_layer(std::move(layer));
     neural_network.compile();
 
     const float weights[] = { 0.0f, 0.0f, 0.0f, 0.0f,

@@ -4,6 +4,8 @@
 
 #include "tests/pch.h"
 
+#include <utility>
+
 #include "opennn/neural_network/layers/addition_layer.h"
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/core/configuration.h"
@@ -204,7 +206,7 @@ TEST(ForwardPropagationMemoryTest, SameLayerAuxiliariesNeverAlias)
     auto gated = make_unique<opennn::Dense>(Shape{2, 4}, Shape{8}, "Identity",
                                             false, "gated");
     gated->set_gated(true);
-    network.add_layer(move(gated), {-1});
+    network.add_layer(std::move(gated), {-1});
     network.compile();
 
     ForwardPropagation inference_layout(
@@ -328,7 +330,7 @@ TEST(ForwardPropagationMemoryTest, TrainingReusesProjectionResidualOutput)
         stage_shape, Shape{1, 1, 8, 8}, "ReLU",
         Shape{1, 1}, "Same", true, "residual");
     residual->set_residual(true);
-    network.add_layer(move(residual), {1, 2});
+    network.add_layer(std::move(residual), {1, 2});
 
     network.add_layer(make_unique<Convolutional>(
                           stage_shape, Shape{1, 1, 8, 8}, "ReLU",

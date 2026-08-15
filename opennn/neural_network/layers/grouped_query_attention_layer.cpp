@@ -216,10 +216,11 @@ void grouped_attention_forward(const TensorView& query, const TensorView& key, c
         }
     };
 
-    #pragma omp parallel for collapse(2) schedule(static)
-    for (Index b = 0; b < batch; ++b)
-        for (Index hq = 0; hq < n_query_heads; ++hq)
-            attend_head(b, hq);
+    const Index heads_count = batch * n_query_heads;
+
+    #pragma omp parallel for schedule(static)
+    for (Index head = 0; head < heads_count; ++head)
+        attend_head(head / n_query_heads, head % n_query_heads);
 }
 
 void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorView& output,
@@ -526,7 +527,7 @@ static bool grouped_attention_sdpa_gpu(const int batch, const int query_seq, con
                 auto [out, stats] = graph->sdpa(entry.Q, entry.K, entry.V,
                                                 cudnn_frontend::graph::SDPA_attributes()
                                                 .set_name("gqa_flash_fwd")
-                                                .set_is_inference(true)
+                                                .set_generate_stats(false)
                                                 .set_causal_mask(causal)
                                                 .set_attn_scale(scale));
                 (void)stats;
@@ -972,7 +973,7 @@ void gqa_sdpa_build(GroupedAttentionSDPA& s, Index max_q, Index max_kv,
 
     auto options = cudnn_frontend::graph::SDPA_attributes()
                    .set_name("gqa_prefill")
-                   .set_is_inference(true)
+                   .set_generate_stats(false)
                    .set_padding_mask(true)
                    .set_seq_len_q(s.SeqQ)
                    .set_seq_len_kv(s.SeqKV)

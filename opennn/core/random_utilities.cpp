@@ -6,9 +6,11 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <mutex>
-#include <Eigen/QR>
 #include "opennn/core/random_utilities.h"
+
+#include <mutex>
+
+#include <Eigen/QR>
 
 namespace opennn
 {

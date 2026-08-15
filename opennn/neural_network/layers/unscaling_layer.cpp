@@ -6,10 +6,11 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/core/string_utilities.h"
 #include "opennn/neural_network/layers/unscaling_layer.h"
-#include "opennn/registry.h"
+
 #include "opennn/core/json.h"
+#include "opennn/core/string_utilities.h"
+#include "opennn/registry.h"
 
 namespace opennn
 {

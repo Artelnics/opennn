@@ -334,7 +334,7 @@ static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
 
     auto sdpa_options = cudnn_frontend::graph::SDPA_attributes()
                         .set_name("flash_attn_fwd")
-                        .set_is_inference(!k.is_training)
+                        .set_generate_stats(k.is_training)
                         .set_padding_mask(true)
                         .set_seq_len_q(entry.fwd_SeqLenQ)
                         .set_seq_len_kv(entry.fwd_SeqLenKV)

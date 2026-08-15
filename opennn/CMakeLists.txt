@@ -72,7 +72,7 @@ set(_opennn_jpeg_include_dir
     ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_INCLUDEDIR})
 set(_opennn_jpeg_lib_dir
     ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_LIBDIR})
-if(MSVC)
+if(MSVC OR (WIN32 AND CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC"))
     set(_opennn_jpeg_library ${_opennn_jpeg_lib_dir}/jpeg-static.lib)
 else()
     set(_opennn_jpeg_library

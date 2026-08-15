@@ -7,6 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/model_expression.h"
+
+#include <utility>
+
 #include "opennn/registry.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/layers/unscaling_layer.h"
@@ -317,7 +320,7 @@ vector<string> ModelExpression::split_expression_lines(const string& expression)
         string line(line_view);
         if (line.back() != ';')
             line += ';';
-        lines.push_back(move(line));
+        lines.push_back(std::move(line));
     }
 
     return lines;
@@ -403,7 +406,7 @@ string ModelExpression::build_expression() const
         buffer << layer_expression << "\n";
 
         if (!is_last)
-            new_input_names = move(layer_output_names);
+            new_input_names = std::move(layer_output_names);
     }
 
     if (was_on_device) network->copy_parameters_device();
@@ -1799,7 +1802,7 @@ string ModelExpression::get_expression_javascript() const
         string token(token_view);
         if (token.size() > 1 && token.back() == '{') break;
         if (token.size() > 1 && token.back() != ';') token += ';';
-        lines.push_back(move(token));
+        lines.push_back(std::move(token));
     }
     rename_spaced_var_definitions(lines);
 

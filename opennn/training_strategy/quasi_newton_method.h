@@ -32,13 +32,17 @@ public:
     explicit QuasiNewtonMethod(Loss* = nullptr);
     void set_default();
     void set_minimum_loss_decrease(const float new_minimum_loss_decrease) { minimum_loss_decrease = new_minimum_loss_decrease; }
-    void update_parameters(const Batch&, ForwardPropagation&, BackPropagation&, OptimizerData&);
     TrainingResult train() override;
     void from_JSON(const JsonDocument&) override;
 
     void to_JSON(JsonWriter&) const override;
 
 private:
+
+    void update_full_batch_parameters(const Batch&,
+                                      ForwardPropagation&,
+                                      BackPropagation&,
+                                      OptimizerData&);
 
     void calculate_inverse_hessian(OptimizerData&) const;
 

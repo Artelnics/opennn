@@ -6,8 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/layers/embedding_layer.h"
+
+#include "opennn/core/tensor_types.h"
 #include "opennn/registry.h"
 
 namespace opennn

@@ -6,18 +6,19 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "opennn/model_selection/cross_validation.h"
+
+#include <cmath>
+#include <limits>
 #include <random>
 #include <set>
-#include <limits>
-#include <cmath>
 
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/dataset/time_series_dataset.h"
 #include "opennn/neural_network/neural_network.h"
-#include "opennn/training_strategy/training_strategy.h"
 #include "opennn/training_strategy/optimizer.h"
-#include "opennn/model_selection/cross_validation.h"
+#include "opennn/training_strategy/training_strategy.h"
 
 namespace opennn
 {

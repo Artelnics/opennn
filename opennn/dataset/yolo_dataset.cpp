@@ -7,12 +7,15 @@
 //   artelnics@artelnics.com
 
 #include "opennn/dataset/yolo_dataset.h"
-#include "opennn/neural_network/layers/convolutional_layer.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/dataset/image_processing.h"
+
+#include <utility>
+
 #include "opennn/core/io_utilities.h"
 #include "opennn/core/json.h"
 #include "opennn/core/string_utilities.h"
+#include "opennn/dataset/image_processing.h"
+#include "opennn/neural_network/layers/convolutional_layer.h"
+#include "opennn/neural_network/neural_network.h"
 
 namespace opennn
 {
@@ -638,7 +641,7 @@ void apply_geometric_to_boxes(vector<YoloDataset::Box>& boxes,
         out.push_back(box);
     }
 
-    boxes = move(out);
+    boxes = std::move(out);
 }
 
 Index grid_cell(float coordinate, Index grid)
@@ -1351,7 +1354,7 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
         ||  target_cache_reader.file_size() != expected_target_size)
             return false;
 
-        anchors = move(cached_anchors);
+        anchors = std::move(cached_anchors);
         classes_number = Index(target_header.classes_number);
         assign_default_class_names(class_names, classes_number);
 
@@ -1434,7 +1437,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
             rgb.chip(0, 2) = image.chip(0, 2);
             rgb.chip(1, 2) = image.chip(0, 2);
             rgb.chip(2, 2) = image.chip(0, 2);
-            image = move(rgb);
+            image = std::move(rgb);
         }
         throw_if(image.dimension(2) != input_shape[2],
                  "YoloDataset: channel mismatch in {} (got {} channels, expected {})",
@@ -1548,7 +1551,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     boxes_cache_reader.open(boxes_cache_path);
     target_data_offset = target_header.targets_offset;
     boxes_data_offset = boxes_header.boxes_byte_offset;
-    boxes_offsets = move(offsets);
+    boxes_offsets = std::move(offsets);
 
     setup_metadata(Index(image_paths.size()));
 

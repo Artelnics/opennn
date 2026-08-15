@@ -6,17 +6,19 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <map>
+#include "opennn/model_selection/growing_inputs.h"
 
+#include <map>
+#include <utility>
+
+#include "opennn/dataset/correlations.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/dataset/time_series_dataset.h"
-#include "opennn/model_selection/growing_inputs.h"
-#include "opennn/dataset/correlations.h"
-#include "opennn/training_strategy/optimizer.h"
-#include "opennn/training_strategy/training_strategy.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/model_selection/selection_utilities.h"
+#include "opennn/training_strategy/optimizer.h"
+#include "opennn/training_strategy/training_strategy.h"
 
 namespace opennn
 {
@@ -249,7 +251,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
             if (warm_start && !candidate_snapshot.empty())
             {
-                warm_snapshot = move(candidate_snapshot);
+                warm_snapshot = std::move(candidate_snapshot);
                 candidate_snapshot = {};
                 warm_feature_ids = input_feature_ids(dataset);
             }

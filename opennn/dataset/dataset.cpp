@@ -7,9 +7,12 @@
 //   artelnics@artelnics.com
 
 #include "opennn/dataset/dataset.h"
-#include "opennn/dataset/batch.h"
-#include "opennn/core/tensor_types.h"
+
+#include <utility>
+
 #include "opennn/core/random_utilities.h"
+#include "opennn/core/tensor_types.h"
+#include "opennn/dataset/batch.h"
 
 namespace opennn
 {
@@ -169,7 +172,7 @@ void Dataset::set_data(MatrixR&& new_data)
     throw_if(new_data.cols() != get_features_number(),
              "Columns number is not equal to variables number");
 
-    data = move(new_data);
+    data = std::move(new_data);
     set_storage_mode(StorageMode::Matrix);
 }
 

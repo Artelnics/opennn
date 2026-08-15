@@ -1,5 +1,7 @@
 #include "tests/pch.h"
 
+#include <utility>
+
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/statistics.h"
 using namespace opennn;
@@ -317,7 +319,7 @@ TEST(Buffer, MoveTransfersOwnership)
     source.resize_bytes(8 * Index(sizeof(float)), Device::CPU);
     source.as<float>()[0] = type(42);
 
-    Buffer dest(move(source));
+    Buffer dest(std::move(source));
 
     EXPECT_TRUE(source.empty());
     EXPECT_EQ(source.data, nullptr);

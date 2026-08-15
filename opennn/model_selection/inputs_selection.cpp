@@ -6,12 +6,13 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "opennn/model_selection/inputs_selection.h"
+
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/dataset/time_series_dataset.h"
-#include "opennn/neural_network/neural_network.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/model_selection/inputs_selection.h"
+#include "opennn/neural_network/neural_network.h"
 
 namespace opennn
 {

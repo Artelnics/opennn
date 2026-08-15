@@ -1,6 +1,8 @@
 #include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
+#include <utility>
+
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/neural_network/layers/normalization_layer_3d.h"
@@ -122,7 +124,7 @@ TEST(Normalization3dTest, FusedResidualAddForward)
     EXPECT_EQ(norm->get_sources_number(), 2);
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(move(norm), {-1, -2});
+    neural_network.add_layer(std::move(norm), {-1, -2});
     neural_network.compile();
     neural_network.set_parameters_random();
 
@@ -181,7 +183,7 @@ TEST(Normalization3dTest, FusedResidualAddAliasesSafeBranchDelta)
         make_unique<Normalization3d>(input_shape, "fused_norm");
     normalization->set_fuse_add(true);
     neural_network.add_layer(
-        move(normalization),
+        std::move(normalization),
         {residual_index, branch_index});
     const Index normalization_index =
         neural_network.get_layers_number() - 1;
@@ -274,7 +276,7 @@ TEST(Normalization3dTest, RMSForwardMatchesHandComputedRMSNorm)
     norm->set_method(NormalizationMethod::RMS);
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(move(norm));
+    neural_network.add_layer(std::move(norm));
     neural_network.compile();
     neural_network.set_parameters_random();
 
@@ -316,7 +318,7 @@ TEST(Normalization3dTest, RMSBackwardGradientMatchesNumerical)
 
     auto norm = make_unique<Normalization3d>(input_shape, "norm");
     norm->set_method(NormalizationMethod::RMS);
-    neural_network.add_layer(move(norm), {-1});
+    neural_network.add_layer(std::move(norm), {-1});
     const Index norm_index = neural_network.get_layers_number() - 1;
 
     neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(norm_index)->get_output_shape()),
@@ -351,7 +353,7 @@ TEST(Normalization3dTest, RMSSaveLoadRoundTrip)
     norm->set_epsilon(epsilon);
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(move(norm));
+    neural_network.add_layer(std::move(norm));
     neural_network.compile();
     neural_network.set_parameters_random();
 
@@ -414,7 +416,7 @@ TEST(Normalization3dTest, FusedResidualAddGradientMatchesNumerical)
 
     auto norm = make_unique<Normalization3d>(input_shape, "fused_norm");
     norm->set_fuse_add(true);
-    neural_network.add_layer(move(norm), {dense_index, -1});
+    neural_network.add_layer(std::move(norm), {dense_index, -1});
     const Index norm_index = neural_network.get_layers_number() - 1;
 
     neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(norm_index)->get_output_shape()),

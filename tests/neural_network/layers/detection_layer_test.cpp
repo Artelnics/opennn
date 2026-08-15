@@ -1,6 +1,8 @@
 #include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
+#include <utility>
+
 #include "opennn/neural_network/layers/detection_layer.h"
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/neural_network/layers/dense_layer.h"
@@ -110,7 +112,7 @@ TEST(Detection, ForwardPropagateSigmoidClassActivation)
     detection->set_class_activation(Detection::ClassActivation::Sigmoid);
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(move(detection));
+    neural_network.add_layer(std::move(detection));
     neural_network.compile();
 
     Tensor4 input(batch_size, grid, grid, channels);
@@ -169,7 +171,7 @@ TEST(Detection, SigmoidClassBackwardGradientMatchesNumerical)
 
     auto detection = make_unique<Detection>(neural_network.get_layer(conv_index)->get_output_shape(), anchors, "detection");
     detection->set_class_activation(Detection::ClassActivation::Sigmoid);
-    neural_network.add_layer(move(detection), {conv_index});
+    neural_network.add_layer(std::move(detection), {conv_index});
     const Index detection_index = neural_network.get_layers_number() - 1;
 
     neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(detection_index)->get_output_shape()),

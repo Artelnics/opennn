@@ -1,6 +1,8 @@
 ﻿#include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
+#include <utility>
+
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/layers/flatten_layer.h"
@@ -333,7 +335,7 @@ TEST(ConvolutionalLayerTest, ProjectionResidualReuseGradientMatchesNumerical)
         Shape{1, 1}, "Same", true, "residual");
     residual->set_residual(true);
     EXPECT_EQ(residual->get_sources_number(), 2);
-    network.add_layer(move(residual), {1, 2});
+    network.add_layer(std::move(residual), {1, 2});
 
     network.add_layer(make_unique<Convolutional>(
                           Shape{2, 2, 4}, Shape{1, 1, 4, 2}, "ReLU",

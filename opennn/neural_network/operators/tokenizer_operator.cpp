@@ -6,9 +6,11 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <atomic>
-
 #include "opennn/neural_network/operators/tokenizer_operator.h"
+
+#include <atomic>
+#include <utility>
+
 #include "opennn/core/io_utilities.h"
 #include "opennn/core/parallel_algorithms.h"
 #include "opennn/core/string_utilities.h"
@@ -264,7 +266,7 @@ WordLevelTokenizer::WordLevelTokenizer()
 
 WordLevelTokenizer::WordLevelTokenizer(vector<string> new_reserved_tokens)
 {
-    reserved_tokens = move(new_reserved_tokens);
+    reserved_tokens = std::move(new_reserved_tokens);
 
     auto resolve_id = [this](string_view token)
     {
@@ -706,7 +708,7 @@ void BytePairTokenizer::load(const filesystem::path& vocabulary_json,
     while (getline(merges_file, line))
     {
         if (!line.empty() && line.back() == '\r') line.pop_back();
-        merge_lines.push_back(move(line));
+        merge_lines.push_back(std::move(line));
     }
 
     set_merges(merge_lines);
@@ -722,7 +724,7 @@ vector<string> BytePairTokenizer::get_merges() const
 
     vector<string> merges(ranked.size());
     ranges::transform(ranked, merges.begin(),
-                      [](pair<int, string>& ranked_merge) { return move(ranked_merge.second); });
+                      [](pair<int, string>& ranked_merge) { return std::move(ranked_merge.second); });
 
     return merges;
 }
@@ -858,7 +860,7 @@ struct PreTokenizeRun
         string piece;
         piece.reserve((end - start) * 2);
         for (size_t k = start; k < end; ++k) append_utf8(piece, cps[k]);
-        pieces.push_back(move(piece));
+        pieces.push_back(std::move(piece));
     }
 
     bool try_contraction(size_t& i)
@@ -923,7 +925,7 @@ vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
         run.emit_single(i);
     }
 
-    return move(run.pieces);
+    return std::move(run.pieces);
 }
 
 void BytePairTokenizer::tokenize_into(string_view text,
@@ -1161,7 +1163,7 @@ vector<string> Qwen3Tokenizer::pre_tokenize(string_view text) const
         run.emit_single(i);
     }
 
-    return move(run.pieces);
+    return std::move(run.pieces);
 }
 
 }

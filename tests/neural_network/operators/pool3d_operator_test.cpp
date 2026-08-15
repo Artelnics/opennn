@@ -1,6 +1,8 @@
 ﻿#include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
+#include <utility>
+
 #include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/layers/pooling_layer.h"
 #include "opennn/neural_network/layers/pooling_layer_3d.h"
@@ -215,7 +217,7 @@ void add_padded_average_pooling_stack(NeuralNetwork& network)
                                             padded_embedding_dimension, "embedding");
     embedding->set_add_positional_encoding(true);
     embedding->set_export_valid_lengths(true);
-    network.add_layer(move(embedding), {-1});
+    network.add_layer(std::move(embedding), {-1});
 
     network.add_layer(make_unique<Normalization3d>(
                           Shape{padded_sequence_length, padded_embedding_dimension},
@@ -309,7 +311,7 @@ TEST(Pool3dOperatoreratorTest, AverageGradientAgreesWithItsForwardOnPaddedBatche
 
     MatrixR data = dataset.get_data();
     write_padded_token_ids(data, valid_lengths);
-    dataset.set_data(move(data));
+    dataset.set_data(std::move(data));
 
     NeuralNetwork neural_network;
     add_padded_average_pooling_stack(neural_network);

@@ -8,6 +8,8 @@
 
 #include "opennn/neural_network/standard_networks.h"
 
+#include <utility>
+
 #include "opennn/core/string_utilities.h"
 #include "opennn/neural_network/layers/activation_layer.h"
 #include "opennn/neural_network/layers/addition_layer.h"
@@ -90,7 +92,7 @@ static void add_recurrent_stack(NeuralNetwork& network,
                                 Shape{complexity_dimensions[i]},
                                 last ? base_label : format("{}_{}", base_label, i + 1));
         if (!last) layer->set_return_sequences(true);
-        network.add_layer(move(layer));
+        network.add_layer(std::move(layer));
     }
 }
 
@@ -109,7 +111,7 @@ static void add_regression_output(NeuralNetwork& network,
 
     auto bounding = make_unique<Bounding>(output_shape);
     if (bounding_method) bounding->set_bounding_method(bounding_method);
-    network.add_layer(move(bounding));
+    network.add_layer(std::move(bounding));
 }
 
 ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
@@ -273,7 +275,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
 
     auto scaling_layer = make_unique<Scaling>(input_shape);
     scaling_layer->set_scalers("ImageMinMax");
-    add_layer(move(scaling_layer));
+    add_layer(std::move(scaling_layer));
 
     const Index complexity_size = complexity_dimensions.rank;
 
@@ -363,7 +365,7 @@ ResNet::ResNet(const Shape& input_shape,
             kernel_shape, "ReLU", Shape{1, 1}, "Same",
              true, name);
         conv->set_residual(true);
-        add_layer(move(conv), {input_index, skip_index});
+        add_layer(std::move(conv), {input_index, skip_index});
         return get_layers_number() - 1;
     };
 
@@ -409,7 +411,7 @@ ResNet::ResNet(const Shape& input_shape,
 
     auto scaling_layer = make_unique<Scaling>(input_shape);
     scaling_layer->set_scalers("ImageMinMax");
-    add_layer(move(scaling_layer));
+    add_layer(std::move(scaling_layer));
 
     Index last_index = add_conv(0,
         Shape{7, 7, input_shape[2], initial_filters[0]}, "ReLU",
@@ -1170,7 +1172,7 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
     // encoding this Embedding adds already means a padded row is not the zero
     // row anyone downstream could recognise it by.
     embedding_layer->set_export_valid_lengths(true);
-    add_layer(move(embedding_layer));
+    add_layer(std::move(embedding_layer));
 
     auto attention_layer = make_unique<MultiHeadAttention>(
         Shape({sequence_length, embedding_dimension}),
@@ -1183,7 +1185,7 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
     // the pooling below, recovering the sequence length by looking for them;
     // it reads the Embedding's exported lengths now, so the demand is gone and
     // this network's attention can be fused.
-    add_layer(move(attention_layer));
+    add_layer(std::move(attention_layer));
 
     add_layer(make_unique<Pooling3d>(get_output_shape(), pooling_method));
 
@@ -1205,7 +1207,7 @@ static Index add_residual_and_norm(NeuralNetwork& network,
 {
     auto norm = make_unique<Normalization3d>(shape, norm_label);
     norm->set_fuse_add(true);
-    network.add_layer(move(norm), {left_index, right_index});
+    network.add_layer(std::move(norm), {left_index, right_index});
     return network.get_layers_number() - 1;
 }
 
@@ -1265,7 +1267,7 @@ Transformer::Transformer(Index input_sequence_length,
     // off zero as soon as training moves their bias, and from there no layer
     // downstream can recover where a sequence ended by looking at it.
     decoder_embedding->set_export_valid_lengths(true);
-    add_layer(move(decoder_embedding), {decoder_tokenizer_index});
+    add_layer(std::move(decoder_embedding), {decoder_tokenizer_index});
     Index current_decoder_index = get_layers_number() - 1;
 
     add_layer(make_unique<Tokenizer>(Shape{input_sequence_length}, "encoder_tokenizer"), {-2});
@@ -1277,7 +1279,7 @@ Transformer::Transformer(Index input_sequence_length,
     encoder_embedding->set_scale_embedding(true);
     encoder_embedding->set_add_positional_encoding(true);
     encoder_embedding->set_export_valid_lengths(true);
-    add_layer(move(encoder_embedding), {encoder_tokenizer_index});
+    add_layer(std::move(encoder_embedding), {encoder_tokenizer_index});
     Index current_encoder_index = get_layers_number() - 1;
 
     const Shape encoder_shape{input_sequence_length, embedding_dimension};
@@ -1318,7 +1320,7 @@ Transformer::Transformer(Index input_sequence_length,
                                     embedding_dimension, heads_number,
                                     true,
                                     "decoder_self_attention" + suffix);
-        add_layer(move(decoder_self_attention), {current_decoder_index});
+        add_layer(std::move(decoder_self_attention), {current_decoder_index});
         const Index self_attn_index = get_layers_number() - 1;
 
         const Index norm1_index = add_residual_and_norm(*this, decoder_shape,
@@ -1440,7 +1442,7 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
         embedding->set_learned_positional(true);
     else
         embedding->set_add_positional_encoding(true);
-    add_layer(move(embedding), {tokenizer_index});
+    add_layer(std::move(embedding), {tokenizer_index});
     Index current_index = get_layers_number() - 1;
 
     const Shape block_shape{sequence_length, embedding_dimension};
@@ -1465,7 +1467,7 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
                             embedding_dimension, heads_number,
                             true,
                             "self_attention" + suffix);
-        add_layer(move(self_attention), {attention_input_index});
+        add_layer(std::move(self_attention), {attention_input_index});
         const Index attn_index = get_layers_number() - 1;
 
         if (pre_normalization)
@@ -1533,7 +1535,7 @@ static Index add_bert_encoder(NeuralNetwork& net,
         Shape{vocabulary_size, sequence_length}, hidden_size, "word_embeddings");
     word_embeddings->set_learned_positional(true);
     word_embeddings->set_export_valid_lengths(true);
-    net.add_layer(move(word_embeddings), {-1});
+    net.add_layer(std::move(word_embeddings), {-1});
     const Index word_index = net.get_layers_number() - 1;
 
     net.add_layer(make_unique<Embedding>(
@@ -1610,7 +1612,7 @@ Qwen3::Qwen3(Index sequence_length,
     auto embedding = make_unique<Embedding>(Shape{vocabulary_size + 1, sequence_length}, hidden_size, "embed_tokens");
     embedding->set_scale_embedding(false);
     embedding->set_weights_follow_compute_dtype(true);
-    add_layer(move(embedding), {-1});
+    add_layer(std::move(embedding), {-1});
     Index current = get_layers_number() - 1;
 
     const Shape block{sequence_length, hidden_size};
@@ -1620,7 +1622,7 @@ Qwen3::Qwen3(Index sequence_length,
         auto norm = make_unique<Normalization3d>(block, name);
         norm->set_method(NormalizationMethod::RMS);
         norm->set_epsilon(rms_epsilon);
-        add_layer(move(norm), {source});
+        add_layer(std::move(norm), {source});
         return get_layers_number() - 1;
     };
 
@@ -1628,7 +1630,7 @@ Qwen3::Qwen3(Index sequence_length,
     {
         auto dense = make_unique<Dense>(in_shape, Shape{out_features}, "Identity", false, name);
         dense->set_use_bias(false);
-        add_layer(move(dense), {source});
+        add_layer(std::move(dense), {source});
         return get_layers_number() - 1;
     };
 
@@ -1649,7 +1651,7 @@ Qwen3::Qwen3(Index sequence_length,
         auto gate_up = make_unique<Dense>(block, Shape{intermediate_size}, "Identity", false, "gate_up" + suffix);
         gate_up->set_use_bias(false);
         gate_up->set_gated(true);
-        add_layer(move(gate_up), {post_norm});
+        add_layer(std::move(gate_up), {post_norm});
         const Index ffn = get_layers_number() - 1;
         const Index down = add_linear(Shape{sequence_length, intermediate_size}, hidden_size, "down" + suffix, ffn);
         static_cast<Dense*>(layers[size_t(down)].get())->set_transposed_inference(true);
@@ -1760,7 +1762,7 @@ TextGenerationNetwork::TextGenerationNetwork(const filesystem::path& path)
 void TextGenerationNetwork::set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
 {
     get_tokenizer_layer(*this, "tokenizer", "TextGenerationNetwork::set_tokenizer")
-        .set_tokenizer(move(new_tokenizer));
+        .set_tokenizer(std::move(new_tokenizer));
 }
 
 void TextGenerationNetwork::set_vocabulary(const vector<string>& new_vocabulary)
@@ -1777,7 +1779,7 @@ const TokenizerOperator* TextGenerationNetwork::get_tokenizer() const
 void TextClassificationNetwork::set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
 {
     get_tokenizer_layer(*this, "tokenizer", "TextClassificationNetwork::set_tokenizer")
-        .set_tokenizer(move(new_tokenizer));
+        .set_tokenizer(std::move(new_tokenizer));
 }
 
 const TokenizerOperator* TextClassificationNetwork::get_tokenizer() const

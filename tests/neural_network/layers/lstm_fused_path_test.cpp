@@ -1,6 +1,8 @@
 #include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
+#include <utility>
+
 #include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/layers/long_short_term_memory_layer.h"
 #include "opennn/dataset/tabular_dataset.h"
@@ -55,7 +57,7 @@ void check_constant_forward(const Index neurons, const string& cell_activation)
     layer->set_activation_function(cell_activation);
     layer->set_recurrent_activation_function("Sigmoid");
     layer->set_return_sequences(true);
-    neural_network.add_layer(move(layer));
+    neural_network.add_layer(std::move(layer));
     neural_network.compile();
 
     neural_network.get_parameters_map().setConstant(c);
@@ -113,7 +115,7 @@ void check_gradient(const Index neurons, const bool return_sequences)
     auto layer = make_unique<LongShortTermMemory>(
         Shape{time_steps, inputs_number}, Shape{neurons});
     layer->set_return_sequences(return_sequences);
-    neural_network.add_layer(move(layer));
+    neural_network.add_layer(std::move(layer));
     neural_network.compile();
     set_varied_parameters(neural_network);
 

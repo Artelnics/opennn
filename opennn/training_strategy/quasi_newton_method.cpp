@@ -5,12 +5,13 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/dataset/dataset.h"
-#include "opennn/training_strategy/loss.h"
 #include "opennn/training_strategy/quasi_newton_method.h"
+
 #include "opennn/dataset/batch.h"
-#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/dataset/dataset.h"
 #include "opennn/neural_network/back_propagation.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/training_strategy/loss.h"
 
 namespace opennn
 {
@@ -79,10 +80,10 @@ void QuasiNewtonMethod::calculate_inverse_hessian(OptimizerData& optimization_da
     inverse_hessian.triangularView<Upper>() = inverse_hessian.triangularView<Lower>().transpose();
 }
 
-void QuasiNewtonMethod::update_parameters(const Batch& batch,
-                                          ForwardPropagation& forward_propagation,
-                                          BackPropagation& back_propagation,
-                                          OptimizerData& optimization_data)
+void QuasiNewtonMethod::update_full_batch_parameters(const Batch& batch,
+                                                     ForwardPropagation& forward_propagation,
+                                                     BackPropagation& back_propagation,
+                                                     OptimizerData& optimization_data)
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
@@ -230,10 +231,10 @@ TrainingResult QuasiNewtonMethod::train()
 
         const float training_error = training_back_propagation.metrics.error;
 
-        update_parameters(*context.training_batch,
-                          *context.training_forward_propagation,
-                          training_back_propagation,
-                          optimization_data);
+        update_full_batch_parameters(*context.training_batch,
+                                     *context.training_forward_propagation,
+                                     training_back_propagation,
+                                     optimization_data);
 
         return {training_error, training_back_propagation.metrics.error, training_back_propagation.metrics.loss_value};
     };

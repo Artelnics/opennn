@@ -1,4 +1,6 @@
 ﻿#include "tests/pch.h"
+#include <utility>
+
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/operators/dropout_operator.h"
@@ -181,7 +183,7 @@ TEST(DropoutLayerTest, InferencePassIsIdentityWithDropout)
     NeuralNetwork dropout_network;
     auto dense_with_dropout = make_unique<opennn::Dense>(Shape{inputs_number}, Shape{outputs_number}, "Identity");
     dense_with_dropout->set_dropout_rate(0.5f);
-    dropout_network.add_layer(move(dense_with_dropout));
+    dropout_network.add_layer(std::move(dense_with_dropout));
     dropout_network.compile();
 
     NeuralNetwork reference_network;
@@ -221,7 +223,7 @@ TEST(DropoutLayerTest, TrainingPassDiffersFromInference)
     NeuralNetwork neural_network;
     auto dense = make_unique<opennn::Dense>(Shape{inputs_number}, Shape{outputs_number}, "Identity");
     dense->set_dropout_rate(0.5f);
-    neural_network.add_layer(move(dense));
+    neural_network.add_layer(std::move(dense));
     neural_network.compile();
 
     set_seed(5u);

@@ -2,6 +2,7 @@
 #include "tests/numerical_derivatives.h"
 
 #include <cmath>
+#include <utility>
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/random_utilities.h"
@@ -80,7 +81,7 @@ TEST(GatedDenseTest, ForwardMatchesHandComputed)
     dense->set_gated(true);
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(move(dense));
+    neural_network.add_layer(std::move(dense));
     neural_network.compile();
 
     const vector<float> gate_weights = { 0.5f, -1.0f,  2.0f,
@@ -136,7 +137,7 @@ float gated_dense_max_gradient_error(bool use_bias)
     auto gate_up = make_unique<opennn::Dense>(input_shape, Shape{intermediate}, "Identity", false, "gate_up");
     gate_up->set_use_bias(use_bias);
     gate_up->set_gated(true);
-    neural_network.add_layer(move(gate_up), {-1});
+    neural_network.add_layer(std::move(gate_up), {-1});
     const Index gated_index = neural_network.get_layers_number() - 1;
 
     neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(gated_index)->get_output_shape()), {gated_index});
@@ -179,7 +180,7 @@ TEST(GatedDenseTest, SaveLoadRoundTrip)
     gate_up->set_gated(true);
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(move(gate_up));
+    neural_network.add_layer(std::move(gate_up));
     neural_network.compile();
     neural_network.set_parameters_random();
 

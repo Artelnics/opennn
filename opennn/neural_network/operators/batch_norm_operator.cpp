@@ -6,23 +6,24 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "opennn/neural_network/operators/batch_norm_operator.h"
+
 #ifdef OPENNN_HAS_CUDA
 #include <cudnn_frontend.h>
 #endif
 
-#include "opennn/neural_network/operators/batch_norm_operator.h"
-#include "opennn/core/device_backend.h"
-#ifdef OPENNN_HAS_CUDA
-#include "opennn/core/cuda/kernel_normalization.cuh"
-#include "opennn/core/cuda/kernel_cast.cuh"
-#endif
-#include "opennn/core/json.h"
-#include "opennn/core/tensor_operations.h"
-#include "opennn/core/string_utilities.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
-#include "opennn/core/profiler.h"
 #include "opennn/core/cuda/cudnn_frontend_utilities.h"
+#ifdef OPENNN_HAS_CUDA
+#include "opennn/core/cuda/kernel_cast.cuh"
+#include "opennn/core/cuda/kernel_normalization.cuh"
+#endif
+#include "opennn/core/device_backend.h"
+#include "opennn/core/json.h"
+#include "opennn/core/profiler.h"
+#include "opennn/core/string_utilities.h"
+#include "opennn/core/tensor_operations.h"
+#include "opennn/neural_network/back_propagation.h"
+#include "opennn/neural_network/forward_propagation.h"
 
 namespace opennn
 {

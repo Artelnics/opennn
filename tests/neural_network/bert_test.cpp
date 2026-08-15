@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <utility>
 #include <vector>
 
 #include "opennn/core/tensor_types.h"
@@ -29,7 +30,7 @@ namespace
         auto embedding = make_unique<Embedding>(Shape{vocab, seq}, hidden, "emb");
         embedding->set_add_positional_encoding(add_positional);
         embedding->set_learned_positional(learned_positional);
-        net.add_layer(move(embedding), {-1});
+        net.add_layer(std::move(embedding), {-1});
         net.compile();
         net.set_parameters_random();
 

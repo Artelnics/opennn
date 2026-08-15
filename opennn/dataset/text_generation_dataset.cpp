@@ -7,13 +7,16 @@
 //   artelnics@artelnics.com
 
 #include "opennn/dataset/text_generation_dataset.h"
-#include "opennn/core/string_utilities.h"
-#include "opennn/core/tensor_types.h"
-#include "opennn/core/io_utilities.h"
+
+#include <utility>
 
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+
+#include "opennn/core/io_utilities.h"
+#include "opennn/core/string_utilities.h"
+#include "opennn/core/tensor_types.h"
 
 namespace opennn
 {
@@ -160,7 +163,7 @@ void TextGenerationDataset::read_txt()
 void TextGenerationDataset::set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
 {
     tokenizer = new_tokenizer
-        ? move(new_tokenizer)
+        ? std::move(new_tokenizer)
         : make_unique<WordLevelTokenizer>(reserved_tokens);
     fixed_vocabulary = tokenizer->get_vocabulary_size() > 0;
 }

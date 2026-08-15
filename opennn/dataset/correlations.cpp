@@ -6,17 +6,18 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/core/tensor_types.h"
-#include "opennn/registry.h"
 #include "opennn/dataset/correlations.h"
+
 #include "opennn/core/parallel_algorithms.h"
+#include "opennn/core/tensor_types.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/neural_network.h"
-#include "opennn/training_strategy/quasi_newton_method.h"
-#include "opennn/training_strategy/levenberg_marquardt_algorithm.h"
 #include "opennn/neural_network/standard_networks.h"
+#include "opennn/registry.h"
+#include "opennn/training_strategy/levenberg_marquardt_algorithm.h"
+#include "opennn/training_strategy/quasi_newton_method.h"
 
 namespace opennn
 {

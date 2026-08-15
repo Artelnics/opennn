@@ -6,14 +6,15 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "opennn/model_selection/genetic_algorithm.h"
+
+#include "opennn/core/random_utilities.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/dataset/time_series_dataset.h"
-#include "opennn/training_strategy/training_strategy.h"
-#include "opennn/model_selection/genetic_algorithm.h"
-#include "opennn/core/random_utilities.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/model_selection/selection_utilities.h"
+#include "opennn/training_strategy/training_strategy.h"
 
 namespace opennn
 {

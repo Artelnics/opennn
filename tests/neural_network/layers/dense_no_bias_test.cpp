@@ -1,6 +1,8 @@
 #include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
+#include <utility>
+
 #include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/dataset/tabular_dataset.h"
@@ -18,7 +20,7 @@ TEST(DenseNoBiasTest, ParameterCountExcludesBias)
     NeuralNetwork without_bias;
     auto dense = make_unique<opennn::Dense>(Shape{4}, Shape{3}, "Identity");
     dense->set_use_bias(false);
-    without_bias.add_layer(move(dense));
+    without_bias.add_layer(std::move(dense));
     without_bias.compile();
 
     EXPECT_EQ(with_bias.get_parameters_number(), 4 * 3 + 3);
@@ -30,7 +32,7 @@ TEST(DenseNoBiasTest, ForwardIsPureMatmul)
     NeuralNetwork neural_network;
     auto dense = make_unique<opennn::Dense>(Shape{2}, Shape{3}, "Identity");
     dense->set_use_bias(false);
-    neural_network.add_layer(move(dense));
+    neural_network.add_layer(std::move(dense));
     neural_network.compile();
 
     VectorR parameters = VectorR::Ones(neural_network.get_parameters_buffer_size());
@@ -64,7 +66,7 @@ TEST(DenseNoBiasTest, GradientMatchesNumerical)
     NeuralNetwork neural_network;
     auto dense = make_unique<opennn::Dense>(Shape{features}, Shape{hidden}, "Identity");
     dense->set_use_bias(false);
-    neural_network.add_layer(move(dense), {-1});
+    neural_network.add_layer(std::move(dense), {-1});
     neural_network.add_layer(make_unique<opennn::Dense>(Shape{hidden}, Shape{targets_number}, "Identity"));
     neural_network.compile();
     neural_network.set_parameters_random();
