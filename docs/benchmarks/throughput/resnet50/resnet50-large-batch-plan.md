@@ -62,13 +62,23 @@ none is merged without it.
 
 ### Phase 0 — configuration and cheap wins (days)
 
-- **0a. Autotune everywhere it counts, and make it cheap.** Autotune cuts our
-  wgrad time 39% at 2048 versus the heuristic (conv 69 → 55 ms/step). It is the
-  harness default now, but costs ~5 min of plan *building* per point (every
-  candidate engine compiled). Tune only the heuristic's top-K candidates
-  (`build_plan_at_index` for K≈8–16, then `autotune()` skips the unbuilt slots)
-  → expected <1 min/point with most of the gain. Gate: 1024/2048 throughput
-  within 2% of full autotune.
+- **0a. Autotune everywhere it counts, and make it cheap — DONE.** Autotune
+  cuts our wgrad time 39% at 2048 versus the heuristic (conv 69 → 55 ms/step)
+  but building every candidate engine cost minutes of warmup per point.
+  `finalize` now builds only the heuristic's first K viable candidates
+  (default 8, `OPENNN_AUTOTUNE_CANDIDATES`; 0 = all) and `autotune()` skips
+  the unbuilt slots. Measured, bf16, fresh plan cache:
+
+  | | tune + warmup | samples/s |
+  |---|---:|---:|
+  | 1024, top-8 | **70 s** | **18,482** |
+  | 1024, all | 196 s | 17,589 |
+  | 2048, top-8 | **47 s** | **19,214** |
+  | 2048, all | 215 s | 17,316 |
+
+  3–4.5× less warmup and *higher* throughput: the exotic engines deep in the
+  list win the tuning micro-benchmark and lose in the real step. Top-8 is the
+  default; the plan cache key includes K.
 - **0b. Workspace budget under autotune — measured, dropped.** fp32/2048 with a
   1 GiB budget: conv 155 ms/step, 7,799 samples/s; with the auto 256 MiB
   budget: 148 ms/step, 8,569 samples/s. A larger budget does not help; the

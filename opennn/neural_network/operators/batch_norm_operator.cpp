@@ -656,9 +656,20 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
             struct Attempt { Type dtype; bool fuse_relu; bool fork; };
 
             vector<Attempt> attempts;
-            if (fork_capable)
-                attempts.push_back({input.type, true, true});
-            attempts.push_back({input.type, fuse_relu && !fuse_add, false});
+            switch (device::batch_norm_backward_rung())
+            {
+            case device::BatchNormBackwardRung::StagedFp32:
+                attempts.push_back({Type::FP32, fuse_relu && !fuse_add, false});
+                break;
+            case device::BatchNormBackwardRung::PlainNative:
+                attempts.push_back({input.type, false, false});
+                break;
+            case device::BatchNormBackwardRung::Auto:
+                if (fork_capable)
+                    attempts.push_back({input.type, true, true});
+                attempts.push_back({input.type, fuse_relu && !fuse_add, false});
+                break;
+            }
             // No un-fused BF16 rung. cuDNN does have plain batchnorm_backward
             // engines for the shapes whose ReLU-fused graph has none, and taking
             // them reaches 69,247 samples/s, but the gradients come out wrong: the
@@ -666,7 +677,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
             // mask is not the cause — forced through the FP32 path it reproduces the
             // fused loss to 0.703 vs 0.699902 — so the fault is in the un-fused BF16
             // batchnorm_backward itself, and it is not worth 15% to ship bad math.
-            if (bf16)
+            if (bf16 && device::batch_norm_backward_rung() == device::BatchNormBackwardRung::Auto)
                 attempts.push_back({Type::FP32, fuse_relu && !fuse_add, false});
 
             for (size_t attempt_index = 0; attempt_index < attempts.size(); attempt_index++)

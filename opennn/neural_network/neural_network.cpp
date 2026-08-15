@@ -395,6 +395,18 @@ const EnumMap<NetworkTask>& network_task_map()
     return map;
 }
 
+vector<CombinationOperator*> get_combination_operators(Layer& layer)
+{
+    vector<CombinationOperator*> combinations;
+    combinations.reserve(layer.get_operators().size());
+
+    for (Operator* op : layer.get_operators())
+        if (auto* combination = dynamic_cast<CombinationOperator*>(op))
+            combinations.push_back(combination);
+
+    return combinations;
+}
+
 void wire_drelu_fusions(vector<unique_ptr<Layer>>& layers,
                         const vector<vector<Index>>& source_layers,
                         Device device,
@@ -557,8 +569,7 @@ bool NeuralNetwork::has_recurrent_layers() const
 {
     return ranges::any_of(layers, [](const unique_ptr<Layer>& layer)
     {
-        return is_one_of(layer->get_type(), LayerType::Recurrent,
-                         LayerType::LongShortTermMemory);
+        return layer->is_recurrent();
     });
 }
 
@@ -2528,11 +2539,8 @@ void NeuralNetwork::activate_transposed_inference_weights()
     for (const auto& layer : layers)
     {
         const bool has_tied_weight = bool(layer->get_tied_weight().source);
-        vector<CombinationOperator*> combinations;
-
-        for (Operator* op : layer->get_operators())
-            if (auto* combination = dynamic_cast<CombinationOperator*>(op))
-                combinations.push_back(combination);
+        const vector<CombinationOperator*> combinations =
+            get_combination_operators(*layer);
 
         for (CombinationOperator* combination : combinations)
         {
@@ -2570,9 +2578,8 @@ void NeuralNetwork::copy_parameters_host()
     clear_low_precision_parameter_storage();
 
     for (const auto& layer : layers)
-        for (Operator* op : layer->get_operators())
-            if (auto* combination = dynamic_cast<CombinationOperator*>(op))
-                combination->transposed_inference_active = false;
+        for (CombinationOperator* combination : get_combination_operators(*layer))
+            combination->transposed_inference_active = false;
 
     link_parameters();
 }

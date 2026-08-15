@@ -479,6 +479,110 @@ TEST_F(GpuComparison, ProjectionResidualGradient)
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 5.0e-3f);
 }
 
+// The bf16 batch-norm backward has three rungs (fused native, plain native,
+// FP32-staged); which one a shape takes depends on the cuDNN build, and a
+// residual block on this GPU takes the plain one - the very configuration an
+// in-source note once measured as producing wrong gradients. This pins each
+// rung in turn on a ResNet-style residual block and checks the whole-network
+// gradient against the CPU fp32 reference, in fp32 and in bf16, so "wrong"
+// versus "bf16-rounded" is a number, not an opinion.
+TEST_F(GpuComparison, ResidualBlockGradientBf16PerBackwardRung)
+{
+    constexpr Index samples_number = 8;
+    const Shape input_shape{4, 4, 16};
+
+    TabularDataset dataset(samples_number, input_shape, Shape{1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    const auto build_network = [&](NeuralNetwork& network)
+    {
+        network.add_layer(make_unique<Convolutional>(
+                              input_shape, Shape{1, 1, 16, 64}, "ReLU",
+                              Shape{1, 1}, "Same", true, "stem"),
+                          {-1});
+        network.add_layer(make_unique<Convolutional>(
+                              Shape{4, 4, 64}, Shape{3, 3, 64, 64}, "ReLU",
+                              Shape{1, 1}, "Same", true, "main"),
+                          {0});
+        auto residual = make_unique<Convolutional>(
+            Shape{4, 4, 64}, Shape{1, 1, 64, 64}, "ReLU",
+            Shape{1, 1}, "Same", true, "residual");
+        residual->set_residual(true);
+        network.add_layer(std::move(residual), {1, 0});
+        network.add_layer(make_unique<Flatten>(Shape{4, 4, 64}), {2});
+        network.add_layer(make_unique<opennn::Dense>(
+                              Shape{1024}, Shape{1}, "Identity"),
+                          {3});
+        network.compile();
+    };
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    NeuralNetwork cpu_network;
+    build_network(cpu_network);
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+
+    Loss cpu_loss(&cpu_network, &dataset);
+    cpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR cpu_gradient = calculate_gradient(cpu_loss);
+
+    struct RestoreRung
+    {
+        ~RestoreRung() { device::set_batch_norm_backward_rung(device::BatchNormBackwardRung::Auto); }
+    } restore;
+
+    const auto gpu_gradient_on = [&](Type type, device::BatchNormBackwardRung rung)
+    {
+        device::set_batch_norm_backward_rung(rung);
+        Configuration::instance().set(Device::CUDA, type);
+        NeuralNetwork gpu_network;
+        build_network(gpu_network);
+        gpu_network.set_parameters(parameters);
+        Loss gpu_loss(&gpu_network, &dataset);
+        gpu_loss.set_error(Loss::Error::MeanSquaredError);
+        return calculate_gradient(gpu_loss);
+    };
+
+    // fp32 on the GPU first: this is the engine-correctness bar, free of any
+    // precision question, and every rung must clear it.
+    const VectorR fp32_auto  = gpu_gradient_on(Type::FP32, device::BatchNormBackwardRung::Auto);
+    const VectorR fp32_plain = gpu_gradient_on(Type::FP32, device::BatchNormBackwardRung::PlainNative);
+
+    const VectorR staged = gpu_gradient_on(Type::BF16, device::BatchNormBackwardRung::StagedFp32);
+    const VectorR plain  = gpu_gradient_on(Type::BF16, device::BatchNormBackwardRung::PlainNative);
+    const VectorR autor  = gpu_gradient_on(Type::BF16, device::BatchNormBackwardRung::Auto);
+
+    for (const VectorR* gradient : {&fp32_auto, &fp32_plain, &staged, &plain, &autor})
+        ASSERT_EQ(cpu_gradient.size(), gradient->size());
+
+    const float fp32_auto_error  = relative_difference(cpu_gradient, fp32_auto);
+    const float fp32_plain_error = relative_difference(cpu_gradient, fp32_plain);
+    const float staged_error     = relative_difference(cpu_gradient, staged);
+    const float plain_error      = relative_difference(cpu_gradient, plain);
+    const float auto_error       = relative_difference(cpu_gradient, autor);
+    const float plain_vs_staged  = relative_difference(staged, plain);
+
+    cout << "residual-block gradient vs fp32 reference - fp32 GPU: auto " << fp32_auto_error
+         << ", plain " << fp32_plain_error << "; bf16 GPU: staged " << staged_error
+         << ", plain " << plain_error << ", auto " << auto_error
+         << "; bf16 plain vs staged " << plain_vs_staged << "\n";
+
+    // fp32: the engines must reproduce the reference (measured ~1e-3).
+    EXPECT_LT(fp32_auto_error, 5.0e-3f);
+    EXPECT_LT(fp32_plain_error, 5.0e-3f);
+
+    // bf16: the rungs compute the same thing and must agree with each other
+    // (measured 1.6e-8 - identical). Against the fp32 reference they carry the
+    // network's bf16 rounding (activations, deltas and weights at 8 mantissa
+    // bits through a 3x3 conv, batch norm and a residual add: measured ~9%),
+    // which is precision, not a fault; a broken engine is far above the bound.
+    EXPECT_LT(plain_vs_staged, 1.0e-2f);
+    EXPECT_LT(staged_error, 2.0e-1f);
+    EXPECT_LT(plain_error, 2.0e-1f);
+    EXPECT_LT(auto_error, 2.0e-1f);
+}
+
 TEST_F(GpuComparison, ResidentInferenceGraphReplay)
 {
     const Index samples_number = 4;

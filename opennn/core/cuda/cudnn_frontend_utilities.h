@@ -201,6 +201,39 @@ inline void set_nhwc_output(shared_ptr<graph::Tensor_attributes>& tensor,
 // chosen under, so those name the directory while a shape-aware structural hash
 // of the graph names the file. A miss, a stale file or a failed deserialize all
 // fall through to the normal build, so a bad cache costs time, never correctness.
+// Autotune measures only the plans that were built. Building every candidate
+// (BuildPlanPolicy_t::ALL) compiles dozens of engines per graph and costs
+// minutes of warmup per shape set - measured ~5 min per batch point for
+// ResNet-50 - while the heuristics already rank the candidates and the winner
+// is nearly always among the first few. So build the first K viable candidates
+// in heuristic order and let autotune() skip the unbuilt slots.
+// OPENNN_AUTOTUNE_CANDIDATES overrides K (0 = build all, the old behaviour).
+inline int64_t autotune_candidate_limit()
+{
+    static const int64_t limit = []
+    {
+        const char* setting = getenv("OPENNN_AUTOTUNE_CANDIDATES");
+        if (!setting || !*setting) return int64_t(8);
+        const long long value = atoll(setting);
+        return value <= 0 ? numeric_limits<int64_t>::max() : int64_t(value);
+    }();
+
+    return limit;
+}
+
+// Builds candidates in heuristic order until `limit` of them exist; plans the
+// workspace budget bars fail fast and do not count. True if at least one built.
+inline bool build_top_candidates(graph::Graph& graph, int64_t limit)
+{
+    const int64_t count = graph.get_execution_plan_count();
+    int64_t built = 0;
+
+    for (int64_t index = 0; index < count && built < limit; ++index)
+        if (graph.build_plan_at_index(index).is_good()) ++built;
+
+    return built > 0;
+}
+
 inline bool plan_cache_enabled()
 {
     // On by default: a miss only costs the build that would have happened anyway.
@@ -248,7 +281,8 @@ inline std::filesystem::path plan_cache_file(const graph::Graph& graph)
     // a cached plan for the same graph.
     const size_t key = std::hash<json>{}(structure)
         ^ (std::hash<int64_t>{}(device::conv_workspace_limit_bytes()) << 1)
-        ^ (std::hash<bool>{}(device::conv_autotune_enabled()) << 2);
+        ^ (std::hash<bool>{}(device::conv_autotune_enabled()) << 2)
+        ^ (std::hash<int64_t>{}(autotune_candidate_limit()) << 3);
 
     return plan_cache_directory() / format("{:016x}.plan", key);
 }
@@ -370,13 +404,14 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
     if (conv_workspace_cap > 0)
         graph.deselect_workspace_greater_than(conv_workspace_cap);
 
-    // Plans over budget are barred and left unbuilt (nullptr) by
-    // BuildPlanPolicy_t::ALL; autotune() skips those slots. The access violation
-    // once attributed to "cap + ALL" is Graph::get_autotune_workspace_size(),
-    // which dereferences every slot including the barred ones — see
-    // autotune_workspace_bytes() below, which is why that accessor is not used.
+    // Plans over budget are barred and left unbuilt (nullptr), as are the
+    // candidates past the top-K; autotune() skips those slots. The access
+    // violation once attributed to "cap + ALL" is
+    // Graph::get_autotune_workspace_size(), which dereferences every slot
+    // including the unbuilt ones — see autotune_workspace_bytes() below, which
+    // is why that accessor is not used.
     const bool autotune = request_autotune
-        && graph.build_plans(handle, BuildPlanPolicy_t::ALL).is_good();
+        && build_top_candidates(graph, autotune_candidate_limit());
 
     // An autotuned graph is measured against real data by the caller before a plan
     // is pinned, so caching here would store a plan the tuning has not chosen yet.

@@ -1692,16 +1692,16 @@ Index TextGenerationNetwork::get_sequence_length() const
 namespace
 {
 
-Tokenizer& get_tokenizer_layer(const NeuralNetwork& network,
-                               const string& label,
-                               const char* method)
+template <typename Network>
+auto& get_tokenizer_layer(Network& network, const string& label, const char* method)
 {
-    Tokenizer* tokenizer_layer = nullptr;
+    using TokenizerType = conditional_t<is_const_v<Network>, const Tokenizer, Tokenizer>;
+    TokenizerType* tokenizer_layer = nullptr;
 
     try
     {
         tokenizer_layer =
-            dynamic_cast<Tokenizer*>(network.get_layer(label).get());
+            dynamic_cast<TokenizerType*>(network.get_layer(label).get());
     }
     catch (const exception&)
     {

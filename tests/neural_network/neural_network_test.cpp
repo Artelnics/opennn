@@ -6,6 +6,8 @@
 #include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/layers/embedding_layer.h"
 #include "opennn/neural_network/layers/layer.h"
+#include "opennn/neural_network/layers/long_short_term_memory_layer.h"
+#include "opennn/neural_network/layers/recurrent_layer.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/dataset/dataset.h"
 
@@ -207,6 +209,23 @@ TEST(NeuralNetworkTest, RejectsWrongSourceCount)
                  runtime_error);
 
     EXPECT_THROW(neural_network.add_layer(nullptr), runtime_error);
+}
+
+TEST(NeuralNetworkTest, DetectsRecurrentLayersByCapability)
+{
+    const auto has_recurrent_layer = [](unique_ptr<Layer> layer)
+    {
+        NeuralNetwork network;
+        network.add_layer(std::move(layer));
+        return network.has_recurrent_layers();
+    };
+
+    EXPECT_FALSE(has_recurrent_layer(
+        make_unique<opennn::Dense>(Shape{3}, Shape{2}, "Identity")));
+    EXPECT_TRUE(has_recurrent_layer(
+        make_unique<Recurrent>(Shape{4, 3}, Shape{2})));
+    EXPECT_TRUE(has_recurrent_layer(
+        make_unique<LongShortTermMemory>(Shape{4, 3}, Shape{2})));
 }
 
 TEST(NeuralNetworkTest, SerializesNetworkTask)
