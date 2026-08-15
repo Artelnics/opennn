@@ -98,7 +98,6 @@ public:
     bool has(const string&) const;
     bool has(LayerType) const;
     bool has_recurrent_layers() const;
-    bool supports_compact_cnn_memory_layout() const noexcept;
 
     bool is_empty() const noexcept { return layers.empty(); }
 

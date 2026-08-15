@@ -395,6 +395,7 @@ const EnumMap<NetworkTask>& network_task_map()
     return map;
 }
 
+#ifdef OPENNN_HAS_CUDA
 vector<CombinationOperator*> get_combination_operators(Layer& layer)
 {
     vector<CombinationOperator*> combinations;
@@ -406,6 +407,7 @@ vector<CombinationOperator*> get_combination_operators(Layer& layer)
 
     return combinations;
 }
+#endif
 
 void wire_drelu_fusions(vector<unique_ptr<Layer>>& layers,
                         const vector<vector<Index>>& source_layers,
@@ -571,18 +573,6 @@ bool NeuralNetwork::has_recurrent_layers() const
     {
         return layer->is_recurrent();
     });
-}
-
-bool NeuralNetwork::supports_compact_cnn_memory_layout() const noexcept
-{
-    return ranges::all_of(
-        layers,
-        [](const unique_ptr<Layer>& layer)
-        {
-            const LayerType type = layer->get_type();
-            return is_one_of(type, LayerType::Scaling, LayerType::Convolutional,
-                             LayerType::Pooling, LayerType::Flatten, LayerType::Dense);
-        });
 }
 
 vector<string> NeuralNetwork::get_input_feature_names() const

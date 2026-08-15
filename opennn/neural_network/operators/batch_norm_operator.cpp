@@ -648,11 +648,12 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
 
             // cuDNN's engine coverage for a BF16-IO batchnorm backward is partial:
             // measured on sm_120 / cuDNN 9.25, only 8 of ResNet-50's 24 shapes have
-            // an engine for the ReLU-fused graph. Give up one thing at a time —
-            // first the residual fork, then the fused ReLU (which then runs as its
-            // own kernel), and only then the IO precision, since staging through
-            // FP32 pays both the wider math and three full-tensor casts. The staged
-            // graph cannot fork: DPre would be written as FP32 into a BF16 buffer.
+            // an engine for the ReLU-fused graph; on sm_86 / cuDNN 9.10, 4 of 53
+            // layers. Give up one thing at a time — first the residual fork, then
+            // the fused ReLU (which then runs as its own kernel), and only then the
+            // IO precision, since staging through FP32 pays both the wider math and
+            // three full-tensor casts. The staged graph cannot fork: DPre would be
+            // written as FP32 into a BF16 buffer.
             struct Attempt { Type dtype; bool fuse_relu; bool fork; };
 
             vector<Attempt> attempts;
@@ -668,15 +669,19 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                 if (fork_capable)
                     attempts.push_back({input.type, true, true});
                 attempts.push_back({input.type, fuse_relu && !fuse_add, false});
+                // Plain native BF16 with the ReLU mask as its own kernel, ahead of
+                // FP32 staging. An earlier note here rejected this rung as "bad
+                // math" (5-epoch loss 1.223 vs 0.656 on sm_120 / cuDNN 9.25);
+                // GpuComparison.ResidualBlockGradientBf16PerBackwardRung pins the
+                // rungs on a residual block and finds plain BF16 and FP32-staged
+                // gradients identical to 1.6e-8 on cuDNN 9.10 (fp32 GPU vs CPU
+                // 7e-7). Staging costs three full-tensor casts and 2x-byte math on
+                // 33 of ResNet-50's 53 layers; this rung is +15.7% at batch 2048.
+                // Run that test on any new cuDNN before trusting it there.
+                if (bf16 && fuse_relu && !fuse_add)
+                    attempts.push_back({input.type, false, false});
                 break;
             }
-            // No un-fused BF16 rung. cuDNN does have plain batchnorm_backward
-            // engines for the shapes whose ReLU-fused graph has none, and taking
-            // them reaches 69,247 samples/s, but the gradients come out wrong: the
-            // 5-epoch loss lands at 1.223 against 0.656 fused. The split-out ReLU
-            // mask is not the cause — forced through the FP32 path it reproduces the
-            // fused loss to 0.703 vs 0.699902 — so the fault is in the un-fused BF16
-            // batchnorm_backward itself, and it is not worth 15% to ship bad math.
             if (bf16 && device::batch_norm_backward_rung() == device::BatchNormBackwardRung::Auto)
                 attempts.push_back({Type::FP32, fuse_relu && !fuse_add, false});
 

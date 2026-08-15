@@ -369,19 +369,21 @@ void BackPropagation::setup_arena(const vector<vector<TensorSpec>>& backward_spe
                last_trainable_layer_index,
                layers_number));
 
-    const bool compact_pool_supported =
-        neural_network.supports_compact_cnn_memory_layout();
-    const MemoryPoolPlan pool_plan = plan_memory_pool(
-        lifetime_entries,
-        compact_pool_supported
-            ? MemoryPoolStrategy::Compact
-            : MemoryPoolStrategy::Chronological);
+    MemoryPoolPlan chronological_plan = plan_memory_pool(
+        lifetime_entries, MemoryPoolStrategy::Chronological);
+    MemoryPoolPlan compact_plan = plan_memory_pool(
+        lifetime_entries, MemoryPoolStrategy::Compact);
+    const bool use_compact = compact_plan.peak_bytes < chronological_plan.peak_bytes;
+    const MemoryPoolPlan pool_plan = use_compact
+        ? std::move(compact_plan)
+        : std::move(chronological_plan);
+
     arena.resize_bytes(pool_plan.peak_bytes, neural_network.get_device());
     arena.setZero();
     memory_debug::record("backward", "BackPropagation::arena", pool_plan.peak_bytes,
                          format("batch={},planner={}",
                                 batch_size,
-                                compact_pool_supported ? "compact" : "chronological"));
+                                use_compact ? "compact" : "chronological"));
     memory_debug::record("backward.arena_analysis", "live_bytes_lower_bound",
                          pool_plan.lower_bound_live_bytes,
                          format("batch={},entries={}", batch_size, delta_entries.size()));

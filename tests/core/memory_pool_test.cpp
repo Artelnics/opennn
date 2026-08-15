@@ -85,6 +85,38 @@ TEST(MemoryPoolTest, CompactLargestFirstEliminatesAvoidableFragmentation)
     EXPECT_EQ(plan.fragmentation_bytes(), 0);
 }
 
+TEST(MemoryPoolTest, BothStrategiesRespectRecordedLifetimes)
+{
+    const vector<MemoryPoolEntry> entries = {
+        {56,  3, 3},
+        {80,  4, 5},
+        {80,  0, 6},
+        {128, 0, 4},
+        {112, 3, 5}
+    };
+
+    for (const MemoryPoolStrategy strategy : {
+             MemoryPoolStrategy::Chronological,
+             MemoryPoolStrategy::Compact})
+    {
+        const MemoryPoolPlan plan = plan_memory_pool(entries, strategy);
+
+        for (size_t i = 0; i < entries.size(); ++i)
+            for (size_t j = i + 1; j < entries.size(); ++j)
+            {
+                const bool lifetimes_overlap =
+                    entries[i].first_step <= entries[j].last_step
+                    && entries[j].first_step <= entries[i].last_step;
+                if (!lifetimes_overlap) continue;
+
+                const bool memory_overlaps =
+                    plan.byte_offsets[i] < plan.byte_offsets[j] + entries[j].bytes
+                    && plan.byte_offsets[j] < plan.byte_offsets[i] + entries[i].bytes;
+                EXPECT_FALSE(memory_overlaps);
+            }
+    }
+}
+
 TEST(BackPropagationMemoryTest, FanoutAccumulationReusesConsumerDelta)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -111,7 +143,17 @@ TEST(BackPropagationMemoryTest, FanoutAccumulationReusesConsumerDelta)
     network.compile();
 
     Loss loss(&network, nullptr);
+    const vector<MemoryPoolEntry> lifetimes =
+        BackPropagation::make_co_planned_lifetimes(loss, batch);
+    const MemoryPoolPlan chronological_plan = plan_memory_pool(
+        lifetimes, MemoryPoolStrategy::Chronological);
+    const MemoryPoolPlan compact_plan = plan_memory_pool(
+        lifetimes, MemoryPoolStrategy::Compact);
+    ASSERT_LT(compact_plan.peak_bytes, chronological_plan.peak_bytes);
+
     BackPropagation back_propagation(batch, loss);
+
+    EXPECT_EQ(back_propagation.arena.bytes, compact_plan.peak_bytes);
 
     TensorView& branch_a_delta = back_propagation.slots[1][1];
     TensorView& branch_b_delta = back_propagation.slots[2][1];
@@ -261,6 +303,39 @@ TEST(ForwardPropagationMemoryTest, TrainingRecomputeScratchUsesFutureActivations
               layout.slots[1][2].data);
     EXPECT_EQ(layout.slots[1][1].data,
               layout.slots[2].back().data);
+
+    Configuration::instance().set();
+}
+
+TEST(ForwardPropagationMemoryTest, RecomputeOverlayUsesLifetimesAcrossLayerTypes)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    constexpr Index batch = 2;
+    const Shape feature_shape{4, 4, 4};
+
+    NeuralNetwork network;
+    network.add_layer(make_unique<Convolutional>(
+                          Shape{4, 4, 2}, Shape{1, 1, 2, 4}, "Identity",
+                          Shape{1, 1}, "Same", true, "conv_1"),
+                      {-1});
+    network.add_layer(make_unique<Convolutional>(
+                          feature_shape, Shape{1, 1, 4, 4}, "Identity",
+                          Shape{1, 1}, "Same", true, "conv_2"),
+                      {0});
+    network.add_layer(make_unique<Convolutional>(
+                          feature_shape, Shape{1, 1, 4, 4}, "Identity",
+                          Shape{1, 1}, "Same", false, "conv_3"),
+                      {1});
+    network.add_layer(make_unique<Addition>(feature_shape, "addition", 2),
+                      {2, 2});
+    network.compile();
+    network.set_training_activation_recomputation(true);
+
+    ForwardPropagation layout(batch, &network, ForwardPropagationMode::Training);
+
+    EXPECT_EQ(layout.slots[0][1].data, layout.slots[1][2].data);
+    EXPECT_EQ(layout.slots[1][1].data, layout.slots[2].back().data);
 
     Configuration::instance().set();
 }

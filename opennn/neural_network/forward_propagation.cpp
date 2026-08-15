@@ -321,10 +321,6 @@ void ForwardPropagation::set(
                 return step >= 0;
             });
 
-    const bool recompute_overlay_allowed =
-        neural_network->supports_compact_cnn_memory_layout()
-        || early_release_outputs > 0;
-
     vector<vector<Index>> slot_offsets(layers_number);
     vector<vector<Index>> transient_slot_offsets(layers_number);
 
@@ -534,15 +530,12 @@ void ForwardPropagation::set(
             const Index backward_step =
                 backward_base - Index(i);
 
-            const Index overlay_offset =
-                recompute_overlay_allowed
-                ? find_memory_pool_overlay(
-                      pooled_lifetimes,
-                      persistent_plan,
-                      bytes,
-                      Index(i),
-                      backward_step)
-                : Index(-1);
+            const Index overlay_offset = find_memory_pool_overlay(
+                pooled_lifetimes,
+                persistent_plan,
+                bytes,
+                Index(i),
+                backward_step);
 
             if(overlay_offset >= 0)
             {
