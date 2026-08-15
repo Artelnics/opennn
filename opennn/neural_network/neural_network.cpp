@@ -259,18 +259,22 @@ void store_uint64_le(unsigned char* destination, uint64_t value)
 
 uint32_t load_uint32_le(const unsigned char* source)
 {
-    uint32_t value = 0;
-    for (int i = 0; i < 4; ++i)
-        value |= uint32_t(source[i]) << (8 * i);
-    return value;
+    return uint32_t{source[0]}
+         | uint32_t{source[1]} << 8
+         | uint32_t{source[2]} << 16
+         | uint32_t{source[3]} << 24;
 }
 
 uint64_t load_uint64_le(const unsigned char* source)
 {
-    uint64_t value = 0;
-    for (int i = 0; i < 8; ++i)
-        value |= uint64_t(source[i]) << (8 * i);
-    return value;
+    return uint64_t{source[0]}
+         | uint64_t{source[1]} << 8
+         | uint64_t{source[2]} << 16
+         | uint64_t{source[3]} << 24
+         | uint64_t{source[4]} << 32
+         | uint64_t{source[5]} << 40
+         | uint64_t{source[6]} << 48
+         | uint64_t{source[7]} << 56;
 }
 
 array<unsigned char, SNAPSHOT_FILE_HEADER_SIZE> make_snapshot_header(
@@ -1695,26 +1699,31 @@ static void save_binary_snapshot(const filesystem::path& file_name,
                                  uint64_t layout_fingerprint)
 {
     const Index payload_bytes = storage.bytes;
-    vector<char> staging;
-    const void* payload = storage.data;
+    const bool cuda = storage.device_type == Device::CUDA && storage.data;
 
-    if (storage.device_type == Device::CUDA && storage.data)
+    vector<char> staging(cuda ? size_t(payload_bytes) : 0);
+    const void* payload = cuda ? staging.data() : storage.data;
+
+    if (cuda)
     {
-        staging.resize(size_t(payload_bytes));
         cudaStream_t stream = Backend::get_compute_stream();
         device::copy_async(staging.data(), storage.data, payload_bytes,
                            device::CopyKind::DeviceToHost, stream);
         device::synchronize(stream);
-        payload = staging.data();
     }
 
-    const auto header = make_snapshot_header(
-        magic, uint64_t(storage.size_in_floats()), uint64_t(payload_bytes),
-        layout_fingerprint, hash_bytes(FNV1A_OFFSET, payload, size_t(payload_bytes)));
+    const array<unsigned char, SNAPSHOT_FILE_HEADER_SIZE> header =
+        make_snapshot_header(
+            magic,
+            uint64_t(storage.size_in_floats()),
+            uint64_t(payload_bytes),
+            layout_fingerprint,
+            hash_bytes(FNV1A_OFFSET, payload, size_t(payload_bytes)));
 
     ofstream file = open_binary_output(file_name);
     write_binary_payload(file, file_name, header.data(), Index(header.size()));
     write_binary_payload(file, file_name, payload, payload_bytes);
+
     file.close();
     throw_if(!file, "Error closing binary file: {}", file_name.string());
 }
@@ -1727,48 +1736,56 @@ static void load_binary_snapshot(const filesystem::path& file_name,
                                  const char* snapshot_name)
 {
     const uint64_t payload_bytes = uint64_t(storage.bytes);
+
     ifstream file(file_name, ios::binary);
     throw_if(!file.is_open(), "Cannot open binary file: {}\n", file_name.string());
 
     const uintmax_t file_bytes = filesystem::file_size(file_name);
-    const bool versioned = is_versioned_snapshot(
-        file, file_bytes, payload_bytes, magic, file_name, caller);
-    const uint64_t expected_checksum = versioned
-        ? read_snapshot_header(file, file_bytes, magic,
-                               uint64_t(storage.size_in_floats()), payload_bytes,
-                               layout_fingerprint, file_name, caller, snapshot_name)
-        : 0;
+    const bool versioned =
+        is_versioned_snapshot(file, file_bytes, payload_bytes, magic, file_name, caller);
 
-    vector<char> staging;
-    void* destination = storage.data;
-    if (versioned || (storage.device_type == Device::CUDA && storage.data))
-    {
-        staging.resize(size_t(payload_bytes));
-        destination = staging.data();
-    }
+    const uint64_t expected_checksum =
+        versioned
+            ? read_snapshot_header(file, file_bytes, magic,
+                                   uint64_t(storage.size_in_floats()), payload_bytes,
+                                   layout_fingerprint, file_name, caller, snapshot_name)
+            : 0;
+
+    const bool cuda = storage.device_type == Device::CUDA && storage.data;
+    const bool use_staging = versioned || cuda;
+
+    vector<char> staging(use_staging ? size_t(payload_bytes) : 0);
+    void* destination = use_staging ? staging.data() : storage.data;
 
     if (payload_bytes > 0)
         file.read(static_cast<char*>(destination), streamsize(payload_bytes));
+
     throw_if(!file, "Error reading binary file: {}", file_name.string());
 
     if (versioned)
     {
-        const uint64_t actual_checksum =
+        const uint64_t checksum =
             hash_bytes(FNV1A_OFFSET, destination, size_t(payload_bytes));
-        throw_if(actual_checksum != expected_checksum,
+
+        throw_if(checksum != expected_checksum,
                  "NeuralNetwork::{}: payload checksum mismatch for {}.",
                  caller, file_name.string());
     }
 
-    if (storage.device_type == Device::CUDA && storage.data && payload_bytes > 0)
+    if (payload_bytes == 0)
+        return;
+
+    if (cuda)
     {
         cudaStream_t stream = Backend::get_compute_stream();
         device::copy_async(storage.data, destination, storage.bytes,
                            device::CopyKind::HostToDevice, stream);
         device::synchronize(stream);
     }
-    else if (versioned && payload_bytes > 0)
+    else if (versioned)
+    {
         memcpy(storage.data, destination, size_t(payload_bytes));
+    }
 }
 
 #ifdef OPENNN_HAS_CUDA

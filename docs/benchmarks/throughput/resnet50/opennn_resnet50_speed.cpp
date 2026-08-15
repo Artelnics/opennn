@@ -40,6 +40,11 @@
 #include "opennn/core/device_backend.h"
 #include "opennn/core/memory_debug.h"
 
+#ifdef OPENNN_HAS_CUDA
+#include <cuda_runtime.h>
+#include <cudnn.h>
+#endif
+
 using namespace opennn;
 using clock_type = chrono::steady_clock;
 
@@ -74,6 +79,16 @@ int main(int argc, char* argv[])
             { device::set_conv_autotune(true);  device::set_conv_workspace_cap(0); }
         else
             { device::set_conv_autotune(true);  device::set_conv_workspace_cap(stoll(workspace_arg) * 1024 * 1024); }
+#ifdef OPENNN_HAS_CUDA
+        // Machine identity for the speed gate: engine choice and throughput are
+        // a property of (GPU, cuDNN), so baselines are keyed by both.
+        {
+            cudaDeviceProp properties{};
+            if (cudaGetDeviceProperties(&properties, 0) == cudaSuccess)
+                cout << "device=" << properties.name << "\n";
+            cout << "cudnn=" << cudnnGetVersion() << "\n";
+        }
+#endif
         cout << "workspace_mode=" << workspace_arg << "\n";
         cout << "workspace_cap_mib=" << device::conv_workspace_limit_bytes() / (1024 * 1024) << "\n";
         cout << "conv_autotune=" << (device::conv_autotune_enabled() ? 1 : 0) << "\n";
