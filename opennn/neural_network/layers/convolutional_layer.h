@@ -59,6 +59,9 @@ public:
     vector<TensorSpec> get_backward_specs(Index) const override;
     bool backward_uses_forward_output() const noexcept override { return get_output_activation() != ActivationFunction::Identity; }
     bool backward_uses_input(size_t input) const noexcept override { return input != 1 || !residual; }
+    // The convolution's own input delta comes out of one dgrad graph, which can
+    // carry an ADD epilogue; the residual input's delta is the batch-norm fork.
+    bool folds_input_delta_addend(size_t input) const noexcept override { return input == 0; }
     size_t get_recomputable_forward_slot() const noexcept override
     {
         return batch_norm.active() ? size_t(0) : SIZE_MAX;

@@ -90,8 +90,10 @@ private:
 
     void apply_delta_cpu(const TensorView&, const TensorView&,
                          TensorView&) const;
+    // The last argument is a delta to add into the input delta (see
+    // BackPropagation::input_delta_addend); empty when there is none.
     void apply_delta_gpu(const TensorView&, const TensorView&,
-                         TensorView&) const;
+                         TensorView&, const TensorView&) const;
 };
 
 }

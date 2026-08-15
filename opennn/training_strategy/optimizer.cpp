@@ -850,7 +850,13 @@ void Optimizer::warmup_device_training(
                              neural_network->get_device());
     };
 
-    const vector<vector<Index>> training_warmup_batch{training_batches.front()};
+    // One whole batch, plus the remainder batch when there is one: the tail
+    // trains through contexts of its own size that must exist - graphs, plans,
+    // workspaces included - before the steady-state allocation guard arms.
+    vector<vector<Index>> training_warmup_batch{training_batches.front()};
+    if (training_batches.size() > 1
+        && training_batches.back().size() != training_batches.front().size())
+        training_warmup_batch.push_back(training_batches.back());
     const function<void(NeuralNetwork*)> saved_post_batch_callback = post_batch_callback;
     post_batch_callback = {};
 
@@ -1063,8 +1069,10 @@ TrainingResult Optimizer::train()
         && validation_batch_size > 0
         && validation_samples_number % validation_batch_size != 0;
 
-    training_session.cuda_graph_capture_allowed = training_session.has_graph_batches()
-        && !has_training_tail;
+    // The tail trains eagerly after the graph epoch in persistent contexts of
+    // its own (TrainingSession::tail), so it neither enters the captured graph
+    // nor moves a pointer the graph baked in: the whole batches keep their graph.
+    training_session.cuda_graph_capture_allowed = training_session.has_graph_batches();
 
     time_t beginning_time;
     time(&beginning_time);
@@ -1072,7 +1080,7 @@ TrainingResult Optimizer::train()
 
     {
         device::CudaAllocationGrowthGuard steady_state_guard(
-            needs_cuda_warmup && !has_training_tail && !has_validation_tail);
+            needs_cuda_warmup && !has_validation_tail);
 
         // Shuffling and slicing 10M+ sample indices costs a visible fraction of a
         // fast GPU epoch, so the next epoch's batches are built on a helper thread
@@ -1996,7 +2004,45 @@ Loss::EvaluationResult Optimizer::train_epoch(
         const vector<Index>& sample_indices = batches.back();
         const Index tail_size = Index(sample_indices.size());
 
-        Batch batch(tail_size, loss->get_dataset(), neural_network->get_config());
+        TrainingSession::TailContext& tail = training_session.tail;
+        if (!tail.forward || tail.size != tail_size)
+        {
+            // First tail of the run (the warm-up pass, before the allocation
+            // guard arms); a different remainder can only come from a new
+            // dataset or batch size, which restarts the session anyway.
+            tail.batch = make_unique<Batch>(tail_size, loss->get_dataset(),
+                                            neural_network->get_config());
+            const vector<MemoryPoolEntry> delta_lifetimes =
+                BackPropagation::make_co_planned_lifetimes(*loss, tail_size);
+            tail.forward = make_unique<ForwardPropagation>(
+                tail_size,
+                neural_network,
+                ForwardPropagationMode::Training,
+                InferenceShapePolicy{},
+                false,
+                delta_lifetimes);
+            tail.backward = make_unique<BackPropagation>(
+                tail_size,
+                *loss,
+                &tail.forward->arena,
+                tail.forward->co_planned_offsets);
+            tail.size = tail_size;
+        }
+        else
+        {
+            // Constructing a BackPropagation links every layer's gradient view
+            // to its buffer, and the last one constructed - or set - wins. Point
+            // the layers at the tail's buffers for this step; the main context
+            // is re-linked below.
+            tail.backward->set(tail_size, *loss,
+                               &tail.forward->arena,
+                               tail.forward->co_planned_offsets);
+        }
+
+        Batch& batch = *tail.batch;
+        ForwardPropagation& tail_forward_propagation = *tail.forward;
+        BackPropagation& tail_back_propagation = *tail.backward;
+
         batch.fill(sample_indices,
                    input_feature_indices,
                    decoder_feature_indices,
@@ -2008,21 +2054,6 @@ Loss::EvaluationResult Optimizer::train_epoch(
             prefetch_batch(batch);
             batch.wait_h2d_on_compute_stream();
         }
-
-        const vector<MemoryPoolEntry> delta_lifetimes =
-            BackPropagation::make_co_planned_lifetimes(*loss, tail_size);
-        ForwardPropagation tail_forward_propagation(
-            tail_size,
-            neural_network,
-            ForwardPropagationMode::Training,
-            {},
-            false,
-            delta_lifetimes);
-        BackPropagation tail_back_propagation(
-            tail_size,
-            *loss,
-            &tail_forward_propagation.arena,
-            tail_forward_propagation.co_planned_offsets);
 
         neural_network->forward_propagate(batch.get_inputs(),
                                           tail_forward_propagation,
@@ -2045,8 +2076,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
         if(on_gpu)
             device::synchronize(Backend::get_compute_stream());
 
-        // Constructing a BackPropagation links every layer's gradient view to
-        // its buffer. Restore those views before the temporary tail context dies.
+        // Re-link the layers' gradient views to the main context (see above).
         back_propagation.set(forward_propagation.batch_size,
                              *loss,
                              &forward_propagation.arena,

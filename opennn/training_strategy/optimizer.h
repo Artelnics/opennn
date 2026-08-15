@@ -119,7 +119,21 @@ protected:
             cuda_graph_capture_allowed = false;
         }
 
+        // The remainder batch (samples % batch_size) trains eagerly after the
+        // whole batches, in contexts of its own size. They are built once - on
+        // the warm-up pass, before the steady-state allocation guard arms - and
+        // re-linked each epoch, so a tail neither allocates inside the guarded
+        // epoch loop nor forces CUDA graph capture off for the whole batches.
+        struct TailContext
+        {
+            unique_ptr<Batch> batch;
+            unique_ptr<ForwardPropagation> forward;
+            unique_ptr<BackPropagation> backward;
+            Index size = 0;
+        };
+
         array<GraphPipeline, pipelines_count> pipelines;
+        TailContext tail;
         Buffer device_metrics{Device::CUDA};
         array<CudaEvent, 4> throttle_events;
         size_t throttle_cursor = 0;

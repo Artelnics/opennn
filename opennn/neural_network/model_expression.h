@@ -41,7 +41,6 @@ private:
 
     static string c_float_literal(float);
 
-    Index get_flat_inputs_number() const;
     vector<string> get_flat_input_names() const;
 
     void check_parameters_are_finite() const;

@@ -708,6 +708,8 @@ void NeuralNetwork::set_output_names(const vector<string>& new_output_names)
 
 void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
 {
+    constexpr Index primary_external_source = -1;
+
     if (get_features_number(input_variables) != new_input_shape.size())
     {
         input_variables.assign(1, Variable());
@@ -717,17 +719,17 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
         input_variables[0].features = new_input_shape.size();
     }
 
-    if (Layer* scaling = get_first(LayerType::Scaling))
-        scaling->set_input_shape(new_input_shape);
-
-    layers[get_first_trainable_layer_index()]->set_input_shape(new_input_shape);
-
     const Index layers_number = get_layers_number();
     for (Index i = 0; i < layers_number; ++i)
     {
         const vector<Index>& sources = source_layers[i];
-        if (sources.size() == 1 && sources[0] >= 0)
-            layers[i]->set_input_shape(layers[sources[0]]->get_output_shape());
+        if (sources.size() != 1) continue;
+
+        const Index source = sources[0];
+        if (source == primary_external_source)
+            layers[i]->set_input_shape(new_input_shape);
+        else if (source >= 0)
+            layers[i]->set_input_shape(layers[source]->get_output_shape());
     }
 }
 
@@ -780,24 +782,12 @@ static void validate_source_arity(const Layer& layer,
 
 Index NeuralNetwork::get_inputs_number() const
 {
-    if (layers.empty())
-        return 0;
-
-    if (get_first(LayerType::Embedding))
-        return get_layer(0)->get_inputs_number();
-
-    for (const LayerType type : {LayerType::Recurrent, LayerType::LongShortTermMemory})
-        if (const Layer* layer = get_first(type))
-            return layer->get_input_shape()[1];
-
-    return layers[0]->get_input_shape().size();
+    return get_input_shape().size();
 }
 
 Index NeuralNetwork::get_outputs_number() const
 {
-    if (layers.empty()) return 0;
-
-    return layers.back()->get_output_shape().size();
+    return get_output_shape().size();
 }
 
 Shape NeuralNetwork::get_input_shape() const
@@ -1822,65 +1812,73 @@ NeuralNetwork::ParameterSlotTotals NeuralNetwork::for_each_parameter_slot(
     const function<void(const ParameterSlot&)>& visit,
     const function<void(Layer&)>& begin_layer) const
 {
-    ParameterSlotTotals totals;
-    Index master_elements = 0;
+    ParameterSlotTotals totals{};
+    Index master_elements{};
 
     for (const auto& layer : layers)
     {
-        if (begin_layer) begin_layer(*layer);
+        if (begin_layer)
+            begin_layer(*layer);
 
         const auto specs = layer->get_parameter_specs();
         const auto quantization = layer->get_parameter_quantization();
         const Layer::TiedWeight tie = layer->get_tied_weight();
 
-        for (size_t spec_index = 0; spec_index < specs.size(); ++spec_index)
+        for (size_t i = 0; i < specs.size(); ++i)
         {
-            const auto& [shape, dtype] = specs[spec_index];
+            const auto& [shape, dtype] = specs[i];
 
             ParameterSlot slot;
             slot.layer = layer.get();
             slot.shape = shape;
             slot.dtype = dtype;
-            slot.tied = tie.source && spec_index == tie.spec_index;
+            slot.tied = tie.source && i == tie.spec_index;
             slot.master_offset = master_elements;
             slot.bf16_offset = totals.bf16_elements;
             slot.int8_offset = totals.int8_elements;
             slot.fp32_offset = totals.fp32_elements;
 
-            if (shape.empty())
+            if (!shape.empty() && dtype == Type::INT8 && !slot.tied)
             {
-                if (visit) visit(slot);
-                continue;
-            }
+                const Operator::SlotQuantization q =
+                    i < quantization.size()
+                        ? quantization[i]
+                        : Operator::SlotQuantization{};
 
-            if (slot.dtype == Type::INT8 && !slot.tied)
-            {
-                const Operator::SlotQuantization slot_quantization =
-                    spec_index < quantization.size() ? quantization[spec_index]
-                                                     : Operator::SlotQuantization{};
-                throw_if(slot_quantization.channels <= 0
-                         || shape.size() % slot_quantization.channels != 0,
+                throw_if(q.channels <= 0 || shape.size() % q.channels != 0,
                          "NeuralNetwork: INT8 parameter slot without per-channel "
-                         "quantization metadata in layer \"{}\".", layer->get_label());
-                slot.scale_channels = slot_quantization.channels;
-                slot.scale_axis = slot_quantization.axis;
+                         "quantization metadata in layer \"{}\".",
+                         layer->get_label());
+
+                slot.scale_channels = q.channels;
+                slot.scale_axis = q.axis;
             }
 
-            if (visit) visit(slot);
+            if (visit)
+                visit(slot);
+
+            if (shape.empty())
+                continue;
 
             const Index aligned = get_aligned_size(shape.size());
             master_elements += aligned;
-            if (slot.tied) continue;
 
-            if (slot.dtype == Type::INT8)
+            if (slot.tied)
+                continue;
+
+            if (dtype == Type::INT8)
             {
                 totals.int8_elements += aligned;
                 totals.fp32_elements += get_aligned_size(slot.scale_channels);
             }
-            else if (slot.dtype == Type::BF16)
+            else if (dtype == Type::BF16)
+            {
                 totals.bf16_elements += aligned;
+            }
             else
+            {
                 totals.fp32_elements += aligned;
+            }
         }
     }
 

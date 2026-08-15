@@ -260,24 +260,10 @@ static constexpr const char* python_subheader =
 
 ModelExpression::ModelExpression(const NeuralNetwork* neural_network) : neural_network(neural_network) {}
 
-Index ModelExpression::get_flat_inputs_number() const
-{
-    const auto& layers = neural_network->get_layers();
-
-    if (!layers.empty())
-    {
-        const Shape first_input_shape = layers[0]->get_input_shape();
-        if (first_input_shape.rank == 2)
-            return first_input_shape.size();
-    }
-
-    return neural_network->get_inputs_number();
-}
-
 vector<string> ModelExpression::get_flat_input_names() const
 {
     vector<string> names = neural_network->get_input_feature_names();
-    const Index flat_inputs_number = get_flat_inputs_number();
+    const Index flat_inputs_number = neural_network->get_inputs_number();
 
     if (ssize(names) == flat_inputs_number)
         return names;
@@ -350,7 +336,7 @@ string ModelExpression::build_expression() const
 
     check_parameters_are_finite();
 
-    const Index inputs_number = get_flat_inputs_number();
+    const Index inputs_number = neural_network->get_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
     vector<string> new_input_names = get_flat_input_names();
@@ -751,7 +737,7 @@ string ModelExpression::get_expression_c_embedded() const
         check_parameters_are_finite();
 
         const vector<string> input_names = get_flat_input_names();
-        const Index inputs_number = get_flat_inputs_number();
+        const Index inputs_number = neural_network->get_inputs_number();
         const Index outputs_number = neural_network->get_outputs_number();
 
         ostringstream tables;

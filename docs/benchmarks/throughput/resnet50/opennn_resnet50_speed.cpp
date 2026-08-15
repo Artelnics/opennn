@@ -112,10 +112,16 @@ int main(int argc, char* argv[])
         // 50,000 CIFAR rows leave a tail at every power-of-two batch. Throughput
         // is then rows processed / epoch time, the same count the other drivers
         // report.
+        // OPENNN_RESNET50_KEEP_TAIL=1 trains the remainder too (the library's
+        // tail path, eager, after the graph epoch) - not the benchmark contract,
+        // but what the speed gate uses to check that a tail no longer costs the
+        // whole batches their CUDA graph.
+        const bool keep_tail = getenv("OPENNN_RESNET50_KEEP_TAIL") != nullptr;
         const Index all_samples = dataset.get_samples_number();
-        const Index samples = batch > 0 ? (all_samples / batch) * batch : all_samples;
+        const Index samples = (batch > 0 && !keep_tail) ? (all_samples / batch) * batch : all_samples;
         for (Index sample = samples; sample < all_samples; ++sample)
             dataset.set_sample_role(sample, SampleRole::None);
+        cout << "tail_kept=" << (keep_tail ? 1 : 0) << "\n";
 
         const bool gpu_resident = (image_size == 0) || force_resident;
         if (gpu_resident)

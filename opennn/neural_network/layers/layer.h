@@ -106,6 +106,11 @@ public:
     virtual bool preserves_output_delta_during_backward() const noexcept { return false; }
     virtual bool allows_input_delta_alias() const noexcept { return false; }
 
+    // True if this layer's backward can add a second delta into the input delta
+    // it writes for the given input (BackPropagation::input_delta_addend), so a
+    // producer read by two layers gets its summed delta without a separate add.
+    virtual bool folds_input_delta_addend(size_t) const noexcept { return false; }
+
     virtual Shape get_input_shape() const noexcept { return input_shape; }
 
     virtual Shape get_output_shape() const = 0;

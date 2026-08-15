@@ -50,6 +50,12 @@ struct BackPropagation
 
     void accumulate_output_deltas(size_t);
 
+    // The delta a layer's backward must add into the input delta it writes for
+    // the given input (empty when there is none): the other consumer's delta of
+    // a producer that two layers read, folded into this layer's dgrad epilogue
+    // instead of a separate add over the whole tensor. See plan_delta_addends.
+    const TensorView& input_delta_addend(size_t layer, size_t input) const noexcept;
+
     TensorView& get_output_delta();
     const TensorView& get_output_delta() const;
 
@@ -132,6 +138,14 @@ private:
     // again by accumulate_output_deltas on every backward pass, so it outlives the
     // plan that produced it and is stored here rather than passed around.
     vector<vector<pair<size_t, size_t>>> consumer_edges;
+
+    // Per (layer, input): the addend view, if that layer folds another
+    // consumer's delta; per producer: the (consumer, input) edge that was folded
+    // and must not be accumulated again. Both filled by plan_delta_addends.
+    vector<vector<TensorView>> input_delta_addends;
+    vector<pair<size_t, size_t>> folded_consumer_edge;
+
+    void plan_delta_addends();
 
     Index output_delta_layer_index = 0;
 

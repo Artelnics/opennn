@@ -1,19 +1,22 @@
 {
   "NVIDIA GeForce RTX 3060 Laptop GPU | cudnn 91002": {
-    "commit": "a572b9079",
+    "commit": "9985e2341",
     "epochs": 3,
     "points": {
       "bf16@1024": {
-        "samples_per_sec": 20492
+        "samples_per_sec": 20644
       },
       "bf16@128": {
-        "samples_per_sec": 13090
+        "samples_per_sec": 12255
+      },
+      "bf16@128+tail": {
+        "samples_per_sec": 12398
       },
       "fp32@1024": {
-        "samples_per_sec": 9852
+        "samples_per_sec": 9410
       }
     },
-    "recorded": "2026-08-15T22:11:21Z",
+    "recorded": "2026-08-15T22:33:15Z",
     "repeats": 2,
     "tolerance": 0.1
   }

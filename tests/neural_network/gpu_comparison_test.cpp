@@ -583,6 +583,65 @@ TEST_F(GpuComparison, ResidualBlockGradientBf16PerBackwardRung)
     EXPECT_LT(auto_error, 2.0e-1f);
 }
 
+// The real ResNet builder, small: a stem, a projection-skip bottleneck block and
+// an identity bottleneck block per stage, two stages, so every block wiring the
+// residual-join fusion (BackPropagation::plan_delta_addends -> conv dgrad + ADD)
+// meets in ResNet-50 is present. Whole-network gradient, GPU vs CPU reference,
+// in fp32 (exactness) and bf16 (precision band).
+TEST_F(GpuComparison, ResNetBottleneckGradient)
+{
+    constexpr Index samples_number = 8;
+    const Shape input_shape{16, 16, 3};
+    const Index classes_number = 4;
+
+    TabularDataset dataset(samples_number, input_shape, Shape{classes_number});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    const auto build = [&]() -> unique_ptr<NeuralNetwork>
+    {
+        return make_unique<ResNet>(input_shape, vector<Index>{2, 2}, Shape{8, 16},
+                                   Shape{classes_number}, true);
+    };
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    unique_ptr<NeuralNetwork> cpu_network = build();
+    cpu_network->set_parameters_random();
+    const VectorR parameters = read_host_parameters(*cpu_network);
+
+    Loss cpu_loss(cpu_network.get(), &dataset);
+    cpu_loss.set_error(Loss::Error::CrossEntropy);
+    const VectorR cpu_gradient = calculate_gradient(cpu_loss);
+
+    const auto gpu_gradient_in = [&](Type type)
+    {
+        Configuration::instance().set(Device::CUDA, type);
+        unique_ptr<NeuralNetwork> gpu_network = build();
+        gpu_network->set_parameters(parameters);
+        Loss gpu_loss(gpu_network.get(), &dataset);
+        gpu_loss.set_error(Loss::Error::CrossEntropy);
+        return calculate_gradient(gpu_loss);
+    };
+
+    const VectorR fp32 = gpu_gradient_in(Type::FP32);
+    const VectorR bf16 = gpu_gradient_in(Type::BF16);
+
+    ASSERT_EQ(cpu_gradient.size(), fp32.size());
+    ASSERT_EQ(cpu_gradient.size(), bf16.size());
+
+    const float fp32_error = relative_difference(cpu_gradient, fp32);
+    const float bf16_error = relative_difference(cpu_gradient, bf16);
+    cout << "ResNet bottleneck gradient vs fp32 reference: fp32 GPU " << fp32_error
+         << ", bf16 GPU " << bf16_error << "\n";
+
+    // fp32 is the exactness bar (measured 1.6e-4 with the residual-join fold,
+    // 2.4e-5 without). bf16 carries this small random network's end-to-end
+    // rounding (measured 0.16-0.36 depending on the draw, identical with and
+    // without the fold), so its bound is a sanity check, not a precision claim.
+    EXPECT_LT(fp32_error, 5.0e-3f);
+    EXPECT_LT(bf16_error, 5.0e-1f);
+}
+
 TEST_F(GpuComparison, ResidentInferenceGraphReplay)
 {
     const Index samples_number = 4;

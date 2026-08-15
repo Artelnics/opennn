@@ -45,7 +45,7 @@ struct ConvolutionOperator::ConvGraphCache
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_X, fwd_W, fwd_B, fwd_Y;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> wgrad_X, wgrad_DY, wgrad_DW;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bgrad_DY, bgrad_DB;
-        shared_ptr<cudnn_frontend::graph::Tensor_attributes> dgrad_W, dgrad_DY, dgrad_DX;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> dgrad_W, dgrad_DY, dgrad_DX, dgrad_R;
         int64_t fwd_workspace_bytes = 0;
         int64_t wgrad_workspace_bytes = 0;
         int64_t bgrad_workspace_bytes = 0;
@@ -55,6 +55,7 @@ struct ConvolutionOperator::ConvGraphCache
         bool bgrad_autotune = false;
         bool dgrad_autotune = false;
         bool wgrad_fp32_output = false;
+        bool dgrad_adds = false;
     };
 
     unordered_map<Index, Entry> entries;
@@ -200,15 +201,36 @@ void build_bgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
     entry.bgrad = graph;
 }
 
-void build_dgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& d, Type dtype)
+// With `add_residual` the graph is DX = conv_dgrad(DY, W) + R: the other
+// consumer's delta of the block input folded into the epilogue, so the block's
+// two input deltas are summed without a pass of their own (see
+// BackPropagation::plan_delta_addends). Engine availability is per shape; the
+// caller falls back to the plain graph plus a separate add.
+void build_dgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& d, Type dtype,
+                 bool add_residual = false)
 {
     auto graph = new_graph(dtype);
 
     entry.dgrad_DY = nhwc_tensor(*graph, "DY", d.batch, d.kernels, d.output_height, d.output_width);
     entry.dgrad_W  = krsc_tensor(*graph, "W", d);
+    entry.dgrad_R  = nullptr;
 
     entry.dgrad_DX = graph->conv_dgrad(entry.dgrad_DY, entry.dgrad_W,
                                        conv_attributes<graph::Conv_dgrad_attributes>(d));
+
+    if (add_residual)
+    {
+        // A dgrad output shape cannot be inferred from DY and W (stride and
+        // padding make it ambiguous), so the virtual intermediate needs its dims
+        // set before a pointwise node can consume it.
+        entry.dgrad_DX->set_dim({d.batch, d.channels, d.height, d.width})
+                      .set_stride(nhwc_strides(d.channels, d.height, d.width));
+        entry.dgrad_R  = nhwc_tensor(*graph, "R", d.batch, d.channels, d.height, d.width);
+        entry.dgrad_DX = graph->pointwise(entry.dgrad_DX, entry.dgrad_R,
+                                          graph::Pointwise_attributes()
+                                          .set_mode(PointwiseMode_t::ADD));
+    }
+
     set_nhwc_output(entry.dgrad_DX, d.batch, d.channels, d.height, d.width);
 
     entry.dgrad_autotune = finalize(
@@ -325,9 +347,16 @@ void ConvolutionOperator::back_propagate(ForwardPropagation& forward_propagation
     const TensorView& output_delta = get_output_delta(back_propagation, layer);
 
     TensorView& input_delta = slot_or(backward_slots, input_delta_slots, 0);
+    const TensorView& addend = back_propagation.input_delta_addend(layer, 0);
 
-    if (output_delta.is_cuda()) apply_delta_gpu(input, output_delta, input_delta);
-    else                         apply_delta_cpu(input, output_delta, input_delta);
+    if (output_delta.is_cuda())
+        apply_delta_gpu(input, output_delta, input_delta, addend);
+    else
+    {
+        apply_delta_cpu(input, output_delta, input_delta);
+        if (addend.data && input_delta.data)
+            input_delta.as_vector() += addend.as_vector();
+    }
 }
 
 namespace
@@ -594,7 +623,8 @@ void ConvolutionOperator::apply_gpu_folded(const TensorView& input,
 
 void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
                                   const TensorView& output_delta,
-                                  TensorView& input_delta) const
+                                  TensorView& input_delta,
+                                  const TensorView& addend) const
 {
     PROFILE_SCOPE("op:conv_bwd");
 
@@ -675,18 +705,45 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
 
         if (input_delta.data && input_delta.size() != 0)
         {
-            if (!entry.dgrad) cudnn_frontend::build_dgrad(entry, dims, input.type);
+            const bool want_add = addend.data && addend.size() == input_delta.size();
+
+            if (!entry.dgrad)
+            {
+                bool fused = want_add;
+                if (fused)
+                    try
+                    {
+                        cudnn_frontend::build_dgrad(entry, dims, input.type, true);
+                    }
+                    catch (const exception& e)
+                    {
+                        fused = false;
+                        cerr << "ConvolutionOperator dgrad " << input_height << "x" << input_width
+                             << "x" << kernel_channels << " k" << kernel_height << "x" << kernel_width
+                             << "x" << kernels_number << " batch " << input.shape[0]
+                             << ": no dgrad+add engine (" << e.what()
+                             << "); adding the residual delta separately.\n";
+                    }
+                if (!fused)
+                    cudnn_frontend::build_dgrad(entry, dims, input.type, false);
+                entry.dgrad_adds = fused;
+            }
 
             unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> dgrad_tensors;
             dgrad_tensors[entry.dgrad_DY] = output_delta.data;
             dgrad_tensors[entry.dgrad_W]  = weights.data;
             dgrad_tensors[entry.dgrad_DX] = input_delta.data;
+            if (entry.dgrad_adds) dgrad_tensors[entry.dgrad_R] = addend.data;
 
             cudnn_frontend::autotune_now(entry.dgrad_autotune, *entry.dgrad, dgrad_tensors,
                                          entry.dgrad_workspace_bytes, "ConvolutionOperator dgrad");
 
             cudnn_frontend::execute_graph(*entry.dgrad, dgrad_tensors, cudnn_frontend::shared_workspace(entry.dgrad_workspace_bytes),
                                     "dgrad execute", cudnn_frontend::timing_label(*this, "conv_dgrad"));
+
+            // The planner counts on this operator consuming the addend either way.
+            if (want_add && !entry.dgrad_adds)
+                add(input_delta, addend, input_delta);
         }
     });
 
@@ -696,7 +753,7 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
 #else
 
 void ConvolutionOperator::apply_gpu(const TensorView&, TensorView&) const                          OPENNN_CUDA_STUB_BODY(apply_gpu)
-void ConvolutionOperator::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&) const OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
+void ConvolutionOperator::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&, const TensorView&) const OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
 
 #endif
 

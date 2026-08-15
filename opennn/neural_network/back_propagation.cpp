@@ -102,10 +102,81 @@ void BackPropagation::set(const Index new_batch_size, Loss& new_loss,
                     external_arena->as<uint8_t>(),
                     external_arena->device_type,
                     plan.backward_specs);
-        return;
     }
+    else
+        setup_arena(plan.backward_specs, plan.layout);
 
-    setup_arena(plan.backward_specs, plan.layout);
+    plan_delta_addends();
+}
+
+// A producer read by two consumers gets its delta as the sum of both consumers'
+// input deltas. The planner already lets one consumer (A) write straight into
+// the producer's delta buffer; the other's (B) was then added in a separate
+// pass over the whole tensor. When A runs after B in the backward sweep (lower
+// layer index) and A's backward can fold an addend into the delta it writes,
+// hand it B's delta instead: A's dgrad epilogue adds it, and
+// accumulate_output_deltas skips that edge. ResNet's block input is exactly
+// this: conv1 (A) and the residual read (B) of the block-end batch norm.
+void BackPropagation::plan_delta_addends()
+{
+    const NeuralNetwork& neural_network = require_network();
+    const auto& layers = neural_network.get_layers();
+    const size_t layers_number = size_t(neural_network.get_layers_number());
+
+    input_delta_addends.assign(layers_number, {});
+    for (size_t i = 0; i < layers_number; ++i)
+        input_delta_addends[i].assign(slots[i].empty() ? 0 : slots[i].size() - 1, TensorView{});
+    folded_consumer_edge.assign(layers_number, {SIZE_MAX, SIZE_MAX});
+
+    for (size_t producer = 0; producer < consumer_edges.size(); ++producer)
+    {
+        const auto& edges = consumer_edges[producer];
+        if (edges.size() != 2) continue;
+
+        const TensorView& destination = output_deltas[producer];
+        if (!destination.data) continue;
+
+        const auto slot_of = [&](const pair<size_t, size_t>& edge) -> const TensorView*
+        {
+            const auto [consumer, input] = edge;
+            const size_t slot = input + 1;
+            if (consumer >= slots.size() || slot >= slots[consumer].size()) return nullptr;
+            const TensorView& view = slots[consumer][slot];
+            return view.data && view.size() == destination.size() ? &view : nullptr;
+        };
+
+        // A: the consumer whose slot is the destination; B: the other one.
+        int a = -1;
+        for (int k = 0; k < 2; ++k)
+        {
+            const TensorView* view = slot_of(edges[size_t(k)]);
+            if (view && view->data == destination.data) a = k;
+        }
+        if (a < 0) continue;
+        const int b = 1 - a;
+
+        const auto [layer_a, input_a] = edges[size_t(a)];
+        const auto [layer_b, input_b] = edges[size_t(b)];
+        const TensorView* addend = slot_of(edges[size_t(b)]);
+
+        if (!addend
+            || addend->data == destination.data
+            || layer_a >= layer_b                       // A must run after B
+            || !layers[layer_a]->folds_input_delta_addend(input_a)
+            || input_a >= input_delta_addends[layer_a].size())
+            continue;
+
+        input_delta_addends[layer_a][input_a] = *addend;
+        folded_consumer_edge[producer] = edges[size_t(b)];
+    }
+}
+
+const TensorView& BackPropagation::input_delta_addend(size_t layer, size_t input) const noexcept
+{
+    static const TensorView empty;
+    if (layer >= input_delta_addends.size() || input >= input_delta_addends[layer].size())
+        return empty;
+    return input_delta_addends[layer][input];
 }
 
 void BackPropagation::setup_gradient()
@@ -524,11 +595,14 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     if (first_source.data != destination.data)
         copy(first_source, destination);
 
+    const pair<size_t, size_t> folded = layer_index < folded_consumer_edge.size()
+        ? folded_consumer_edge[layer_index] : pair<size_t, size_t>{SIZE_MAX, SIZE_MAX};
+
     for (auto it = edges.begin(); it != edges.end(); ++it)
     {
         const TensorView& s = source(*it);
 
-        if (it == first || !valid(*it) || s.data == destination.data)
+        if (it == first || !valid(*it) || s.data == destination.data || *it == folded)
             continue;
 
         if (destination.is_cuda())

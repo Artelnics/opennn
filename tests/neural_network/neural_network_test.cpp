@@ -228,6 +228,76 @@ TEST(NeuralNetworkTest, DetectsRecurrentLayersByCapability)
         make_unique<LongShortTermMemory>(Shape{4, 3}, Shape{2})));
 }
 
+TEST(NeuralNetworkTest, InputCountIsTheExternalShapeSize)
+{
+    const auto inputs_number = [](unique_ptr<Layer> layer)
+    {
+        NeuralNetwork network;
+        network.add_layer(std::move(layer));
+        return network.get_inputs_number();
+    };
+
+    EXPECT_EQ(inputs_number(
+        make_unique<opennn::Dense>(Shape{5}, Shape{2}, "Identity")), 5);
+    EXPECT_EQ(inputs_number(
+        make_unique<Recurrent>(Shape{4, 3}, Shape{2})), 12);
+    EXPECT_EQ(inputs_number(
+        make_unique<LongShortTermMemory>(Shape{4, 3}, Shape{2})), 12);
+    EXPECT_EQ(inputs_number(
+        make_unique<Scaling>(Shape{2, 3, 4})), 24);
+    EXPECT_EQ(inputs_number(
+        make_unique<Embedding>(Shape{100, 7}, 8)), 7);
+}
+
+TEST(NeuralNetworkTest, SetInputShapePropagatesFromTheFirstExternalInput)
+{
+    NeuralNetwork scaled;
+    scaled.add_layer(make_unique<Scaling>(Shape{2}));
+    scaled.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{3}, "Identity"));
+    scaled.add_layer(make_unique<opennn::Dense>(Shape{3}, Shape{1}, "Identity"));
+
+    scaled.set_input_shape(Shape{5});
+
+    EXPECT_EQ(scaled.get_layer(0)->get_input_shape(), Shape{5});
+    EXPECT_EQ(scaled.get_layer(1)->get_input_shape(), Shape{5});
+    EXPECT_EQ(scaled.get_layer(2)->get_input_shape(), Shape{3});
+
+    NeuralNetwork unscaled;
+    unscaled.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{3}, "Identity"));
+    unscaled.add_layer(make_unique<opennn::Dense>(Shape{3}, Shape{1}, "Identity"));
+
+    unscaled.set_input_shape(Shape{7});
+
+    EXPECT_EQ(unscaled.get_layer(0)->get_input_shape(), Shape{7});
+    EXPECT_EQ(unscaled.get_layer(1)->get_input_shape(), Shape{3});
+}
+
+TEST(NeuralNetworkTest, SetInputShapeDoesNotRequireTrainableLayers)
+{
+    NeuralNetwork empty;
+    EXPECT_NO_THROW(empty.set_input_shape(Shape{4}));
+
+    NeuralNetwork preprocessing_only;
+    preprocessing_only.add_layer(make_unique<Scaling>(Shape{2}));
+
+    EXPECT_NO_THROW(preprocessing_only.set_input_shape(Shape{6}));
+    EXPECT_EQ(preprocessing_only.get_input_shape(), Shape{6});
+}
+
+TEST(NeuralNetworkTest, SetInputShapeLeavesOtherExternalInputsUnchanged)
+{
+    NeuralNetwork network;
+    network.add_layer(
+        make_unique<opennn::Dense>(Shape{2}, Shape{3}, "Identity"), {-1});
+    network.add_layer(
+        make_unique<opennn::Dense>(Shape{4}, Shape{3}, "Identity"), {-2});
+
+    network.set_input_shape(Shape{5});
+
+    EXPECT_EQ(network.get_layer(0)->get_input_shape(), Shape{5});
+    EXPECT_EQ(network.get_layer(1)->get_input_shape(), Shape{4});
+}
+
 TEST(NeuralNetworkTest, SerializesNetworkTask)
 {
     NeuralNetwork neural_network;

@@ -5,7 +5,8 @@ Runs the OpenNN ResNet-50 training harness at a few (batch, precision) points
 and fails if any of the invariants that past regressions violated no longer
 hold, or if throughput drops below this machine's recorded baseline:
 
-  * RESULT=OK, whole batches only (processed_samples == floor(N/batch)*batch)
+  * RESULT=OK, whole batches only (processed_samples == floor(N/batch)*batch),
+    or every sample when the point keeps the tail
   * convolution workspace bounded (workspace_cap_mib > 0) and autotune on
   * CUDA graphs requested and never abandoned ("continuing without graphs")
   * bf16: no batch-norm backward shape falls back to FP32 staging
@@ -21,7 +22,12 @@ by ~8%, so best-of-N against best-of-N is the honest comparison. The tolerance
 is stored with the baseline so each machine keeps its own (10% for a laptop,
 5% for the desktop benchmarks machine).
 
-  usage: speed_gate.py [--record] [--points 128:bf16,1024:bf16,1024:fp32]
+A point written as 128:bf16:tail keeps the remainder batch
+(OPENNN_RESNET50_KEEP_TAIL=1) - the library's tail path - and additionally
+asserts that the whole batches kept their CUDA graph, which a 2026-08-14
+change had silently switched off for every dataset the batch does not divide.
+
+  usage: speed_gate.py [--record] [--points 128:bf16,128:bf16:tail,1024:bf16,1024:fp32]
                        [--repeats 2] [--tolerance 0.10] [--epochs 3]
                        [--bin PATH] [--data-dir DIR]
 
@@ -67,10 +73,13 @@ def git_commit() -> str:
         return "unknown"
 
 
-def run_point(binary: str, data: Path, epochs: int, batch: int, precision: str) -> dict:
+def run_point(binary: str, data: Path, epochs: int, batch: int, precision: str,
+              keep_tail: bool = False) -> dict:
     cmd = [binary, str(data / "train"), str(epochs), str(batch), precision]
     env = dict(os.environ)
     env.setdefault("LD_LIBRARY_PATH", "/usr/local/cuda/lib64:")
+    if keep_tail:
+        env["OPENNN_RESNET50_KEEP_TAIL"] = "1"
     out = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env)
     raw = out.stdout + out.stderr
     fields: dict[str, str] = {}
@@ -82,6 +91,7 @@ def run_point(binary: str, data: Path, epochs: int, batch: int, precision: str) 
     return {
         "batch": batch,
         "precision": precision,
+        "keep_tail": keep_tail,
         "returncode": out.returncode,
         "fields": fields,
         "samples": int(config.group(1)) if config else None,
@@ -104,8 +114,12 @@ def check_point(result: dict, baseline: float | None, tolerance: float) -> list[
     batch = result["batch"]
     samples = result["samples"]
     processed = int(f.get("processed_samples", "0") or 0)
-    if samples is not None and processed != (samples // batch) * batch:
-        failures.append(f"processed_samples={processed}, expected {(samples // batch) * batch} (whole batches)")
+    if samples is not None:
+        expected = samples if result["keep_tail"] else (samples // batch) * batch
+        if processed != expected:
+            failures.append(f"processed_samples={processed}, expected {expected}")
+        if result["keep_tail"] and samples % batch == 0:
+            failures.append(f"tail point but {samples} % {batch} == 0 - pick a batch that leaves a remainder")
 
     if int(f.get("workspace_cap_mib", "0") or 0) <= 0:
         failures.append("convolution workspace is unbounded (workspace_cap_mib=0) - the 2026-08-15 cliff")
@@ -131,7 +145,7 @@ def check_point(result: dict, baseline: float | None, tolerance: float) -> list[
 def main() -> int:
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--record", action="store_true", help="write this run as the baseline")
-    parser.add_argument("--points", default="128:bf16,1024:bf16,1024:fp32")
+    parser.add_argument("--points", default="128:bf16,128:bf16:tail,1024:bf16,1024:fp32")
     parser.add_argument("--repeats", type=int, default=2,
                         help="runs per point; the best samples/s counts")
     parser.add_argument("--tolerance", type=float, default=0.10,
@@ -149,8 +163,11 @@ def main() -> int:
 
     points = []
     for item in args.points.split(","):
-        batch, _, precision = item.partition(":")
-        points.append((int(batch), precision or "bf16"))
+        parts = item.split(":")
+        batch = int(parts[0])
+        precision = parts[1] if len(parts) > 1 and parts[1] else "bf16"
+        keep_tail = len(parts) > 2 and parts[2] == "tail"
+        points.append((batch, precision, keep_tail))
 
     baselines = json.loads(BASELINES.read_text()) if BASELINES.exists() else {}
 
@@ -158,12 +175,12 @@ def main() -> int:
     all_failures: dict[str, list[str]] = {}
     measured: dict[str, float] = {}
     rows = []
-    for batch, precision in points:
+    for batch, precision, keep_tail in points:
         # Best of --repeats: keep the run with the highest samples/s, but any
         # invariant failure in any run counts.
         result = None
         for _ in range(max(1, args.repeats)):
-            attempt = run_point(binary, args.data_dir, args.epochs, batch, precision)
+            attempt = run_point(binary, args.data_dir, args.epochs, batch, precision, keep_tail)
             attempt_sps = float(attempt["fields"].get("samples_per_sec", "0") or 0)
             if result is None or attempt_sps > float(result["fields"].get("samples_per_sec", "0") or 0):
                 if result is not None:
@@ -173,7 +190,7 @@ def main() -> int:
         f = result["fields"]
         if machine_key is None and f.get("device"):
             machine_key = f"{f.get('device')} | cudnn {f.get('cudnn', '?')}"
-        point_key = f"{precision}@{batch}"
+        point_key = f"{precision}@{batch}" + ("+tail" if keep_tail else "")
         baseline = None
         tolerance = args.tolerance
         if machine_key and machine_key in baselines:
