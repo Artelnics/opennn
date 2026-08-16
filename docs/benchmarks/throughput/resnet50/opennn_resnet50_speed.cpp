@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <memory>
@@ -93,26 +94,33 @@ int main(int argc, char* argv[])
         cout << "workspace_cap_mib=" << device::conv_workspace_limit_bytes() / (1024 * 1024) << "\n";
         cout << "conv_autotune=" << (device::conv_autotune_enabled() ? 1 : 0) << "\n";
 
-        // Batch-norm rungs, for A/B runs of the library's own kernels against
-        // cuDNN's graphs: OPENNN_BN_FORWARD_RUNG=auto|cudnn|own and
-        // OPENNN_BN_BACKWARD_RUNG=auto|staged|plain|own (Auto when unset).
+        // Kernel rungs, for A/B runs of the library's own kernels against
+        // cuDNN's (Auto when unset): OPENNN_BN_FORWARD_RUNG=auto|cudnn|own,
+        // OPENNN_BN_BACKWARD_RUNG=auto|staged|plain|own, OPENNN_POOLING_RUNG=auto|cudnn|own.
         {
-            const string forward_rung  = getenv("OPENNN_BN_FORWARD_RUNG")  ? getenv("OPENNN_BN_FORWARD_RUNG")  : "auto";
-            const string backward_rung = getenv("OPENNN_BN_BACKWARD_RUNG") ? getenv("OPENNN_BN_BACKWARD_RUNG") : "auto";
-            if (forward_rung == "cudnn")     device::set_batch_norm_forward_rung(device::BatchNormForwardRung::CudnnGraph);
-            else if (forward_rung == "own")  device::set_batch_norm_forward_rung(device::BatchNormForwardRung::OwnKernel);
-            else if (forward_rung != "auto") throw runtime_error("OPENNN_BN_FORWARD_RUNG: auto|cudnn|own");
-            if (backward_rung == "staged")     device::set_batch_norm_backward_rung(device::BatchNormBackwardRung::StagedFp32);
-            else if (backward_rung == "plain") device::set_batch_norm_backward_rung(device::BatchNormBackwardRung::PlainNative);
-            else if (backward_rung == "own")   device::set_batch_norm_backward_rung(device::BatchNormBackwardRung::OwnKernel);
-            else if (backward_rung != "auto")  throw runtime_error("OPENNN_BN_BACKWARD_RUNG: auto|staged|plain|own");
-            // Max pooling: OPENNN_POOLING_RUNG=auto|cudnn|own.
-            const string pooling_rung = getenv("OPENNN_POOLING_RUNG") ? getenv("OPENNN_POOLING_RUNG") : "auto";
-            if (pooling_rung == "cudnn")     device::set_max_pooling_rung(device::MaxPoolingRung::Cudnn);
-            else if (pooling_rung == "own")  device::set_max_pooling_rung(device::MaxPoolingRung::OwnKernel);
-            else if (pooling_rung != "auto") throw runtime_error("OPENNN_POOLING_RUNG: auto|cudnn|own");
-            cout << "bn_forward_rung=" << forward_rung << " bn_backward_rung=" << backward_rung
-                 << " pooling_rung=" << pooling_rung << "\n";
+            const auto rung = [](const char* variable, initializer_list<pair<const char*, function<void()>>> choices)
+            {
+                const string value = getenv(variable) ? getenv(variable) : "auto";
+                for (const auto& [name, apply] : choices)
+                    if (value == name) { apply(); return value; }
+                throw runtime_error(string(variable) + ": unknown value '" + value + "'");
+            };
+            using device::BatchNormForwardRung; using device::BatchNormBackwardRung; using device::MaxPoolingRung;
+            const string bn_forward = rung("OPENNN_BN_FORWARD_RUNG", {
+                {"auto",  [] {}},
+                {"cudnn", [] { device::set_batch_norm_forward_rung(BatchNormForwardRung::CudnnGraph); }},
+                {"own",   [] { device::set_batch_norm_forward_rung(BatchNormForwardRung::OwnKernel); }}});
+            const string bn_backward = rung("OPENNN_BN_BACKWARD_RUNG", {
+                {"auto",   [] {}},
+                {"staged", [] { device::set_batch_norm_backward_rung(BatchNormBackwardRung::StagedFp32); }},
+                {"plain",  [] { device::set_batch_norm_backward_rung(BatchNormBackwardRung::PlainNative); }},
+                {"own",    [] { device::set_batch_norm_backward_rung(BatchNormBackwardRung::OwnKernel); }}});
+            const string pooling = rung("OPENNN_POOLING_RUNG", {
+                {"auto",  [] {}},
+                {"cudnn", [] { device::set_max_pooling_rung(MaxPoolingRung::Cudnn); }},
+                {"own",   [] { device::set_max_pooling_rung(MaxPoolingRung::OwnKernel); }}});
+            cout << "bn_forward_rung=" << bn_forward << " bn_backward_rung=" << bn_backward
+                 << " pooling_rung=" << pooling << "\n";
         }
 
         if (!cache_dir.empty())

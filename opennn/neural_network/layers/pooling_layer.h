@@ -11,6 +11,10 @@
 #include "opennn/neural_network/layers/layer.h"
 #include "opennn/neural_network/operators/operator.h"
 
+#ifdef OPENNN_HAS_CUDA
+struct MaxPoolGeometry;
+#endif
+
 namespace opennn
 {
 
@@ -70,6 +74,7 @@ struct PoolOperator : Operator
     // window's argmax fits a byte; in Auto only where the mask slot exists
     // (training), so inference keeps cuDNN's forward.
     bool own_max_pooling(const TensorView& input, const TensorView& mask) const noexcept;
+    ::MaxPoolGeometry max_pool_geometry(const TensorView& input) const noexcept;
 
 
 private:

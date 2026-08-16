@@ -245,6 +245,16 @@ cudnnPoolingDescriptor_t PoolOperator::get_pooling_descriptor() const
 
 #ifdef OPENNN_HAS_CUDA
 
+MaxPoolGeometry PoolOperator::max_pool_geometry(const TensorView& input) const noexcept
+{
+    return {input.size() / (input_height * input_width * input_channels),
+            input_height, input_width, input_channels,
+            get_output_height(), get_output_width(),
+            to_int(pool_height), to_int(pool_width),
+            to_int(row_stride), to_int(column_stride),
+            to_int(padding_height), to_int(padding_width)};
+}
+
 bool PoolOperator::own_max_pooling(const TensorView& input, const TensorView& mask) const noexcept
 {
     if (method != Max || pool_height * pool_width > 255) return false;
@@ -274,16 +284,11 @@ void PoolOperator::forward_propagate(ForwardPropagation& forward_propagation, si
     {
         if (own_max_pooling(input, indices))
         {
-            const Index batch = input.size() / (input_height * input_width * input_channels);
             input.dispatch([&]<typename T>()
             {
                 max_pooling_forward_cuda<T>(input.as<T>(), output.as<T>(),
                                             indices.empty() ? nullptr : indices.as<uint8_t>(),
-                                            batch, input_height, input_width, input_channels,
-                                            get_output_height(), get_output_width(),
-                                            to_int(pool_height), to_int(pool_width),
-                                            to_int(row_stride), to_int(column_stride),
-                                            to_int(padding_height), to_int(padding_width));
+                                            max_pool_geometry(input));
             });
             return;
         }
@@ -324,15 +329,10 @@ void PoolOperator::back_propagate(ForwardPropagation& forward_propagation, BackP
         // The forward left the argmax mask exactly when it ran the library kernel.
         if (own_max_pooling(input, indices) && !indices.empty())
         {
-            const Index batch = input.size() / (input_height * input_width * input_channels);
             output_delta.dispatch([&]<typename T>()
             {
                 max_pooling_backward_cuda<T>(output_delta.as<T>(), indices.as<uint8_t>(), input_delta.as<T>(),
-                                             batch, input_height, input_width, input_channels,
-                                             get_output_height(), get_output_width(),
-                                             to_int(pool_height), to_int(pool_width),
-                                             to_int(row_stride), to_int(column_stride),
-                                             to_int(padding_height), to_int(padding_width));
+                                             max_pool_geometry(input));
             });
             return;
         }

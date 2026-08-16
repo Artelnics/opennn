@@ -17,21 +17,20 @@
 // path; ties go to the first window position, as in the CPU path.
 // `mask` may be null in the forward (inference: nothing to save).
 
-template<typename T>
-void max_pooling_forward_cuda(const T* x, T* y, uint8_t* mask,
-                              Index batch, Index height, Index width, Index channels,
-                              Index out_height, Index out_width,
-                              int pool_height, int pool_width,
-                              int stride_h, int stride_w,
-                              int pad_h, int pad_w);
+struct MaxPoolGeometry
+{
+    Index batch, height, width, channels;
+    Index out_height, out_width;
+    int pool_height, pool_width;
+    int stride_h, stride_w;
+    int pad_h, pad_w;
+};
 
 template<typename T>
-void max_pooling_backward_cuda(const T* dy, const uint8_t* mask, T* dx,
-                               Index batch, Index height, Index width, Index channels,
-                               Index out_height, Index out_width,
-                               int pool_height, int pool_width,
-                               int stride_h, int stride_w,
-                               int pad_h, int pad_w);
+void max_pooling_forward_cuda(const T* x, T* y, uint8_t* mask, const MaxPoolGeometry&);
+
+template<typename T>
+void max_pooling_backward_cuda(const T* dy, const uint8_t* mask, T* dx, const MaxPoolGeometry&);
 
 #endif
 
