@@ -140,6 +140,13 @@ class ResnetFamily(Family):
             env["PT_FAST"] = "1"
             if precision == "bf16":
                 env["PT_BF16"] = "1"
+            # PYTORCH_BEST=1: PyTorch's strongest one-line options on top of the
+            # fast path - torch.compile(mode="reduce-overhead") (CUDA graphs)
+            # and Adam(fused=True). Measured 2026-08-16 on the RTX 3060 (bf16):
+            # 2.5x the fast path at batch 128, 1.4x at 512, 1.13x at 2048.
+            if os.environ.get("PYTORCH_BEST"):
+                env["PT_COMPILE_MODE"] = "reduce-overhead"
+                env["PT_FUSED_ADAM"] = "1"
         else:
             env["LD_LIBRARY_PATH"] = os.pathsep.join(tensorflow_library_dirs(PY))
             if precision == "bf16":

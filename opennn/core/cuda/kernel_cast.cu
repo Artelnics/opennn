@@ -41,19 +41,41 @@ void cast_fp32_to_bf16(const Index n, const float* src, __nv_bfloat16* dst,
                    cast_fp32_to_bf16_kernel, src, dst);
 }
 
-__global__ void cast_bf16_to_fp32_kernel(const int n,
+// Four elements per thread (one 8-byte load, one float4 store) when both
+// pointers allow it, a scalar tail otherwise - the widening twin of the kernel
+// above. This is the per-step cast of every convolution weight gradient in
+// BF16 training (cuDNN's wgrad stores BF16 for these shapes), 53 launches over
+// ResNet-50's 25M parameters.
+__global__ void cast_bf16_to_fp32_kernel(const int n_vec,
+                                         const int n,
                                          const __nv_bfloat16* __restrict__ src,
                                          float* __restrict__ dst)
 {
     const Index tid = Index(blockIdx.x) * blockDim.x + threadIdx.x;
     const Index stride = Index(blockDim.x) * gridDim.x;
-    for (Index i = tid; i < n; i += stride)
+
+    const __nv_bfloat162* __restrict__ const src2 = reinterpret_cast<const __nv_bfloat162*>(src);
+    float4* __restrict__ const dst4 = reinterpret_cast<float4*>(dst);
+
+    for (Index i = tid; i < n_vec; i += stride)
+    {
+        const uint2 raw = reinterpret_cast<const uint2*>(src2)[i];
+        const float2 lo = __bfloat1622float2(*reinterpret_cast<const __nv_bfloat162*>(&raw.x));
+        const float2 hi = __bfloat1622float2(*reinterpret_cast<const __nv_bfloat162*>(&raw.y));
+        dst4[i] = make_float4(lo.x, lo.y, hi.x, hi.y);
+    }
+
+    const int tail_start = n_vec * 4;
+    for (Index i = tail_start + tid; i < n; i += stride)
         dst[i] = __bfloat162float(src[i]);
 }
 
 void cast_bf16_to_fp32(const Index n, const __nv_bfloat16* src, float* dst)
 {
-    launch_elementwise(n, cast_bf16_to_fp32_kernel, src, dst);
+    const bool aligned = are_float4_aligned(dst)
+        && (reinterpret_cast<std::uintptr_t>(src) & 0x7) == 0;
+    launch_vec4_on(opennn::device::get_compute_stream(), n, aligned,
+                   cast_bf16_to_fp32_kernel, src, dst);
 }
 
 // OpenNN: Open Neural Networks Library.

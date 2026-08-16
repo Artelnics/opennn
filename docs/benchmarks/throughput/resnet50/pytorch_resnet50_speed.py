@@ -14,6 +14,11 @@
 #   usage:  python pytorch_resnet50_speed.py [epochs] [batch] [data_dir]
 #   env:    PT_FAST=1  -> channels_last + torch.compile + TF32
 #           PT_BF16=1  -> torch.autocast(bfloat16) (matches OpenNN's bf16 column)
+#           PT_COMPILE_MODE=reduce-overhead|max-autotune  (with PT_FAST; default
+#                      is torch.compile's default mode; reduce-overhead adds
+#                      CUDA graphs, PyTorch's answer to OpenNN's graphed step)
+#           PT_FUSED_ADAM=1 -> torch.optim.Adam(fused=True), one kernel per step
+#                      instead of the foreach implementation
 
 import sys
 import time
@@ -28,6 +33,8 @@ batch = int(sys.argv[2]) if len(sys.argv) > 2 else 128
 data_dir = sys.argv[3] if len(sys.argv) > 3 else "cifar10"
 fast = os.environ.get("PT_FAST") is not None
 bf16 = os.environ.get("PT_BF16") is not None
+compile_mode = os.environ.get("PT_COMPILE_MODE")   # None -> torch.compile default
+fused_adam = os.environ.get("PT_FUSED_ADAM") is not None
 
 assert torch.cuda.is_available(), "CUDA GPU required"
 torch.manual_seed(42)
@@ -98,17 +105,18 @@ if fast:
 n = x.shape[0]
 classes = int(y.max().item()) + 1
 print(f"device={torch.cuda.get_device_name(0)}")
-print(f"path={'fast(channels_last+compile)' if fast else 'eager(NCHW)'}{' +bf16' if bf16 else ''}")
+print(f"path={'fast(channels_last+compile' + (f':{compile_mode}' if compile_mode else '') + ')' if fast else 'eager(NCHW)'}"
+      f"{' +bf16' if bf16 else ''}{' +fused_adam' if fused_adam else ''}")
 print(f"samples={n} batch={batch} epochs={epochs} classes={classes}")
 
 model = ResNet50(classes).cuda()
 print(f"parameters={sum(p.numel() for p in model.parameters())}")
 if fast:
     model = model.to(memory_format=torch.channels_last)
-    model = torch.compile(model)
+    model = torch.compile(model, mode=compile_mode) if compile_mode else torch.compile(model)
 
 loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001, fused=fused_adam)
 starts = list(range(0, n - batch + 1, batch))
 # An epoch runs whole batches and drops the remainder (50,000 CIFAR rows at
 # batch 16,384 leave 17,232 unprocessed), so throughput must divide the rows

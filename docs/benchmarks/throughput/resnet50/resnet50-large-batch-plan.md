@@ -329,12 +329,41 @@ these shapes; more would need custom convolution kernels (weeks, high risk) or
 a GPU/cuDNN generation where the fused engines exist - which the probe tells
 in two minutes.
 
-### Phase 4 — parallel small items
+### Phase 4 — parallel small items (measured 2026-08-16)
 
-Keep the small-batch lead (graphs, resident gather); move the resident gather
-inside the graph (small-batch only); vectorize `cast_bf16_to_fp32`; the
-protocol question of PyTorch `reduce-overhead` + fused Adam (≈+30% for PyTorch
-at 128 per the 2026-08-11 note) — decide it explicitly rather than inherit it.
+- **Resident gather inside the graph: already the case.** The host profile at
+  batch 128 (`OPENNN_PROFILE=1`, bf16) shows the host in `step:group_sync`
+  68% of the epoch and in `cudaGraphLaunch` 25% (~19 ms per 8-step graph of
+  ~5,000 nodes, well under the ~74 ms the GPU takes for the group);
+  `step:gather_issue` is 0.6%. The GPU is the bottleneck at 128; the gather
+  kernel already runs inside the captured step and only the 1 KB index upload
+  is outside. Nothing to move.
+- **`cast_bf16_to_fp32` vectorized** (four elements per thread, the widening
+  twin of `cast_fp32_to_bf16`): the 53 per-step conv weight-gradient casts
+  measured neutral (bf16 128 14,146 / 14,136 vs 14,129 / 14,080; 512 20,725
+  vs 20,658; 2048 25,556 vs 25,603) - launch-bound small tensors, not
+  bandwidth. Kept for symmetry; no claim.
+- **PyTorch protocol - the one that matters.** The sweep runs PyTorch on
+  `PT_FAST` (channels_last + `torch.compile` default mode + TF32, foreach
+  Adam). Its strongest one-line options, `torch.compile(mode="reduce-overhead")`
+  (CUDA graphs) and `Adam(fused=True)`, now behind `PT_COMPILE_MODE` /
+  `PT_FUSED_ADAM` in the driver and `PYTORCH_BEST=1` in the sweep runner,
+  measured on the RTX 3060 / cuDNN 9.24, bf16, same session (hot GPU, so the
+  ratios are the robust part):
+
+  | batch | PT fast (sweep protocol) | PT fast + reduce-overhead + fused Adam | OpenNN (same session) |
+  |---:|---:|---:|---:|
+  | 128 | 5,342 (7,965 in the cool sweep) | **13,211** (fused Adam alone 10,710; graphs alone 6,468) | 14,1xx |
+  | 512 | 13,819 | **19,093** | 20,7xx |
+  | 2048 | 20,138 | **22,661** | 25,556 |
+
+  The published protocol understates PyTorch by 2.5x at 128, 1.4x at 512,
+  1.13x at 2048. OpenNN still leads at every point against PyTorch's best
+  (+7% at 128, +8% at 512, +13% at 2048 in this session), but the small-batch
+  margin is a few percent, not the 1.75x the sweep table shows. Recommendation:
+  make `PYTORCH_BEST=1` the sweep's PyTorch protocol (a PyTorch user gets both
+  options for free), re-run the three-way table with it, and state the margin
+  against that. The same question is open for TensorFlow (XLA `jit_compile`).
 
 ## 4. Projected trajectory (batch 2048, ms/step; lower is better)
 
