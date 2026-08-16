@@ -94,6 +94,16 @@ enum class BatchNormBackwardRung { Auto, StagedFp32, PlainNative, OwnKernel };
 BatchNormBackwardRung batch_norm_backward_rung() noexcept;
 void set_batch_norm_backward_rung(BatchNormBackwardRung) noexcept;
 
+// Which batch-norm training forward to run. Auto takes the library's own
+// kernel (batchnorm_forward_fused_cuda) wherever it can leave the packed ReLU
+// mask the BF16 backward reads in place of Y - a BF16 ReLU output with a
+// channel count that is a multiple of 8, i.e. every BN of a ResNet - and
+// cuDNN's fused graph elsewhere (FP32 included: measured slower there); the
+// other two pin one for parity checks. Diagnostic; Auto in production.
+enum class BatchNormForwardRung { Auto, CudnnGraph, OwnKernel };
+BatchNormForwardRung batch_norm_forward_rung() noexcept;
+void set_batch_norm_forward_rung(BatchNormForwardRung) noexcept;
+
 class CudaAllocationGrowthGuard
 {
 public:

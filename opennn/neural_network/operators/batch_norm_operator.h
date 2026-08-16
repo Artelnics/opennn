@@ -48,6 +48,7 @@ struct BatchNormalizationOperator : Operator
 
     void set_parameters_random() override { init_defaults(); }
     void set_parameters_glorot() override { init_defaults(); }
+    void initialize_states() override;
 
     void init_defaults();
 
@@ -77,7 +78,8 @@ private:
     void apply_training_gpu (const TensorView&,
                              TensorView&, TensorView&,
                              TensorView&,
-                             const TensorView&);
+                             const TensorView&,
+                             TensorView&);
 
     void apply_delta_cpu(const TensorView&,
                          const TensorView&,
@@ -87,8 +89,18 @@ private:
                          const TensorView&,
                          const TensorView&,
                          const TensorView&,
+                         const TensorView&,
                          TensorView&,
                          TensorView&) const;
+
+    // The library's own training forward runs, and leaves the packed ReLU
+    // mask in `mask`, when the host layer gave it a mask slot (a ReLU output
+    // with a channel count that packs) and the backward will read it (BF16),
+    // unless the forward rung is pinned.
+    bool own_forward_kernel(const TensorView& mask, Type dtype) const noexcept;
+
+    // The optional fourth output slot: the packed ReLU mask.
+    TensorView& relu_mask(ForwardPropagation&, size_t layer) const noexcept;
 };
 
 }

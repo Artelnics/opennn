@@ -93,6 +93,22 @@ int main(int argc, char* argv[])
         cout << "workspace_cap_mib=" << device::conv_workspace_limit_bytes() / (1024 * 1024) << "\n";
         cout << "conv_autotune=" << (device::conv_autotune_enabled() ? 1 : 0) << "\n";
 
+        // Batch-norm rungs, for A/B runs of the library's own kernels against
+        // cuDNN's graphs: OPENNN_BN_FORWARD_RUNG=auto|cudnn|own and
+        // OPENNN_BN_BACKWARD_RUNG=auto|staged|plain|own (Auto when unset).
+        {
+            const string forward_rung  = getenv("OPENNN_BN_FORWARD_RUNG")  ? getenv("OPENNN_BN_FORWARD_RUNG")  : "auto";
+            const string backward_rung = getenv("OPENNN_BN_BACKWARD_RUNG") ? getenv("OPENNN_BN_BACKWARD_RUNG") : "auto";
+            if (forward_rung == "cudnn")     device::set_batch_norm_forward_rung(device::BatchNormForwardRung::CudnnGraph);
+            else if (forward_rung == "own")  device::set_batch_norm_forward_rung(device::BatchNormForwardRung::OwnKernel);
+            else if (forward_rung != "auto") throw runtime_error("OPENNN_BN_FORWARD_RUNG: auto|cudnn|own");
+            if (backward_rung == "staged")     device::set_batch_norm_backward_rung(device::BatchNormBackwardRung::StagedFp32);
+            else if (backward_rung == "plain") device::set_batch_norm_backward_rung(device::BatchNormBackwardRung::PlainNative);
+            else if (backward_rung == "own")   device::set_batch_norm_backward_rung(device::BatchNormBackwardRung::OwnKernel);
+            else if (backward_rung != "auto")  throw runtime_error("OPENNN_BN_BACKWARD_RUNG: auto|staged|plain|own");
+            cout << "bn_forward_rung=" << forward_rung << " bn_backward_rung=" << backward_rung << "\n";
+        }
+
         if (!cache_dir.empty())
             cerr << "note: custom cache dir ignored (OpenNN caches in "
                          "<data_path>/.cache): " << cache_dir << "\n";

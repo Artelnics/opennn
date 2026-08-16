@@ -12,23 +12,41 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
                               const float* mean, const float* variance,
                               const float epsilon, const bool apply_relu, T* y);
 
-// Fused batch-norm backward for NHWC activations, FP32 math on BF16 or FP32
-// tensors: the ReLU mask taken from the saved output Y (skipped when y is
-// null), the two per-channel reductions, dX written in place over dY, and -
-// when dpre is given - the residual fork dPre = masked dY for the skip branch.
-// Two launches over the tensor instead of the separate dReLU kernel, delta
-// copy and staged casts a shape without a fused cuDNN engine used to pay.
-// Threads own channel pairs (vector loads along C, contiguous in NHWC) when
-// channels is even. With `xhat_from_y` and a ReLU output that is BN(x) itself
-// (no residual add), the reduce pass rebuilds x_hat as (y - beta) / gamma and
-// skips X (the apply pass still needs X on masked elements): six passes instead
-// of seven. `partials` is scratch for 2 * batchnorm_backward_partial_rows(rows)
-// * channels floats.
+// Fused NHWC batch-norm training kernels (library path when cuDNN has no
+// fused engine for a shape, or by choice). Threads own VEC adjacent channels
+// (vector loads along C, contiguous in NHWC): eight when the channel count
+// allows it, else two, else one.
+//
+// Forward: batch statistics (reduce + finalize, running-statistics update
+// included), then y = relu?(bn(x) [+ residual]). With `relu` and a non-null
+// `mask` (channels % 8 == 0), the apply pass packs (y > 0) for each row's
+// eight-channel group into one byte at mask[(row * channels + c0) / 8].
+// `partials` is scratch for (2 * batchnorm_backward_partial_rows(rows) + 2) *
+// channels floats.
+//
+// Backward: dY is gated by the mask when given (BF16 only - the eight-channel
+// layout the mask needs is not taken for FP32, where it measured slower), else
+// by y > 0 when `y` is given, then dbeta/dgamma and dX in place (dpre receives the gated dY for a
+// residual fork). With `xhat_from_y`, no mask, and a ReLU output that is BN(x)
+// itself (no residual add), the reduce pass rebuilds x_hat as (y - beta) /
+// gamma and skips X (the apply pass still needs X on masked elements): six
+// passes instead of seven. `partials` is scratch for 2 *
+// batchnorm_backward_partial_rows(rows) * channels floats.
 Index batchnorm_backward_partial_rows(const Index rows);
 
 template<typename T>
+void batchnorm_forward_fused_cuda(const Index rows, const Index channels,
+                                  const T* x, const T* residual,
+                                  const float* gamma, const float* beta,
+                                  const float epsilon, const float momentum,
+                                  T* y, float* mean, float* inv_var,
+                                  float* running_mean, float* running_var,
+                                  const bool relu, uint8_t* mask,
+                                  float* partials);
+
+template<typename T>
 void batchnorm_backward_fused_cuda(const Index rows, const Index channels,
-                                   const T* x, T* dy_dx, const T* y,
+                                   const T* x, T* dy_dx, const T* y, const uint8_t* mask,
                                    const float* gamma, const float* beta,
                                    const float* mean, const float* inv_var,
                                    const bool xhat_from_y,

@@ -138,10 +138,21 @@ vector<TensorSpec> Convolutional::get_forward_specs(Index batch_size) const
     const Shape convolution_view_shape = batch_norm.active() ? output_shape          : Shape{};
     const Shape bn_stat_shape          = batch_norm.active() ? Shape{kernels_number} : Shape{};
 
+    // Packed ReLU mask of the BN output, one bit per element, written by the
+    // library's own BN forward and read by its BF16 backward in place of Y
+    // (see BatchNormForwardRung). Eight channels per byte, so only for channel
+    // counts that pack, and only in BF16, where the backward reads it.
+    const bool relu_mask = batch_norm.active() && batch_norm.fuse_relu
+        && kernels_number % 8 == 0 && compute_dtype == Type::BF16;
+    const Shape relu_mask_shape = relu_mask
+        ? Shape{batch_size, get_output_height(), get_output_width(), kernels_number / 8}
+        : Shape{};
+
     return {
                                      {convolution_view_shape, act},
                                      {bn_stat_shape,          Type::FP32},
                                      {bn_stat_shape,          Type::FP32},
+                                     {relu_mask_shape,        Type::INT8},
                                      {output_shape,           act},
     };
 }
@@ -183,7 +194,7 @@ void Convolutional::update_convolution_operator()
     if (batch_norm.active())
     {
         batch_norm.input_slots  = {ConvolutionView};
-        batch_norm.output_slots = {Output, BatchNormMean, BatchNormInverseVariance};
+        batch_norm.output_slots = {Output, BatchNormMean, BatchNormInverseVariance, ReluMask};
     }
 
     activation_operator.input_slots  = {Output};

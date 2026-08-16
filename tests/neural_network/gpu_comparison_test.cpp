@@ -539,6 +539,31 @@ TEST_F(GpuComparison, ProjectionResidualGradient)
 // rung in turn on a ResNet-style residual block and checks the whole-network
 // gradient against the CPU fp32 reference, in fp32 and in bf16, so "wrong"
 // versus "bf16-rounded" is a number, not an opinion.
+// A ResNet-style residual block, batch-normalized throughout: stem, 3x3 main
+// path, and a 1x1 residual convolution whose BN adds the stem output before
+// its ReLU - the wiring the fused BN forward/backward paths are built for.
+static void build_residual_block(NeuralNetwork& network, const Shape& input_shape)
+{
+    network.add_layer(make_unique<Convolutional>(
+                          input_shape, Shape{1, 1, input_shape[2], 64}, "ReLU",
+                          Shape{1, 1}, "Same", true, "stem"),
+                      {-1});
+    network.add_layer(make_unique<Convolutional>(
+                          Shape{4, 4, 64}, Shape{3, 3, 64, 64}, "ReLU",
+                          Shape{1, 1}, "Same", true, "main"),
+                      {0});
+    auto residual = make_unique<Convolutional>(
+        Shape{4, 4, 64}, Shape{1, 1, 64, 64}, "ReLU",
+        Shape{1, 1}, "Same", true, "residual");
+    residual->set_residual(true);
+    network.add_layer(std::move(residual), {1, 0});
+    network.add_layer(make_unique<Flatten>(Shape{4, 4, 64}), {2});
+    network.add_layer(make_unique<opennn::Dense>(
+                          Shape{1024}, Shape{1}, "Identity"),
+                      {3});
+    network.compile();
+}
+
 TEST_F(GpuComparison, ResidualBlockGradientBf16PerBackwardRung)
 {
     constexpr Index samples_number = 8;
@@ -548,27 +573,7 @@ TEST_F(GpuComparison, ResidualBlockGradientBf16PerBackwardRung)
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
-    const auto build_network = [&](NeuralNetwork& network)
-    {
-        network.add_layer(make_unique<Convolutional>(
-                              input_shape, Shape{1, 1, 16, 64}, "ReLU",
-                              Shape{1, 1}, "Same", true, "stem"),
-                          {-1});
-        network.add_layer(make_unique<Convolutional>(
-                              Shape{4, 4, 64}, Shape{3, 3, 64, 64}, "ReLU",
-                              Shape{1, 1}, "Same", true, "main"),
-                          {0});
-        auto residual = make_unique<Convolutional>(
-            Shape{4, 4, 64}, Shape{1, 1, 64, 64}, "ReLU",
-            Shape{1, 1}, "Same", true, "residual");
-        residual->set_residual(true);
-        network.add_layer(std::move(residual), {1, 0});
-        network.add_layer(make_unique<Flatten>(Shape{4, 4, 64}), {2});
-        network.add_layer(make_unique<opennn::Dense>(
-                              Shape{1024}, Shape{1}, "Identity"),
-                          {3});
-        network.compile();
-    };
+    const auto build_network = [&](NeuralNetwork& network) { build_residual_block(network, input_shape); };
 
     Configuration::instance().set(Device::CPU, Type::FP32);
     NeuralNetwork cpu_network;
@@ -644,6 +649,106 @@ TEST_F(GpuComparison, ResidualBlockGradientBf16PerBackwardRung)
     EXPECT_LT(plain_error, 2.0e-1f);
     EXPECT_LT(own_error, 2.0e-1f);
     EXPECT_LT(auto_error, 2.0e-1f);
+}
+
+// The library's own batch-norm training forward (BatchNormForwardRung::
+// OwnKernel: batch statistics, running-statistics update, scale/shift with the
+// residual add and ReLU, and the packed ReLU mask) against cuDNN's fused graph
+// on the residual block, in fp32 and bf16. Two things are compared per rung:
+// the whole-network gradient with the backward pinned to the library kernel -
+// which gates dY by the mask when the forward left one and by Y otherwise, so
+// the two paths meet here - and the inference output after that one training
+// forward, which is where the running statistics show.
+TEST_F(GpuComparison, ResidualBlockBatchNormForwardRungParity)
+{
+    constexpr Index samples_number = 8;
+    const Shape input_shape{4, 4, 16};
+
+    TabularDataset dataset(samples_number, input_shape, Shape{1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    Tensor4 inputs(samples_number, input_shape[0], input_shape[1], input_shape[2]);
+    inputs.setRandom();
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    NeuralNetwork cpu_network;
+    build_residual_block(cpu_network, input_shape);
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+
+    Loss cpu_loss(&cpu_network, &dataset);
+    cpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR cpu_gradient = calculate_gradient(cpu_loss);
+    const MatrixR cpu_outputs = cpu_network.calculate_outputs(inputs);
+
+    struct RestoreRungs
+    {
+        ~RestoreRungs()
+        {
+            device::set_batch_norm_forward_rung(device::BatchNormForwardRung::Auto);
+            device::set_batch_norm_backward_rung(device::BatchNormBackwardRung::Auto);
+        }
+    } restore;
+    device::set_batch_norm_backward_rung(device::BatchNormBackwardRung::OwnKernel);
+
+    struct Run { VectorR gradient; MatrixR outputs; };
+    const auto gpu_run = [&](Type type, device::BatchNormForwardRung rung)
+    {
+        device::set_batch_norm_forward_rung(rung);
+        Configuration::instance().set(Device::CUDA, type);
+        NeuralNetwork gpu_network;
+        build_residual_block(gpu_network, input_shape);
+        gpu_network.set_parameters(parameters);
+        Loss gpu_loss(&gpu_network, &dataset);
+        gpu_loss.set_error(Loss::Error::MeanSquaredError);
+        Run run;
+        run.gradient = calculate_gradient(gpu_loss);
+        run.outputs = gpu_network.calculate_outputs(inputs);
+        return run;
+    };
+
+    const Run fp32_cudnn = gpu_run(Type::FP32, device::BatchNormForwardRung::CudnnGraph);
+    const Run fp32_own   = gpu_run(Type::FP32, device::BatchNormForwardRung::OwnKernel);
+    const Run bf16_cudnn = gpu_run(Type::BF16, device::BatchNormForwardRung::CudnnGraph);
+    const Run bf16_own   = gpu_run(Type::BF16, device::BatchNormForwardRung::OwnKernel);
+
+    for (const Run* run : {&fp32_cudnn, &fp32_own, &bf16_cudnn, &bf16_own})
+    {
+        ASSERT_EQ(cpu_gradient.size(), run->gradient.size());
+        ASSERT_EQ(cpu_outputs.rows(), run->outputs.rows());
+        ASSERT_EQ(cpu_outputs.cols(), run->outputs.cols());
+    }
+
+    const float fp32_cudnn_error   = relative_difference(cpu_gradient, fp32_cudnn.gradient);
+    const float fp32_own_error     = relative_difference(cpu_gradient, fp32_own.gradient);
+    const float fp32_own_vs_cudnn  = relative_difference(fp32_cudnn.gradient, fp32_own.gradient);
+    const float bf16_own_vs_cudnn  = relative_difference(bf16_cudnn.gradient, bf16_own.gradient);
+    const float fp32_cudnn_outputs = relative_difference(cpu_outputs, fp32_cudnn.outputs);
+    const float fp32_own_outputs   = relative_difference(cpu_outputs, fp32_own.outputs);
+    const float bf16_own_outputs   = relative_difference(bf16_cudnn.outputs, bf16_own.outputs);
+
+    cout << "batch-norm forward rung parity - fp32 gradient vs reference: cuDNN " << fp32_cudnn_error
+         << ", own " << fp32_own_error << ", own vs cuDNN " << fp32_own_vs_cudnn
+         << "; bf16 gradient own vs cuDNN " << bf16_own_vs_cudnn
+         << "; inference after one step, fp32 vs reference: cuDNN " << fp32_cudnn_outputs
+         << ", own " << fp32_own_outputs << "; bf16 own vs cuDNN " << bf16_own_outputs << "\n";
+
+    // fp32: both forwards reproduce the reference gradient, and each other.
+    EXPECT_LT(fp32_cudnn_error, 5.0e-3f);
+    EXPECT_LT(fp32_own_error, 5.0e-3f);
+    EXPECT_LT(fp32_own_vs_cudnn, 1.0e-3f);
+
+    // bf16: same computation, same rounding points; must agree with cuDNN's.
+    EXPECT_LT(bf16_own_vs_cudnn, 1.0e-2f);
+
+    // Running statistics: inference after the one training forward matches the
+    // reference in fp32 (measured ~1e-5; the running variance keeps cuDNN's
+    // sample-variance convention, a factor rows/(rows-1) inside the momentum
+    // term, and the reference the population one).
+    EXPECT_LT(fp32_cudnn_outputs, 1.0e-3f);
+    EXPECT_LT(fp32_own_outputs, 1.0e-3f);
+    EXPECT_LT(bf16_own_outputs, 2.0e-2f);
 }
 
 // The real ResNet builder, small: a stem, a projection-skip bottleneck block and

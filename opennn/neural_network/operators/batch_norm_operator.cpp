@@ -127,6 +127,11 @@ void BatchNormalizationOperator::init_defaults()
 {
     if (gamma.data)            gamma.as_vector().setOnes();
     if (beta.data)             beta.as_vector().setZero();
+    initialize_states();
+}
+
+void BatchNormalizationOperator::initialize_states()
+{
     if (running_mean.data)     running_mean.as_vector().setZero();
     if (running_variance.data) running_variance.as_vector().setOnes();
     invalidate_inference_cache();
@@ -207,7 +212,8 @@ void BatchNormalizationOperator::forward_propagate(ForwardPropagation& forward_p
     TensorView& mean         = get_output(forward_propagation, layer, 1);
     TensorView& inv_variance = get_output(forward_propagation, layer, 2);
 
-    if (input.is_cuda()) apply_training_gpu(input, mean, inv_variance, output, residual);
+    if (input.is_cuda()) apply_training_gpu(input, mean, inv_variance, output, residual,
+                                            relu_mask(forward_propagation, layer));
     else
     {
         apply_training_cpu(input, mean, inv_variance, output);
@@ -215,6 +221,25 @@ void BatchNormalizationOperator::forward_propagate(ForwardPropagation& forward_p
     }
 
     invalidate_inference_cache();
+}
+
+TensorView& BatchNormalizationOperator::relu_mask(ForwardPropagation& forward_propagation, size_t layer) const noexcept
+{
+    static TensorView empty;
+    return output_slots.size() > 3 ? get_output(forward_propagation, layer, 3) : empty;
+}
+
+bool BatchNormalizationOperator::own_forward_kernel(const TensorView& mask, Type dtype) const noexcept
+{
+    switch (device::batch_norm_forward_rung())
+    {
+    case device::BatchNormForwardRung::CudnnGraph: return false;
+    case device::BatchNormForwardRung::OwnKernel:  return features % 8 == 0;
+    case device::BatchNormForwardRung::Auto:       break;
+    }
+    // Where the mask pays: the BF16 backward reads it in place of Y (the FP32
+    // backward keeps its channel-pair layout, see batchnorm_backward_fused_cuda).
+    return fuse_relu && !mask.empty() && dtype == Type::BF16;
 }
 
 void BatchNormalizationOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
@@ -239,7 +264,8 @@ void BatchNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
         return;
     }
 
-    apply_delta_gpu(input, output, mean, inverse_variance, delta, residual_delta);
+    apply_delta_gpu(input, output, mean, inverse_variance, relu_mask(forward_propagation, layer),
+                    delta, residual_delta);
 }
 
 void BatchNormalizationOperator::apply_inference_cpu(const TensorView& input, TensorView& output)
@@ -547,7 +573,8 @@ void BatchNormalizationOperator::apply_inference_gpu(const TensorView& input, Te
 void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
                                    TensorView& mean, TensorView& inverse_variance,
                                    TensorView& output,
-                                   const TensorView& residual)
+                                   const TensorView& residual,
+                                   TensorView& mask)
 {
     PROFILE_SCOPE("op:bn_fwd");
 
@@ -556,6 +583,33 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
 
     throw_if(!input.is_fp32() && !bf16,
              "BatchNormalizationOperator: GPU training forward requires FP32 or BF16.");
+
+    if (own_forward_kernel(mask, input.type))
+    {
+        const Index rows = input.size() / features;
+        float* partials = ensure_bf16_to_fp32_workspace(
+            (2 * batchnorm_backward_partial_rows(rows) + 2) * features);
+        const void* r = fuse_add ? residual.data : nullptr;
+        uint8_t* mask_bits = fuse_relu && !mask.empty() ? mask.as<uint8_t>() : nullptr;
+
+        if (bf16)
+            batchnorm_forward_fused_cuda<bfloat16>(
+                rows, features,
+                input.as<bfloat16>(), static_cast<const bfloat16*>(r),
+                gamma.as<float>(), beta.as<float>(), BN_EPSILON, momentum,
+                output.as<bfloat16>(), mean.as<float>(), inverse_variance.as<float>(),
+                running_mean.as<float>(), running_variance.as<float>(),
+                fuse_relu, mask_bits, partials);
+        else
+            batchnorm_forward_fused_cuda<float>(
+                rows, features,
+                input.as<float>(), static_cast<const float*>(r),
+                gamma.as<float>(), beta.as<float>(), BN_EPSILON, momentum,
+                output.as<float>(), mean.as<float>(), inverse_variance.as<float>(),
+                running_mean.as<float>(), running_variance.as<float>(),
+                fuse_relu, mask_bits, partials);
+        return;
+    }
 
     const bool ran = cudnn_frontend::bn_frontend_enabled()
         && cudnn_frontend::run_frontend(bn_graph_cache, "BatchNormalizationOperator", [&](BatchNormalizationGraphCache& cache)
@@ -624,6 +678,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                                 const TensorView& output,
                                 const TensorView& mean,
                                 const TensorView& inverse_variance,
+                                const TensorView& mask,
                                 TensorView& delta,
                                 TensorView& residual_delta) const
 {
@@ -712,7 +767,10 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
             if (!fully_fused)
                 cerr << "BatchNormalizationOperator backward c" << features
                      << " r" << input.size() / features << " batch " << batch << ": "
-                     << (entry.bwd_own_kernel ? "own fused kernel (no fused cuDNN engine)"
+                     << (entry.bwd_own_kernel
+                            ? (fuse_relu && own_forward_kernel(mask, input.type) && bf16
+                                   ? "own fused kernel, ReLU from the forward mask (no fused cuDNN engine)"
+                                   : "own fused kernel (no fused cuDNN engine)")
                          : !entry.bwd_native_dtype ? "FP32-staged cuDNN graph"
                          : entry.bwd_fused_relu ? "cuDNN graph, fused ReLU, no residual fork"
                          : "plain cuDNN graph; ReLU/copy run separately")
@@ -727,16 +785,21 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
             void* dpre = fuse_add && !residual_delta.empty() ? residual_delta.data : nullptr;
             const void* y = fuse_relu ? output.data : nullptr;
 
-            // For a ReLU output that is BN(x) itself the reduce pass rebuilds
-            // x_hat from Y and skips X (six passes, not seven). Kept to FP32: in
-            // BF16 the (y - beta) / gamma reconstruction amplifies y's rounding by
-            // 1/gamma.
+            // The ReLU gate comes from the packed mask the library's own forward
+            // left, when it ran; otherwise from Y.
+            const uint8_t* mask_bits = fuse_relu && own_forward_kernel(mask, input.type) && !mask.empty()
+                ? mask.as<uint8_t>() : nullptr;
+
+            // Without a mask, for a ReLU output that is BN(x) itself the reduce
+            // pass rebuilds x_hat from Y and skips X (six passes, not seven).
+            // Kept to FP32: in BF16 the (y - beta) / gamma reconstruction
+            // amplifies y's rounding by 1/gamma.
             const bool xhat_from_y = fuse_relu && !fuse_add && !bf16;
 
             if (bf16)
                 batchnorm_backward_fused_cuda<bfloat16>(
                     rows, features,
-                    input.as<bfloat16>(), delta.as<bfloat16>(), static_cast<const bfloat16*>(y),
+                    input.as<bfloat16>(), delta.as<bfloat16>(), static_cast<const bfloat16*>(y), mask_bits,
                     gamma.as<float>(), beta.as<float>(), mean.as<float>(), inverse_variance.as<float>(),
                     xhat_from_y,
                     static_cast<bfloat16*>(dpre), gamma_gradient.as<float>(), beta_gradient.as<float>(),
@@ -744,7 +807,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
             else
                 batchnorm_backward_fused_cuda<float>(
                     rows, features,
-                    input.as<float>(), delta.as<float>(), static_cast<const float*>(y),
+                    input.as<float>(), delta.as<float>(), static_cast<const float*>(y), mask_bits,
                     gamma.as<float>(), beta.as<float>(), mean.as<float>(), inverse_variance.as<float>(),
                     xhat_from_y,
                     static_cast<float*>(dpre), gamma_gradient.as<float>(), beta_gradient.as<float>(),
@@ -827,10 +890,10 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
 
 void BatchNormalizationOperator::apply_inference_gpu(const TensorView&, TensorView&, const TensorView&)                 OPENNN_CUDA_STUB_BODY(apply_inference_gpu)
 void BatchNormalizationOperator::apply_training_gpu (const TensorView&, TensorView&, TensorView&, TensorView&,
-                                    const TensorView&)                                                   OPENNN_CUDA_STUB_BODY(apply_training_gpu)
+                                                     const TensorView&, TensorView&)                             OPENNN_CUDA_STUB_BODY(apply_training_gpu)
 void BatchNormalizationOperator::apply_delta_gpu    (const TensorView&, const TensorView&,
-                                    const TensorView&, const TensorView&, TensorView&,
-                                    TensorView&) const                                                  OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
+                                                     const TensorView&, const TensorView&, const TensorView&,
+                                                     TensorView&, TensorView&) const                            OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
 
 #endif
 

@@ -217,13 +217,53 @@ cross-operator fusion the batch-norm passes are close to their floor: forward
 is cuDNN's fused two-pass graph, backward our own two-launch kernel at 7-8
 passes. What remains:
 
-- **3'a. Own batch-norm forward emitting a 1-bit ReLU mask** (~3-4 days).
-  Same two passes as cuDNN's graph (stats reduce; apply + residual add + ReLU),
-  plus a bit-mask write (1/16 of a bf16 tensor). The backward then reads the
-  mask instead of Y in both passes: 8 → 6 passes on residual layers, 7 → 5 on
-  the rest, and the fp32 x̂-from-Y trick becomes unnecessary. Expected ~-5% of
-  the step, both precisions. Gate: gradient tests, forward at parity with the
-  cuDNN graph (measured), backward faster.
+- **3'a. Own batch-norm forward emitting a 1-bit ReLU mask — done for BF16:
+  +6% at bf16 2048 over the shipped code, parity at 128; FP32 measured slower
+  and keeps its previous path.** `batchnorm_forward_fused_cuda` (stats reduce;
+  finalize with the running-statistics update; apply + residual add + ReLU)
+  packs (y > 0) eight channels per byte into a new `ReluMask` forward slot of
+  `Convolutional`; `batchnorm_backward_fused_cuda` gates dY by that byte in
+  both passes instead of re-reading Y, on an eight-channel (16-byte) vector
+  layout. `device::BatchNormForwardRung {Auto, CudnnGraph, OwnKernel}` pins it
+  like the backward rung (harness: `OPENNN_BN_FORWARD_RUNG`,
+  `OPENNN_BN_BACKWARD_RUNG`); Auto takes the own forward for BF16 ReLU outputs
+  with channels % 8 == 0 (every BN of a ResNet) and cuDNN's fused graph
+  elsewhere; cuDNN's fully fused backward, where a shape has one, still wins
+  and still runs. Correctness: `ResidualBlockBatchNormForwardRungParity` (own
+  vs cuDNN forward: gradient 6e-6 fp32 / 1.5e-4 bf16, inference after a
+  training step 1e-5 vs the CPU reference) and the two gradient tests.
+
+  Measured on the RTX 3060 / cuDNN 9.24. The laptop drifts ~10% with
+  temperature after an hour of benchmarking, so the numbers that count are
+  cooled, order-alternated pairs (own : cuDNN forward : yesterday's binary):
+
+  | point | own forward + mask | cuDNN forward, new backward | shipped (yesterday) |
+  |---|---:|---:|---:|
+  | bf16 2048 | **24,035 / 23,355** | 22,963 / 23,267 | 22,663 / 22,232 |
+  | bf16 128 | 13,063 / 12,020 | 12,977 / 12,022 | 12,792 / 12,246 |
+  | fp32 2048 (8-channel fp32 backward, since reverted) | 11,342 / 11,434 | — | 11,618 / 11,828 |
+  | fp32 128 | 6,733 / 5,966 | 6,373 / 6,053 | 6,564 / 6,237 |
+
+  A first cut lost 5-9% at batch 128: CIFAR's late 1x1/2x2 stages give a BN
+  128-512 rows there, and the reduce still spawned 128 nearly idle row blocks
+  whose partials one thread per channel then summed serially. Row blocks now
+  follow the rows (at least four per lane) and the finalize sums a warp of
+  channels with eight lanes over the row blocks - that fix applies to the
+  backward the shipped code already had, which is why 128 ends slightly ahead.
+  In FP32 the eight-channel reduce kernel sits at ~90 registers (half
+  occupancy; the 64-channel layers run a second, mostly empty wave) and the
+  whole step measured ~3% slower, so FP32 keeps channel pairs, Y and the
+  x_hat-from-Y trick, and Auto leaves its forward on cuDNN; the FP32 own path
+  stays pinnable (`OPENNN_BN_FORWARD_RUNG=own`) for the RTX 4080, where the
+  register budget is the same but the wave arithmetic is not.
+
+  Less than the ~5% first estimated for BF16 too: the mask removes ~27% of the
+  batch-norm backward's traffic and that backward is ~10% of the step. Side
+  finding, fixed: `NeuralNetwork::compile` left the batch-norm running variance
+  at zero (states are zeroed; only `set_parameters_random` set the defaults),
+  so a fresh network's inference was scaled by 1/sqrt(epsilon) until training
+  moved it; operators now initialize their states on compile
+  (`Operator::initialize_states`).
 - **3'b. Convolution engine choice — measured on cuDNN 9.24, nothing beats the
   defaults here.** Three knobs now live in `finalize` (defaults unchanged, all
   environment-controlled, all folded into the plan-cache key): heuristic mode
@@ -248,7 +288,8 @@ passes. What remains:
 - **3'c. Pooling backward** (a day). `cudnnPoolingBackward` recomputes the
   argmax; a mask from the forward makes it one read + one scatter: ~1-2%.
 
-Realistic remaining upside on this stack: **~5-8%** in total. Beyond that the
+Realistic remaining upside on this stack after 3'a: **~2-4%** (3'c and the
+Phase 4 items). Beyond that the
 architecture is at the floor of what cuDNN's convolution engines allow on
 these shapes; more would need custom convolution kernels (weeks, high risk) or
 a GPU/cuDNN generation where the fused engines exist - which the probe tells

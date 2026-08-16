@@ -148,6 +148,29 @@ for every engine and are not throughput measurements. The product claim is the
 RTX 4080's number: run the two gradient tests, `speed_gate.py --record
 --tolerance 0.05` and the peak-batch sweep there.
 
+### 9.1 The same run on cuDNN 9.24 (PyTorch's own library version)
+
+Same machine, same binary rebuilt against the `nvidia-cudnn-cu12==9.24.0.43`
+wheel PyTorch 2.13 ships with (so OpenNN and PyTorch use the very same cuDNN;
+TensorFlow 2.21 bundles its own), 2026-08-16, result JSONs
+`gpu-resnet50-peak-batch-speed-20260816T094248Z / 100058Z / 102823Z`.
+
+| batch | bf16 OpenNN | bf16 PyTorch | bf16 TensorFlow | fp32 OpenNN | fp32 PyTorch | fp32 TensorFlow |
+|---:|---:|---:|---:|---:|---:|---:|
+| 128 | **12,589** | 7,965 | 8,150 | **7,217** | 5,665 | 4,728 |
+| 256 | **16,119** | 10,084 | 12,035 | **8,424** | 6,928 | 6,267 |
+| 512 | **18,602** | 15,824 | 16,341 | **9,268** | 8,080 | 7,299 |
+| 1024 | **21,284** | 18,009 | 19,482 | **10,759** | 8,916 | 8,429 |
+| 2048 | **22,578** | 19,893 | 21,020 | **11,038** | 9,600 | OOM |
+| 4096 | **24,817** | 21,122 | OOM | 1,362 (paging) | timeout | — |
+| 8192 | 2,059 (paging) | 1,312 (paging) | — | OOM | — | — |
+| peak | **24,817 @4096** | 21,122 @4096 | 21,020 @2048 | **11,038 @2048** | 9,600 @2048 | 8,429 @1024 |
+
+Peak vs peak: bf16 1.17× PyTorch / 1.18× TensorFlow; fp32 1.15× / 1.31×. The
+9.10 → 9.24 change is inside run-to-run noise for OpenNN at every point
+(bf16 4096 24,817 vs 23,283, fp32 2048 11,038 vs 11,489: ±5% either way);
+neither library version changes the ranking.
+
 ## 10. Not recommended (already tried)
 
 Hand-written BN kernels for the native path and the strided-view trick for the

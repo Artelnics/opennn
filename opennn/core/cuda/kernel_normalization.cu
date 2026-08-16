@@ -129,36 +129,319 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
                        epsilon, apply_relu ? 1 : 0, y);
 }
 
-// ---- fused batch-norm backward (NHWC) ---------------------------------------
+// ---- fused batch-norm training forward and backward (NHWC) -----------------
 //
 // One thread owns VEC adjacent channels and strides down a slice of rows, so a
-// warp reads 32*VEC consecutive channels of one row: coalesced, vector loads
-// along C, which is contiguous in NHWC. Block (32, BN_BWD_THREADS_Y) threads;
-// grid (channel-group blocks, row blocks). Row-block partials are summed by a
-// second, tiny kernel so the reduction order is fixed - no float atomics.
+// warp reads consecutive channels of one row: coalesced, vector loads along C,
+// which is contiguous in NHWC. Reduce blocks hold BN_THREADS threads laid out
+// as (channel-group lanes, row lanes); grid (channel-group blocks, row blocks).
+// Row-block partials are summed by a second, tiny kernel so the reduction order
+// is fixed - no float atomics.
 //
-// x_hat: from X as (x - mean) * inv_var. In the reduce pass only, and only for
-// a ReLU output that is BN(x) with no residual add (XHAT_FROM_Y), it is rebuilt
-// as (y - beta) / gamma instead: where y == 0 the masked dY is 0 and x_hat drops
-// out of both sums, so X need not be read there. The apply pass always reads X:
-// dX = gamma * inv_var * (g - dbeta/M - x_hat * dgamma/M) is non-zero on masked
-// elements too, and there y says nothing about x_hat.
+// ReLU mask: with VEC == 8 the forward apply pass packs (y > 0) for its eight
+// channels into one byte, mask[(row * channels + c0) / 8]. The BF16 backward
+// gates dY with that byte instead of re-reading Y: one bit per element in place
+// of a second full-width tensor in each of its two passes (FP32 keeps channel
+// pairs and Y; see batchnorm_backward_fused_cuda).
+//
+// x_hat: from X as (x - mean) * inv_var. Without a mask, in the reduce pass
+// only, and only for a ReLU output that is BN(x) with no residual add
+// (XHAT_FROM_Y), it is rebuilt as (y - beta) / gamma instead: where y == 0 the
+// masked dY is 0 and x_hat drops out of both sums, so X need not be read there.
+// The apply pass always reads X: dX = gamma * inv_var * (g - dbeta/M - x_hat *
+// dgamma/M) is non-zero on masked elements too, and there y says nothing about
+// x_hat.
 
-constexpr int BN_BWD_THREADS_X = 32;
-constexpr int BN_BWD_THREADS_Y = 8;
-constexpr Index BN_BWD_MAX_ROW_BLOCKS = 128;
+constexpr int BN_THREADS = 256;
+constexpr Index BN_MAX_ROW_BLOCKS = 128;
 
+// Upper bound on the row blocks a launch uses for `rows`: what the caller's
+// partials scratch must hold.
 Index batchnorm_backward_partial_rows(const Index rows)
 {
-    const Index rows_per_block = (rows + BN_BWD_MAX_ROW_BLOCKS - 1) / BN_BWD_MAX_ROW_BLOCKS;
-    return rows_per_block <= 0 ? 1 : (rows + rows_per_block - 1) / rows_per_block;
+    return rows < BN_MAX_ROW_BLOCKS ? (rows <= 0 ? 1 : rows) : BN_MAX_ROW_BLOCKS;
+}
+
+// As many channel-group lanes as the tensor has, up to a warp; the rest of the
+// block strides down the rows, so narrow layers (64 channels) still fill it.
+static dim3 batchnorm_reduce_block(const Index channel_groups)
+{
+    const int lanes = int(channel_groups < 32 ? channel_groups : 32);
+    return dim3(unsigned(lanes), unsigned(BN_THREADS / lanes));
+}
+
+// Row blocks for a launch: enough to fill the GPU when there are rows to
+// spare, but at least four rows per row lane, so a late ResNet stage at a small
+// batch (128-512 rows) is not spread over 128 nearly idle blocks whose partials
+// then have to be summed again.
+static Index batchnorm_row_blocks(const Index rows, const dim3& reduce_block)
+{
+    const Index wanted = rows / (Index(reduce_block.y) * 4);
+    const Index cap = batchnorm_backward_partial_rows(rows);
+    return wanted < 1 ? 1 : (wanted > cap ? cap : wanted);
+}
+
+// Sums the row-block partials of a channel: a warp of channels per block, eight
+// lanes striding the row blocks, so a 128-block reduction is 16 loads per lane
+// and a shared sum, not 128 dependent loads on one thread.
+constexpr int BN_FINALIZE_LANES = 8;
+
+__device__ static bool batchnorm_sum_partials(const int channels, const int row_blocks,
+                                              const float* __restrict__ partials,
+                                              int& c, float& s1, float& s2)
+{
+    __shared__ float sh1[BN_FINALIZE_LANES][32];
+    __shared__ float sh2[BN_FINALIZE_LANES][32];
+    c = blockIdx.x * 32 + threadIdx.x;
+    float t1 = 0.0f, t2 = 0.0f;
+    if (c < channels)
+        for (int b = threadIdx.y; b < row_blocks; b += BN_FINALIZE_LANES)
+        {
+            const Index slot = (Index(b) * channels + c) * 2;
+            t1 += partials[slot];
+            t2 += partials[slot + 1];
+        }
+    sh1[threadIdx.y][threadIdx.x] = t1;
+    sh2[threadIdx.y][threadIdx.x] = t2;
+    __syncthreads();
+    if (threadIdx.y != 0 || c >= channels) return false;
+    s1 = s2 = 0.0f;
+    #pragma unroll
+    for (int j = 0; j < BN_FINALIZE_LANES; ++j)
+    {
+        s1 += sh1[j][threadIdx.x];
+        s2 += sh2[j][threadIdx.x];
+    }
+    return true;
 }
 
 template<typename T, int VEC> struct BnVec;
-template<> struct BnVec<float, 1> { using type = float; __device__ static void load(const float* p, float* out) { out[0] = p[0]; } __device__ static void store(float* p, const float* v) { p[0] = v[0]; } };
-template<> struct BnVec<float, 2> { using type = float2; __device__ static void load(const float* p, float* out) { const float2 v = *reinterpret_cast<const float2*>(p); out[0] = v.x; out[1] = v.y; } __device__ static void store(float* p, const float* v) { *reinterpret_cast<float2*>(p) = make_float2(v[0], v[1]); } };
-template<> struct BnVec<__nv_bfloat16, 1> { using type = __nv_bfloat16; __device__ static void load(const __nv_bfloat16* p, float* out) { out[0] = __bfloat162float(p[0]); } __device__ static void store(__nv_bfloat16* p, const float* v) { p[0] = __float2bfloat16(v[0]); } };
-template<> struct BnVec<__nv_bfloat16, 2> { using type = __nv_bfloat162; __device__ static void load(const __nv_bfloat16* p, float* out) { const float2 v = __bfloat1622float2(*reinterpret_cast<const __nv_bfloat162*>(p)); out[0] = v.x; out[1] = v.y; } __device__ static void store(__nv_bfloat16* p, const float* v) { *reinterpret_cast<__nv_bfloat162*>(p) = __floats2bfloat162_rn(v[0], v[1]); } };
+template<> struct BnVec<float, 1> { __device__ static void load(const float* p, float* out) { out[0] = p[0]; } __device__ static void store(float* p, const float* v) { p[0] = v[0]; } };
+template<> struct BnVec<float, 2> { __device__ static void load(const float* p, float* out) { const float2 v = *reinterpret_cast<const float2*>(p); out[0] = v.x; out[1] = v.y; } __device__ static void store(float* p, const float* v) { *reinterpret_cast<float2*>(p) = make_float2(v[0], v[1]); } };
+template<> struct BnVec<float, 8>
+{
+    __device__ static void load(const float* p, float* out)
+    {
+        const float4 a = reinterpret_cast<const float4*>(p)[0];
+        const float4 b = reinterpret_cast<const float4*>(p)[1];
+        out[0] = a.x; out[1] = a.y; out[2] = a.z; out[3] = a.w;
+        out[4] = b.x; out[5] = b.y; out[6] = b.z; out[7] = b.w;
+    }
+    __device__ static void store(float* p, const float* v)
+    {
+        reinterpret_cast<float4*>(p)[0] = make_float4(v[0], v[1], v[2], v[3]);
+        reinterpret_cast<float4*>(p)[1] = make_float4(v[4], v[5], v[6], v[7]);
+    }
+};
+template<> struct BnVec<__nv_bfloat16, 1> { __device__ static void load(const __nv_bfloat16* p, float* out) { out[0] = __bfloat162float(p[0]); } __device__ static void store(__nv_bfloat16* p, const float* v) { p[0] = __float2bfloat16(v[0]); } };
+template<> struct BnVec<__nv_bfloat16, 2> { __device__ static void load(const __nv_bfloat16* p, float* out) { const float2 v = __bfloat1622float2(*reinterpret_cast<const __nv_bfloat162*>(p)); out[0] = v.x; out[1] = v.y; } __device__ static void store(__nv_bfloat16* p, const float* v) { *reinterpret_cast<__nv_bfloat162*>(p) = __floats2bfloat162_rn(v[0], v[1]); } };
+template<> struct BnVec<__nv_bfloat16, 8>
+{
+    __device__ static void load(const __nv_bfloat16* p, float* out)
+    {
+        const uint4 u = *reinterpret_cast<const uint4*>(p);
+        const __nv_bfloat162* h = reinterpret_cast<const __nv_bfloat162*>(&u);
+        #pragma unroll
+        for (int k = 0; k < 4; ++k)
+        {
+            const float2 f = __bfloat1622float2(h[k]);
+            out[2 * k] = f.x;
+            out[2 * k + 1] = f.y;
+        }
+    }
+    __device__ static void store(__nv_bfloat16* p, const float* v)
+    {
+        uint4 u;
+        __nv_bfloat162* h = reinterpret_cast<__nv_bfloat162*>(&u);
+        #pragma unroll
+        for (int k = 0; k < 4; ++k)
+            h[k] = __floats2bfloat162_rn(v[2 * k], v[2 * k + 1]);
+        *reinterpret_cast<uint4*>(p) = u;
+    }
+};
+
+// Sums a reduce block's per-thread (s1, s2) down its row lanes and stores one
+// (s1, s2) pair per channel for this row block.
+template<int VEC>
+__device__ static void batchnorm_store_partials(const int channels, const int c0,
+                                                const float* s1, const float* s2,
+                                                float* __restrict__ partials)
+{
+    __shared__ float sh1[BN_THREADS * VEC];
+    __shared__ float sh2[BN_THREADS * VEC];
+    const int lane = (threadIdx.y * blockDim.x + threadIdx.x) * VEC;
+    #pragma unroll
+    for (int k = 0; k < VEC; ++k)
+    {
+        sh1[lane + k] = s1[k];
+        sh2[lane + k] = s2[k];
+    }
+    __syncthreads();
+
+    if (threadIdx.y != 0) return;
+    #pragma unroll
+    for (int k = 0; k < VEC; ++k)
+    {
+        const int c = c0 + k;
+        if (c >= channels) continue;
+        float t1 = 0.0f, t2 = 0.0f;
+        for (unsigned j = 0; j < blockDim.y; ++j)
+        {
+            const int idx = (j * blockDim.x + threadIdx.x) * VEC + k;
+            t1 += sh1[idx];
+            t2 += sh2[idx];
+        }
+        const Index slot = (Index(blockIdx.y) * channels + c) * 2;
+        partials[slot] = t1;
+        partials[slot + 1] = t2;
+    }
+}
+
+// ---- forward -----------------------------------------------------------------
+
+template<typename T, int VEC>
+__global__ void batchnorm_forward_reduce_kernel(const Index rows, const int channels,
+                                                const Index rows_per_block,
+                                                const T* __restrict__ x,
+                                                float* __restrict__ partials)
+{
+    const int c0 = (blockIdx.x * blockDim.x + threadIdx.x) * VEC;
+    const Index row_begin = Index(blockIdx.y) * rows_per_block;
+    const Index row_end = min(rows, row_begin + rows_per_block);
+
+    float s1[VEC], s2[VEC];
+    #pragma unroll
+    for (int k = 0; k < VEC; ++k) s1[k] = s2[k] = 0.0f;
+
+    if (c0 < channels)
+    {
+        float v[VEC];
+        for (Index r = row_begin + threadIdx.y; r < row_end; r += blockDim.y)
+        {
+            BnVec<T, VEC>::load(x + r * channels + c0, v);
+            #pragma unroll
+            for (int k = 0; k < VEC; ++k)
+            {
+                s1[k] += v[k];
+                s2[k] += v[k] * v[k];
+            }
+        }
+    }
+
+    batchnorm_store_partials<VEC>(channels, c0, s1, s2, partials);
+}
+
+// Batch statistics from the row-block partials, the running-statistics update,
+// and the per-channel scale/shift the apply pass uses. Population variance for
+// the batch, as the CPU path; the running variance keeps the sample variance
+// cuDNN's forward stores.
+__global__ void batchnorm_forward_finalize_kernel(const int channels, const int row_blocks,
+                                                  const float inv_rows, const float unbias,
+                                                  const float epsilon, const float momentum,
+                                                  const float* __restrict__ partials,
+                                                  const float* __restrict__ gamma,
+                                                  const float* __restrict__ beta,
+                                                  float* __restrict__ mean,
+                                                  float* __restrict__ inv_var,
+                                                  float* __restrict__ running_mean,
+                                                  float* __restrict__ running_var,
+                                                  float* __restrict__ scale_shift)
+{
+    int c;
+    float s1, s2;
+    if (!batchnorm_sum_partials(channels, row_blocks, partials, c, s1, s2)) return;
+    const float m = s1 * inv_rows;
+    const float var = fmaxf(s2 * inv_rows - m * m, 0.0f);
+    const float iv = 1.0f / sqrtf(var + epsilon);
+    mean[c] = m;
+    inv_var[c] = iv;
+    running_mean[c] = running_mean[c] * (1.0f - momentum) + m * momentum;
+    running_var[c]  = running_var[c]  * (1.0f - momentum) + var * unbias * momentum;
+    const float scale = gamma[c] * iv;
+    scale_shift[c] = scale;
+    scale_shift[channels + c] = beta[c] - m * scale;
+}
+
+template<typename T, int VEC, bool RELU, bool ADD>
+__global__ void batchnorm_forward_apply_kernel(const Index groups, const int channels,
+                                               const T* __restrict__ x,
+                                               const T* __restrict__ residual,
+                                               const float* __restrict__ scale_shift,
+                                               T* __restrict__ y,
+                                               uint8_t* __restrict__ mask)
+{
+    const int channel_groups = channels / VEC;
+    for (Index gi = Index(blockIdx.x) * blockDim.x + threadIdx.x; gi < groups;
+         gi += Index(gridDim.x) * blockDim.x)
+    {
+        const int c0 = int(gi % channel_groups) * VEC;
+        const Index i = (gi / channel_groups) * channels + c0;
+
+        float vx[VEC], vr[VEC], out[VEC];
+        BnVec<T, VEC>::load(x + i, vx);
+        if (ADD) BnVec<T, VEC>::load(residual + i, vr);
+
+        unsigned bits = 0;
+        #pragma unroll
+        for (int k = 0; k < VEC; ++k)
+        {
+            const int c = c0 + k;
+            float v = vx[k] * scale_shift[c] + scale_shift[channels + c];
+            if (ADD) v += vr[k];
+            if (RELU)
+            {
+                v = fmaxf(v, 0.0f);
+                bits |= (v > 0.0f ? 1u : 0u) << k;
+            }
+            out[k] = v;
+        }
+        BnVec<T, VEC>::store(y + i, out);
+        if (RELU && mask) mask[gi] = uint8_t(bits);
+    }
+}
+
+template<typename T>
+void batchnorm_forward_fused_cuda(const Index rows, const Index channels,
+                                  const T* x, const T* residual,
+                                  const float* gamma, const float* beta,
+                                  const float epsilon, const float momentum,
+                                  T* y, float* mean, float* inv_var,
+                                  float* running_mean, float* running_var,
+                                  const bool relu, uint8_t* mask,
+                                  float* partials)
+{
+    if (rows == 0 || channels == 0) return;
+    if (channels % 8 != 0)
+        throw std::runtime_error("batchnorm_forward_fused_cuda: channels must be a multiple of 8.");
+    constexpr int VEC = 8;
+    cudaStream_t stream = opennn::device::get_compute_stream();
+
+    const Index channel_groups = channels / VEC;
+    const dim3 reduce_block = batchnorm_reduce_block(channel_groups);
+    const Index row_blocks = batchnorm_row_blocks(rows, reduce_block);
+    const Index rows_per_block = (rows + row_blocks - 1) / row_blocks;
+    const dim3 reduce_grid(unsigned((channel_groups + reduce_block.x - 1) / reduce_block.x),
+                           unsigned(row_blocks));
+    OPENNN_CUDA_LAUNCH((batchnorm_forward_reduce_kernel<T, VEC><<<reduce_grid, reduce_block, 0, stream>>>(
+        rows, checked_int(channels), rows_per_block, x, partials)));
+
+    float* scale_shift = partials + 2 * batchnorm_backward_partial_rows(rows) * channels;
+    const float unbias = rows > 1 ? float(rows) / float(rows - 1) : 1.0f;
+    const dim3 finalize_block(32, BN_FINALIZE_LANES);
+    OPENNN_CUDA_LAUNCH((batchnorm_forward_finalize_kernel<<<
+        unsigned((channels + 31) / 32), finalize_block, 0, stream>>>(
+        checked_int(channels), checked_int(row_blocks), 1.0f / static_cast<float>(rows), unbias,
+        epsilon, momentum, partials, gamma, beta, mean, inv_var, running_mean, running_var, scale_shift)));
+
+    const bool add = residual != nullptr;
+    const Index groups = rows * channel_groups;
+    if (relu && add)       launch_elementwise_strided(groups, batchnorm_forward_apply_kernel<T, VEC, true,  true >, checked_int(channels), x, residual, scale_shift, y, mask);
+    else if (relu)         launch_elementwise_strided(groups, batchnorm_forward_apply_kernel<T, VEC, true,  false>, checked_int(channels), x, residual, scale_shift, y, mask);
+    else if (add)          launch_elementwise_strided(groups, batchnorm_forward_apply_kernel<T, VEC, false, true >, checked_int(channels), x, residual, scale_shift, y, mask);
+    else                   launch_elementwise_strided(groups, batchnorm_forward_apply_kernel<T, VEC, false, false>, checked_int(channels), x, residual, scale_shift, y, mask);
+}
+
+// ---- backward ----------------------------------------------------------------
 
 template<typename T, int VEC, bool XHAT_FROM_Y>
 __global__ void batchnorm_backward_reduce_kernel(const Index rows, const int channels,
@@ -166,13 +449,14 @@ __global__ void batchnorm_backward_reduce_kernel(const Index rows, const int cha
                                                  const T* __restrict__ x,
                                                  const T* __restrict__ dy,
                                                  const T* __restrict__ y,
+                                                 const uint8_t* __restrict__ mask,
                                                  const float* __restrict__ gamma,
                                                  const float* __restrict__ beta,
                                                  const float* __restrict__ mean,
                                                  const float* __restrict__ inv_var,
                                                  float* __restrict__ partials)
 {
-    const int c0 = (blockIdx.x * BN_BWD_THREADS_X + threadIdx.x) * VEC;
+    const int c0 = (blockIdx.x * blockDim.x + threadIdx.x) * VEC;
     const Index row_begin = Index(blockIdx.y) * rows_per_block;
     const Index row_end = min(rows, row_begin + rows_per_block);
 
@@ -193,17 +477,18 @@ __global__ void batchnorm_backward_reduce_kernel(const Index rows, const int cha
     if (c0 < channels)
     {
         float vdy[VEC], vy[VEC], vx[VEC];
-        for (Index r = row_begin + threadIdx.y; r < row_end; r += BN_BWD_THREADS_Y)
+        for (Index r = row_begin + threadIdx.y; r < row_end; r += blockDim.y)
         {
             const Index i = r * channels + c0;
             BnVec<T, VEC>::load(dy + i, vdy);
             if (y) BnVec<T, VEC>::load(y + i, vy);
             if (!XHAT_FROM_Y) BnVec<T, VEC>::load(x + i, vx);
+            const unsigned bits = mask ? mask[i / 8] : 0xFFu;
             #pragma unroll
             for (int k = 0; k < VEC; ++k)
             {
                 float g = vdy[k];
-                if (y && vy[k] <= 0.0f) g = 0.0f;
+                if (mask ? !((bits >> k) & 1u) : (y && vy[k] <= 0.0f)) g = 0.0f;
                 const float x_hat = XHAT_FROM_Y ? (vy[k] - b[k]) * ig[k] : (vx[k] - m[k]) * iv[k];
                 s1[k] += g;
                 s2[k] += g * x_hat;
@@ -211,34 +496,7 @@ __global__ void batchnorm_backward_reduce_kernel(const Index rows, const int cha
         }
     }
 
-    __shared__ float sh1[BN_BWD_THREADS_Y][BN_BWD_THREADS_X * VEC];
-    __shared__ float sh2[BN_BWD_THREADS_Y][BN_BWD_THREADS_X * VEC];
-    #pragma unroll
-    for (int k = 0; k < VEC; ++k)
-    {
-        sh1[threadIdx.y][threadIdx.x * VEC + k] = s1[k];
-        sh2[threadIdx.y][threadIdx.x * VEC + k] = s2[k];
-    }
-    __syncthreads();
-
-    if (threadIdx.y == 0)
-    {
-        #pragma unroll
-        for (int k = 0; k < VEC; ++k)
-        {
-            const int c = c0 + k;
-            if (c >= channels) continue;
-            float t1 = 0.0f, t2 = 0.0f;
-            for (int j = 0; j < BN_BWD_THREADS_Y; ++j)
-            {
-                t1 += sh1[j][threadIdx.x * VEC + k];
-                t2 += sh2[j][threadIdx.x * VEC + k];
-            }
-            const Index slot = (Index(blockIdx.y) * channels + c) * 2;
-            partials[slot] = t1;
-            partials[slot + 1] = t2;
-        }
-    }
+    batchnorm_store_partials<VEC>(channels, c0, s1, s2, partials);
 }
 
 __global__ void batchnorm_backward_finalize_kernel(const int channels, const int row_blocks,
@@ -246,27 +504,21 @@ __global__ void batchnorm_backward_finalize_kernel(const int channels, const int
                                                    float* __restrict__ dgamma,
                                                    float* __restrict__ dbeta)
 {
-    const int c = blockIdx.x * blockDim.x + threadIdx.x;
-    if (c >= channels) return;
-    float s1 = 0.0f, s2 = 0.0f;
-    for (int b = 0; b < row_blocks; ++b)
-    {
-        const Index slot = (Index(b) * channels + c) * 2;
-        s1 += partials[slot];
-        s2 += partials[slot + 1];
-    }
+    int c;
+    float s1, s2;
+    if (!batchnorm_sum_partials(channels, row_blocks, partials, c, s1, s2)) return;
     dbeta[c] = s1;
     dgamma[c] = s2;
 }
 
-template<typename T, int VEC, bool XHAT_FROM_Y>
+template<typename T, int VEC>
 __global__ void batchnorm_backward_apply_kernel(const Index groups, const int channels,
                                                 const float inv_rows,
                                                 const T* __restrict__ x,
                                                 T* __restrict__ dy_dx,
                                                 const T* __restrict__ y,
+                                                const uint8_t* __restrict__ mask,
                                                 const float* __restrict__ gamma,
-                                                const float* __restrict__ /*beta*/,
                                                 const float* __restrict__ mean,
                                                 const float* __restrict__ inv_var,
                                                 const float* __restrict__ dgamma,
@@ -284,13 +536,14 @@ __global__ void batchnorm_backward_apply_kernel(const Index groups, const int ch
         BnVec<T, VEC>::load(dy_dx + i, vdy);
         if (y) BnVec<T, VEC>::load(y + i, vy);
         BnVec<T, VEC>::load(x + i, vx);
+        const unsigned bits = mask ? mask[i / 8] : 0xFFu;
 
         #pragma unroll
         for (int k = 0; k < VEC; ++k)
         {
             const int c = c0 + k;
             float g = vdy[k];
-            if (y && vy[k] <= 0.0f) g = 0.0f;
+            if (mask ? !((bits >> k) & 1u) : (y && vy[k] <= 0.0f)) g = 0.0f;
             pre[k] = g;
             const float gm = gamma[c], iv = inv_var[c];
             const float x_hat = (vx[k] - mean[c]) * iv;
@@ -303,34 +556,34 @@ __global__ void batchnorm_backward_apply_kernel(const Index groups, const int ch
 
 template<typename T, int VEC, bool XHAT_FROM_Y>
 static void batchnorm_backward_launch(const Index rows, const Index channels,
-                                      const T* x, T* dy_dx, const T* y,
+                                      const T* x, T* dy_dx, const T* y, const uint8_t* mask,
                                       const float* gamma, const float* beta,
                                       const float* mean, const float* inv_var,
                                       T* dpre, float* dgamma, float* dbeta,
                                       float* partials, cudaStream_t stream)
 {
-    const Index row_blocks = batchnorm_backward_partial_rows(rows);
-    const Index rows_per_block = (rows + row_blocks - 1) / row_blocks;
     const Index channel_groups = channels / VEC;
-    const dim3 reduce_block(BN_BWD_THREADS_X, BN_BWD_THREADS_Y);
-    const dim3 reduce_grid(unsigned((channel_groups + BN_BWD_THREADS_X - 1) / BN_BWD_THREADS_X),
+    const dim3 reduce_block = batchnorm_reduce_block(channel_groups);
+    const Index row_blocks = batchnorm_row_blocks(rows, reduce_block);
+    const Index rows_per_block = (rows + row_blocks - 1) / row_blocks;
+    const dim3 reduce_grid(unsigned((channel_groups + reduce_block.x - 1) / reduce_block.x),
                            unsigned(row_blocks));
     OPENNN_CUDA_LAUNCH((batchnorm_backward_reduce_kernel<T, VEC, XHAT_FROM_Y><<<reduce_grid, reduce_block, 0, stream>>>(
-        rows, checked_int(channels), rows_per_block, x, dy_dx, y, gamma, beta, mean, inv_var, partials)));
+        rows, checked_int(channels), rows_per_block, x, dy_dx, y, mask, gamma, beta, mean, inv_var, partials)));
 
-    const int finalize_threads = 256;
+    const dim3 finalize_block(32, BN_FINALIZE_LANES);
     OPENNN_CUDA_LAUNCH((batchnorm_backward_finalize_kernel<<<
-        unsigned((channels + finalize_threads - 1) / finalize_threads), finalize_threads, 0, stream>>>(
+        unsigned((channels + 31) / 32), finalize_block, 0, stream>>>(
         checked_int(channels), checked_int(row_blocks), partials, dgamma, dbeta)));
 
-    launch_elementwise_strided(rows * channel_groups, batchnorm_backward_apply_kernel<T, VEC, XHAT_FROM_Y>,
+    launch_elementwise_strided(rows * channel_groups, batchnorm_backward_apply_kernel<T, VEC>,
                                checked_int(channels), 1.0f / static_cast<float>(rows),
-                               x, dy_dx, y, gamma, beta, mean, inv_var, dgamma, dbeta, dpre);
+                               x, dy_dx, y, mask, gamma, mean, inv_var, dgamma, dbeta, dpre);
 }
 
 template<typename T>
 void batchnorm_backward_fused_cuda(const Index rows, const Index channels,
-                                   const T* x, T* dy_dx, const T* y,
+                                   const T* x, T* dy_dx, const T* y, const uint8_t* mask,
                                    const float* gamma, const float* beta,
                                    const float* mean, const float* inv_var,
                                    const bool xhat_from_y,
@@ -340,17 +593,27 @@ void batchnorm_backward_fused_cuda(const Index rows, const Index channels,
     if (rows == 0 || channels == 0) return;
     cudaStream_t stream = opennn::device::get_compute_stream();
 
+    // Eight channels per thread (16-byte loads) for BF16 when the count allows
+    // it; a mask packs eight channels per byte, so it needs that layout, and
+    // with it Y is not read at all. FP32 keeps channel pairs: eight FP32
+    // channels per thread put the reduce kernel at ~90 registers, and on an
+    // RTX 3060 that measured ~3% slower for the whole ResNet-50 step at batch
+    // 2048 (the 64-channel layers run a second, mostly empty wave), while
+    // BF16 with the same layout and the mask measured ~6% faster.
+    const bool vec8 = channels % 8 == 0 && sizeof(T) == 2;
+    const bool vec2 = channels % 2 == 0;
+    if (!vec8) mask = nullptr;
+    if (mask) y = nullptr;
+
     // x_hat from Y needs the ReLU output and its parameters.
     const bool from_y = xhat_from_y && y != nullptr && beta != nullptr;
 
-    // Vector loads need an even channel count; the row stride is then a
-    // multiple of 2 elements and the NHWC base pointers are at least 4-byte aligned.
-    const bool vec2 = channels % 2 == 0;
-
-    if (vec2 && from_y)       batchnorm_backward_launch<T, 2, true >(rows, channels, x, dy_dx, y, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
-    else if (vec2)            batchnorm_backward_launch<T, 2, false>(rows, channels, x, dy_dx, y, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
-    else if (from_y)          batchnorm_backward_launch<T, 1, true >(rows, channels, x, dy_dx, y, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
-    else                      batchnorm_backward_launch<T, 1, false>(rows, channels, x, dy_dx, y, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
+    if (vec8 && from_y)       batchnorm_backward_launch<T, 8, true >(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
+    else if (vec8)            batchnorm_backward_launch<T, 8, false>(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
+    else if (vec2 && from_y)  batchnorm_backward_launch<T, 2, true >(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
+    else if (vec2)            batchnorm_backward_launch<T, 2, false>(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
+    else if (from_y)          batchnorm_backward_launch<T, 1, true >(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
+    else                      batchnorm_backward_launch<T, 1, false>(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
 }
 
 __global__ void conv_bn_fold_kernel(const Index total, const int kernel_size, const int kernels,
@@ -593,7 +856,8 @@ void rmsnorm_backward_cuda(const int N, const int D, const T* dY, const T* X, co
 
 #define INSTANTIATE(T) \
     template void batchnorm_inference_cuda<T>(const Index, const Index, const T*, const T*, const float*, const float*, const float*, const float*, const float, const bool, T*); \
-    template void batchnorm_backward_fused_cuda<T>(const Index, const Index, const T*, T*, const T*, const float*, const float*, const float*, const float*, const bool, T*, float*, float*, float*); \
+    template void batchnorm_forward_fused_cuda<T>(const Index, const Index, const T*, const T*, const float*, const float*, const float, const float, T*, float*, float*, float*, float*, const bool, uint8_t*, float*); \
+    template void batchnorm_backward_fused_cuda<T>(const Index, const Index, const T*, T*, const T*, const uint8_t*, const float*, const float*, const float*, const float*, const bool, T*, float*, float*, float*); \
     template void layernorm_forward_cuda<T>(const int, const int, const T*, T*, float*, float*, const float*, const float*, const float); \
     template void layernorm_add_forward_cuda<T>(const int, const int, const T*, const T*, T*, T*, float*, float*, const float*, const float*, const float); \
     template void layernorm_backward_cuda<T>(const int, const int, const T*, const T*, const float*, const float*, const float*, T*, float*, float*); \

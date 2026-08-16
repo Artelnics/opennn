@@ -536,6 +536,13 @@ void NeuralNetwork::compile(Configuration::Resolved new_config)
 
     link_states();
 
+    // A zeroed running variance would scale a fresh network's inference by
+    // 1/sqrt(epsilon) until training has moved it; the operators know their
+    // resting values.
+    for (auto& layer : layers)
+        for (Operator* op : layer->get_operators())
+            op->initialize_states();
+
     wire_drelu_fusions(layers, source_layers, get_device(), get_training_type());
 }
 
