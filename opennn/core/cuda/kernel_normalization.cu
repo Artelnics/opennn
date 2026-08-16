@@ -157,7 +157,7 @@ constexpr Index BN_MAX_ROW_BLOCKS = 128;
 
 // Upper bound on the row blocks a launch uses for `rows`: what the caller's
 // partials scratch must hold.
-Index batchnorm_backward_partial_rows(const Index rows)
+Index batchnorm_partial_rows(const Index rows)
 {
     return rows < BN_MAX_ROW_BLOCKS ? (rows <= 0 ? 1 : rows) : BN_MAX_ROW_BLOCKS;
 }
@@ -177,7 +177,7 @@ static dim3 batchnorm_reduce_block(const Index channel_groups)
 static Index batchnorm_row_blocks(const Index rows, const dim3& reduce_block)
 {
     const Index wanted = rows / (Index(reduce_block.y) * 4);
-    const Index cap = batchnorm_backward_partial_rows(rows);
+    const Index cap = batchnorm_partial_rows(rows);
     return wanted < 1 ? 1 : (wanted > cap ? cap : wanted);
 }
 
@@ -215,48 +215,39 @@ __device__ static bool batchnorm_sum_partials(const int channels, const int row_
     return true;
 }
 
-template<typename T, int VEC> struct BnVec;
-template<> struct BnVec<float, 1> { __device__ static void load(const float* p, float* out) { out[0] = p[0]; } __device__ static void store(float* p, const float* v) { p[0] = v[0]; } };
-template<> struct BnVec<float, 2> { __device__ static void load(const float* p, float* out) { const float2 v = *reinterpret_cast<const float2*>(p); out[0] = v.x; out[1] = v.y; } __device__ static void store(float* p, const float* v) { *reinterpret_cast<float2*>(p) = make_float2(v[0], v[1]); } };
-template<> struct BnVec<float, 8>
+// VEC adjacent elements of a row moved as one aligned raw load/store (16 bytes
+// for eight BF16 or four FP32 channels; two of them for eight FP32) and
+// converted element by element; the caller guarantees channels % VEC == 0, so
+// the addresses are VEC * sizeof(T) aligned.
+template<int BYTES> struct BnRaw;
+template<> struct BnRaw<2>  { unsigned short v; };
+template<> struct BnRaw<4>  { unsigned int v; };
+template<> struct BnRaw<8>  { uint2 v; };
+template<> struct BnRaw<16> { uint4 v; };
+template<> struct BnRaw<32> { uint4 v[2]; };
+
+__device__ static inline float bn_to_float(float x) { return x; }
+__device__ static inline float bn_to_float(__nv_bfloat16 x) { return __bfloat162float(x); }
+__device__ static inline void bn_from_float(float x, float& out) { out = x; }
+__device__ static inline void bn_from_float(float x, __nv_bfloat16& out) { out = __float2bfloat16(x); }
+
+template<typename T, int VEC> struct BnVec
 {
-    __device__ static void load(const float* p, float* out)
+    using Raw = BnRaw<int(sizeof(T)) * VEC>;
+    __device__ static void load(const T* p, float* out)
     {
-        const float4 a = reinterpret_cast<const float4*>(p)[0];
-        const float4 b = reinterpret_cast<const float4*>(p)[1];
-        out[0] = a.x; out[1] = a.y; out[2] = a.z; out[3] = a.w;
-        out[4] = b.x; out[5] = b.y; out[6] = b.z; out[7] = b.w;
-    }
-    __device__ static void store(float* p, const float* v)
-    {
-        reinterpret_cast<float4*>(p)[0] = make_float4(v[0], v[1], v[2], v[3]);
-        reinterpret_cast<float4*>(p)[1] = make_float4(v[4], v[5], v[6], v[7]);
-    }
-};
-template<> struct BnVec<__nv_bfloat16, 1> { __device__ static void load(const __nv_bfloat16* p, float* out) { out[0] = __bfloat162float(p[0]); } __device__ static void store(__nv_bfloat16* p, const float* v) { p[0] = __float2bfloat16(v[0]); } };
-template<> struct BnVec<__nv_bfloat16, 2> { __device__ static void load(const __nv_bfloat16* p, float* out) { const float2 v = __bfloat1622float2(*reinterpret_cast<const __nv_bfloat162*>(p)); out[0] = v.x; out[1] = v.y; } __device__ static void store(__nv_bfloat16* p, const float* v) { *reinterpret_cast<__nv_bfloat162*>(p) = __floats2bfloat162_rn(v[0], v[1]); } };
-template<> struct BnVec<__nv_bfloat16, 8>
-{
-    __device__ static void load(const __nv_bfloat16* p, float* out)
-    {
-        const uint4 u = *reinterpret_cast<const uint4*>(p);
-        const __nv_bfloat162* h = reinterpret_cast<const __nv_bfloat162*>(&u);
+        const Raw raw = *reinterpret_cast<const Raw*>(p);
+        const T* e = reinterpret_cast<const T*>(&raw);
         #pragma unroll
-        for (int k = 0; k < 4; ++k)
-        {
-            const float2 f = __bfloat1622float2(h[k]);
-            out[2 * k] = f.x;
-            out[2 * k + 1] = f.y;
-        }
+        for (int k = 0; k < VEC; ++k) out[k] = bn_to_float(e[k]);
     }
-    __device__ static void store(__nv_bfloat16* p, const float* v)
+    __device__ static void store(T* p, const float* v)
     {
-        uint4 u;
-        __nv_bfloat162* h = reinterpret_cast<__nv_bfloat162*>(&u);
+        Raw raw;
+        T* e = reinterpret_cast<T*>(&raw);
         #pragma unroll
-        for (int k = 0; k < 4; ++k)
-            h[k] = __floats2bfloat162_rn(v[2 * k], v[2 * k + 1]);
-        *reinterpret_cast<uint4*>(p) = u;
+        for (int k = 0; k < VEC; ++k) bn_from_float(v[k], e[k]);
+        *reinterpret_cast<Raw*>(p) = raw;
     }
 };
 
@@ -425,7 +416,7 @@ void batchnorm_forward_fused_cuda(const Index rows, const Index channels,
     OPENNN_CUDA_LAUNCH((batchnorm_forward_reduce_kernel<T, VEC><<<reduce_grid, reduce_block, 0, stream>>>(
         rows, checked_int(channels), rows_per_block, x, partials)));
 
-    float* scale_shift = partials + 2 * batchnorm_backward_partial_rows(rows) * channels;
+    float* scale_shift = partials + 2 * batchnorm_partial_rows(rows) * channels;
     const float unbias = rows > 1 ? float(rows) / float(rows - 1) : 1.0f;
     const dim3 finalize_block(32, BN_FINALIZE_LANES);
     OPENNN_CUDA_LAUNCH((batchnorm_forward_finalize_kernel<<<
@@ -608,12 +599,14 @@ void batchnorm_backward_fused_cuda(const Index rows, const Index channels,
     // x_hat from Y needs the ReLU output and its parameters.
     const bool from_y = xhat_from_y && y != nullptr && beta != nullptr;
 
-    if (vec8 && from_y)       batchnorm_backward_launch<T, 8, true >(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
-    else if (vec8)            batchnorm_backward_launch<T, 8, false>(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
-    else if (vec2 && from_y)  batchnorm_backward_launch<T, 2, true >(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
-    else if (vec2)            batchnorm_backward_launch<T, 2, false>(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
-    else if (from_y)          batchnorm_backward_launch<T, 1, true >(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
-    else                      batchnorm_backward_launch<T, 1, false>(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
+    const auto launch = [&]<int VEC>()
+    {
+        if (from_y) batchnorm_backward_launch<T, VEC, true >(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
+        else        batchnorm_backward_launch<T, VEC, false>(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
+    };
+    if (vec8)      launch.template operator()<8>();
+    else if (vec2) launch.template operator()<2>();
+    else           launch.template operator()<1>();
 }
 
 __global__ void conv_bn_fold_kernel(const Index total, const int kernel_size, const int kernels,

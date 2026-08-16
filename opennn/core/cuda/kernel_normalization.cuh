@@ -21,7 +21,7 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
 // included), then y = relu?(bn(x) [+ residual]). With `relu` and a non-null
 // `mask` (channels % 8 == 0), the apply pass packs (y > 0) for each row's
 // eight-channel group into one byte at mask[(row * channels + c0) / 8].
-// `partials` is scratch for (2 * batchnorm_backward_partial_rows(rows) + 2) *
+// `partials` is scratch for (2 * batchnorm_partial_rows(rows) + 2) *
 // channels floats.
 //
 // Backward: dY is gated by the mask when given (BF16 only - the eight-channel
@@ -31,8 +31,8 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
 // itself (no residual add), the reduce pass rebuilds x_hat as (y - beta) /
 // gamma and skips X (the apply pass still needs X on masked elements): six
 // passes instead of seven. `partials` is scratch for 2 *
-// batchnorm_backward_partial_rows(rows) * channels floats.
-Index batchnorm_backward_partial_rows(const Index rows);
+// batchnorm_partial_rows(rows) * channels floats.
+Index batchnorm_partial_rows(const Index rows);
 
 template<typename T>
 void batchnorm_forward_fused_cuda(const Index rows, const Index channels,
