@@ -99,7 +99,7 @@ def run_point(binary: str, data: Path, epochs: int, batch: int, precision: str,
         "graphs_abandoned": "continuing without graphs" in raw or "graph capture failed" in raw,
         "bn_staged": len(re.findall(r"BatchNormalizationOperator backward .*FP32-staged", raw)),
         "bn_degraded": len(re.findall(r"BatchNormalizationOperator backward ", raw)),
-        "wgrad_no_fp32_store": len(re.findall(r"no FP32-store engine", raw)),
+        "wgrad_no_fp32_store": len(re.findall(r"ConvolutionOperator wgrad .*no engine", raw)),
         "raw_tail": raw[-1500:],
     }
 

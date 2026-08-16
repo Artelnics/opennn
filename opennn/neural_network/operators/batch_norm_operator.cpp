@@ -671,40 +671,36 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                 break;
             }
 
-            const bool own_kernel_fallback = rung == device::BatchNormBackwardRung::Auto
-                                          || rung == device::BatchNormBackwardRung::OwnKernel;
-            if (attempts.empty())
-                entry.bwd_own_kernel = true;
-
-            for (size_t attempt_index = 0; attempt_index < attempts.size(); attempt_index++)
+            // The first attempt with an engine wins; with none, Auto and OwnKernel
+            // take the library kernel and a pinned cuDNN rung reports its failure.
+            exception_ptr last_failure;
+            for (const Attempt& attempt : attempts)
             {
-                const Attempt& attempt = attempts[attempt_index];
-
                 try
                 {
                     cudnn_frontend::build_bn_backward(entry, batch, features, spatial,
                                                       attempt.fuse_relu, attempt.dtype, attempt.fork);
+                    entry.bwd_forked       = attempt.fork;
+                    entry.bwd_fused_relu   = attempt.fuse_relu;
+                    entry.bwd_native_dtype = attempt.dtype == input.type;
+                    break;
                 }
-                catch (const exception&)
+                catch (...)
                 {
                     // build_bn_backward assigns entry.bwd last, so a throw leaves the
                     // tensor handles it already overwrote pointing at a dead graph.
                     entry.bwd_Y    = nullptr;
                     entry.bwd_DPre = nullptr;
-
-                    if (attempt_index + 1 == attempts.size())
-                    {
-                        if (!own_kernel_fallback) throw;
-                        entry.bwd_own_kernel = true;
-                        break;
-                    }
-                    continue;
+                    last_failure = current_exception();
                 }
+            }
 
-                entry.bwd_forked       = attempt.fork;
-                entry.bwd_fused_relu   = attempt.fuse_relu;
-                entry.bwd_native_dtype = attempt.dtype == input.type;
-                break;
+            if (!entry.bwd)
+            {
+                if (rung == device::BatchNormBackwardRung::StagedFp32
+                    || rung == device::BatchNormBackwardRung::PlainNative)
+                    rethrow_exception(last_failure);
+                entry.bwd_own_kernel = true;
             }
 
             // Once per shape: what this backward runs on when it is not the fully

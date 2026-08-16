@@ -24,6 +24,7 @@ public:
               const string& = "embedding_layer");
 
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 1); }
+    bool allows_bf16_input_cast(size_t) const noexcept override { return false; }
 
     Shape get_input_shape() const noexcept override { return {sequence_length}; }
     Shape get_output_shape() const override;

@@ -9,6 +9,7 @@
 #include "opennn/neural_network/layers/long_short_term_memory_layer.h"
 #include "opennn/neural_network/layers/recurrent_layer.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/neural_network/layers/tokenizer_layer.h"
 #include "opennn/dataset/dataset.h"
 
 using namespace opennn;
@@ -247,6 +248,17 @@ TEST(NeuralNetworkTest, InputCountIsTheExternalShapeSize)
         make_unique<Scaling>(Shape{2, 3, 4})), 24);
     EXPECT_EQ(inputs_number(
         make_unique<Embedding>(Shape{100, 7}, 8)), 7);
+}
+
+TEST(NeuralNetworkTest, DiscreteInputLayersRejectBf16InputCasts)
+{
+    const opennn::Dense dense(Shape{1}, Shape{1}, "Identity");
+    const Embedding embedding(Shape{512, 1}, 2);
+    const Tokenizer tokenizer(Shape{1});
+
+    EXPECT_TRUE(dense.allows_bf16_input_cast(0));
+    EXPECT_FALSE(embedding.allows_bf16_input_cast(0));
+    EXPECT_FALSE(tokenizer.allows_bf16_input_cast(0));
 }
 
 TEST(NeuralNetworkTest, SetInputShapePropagatesFromTheFirstExternalInput)

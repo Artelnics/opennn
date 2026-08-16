@@ -23,6 +23,7 @@ public:
     Shape get_output_shape() const noexcept override { return input_shape; }
 
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 1); }
+    bool allows_bf16_input_cast(size_t) const noexcept override { return false; }
 
     void apply_input_shape(const Shape&) override;
 

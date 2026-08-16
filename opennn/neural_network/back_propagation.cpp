@@ -145,29 +145,27 @@ void BackPropagation::plan_delta_addends()
             return view.data && view.size() == destination.size() ? &view : nullptr;
         };
 
-        // A: the consumer whose slot is the destination; B: the other one.
-        int a = -1;
-        for (int k = 0; k < 2; ++k)
-        {
-            const TensorView* view = slot_of(edges[size_t(k)]);
-            if (view && view->data == destination.data) a = k;
-        }
-        if (a < 0) continue;
-        const int b = 1 - a;
+        // A: the consumer whose slot is the destination; B: the other one, whose
+        // slot becomes A's addend. Exactly one of the two must alias.
+        const TensorView* first  = slot_of(edges[0]);
+        const TensorView* second = slot_of(edges[1]);
+        const bool first_is_destination  = first  && first->data  == destination.data;
+        const bool second_is_destination = second && second->data == destination.data;
+        if (first_is_destination == second_is_destination) continue;
 
-        const auto [layer_a, input_a] = edges[size_t(a)];
-        const auto [layer_b, input_b] = edges[size_t(b)];
-        const TensorView* addend = slot_of(edges[size_t(b)]);
+        const auto& edge_a = first_is_destination ? edges[0] : edges[1];
+        const auto& edge_b = first_is_destination ? edges[1] : edges[0];
+        const TensorView* addend = first_is_destination ? second : first;
+        const auto [layer_a, input_a] = edge_a;
 
         if (!addend
-            || addend->data == destination.data
-            || layer_a >= layer_b                       // A must run after B
+            || layer_a >= edge_b.first                  // A must run after B
             || !layers[layer_a]->folds_input_delta_addend(input_a)
             || input_a >= input_delta_addends[layer_a].size())
             continue;
 
         input_delta_addends[layer_a][input_a] = *addend;
-        folded_consumer_edge[producer] = edges[size_t(b)];
+        folded_consumer_edge[producer] = edge_b;
     }
 }
 

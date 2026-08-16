@@ -123,6 +123,11 @@ public:
     virtual bool is_recurrent() const noexcept { return false; }
     virtual bool skip_for_pre_scaled_input() const noexcept { return false; }
 
+    // Whether an FP32 input may be narrowed to BF16 while it is staged for
+    // this input slot. Layers that interpret values as exact identifiers must
+    // reject the cast even when the network uses BF16 activations.
+    virtual bool allows_bf16_input_cast(size_t) const noexcept { return true; }
+
     Index get_inputs_number() const noexcept { return get_input_shape().size(); }
 
     Index get_outputs_number() const { return get_output_shape().size(); }

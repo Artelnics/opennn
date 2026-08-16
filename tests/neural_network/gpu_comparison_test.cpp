@@ -26,6 +26,7 @@
 #include "opennn/core/device_backend.h"
 #include "opennn/core/cuda/kernel_prelude.cuh"
 #include "opennn/core/random_utilities.h"
+#include "opennn/registry.h"
 
 using namespace opennn;
 
@@ -51,11 +52,63 @@ float relative_difference(const MatrixR& reference, const MatrixR& other)
     return max_abs_diff / scale;
 }
 
+class ExactInputProbe final : public Layer
+{
+public:
+    ExactInputProbe()
+        : Layer(LayerType::Activation, false)
+    {
+        input_shape = {1};
+    }
+
+    bool accepts_input_rank(Index rank) const override { return rank == 1; }
+    bool allows_bf16_input_cast(size_t) const noexcept override { return false; }
+    Shape get_output_shape() const override { return input_shape; }
+    vector<TensorSpec> get_forward_specs(Index) const override { return {}; }
+
+    void forward_propagate(ForwardPropagation& propagation, size_t layer, bool) override
+    {
+        called = true;
+        observed_input = propagation.inputs[layer].front();
+    }
+
+    bool called = false;
+    TensorView observed_input;
+};
+
 }
 
 class GpuComparison : public ::testing::Test
 {
 };
+
+TEST_F(GpuComparison, LayerContractPreservesExactExternalInput)
+{
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+
+    auto probe = make_unique<ExactInputProbe>();
+    ExactInputProbe* const probe_ptr = probe.get();
+
+    NeuralNetwork network;
+    network.add_layer(std::move(probe));
+    network.compile();
+
+    Tensor2 input(1, 1);
+    input(0, 0) = 257.0f; // BF16 rounds this identifier to 256.
+
+    ForwardPropagation propagation(1, &network, ForwardPropagationMode::Inference);
+    network.forward_propagate({TensorView(input.data(), {1, 1})}, propagation, false);
+
+    ASSERT_TRUE(probe_ptr->called);
+    ASSERT_EQ(probe_ptr->observed_input.type, Type::FP32);
+    ASSERT_EQ(probe_ptr->observed_input.device, Device::CUDA);
+
+    float observed = 0.0f;
+    device::copy_async(&observed, probe_ptr->observed_input.data, sizeof(float),
+                       device::CopyKind::DeviceToHost);
+    device::synchronize();
+    EXPECT_EQ(observed, 257.0f);
+}
 
 TEST_F(GpuComparison, ApproximationForward)
 {

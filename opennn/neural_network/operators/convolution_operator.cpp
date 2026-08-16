@@ -247,16 +247,28 @@ string timing_label(const ConvolutionOperator& op, const char* kind)
                   op.kernel_height, op.kernel_width, op.kernels_number, op.row_stride);
 }
 
-// Once per shape: a graph the operator would rather have (an FP32 gradient
-// store, an ADD epilogue) has no engine here and a slower form runs instead.
-// This line is the only signal of the extra passes that costs.
-void report_fallback(const ConvolutionOperator& op, const char* kind, int64_t batch,
-                     const string& reason, const char* consequence)
+// Builds a graph the operator would rather have (an FP32 gradient store, an ADD
+// epilogue); false when this shape has no engine for it, so the caller builds
+// the plain form. The report is once per shape and the only signal of the
+// extra passes the plain form costs.
+template<typename Build>
+bool build_preferred(const ConvolutionOperator& op, const char* kind, int64_t batch,
+                     const char* consequence, Build&& build)
 {
-    cerr << "ConvolutionOperator " << kind << " "
-         << op.input_height << "x" << op.input_width << "x" << op.kernel_channels
-         << " k" << op.kernel_height << "x" << op.kernel_width << "x" << op.kernels_number
-         << " batch " << batch << ": " << reason << " (" << consequence << ").\n";
+    try
+    {
+        build();
+        return true;
+    }
+    catch (const exception& e)
+    {
+        cerr << "ConvolutionOperator " << kind << " "
+             << op.input_height << "x" << op.input_width << "x" << op.kernel_channels
+             << " k" << op.kernel_height << "x" << op.kernel_width << "x" << op.kernels_number
+             << " batch " << batch << ": no engine (" << e.what() << "); "
+             << consequence << ".\n";
+        return false;
+    }
 }
 
 }
@@ -654,29 +666,14 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
 
         if (!entry.wgrad)
         {
-            // Prefer an FP32 weight-gradient store (see build_wgrad); fall back to
-            // the BF16 store + widening cast on shapes with no FP32-store engine.
-            // The fallback rebuilds every handle, so the failed attempt leaves
-            // nothing to undo.
-            bool fp32_store = input.is_bf16();
-
-            if (fp32_store)
-                try
-                {
-                    cudnn_frontend::build_wgrad(entry, dims, input.type, true);
-                }
-                catch (const exception& e)
-                {
-                    fp32_store = false;
-                    cudnn_frontend::report_fallback(*this, "wgrad", input.shape[0],
-                                                    "no FP32-store engine: " + string(e.what()),
-                                                    "BF16 store + widening cast per step");
-                }
-
-            if (!fp32_store)
+            // Prefer an FP32 weight-gradient store (see build_wgrad). A failed
+            // build rebuilds every handle, so there is nothing to undo.
+            entry.wgrad_fp32_output = input.is_bf16()
+                && cudnn_frontend::build_preferred(*this, "wgrad", input.shape[0],
+                       "BF16 store + widening cast per step",
+                       [&] { cudnn_frontend::build_wgrad(entry, dims, input.type, true); });
+            if (!entry.wgrad_fp32_output)
                 cudnn_frontend::build_wgrad(entry, dims, input.type, false);
-
-            entry.wgrad_fp32_output = fp32_store;
         }
 
         const bool wgrad_bf16 = input.is_bf16() && !entry.wgrad_fp32_output;
@@ -717,22 +714,12 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
 
             if (!entry.dgrad)
             {
-                bool fused = want_add;
-                if (fused)
-                    try
-                    {
-                        cudnn_frontend::build_dgrad(entry, dims, input.type, true);
-                    }
-                    catch (const exception& e)
-                    {
-                        fused = false;
-                        cudnn_frontend::report_fallback(*this, "dgrad", input.shape[0],
-                                                        "no dgrad+add engine: " + string(e.what()),
-                                                        "residual delta added separately");
-                    }
-                if (!fused)
+                entry.dgrad_adds = want_add
+                    && cudnn_frontend::build_preferred(*this, "dgrad", input.shape[0],
+                           "residual delta added separately",
+                           [&] { cudnn_frontend::build_dgrad(entry, dims, input.type, true); });
+                if (!entry.dgrad_adds)
                     cudnn_frontend::build_dgrad(entry, dims, input.type, false);
-                entry.dgrad_adds = fused;
             }
 
             unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> dgrad_tensors;

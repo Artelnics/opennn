@@ -1154,18 +1154,21 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
         if (uses_bf16_activations)
             forward_propagation.host_bf16_input_scratch.resize(input_view.size());
 
-        const auto input_feeds_token_ids = [&](size_t input_index)
+        const auto external_input_allows_bf16_cast = [&](size_t input_index)
         {
             const Index external_source = -static_cast<Index>(input_index) - 1;
 
             for (size_t layer_index = 0; layer_index < source_layers.size(); ++layer_index)
-                for (const Index source : source_layers[layer_index])
-                    if (source == external_source
-                        && is_one_of(layers[layer_index]->get_type(),
-                                     LayerType::Embedding, LayerType::Tokenizer))
-                        return true;
+                for (size_t source_index = 0;
+                     source_index < source_layers[layer_index].size();
+                     ++source_index)
+                {
+                    if (source_layers[layer_index][source_index] == external_source
+                        && !layers[layer_index]->allows_bf16_input_cast(source_index))
+                        return false;
+                }
 
-            return false;
+            return true;
         };
 
         cudaStream_t stream = Backend::get_compute_stream();
@@ -1185,7 +1188,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
             const bool cast_input_to_bf16 = uses_bf16_activations
                                          && source.is_fp32()
-                                         && !input_feeds_token_ids(i);
+                                         && external_input_allows_bf16_cast(i);
 
             Buffer& input_buffer = forward_propagation.staged_input_storage[i];
             const auto ensure_cuda_capacity = [&](Index required_bytes)
