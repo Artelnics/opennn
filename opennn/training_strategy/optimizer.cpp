@@ -1019,11 +1019,12 @@ TrainingResult Optimizer::train()
         validation_forward_propagation = make_unique<ForwardPropagation>();
         validation_forward_propagation->set(validation_batch_size, neural_network,
                                             &training_forward_propagation.arena,
-                                            ForwardPropagationMode::Inference);
+                                            ForwardPropagationMode::Inference,
+                                            InferenceShapePolicy{},
+                                            true);
     }
 
     ForwardPropagation* validation_fp = validation_forward_propagation.get();
-    mark_validation_propagation(validation_fp);
 
     setup_device_training();
 
@@ -1063,8 +1064,6 @@ TrainingResult Optimizer::train()
                                has_validation ? &validation_batches : nullptr);
     }
 
-    const bool has_training_tail = training_batch_size > 0
-        && training_samples_number % training_batch_size != 0;
     const bool has_validation_tail = has_validation
         && validation_batch_size > 0
         && validation_samples_number % validation_batch_size != 0;
@@ -1224,9 +1223,9 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
     if (context.validation_samples_number > 0)
         context.validation_forward_propagation =
             make_unique<ForwardPropagation>(context.validation_samples_number, neural_network,
-                                            ForwardPropagationMode::Inference);
-
-    mark_validation_propagation(context.validation_forward_propagation.get());
+                                            ForwardPropagationMode::Inference,
+                                            InferenceShapePolicy{},
+                                            true);
 
     loss->set_normalization_coefficient();
 }
@@ -1695,10 +1694,15 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         }
     };
 
+    // Grouped graphs hide the individual parameter updates from callbacks.
+    // Keep one graph replay per batch when a callback must observe every update.
+    const bool can_group_batches = !post_batch_callback
+                                && batches_number >= Index(TrainingSession::group_size);
+
     try
     {
         if (resident_gather
-            && batches_number >= Index(TrainingSession::group_size))
+            && can_group_batches)
         {
             run_grouped_epoch(
                 [&](Batch& slot)
@@ -1729,7 +1733,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                 });
         }
         else if (staged_h2d
-            && batches_number >= Index(TrainingSession::group_size))
+            && can_group_batches)
         {
             run_grouped_epoch(
                 [&](Batch& slot)
@@ -1817,6 +1821,12 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                 }
 
                 slot.record_h2d_done(compute);
+
+                if (post_batch_callback)
+                {
+                    device::synchronize(compute);
+                    post_batch_callback(neural_network);
+                }
 
                 if (host_batch)
                 {
@@ -2019,7 +2029,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
                 neural_network,
                 ForwardPropagationMode::Training,
                 InferenceShapePolicy{},
-                false,
+                true,
                 delta_lifetimes);
             tail.backward = make_unique<BackPropagation>(
                 tail_size,
@@ -2199,7 +2209,8 @@ Loss::EvaluationResult Optimizer::train_epoch(
         neural_network->has_recurrent_layers(),
         &training_session,
         training_session.fixed_batch(),
-        profile_this ? &worker_profile : nullptr
+        profile_this ? &worker_profile : nullptr,
+        {}
     };
 
     context.step = [&](Batch& batch, Loss::EvaluationResult& result)
@@ -2415,7 +2426,10 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
         FillMode::Validation,
         true,
         neural_network->has_recurrent_layers(),
-        &training_session
+        &training_session,
+        nullptr,
+        nullptr,
+        {}
     };
 
     context.step = [&](Batch& batch, Loss::EvaluationResult& result)

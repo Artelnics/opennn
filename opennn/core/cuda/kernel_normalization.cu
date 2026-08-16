@@ -129,6 +129,142 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
                        epsilon, apply_relu ? 1 : 0, y);
 }
 
+// ---- fused batch-norm backward (NHWC) ---------------------------------------
+//
+// One thread owns one channel and strides down a slice of rows, so a warp reads
+// 32 consecutive channels of one row: coalesced along C, which is contiguous
+// in NHWC. Block (32, BN_BWD_ROWS_PER_BLOCK_Y) threads; grid (channel blocks,
+// row blocks). Row-block partials are summed by a second, tiny kernel so the
+// reduction order is fixed - no float atomics.
+
+constexpr int BN_BWD_THREADS_X = 32;
+constexpr int BN_BWD_THREADS_Y = 8;
+constexpr Index BN_BWD_MAX_ROW_BLOCKS = 128;
+
+Index batchnorm_backward_partial_rows(const Index rows)
+{
+    const Index rows_per_block = (rows + BN_BWD_MAX_ROW_BLOCKS - 1) / BN_BWD_MAX_ROW_BLOCKS;
+    return rows_per_block <= 0 ? 1 : (rows + rows_per_block - 1) / rows_per_block;
+}
+
+template<typename T>
+__global__ void batchnorm_backward_reduce_kernel(const Index rows, const int channels,
+                                                 const Index rows_per_block,
+                                                 const T* __restrict__ x,
+                                                 const T* __restrict__ dy,
+                                                 const T* __restrict__ y,
+                                                 const float* __restrict__ mean,
+                                                 const float* __restrict__ inv_var,
+                                                 float* __restrict__ partials)
+{
+    const int c = blockIdx.x * BN_BWD_THREADS_X + threadIdx.x;
+    const Index row_begin = Index(blockIdx.y) * rows_per_block;
+    const Index row_end = min(rows, row_begin + rows_per_block);
+
+    float s1 = 0.0f, s2 = 0.0f;
+    if (c < channels)
+    {
+        const float m = mean[c], iv = inv_var[c];
+        for (Index r = row_begin + threadIdx.y; r < row_end; r += BN_BWD_THREADS_Y)
+        {
+            const Index i = r * channels + c;
+            float g = static_cast<float>(dy[i]);
+            if (y && static_cast<float>(y[i]) <= 0.0f) g = 0.0f;
+            s1 += g;
+            s2 += g * (static_cast<float>(x[i]) - m) * iv;
+        }
+    }
+
+    __shared__ float sh1[BN_BWD_THREADS_Y][BN_BWD_THREADS_X];
+    __shared__ float sh2[BN_BWD_THREADS_Y][BN_BWD_THREADS_X];
+    sh1[threadIdx.y][threadIdx.x] = s1;
+    sh2[threadIdx.y][threadIdx.x] = s2;
+    __syncthreads();
+
+    if (threadIdx.y == 0 && c < channels)
+    {
+        float t1 = 0.0f, t2 = 0.0f;
+        for (int k = 0; k < BN_BWD_THREADS_Y; ++k) { t1 += sh1[k][threadIdx.x]; t2 += sh2[k][threadIdx.x]; }
+        const Index slot = (Index(blockIdx.y) * channels + c) * 2;
+        partials[slot] = t1;
+        partials[slot + 1] = t2;
+    }
+}
+
+__global__ void batchnorm_backward_finalize_kernel(const int channels, const int row_blocks,
+                                                   const float* __restrict__ partials,
+                                                   float* __restrict__ dgamma,
+                                                   float* __restrict__ dbeta)
+{
+    const int c = blockIdx.x * blockDim.x + threadIdx.x;
+    if (c >= channels) return;
+    float s1 = 0.0f, s2 = 0.0f;
+    for (int b = 0; b < row_blocks; ++b)
+    {
+        const Index slot = (Index(b) * channels + c) * 2;
+        s1 += partials[slot];
+        s2 += partials[slot + 1];
+    }
+    dbeta[c] = s1;
+    dgamma[c] = s2;
+}
+
+template<typename T>
+__global__ void batchnorm_backward_apply_kernel(const Index total, const int channels,
+                                                const float inv_rows,
+                                                const T* __restrict__ x,
+                                                T* __restrict__ dy_dx,
+                                                const T* __restrict__ y,
+                                                const float* __restrict__ gamma,
+                                                const float* __restrict__ mean,
+                                                const float* __restrict__ inv_var,
+                                                const float* __restrict__ dgamma,
+                                                const float* __restrict__ dbeta,
+                                                T* __restrict__ dpre)
+{
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < total;
+         i += Index(gridDim.x) * blockDim.x)
+    {
+        const int c = int(i % channels);
+        float g = static_cast<float>(dy_dx[i]);
+        if (y && static_cast<float>(y[i]) <= 0.0f) g = 0.0f;
+        if (dpre) dpre[i] = static_cast<T>(g);
+
+        const float iv = inv_var[c];
+        const float x_hat = (static_cast<float>(x[i]) - mean[c]) * iv;
+        const float dx = gamma[c] * iv * (g - dbeta[c] * inv_rows - x_hat * dgamma[c] * inv_rows);
+        dy_dx[i] = static_cast<T>(dx);
+    }
+}
+
+template<typename T>
+void batchnorm_backward_fused_cuda(const Index rows, const Index channels,
+                                   const T* x, T* dy_dx, const T* y,
+                                   const float* gamma, const float* mean, const float* inv_var,
+                                   T* dpre, float* dgamma, float* dbeta,
+                                   float* partials)
+{
+    if (rows == 0 || channels == 0) return;
+    cudaStream_t stream = opennn::device::get_compute_stream();
+
+    const Index row_blocks = batchnorm_backward_partial_rows(rows);
+    const Index rows_per_block = (rows + row_blocks - 1) / row_blocks;
+    const dim3 reduce_block(BN_BWD_THREADS_X, BN_BWD_THREADS_Y);
+    const dim3 reduce_grid(unsigned((channels + BN_BWD_THREADS_X - 1) / BN_BWD_THREADS_X),
+                           unsigned(row_blocks));
+    OPENNN_CUDA_LAUNCH((batchnorm_backward_reduce_kernel<T><<<reduce_grid, reduce_block, 0, stream>>>(
+        rows, checked_int(channels), rows_per_block, x, dy_dx, y, mean, inv_var, partials)));
+
+    const int finalize_threads = 256;
+    OPENNN_CUDA_LAUNCH((batchnorm_backward_finalize_kernel<<<
+        unsigned((channels + finalize_threads - 1) / finalize_threads), finalize_threads, 0, stream>>>(
+        checked_int(channels), checked_int(row_blocks), partials, dgamma, dbeta)));
+
+    launch_elementwise_strided(rows * channels, batchnorm_backward_apply_kernel<T>, checked_int(channels),
+                               1.0f / static_cast<float>(rows),
+                               x, dy_dx, y, gamma, mean, inv_var, dgamma, dbeta, dpre);
+}
+
 __global__ void conv_bn_fold_kernel(const Index total, const int kernel_size, const int kernels,
                                     const float* __restrict__ weights,
                                     const float* __restrict__ gamma,
@@ -369,6 +505,7 @@ void rmsnorm_backward_cuda(const int N, const int D, const T* dY, const T* X, co
 
 #define INSTANTIATE(T) \
     template void batchnorm_inference_cuda<T>(const Index, const Index, const T*, const T*, const float*, const float*, const float*, const float*, const float, const bool, T*); \
+    template void batchnorm_backward_fused_cuda<T>(const Index, const Index, const T*, T*, const T*, const float*, const float*, const float*, T*, float*, float*, float*); \
     template void layernorm_forward_cuda<T>(const int, const int, const T*, T*, float*, float*, const float*, const float*, const float); \
     template void layernorm_add_forward_cuda<T>(const int, const int, const T*, const T*, T*, T*, float*, float*, const float*, const float*, const float); \
     template void layernorm_backward_cuda<T>(const int, const int, const T*, const T*, const float*, const float*, const float*, T*, float*, float*); \

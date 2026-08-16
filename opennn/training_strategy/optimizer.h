@@ -165,12 +165,6 @@ protected:
                                  TrainingResult&,
                                  const BestModelSnapshot&);
 
-    static void mark_validation_propagation(ForwardPropagation* validation_propagation)
-    {
-        if (validation_propagation)
-            validation_propagation->inputs_pre_scaled = true;
-    }
-
     void write_common_json(JsonWriter&) const;
     void read_common_json(const Json*);
 

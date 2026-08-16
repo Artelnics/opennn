@@ -148,7 +148,6 @@ void ForwardPropagation::set(
     batch_size = new_batch_size;
     neural_network = new_neural_network;
     mode = new_mode;
-    inputs_pre_scaled = new_inputs_pre_scaled;
     past_length = 0;
 
     const auto& layers = neural_network->get_layers();
@@ -179,15 +178,14 @@ void ForwardPropagation::set(
              source_layers.size(),
              layers_number);
 
-    if(mode == ForwardPropagationMode::Training && inputs_pre_scaled)
-    {
-        for(size_t i = 0;
-            i < layers_number && layers[i]->get_type() == LayerType::Scaling;
-            ++i)
-        {
-            forward_specs[i].clear();
-        }
-    }
+    execution_start_layer = 0;
+    if (new_inputs_pre_scaled)
+        while (size_t(execution_start_layer) < layers_number
+              && layers[size_t(execution_start_layer)]->skip_for_pre_scaled_input())
+            ++execution_start_layer;
+
+    for (Index i = 0; i < execution_start_layer; ++i)
+        forward_specs[size_t(i)].clear();
 
     const Shape model_input_shape = neural_network->get_input_shape();
 

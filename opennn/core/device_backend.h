@@ -85,11 +85,12 @@ void    set_conv_workspace_auto_limit_bytes(int64_t) noexcept;
 bool conv_autotune_enabled() noexcept;
 void set_conv_autotune(bool) noexcept;
 
-// Which rung of the batch-norm backward ladder to take. Auto lets each shape
-// find the fastest engine cuDNN has for it; the other two pin a rung so a
+// Which rung of the batch-norm backward to take. Auto takes cuDNN's fully
+// fused engine when the shape has one and the library's own fused kernel
+// (batchnorm_backward_fused_cuda) otherwise; the other three pin a rung so a
 // gradient can be checked against the reference on purpose (a shape may never
 // take a rung by itself on a given GPU). Diagnostic; Auto in production.
-enum class BatchNormBackwardRung { Auto, StagedFp32, PlainNative };
+enum class BatchNormBackwardRung { Auto, StagedFp32, PlainNative, OwnKernel };
 BatchNormBackwardRung batch_norm_backward_rung() noexcept;
 void set_batch_norm_backward_rung(BatchNormBackwardRung) noexcept;
 

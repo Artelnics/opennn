@@ -121,6 +121,7 @@ public:
 
     virtual bool allows_successors() const noexcept { return true; }
     virtual bool is_recurrent() const noexcept { return false; }
+    virtual bool skip_for_pre_scaled_input() const noexcept { return false; }
 
     Index get_inputs_number() const noexcept { return get_input_shape().size(); }
 

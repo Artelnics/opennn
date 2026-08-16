@@ -1125,11 +1125,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
     throw_if(parameters.size_in_floats() != get_aligned_size(get_parameter_specs()),
              "Network shapes changed since compile(); call compile() again.");
 
-    Index first_layer_index = 0;
-    if (is_training || forward_propagation.inputs_pre_scaled)
-        while (first_layer_index < get_layers_number()
-               && layers[first_layer_index]->get_type() == LayerType::Scaling)
-            ++first_layer_index;
+    const Index first_layer_index = forward_propagation.get_execution_start_layer();
     const Index last_layer_index = get_layers_number() - 1;
 
 #ifdef OPENNN_HAS_CUDA
@@ -1259,6 +1255,13 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
         return input_view[input_index];
     };
 
+    if (first_layer_index > last_layer_index && last_layer_index >= 0)
+    {
+        auto& final_inputs = forward_propagation.inputs[size_t(last_layer_index)];
+        if (!final_inputs.empty()) final_inputs.front() = pick_input(0);
+        return;
+    }
+
     for (const auto& [layer_i, source_j, ext_idx] : forward_propagation.passthrough_overrides)
         if (Index(layer_i) >= first_layer_index)
             forward_propagation.inputs[layer_i][source_j] = pick_input(ext_idx);
@@ -1274,8 +1277,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
             if (source_layer < 0)
                 input_slot[source_index] = pick_input(size_t(-source_layer - 1));
-            else if ((is_training || forward_propagation.inputs_pre_scaled)
-                     && source_layer < first_layer_index)
+            else if (source_layer < forward_propagation.get_execution_start_layer())
                 input_slot[source_index] = pick_input(source_index);
         }
 

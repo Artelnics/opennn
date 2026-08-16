@@ -67,6 +67,7 @@ struct ForwardPropagation
     Index get_sequence_capacity() const noexcept { return sequence_capacity; }
     Index get_final_output_capacity() const noexcept { return final_output_capacity; }
     Index get_final_output_layer() const noexcept { return final_output_layer; }
+    Index get_execution_start_layer() const noexcept { return execution_start_layer; }
 
     TensorView get_last_trainable_layer_outputs() const;
 
@@ -84,8 +85,6 @@ struct ForwardPropagation
     ForwardPropagationMode mode = ForwardPropagationMode::Training;
 
     Index past_length = 0;
-
-    bool inputs_pre_scaled = false;
 
     Buffer arena;
     vector<Buffer> staged_input_storage;
@@ -152,6 +151,7 @@ private:
     vector<size_t> recomputable_slots;
     Index sequence_capacity = 0;
     Index active_sequence_length = 0;
+    Index execution_start_layer = 0;
     Index final_output_capacity = 0;
     Index final_output_layer = -1;
     optional<OutputWindow> output_window;

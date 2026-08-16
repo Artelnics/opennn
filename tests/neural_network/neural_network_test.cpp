@@ -298,6 +298,68 @@ TEST(NeuralNetworkTest, SetInputShapeLeavesOtherExternalInputsUnchanged)
     EXPECT_EQ(network.get_layer(1)->get_input_shape(), Shape{4});
 }
 
+TEST(NeuralNetworkTest, PreScaledInputBoundaryIsPlannedOnce)
+{
+    NeuralNetwork network;
+    network.add_layer(make_unique<Scaling>(Shape{1}));
+    network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
+    network.compile();
+
+    ForwardPropagation raw_training(
+        2, &network, ForwardPropagationMode::Training, {}, false);
+    ForwardPropagation preprocessed_inference(
+        2, &network, ForwardPropagationMode::Inference, {}, true);
+
+    EXPECT_EQ(raw_training.get_execution_start_layer(), 0);
+    EXPECT_EQ(preprocessed_inference.get_execution_start_layer(), 1);
+    EXPECT_FALSE(raw_training.slots[0].back().empty());
+    EXPECT_TRUE(preprocessed_inference.slots[0].back().empty());
+
+    Tensor2 inputs(2, 1);
+    inputs.setValues({{2.0f}, {3.0f}});
+    const vector<TensorView> input_views = {
+        TensorView(inputs.data(), {2, 1})};
+
+    network.forward_propagate(input_views, raw_training, true);
+    network.forward_propagate(input_views, preprocessed_inference, false);
+
+    EXPECT_NE(raw_training.inputs[1][0].data, inputs.data());
+    EXPECT_EQ(preprocessed_inference.inputs[1][0].data, inputs.data());
+}
+
+TEST(NeuralNetworkTest, PreScaledBoundaryLeavesTextInputPipelineActive)
+{
+    TextClassificationNetwork network(Shape{16, 4, 8}, Shape{2}, Shape{2});
+
+    ASSERT_FALSE(network.get_layer(0)->skip_for_pre_scaled_input());
+
+    ForwardPropagation propagation(
+        3, &network, ForwardPropagationMode::Training, {}, true);
+
+    EXPECT_EQ(propagation.get_execution_start_layer(), 0);
+}
+
+TEST(NeuralNetworkTest, PreScaledInputIsOutputWhenEveryLayerIsSkipped)
+{
+    NeuralNetwork network;
+    network.add_layer(make_unique<Scaling>(Shape{1}));
+    network.compile();
+
+    ForwardPropagation propagation(
+        2, &network, ForwardPropagationMode::Inference, {}, true);
+
+    Tensor2 inputs(2, 1);
+    inputs.setValues({{2.0f}, {3.0f}});
+    const vector<TensorView> input_views = {
+        TensorView(inputs.data(), {2, 1})};
+
+    network.forward_propagate(input_views, propagation, false);
+
+    const TensorView outputs = propagation.get_outputs();
+    ASSERT_EQ(outputs.data, inputs.data());
+    EXPECT_EQ(outputs.shape, (Shape{2, 1}));
+}
+
 TEST(NeuralNetworkTest, SerializesNetworkTask)
 {
     NeuralNetwork neural_network;

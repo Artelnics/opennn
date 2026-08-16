@@ -67,6 +67,7 @@ public:
 
     void set(const Shape& = {});
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 1, 2, 3); }
+    bool skip_for_pre_scaled_input() const noexcept override { return true; }
 
     void apply_input_shape(const Shape&) override;
 

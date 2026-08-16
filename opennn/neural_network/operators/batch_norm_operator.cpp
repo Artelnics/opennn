@@ -364,6 +364,7 @@ struct BatchNormalizationOperator::BatchNormalizationGraphCache
         bool bwd_forked = false;
         bool bwd_native_dtype = false;
         bool bwd_fused_relu = false;
+        bool bwd_own_kernel = false;   // batchnorm_backward_fused_cuda, no cuDNN graph
         bool fwd_autotune = false;
         bool bwd_autotune = false;
     };
@@ -641,23 +642,21 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
         && cudnn_frontend::run_frontend(bn_graph_cache, "BatchNormalizationOperator", [&](BatchNormalizationGraphCache& cache)
     {
         auto& entry = cache.entries[input.shape[0]];
-        if (!entry.bwd)
+        if (!entry.bwd && !entry.bwd_own_kernel)
         {
             const int64_t batch   = input.shape[0];
             const int64_t spatial = int64_t(input.size()) / (batch * features);
 
-            // cuDNN's engine coverage for a BF16-IO batchnorm backward is partial:
-            // measured on sm_120 / cuDNN 9.25, only 8 of ResNet-50's 24 shapes have
-            // an engine for the ReLU-fused graph; on sm_86 / cuDNN 9.10, 4 of 53
-            // layers. Give up one thing at a time — first the residual fork, then
-            // the fused ReLU (which then runs as its own kernel), and only then the
-            // IO precision, since staging through FP32 pays both the wider math and
-            // three full-tensor casts. The staged graph cannot fork: DPre would be
-            // written as FP32 into a BF16 buffer.
+            // cuDNN's BF16 fused-backward coverage is partial. Auto tries the
+            // exact fused graph once, then uses the library kernel to retain the
+            // dReLU and residual fork without FP32 staging. The other rungs remain
+            // available for direct comparison in the GPU gradient test.
             struct Attempt { Type dtype; bool fuse_relu; bool fork; };
 
+            const device::BatchNormBackwardRung rung = device::batch_norm_backward_rung();
+
             vector<Attempt> attempts;
-            switch (device::batch_norm_backward_rung())
+            switch (rung)
             {
             case device::BatchNormBackwardRung::StagedFp32:
                 attempts.push_back({Type::FP32, fuse_relu && !fuse_add, false});
@@ -666,24 +665,16 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                 attempts.push_back({input.type, false, false});
                 break;
             case device::BatchNormBackwardRung::Auto:
-                if (fork_capable)
-                    attempts.push_back({input.type, true, true});
-                attempts.push_back({input.type, fuse_relu && !fuse_add, false});
-                // Plain native BF16 with the ReLU mask as its own kernel, ahead of
-                // FP32 staging. An earlier note here rejected this rung as "bad
-                // math" (5-epoch loss 1.223 vs 0.656 on sm_120 / cuDNN 9.25);
-                // GpuComparison.ResidualBlockGradientBf16PerBackwardRung pins the
-                // rungs on a residual block and finds plain BF16 and FP32-staged
-                // gradients identical to 1.6e-8 on cuDNN 9.10 (fp32 GPU vs CPU
-                // 7e-7). Staging costs three full-tensor casts and 2x-byte math on
-                // 33 of ResNet-50's 53 layers; this rung is +15.7% at batch 2048.
-                // Run that test on any new cuDNN before trusting it there.
-                if (bf16 && fuse_relu && !fuse_add)
-                    attempts.push_back({input.type, false, false});
+                attempts.push_back({input.type, fuse_relu, fork_capable});
+                break;
+            case device::BatchNormBackwardRung::OwnKernel:
                 break;
             }
-            if (bf16 && device::batch_norm_backward_rung() == device::BatchNormBackwardRung::Auto)
-                attempts.push_back({Type::FP32, fuse_relu && !fuse_add, false});
+
+            const bool own_kernel_fallback = rung == device::BatchNormBackwardRung::Auto
+                                          || rung == device::BatchNormBackwardRung::OwnKernel;
+            if (attempts.empty())
+                entry.bwd_own_kernel = true;
 
             for (size_t attempt_index = 0; attempt_index < attempts.size(); attempt_index++)
             {
@@ -701,7 +692,12 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                     entry.bwd_Y    = nullptr;
                     entry.bwd_DPre = nullptr;
 
-                    if (attempt_index + 1 == attempts.size()) throw;
+                    if (attempt_index + 1 == attempts.size())
+                    {
+                        if (!own_kernel_fallback) throw;
+                        entry.bwd_own_kernel = true;
+                        break;
+                    }
                     continue;
                 }
 
@@ -724,6 +720,36 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                          << ".\n";
                 break;
             }
+
+            if (entry.bwd_own_kernel)
+                cerr << "BatchNormalizationOperator backward c" << features
+                     << " r" << input.size() / features << " batch " << input.shape[0]
+                     << ": own fused kernel (no fused cuDNN engine for this shape).\n";
+        }
+
+        if (entry.bwd_own_kernel)
+        {
+            const Index rows = input.size() / features;
+            float* partials = ensure_bf16_to_fp32_workspace(
+                2 * batchnorm_backward_partial_rows(rows) * features);
+            void* dpre = fuse_add && !residual_delta.empty() ? residual_delta.data : nullptr;
+            const void* y = fuse_relu ? output.data : nullptr;
+
+            if (bf16)
+                batchnorm_backward_fused_cuda<bfloat16>(
+                    rows, features,
+                    input.as<bfloat16>(), delta.as<bfloat16>(), static_cast<const bfloat16*>(y),
+                    gamma.as<float>(), mean.as<float>(), inverse_variance.as<float>(),
+                    static_cast<bfloat16*>(dpre), gamma_gradient.as<float>(), beta_gradient.as<float>(),
+                    partials);
+            else
+                batchnorm_backward_fused_cuda<float>(
+                    rows, features,
+                    input.as<float>(), delta.as<float>(), static_cast<const float*>(y),
+                    gamma.as<float>(), mean.as<float>(), inverse_variance.as<float>(),
+                    static_cast<float*>(dpre), gamma_gradient.as<float>(), beta_gradient.as<float>(),
+                    partials);
+            return;
         }
 
         // Whatever the chosen graph does not fuse runs here instead, ahead of it.

@@ -548,29 +548,37 @@ TEST_F(GpuComparison, ResidualBlockGradientBf16PerBackwardRung)
     // precision question, and every rung must clear it.
     const VectorR fp32_auto  = gpu_gradient_on(Type::FP32, device::BatchNormBackwardRung::Auto);
     const VectorR fp32_plain = gpu_gradient_on(Type::FP32, device::BatchNormBackwardRung::PlainNative);
+    const VectorR fp32_own   = gpu_gradient_on(Type::FP32, device::BatchNormBackwardRung::OwnKernel);
 
     const VectorR staged = gpu_gradient_on(Type::BF16, device::BatchNormBackwardRung::StagedFp32);
     const VectorR plain  = gpu_gradient_on(Type::BF16, device::BatchNormBackwardRung::PlainNative);
+    const VectorR own    = gpu_gradient_on(Type::BF16, device::BatchNormBackwardRung::OwnKernel);
     const VectorR autor  = gpu_gradient_on(Type::BF16, device::BatchNormBackwardRung::Auto);
 
-    for (const VectorR* gradient : {&fp32_auto, &fp32_plain, &staged, &plain, &autor})
+    for (const VectorR* gradient : {&fp32_auto, &fp32_plain, &fp32_own, &staged, &plain, &own, &autor})
         ASSERT_EQ(cpu_gradient.size(), gradient->size());
 
     const float fp32_auto_error  = relative_difference(cpu_gradient, fp32_auto);
     const float fp32_plain_error = relative_difference(cpu_gradient, fp32_plain);
+    const float fp32_own_error   = relative_difference(cpu_gradient, fp32_own);
     const float staged_error     = relative_difference(cpu_gradient, staged);
     const float plain_error      = relative_difference(cpu_gradient, plain);
+    const float own_error        = relative_difference(cpu_gradient, own);
     const float auto_error       = relative_difference(cpu_gradient, autor);
     const float plain_vs_staged  = relative_difference(staged, plain);
+    const float own_vs_staged    = relative_difference(staged, own);
 
     cout << "residual-block gradient vs fp32 reference - fp32 GPU: auto " << fp32_auto_error
-         << ", plain " << fp32_plain_error << "; bf16 GPU: staged " << staged_error
-         << ", plain " << plain_error << ", auto " << auto_error
-         << "; bf16 plain vs staged " << plain_vs_staged << "\n";
+         << ", plain " << fp32_plain_error << ", own " << fp32_own_error
+         << "; bf16 GPU: staged " << staged_error << ", plain " << plain_error
+         << ", own " << own_error << ", auto " << auto_error
+         << "; bf16 plain vs staged " << plain_vs_staged
+         << ", own vs staged " << own_vs_staged << "\n";
 
     // fp32: the engines must reproduce the reference (measured ~1e-3).
     EXPECT_LT(fp32_auto_error, 5.0e-3f);
     EXPECT_LT(fp32_plain_error, 5.0e-3f);
+    EXPECT_LT(fp32_own_error, 5.0e-3f);
 
     // bf16: the rungs compute the same thing and must agree with each other
     // (measured 1.6e-8 - identical). Against the fp32 reference they carry the
@@ -578,8 +586,10 @@ TEST_F(GpuComparison, ResidualBlockGradientBf16PerBackwardRung)
     // bits through a 3x3 conv, batch norm and a residual add: measured ~9%),
     // which is precision, not a fault; a broken engine is far above the bound.
     EXPECT_LT(plain_vs_staged, 1.0e-2f);
+    EXPECT_LT(own_vs_staged, 1.0e-2f);
     EXPECT_LT(staged_error, 2.0e-1f);
     EXPECT_LT(plain_error, 2.0e-1f);
+    EXPECT_LT(own_error, 2.0e-1f);
     EXPECT_LT(auto_error, 2.0e-1f);
 }
 
