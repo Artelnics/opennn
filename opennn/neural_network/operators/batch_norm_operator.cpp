@@ -8,9 +8,6 @@
 
 #include "opennn/neural_network/operators/batch_norm_operator.h"
 
-#ifdef OPENNN_HAS_CUDA
-#include <cudnn_frontend.h>
-#endif
 
 #include "opennn/core/cuda/cudnn_frontend_utilities.h"
 #ifdef OPENNN_HAS_CUDA
@@ -475,10 +472,7 @@ void build_bn_forward(BatchNormalizationOperator::BatchNormalizationGraphCache::
     entry.fwd_NextMean = next_mean;
     entry.fwd_NextVar  = next_var;
 
-    entry.fwd.autotune_pending = finalize(
-        *graph, entry.fwd.workspace_bytes, "batchnorm forward",
-        device::conv_autotune_enabled());
-    entry.fwd.graph = graph;
+    entry.fwd.build(graph, "batchnorm forward");
 }
 
 void build_bn_backward(BatchNormalizationOperator::BatchNormalizationGraphCache::Entry& entry,
@@ -537,10 +531,7 @@ void build_bn_backward(BatchNormalizationOperator::BatchNormalizationGraphCache:
     entry.bwd_DScale = dscale;
     entry.bwd_DBias  = dbias;
 
-    entry.bwd.autotune_pending = finalize(
-        *graph, entry.bwd.workspace_bytes, "batchnorm backward",
-        device::conv_autotune_enabled());
-    entry.bwd.graph = graph;
+    entry.bwd.build(graph, "batchnorm backward");
 }
 
 }

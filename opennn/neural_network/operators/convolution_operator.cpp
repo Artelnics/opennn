@@ -8,9 +8,6 @@
 
 #include "opennn/neural_network/operators/convolution_operator.h"
 
-#ifdef OPENNN_HAS_CUDA
-#include <cudnn_frontend.h>
-#endif
 
 #include "opennn/core/cuda/cudnn_frontend_utilities.h"
 #ifdef OPENNN_HAS_CUDA
@@ -136,10 +133,7 @@ void build_forward(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims
 
     set_nhwc_output(entry.fwd_Y, d.batch, d.kernels, d.output_height, d.output_width);
 
-    entry.fwd.autotune_pending = finalize(
-        *graph, entry.fwd.workspace_bytes, "forward",
-        device::conv_autotune_enabled());
-    entry.fwd.graph = graph;
+    entry.fwd.build(graph, "forward");
 }
 
 // The weight gradient is accumulated in FP32 whatever the IO type (new_graph sets
@@ -166,10 +160,7 @@ void build_wgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
     if (fp32_output)
         entry.wgrad_DW->set_data_type(DataType_t::FLOAT);
 
-    entry.wgrad.autotune_pending = finalize(
-        *graph, entry.wgrad.workspace_bytes, "wgrad",
-        device::conv_autotune_enabled());
-    entry.wgrad.graph = graph;
+    entry.wgrad.build(graph, "wgrad");
 }
 
 void build_bgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& d, Type dtype)
@@ -187,10 +178,7 @@ void build_bgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
                    .set_dim({1, d.kernels, 1, 1})
                    .set_stride({d.kernels, 1, d.kernels, d.kernels});
 
-    entry.bgrad.autotune_pending = finalize(
-        *graph, entry.bgrad.workspace_bytes, "bgrad",
-        device::conv_autotune_enabled());
-    entry.bgrad.graph = graph;
+    entry.bgrad.build(graph, "bgrad");
 }
 
 // With `add_residual` the graph is DX = conv_dgrad(DY, W) + R: the other
@@ -225,10 +213,7 @@ void build_dgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
 
     set_nhwc_output(entry.dgrad_DX, d.batch, d.channels, d.height, d.width);
 
-    entry.dgrad.autotune_pending = finalize(
-        *graph, entry.dgrad.workspace_bytes, "dgrad",
-        device::conv_autotune_enabled());
-    entry.dgrad.graph = graph;
+    entry.dgrad.build(graph, "dgrad");
 }
 
 string timing_label(const ConvolutionOperator& op, const char* kind)

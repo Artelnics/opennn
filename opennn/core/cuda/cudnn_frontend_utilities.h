@@ -208,8 +208,8 @@ inline void set_nhwc_output(shared_ptr<graph::Tensor_attributes>& tensor,
 // ResNet-50 - while the heuristics already rank the candidates and the winner
 // is nearly always among the first few. So build the first K viable candidates
 // in heuristic order and let autotune() skip the unbuilt slots.
-// OPENNN_AUTOTUNE_CANDIDATES overrides K (0 = build all, the old behaviour).
-// 0 or a negative count means "build all" (the old behaviour).
+// OPENNN_AUTOTUNE_CANDIDATES overrides K; 0 or a negative count means "build
+// all" (the old behaviour).
 inline int64_t candidate_limit_from(long long value)
 {
     return value <= 0 ? numeric_limits<int64_t>::max() : int64_t(value);
@@ -436,10 +436,13 @@ seq_len_scalar(graph::Graph& graph, const char* name, int64_t batch = 1)
                         .set_data_type(DataType_t::INT32));
 }
 
-inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string& tag,
-                     bool request_autotune = false)
+// Builds the plan(s) of a graph. Returns true when the plan choice is left to
+// the first real execution (device::conv_autotune_enabled(): the top-K
+// candidates are built and timed on real tensors by autotune()).
+inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string& tag)
 {
     const cudnnHandle_t handle = Backend::get_cudnn_handle();
+    const bool request_autotune = device::conv_autotune_enabled();
 
     workspace_bytes = 0;
 
@@ -625,6 +628,15 @@ struct GraphSlot
 
     explicit operator bool() const noexcept { return graph != nullptr; }
     graph::Graph& operator*() const noexcept { return *graph; }
+
+    // finalize() a freshly assembled graph and take it; on a throw the slot is
+    // left empty (finalize reports the failure).
+    void build(shared_ptr<graph::Graph> built, const string& tag)
+    {
+        graph.reset();
+        autotune_pending = finalize(*built, workspace_bytes, tag);
+        graph = std::move(built);
+    }
 };
 
 // Autotune once on real tensors, then execute. `scratch_autotune` times the

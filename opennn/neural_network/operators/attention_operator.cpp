@@ -331,7 +331,7 @@ static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
                                       const AttentionOperator::SDPACache::CacheKey& k,
                                       float dropout_rate)
 {
-    const auto graph = cudnn_frontend::new_graph(Type::BF16);   // the SDPA graphs are BF16 (FP32 goes through the BF16 pack)
+    const auto graph = cudnn_frontend::new_graph(Type::BF16);
 
     entry.fwd_Q = bhsd_input(*graph, "Q", k.batch_size, k.heads, k.q_seq,   k.head_dim);
     entry.fwd_K = bhsd_input(*graph, "K", k.batch_size, k.heads, k.src_seq, k.head_dim);
@@ -403,7 +403,7 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
                                        const AttentionOperator::SDPACache::CacheKey& k,
                                        float dropout_rate)
 {
-    const auto graph = cudnn_frontend::new_graph(Type::BF16);   // the SDPA graphs are BF16 (FP32 goes through the BF16 pack)
+    const auto graph = cudnn_frontend::new_graph(Type::BF16);
 
     entry.bwd_Q  = bhsd_input(*graph, "Q_bwd",  k.batch_size, k.heads, k.q_seq,   k.head_dim);
     entry.bwd_K  = bhsd_input(*graph, "K_bwd",  k.batch_size, k.heads, k.src_seq, k.head_dim);
@@ -957,9 +957,9 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
         tensor_map[entry.fwd_Offset] = entry.dropout_offset;
     }
 
-    auto status = entry.fwd_graph->execute(Backend::get_cudnn_handle(), tensor_map, entry.fwd_workspace_buf);
-    throw_if(status.is_bad(),
-             "SDPA forward execute: {}", status.get_message());
+    cudnn_frontend::execute_graph(*entry.fwd_graph, tensor_map, entry.fwd_workspace_buf,
+                                  "SDPA forward execute",
+                                  cudnn_frontend::graph_timing_enabled() ? string("sdpa_fwd") : string());
     if (fp32_via_bf16)
         cast_bf16_to_fp32(output.size(), output_bf16, output.as<float>());
 }
@@ -1214,9 +1214,9 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
         tensor_map[entry.bwd_Offset] = entry.dropout_offset;
     }
 
-    auto status = entry.bwd_graph->execute(Backend::get_cudnn_handle(), tensor_map, entry.bwd_workspace_buf);
-    throw_if(status.is_bad(),
-             "SDPA backward execute: {}", status.get_message());
+    cudnn_frontend::execute_graph(*entry.bwd_graph, tensor_map, entry.bwd_workspace_buf,
+                                  "SDPA backward execute",
+                                  cudnn_frontend::graph_timing_enabled() ? string("sdpa_bwd") : string());
     if (fp32_via_bf16)
     {
         cast_bf16_to_fp32(query.size(), query_gradient_bf16.as<bfloat16>(), query_delta.as<float>());

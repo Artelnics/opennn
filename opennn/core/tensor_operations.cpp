@@ -1068,9 +1068,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
             bf16_fp32_store_supported.store(false, memory_order_relaxed);
             cerr << "linear_backward: cuBLASLt has no BF16-in/FP32-out weight-gradient "
                     "epilogue here; using BF16 store + cast for the rest of the process.\n";
-#ifdef OPENNN_HAS_CUDA
-            cudaGetLastError();
-#endif
+            device::reset_last_error();
         }
     }
 

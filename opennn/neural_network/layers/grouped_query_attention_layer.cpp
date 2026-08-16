@@ -904,11 +904,10 @@ struct GroupedAttentionScratch
     Buffer q{Device::CUDA}, k{Device::CUDA}, v{Device::CUDA};
     Buffer qr{Device::CUDA}, kr{Device::CUDA}, attn{Device::CUDA};
     Buffer qkv{Device::CUDA}, partials{Device::CUDA};
-    Index sequence = -1;
+    // The scratch is keyed on its geometry (gqa_scratch); `built` says the
+    // tables exist. query_capacity is not part of the key and grows.
+    bool built = false;
     Index query_capacity = 0;
-    Index q_dim = 0, kv_dim = 0, head_dim = 0;
-    float theta = 0.0f;
-    Type dtype = Type::FP32;
 };
 
 GroupedAttentionScratch& gqa_scratch(Index sequence, Index q_dim, Index kv_dim,
@@ -927,8 +926,6 @@ struct GroupedAttentionSDPA
     void* workspace = nullptr;
     int32_t* seq_device = nullptr;
     int32_t* seq_pinned = nullptr;
-    Index max_q = 0, max_kv = 0;
-    Index q_heads = 0, kv_heads = 0, head_dim = 0;
     bool failed = false;
 
     ~GroupedAttentionSDPA()
@@ -996,11 +993,6 @@ void gqa_sdpa_build(GroupedAttentionSDPA& s, Index max_q, Index max_kv,
     s.graph = std::move(graph);
     s.tensors.clear();
     s.tensors.reserve(6);
-    s.max_q = max_q;
-    s.max_kv = max_kv;
-    s.q_heads = q_heads;
-    s.kv_heads = kv_heads;
-    s.head_dim = head_dim;
 }
 
 }
@@ -1027,11 +1019,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
              "{}-token KV cache.", past, past + seq, table_len);
     auto& s = gqa_scratch(table_len, qd, kd, head_dim, rope_theta, act);
     {
-        const bool geometry_changed =
-            s.sequence != table_len || s.dtype != act
-            || s.q_dim != qd || s.kv_dim != kd
-            || s.head_dim != head_dim || s.theta != rope_theta;
-        if (geometry_changed)
+        if (!s.built)
         {
             vector<float> cos_h(size_t(table_len) * head_dim), sin_h(size_t(table_len) * head_dim);
             { TensorView cv(cos_h.data(), {table_len, head_dim}), sv(sin_h.data(), {table_len, head_dim});
@@ -1049,10 +1037,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
             s.query_capacity = 0;
             s.partials.resize_bytes(grouped_attention_decode_scratch_floats(q_heads, head_dim)
                                     * Index(sizeof(float)), Device::CUDA);
-            s.sequence = table_len;
-            s.q_dim = qd; s.kv_dim = kd; s.head_dim = head_dim;
-            s.theta = rope_theta;
-            s.dtype = act;
+            s.built = true;
         }
 
         if (s.query_capacity < query_capacity)
@@ -1152,9 +1137,8 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                               q_heads, kv_heads, head_dim);
         if (seq > 1 && act == Type::BF16 && !sdpa.failed)
         {
-            if (!sdpa.graph || sdpa.max_q != query_capacity
-                || sdpa.max_kv != table_len || sdpa.q_heads != q_heads
-                || sdpa.kv_heads != kv_heads || sdpa.head_dim != head_dim)
+            // The entry is keyed on this geometry (gqa_sdpa), so a built graph fits.
+            if (!sdpa.graph)
             {
                 try
                 {
@@ -1183,9 +1167,8 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                     sdpa.tensors[sdpa.O]     = s.attn.data();
                     sdpa.tensors[sdpa.SeqQ]  = sdpa.seq_device;
                     sdpa.tensors[sdpa.SeqKV] = sdpa.seq_device + 1;
-                    cudnn_frontend::check_status(
-                        sdpa.graph->execute(Backend::get_cudnn_handle(), sdpa.tensors, sdpa.workspace),
-                        "gqa sdpa execute");
+                    cudnn_frontend::execute_graph(*sdpa.graph, sdpa.tensors, sdpa.workspace, "gqa sdpa execute",
+                                                  cudnn_frontend::graph_timing_enabled() ? string("gqa_sdpa") : string());
                 }
                 {
                     linear_forward_transposed(attn_v, o_proj, o_b, o_scale);

@@ -836,7 +836,7 @@ namespace
         return CUBLAS_COMPUTE_DTYPE;
     }
 
-    void* ensure_workspace_bytes_here(device::GraphWorkspaceKind kind, Index minimum_bytes)
+    void* thread_workspace(device::GraphWorkspaceKind kind, Index minimum_bytes)
     {
         if (const optional<void*> graph_workspace =
                 device::graph_workspace_override(kind, minimum_bytes))
@@ -943,7 +943,7 @@ namespace
 
 void* ensure_workspace_bytes(device::GraphWorkspaceKind kind, Index bytes)
 {
-    return ensure_workspace_bytes_here(kind, bytes);
+    return thread_workspace(kind, bytes);
 }
 
 void release_thread_workspaces()
