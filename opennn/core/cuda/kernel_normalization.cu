@@ -155,6 +155,17 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
 constexpr int BN_THREADS = 256;
 constexpr Index BN_MAX_ROW_BLOCKS = 128;
 
+// 16-byte channel groups: eight BF16 or four FP32 channels per lane. Eight FP32
+// channels per lane put the reduce kernel at ~90 registers and measured slower.
+template<typename T> constexpr int BN_WIDE_VEC = sizeof(T) == 2 ? 8 : 4;
+
+// The mask byte covers eight channels; a lane with a four-channel group takes
+// its nibble. No mask: every element passes.
+__device__ static inline unsigned batchnorm_mask_bits(const uint8_t* mask, const Index i, const int c0)
+{
+    return mask ? unsigned(mask[i / 8]) >> (c0 & 4) : 0xFFu;
+}
+
 // Upper bound on the row blocks a launch uses for `rows`: what the caller's
 // partials scratch must hold.
 Index batchnorm_partial_rows(const Index rows)
@@ -317,36 +328,13 @@ __global__ void batchnorm_forward_finalize_kernel(const int channels, const int 
     scale_shift[channels + c] = beta[c] - m * scale;
 }
 
-// Per element: y = relu?(x * scale + shift [+ residual]), and the ReLU bit.
-template<int VEC, bool RELU, bool ADD>
-__device__ static inline unsigned batchnorm_apply_group(const int channels, const int c0,
-                                                        const float* vx, const float* vr,
-                                                        const float* __restrict__ scale_shift,
-                                                        float* out)
-{
-    unsigned bits = 0;
-    #pragma unroll
-    for (int k = 0; k < VEC; ++k)
-    {
-        const int c = c0 + k;
-        float v = vx[k] * scale_shift[c] + scale_shift[channels + c];
-        if (ADD) v += vr[k];
-        if (RELU)
-        {
-            v = fmaxf(v, 0.0f);
-            bits |= (v > 0.0f ? 1u : 0u) << k;
-        }
-        out[k] = v;
-    }
-    return bits;
-}
-
-// The mask byte covers eight channels. VEC == 8 (BF16): a lane writes its own
-// byte, plain grid-stride loop. VEC == 4 (FP32): two adjacent lanes hold the
-// two nibbles - the group index is even for the low nibble, and consecutive
-// groups are consecutive lanes of one warp - so the odd lane's bits are
-// shuffled down and the even lane writes; every lane of the block runs the
-// loop body for the shuffle's sake, lanes past the end just do no work.
+// y = relu?(x * scale + shift [+ residual]) for a lane's VEC channels, and the
+// ReLU bits. The mask byte covers eight channels: a VEC == 8 lane writes its
+// own byte; with VEC == 4 two adjacent lanes hold the two nibbles - the group
+// index is even for the low nibble and consecutive groups are consecutive
+// lanes of one warp - so the odd lane's bits are shuffled down and the even
+// lane writes. Every lane runs the loop body for the shuffle's sake; lanes past
+// the end do no work.
 template<typename T, int VEC, bool RELU, bool ADD>
 __global__ void batchnorm_forward_apply_kernel(const Index groups, const int channels,
                                                const T* __restrict__ x,
@@ -357,40 +345,38 @@ __global__ void batchnorm_forward_apply_kernel(const Index groups, const int cha
 {
     static_assert(VEC == 8 || VEC == 4, "mask packing needs 8 or 4 channels per lane");
     const int channel_groups = channels / VEC;
-    float vx[VEC], vr[VEC], out[VEC];
-
-    if constexpr (VEC == 8)
+    for (Index base = Index(blockIdx.x) * blockDim.x; base < groups;
+         base += Index(gridDim.x) * blockDim.x)
     {
-        for (Index gi = Index(blockIdx.x) * blockDim.x + threadIdx.x; gi < groups;
-             gi += Index(gridDim.x) * blockDim.x)
+        const Index gi = base + threadIdx.x;
+        const bool valid = gi < groups;
+        unsigned bits = 0;
+        if (valid)
         {
             const int c0 = int(gi % channel_groups) * VEC;
             const Index i = (gi / channel_groups) * channels + c0;
+            float vx[VEC], vr[VEC], out[VEC];
             VecIO<T, VEC>::load_float(x + i, vx);
             if (ADD) VecIO<T, VEC>::load_float(residual + i, vr);
-            const unsigned bits = batchnorm_apply_group<VEC, RELU, ADD>(channels, c0, vx, vr, scale_shift, out);
-            VecIO<T, VEC>::store_float(y + i, out);
-            if (RELU && mask) mask[gi] = uint8_t(bits);
-        }
-    }
-    else
-    {
-        for (Index base = Index(blockIdx.x) * blockDim.x; base < groups;
-             base += Index(gridDim.x) * blockDim.x)
-        {
-            const Index gi = base + threadIdx.x;
-            const bool valid = gi < groups;
-            unsigned bits = 0;
-            if (valid)
+            #pragma unroll
+            for (int k = 0; k < VEC; ++k)
             {
-                const int c0 = int(gi % channel_groups) * VEC;
-                const Index i = (gi / channel_groups) * channels + c0;
-                VecIO<T, VEC>::load_float(x + i, vx);
-                if (ADD) VecIO<T, VEC>::load_float(residual + i, vr);
-                bits = batchnorm_apply_group<VEC, RELU, ADD>(channels, c0, vx, vr, scale_shift, out);
-                VecIO<T, VEC>::store_float(y + i, out);
+                const int c = c0 + k;
+                float v = vx[k] * scale_shift[c] + scale_shift[channels + c];
+                if (ADD) v += vr[k];
+                if (RELU)
+                {
+                    v = fmaxf(v, 0.0f);
+                    bits |= (v > 0.0f ? 1u : 0u) << k;
+                }
+                out[k] = v;
             }
-            if (RELU && mask)
+            VecIO<T, VEC>::store_float(y + i, out);
+        }
+        if (RELU && mask)
+        {
+            if constexpr (VEC == 8) { if (valid) mask[gi] = uint8_t(bits); }
+            else
             {
                 const unsigned high = __shfl_down_sync(0xffffffffu, bits, 1);
                 if (valid && (gi & 1) == 0) mask[gi >> 1] = uint8_t(bits | (high << 4));
@@ -412,8 +398,7 @@ void batchnorm_forward_fused_cuda(const Index rows, const Index channels,
     if (rows == 0 || channels == 0) return;
     if (channels % 8 != 0)
         throw std::runtime_error("batchnorm_forward_fused_cuda: channels must be a multiple of 8.");
-    // 16-byte channel groups: eight BF16 or four FP32 channels per lane.
-    constexpr int VEC = sizeof(T) == 2 ? 8 : 4;
+    constexpr int VEC = BN_WIDE_VEC<T>;
     cudaStream_t stream = opennn::device::get_compute_stream();
 
     const Index channel_groups = channels / VEC;
@@ -483,7 +468,7 @@ __global__ void batchnorm_backward_reduce_kernel(const Index rows, const int cha
             VecIO<T, VEC>::load_float(dy + i, vdy);
             if (y) VecIO<T, VEC>::load_float(y + i, vy);
             if (!XHAT_FROM_Y) VecIO<T, VEC>::load_float(x + i, vx);
-            const unsigned bits = mask ? (unsigned(mask[i / 8]) >> (c0 & 4)) : 0xFFu;
+            const unsigned bits = batchnorm_mask_bits(mask, i, c0);
             #pragma unroll
             for (int k = 0; k < VEC; ++k)
             {
@@ -536,7 +521,7 @@ __global__ void batchnorm_backward_apply_kernel(const Index groups, const int ch
         VecIO<T, VEC>::load_float(dy_dx + i, vdy);
         if (y) VecIO<T, VEC>::load_float(y + i, vy);
         VecIO<T, VEC>::load_float(x + i, vx);
-        const unsigned bits = mask ? (unsigned(mask[i / 8]) >> (c0 & 4)) : 0xFFu;
+        const unsigned bits = batchnorm_mask_bits(mask, i, c0);
 
         #pragma unroll
         for (int k = 0; k < VEC; ++k)
@@ -593,11 +578,8 @@ void batchnorm_backward_fused_cuda(const Index rows, const Index channels,
     if (rows == 0 || channels == 0) return;
     cudaStream_t stream = opennn::device::get_compute_stream();
 
-    // 16-byte channel groups where the count allows it: eight BF16 or four
-    // FP32 channels per lane (eight FP32 put the reduce kernel at ~90
-    // registers and measured slower). The mask packs eight channels per byte
-    // and needs one of these two layouts (a VEC == 4 lane reads its nibble);
-    // with it Y is not read at all.
+    // Wide 16-byte groups where the count allows it; the mask needs that
+    // layout (eight channels per byte), and with it Y is not read at all.
     const bool wide = channels % 8 == 0;
     const bool vec2 = channels % 2 == 0;
     if (!wide) mask = nullptr;
@@ -611,7 +593,7 @@ void batchnorm_backward_fused_cuda(const Index rows, const Index channels,
         if (from_y) batchnorm_backward_launch<T, VEC, true >(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
         else        batchnorm_backward_launch<T, VEC, false>(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
     };
-    if (wide)      launch.template operator()<sizeof(T) == 2 ? 8 : 4>();
+    if (wide)      launch.template operator()<BN_WIDE_VEC<T>>();
     else if (vec2) launch.template operator()<2>();
     else           launch.template operator()<1>();
 }

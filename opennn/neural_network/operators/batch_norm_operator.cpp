@@ -229,7 +229,7 @@ TensorView& BatchNormalizationOperator::relu_mask(ForwardPropagation& forward_pr
     return output_slots.size() > 3 ? get_output(forward_propagation, layer, 3) : empty;
 }
 
-bool BatchNormalizationOperator::own_forward_kernel(const TensorView& mask, Type dtype) const noexcept
+bool BatchNormalizationOperator::own_forward_kernel(const TensorView& mask) const noexcept
 {
     switch (device::batch_norm_forward_rung())
     {
@@ -238,7 +238,6 @@ bool BatchNormalizationOperator::own_forward_kernel(const TensorView& mask, Type
     case device::BatchNormForwardRung::Auto:       break;
     }
     // Where the mask pays: the backward reads it in place of Y.
-    (void)dtype;
     return fuse_relu && !mask.empty();
 }
 
@@ -584,7 +583,7 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
     throw_if(!input.is_fp32() && !bf16,
              "BatchNormalizationOperator: GPU training forward requires FP32 or BF16.");
 
-    if (own_forward_kernel(mask, input.get_type()))
+    if (own_forward_kernel(mask))
     {
         const Index rows = input.size() / features;
         float* partials = ensure_bf16_to_fp32_workspace(
@@ -761,7 +760,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                 cerr << "BatchNormalizationOperator backward c" << features
                      << " r" << input.size() / features << " batch " << batch << ": "
                      << (entry.bwd_own_kernel
-                            ? (fuse_relu && own_forward_kernel(mask, input.get_type()) && bf16
+                            ? (fuse_relu && own_forward_kernel(mask)
                                    ? "own fused kernel, ReLU from the forward mask (no fused cuDNN engine)"
                                    : "own fused kernel (no fused cuDNN engine)")
                          : !entry.bwd_native_dtype ? "FP32-staged cuDNN graph"
@@ -777,7 +776,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                 2 * batchnorm_partial_rows(rows) * features);
             // The ReLU gate comes from the packed mask the library's own forward
             // left, when it ran; otherwise from Y.
-            const uint8_t* mask_bits = fuse_relu && own_forward_kernel(mask, input.get_type()) && !mask.empty()
+            const uint8_t* mask_bits = fuse_relu && own_forward_kernel(mask) && !mask.empty()
                 ? mask.as<uint8_t>() : nullptr;
 
             // Without a mask, for a ReLU output that is BN(x) itself the reduce
