@@ -247,6 +247,18 @@ string timing_label(const ConvolutionOperator& op, const char* kind)
                   op.kernel_height, op.kernel_width, op.kernels_number, op.row_stride);
 }
 
+// Once per shape: a graph the operator would rather have (an FP32 gradient
+// store, an ADD epilogue) has no engine here and a slower form runs instead.
+// This line is the only signal of the extra passes that costs.
+void report_fallback(const ConvolutionOperator& op, const char* kind, int64_t batch,
+                     const string& reason, const char* consequence)
+{
+    cerr << "ConvolutionOperator " << kind << " "
+         << op.input_height << "x" << op.input_width << "x" << op.kernel_channels
+         << " k" << op.kernel_height << "x" << op.kernel_width << "x" << op.kernels_number
+         << " batch " << batch << ": " << reason << " (" << consequence << ").\n";
+}
+
 }
 
 }
@@ -656,13 +668,9 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
                 catch (const exception& e)
                 {
                     fp32_store = false;
-                    // Once per shape: the only signal that this convolution keeps
-                    // paying the BF16 store + widening cast per step.
-                    cerr << "ConvolutionOperator wgrad " << input_height << "x" << input_width
-                         << "x" << kernel_channels << " k" << kernel_height << "x" << kernel_width
-                         << "x" << kernels_number << " batch " << input.shape[0]
-                         << ": no FP32-store engine (" << e.what()
-                         << "); using BF16 store + cast.\n";
+                    cudnn_frontend::report_fallback(*this, "wgrad", input.shape[0],
+                                                    "no FP32-store engine: " + string(e.what()),
+                                                    "BF16 store + widening cast per step");
                 }
 
             if (!fp32_store)
@@ -718,11 +726,9 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
                     catch (const exception& e)
                     {
                         fused = false;
-                        cerr << "ConvolutionOperator dgrad " << input_height << "x" << input_width
-                             << "x" << kernel_channels << " k" << kernel_height << "x" << kernel_width
-                             << "x" << kernels_number << " batch " << input.shape[0]
-                             << ": no dgrad+add engine (" << e.what()
-                             << "); adding the residual delta separately.\n";
+                        cudnn_frontend::report_fallback(*this, "dgrad", input.shape[0],
+                                                        "no dgrad+add engine: " + string(e.what()),
+                                                        "residual delta added separately");
                     }
                 if (!fused)
                     cudnn_frontend::build_dgrad(entry, dims, input.type, false);

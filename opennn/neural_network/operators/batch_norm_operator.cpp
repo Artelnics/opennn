@@ -704,27 +704,23 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                 entry.bwd_forked       = attempt.fork;
                 entry.bwd_fused_relu   = attempt.fuse_relu;
                 entry.bwd_native_dtype = attempt.dtype == input.type;
-
-                // Once per shape: which rung this backward runs on. A rung below
-                // the first costs extra full-tensor passes (a standalone dReLU, a
-                // residual-delta copy, three FP32 staging casts), and this is the
-                // only signal of it.
-                if (attempt_index > 0 || !entry.bwd_native_dtype)
-                    cerr << "BatchNormalizationOperator backward c" << features
-                         << " r" << input.size() / features << " batch " << batch
-                         << ": rung " << attempt_index
-                         << (entry.bwd_native_dtype ? " (native " : " (FP32-staged ")
-                         << (entry.bwd_forked ? "fused ReLU + residual fork)"
-                             : entry.bwd_fused_relu ? "fused ReLU)"
-                             : "plain; ReLU/copy run separately)")
-                         << ".\n";
                 break;
             }
 
-            if (entry.bwd_own_kernel)
+            // Once per shape: what this backward runs on when it is not the fully
+            // fused cuDNN graph. Anything else costs extra full-tensor passes
+            // (a standalone dReLU, a residual-delta copy, three FP32 staging
+            // casts), and this line is the only signal of it.
+            const bool fully_fused = entry.bwd && entry.bwd_native_dtype
+                && entry.bwd_fused_relu == fuse_relu && (entry.bwd_forked || !fuse_add);
+            if (!fully_fused)
                 cerr << "BatchNormalizationOperator backward c" << features
-                     << " r" << input.size() / features << " batch " << input.shape[0]
-                     << ": own fused kernel (no fused cuDNN engine for this shape).\n";
+                     << " r" << input.size() / features << " batch " << batch << ": "
+                     << (entry.bwd_own_kernel ? "own fused kernel (no fused cuDNN engine)"
+                         : !entry.bwd_native_dtype ? "FP32-staged cuDNN graph"
+                         : entry.bwd_fused_relu ? "cuDNN graph, fused ReLU, no residual fork"
+                         : "plain cuDNN graph; ReLU/copy run separately")
+                     << ".\n";
         }
 
         if (entry.bwd_own_kernel)
@@ -735,18 +731,26 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
             void* dpre = fuse_add && !residual_delta.empty() ? residual_delta.data : nullptr;
             const void* y = fuse_relu ? output.data : nullptr;
 
+            // For a ReLU output that is BN(x) itself the reduce pass rebuilds
+            // x_hat from Y and skips X (six passes, not seven). Kept to FP32: in
+            // BF16 the (y - beta) / gamma reconstruction amplifies y's rounding by
+            // 1/gamma.
+            const bool xhat_from_y = fuse_relu && !fuse_add && !bf16;
+
             if (bf16)
                 batchnorm_backward_fused_cuda<bfloat16>(
                     rows, features,
                     input.as<bfloat16>(), delta.as<bfloat16>(), static_cast<const bfloat16*>(y),
-                    gamma.as<float>(), mean.as<float>(), inverse_variance.as<float>(),
+                    gamma.as<float>(), beta.as<float>(), mean.as<float>(), inverse_variance.as<float>(),
+                    xhat_from_y,
                     static_cast<bfloat16*>(dpre), gamma_gradient.as<float>(), beta_gradient.as<float>(),
                     partials);
             else
                 batchnorm_backward_fused_cuda<float>(
                     rows, features,
                     input.as<float>(), delta.as<float>(), static_cast<const float*>(y),
-                    gamma.as<float>(), mean.as<float>(), inverse_variance.as<float>(),
+                    gamma.as<float>(), beta.as<float>(), mean.as<float>(), inverse_variance.as<float>(),
+                    xhat_from_y,
                     static_cast<float*>(dpre), gamma_gradient.as<float>(), beta_gradient.as<float>(),
                     partials);
             return;

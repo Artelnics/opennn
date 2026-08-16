@@ -18,14 +18,20 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
 // when dpre is given - the residual fork dPre = masked dY for the skip branch.
 // Two launches over the tensor instead of the separate dReLU kernel, delta
 // copy and staged casts a shape without a fused cuDNN engine used to pay.
-// `partials` is scratch for 2 * batchnorm_backward_partial_rows(rows) *
-// channels floats.
+// Threads own channel pairs (vector loads along C, contiguous in NHWC) when
+// channels is even. With `xhat_from_y` and a ReLU output that is BN(x) itself
+// (no residual add), the reduce pass rebuilds x_hat as (y - beta) / gamma and
+// skips X (the apply pass still needs X on masked elements): six passes instead
+// of seven. `partials` is scratch for 2 * batchnorm_backward_partial_rows(rows)
+// * channels floats.
 Index batchnorm_backward_partial_rows(const Index rows);
 
 template<typename T>
 void batchnorm_backward_fused_cuda(const Index rows, const Index channels,
                                    const T* x, T* dy_dx, const T* y,
-                                   const float* gamma, const float* mean, const float* inv_var,
+                                   const float* gamma, const float* beta,
+                                   const float* mean, const float* inv_var,
+                                   const bool xhat_from_y,
                                    T* dpre, float* dgamma, float* dbeta,
                                    float* partials);
 

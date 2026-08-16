@@ -112,10 +112,19 @@ Measured, autotuned top-8, fresh plan cache, bf16:
 every batch on this GPU**, by 2–3% at the peak (inside noise) and decisively
 below it. fp32 is untouched by this (it never staged).
 
-**1b — the fused kernel, now only if a cuDNN build lacks the plain bf16 engine
-too (or fails the 0d test there).** Design kept for that case, used on every
-shape where cuDNN lacks the fully fused native engine. bf16 IO, fp32 math,
-dReLU and the residual fork fused. Two kernels:
+**1b — the fused kernel — DONE.** `batchnorm_backward_fused_cuda`
+(`kernel_normalization.cu`): NHWC, bf16/fp32 IO, fp32 math, dReLU and the
+residual fork fused, channel-pair vector loads, and for non-residual fp32
+layers the reduce pass rebuilds x̂ from Y and skips X. Auto now takes cuDNN's
+fully fused engine where the shape has one and this kernel otherwise (49 of
+53 layers here); the plain and staged cuDNN graphs remain pinnable rungs
+(`device::set_batch_norm_backward_rung`) and the gradient test compares all of
+them: fp32 own vs CPU 2.5e-4, bf16 own vs staged 6.6e-8. Measured A/B against
+the cuDNN plain path, autotuned top-8, fresh cache: fp32 2048 → **11,731**
+(PyTorch 10,363, **1.13×**), fp32 1024 10,842 → 10,989, bf16 2048 23,627 →
+24,030, bf16 1024 21,913 → 21,604 (noise). The gradient test caught a wrong
+first version of the x̂-from-Y trick (the apply pass needs x̂ on masked
+elements too) — keep it in the loop for every kernel change. Design notes:
 
 1. **Reduce**: per channel `Σ dy'` and `Σ dy'·x̂` with `dy' = dy ⊙ [y > 0]`
    (residual layers read the saved Y; non-residual ones can rebuild the mask
@@ -150,16 +159,16 @@ for `Convolutional` where the planner can prove it. Expected: **−5.6 ms bf16,
 −11 ms fp32** at 2048. Gate: loss identical (pure reordering of adds), the
 `bwd:accumulate_output_deltas` scope at ~0.
 
-**Status after 0a + 0d + 1a (measured) at 2048 on this GPU:** bf16 22,065
-samples/s ≈ 93 ms/step vs PyTorch 21,405 / TensorFlow 21,641 (**≈1.03×**);
-Phase 2 adds ~5%. fp32 ≈ 245 vs 199 still (**≈0.81×**): its deficit is the 16
-residual layers' separate dReLU + delta copy (15–19 ms) and the residual-join
-adds (11 ms), both 4-byte passes — Phase 2 and the residual-layer fusion (1b or
-Phase 3) are what fp32 needs. On the RTX 4080 the same fixes clear TensorFlow's
-65,752 bf16 peak (the in-source +21% measurement of the un-staged path is this
-same win).
+**Status after 0a + 0d + 1a + 1b + Phase 2 (all measured, 2026-08-16) at 2048
+on this GPU:** bf16 **24,030** samples/s vs PyTorch 21,405 / TensorFlow 21,641
+(**1.12× / 1.11×**); fp32 **11,731** vs PyTorch 10,363 (**1.13×**; TensorFlow
+does not fit 2048 in fp32). bf16 4096: 22,834 vs PyTorch 19,898 (**1.15×**),
+TensorFlow OOM. OpenNN leads both engines at every measured batch in both
+precisions on this GPU. On the RTX 4080 the same fixes should clear
+TensorFlow's 65,752 bf16 peak (the in-source +21% measurement of the un-staged
+path is this same win) — to be measured there (§ runbook in the audit thread).
 
-### Phase 3 — the MLPerf fusion architecture (3–5 weeks) — to win clearly
+### Phase 3 — the MLPerf fusion architecture (3–5 weeks) — for margin beyond the win
 
 All patterns exist in our cudnn-frontend 1.27 / cuDNN ≥ 9.8 on Ampere+ (samples
 `SBRCS`, `CSBR`, `bn_finalize`, `Dgrad Drelu DBNweight`):
@@ -193,9 +202,10 @@ at 128 per the 2026-08-11 note) — decide it explicitly rather than inherit it.
 |---|---:|---:|---:|---:|
 | 2026-08-15 morning (autotuned) | 117 | 100 | 245 | 199 |
 | + 0a top-K autotune (measured) | 107 | | | |
-| + 1a plain-bf16 rung (measured) | **93** | | 245 | |
-| + Phase 2 (fused join) | 87–90 | | 234 | |
-| + residual-layer fusion (1b/3) | | | 215–219 | |
+| + 1a plain-bf16 rung (measured) | 93 | | 245 | |
+| + Phase 2 fused join (measured) | 89 | | 218 | |
+| + 1b own BN-backward kernel (measured) | **85** | 100 | **175** | 199 |
+| + Phase 3 (MLPerf fusion) | 70–75 | | 150–160 | |
 | + Phase 3 (MLPerf fusion) | 75–80 | 100 | 165–175 | 199 |
 
 ## 5. Validation gates (all phases)
