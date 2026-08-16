@@ -5,10 +5,6 @@
 
 #include "opennn/core/cuda/kernel_prelude.cuh"
 
-void scatter_time_slice_fill_cuda(const Index batch, const Index time_steps,
-                                  const Index features, const Index t,
-                                  const float* src, float* dst);
-
 inline constexpr int RNN_COPY_MAX_REGIONS = 16;
 
 struct RnnCopySpec
@@ -28,6 +24,8 @@ void gather_time_slice_cuda(const Index batch, const Index time_steps,
                             const Index features, const Index t,
                             const T* src, T* dst);
 
+// Writes only the (batch, features) slice at time step t of dst (batch, time_steps,
+// features); the caller pre-zeroes dst when the other steps must read as zero.
 template<typename T>
 void scatter_time_slice_cuda(const Index batch, const Index time_steps,
                              const Index features, const Index t,
@@ -51,7 +49,6 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
                                       const Index out_features,
                                       const Index time_steps,
                                       const Index t,
-                                      const bool first_iter,
                                       const T* output_delta,
                                       const T* next_carry,
                                       const T* activation_derivatives,

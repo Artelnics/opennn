@@ -65,10 +65,10 @@ static void cross_entropy_3d_gradient_device_count_cuda(const TensorView& input,
     const Index vocabulary_size = input.get_shape().back();
 
     input.dispatch([&]<typename T>() {
-        cross_entropy_3d_multiple_backward_device_count_cuda<T>(
+        cross_entropy_3d_multiple_backward_cuda<T>(
             static_cast<size_t>(input.size()), to_int(vocabulary_size),
             input.as<T>(), target.as<float>(), input_delta.as<T>(),
-            active_tokens_count_device);
+            0.0f, active_tokens_count_device);
     });
 }
 

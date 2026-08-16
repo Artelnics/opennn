@@ -8,6 +8,7 @@
 template<typename TIn, typename TOut>
 void bounding_cuda(const Index n, const int features, const TIn* input, const float* lower, const float* upper, TOut* output);
 
+// Per-feature scaler codes in `scalers`; `inverse` applies the unscaling.
 template<typename TIn, typename TOut>
 void scale_cuda(const Index n, const int features,
                 const TIn* input,
@@ -15,16 +16,8 @@ void scale_cuda(const Index n, const int features,
                 const float* means, const float* standard_deviations,
                 const float* scalers,
                 float min_range, float max_range,
-                TOut* output);
-
-template<typename TIn, typename TOut>
-void unscale_cuda(const Index n, const int features,
-                  const TIn* input,
-                  const float* minimums, const float* maximums,
-                  const float* means, const float* standard_deviations,
-                  const float* scalers,
-                  float min_range, float max_range,
-                  TOut* output);
+                TOut* output,
+                bool inverse);
 
 #endif
 

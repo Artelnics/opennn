@@ -192,19 +192,6 @@ static void scale_gpu(const TensorView& input,
     const Index features = scalers.size();
 
     visit_type_pair<Type::FP32, Type::BF16>(input.get_type(), output.get_type(), [&]<typename TIn, typename TOut>() {
-        if (inverse)
-        {
-            unscale_cuda<TIn, TOut>(output.size(), to_int(features),
-                                    input.as<TIn>(),
-                                    minimums.as_float(),
-                                    maximums.as_float(),
-                                    means.as_float(),
-                                    standard_deviations.as_float(),
-                                    scalers.as_float(),
-                                    min_range, max_range,
-                                    output.as<TOut>());
-            return;
-        }
         scale_cuda<TIn, TOut>(output.size(), to_int(features),
                               input.as<TIn>(),
                               minimums.as_float(),
@@ -213,7 +200,8 @@ static void scale_gpu(const TensorView& input,
                               standard_deviations.as_float(),
                               scalers.as_float(),
                               min_range, max_range,
-                              output.as<TOut>());
+                              output.as<TOut>(),
+                              inverse);
     });
 }
 

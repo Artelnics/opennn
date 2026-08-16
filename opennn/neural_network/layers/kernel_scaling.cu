@@ -83,10 +83,16 @@ __global__ void scale_kernel(const int n, const int features,
                 y = (stds[f] > FLT_EPSILON) ? x / stds[f] : 0.0f;
             break;
         case 4:
-            y = Inverse ? expf(x) : logf(fmaxf(x, FLT_EPSILON));
+            if constexpr (Inverse)
+                y = expf(x);
+            else
+                y = logf(fmaxf(x, FLT_EPSILON));
             break;
         case 5:
-            y = Inverse ? x * 255.0f : x / 255.0f;
+            if constexpr (Inverse)
+                y = x * 255.0f;
+            else
+                y = x / 255.0f;
             break;
         default:
             break;
@@ -103,31 +109,22 @@ void scale_cuda(const Index n, const int features,
                 const float* means, const float* stds,
                 const float* scalers,
                 const float min_range, const float max_range,
-                TOut* output)
+                TOut* output,
+                const bool inverse)
 {
-    launch_elementwise_strided(n, scale_kernel<TIn, TOut, false>, features,
-                       input, minimums, maximums, means, stds, scalers,
-                       min_range, max_range, output);
-}
-
-template<typename TIn, typename TOut>
-void unscale_cuda(const Index n, const int features,
-                  const TIn* input,
-                  const float* minimums, const float* maximums,
-                  const float* means, const float* stds,
-                  const float* scalers,
-                  const float min_range, const float max_range,
-                  TOut* output)
-{
-    launch_elementwise_strided(n, scale_kernel<TIn, TOut, true>, features,
-                       input, minimums, maximums, means, stds, scalers,
-                       min_range, max_range, output);
+    if (inverse)
+        launch_elementwise_strided(n, scale_kernel<TIn, TOut, true>, features,
+                                   input, minimums, maximums, means, stds, scalers,
+                                   min_range, max_range, output);
+    else
+        launch_elementwise_strided(n, scale_kernel<TIn, TOut, false>, features,
+                                   input, minimums, maximums, means, stds, scalers,
+                                   min_range, max_range, output);
 }
 
 #define INSTANTIATE(TIn, TOut) \
     template void bounding_cuda<TIn, TOut>(const Index, const int, const TIn*, const float*, const float*, TOut*); \
-    template void scale_cuda<TIn, TOut>(const Index, const int, const TIn*, const float*, const float*, const float*, const float*, const float*, float, float, TOut*); \
-    template void unscale_cuda<TIn, TOut>(const Index, const int, const TIn*, const float*, const float*, const float*, const float*, const float*, float, float, TOut*);
+    template void scale_cuda<TIn, TOut>(const Index, const int, const TIn*, const float*, const float*, const float*, const float*, const float*, float, float, TOut*, bool);
 
 OPENNN_INSTANTIATE_FLOAT_BF16_2(INSTANTIATE)
 #undef INSTANTIATE

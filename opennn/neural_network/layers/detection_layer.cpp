@@ -78,7 +78,6 @@ void DetectionOperator::forward_propagate(ForwardPropagation& forward_propagatio
                                grid_size,
                                boxes_per_cell,
                                classes_number,
-                               input.get_shape()[3],
                                static_cast<int>(class_activation),
                                device_anchors.as<float>(),
                                input.as<float>(),
@@ -161,7 +160,7 @@ void DetectionOperator::back_propagate(ForwardPropagation& forward_propagation, 
     if (output_delta.is_cuda())
     {
         detection_backward_cuda(output.get_shape()[0], grid_size, boxes_per_cell, classes_number,
-                                output.get_shape()[3], static_cast<int>(class_activation),
+                                static_cast<int>(class_activation),
                                 output.as<float>(), output_delta.as<float>(), input_delta.as<float>());
         return;
     }

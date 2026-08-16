@@ -5,6 +5,9 @@
 
 #include "opennn/core/cuda/kernel_prelude.cuh"
 
+// Rows of x are (BT, C) with C = 2H: the left half feeds the attention (xa,
+// compact (BT, H)), the right half is carried into cat unchanged.
+void c2psa_gather_left_cuda(const void* x, void* xa, int BT, int C, int H, cudaDataType_t dtype);
 void c2psa_split_cuda(const void* x, void* xa, void* cat, int BT, int C, int H, cudaDataType_t dtype);
 void c2psa_fill_cat_left_cuda(const void* attn_v, void* cat, int BT, int C, int H, cudaDataType_t dtype);
 void c2psa_row_softmax_cuda(void* A, int rows, int T_sz, cudaDataType_t dtype);

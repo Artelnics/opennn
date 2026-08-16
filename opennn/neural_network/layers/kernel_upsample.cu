@@ -65,7 +65,6 @@ void upsample_backward_cuda(const int batch, const int in_h, const int in_w, con
                             const float* out_delta, float* in_delta)
 {
     const int n = batch * in_h * in_w * channels;
-    if (n == 0) return;
     // No pre-zeroing: the kernel assigns in_delta[i] for every i below n.
     launch_elementwise_strided(n, upsample_backward_kernel,
                        out_delta, in_delta, in_h, in_w, in_h * scale, in_w * scale, channels, scale);

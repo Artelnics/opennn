@@ -916,7 +916,9 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
     const float* dy_data = output_delta.as<float>();
     if (!return_seq)
     {
-        scatter_time_slice_fill_cuda(
+        device::set_zero_async(dy_buf.data(), batch_size * T * H * Index(sizeof(float)),
+                               device::get_compute_stream());
+        scatter_time_slice_cuda<float>(
             batch_size, T, H, T - 1,
             output_delta.as<float>(),
             static_cast<float*>(dy_buf.data()));

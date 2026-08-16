@@ -1,3 +1,11 @@
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   L O S S   K E R N E L S
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/training_strategy/kernel_losses.cuh"
 
@@ -237,23 +245,11 @@ void cross_entropy_3d_multiple_backward_cuda(const Index n,
                                              const T* outputs,
                                              const float* targets,
                                              T* output_deltas,
-                                             const float scale_factor)
+                                             const float scale_factor,
+                                             const float* active_count_device)
 {
     launch_elementwise(n, cross_entropy_3d_multiple_backward_kernel<T>,
-                       vocab_size, outputs, targets, output_deltas, scale_factor,
-                       static_cast<const float*>(nullptr));
-}
-
-template<typename T>
-void cross_entropy_3d_multiple_backward_device_count_cuda(const Index n,
-                                                          const int vocab_size,
-                                                          const T* outputs,
-                                                          const float* targets,
-                                                          T* output_deltas,
-                                                          const float* active_count_device)
-{
-    launch_elementwise(n, cross_entropy_3d_multiple_backward_kernel<T>,
-                       vocab_size, outputs, targets, output_deltas, 0.0f, active_count_device);
+                       vocab_size, outputs, targets, output_deltas, scale_factor, active_count_device);
 }
 
 __global__ void accumulate_scaled_metric_kernel(const float* __restrict__ value,
@@ -265,7 +261,7 @@ __global__ void accumulate_scaled_metric_kernel(const float* __restrict__ value,
 
 void accumulate_scaled_metric_cuda(const float* value, float scale, float* error_sum)
 {
-    OPENNN_CUDA_LAUNCH(accumulate_scaled_metric_kernel<<<1, 1, 0, opennn::device::get_compute_stream()>>>(value, scale, error_sum));
+    launch_single(nullptr, accumulate_scaled_metric_kernel, value, scale, error_sum);
 }
 
 __global__ void accumulate_cross_entropy_3d_metrics_kernel(const float* __restrict__ values,
@@ -287,8 +283,7 @@ void accumulate_cross_entropy_3d_metrics_cuda(const float* values,
                                               float* error_sum,
                                               float* accuracy_sum)
 {
-    OPENNN_CUDA_LAUNCH(accumulate_cross_entropy_3d_metrics_kernel<<<1, 1, 0, opennn::device::get_compute_stream()>>>(
-        values, error_sum, accuracy_sum));
+    launch_single(nullptr, accumulate_cross_entropy_3d_metrics_kernel, values, error_sum, accuracy_sum);
 }
 
 template<typename T>
@@ -306,7 +301,7 @@ __global__ void l1_gradient_kernel(
     const T* __restrict__ parameters,
     const float weight)
 {
-    constexpr int vec_width = 16 / sizeof(T);
+    constexpr int vec_width = vec16<T>;
 
     const Index tid = Index(blockIdx.x) * blockDim.x + threadIdx.x;
     const Index stride = Index(blockDim.x) * gridDim.x;
@@ -336,8 +331,8 @@ __global__ void l1_gradient_kernel(
 template<typename T>
 void l1_gradient_cuda(const Index n, T* deltas, const T* parameters, const float weight)
 {
-    launch_vec_on<int(16 / sizeof(T))>(opennn::device::get_compute_stream(), n, are_aligned<16>(deltas, parameters),
-                                       l1_gradient_kernel<T>, deltas, parameters, weight);
+    launch_vec_on<vec16<T>>(opennn::device::get_compute_stream(), n, are_aligned<16>(deltas, parameters),
+                            l1_gradient_kernel<T>, deltas, parameters, weight);
 }
 
 static constexpr float YOLO_EPSILON       = 1e-7f;
@@ -349,7 +344,7 @@ static constexpr float YOLO_INV_PI2       = 4.0f / (3.14159265f * 3.14159265f);
 // Everything the CIoU loss and its gradient share for one (pred, gt) pair of
 // (cx, cy, w, h) boxes: corners, intersection, union, enclosure and the centre
 // distance / aspect-ratio penalties.
-struct GiouTerms
+struct CiouTerms
 {
     float pl, pr, pt, pb;      // predicted box corners
     float gl, gr, gt_, gb;     // ground-truth box corners
@@ -361,9 +356,9 @@ struct GiouTerms
     float v_diff, v, alpha;    // aspect-ratio penalty
 };
 
-__device__ __forceinline__ GiouTerms giou_terms(const float* pred, const float* gt)
+__device__ __forceinline__ CiouTerms ciou_terms(const float* pred, const float* gt)
 {
-    GiouTerms t;
+    CiouTerms t;
 
     t.pl = pred[0] - 0.5f * pred[2];
     t.pr = pred[0] + 0.5f * pred[2];
@@ -406,9 +401,9 @@ __device__ __forceinline__ GiouTerms giou_terms(const float* pred, const float* 
     return t;
 }
 
-__device__ __forceinline__ float yolo_giou_forward(const float* pred, const float* gt, float* out_iou)
+__device__ __forceinline__ float yolo_ciou_forward(const float* pred, const float* gt, float* out_iou)
 {
-    const GiouTerms t = giou_terms(pred, gt);
+    const CiouTerms t = ciou_terms(pred, gt);
     *out_iou = t.iou;
 
     return t.giou - t.rho2/t.c2 - t.alpha*t.v;
@@ -428,12 +423,12 @@ __device__ __forceinline__ float corner_min_grad(float a, float b)
     return 0.5f;
 }
 
-__device__ __forceinline__ void yolo_giou_grad(
+__device__ __forceinline__ void yolo_ciou_grad(
     const float* pred, const float* gt,
     float* out_iou, float* out_giou,
     float& cx_grad, float& cy_grad, float& w_grad, float& h_grad)
 {
-    const GiouTerms t = giou_terms(pred, gt);
+    const CiouTerms t = ciou_terms(pred, gt);
     const float pw = pred[2], ph = pred[3];
     const float pl = t.pl, pr = t.pr, pt = t.pt, pb = t.pb;
     const float gl = t.gl, gr = t.gr, gt_ = t.gt_, gb = t.gb;
@@ -544,7 +539,7 @@ __global__ void yolo_loss_forward_kernel(
             yolo_decode_cell_boxes(i, boxes_per_cell, grid_size, pred_raw, gt_raw, pred, gt);
 
             float iou_unused;
-            const float ciou = yolo_giou_forward(pred, gt, &iou_unused);
+            const float ciou = yolo_ciou_forward(pred, gt, &iou_unused);
 
             float contrib = lambda_giou * (1.0f - ciou);
 
@@ -612,7 +607,7 @@ __global__ void yolo_loss_gradient_kernel(
 
             float iou, giou;
             float cx_g, cy_g, w_g, h_g;
-            yolo_giou_grad(pred, gt, &iou, &giou, cx_g, cy_g, w_g, h_g);
+            yolo_ciou_grad(pred, gt, &iou, &giou, cx_g, cy_g, w_g, h_g);
 
             const float scale = lambda_giou * inv_batch;
             delta[base + 0] = scale * inv_grid * fmaxf(-YOLO_GRAD_CLIP, fminf(YOLO_GRAD_CLIP, cx_g));
@@ -705,7 +700,8 @@ void yolo_gradient_cuda(const float* output, const float* target, float* delta,
 {
     const int n_boxes = batch * grid * grid * boxes_per_cell;
     if (n_boxes == 0) return;
-    cudaMemsetAsync(delta, 0, size_t(n_boxes) * values_per_box * sizeof(float), opennn::device::get_compute_stream());
+    opennn::device::set_zero_async(delta, Index(n_boxes) * values_per_box * Index(sizeof(float)),
+                                   opennn::device::get_compute_stream());
     launch_elementwise(n_boxes, yolo_loss_gradient_kernel,
                        output, target, delta, values_per_box, classes_number, sigmoid_classes, inv_batch,
                        grid, boxes_per_cell, lambda_giou, lambda_noobj, lambda_class, focal_gamma, obj_focal_gamma);
@@ -719,12 +715,13 @@ void yolo_gradient_cuda(const float* output, const float* target, float* delta,
     template void weighted_squared_error_cuda<T>(const Index, float*, const float*, const T*, const float, const float); \
     template void weighted_squared_error_gradient_cuda<T>(const Index, T*, const float*, const T*, const float, const float, const float); \
     template void cross_entropy_3d_multiple_forward_cuda<T>(const Index, const int, const T*, const float*, float*, float*, float*, const float); \
-    template void cross_entropy_3d_multiple_backward_cuda<T>(const Index, const int, const T*, const float*, T*, const float); \
-    template void cross_entropy_3d_multiple_backward_device_count_cuda<T>(const Index, const int, const T*, const float*, T*, const float*); \
-    template void l1_gradient_cuda<T>(const Index, T*, const T*, const float);
+    template void cross_entropy_3d_multiple_backward_cuda<T>(const Index, const int, const T*, const float*, T*, const float, const float*); \
+    template void mean_absolute_error_gradient_cuda<T>(const Index, T*, const float*, const T*, float);
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
+
+template void l1_gradient_cuda<float>(const Index, float*, const float*, const float);
 
 // Scaled elementwise difference, the shared front half of the squared-error family.
 template<typename TIn, typename TOut>
@@ -754,8 +751,6 @@ void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target
 OPENNN_INSTANTIATE_FLOAT_BF16_2(INSTANTIATE2)
 #undef INSTANTIATE2
 
-#define INSTANTIATE(T) \
-    template void mean_absolute_error_gradient_cuda<T>(const Index, T*, const float*, const T*, float);
-
-OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
-#undef INSTANTIATE
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
+// Licensed under the GNU Lesser General Public License v2.1 or later.

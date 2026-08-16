@@ -1,11 +1,20 @@
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   C 2 P S A   K E R N E L S
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/neural_network/layers/kernel_concat.cuh"
 #include "opennn/neural_network/operators/kernel_c2psa.cuh"
 
+// x and cat share the (BT, C) layout; copies channels [H, 2H) of every row.
 template<typename T>
-__global__ void c2psa_split_kernel(
+__global__ void c2psa_copy_right_kernel(
     const int n,
     const T* __restrict__ x,
-    T* __restrict__ xa,
     T* __restrict__ cat,
     int C, int H)
 {
@@ -13,23 +22,7 @@ __global__ void c2psa_split_kernel(
     {
         const int row = i / H;
         const int col = i % H;
-        xa[i]                  = x[row * C + col];
         cat[row * C + H + col] = x[row * C + H + col];
-    }
-}
-
-template<typename T>
-__global__ void c2psa_fill_cat_left_kernel(
-    const int n,
-    const T* __restrict__ attn_v,
-    T* __restrict__ cat,
-    int C, int H)
-{
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
-    {
-        const int row = i / H;
-        const int col = i % H;
-        cat[row * C + col] = attn_v[i];
     }
 }
 
@@ -39,19 +32,7 @@ __global__ void c2psa_row_softmax_kernel(const int rows, T* __restrict__ A, int 
     const int row = blockIdx.x * blockDim.x + threadIdx.x;
     if (row >= rows) return;
     T* p = A + row * T_sz;
-
-    float maxv = static_cast<float>(p[0]);
-    for (int j = 1; j < T_sz; ++j) maxv = fmaxf(maxv, static_cast<float>(p[j]));
-
-    float sum = 0.f;
-    for (int j = 0; j < T_sz; ++j)
-    {
-        const float v = expf(static_cast<float>(p[j]) - maxv);
-        p[j] = static_cast<T>(v);
-        sum += v;
-    }
-    const float inv = 1.f / sum;
-    for (int j = 0; j < T_sz; ++j) p[j] = static_cast<T>(static_cast<float>(p[j]) * inv);
+    row_softmax<T>(p, p, T_sz, 0.0f);
 }
 
 template<typename T>
@@ -66,11 +47,7 @@ __global__ void c2psa_softmax_bwd_kernel(
     if (row >= rows) return;
     const T* Ap  = A  + row * T_sz;
     T*       dAp = dA + row * T_sz;
-
-    float dot = 0.f;
-    for (int j = 0; j < T_sz; ++j) dot += static_cast<float>(Ap[j]) * static_cast<float>(dAp[j]);
-    for (int j = 0; j < T_sz; ++j)
-        dAp[j] = static_cast<T>(static_cast<float>(Ap[j]) * (static_cast<float>(dAp[j]) - dot) * scale);
+    row_softmax_backward<T>(Ap, dAp, dAp, T_sz, scale);
 }
 
 template<typename T>
@@ -89,13 +66,23 @@ __global__ void c2psa_scatter_dx_kernel(
     }
 }
 
+void c2psa_gather_left_cuda(
+    const void* x, void* xa,
+    int BT, int C, int H, cudaDataType_t dtype)
+{
+    dispatch_float_bf16(dtype != CUDA_R_32F, [&]<typename T>() {
+        slice_channels_cuda<T, false>(BT, 1, 1, H, C, 0, (const T*)x, (T*)xa);
+    });
+}
+
 void c2psa_split_cuda(
     const void* x, void* xa, void* cat,
     int BT, int C, int H, cudaDataType_t dtype)
 {
+    c2psa_gather_left_cuda(x, xa, BT, C, H, dtype);
     dispatch_float_bf16(dtype != CUDA_R_32F, [&]<typename T>() {
-        launch_elementwise_strided(Index(BT) * H, c2psa_split_kernel<T>,
-            (const T*)x, (T*)xa, (T*)cat, C, H);
+        launch_elementwise_strided(Index(BT) * H, c2psa_copy_right_kernel<T>,
+            (const T*)x, (T*)cat, C, H);
     });
 }
 
@@ -104,8 +91,7 @@ void c2psa_fill_cat_left_cuda(
     int BT, int C, int H, cudaDataType_t dtype)
 {
     dispatch_float_bf16(dtype != CUDA_R_32F, [&]<typename T>() {
-        launch_elementwise_strided(Index(BT) * H, c2psa_fill_cat_left_kernel<T>,
-            (const T*)attn_v, (T*)cat, C, H);
+        slice_channels_cuda<T, true>(BT, 1, 1, H, C, 0, (const T*)attn_v, (T*)cat);
     });
 }
 
@@ -132,3 +118,7 @@ void c2psa_scatter_dx_cuda(
             (const T*)d_xa, (const T*)d_cat, (T*)din, C, H);
     });
 }
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
+// Licensed under the GNU Lesser General Public License v2.1 or later.

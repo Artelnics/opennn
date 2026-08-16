@@ -33,11 +33,11 @@ void weighted_squared_error_gradient_cuda(const Index, T*, const float*, const T
 template<typename T>
 void cross_entropy_3d_multiple_forward_cuda(const Index, const int, const T*, const float*, float*, float*, float*, const float);
 
+// The scale is 1 / active_count_device[0] when that pointer is given (0 for an
+// empty count), the host scale otherwise.
 template<typename T>
-void cross_entropy_3d_multiple_backward_cuda(const Index, const int, const T*, const float*, T*, const float);
-
-template<typename T>
-void cross_entropy_3d_multiple_backward_device_count_cuda(const Index, const int, const T*, const float*, T*, const float*);
+void cross_entropy_3d_multiple_backward_cuda(const Index, const int, const T*, const float*, T*, const float scale,
+                                             const float* active_count_device = nullptr);
 
 void accumulate_scaled_metric_cuda(const float*, float, float*);
 

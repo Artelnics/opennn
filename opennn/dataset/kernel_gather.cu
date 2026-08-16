@@ -55,7 +55,6 @@ void gather_rows_cuda(const float* matrix, const int* row_indices, void* out, co
 __global__ void gather_window_inputs_kernel(const float* __restrict__ matrix,
                                             const int* __restrict__ start_rows,
                                             float* __restrict__ out,
-                                            const int past,
                                             const int features,
                                             const int matrix_cols,
                                             const int matrix_rows,
@@ -65,7 +64,7 @@ __global__ void gather_window_inputs_kernel(const float* __restrict__ matrix,
     const int t = blockIdx.y;
 
     const long long row = (long long)start_rows[s] + t;
-    float* __restrict__ dst = out + (size_t(s) * past + t) * features;
+    float* __restrict__ dst = out + (size_t(s) * gridDim.y + t) * features;
 
     if (row >= matrix_rows)
     {
@@ -91,7 +90,7 @@ void gather_window_inputs_cuda(const float* matrix, const int* start_rows, float
     const int cols = checked_int(features);
 
     OPENNN_CUDA_LAUNCH(gather_window_inputs_kernel<<<dim3(batch, past), row_threads(cols), 0, stream>>>(
-        matrix, start_rows, out, past, cols,
+        matrix, start_rows, out, cols,
         checked_int(window.matrix_cols), checked_int(window.matrix_rows), checked_int(col_offset)));
 }
 

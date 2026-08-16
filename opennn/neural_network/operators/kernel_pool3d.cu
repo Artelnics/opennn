@@ -7,24 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/core/device_backend.h"
 #include "opennn/neural_network/operators/kernel_pool3d.cuh"
-
-struct PoolingScratch
-{
-    void* data = nullptr;
-    Index bytes = 0;
-
-    float* ensure(Index floats_needed)
-    {
-        const Index new_bytes = floats_needed * Index(sizeof(float));
-        if (new_bytes <= bytes) return static_cast<float*>(data);
-
-        if (data) opennn::device::deallocate(opennn::Device::CUDA, data, bytes);
-        data = opennn::device::allocate(opennn::Device::CUDA, new_bytes);
-        bytes = new_bytes;
-        return static_cast<float*>(data);
-    }
-};
 
 // Where a sequence ends, clamped to what this tensor actually holds. A null
 // lengths pointer means no record was exported, and every row counts.
@@ -97,16 +81,6 @@ void max_pooling_3d_backward_cuda(const Index n, const T* delta, T* in_gradient,
     launch_elementwise_strided(n, max_pooling_3d_backward_kernel<T>, delta, in_gradient, indices, S, F);
 }
 
-static float* get_pooling_scratch(size_t floats_needed)
-{
-    checked_host_condition(
-        floats_needed > static_cast<size_t>(std::numeric_limits<Index>::max()),
-        "pooling scratch size exceeds Index range.");
-
-    static PoolingScratch& scratch = *new PoolingScratch();
-    return scratch.ensure(Index(floats_needed));
-}
-
 template<typename T>
 __global__ void pooling_3d_valid_mask_kernel(const int BS, const int S, const int F,
                                              const T* __restrict__ in,
@@ -176,7 +150,10 @@ static void prepare_pooling_valid_mask(const int B, const int S, const int F, co
     const int BS = checked_int(Index(B) * S);
     const cudaStream_t stream = opennn::device::get_compute_stream();
 
-    float* const scratch = get_pooling_scratch(static_cast<size_t>(BS) + B);
+    // Per-row mask followed by the per-sequence counts, in the library workspace
+    // (pinned by a captured graph like every other kind).
+    float* const scratch = opennn::ensure_workspace<float>(opennn::device::GraphWorkspaceKind::PoolingMask,
+                                                           Index(BS) + Index(B));
     valid_mask = scratch;
     counts     = scratch + BS;
 

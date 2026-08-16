@@ -258,7 +258,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             dWout.get_data(), dtype, C_int, 0LL,
             1, 1.0f, 1.0f);
 
-        c2psa_split_cuda(d_cat_gpu, compact_d_ao, d_cat_gpu, BT, C_int, H, dtype);
+        c2psa_gather_left_cuda(d_cat_gpu, compact_d_ao, BT, C_int, H, dtype);
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             H, T, T,

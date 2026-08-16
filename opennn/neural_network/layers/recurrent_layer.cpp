@@ -416,7 +416,9 @@ void RecurrentOperator::apply_delta_gpu_cudnn_(const TensorView& input,
     const float* dy_data = output_delta.as<float>();
     if (!return_sequences)
     {
-        scatter_time_slice_fill_cuda(
+        device::set_zero_async(dy_buf.data(), batch_size * T * H * Index(sizeof(float)),
+                               device::get_compute_stream());
+        scatter_time_slice_cuda<float>(
             batch_size, T, H, T - 1,
             output_delta.as<float>(),
             static_cast<float*>(dy_buf.data()));
@@ -577,7 +579,6 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
 
             const Scalar* delta_src = nullptr;
             const Scalar* carry_src = nullptr;
-            bool kernel_first_iter  = first_iter;
 
             if (return_sequences)
             {
@@ -595,9 +596,8 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
                                               step_seq_delta_buf.data(), axpy_dtype, 1,
                                               CUDA_R_32F));
                 }
-                delta_src        = static_cast<const Scalar*>(step_seq_delta_buf.data());
-                carry_src        = nullptr;
-                kernel_first_iter = true;
+                delta_src = static_cast<const Scalar*>(step_seq_delta_buf.data());
+                carry_src = nullptr;
             }
             else
             {
@@ -606,7 +606,7 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
             }
 
             rnn_step_fused_backward_pre_cuda<Scalar>(
-                batch_size, output_features, time_steps, t, kernel_first_iter,
+                batch_size, output_features, time_steps, t,
                 delta_src, carry_src,
                 activation_derivatives.as<Scalar>(),
                 delta_scratch.as<Scalar>());

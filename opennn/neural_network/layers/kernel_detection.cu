@@ -11,10 +11,13 @@
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/neural_network/layers/kernel_detection.cuh"
 
+static constexpr int class_activation_sigmoid = 1;
+
 // Anchor-based head: flat box index -> (batch, row, col, box) -> offset of the
-// box's first value in the (B, S, S, channels) tensor; `box` selects its anchor.
+// box's first value in the (B, S, S, boxes_per_cell * values_per_box) tensor;
+// `box` selects its anchor.
 __device__ __forceinline__ int detection_box_base(const Index idx, const int grid_size, const int boxes_per_cell,
-                                                  const int channels, const int values_per_box, int& box)
+                                                  const int values_per_box, int& box)
 {
     box = idx % boxes_per_cell;
     const int t   = idx / boxes_per_cell;
@@ -23,6 +26,7 @@ __device__ __forceinline__ int detection_box_base(const Index idx, const int gri
     const int row = t2 % grid_size;
     const int b   = t2 / grid_size;
 
+    const int channels = boxes_per_cell * values_per_box;
     const int cell = ((b * grid_size + row) * grid_size + col) * channels;
     return cell + box * values_per_box;
 }
@@ -44,7 +48,6 @@ __global__ void detection_forward_kernel(const int n,
                                          const int grid_size,
                                          const int boxes_per_cell,
                                          const int classes_number,
-                                         const int channels,
                                          const int class_activation,
                                          const float* __restrict__ anchors,
                                          const float* __restrict__ src,
@@ -57,7 +60,7 @@ __global__ void detection_forward_kernel(const int n,
          idx += Index(blockDim.x) * gridDim.x)
     {
         int box;
-        const int base = detection_box_base(idx, grid_size, boxes_per_cell, channels, values_per_box, box);
+        const int base = detection_box_base(idx, grid_size, boxes_per_cell, values_per_box, box);
 
         const float aw = anchors[box * 2 + 0];
         const float ah = anchors[box * 2 + 1];
@@ -74,24 +77,7 @@ __global__ void detection_forward_kernel(const int n,
                 dst[base + 5 + c] = sigmoid_f(src[base + 5 + c]);
         }
         else
-        {
-            float max_logit = src[base + 5];
-            for (int c = 1; c < classes_number; ++c)
-            {
-                const float v = src[base + 5 + c];
-                if (v > max_logit) max_logit = v;
-            }
-            float sum = 0.0f;
-            for (int c = 0; c < classes_number; ++c)
-            {
-                const float e = __expf(src[base + 5 + c] - max_logit);
-                dst[base + 5 + c] = e;
-                sum += e;
-            }
-            const float inv_sum = 1.0f / (sum + 1e-7f);
-            for (int c = 0; c < classes_number; ++c)
-                dst[base + 5 + c] *= inv_sum;
-        }
+            row_softmax<float, true>(src + base + 5, dst + base + 5, classes_number, 1e-7f);
     }
 }
 
@@ -99,7 +85,6 @@ void detection_forward_cuda(const Index batch_size,
                             const Index grid_size,
                             const Index boxes_per_cell,
                             const Index classes_number,
-                            const Index channels,
                             const int class_activation,
                             const float* anchors,
                             const float* input,
@@ -107,14 +92,13 @@ void detection_forward_cuda(const Index batch_size,
 {
     launch_elementwise_strided(batch_size * grid_size * grid_size * boxes_per_cell, detection_forward_kernel,
                                checked_int(grid_size), checked_int(boxes_per_cell), checked_int(classes_number),
-                               checked_int(channels), class_activation, anchors, input, output);
+                               class_activation, anchors, input, output);
 }
 
 __global__ void detection_backward_kernel(const int n,
                                           const int grid_size,
                                           const int boxes_per_cell,
                                           const int classes_number,
-                                          const int channels,
                                           const int class_activation,
                                           const float* __restrict__ out,
                                           const float* __restrict__ delta,
@@ -127,7 +111,7 @@ __global__ void detection_backward_kernel(const int n,
          idx += Index(blockDim.x) * gridDim.x)
     {
         int box;
-        const int base = detection_box_base(idx, grid_size, boxes_per_cell, channels, values_per_box, box);
+        const int base = detection_box_base(idx, grid_size, boxes_per_cell, values_per_box, box);
 
         const float ox = out[base + 0];
         const float oy = out[base + 1];
@@ -149,17 +133,7 @@ __global__ void detection_backward_kernel(const int n,
             }
         }
         else
-        {
-            float dot = 0.0f;
-            for (int c = 0; c < classes_number; ++c)
-                dot += delta[base + 5 + c] * out[base + 5 + c];
-
-            for (int c = 0; c < classes_number; ++c)
-            {
-                const float s = out[base + 5 + c];
-                in_delta[base + 5 + c] = s * (delta[base + 5 + c] - dot);
-            }
-        }
+            row_softmax_backward<float>(out + base + 5, delta + base + 5, in_delta + base + 5, classes_number, 1.0f);
     }
 }
 
@@ -167,7 +141,6 @@ void detection_backward_cuda(const Index batch_size,
                              const Index grid_size,
                              const Index boxes_per_cell,
                              const Index classes_number,
-                             const Index channels,
                              const int class_activation,
                              const float* output,
                              const float* output_delta,
@@ -175,7 +148,15 @@ void detection_backward_cuda(const Index batch_size,
 {
     launch_elementwise_strided(batch_size * grid_size * grid_size * boxes_per_cell, detection_backward_kernel,
                                checked_int(grid_size), checked_int(boxes_per_cell), checked_int(classes_number),
-                               checked_int(channels), class_activation, output, output_delta, input_delta);
+                               class_activation, output, output_delta, input_delta);
+}
+
+// Anchor-free head channel layout: 4 * max(reg_max, 1) box channels (plain
+// (x, y, w, h) when there are no DFL bins) followed by the class channels.
+static void detection_v8_channels(const Index classes_number, const Index reg_max, int& box_ch, int& channels)
+{
+    box_ch   = checked_int(4 * max(reg_max, Index(1)));
+    channels = checked_int(box_ch + classes_number);
 }
 
 __global__ void detection_v8_forward_kernel(const int n,
@@ -214,8 +195,8 @@ void detection_v8_forward_cuda(const Index batch_size,
                                const float* input,
                                float* output)
 {
-    const int box_ch   = checked_int(4 * max(reg_max, Index(1)));
-    const int channels = checked_int(box_ch + classes_number);
+    int box_ch, channels;
+    detection_v8_channels(classes_number, reg_max, box_ch, channels);
     launch_elementwise_strided(batch_size * grid_size * grid_width, detection_v8_forward_kernel,
                                checked_int(grid_size), checked_int(grid_width), channels, box_ch, input, output);
 }
@@ -263,8 +244,8 @@ void detection_v8_backward_cuda(const Index batch_size,
                                 const float* output_delta,
                                 float* input_delta)
 {
-    const int box_ch   = checked_int(4 * max(reg_max, Index(1)));
-    const int channels = checked_int(box_ch + classes_number);
+    int box_ch, channels;
+    detection_v8_channels(classes_number, reg_max, box_ch, channels);
     launch_elementwise_strided(batch_size * grid_size * grid_width, detection_v8_backward_kernel,
                                checked_int(grid_size), checked_int(grid_width), channels, box_ch,
                                output, output_delta, input_delta);

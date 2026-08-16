@@ -11,6 +11,34 @@
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/neural_network/layers/kernel_recurrent.cuh"
 
+static constexpr int activation_identity = int(opennn::ActivationFunction::Identity);
+static constexpr int activation_softmax  = int(opennn::ActivationFunction::Softmax);
+
+__device__ inline void rnn_activation(int activation_id, float z, float& h, float& dh)
+{
+    switch (activation_id)
+    {
+        case activation_sigmoid:
+            h  = sigmoid_f(z);
+            dh = h * (1.0f - h);
+            break;
+        case activation_tanh:
+            h  = tanhf(z);
+            dh = 1.0f - h * h;
+            break;
+        case activation_relu:
+            h  = z > 0.0f ? z : 0.0f;
+            dh = z > 0.0f ? 1.0f : 0.0f;
+            break;
+        case activation_identity:
+        case activation_softmax:
+        default:
+            h  = z;
+            dh = 1.0f;
+            break;
+    }
+}
+
 struct RnnCopyParams
 {
     RnnCopySpec specs[RNN_COPY_MAX_REGIONS];
@@ -56,35 +84,6 @@ void scatter_time_slice_cuda(const Index batch,
                              T* dst)
 {
     launch_elementwise(batch * features, time_slice_kernel<T, false>,
-                       checked_int(time_steps), checked_int(features), checked_int(t), src, dst);
-}
-
-__global__ void scatter_time_slice_fill_kernel(const int n,
-                                               const int time_steps,
-                                               const int features,
-                                               const int t,
-                                               const float* __restrict__ src,
-                                               float* __restrict__ dst)
-{
-    const long long idx = (long long)blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx >= n) return;
-
-    const int f  = int(idx % features);
-    const long long bt = idx / features;
-    const int ts = int(bt % time_steps);
-    const int b  = int(bt / time_steps);
-
-    dst[idx] = (ts == t) ? src[b * features + f] : 0.0f;
-}
-
-void scatter_time_slice_fill_cuda(const Index batch,
-                                  const Index time_steps,
-                                  const Index features,
-                                  const Index t,
-                                  const float* src,
-                                  float* dst)
-{
-    launch_elementwise(batch * time_steps * features, scatter_time_slice_fill_kernel,
                        checked_int(time_steps), checked_int(features), checked_int(t), src, dst);
 }
 
@@ -210,7 +209,6 @@ __global__ void rnn_step_fused_backward_pre_kernel(const int n,
                                                    const int out_features,
                                                    const int time_steps,
                                                    const int t,
-                                                   const bool first_iter,
                                                    const T* __restrict__ output_delta,
                                                    const T* __restrict__ next_carry,
                                                    const T* __restrict__ activation_derivatives,
@@ -222,7 +220,7 @@ __global__ void rnn_step_fused_backward_pre_kernel(const int n,
     const int b = idx / out_features;
     const int j = idx - b * out_features;
 
-    const float dh = first_iter
+    const float dh = output_delta
         ? static_cast<float>(output_delta[idx])
         : static_cast<float>(next_carry[idx]);
 
@@ -239,7 +237,6 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
                                       const Index out_features,
                                       const Index time_steps,
                                       const Index t,
-                                      const bool first_iter,
                                       const T* output_delta,
                                       const T* next_carry,
                                       const T* activation_derivatives,
@@ -247,11 +244,8 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
 {
     if (batch == 0 || out_features == 0) return;
 
-    checked_host_condition(t < 0 || t >= time_steps,
-                           "rnn_step_fused_backward_pre_cuda: time step out of range.");
-
     launch_elementwise(batch * out_features, rnn_step_fused_backward_pre_kernel<T>,
-                       checked_int(out_features), checked_int(time_steps), checked_int(t), first_iter,
+                       checked_int(out_features), checked_int(time_steps), checked_int(t),
                        output_delta, next_carry, activation_derivatives, delta);
 }
 
@@ -259,7 +253,7 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
     template void gather_time_slice_cuda<T>(const Index, const Index, const Index, const Index, const T*, T*); \
     template void scatter_time_slice_cuda<T>(const Index, const Index, const Index, const Index, const T*, T*); \
     template void rnn_step_fused_forward_cuda<T>(const Index, const Index, const Index, const T*, const T*, const T*, const T*, const T*, T*, T*, const int); \
-    template void rnn_step_fused_backward_pre_cuda<T>(const Index, const Index, const Index, const Index, const bool, const T*, const T*, const T*, T*);
+    template void rnn_step_fused_backward_pre_cuda<T>(const Index, const Index, const Index, const Index, const T*, const T*, const T*, T*);
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE

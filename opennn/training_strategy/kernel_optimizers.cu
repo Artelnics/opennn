@@ -100,6 +100,13 @@ __global__ void adam_update_kernel(
     }
 }
 
+// Vector path: fp32 operands on 16-byte boundaries, the bf16 mirror on 4.
+static bool adam_vector_aligned(const float* parameters, const float* m, const float* v,
+                                const float* gradients, const __nv_bfloat16* mirror)
+{
+    return are_aligned<16>(parameters, m, v, gradients) && is_aligned<4>(mirror);
+}
+
 void adam_update_cuda(
     const Index n,
     float* parameters,
@@ -119,7 +126,7 @@ void adam_update_cuda(
     const float effective_lr = learning_rate * sqrt_bias_correction_2 / bias_correction_1;
     const float effective_eps = epsilon * sqrt_bias_correction_2;
 
-    const bool aligned = are_aligned<16>(parameters, m, v, gradients) && is_aligned<4>(parameters_bf16_mirror);
+    const bool aligned = adam_vector_aligned(parameters, m, v, gradients, parameters_bf16_mirror);
 
     launch_vec_on<4>(opennn::device::get_compute_stream(), n, aligned, adam_update_kernel,
                    parameters, m, v, gradients, parameters_bf16_mirror,
@@ -163,11 +170,11 @@ void adam_update_capturable_cuda(
     if (n == 0) return;
     if (stream == nullptr) stream = opennn::device::get_compute_stream();
 
-    OPENNN_CUDA_LAUNCH(adam_prepare_kernel<<<1, 1, 0, stream>>>(
-        step_device, beta_1, beta_2, learning_rate_device, epsilon,
-        effective_lr_device, effective_eps_device));
+    launch_single(stream, adam_prepare_kernel,
+                  step_device, beta_1, beta_2, learning_rate_device, epsilon,
+                  effective_lr_device, effective_eps_device);
 
-    const bool aligned = are_aligned<16>(parameters, m, v, gradients) && is_aligned<4>(parameters_bf16_mirror);
+    const bool aligned = adam_vector_aligned(parameters, m, v, gradients, parameters_bf16_mirror);
 
     launch_vec_on<4>(stream, n, aligned, adam_update_kernel,
                    parameters, m, v, gradients, parameters_bf16_mirror,
@@ -177,6 +184,7 @@ void adam_update_capturable_cuda(
                    static_cast<const float*>(effective_eps_device));
 }
 
+// Momentum step (momentum > 0; the plain step is inlined in the kernel).
 __device__ __forceinline__ void sgd_update_one(
     float& p,
     float& v,
@@ -186,8 +194,6 @@ __device__ __forceinline__ void sgd_update_one(
     bool nesterov)
 {
     const float lr_g = lr * g;
-    if (momentum <= 0.0f) { p -= lr_g; return; }
-
     const float v_new = fmaf(momentum, v, -lr_g);
     v = v_new;
     p += nesterov ? fmaf(momentum, v_new, -lr_g) : v_new;
@@ -269,6 +275,12 @@ __global__ void sgd_update_kernel(
     }
 }
 
+static bool sgd_vector_aligned(const float* parameters, const float* velocity,
+                               const float* gradients, const __nv_bfloat16* mirror)
+{
+    return are_aligned<16>(parameters, gradients, velocity) && is_aligned<4>(mirror);
+}
+
 void sgd_update_cuda(
     const Index n,
     float* parameters,
@@ -281,7 +293,7 @@ void sgd_update_cuda(
 {
     if (learning_rate == 0.0f) return;
 
-    const bool aligned = are_aligned<16>(parameters, gradients, velocity) && is_aligned<4>(parameters_bf16_mirror);
+    const bool aligned = sgd_vector_aligned(parameters, velocity, gradients, parameters_bf16_mirror);
 
     launch_vec_on<4>(opennn::device::get_compute_stream(), n, aligned, sgd_update_kernel,
                    parameters, velocity, gradients, parameters_bf16_mirror,
@@ -295,8 +307,7 @@ __global__ void set_scalar_kernel(float* __restrict__ dst, const float value)
 
 void set_scalar_device_cuda(float* dst, const float value, cudaStream_t stream)
 {
-    if (stream == nullptr) stream = opennn::device::get_compute_stream();
-    OPENNN_CUDA_LAUNCH(set_scalar_kernel<<<1, 1, 0, stream>>>(dst, value));
+    launch_single(stream, set_scalar_kernel, dst, value);
 }
 
 void sgd_update_capturable_cuda(
@@ -312,7 +323,7 @@ void sgd_update_capturable_cuda(
 {
     if (stream == nullptr) stream = opennn::device::get_compute_stream();
 
-    const bool aligned = are_aligned<16>(parameters, gradients, velocity) && is_aligned<4>(parameters_bf16_mirror);
+    const bool aligned = sgd_vector_aligned(parameters, velocity, gradients, parameters_bf16_mirror);
 
     launch_vec_on<4>(stream, n, aligned, sgd_update_kernel,
                    parameters, velocity, gradients, parameters_bf16_mirror,

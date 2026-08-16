@@ -22,17 +22,13 @@ cudaStream_t get_compute_stream();
 
 static constexpr int block_size = 256;
 
-static constexpr int activation_identity   = int(opennn::ActivationFunction::Identity);
 static constexpr int activation_sigmoid    = int(opennn::ActivationFunction::Sigmoid);
 static constexpr int activation_tanh       = int(opennn::ActivationFunction::Tanh);
 static constexpr int activation_relu       = int(opennn::ActivationFunction::ReLU);
-static constexpr int activation_softmax    = int(opennn::ActivationFunction::Softmax);
 static constexpr int activation_leaky_relu = int(opennn::ActivationFunction::LeakyReLU);
 static constexpr int activation_gelu       = int(opennn::ActivationFunction::GELU);
 static constexpr int activation_gelu_tanh  = int(opennn::ActivationFunction::GELUTanh);
 static constexpr int activation_silu       = int(opennn::ActivationFunction::SiLU);
-
-static constexpr int class_activation_sigmoid = 1;
 
 static constexpr float leaky_relu_slope = opennn::LEAKY_RELU_SLOPE;
 
@@ -95,6 +91,14 @@ static inline void launch_elementwise_strided(Index n, K kernel, Args... args)
     if (n == 0) return;
     const int total = checked_int(n);
     OPENNN_CUDA_LAUNCH(kernel<<<grid_size_strided_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, args...));
+}
+
+// One-thread kernel (scalar bookkeeping such as folding a metric into a sum).
+template<typename K, typename... Args>
+static inline void launch_single(cudaStream_t stream, K kernel, Args... args)
+{
+    if (stream == nullptr) stream = opennn::device::get_compute_stream();
+    OPENNN_CUDA_LAUNCH(kernel<<<1, 1, 0, stream>>>(args...));
 }
 
 #define OPENNN_INSTANTIATE_FLOAT_BF16(X) \
@@ -214,31 +218,36 @@ __device__ __forceinline__ bool token_is_padding(const T* token, int features)
     return true;
 }
 
-__device__ inline void rnn_activation(int activation_id, float z, float& h, float& dh)
+// One-thread row softmax over n contiguous elements: max, exp, sum, normalize
+// by 1 / (sum + epsilon). dst may alias src. FastExp selects __expf over expf
+// so each caller keeps its own numerics.
+template<typename T, bool FastExp = false>
+__device__ __forceinline__ void row_softmax(const T* src, T* dst, int n, float epsilon)
 {
-    switch (activation_id)
+    float max_value = static_cast<float>(src[0]);
+    for (int j = 1; j < n; ++j) max_value = fmaxf(max_value, static_cast<float>(src[j]));
+
+    float sum = 0.0f;
+    for (int j = 0; j < n; ++j)
     {
-        case activation_sigmoid:
-            h  = sigmoid_f(z);
-            dh = h * (1.0f - h);
-            break;
-        case activation_tanh:
-            h  = tanhf(z);
-            dh = 1.0f - h * h;
-            break;
-        case activation_relu:
-            h  = z > 0.0f ? z : 0.0f;
-            dh = z > 0.0f ? 1.0f : 0.0f;
-            break;
-        case activation_identity:
-        case activation_softmax:
-        default:
-            h  = z;
-            dh = 1.0f;
-            break;
+        const float x = static_cast<float>(src[j]) - max_value;
+        const float e = FastExp ? __expf(x) : expf(x);
+        dst[j] = static_cast<T>(e);
+        sum += e;
     }
+    const float inv_sum = 1.0f / (sum + epsilon);
+    for (int j = 0; j < n; ++j) dst[j] = static_cast<T>(static_cast<float>(dst[j]) * inv_sum);
 }
 
+// Its backward for one row: dx = y * (dy - <y, dy>) * scale. dx may alias dy.
+template<typename T>
+__device__ __forceinline__ void row_softmax_backward(const T* y, const T* dy, T* dx, int n, float scale)
+{
+    float dot = 0.0f;
+    for (int j = 0; j < n; ++j) dot += static_cast<float>(y[j]) * static_cast<float>(dy[j]);
+    for (int j = 0; j < n; ++j)
+        dx[j] = static_cast<T>(static_cast<float>(y[j]) * (static_cast<float>(dy[j]) - dot) * scale);
+}
 
 // Warp reductions (all 32 lanes must participate). warp_reduce_sum/max use
 // xor shuffles and leave the result in every lane; warp_reduce_sum2 folds two
