@@ -154,9 +154,9 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
 constexpr int BN_THREADS = 256;
 constexpr Index BN_MAX_ROW_BLOCKS = 128;
 
-// 16-byte channel groups: eight BF16 or four FP32 channels per lane. Eight FP32
-// channels per lane put the reduce kernel at ~90 registers and measured slower.
-template<typename T> constexpr int BN_WIDE_VEC = sizeof(T) == 2 ? 8 : 4;
+// The wide rung is a 16-byte channel group (vec16: eight BF16 or four FP32
+// channels per lane); eight FP32 channels per lane put the reduce kernel at
+// ~90 registers and measured slower.
 
 // The mask byte covers eight channels; a lane with a four-channel group takes
 // its nibble. No mask: every element passes.
@@ -260,6 +260,28 @@ __device__ static void batchnorm_store_partials(const int channels, const int c0
         partials[slot] = t1;
         partials[slot + 1] = t2;
     }
+}
+
+// Grid of a reduce launch over `rows` x `channels` in VEC-channel groups, and
+// of the finalize that sums its row-block partials.
+struct BnReduceLaunch
+{
+    dim3 reduce_grid, reduce_block;
+    Index row_blocks, rows_per_block;
+    dim3 finalize_grid, finalize_block;
+};
+
+static BnReduceLaunch batchnorm_reduce_launch(const Index rows, const Index channels, const int vec)
+{
+    BnReduceLaunch launch;
+    const Index channel_groups = channels / vec;
+    launch.reduce_block = batchnorm_reduce_block(channel_groups);
+    launch.row_blocks = batchnorm_row_blocks(rows, launch.reduce_block);
+    launch.rows_per_block = ceil_div(rows, launch.row_blocks);
+    launch.reduce_grid = dim3(unsigned(ceil_div(channel_groups, Index(launch.reduce_block.x))), unsigned(launch.row_blocks));
+    launch.finalize_grid = dim3(unsigned(ceil_div(channels, Index(32))));
+    launch.finalize_block = dim3(32, BN_FINALIZE_LANES);
+    return launch;
 }
 
 // ---- forward -----------------------------------------------------------------
@@ -395,30 +417,22 @@ void batchnorm_forward_fused_cuda(const Index rows, const Index channels,
                                   float* partials)
 {
     if (rows == 0 || channels == 0) return;
-    if (channels % 8 != 0)
-        throw std::runtime_error("batchnorm_forward_fused_cuda: channels must be a multiple of 8.");
-    constexpr int VEC = BN_WIDE_VEC<T>;
+    checked_host_condition(channels % 8 != 0, "batchnorm_forward_fused_cuda: channels must be a multiple of 8.");
+    constexpr int VEC = vec16<T>;
     cudaStream_t stream = opennn::device::get_compute_stream();
 
-    const Index channel_groups = channels / VEC;
-    const dim3 reduce_block = batchnorm_reduce_block(channel_groups);
-    const Index row_blocks = batchnorm_row_blocks(rows, reduce_block);
-    const Index rows_per_block = (rows + row_blocks - 1) / row_blocks;
-    const dim3 reduce_grid(unsigned((channel_groups + reduce_block.x - 1) / reduce_block.x),
-                           unsigned(row_blocks));
-    OPENNN_CUDA_LAUNCH((batchnorm_forward_reduce_kernel<T, VEC><<<reduce_grid, reduce_block, 0, stream>>>(
-        rows, checked_int(channels), rows_per_block, x, partials)));
+    const BnReduceLaunch g = batchnorm_reduce_launch(rows, channels, VEC);
+    OPENNN_CUDA_LAUNCH((batchnorm_forward_reduce_kernel<T, VEC><<<g.reduce_grid, g.reduce_block, 0, stream>>>(
+        rows, checked_int(channels), g.rows_per_block, x, partials)));
 
     float* scale_shift = partials + 2 * batchnorm_partial_rows(rows) * channels;
     const float unbias = rows > 1 ? float(rows) / float(rows - 1) : 1.0f;
-    const dim3 finalize_block(32, BN_FINALIZE_LANES);
-    OPENNN_CUDA_LAUNCH((batchnorm_forward_finalize_kernel<<<
-        unsigned((channels + 31) / 32), finalize_block, 0, stream>>>(
-        checked_int(channels), checked_int(row_blocks), 1.0f / static_cast<float>(rows), unbias,
+    OPENNN_CUDA_LAUNCH((batchnorm_forward_finalize_kernel<<<g.finalize_grid, g.finalize_block, 0, stream>>>(
+        checked_int(channels), checked_int(g.row_blocks), 1.0f / static_cast<float>(rows), unbias,
         epsilon, momentum, partials, gamma, beta, mean, inv_var, running_mean, running_var, scale_shift)));
 
     const bool add = residual != nullptr;
-    const Index groups = rows * channel_groups;
+    const Index groups = rows * (channels / VEC);
     if (relu && add)       launch_elementwise_strided(groups, batchnorm_forward_apply_kernel<T, VEC, true,  true >, checked_int(channels), x, residual, scale_shift, y, mask);
     else if (relu)         launch_elementwise_strided(groups, batchnorm_forward_apply_kernel<T, VEC, true,  false>, checked_int(channels), x, residual, scale_shift, y, mask);
     else if (add)          launch_elementwise_strided(groups, batchnorm_forward_apply_kernel<T, VEC, false, true >, checked_int(channels), x, residual, scale_shift, y, mask);
@@ -546,21 +560,14 @@ static void batchnorm_backward_launch(const Index rows, const Index channels,
                                       T* dpre, float* dgamma, float* dbeta,
                                       float* partials, cudaStream_t stream)
 {
-    const Index channel_groups = channels / VEC;
-    const dim3 reduce_block = batchnorm_reduce_block(channel_groups);
-    const Index row_blocks = batchnorm_row_blocks(rows, reduce_block);
-    const Index rows_per_block = (rows + row_blocks - 1) / row_blocks;
-    const dim3 reduce_grid(unsigned((channel_groups + reduce_block.x - 1) / reduce_block.x),
-                           unsigned(row_blocks));
-    OPENNN_CUDA_LAUNCH((batchnorm_backward_reduce_kernel<T, VEC, XHAT_FROM_Y><<<reduce_grid, reduce_block, 0, stream>>>(
-        rows, checked_int(channels), rows_per_block, x, dy_dx, y, mask, gamma, beta, mean, inv_var, partials)));
+    const BnReduceLaunch g = batchnorm_reduce_launch(rows, channels, VEC);
+    OPENNN_CUDA_LAUNCH((batchnorm_backward_reduce_kernel<T, VEC, XHAT_FROM_Y><<<g.reduce_grid, g.reduce_block, 0, stream>>>(
+        rows, checked_int(channels), g.rows_per_block, x, dy_dx, y, mask, gamma, beta, mean, inv_var, partials)));
 
-    const dim3 finalize_block(32, BN_FINALIZE_LANES);
-    OPENNN_CUDA_LAUNCH((batchnorm_backward_finalize_kernel<<<
-        unsigned((channels + 31) / 32), finalize_block, 0, stream>>>(
-        checked_int(channels), checked_int(row_blocks), partials, dgamma, dbeta)));
+    OPENNN_CUDA_LAUNCH((batchnorm_backward_finalize_kernel<<<g.finalize_grid, g.finalize_block, 0, stream>>>(
+        checked_int(channels), checked_int(g.row_blocks), partials, dgamma, dbeta)));
 
-    launch_elementwise_strided(rows * channel_groups, batchnorm_backward_apply_kernel<T, VEC>,
+    launch_elementwise_strided(rows * (channels / VEC), batchnorm_backward_apply_kernel<T, VEC>,
                                checked_int(channels), 1.0f / static_cast<float>(rows),
                                x, dy_dx, y, mask, gamma, mean, inv_var, dgamma, dbeta, dpre);
 }
@@ -592,7 +599,7 @@ void batchnorm_backward_fused_cuda(const Index rows, const Index channels,
         if (from_y) batchnorm_backward_launch<T, VEC, true >(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
         else        batchnorm_backward_launch<T, VEC, false>(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
     };
-    if (wide)      launch.template operator()<BN_WIDE_VEC<T>>();
+    if (wide)      launch.template operator()<vec16<T>>();
     else if (vec2) launch.template operator()<2>();
     else           launch.template operator()<1>();
 }
@@ -798,7 +805,7 @@ static void norm_backward_launch(const int N, const int D, const T* dY, const T*
 
     constexpr int NUM_WARPS = 8;
     const dim3 block(32, NUM_WARPS);
-    const int grid_x = (D + 31) / 32;
+    const int grid_x = ceil_div(D, 32);
 
     const int desired_chunks = grid_x < 192 ? 192 / grid_x : 1;
     int chunk = ceil_div(N, desired_chunks);

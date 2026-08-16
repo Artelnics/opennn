@@ -13,11 +13,31 @@
 #include <curand_kernel.h>
 #include <cub/block/block_reduce.cuh>
 
+namespace
+{
+
+// The sampling kernels' block width; the launches use it, so cub's block
+// reduce and the actual blockDim can never disagree.
 constexpr int SAMPLING_BLOCK_THREADS = 256;
 using BlockArgMaxReduce = cub::BlockReduce<cub::KeyValuePair<int, float>, SAMPLING_BLOCK_THREADS>;
 
+// A token is padding when every feature is (numerically) zero; each lane
+// checks features [lane, lane + stride, ...] and the caller combines lanes.
 template<typename T>
-__global__ void swap_heads_scalar_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int P, const int Q, const int D)
+__device__ __forceinline__ bool token_is_padding_strided(const T* token, int features, int lane, int stride)
+{
+    for (int e = lane; e < features; e += stride)
+        if (fabsf(static_cast<float>(token[e])) > padding_epsilon) return false;
+    return true;
+}
+
+}
+
+// (b, p, q, d) -> (b, q, p, d): split_heads and merge_heads are the same
+// transpose with P/Q swapped; the 16-byte vector form runs over float4 when
+// the innermost dimension allows it.
+template<typename T>
+__global__ void swap_heads_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int P, const int Q, const int D)
 {
     for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
@@ -35,15 +55,12 @@ void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int
 {
     if (n == 0) return;
 
-    if ((static_cast<size_t>(D) * sizeof(T)) % 16 == 0 && are_float4_aligned(in, out))
-    {
-        const int vec_width = static_cast<int>(16 / sizeof(T));
-        launch_elementwise_strided(n / vec_width, swap_heads_scalar_kernel<float4>,
+    if (D % vec16<T> == 0 && are_aligned<16>(in, out))
+        launch_elementwise_strided(n / vec16<T>, swap_heads_kernel<float4>,
                                    reinterpret_cast<const float4*>(in), reinterpret_cast<float4*>(out),
-                                   S, H, D / vec_width);
-    }
+                                   S, H, D / vec16<T>);
     else
-        launch_elementwise_strided(n, swap_heads_scalar_kernel<T>, in, out, S, H, D);
+        launch_elementwise_strided(n, swap_heads_kernel<T>, in, out, S, H, D);
 }
 
 template<typename T>
@@ -159,7 +176,7 @@ static void launch_masked_softmax_rows(const int batch_size, const int heads_num
             attention_weights, padding_mask, causal, zero_queries));
     };
 
-    const int elems = (source_sequence_length + 31) / 32;
+    const int elems = ceil_div(source_sequence_length, 32);
     if      (elems <= 4)  launch(std::integral_constant<int, 4>{});
     else if (elems <= 8)  launch(std::integral_constant<int, 8>{});
     else if (elems <= 16) launch(std::integral_constant<int, 16>{});
@@ -313,20 +330,23 @@ static inline int rope_threads(int model_dim)
     return 256;
 }
 
+template<typename T, int SIGN>
+static void rope_launch(const int rows, const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* in, T* out, const float* cos, const float* sin)
+{
+    if (rows == 0 || model_dim == 0) return;
+    OPENNN_CUDA_LAUNCH((rope_apply_kernel<T, SIGN><<<rows, rope_threads(model_dim), 0, opennn::device::get_compute_stream()>>>(seq, model_dim, head_dim, rotary_dim, offset, in, out, cos, sin)));
+}
+
 template<typename T>
 void rope_forward_cuda(const int rows, const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* in, T* out, const float* cos, const float* sin)
 {
-    if (rows == 0 || model_dim == 0) return;
-
-    OPENNN_CUDA_LAUNCH((rope_apply_kernel<T, 1><<<rows, rope_threads(model_dim), 0, opennn::device::get_compute_stream()>>>(seq, model_dim, head_dim, rotary_dim, offset, in, out, cos, sin)));
+    rope_launch<T, 1>(rows, seq, model_dim, head_dim, rotary_dim, offset, in, out, cos, sin);
 }
 
 template<typename T>
 void rope_backward_cuda(const int rows, const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* dout, T* din, const float* cos, const float* sin)
 {
-    if (rows == 0 || model_dim == 0) return;
-
-    OPENNN_CUDA_LAUNCH((rope_apply_kernel<T, -1><<<rows, rope_threads(model_dim), 0, opennn::device::get_compute_stream()>>>(seq, model_dim, head_dim, rotary_dim, offset, dout, din, cos, sin)));
+    rope_launch<T, -1>(rows, seq, model_dim, head_dim, rotary_dim, offset, dout, din, cos, sin);
 }
 
 template<typename T>
@@ -745,9 +765,9 @@ void sample_logits_row_cuda(const int n, const float temperature, const int top_
     const int k = temperature <= 0.0f ? 1 : std::max(1, std::min(top_k, 32));
     const int blocks = LOGITS_SAMPLE_BLOCKS;
 
-    OPENNN_CUDA_LAUNCH((logits_top_candidates_kernel<T, 8><<<blocks, 256, 0, stream>>>(
+    OPENNN_CUDA_LAUNCH((logits_top_candidates_kernel<T, 8><<<blocks, SAMPLING_BLOCK_THREADS, 0, stream>>>(
         n, k, logits, candidates_scratch)));
-    OPENNN_CUDA_LAUNCH((sample_from_candidates_kernel<16><<<1, 256, 0, stream>>>(
+    OPENNN_CUDA_LAUNCH((sample_from_candidates_kernel<16><<<1, SAMPLING_BLOCK_THREADS, 0, stream>>>(
         blocks * k, k, temperature, top_p, seed, step, candidates_scratch, id_out, token_out)));
 }
 
@@ -772,16 +792,18 @@ void grouped_attention_cuda(const int batch, const int query_seq, const int key_
         const int valid = std::min(query_position_offset + 1, key_seq);
 
         #define OPENNN_DECODE_ATTENTION_CASE(HD, G) \
-            if (head_dim == HD && group == G) \
+            else if (head_dim == HD && group == G) \
                 OPENNN_CUDA_LAUNCH((grouped_attention_decode_kernel<T, HD, G><<<grid, warps * 32, 0, stream>>>( \
                     n_kv_heads, scale, position_device, valid, Q, K, V, decode_partials)));
 
+        if (false) {}
         OPENNN_DECODE_ATTENTION_CASE(64, 1)  OPENNN_DECODE_ATTENTION_CASE(64, 2)
         OPENNN_DECODE_ATTENTION_CASE(64, 4)  OPENNN_DECODE_ATTENTION_CASE(64, 8)
         OPENNN_DECODE_ATTENTION_CASE(128, 1) OPENNN_DECODE_ATTENTION_CASE(128, 2)
         OPENNN_DECODE_ATTENTION_CASE(128, 4) OPENNN_DECODE_ATTENTION_CASE(128, 8)
         OPENNN_DECODE_ATTENTION_CASE(256, 1) OPENNN_DECODE_ATTENTION_CASE(256, 2)
         OPENNN_DECODE_ATTENTION_CASE(256, 4)
+        else throw std::runtime_error("grouped_attention_cuda: decode kernel ladder does not cover a supported (head_dim, group).");
         #undef OPENNN_DECODE_ATTENTION_CASE
 
         const int smem = 2 * GROUPED_ATTENTION_DECODE_SPLITS * int(sizeof(float));
@@ -790,8 +812,9 @@ void grouped_attention_cuda(const int batch, const int query_seq, const int key_
         return;
     }
 
+    checked_host_condition(head_dim > 256, "grouped_attention_cuda: head_dim above 256 is not supported.");
     const int block = 128;
-    const int grid = (total + block - 1) / block;
+    const int grid = ceil_div(total, block);
     OPENNN_CUDA_LAUNCH((grouped_attention_kernel<T><<<grid, block, 0, stream>>>(
         total, query_seq, key_seq, n_query_heads, n_kv_heads, head_dim, group, scale,
         query_position_offset, causal ? 1 : 0, Q, K, V, O)));

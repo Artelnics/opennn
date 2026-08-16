@@ -59,9 +59,9 @@ void bias_grad_sum_cuda(const Index batch, const Index features, const T* delta,
 
     const int f_blocks = ceil_div(f, block_size);
     const int desired_chunks = f_blocks < 256 ? 256 / f_blocks : 1;
-    int chunk = checked_int((batch + desired_chunks - 1) / desired_chunks);
+    int chunk = checked_int(ceil_div(batch, Index(desired_chunks)));
     if (chunk < 64) chunk = 64;
-    const int n_chunks = int((batch + chunk - 1) / chunk);
+    const int n_chunks = checked_int(ceil_div(batch, Index(chunk)));
     const dim3 grid(f_blocks, n_chunks);
     OPENNN_CUDA_LAUNCH(bias_grad_sum_kernel<T><<<grid, block_size, 0,
                                          opennn::device::get_compute_stream()>>>(

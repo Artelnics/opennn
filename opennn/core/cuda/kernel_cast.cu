@@ -34,7 +34,7 @@ template<typename Src, typename Dst>
 void cast_cuda(const Index n, const Src* src, Dst* dst, cudaStream_t stream)
 {
     if (stream == nullptr) stream = opennn::device::get_compute_stream();
-    launch_vec4_on(stream, n, is_aligned<4 * sizeof(Src)>(src) && is_aligned<4 * sizeof(Dst)>(dst),
+    launch_vec_on<4>(stream, n, is_aligned<4 * sizeof(Src)>(src) && is_aligned<4 * sizeof(Dst)>(dst),
                    cast_kernel<Src, Dst>, src, dst);
 }
 

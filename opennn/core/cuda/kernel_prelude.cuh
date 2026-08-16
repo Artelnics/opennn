@@ -2,8 +2,8 @@
 #define KERNEL_PRELUDE_CUH
 
 // Shared by every kernel_*.cuh: the CUDA headers, the MSVC arg() shims and
-// Eigen's Index. Split out of kernel.cuh so each kernel family can declare
-// itself next to its own .cu without pulling in every other family.
+// Eigen's Index, so each kernel family declares itself next to its own .cu
+// without pulling in every other family.
 
 #ifdef OPENNN_HAS_CUDA
 

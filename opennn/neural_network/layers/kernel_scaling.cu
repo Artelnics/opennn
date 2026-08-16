@@ -8,6 +8,8 @@
 
 // bounding, scaling and unscaling
 
+#include <cfloat>
+
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/neural_network/layers/kernel_scaling.cuh"
 

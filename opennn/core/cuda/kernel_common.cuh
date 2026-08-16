@@ -1,15 +1,13 @@
 #ifndef KERNEL_COMMON_CUH
 #define KERNEL_COMMON_CUH
 
-#include <cstdint>
-#include <cfloat>
+#ifdef OPENNN_HAS_CUDA
+
 #include <limits>
 #include <stdexcept>
 
 #include "opennn/core/cuda/kernel_prelude.cuh"
 #include "opennn/core/configuration.h"
-
-#ifdef OPENNN_HAS_CUDA
 
 namespace opennn::device
 {
@@ -109,10 +107,10 @@ static inline void launch_elementwise_strided(Index n, K kernel, Args... args)
     X(__nv_bfloat16, float)                \
     X(__nv_bfloat16, __nv_bfloat16)
 
-// VEC adjacent elements moved as one aligned raw load/store (up to 16 bytes:
-// eight BF16, four FP32 or sixteen bytes) and, for the float variants,
-// converted element by element. The caller guarantees the address is
-// VEC * sizeof(T) aligned (NHWC rows with channels % VEC == 0).
+// VecIO<T, VEC>: VEC adjacent elements moved as one aligned raw load/store (up
+// to 16 bytes: eight BF16, four FP32 or sixteen bytes) and, for the float
+// variants, converted element by element. The caller guarantees the address
+// is VEC * sizeof(T) aligned.
 template<int BYTES> struct RawBytes;
 template<> struct RawBytes<1>  { unsigned char v; };
 template<> struct RawBytes<2>  { unsigned short v; };
@@ -177,10 +175,8 @@ static inline bool are_aligned(const Ptrs*... ptrs)
 {
     return (is_aligned<BYTES>(ptrs) && ...);
 }
-static inline bool is_float4_aligned(const void* ptr) { return is_aligned<16>(ptr); }
-template<typename... Ptrs>
-static inline bool are_float4_aligned(const Ptrs*... ptrs) { return are_aligned<16>(ptrs...); }
-static inline bool is_bfloat162_aligned(const void* ptr) { return is_aligned<4>(ptr); }
+// Elements of T in a 16-byte vector: eight BF16, four FP32.
+template<typename T> constexpr int vec16 = 16 / int(sizeof(T));
 
 // Launches a kernel of the form (n_vec, n, args...): the first n_vec * VEC
 // elements go through the vector path, the tail through the scalar one; with
@@ -193,11 +189,6 @@ static inline void launch_vec_on(cudaStream_t stream, Index n, bool aligned, K k
     const int n_vec = aligned ? total / VEC : 0;
     OPENNN_CUDA_LAUNCH(kernel<<<grid_size_for(vector_work_size(total, n_vec, VEC)), block_size, 0,
                        stream>>>(n_vec, total, args...));
-}
-template<typename K, typename... Args>
-static inline void launch_vec4_on(cudaStream_t stream, Index n, bool aligned, K kernel, Args... args)
-{
-    launch_vec_on<4>(stream, n, aligned, kernel, args...);
 }
 
 // Runtime float/bf16 choice for a templated call: f.template operator()<T>().
@@ -219,16 +210,6 @@ template<typename T>
 __device__ __forceinline__ bool token_is_padding(const T* token, int features)
 {
     for (int e = 0; e < features; ++e)
-        if (fabsf(static_cast<float>(token[e])) > padding_epsilon) return false;
-    return true;
-}
-
-// The same test split over lanes: each lane checks features [lane, lane +
-// stride, ...]; the caller combines the lanes' verdicts.
-template<typename T>
-__device__ __forceinline__ bool token_is_padding_strided(const T* token, int features, int lane, int stride)
-{
-    for (int e = lane; e < features; e += stride)
         if (fabsf(static_cast<float>(token[e])) > padding_epsilon) return false;
     return true;
 }
@@ -259,8 +240,9 @@ __device__ inline void rnn_activation(int activation_id, float z, float& h, floa
 }
 
 
-// Warp reductions (all 32 lanes must participate); the xor form leaves the
-// result in every lane, the two-value form folds two sums in one pass.
+// Warp reductions (all 32 lanes must participate). warp_reduce_sum/max use
+// xor shuffles and leave the result in every lane; warp_reduce_sum2 folds two
+// sums in one pass with down shuffles and leaves them in lane 0.
 __device__ __forceinline__ float warp_reduce_sum(float x)
 {
     #pragma unroll
@@ -331,8 +313,7 @@ __device__ __forceinline__ bool block_reduce_sum2(float& a, float& b)
     return threadIdx.x == 0;
 }
 
-// NHWC index arithmetic shared by the pooling / normalization / concat /
-// upsample kernels: flat element or channel-group index -> (n, h, w, c).
+// NHWC index arithmetic: flat element index -> (n, h, w, c).
 __device__ __forceinline__ void nhwc_decompose(Index i, int channels, int width, int height,
                                                Index& n, int& h, int& w, int& c)
 {

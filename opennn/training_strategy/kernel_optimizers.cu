@@ -119,10 +119,9 @@ void adam_update_cuda(
     const float effective_lr = learning_rate * sqrt_bias_correction_2 / bias_correction_1;
     const float effective_eps = epsilon * sqrt_bias_correction_2;
 
-    const bool aligned = are_float4_aligned(parameters, m, v, gradients)
-        && is_bfloat162_aligned(parameters_bf16_mirror);
+    const bool aligned = are_aligned<16>(parameters, m, v, gradients) && is_aligned<4>(parameters_bf16_mirror);
 
-    launch_vec4_on(opennn::device::get_compute_stream(), n, aligned, adam_update_kernel,
+    launch_vec_on<4>(opennn::device::get_compute_stream(), n, aligned, adam_update_kernel,
                    parameters, m, v, gradients, parameters_bf16_mirror,
                    beta_1, 1.0f - beta_1, beta_2, 1.0f - beta_2,
                    effective_lr, effective_eps,
@@ -168,10 +167,9 @@ void adam_update_capturable_cuda(
         step_device, beta_1, beta_2, learning_rate_device, epsilon,
         effective_lr_device, effective_eps_device));
 
-    const bool aligned = are_float4_aligned(parameters, m, v, gradients)
-        && is_bfloat162_aligned(parameters_bf16_mirror);
+    const bool aligned = are_aligned<16>(parameters, m, v, gradients) && is_aligned<4>(parameters_bf16_mirror);
 
-    launch_vec4_on(stream, n, aligned, adam_update_kernel,
+    launch_vec_on<4>(stream, n, aligned, adam_update_kernel,
                    parameters, m, v, gradients, parameters_bf16_mirror,
                    beta_1, 1.0f - beta_1, beta_2, 1.0f - beta_2,
                    0.0f, 0.0f,
@@ -283,11 +281,9 @@ void sgd_update_cuda(
 {
     if (learning_rate == 0.0f) return;
 
-    const bool aligned = are_float4_aligned(parameters, gradients)
-        && (velocity == nullptr || is_float4_aligned(velocity))
-        && is_bfloat162_aligned(parameters_bf16_mirror);
+    const bool aligned = are_aligned<16>(parameters, gradients, velocity) && is_aligned<4>(parameters_bf16_mirror);
 
-    launch_vec4_on(opennn::device::get_compute_stream(), n, aligned, sgd_update_kernel,
+    launch_vec_on<4>(opennn::device::get_compute_stream(), n, aligned, sgd_update_kernel,
                    parameters, velocity, gradients, parameters_bf16_mirror,
                    learning_rate, static_cast<const float*>(nullptr), momentum, nesterov);
 }
@@ -316,11 +312,9 @@ void sgd_update_capturable_cuda(
 {
     if (stream == nullptr) stream = opennn::device::get_compute_stream();
 
-    const bool aligned = are_float4_aligned(parameters, gradients)
-        && (velocity == nullptr || is_float4_aligned(velocity))
-        && is_bfloat162_aligned(parameters_bf16_mirror);
+    const bool aligned = are_aligned<16>(parameters, gradients, velocity) && is_aligned<4>(parameters_bf16_mirror);
 
-    launch_vec4_on(stream, n, aligned, sgd_update_kernel,
+    launch_vec_on<4>(stream, n, aligned, sgd_update_kernel,
                    parameters, velocity, gradients, parameters_bf16_mirror,
                    0.0f, learning_rate_device, momentum, nesterov);
 }

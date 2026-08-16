@@ -14,8 +14,8 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
 
 // Fused NHWC batch-norm training kernels (library path when cuDNN has no
 // fused engine for a shape, or by choice). Threads own VEC adjacent channels
-// (vector loads along C, contiguous in NHWC): eight when the channel count
-// allows it, else two, else one.
+// (vector loads along C, contiguous in NHWC): a 16-byte group - eight BF16 or
+// four FP32 - when the channel count allows it, else two, else one.
 //
 // Forward: batch statistics (reduce + finalize, running-statistics update
 // included), then y = relu?(bn(x) [+ residual]). With `relu` and a non-null

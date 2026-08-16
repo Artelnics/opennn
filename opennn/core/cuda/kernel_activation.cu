@@ -144,7 +144,7 @@ void activation_forward_cuda(const Index n, T* data, const int function)
         }
 
     if constexpr (std::is_same_v<T, float>)
-        launch_vec4_on(opennn::device::get_compute_stream(), n, are_float4_aligned(data),
+        launch_vec_on<4>(opennn::device::get_compute_stream(), n, are_aligned<16>(data),
                        activation_forward_kernel_f4, data, function);
     else
         launch_elementwise_strided(n, activation_forward_kernel<T>, data, function);
@@ -208,7 +208,7 @@ void activation_backward_cuda(const Index n, const T* outputs, T* delta, const i
         }
 
     if constexpr (std::is_same_v<T, float>)
-        launch_vec4_on(opennn::device::get_compute_stream(), n, are_float4_aligned(outputs, delta),
+        launch_vec_on<4>(opennn::device::get_compute_stream(), n, are_aligned<16>(outputs, delta),
                        activation_backward_kernel_f4, outputs, delta, function);
     else
         launch_elementwise_strided(n, activation_backward_kernel<T>, outputs, delta, function);

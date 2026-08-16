@@ -1,6 +1,10 @@
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   P O O L I N G   K E R N E L S
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/core/cuda/kernel_pooling.cuh"
@@ -105,10 +109,8 @@ __global__ void max_pooling_backward_kernel(const Index groups, const MaxPoolGeo
 template<typename T, typename F>
 void with_vector_width(Index channels, F&& launch)
 {
-    constexpr int wide = 16 / int(sizeof(T));
-    if (channels % wide != 0) launch.template operator()<1>();
-    else if constexpr (wide == 8) launch.template operator()<8>();
-    else launch.template operator()<4>();
+    if (channels % vec16<T> != 0) launch.template operator()<1>();
+    else launch.template operator()<vec16<T>>();
 }
 
 }
@@ -117,8 +119,8 @@ template<typename T>
 void max_pooling_forward_cuda(const T* x, T* y, uint8_t* mask, const MaxPoolGeometry& g)
 {
     if (g.batch == 0 || g.channels == 0) return;
-    if (g.pool_height * g.pool_width > 255)
-        throw std::runtime_error("max_pooling_forward_cuda: pool window too large for a one-byte argmax.");
+    checked_host_condition(mask && g.pool_height * g.pool_width > 255,
+                           "max_pooling_forward_cuda: pool window too large for a one-byte argmax.");
     with_vector_width<T>(g.channels, [&]<int VEC>()
     {
         launch_elementwise_strided(g.batch * g.out_height * g.out_width * (g.channels / VEC),
@@ -143,3 +145,7 @@ void max_pooling_backward_cuda(const T* dy, const uint8_t* mask, T* dx, const Ma
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
+// Licensed under the GNU Lesser General Public License v2.1 or later.

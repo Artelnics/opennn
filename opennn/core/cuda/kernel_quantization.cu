@@ -119,12 +119,6 @@ __global__ void w8a16_linear_in_major_kernel(
         y[size_t(r) * out_features + j] = static_cast<T>(acc[r] * scale + bias_value);
 }
 
-// Wide vocabularies spread a row over eight warps.
-static int w8a16_out_major_warps(const Index out_features)
-{
-    return out_features >= 32768 ? 8 : 1;
-}
-
 template<typename T>
 void w8a16_linear_cuda(const int m, const int in_features, const int out_features,
                        const bool weights_out_major,
@@ -144,7 +138,9 @@ void w8a16_linear_cuda(const int m, const int in_features, const int out_feature
         return;
     }
 
-    if (w8a16_out_major_warps(out_features) == 8)
+    // Wide vocabularies spread a row over eight warps: one block per row; else
+    // a block covers eight rows, a warp each.
+    if (out_features >= 32768)
         OPENNN_CUDA_LAUNCH((w8a16_linear_out_major_kernel<T, 8>
             <<<out_features, block_size, 0, stream>>>(
                 m, in_features, out_features, x, w, scales, bias, y)));
