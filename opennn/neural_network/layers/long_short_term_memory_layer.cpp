@@ -25,7 +25,7 @@ namespace
 
 void zero_if_linked(const TensorView& view)
 {
-    if (view.data) view.setZero();
+    if (view.get_data()) view.setZero();
 }
 
 void zero_linked(initializer_list<const TensorView*> views)
@@ -98,31 +98,31 @@ void LongShortTermMemoryOperator::link_gradients(span<const TensorView> views)
 
 void LongShortTermMemoryOperator::set_parameters_random()
 {
-    if (forget_bias.data) forget_bias.fill(1.0f);
+    if (forget_bias.get_data()) forget_bias.fill(1.0f);
     zero_linked({&input_bias, &candidate_bias, &output_bias});
 
-    if (forget_weights.data)
+    if (forget_weights.get_data())
         set_random_uniform_linked({&forget_weights, &input_weights,
                                    &candidate_weights, &output_weights}, -0.1f, 0.1f);
 
-    if (forget_recurrent_weights.data)
+    if (forget_recurrent_weights.get_data())
         set_random_uniform_linked({&forget_recurrent_weights, &input_recurrent_weights,
                                    &candidate_recurrent_weights, &output_recurrent_weights}, -0.1f, 0.1f);
 }
 
 void LongShortTermMemoryOperator::set_parameters_glorot()
 {
-    if (forget_bias.data) forget_bias.fill(1.0f);
+    if (forget_bias.get_data()) forget_bias.fill(1.0f);
     zero_linked({&input_bias, &candidate_bias, &output_bias});
 
-    if (forget_weights.data)
+    if (forget_weights.get_data())
     {
         const float limit = glorot_limit(input_features, output_features);
         set_random_uniform_linked({&forget_weights, &input_weights,
                                    &candidate_weights, &output_weights}, -limit, limit);
     }
 
-    if (forget_recurrent_weights.data)
+    if (forget_recurrent_weights.get_data())
         for (TensorView* recurrent : {&forget_recurrent_weights, &input_recurrent_weights,
                                       &candidate_recurrent_weights, &output_recurrent_weights})
             set_random_orthogonal(recurrent->as_matrix());
@@ -132,15 +132,15 @@ void LongShortTermMemoryOperator::set_parameters_pytorch()
 {
     const float limit = 1.0f / sqrt(float(output_features > 0 ? output_features : 1));
 
-    if (forget_bias.data)
+    if (forget_bias.get_data())
         set_random_uniform_linked({&forget_bias, &input_bias,
                                    &candidate_bias, &output_bias}, -limit, limit);
 
-    if (forget_weights.data)
+    if (forget_weights.get_data())
         set_random_uniform_linked({&forget_weights, &input_weights,
                                    &candidate_weights, &output_weights}, -limit, limit);
 
-    if (forget_recurrent_weights.data)
+    if (forget_recurrent_weights.get_data())
         set_random_uniform_linked({&forget_recurrent_weights, &input_recurrent_weights,
                                    &candidate_recurrent_weights, &output_recurrent_weights}, -limit, limit);
 }
@@ -179,9 +179,9 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
                                       TensorView& hidden_state,
                                       TensorView& cell_activation) const
 {
-    if (!input.data || output_features == 0 || time_steps == 0) return;
+    if (!input.get_data() || output_features == 0 || time_steps == 0) return;
 
-    const Index batch_size = input.shape[0];
+    const Index batch_size = input.get_shape()[0];
     const Index F = input_features;
     const Index H = output_features;
     const Index T = time_steps;
@@ -447,7 +447,7 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
                                         const TensorView& hidden_state,
                                         const TensorView& cell_activation) const
 {
-    if (!input.data || !output_delta.data || output_features == 0 || time_steps == 0) return;
+    if (!input.get_data() || !output_delta.get_data() || output_features == 0 || time_steps == 0) return;
 
     zero_linked({&forget_bias_gradient, &input_bias_gradient,
                  &candidate_bias_gradient, &output_bias_gradient,
@@ -456,7 +456,7 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
                  &forget_recurrent_weight_gradient, &input_recurrent_weight_gradient,
                  &candidate_recurrent_weight_gradient, &output_recurrent_weight_gradient});
 
-    const Index batch_size = input.shape[0];
+    const Index batch_size = input.get_shape()[0];
     const Index F = input_features;
     const Index H = output_features;
     const Index T = time_steps;
@@ -872,17 +872,17 @@ void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
                                       bool return_seq,
                                       bool is_training) const
 {
-    const Index batch_size = input.shape[0];
-    if (!input.data || output_features == 0 || time_steps == 0 || batch_size == 0) return;
+    const Index batch_size = input.get_shape()[0];
+    if (!input.get_data() || output_features == 0 || time_steps == 0 || batch_size == 0) return;
 
     ensure_cudnn_setup_(batch_size, is_training);
     pack_weights_to_cudnn_();
 
     float* y_target = return_seq ? output.as<float>()
-                                 : static_cast<float*>(y_buf.data);
+                                 : static_cast<float*>(y_buf.data());
 
     cudnn_rnn_forward_(is_training,  true,
-                       input.data, y_target,
+                       input.get_data(), y_target,
                        [&] {
                            ensure_cudnn_setup_(batch_size, is_training);
                            pack_weights_to_cudnn_();
@@ -902,10 +902,10 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
                                             TensorView& input_delta,
                                             bool return_seq) const
 {
-    if (!input.data || !output_delta.data
+    if (!input.get_data() || !output_delta.get_data()
         || output_features == 0 || time_steps == 0) return;
 
-    const Index batch_size = input.shape[0];
+    const Index batch_size = input.get_shape()[0];
     if (batch_size == 0) return;
 
     ensure_cudnn_setup_(batch_size, true);
@@ -919,22 +919,22 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
         scatter_time_slice_fill_cuda(
             batch_size, T, H, T - 1,
             output_delta.as<float>(),
-            static_cast<float*>(dy_buf.data));
-        dy_data = static_cast<const float*>(dy_buf.data);
+            static_cast<float*>(dy_buf.data()));
+        dy_data = static_cast<const float*>(dy_buf.data());
     }
 
     const float* y_data = return_seq ? output.as<float>()
-                                     : static_cast<const float*>(y_buf.data);
+                                     : static_cast<const float*>(y_buf.data());
 
-    void* dx_data = input_delta.data;
+    void* dx_data = input_delta.get_data();
     if (!dx_data || input_delta.empty())
     {
         dx_scratch_buf.grow_to(batch_size * T * input_features * Index(sizeof(float)));
-        dx_data = dx_scratch_buf.data;
+        dx_data = dx_scratch_buf.data();
     }
 
     cudnn_rnn_backward_( true,
-                        input.data, y_data, dy_data, dx_data);
+                        input.get_data(), y_data, dy_data, dx_data);
 
     unpack_gradients_from_cudnn_();
 }
@@ -1070,7 +1070,7 @@ void LongShortTermMemory::apply_input_shape(const Shape& new_input_shape)
 void LongShortTermMemory::set_output_shape(const Shape& new_output_shape)
 {
     check_rank(new_output_shape, {1, 2}, "LongShortTermMemory", "output");
-    output_features = new_output_shape[new_output_shape.rank - 1];
+    output_features = new_output_shape[new_output_shape.get_rank() - 1];
     configure_operators();
 }
 
@@ -1117,7 +1117,7 @@ string LongShortTermMemory::write_expression(const vector<string>& feature_names
 {
     if (parameters.size() < 12) return {};
     for (Index p = 0; p < 12; ++p)
-        if (!parameters[p].data) return {};
+        if (!parameters[p].get_data()) return {};
 
     VectorMap bf = parameters[0].as_vector();
     VectorMap bi = parameters[1].as_vector();

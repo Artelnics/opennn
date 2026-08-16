@@ -129,10 +129,10 @@ TEST(Dataset, Shapes)
     TabularDataset tabular(3, { 2 }, { 1 });
     Dataset& dataset = tabular;
 
-    EXPECT_EQ(dataset.get_input_shape().rank, 1);
+    EXPECT_EQ(dataset.get_input_shape().get_rank(), 1);
     EXPECT_EQ(dataset.get_input_shape()[0], 2);
 
-    EXPECT_EQ(dataset.get_target_shape().rank, 1);
+    EXPECT_EQ(dataset.get_target_shape().get_rank(), 1);
     EXPECT_EQ(dataset.get_target_shape()[0], 1);
 
     EXPECT_EQ(dataset.get_shape("Input")[0], 2);

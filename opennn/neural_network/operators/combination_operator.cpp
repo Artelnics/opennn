@@ -98,8 +98,8 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
 
     if (transposed_inference_active)
     {
-        const TensorView transposed(weights.data, {output_features, input_features},
-                                    weights.type, weights.device);
+        const TensorView transposed(weights.get_data(), {output_features, input_features},
+                                    weights.get_type(), weights.get_device());
         linear_forward_transposed(get_input(forward_propagation, layer), transposed, output, weight_scale);
         return;
     }
@@ -122,9 +122,9 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
         try
         {
             relu_mask.ensure<uint8_t>(rows * (output_features / 8));
-            if (relu_mask_view.data != relu_mask.data || relu_mask_view.shape.empty()
-                || relu_mask_view.shape[0] != rows)
-                relu_mask_view = TensorView(relu_mask.data, Shape{rows, output_features / 8},
+            if (relu_mask_view.get_data() != relu_mask.data() || relu_mask_view.get_shape().empty()
+                || relu_mask_view.get_shape()[0] != rows)
+                relu_mask_view = TensorView(relu_mask.data(), Shape{rows, output_features / 8},
                                             Type::INT8, Device::CUDA);
             linear_forward(get_input(forward_propagation, layer), weights, bias, output,
                            CUBLASLT_EPILOGUE_RELU_AUX_BIAS, &relu_mask_view, weight_scale);
@@ -154,11 +154,13 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
     const TensorView& input        = get_input(forward_propagation, layer);
     const TensorView& output_delta = get_output_delta(back_propagation, layer);
 
-    TensorView& input_delta = slot_or(backward_slots, input_delta_slots, 0);
+    TensorView empty_input_delta;
+    TensorView& input_delta = slot_or(backward_slots, input_delta_slots, 0,
+                                      empty_input_delta);
 
     bool recover_unfused = false;
     if (drelu_source && drelu_source->relu_mask_fused_active
-        && input_delta.data && !input_delta.empty())
+        && input_delta.get_data() && !input_delta.empty())
     {
         try
         {

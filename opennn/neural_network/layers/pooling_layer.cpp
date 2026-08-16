@@ -241,13 +241,14 @@ void PoolOperator::forward_propagate(ForwardPropagation& forward_propagation, si
     {
         CHECK_CUDNN(cudnnPoolingForward(Backend::get_cudnn_handle(),
             get_pooling_descriptor(),
-            &one,  input.get_descriptor(),  input.data,
-            &zero, output.get_descriptor(), output.data));
+            &one,  input.get_descriptor(),  input.get_data(),
+            &zero, output.get_descriptor(), output.get_data()));
         return;
     }
 #endif
 
-    TensorView& indices = slot_or(forward_slots, output_slots, 1);
+    TensorView empty_indices;
+    TensorView& indices = slot_or(forward_slots, output_slots, 1, empty_indices);
 
     pooling_2d_forward(input, output, indices,
                        input_height, input_width, input_channels,
@@ -273,15 +274,16 @@ void PoolOperator::back_propagate(ForwardPropagation& forward_propagation, BackP
 
         CHECK_CUDNN(cudnnPoolingBackward(Backend::get_cudnn_handle(),
             get_pooling_descriptor(),
-            &one,  output.get_descriptor(),       output.data,
-                   output_delta.get_descriptor(), output_delta.data,
-                   input.get_descriptor(),        input.data,
-            &zero, input_delta.get_descriptor(),  input_delta.data));
+            &one,  output.get_descriptor(),       output.get_data(),
+                   output_delta.get_descriptor(), output_delta.get_data(),
+                   input.get_descriptor(),        input.get_data(),
+            &zero, input_delta.get_descriptor(),  input_delta.get_data()));
         return;
     }
 #endif
 
-    const TensorView& indices = slot_or(forward_slots, output_slots, 1);
+    TensorView empty_indices;
+    const TensorView& indices = slot_or(forward_slots, output_slots, 1, empty_indices);
 
     pooling_2d_backward(output_delta, indices, input_delta,
                         input_height, input_width, input_channels,
@@ -311,18 +313,18 @@ void validate_pooling_configuration(const Shape& input_shape,
                                     const Shape& padding_shape,
                                     const string& label)
 {
-    throw_if(input_shape.rank != 3,
+    throw_if(input_shape.get_rank() != 3,
              "Pooling layer '{}': input shape must have 3 dimensions, read {}.",
-             label, input_shape.rank);
-    throw_if(pool_shape.rank != 2,
+             label, input_shape.get_rank());
+    throw_if(pool_shape.get_rank() != 2,
              "Pooling layer '{}': pool shape must have 2 dimensions, read {}.",
-             label, pool_shape.rank);
-    throw_if(stride_shape.rank != 2,
+             label, pool_shape.get_rank());
+    throw_if(stride_shape.get_rank() != 2,
              "Pooling layer '{}': stride must have 2 dimensions, read {}.",
-             label, stride_shape.rank);
-    throw_if(padding_shape.rank != 2,
+             label, stride_shape.get_rank());
+    throw_if(padding_shape.get_rank() != 2,
              "Pooling layer '{}': padding must have 2 dimensions, read {}.",
-             label, padding_shape.rank);
+             label, padding_shape.get_rank());
 
     throw_if(pool_shape[0] <= 0 || pool_shape[1] <= 0,
              "Pooling layer '{}': pool size must be positive, read {}.",
@@ -496,7 +498,7 @@ void Pooling::set(const Shape& new_input_shape,
 
 void Pooling::apply_input_shape(const Shape& new_input_shape)
 {
-    throw_if(new_input_shape.rank != 3, "Input shape must be 3");
+    throw_if(new_input_shape.get_rank() != 3, "Input shape must be 3");
 
     input_height = new_input_shape[0];
     input_width = new_input_shape[1];

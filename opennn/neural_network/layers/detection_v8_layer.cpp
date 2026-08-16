@@ -23,7 +23,7 @@ namespace opennn
 
 void DetectionV8Operator::set(const Shape& input_shape, Index new_reg_max)
 {
-    throw_if(input_shape.rank != 3,
+    throw_if(input_shape.get_rank() != 3,
              "DetectionV8Operator: input shape must be rank 3.");
     reg_max = max(Index(1), new_reg_max);
     const Index box_ch = 4 * reg_max;
@@ -43,13 +43,13 @@ void DetectionV8Operator::forward_propagate(ForwardPropagation& forward_propagat
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
-        detection_v8_forward_cuda(input.shape[0], grid_size, grid_width, classes_number,
+        detection_v8_forward_cuda(input.get_shape()[0], grid_size, grid_width, classes_number,
                                   reg_max, input.as<float>(), output.as<float>());
         return;
     }
 #endif
 
-    const Index batch_size = input.shape[0];
+    const Index batch_size = input.get_shape()[0];
     const Index box_ch     = 4 * reg_max;
     const Index channels   = box_ch + classes_number;
     const Index sig_start  = reg_max > 1 ? box_ch : 0;
@@ -84,14 +84,14 @@ void DetectionV8Operator::back_propagate(ForwardPropagation& forward_propagation
 #ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
     {
-        detection_v8_backward_cuda(output.shape[0], grid_size, grid_width, classes_number,
+        detection_v8_backward_cuda(output.get_shape()[0], grid_size, grid_width, classes_number,
                                    reg_max, output.as<float>(), output_delta.as<float>(),
                                    input_delta.as<float>());
         return;
     }
 #endif
 
-    const Index batch_size = output.shape[0];
+    const Index batch_size = output.get_shape()[0];
     const Index box_ch     = 4 * reg_max;
     const Index channels   = box_ch + classes_number;
     const Index sig_start  = reg_max > 1 ? box_ch : 0;

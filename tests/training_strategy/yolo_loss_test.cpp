@@ -209,9 +209,9 @@ TEST(YoloLoss, OutputDeltaLayersFollowSelectedLoss)
         ASSERT_FALSE(first_output.empty());
         ASSERT_FALSE(last_output.empty());
 
-        const auto first_begin = reinterpret_cast<uintptr_t>(first_output.data);
+        const auto first_begin = reinterpret_cast<uintptr_t>(first_output.get_data());
         const auto first_end = first_begin + uintptr_t(first_output.byte_size());
-        const auto last_begin = reinterpret_cast<uintptr_t>(last_output.data);
+        const auto last_begin = reinterpret_cast<uintptr_t>(last_output.get_data());
         const auto last_end = last_begin + uintptr_t(last_output.byte_size());
         EXPECT_TRUE(first_end <= last_begin || last_end <= first_begin);
 
@@ -268,9 +268,9 @@ TEST(YoloLoss, InferencePolicyRetainsConsumedHead)
     ASSERT_FALSE(detection_output.empty());
     ASSERT_FALSE(tail_output.empty());
 
-    const auto detection_begin = reinterpret_cast<uintptr_t>(detection_output.data);
+    const auto detection_begin = reinterpret_cast<uintptr_t>(detection_output.get_data());
     const auto detection_end = detection_begin + uintptr_t(detection_output.byte_size());
-    const auto tail_begin = reinterpret_cast<uintptr_t>(tail_output.data);
+    const auto tail_begin = reinterpret_cast<uintptr_t>(tail_output.get_data());
     const auto tail_end = tail_begin + uintptr_t(tail_output.byte_size());
     EXPECT_TRUE(detection_end <= tail_begin || tail_end <= detection_begin);
 }

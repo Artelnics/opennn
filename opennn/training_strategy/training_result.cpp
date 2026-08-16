@@ -158,7 +158,7 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
     if (total_bytes > 0)
     {
         if (device == Device::CUDA)
-            opennn::device::set_zero_async(data.data, total_bytes, Backend::get_compute_stream());
+            opennn::device::set_zero_async(data.data(), total_bytes, Backend::get_compute_stream());
         else
             data.setZero();
     }
@@ -172,7 +172,7 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
     {
         if (shape.size() > 0)
         {
-            views.emplace_back(cursor, shape, Type::FP32, data.device_type);
+            views.emplace_back(cursor, shape, Type::FP32, data.get_device());
             cursor += get_aligned_bytes(shape.size(), Type::FP32);
         }
         else

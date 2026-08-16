@@ -69,7 +69,7 @@ static void add_dense_stack(NeuralNetwork& network,
                             const Shape& complexity_dimensions,
                             const string& hidden_activation)
 {
-    for (size_t i = 0; i < complexity_dimensions.rank; ++i)
+    for (size_t i = 0; i < complexity_dimensions.get_rank(); ++i)
         network.add_layer(make_unique<Dense>(network.get_output_shape(),
                                              Shape{ complexity_dimensions[i] },
                                              hidden_activation,
@@ -83,7 +83,7 @@ static void add_recurrent_stack(NeuralNetwork& network,
                                 const string& base_label,
                                 MakeLayer make_layer)
 {
-    const Index layer_count = complexity_dimensions.rank;
+    const Index layer_count = complexity_dimensions.get_rank();
 
     for (Index i = 0; i < layer_count; ++i)
     {
@@ -231,12 +231,12 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Scaling>(input_shape));
 
-    for (size_t i = 0; i < encoder_dimensions.rank; ++i)
+    for (size_t i = 0; i < encoder_dimensions.get_rank(); ++i)
     {
         throw_if(encoder_dimensions[i] <= 0,
                  "AutoAssociationNetwork: encoder dimensions must be positive.");
 
-        const bool bottleneck = i == encoder_dimensions.rank - 1;
+        const bool bottleneck = i == encoder_dimensions.get_rank() - 1;
         add_layer(make_unique<Dense>(get_output_shape(),
                                      Shape{encoder_dimensions[i]},
                                      hidden_activation,
@@ -246,7 +246,7 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
     }
 
     Index decoder = 1;
-    for (Index i = Index(encoder_dimensions.rank) - 2; i >= 0; --i, ++decoder)
+    for (Index i = Index(encoder_dimensions.get_rank()) - 2; i >= 0; --i, ++decoder)
         add_layer(make_unique<Dense>(get_output_shape(),
                                      Shape{encoder_dimensions[i]},
                                      hidden_activation,
@@ -271,13 +271,13 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                                        const Shape& output_shape)
     : NeuralNetwork(NetworkTask::ImageClassification)
 {
-    throw_if(input_shape.rank != 3, "Input shape size is not 3.");
+    throw_if(input_shape.get_rank() != 3, "Input shape size is not 3.");
 
     auto scaling_layer = make_unique<Scaling>(input_shape);
     scaling_layer->set_scalers("ImageMinMax");
     add_layer(std::move(scaling_layer));
 
-    const Index complexity_size = complexity_dimensions.rank;
+    const Index complexity_size = complexity_dimensions.get_rank();
 
     for (Index i = 0; i < complexity_size; ++i)
     {
@@ -331,8 +331,8 @@ ResNet::ResNet(const Shape& input_shape,
                bool use_bottleneck)
     : NeuralNetwork(NetworkTask::ImageClassification)
 {
-    throw_if(input_shape.rank != 3, "ResNet: input shape must be rank 3 (H, W, C).");
-    throw_if(Index(blocks_per_stage.size()) != Index(initial_filters.rank),
+    throw_if(input_shape.get_rank() != 3, "ResNet: input shape must be rank 3 (H, W, C).");
+    throw_if(Index(blocks_per_stage.size()) != Index(initial_filters.get_rank()),
              "ResNet: blocks_per_stage and initial_filters must have the same size.");
     throw_if(blocks_per_stage.empty(), "ResNet: at least one stage is required.");
 
@@ -469,7 +469,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                          ModelSize model_size)
     : NeuralNetwork(NetworkTask::ObjectDetection)
 {
-    throw_if(input_shape.rank != 3, "YoloNetwork: input shape must be rank 3 (H, W, C).");
+    throw_if(input_shape.get_rank() != 3, "YoloNetwork: input shape must be rank 3 (H, W, C).");
     throw_if(classes_number <= 0 || anchors.empty(),
              "YoloNetwork: classes_number and anchors must be valid.");
     throw_if(input_shape[0] != grid_size * 32 || input_shape[1] != grid_size * 32,
@@ -1159,7 +1159,7 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
     const Index sequence_length = input_shape[1];
     const Index embedding_dimension = input_shape[2];
     const Index heads_number = complexity_dimensions[0];
-    const Index hidden_neurons = complexity_dimensions.rank > 1 ? complexity_dimensions[1] : 64;
+    const Index hidden_neurons = complexity_dimensions.get_rank() > 1 ? complexity_dimensions[1] : 64;
 
     add_layer(make_unique<Tokenizer>(Shape{sequence_length}, "tokenizer"), {-1});
 

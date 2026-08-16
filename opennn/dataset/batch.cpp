@@ -137,13 +137,13 @@ void Batch::set(const Index new_batch_size,
         input_host_bf16_allocated_size = 0;
     }
 
-    if (!decoder.shape.empty() && decoder.buffer.data)
+    if (!decoder.shape.empty() && decoder.buffer.data())
         input_views_host_cache.emplace_back(decoder.buffer.as<float>(), decoder.shape, Type::FP32, Device::CPU);
 
-    if (!input.shape.empty() && input.buffer.data)
+    if (!input.shape.empty() && input.buffer.data())
         input_views_host_cache.emplace_back(input.buffer.as<float>(), input.shape, Type::FP32, Device::CPU);
 
-    if (!target.shape.empty() && target.buffer.data)
+    if (!target.shape.empty() && target.buffer.data())
         target_view_host_cache = TensorView(target.buffer.as<float>(), target.shape, Type::FP32, Device::CPU);
 
     const bool needs_fp32_staging = input.type == Type::BF16
@@ -175,16 +175,16 @@ void Batch::set(const Index new_batch_size,
                               gather_indices_bytes,
                               format("samples={}", batch_size));
 
-    if (on_gpu && !input.shape.empty() && input.buffer.data)
+    if (on_gpu && !input.shape.empty() && input.buffer.data())
     {
-        if (!decoder.shape.empty() && decoder.buffer.data)
-            input_views_cache.emplace_back(decoder.buffer.data, decoder.shape, decoder.type, Device::CUDA);
+        if (!decoder.shape.empty() && decoder.buffer.data())
+            input_views_cache.emplace_back(decoder.buffer.data(), decoder.shape, decoder.type, Device::CUDA);
 
-        input_views_cache.emplace_back(input.buffer.data, input.shape, input.type, Device::CUDA);
+        input_views_cache.emplace_back(input.buffer.data(), input.shape, input.type, Device::CUDA);
     }
 
-    if (on_gpu && !target.shape.empty() && target.buffer.data)
-        target_view_cache = TensorView(target.buffer.data, target.shape, target.type, Device::CUDA);
+    if (on_gpu && !target.shape.empty() && target.buffer.data())
+        target_view_cache = TensorView(target.buffer.data(), target.shape, target.type, Device::CUDA);
 
     if (on_gpu && !h2d_done_event)
         h2d_done_event.create();
@@ -247,7 +247,7 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
 
         const Index index_bytes = current_batch_size * Index(sizeof(int));
         memcpy(gather_indices_host, gather.row_indices.data(), size_t(index_bytes));
-        device::copy_async(gather_indices_device.data, gather_indices_host,
+        device::copy_async(gather_indices_device.data(), gather_indices_host,
                            index_bytes,
                            device::CopyKind::HostToDevice, stream);
 
@@ -267,12 +267,12 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
             return;
         }
 
-        gather_rows_cuda(matrix, idx, destination.input.buffer.data,
+        gather_rows_cuda(matrix, idx, destination.input.buffer.data(),
                          destination.input.type == Type::BF16,
                          current_batch_size, input_values_per_sample,
                          matrix_cols, gather.input_col_offset, stream);
 
-        gather_rows_cuda(matrix, idx, destination.target.buffer.data, false,
+        gather_rows_cuda(matrix, idx, destination.target.buffer.data(), false,
                          current_batch_size, target_values_per_sample,
                          matrix_cols, gather.target_col_offset, stream);
 
@@ -294,12 +294,12 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
         else
         {
             const Index staging_bytes = input_values_count * Index(sizeof(float));
-            if (destination.fp32_staging.bytes < staging_bytes)
+            if (destination.fp32_staging.byte_size() < staging_bytes)
             {
-                const Index before = destination.fp32_staging.bytes;
+                const Index before = destination.fp32_staging.byte_size();
                 destination.fp32_staging.resize_bytes(staging_bytes, Device::CUDA);
                 memory_debug::record("batch.device", "Batch::fp32_staging",
-                                     destination.fp32_staging.bytes - before,
+                                     destination.fp32_staging.byte_size() - before,
                                      format("samples={}", current_batch_size));
             }
             

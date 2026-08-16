@@ -21,9 +21,9 @@ TEST(Normalization3dTest, DefaultConstructor)
 {
     Normalization3d normalization_3d;
 
-    EXPECT_EQ(normalization_3d.get_input_shape().rank, 2);
+    EXPECT_EQ(normalization_3d.get_input_shape().get_rank(), 2);
     EXPECT_EQ(normalization_3d.get_input_shape()[0], 0);
-    EXPECT_EQ(normalization_3d.get_output_shape().rank, 2);
+    EXPECT_EQ(normalization_3d.get_output_shape().get_rank(), 2);
     EXPECT_EQ(normalization_3d.get_output_shape()[0], 0);
 }
 
@@ -207,8 +207,8 @@ TEST(Normalization3dTest, FusedResidualAddAliasesSafeBranchDelta)
         back_propagation.slots[size_t(normalization_index)].size(),
         size_t(3));
     EXPECT_EQ(
-        back_propagation.slots[size_t(normalization_index)][1].data,
-        back_propagation.slots[size_t(normalization_index)][2].data);
+        back_propagation.slots[size_t(normalization_index)][1].get_data(),
+        back_propagation.slots[size_t(normalization_index)][2].get_data());
 
     const VectorR gradient = calculate_gradient(loss);
 

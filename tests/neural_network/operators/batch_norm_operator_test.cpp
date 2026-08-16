@@ -1,4 +1,4 @@
-﻿#include "tests/pch.h"
+#include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
 #include "opennn/core/tensor_types.h"
@@ -131,9 +131,9 @@ TEST(BatchNormalizationOperatoreratorTest, ForwardTrainingNormalizesPerFeature)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 2);
-    ASSERT_EQ(output_view.shape[0], batch_size);
-    ASSERT_EQ(output_view.shape[1], outputs_number);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 2);
+    ASSERT_EQ(output_view.get_shape()[0], batch_size);
+    ASSERT_EQ(output_view.get_shape()[1], outputs_number);
 
     const MatrixMap output = output_view.as_flat_matrix();
 
@@ -172,8 +172,8 @@ TEST(BatchNormalizationOperatoreratorTest, ForwardInferenceUsesRunningStatistics
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape[0], batch_size);
-    ASSERT_EQ(output_view.shape[1], outputs_number);
+    ASSERT_EQ(output_view.get_shape()[0], batch_size);
+    ASSERT_EQ(output_view.get_shape()[1], outputs_number);
 
     const MatrixMap output = output_view.as_flat_matrix();
 

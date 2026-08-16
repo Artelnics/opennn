@@ -137,10 +137,10 @@ TEST(MultiHeadAttentionTest, ForwardSelfAttentionMatchesHandComputed)
 
     const TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 3);
-    EXPECT_EQ(output_view.shape[0], batch_size);
-    EXPECT_EQ(output_view.shape[1], sequence_length);
-    EXPECT_EQ(output_view.shape[2], embedding_dimension);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 3);
+    EXPECT_EQ(output_view.get_shape()[0], batch_size);
+    EXPECT_EQ(output_view.get_shape()[1], sequence_length);
+    EXPECT_EQ(output_view.get_shape()[2], embedding_dimension);
 
     const float scale = type(1.0) / std::sqrt(type(embedding_dimension));
     const float exp_score = std::exp(scale);
@@ -229,9 +229,9 @@ TEST(MultiHeadAttentionTest, CrossAttentionForwardOrGradient)
 
     const TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 3);
-    EXPECT_EQ(output_view.shape[1], query_sequence_length);
-    EXPECT_EQ(output_view.shape[2], embedding_dimension);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 3);
+    EXPECT_EQ(output_view.get_shape()[1], query_sequence_length);
+    EXPECT_EQ(output_view.get_shape()[2], embedding_dimension);
 
     const float scale = type(1.0) / std::sqrt(type(embedding_dimension));
     const float exp_score = std::exp(scale);

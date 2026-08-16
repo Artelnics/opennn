@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   Y O L O   D A T A S E T   C L A S S
@@ -1249,7 +1249,7 @@ void YoloDataset::set(const filesystem::path& new_images_dir,
                       Index new_boxes_per_cell,
                       const vector<array<float, 2>>& new_anchors)
 {
-    throw_if(new_input_shape.rank != 3,
+    throw_if(new_input_shape.get_rank() != 3,
              "YoloDataset: input_shape must be rank 3.");
     throw_if(new_grid_size <= 0,
              "YoloDataset: grid_size must be positive.");

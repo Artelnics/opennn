@@ -828,7 +828,7 @@ namespace
                 device::graph_workspace_override(kind, minimum_bytes))
             return static_cast<T*>(*graph_workspace);
 
-        if (minimum_bytes > workspace_buffer.bytes && workspace_buffer.data)
+        if (minimum_bytes > workspace_buffer.byte_size() && workspace_buffer.data())
         {
             throw_if(device::cuda_allocation_growth_forbidden(),
                      "workspace growth forbidden (warmup incomplete).");
@@ -953,12 +953,12 @@ bfloat16* ensure_int8_dequant_workspace(Index n)
 void* ensure_shared_scratch(size_t min_bytes)
 {
     Buffer& buffer = thread_state().shared_scratch;
-    const Index before = buffer.bytes;
+    const Index before = buffer.byte_size();
     void* pointer = ensure_workspace<uint8_t>(
         buffer, Index(min_bytes), device::GraphWorkspaceKind::SharedScratch);
-    if (buffer.bytes > before)
+    if (buffer.byte_size() > before)
         memory_debug::record("workspace.shared_scratch", "shared_scratch",
-                             buffer.bytes - before, "high_water");
+                             buffer.byte_size() - before, "high_water");
     return pointer;
 }
 
@@ -975,7 +975,7 @@ void release_matmul_thread_workspaces()
 
 const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
 {
-    if (input.type == target_type) return input.data;
+    if (input.get_type() == target_type) return input.get_data();
 
     if (input.is_fp32() && target_type == Type::BF16)
     {

@@ -35,7 +35,7 @@ TEST_F(ConcatenationLayerTest, Constructor)
     EXPECT_EQ(concatenation.get_label(), "concat");
 
     const Shape output_shape = concatenation.get_output_shape();
-    ASSERT_EQ(output_shape.rank, 3);
+    ASSERT_EQ(output_shape.get_rank(), 3);
     EXPECT_EQ(output_shape[0], height);
     EXPECT_EQ(output_shape[1], width);
     EXPECT_EQ(output_shape[2], channels_a + channels_b);
@@ -48,7 +48,7 @@ TEST_F(ConcatenationLayerTest, OutputChannelsAreSumOfInputChannels)
     EXPECT_EQ(concatenation.get_sources_number(), 3);
 
     const Shape output_shape = concatenation.get_output_shape();
-    ASSERT_EQ(output_shape.rank, 3);
+    ASSERT_EQ(output_shape.get_rank(), 3);
     EXPECT_EQ(output_shape[0], 4);
     EXPECT_EQ(output_shape[1], 5);
     EXPECT_EQ(output_shape[2], 9);
@@ -87,9 +87,9 @@ TEST_F(ConcatenationLayerTest, ForwardPropagateConcatenatesAlongChannels)
     neural_network.forward_propagate(input_views, forward_propagation, false);
 
     TensorView output_view = forward_propagation.get_outputs();
-    const Shape& output_dims = output_view.shape;
+    const Shape& output_dims = output_view.get_shape();
 
-    ASSERT_EQ(output_dims.rank, 4);
+    ASSERT_EQ(output_dims.get_rank(), 4);
     EXPECT_EQ(output_dims[0], batch_size);
     EXPECT_EQ(output_dims[1], height);
     EXPECT_EQ(output_dims[2], width);
@@ -147,8 +147,8 @@ TEST_F(ConcatenationLayerTest, ForwardPropagateThreeInputs)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 4);
-    EXPECT_EQ(output_view.shape[3], total_channels);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 4);
+    EXPECT_EQ(output_view.get_shape()[3], total_channels);
 
     const float* output_data = output_view.as<type>();
 

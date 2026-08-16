@@ -78,9 +78,9 @@ TEST(ActivationsTest, ForwardPropagateReLU)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 2);
-    EXPECT_EQ(output_view.shape[0], batch_size);
-    EXPECT_EQ(output_view.shape[1], features);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 2);
+    EXPECT_EQ(output_view.get_shape()[0], batch_size);
+    EXPECT_EQ(output_view.get_shape()[1], features);
     ASSERT_EQ(output_view.size(), batch_size * features);
 
     const type* output_data = output_view.as<type>();
@@ -107,9 +107,9 @@ TEST(ActivationsTest, ForwardPropagateTanh)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 2);
-    EXPECT_EQ(output_view.shape[0], batch_size);
-    EXPECT_EQ(output_view.shape[1], features);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 2);
+    EXPECT_EQ(output_view.get_shape()[0], batch_size);
+    EXPECT_EQ(output_view.get_shape()[1], features);
     ASSERT_EQ(output_view.size(), batch_size * features);
 
     const type* output_data = output_view.as<type>();
@@ -165,9 +165,9 @@ TEST(ActivationsTest, ForwardPropagateSoftmax)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 2);
-    EXPECT_EQ(output_view.shape[0], batch_size);
-    EXPECT_EQ(output_view.shape[1], features);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 2);
+    EXPECT_EQ(output_view.get_shape()[0], batch_size);
+    EXPECT_EQ(output_view.get_shape()[1], features);
     ASSERT_EQ(output_view.size(), batch_size * features);
 
     const type* output_data = output_view.as<type>();

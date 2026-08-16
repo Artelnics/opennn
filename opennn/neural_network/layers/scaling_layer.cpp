@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   S C A L I N G   L A Y E R   C L A S S
@@ -191,7 +191,7 @@ static void scale_gpu(const TensorView& input,
 {
     const Index features = scalers.size();
 
-    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&]<typename TIn, typename TOut>() {
+    visit_type_pair<Type::FP32, Type::BF16>(input.get_type(), output.get_type(), [&]<typename TIn, typename TOut>() {
         if (inverse)
         {
             unscale_cuda<TIn, TOut>(output.size(), to_int(features),
@@ -233,7 +233,7 @@ void ScaleOperator::forward_propagate(ForwardPropagation& forward_propagation, s
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);
 
-    if (!minimums.data)
+    if (!minimums.get_data())
     {
         copy(input, output);
         return;
@@ -293,7 +293,7 @@ void Scaling::set_descriptives(const vector<Descriptives>& new_descriptives)
                     get_name(), descriptives.size(), new_descriptives.size());
     descriptives = new_descriptives;
     op_storage_dirty = true;
-    refresh_op_storage(op_storage.device_type);
+    refresh_op_storage(op_storage.get_device());
 }
 
 void Scaling::set_scalers(const vector<string>& scalers_str)
@@ -303,7 +303,7 @@ void Scaling::set_scalers(const vector<string>& scalers_str)
                     get_name(), scalers.size(), scalers_str.size());
     ranges::transform(scalers_str, scalers.begin(), string_to_scaler_method);
     op_storage_dirty = true;
-    refresh_op_storage(op_storage.device_type);
+    refresh_op_storage(op_storage.get_device());
 }
 
 void Scaling::set_scalers(const string& scaler)
@@ -311,7 +311,7 @@ void Scaling::set_scalers(const string& scaler)
     const ScalerMethod method = string_to_scaler_method(scaler);
     ranges::fill(scalers, method);
     op_storage_dirty = true;
-    refresh_op_storage(op_storage.device_type);
+    refresh_op_storage(op_storage.get_device());
 }
 
 void Scaling::set_feature_scaling(const FeatureScaling& scaling)
@@ -330,7 +330,7 @@ void Scaling::set_feature_scaling(const FeatureScaling& scaling)
     min_range = scaling.min_range;
     max_range = scaling.max_range;
     op_storage_dirty = true;
-    refresh_op_storage(op_storage.device_type);
+    refresh_op_storage(op_storage.get_device());
 }
 
 bool Scaling::is_passthrough() const
@@ -432,7 +432,7 @@ void Scaling::read_JSON_body(const Json* scaling_layer_element)
         max_range = parse_float(read_json_string(scaling_layer_element, "MaxRange"), "Scaling: MaxRange");
 
     op_storage_dirty = true;
-    refresh_op_storage(op_storage.device_type);
+    refresh_op_storage(op_storage.get_device());
 }
 
 void Scaling::write_JSON_body(JsonWriter& printer) const

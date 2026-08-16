@@ -78,14 +78,14 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
     const TensorView& x = get_input(fp, layer);
     TensorView& output  = get_output(fp, layer);
 
-    const Index B      = x.shape[0];
+    const Index B      = x.get_shape()[0];
     const Index tokens = Index(h) * Index(w);
     const Index C      = channels;
     const Index half_c = C / 2;
     const float scale  = 1.0f / sqrtf(float(half_c));
 
 #ifdef OPENNN_HAS_CUDA
-    if (x.device == Device::CUDA)
+    if (x.is_cuda())
     {
         const int BT     = int(B * tokens);
         const int H      = int(half_c);
@@ -94,38 +94,38 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
         const cudaDataType_t dtype = x.cuda_dtype();
         const Index esz  = (dtype == CUDA_R_32F) ? sizeof(float) : sizeof(uint16_t);
 
-        void* xa_gpu   = fp.slots[layer][1].data;
-        void* Q_gpu    = fp.slots[layer][2].data;
-        void* K_gpu    = fp.slots[layer][3].data;
-        void* Attn_gpu = fp.slots[layer][4].data;
-        void* V_gpu    = fp.slots[layer][5].data;
-        void* cat_gpu  = fp.slots[layer][6].data;
-        void* out_gpu  = output.data;
+        void* xa_gpu   = fp.slots[layer][1].get_data();
+        void* Q_gpu    = fp.slots[layer][2].get_data();
+        void* K_gpu    = fp.slots[layer][3].get_data();
+        void* Attn_gpu = fp.slots[layer][4].get_data();
+        void* V_gpu    = fp.slots[layer][5].get_data();
+        void* cat_gpu  = fp.slots[layer][6].get_data();
+        void* out_gpu  = output.get_data();
 
         const Index scratch_needed = (Index(BT) * H
                                     + Index(BT) * C_int
                                     + Index(BT) * T
                                     + Index(BT) * H * 4) * esz;
         gpu_scratch.resize_bytes(scratch_needed, Device::CUDA);
-        void* attn_v_gpu = gpu_scratch.data;
+        void* attn_v_gpu = gpu_scratch.data();
 
-        c2psa_split_cuda(x.data, xa_gpu, cat_gpu, BT, C_int, H, dtype);
+        c2psa_split_cuda(x.get_data(), xa_gpu, cat_gpu, BT, C_int, H, dtype);
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, BT, H,
-            Wq.data, dtype, H, 0LL,
+            Wq.get_data(), dtype, H, 0LL,
             xa_gpu,  dtype, H, 0LL,
             Q_gpu,   dtype, H, 0LL, 1);
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, BT, H,
-            Wk.data, dtype, H, 0LL,
+            Wk.get_data(), dtype, H, 0LL,
             xa_gpu,  dtype, H, 0LL,
             K_gpu,   dtype, H, 0LL, 1);
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, BT, H,
-            Wv.data, dtype, H, 0LL,
+            Wv.get_data(), dtype, H, 0LL,
             xa_gpu,  dtype, H, 0LL,
             V_gpu,   dtype, H, 0LL, 1);
 
@@ -149,7 +149,7 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             C_int, BT, C_int,
-            Wout.data, dtype, C_int, 0LL,
+            Wout.get_data(), dtype, C_int, 0LL,
             cat_gpu,   dtype, C_int, 0LL,
             out_gpu,   dtype, C_int, 0LL, 1);
         return;
@@ -207,7 +207,7 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
 void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     const TensorView& x    = get_input(fp, layer);
-    const Index B          = x.shape[0];
+    const Index B          = x.get_shape()[0];
     const Index tokens     = Index(h) * Index(w);
     const Index C          = channels;
     const Index half_c     = C / 2;
@@ -217,7 +217,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
     TensorView&       delta_in  = get_input_delta(bp, layer);
 
 #ifdef OPENNN_HAS_CUDA
-    if (x.device == Device::CUDA)
+    if (x.is_cuda())
     {
         const int BT     = int(B * tokens);
         const int H      = int(half_c);
@@ -226,14 +226,14 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
         const cudaDataType_t dtype = x.cuda_dtype();
         const Index esz  = (dtype == CUDA_R_32F) ? sizeof(float) : sizeof(uint16_t);
 
-        const void* xa_gpu   = fp.slots[layer][1].data;
-        const void* Q_gpu    = fp.slots[layer][2].data;
-        const void* K_gpu    = fp.slots[layer][3].data;
-        const void* Attn_gpu = fp.slots[layer][4].data;
-        const void* V_gpu    = fp.slots[layer][5].data;
-        const void* cat_gpu  = fp.slots[layer][6].data;
+        const void* xa_gpu   = fp.slots[layer][1].get_data();
+        const void* Q_gpu    = fp.slots[layer][2].get_data();
+        const void* K_gpu    = fp.slots[layer][3].get_data();
+        const void* Attn_gpu = fp.slots[layer][4].get_data();
+        const void* V_gpu    = fp.slots[layer][5].get_data();
+        const void* cat_gpu  = fp.slots[layer][6].get_data();
 
-        uint8_t* scratch = static_cast<uint8_t*>(gpu_scratch.data);
+        uint8_t* scratch = static_cast<uint8_t*>(gpu_scratch.data());
         void* compact_d_ao = scratch;
         void* d_cat_gpu    = scratch + (size_t)BT * H    * esz;
         void* d_A_gpu      = scratch + (size_t)BT * (H + C_int) * esz;
@@ -242,12 +242,12 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
         void* dV_gpu       = scratch + (size_t)BT * (H + C_int + T + H * 2) * esz;
         void* d_xa_gpu     = scratch + (size_t)BT * (H + C_int + T + H * 3) * esz;
 
-        const void* d_out_gpu = delta_out.data;
-        void*       din_gpu   = delta_in.data;
+        const void* d_out_gpu = delta_out.get_data();
+        void*       din_gpu   = delta_in.get_data();
 
         gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
             C_int, BT, C_int,
-            Wout.data, dtype, C_int, 0LL,
+            Wout.get_data(), dtype, C_int, 0LL,
             d_out_gpu, dtype, C_int, 0LL,
             d_cat_gpu, dtype, C_int, 0LL, 1);
 
@@ -255,7 +255,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             C_int, C_int, BT,
             d_out_gpu, dtype, C_int, 0LL,
             cat_gpu,   dtype, C_int, 0LL,
-            dWout.data, dtype, C_int, 0LL,
+            dWout.get_data(), dtype, C_int, 0LL,
             1, 1.0f, 1.0f);
 
         c2psa_split_cuda(d_cat_gpu, compact_d_ao, d_cat_gpu, BT, C_int, H, dtype);
@@ -294,21 +294,21 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             H, H, BT,
             dQ_gpu,   dtype, H, 0LL,
             xa_gpu,   dtype, H, 0LL,
-            dWq.data, dtype, H, 0LL,
+            dWq.get_data(), dtype, H, 0LL,
             1, 1.0f, 1.0f);
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             H, H, BT,
             dK_gpu,   dtype, H, 0LL,
             xa_gpu,   dtype, H, 0LL,
-            dWk.data, dtype, H, 0LL,
+            dWk.get_data(), dtype, H, 0LL,
             1, 1.0f, 1.0f);
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             H, H, BT,
             dV_gpu,   dtype, H, 0LL,
             xa_gpu,   dtype, H, 0LL,
-            dWv.data, dtype, H, 0LL,
+            dWv.get_data(), dtype, H, 0LL,
             1, 1.0f, 1.0f);
 
         if (din_gpu)
@@ -316,19 +316,19 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
 
             gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
                 H, BT, H,
-                Wq.data, dtype, H, 0LL,
+                Wq.get_data(), dtype, H, 0LL,
                 dQ_gpu,  dtype, H, 0LL,
                 d_xa_gpu, dtype, H, 0LL,
                 1, 1.0f, 0.0f);
             gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
                 H, BT, H,
-                Wk.data, dtype, H, 0LL,
+                Wk.get_data(), dtype, H, 0LL,
                 dK_gpu,  dtype, H, 0LL,
                 d_xa_gpu, dtype, H, 0LL,
                 1, 1.0f, 1.0f);
             gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
                 H, BT, H,
-                Wv.data, dtype, H, 0LL,
+                Wv.get_data(), dtype, H, 0LL,
                 dV_gpu,  dtype, H, 0LL,
                 d_xa_gpu, dtype, H, 0LL,
                 1, 1.0f, 1.0f);
@@ -347,7 +347,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
     const float* cat = fp.slots[layer][6].as<float>();
 
     const float* dout = delta_out.as<float>();
-    float*       din  = delta_in.data ? delta_in.as<float>() : nullptr;
+    float*       din  = delta_in.get_data() ? delta_in.as<float>() : nullptr;
 
     const MatrixMap Wq_m   = Wq.as_matrix();
     const MatrixMap Wk_m   = Wk.as_matrix();

@@ -1,4 +1,4 @@
-﻿#include "tests/pch.h"
+#include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
 #include <utility>
@@ -213,11 +213,11 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
     TensorView output_view = forward_propagation.get_outputs();
     const Shape expected_output_dims = neural_network.get_layer(0)->get_output_shape();
 
-    ASSERT_EQ(output_view.shape.rank, 4);
-    EXPECT_EQ(output_view.shape[0], batch_size);
-    EXPECT_EQ(output_view.shape[1], expected_output_dims[0]);
-    EXPECT_EQ(output_view.shape[2], expected_output_dims[1]);
-    EXPECT_EQ(output_view.shape[3], expected_output_dims[2]);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 4);
+    EXPECT_EQ(output_view.get_shape()[0], batch_size);
+    EXPECT_EQ(output_view.get_shape()[1], expected_output_dims[0]);
+    EXPECT_EQ(output_view.get_shape()[2], expected_output_dims[1]);
+    EXPECT_EQ(output_view.get_shape()[3], expected_output_dims[2]);
 
     const Index kernel_height = parameters.kernel_shape[0];
     const Index kernel_width = parameters.kernel_shape[1];
@@ -235,9 +235,9 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
     else if (!parameters.batch_normalization && parameters.activation_function == "ReLU"
              && parameters.convolution_type == "Same")
     {
-        const Index output_height = output_view.shape[1];
-        const Index output_width = output_view.shape[2];
-        const Index kernels_number = output_view.shape[3];
+        const Index output_height = output_view.get_shape()[1];
+        const Index output_width = output_view.get_shape()[2];
+        const Index kernels_number = output_view.get_shape()[3];
 
         const Index half_height = kernel_height / 2;
         const Index half_width = kernel_width / 2;

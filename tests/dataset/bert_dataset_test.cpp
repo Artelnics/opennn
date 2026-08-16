@@ -121,9 +121,9 @@ TEST(BertDatasetTest, FeedsBertClassifierForward)
     model.forward_propagate(inputs, forward_propagation, false);
 
     const TensorView output = forward_propagation.get_outputs();
-    ASSERT_EQ(output.shape.rank, 2);
-    EXPECT_EQ(output.shape[0], batch);
-    EXPECT_EQ(output.shape[1], labels);
+    ASSERT_EQ(output.get_shape().get_rank(), 2);
+    EXPECT_EQ(output.get_shape()[0], batch);
+    EXPECT_EQ(output.get_shape()[1], labels);
 
     const float* values = output.as<float>();
     for (Index i = 0; i < output.size(); ++i)

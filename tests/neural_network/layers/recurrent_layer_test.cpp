@@ -75,9 +75,9 @@ TEST(RecurrentLayerTest, ForwardPropagateValues)
 
         const TensorView outputs_view = forward_propagation.get_outputs();
 
-        ASSERT_EQ(outputs_view.shape.rank, 2);
-        EXPECT_EQ(outputs_view.shape[0], samples_number);
-        EXPECT_EQ(outputs_view.shape[1], outputs_number);
+        ASSERT_EQ(outputs_view.get_shape().get_rank(), 2);
+        EXPECT_EQ(outputs_view.get_shape()[0], samples_number);
+        EXPECT_EQ(outputs_view.get_shape()[1], outputs_number);
 
         const float* output_data = outputs_view.as<type>();
 
@@ -143,10 +143,10 @@ TEST(RecurrentLayerTest, ReturnSequences)
 
     const TensorView outputs_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(outputs_view.shape.rank, 3);
-    EXPECT_EQ(outputs_view.shape[0], samples_number);
-    EXPECT_EQ(outputs_view.shape[1], time_steps);
-    EXPECT_EQ(outputs_view.shape[2], outputs_number);
+    ASSERT_EQ(outputs_view.get_shape().get_rank(), 3);
+    EXPECT_EQ(outputs_view.get_shape()[0], samples_number);
+    EXPECT_EQ(outputs_view.get_shape()[1], time_steps);
+    EXPECT_EQ(outputs_view.get_shape()[2], outputs_number);
 
     const float* output_data = outputs_view.as<type>();
 

@@ -132,10 +132,10 @@ TEST(LanguageDataset, ReadTxtMatrixShapesAndStartToken)
     const Shape input_shape = dataset.get_shape("Input");
     const Shape target_shape = dataset.get_shape("Target");
 
-    ASSERT_EQ(input_shape.rank, 1);
+    ASSERT_EQ(input_shape.get_rank(), 1);
     EXPECT_EQ(input_shape[0], input_sequence_length);
 
-    ASSERT_EQ(target_shape.rank, 1);
+    ASSERT_EQ(target_shape.get_rank(), 1);
     EXPECT_EQ(target_shape[0], target_sequence_length);
 
     const MatrixR& data = dataset.get_data();

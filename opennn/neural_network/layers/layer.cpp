@@ -153,7 +153,7 @@ bool Layer::refresh_feature_storage(Buffer& storage, bool& dirty, Device device,
                                     const function<void(float*)>& fill)
 {
     const Index bytes = columns * features * Index(sizeof(float));
-    if (!dirty && storage.bytes == bytes && storage.device_type == device)
+    if (!dirty && storage.byte_size() == bytes && storage.get_device() == device)
         return false;
 
     storage.resize_bytes(bytes, device);
@@ -165,10 +165,10 @@ bool Layer::refresh_feature_storage(Buffer& storage, bool& dirty, Device device,
     fill(staging.data());
 
     if (device == Device::CUDA)
-        opennn::device::copy_async(storage.data, staging.data(), bytes,
+        opennn::device::copy_async(storage.data(), staging.data(), bytes,
                                    opennn::device::CopyKind::HostToDevice);
     else
-        memcpy(storage.data, staging.data(), size_t(bytes));
+        memcpy(storage.data(), staging.data(), size_t(bytes));
 
     return true;
 }

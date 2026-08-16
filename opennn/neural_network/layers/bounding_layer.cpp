@@ -68,7 +68,7 @@ static void bound_gpu(const TensorView& input,
                const TensorView& upper_bounds,
                TensorView& output)
 {
-    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&]<typename TIn, typename TOut>() {
+    visit_type_pair<Type::FP32, Type::BF16>(input.get_type(), output.get_type(), [&]<typename TIn, typename TOut>() {
         bounding_cuda<TIn, TOut>(output.size(), to_int(lower_bounds.size()),
                                  input.as<TIn>(),
                                  lower_bounds.as_float(),
@@ -91,7 +91,7 @@ void BoundOperator::forward_propagate(ForwardPropagation& forward_propagation, s
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);
 
-    if (method == Method::NoBounding || !lower.data)
+    if (method == Method::NoBounding || !lower.get_data())
     {
         copy(input, output);
         return;
@@ -166,7 +166,7 @@ void Bounding::set_lower_bound(Index index, float new_lower_bound)
                     index, lower_bounds.size());
     lower_bounds[size_t(index)] = new_lower_bound;
     op_storage_dirty = true;
-    refresh_op_storage(op_storage.device_type);
+    refresh_op_storage(op_storage.get_device());
 }
 
 void Bounding::set_upper_bound(Index index, float new_upper_bound)
@@ -176,7 +176,7 @@ void Bounding::set_upper_bound(Index index, float new_upper_bound)
                     index, upper_bounds.size());
     upper_bounds[size_t(index)] = new_upper_bound;
     op_storage_dirty = true;
-    refresh_op_storage(op_storage.device_type);
+    refresh_op_storage(op_storage.get_device());
 }
 
 float* Bounding::link_states(float* pointer, Device device)
@@ -231,7 +231,7 @@ void Bounding::read_JSON_body(const Json* root_element)
     parse_bounds("UpperBounds", upper_bounds);
 
     op_storage_dirty = true;
-    refresh_op_storage(op_storage.device_type);
+    refresh_op_storage(op_storage.get_device());
 }
 
 void Bounding::write_JSON_body(JsonWriter& printer) const

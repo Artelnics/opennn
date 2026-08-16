@@ -161,9 +161,9 @@ TEST(PoolingLayerTest, UnitWindowIsPassthrough)
         true);
 
     const TensorView outputs = forward_propagation.get_outputs();
-    EXPECT_EQ(outputs.data, inputs.data());
-    EXPECT_EQ(outputs.shape, Shape({batch_size}).append(input_shape));
-    EXPECT_EQ(forward_propagation.arena.bytes, 0);
+    EXPECT_EQ(outputs.get_data(), inputs.data());
+    EXPECT_EQ(outputs.get_shape(), Shape({batch_size}).append(input_shape));
+    EXPECT_EQ(forward_propagation.arena.byte_size(), 0);
 }
 
 TEST(PoolingLayerTest, JsonRejectsPoolLargerThanPaddedInput)
@@ -215,8 +215,8 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 4);
-    EXPECT_EQ(output_view.shape[0], batch_size);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 4);
+    EXPECT_EQ(output_view.get_shape()[0], batch_size);
     ASSERT_EQ(output_view.size(), parameters.expected_output.size());
 
     const float* output_data = output_view.as<type>();
@@ -318,7 +318,7 @@ TEST_P(Pooling3dLayerTest, ForwardPropagate)
     neural_network.forward_propagate(input_views, forward_propagation, false);
 
     TensorView output_view = forward_propagation.get_outputs();
-    ASSERT_EQ(output_view.shape[0], batch_size);
+    ASSERT_EQ(output_view.get_shape()[0], batch_size);
     ASSERT_EQ(output_view.size(), batch_size * feat);
 
     const float* output_data = output_view.as<type>();

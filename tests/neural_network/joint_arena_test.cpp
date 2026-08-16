@@ -62,12 +62,12 @@ struct Model
 // True when the view's whole byte range sits inside [base, base + bytes).
 bool lies_within(const TensorView& view, const Buffer& arena)
 {
-    if (!view.data) return true;
+    if (!view.get_data()) return true;
 
-    const auto* first = static_cast<const uint8_t*>(view.data);
+    const auto* first = static_cast<const uint8_t*>(view.get_data());
     const auto* base = arena.as<uint8_t>();
 
-    return first >= base && first + view.byte_size() <= base + arena.bytes;
+    return first >= base && first + view.byte_size() <= base + arena.byte_size();
 }
 
 Index count_delta_views_outside(const BackPropagation& back_propagation,
@@ -126,10 +126,10 @@ TEST(JointArenaTest, BackPropagationBindsIntoTheForwardArena)
     BackPropagation back_propagation(batch_size, *model.loss,
                                      &joint.arena, joint.co_planned_offsets);
 
-    EXPECT_EQ(back_propagation.arena.bytes, 0)
+    EXPECT_EQ(back_propagation.arena.byte_size(), 0)
         << "joint planning is active, so BackPropagation must not allocate an arena";
 
-    ASSERT_GT(joint.arena.bytes, 0);
+    ASSERT_GT(joint.arena.byte_size(), 0);
     EXPECT_EQ(count_delta_views_outside(back_propagation, joint.arena), 0)
         << "every delta view must point inside the forward arena";
 }
@@ -150,7 +150,7 @@ TEST(JointArenaTest, SeparatePoolIsUsedWithoutTheJointPlan)
     BackPropagation back_propagation(batch_size, *model.loss,
                                      &separate.arena, separate.co_planned_offsets);
 
-    EXPECT_GT(back_propagation.arena.bytes, 0)
+    EXPECT_GT(back_propagation.arena.byte_size(), 0)
         << "without a joint plan BackPropagation owns its arena";
     EXPECT_EQ(count_delta_views_outside(back_propagation,
                                         back_propagation.arena), 0);
@@ -177,7 +177,7 @@ TEST(JointArenaTest, JointArenaOverheadStaysBounded)
     BackPropagation separate_back(batch_size, *model.loss,
                                   &separate.arena, separate.co_planned_offsets);
 
-    const Index separate_bytes = separate.arena.bytes + separate_back.arena.bytes;
+    const Index separate_bytes = separate.arena.byte_size() + separate_back.arena.byte_size();
 
     const vector<MemoryPoolEntry> lifetimes = model.delta_lifetimes(batch_size);
     ForwardPropagation joint(batch_size, &model.neural_network,
@@ -186,7 +186,7 @@ TEST(JointArenaTest, JointArenaOverheadStaysBounded)
     BackPropagation joint_back(batch_size, *model.loss,
                                &joint.arena, joint.co_planned_offsets);
 
-    const Index joint_bytes = joint.arena.bytes + joint_back.arena.bytes;
+    const Index joint_bytes = joint.arena.byte_size() + joint_back.arena.byte_size();
 
     ASSERT_FALSE(joint.co_planned_offsets.empty());
 

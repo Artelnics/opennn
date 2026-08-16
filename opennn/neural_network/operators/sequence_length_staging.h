@@ -67,7 +67,7 @@ public:
 
         ranges::transform(lengths, host_slot, [](const Index length) { return int(length); });
 
-        device::copy_async(device_lengths.data, host_slot, bytes,
+        device::copy_async(device_lengths.data(), host_slot, bytes,
                            device::CopyKind::HostToDevice, device::get_compute_stream());
         mark_copied();
 

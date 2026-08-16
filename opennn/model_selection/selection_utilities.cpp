@@ -86,7 +86,7 @@ ParameterSnapshot capture_parameter_snapshot(NeuralNetwork* neural_network)
         {
             if (views[v].empty() || (tie.source && v == tie.spec_index)) continue;
 
-            blocks[v].shape = views[v].shape;
+            blocks[v].shape = views[v].get_shape();
             blocks[v].values.assign(views[v].as_float(), views[v].as_float() + views[v].size());
         }
     }
@@ -122,20 +122,20 @@ void seed_parameters_from_snapshot(NeuralNetwork* neural_network,
             if (block.values.empty() || view.empty() || (tie.source && v == tie.spec_index))
                 continue;
 
-            if (view.shape == block.shape)
+            if (view.get_shape() == block.shape)
             {
                 ranges::copy(block.values, view.as_float());
                 continue;
             }
 
-            if (view.shape.rank == 1 && block.shape.rank == 1)
+            if (view.get_shape().get_rank() == 1 && block.shape.get_rank() == 1)
             {
                 const Index count = min(view.size(), Index(block.values.size()));
                 copy_n(block.values.begin(), count, view.as_float());
                 continue;
             }
 
-            if (view.shape.rank != 2 || block.shape.rank != 2) continue;
+            if (view.get_shape().get_rank() != 2 || block.shape.get_rank() != 2) continue;
 
             MatrixMap destination = view.as_matrix();
             const Eigen::Map<const MatrixR> source(block.values.data(),

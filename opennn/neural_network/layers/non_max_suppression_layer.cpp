@@ -43,7 +43,7 @@ void NonMaxSuppressionOperator::set(const Shape& input_shape,
                               float new_confidence_threshold,
                               float new_iou_threshold)
 {
-    throw_if(input_shape.rank != 3,
+    throw_if(input_shape.get_rank() != 3,
              "NonMaxSuppressionOperator: input shape must be rank 3.");
     throw_if(new_boxes_per_cell <= 0,
              "NonMaxSuppressionOperator: boxes_per_cell must be positive.");
@@ -81,10 +81,10 @@ void NonMaxSuppressionOperator::forward_propagate(ForwardPropagation& forward_pr
                            device::CopyKind::DeviceToHost, stream);
         device::synchronize(stream);
 
-        TensorView cpu_in{cpu_input_staging.data(), input.shape};
+        TensorView cpu_in{cpu_input_staging.data(), input.get_shape()};
 
         cpu_output_staging.resize(size_t(output.size()));
-        TensorView cpu_out{cpu_output_staging.data(), output.shape};
+        TensorView cpu_out{cpu_output_staging.data(), output.get_shape()};
 
         apply(cpu_in, cpu_out);
 
@@ -99,8 +99,8 @@ void NonMaxSuppressionOperator::forward_propagate(ForwardPropagation& forward_pr
 
 void NonMaxSuppressionOperator::apply(const TensorView& input, TensorView& output) const
 {
-    const Index batch_size = input.shape[0];
-    const Index channels = input.shape[3];
+    const Index batch_size = input.get_shape()[0];
+    const Index channels = input.get_shape()[3];
     const Index values_per_box = 5 + classes_number;
     const Index max_boxes = grid_size * grid_width * boxes_per_cell;
 
@@ -190,7 +190,7 @@ NonMaxSuppression::NonMaxSuppression(const Shape& new_input_shape,
 
 Shape NonMaxSuppression::get_output_shape() const
 {
-    if (input_shape.rank != 3) return {};
+    if (input_shape.get_rank() != 3) return {};
     return {input_shape[0] * input_shape[1] * nms.boxes_per_cell, 6};
 }
 

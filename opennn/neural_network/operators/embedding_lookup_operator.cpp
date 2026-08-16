@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   E M B E D D I N G   L O O K U P   O P E R A T O R   S O U R C E
@@ -78,7 +78,7 @@ static void embedding_lookup_backward_cpu(const TensorView& indices, const Tenso
     MatrixMap weight_gradients = weight_gradient.as_matrix().setZero();
     const float scale = scale_embedding ? sqrt(to_type(embedding_dimension)) : 1.0f;
 
-    const bool accumulate_positional = !positional_gradient.empty() && positional_gradient.data != nullptr;
+    const bool accumulate_positional = !positional_gradient.empty() && positional_gradient.get_data() != nullptr;
 
     for (Index token_index = 0; token_index < total_elements; ++token_index)
     {
@@ -153,7 +153,7 @@ void compute_token_valid_lengths(const TensorView& indices, Index sequence_lengt
     if (indices.is_cuda())
     {
         host.resize(size_t(total));
-        copy_device_to_host_float(indices.data, indices.type, total, host.data(), Backend::get_compute_stream());
+        copy_device_to_host_float(indices.get_data(), indices.get_type(), total, host.data(), Backend::get_compute_stream());
         ids = host.data();
     }
 #endif
@@ -215,7 +215,7 @@ static void embedding_lookup_backward_gpu(const TensorView& indices, const Tenso
 {
     weight_gradient.set_zero_async();
 
-    const bool accumulate_positional = !positional_gradient.empty() && positional_gradient.data != nullptr;
+    const bool accumulate_positional = !positional_gradient.empty() && positional_gradient.get_data() != nullptr;
     if (accumulate_positional) positional_gradient.set_zero_async();
 
     output_delta.dispatch([&]<typename T>() {
@@ -291,7 +291,7 @@ void EmbeddingLookupOperator::link_gradients(span<const TensorView> views)
 void EmbeddingLookupOperator::link_states(span<const TensorView> views)
 {
     if (positional_trainable || views.empty()) return;
-    const bool needs_init = positional_encoding.data == nullptr;
+    const bool needs_init = !positional_encoding.get_data();
     positional_encoding = views[0];
     if (needs_init) init_positional_encoding();
 }
@@ -316,7 +316,7 @@ void EmbeddingLookupOperator::set_parameters_glorot()
 
 void EmbeddingLookupOperator::init_trainable_positional()
 {
-    if (!positional_trainable || positional_encoding.empty() || !positional_encoding.data) return;
+    if (!positional_trainable || positional_encoding.empty() || !positional_encoding.get_data()) return;
     MatrixMap positional_matrix = positional_encoding.as_matrix();
     set_random_normal(positional_matrix, 0.0f, 0.02f);
 }
@@ -324,7 +324,7 @@ void EmbeddingLookupOperator::init_trainable_positional()
 void EmbeddingLookupOperator::init_positional_encoding()
 {
     if (!add_positional_encoding) return;
-    if (positional_encoding.empty() || !positional_encoding.data) return;
+    if (positional_encoding.empty() || !positional_encoding.get_data()) return;
 
     float* table = positional_encoding.as<float>();
     const Index half   = embedding_dimension / 2;

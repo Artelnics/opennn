@@ -80,10 +80,10 @@ TEST_P(EmbeddingLayerTest, ForwardPropagate)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 3);
-    EXPECT_EQ(output_view.shape[0], batch_size);
-    EXPECT_EQ(output_view.shape[1], parameters.sequence_length);
-    EXPECT_EQ(output_view.shape[2], parameters.embedding_dimension);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 3);
+    EXPECT_EQ(output_view.get_shape()[0], batch_size);
+    EXPECT_EQ(output_view.get_shape()[1], parameters.sequence_length);
+    EXPECT_EQ(output_view.get_shape()[2], parameters.embedding_dimension);
 }
 
 TEST(Embedding, ForwardValuesMatchExpected)
@@ -119,7 +119,7 @@ TEST(Embedding, ForwardValuesMatchExpected)
     neural_network.forward_propagate(input_views, forward_propagation, false);
 
     const TensorView output_view = forward_propagation.get_outputs();
-    ASSERT_EQ(output_view.shape.rank, 3);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 3);
     ASSERT_EQ(output_view.size(), batch_size * sequence_length * embedding_dimension);
 
     const float* output = output_view.as<type>();

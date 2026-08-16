@@ -48,12 +48,12 @@ void run(NeuralNetwork& network, ForwardPropagation& forward_propagation,
 vector<float> logits_row(const ForwardPropagation& forward_propagation, Index pos)
 {
     const TensorView output = forward_propagation.get_outputs();
-    const Index vocabulary = output.shape.back();
+    const Index vocabulary = output.get_shape().back();
     vector<float> row(size_t(vocabulary), 0.0f);
 
-    const Index elem = Index(type_bytes(output.type));
+    const Index elem = Index(type_bytes(output.get_type()));
     vector<char> host(size_t(vocabulary) * size_t(elem));
-    const char* src = static_cast<const char*>(output.data) + size_t(pos) * vocabulary * elem;
+    const char* src = static_cast<const char*>(output.get_data()) + size_t(pos) * vocabulary * elem;
 
 #ifdef OPENNN_HAS_CUDA
     if (output.is_cuda())
@@ -170,8 +170,8 @@ float compact_last_row_max_diff(const Dims& d, bool bf16_upload)
         {d.prompt2, 1});
     run(*network, compact, window, ids, 0);
 
-    EXPECT_EQ(compact.get_outputs().shape[1], 1);
-    EXPECT_LT(compact.arena.bytes, full.arena.bytes);
+    EXPECT_EQ(compact.get_outputs().get_shape()[1], 1);
+    EXPECT_LT(compact.arena.byte_size(), full.arena.byte_size());
     return max_difference(expected, logits_row(compact, 0));
 }
 
@@ -295,7 +295,7 @@ TEST(Qwen3NetworkTest, CompactPoolDependsOnBlockNotModelContext)
     ForwardPropagation long_compact(
         1, long_network.get(), ForwardPropagationMode::Inference, {4, 1});
 
-    EXPECT_EQ(short_compact.arena.bytes, long_compact.arena.bytes);
+    EXPECT_EQ(short_compact.arena.byte_size(), long_compact.arena.byte_size());
     EXPECT_EQ(short_compact.get_sequence_capacity(), 4);
     EXPECT_EQ(long_compact.get_sequence_capacity(), 4);
     EXPECT_EQ(short_compact.get_final_output_capacity(), 1);
@@ -323,7 +323,7 @@ TEST(Qwen3NetworkTest, CompactOutputWindowMatchesSelectedFullRowsCpu)
     };
     network->forward_propagate(inputs, selected, false);
 
-    ASSERT_EQ(selected.get_outputs().shape[1], 4);
+    ASSERT_EQ(selected.get_outputs().get_shape()[1], 4);
     for (Index row = 0; row < 4; ++row)
         EXPECT_LT(max_difference(logits_row(full, row + 1),
                                  logits_row(selected, row)),
@@ -462,7 +462,7 @@ TEST(Qwen3NetworkTest, DecodeGraphSurvivesFiveSuffixPrefillsGpu)
     Buffer token_device{Device::CUDA};
     token_device.resize_bytes(Index(sizeof(float)), Device::CUDA);
     const vector<TensorView> decode_inputs = {
-        TensorView(token_device.data, {1, 1}, Type::FP32, Device::CUDA)
+        TensorView(token_device.data(), {1, 1}, Type::FP32, Device::CUDA)
     };
 
     vector<float> window(size_t(d.seq), 0.0f);
@@ -472,7 +472,7 @@ TEST(Qwen3NetworkTest, DecodeGraphSurvivesFiveSuffixPrefillsGpu)
     const auto decode_token = [&](Index token)
     {
         const float token_value = float(token);
-        device::copy_async(token_device.data, &token_value, Index(sizeof(float)),
+        device::copy_async(token_device.data(), &token_value, Index(sizeof(float)),
                            device::CopyKind::HostToDevice,
                            device::get_compute_stream());
         device::synchronize(device::get_compute_stream());
@@ -502,7 +502,7 @@ TEST(Qwen3NetworkTest, DecodeGraphSurvivesFiveSuffixPrefillsGpu)
         const Index token = 1 + Index((turn * 7 + 3) % size_t(d.vocab - 1));
         const TensorView graph_view = decode_token(token);
         const vector<float> graph_logits = logits_row(decode, 0);
-        ASSERT_EQ(graph_view.data, decode.get_outputs().data);
+        ASSERT_EQ(graph_view.get_data(), decode.get_outputs().get_data());
 
         --position;
         decode.past_length = position;

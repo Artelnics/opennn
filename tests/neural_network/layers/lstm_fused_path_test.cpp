@@ -71,7 +71,7 @@ void check_constant_forward(const Index neurons, const string& cell_activation)
     neural_network.forward_propagate(input_views, forward_propagation, false);
 
     const TensorView outputs_view = forward_propagation.get_outputs();
-    ASSERT_EQ(outputs_view.shape.size(), samples_number * time_steps * neurons);
+    ASSERT_EQ(outputs_view.get_shape().size(), samples_number * time_steps * neurons);
 
     const vector<double> reference = reference_constant_outputs(
         features, neurons, time_steps, double(c), cell_activation == "Identity");

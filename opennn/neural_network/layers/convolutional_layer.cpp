@@ -28,15 +28,15 @@ void validate_convolution_configuration(const Shape& input_shape,
                                         bool residual,
                                         const string& label)
 {
-    throw_if(input_shape.rank != 3,
+    throw_if(input_shape.get_rank() != 3,
              "Convolutional layer '{}': input shape must have 3 dimensions, read {}.",
-             label, input_shape.rank);
-    throw_if(kernel_shape.rank != 4,
+             label, input_shape.get_rank());
+    throw_if(kernel_shape.get_rank() != 4,
              "Convolutional layer '{}': kernel shape must have 4 dimensions, read {}.",
-             label, kernel_shape.rank);
-    throw_if(stride_shape.rank != 2,
+             label, kernel_shape.get_rank());
+    throw_if(stride_shape.get_rank() != 2,
              "Convolutional layer '{}': stride must have 2 dimensions, read {}.",
-             label, stride_shape.rank);
+             label, stride_shape.get_rank());
 
     throw_if(kernel_shape[0] <= 0 || kernel_shape[1] <= 0
              || kernel_shape[2] <= 0 || kernel_shape[3] <= 0,
@@ -259,7 +259,7 @@ void Convolutional::set(const Shape& new_input_shape,
 
 void Convolutional::apply_input_shape(const Shape& new_input_shape)
 {
-    throw_if(new_input_shape.rank != 3, "Input shape rank must be 3.");
+    throw_if(new_input_shape.get_rank() != 3, "Input shape rank must be 3.");
 
     input_height = new_input_shape[0];
     input_width = new_input_shape[1];
@@ -454,7 +454,7 @@ bool Convolutional::forward_propagate_folded(ForwardPropagation& forward_propaga
         folded_dirty = false;
     }
 
-    const TensorView folded_weights(folded_parameters.data,
+    const TensorView folded_weights(folded_parameters.data(),
         Shape{kernel_channels, kernels_number}, Type::FP32, Device::CUDA);
 
     const TensorView folded_bias(folded_parameters.as<float>() + weight_count,

@@ -14,8 +14,8 @@ TEST(BatchTest, FreshCpuBatchUsesConfiguredDevice)
     Batch batch(2, &dataset, config);
 
     EXPECT_FALSE(batch.uses_cuda());
-    EXPECT_EQ(batch.input.buffer.device_type, Device::CPU);
-    EXPECT_EQ(batch.input.buffer.bytes, 2 * 3 * Index(sizeof(float)));
+    EXPECT_EQ(batch.input.buffer.get_device(), Device::CPU);
+    EXPECT_EQ(batch.input.buffer.byte_size(), 2 * 3 * Index(sizeof(float)));
 }
 
 TEST(BatchTest, ValidationQueueIsDerivedFromPoolOwnership)
@@ -38,8 +38,8 @@ TEST(BatchTest, FreshCudaBatchUsesConfiguredDevice)
     Batch batch(2, &dataset, config);
 
     EXPECT_TRUE(batch.uses_cuda());
-    EXPECT_EQ(batch.input.buffer.device_type, Device::CUDA);
-    EXPECT_EQ(batch.input.buffer.bytes, 2 * 3 * Index(sizeof(float)));
+    EXPECT_EQ(batch.input.buffer.get_device(), Device::CUDA);
+    EXPECT_EQ(batch.input.buffer.byte_size(), 2 * 3 * Index(sizeof(float)));
 }
 
 TEST(BatchTest, CudaPrefetchBatchKeepsDeviceIdentityWithoutDeviceStorage)
@@ -50,8 +50,8 @@ TEST(BatchTest, CudaPrefetchBatchKeepsDeviceIdentityWithoutDeviceStorage)
     Batch batch(2, &dataset, config, true);
 
     EXPECT_TRUE(batch.uses_cuda());
-    EXPECT_EQ(batch.input.buffer.device_type, Device::CUDA);
-    EXPECT_EQ(batch.input.buffer.bytes, 0);
+    EXPECT_EQ(batch.input.buffer.get_device(), Device::CUDA);
+    EXPECT_EQ(batch.input.buffer.byte_size(), 0);
 }
 
 #endif

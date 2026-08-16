@@ -44,25 +44,28 @@ void split_heads(const TensorView& source, TensorView& destination)
 {
     if (source.is_cuda()) { split_heads_gpu(source, destination); return; }
 
+    const Shape& shape = source.get_shape();
     transpose_middle_axes(source.as<float>(), destination.as<float>(),
-                          source.shape[0], source.shape[1], source.shape[2], source.shape[3]);
+                          shape[0], shape[1], shape[2], shape[3]);
 }
 
 void merge_heads(const TensorView& source, TensorView& destination)
 {
     if (source.is_cuda()) { merge_heads_gpu(source, destination); return; }
 
+    const Shape& shape = source.get_shape();
     transpose_middle_axes(source.as<float>(), destination.as<float>(),
-                          source.shape[0], source.shape[1], source.shape[2], source.shape[3]);
+                          shape[0], shape[1], shape[2], shape[3]);
 }
 
 #ifdef OPENNN_HAS_CUDA
 
 static void split_heads_gpu(const TensorView& source, TensorView& destination)
 {
-    const Index sequence_length = source.shape[1];
-    const Index heads_number = source.shape[2];
-    const Index head_dimension = source.shape[3];
+    const Shape& shape = source.get_shape();
+    const Index sequence_length = shape[1];
+    const Index heads_number = shape[2];
+    const Index head_dimension = shape[3];
 
     destination.dispatch([&]<typename T>() {
         split_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
@@ -74,9 +77,10 @@ static void split_heads_gpu(const TensorView& source, TensorView& destination)
 
 static void merge_heads_gpu(const TensorView& source, TensorView& destination)
 {
-    const Index heads_number = source.shape[1];
-    const Index sequence_length = source.shape[2];
-    const Index head_dimension = source.shape[3];
+    const Shape& shape = source.get_shape();
+    const Index heads_number = shape[1];
+    const Index sequence_length = shape[2];
+    const Index head_dimension = shape[3];
 
     destination.dispatch([&]<typename T>() {
         merge_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
@@ -114,15 +118,16 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
     const TensorView& input = input_views[min(input_view_index, input_views.size() - 1)];
     TensorView& head_output = get_output(forward_propagation, layer);
 
-    const Index batch_size     = input.shape[0];
-    const Index seq_len        = input.shape[1];
+    const Index batch_size     = input.get_shape()[0];
+    const Index seq_len        = input.get_shape()[1];
     const Index rows           = batch_size * seq_len;
-    const Index heads_number   = head_output.shape[1];
-    const Index head_dimension = head_output.shape[3];
+    const Index heads_number   = head_output.get_shape()[1];
+    const Index head_dimension = head_output.get_shape()[3];
 
     TensorView&       scratch     = forward_slots[scratch_slot];
-    TensorView        scratch_2d  = scratch.reshape({rows, input_features});
-    const TensorView  scratch_4d  = scratch.reshape({batch_size, seq_len, heads_number, head_dimension});
+    TensorView        scratch_2d  = scratch.reshape_prefix({rows, input_features});
+    const TensorView  scratch_4d  = scratch.reshape_prefix(
+        {batch_size, seq_len, heads_number, head_dimension});
     const TensorView  input_2d    = input.reshape({rows, input_features});
 
     linear_forward(input_2d, weights, bias, scratch_2d,
@@ -141,15 +146,16 @@ void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_pro
 
     const TensorView& head_delta = get_output_delta(back_propagation, layer);
 
-    const Index batch_size     = input.shape[0];
-    const Index seq_len        = input.shape[1];
+    const Index batch_size     = input.get_shape()[0];
+    const Index seq_len        = input.get_shape()[1];
     const Index rows           = batch_size * seq_len;
-    const Index heads_number   = head_delta.shape[1];
-    const Index head_dimension = head_delta.shape[3];
+    const Index heads_number   = head_delta.get_shape()[1];
+    const Index head_dimension = head_delta.get_shape()[3];
 
     TensorView&       scratch     = forward_slots[scratch_slot];
-    TensorView        scratch_4d  = scratch.reshape({batch_size, seq_len, heads_number, head_dimension});
-    const TensorView  scratch_2d  = scratch.reshape({rows, input_features});
+    TensorView        scratch_4d  = scratch.reshape_prefix(
+        {batch_size, seq_len, heads_number, head_dimension});
+    const TensorView  scratch_2d  = scratch.reshape_prefix({rows, input_features});
     const TensorView  input_2d    = input.reshape({rows, input_features});
 
     merge_heads(head_delta, scratch_4d);

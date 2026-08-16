@@ -563,7 +563,7 @@ inline void autotune_now(bool& pending, graph::Graph& graph,
     {
         const int64_t tune_bytes = autotune_workspace_bytes(graph);
         if (tune_bytes > 0) tune_workspace.resize_bytes(Index(tune_bytes), Device::CUDA);
-        check_status(graph.autotune(Backend::get_cudnn_handle(), tensors, tune_workspace.data), "autotune");
+        check_status(graph.autotune(Backend::get_cudnn_handle(), tensors, tune_workspace.data()), "autotune");
 
         // The winner is now the candidate; persist it so the next process loads
         // the tuned plan instead of re-tuning (or, worse, settling for the
@@ -612,7 +612,7 @@ inline void autotune_with_scratch(bool& pending, graph::Graph& graph,
 
             Buffer& buffer = buffers.emplace_back(Device::CUDA);
             buffer.resize_bytes(Index(elements * int64_t(sizeof(float))), Device::CUDA);
-            pointer = buffer.data;
+            pointer = buffer.data();
         }
     }
     catch (const exception& e)

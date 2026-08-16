@@ -59,12 +59,12 @@ void run(NeuralNetwork& network, ForwardPropagation& forward_propagation,
 vector<float> logits_row(const ForwardPropagation& forward_propagation, Index pos)
 {
     const TensorView output = forward_propagation.get_outputs();
-    const Index vocabulary = output.shape.back();
+    const Index vocabulary = output.get_shape().back();
     vector<float> row(size_t(vocabulary), 0.0f);
 
-    const Index elem = Index(type_bytes(output.type));
+    const Index elem = Index(type_bytes(output.get_type()));
     vector<char> host(size_t(vocabulary) * size_t(elem));
-    const char* src = static_cast<const char*>(output.data) + size_t(pos) * vocabulary * elem;
+    const char* src = static_cast<const char*>(output.get_data()) + size_t(pos) * vocabulary * elem;
 
 #ifdef OPENNN_HAS_CUDA
     if (output.is_cuda())

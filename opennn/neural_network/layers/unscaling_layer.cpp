@@ -72,7 +72,7 @@ void Unscaling::read_JSON_body(const Json* root_element)
     }
 
     op_storage_dirty = true;
-    refresh_op_storage(op_storage.device_type);
+    refresh_op_storage(op_storage.get_device());
 }
 
 void Unscaling::write_JSON_body(JsonWriter& printer) const

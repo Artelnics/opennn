@@ -73,11 +73,6 @@ Correlation fit_softmax_correlation(const MatrixR& x_filter,
     neural_network.compile(Device::CPU);
     neural_network.set_parameters_glorot();
 
-    auto* const dense_2d = dynamic_cast<Dense*>(neural_network.get_first(LayerType::Dense));
-    throw_if(!dense_2d, "Expected Dense layer.");
-
-    dense_2d->set_activation_function("Softmax");
-
     Loss loss(&neural_network, &dataset);
     loss.set_error("MeanSquaredError");
     loss.set_regularization("None");

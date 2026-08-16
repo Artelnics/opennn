@@ -153,7 +153,7 @@ TEST(BackPropagationMemoryTest, FanoutAccumulationReusesConsumerDelta)
 
     BackPropagation back_propagation(batch, loss);
 
-    EXPECT_EQ(back_propagation.arena.bytes, compact_plan.peak_bytes);
+    EXPECT_EQ(back_propagation.arena.byte_size(), compact_plan.peak_bytes);
 
     TensorView& branch_a_delta = back_propagation.slots[1][1];
     TensorView& branch_b_delta = back_propagation.slots[2][1];
@@ -161,9 +161,9 @@ TEST(BackPropagationMemoryTest, FanoutAccumulationReusesConsumerDelta)
 
     ASSERT_FALSE(branch_a_delta.empty());
     ASSERT_FALSE(branch_b_delta.empty());
-    ASSERT_NE(branch_a_delta.data, branch_b_delta.data);
-    EXPECT_TRUE(stem_output_delta.data == branch_a_delta.data
-                || stem_output_delta.data == branch_b_delta.data);
+    ASSERT_NE(branch_a_delta.get_data(), branch_b_delta.get_data());
+    EXPECT_TRUE(stem_output_delta.get_data() == branch_a_delta.get_data()
+                || stem_output_delta.get_data() == branch_b_delta.get_data());
 
     branch_a_delta.as_vector().setConstant(1.0f);
     branch_b_delta.as_vector().setConstant(2.0f);
@@ -232,10 +232,10 @@ TEST(ForwardPropagationMemoryTest, InferenceReusesResidualAndPassthroughOutputs)
                     actual_leaf.as<float>()[i],
                     1.0e-6f);
 
-    EXPECT_LT(inference_layout.arena.bytes, training_layout.arena.bytes);
+    EXPECT_LT(inference_layout.arena.byte_size(), training_layout.arena.byte_size());
 
-    EXPECT_EQ(inference_layout.slots[0].back().data,
-              inference_layout.slots[4].back().data);
+    EXPECT_EQ(inference_layout.slots[0].back().get_data(),
+              inference_layout.slots[4].back().get_data());
 
     Configuration::instance().set();
 }
@@ -258,9 +258,9 @@ TEST(ForwardPropagationMemoryTest, SameLayerAuxiliariesNeverAlias)
     ASSERT_FALSE(slots[1].empty());
     ASSERT_FALSE(slots[4].empty());
     ASSERT_FALSE(slots[5].empty());
-    EXPECT_NE(slots[1].data, slots[4].data);
-    EXPECT_NE(slots[1].data, slots[5].data);
-    EXPECT_NE(slots[4].data, slots[5].data);
+    EXPECT_NE(slots[1].get_data(), slots[4].get_data());
+    EXPECT_NE(slots[1].get_data(), slots[5].get_data());
+    EXPECT_NE(slots[4].get_data(), slots[5].get_data());
 
     Configuration::instance().set();
 }
@@ -297,12 +297,12 @@ TEST(ForwardPropagationMemoryTest, TrainingRecomputeScratchUsesFutureActivations
             if (slot != network.get_layers()[layer]->get_recomputable_forward_slot())
                 expected_persistent_bytes += get_aligned_bytes(specs[layer][slot]);
 
-    EXPECT_EQ(layout.arena.bytes, expected_persistent_bytes);
+    EXPECT_EQ(layout.arena.byte_size(), expected_persistent_bytes);
 
-    EXPECT_EQ(layout.slots[0][1].data,
-              layout.slots[1][2].data);
-    EXPECT_EQ(layout.slots[1][1].data,
-              layout.slots[2].back().data);
+    EXPECT_EQ(layout.slots[0][1].get_data(),
+              layout.slots[1][2].get_data());
+    EXPECT_EQ(layout.slots[1][1].get_data(),
+              layout.slots[2].back().get_data());
 
     Configuration::instance().set();
 }
@@ -334,8 +334,8 @@ TEST(ForwardPropagationMemoryTest, RecomputeOverlayUsesLifetimesAcrossLayerTypes
 
     ForwardPropagation layout(batch, &network, ForwardPropagationMode::Training);
 
-    EXPECT_EQ(layout.slots[0][1].data, layout.slots[1][2].data);
-    EXPECT_EQ(layout.slots[1][1].data, layout.slots[2].back().data);
+    EXPECT_EQ(layout.slots[0][1].get_data(), layout.slots[1][2].get_data());
+    EXPECT_EQ(layout.slots[1][1].get_data(), layout.slots[2].back().get_data());
 
     Configuration::instance().set();
 }
@@ -364,7 +364,7 @@ TEST(ForwardPropagationMemoryTest, TrainingDoesNotAllocateSkippedLeadingScaling)
 
     ASSERT_EQ(layout.slots[0].size(), 1);
     EXPECT_TRUE(layout.slots[0].back().empty());
-    EXPECT_EQ(layout.arena.bytes,
+    EXPECT_EQ(layout.arena.byte_size(),
               get_aligned_bytes(network.get_forward_specs(batch)[1]));
 
     MatrixR inputs = MatrixR::Random(batch, feature_shape.size());
@@ -374,7 +374,7 @@ TEST(ForwardPropagationMemoryTest, TrainingDoesNotAllocateSkippedLeadingScaling)
         true);
 
     ASSERT_FALSE(layout.inputs[1].empty());
-    EXPECT_EQ(layout.inputs[1][0].data, inputs.data());
+    EXPECT_EQ(layout.inputs[1][0].get_data(), inputs.data());
 
     Configuration::instance().set();
 }
@@ -422,8 +422,8 @@ TEST(ForwardPropagationMemoryTest, TrainingReusesProjectionResidualOutput)
     ASSERT_FALSE(projection_output.empty());
     ASSERT_FALSE(later_output.empty());
     EXPECT_EQ(projection_output.byte_size(), later_output.byte_size());
-    EXPECT_EQ(projection_output.data, later_output.data);
-    EXPECT_EQ(layout.inputs[3][1].data, projection_output.data);
+    EXPECT_EQ(projection_output.get_data(), later_output.get_data());
+    EXPECT_EQ(layout.inputs[3][1].get_data(), projection_output.get_data());
 
     Configuration::instance().set();
 }

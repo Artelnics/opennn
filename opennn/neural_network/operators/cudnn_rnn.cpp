@@ -87,8 +87,8 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
         CHECK_CUDNN(cudnnSetDropoutDescriptor(
             dropout_desc, Backend::get_cudnn_handle(),
              0.0f,
-            dropout_states_buf.data,
-            size_t(dropout_states_buf.bytes),
+            dropout_states_buf.data(),
+            size_t(dropout_states_buf.byte_size()),
              0ULL));
 
         CHECK_CUDNN(cudnnSetRNNDescriptor_v8(
@@ -116,7 +116,7 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
         weight_space_buf.grow_to(Index(weight_bytes));
         dweight_space_buf.grow_to(Index(weight_bytes));
 
-        device::set_zero_async(weight_space_buf.data, weight_space_buf.bytes,
+        device::set_zero_async(weight_space_buf.data(), weight_space_buf.byte_size(),
                                Backend::get_compute_stream());
 
         CudnnDescriptor<cudnnTensorDescriptor_t> m_desc;
@@ -130,12 +130,12 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
         {
             CHECK_CUDNN(cudnnGetRNNWeightParams(
                 Backend::get_cudnn_handle(), rnn_desc, 0,
-                size_t(weight_space_buf.bytes), weight_space_buf.data, lin,
+                size_t(weight_space_buf.byte_size()), weight_space_buf.data(), lin,
                 m_desc, reinterpret_cast<void**>(&cudnn_w_ptrs_[lin]),
                 b_desc, reinterpret_cast<void**>(&cudnn_b_ptrs_[lin])));
             CHECK_CUDNN(cudnnGetRNNWeightParams(
                 Backend::get_cudnn_handle(), rnn_desc, 0,
-                size_t(dweight_space_buf.bytes), dweight_space_buf.data, lin,
+                size_t(dweight_space_buf.byte_size()), dweight_space_buf.data(), lin,
                 m_desc, reinterpret_cast<void**>(&cudnn_gw_ptrs_[lin]),
                 b_desc, reinterpret_cast<void**>(&cudnn_gb_ptrs_[lin])));
         }
@@ -193,7 +193,7 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
         for (Index i = 0; i < batch_size; ++i) seq_h[i] = int32_t(T);
 
         slot.seq_dev.grow_to(batch_size * Index(sizeof(int32_t)));
-        device::copy_async(slot.seq_dev.data, seq_h,
+        device::copy_async(slot.seq_dev.data(), seq_h,
                            batch_size * Index(sizeof(int32_t)),
                            device::CopyKind::HostToDevice,
                            Backend::get_compute_stream());
@@ -276,11 +276,11 @@ void CudnnRnnState::cudnn_pack_weights_(int num_linear_layers,
     for (int lin = 0; lin < num_linear_layers; ++lin)
     {
         const bool is_input_w = (lin < input_layers);
-        if (cudnn_w_ptrs_[lin] && weights[lin]->data)
+        if (cudnn_w_ptrs_[lin] && weights[lin]->get_data())
             specs[count++] = {weights[lin]->as<float>(), cudnn_w_ptrs_[lin],
                               int(is_input_w ? F : H), int(H), 1};
 
-        if (cudnn_b_ptrs_[lin] && biases[lin] && biases[lin]->data)
+        if (cudnn_b_ptrs_[lin] && biases[lin] && biases[lin]->get_data())
             specs[count++] = {biases[lin]->as<float>(), cudnn_b_ptrs_[lin],
                               1, int(H), 0};
     }
@@ -302,12 +302,12 @@ void CudnnRnnState::cudnn_unpack_gradients_(int num_linear_layers,
     for (int lin = 0; lin < num_linear_layers; ++lin)
     {
         const bool is_input_w = (lin < input_layers);
-        if (cudnn_gw_ptrs_[lin] && weight_gradients[lin]->data)
+        if (cudnn_gw_ptrs_[lin] && weight_gradients[lin]->get_data())
             specs[count++] = {cudnn_gw_ptrs_[lin],
                               const_cast<float*>(weight_gradients[lin]->as<float>()),
                               int(H), int(is_input_w ? F : H), 1};
 
-        if (cudnn_gb_ptrs_[lin] && bias_gradients[lin] && bias_gradients[lin]->data)
+        if (cudnn_gb_ptrs_[lin] && bias_gradients[lin] && bias_gradients[lin]->get_data())
             specs[count++] = {cudnn_gb_ptrs_[lin],
                               const_cast<float*>(bias_gradients[lin]->as<float>()),
                               1, int(H), 0};
@@ -330,10 +330,10 @@ void CudnnRnnState::cudnn_rnn_forward_(bool is_training, bool has_cell_state,
             shape.y_desc, y,
             shape.h_desc, nullptr, nullptr,
             has_cell_state ? shape.c_desc : shape.h_desc, nullptr, nullptr,
-            size_t(weight_space_buf.bytes), weight_space_buf.data,
-            size_t(workspace_buf.bytes), workspace_buf.data,
-            is_training ? size_t(reserve_space_buf.bytes) : 0,
-            is_training ? reserve_space_buf.data : nullptr);
+            size_t(weight_space_buf.byte_size()), weight_space_buf.data(),
+            size_t(workspace_buf.byte_size()), workspace_buf.data(),
+            is_training ? size_t(reserve_space_buf.byte_size()) : 0,
+            is_training ? reserve_space_buf.data() : nullptr);
     };
 
     cudnnStatus_t forward_status = run_forward();
@@ -364,11 +364,11 @@ void CudnnRnnState::cudnn_rnn_backward_(bool has_cell_state,
         shape.x_desc, dx,
         shape.h_desc, nullptr, nullptr, nullptr,
         second_state_desc, nullptr, nullptr, nullptr,
-        size_t(weight_space_buf.bytes), weight_space_buf.data,
-        size_t(workspace_buf.bytes), workspace_buf.data,
-        size_t(reserve_space_buf.bytes), reserve_space_buf.data));
+        size_t(weight_space_buf.byte_size()), weight_space_buf.data(),
+        size_t(workspace_buf.byte_size()), workspace_buf.data(),
+        size_t(reserve_space_buf.byte_size()), reserve_space_buf.data()));
 
-    device::set_zero_async(dweight_space_buf.data, dweight_space_buf.bytes,
+    device::set_zero_async(dweight_space_buf.data(), dweight_space_buf.byte_size(),
                            Backend::get_compute_stream());
 
     CHECK_CUDNN(cudnnRNNBackwardWeights_v8(
@@ -379,9 +379,9 @@ void CudnnRnnState::cudnn_rnn_backward_(bool has_cell_state,
         shape.x_desc, x,
         shape.h_desc, nullptr,
         shape.y_desc, y,
-        size_t(dweight_space_buf.bytes), dweight_space_buf.data,
-        size_t(workspace_buf.bytes), workspace_buf.data,
-        size_t(reserve_space_buf.bytes), reserve_space_buf.data));
+        size_t(dweight_space_buf.byte_size()), dweight_space_buf.data(),
+        size_t(workspace_buf.byte_size()), workspace_buf.data(),
+        size_t(reserve_space_buf.byte_size()), reserve_space_buf.data()));
 }
 
 }

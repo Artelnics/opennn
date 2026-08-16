@@ -100,11 +100,11 @@ TEST_F(GpuComparison, LayerContractPreservesExactExternalInput)
     network.forward_propagate({TensorView(input.data(), {1, 1})}, propagation, false);
 
     ASSERT_TRUE(probe_ptr->called);
-    ASSERT_EQ(probe_ptr->observed_input.type, Type::FP32);
-    ASSERT_EQ(probe_ptr->observed_input.device, Device::CUDA);
+    ASSERT_EQ(probe_ptr->observed_input.get_type(), Type::FP32);
+    ASSERT_EQ(probe_ptr->observed_input.get_device(), Device::CUDA);
 
     float observed = 0.0f;
-    device::copy_async(&observed, probe_ptr->observed_input.data, sizeof(float),
+    device::copy_async(&observed, probe_ptr->observed_input.get_data(), sizeof(float),
                        device::CopyKind::DeviceToHost);
     device::synchronize();
     EXPECT_EQ(observed, 257.0f);
@@ -829,11 +829,11 @@ TEST_F(GpuComparison, ResidentInferenceGraphReplay)
     const Index input_bytes = inputs.size() * Index(sizeof(float));
     Buffer input_buffer;
     input_buffer.resize_bytes(input_bytes, Device::CUDA);
-    device::copy_async(input_buffer.data, inputs.data(), input_bytes,
+    device::copy_async(input_buffer.data(), inputs.data(), input_bytes,
                        device::CopyKind::HostToDevice);
     device::synchronize();
 
-    const TensorView input_view(input_buffer.data,
+    const TensorView input_view(input_buffer.data(),
                                 Shape{samples_number, height, width, channels},
                                 Type::FP32, Device::CUDA);
 
@@ -843,7 +843,7 @@ TEST_F(GpuComparison, ResidentInferenceGraphReplay)
     {
         vector<float> host(size_t(outputs.size()));
         device::synchronize();
-        copy_device_to_host_float(outputs.data, outputs.type, outputs.size(),
+        copy_device_to_host_float(outputs.get_data(), outputs.get_type(), outputs.size(),
                                   host.data(), Backend::get_compute_stream());
         device::synchronize();
         return host;
@@ -893,18 +893,18 @@ TEST_F(GpuComparison, ResidentInferenceGraphInvalidation)
     const Index input_bytes = inputs.size() * Index(sizeof(float));
     Buffer input_buffer;
     input_buffer.resize_bytes(input_bytes, Device::CUDA);
-    device::copy_async(input_buffer.data, inputs.data(), input_bytes,
+    device::copy_async(input_buffer.data(), inputs.data(), input_bytes,
                        device::CopyKind::HostToDevice);
     Buffer second_input_buffer;
     second_input_buffer.resize_bytes(input_bytes, Device::CUDA);
-    device::copy_async(second_input_buffer.data, inputs.data(), input_bytes,
+    device::copy_async(second_input_buffer.data(), inputs.data(), input_bytes,
                        device::CopyKind::HostToDevice);
     device::synchronize();
 
-    const TensorView input_view(input_buffer.data,
+    const TensorView input_view(input_buffer.data(),
                                 Shape{samples_number, height, width, channels},
                                 Type::FP32, Device::CUDA);
-    const TensorView second_input_view(second_input_buffer.data,
+    const TensorView second_input_view(second_input_buffer.data(),
                                        Shape{samples_number, height, width, channels},
                                        Type::FP32, Device::CUDA);
 
@@ -914,7 +914,7 @@ TEST_F(GpuComparison, ResidentInferenceGraphInvalidation)
     {
         vector<float> host(size_t(outputs.size()));
         device::synchronize();
-        copy_device_to_host_float(outputs.data, outputs.type, outputs.size(),
+        copy_device_to_host_float(outputs.get_data(), outputs.get_type(), outputs.size(),
                                   host.data(), Backend::get_compute_stream());
         device::synchronize();
         return host;
@@ -1224,7 +1224,7 @@ TEST_F(GpuComparison, SdpaAttentionRefreshesPaddingBetweenBatches)
 
         const TensorView outputs = forward_propagation.get_outputs();
         VectorR host(outputs.size());
-        device::copy_async(host.data(), outputs.data,
+        device::copy_async(host.data(), outputs.get_data(),
                            outputs.size() * Index(sizeof(float)),
                            device::CopyKind::DeviceToHost,
                            Backend::get_compute_stream());

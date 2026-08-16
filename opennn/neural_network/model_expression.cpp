@@ -271,7 +271,7 @@ vector<string> ModelExpression::get_flat_input_names() const
     const auto& layers = neural_network->get_layers();
     const Shape first_input_shape = layers.empty() ? Shape{} : layers[0]->get_input_shape();
 
-    if (first_input_shape.rank == 2)
+    if (first_input_shape.get_rank() == 2)
     {
         const Index time_steps = first_input_shape[0];
         const Index features = first_input_shape[1];
@@ -1081,7 +1081,7 @@ string ModelExpression::get_expression_c_embedded() const
                     static_cast<const Dense*>(layers[i].get());
 
                 throw_if(
-                    dense->get_input_shape().rank != 1,
+                    dense->get_input_shape().get_rank() != 1,
                     "ModelExpression: only rank-1 Dense inputs are supported in embedded export.");
 
                 throw_if(
@@ -1093,8 +1093,8 @@ string ModelExpression::get_expression_c_embedded() const
 
                 throw_if(
                     parameter_views.size() < 2
-                    || !parameter_views[0].data
-                    || !parameter_views[1].data,
+                    || !parameter_views[0].get_data()
+                    || !parameter_views[1].get_data(),
                     "ModelExpression: layer '{}' is not configured.",
                     layer_labels[i]);
 
@@ -1219,9 +1219,9 @@ string ModelExpression::get_expression_c_embedded() const
 
                 throw_if(
                     parameter_views.size() < 3
-                    || !parameter_views[0].data
-                    || !parameter_views[1].data
-                    || !parameter_views[2].data,
+                    || !parameter_views[0].get_data()
+                    || !parameter_views[1].get_data()
+                    || !parameter_views[2].get_data(),
                     "ModelExpression: layer '{}' is not configured.",
                     layer_labels[i]);
 
@@ -1235,10 +1235,10 @@ string ModelExpression::get_expression_c_embedded() const
                 const Index features = input_shape[1];
 
                 const bool return_sequences =
-                    output_shape.rank == 2;
+                    output_shape.get_rank() == 2;
 
                 const Index hidden =
-                    output_shape[output_shape.rank - 1];
+                    output_shape[output_shape.get_rank() - 1];
 
                 const VectorMap biases_map =
                     parameter_views[0].as_vector();
@@ -1332,7 +1332,7 @@ string ModelExpression::get_expression_c_embedded() const
                         parameter_views | views::take(12),
                         [](const TensorView& view)
                         {
-                            return view.data != nullptr;
+                            return view.get_data() != nullptr;
                         });
 
                 throw_if(

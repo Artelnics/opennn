@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L O N G   S H O R T   T E R M   M E M O R Y   L A Y E R   H E A D E R
@@ -161,8 +161,8 @@ public:
                                 : Shape{output_features};
     }
 
-    Index get_time_steps()      const noexcept { return input_shape.rank == 2 ? input_shape[0] : Index(0); }
-    Index get_input_features()  const noexcept { return input_shape.rank == 2 ? input_shape[1] : Index(0); }
+    Index get_time_steps()      const noexcept { return input_shape.get_rank() == 2 ? input_shape[0] : Index(0); }
+    Index get_input_features()  const noexcept { return input_shape.get_rank() == 2 ? input_shape[1] : Index(0); }
     Index get_output_features() const noexcept { return output_features; }
 
     bool get_return_sequences() const noexcept { return return_sequences; }

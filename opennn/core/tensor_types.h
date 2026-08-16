@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T E N S O R   T Y P E S   H E A D E R
@@ -121,19 +121,59 @@ inline int to_int(Index value)
 }
 inline float to_type(Index value) { return static_cast<float>(value); }
 
+namespace detail
+{
+
+inline Index checked_index_add(Index left, Index right, string_view operation)
+{
+    throw_if(left < 0 || right < 0, "{}: values cannot be negative.", operation);
+    throw_if(left > numeric_limits<Index>::max() - right,
+             "{}: Index addition overflow.", operation);
+    return left + right;
+}
+
+inline Index checked_index_multiply(Index left, Index right, string_view operation)
+{
+    throw_if(left < 0 || right < 0, "{}: values cannot be negative.", operation);
+    if (left == 0 || right == 0) return 0;
+    throw_if(left > numeric_limits<Index>::max() / right,
+             "{}: Index multiplication overflow.", operation);
+    return left * right;
+}
+
+template<typename Range, typename Projection>
+Index checked_index_sum(const Range& values, Projection projection, string_view operation)
+{
+    Index total = 0;
+    for (const auto& value : values)
+        total = checked_index_add(total, projection(value), operation);
+    return total;
+}
+
+}
+
 inline Index align_up(Index value, Index alignment)
 {
-    return value == 0 ? 0 : (value + alignment - 1) & ~(alignment - 1);
+    throw_if(alignment <= 0 || (alignment & (alignment - 1)) != 0,
+             "align_up: alignment must be a positive power of two.");
+    if (value == 0) return 0;
+    return detail::checked_index_add(value, alignment - 1, "align_up") & ~(alignment - 1);
 }
 
 inline Index ceil_div(Index value, Index divisor)
 {
-    return (value + divisor - 1) / divisor;
+    throw_if(value < 0 || divisor <= 0,
+             "ceil_div: value must be non-negative and divisor must be positive.");
+    return value / divisor + Index(value % divisor != 0);
 }
 
 inline Index get_aligned_size(Index size)     { return align_up(size,    ALIGN_ELEMENTS); }
 inline Index get_aligned_bytes(Index n_bytes) { return align_up(n_bytes, ALIGN_BYTES); }
-inline Index get_aligned_bytes(Index count, Type dtype) { return get_aligned_bytes(count * type_bytes(dtype)); }
+inline Index get_aligned_bytes(Index count, Type dtype)
+{
+    return get_aligned_bytes(detail::checked_index_multiply(count, type_bytes(dtype),
+                                                            "get_aligned_bytes"));
+}
 
 inline bool is_aligned(const void* ptr)
 {
@@ -147,9 +187,6 @@ struct Shape
 {
     static constexpr size_t MaxRank = 4;
 
-    Index  dims[MaxRank] = {0};
-    size_t rank          = 0;
-
     Shape() noexcept = default;
 
     Shape(size_t new_rank, Index value) : rank(new_rank)
@@ -157,6 +194,7 @@ struct Shape
         throw_if(new_rank > MaxRank,
                  "Shape: rank {} exceeds MaxRank={}.",
                         new_rank, MaxRank);
+        throw_if(value < 0, "Shape: dimensions cannot be negative.");
         fill_n(dims, rank, value);
     }
 
@@ -165,6 +203,8 @@ struct Shape
         throw_if(list.size() > MaxRank,
                  "Shape: initializer rank {} exceeds MaxRank={}.",
                         list.size(), MaxRank);
+        throw_if(ranges::any_of(list, [](Index value) { return value < 0; }),
+                 "Shape: dimensions cannot be negative.");
         copy_n(list.begin(), rank, dims);
     }
 
@@ -174,49 +214,79 @@ struct Shape
         throw_if(rank > MaxRank,
                  "Shape: iterator-pair rank {} exceeds MaxRank={}.",
                         rank, MaxRank);
+        throw_if(any_of(first, last, [](Index value) { return value < 0; }),
+                 "Shape: dimensions cannot be negative.");
         copy_n(first, rank, dims);
     }
 
-    const Index* begin() const noexcept { return dims; }
-    const Index* end()   const noexcept { return dims + rank; }
-    const Index& operator[](size_t i) const noexcept { return dims[i]; }
-    Index&                     operator[](size_t i)       noexcept { return dims[i]; }
+    size_t get_rank() const noexcept { return rank; }
 
-    Index&                     back()       { throw_if(rank == 0, "Shape::back() on empty"); return dims[rank - 1]; }
-    const Index& back() const { throw_if(rank == 0, "Shape::back() on empty"); return dims[rank - 1]; }
+    const Index* begin() const noexcept { return dims; }
+    const Index* end() const noexcept { return dims + rank; }
+    Index operator[](size_t i) const noexcept { return dims[i]; }
+    Index back() const { throw_if(rank == 0, "Shape::back() on empty"); return dims[rank - 1]; }
 
     bool empty() const noexcept { return rank == 0; }
 
     Index dim_or_zero(size_t i) const noexcept { return i < rank ? dims[i] : Index(0); }
 
-    Index size() const noexcept
+    Index size() const
     {
-        return rank == 0 ? 0 : accumulate(begin(), end(), Index(1), multiplies<>{});
+        throw_if(rank > MaxRank, "Shape::size: rank exceeds MaxRank={}.", MaxRank);
+        if (rank == 0) return 0;
+
+        Index element_count = 1;
+        for (const Index dimension : *this)
+            element_count = detail::checked_index_multiply(element_count, dimension,
+                                                           "Shape::size");
+        return element_count;
     }
 
     void clear() noexcept { rank = 0; }
-    void push_back(Index value) noexcept { if (rank < MaxRank) dims[rank++] = value; }
+
+    void set_dimension(size_t index, Index value)
+    {
+        throw_if(index >= rank,
+                 "Shape::set_dimension: index {} is out of range for rank {}.",
+                 index, rank);
+        throw_if(value < 0, "Shape::set_dimension: dimensions cannot be negative.");
+        dims[index] = value;
+    }
+
+    void push_back(Index value)
+    {
+        throw_if(rank >= MaxRank, "Shape::push_back: rank exceeds MaxRank={}.", MaxRank);
+        throw_if(value < 0, "Shape::push_back: dimensions cannot be negative.");
+        dims[rank++] = value;
+    }
 
     friend ostream& operator<<(ostream& os, const Shape& shape)
     {
         os << "[";
-        for (size_t i = 0; i < shape.rank; ++i) os << (i ? ", " : " ") << shape.dims[i];
+        for (size_t i = 0; i < shape.get_rank(); ++i) os << (i ? ", " : " ") << shape.dims[i];
         os << " ]";
         return os;
     }
 
     bool operator==(const Shape& other) const noexcept
     {
-        return rank == other.rank && equal(begin(), end(), other.begin());
+        return rank == other.get_rank() && equal(begin(), end(), other.begin());
     }
 
     Shape& append(const Shape& other)
     {
-        const size_t copy_count = min(other.rank, MaxRank - rank);
-        copy_n(other.dims, copy_count, dims + rank);
-        rank += copy_count;
+        throw_if(rank > MaxRank || other.get_rank() > MaxRank - rank,
+                 "Shape::append: combined rank exceeds MaxRank={}.", MaxRank);
+        throw_if(any_of(other.begin(), other.end(), [](Index value) { return value < 0; }),
+                 "Shape::append: dimensions cannot be negative.");
+        copy_n(other.dims, other.get_rank(), dims + rank);
+        rank += other.get_rank();
         return *this;
     }
+
+private:
+    Index dims[MaxRank] = {0};
+    size_t rank = 0;
 };
 
 struct TensorSpec
@@ -229,136 +299,61 @@ struct TensorSpec
 
 inline Index get_aligned_size(const vector<TensorSpec>& specs)
 {
-    return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
-        [](const auto& spec) { return get_aligned_size(spec.shape.size()); });
+    return detail::checked_index_sum(specs,
+        [](const auto& spec) { return get_aligned_size(spec.shape.size()); },
+        "get_aligned_size(TensorSpec list)");
 }
 
 inline Index get_aligned_size(const vector<vector<TensorSpec>>& specs)
 {
-    return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
-        [](const auto& s) { return get_aligned_size(s); });
+    return detail::checked_index_sum(specs,
+        [](const auto& group) { return get_aligned_size(group); },
+        "get_aligned_size(TensorSpec groups)");
 }
 
 inline Index get_aligned_bytes(const TensorSpec& spec) { return get_aligned_bytes(spec.shape.size(), spec.dtype); }
 
 inline Index get_aligned_bytes(const vector<TensorSpec>& specs)
 {
-    return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
-        [](const TensorSpec& spec) { return get_aligned_bytes(spec); });
+    return detail::checked_index_sum(specs,
+        [](const TensorSpec& spec) { return get_aligned_bytes(spec); },
+        "get_aligned_bytes(TensorSpec list)");
 }
 
 inline Index get_aligned_bytes(const vector<vector<TensorSpec>>& specs)
 {
-    return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
-        [](const auto& s) { return get_aligned_bytes(s); });
+    return detail::checked_index_sum(specs,
+        [](const auto& group) { return get_aligned_bytes(group); },
+        "get_aligned_bytes(TensorSpec groups)");
 }
 
 inline Index get_aligned_bytes(const vector<Shape>& shapes, Type dtype)
 {
-    return transform_reduce(shapes.begin(), shapes.end(), Index(0), plus<>{},
-        [dtype](const Shape& s) { return get_aligned_bytes(s.size(), dtype); });
+    return detail::checked_index_sum(shapes,
+        [dtype](const Shape& shape) { return get_aligned_bytes(shape.size(), dtype); },
+        "get_aligned_bytes(Shape list)");
 }
 
 inline Index get_aligned_bytes(const vector<TensorSpec>& specs, Type dtype)
 {
-    return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
-        [dtype](const auto& spec) { return get_aligned_bytes(spec.shape.size(), dtype); });
+    return detail::checked_index_sum(specs,
+        [dtype](const auto& spec) { return get_aligned_bytes(spec.shape.size(), dtype); },
+        "get_aligned_bytes(TensorSpec list, dtype)");
 }
 
 inline Index get_aligned_bytes(const vector<vector<TensorSpec>>& specs, Type dtype)
 {
-    return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
-        [dtype](const auto& s) { return get_aligned_bytes(s, dtype); });
+    return detail::checked_index_sum(specs,
+        [dtype](const auto& group) { return get_aligned_bytes(group, dtype); },
+        "get_aligned_bytes(TensorSpec groups, dtype)");
 }
 
 struct Buffer
 {
-    void* data = nullptr;
-    Index bytes = 0;
-    Device device_type = Device::CPU;
-    bool owns = true;
-
-    template<typename T> T*       as()       { return static_cast<T*>(data); }
-    template<typename T> const T* as() const { return static_cast<const T*>(data); }
-
-    Index size_in_floats() const noexcept { return bytes / Index(sizeof(float)); }
-    bool  empty() const noexcept { return bytes == 0; }
-
-    VectorMap as_vector() &
+    explicit Buffer(Device initial_device = Device::CPU) : allocation_device(initial_device)
     {
-        throw_if(!empty() && device_type != Device::CPU,
-                 "Buffer::as_vector requires host storage.");
-        return VectorMap(as<float>(), size_in_floats());
+        validate_device(initial_device, "Buffer");
     }
-
-    ConstVectorMap as_vector() const &
-    {
-        throw_if(!empty() && device_type != Device::CPU,
-                 "Buffer::as_vector requires host storage.");
-        return ConstVectorMap(as<float>(), size_in_floats());
-    }
-
-    void resize_bytes(Index byte_count, Device allocation_device)
-    {
-        if (byte_count == bytes && device_type == allocation_device) return;
-
-        const bool changes_cuda_allocation =
-            (device_type == Device::CUDA && data)
-            || (allocation_device == Device::CUDA && byte_count > 0);
-        throw_if(changes_cuda_allocation && device::cuda_allocation_growth_forbidden(),
-                 "CUDA buffer resize from {} to {} bytes while CUDA allocation growth is forbidden "
-                        "(warmup incomplete before CUDA graph capture).",
-                        bytes,
-                        byte_count);
-
-        free_buffer();
-        device_type = allocation_device;
-        if (byte_count == 0) return;
-
-        data = device::allocate(allocation_device, byte_count);
-        bytes = byte_count;
-    }
-
-    void set_view(void* external_data, Index byte_count, Device view_device) noexcept
-    {
-        free_buffer();
-        data = external_data;
-        bytes = byte_count;
-        device_type = view_device;
-        owns = false;
-    }
-
-    void grow_to(Index minimum_bytes)
-    {
-        if (minimum_bytes > bytes)
-            resize_bytes(minimum_bytes, device_type);
-    }
-
-    template<typename T>
-    T* ensure(Index element_count)
-    {
-        grow_to(element_count * Index(sizeof(T)));
-        return as<T>();
-    }
-
-    void setZero()
-    {
-        device::set_zero(data, bytes, device_type);
-    }
-
-    void migrate_to(Device target_device, cudaStream_t stream = nullptr)
-    {
-        if (device_type == target_device || !data) return;
-
-        Buffer target_buffer(target_device);
-        target_buffer.resize_bytes(bytes, target_device);
-        device::copy_async(target_buffer.data, data, bytes, device_type, target_device, stream);
-        if (stream) device::synchronize(stream);
-
-        swap(target_buffer);
-    }
-
-    explicit Buffer(Device initial_device = Device::CPU) noexcept : device_type(initial_device) {}
     Buffer(const Buffer&) = delete;
     Buffer& operator=(const Buffer&) = delete;
 
@@ -368,59 +363,217 @@ struct Buffer
         if (this == &other) return *this;
 
         free_buffer();
-        data = other.data;
-        bytes = other.bytes;
-        device_type = other.device_type;
-        owns = other.owns;
+        pointer = other.pointer;
+        allocated_bytes = other.allocated_bytes;
+        allocation_device = other.allocation_device;
+        owns_allocation = other.owns_allocation;
 
-        other.data = nullptr;
-        other.bytes = 0;
-        other.device_type = Device::CPU;
-        other.owns = true;
+        other.pointer = nullptr;
+        other.allocated_bytes = 0;
+        other.allocation_device = Device::CPU;
+        other.owns_allocation = true;
 
         return *this;
     }
 
     ~Buffer() { free_buffer(); }
 
+    template<typename T>
+    T* as()
+    {
+        validate_state("Buffer::as");
+        return static_cast<T*>(pointer);
+    }
+
+    template<typename T>
+    const T* as() const
+    {
+        validate_state("Buffer::as");
+        return static_cast<const T*>(pointer);
+    }
+
+    void* data() const noexcept { return pointer; }
+    Index byte_size() const noexcept { return allocated_bytes; }
+    Device get_device() const noexcept { return allocation_device; }
+    bool owns_memory() const noexcept { return owns_allocation; }
+    Index size_in_floats() const noexcept { return allocated_bytes / Index(sizeof(float)); }
+    bool  empty() const noexcept { return allocated_bytes == 0; }
+
+    VectorMap as_vector() &
+    {
+        validate_state("Buffer::as_vector");
+        throw_if(allocation_device != Device::CPU,
+                 "Buffer::as_vector requires host storage.");
+        throw_if(allocated_bytes % Index(sizeof(float)) != 0,
+                 "Buffer::as_vector requires a whole number of floats.");
+        return VectorMap(static_cast<float*>(pointer), size_in_floats());
+    }
+
+    ConstVectorMap as_vector() const &
+    {
+        validate_state("Buffer::as_vector");
+        throw_if(allocation_device != Device::CPU,
+                 "Buffer::as_vector requires host storage.");
+        throw_if(allocated_bytes % Index(sizeof(float)) != 0,
+                 "Buffer::as_vector requires a whole number of floats.");
+        return ConstVectorMap(static_cast<const float*>(pointer), size_in_floats());
+    }
+
+    void resize_bytes(Index byte_count, Device new_device)
+    {
+        validate_state("Buffer::resize_bytes");
+        validate_size_and_device(byte_count, new_device, "Buffer::resize_bytes");
+        if (owns_allocation
+            && byte_count == allocated_bytes
+            && allocation_device == new_device) return;
+
+        const bool changes_cuda_allocation =
+            (allocation_device == Device::CUDA && pointer)
+            || (new_device == Device::CUDA && byte_count > 0);
+        throw_if(changes_cuda_allocation && device::cuda_allocation_growth_forbidden(),
+                 "CUDA buffer resize from {} to {} bytes while CUDA allocation growth is forbidden "
+                        "(warmup incomplete before CUDA graph capture).",
+                        allocated_bytes,
+                        byte_count);
+
+        Buffer replacement(new_device);
+        if (byte_count > 0)
+        {
+            replacement.pointer = device::allocate(new_device, byte_count);
+            replacement.allocated_bytes = byte_count;
+        }
+
+        swap(replacement);
+    }
+
+    void set_view(void* external_data, Index byte_count, Device view_device)
+    {
+        validate_state("Buffer::set_view");
+        validate_size_and_device(byte_count, view_device, "Buffer::set_view");
+        throw_if((external_data == nullptr) != (byte_count == 0),
+                 "Buffer::set_view requires null data exactly when the view is empty.");
+        throw_if(owns_allocation && pointer && external_data == pointer,
+                 "Buffer::set_view cannot alias the buffer's owned allocation.");
+
+        Buffer replacement(view_device);
+        replacement.pointer = external_data;
+        replacement.allocated_bytes = byte_count;
+        replacement.owns_allocation = false;
+        swap(replacement);
+    }
+
+    void grow_to(Index minimum_bytes)
+    {
+        validate_state("Buffer::grow_to");
+        throw_if(minimum_bytes < 0, "Buffer::grow_to size cannot be negative.");
+        if (minimum_bytes > allocated_bytes)
+            resize_bytes(minimum_bytes, allocation_device);
+    }
+
+    template<typename T>
+    T* ensure(Index element_count)
+    {
+        grow_to(detail::checked_index_multiply(element_count, Index(sizeof(T)),
+                                               "Buffer::ensure"));
+        return as<T>();
+    }
+
+    void setZero()
+    {
+        validate_state("Buffer::setZero");
+        device::set_zero(pointer, allocated_bytes, allocation_device);
+    }
+
+    void migrate_to(Device target_device, cudaStream_t stream = nullptr)
+    {
+        validate_state("Buffer::migrate_to");
+        validate_device(target_device, "Buffer::migrate_to");
+        if (allocation_device == target_device) return;
+
+        Buffer target_buffer(target_device);
+        if (!pointer)
+        {
+            swap(target_buffer);
+            return;
+        }
+
+        target_buffer.resize_bytes(allocated_bytes, target_device);
+        device::copy_async(target_buffer.pointer, pointer, allocated_bytes,
+                           allocation_device, target_device, stream);
+        if (stream) device::synchronize(stream);
+
+        swap(target_buffer);
+    }
+
     void swap(Buffer& other) noexcept
     {
         // std:: is required: the member `swap` hides the namespace-scope one.
-        std::swap(data, other.data);
-        std::swap(bytes, other.bytes);
-        std::swap(device_type, other.device_type);
-        std::swap(owns, other.owns);
+        std::swap(pointer, other.pointer);
+        std::swap(allocated_bytes, other.allocated_bytes);
+        std::swap(allocation_device, other.allocation_device);
+        std::swap(owns_allocation, other.owns_allocation);
     }
 
 private:
+    static void validate_device(Device device, string_view operation)
+    {
+        throw_if(device == Device::Auto, "{} requires a concrete device.", operation);
+    }
+
+    static void validate_size_and_device(Index byte_count,
+                                         Device device,
+                                         string_view operation)
+    {
+        throw_if(byte_count < 0, "{} size cannot be negative.", operation);
+        validate_device(device, operation);
+    }
+
+    void validate_state(string_view operation) const
+    {
+        validate_size_and_device(allocated_bytes, allocation_device, operation);
+        throw_if((pointer == nullptr) != (allocated_bytes == 0),
+                 "{} found inconsistent data and byte count.", operation);
+    }
+
     void free_buffer()
     {
-        if (data && owns) device::deallocate(device_type, data, bytes);
-        data = nullptr;
-        bytes = 0;
-        owns = true;
+        if (pointer && owns_allocation)
+            device::deallocate(allocation_device, pointer, allocated_bytes);
+        pointer = nullptr;
+        allocated_bytes = 0;
+        owns_allocation = true;
     }
+
+    void* pointer = nullptr;
+    Index allocated_bytes = 0;
+    Device allocation_device = Device::CPU;
+    bool owns_allocation = true;
 };
 
 struct TensorView
 {
-    void* data = nullptr;
-
-    Shape shape;
-
-    Type type = Type::FP32;
-    Device device = Device::CPU;TensorView
-
-    (void* new_data = nullptr, const Shape& new_shape = {},
-               Type new_dtype = Type::FP32,
+    TensorView(void* new_data = nullptr,
+               const Shape& new_shape = {},
+               Type new_type = Type::FP32,
                Device new_device = Device::CPU) noexcept
-        : data(new_data), shape(new_shape), type(new_dtype), device(new_device) {}
+        : data(new_data),
+          shape(new_shape),
+          type(new_type),
+          device(new_device) {}
 
-    Index get_rank() const noexcept { return shape.rank; }
+    void* get_data() const noexcept { return data; }
+    const Shape& get_shape() const noexcept { return shape; }
+    Type get_type() const noexcept { return type; }
+    Device get_device() const noexcept { return device; }
+    Index get_rank() const noexcept { return Index(shape.get_rank()); }
 
-    Index size() const noexcept { return shape.size(); }
+    Index size() const { return shape.size(); }
 
-    Index byte_size() const { return size() * type_bytes(type); }
+    Index byte_size() const
+    {
+        return detail::checked_index_multiply(size(), type_bytes(type),
+                                              "TensorView::byte_size");
+    }
 
     bool empty() const noexcept { return shape.empty(); }
     bool is_cuda() const noexcept { return device == Device::CUDA; }
@@ -449,12 +602,31 @@ struct TensorView
     }
 
     TensorView reshape(const Shape& new_shape) const
-    { return TensorView(data, new_shape, type, device); }
+    {
+        const Index current_size = size();
+        const Index reshaped_size = new_shape.size();
+        throw_if(reshaped_size != current_size,
+                 "TensorView::reshape cannot change the element count from {} to {}.",
+                 current_size, reshaped_size);
+        return TensorView(data, new_shape, type, device);
+    }
+
+    TensorView reshape_prefix(const Shape& new_shape) const
+    {
+        const Index current_size = size();
+        const Index reshaped_size = new_shape.size();
+        throw_if(reshaped_size > current_size,
+                 "TensorView::reshape_prefix cannot grow the element count from {} to {}.",
+                 current_size, reshaped_size);
+        return TensorView(data, new_shape, type, device);
+    }
 
     MatrixMap as_matrix() const
     {
-        throw_if(shape.rank < 2, "TensorView::as_matrix requires rank >= 2.");
-        throw_if(shape.size() > 0 && !data, "TensorView::as_matrix requires non-null data.");
+        require_host_fp32("TensorView::as_matrix");
+        throw_if(shape.get_rank() < 2, "TensorView::as_matrix requires rank >= 2.");
+        throw_if(shape.size() > 0 && !data,
+                 "TensorView::as_matrix requires non-null data.");
 
         const Index row_count = shape[0];
         const Index column_count = row_count == 0 ? 0 : shape.size() / row_count;
@@ -463,13 +635,18 @@ struct TensorView
 
     MatrixMap as_matrix(Index matrix_index) const
     {
-        throw_if(shape.rank < 2, "TensorView::as_matrix(matrix_index) requires rank >= 2.");
-        throw_if(shape.size() > 0 && !data, "TensorView::as_matrix(matrix_index) requires non-null data.");
+        require_host_fp32("TensorView::as_matrix(matrix_index)");
+        throw_if(shape.get_rank() < 2,
+                 "TensorView::as_matrix(matrix_index) requires rank >= 2.");
+        throw_if(shape.size() > 0 && !data,
+                 "TensorView::as_matrix(matrix_index) requires non-null data.");
 
-        const Index row_count = shape[shape.rank - 2];
-        const Index column_count = shape[shape.rank - 1];
+        const Index row_count = shape[shape.get_rank() - 2];
+        const Index column_count = shape[shape.get_rank() - 1];
         const Index matrix_element_count = row_count * column_count;
-        const Index matrix_count = matrix_element_count == 0 ? 0 : shape.size() / matrix_element_count;
+        const Index matrix_count = matrix_element_count == 0
+            ? 0
+            : shape.size() / matrix_element_count;
 
         throw_if(matrix_index < 0 || matrix_index >= matrix_count,
                  "TensorView::as_matrix(matrix_index): matrix index {} out of range [0, {}).",
@@ -482,66 +659,92 @@ struct TensorView
 
     MatrixMap as_flat_matrix() const
     {
-        throw_if(shape.rank < 1, "TensorView::as_flat_matrix requires rank >= 1.");
-        throw_if(shape.size() > 0 && !data, "TensorView::as_flat_matrix requires non-null data.");
+        require_host_fp32("TensorView::as_flat_matrix");
+        throw_if(shape.get_rank() < 1, "TensorView::as_flat_matrix requires rank >= 1.");
+        throw_if(shape.size() > 0 && !data,
+                 "TensorView::as_flat_matrix requires non-null data.");
 
-        const Index column_count = shape[shape.rank - 1];
+        const Index column_count = shape[shape.get_rank() - 1];
         const Index row_count = column_count == 0 ? 0 : shape.size() / column_count;
         return MatrixMap(reinterpret_cast<float*>(data), row_count, column_count);
     }
 
     VectorMap as_vector() const
     {
-        throw_if(shape.size() > 0 && !data, "TensorView::as_vector requires non-null data.");
+        require_host_fp32("TensorView::as_vector");
+        throw_if(shape.size() > 0 && !data,
+                 "TensorView::as_vector requires non-null data.");
         return VectorMap(reinterpret_cast<float*>(data), shape.size());
     }
 
     template<int Rank>
     TensorMapR<Rank> as_tensor() const
     {
-        throw_if(shape.rank != Rank,
-                 "TensorView::as_tensor requires rank {}, got {}.", Rank, shape.rank);
-        throw_if(shape.size() > 0 && !data, "TensorView::as_tensor requires non-null data.");
+        require_host_fp32("TensorView::as_tensor");
+        throw_if(shape.get_rank() != Rank,
+                 "TensorView::as_tensor requires rank {}, got {}.", Rank, shape.get_rank());
+        throw_if(shape.size() > 0 && !data,
+                 "TensorView::as_tensor requires non-null data.");
 
         Eigen::array<Index, Rank> dims;
-        copy_n(shape.dims, Rank, dims.begin());
+        copy_n(shape.begin(), Rank, dims.begin());
         return TensorMapR<Rank>(reinterpret_cast<float*>(data), dims);
     }
 
     template<int Rank>
     TensorMapR<Rank> as_tensor(Index batch_index) const
     {
-        throw_if(shape.rank != Rank + 1,
+        require_host_fp32("TensorView::as_tensor(batch_index)");
+        throw_if(shape.get_rank() != Rank + 1,
                  "TensorView::as_tensor(batch_index) requires rank {}, got {}.",
-                        Rank + 1, shape.rank);
+                        Rank + 1, shape.get_rank());
         throw_if(batch_index < 0 || batch_index >= shape[0],
                  "TensorView::as_tensor(batch_index): batch index {} out of range [0, {}).",
                         batch_index, shape[0]);
-        throw_if(shape.size() > 0 && !data, "TensorView::as_tensor(batch_index) requires non-null data.");
+        throw_if(shape.size() > 0 && !data,
+                 "TensorView::as_tensor(batch_index) requires non-null data.");
 
         Eigen::array<Index, Rank> dims;
         for (int i = 0; i < Rank; ++i) dims[i] = shape[i + 1];
         const Index slice_element_count = shape.size() / shape[0];
-        return TensorMapR<Rank>(reinterpret_cast<float*>(data) + batch_index * slice_element_count, dims);
+        return TensorMapR<Rank>(reinterpret_cast<float*>(data)
+                               + batch_index * slice_element_count,
+                               dims);
     }
 
     void fill(float) const;
     void setZero() const { fill(0.0f); }
     void set_zero_async() const;
 
-    mutable shared_ptr<cudnnTensorStruct> descriptor_handle = nullptr;
-
     cudnnTensorDescriptor_t get_descriptor() const;
 
 private:
+    void require_host_fp32(string_view accessor) const
+    {
+        throw_if(device != Device::CPU || type != Type::FP32,
+                 "{} requires CPU FP32 storage.", accessor);
+    }
+
     void set_descriptor(const Shape&) const;
 
+    void* data = nullptr;
+    Shape shape;
+    Type type = Type::FP32;
+    Device device = Device::CPU;
+    mutable shared_ptr<cudnnTensorStruct> descriptor_handle;
 };
 
-inline TensorView& slot_or(vector<TensorView>& views, const vector<size_t>& slot_indices, size_t i)
+inline TensorView& slot_or(vector<TensorView>& views,
+                           const vector<size_t>& slot_indices,
+                           size_t i,
+                           TensorView& fallback)
 {
-    static TensorView empty;
-    return i < slot_indices.size() ? views[slot_indices[i]] : empty;
+    if (i >= slot_indices.size()) return fallback;
+
+    throw_if(slot_indices[i] >= views.size(),
+             "slot_or: slot index {} is out of range for {} views.",
+             slot_indices[i], views.size());
+    return views[slot_indices[i]];
 }
 
 template<typename T, size_t N>
@@ -569,7 +772,7 @@ size_t hash_combine(const Vs&... values)
 inline void TensorView::set_zero_async() const
 {
     if (!data || byte_size() == 0) return;
-    device::set_zero_async(data, byte_size(), Backend::get_compute_stream());
+    opennn::device::set_zero_async(data, byte_size(), Backend::get_compute_stream());
 }
 
 inline const float one = 1.0f;

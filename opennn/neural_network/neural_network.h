@@ -116,7 +116,7 @@ public:
     // This is >= get_parameters_number(), which is the logical sum over layers;
     // index buffers with this one, count parameters with that one.
     Index get_parameters_buffer_size() const noexcept { return parameters.size_in_floats(); }
-    Device get_parameters_device() const noexcept { return parameters.device_type; }
+    Device get_parameters_device() const noexcept { return parameters.get_device(); }
     float* get_states_data() { return states.as<float>(); }
     const float* get_states_data() const noexcept { return states.as<float>(); }
     Index get_states_buffer_size() const noexcept { return states.size_in_floats(); }
@@ -230,7 +230,7 @@ public:
 
     bfloat16* get_parameters_bf16_mirror_data()
     {
-        return config.training_type == Type::BF16 && parameters.owns
+        return config.training_type == Type::BF16 && parameters.owns_memory()
             ? parameters_bf16_mirror.as<bfloat16>()
             : nullptr;
     }
@@ -284,7 +284,7 @@ private:
     struct HostParametersGuard
     {
         explicit HostParametersGuard(NeuralNetwork& n)
-            : network(n), was_on_device(n.parameters.device_type == Device::CUDA)
+            : network(n), was_on_device(n.parameters.get_device() == Device::CUDA)
         {
             if (was_on_device) network.copy_parameters_host();
         }
@@ -301,7 +301,7 @@ private:
     struct HostStatesGuard
     {
         explicit HostStatesGuard(NeuralNetwork& n)
-            : HostStatesGuard(n, n.states.device_type == Device::CUDA) {}
+            : HostStatesGuard(n, n.states.get_device() == Device::CUDA) {}
 
         HostStatesGuard(NeuralNetwork& n, bool stage)
             : network(n), was_on_device(stage)

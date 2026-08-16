@@ -56,9 +56,9 @@ TEST_F(FlattenLayerTest, ForwardPropagate)
     neural_network.forward_propagate(input_views, forward_propagation, false);
 
     TensorView output_view = forward_propagation.get_outputs();
-    const Shape& output_dims = output_view.shape;
+    const Shape& output_dims = output_view.get_shape();
 
-    ASSERT_EQ(output_dims.rank, 2);
+    ASSERT_EQ(output_dims.get_rank(), 2);
     EXPECT_EQ(output_dims[0], batch_size);
     EXPECT_EQ(output_dims[1], height * width * channels);
 

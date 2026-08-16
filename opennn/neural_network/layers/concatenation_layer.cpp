@@ -29,14 +29,14 @@ void ConcatenationOperator::forward_propagate(ForwardPropagation& forward_propag
     throw_if(inputs.size() != input_channels.size(),
              "Concatenation: input count mismatch.");
 
-    const Index total_channels = output.shape[3];
+    const Index total_channels = output.get_shape()[3];
 
 #ifdef OPENNN_HAS_CUDA
     if (output.is_cuda())
     {
-        const Index batch_size = output.shape[0];
-        const Index height     = inputs[0].shape[1];
-        const Index width      = inputs[0].shape[2];
+        const Index batch_size = output.get_shape()[0];
+        const Index height     = inputs[0].get_shape()[1];
+        const Index width      = inputs[0].get_shape()[2];
         Index ch_offset = 0;
         for (size_t i = 0; i < inputs.size(); ++i)
         {
@@ -59,7 +59,7 @@ void ConcatenationOperator::forward_propagate(ForwardPropagation& forward_propag
         Index ch_offset = 0;
         for (size_t i = 0; i < inputs.size(); ++i)
         {
-            const Index in_c = inputs[i].shape[3];
+            const Index in_c = inputs[i].get_shape()[3];
             memcpy(out_row + ch_offset, inputs[i].as<float>() + pixel * in_c, in_c * sizeof(float));
             ch_offset += in_c;
         }
@@ -78,14 +78,14 @@ void ConcatenationOperator::back_propagate(ForwardPropagation&, BackPropagation&
 
     if (!needs_input_delta) return;
 
-    const Index total_channels = output_delta.shape[3];
+    const Index total_channels = output_delta.get_shape()[3];
 
 #ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
     {
-        const Index batch_size = output_delta.shape[0];
-        const Index height     = output_delta.shape[1];
-        const Index width      = output_delta.shape[2];
+        const Index batch_size = output_delta.get_shape()[0];
+        const Index height     = output_delta.get_shape()[1];
+        const Index width      = output_delta.get_shape()[2];
         Index ch_offset = 0;
         for (size_t i = 0; i < input_channels.size(); ++i)
         {

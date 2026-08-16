@@ -113,7 +113,7 @@ void ForwardPropagation::stage_position(cudaStream_t stream)
     }
 
     *static_cast<int*>(position_pinned) = int(past_length);
-    device::copy_async(position_device.data, position_pinned, Index(sizeof(int)),
+    device::copy_async(position_device.data(), position_pinned, Index(sizeof(int)),
                        device::CopyKind::HostToDevice, stream);
 #else
     (void)stream;
@@ -215,10 +215,10 @@ void ForwardPropagation::set(
         {
             for(TensorSpec& spec : layer_specs)
             {
-                if(spec.shape.rank >= 2
+                if(spec.shape.get_rank() >= 2
                    && spec.shape[1] == model_sequence_capacity)
                 {
-                    spec.shape[1] = sequence_capacity;
+                    spec.shape.set_dimension(1, sequence_capacity);
                 }
             }
         }
@@ -257,12 +257,12 @@ void ForwardPropagation::set(
         TensorSpec& output_spec =
             forward_specs[size_t(final_output_layer)].back();
 
-        throw_if(output_spec.shape.rank < 2
+        throw_if(output_spec.shape.get_rank() < 2
                  || output_spec.shape[1] != sequence_capacity,
                  "ForwardPropagation::set: final output does not expose a "
                  "sequence dimension compatible with compact inference.");
 
-        output_spec.shape[1] = final_output_capacity;
+        output_spec.shape.set_dimension(1, final_output_capacity);
     }
 
     const bool is_training =
@@ -694,14 +694,14 @@ void ForwardPropagation::set(
         activation_pool_bytes + transient_block_bytes;
 
     if(external_storage
-       && external_storage->device_type
+       && external_storage->get_device()
               == neural_network->get_device()
-       && external_storage->bytes >= total_bytes)
+       && external_storage->byte_size() >= total_bytes)
     {
         arena.set_view(
-            external_storage->data,
+            external_storage->data(),
             total_bytes,
-            external_storage->device_type);
+            external_storage->get_device());
     }
     else
     {
@@ -713,9 +713,9 @@ void ForwardPropagation::set(
     arena.setZero();
 
     memory_debug::record(
-        arena.owns ? "forward" : "forward.aliased",
+        arena.owns_memory() ? "forward" : "forward.aliased",
         "ForwardPropagation::arena",
-        arena.owns ? total_bytes : 0,
+        arena.owns_memory() ? total_bytes : 0,
         format("batch={},mode={}",
                batch_size,
                is_training ? "training" : "inference"));
@@ -846,7 +846,7 @@ Index ForwardPropagation::bind_slots(
                      i, j);
 
             slots[i][j + 1] =
-                TensorView(arena_base + offset, shape, dtype, arena.device_type);
+                TensorView(arena_base + offset, shape, dtype, arena.get_device());
 
             if (!transient) layer_logical_bytes += get_aligned_bytes(specs[j]);
         }
@@ -882,8 +882,8 @@ Index ForwardPropagation::bind_slots(
 
             TensorView view = slots[resolved].back();
             if (!view.empty())
-                view.shape = Shape{view.shape[0]}
-                    .append(layers[source_layer]->get_output_shape());
+                view = view.reshape(Shape{view.get_shape()[0]}
+                    .append(layers[source_layer]->get_output_shape()));
             inputs[i][j] = view;
         }
     }
@@ -918,8 +918,12 @@ void ForwardPropagation::set_active_sequence_length(Index length)
     const auto shrink_sequence = [this, length](TensorView& view)
     {
         if (!view.empty() && view.get_rank() >= 2
-            && view.shape[1] == sequence_capacity)
-            view.shape[1] = length;
+            && view.get_shape()[1] == sequence_capacity)
+        {
+            Shape active_shape = view.get_shape();
+            active_shape.set_dimension(1, length);
+            view = view.reshape_prefix(active_shape);
+        }
     };
 
     for (auto& layer_slots : slots)
@@ -964,32 +968,41 @@ void ForwardPropagation::set_output_sequence_window(Index start, Index count)
              "ForwardPropagation::set_output_sequence_window: final layer "
              "input is not sequence-shaped.");
 
+    const Shape& capacity_shape = capacity_input.get_shape();
     const Index row_bytes =
-        capacity_input.shape.size() / capacity_input.shape[0]
-        / capacity_input.shape[1] * type_bytes(capacity_input.type);
+        capacity_shape.size() / capacity_shape[0] / capacity_shape[1]
+        * type_bytes(capacity_input.get_type());
 
     OutputWindow& window = *output_window;
     window.start = start;
     window.count = count;
 
-    input = capacity_input;
-    input.shape[1] = count;
+    Shape window_shape = capacity_shape;
+    window_shape.set_dimension(1, count);
 
     if (batch_size == 1)
     {
-        window.input.resize_bytes(0, capacity_input.device);
-        input.data = static_cast<char*>(capacity_input.data) + start * row_bytes;
+        window.input.resize_bytes(0, capacity_input.get_device());
+        input = TensorView(static_cast<char*>(capacity_input.get_data()) + start * row_bytes,
+                           window_shape,
+                           capacity_input.get_type(),
+                           capacity_input.get_device());
     }
     else
     {
         window.input.resize_bytes(batch_size * count * row_bytes,
-                                  capacity_input.device);
-        input.data = window.input.data;
+                                  capacity_input.get_device());
+        input = TensorView(window.input.data(),
+                           window_shape,
+                           capacity_input.get_type(),
+                           capacity_input.get_device());
     }
 
     TensorView& output = slots[size_t(final_output_layer)].back();
-    output = capacity_slots[size_t(final_output_layer)].back();
-    output.shape[1] = count;
+    const TensorView& capacity_output = capacity_slots[size_t(final_output_layer)].back();
+    Shape output_shape = capacity_output.get_shape();
+    output_shape.set_dimension(1, count);
+    output = capacity_output.reshape_prefix(output_shape);
 }
 
 void ForwardPropagation::gather_output_window()
@@ -1001,18 +1014,19 @@ void ForwardPropagation::gather_output_window()
     const TensorView& capacity_input =
         capacity_inputs[size_t(final_output_layer)].front();
 
-    const Index sequence = capacity_input.shape[1];
-    const Index row_bytes = capacity_input.shape.size() / capacity_input.shape[0]
-                          / sequence * type_bytes(capacity_input.type);
+    const Shape& capacity_shape = capacity_input.get_shape();
+    const Index sequence = capacity_shape[1];
+    const Index row_bytes = capacity_shape.size() / capacity_shape[0]
+                          / sequence * type_bytes(capacity_input.get_type());
     const Index window_bytes = window.count * row_bytes;
 
     for (Index sample = 0; sample < batch_size; ++sample)
         device::copy_async(
-            static_cast<char*>(window.input.data) + sample * window_bytes,
-            static_cast<const char*>(capacity_input.data)
+            static_cast<char*>(window.input.data()) + sample * window_bytes,
+            static_cast<const char*>(capacity_input.get_data())
                 + (sample * sequence + window.start) * row_bytes,
             window_bytes,
-            capacity_input.device, capacity_input.device,
+            capacity_input.get_device(), capacity_input.get_device(),
             device::get_compute_stream());
 }
 
@@ -1030,8 +1044,8 @@ TensorView ForwardPropagation::get_layer_outputs(const Index layer) const
 
     TensorView input = inputs[size_t(layer)].front();
     if (!input.empty())
-        input.shape = Shape{input.shape[0]}.append(
-            neural_network->get_layers()[size_t(layer)]->get_output_shape());
+        input = input.reshape(Shape{input.get_shape()[0]}.append(
+            neural_network->get_layers()[size_t(layer)]->get_output_shape()));
     return input;
 }
 
@@ -1082,7 +1096,7 @@ void ForwardPropagation::inherit_valid_lengths(const size_t layer)
     const Shape output_shape = layers[layer]->get_output_shape();
     const Shape source_shape = layers[size_t(source)]->get_output_shape();
 
-    if (output_shape.rank < 2 || source_shape.rank < 2) return;
+    if (output_shape.get_rank() < 2 || source_shape.get_rank() < 2) return;
     if (output_shape[0] != source_shape[0]) return;
 
     valid_lengths[layer] = *source_lengths;
@@ -1117,7 +1131,7 @@ void ForwardPropagation::prepare_cuda_graph_workspaces()
     for(size_t i = 0; i < inference_graph_workspaces.size(); ++i)
     {
         Buffer& buffer = inference_graph_workspaces[i];
-        const Index growth = inference_graph_workspace_requirements[i] - buffer.bytes;
+        const Index growth = inference_graph_workspace_requirements[i] - buffer.byte_size();
 
         if(growth <= 0) continue;
 
@@ -1133,7 +1147,8 @@ void ForwardPropagation::prepare_cuda_graph_workspaces()
 bool ForwardPropagation::cuda_graph_workspaces_need_growth() const noexcept
 {
     for (size_t i = 0; i < inference_graph_workspaces.size(); ++i)
-        if (inference_graph_workspace_requirements[i] > inference_graph_workspaces[i].bytes)
+        if (inference_graph_workspace_requirements[i]
+            > inference_graph_workspaces[i].byte_size())
             return true;
 
     return false;
@@ -1145,8 +1160,8 @@ ForwardPropagation::get_cuda_graph_workspace_views() const noexcept
     device::GraphWorkspaceViews views{};
 
     for (size_t i = 0; i < views.size(); ++i)
-        views[i] = {inference_graph_workspaces[i].data,
-                    inference_graph_workspaces[i].bytes};
+        views[i] = {inference_graph_workspaces[i].data(),
+                    inference_graph_workspaces[i].byte_size()};
 
     return views;
 }

@@ -359,7 +359,7 @@ void ImageDataset::read_images()
 
     if (!requested_input_shape.empty())
     {
-        throw_if(requested_input_shape.rank != 3,
+        throw_if(requested_input_shape.get_rank() != 3,
                  "ImageDataset: requested input shape must be {height, width, channels}.");
 
         if (requested_input_shape[0] > 0) height   = requested_input_shape[0];

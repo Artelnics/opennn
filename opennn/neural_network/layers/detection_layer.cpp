@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   D E T E C T I O N   L A Y E R   C L A S S
@@ -25,7 +25,7 @@ namespace opennn
 
 void DetectionOperator::set(const Shape& input_shape, const vector<array<float, 2>>& new_anchors)
 {
-    throw_if(input_shape.rank != 3,
+    throw_if(input_shape.get_rank() != 3,
              "DetectionOperator: input shape must be rank 3.");
     throw_if(new_anchors.empty(),
              "DetectionOperator: anchors are empty.");
@@ -59,7 +59,7 @@ void DetectionOperator::forward_propagate(ForwardPropagation& forward_propagatio
 
         const Index anchor_bytes = Index(anchors.size() * 2 * sizeof(float));
 
-        if(device_anchors.bytes < anchor_bytes)
+        if(device_anchors.byte_size() < anchor_bytes)
         {
             device_anchors.resize_bytes(anchor_bytes, Device::CUDA);
 
@@ -74,11 +74,11 @@ void DetectionOperator::forward_propagate(ForwardPropagation& forward_propagatio
                             device::get_compute_stream());
         }
 
-        detection_forward_cuda(input.shape[0],
+        detection_forward_cuda(input.get_shape()[0],
                                grid_size,
                                boxes_per_cell,
                                classes_number,
-                               input.shape[3],
+                               input.get_shape()[3],
                                static_cast<int>(class_activation),
                                device_anchors.as<float>(),
                                input.as<float>(),
@@ -89,8 +89,8 @@ void DetectionOperator::forward_propagate(ForwardPropagation& forward_propagatio
 
 #endif
 
-    const Index batch_size = input.shape[0];
-    const Index channels = input.shape[3];
+    const Index batch_size = input.get_shape()[0];
+    const Index channels = input.get_shape()[3];
     const Index values_per_box = 5 + classes_number;
 
     const float* src = input.as<float>();
@@ -160,14 +160,14 @@ void DetectionOperator::back_propagate(ForwardPropagation& forward_propagation, 
 #ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
     {
-        detection_backward_cuda(output.shape[0], grid_size, boxes_per_cell, classes_number,
-                                output.shape[3], static_cast<int>(class_activation),
+        detection_backward_cuda(output.get_shape()[0], grid_size, boxes_per_cell, classes_number,
+                                output.get_shape()[3], static_cast<int>(class_activation),
                                 output.as<float>(), output_delta.as<float>(), input_delta.as<float>());
         return;
     }
 #endif
 
-    const Index batch_size = output.shape[0];
+    const Index batch_size = output.get_shape()[0];
     const Index values_per_box = 5 + classes_number;
 
     const float* out = output.as<float>();
@@ -179,7 +179,7 @@ void DetectionOperator::back_propagate(ForwardPropagation& forward_propagation, 
     #pragma omp parallel for
     for (Index cell_index = 0; cell_index < cells_count; ++cell_index)
     {
-        const Index cell = cell_index * output.shape[3];
+        const Index cell = cell_index * output.get_shape()[3];
 
         for (Index box = 0; box < boxes_per_cell; ++box)
         {

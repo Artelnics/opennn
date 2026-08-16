@@ -65,7 +65,7 @@ void dropout_backward(TensorView& delta, const Buffer& mask, float rate)
 static void dropout_forward_gpu(TensorView& output, Buffer& mask, float rate)
 {
     const Index element_count = output.size();
-    if (mask.device_type != Device::CUDA || mask.bytes < element_count)
+    if (mask.get_device() != Device::CUDA || mask.byte_size() < element_count)
         mask.resize_bytes(element_count, Device::CUDA);
 
     const unsigned long long seed = static_cast<unsigned long long>(random_integer(0, 1 << 30));

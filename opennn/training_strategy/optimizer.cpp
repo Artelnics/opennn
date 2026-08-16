@@ -45,7 +45,7 @@ namespace opennn
 static void clip_gradient_norm_device(Buffer& gradient, Index gradient_size, float max_norm)
 {
     thread_local Buffer squared_norm_device(Device::CUDA);
-    if (!squared_norm_device.data)
+    if (!squared_norm_device.data())
         squared_norm_device.grow_to(Index(sizeof(float)));
     float* const squared_norm_ptr = squared_norm_device.as<float>();
 
@@ -135,7 +135,7 @@ struct DeviceEpochMetricSums
         if (!device::is_cuda_build()) return;
 
         values.grow_to(2 * Index(sizeof(float)));
-        device::set_zero_async(values.data, 2 * Index(sizeof(float)),
+        device::set_zero_async(values.data(), 2 * Index(sizeof(float)),
                                Backend::get_compute_stream());
     }
 
@@ -149,7 +149,7 @@ struct DeviceEpochMetricSums
 
         float host[2] = {0.0f, 0.0f};
         const cudaStream_t stream = Backend::get_compute_stream();
-        device::copy_async(host, values.data, Index(sizeof(host)),
+        device::copy_async(host, values.data(), Index(sizeof(host)),
                            device::CopyKind::DeviceToHost,
                            stream);
         device::synchronize(stream);
@@ -657,7 +657,7 @@ void Optimizer::warmup_device_training(
     {
         parameters_snapshot.resize_bytes(parameters_bytes, Device::CPU);
 
-        device::copy_async(parameters_snapshot.data,
+        device::copy_async(parameters_snapshot.data(),
                            neural_network->get_parameters_data(),
                            parameters_bytes,
                            device::CopyKind::DeviceToHost,
@@ -668,7 +668,7 @@ void Optimizer::warmup_device_training(
     {
         states_snapshot.resize_bytes(states_bytes, Device::CPU);
 
-        device::copy_async(states_snapshot.data,
+        device::copy_async(states_snapshot.data(),
                            neural_network->get_states_data(),
                            states_bytes,
                            device::CopyKind::DeviceToHost,
@@ -687,7 +687,7 @@ void Optimizer::warmup_device_training(
         if(parameters_bytes > 0)
         {
             device::copy_async(neural_network->get_parameters_data(),
-                               parameters_snapshot.data,
+                               parameters_snapshot.data(),
                                parameters_bytes,
                                device::CopyKind::HostToDevice,
                                stream);
@@ -698,7 +698,7 @@ void Optimizer::warmup_device_training(
         if(states_bytes > 0)
         {
             device::copy_async(neural_network->get_states_data(),
-                               states_snapshot.data,
+                               states_snapshot.data(),
                                states_bytes,
                                device::CopyKind::HostToDevice,
                                stream);
@@ -1376,7 +1376,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
     const Index gradient_size = gradient.size_in_floats();
     if (max_norm <= 0.0f || gradient_size <= 0) return;
 
-    if (gradient.device_type == Device::CUDA)
+    if (gradient.get_device() == Device::CUDA)
         clip_gradient_norm_device(gradient, gradient_size, max_norm);
     else
     {
@@ -1447,8 +1447,8 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         const auto copy_section = [&](BatchSlot& section)
         {
             const Index values_count = section.shape.size();
-            if (!section.host || !section.buffer.data || values_count <= 0) return;
-            device::copy_async(section.buffer.data, section.host,
+            if (!section.host || !section.buffer.data() || values_count <= 0) return;
+            device::copy_async(section.buffer.data(), section.host,
                                values_count * Index(sizeof(float)),
                                device::CopyKind::HostToDevice, stream);
         };

@@ -335,8 +335,8 @@ TEST(NeuralNetworkTest, PreScaledInputBoundaryIsPlannedOnce)
     network.forward_propagate(input_views, raw_training, true);
     network.forward_propagate(input_views, preprocessed_inference, false);
 
-    EXPECT_NE(raw_training.inputs[1][0].data, inputs.data());
-    EXPECT_EQ(preprocessed_inference.inputs[1][0].data, inputs.data());
+    EXPECT_NE(raw_training.inputs[1][0].get_data(), inputs.data());
+    EXPECT_EQ(preprocessed_inference.inputs[1][0].get_data(), inputs.data());
 }
 
 TEST(NeuralNetworkTest, PreScaledBoundaryLeavesTextInputPipelineActive)
@@ -368,8 +368,8 @@ TEST(NeuralNetworkTest, PreScaledInputIsOutputWhenEveryLayerIsSkipped)
     network.forward_propagate(input_views, propagation, false);
 
     const TensorView outputs = propagation.get_outputs();
-    ASSERT_EQ(outputs.data, inputs.data());
-    EXPECT_EQ(outputs.shape, (Shape{2, 1}));
+    ASSERT_EQ(outputs.get_data(), inputs.data());
+    EXPECT_EQ(outputs.get_shape(), (Shape{2, 1}));
 }
 
 TEST(NeuralNetworkTest, SerializesNetworkTask)

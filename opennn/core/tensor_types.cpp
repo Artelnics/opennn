@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T E N S O R   T Y P E S
@@ -26,7 +26,7 @@ cudnnTensorDescriptor_t TensorView::get_descriptor() const
 void TensorView::set_descriptor(const Shape& descriptor_shape) const
 {
     int batch_count = 1, channels = 1, height = 1, width = 1;
-    const size_t rank = descriptor_shape.rank;
+    const size_t rank = descriptor_shape.get_rank();
     if (rank >= 1) channels    = static_cast<int>(descriptor_shape[rank - 1]);
     if (rank >= 2) batch_count = static_cast<int>(descriptor_shape[0]);
     if (rank >= 3) width       = static_cast<int>(descriptor_shape[rank - 2]);
@@ -49,14 +49,15 @@ void TensorView::set_descriptor(const Shape& descriptor_shape) const
         });
     }
 
-    CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, to_cudnn(type),
+    CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC,
+                                           to_cudnn(type),
                                            batch_count, channels, height, width));
 }
 
 static bool uses_cuda_fill(const TensorView& view)
 {
     cudaPointerAttributes attr{};
-    const cudaError_t err = cudaPointerGetAttributes(&attr, view.data);
+    const cudaError_t err = cudaPointerGetAttributes(&attr, view.get_data());
     const bool gpu_data = (err == cudaSuccess) && (attr.type == cudaMemoryTypeDevice);
     if (err != cudaSuccess) cudaGetLastError();
     return gpu_data;
@@ -66,12 +67,12 @@ static void fill_cuda(const TensorView& view, float value)
 {
     if (value == 0.0f)
     {
-        device::set_zero(view.data, view.byte_size(), Device::CUDA);
+        device::set_zero(view.get_data(), view.byte_size(), Device::CUDA);
         return;
     }
 
     CHECK_CUDNN(cudnnSetTensor(Backend::get_cudnn_handle(),
-                               view.get_descriptor(), view.data, &value));
+                               view.get_descriptor(), view.get_data(), &value));
 }
 
 #else
@@ -103,13 +104,13 @@ void TensorView::fill(float value) const
     }
 
     assert(type == Type::FP32);
-    float* data_pointer = static_cast<float*>(data);
-    std::fill(data_pointer, data_pointer + size(), value);
+    float* values = static_cast<float*>(data);
+    std::fill(values, values + size(), value);
 }
 
 string shape_to_string(const Shape& shape, const string& separator)
 {
-    const Index size = shape.rank;
+    const Index size = shape.get_rank();
 
     ostringstream buffer;
 

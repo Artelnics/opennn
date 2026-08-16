@@ -59,8 +59,8 @@ void rotary_build_tables(TensorView& cos_table, TensorView& sin_table,
 static void rotary_forward_cpu(const TensorView& input, const TensorView& cos_table, const TensorView& sin_table,
                         TensorView& output, Index head_dim, Index rotary_dim, Index position_offset)
 {
-    const Index seq       = input.shape[1];
-    const Index model_dim = input.shape.back();
+    const Index seq       = input.get_shape()[1];
+    const Index model_dim = input.get_shape().back();
     const Index num_heads = model_dim / head_dim;
     const Index rows      = input.size() / model_dim;
     const Index half      = rotary_dim / 2;
@@ -97,8 +97,8 @@ static void rotary_forward_cpu(const TensorView& input, const TensorView& cos_ta
 static void rotary_backward_cpu(const TensorView& output_delta, const TensorView& cos_table, const TensorView& sin_table,
                          TensorView& input_delta, Index head_dim, Index rotary_dim, Index position_offset)
 {
-    const Index seq       = output_delta.shape[1];
-    const Index model_dim = output_delta.shape.back();
+    const Index seq       = output_delta.get_shape()[1];
+    const Index model_dim = output_delta.get_shape().back();
     const Index num_heads = model_dim / head_dim;
     const Index rows      = output_delta.size() / model_dim;
     const Index half      = rotary_dim / 2;
@@ -157,9 +157,9 @@ void grouped_attention_forward(const TensorView& query, const TensorView& key, c
         return;
     }
 
-    const Index batch     = query.shape[0];
-    const Index query_seq = query.shape[1];
-    const Index key_seq   = key.shape[1];
+    const Index batch     = query.get_shape()[0];
+    const Index query_seq = query.get_shape()[1];
+    const Index key_seq   = key.get_shape()[1];
     const Index group     = n_query_heads / n_kv_heads;
 
     const float* Q = query.as<float>();
@@ -255,9 +255,9 @@ void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorVi
 static void rope_forward_gpu(const TensorView& input, const TensorView& cos_table, const TensorView& sin_table,
                              TensorView& output, Index head_dim, Index rotary_dim, Index position_offset)
 {
-    const int seq       = to_int(input.shape[1]);
-    const int model_dim = to_int(input.shape.back());
-    const int rows      = to_int(input.size() / input.shape.back());
+    const int seq       = to_int(input.get_shape()[1]);
+    const int model_dim = to_int(input.get_shape().back());
+    const int rows      = to_int(input.size() / input.get_shape().back());
 
     output.dispatch([&]<typename T>() {
         rope_forward_cuda<T>(rows, seq, model_dim, to_int(head_dim), to_int(rotary_dim), to_int(position_offset),
@@ -269,9 +269,9 @@ static void rope_forward_gpu(const TensorView& input, const TensorView& cos_tabl
 static void rope_backward_gpu(const TensorView& output_delta, const TensorView& cos_table, const TensorView& sin_table,
                               TensorView& input_delta, Index head_dim, Index rotary_dim, Index position_offset)
 {
-    const int seq       = to_int(output_delta.shape[1]);
-    const int model_dim = to_int(output_delta.shape.back());
-    const int rows      = to_int(output_delta.size() / output_delta.shape.back());
+    const int seq       = to_int(output_delta.get_shape()[1]);
+    const int model_dim = to_int(output_delta.get_shape().back());
+    const int rows      = to_int(output_delta.size() / output_delta.get_shape().back());
 
     input_delta.dispatch([&]<typename T>() {
         rope_backward_cuda<T>(rows, seq, model_dim, to_int(head_dim), to_int(rotary_dim), to_int(position_offset),
@@ -561,9 +561,9 @@ static void grouped_attention_gpu(const TensorView& query, const TensorView& key
                                   bool causal, float scale, Index query_position_offset,
                                   float* decode_partials, const int* kv_length_device)
 {
-    const int batch     = to_int(query.shape[0]);
-    const int query_seq = to_int(query.shape[1]);
-    const int key_seq   = to_int(key.shape[1]);
+    const int batch     = to_int(query.get_shape()[0]);
+    const int query_seq = to_int(query.get_shape()[1]);
+    const int key_seq   = to_int(key.get_shape()[1]);
     const int group     = to_int(n_kv_heads) > 0 ? to_int(n_query_heads / n_kv_heads) : 0;
 
     const bool decode = batch == 1 && query_seq == 1 && causal && decode_partials
@@ -688,10 +688,10 @@ void GroupedQueryAttentionOperator::link_parameters(span<const TensorView> views
 {
     if (!link_views(views, {&q_proj, &k_proj, &v_proj, &o_proj})) return;
 
-    const Index elem = Index(type_bytes(q_proj.type));
-    qkv_fused = q_proj.type == k_proj.type && k_proj.type == v_proj.type
-        && static_cast<const char*>(k_proj.data) == static_cast<const char*>(q_proj.data) + q_proj.size() * elem
-        && static_cast<const char*>(v_proj.data) == static_cast<const char*>(k_proj.data) + k_proj.size() * elem;
+    const Index elem = Index(type_bytes(q_proj.get_type()));
+    qkv_fused = q_proj.get_type() == k_proj.get_type() && k_proj.get_type() == v_proj.get_type()
+        && static_cast<const char*>(k_proj.get_data()) == static_cast<const char*>(q_proj.get_data()) + q_proj.size() * elem
+        && static_cast<const char*>(v_proj.get_data()) == static_cast<const char*>(k_proj.get_data()) + k_proj.size() * elem;
 
     if (use_qk_norm && views.size() >= 6)
     {
@@ -713,12 +713,12 @@ void GroupedQueryAttentionOperator::link_parameter_scales(span<const TensorView>
     v_scale = views[2];
     o_scale = views[3];
 
-    const bool scales_fused = q_scale.data && k_scale.data && v_scale.data
+    const bool scales_fused = q_scale.get_data() && k_scale.get_data() && v_scale.get_data()
         && k_scale.as<const float>() == q_scale.as<const float>() + q_scale.size()
         && v_scale.as<const float>() == k_scale.as<const float>() + k_scale.size();
 
     qkv_scale = scales_fused
-        ? TensorView(q_scale.data, Shape{q_dim() + 2 * kv_dim()}, Type::FP32, q_scale.device)
+        ? TensorView(q_scale.get_data(), Shape{q_dim() + 2 * kv_dim()}, Type::FP32, q_scale.get_device())
         : TensorView{};
 
     if (q_proj.is_int8() && !scales_fused)
@@ -728,8 +728,8 @@ void GroupedQueryAttentionOperator::link_parameter_scales(span<const TensorView>
 void GroupedQueryAttentionOperator::set_parameters_random()
 {
 
-    if (q_norm.data) q_norm.as_vector().setOnes();
-    if (k_norm.data) k_norm.as_vector().setOnes();
+    if (q_norm.get_data()) q_norm.as_vector().setOnes();
+    if (k_norm.get_data()) k_norm.as_vector().setOnes();
 }
 
 void GroupedQueryAttentionOperator::back_propagate(ForwardPropagation&, BackPropagation&, size_t) const
@@ -786,12 +786,12 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
     {
         forward_gpu(input, output, batch, forward_propagation.past_length,
                     forward_propagation.get_sequence_capacity(),
-                    static_cast<const int*>(forward_propagation.position_device.data));
+                    static_cast<const int*>(forward_propagation.position_device.data()));
         return;
     }
 #endif
 
-    const Index seq   = input.shape[1];
+    const Index seq   = input.get_shape()[1];
     const Index qd    = q_dim();
     const Index kd    = kv_dim();
     const float scale = 1.0f / sqrt(float(head_dim));
@@ -816,7 +816,7 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
         const Index total = past + seq;
 
         const Index capacity_bytes = table_len * kd * Index(sizeof(float));
-        if (cache_capacity != table_len || kv_key.device_type != Device::CPU)
+        if (cache_capacity != table_len || kv_key.get_device() != Device::CPU)
         {
             kv_key.resize_bytes(capacity_bytes, Device::CPU);
             kv_value.resize_bytes(capacity_bytes, Device::CPU);
@@ -1012,13 +1012,13 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                                                 Index query_capacity,
                                                 const int* position_device)
 {
-    const Index seq = input.shape[1];
+    const Index seq = input.get_shape()[1];
     const Index qd  = q_dim();
     const Index kd  = kv_dim();
     const float scale = 1.0f / sqrt(float(head_dim));
     cudaStream_t stream = device::get_compute_stream();
 
-    const Type  act  = input.type;
+    const Type  act  = input.get_type();
     const Index elem = Index(type_bytes(act));
 
     const Index table_len = sequence_length;
@@ -1043,7 +1043,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
             auto upload = [&](const vector<float>& host) {
                 Buffer b(Device::CPU);
                 b.resize_bytes(Index(host.size()) * Index(sizeof(float)), Device::CPU);
-                memcpy(b.data, host.data(), host.size() * sizeof(float));
+                memcpy(b.data(), host.data(), host.size() * sizeof(float));
                 b.migrate_to(Device::CUDA, stream);
                 return b;
             };
@@ -1070,7 +1070,8 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
             s.query_capacity = query_capacity;
         }
 
-        if (cache_capacity != table_len || cache_dtype != act || kv_key.device_type != Device::CUDA)
+        if (cache_capacity != table_len || cache_dtype != act
+            || kv_key.get_device() != Device::CUDA)
         {
             kv_key.resize_bytes(table_len * kd * elem, Device::CUDA);
             kv_value.resize_bytes(table_len * kd * elem, Device::CUDA);
@@ -1079,34 +1080,34 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         }
     }
 
-    TensorView cos_v(s.cos.data, {table_len, head_dim}, Type::FP32, Device::CUDA);
-    TensorView sin_v(s.sin.data, {table_len, head_dim}, Type::FP32, Device::CUDA);
+    TensorView cos_v(s.cos.data(), {table_len, head_dim}, Type::FP32, Device::CUDA);
+    TensorView sin_v(s.sin.data(), {table_len, head_dim}, Type::FP32, Device::CUDA);
 
     if (batch == 1)
     {
         const Index total = past + seq;
-        TensorView x_b(input.data,  {1, seq, hidden}, act, Device::CUDA);
-        TensorView o_b(output.data, {1, seq, hidden}, act, Device::CUDA);
-        TensorView q_v(s.q.data,  {1, seq, qd}, act, Device::CUDA);
-        TensorView k_v(s.k.data,  {1, seq, kd}, act, Device::CUDA);
-        TensorView qr_v(s.qr.data, {1, seq, qd}, act, Device::CUDA);
-        TensorView attn_v(s.attn.data, {1, seq, qd}, act, Device::CUDA);
+        TensorView x_b(input.get_data(),  {1, seq, hidden}, act, Device::CUDA);
+        TensorView o_b(output.get_data(), {1, seq, hidden}, act, Device::CUDA);
+        TensorView q_v(s.q.data(),  {1, seq, qd}, act, Device::CUDA);
+        TensorView k_v(s.k.data(),  {1, seq, kd}, act, Device::CUDA);
+        TensorView qr_v(s.qr.data(), {1, seq, qd}, act, Device::CUDA);
+        TensorView attn_v(s.attn.data(), {1, seq, qd}, act, Device::CUDA);
 
-        char* v_at = static_cast<char*>(kv_value.data) + size_t(past) * kd * elem;
-        char* k_at = static_cast<char*>(kv_key.data)   + size_t(past) * kd * elem;
+        char* v_at = static_cast<char*>(kv_value.data()) + size_t(past) * kd * elem;
+        char* k_at = static_cast<char*>(kv_key.data())   + size_t(past) * kd * elem;
         TensorView v_slot(v_at, {1, seq, kd}, act, Device::CUDA);
         TensorView k_slot(k_at, {1, seq, kd}, act, Device::CUDA);
 
         if (seq == 1 && qkv_fused && position_device && use_qk_norm)
         {
-            TensorView qkv_row(s.qkv.data, {1, 1, qd + 2 * kd}, act, Device::CUDA);
+            TensorView qkv_row(s.qkv.data(), {1, 1, qd + 2 * kd}, act, Device::CUDA);
             {
-                TensorView qkv_w(q_proj.data, {qd + 2 * kd, hidden}, q_proj.type, Device::CUDA);
+                TensorView qkv_w(q_proj.get_data(), {qd + 2 * kd, hidden}, q_proj.get_type(), Device::CUDA);
                 linear_forward_transposed(x_b, qkv_w, qkv_row, qkv_scale);
             }
 
-            TensorView key_cache(kv_key.data,   {1, table_len, kd}, act, Device::CUDA);
-            TensorView val_cache(kv_value.data, {1, table_len, kd}, act, Device::CUDA);
+            TensorView key_cache(kv_key.data(),   {1, table_len, kd}, act, Device::CUDA);
+            TensorView val_cache(kv_value.data(), {1, table_len, kd}, act, Device::CUDA);
             {
                 qk_rope_cache_append(qkv_row, q_norm, k_norm, cos_v, sin_v, qr_v, key_cache, val_cache,
                                      q_heads, kv_heads, head_dim, rms_epsilon, position_device);
@@ -1114,7 +1115,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
             {
                 grouped_attention_forward(qr_v, key_cache, val_cache, attn_v, q_heads, kv_heads, head_dim,
                                           true, scale, past,
-                                          static_cast<float*>(s.partials.data), position_device);
+                                          static_cast<float*>(s.partials.data()), position_device);
             }
             {
                 linear_forward_transposed(attn_v, o_proj, o_b, o_scale);
@@ -1124,12 +1125,12 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
         if (seq == 1 && qkv_fused)
         {
-            TensorView qkv_row(s.qkv.data, {1, 1, qd + 2 * kd}, act, Device::CUDA);
-            TensorView qkv_w(q_proj.data, {qd + 2 * kd, hidden}, q_proj.type, Device::CUDA);
+            TensorView qkv_row(s.qkv.data(), {1, 1, qd + 2 * kd}, act, Device::CUDA);
+            TensorView qkv_w(q_proj.get_data(), {qd + 2 * kd, hidden}, q_proj.get_type(), Device::CUDA);
             linear_forward_transposed(x_b, qkv_w, qkv_row, qkv_scale);
-            q_v = TensorView(s.qkv.data, {1, 1, qd}, act, Device::CUDA);
-            k_v = TensorView(static_cast<char*>(s.qkv.data) + size_t(qd) * elem, {1, 1, kd}, act, Device::CUDA);
-            device::copy_async(v_at, static_cast<char*>(s.qkv.data) + size_t(qd + kd) * elem,
+            q_v = TensorView(s.qkv.data(), {1, 1, qd}, act, Device::CUDA);
+            k_v = TensorView(static_cast<char*>(s.qkv.data()) + size_t(qd) * elem, {1, 1, kd}, act, Device::CUDA);
+            device::copy_async(v_at, static_cast<char*>(s.qkv.data()) + size_t(qd + kd) * elem,
                                kd * elem, device::CopyKind::DeviceToDevice, stream);
         }
         else
@@ -1179,10 +1180,10 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                     device::copy_async(sdpa.seq_device, sdpa.seq_pinned, Index(2 * sizeof(int32_t)),
                                        device::CopyKind::HostToDevice, stream);
 
-                    sdpa.tensors[sdpa.Q]     = s.qr.data;
-                    sdpa.tensors[sdpa.K]     = kv_key.data;
-                    sdpa.tensors[sdpa.V]     = kv_value.data;
-                    sdpa.tensors[sdpa.O]     = s.attn.data;
+                    sdpa.tensors[sdpa.Q]     = s.qr.data();
+                    sdpa.tensors[sdpa.K]     = kv_key.data();
+                    sdpa.tensors[sdpa.V]     = kv_value.data();
+                    sdpa.tensors[sdpa.O]     = s.attn.data();
                     sdpa.tensors[sdpa.SeqQ]  = sdpa.seq_device;
                     sdpa.tensors[sdpa.SeqKV] = sdpa.seq_device + 1;
                     cudnn_frontend::check_status(
@@ -1196,11 +1197,11 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
             }
         }
 
-        TensorView key_all(kv_key.data,   {1, total, kd}, act, Device::CUDA);
-        TensorView val_all(kv_value.data, {1, total, kd}, act, Device::CUDA);
+        TensorView key_all(kv_key.data(),   {1, total, kd}, act, Device::CUDA);
+        TensorView val_all(kv_value.data(), {1, total, kd}, act, Device::CUDA);
         {
             grouped_attention_forward(qr_v, key_all, val_all, attn_v, q_heads, kv_heads, head_dim, true, scale, past,
-                                      static_cast<float*>(s.partials.data));
+                                      static_cast<float*>(s.partials.data()));
         }
         {
             linear_forward_transposed(attn_v, o_proj, o_b, o_scale);
@@ -1210,17 +1211,17 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
     throw_if(past != 0, "GroupedQueryAttentionOperator: KV-cache decoding requires batch size 1.");
 
-    TensorView q_v (s.q.data,    {1, seq, qd}, act, Device::CUDA);
-    TensorView k_v (s.k.data,    {1, seq, kd}, act, Device::CUDA);
-    TensorView v_v (s.v.data,    {1, seq, kd}, act, Device::CUDA);
-    TensorView qr_v(s.qr.data,   {1, seq, qd}, act, Device::CUDA);
-    TensorView kr_v(s.kr.data,   {1, seq, kd}, act, Device::CUDA);
-    TensorView attn_v(s.attn.data, {1, seq, qd}, act, Device::CUDA);
+    TensorView q_v (s.q.data(),    {1, seq, qd}, act, Device::CUDA);
+    TensorView k_v (s.k.data(),    {1, seq, kd}, act, Device::CUDA);
+    TensorView v_v (s.v.data(),    {1, seq, kd}, act, Device::CUDA);
+    TensorView qr_v(s.qr.data(),   {1, seq, qd}, act, Device::CUDA);
+    TensorView kr_v(s.kr.data(),   {1, seq, kd}, act, Device::CUDA);
+    TensorView attn_v(s.attn.data(), {1, seq, qd}, act, Device::CUDA);
 
     for (Index b = 0; b < batch; ++b)
     {
-        char* in_b  = static_cast<char*>(input.data)  + size_t(b) * seq * hidden * elem;
-        char* out_b = static_cast<char*>(output.data) + size_t(b) * seq * hidden * elem;
+        char* in_b  = static_cast<char*>(input.get_data())  + size_t(b) * seq * hidden * elem;
+        char* out_b = static_cast<char*>(output.get_data()) + size_t(b) * seq * hidden * elem;
         TensorView x_b(in_b,  {1, seq, hidden}, act, Device::CUDA);
         TensorView o_b(out_b, {1, seq, hidden}, act, Device::CUDA);
 
@@ -1281,7 +1282,7 @@ void GroupedQueryAttention::set(const Shape& new_input_shape,
 
 void GroupedQueryAttention::apply_input_shape(const Shape& new_input_shape)
 {
-    if (new_input_shape.rank < 2) return;
+    if (new_input_shape.get_rank() < 2) return;
     set({new_input_shape[0], new_input_shape[1]},
         q_heads, kv_heads, head_dim, rope_theta, rms_epsilon, use_qk_norm, label);
 }

@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T E N S O R   O P E R A T I O N S   S O U R C E
@@ -85,18 +85,18 @@ static bool try_linear_forward(const TensorView& input,
         || !weights.is_fp32()
         || !bias.is_fp32()
         || !output.is_fp32()
-        || input.shape.rank == 0
-        || weights.shape.rank != 2
-        || bias.shape.rank != 1)
+        || input.get_shape().get_rank() == 0
+        || weights.get_shape().get_rank() != 2
+        || bias.get_shape().get_rank() != 1)
         return false;
 
-    const Index input_columns = input.shape.back();
-    const Index output_columns = weights.shape.back();
+    const Index input_columns = input.get_shape().back();
+    const Index output_columns = weights.get_shape().back();
 
     if (input_columns <= 0
         || output_columns <= 0
         || input.size() % input_columns != 0
-        || weights.shape[0] != input_columns
+        || weights.get_shape()[0] != input_columns
         || bias.size() != output_columns)
         return false;
 
@@ -191,23 +191,151 @@ ActivationFunction activation_function_from_string(const string& name)
 OPENNN_GPU_OPS(OPENNN_DECLARE_GPU_OP)
 #undef OPENNN_DECLARE_GPU_OP
 
+static void require_tensor(const TensorView& tensor, string_view operation, string_view role)
+{
+    const Shape& shape = tensor.get_shape();
+    throw_if(shape.empty(), "{}: {} must have a shape.", operation, role);
+    throw_if(any_of(shape.begin(), shape.end(), [](Index dim) { return dim < 0; }),
+             "{}: {} has a negative dimension.", operation, role);
+    throw_if(tensor.get_device() == Device::Auto, "{}: {} has unresolved device metadata.", operation, role);
+    throw_if(tensor.get_type() == Type::Auto, "{}: {} has unresolved dtype metadata.", operation, role);
+    throw_if(tensor.size() > 0 && !tensor.get_data(), "{}: {} has no storage.", operation, role);
+}
+
+static void require_same_device(const TensorView& reference, const TensorView& tensor,
+                                string_view operation)
+{
+    throw_if(reference.get_device() != tensor.get_device(),
+             "{}: all tensors must be on the same device.", operation);
+}
+
+static void require_same_type(const TensorView& reference, const TensorView& tensor,
+                              string_view operation)
+{
+    throw_if(reference.get_type() != tensor.get_type(),
+             "{}: tensor dtypes are incompatible.", operation);
+}
+
+static void require_same_shape(const TensorView& reference, const TensorView& tensor,
+                               string_view operation)
+{
+    throw_if(reference.get_shape() != tensor.get_shape(),
+             "{}: tensor shapes are incompatible.", operation);
+}
+
+static void require_optional_tensor(const TensorView& reference, const TensorView& tensor,
+                                    string_view operation, string_view role)
+{
+    if (tensor.empty()) return;
+    require_tensor(tensor, operation, role);
+    require_same_device(reference, tensor, operation);
+}
+
+static void require_fp32_or_bf16(const TensorView& tensor, string_view operation, string_view role)
+{
+    throw_if(!tensor.is_fp32() && !tensor.is_bf16(),
+             "{}: {} must use FP32 or BF16 storage.", operation, role);
+}
+
+static void require_cpu_fp32(const TensorView& tensor, string_view operation, string_view role)
+{
+    throw_if(tensor.get_device() != Device::CPU || !tensor.is_fp32(),
+             "{}: CPU {} must use FP32 storage.", operation, role);
+}
+
+static Index matrix_count(const TensorView& tensor)
+{
+    const Shape& shape = tensor.get_shape();
+    const size_t rank = shape.get_rank();
+    return tensor.size() / (shape[rank - 2] * shape[rank - 1]);
+}
+
+static void require_matching_linear_prefix(const TensorView& input, const TensorView& output,
+                                           string_view operation)
+{
+    const Shape& input_shape = input.get_shape();
+    const Shape& output_shape = output.get_shape();
+
+    throw_if(input_shape.get_rank() != output_shape.get_rank(),
+             "{}: input and output ranks do not match.", operation);
+    for (size_t i = 0; i + 1 < input_shape.get_rank(); ++i)
+        throw_if(input_shape[i] != output_shape[i],
+                 "{}: input and output leading dimensions do not match.", operation);
+}
+
+static void validate_linear_io(const TensorView& input, const TensorView& weights,
+                               const TensorView& output, bool transposed_weights,
+                               string_view operation)
+{
+    require_tensor(input, operation, "input");
+    require_tensor(weights, operation, "weights");
+    require_tensor(output, operation, "output");
+    require_same_device(input, weights, operation);
+    require_same_device(input, output, operation);
+
+    const Shape& input_shape = input.get_shape();
+    const Shape& weights_shape = weights.get_shape();
+    const Shape& output_shape = output.get_shape();
+
+    throw_if(input_shape.get_rank() < 1, "{}: input rank must be at least one.", operation);
+    throw_if(weights_shape.get_rank() != 2, "{}: weights must be a matrix.", operation);
+    throw_if(output_shape.get_rank() < 1, "{}: output rank must be at least one.", operation);
+
+    const Index input_features  = input_shape.back();
+    const Index weight_inputs   = transposed_weights ? weights_shape[1] : weights_shape[0];
+    const Index output_features = transposed_weights ? weights_shape[0] : weights_shape[1];
+    throw_if(input_features <= 0 || output_features <= 0,
+             "{}: feature dimensions must be positive.", operation);
+    throw_if(weight_inputs != input_features,
+             "{}: input and weight feature dimensions do not match.", operation);
+    throw_if(output_shape.back() != output_features,
+             "{}: output feature dimension does not match the weights.", operation);
+    require_matching_linear_prefix(input, output, operation);
+}
+
+static void validate_linear_types(const TensorView& input, const TensorView& weights,
+                                  const TensorView& output, string_view operation)
+{
+    if (!input.is_cuda())
+    {
+        require_cpu_fp32(input, operation, "input");
+        require_cpu_fp32(weights, operation, "weights");
+        require_cpu_fp32(output, operation, "output");
+        return;
+    }
+
+    require_fp32_or_bf16(input, operation, "input");
+    require_fp32_or_bf16(output, operation, "output");
+    throw_if(!weights.is_int8() && weights.get_type() != output.get_type(),
+             "{}: non-quantized weights and output must use the same dtype.", operation);
+}
+
 void copy(const TensorView& source, TensorView& destination)
 {
-    throw_if(source.size() != destination.size(),
-             "Tensor sizes mismatch in copy operation.");
-    throw_if(source.type != destination.type,
-             "Tensor dtypes mismatch in copy operation.");
+    require_tensor(source, "copy", "source");
+    require_tensor(destination, "copy", "destination");
+    require_same_shape(source, destination, "copy");
+    require_same_device(source, destination, "copy");
+    require_same_type(source, destination, "copy");
 
     if (source.is_cuda()) { copy_gpu(source, destination); return; }
-    memcpy(destination.data, source.data, source.byte_size());
+    memcpy(destination.get_data(), source.get_data(), source.byte_size());
 }
 
 void add(const TensorView& input_1,
          const TensorView& input_2,
          TensorView& output)
 {
-    throw_if(input_1.size() != input_2.size() || input_1.size() != output.size(),
-             "Tensor dimensions do not match.");
+    require_tensor(input_1, "add", "first input");
+    require_tensor(input_2, "add", "second input");
+    require_tensor(output, "add", "output");
+    require_same_shape(input_1, input_2, "add");
+    require_same_shape(input_1, output, "add");
+    require_same_device(input_1, input_2, "add");
+    require_same_device(input_1, output, "add");
+    require_same_type(input_1, input_2, "add");
+    require_same_type(input_1, output, "add");
+    if (!input_1.is_cuda()) require_cpu_fp32(input_1, "add", "input");
 
     if (input_1.is_cuda()) { add_gpu(input_1, input_2, output); return; }
     output.as_vector().noalias() = input_1.as_vector() + input_2.as_vector();
@@ -218,8 +346,9 @@ static void multiply_cpu(const TensorView& input_a, bool transpose_a,
                   TensorView& output,
                   float alpha, float beta)
 {
-    const size_t rank = input_a.get_rank();
-    const Index batch_count = input_a.size() / (input_a.shape[rank - 2] * input_a.shape[rank - 1]);
+    const Shape& shape = input_a.get_shape();
+    const size_t rank = shape.get_rank();
+    const Index batch_count = input_a.size() / (shape[rank - 2] * shape[rank - 1]);
 
     const bool parallel = output.size() >= 65536;
 
@@ -250,6 +379,70 @@ void multiply(const TensorView& input_a, bool transpose_a,
               TensorView& output,
               float alpha, float beta)
 {
+    require_tensor(input_a, "multiply", "first input");
+    require_tensor(input_b, "multiply", "second input");
+    require_tensor(output, "multiply", "output");
+    require_same_device(input_a, input_b, "multiply");
+    require_same_device(input_a, output, "multiply");
+
+    const Shape& shape_a = input_a.get_shape();
+    const Shape& shape_b = input_b.get_shape();
+    const Shape& output_shape = output.get_shape();
+
+    throw_if(shape_a.get_rank() < 2 || shape_b.get_rank() < 2 || output_shape.get_rank() < 2,
+             "multiply: all tensors must have rank two or greater.");
+    require_fp32_or_bf16(input_a, "multiply", "first input");
+    require_fp32_or_bf16(input_b, "multiply", "second input");
+    require_fp32_or_bf16(output, "multiply", "output");
+    if (!input_a.is_cuda())
+    {
+        require_cpu_fp32(input_a, "multiply", "first input");
+        require_same_type(input_a, input_b, "multiply");
+        require_same_type(input_a, output, "multiply");
+    }
+
+    const size_t rank_a = shape_a.get_rank();
+    const size_t rank_b = shape_b.get_rank();
+    const Index rows_a = shape_a[rank_a - 2];
+    const Index cols_a = shape_a[rank_a - 1];
+    const Index rows_b = shape_b[rank_b - 2];
+    const Index cols_b = shape_b[rank_b - 1];
+    const Index rows_output = output_shape[output_shape.get_rank() - 2];
+    const Index cols_output = output_shape.back();
+    throw_if(rows_a <= 0 || cols_a <= 0 || rows_b <= 0 || cols_b <= 0
+             || rows_output <= 0 || cols_output <= 0,
+             "multiply: matrix dimensions must be positive.");
+
+    const Index inner_a = transpose_a ? rows_a : cols_a;
+    const Index inner_b = transpose_b ? cols_b : rows_b;
+    const Index result_rows = transpose_a ? cols_a : rows_a;
+    const Index result_columns = transpose_b ? rows_b : cols_b;
+    throw_if(inner_a != inner_b, "multiply: inner matrix dimensions do not match.");
+
+    const bool flattened_cuda_rhs = input_a.is_cuda() && rank_a > 2 && rank_b == 2;
+    if (flattened_cuda_rhs)
+    {
+        throw_if(transpose_a, "multiply: a flattened CUDA left operand cannot be transposed.");
+        const Index flat_rows = input_a.size() / cols_a;
+        throw_if(output_shape.back() != result_columns
+                 || output.size() != flat_rows * result_columns,
+                 "multiply: output shape does not match the flattened matrix product.");
+    }
+    else
+    {
+        throw_if(rank_a != rank_b || rank_a != output_shape.get_rank(),
+                 "multiply: batched operands and output must have matching ranks.");
+        for (size_t i = 0; i + 2 < rank_a; ++i)
+            throw_if(shape_a[i] != shape_b[i] || shape_a[i] != output_shape[i],
+                     "multiply: batch dimensions do not match.");
+        throw_if(matrix_count(input_a) != matrix_count(input_b)
+                 || matrix_count(input_a) != matrix_count(output),
+                 "multiply: matrix batch counts do not match.");
+        throw_if(output_shape[output_shape.get_rank() - 2] != result_rows
+                 || output_shape.back() != result_columns,
+                 "multiply: output matrix dimensions do not match the product.");
+    }
+
     if (input_a.is_cuda()) { multiply_gpu(input_a, transpose_a, input_b, transpose_b, output, alpha, beta); return; }
     multiply_cpu(input_a, transpose_a, input_b, transpose_b, output, alpha, beta);
 }
@@ -273,6 +466,11 @@ static void softmax_cpu(TensorView& output)
 void softmax(TensorView& output)
 {
     if (output.empty()) return;
+
+    require_tensor(output, "softmax", "output");
+    throw_if(output.get_shape().back() <= 0, "softmax: the channel dimension must be positive.");
+    require_fp32_or_bf16(output, "softmax", "output");
+    if (!output.is_cuda()) require_cpu_fp32(output, "softmax", "output");
 
     if (output.is_cuda()) { softmax_gpu(output); return; }
     softmax_cpu(output);
@@ -354,6 +552,10 @@ void activation_forward(TensorView& output, ActivationFunction function)
     if (function == ActivationFunction::Identity || output.empty()) return;
     if (function == ActivationFunction::Softmax) { softmax(output); return; }
 
+    require_tensor(output, "activation_forward", "output");
+    require_fp32_or_bf16(output, "activation_forward", "output");
+    if (!output.is_cuda()) require_cpu_fp32(output, "activation_forward", "output");
+
     if (output.is_cuda()) { activation_forward_gpu(output, function); return; }
     activation_forward_cpu(output, function);
 }
@@ -362,6 +564,14 @@ void activation_backward(const TensorView& outputs, TensorView& delta, Activatio
 {
     if (is_one_of(function, ActivationFunction::Identity, ActivationFunction::Softmax)
         || outputs.empty()) return;
+
+    require_tensor(outputs, "activation_backward", "outputs");
+    require_tensor(delta, "activation_backward", "delta");
+    require_same_shape(outputs, delta, "activation_backward");
+    require_same_device(outputs, delta, "activation_backward");
+    require_same_type(outputs, delta, "activation_backward");
+    require_fp32_or_bf16(outputs, "activation_backward", "outputs");
+    if (!outputs.is_cuda()) require_cpu_fp32(outputs, "activation_backward", "outputs");
 
     if (outputs.is_cuda()) { activation_backward_gpu(outputs, delta, function); return; }
     activation_backward_cpu(outputs, delta, function);
@@ -391,7 +601,7 @@ static void linear_backward_cpu(const TensorView& output_delta, const TensorView
     if (!bias_gradient.empty())
         bias_gradient.as_vector().noalias() = output_delta.as_flat_matrix().colwise().sum();
 
-    if (!input_delta.data || input_delta.empty()) return;
+    if (!input_delta.get_data() || input_delta.empty()) return;
 
     auto input_delta_mat = input_delta.as_flat_matrix();
     const auto product   = output_delta.as_flat_matrix() * weights.as_matrix().transpose();
@@ -404,6 +614,52 @@ void linear_forward(const TensorView& input, const TensorView& weights, const Te
                     TensorView& output, cublasLtEpilogue_t epilogue, TensorView* pre_activation,
                     const TensorView& weight_scale)
 {
+    constexpr string_view operation = "linear_forward";
+    validate_linear_io(input, weights, output, false, operation);
+    validate_linear_types(input, weights, output, operation);
+
+    require_optional_tensor(input, bias, operation, "bias");
+    if (!bias.empty())
+    {
+        throw_if(bias.get_shape().get_rank() != 1 || bias.size() != output.get_shape().back(),
+                 "linear_forward: bias shape does not match the output features.");
+        throw_if(bias.get_type() != output.get_type() && !(output.is_bf16() && bias.is_fp32()),
+                 "linear_forward: bias dtype is incompatible with the output.");
+    }
+
+    if (pre_activation)
+    {
+        require_tensor(*pre_activation, operation, "pre-activation output");
+        require_same_device(input, *pre_activation, operation);
+        if (epilogue == CUBLASLT_EPILOGUE_GELU_AUX_BIAS)
+        {
+            require_same_shape(output, *pre_activation, operation);
+            require_same_type(output, *pre_activation, operation);
+        }
+        else if (epilogue == CUBLASLT_EPILOGUE_RELU_AUX_BIAS)
+        {
+            const Index rows = output.size() / output.get_shape().back();
+            throw_if(!pre_activation->is_int8() || pre_activation->get_shape().get_rank() != 2
+                     || pre_activation->get_shape()[0] != rows
+                     || pre_activation->get_shape()[1] * 8 != output.get_shape().back(),
+                     "linear_forward: ReLU mask shape or dtype is incompatible with the output.");
+        }
+        else
+        {
+            throw runtime_error("linear_forward: auxiliary output requires an auxiliary epilogue.");
+        }
+    }
+
+    require_optional_tensor(input, weight_scale, operation, "weight scale");
+    if (weights.is_int8())
+    {
+        throw_if(!input.is_cuda() || !input.is_bf16() || !output.is_bf16(),
+                 "linear_forward: INT8 weights require CUDA BF16 activations.");
+        throw_if(weight_scale.empty() || !weight_scale.is_fp32()
+                 || weight_scale.get_shape().get_rank() != 1 || weight_scale.size() != output.get_shape().back(),
+                 "linear_forward: INT8 weights require one FP32 scale per output feature.");
+    }
+
     if (input.is_cuda()) { linear_forward_gpu(input, weights, bias, output, epilogue, pre_activation, weight_scale); return; }
 
     throw_if(weights.is_int8(), "linear_forward: INT8 weights are CUDA-only.");
@@ -419,7 +675,51 @@ void linear_backward(const TensorView& output_delta, const TensorView& input, co
                      TensorView& input_delta, bool accumulate_input_delta,
                      const TensorView* drelu_mask)
 {
-    throw_if(drelu_mask && (!output_delta.is_cuda() || output_delta.type == Type::BF16
+    constexpr string_view operation = "linear_backward";
+    validate_linear_io(input, weights, output_delta, false, operation);
+    require_fp32_or_bf16(output_delta, operation, "output delta");
+    require_fp32_or_bf16(input, operation, "input");
+    throw_if(weights.get_type() != output_delta.get_type(),
+             "linear_backward: weights and output delta must use the same dtype.");
+    throw_if(weights.is_int8(), "linear_backward: INT8 weights are inference-only.");
+
+    require_tensor(weight_gradient, operation, "weight gradient");
+    require_same_device(input, weight_gradient, operation);
+    require_same_shape(weights, weight_gradient, operation);
+    throw_if(!weight_gradient.is_fp32(), "linear_backward: weight gradient must use FP32 storage.");
+
+    require_optional_tensor(input, bias_gradient, operation, "bias gradient");
+    if (!bias_gradient.empty())
+        throw_if(!bias_gradient.is_fp32() || bias_gradient.get_shape().get_rank() != 1
+                 || bias_gradient.size() != output_delta.get_shape().back(),
+                 "linear_backward: bias gradient must be an FP32 output-feature vector.");
+
+    require_optional_tensor(input, input_delta, operation, "input delta");
+    if (!input_delta.empty())
+    {
+        require_same_shape(input, input_delta, operation);
+        require_same_type(input, input_delta, operation);
+    }
+
+    if (!output_delta.is_cuda())
+    {
+        require_cpu_fp32(output_delta, operation, "output delta");
+        require_cpu_fp32(input, operation, "input");
+        require_cpu_fp32(weights, operation, "weights");
+    }
+
+    if (drelu_mask)
+    {
+        require_tensor(*drelu_mask, operation, "DReLU mask");
+        require_same_device(output_delta, *drelu_mask, operation);
+        const Index rows = output_delta.size() / output_delta.get_shape().back();
+        throw_if(!drelu_mask->is_int8() || drelu_mask->get_shape().get_rank() != 2
+                 || drelu_mask->get_shape()[0] != rows
+                 || drelu_mask->get_shape()[1] * 8 != output_delta.get_shape().back(),
+                 "linear_backward: DReLU mask shape or dtype is incompatible with the output delta.");
+    }
+
+    throw_if(drelu_mask && (!output_delta.is_cuda() || output_delta.is_bf16()
                             || accumulate_input_delta),
              "linear_backward: the DRELU fused input-delta path is CUDA fp32, non-accumulating only.");
 
@@ -455,13 +755,27 @@ static void w8a16_linear_rows(Index rows, Index in_features, Index out_features,
 void linear_forward_transposed(const TensorView& input, const TensorView& embed_weight, TensorView& output,
                           const TensorView& weight_scale)
 {
+    constexpr string_view operation = "linear_forward_transposed";
+    validate_linear_io(input, embed_weight, output, true, operation);
+    validate_linear_types(input, embed_weight, output, operation);
+    require_optional_tensor(input, weight_scale, operation, "weight scale");
+
+    if (embed_weight.is_int8())
+    {
+        throw_if(!input.is_cuda() || !input.is_bf16() || !output.is_bf16(),
+                 "linear_forward_transposed: INT8 weights require CUDA BF16 activations.");
+        throw_if(weight_scale.empty() || !weight_scale.is_fp32()
+                 || weight_scale.get_shape().get_rank() != 1 || weight_scale.size() != output.get_shape().back(),
+                 "linear_forward_transposed: INT8 weights require one FP32 scale per output feature.");
+    }
+
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda() && embed_weight.is_int8())
     {
         throw_if(weight_scale.empty() || !input.is_bf16() || !output.is_bf16(),
                  "linear_forward_transposed: INT8 weights require BF16 activations and a per-channel scale vector.");
 
-        const Index in_features  = embed_weight.shape.back();
+        const Index in_features  = embed_weight.get_shape().back();
         const Index out_features = embed_weight.size() / in_features;
         const Index rows = input.size() / in_features;
 
@@ -486,7 +800,7 @@ void linear_forward_transposed(const TensorView& input, const TensorView& embed_
             gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
                                       to_int(tile), to_int(rows), to_int(in_features),
                                       dequantized, CUDA_R_16BF, to_int(in_features), 0,
-                                      input.data, CUDA_R_16BF, to_int(in_features), 0,
+                                      input.get_data(), CUDA_R_16BF, to_int(in_features), 0,
                                       output.as<bfloat16>() + j0, CUDA_R_16BF, to_int(out_features), 0,
                                       1);
         }
@@ -504,7 +818,7 @@ void linear_forward_transposed(const TensorView& input, const TensorView& embed_
 
 static void copy_gpu(const TensorView& source, TensorView& destination)
 {
-    device::copy_async(destination.data, source.data, source.byte_size(),
+    device::copy_async(destination.get_data(), source.get_data(), source.byte_size(),
                        device::CopyKind::DeviceToDevice,
                        Backend::get_compute_stream());
 }
@@ -523,9 +837,9 @@ static void add_gpu(const TensorView& input_1,
 
     CHECK_CUDNN(cudnnOpTensor(Backend::get_cudnn_handle(),
                               Backend::get_op_tensor_add_descriptor(),
-                              &one, input_1.get_descriptor(), input_1.data,
-                              &one, input_2.get_descriptor(), input_2.data,
-                              &zero, output.get_descriptor(), output.data));
+                              &one, input_1.get_descriptor(), input_1.get_data(),
+                              &one, input_2.get_descriptor(), input_2.get_data(),
+                              &zero, output.get_descriptor(), output.get_data()));
 }
 
 static void multiply_gpu(const TensorView& input_a, bool transpose_a,
@@ -536,10 +850,10 @@ static void multiply_gpu(const TensorView& input_a, bool transpose_a,
     const size_t rank_a = input_a.get_rank();
     const size_t rank_b = input_b.get_rank();
 
-    int rows_a = to_int(input_a.shape[rank_a - 2]);
-    const int cols_a = to_int(input_a.shape[rank_a - 1]);
-    const int rows_b = to_int(input_b.shape[rank_b - 2]);
-    const int cols_b = to_int(input_b.shape[rank_b - 1]);
+    int rows_a = to_int(input_a.get_shape()[rank_a - 2]);
+    const int cols_a = to_int(input_a.get_shape()[rank_a - 1]);
+    const int rows_b = to_int(input_b.get_shape()[rank_b - 2]);
+    const int cols_b = to_int(input_b.get_shape()[rank_b - 1]);
 
     if (rank_b == 2 && rank_a > 2)
         rows_a = to_int(input_a.size() / cols_a);
@@ -554,13 +868,14 @@ static void multiply_gpu(const TensorView& input_a, bool transpose_a,
     const int batch_count = to_int(input_a.size() / (rows_a * cols_a));
     const long long stride_a = rows_a * cols_a;
     const long long stride_b = rows_b * cols_b;
-    const long long stride_output = output.shape[output.get_rank() - 2] * output.shape[output.get_rank() - 1];
+    const long long stride_output = output.get_shape()[output.get_rank() - 2]
+                                  * output.get_shape()[output.get_rank() - 1];
 
     gemm_strided_batched_cuda(operation_b, operation_a,
                               cols_out, rows_out, inner_dim,
-                              input_b.data, input_b.cuda_dtype(), cols_b, stride_b,
-                              input_a.data, input_a.cuda_dtype(), cols_a, stride_a,
-                              output.data,  output.cuda_dtype(), cols_out, stride_output,
+                              input_b.get_data(), input_b.cuda_dtype(), cols_b, stride_b,
+                              input_a.get_data(), input_a.cuda_dtype(), cols_a, stride_a,
+                              output.get_data(), output.cuda_dtype(), cols_out, stride_output,
                               batch_count,
                               alpha, beta);
 }
@@ -576,17 +891,17 @@ static void softmax_gpu(TensorView& output)
                                         CUDNN_SOFTMAX_ACCURATE,
                                         CUDNN_SOFTMAX_MODE_CHANNEL,
                                         &one,
-                                        output.get_descriptor(), output.data,
+                                        output.get_descriptor(), output.get_data(),
                                         &zero,
-                                        output.get_descriptor(), output.data));
+                                        output.get_descriptor(), output.get_data()));
         return;
     }
 
-    const Index channels = output.shape.back();
+    const Index channels = output.get_shape().back();
     const Index total_rows = output.size() / channels;
     const Index max_rows = max_descriptor_elements / channels;
-    char* const base = static_cast<char*>(output.data);
-    const Index row_bytes = channels * type_bytes(output.type);
+    char* const base = static_cast<char*>(output.get_data());
+    const Index row_bytes = channels * type_bytes(output.get_type());
 
     for (Index row = 0; row < total_rows; row += max_rows)
     {
@@ -594,15 +909,15 @@ static void softmax_gpu(TensorView& output)
 
         const TensorView chunk(base + row * row_bytes,
                                Shape{chunk_rows, channels},
-                               output.type, output.device);
+                               output.get_type(), output.get_device());
 
         CHECK_CUDNN(cudnnSoftmaxForward(Backend::get_cudnn_handle(),
                                         CUDNN_SOFTMAX_ACCURATE,
                                         CUDNN_SOFTMAX_MODE_CHANNEL,
                                         &one,
-                                        chunk.get_descriptor(), chunk.data,
+                                        chunk.get_descriptor(), chunk.get_data(),
                                         &zero,
-                                        chunk.get_descriptor(), chunk.data));
+                                        chunk.get_descriptor(), chunk.get_data()));
     }
 }
 
@@ -629,16 +944,16 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
                                   TensorView& output, cublasLtEpilogue_t epilogue,
                                   TensorView* pre_activation)
 {
-    const int input_columns  = to_int(input.shape.back());
-    const int output_columns = to_int(weights.shape.back());
-    const int total_rows     = to_int(input.size() / input.shape.back());
+    const int input_columns  = to_int(input.get_shape().back());
+    const int output_columns = to_int(weights.get_shape().back());
+    const int total_rows     = to_int(input.size() / input.get_shape().back());
 
-    const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
+    const void* input_for_gemm = data_for_gemm_dtype(input, weights.get_type());
     const cudaDataType_t io_type = output.cuda_dtype();
 
-    const void* bias_for_gemm = (bias.data && output.is_bf16() && bias.is_fp32())
+    const void* bias_for_gemm = (bias.get_data() && output.is_bf16() && bias.is_fp32())
         ? bias_for_gemm_bf16(bias)
-        : bias.data;
+        : bias.get_data();
 
     try
     {
@@ -646,9 +961,9 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
             output_columns, total_rows, input_columns,
             CUBLAS_OP_N, CUBLAS_OP_N,
             epilogue,
-            weights.data, input_for_gemm, output.data, bias_for_gemm,
+            weights.get_data(), input_for_gemm, output.get_data(), bias_for_gemm,
             io_type, io_type,
-            pre_activation ? pre_activation->data : nullptr);
+            pre_activation ? pre_activation->get_data() : nullptr);
     }
     catch (const runtime_error& e)
     {
@@ -680,20 +995,20 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     throw_if(weight_scale.empty() || !input.is_bf16() || !output.is_bf16(),
              "linear_forward: INT8 weights require BF16 activations and a per-channel scale vector.");
 
-    const int input_columns  = to_int(input.shape.back());
-    const int output_columns = to_int(weights.shape.back());
-    const int total_rows     = to_int(input.size() / input.shape.back());
+    const int input_columns  = to_int(input.get_shape().back());
+    const int output_columns = to_int(weights.get_shape().back());
+    const int total_rows     = to_int(input.size() / input.get_shape().back());
 
     const bool gemv_path = (total_rows <= W8A16_MAX_M
                             || weights.byte_size() > int8_dequant_budget_bytes)
         && (epilogue == CUBLASLT_EPILOGUE_DEFAULT || epilogue == CUBLASLT_EPILOGUE_BIAS)
-        && (!bias.data || bias.is_bf16());
+        && (!bias.get_data() || bias.is_bf16());
 
     if (gemv_path)
     {
         w8a16_linear_rows(total_rows, input_columns, output_columns, false,
                           input.as<bfloat16>(), weights.as<int8_t>(), weight_scale.as<float>(),
-                          epilogue == CUBLASLT_EPILOGUE_BIAS && bias.data
+                          epilogue == CUBLASLT_EPILOGUE_BIAS && bias.get_data()
                               ? bias.as<bfloat16>() : nullptr,
                           output.as<bfloat16>());
         return;
@@ -702,7 +1017,8 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     bfloat16* dequantized = ensure_int8_dequant_workspace(weights.size());
     w8_dequant_cuda<bfloat16>(input_columns, output_columns, false, weights.as<int8_t>(),
                               weight_scale.as<float>(), dequantized);
-    const TensorView dequantized_weights(dequantized, weights.shape, Type::BF16, Device::CUDA);
+    const TensorView dequantized_weights(dequantized, weights.get_shape(),
+                                         Type::BF16, Device::CUDA);
     linear_forward_lt_gpu(input, dequantized_weights, bias, output, epilogue, pre_activation);
 }
 
@@ -711,11 +1027,11 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
                          TensorView& input_delta, bool accumulate_input_delta,
                          const TensorView* drelu_mask)
 {
-    const int input_columns  = to_int(input.shape.back());
-    const int output_columns = to_int(output_delta.shape.back());
-    const int total_rows     = to_int(input.size() / input.shape.back());
+    const int input_columns  = to_int(input.get_shape().back());
+    const int output_columns = to_int(output_delta.get_shape().back());
+    const int total_rows     = to_int(input.size() / input.get_shape().back());
 
-    const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
+    const void* input_for_gemm = data_for_gemm_dtype(input, weights.get_type());
 
     const bool has_bias = bias_gradient.size() > 0;
 
@@ -728,7 +1044,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
     // failure pins the old staged path for the rest of the process.
     static atomic<bool> bf16_fp32_store_supported{true};
 
-    const bool direct_fp32_store = output_delta.type != Type::BF16
+    const bool direct_fp32_store = !output_delta.is_bf16()
         || bf16_fp32_store_supported.load(memory_order_relaxed);
 
     bool stored = false;
@@ -740,7 +1056,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
                 output_columns, input_columns, total_rows,
                 CUBLAS_OP_N, CUBLAS_OP_T,
                 has_bias ? CUBLASLT_EPILOGUE_BGRADA : CUBLASLT_EPILOGUE_DEFAULT,
-                output_delta.data, input_for_gemm, weight_gradient.data,
+                output_delta.get_data(), input_for_gemm, weight_gradient.get_data(),
                 has_bias ? bias_gradient.as<float>() : nullptr,
                 output_delta.cuda_dtype(),
                 CUDA_R_32F);
@@ -748,7 +1064,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
         }
         catch (const exception&)
         {
-            if (output_delta.type != Type::BF16) throw;
+            if (!output_delta.is_bf16()) throw;
             bf16_fp32_store_supported.store(false, memory_order_relaxed);
             cerr << "linear_backward: cuBLASLt has no BF16-in/FP32-out weight-gradient "
                     "epilogue here; using BF16 store + cast for the rest of the process.\n";
@@ -765,21 +1081,22 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
             output_columns, input_columns, total_rows,
             CUBLAS_OP_N, CUBLAS_OP_T,
             CUBLASLT_EPILOGUE_DEFAULT,
-            output_delta.data, input_for_gemm, dw_bf16, nullptr,
+            output_delta.get_data(), input_for_gemm, dw_bf16, nullptr,
             output_delta.cuda_dtype(),
             CUDA_R_16BF);
         cast_bf16_to_fp32(weight_gradient.size(), dw_bf16, weight_gradient.as<float>());
 
         if (has_bias)
         {
-            device::set_zero_async(bias_gradient.data, bias_gradient.size() * Index(sizeof(float)),
+            device::set_zero_async(bias_gradient.get_data(),
+                                   bias_gradient.size() * Index(sizeof(float)),
                                    Backend::get_compute_stream());
             bias_grad_sum_cuda<bfloat16>(total_rows, output_columns,
                                          output_delta.as<bfloat16>(), bias_gradient.as<float>());
         }
     }
 
-    if (!input_delta.data || input_delta.empty()) return;
+    if (!input_delta.get_data() || input_delta.empty()) return;
 
     if (drelu_mask)
     {
@@ -788,9 +1105,9 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
             input_columns, total_rows, output_columns,
             CUBLAS_OP_T, CUBLAS_OP_N,
             CUBLASLT_EPILOGUE_DRELU,
-            weights.data, output_delta.data, input_delta.data, nullptr,
+            weights.get_data(), output_delta.get_data(), input_delta.get_data(), nullptr,
             output_delta.cuda_dtype(), input_delta.cuda_dtype(),
-            drelu_mask->data);
+            drelu_mask->get_data());
         return;
     }
 

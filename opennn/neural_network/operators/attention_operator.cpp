@@ -56,12 +56,12 @@ bool AttentionOperator::get_contiguous_source_lengths(const TensorView& source_i
                                                 vector<Index>& lengths,
                                                 bool& has_padding)
 {
-    if (source_input.shape.rank != 3 || !source_input.is_fp32())
+    if (source_input.get_shape().get_rank() != 3 || !source_input.is_fp32())
         return false;
 
-    const Index batch_size          = source_input.shape[0];
-    const Index sequence_length     = source_input.shape[1];
-    const Index embedding_dimension = source_input.shape[2];
+    const Index batch_size          = source_input.get_shape()[0];
+    const Index sequence_length     = source_input.get_shape()[1];
+    const Index embedding_dimension = source_input.get_shape()[2];
     const float* source_data        = source_input.as<float>();
 
     lengths.assign(batch_size, sequence_length);
@@ -102,7 +102,7 @@ void AttentionOperator::softmax_rows_prefix(float* matrix, Index rows, Index col
 Index AttentionOperator::infer_attention_prefix_length(const TensorView& attention_weights,
                                                  Index batch_index)
 {
-    const auto& shape = attention_weights.shape;
+    const auto& shape = attention_weights.get_shape();
     const float* first_row = attention_weights.as<float>()
         + batch_index * shape[1] * shape[2] * shape[3];
 
@@ -301,7 +301,10 @@ void refresh_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
                                    const AttentionOperator::SDPACache::CacheKey& k,
                                    const TensorView& source_input)
 {
-    const bool ok = source_input.shape.rank == 3 && source_input.shape[0] == k.batch_size && source_input.shape[1] == k.src_seq
+    const Shape& shape = source_input.get_shape();
+    const bool ok = shape.get_rank() == 3
+        && shape[0] == k.batch_size
+        && shape[1] == k.src_seq
         && source_input.is_cuda();
 
     throw_if(!ok,
@@ -311,7 +314,7 @@ void refresh_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
         attention_sequence_lengths_cuda<T>(to_int(k.batch_size),
                                            to_int(k.q_seq),
                                            to_int(k.src_seq),
-                                           to_int(source_input.shape[2]),
+                                           to_int(shape[2]),
                                            source_input.as<T>(),
                                            entry.query_lengths,
                                            entry.source_lengths);
@@ -479,9 +482,10 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
     const TensorView& source_input = src_views[min(size_t{1}, src_views.size() - 1)];
 
     const TensorView& query = get_input(forward_propagation, layer);
+    const Shape& query_shape = query.get_shape();
 
-    TensorView attention_out = forward_slots[scratch_slot].reshape(
-        {forward_propagation.batch_size, query.shape[1], query.shape[2], query.shape[3]});
+    TensorView attention_out = forward_slots[scratch_slot].reshape_prefix(
+        {forward_propagation.batch_size, query_shape[1], query_shape[2], query_shape[3]});
 
     // Keys and values come from the last of the layer's inputs: its own, for
     // self-attention, and the encoder's for cross-attention. That is the
@@ -510,9 +514,9 @@ void AttentionOperator::merge_output_heads(ForwardPropagation& forward_propagati
     const Index batch_size = forward_propagation.batch_size;
     auto& forward_slots = forward_propagation.slots[layer];
 
-    const TensorView heads = forward_slots[scratch_slot].reshape(
+    const TensorView heads = forward_slots[scratch_slot].reshape_prefix(
         {batch_size, heads_number, query_sequence_length, head_dimension});
-    TensorView merged = forward_slots[attention_output_slot].reshape(
+    TensorView merged = forward_slots[attention_output_slot].reshape_prefix(
         {batch_size, query_sequence_length, heads_number, head_dimension});
 
     merge_heads(heads, merged);
@@ -525,9 +529,9 @@ void AttentionOperator::split_output_delta(ForwardPropagation& forward_propagati
     const Index batch_size = forward_propagation.batch_size;
 
     const TensorView merged_delta =
-        back_propagation.slots[layer][merged_output_delta_slot].reshape(
+        back_propagation.slots[layer][merged_output_delta_slot].reshape_prefix(
             {batch_size, query_sequence_length, heads_number, head_dimension});
-    TensorView heads_delta = forward_propagation.slots[layer][scratch_slot].reshape(
+    TensorView heads_delta = forward_propagation.slots[layer][scratch_slot].reshape_prefix(
         {batch_size, heads_number, query_sequence_length, head_dimension});
 
     split_heads(merged_delta, heads_delta);
@@ -545,8 +549,9 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
     const TensorView& attention_weights = get_output(forward_propagation, layer);
     const TensorView& attention_weights_dropped = get_output(forward_propagation, layer, 1);
 
-    const TensorView output_delta = forward_slots[scratch_slot]
-        .reshape({forward_propagation.batch_size, query.shape[1], query.shape[2], query.shape[3]});
+    const Shape& query_shape = query.get_shape();
+    const TensorView output_delta = forward_slots[scratch_slot].reshape_prefix(
+        {forward_propagation.batch_size, query_shape[1], query_shape[2], query_shape[3]});
 
     TensorView& attention_weight_delta = get_output_delta(back_propagation, layer);
     TensorView& query_delta            = get_output_delta(back_propagation, layer, 1);
@@ -583,10 +588,13 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
                                                  CUDNN_SOFTMAX_ACCURATE,
                                                  CUDNN_SOFTMAX_MODE_CHANNEL,
                                                  &one,
-                                                 attention_weights.get_descriptor(),      attention_weights.data,
-                                                 attention_weight_delta.get_descriptor(), attention_weight_delta.data,
+                                                 attention_weights.get_descriptor(),
+                                                 attention_weights.get_data(),
+                                                 attention_weight_delta.get_descriptor(),
+                                                 attention_weight_delta.get_data(),
                                                  &zero,
-                                                 attention_weight_delta.get_descriptor(), attention_weight_delta.data));
+                                                 attention_weight_delta.get_descriptor(),
+                                                 attention_weight_delta.get_data()));
             });
         return;
     }
@@ -668,8 +676,8 @@ void AttentionOperator::apply_unfused(const TensorView& query,
         && value.is_fp32()
         && attention_weights.is_fp32()
         && output.is_fp32()
-        && source_input.shape.rank == 3
-        && attention_weights.shape.rank == 4;
+        && source_input.get_shape().get_rank() == 3
+        && attention_weights.get_shape().get_rank() == 4;
 
     if (use_cpu_fast_path)
     {
@@ -677,12 +685,12 @@ void AttentionOperator::apply_unfused(const TensorView& query,
         bool has_padding = false;
         bool have_lengths = false;
 
-        if (explicit_lengths && Index(explicit_lengths->size()) == source_input.shape[0])
+        if (explicit_lengths && Index(explicit_lengths->size()) == source_input.get_shape()[0])
         {
             valid_lengths = *explicit_lengths;
             have_lengths = true;
             has_padding = ranges::any_of(valid_lengths,
-                [&](const Index length) { return length < source_input.shape[1]; });
+                [&](const Index length) { return length < source_input.get_shape()[1]; });
         }
         else
         {
@@ -691,9 +699,9 @@ void AttentionOperator::apply_unfused(const TensorView& query,
 
         if (have_lengths && has_padding)
         {
-            const Index batch_size = source_input.shape[0];
-            const Index query_length = query.shape[2];
-            const Index source_length = key.shape[2];
+            const Index batch_size = source_input.get_shape()[0];
+            const Index query_length = query.get_shape()[2];
+            const Index source_length = key.get_shape()[2];
             const Index batch_heads = batch_size * heads_number;
             const float scale = scaling_factor();
 
@@ -735,10 +743,10 @@ void AttentionOperator::apply_unfused(const TensorView& query,
 
     multiply(query, false, key, true, attention_weights, scaling_factor(), 0.0f);
 
-    const Index batch_size = source_input.shape[0];
-    const Index source_length = source_input.shape[1];
-    const Index embedding_dimension = source_input.shape[2];
-    const Index query_length = attention_weights.shape[2];
+    const Index batch_size = source_input.get_shape()[0];
+    const Index source_length = source_input.get_shape()[1];
+    const Index embedding_dimension = source_input.get_shape()[2];
+    const Index query_length = attention_weights.get_shape()[2];
 
 #ifdef OPENNN_HAS_CUDA
     if (attention_weights.is_cuda() && explicit_lengths
@@ -849,7 +857,7 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
                                bool is_training,
                                const vector<Index>* explicit_lengths)
 {
-    throw_if(!sdpa_supported(query.type, query.device),
+    throw_if(!sdpa_supported(query.get_type(), query.get_device()),
              "AttentionOperator: SDPA backend selected by the layer "
              "but not supported (build without HAVE_CUDNN_FRONTEND, "
              "unsupported dtype, or CPU runtime).");
@@ -859,9 +867,9 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
     const bool dropout_in_graph = dropout.active() && is_training;
 
     SDPACache::CacheKey cache_key{
-        query.shape[0],
-        query.shape[2],
-        key.shape[2],
+        query.get_shape()[0],
+        query.get_shape()[2],
+        key.get_shape()[2],
         heads_number,
         head_dimension,
         Type::BF16,
@@ -900,10 +908,10 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
         ++sdpa_dropout_offset;
     }
 
-    void* q_ptr = query.data;
-    void* k_ptr = key.data;
-    void* v_ptr = value.data;
-    void* o_ptr = output.data;
+    void* q_ptr = query.get_data();
+    void* k_ptr = key.get_data();
+    void* v_ptr = value.get_data();
+    void* o_ptr = output.get_data();
     const bool fp32_via_bf16 = query.is_fp32();
 
     bfloat16* output_bf16 = nullptr;
@@ -1004,13 +1012,13 @@ void AttentionOperator::apply_delta_cpu(const TensorView& query,
         && !use_causal_mask
         && !dropout.active()
         && compute_dtype == Type::FP32
-        && attention_weights.shape.rank == 4
-        && attention_weight_delta.shape.rank == 4;
+        && attention_weights.get_shape().get_rank() == 4
+        && attention_weight_delta.get_shape().get_rank() == 4;
 
     if (use_cpu_fast_path)
     {
-        const Index batch_size = query.shape[0];
-        const Index source_length = key.shape[2];
+        const Index batch_size = query.get_shape()[0];
+        const Index source_length = key.get_shape()[2];
         vector<Index> valid_lengths(batch_size);
         bool has_padding = false;
         bool valid_prefixes = true;
@@ -1105,16 +1113,16 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
                                 TensorView& value_delta,
                                 span<const TensorView> bf16_scratch) const
 {
-    throw_if(!sdpa_supported(query.type, query.device) || !sdpa_cache,
+    throw_if(!sdpa_supported(query.get_type(), query.get_device()) || !sdpa_cache,
              "AttentionOperator: SDPA backward called without a live SDPA "
              "forward graph (use_sdpa set inconsistently between fwd/bwd).");
 
     const bool dropout_in_graph = dropout.active();
 
     SDPACache::CacheKey cache_key{
-        query.shape[0],
-        query.shape[2],
-        key.shape[2],
+        query.get_shape()[0],
+        query.get_shape()[2],
+        key.get_shape()[2],
         heads_number,
         head_dimension,
         Type::BF16,
@@ -1143,15 +1151,15 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
                            Backend::get_compute_stream());
     }
 
-    void* bq  = query.data;
-    void* bk  = key.data;
-    void* bv  = value.data;
+    void* bq  = query.get_data();
+    void* bk  = key.get_data();
+    void* bv  = value.get_data();
 
-    void* bo  = attention_output.data;
-    void* bdo = output_delta.data;
-    void* bdq = query_delta.data;
-    void* bdk = key_delta.data;
-    void* bdv = value_delta.data;
+    void* bo  = attention_output.get_data();
+    void* bdo = output_delta.get_data();
+    void* bdq = query_delta.get_data();
+    void* bdk = key_delta.get_data();
+    void* bdv = value_delta.get_data();
     const bool fp32_via_bf16 = query.is_fp32();
     const TensorView& output_gradient_bf16 = bf16_scratch[0];
     const TensorView& query_gradient_bf16  = bf16_scratch[1];
@@ -1177,16 +1185,16 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
         cast_fp32_to_bf16(value.size(), value.as<float>(), value_bf16.as<bfloat16>(), cstream);
         cast_fp32_to_bf16(attention_output.size(), attention_output.as<float>(),
                           output_bf16.as<bfloat16>(), cstream);
-        bq  = query_bf16.data;
-        bk  = key_bf16.data;
-        bv  = value_bf16.data;
-        bo  = output_bf16.data;
+        bq  = query_bf16.get_data();
+        bk  = key_bf16.get_data();
+        bv  = value_bf16.get_data();
+        bo  = output_bf16.get_data();
         cast_fp32_to_bf16(output_delta.size(), output_delta.as<float>(),
                           output_gradient_bf16.as<bfloat16>(), cstream);
-        bdo = output_gradient_bf16.data;
-        bdq = query_gradient_bf16.data;
-        bdk = key_gradient_bf16.data;
-        bdv = value_gradient_bf16.data;
+        bdo = output_gradient_bf16.get_data();
+        bdq = query_gradient_bf16.get_data();
+        bdk = key_gradient_bf16.get_data();
+        bdv = value_gradient_bf16.get_data();
     }
     unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensor_map;
     tensor_map[entry.bwd_Q]     = bq;

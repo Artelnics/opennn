@@ -1,4 +1,4 @@
-﻿#include "tests/pch.h"
+#include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
 #include "opennn/core/tensor_types.h"
@@ -146,10 +146,10 @@ TEST(Dense3dTest, SequenceForwardValuesMatchHandComputed)
 
     const TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 3);
-    EXPECT_EQ(output_view.shape[0], batch_size);
-    EXPECT_EQ(output_view.shape[1], sequence_length);
-    EXPECT_EQ(output_view.shape[2], output_embedding);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 3);
+    EXPECT_EQ(output_view.get_shape()[0], batch_size);
+    EXPECT_EQ(output_view.get_shape()[1], sequence_length);
+    EXPECT_EQ(output_view.get_shape()[2], output_embedding);
 
     const float* output_data = output_view.as<type>();
 

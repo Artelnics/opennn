@@ -105,7 +105,9 @@ void RecurrentOperator::back_propagate(ForwardPropagation& forward_propagation, 
     const TensorView& activation_derivatives   = forward_slots[output_slots[2]];
     const TensorView& output_delta             = get_output_delta(back_propagation, layer);
 
-    TensorView& input_delta = slot_or(backward_slots, input_delta_slots, 0);
+    TensorView empty_input_delta;
+    TensorView& input_delta = slot_or(backward_slots, input_delta_slots, 0,
+                                      empty_input_delta);
 
     if (output_delta.is_cuda())
     {
@@ -173,7 +175,7 @@ void RecurrentOperator::apply(const TensorView& input,
                             TensorView& output,
                             bool is_training) const
 {
-    const Index batch_size = input.shape[0];
+    const Index batch_size = input.get_shape()[0];
     const Index BT = batch_size * time_steps;
 
     const VectorMap bias_map  = bias.as_vector();
@@ -239,7 +241,7 @@ void RecurrentOperator::apply_delta(const TensorView& input,
                               const TensorView& output_delta,
                               TensorView& input_delta) const
 {
-    const Index batch_size = input.shape[0];
+    const Index batch_size = input.get_shape()[0];
 
     const MatrixMap w_in_map  = input_weights.as_matrix();
     const MatrixMap w_rec_map = recurrent_weights.as_matrix();
@@ -256,7 +258,7 @@ void RecurrentOperator::apply_delta(const TensorView& input,
     const float* hidden_data = hidden_states.as<float>();
     const float* derivs_data = activation_derivatives.as<float>();
 
-    const bool write_input_delta = !input_delta.empty() && input_delta.data != nullptr;
+    const bool write_input_delta = !input_delta.empty() && input_delta.get_data() != nullptr;
     float* input_delta_data = write_input_delta ? input_delta.as<float>() : nullptr;
 
     const Index h_stride_b = time_steps * output_features;
@@ -329,15 +331,15 @@ void RecurrentOperator::apply_delta(const TensorView& input,
 
 static void zero_device_view(const TensorView& view)
 {
-    if (!view.data || view.empty()) return;
-    device::set_zero_async(view.data, view.byte_size(), Backend::get_compute_stream());
+    if (!view.get_data() || view.empty()) return;
+    device::set_zero_async(view.get_data(), view.byte_size(), Backend::get_compute_stream());
 }
 
 static void require_same_recurrent_dtype(const TensorView& reference,
                                          initializer_list<pair<const TensorView*, const char*>> views)
 {
     for (const auto& [view, name] : views)
-        throw_if(view->data && !view->empty() && view->type != reference.type,
+        throw_if(view->get_data() && !view->empty() && view->get_type() != reference.get_type(),
                  "RecurrentOperator CUDA: {} dtype does not match recurrent compute dtype.", name);
 }
 
@@ -380,13 +382,13 @@ void RecurrentOperator::apply_gpu_cudnn_(const TensorView& input,
                                          TensorView& output,
                                          bool is_training) const
 {
-    const Index batch_size = input.shape[0];
+    const Index batch_size = input.get_shape()[0];
 
     ensure_cudnn_setup_(batch_size, is_training);
     pack_weights_to_cudnn_();
 
     cudnn_rnn_forward_(is_training,  false,
-                       input.data, hidden_states.data,
+                       input.get_data(), hidden_states.get_data(),
                        [&] {
                            ensure_cudnn_setup_(batch_size, is_training);
                            pack_weights_to_cudnn_();
@@ -405,7 +407,7 @@ void RecurrentOperator::apply_delta_gpu_cudnn_(const TensorView& input,
                                                const TensorView& output_delta,
                                                TensorView& input_delta) const
 {
-    const Index batch_size = input.shape[0];
+    const Index batch_size = input.get_shape()[0];
     const Index H = output_features;
     const Index T = time_steps;
 
@@ -417,19 +419,19 @@ void RecurrentOperator::apply_delta_gpu_cudnn_(const TensorView& input,
         scatter_time_slice_fill_cuda(
             batch_size, T, H, T - 1,
             output_delta.as<float>(),
-            static_cast<float*>(dy_buf.data));
-        dy_data = static_cast<const float*>(dy_buf.data);
+            static_cast<float*>(dy_buf.data()));
+        dy_data = static_cast<const float*>(dy_buf.data());
     }
 
-    void* dx_data = input_delta.data;
+    void* dx_data = input_delta.get_data();
     if (!dx_data || input_delta.empty())
     {
         dx_scratch_buf.grow_to(batch_size * T * input_features * Index(sizeof(float)));
-        dx_data = dx_scratch_buf.data;
+        dx_data = dx_scratch_buf.data();
     }
 
     cudnn_rnn_backward_( false,
-                        input.data, hidden_states.data, dy_data, dx_data);
+                        input.get_data(), hidden_states.get_data(), dy_data, dx_data);
 
     unpack_gradients_from_cudnn_();
 }
@@ -440,7 +442,7 @@ void RecurrentOperator::apply_gpu(const TensorView& input,
                             TensorView& output,
                             bool is_training) const
 {
-    if (!input.data || output_features == 0 || time_steps == 0) return;
+    if (!input.get_data() || output_features == 0 || time_steps == 0) return;
 
     if (cudnn_rnn_eligible_(output))
     {
@@ -459,7 +461,7 @@ void RecurrentOperator::apply_gpu(const TensorView& input,
 
     output.dispatch([&]<typename Scalar>()
     {
-        const Index batch_size = input.shape[0];
+        const Index batch_size = input.get_shape()[0];
         const Shape step_input_shape{batch_size, input_features};
         const Shape step_hidden_shape{batch_size, output_features};
 
@@ -472,21 +474,21 @@ void RecurrentOperator::apply_gpu(const TensorView& input,
 
         for (Index t = 0; t < time_steps; ++t)
         {
-            TensorView step_input(step_input_buf.data, step_input_shape, input.type, Device::CUDA);
-            TensorView step_hidden(step_hidden_buf.data, step_hidden_shape, output.type, Device::CUDA);
+            TensorView step_input(step_input_buf.data(), step_input_shape, input.get_type(), Device::CUDA);
+            TensorView step_hidden(step_hidden_buf.data(), step_hidden_shape, output.get_type(), Device::CUDA);
 
             gather_time_slice_cuda<Scalar>(batch_size, time_steps, input_features, t,
                                            input.as<Scalar>(), step_input.as<Scalar>());
 
             const Scalar* prev_h_ptr = (t > 0)
-                ? static_cast<const Scalar*>(prev_hidden_buf.data)
+                ? static_cast<const Scalar*>(prev_hidden_buf.data())
                 : nullptr;
 
             Scalar* derivs = nullptr;
             TensorView step_derivs;
             if (is_training && !activation_derivatives.empty())
             {
-                step_derivs = TensorView(step_derivs_buf.data, step_hidden_shape, output.type, Device::CUDA);
+                step_derivs = TensorView(step_derivs_buf.data(), step_hidden_shape, output.get_type(), Device::CUDA);
                 derivs = step_derivs.as<Scalar>();
             }
 
@@ -516,7 +518,7 @@ void RecurrentOperator::apply_gpu(const TensorView& input,
             copy(hidden_states, output);
         else
         {
-            TensorView final_hidden(prev_hidden_buf.data, step_hidden_shape, output.type, Device::CUDA);
+            TensorView final_hidden(prev_hidden_buf.data(), step_hidden_shape, output.get_type(), Device::CUDA);
             copy(final_hidden, output);
         }
     });
@@ -533,7 +535,7 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
                                   TensorView& next_carry_scratch,
                                   TensorView& step_in_delta_scratch) const
 {
-    if (!input.data || !output_delta.data || output_features == 0 || time_steps == 0) return;
+    if (!input.get_data() || !output_delta.get_data() || output_features == 0 || time_steps == 0) return;
 
     if (cudnn_rnn_eligible_(output_delta))
     {
@@ -557,7 +559,7 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
 
     output_delta.dispatch([&]<typename Scalar>()
     {
-        const Index batch_size = input.shape[0];
+        const Index batch_size = input.get_shape()[0];
 
         zero_device_view(bias_gradient);
         zero_device_view(input_weight_gradient);
@@ -582,18 +584,18 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
                 gather_time_slice_cuda<Scalar>(batch_size, time_steps,
                                                output_features, t,
                                                output_delta.as<Scalar>(),
-                                               static_cast<Scalar*>(step_seq_delta_buf.data));
+                                               static_cast<Scalar*>(step_seq_delta_buf.data()));
                 if (!first_iter)
                 {
                     const float alpha = 1.0f;
                     const int   n     = to_int(batch_size * output_features);
                     CHECK_CUBLAS(cublasAxpyEx(Backend::get_cublas_handle(), n,
                                               &alpha, CUDA_R_32F,
-                                              next_carry_scratch.data, axpy_dtype, 1,
-                                              step_seq_delta_buf.data, axpy_dtype, 1,
+                                              next_carry_scratch.get_data(), axpy_dtype, 1,
+                                              step_seq_delta_buf.data(), axpy_dtype, 1,
                                               CUDA_R_32F));
                 }
-                delta_src        = static_cast<const Scalar*>(step_seq_delta_buf.data);
+                delta_src        = static_cast<const Scalar*>(step_seq_delta_buf.data());
                 carry_src        = nullptr;
                 kernel_first_iter = true;
             }
@@ -632,7 +634,7 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
                          next_carry_scratch, 1.0f, 0.0f);
             }
 
-            if (input_delta.data && !input_delta.empty())
+            if (input_delta.get_data() && !input_delta.empty())
             {
                 multiply(delta_scratch, false, input_weights, true,
                          step_in_delta_scratch, 1.0f, 0.0f);
@@ -747,7 +749,7 @@ void Recurrent::apply_input_shape(const Shape& new_input_shape)
 void Recurrent::set_output_shape(const Shape& new_output_shape)
 {
     check_rank(new_output_shape, {1, 2}, "Recurrent", "output");
-    output_features = new_output_shape[new_output_shape.rank - 1];
+    output_features = new_output_shape[new_output_shape.get_rank() - 1];
     configure_operators();
 }
 
@@ -775,7 +777,7 @@ void Recurrent::write_JSON_body(JsonWriter& printer) const
 string Recurrent::write_expression(const vector<string>& feature_names,
                                    const vector<string>& output_names) const
 {
-    if (parameters.size() < 3 || !parameters[0].data || !parameters[1].data || !parameters[2].data)
+    if (parameters.size() < 3 || !parameters[0].get_data() || !parameters[1].get_data() || !parameters[2].get_data())
         return {};
 
     VectorMap biases_map        = parameters[0].as_vector();

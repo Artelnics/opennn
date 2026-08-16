@@ -107,7 +107,7 @@ TEST(GroupedAttentionTest, GpuMatchesCpu)
     cudaStream_t stream = Backend::get_compute_stream();
     auto to_device = [&](const vector<float>& h, Buffer& buf) {
         buf.resize_bytes(Index(h.size()) * Index(sizeof(float)), Device::CPU);
-        memcpy(buf.data, h.data(), h.size() * sizeof(float));
+        memcpy(buf.data(), h.data(), h.size() * sizeof(float));
         buf.migrate_to(Device::CUDA, stream);
     };
     Buffer qb(Device::CPU), kb(Device::CPU), vb(Device::CPU), ob(Device::CUDA);

@@ -1,4 +1,4 @@
-﻿#include "tests/pch.h"
+#include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
 #include <utility>
@@ -69,9 +69,9 @@ TEST(Pool3dOperatoreratorTest, ForwardMaxValuesAndShape)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 2);
-    EXPECT_EQ(output_view.shape[0], batch_size);
-    EXPECT_EQ(output_view.shape[1], feat);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 2);
+    EXPECT_EQ(output_view.get_shape()[0], batch_size);
+    EXPECT_EQ(output_view.get_shape()[1], feat);
 
     const float expected[8] = {5, 6, 7, 8, 8, 7, 6, 5};
     for (Index i = 0; i < output_view.size(); ++i)
@@ -99,9 +99,9 @@ TEST(Pool3dOperatoreratorTest, ForwardAverageValuesWithPadding)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 2);
-    EXPECT_EQ(output_view.shape[0], batch_size);
-    EXPECT_EQ(output_view.shape[1], feat);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 2);
+    EXPECT_EQ(output_view.get_shape()[0], batch_size);
+    EXPECT_EQ(output_view.get_shape()[1], feat);
 
     const float expected[8] = {8.0f / 3.0f, 10.0f / 3.0f, 4.0f, 14.0f / 3.0f,
                                6.0f, 5.0f, 4.0f, 3.0f};
@@ -270,9 +270,9 @@ TEST(Pool3dOperatoreratorTest, AverageIgnoresPaddingBehindANonzeroShift)
 
     const TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 2);
-    ASSERT_EQ(output_view.shape[0], batch_size);
-    ASSERT_EQ(output_view.shape[1], padded_embedding_dimension);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 2);
+    ASSERT_EQ(output_view.get_shape()[0], batch_size);
+    ASSERT_EQ(output_view.get_shape()[1], padded_embedding_dimension);
 
     for (Index sample = 0; sample < batch_size; ++sample)
     {

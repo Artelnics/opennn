@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L A Y E R   C L A S S   H E A D E R
@@ -27,14 +27,14 @@ inline void check_rank(const Shape& shape, initializer_list<int> allowed,
                        const char* layer, const char* what)
 {
     if (shape.empty()) return;
-    if (ranges::any_of(allowed, [&](int r){ return int(shape.rank) == r; })) return;
+    if (ranges::any_of(allowed, [&](int r){ return int(shape.get_rank()) == r; })) return;
 
     string allowed_str;
     for (int r : allowed)
         allowed_str += format("{}{}", allowed_str.empty() ? "" : "/", r);
 
     throw runtime_error(format("{} layer supports {} rank {} (got {}).",
-                               layer, what, allowed_str, shape.rank));
+                               layer, what, allowed_str, shape.get_rank()));
 }
 
 class Layer
@@ -70,9 +70,9 @@ public:
     // below - but whether the shape is acceptable at all is answered uniformly.
     void set_input_shape(const Shape& new_input_shape)
     {
-        throw_if(!new_input_shape.empty() && !accepts_input_rank(new_input_shape.rank),
+        throw_if(!new_input_shape.empty() && !accepts_input_rank(new_input_shape.get_rank()),
                  "{} layer does not accept an input of rank {}.",
-                 get_name(), new_input_shape.rank);
+                 get_name(), new_input_shape.get_rank());
 
         apply_input_shape(new_input_shape);
     }

@@ -51,14 +51,14 @@ pair<ptrdiff_t, ptrdiff_t> slot_range(ForwardPropagation& propagation,
                                       const TensorView& view)
 {
     const char* base = propagation.arena.as<char>();
-    const ptrdiff_t low = static_cast<const char*>(view.data) - base;
+    const ptrdiff_t low = static_cast<const char*>(view.get_data()) - base;
     return {low, low + view.byte_size()};
 }
 
 void expect_identical_plans(ForwardPropagation& left,
                             ForwardPropagation& right)
 {
-    ASSERT_EQ(left.arena.bytes, right.arena.bytes);
+    ASSERT_EQ(left.arena.byte_size(), right.arena.byte_size());
     ASSERT_EQ(left.slots.size(), right.slots.size());
 
     for (size_t i = 0; i < left.slots.size(); ++i)
@@ -70,7 +70,7 @@ void expect_identical_plans(ForwardPropagation& left,
             const TensorView& left_slot = left.slots[i][j];
             const TensorView& right_slot = right.slots[i][j];
             EXPECT_EQ(left_slot.byte_size(), right_slot.byte_size());
-            if (!left_slot.data || !right_slot.data) continue;
+            if (!left_slot.get_data() || !right_slot.get_data()) continue;
             EXPECT_EQ(slot_range(left, left_slot),
                       slot_range(right, right_slot));
         }
@@ -104,7 +104,7 @@ TEST(ForwardPropagationRetainedOutputsTest,
     for (const Index i : rerun_layers)
         for (const TensorView& slot : propagation.slots[size_t(i)])
         {
-            if (!slot.data || slot.byte_size() == 0) continue;
+            if (!slot.get_data() || slot.byte_size() == 0) continue;
             const auto [low, high] = slot_range(propagation, slot);
             EXPECT_TRUE(high <= retained_low || low >= retained_high)
                 << "layer " << i << " slot [" << low << ", " << high
@@ -137,8 +137,8 @@ TEST(ForwardPropagationRetainedOutputsTest, EmptyPolicyKeepsDefaultPlan)
 
     const TensorView& retained =
         retained_propagation.slots[size_t(layout.encoder_last)].back();
-    EXPECT_LE(retained_propagation.arena.bytes,
-              default_propagation.arena.bytes
+    EXPECT_LE(retained_propagation.arena.byte_size(),
+              default_propagation.arena.byte_size()
                   + get_aligned_bytes(retained.byte_size()));
 
     Configuration::instance().set();

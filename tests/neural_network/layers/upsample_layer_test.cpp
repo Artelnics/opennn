@@ -30,7 +30,7 @@ TEST_F(UpsampleLayerTest, Constructor)
 
     const Shape output_shape = upsample_layer.get_output_shape();
 
-    ASSERT_EQ(output_shape.rank, 3);
+    ASSERT_EQ(output_shape.get_rank(), 3);
     EXPECT_EQ(output_shape[0], height * scale_factor);
     EXPECT_EQ(output_shape[1], width * scale_factor);
     EXPECT_EQ(output_shape[2], channels);
@@ -46,7 +46,7 @@ TEST_F(UpsampleLayerTest, GeneralConstructorLabel)
 
     const Shape output_shape = upsample_layer.get_output_shape();
 
-    ASSERT_EQ(output_shape.rank, 3);
+    ASSERT_EQ(output_shape.get_rank(), 3);
     EXPECT_EQ(output_shape[0], height * scale_factor);
     EXPECT_EQ(output_shape[1], width * scale_factor);
     EXPECT_EQ(output_shape[2], channels);
@@ -85,9 +85,9 @@ TEST_F(UpsampleLayerTest, ForwardPropagateNearestNeighborReplication)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 4);
-    ASSERT_EQ(output_view.shape[1], in_h * scale);
-    ASSERT_EQ(output_view.shape[2], in_w * scale);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 4);
+    ASSERT_EQ(output_view.get_shape()[1], in_h * scale);
+    ASSERT_EQ(output_view.get_shape()[2], in_w * scale);
 
     const Index out_w = in_w * scale;
     const float* out = output_view.as<type>();
@@ -129,9 +129,9 @@ TEST_F(UpsampleLayerTest, ForwardPropagateChannelsPreserved)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape[1], in_h * scale);
-    ASSERT_EQ(output_view.shape[2], in_w * scale);
-    ASSERT_EQ(output_view.shape[3], ch);
+    ASSERT_EQ(output_view.get_shape()[1], in_h * scale);
+    ASSERT_EQ(output_view.get_shape()[2], in_w * scale);
+    ASSERT_EQ(output_view.get_shape()[3], ch);
 
     const float* out = output_view.as<type>();
     const Index spatial = (in_h * scale) * (in_w * scale);

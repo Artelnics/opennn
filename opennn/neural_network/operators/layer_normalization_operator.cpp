@@ -28,7 +28,7 @@ static void layer_normalization_forward_cpu(const TensorView& input, const Tenso
                             TensorView& normalized, TensorView& output,
                             float epsilon)
 {
-    const Index embedding_dimension = input.shape.back();
+    const Index embedding_dimension = input.get_shape().back();
     const Index total_rows = input.size() / embedding_dimension;
     const float inv_D = 1.0f / to_type(embedding_dimension);
 
@@ -77,7 +77,7 @@ static void layer_normalization_backward_cpu(const TensorView& output_delta,
                              const TensorView& beta_gradient,
                              TensorView& input_delta)
 {
-    const Index embedding_dimension = output_delta.shape.back();
+    const Index embedding_dimension = output_delta.get_shape().back();
     const Index total_rows = output_delta.size() / embedding_dimension;
     const float inv_D = 1.0f / to_type(embedding_dimension);
 
@@ -134,8 +134,8 @@ void layer_normalization_add_forward(const TensorView& input, const TensorView& 
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
-        const int rows = to_int(input.size() / input.shape.back());
-        const int cols = to_int(input.shape.back());
+        const int rows = to_int(input.size() / input.get_shape().back());
+        const int cols = to_int(input.get_shape().back());
         output.dispatch([&]<typename T>() {
             layernorm_add_forward_cuda<T>(rows, cols,
                                           input.as<T>(), residual.as<T>(),
@@ -170,7 +170,7 @@ static void rms_normalization_forward_cpu(const TensorView& input, const TensorV
                             TensorView& inverse_rms, TensorView& normalized, TensorView& output,
                             float epsilon)
 {
-    const Index embedding_dimension = input.shape.back();
+    const Index embedding_dimension = input.get_shape().back();
     const Index total_rows = input.size() / embedding_dimension;
     const float inv_D = 1.0f / to_type(embedding_dimension);
 
@@ -209,7 +209,7 @@ static void rms_normalization_backward_cpu(const TensorView& output_delta,
                              const TensorView& weight_gradient,
                              TensorView& input_delta)
 {
-    const Index embedding_dimension = output_delta.shape.back();
+    const Index embedding_dimension = output_delta.get_shape().back();
     const Index total_rows = output_delta.size() / embedding_dimension;
     const float inv_D = 1.0f / to_type(embedding_dimension);
 
@@ -275,8 +275,8 @@ void rms_normalization_backward(const TensorView& input, const TensorView& outpu
 static void layer_normalization_forward_gpu(const TensorView& input, const TensorView& gamma, const TensorView& beta,
                             TensorView& means, TensorView& standard_deviations, TensorView& output, float epsilon)
 {
-    const int rows = to_int(input.size() / input.shape.back());
-    const int cols = to_int(input.shape.back());
+    const int rows = to_int(input.size() / input.get_shape().back());
+    const int cols = to_int(input.get_shape().back());
 
     output.dispatch([&]<typename T>() {
         layernorm_forward_cuda<T>(rows, cols,
@@ -292,8 +292,8 @@ static void layer_normalization_backward_gpu(const TensorView& input, const Tens
                              const TensorView& gamma_gradient, const TensorView& beta_gradient,
                              TensorView& input_delta)
 {
-    const int rows = to_int(input.size() / input.shape.back());
-    const int cols = to_int(input.shape.back());
+    const int rows = to_int(input.size() / input.get_shape().back());
+    const int cols = to_int(input.get_shape().back());
 
     input.dispatch([&]<typename T>() {
         T* input_delta_data = input_delta.empty() ? nullptr : input_delta.as<T>();
@@ -310,8 +310,8 @@ static void layer_normalization_backward_gpu(const TensorView& input, const Tens
 static void rms_normalization_forward_gpu(const TensorView& input, const TensorView& weight,
                             TensorView& inverse_rms, TensorView& output, float epsilon)
 {
-    const int rows = to_int(input.size() / input.shape.back());
-    const int cols = to_int(input.shape.back());
+    const int rows = to_int(input.size() / input.get_shape().back());
+    const int cols = to_int(input.get_shape().back());
 
     output.dispatch([&]<typename T>() {
         rmsnorm_forward_cuda<T>(rows, cols,
@@ -325,8 +325,8 @@ static void rms_normalization_backward_gpu(const TensorView& input, const Tensor
                              const TensorView& inverse_rms, const TensorView& weight,
                              const TensorView& weight_gradient, TensorView& input_delta)
 {
-    const int rows = to_int(input.size() / input.shape.back());
-    const int cols = to_int(input.shape.back());
+    const int rows = to_int(input.size() / input.get_shape().back());
+    const int cols = to_int(input.get_shape().back());
 
     input.dispatch([&]<typename T>() {
         T* input_delta_data = input_delta.empty() ? nullptr : input_delta.as<T>();
@@ -385,8 +385,8 @@ void LayerNormalizationOperator::link_gradients(span<const TensorView> views)
 
 void LayerNormalizationOperator::init_defaults()
 {
-    if (gamma.data) gamma.as_vector().setOnes();
-    if (beta.data)  beta.as_vector().setZero();
+    if (gamma.get_data()) gamma.as_vector().setOnes();
+    if (beta.get_data())  beta.as_vector().setZero();
 }
 
 void LayerNormalizationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
@@ -447,7 +447,7 @@ void LayerNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
     if (fuse_add)
     {
         TensorView& residual_delta = back_propagation.slots[layer][2];
-        if (residual_delta.data && residual_delta.data != input_delta.data)
+        if (residual_delta.get_data() && residual_delta.get_data() != input_delta.get_data())
             copy(input_delta, residual_delta);
     }
 }

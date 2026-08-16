@@ -84,9 +84,9 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagate)
         neural_network.forward_propagate(input_views, forward_propagation, true);
 
         TensorView outputs_view = forward_propagation.get_outputs();
-        EXPECT_EQ(outputs_view.shape[0], samples_number)
+        EXPECT_EQ(outputs_view.get_shape()[0], samples_number)
             << "cell activation=" << act;
-        EXPECT_EQ(outputs_view.shape[1], outputs_number)
+        EXPECT_EQ(outputs_view.get_shape()[1], outputs_number)
             << "cell activation=" << act;
     }
 }
@@ -122,9 +122,9 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
         neural_network.forward_propagate(input_views, forward_propagation, false);
 
         const TensorView outputs_view = forward_propagation.get_outputs();
-        ASSERT_EQ(outputs_view.shape.rank, size_t(2));
-        EXPECT_EQ(outputs_view.shape[0], samples_number);
-        EXPECT_EQ(outputs_view.shape[1], outputs_number);
+        ASSERT_EQ(outputs_view.get_shape().get_rank(), size_t(2));
+        EXPECT_EQ(outputs_view.get_shape()[0], samples_number);
+        EXPECT_EQ(outputs_view.get_shape()[1], outputs_number);
 
         const float* output_data = outputs_view.as<type>();
         for (Index i = 0; i < samples_number * outputs_number; ++i)
@@ -153,10 +153,10 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
         neural_network.forward_propagate(input_views, forward_propagation, false);
 
         const TensorView outputs_view = forward_propagation.get_outputs();
-        ASSERT_EQ(outputs_view.shape.rank, size_t(3));
-        EXPECT_EQ(outputs_view.shape[0], samples_number);
-        EXPECT_EQ(outputs_view.shape[1], time_steps);
-        EXPECT_EQ(outputs_view.shape[2], outputs_number);
+        ASSERT_EQ(outputs_view.get_shape().get_rank(), size_t(3));
+        EXPECT_EQ(outputs_view.get_shape()[0], samples_number);
+        EXPECT_EQ(outputs_view.get_shape()[1], time_steps);
+        EXPECT_EQ(outputs_view.get_shape()[2], outputs_number);
 
         const float* output_data = outputs_view.as<type>();
         for (Index b = 0; b < samples_number; ++b)
@@ -252,10 +252,10 @@ TEST(LongShortTermMemoryLayerTest, ForgetBiasInitialisedToOne)
     ASSERT_NE(lstm, nullptr);
 
     const TensorView& bf = lstm->get_forget_bias();
-    ASSERT_NE(bf.data, nullptr);
-    ASSERT_GT(bf.shape.size(), 0);
+    ASSERT_NE(bf.get_data(), nullptr);
+    ASSERT_GT(bf.get_shape().size(), 0);
     const float* bf_data = bf.as<float>();
-    for (Index i = 0; i < bf.shape.size(); ++i)
+    for (Index i = 0; i < bf.get_shape().size(); ++i)
         EXPECT_FLOAT_EQ(bf_data[i], 1.0f);
 }
 

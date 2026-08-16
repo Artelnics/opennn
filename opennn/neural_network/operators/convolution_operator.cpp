@@ -370,7 +370,9 @@ void ConvolutionOperator::back_propagate(ForwardPropagation& forward_propagation
     const TensorView& input        = get_input(forward_propagation, layer);
     const TensorView& output_delta = get_output_delta(back_propagation, layer);
 
-    TensorView& input_delta = slot_or(backward_slots, input_delta_slots, 0);
+    TensorView empty_input_delta;
+    TensorView& input_delta = slot_or(backward_slots, input_delta_slots, 0,
+                                      empty_input_delta);
     const TensorView& addend = back_propagation.input_delta_addend(layer, 0);
 
     if (output_delta.is_cuda())
@@ -378,7 +380,7 @@ void ConvolutionOperator::back_propagate(ForwardPropagation& forward_propagation
     else
     {
         apply_delta_cpu(input, output_delta, input_delta);
-        if (addend.data && input_delta.data)
+        if (addend.get_data() && input_delta.get_data())
             input_delta.as_vector() += addend.as_vector();
     }
 }
@@ -479,9 +481,9 @@ void col2im(const float* col, Index input_height, Index input_width, Index chann
 
 void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output) const
 {
-    const Index batch_size = input.shape[0];
-    const Index output_height = output.shape[1];
-    const Index output_width = output.shape[2];
+    const Index batch_size = input.get_shape()[0];
+    const Index output_height = output.get_shape()[1];
+    const Index output_width = output.get_shape()[2];
     const Index output_positions = output_height * output_width;
     const Index patch_size = kernel_height * kernel_width * kernel_channels;
     const Index input_size = input_height * input_width * kernel_channels;
@@ -520,9 +522,9 @@ void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
                                   const TensorView& output_delta,
                                   TensorView& input_delta) const
 {
-    const Index batch_size = output_delta.shape[0];
-    const Index output_height = output_delta.shape[1];
-    const Index output_width = output_delta.shape[2];
+    const Index batch_size = output_delta.get_shape()[0];
+    const Index output_height = output_delta.get_shape()[1];
+    const Index output_width = output_delta.get_shape()[2];
     const Index output_positions = output_height * output_width;
     const Index patch_size = kernel_height * kernel_width * kernel_channels;
     const Index input_size = input_height * input_width * kernel_channels;
@@ -599,7 +601,7 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
     throw_if(!input.is_fp32() && !input.is_bf16(),
              "ConvolutionOperator: GPU convolution requires FP32 or BF16 input.");
 
-    void* weights_data = weights.data;
+    void* weights_data = weights.get_data();
     if (weights.is_int8())
     {
         throw_if(weight_scale.empty() || !input.is_bf16(),
@@ -613,16 +615,16 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
     const bool ran = cudnn_frontend::frontend_enabled()
         && cudnn_frontend::run_frontend(conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
     {
-        auto& entry = cache.entries[input.shape[0]];
+        auto& entry = cache.entries[input.get_shape()[0]];
         if (!entry.fwd)
-            cudnn_frontend::build_forward(entry, cudnn_frontend::make_dims(*this, input.shape[0]),
-                                    fuse_relu, use_bias, input.type);
+            cudnn_frontend::build_forward(entry, cudnn_frontend::make_dims(*this, input.get_shape()[0]),
+                                    fuse_relu, use_bias, input.get_type());
 
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
-        tensors[entry.fwd_X] = input.data;
+        tensors[entry.fwd_X] = input.get_data();
         tensors[entry.fwd_W] = weights_data;
-        if (use_bias) tensors[entry.fwd_B] = bias.data;
-        tensors[entry.fwd_Y] = output.data;
+        if (use_bias) tensors[entry.fwd_B] = bias.get_data();
+        tensors[entry.fwd_Y] = output.get_data();
 
         cudnn_frontend::autotune_with_scratch(entry.fwd_autotune, *entry.fwd, tensors,
                                               entry.fwd_workspace_bytes, "ConvolutionOperator fwd");
@@ -652,7 +654,7 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
 {
     PROFILE_SCOPE("op:conv_bwd");
 
-    assert(output_delta.type == input.type);
+    assert(output_delta.get_type() == input.get_type());
     assert(weight_gradient.is_fp32());
 
     throw_if(!input.is_fp32() && !input.is_bf16(),
@@ -661,28 +663,28 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
     const bool ran = cudnn_frontend::frontend_enabled()
         && cudnn_frontend::run_frontend(conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
     {
-        auto& entry = cache.entries[input.shape[0]];
-        const auto dims = cudnn_frontend::make_dims(*this, input.shape[0]);
+        auto& entry = cache.entries[input.get_shape()[0]];
+        const auto dims = cudnn_frontend::make_dims(*this, input.get_shape()[0]);
 
         if (!entry.wgrad)
         {
             // Prefer an FP32 weight-gradient store (see build_wgrad). A failed
             // build rebuilds every handle, so there is nothing to undo.
             entry.wgrad_fp32_output = input.is_bf16()
-                && cudnn_frontend::build_preferred(*this, "wgrad", input.shape[0],
+                && cudnn_frontend::build_preferred(*this, "wgrad", input.get_shape()[0],
                        "BF16 store + widening cast per step",
-                       [&] { cudnn_frontend::build_wgrad(entry, dims, input.type, true); });
+                       [&] { cudnn_frontend::build_wgrad(entry, dims, input.get_type(), true); });
             if (!entry.wgrad_fp32_output)
-                cudnn_frontend::build_wgrad(entry, dims, input.type, false);
+                cudnn_frontend::build_wgrad(entry, dims, input.get_type(), false);
         }
 
         const bool wgrad_bf16 = input.is_bf16() && !entry.wgrad_fp32_output;
         bfloat16* dw_bf16 = wgrad_bf16 ? ensure_bf16_gradient_workspace(weight_gradient.size()) : nullptr;
 
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
-        tensors[entry.wgrad_DY] = output_delta.data;
-        tensors[entry.wgrad_X]  = input.data;
-        tensors[entry.wgrad_DW] = wgrad_bf16 ? static_cast<void*>(dw_bf16) : weight_gradient.data;
+        tensors[entry.wgrad_DY] = output_delta.get_data();
+        tensors[entry.wgrad_X]  = input.get_data();
+        tensors[entry.wgrad_DW] = wgrad_bf16 ? static_cast<void*>(dw_bf16) : weight_gradient.get_data();
 
         cudnn_frontend::autotune_now(entry.wgrad_autotune, *entry.wgrad, tensors,
                                      entry.wgrad_workspace_bytes, "ConvolutionOperator wgrad");
@@ -695,11 +697,11 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
 
         if (use_bias)
         {
-            if (!entry.bgrad) cudnn_frontend::build_bgrad(entry, dims, input.type);
+            if (!entry.bgrad) cudnn_frontend::build_bgrad(entry, dims, input.get_type());
 
             unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> bgrad_tensors;
-            bgrad_tensors[entry.bgrad_DY] = output_delta.data;
-            bgrad_tensors[entry.bgrad_DB] = bias_gradient.data;
+            bgrad_tensors[entry.bgrad_DY] = output_delta.get_data();
+            bgrad_tensors[entry.bgrad_DB] = bias_gradient.get_data();
 
             cudnn_frontend::autotune_now(entry.bgrad_autotune, *entry.bgrad, bgrad_tensors,
                                          entry.bgrad_workspace_bytes, "ConvolutionOperator bgrad");
@@ -708,25 +710,25 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
                                     "bgrad execute", cudnn_frontend::timing_label(*this, "conv_bgrad"));
         }
 
-        if (input_delta.data && input_delta.size() != 0)
+        if (input_delta.get_data() && input_delta.size() != 0)
         {
-            const bool want_add = addend.data && addend.size() == input_delta.size();
+            const bool want_add = addend.get_data() && addend.size() == input_delta.size();
 
             if (!entry.dgrad)
             {
                 entry.dgrad_adds = want_add
-                    && cudnn_frontend::build_preferred(*this, "dgrad", input.shape[0],
+                    && cudnn_frontend::build_preferred(*this, "dgrad", input.get_shape()[0],
                            "residual delta added separately",
-                           [&] { cudnn_frontend::build_dgrad(entry, dims, input.type, true); });
+                           [&] { cudnn_frontend::build_dgrad(entry, dims, input.get_type(), true); });
                 if (!entry.dgrad_adds)
-                    cudnn_frontend::build_dgrad(entry, dims, input.type, false);
+                    cudnn_frontend::build_dgrad(entry, dims, input.get_type(), false);
             }
 
             unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> dgrad_tensors;
-            dgrad_tensors[entry.dgrad_DY] = output_delta.data;
-            dgrad_tensors[entry.dgrad_W]  = weights.data;
-            dgrad_tensors[entry.dgrad_DX] = input_delta.data;
-            if (entry.dgrad_adds) dgrad_tensors[entry.dgrad_R] = addend.data;
+            dgrad_tensors[entry.dgrad_DY] = output_delta.get_data();
+            dgrad_tensors[entry.dgrad_W]  = weights.get_data();
+            dgrad_tensors[entry.dgrad_DX] = input_delta.get_data();
+            if (entry.dgrad_adds) dgrad_tensors[entry.dgrad_R] = addend.get_data();
 
             cudnn_frontend::autotune_now(entry.dgrad_autotune, *entry.dgrad, dgrad_tensors,
                                          entry.dgrad_workspace_bytes, "ConvolutionOperator dgrad");

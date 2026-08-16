@@ -37,14 +37,14 @@ void UpsampleOperator::forward_propagate(ForwardPropagation& forward_propagation
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
-        upsample_forward_cuda(to_int(input.shape[0]), to_int(input_height), to_int(input_width),
+        upsample_forward_cuda(to_int(input.get_shape()[0]), to_int(input_height), to_int(input_width),
                               to_int(channels), to_int(scale_factor),
                               input.as<float>(), output.as<float>());
         return;
     }
 #endif
 
-    const Index batch_size = input.shape[0];
+    const Index batch_size = input.get_shape()[0];
     const Index out_h = input_height * scale_factor;
     const Index out_w = input_width * scale_factor;
     const float* src = input.as<float>();
@@ -79,14 +79,14 @@ void UpsampleOperator::back_propagate(ForwardPropagation&, BackPropagation& back
 #ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
     {
-        upsample_backward_cuda(to_int(input_delta.shape[0]), to_int(input_height), to_int(input_width),
+        upsample_backward_cuda(to_int(input_delta.get_shape()[0]), to_int(input_height), to_int(input_width),
                                to_int(channels), to_int(scale_factor),
                                output_delta.as<float>(), input_delta.as<float>());
         return;
     }
 #endif
 
-    const Index batch_size = input_delta.shape[0];
+    const Index batch_size = input_delta.get_shape()[0];
     const Index out_h = input_height * scale_factor;
     const Index out_w = input_width * scale_factor;
     const float* delta = output_delta.as<float>();

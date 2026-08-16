@@ -498,15 +498,15 @@ public:
         const SamplingConfig config = clamp_sampling(input_config);
 
         const TensorView output = propagation.get_outputs();
-        throw_if(output.shape.empty()
-                 || output.shape.back() != output_vocabulary,
+        throw_if(output.get_shape().empty()
+                 || output.get_shape().back() != output_vocabulary,
                  "ChatSession: output vocabulary does not match the sampler.");
         throw_if(row_index < 0
                  || row_index >= output.size() / output_vocabulary,
                  "ChatSession: logits row is out of range.");
 
-        const Index element_bytes = Index(type_bytes(output.type));
-        char* const row = static_cast<char*>(output.data)
+        const Index element_bytes = Index(type_bytes(output.get_type()));
+        char* const row = static_cast<char*>(output.get_data())
             + row_index * output_vocabulary * element_bytes;
 
 #ifdef OPENNN_HAS_CUDA
@@ -518,20 +518,20 @@ public:
         if (fast_gpu)
         {
             const TensorView row_view(row, {vocabulary},
-                                      output.type, Device::CUDA);
+                                      output.get_type(), Device::CUDA);
             sample_logits_row(row_view,
                               config.temperature,
                               config.temperature == 0.0f ? 1 : config.top_k,
                               config.top_p,
                               seed,
                               step++,
-                              gpu_candidates.data,
-                              static_cast<int*>(gpu_id.data),
+                              gpu_candidates.data(),
+                              static_cast<int*>(gpu_id.data()),
                               token_device
-                                  ? static_cast<float*>(token_device->data)
+                                  ? static_cast<float*>(token_device->data())
                                   : nullptr);
             device::copy_async(pinned_id,
-                               gpu_id.data,
+                               gpu_id.data(),
                                Index(sizeof(int)),
                                device::CopyKind::DeviceToHost,
                                device::get_compute_stream());
@@ -540,14 +540,14 @@ public:
         }
 #endif
 
-        read_logits(TensorView(row, {vocabulary}, output.type, output.device));
+        read_logits(TensorView(row, {vocabulary}, output.get_type(), output.get_device()));
         const Index sampled = sample_host(config, history);
 
 #ifdef OPENNN_HAS_CUDA
         if (token_device)
         {
             const float token_value = float(sampled);
-            device::copy_async(token_device->data,
+            device::copy_async(token_device->data(),
                                &token_value,
                                Index(sizeof(float)),
                                device::CopyKind::HostToDevice,
@@ -567,7 +567,7 @@ private:
             if (row.is_fp32())
             {
                 device::copy_async(logits.data(),
-                                   row.data,
+                                   row.get_data(),
                                    vocabulary * Index(sizeof(float)),
                                    device::CopyKind::DeviceToHost,
                                    device::get_compute_stream());
@@ -578,7 +578,7 @@ private:
             throw_if(!row.is_bf16(),
                      "ChatSession: unsupported logits dtype.");
             device::copy_async(bf16_logits.data(),
-                               row.data,
+                               row.get_data(),
                                vocabulary * Index(sizeof(uint16_t)),
                                device::CopyKind::DeviceToHost,
                                device::get_compute_stream());
@@ -586,7 +586,7 @@ private:
         }
         else if (row.is_fp32())
         {
-            memcpy(logits.data(), row.data,
+            memcpy(logits.data(), row.get_data(),
                    size_t(vocabulary) * sizeof(float));
             return;
         }
@@ -594,7 +594,7 @@ private:
         {
             throw_if(!row.is_bf16(),
                      "ChatSession: unsupported logits dtype.");
-            memcpy(bf16_logits.data(), row.data,
+            memcpy(bf16_logits.data(), row.get_data(),
                    size_t(vocabulary) * sizeof(uint16_t));
         }
 
@@ -913,7 +913,7 @@ make_decoder_only_state(TextGenerationNetwork& network)
 void copy_classic_input(const TensorView& destination,
                         const float* source)
 {
-    device::copy_async(destination.data,
+    device::copy_async(destination.get_data(),
                        source,
                        destination.byte_size(),
                        device::CopyKind::HostToDevice,
@@ -924,7 +924,7 @@ void read_classic_distribution(ClassicGenerationState& state,
                                const Index position)
 {
     const TensorView output = state.propagation->get_outputs();
-    const Index vocabulary = output.shape.back();
+    const Index vocabulary = output.get_shape().back();
     const Index offset = position * vocabulary;
 
     if (output.is_bf16())
@@ -1025,7 +1025,7 @@ struct ChatSession::Impl
             prefill.stage_position(stream);
             decode.stage_position(stream);
             decode_inputs = {
-                TensorView(token_device.data, {1, 1},
+                TensorView(token_device.data(), {1, 1},
                            Type::FP32, Device::CUDA)
             };
         }
@@ -1114,7 +1114,7 @@ struct ChatSession::Impl
     static void stage_token(Buffer& destination, Index token)
     {
         const float value = float(token);
-        device::copy_async(destination.data, &value, Index(sizeof(float)),
+        device::copy_async(destination.data(), &value, Index(sizeof(float)),
                            device::CopyKind::HostToDevice,
                            device::get_compute_stream());
         device::synchronize(device::get_compute_stream());
@@ -1273,7 +1273,7 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
     draft->decode.stage_position(stream);
     draft->target_verify.stage_position(stream);
     draft->decode_inputs = {
-        TensorView(draft->token_device.data, {1, 1},
+        TensorView(draft->token_device.data(), {1, 1},
                    Type::FP32, Device::CUDA)
     };
     draft->sampler = make_unique<DecoderSampler>(

@@ -45,9 +45,9 @@ void audit(const string& label, NeuralNetwork& network, Loss& loss, const Index 
     const double mib = 1024.0 * 1024.0;
     cout << "\n[AUDIT] ===== " << label << " =====\n"
          << "[AUDIT] batch=" << batch_size
-         << " fp_arena_mib=" << fixed << setprecision(2) << double(forward_propagation.arena.bytes) / mib
-         << " bp_arena_mib=" << double(back_propagation.arena.bytes) / mib
-         << " gradient_mib=" << double(back_propagation.gradient.bytes) / mib
+         << " fp_arena_mib=" << fixed << setprecision(2) << double(forward_propagation.arena.byte_size()) / mib
+         << " bp_arena_mib=" << double(back_propagation.arena.byte_size()) / mib
+         << " gradient_mib=" << double(back_propagation.gradient.byte_size()) / mib
          << " parameters=" << network.get_parameters_number() << "\n";
 
     memory_debug::print(cout);

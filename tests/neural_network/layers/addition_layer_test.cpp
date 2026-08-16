@@ -56,7 +56,7 @@ TEST(AdditionLayerTest, BackwardSpecsCountMatchesInputsNumber)
     for (const TensorSpec& spec : backward_specs)
     {
         const Shape& shape = spec.shape;
-        ASSERT_EQ(shape.rank, 3);
+        ASSERT_EQ(shape.get_rank(), 3);
         EXPECT_EQ(shape[0], batch_size);
         EXPECT_EQ(shape[1], 4);
         EXPECT_EQ(shape[2], 2);
@@ -96,10 +96,10 @@ TEST(AdditionLayerTest, ForwardPropagateSumsTwoInputs)
 
     const TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 3);
-    EXPECT_EQ(output_view.shape[0], batch_size);
-    EXPECT_EQ(output_view.shape[1], rows);
-    EXPECT_EQ(output_view.shape[2], cols);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 3);
+    EXPECT_EQ(output_view.get_shape()[0], batch_size);
+    EXPECT_EQ(output_view.get_shape()[1], rows);
+    EXPECT_EQ(output_view.get_shape()[2], cols);
     EXPECT_EQ(output_view.size(), total);
 
     const float* output_data = output_view.as<type>();

@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   P O O L 3 D   O P E R A T O R   S O U R C E
@@ -276,12 +276,13 @@ static const int* stage_pooling_lengths(const vector<Index>* valid_lengths)
 static void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool  ,
                                        const vector<Index>* valid_lengths)
 {
+    const Shape& shape = input.get_shape();
     output.dispatch([&]<typename T>() {
-        max_pooling_3d_forward_cuda<T>(to_int(input.shape[0]) * to_int(input.shape[2]),
+        max_pooling_3d_forward_cuda<T>(to_int(shape[0]) * to_int(shape[2]),
                                        input.as<T>(), output.as<T>(),
                                        maximal_indices.as<float>(),
-                                       to_int(input.shape[1]),
-                                       to_int(input.shape[2]),
+                                       to_int(shape[1]),
+                                       to_int(shape[2]),
                                        stage_pooling_lengths(valid_lengths));
     });
 }
@@ -289,24 +290,27 @@ static void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& outp
 static void average_pooling_3d_forward_gpu(const TensorView& input, TensorView& output,
                                            const vector<Index>* valid_lengths)
 {
+    const Shape& shape = input.get_shape();
     output.dispatch([&]<typename T>() {
-        average_pooling_3d_forward_cuda<T>(to_int(input.shape[0]) * to_int(input.shape[2]),
+        average_pooling_3d_forward_cuda<T>(to_int(shape[0]) * to_int(shape[2]),
                                            input.as<T>(), output.as<T>(),
-                                           to_int(input.shape[1]),
-                                           to_int(input.shape[2]),
+                                           to_int(shape[1]),
+                                           to_int(shape[2]),
                                            stage_pooling_lengths(valid_lengths));
     });
 }
 
 static void max_pooling_3d_backward_gpu(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta)
 {
+    const Shape& output_shape = output_delta.get_shape();
+    const Shape& input_shape = input_delta.get_shape();
     input_delta.dispatch([&]<typename T>() {
         input_delta.set_zero_async();
-        max_pooling_3d_backward_cuda<T>(to_int(output_delta.shape[0]) * to_int(output_delta.shape[1]),
+        max_pooling_3d_backward_cuda<T>(to_int(output_shape[0]) * to_int(output_shape[1]),
                                         output_delta.as<T>(), input_delta.as<T>(),
                                         maximal_indices.as<float>(),
-                                        to_int(input_delta.shape[1]),
-                                        to_int(output_delta.shape[1]));
+                                        to_int(input_shape[1]),
+                                        to_int(output_shape[1]));
     });
 }
 
@@ -315,30 +319,33 @@ static void average_pooling_3d_backward_gpu(const TensorView& input,
                                      TensorView& input_delta,
                                      const vector<Index>* valid_lengths)
 {
+    const Shape& shape = input.get_shape();
     input_delta.dispatch([&]<typename T>() {
         // No pre-zeroing: the kernel writes every element of input_delta.
-        average_pooling_3d_backward_cuda<T>(to_int(input.shape[0]) * to_int(input.shape[2]),
+        average_pooling_3d_backward_cuda<T>(to_int(shape[0]) * to_int(shape[2]),
                                             input.as<T>(), output_delta.as<T>(),
                                             input_delta.as<T>(),
-                                            to_int(input.shape[1]),
-                                            to_int(input.shape[2]),
+                                            to_int(shape[1]),
+                                            to_int(shape[2]),
                                             stage_pooling_lengths(valid_lengths));
     });
 }
 
 static void first_token_3d_forward_gpu(const TensorView& input, TensorView& output)
 {
+    const Shape& shape = input.get_shape();
     output.dispatch([&]<typename T>() {
-        first_token_3d_forward_cuda<T>(to_int(input.shape[0]), to_int(input.shape[1]), to_int(input.shape[2]),
+        first_token_3d_forward_cuda<T>(to_int(shape[0]), to_int(shape[1]), to_int(shape[2]),
                                        input.as<T>(), output.as<T>());
     });
 }
 
 static void first_token_3d_backward_gpu(const TensorView& output_delta, TensorView& input_delta)
 {
+    const Shape& shape = input_delta.get_shape();
     input_delta.dispatch([&]<typename T>() {
         input_delta.set_zero_async();
-        first_token_3d_backward_cuda<T>(to_int(input_delta.shape[0]), to_int(input_delta.shape[1]), to_int(input_delta.shape[2]),
+        first_token_3d_backward_cuda<T>(to_int(shape[0]), to_int(shape[1]), to_int(shape[2]),
                                         output_delta.as<T>(), input_delta.as<T>());
     });
 }
@@ -366,7 +373,7 @@ static const vector<Index>* exported_valid_lengths(const ForwardPropagation& for
 {
     const vector<Index>* lengths = forward_propagation.input_valid_lengths(layer, 0);
 
-    return lengths && Index(lengths->size()) == input.shape[0] ? lengths : nullptr;
+    return lengths && Index(lengths->size()) == input.get_shape()[0] ? lengths : nullptr;
 }
 
 void Pool3dOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)

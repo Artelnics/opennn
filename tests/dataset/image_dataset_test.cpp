@@ -164,7 +164,7 @@ TEST(ImageDataset, ConstructFromPathTwoClasses)
     EXPECT_EQ(image_dataset.get_samples_number(), 4);
 
     const Shape input_shape = image_dataset.get_input_shape();
-    ASSERT_EQ(input_shape.rank, 3u);
+    ASSERT_EQ(input_shape.get_rank(), 3u);
     EXPECT_EQ(input_shape[0], 3);
     EXPECT_EQ(input_shape[1], 4);
     EXPECT_EQ(input_shape[2], 3);
@@ -172,7 +172,7 @@ TEST(ImageDataset, ConstructFromPathTwoClasses)
     EXPECT_EQ(image_dataset.get_channels_number(), 3);
 
     const Shape target_shape = image_dataset.get_target_shape();
-    ASSERT_EQ(target_shape.rank, 1u);
+    ASSERT_EQ(target_shape.get_rank(), 1u);
     EXPECT_EQ(target_shape[0], 1);
 
     EXPECT_EQ(image_dataset.get_variables_number(), 2);
@@ -211,7 +211,7 @@ TEST(ImageDataset, ThreeClassesUseCategoricalTargets)
     EXPECT_EQ(image_dataset.get_samples_number(), 6);
 
     const Shape target_shape = image_dataset.get_target_shape();
-    ASSERT_EQ(target_shape.rank, 1u);
+    ASSERT_EQ(target_shape.get_rank(), 1u);
     EXPECT_EQ(target_shape[0], 3);
 
     const VectorI distribution = image_dataset.calculate_target_distribution();

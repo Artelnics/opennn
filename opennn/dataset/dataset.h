@@ -154,7 +154,7 @@ public:
 
     virtual void enable_device_residency();
     void disable_device_residency() { data_device.resize_bytes(0, Device::CUDA); }
-    bool is_device_resident() const noexcept { return data_device.data != nullptr; }
+    bool is_device_resident() const noexcept { return data_device.data() != nullptr; }
     bool uses_device_residency() const noexcept
     {
         return is_device_resident() || storage_mode == StorageMode::GPUPersistantData;

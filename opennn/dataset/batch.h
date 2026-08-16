@@ -88,7 +88,7 @@ struct Batch
 
     bool uses_cuda() const
     {
-        return input.buffer.device_type == Device::CUDA && device::is_cuda_build();
+        return input.buffer.get_device() == Device::CUDA && device::is_cuda_build();
     }
 
     Index get_batch_size() const { return batch_size; }

@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   M U L T I H E A D   A T T E N T I O N   L A Y E R   C L A S S
@@ -202,7 +202,7 @@ void MultiHeadAttention::set_sdpa_min_sequence_length(Index new_threshold)
 
 void MultiHeadAttention::apply_input_shape(const Shape& new_input_shape)
 {
-    throw_if(new_input_shape.rank != 2,
+    throw_if(new_input_shape.get_rank() != 2,
              "MultiHeadAttention input shape must have rank 2.");
 
     if (heads_number <= 0)

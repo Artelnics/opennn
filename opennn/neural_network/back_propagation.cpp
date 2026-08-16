@@ -100,7 +100,7 @@ void BackPropagation::set(const Index new_batch_size, Loss& new_loss,
         arena.resize_bytes(0, neural_network.get_device());
         bind_deltas(plan.layout, arena_offsets,
                     external_arena->as<uint8_t>(),
-                    external_arena->device_type,
+                    external_arena->get_device(),
                     plan.backward_specs);
     }
     else
@@ -134,7 +134,7 @@ void BackPropagation::plan_delta_addends()
         if (edges.size() != 2) continue;
 
         const TensorView& destination = output_deltas[producer];
-        if (!destination.data) continue;
+        if (!destination.get_data()) continue;
 
         const auto slot_of = [&](const pair<size_t, size_t>& edge) -> const TensorView*
         {
@@ -142,15 +142,15 @@ void BackPropagation::plan_delta_addends()
             const size_t slot = input + 1;
             if (consumer >= slots.size() || slot >= slots[consumer].size()) return nullptr;
             const TensorView& view = slots[consumer][slot];
-            return view.data && view.size() == destination.size() ? &view : nullptr;
+            return view.get_data() && view.size() == destination.size() ? &view : nullptr;
         };
 
         // A: the consumer whose slot is the destination; B: the other one, whose
         // slot becomes A's addend. Exactly one of the two must alias.
         const TensorView* first  = slot_of(edges[0]);
         const TensorView* second = slot_of(edges[1]);
-        const bool first_is_destination  = first  && first->data  == destination.data;
-        const bool second_is_destination = second && second->data == destination.data;
+        const bool first_is_destination  = first  && first->get_data() == destination.get_data();
+        const bool second_is_destination = second && second->get_data() == destination.get_data();
         if (first_is_destination == second_is_destination) continue;
 
         const auto& edge_a = first_is_destination ? edges[0] : edges[1];
@@ -192,7 +192,7 @@ void BackPropagation::setup_gradient()
 
     float* pointer = gradient.as<float>();
     for (size_t i = 0; i < layers.size(); ++i)
-        pointer = layers[i]->link_gradients(pointer, gradient.device_type);
+        pointer = layers[i]->link_gradients(pointer, gradient.get_device());
 }
 
 BackPropagation::DeltaLayout BackPropagation::build_delta_layout(
@@ -465,7 +465,7 @@ void BackPropagation::setup_arena(const vector<vector<TensorSpec>>& backward_spe
                          format("batch={},entries={}", batch_size, delta_entries.size()));
 
     bind_deltas(layout, pool_plan.byte_offsets,
-                arena.as<uint8_t>(), arena.device_type,
+                arena.as<uint8_t>(), arena.get_device(),
                 backward_specs);
 }
 
@@ -552,8 +552,12 @@ void BackPropagation::bind_deltas(const DeltaLayout& layout,
         else
             continue;
 
-        output_deltas[index].shape =
-            Shape{batch_size}.append(layers[index]->get_output_shape());
+        const TensorView& delta = output_deltas[index];
+        output_deltas[index] = TensorView(
+            delta.get_data(),
+            Shape{batch_size}.append(layers[index]->get_output_shape()),
+            delta.get_type(),
+            delta.get_device());
     }
 }
 
@@ -563,7 +567,7 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     if (edges.size() <= 1) return;
 
     TensorView& destination = output_deltas[layer_index];
-    if (!destination.data) return;
+    if (!destination.get_data()) return;
 
     const auto source = [&](const auto& edge) -> const TensorView&
     {
@@ -573,14 +577,14 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     const auto valid = [&](const auto& edge)
     {
         const TensorView& s = source(edge);
-        return s.data && s.size() == destination.size();
+        return s.get_data() && s.size() == destination.size();
     };
 
     // Prefer destination itself as the initial accumulated value.
     auto first = std::ranges::find_if(edges, [&](const auto& edge)
     {
         const TensorView& s = source(edge);
-        return valid(edge) && s.data == destination.data;
+        return valid(edge) && s.get_data() == destination.get_data();
     });
 
     if (first == edges.end())
@@ -594,7 +598,7 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
 
     const TensorView& first_source = source(*first);
 
-    if (first_source.data != destination.data)
+    if (first_source.get_data() != destination.get_data())
         copy(first_source, destination);
 
     const pair<size_t, size_t> folded = layer_index < folded_consumer_edge.size()
@@ -604,7 +608,7 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     {
         const TensorView& s = source(*it);
 
-        if (it == first || !valid(*it) || s.data == destination.data || *it == folded)
+        if (it == first || !valid(*it) || s.get_data() == destination.get_data() || *it == folded)
             continue;
 
         if (destination.is_cuda())

@@ -1,4 +1,4 @@
-﻿#include "tests/pch.h"
+#include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
 #include "opennn/core/tensor_types.h"
@@ -68,11 +68,11 @@ TEST_F(UpsampleOperatoreratorTest, ForwardOutputShape)
 
     TensorView output_view = forward_propagation.get_outputs();
 
-    ASSERT_EQ(output_view.shape.rank, 4);
-    EXPECT_EQ(output_view.shape[0], batch_size);
-    EXPECT_EQ(output_view.shape[1], height * scale_factor);
-    EXPECT_EQ(output_view.shape[2], width * scale_factor);
-    EXPECT_EQ(output_view.shape[3], channels);
+    ASSERT_EQ(output_view.get_shape().get_rank(), 4);
+    EXPECT_EQ(output_view.get_shape()[0], batch_size);
+    EXPECT_EQ(output_view.get_shape()[1], height * scale_factor);
+    EXPECT_EQ(output_view.get_shape()[2], width * scale_factor);
+    EXPECT_EQ(output_view.get_shape()[3], channels);
 }
 
 TEST_F(UpsampleOperatoreratorTest, ForwardConstantReplication)

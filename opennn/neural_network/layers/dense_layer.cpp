@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   D E N S E   L A Y E R   C L A S S
@@ -32,7 +32,7 @@ Shape Dense::get_output_shape() const
 {
     if (input_shape.empty()) return {output_features};
     Shape output_shape = input_shape;
-    output_shape.back() = output_features;
+    output_shape.set_dimension(output_shape.get_rank() - 1, output_features);
     return output_shape;
 }
 
@@ -328,7 +328,7 @@ string Dense::write_expression(const vector<string>& input_names,
 {
     const vector<TensorView>& parameter_views = get_parameter_views();
 
-    throw_if(parameter_views.size() < 2 || !parameter_views[0].data || !parameter_views[1].data,
+    throw_if(parameter_views.size() < 2 || !parameter_views[0].get_data() || !parameter_views[1].get_data(),
              "Dense::write_expression: layer not configured.");
 
     throw_if(batch_norm.active(),
