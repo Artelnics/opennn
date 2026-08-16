@@ -29,13 +29,10 @@
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/variable.h"
 #include "opennn/dataset/batch.h"
-#include "opennn/dataset/image_dataset.h"
-#include "opennn/dataset/tabular_dataset.h"
-#include "opennn/dataset/time_series_dataset.h"
+#include "opennn/dataset/dataset.h"
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/neural_network/layers/unscaling_layer.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/registry.h"
 #include "opennn/training_strategy/kernel_optimizers.cuh"
@@ -74,6 +71,42 @@ static void clip_gradient_norm_device(Buffer&, Index, float) OPENNN_CUDA_STUB_BO
 
 namespace
 {
+
+template<typename F>
+class ScopeExit
+{
+public:
+    explicit ScopeExit(F new_cleanup)
+        : cleanup(std::move(new_cleanup))
+    {
+    }
+
+    ~ScopeExit() noexcept
+    {
+        if (!active) return;
+        try { cleanup(); }
+        catch (...) {}
+    }
+
+    ScopeExit(const ScopeExit&) = delete;
+    ScopeExit& operator=(const ScopeExit&) = delete;
+
+    void release() noexcept { active = false; }
+
+private:
+    F cleanup;
+    bool active = true;
+};
+
+Scaling* find_scaling_endpoint(NeuralNetwork& neural_network, bool inverse)
+{
+    for (const unique_ptr<Layer>& layer : neural_network.get_layers())
+        if (auto* scaling = dynamic_cast<Scaling*>(layer.get());
+            scaling && scaling->is_inverse() == inverse)
+            return scaling;
+
+    return nullptr;
+}
 
 InferenceShapePolicy loss_inference_policy(const Loss& loss)
 {
@@ -556,214 +589,23 @@ void Optimizer::set_names()
     neural_network->set_output_variables(target_variables);
 }
 
-void Optimizer::set_scaling()
+void Optimizer::prepare_training_scaling()
 {
-    Dataset* dataset = loss->get_dataset();
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    Dataset* const dataset = loss->get_dataset();
+    NeuralNetwork* const neural_network = loss->get_neural_network();
 
-    vector<Descriptives> input_descriptives;
-    vector<string> input_scalers;
-
-    Scaling* scaling_layer =
-        dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling));
-
-    if(scaling_layer)
+    const auto prepare_endpoint = [&](bool inverse, VariableRole role)
     {
-        const Index rank = scaling_layer->get_input_shape().rank;
+        Scaling* const endpoint = find_scaling_endpoint(*neural_network, inverse);
+        if (!endpoint) return;
 
-        if(rank <= 2)
-        {
-            TabularDataset* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
-            throw_if(!tabular_dataset, "Expected TabularDataset.");
-
-            input_scalers = tabular_dataset->get_feature_scalers("Input");
-            input_descriptives = tabular_dataset->scale_features("Input");
-
-            scaling_layer->set_descriptives(input_descriptives);
-            scaling_layer->set_scalers(input_scalers);
-        }
-        else if(rank == 3)
-        {
-            ImageDataset* image_dataset = dynamic_cast<ImageDataset*>(dataset);
-            throw_if(!image_dataset, "Expected ImageDataset.");
-
-            image_dataset->set_input_scaling(scaling_layer->get_descriptives(),
-                                             scaling_layer->get_scalers(),
-                                             scaling_layer->get_min_range(),
-                                             scaling_layer->get_max_range());
-        }
-        else
-        {
-            throw runtime_error(
-                format("Unexpected Scaling input rank: {}", rank));
-        }
-    }
-
-    Unscaling* unscaling_layer =
-        dynamic_cast<Unscaling*>(neural_network->get_first(LayerType::Unscaling));
-
-    if(!unscaling_layer) return;
-
-    const vector<Index> input_indices =
-        dataset->get_feature_indices(VariableRole::Input);
-
-    const vector<Index> target_indices =
-        dataset->get_feature_indices(VariableRole::Target);
-
-    const bool has_pure_targets = ranges::any_of(target_indices, [&](const Index target)
-    {
-        return ranges::find(input_indices, target) == input_indices.end();
-    });
-
-    vector<Descriptives> target_descriptives;
-    vector<string> target_scalers;
-
-    if(has_pure_targets)
-    {
-        TabularDataset* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
-
-        throw_if(!tabular_dataset,
-                 "Expected TabularDataset for target unscaling.");
-
-        target_descriptives = tabular_dataset->scale_features("Target");
-        target_scalers = tabular_dataset->get_feature_scalers("Target");
-    }
-
-    vector<Descriptives> unscaling_descriptives;
-    vector<string> unscaling_scalers;
-
-    unscaling_descriptives.reserve(target_indices.size());
-    unscaling_scalers.reserve(target_indices.size());
-
-    for(size_t i = 0; i < target_indices.size(); ++i)
-    {
-        const vector<Index>::const_iterator input =
-            ranges::find(input_indices, target_indices[i]);
-
-        if(input == input_indices.end())
-        {
-            unscaling_descriptives.push_back(target_descriptives[i]);
-            unscaling_scalers.push_back(target_scalers[i]);
-            continue;
-        }
-
-        const Index index = distance(input_indices.begin(), input);
-
-        unscaling_descriptives.push_back(input_descriptives[size_t(index)]);
-        unscaling_scalers.push_back(input_scalers[size_t(index)]);
-    }
-
-    const Index outputs_number = unscaling_layer->get_outputs_number();
-    const Index targets_number = ssize(unscaling_descriptives);
-
-    TimeSeriesDataset* time_series = dynamic_cast<TimeSeriesDataset*>(dataset);
-
-    if(time_series
-       && time_series->get_multi_target()
-       && targets_number > 0
-       && outputs_number == targets_number * time_series->get_future_time_steps())
-    {
-        const Index steps = time_series->get_future_time_steps();
-
-        vector<Descriptives> expanded_descriptives;
-        vector<string> expanded_scalers;
-
-        expanded_descriptives.reserve(size_t(outputs_number));
-        expanded_scalers.reserve(size_t(outputs_number));
-
-        for(Index i = 0; i < targets_number; ++i)
-        {
-            for(Index step = 0; step < steps; ++step)
-            {
-                expanded_descriptives.push_back(unscaling_descriptives[size_t(i)]);
-                expanded_scalers.push_back(unscaling_scalers[size_t(i)]);
-            }
-        }
-
-        unscaling_descriptives = std::move(expanded_descriptives);
-        unscaling_scalers = std::move(expanded_scalers);
-    }
-
-    throw_if(ssize(unscaling_descriptives) != outputs_number,
-             "Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
-
-    unscaling_layer->set_descriptives(unscaling_descriptives);
-    unscaling_layer->set_scalers(unscaling_scalers);
-}
-
-void Optimizer::set_unscaling()
-{
-    Dataset* dataset = loss->get_dataset();
-    TabularDataset* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
-    NeuralNetwork* neural_network = loss->get_neural_network();
-
-    const auto reconstruct_descriptives =
-        [](const VectorR& minimums,
-           const VectorR& maximums,
-           const VectorR& means,
-           const VectorR& standard_deviations)
-    {
-        vector<Descriptives> descriptives;
-        descriptives.reserve(minimums.size());
-
-        for(Index i = 0; i < minimums.size(); ++i)
-            descriptives.emplace_back(minimums[i],
-                                      maximums[i],
-                                      means[i],
-                                      standard_deviations[i]);
-
-        return descriptives;
+        const FeatureScaling requested = endpoint->get_feature_scaling();
+        endpoint->set_feature_scaling(dataset->prepare_training_scaling(
+            role, requested, requested.size()));
     };
 
-    Scaling* scaling_layer =
-        dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling));
-
-    if(scaling_layer && scaling_layer->get_input_shape().rank <= 2)
-    {
-        throw_if(!tabular_dataset, "Expected TabularDataset.");
-
-        tabular_dataset->unscale_features(
-            "Input",
-            reconstruct_descriptives(scaling_layer->get_minimums(),
-                                     scaling_layer->get_maximums(),
-                                     scaling_layer->get_means(),
-                                     scaling_layer->get_standard_deviations()));
-    }
-
-    Unscaling* unscaling_layer =
-        dynamic_cast<Unscaling*>(neural_network->get_first(LayerType::Unscaling));
-
-    if(!unscaling_layer) return;
-
-    const vector<Descriptives> target_descriptives =
-        reconstruct_descriptives(unscaling_layer->get_minimums(),
-                                 unscaling_layer->get_maximums(),
-                                 unscaling_layer->get_means(),
-                                 unscaling_layer->get_standard_deviations());
-
-    const vector<Index> input_indices =
-        dataset->get_feature_indices(VariableRole::Input);
-
-    const vector<Index> target_indices =
-        dataset->get_feature_indices(VariableRole::Target);
-
-    vector<Descriptives> unscaled_descriptives;
-    unscaled_descriptives.reserve(target_indices.size());
-
-    for(size_t i = 0; i < target_indices.size(); ++i)
-    {
-        if(ranges::find(input_indices, target_indices[i]) != input_indices.end())
-            continue;
-
-        if(i < target_descriptives.size())
-            unscaled_descriptives.push_back(target_descriptives[i]);
-    }
-
-    if(unscaled_descriptives.empty()) return;
-
-    throw_if(!tabular_dataset, "Expected TabularDataset.");
-
-    tabular_dataset->unscale_features("Target", unscaled_descriptives);
+    prepare_endpoint(false, VariableRole::Input);
+    prepare_endpoint(true, VariableRole::Target);
 }
 
 void Optimizer::warmup_device_training(
@@ -987,7 +829,8 @@ TrainingResult Optimizer::train()
     vector<vector<Index>> validation_batches;
 
     set_names();
-    set_scaling();
+    ScopeExit scaling_cleanup([dataset] { dataset->clear_training_scaling(); });
+    prepare_training_scaling();
 
     BatchPools batch_pools;
     OptimizerData optimizer_data;
@@ -1034,6 +877,7 @@ TrainingResult Optimizer::train()
     ForwardPropagation* validation_fp = validation_forward_propagation.get();
 
     setup_device_training();
+    ScopeExit device_cleanup([this] { teardown_device_training(); });
 
     const Index parameters_buffer_size = neural_network->get_parameters_buffer_size();
     const Device device = neural_network->get_device();
@@ -1177,10 +1021,9 @@ TrainingResult Optimizer::train()
     }
 
     teardown_device_training();
+    device_cleanup.release();
 
     restore_best_parameters(neural_network, results, best_model);
-
-    set_unscaling();
 
     if (display) results.print();
 
@@ -1205,7 +1048,8 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
     const vector<Index> target_feature_indices = dataset->get_feature_indices(VariableRole::Target);
 
     set_names();
-    set_scaling();
+    ScopeExit scaling_cleanup([dataset] { dataset->clear_training_scaling(); });
+    prepare_training_scaling();
 
     context.training_batch = make_unique<Batch>(context.training_samples_number,
                                                 dataset,
@@ -1315,8 +1159,6 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
     }
 
     restore_best_parameters(neural_network, results, best_model);
-
-    set_unscaling();
 
     if (display) results.print();
 

@@ -126,6 +126,92 @@ TEST(TabularDataset, ScaleData)
     EXPECT_NEAR(scaled_data_minmax(1, 1), type(1.0), EPSILON);
 }
 
+TEST(TabularDataset, TrainingScalingTransformsBatchesWithoutMutatingData)
+{
+    TabularDataset dataset(3, {1}, {1});
+    MatrixR raw(3, 2);
+    raw << 10.0f, 100.0f,
+           20.0f, 200.0f,
+           30.0f, 300.0f;
+    dataset.set_data(raw);
+    dataset.set_sample_roles(SampleRole::Training);
+    dataset.set_variable_scalers("MinimumMaximum");
+
+    FeatureScaling requested;
+    requested.descriptives.resize(1);
+    requested.scalers.resize(1, ScalerMethod::None);
+
+    const FeatureScaling input_scaling = dataset.prepare_training_scaling(
+        VariableRole::Input, requested, 1);
+    const FeatureScaling target_scaling = dataset.prepare_training_scaling(
+        VariableRole::Target, requested, 1);
+
+    EXPECT_EQ(input_scaling.scalers, vector<ScalerMethod>{ScalerMethod::MinimumMaximum});
+    EXPECT_EQ(target_scaling.scalers, vector<ScalerMethod>{ScalerMethod::MinimumMaximum});
+    EXPECT_TRUE(dataset.get_data().isApprox(raw, 0.0f));
+
+    std::array<float, 3> inputs{};
+    std::array<float, 3> targets{};
+    dataset.fill_inputs({0, 1, 2}, {0}, inputs.data(), FillMode::Training);
+    dataset.fill_targets({0, 1, 2}, {1}, targets.data(), FillMode::Validation);
+
+    EXPECT_NEAR(inputs[0], -1.0f, EPSILON);
+    EXPECT_NEAR(inputs[1],  0.0f, EPSILON);
+    EXPECT_NEAR(inputs[2],  1.0f, EPSILON);
+    EXPECT_NEAR(targets[0], -1.0f, EPSILON);
+    EXPECT_NEAR(targets[1],  0.0f, EPSILON);
+    EXPECT_NEAR(targets[2],  1.0f, EPSILON);
+    EXPECT_TRUE(dataset.get_data().isApprox(raw, 0.0f));
+
+    requested.min_range = 0.0f;
+    const FeatureScaling repeated_target_scaling = dataset.prepare_training_scaling(
+        VariableRole::Target, requested, 1);
+    EXPECT_FLOAT_EQ(repeated_target_scaling.min_range, 0.0f);
+    dataset.fill_targets({0, 1, 2}, {1}, targets.data(), FillMode::Validation);
+    EXPECT_NEAR(targets[0], 0.0f, EPSILON);
+    EXPECT_NEAR(targets[1], 0.5f, EPSILON);
+    EXPECT_NEAR(targets[2], 1.0f, EPSILON);
+
+    dataset.clear_training_scaling();
+    dataset.fill_inputs({0, 1, 2}, {0}, inputs.data(), FillMode::Training);
+    EXPECT_NEAR(inputs[0], 10.0f, EPSILON);
+    EXPECT_NEAR(inputs[1], 20.0f, EPSILON);
+    EXPECT_NEAR(inputs[2], 30.0f, EPSILON);
+}
+
+TEST(TabularDataset, SharedTargetReusesConfiguredInputTransform)
+{
+    TabularDataset dataset(3, {1}, {1});
+    MatrixR raw(3, 2);
+    raw << 10.0f, 0.0f,
+           20.0f, 0.0f,
+           30.0f, 0.0f;
+    dataset.set_data(raw);
+    dataset.set_variable_indices({0}, {0});
+    dataset.set_variable_scalers("MinimumMaximum");
+
+    FeatureScaling requested;
+    requested.descriptives.resize(1);
+    requested.scalers.resize(1, ScalerMethod::None);
+
+    EXPECT_THROW(dataset.prepare_training_scaling(
+        VariableRole::Target, requested, 1), runtime_error);
+
+    const FeatureScaling input_scaling = dataset.prepare_training_scaling(
+        VariableRole::Input, requested, 1);
+    const FeatureScaling target_scaling = dataset.prepare_training_scaling(
+        VariableRole::Target, requested, 1);
+
+    ASSERT_EQ(input_scaling.descriptives.size(), 1);
+    ASSERT_EQ(target_scaling.descriptives.size(), 1);
+    EXPECT_FLOAT_EQ(target_scaling.descriptives[0].minimum,
+                    input_scaling.descriptives[0].minimum);
+    EXPECT_FLOAT_EQ(target_scaling.descriptives[0].maximum,
+                    input_scaling.descriptives[0].maximum);
+    EXPECT_EQ(target_scaling.scalers, input_scaling.scalers);
+    EXPECT_TRUE(dataset.get_data().isApprox(raw, 0.0f));
+}
+
 TEST(TabularDataset, UnuseConstantRawVariables)
 {
     TabularDataset dataset(3, { 2 }, { 1 });

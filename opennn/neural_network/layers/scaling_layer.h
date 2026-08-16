@@ -8,10 +8,9 @@
 
 #pragma once
 
-#include "opennn/core/statistics.h"
+#include "opennn/core/scaling.h"
 #include "opennn/neural_network/layers/layer.h"
 #include "opennn/neural_network/operators/operator.h"
-#include "opennn/core/variable.h"
 
 namespace opennn
 {
@@ -64,6 +63,12 @@ public:
 
     float get_min_range() const noexcept { return min_range; }
     float get_max_range() const noexcept { return max_range; }
+    bool is_inverse() const noexcept { return scale_op.invert; }
+
+    FeatureScaling get_feature_scaling() const
+    {
+        return {descriptives, scalers, min_range, max_range};
+    }
 
     void set(const Shape& = {});
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 1, 2, 3); }
@@ -74,6 +79,7 @@ public:
     void set_descriptives(const vector<Descriptives>&);
     void set_scalers(const vector<string>&);
     void set_scalers(const string&);
+    void set_feature_scaling(const FeatureScaling&);
 
     bool is_passthrough() const;
 

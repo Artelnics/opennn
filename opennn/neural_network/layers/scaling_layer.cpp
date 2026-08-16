@@ -314,6 +314,25 @@ void Scaling::set_scalers(const string& scaler)
     refresh_op_storage(op_storage.device_type);
 }
 
+void Scaling::set_feature_scaling(const FeatureScaling& scaling)
+{
+    throw_if(scaling.descriptives.size() != descriptives.size()
+             || scaling.scalers.size() != scalers.size(),
+             "{}::set_feature_scaling: size mismatch (expected {}, got {} descriptives and {} scalers).",
+             get_name(), descriptives.size(), scaling.descriptives.size(),
+             scaling.scalers.size());
+    throw_if(!(scaling.min_range < scaling.max_range),
+             "{}::set_feature_scaling: minimum range must be smaller than maximum range.",
+             get_name());
+
+    descriptives = scaling.descriptives;
+    scalers = scaling.scalers;
+    min_range = scaling.min_range;
+    max_range = scaling.max_range;
+    op_storage_dirty = true;
+    refresh_op_storage(op_storage.device_type);
+}
+
 bool Scaling::is_passthrough() const
 {
     return ranges::all_of(scalers, [](ScalerMethod m) { return m == ScalerMethod::None; });

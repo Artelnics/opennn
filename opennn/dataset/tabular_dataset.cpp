@@ -370,6 +370,42 @@ void TabularDataset::fill_features(const vector<Index>& sample_indices, const ve
         fill_tensor_data(data, sample_indices, feature_indices,
                          span<float>(output, size_t(ssize(sample_indices) * ssize(feature_indices))),
                          contiguous);
+
+    apply_training_scaling(feature_indices, output, ssize(sample_indices));
+}
+
+float TabularDataset::apply_training_scaling(Index feature_index, float value) const
+{
+    if (feature_index < 0
+        || size_t(feature_index) >= training_transforms.size())
+        return value;
+
+    return training_transforms[size_t(feature_index)].apply(value);
+}
+
+void TabularDataset::apply_training_scaling(const vector<Index>& feature_indices,
+                                            float* output,
+                                            Index samples_number) const
+{
+    if (training_transforms.empty() || !output) return;
+
+    const Index features_number = ssize(feature_indices);
+    for (Index j = 0; j < features_number; ++j)
+    {
+        const Index feature_index = feature_indices[size_t(j)];
+        if (feature_index < 0
+            || size_t(feature_index) >= training_transforms.size())
+            continue;
+
+        const TrainingTransform& transform = training_transforms[size_t(feature_index)];
+        if (!transform.configured) continue;
+
+        for (Index i = 0; i < samples_number; ++i)
+        {
+            float& value = output[i * features_number + j];
+            value = transform.apply(value);
+        }
+    }
 }
 
 void TabularDataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices,
@@ -1057,6 +1093,125 @@ vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
         apply_scaler(feature_indices[i], scalers[i], feature_descriptives[i], false);
 
     return feature_descriptives;
+}
+
+FeatureScaling TabularDataset::prepare_training_scaling(
+    VariableRole role,
+    const FeatureScaling& requested,
+    Index expected_features)
+{
+    throw_if(!is_one_of(role, VariableRole::Input, VariableRole::Target),
+             "TabularDataset supports training scaling only for inputs and targets.");
+    throw_if(!(requested.min_range < requested.max_range),
+             "TabularDataset training scaling range is invalid.");
+
+    const vector<Index> feature_indices = get_feature_indices(role);
+    const vector<Index> input_feature_indices =
+        role == VariableRole::Target
+        ? get_feature_indices(VariableRole::Input)
+        : vector<Index>{};
+    throw_if(expected_features != ssize(feature_indices),
+             "TabularDataset {} training scaling expects {} features, got {}.",
+             variable_role_to_string(role), feature_indices.size(), expected_features);
+
+    vector<Index> statistic_sample_indices = get_sample_indices(SampleRole::Training);
+    if (statistic_sample_indices.empty())
+        statistic_sample_indices = get_used_sample_indices();
+
+    vector<Descriptives> feature_descriptives;
+    if (storage_mode == StorageMode::BinaryFile)
+    {
+        const vector<Descriptives> all_descriptives =
+            compute_descriptives_streaming(statistic_sample_indices);
+        feature_descriptives.reserve(feature_indices.size());
+        ranges::transform(feature_indices,
+                          back_inserter(feature_descriptives),
+                          [&](Index feature)
+                          {
+                              return all_descriptives[size_t(feature)];
+                          });
+    }
+    else
+    {
+        feature_descriptives =
+            calculate_feature_descriptives(variable_role_to_string(role),
+                                            statistic_sample_indices);
+    }
+
+    const vector<string> scaler_names =
+        get_feature_scalers(variable_role_to_string(role));
+    vector<ScalerMethod> feature_scalers(scaler_names.size());
+    ranges::transform(scaler_names, feature_scalers.begin(), string_to_scaler_method);
+
+    const Index columns_number = storage_mode == StorageMode::BinaryFile
+                               ? cache_columns_number
+                               : data.cols();
+    if (training_transforms.empty())
+        training_transforms.resize(size_t(columns_number));
+
+    FeatureScaling effective;
+    effective.descriptives.reserve(feature_indices.size());
+    effective.scalers.reserve(feature_indices.size());
+    effective.min_range = requested.min_range;
+    effective.max_range = requested.max_range;
+
+    for (size_t i = 0; i < feature_indices.size(); ++i)
+    {
+        const size_t feature = size_t(feature_indices[i]);
+        TrainingTransform& transform = training_transforms[feature];
+        const bool shared_with_input = role == VariableRole::Target
+                                    && ranges::find(input_feature_indices, feature_indices[i])
+                                       != input_feature_indices.end();
+        const bool reuse_input_transform = shared_with_input && transform.configured;
+
+        throw_if(shared_with_input && !reuse_input_transform,
+                 "Input-target feature {} requires an input Scaling layer.",
+                 feature_indices[i]);
+
+        throw_if(reuse_input_transform
+                 && (transform.min_range != requested.min_range
+                     || transform.max_range != requested.max_range),
+                 "Input-target feature {} cannot use different input and output scaling ranges.",
+                 feature_indices[i]);
+
+        if (!reuse_input_transform)
+        {
+            transform = {feature_descriptives[i],
+                         feature_scalers[i],
+                         requested.min_range,
+                         requested.max_range,
+                         true};
+        }
+
+        effective.descriptives.push_back(transform.descriptives);
+        effective.scalers.push_back(transform.scaler);
+
+    }
+
+    return effective;
+}
+
+void TabularDataset::clear_training_scaling() noexcept
+{
+    training_transforms.clear();
+
+    if (is_device_resident()) disable_device_residency();
+}
+
+void TabularDataset::enable_device_residency()
+{
+    if (training_transforms.empty())
+    {
+        Dataset::enable_device_residency();
+        return;
+    }
+
+    MatrixR staged = data;
+    for (Index row = 0; row < staged.rows(); ++row)
+        for (Index column = 0; column < staged.cols(); ++column)
+            staged(row, column) = apply_training_scaling(column, staged(row, column));
+
+    upload_device_matrix(staged);
 }
 
 void TabularDataset::unscale_features(const string& variable_role,

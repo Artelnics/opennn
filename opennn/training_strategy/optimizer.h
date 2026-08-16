@@ -141,8 +141,7 @@ protected:
     };
 
     void set_names();
-    void set_scaling();
-    void set_unscaling();
+    void prepare_training_scaling();
 
     bool check_stopping_condition(TrainingResult&, 
         Index, float, float, Index, float, bool) const;

@@ -316,7 +316,10 @@ void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
             const bool in_range = actual_row < data_rows_number;
 
             for (Index k = 0; k < inputs_number; ++k)
-                inputs(i, j, k) = in_range ? data(actual_row, input_indices[k]) : 0.0f;
+                inputs(i, j, k) = in_range
+                    ? apply_training_scaling(input_indices[size_t(k)],
+                                             data(actual_row, input_indices[size_t(k)]))
+                    : 0.0f;
         }
     }
 }
@@ -352,7 +355,8 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
             const Index target_row = sample_indices[i] + past_time_steps + (future_time_steps - 1);
             for (Index j = 0; j < target_columns; ++j)
                 targets(i, j) = (target_row < total_rows_in_data)
-                    ? data(target_row, target_indices[j])
+                    ? apply_training_scaling(target_indices[size_t(j)],
+                                             data(target_row, target_indices[size_t(j)]))
                     : 0.0f;
         }
         return;
@@ -366,9 +370,45 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
                 const Index target_row = sample_indices[i] + past_time_steps + k;
                 targets(i, j * future_time_steps + k) =
                     (target_row < total_rows_in_data)
-                    ? data(target_row, target_indices[j])
+                    ? apply_training_scaling(target_indices[size_t(j)],
+                                             data(target_row, target_indices[size_t(j)]))
                     : 0.0f;
             }
+}
+
+FeatureScaling TimeSeriesDataset::prepare_training_scaling(
+    VariableRole role,
+    const FeatureScaling& requested,
+    Index expected_features)
+{
+    const Index feature_count = get_features_number(role);
+    FeatureScaling effective =
+        TabularDataset::prepare_training_scaling(role, requested, feature_count);
+
+    if (role == VariableRole::Target
+        && multi_target
+        && expected_features == feature_count * future_time_steps)
+    {
+        FeatureScaling expanded;
+        expanded.min_range = effective.min_range;
+        expanded.max_range = effective.max_range;
+        expanded.descriptives.reserve(size_t(expected_features));
+        expanded.scalers.reserve(size_t(expected_features));
+
+        for (Index feature = 0; feature < feature_count; ++feature)
+            for (Index step = 0; step < future_time_steps; ++step)
+            {
+                expanded.descriptives.push_back(effective.descriptives[size_t(feature)]);
+                expanded.scalers.push_back(effective.scalers[size_t(feature)]);
+            }
+
+        return expanded;
+    }
+
+    throw_if(expected_features != feature_count,
+             "TimeSeriesDataset {} training scaling expects {} features, got {}.",
+             variable_role_to_string(role), feature_count, expected_features);
+    return effective;
 }
 
 void TimeSeriesDataset::fill_batch(Batch& batch,

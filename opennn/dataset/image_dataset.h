@@ -46,6 +46,12 @@ public:
                            float,
                            float);
 
+    FeatureScaling prepare_training_scaling(
+        VariableRole,
+        const FeatureScaling&,
+        Index) override;
+    void clear_training_scaling() noexcept override;
+
     VectorI calculate_target_distribution() const override;
 
     void enable_device_residency() override;

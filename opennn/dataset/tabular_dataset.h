@@ -128,6 +128,13 @@ public:
     vector<Descriptives> scale_features(const string&);
     void unscale_features(const string&, const vector<Descriptives>&);
 
+    FeatureScaling prepare_training_scaling(
+        VariableRole,
+        const FeatureScaling&,
+        Index) override;
+    void clear_training_scaling() noexcept override;
+    void enable_device_residency() override;
+
     VectorI calculate_target_distribution() const override;
     vector<vector<Index>> calculate_Tukey_outliers(const float = 1.5f, bool = false);
     vector<vector<Index>> replace_Tukey_outliers_with_NaN(const float = 1.5f);
@@ -196,6 +203,11 @@ protected:
                                 float*,
                                 int contiguous = -1) const;
 
+    float apply_training_scaling(Index, float) const;
+    void apply_training_scaling(const vector<Index>&,
+                                float*,
+                                Index) const;
+
     vector<Index> filter_used_samples_by_column(Index, bool) const;
 
     vector<Descriptives> calculate_variable_descriptives_samples(bool positive) const;
@@ -215,6 +227,24 @@ protected:
     vector<Descriptives> cache_transform_descriptives;
     mutable vector<float> cache_feature_replacement;
     vector<ScalerMethod> cache_feature_transforms;
+
+    struct TrainingTransform
+    {
+        Descriptives descriptives;
+        ScalerMethod scaler = ScalerMethod::None;
+        float min_range = -1.0f;
+        float max_range = 1.0f;
+        bool configured = false;
+
+        float apply(float value) const
+        {
+            return configured
+                ? scale_value(scaler, descriptives, value, min_range, max_range)
+                : value;
+        }
+    };
+
+    vector<TrainingTransform> training_transforms;
 
     DateFormat infer_column_types(const vector<string_view>&, char, bool has_quotes = false);
 

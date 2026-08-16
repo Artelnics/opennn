@@ -178,6 +178,39 @@ TEST(TimeSeriesDataset, test_set_lags_number)
 
 }
 
+TEST(TimeSeriesDataset, TrainingScalingExpandsMultiStepTargetsWithoutMutatingData)
+{
+    TimeSeriesDataset dataset(6, {1}, {1});
+    MatrixR raw(6, 2);
+    raw << 0.0f, 10.0f,
+           1.0f, 20.0f,
+           2.0f, 30.0f,
+           3.0f, 40.0f,
+           4.0f, 50.0f,
+           5.0f, 60.0f;
+    dataset.set_data(raw);
+    dataset.set_variable_scalers("MinimumMaximum");
+    dataset.set_future_time_steps(2);
+    dataset.set_multi_target(true);
+
+    FeatureScaling requested;
+    requested.descriptives.resize(2);
+    requested.scalers.resize(2, ScalerMethod::None);
+
+    const FeatureScaling effective = dataset.prepare_training_scaling(
+        VariableRole::Target, requested, 2);
+
+    ASSERT_EQ(effective.descriptives.size(), 2);
+    ASSERT_EQ(effective.scalers.size(), 2);
+    EXPECT_EQ(effective.scalers[0], ScalerMethod::MinimumMaximum);
+    EXPECT_EQ(effective.scalers[1], ScalerMethod::MinimumMaximum);
+    EXPECT_FLOAT_EQ(effective.descriptives[0].minimum,
+                    effective.descriptives[1].minimum);
+    EXPECT_FLOAT_EQ(effective.descriptives[0].maximum,
+                    effective.descriptives[1].maximum);
+    EXPECT_TRUE(dataset.Dataset::get_data().isApprox(raw, 0.0f));
+}
+
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2025 Artificial Intelligence Techniques, SL.
 //

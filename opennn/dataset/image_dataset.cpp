@@ -133,6 +133,32 @@ void ImageDataset::set_input_scaling(const vector<Descriptives>& descriptives,
     }
 }
 
+FeatureScaling ImageDataset::prepare_training_scaling(
+    VariableRole role,
+    const FeatureScaling& requested,
+    Index expected_features)
+{
+    throw_if(role != VariableRole::Input,
+             "ImageDataset supports training scaling only for inputs.");
+    throw_if(expected_features != get_channels_number(),
+             "ImageDataset training scaling expects {} channels, got {}.",
+             get_channels_number(), expected_features);
+
+    set_input_scaling(requested.descriptives,
+                      requested.scalers,
+                      requested.min_range,
+                      requested.max_range);
+    return requested;
+}
+
+void ImageDataset::clear_training_scaling() noexcept
+{
+    input_scale.clear();
+    input_offset.clear();
+
+    if (is_device_resident()) disable_device_residency();
+}
+
 void ImageDataset::to_JSON(JsonWriter& printer) const
 {
     write_json_header(printer, {

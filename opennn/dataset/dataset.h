@@ -11,6 +11,7 @@
 #include "opennn/dataset/batch.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/enum_map.h"
+#include "opennn/core/scaling.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/variable.h"
 
@@ -150,6 +151,15 @@ public:
     }
     const float* get_device_data() const { return data_device.as<float>(); }
     Index get_device_data_columns() const noexcept { return device_data_columns; }
+
+    // Fits or installs the requested transform and returns the effective
+    // configuration that the corresponding Scaling layer must use.
+    virtual FeatureScaling prepare_training_scaling(
+        VariableRole,
+        const FeatureScaling&,
+        Index);
+    // Removes transient batch transforms without modifying source data.
+    virtual void clear_training_scaling() noexcept {}
 
     void set_sample_roles(SampleRole);
     void set_sample_roles(string_view role) { set_sample_roles(string_to_sample_role(role)); }

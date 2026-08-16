@@ -13,6 +13,21 @@
 
 namespace opennn
 {
+    // Complete per-feature transform shared by a Scaling layer and the Dataset
+    // that prepares already-scaled training batches.
+    struct FeatureScaling
+    {
+        vector<Descriptives> descriptives;
+        vector<ScalerMethod> scalers;
+        float min_range = -1.0f;
+        float max_range = 1.0f;
+
+        Index size() const noexcept
+        {
+            return ssize(descriptives);
+        }
+    };
+
     template<typename X>
     auto scale_minimum_maximum_formula(const X& x, const Descriptives& d, float min_range, float max_range)
     {

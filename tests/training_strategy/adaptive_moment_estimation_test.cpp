@@ -229,6 +229,42 @@ TEST_F(AdaptiveMomentEstimationTest, TrainsRemainderBatchCPU)
     EXPECT_EQ(batches_processed, 3);
 }
 
+TEST_F(AdaptiveMomentEstimationTest, TrainingScalingCleanupSurvivesCallbackException)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    TabularDataset dataset(4, {1}, {1});
+    MatrixR raw(4, 2);
+    raw << 10.0f, 100.0f,
+           20.0f, 200.0f,
+           30.0f, 300.0f,
+           40.0f, 400.0f;
+    dataset.set_data(raw);
+    dataset.set_sample_roles(SampleRole::Training);
+    dataset.set_variable_scalers("MinimumMaximum");
+
+    ApproximationNetwork network({1}, {2}, {1});
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    AdaptiveMomentEstimation adam(&loss);
+    adam.set_batch_size(2);
+    adam.set_maximum_epochs(0);
+    adam.set_display(false);
+    adam.post_batch_callback = [](NeuralNetwork*)
+    {
+        throw runtime_error("intentional callback failure");
+    };
+
+    EXPECT_THROW(adam.train(), runtime_error);
+    EXPECT_TRUE(dataset.get_data().isApprox(raw, 0.0f));
+
+    std::array<float, 4> inputs{};
+    dataset.fill_inputs({0, 1, 2, 3}, {0}, inputs.data(), FillMode::Training);
+    for (Index i = 0; i < 4; ++i)
+        EXPECT_NEAR(inputs[size_t(i)], raw(i, 0), EPSILON);
+}
+
 #ifdef OPENNN_HAS_CUDA
 TEST_F(AdaptiveMomentEstimationTest, TrainApproximationGPU)
 {
@@ -317,6 +353,7 @@ TEST_F(AdaptiveMomentEstimationTest, CudaGraphGroupedResidentBf16Replay)
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
     dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+    const MatrixR raw = dataset.get_data();
 
     ApproximationNetwork network({2}, {6}, {1});
     Loss loss(&network, &dataset);
@@ -329,6 +366,7 @@ TEST_F(AdaptiveMomentEstimationTest, CudaGraphGroupedResidentBf16Replay)
     adam.set_display(false);
 
     EXPECT_TRUE(isfinite(adam.train().get_training_error()));
+    EXPECT_TRUE(dataset.get_data().isApprox(raw, 0.0f));
 }
 #endif
 

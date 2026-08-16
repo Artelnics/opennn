@@ -185,6 +185,16 @@ void Dataset::enable_device_residency()
     upload_device_matrix(data);
 }
 
+FeatureScaling Dataset::prepare_training_scaling(
+    VariableRole role,
+    const FeatureScaling&,
+    Index)
+{
+    throw runtime_error(format(
+        "Dataset does not support {} training scaling.",
+        variable_role_to_string(role)));
+}
+
 void Dataset::upload_device_matrix(const MatrixR& matrix)
 {
     device_data_columns = matrix.cols();

@@ -68,6 +68,11 @@ public:
                     const vector<Index>&,
                     FillMode) const override;
 
+    FeatureScaling prepare_training_scaling(
+        VariableRole,
+        const FeatureScaling&,
+        Index) override;
+
     void resize_input_shape(Index) override;
 
     void refresh_forecasting_roles();
