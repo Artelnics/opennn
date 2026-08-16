@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "opennn/neural_network/detection_head.h"
 #include "opennn/neural_network/layers/layer.h"
 #include "opennn/neural_network/operators/operator.h"
 
@@ -27,7 +28,7 @@ struct DetectionV8Operator : Operator
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 };
 
-class DetectionV8 final : public Layer
+class DetectionV8 final : public Layer, public DetectionHeadEndpoint
 {
 public:
 
@@ -37,6 +38,14 @@ public:
     Shape get_output_shape() const override { return input_shape; }
     Index get_classes_number() const { return detection.classes_number; }
     Index get_reg_max() const { return detection.reg_max; }
+    DetectionHeadMetadata get_detection_head_metadata() const noexcept override
+    {
+        return {DetectionHeadKind::AnchorFree,
+                1,
+                detection.classes_number,
+                detection.reg_max,
+                DetectionClassActivation::Sigmoid};
+    }
 
     void set(const Shape&, const string&);
     void set(const Shape&, Index reg_max, const string&);

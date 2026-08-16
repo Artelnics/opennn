@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "opennn/neural_network/detection_head.h"
 #include "opennn/neural_network/layers/layer.h"
 #include "opennn/neural_network/operators/operator.h"
 
@@ -16,7 +17,7 @@ namespace opennn
 
 struct DetectionOperator : Operator
 {
-    enum class ClassActivation { Softmax, Sigmoid };
+    using ClassActivation = DetectionClassActivation;
 
     Index grid_size = 0;
     Index grid_width = 0;
@@ -33,7 +34,7 @@ struct DetectionOperator : Operator
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 };
 
-class Detection final : public Layer
+class Detection final : public Layer, public DetectionHeadEndpoint
 {
 public:
 
@@ -46,6 +47,14 @@ public:
     Shape get_output_shape() const override { return input_shape; }
     const vector<array<float, 2>>& get_anchors() const { return detection.anchors; }
     ClassActivation get_class_activation() const { return detection.class_activation; }
+    DetectionHeadMetadata get_detection_head_metadata() const noexcept override
+    {
+        return {DetectionHeadKind::AnchorBased,
+                detection.boxes_per_cell,
+                detection.classes_number,
+                1,
+                detection.class_activation};
+    }
 
     void set(const Shape&, const vector<array<float, 2>>&, const string&);
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 3); }

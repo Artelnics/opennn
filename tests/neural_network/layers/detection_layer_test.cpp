@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "opennn/neural_network/layers/detection_layer.h"
+#include "opennn/neural_network/layers/detection_v8_layer.h"
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/layers/flatten_layer.h"
@@ -51,6 +52,31 @@ TEST(Detection, DefaultConstructorAndClassActivationDefault)
 
     default_layer.set_class_activation(Detection::ClassActivation::Softmax);
     EXPECT_EQ(default_layer.get_class_activation(), Detection::ClassActivation::Softmax);
+}
+
+TEST(Detection, ImplementsDetectionHeadContract)
+{
+    const vector<std::array<float, 2>> anchors{{0.2f, 0.3f}, {0.4f, 0.5f}};
+    Detection anchored(Shape{2, 2, 16}, anchors);
+    anchored.set_class_activation(Detection::ClassActivation::Sigmoid);
+    DetectionV8 anchor_free(Shape{2, 2, 35}, 8);
+
+    const DetectionHeadMetadata anchored_metadata =
+        anchored.get_detection_head_metadata();
+    EXPECT_EQ(anchored_metadata.kind, DetectionHeadKind::AnchorBased);
+    EXPECT_EQ(anchored_metadata.boxes_per_cell, 2);
+    EXPECT_EQ(anchored_metadata.classes_number, 3);
+    EXPECT_EQ(anchored_metadata.regression_bins, 1);
+    EXPECT_EQ(anchored_metadata.class_activation,
+              DetectionClassActivation::Sigmoid);
+
+    const DetectionHeadMetadata anchor_free_metadata =
+        anchor_free.get_detection_head_metadata();
+    EXPECT_EQ(anchor_free_metadata.kind, DetectionHeadKind::AnchorFree);
+    EXPECT_EQ(anchor_free_metadata.classes_number, 3);
+    EXPECT_EQ(anchor_free_metadata.regression_bins, 8);
+    EXPECT_EQ(anchor_free_metadata.class_activation,
+              DetectionClassActivation::Sigmoid);
 }
 
 TEST(Detection, ForwardPropagateMatchesHandComputedValuesForKnownLogits)

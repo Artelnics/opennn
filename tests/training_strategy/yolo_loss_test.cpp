@@ -1,6 +1,7 @@
 #include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
+#include "opennn/dataset/tabular_dataset.h"
 #include "opennn/dataset/yolo_dataset.h"
 #include "opennn/neural_network/layers/detection_layer.h"
 #include "opennn/neural_network/layers/detection_v8_layer.h"
@@ -374,23 +375,16 @@ void build_yolo_v8_network(NeuralNetwork& net, const YoloLossV8Fixture& f)
 
 }
 
-TEST(YoloLoss, V8NoObjectGradientMatchesNumericalGradient)
+TEST(YoloLoss, V8UsesDetectionContractWithGenericDataset)
 {
-
     YoloLossV8Fixture f;
-    write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
-    write_bmp_24(f.images_dir / "b.bmp", f.W, f.H,  50, 200, 100);
-    { ofstream empty_a(f.labels_dir / "a.txt"); }
-    { ofstream empty_b(f.labels_dir / "b.txt"); }
-
-    YoloDataset dataset;
-    dataset.set_display(false);
-    dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, 0, {});
-    dataset.set_v8_mode(true);
-
-    YoloDataset::AugmentationConfig no_aug;
-    no_aug.enabled = false;
-    dataset.set_augmentation(no_aug);
+    constexpr Index samples_number = 2;
+    constexpr Index max_gt_boxes = 3;
+    TabularDataset dataset(samples_number,
+                           Shape{f.H, f.W, 3},
+                           Shape{max_gt_boxes * 5});
+    dataset.set_data_constant(0.0f);
+    dataset.set_sample_roles(SampleRole::Training);
 
     NeuralNetwork neural_network;
     build_yolo_v8_network(neural_network, f);

@@ -16,16 +16,12 @@
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"
-#include "opennn/dataset/tabular_dataset.h"
-#include "opennn/dataset/yolo_dataset.h"
 #include "opennn/neural_network/back_propagation.h"
+#include "opennn/neural_network/detection_head.h"
 #include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/layers/detection_layer.h"
-#include "opennn/neural_network/layers/detection_v8_layer.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/training_strategy/error_functions.h"
 #include "opennn/training_strategy/kernel_losses.cuh"
-#include "opennn/registry.h"
 
 namespace opennn
 {
@@ -192,21 +188,52 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
     return r;
 }
 
-void check_yolo_loss(const Dataset* dataset)
+const DetectionHeadEndpoint& get_detection_head(const NeuralNetwork& neural_network,
+                                                Index layer_index)
 {
-    throw_if(!dynamic_cast<const YoloDataset*>(dataset),
-             "YOLO loss requires YoloDataset.");
+    const auto* const head = dynamic_cast<const DetectionHeadEndpoint*>(
+        neural_network.get_layer(layer_index).get());
+    throw_if(!head, "YOLO loss requires detection-head endpoints.");
+    return *head;
 }
 
-bool yolo_uses_sigmoid_classes(const NeuralNetwork* nn)
+DetectionHeadMetadata get_detection_head_metadata(const NeuralNetwork& neural_network,
+                                                  Index layer_index)
 {
-    if (!nn) return false;
-    const vector<unique_ptr<Layer>>& layers = nn->get_layers();
-    for (const unique_ptr<Layer>& layer : layers)
-        if (layer && layer->get_type() == LayerType::Detection)
-            return static_cast<const Detection*>(layer.get())->get_class_activation()
-                   == Detection::ClassActivation::Sigmoid;
-    return false;
+    const DetectionHeadMetadata metadata =
+        get_detection_head(neural_network, layer_index).get_detection_head_metadata();
+    throw_if(metadata.classes_number <= 0,
+             "YOLO detection head must declare at least one class.");
+    throw_if(metadata.boxes_per_cell <= 0,
+             "YOLO detection head must declare at least one box per cell.");
+    throw_if(metadata.regression_bins <= 0,
+             "YOLO detection head must declare at least one regression bin.");
+    return metadata;
+}
+
+DetectionHeadMetadata get_loss_head_metadata(const NeuralNetwork& neural_network,
+                                             const vector<Index>& detection_indices)
+{
+    throw_if(detection_indices.empty(),
+             "YOLO loss requires at least one detection-head endpoint.");
+
+    const DetectionHeadMetadata first =
+        get_detection_head_metadata(neural_network, detection_indices.front());
+
+    for (size_t i = 1; i < detection_indices.size(); ++i)
+    {
+        const DetectionHeadMetadata current =
+            get_detection_head_metadata(neural_network, detection_indices[i]);
+        throw_if(current.kind != first.kind
+                 || current.classes_number != first.classes_number,
+                 "YOLO detection heads must use the same kind and class count.");
+        throw_if(first.kind == DetectionHeadKind::AnchorBased
+                 && (current.boxes_per_cell != first.boxes_per_cell
+                     || current.class_activation != first.class_activation),
+                 "Anchor-based YOLO heads must use the same box count and class activation.");
+    }
+
+    return first;
 }
 
 }
@@ -300,18 +327,18 @@ namespace
 
 Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
                                       const TensorView& target,
-                                      const Dataset* dataset,
-                                      const NeuralNetwork* neural_network,
-                                      bool sigmoid_classes,
+                                      const DetectionHeadMetadata& head,
                                       YoloLambdas lam)
 {
-    check_yolo_loss(dataset);
-    const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
-    const Index boxes_per_cell = yolo_dataset->get_boxes_per_cell();
-    const Index classes_number = yolo_dataset->get_classes_number();
     const Index batch_size = output.shape[0];
+    const bool sigmoid_classes =
+        head.class_activation == DetectionClassActivation::Sigmoid;
 
-    return {.error = yolo_error_kernel(output, target, boxes_per_cell, classes_number, sigmoid_classes, lam) / float(batch_size)};
+    return {.error = yolo_error_kernel(output, target,
+                                       head.boxes_per_cell,
+                                       head.classes_number,
+                                       sigmoid_classes,
+                                       lam) / float(batch_size)};
 }
 
 }
@@ -423,17 +450,18 @@ namespace
 void yolo_gradient_cpu(const TensorView& output,
                        const TensorView& target,
                        const TensorView& output_delta,
-                       const Dataset* dataset,
-                       const NeuralNetwork* neural_network,
-                       bool sigmoid_classes,
+                       const DetectionHeadMetadata& head,
                        YoloLambdas lam)
 {
-    check_yolo_loss(dataset);
-    const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
-    const Index boxes_per_cell = yolo_dataset->get_boxes_per_cell();
-    const Index classes_number = yolo_dataset->get_classes_number();
     const float inv_batch = 1.0f / float(output.shape[0]);
-    yolo_gradient_kernel(output, target, output_delta, boxes_per_cell, classes_number, sigmoid_classes, inv_batch, lam);
+    const bool sigmoid_classes =
+        head.class_activation == DetectionClassActivation::Sigmoid;
+    yolo_gradient_kernel(output, target, output_delta,
+                         head.boxes_per_cell,
+                         head.classes_number,
+                         sigmoid_classes,
+                         inv_batch,
+                         lam);
 }
 
 vector<float> assemble_head_target(const float* tgt,
@@ -504,25 +532,25 @@ void for_each_yolo_head(const ForwardPropagation& forward_propagation,
 
 Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& forward_propagation,
                                             const TensorView& target_flat,
-                                            const Dataset* dataset,
                                             const NeuralNetwork* nn,
                                             const vector<Index>& detection_indices,
-                                            bool sigmoid_classes,
+                                            const DetectionHeadMetadata& head,
                                             YoloLambdas lam)
 {
-    check_yolo_loss(dataset);
-    const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
-    const Index boxes_per_head = yolo_dataset->get_boxes_per_head();
-    const Index classes_number = yolo_dataset->get_classes_number();
     const Index batch_size = target_flat.shape[0];
+    const bool sigmoid_classes =
+        head.class_activation == DetectionClassActivation::Sigmoid;
 
     float total_error = 0.0f;
     for_each_yolo_head(forward_propagation, nn, detection_indices,
                        target_flat.as<float>(), batch_size, 0,
         [&](Index, const TensorView& head_output, const TensorView& head_target)
         {
-            total_error += yolo_error_kernel(head_output, head_target, boxes_per_head,
-                                             classes_number, sigmoid_classes, lam);
+            total_error += yolo_error_kernel(head_output, head_target,
+                                             head.boxes_per_cell,
+                                             head.classes_number,
+                                             sigmoid_classes,
+                                             lam);
         });
 
     return {.error = total_error / float(batch_size)};
@@ -531,26 +559,27 @@ Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& forward_pr
 void yolo_gradient_cpu_multi(const ForwardPropagation& forward_propagation,
                              const TensorView& target_flat,
                              BackPropagation& back_propagation,
-                             const Dataset* dataset,
                              const NeuralNetwork* nn,
                              const vector<Index>& detection_indices,
-                             bool sigmoid_classes,
+                             const DetectionHeadMetadata& head,
                              YoloLambdas lam)
 {
-    check_yolo_loss(dataset);
-    const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
-    const Index boxes_per_head = yolo_dataset->get_boxes_per_head();
-    const Index classes_number = yolo_dataset->get_classes_number();
     const Index batch_size = target_flat.shape[0];
     const float inv_batch = 1.0f / float(batch_size);
+    const bool sigmoid_classes =
+        head.class_activation == DetectionClassActivation::Sigmoid;
 
     for_each_yolo_head(forward_propagation, nn, detection_indices,
                        target_flat.as<float>(), batch_size, 0,
         [&](Index detection_idx, const TensorView& head_output, const TensorView& head_target)
         {
             TensorView& head_delta = back_propagation.output_deltas[size_t(detection_idx)];
-            yolo_gradient_kernel(head_output, head_target, head_delta, boxes_per_head,
-                                 classes_number, sigmoid_classes, inv_batch, lam);
+            yolo_gradient_kernel(head_output, head_target, head_delta,
+                                 head.boxes_per_cell,
+                                 head.classes_number,
+                                 sigmoid_classes,
+                                 inv_batch,
+                                 lam);
         });
 }
 
@@ -601,6 +630,7 @@ static void dfl_decode_box(const float* box_logits, Index reg_max, Index col, In
 static TalResult tal_assign_head(const TensorView& output,
                                   const float* gt_list,
                                   Index batch_size, Index G, Index C,
+                                  Index max_gt_boxes,
                                   Index reg_max = 1)
 {
     const Index cells  = G * G;
@@ -614,12 +644,12 @@ static TalResult tal_assign_head(const TensorView& output,
 
     for (Index n = 0; n < batch_size; ++n)
     {
-        const float* gt    = gt_list + n * YoloDataset::MAX_GT_BOXES * 5;
+        const float* gt    = gt_list + n * max_gt_boxes * 5;
         const float* out_n = output.as<float>() + n * cells * ch_out;
 
         vector<float> assign_iou(size_t(cells), -1.0f);
 
-        for (Index gi = 0; gi < YoloDataset::MAX_GT_BOXES; ++gi)
+        for (Index gi = 0; gi < max_gt_boxes; ++gi)
         {
             if (gt[gi*5 + 4] < 0.5f) continue;
 
@@ -685,6 +715,7 @@ static TalResult tal_assign_head(const TensorView& output,
 static float yolo_v8_error_kernel_tal(const TensorView& output,
                                        const float* gt_list,
                                        Index batch_size, Index G, Index C,
+                                       Index max_gt_boxes,
                                        const TalResult& tal,
                                        YoloLambdas lam,
                                        Index reg_max = 1)
@@ -701,7 +732,7 @@ static float yolo_v8_error_kernel_tal(const TensorView& output,
 
     for (Index n = 0; n < batch_size; ++n)
     {
-        const float* gt = gt_list + n * YoloDataset::MAX_GT_BOXES * 5;
+        const float* gt = gt_list + n * max_gt_boxes * 5;
         for (Index row = 0; row < G; ++row)
             for (Index col = 0; col < G; ++col)
             {
@@ -789,6 +820,7 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                                          const float* gt_list,
                                          const TensorView& output_delta,
                                          Index batch_size, Index G, Index C,
+                                         Index max_gt_boxes,
                                          const TalResult& tal,
                                          float inv_batch,
                                          YoloLambdas lam,
@@ -807,7 +839,7 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
 
     for (Index n = 0; n < batch_size; ++n)
     {
-        const float* gt = gt_list + n * YoloDataset::MAX_GT_BOXES * 5;
+        const float* gt = gt_list + n * max_gt_boxes * 5;
         for (Index row = 0; row < G; ++row)
             for (Index col = 0; col < G; ++col)
             {
@@ -944,12 +976,6 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
 #pragma optimize("", on)
 #endif
 
-static Index get_v8_reg_max(const NeuralNetwork* nn, Index detection_idx)
-{
-    const auto* layer = dynamic_cast<const DetectionV8*>(nn->get_layer(detection_idx).get());
-    return layer ? layer->get_reg_max() : Index(1);
-}
-
 template<typename HeadFn>
 static void for_each_v8_head(const ForwardPropagation& forward_propagation,
                              const TensorView& target_flat,
@@ -977,8 +1003,12 @@ static void for_each_v8_head(const ForwardPropagation& forward_propagation,
     for (Index detection_idx : detection_indices)
     {
         const TensorView head_view = forward_propagation.slots[size_t(detection_idx)].back();
+        const DetectionHeadMetadata metadata =
+            get_detection_head_metadata(*nn, detection_idx);
+        throw_if(metadata.kind != DetectionHeadKind::AnchorFree,
+                 "YOLO v8 loss requires anchor-free detection heads.");
         const Index G       = nn->get_layer(detection_idx)->get_output_shape()[0];
-        const Index reg_max = get_v8_reg_max(nn, detection_idx);
+        const Index reg_max = metadata.regression_bins;
 
         TensorView head_output = head_view;
         vector<float> out_cpu;
@@ -1019,6 +1049,18 @@ static void for_each_v8_head(const ForwardPropagation& forward_propagation,
     }
 }
 
+Index get_max_gt_boxes(const TensorView& target_flat, Index batch_size)
+{
+    constexpr Index values_per_box = 5;
+    throw_if(batch_size <= 0
+             || target_flat.size() % (batch_size * values_per_box) != 0,
+             "YOLO v8 targets must contain five values per ground-truth box.");
+    const Index max_gt_boxes = target_flat.size() / (batch_size * values_per_box);
+    throw_if(max_gt_boxes <= 0,
+             "YOLO v8 targets must reserve at least one ground-truth box.");
+    return max_gt_boxes;
+}
+
 Loss::EvaluationResult yolo_v8_error_multi(const ForwardPropagation& forward_propagation,
                                            const TensorView& target_flat,
                                            const NeuralNetwork* nn,
@@ -1027,13 +1069,17 @@ Loss::EvaluationResult yolo_v8_error_multi(const ForwardPropagation& forward_pro
                                            YoloLambdas lam)
 {
     const Index batch_size = target_flat.shape[0];
+    const Index max_gt_boxes = get_max_gt_boxes(target_flat, batch_size);
 
     float total_error = 0.0f;
     for_each_v8_head(forward_propagation, target_flat, nullptr, nn, detection_indices,
         [&](const TensorView& head_output, const float* tgt, TensorView*, Index G, Index reg_max)
         {
-            const TalResult tal = tal_assign_head(head_output, tgt, batch_size, G, classes_number, reg_max);
-            total_error += yolo_v8_error_kernel_tal(head_output, tgt, batch_size, G, classes_number, tal, lam, reg_max);
+            const TalResult tal = tal_assign_head(head_output, tgt, batch_size, G,
+                                                  classes_number, max_gt_boxes, reg_max);
+            total_error += yolo_v8_error_kernel_tal(head_output, tgt, batch_size, G,
+                                                    classes_number, max_gt_boxes,
+                                                    tal, lam, reg_max);
         });
     return {.error = total_error / float(batch_size)};
 }
@@ -1048,12 +1094,16 @@ void yolo_v8_gradient_multi(const ForwardPropagation& forward_propagation,
 {
     const Index batch_size = target_flat.shape[0];
     const float inv_batch = 1.0f / float(batch_size);
+    const Index max_gt_boxes = get_max_gt_boxes(target_flat, batch_size);
 
     for_each_v8_head(forward_propagation, target_flat, &back_propagation, nn, detection_indices,
         [&](const TensorView& head_output, const float* tgt, TensorView* head_delta, Index G, Index reg_max)
         {
-            const TalResult tal = tal_assign_head(head_output, tgt, batch_size, G, classes_number, reg_max);
-            yolo_v8_gradient_kernel_tal(head_output, tgt, *head_delta, batch_size, G, classes_number, tal, inv_batch, lam, reg_max);
+            const TalResult tal = tal_assign_head(head_output, tgt, batch_size, G,
+                                                  classes_number, max_gt_boxes, reg_max);
+            yolo_v8_gradient_kernel_tal(head_output, tgt, *head_delta, batch_size, G,
+                                        classes_number, max_gt_boxes,
+                                        tal, inv_batch, lam, reg_max);
         });
 }
 
@@ -1112,21 +1162,17 @@ void for_each_yolo_head_gpu(const ForwardPropagation& forward_propagation,
 
 void yolo_error_gpu_accumulate(const ForwardPropagation& forward_propagation,
                                const TensorView& target_flat,
-                               const Dataset* dataset,
                                const NeuralNetwork* nn,
                                const vector<Index>& detection_indices,
-                               bool sigmoid_classes,
+                               const DetectionHeadMetadata& head,
                                Buffer& target_device,
                                float* error_accum,
                                YoloLambdas lam)
 {
-    check_yolo_loss(dataset);
-    const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
-
-    const Index boxes_per_head = yolo_dataset->get_boxes_per_head() > 0
-        ? yolo_dataset->get_boxes_per_head()
-        : yolo_dataset->get_boxes_per_cell();
-    const Index classes_number = yolo_dataset->get_classes_number();
+    const Index boxes_per_head = head.boxes_per_cell;
+    const Index classes_number = head.classes_number;
+    const bool sigmoid_classes =
+        head.class_activation == DetectionClassActivation::Sigmoid;
     const Index values_per_box = 5 + classes_number;
     const Index batch_size = target_flat.shape[0];
 
@@ -1145,10 +1191,9 @@ void yolo_error_gpu_accumulate(const ForwardPropagation& forward_propagation,
 
 Loss::EvaluationResult yolo_error_gpu_multi(const ForwardPropagation& forward_propagation,
                                             const TensorView& target_flat,
-                                            const Dataset* dataset,
                                             const NeuralNetwork* nn,
                                             const vector<Index>& detection_indices,
-                                            bool sigmoid_classes,
+                                            const DetectionHeadMetadata& head,
                                             Buffer& target_device,
                                             Buffer& error_device,
                                             YoloLambdas lam)
@@ -1156,8 +1201,8 @@ Loss::EvaluationResult yolo_error_gpu_multi(const ForwardPropagation& forward_pr
     const Index batch_size = target_flat.shape[0];
 
     error_device.grow_to(Index(sizeof(float)));
-    yolo_error_gpu_accumulate(forward_propagation, target_flat, dataset, nn,
-                              detection_indices, sigmoid_classes, target_device,
+    yolo_error_gpu_accumulate(forward_propagation, target_flat, nn,
+                              detection_indices, head, target_device,
                               error_device.as<float>(), lam);
 
     cudaStreamSynchronize(device::get_compute_stream());
@@ -1170,19 +1215,16 @@ Loss::EvaluationResult yolo_error_gpu_multi(const ForwardPropagation& forward_pr
 void yolo_gradient_gpu_multi(const ForwardPropagation& forward_propagation,
                              const TensorView& target_flat,
                              BackPropagation& back_propagation,
-                             const Dataset* dataset,
                              const NeuralNetwork* nn,
                              const vector<Index>& detection_indices,
-                             bool sigmoid_classes,
+                             const DetectionHeadMetadata& head,
                              Buffer& target_device,
                              YoloLambdas lam)
 {
-    check_yolo_loss(dataset);
-    const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
-    const Index boxes_per_head = yolo_dataset->get_boxes_per_head() > 0
-        ? yolo_dataset->get_boxes_per_head()
-        : yolo_dataset->get_boxes_per_cell();
-    const Index classes_number = yolo_dataset->get_classes_number();
+    const Index boxes_per_head = head.boxes_per_cell;
+    const Index classes_number = head.classes_number;
+    const bool sigmoid_classes =
+        head.class_activation == DetectionClassActivation::Sigmoid;
     const Index values_per_box = 5 + classes_number;
     const Index batch_size = target_flat.shape[0];
     const float inv_batch = 1.0f / float(batch_size);
@@ -1230,16 +1272,26 @@ vector<Index> Loss::get_output_delta_layer_indices() const
 
     if (error == Error::Yolo)
     {
-        const bool uses_v8 = ranges::any_of(layers, [](const unique_ptr<Layer>& layer)
+        const bool uses_anchor_free = ranges::any_of(layers, [](const unique_ptr<Layer>& layer)
         {
-            return layer && layer->get_type() == LayerType::DetectionV8;
+            const auto* const head = layer
+                ? dynamic_cast<const DetectionHeadEndpoint*>(layer.get())
+                : nullptr;
+            return head
+                && head->get_detection_head_metadata().kind
+                   == DetectionHeadKind::AnchorFree;
         });
-        const LayerType head_type = uses_v8 ? LayerType::DetectionV8
-                                            : LayerType::Detection;
 
         for (size_t i = 0; i < layers.size(); ++i)
-            if (layers[i] && layers[i]->get_type() == head_type)
+        {
+            const auto* const head = layers[i]
+                ? dynamic_cast<const DetectionHeadEndpoint*>(layers[i].get())
+                : nullptr;
+            if (head
+                && (head->get_detection_head_metadata().kind
+                    == DetectionHeadKind::AnchorFree) == uses_anchor_free)
                 result.push_back(Index(i));
+        }
 
         if (!result.empty())
             return result;
@@ -1357,33 +1409,30 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
     const bool is_gradient = back_propagation != nullptr;
     const YoloLambdas lam{yolo_lambda_giou, yolo_lambda_dfl, yolo_lambda_noobj, yolo_lambda_class, yolo_focal_gamma, yolo_obj_focal_gamma};
     const vector<Index> detection_indices = get_output_delta_layer_indices();
-    const bool uses_v8 = !detection_indices.empty()
-                      && neural_network->get_layer(detection_indices.front())->get_type()
-                         == LayerType::DetectionV8;
+    const DetectionHeadMetadata head =
+        get_loss_head_metadata(*neural_network, detection_indices);
 
-    if (uses_v8)
+    if (head.kind == DetectionHeadKind::AnchorFree)
     {
-        const auto* yolo_ds = static_cast<const YoloDataset*>(dataset);
         if (!is_gradient)
             return yolo_v8_error_multi(forward_propagation, target, neural_network,
-                                       detection_indices, yolo_ds->get_classes_number(), lam);
+                                       detection_indices, head.classes_number, lam);
         yolo_v8_gradient_multi(forward_propagation, target, *back_propagation,
-                               neural_network, detection_indices, yolo_ds->get_classes_number(), lam);
+                               neural_network, detection_indices, head.classes_number, lam);
         return {};
     }
 
-    const bool sigmoid = yolo_uses_sigmoid_classes(neural_network);
 #ifdef OPENNN_HAS_CUDA
     const bool on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
     if (on_gpu)
     {
 
         if (!is_gradient)
-            return yolo_error_gpu_multi(forward_propagation, target, dataset, neural_network,
-                                        detection_indices, sigmoid,
+            return yolo_error_gpu_multi(forward_propagation, target, neural_network,
+                                        detection_indices, head,
                                         yolo_target_device, errors_device, lam);
         yolo_gradient_gpu_multi(forward_propagation, target, *back_propagation,
-                                dataset, neural_network, detection_indices, sigmoid,
+                                neural_network, detection_indices, head,
                                 yolo_target_device, lam);
         return {};
     }
@@ -1392,16 +1441,16 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
 
     if (!is_gradient)
         return detection_indices.size() > 1
-            ? yolo_error_cpu_multi(forward_propagation, target, dataset, neural_network,
-                                   detection_indices, sigmoid, lam)
-            : yolo_error_cpu(input, target, dataset, neural_network, sigmoid, lam);
+            ? yolo_error_cpu_multi(forward_propagation, target, neural_network,
+                                   detection_indices, head, lam)
+            : yolo_error_cpu(input, target, head, lam);
 
     if (detection_indices.size() > 1)
         yolo_gradient_cpu_multi(forward_propagation, target, *back_propagation,
-                                dataset, neural_network, detection_indices, sigmoid, lam);
+                                neural_network, detection_indices, head, lam);
     else
         yolo_gradient_cpu(input, target, back_propagation->get_output_delta(),
-                          dataset, neural_network, sigmoid, lam);
+                          head, lam);
     return {};
 }
 
