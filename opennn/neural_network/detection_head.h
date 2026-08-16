@@ -23,6 +23,9 @@ struct DetectionHeadMetadata
     Index classes_number = 0;
     Index regression_bins = 1;
     DetectionClassActivation class_activation = DetectionClassActivation::Softmax;
+
+    bool is_anchor_free() const noexcept { return kind == DetectionHeadKind::AnchorFree; }
+    bool uses_sigmoid_classes() const noexcept { return class_activation == DetectionClassActivation::Sigmoid; }
 };
 
 class DetectionHeadEndpoint
