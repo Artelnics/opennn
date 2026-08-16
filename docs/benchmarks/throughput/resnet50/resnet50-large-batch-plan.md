@@ -244,6 +244,14 @@ passes. What remains:
   | fp32 2048 (8-channel fp32 backward, since reverted) | 11,342 / 11,434 | — | 11,618 / 11,828 |
   | fp32 128 | 6,733 / 5,966 | 6,373 / 6,053 | 6,564 / 6,237 |
 
+  Final check of the committed binary (c1b7be414) against its direct
+  predecessor HEAD (48a43e9ce) and the morning binary, fresh plan cache, cooled
+  pairs: bf16 2048 **24,876** vs HEAD 22,451; fp32 2048 11,940 / 11,938 vs
+  HEAD 11,923 / 11,774 / 11,685 vs morning 12,118 / 12,017 / 11,945 - fp32 at
+  parity (the -3..-8% seen in earlier fp32 pairs was a stale autotune cache
+  keyed differently by the two binaries, plus WSL memory pressure from build
+  trees: two runs paged at ~1,600 samples/s until the trees were deleted).
+
   A first cut lost 5-9% at batch 128: CIFAR's late 1x1/2x2 stages give a BN
   128-512 rows there, and the reduce still spawned 128 nearly idle row blocks
   whose partials one thread per channel then summed serially. Row blocks now
