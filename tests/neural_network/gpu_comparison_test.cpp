@@ -751,6 +751,99 @@ TEST_F(GpuComparison, ResidualBlockBatchNormForwardRungParity)
     EXPECT_LT(bf16_own_outputs, 2.0e-2f);
 }
 
+// Max pooling on CUDA has two rungs: cuDNN's pooling, and the library's own
+// forward that saves a one-byte argmax per output for a gather backward
+// (MaxPoolingRung). A conv + ReLU feeding a 3x3 / stride 2 / pad 1 max pool -
+// overlapping windows and padding, as in the ResNet stem - checks both rungs'
+// gradients against the CPU reference in fp32, their agreement in bf16, and
+// the own forward's outputs.
+TEST_F(GpuComparison, MaxPoolingGradientPerRung)
+{
+    constexpr Index samples_number = 8;
+    const Shape input_shape{4, 4, 16};
+
+    TabularDataset dataset(samples_number, input_shape, Shape{1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    Tensor4 inputs(samples_number, 4, 4, 16);
+    inputs.setRandom();
+
+    const auto build_network = [&](NeuralNetwork& network)
+    {
+        network.add_layer(make_unique<Convolutional>(
+                              input_shape, Shape{3, 3, 16, 32}, "ReLU",
+                              Shape{1, 1}, "Same", false, "conv"),
+                          {-1});
+        network.add_layer(make_unique<Pooling>(Shape{4, 4, 32}, Shape{3, 3}, Shape{2, 2}, Shape{1, 1},
+                                               "MaxPooling", "pool"),
+                          {0});
+        network.add_layer(make_unique<Flatten>(Shape{2, 2, 32}), {1});
+        network.add_layer(make_unique<opennn::Dense>(Shape{128}, Shape{1}, "Identity"), {2});
+        network.compile();
+    };
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    NeuralNetwork cpu_network;
+    build_network(cpu_network);
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+
+    Loss cpu_loss(&cpu_network, &dataset);
+    cpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR cpu_gradient = calculate_gradient(cpu_loss);
+    const MatrixR cpu_outputs = cpu_network.calculate_outputs(inputs);
+
+    struct RestoreRung
+    {
+        ~RestoreRung() { device::set_max_pooling_rung(device::MaxPoolingRung::Auto); }
+    } restore;
+
+    struct Run { VectorR gradient; MatrixR outputs; };
+    const auto gpu_run = [&](Type type, device::MaxPoolingRung rung)
+    {
+        device::set_max_pooling_rung(rung);
+        Configuration::instance().set(Device::CUDA, type);
+        NeuralNetwork gpu_network;
+        build_network(gpu_network);
+        gpu_network.set_parameters(parameters);
+        Loss gpu_loss(&gpu_network, &dataset);
+        gpu_loss.set_error(Loss::Error::MeanSquaredError);
+        Run run;
+        run.gradient = calculate_gradient(gpu_loss);
+        run.outputs = gpu_network.calculate_outputs(inputs);
+        return run;
+    };
+
+    const Run fp32_cudnn = gpu_run(Type::FP32, device::MaxPoolingRung::Cudnn);
+    const Run fp32_own   = gpu_run(Type::FP32, device::MaxPoolingRung::OwnKernel);
+    const Run bf16_cudnn = gpu_run(Type::BF16, device::MaxPoolingRung::Cudnn);
+    const Run bf16_own   = gpu_run(Type::BF16, device::MaxPoolingRung::OwnKernel);
+
+    for (const Run* run : {&fp32_cudnn, &fp32_own, &bf16_cudnn, &bf16_own})
+    {
+        ASSERT_EQ(cpu_gradient.size(), run->gradient.size());
+        ASSERT_EQ(cpu_outputs.rows(), run->outputs.rows());
+    }
+
+    const float fp32_cudnn_error  = relative_difference(cpu_gradient, fp32_cudnn.gradient);
+    const float fp32_own_error    = relative_difference(cpu_gradient, fp32_own.gradient);
+    const float bf16_own_vs_cudnn = relative_difference(bf16_cudnn.gradient, bf16_own.gradient);
+    const float fp32_own_outputs  = relative_difference(cpu_outputs, fp32_own.outputs);
+    const float bf16_own_outputs  = relative_difference(bf16_cudnn.outputs, bf16_own.outputs);
+
+    cout << "max-pooling rungs - fp32 gradient vs reference: cuDNN " << fp32_cudnn_error
+         << ", own " << fp32_own_error << "; bf16 gradient own vs cuDNN " << bf16_own_vs_cudnn
+         << "; outputs: fp32 own vs reference " << fp32_own_outputs
+         << ", bf16 own vs cuDNN " << bf16_own_outputs << "\n";
+
+    EXPECT_LT(fp32_cudnn_error, 5.0e-3f);
+    EXPECT_LT(fp32_own_error, 5.0e-3f);
+    EXPECT_LT(bf16_own_vs_cudnn, 1.0e-2f);
+    EXPECT_LT(fp32_own_outputs, 1.0e-3f);
+    EXPECT_LT(bf16_own_outputs, 1.0e-2f);
+}
+
 // The real ResNet builder, small: a stem, a projection-skip bottleneck block and
 // an identity bottleneck block per stage, two stages, so every block wiring the
 // residual-join fusion (BackPropagation::plan_delta_addends -> conv dgrad + ADD)

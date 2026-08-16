@@ -381,7 +381,7 @@ TEST(NeuralNetworkTest, SerializesNetworkTask)
     neural_network.to_JSON(writer);
 
     JsonDocument document;
-    document.root = Json::parse(writer.c_str());
+    document.set_root(Json::parse(writer.c_str()));
 
     NeuralNetwork loaded;
     loaded.from_JSON(document);
@@ -407,7 +407,7 @@ TEST(NeuralNetworkTest, SerializesTiedWeightRelationships)
     neural_network.to_JSON(writer);
 
     JsonDocument document;
-    document.root = Json::parse(writer.c_str());
+    document.set_root(Json::parse(writer.c_str()));
 
     NeuralNetwork restored;
     restored.from_JSON(document);

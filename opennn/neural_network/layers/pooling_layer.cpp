@@ -7,6 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/pooling_layer.h"
+#ifdef OPENNN_HAS_CUDA
+#include "opennn/core/cuda/kernel_pooling.cuh"
+#endif
 #include "opennn/registry.h"
 #include "opennn/core/enum_map.h"
 
@@ -205,6 +208,16 @@ void PoolOperator::set(Index input_h, Index input_w, Index input_c,
 #endif
 }
 
+Index PoolOperator::get_output_height() const noexcept
+{
+    return (input_height - pool_height + 2 * padding_height) / row_stride + 1;
+}
+
+Index PoolOperator::get_output_width() const noexcept
+{
+    return (input_width - pool_width + 2 * padding_width) / column_stride + 1;
+}
+
 #ifdef OPENNN_HAS_CUDA
 
 cudnnPoolingDescriptor_t PoolOperator::get_pooling_descriptor() const
@@ -230,15 +243,51 @@ cudnnPoolingDescriptor_t PoolOperator::get_pooling_descriptor() const
 
 #endif
 
+#ifdef OPENNN_HAS_CUDA
+
+bool PoolOperator::own_max_pooling(const TensorView& input, const TensorView& mask) const noexcept
+{
+    if (method != Max || pool_height * pool_width > 255) return false;
+    if (!input.is_fp32() && !input.is_bf16()) return false;
+    switch (device::max_pooling_rung())
+    {
+    case device::MaxPoolingRung::Cudnn:     return false;
+    case device::MaxPoolingRung::OwnKernel: return true;
+    case device::MaxPoolingRung::Auto:      break;
+    }
+    return !mask.empty();
+}
+
+#endif
+
 void PoolOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     auto& forward_slots = forward_propagation.slots[layer];
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);
 
+    TensorView empty_indices;
+    TensorView& indices = slot_or(forward_slots, output_slots, 1, empty_indices);
+
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
+        if (own_max_pooling(input, indices))
+        {
+            const Index batch = input.size() / (input_height * input_width * input_channels);
+            input.dispatch([&]<typename T>()
+            {
+                max_pooling_forward_cuda<T>(input.as<T>(), output.as<T>(),
+                                            indices.empty() ? nullptr : indices.as<uint8_t>(),
+                                            batch, input_height, input_width, input_channels,
+                                            get_output_height(), get_output_width(),
+                                            to_int(pool_height), to_int(pool_width),
+                                            to_int(row_stride), to_int(column_stride),
+                                            to_int(padding_height), to_int(padding_width));
+            });
+            return;
+        }
+
         CHECK_CUDNN(cudnnPoolingForward(Backend::get_cudnn_handle(),
             get_pooling_descriptor(),
             &one,  input.get_descriptor(),  input.get_data(),
@@ -246,9 +295,6 @@ void PoolOperator::forward_propagate(ForwardPropagation& forward_propagation, si
         return;
     }
 #endif
-
-    TensorView empty_indices;
-    TensorView& indices = slot_or(forward_slots, output_slots, 1, empty_indices);
 
     pooling_2d_forward(input, output, indices,
                        input_height, input_width, input_channels,
@@ -266,11 +312,30 @@ void PoolOperator::back_propagate(ForwardPropagation& forward_propagation, BackP
     TensorView& input_delta        = get_input_delta(back_propagation, layer);
     if (input_delta.empty()) return;
 
+    TensorView empty_indices;
+    const TensorView& indices = slot_or(forward_slots, output_slots, 1, empty_indices);
+
 #ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
     {
         const TensorView& input  = get_input(forward_propagation, layer);
         const TensorView& output = get_output(forward_propagation, layer);
+
+        // The forward left the argmax mask exactly when it ran the library kernel.
+        if (own_max_pooling(input, indices) && !indices.empty())
+        {
+            const Index batch = input.size() / (input_height * input_width * input_channels);
+            output_delta.dispatch([&]<typename T>()
+            {
+                max_pooling_backward_cuda<T>(output_delta.as<T>(), indices.as<uint8_t>(), input_delta.as<T>(),
+                                             batch, input_height, input_width, input_channels,
+                                             get_output_height(), get_output_width(),
+                                             to_int(pool_height), to_int(pool_width),
+                                             to_int(row_stride), to_int(column_stride),
+                                             to_int(padding_height), to_int(padding_width));
+            });
+            return;
+        }
 
         CHECK_CUDNN(cudnnPoolingBackward(Backend::get_cudnn_handle(),
             get_pooling_descriptor(),
@@ -281,9 +346,6 @@ void PoolOperator::back_propagate(ForwardPropagation& forward_propagation, BackP
         return;
     }
 #endif
-
-    TensorView empty_indices;
-    const TensorView& indices = slot_or(forward_slots, output_slots, 1, empty_indices);
 
     pooling_2d_backward(output_delta, indices, input_delta,
                         input_height, input_width, input_channels,
@@ -413,14 +475,16 @@ vector<TensorSpec> Pooling::get_forward_specs(Index batch_size) const
 
     const Shape out_shape = get_output_shape();
 
-    const Shape indices_shape = (pooling_method == PoolingMethod::MaxPooling
-                                 && compute_device != Device::CUDA)
-        ? Shape{batch_size}.append(out_shape)
-        : Shape{};
+    // The argmax of each output window, for the backward: on the CPU as a
+    // float per output; on CUDA a byte per output (the window position, see
+    // max_pooling_forward_cuda), so a window has to fit a byte.
+    const bool max_pooling = pooling_method == PoolingMethod::MaxPooling;
+    const bool cuda = compute_device == Device::CUDA;
+    const bool argmax_saved = max_pooling && (!cuda || pool_height * pool_width <= 255);
 
     return {
-        {indices_shape,                           Type::FP32},
-        {Shape{batch_size}.append(out_shape), compute_dtype},
+        {argmax_saved ? Shape{batch_size}.append(out_shape) : Shape{}, cuda ? Type::INT8 : Type::FP32},
+        {Shape{batch_size}.append(out_shape),                          compute_dtype},
     };
 }
 

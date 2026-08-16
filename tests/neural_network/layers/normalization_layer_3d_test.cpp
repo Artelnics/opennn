@@ -410,15 +410,15 @@ TEST(Normalization3dTest, LoadsLegacyRMSLayerName)
     original.to_JSON(writer);
 
     JsonDocument legacy_document;
-    legacy_document.root = Json::parse(writer.c_str());
+    legacy_document.set_root(Json::parse(writer.c_str()));
 
-    Json& layers = legacy_document.root["NeuralNetwork"]["Layers"];
-    Json& item = layers["Items"].array_value.front();
-    ASSERT_EQ(item.object_value.front().first, "Normalization3d");
+    Json& layers = legacy_document.get_root()["NeuralNetwork"]["Layers"];
+    Json& item = layers["Items"].as_array().front();
+    ASSERT_EQ(item.as_object().front().first, "Normalization3d");
 
-    item.object_value.front().first = "RMSNormalization3d";
-    Json& body = item.object_value.front().second;
-    erase_if(body.object_value,
+    item.as_object().front().first = "RMSNormalization3d";
+    Json& body = item.as_object().front().second;
+    erase_if(body.as_object(),
              [](const auto& field) { return field.first == "Method"; });
 
     NeuralNetwork restored;

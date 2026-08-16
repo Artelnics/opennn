@@ -21,8 +21,43 @@
 namespace opennn
 {
 
-Json Json::make_object() { Json j; j.kind = Kind::Object; return j; }
-Json Json::make_array () { Json j; j.kind = Kind::Array;  return j; }
+Json Json::make_object()
+{
+    Json json;
+    json.value.emplace<Object>();
+    return json;
+}
+
+Json Json::make_array()
+{
+    Json json;
+    json.value.emplace<Array>();
+    return json;
+}
+
+Json::Array& Json::as_array()
+{
+    throw_if(!is_array(), "JSON: value is not an array");
+    return std::get<Array>(value);
+}
+
+const Json::Array& Json::as_array() const
+{
+    throw_if(!is_array(), "JSON: value is not an array");
+    return std::get<Array>(value);
+}
+
+Json::Object& Json::as_object()
+{
+    throw_if(!is_object(), "JSON: value is not an object");
+    return std::get<Object>(value);
+}
+
+const Json::Object& Json::as_object() const
+{
+    throw_if(!is_object(), "JSON: value is not an object");
+    return std::get<Object>(value);
+}
 
 bool Json::has(std::string_view key) const
 {
@@ -32,9 +67,10 @@ bool Json::has(std::string_view key) const
 const Json* Json::find(std::string_view key) const
 {
     if (!is_object()) return nullptr;
-    const auto it = std::ranges::find_if(object_value,
+    const Object& object = as_object();
+    const auto it = std::ranges::find_if(object,
                                          [key](const auto& item) { return item.first == key; });
-    return it != object_value.end() ? &it->second : nullptr;
+    return it != object.end() ? &it->second : nullptr;
 }
 
 const Json& Json::at(std::string_view key) const
@@ -46,11 +82,12 @@ const Json& Json::at(std::string_view key) const
 
 Json& Json::operator[](std::string_view key)
 {
-    if (!is_object()) { kind = Kind::Object; object_value.clear(); }
-    for (auto& [k, v] : object_value)
+    if (!is_object()) value.emplace<Object>();
+    Object& object = as_object();
+    for (auto& [k, v] : object)
         if (k == key) return v;
-    object_value.emplace_back(std::string(key), Json{});
-    return object_value.back().second;
+    object.emplace_back(std::string(key), Json{});
+    return object.back().second;
 }
 
 Json& Json::set(std::string_view key, Json value)
@@ -61,19 +98,19 @@ Json& Json::set(std::string_view key, Json value)
 
 void Json::push_back(Json value)
 {
-    if (!is_array()) { kind = Kind::Array; array_value.clear(); }
-    array_value.push_back(std::move(value));
+    if (!is_array()) this->value.emplace<Array>();
+    as_array().push_back(std::move(value));
 }
 
 std::string Json::as_string() const
 {
     using enum Kind;
-    switch (kind)
+    switch (get_kind())
     {
     case Null:   return "";
-    case Bool:   return bool_value ? "1" : "0";
-    case Number: return std::format("{:.10g}", number_value);
-    case String: return string_value;
+    case Bool:   return std::get<bool>(value) ? "1" : "0";
+    case Number: return std::format("{:.10g}", std::get<double>(value));
+    case String: return std::get<std::string>(value);
     case Array:
     case Object: return dump(0);
     }
@@ -84,13 +121,16 @@ std::string Json::as_string() const
 long long Json::as_long() const
 {
     using enum Kind;
-    switch (kind)
+    switch (get_kind())
     {
-    case Number: return (long long)(number_value);
-    case Bool:   return bool_value ? 1 : 0;
+    case Number: return (long long)(std::get<double>(value));
+    case Bool:   return std::get<bool>(value) ? 1 : 0;
     case String:
-        if (string_value.empty()) return 0LL;
-        return parse_number<long long>(string_value, "JSON", "integer");
+    {
+        const std::string& string = std::get<std::string>(value);
+        if (string.empty()) return 0LL;
+        return parse_number<long long>(string, "JSON", "integer");
+    }
     case Null:
     case Array:
     case Object: return 0;
@@ -102,18 +142,19 @@ long long Json::as_long() const
 double Json::as_double() const
 {
     using enum Kind;
-    switch (kind)
+    switch (get_kind())
     {
-    case Number: return number_value;
-    case Bool:   return bool_value ? 1.0 : 0.0;
+    case Number: return std::get<double>(value);
+    case Bool:   return std::get<bool>(value) ? 1.0 : 0.0;
     case String: {
-        if (string_value.empty()) return 0.0;
+        const std::string& string = std::get<std::string>(value);
+        if (string.empty()) return 0.0;
         double value = 0.0;
-        const char* const first = string_value.data();
-        const char* const last = first + string_value.size();
+        const char* const first = string.data();
+        const char* const last = first + string.size();
         const auto [end, error] = std::from_chars(first, last, value);
         throw_if(error != std::errc{} || end != last,
-                 "JSON: invalid numeric value '{}'", string_value);
+                 "JSON: invalid numeric value '{}'", string);
         return value;
     }
     case Null:
@@ -127,11 +168,11 @@ double Json::as_double() const
 bool Json::as_bool() const
 {
     using enum Kind;
-    switch (kind)
+    switch (get_kind())
     {
-    case Bool:   return bool_value;
-    case Number: return number_value != 0.0;
-    case String: return contains({"1", "true"}, string_value);
+    case Bool:   return std::get<bool>(value);
+    case Number: return std::get<double>(value) != 0.0;
+    case String: return contains({"1", "true"}, std::get<std::string>(value));
     case Null:
     case Array:
     case Object: return false;
@@ -178,50 +219,57 @@ static void dump_indent(std::string& out, int indent, int depth)
 static void dump_value(std::string& out, const Json& v, int indent, int depth)
 {
     using enum Json::Kind;
-    switch (v.kind)
+    switch (v.get_kind())
     {
     case Null:   out += "null"; return;
-    case Bool:   out += (v.bool_value ? "true" : "false"); return;
+    case Bool:   out += (v.as_bool() ? "true" : "false"); return;
     case Number: {
+        const double number = v.as_double();
         char buf[32];
-        const long long as_int = static_cast<long long>(v.number_value);
-        if (v.number_value == static_cast<double>(as_int) && std::abs(v.number_value) < 1e15)
+        const long long as_int = static_cast<long long>(number);
+        if (number == static_cast<double>(as_int) && std::abs(number) < 1e15)
             std::snprintf(buf, sizeof(buf), "%lld", as_int);
         else
         {
-            auto [ptr, ec] = std::to_chars(buf, buf + sizeof(buf) - 1, v.number_value);
+            auto [ptr, ec] = std::to_chars(buf, buf + sizeof(buf) - 1, number);
             *ptr = '\0';
         }
         out += buf;
         return;
     }
-    case String: escape_string(out, v.string_value); return;
+    case String: escape_string(out, v.as_string()); return;
     case Array:
-        if (v.array_value.empty()) { out += "[]"; return; }
+    {
+        const Json::Array& array = v.as_array();
+        if (array.empty()) { out += "[]"; return; }
         out.push_back('[');
-        for (std::size_t i = 0; i < v.array_value.size(); ++i)
+        for (std::size_t i = 0; i < array.size(); ++i)
         {
             dump_indent(out, indent, depth + 1);
-            dump_value(out, v.array_value[i], indent, depth + 1);
-            if (i + 1 < v.array_value.size()) out.push_back(',');
+            dump_value(out, array[i], indent, depth + 1);
+            if (i + 1 < array.size()) out.push_back(',');
         }
         dump_indent(out, indent, depth);
         out.push_back(']');
         return;
+    }
     case Object:
-        if (v.object_value.empty()) { out += "{}"; return; }
+    {
+        const Json::Object& object = v.as_object();
+        if (object.empty()) { out += "{}"; return; }
         out.push_back('{');
-        for (std::size_t i = 0; i < v.object_value.size(); ++i)
+        for (std::size_t i = 0; i < object.size(); ++i)
         {
             dump_indent(out, indent, depth + 1);
-            escape_string(out, v.object_value[i].first);
+            escape_string(out, object[i].first);
             out += indent > 0 ? ": " : ":";
-            dump_value(out, v.object_value[i].second, indent, depth + 1);
-            if (i + 1 < v.object_value.size()) out.push_back(',');
+            dump_value(out, object[i].second, indent, depth + 1);
+            if (i + 1 < object.size()) out.push_back(',');
         }
         dump_indent(out, indent, depth);
         out.push_back('}');
         return;
+    }
     }
 }
 
@@ -360,24 +408,23 @@ struct Parser
             if (position < s.size() && is_one_of(s[position], '+', '-')) ++position;
             while (position < s.size() && std::isdigit(static_cast<unsigned char>(s[position]))) ++position;
         }
-        Json j;
-        j.kind = Json::Kind::Number;
+        double value = 0.0;
         const char* const first = s.data() + start;
         const char* const last = s.data() + position;
-        const auto [ptr, ec] = std::from_chars(first, last, j.number_value);
+        const auto [ptr, ec] = std::from_chars(first, last, value);
         if (ec != std::errc() || ptr != last) fail("bad number");
-        return j;
+        return Json(value);
     }
 
     Json parse_value()
     {
         const char c = peek();
-        if (c == '"') { Json j; j.kind = Json::Kind::String; j.string_value = parse_string(); return j; }
+        if (c == '"') return Json(parse_string());
         if (c == '{') return parse_object();
         if (c == '[') return parse_array();
         if (c == '-' || std::isdigit(static_cast<unsigned char>(c))) return parse_number();
-        if (match("true"))  { Json j; j.kind = Json::Kind::Bool; j.bool_value = true;  return j; }
-        if (match("false")) { Json j; j.kind = Json::Kind::Bool; j.bool_value = false; return j; }
+        if (match("true"))  return Json(true);
+        if (match("false")) return Json(false);
         if (match("null"))  return Json{};
         fail(std::format("unexpected character '{}'", c));
     }
@@ -394,7 +441,7 @@ struct Parser
             skip_ws();
             if (position >= s.size() || s[position] != ':') fail("expected ':'");
             ++position;
-            j.object_value.emplace_back(std::move(key), parse_value());
+            j.as_object().emplace_back(std::move(key), parse_value());
             skip_ws();
             if (position < s.size() && s[position] == ',') { ++position; continue; }
             if (position < s.size() && s[position] == '}') { ++position; return j; }
@@ -410,7 +457,7 @@ struct Parser
         if (position < s.size() && s[position] == ']') { ++position; return j; }
         while (true)
         {
-            j.array_value.push_back(parse_value());
+            j.push_back(parse_value());
             skip_ws();
             if (position < s.size() && s[position] == ',') { ++position; continue; }
             if (position < s.size() && s[position] == ']') { ++position; return j; }
@@ -462,26 +509,28 @@ const Json* JsonDocument::first_child(std::string_view name) const
 JsonDocument JsonDocument::wrap(std::string_view tag, Json value)
 {
     JsonDocument doc;
-    doc.root = Json::make_object();
-    doc.root.set(tag, std::move(value));
+    doc.set_root(Json::make_object());
+    doc.get_root().set(tag, std::move(value));
     return doc;
 }
 void JsonWriter::open_element(std::string_view name)
 {
     Json* parent = stack.empty() ? &root : stack.back();
-    if (parent == &root && root.kind == Json::Kind::Null) root = Json::make_object();
+    if (parent == &root && root.is_null()) root = Json::make_object();
 
     Json child = Json::make_object();
 
     if (parent->is_object())
     {
-        parent->object_value.emplace_back(std::string(name), std::move(child));
-        stack.push_back(&parent->object_value.back().second);
+        Json::Object& object = parent->as_object();
+        object.emplace_back(std::string(name), std::move(child));
+        stack.push_back(&object.back().second);
     }
     else if (parent->is_array())
     {
-        parent->array_value.push_back(std::move(child));
-        stack.push_back(&parent->array_value.back());
+        Json::Array& array = parent->as_array();
+        array.push_back(std::move(child));
+        stack.push_back(&array.back());
     }
     else
     {
@@ -497,11 +546,12 @@ void JsonWriter::close_element()
 void JsonWriter::begin_array(std::string_view name)
 {
     Json* parent = stack.empty() ? &root : stack.back();
-    if (parent->kind == Json::Kind::Null) *parent = Json::make_object();
+    if (parent->is_null()) *parent = Json::make_object();
     throw_if(!parent->is_object(),
              "JsonWriter::begin_array: parent is not an object");
-    parent->object_value.emplace_back(std::string(name), Json::make_array());
-    stack.push_back(&parent->object_value.back().second);
+    Json::Object& object = parent->as_object();
+    object.emplace_back(std::string(name), Json::make_array());
+    stack.push_back(&object.back().second);
 }
 
 void JsonWriter::end_array()
@@ -514,8 +564,9 @@ void JsonWriter::begin_array_object()
     throw_if(stack.empty() || !stack.back()->is_array(),
              "JsonWriter::begin_array_object: not in array");
     Json* parent = stack.back();
-    parent->array_value.push_back(Json::make_object());
-    stack.push_back(&parent->array_value.back());
+    Json::Array& array = parent->as_array();
+    array.push_back(Json::make_object());
+    stack.push_back(&array.back());
 }
 
 void JsonWriter::end_array_object()
@@ -532,7 +583,7 @@ void JsonWriter::pop_scope()
 void JsonWriter::add_field(std::string_view name, Json value)
 {
     Json* parent = stack.empty() ? &root : stack.back();
-    if (parent->kind == Json::Kind::Null) *parent = Json::make_object();
+    if (parent->is_null()) *parent = Json::make_object();
     throw_if(!parent->is_object(),
              "JsonWriter::add_field on non-object");
     parent->set(name, std::move(value));
@@ -590,8 +641,9 @@ std::vector<std::string> read_json_strings(const Json* root, std::string_view fi
     if (!value) return {};
     if (!value->is_array()) return get_tokens(value->as_string(), "\n");
 
-    std::vector<std::string> values(value->array_value.size());
-    std::ranges::transform(value->array_value, values.begin(),
+    const Json::Array& array = value->as_array();
+    std::vector<std::string> values(array.size());
+    std::ranges::transform(array, values.begin(),
                       [](const Json& item) { return item.as_string(); });
     return values;
 }

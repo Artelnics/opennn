@@ -23,9 +23,10 @@ const Json* get_layer_json_root(const JsonDocument& document, const Layer& layer
     if (const Json* root = document.first_child(layer.get_name()))
         return root;
 
-    if (document.root.is_object() && document.root.object_value.size() == 1)
+    const Json& document_root = document.get_root();
+    if (document_root.is_object() && document_root.as_object().size() == 1)
     {
-        const auto& [serialized_name, value] = document.root.object_value.front();
+        const auto& [serialized_name, value] = document_root.as_object().front();
         if (string_to_layer_type(serialized_name) == layer.get_type())
             return &value;
     }

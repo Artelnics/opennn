@@ -681,7 +681,7 @@ void BytePairTokenizer::load(const filesystem::path& vocabulary_json,
     throw_if(!parsed.is_object(), "vocab.json is not a JSON object.");
 
     Index maximum_id = -1;
-    for (const auto& [token, id_value] : parsed.object_value)
+    for (const auto& [token, id_value] : parsed.as_object())
     {
         const Index id = Index(id_value.as_long());
         throw_if(id < 0, "vocab.json contains a negative token id.");
@@ -690,7 +690,7 @@ void BytePairTokenizer::load(const filesystem::path& vocabulary_json,
 
     vector<string> loaded_vocabulary(size_t(maximum_id + 2));
     loaded_vocabulary[0] = string(PAD_TOKEN);
-    for (const auto& [token, id_value] : parsed.object_value)
+    for (const auto& [token, id_value] : parsed.as_object())
     {
         string& destination = loaded_vocabulary[size_t(id_value.as_long()) + 1];
         throw_if(!destination.empty(), "vocab.json contains duplicate token ids.");

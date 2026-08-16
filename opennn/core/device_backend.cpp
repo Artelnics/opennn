@@ -38,6 +38,7 @@ atomic<int64_t> conv_workspace_auto_bytes{conv_workspace_auto_ceiling};
 atomic_bool conv_autotune_enabled_flag{false};
 atomic<BatchNormBackwardRung> batch_norm_backward_rung_setting{BatchNormBackwardRung::Auto};
 atomic<BatchNormForwardRung>  batch_norm_forward_rung_setting{BatchNormForwardRung::Auto};
+atomic<MaxPoolingRung>        max_pooling_rung_setting{MaxPoolingRung::Auto};
 
 thread_local GraphWorkspaceRequirements* active_graph_workspace_requirements = nullptr;
 thread_local const GraphWorkspaceViews* active_graph_workspace_views = nullptr;
@@ -256,6 +257,17 @@ void set_batch_norm_forward_rung(BatchNormForwardRung rung) noexcept
 {
     batch_norm_forward_rung_setting.store(rung, memory_order_relaxed);
 }
+
+MaxPoolingRung max_pooling_rung() noexcept
+{
+    return max_pooling_rung_setting.load(memory_order_relaxed);
+}
+
+void set_max_pooling_rung(MaxPoolingRung rung) noexcept
+{
+    max_pooling_rung_setting.store(rung, memory_order_relaxed);
+}
+
 
 CudaAllocationGrowthGuard::CudaAllocationGrowthGuard(
     bool enabled, bool forbid_matmul_plan_creation)

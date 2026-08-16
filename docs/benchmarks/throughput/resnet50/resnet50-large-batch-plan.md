@@ -293,10 +293,36 @@ passes. What remains:
   All inside noise: the top-8 autotune already reaches the good engines on this
   GPU. The knobs stay as levers for other GPUs (the RTX 4080 may rank
   differently); the gate protects the defaults.
-- **3'c. Pooling backward** (a day). `cudnnPoolingBackward` recomputes the
-  argmax; a mask from the forward makes it one read + one scatter: ~1-2%.
+- **3'c. Pooling backward from a forward argmax mask — done, +3-5% bf16 at
+  2048, fp32 and small batch at parity.** `pooling_probe` (raw cuDNN, in the
+  benchmark tree) put the numbers on it first: on the RTX 3060 cuDNN's max-pool
+  forward runs at the copy roofline (260-317 GB/s) but its backward at 59 GB/s
+  in bf16 (2.82 ms for the CIFAR stem pool at batch 2048, 7.6 ms at the
+  ImageNet stem shape) against ~0.3 ms for the traffic a mask path needs. Now
+  `max_pooling_forward_cuda` writes Y plus one byte per output (the window
+  position of the maximum; windows up to 255 elements) into the layer's
+  `MaximalIndices` slot - already there for the CPU path, INT8 on CUDA,
+  training-only - and `max_pooling_backward_cuda` is a gather: each input
+  element visits the at most ceil(pool/stride)^2 outputs whose window covers
+  it and sums the dY whose argmax lands on it. No atomics, no zero fill,
+  deterministic, X and Y not read again. `device::MaxPoolingRung {Auto,
+  Cudnn, OwnKernel}` (harness `OPENNN_POOLING_RUNG`); Auto = own kernels in
+  training where the mask slot exists, cuDNN at inference and for average
+  pooling. `MaxPoolingGradientPerRung`: both rungs equal the CPU reference to
+  4e-9 in fp32 and each other exactly in bf16 (max pooling selects, it does
+  not round). Measured, same binary, cooled pairs (own : cuDNN):
 
-Realistic remaining upside on this stack after 3'a: **~2-4%** (3'c and the
+  | point | own | cuDNN |
+  |---|---:|---:|
+  | bf16 2048 | **25,333** / 24,167 | 24,058 / 23,839 |
+  | bf16 128 | 13,753 | 13,572 |
+  | fp32 2048 | 11,691 | 11,752 |
+
+  ResNet-50 has one max pool, so this is the whole of it: bf16 peak on this
+  GPU 25.3k, fp32 inside noise (its cuDNN backward was 2.7 ms of a ~175 ms
+  step). Memory: 1 byte per pool output, ~8 MB at batch 2048 here.
+
+Realistic remaining upside on this stack after 3'a and 3'c: **~1-3%** (the
 Phase 4 items). Beyond that the
 architecture is at the floor of what cuDNN's convolution engines allow on
 these shapes; more would need custom convolution kernels (weeks, high risk) or

@@ -47,6 +47,9 @@ struct PoolOperator : Operator
 
     Method method = Max;
 
+    Index get_output_height() const noexcept;
+    Index get_output_width() const noexcept;
+
     void set(Index, Index, Index,
              Index, Index,
              Index, Index,
@@ -62,6 +65,12 @@ struct PoolOperator : Operator
 
 #ifdef OPENNN_HAS_CUDA
     cudnnPoolingDescriptor_t get_pooling_descriptor() const;
+
+    // The library's own max-pooling kernels run when the rung allows and the
+    // window's argmax fits a byte; in Auto only where the mask slot exists
+    // (training), so inference keeps cuDNN's forward.
+    bool own_max_pooling(const TensorView& input, const TensorView& mask) const noexcept;
+
 
 private:
 
@@ -150,6 +159,12 @@ private:
     PoolOperator pool;
 
     enum Forward {Input, MaximalIndices, Output};
+
+    // The saved argmax only feeds the backward.
+    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    {
+        return spec == size_t(MaximalIndices) - 1 ? ForwardSlotKind::TrainingOnly : ForwardSlotKind::Pooled;
+    }
 
     void update_pool_operator();
 };

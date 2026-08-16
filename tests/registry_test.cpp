@@ -300,7 +300,7 @@ TEST(RegistryTest, AliasesConstructConfiguredComponents)
 
     const string rms_json = serialize_layer(*rms_normalization);
     JsonDocument rms_document;
-    rms_document.root = Json::parse(rms_json);
+    rms_document.set_root(Json::parse(rms_json));
 
     EXPECT_EQ(rms_document.first_child("RMSNormalization3d"), nullptr);
     const Json* rms_root = rms_document.first_child("Normalization3d");
@@ -315,7 +315,7 @@ TEST(RegistryTest, AliasesConstructConfiguredComponents)
     EXPECT_EQ(restored_normalization->get_method(), NormalizationMethod::RMS);
 
     Json legacy_body = *rms_root;
-    erase_if(legacy_body.object_value,
+    erase_if(legacy_body.as_object(),
              [](const auto& field) { return field.first == "Method"; });
     const JsonDocument legacy_document =
         JsonDocument::wrap("RMSNormalization3d", std::move(legacy_body));
@@ -341,7 +341,7 @@ TEST(RegistryTest, EveryLayerStateRoundTripsThroughJSONAndTheFactory)
 
         const string original_json = serialize_layer(*original);
         JsonDocument document;
-        document.root = Json::parse(original_json);
+        document.set_root(Json::parse(original_json));
         expect_nondefault_fields(type, document);
 
         const unique_ptr<Layer> restored = create_layer(name);

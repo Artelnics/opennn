@@ -50,13 +50,14 @@ void Unscaling::read_JSON_body(const Json* root_element)
     const Json* const neurons_array = root_element->find("Neurons");
     if (!neurons_array || !neurons_array->is_array()) return;
 
-    throw_if(ssize(neurons_array->array_value) != ssize(scalers),
+    const Json::Array& neurons = neurons_array->as_array();
+    throw_if(ssize(neurons) != ssize(scalers),
              "Unscaling::read_JSON_body: \"Neurons\" has {} entries, expected {}.",
-                    neurons_array->array_value.size(), scalers.size());
+                    neurons.size(), scalers.size());
 
-    for (size_t i = 0; i < neurons_array->array_value.size(); ++i)
+    for (size_t i = 0; i < neurons.size(); ++i)
     {
-        const Json* const neuron = &neurons_array->array_value[i];
+        const Json* const neuron = &neurons[i];
 
         scalers[i] = string_to_scaler_method(read_json_string(neuron, "Scaler"));
 

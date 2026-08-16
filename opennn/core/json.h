@@ -19,6 +19,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace opennn
@@ -27,38 +28,39 @@ namespace opennn
 class Json
 {
 public:
+    using Array = std::vector<Json>;
+    using Object = std::vector<std::pair<std::string, Json>>;
+
     enum class Kind { Null, Bool, Number, String, Array, Object };
-
-    Kind                                    kind = Kind::Null;
-    bool                                    bool_value = false;
-    double                                  number_value = 0.0;
-    std::string                              string_value;
-    std::vector<Json>                        array_value;
-    std::vector<std::pair<std::string, Json>> object_value;
-
-    Json() = default;
-    Json(bool b)                : kind(Kind::Bool),   bool_value(b)   {}
-    Json(int i)                 : kind(Kind::Number), number_value(i) {}
-    Json(long i)                : kind(Kind::Number), number_value(double(i)) {}
-    Json(long long i)           : kind(Kind::Number), number_value(double(i)) {}
-    Json(unsigned int i)        : kind(Kind::Number), number_value(double(i)) {}
-    Json(unsigned long i)       : kind(Kind::Number), number_value(double(i)) {}
-    Json(unsigned long long i)  : kind(Kind::Number), number_value(double(i)) {}
-    Json(double d)              : kind(Kind::Number), number_value(d) {}
-    Json(float d)               : kind(Kind::Number), number_value(double(d)) {}
-    Json(const char* s)         : kind(Kind::String), string_value(s) {}
-    Json(const std::string& s)      : kind(Kind::String), string_value(s) {}
-    Json(std::string_view s)        : kind(Kind::String), string_value(s) {}
 
     static Json make_object();
     static Json make_array();
 
-    bool is_null()   const noexcept { return kind == Kind::Null; }
-    bool is_bool()   const noexcept { return kind == Kind::Bool; }
-    bool is_number() const noexcept { return kind == Kind::Number; }
-    bool is_string() const noexcept { return kind == Kind::String; }
-    bool is_array()  const noexcept { return kind == Kind::Array; }
-    bool is_object() const noexcept { return kind == Kind::Object; }
+    Json() = default;
+    Json(bool new_value) : value(new_value) {}
+    Json(int new_value) : value(double(new_value)) {}
+    Json(long new_value) : value(double(new_value)) {}
+    Json(long long new_value) : value(double(new_value)) {}
+    Json(unsigned int new_value) : value(double(new_value)) {}
+    Json(unsigned long new_value) : value(double(new_value)) {}
+    Json(unsigned long long new_value) : value(double(new_value)) {}
+    Json(double new_value) : value(new_value) {}
+    Json(float new_value) : value(double(new_value)) {}
+    Json(const char* new_value) : value(std::string(new_value)) {}
+    Json(const std::string& new_value) : value(new_value) {}
+    Json(std::string_view new_value) : value(std::string(new_value)) {}
+
+    Kind get_kind() const noexcept { return Kind(value.index()); }
+    bool is_null() const noexcept { return std::holds_alternative<std::monostate>(value); }
+    bool is_bool() const noexcept { return std::holds_alternative<bool>(value); }
+    bool is_number() const noexcept { return std::holds_alternative<double>(value); }
+    bool is_string() const noexcept { return std::holds_alternative<std::string>(value); }
+    bool is_array() const noexcept { return std::holds_alternative<Array>(value); }
+    bool is_object() const noexcept { return std::holds_alternative<Object>(value); }
+    Array& as_array();
+    const Array& as_array() const;
+    Object& as_object();
+    const Object& as_object() const;
     bool         has(std::string_view) const;
     const Json*  find(std::string_view) const;
     const Json&  at(std::string_view) const;
@@ -71,18 +73,28 @@ public:
     bool        as_bool()   const;
     static Json parse(std::string_view);
     std::string dump(int indent = 2) const;
+
+private:
+    using Value = std::variant<std::monostate, bool, double, std::string, Array, Object>;
+
+    Value value;
 };
 
 class JsonDocument
 {
 public:
-    Json root;
+    static JsonDocument wrap(std::string_view, Json);
 
     void load(const std::filesystem::path&);
     void save(const std::filesystem::path&, int indent = 2) const;
+    void set_root(Json new_root) { root = std::move(new_root); }
+    Json& get_root() noexcept { return root; }
+    const Json& get_root() const noexcept { return root; }
     const Json* first_child(std::string_view) const;
     const Json* first_child() const noexcept { return &root; }
-    static JsonDocument wrap(std::string_view, Json);
+
+private:
+    Json root;
 };
 
 class JsonWriter
@@ -149,7 +161,7 @@ Json json_array(const Range& values)
 {
     Json array = Json::make_array();
     if constexpr (requires { std::size(values); })
-        array.array_value.reserve(std::size(values));
+        array.as_array().reserve(std::size(values));
     for (const auto& value : values)
         array.push_back(Json(value));
     return array;
@@ -162,11 +174,11 @@ void for_json_items(const Json* parent, const char* tag, std::size_t count, Func
         throw std::runtime_error(std::format("Missing JSON parent for: {}", tag));
 
     const Json* const arr = parent->find(tag);
-    if (!arr || !arr->is_array() || arr->array_value.size() != count)
+    if (!arr || !arr->is_array() || arr->as_array().size() != count)
         throw std::runtime_error(std::format("Missing or wrong-size JSON array: {}", tag));
 
     for (std::size_t i = 0; i < count; ++i)
-        func(i, &arr->array_value[i]);
+        func(i, &arr->as_array()[i]);
 }
 
 JsonDocument load_json_file(const std::filesystem::path&);

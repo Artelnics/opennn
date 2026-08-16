@@ -96,8 +96,13 @@ if(OPENNN_HAS_CUDA)
     # keeps private.
     target_include_directories(cudnn_fusion_probe SYSTEM PRIVATE
         ${CUDNN_FRONTEND_INCLUDE_DIR} ${CUDNN_INCLUDE_DIR} ${CUDAToolkit_INCLUDE_DIRS})
+    add_executable(pooling_probe
+        throughput/resnet50/pooling_probe.cpp)
+    target_include_directories(pooling_probe SYSTEM PRIVATE
+        ${CUDNN_INCLUDE_DIR} ${CUDAToolkit_INCLUDE_DIRS})
     list(APPEND _benchmark_targets
         cudnn_fusion_probe
+        pooling_probe
         opennn_transformer_resident
         opennn_qwen3_resident
         opennn_transformer_train

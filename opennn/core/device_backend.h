@@ -104,6 +104,17 @@ enum class BatchNormForwardRung { Auto, CudnnGraph, OwnKernel };
 BatchNormForwardRung batch_norm_forward_rung() noexcept;
 void set_batch_norm_forward_rung(BatchNormForwardRung) noexcept;
 
+// Which max-pooling kernels to run on CUDA. Auto takes the library's own
+// forward + argmax-mask backward (max_pooling_forward_cuda /
+// max_pooling_backward_cuda) in training, where the mask slot exists, and
+// cuDNN's pooling elsewhere (inference, average pooling, windows above 255
+// elements); Cudnn pins cuDNN, OwnKernel the library kernels wherever they
+// apply. Diagnostic; Auto in production.
+enum class MaxPoolingRung { Auto, Cudnn, OwnKernel };
+MaxPoolingRung max_pooling_rung() noexcept;
+void set_max_pooling_rung(MaxPoolingRung) noexcept;
+
+
 class CudaAllocationGrowthGuard
 {
 public:

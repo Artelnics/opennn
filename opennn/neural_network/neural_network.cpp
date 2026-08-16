@@ -1457,7 +1457,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     {
         const Json* items = parent->find(tag);
         const size_t entries_number = items && items->is_array()
-                                    ? items->array_value.size()
+                                    ? items->as_array().size()
                                     : 0;
 
         variables.assign(entries_number, Variable());
@@ -1503,16 +1503,16 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     const Json* items_array = layers_container->find("Items");
     if (items_array && items_array->is_array())
     {
-        for (const Json& item : items_array->array_value)
+        for (const Json& item : items_array->as_array())
         {
-            if (!item.is_object() || item.object_value.empty()) continue;
+            if (!item.is_object() || item.as_object().empty()) continue;
 
-            const string& tag_name = item.object_value[0].first;
+            const string& tag_name = item.as_object().front().first;
 
             unique_ptr<Layer> layer = create_layer(tag_name);
 
             JsonDocument layer_doc;
-            layer_doc.root = item;
+            layer_doc.set_root(item);
             layer->from_JSON(layer_doc);
 
             layers.push_back(std::move(layer));
@@ -1526,7 +1526,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
         const Json* indices_array = source_layers_element->find("SourceLayer");
         if (indices_array && indices_array->is_array())
         {
-            for (const Json& entry : indices_array->array_value)
+            for (const Json& entry : indices_array->as_array())
             {
                 const long layer_index = read_json_index(&entry, "LayerIndex");
                 const string text   = read_json_string(&entry, "Text");
@@ -1546,7 +1546,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     if (const Json* tied_weights = layers_container->find("TiedWeights");
         tied_weights && tied_weights->is_array())
     {
-        for (const Json& entry : tied_weights->array_value)
+        for (const Json& entry : tied_weights->as_array())
         {
             const Index layer_index = read_json_index(&entry, "LayerIndex");
             const Index source_layer_index = read_json_index(&entry, "SourceLayerIndex");
@@ -1575,13 +1575,13 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     if (items_array && items_array->is_array())
     {
         Index layer_index = 0;
-        for (const Json& item : items_array->array_value)
+        for (const Json& item : items_array->as_array())
         {
-            if (!item.is_object() || item.object_value.empty()) continue;
+            if (!item.is_object() || item.as_object().empty()) continue;
             if (layer_index >= ssize(layers)) break;
 
             JsonDocument layer_doc;
-            layer_doc.root = item;
+            layer_doc.set_root(item);
             layers[layer_index]->load_state_from_JSON(layer_doc);
             ++layer_index;
         }

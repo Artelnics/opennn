@@ -215,42 +215,6 @@ __device__ static bool batchnorm_sum_partials(const int channels, const int row_
     return true;
 }
 
-// VEC adjacent elements of a row moved as one aligned raw load/store (16 bytes
-// for eight BF16 or four FP32 channels; two of them for eight FP32) and
-// converted element by element; the caller guarantees channels % VEC == 0, so
-// the addresses are VEC * sizeof(T) aligned.
-template<int BYTES> struct BnRaw;
-template<> struct BnRaw<2>  { unsigned short v; };
-template<> struct BnRaw<4>  { unsigned int v; };
-template<> struct BnRaw<8>  { uint2 v; };
-template<> struct BnRaw<16> { uint4 v; };
-template<> struct BnRaw<32> { uint4 v[2]; };
-
-__device__ static inline float bn_to_float(float x) { return x; }
-__device__ static inline float bn_to_float(__nv_bfloat16 x) { return __bfloat162float(x); }
-__device__ static inline void bn_from_float(float x, float& out) { out = x; }
-__device__ static inline void bn_from_float(float x, __nv_bfloat16& out) { out = __float2bfloat16(x); }
-
-template<typename T, int VEC> struct BnVec
-{
-    using Raw = BnRaw<int(sizeof(T)) * VEC>;
-    __device__ static void load(const T* p, float* out)
-    {
-        const Raw raw = *reinterpret_cast<const Raw*>(p);
-        const T* e = reinterpret_cast<const T*>(&raw);
-        #pragma unroll
-        for (int k = 0; k < VEC; ++k) out[k] = bn_to_float(e[k]);
-    }
-    __device__ static void store(T* p, const float* v)
-    {
-        Raw raw;
-        T* e = reinterpret_cast<T*>(&raw);
-        #pragma unroll
-        for (int k = 0; k < VEC; ++k) bn_from_float(v[k], e[k]);
-        *reinterpret_cast<Raw*>(p) = raw;
-    }
-};
-
 // Sums a reduce block's per-thread (s1, s2) down its row lanes and stores one
 // (s1, s2) pair per channel for this row block.
 template<int VEC>
@@ -309,7 +273,7 @@ __global__ void batchnorm_forward_reduce_kernel(const Index rows, const int chan
         float v[VEC];
         for (Index r = row_begin + threadIdx.y; r < row_end; r += blockDim.y)
         {
-            BnVec<T, VEC>::load(x + r * channels + c0, v);
+            VecIO<T, VEC>::load_float(x + r * channels + c0, v);
             #pragma unroll
             for (int k = 0; k < VEC; ++k)
             {
@@ -369,8 +333,8 @@ __global__ void batchnorm_forward_apply_kernel(const Index groups, const int cha
         const Index i = (gi / channel_groups) * channels + c0;
 
         float vx[VEC], vr[VEC], out[VEC];
-        BnVec<T, VEC>::load(x + i, vx);
-        if (ADD) BnVec<T, VEC>::load(residual + i, vr);
+        VecIO<T, VEC>::load_float(x + i, vx);
+        if (ADD) VecIO<T, VEC>::load_float(residual + i, vr);
 
         unsigned bits = 0;
         #pragma unroll
@@ -386,7 +350,7 @@ __global__ void batchnorm_forward_apply_kernel(const Index groups, const int cha
             }
             out[k] = v;
         }
-        BnVec<T, VEC>::store(y + i, out);
+        VecIO<T, VEC>::store_float(y + i, out);
         if (RELU && mask) mask[gi] = uint8_t(bits);
     }
 }
@@ -471,9 +435,9 @@ __global__ void batchnorm_backward_reduce_kernel(const Index rows, const int cha
         for (Index r = row_begin + threadIdx.y; r < row_end; r += blockDim.y)
         {
             const Index i = r * channels + c0;
-            BnVec<T, VEC>::load(dy + i, vdy);
-            if (y) BnVec<T, VEC>::load(y + i, vy);
-            if (!XHAT_FROM_Y) BnVec<T, VEC>::load(x + i, vx);
+            VecIO<T, VEC>::load_float(dy + i, vdy);
+            if (y) VecIO<T, VEC>::load_float(y + i, vy);
+            if (!XHAT_FROM_Y) VecIO<T, VEC>::load_float(x + i, vx);
             const unsigned bits = mask ? mask[i / 8] : 0xFFu;
             #pragma unroll
             for (int k = 0; k < VEC; ++k)
@@ -524,9 +488,9 @@ __global__ void batchnorm_backward_apply_kernel(const Index groups, const int ch
         const Index i = (gi / channel_groups) * channels + c0;
 
         float vdy[VEC], vy[VEC], vx[VEC], out[VEC], pre[VEC];
-        BnVec<T, VEC>::load(dy_dx + i, vdy);
-        if (y) BnVec<T, VEC>::load(y + i, vy);
-        BnVec<T, VEC>::load(x + i, vx);
+        VecIO<T, VEC>::load_float(dy_dx + i, vdy);
+        if (y) VecIO<T, VEC>::load_float(y + i, vy);
+        VecIO<T, VEC>::load_float(x + i, vx);
         const unsigned bits = mask ? mask[i / 8] : 0xFFu;
 
         #pragma unroll
@@ -540,8 +504,8 @@ __global__ void batchnorm_backward_apply_kernel(const Index groups, const int ch
             const float x_hat = (vx[k] - mean[c]) * iv;
             out[k] = gm * iv * (g - dbeta[c] * inv_rows - x_hat * dgamma[c] * inv_rows);
         }
-        if (dpre) BnVec<T, VEC>::store(dpre + i, pre);
-        BnVec<T, VEC>::store(dy_dx + i, out);
+        if (dpre) VecIO<T, VEC>::store_float(dpre + i, pre);
+        VecIO<T, VEC>::store_float(dy_dx + i, out);
     }
 }
 

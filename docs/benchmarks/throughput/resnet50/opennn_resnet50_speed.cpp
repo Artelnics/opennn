@@ -106,7 +106,13 @@ int main(int argc, char* argv[])
             else if (backward_rung == "plain") device::set_batch_norm_backward_rung(device::BatchNormBackwardRung::PlainNative);
             else if (backward_rung == "own")   device::set_batch_norm_backward_rung(device::BatchNormBackwardRung::OwnKernel);
             else if (backward_rung != "auto")  throw runtime_error("OPENNN_BN_BACKWARD_RUNG: auto|staged|plain|own");
-            cout << "bn_forward_rung=" << forward_rung << " bn_backward_rung=" << backward_rung << "\n";
+            // Max pooling: OPENNN_POOLING_RUNG=auto|cudnn|own.
+            const string pooling_rung = getenv("OPENNN_POOLING_RUNG") ? getenv("OPENNN_POOLING_RUNG") : "auto";
+            if (pooling_rung == "cudnn")     device::set_max_pooling_rung(device::MaxPoolingRung::Cudnn);
+            else if (pooling_rung == "own")  device::set_max_pooling_rung(device::MaxPoolingRung::OwnKernel);
+            else if (pooling_rung != "auto") throw runtime_error("OPENNN_POOLING_RUNG: auto|cudnn|own");
+            cout << "bn_forward_rung=" << forward_rung << " bn_backward_rung=" << backward_rung
+                 << " pooling_rung=" << pooling_rung << "\n";
         }
 
         if (!cache_dir.empty())

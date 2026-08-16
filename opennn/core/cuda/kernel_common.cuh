@@ -107,6 +107,57 @@ static inline void launch_elementwise_strided(Index n, K kernel, Args... args)
     X(__nv_bfloat16, float)                \
     X(__nv_bfloat16, __nv_bfloat16)
 
+// VEC adjacent elements moved as one aligned raw load/store (16 bytes for
+// eight BF16 / four FP32 / sixteen bytes; two of them for eight FP32) and, for
+// the float variants, converted element by element. The caller guarantees the
+// address is VEC * sizeof(T) aligned (NHWC rows with channels % VEC == 0).
+template<int BYTES> struct RawBytes;
+template<> struct RawBytes<1>  { unsigned char v; };
+template<> struct RawBytes<2>  { unsigned short v; };
+template<> struct RawBytes<4>  { unsigned int v; };
+template<> struct RawBytes<8>  { uint2 v; };
+template<> struct RawBytes<16> { uint4 v; };
+template<> struct RawBytes<32> { uint4 v[2]; };
+
+__device__ static inline float element_to_float(float x) { return x; }
+__device__ static inline float element_to_float(__nv_bfloat16 x) { return __bfloat162float(x); }
+__device__ static inline void element_from_float(float x, float& out) { out = x; }
+__device__ static inline void element_from_float(float x, __nv_bfloat16& out) { out = __float2bfloat16(x); }
+
+template<typename T, int VEC> struct VecIO
+{
+    using Raw = RawBytes<int(sizeof(T)) * VEC>;
+    __device__ static void load(const T* p, T* out)
+    {
+        const Raw raw = *reinterpret_cast<const Raw*>(p);
+        const T* e = reinterpret_cast<const T*>(&raw);
+        #pragma unroll
+        for (int k = 0; k < VEC; ++k) out[k] = e[k];
+    }
+    __device__ static void store(T* p, const T* v)
+    {
+        Raw raw;
+        T* e = reinterpret_cast<T*>(&raw);
+        #pragma unroll
+        for (int k = 0; k < VEC; ++k) e[k] = v[k];
+        *reinterpret_cast<Raw*>(p) = raw;
+    }
+    __device__ static void load_float(const T* p, float* out)
+    {
+        T v[VEC];
+        load(p, v);
+        #pragma unroll
+        for (int k = 0; k < VEC; ++k) out[k] = element_to_float(v[k]);
+    }
+    __device__ static void store_float(T* p, const float* v)
+    {
+        T e[VEC];
+        #pragma unroll
+        for (int k = 0; k < VEC; ++k) element_from_float(v[k], e[k]);
+        store(p, e);
+    }
+};
+
 static inline int vector_work_size(int total, int n_vec, int vec_width)
 {
     const int n_tail = total - n_vec * vec_width;

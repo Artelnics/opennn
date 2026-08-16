@@ -3,6 +3,7 @@
 #include <array>
 
 #include "opennn/core/io_utilities.h"
+#include "opennn/core/json.h"
 
 using namespace opennn;
 
@@ -28,6 +29,50 @@ void remove_quietly(const filesystem::path& path)
     filesystem::remove(path, ec);
 }
 
+template<typename T>
+concept HasPublicJsonKind = requires(T value) { value.kind; };
+
+template<typename T>
+concept HasPublicJsonDocumentRoot = requires(T value) { value.root; };
+
+}
+
+TEST(JsonTest, PayloadDeterminesKind)
+{
+    static_assert(!HasPublicJsonKind<Json>);
+    static_assert(!HasPublicJsonDocumentRoot<JsonDocument>);
+
+    Json value(3);
+    EXPECT_EQ(value.get_kind(), Json::Kind::Number);
+    EXPECT_THROW(value.as_array(), runtime_error);
+    EXPECT_THROW(value.as_object(), runtime_error);
+
+    value["name"] = Json("OpenNN");
+    ASSERT_TRUE(value.is_object());
+    EXPECT_EQ(value.at("name").as_string(), "OpenNN");
+    EXPECT_THROW(value.as_array(), runtime_error);
+
+    value.push_back(Json(true));
+    ASSERT_TRUE(value.is_array());
+    ASSERT_EQ(value.as_array().size(), 1u);
+    EXPECT_TRUE(value.as_array().front().as_bool());
+    EXPECT_THROW(value.as_object(), runtime_error);
+}
+
+TEST(JsonTest, NestedValueRoundTrips)
+{
+    const string text = R"({"number":3,"items":[true,"OpenNN",null]})";
+    const Json value = Json::parse(text);
+
+    ASSERT_TRUE(value.is_object());
+    EXPECT_EQ(value.at("number").as_long(), 3);
+
+    const Json::Array& items = value.at("items").as_array();
+    ASSERT_EQ(items.size(), 3u);
+    EXPECT_TRUE(items[0].as_bool());
+    EXPECT_EQ(items[1].as_string(), "OpenNN");
+    EXPECT_TRUE(items[2].is_null());
+    EXPECT_EQ(value.dump(0), text);
 }
 
 TEST(IoUtilitiesTest, FileWriterReaderRoundTrip)
