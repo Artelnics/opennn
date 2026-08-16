@@ -158,6 +158,23 @@ void TimeSeriesDataset::resize_input_shape(Index input_features_count)
     set_shape(VariableRole::Input, {past_time_steps, input_features_count});
 }
 
+vector<Variable> TimeSeriesDataset::get_model_input_variables() const
+{
+    const vector<string> feature_names = get_feature_names(VariableRole::Input);
+    vector<Variable> model_variables;
+    model_variables.reserve(feature_names.size() * size_t(past_time_steps));
+
+    for (const string& feature_name : feature_names)
+        for (Index lag = 0; lag < past_time_steps; ++lag)
+            model_variables.emplace_back(
+                format("{}_lag{}", feature_name.empty() ? "variable" : feature_name, lag),
+                "Input",
+                VariableType::Numeric,
+                "None");
+
+    return model_variables;
+}
+
 void TimeSeriesDataset::to_JSON(JsonWriter& printer) const
 {
     write_json_header(printer, {

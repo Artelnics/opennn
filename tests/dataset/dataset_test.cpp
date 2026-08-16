@@ -2,12 +2,21 @@
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/dataset.h"
+#include "opennn/dataset/image_dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/core/variable.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/core/configuration.h"
 
 using namespace opennn;
+
+TEST(Dataset, UnsupportedInputSelectionCapabilitiesThrow)
+{
+    const ImageDataset dataset;
+
+    EXPECT_THROW(dataset.calculate_input_target_correlation_values(), runtime_error);
+    EXPECT_THROW(dataset.calculate_used_feature_scaling(VariableRole::Input), runtime_error);
+}
 
 TEST(Dataset, SetDataAndDimensions)
 {

@@ -73,6 +73,9 @@ public:
         const FeatureScaling&,
         Index) override;
 
+    vector<Variable> get_model_input_variables() const override;
+    bool sample_order_matters() const noexcept override { return true; }
+
     void resize_input_shape(Index) override;
 
     void refresh_forecasting_roles();

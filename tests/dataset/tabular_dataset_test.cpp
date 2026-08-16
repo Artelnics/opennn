@@ -745,6 +745,36 @@ TEST(TabularDataset, InputTargetVariableCorrelations)
     }
 }
 
+TEST(TabularDataset, InputSelectionCapabilitiesWorkThroughDatasetContract)
+{
+    TabularDataset tabular(3, {2}, {1});
+    MatrixR data(3, 3);
+    data << 1.0f, 3.0f, 1.0f,
+            2.0f, 2.0f, 2.0f,
+            3.0f, 1.0f, 3.0f;
+    tabular.set_data(data);
+    tabular.set_sample_roles(SampleRole::Training);
+    tabular.set_variable_scalers("MinimumMaximum");
+    tabular.set_display(false);
+
+    const Dataset& dataset = tabular;
+    const MatrixR correlations = dataset.calculate_input_target_correlation_values();
+    const FeatureScaling scaling =
+        dataset.calculate_used_feature_scaling(VariableRole::Input);
+
+    ASSERT_EQ(correlations.rows(), 2);
+    ASSERT_EQ(correlations.cols(), 1);
+    EXPECT_NEAR(correlations(0, 0), 1.0f, EPSILON);
+    EXPECT_NEAR(correlations(1, 0), -1.0f, EPSILON);
+
+    ASSERT_EQ(scaling.descriptives.size(), 2);
+    EXPECT_EQ(scaling.scalers,
+              vector<ScalerMethod>({ScalerMethod::MinimumMaximum,
+                                    ScalerMethod::MinimumMaximum}));
+    EXPECT_FLOAT_EQ(scaling.descriptives[0].minimum, 1.0f);
+    EXPECT_FLOAT_EQ(scaling.descriptives[0].maximum, 3.0f);
+}
+
 TEST(TabularDataset, InputVariableCorrelations)
 {
     MatrixR data;

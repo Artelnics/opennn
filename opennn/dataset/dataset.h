@@ -105,6 +105,16 @@ public:
     vector<string> get_feature_names(VariableRole) const;
     vector<string> get_feature_names(string_view role) const { return get_feature_names(string_to_variable_role(role)); }
 
+    virtual vector<Variable> get_model_input_variables() const
+    {
+        return get_variables(VariableRole::Input);
+    }
+
+    virtual bool sample_order_matters() const noexcept { return false; }
+
+    virtual MatrixR calculate_input_target_correlation_values() const;
+    virtual FeatureScaling calculate_used_feature_scaling(VariableRole) const;
+
     vector<vector<Index>> get_feature_indices() const;
     vector<Index> get_feature_indices(const Index) const;
     vector<Index> get_feature_indices(VariableRole) const;

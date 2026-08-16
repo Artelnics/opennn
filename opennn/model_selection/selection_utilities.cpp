@@ -9,7 +9,7 @@
 #include "opennn/model_selection/selection_utilities.h"
 
 #include "opennn/core/json.h"
-#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/dataset/dataset.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/neural_network.h"
@@ -196,20 +196,18 @@ long long read_json_index_alias(const Json* root, const string_view primary, con
     return read_json_index(root, root->has(primary) ? primary : legacy);
 }
 
-InputScaling capture_input_scaling(Dataset* dataset)
+FeatureScaling capture_input_scaling(Dataset* dataset)
 {
-    auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
-
-    return {tabular_dataset ? tabular_dataset->get_feature_scalers("Input") : vector<string>{},
-            tabular_dataset ? tabular_dataset->calculate_feature_descriptives("Input") : vector<Descriptives>{}};
+    return dataset->calculate_used_feature_scaling(VariableRole::Input);
 }
 
-void apply_input_scaling(NeuralNetwork* neural_network, const InputScaling& input_scaling)
+void apply_input_scaling(NeuralNetwork* neural_network, FeatureScaling input_scaling)
 {
     if (auto* scaling_layer = dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling)))
     {
-        scaling_layer->set_descriptives(input_scaling.descriptives);
-        scaling_layer->set_scalers(input_scaling.scalers);
+        input_scaling.min_range = scaling_layer->get_min_range();
+        input_scaling.max_range = scaling_layer->get_max_range();
+        scaling_layer->set_feature_scaling(input_scaling);
     }
 }
 

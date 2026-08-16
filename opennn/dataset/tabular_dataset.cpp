@@ -909,6 +909,11 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_target_variable_spearman_
     return calculate_input_target_variable_correlations(correlation_spearman, "spearman");
 }
 
+MatrixR TabularDataset::calculate_input_target_correlation_values() const
+{
+    return get_correlation_values(calculate_input_target_variable_pearson_correlations());
+}
+
 Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
     Correlation (*correlation_function)(const MatrixR&, const MatrixR&),
     Correlation::Method method,
@@ -961,13 +966,25 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_variable_spearman_correla
 
 VectorI TabularDataset::calculate_correlations_rank() const
 {
-    const Tensor<Correlation, 2> correlations = calculate_input_target_variable_pearson_correlations();
-
-    const MatrixR absolute_correlations = get_correlation_values(correlations).array().abs();
+    const MatrixR absolute_correlations =
+        calculate_input_target_correlation_values().array().abs();
 
     const VectorR absolute_mean_correlations = absolute_correlations.rowwise().mean();
 
     return calculate_rank(absolute_mean_correlations);
+}
+
+FeatureScaling TabularDataset::calculate_used_feature_scaling(VariableRole role) const
+{
+    const string role_name = variable_role_to_string(role);
+    FeatureScaling scaling;
+    scaling.descriptives = calculate_feature_descriptives(role_name);
+
+    const vector<string> scaler_names = get_feature_scalers(role_name);
+    scaling.scalers.resize(scaler_names.size());
+    ranges::transform(scaler_names, scaling.scalers.begin(), string_to_scaler_method);
+
+    return scaling;
 }
 
 void TabularDataset::apply_scaler(Index feature_index, const string& scaler, const Descriptives& desc, bool unscale)

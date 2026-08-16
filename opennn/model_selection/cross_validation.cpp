@@ -14,8 +14,6 @@
 #include <set>
 
 #include "opennn/dataset/dataset.h"
-#include "opennn/dataset/tabular_dataset.h"
-#include "opennn/dataset/time_series_dataset.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/training_strategy/optimizer.h"
 #include "opennn/training_strategy/training_strategy.h"
@@ -48,7 +46,7 @@ vector<vector<Index>> build_fold_partition(TrainingStrategy* training_strategy, 
             folds[i % size_t(k)].push_back(items[i]);
     };
 
-    if (dynamic_cast<TimeSeriesDataset*>(dataset))
+    if (dataset->sample_order_matters())
     {
         ranges::sort(development);
         deal_blocks(development);

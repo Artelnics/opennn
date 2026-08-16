@@ -9,8 +9,8 @@
 #pragma once
 
 #include "opennn/core/opennn_types.h"
+#include "opennn/core/scaling.h"
 #include "opennn/core/tensor_types.h"
-#include "opennn/core/statistics.h"
 
 namespace opennn
 {
@@ -41,15 +41,9 @@ struct ParameterSnapshot
     bool empty() const noexcept { return layers.empty(); }
 };
 
-struct InputScaling
-{
-    vector<string> scalers;
-    vector<Descriptives> descriptives;
-};
+FeatureScaling capture_input_scaling(Dataset*);
 
-InputScaling capture_input_scaling(Dataset*);
-
-void apply_input_scaling(NeuralNetwork*, const InputScaling&);
+void apply_input_scaling(NeuralNetwork*, FeatureScaling);
 
 ParameterSnapshot capture_parameter_snapshot(NeuralNetwork*);
 

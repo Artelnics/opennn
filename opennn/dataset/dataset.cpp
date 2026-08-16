@@ -195,6 +195,18 @@ FeatureScaling Dataset::prepare_training_scaling(
         variable_role_to_string(role)));
 }
 
+MatrixR Dataset::calculate_input_target_correlation_values() const
+{
+    throw runtime_error("Dataset does not support input-target correlations.");
+}
+
+FeatureScaling Dataset::calculate_used_feature_scaling(VariableRole role) const
+{
+    throw runtime_error(format(
+        "Dataset does not support {} feature scaling statistics.",
+        variable_role_to_string(role)));
+}
+
 void Dataset::upload_device_matrix(const MatrixR& matrix)
 {
     device_data_columns = matrix.cols();

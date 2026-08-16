@@ -9,9 +9,8 @@
 #include "opennn/model_selection/genetic_algorithm.h"
 
 #include "opennn/core/random_utilities.h"
+#include "opennn/core/statistics.h"
 #include "opennn/dataset/dataset.h"
-#include "opennn/dataset/tabular_dataset.h"
-#include "opennn/dataset/time_series_dataset.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/model_selection/selection_utilities.h"
 #include "opennn/training_strategy/training_strategy.h"
@@ -134,10 +133,11 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     VectorB individual_genes(genes_number);
 
-    const auto* correlations_dataset = dynamic_cast<const TabularDataset*>(dataset);
-    throw_if(!correlations_dataset, "Expected TabularDataset.");
-
-    const VectorI correlations_argsort = correlations_dataset->calculate_correlations_rank();
+    const MatrixR absolute_correlations =
+        dataset->calculate_input_target_correlation_values().array().abs();
+    const VectorR absolute_mean_correlations = absolute_correlations.rowwise().mean();
+    const VectorI correlations_argsort =
+        calculate_rank(absolute_mean_correlations);
 
     VectorR gene_weight(genes_number);
     for (Index p = 0; p < genes_number; ++p)
@@ -571,13 +571,11 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
 
     dataset->set_variable_indices(optimal_variable_indices, original_target_indices);
 
-    const InputScaling input_scaling = capture_input_scaling(dataset);
+    const FeatureScaling input_scaling = capture_input_scaling(dataset);
 
     const Index optimal_variables_number = dataset->get_features_number(VariableRole::Input);
 
-    const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
-
-    if (time_series_dataset && time_variable_indices.size() == 1)
+    if (time_variable_indices.size() == 1)
         dataset->set_variable_role(time_variable_indices[0], "Time");
 
     configure_neural_network_inputs(neural_network, dataset, optimal_variables_number);

@@ -122,7 +122,10 @@ public:
     Tensor<Correlation, 2> calculate_input_target_variable_pearson_correlations() const;
     Tensor<Correlation, 2> calculate_input_target_variable_spearman_correlations() const;
 
+    MatrixR calculate_input_target_correlation_values() const override;
     VectorI calculate_correlations_rank() const;
+
+    FeatureScaling calculate_used_feature_scaling(VariableRole) const override;
 
     vector<Descriptives> scale_data();
     vector<Descriptives> scale_features(const string&);

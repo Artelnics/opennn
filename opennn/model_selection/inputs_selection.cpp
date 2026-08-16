@@ -9,9 +9,6 @@
 #include "opennn/model_selection/inputs_selection.h"
 
 #include "opennn/dataset/dataset.h"
-#include "opennn/dataset/tabular_dataset.h"
-#include "opennn/dataset/time_series_dataset.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/neural_network.h"
 
 namespace opennn
@@ -24,32 +21,9 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
 
 void InputsSelection::configure_neural_network_inputs(NeuralNetwork* neural_network, Dataset* dataset, Index input_features_number) const
 {
-    const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
-
-    const Shape input_shape = time_series_dataset
-        ? Shape{ time_series_dataset->get_past_time_steps(), input_features_number }
-        : Shape{ input_features_number };
-    neural_network->set_input_shape(input_shape);
-    dataset->set_shape(VariableRole::Input, input_shape);
-
-    if (time_series_dataset)
-    {
-        const Index past_time_steps = time_series_dataset->get_past_time_steps();
-        const vector<string> base_names = dataset->get_variable_names(VariableRole::Input);
-
-        vector<string> final_feature_names;
-        final_feature_names.reserve(base_names.size() * past_time_steps);
-
-        for (const string& base_name : base_names)
-            for (Index j = 0; j < past_time_steps; ++j)
-                final_feature_names.push_back(format("{}_lag{}", base_name.empty() ? "variable" : base_name, j));
-
-        neural_network->set_input_names(final_feature_names);
-    }
-    else
-    {
-        neural_network->set_input_variables(dataset->get_variables(VariableRole::Input));
-    }
+    dataset->resize_input_shape(input_features_number);
+    neural_network->set_input_shape(dataset->get_input_shape());
+    neural_network->set_input_variables(dataset->get_model_input_variables());
 
     neural_network->compile();
 }

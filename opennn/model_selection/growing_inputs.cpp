@@ -11,10 +11,7 @@
 #include <map>
 #include <utility>
 
-#include "opennn/dataset/correlations.h"
 #include "opennn/dataset/dataset.h"
-#include "opennn/dataset/tabular_dataset.h"
-#include "opennn/dataset/time_series_dataset.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/model_selection/selection_utilities.h"
 #include "opennn/training_strategy/optimizer.h"
@@ -104,11 +101,8 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     if (display) cout << "Calculating correlations...\n";
 
-    const auto* correlations_dataset = dynamic_cast<const TabularDataset*>(dataset);
-    throw_if(!correlations_dataset, "Expected TabularDataset.");
-
     const VectorR total_correlations =
-        get_correlation_values(correlations_dataset->calculate_input_target_variable_pearson_correlations()).col(0).array().abs();
+        dataset->calculate_input_target_correlation_values().col(0).array().abs();
 
     vector<Index> correlation_indices(original_input_variables_number);
     iota(correlation_indices.begin(), correlation_indices.end(), 0);
@@ -295,12 +289,12 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     const Index optimal_processed_variables_number = dataset->get_features_number(VariableRole::Input);
 
-    if (dynamic_cast<TimeSeriesDataset*>(dataset) && time_variable_indices.size() == 1)
+    if (time_variable_indices.size() == 1)
         dataset->set_variable_role(time_variable_indices[0], "Time");
 
     configure_neural_network_inputs(neural_network, dataset, optimal_processed_variables_number);
 
-    const InputScaling input_scaling = capture_input_scaling(dataset);
+    const FeatureScaling input_scaling = capture_input_scaling(dataset);
 
     set_maximum_inputs_number(dataset->get_variables_number(VariableRole::Input));
 

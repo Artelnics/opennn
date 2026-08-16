@@ -178,6 +178,28 @@ TEST(TimeSeriesDataset, test_set_lags_number)
 
 }
 
+TEST(TimeSeriesDataset, ModelInputVariablesReflectForecastingWindow)
+{
+    TimeSeriesDataset dataset(4, {2}, {1});
+    dataset.set_variable_names({"temperature", "pressure", "target"});
+    dataset.set_past_time_steps(3);
+    dataset.resize_input_shape(2);
+
+    const vector<Variable> model_variables = dataset.get_model_input_variables();
+
+    ASSERT_EQ(model_variables.size(), 6);
+    EXPECT_EQ(model_variables[0].name, "temperature_lag0");
+    EXPECT_EQ(model_variables[2].name, "temperature_lag2");
+    EXPECT_EQ(model_variables[3].name, "pressure_lag0");
+    EXPECT_EQ(model_variables[5].name, "pressure_lag2");
+    EXPECT_TRUE(ranges::all_of(model_variables, [](const Variable& variable)
+    {
+        return variable.role == VariableRole::Input;
+    }));
+    EXPECT_EQ(dataset.get_input_shape(), Shape({3, 2}));
+    EXPECT_TRUE(dataset.sample_order_matters());
+}
+
 TEST(TimeSeriesDataset, TrainingScalingExpandsMultiStepTargetsWithoutMutatingData)
 {
     TimeSeriesDataset dataset(6, {1}, {1});
