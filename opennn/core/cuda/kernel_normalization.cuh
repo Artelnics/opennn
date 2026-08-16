@@ -24,9 +24,8 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
 // `partials` is scratch for (2 * batchnorm_partial_rows(rows) + 2) *
 // channels floats.
 //
-// Backward: dY is gated by the mask when given (BF16 only - the eight-channel
-// layout the mask needs is not taken for FP32, where it measured slower), else
-// by y > 0 when `y` is given, then dbeta/dgamma and dX in place (dpre receives the gated dY for a
+// Backward: dY is gated by the mask when given (channels % 8 == 0), else by
+// y > 0 when `y` is given, then dbeta/dgamma and dX in place (dpre receives the gated dY for a
 // residual fork). With `xhat_from_y`, no mask, and a ReLU output that is BN(x)
 // itself (no residual add), the reduce pass rebuilds x_hat as (y - beta) /
 // gamma and skips X (the apply pass still needs X on masked elements): six

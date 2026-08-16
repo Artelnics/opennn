@@ -139,11 +139,10 @@ vector<TensorSpec> Convolutional::get_forward_specs(Index batch_size) const
     const Shape bn_stat_shape          = batch_norm.active() ? Shape{kernels_number} : Shape{};
 
     // Packed ReLU mask of the BN output, one bit per element, written by the
-    // library's own BN forward and read by its BF16 backward in place of Y
-    // (see BatchNormForwardRung). Eight channels per byte, so only for channel
-    // counts that pack, and only in BF16, where the backward reads it.
-    const bool relu_mask = batch_norm.active() && batch_norm.fuse_relu
-        && kernels_number % 8 == 0 && compute_dtype == Type::BF16;
+    // library's own BN forward and read by its backward in place of Y (see
+    // BatchNormForwardRung). Eight channels per byte, so only for channel
+    // counts that pack.
+    const bool relu_mask = batch_norm.active() && batch_norm.fuse_relu && kernels_number % 8 == 0;
     const Shape relu_mask_shape = relu_mask
         ? Shape{batch_size, get_output_height(), get_output_width(), kernels_number / 8}
         : Shape{};

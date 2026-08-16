@@ -138,11 +138,11 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
 // Row-block partials are summed by a second, tiny kernel so the reduction order
 // is fixed - no float atomics.
 //
-// ReLU mask: with VEC == 8 the forward apply pass packs (y > 0) for its eight
-// channels into one byte, mask[(row * channels + c0) / 8]. The BF16 backward
-// gates dY with that byte instead of re-reading Y: one bit per element in place
-// of a second full-width tensor in each of its two passes (FP32 keeps channel
-// pairs and Y; see batchnorm_backward_fused_cuda).
+// ReLU mask: the forward apply pass packs (y > 0) eight channels per byte,
+// mask[(row * channels + c0) / 8] (one lane's eight BF16 channels, or two
+// adjacent lanes' four FP32 channels each). The backward gates dY with that
+// byte instead of re-reading Y: one bit per element in place of a second
+// full-width tensor in each of its two passes.
 //
 // x_hat: from X as (x - mean) * inv_var. Without a mask, in the reduce pass
 // only, and only for a ReLU output that is BN(x) with no residual add
@@ -317,6 +317,36 @@ __global__ void batchnorm_forward_finalize_kernel(const int channels, const int 
     scale_shift[channels + c] = beta[c] - m * scale;
 }
 
+// Per element: y = relu?(x * scale + shift [+ residual]), and the ReLU bit.
+template<int VEC, bool RELU, bool ADD>
+__device__ static inline unsigned batchnorm_apply_group(const int channels, const int c0,
+                                                        const float* vx, const float* vr,
+                                                        const float* __restrict__ scale_shift,
+                                                        float* out)
+{
+    unsigned bits = 0;
+    #pragma unroll
+    for (int k = 0; k < VEC; ++k)
+    {
+        const int c = c0 + k;
+        float v = vx[k] * scale_shift[c] + scale_shift[channels + c];
+        if (ADD) v += vr[k];
+        if (RELU)
+        {
+            v = fmaxf(v, 0.0f);
+            bits |= (v > 0.0f ? 1u : 0u) << k;
+        }
+        out[k] = v;
+    }
+    return bits;
+}
+
+// The mask byte covers eight channels. VEC == 8 (BF16): a lane writes its own
+// byte, plain grid-stride loop. VEC == 4 (FP32): two adjacent lanes hold the
+// two nibbles - the group index is even for the low nibble, and consecutive
+// groups are consecutive lanes of one warp - so the odd lane's bits are
+// shuffled down and the even lane writes; every lane of the block runs the
+// loop body for the shuffle's sake, lanes past the end just do no work.
 template<typename T, int VEC, bool RELU, bool ADD>
 __global__ void batchnorm_forward_apply_kernel(const Index groups, const int channels,
                                                const T* __restrict__ x,
@@ -325,33 +355,47 @@ __global__ void batchnorm_forward_apply_kernel(const Index groups, const int cha
                                                T* __restrict__ y,
                                                uint8_t* __restrict__ mask)
 {
+    static_assert(VEC == 8 || VEC == 4, "mask packing needs 8 or 4 channels per lane");
     const int channel_groups = channels / VEC;
-    for (Index gi = Index(blockIdx.x) * blockDim.x + threadIdx.x; gi < groups;
-         gi += Index(gridDim.x) * blockDim.x)
+    float vx[VEC], vr[VEC], out[VEC];
+
+    if constexpr (VEC == 8)
     {
-        const int c0 = int(gi % channel_groups) * VEC;
-        const Index i = (gi / channel_groups) * channels + c0;
-
-        float vx[VEC], vr[VEC], out[VEC];
-        VecIO<T, VEC>::load_float(x + i, vx);
-        if (ADD) VecIO<T, VEC>::load_float(residual + i, vr);
-
-        unsigned bits = 0;
-        #pragma unroll
-        for (int k = 0; k < VEC; ++k)
+        for (Index gi = Index(blockIdx.x) * blockDim.x + threadIdx.x; gi < groups;
+             gi += Index(gridDim.x) * blockDim.x)
         {
-            const int c = c0 + k;
-            float v = vx[k] * scale_shift[c] + scale_shift[channels + c];
-            if (ADD) v += vr[k];
-            if (RELU)
-            {
-                v = fmaxf(v, 0.0f);
-                bits |= (v > 0.0f ? 1u : 0u) << k;
-            }
-            out[k] = v;
+            const int c0 = int(gi % channel_groups) * VEC;
+            const Index i = (gi / channel_groups) * channels + c0;
+            VecIO<T, VEC>::load_float(x + i, vx);
+            if (ADD) VecIO<T, VEC>::load_float(residual + i, vr);
+            const unsigned bits = batchnorm_apply_group<VEC, RELU, ADD>(channels, c0, vx, vr, scale_shift, out);
+            VecIO<T, VEC>::store_float(y + i, out);
+            if (RELU && mask) mask[gi] = uint8_t(bits);
         }
-        VecIO<T, VEC>::store_float(y + i, out);
-        if (RELU && mask) mask[gi] = uint8_t(bits);
+    }
+    else
+    {
+        for (Index base = Index(blockIdx.x) * blockDim.x; base < groups;
+             base += Index(gridDim.x) * blockDim.x)
+        {
+            const Index gi = base + threadIdx.x;
+            const bool valid = gi < groups;
+            unsigned bits = 0;
+            if (valid)
+            {
+                const int c0 = int(gi % channel_groups) * VEC;
+                const Index i = (gi / channel_groups) * channels + c0;
+                VecIO<T, VEC>::load_float(x + i, vx);
+                if (ADD) VecIO<T, VEC>::load_float(residual + i, vr);
+                bits = batchnorm_apply_group<VEC, RELU, ADD>(channels, c0, vx, vr, scale_shift, out);
+                VecIO<T, VEC>::store_float(y + i, out);
+            }
+            if (RELU && mask)
+            {
+                const unsigned high = __shfl_down_sync(0xffffffffu, bits, 1);
+                if (valid && (gi & 1) == 0) mask[gi >> 1] = uint8_t(bits | (high << 4));
+            }
+        }
     }
 }
 
@@ -368,7 +412,8 @@ void batchnorm_forward_fused_cuda(const Index rows, const Index channels,
     if (rows == 0 || channels == 0) return;
     if (channels % 8 != 0)
         throw std::runtime_error("batchnorm_forward_fused_cuda: channels must be a multiple of 8.");
-    constexpr int VEC = 8;
+    // 16-byte channel groups: eight BF16 or four FP32 channels per lane.
+    constexpr int VEC = sizeof(T) == 2 ? 8 : 4;
     cudaStream_t stream = opennn::device::get_compute_stream();
 
     const Index channel_groups = channels / VEC;
@@ -438,7 +483,7 @@ __global__ void batchnorm_backward_reduce_kernel(const Index rows, const int cha
             VecIO<T, VEC>::load_float(dy + i, vdy);
             if (y) VecIO<T, VEC>::load_float(y + i, vy);
             if (!XHAT_FROM_Y) VecIO<T, VEC>::load_float(x + i, vx);
-            const unsigned bits = mask ? mask[i / 8] : 0xFFu;
+            const unsigned bits = mask ? (unsigned(mask[i / 8]) >> (c0 & 4)) : 0xFFu;
             #pragma unroll
             for (int k = 0; k < VEC; ++k)
             {
@@ -491,7 +536,7 @@ __global__ void batchnorm_backward_apply_kernel(const Index groups, const int ch
         VecIO<T, VEC>::load_float(dy_dx + i, vdy);
         if (y) VecIO<T, VEC>::load_float(y + i, vy);
         VecIO<T, VEC>::load_float(x + i, vx);
-        const unsigned bits = mask ? mask[i / 8] : 0xFFu;
+        const unsigned bits = mask ? (unsigned(mask[i / 8]) >> (c0 & 4)) : 0xFFu;
 
         #pragma unroll
         for (int k = 0; k < VEC; ++k)
@@ -548,16 +593,14 @@ void batchnorm_backward_fused_cuda(const Index rows, const Index channels,
     if (rows == 0 || channels == 0) return;
     cudaStream_t stream = opennn::device::get_compute_stream();
 
-    // Eight channels per thread (16-byte loads) for BF16 when the count allows
-    // it; a mask packs eight channels per byte, so it needs that layout, and
-    // with it Y is not read at all. FP32 keeps channel pairs: eight FP32
-    // channels per thread put the reduce kernel at ~90 registers, and on an
-    // RTX 3060 that measured ~3% slower for the whole ResNet-50 step at batch
-    // 2048 (the 64-channel layers run a second, mostly empty wave), while
-    // BF16 with the same layout and the mask measured ~6% faster.
-    const bool vec8 = channels % 8 == 0 && sizeof(T) == 2;
+    // 16-byte channel groups where the count allows it: eight BF16 or four
+    // FP32 channels per lane (eight FP32 put the reduce kernel at ~90
+    // registers and measured slower). The mask packs eight channels per byte
+    // and needs one of these two layouts (a VEC == 4 lane reads its nibble);
+    // with it Y is not read at all.
+    const bool wide = channels % 8 == 0;
     const bool vec2 = channels % 2 == 0;
-    if (!vec8) mask = nullptr;
+    if (!wide) mask = nullptr;
     if (mask) y = nullptr;
 
     // x_hat from Y needs the ReLU output and its parameters.
@@ -568,7 +611,7 @@ void batchnorm_backward_fused_cuda(const Index rows, const Index channels,
         if (from_y) batchnorm_backward_launch<T, VEC, true >(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
         else        batchnorm_backward_launch<T, VEC, false>(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
     };
-    if (vec8)      launch.template operator()<8>();
+    if (wide)      launch.template operator()<sizeof(T) == 2 ? 8 : 4>();
     else if (vec2) launch.template operator()<2>();
     else           launch.template operator()<1>();
 }

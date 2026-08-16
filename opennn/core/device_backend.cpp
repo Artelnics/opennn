@@ -595,6 +595,18 @@ void StreamCapture::end(GraphExecHandle& exec)
     finished = true;
 
     const GraphHandle graph(raw_graph);
+
+    // Node count, once per capture, when profiling: each node is a launch the
+    // GPU pays ~2-3 us for regardless of batch, so at small batch this number
+    // is the step's floor.
+    if (getenv("OPENNN_PROFILE") || getenv("OPENNN_GRAPH_NODES"))
+    {
+        size_t nodes = 0;
+        if (cudaGraphGetNodes(graph.get(), nullptr, &nodes) == cudaSuccess)
+            cerr << "CUDA graph captured: " << nodes << " nodes" << endl;
+        cudaGetLastError();
+    }
+
     instantiate_or_update(exec, graph.get());
 }
 

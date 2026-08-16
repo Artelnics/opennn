@@ -237,9 +237,9 @@ bool BatchNormalizationOperator::own_forward_kernel(const TensorView& mask, Type
     case device::BatchNormForwardRung::OwnKernel:  return features % 8 == 0;
     case device::BatchNormForwardRung::Auto:       break;
     }
-    // Where the mask pays: the BF16 backward reads it in place of Y (the FP32
-    // backward keeps its channel-pair layout, see batchnorm_backward_fused_cuda).
-    return fuse_relu && !mask.empty() && dtype == Type::BF16;
+    // Where the mask pays: the backward reads it in place of Y.
+    (void)dtype;
+    return fuse_relu && !mask.empty();
 }
 
 void BatchNormalizationOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const

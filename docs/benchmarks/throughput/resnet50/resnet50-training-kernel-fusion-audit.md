@@ -171,6 +171,38 @@ Peak vs peak: bf16 1.17× PyTorch / 1.18× TensorFlow; fp32 1.15× / 1.31×. The
 (bf16 4096 24,817 vs 23,283, fp32 2048 11,038 vs 11,489: ±5% either way);
 neither library version changes the ranking.
 
+### 9.2 The definitive table: each framework on its best one-line configuration
+
+The tables above give PyTorch its `torch.compile` default mode and the
+foreach Adam. That understates it - `torch.compile(mode="reduce-overhead")`
+(CUDA graphs) and `Adam(fused=True)` are one-line options and at small batch
+they are worth 2.5x to PyTorch (see the plan note, Phase 4). TensorFlow
+already ran its whole step under XLA. So this is the table to quote: same
+machine, cuDNN 9.24, 2026-08-16 evening, OpenNN binary 382aeba22 (Tier B +
+pooling), PyTorch on channels_last + reduce-overhead + fused Adam (now the
+sweep's protocol; `PYTORCH_PLAIN=1` reverts), result JSONs
+`gpu-resnet50-peak-batch-speed-20260816T171737Z / 175322Z / 182150Z`.
+
+| batch | bf16 OpenNN | bf16 PyTorch | bf16 TensorFlow | fp32 OpenNN | fp32 PyTorch | fp32 TensorFlow |
+|---:|---:|---:|---:|---:|---:|---:|
+| 128 | 12,923 | 13,193 | 8,635 | **7,634** | 7,229 | 5,241 |
+| 256 | **17,888** | 16,705 | 12,721 | **8,741** | 8,451 | 6,646 |
+| 512 | **20,947** | 19,507 | 16,804 | **10,251** | 9,661 | 7,740 |
+| 1024 | **24,182** | 20,860 | 20,098 | **11,592** | 10,299 | 8,801 |
+| 2048 | **25,874** | 22,578 | 22,667 | **12,355** | 10,959 | OOM |
+| 4096 | **26,412** | 22,769 | OOM | **1,446** | 890 | — |
+| peak | **26,412 @4096** | 22,769 @4096 | 22,667 @2048 | **12,355 @2048** | 10,959 @2048 | 8,801 @1024 |
+
+**OpenNN leads at every point but one, bf16 @128, where it is at parity with
+PyTorch's best (-2%, inside run-to-run noise).** Peak vs peak: bf16 1.16x
+PyTorch / 1.17x TensorFlow; fp32 1.13x / 1.40x; fp32 leads at every batch,
+128 included. The small-batch lead of the earlier tables was largely CUDA
+graphs, which PyTorch's reduce-overhead mode also has; the large-batch lead is
+kernel-level (workspace budget, autotune, own batch-norm and pooling kernels,
+fused residual join) and survives. Points past the card's 6 GB are WSL2 paging
+for every engine. The RTX 4080 run should reproduce this table with this
+protocol.
+
 ## 10. Not recommended (already tried)
 
 Hand-written BN kernels for the native path and the strided-view trick for the

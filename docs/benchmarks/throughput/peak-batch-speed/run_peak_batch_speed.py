@@ -140,11 +140,16 @@ class ResnetFamily(Family):
             env["PT_FAST"] = "1"
             if precision == "bf16":
                 env["PT_BF16"] = "1"
-            # PYTORCH_BEST=1: PyTorch's strongest one-line options on top of the
-            # fast path - torch.compile(mode="reduce-overhead") (CUDA graphs)
-            # and Adam(fused=True). Measured 2026-08-16 on the RTX 3060 (bf16):
-            # 2.5x the fast path at batch 128, 1.4x at 512, 1.13x at 2048.
-            if os.environ.get("PYTORCH_BEST"):
+            # PyTorch's strongest one-line options on top of the fast path -
+            # torch.compile(mode="reduce-overhead") (CUDA graphs) and
+            # Adam(fused=True) - are the protocol: a PyTorch user gets both for
+            # free, and without them the sweep understated PyTorch by 2.5x at
+            # batch 128, 1.4x at 512, 1.13x at 2048 (RTX 3060, bf16,
+            # 2026-08-16). PYTORCH_PLAIN=1 reverts to the compile-default /
+            # foreach-Adam path for comparison with older tables. TensorFlow
+            # already runs its whole step under XLA (jit_compile), which is its
+            # equivalent.
+            if not os.environ.get("PYTORCH_PLAIN"):
                 env["PT_COMPILE_MODE"] = "reduce-overhead"
                 env["PT_FUSED_ADAM"] = "1"
         else:
@@ -304,6 +309,13 @@ def main() -> None:
                 "isolation": "one fresh process per (engine, precision, batch) point",
                 "stop_rule": "first oom/error/timeout ends that engine's ascent",
                 "quality_rule": "not gated (saturation benchmark; see quality/convergence)",
+            },
+            "engine_paths": {
+                "opennn": "CUDA graphs, cuDNN autotune, GPU-resident data",
+                "pytorch": ("channels_last + torch.compile default + foreach Adam (PYTORCH_PLAIN)"
+                            if os.environ.get("PYTORCH_PLAIN") else
+                            "channels_last + torch.compile(mode=reduce-overhead) + Adam(fused=True)"),
+                "tensorflow": "NHWC + tf.function(jit_compile=True) over the whole step",
             },
         },
         "configuration": {

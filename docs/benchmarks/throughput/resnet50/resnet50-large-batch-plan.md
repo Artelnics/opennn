@@ -357,13 +357,48 @@ in two minutes.
   | 512 | 13,819 | **19,093** | 20,7xx |
   | 2048 | 20,138 | **22,661** | 25,556 |
 
-  The published protocol understates PyTorch by 2.5x at 128, 1.4x at 512,
-  1.13x at 2048. OpenNN still leads at every point against PyTorch's best
-  (+7% at 128, +8% at 512, +13% at 2048 in this session), but the small-batch
-  margin is a few percent, not the 1.75x the sweep table shows. Recommendation:
-  make `PYTORCH_BEST=1` the sweep's PyTorch protocol (a PyTorch user gets both
-  options for free), re-run the three-way table with it, and state the margin
-  against that. The same question is open for TensorFlow (XLA `jit_compile`).
+  The published protocol understated PyTorch by 2.5x at 128, 1.4x at 512,
+  1.13x at 2048. It is now the sweep's PyTorch protocol (`PYTORCH_PLAIN=1`
+  reverts); TensorFlow already runs its whole step under XLA. The three-way
+  table on it is audit note 9.2: OpenNN leads at every point but bf16 @128,
+  where it is at parity with PyTorch's best (-2%, noise); peak vs peak bf16
+  1.16x PyTorch / 1.17x TensorFlow, fp32 1.13x / 1.40x. The small-batch lead of
+  the earlier tables was largely CUDA graphs, which PyTorch's reduce-overhead
+  mode also has.
+
+### Phase 5 — kernel count and the FP32 mask (measured 2026-08-16 night)
+
+At batch 128 the captured step is 578 graph nodes (`OPENNN_GRAPH_NODES=1`
+prints the count at capture), and the GPU is the bottleneck, so the step's
+floor is launches. Three things were tried against that, each A/B'd against
+the 382aeba22 binary in cooled pairs:
+
+- **FP32 ReLU mask on a four-channel layout — kept: fp32 2048 12,637 / 12,616
+  vs 12,403 / 12,386 (+1.9%), fp32 128 7,936 vs 7,638 (+3.9%); bf16
+  unchanged (128 14,320 vs 14,284, 2048 25,785 vs 25,672).** The eight-channel
+  FP32 layout had measured slower (~90 registers, half occupancy); four FP32
+  channels per lane are the same 16-byte load as eight BF16, 56 registers,
+  and the mask byte's two nibbles come from a lane pair (`__shfl_down_sync`
+  in the forward apply, a nibble shift in the backward). Auto now takes the own
+  forward + mask for FP32 too; the layer allocates the mask slot for both
+  types.
+- **Batch-norm finalize folded into the reduce (last row block per channel
+  column finalizes) — tried, reverted.** -98 nodes per step, but the column
+  finalize inside one block is 8x less parallel than the separate finalize
+  kernel (one block per column vs one warp of channels per block, eight lanes
+  over the row blocks): bf16 128 13,234 vs 14,161 (-6.5%), 2048 -2.3%. Fold on
+  vs off with the same column code measured identical, which is how it was
+  pinned on the finalize's parallelism, not on the atomics. The old two-kernel
+  reduction stays.
+- **One deferred cast for the 53 BF16 weight gradients — tried, reverted.**
+  -53 nodes per step, measured neutral (13,200 vs 13,226 with it off/on),
+  and it costs 51 MB of per-layer BF16 gradient buffers. Launch overhead
+  inside a CUDA graph is smaller than the 2-3 us per node assumed; node count
+  is not the small-batch lever on this GPU.
+
+So the honest small-batch position after all of it: bf16 @128 at parity with
+PyTorch's best, fp32 @128 +10% over it (7,936 vs 7,229). Widening bf16 @128
+would need kernel-time wins at tiny shapes, i.e. custom convolutions.
 
 ## 4. Projected trajectory (batch 2048, ms/step; lower is better)
 
