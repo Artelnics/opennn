@@ -45,7 +45,7 @@ struct ScaleOperator : Operator
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
 };
 
-class Scaling : public Layer
+class Scaling : public Layer, public FeatureScalingEndpoint
 {
 public:
 
@@ -64,8 +64,12 @@ public:
     float get_min_range() const noexcept { return min_range; }
     float get_max_range() const noexcept { return max_range; }
     bool is_inverse() const noexcept { return scale_op.invert; }
+    VariableRole get_scaling_role() const noexcept override
+    {
+        return is_inverse() ? VariableRole::Target : VariableRole::Input;
+    }
 
-    FeatureScaling get_feature_scaling() const
+    FeatureScaling get_feature_scaling() const override
     {
         return {descriptives, scalers, min_range, max_range};
     }
@@ -79,7 +83,7 @@ public:
     void set_descriptives(const vector<Descriptives>&);
     void set_scalers(const vector<string>&);
     void set_scalers(const string&);
-    void set_feature_scaling(const FeatureScaling&);
+    void set_feature_scaling(const FeatureScaling&) override;
 
     bool is_passthrough() const;
 

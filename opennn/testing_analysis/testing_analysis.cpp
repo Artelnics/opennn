@@ -10,9 +10,9 @@
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/correlations.h"
 #include "opennn/core/parallel_algorithms.h"
+#include "opennn/core/scaling.h"
 #include "opennn/neural_network/standard_networks.h"
 #include "opennn/core/statistics.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/training_strategy/error_functions.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
@@ -24,14 +24,30 @@ namespace opennn
 namespace
 {
 
-const Scaling* find_output_scaling(const NeuralNetwork& neural_network)
+FeatureScaling get_output_scaling(const NeuralNetwork& neural_network)
 {
     for (const unique_ptr<Layer>& layer : neural_network.get_layers())
-        if (const auto* scaling = dynamic_cast<const Scaling*>(layer.get());
-            scaling && scaling->is_inverse())
-            return scaling;
+        if (const auto* endpoint = dynamic_cast<const FeatureScalingEndpoint*>(layer.get());
+            endpoint && endpoint->get_scaling_role() == VariableRole::Target)
+            return endpoint->get_feature_scaling();
 
-    return nullptr;
+    throw runtime_error("Output scaling endpoint not found.\n");
+}
+
+VectorR get_scaling_ranges(const FeatureScaling& scaling, Index outputs_number)
+{
+    throw_if(ssize(scaling.descriptives) != outputs_number,
+             "Output scaling expects {} features, got {}.",
+             outputs_number, scaling.descriptives.size());
+
+    VectorR ranges(outputs_number);
+    for (Index i = 0; i < outputs_number; ++i)
+    {
+        const Descriptives& descriptives = scaling.descriptives[size_t(i)];
+        ranges(i) = abs(descriptives.maximum - descriptives.minimum);
+    }
+
+    return ranges;
 }
 
 }
@@ -165,13 +181,8 @@ Tensor3 TestingAnalysis::calculate_error_data() const
 
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
-    const Scaling* output_scaling = find_output_scaling(*neural_network);
-
-    throw_if(!output_scaling,
-             "Output scaling layer not found.\n");
-
-    const VectorR output_minimums = output_scaling->get_minimums();
-    const VectorR output_maximums = output_scaling->get_maximums();
+    const VectorR ranges = get_scaling_ranges(
+        get_output_scaling(*neural_network), outputs_number);
 
     Tensor3 error_data(testing_samples_number, 3, outputs_number);
 
@@ -180,7 +191,7 @@ Tensor3 TestingAnalysis::calculate_error_data() const
 #pragma omp parallel for
     for (Index i = 0; i < outputs_number; ++i)
     {
-        const float range = abs(output_maximums(i) - output_minimums(i));
+        const float range = ranges(i);
 
         for (Index j = 0; j < testing_samples_number; ++j)
         {
@@ -206,15 +217,8 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
 
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
-    const Scaling* output_scaling = find_output_scaling(*neural_network);
-
-    throw_if(!output_scaling,
-             "Output scaling layer not found.\n");
-
-    const VectorR output_minimums = output_scaling->get_minimums();
-    const VectorR output_maximums = output_scaling->get_maximums();
-
-    const VectorR ranges = (output_maximums - output_minimums).cwiseAbs();
+    const VectorR ranges = get_scaling_ranges(
+        get_output_scaling(*neural_network), neural_network->get_outputs_number());
     const MatrixR errors = targets - outputs;
     MatrixR error_data = ((errors.array() * 100.0f).rowwise() / ranges.transpose().array()).matrix();
     error_data = error_data.array().isFinite().select(error_data.array(), 0.0f).matrix();

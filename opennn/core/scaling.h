@@ -28,6 +28,18 @@ namespace opennn
         }
     };
 
+    // A network endpoint whose feature transform can be coordinated with a
+    // Dataset without exposing the concrete layer that implements it.
+    class FeatureScalingEndpoint
+    {
+    public:
+        virtual ~FeatureScalingEndpoint() = default;
+
+        virtual VariableRole get_scaling_role() const noexcept = 0;
+        virtual FeatureScaling get_feature_scaling() const = 0;
+        virtual void set_feature_scaling(const FeatureScaling&) = 0;
+    };
+
     template<typename X>
     auto scale_minimum_maximum_formula(const X& x, const Descriptives& d, float min_range, float max_range)
     {

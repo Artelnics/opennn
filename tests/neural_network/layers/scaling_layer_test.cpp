@@ -2,6 +2,7 @@
 
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/neural_network/layers/unscaling_layer.h"
 #include "opennn/core/statistics.h"
 
 using namespace opennn;
@@ -21,6 +22,31 @@ TEST(ScalingLayerTest, GeneralConstructor)
     EXPECT_EQ(scaling_layer_2d.get_input_shape(), Shape{ 1 });
     EXPECT_EQ(scaling_layer_2d.get_output_shape(), Shape{ 1 });
     EXPECT_EQ(scaling_layer_2d.get_name(), "Scaling");
+}
+
+TEST(ScalingLayerTest, ImplementsFeatureScalingEndpoint)
+{
+    Scaling scaling({1});
+    Unscaling unscaling({1});
+
+    FeatureScalingEndpoint& input_endpoint = scaling;
+    FeatureScalingEndpoint& target_endpoint = unscaling;
+
+    EXPECT_EQ(input_endpoint.get_scaling_role(), VariableRole::Input);
+    EXPECT_EQ(target_endpoint.get_scaling_role(), VariableRole::Target);
+
+    FeatureScaling configured = input_endpoint.get_feature_scaling();
+    configured.descriptives = {Descriptives(1.0f, 3.0f, 2.0f, 1.0f)};
+    configured.scalers = {ScalerMethod::MeanStandardDeviation};
+    configured.min_range = 0.0f;
+    configured.max_range = 1.0f;
+    input_endpoint.set_feature_scaling(configured);
+
+    const FeatureScaling actual = scaling.get_feature_scaling();
+    EXPECT_EQ(actual.scalers, configured.scalers);
+    EXPECT_FLOAT_EQ(actual.descriptives[0].minimum, 1.0f);
+    EXPECT_FLOAT_EQ(actual.min_range, 0.0f);
+    EXPECT_FLOAT_EQ(actual.max_range, 1.0f);
 }
 
 TEST(ScalingLayerTest, ForwardPropagate)

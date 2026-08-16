@@ -11,9 +11,7 @@
 #include "opennn/core/json.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/model_selection/cross_validation.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/neural_network.h"
-#include "opennn/registry.h"
 #include "opennn/training_strategy/training_result.h"
 #include "opennn/training_strategy/training_strategy.h"
 
@@ -203,11 +201,17 @@ FeatureScaling capture_input_scaling(Dataset* dataset)
 
 void apply_input_scaling(NeuralNetwork* neural_network, FeatureScaling input_scaling)
 {
-    if (auto* scaling_layer = dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling)))
+    for (const unique_ptr<Layer>& layer : neural_network->get_layers())
     {
-        input_scaling.min_range = scaling_layer->get_min_range();
-        input_scaling.max_range = scaling_layer->get_max_range();
-        scaling_layer->set_feature_scaling(input_scaling);
+        auto* const endpoint = dynamic_cast<FeatureScalingEndpoint*>(layer.get());
+        if (!endpoint || endpoint->get_scaling_role() != VariableRole::Input)
+            continue;
+
+        const FeatureScaling current = endpoint->get_feature_scaling();
+        input_scaling.min_range = current.min_range;
+        input_scaling.max_range = current.max_range;
+        endpoint->set_feature_scaling(input_scaling);
+        return;
     }
 }
 

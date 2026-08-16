@@ -3,6 +3,7 @@
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/time_series_dataset.h"
 #include "opennn/model_selection/cross_validation.h"
+#include "opennn/model_selection/selection_utilities.h"
 #include "opennn/training_strategy/training_strategy.h"
 #include "opennn/model_selection/model_selection.h"
 #include "opennn/neural_network/standard_networks.h"
@@ -74,4 +75,34 @@ TEST(ModelSelectionTest, ConfiguresForecastingInputsThroughDatasetContract)
     ASSERT_EQ(input_variables.size(), 6);
     EXPECT_EQ(input_variables.front().name, "temperature_lag0");
     EXPECT_EQ(input_variables.back().name, "pressure_lag2");
+}
+
+TEST(ModelSelectionTest, AppliesInputScalingThroughEndpointContract)
+{
+    ApproximationNetwork neural_network({2}, {}, {1});
+    auto* const endpoint = dynamic_cast<FeatureScalingEndpoint*>(
+        neural_network.get_layers().front().get());
+    ASSERT_NE(endpoint, nullptr);
+
+    FeatureScaling current = endpoint->get_feature_scaling();
+    current.min_range = -2.0f;
+    current.max_range = 2.0f;
+    endpoint->set_feature_scaling(current);
+
+    FeatureScaling selected;
+    selected.descriptives = {
+        Descriptives(1.0f, 3.0f, 2.0f, 1.0f),
+        Descriptives(2.0f, 6.0f, 4.0f, 2.0f)};
+    selected.scalers = {
+        ScalerMethod::MeanStandardDeviation,
+        ScalerMethod::MinimumMaximum};
+
+    apply_input_scaling(&neural_network, selected);
+
+    const FeatureScaling actual = endpoint->get_feature_scaling();
+    EXPECT_EQ(actual.scalers, selected.scalers);
+    EXPECT_FLOAT_EQ(actual.descriptives[0].minimum, 1.0f);
+    EXPECT_FLOAT_EQ(actual.descriptives[1].maximum, 6.0f);
+    EXPECT_FLOAT_EQ(actual.min_range, -2.0f);
+    EXPECT_FLOAT_EQ(actual.max_range, 2.0f);
 }

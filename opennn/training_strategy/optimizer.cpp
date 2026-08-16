@@ -26,15 +26,14 @@
 
 #include "opennn/core/device_backend.h"
 #include "opennn/core/profiler.h"
+#include "opennn/core/scaling.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/variable.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/neural_network.h"
-#include "opennn/registry.h"
 #include "opennn/training_strategy/kernel_optimizers.cuh"
 #include "opennn/training_strategy/loss.h"
 
@@ -98,12 +97,13 @@ private:
     bool active = true;
 };
 
-Scaling* find_scaling_endpoint(NeuralNetwork& neural_network, bool inverse)
+FeatureScalingEndpoint* find_scaling_endpoint(NeuralNetwork& neural_network,
+                                              VariableRole role)
 {
     for (const unique_ptr<Layer>& layer : neural_network.get_layers())
-        if (auto* scaling = dynamic_cast<Scaling*>(layer.get());
-            scaling && scaling->is_inverse() == inverse)
-            return scaling;
+        if (auto* endpoint = dynamic_cast<FeatureScalingEndpoint*>(layer.get());
+            endpoint && endpoint->get_scaling_role() == role)
+            return endpoint;
 
     return nullptr;
 }
@@ -605,9 +605,10 @@ void Optimizer::prepare_training_scaling()
     Dataset* const dataset = loss->get_dataset();
     NeuralNetwork* const neural_network = loss->get_neural_network();
 
-    const auto prepare_endpoint = [&](bool inverse, VariableRole role)
+    const auto prepare_endpoint = [&](VariableRole role)
     {
-        Scaling* const endpoint = find_scaling_endpoint(*neural_network, inverse);
+        FeatureScalingEndpoint* const endpoint =
+            find_scaling_endpoint(*neural_network, role);
         if (!endpoint) return;
 
         const FeatureScaling requested = endpoint->get_feature_scaling();
@@ -615,8 +616,8 @@ void Optimizer::prepare_training_scaling()
             role, requested, requested.size()));
     };
 
-    prepare_endpoint(false, VariableRole::Input);
-    prepare_endpoint(true, VariableRole::Target);
+    prepare_endpoint(VariableRole::Input);
+    prepare_endpoint(VariableRole::Target);
 }
 
 void Optimizer::warmup_device_training(
