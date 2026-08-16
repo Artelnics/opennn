@@ -41,19 +41,11 @@ struct ConvolutionOperator::ConvGraphCache
 {
     struct Entry
     {
-        shared_ptr<cudnn_frontend::graph::Graph> fwd, wgrad, bgrad, dgrad;
+        cudnn_frontend::GraphSlot fwd, wgrad, bgrad, dgrad;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_X, fwd_W, fwd_B, fwd_Y;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> wgrad_X, wgrad_DY, wgrad_DW;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bgrad_DY, bgrad_DB;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> dgrad_W, dgrad_DY, dgrad_DX, dgrad_R;
-        int64_t fwd_workspace_bytes = 0;
-        int64_t wgrad_workspace_bytes = 0;
-        int64_t bgrad_workspace_bytes = 0;
-        int64_t dgrad_workspace_bytes = 0;
-        bool fwd_autotune = false;
-        bool wgrad_autotune = false;
-        bool bgrad_autotune = false;
-        bool dgrad_autotune = false;
         bool wgrad_fp32_output = false;
         bool dgrad_adds = false;
     };
@@ -144,10 +136,10 @@ void build_forward(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims
 
     set_nhwc_output(entry.fwd_Y, d.batch, d.kernels, d.output_height, d.output_width);
 
-    entry.fwd_autotune = finalize(
-        *graph, entry.fwd_workspace_bytes, "forward",
+    entry.fwd.autotune_pending = finalize(
+        *graph, entry.fwd.workspace_bytes, "forward",
         device::conv_autotune_enabled());
-    entry.fwd = graph;
+    entry.fwd.graph = graph;
 }
 
 // The weight gradient is accumulated in FP32 whatever the IO type (new_graph sets
@@ -174,10 +166,10 @@ void build_wgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
     if (fp32_output)
         entry.wgrad_DW->set_data_type(DataType_t::FLOAT);
 
-    entry.wgrad_autotune = finalize(
-        *graph, entry.wgrad_workspace_bytes, "wgrad",
+    entry.wgrad.autotune_pending = finalize(
+        *graph, entry.wgrad.workspace_bytes, "wgrad",
         device::conv_autotune_enabled());
-    entry.wgrad = graph;
+    entry.wgrad.graph = graph;
 }
 
 void build_bgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& d, Type dtype)
@@ -195,10 +187,10 @@ void build_bgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
                    .set_dim({1, d.kernels, 1, 1})
                    .set_stride({d.kernels, 1, d.kernels, d.kernels});
 
-    entry.bgrad_autotune = finalize(
-        *graph, entry.bgrad_workspace_bytes, "bgrad",
+    entry.bgrad.autotune_pending = finalize(
+        *graph, entry.bgrad.workspace_bytes, "bgrad",
         device::conv_autotune_enabled());
-    entry.bgrad = graph;
+    entry.bgrad.graph = graph;
 }
 
 // With `add_residual` the graph is DX = conv_dgrad(DY, W) + R: the other
@@ -233,10 +225,10 @@ void build_dgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
 
     set_nhwc_output(entry.dgrad_DX, d.batch, d.channels, d.height, d.width);
 
-    entry.dgrad_autotune = finalize(
-        *graph, entry.dgrad_workspace_bytes, "dgrad",
+    entry.dgrad.autotune_pending = finalize(
+        *graph, entry.dgrad.workspace_bytes, "dgrad",
         device::conv_autotune_enabled());
-    entry.dgrad = graph;
+    entry.dgrad.graph = graph;
 }
 
 string timing_label(const ConvolutionOperator& op, const char* kind)
@@ -616,7 +608,7 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
         && cudnn_frontend::run_frontend(conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
     {
         auto& entry = cache.entries[input.get_shape()[0]];
-        if (!entry.fwd)
+        if (!entry.fwd.graph)
             cudnn_frontend::build_forward(entry, cudnn_frontend::make_dims(*this, input.get_shape()[0]),
                                     fuse_relu, use_bias, input.get_type());
 
@@ -626,11 +618,8 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
         if (use_bias) tensors[entry.fwd_B] = bias.get_data();
         tensors[entry.fwd_Y] = output.get_data();
 
-        cudnn_frontend::autotune_with_scratch(entry.fwd_autotune, *entry.fwd, tensors,
-                                              entry.fwd_workspace_bytes, "ConvolutionOperator fwd");
-
-        cudnn_frontend::execute_graph(*entry.fwd, tensors, cudnn_frontend::shared_workspace(entry.fwd_workspace_bytes),
-                                "forward execute", cudnn_frontend::timing_label(*this, "conv_fwd"));
+        cudnn_frontend::run_slot(entry.fwd, tensors, "ConvolutionOperator fwd",
+                                 cudnn_frontend::timing_label(*this, "conv_fwd"), true);
     });
 
     if (!ran) cudnn_frontend::throw_frontend_unavailable("ConvolutionOperator: GPU convolution");
@@ -666,7 +655,7 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
         auto& entry = cache.entries[input.get_shape()[0]];
         const auto dims = cudnn_frontend::make_dims(*this, input.get_shape()[0]);
 
-        if (!entry.wgrad)
+        if (!entry.wgrad.graph)
         {
             // Prefer an FP32 weight-gradient store (see build_wgrad). A failed
             // build rebuilds every handle, so there is nothing to undo.
@@ -686,35 +675,29 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
         tensors[entry.wgrad_X]  = input.get_data();
         tensors[entry.wgrad_DW] = wgrad_bf16 ? static_cast<void*>(dw_bf16) : weight_gradient.get_data();
 
-        cudnn_frontend::autotune_now(entry.wgrad_autotune, *entry.wgrad, tensors,
-                                     entry.wgrad_workspace_bytes, "ConvolutionOperator wgrad");
-
-        cudnn_frontend::execute_graph(*entry.wgrad, tensors, cudnn_frontend::shared_workspace(entry.wgrad_workspace_bytes),
-                                "wgrad execute", cudnn_frontend::timing_label(*this, "conv_wgrad"));
+        cudnn_frontend::run_slot(entry.wgrad, tensors, "ConvolutionOperator wgrad",
+                                 cudnn_frontend::timing_label(*this, "conv_wgrad"), false);
 
         if (wgrad_bf16)
             cast_bf16_to_fp32(weight_gradient.size(), dw_bf16, weight_gradient.as<float>());
 
         if (use_bias)
         {
-            if (!entry.bgrad) cudnn_frontend::build_bgrad(entry, dims, input.get_type());
+            if (!entry.bgrad.graph) cudnn_frontend::build_bgrad(entry, dims, input.get_type());
 
             unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> bgrad_tensors;
             bgrad_tensors[entry.bgrad_DY] = output_delta.get_data();
             bgrad_tensors[entry.bgrad_DB] = bias_gradient.get_data();
 
-            cudnn_frontend::autotune_now(entry.bgrad_autotune, *entry.bgrad, bgrad_tensors,
-                                         entry.bgrad_workspace_bytes, "ConvolutionOperator bgrad");
-
-            cudnn_frontend::execute_graph(*entry.bgrad, bgrad_tensors, cudnn_frontend::shared_workspace(entry.bgrad_workspace_bytes),
-                                    "bgrad execute", cudnn_frontend::timing_label(*this, "conv_bgrad"));
+            cudnn_frontend::run_slot(entry.bgrad, bgrad_tensors, "ConvolutionOperator bgrad",
+                                     cudnn_frontend::timing_label(*this, "conv_bgrad"), false);
         }
 
         if (input_delta.get_data() && input_delta.size() != 0)
         {
             const bool want_add = addend.get_data() && addend.size() == input_delta.size();
 
-            if (!entry.dgrad)
+            if (!entry.dgrad.graph)
             {
                 entry.dgrad_adds = want_add
                     && cudnn_frontend::build_preferred(*this, "dgrad", input.get_shape()[0],
@@ -730,11 +713,8 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
             dgrad_tensors[entry.dgrad_DX] = input_delta.get_data();
             if (entry.dgrad_adds) dgrad_tensors[entry.dgrad_R] = addend.get_data();
 
-            cudnn_frontend::autotune_now(entry.dgrad_autotune, *entry.dgrad, dgrad_tensors,
-                                         entry.dgrad_workspace_bytes, "ConvolutionOperator dgrad");
-
-            cudnn_frontend::execute_graph(*entry.dgrad, dgrad_tensors, cudnn_frontend::shared_workspace(entry.dgrad_workspace_bytes),
-                                    "dgrad execute", cudnn_frontend::timing_label(*this, "conv_dgrad"));
+            cudnn_frontend::run_slot(entry.dgrad, dgrad_tensors, "ConvolutionOperator dgrad",
+                                     cudnn_frontend::timing_label(*this, "conv_dgrad"), false);
 
             // The planner counts on this operator consuming the addend either way.
             if (want_add && !entry.dgrad_adds)

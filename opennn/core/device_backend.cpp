@@ -588,7 +588,7 @@ void StreamCapture::end(GraphExecHandle& exec)
     // Node count, once per capture, when profiling: each node is a launch the
     // GPU pays ~2-3 us for regardless of batch, so at small batch this number
     // is the step's floor.
-    if (getenv("OPENNN_PROFILE") || getenv("OPENNN_GRAPH_NODES"))
+    if (env_flag_enabled("OPENNN_PROFILE") || env_flag_enabled("OPENNN_GRAPH_NODES"))
     {
         size_t nodes = 0;
         if (cudaGraphGetNodes(graph.get(), nullptr, &nodes) == cudaSuccess)
@@ -762,10 +762,8 @@ namespace
         LtMatmulPlan() = default;
         LtMatmulPlan(const LtMatmulPlan&) = delete;
         LtMatmulPlan& operator=(const LtMatmulPlan&) = delete;
-        LtMatmulPlan(LtMatmulPlan&& other) noexcept { swap_with(other); }
-        LtMatmulPlan& operator=(LtMatmulPlan&& other) noexcept { swap_with(other); return *this; }
-
-        void swap_with(LtMatmulPlan& other) noexcept
+        LtMatmulPlan& operator=(LtMatmulPlan&&) = delete;
+        LtMatmulPlan(LtMatmulPlan&& other) noexcept
         {
             swap(matmul_descriptor, other.matmul_descriptor);
             swap(a_matrix_layout, other.a_matrix_layout);
@@ -937,7 +935,6 @@ namespace
             plan.algorithm = heuristic.algo;
             plan.has_algorithm = true;
             plan.workspace_bytes = heuristic.workspaceSize;
-            ensure_shared_scratch(plan.workspace_bytes);
         }
 
         return plans.emplace(key, std::move(plan)).first->second;
@@ -1047,9 +1044,6 @@ void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t trans
 
 namespace opennn
 {
-
-
-
 
 void* ensure_workspace_bytes(device::GraphWorkspaceKind, Index) OPENNN_CUDA_STUB_BODY(ensure_workspace_bytes)
 

@@ -89,8 +89,9 @@ inline void execute_graph(graph::Graph& graph,
         return;
     }
 
-    CudaEvent begin(cudaEventDefault);
-    CudaEvent end(cudaEventDefault);
+    // Timing is a diagnostic; the two events live for the thread.
+    thread_local CudaEvent begin(cudaEventDefault);
+    thread_local CudaEvent end(cudaEventDefault);
     device::record_event(begin, device::get_compute_stream());
 
     check_status(graph.execute(Backend::get_cudnn_handle(), tensors, workspace), what);
@@ -208,16 +209,15 @@ inline void set_nhwc_output(shared_ptr<graph::Tensor_attributes>& tensor,
 // is nearly always among the first few. So build the first K viable candidates
 // in heuristic order and let autotune() skip the unbuilt slots.
 // OPENNN_AUTOTUNE_CANDIDATES overrides K (0 = build all, the old behaviour).
+// 0 or a negative count means "build all" (the old behaviour).
+inline int64_t candidate_limit_from(long long value)
+{
+    return value <= 0 ? numeric_limits<int64_t>::max() : int64_t(value);
+}
+
 inline int64_t autotune_candidate_limit()
 {
-    static const int64_t limit = []
-    {
-        const char* setting = getenv("OPENNN_AUTOTUNE_CANDIDATES");
-        if (!setting || !*setting) return int64_t(8);
-        const long long value = atoll(setting);
-        return value <= 0 ? numeric_limits<int64_t>::max() : int64_t(value);
-    }();
-
+    static const int64_t limit = candidate_limit_from(env_int_or("OPENNN_AUTOTUNE_CANDIDATES", 8));
     return limit;
 }
 
@@ -235,10 +235,7 @@ inline int64_t autotune_candidate_limit(const string& tag)
             string name = "OPENNN_AUTOTUNE_CANDIDATES_" + string(kind);
             for (char& c : name) c = char(toupper(c));
             if (const char* setting = getenv(name.c_str()); setting && *setting)
-            {
-                const long long value = atoll(setting);
-                limits[kind] = value <= 0 ? numeric_limits<int64_t>::max() : int64_t(value);
-            }
+                limits[kind] = candidate_limit_from(env_int_or(name.c_str(), 0));
         }
         return limits;
     }();
@@ -300,15 +297,7 @@ inline bool build_top_candidates(graph::Graph& graph, int64_t limit)
 inline bool plan_cache_enabled()
 {
     // On by default: a miss only costs the build that would have happened anyway.
-    static const bool enabled = []
-    {
-        const char* setting = getenv("OPENNN_CUDNN_PLAN_CACHE");
-        if (!setting || !*setting) return true;
-
-        const string value(setting);
-        return value != "0" && value != "false" && value != "off" && value != "no";
-    }();
-
+    static const bool enabled = env_flag_enabled("OPENNN_CUDNN_PLAN_CACHE", true);
     return enabled;
 }
 
@@ -419,20 +408,20 @@ inline void store_cached_plan(graph::Graph& graph)
     if (failed) std::filesystem::remove(pending, failed);
 }
 
-// Attention finalizes separately from the layer graphs: it needs no workspace
-// accounting and never autotunes.
-inline void finalize_attention(graph::Graph& graph, const string& tag)
+// Attention finalizes separately from the layer graphs: no workspace budget,
+// no autotune; it reports the workspace the built plan needs.
+inline void finalize_attention(graph::Graph& graph, const string& tag, int64_t& workspace_bytes)
 {
     const cudnnHandle_t handle = Backend::get_cudnn_handle();
 
     check_status(graph.validate(), tag + " validate");
 
-    int64_t attention_workspace_bytes = 0;
-    if (load_cached_plan(graph, handle, attention_workspace_bytes)) return;
+    if (load_cached_plan(graph, handle, workspace_bytes)) return;
 
     check_status(graph.build_operation_graph(handle), tag + " build_operation_graph");
     check_status(graph.create_execution_plans({HeurMode_t::A}), tag + " create_execution_plans");
     check_status(graph.build_plans(handle, BuildPlanPolicy_t::HEURISTICS_CHOICE), tag + " build_plans");
+    check_status(graph.get_workspace_size(workspace_bytes), tag + " workspace");
 
     store_cached_plan(graph);
 }
@@ -579,9 +568,7 @@ inline void autotune_now(bool& pending, graph::Graph& graph,
         report_autotune_skipped(tag, "unknown error");
     }
 
-#ifdef OPENNN_HAS_CUDA
-    cudaGetLastError();
-#endif
+    device::reset_last_error();
 
     workspace_bytes = graph.get_workspace_size();
 }
@@ -619,15 +606,39 @@ inline void autotune_with_scratch(bool& pending, graph::Graph& graph,
     {
         pending = false;
         buffers.clear();
-#ifdef OPENNN_HAS_CUDA
-        cudaGetLastError();
-#endif
+        device::reset_last_error();
         report_autotune_skipped(tag, e.what());
         workspace_bytes = graph.get_workspace_size();
         return;
     }
 
     autotune_now(pending, graph, scratch, workspace_bytes, tag);
+}
+
+// A built graph with what running it needs: the plan's workspace and whether
+// finalize() left the plan choice to the first real execution (autotune).
+struct GraphSlot
+{
+    shared_ptr<graph::Graph> graph;
+    int64_t workspace_bytes = 0;
+    bool autotune_pending = false;
+
+    explicit operator bool() const noexcept { return graph != nullptr; }
+    graph::Graph& operator*() const noexcept { return *graph; }
+};
+
+// Autotune once on real tensors, then execute. `scratch_autotune` times the
+// candidates on scratch copies of the outputs (graphs whose outputs feed the
+// step, or accumulate); the plain form times them in place.
+template<typename TensorMap>
+inline void run_slot(GraphSlot& slot, TensorMap& tensors, const char* what,
+                     const string& timing_label, bool scratch_autotune)
+{
+    if (scratch_autotune)
+        autotune_with_scratch(slot.autotune_pending, *slot.graph, tensors, slot.workspace_bytes, what);
+    else
+        autotune_now(slot.autotune_pending, *slot.graph, tensors, slot.workspace_bytes, what);
+    execute_graph(*slot.graph, tensors, shared_workspace(slot.workspace_bytes), what, timing_label);
 }
 
 }

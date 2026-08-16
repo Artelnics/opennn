@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/dataset/batch.h"
+#include "opennn/core/string_utilities.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/memory_debug.h"
@@ -18,11 +19,7 @@ namespace opennn
 
 bool bf16_host_input_cast_enabled() noexcept
 {
-    static const bool enabled = []
-    {
-        const char* flag = getenv("OPENNN_BF16_HOST_INPUT_CAST");
-        return !flag || string(flag) != "0";
-    }();
+    static const bool enabled = env_flag_enabled("OPENNN_BF16_HOST_INPUT_CAST", true);
 
     return enabled;
 }

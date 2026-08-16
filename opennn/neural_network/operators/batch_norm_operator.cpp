@@ -374,7 +374,7 @@ struct BatchNormalizationOperator::BatchNormalizationGraphCache
 {
     struct Entry
     {
-        shared_ptr<cudnn_frontend::graph::Graph> fwd, bwd;
+        cudnn_frontend::GraphSlot fwd, bwd;
 
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_X, fwd_Scale, fwd_Bias,
             fwd_PrevMean, fwd_PrevVar, fwd_Eps, fwd_Mom, fwd_Residual,
@@ -383,15 +383,10 @@ struct BatchNormalizationOperator::BatchNormalizationGraphCache
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_DY, bwd_Y, bwd_X, bwd_Scale,
             bwd_Bias, bwd_Mean, bwd_InvVar, bwd_DPre, bwd_DX, bwd_DScale, bwd_DBias;
 
-        int64_t fwd_workspace_bytes = 0;
-        int64_t bwd_workspace_bytes = 0;
-
-        bool bwd_forked = false;
-        bool bwd_native_dtype = false;
-        bool bwd_fused_relu = false;
-        bool bwd_own_kernel = false;   // batchnorm_backward_fused_cuda, no cuDNN graph
-        bool fwd_autotune = false;
-        bool bwd_autotune = false;
+        // The backward attempt that won (see apply_delta_gpu); nullopt until
+        // the first backward, and, with no cuDNN engine, own_kernel.
+        struct BackwardChoice { Type dtype; bool fuse_relu; bool fork; bool own_kernel; };
+        optional<BackwardChoice> bwd_choice;
     };
 
     unordered_map<Index, Entry> entries;
@@ -480,10 +475,10 @@ void build_bn_forward(BatchNormalizationOperator::BatchNormalizationGraphCache::
     entry.fwd_NextMean = next_mean;
     entry.fwd_NextVar  = next_var;
 
-    entry.fwd_autotune = finalize(
-        *graph, entry.fwd_workspace_bytes, "batchnorm forward",
+    entry.fwd.autotune_pending = finalize(
+        *graph, entry.fwd.workspace_bytes, "batchnorm forward",
         device::conv_autotune_enabled());
-    entry.fwd = graph;
+    entry.fwd.graph = graph;
 }
 
 void build_bn_backward(BatchNormalizationOperator::BatchNormalizationGraphCache::Entry& entry,
@@ -542,10 +537,10 @@ void build_bn_backward(BatchNormalizationOperator::BatchNormalizationGraphCache:
     entry.bwd_DScale = dscale;
     entry.bwd_DBias  = dbias;
 
-    entry.bwd_autotune = finalize(
-        *graph, entry.bwd_workspace_bytes, "batchnorm backward",
+    entry.bwd.autotune_pending = finalize(
+        *graph, entry.bwd.workspace_bytes, "batchnorm backward",
         device::conv_autotune_enabled());
-    entry.bwd = graph;
+    entry.bwd.graph = graph;
 }
 
 }
@@ -607,7 +602,7 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
         && cudnn_frontend::run_frontend(bn_graph_cache, "BatchNormalizationOperator", [&](BatchNormalizationGraphCache& cache)
     {
         auto& entry = cache.entries[input.get_shape()[0]];
-        if (!entry.fwd)
+        if (!entry.fwd.graph)
         {
             const int64_t batch    = input.get_shape()[0];
             const int64_t spatial  = int64_t(input.size()) / (batch * features);
@@ -636,14 +631,10 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
         tensors[entry.fwd_NextMean] = running_mean.get_data();
         tensors[entry.fwd_NextVar]  = running_variance.get_data();
 
-        cudnn_frontend::autotune_with_scratch(entry.fwd_autotune, *entry.fwd, tensors,
-                                              entry.fwd_workspace_bytes, "BatchNormOperator fwd");
-
-        cudnn_frontend::execute_graph(*entry.fwd, tensors, cudnn_frontend::shared_workspace(entry.fwd_workspace_bytes),
-                                "batchnorm forward execute",
-                                cudnn_frontend::graph_timing_enabled()
-                                ? format("bn_fwd c{} r{}", features, input.size() / features)
-                                : string());
+        cudnn_frontend::run_slot(entry.fwd, tensors, "BatchNormOperator fwd",
+                                 cudnn_frontend::graph_timing_enabled()
+                                 ? format("bn_fwd c{} r{}", features, input.size() / features) : string(),
+                                 true);
     });
 
     if (!ran)
@@ -689,7 +680,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
         && cudnn_frontend::run_frontend(bn_graph_cache, "BatchNormalizationOperator", [&](BatchNormalizationGraphCache& cache)
     {
         auto& entry = cache.entries[input.get_shape()[0]];
-        if (!entry.bwd && !entry.bwd_own_kernel)
+        if (!entry.bwd_choice)
         {
             const int64_t batch   = input.get_shape()[0];
             const int64_t spatial = int64_t(input.size()) / (batch * features);
@@ -698,7 +689,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
             // exact fused graph once, then uses the library kernel to retain the
             // dReLU and residual fork without FP32 staging. The other rungs remain
             // available for direct comparison in the GPU gradient test.
-            struct Attempt { Type dtype; bool fuse_relu; bool fork; };
+            using Attempt = BatchNormalizationGraphCache::Entry::BackwardChoice;
 
             const device::BatchNormBackwardRung rung = device::rung<device::BatchNormBackwardRung>();
 
@@ -706,13 +697,13 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
             switch (rung)
             {
             case device::BatchNormBackwardRung::StagedFp32:
-                attempts.push_back({Type::FP32, fuse_relu && !fuse_add, false});
+                attempts.push_back({Type::FP32, fuse_relu && !fuse_add, false, false});
                 break;
             case device::BatchNormBackwardRung::PlainNative:
-                attempts.push_back({input.get_type(), false, false});
+                attempts.push_back({input.get_type(), false, false, false});
                 break;
             case device::BatchNormBackwardRung::Auto:
-                attempts.push_back({input.get_type(), fuse_relu, fork_capable});
+                attempts.push_back({input.get_type(), fuse_relu, fork_capable, false});
                 break;
             case device::BatchNormBackwardRung::OwnKernel:
                 break;
@@ -727,14 +718,12 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                 {
                     cudnn_frontend::build_bn_backward(entry, batch, features, spatial,
                                                       attempt.fuse_relu, attempt.dtype, attempt.fork);
-                    entry.bwd_forked       = attempt.fork;
-                    entry.bwd_fused_relu   = attempt.fuse_relu;
-                    entry.bwd_native_dtype = attempt.dtype == input.get_type();
+                    entry.bwd_choice = attempt;
                     break;
                 }
                 catch (...)
                 {
-                    // build_bn_backward assigns entry.bwd last, so a throw leaves the
+                    // build_bn_backward assigns entry.bwd.graph last, so a throw leaves the
                     // tensor handles it already overwrote pointing at a dead graph.
                     entry.bwd_Y    = nullptr;
                     entry.bwd_DPre = nullptr;
@@ -742,34 +731,36 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                 }
             }
 
-            if (!entry.bwd)
+            if (!entry.bwd_choice)
             {
                 if (rung == device::BatchNormBackwardRung::StagedFp32
                     || rung == device::BatchNormBackwardRung::PlainNative)
                     rethrow_exception(last_failure);
-                entry.bwd_own_kernel = true;
+                entry.bwd_choice = Attempt{input.get_type(), fuse_relu, fuse_add, true};
             }
 
             // Once per shape: what this backward runs on when it is not the fully
             // fused cuDNN graph. Anything else costs extra full-tensor passes
             // (a standalone dReLU, a residual-delta copy, three FP32 staging
             // casts), and this line is the only signal of it.
-            const bool fully_fused = entry.bwd && entry.bwd_native_dtype
-                && entry.bwd_fused_relu == fuse_relu && (entry.bwd_forked || !fuse_add);
+            const Attempt& chosen = *entry.bwd_choice;
+            const bool fully_fused = !chosen.own_kernel && chosen.dtype == input.get_type()
+                && chosen.fuse_relu == fuse_relu && (chosen.fork || !fuse_add);
             if (!fully_fused)
                 cerr << "BatchNormalizationOperator backward c" << features
                      << " r" << input.size() / features << " batch " << batch << ": "
-                     << (entry.bwd_own_kernel
+                     << (chosen.own_kernel
                             ? (fuse_relu && own_forward_kernel(mask)
                                    ? "own fused kernel, ReLU from the forward mask (no fused cuDNN engine)"
                                    : "own fused kernel (no fused cuDNN engine)")
-                         : !entry.bwd_native_dtype ? "FP32-staged cuDNN graph"
-                         : entry.bwd_fused_relu ? "cuDNN graph, fused ReLU, no residual fork"
+                         : chosen.dtype != input.get_type() ? "FP32-staged cuDNN graph"
+                         : chosen.fuse_relu ? "cuDNN graph, fused ReLU, no residual fork"
                          : "plain cuDNN graph; ReLU/copy run separately")
                      << ".\n";
         }
+        const auto& chosen = *entry.bwd_choice;
 
-        if (entry.bwd_own_kernel)
+        if (chosen.own_kernel)
         {
             const Index rows = input.size() / features;
             float* partials = ensure_bf16_to_fp32_workspace(
@@ -801,13 +792,13 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
         }
 
         // Whatever the chosen graph does not fuse runs here instead, ahead of it.
-        if (fuse_relu && !entry.bwd_fused_relu)
+        if (fuse_relu && !chosen.fuse_relu)
             activation_backward(output, delta, ActivationFunction::ReLU);
 
-        if (fuse_add && !entry.bwd_forked && !residual_delta.empty())
+        if (fuse_add && !chosen.fork && !residual_delta.empty())
             copy(delta, residual_delta);
 
-        const bool stage_fp32 = bf16 && !entry.bwd_native_dtype;
+        const bool stage_fp32 = bf16 && chosen.dtype != input.get_type();
 
         void* x_ptr    = input.get_data();
         void* dy_ptr   = delta.get_data();
@@ -825,7 +816,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
         tensors[entry.bwd_DY]     = dy_ptr;
         if (entry.bwd_Bias)     tensors[entry.bwd_Bias]     = beta.get_data();
-        if (entry.bwd_forked)
+        if (chosen.fork)
         {
             tensors[entry.bwd_Y]    = output.get_data();
             tensors[entry.bwd_DPre] = residual_delta.get_data();
@@ -838,14 +829,10 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
         tensors[entry.bwd_DScale] = gamma_gradient.get_data();
         tensors[entry.bwd_DBias]  = beta_gradient.get_data();
 
-        cudnn_frontend::autotune_with_scratch(entry.bwd_autotune, *entry.bwd, tensors,
-                                              entry.bwd_workspace_bytes, "BatchNormOperator bwd");
-
-        cudnn_frontend::execute_graph(*entry.bwd, tensors, cudnn_frontend::shared_workspace(entry.bwd_workspace_bytes),
-                                "batchnorm backward execute",
-                                cudnn_frontend::graph_timing_enabled()
-                                ? format("bn_bwd c{} r{}", features, input.size() / features)
-                                : string());
+        cudnn_frontend::run_slot(entry.bwd, tensors, "BatchNormOperator bwd",
+                                 cudnn_frontend::graph_timing_enabled()
+                                 ? format("bn_bwd c{} r{}", features, input.size() / features) : string(),
+                                 true);
 
         if (stage_fp32) store_as_bfloat16(*staging, dx_fp32, delta.get_data());
     });

@@ -24,6 +24,17 @@
 namespace opennn
 {
 
+// The softmax scale; a zero head dimension (operator not set) gets 1/sqrt(16).
+static float attention_scale(Index head_dim)
+{
+    return head_dim == 0 ? 0.25f : 1.0f / sqrt(float(head_dim));
+}
+
+float AttentionOperator::scaling_factor() const
+{
+    return attention_scale(head_dimension);
+}
+
 void AttentionOperator::set(Index new_heads_number, Index new_head_dimension,
                     Index new_query_sequence_length, Index new_source_sequence_length,
                     bool new_use_causal_mask, Type new_compute_dtype)
@@ -42,10 +53,6 @@ void AttentionOperator::set(Index new_heads_number, Index new_head_dimension,
         causal_mask.resize(0, 0);
 }
 
-float AttentionOperator::scaling_factor() const
-{
-    return (head_dimension == 0) ? 0.25f : 1.0f / float(sqrt(head_dimension));
-}
 
 static bool row_nonzero(const float* row, Index dim)
 {
@@ -196,7 +203,6 @@ struct AttentionOperator::SDPACache
         Index src_seq    = 0;
         Index heads      = 0;
         Index head_dim   = 0;
-        Type  dtype      = Type::FP32;
         bool  dropout_active = false;
         bool  causal         = false;
         bool  is_training    = false;
@@ -209,7 +215,6 @@ struct AttentionOperator::SDPACache
         size_t operator()(const CacheKey& k) const
         {
             return hash_combine(k.batch_size, k.q_seq, k.src_seq, k.heads, k.head_dim,
-                                Index(k.dtype),
                                 Index(k.dropout_active), Index(k.causal), Index(k.is_training));
         }
     };
@@ -280,7 +285,6 @@ struct AttentionOperator::SDPACache
 namespace
 {
 
-float attention_scale(Index head_dim) { return 1.0f / sqrt(float(head_dim)); }
 
 shared_ptr<cudnn_frontend::graph::Tensor_attributes>
 bhsd_input(cudnn_frontend::graph::Graph& graph, const char* name, int64_t B, int64_t H, int64_t S, int64_t D)
@@ -327,7 +331,7 @@ static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
                                       const AttentionOperator::SDPACache::CacheKey& k,
                                       float dropout_rate)
 {
-    const auto graph = cudnn_frontend::new_graph(k.dtype);
+    const auto graph = cudnn_frontend::new_graph(Type::BF16);   // the SDPA graphs are BF16 (FP32 goes through the BF16 pack)
 
     entry.fwd_Q = bhsd_input(*graph, "Q", k.batch_size, k.heads, k.q_seq,   k.head_dim);
     entry.fwd_K = bhsd_input(*graph, "K", k.batch_size, k.heads, k.src_seq, k.head_dim);
@@ -381,9 +385,8 @@ static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
         entry.fwd_Stats = Stats;
     }
 
-    cudnn_frontend::finalize_attention(*graph, "sdpa fwd");
-
-    const int64_t ws = graph->get_workspace_size();
+    int64_t ws = 0;
+    cudnn_frontend::finalize_attention(*graph, "sdpa fwd", ws);
     if (ws > 0)
         entry.fwd_workspace_buf = device::allocate(Device::CUDA, Index(ws));
 
@@ -400,7 +403,7 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
                                        const AttentionOperator::SDPACache::CacheKey& k,
                                        float dropout_rate)
 {
-    const auto graph = cudnn_frontend::new_graph(k.dtype);
+    const auto graph = cudnn_frontend::new_graph(Type::BF16);   // the SDPA graphs are BF16 (FP32 goes through the BF16 pack)
 
     entry.bwd_Q  = bhsd_input(*graph, "Q_bwd",  k.batch_size, k.heads, k.q_seq,   k.head_dim);
     entry.bwd_K  = bhsd_input(*graph, "K_bwd",  k.batch_size, k.heads, k.src_seq, k.head_dim);
@@ -454,9 +457,8 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
     entry.bwd_dK = dK;
     entry.bwd_dV = dV;
 
-    cudnn_frontend::finalize_attention(*graph, "sdpa bwd");
-
-    const int64_t ws = graph->get_workspace_size();
+    int64_t ws = 0;
+    cudnn_frontend::finalize_attention(*graph, "sdpa bwd", ws);
     if (ws > 0)
         entry.bwd_workspace_buf = device::allocate(Device::CUDA, Index(ws));
 
@@ -872,7 +874,6 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
         key.get_shape()[2],
         heads_number,
         head_dimension,
-        Type::BF16,
         dropout_in_graph,
         use_causal_mask,
         is_training
@@ -1125,7 +1126,6 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
         key.get_shape()[2],
         heads_number,
         head_dimension,
-        Type::BF16,
         dropout_in_graph,
         use_causal_mask,
         true

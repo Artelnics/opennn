@@ -818,7 +818,7 @@ void LongShortTermMemoryOperator::ensure_cudnn_setup_(Index batch_size, bool for
             "Reconfigure the layer or fall back to CPU.");
     }
 
-    cudnn_setup_({CUDNN_LSTM, 8, "OPENNN_RNN_PERSIST"},
+    cudnn_setup_({CUDNN_LSTM, 8},
                  input_features, output_features, time_steps,
                  batch_size, for_training);
 }

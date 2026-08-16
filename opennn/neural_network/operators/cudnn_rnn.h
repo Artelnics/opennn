@@ -87,7 +87,6 @@ struct CudnnRnnConfig
 {
     cudnnRNNMode_t cell_mode;
     int num_linear_layers;
-    const char* persist_env_var;
 };
 
 #endif
@@ -138,6 +137,14 @@ protected:
     void cudnn_setup_attempt_(const CudnnRnnConfig&,
                               Index input_features, Index output_features, Index time_steps,
                               Index batch_size, bool for_training) const;
+    // Weights and biases between the library's per-linear-layer tensors and
+    // cuDNN's packed weight space (to_cudnn) or the gradients back (!to_cudnn).
+    void cudnn_copy_weight_regions_(int num_linear_layers,
+                                    Index input_features,
+                                    Index output_features,
+                                    const TensorView* const* matrices,
+                                    const TensorView* const* vectors,
+                                    bool to_cudnn) const;
     void cudnn_pack_weights_(int num_linear_layers,
                              Index input_features, Index output_features,
                              const TensorView* const* weights,

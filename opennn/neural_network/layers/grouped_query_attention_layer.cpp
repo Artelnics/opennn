@@ -537,9 +537,7 @@ static bool grouped_attention_sdpa_gpu(const int batch, const int query_seq, con
                    .set_stride(strides(n_query_heads, query_seq));
                 entry.O = out;
 
-                cudnn_frontend::finalize_attention(*graph, "gqa sdpa fwd");
-                cudnn_frontend::check_status(graph->get_workspace_size(entry.workspace_bytes),
-                                             "gqa sdpa get_workspace_size");
+                cudnn_frontend::finalize_attention(*graph, "gqa sdpa fwd", entry.workspace_bytes);
                 entry.graph = graph;
             }
 
@@ -987,9 +985,8 @@ void gqa_sdpa_build(GroupedAttentionSDPA& s, Index max_q, Index max_kv,
       .set_stride({q_heads * max_q * head_dim, head_dim, q_heads * head_dim, 1});
     s.O = O;
 
-    cudnn_frontend::finalize_attention(*graph, "gqa sdpa");
-
-    const int64_t workspace_bytes = graph->get_workspace_size();
+    int64_t workspace_bytes = 0;
+    cudnn_frontend::finalize_attention(*graph, "gqa sdpa", workspace_bytes);
     device::deallocate(Device::CUDA, s.workspace, 0);
     s.workspace = workspace_bytes > 0 ? device::allocate(Device::CUDA, Index(workspace_bytes)) : nullptr;
 

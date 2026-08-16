@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/operators/cudnn_rnn.h"
+#include "opennn/core/string_utilities.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/neural_network/layers/kernel_recurrent.cuh"
 
@@ -15,12 +16,10 @@
 namespace opennn
 {
 
-static bool persist_env_enabled(const char* env_var)
+// OPENNN_RNN_PERSIST=0 turns the persistent cuDNN RNN algorithm off.
+static bool persist_env_enabled()
 {
-    static const bool enabled = [env_var]() {
-        const char* env = getenv(env_var);
-        return !(env && string(env) == "0");
-    }();
+    static const bool enabled = env_flag_enabled("OPENNN_RNN_PERSIST", true);
     return enabled;
 }
 
@@ -31,7 +30,7 @@ void CudnnRnnState::cudnn_setup_(const CudnnRnnConfig& config,
                                  Index batch_size,
                                  bool for_training) const
 {
-    if (!persist_algo_failed_ && persist_env_enabled(config.persist_env_var))
+    if (!persist_algo_failed_ && persist_env_enabled())
     {
         try
         {
@@ -57,7 +56,7 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
                                          Index batch_size,
                                          bool for_training) const
 {
-    persist_algo_active_ = !persist_algo_failed_ && persist_env_enabled(config.persist_env_var);
+    persist_algo_active_ = !persist_algo_failed_ && persist_env_enabled();
 
     const Index F = input_features;
     const Index H = output_features;
@@ -261,30 +260,47 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
     cached_output_features = H;
 }
 
+void CudnnRnnState::cudnn_copy_weight_regions_(int num_linear_layers,
+                                               Index input_features,
+                                               Index output_features,
+                                               const TensorView* const* matrices,
+                                               const TensorView* const* vectors,
+                                               bool to_cudnn) const
+{
+    const int F = int(input_features);
+    const int H = int(output_features);
+    const int input_layers = num_linear_layers / 2;
+    float* const* cudnn_matrices = to_cudnn ? cudnn_w_ptrs_ : cudnn_gw_ptrs_;
+    float* const* cudnn_vectors  = to_cudnn ? cudnn_b_ptrs_ : cudnn_gb_ptrs_;
+
+    RnnCopySpec specs[RNN_COPY_MAX_REGIONS];
+    int count = 0;
+    for (int lin = 0; lin < num_linear_layers; ++lin)
+    {
+        const int rows = lin < input_layers ? F : H;
+        if (cudnn_matrices[lin] && matrices[lin]->get_data())
+        {
+            float* ours = const_cast<float*>(matrices[lin]->as<float>());
+            specs[count++] = to_cudnn ? RnnCopySpec{ours, cudnn_matrices[lin], rows, H, 1}
+                                      : RnnCopySpec{cudnn_matrices[lin], ours, H, rows, 1};
+        }
+        if (cudnn_vectors[lin] && vectors[lin] && vectors[lin]->get_data())
+        {
+            float* ours = const_cast<float*>(vectors[lin]->as<float>());
+            specs[count++] = to_cudnn ? RnnCopySpec{ours, cudnn_vectors[lin], 1, H, 0}
+                                      : RnnCopySpec{cudnn_vectors[lin], ours, 1, H, 0};
+        }
+    }
+    rnn_copy_regions_cuda(specs, count);
+}
+
 void CudnnRnnState::cudnn_pack_weights_(int num_linear_layers,
                                         Index input_features,
                                         Index output_features,
                                         const TensorView* const* weights,
                                         const TensorView* const* biases) const
 {
-    const Index F = input_features;
-    const Index H = output_features;
-    const int input_layers = num_linear_layers / 2;
-
-    RnnCopySpec specs[RNN_COPY_MAX_REGIONS];
-    int count = 0;
-    for (int lin = 0; lin < num_linear_layers; ++lin)
-    {
-        const bool is_input_w = (lin < input_layers);
-        if (cudnn_w_ptrs_[lin] && weights[lin]->get_data())
-            specs[count++] = {weights[lin]->as<float>(), cudnn_w_ptrs_[lin],
-                              int(is_input_w ? F : H), int(H), 1};
-
-        if (cudnn_b_ptrs_[lin] && biases[lin] && biases[lin]->get_data())
-            specs[count++] = {biases[lin]->as<float>(), cudnn_b_ptrs_[lin],
-                              1, int(H), 0};
-    }
-    rnn_copy_regions_cuda(specs, count);
+    cudnn_copy_weight_regions_(num_linear_layers, input_features, output_features, weights, biases, true);
 }
 
 void CudnnRnnState::cudnn_unpack_gradients_(int num_linear_layers,
@@ -293,26 +309,7 @@ void CudnnRnnState::cudnn_unpack_gradients_(int num_linear_layers,
                                             const TensorView* const* weight_gradients,
                                             const TensorView* const* bias_gradients) const
 {
-    const Index F = input_features;
-    const Index H = output_features;
-    const int input_layers = num_linear_layers / 2;
-
-    RnnCopySpec specs[RNN_COPY_MAX_REGIONS];
-    int count = 0;
-    for (int lin = 0; lin < num_linear_layers; ++lin)
-    {
-        const bool is_input_w = (lin < input_layers);
-        if (cudnn_gw_ptrs_[lin] && weight_gradients[lin]->get_data())
-            specs[count++] = {cudnn_gw_ptrs_[lin],
-                              const_cast<float*>(weight_gradients[lin]->as<float>()),
-                              int(H), int(is_input_w ? F : H), 1};
-
-        if (cudnn_gb_ptrs_[lin] && bias_gradients[lin] && bias_gradients[lin]->get_data())
-            specs[count++] = {cudnn_gb_ptrs_[lin],
-                              const_cast<float*>(bias_gradients[lin]->as<float>()),
-                              1, int(H), 0};
-    }
-    rnn_copy_regions_cuda(specs, count);
+    cudnn_copy_weight_regions_(num_linear_layers, input_features, output_features, weight_gradients, bias_gradients, false);
 }
 
 void CudnnRnnState::cudnn_rnn_forward_(bool is_training, bool has_cell_state,

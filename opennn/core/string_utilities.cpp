@@ -443,6 +443,27 @@ bool env_flag_enabled(const char* name) noexcept
                           });
 }
 
+bool env_flag_enabled(const char* name, bool default_value) noexcept
+{
+    const char* const value = getenv(name);
+    if (!value || !*value) return default_value;
+    const string_view text(value);
+    for (string_view on : {"1", "true", "on", "yes"})
+        if (equal_ignoring_case(text, on)) return true;
+    for (string_view off : {"0", "false", "off", "no"})
+        if (equal_ignoring_case(text, off)) return false;
+    return default_value;
+}
+
+long long env_int_or(const char* name, long long default_value) noexcept
+{
+    const char* const value = getenv(name);
+    if (!value || !*value) return default_value;
+    char* end = nullptr;
+    const long long parsed = strtoll(value, &end, 10);
+    return end == value ? default_value : parsed;
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

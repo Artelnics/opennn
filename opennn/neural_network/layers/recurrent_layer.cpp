@@ -353,7 +353,7 @@ static CudnnRnnConfig recurrent_cudnn_config(ActivationFunction activation)
 {
     return {activation == ActivationFunction::ReLU ? CUDNN_RNN_RELU
                                                    : CUDNN_RNN_TANH,
-            2, "OPENNN_RNN_PERSIST"};
+            2};
 }
 
 void RecurrentOperator::ensure_cudnn_setup_(Index batch_size, bool for_training) const

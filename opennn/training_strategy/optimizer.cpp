@@ -1498,7 +1498,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         catch (const exception& capture_error)
         {
             training_session.disable_cuda_graph_capture();
-            cout << "CUDA graph capture failed (" << capture_error.what()
+            cerr << "CUDA graph capture failed (" << capture_error.what()
                  << "); continuing without graphs.\n";
             ::opennn::enabled() = profiler_enabled;
             operation();
