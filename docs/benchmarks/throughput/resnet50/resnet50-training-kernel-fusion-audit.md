@@ -108,39 +108,45 @@ an fp32 gradient-check confirms the un-fused engine is truly wrong, not noisier.
 
 ## 9. Three-way throughput on the audit machine (RTX 3060 Laptop, 6 GB, WSL2)
 
-Whole batches, corrected sample counts, all three engines same session. samples/s:
+Definitive run, 2026-08-16, all three engines in one session, final binary
+(everything in this note plus the plan's items 0a, 0d, 1a, 1b and Phase 2),
+whole batches, corrected sample counts, autotuned top-8. Result JSONs
+`gpu-resnet50-peak-batch-speed-20260816T010828Z / 011958Z / 013818Z`.
 
 **bf16**
 
 | batch | OpenNN | PyTorch | TensorFlow |
 |---:|---:|---:|---:|
-| 128 | **10,579** | 5,495 | 7,963 |
-| 256 | **13,657** | 10,432 | 10,341 |
-| 512 | **15,827** | 14,947 | 15,673 |
-| 1024 | 17,721 | 19,098 | 18,819 |
-| 2048 | 17,427 | 21,405 | **21,641** |
-| peak | 17,721 @1024 | 21,405 @2048 | **21,641 @2048** |
+| 128 | **12,314** | 7,052 | 8,499 |
+| 256 | **16,191** | 12,145 | 11,951 |
+| 512 | **20,257** | 15,870 | 15,949 |
+| 1024 | **22,129** | 18,157 | 18,680 |
+| 2048 | **22,704** | 20,035 | 21,369 |
+| 4096 | **23,283** | 21,072 | OOM |
+| 8192 | 2,133 (6 GB paging) | 1,459 (paging) | — |
+| peak | **23,283 @4096** | 21,072 @4096 | 21,369 @2048 |
 
 **fp32**
 
 | batch | OpenNN | PyTorch | TensorFlow |
 |---:|---:|---:|---:|
-| 128 | **6,154** | 5,665 | 4,430 |
-| 256 | **7,409** | 7,317 | 5,837 |
-| 512 | **8,662** | 8,334 | 7,132 |
-| 1024 | 8,745 | **9,739** | 7,786 |
-| 2048 | 8,356 | **10,363** | — |
-| peak | 8,745 @1024 | 10,363 @2048 | 7,786 @1024 |
+| 128 | **6,737** | 5,596 | 4,655 |
+| 256 | **8,304** | 7,059 | 5,939 |
+| 512 | **9,394** | 8,189 | 7,312 |
+| 1024 | **10,231** | 9,248 | 8,341 |
+| 2048 | **11,489** | 10,058 | OOM |
+| 4096 | 1,220 (paging) | timeout | — |
+| peak | **11,489 @2048** | 10,058 @2048 | 8,341 @1024 |
 
-**Crossover, not a clean win on this GPU.** OpenNN wins small batch (128–512) in
-both precisions on both engines (1.9× PyTorch, 1.3× TF at bf16/128). At peak it
-loses to PyTorch in both precisions (0.83× bf16, 0.84× fp32) and to TensorFlow
-in bf16 (0.82×), beating TF only at the fp32 peak (1.12×). This contradicts the
-canonical RTX 4080 result (1.35–1.50× wins) — real hardware difference: a 30-SM
-mobile GPU in WSL2 where launch overhead is our edge and PT/TF's per-kernel
-plateau is higher, plus OpenNN ran in `heur` mode here (autotune crashes WSL,
-~13% self-handicap at large batch). Closing the peak needs the fusion work in
-§6/§8, not the four micro-improvements.
+**OpenNN leads at every point in both precisions.** Peak vs peak: bf16 1.11×
+PyTorch / 1.09× TensorFlow; fp32 1.14× / 1.38×; batch 128 bf16 1.75× / 1.45×.
+The Saturday-morning picture (§ audit thread) was 0.83× at the bf16 peak with a
+cliff past 1024; the change is the sum of the workspace budget, top-K autotune,
+the plain-bf16 rung, the fused residual join and the own batch-norm backward
+kernel, each measured on its own. Points past the card's 6 GB are WSL2 paging
+for every engine and are not throughput measurements. The product claim is the
+RTX 4080's number: run the two gradient tests, `speed_gate.py --record
+--tolerance 0.05` and the peak-batch sweep there.
 
 ## 10. Not recommended (already tried)
 
