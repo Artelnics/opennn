@@ -189,12 +189,26 @@ The plain cutlass/xmma engines cuDNN picks for our convolutions do not offer
 these prologue/epilogue fusions; where a runtime-fusion engine exists it is far
 slower on these shapes. (Our own `dgrad + ADD` fold measured *faster* because a
 source-add is a native cutlass epilogue; a masked ReLU with a second full
-tensor is not.) So on this GPU/cuDNN generation Phase 3 as designed cannot
-deliver, and the weeks it would cost are better spent elsewhere. Two things
-keep it alive as an option, not a plan: run the probe on the RTX 4080 (cuDNN
-9.23; two minutes, engine coverage differs by architecture and version), and
-note that the cuDNN samples exercise these patterns in FP16 - a training type
-the library does not offer, and one that would bring loss scaling with it.
+tensor is not.)
+
+**Re-run on cuDNN 9.24.0 (2026-08-16), same GPU: identical.** genstats, SBRCS
+and DBAR still have no engine on any of the nine shapes; `dgrad + dReLU` is
+1.5–19× slower than plain. The verdict is architecture-bound (Ampere), not a
+library-version artefact; the RTX 4080 is the same generation and likely the
+same, Blackwell may differ - the probe answers in two minutes wherever it runs.
+So on this GPU generation Phase 3 as designed cannot deliver, and the weeks it
+would cost are better spent elsewhere. One caveat kept on record: the cuDNN
+samples exercise these patterns in FP16, a training type the library does not
+offer and one that brings loss scaling with it.
+
+**Library parity.** The 3-way sweeps until 2026-08-16 ran OpenNN on the WSL
+system cuDNN 9.10.2 while PyTorch's wheel bundles cuDNN 9.24. A 9.24 build
+(`nvidia-cudnn-cu12` wheel, no sudo needed; RUNPATH carries the wheel's lib
+dir) measures equal within noise at top-8 - bf16 2048 23,987 → 24,421, bf16
+1024 21,472 → 21,310, fp32 2048 11,089 - with all gradient tests unchanged
+(plain-bf16 rung and own kernel exact on 9.24 too) and top-8 still ≥ all
+candidates. Benchmarks and the gate on this machine now run on 9.24 (its own
+gate key: `... | cudnn 92400`).
 
 ### Phase 3' — what replaces it (own kernels, no dependence on cuDNN fusion engines)
 
@@ -210,10 +224,27 @@ passes. What remains:
   the rest, and the fp32 x̂-from-Y trick becomes unnecessary. Expected ~-5% of
   the step, both precisions. Gate: gradient tests, forward at parity with the
   cuDNN graph (measured), backward faster.
-- **3'b. Convolution engine choice** (hours). Conv is 60% and already
-  autotuned; the cheap experiments left are the heuristic mode (`HeurMode_t::B`
-  or the A+B union) as the candidate source, and K per graph kind (wgrad is the
-  largest single component). Keep whatever measures faster; a few % at most.
+- **3'b. Convolution engine choice — measured on cuDNN 9.24, nothing beats the
+  defaults here.** Three knobs now live in `finalize` (defaults unchanged, all
+  environment-controlled, all folded into the plan-cache key): heuristic mode
+  `OPENNN_CUDNN_HEURISTICS=A|B|AB`, per-kind candidate count
+  `OPENNN_AUTOTUNE_CANDIDATES_{FORWARD,WGRAD,DGRAD}`, and a numeric-note
+  restriction for convolution graphs `OPENNN_CONV_ENGINE_NOTES=WINOGRAD,FFT`
+  (falls back to the unrestricted list for shapes without such engines).
+  Measured at batch 2048, autotuned, fresh plan cache, RTX 3060 / cuDNN 9.24
+  (repeat runs of the default itself differ by ~1.5–4%):
+
+  | knob | bf16 | fp32 |
+  |---|---:|---:|
+  | default (A, K=8, auto budget) | 22,804 / 23,138 | 11,500 / 11,481 / 11,966 |
+  | heuristics B | 23,268 | 11,117 |
+  | heuristics A+B | 23,474 | 11,391 |
+  | wgrad K=16 | 23,410 | 11,112 |
+  | Winograd/FFT + 1 GiB budget | — | 11,489 (2048), 11,090 vs 10,680 (1024) |
+
+  All inside noise: the top-8 autotune already reaches the good engines on this
+  GPU. The knobs stay as levers for other GPUs (the RTX 4080 may rank
+  differently); the gate protects the defaults.
 - **3'c. Pooling backward** (a day). `cudnnPoolingBackward` recomputes the
   argmax; a mask from the forward makes it one read + one scatter: ~1-2%.
 

@@ -19,5 +19,26 @@
     "recorded": "2026-08-16T01:07:09Z",
     "repeats": 2,
     "tolerance": 0.1
+  },
+  "NVIDIA GeForce RTX 3060 Laptop GPU | cudnn 92400": {
+    "commit": "e05fee111",
+    "epochs": 3,
+    "points": {
+      "bf16@1024": {
+        "samples_per_sec": 21852
+      },
+      "bf16@128": {
+        "samples_per_sec": 13171
+      },
+      "bf16@128+tail": {
+        "samples_per_sec": 13191
+      },
+      "fp32@1024": {
+        "samples_per_sec": 10844
+      }
+    },
+    "recorded": "2026-08-16T08:56:11Z",
+    "repeats": 2,
+    "tolerance": 0.1
   }
 }

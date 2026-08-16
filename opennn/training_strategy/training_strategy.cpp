@@ -9,7 +9,6 @@
 #include "opennn/training_strategy/training_strategy.h"
 
 #include "opennn/registry.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
 
 namespace opennn
 {
@@ -72,16 +71,11 @@ void TrainingStrategy::set_optimization_algorithm(const string& new_optimization
 
 void TrainingStrategy::set_default()
 {
-    static constexpr Index classification_epochs = 100;
-    static constexpr float language_model_learning_rate = 0.0001f;
-
     if (!get_neural_network())
         return;
 
     const char* loss_name = "MeanSquaredError";
     const char* optimizer_name = "AdaptiveMomentEstimation";
-    bool limit_epochs = false;
-    bool lower_adam_learning_rate = false;
 
     switch (neural_network->get_task())
     {
@@ -96,12 +90,10 @@ void TrainingStrategy::set_default()
         case NetworkTask::ObjectDetection:
         case NetworkTask::TextClassification:
             loss_name = "CrossEntropy";
-            limit_epochs = true;
             break;
 
         case NetworkTask::LanguageModeling:
             loss_name = "CrossEntropyError3d";
-            lower_adam_learning_rate = true;
             break;
 
         case NetworkTask::Generic:
@@ -113,16 +105,7 @@ void TrainingStrategy::set_default()
 
     set_loss(loss_name);
     set_optimization_algorithm(optimizer_name);
-
-    if (limit_epochs)
-        optimizer->set_maximum_epochs(classification_epochs);
-
-    if (lower_adam_learning_rate)
-    {
-        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get());
-        throw_if(!adam, "Language-model defaults require AdaptiveMomentEstimation.");
-        adam->set_learning_rate(language_model_learning_rate);
-    }
+    optimizer->configure_for_task(neural_network->get_task());
 }
 
 TrainingResult TrainingStrategy::train()

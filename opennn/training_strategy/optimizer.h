@@ -68,6 +68,8 @@ public:
 
     void set_gradient_clip_norm(const float new_clip) { gradient_clip_norm = new_clip; }
 
+    virtual void configure_for_task(NetworkTask);
+
     virtual TrainingResult train();
 
     Index get_maximum_batch_size() const;

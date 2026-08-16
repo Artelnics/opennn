@@ -28,6 +28,8 @@ public:
 
     void set_default();
 
+    void configure_for_task(NetworkTask) override;
+
     void set_learning_rate(const float new_learning_rate) { learning_rate = new_learning_rate; }
     float get_learning_rate() const { return learning_rate; }
     void set_beta_1(const float);

@@ -221,6 +221,69 @@ inline int64_t autotune_candidate_limit()
     return limit;
 }
 
+// Per-kind candidate count: OPENNN_AUTOTUNE_CANDIDATES_<KIND> (KIND = FORWARD,
+// WGRAD, DGRAD, from the graph tag) overrides the global count for that graph
+// kind - the weight gradient is the largest single component of a ResNet step
+// and may deserve a wider search than the rest.
+inline int64_t autotune_candidate_limit(const string& tag)
+{
+    static const auto per_kind = []
+    {
+        map<string, int64_t> limits;
+        for (const char* kind : {"forward", "wgrad", "dgrad"})
+        {
+            string name = "OPENNN_AUTOTUNE_CANDIDATES_" + string(kind);
+            for (char& c : name) c = char(toupper(c));
+            if (const char* setting = getenv(name.c_str()); setting && *setting)
+            {
+                const long long value = atoll(setting);
+                limits[kind] = value <= 0 ? numeric_limits<int64_t>::max() : int64_t(value);
+            }
+        }
+        return limits;
+    }();
+
+    const auto found = per_kind.find(tag);
+    return found == per_kind.end() ? autotune_candidate_limit() : found->second;
+}
+
+// Which heuristic list seeds the candidates: OPENNN_CUDNN_HEURISTICS = A
+// (default), B, or AB (A's list followed by B's). Modes rank engines
+// differently; which is right is a per-GPU measurement.
+inline vector<HeurMode_t> heuristic_modes()
+{
+    static const vector<HeurMode_t> modes = []
+    {
+        const char* setting = getenv("OPENNN_CUDNN_HEURISTICS");
+        const string value = setting ? setting : "A";
+        if (value == "B")  return vector<HeurMode_t>{HeurMode_t::B, HeurMode_t::FALLBACK};
+        if (value == "AB") return vector<HeurMode_t>{HeurMode_t::A, HeurMode_t::B, HeurMode_t::FALLBACK};
+        return vector<HeurMode_t>{HeurMode_t::A, HeurMode_t::FALLBACK};
+    }();
+    return modes;
+}
+
+// Restrict a convolution graph's candidates to engines carrying the given
+// numerical notes: OPENNN_CONV_ENGINE_NOTES = WINOGRAD, FFT, or WINOGRAD,FFT.
+// Those engines rank low in the heuristics and need workspace, so a top-K
+// search over the default order never reaches them; this lets an A/B ask
+// whether they beat implicit GEMM on a given GPU (fp32 3x3 layers, mostly).
+// Empty when unset. Applied to conv graphs only - batch-norm graphs have no
+// such engines and would lose every candidate.
+inline const vector<NumericalNote_t>& conv_engine_notes()
+{
+    static const vector<NumericalNote_t> notes = []
+    {
+        vector<NumericalNote_t> selected;
+        const char* setting = getenv("OPENNN_CONV_ENGINE_NOTES");
+        const string value = setting ? setting : "";
+        if (value.find("WINOGRAD") != string::npos) selected.push_back(NumericalNote_t::WINOGRAD);
+        if (value.find("FFT") != string::npos)      selected.push_back(NumericalNote_t::FFT);
+        return selected;
+    }();
+    return notes;
+}
+
 // Builds candidates in heuristic order until `limit` of them exist; plans the
 // workspace budget bars fail fast and do not count. True if at least one built.
 inline bool build_top_candidates(graph::Graph& graph, int64_t limit)
@@ -279,10 +342,16 @@ inline std::filesystem::path plan_cache_file(const graph::Graph& graph)
     // The workspace cap changes which plans survive selection, and autotune
     // changes which survivor wins, so runs that differ in either must not share
     // a cached plan for the same graph.
+    size_t selection = size_t(autotune_candidate_limit());
+    for (const char* kind : {"forward", "wgrad", "dgrad"})
+        selection = selection * 31 + size_t(autotune_candidate_limit(kind));
+    for (const HeurMode_t mode : heuristic_modes()) selection = selection * 31 + size_t(mode) + 1;
+    for (const NumericalNote_t note : conv_engine_notes()) selection = selection * 31 + size_t(note) + 7;
+
     const size_t key = std::hash<json>{}(structure)
         ^ (std::hash<int64_t>{}(device::conv_workspace_limit_bytes()) << 1)
         ^ (std::hash<bool>{}(device::conv_autotune_enabled()) << 2)
-        ^ (std::hash<int64_t>{}(autotune_candidate_limit()) << 3);
+        ^ (std::hash<size_t>{}(selection) << 3);
 
     return plan_cache_directory() / format("{:016x}.plan", key);
 }
@@ -390,9 +459,6 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
     if (load_cached_plan(graph, handle, workspace_bytes)) return false;
 
     check_status(graph.build_operation_graph(handle), tag + " build_operation_graph");
-    check_status(graph.create_execution_plans({HeurMode_t::A, HeurMode_t::FALLBACK}),
-                 tag + " create_execution_plans");
-
     // The workspace budget is applied in every mode, autotune included. Left
     // unbounded, cuDNN's first heuristic choice for these NHWC shapes needs a
     // scratch that grows with the batch (~4 MiB per sample on sm_86: 2 GiB at
@@ -401,8 +467,21 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
     // 1.5-2x faster at every batch on an RTX 3060, while the unbounded plan
     // collapsed throughput 5-30x once its scratch spilled and then OOMed.
     const int64_t conv_workspace_cap = device::conv_workspace_limit_bytes();
-    if (conv_workspace_cap > 0)
-        graph.deselect_workspace_greater_than(conv_workspace_cap);
+
+    // Candidate list: the heuristic modes' engines under the workspace budget,
+    // optionally restricted to the requested numeric notes for convolution
+    // graphs (see conv_engine_notes). A restricted list can be empty for a
+    // shape - 1x1 convolutions have no Winograd engine - so the build below
+    // falls back to the unrestricted list rather than leaving it without a plan.
+    const bool convolution_graph = tag == "forward" || tag == "wgrad" || tag == "dgrad";
+    const auto prepare_candidates = [&](bool restrict_notes)
+    {
+        check_status(graph.create_execution_plans(heuristic_modes()), tag + " create_execution_plans");
+        if (conv_workspace_cap > 0)
+            graph.deselect_workspace_greater_than(conv_workspace_cap);
+        if (restrict_notes)
+            graph.select_numeric_notes(conv_engine_notes());
+    };
 
     // Plans over budget are barred and left unbuilt (nullptr), as are the
     // candidates past the top-K; autotune() skips those slots. The access
@@ -410,14 +489,29 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
     // Graph::get_autotune_workspace_size(), which dereferences every slot
     // including the unbuilt ones — see autotune_workspace_bytes() below, which
     // is why that accessor is not used.
-    const bool autotune = request_autotune
-        && build_top_candidates(graph, autotune_candidate_limit());
+    const auto build_candidates = [&]() -> bool
+    {
+        if (request_autotune)
+            return build_top_candidates(graph, autotune_candidate_limit(tag));
+        return graph.build_plans(handle, BuildPlanPolicy_t::HEURISTICS_CHOICE).is_good();
+    };
+
+    bool restricted = convolution_graph && !conv_engine_notes().empty();
+    prepare_candidates(restricted);
+    bool built = build_candidates();
+    if (!built && restricted)
+    {
+        restricted = false;
+        prepare_candidates(false);
+        built = build_candidates();
+    }
+    // Still nothing: report it the way build_plans does, and let the caller decide.
+    if (!built)
+        check_status(graph.build_plans(handle, BuildPlanPolicy_t::HEURISTICS_CHOICE), tag + " build_plans");
 
     // An autotuned graph is measured against real data by the caller before a plan
     // is pinned, so caching here would store a plan the tuning has not chosen yet.
-    if (autotune) return true;
-
-    check_status(graph.build_plans(handle, BuildPlanPolicy_t::HEURISTICS_CHOICE), tag + " build_plans");
+    if (request_autotune && built) return true;
 
     check_status(graph.get_workspace_size(workspace_bytes), tag + " get_workspace_size");
 

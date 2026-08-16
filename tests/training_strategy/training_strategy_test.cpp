@@ -52,6 +52,20 @@ TEST(TrainingStrategy, UsesExplicitNetworkTask)
     EXPECT_FLOAT_EQ(adam->get_learning_rate(), 0.0001f);
 }
 
+TEST(TrainingStrategy, ClassificationFamilyUsesOptimizerTaskDefaults)
+{
+    TabularDataset dataset(10, {2}, {2});
+    NeuralNetwork neural_network;
+    neural_network.set_task(NetworkTask::ImageClassification);
+
+    TrainingStrategy training_strategy(&neural_network, &dataset);
+
+    EXPECT_EQ(training_strategy.get_loss()->get_name(), "CrossEntropy");
+    EXPECT_EQ(training_strategy.get_optimization_algorithm()->get_name(),
+              "AdaptiveMomentEstimation");
+    EXPECT_EQ(training_strategy.get_optimization_algorithm()->get_maximum_epochs(), 100);
+}
+
 TEST(TrainingStrategy, DoesNotInferTaskFromTopology)
 {
     TabularDataset dataset(10, {2}, {2});

@@ -89,6 +89,16 @@ void AdaptiveMomentEstimation::set_default()
     name = "AdaptiveMomentEstimation";
 }
 
+void AdaptiveMomentEstimation::configure_for_task(NetworkTask task)
+{
+    static constexpr float language_model_learning_rate = 0.0001f;
+
+    Optimizer::configure_for_task(task);
+
+    if (task == NetworkTask::LanguageModeling)
+        learning_rate = language_model_learning_rate;
+}
+
 void AdaptiveMomentEstimation::setup_optimizer_data(OptimizerData& optimization_data,
                                                     Index parameters_number,
                                                     Device device)

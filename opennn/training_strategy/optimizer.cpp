@@ -219,6 +219,17 @@ Optimizer::Optimizer(Loss* new_loss)
 
 Optimizer::~Optimizer() = default;
 
+void Optimizer::configure_for_task(NetworkTask task)
+{
+    static constexpr Index classification_epochs = 100;
+
+    if (is_one_of(task,
+                  NetworkTask::ImageClassification,
+                  NetworkTask::ObjectDetection,
+                  NetworkTask::TextClassification))
+        maximum_epochs = classification_epochs;
+}
+
 void Optimizer::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Optimizer");
