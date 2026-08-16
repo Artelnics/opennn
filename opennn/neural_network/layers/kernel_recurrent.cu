@@ -59,7 +59,7 @@ void scatter_time_slice_cuda(const Index batch,
                        checked_int(time_steps), checked_int(features), checked_int(t), src, dst);
 }
 
-__global__ void scatter_time_slice_fill_kernel(const int batch,
+__global__ void scatter_time_slice_fill_kernel(const int n,
                                                const int time_steps,
                                                const int features,
                                                const int t,
@@ -67,8 +67,7 @@ __global__ void scatter_time_slice_fill_kernel(const int batch,
                                                float* __restrict__ dst)
 {
     const long long idx = (long long)blockIdx.x * blockDim.x + threadIdx.x;
-    const long long total = (long long)batch * time_steps * features;
-    if (idx >= total) return;
+    if (idx >= n) return;
 
     const int f  = int(idx % features);
     const long long bt = idx / features;
@@ -85,15 +84,8 @@ void scatter_time_slice_fill_cuda(const Index batch,
                                   const float* src,
                                   float* dst)
 {
-    if (batch == 0 || time_steps == 0 || features == 0) return;
-    const int total = checked_int(batch * time_steps * features);
-    OPENNN_CUDA_LAUNCH(scatter_time_slice_fill_kernel<<<grid_size_for(total), block_size, 0,
-                                   opennn::device::get_compute_stream()>>>(
-        checked_int(batch),
-        checked_int(time_steps),
-        checked_int(features),
-        checked_int(t),
-        src, dst));
+    launch_elementwise(batch * time_steps * features, scatter_time_slice_fill_kernel,
+                       checked_int(time_steps), checked_int(features), checked_int(t), src, dst);
 }
 
 __global__ void rnn_copy_regions_kernel(const RnnCopyParams params)
@@ -139,8 +131,7 @@ void rnn_copy_regions_cuda(const RnnCopySpec* specs, int count,
 }
 
 template<typename T>
-__global__ void rnn_step_fused_forward_kernel(const int batch,
-                                              const int in_features,
+__global__ void rnn_step_fused_forward_kernel(const int in_features,
                                               const int out_features,
                                               const T* __restrict__ step_input,
                                               const T* __restrict__ prev_hidden,
@@ -166,8 +157,6 @@ __global__ void rnn_step_fused_forward_kernel(const int batch,
             sH[k] = static_cast<float>(prev_hidden[b * out_features + k]);
 
     __syncthreads();
-
-    if (j >= out_features) return;
 
     float z = static_cast<float>(bias[j]);
 
@@ -201,16 +190,15 @@ void rnn_step_fused_forward_cuda(const Index batch,
 {
     if (batch == 0 || out_features == 0) return;
 
-    const int block_size = checked_int(out_features);
+    const int threads    = checked_int(out_features);
     const int grid_size  = checked_int(batch);
-    checked_host_condition(block_size > 1024,
+    checked_host_condition(threads > 1024,
                            "rnn_step_fused_forward_cuda: out_features exceeds CUDA max threads per block.");
     const Index shmem_floats = in_features + (prev_hidden ? out_features : Index(0));
     const size_t shmem_bytes = static_cast<size_t>(shmem_floats) * sizeof(float);
 
-    OPENNN_CUDA_LAUNCH(rnn_step_fused_forward_kernel<T><<<grid_size, block_size, shmem_bytes,
+    OPENNN_CUDA_LAUNCH(rnn_step_fused_forward_kernel<T><<<grid_size, threads, shmem_bytes,
                                        opennn::device::get_compute_stream()>>>(
-        checked_int(batch),
         checked_int(in_features),
         checked_int(out_features),
         step_input, prev_hidden, W_in, W_rec, bias,
@@ -218,7 +206,7 @@ void rnn_step_fused_forward_cuda(const Index batch,
 }
 
 template<typename T>
-__global__ void rnn_step_fused_backward_pre_kernel(const int batch,
+__global__ void rnn_step_fused_backward_pre_kernel(const int n,
                                                    const int out_features,
                                                    const int time_steps,
                                                    const int t,
@@ -229,8 +217,7 @@ __global__ void rnn_step_fused_backward_pre_kernel(const int batch,
                                                    T* __restrict__ delta)
 {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    const int total = batch * out_features;
-    if (idx >= total) return;
+    if (idx >= n) return;
 
     const int b = idx / out_features;
     const int j = idx - b * out_features;
@@ -263,17 +250,9 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
     checked_host_condition(t < 0 || t >= time_steps,
                            "rnn_step_fused_backward_pre_cuda: time step out of range.");
 
-    const int total = checked_int(batch * out_features);
-    OPENNN_CUDA_LAUNCH(rnn_step_fused_backward_pre_kernel<T><<<grid_size_for(total), block_size, 0,
-                                            opennn::device::get_compute_stream()>>>(
-        checked_int(batch),
-        checked_int(out_features),
-        checked_int(time_steps),
-        checked_int(t),
-        first_iter,
-        output_delta, next_carry,
-        activation_derivatives,
-        delta));
+    launch_elementwise(batch * out_features, rnn_step_fused_backward_pre_kernel<T>,
+                       checked_int(out_features), checked_int(time_steps), checked_int(t), first_iter,
+                       output_delta, next_carry, activation_derivatives, delta);
 }
 
 #define INSTANTIATE(T) \

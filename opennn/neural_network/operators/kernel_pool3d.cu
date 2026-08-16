@@ -250,38 +250,11 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
     launch_elementwise_strided(n, average_pooling_3d_backward_kernel<T>, delta, in_gradient, S, F, valid_mask, counts);
 }
 
-template<typename T, bool Gather>
-__global__ void first_token_3d_kernel(const int n, const int S, const int F, const T* __restrict__ src, T* __restrict__ dst)
-{
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
-    {
-        const int b = i / F;
-        const int h = i % F;
-        const int strided = b * S * F + h;
-        if constexpr (Gather) dst[i] = src[strided];
-        else                  dst[strided] = src[i];
-    }
-}
-
-template<typename T>
-void first_token_3d_forward_cuda(const int B, const int S, const int F, const T* in, T* out)
-{
-    launch_elementwise_strided(Index(B) * F, first_token_3d_kernel<T, true>, S, F, in, out);
-}
-
-template<typename T>
-void first_token_3d_backward_cuda(const int B, const int S, const int F, const T* delta, T* in_gradient)
-{
-    launch_elementwise_strided(Index(B) * F, first_token_3d_kernel<T, false>, S, F, delta, in_gradient);
-}
-
 #define INSTANTIATE(T) \
     template void max_pooling_3d_forward_cuda<T>(const Index, const T*, T*, float*, const int, const int, const int*); \
     template void max_pooling_3d_backward_cuda<T>(const Index, const T*, T*, const float*, const int, const int); \
     template void average_pooling_3d_forward_cuda<T>(const Index, const T*, T*, const int, const int, const int*); \
-    template void average_pooling_3d_backward_cuda<T>(const Index, const T*, const T*, T*, const int, const int, const int*); \
-    template void first_token_3d_forward_cuda<T>(const int, const int, const int, const T*, T*); \
-    template void first_token_3d_backward_cuda<T>(const int, const int, const int, const T*, T*);
+    template void average_pooling_3d_backward_cuda<T>(const Index, const T*, const T*, T*, const int, const int, const int*);
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE

@@ -14,6 +14,7 @@
 #include "opennn/neural_network/operators/sequence_length_staging.h"
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/neural_network/operators/kernel_pool3d.cuh"
+#include "opennn/neural_network/layers/kernel_recurrent.cuh"
 #endif
 
 namespace opennn
@@ -331,12 +332,13 @@ static void average_pooling_3d_backward_gpu(const TensorView& input,
     });
 }
 
+// The first token of every sequence is the t = 0 time slice of the (B, S, F) tensor.
 static void first_token_3d_forward_gpu(const TensorView& input, TensorView& output)
 {
     const Shape& shape = input.get_shape();
     output.dispatch([&]<typename T>() {
-        first_token_3d_forward_cuda<T>(to_int(shape[0]), to_int(shape[1]), to_int(shape[2]),
-                                       input.as<T>(), output.as<T>());
+        gather_time_slice_cuda<T>(shape[0], shape[1], shape[2], 0,
+                                  input.as<T>(), output.as<T>());
     });
 }
 
@@ -345,8 +347,8 @@ static void first_token_3d_backward_gpu(const TensorView& output_delta, TensorVi
     const Shape& shape = input_delta.get_shape();
     input_delta.dispatch([&]<typename T>() {
         input_delta.set_zero_async();
-        first_token_3d_backward_cuda<T>(to_int(shape[0]), to_int(shape[1]), to_int(shape[2]),
-                                        output_delta.as<T>(), input_delta.as<T>());
+        scatter_time_slice_cuda<T>(shape[0], shape[1], shape[2], 0,
+                                   output_delta.as<T>(), input_delta.as<T>());
     });
 }
 

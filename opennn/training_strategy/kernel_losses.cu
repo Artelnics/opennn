@@ -260,8 +260,7 @@ __global__ void accumulate_scaled_metric_kernel(const float* __restrict__ value,
                                                 const float scale,
                                                 float* __restrict__ error_sum)
 {
-    if (threadIdx.x == 0 && blockIdx.x == 0)
-        error_sum[0] += value[0] * scale;
+    error_sum[0] += value[0] * scale;
 }
 
 void accumulate_scaled_metric_cuda(const float* value, float scale, float* error_sum)
@@ -273,8 +272,6 @@ __global__ void accumulate_cross_entropy_3d_metrics_kernel(const float* __restri
                                                            float* __restrict__ error_sum,
                                                            float* __restrict__ accuracy_sum)
 {
-    if (threadIdx.x != 0 || blockIdx.x != 0) return;
-
     const float loss_sum = values[0];
     const float active_count = values[1];
     const float correct_count = values[2];
@@ -339,64 +336,82 @@ __global__ void l1_gradient_kernel(
 template<typename T>
 void l1_gradient_cuda(const Index n, T* deltas, const T* parameters, const float weight)
 {
-    if (n == 0) return;
-
-    constexpr int vec_width = 16 / sizeof(T);
-    const int total = checked_int(n);
-
-    const bool aligned = are_float4_aligned(deltas, parameters);
-
-    const int n_vec = aligned ? (total / vec_width) : 0;
-    const int grid_size = grid_size_for(vector_work_size(total, n_vec, vec_width));
-
-    OPENNN_CUDA_LAUNCH(l1_gradient_kernel<T><<<grid_size, block_size, 0, opennn::device::get_compute_stream()>>>(n_vec, total, deltas, parameters, weight));
+    launch_vec_on<int(16 / sizeof(T))>(opennn::device::get_compute_stream(), n, are_aligned<16>(deltas, parameters),
+                                       l1_gradient_kernel<T>, deltas, parameters, weight);
 }
 
 static constexpr float YOLO_EPSILON       = 1e-7f;
 static constexpr float YOLO_CORNER_EPS    = 1e-6f;
 static constexpr float YOLO_GRAD_CLIP     = 10.0f;
 
-__device__ __forceinline__ float yolo_giou_forward(const float* pred, const float* gt, float* out_iou)
+static constexpr float YOLO_INV_PI2       = 4.0f / (3.14159265f * 3.14159265f);
+
+// Everything the CIoU loss and its gradient share for one (pred, gt) pair of
+// (cx, cy, w, h) boxes: corners, intersection, union, enclosure and the centre
+// distance / aspect-ratio penalties.
+struct GiouTerms
 {
-    const float pl = pred[0] - 0.5f * pred[2];
-    const float pr = pred[0] + 0.5f * pred[2];
-    const float pt = pred[1] - 0.5f * pred[3];
-    const float pb = pred[1] + 0.5f * pred[3];
+    float pl, pr, pt, pb;      // predicted box corners
+    float gl, gr, gt_, gb;     // ground-truth box corners
+    float iw_raw, ih_raw;      // signed intersection extents
+    float iw, ih, inter;       // clamped intersection
+    float uni, iou;
+    float ew, eh, enc, giou;   // enclosing box and GIoU
+    float dx, dy, rho2, c2;    // centre offset and enclosing diagonal
+    float v_diff, v, alpha;    // aspect-ratio penalty
+};
 
-    const float gl = gt[0] - 0.5f * gt[2];
-    const float gr = gt[0] + 0.5f * gt[2];
-    const float gt_ = gt[1] - 0.5f * gt[3];
-    const float gb = gt[1] + 0.5f * gt[3];
+__device__ __forceinline__ GiouTerms giou_terms(const float* pred, const float* gt)
+{
+    GiouTerms t;
 
-    const float iw = fmaxf(0.0f, fminf(pr, gr) - fmaxf(pl, gl));
-    const float ih = fmaxf(0.0f, fminf(pb, gb) - fmaxf(pt, gt_));
-    const float inter = iw * ih;
+    t.pl = pred[0] - 0.5f * pred[2];
+    t.pr = pred[0] + 0.5f * pred[2];
+    t.pt = pred[1] - 0.5f * pred[3];
+    t.pb = pred[1] + 0.5f * pred[3];
+
+    t.gl  = gt[0] - 0.5f * gt[2];
+    t.gr  = gt[0] + 0.5f * gt[2];
+    t.gt_ = gt[1] - 0.5f * gt[3];
+    t.gb  = gt[1] + 0.5f * gt[3];
+
+    t.iw_raw = fminf(t.pr, t.gr) - fmaxf(t.pl, t.gl);
+    t.ih_raw = fminf(t.pb, t.gb) - fmaxf(t.pt, t.gt_);
+    t.iw = fmaxf(0.0f, t.iw_raw);
+    t.ih = fmaxf(0.0f, t.ih_raw);
+    t.inter = t.iw * t.ih;
 
     const float pa = pred[2] * pred[3];
     const float ga = gt[2] * gt[3];
-    const float uni = pa + ga - inter;
+    t.uni = pa + ga - t.inter;
 
-    const float iou = (uni > 0.0f) ? inter / uni : 0.0f;
-    *out_iou = iou;
+    t.iou = (t.uni > 0.0f) ? t.inter / t.uni : 0.0f;
 
-    const float ew = fmaxf(pr, gr) - fminf(pl, gl);
-    const float eh = fmaxf(pb, gb) - fminf(pt, gt_);
-    const float enc = ew * eh;
+    t.ew = fmaxf(t.pr, t.gr) - fminf(t.pl, t.gl);
+    t.eh = fmaxf(t.pb, t.gb) - fminf(t.pt, t.gt_);
+    t.enc = t.ew * t.eh;
 
-    const float giou = (enc > 0.0f) ? (iou - (enc - uni) / enc) : iou;
+    t.giou = (t.enc > 0.0f) ? (t.iou - (t.enc - t.uni) / t.enc) : t.iou;
 
-    const float dx   = pred[0] - gt[0];
-    const float dy   = pred[1] - gt[1];
-    const float rho2 = dx*dx + dy*dy;
-    const float c2   = ew*ew + eh*eh + YOLO_EPSILON;
+    t.dx   = pred[0] - gt[0];
+    t.dy   = pred[1] - gt[1];
+    t.rho2 = t.dx*t.dx + t.dy*t.dy;
+    t.c2   = t.ew*t.ew + t.eh*t.eh + YOLO_EPSILON;
 
-    const float v_diff = atan2f(gt[2], gt[3]) - atan2f(pred[2], pred[3]);
-    constexpr float INV_PI2 = 4.0f / (3.14159265f * 3.14159265f);
-    const float v     = INV_PI2 * v_diff * v_diff;
-    // Guard on uni (not iou) to match the gradient kernel for disjoint boxes.
-    const float alpha = (uni > 0.0f) ? v / (1.0f - iou + v + YOLO_EPSILON) : 0.0f;
+    t.v_diff = atan2f(gt[2], gt[3]) - atan2f(pred[2], pred[3]);
+    t.v      = YOLO_INV_PI2 * t.v_diff * t.v_diff;
+    // Guard on uni (not iou) so the loss and its gradient agree for disjoint boxes.
+    t.alpha  = (t.uni > 0.0f) ? t.v / (1.0f - t.iou + t.v + YOLO_EPSILON) : 0.0f;
 
-    return giou - rho2/c2 - alpha*v;
+    return t;
+}
+
+__device__ __forceinline__ float yolo_giou_forward(const float* pred, const float* gt, float* out_iou)
+{
+    const GiouTerms t = giou_terms(pred, gt);
+    *out_iou = t.iou;
+
+    return t.giou - t.rho2/t.c2 - t.alpha*t.v;
 }
 
 __device__ __forceinline__ float corner_max_grad(float a, float b)
@@ -418,36 +433,17 @@ __device__ __forceinline__ void yolo_giou_grad(
     float* out_iou, float* out_giou,
     float& cx_grad, float& cy_grad, float& w_grad, float& h_grad)
 {
+    const GiouTerms t = giou_terms(pred, gt);
     const float pw = pred[2], ph = pred[3];
-    const float pl = pred[0] - 0.5f * pw;
-    const float pr = pred[0] + 0.5f * pw;
-    const float pt = pred[1] - 0.5f * ph;
-    const float pb = pred[1] + 0.5f * ph;
+    const float pl = t.pl, pr = t.pr, pt = t.pt, pb = t.pb;
+    const float gl = t.gl, gr = t.gr, gt_ = t.gt_, gb = t.gb;
+    const float iw = t.iw, ih = t.ih, ew = t.ew, eh = t.eh;
+    const float inter = t.inter, uni = t.uni, enc = t.enc;
 
-    const float gl = gt[0] - 0.5f * gt[2];
-    const float gr = gt[0] + 0.5f * gt[2];
-    const float gt_ = gt[1] - 0.5f * gt[3];
-    const float gb = gt[1] + 0.5f * gt[3];
+    *out_iou  = t.iou;
+    *out_giou = t.giou;
 
-    const float iw_raw = fminf(pr, gr) - fmaxf(pl, gl);
-    const float ih_raw = fminf(pb, gb) - fmaxf(pt, gt_);
-    const float iw = fmaxf(0.0f, iw_raw);
-    const float ih = fmaxf(0.0f, ih_raw);
-    const float inter = iw * ih;
-
-    const float pa = pw * ph;
-    const float uni = pa + gt[2] * gt[3] - inter;
-
-    const float iou = (uni > 0.0f) ? inter / uni : 0.0f;
-    *out_iou = iou;
-
-    const float ew = fmaxf(pr, gr) - fminf(pl, gl);
-    const float eh = fmaxf(pb, gb) - fminf(pt, gt_);
-    const float enc = ew * eh;
-
-    *out_giou = (enc > 0.0f) ? (iou - (enc - uni) / enc) : iou;
-
-    const float alive = (iw_raw > 0.0f && ih_raw > 0.0f) ? 1.0f : 0.0f;
+    const float alive = (t.iw_raw > 0.0f && t.ih_raw > 0.0f) ? 1.0f : 0.0f;
 
     const float d_il = alive * -corner_max_grad(pl, gl) * ih;
     const float d_ir = alive *  corner_min_grad(pr, gr) * ih;
@@ -477,10 +473,7 @@ __device__ __forceinline__ void yolo_giou_grad(
     w_grad  = 0.5f * (d_loss_r - d_loss_l);
     h_grad  = 0.5f * (d_loss_b - d_loss_t);
 
-    const float dx   = pred[0] - gt[0];
-    const float dy   = pred[1] - gt[1];
-    const float rho2 = dx*dx + dy*dy;
-    const float c2   = ew*ew + eh*eh + YOLO_EPSILON;
+    const float dx = t.dx, dy = t.dy, rho2 = t.rho2, c2 = t.c2;
     const float ic4  = 1.0f / (c2 * c2);
 
     const float dew_dcx = corner_max_grad(pr, gr) - corner_min_grad(pl, gl);
@@ -492,14 +485,34 @@ __device__ __forceinline__ void yolo_giou_grad(
     w_grad  += -rho2 * 2.0f*ew*dew_dw * ic4;
     h_grad  += -rho2 * 2.0f*eh*deh_dh * ic4;
 
-    const float v_diff = atan2f(gt[2], gt[3]) - atan2f(pred[2], pred[3]);
-    constexpr float INV_PI2 = 4.0f / (3.14159265f * 3.14159265f);
-    const float v     = INV_PI2 * v_diff * v_diff;
-    const float alpha = (uni > 0.0f) ? v / (1.0f - iou + v + YOLO_EPSILON) : 0.0f;
     const float wh2   = pw*pw + ph*ph + YOLO_EPSILON;
-    const float coeff = alpha * INV_PI2 * 2.0f * v_diff;
+    const float coeff = t.alpha * YOLO_INV_PI2 * 2.0f * t.v_diff;
     w_grad += coeff * (-ph / wh2);
     h_grad += coeff * (pw / wh2);
+}
+
+// Box i's cell-relative (x, y) offsets to grid-normalized centres, for both
+// the prediction and its ground truth; returns 1 / grid_size.
+__device__ __forceinline__ float yolo_decode_cell_boxes(const int i, const int boxes_per_cell, const int grid_size,
+                                                        const float* pred_raw, const float* gt_raw,
+                                                        float* pred, float* gt)
+{
+    const int cell_idx = i / boxes_per_cell;
+    const int col = cell_idx % grid_size;
+    const int row = (cell_idx / grid_size) % grid_size;
+    const float inv_grid = 1.0f / float(grid_size);
+
+    pred[0] = (pred_raw[0] + float(col)) * inv_grid;
+    pred[1] = (pred_raw[1] + float(row)) * inv_grid;
+    pred[2] = pred_raw[2];
+    pred[3] = pred_raw[3];
+
+    gt[0] = (gt_raw[0] + float(col)) * inv_grid;
+    gt[1] = (gt_raw[1] + float(row)) * inv_grid;
+    gt[2] = gt_raw[2];
+    gt[3] = gt_raw[3];
+
+    return inv_grid;
 }
 
 __global__ void yolo_loss_forward_kernel(
@@ -527,12 +540,8 @@ __global__ void yolo_loss_forward_kernel(
             const float* pred_raw = output + base;
             const float* gt_raw   = target + base;
 
-            const int cell_idx = i / boxes_per_cell;
-            const int col = cell_idx % grid_size;
-            const int row = (cell_idx / grid_size) % grid_size;
-            const float inv_grid = 1.0f / float(grid_size);
-            const float pred[4] = {(pred_raw[0] + float(col)) * inv_grid, (pred_raw[1] + float(row)) * inv_grid, pred_raw[2], pred_raw[3]};
-            const float gt[4]   = {(gt_raw[0]   + float(col)) * inv_grid, (gt_raw[1]   + float(row)) * inv_grid, gt_raw[2],   gt_raw[3]};
+            float pred[4], gt[4];
+            yolo_decode_cell_boxes(i, boxes_per_cell, grid_size, pred_raw, gt_raw, pred, gt);
 
             float iou_unused;
             const float ciou = yolo_giou_forward(pred, gt, &iou_unused);
@@ -598,12 +607,8 @@ __global__ void yolo_loss_gradient_kernel(
             const float* pred_raw = output + base;
             const float* gt_raw   = target + base;
 
-            const int cell_idx = i / boxes_per_cell;
-            const int col = cell_idx % grid_size;
-            const int row = (cell_idx / grid_size) % grid_size;
-            const float inv_grid = 1.0f / float(grid_size);
-            const float pred[4] = {(pred_raw[0] + float(col)) * inv_grid, (pred_raw[1] + float(row)) * inv_grid, pred_raw[2], pred_raw[3]};
-            const float gt[4]   = {(gt_raw[0]   + float(col)) * inv_grid, (gt_raw[1]   + float(row)) * inv_grid, gt_raw[2],   gt_raw[3]};
+            float pred[4], gt[4];
+            const float inv_grid = yolo_decode_cell_boxes(i, boxes_per_cell, grid_size, pred_raw, gt_raw, pred, gt);
 
             float iou, giou;
             float cx_g, cy_g, w_g, h_g;
@@ -721,9 +726,7 @@ void yolo_gradient_cuda(const float* output, const float* target, float* delta,
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
 
-// Scaled elementwise difference, the shared front half of the squared-error
-// family. It lived in kernel_scaling.cu, whose other kernels serve the Scaling and
-// Bounding layers, while its own callers are loss.cpp and error_functions.cpp.
+// Scaled elementwise difference, the shared front half of the squared-error family.
 template<typename TIn, typename TOut>
 __global__ void scaled_diff_kernel(const int n,
                                    const TIn* __restrict__ input,

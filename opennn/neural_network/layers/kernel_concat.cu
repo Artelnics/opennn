@@ -19,11 +19,9 @@ __global__ void concat_slice_kernel(
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
-        const int c  = i % slice_ch;
-        const int w  = (i / slice_ch) % W;
-        const int h  = (i / slice_ch / W) % H;
-        const int b  =  i / slice_ch / W / H;
-        const int strided = ((b * H + h) * W + w) * total_ch + ch_offset + c;
+        Index b; int h, w, c;
+        nhwc_decompose(i, slice_ch, W, H, b, h, w, c);
+        const Index strided = ((b * H + h) * W + w) * total_ch + ch_offset + c;
         if constexpr (Scatter) dst[strided] = src[i];
         else                   dst[i] = src[strided];
     }

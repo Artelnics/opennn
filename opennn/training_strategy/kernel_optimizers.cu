@@ -9,6 +9,22 @@
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/training_strategy/kernel_optimizers.cuh"
 
+// The bf16 mirror of the parameters, when there is one, follows the fp32
+// master: four lanes at a time on the vector path, one on the tail.
+__device__ __forceinline__ void store_bf16_mirror4(__nv_bfloat162* __restrict__ mirror2, const Index i, const float4& P)
+{
+    if (mirror2)
+    {
+        mirror2[i * 2 + 0] = __floats2bfloat162_rn(P.x, P.y);
+        mirror2[i * 2 + 1] = __floats2bfloat162_rn(P.z, P.w);
+    }
+}
+
+__device__ __forceinline__ void store_bf16_mirror(__nv_bfloat16* __restrict__ mirror, const Index i, const float p)
+{
+    if (mirror) mirror[i] = __float2bfloat16(p);
+}
+
 __device__ __forceinline__ void adam_update_one(
     float& p,
     float& m,
@@ -71,11 +87,7 @@ __global__ void adam_update_kernel(
         m4[i] = M;
         v4[i] = V;
 
-        if (bf2)
-        {
-            bf2[i * 2 + 0] = __floats2bfloat162_rn(P.x, P.y);
-            bf2[i * 2 + 1] = __floats2bfloat162_rn(P.z, P.w);
-        }
+        store_bf16_mirror4(bf2, i, P);
     }
 
     const int tail_start = n_vec * 4;
@@ -84,9 +96,7 @@ __global__ void adam_update_kernel(
         adam_update_one(parameters[i], m[i], v[i], gradients[i],
                         beta_1, one_minus_beta_1, beta_2, one_minus_beta_2,
                         lr, eps);
-
-        if (parameters_bf16_mirror)
-            parameters_bf16_mirror[i] = __float2bfloat16(parameters[i]);
+        store_bf16_mirror(parameters_bf16_mirror, i, parameters[i]);
     }
 }
 
@@ -131,8 +141,6 @@ __global__ void adam_prepare_kernel(int* __restrict__ step,
                                     float* __restrict__ effective_lr,
                                     float* __restrict__ effective_eps)
 {
-    if (threadIdx.x != 0 || blockIdx.x != 0) return;
-
     const int t = (*step) + 1;
     *step = t;
 
@@ -226,11 +234,7 @@ __global__ void sgd_update_kernel(
             p4[i] = P;
             v4[i] = V;
 
-            if (bf2)
-            {
-                bf2[i * 2 + 0] = __floats2bfloat162_rn(P.x, P.y);
-                bf2[i * 2 + 1] = __floats2bfloat162_rn(P.z, P.w);
-            }
+            store_bf16_mirror4(bf2, i, P);
         }
 
         const int tail_start = n_vec * 4;
@@ -238,8 +242,7 @@ __global__ void sgd_update_kernel(
         {
             sgd_update_one(parameters[i], velocity[i], gradients[i],
                            lr, momentum, nesterov);
-            if (parameters_bf16_mirror)
-                parameters_bf16_mirror[i] = __float2bfloat16(parameters[i]);
+            store_bf16_mirror(parameters_bf16_mirror, i, parameters[i]);
         }
     }
     else
@@ -256,19 +259,14 @@ __global__ void sgd_update_kernel(
 
             p4[i] = P;
 
-            if (bf2)
-            {
-                bf2[i * 2 + 0] = __floats2bfloat162_rn(P.x, P.y);
-                bf2[i * 2 + 1] = __floats2bfloat162_rn(P.z, P.w);
-            }
+            store_bf16_mirror4(bf2, i, P);
         }
 
         const int tail_start = n_vec * 4;
         for (Index i = tail_start + tid; i < n; i += stride)
         {
             parameters[i] -= lr * gradients[i];
-            if (parameters_bf16_mirror)
-                parameters_bf16_mirror[i] = __float2bfloat16(parameters[i]);
+            store_bf16_mirror(parameters_bf16_mirror, i, parameters[i]);
         }
     }
 }
@@ -296,7 +294,7 @@ void sgd_update_cuda(
 
 __global__ void set_scalar_kernel(float* __restrict__ dst, const float value)
 {
-    if (threadIdx.x == 0 && blockIdx.x == 0) *dst = value;
+    *dst = value;
 }
 
 void set_scalar_device_cuda(float* dst, const float value, cudaStream_t stream)

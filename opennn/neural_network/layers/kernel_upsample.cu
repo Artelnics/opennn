@@ -19,10 +19,8 @@ __global__ void upsample_forward_kernel(
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
-        const int c  = i % channels;
-        const int ow = (i / channels) % out_w;
-        const int oh = (i / channels / out_w) % out_h;
-        const int b  =  i / channels / out_w / out_h;
+        Index b; int oh, ow, c;
+        nhwc_decompose(i, channels, out_w, out_h, b, oh, ow, c);
 
         const int iw = ow / scale;
         const int ih = oh / scale;
@@ -40,10 +38,8 @@ __global__ void upsample_backward_kernel(
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
-        const int c  = i % channels;
-        const int iw = (i / channels) % in_w;
-        const int ih = (i / channels / in_w) % in_h;
-        const int b  =  i / channels / in_w / in_h;
+        Index b; int ih, iw, c;
+        nhwc_decompose(i, channels, in_w, in_h, b, ih, iw, c);
 
         float acc = 0.0f;
         for (int dh = 0; dh < scale; ++dh)

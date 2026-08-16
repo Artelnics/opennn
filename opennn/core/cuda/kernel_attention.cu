@@ -112,8 +112,7 @@ __global__ void masked_softmax_rows_kernel(const int rows, const int source_sequ
         row_max = fmaxf(row_max, value);
     }
 
-    for (int offset = 16; offset > 0; offset >>= 1)
-        row_max = fmaxf(row_max, __shfl_xor_sync(0xffffffff, row_max, offset));
+    row_max = warp_reduce_max(row_max);
 
     float row_sum = 0.0f;
     #pragma unroll
@@ -123,8 +122,7 @@ __global__ void masked_softmax_rows_kernel(const int rows, const int source_sequ
         row_sum += values[e];
     }
 
-    for (int offset = 16; offset > 0; offset >>= 1)
-        row_sum += __shfl_xor_sync(0xffffffff, row_sum, offset);
+    row_sum = warp_reduce_sum(row_sum);
 
     const float inv_row_sum = 1.0f / row_sum;
 
@@ -218,8 +216,7 @@ void attention_length_masked_softmax_cuda(const int batch_size, const int heads_
 }
 
 template<typename T>
-__global__ void attention_sequence_lengths_kernel(const int batch_size,
-                                                  const int query_sequence_length,
+__global__ void attention_sequence_lengths_kernel(const int query_sequence_length,
                                                   const int source_sequence_length,
                                                   const int embedding_dimension,
                                                   const T* __restrict__ source_input,
@@ -227,7 +224,6 @@ __global__ void attention_sequence_lengths_kernel(const int batch_size,
                                                   int32_t* __restrict__ source_lengths)
 {
     const int batch = blockIdx.x;
-    if (batch >= batch_size) return;
 
     const T* sequence = source_input + int64_t(batch) * source_sequence_length * embedding_dimension;
 
@@ -240,10 +236,8 @@ __global__ void attention_sequence_lengths_kernel(const int batch_size,
 
     for (int s = warp; s < source_sequence_length; s += warps)
     {
-        bool nonzero = false;
         const T* token = sequence + int64_t(s) * embedding_dimension;
-        for (int e = lane; e < embedding_dimension; e += 32)
-            if (fabsf(static_cast<float>(token[e])) > padding_epsilon) { nonzero = true; break; }
+        const bool nonzero = !token_is_padding_strided(token, embedding_dimension, lane, 32);
 
         if (!__any_sync(0xffffffffu, nonzero)) first_padded = min(first_padded, s);
     }
@@ -272,7 +266,6 @@ void attention_sequence_lengths_cuda(const int batch_size,
 {
     if (batch_size > 0)
         OPENNN_CUDA_LAUNCH(attention_sequence_lengths_kernel<T><<<batch_size, block_size, 0, opennn::device::get_compute_stream()>>>(
-            batch_size,
             query_sequence_length,
             source_sequence_length,
             embedding_dimension,
@@ -282,10 +275,9 @@ void attention_sequence_lengths_cuda(const int batch_size,
 }
 
 template<typename T, int SIGN>
-__global__ void rope_apply_kernel(const int rows, const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* __restrict__ in, T* __restrict__ out, const float* __restrict__ cos, const float* __restrict__ sin)
+__global__ void rope_apply_kernel(const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* __restrict__ in, T* __restrict__ out, const float* __restrict__ cos, const float* __restrict__ sin)
 {
     const int row = blockIdx.x;
-    if (row >= rows) return;
 
     const int pos  = (row % seq) + offset;
     const int half = rotary_dim >> 1;
@@ -326,7 +318,7 @@ void rope_forward_cuda(const int rows, const int seq, const int model_dim, const
 {
     if (rows == 0 || model_dim == 0) return;
 
-    OPENNN_CUDA_LAUNCH((rope_apply_kernel<T, 1><<<rows, rope_threads(model_dim), 0, opennn::device::get_compute_stream()>>>(rows, seq, model_dim, head_dim, rotary_dim, offset, in, out, cos, sin)));
+    OPENNN_CUDA_LAUNCH((rope_apply_kernel<T, 1><<<rows, rope_threads(model_dim), 0, opennn::device::get_compute_stream()>>>(seq, model_dim, head_dim, rotary_dim, offset, in, out, cos, sin)));
 }
 
 template<typename T>
@@ -334,7 +326,7 @@ void rope_backward_cuda(const int rows, const int seq, const int model_dim, cons
 {
     if (rows == 0 || model_dim == 0) return;
 
-    OPENNN_CUDA_LAUNCH((rope_apply_kernel<T, -1><<<rows, rope_threads(model_dim), 0, opennn::device::get_compute_stream()>>>(rows, seq, model_dim, head_dim, rotary_dim, offset, dout, din, cos, sin)));
+    OPENNN_CUDA_LAUNCH((rope_apply_kernel<T, -1><<<rows, rope_threads(model_dim), 0, opennn::device::get_compute_stream()>>>(seq, model_dim, head_dim, rotary_dim, offset, dout, din, cos, sin)));
 }
 
 template<typename T>
@@ -365,7 +357,6 @@ __global__ void qk_rope_cache_append_kernel(const int n_q_heads, const int n_kv_
     extern __shared__ float vals[];
 
     float local_sum_sq = 0.0f;
-    float ignore = 0.0f;
     for (int d = threadIdx.x; d < head_dim; d += blockDim.x)
     {
         const float x = static_cast<float>(src[d]);
@@ -373,7 +364,7 @@ __global__ void qk_rope_cache_append_kernel(const int n_q_heads, const int n_kv_
     }
 
     __shared__ float s_inv_rms;
-    if (block_reduce_sum2(local_sum_sq, ignore))
+    if (block_reduce_sum(local_sum_sq))
         s_inv_rms = rsqrtf(local_sum_sq / static_cast<float>(head_dim) + eps);
     __syncthreads();
 
@@ -468,13 +459,11 @@ __global__ void grouped_attention_softmax_kernel(const int rows, const int query
 
     float m = -1e30f;
     for (int j = lane; j < valid; j += 32) m = fmaxf(m, s_row[j]);
-    for (int offset = 16; offset > 0; offset >>= 1)
-        m = fmaxf(m, __shfl_xor_sync(0xffffffffu, m, offset));
+    m = warp_reduce_max(m);
 
     float l = 0.0f;
     for (int j = lane; j < valid; j += 32) l += __expf(s_row[j] - m);
-    for (int offset = 16; offset > 0; offset >>= 1)
-        l += __shfl_xor_sync(0xffffffffu, l, offset);
+    l = warp_reduce_sum(l);
 
     const float inv_l = 1.0f / l;
     for (int j = lane; j < key_seq; j += 32)
@@ -558,10 +547,7 @@ __global__ void grouped_attention_decode_kernel(const int n_kv_heads, const floa
             float dot = 0.0f;
             #pragma unroll
             for (int f = 0; f < FRAG; ++f) dot += q[g][f] * k_frag[f];
-            #pragma unroll
-            for (int offset = 16; offset > 0; offset >>= 1)
-                dot += __shfl_xor_sync(0xffffffffu, dot, offset);
-            s[g] = dot * scale;
+            s[g] = warp_reduce_sum(dot) * scale;
         }
 
         float v_frag[FRAG];

@@ -11,7 +11,36 @@
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/neural_network/layers/kernel_detection.cuh"
 
-__global__ void detection_forward_kernel(const int batch_size,
+// Anchor-based head: flat box index -> (batch, row, col, box) -> offset of the
+// box's first value in the (B, S, S, channels) tensor; `box` selects its anchor.
+__device__ __forceinline__ int detection_box_base(const Index idx, const int grid_size, const int boxes_per_cell,
+                                                  const int channels, const int values_per_box, int& box)
+{
+    box = idx % boxes_per_cell;
+    const int t   = idx / boxes_per_cell;
+    const int col = t % grid_size;
+    const int t2  = t / grid_size;
+    const int row = t2 % grid_size;
+    const int b   = t2 / grid_size;
+
+    const int cell = ((b * grid_size + row) * grid_size + col) * channels;
+    return cell + box * values_per_box;
+}
+
+// Anchor-free head: flat cell index -> (batch, row, col) -> offset of the
+// cell's first channel in the (B, S, W, channels) tensor.
+__device__ __forceinline__ int detection_v8_cell_base(const Index idx, const int grid_size, const int grid_width,
+                                                      const int channels)
+{
+    const int col = idx % grid_width;
+    const int t   = idx / grid_width;
+    const int row = t % grid_size;
+    const int b   = t / grid_size;
+
+    return ((b * grid_size + row) * grid_width + col) * channels;
+}
+
+__global__ void detection_forward_kernel(const int n,
                                          const int grid_size,
                                          const int boxes_per_cell,
                                          const int classes_number,
@@ -22,21 +51,13 @@ __global__ void detection_forward_kernel(const int batch_size,
                                          float* __restrict__ dst)
 {
     const int values_per_box = 5 + classes_number;
-    const int total = batch_size * grid_size * grid_size * boxes_per_cell;
 
     for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x;
-         idx < total;
+         idx < n;
          idx += Index(blockDim.x) * gridDim.x)
     {
-        const int box = idx % boxes_per_cell;
-        const int t   = idx / boxes_per_cell;
-        const int col = t % grid_size;
-        const int t2  = t / grid_size;
-        const int row = t2 % grid_size;
-        const int b   = t2 / grid_size;
-
-        const int cell = ((b * grid_size + row) * grid_size + col) * channels;
-        const int base = cell + box * values_per_box;
+        int box;
+        const int base = detection_box_base(idx, grid_size, boxes_per_cell, channels, values_per_box, box);
 
         const float aw = anchors[box * 2 + 0];
         const float ah = anchors[box * 2 + 1];
@@ -84,21 +105,12 @@ void detection_forward_cuda(const Index batch_size,
                             const float* input,
                             float* output)
 {
-    if (batch_size == 0 || grid_size == 0 || boxes_per_cell == 0) return;
-
-    const int total = checked_int(batch_size * grid_size * grid_size * boxes_per_cell);
-    OPENNN_CUDA_LAUNCH(detection_forward_kernel<<<grid_size_strided_for(total), block_size, 0,
-                               opennn::device::get_compute_stream()>>>(
-        checked_int(batch_size),
-        checked_int(grid_size),
-        checked_int(boxes_per_cell),
-        checked_int(classes_number),
-        checked_int(channels),
-        class_activation,
-        anchors, input, output));
+    launch_elementwise_strided(batch_size * grid_size * grid_size * boxes_per_cell, detection_forward_kernel,
+                               checked_int(grid_size), checked_int(boxes_per_cell), checked_int(classes_number),
+                               checked_int(channels), class_activation, anchors, input, output);
 }
 
-__global__ void detection_backward_kernel(const int batch_size,
+__global__ void detection_backward_kernel(const int n,
                                           const int grid_size,
                                           const int boxes_per_cell,
                                           const int classes_number,
@@ -109,21 +121,13 @@ __global__ void detection_backward_kernel(const int batch_size,
                                           float* __restrict__ in_delta)
 {
     const int values_per_box = 5 + classes_number;
-    const int total = batch_size * grid_size * grid_size * boxes_per_cell;
 
     for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x;
-         idx < total;
+         idx < n;
          idx += Index(blockDim.x) * gridDim.x)
     {
-        const int box = idx % boxes_per_cell;
-        const int t   = idx / boxes_per_cell;
-        const int col = t % grid_size;
-        const int t2  = t / grid_size;
-        const int row = t2 % grid_size;
-        const int b   = t2 / grid_size;
-
-        const int cell = ((b * grid_size + row) * grid_size + col) * channels;
-        const int base = cell + box * values_per_box;
+        int box;
+        const int base = detection_box_base(idx, grid_size, boxes_per_cell, channels, values_per_box, box);
 
         const float ox = out[base + 0];
         const float oy = out[base + 1];
@@ -169,21 +173,12 @@ void detection_backward_cuda(const Index batch_size,
                              const float* output_delta,
                              float* input_delta)
 {
-    if (batch_size == 0 || grid_size == 0 || boxes_per_cell == 0) return;
-
-    const int total = checked_int(batch_size * grid_size * grid_size * boxes_per_cell);
-    OPENNN_CUDA_LAUNCH(detection_backward_kernel<<<grid_size_strided_for(total), block_size, 0,
-                                opennn::device::get_compute_stream()>>>(
-        checked_int(batch_size),
-        checked_int(grid_size),
-        checked_int(boxes_per_cell),
-        checked_int(classes_number),
-        checked_int(channels),
-        class_activation,
-        output, output_delta, input_delta));
+    launch_elementwise_strided(batch_size * grid_size * grid_size * boxes_per_cell, detection_backward_kernel,
+                               checked_int(grid_size), checked_int(boxes_per_cell), checked_int(classes_number),
+                               checked_int(channels), class_activation, output, output_delta, input_delta);
 }
 
-__global__ void detection_v8_forward_kernel(const int batch_size,
+__global__ void detection_v8_forward_kernel(const int n,
                                             const int grid_size,
                                             const int grid_width,
                                             const int channels,
@@ -191,21 +186,21 @@ __global__ void detection_v8_forward_kernel(const int batch_size,
                                             const float* __restrict__ src,
                                             float* __restrict__ dst)
 {
-    const int total = batch_size * grid_size * grid_width;
+    // Plain (x, y, w, h) boxes go through a sigmoid; DFL bins stay raw.
+    const bool sigmoid_box = box_ch == 4;
 
     for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x;
-         idx < total;
+         idx < n;
          idx += Index(blockDim.x) * gridDim.x)
     {
-        const int col = idx % grid_width;
-        const int t   = idx / grid_width;
-        const int row = t % grid_size;
-        const int b   = t / grid_size;
+        const int base = detection_v8_cell_base(idx, grid_size, grid_width, channels);
 
-        const int base = ((b * grid_size + row) * grid_width + col) * channels;
-
-        for (int ch = 0; ch < box_ch; ++ch)
-            dst[base + ch] = (box_ch == 4) ? sigmoid_f(src[base + ch]) : src[base + ch];
+        if (sigmoid_box)
+            for (int ch = 0; ch < box_ch; ++ch)
+                dst[base + ch] = sigmoid_f(src[base + ch]);
+        else
+            for (int ch = 0; ch < box_ch; ++ch)
+                dst[base + ch] = src[base + ch];
         for (int ch = box_ch; ch < channels; ++ch)
             dst[base + ch] = sigmoid_f(src[base + ch]);
     }
@@ -219,18 +214,13 @@ void detection_v8_forward_cuda(const Index batch_size,
                                const float* input,
                                float* output)
 {
-    if (batch_size == 0 || grid_size == 0) return;
-
     const int box_ch   = checked_int(4 * max(reg_max, Index(1)));
-    const int total    = checked_int(batch_size * grid_size * grid_width);
     const int channels = checked_int(box_ch + classes_number);
-    OPENNN_CUDA_LAUNCH(detection_v8_forward_kernel<<<grid_size_for(total), block_size, 0,
-                               opennn::device::get_compute_stream()>>>(
-        checked_int(batch_size), checked_int(grid_size), checked_int(grid_width),
-        channels, box_ch, input, output));
+    launch_elementwise_strided(batch_size * grid_size * grid_width, detection_v8_forward_kernel,
+                               checked_int(grid_size), checked_int(grid_width), channels, box_ch, input, output);
 }
 
-__global__ void detection_v8_backward_kernel(const int batch_size,
+__global__ void detection_v8_backward_kernel(const int n,
                                              const int grid_size,
                                              const int grid_width,
                                              const int channels,
@@ -239,31 +229,23 @@ __global__ void detection_v8_backward_kernel(const int batch_size,
                                              const float* __restrict__ delta,
                                              float* __restrict__ in_delta)
 {
-    const int total = batch_size * grid_size * grid_width;
+    const bool sigmoid_box = box_ch == 4;
 
     for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x;
-         idx < total;
+         idx < n;
          idx += Index(blockDim.x) * gridDim.x)
     {
-        const int col = idx % grid_width;
-        const int t   = idx / grid_width;
-        const int row = t % grid_size;
-        const int b   = t / grid_size;
+        const int base = detection_v8_cell_base(idx, grid_size, grid_width, channels);
 
-        const int base = ((b * grid_size + row) * grid_width + col) * channels;
-
-        for (int ch = 0; ch < box_ch; ++ch)
-        {
-            if (box_ch == 4)
+        if (sigmoid_box)
+            for (int ch = 0; ch < box_ch; ++ch)
             {
                 const float s = out[base + ch];
                 in_delta[base + ch] = delta[base + ch] * s * (1.0f - s);
             }
-            else
-            {
+        else
+            for (int ch = 0; ch < box_ch; ++ch)
                 in_delta[base + ch] = delta[base + ch];
-            }
-        }
         for (int ch = box_ch; ch < channels; ++ch)
         {
             const float s = out[base + ch];
@@ -281,15 +263,11 @@ void detection_v8_backward_cuda(const Index batch_size,
                                 const float* output_delta,
                                 float* input_delta)
 {
-    if (batch_size == 0 || grid_size == 0) return;
-
     const int box_ch   = checked_int(4 * max(reg_max, Index(1)));
-    const int total    = checked_int(batch_size * grid_size * grid_width);
     const int channels = checked_int(box_ch + classes_number);
-    OPENNN_CUDA_LAUNCH(detection_v8_backward_kernel<<<grid_size_for(total), block_size, 0,
-                                opennn::device::get_compute_stream()>>>(
-        checked_int(batch_size), checked_int(grid_size), checked_int(grid_width),
-        channels, box_ch, output, output_delta, input_delta));
+    launch_elementwise_strided(batch_size * grid_size * grid_width, detection_v8_backward_kernel,
+                               checked_int(grid_size), checked_int(grid_width), channels, box_ch,
+                               output, output_delta, input_delta);
 }
 
 

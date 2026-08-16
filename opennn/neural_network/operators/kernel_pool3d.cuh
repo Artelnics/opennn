@@ -26,12 +26,6 @@ template<typename T>
 void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta, T* in_grad, const int S, const int F,
                                       const int* valid_lengths);
 
-template<typename T>
-void first_token_3d_forward_cuda(const int B, const int S, const int F, const T* in, T* out);
-
-template<typename T>
-void first_token_3d_backward_cuda(const int B, const int S, const int F, const T* delta, T* in_gradient);
-
 #endif
 
 #endif
