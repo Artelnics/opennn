@@ -105,7 +105,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
             momentum,
             nesterov,
             neural_network->get_parameters_bf16_mirror_data(),
-            Backend::get_compute_stream());
+            device::get_compute_stream());
         return;
 #else
         throw runtime_error("Capturable SGD parameter updates require CUDA support.");
@@ -179,7 +179,7 @@ void StochasticGradientDescent::on_epoch_begin(Index epoch, OptimizerData& optim
     if (can_use_cuda_graph())
         set_scalar_device_cuda(optimizer_data.views[GraphLearningRate].as<float>(),
                                optimizer_data.current_learning_rate,
-                               Backend::get_compute_stream());
+                               device::get_compute_stream());
 #endif
 }
 

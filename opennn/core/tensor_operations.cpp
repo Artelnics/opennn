@@ -820,7 +820,7 @@ static void copy_gpu(const TensorView& source, TensorView& destination)
 {
     device::copy_async(destination.get_data(), source.get_data(), source.byte_size(),
                        device::CopyKind::DeviceToDevice,
-                       Backend::get_compute_stream());
+                       device::get_compute_stream());
 }
 
 static void add_gpu(const TensorView& input_1,
@@ -1090,7 +1090,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
         {
             device::set_zero_async(bias_gradient.get_data(),
                                    bias_gradient.size() * Index(sizeof(float)),
-                                   Backend::get_compute_stream());
+                                   device::get_compute_stream());
             bias_grad_sum_cuda<bfloat16>(total_rows, output_columns,
                                          output_delta.as<bfloat16>(), bias_gradient.as<float>());
         }

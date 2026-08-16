@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
             TensorView decoder_view(base, {batch, decoder_seq}, Type::FP32, Device::CUDA);
             TensorView input_view(base + decoder_bytes, {batch, input_seq}, Type::FP32, Device::CUDA);
 
-            cudaStream_t stream = Backend::get_compute_stream();
+            cudaStream_t stream = device::get_compute_stream();
             device::copy_async(decoder_view.data, decoder_ids.data(), decoder_view.byte_size(),
                                device::CopyKind::HostToDevice, stream);
             device::copy_async(input_view.data, input_ids.data(), input_view.byte_size(),

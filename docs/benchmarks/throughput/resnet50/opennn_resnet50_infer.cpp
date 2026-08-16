@@ -155,8 +155,8 @@ true);
         float probe[4] = {0.0f, 0.0f, 0.0f, 0.0f};
         const Index probe_size = min<Index>(Index(4), outputs.size());
         copy_device_to_host_float(outputs.data, outputs.type, probe_size,
-                                  probe, Backend::get_compute_stream());
-        cudaStreamSynchronize(Backend::get_compute_stream());
+                                  probe, device::get_compute_stream());
+        cudaStreamSynchronize(device::get_compute_stream());
         for (Index i = 0; i < probe_size; ++i)
             if (!isfinite(probe[i]))
                 throw runtime_error("non-finite outputs");

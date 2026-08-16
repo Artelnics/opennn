@@ -332,7 +332,7 @@ void RecurrentOperator::apply_delta(const TensorView& input,
 static void zero_device_view(const TensorView& view)
 {
     if (!view.get_data() || view.empty()) return;
-    device::set_zero_async(view.get_data(), view.byte_size(), Backend::get_compute_stream());
+    device::set_zero_async(view.get_data(), view.byte_size(), device::get_compute_stream());
 }
 
 static void require_same_recurrent_dtype(const TensorView& reference,

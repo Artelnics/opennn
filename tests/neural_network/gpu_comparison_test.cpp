@@ -587,12 +587,12 @@ TEST_F(GpuComparison, ResidualBlockGradientBf16PerBackwardRung)
 
     struct RestoreRung
     {
-        ~RestoreRung() { device::set_batch_norm_backward_rung(device::BatchNormBackwardRung::Auto); }
+        ~RestoreRung() { device::set_rung(device::BatchNormBackwardRung::Auto); }
     } restore;
 
     const auto gpu_gradient_on = [&](Type type, device::BatchNormBackwardRung rung)
     {
-        device::set_batch_norm_backward_rung(rung);
+        device::set_rung(rung);
         Configuration::instance().set(Device::CUDA, type);
         NeuralNetwork gpu_network;
         build_network(gpu_network);
@@ -686,16 +686,16 @@ TEST_F(GpuComparison, ResidualBlockBatchNormForwardRungParity)
     {
         ~RestoreRungs()
         {
-            device::set_batch_norm_forward_rung(device::BatchNormForwardRung::Auto);
-            device::set_batch_norm_backward_rung(device::BatchNormBackwardRung::Auto);
+            device::set_rung(device::BatchNormForwardRung::Auto);
+            device::set_rung(device::BatchNormBackwardRung::Auto);
         }
     } restore;
-    device::set_batch_norm_backward_rung(device::BatchNormBackwardRung::OwnKernel);
+    device::set_rung(device::BatchNormBackwardRung::OwnKernel);
 
     struct Run { VectorR gradient; MatrixR outputs; };
     const auto gpu_run = [&](Type type, device::BatchNormForwardRung rung)
     {
-        device::set_batch_norm_forward_rung(rung);
+        device::set_rung(rung);
         Configuration::instance().set(Device::CUDA, type);
         NeuralNetwork gpu_network;
         build_residual_block(gpu_network, input_shape);
@@ -796,13 +796,13 @@ TEST_F(GpuComparison, MaxPoolingGradientPerRung)
 
     struct RestoreRung
     {
-        ~RestoreRung() { device::set_max_pooling_rung(device::MaxPoolingRung::Auto); }
+        ~RestoreRung() { device::set_rung(device::MaxPoolingRung::Auto); }
     } restore;
 
     struct Run { VectorR gradient; MatrixR outputs; };
     const auto gpu_run = [&](Type type, device::MaxPoolingRung rung)
     {
-        device::set_max_pooling_rung(rung);
+        device::set_rung(rung);
         Configuration::instance().set(Device::CUDA, type);
         NeuralNetwork gpu_network;
         build_network(gpu_network);
@@ -937,7 +937,7 @@ TEST_F(GpuComparison, ResidentInferenceGraphReplay)
         vector<float> host(size_t(outputs.size()));
         device::synchronize();
         copy_device_to_host_float(outputs.get_data(), outputs.get_type(), outputs.size(),
-                                  host.data(), Backend::get_compute_stream());
+                                  host.data(), device::get_compute_stream());
         device::synchronize();
         return host;
     };
@@ -1008,7 +1008,7 @@ TEST_F(GpuComparison, ResidentInferenceGraphInvalidation)
         vector<float> host(size_t(outputs.size()));
         device::synchronize();
         copy_device_to_host_float(outputs.get_data(), outputs.get_type(), outputs.size(),
-                                  host.data(), Backend::get_compute_stream());
+                                  host.data(), device::get_compute_stream());
         device::synchronize();
         return host;
     };
@@ -1320,8 +1320,8 @@ TEST_F(GpuComparison, SdpaAttentionRefreshesPaddingBetweenBatches)
         device::copy_async(host.data(), outputs.get_data(),
                            outputs.size() * Index(sizeof(float)),
                            device::CopyKind::DeviceToHost,
-                           Backend::get_compute_stream());
-        device::synchronize(Backend::get_compute_stream());
+                           device::get_compute_stream());
+        device::synchronize(device::get_compute_stream());
         return host;
     };
 

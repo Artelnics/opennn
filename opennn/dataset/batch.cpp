@@ -358,7 +358,7 @@ void Batch::wait_h2d_complete()
 void Batch::wait_h2d_on_compute_stream()
 {
     if (h2d_done_recorded)
-        device::stream_wait_event(Backend::get_compute_stream(), h2d_done_event);
+        device::stream_wait_event(device::get_compute_stream(), h2d_done_event);
 }
 
 ThreadSafeQueue<Batch*>& BatchPools::validation_queue()

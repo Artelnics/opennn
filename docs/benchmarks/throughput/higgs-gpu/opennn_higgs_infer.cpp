@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
         inputs_device.resize_bytes(input_bytes, Device::CUDA);
 
 #ifdef OPENNN_HAS_CUDA
-        cudaStream_t stream = Backend::get_compute_stream();
+        cudaStream_t stream = device::get_compute_stream();
         device::copy_async(inputs_device.data,
                            inputs.data(),
                            processed * inputs_number * Index(sizeof(float)),
@@ -164,7 +164,7 @@ int main(int argc, char* argv[])
 
         auto run_pass = [&]()
         {
-            cudaStream_t compute = Backend::get_compute_stream();
+            cudaStream_t compute = device::get_compute_stream();
             for (Index b = 0; b < batches; ++b)
             {
                 const Index start = b * batch;

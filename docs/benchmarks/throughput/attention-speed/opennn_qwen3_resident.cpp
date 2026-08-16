@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
         const TensorView outputs = forward_propagation.get_outputs();
         vector<float> host(size_t(outputs.size()));
         device::copy_async(host.data(), outputs.data, outputs.size(),
-                           Device::CPU, Device::CUDA, Backend::get_compute_stream());
+                           Device::CPU, Device::CUDA, device::get_compute_stream());
         device::synchronize();
 
         double sum = 0.0, absolute_sum = 0.0;

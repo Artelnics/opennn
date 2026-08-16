@@ -141,7 +141,7 @@ static bool run_tiny_gpu_matmul()
     auto* b = static_cast<float*>(device::allocate(Device::CUDA, bytes));
     auto* c = static_cast<float*>(device::allocate(Device::CUDA, bytes));
 
-    cudaStream_t stream = Backend::get_compute_stream();
+    cudaStream_t stream = device::get_compute_stream();
     device::set_zero_async(a, bytes, stream);
     device::set_zero_async(b, bytes, stream);
 

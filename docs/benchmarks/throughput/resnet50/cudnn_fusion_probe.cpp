@@ -106,7 +106,7 @@ Timed time_graph(const std::string& tag, Type dtype, int iterations, Build&& bui
         bind(handles, tensors);
         ocf::autotune_now(pending, *graph, tensors, workspace_bytes, tag.c_str());
 
-        cudaStream_t stream = Backend::get_compute_stream();
+        cudaStream_t stream = device::get_compute_stream();
         for (int i = 0; i < 3; ++i)
             ocf::execute_graph(*graph, tensors, ocf::shared_workspace(workspace_bytes), tag, "");
         cudaStreamSynchronize(stream);

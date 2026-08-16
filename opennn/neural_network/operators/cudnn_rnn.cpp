@@ -117,7 +117,7 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
         dweight_space_buf.grow_to(Index(weight_bytes));
 
         device::set_zero_async(weight_space_buf.data(), weight_space_buf.byte_size(),
-                               Backend::get_compute_stream());
+                               device::get_compute_stream());
 
         CudnnDescriptor<cudnnTensorDescriptor_t> m_desc;
         CudnnDescriptor<cudnnTensorDescriptor_t> b_desc;
@@ -196,7 +196,7 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
         device::copy_async(slot.seq_dev.data(), seq_h,
                            batch_size * Index(sizeof(int32_t)),
                            device::CopyKind::HostToDevice,
-                           Backend::get_compute_stream());
+                           device::get_compute_stream());
 
         static float zero_pad_fill = 0.0f;
         CHECK_CUDNN(cudnnSetRNNDataDescriptor(
@@ -369,7 +369,7 @@ void CudnnRnnState::cudnn_rnn_backward_(bool has_cell_state,
         size_t(reserve_space_buf.byte_size()), reserve_space_buf.data()));
 
     device::set_zero_async(dweight_space_buf.data(), dweight_space_buf.byte_size(),
-                           Backend::get_compute_stream());
+                           device::get_compute_stream());
 
     CHECK_CUDNN(cudnnRNNBackwardWeights_v8(
         Backend::get_cudnn_handle(),

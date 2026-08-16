@@ -153,7 +153,7 @@ void compute_token_valid_lengths(const TensorView& indices, Index sequence_lengt
     if (indices.is_cuda())
     {
         host.resize(size_t(total));
-        copy_device_to_host_float(indices.get_data(), indices.get_type(), total, host.data(), Backend::get_compute_stream());
+        copy_device_to_host_float(indices.get_data(), indices.get_type(), total, host.data(), device::get_compute_stream());
         ids = host.data();
     }
 #endif

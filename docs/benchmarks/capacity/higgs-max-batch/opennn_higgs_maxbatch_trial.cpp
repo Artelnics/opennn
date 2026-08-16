@@ -226,7 +226,7 @@ TensorView maybe_alias_bf16_input_cast(const TensorView& fp32_input,
     cast_fp32_to_bf16(fp32_input.size(),
                       fp32_input.as<float>(),
                       future_activation.as<__nv_bfloat16>(),
-                      Backend::get_compute_stream());
+                      device::get_compute_stream());
 
     memory_debug::record("forward.aliased",
                          "HIGGS bf16 input cast",
@@ -347,7 +347,7 @@ int main(int argc, char* argv[])
                                Device::CUDA);
             char* const base = arena.as<char>();
 
-            cudaStream_t stream = Backend::get_compute_stream();
+            cudaStream_t stream = device::get_compute_stream();
             if (bf16_resident_input)
             {
                 vector<uint16_t> inputs_bf16(size_t(batch * inputs_number));

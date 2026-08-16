@@ -919,7 +919,7 @@ static bool upload_host_vector(Buffer& buffer, const VectorR& values)
         buffer.resize_bytes(byte_count, Device::CUDA);
         if (byte_count > 0)
         {
-            cudaStream_t stream = Backend::get_compute_stream();
+            cudaStream_t stream = device::get_compute_stream();
             device::copy_async(buffer.data(), values.data(), byte_count,
                                device::CopyKind::HostToDevice,
                                stream);
@@ -1179,7 +1179,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
             return true;
         };
 
-        cudaStream_t stream = Backend::get_compute_stream();
+        cudaStream_t stream = device::get_compute_stream();
         bool inputs_staged = false;
 
         if (forward_propagation.needs_position_staging())
@@ -1313,7 +1313,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
     VectorR saved_parameters(parameters_size);
     if (parameters.get_device() == Device::CUDA)
     {
-        cudaStream_t stream = Backend::get_compute_stream();
+        cudaStream_t stream = device::get_compute_stream();
         device::copy_async(saved_parameters.data(), parameters.data(),
                            parameters_size * Index(sizeof(float)),
                            device::CopyKind::DeviceToHost, stream);
@@ -1710,7 +1710,7 @@ static void save_binary_snapshot(const filesystem::path& file_name,
 
     if (cuda)
     {
-        cudaStream_t stream = Backend::get_compute_stream();
+        cudaStream_t stream = device::get_compute_stream();
         device::copy_async(staging.data(), storage.data(), payload_bytes,
                            device::CopyKind::DeviceToHost, stream);
         device::synchronize(stream);
@@ -1781,7 +1781,7 @@ static void load_binary_snapshot(const filesystem::path& file_name,
 
     if (cuda)
     {
-        cudaStream_t stream = Backend::get_compute_stream();
+        cudaStream_t stream = device::get_compute_stream();
         device::copy_async(storage.data(), destination, storage.byte_size(),
                            device::CopyKind::HostToDevice, stream);
         device::synchronize(stream);
@@ -2002,7 +2002,7 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
         uint16_t* const mirror = parameters_bf16_mirror.as<uint16_t>();
         float* const fp32_compact = parameters_fp32_inference_storage.as<float>();
         int8_t* const int8_storage = parameters_int8_storage.as<int8_t>();
-        cudaStream_t stream = Backend::get_compute_stream();
+        cudaStream_t stream = device::get_compute_stream();
 
         const auto skip = [&](const Index count)
         {
@@ -2354,7 +2354,7 @@ void NeuralNetwork::copy_parameters_device()
         return;
     }
 
-    cudaStream_t stream = Backend::get_compute_stream();
+    cudaStream_t stream = device::get_compute_stream();
     parameters.migrate_to(Device::CUDA, stream);
 
     if (config.training_type == Type::BF16)
@@ -2403,7 +2403,7 @@ void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
     {
         parameters_fp32_inference_storage.resize_bytes(fp32_keep_floats * Index(sizeof(float)), Device::CUDA);
 
-        cudaStream_t stream = Backend::get_compute_stream();
+        cudaStream_t stream = device::get_compute_stream();
         float* const source_base = parameters.as<float>();
         float* const destination_base = parameters_fp32_inference_storage.as<float>();
 
@@ -2462,7 +2462,7 @@ void NeuralNetwork::upload_parameters_bf16_inference()
         return;
     }
 
-    cudaStream_t stream = Backend::get_compute_stream();
+    cudaStream_t stream = device::get_compute_stream();
     const float* const host_fp32 = parameters.as<float>();
 
     const ParameterSlotTotals totals = for_each_parameter_slot({});
@@ -2533,7 +2533,7 @@ void NeuralNetwork::upload_parameters_int8_inference()
 
 void NeuralNetwork::activate_transposed_inference_weights()
 {
-    cudaStream_t stream = Backend::get_compute_stream();
+    cudaStream_t stream = device::get_compute_stream();
 
     const auto transpose_in_place = [&](const TensorView& weight)
     {
@@ -2594,7 +2594,7 @@ void NeuralNetwork::copy_parameters_host()
              "NeuralNetwork::copy_parameters_host: the fp32 CUDA parameter master "
              "was released for quantized inference and cannot be copied back.");
 
-    parameters.migrate_to(Device::CPU, Backend::get_compute_stream());
+    parameters.migrate_to(Device::CPU, device::get_compute_stream());
     clear_low_precision_parameter_storage();
 
     for (const auto& layer : layers)
@@ -2607,7 +2607,7 @@ void NeuralNetwork::copy_parameters_host()
 void NeuralNetwork::copy_states_device()
 {
     if (!states.empty())
-        states.migrate_to(Device::CUDA, Backend::get_compute_stream());
+        states.migrate_to(Device::CUDA, device::get_compute_stream());
 
     link_states(Device::CUDA);
 }
@@ -2615,7 +2615,7 @@ void NeuralNetwork::copy_states_device()
 void NeuralNetwork::copy_states_host()
 {
     if (!states.empty())
-        states.migrate_to(Device::CPU, Backend::get_compute_stream());
+        states.migrate_to(Device::CPU, device::get_compute_stream());
 
     link_states(Device::CPU);
 }
@@ -2631,7 +2631,7 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     const Index out_cols = out_view.size() / batch_size;
     MatrixR result(batch_size, out_cols);
 
-    cudaStream_t stream = Backend::get_compute_stream();
+    cudaStream_t stream = device::get_compute_stream();
     copy_device_to_host_float(out_view.get_data(), out_view.get_type(), out_view.size(),
                               result.data(), stream);
 
@@ -2675,7 +2675,7 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
         return forward_propagation.get_outputs();
     }
 
-    const cudaStream_t compute = Backend::get_compute_stream();
+    const cudaStream_t compute = device::get_compute_stream();
 
     if (forward_propagation.inference_graph_exec)
     {
@@ -2754,7 +2754,7 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
     }
 
     if (forward_propagation.inference_graph_exec)
-        release_matmul_thread_workspaces();
+        release_thread_workspaces();
 
     ::opennn::enabled() = profiler_was_enabled;
 

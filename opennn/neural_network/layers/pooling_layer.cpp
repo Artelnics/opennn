@@ -259,7 +259,7 @@ bool PoolOperator::own_max_pooling(const TensorView& input, const TensorView& ma
 {
     if (method != Max || pool_height * pool_width > 255) return false;
     if (!input.is_fp32() && !input.is_bf16()) return false;
-    switch (device::max_pooling_rung())
+    switch (device::rung<device::MaxPoolingRung>())
     {
     case device::MaxPoolingRung::Cudnn:     return false;
     case device::MaxPoolingRung::OwnKernel: return true;

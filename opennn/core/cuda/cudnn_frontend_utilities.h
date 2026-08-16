@@ -91,11 +91,11 @@ inline void execute_graph(graph::Graph& graph,
 
     CudaEvent begin(cudaEventDefault);
     CudaEvent end(cudaEventDefault);
-    device::record_event(begin, Backend::get_compute_stream());
+    device::record_event(begin, device::get_compute_stream());
 
     check_status(graph.execute(Backend::get_cudnn_handle(), tensors, workspace), what);
 
-    device::record_event(end, Backend::get_compute_stream());
+    device::record_event(end, device::get_compute_stream());
     device::synchronize_event(end);
 
     float milliseconds = 0;

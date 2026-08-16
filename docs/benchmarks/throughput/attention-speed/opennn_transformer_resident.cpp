@@ -104,7 +104,7 @@ int main(int argc, char* argv[])
         device::synchronize();
         cout << "cuda_graph=on\n";
 
-        cudaStream_t stream = Backend::get_compute_stream();
+        cudaStream_t stream = device::get_compute_stream();
         cudaEvent_t ev0, ev1;
         cudaEventCreate(&ev0); cudaEventCreate(&ev1);
 

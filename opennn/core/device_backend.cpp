@@ -36,9 +36,11 @@ constexpr int64_t conv_workspace_auto_ceiling = int64_t(256) * 1024 * 1024;
 atomic<int64_t> conv_workspace_cap_mode{-1};
 atomic<int64_t> conv_workspace_auto_bytes{conv_workspace_auto_ceiling};
 atomic_bool conv_autotune_enabled_flag{false};
-atomic<BatchNormBackwardRung> batch_norm_backward_rung_setting{BatchNormBackwardRung::Auto};
-atomic<BatchNormForwardRung>  batch_norm_forward_rung_setting{BatchNormForwardRung::Auto};
-atomic<MaxPoolingRung>        max_pooling_rung_setting{MaxPoolingRung::Auto};
+template<typename Rung> atomic<Rung>& rung_setting() noexcept
+{
+    static atomic<Rung> setting{Rung::Auto};
+    return setting;
+}
 
 thread_local GraphWorkspaceRequirements* active_graph_workspace_requirements = nullptr;
 thread_local const GraphWorkspaceViews* active_graph_workspace_views = nullptr;
@@ -238,36 +240,23 @@ void set_conv_autotune(bool enabled) noexcept
     conv_autotune_enabled_flag.store(enabled, memory_order_relaxed);
 }
 
-BatchNormBackwardRung batch_norm_backward_rung() noexcept
+template<typename Rung> Rung rung() noexcept
 {
-    return batch_norm_backward_rung_setting.load(memory_order_relaxed);
+    return rung_setting<Rung>().load(memory_order_relaxed);
 }
 
-void set_batch_norm_backward_rung(BatchNormBackwardRung rung) noexcept
+template<typename Rung> void set_rung(Rung value) noexcept
 {
-    batch_norm_backward_rung_setting.store(rung, memory_order_relaxed);
+    rung_setting<Rung>().store(value, memory_order_relaxed);
 }
 
-BatchNormForwardRung batch_norm_forward_rung() noexcept
-{
-    return batch_norm_forward_rung_setting.load(memory_order_relaxed);
-}
-
-void set_batch_norm_forward_rung(BatchNormForwardRung rung) noexcept
-{
-    batch_norm_forward_rung_setting.store(rung, memory_order_relaxed);
-}
-
-MaxPoolingRung max_pooling_rung() noexcept
-{
-    return max_pooling_rung_setting.load(memory_order_relaxed);
-}
-
-void set_max_pooling_rung(MaxPoolingRung rung) noexcept
-{
-    max_pooling_rung_setting.store(rung, memory_order_relaxed);
-}
-
+#define OPENNN_RUNG(R) \
+    template R rung<R>() noexcept; \
+    template void set_rung<R>(R) noexcept;
+OPENNN_RUNG(BatchNormBackwardRung)
+OPENNN_RUNG(BatchNormForwardRung)
+OPENNN_RUNG(MaxPoolingRung)
+#undef OPENNN_RUNG
 
 CudaAllocationGrowthGuard::CudaAllocationGrowthGuard(
     bool enabled, bool forbid_matmul_plan_creation)
@@ -636,7 +625,12 @@ void launch_graph(const GraphExecHandle&, cudaStream_t) { throw_cuda_unavailable
 
 cudaStream_t get_compute_stream()
 {
-    return Backend::get_compute_stream();
+    return Backend::instance().compute_stream;
+}
+
+cudaStream_t get_transfer_stream()
+{
+    return Backend::instance().transfer_stream;
 }
 
 }
@@ -817,14 +811,16 @@ namespace
 
     struct CudaMatmulThreadState
     {
-        Buffer shared_scratch{Device::CUDA};
-
-        Buffer bf16_input{Device::CUDA};
-        Buffer bf16_gradient{Device::CUDA};
-        Buffer bf16_to_fp32{Device::CUDA};
-        Buffer int8_dequant{Device::CUDA};
+        array<Buffer, size_t(device::GraphWorkspaceKind::Count)> workspaces =
+            make_workspaces(make_index_sequence<size_t(device::GraphWorkspaceKind::Count)>{});
 
         unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_matmul_plans;
+
+        template<size_t... I>
+        static array<Buffer, sizeof...(I)> make_workspaces(index_sequence<I...>)
+        {
+            return {((void)I, Buffer{Device::CUDA})...};
+        }
     };
 
     CudaMatmulThreadState& thread_state()
@@ -842,31 +838,26 @@ namespace
         return CUBLAS_COMPUTE_DTYPE;
     }
 
-    template <typename T>
-    T* ensure_workspace(Buffer& workspace_buffer, 
-                        Index n,
-                        device::GraphWorkspaceKind kind)
+    void* ensure_workspace_bytes_here(device::GraphWorkspaceKind kind, Index minimum_bytes)
     {
-        const Index minimum_bytes = n * Index(sizeof(T));
         if (const optional<void*> graph_workspace =
                 device::graph_workspace_override(kind, minimum_bytes))
-            return static_cast<T*>(*graph_workspace);
+            return *graph_workspace;
 
-        if (minimum_bytes > workspace_buffer.byte_size() && workspace_buffer.data())
+        Buffer& buffer = thread_state().workspaces[size_t(kind)];
+        if (minimum_bytes > buffer.byte_size() && buffer.data())
         {
             throw_if(device::cuda_allocation_growth_forbidden(),
                      "workspace growth forbidden (warmup incomplete).");
-            device::synchronize(Backend::get_compute_stream());
+            device::synchronize(device::get_compute_stream());
         }
-
-        return workspace_buffer.ensure<T>(n);
-    }
-
-    bfloat16* ensure_bf16_input_workspace(Index n)
-    {
-        return ensure_workspace<bfloat16>(
-            thread_state().bf16_input, n,
-            device::GraphWorkspaceKind::Bf16Input);
+        const Index before = buffer.byte_size();
+        void* pointer = buffer.ensure<uint8_t>(minimum_bytes);
+        if (buffer.byte_size() > before)
+            memory_debug::record(string("workspace.") + device::graph_workspace_labels[size_t(kind)],
+                                 device::graph_workspace_labels[size_t(kind)],
+                                 buffer.byte_size() - before, "high_water");
+        return pointer;
     }
 
     LtMatmulPlan& get_lt_matmul_plan(
@@ -953,48 +944,16 @@ namespace
     }
 }
 
-bfloat16* ensure_bf16_gradient_workspace(Index n)
+void* ensure_workspace_bytes(device::GraphWorkspaceKind kind, Index bytes)
 {
-    return ensure_workspace<bfloat16>(
-        thread_state().bf16_gradient, n,
-        device::GraphWorkspaceKind::Bf16Gradient);
+    return ensure_workspace_bytes_here(kind, bytes);
 }
 
-float* ensure_bf16_to_fp32_workspace(Index n)
+void release_thread_workspaces()
 {
-    return ensure_workspace<float>(
-        thread_state().bf16_to_fp32, n,
-        device::GraphWorkspaceKind::Bf16ToFp32);
-}
-
-bfloat16* ensure_int8_dequant_workspace(Index n)
-{
-    return ensure_workspace<bfloat16>(
-        thread_state().int8_dequant, n,
-        device::GraphWorkspaceKind::Int8Dequant);
-}
-
-void* ensure_shared_scratch(size_t min_bytes)
-{
-    Buffer& buffer = thread_state().shared_scratch;
-    const Index before = buffer.byte_size();
-    void* pointer = ensure_workspace<uint8_t>(
-        buffer, Index(min_bytes), device::GraphWorkspaceKind::SharedScratch);
-    if (buffer.byte_size() > before)
-        memory_debug::record("workspace.shared_scratch", "shared_scratch",
-                             buffer.byte_size() - before, "high_water");
-    return pointer;
-}
-
-void release_matmul_thread_workspaces()
-{
-    device::synchronize(Backend::get_compute_stream());
-    CudaMatmulThreadState& state = thread_state();
-    state.shared_scratch.resize_bytes(0, Device::CUDA);
-    state.bf16_input.resize_bytes(0, Device::CUDA);
-    state.bf16_gradient.resize_bytes(0, Device::CUDA);
-    state.bf16_to_fp32.resize_bytes(0, Device::CUDA);
-    state.int8_dequant.resize_bytes(0, Device::CUDA);
+    device::synchronize(device::get_compute_stream());
+    for (Buffer& buffer : thread_state().workspaces)
+        buffer.resize_bytes(0, Device::CUDA);
 }
 
 const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
@@ -1003,7 +962,7 @@ const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
 
     if (input.is_fp32() && target_type == Type::BF16)
     {
-        bfloat16* dst = ensure_bf16_input_workspace(input.size());
+        bfloat16* dst = ensure_workspace<bfloat16>(device::GraphWorkspaceKind::Bf16Input, input.size());
         cast_fp32_to_bf16(input.size(), input.as<float>(), dst);
         return dst;
     }
@@ -1057,7 +1016,7 @@ void run_lt_matmul_cached(
                                 plan.has_algorithm ? &plan.algorithm : nullptr,
                                 ensure_shared_scratch(plan.workspace_bytes), 
                                 plan.workspace_bytes,
-                                Backend::get_compute_stream()));
+                                device::get_compute_stream()));
 }
 
 void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
@@ -1089,15 +1048,12 @@ void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t trans
 namespace opennn
 {
 
-bfloat16* ensure_bf16_gradient_workspace(Index) OPENNN_CUDA_STUB_BODY(ensure_bf16_gradient_workspace)
 
-bfloat16* ensure_int8_dequant_workspace(Index) OPENNN_CUDA_STUB_BODY(ensure_int8_dequant_workspace)
 
-float* ensure_bf16_to_fp32_workspace(Index) OPENNN_CUDA_STUB_BODY(ensure_bf16_to_fp32_workspace)
 
-void* ensure_shared_scratch(size_t) OPENNN_CUDA_STUB_BODY(ensure_shared_scratch)
+void* ensure_workspace_bytes(device::GraphWorkspaceKind, Index) OPENNN_CUDA_STUB_BODY(ensure_workspace_bytes)
 
-void release_matmul_thread_workspaces() OPENNN_CUDA_STUB_BODY(release_matmul_thread_workspaces)
+void release_thread_workspaces() OPENNN_CUDA_STUB_BODY(release_thread_workspaces)
 
 const void* data_for_gemm_dtype(const TensorView&, Type) OPENNN_CUDA_STUB_BODY(data_for_gemm_dtype)
 

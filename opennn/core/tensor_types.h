@@ -772,7 +772,7 @@ size_t hash_combine(const Vs&... values)
 inline void TensorView::set_zero_async() const
 {
     if (!data || byte_size() == 0) return;
-    opennn::device::set_zero_async(data, byte_size(), Backend::get_compute_stream());
+    opennn::device::set_zero_async(data, byte_size(), device::get_compute_stream());
 }
 
 inline const float one = 1.0f;

@@ -85,35 +85,29 @@ void    set_conv_workspace_auto_limit_bytes(int64_t) noexcept;
 bool conv_autotune_enabled() noexcept;
 void set_conv_autotune(bool) noexcept;
 
-// Which rung of the batch-norm backward to take. Auto takes cuDNN's fully
-// fused engine when the shape has one and the library's own fused kernel
-// (batchnorm_backward_fused_cuda) otherwise; the other three pin a rung so a
-// gradient can be checked against the reference on purpose (a shape may never
-// take a rung by itself on a given GPU). Diagnostic; Auto in production.
+// Diagnostic kernel choices ("rungs"): Auto in production; the other values
+// pin one path so a gradient or an output can be checked against the reference
+// on purpose (a shape may never take a rung by itself on a given GPU), and so
+// the benchmark harness can A/B them. Read with rung<R>(), set with set_rung().
+//
+// Batch-norm backward: Auto takes cuDNN's fully fused engine when the shape
+// has one and the library's own fused kernel (batchnorm_backward_fused_cuda)
+// otherwise.
 enum class BatchNormBackwardRung { Auto, StagedFp32, PlainNative, OwnKernel };
-BatchNormBackwardRung batch_norm_backward_rung() noexcept;
-void set_batch_norm_backward_rung(BatchNormBackwardRung) noexcept;
-
-// Which batch-norm training forward to run. Auto takes the library's own
-// kernel (batchnorm_forward_fused_cuda) wherever it can leave the packed ReLU
-// mask the backward reads in place of Y - a ReLU output with a channel count
-// that is a multiple of 8, i.e. every BN of a ResNet - and cuDNN's fused graph
-// elsewhere; the other two pin one for parity checks. Diagnostic; Auto in
-// production.
+// Batch-norm training forward: Auto takes the library's own kernel
+// (batchnorm_forward_fused_cuda) wherever it can leave the packed ReLU mask
+// the backward reads in place of Y - a ReLU output with a channel count that
+// is a multiple of 8, i.e. every BN of a ResNet - and cuDNN's fused graph
+// elsewhere.
 enum class BatchNormForwardRung { Auto, CudnnGraph, OwnKernel };
-BatchNormForwardRung batch_norm_forward_rung() noexcept;
-void set_batch_norm_forward_rung(BatchNormForwardRung) noexcept;
-
-// Which max-pooling kernels to run on CUDA. Auto takes the library's own
-// forward + argmax-mask backward (max_pooling_forward_cuda /
-// max_pooling_backward_cuda) in training, where the mask slot exists, and
-// cuDNN's pooling elsewhere (inference, average pooling, windows above 255
-// elements); Cudnn pins cuDNN, OwnKernel the library kernels wherever they
-// apply. Diagnostic; Auto in production.
+// Max pooling on CUDA: Auto takes the library's own forward + argmax-mask
+// backward (max_pooling_forward_cuda / max_pooling_backward_cuda) in training,
+// where the mask slot exists, and cuDNN's pooling elsewhere (inference,
+// average pooling, windows above 255 elements).
 enum class MaxPoolingRung { Auto, Cudnn, OwnKernel };
-MaxPoolingRung max_pooling_rung() noexcept;
-void set_max_pooling_rung(MaxPoolingRung) noexcept;
 
+template<typename Rung> Rung rung() noexcept;
+template<typename Rung> void set_rung(Rung) noexcept;
 
 class CudaAllocationGrowthGuard
 {
@@ -209,7 +203,11 @@ private:
 
 void launch_graph(const GraphExecHandle&, cudaStream_t);
 
+// The library's two streams: every kernel and cuDNN/cuBLAS call runs on the
+// compute stream; host<->device staging copies on the transfer stream, joined
+// to compute with events (see Batch::wait_h2d_on_compute_stream).
 cudaStream_t get_compute_stream();
+cudaStream_t get_transfer_stream();
 
 }
 
@@ -256,8 +254,6 @@ public:
     static cublasLtHandle_t get_cublas_lt_handle()                 { return instance().cublas_lt_handle; }
 
     static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn(); }
-    static cudaStream_t get_compute_stream()                       { return instance().compute_stream; }
-    static cudaStream_t get_transfer_stream()                      { return instance().transfer_stream; }
     static cudnnOpTensorDescriptor_t get_op_tensor_add_descriptor()
     {
         Backend& backend = instance();
@@ -286,6 +282,9 @@ private:
 
     cudaStream_t compute_stream = nullptr;
     cudaStream_t transfer_stream = nullptr;
+
+    friend cudaStream_t device::get_compute_stream();
+    friend cudaStream_t device::get_transfer_stream();
 };
 
 inline ThreadPoolDevice& get_device()
@@ -295,15 +294,22 @@ inline ThreadPoolDevice& get_device()
 
 struct TensorView;
 
-bfloat16* ensure_bf16_gradient_workspace(Index);
+// Per-thread device scratch, one growable buffer per GraphWorkspaceKind
+// (a captured inference graph pins them through CudaGraphWorkspaceScope).
+// Growth is forbidden while a CudaAllocationGrowthGuard is active - warm-up
+// must have sized them.
+void* ensure_workspace_bytes(device::GraphWorkspaceKind, Index bytes);
+template<typename T>
+T* ensure_workspace(device::GraphWorkspaceKind kind, Index count)
+{
+    return static_cast<T*>(ensure_workspace_bytes(kind, count * Index(sizeof(T))));
+}
+inline bfloat16* ensure_bf16_gradient_workspace(Index n) { return ensure_workspace<bfloat16>(device::GraphWorkspaceKind::Bf16Gradient, n); }
+inline bfloat16* ensure_int8_dequant_workspace(Index n)  { return ensure_workspace<bfloat16>(device::GraphWorkspaceKind::Int8Dequant, n); }
+inline float*    ensure_bf16_to_fp32_workspace(Index n)  { return ensure_workspace<float>(device::GraphWorkspaceKind::Bf16ToFp32, n); }
+inline void*     ensure_shared_scratch(size_t bytes)     { return ensure_workspace_bytes(device::GraphWorkspaceKind::SharedScratch, Index(bytes)); }
 
-bfloat16* ensure_int8_dequant_workspace(Index);
-
-float* ensure_bf16_to_fp32_workspace(Index);
-
-void* ensure_shared_scratch(size_t);
-
-void release_matmul_thread_workspaces();
+void release_thread_workspaces();
 
 const void* data_for_gemm_dtype(const TensorView&, Type);
 

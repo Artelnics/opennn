@@ -901,10 +901,10 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
         const int64_t offset_value = static_cast<int64_t>(sdpa_last_used_offset);
         device::copy_async(entry.dropout_seed, &seed_value, Index(sizeof(int64_t)),
                            device::CopyKind::HostToDevice,
-                           Backend::get_compute_stream());
+                           device::get_compute_stream());
         device::copy_async(entry.dropout_offset, &offset_value, Index(sizeof(int64_t)),
                            device::CopyKind::HostToDevice,
-                           Backend::get_compute_stream());
+                           device::get_compute_stream());
         ++sdpa_dropout_offset;
     }
 
@@ -918,7 +918,7 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
 
     if (fp32_via_bf16)
     {
-        cudaStream_t cstream = Backend::get_compute_stream();
+        cudaStream_t cstream = device::get_compute_stream();
         const Index q_elems  = query.size();
         const Index kv_elems = key.size();
 
@@ -1145,10 +1145,10 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
         const int64_t offset_value = static_cast<int64_t>(sdpa_last_used_offset);
         device::copy_async(entry.dropout_seed, &seed_value, Index(sizeof(int64_t)),
                            device::CopyKind::HostToDevice,
-                           Backend::get_compute_stream());
+                           device::get_compute_stream());
         device::copy_async(entry.dropout_offset, &offset_value, Index(sizeof(int64_t)),
                            device::CopyKind::HostToDevice,
-                           Backend::get_compute_stream());
+                           device::get_compute_stream());
     }
 
     void* bq  = query.get_data();
@@ -1179,7 +1179,7 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
                  "SDPA backward: BF16 scratch views were not planned "
                  "(BackPropagation::set ran without the SDPA backward specs).");
 
-        cudaStream_t cstream = Backend::get_compute_stream();
+        cudaStream_t cstream = device::get_compute_stream();
         cast_fp32_to_bf16(query.size(), query.as<float>(), query_bf16.as<bfloat16>(), cstream);
         cast_fp32_to_bf16(key.size(),   key.as<float>(),   key_bf16.as<bfloat16>(), cstream);
         cast_fp32_to_bf16(value.size(), value.as<float>(), value_bf16.as<bfloat16>(), cstream);

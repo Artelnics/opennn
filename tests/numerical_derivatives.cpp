@@ -24,7 +24,7 @@ void upload_batch_if_gpu(Batch& batch, const NeuralNetwork& neural_network)
 {
 #ifdef OPENNN_HAS_CUDA
     if (!neural_network.is_gpu()) return;
-    batch.upload_to_device_batch_async(batch, Backend::get_transfer_stream());
+    batch.upload_to_device_batch_async(batch, device::get_transfer_stream());
     batch.wait_h2d_complete();
 #else
     (void)batch;

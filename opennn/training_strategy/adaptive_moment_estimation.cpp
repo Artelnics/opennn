@@ -117,7 +117,7 @@ void AdaptiveMomentEstimation::setup_optimizer_data(OptimizerData& optimization_
     if (use_graph)
         set_scalar_device_cuda(optimization_data.views[GraphScalars].as<float>() + 3,
                                learning_rate,
-                               Backend::get_compute_stream());
+                               device::get_compute_stream());
 #endif
 }
 
@@ -127,7 +127,7 @@ void AdaptiveMomentEstimation::on_epoch_begin(Index, OptimizerData& optimization
     if (can_use_cuda_graph() && optimization_data.views[GraphScalars].size() >= 4)
         set_scalar_device_cuda(optimization_data.views[GraphScalars].as<float>() + 3,
                                learning_rate,
-                               Backend::get_compute_stream());
+                               device::get_compute_stream());
 #else
     (void)optimization_data;
 #endif
@@ -161,7 +161,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
             graph_learning_rate,
             graph_epsilon,
             neural_network->get_parameters_bf16_mirror_data(),
-            Backend::get_compute_stream());
+            device::get_compute_stream());
         return;
 #else
         throw runtime_error("Capturable Adam parameter updates require CUDA support.");

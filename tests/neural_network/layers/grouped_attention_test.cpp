@@ -104,7 +104,7 @@ TEST(GroupedAttentionTest, GpuMatchesCpu)
         grouped_attention_forward(q, k, v, o, q_heads, kv_heads, head_dim, true, scale);
     }
 
-    cudaStream_t stream = Backend::get_compute_stream();
+    cudaStream_t stream = device::get_compute_stream();
     auto to_device = [&](const vector<float>& h, Buffer& buf) {
         buf.resize_bytes(Index(h.size()) * Index(sizeof(float)), Device::CPU);
         memcpy(buf.data(), h.data(), h.size() * sizeof(float));

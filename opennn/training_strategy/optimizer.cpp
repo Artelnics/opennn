@@ -136,7 +136,7 @@ struct DeviceEpochMetricSums
 
         values.grow_to(2 * Index(sizeof(float)));
         device::set_zero_async(values.data(), 2 * Index(sizeof(float)),
-                               Backend::get_compute_stream());
+                               device::get_compute_stream());
     }
 
     float* error_sum() { return values.as<float>(); }
@@ -148,7 +148,7 @@ struct DeviceEpochMetricSums
         if (!device::is_cuda_build()) return sums;
 
         float host[2] = {0.0f, 0.0f};
-        const cudaStream_t stream = Backend::get_compute_stream();
+        const cudaStream_t stream = device::get_compute_stream();
         device::copy_async(host, values.data(), Index(sizeof(host)),
                            device::CopyKind::DeviceToHost,
                            stream);
@@ -642,7 +642,7 @@ void Optimizer::warmup_device_training(
        || training_batches.empty())
         return;
 
-    const cudaStream_t stream = Backend::get_compute_stream();
+    const cudaStream_t stream = device::get_compute_stream();
 
     const Index parameters_bytes =
         neural_network->get_parameters_buffer_size() * Index(sizeof(float));
@@ -1258,7 +1258,7 @@ void Optimizer::update_best_parameters(NeuralNetwork* neural_network,
         const size_t bytes = size_t(size) * sizeof(float);
         if (neural_network->is_gpu() && device::is_cuda_build())
         {
-            const cudaStream_t stream = Backend::get_compute_stream();
+            const cudaStream_t stream = device::get_compute_stream();
             device::copy_async(destination.data(), source, Index(bytes),
                                device::CopyKind::DeviceToHost, stream);
             device::synchronize(stream);
@@ -1335,7 +1335,7 @@ void Optimizer::teardown_device_training()
     NeuralNetwork* neural_network = loss->get_neural_network();
     if (!neural_network->is_gpu()) return;
 
-    device::synchronize(Backend::get_compute_stream());
+    device::synchronize(device::get_compute_stream());
 
     if (loss->get_dataset()->is_device_resident())
         loss->get_dataset()->disable_device_residency();
@@ -1348,7 +1348,7 @@ void Optimizer::prefetch_batch(Batch& batch)
 {
     if (!batch.uses_cuda()) return;
 
-    batch.upload_to_device_batch_async(batch, Backend::get_transfer_stream());
+    batch.upload_to_device_batch_async(batch, device::get_transfer_stream());
 }
 
 void Optimizer::sync_device(const bool on_gpu,
@@ -1368,7 +1368,7 @@ void Optimizer::sync_device(const bool on_gpu,
     else
         slot.create();
 
-    device::record_event(slot.handle, Backend::get_compute_stream());
+    device::record_event(slot.handle, device::get_compute_stream());
 }
 
 void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
@@ -1405,8 +1405,8 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     DeviceEpochMetricSums device_metrics(training_session.device_metrics);
     device_metrics.reset();
 
-    const cudaStream_t compute = Backend::get_compute_stream();
-    const cudaStream_t transfer = Backend::get_transfer_stream();
+    const cudaStream_t compute = device::get_compute_stream();
+    const cudaStream_t transfer = device::get_transfer_stream();
 
     auto& pipelines = training_session.pipelines;
     const bool profile_this = env_flag_enabled("OPENNN_PROFILE");
@@ -1765,9 +1765,9 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
         {
             PROFILE_SCOPE_HOST("step:fixed_h2d_issue");
             if (fixed_device_batch_in_use)
-                device::stream_wait_event(Backend::get_transfer_stream(), fixed_device_batch->h2d_done_event);
+                device::stream_wait_event(device::get_transfer_stream(), fixed_device_batch->h2d_done_event);
 
-            next_batch->upload_to_device_batch_async(*fixed_device_batch, Backend::get_transfer_stream());
+            next_batch->upload_to_device_batch_async(*fixed_device_batch, device::get_transfer_stream());
             return;
         }
 
@@ -1792,7 +1792,7 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
 
         if (use_fixed_device_batch)
         {
-            device::record_event(fixed_device_batch->h2d_done_event, Backend::get_compute_stream());
+            device::record_event(fixed_device_batch->h2d_done_event, device::get_compute_stream());
             fixed_device_batch_in_use = true;
         }
 
@@ -1801,7 +1801,7 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
             sync_device(on_gpu, context.has_recurrent_layers, *context.training_session);
 
             if (on_gpu && context.fill_mode != FillMode::Training)
-                device::synchronize(Backend::get_compute_stream());
+                device::synchronize(device::get_compute_stream());
         }
 
         context.empty_queue->push(current_batch);
@@ -1945,7 +1945,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
             post_batch_callback(neural_network);
 
         if(on_gpu)
-            device::synchronize(Backend::get_compute_stream());
+            device::synchronize(device::get_compute_stream());
 
         // Re-link the layers' gradient views to the main context (see above).
         back_propagation.set(forward_propagation.batch_size,
@@ -2215,7 +2215,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
         result = loss->calculate_error(batch, tail_forward_propagation);
 
         if(on_gpu)
-            device::synchronize(Backend::get_compute_stream());
+            device::synchronize(device::get_compute_stream());
 
         return result;
     };

@@ -72,7 +72,7 @@ void store_as_bfloat16(const Fp32Staging& staging,
                        void* bfloat16_target)
 {
     cast_fp32_to_bf16(staging.elements, slice.data(), static_cast<bfloat16*>(bfloat16_target),
-                      Backend::get_compute_stream());
+                      device::get_compute_stream());
 }
 
 }
@@ -231,7 +231,7 @@ TensorView& BatchNormalizationOperator::relu_mask(ForwardPropagation& forward_pr
 
 bool BatchNormalizationOperator::own_forward_kernel(const TensorView& mask) const noexcept
 {
-    switch (device::batch_norm_forward_rung())
+    switch (device::rung<device::BatchNormForwardRung>())
     {
     case device::BatchNormForwardRung::CudnnGraph: return false;
     case device::BatchNormForwardRung::OwnKernel:  return features % 8 == 0;
@@ -700,7 +700,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
             // available for direct comparison in the GPU gradient test.
             struct Attempt { Type dtype; bool fuse_relu; bool fork; };
 
-            const device::BatchNormBackwardRung rung = device::batch_norm_backward_rung();
+            const device::BatchNormBackwardRung rung = device::rung<device::BatchNormBackwardRung>();
 
             vector<Attempt> attempts;
             switch (rung)

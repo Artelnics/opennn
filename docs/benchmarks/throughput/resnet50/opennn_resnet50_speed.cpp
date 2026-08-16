@@ -108,17 +108,17 @@ int main(int argc, char* argv[])
             using device::BatchNormForwardRung; using device::BatchNormBackwardRung; using device::MaxPoolingRung;
             const string bn_forward = rung("OPENNN_BN_FORWARD_RUNG", {
                 {"auto",  [] {}},
-                {"cudnn", [] { device::set_batch_norm_forward_rung(BatchNormForwardRung::CudnnGraph); }},
-                {"own",   [] { device::set_batch_norm_forward_rung(BatchNormForwardRung::OwnKernel); }}});
+                {"cudnn", [] { device::set_rung(BatchNormForwardRung::CudnnGraph); }},
+                {"own",   [] { device::set_rung(BatchNormForwardRung::OwnKernel); }}});
             const string bn_backward = rung("OPENNN_BN_BACKWARD_RUNG", {
                 {"auto",   [] {}},
-                {"staged", [] { device::set_batch_norm_backward_rung(BatchNormBackwardRung::StagedFp32); }},
-                {"plain",  [] { device::set_batch_norm_backward_rung(BatchNormBackwardRung::PlainNative); }},
-                {"own",    [] { device::set_batch_norm_backward_rung(BatchNormBackwardRung::OwnKernel); }}});
+                {"staged", [] { device::set_rung(BatchNormBackwardRung::StagedFp32); }},
+                {"plain",  [] { device::set_rung(BatchNormBackwardRung::PlainNative); }},
+                {"own",    [] { device::set_rung(BatchNormBackwardRung::OwnKernel); }}});
             const string pooling = rung("OPENNN_POOLING_RUNG", {
                 {"auto",  [] {}},
-                {"cudnn", [] { device::set_max_pooling_rung(MaxPoolingRung::Cudnn); }},
-                {"own",   [] { device::set_max_pooling_rung(MaxPoolingRung::OwnKernel); }}});
+                {"cudnn", [] { device::set_rung(MaxPoolingRung::Cudnn); }},
+                {"own",   [] { device::set_rung(MaxPoolingRung::OwnKernel); }}});
             cout << "bn_forward_rung=" << bn_forward << " bn_backward_rung=" << bn_backward
                  << " pooling_rung=" << pooling << "\n";
         }

@@ -296,12 +296,17 @@ TEST(DeviceBackendTest, PinnedHostNegativeBytesThrows)
 
 TEST(DeviceBackendTest, ComputeStreamMatchesBuild)
 {
-    EXPECT_EQ(device::get_compute_stream(), Backend::get_compute_stream());
-
     if (device::has_cuda_device())
-        EXPECT_NE(Backend::get_compute_stream(), nullptr);
+    {
+        EXPECT_NE(device::get_compute_stream(), nullptr);
+        EXPECT_NE(device::get_transfer_stream(), nullptr);
+        EXPECT_NE(device::get_compute_stream(), device::get_transfer_stream());
+    }
     else
-        EXPECT_EQ(Backend::get_compute_stream(), nullptr);
+    {
+        EXPECT_EQ(device::get_compute_stream(), nullptr);
+        EXPECT_EQ(device::get_transfer_stream(), nullptr);
+    }
 }
 
 TEST(DeviceBackendTest, BackendProvidesThreadPoolDevice)
