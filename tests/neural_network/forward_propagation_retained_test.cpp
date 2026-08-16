@@ -128,6 +128,7 @@ TEST(ForwardPropagationRetainedOutputsTest, EmptyPolicyKeepsDefaultPlan)
         1, &network, ForwardPropagationMode::Inference, InferenceShapePolicy{});
 
     expect_identical_plans(default_propagation, explicit_propagation);
+    EXPECT_FALSE(default_propagation.needs_position_staging());
 
     InferenceShapePolicy retained_policy;
     retained_policy.retained_output_layers = {layout.encoder_last};
@@ -156,6 +157,7 @@ TEST(ForwardPropagationRetainedOutputsTest,
         1, &network, ForwardPropagationMode::Inference, InferenceShapePolicy{});
 
     expect_identical_plans(default_propagation, explicit_propagation);
+    EXPECT_TRUE(default_propagation.needs_position_staging());
 
     Configuration::instance().set();
 }

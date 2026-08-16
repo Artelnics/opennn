@@ -109,6 +109,9 @@ public:
 
     Error get_error() const noexcept { return error; }
 
+    // Layer outputs whose deltas are written directly by this loss.
+    vector<Index> get_output_delta_layer_indices() const;
+
     bool output_delta_overwrites_outputs() const;
 
     void back_propagate(const Batch&,

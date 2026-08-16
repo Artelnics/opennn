@@ -219,6 +219,14 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_layout(
     layout.reusable_consumer_deltas.assign(
         layers.size(), {SIZE_MAX, SIZE_MAX});
 
+    vector<bool> receives_loss_delta(layers.size(), false);
+    for (const Index layer : loss->get_output_delta_layer_indices())
+    {
+        throw_if(layer < 0 || size_t(layer) >= layers.size(),
+                 "Loss output-delta layer {} is outside the network.", layer);
+        receives_loss_delta[size_t(layer)] = true;
+    }
+
     const auto resolve_source = [&](Index layer)
     {
         while (layer >= 0
@@ -322,19 +330,15 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_layout(
         const size_t i = size_t(layer);
         const auto& edges = consumer_edges[i];
 
-        const bool detached_detection =
-            edges.empty()
-            && is_one_of(layers[i]->get_type(),
-                         LayerType::Detection,
-                         LayerType::DetectionV8);
+        const bool detached_loss_output = edges.empty() && receives_loss_delta[i];
 
-        if (!detached_detection && edges.size() <= 1)
+        if (!detached_loss_output && edges.size() <= 1)
             continue;
 
         const Shape output_shape = layers[i]->get_output_shape();
         const Shape delta_shape = Shape{batch_size}.append(output_shape);
 
-        if (!detached_detection)
+        if (!detached_loss_output)
         {
             const auto reusable = ranges::find_if(
                 edges,
@@ -364,7 +368,7 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_layout(
             layer,
             0,
             {delta_shape, compute_dtype},
-            detached_detection ? Index{0} : last_step,
+            detached_loss_output ? Index{0} : last_step,
             last_step
         });
     }

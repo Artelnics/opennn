@@ -1174,7 +1174,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
         cudaStream_t stream = Backend::get_compute_stream();
         bool inputs_staged = false;
 
-        if (has(LayerType::GroupedQueryAttention))
+        if (forward_propagation.needs_position_staging())
             forward_propagation.stage_position(stream);
 
         for (size_t i = 0; i < input_view.size(); ++i)

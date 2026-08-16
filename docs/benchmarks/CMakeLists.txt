@@ -90,7 +90,14 @@ set(_benchmark_targets
         recurrent_lstm_forecasting_benchmark)
 
 if(OPENNN_HAS_CUDA)
+    add_executable(cudnn_fusion_probe
+        throughput/resnet50/cudnn_fusion_probe.cpp)
+    # Builds cudnn-frontend graphs itself, so it needs the headers the library
+    # keeps private.
+    target_include_directories(cudnn_fusion_probe SYSTEM PRIVATE
+        ${CUDNN_FRONTEND_INCLUDE_DIR} ${CUDNN_INCLUDE_DIR} ${CUDAToolkit_INCLUDE_DIRS})
     list(APPEND _benchmark_targets
+        cudnn_fusion_probe
         opennn_transformer_resident
         opennn_qwen3_resident
         opennn_transformer_train

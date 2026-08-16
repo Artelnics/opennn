@@ -6,6 +6,7 @@
 #include "opennn/neural_network/layers/detection_v8_layer.h"
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/neural_network/layers/concatenation_layer.h"
+#include "opennn/neural_network/layers/non_max_suppression_layer.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/training_strategy/loss.h"
 
@@ -142,6 +143,135 @@ void build_yolo_network(NeuralNetwork& net, const YoloLossFixture& f)
     net.get_parameters_map().setConstant(0.1f);
 }
 
+}
+
+TEST(YoloLoss, OutputDeltaLayersFollowSelectedLoss)
+{
+    for (const bool v8 : {false, true})
+    {
+        SCOPED_TRACE(v8 ? "DetectionV8" : "Detection");
+
+        constexpr Index height = 2;
+        constexpr Index width = 2;
+        constexpr Index features = 4;
+        const Index head_channels = v8 ? 5 : 6;
+        const vector<std::array<float, 2>> anchors{{0.5f, 0.5f}};
+
+        NeuralNetwork network;
+        network.add_layer(make_unique<Convolutional>(
+            Shape{height, width, 3}, Shape{1, 1, 3, features},
+            "Identity", Shape{1, 1}, "Same", false, "stem"));
+        const Index stem = network.get_layers_number() - 1;
+
+        const auto add_head = [&](const string& suffix)
+        {
+            network.add_layer(make_unique<Convolutional>(
+                Shape{height, width, features}, Shape{1, 1, features, head_channels},
+                "Identity", Shape{1, 1}, "Same", false, "logits_" + suffix), {stem});
+            const Index logits = network.get_layers_number() - 1;
+
+            if (v8)
+                network.add_layer(make_unique<DetectionV8>(
+                    Shape{height, width, head_channels}, "detection_" + suffix), {logits});
+            else
+                network.add_layer(make_unique<Detection>(
+                    Shape{height, width, head_channels}, anchors, "detection_" + suffix), {logits});
+
+            return network.get_layers_number() - 1;
+        };
+
+        const Index first_head = add_head("first");
+        const Index last_head = add_head("last");
+        network.compile();
+
+        Loss standard_loss(&network);
+        EXPECT_EQ(standard_loss.get_output_delta_layer_indices(), vector<Index>{last_head});
+
+        BackPropagation standard_back_propagation(2, standard_loss);
+        EXPECT_TRUE(standard_back_propagation.output_deltas[size_t(first_head)].empty());
+        EXPECT_FALSE(standard_back_propagation.output_deltas[size_t(last_head)].empty());
+
+        Loss yolo_loss(&network);
+        yolo_loss.set_error(Loss::Error::Yolo);
+        EXPECT_EQ(yolo_loss.get_output_delta_layer_indices(),
+                  (vector<Index>{first_head, last_head}));
+
+        InferenceShapePolicy policy;
+        policy.retained_output_layers = yolo_loss.get_output_delta_layer_indices();
+        ForwardPropagation validation_propagation(
+            2, &network, ForwardPropagationMode::Inference, policy);
+
+        const TensorView& first_output =
+            validation_propagation.slots[size_t(first_head)].back();
+        const TensorView& last_output =
+            validation_propagation.slots[size_t(last_head)].back();
+        ASSERT_FALSE(first_output.empty());
+        ASSERT_FALSE(last_output.empty());
+
+        const auto first_begin = reinterpret_cast<uintptr_t>(first_output.data);
+        const auto first_end = first_begin + uintptr_t(first_output.byte_size());
+        const auto last_begin = reinterpret_cast<uintptr_t>(last_output.data);
+        const auto last_end = last_begin + uintptr_t(last_output.byte_size());
+        EXPECT_TRUE(first_end <= last_begin || last_end <= first_begin);
+
+        BackPropagation yolo_back_propagation(2, yolo_loss);
+        EXPECT_FALSE(yolo_back_propagation.output_deltas[size_t(first_head)].empty());
+        EXPECT_FALSE(yolo_back_propagation.output_deltas[size_t(last_head)].empty());
+    }
+}
+
+TEST(YoloLoss, InferencePolicyRetainsConsumedHead)
+{
+    constexpr Index height = 2;
+    constexpr Index width = 2;
+    constexpr Index features = 4;
+    constexpr Index head_channels = 6;
+    const vector<std::array<float, 2>> anchors{{0.5f, 0.5f}};
+
+    NeuralNetwork network;
+    network.add_layer(make_unique<Convolutional>(
+        Shape{height, width, 3}, Shape{1, 1, 3, features},
+        "Identity", Shape{1, 1}, "Same", false, "stem"));
+    const Index stem = network.get_layers_number() - 1;
+
+    network.add_layer(make_unique<Convolutional>(
+        Shape{height, width, features}, Shape{1, 1, features, head_channels},
+        "Identity", Shape{1, 1}, "Same", false, "logits"), {stem});
+    const Index logits = network.get_layers_number() - 1;
+
+    network.add_layer(make_unique<Detection>(
+        Shape{height, width, head_channels}, anchors, "detection"), {logits});
+    const Index detection = network.get_layers_number() - 1;
+
+    network.add_layer(make_unique<NonMaxSuppression>(
+        Shape{height, width, head_channels}, 1, 0.5f, 0.4f, "nms"), {detection});
+
+    network.add_layer(make_unique<Convolutional>(
+        Shape{height, width, features}, Shape{1, 1, features, features},
+        "Identity", Shape{1, 1}, "Same", false, "tail"), {stem});
+    const Index tail = network.get_layers_number() - 1;
+    network.compile();
+
+    Loss yolo_loss(&network);
+    yolo_loss.set_error(Loss::Error::Yolo);
+    ASSERT_EQ(yolo_loss.get_output_delta_layer_indices(), vector<Index>{detection});
+
+    InferenceShapePolicy policy;
+    policy.retained_output_layers = yolo_loss.get_output_delta_layer_indices();
+    ForwardPropagation validation_propagation(
+        2, &network, ForwardPropagationMode::Inference, policy);
+
+    const TensorView& detection_output =
+        validation_propagation.slots[size_t(detection)].back();
+    const TensorView& tail_output = validation_propagation.slots[size_t(tail)].back();
+    ASSERT_FALSE(detection_output.empty());
+    ASSERT_FALSE(tail_output.empty());
+
+    const auto detection_begin = reinterpret_cast<uintptr_t>(detection_output.data);
+    const auto detection_end = detection_begin + uintptr_t(detection_output.byte_size());
+    const auto tail_begin = reinterpret_cast<uintptr_t>(tail_output.data);
+    const auto tail_end = tail_begin + uintptr_t(tail_output.byte_size());
+    EXPECT_TRUE(detection_end <= tail_begin || tail_end <= detection_begin);
 }
 
 TEST(YoloLoss, NoObjectGradientMatchesNumericalGradient)

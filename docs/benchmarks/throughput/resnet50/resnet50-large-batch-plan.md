@@ -168,26 +168,60 @@ precisions on this GPU. On the RTX 4080 the same fixes should clear
 TensorFlow's 65,752 bf16 peak (the in-source +21% measurement of the un-staged
 path is this same win) — to be measured there (§ runbook in the audit thread).
 
-### Phase 3 — the MLPerf fusion architecture (3–5 weeks) — for margin beyond the win
+### Phase 3 — the MLPerf fusion architecture: measured, and NOT the way forward on this stack
 
-All patterns exist in our cudnn-frontend 1.27 / cuDNN ≥ 9.8 on Ampere+ (samples
-`SBRCS`, `CSBR`, `bn_finalize`, `Dgrad Drelu DBNweight`):
+The design rested on one premise: that cuDNN's fused engines (SBRCS: BN-apply
++ ReLU in the conv prologue and genstats in its epilogue; DBAR: dgrad + dReLU
++ dbn_weight) run near plain-convolution speed on our shapes. NVIDIA's MLPerf
+work at 224x224 never had to establish that for 8x8-to-1x1 spatial at batch
+2048, so `cudnn_fusion_probe` (this folder; builds with the benchmarks) times
+every pattern per real ResNet-50/CIFAR shape through the library's own
+autotune path. On the audit machine (sm_86, cuDNN 9.10.2), batch 2048:
 
-- **Forward**: `scale·x + bias → ReLU → conv → genstats` per layer (the previous
-  layer's BN *applied in the conv prologue*, this layer's BN statistics computed
-  in the conv epilogue), then a per-channel `bn_finalize`. The standalone BN
-  forward pass — and the `ConvolutionView` slot — disappear: the conv output is
-  written once and read once. Expected −10 ms bf16 / −25 ms fp32 at 2048, and
-  ~30% less activation memory (raises max batch).
-- **Backward**: `dgrad + dReLU + dbn_weight` (DBAR) fuses the next layer's dReLU
-  and this layer's dscale/dbias reductions into the dgrad, leaving one apply
-  pass. Replaces most of what Phase 1 does with cuDNN engines where they exist;
-  Phase 1's kernel remains the fallback per shape.
+| pattern | bf16 | fp32 |
+|---|---|---|
+| conv + genstats | **no engine** on any of 9 shapes | no engine |
+| SBRCS (scale-bias-ReLU prologue + conv + genstats) | **no engine** | no engine |
+| DBAR (dgrad + dReLU + dbn_weight) | **no engine** | no engine |
+| dgrad + dReLU (the one fused form that exists) | **1.1–14× slower** than plain dgrad | 1.3–4.3× slower |
 
-Risks: per-shape engine coverage (ladders as today), Ada (sm_89) support of
-DBAR (the sample gates on Ampere/Hopper — verify on the 4080), and a real
-refactor of `Convolutional`'s slot layout. Expected end state at 2048: bf16
-≈ 75–80 ms/step (**≈1.25× PyTorch**), fp32 ≈ 165–175 (**≈1.15×**).
+The plain cutlass/xmma engines cuDNN picks for our convolutions do not offer
+these prologue/epilogue fusions; where a runtime-fusion engine exists it is far
+slower on these shapes. (Our own `dgrad + ADD` fold measured *faster* because a
+source-add is a native cutlass epilogue; a masked ReLU with a second full
+tensor is not.) So on this GPU/cuDNN generation Phase 3 as designed cannot
+deliver, and the weeks it would cost are better spent elsewhere. Two things
+keep it alive as an option, not a plan: run the probe on the RTX 4080 (cuDNN
+9.23; two minutes, engine coverage differs by architecture and version), and
+note that the cuDNN samples exercise these patterns in FP16 - a training type
+the library does not offer, and one that would bring loss scaling with it.
+
+### Phase 3' — what replaces it (own kernels, no dependence on cuDNN fusion engines)
+
+The step at 2048 is now conv ~60% / batch-norm ~35% / rest ~5%. Without
+cross-operator fusion the batch-norm passes are close to their floor: forward
+is cuDNN's fused two-pass graph, backward our own two-launch kernel at 7-8
+passes. What remains:
+
+- **3'a. Own batch-norm forward emitting a 1-bit ReLU mask** (~3-4 days).
+  Same two passes as cuDNN's graph (stats reduce; apply + residual add + ReLU),
+  plus a bit-mask write (1/16 of a bf16 tensor). The backward then reads the
+  mask instead of Y in both passes: 8 → 6 passes on residual layers, 7 → 5 on
+  the rest, and the fp32 x̂-from-Y trick becomes unnecessary. Expected ~-5% of
+  the step, both precisions. Gate: gradient tests, forward at parity with the
+  cuDNN graph (measured), backward faster.
+- **3'b. Convolution engine choice** (hours). Conv is 60% and already
+  autotuned; the cheap experiments left are the heuristic mode (`HeurMode_t::B`
+  or the A+B union) as the candidate source, and K per graph kind (wgrad is the
+  largest single component). Keep whatever measures faster; a few % at most.
+- **3'c. Pooling backward** (a day). `cudnnPoolingBackward` recomputes the
+  argmax; a mask from the forward makes it one read + one scatter: ~1-2%.
+
+Realistic remaining upside on this stack: **~5-8%** in total. Beyond that the
+architecture is at the floor of what cuDNN's convolution engines allow on
+these shapes; more would need custom convolution kernels (weeks, high risk) or
+a GPU/cuDNN generation where the fused engines exist - which the probe tells
+in two minutes.
 
 ### Phase 4 — parallel small items
 
@@ -205,7 +239,7 @@ at 128 per the 2026-08-11 note) — decide it explicitly rather than inherit it.
 | + 1a plain-bf16 rung (measured) | 93 | | 245 | |
 | + Phase 2 fused join (measured) | 89 | | 218 | |
 | + 1b own BN-backward kernel (measured) | **85** | 100 | **175** | 199 |
-| + Phase 3 (MLPerf fusion) | 70–75 | | 150–160 | |
+| + Phase 3' (own BN fwd + mask, conv/pool tweaks) | ~78–80 | | ~160–165 | |
 | + Phase 3 (MLPerf fusion) | 75–80 | 100 | 165–175 | 199 |
 
 ## 5. Validation gates (all phases)

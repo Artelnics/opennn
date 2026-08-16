@@ -153,6 +153,12 @@ void ForwardPropagation::set(
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
 
+    position_staging_required = ranges::any_of(
+        layers, [](const unique_ptr<Layer>& layer)
+        {
+            return layer && layer->uses_sequence_position();
+        });
+
     staged_input_storage.clear();
     staged_inputs.clear();
     host_bf16_input_scratch.clear();
@@ -622,11 +628,7 @@ void ForwardPropagation::set(
 
         for(size_t i = 0; i < layers_number; ++i)
         {
-            if(!has_consumers[i]
-               || is_one_of(
-                   layers[i]->get_type(),
-                   LayerType::Detection,
-                   LayerType::DetectionV8))
+            if(!has_consumers[i])
             {
                 externally_observable[i] = true;
             }

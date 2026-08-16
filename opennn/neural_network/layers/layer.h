@@ -122,6 +122,7 @@ public:
     virtual bool allows_successors() const noexcept { return true; }
     virtual bool is_recurrent() const noexcept { return false; }
     virtual bool skip_for_pre_scaled_input() const noexcept { return false; }
+    virtual bool uses_sequence_position() const noexcept { return false; }
 
     // Whether an FP32 input may be narrowed to BF16 while it is staged for
     // this input slot. Layers that interpret values as exact identifiers must

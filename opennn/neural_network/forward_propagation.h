@@ -68,6 +68,7 @@ struct ForwardPropagation
     Index get_final_output_capacity() const noexcept { return final_output_capacity; }
     Index get_final_output_layer() const noexcept { return final_output_layer; }
     Index get_execution_start_layer() const noexcept { return execution_start_layer; }
+    bool needs_position_staging() const noexcept { return position_staging_required; }
 
     TensorView get_last_trainable_layer_outputs() const;
 
@@ -152,6 +153,7 @@ private:
     Index sequence_capacity = 0;
     Index active_sequence_length = 0;
     Index execution_start_layer = 0;
+    bool position_staging_required = false;
     Index final_output_capacity = 0;
     Index final_output_layer = -1;
     optional<OutputWindow> output_window;

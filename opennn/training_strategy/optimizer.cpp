@@ -75,6 +75,13 @@ static void clip_gradient_norm_device(Buffer&, Index, float) OPENNN_CUDA_STUB_BO
 namespace
 {
 
+InferenceShapePolicy loss_inference_policy(const Loss& loss)
+{
+    InferenceShapePolicy policy;
+    policy.retained_output_layers = loss.get_output_delta_layer_indices();
+    return policy;
+}
+
 Loss::EvaluationResult average_epoch_metrics(Loss::EvaluationResult sums,
                                              Index batches_number,
                                              bool include_accuracy)
@@ -1020,7 +1027,7 @@ TrainingResult Optimizer::train()
         validation_forward_propagation->set(validation_batch_size, neural_network,
                                             &training_forward_propagation.arena,
                                             ForwardPropagationMode::Inference,
-                                            InferenceShapePolicy{},
+                                            loss_inference_policy(*loss),
                                             true);
     }
 
@@ -1224,7 +1231,7 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
         context.validation_forward_propagation =
             make_unique<ForwardPropagation>(context.validation_samples_number, neural_network,
                                             ForwardPropagationMode::Inference,
-                                            InferenceShapePolicy{},
+                                            loss_inference_policy(*loss),
                                             true);
 
     loss->set_normalization_coefficient();
@@ -2346,7 +2353,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
             tail_size,
             neural_network,
             ForwardPropagationMode::Inference,
-            {},
+            loss_inference_policy(*loss),
             true);
         neural_network->forward_propagate(batch.get_inputs(),
                                           tail_forward_propagation,

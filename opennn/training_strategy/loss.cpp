@@ -436,21 +436,6 @@ void yolo_gradient_cpu(const TensorView& output,
     yolo_gradient_kernel(output, target, output_delta, boxes_per_cell, classes_number, sigmoid_classes, inv_batch, lam);
 }
 
-vector<Index> yolo_detection_layer_indices(const NeuralNetwork* nn)
-{
-    vector<Index> result;
-    if (!nn) return result;
-
-    const auto& layers = nn->get_layers();
-    result.reserve(layers.size());
-
-    for (size_t i = 0; i < layers.size(); ++i)
-        if (layers[i] && layers[i]->get_type() == LayerType::Detection)
-            result.push_back(Index(i));
-
-    return result;
-}
-
 vector<float> assemble_head_target(const float* tgt,
                                    Index batch_size,
                                    Index per_sample_floats,
@@ -567,26 +552,6 @@ void yolo_gradient_cpu_multi(const ForwardPropagation& forward_propagation,
             yolo_gradient_kernel(head_output, head_target, head_delta, boxes_per_head,
                                  classes_number, sigmoid_classes, inv_batch, lam);
         });
-}
-
-bool yolo_uses_v8(const NeuralNetwork* nn)
-{
-    if (!nn) return false;
-    return ranges::any_of(nn->get_layers(), [](const unique_ptr<Layer>& layer)
-    {
-        return layer && layer->get_type() == LayerType::DetectionV8;
-    });
-}
-
-vector<Index> yolo_detection_v8_layer_indices(const NeuralNetwork* nn)
-{
-    vector<Index> result;
-    if (!nn) return result;
-    const auto& layers = nn->get_layers();
-    for (size_t i = 0; i < layers.size(); ++i)
-        if (layers[i] && layers[i]->get_type() == LayerType::DetectionV8)
-            result.push_back(Index(i));
-    return result;
 }
 
 static constexpr float TAL_ALPHA = 0.5f;
@@ -1255,6 +1220,35 @@ void Loss::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 
 }
 
+vector<Index> Loss::get_output_delta_layer_indices() const
+{
+    vector<Index> result;
+    if (!neural_network || neural_network->get_layers_number() == 0)
+        return result;
+
+    const auto& layers = neural_network->get_layers();
+
+    if (error == Error::Yolo)
+    {
+        const bool uses_v8 = ranges::any_of(layers, [](const unique_ptr<Layer>& layer)
+        {
+            return layer && layer->get_type() == LayerType::DetectionV8;
+        });
+        const LayerType head_type = uses_v8 ? LayerType::DetectionV8
+                                            : LayerType::Detection;
+
+        for (size_t i = 0; i < layers.size(); ++i)
+            if (layers[i] && layers[i]->get_type() == head_type)
+                result.push_back(Index(i));
+
+        if (!result.empty())
+            return result;
+    }
+
+    result.push_back(neural_network->get_last_trainable_layer_index());
+    return result;
+}
+
 void Loss::set_normalization_coefficient()
 {
     normalization_coefficient = 1.0f;
@@ -1362,20 +1356,22 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
 {
     const bool is_gradient = back_propagation != nullptr;
     const YoloLambdas lam{yolo_lambda_giou, yolo_lambda_dfl, yolo_lambda_noobj, yolo_lambda_class, yolo_focal_gamma, yolo_obj_focal_gamma};
+    const vector<Index> detection_indices = get_output_delta_layer_indices();
+    const bool uses_v8 = !detection_indices.empty()
+                      && neural_network->get_layer(detection_indices.front())->get_type()
+                         == LayerType::DetectionV8;
 
-    if (yolo_uses_v8(neural_network))
+    if (uses_v8)
     {
-        const vector<Index> v8_indices = yolo_detection_v8_layer_indices(neural_network);
         const auto* yolo_ds = static_cast<const YoloDataset*>(dataset);
         if (!is_gradient)
             return yolo_v8_error_multi(forward_propagation, target, neural_network,
-                                       v8_indices, yolo_ds->get_classes_number(), lam);
+                                       detection_indices, yolo_ds->get_classes_number(), lam);
         yolo_v8_gradient_multi(forward_propagation, target, *back_propagation,
-                               neural_network, v8_indices, yolo_ds->get_classes_number(), lam);
+                               neural_network, detection_indices, yolo_ds->get_classes_number(), lam);
         return {};
     }
 
-    const vector<Index> detection_indices = yolo_detection_layer_indices(neural_network);
     const bool sigmoid = yolo_uses_sigmoid_classes(neural_network);
 #ifdef OPENNN_HAS_CUDA
     const bool on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
