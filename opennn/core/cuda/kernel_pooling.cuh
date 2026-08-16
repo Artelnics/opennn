@@ -19,11 +19,34 @@
 
 struct MaxPoolGeometry
 {
-    Index batch, height, width, channels;
-    Index out_height, out_width;
+    Index batch;
+    int height, width, channels;
+    int out_height, out_width;
     int pool_height, pool_width;
     int stride_h, stride_w;
     int pad_h, pad_w;
+
+    // Thread index -> (n, row, column, first channel of a VEC group); channel
+    // groups are the fastest index, so a warp touches consecutive channels of
+    // one pixel.
+    __host__ __device__ void decompose(Index gi, int rows, int columns, int vec,
+                                       Index& n, int& row, int& column, int& c0) const
+    {
+        const int channel_groups = channels / vec;
+        c0 = int(gi % channel_groups) * vec;
+        Index rest = gi / channel_groups;
+        column = int(rest % columns); rest /= columns;
+        row = int(rest % rows);
+        n = rest / rows;
+    }
+    __host__ __device__ Index input_offset(Index n, int row, int column, int c0) const
+    {
+        return ((n * height + row) * Index(width) + column) * channels + c0;
+    }
+    __host__ __device__ Index output_offset(Index n, int row, int column, int c0) const
+    {
+        return ((n * out_height + row) * Index(out_width) + column) * channels + c0;
+    }
 };
 
 template<typename T>

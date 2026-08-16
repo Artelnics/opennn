@@ -8,49 +8,10 @@
 namespace
 {
 
-// The geometry as the kernels take it (int fields), plus the index arithmetic
-// they share. Thread index -> (n, row, column, first channel of a VEC group);
-// channel groups are the fastest index, so a warp touches consecutive
-// channels of one pixel.
-struct PoolShape
-{
-    int height, width, channels;
-    int out_height, out_width;
-    int pool_height, pool_width;
-    int stride_h, stride_w;
-    int pad_h, pad_w;
-
-    __device__ void decompose(Index gi, int rows, int columns, int vec,
-                              Index& n, int& row, int& column, int& c0) const
-    {
-        const int channel_groups = channels / vec;
-        c0 = int(gi % channel_groups) * vec;
-        Index rest = gi / channel_groups;
-        column = int(rest % columns); rest /= columns;
-        row = int(rest % rows);
-        n = rest / rows;
-    }
-    __device__ Index input_offset(Index n, int row, int column, int c0) const
-    {
-        return ((n * height + row) * Index(width) + column) * channels + c0;
-    }
-    __device__ Index output_offset(Index n, int row, int column, int c0) const
-    {
-        return ((n * out_height + row) * Index(out_width) + column) * channels + c0;
-    }
-};
-
-PoolShape make_shape(const MaxPoolGeometry& g)
-{
-    return {checked_int(g.height), checked_int(g.width), checked_int(g.channels),
-            checked_int(g.out_height), checked_int(g.out_width),
-            g.pool_height, g.pool_width, g.stride_h, g.stride_w, g.pad_h, g.pad_w};
-}
-
 // One thread per output pixel and VEC channels: the window maximum and its
 // position.
 template<typename T, int VEC>
-__global__ void max_pooling_forward_kernel(const Index groups, const PoolShape s,
+__global__ void max_pooling_forward_kernel(const Index groups, const MaxPoolGeometry s,
                                            const T* __restrict__ x,
                                            T* __restrict__ y,
                                            uint8_t* __restrict__ mask)
@@ -93,7 +54,7 @@ __global__ void max_pooling_forward_kernel(const Index groups, const PoolShape s
 // whose window covers (hi, wi) - at most ceil(pool / stride)^2 of them - and
 // whose argmax lands on it.
 template<typename T, int VEC>
-__global__ void max_pooling_backward_kernel(const Index groups, const PoolShape s,
+__global__ void max_pooling_backward_kernel(const Index groups, const MaxPoolGeometry s,
                                             const T* __restrict__ dy,
                                             const uint8_t* __restrict__ mask,
                                             T* __restrict__ dx)
@@ -158,11 +119,10 @@ void max_pooling_forward_cuda(const T* x, T* y, uint8_t* mask, const MaxPoolGeom
     if (g.batch == 0 || g.channels == 0) return;
     if (g.pool_height * g.pool_width > 255)
         throw std::runtime_error("max_pooling_forward_cuda: pool window too large for a one-byte argmax.");
-    const PoolShape s = make_shape(g);
     with_vector_width<T>(g.channels, [&]<int VEC>()
     {
         launch_elementwise_strided(g.batch * g.out_height * g.out_width * (g.channels / VEC),
-                                   max_pooling_forward_kernel<T, VEC>, s, x, y, mask);
+                                   max_pooling_forward_kernel<T, VEC>, g, x, y, mask);
     });
 }
 
@@ -170,11 +130,10 @@ template<typename T>
 void max_pooling_backward_cuda(const T* dy, const uint8_t* mask, T* dx, const MaxPoolGeometry& g)
 {
     if (g.batch == 0 || g.channels == 0) return;
-    const PoolShape s = make_shape(g);
     with_vector_width<T>(g.channels, [&]<int VEC>()
     {
         launch_elementwise_strided(g.batch * g.height * g.width * (g.channels / VEC),
-                                   max_pooling_backward_kernel<T, VEC>, s, dy, mask, dx);
+                                   max_pooling_backward_kernel<T, VEC>, g, dy, mask, dx);
     });
 }
 

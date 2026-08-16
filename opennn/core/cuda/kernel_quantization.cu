@@ -62,8 +62,7 @@ __global__ void w8a16_linear_out_major_kernel(
     }
 
     for (int r = 0; r < m; ++r)
-        for (int offset = 16; offset > 0; offset >>= 1)
-            acc[r] += __shfl_down_sync(0xffffffffu, acc[r], offset);
+        acc[r] = warp_reduce_sum(acc[r]);
 
     const auto store = [&](const int r, const float sum)
     {
@@ -120,6 +119,12 @@ __global__ void w8a16_linear_in_major_kernel(
         y[size_t(r) * out_features + j] = static_cast<T>(acc[r] * scale + bias_value);
 }
 
+// Wide vocabularies spread a row over eight warps.
+static int w8a16_out_major_warps(const Index out_features)
+{
+    return out_features >= 32768 ? 8 : 1;
+}
+
 template<typename T>
 void w8a16_linear_cuda(const int m, const int in_features, const int out_features,
                        const bool weights_out_major,
@@ -149,9 +154,13 @@ void w8a16_linear_cuda(const int m, const int in_features, const int out_feature
                 m, in_features, out_features, x, w, scales, bias, y)));
 }
 
-template<typename T, bool SCALE_BY_ROW>
+// One scale per row (row_scale_stride 1, column_scale_stride 0) or per column
+// (0, 1).
+template<typename T>
 __global__ void w8_dequant_kernel(const int rows,
                                   const int row_length,
+                                  const int row_scale_stride,
+                                  const int column_scale_stride,
                                   const int8_t* __restrict__ q,
                                   const float* __restrict__ scales,
                                   T* __restrict__ out)
@@ -162,7 +171,7 @@ __global__ void w8_dequant_kernel(const int rows,
     for (int row = blockIdx.y; row < rows; row += gridDim.y)
     {
         const Index i = Index(row) * row_length + column;
-        const float scale = SCALE_BY_ROW ? scales[row] : scales[column];
+        const float scale = scales[row * row_scale_stride + column * column_scale_stride];
         out[i] = static_cast<T>(float(q[i]) * scale);
     }
 }
@@ -175,13 +184,8 @@ void w8_dequant_cuda(const Index rows, const Index row_length, const bool scale_
     constexpr int max_grid_y = 65535;
     const dim3 grid(unsigned(grid_size_for(checked_int(row_length))),
                     unsigned(min(checked_int(rows), max_grid_y)));
-    cudaStream_t stream = opennn::device::get_compute_stream();
-    if (scale_by_row)
-        OPENNN_CUDA_LAUNCH((w8_dequant_kernel<T, true>
-            <<<grid, block_size, 0, stream>>>(checked_int(rows), checked_int(row_length), q, scales, out)));
-    else
-        OPENNN_CUDA_LAUNCH((w8_dequant_kernel<T, false>
-            <<<grid, block_size, 0, stream>>>(checked_int(rows), checked_int(row_length), q, scales, out)));
+    OPENNN_CUDA_LAUNCH((w8_dequant_kernel<T><<<grid, block_size, 0, opennn::device::get_compute_stream()>>>(
+        checked_int(rows), checked_int(row_length), scale_by_row ? 1 : 0, scale_by_row ? 0 : 1, q, scales, out)));
 }
 
 template<typename T>
@@ -227,11 +231,12 @@ void embedding_forward_w8_cuda(const Index n, const float* inputs, const int8_t*
                        sequence_length, embedding_dimension, vocabulary_size, scale_embedding);
 }
 
+// The W8A16 linear and the dequant have BF16 callers only; the embedding
+// lookup serves both types.
+template void w8a16_linear_cuda<__nv_bfloat16>(const int, const int, const int, const bool, const __nv_bfloat16*, const int8_t*, const float*, const __nv_bfloat16*, __nv_bfloat16*);
+template void w8_dequant_cuda<__nv_bfloat16>(const Index, const Index, const bool, const int8_t*, const float*, __nv_bfloat16*);
 #define INSTANTIATE(T) \
-    template void w8a16_linear_cuda<T>(const int, const int, const int, const bool, const T*, const int8_t*, const float*, const T*, T*); \
-    template void w8_dequant_cuda<T>(const Index, const Index, const bool, const int8_t*, const float*, T*); \
     template void embedding_forward_w8_cuda<T>(const Index, const float*, const int8_t*, const float*, const float*, T*, const int, const int, const int, const bool);
-
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
 

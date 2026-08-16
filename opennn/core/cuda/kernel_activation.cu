@@ -12,47 +12,9 @@
 #include "opennn/core/cuda/kernel_activation.cuh"
 #include <curand_kernel.h>
 
-template<typename T>
-__global__ void swiglu_forward_kernel(const int n, const T* __restrict__ gate, const T* __restrict__ up, T* __restrict__ out)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i >= n) return;
-
-    const float g = static_cast<float>(gate[i]);
-    const float silu = g / (1.0f + expf(-g));
-    out[i] = static_cast<T>(silu * static_cast<float>(up[i]));
-}
-
-template<typename T>
-__global__ void swiglu_backward_kernel(const int n, const T* __restrict__ dout, const T* __restrict__ gate, const T* __restrict__ up, T* __restrict__ dgate, T* __restrict__ dup)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i >= n) return;
-
-    const float d   = static_cast<float>(dout[i]);
-    const float g   = static_cast<float>(gate[i]);
-    const float sig = 1.0f / (1.0f + expf(-g));
-    const float silu = g * sig;
-
-    if (dup)   dup[i]   = static_cast<T>(d * silu);
-    if (dgate) dgate[i] = static_cast<T>(d * static_cast<float>(up[i]) * sig * (1.0f + g * (1.0f - sig)));
-}
-
-template<typename T>
-void swiglu_forward_cuda(const int n, const T* gate, const T* up, T* out)
-{
-    launch_elementwise(n, swiglu_forward_kernel<T>, gate, up, out);
-}
-
-template<typename T>
-void swiglu_backward_cuda(const int n, const T* dout, const T* gate, const T* up, T* dgate, T* dup)
-{
-    launch_elementwise(n, swiglu_backward_kernel<T>, dout, gate, up, dgate, dup);
-}
-
 __device__ __forceinline__ float opennn_activation_value(float x, int function)
 {
-    if (function == activation_sigmoid)    return 1.0f / (1.0f + expf(-x));
+    if (function == activation_sigmoid)    return sigmoid_f(x);
     if (function == activation_tanh)       return tanhf(x);
     if (function == activation_relu)       return fmaxf(x, 0.0f);
     if (function == activation_leaky_relu) return x >= 0.0f ? x : leaky_relu_slope * x;
@@ -62,10 +24,13 @@ __device__ __forceinline__ float opennn_activation_value(float x, int function)
         constexpr float sqrt_2_over_pi = 0.7978845608028654f;
         return 0.5f * x * (1.0f + tanhf(sqrt_2_over_pi * (x + 0.044715f * x * x * x)));
     }
-    if (function == activation_silu)       return x / (1.0f + expf(-x));
+    if (function == activation_silu)       return x * sigmoid_f(x);
     return x;
 }
 
+// `y` is the saved output for sigmoid/tanh/relu/leaky_relu and the saved input
+// (pre-activation) for gelu/gelu_tanh/silu, as ActivationOperator arranges
+// (activation_needs_input).
 __device__ __forceinline__ float opennn_activation_grad(float y, float d, int function)
 {
     if (function == activation_sigmoid)    return d * y * (1.0f - y);
@@ -89,11 +54,45 @@ __device__ __forceinline__ float opennn_activation_grad(float y, float d, int fu
     }
     if (function == activation_silu)
     {
-
-        const float s = 1.0f / (1.0f + expf(-y));
+        const float s = sigmoid_f(y);
         return d * s * (1.0f + y * (1.0f - s));
     }
     return d;
+}
+
+template<typename T>
+__global__ void swiglu_forward_kernel(const int n, const T* __restrict__ gate, const T* __restrict__ up, T* __restrict__ out)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= n) return;
+
+    const float g = static_cast<float>(gate[i]);
+    out[i] = static_cast<T>(opennn_activation_value(g, activation_silu) * static_cast<float>(up[i]));
+}
+
+template<typename T>
+__global__ void swiglu_backward_kernel(const int n, const T* __restrict__ dout, const T* __restrict__ gate, const T* __restrict__ up, T* __restrict__ dgate, T* __restrict__ dup)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= n) return;
+
+    const float d = static_cast<float>(dout[i]);
+    const float g = static_cast<float>(gate[i]);
+
+    if (dup)   dup[i]   = static_cast<T>(d * opennn_activation_value(g, activation_silu));
+    if (dgate) dgate[i] = static_cast<T>(opennn_activation_grad(g, d * static_cast<float>(up[i]), activation_silu));
+}
+
+template<typename T>
+void swiglu_forward_cuda(const int n, const T* gate, const T* up, T* out)
+{
+    launch_elementwise(n, swiglu_forward_kernel<T>, gate, up, out);
+}
+
+template<typename T>
+void swiglu_backward_cuda(const int n, const T* dout, const T* gate, const T* up, T* dgate, T* dup)
+{
+    launch_elementwise(n, swiglu_backward_kernel<T>, dout, gate, up, dgate, dup);
 }
 
 template<typename T>
@@ -145,13 +144,10 @@ void activation_forward_cuda(const Index n, T* data, const int function)
         }
 
     if constexpr (std::is_same_v<T, float>)
-    {
         launch_vec4_on(opennn::device::get_compute_stream(), n, are_float4_aligned(data),
                        activation_forward_kernel_f4, data, function);
-        return;
-    }
-
-    launch_elementwise_strided(n, activation_forward_kernel<T>, data, function);
+    else
+        launch_elementwise_strided(n, activation_forward_kernel<T>, data, function);
 }
 
 template<typename T>
@@ -212,13 +208,10 @@ void activation_backward_cuda(const Index n, const T* outputs, T* delta, const i
         }
 
     if constexpr (std::is_same_v<T, float>)
-    {
         launch_vec4_on(opennn::device::get_compute_stream(), n, are_float4_aligned(outputs, delta),
                        activation_backward_kernel_f4, outputs, delta, function);
-        return;
-    }
-
-    launch_elementwise_strided(n, activation_backward_kernel<T>, outputs, delta, function);
+    else
+        launch_elementwise_strided(n, activation_backward_kernel<T>, outputs, delta, function);
 }
 
 template<typename T>

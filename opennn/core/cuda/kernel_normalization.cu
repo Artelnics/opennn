@@ -15,7 +15,6 @@ template<typename T, bool FuseResidual, bool HasMean>
 __global__ void norm_forward_kernel(const int N, const int D, const T* __restrict__ X, const T* __restrict__ R, T* __restrict__ sum, T* __restrict__ Y, float* __restrict__ means, float* __restrict__ inv_vars, const float* __restrict__ gamma, const float* __restrict__ beta, const float eps)
 {
     const int idx = blockIdx.x;
-    if (idx >= N) return;
 
     const T* x_row = X + idx * D;
     T* y_row = Y + idx * D;
@@ -357,14 +356,14 @@ __global__ void batchnorm_forward_apply_kernel(const Index groups, const int cha
             const Index i = (gi / channel_groups) * channels + c0;
             float vx[VEC], vr[VEC], out[VEC];
             VecIO<T, VEC>::load_float(x + i, vx);
-            if (ADD) VecIO<T, VEC>::load_float(residual + i, vr);
+            if constexpr (ADD) VecIO<T, VEC>::load_float(residual + i, vr);
             #pragma unroll
             for (int k = 0; k < VEC; ++k)
             {
                 const int c = c0 + k;
                 float v = vx[k] * scale_shift[c] + scale_shift[channels + c];
-                if (ADD) v += vr[k];
-                if (RELU)
+                if constexpr (ADD) v += vr[k];
+                if constexpr (RELU)
                 {
                     v = fmaxf(v, 0.0f);
                     bits |= (v > 0.0f ? 1u : 0u) << k;
@@ -653,27 +652,31 @@ void add_relu_cuda(const Index total, const float* a, const float* b,
     launch_elementwise_strided(total, add_relu_kernel, a, b, apply_relu ? 1 : 0, y);
 }
 
+template<typename T, bool FuseResidual, bool HasMean>
+static void norm_forward_launch(const int N, const int D, const T* X, const T* R, T* sum, T* Y,
+                                float* means, float* inv_vars, const float* gamma, const float* beta, const float eps)
+{
+    if (N == 0 || D == 0) return;
+    OPENNN_CUDA_LAUNCH((norm_forward_kernel<T, FuseResidual, HasMean><<<N, layernorm_threads(D), 0, opennn::device::get_compute_stream()>>>(
+        N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)));
+}
+
 template<typename T>
 void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps)
 {
-    if (N == 0 || D == 0) return;
-
-    OPENNN_CUDA_LAUNCH((norm_forward_kernel<T, false, true><<<N, layernorm_threads(D), 0, opennn::device::get_compute_stream()>>>(N, D, X, nullptr, nullptr, Y, means, inv_vars, gamma, beta, eps)));
+    norm_forward_launch<T, false, true>(N, D, X, nullptr, nullptr, Y, means, inv_vars, gamma, beta, eps);
 }
 
 template<typename T>
 void layernorm_add_forward_cuda(const int N, const int D, const T* X, const T* R, T* sum, T* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps)
 {
-    if (N == 0 || D == 0) return;
-
-    OPENNN_CUDA_LAUNCH((norm_forward_kernel<T, true, true><<<N, layernorm_threads(D), 0, opennn::device::get_compute_stream()>>>(N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)));
+    norm_forward_launch<T, true, true>(N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps);
 }
 
 template<typename T, bool HasMean>
 __global__ void norm_backward_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, const float* __restrict__ gamma, T* __restrict__ dX)
 {
     const int idx = blockIdx.x;
-    if (idx >= N) return;
 
     const T* dy_row = dY + idx * D;
     const T* x_row = X + idx * D;
@@ -807,9 +810,8 @@ static void norm_backward_launch(const int N, const int D, const T* dY, const T*
         cudaMemsetAsync(dGamma, 0, size_t(D) * sizeof(float), stream);
         if constexpr (HasMean) cudaMemsetAsync(dBeta, 0, size_t(D) * sizeof(float), stream);
     }
-    norm_weight_gradient_coalesced_kernel<T, NUM_WARPS, HasMean><<<dim3(grid_x, grid_y), block, 0,
-        opennn::device::get_compute_stream()>>>(N, D, chunk, dY, X, means, inv_vars, dGamma, dBeta);
-    opennn::device::check_last_error();
+    OPENNN_CUDA_LAUNCH((norm_weight_gradient_coalesced_kernel<T, NUM_WARPS, HasMean><<<dim3(grid_x, grid_y), block, 0,
+        opennn::device::get_compute_stream()>>>(N, D, chunk, dY, X, means, inv_vars, dGamma, dBeta)));
 }
 
 template<typename T>
@@ -823,9 +825,7 @@ void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, 
 template<typename T>
 void rmsnorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* inv_rms, const float* weight, const float eps)
 {
-    if (N == 0 || D == 0) return;
-
-    OPENNN_CUDA_LAUNCH((norm_forward_kernel<T, false, false><<<N, layernorm_threads(D), 0, opennn::device::get_compute_stream()>>>(N, D, X, nullptr, nullptr, Y, nullptr, inv_rms, weight, nullptr, eps)));
+    norm_forward_launch<T, false, false>(N, D, X, nullptr, nullptr, Y, nullptr, inv_rms, weight, nullptr, eps);
 }
 
 template<typename T>

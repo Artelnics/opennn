@@ -248,8 +248,8 @@ cudnnPoolingDescriptor_t PoolOperator::get_pooling_descriptor() const
 MaxPoolGeometry PoolOperator::max_pool_geometry(const TensorView& input) const noexcept
 {
     return {input.size() / (input_height * input_width * input_channels),
-            input_height, input_width, input_channels,
-            get_output_height(), get_output_width(),
+            to_int(input_height), to_int(input_width), to_int(input_channels),
+            to_int(get_output_height()), to_int(get_output_width()),
             to_int(pool_height), to_int(pool_width),
             to_int(row_stride), to_int(column_stride),
             to_int(padding_height), to_int(padding_width)};

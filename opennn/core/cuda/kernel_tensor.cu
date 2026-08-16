@@ -8,20 +8,19 @@
 
 // Shape- and reduction-level kernels that belong to no single layer family:
 // a 2D transpose used when materializing transposed weights, and the bias
-// gradient reduction behind linear_backward. Both were filed under the
-// recurrent kernels, whose callers they never had in common.
+// gradient reduction behind linear_backward.
 
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/core/cuda/kernel_tensor.cuh"
 
 template<typename T>
-__global__ void transpose_2d_kernel(const int rows,
+__global__ void transpose_2d_kernel(const int total,
+                                    const int rows,
                                     const int cols,
                                     const T* __restrict__ src,
                                     T* __restrict__ dst)
 {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    const int total = rows * cols;
     if (idx >= total) return;
 
     const int r = idx / cols;
@@ -35,13 +34,7 @@ void transpose_2d_cuda(const Index rows,
                        const T* src,
                        T* dst)
 {
-    if (rows == 0 || cols == 0) return;
-    const int total = checked_int(rows * cols);
-    OPENNN_CUDA_LAUNCH(transpose_2d_kernel<T><<<grid_size_for(total), block_size, 0,
-                             opennn::device::get_compute_stream()>>>(
-        checked_int(rows),
-        checked_int(cols),
-        src, dst));
+    launch_elementwise(rows * cols, transpose_2d_kernel<T>, checked_int(rows), checked_int(cols), src, dst);
 }
 
 template<typename T>
@@ -75,7 +68,9 @@ void bias_grad_sum_cuda(const Index batch, const Index features, const T* delta,
         checked_int(batch), f, chunk, delta, bias_grad));
 }
 
-#define INSTANTIATE(T)     template void transpose_2d_cuda<T>(const Index, const Index, const T*, T*);     template void bias_grad_sum_cuda<T>(const Index, const Index, const T*, float*);
+#define INSTANTIATE(T) \
+    template void transpose_2d_cuda<T>(const Index, const Index, const T*, T*); \
+    template void bias_grad_sum_cuda<T>(const Index, const Index, const T*, float*);
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE

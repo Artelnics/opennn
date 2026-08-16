@@ -7,11 +7,6 @@
 
 inline constexpr int W8A16_MAX_M = 16;
 
-inline int w8a16_out_major_warps(const Index out_features)
-{
-    return out_features >= 32768 ? 8 : 1;
-}
-
 template<typename T>
 void w8a16_linear_cuda(const int m, const int in_features, const int out_features,
                        const bool weights_out_major,
