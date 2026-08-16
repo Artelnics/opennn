@@ -400,6 +400,42 @@ So the honest small-batch position after all of it: bf16 @128 at parity with
 PyTorch's best, fp32 @128 +10% over it (7,936 vs 7,229). Widening bf16 @128
 would need kernel-time wins at tiny shapes, i.e. custom convolutions.
 
+### Phase 6 — execution lanes (multi-stream inside the graph): built, measured, off by default (2026-08-17)
+
+The mechanism is in (`device::lanes_available()` / `set_active_lane()` /
+`lane_stream()`; lane 0 is the compute stream everything always ran on, lanes
+1.. are extra streams with their own cuDNN/cuBLAS handles and thread scratch
+behind the same accessors, `OPENNN_LANES` selects the count, default 1). The
+first schedule forks each convolution layer's weight (and bias) gradient onto
+lane 1 while the input gradient runs on lane 0, with a per-layer join
+(`ConvolutionOperator::apply_delta_gpu`); a forked lane joins the capture
+through the fork event, so the captured step becomes a graph with parallel
+branches; the gradient tests pass with one and two lanes.
+
+Measured on the RTX 3060 (30 SMs), cooled pairs, lanes 1 : 2:
+
+| point | autotuned | heuristics only |
+|---|---:|---:|
+| bf16 128 | 14,099 / 14,067 : 13,756 / 13,692 (-2.5%) | 13,160 / 13,041 : 13,188 / 13,140 (parity) |
+| bf16 256 / 512 | 17,921 : 17,620 / 20,956 : 20,320 | — |
+| bf16 2048 | 25,909 : 25,665 | — |
+| fp32 128 | 7,937 : 7,403 | — |
+| fp32 2048 | 12,584 : 11,900 | 11,922 : 11,169 (-6%) |
+
+Two things in that table. Autotune must not time candidates while another
+lane runs (that alone was 2-9% at 128; `autotune_now`/`autotune_with_scratch`
+now synchronize the device first when lanes > 1). And with that removed the
+premise still fails here: cuDNN's kernels at these shapes occupy the SMs even
+at batch 128, so overlapping dgrad with wgrad gains nothing, and at large
+batch the two contend for the same bandwidth and lose 5-6%. The estimate of
++10-20% at 128 assumed underfilled SMs; on this card the small-batch time is
+per-kernel latency and tail, which concurrency does not remove.
+
+Kept, off by default (zero cost at one lane), for the RTX 4080: 76 SMs make
+the underfill argument real, and the run there should include
+`OPENNN_LANES=2` at 128-1024. If it does not pay there either, the schedule
+and the lane accessors can go.
+
 ## 4. Projected trajectory (batch 2048, ms/step; lower is better)
 
 | | bf16 OpenNN | bf16 PyTorch | fp32 OpenNN | fp32 PyTorch |

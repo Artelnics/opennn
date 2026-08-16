@@ -549,6 +549,10 @@ inline void autotune_now(bool& pending, graph::Graph& graph,
 {
     if (!pending) return;
     pending = false;
+    // Candidates are timed: with several lanes another lane may be running
+    // now and would skew the timing (measured: a mistuned plan cost 2-9% for
+    // the whole step), so the device is idle before the first measurement.
+    if (device::lanes_available() > 1) device::synchronize();
 
     Buffer tune_workspace{Device::CUDA};
     try
@@ -582,6 +586,7 @@ inline void autotune_with_scratch(bool& pending, graph::Graph& graph,
                                   const char* tag = nullptr)
 {
     if (!pending) return;
+    if (device::lanes_available() > 1) device::synchronize();
 
     TensorMap scratch = tensors;
     vector<Buffer> buffers;

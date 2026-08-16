@@ -623,9 +623,41 @@ void launch_graph(const GraphExecHandle&, cudaStream_t) { throw_cuda_unavailable
 
 #endif
 
+namespace
+{
+thread_local int active_lane_index = 0;
+}
+
+int lanes_available() noexcept
+{
+    static const int lanes = []
+    {
+        const long long value = env_int_or("OPENNN_LANES", 1);
+        return int(value < 1 ? 1 : (value > MAX_LANES ? MAX_LANES : value));
+    }();
+    return lanes;
+}
+
+int active_lane() noexcept
+{
+    return active_lane_index;
+}
+
+void set_active_lane(int lane)
+{
+    throw_if(lane < 0 || lane >= lanes_available(),
+             "set_active_lane: lane {} outside the {} configured (OPENNN_LANES).", lane, lanes_available());
+    active_lane_index = lane;
+}
+
+cudaStream_t lane_stream(int lane)
+{
+    return Backend::instance().stream(lane);
+}
+
 cudaStream_t get_compute_stream()
 {
-    return Backend::instance().compute_stream;
+    return Backend::instance().stream(active_lane_index);
 }
 
 cudaStream_t get_transfer_stream()
@@ -654,47 +686,68 @@ Backend::Backend()
         return;
     }
 
-    compute_stream = device::create_stream(cudaStreamDefault);
+    lane_streams[0] = device::create_stream(cudaStreamDefault);
     transfer_stream = device::create_stream(cudaStreamNonBlocking);
 
     CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
-
+    CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&op_tensor_add_descriptor));
+    CHECK_CUDNN(cudnnSetOpTensorDescriptor(op_tensor_add_descriptor,
+                                           CUDNN_OP_TENSOR_ADD,
+                                           CUDNN_DATA_FLOAT,
+                                           CUDNN_NOT_PROPAGATE_NAN));
 #endif
 }
 
-cublasHandle_t Backend::cublas()
+cudaStream_t Backend::stream(int lane)
 {
 #ifdef OPENNN_HAS_CUDA
-    call_once(cublas_init_once, [this]
-    {
-        if (!compute_stream) return;
-
-        CHECK_CUBLAS(cublasCreate(&cublas_handle));
-        CHECK_CUBLAS(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
-        CHECK_CUBLAS(cublasSetStream(cublas_handle, compute_stream));
-    });
+    if (!lane_streams[0]) return nullptr;   // no CUDA device
+    if (lane == 0) return lane_streams[0];
+    std::lock_guard<std::mutex> lock(lane_mutex);
+    if (!lane_streams[lane])
+        lane_streams[lane] = device::create_stream(cudaStreamNonBlocking);
+    return lane_streams[lane];
+#else
+    (void)lane;
+    return nullptr;
 #endif
-    return cublas_handle;
 }
 
-cudnnHandle_t Backend::cudnn()
+cublasHandle_t Backend::cublas(int lane)
 {
 #ifdef OPENNN_HAS_CUDA
-    call_once(cudnn_init_once, [this]
+    cudaStream_t lane_stream = stream(lane);
+    if (!lane_stream) return nullptr;
+    std::lock_guard<std::mutex> lock(lane_mutex);
+    if (!cublas_handles[lane])
     {
-        if (!compute_stream) return;
-
-        CHECK_CUDNN(cudnnCreate(&cudnn_handle));
-        CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
-
-        CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&op_tensor_add_descriptor));
-        CHECK_CUDNN(cudnnSetOpTensorDescriptor(op_tensor_add_descriptor,
-                                               CUDNN_OP_TENSOR_ADD,
-                                               CUDNN_DATA_FLOAT,
-                                               CUDNN_NOT_PROPAGATE_NAN));
-    });
+        CHECK_CUBLAS(cublasCreate(&cublas_handles[lane]));
+        CHECK_CUBLAS(cublasSetMathMode(cublas_handles[lane], CUBLAS_TF32_TENSOR_OP_MATH));
+        CHECK_CUBLAS(cublasSetStream(cublas_handles[lane], lane_stream));
+    }
+    return cublas_handles[lane];
+#else
+    (void)lane;
+    return nullptr;
 #endif
-    return cudnn_handle;
+}
+
+cudnnHandle_t Backend::cudnn(int lane)
+{
+#ifdef OPENNN_HAS_CUDA
+    cudaStream_t lane_stream = stream(lane);
+    if (!lane_stream) return nullptr;
+    std::lock_guard<std::mutex> lock(lane_mutex);
+    if (!cudnn_handles[lane])
+    {
+        CHECK_CUDNN(cudnnCreate(&cudnn_handles[lane]));
+        CHECK_CUDNN(cudnnSetStream(cudnn_handles[lane], lane_stream));
+    }
+    return cudnn_handles[lane];
+#else
+    (void)lane;
+    return nullptr;
+#endif
 }
 
 Backend::~Backend()
@@ -702,9 +755,12 @@ Backend::~Backend()
 #ifdef OPENNN_HAS_CUDA
     if (op_tensor_add_descriptor) { cudnnDestroyOpTensorDescriptor(op_tensor_add_descriptor); op_tensor_add_descriptor = nullptr; }
     if (cublas_lt_handle)        { cublasLtDestroy(cublas_lt_handle);                       cublas_lt_handle = nullptr; }
-    if (cublas_handle)           { cublasDestroy(cublas_handle);                             cublas_handle = nullptr; }
-    if (cudnn_handle)            { cudnnDestroy(cudnn_handle);                               cudnn_handle = nullptr; }
-    device::destroy_stream(compute_stream);  compute_stream = nullptr;
+    for (int lane = 0; lane < device::MAX_LANES; ++lane)
+    {
+        if (cublas_handles[lane]) { cublasDestroy(cublas_handles[lane]); cublas_handles[lane] = nullptr; }
+        if (cudnn_handles[lane])  { cudnnDestroy(cudnn_handles[lane]);   cudnn_handles[lane] = nullptr; }
+        device::destroy_stream(lane_streams[lane]); lane_streams[lane] = nullptr;
+    }
     device::destroy_stream(transfer_stream); transfer_stream = nullptr;
 #endif
 }
@@ -809,15 +865,23 @@ namespace
 
     struct CudaMatmulThreadState
     {
-        array<Buffer, size_t(device::GraphWorkspaceKind::Count)> workspaces =
-            make_workspaces(make_index_sequence<size_t(device::GraphWorkspaceKind::Count)>{});
+        // One workspace set per lane: lanes run concurrently, so they cannot
+        // share scratch.
+        using LaneWorkspaces = std::array<Buffer, size_t(device::GraphWorkspaceKind::Count)>;
+        std::array<LaneWorkspaces, device::MAX_LANES> workspaces =
+            make_lanes(make_index_sequence<device::MAX_LANES>{});
 
         unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_matmul_plans;
 
         template<size_t... I>
-        static array<Buffer, sizeof...(I)> make_workspaces(index_sequence<I...>)
+        static LaneWorkspaces make_workspaces(index_sequence<I...>)
         {
             return {((void)I, Buffer{Device::CUDA})...};
+        }
+        template<size_t... L>
+        static std::array<LaneWorkspaces, sizeof...(L)> make_lanes(index_sequence<L...>)
+        {
+            return {((void)L, make_workspaces(make_index_sequence<size_t(device::GraphWorkspaceKind::Count)>{}))...};
         }
     };
 
@@ -838,11 +902,13 @@ namespace
 
     void* thread_workspace(device::GraphWorkspaceKind kind, Index minimum_bytes)
     {
-        if (const optional<void*> graph_workspace =
-                device::graph_workspace_override(kind, minimum_bytes))
-            return *graph_workspace;
+        // The pinned inference-graph workspaces belong to lane 0.
+        if (device::active_lane() == 0)
+            if (const optional<void*> graph_workspace =
+                    device::graph_workspace_override(kind, minimum_bytes))
+                return *graph_workspace;
 
-        Buffer& buffer = thread_state().workspaces[size_t(kind)];
+        Buffer& buffer = thread_state().workspaces[size_t(device::active_lane())][size_t(kind)];
         if (minimum_bytes > buffer.byte_size() && buffer.data())
         {
             throw_if(device::cuda_allocation_growth_forbidden(),
@@ -949,8 +1015,9 @@ void* ensure_workspace_bytes(device::GraphWorkspaceKind kind, Index bytes)
 void release_thread_workspaces()
 {
     device::synchronize(device::get_compute_stream());
-    for (Buffer& buffer : thread_state().workspaces)
-        buffer.resize_bytes(0, Device::CUDA);
+    for (auto& lane : thread_state().workspaces)
+        for (Buffer& buffer : lane)
+            buffer.resize_bytes(0, Device::CUDA);
 }
 
 const void* data_for_gemm_dtype(const TensorView& input, Type target_type)

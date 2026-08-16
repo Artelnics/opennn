@@ -120,7 +120,7 @@ int main(int argc, char* argv[])
                 {"cudnn", [] { device::set_rung(MaxPoolingRung::Cudnn); }},
                 {"own",   [] { device::set_rung(MaxPoolingRung::OwnKernel); }}});
             cout << "bn_forward_rung=" << bn_forward << " bn_backward_rung=" << bn_backward
-                 << " pooling_rung=" << pooling << "\n";
+                 << " pooling_rung=" << pooling << " lanes=" << device::lanes_available() << "\n";
         }
 
         if (!cache_dir.empty())

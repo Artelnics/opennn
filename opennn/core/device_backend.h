@@ -9,6 +9,7 @@
 #pragma once
 
 #include <array>
+#include <mutex>
 
 #include "opennn/core/opennn_types.h"
 #include "opennn/core/configuration.h"
@@ -204,9 +205,23 @@ private:
 
 void launch_graph(const GraphExecHandle&, cudaStream_t);
 
-// The library's two streams: every kernel and cuDNN/cuBLAS call runs on the
-// compute stream; host<->device staging copies on the transfer stream, joined
-// to compute with events (see Batch::wait_h2d_on_compute_stream).
+// Execution lanes. Lane 0 is the compute stream every kernel and cuDNN/cuBLAS
+// call has always run on; lanes 1.. are extra streams, each with its own
+// cuDNN/cuBLAS handles and thread scratch, for work the schedule forks off -
+// kernels on different lanes run concurrently, inside a captured graph too
+// (a forked lane joins the capture through the fork event and must be joined
+// back before the capture ends). The active lane is a thread-local index the
+// accessors below read; a scheduler sets it around the ops it forks and
+// restores it. lanes_available() is the configured count (OPENNN_LANES,
+// default 1: no forking anywhere).
+constexpr int MAX_LANES = 4;
+int lanes_available() noexcept;
+int active_lane() noexcept;
+void set_active_lane(int lane);
+cudaStream_t lane_stream(int lane);
+
+// The active lane's stream; host<->device staging copies use the transfer
+// stream, joined to compute with events (see Batch::wait_h2d_on_compute_stream).
 cudaStream_t get_compute_stream();
 cudaStream_t get_transfer_stream();
 
@@ -251,14 +266,15 @@ public:
     ThreadPoolDevice* get_thread_pool_device();
     void set_threads_number(int);
 
-    static cublasHandle_t get_cublas_handle()                      { return instance().cublas(); }
+    // Handles of the active lane (see device::active_lane).
+    static cublasHandle_t get_cublas_handle()                      { return instance().cublas(device::active_lane()); }
     static cublasLtHandle_t get_cublas_lt_handle()                 { return instance().cublas_lt_handle; }
 
-    static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn(); }
+    static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn(device::active_lane()); }
     static cudnnOpTensorDescriptor_t get_op_tensor_add_descriptor()
     {
         Backend& backend = instance();
-        backend.cudnn();
+        backend.cudnn(0);
         return backend.op_tensor_add_descriptor;
     }
 
@@ -266,26 +282,27 @@ private:
     Backend();
     ~Backend();
 
-    cublasHandle_t cublas();
-    cudnnHandle_t cudnn();
+    cublasHandle_t cublas(int lane);
+    cudnnHandle_t cudnn(int lane);
+    cudaStream_t stream(int lane);
 
     unique_ptr<ThreadPool> thread_pool;
     unique_ptr<ThreadPoolDevice> thread_pool_device;
 
     cublasLtHandle_t cublas_lt_handle = nullptr;
-
-    cublasHandle_t cublas_handle = nullptr;
-    once_flag cublas_init_once;
-
-    cudnnHandle_t cudnn_handle = nullptr;
     cudnnOpTensorDescriptor_t op_tensor_add_descriptor = nullptr;
-    once_flag cudnn_init_once;
 
-    cudaStream_t compute_stream = nullptr;
+    // Per lane; lane 0 is created with the backend, the others on first use.
+    std::mutex lane_mutex;
+    std::array<cudaStream_t, device::MAX_LANES>   lane_streams{};
+    std::array<cublasHandle_t, device::MAX_LANES> cublas_handles{};
+    std::array<cudnnHandle_t, device::MAX_LANES>  cudnn_handles{};
+
     cudaStream_t transfer_stream = nullptr;
 
     friend cudaStream_t device::get_compute_stream();
     friend cudaStream_t device::get_transfer_stream();
+    friend cudaStream_t device::lane_stream(int);
 };
 
 inline ThreadPoolDevice& get_device()
