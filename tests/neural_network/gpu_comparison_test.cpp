@@ -9,6 +9,7 @@
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
+#include "opennn/dataset/language_dataset.h"
 #include "opennn/dataset/time_series_dataset.h"
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/neural_network/layers/dense_layer.h"
@@ -1221,6 +1222,68 @@ TEST_F(GpuComparison, ForecastingRecurrentWideGradient)
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
+}
+
+// The whole encoder-decoder training gradient: CPU against the numerical
+// gradient, and GPU against CPU (the residual fan-outs fold one consumer's
+// delta into the other's GEMM on both devices, the GPU through cuBLASLt's C).
+static void write_transformer_gradient_corpus(const string& file_path)
+{
+    string content;
+    for (Index sample = 0; sample < 4; ++sample)
+    {
+        for (Index token = 0; token < 4; ++token)
+            content += "w" + to_string((sample * 3 + token * 5) % 9) + (token + 1 < 4 ? " " : "");
+        content += "\t";
+        for (Index token = 0; token < 3; ++token)
+            content += "t" + to_string((sample * 2 + token * 3) % 7) + (token + 1 < 3 ? " " : "");
+        content += "\n";
+    }
+    ofstream out(file_path);
+    out << content;
+}
+
+static VectorR transformer_training_gradient(Device device, const string& corpus,
+                                             const VectorR* parameters, VectorR* parameters_out,
+                                             VectorR* numerical_out)
+{
+    Configuration::instance().set(device, Type::FP32);
+    set_seed(7);
+    LanguageDataset dataset(corpus);
+    dataset.set_display(false);
+    dataset.split_samples(1.0f, 0.0f, 0.0f);
+
+    Transformer transformer(dataset.get_shape("Input")[0], dataset.get_shape("Decoder")[0],
+                            dataset.get_input_vocabulary_size(), dataset.get_target_vocabulary_size(),
+                            8, 2, 16, 1);
+    transformer.set_dropout_rate(0.0f);
+    transformer.set_attention_sdpa_min_sequence_length(1 << 20);   // unfused attention on both devices
+    if (parameters) transformer.set_parameters(*parameters);
+    else            transformer.set_parameters_random();
+    if (parameters_out) *parameters_out = read_host_parameters(transformer);
+
+    Loss loss(&transformer, &dataset);
+    loss.set_error(Loss::Error::CrossEntropy3d);
+
+    if (numerical_out) *numerical_out = calculate_numerical_gradient(loss);
+    return calculate_gradient(loss);
+}
+
+TEST_F(GpuComparison, TransformerTrainingGradient)
+{
+    const string corpus = (filesystem::temp_directory_path() / "opennn_gpu_transformer_gradient.txt").string();
+    write_transformer_gradient_corpus(corpus);
+
+    VectorR parameters, numerical;
+    const VectorR cpu_gradient = transformer_training_gradient(Device::CPU, corpus, nullptr, &parameters, &numerical);
+    EXPECT_LT((cpu_gradient - numerical).array().abs().maxCoeff(), 2.0e-3f)
+        << "CPU transformer gradient differs from the numerical one";
+
+    const VectorR gpu_gradient = transformer_training_gradient(Device::CUDA, corpus, &parameters, nullptr, nullptr);
+    ASSERT_EQ(gpu_gradient.size(), cpu_gradient.size());
+    EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
+
+    filesystem::remove(corpus);
 }
 
 TEST_F(GpuComparison, TransformerForward)

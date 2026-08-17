@@ -125,6 +125,32 @@ After B-D the step at bf16 128 is ~74 ms: attention (cuDNN SDPA) 22 ms
 (forward 0.86 ms and backward 2.8 ms per layer), projections 13 ms, the other
 GEMMs 28 ms, LayerNorm 4.4, ReLU backward 2.7, the rest ~3.
 
+Second round (commit after 82bcfb204), each pair alternated on the ext4
+corpus, bf16 128 / 32:
+
+| lever | what | bf16 128 | bf16 32 |
+|---|---|---:|---:|
+| H. cuBLASLt autotune | the heuristics' top-8 candidates timed on the first real call of each GEMM shape (`autotune_lt_plan`, `OPENNN_LT_AUTOTUNE_CANDIDATES`, 1 = heuristic choice) | 1,802 / 1,768 vs 1,749 / 1,742: **+2.2%** | 1,619 / 1,596 vs 1,570 / 1,566: **+2.5%** |
+| I. residual add folded into the sublayer's dgrad | the planner's `input_delta_addend` (a fan-out's other consumer delta) is cuBLASLt's C with beta = 1 in the sublayer's input-delta GEMM (`linear_backward(..., addend)`; Dense and the attention layer's first-writing projection fold it, `folds_input_delta_addend`); the accumulate pass over those edges is gone | 1,824 / 1,790 vs 1,772 / 1,758: **+2.3%** | +1% (noisy) |
+| J. cross-entropy 3d metrics in one pass | one warp per token, coalesced argmax, loss / active / hit sums block-reduced into the metrics buffer (`cross_entropy_3d_metrics_cuda`); replaces the per-token arrays and three `cublasSasum` | neutral (~0.3 ms) | neutral |
+| single Adam kernel | not done: one ~3 us launch per step | | |
+
+I found a real bug on the way: the fold's first version also fed the addend to
+the attention layer's *output* projection (a `CombinationOperator` too), which
+the transformer's loss trajectory exposed (0.079 vs 0.054 at 5 epochs) and the
+unit tests did not - there was no end-to-end transformer gradient test. There
+is now: `GpuComparison.TransformerTrainingGradient` (CPU vs the numerical
+gradient, then GPU vs CPU) plus `ActivationsTest.DenseFanoutFoldedResidualGradient{CPU,GPU}`
+and the memory-pool test updated to the folded semantics.
+
+Paired against PyTorch's best config after H-J (alternated O P P O per point,
+machine hot after eight hours of benchmarks, so absolute numbers are ~8% under
+the cool ladders): bf16 128 OpenNN 1,819 / 1,788 vs PyTorch 1,795 / 1,791
+(+0.6%); 32: 1,628 / 1,515 vs 1,586 / 1,569 (-0.4%); 64: 1,488 / 1,511 vs
+1,536 / 1,535 (-2.4%); 256: 1,636 / 1,606 vs 1,708 / 1,716 (-5.3%). Still
+parity within the thermal band, PyTorch ahead at 256; the levers below the
+attention kernel are used up.
+
 ## Where the bf16 gap to PyTorch is
 
 A microbenchmark of the attention shape (B 128, 8 heads, S 256, d 32, bf16;
@@ -222,10 +248,9 @@ on the same binary moves any engine by +-5%):
 3. Device-resident token dataset (`Dataset::can_device_gather` excludes
    batches with a decoder section), which removes the host prefetch path and
    its epoch-start drain regardless of disk.
-4. Small OpenNN-side items: fold the residual add into the sublayer's
-   input-delta GEMM (beta=1 with the LN's delta as C), softmax + cross-entropy
-   fused, one Adam kernel; fp32: keep the SDPA Q/K/V/O bf16 pack pooled so the
-   backward does not re-cast (4 casts per layer, ~2.5% of the fp32 step).
+4. fp32: keep the SDPA Q/K/V/O bf16 pack pooled so the backward does not
+   re-cast (4 casts per layer, ~2.5% of the fp32 step). (The residual fold,
+   the fused cross-entropy metrics and the cuBLASLt autotune are done, H-J.)
 
 ## Appendix: first look on the old corpus (vocab 4000 / seq 128), 5 epochs
 

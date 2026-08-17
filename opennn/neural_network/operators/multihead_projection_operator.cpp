@@ -186,7 +186,16 @@ void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_pro
         ? accumulate_input_delta_self
         : accumulate_input_delta_cross;
 
-    linear_backward(output_delta_2d, input_2d, weights, weight_gradient, bias_gradient, input_delta_2d, accumulate);
+    // The projection that writes an input delta first also folds in the delta
+    // another consumer of that input left (BackPropagation::plan_delta_addends).
+    const size_t input_ordinal = min(input_view_index, input_views.size() - 1);
+    const TensorView& planned_addend = back_propagation.input_delta_addend(layer, input_ordinal);
+    const TensorView addend = accumulate || planned_addend.empty()
+        ? TensorView{}
+        : planned_addend.reshape({rows, input_features});
+
+    linear_backward(output_delta_2d, input_2d, weights, weight_gradient, bias_gradient, input_delta_2d, accumulate,
+                    nullptr, addend.empty() ? nullptr : &addend);
 }
 
 }

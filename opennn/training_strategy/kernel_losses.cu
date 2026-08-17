@@ -208,6 +208,96 @@ void cross_entropy_3d_multiple_forward_cuda(const Index n,
                        vocab_size, outputs, targets, errors, valid_mask, correct_mask, epsilon);
 }
 
+
+// The device-metrics form of the forward above: one warp per token (lanes
+// stride over the vocabulary, coalesced), the per-token loss, validity and
+// argmax-hit block-reduced and added into sums[0..2] (loss, active, correct).
+// Replaces the per-token error/mask arrays and their three cublasSasum passes;
+// sums must be zero on entry. Ties in the argmax go to the lowest class, as in
+// the serial scan.
+template<typename T>
+__global__ void cross_entropy_3d_metrics_kernel(const int total_tokens, const int vocab_size,
+                                                const T* __restrict__ outputs,
+                                                const float* __restrict__ targets,
+                                                const float epsilon,
+                                                float* __restrict__ sums)
+{
+    const int lane  = threadIdx.x & 31;
+    const int warp  = threadIdx.x >> 5;
+    const int warps = blockDim.x >> 5;
+
+    float loss = 0.0f, active = 0.0f, correct = 0.0f;
+
+    for (int token = blockIdx.x * warps + warp; token < total_tokens; token += gridDim.x * warps)
+    {
+        const int target_class = static_cast<int>(targets[token]);
+        if (target_class <= 0 || target_class >= vocab_size) continue;
+
+        const T* row = outputs + Index(token) * vocab_size;
+        float best_value = -INFINITY;
+        int best_index = 0;
+        for (int k = lane; k < vocab_size; k += 32)
+        {
+            const float value = static_cast<float>(row[k]);
+            if (value > best_value) { best_value = value; best_index = k; }
+        }
+        #pragma unroll
+        for (int offset = 16; offset > 0; offset >>= 1)
+        {
+            const float other_value = __shfl_down_sync(0xffffffffu, best_value, offset);
+            const int   other_index = __shfl_down_sync(0xffffffffu, best_index, offset);
+            if (other_value > best_value || (other_value == best_value && other_index < best_index))
+            {
+                best_value = other_value;
+                best_index = other_index;
+            }
+        }
+        if (lane == 0)
+        {
+            loss += -logf(static_cast<float>(row[target_class]) + epsilon);
+            active += 1.0f;
+            correct += best_index == target_class ? 1.0f : 0.0f;
+        }
+    }
+
+    __shared__ float block_loss[32], block_active[32], block_correct[32];
+    if (lane == 0)
+    {
+        block_loss[warp] = loss;
+        block_active[warp] = active;
+        block_correct[warp] = correct;
+    }
+    __syncthreads();
+    if (warp == 0)
+    {
+        loss    = lane < warps ? block_loss[lane]    : 0.0f;
+        active  = lane < warps ? block_active[lane]  : 0.0f;
+        correct = lane < warps ? block_correct[lane] : 0.0f;
+        loss = warp_reduce_sum(loss);
+        active = warp_reduce_sum(active);
+        correct = warp_reduce_sum(correct);
+        if (lane == 0)
+        {
+            atomicAdd(sums + 0, loss);
+            atomicAdd(sums + 1, active);
+            atomicAdd(sums + 2, correct);
+        }
+    }
+}
+
+template<typename T>
+void cross_entropy_3d_metrics_cuda(const Index total_tokens, const int vocab_size,
+                                   const T* outputs, const float* targets,
+                                   const float epsilon, float* sums)
+{
+    if (total_tokens <= 0) return;
+    const int warps_per_block = block_size / 32;
+    const Index needed = (total_tokens + warps_per_block - 1) / warps_per_block;
+    const int blocks = int(needed < 4096 ? needed : 4096);
+    OPENNN_CUDA_LAUNCH(cross_entropy_3d_metrics_kernel<T><<<blocks, block_size, 0, opennn::device::get_compute_stream()>>>(
+        int(total_tokens), vocab_size, outputs, targets, epsilon, sums));
+}
+
 template<typename T>
 __global__ void cross_entropy_3d_multiple_backward_kernel(const int n,
                                                           const int vocab_size,
@@ -715,6 +805,7 @@ void yolo_gradient_cuda(const float* output, const float* target, float* delta,
     template void weighted_squared_error_cuda<T>(const Index, float*, const float*, const T*, const float, const float); \
     template void weighted_squared_error_gradient_cuda<T>(const Index, T*, const float*, const T*, const float, const float, const float); \
     template void cross_entropy_3d_multiple_forward_cuda<T>(const Index, const int, const T*, const float*, float*, float*, float*, const float); \
+    template void cross_entropy_3d_metrics_cuda<T>(const Index, const int, const T*, const float*, const float, float*); \
     template void cross_entropy_3d_multiple_backward_cuda<T>(const Index, const int, const T*, const float*, T*, const float, const float*); \
     template void mean_absolute_error_gradient_cuda<T>(const Index, T*, const float*, const T*, float);
 

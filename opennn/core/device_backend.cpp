@@ -815,6 +815,11 @@ namespace
         bool                   has_algorithm = false;
         size_t                 workspace_bytes = 0;
 
+        // The heuristics' top candidates, timed on the first real execution
+        // (autotune_lt_plan); `tuned` once the winner is pinned in `algorithm`.
+        vector<cublasLtMatmulHeuristicResult_t> candidates;
+        bool                   tuned = true;
+
         LtMatmulPlan() = default;
         LtMatmulPlan(const LtMatmulPlan&) = delete;
         LtMatmulPlan& operator=(const LtMatmulPlan&) = delete;
@@ -828,6 +833,8 @@ namespace
             swap(algorithm, other.algorithm);
             swap(has_algorithm, other.has_algorithm);
             swap(workspace_bytes, other.workspace_bytes);
+            swap(candidates, other.candidates);
+            swap(tuned, other.tuned);
         }
 
         ~LtMatmulPlan()
@@ -984,7 +991,12 @@ namespace
             CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
             &cublas_lt_workspace_search_bytes, sizeof(cublas_lt_workspace_search_bytes)));
 
-        cublasLtMatmulHeuristicResult_t heuristic{};
+        // The heuristics' first choice is what cuBLASLt would run; asking for
+        // the top-K and timing them on the first real call picks among them
+        // (autotune_lt_plan). OPENNN_LT_AUTOTUNE_CANDIDATES=1 keeps the
+        // heuristic choice.
+        const int requested = int(clamp(env_int_or("OPENNN_LT_AUTOTUNE_CANDIDATES", 8), 1LL, 32LL));
+        vector<cublasLtMatmulHeuristicResult_t> heuristics(size_t(requested), cublasLtMatmulHeuristicResult_t{});
         int returned_results = 0;
         CHECK_CUBLAS(cublasLtMatmulAlgoGetHeuristic(Backend::get_cublas_lt_handle(),
                                                     plan.matmul_descriptor,
@@ -992,18 +1004,81 @@ namespace
                                                     plan.b_matrix_layout,
                                                     plan.output_matrix_layout,
                                                     plan.output_matrix_layout,
-                                                    pref, 1,
-                                                    &heuristic, &returned_results));
+                                                    pref, requested,
+                                                    heuristics.data(), &returned_results));
         cublasLtMatmulPreferenceDestroy(pref);
 
-        if (returned_results > 0)
+        heuristics.resize(size_t(max(returned_results, 0)));
+        erase_if(heuristics, [](const cublasLtMatmulHeuristicResult_t& h) { return h.state != CUBLAS_STATUS_SUCCESS; });
+
+        if (!heuristics.empty())
         {
-            plan.algorithm = heuristic.algo;
+            plan.algorithm = heuristics.front().algo;
             plan.has_algorithm = true;
-            plan.workspace_bytes = heuristic.workspaceSize;
+            plan.workspace_bytes = heuristics.front().workspaceSize;
+            plan.candidates = std::move(heuristics);
+            plan.tuned = plan.candidates.size() <= 1;
         }
 
         return plans.emplace(key, std::move(plan)).first->second;
+    }
+
+    // Times every candidate of the plan on the call's real operands (the
+    // outputs are rewritten by each run and end with the winner's values, which
+    // is what the call would have produced anyway) and pins the fastest. Not
+    // during stream capture, and with the device idle when several lanes run.
+    void autotune_lt_plan(LtMatmulPlan& plan,
+                          const void* a_data, const void* b_data, void* c_data,
+                          cudaStream_t stream)
+    {
+        plan.tuned = true;
+        if (plan.candidates.size() <= 1) return;
+
+        cudaStreamCaptureStatus capture_status = cudaStreamCaptureStatusNone;
+        if (cudaStreamIsCapturing(stream, &capture_status) != cudaSuccess
+            || capture_status != cudaStreamCaptureStatusNone)
+        {
+            device::reset_last_error();
+            return;
+        }
+
+        if (device::lanes_available() > 1) device::synchronize();
+
+        size_t largest_workspace = 0;
+        for (const auto& candidate : plan.candidates)
+            largest_workspace = max(largest_workspace, candidate.workspaceSize);
+        void* const workspace = ensure_shared_scratch(largest_workspace);
+
+        const CudaEvent start(cudaEventDefault), stop(cudaEventDefault);
+        constexpr int timed_runs = 3;
+
+        float best_ms = numeric_limits<float>::infinity();
+        size_t best = 0;
+        for (size_t index = 0; index < plan.candidates.size(); ++index)
+        {
+            const auto& candidate = plan.candidates[index];
+            const auto run = [&]
+            {
+                return cublasLtMatmul(Backend::get_cublas_lt_handle(), plan.matmul_descriptor,
+                                      &one, a_data, plan.a_matrix_layout, b_data, plan.b_matrix_layout,
+                                      &zero, c_data, plan.output_matrix_layout, c_data, plan.output_matrix_layout,
+                                      &candidate.algo, workspace, candidate.workspaceSize, stream);
+            };
+            if (run() != CUBLAS_STATUS_SUCCESS) { device::reset_last_error(); continue; }
+            device::record_event(start, stream);
+            bool ok = true;
+            for (int i = 0; i < timed_runs && ok; ++i) ok = run() == CUBLAS_STATUS_SUCCESS;
+            device::record_event(stop, stream);
+            device::synchronize_event(stop);
+            if (!ok) { device::reset_last_error(); continue; }
+            float ms = 0.0f;
+            CHECK_CUDA(cudaEventElapsedTime(&ms, start, stop));
+            if (ms < best_ms) { best_ms = ms; best = index; }
+        }
+
+        plan.algorithm = plan.candidates[best].algo;
+        plan.workspace_bytes = plan.candidates[best].workspaceSize;
+        plan.candidates.clear();
     }
 }
 
@@ -1058,7 +1133,8 @@ void run_lt_matmul_cached(
     const void* bias_pointer,
     cudaDataType_t io_dtype,
     cudaDataType_t out_dtype,
-    const void* aux_pointer)
+    const void* aux_pointer,
+    const void* addend)
 {
     LtMatmulPlan& plan = get_lt_matmul_plan(m, n, k, transA, transB, epilogue, io_dtype, out_dtype);
 
@@ -1069,13 +1145,16 @@ void run_lt_matmul_cached(
         CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor,
             CUBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER, &aux_pointer, sizeof(aux_pointer)));
 
+    if (!plan.tuned)
+        autotune_lt_plan(plan, a_data, b_data, c_data, device::get_compute_stream());
+
     CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(),
                                 plan.matmul_descriptor,
                                 &one,
                                 a_data, plan.a_matrix_layout,
                                 b_data, plan.b_matrix_layout,
-                                &zero,
-                                c_data, plan.output_matrix_layout,
+                                addend ? &one : &zero,
+                                addend ? addend : c_data, plan.output_matrix_layout,
                                 c_data, plan.output_matrix_layout,
                                 plan.has_algorithm ? &plan.algorithm : nullptr,
                                 ensure_shared_scratch(plan.workspace_bytes), 
@@ -1128,6 +1207,7 @@ void run_lt_matmul_cached(int, int, int,
                           const void*,
                           cudaDataType_t,
                           cudaDataType_t,
+                          const void*,
                           const void*) OPENNN_CUDA_STUB_BODY(run_lt_matmul_cached)
 
 void gemm_strided_batched_cuda(cublasOperation_t, cublasOperation_t,

@@ -94,6 +94,7 @@ void Dense::configure_operators()
 {
 
     reset_drelu_fusion();
+    combination.folds_input_delta_addend = false;
 
     if (gated)
     {
@@ -139,6 +140,7 @@ void Dense::configure_operators()
 
     operators = {&combination, &batch_norm, &activation_operator, &dropout};
     combination.accumulate_input_delta = false;
+    combination.folds_input_delta_addend = true;
 
     const bool input_deriv = activation_needs_input(activation_operator.activation_function);
 

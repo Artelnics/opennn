@@ -24,6 +24,12 @@ struct CombinationOperator : Operator
 
     bool  accumulate_input_delta = false;
 
+    // Set by a layer whose input 0 this combination consumes directly (Dense):
+    // the backward then folds BackPropagation::input_delta_addend(layer, 0)
+    // into the input delta it writes. Combinations inside other layers (an
+    // attention layer's output projection) leave it off.
+    bool  folds_input_delta_addend = false;
+
     bool  tied_transposed = false;
 
     bool  transposed_inference_preferred = false;

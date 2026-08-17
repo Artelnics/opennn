@@ -8,6 +8,8 @@
 #include "opennn/core/configuration.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/layers/addition_layer.h"
+#include "opennn/neural_network/layers/flatten_layer.h"
 #include "opennn/neural_network/layers/activation_layer.h"
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/neural_network/operators/activation_operator.h"
@@ -229,6 +231,55 @@ TEST(ActivationsTest, BackwardGradientMatchesNumerical)
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
+
+// A layer read by two Dense consumers: one of them sums the other's delta
+// inside its input-delta GEMM (BackPropagation::plan_delta_addends +
+// Dense::folds_input_delta_addend). The gradient must match the numerical one
+// on both devices.
+static void expect_dense_fanout_gradient(Device device)
+{
+    Configuration::instance().set(device, Type::FP32);
+
+    // Sequences of 2 tokens with 5 features: the Dense layers act per token
+    // and the Addition layer merges the two branches (rank-2 samples).
+    const Index samples_number = 6;
+    const Shape input_shape{2, 5};
+
+    TabularDataset dataset(samples_number, input_shape, {3});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<opennn::Dense>(input_shape, Shape{4}, "Tanh"), {-1});
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{2, 4}, Shape{4}, "Tanh", false, "branch_a"), {0});
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{2, 4}, Shape{4}, "Identity", false, "branch_b"), {0});
+    neural_network.add_layer(make_unique<Addition>(Shape{2, 4}, "merge", 2), {1, 2});
+    neural_network.add_layer(make_unique<Flatten>(Shape{2, 4}), {3});
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{8}, Shape{3}, "Identity"), {4});
+    neural_network.compile();
+    neural_network.set_parameters_random();
+
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    const VectorR gradient = calculate_gradient(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
+
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
+    Configuration::instance().set();
+}
+
+TEST(ActivationsTest, DenseFanoutFoldedResidualGradientCPU)
+{
+    expect_dense_fanout_gradient(Device::CPU);
+}
+
+#ifdef OPENNN_HAS_CUDA
+TEST(ActivationsTest, DenseFanoutFoldedResidualGradientGPU)
+{
+    expect_dense_fanout_gradient(Device::CUDA);
+}
+#endif
 
 TEST(ActivationsTest, LeakyReLUForwardPassesPositiveAndScalesNegative)
 {

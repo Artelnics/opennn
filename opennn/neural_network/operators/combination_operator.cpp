@@ -184,7 +184,16 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
         }
     }
 
-    linear_backward(output_delta, input, weights, weight_gradient, bias_gradient, input_delta, accumulate_input_delta);
+    // A residual read of this layer's input by another consumer: its delta is
+    // summed by the same GEMM (BackPropagation::plan_delta_addends) instead of
+    // an accumulate pass afterwards.
+    static const TensorView no_addend;
+    const TensorView& addend = folds_input_delta_addend && !accumulate_input_delta && !recover_unfused
+        ? back_propagation.input_delta_addend(layer, 0)
+        : no_addend;
+
+    linear_backward(output_delta, input, weights, weight_gradient, bias_gradient, input_delta,
+                    accumulate_input_delta, nullptr, addend.empty() ? nullptr : &addend);
 
     if (recover_unfused)
         activation_backward(input, input_delta, ActivationFunction::ReLU);

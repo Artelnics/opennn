@@ -162,15 +162,20 @@ TEST(BackPropagationMemoryTest, FanoutAccumulationReusesConsumerDelta)
     ASSERT_FALSE(branch_a_delta.empty());
     ASSERT_FALSE(branch_b_delta.empty());
     ASSERT_NE(branch_a_delta.get_data(), branch_b_delta.get_data());
-    EXPECT_TRUE(stem_output_delta.get_data() == branch_a_delta.get_data()
-                || stem_output_delta.get_data() == branch_b_delta.get_data());
+
+    // branch_a (the first consumer) holds the stem's delta; branch_b's delta is
+    // handed to branch_a's backward as an addend, summed by its input-delta
+    // GEMM (Dense::folds_input_delta_addend), so the accumulation pass has
+    // nothing left to add for this edge.
+    ASSERT_EQ(stem_output_delta.get_data(), branch_a_delta.get_data());
+    EXPECT_EQ(back_propagation.input_delta_addend(1, 0).get_data(), branch_b_delta.get_data());
 
     branch_a_delta.as_vector().setConstant(1.0f);
     branch_b_delta.as_vector().setConstant(2.0f);
     back_propagation.accumulate_output_deltas(0);
 
     for (Index i = 0; i < stem_output_delta.size(); ++i)
-        EXPECT_FLOAT_EQ(stem_output_delta.as<float>()[i], 3.0f);
+        EXPECT_FLOAT_EQ(stem_output_delta.as<float>()[i], 1.0f);
 
     Configuration::instance().set();
 }

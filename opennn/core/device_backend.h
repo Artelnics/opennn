@@ -334,6 +334,9 @@ const void* data_for_gemm_dtype(const TensorView&, Type);
 
 const void* bias_for_gemm_bf16(const TensorView&);
 
+// D = epilogue(A * B [+ addend]): with `addend` the matmul reads it as C with
+// beta = 1 (same layout as D), so a sum that would otherwise be a separate
+// pass costs one read inside the epilogue.
 void run_lt_matmul_cached(
     int, int, int,
     cublasOperation_t transA,
@@ -343,7 +346,8 @@ void run_lt_matmul_cached(
     const void*,
     cudaDataType_t io_dtype  = CUDA_R_32F,
     cudaDataType_t out_dtype = CUDA_R_32F,
-    const void* aux_pointer  = nullptr);
+    const void* aux_pointer  = nullptr,
+    const void* addend       = nullptr);
 
 void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
                                int, int, int,

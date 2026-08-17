@@ -54,6 +54,13 @@ public:
     }
     bool backward_uses_forward_output() const noexcept override { return false; }
     bool preserves_output_delta_during_backward() const noexcept override { return true; }
+    // The query projection writes the query input's delta first (self and
+    // cross), the key projection the source input's (cross): each folds the
+    // addend the planner assigns to that input.
+    bool folds_input_delta_addend(size_t input) const noexcept override
+    {
+        return input == 0 || (cross_attention && input == 1);
+    }
 
     void set(Index = 0,
              Index = 0,

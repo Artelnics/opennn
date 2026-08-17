@@ -185,7 +185,7 @@ ActivationFunction activation_function_from_string(const string& name)
     X(activation_forward_gpu, (TensorView&, ActivationFunction)) \
     X(activation_backward_gpu, (const TensorView&, TensorView&, ActivationFunction)) \
     X(linear_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cublasLtEpilogue_t, TensorView*, const TensorView&)) \
-    X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool, const TensorView*))
+    X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool, const TensorView*, const TensorView*))
 
 #define OPENNN_DECLARE_GPU_OP(name, sig) static void name sig;
 OPENNN_GPU_OPS(OPENNN_DECLARE_GPU_OP)
@@ -595,7 +595,7 @@ static void linear_forward_cpu(const TensorView& input, const TensorView& weight
 
 static void linear_backward_cpu(const TensorView& output_delta, const TensorView& input, const TensorView& weights,
                          const TensorView& weight_gradient, const TensorView& bias_gradient,
-                         TensorView& input_delta, bool accumulate)
+                         TensorView& input_delta, bool accumulate, const TensorView* addend)
 {
     weight_gradient.as_matrix().noalias() = input.as_flat_matrix().transpose() * output_delta.as_flat_matrix();
     if (!bias_gradient.empty())
@@ -606,8 +606,9 @@ static void linear_backward_cpu(const TensorView& output_delta, const TensorView
     auto input_delta_mat = input_delta.as_flat_matrix();
     const auto product   = output_delta.as_flat_matrix() * weights.as_matrix().transpose();
 
-    if (accumulate) input_delta_mat.noalias() += product;
-    else            input_delta_mat.noalias()  = product;
+    if (accumulate)   input_delta_mat.noalias() += product;
+    else if (addend)  input_delta_mat.noalias()  = product + addend->as_flat_matrix();
+    else              input_delta_mat.noalias()  = product;
 }
 
 void linear_forward(const TensorView& input, const TensorView& weights, const TensorView& bias,
@@ -673,7 +674,7 @@ void linear_forward(const TensorView& input, const TensorView& weights, const Te
 void linear_backward(const TensorView& output_delta, const TensorView& input, const TensorView& weights,
                      const TensorView& weight_gradient, const TensorView& bias_gradient,
                      TensorView& input_delta, bool accumulate_input_delta,
-                     const TensorView* drelu_mask)
+                     const TensorView* drelu_mask, const TensorView* addend)
 {
     constexpr string_view operation = "linear_backward";
     validate_linear_io(input, weights, output_delta, false, operation);
@@ -724,14 +725,25 @@ void linear_backward(const TensorView& output_delta, const TensorView& input, co
     throw_if(drelu_mask && (!output_delta.is_cuda() || accumulate_input_delta),
              "linear_backward: the DRELU fused input-delta path is CUDA, non-accumulating only.");
 
+    if (addend && addend->empty()) addend = nullptr;
+    if (addend)
+    {
+        require_tensor(*addend, operation, "input delta addend");
+        require_same_shape(input_delta, *addend, operation);
+        require_same_type(input_delta, *addend, operation);
+        require_same_device(input_delta, *addend, operation);
+        throw_if(accumulate_input_delta || input_delta.empty(),
+                 "linear_backward: the input delta addend needs a non-accumulating input delta.");
+    }
+
     if (output_delta.is_cuda())
     {
         linear_backward_gpu(output_delta, input, weights, weight_gradient, bias_gradient,
-                            input_delta, accumulate_input_delta, drelu_mask);
+                            input_delta, accumulate_input_delta, drelu_mask, addend);
         return;
     }
     linear_backward_cpu(output_delta, input, weights, weight_gradient, bias_gradient,
-                        input_delta, accumulate_input_delta);
+                        input_delta, accumulate_input_delta, addend);
 }
 
 
@@ -1026,7 +1038,7 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
 static void linear_backward_gpu(const TensorView& output_delta, const TensorView& input, const TensorView& weights,
                          const TensorView& weight_gradient, const TensorView& bias_gradient,
                          TensorView& input_delta, bool accumulate_input_delta,
-                         const TensorView* drelu_mask)
+                         const TensorView* drelu_mask, const TensorView* addend)
 {
     const int input_columns  = to_int(input.get_shape().back());
     const int output_columns = to_int(output_delta.get_shape().back());
@@ -1097,16 +1109,16 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 
     if (!input_delta.get_data() || input_delta.empty()) return;
 
-    if (drelu_mask)
+    if (drelu_mask || addend)
     {
-
         run_lt_matmul_cached(
             input_columns, total_rows, output_columns,
             CUBLAS_OP_T, CUBLAS_OP_N,
-            CUBLASLT_EPILOGUE_DRELU,
+            drelu_mask ? CUBLASLT_EPILOGUE_DRELU : CUBLASLT_EPILOGUE_DEFAULT,
             weights.get_data(), output_delta.get_data(), input_delta.get_data(), nullptr,
             output_delta.cuda_dtype(), input_delta.cuda_dtype(),
-            drelu_mask->get_data());
+            drelu_mask ? drelu_mask->get_data() : nullptr,
+            addend ? addend->get_data() : nullptr);
         return;
     }
 

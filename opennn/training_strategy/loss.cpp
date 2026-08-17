@@ -1608,21 +1608,14 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         const Index vocabulary_size = input.get_shape().back();
         const Index token_count = input.size() / vocabulary_size;
 
-        float* valid_mask_device = workspace + token_count;
-        float* correct_mask_device = workspace + 2 * token_count;
-
+        // One pass: loss, active-token and argmax-hit sums land in
+        // results_device[0..2] (the backward reads the active count from [1]).
+        device::set_zero_async(results_device, 3 * Index(sizeof(float)), device::get_compute_stream());
         input.dispatch([&]<typename T>()
         {
-            cross_entropy_3d_multiple_forward_cuda<T>(token_count, to_int(vocabulary_size),
-                input.as<T>(), target.as<float>(), workspace, valid_mask_device, correct_mask_device, EPSILON);
+            cross_entropy_3d_metrics_cuda<T>(token_count, to_int(vocabulary_size),
+                input.as<T>(), target.as<float>(), EPSILON, results_device);
         });
-
-        {
-            device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
-            CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), workspace,             1, results_device + 0));
-            CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,     1, results_device + 1));
-            CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device,   1, results_device + 2));
-        }
 
         accumulate_cross_entropy_3d_metrics_cuda(results_device, error_sum_device, accuracy_sum_device);
         return true;

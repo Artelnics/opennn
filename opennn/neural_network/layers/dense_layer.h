@@ -41,6 +41,11 @@ public:
     vector<TensorSpec> get_backward_specs(Index) const override;
     bool backward_uses_forward_output() const noexcept override { return gated || batch_norm.active() || activation_operator.activation_function != ActivationFunction::Identity; }
     bool preserves_output_delta_during_backward() const noexcept override { return !backward_uses_forward_output() && !dropout.active(); }
+    bool folds_input_delta_addend(size_t input) const noexcept override
+    {
+        return input == 0 && combination.folds_input_delta_addend && !gated && !tied_source
+            && !combination.accumulate_input_delta && !combination.drelu_source;
+    }
 
     ForwardSlotKind get_forward_slot_kind(size_t spec) const override
     {

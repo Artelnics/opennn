@@ -128,10 +128,13 @@ void linear_forward(const TensorView&, const TensorView&, const TensorView&,
                     TensorView&, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS,
                     TensorView* pre_activation = nullptr,
                     const TensorView& weight_scale = {});
+// `addend`, when given (and not accumulating), is summed into the input delta
+// by the same GEMM: input_delta = output_delta * W^T + addend.
 void linear_backward(const TensorView&, const TensorView&, const TensorView&,
                      const TensorView&, const TensorView&,
                      TensorView&, bool accumulate_input_delta = false,
-                     const TensorView* drelu_mask = nullptr);
+                     const TensorView* drelu_mask = nullptr,
+                     const TensorView* addend = nullptr);
 
 
 
