@@ -128,7 +128,7 @@ GEMMs 28 ms, LayerNorm 4.4, ReLU backward 2.7, the rest ~3.
 ## Where the bf16 gap to PyTorch is
 
 A microbenchmark of the attention shape (B 128, 8 heads, S 256, d 32, bf16;
-`sdpa_probe.py` in the scratch logs) on this GPU:
+[`sdpa_probe.py`](sdpa_probe.py)) on this GPU:
 
 | kernel | fwd | bwd | fwd+bwd |
 |---|---:|---:|---:|

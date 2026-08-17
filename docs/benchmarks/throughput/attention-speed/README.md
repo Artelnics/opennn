@@ -21,6 +21,8 @@ Need* — token embeddings + positional encoding + N encoder/decoder layers
 | `run_transformer.py` | 3-way orchestrator for the inference comparison (`gpu-transformer-inference-speed`) |
 | `run_transformer_train.py` | 3-way orchestrator for the training comparison (`gpu-transformer-training-speed`) |
 | `build.sh` | Portable wrapper: builds the four Transformer CMake targets and symlinks them here |
+| `sdpa_probe.py` | Attention-kernel probe (PyTorch FA2 / efficient / cuDNN fwd+bwd at the benchmark shape, plus the GEMM shapes) |
+| `transformer-training-batch-sweep.md` | Working note: batch ladder vs PyTorch's best config and TensorFlow, profile, levers, where the bf16 gap is |
 
 ## How to run
 
