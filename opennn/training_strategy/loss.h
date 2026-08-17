@@ -152,6 +152,11 @@ public:
     void set_yolo_lambda_dfl(float v)       { yolo_lambda_dfl       = v; }
     void set_yolo_focal_gamma(float v)      { yolo_focal_gamma      = v; }
     void set_yolo_obj_focal_gamma(float v)  { yolo_obj_focal_gamma  = v; }
+    float get_yolo_lambda_noobj() const noexcept  { return yolo_lambda_noobj;  }
+    float get_yolo_lambda_class() const noexcept  { return yolo_lambda_class;  }
+    float get_yolo_lambda_giou()  const noexcept  { return yolo_lambda_giou;   }
+    float get_yolo_lambda_dfl()   const noexcept  { return yolo_lambda_dfl;    }
+    float get_yolo_focal_gamma()  const noexcept  { return yolo_focal_gamma;   }
 
 protected:
 

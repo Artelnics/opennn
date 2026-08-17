@@ -69,9 +69,14 @@ public:
 
     void set_loss_goal(const float new_loss_goal) { training_loss_goal = new_loss_goal; }
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
+    Index get_maximum_validation_failures() const noexcept { return maximum_validation_failures; }
     void set_validation_period(const Index n) { validation_period = n; }
 
     void set_gradient_clip_norm(const float new_clip) { gradient_clip_norm = new_clip; }
+    float get_gradient_clip_norm() const noexcept { return gradient_clip_norm; }
+
+    Index get_batch_size() const noexcept { return batch_size; }
+    Index get_display_period() const noexcept { return display_period; }
 
     virtual void configure_for_task(NetworkTask);
 

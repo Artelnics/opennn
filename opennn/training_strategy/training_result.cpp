@@ -142,7 +142,7 @@ Tensor<string, 2> TrainingResult::write_override_results(const Index precision) 
 
     override_results(4, 1) = validation_error_history.size() == 0
         ? "QUIET_NAN"
-        : format("{:.{}g}", validation_error_history(size - 1), precision);
+        : format("{:.{}g}", validation_error_history(validation_error_history.size() - 1), precision);
 
     return override_results;
 }

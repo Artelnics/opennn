@@ -1296,7 +1296,157 @@ void YoloDataset::open_or_build_cache(const vector<array<float, 2>>& requested_a
     image_cache_reader.close();
     target_cache_reader.close();
     boxes_cache_reader.close();
+
+    // Fast path: image + boxes caches are still valid (same resolution and sources),
+    // only the target tensor layout changed (different grid/bpc/anchors).
+    // Rebuilding only the target cache avoids re-decoding and letterboxing all images.
+    if (try_rebuild_target_from_boxes(requested_anchors))
+        return;
+
     build_cache(requested_anchors);
+}
+
+bool YoloDataset::try_rebuild_target_from_boxes(const vector<array<float, 2>>& requested_anchors)
+{
+    if (!filesystem::exists(image_cache_path) || !filesystem::exists(boxes_cache_path))
+        return false;
+
+    try
+    {
+        image_cache_reader.open(image_cache_path);
+        boxes_cache_reader.open(boxes_cache_path);
+
+        YoloImageCacheHeader image_header{};
+        image_cache_reader.read_at(span(&image_header, 1), 0);
+
+        if (memcmp(image_header.magic, YOLO_IMAGE_MAGIC, 8) != 0
+        ||  image_header.version != YOLO_CACHE_VERSION
+        ||  Index(image_header.height)   != input_shape[0]
+        ||  Index(image_header.width)    != input_shape[1]
+        ||  Index(image_header.channels) != input_shape[2]
+        ||  image_header.sources_hash   != hash_sources(images_directory, labels_directory))
+        {
+            image_cache_reader.close();
+            boxes_cache_reader.close();
+            return false;
+        }
+
+        YoloBoxesCacheHeader boxes_header{};
+        boxes_cache_reader.read_at(span(&boxes_header, 1), 0);
+
+        if (memcmp(boxes_header.magic, YOLO_BOXES_MAGIC, 8) != 0
+        ||  boxes_header.version != YOLO_CACHE_VERSION
+        ||  boxes_header.samples != image_header.samples)
+        {
+            image_cache_reader.close();
+            boxes_cache_reader.close();
+            return false;
+        }
+
+        const size_t n_samples = static_cast<size_t>(boxes_header.samples);
+
+        vector<uint64_t> offsets(n_samples + 1);
+        boxes_cache_reader.read_at(span(offsets), boxes_header.offsets_byte_offset);
+
+        vector<YoloBoxRecord> raw_boxes(static_cast<size_t>(boxes_header.total_boxes));
+        if (boxes_header.total_boxes > 0)
+            boxes_cache_reader.read_at(span(raw_boxes), boxes_header.boxes_byte_offset);
+
+        vector<vector<Box>> labels(n_samples);
+        Index max_class_id = -1;
+        for (size_t i = 0; i < n_samples; ++i)
+        {
+            const size_t start = static_cast<size_t>(offsets[i]);
+            const size_t end   = static_cast<size_t>(offsets[i + 1]);
+            labels[i].reserve(end - start);
+            for (size_t j = start; j < end; ++j)
+            {
+                const auto& r = raw_boxes[j];
+                labels[i].push_back({Index(r.class_id), r.x, r.y, r.w, r.h});
+                max_class_id = max(max_class_id, Index(r.class_id));
+            }
+        }
+
+        classes_number = class_names.empty() ? max_class_id + 1 : ssize(class_names);
+        if (classes_number <= 0)
+        {
+            image_cache_reader.close();
+            boxes_cache_reader.close();
+            return false;
+        }
+        assign_default_class_names(class_names, classes_number);
+
+        const vector<array<float, 2>> new_anchors = requested_anchors.empty()
+            ? calculate_yolo_anchors(labels, boxes_per_cell)
+            : requested_anchors;
+
+        if (ssize(new_anchors) != boxes_per_cell)
+        {
+            image_cache_reader.close();
+            boxes_cache_reader.close();
+            return false;
+        }
+
+        target_record_floats = v8_mode
+            ? MAX_GT_BOXES * 5
+            : grid_size * grid_size * boxes_per_cell * (5 + classes_number);
+
+        filesystem::create_directories(target_cache_path.parent_path());
+        const filesystem::path target_tmp_path = target_cache_path.string() + ".tmp";
+        FileWriter target_writer;
+        target_writer.open(target_tmp_path);
+
+        YoloTargetCacheHeader target_header{};
+        memcpy(target_header.magic, YOLO_TARGET_MAGIC, 8);
+        target_header.version        = YOLO_CACHE_VERSION;
+        target_header.grid_size      = uint32_t(grid_size);
+        target_header.boxes_per_cell = uint32_t(boxes_per_cell);
+        target_header.classes_number = uint32_t(classes_number);
+        target_header.samples        = uint64_t(n_samples);
+        target_header.target_floats  = uint64_t(target_record_floats);
+        target_header.anchors_hash   = hash_anchors(new_anchors);
+        target_header.anchors_offset = sizeof(YoloTargetCacheHeader);
+        target_header.targets_offset = target_header.anchors_offset
+            + uint64_t(new_anchors.size() * sizeof(array<float, 2>));
+
+        target_writer.write(span(&target_header, 1));
+        target_writer.write(span(new_anchors));
+
+        vector<float> target_buf(static_cast<size_t>(target_record_floats), 0.f);
+        for (const auto& sample_boxes : labels)
+        {
+            fill(target_buf.begin(), target_buf.end(), 0.f);
+            if (v8_mode)
+                make_target_v8_gtlist(sample_boxes, classes_number, target_buf.data());
+            else
+                make_target(sample_boxes, new_anchors, grid_size, boxes_per_cell,
+                            classes_number, target_buf.data());
+            target_writer.write(span(target_buf));
+        }
+        target_writer.finish_with_rename(target_cache_path);
+
+        target_cache_reader.open(target_cache_path);
+        anchors            = new_anchors;
+        target_data_offset = target_header.targets_offset;
+        boxes_offsets      = move(offsets);
+        boxes_data_offset  = boxes_header.boxes_byte_offset;
+
+        setup_metadata(Index(n_samples));
+
+        if (display)
+            cout << "\nYOLO target cache rebuilt (" << n_samples
+                 << " samples, grid=" << grid_size
+                 << ", bpc=" << boxes_per_cell << ").\n";
+
+        return true;
+    }
+    catch (const exception&)
+    {
+        image_cache_reader.close();
+        target_cache_reader.close();
+        boxes_cache_reader.close();
+        return false;
+    }
 }
 
 bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchors)
@@ -1772,9 +1922,12 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
 
     const bool augment = mode == FillMode::Training && augmentation.enabled;
     const bool matrix_storage = storage_mode == StorageMode::Matrix;
-    const uint64_t epoch_seed = augment
-        ? augmentation_counter.fetch_add(1, memory_order_relaxed) + 1
-        : 0;
+    const uint64_t epoch_seed = [&]() -> uint64_t {
+        if (!augment) return 0;
+        uint64_t h = 14695981039346656037ULL;
+        for (Index si : sample_indices) { h ^= uint64_t(si); h *= 1099511628211ULL; }
+        return h ? h : 1;
+    }();
 
     if (matrix_storage)
         load_images_to_ram();
@@ -1894,9 +2047,12 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
 
     const bool augment = mode == FillMode::Training && augmentation.enabled;
     const bool matrix_storage = storage_mode == StorageMode::Matrix;
-    const uint64_t epoch_seed = augment
-        ? augmentation_counter.load(memory_order_relaxed)
-        : 0;
+    const uint64_t epoch_seed = [&]() -> uint64_t {
+        if (!augment) return 0;
+        uint64_t h = 14695981039346656037ULL;
+        for (Index si : sample_indices) { h ^= uint64_t(si); h *= 1099511628211ULL; }
+        return h ? h : 1;
+    }();
 
     const AugmentationConfig cfg = augmentation;
 

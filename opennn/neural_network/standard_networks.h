@@ -106,7 +106,7 @@ public:
 
     enum class HeadStyle { Single, FPN, PANet, FPNv8 };
 
-    enum class BodyActivation { ReLU, LeakyReLU };
+    enum class BodyActivation { ReLU, LeakyReLU, SiLU };
 
     enum class ModelSize { n, s, m, l, x };
 

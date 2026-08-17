@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include <atomic>
 #include <cstdio>
 
 #include "opennn/dataset/image_dataset.h"
@@ -104,6 +103,7 @@ public:
 
     bool is_v8_mode() const noexcept { return v8_mode; }
     void set_v8_mode(bool enabled);
+    Index get_target_record_floats() const noexcept { return target_record_floats; }
 
     void set(const filesystem::path&,
              const filesystem::path&,
@@ -176,8 +176,6 @@ private:
     vector<uint64_t> boxes_offsets;
 
     AugmentationConfig augmentation{};
-    mutable atomic<uint64_t> augmentation_counter{0};
-
     float display_confidence_threshold = 0.25f;
 
     vector<filesystem::path> image_filenames;
@@ -192,6 +190,7 @@ private:
 
     void open_or_build_cache(const vector<array<float, 2>>&);
     bool try_open_cache(const vector<array<float, 2>>&);
+    bool try_rebuild_target_from_boxes(const vector<array<float, 2>>&);
     void build_cache(const vector<array<float, 2>>&);
     void setup_metadata(Index);
     void read_sample_boxes(Index, vector<Box>&) const;
