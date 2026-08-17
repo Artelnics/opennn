@@ -23,6 +23,14 @@ struct AttentionOperator : Operator
     bool  use_causal_mask = false;
     bool use_sdpa = false;
 
+    // Q, K, V, the attention output and all their deltas laid out as the
+    // projections' GEMMs produce them, (batch, sequence, heads, head_dim), instead
+    // of (batch, heads, sequence, head_dim). Only the SDPA path can read that
+    // layout (through strides), and doing so drops the eight head transposes a
+    // layer otherwise pays per step. The owning layer keeps this in step with
+    // use_sdpa and with the projections' interleaved_heads.
+    bool interleaved_heads = false;
+
     bool zero_padded_queries = false;
 
     MatrixR causal_mask;
@@ -81,7 +89,7 @@ private:
                        TensorView&,
                        void*,
                        bool,
-                       const vector<Index>* explicit_lengths = nullptr);
+                       SequenceLengths explicit_lengths = {});
 
 #ifdef OPENNN_HAS_CUDA
     void apply_sdpa_forward(const TensorView&,
@@ -91,7 +99,7 @@ private:
                             TensorView&,
                             const TensorView&,
                             bool,
-                            const vector<Index>* explicit_lengths = nullptr);
+                            const int* explicit_lengths = nullptr);
 #endif
 
     void apply_delta_cpu(const TensorView&,

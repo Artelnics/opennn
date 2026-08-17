@@ -69,7 +69,9 @@ template<typename T>
 void layernorm_add_forward_cuda(const int N, const int D, const T* X, const T* R, T* sum, T* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps);
 
 template<typename T>
-void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, const float* means, const float* inv_vars, const float* gamma, T* dX, float* dGamma, float* dBeta);
+// dX2, when given, receives a second copy of dX (the residual branch of a fused
+// add + norm), stored by the same kernel.
+void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, const float* means, const float* inv_vars, const float* gamma, T* dX, T* dX2, float* dGamma, float* dBeta);
 
 template<typename T>
 void rmsnorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* inv_rms, const float* weight, const float eps);

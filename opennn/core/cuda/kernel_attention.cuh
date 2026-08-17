@@ -32,6 +32,11 @@ void attention_sequence_lengths_cuda(const int batch_size,
                                      int32_t* query_lengths,
                                      int32_t* source_lengths);
 
+// SDPA length tensors from an exported record (see kernel).
+void attention_sdpa_lengths_cuda(const int batch_size, const int query_sequence_length,
+                                 const int source_sequence_length, const int* record,
+                                 int32_t* query_lengths, int32_t* source_lengths);
+
 template<typename T>
 void rope_forward_cuda(const int rows, const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* in, T* out, const float* cos, const float* sin);
 

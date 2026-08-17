@@ -164,11 +164,15 @@ void ForwardPropagation::set(
     host_bf16_input_scratch.clear();
     passthrough_overrides.clear();
     valid_lengths.clear();
+    device_valid_lengths.clear();
+    device_valid_length_storage.clear();
     output_window.reset();
 
     inputs.resize(layers_number);
     slots.resize(layers_number);
     valid_lengths.resize(layers_number);
+    device_valid_lengths.assign(layers_number, nullptr);
+    device_valid_length_storage.resize(layers_number);
 
     auto forward_specs = neural_network->get_forward_specs(batch_size);
 
@@ -1056,25 +1060,58 @@ TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
         : TensorView{};
 }
 
+// The layer whose record feeds one of `layer`'s inputs, or -1 when that input
+// is one of the network's own inputs: raw token ids that nothing has had the
+// chance to describe yet.
+Index ForwardPropagation::valid_lengths_source(const size_t layer, const size_t input_ordinal) const
+{
+    if (!neural_network) return -1;
+
+    const auto& source_layers = neural_network->get_source_layers();
+    if (layer >= source_layers.size()) return -1;
+
+    const vector<Index>& sources = source_layers[layer];
+    if (input_ordinal >= sources.size()) return -1;
+
+    const Index source = sources[input_ordinal];
+    return (source < 0 || size_t(source) >= valid_lengths.size()) ? -1 : source;
+}
+
 const vector<Index>* ForwardPropagation::input_valid_lengths(const size_t layer,
                                                              const size_t input_ordinal) const
 {
-    if (!neural_network) return nullptr;
-
-    const auto& source_layers = neural_network->get_source_layers();
-    if (layer >= source_layers.size()) return nullptr;
-
-    const vector<Index>& sources = source_layers[layer];
-    if (input_ordinal >= sources.size()) return nullptr;
-
-    // A negative source is one of the network's own inputs: raw token ids that
-    // nothing has had the chance to describe yet.
-    const Index source = sources[input_ordinal];
-    if (source < 0 || size_t(source) >= valid_lengths.size()) return nullptr;
+    const Index source = valid_lengths_source(layer, input_ordinal);
+    if (source < 0) return nullptr;
 
     const vector<Index>& lengths = valid_lengths[size_t(source)];
 
     return lengths.empty() ? nullptr : &lengths;
+}
+
+const int* ForwardPropagation::input_device_valid_lengths(const size_t layer,
+                                                          const size_t input_ordinal) const
+{
+    const Index source = valid_lengths_source(layer, input_ordinal);
+    return source < 0 ? nullptr : device_valid_lengths[size_t(source)];
+}
+
+SequenceLengths ForwardPropagation::input_sequence_lengths(const size_t layer,
+                                                          const size_t input_ordinal) const
+{
+    return {input_valid_lengths(layer, input_ordinal),
+            input_device_valid_lengths(layer, input_ordinal)};
+}
+
+int* ForwardPropagation::device_valid_lengths_slot(const size_t layer, const Index batch_size)
+{
+    Buffer& storage = device_valid_length_storage[layer];
+    if (storage.get_device() != Device::CUDA)
+        storage.resize_bytes(batch_size * Index(sizeof(int)), Device::CUDA);
+    else
+        storage.grow_to(batch_size * Index(sizeof(int)));
+
+    device_valid_lengths[layer] = storage.as<int>();
+    return storage.as<int>();
 }
 
 void ForwardPropagation::inherit_valid_lengths(const size_t layer)
@@ -1082,10 +1119,11 @@ void ForwardPropagation::inherit_valid_lengths(const size_t layer)
     if (layer >= valid_lengths.size()) return;
 
     // An Embedding writes its own record while it runs; nothing overwrites it.
-    if (!valid_lengths[layer].empty()) return;
+    if (!valid_lengths[layer].empty() || device_valid_lengths[layer]) return;
 
     const vector<Index>* source_lengths = input_valid_lengths(layer, 0);
-    if (!source_lengths) return;
+    const int* device_source_lengths = input_device_valid_lengths(layer, 0);
+    if (!source_lengths && !device_source_lengths) return;
 
     // The record travels only as far as the sequence it describes. A layer that
     // pools the sequence away, or reshapes it, ends the record here rather than
@@ -1099,7 +1137,8 @@ void ForwardPropagation::inherit_valid_lengths(const size_t layer)
     if (output_shape.get_rank() < 2 || source_shape.get_rank() < 2) return;
     if (output_shape[0] != source_shape[0]) return;
 
-    valid_lengths[layer] = *source_lengths;
+    if (source_lengths) valid_lengths[layer] = *source_lengths;
+    device_valid_lengths[layer] = device_source_lengths;
 }
 
 TensorView ForwardPropagation::get_outputs() const

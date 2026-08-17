@@ -74,6 +74,36 @@ void embedding_backward_cuda(const Index n, const float* inputs, const T* output
                        sequence_length, embedding_dimension, vocabulary_size, scale_embedding);
 }
 
+// One warp per sample: how many of its tokens are not padding (id 0). Same
+// count the CPU path makes, kept on the device so the record can feed the
+// attention masks without a host round trip (and inside a CUDA graph).
+__global__ void token_valid_lengths_kernel(const int batch_size, const int sequence_length,
+                                           const float* __restrict__ token_ids, int* __restrict__ lengths)
+{
+    const int sample = (blockIdx.x * blockDim.x + threadIdx.x) >> 5;
+    const int lane = threadIdx.x & 31;
+    if (sample >= batch_size) return;
+
+    const float* row = token_ids + Index(sample) * sequence_length;
+    int count = 0;
+    for (int s = lane; s < sequence_length; s += 32)
+        count += static_cast<int>(row[s]) != 0;
+
+    for (int offset = 16; offset > 0; offset >>= 1)
+        count += __shfl_xor_sync(0xffffffffu, count, offset);
+
+    if (lane == 0) lengths[sample] = count;
+}
+
+void token_valid_lengths_cuda(const Index batch_size, const Index sequence_length,
+                              const float* token_ids, int* lengths, cudaStream_t stream)
+{
+    if (batch_size <= 0) return;
+    const int blocks = int((batch_size * 32 + block_size - 1) / block_size);
+    OPENNN_CUDA_LAUNCH(token_valid_lengths_kernel<<<blocks, block_size, 0, stream>>>(
+        int(batch_size), int(sequence_length), token_ids, lengths));
+}
+
 #define INSTANTIATE(T) \
     template void embedding_backward_cuda<T>(const Index, const float*, const T*, float*, float*, const int, const int, const int, const bool);
 

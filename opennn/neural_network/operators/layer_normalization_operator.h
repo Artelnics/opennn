@@ -24,11 +24,13 @@ void layer_normalization_add_forward(const TensorView&, const TensorView&,
                             const TensorView&, const TensorView&,
                             TensorView&, TensorView&,
                             TensorView&, TensorView&, TensorView&, float);
+// The trailing view, when non-null, receives a second copy of the input delta
+// (the residual branch of a fused add + norm) without a separate copy pass.
 void layer_normalization_backward(const TensorView&, const TensorView&,
                          const TensorView&, const TensorView&,
                          const TensorView&, const TensorView&,
                          const TensorView&, const TensorView&,
-                         TensorView&);
+                         TensorView&, TensorView* = nullptr);
 void rms_normalization_forward(const TensorView&, const TensorView&,
                       TensorView&, TensorView&, TensorView&, float);
 void rms_normalization_backward(const TensorView&, const TensorView&,

@@ -147,16 +147,10 @@ void compute_token_valid_lengths(const TensorView& indices, Index sequence_lengt
     valid_lengths.assign(batch_size, sequence_length);
     if (batch_size == 0) return;
 
+    throw_if(indices.is_cuda(),
+             "compute_token_valid_lengths: CUDA token ids are counted on the device (token_valid_lengths_cuda).");
+
     const float* ids = indices.as<float>();
-    vector<float> host;
-#ifdef OPENNN_HAS_CUDA
-    if (indices.is_cuda())
-    {
-        host.resize(size_t(total));
-        copy_device_to_host_float(indices.get_data(), indices.get_type(), total, host.data(), device::get_compute_stream());
-        ids = host.data();
-    }
-#endif
 
     for (Index b = 0; b < batch_size; ++b)
     {
@@ -351,8 +345,20 @@ void EmbeddingLookupOperator::forward_propagate(ForwardPropagation& forward_prop
     TensorView& output        = get_output(forward_propagation, layer);
 
     if (export_valid_lengths)
+    {
+#ifdef OPENNN_HAS_CUDA
+        if (indices.is_cuda())
+        {
+            const Index batch_size = sequence_length > 0 ? indices.size() / sequence_length : 0;
+            token_valid_lengths_cuda(batch_size, sequence_length, indices.as<float>(),
+                                     forward_propagation.device_valid_lengths_slot(layer, batch_size),
+                                     device::get_compute_stream());
+        }
+        else
+#endif
         compute_token_valid_lengths(indices, sequence_length,
                                     forward_propagation.valid_lengths[layer]);
+    }
 
     embedding_lookup_forward(indices, weights, positional_encoding, output,
                              sequence_length, embedding_dimension, vocabulary_size,

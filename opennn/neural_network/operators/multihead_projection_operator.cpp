@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/operators/multihead_projection_operator.h"
+#include "opennn/core/profiler.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
@@ -107,6 +108,7 @@ void MultiHeadProjectionOperator::set(Index new_input_features, Index new_heads_
 
 void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
+    PROFILE_SCOPE("op:projection_fwd");
 
     throw_if(tied_transposed || transposed_inference_active
              || fused_activation != ActivationFunction::Identity,
@@ -124,11 +126,20 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
     const Index heads_number   = head_output.get_shape()[1];
     const Index head_dimension = head_output.get_shape()[3];
 
+    const TensorView  input_2d    = input.reshape({rows, input_features});
+
+    if (interleaved_heads && input.is_cuda())
+    {
+        TensorView head_output_2d = head_output.reshape({rows, heads_number * head_dimension});
+        linear_forward(input_2d, weights, bias, head_output_2d,
+                       CUBLASLT_EPILOGUE_BIAS, nullptr, weight_scale);
+        return;
+    }
+
     TensorView&       scratch     = forward_slots[scratch_slot];
     TensorView        scratch_2d  = scratch.reshape_prefix({rows, input_features});
     const TensorView  scratch_4d  = scratch.reshape_prefix(
         {batch_size, seq_len, heads_number, head_dimension});
-    const TensorView  input_2d    = input.reshape({rows, input_features});
 
     linear_forward(input_2d, weights, bias, scratch_2d,
                    CUBLASLT_EPILOGUE_BIAS, nullptr, weight_scale);
@@ -137,6 +148,7 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
 
 void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
+    PROFILE_SCOPE("op:projection_bwd");
     auto& forward_slots = forward_propagation.slots[layer];
     auto& backward_slots = back_propagation.slots[layer];
 
@@ -152,13 +164,17 @@ void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_pro
     const Index heads_number   = head_delta.get_shape()[1];
     const Index head_dimension = head_delta.get_shape()[3];
 
+    const TensorView  input_2d    = input.reshape({rows, input_features});
+    const bool interleaved = interleaved_heads && input.is_cuda();
+
     TensorView&       scratch     = forward_slots[scratch_slot];
     TensorView        scratch_4d  = scratch.reshape_prefix(
         {batch_size, seq_len, heads_number, head_dimension});
-    const TensorView  scratch_2d  = scratch.reshape_prefix({rows, input_features});
-    const TensorView  input_2d    = input.reshape({rows, input_features});
+    const TensorView  output_delta_2d = interleaved
+        ? head_delta.reshape({rows, heads_number * head_dimension})
+        : scratch.reshape_prefix({rows, input_features});
 
-    merge_heads(head_delta, scratch_4d);
+    if (!interleaved) merge_heads(head_delta, scratch_4d);
 
     TensorView& input_delta    = backward_slots[self_attention ? input_delta_slot_self : input_delta_slot_cross];
 
@@ -170,7 +186,7 @@ void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_pro
         ? accumulate_input_delta_self
         : accumulate_input_delta_cross;
 
-    linear_backward(scratch_2d, input_2d, weights, weight_gradient, bias_gradient, input_delta_2d, accumulate);
+    linear_backward(output_delta_2d, input_2d, weights, weight_gradient, bias_gradient, input_delta_2d, accumulate);
 }
 
 }

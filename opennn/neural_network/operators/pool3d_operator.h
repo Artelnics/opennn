@@ -23,10 +23,10 @@ namespace opennn
 // touched. It is deliberately not defaulted: a caller that has the lengths and
 // forgets to pass them gets the guess, silently, and that is the failure this
 // parameter exists to end.
-void max_pooling_3d_forward(const TensorView&, TensorView&, TensorView&, bool, const vector<Index>*);
-void average_pooling_3d_forward(const TensorView&, TensorView&, const vector<Index>*);
+void max_pooling_3d_forward(const TensorView&, TensorView&, TensorView&, bool, SequenceLengths);
+void average_pooling_3d_forward(const TensorView&, TensorView&, SequenceLengths);
 void max_pooling_3d_backward(const TensorView&, const TensorView&, TensorView&);
-void average_pooling_3d_backward(const TensorView&, const TensorView&, TensorView&, const vector<Index>*);
+void average_pooling_3d_backward(const TensorView&, const TensorView&, TensorView&, SequenceLengths);
 void first_token_3d_forward(const TensorView&, TensorView&);
 void first_token_3d_backward(const TensorView&, TensorView&);
 

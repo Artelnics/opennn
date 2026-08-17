@@ -114,7 +114,7 @@ vector<float> pooling_backward_on_cpu(const PoolingCase& test_case)
 
     // No exported lengths: this test is about the kernel writing every element,
     // so it stays on the path that reads the padding off the data.
-    average_pooling_3d_backward(input_view, output_delta_view, input_delta_view, nullptr);
+    average_pooling_3d_backward(input_view, output_delta_view, input_delta_view, {});
 
     return input_delta;
 }
@@ -169,7 +169,7 @@ vector<float> pooling_backward_on_gpu(const PoolingCase& test_case)
 
     // No exported lengths: this test is about the kernel writing every element,
     // so it stays on the path that reads the padding off the data.
-    average_pooling_3d_backward(input_view, output_delta_view, input_delta_view, nullptr);
+    average_pooling_3d_backward(input_view, output_delta_view, input_delta_view, {});
     device::synchronize();
 
     return input_delta_device.to_host();

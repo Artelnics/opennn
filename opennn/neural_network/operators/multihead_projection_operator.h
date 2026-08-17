@@ -29,6 +29,11 @@ struct MultiHeadProjectionOperator : CombinationOperator
     bool accumulate_input_delta_self  = false;
     bool accumulate_input_delta_cross = false;
 
+    // Leave the head output in the GEMM's own (batch, sequence, heads, head_dim)
+    // layout instead of transposing to (batch, heads, sequence, head_dim): what
+    // the SDPA path consumes. See AttentionOperator::interleaved_heads.
+    bool interleaved_heads = false;
+
     void set(Index, Index, Index, Type);
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;

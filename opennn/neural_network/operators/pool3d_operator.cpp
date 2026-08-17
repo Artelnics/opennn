@@ -11,7 +11,6 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/operators/sequence_length_staging.h"
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/neural_network/operators/kernel_pool3d.cuh"
 #include "opennn/neural_network/layers/kernel_recurrent.cuh"
@@ -21,10 +20,10 @@ namespace opennn
 {
 
 // Defined below: against the CUDA kernels, or as throwing stubs.
-static void max_pooling_3d_forward_gpu(const TensorView&, TensorView&, TensorView&, bool, const vector<Index>*);
-static void average_pooling_3d_forward_gpu(const TensorView&, TensorView&, const vector<Index>*);
+static void max_pooling_3d_forward_gpu(const TensorView&, TensorView&, TensorView&, bool, const int*);
+static void average_pooling_3d_forward_gpu(const TensorView&, TensorView&, const int*);
 static void max_pooling_3d_backward_gpu(const TensorView&, const TensorView&, TensorView&);
-static void average_pooling_3d_backward_gpu(const TensorView&, const TensorView&, TensorView&, const vector<Index>*);
+static void average_pooling_3d_backward_gpu(const TensorView&, const TensorView&, TensorView&, const int*);
 static void first_token_3d_forward_gpu(const TensorView&, TensorView&);
 static void first_token_3d_backward_gpu(const TensorView&, TensorView&);
 
@@ -82,10 +81,10 @@ static void max_pooling_3d_forward_cpu(const TensorView& input, TensorView& outp
 }
 
 void max_pooling_3d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training,
-                            const vector<Index>* valid_lengths)
+                            const SequenceLengths valid_lengths)
 {
-    if (input.is_cuda()) { max_pooling_3d_forward_gpu(input, output, maximal_indices, is_training, valid_lengths); return; }
-    max_pooling_3d_forward_cpu(input, output, maximal_indices, is_training, valid_lengths);
+    if (input.is_cuda()) { max_pooling_3d_forward_gpu(input, output, maximal_indices, is_training, valid_lengths.device); return; }
+    max_pooling_3d_forward_cpu(input, output, maximal_indices, is_training, valid_lengths.host);
 }
 
 static void average_pooling_3d_forward_cpu(const TensorView& input, TensorView& output,
@@ -124,10 +123,10 @@ static void average_pooling_3d_forward_cpu(const TensorView& input, TensorView& 
 }
 
 void average_pooling_3d_forward(const TensorView& input, TensorView& output,
-                                const vector<Index>* valid_lengths)
+                                const SequenceLengths valid_lengths)
 {
-    if (input.is_cuda()) { average_pooling_3d_forward_gpu(input, output, valid_lengths); return; }
-    average_pooling_3d_forward_cpu(input, output, valid_lengths);
+    if (input.is_cuda()) { average_pooling_3d_forward_gpu(input, output, valid_lengths.device); return; }
+    average_pooling_3d_forward_cpu(input, output, valid_lengths.host);
 }
 
 static void max_pooling_3d_backward_cpu(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta)
@@ -207,10 +206,10 @@ static void average_pooling_3d_backward_cpu(const TensorView& input,
 void average_pooling_3d_backward(const TensorView& input,
                                  const TensorView& output_delta,
                                  TensorView& input_delta,
-                                 const vector<Index>* valid_lengths)
+                                 const SequenceLengths valid_lengths)
 {
-    if (output_delta.is_cuda()) { average_pooling_3d_backward_gpu(input, output_delta, input_delta, valid_lengths); return; }
-    average_pooling_3d_backward_cpu(input, output_delta, input_delta, valid_lengths);
+    if (output_delta.is_cuda()) { average_pooling_3d_backward_gpu(input, output_delta, input_delta, valid_lengths.device); return; }
+    average_pooling_3d_backward_cpu(input, output_delta, input_delta, valid_lengths.host);
 }
 
 static void first_token_3d_forward_cpu(const TensorView& input, TensorView& output)
@@ -265,17 +264,8 @@ void first_token_3d_backward(const TensorView& output_delta, TensorView& input_d
 
 #ifdef OPENNN_HAS_CUDA
 
-static const int* stage_pooling_lengths(const vector<Index>* valid_lengths)
-{
-    if (!valid_lengths) return nullptr;
-
-    thread_local SequenceLengthStaging staging;
-
-    return staging.stage(*valid_lengths);
-}
-
 static void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool  ,
-                                       const vector<Index>* valid_lengths)
+                                       const int* valid_lengths)
 {
     const Shape& shape = input.get_shape();
     output.dispatch([&]<typename T>() {
@@ -284,12 +274,12 @@ static void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& outp
                                        maximal_indices.as<float>(),
                                        to_int(shape[1]),
                                        to_int(shape[2]),
-                                       stage_pooling_lengths(valid_lengths));
+                                       valid_lengths);
     });
 }
 
 static void average_pooling_3d_forward_gpu(const TensorView& input, TensorView& output,
-                                           const vector<Index>* valid_lengths)
+                                           const int* valid_lengths)
 {
     const Shape& shape = input.get_shape();
     output.dispatch([&]<typename T>() {
@@ -297,7 +287,7 @@ static void average_pooling_3d_forward_gpu(const TensorView& input, TensorView& 
                                            input.as<T>(), output.as<T>(),
                                            to_int(shape[1]),
                                            to_int(shape[2]),
-                                           stage_pooling_lengths(valid_lengths));
+                                           valid_lengths);
     });
 }
 
@@ -318,7 +308,7 @@ static void max_pooling_3d_backward_gpu(const TensorView& maximal_indices, const
 static void average_pooling_3d_backward_gpu(const TensorView& input,
                                      const TensorView& output_delta,
                                      TensorView& input_delta,
-                                     const vector<Index>* valid_lengths)
+                                     const int* valid_lengths)
 {
     const Shape& shape = input.get_shape();
     input_delta.dispatch([&]<typename T>() {
@@ -328,7 +318,7 @@ static void average_pooling_3d_backward_gpu(const TensorView& input,
                                             input_delta.as<T>(),
                                             to_int(shape[1]),
                                             to_int(shape[2]),
-                                            stage_pooling_lengths(valid_lengths));
+                                            valid_lengths);
     });
 }
 
@@ -354,10 +344,10 @@ static void first_token_3d_backward_gpu(const TensorView& output_delta, TensorVi
 
 #else
 
-static void max_pooling_3d_forward_gpu(const TensorView&, TensorView&, TensorView&, bool, const vector<Index>*) { throw runtime_error("max_pooling_3d_forward_gpu: CUDA support not compiled in."); }
-static void average_pooling_3d_forward_gpu(const TensorView&, TensorView&, const vector<Index>*) { throw runtime_error("average_pooling_3d_forward_gpu: CUDA support not compiled in."); }
+static void max_pooling_3d_forward_gpu(const TensorView&, TensorView&, TensorView&, bool, const int*) { throw runtime_error("max_pooling_3d_forward_gpu: CUDA support not compiled in."); }
+static void average_pooling_3d_forward_gpu(const TensorView&, TensorView&, const int*) { throw runtime_error("average_pooling_3d_forward_gpu: CUDA support not compiled in."); }
 static void max_pooling_3d_backward_gpu(const TensorView&, const TensorView&, TensorView&) { throw runtime_error("max_pooling_3d_backward_gpu: CUDA support not compiled in."); }
-static void average_pooling_3d_backward_gpu(const TensorView&, const TensorView&, TensorView&, const vector<Index>*) { throw runtime_error("average_pooling_3d_backward_gpu: CUDA support not compiled in."); }
+static void average_pooling_3d_backward_gpu(const TensorView&, const TensorView&, TensorView&, const int*) { throw runtime_error("average_pooling_3d_backward_gpu: CUDA support not compiled in."); }
 static void first_token_3d_forward_gpu(const TensorView&, TensorView&) { throw runtime_error("first_token_3d_forward_gpu: CUDA support not compiled in."); }
 static void first_token_3d_backward_gpu(const TensorView&, TensorView&) { throw runtime_error("first_token_3d_backward_gpu: CUDA support not compiled in."); }
 
@@ -369,13 +359,16 @@ static void first_token_3d_backward_gpu(const TensorView&, TensorView&) { throw 
 // -- recovering the lengths by looking for the zero rows the Embedding wrote --
 // only survives while nothing in between has touched those rows, and a single
 // normalization with a nonzero shift is enough to end that.
-static const vector<Index>* exported_valid_lengths(const ForwardPropagation& forward_propagation,
-                                                   const TensorView& input,
-                                                   size_t layer)
+static SequenceLengths exported_valid_lengths(const ForwardPropagation& forward_propagation,
+                                              const TensorView& input,
+                                              size_t layer)
 {
-    const vector<Index>* lengths = forward_propagation.input_valid_lengths(layer, 0);
+    SequenceLengths lengths = forward_propagation.input_sequence_lengths(layer, 0);
 
-    return lengths && Index(lengths->size()) == input.get_shape()[0] ? lengths : nullptr;
+    if (lengths.host && Index(lengths.host->size()) != input.get_shape()[0])
+        lengths.host = nullptr;
+
+    return lengths;
 }
 
 void Pool3dOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
@@ -384,7 +377,7 @@ void Pool3dOperator::forward_propagate(ForwardPropagation& forward_propagation, 
     TensorView& output      = get_output(forward_propagation, layer);
     TensorView& indices     = get_output(forward_propagation, layer, 1);
 
-    const vector<Index>* valid_lengths = exported_valid_lengths(forward_propagation, input, layer);
+    const SequenceLengths valid_lengths = exported_valid_lengths(forward_propagation, input, layer);
 
     if (method == Max)
         max_pooling_3d_forward(input, output, indices, is_training, valid_lengths);

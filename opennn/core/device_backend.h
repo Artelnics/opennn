@@ -48,12 +48,13 @@ enum class GraphWorkspaceKind
     Bf16ToFp32,
     Int8Dequant,
     PoolingMask,
+    NormPartials,
     Count
 };
 
 inline constexpr std::array<const char*, size_t(GraphWorkspaceKind::Count)>
 graph_workspace_labels = {"shared_scratch", "bf16_input", "bf16_gradient",
-                          "bf16_to_fp32", "int8_dequant", "pooling_mask"};
+                          "bf16_to_fp32", "int8_dequant", "pooling_mask", "norm_partials"};
 
 struct GraphWorkspaceView
 {

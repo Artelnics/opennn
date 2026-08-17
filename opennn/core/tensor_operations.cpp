@@ -708,20 +708,21 @@ void linear_backward(const TensorView& output_delta, const TensorView& input, co
         require_cpu_fp32(weights, operation, "weights");
     }
 
+    // The mask was written by the producer's ReLU epilogue over this layer's
+    // input, so it is (rows, input_features / 8) bytes.
     if (drelu_mask)
     {
         require_tensor(*drelu_mask, operation, "DReLU mask");
         require_same_device(output_delta, *drelu_mask, operation);
-        const Index rows = output_delta.size() / output_delta.get_shape().back();
+        const Index rows = input.size() / input.get_shape().back();
         throw_if(!drelu_mask->is_int8() || drelu_mask->get_shape().get_rank() != 2
                  || drelu_mask->get_shape()[0] != rows
-                 || drelu_mask->get_shape()[1] * 8 != output_delta.get_shape().back(),
-                 "linear_backward: DReLU mask shape or dtype is incompatible with the output delta.");
+                 || drelu_mask->get_shape()[1] * 8 != input.get_shape().back(),
+                 "linear_backward: DReLU mask shape or dtype is incompatible with the input.");
     }
 
-    throw_if(drelu_mask && (!output_delta.is_cuda() || output_delta.is_bf16()
-                            || accumulate_input_delta),
-             "linear_backward: the DRELU fused input-delta path is CUDA fp32, non-accumulating only.");
+    throw_if(drelu_mask && (!output_delta.is_cuda() || accumulate_input_delta),
+             "linear_backward: the DRELU fused input-delta path is CUDA, non-accumulating only.");
 
     if (output_delta.is_cuda())
     {

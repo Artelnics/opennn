@@ -422,7 +422,7 @@ void wire_drelu_fusions(vector<unique_ptr<Layer>>& layers,
         if (auto* dense = dynamic_cast<Dense*>(layer.get()))
             dense->reset_drelu_fusion();
 
-    if (device != Device::CUDA || training_type != Type::FP32)
+    if (device != Device::CUDA || !is_one_of(training_type, Type::FP32, Type::BF16))
         return;
 
     if (!env_flag_enabled("OPENNN_DRELU_FUSION"))

@@ -116,7 +116,8 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
 
     const bool relu = (fused_activation == ActivationFunction::ReLU);
 
-    if (relu && emit_relu_mask && is_training && output.is_cuda() && output.is_fp32())
+    if (relu && emit_relu_mask && is_training && output.is_cuda()
+        && (output.is_fp32() || output.is_bf16()))
     {
         const Index rows = output.size() / output_features;
         try
@@ -131,9 +132,12 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
             relu_mask_fused_active = true;
             return;
         }
-        catch (const runtime_error&)
+        catch (const runtime_error& error)
         {
-
+            static once_flag reported;
+            call_once(reported, [&]{
+                cerr << "linear_forward: ReLU-mask epilogue unavailable ("
+                     << error.what() << "); ReLU backward runs unfused.\n"; });
             emit_relu_mask = false;
             relu_mask_fused_active = false;
         }
@@ -168,9 +172,12 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
                             input_delta, accumulate_input_delta, &drelu_source->relu_mask_view);
             return;
         }
-        catch (const runtime_error&)
+        catch (const runtime_error& error)
         {
-
+            static once_flag reported;
+            call_once(reported, [&]{
+                cerr << "linear_backward: DReLU epilogue unavailable ("
+                     << error.what() << "); ReLU backward runs unfused.\n"; });
             drelu_source->relu_mask_fused_active = false;
             drelu_source->emit_relu_mask = false;
             recover_unfused = true;

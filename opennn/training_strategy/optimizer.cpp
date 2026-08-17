@@ -796,6 +796,7 @@ void Optimizer::display_epoch_results(const Index epoch,
 TrainingResult Optimizer::train()
 {
     TrainingResult results(maximum_epochs + 1);
+    cuda_graph_capture_failed = false;
 
     if (!loss || !loss->get_neural_network() || !loss->get_dataset())
         return results;
@@ -1497,6 +1498,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         catch (const exception& capture_error)
         {
             training_session.disable_cuda_graph_capture();
+            cuda_graph_capture_failed = true;
             cerr << "CUDA graph capture failed (" << capture_error.what()
                  << "); continuing without graphs.\n";
             ::opennn::enabled() = profiler_enabled;

@@ -7,13 +7,13 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/operators/attention_operator.h"
+#include "opennn/core/profiler.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/operators/dropout_operator.h"
 #include "opennn/neural_network/operators/multihead_projection_operator.h"
-#include "opennn/neural_network/operators/sequence_length_staging.h"
 
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/cuda/cudnn_frontend_utilities.h"
@@ -206,6 +206,7 @@ struct AttentionOperator::SDPACache
         bool  dropout_active = false;
         bool  causal         = false;
         bool  is_training    = false;
+        bool  interleaved    = false;
 
         bool operator==(const CacheKey&) const = default;
     };
@@ -215,7 +216,8 @@ struct AttentionOperator::SDPACache
         size_t operator()(const CacheKey& k) const
         {
             return hash_combine(k.batch_size, k.q_seq, k.src_seq, k.heads, k.head_dim,
-                                Index(k.dropout_active), Index(k.causal), Index(k.is_training));
+                                Index(k.dropout_active), Index(k.causal), Index(k.is_training),
+                                Index(k.interleaved));
         }
     };
 
@@ -226,6 +228,7 @@ struct AttentionOperator::SDPACache
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_SeqLenQ, fwd_SeqLenKV;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_Seed, fwd_Offset;
         void* fwd_workspace_buf = nullptr;
+        bool fwd_autotune_pending = false;
 
         shared_ptr<cudnn_frontend::graph::Graph> bwd_graph;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_Q, bwd_K, bwd_V, bwd_O, bwd_dO, bwd_Stats;
@@ -233,6 +236,7 @@ struct AttentionOperator::SDPACache
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_SeqLenQ, bwd_SeqLenKV;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_Seed, bwd_Offset;
         void* bwd_workspace_buf = nullptr;
+        bool bwd_autotune_pending = false;
 
         void* stats_buf = nullptr;
 
@@ -286,19 +290,29 @@ namespace
 {
 
 
+// A (B, H, S, D) tensor as the graph sees it, over memory that is either
+// (B, H, S, D) or, interleaved, (B, S, H, D): the layout the projections'
+// GEMMs write and the output projection reads.
+vector<int64_t> heads_strides(int64_t H, int64_t S, int64_t D, bool interleaved)
+{
+    return interleaved ? vector<int64_t>{S * H * D, D, H * D, 1}
+                       : vector<int64_t>{H * S * D, S * D, D, 1};
+}
+
 shared_ptr<cudnn_frontend::graph::Tensor_attributes>
-bhsd_input(cudnn_frontend::graph::Graph& graph, const char* name, int64_t B, int64_t H, int64_t S, int64_t D)
+heads_input(cudnn_frontend::graph::Graph& graph, const char* name,
+            int64_t B, int64_t H, int64_t S, int64_t D, bool interleaved)
 {
     return graph.tensor(cudnn_frontend::graph::Tensor_attributes()
                         .set_name(name)
                         .set_dim   ({B, H, S, D})
-                        .set_stride({H * S * D, S * D, D, 1}));
+                        .set_stride(heads_strides(H, S, D, interleaved)));
 }
 
-void bhsd_output(shared_ptr<cudnn_frontend::graph::Tensor_attributes>& T,
-                 int64_t B, int64_t H, int64_t S, int64_t D)
+void heads_output(shared_ptr<cudnn_frontend::graph::Tensor_attributes>& T,
+                  int64_t B, int64_t H, int64_t S, int64_t D, bool interleaved)
 {
-    T->set_output(true).set_dim({B, H, S, D}).set_stride({H * S * D, S * D, D, 1});
+    T->set_output(true).set_dim({B, H, S, D}).set_stride(heads_strides(H, S, D, interleaved));
 }
 
 void refresh_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
@@ -333,9 +347,9 @@ static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
 {
     const auto graph = cudnn_frontend::new_graph(Type::BF16);
 
-    entry.fwd_Q = bhsd_input(*graph, "Q", k.batch_size, k.heads, k.q_seq,   k.head_dim);
-    entry.fwd_K = bhsd_input(*graph, "K", k.batch_size, k.heads, k.src_seq, k.head_dim);
-    entry.fwd_V = bhsd_input(*graph, "V", k.batch_size, k.heads, k.src_seq, k.head_dim);
+    entry.fwd_Q = heads_input(*graph, "Q", k.batch_size, k.heads, k.q_seq,   k.head_dim, k.interleaved);
+    entry.fwd_K = heads_input(*graph, "K", k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
+    entry.fwd_V = heads_input(*graph, "V", k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
     entry.fwd_SeqLenQ  = cudnn_frontend::seq_len_scalar(*graph, "SeqLenQ",  k.batch_size);
     entry.fwd_SeqLenKV = cudnn_frontend::seq_len_scalar(*graph, "SeqLenKV", k.batch_size);
 
@@ -373,7 +387,7 @@ static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
 
     auto [O, Stats] = graph->sdpa(entry.fwd_Q, entry.fwd_K, entry.fwd_V, sdpa_options);
 
-    bhsd_output(O, k.batch_size, k.heads, k.q_seq, k.head_dim);
+    heads_output(O, k.batch_size, k.heads, k.q_seq, k.head_dim, k.interleaved);
     entry.fwd_O = O;
 
     if (k.is_training && Stats)
@@ -386,7 +400,7 @@ static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
     }
 
     int64_t ws = 0;
-    cudnn_frontend::finalize_attention(*graph, "sdpa fwd", ws);
+    entry.fwd_autotune_pending = cudnn_frontend::finalize_attention(*graph, "sdpa fwd", ws, true);
     if (ws > 0)
         entry.fwd_workspace_buf = device::allocate(Device::CUDA, Index(ws));
 
@@ -405,20 +419,16 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
 {
     const auto graph = cudnn_frontend::new_graph(Type::BF16);
 
-    entry.bwd_Q  = bhsd_input(*graph, "Q_bwd",  k.batch_size, k.heads, k.q_seq,   k.head_dim);
-    entry.bwd_K  = bhsd_input(*graph, "K_bwd",  k.batch_size, k.heads, k.src_seq, k.head_dim);
-    entry.bwd_V  = bhsd_input(*graph, "V_bwd",  k.batch_size, k.heads, k.src_seq, k.head_dim);
-    entry.bwd_dO = bhsd_input(*graph, "dO_bwd", k.batch_size, k.heads, k.q_seq,   k.head_dim);
+    entry.bwd_Q  = heads_input(*graph, "Q_bwd",  k.batch_size, k.heads, k.q_seq,   k.head_dim, k.interleaved);
+    entry.bwd_K  = heads_input(*graph, "K_bwd",  k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
+    entry.bwd_V  = heads_input(*graph, "V_bwd",  k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
+    entry.bwd_dO = heads_input(*graph, "dO_bwd", k.batch_size, k.heads, k.q_seq,   k.head_dim, k.interleaved);
     entry.bwd_SeqLenQ  = cudnn_frontend::seq_len_scalar(*graph, "SeqLenQ_bwd",  k.batch_size);
     entry.bwd_SeqLenKV = cudnn_frontend::seq_len_scalar(*graph, "SeqLenKV_bwd", k.batch_size);
 
-    entry.bwd_O = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
-                                .set_name("O_bwd")
-                                .set_dim({k.batch_size, k.heads, k.q_seq, k.head_dim})
-                                .set_stride({k.q_seq * k.heads * k.head_dim,
-                                             k.head_dim,
-                                             k.heads * k.head_dim,
-                                             1}));
+    // O is read from the merged (B, S, H*D) attention output whichever layout
+    // the head tensors use.
+    entry.bwd_O = heads_input(*graph, "O_bwd", k.batch_size, k.heads, k.q_seq, k.head_dim, true);
 
     entry.bwd_Stats = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
                                     .set_name("Stats_bwd")
@@ -449,16 +459,16 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
                                               entry.bwd_O, entry.bwd_dO, entry.bwd_Stats,
                                               sdpa_bwd_options);
 
-    bhsd_output(dQ, k.batch_size, k.heads, k.q_seq,   k.head_dim);
-    bhsd_output(dK, k.batch_size, k.heads, k.src_seq, k.head_dim);
-    bhsd_output(dV, k.batch_size, k.heads, k.src_seq, k.head_dim);
+    heads_output(dQ, k.batch_size, k.heads, k.q_seq,   k.head_dim, k.interleaved);
+    heads_output(dK, k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
+    heads_output(dV, k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
 
     entry.bwd_dQ = dQ;
     entry.bwd_dK = dK;
     entry.bwd_dV = dV;
 
     int64_t ws = 0;
-    cudnn_frontend::finalize_attention(*graph, "sdpa bwd", ws);
+    entry.bwd_autotune_pending = cudnn_frontend::finalize_attention(*graph, "sdpa bwd", ws, true);
     if (ws > 0)
         entry.bwd_workspace_buf = device::allocate(Device::CUDA, Index(ws));
 
@@ -478,6 +488,7 @@ AttentionOperator& AttentionOperator::operator=(AttentionOperator&&) noexcept = 
 
 void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
+    PROFILE_SCOPE("op:attention_fwd");
     auto& forward_slots = forward_propagation.slots[layer];
 
     const auto& src_views = get_inputs(forward_propagation, layer);
@@ -486,21 +497,26 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
     const TensorView& query = get_input(forward_propagation, layer);
     const Shape& query_shape = query.get_shape();
 
-    TensorView attention_out = forward_slots[scratch_slot].reshape_prefix(
-        {forward_propagation.batch_size, query_shape[1], query_shape[2], query_shape[3]});
+    // Interleaved heads: SDPA writes the merged (B, S, H*D) output directly.
+    const bool sdpa_interleaved = use_sdpa && interleaved_heads && query.is_cuda();
+
+    TensorView attention_out = sdpa_interleaved
+        ? forward_slots[attention_output_slot]
+        : forward_slots[scratch_slot].reshape_prefix(
+              {forward_propagation.batch_size, query_shape[1], query_shape[2], query_shape[3]});
 
     // Keys and values come from the last of the layer's inputs: its own, for
     // self-attention, and the encoder's for cross-attention. That is the
     // sequence the mask has to describe, and in an encoder-decoder it is not
     // the one the queries came from.
-    const vector<Index>* explicit_lengths =
-        forward_propagation.input_valid_lengths(layer, forward_propagation.inputs[layer].size() - 1);
+    const SequenceLengths explicit_lengths =
+        forward_propagation.input_sequence_lengths(layer, forward_propagation.inputs[layer].size() - 1);
 
 #ifdef OPENNN_HAS_CUDA
     if (use_sdpa && query.is_cuda())
         apply_sdpa_forward(query, get_input(forward_propagation, layer, 1), get_input(forward_propagation, layer, 2), source_input,
                            attention_out, forward_slots[sdpa_qkv_pack_slot], is_training,
-                           explicit_lengths);
+                           explicit_lengths.device);
     else
 #endif
     apply_unfused(query, get_input(forward_propagation, layer, 1), get_input(forward_propagation, layer, 2), source_input,
@@ -508,7 +524,7 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
                   attention_out, forward_slots[scratch_slot].as<float>(), is_training,
                   explicit_lengths);
 
-    merge_output_heads(forward_propagation, layer);
+    if (!sdpa_interleaved) merge_output_heads(forward_propagation, layer);
 }
 
 void AttentionOperator::merge_output_heads(ForwardPropagation& forward_propagation, size_t layer) const
@@ -541,8 +557,7 @@ void AttentionOperator::split_output_delta(ForwardPropagation& forward_propagati
 
 void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
-    split_output_delta(forward_propagation, back_propagation, layer);
-
+    PROFILE_SCOPE("op:attention_bwd");
     auto& forward_slots = forward_propagation.slots[layer];
 
     const TensorView& query             = get_input(forward_propagation, layer);
@@ -551,9 +566,15 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
     const TensorView& attention_weights = get_output(forward_propagation, layer);
     const TensorView& attention_weights_dropped = get_output(forward_propagation, layer, 1);
 
+    // Interleaved heads: the merged (B, S, H*D) output delta is dO as it is.
+    const bool sdpa_interleaved = use_sdpa && interleaved_heads && query.is_cuda();
+    if (!sdpa_interleaved) split_output_delta(forward_propagation, back_propagation, layer);
+
     const Shape& query_shape = query.get_shape();
-    const TensorView output_delta = forward_slots[scratch_slot].reshape_prefix(
-        {forward_propagation.batch_size, query_shape[1], query_shape[2], query_shape[3]});
+    const TensorView output_delta = sdpa_interleaved
+        ? back_propagation.slots[layer][merged_output_delta_slot]
+        : forward_slots[scratch_slot].reshape_prefix(
+              {forward_propagation.batch_size, query_shape[1], query_shape[2], query_shape[3]});
 
     TensorView& attention_weight_delta = get_output_delta(back_propagation, layer);
     TensorView& query_delta            = get_output_delta(back_propagation, layer, 1);
@@ -608,56 +629,6 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
                     query_delta, key_delta, value_delta);
 }
 
-#ifdef OPENNN_HAS_CUDA
-namespace
-{
-
-const int* stage_attention_lengths(const vector<Index>& lengths)
-{
-    thread_local SequenceLengthStaging staging;
-
-    return staging.stage(lengths);
-}
-
-// Fills the two length tensors the SDPA graph masks with from lengths an
-// Embedding already knows exactly. Only the key lengths carry padding: the query
-// side stays at the full sequence because the unfused path also computes every
-// query row, masking keys alone.
-void upload_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
-                                  const AttentionOperator::SDPACache::CacheKey& k,
-                                  const vector<Index>& lengths)
-{
-    throw_if(Index(lengths.size()) != k.batch_size,
-             "SDPA padding mask: {} valid lengths for a batch of {}.",
-             lengths.size(), k.batch_size);
-
-    thread_local SequenceLengthStaging staging;
-
-    int* const query_slot  = staging.acquire(2 * k.batch_size);
-    int* const source_slot = query_slot + k.batch_size;
-
-    for (Index batch_index = 0; batch_index < k.batch_size; ++batch_index)
-    {
-        query_slot[batch_index] = int(k.q_seq);
-
-        // cuDNN reads a key length of zero as "skip this batch entry", which
-        // leaves that sample's output unwritten. A sample of nothing but padding
-        // has no meaningful attention output either way, so floor the length at
-        // one to keep the buffer defined -- the same floor the scan applies.
-        source_slot[batch_index] =
-            int(clamp(lengths[size_t(batch_index)], Index(1), k.src_seq));
-    }
-
-    cudaStream_t stream = device::get_compute_stream();
-    const Index bytes = k.batch_size * Index(sizeof(int));
-    device::copy_async(entry.query_lengths,  query_slot,  bytes, device::CopyKind::HostToDevice, stream);
-    device::copy_async(entry.source_lengths, source_slot, bytes, device::CopyKind::HostToDevice, stream);
-    staging.mark_copied();
-}
-
-}
-#endif
-
 void AttentionOperator::apply_unfused(const TensorView& query,
                               const TensorView& key,
                               const TensorView& value,
@@ -667,7 +638,7 @@ void AttentionOperator::apply_unfused(const TensorView& query,
                               TensorView& output,
                               [[maybe_unused]] void* scratch,
                               bool is_training,
-                              const vector<Index>* explicit_lengths)
+                              const SequenceLengths explicit_lengths)
 {
     const bool use_cpu_fast_path =
         !query.is_cuda()
@@ -687,9 +658,9 @@ void AttentionOperator::apply_unfused(const TensorView& query,
         bool has_padding = false;
         bool have_lengths = false;
 
-        if (explicit_lengths && Index(explicit_lengths->size()) == source_input.get_shape()[0])
+        if (explicit_lengths.host && Index(explicit_lengths.host->size()) == source_input.get_shape()[0])
         {
-            valid_lengths = *explicit_lengths;
+            valid_lengths = *explicit_lengths.host;
             have_lengths = true;
             has_padding = ranges::any_of(valid_lengths,
                 [&](const Index length) { return length < source_input.get_shape()[1]; });
@@ -751,16 +722,14 @@ void AttentionOperator::apply_unfused(const TensorView& query,
     const Index query_length = attention_weights.get_shape()[2];
 
 #ifdef OPENNN_HAS_CUDA
-    if (attention_weights.is_cuda() && explicit_lengths
-        && Index(explicit_lengths->size()) == batch_size)
+    if (attention_weights.is_cuda() && explicit_lengths.device)
     {
-        const int* device_lengths = stage_attention_lengths(*explicit_lengths);
         attention_weights.dispatch([&]<typename T>() {
             attention_length_masked_softmax_cuda<T>(to_int(batch_size),
                                           to_int(heads_number),
                                           to_int(query_length),
                                           to_int(source_length),
-                                          device_lengths,
+                                          explicit_lengths.device,
                                           attention_weights.as<T>(),
                                           reinterpret_cast<T*>(scratch),
                                           use_causal_mask,
@@ -857,7 +826,7 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
                                TensorView& output,
                                const TensorView& qkv_pack_bf16,
                                bool is_training,
-                               const vector<Index>* explicit_lengths)
+                               const int* explicit_lengths)
 {
     throw_if(!sdpa_supported(query.get_type(), query.get_device()),
              "AttentionOperator: SDPA backend selected by the layer "
@@ -876,7 +845,8 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
         head_dimension,
         dropout_in_graph,
         use_causal_mask,
-        is_training
+        is_training,
+        interleaved_heads
     };
 
     auto& entry = sdpa_cache->get_or_create_entry(cache_key);
@@ -891,7 +861,9 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
     // data. Lengths an Embedding exports are exact and stay exact, so they are
     // preferred wherever they are available.
     if (explicit_lengths)
-        upload_sdpa_sequence_lengths(entry, cache_key, *explicit_lengths);
+        attention_sdpa_lengths_cuda(to_int(cache_key.batch_size), to_int(cache_key.q_seq),
+                                    to_int(cache_key.src_seq), explicit_lengths,
+                                    entry.query_lengths, entry.source_lengths);
     else
         refresh_sdpa_sequence_lengths(entry, cache_key, source_input);
 
@@ -957,6 +929,11 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
         tensor_map[entry.fwd_Offset] = entry.dropout_offset;
     }
 
+    if (entry.fwd_autotune_pending)
+    {
+        int64_t ws = 0;
+        cudnn_frontend::autotune_now(entry.fwd_autotune_pending, *entry.fwd_graph, tensor_map, ws, "sdpa fwd");
+    }
     cudnn_frontend::execute_graph(*entry.fwd_graph, tensor_map, entry.fwd_workspace_buf,
                                   "SDPA forward execute",
                                   cudnn_frontend::graph_timing_enabled() ? string("sdpa_fwd") : string());
@@ -1128,7 +1105,8 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
         head_dimension,
         dropout_in_graph,
         use_causal_mask,
-        true
+        true,
+        interleaved_heads
     };
 
     SDPACache::Entry* entry_ptr = sdpa_cache->find_entry(cache_key);
@@ -1214,6 +1192,11 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
         tensor_map[entry.bwd_Offset] = entry.dropout_offset;
     }
 
+    if (entry.bwd_autotune_pending)
+    {
+        int64_t ws = 0;
+        cudnn_frontend::autotune_now(entry.bwd_autotune_pending, *entry.bwd_graph, tensor_map, ws, "sdpa bwd");
+    }
     cudnn_frontend::execute_graph(*entry.bwd_graph, tensor_map, entry.bwd_workspace_buf,
                                   "SDPA backward execute",
                                   cudnn_frontend::graph_timing_enabled() ? string("sdpa_bwd") : string());

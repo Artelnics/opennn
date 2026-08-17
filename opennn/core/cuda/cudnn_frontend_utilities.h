@@ -410,20 +410,61 @@ inline void store_cached_plan(graph::Graph& graph)
 
 // Attention finalizes separately from the layer graphs: no workspace budget,
 // no autotune; it reports the workspace the built plan needs.
-inline void finalize_attention(graph::Graph& graph, const string& tag, int64_t& workspace_bytes)
+inline int64_t autotune_workspace_bytes(const graph::Graph& graph)
+{
+    int64_t maximum = 0;
+    const int64_t count = graph.get_execution_plan_count();
+
+    for (int64_t index = 0; index < count; ++index)
+    {
+        int64_t bytes = 0;
+        if (graph.get_workspace_size_plan_at_index(index, bytes).is_good())
+            maximum = max(maximum, bytes);
+    }
+
+    return maximum;
+}
+
+// Attention graphs (SDPA forward/backward): the heuristics' first plan, or,
+// when the caller allows it and OPENNN_SDPA_AUTOTUNE=1, the top candidates of
+// the A and B heuristic lists built for autotune_now() to time on the first
+// real execution (returns true in that case: the caller must run autotune_now
+// before executing). Measured neutral on an RTX 3060 (cuDNN 9.24 has one
+// engine for that shape); kept for GPUs where cuDNN offers more.
+inline bool sdpa_autotune_enabled()
+{
+    static const bool enabled = env_flag_enabled("OPENNN_SDPA_AUTOTUNE", false);
+    return enabled;
+}
+
+inline bool finalize_attention(graph::Graph& graph, const string& tag, int64_t& workspace_bytes,
+                               bool allow_autotune = false)
 {
     const cudnnHandle_t handle = Backend::get_cudnn_handle();
 
     check_status(graph.validate(), tag + " validate");
 
-    if (load_cached_plan(graph, handle, workspace_bytes)) return;
+    if (load_cached_plan(graph, handle, workspace_bytes)) return false;
 
     check_status(graph.build_operation_graph(handle), tag + " build_operation_graph");
+
+    if (allow_autotune && sdpa_autotune_enabled())
+    {
+        check_status(graph.create_execution_plans({HeurMode_t::A, HeurMode_t::B, HeurMode_t::FALLBACK}),
+                     tag + " create_execution_plans");
+        if (build_top_candidates(graph, autotune_candidate_limit()))
+        {
+            workspace_bytes = autotune_workspace_bytes(graph);
+            return true;
+        }
+    }
+
     check_status(graph.create_execution_plans({HeurMode_t::A}), tag + " create_execution_plans");
     check_status(graph.build_plans(handle, BuildPlanPolicy_t::HEURISTICS_CHOICE), tag + " build_plans");
     check_status(graph.get_workspace_size(workspace_bytes), tag + " workspace");
 
     store_cached_plan(graph);
+    return false;
 }
 
 inline shared_ptr<graph::Tensor_attributes>
@@ -527,20 +568,6 @@ inline void report_autotune_skipped(const char* tag, const char* reason)
 // leaves the barred plans as nullptr — that is the crash that used to force
 // autotune to run unbounded. The per-index query goes through
 // is_plan_index_executable() first, so it is safe under a cap.
-inline int64_t autotune_workspace_bytes(const graph::Graph& graph)
-{
-    int64_t maximum = 0;
-    const int64_t count = graph.get_execution_plan_count();
-
-    for (int64_t index = 0; index < count; ++index)
-    {
-        int64_t bytes = 0;
-        if (graph.get_workspace_size_plan_at_index(index, bytes).is_good())
-            maximum = max(maximum, bytes);
-    }
-
-    return maximum;
-}
 
 template<typename TensorMap>
 inline void autotune_now(bool& pending, graph::Graph& graph,

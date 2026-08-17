@@ -46,6 +46,10 @@ python make_synthetic_corpus.py corpus.txt 256 256 1024 1234
 python pytorch_transformer_train.py corpus.txt 256 8 1024 2 16 20
 python tensorflow_transformer_train.py corpus.txt 256 8 1024 2 16 20
 #   OPENNN_LR overrides the LR; OPENNN_BF16=1 / PT_BF16=1 / TF_BF16=1 -> bf16
+#   PT_COMPILE_MODE=reduce-overhead PT_FUSED_ADAM=1 -> PyTorch's best config
+#   (torch.compile + CUDA graphs + fused Adam); the peak-batch runner uses it
+#   by default (PYTORCH_PLAIN=1 reverts to eager). OpenNN prints cuda_graph=
+#   captured|failed|off: a "failed" run trains eagerly and is not the number.
 
 # Or run the full 3-way training comparison harness:
 python run_transformer_train.py --runs 5 --precision both

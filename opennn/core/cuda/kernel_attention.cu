@@ -291,6 +291,35 @@ void attention_sequence_lengths_cuda(const int batch_size,
             source_lengths));
 }
 
+// The two length tensors the SDPA graph masks with, from the record an
+// Embedding exported. Only the key side carries padding: the query side stays
+// at the full sequence because the unfused path also computes every query row.
+// cuDNN reads a key length of zero as "skip this batch entry", which leaves
+// that sample's output unwritten, so the length is floored at one -- the same
+// floor the activation scan applies.
+__global__ void attention_sdpa_lengths_kernel(const int batch_size, const int query_sequence_length,
+                                              const int source_sequence_length,
+                                              const int* __restrict__ record,
+                                              int32_t* __restrict__ query_lengths,
+                                              int32_t* __restrict__ source_lengths)
+{
+    const int batch = blockIdx.x * blockDim.x + threadIdx.x;
+    if (batch >= batch_size) return;
+
+    query_lengths[batch] = query_sequence_length;
+    source_lengths[batch] = max(1, min(record[batch], source_sequence_length));
+}
+
+void attention_sdpa_lengths_cuda(const int batch_size, const int query_sequence_length,
+                                 const int source_sequence_length, const int* record,
+                                 int32_t* query_lengths, int32_t* source_lengths)
+{
+    if (batch_size <= 0) return;
+    OPENNN_CUDA_LAUNCH(attention_sdpa_lengths_kernel<<<(batch_size + block_size - 1) / block_size, block_size, 0,
+                                                       opennn::device::get_compute_stream()>>>(
+        batch_size, query_sequence_length, source_sequence_length, record, query_lengths, source_lengths));
+}
+
 template<typename T, int SIGN>
 __global__ void rope_apply_kernel(const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* __restrict__ in, T* __restrict__ out, const float* __restrict__ cos, const float* __restrict__ sin)
 {

@@ -101,6 +101,10 @@ class Family:
             ) -> tuple[list[str], dict[str, str]]:
         raise NotImplementedError
 
+    def engine_paths(self) -> dict[str, str]:
+        return {"opennn": "CUDA graphs, GPU-resident data",
+                "pytorch": "eager", "tensorflow": "tf.function(jit_compile=True)"}
+
 class HiggsFamily(Family):
     def __init__(self) -> None:
         super().__init__("higgs", start_batch=7000, max_batch=10_500_000, epochs=3)
@@ -159,14 +163,36 @@ class ResnetFamily(Family):
         return ([PY, str(self.drivers / script), str(epochs), str(batch),
                  str(self.data_dir)], env)
 
+    def engine_paths(self):
+        return {
+            "opennn": "CUDA graphs, cuDNN autotune, GPU-resident data",
+            "pytorch": ("channels_last + torch.compile default + foreach Adam (PYTORCH_PLAIN)"
+                        if os.environ.get("PYTORCH_PLAIN") else
+                        "channels_last + torch.compile(mode=reduce-overhead) + Adam(fused=True)"),
+            "tensorflow": "NHWC + tf.function(jit_compile=True) over the whole step",
+        }
+
 class TransformerFamily(Family):
     def __init__(self) -> None:
         drivers = BENCH_ROOT / "throughput" / "attention-speed"
         super().__init__("transformer", start_batch=32, max_batch=4096, epochs=5,
                          cwd=drivers)
         self.drivers = drivers
-        self.corpus = "synthetic_corpus.txt"
+        # TRANSFORMER_CORPUS points every engine at one corpus file (absolute
+        # path); by default the one next to the drivers. On WSL keep it on the
+        # Linux disk: OpenNN reads its token cache per batch, and a corpus under
+        # /mnt/c turns that into 9p round trips (measured 20-30 ms per batch).
+        self.corpus = os.environ.get("TRANSFORMER_CORPUS", "synthetic_corpus.txt")
         self.shape = ("256", "8", "1024", "2")
+
+    def engine_paths(self):
+        return {
+            "opennn": "CUDA graphs, fused (cuDNN) attention in both precisions, GPU-resident data",
+            "pytorch": ("autocast + eager + foreach Adam (PYTORCH_PLAIN)"
+                        if os.environ.get("PYTORCH_PLAIN") else
+                        "autocast + torch.compile(mode=reduce-overhead) + Adam(fused=True)"),
+            "tensorflow": "mixed_bfloat16 + tf.function(jit_compile=True) over the whole step",
+        }
 
     def cmd(self, engine, precision, batch, epochs):
         args = [self.corpus, *self.shape, str(batch), str(epochs)]
@@ -179,8 +205,14 @@ class TransformerFamily(Family):
         script = ("pytorch_transformer_train.py" if engine == "pytorch"
                   else "tensorflow_transformer_train.py")
         env = {}
-        if engine == "pytorch" and precision == "bf16":
-            env["PT_BF16"] = "1"
+        if engine == "pytorch":
+            if precision == "bf16":
+                env["PT_BF16"] = "1"
+            # Same protocol as the ResNet family: torch.compile(reduce-overhead)
+            # + Adam(fused=True) unless PYTORCH_PLAIN=1.
+            if not os.environ.get("PYTORCH_PLAIN"):
+                env["PT_COMPILE_MODE"] = "reduce-overhead"
+                env["PT_FUSED_ADAM"] = "1"
         if engine == "tensorflow":
             env["LD_LIBRARY_PATH"] = os.pathsep.join(tensorflow_library_dirs(PY))
             if precision == "bf16":
@@ -310,13 +342,7 @@ def main() -> None:
                 "stop_rule": "first oom/error/timeout ends that engine's ascent",
                 "quality_rule": "not gated (saturation benchmark; see quality/convergence)",
             },
-            "engine_paths": {
-                "opennn": "CUDA graphs, cuDNN autotune, GPU-resident data",
-                "pytorch": ("channels_last + torch.compile default + foreach Adam (PYTORCH_PLAIN)"
-                            if os.environ.get("PYTORCH_PLAIN") else
-                            "channels_last + torch.compile(mode=reduce-overhead) + Adam(fused=True)"),
-                "tensorflow": "NHWC + tf.function(jit_compile=True) over the whole step",
-            },
+            "engine_paths": family.engine_paths(),
         },
         "configuration": {
             "family": args.family,

@@ -9,6 +9,7 @@
 // layer, RMS and batch normalization
 
 #include "opennn/core/cuda/kernel_common.cuh"
+#include "opennn/core/device_backend.h"
 #include "opennn/core/cuda/kernel_normalization.cuh"
 
 template<typename T, bool FuseResidual, bool HasMean>
@@ -659,11 +660,275 @@ void add_relu_cuda(const Index total, const float* a, const float* b,
     launch_elementwise_strided(total, add_relu_kernel, a, b, apply_relu ? 1 : 0, y);
 }
 
+
+// ---- warp-per-row layer norm --------------------------------------------------
+//
+// One warp per row when D is a small multiple of one 16-byte vector per lane
+// (D = 32 * VEC * ITER, ITER <= 4: 256..1024 for BF16, 128..512 for FP32) and
+// every row-shaped operand is 16-byte aligned. Each lane keeps its ITER * VEC
+// values in registers, so a row is read once, the statistics cost a couple of
+// warp shuffles instead of a block reduction, and the loads and stores are
+// full 128-bit transactions. Anything else takes the block-per-row kernels.
+
+static constexpr int norm_warp_rows_per_block = 8;   // 256 threads
+
+template<typename T, int ITER>
+__device__ __forceinline__ bool norm_warp_shape(const int D)
+{
+    return D == 32 * vec16<T> * ITER;
+}
+
+template<typename T, bool FuseResidual, bool HasMean, int ITER>
+__global__ void __launch_bounds__(256)
+norm_forward_warp_kernel(const int N, const int D, const T* __restrict__ X, const T* __restrict__ R,
+                         T* __restrict__ sum, T* __restrict__ Y, float* __restrict__ means,
+                         float* __restrict__ inv_vars, const float* __restrict__ gamma,
+                         const float* __restrict__ beta, const float eps)
+{
+    constexpr int VEC = vec16<T>;
+    const int lane = threadIdx.x & 31;
+    const int warps = gridDim.x * norm_warp_rows_per_block;
+    const float inv_D = 1.0f / static_cast<float>(D);
+
+    for (int row = blockIdx.x * norm_warp_rows_per_block + (threadIdx.x >> 5); row < N; row += warps)
+    {
+        const Index base = Index(row) * D;
+        float x[ITER][VEC];
+        float local_sum = 0.0f, local_sum_sq = 0.0f;
+
+        #pragma unroll
+        for (int it = 0; it < ITER; ++it)
+        {
+            const int col = (it * 32 + lane) * VEC;
+            VecIO<T, VEC>::load_float(X + base + col, x[it]);
+            if constexpr (FuseResidual)
+            {
+                float r[VEC];
+                VecIO<T, VEC>::load_float(R + base + col, r);
+                #pragma unroll
+                for (int k = 0; k < VEC; ++k) x[it][k] += r[k];
+                VecIO<T, VEC>::store_float(sum + base + col, x[it]);
+            }
+            #pragma unroll
+            for (int k = 0; k < VEC; ++k)
+            {
+                if constexpr (HasMean) local_sum += x[it][k];
+                local_sum_sq += x[it][k] * x[it][k];
+            }
+        }
+
+        if constexpr (HasMean) warp_reduce_sum2(local_sum, local_sum_sq);
+        else                   local_sum_sq = warp_reduce_sum(local_sum_sq);
+
+        float mean = 0.0f, inv_var;
+        if constexpr (HasMean)
+        {
+            mean = local_sum * inv_D;
+            inv_var = rsqrtf(fmaxf(local_sum_sq * inv_D - mean * mean, 0.0f) + eps);
+            if (lane == 0) { means[row] = mean; inv_vars[row] = inv_var; }
+        }
+        else
+        {
+            inv_var = rsqrtf(local_sum_sq * inv_D + eps);
+            if (lane == 0 && inv_vars) inv_vars[row] = inv_var;
+        }
+
+        #pragma unroll
+        for (int it = 0; it < ITER; ++it)
+        {
+            const int col = (it * 32 + lane) * VEC;
+            float g[VEC], b[VEC], y[VEC];
+            VecIO<float, 4>::load(gamma + col, g);
+            if constexpr (VEC == 8) VecIO<float, 4>::load(gamma + col + 4, g + 4);
+            if constexpr (HasMean)
+            {
+                VecIO<float, 4>::load(beta + col, b);
+                if constexpr (VEC == 8) VecIO<float, 4>::load(beta + col + 4, b + 4);
+            }
+            #pragma unroll
+            for (int k = 0; k < VEC; ++k)
+            {
+                if constexpr (HasMean) y[k] = fmaf(g[k], (x[it][k] - mean) * inv_var, b[k]);
+                else                   y[k] = g[k] * x[it][k] * inv_var;
+            }
+            VecIO<T, VEC>::store_float(Y + base + col, y);
+        }
+    }
+}
+
+// dX for its rows and, in the same pass, this warp's share of dgamma / dbeta:
+// each lane owns the columns it loads, accumulates over the warp's rows in
+// registers, and the block folds its warps into one row of `partials`
+// ([gridDim.x][2][D]: gamma then beta) that norm_weight_gradient_finalize_kernel
+// sums. Deterministic, and dY / X are read once instead of twice.
+template<typename T, bool HasMean, int ITER>
+__global__ void __launch_bounds__(256)
+norm_backward_warp_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X,
+                          const float* __restrict__ means, const float* __restrict__ inv_vars,
+                          const float* __restrict__ gamma, T* __restrict__ dX,
+                          T* __restrict__ dX2, float* __restrict__ partials)
+{
+    constexpr int VEC = vec16<T>;
+    const int lane = threadIdx.x & 31;
+    const int warp = threadIdx.x >> 5;
+    const int warps = gridDim.x * norm_warp_rows_per_block;
+    const float inv_D = 1.0f / static_cast<float>(D);
+
+    float g[ITER][VEC];
+    float pg[ITER][VEC], pb[ITER][VEC];
+    #pragma unroll
+    for (int it = 0; it < ITER; ++it)
+    {
+        const int col = (it * 32 + lane) * VEC;
+        VecIO<float, 4>::load(gamma + col, g[it]);
+        if constexpr (VEC == 8) VecIO<float, 4>::load(gamma + col + 4, g[it] + 4);
+        #pragma unroll
+        for (int k = 0; k < VEC; ++k) { pg[it][k] = 0.0f; pb[it][k] = 0.0f; }
+    }
+
+    for (int row = blockIdx.x * norm_warp_rows_per_block + warp; row < N; row += warps)
+    {
+        const Index base = Index(row) * D;
+        const float mean = HasMean ? means[row] : 0.0f;
+        const float inv_var = inv_vars[row];
+
+        float dy[ITER][VEC], xhat[ITER][VEC];
+        float local_sum_d = 0.0f, local_sum_dx = 0.0f;
+        #pragma unroll
+        for (int it = 0; it < ITER; ++it)
+        {
+            const int col = (it * 32 + lane) * VEC;
+            VecIO<T, VEC>::load_float(dY + base + col, dy[it]);
+            VecIO<T, VEC>::load_float(X + base + col, xhat[it]);
+            #pragma unroll
+            for (int k = 0; k < VEC; ++k)
+            {
+                xhat[it][k] = (xhat[it][k] - mean) * inv_var;
+                const float d = dy[it][k] * g[it][k];
+                if constexpr (HasMean) { local_sum_d += d; pb[it][k] += dy[it][k]; }
+                local_sum_dx += d * xhat[it][k];
+                pg[it][k] += dy[it][k] * xhat[it][k];
+            }
+        }
+
+        if constexpr (HasMean) warp_reduce_sum2(local_sum_d, local_sum_dx);
+        else                   local_sum_dx = warp_reduce_sum(local_sum_dx);
+        const float mean_d = local_sum_d * inv_D;
+        const float mean_dx = local_sum_dx * inv_D;
+
+        if (dX)
+        {
+            #pragma unroll
+            for (int it = 0; it < ITER; ++it)
+            {
+                const int col = (it * 32 + lane) * VEC;
+                float dx[VEC];
+                #pragma unroll
+                for (int k = 0; k < VEC; ++k)
+                    dx[k] = (dy[it][k] * g[it][k] - mean_d - xhat[it][k] * mean_dx) * inv_var;
+                VecIO<T, VEC>::store_float(dX + base + col, dx);
+                if (dX2) VecIO<T, VEC>::store_float(dX2 + base + col, dx);
+            }
+        }
+    }
+
+    // Fold the block's warps: warp w adds its columns into shared, in turn.
+    __shared__ float block_gamma[32 * 8 * 4];   // D <= 1024
+    __shared__ float block_beta [32 * 8 * 4];
+    for (int i = threadIdx.x; i < D; i += blockDim.x) { block_gamma[i] = 0.0f; block_beta[i] = 0.0f; }
+    __syncthreads();
+    for (int w = 0; w < norm_warp_rows_per_block; ++w)
+    {
+        if (w == warp)
+        {
+            #pragma unroll
+            for (int it = 0; it < ITER; ++it)
+            {
+                const int col = (it * 32 + lane) * VEC;
+                #pragma unroll
+                for (int k = 0; k < VEC; ++k)
+                {
+                    block_gamma[col + k] += pg[it][k];
+                    if constexpr (HasMean) block_beta[col + k] += pb[it][k];
+                }
+            }
+        }
+        __syncthreads();
+    }
+    float* out = partials + Index(blockIdx.x) * 2 * D;
+    for (int i = threadIdx.x; i < D; i += blockDim.x)
+    {
+        out[i] = block_gamma[i];
+        if constexpr (HasMean) out[D + i] = block_beta[i];
+    }
+}
+
+template<bool HasMean>
+__global__ void norm_weight_gradient_finalize_kernel(const int blocks, const int D,
+                                                     const float* __restrict__ partials,
+                                                     float* __restrict__ dGamma, float* __restrict__ dBeta)
+{
+    const int d = blockIdx.x * blockDim.x + threadIdx.x;
+    if (d >= D) return;
+    float g = 0.0f, b = 0.0f;
+    for (int i = 0; i < blocks; ++i)
+    {
+        g += partials[Index(i) * 2 * D + d];
+        if constexpr (HasMean) b += partials[Index(i) * 2 * D + D + d];
+    }
+    dGamma[d] = g;
+    if constexpr (HasMean) dBeta[d] = b;
+}
+
+// The block count for the warp-per-row backward: enough warps to fill the
+// device several times over, few enough that the finalize sum stays short.
+static inline int norm_warp_blocks(const int N)
+{
+    const int needed = ceil_div(N, norm_warp_rows_per_block);
+    return needed < 240 ? needed : 240;
+}
+
+template<typename T, bool FuseResidual, bool HasMean, int ITER>
+static bool norm_forward_warp_try(const int N, const int D, const T* X, const T* R, T* sum, T* Y,
+                                  float* means, float* inv_vars, const float* gamma, const float* beta,
+                                  const float eps)
+{
+    if (D != 32 * vec16<T> * ITER) return false;
+    OPENNN_CUDA_LAUNCH((norm_forward_warp_kernel<T, FuseResidual, HasMean, ITER>
+        <<<ceil_div(N, norm_warp_rows_per_block), 256, 0, opennn::device::get_compute_stream()>>>(
+            N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)));
+    return true;
+}
+
+template<typename T, bool HasMean, int ITER>
+static bool norm_backward_warp_try(const int N, const int D, const T* dY, const T* X, const float* means,
+                                   const float* inv_vars, const float* gamma, T* dX, T* dX2, float* dGamma, float* dBeta)
+{
+    if (D != 32 * vec16<T> * ITER) return false;
+    const int blocks = norm_warp_blocks(N);
+    float* partials = opennn::ensure_workspace<float>(opennn::device::GraphWorkspaceKind::NormPartials,
+                                                      Index(blocks) * 2 * D);
+    const cudaStream_t stream = opennn::device::get_compute_stream();
+    OPENNN_CUDA_LAUNCH((norm_backward_warp_kernel<T, HasMean, ITER><<<blocks, 256, 0, stream>>>(
+        N, D, dY, X, means, inv_vars, gamma, dX, dX2, partials)));
+    OPENNN_CUDA_LAUNCH((norm_weight_gradient_finalize_kernel<HasMean><<<ceil_div(D, 256), 256, 0, stream>>>(
+        blocks, D, partials, dGamma, dBeta)));
+    return true;
+}
+
 template<typename T, bool FuseResidual, bool HasMean>
 static void norm_forward_launch(const int N, const int D, const T* X, const T* R, T* sum, T* Y,
                                 float* means, float* inv_vars, const float* gamma, const float* beta, const float eps)
 {
     if (N == 0 || D == 0) return;
+
+    if (are_aligned<16>(X, R, sum, Y, gamma, beta)
+        && (norm_forward_warp_try<T, FuseResidual, HasMean, 1>(N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)
+         || norm_forward_warp_try<T, FuseResidual, HasMean, 2>(N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)
+         || norm_forward_warp_try<T, FuseResidual, HasMean, 3>(N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)
+         || norm_forward_warp_try<T, FuseResidual, HasMean, 4>(N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)))
+        return;
+
     OPENNN_CUDA_LAUNCH((norm_forward_kernel<T, FuseResidual, HasMean><<<N, layernorm_threads(D), 0, opennn::device::get_compute_stream()>>>(
         N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)));
 }
@@ -681,13 +946,14 @@ void layernorm_add_forward_cuda(const int N, const int D, const T* X, const T* R
 }
 
 template<typename T, bool HasMean>
-__global__ void norm_backward_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, const float* __restrict__ gamma, T* __restrict__ dX)
+__global__ void norm_backward_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, const float* __restrict__ gamma, T* __restrict__ dX, T* __restrict__ dX2)
 {
     const int idx = blockIdx.x;
 
     const T* dy_row = dY + idx * D;
     const T* x_row = X + idx * D;
     T* dx_row = dX + idx * D;
+    T* dx2_row = dX2 ? dX2 + idx * D : nullptr;
 
     float mean = 0.0f;
     if constexpr (HasMean) mean = means[idx];
@@ -727,10 +993,13 @@ __global__ void norm_backward_kernel(const int N, const int D, const T* __restri
         float x_hat;
         if constexpr (HasMean) x_hat = (static_cast<float>(x_row[i]) - mean) * inv_var;
         else                   x_hat = static_cast<float>(x_row[i]) * inv_var;
+        T dx;
         if constexpr (HasMean)
-            dx_row[i] = static_cast<T>((d - mean_D - x_hat * mean_D_xhat) * inv_var);
+            dx = static_cast<T>((d - mean_D - x_hat * mean_D_xhat) * inv_var);
         else
-            dx_row[i] = static_cast<T>((d - x_hat * mean_D_xhat) * inv_var);
+            dx = static_cast<T>((d - x_hat * mean_D_xhat) * inv_var);
+        dx_row[i] = dx;
+        if (dx2_row) dx2_row[i] = dx;
     }
 }
 
@@ -798,10 +1067,17 @@ __global__ void norm_weight_gradient_coalesced_kernel(const int N, const int D,
 }
 
 template<typename T, bool HasMean>
-static void norm_backward_launch(const int N, const int D, const T* dY, const T* X, const float* means, const float* inv_vars, const float* gamma, T* dX, float* dGamma, float* dBeta)
+static void norm_backward_launch(const int N, const int D, const T* dY, const T* X, const float* means, const float* inv_vars, const float* gamma, T* dX, T* dX2, float* dGamma, float* dBeta)
 {
+    if (are_aligned<16>(dY, X, dX, dX2, gamma)
+        && (norm_backward_warp_try<T, HasMean, 1>(N, D, dY, X, means, inv_vars, gamma, dX, dX2, dGamma, dBeta)
+         || norm_backward_warp_try<T, HasMean, 2>(N, D, dY, X, means, inv_vars, gamma, dX, dX2, dGamma, dBeta)
+         || norm_backward_warp_try<T, HasMean, 3>(N, D, dY, X, means, inv_vars, gamma, dX, dX2, dGamma, dBeta)
+         || norm_backward_warp_try<T, HasMean, 4>(N, D, dY, X, means, inv_vars, gamma, dX, dX2, dGamma, dBeta)))
+        return;
+
     if (dX)
-        OPENNN_CUDA_LAUNCH((norm_backward_kernel<T, HasMean><<<N, layernorm_threads(D), 0, opennn::device::get_compute_stream()>>>(N, D, dY, X, means, inv_vars, gamma, dX)));
+        OPENNN_CUDA_LAUNCH((norm_backward_kernel<T, HasMean><<<N, layernorm_threads(D), 0, opennn::device::get_compute_stream()>>>(N, D, dY, X, means, inv_vars, gamma, dX, dX2)));
 
     constexpr int NUM_WARPS = 8;
     const dim3 block(32, NUM_WARPS);
@@ -822,11 +1098,11 @@ static void norm_backward_launch(const int N, const int D, const T* dY, const T*
 }
 
 template<typename T>
-void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, const float* means, const float* inv_vars, const float* gamma, T* dX, float* dGamma, float* dBeta)
+void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, const float* means, const float* inv_vars, const float* gamma, T* dX, T* dX2, float* dGamma, float* dBeta)
 {
     if (N == 0 || D == 0) return;
 
-    norm_backward_launch<T, true>(N, D, dY, X, means, inv_vars, gamma, dX, dGamma, dBeta);
+    norm_backward_launch<T, true>(N, D, dY, X, means, inv_vars, gamma, dX, dX2, dGamma, dBeta);
 }
 
 template<typename T>
@@ -840,7 +1116,7 @@ void rmsnorm_backward_cuda(const int N, const int D, const T* dY, const T* X, co
 {
     if (N == 0 || D == 0) return;
 
-    norm_backward_launch<T, false>(N, D, dY, X, nullptr, inv_rms, weight, dX, dWeight, nullptr);
+    norm_backward_launch<T, false>(N, D, dY, X, nullptr, inv_rms, weight, dX, nullptr, dWeight, nullptr);
 }
 
 #define INSTANTIATE(T) \
@@ -849,7 +1125,7 @@ void rmsnorm_backward_cuda(const int N, const int D, const T* dY, const T* X, co
     template void batchnorm_backward_fused_cuda<T>(const Index, const Index, const T*, T*, const T*, const uint8_t*, const float*, const float*, const float*, const float*, const bool, T*, float*, float*, float*); \
     template void layernorm_forward_cuda<T>(const int, const int, const T*, T*, float*, float*, const float*, const float*, const float); \
     template void layernorm_add_forward_cuda<T>(const int, const int, const T*, const T*, T*, T*, float*, float*, const float*, const float*, const float); \
-    template void layernorm_backward_cuda<T>(const int, const int, const T*, const T*, const float*, const float*, const float*, T*, float*, float*); \
+    template void layernorm_backward_cuda<T>(const int, const int, const T*, const T*, const float*, const float*, const float*, T*, T*, float*, float*); \
     template void rmsnorm_forward_cuda<T>(const int, const int, const T*, T*, float*, const float*, const float); \
     template void rmsnorm_backward_cuda<T>(const int, const int, const T*, const T*, const float*, const float*, T*, float*);
 

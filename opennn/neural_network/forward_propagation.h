@@ -17,6 +17,16 @@
 namespace opennn
 {
 
+// One length per sample of a batch, as an Embedding exports it: on the host for
+// CPU runs, as int32 on the device for CUDA runs. Either side may be absent.
+struct SequenceLengths
+{
+    const vector<Index>* host = nullptr;
+    const int* device = nullptr;
+
+    explicit operator bool() const noexcept { return host || device; }
+};
+
 class NeuralNetwork;
 
 enum class ForwardPropagationMode
@@ -110,15 +120,30 @@ struct ForwardPropagation
     // different lengths and padded differently, and cross-attention reads the
     // encoder's while decoder self-attention reads the decoder's. A single
     // record cannot say which is which, and the two would overwrite each other.
+    //
+    // A CPU run keeps the record on the host; a CUDA run keeps it on the device
+    // (one int32 per sample) so the masks that read it never wait on a host
+    // round trip and the step can be captured into a CUDA graph.
     vector<vector<Index>> valid_lengths;
+    vector<const int*> device_valid_lengths;
+    vector<Buffer> device_valid_length_storage;
 
     // The record for whatever feeds one of a layer's inputs. Null when that
     // input carries no record.
     const vector<Index>* input_valid_lengths(size_t layer, size_t input_ordinal) const;
+    const int* input_device_valid_lengths(size_t layer, size_t input_ordinal) const;
+    SequenceLengths input_sequence_lengths(size_t layer, size_t input_ordinal) const;
+
+    // The device record a layer is about to write for the sequence it outputs
+    // (`batch_size` int32 values), owned here so a graph replay reads the same
+    // addresses.
+    int* device_valid_lengths_slot(size_t layer, Index batch_size);
 
     // Carries a record forward: a layer that keeps the sequence dimension keeps
     // its first input's record. Called once per layer, after it has run.
     void inherit_valid_lengths(size_t layer);
+
+    Index valid_lengths_source(size_t layer, size_t input_ordinal) const;
 
     bool use_cuda_graph = false;
     bool cuda_graph_failed = false;

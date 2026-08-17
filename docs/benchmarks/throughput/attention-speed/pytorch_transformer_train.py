@@ -10,6 +10,11 @@
 #
 #   usage: python pytorch_transformer_train.py CORPUS.txt [d_model] [heads] [ff] [layers] [batch] [epochs]
 #   env:   PT_BF16=1 -> train under autocast(bf16) (matches OpenNN OPENNN_BF16)
+#          PT_COMPILE_MODE=default|reduce-overhead|max-autotune -> torch.compile the
+#                      model (reduce-overhead adds CUDA graphs, PyTorch's answer to
+#                      OpenNN's graphed step); unset -> eager
+#          PT_FUSED_ADAM=1 -> torch.optim.Adam(fused=True), one kernel per step
+#                      instead of the foreach implementation
 
 import sys
 import os
@@ -31,6 +36,8 @@ assert torch.cuda.is_available(), "CUDA GPU required"
 dev = torch.device("cuda")
 torch.manual_seed(0)
 torch.backends.cuda.matmul.allow_tf32 = True
+compile_mode = os.environ.get("PT_COMPILE_MODE")   # None -> eager
+fused_adam = os.environ.get("PT_FUSED_ADAM") is not None
 
 def read_corpus(path):
     in_lens, tgt_lens, vocab = [], [], set()
@@ -52,6 +59,8 @@ samples, input_seq, decoder_seq, vocab = read_corpus(corpus)
 print(f"precision={'bf16' if os.environ.get('PT_BF16') else 'fp32'} samples={samples} "
       f"input_seq={input_seq} decoder_seq={decoder_seq} input_vocab={vocab} output_vocab={vocab} "
       f"d_model={d_model} heads={heads} ff={ff} layers={layers} batch={batch} epochs={epochs}")
+print(f"mode={'compile:' + compile_mode if compile_mode else 'eager'}"
+      f"{' +fused_adam' if fused_adam else ''}")
 
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_len):
@@ -87,6 +96,8 @@ class Seq2SeqTransformer(nn.Module):
 model = Seq2SeqTransformer().to(dev).train()
 params = sum(p.numel() for p in model.parameters())
 print(f"parameters={params}")
+if compile_mode:
+    model = torch.compile(model, mode=None if compile_mode == "default" else compile_mode)
 
 src = torch.randint(0, vocab, (samples, input_seq), device=dev)
 dec = torch.randint(0, vocab, (samples, decoder_seq), device=dev)
@@ -94,7 +105,7 @@ tgt = torch.randint(0, vocab, (samples, decoder_seq), device=dev)
 
 lr = float(os.environ.get("OPENNN_LR", "0.0001"))
 print(f"learning_rate={lr}")
-opt = torch.optim.Adam(model.parameters(), lr=lr)
+opt = torch.optim.Adam(model.parameters(), lr=lr, fused=fused_adam)
 loss_fn = nn.CrossEntropyLoss()
 
 use_bf16 = os.environ.get("PT_BF16") is not None

@@ -19,7 +19,7 @@ namespace opennn
 
 // Defined below: against the CUDA kernels, or as throwing stubs.
 static void layer_normalization_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&, float);
-static void layer_normalization_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&);
+static void layer_normalization_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView*);
 static void rms_normalization_forward_gpu(const TensorView&, const TensorView&, TensorView&, TensorView&, float);
 static void rms_normalization_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&);
 
@@ -154,16 +154,17 @@ void layer_normalization_backward(const TensorView& input, const TensorView& out
                          const TensorView& means, const TensorView& standard_deviations,
                          const TensorView& normalized, const TensorView& gamma,
                          const TensorView& gamma_gradient, const TensorView& beta_gradient,
-                         TensorView& input_delta)
+                         TensorView& input_delta, TensorView* residual_delta)
 {
     if (input.is_cuda())
     {
         layer_normalization_backward_gpu(input, output_delta, means, standard_deviations, gamma,
-                                gamma_gradient, beta_gradient, input_delta);
+                                gamma_gradient, beta_gradient, input_delta, residual_delta);
         return;
     }
     layer_normalization_backward_cpu(output_delta, standard_deviations, normalized, gamma,
                             gamma_gradient, beta_gradient, input_delta);
+    if (residual_delta) copy(input_delta, *residual_delta);
 }
 
 static void rms_normalization_forward_cpu(const TensorView& input, const TensorView& weight,
@@ -290,19 +291,20 @@ static void layer_normalization_backward_gpu(const TensorView& input, const Tens
                              const TensorView& means, const TensorView& standard_deviations,
                              const TensorView& gamma,
                              const TensorView& gamma_gradient, const TensorView& beta_gradient,
-                             TensorView& input_delta)
+                             TensorView& input_delta, TensorView* residual_delta)
 {
     const int rows = to_int(input.size() / input.get_shape().back());
     const int cols = to_int(input.get_shape().back());
 
     input.dispatch([&]<typename T>() {
         T* input_delta_data = input_delta.empty() ? nullptr : input_delta.as<T>();
+        T* residual_delta_data = residual_delta && input_delta_data ? residual_delta->as<T>() : nullptr;
 
         layernorm_backward_cuda<T>(rows, cols,
                                    output_delta.as<T>(), input.as<T>(),
                                    means.as<float>(), standard_deviations.as<float>(),
                                    gamma.as<float>(),
-                                   input_delta_data,
+                                   input_delta_data, residual_delta_data,
                                    gamma_gradient.as<float>(), beta_gradient.as<float>());
     });
 }
@@ -341,7 +343,7 @@ static void rms_normalization_backward_gpu(const TensorView& input, const Tensor
 #else
 
 static void layer_normalization_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&, float) { throw runtime_error("layer_normalization_forward_gpu: CUDA support not compiled in."); }
-static void layer_normalization_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&) { throw runtime_error("layer_normalization_backward_gpu: CUDA support not compiled in."); }
+static void layer_normalization_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView*) { throw runtime_error("layer_normalization_backward_gpu: CUDA support not compiled in."); }
 static void rms_normalization_forward_gpu(const TensorView&, const TensorView&, TensorView&, TensorView&, float) { throw runtime_error("rms_normalization_forward_gpu: CUDA support not compiled in."); }
 static void rms_normalization_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&) { throw runtime_error("rms_normalization_backward_gpu: CUDA support not compiled in."); }
 
@@ -440,16 +442,19 @@ void LayerNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
 
     const TensorView& norm_input = fuse_add ? normalized : get_input(forward_propagation, layer);
 
-    layer_normalization_backward(norm_input, output_delta, get_output(forward_propagation, layer),
-                        stds, normalized, gamma, gamma_gradient, beta_gradient,
-                        input_delta);
-
+    // With a fused add both inputs get the same delta: the kernel stores it
+    // twice rather than a copy pass reading it back.
+    TensorView* residual_delta = nullptr;
     if (fuse_add)
     {
-        TensorView& residual_delta = back_propagation.slots[layer][2];
-        if (residual_delta.get_data() && residual_delta.get_data() != input_delta.get_data())
-            copy(input_delta, residual_delta);
+        TensorView& residual = back_propagation.slots[layer][2];
+        if (residual.get_data() && residual.get_data() != input_delta.get_data())
+            residual_delta = &residual;
     }
+
+    layer_normalization_backward(norm_input, output_delta, get_output(forward_propagation, layer),
+                        stds, normalized, gamma, gamma_gradient, beta_gradient,
+                        input_delta, residual_delta);
 }
 
 }

@@ -124,6 +124,9 @@ int main(int argc, char* argv[])
         const double samples_per_s = double(samples) / median_epoch_s;
         const double tokens_per_s  = samples_per_s * double(input_seq + decoder_seq);
 
+        const bool graph_requested = getenv("OPENNN_TRANSFORMER_TRAIN_NO_GRAPH") == nullptr;
+        cout << "cuda_graph=" << (!graph_requested ? "off"
+                                  : adam->get_cuda_graph_capture_failed() ? "failed" : "captured") << "\n";
         cout << "final_loss=" << result.loss << "\n";
         cout << "wall_s=" << wall_s << "\n";
         cout << "samples_per_sec=" << samples_per_s << "\n";

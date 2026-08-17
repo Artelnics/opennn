@@ -344,6 +344,64 @@ TEST_F(AdaptiveMomentEstimationTest, CudaGraphGroupedHostStagingReplay)
     EXPECT_TRUE(isfinite(adam.train().get_training_error()));
 }
 
+// The encoder-decoder Transformer's training step must capture into a CUDA
+// graph: an exported valid-length record that took a host round trip
+// (compute_token_valid_lengths D2H + stream sync) once broke every capture
+// and left the whole run eager. Both attention paths are covered, fused
+// (SDPA) and unfused, in the precision the benchmarks train in.
+static void expect_transformer_step_captures(Type dtype, Index sdpa_min_sequence_length)
+{
+    Configuration::instance().set(Device::CUDA, dtype);
+
+    string content;
+    for (Index sample = 0; sample < 16; ++sample)
+    {
+        for (Index token = 0; token < 14; ++token)
+            content += "w" + to_string((sample * 7 + token * 3) % 23) + (token + 1 < 14 ? " " : "");
+        content += "\t";
+        for (Index token = 0; token < 15; ++token)
+            content += "t" + to_string((sample * 5 + token * 2) % 19) + (token + 1 < 15 ? " " : "");
+        content += "\n";
+    }
+    const string file_path = (filesystem::temp_directory_path()
+                              / ("opennn_adam_transformer_graph_" + to_string(int(dtype)) + ".txt")).string();
+    { ofstream out(file_path); out << content; }
+
+    set_seed(3);
+    LanguageDataset dataset(file_path);
+    dataset.set_display(false);
+    dataset.split_samples(1.0f, 0.0f, 0.0f);
+
+    Transformer transformer(dataset.get_shape("Input")[0], dataset.get_shape("Decoder")[0],
+                            dataset.get_input_vocabulary_size(), dataset.get_target_vocabulary_size(),
+                            32, 4, 64, 1);
+    transformer.set_attention_sdpa_min_sequence_length(sdpa_min_sequence_length);
+
+    Loss loss(&transformer, &dataset);
+    loss.set_error(Loss::Error::CrossEntropy3d);
+
+    AdaptiveMomentEstimation adam(&loss);
+    adam.set_batch_size(2);           // 8 whole batches: one grouped graph
+    adam.set_cuda_graph(true);
+    adam.set_maximum_epochs(1);
+    adam.set_display(false);
+
+    EXPECT_TRUE(isfinite(adam.train().get_training_error()));
+    EXPECT_FALSE(adam.get_cuda_graph_capture_failed());
+
+    filesystem::remove(file_path);
+}
+
+TEST_F(AdaptiveMomentEstimationTest, CudaGraphCapturesTransformerStepSdpaBf16)
+{
+    expect_transformer_step_captures(Type::BF16, 1);
+}
+
+TEST_F(AdaptiveMomentEstimationTest, CudaGraphCapturesTransformerStepUnfusedFp32)
+{
+    expect_transformer_step_captures(Type::FP32, 1 << 20);
+}
+
 TEST_F(AdaptiveMomentEstimationTest, CudaGraphGroupedResidentBf16Replay)
 {
     Configuration::instance().set(Device::CUDA, Type::BF16);

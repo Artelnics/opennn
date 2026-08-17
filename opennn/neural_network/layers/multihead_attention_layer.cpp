@@ -125,7 +125,7 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
                   query_sequence_length, source_sequence_length,
                   new_use_causal_mask, compute_dtype);
 
-    attention.use_sdpa = should_use_sdpa();
+    apply_sdpa_choice();
 
     for (auto* proj : {&query_projection, &key_projection, &value_projection})
     {
@@ -182,22 +182,30 @@ bool MultiHeadAttention::should_use_sdpa() const
     return shorter >= sdpa_min_sequence_length;
 }
 
+void MultiHeadAttention::apply_sdpa_choice()
+{
+    attention.use_sdpa = should_use_sdpa();
+    attention.interleaved_heads = attention.use_sdpa;
+    for (auto* proj : {&query_projection, &key_projection, &value_projection})
+        proj->interleaved_heads = attention.use_sdpa;
+}
+
 void MultiHeadAttention::set_zero_padded_queries(bool new_zero_padded_queries)
 {
     attention.zero_padded_queries = new_zero_padded_queries;
-    attention.use_sdpa = should_use_sdpa();
+    apply_sdpa_choice();
 }
 
 void MultiHeadAttention::set_sdpa_auto(bool new_sdpa_auto)
 {
     sdpa_auto = new_sdpa_auto;
-    attention.use_sdpa = should_use_sdpa();
+    apply_sdpa_choice();
 }
 
 void MultiHeadAttention::set_sdpa_min_sequence_length(Index new_threshold)
 {
     sdpa_min_sequence_length = new_threshold;
-    attention.use_sdpa = should_use_sdpa();
+    apply_sdpa_choice();
 }
 
 void MultiHeadAttention::apply_input_shape(const Shape& new_input_shape)

@@ -78,6 +78,10 @@ public:
 
     bool should_use_sdpa() const;
 
+    // Applies should_use_sdpa() to the attention and to the three projections
+    // (the head layout follows the attention path).
+    void apply_sdpa_choice();
+
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
 

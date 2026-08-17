@@ -54,6 +54,11 @@ public:
 
     void set_cuda_graph(bool enabled) { use_cuda_graph = enabled; }
 
+    // True once a CUDA graph capture of the training step failed and the run
+    // fell back to eager launches (the step contained a host sync or another
+    // uncapturable call). Reset by train().
+    bool get_cuda_graph_capture_failed() const noexcept { return cuda_graph_capture_failed; }
+
     void set_shuffle(bool enabled) { shuffle_samples = enabled; }
 
     void set_batch_pool_size(int size) { batch_pool_size_override = size; }
@@ -329,6 +334,7 @@ protected:
     int workers_number = 2;
 
     bool use_cuda_graph = false;
+    bool cuda_graph_capture_failed = false;
 
     string name;
 };
