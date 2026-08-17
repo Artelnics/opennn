@@ -228,10 +228,23 @@ int main(int argc, char* argv[])
             dataset.set_variable_scalers("None");
         const Index samples = dataset.get_samples_number();
 
+        // Whole batches only, like the PyTorch and TensorFlow drivers
+        // (range(0, n - batch + 1, batch)): the remainder is left out of the
+        // epoch instead of trained as a smaller tail batch. The tail is real
+        // work the throughput figure does not count (up to 6.5% at 896,000),
+        // and the library keeps a second set of activation contexts for it,
+        // which at 6 GB is the difference between fitting and paging at
+        // 448,000. OPENNN_SPEED_KEEP_TAIL=1 trains it anyway.
+        const bool keep_tail = getenv("OPENNN_SPEED_KEEP_TAIL") != nullptr;
+        const Index whole_samples = (batch > 0 && !keep_tail) ? (samples / batch) * batch : samples;
+        for (Index sample = whole_samples; sample < samples; ++sample)
+            dataset.set_sample_role(sample, SampleRole::None);
+
         cout << "engine=opennn\n";
         cout << "mode=train\n";
         cout << "device=cuda\n";
         cout << "samples=" << samples << "\n";
+        cout << "tail_kept=" << (keep_tail ? 1 : 0) << "\n";
         cout << "batch=" << batch << "\n";
         cout << "epochs=" << epochs << "\n";
         cout << "hidden=" << hidden << "\n";

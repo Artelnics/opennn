@@ -48,9 +48,12 @@ OOM_MARKERS = (
     "CUDA Error: 2 ", "cudaMalloc(",
 )
 
-def run_text(cmd: list[str]) -> str:
+def run_text(cmd: list[str], timeout_s: float = 60.0) -> str:
+    # Bounded: `git status` on a network / 9p-mounted tree can take minutes,
+    # and the metadata is not worth stalling a sweep for.
     try:
-        return subprocess.run(cmd, capture_output=True, text=True, check=False).stdout.strip()
+        return subprocess.run(cmd, capture_output=True, text=True, check=False,
+                              timeout=timeout_s).stdout.strip()
     except Exception:
         return ""
 
