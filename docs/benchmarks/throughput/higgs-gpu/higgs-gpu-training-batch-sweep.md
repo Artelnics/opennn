@@ -127,5 +127,9 @@ so it is the next thing to profile on that machine; the tail is part of it
 * The output layer (1024 -> 1) costs 0.25 ms of a 2.7 ms step in three
   GEMV-shaped calls cuBLAS runs at 0.1-0.3 TFLOPS; a fused outer-product x
   ReLU' kernel for the single-output case would save ~0.13 ms (5%).
-* `OPENNN_DRELU_FUSION=1` on these shapes: not measured yet (it lost 7% on
-  the transformer's shapes).
+* `OPENNN_DRELU_FUSION=1` on these shapes (the ReLU derivative as cuBLASLt's
+  DRELU epilogue of the next layer's dX GEMM, mask from a RELU_AUX forward
+  epilogue): measured, alternated pairs at 7,000 - bf16 2.27 / 2.31 M vs
+  2.78 / 2.51 M (-14%), fp32 1.08 / 1.02 M vs 1.17 / 1.19 M (-11%). The aux
+  epilogues make cuBLASLt pick slower kernels here as they did on the
+  transformer; the separate ReLU backward at bandwidth stays.
