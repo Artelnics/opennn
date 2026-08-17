@@ -138,14 +138,18 @@ A microbenchmark of the attention shape (B 128, 8 heads, S 256, d 32, bf16;
 | causal: FA2 / cuDNN (PyTorch) | 0.34 / 0.60 | 1.81 / 2.52 | 2.15 / 3.13 |
 
 FlashAttention-2 is ~1.35x faster than cuDNN's Ampere SDPA at head dim 32:
-6 attention layers x ~1 ms = 6-8 ms per step - the whole remaining bf16 gap
-(the GEMMs, LayerNorm and the elementwise passes are at the same speed or at
-bandwidth on both sides). Nothing on the cuDNN side moves it (F, G above);
-the OpenNN-side items left (residual add folded into the sublayer's dgrad,
-softmax + cross-entropy in one pass, one Adam kernel) add up to ~2 ms. So on
-this GPU bf16 parity with PyTorch's best at 128-256 needs a
-FlashAttention-class kernel for the fused attention path; that is a separate
-decision (a CUTLASS-based dependency, long compile), noted below.
+6 attention layers x ~1 ms = 6-8 ms per step, the one structural item left
+between the two stacks in bf16 (the GEMMs, LayerNorm and the elementwise
+passes are at the same speed or at bandwidth on both sides). Nothing on the
+cuDNN side moves it (F, G above); the OpenNN-side items left (residual add
+folded into the sublayer's dgrad, softmax + cross-entropy in one pass, one
+Adam kernel) add up to ~2 ms. A clear bf16 lead on Ampere therefore needs a
+FlashAttention-class kernel for the fused attention path: FA2's kernels
+(BSD-3, CUTLASS 3.x headers; for this benchmark the hdim32 bf16 causal and
+non-causal forward/backward instantiations, ~4 .cu files) take exactly the
+(B, S, H, D) layout the interleaved-heads path now uses; padded batches
+would need the varlen entry (packed sequences) or the cuDNN graph as the
+fallback. That is a dependency decision, noted below.
 
 ## The ladder (RTX 3060 Laptop, 5 timed epochs, samples/s)
 
@@ -169,14 +173,43 @@ not kernels (PyTorch 512 and 1024, OpenNN 1024, fp32 512), and are marked.
 | fp32 512 | 67 (paging) | 98 (paging) | 68 (paging) | |
 
 Against the baseline the levers are worth +13-16% in bf16 and +12-15% in fp32
-at every point that fits in memory. Against PyTorch's best config:
+at every point that fits in memory.
 
-* **fp32: OpenNN leads at every batch, 1.33-1.60x** (peak 989 vs 619) - the
-  fp32-via-bf16 fused attention against PyTorch's fp32 attention.
-* **bf16: PyTorch leads by 1% at 32, 2% at 64, 4% at 128 and 6% at 256**
-  (peak-to-peak 1,917 vs 2,030), for the reason above; at 512 OpenNN keeps
-  1,619 while PyTorch is already paging (357): OpenNN's step needs less
-  memory (3.2 GB at batch 256 against 6 GB of VRAM).
+The rows above come from separate ladders (PyTorch/TensorFlow at ~02:00 on a
+cool machine, OpenNN at ~04:00). The results artifact is the single
+back-to-back sweep of the three engines,
+[`results/gpu-transformer-peak-batch-speed-20260817T020628Z.json`](../../results/gpu-transformer-peak-batch-speed-20260817T020628Z.json)
+(commit 82bcfb204, OpenNN first within each precision, machine already warm):
+
+| batch | OpenNN | PyTorch best | TensorFlow | OpenNN / PyTorch |
+|---|---:|---:|---:|---:|
+| bf16 32 | **1,780** | 1,739 | 1,201 | 1.02 |
+| bf16 64 | **1,820** | 1,775 | 1,211 | 1.03 |
+| bf16 128 | **1,909** | 1,887 | 1,375 | 1.01 |
+| bf16 256 | 1,894 | **1,912** | OOM | 0.99 |
+| bf16 512 | **1,619** | 520 (paging) | | 3.1 |
+| bf16 1024 | 312 (paging) | 137 (paging) | | |
+| fp32 32 | **898** | 561 | 609 | 1.60 |
+| fp32 64 | **1,037** | 584 | 674 | 1.78 |
+| fp32 128 | **1,013** | 599 | OOM | 1.69 |
+| fp32 256 | **941** | 585 | | 1.61 |
+| fp32 512 | 90 (paging) | 69 (paging) | | |
+
+Peak-to-peak: bf16 1,909 vs 1,912 (0.999); fp32 1,037 vs 599 (1.73x).
+
+So, on this laptop and with the thermal band it has (a run 90 minutes later
+on the same binary moves any engine by +-5%):
+
+* **fp32: OpenNN leads at every batch, 1.6-1.8x in the artifact** (1.33-1.60x
+  in the cool-machine ladders) - the fp32-via-bf16 fused attention against
+  PyTorch's fp32 attention.
+* **bf16: parity.** In the artifact OpenNN is +1-3% at 32-128 and -1% at
+  256; in the cool-machine ladders PyTorch was +1-6%. The structural
+  difference is the one measured below (FlashAttention-2 vs cuDNN SDPA,
+  ~5-8 ms of a ~70 ms step in PyTorch's favour); it is what separates
+  "parity within noise" from a clear OpenNN lead. From 512 up OpenNN keeps
+  1,619 while PyTorch pages (its step needs more memory: OpenNN uses 3.2 GB
+  at batch 256 of the 6 GB).
 * TensorFlow is well behind both and out of memory from 256 (bf16) / 128 (fp32).
 
 ## Next
@@ -184,8 +217,8 @@ at every point that fits in memory. Against PyTorch's best config:
 1. RTX 4080 (the product GPU): the same sweep with this protocol; the
    cuDNN-vs-FA2 ratio there decides how much of the bf16 gap survives.
 2. Decide on FlashAttention-2 (or an equivalent kernel) for the fused
-   attention path: on this GPU it is the difference between -4% and parity or
-   better in bf16.
+   attention path: on this GPU it is the difference between parity within
+   noise and a clear bf16 lead.
 3. Device-resident token dataset (`Dataset::can_device_gather` excludes
    batches with a decoder section), which removes the host prefetch path and
    its epoch-start drain regardless of disk.
