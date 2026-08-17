@@ -24,8 +24,14 @@
 #           shuffle    = "shuffle" to reshuffle every epoch (matches OpenNN)
 #           activation = "relu" (default) or "tanh"
 #           thresholds = "none" when unset
+#   env:    PT_COMPILE_MODE=default|reduce-overhead|max-autotune -> torch.compile
+#                      the model (reduce-overhead adds CUDA graphs); unset = eager
+#           PT_COMPILE_STEP=1 -> compile the whole train step (forward, backward
+#                      and the optimizer update) instead of the model alone
+#           PT_FUSED_ADAM=1 -> torch.optim.Adam(fused=True)
 
 import contextlib
+import os
 import sys
 import time
 from pathlib import Path
@@ -101,10 +107,18 @@ def main():
     print(f"parameters={sum(p.numel() for p in model.parameters())}")
 
     loss_fn = torch.nn.BCEWithLogitsLoss()
-    optimizer = torch.optim.Adam(model.parameters())
+    compile_mode = os.environ.get("PT_COMPILE_MODE")
+    compile_step = os.environ.get("PT_COMPILE_STEP") is not None
+    fused_adam = os.environ.get("PT_FUSED_ADAM") is not None
+    optimizer = torch.optim.Adam(model.parameters(), fused=fused_adam)
+    print(f"mode={'compile:' + compile_mode + (':step' if compile_step else ':model') if compile_mode else 'eager'}"
+          f"{' +fused_adam' if fused_adam else ''}")
 
     ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
            if use_autocast else contextlib.nullcontext())
+
+    if compile_mode and not compile_step:
+        model = torch.compile(model, mode=None if compile_mode == "default" else compile_mode)
 
     def train_step(xb, yb):
         optimizer.zero_grad(set_to_none=True)
@@ -114,6 +128,9 @@ def main():
         loss.backward()
         optimizer.step()
         return loss
+
+    if compile_mode and compile_step:
+        train_step = torch.compile(train_step, mode=None if compile_mode == "default" else compile_mode)
 
     n = x.shape[0]
     starts = list(range(0, n - batch + 1, batch))
