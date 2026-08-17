@@ -9,6 +9,7 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/profiler.h"
+#include "opennn/core/string_utilities.h"
 #include "opennn/core/cuda/kernel_activation.cuh"
 #include "opennn/core/cuda/kernel_normalization.cuh"
 #include "opennn/core/cuda/kernel_cast.cuh"
@@ -1057,11 +1058,47 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
     // failure pins the old staged path for the rest of the process.
     static atomic<bool> bf16_fp32_store_supported{true};
 
+    // OPENNN_WGRAD_STAGED=1 forces the staged path (BF16 store + cast + separate
+    // bias reduction) for A/B measurement of the epilogue's kernel choice.
+    static const bool force_staged = env_flag_enabled("OPENNN_WGRAD_STAGED", false);
+
     const bool direct_fp32_store = !output_delta.is_bf16()
-        || bf16_fp32_store_supported.load(memory_order_relaxed);
+        || (bf16_fp32_store_supported.load(memory_order_relaxed) && !force_staged);
 
     bool stored = false;
-    if (direct_fp32_store)
+    {
+    PROFILE_SCOPE("op:linear_bwd_wgrad " + to_string(output_columns) + "x" + to_string(input_columns) + "x" + to_string(total_rows));
+
+    // A weight gradient with a small output and a long reduction (a first
+    // layer's 28 x 1024 over 7,000 rows) is a split-K job cuBLASLt's heuristics
+    // handle badly here - measured 17x the time cuBLAS's GEMM takes for the same
+    // shape - so those go through cublasGemmEx (multiply), the bias gradient
+    // reduced by its own kernel.
+    const bool skinny_wgrad = Index(output_columns) * Index(input_columns) <= Index(64) * 1024
+                           && Index(total_rows) >= 4 * Index(max(output_columns, input_columns));
+    if (skinny_wgrad)
+    {
+        const TensorView input_2d(const_cast<void*>(input_for_gemm), Shape{total_rows, input_columns},
+                                  weights.get_type(), Device::CUDA);
+        const TensorView output_delta_2d(output_delta.get_data(), Shape{total_rows, output_columns},
+                                         output_delta.get_type(), Device::CUDA);
+        TensorView weight_gradient_2d(weight_gradient.get_data(), Shape{input_columns, output_columns},
+                                      Type::FP32, Device::CUDA);
+        multiply(input_2d, true, output_delta_2d, false, weight_gradient_2d, 1.0f, 0.0f);
+
+        if (has_bias)
+        {
+            device::set_zero_async(bias_gradient.get_data(),
+                                   bias_gradient.size() * Index(sizeof(float)),
+                                   device::get_compute_stream());
+            output_delta.dispatch([&]<typename T>() {
+                bias_grad_sum_cuda<T>(total_rows, output_columns,
+                                      output_delta.as<T>(), bias_gradient.as<float>());
+            });
+        }
+        stored = true;
+    }
+    else if (direct_fp32_store)
     {
         try
         {
@@ -1106,9 +1143,11 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
                                          output_delta.as<bfloat16>(), bias_gradient.as<float>());
         }
     }
+    }
 
     if (!input_delta.get_data() || input_delta.empty()) return;
 
+    PROFILE_SCOPE("op:linear_bwd_dx " + to_string(output_columns) + "x" + to_string(input_columns) + "x" + to_string(total_rows));
     if (drelu_mask || addend)
     {
         run_lt_matmul_cached(
