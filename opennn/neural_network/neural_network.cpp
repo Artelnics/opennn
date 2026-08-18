@@ -1049,19 +1049,51 @@ void NeuralNetwork::set_parameters_pytorch()
     initialize_parameters(&Operator::set_parameters_pytorch);
 }
 
+namespace
+{
+
+// Every calculate_outputs overload wraps a single Eigen input in one view.
+// Kept in one place so each shape is written once.
+
+TensorView single_input_view(const MatrixR& inputs)
+{
+    return TensorView(const_cast<float*>(inputs.data()),
+                      {inputs.rows(), inputs.cols()}, Type::FP32);
+}
+
+
+TensorView single_input_view(const Tensor3& inputs)
+{
+    return TensorView(const_cast<float*>(inputs.data()),
+                      {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)},
+                      Type::FP32);
+}
+
+
+TensorView single_input_view(const Tensor4& inputs)
+{
+    return TensorView(const_cast<float*>(inputs.data()),
+                      {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2),
+                       inputs.dimension(3)},
+                      Type::FP32);
+}
+
+}
+
+
 void NeuralNetwork::calculate_outputs(const MatrixR& inputs, MatrixR& outputs)
 {
-    calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.rows(), inputs.cols()}, Type::FP32)}, outputs);
+    calculate_outputs(vector<TensorView>{single_input_view(inputs)}, outputs);
 }
 
 void NeuralNetwork::calculate_outputs(const Tensor3& inputs, MatrixR& outputs)
 {
-    calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)}, Type::FP32)}, outputs);
+    calculate_outputs(vector<TensorView>{single_input_view(inputs)}, outputs);
 }
 
 void NeuralNetwork::calculate_outputs(const Tensor4& inputs, MatrixR& outputs)
 {
-    calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}, Type::FP32)}, outputs);
+    calculate_outputs(vector<TensorView>{single_input_view(inputs)}, outputs);
 }
 
 void NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2,
@@ -1080,8 +1112,8 @@ void NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& in
     ForwardPropagation forward_propagation(batch_size, this,
                                            ForwardPropagationMode::Inference);
 
-    const vector<TensorView> input_views = {TensorView(const_cast<float*>(inputs_1.data()), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}}),
-                                            TensorView(const_cast<float*>(inputs_2.data()), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}})};
+    const vector<TensorView> input_views = {single_input_view(inputs_1),
+                                            single_input_view(inputs_2)};
 
     forward_propagate(input_views, forward_propagation, false);
 
@@ -1229,17 +1261,17 @@ void NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views,
 
 MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
 {
-    return calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.rows(), inputs.cols()}, Type::FP32)});
+    return calculate_outputs(vector<TensorView>{single_input_view(inputs)});
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs)
 {
-    return calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)}, Type::FP32)});
+    return calculate_outputs(vector<TensorView>{single_input_view(inputs)});
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs)
 {
-    return calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}, Type::FP32)});
+    return calculate_outputs(vector<TensorView>{single_input_view(inputs)});
 }
 
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,

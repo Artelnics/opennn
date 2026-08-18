@@ -6,7 +6,7 @@
 //
 //   The forward path is CPU-vs-GPU validated by opennn_attention_validate.cpp.
 //
-//   usage: opennn_transformer_infer [seq] [d_model] [heads] [ff] [layers] [vocab] [batch] [iters] [fp32|bf16] [percall|reuse]
+//   usage: opennn_transformer_infer [seq] [d_model] [heads] [ff] [layers] [vocab] [batch] [iters] [fp32|bf16] [default|reuse]
 
 #include <chrono>
 #include <cstdlib>
@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
             result_checksum = checksum(outputs.data(), Index(outputs.size()));
         }
 
-        cout << "mode=" << (reuse_outputs ? "reuse" : "percall") << "\n";
+        cout << "mode=" << (reuse_outputs ? "reuse" : "default") << "\n";
         cout << "checksum=" << result_checksum << "\n";
 
         const double per = chrono::duration<double>(t1 - t0).count() / double(iters);
