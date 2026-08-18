@@ -173,20 +173,33 @@ class Json;
 class JsonDocument;
 class JsonWriter;
 
-inline void throw_if(bool condition, string_view message,
-                     const source_location& loc = source_location::current())
+namespace detail
 {
-    if (condition)
-        throw runtime_error(format("{} [at {}:{}]",
-                                        message, loc.file_name(), loc.line()));
+
+[[noreturn]] inline void throw_formatted(string_view message,
+                                         const source_location& loc = source_location::current())
+{
+    throw runtime_error(format("{} [at {}:{}]",
+                                    message, loc.file_name(), loc.line()));
 }
 
-template <typename... Args>
-inline void throw_if(bool condition, format_string<Args...> message, Args&&... args)
+
+template<typename... Args>
+[[noreturn]] inline void throw_formatted(format_string<Args...> message, Args&&... args)
 {
-    if (condition)
-        throw runtime_error(format(message, std::forward<Args>(args)...));
+    throw runtime_error(format(message, std::forward<Args>(args)...));
 }
+
+}
+
+
+// A macro, so the message arguments are evaluated only when the condition
+// holds. As a function it evaluated them unconditionally, which turned
+//     throw_if(!buffer, "... {} ...", buffer->byte_size());
+// -- a guard -- into the crash it was written to prevent.
+#define throw_if(condition, ...)                                           do                                                                     {                                                                          if (condition)                                                             ::opennn::detail::throw_formatted(__VA_ARGS__);                }                                                                      while (false)
+
+
 
 template <typename T, typename... Candidates>
 constexpr bool is_one_of(const T& value, const Candidates&... candidates)

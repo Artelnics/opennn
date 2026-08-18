@@ -1015,7 +1015,10 @@ void NeuralNetwork::set_states(const VectorR& new_states)
     const Index expected_size = get_states_buffer_size();
 
     if (expected_size == 0)
-        return throw_if(new_states.size() != 0, "NeuralNetwork::set_states: network has no state buffer.");
+    {
+        throw_if(new_states.size() != 0, "NeuralNetwork::set_states: network has no state buffer.");
+        return;
+    }
 
     throw_if(new_states.size() != expected_size,
              "NeuralNetwork::set_states: size mismatch (got {}, expected {}).", new_states.size(), expected_size);
