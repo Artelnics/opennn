@@ -6,7 +6,7 @@
 //
 //   The forward path is CPU-vs-GPU validated by opennn_attention_validate.cpp.
 //
-//   usage: opennn_transformer_infer [seq] [d_model] [heads] [ff] [layers] [vocab] [batch] [iters]
+//   usage: opennn_transformer_infer [seq] [d_model] [heads] [ff] [layers] [vocab] [batch] [iters] [fp32|bf16]
 
 #include <chrono>
 #include <cstdlib>
@@ -33,11 +33,12 @@ int main(int argc, char* argv[])
     const Index vocab   = argc > 6 ? Index(stoll(argv[6])) : 10000;
     const Index batch   = argc > 7 ? Index(stoll(argv[7])) : 8;
     const Index iters   = argc > 8 ? Index(stoll(argv[8])) : 50;
+    const bool use_bf16 = argc > 9 ? string(argv[9]) == "bf16" : false;
 
     try
     {
         set_seed(0);
-        Configuration::instance().set(Device::CUDA, Type::FP32);
+        Configuration::instance().set(Device::CUDA, use_bf16 ? Type::BF16 : Type::FP32);
 
         Transformer transformer(seq, seq, vocab, vocab, d_model, heads, ff, layers);
 
@@ -47,7 +48,7 @@ int main(int argc, char* argv[])
         cout << "config seq=" << seq << " d_model=" << d_model << " heads=" << heads
                   << " ff=" << ff << " layers=" << layers << " vocab=" << vocab
                   << " batch=" << batch
-                  << " sdpa_min=" << sdpa_min_sequence_length << "\n";
+                  << " sdpa_min=" << sdpa_min_sequence_length << " precision=" << (use_bf16 ? "bf16" : "fp32") << "\n";
         cout << "parameters=" << transformer.get_parameters_buffer_size() << "\n";
 
         Tensor3 inputs(batch, seq, 1);

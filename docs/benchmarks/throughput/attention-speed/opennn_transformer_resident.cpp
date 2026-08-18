@@ -68,8 +68,8 @@ int main(int argc, char* argv[])
         Buffer in_gpu, ctx_gpu;
         in_gpu.resize_bytes(in_bytes, Device::CUDA);
         ctx_gpu.resize_bytes(in_bytes, Device::CUDA);
-        device::copy_async(in_gpu.data,  host_in.data(),  in_bytes, device::CopyKind::HostToDevice);
-        device::copy_async(ctx_gpu.data, host_ctx.data(), in_bytes, device::CopyKind::HostToDevice);
+        device::copy_async(in_gpu.data(),  host_in.data(),  in_bytes, device::CopyKind::HostToDevice);
+        device::copy_async(ctx_gpu.data(), host_ctx.data(), in_bytes, device::CopyKind::HostToDevice);
         device::synchronize();
 
         const vector<TensorView> gpu_inputs{
