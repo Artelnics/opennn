@@ -371,6 +371,38 @@ public:
         return true;
     }
 
+    // Hand every cached block back to the driver. Called when an allocation
+    // fails: memory held here is memory the driver cannot use, and this
+    // library is routinely run right up against the capacity limit.
+    // Returns whether anything was actually released, so a caller can tell a
+    // retry apart from a hopeless one.
+    bool flush()
+    {
+        const lock_guard<mutex> guard(blocks_mutex);
+
+        bool released = false;
+
+        for (auto& [size_in_bytes, cached] : blocks)
+        {
+            for (CachedBlock& block : cached)
+            {
+                for (cudaEvent_t event : block.pending_events)
+                    cudaEventSynchronize(event);
+
+                recycle_events(block);
+                cudaFree(block.pointer);
+                released = true;
+            }
+
+            cached.clear();
+        }
+
+        blocks.clear();
+        cached_bytes = 0;
+
+        return released;
+    }
+
 private:
 
     struct CachedBlock
@@ -380,7 +412,7 @@ private:
     };
 
     CudaBlockCache()
-        : is_enabled(env_flag_enabled("OPENNN_DEVICE_CACHE", false)),
+        : is_enabled(env_flag_enabled("OPENNN_DEVICE_CACHE", true)),
           byte_cap(read_cap_bytes())
     {
     }
@@ -460,6 +492,18 @@ void* allocate(Device device_type, Index byte_count)
 #ifdef OPENNN_HAS_CUDA
         if (void* recycled = CudaBlockCache::instance().take(byte_count))
             return recycled;
+
+        try
+        {
+            return allocate_cuda(byte_count);
+        }
+        catch (const runtime_error&)
+        {
+            // Retained blocks are memory the driver cannot hand out. Release
+            // them and try once more before failing, so enabling the cache can
+            // never turn a workload that used to fit into one that does not.
+            if (!CudaBlockCache::instance().flush()) throw;
+        }
 #endif
         return allocate_cuda(byte_count);
     }
