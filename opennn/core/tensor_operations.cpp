@@ -984,10 +984,55 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
     }
 }
 
+// A dense layer with one output - a classifier head, a regression output, a
+// critic - contracts a whole activation row down to a single value. cuBLASLt
+// falls back to a general GEMV there, which on the HIGGS head measured 0.0113
+// ms against 0.0058 ms for the traffic alone at batch 8192: the operation only
+// reads the activation, so a streaming reduction is close to twice as fast.
+// The own kernel needs whole 16-byte vectors and no epilogue beyond the bias;
+// anything else stays on cuBLAS. OPENNN_LINEAR_SINGLE_OUTPUT=0 pins the
+// cuBLAS path for A/B.
+static bool single_output_reduction_applies(const TensorView& input, const TensorView& weights,
+                                            const TensorView& bias, const TensorView& output,
+                                            cublasLtEpilogue_t epilogue, const TensorView* pre_activation)
+{
+    static const bool enabled = env_flag_enabled("OPENNN_LINEAR_SINGLE_OUTPUT", true);
+    if (!enabled || pre_activation) return false;
+
+    if (epilogue != CUBLASLT_EPILOGUE_DEFAULT && epilogue != CUBLASLT_EPILOGUE_BIAS) return false;
+    if (weights.get_shape().back() != 1) return false;
+    if (input.get_type() != output.get_type() || input.get_type() != weights.get_type()) return false;
+    if (!input.is_bf16() && !input.is_fp32()) return false;
+    if (bias.get_data() && bias.get_type() != input.get_type()) return false;
+
+    const Index features = input.get_shape().back();
+    const Index per_vector = Index(16) / Index(type_bytes(input.get_type()));
+    if (features % per_vector != 0) return false;
+
+    const auto aligned = [](const void* p) { return reinterpret_cast<uintptr_t>(p) % 16 == 0; };
+    return aligned(input.get_data()) && aligned(weights.get_data());
+}
+
 static void linear_forward_gpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
                                TensorView& output, cublasLtEpilogue_t epilogue,
                                TensorView* pre_activation, const TensorView& weight_scale)
 {
+    if (!weights.is_int8()
+        && single_output_reduction_applies(input, weights, bias, output, epilogue, pre_activation))
+    {
+        const Index features = input.get_shape().back();
+        const Index rows = input.size() / features;
+        const void* bias_data = (epilogue == CUBLASLT_EPILOGUE_BIAS) ? bias.get_data() : nullptr;
+
+        input.dispatch([&]<typename T>() {
+            linear_forward_single_output_cuda<T>(rows, features,
+                                                 input.as<T>(), weights.as<T>(),
+                                                 static_cast<const T*>(bias_data),
+                                                 output.as<T>());
+        });
+        return;
+    }
+
     if (!weights.is_int8())
         return linear_forward_lt_gpu(input, weights, bias, output, epilogue, pre_activation);
 
