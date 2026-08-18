@@ -201,12 +201,10 @@ static void scale_gpu(const TensorView& input,
 
 #else
 
-static void scale_gpu(const TensorView&, const TensorView&, const TensorView&,
-                      const TensorView&, const TensorView&, const TensorView&,
-                      float, float, TensorView&, bool)
-{
-    throw runtime_error("scale_gpu: CUDA support not compiled in.");
-}
+OPENNN_CUDA_STUB(void, scale_gpu,
+                 (const TensorView&, const TensorView&, const TensorView&,
+                  const TensorView&, const TensorView&, const TensorView&,
+                  float, float, TensorView&, bool))
 
 #endif
 

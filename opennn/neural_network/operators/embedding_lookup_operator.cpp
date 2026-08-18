@@ -219,8 +219,8 @@ static void embedding_lookup_backward_gpu(const TensorView& indices, const Tenso
 
 #else
 
-static void embedding_lookup_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, bool, const TensorView&) { throw runtime_error("embedding_lookup_forward_gpu: CUDA support not compiled in."); }
-static void embedding_lookup_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, Index, Index, Index, bool) { throw runtime_error("embedding_lookup_backward_gpu: CUDA support not compiled in."); }
+OPENNN_CUDA_STUB(void, embedding_lookup_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, bool, const TensorView&))
+OPENNN_CUDA_STUB(void, embedding_lookup_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, Index, Index, Index, bool))
 
 #endif
 

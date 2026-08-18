@@ -574,6 +574,15 @@ struct TensorView
                                               "TensorView::byte_size");
     }
 
+    // The tensor seen as a matrix of last-dimension rows: the shape
+    // as_flat_matrix() builds and every row-wise kernel works in.
+    Index flat_columns() const noexcept { return shape.get_rank() == 0 ? 0 : shape[shape.get_rank() - 1]; }
+    Index flat_rows() const noexcept
+    {
+        const Index columns = flat_columns();
+        return columns == 0 ? 0 : shape.size() / columns;
+    }
+
     bool empty() const noexcept { return shape.empty(); }
     bool is_cuda() const noexcept { return device == Device::CUDA; }
     bool is_fp32() const noexcept { return type == Type::FP32; }
@@ -620,10 +629,8 @@ struct TensorView
 
     MatrixMap as_matrix() const
     {
-        require_host_fp32("TensorView::as_matrix");
+        require_host_fp32_data("TensorView::as_matrix");
         throw_if(shape.get_rank() < 2, "TensorView::as_matrix requires rank >= 2.");
-        throw_if(shape.size() > 0 && !data,
-                 "TensorView::as_matrix requires non-null data.");
 
         const Index row_count = shape[0];
         const Index column_count = row_count == 0 ? 0 : shape.size() / row_count;
@@ -632,11 +639,9 @@ struct TensorView
 
     MatrixMap as_matrix(Index matrix_index) const
     {
-        require_host_fp32("TensorView::as_matrix(matrix_index)");
+        require_host_fp32_data("TensorView::as_matrix(matrix_index)");
         throw_if(shape.get_rank() < 2,
                  "TensorView::as_matrix(matrix_index) requires rank >= 2.");
-        throw_if(shape.size() > 0 && !data,
-                 "TensorView::as_matrix(matrix_index) requires non-null data.");
 
         const Index row_count = shape[shape.get_rank() - 2];
         const Index column_count = shape[shape.get_rank() - 1];
@@ -656,32 +661,24 @@ struct TensorView
 
     MatrixMap as_flat_matrix() const
     {
-        require_host_fp32("TensorView::as_flat_matrix");
+        require_host_fp32_data("TensorView::as_flat_matrix");
         throw_if(shape.get_rank() < 1, "TensorView::as_flat_matrix requires rank >= 1.");
-        throw_if(shape.size() > 0 && !data,
-                 "TensorView::as_flat_matrix requires non-null data.");
 
-        const Index column_count = shape[shape.get_rank() - 1];
-        const Index row_count = column_count == 0 ? 0 : shape.size() / column_count;
-        return MatrixMap(reinterpret_cast<float*>(data), row_count, column_count);
+        return MatrixMap(reinterpret_cast<float*>(data), flat_rows(), flat_columns());
     }
 
     VectorMap as_vector() const
     {
-        require_host_fp32("TensorView::as_vector");
-        throw_if(shape.size() > 0 && !data,
-                 "TensorView::as_vector requires non-null data.");
+        require_host_fp32_data("TensorView::as_vector");
         return VectorMap(reinterpret_cast<float*>(data), shape.size());
     }
 
     template<int Rank>
     TensorMapR<Rank> as_tensor() const
     {
-        require_host_fp32("TensorView::as_tensor");
+        require_host_fp32_data("TensorView::as_tensor");
         throw_if(shape.get_rank() != Rank,
                  "TensorView::as_tensor requires rank {}, got {}.", Rank, shape.get_rank());
-        throw_if(shape.size() > 0 && !data,
-                 "TensorView::as_tensor requires non-null data.");
 
         Eigen::array<Index, Rank> dims;
         copy_n(shape.begin(), Rank, dims.begin());
@@ -691,15 +688,13 @@ struct TensorView
     template<int Rank>
     TensorMapR<Rank> as_tensor(Index batch_index) const
     {
-        require_host_fp32("TensorView::as_tensor(batch_index)");
+        require_host_fp32_data("TensorView::as_tensor(batch_index)");
         throw_if(shape.get_rank() != Rank + 1,
                  "TensorView::as_tensor(batch_index) requires rank {}, got {}.",
                         Rank + 1, shape.get_rank());
         throw_if(batch_index < 0 || batch_index >= shape[0],
                  "TensorView::as_tensor(batch_index): batch index {} out of range [0, {}).",
                         batch_index, shape[0]);
-        throw_if(shape.size() > 0 && !data,
-                 "TensorView::as_tensor(batch_index) requires non-null data.");
 
         Eigen::array<Index, Rank> dims;
         for (int i = 0; i < Rank; ++i) dims[i] = shape[i + 1];
@@ -720,6 +715,14 @@ private:
     {
         throw_if(device != Device::CPU || type != Type::FP32,
                  "{} requires CPU FP32 storage.", accessor);
+    }
+
+    // Every host accessor wants the same two things, and named the accessor
+    // twice to say so.
+    void require_host_fp32_data(string_view accessor) const
+    {
+        require_host_fp32(accessor);
+        throw_if(shape.size() > 0 && !data, "{} requires non-null data.", accessor);
     }
 
     void set_descriptor(const Shape&) const;

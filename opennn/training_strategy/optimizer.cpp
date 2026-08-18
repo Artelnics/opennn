@@ -70,32 +70,6 @@ static void clip_gradient_norm_device(Buffer&, Index, float) OPENNN_CUDA_STUB_BO
 namespace
 {
 
-template<typename F>
-class ScopeExit
-{
-public:
-    explicit ScopeExit(F new_cleanup)
-        : cleanup(std::move(new_cleanup))
-    {
-    }
-
-    ~ScopeExit() noexcept
-    {
-        if (!active) return;
-        try { cleanup(); }
-        catch (...) {}
-    }
-
-    ScopeExit(const ScopeExit&) = delete;
-    ScopeExit& operator=(const ScopeExit&) = delete;
-
-    void release() noexcept { active = false; }
-
-private:
-    F cleanup;
-    bool active = true;
-};
-
 FeatureScalingEndpoint* find_scaling_endpoint(NeuralNetwork& neural_network,
                                               VariableRole role)
 {
@@ -720,7 +694,14 @@ void Optimizer::warmup_device_training(
     const function<void(NeuralNetwork*)> saved_post_batch_callback = post_batch_callback;
     post_batch_callback = {};
 
-    try
+    // However the warm-up ends, the pre-warm-up state and the caller's callback
+    // come back.
+    ScopeExit warmup_cleanup([&]
+    {
+        restore_pre_warmup_state();
+        post_batch_callback = saved_post_batch_callback;
+    });
+
     {
         if(validation_forward_propagation
            && validation_empty_queue
@@ -750,14 +731,6 @@ void Optimizer::warmup_device_training(
                     training_session,
                     optimizer_data);
 
-        restore_pre_warmup_state();
-        post_batch_callback = saved_post_batch_callback;
-    }
-    catch(...)
-    {
-        restore_pre_warmup_state();
-        post_batch_callback = saved_post_batch_callback;
-        throw;
     }
 }
 

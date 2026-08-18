@@ -456,7 +456,7 @@ void ForwardPropagation::set(
     if(is_training)
     {
         const Index backward_base =
-            Index(2 * layers_number - 1);
+            backward_step(Index(layers_number), 0);
 
         collect_pooled_slots(
             [&](const size_t i, const bool is_output)

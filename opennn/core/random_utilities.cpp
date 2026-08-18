@@ -61,28 +61,29 @@ bool random_bool(float probability)
     return distribution(generator);
 }
 
-void set_random_uniform(MatrixR& tensor, float min, float max)
+// One draw per element under one lock, whatever the container and whatever the
+// distribution: the three fillers below differ in nothing else.
+template <typename Tensor, typename Distribution>
+static void fill_random(Tensor&& tensor, Distribution distribution)
 {
     lock_guard<mutex> lock(rng_mutex);
-    uniform_real_distribution<float> distribution(min, max);
     for (Index i = 0; i < tensor.size(); ++i)
         tensor(i) = distribution(generator);
+}
+
+void set_random_uniform(MatrixR& tensor, float min, float max)
+{
+    fill_random(tensor, uniform_real_distribution<float>(min, max));
 }
 
 void set_random_uniform(VectorMap tensor, float min, float max)
 {
-    lock_guard<mutex> lock(rng_mutex);
-    uniform_real_distribution<float> distribution(min, max);
-    for (Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(generator);
+    fill_random(tensor, uniform_real_distribution<float>(min, max));
 }
 
 void set_random_normal(MatrixMap tensor, float mean, float std_dev)
 {
-    lock_guard<mutex> lock(rng_mutex);
-    normal_distribution<float> distribution(mean, std_dev);
-    for (Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(generator);
+    fill_random(tensor, normal_distribution<float>(mean, std_dev));
 }
 
 void set_random_orthogonal(MatrixMap tensor)

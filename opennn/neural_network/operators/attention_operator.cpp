@@ -172,14 +172,11 @@ TensorSpec AttentionOperator::sdpa_qkv_pack_spec(Index batch_size) const
     if (!use_sdpa || compute_dtype != Type::FP32)
         return {Shape{}, Type::BF16};
 
-    const Index query_elements  = batch_size * heads_number * query_sequence_length  * head_dimension;
-    const Index source_elements = batch_size * heads_number * source_sequence_length * head_dimension;
-    const Index bf16_bytes = Index(sizeof(bfloat16));
+    const SdpaBf16Pack pack{
+        batch_size * heads_number * query_sequence_length  * head_dimension,
+        batch_size * heads_number * source_sequence_length * head_dimension};
 
-    const Index pack_bytes = 2 * get_aligned_bytes(query_elements * bf16_bytes)
-                           + 2 * get_aligned_bytes(source_elements * bf16_bytes);
-
-    return {{pack_bytes / bf16_bytes}, Type::BF16};
+    return {{pack.total_elements()}, Type::BF16};
 }
 
 bool AttentionOperator::sdpa_supported(Type dtype, Device device)
@@ -293,26 +290,17 @@ namespace
 // A (B, H, S, D) tensor as the graph sees it, over memory that is either
 // (B, H, S, D) or, interleaved, (B, S, H, D): the layout the projections'
 // GEMMs write and the output projection reads.
-vector<int64_t> heads_strides(int64_t H, int64_t S, int64_t D, bool interleaved)
-{
-    return interleaved ? vector<int64_t>{S * H * D, D, H * D, 1}
-                       : vector<int64_t>{H * S * D, S * D, D, 1};
-}
-
 shared_ptr<cudnn_frontend::graph::Tensor_attributes>
 heads_input(cudnn_frontend::graph::Graph& graph, const char* name,
             int64_t B, int64_t H, int64_t S, int64_t D, bool interleaved)
 {
-    return graph.tensor(cudnn_frontend::graph::Tensor_attributes()
-                        .set_name(name)
-                        .set_dim   ({B, H, S, D})
-                        .set_stride(heads_strides(H, S, D, interleaved)));
+    return cudnn_frontend::bhsd_tensor(graph, name, B, H, S, D, interleaved);
 }
 
 void heads_output(shared_ptr<cudnn_frontend::graph::Tensor_attributes>& T,
                   int64_t B, int64_t H, int64_t S, int64_t D, bool interleaved)
 {
-    T->set_output(true).set_dim({B, H, S, D}).set_stride(heads_strides(H, S, D, interleaved));
+    cudnn_frontend::set_bhsd_output(T, B, H, S, D, interleaved);
 }
 
 void refresh_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
@@ -371,12 +359,8 @@ static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
 
     if (k.dropout_active)
     {
-        entry.fwd_Seed   = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
-                                         .set_name("Seed").set_dim({1,1,1,1}).set_stride({1,1,1,1})
-                                         .set_data_type(cudnn_frontend::DataType_t::INT64));
-        entry.fwd_Offset = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
-                                         .set_name("Offset").set_dim({1,1,1,1}).set_stride({1,1,1,1})
-                                         .set_data_type(cudnn_frontend::DataType_t::INT64));
+        entry.fwd_Seed   = cudnn_frontend::scalar_tensor(*graph, "Seed", cudnn_frontend::DataType_t::INT64);
+        entry.fwd_Offset = cudnn_frontend::scalar_tensor(*graph, "Offset", cudnn_frontend::DataType_t::INT64);
         sdpa_options.set_dropout(dropout_rate, entry.fwd_Seed, entry.fwd_Offset);
 
         if (!entry.dropout_seed)
@@ -446,12 +430,8 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
 
     if (k.dropout_active)
     {
-        entry.bwd_Seed   = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
-                                         .set_name("Seed_bwd").set_dim({1,1,1,1}).set_stride({1,1,1,1})
-                                         .set_data_type(cudnn_frontend::DataType_t::INT64));
-        entry.bwd_Offset = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
-                                         .set_name("Offset_bwd").set_dim({1,1,1,1}).set_stride({1,1,1,1})
-                                         .set_data_type(cudnn_frontend::DataType_t::INT64));
+        entry.bwd_Seed   = cudnn_frontend::scalar_tensor(*graph, "Seed_bwd", cudnn_frontend::DataType_t::INT64);
+        entry.bwd_Offset = cudnn_frontend::scalar_tensor(*graph, "Offset_bwd", cudnn_frontend::DataType_t::INT64);
         sdpa_bwd_options.set_dropout(dropout_rate, entry.bwd_Seed, entry.bwd_Offset);
     }
 
@@ -897,13 +877,15 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
                  "SDPA forward: the transient Q/K/V/O BF16 pack was not planned "
                  "(ForwardPropagation::set ran without the SDPA pack spec).");
 
-        bfloat16* const query_bf16 = qkv_pack_bf16.as<bfloat16>();
-        bfloat16* const key_bf16   = query_bf16
-            + get_aligned_bytes(q_elems * Index(sizeof(bfloat16))) / Index(sizeof(bfloat16));
-        bfloat16* const value_bf16 = key_bf16
-            + get_aligned_bytes(kv_elems * Index(sizeof(bfloat16))) / Index(sizeof(bfloat16));
-        output_bf16 = value_bf16
-            + get_aligned_bytes(kv_elems * Index(sizeof(bfloat16))) / Index(sizeof(bfloat16));
+        const SdpaBf16Pack pack{q_elems, kv_elems};
+
+        throw_if(qkv_pack_bf16.size() < pack.total_elements(),
+                 "SDPA forward: the Q/K/V/O BF16 pack holds {} elements, the "
+                 "layout needs {}.", qkv_pack_bf16.size(), pack.total_elements());
+
+        const auto [query_bf16, key_bf16, value_bf16, packed_output] =
+            pack.over(qkv_pack_bf16.as<bfloat16>());
+        output_bf16 = packed_output;
 
         cast_fp32_to_bf16(q_elems,  query.as<float>(), query_bf16, cstream);
         cast_fp32_to_bf16(kv_elems, key.as<float>(),   key_bf16, cstream);
@@ -913,7 +895,7 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
         v_ptr = value_bf16;
         o_ptr = output_bf16;
     }
-    unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensor_map;
+    cudnn_frontend::VariantPack tensor_map;
     tensor_map[entry.fwd_Q] = q_ptr;
     tensor_map[entry.fwd_K] = k_ptr;
     tensor_map[entry.fwd_V] = v_ptr;
@@ -934,7 +916,7 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
     }
     cudnn_frontend::execute_graph(*entry.fwd_graph, tensor_map, entry.fwd_workspace_buf,
                                   "SDPA forward execute",
-                                  cudnn_frontend::graph_timing_enabled() ? string("sdpa_fwd") : string());
+                                  cudnn_frontend::timing_label("sdpa_fwd"));
     if (fp32_via_bf16)
         cast_bf16_to_fp32(output.size(), output_bf16, output.as<float>());
 }
@@ -1172,7 +1154,7 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
         bdk = key_gradient_bf16.get_data();
         bdv = value_gradient_bf16.get_data();
     }
-    unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensor_map;
+    cudnn_frontend::VariantPack tensor_map;
     tensor_map[entry.bwd_Q]     = bq;
     tensor_map[entry.bwd_K]     = bk;
     tensor_map[entry.bwd_V]     = bv;
@@ -1197,7 +1179,7 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
     }
     cudnn_frontend::execute_graph(*entry.bwd_graph, tensor_map, entry.bwd_workspace_buf,
                                   "SDPA backward execute",
-                                  cudnn_frontend::graph_timing_enabled() ? string("sdpa_bwd") : string());
+                                  cudnn_frontend::timing_label("sdpa_bwd"));
     if (fp32_via_bf16)
     {
         cast_bf16_to_fp32(query.size(), query_gradient_bf16.as<bfloat16>(), query_delta.as<float>());

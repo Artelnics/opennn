@@ -194,6 +194,40 @@ constexpr bool is_one_of(const T& value, const Candidates&... candidates)
     return ((value == candidates) || ...);
 }
 
+// Runs its cleanup when the scope ends, however it ends. The destructor
+// swallows: cleanup runs while an exception may already be in flight, and a
+// second one leaving a destructor would terminate. release() disarms it for the
+// paths that hand ownership on instead.
+template <typename F>
+class ScopeExit
+{
+public:
+
+    explicit ScopeExit(F new_cleanup)
+        : cleanup(std::move(new_cleanup))
+    {
+    }
+
+    ~ScopeExit() noexcept
+    {
+        if (!active) return;
+        try { cleanup(); }
+        catch (...) {}
+    }
+
+    ScopeExit(const ScopeExit&) = delete;
+    ScopeExit& operator=(const ScopeExit&) = delete;
+
+    void release() noexcept { active = false; }
+
+private:
+
+    F cleanup;
+    bool active = true;
+};
+
+template <typename F> ScopeExit(F) -> ScopeExit<F>;
+
 constexpr float EPSILON = numeric_limits<float>::epsilon();
 constexpr float MAX = numeric_limits<float>::max();
 constexpr float POS_INFINITY = numeric_limits<float>::infinity();

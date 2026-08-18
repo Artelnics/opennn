@@ -93,8 +93,8 @@ static void merge_heads_gpu(const TensorView& source, TensorView& destination)
 
 #else
 
-static void split_heads_gpu(const TensorView&, TensorView&) { throw runtime_error("split_heads_gpu: CUDA support not compiled in."); }
-static void merge_heads_gpu(const TensorView&, TensorView&) { throw runtime_error("merge_heads_gpu: CUDA support not compiled in."); }
+OPENNN_CUDA_STUB(void, split_heads_gpu, (const TensorView&, TensorView&))
+OPENNN_CUDA_STUB(void, merge_heads_gpu, (const TensorView&, TensorView&))
 
 #endif
 

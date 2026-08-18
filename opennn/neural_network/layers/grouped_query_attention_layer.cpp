@@ -255,8 +255,8 @@ static void rope_forward_gpu(const TensorView& input, const TensorView& cos_tabl
                              TensorView& output, Index head_dim, Index rotary_dim, Index position_offset)
 {
     const int seq       = to_int(input.get_shape()[1]);
-    const int model_dim = to_int(input.get_shape().back());
-    const int rows      = to_int(input.size() / input.get_shape().back());
+    const int model_dim = to_int(input.flat_columns());
+    const int rows      = to_int(input.flat_rows());
 
     output.dispatch([&]<typename T>() {
         rope_forward_cuda<T>(rows, seq, model_dim, to_int(head_dim), to_int(rotary_dim), to_int(position_offset),
@@ -269,8 +269,8 @@ static void rope_backward_gpu(const TensorView& output_delta, const TensorView& 
                               TensorView& input_delta, Index head_dim, Index rotary_dim, Index position_offset)
 {
     const int seq       = to_int(output_delta.get_shape()[1]);
-    const int model_dim = to_int(output_delta.get_shape().back());
-    const int rows      = to_int(output_delta.size() / output_delta.get_shape().back());
+    const int model_dim = to_int(output_delta.flat_columns());
+    const int rows      = to_int(output_delta.flat_rows());
 
     input_delta.dispatch([&]<typename T>() {
         rope_backward_cuda<T>(rows, seq, model_dim, to_int(head_dim), to_int(rotary_dim), to_int(position_offset),
@@ -540,7 +540,7 @@ static bool grouped_attention_sdpa_gpu(const int batch, const int query_seq, con
                 entry.graph = graph;
             }
 
-            unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
+            cudnn_frontend::VariantPack tensors;
             tensors[entry.Q] = const_cast<T*>(Q);
             tensors[entry.K] = const_cast<T*>(K);
             tensors[entry.V] = const_cast<T*>(V);
@@ -634,10 +634,10 @@ void qk_rope_cache_append(const TensorView&, const TensorView&, const TensorView
     throw runtime_error("qk_rope_cache_append: CUDA support not compiled in.");
 }
 
-static void grouped_attention_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, float, Index, float*, const int*) { throw runtime_error("grouped_attention_gpu: CUDA support not compiled in."); }
-static void qk_norm_gpu(const TensorView&, const TensorView&, TensorView&, Index, float) { throw runtime_error("qk_norm_gpu: CUDA support not compiled in."); }
-static void rope_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index) { throw runtime_error("rope_forward_gpu: CUDA support not compiled in."); }
-static void rope_backward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index) { throw runtime_error("rope_backward_gpu: CUDA support not compiled in."); }
+OPENNN_CUDA_STUB(void, grouped_attention_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, float, Index, float*, const int*))
+OPENNN_CUDA_STUB(void, qk_norm_gpu, (const TensorView&, const TensorView&, TensorView&, Index, float))
+OPENNN_CUDA_STUB(void, rope_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index))
+OPENNN_CUDA_STUB(void, rope_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index))
 
 #endif
 
@@ -917,7 +917,7 @@ struct GroupedAttentionSDPA
 {
     shared_ptr<cudnn_frontend::graph::Graph> graph;
     shared_ptr<cudnn_frontend::graph::Tensor_attributes> Q, K, V, O, SeqQ, SeqKV;
-    unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
+    cudnn_frontend::VariantPack tensors;
     void* workspace = nullptr;
     int32_t* seq_device = nullptr;
     int32_t* seq_pinned = nullptr;
@@ -1163,7 +1163,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                     sdpa.tensors[sdpa.SeqQ]  = sdpa.seq_device;
                     sdpa.tensors[sdpa.SeqKV] = sdpa.seq_device + 1;
                     cudnn_frontend::execute_graph(*sdpa.graph, sdpa.tensors, sdpa.workspace, "gqa sdpa execute",
-                                                  cudnn_frontend::graph_timing_enabled() ? string("gqa_sdpa") : string());
+                                                  cudnn_frontend::timing_label("gqa_sdpa"));
                 }
                 {
                     linear_forward_transposed(attn_v, o_proj, o_b, o_scale);

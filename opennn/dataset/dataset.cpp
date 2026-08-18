@@ -213,9 +213,11 @@ void Dataset::upload_device_matrix(const MatrixR& matrix)
 
     const Index bytes = Index(matrix.size()) * Index(sizeof(float));
     data_device.resize_bytes(bytes, Device::CUDA);
+
+    const cudaStream_t stream = device::get_compute_stream();
     device::copy_async(data_device.data(), matrix.data(), bytes,
-                       device::CopyKind::HostToDevice, device::get_compute_stream());
-    device::synchronize(device::get_compute_stream());
+                       device::CopyKind::HostToDevice, stream);
+    device::synchronize(stream);
 }
 
 void Dataset::set_data_constant(float new_value)

@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   B A T C H   S T R U C T   H E A D E R
@@ -25,6 +25,10 @@ enum class FillMode { Training, Validation, Inference };
 
 struct BatchSlot
 {
+    // A slot carries data once it has both a shape and a buffer behind it;
+    // an unused slot (a network with no decoder input, say) has neither.
+    bool has_data() const noexcept { return !shape.empty() && buffer.data(); }
+
     Buffer buffer;
     Shape  shape;
     Type   type = Type::FP32;

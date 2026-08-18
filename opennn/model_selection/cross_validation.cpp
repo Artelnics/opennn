@@ -150,19 +150,11 @@ void refit_final_model_on_development(TrainingStrategy* training_strategy, Index
     const Index saved_epochs = optimizer->get_maximum_epochs();
     optimizer->set_maximum_epochs(final_epochs);
 
-    try
-    {
-        FoldScope scope(*dataset, development, {});
-        neural_network->set_parameters_random();
-        training_strategy->train();
-    }
-    catch (...)
-    {
-        optimizer->set_maximum_epochs(saved_epochs);
-        throw;
-    }
+    ScopeExit epochs_cleanup([optimizer, saved_epochs] { optimizer->set_maximum_epochs(saved_epochs); });
 
-    optimizer->set_maximum_epochs(saved_epochs);
+    FoldScope scope(*dataset, development, {});
+    neural_network->set_parameters_random();
+    training_strategy->train();
 }
 
 }

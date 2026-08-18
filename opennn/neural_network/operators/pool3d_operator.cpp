@@ -347,12 +347,12 @@ static void first_token_3d_backward_gpu(const TensorView& output_delta, TensorVi
 
 #else
 
-static void max_pooling_3d_forward_gpu(const TensorView&, TensorView&, TensorView&, bool, const int*) { throw runtime_error("max_pooling_3d_forward_gpu: CUDA support not compiled in."); }
-static void average_pooling_3d_forward_gpu(const TensorView&, TensorView&, const int*) { throw runtime_error("average_pooling_3d_forward_gpu: CUDA support not compiled in."); }
-static void max_pooling_3d_backward_gpu(const TensorView&, const TensorView&, TensorView&) { throw runtime_error("max_pooling_3d_backward_gpu: CUDA support not compiled in."); }
-static void average_pooling_3d_backward_gpu(const TensorView&, const TensorView&, TensorView&, const int*) { throw runtime_error("average_pooling_3d_backward_gpu: CUDA support not compiled in."); }
-static void first_token_3d_forward_gpu(const TensorView&, TensorView&) { throw runtime_error("first_token_3d_forward_gpu: CUDA support not compiled in."); }
-static void first_token_3d_backward_gpu(const TensorView&, TensorView&) { throw runtime_error("first_token_3d_backward_gpu: CUDA support not compiled in."); }
+OPENNN_CUDA_STUB(void, max_pooling_3d_forward_gpu, (const TensorView&, TensorView&, TensorView&, bool, const int*))
+OPENNN_CUDA_STUB(void, average_pooling_3d_forward_gpu, (const TensorView&, TensorView&, const int*))
+OPENNN_CUDA_STUB(void, max_pooling_3d_backward_gpu, (const TensorView&, const TensorView&, TensorView&))
+OPENNN_CUDA_STUB(void, average_pooling_3d_backward_gpu, (const TensorView&, const TensorView&, TensorView&, const int*))
+OPENNN_CUDA_STUB(void, first_token_3d_forward_gpu, (const TensorView&, TensorView&))
+OPENNN_CUDA_STUB(void, first_token_3d_backward_gpu, (const TensorView&, TensorView&))
 
 #endif
 

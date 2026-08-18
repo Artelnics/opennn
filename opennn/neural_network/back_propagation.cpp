@@ -399,7 +399,7 @@ vector<MemoryPoolEntry> BackPropagation::make_co_planned_lifetimes(
     const NeuralNetwork& neural_network = planner.require_network();
     const DeltaPlan plan = planner.build_delta_plan();
 
-    const Index backward_base = Index(2 * neural_network.get_layers_number() - 1);
+    const Index backward_base = backward_step(neural_network.get_layers_number(), 0);
     const Index step_offset =
         backward_base - neural_network.get_last_trainable_layer_index();
 
@@ -472,6 +472,11 @@ void BackPropagation::bind_deltas(const DeltaLayout& layout,
                                   const vector<vector<TensorSpec>>& backward_specs)
 {
     const NeuralNetwork& neural_network = require_network();
+
+    throw_if(byte_offsets.size() != layout.entries.size(),
+             "BackPropagation::bind_deltas: got {} byte offsets for {} delta "
+             "entries; the forward co-plan and this layout disagree.",
+             byte_offsets.size(), layout.entries.size());
 
     const auto& layers = neural_network.get_layers();
     const Index layers_number = neural_network.get_layers_number();

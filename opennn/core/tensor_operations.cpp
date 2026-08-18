@@ -334,9 +334,9 @@ void add(const TensorView& input_1,
     require_same_device(input_1, output, "add");
     require_same_type(input_1, input_2, "add");
     require_same_type(input_1, output, "add");
-    if (!input_1.is_cuda()) require_cpu_fp32(input_1, "add", "input");
-
     if (input_1.is_cuda()) { add_gpu(input_1, input_2, output); return; }
+
+    require_cpu_fp32(input_1, "add", "input");
     output.as_vector().noalias() = input_1.as_vector() + input_2.as_vector();
 }
 
@@ -469,9 +469,9 @@ void softmax(TensorView& output)
     require_tensor(output, "softmax", "output");
     throw_if(output.get_shape().back() <= 0, "softmax: the channel dimension must be positive.");
     require_fp32_or_bf16(output, "softmax", "output");
-    if (!output.is_cuda()) require_cpu_fp32(output, "softmax", "output");
-
     if (output.is_cuda()) { softmax_gpu(output); return; }
+
+    require_cpu_fp32(output, "softmax", "output");
     softmax_cpu(output);
 }
 
@@ -553,9 +553,9 @@ void activation_forward(TensorView& output, ActivationFunction function)
 
     require_tensor(output, "activation_forward", "output");
     require_fp32_or_bf16(output, "activation_forward", "output");
-    if (!output.is_cuda()) require_cpu_fp32(output, "activation_forward", "output");
-
     if (output.is_cuda()) { activation_forward_gpu(output, function); return; }
+
+    require_cpu_fp32(output, "activation_forward", "output");
     activation_forward_cpu(output, function);
 }
 
@@ -570,9 +570,9 @@ void activation_backward(const TensorView& outputs, TensorView& delta, Activatio
     require_same_device(outputs, delta, "activation_backward");
     require_same_type(outputs, delta, "activation_backward");
     require_fp32_or_bf16(outputs, "activation_backward", "outputs");
-    if (!outputs.is_cuda()) require_cpu_fp32(outputs, "activation_backward", "outputs");
-
     if (outputs.is_cuda()) { activation_backward_gpu(outputs, delta, function); return; }
+
+    require_cpu_fp32(outputs, "activation_backward", "outputs");
     activation_backward_cpu(outputs, delta, function);
 }
 
@@ -947,9 +947,9 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
                                   TensorView& output, cublasLtEpilogue_t epilogue,
                                   TensorView* pre_activation)
 {
-    const int input_columns  = to_int(input.get_shape().back());
-    const int output_columns = to_int(weights.get_shape().back());
-    const int total_rows     = to_int(input.size() / input.get_shape().back());
+    const int input_columns  = to_int(input.flat_columns());
+    const int output_columns = to_int(weights.flat_columns());
+    const int total_rows     = to_int(input.flat_rows());
 
     const void* input_for_gemm = data_for_gemm_dtype(input, weights.get_type());
     const cudaDataType_t io_type = output.cuda_dtype();
@@ -1039,9 +1039,9 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     throw_if(weight_scale.empty() || !input.is_bf16() || !output.is_bf16(),
              "linear_forward: INT8 weights require BF16 activations and a per-channel scale vector.");
 
-    const int input_columns  = to_int(input.get_shape().back());
-    const int output_columns = to_int(weights.get_shape().back());
-    const int total_rows     = to_int(input.size() / input.get_shape().back());
+    const int input_columns  = to_int(input.flat_columns());
+    const int output_columns = to_int(weights.flat_columns());
+    const int total_rows     = to_int(input.flat_rows());
 
     const bool gemv_path = (total_rows <= W8A16_MAX_M
                             || weights.byte_size() > int8_dequant_budget_bytes)
@@ -1068,9 +1068,9 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
                          TensorView& input_delta, bool accumulate_input_delta,
                          const TensorView* drelu_mask, const TensorView* addend)
 {
-    const int input_columns  = to_int(input.get_shape().back());
-    const int output_columns = to_int(output_delta.get_shape().back());
-    const int total_rows     = to_int(input.size() / input.get_shape().back());
+    const int input_columns  = to_int(input.flat_columns());
+    const int output_columns = to_int(output_delta.flat_columns());
+    const int total_rows     = to_int(input.flat_rows());
 
     const void* input_for_gemm = data_for_gemm_dtype(input, weights.get_type());
 
@@ -1192,7 +1192,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 
 #else
 
-#define OPENNN_STUB_GPU_OP(name, sig) static void name sig { throw runtime_error(#name ": CUDA support not compiled in."); }
+#define OPENNN_STUB_GPU_OP(name, sig) OPENNN_CUDA_STUB(void, name, sig)
 OPENNN_GPU_OPS(OPENNN_STUB_GPU_OP)
 #undef OPENNN_STUB_GPU_OP
 

@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   N E U R A L   N E T W O R K   C L A S S
@@ -275,20 +275,71 @@ uint64_t load_uint64_le(const unsigned char* source)
          | uint64_t{source[7]} << 56;
 }
 
+// Sequential little-endian cursors over the snapshot header. Fields are laid out
+// in the order they are appended, so writer and reader cannot disagree about an
+// offset, and SNAPSHOT_FILE_HEADER_SIZE is whatever the writer ends up having
+// written rather than a total kept by hand.
+class HeaderWriter
+{
+public:
+
+    explicit HeaderWriter(span<unsigned char> destination) : buffer(destination) {}
+
+    void bytes(span<const unsigned char> value)
+    {
+        ranges::copy(value, buffer.begin() + used);
+        used += Index(value.size());
+    }
+
+    void u32(uint32_t value) { store_uint32_le(buffer.data() + used, value); used += 4; }
+    void u64(uint64_t value) { store_uint64_le(buffer.data() + used, value); used += 8; }
+
+    Index size() const noexcept { return used; }
+
+private:
+
+    span<unsigned char> buffer;
+    Index used = 0;
+};
+
+class HeaderReader
+{
+public:
+
+    explicit HeaderReader(span<const unsigned char> source) : buffer(source) {}
+
+    void skip(Index count) noexcept { used += count; }
+
+    uint32_t u32() { const uint32_t v = load_uint32_le(buffer.data() + used); used += 4; return v; }
+    uint64_t u64() { const uint64_t v = load_uint64_le(buffer.data() + used); used += 8; return v; }
+
+private:
+
+    span<const unsigned char> buffer;
+    Index used = 0;
+};
+
 array<unsigned char, SNAPSHOT_FILE_HEADER_SIZE> make_snapshot_header(
     const SnapshotMagic& magic, uint64_t elements, uint64_t payload_bytes,
     uint64_t layout, uint64_t checksum)
 {
     array<unsigned char, SNAPSHOT_FILE_HEADER_SIZE> header{};
-    ranges::copy(magic, header.begin());
-    store_uint32_le(header.data() + 8, SNAPSHOT_FILE_VERSION);
-    store_uint32_le(header.data() + 12, SNAPSHOT_FILE_HEADER_SIZE);
-    store_uint32_le(header.data() + 16, SNAPSHOT_FILE_ENDIAN_MARKER);
-    store_uint32_le(header.data() + 20, SNAPSHOT_FILE_SCALAR_FP32);
-    store_uint64_le(header.data() + 24, elements);
-    store_uint64_le(header.data() + 32, payload_bytes);
-    store_uint64_le(header.data() + 40, layout);
-    store_uint64_le(header.data() + 48, checksum);
+
+    HeaderWriter write(header);
+    write.bytes(magic);
+    write.u32(SNAPSHOT_FILE_VERSION);
+    write.u32(SNAPSHOT_FILE_HEADER_SIZE);
+    write.u32(SNAPSHOT_FILE_ENDIAN_MARKER);
+    write.u32(SNAPSHOT_FILE_SCALAR_FP32);
+    write.u64(elements);
+    write.u64(payload_bytes);
+    write.u64(layout);
+    write.u64(checksum);
+
+    throw_if(write.size() != SNAPSHOT_FILE_HEADER_SIZE,
+             "make_snapshot_header: wrote {} header bytes, expected {}.",
+             write.size(), Index(SNAPSHOT_FILE_HEADER_SIZE));
+
     return header;
 }
 
@@ -336,14 +387,17 @@ uint64_t read_snapshot_header(ifstream& file, uintmax_t file_bytes,
              "legacy raw snapshot of the expected size.",
              caller, file_name.string());
 
-    const uint32_t version = load_uint32_le(header.data() + 8);
-    const uint32_t header_size = load_uint32_le(header.data() + 12);
-    const uint32_t endian_marker = load_uint32_le(header.data() + 16);
-    const uint32_t scalar_type = load_uint32_le(header.data() + 20);
-    const uint64_t stored_elements = load_uint64_le(header.data() + 24);
-    const uint64_t stored_payload_bytes = load_uint64_le(header.data() + 32);
-    const uint64_t stored_layout = load_uint64_le(header.data() + 40);
-    const uint64_t stored_checksum = load_uint64_le(header.data() + 48);
+    HeaderReader read(header);
+    read.skip(Index(magic.size()));                 // matched above
+
+    const uint32_t version = read.u32();
+    const uint32_t header_size = read.u32();
+    const uint32_t endian_marker = read.u32();
+    const uint32_t scalar_type = read.u32();
+    const uint64_t stored_elements = read.u64();
+    const uint64_t stored_payload_bytes = read.u64();
+    const uint64_t stored_layout = read.u64();
+    const uint64_t stored_checksum = read.u64();
 
     throw_if(version != SNAPSHOT_FILE_VERSION,
              "NeuralNetwork::{}: unsupported {} file version {} in {} "
@@ -2202,8 +2256,7 @@ void NeuralNetwork::link_parameters()
 
     float* fp32_base = parameters.as<float>();
     float* fp32_inference_base =
-        parameters.get_device() == Device::CUDA
-        && !parameters.owns_memory()
+        fp32_master_released()
         && !parameters_fp32_inference_storage.empty()
         ? parameters_fp32_inference_storage.as<float>()
         : nullptr;
@@ -2357,7 +2410,7 @@ void NeuralNetwork::copy_parameters_device()
     if (parameters.empty())
         return clear_low_precision_parameter_storage();
 
-    if (parameters.get_device() == Device::CUDA && !parameters.owns_memory())
+    if (fp32_master_released())
     {
         const bool bf16_released = config.training_type == Type::BF16 && !parameters_bf16_mirror.empty();
         const bool int8_released = config.training_type == Type::INT8 && !parameters_int8_storage.empty();
@@ -2604,7 +2657,7 @@ void NeuralNetwork::copy_parameters_host()
     if (parameters.empty())
         return clear_low_precision_parameter_storage();
 
-    throw_if(parameters.get_device() == Device::CUDA && !parameters.owns_memory(),
+    throw_if(fp32_master_released(),
              "NeuralNetwork::copy_parameters_host: the fp32 CUDA parameter master "
              "was released for quantized inference and cannot be copied back.");
 

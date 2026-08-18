@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C U D N N   F R O N T E N D   U T I L I T I E S   H E A D E R
@@ -187,6 +187,81 @@ inline void set_nhwc_output(shared_ptr<graph::Tensor_attributes>& tensor,
     tensor->set_output(true)
            .set_dim({n, c, h, w})
            .set_stride(nhwc_strides(c, h, w));
+}
+
+// The pointer bindings a graph execution consumes: one device pointer per
+// Tensor_attributes the graph declared.
+using VariantPack = unordered_map<shared_ptr<graph::Tensor_attributes>, void*>;
+
+// A (B, H, S, D) tensor over memory that is laid out either that way or,
+// interleaved, as (B, S, H, D) - the layout the projection GEMMs write.
+inline vector<int64_t> bhsd_strides(int64_t h, int64_t s, int64_t d, bool interleaved)
+{
+    return interleaved ? vector<int64_t>{s * h * d, d, h * d, 1}
+                       : vector<int64_t>{h * s * d, s * d, d, 1};
+}
+
+inline shared_ptr<graph::Tensor_attributes>
+bhsd_tensor(graph::Graph& graph, const char* name,
+            int64_t b, int64_t h, int64_t s, int64_t d, bool interleaved)
+{
+    return graph.tensor(graph::Tensor_attributes()
+                        .set_name(name)
+                        .set_dim   ({b, h, s, d})
+                        .set_stride(bhsd_strides(h, s, d, interleaved)));
+}
+
+inline void set_bhsd_output(shared_ptr<graph::Tensor_attributes>& tensor,
+                            int64_t b, int64_t h, int64_t s, int64_t d, bool interleaved)
+{
+    tensor->set_output(true)
+           .set_dim   ({b, h, s, d})
+           .set_stride(bhsd_strides(h, s, d, interleaved));
+}
+
+// A (1, C, 1, 1) FP32 tensor: the per-channel parameters and statistics batch
+// normalization and a convolution bias work in. The strides are the NHWC ones
+// for a 1x1 image, which is what the layout amounts to.
+inline shared_ptr<graph::Tensor_attributes>
+per_channel_tensor(graph::Graph& graph, const char* name, int64_t channels)
+{
+    return graph.tensor(graph::Tensor_attributes()
+                        .set_name(name)
+                        .set_data_type(DataType_t::FLOAT)
+                        .set_dim({1, channels, 1, 1})
+                        .set_stride(nhwc_strides(channels, 1, 1)));
+}
+
+inline void set_per_channel_output(shared_ptr<graph::Tensor_attributes>& tensor, int64_t channels)
+{
+    tensor->set_output(true)
+           .set_data_type(DataType_t::FLOAT)
+           .set_dim({1, channels, 1, 1})
+           .set_stride(nhwc_strides(channels, 1, 1));
+}
+
+// Empty unless graph timing is on, and execute_graph reads an empty label as
+// "do not time" - so the format cost is not paid when timing is off, and a
+// non-empty constant would silently turn timing on.
+template <typename... Args>
+inline string timing_label(format_string<Args...> fmt, Args&&... args)
+{
+    if (!graph_timing_enabled()) return {};
+    return format(fmt, std::forward<Args>(args)...);
+}
+
+// A one-element tensor. Pass by value for a host scalar the graph reads
+// directly; leave it false for a device pointer.
+inline shared_ptr<graph::Tensor_attributes>
+scalar_tensor(graph::Graph& graph, const char* name, DataType_t dtype,
+              bool pass_by_value = false, int64_t batch = 1)
+{
+    return graph.tensor(graph::Tensor_attributes()
+                        .set_name(name)
+                        .set_dim   ({batch, 1, 1, 1})
+                        .set_stride({1, 1, 1, 1})
+                        .set_data_type(dtype)
+                        .set_is_pass_by_value(pass_by_value));
 }
 
 // Execution-plan disk cache. Building plans dominates process startup: on
@@ -467,11 +542,7 @@ inline bool finalize_attention(graph::Graph& graph, const string& tag, int64_t& 
 inline shared_ptr<graph::Tensor_attributes>
 seq_len_scalar(graph::Graph& graph, const char* name, int64_t batch = 1)
 {
-    return graph.tensor(graph::Tensor_attributes()
-                        .set_name(name)
-                        .set_dim({batch, 1, 1, 1})
-                        .set_stride({1, 1, 1, 1})
-                        .set_data_type(DataType_t::INT32));
+    return scalar_tensor(graph, name, DataType_t::INT32, false, batch);
 }
 
 // Builds the plan(s) of a graph. Returns true when the plan choice is left to

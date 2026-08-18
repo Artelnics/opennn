@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   A T T E N T I O N   O P E R A T O R   H E A D E R
@@ -50,6 +50,34 @@ struct AttentionOperator : Operator
     static constexpr size_t sdpa_scratch_slots_count = 8;
 
     vector<TensorSpec> sdpa_gradient_scratch_specs(Index) const;
+
+    // The transient BF16 pack the FP32 SDPA path stages Q/K/V/O through. One
+    // definition serves both the size ForwardPropagation must plan and the
+    // pointers the graph is handed, so the two cannot drift apart.
+    struct SdpaBf16Pack
+    {
+        Index query_elements = 0;
+        Index source_elements = 0;
+
+        static Index slot_elements(Index elements)
+        {
+            return get_aligned_bytes(elements * Index(sizeof(bfloat16))) / Index(sizeof(bfloat16));
+        }
+
+        Index total_elements() const
+        {
+            return 2 * slot_elements(query_elements) + 2 * slot_elements(source_elements);
+        }
+
+        struct Pointers { bfloat16* query; bfloat16* key; bfloat16* value; bfloat16* output; };
+
+        Pointers over(bfloat16* base) const
+        {
+            bfloat16* const key   = base + slot_elements(query_elements);
+            bfloat16* const value = key  + slot_elements(source_elements);
+            return {base, key, value, value + slot_elements(source_elements)};
+        }
+    };
 
     TensorSpec sdpa_qkv_pack_spec(Index) const;
 

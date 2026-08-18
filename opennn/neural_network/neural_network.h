@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   N E U R A L   N E T W O R K   C L A S S   H E A D E R
@@ -36,6 +36,27 @@ class NeuralNetwork
 {
 
 public:
+
+    // Stages the parameters on the host for as long as it lives, and puts them
+    // back on the device when it dies - however it dies. Anything that reads
+    // parameter values directly (expression export, reporting) needs this;
+    // doing it by hand leaves them stranded on the host when a read throws.
+    struct HostParametersGuard
+    {
+        explicit HostParametersGuard(NeuralNetwork& n)
+            : network(n), was_on_device(n.parameters.get_device() == Device::CUDA)
+        {
+            if (was_on_device) network.copy_parameters_host();
+        }
+
+        ~HostParametersGuard() { if (was_on_device) network.copy_parameters_device(); }
+
+        HostParametersGuard(const HostParametersGuard&) = delete;
+        HostParametersGuard& operator=(const HostParametersGuard&) = delete;
+
+        NeuralNetwork& network;
+        const bool was_on_device;
+    };
 
     NeuralNetwork();
 
@@ -177,6 +198,14 @@ public:
     void set_parameters_pytorch();
     void link_parameters();
 
+    // True once release_bf16_fp32_parameter_master_for_inference() has handed
+    // the fp32 master back to the allocator: the CUDA parameter view is alive
+    // but non-owning, and only the quantized mirror holds real weights.
+    bool fp32_master_released() const noexcept
+    {
+        return parameters.get_device() == Device::CUDA && !parameters.owns_memory();
+    }
+
     // Points every layer's gradient views at this buffer, and does nothing when
     // they already point there. Training alternates between propagation contexts
     // - the full batch and the remainder batch - so the link belongs to the
@@ -292,23 +321,6 @@ private:
     void compile(Configuration::EffectiveConfig);
 
     MatrixR calculate_outputs_device(const vector<TensorView>&, ForwardPropagation&);
-
-    struct HostParametersGuard
-    {
-        explicit HostParametersGuard(NeuralNetwork& n)
-            : network(n), was_on_device(n.parameters.get_device() == Device::CUDA)
-        {
-            if (was_on_device) network.copy_parameters_host();
-        }
-
-        ~HostParametersGuard() { if (was_on_device) network.copy_parameters_device(); }
-
-        HostParametersGuard(const HostParametersGuard&) = delete;
-        HostParametersGuard& operator=(const HostParametersGuard&) = delete;
-
-        NeuralNetwork& network;
-        const bool was_on_device;
-    };
 
     struct HostStatesGuard
     {

@@ -395,36 +395,6 @@ using namespace ::cudnn_frontend;
 namespace
 {
 
-shared_ptr<graph::Tensor_attributes>
-per_channel_tensor(graph::Graph& graph, const char* name, int64_t channels)
-{
-
-    return graph.tensor(graph::Tensor_attributes()
-                        .set_name(name)
-                        .set_data_type(DataType_t::FLOAT)
-                        .set_dim({1, channels, 1, 1})
-                        .set_stride({channels, 1, channels, channels}));
-}
-
-shared_ptr<graph::Tensor_attributes>
-scalar_tensor(graph::Graph& graph, const char* name)
-{
-    return graph.tensor(graph::Tensor_attributes()
-                        .set_name(name)
-                        .set_data_type(DataType_t::FLOAT)
-                        .set_dim({1, 1, 1, 1})
-                        .set_stride({1, 1, 1, 1})
-                        .set_is_pass_by_value(true));
-}
-
-void set_per_channel_output(shared_ptr<graph::Tensor_attributes>& tensor, int64_t channels)
-{
-    tensor->set_output(true)
-           .set_data_type(DataType_t::FLOAT)
-           .set_dim({1, channels, 1, 1})
-           .set_stride({channels, 1, channels, channels});
-}
-
 void build_bn_forward(BatchNormalizationOperator::BatchNormalizationGraphCache::Entry& entry,
                       int64_t batch, int64_t channels, int64_t spatial,
                       bool fuse_relu, bool fuse_add, Type dtype)
@@ -436,8 +406,8 @@ void build_bn_forward(BatchNormalizationOperator::BatchNormalizationGraphCache::
     entry.fwd_Bias     = per_channel_tensor(*graph, "BIAS", channels);
     entry.fwd_PrevMean = per_channel_tensor(*graph, "PREV_MEAN", channels);
     entry.fwd_PrevVar  = per_channel_tensor(*graph, "PREV_VAR", channels);
-    entry.fwd_Eps      = scalar_tensor(*graph, "BN_EPSILON");
-    entry.fwd_Mom      = scalar_tensor(*graph, "MOMENTUM");
+    entry.fwd_Eps      = scalar_tensor(*graph, "BN_EPSILON", DataType_t::FLOAT, true);
+    entry.fwd_Mom      = scalar_tensor(*graph, "MOMENTUM", DataType_t::FLOAT, true);
 
     auto attributes = graph::Batchnorm_attributes()
                       .set_epsilon(entry.fwd_Eps)
@@ -605,7 +575,7 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
         void* residual_ptr = fuse_add ? residual.get_data() : nullptr;
         void* y_ptr        = output.get_data();
 
-        unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
+        cudnn_frontend::VariantPack tensors;
         if (fuse_add) tensors[entry.fwd_Residual] = residual_ptr;
         tensors[entry.fwd_X]        = x_ptr;
         tensors[entry.fwd_Scale]    = gamma.get_data();
@@ -621,8 +591,7 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
         tensors[entry.fwd_NextVar]  = running_variance.get_data();
 
         cudnn_frontend::run_slot(entry.fwd, tensors, "BatchNormOperator fwd",
-                                 cudnn_frontend::graph_timing_enabled()
-                                 ? format("bn_fwd c{} r{}", features, input.size() / features) : string(),
+                                 cudnn_frontend::timing_label("bn_fwd c{} r{}", features, input.size() / features),
                                  true);
     });
 
@@ -811,8 +780,7 @@ void BatchNormalizationOperator::apply_delta_gpu(
             dy_ptr = dx_fp32.data();
         }
 
-        unordered_map<
-            shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors{
+        cudnn_frontend::VariantPack tensors{
             {entry.bwd_DY,     dy_ptr},
             {entry.bwd_X,      x_ptr},
             {entry.bwd_Scale,  gamma.get_data()},
@@ -834,9 +802,7 @@ void BatchNormalizationOperator::apply_delta_gpu(
 
         cudnn_frontend::run_slot(
             entry.bwd, tensors, "BatchNormOperator bwd",
-            cudnn_frontend::graph_timing_enabled()
-                ? format("bn_bwd c{} r{}", features, input.size() / features)
-                : string(),
+            cudnn_frontend::timing_label("bn_bwd c{} r{}", features, input.size() / features),
             true);
 
         if (stage_fp32)

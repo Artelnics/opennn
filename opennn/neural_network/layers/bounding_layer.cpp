@@ -79,10 +79,8 @@ static void bound_gpu(const TensorView& input,
 
 #else
 
-static void bound_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&)
-{
-    throw runtime_error("bound_gpu: CUDA support not compiled in.");
-}
+OPENNN_CUDA_STUB(void, bound_gpu,
+                 (const TensorView&, const TensorView&, const TensorView&, TensorView&))
 
 #endif
 

@@ -925,6 +925,7 @@ void read_classic_distribution(ClassicGenerationState& state,
     const TensorView output = state.propagation->get_outputs();
     const Index vocabulary = output.get_shape().back();
     const Index offset = position * vocabulary;
+    const cudaStream_t stream = device::get_compute_stream();
 
     if (output.is_bf16())
     {
@@ -932,8 +933,8 @@ void read_classic_distribution(ClassicGenerationState& state,
                            output.as<bfloat16>() + offset,
                            vocabulary * Index(sizeof(uint16_t)),
                            device::CopyKind::DeviceToHost,
-                           device::get_compute_stream());
-        device::synchronize(device::get_compute_stream());
+                           stream);
+        device::synchronize(stream);
         ranges::transform(state.bf16_staging | views::take(vocabulary),
                           state.distribution.data(), bfloat16_to_float_host);
         return;
@@ -945,8 +946,8 @@ void read_classic_distribution(ClassicGenerationState& state,
                        output.as<float>() + offset,
                        vocabulary * Index(sizeof(float)),
                        device::CopyKind::DeviceToHost,
-                       device::get_compute_stream());
-    device::synchronize(device::get_compute_stream());
+                       stream);
+    device::synchronize(stream);
 }
 
 }

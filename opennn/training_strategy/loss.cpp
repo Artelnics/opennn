@@ -1406,7 +1406,7 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
     }
 
 #ifdef OPENNN_HAS_CUDA
-    const bool on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
+    const bool on_gpu = runs_on_gpu();
     if (on_gpu)
     {
 
@@ -1461,7 +1461,7 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
     EvaluationResult result;
 
     float* workspace_device = nullptr;
-    const bool device_on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
+    const bool device_on_gpu = runs_on_gpu();
     if (device_on_gpu && error != Error::Yolo)
         workspace_device = ensure_error_workspace(input, batch.get_batch_size());
 
@@ -1511,10 +1511,7 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
 bool Loss::supports_device_epoch_metrics() const
 {
     if (error == Error::Yolo) return false;
-    return device::is_cuda_build()
-        && neural_network
-        && neural_network->is_gpu()
-        && error != Error::MinkowskiError;
+    return runs_on_gpu() && error != Error::MinkowskiError;
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -1776,7 +1773,7 @@ void Loss::back_propagate_layers(ForwardPropagation& forward_propagation,
 
 void Loss::add_regularization(BackPropagation& back_propagation) const
 {
-    if (regularization_method == Regularization::NoRegularization) return;
+    if (!has_regularization()) return;
 
     check_neural_network();
 
@@ -1797,7 +1794,7 @@ float Loss::calculate_regularization(const VectorR& parameters_vec) const
 
 float Loss::calculate_regularization(const TensorView& parameters) const
 {
-    if (regularization_method == Regularization::NoRegularization || regularization_weight == 0.0f) return 0.0f;
+    if (!has_regularization()) return 0.0f;
 
     float penalty = 0.0f;
 
@@ -1848,7 +1845,7 @@ void Loss::set_error(const string& new_name)
 
 void Loss::add_regularization_gradient(const TensorView& gradient) const
 {
-    if (regularization_method == Regularization::NoRegularization || regularization_weight == 0.0f) return;
+    if (!has_regularization()) return;
 
     check_neural_network();
 
@@ -1872,7 +1869,7 @@ void Loss::add_regularization_gradient(const TensorView& gradient) const
 
 void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
 {
-    if (regularization_method == Regularization::NoRegularization || regularization_weight == 0.0f) return;
+    if (!has_regularization()) return;
 
     check_neural_network();
 

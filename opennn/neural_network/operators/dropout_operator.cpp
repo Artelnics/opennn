@@ -86,8 +86,8 @@ static void dropout_backward_gpu(TensorView& delta, const Buffer& mask, float ra
 
 #else
 
-static void dropout_forward_gpu(TensorView&, Buffer&, float) { throw runtime_error("dropout_forward_gpu: CUDA support not compiled in."); }
-static void dropout_backward_gpu(TensorView&, const Buffer&, float) { throw runtime_error("dropout_backward_gpu: CUDA support not compiled in."); }
+OPENNN_CUDA_STUB(void, dropout_forward_gpu, (TensorView&, Buffer&, float))
+OPENNN_CUDA_STUB(void, dropout_backward_gpu, (TensorView&, const Buffer&, float))
 
 #endif
 

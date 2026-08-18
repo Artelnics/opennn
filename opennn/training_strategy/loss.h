@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L O S S   C L A S S   H E A D E R
@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "opennn/core/device_backend.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/neural_network/back_propagation.h"
 
@@ -187,6 +188,21 @@ private:
     void check_neural_network() const
     {
         throw_if(!neural_network, "Loss error: neural network is not set.");
+    }
+
+    // The device paths need a CUDA build as well as a CUDA-configured network:
+    // is_gpu() alone only says what the configuration asked for.
+    bool runs_on_gpu() const noexcept
+    {
+        return device::is_cuda_build() && neural_network && neural_network->is_gpu();
+    }
+
+    // A zero weight is as good as no regularization, and skipping it here keeps
+    // the four regularization entry points asking the same question.
+    bool has_regularization() const noexcept
+    {
+        return regularization_method != Regularization::NoRegularization
+            && regularization_weight != 0.0f;
     }
 
     void add_regularization(BackPropagation&) const;

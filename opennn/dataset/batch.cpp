@@ -129,21 +129,21 @@ void Batch::set(const Index new_batch_size,
     setup_buffer("Target",  target,  Type::FP32);
     setup_buffer("Decoder", decoder, Type::FP32);
 
-    if (!decoder.shape.empty() && decoder.buffer.data())
+    if (decoder.has_data())
         input_views_host_cache.emplace_back(
             decoder.buffer.as<float>(),
             decoder.shape,
             Type::FP32,
             Device::CPU);
 
-    if (!input.shape.empty() && input.buffer.data())
+    if (input.has_data())
         input_views_host_cache.emplace_back(
             input.buffer.as<float>(),
             input.shape,
             Type::FP32,
             Device::CPU);
 
-    if (!target.shape.empty() && target.buffer.data())
+    if (target.has_data())
         target_view_host_cache = TensorView(
             target.buffer.as<float>(),
             target.shape,
@@ -243,9 +243,9 @@ void Batch::set(const Index new_batch_size,
             format("samples={}", batch_size));
     }
 
-    if (!input.shape.empty() && input.buffer.data())
+    if (input.has_data())
     {
-        if (!decoder.shape.empty() && decoder.buffer.data())
+        if (decoder.has_data())
         {
             input_views_cache.emplace_back(
                 decoder.buffer.data(),
@@ -261,7 +261,7 @@ void Batch::set(const Index new_batch_size,
             Device::CUDA);
     }
 
-    if (!target.shape.empty() && target.buffer.data())
+    if (target.has_data())
     {
         target_view_cache = TensorView(
             target.buffer.data(),
