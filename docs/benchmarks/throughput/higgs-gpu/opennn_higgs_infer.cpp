@@ -12,7 +12,7 @@
 //   used on the PyTorch and TensorFlow sides. It is selected exactly like
 //   opennn_speed.cpp: Configuration::instance().set(Device::CUDA, type).
 //
-//   usage:  opennn_higgs_infer <test_csv> [batch] [runs] [fp32|bf16] [hidden] [hidden_layers] [activation] [resident|default|reuse]
+//   usage:  opennn_higgs_infer <test_csv> [batch] [runs] [fp32|bf16] [hidden] [hidden_layers] [activation] [resident|default|reuse|construct]
 //                              [hidden] [hidden_layers] [activation]
 
 #include <algorithm>
@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
     {
         if (argc < 2)
         {
-            cerr << "usage: opennn_higgs_infer <test_csv> [batch] [runs] [fp32|bf16] [hidden] [hidden_layers] [activation] [resident|default|reuse]"
+            cerr << "usage: opennn_higgs_infer <test_csv> [batch] [runs] [fp32|bf16] [hidden] [hidden_layers] [activation] [resident|default|reuse|construct]"
                          " [hidden] [hidden_layers] [activation]\n";
             return 2;
         }
@@ -201,7 +201,16 @@ int main(int argc, char* argv[])
         {
             for (Index b = 0; b < batches; ++b)
             {
-                if (api_path == "reuse")
+                // `construct` isolates what the default path pays per call
+                // beyond the work itself: planning the arena and allocating it.
+                // No forward pass is run.
+                if (api_path == "construct")
+                {
+                    ForwardPropagation probe(batch, network.get(),
+                                             ForwardPropagationMode::Inference);
+                    (void)probe.get_outputs();
+                }
+                else if (api_path == "reuse")
                     network->calculate_outputs(host_batch, default_outputs);
                 else
                     default_outputs = network->calculate_outputs(host_batch);
