@@ -1119,6 +1119,13 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
     void* bdk = key_delta.get_data();
     void* bdv = value_delta.get_data();
     const bool fp32_via_bf16 = query.is_fp32();
+
+    // Indexed positionally below, so the count is a precondition rather than
+    // something the caller can get away with shortening.
+    throw_if(bf16_scratch.size() < sdpa_scratch_slots_count,
+             "SDPA backward: {} BF16 scratch slots were passed, the layout needs {}.",
+             bf16_scratch.size(), sdpa_scratch_slots_count);
+
     const TensorView& output_gradient_bf16 = bf16_scratch[0];
     const TensorView& query_gradient_bf16  = bf16_scratch[1];
     const TensorView& key_gradient_bf16    = bf16_scratch[2];

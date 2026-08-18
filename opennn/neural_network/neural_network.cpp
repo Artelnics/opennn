@@ -2464,6 +2464,13 @@ void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
 
     if (!can_release_parameter_master) return;
 
+    // This walks the specs itself rather than reusing for_each_parameter_slot's
+    // slot.fp32_offset, and the two are not interchangeable: fp32_offset skips
+    // tied slots and counts INT8 scale channels, while the layout written below
+    // counts every non-BF16 slot and no scales. They agree today only because a
+    // tied slot is bias-free, so its one spec carries weights_dtype - BF16 in a
+    // BF16 run - and INT8 never appears in training. Substituting one for the
+    // other would misplace every parameter after the first tied FP32 slot.
     const auto specs = get_parameter_specs();
 
     Index fp32_keep_floats = 0;
