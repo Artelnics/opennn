@@ -287,6 +287,90 @@ CudaAllocationGrowthGuard::~CudaAllocationGrowthGuard() noexcept
     }
 }
 
+namespace
+{
+
+#ifdef OPENNN_HAS_CUDA
+
+// Optional reuse of freed CUDA blocks, keyed on exact size.
+//
+// cudaMalloc/cudaFree is expensive enough to dominate short-lived work: a
+// malloc+free pair of 8 MB measures ~0.68 ms on an RTX 3060 Laptop, and
+// building a dense inference arena of that size was measured at 0.63 ms, more
+// than the 0.27 ms the forward pass itself took. Handing the block back instead
+// of releasing it removes that cost.
+//
+// OFF by default, because cudaFree implicitly synchronises and skipping it
+// removes that barrier. A recycled block is only safe when the work that used
+// it is ordered before the work that receives it next. That holds for reuse on
+// a single stream, which is how OpenNN allocates today, but not in general --
+// enable with OPENNN_DEVICE_CACHE=1 and cap it with OPENNN_DEVICE_CACHE_MB.
+class CudaBlockCache
+{
+public:
+
+    static CudaBlockCache& instance()
+    {
+        static CudaBlockCache cache;
+        return cache;
+    }
+
+    void* take(Index byte_count)
+    {
+        if (!is_enabled || byte_count <= 0) return nullptr;
+
+        const lock_guard<mutex> guard(blocks_mutex);
+
+        const auto entry = blocks.find(byte_count);
+        if (entry == blocks.end() || entry->second.empty()) return nullptr;
+
+        void* pointer = entry->second.back();
+        entry->second.pop_back();
+        cached_bytes -= byte_count;
+
+        return pointer;
+    }
+
+    bool give(void* pointer, Index byte_count)
+    {
+        if (!is_enabled || byte_count <= 0) return false;
+
+        const lock_guard<mutex> guard(blocks_mutex);
+
+        if (cached_bytes + byte_count > byte_cap) return false;
+
+        blocks[byte_count].push_back(pointer);
+        cached_bytes += byte_count;
+
+        return true;
+    }
+
+private:
+
+    CudaBlockCache()
+        : is_enabled(env_flag_enabled("OPENNN_DEVICE_CACHE", false)),
+          byte_cap(read_cap_bytes())
+    {
+    }
+
+    static Index read_cap_bytes()
+    {
+        const char* value = getenv("OPENNN_DEVICE_CACHE_MB");
+        const Index megabytes = value ? Index(strtoll(value, nullptr, 10)) : Index(512);
+        return (megabytes > 0 ? megabytes : Index(512)) * 1024 * 1024;
+    }
+
+    const bool is_enabled;
+    const Index byte_cap;
+    Index cached_bytes = 0;
+    unordered_map<Index, vector<void*>> blocks;
+    mutex blocks_mutex;
+};
+
+#endif
+
+}
+
 void* allocate(Device device_type, Index byte_count)
 {
     throw_if_auto(device_type);
@@ -295,7 +379,13 @@ void* allocate(Device device_type, Index byte_count)
     if (byte_count == 0) return nullptr;
 
     if (device_type == Device::CUDA)
+    {
+#ifdef OPENNN_HAS_CUDA
+        if (void* recycled = CudaBlockCache::instance().take(byte_count))
+            return recycled;
+#endif
         return allocate_cuda(byte_count);
+    }
 
     return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
 }
@@ -309,7 +399,8 @@ void deallocate(Device device_type, void* pointer, Index byte_count)
     if (device_type == Device::CUDA)
     {
 #ifdef OPENNN_HAS_CUDA
-        cudaFree(pointer);
+        if (!CudaBlockCache::instance().give(pointer, byte_count))
+            cudaFree(pointer);
 #endif
         return;
     }
