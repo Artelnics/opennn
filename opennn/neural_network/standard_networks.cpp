@@ -530,6 +530,14 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
         }
     };
 
+    // Every backbone below ends the same way, and the prior bias has to be
+    // applied after the parameters are randomised or it is overwritten.
+    auto finish_yolo_network = [&] {
+        compile();
+        set_parameters_random();
+        apply_yolo_prior_bias(classes_number);
+    };
+
     auto add_det_head = [&](Index feature_index,
                             const vector<array<float, 2>>& head_anchors,
                             const string& name) -> Index {
@@ -678,9 +686,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 act, stride, true, "fpn_p4_conv");
             add_det_head(p4_conv, anchors_small, "small");
 
-            compile();
-            set_parameters_random();
-            apply_yolo_prior_bias(classes_number);
+            finish_yolo_network();
             return;
         }
     }
@@ -993,9 +999,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 add_det_head(n5d, anchors_large, "large");
             }
 
-            compile();
-            set_parameters_random();
-            apply_yolo_prior_bias(classes_number);
+            finish_yolo_network();
             return;
         }
 
@@ -1117,9 +1121,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 act, stride, true, "fpn_p3_lateral");
             add_det_head(p3_lateral, anchors_small, "small");
 
-            compile();
-            set_parameters_random();
-            apply_yolo_prior_bias(classes_number);
+            finish_yolo_network();
             return;
         }
     }
@@ -1144,9 +1146,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                                              0.4f,
                                              "non_max_suppression_layer"));
 
-    compile();
-    set_parameters_random();
-    apply_yolo_prior_bias(classes_number);
+    finish_yolo_network();
 }
 
 TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
