@@ -594,8 +594,7 @@ void Optimizer::prepare_training_scaling()
 }
 
 void Optimizer::warmup_device_training(
-    ForwardPropagation& training_forward_propagation,
-    BackPropagation& training_back_propagation,
+    TrainingContext& training_context,
     ThreadSafeQueue<Batch*>& training_empty_queue,
     const vector<vector<Index>>& training_batches,
     const vector<Index>& input_feature_indices,
@@ -721,8 +720,7 @@ void Optimizer::warmup_device_training(
                            training_session);
         }
 
-        train_epoch(training_forward_propagation,
-                    training_back_propagation,
+        train_epoch(training_context,
                     training_empty_queue,
                     training_warmup_batch,
                     input_feature_indices,
@@ -829,24 +827,12 @@ TrainingResult Optimizer::train()
                       has_validation,
                       training_session);
 
-    // BackPropagation owns the delta layout; ForwardPropagation only co-plans the
-    // lifetimes, so it never needs to see the Loss.
-    const vector<MemoryPoolEntry> delta_lifetimes =
-        BackPropagation::make_co_planned_lifetimes(*loss, training_batch_size);
+    TrainingContext training_context(training_batch_size, *loss, /*inputs_pre_scaled*/ true);
 
-    ForwardPropagation training_forward_propagation(
-        training_batch_size,
-        neural_network,
-        ForwardPropagationMode::Training,
-        {},
-        true,
-        delta_lifetimes);
+    ForwardPropagation& training_forward_propagation = training_context.forward;
+    BackPropagation& training_back_propagation = training_context.backward;
 
     loss->set_normalization_coefficient();
-
-    BackPropagation training_back_propagation(training_batch_size, *loss,
-                                              &training_forward_propagation.arena,
-                                              training_forward_propagation.co_planned_offsets);
 
     unique_ptr<ForwardPropagation> validation_forward_propagation;
     if (has_validation)
@@ -886,8 +872,7 @@ TrainingResult Optimizer::train()
         if (has_validation)
             dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
 
-        warmup_device_training(training_forward_propagation,
-                               training_back_propagation,
+        warmup_device_training(training_context,
                                batch_pools.training_empty_queue,
                                training_batches,
                                input_feature_indices,
@@ -946,8 +931,7 @@ TrainingResult Optimizer::train()
 
             on_epoch_begin(epoch, optimizer_data);
 
-            const Loss::EvaluationResult training_evaluation_result = train_epoch(training_forward_propagation,
-                                                                                 training_back_propagation,
+            const Loss::EvaluationResult training_evaluation_result = train_epoch(training_context,
                                                                                  batch_pools.training_empty_queue,
                                                                                  training_batches,
                                                                                  input_feature_indices,
@@ -1783,8 +1767,7 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
 }
 
 Loss::EvaluationResult Optimizer::train_epoch(
-    ForwardPropagation& forward_propagation,
-    BackPropagation& back_propagation,
+    TrainingContext& main_context,
     ThreadSafeQueue<Batch*>& empty_queue,
     const vector<vector<Index>>& batches,
     const vector<Index>& input_feature_indices,
@@ -1794,6 +1777,9 @@ Loss::EvaluationResult Optimizer::train_epoch(
     OptimizerData& optimizer_data)
 {
     Loss::EvaluationResult epoch_result;
+
+    ForwardPropagation& forward_propagation = main_context.forward;
+    BackPropagation& back_propagation = main_context.backward;
 
     NeuralNetwork* neural_network = loss->get_neural_network();
     const Index all_batches_number = Index(batches.size());
@@ -1844,42 +1830,14 @@ Loss::EvaluationResult Optimizer::train_epoch(
         const Index tail_size = Index(sample_indices.size());
 
         TrainingSession::TailContext& tail = training_session.tail;
-        if (!tail.forward || tail.size != tail_size)
+        if (!tail.context || tail.size != tail_size)
         {
             // First tail of the run (the warm-up pass, before the allocation
             // guard arms); a different remainder can only come from a new
             // dataset or batch size, which restarts the session anyway.
             tail.batch = make_unique<Batch>(tail_size, loss->get_dataset(),
                                             neural_network->get_config());
-            const vector<MemoryPoolEntry> delta_lifetimes =
-                BackPropagation::make_co_planned_lifetimes(*loss, tail_size);
-
-            // The remainder is smaller than a whole batch and runs only after
-            // every whole batch has been consumed, so it lays its activations,
-            // deltas and gradients over the main context's rather than
-            // allocating a second set - the same trick the validation context
-            // already plays on this arena.
-            tail.forward = make_unique<ForwardPropagation>();
-            tail.forward->set(tail_size,
-                              neural_network,
-                              &forward_propagation.arena,
-                              ForwardPropagationMode::Training,
-                              InferenceShapePolicy{},
-                              true,
-                              delta_lifetimes);
-
-            throw_if(tail.forward->arena.owns_memory(),
-                     "Optimizer::train_epoch: the remainder batch of {} samples "
-                     "did not fit in the {}-sample arena and allocated one of "
-                     "its own, which the steady-state allocation guard forbids.",
-                     tail_size, forward_propagation.batch_size);
-
-            tail.backward = make_unique<BackPropagation>(
-                tail_size,
-                *loss,
-                &tail.forward->arena,
-                tail.forward->co_planned_offsets,
-                &back_propagation.gradient);
+            tail.context = make_unique<TrainingContext>(tail_size, *loss, true, &main_context);
             tail.size = tail_size;
         }
         // No re-set on the reused path: Loss::back_propagate links the layers'
@@ -1887,8 +1845,8 @@ Loss::EvaluationResult Optimizer::train_epoch(
         // delta layout and its gradient buffer from one epoch to the next.
 
         Batch& batch = *tail.batch;
-        ForwardPropagation& tail_forward_propagation = *tail.forward;
-        BackPropagation& tail_back_propagation = *tail.backward;
+        ForwardPropagation& tail_forward_propagation = tail.context->forward;
+        BackPropagation& tail_back_propagation = tail.context->backward;
 
         batch.fill(sample_indices,
                    input_feature_indices,

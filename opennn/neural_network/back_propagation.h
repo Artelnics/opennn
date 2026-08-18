@@ -121,7 +121,11 @@ private:
     // Planning-only instance: make_co_planned_lifetimes must produce the delta
     // layout before any BackPropagation is built into the arena that layout sizes,
     // so it borrows a Loss and a batch size into an object that allocates nothing.
+    // TrainingContext holds one as a member and sets it once the forward arena
+    // it binds into exists.
     BackPropagation() = default;
+
+    friend struct TrainingContext;
 
     vector<vector<pair<size_t, size_t>>> make_consumer_edges() const;
     DeltaLayout build_delta_layout(const vector<vector<TensorSpec>>&) const;

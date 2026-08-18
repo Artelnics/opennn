@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   O P T I M I Z E R   C L A S S   H E A D E R
@@ -15,6 +15,7 @@
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/core/json.h"
 #include "opennn/training_strategy/loss.h"
+#include "opennn/training_strategy/training_context.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/thread_safe_queue.h"
 #include "opennn/training_strategy/training_result.h"
@@ -134,8 +135,7 @@ protected:
         struct TailContext
         {
             unique_ptr<Batch> batch;
-            unique_ptr<ForwardPropagation> forward;
-            unique_ptr<BackPropagation> backward;
+            unique_ptr<TrainingContext> context;
             Index size = 0;
         };
 
@@ -177,8 +177,7 @@ protected:
     void setup_device_training();
     void teardown_device_training();
 
-    void warmup_device_training(ForwardPropagation&,
-                                BackPropagation&,
+    void warmup_device_training(TrainingContext&,
                                 ThreadSafeQueue<Batch*>&,
                                 const vector<vector<Index>>&,
                                 const vector<Index>&,
@@ -288,8 +287,7 @@ protected:
                                            const vector<Index>&,
                                            const vector<Index>&);
 
-    Loss::EvaluationResult train_epoch(ForwardPropagation&,
-                                       BackPropagation&,
+    Loss::EvaluationResult train_epoch(TrainingContext&,
                                        ThreadSafeQueue<Batch*>&,
                                        const vector<vector<Index>>&,
                                        const vector<Index>&,
