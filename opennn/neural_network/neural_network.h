@@ -233,6 +233,16 @@ public:
 
     MatrixR calculate_outputs(const Tensor4&);
 
+    // Buffer-reusing counterparts of the three overloads above. Prefer these
+    // when calling repeatedly: the by-value versions must allocate a result
+    // every call, which costs more than the device-to-host copy itself once
+    // outputs are large.
+    void calculate_outputs(const MatrixR&, MatrixR& outputs);
+
+    void calculate_outputs(const Tensor3&, MatrixR& outputs);
+
+    void calculate_outputs(const Tensor4&, MatrixR& outputs);
+
     Tensor3 calculate_outputs(const Tensor3&, const Tensor3&);
 
     void from_JSON(const JsonDocument&);

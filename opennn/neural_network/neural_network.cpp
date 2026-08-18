@@ -1049,6 +1049,21 @@ void NeuralNetwork::set_parameters_pytorch()
     initialize_parameters(&Operator::set_parameters_pytorch);
 }
 
+void NeuralNetwork::calculate_outputs(const MatrixR& inputs, MatrixR& outputs)
+{
+    calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.rows(), inputs.cols()}, Type::FP32)}, outputs);
+}
+
+void NeuralNetwork::calculate_outputs(const Tensor3& inputs, MatrixR& outputs)
+{
+    calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)}, Type::FP32)}, outputs);
+}
+
+void NeuralNetwork::calculate_outputs(const Tensor4& inputs, MatrixR& outputs)
+{
+    calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}, Type::FP32)}, outputs);
+}
+
 Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2)
 {
     const Index layers_number = get_layers_number();
