@@ -1064,12 +1064,14 @@ void NeuralNetwork::calculate_outputs(const Tensor4& inputs, MatrixR& outputs)
     calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}, Type::FP32)}, outputs);
 }
 
-Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2)
+void NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2,
+                                      Tensor3& outputs)
 {
-    const Index layers_number = get_layers_number();
-
-    if (layers_number == 0)
-        return {};
+    if (get_layers_number() == 0)
+    {
+        outputs = Tensor3();
+        return;
+    }
 
     warn_if_stale_configuration();
 
@@ -1081,23 +1083,39 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
     const vector<TensorView> input_views = {TensorView(const_cast<float*>(inputs_1.data()), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}}),
                                             TensorView(const_cast<float*>(inputs_2.data()), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}})};
 
-    if (is_gpu())
-    {
-        const MatrixR result_matrix = calculate_outputs_device(input_views, forward_propagation);
-        const TensorView out = forward_propagation.get_outputs();
-        throw_if(out.get_shape().get_rank() < 3,
-                 "calculate_outputs(Tensor3, Tensor3): expected rank-3 output, got rank {}",
-                        out.get_shape().get_rank());
-        const Shape& shape = out.get_shape();
-        Tensor3 result(shape[0], shape[1], shape[2]);
-        memcpy(result.data(), result_matrix.data(),
-                    size_t(result.size()) * sizeof(float));
-        return result;
-    }
-
     forward_propagate(input_views, forward_propagation, false);
 
-    return forward_propagation.get_outputs().as_tensor<3>();
+    if (!is_gpu())
+    {
+        outputs = forward_propagation.get_outputs().as_tensor<3>();
+        return;
+    }
+
+    const TensorView out = forward_propagation.get_outputs();
+
+    throw_if(out.get_shape().get_rank() < 3,
+             "calculate_outputs(Tensor3, Tensor3): expected rank-3 output, got rank {}",
+             out.get_shape().get_rank());
+
+    const Shape& shape = out.get_shape();
+
+    // Copy straight into the caller's tensor. Going through an intermediate
+    // MatrixR meant a second allocation of the same size plus a memcpy, and at
+    // inference sizes the allocation costs more than the transfer itself.
+    if (outputs.dimension(0) != shape[0]
+        || outputs.dimension(1) != shape[1]
+        || outputs.dimension(2) != shape[2])
+        outputs.resize(shape[0], shape[1], shape[2]);
+
+    copy_device_to_host_float(out.get_data(), out.get_type(), out.size(),
+                              outputs.data(), device::get_compute_stream());
+}
+
+Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2)
+{
+    Tensor3 outputs;
+    calculate_outputs(inputs_1, inputs_2, outputs);
+    return outputs;
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)

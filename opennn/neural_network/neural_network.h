@@ -245,6 +245,8 @@ public:
 
     Tensor3 calculate_outputs(const Tensor3&, const Tensor3&);
 
+    void calculate_outputs(const Tensor3&, const Tensor3&, Tensor3& outputs);
+
     void from_JSON(const JsonDocument&);
 
     void to_JSON(JsonWriter&) const;
