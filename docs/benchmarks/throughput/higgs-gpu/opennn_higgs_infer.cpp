@@ -142,7 +142,7 @@ int main(int argc, char* argv[])
 
 #ifdef OPENNN_HAS_CUDA
         cudaStream_t stream = device::get_compute_stream();
-        device::copy_async(inputs_device.data,
+        device::copy_async(inputs_device.data(),
                            inputs.data(),
                            processed * inputs_number * Index(sizeof(float)),
                            device::CopyKind::HostToDevice,
@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
             for (Index b = 0; b < batches; ++b)
             {
                 const Index start = b * batch;
-                device::copy_async(staging_input.data,
+                device::copy_async(staging_input.data(),
                                    inputs_device.as<float>() + start * inputs_number,
                                    batch * inputs_number * Index(sizeof(float)),
                                    device::CopyKind::DeviceToDevice,
@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
         {
             float probe[4] = {0.0f, 0.0f, 0.0f, 0.0f};
             const Index probe_size = min<Index>(Index(4), batch);
-            copy_device_to_host_float(last_outputs->data, last_outputs->type,
+            copy_device_to_host_float(last_outputs->get_data(), last_outputs->get_type(),
                                       probe_size, probe, stream);
             cudaStreamSynchronize(stream);
             for (Index i = 0; i < probe_size; ++i)

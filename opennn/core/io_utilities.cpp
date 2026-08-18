@@ -55,8 +55,15 @@ void download_files_if_missing(const filesystem::path& directory,
                                const string_view base_url,
                                const vector<string_view>& filenames)
 {
+    // Not `string base(string(base_url))`: that parses as a function declaration
+    // (most vexing parse) and g++ rejects the later use as a value.
+    const string base(base_url);
     for (const string_view filename : filenames)
-        download_if_missing(directory / filename, string(base_url) + string(filename));
+    {
+        string url = base;
+        url += string(filename);
+        download_if_missing(directory / filename, url);
+    }
 }
 
 string read_text_file(const filesystem::path& path)
@@ -86,7 +93,7 @@ namespace
 template <typename Kind>
 vector<filesystem::path> list_entries(const filesystem::path& directory,
                                       Kind is_wanted_kind,
-                                      bool (*predicate)(const filesystem::path&))
+                                      std::function<bool(const filesystem::path&)> predicate)
 {
     vector<filesystem::path> paths;
 
@@ -101,7 +108,7 @@ vector<filesystem::path> list_entries(const filesystem::path& directory,
 }
 
 vector<filesystem::path> list_files(const filesystem::path& directory,
-                                    bool (*predicate)(const filesystem::path&))
+                                    std::function<bool(const filesystem::path&)> predicate)
 {
     return list_entries(directory,
                         [](const filesystem::directory_entry& e) { return e.is_regular_file(); },
@@ -109,7 +116,7 @@ vector<filesystem::path> list_files(const filesystem::path& directory,
 }
 
 vector<filesystem::path> list_directories(const filesystem::path& directory,
-                                          bool (*predicate)(const filesystem::path&))
+                                          std::function<bool(const filesystem::path&)> predicate)
 {
     return list_entries(directory,
                         [](const filesystem::directory_entry& e) { return e.is_directory(); },

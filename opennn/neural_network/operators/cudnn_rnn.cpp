@@ -34,9 +34,8 @@ void CudnnRnnState::cudnn_setup_(const CudnnRnnConfig& config,
     {
         try
         {
-            cudnn_setup_attempt_(config, input_features, output_features, time_steps,
-                                 batch_size, for_training);
-            return;
+            return cudnn_setup_attempt_(config, input_features, output_features, time_steps,
+                                        batch_size, for_training);
         }
         catch (const exception&)
         {

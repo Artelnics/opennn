@@ -1476,14 +1476,10 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         if (exec)
         {
             PROFILE_SCOPE_HOST("step:graph_launch");
-            device::launch_graph(exec, compute);
-            return;
+            return device::launch_graph(exec, compute);
         }
         if (!training_session.cuda_graph_capture_allowed)
-        {
-            operation();
-            return;
-        }
+            return operation();
 
         const bool profiler_enabled = ::opennn::enabled();
         ::opennn::enabled() = false;
@@ -1502,8 +1498,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
             cerr << "CUDA graph capture failed (" << capture_error.what()
                  << "); continuing without graphs.\n";
             ::opennn::enabled() = profiler_enabled;
-            operation();
-            return;
+            return operation();
         }
         ::opennn::enabled() = profiler_enabled;
     };
@@ -1768,8 +1763,7 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
             if (fixed_device_batch_in_use)
                 device::stream_wait_event(device::get_transfer_stream(), fixed_device_batch->h2d_done_event);
 
-            next_batch->upload_to_device_batch_async(*fixed_device_batch, device::get_transfer_stream());
-            return;
+            return next_batch->upload_to_device_batch_async(*fixed_device_batch, device::get_transfer_stream());
         }
 
         PROFILE_SCOPE_HOST("step:prefetch_h2d_issue");
@@ -1900,16 +1894,9 @@ Loss::EvaluationResult Optimizer::train_epoch(
                 tail.forward->co_planned_offsets);
             tail.size = tail_size;
         }
-        else
-        {
-            // Constructing a BackPropagation links every layer's gradient view
-            // to its buffer, and the last one constructed - or set - wins. Point
-            // the layers at the tail's buffers for this step; the main context
-            // is re-linked below.
-            tail.backward->set(tail_size, *loss,
-                               &tail.forward->arena,
-                               tail.forward->co_planned_offsets);
-        }
+        // No re-set on the reused path: Loss::back_propagate links the layers'
+        // gradient views to whichever context it is handed, so the tail keeps its
+        // delta layout and its gradient buffer from one epoch to the next.
 
         Batch& batch = *tail.batch;
         ForwardPropagation& tail_forward_propagation = *tail.forward;
@@ -1947,12 +1934,6 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
         if(on_gpu)
             device::synchronize(device::get_compute_stream());
-
-        // Re-link the layers' gradient views to the main context (see above).
-        back_propagation.set(forward_propagation.batch_size,
-                             *loss,
-                             &forward_propagation.arena,
-                             forward_propagation.co_planned_offsets);
 
         return result;
     };

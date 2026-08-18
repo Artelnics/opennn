@@ -874,7 +874,7 @@ namespace
     {
         // One workspace set per lane: lanes run concurrently, so they cannot
         // share scratch.
-        using LaneWorkspaces = std::array<Buffer, size_t(device::GraphWorkspaceKind::Count)>;
+        using LaneWorkspaces = std::array<Buffer, static_cast<size_t>(device::GraphWorkspaceKind::Count)>;
         std::array<LaneWorkspaces, device::MAX_LANES> workspaces =
             make_lanes(make_index_sequence<device::MAX_LANES>{});
 
@@ -888,7 +888,7 @@ namespace
         template<size_t... L>
         static std::array<LaneWorkspaces, sizeof...(L)> make_lanes(index_sequence<L...>)
         {
-            return {((void)L, make_workspaces(make_index_sequence<size_t(device::GraphWorkspaceKind::Count)>{}))...};
+            return {((void)L, make_workspaces(make_index_sequence<static_cast<size_t>(device::GraphWorkspaceKind::Count)>{}))...};
         }
     };
 
@@ -915,7 +915,7 @@ namespace
                     device::graph_workspace_override(kind, minimum_bytes))
                 return *graph_workspace;
 
-        Buffer& buffer = thread_state().workspaces[size_t(device::active_lane())][size_t(kind)];
+        Buffer& buffer = thread_state().workspaces[static_cast<size_t>(device::active_lane())][static_cast<size_t>(kind)];
         if (minimum_bytes > buffer.byte_size() && buffer.data())
         {
             throw_if(device::cuda_allocation_growth_forbidden(),
@@ -925,8 +925,8 @@ namespace
         const Index before = buffer.byte_size();
         void* pointer = buffer.ensure<uint8_t>(minimum_bytes);
         if (buffer.byte_size() > before)
-            memory_debug::record(string("workspace.") + device::graph_workspace_labels[size_t(kind)],
-                                 device::graph_workspace_labels[size_t(kind)],
+            memory_debug::record(string("workspace.") + device::graph_workspace_labels[static_cast<size_t>(kind)],
+                                 device::graph_workspace_labels[static_cast<size_t>(kind)],
                                  buffer.byte_size() - before, "high_water");
         return pointer;
     }
@@ -996,7 +996,7 @@ namespace
         // (autotune_lt_plan). OPENNN_LT_AUTOTUNE_CANDIDATES=1 keeps the
         // heuristic choice.
         const int requested = int(clamp(env_int_or("OPENNN_LT_AUTOTUNE_CANDIDATES", 8), 1LL, 32LL));
-        vector<cublasLtMatmulHeuristicResult_t> heuristics(size_t(requested), cublasLtMatmulHeuristicResult_t{});
+        vector<cublasLtMatmulHeuristicResult_t> heuristics(static_cast<size_t>(requested), cublasLtMatmulHeuristicResult_t{});
         int returned_results = 0;
         CHECK_CUBLAS(cublasLtMatmulAlgoGetHeuristic(Backend::get_cublas_lt_handle(),
                                                     plan.matmul_descriptor,
@@ -1008,7 +1008,7 @@ namespace
                                                     heuristics.data(), &returned_results));
         cublasLtMatmulPreferenceDestroy(pref);
 
-        heuristics.resize(size_t(max(returned_results, 0)));
+        heuristics.resize(static_cast<size_t>(max(returned_results, 0)));
         erase_if(heuristics, [](const cublasLtMatmulHeuristicResult_t& h) { return h.state != CUBLAS_STATUS_SUCCESS; });
 
         if (!heuristics.empty())
@@ -1037,10 +1037,7 @@ namespace
         cudaStreamCaptureStatus capture_status = cudaStreamCaptureStatusNone;
         if (cudaStreamIsCapturing(stream, &capture_status) != cudaSuccess
             || capture_status != cudaStreamCaptureStatusNone)
-        {
-            device::reset_last_error();
-            return;
-        }
+            return device::reset_last_error();
 
         if (device::lanes_available() > 1) device::synchronize();
 

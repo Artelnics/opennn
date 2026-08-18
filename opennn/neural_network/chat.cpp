@@ -571,8 +571,7 @@ private:
                                    vocabulary * Index(sizeof(float)),
                                    device::CopyKind::DeviceToHost,
                                    device::get_compute_stream());
-                device::synchronize(device::get_compute_stream());
-                return;
+                return device::synchronize(device::get_compute_stream());
             }
 
             throw_if(!row.is_bf16(),

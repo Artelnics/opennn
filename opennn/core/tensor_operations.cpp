@@ -37,17 +37,16 @@ static void add_bias(TensorView& output, const TensorView& bias, Index rows, Ind
     {
         static thread_local vector<float> ones;
         if (ssize(ones) < rows) ones.assign(size_t(rows), 1.0f);
-        cblas_sger(CblasRowMajor,
-                   to_int(rows),
-                   to_int(columns),
-                   1.0f,
-                   ones.data(),
-                   1,
-                   b,
-                   1,
-                   y,
-                   to_int(columns));
-        return;
+        return cblas_sger(CblasRowMajor,
+                          to_int(rows),
+                          to_int(columns),
+                          1.0f,
+                          ones.data(),
+                          1,
+                          b,
+                          1,
+                          y,
+                          to_int(columns));
     }
 
     const bool parallel_bias = rows * columns >= 65536;
@@ -301,8 +300,7 @@ static void validate_linear_types(const TensorView& input, const TensorView& wei
     {
         require_cpu_fp32(input, operation, "input");
         require_cpu_fp32(weights, operation, "weights");
-        require_cpu_fp32(output, operation, "output");
-        return;
+        return require_cpu_fp32(output, operation, "output");
     }
 
     require_fp32_or_bf16(input, operation, "input");
@@ -738,11 +736,8 @@ void linear_backward(const TensorView& output_delta, const TensorView& input, co
     }
 
     if (output_delta.is_cuda())
-    {
-        linear_backward_gpu(output_delta, input, weights, weight_gradient, bias_gradient,
-                            input_delta, accumulate_input_delta, drelu_mask, addend);
-        return;
-    }
+        return linear_backward_gpu(output_delta, input, weights, weight_gradient, bias_gradient,
+                                   input_delta, accumulate_input_delta, drelu_mask, addend);
     linear_backward_cpu(output_delta, input, weights, weight_gradient, bias_gradient,
                         input_delta, accumulate_input_delta, addend);
 }
@@ -794,12 +789,9 @@ void linear_forward_transposed(const TensorView& input, const TensorView& embed_
         const Index rows = input.size() / in_features;
 
         if (rows <= W8A16_MAX_M)
-        {
-            w8a16_linear_rows(rows, in_features, out_features, true,
-                              input.as<bfloat16>(), embed_weight.as<int8_t>(),
-                              weight_scale.as<float>(), nullptr, output.as<bfloat16>());
-            return;
-        }
+            return w8a16_linear_rows(rows, in_features, out_features, true,
+                                     input.as<bfloat16>(), embed_weight.as<int8_t>(),
+                                     weight_scale.as<float>(), nullptr, output.as<bfloat16>());
 
         const Index tile_rows = min(out_features,
             max(Index(1), int8_dequant_budget_bytes / (in_features * Index(sizeof(bfloat16)))));
@@ -843,11 +835,8 @@ static void add_gpu(const TensorView& input_1,
 {
 
     if (input_1.is_fp32() && input_2.is_fp32() && output.is_fp32())
-    {
-        add_relu_cuda(output.size(), input_1.as<float>(), input_2.as<float>(),
-                       false, output.as<float>());
-        return;
-    }
+        return add_relu_cuda(output.size(), input_1.as<float>(), input_2.as<float>(),
+                              false, output.as<float>());
 
     CHECK_CUDNN(cudnnOpTensor(Backend::get_cudnn_handle(),
                               Backend::get_op_tensor_add_descriptor(),
@@ -986,8 +975,7 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
             linear_forward_lt_gpu(input, weights, bias, *pre_activation,
                                   CUBLASLT_EPILOGUE_BIAS, nullptr);
             copy_gpu(*pre_activation, output);
-            activation_forward_gpu(output, ActivationFunction::GELUTanh);
-            return;
+            return activation_forward_gpu(output, ActivationFunction::GELUTanh);
         }
 
         throw runtime_error(format("cuBLASLt GEMM {}x{}x{} ({}) failed: {}",
@@ -1001,10 +989,7 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
                                TensorView* pre_activation, const TensorView& weight_scale)
 {
     if (!weights.is_int8())
-    {
-        linear_forward_lt_gpu(input, weights, bias, output, epilogue, pre_activation);
-        return;
-    }
+        return linear_forward_lt_gpu(input, weights, bias, output, epilogue, pre_activation);
 
     throw_if(weight_scale.empty() || !input.is_bf16() || !output.is_bf16(),
              "linear_forward: INT8 weights require BF16 activations and a per-channel scale vector.");
@@ -1019,14 +1004,11 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
         && (!bias.get_data() || bias.is_bf16());
 
     if (gemv_path)
-    {
-        w8a16_linear_rows(total_rows, input_columns, output_columns, false,
-                          input.as<bfloat16>(), weights.as<int8_t>(), weight_scale.as<float>(),
-                          epilogue == CUBLASLT_EPILOGUE_BIAS && bias.get_data()
-                              ? bias.as<bfloat16>() : nullptr,
-                          output.as<bfloat16>());
-        return;
-    }
+        return w8a16_linear_rows(total_rows, input_columns, output_columns, false,
+                                 input.as<bfloat16>(), weights.as<int8_t>(), weight_scale.as<float>(),
+                                 epilogue == CUBLASLT_EPILOGUE_BIAS && bias.get_data()
+                                     ? bias.as<bfloat16>() : nullptr,
+                                 output.as<bfloat16>());
 
     bfloat16* dequantized = ensure_int8_dequant_workspace(weights.size());
     w8_dequant_cuda<bfloat16>(input_columns, output_columns, false, weights.as<int8_t>(),
@@ -1149,17 +1131,14 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 
     PROFILE_SCOPE("op:linear_bwd_dx " + to_string(output_columns) + "x" + to_string(input_columns) + "x" + to_string(total_rows));
     if (drelu_mask || addend)
-    {
-        run_lt_matmul_cached(
-            input_columns, total_rows, output_columns,
-            CUBLAS_OP_T, CUBLAS_OP_N,
-            drelu_mask ? CUBLASLT_EPILOGUE_DRELU : CUBLASLT_EPILOGUE_DEFAULT,
-            weights.get_data(), output_delta.get_data(), input_delta.get_data(), nullptr,
-            output_delta.cuda_dtype(), input_delta.cuda_dtype(),
-            drelu_mask ? drelu_mask->get_data() : nullptr,
-            addend ? addend->get_data() : nullptr);
-        return;
-    }
+        return run_lt_matmul_cached(
+                   input_columns, total_rows, output_columns,
+                   CUBLAS_OP_T, CUBLAS_OP_N,
+                   drelu_mask ? CUBLASLT_EPILOGUE_DRELU : CUBLASLT_EPILOGUE_DEFAULT,
+                   weights.get_data(), output_delta.get_data(), input_delta.get_data(), nullptr,
+                   output_delta.cuda_dtype(), input_delta.cuda_dtype(),
+                   drelu_mask ? drelu_mask->get_data() : nullptr,
+                   addend ? addend->get_data() : nullptr);
 
     multiply(output_delta, false, weights, true, input_delta, 1.0f,
              accumulate_input_delta ? 1.0f : 0.0f);

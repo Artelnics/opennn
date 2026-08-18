@@ -35,26 +35,25 @@ unsigned Configuration::get_generation() const
     return generation;
 }
 
-Configuration::Resolved Configuration::resolve() const
+Configuration::EffectiveConfig Configuration::resolve() const
 {
     const lock_guard<mutex> lock(configuration_mutex);
-    return resolve_unlocked(device);
+    return resolve_effective(device);
 }
 
-Configuration::Resolved Configuration::resolve_for(const Device requested_device) const
+Configuration::EffectiveConfig Configuration::resolve_for(const Device requested_device) const
 {
     const lock_guard<mutex> lock(configuration_mutex);
 
     if (requested_device == Device::CPU)
         return {Device::CPU, Type::FP32, generation};
 
-    return resolve_unlocked(requested_device);
+    return resolve_effective(requested_device);
 }
 
-Configuration::Resolved Configuration::resolve_unlocked(const Device requested_device) const
+Configuration::EffectiveConfig Configuration::resolve_effective(const Device requested_device) const
 {
-    Resolved resolved;
-    resolved.generation = generation;
+    EffectiveConfig resolved{Device::CPU, Type::FP32, generation};
 
     switch (requested_device)
     {

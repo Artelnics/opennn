@@ -52,7 +52,7 @@ enum class GraphWorkspaceKind
     Count
 };
 
-inline constexpr std::array<const char*, size_t(GraphWorkspaceKind::Count)>
+inline constexpr std::array<const char*, static_cast<size_t>(GraphWorkspaceKind::Count)>
 graph_workspace_labels = {"shared_scratch", "bf16_input", "bf16_gradient",
                           "bf16_to_fp32", "int8_dequant", "pooling_mask", "norm_partials"};
 
@@ -62,8 +62,8 @@ struct GraphWorkspaceView
     Index bytes = 0;
 };
 
-using GraphWorkspaceRequirements = std::array<Index, size_t(GraphWorkspaceKind::Count)>;
-using GraphWorkspaceViews = std::array<GraphWorkspaceView, size_t(GraphWorkspaceKind::Count)>;
+using GraphWorkspaceRequirements = std::array<Index, static_cast<size_t>(GraphWorkspaceKind::Count)>;
+using GraphWorkspaceViews = std::array<GraphWorkspaceView, static_cast<size_t>(GraphWorkspaceKind::Count)>;
 
 class CudaGraphWorkspaceScope
 {

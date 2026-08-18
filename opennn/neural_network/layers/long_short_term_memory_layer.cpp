@@ -160,10 +160,7 @@ void LongShortTermMemoryOperator::forward_propagate(ForwardPropagation& forward_
     TensorView& cell_activation = forward_slots[CellActivationSlot];
 
     if (input.is_cuda())
-    {
-        apply_gpu(input, output, return_sequences, is_training);
-        return;
-    }
+        return apply_gpu(input, output, return_sequences, is_training);
 
     apply(input, output, forget_gate, input_gate, candidate_gate, output_gate,
           cell_state, hidden_state, cell_activation);
@@ -418,11 +415,8 @@ void LongShortTermMemoryOperator::back_propagate(ForwardPropagation& forward_pro
     const TensorView& cell_activation = forward_slots[CellActivationSlot];
 
     if (input.is_cuda())
-    {
-        apply_delta_gpu(input, forward_slots[OutputSlot], output_delta,
-                        input_delta, return_sequences);
-        return;
-    }
+        return apply_delta_gpu(input, forward_slots[OutputSlot], output_delta,
+                               input_delta, return_sequences);
 
     apply_delta(input, output_delta, input_delta, hidden_delta, cell_delta,
                 forget_delta, input_gate_delta, candidate_delta, output_gate_delta,
@@ -1049,8 +1043,7 @@ void LongShortTermMemory::set(const Shape& new_input_shape,
     {
         input_shape = {};
         output_features = 0;
-        configure_operators();
-        return;
+        return configure_operators();
     }
 
     check_rank(new_input_shape, {2}, "LongShortTermMemory", "input");

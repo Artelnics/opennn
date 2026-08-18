@@ -42,11 +42,8 @@ void DetectionV8Operator::forward_propagate(ForwardPropagation& forward_propagat
 
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
-    {
-        detection_v8_forward_cuda(input.get_shape()[0], grid_size, grid_width, classes_number,
-                                  reg_max, input.as<float>(), output.as<float>());
-        return;
-    }
+        return detection_v8_forward_cuda(input.get_shape()[0], grid_size, grid_width, classes_number,
+                                         reg_max, input.as<float>(), output.as<float>());
 #endif
 
     const Index batch_size = input.get_shape()[0];
@@ -83,12 +80,9 @@ void DetectionV8Operator::back_propagate(ForwardPropagation& forward_propagation
 
 #ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
-    {
-        detection_v8_backward_cuda(output.get_shape()[0], grid_size, grid_width, classes_number,
-                                   reg_max, output.as<float>(), output_delta.as<float>(),
-                                   input_delta.as<float>());
-        return;
-    }
+        return detection_v8_backward_cuda(output.get_shape()[0], grid_size, grid_width, classes_number,
+                                          reg_max, output.as<float>(), output_delta.as<float>(),
+                                          input_delta.as<float>());
 #endif
 
     const Index batch_size = output.get_shape()[0];

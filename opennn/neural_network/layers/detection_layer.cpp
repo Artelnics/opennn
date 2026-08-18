@@ -158,12 +158,9 @@ void DetectionOperator::back_propagate(ForwardPropagation& forward_propagation, 
 
 #ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
-    {
-        detection_backward_cuda(output.get_shape()[0], grid_size, boxes_per_cell, classes_number,
-                                static_cast<int>(class_activation),
-                                output.as<float>(), output_delta.as<float>(), input_delta.as<float>());
-        return;
-    }
+        return detection_backward_cuda(output.get_shape()[0], grid_size, boxes_per_cell, classes_number,
+                                       static_cast<int>(class_activation),
+                                       output.as<float>(), output_delta.as<float>(), input_delta.as<float>());
 #endif
 
     const Index batch_size = output.get_shape()[0];

@@ -556,10 +556,7 @@ void WordPieceTokenizer::wordpiece(const string& word,
     };
 
     if (Index(characters) > max_input_chars_per_word)
-    {
-        append_unknown();
-        return;
-    }
+        return append_unknown();
 
     const size_t token_start = tokens ? tokens->size() : 0;
     const size_t id_start = ids ? ids->size() : 0;
@@ -592,8 +589,7 @@ void WordPieceTokenizer::wordpiece(const string& word,
         {
             if (tokens) tokens->resize(token_start);
             if (ids) ids->resize(id_start);
-            append_unknown();
-            return;
+            return append_unknown();
         }
         start = end;
     }

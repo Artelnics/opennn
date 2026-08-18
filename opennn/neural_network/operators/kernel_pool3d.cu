@@ -158,10 +158,7 @@ static void prepare_pooling_valid_mask(const int B, const int S, const int F, co
     counts     = scratch + BS;
 
     if (device_lengths != nullptr)
-    {
-        launch_elementwise(BS, pooling_3d_length_mask_kernel, S, device_lengths, valid_mask, counts);
-        return;
-    }
+        return launch_elementwise(BS, pooling_3d_length_mask_kernel, S, device_lengths, valid_mask, counts);
 
     opennn::device::set_zero_async(counts, Index(B) * Index(sizeof(float)), stream);
 

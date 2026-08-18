@@ -28,6 +28,7 @@ struct BatchSlot
     Buffer buffer;
     Shape  shape;
     Type   type = Type::FP32;
+    
     optional<bool> contiguous;
 
     float* host = nullptr;
@@ -54,7 +55,7 @@ struct Batch
 {
     Batch(Index,
           const Dataset*,
-          const Configuration::Resolved&,
+          const Configuration::EffectiveConfig&,
           bool prefetch_only = false);
     ~Batch();
 
@@ -65,7 +66,7 @@ struct Batch
 
     void set(Index,
              const Dataset*,
-             const Configuration::Resolved&,
+             const Configuration::EffectiveConfig&,
              bool prefetch_only = false);
 
     void fill(const vector<Index>&,
@@ -76,14 +77,12 @@ struct Batch
 
     const vector<TensorView>& get_inputs() const
     {
-        if (uses_cuda()) return input_views_cache;
-        return input_views_host_cache;
+        return uses_cuda() ? input_views_cache : input_views_host_cache;
     }
 
     const TensorView& get_targets() const
     {
-        if (uses_cuda()) return target_view_cache;
-        return target_view_host_cache;
+        return uses_cuda() ? target_view_cache : target_view_host_cache;
     }
 
     bool uses_cuda() const

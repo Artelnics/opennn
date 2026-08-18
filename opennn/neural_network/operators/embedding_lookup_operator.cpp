@@ -111,12 +111,9 @@ void embedding_lookup_forward(const TensorView& indices, const TensorView& weigh
                               const TensorView& weight_scale)
 {
     if (output.is_cuda())
-    {
-        embedding_lookup_forward_gpu(indices, weights, positional_encoding, output,
-                                     sequence_length, embedding_dimension, vocabulary_size,
-                                     scale_embedding, add_positional_encoding, weight_scale);
-        return;
-    }
+        return embedding_lookup_forward_gpu(indices, weights, positional_encoding, output,
+                                            sequence_length, embedding_dimension, vocabulary_size,
+                                            scale_embedding, add_positional_encoding, weight_scale);
     throw_if(weights.is_int8(), "embedding_lookup_forward: INT8 weights are CUDA-only.");
     embedding_lookup_forward_cpu(indices, weights, positional_encoding, output,
                                  sequence_length, embedding_dimension, vocabulary_size,
@@ -129,11 +126,8 @@ void embedding_lookup_backward(const TensorView& indices, const TensorView& outp
                                bool scale_embedding)
 {
     if (output_delta.is_cuda())
-    {
-        embedding_lookup_backward_gpu(indices, output_delta, weight_gradient, positional_gradient,
-                                      sequence_length, embedding_dimension, vocabulary_size, scale_embedding);
-        return;
-    }
+        return embedding_lookup_backward_gpu(indices, output_delta, weight_gradient, positional_gradient,
+                                             sequence_length, embedding_dimension, vocabulary_size, scale_embedding);
     embedding_lookup_backward_cpu(indices, output_delta, weight_gradient, positional_gradient,
                                   sequence_length,
                                   embedding_dimension, vocabulary_size, scale_embedding);

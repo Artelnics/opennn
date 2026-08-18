@@ -147,12 +147,11 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
 
         c2psa_fill_cat_left_cuda(attn_v_gpu, cat_gpu, BT, C_int, H, dtype);
 
-        gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-            C_int, BT, C_int,
-            Wout.get_data(), dtype, C_int, 0LL,
-            cat_gpu,   dtype, C_int, 0LL,
-            out_gpu,   dtype, C_int, 0LL, 1);
-        return;
+        return gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+                   C_int, BT, C_int,
+                   Wout.get_data(), dtype, C_int, 0LL,
+                   cat_gpu,   dtype, C_int, 0LL,
+                   out_gpu,   dtype, C_int, 0LL, 1);
     }
 #endif
 

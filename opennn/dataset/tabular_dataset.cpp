@@ -92,7 +92,7 @@ MatrixR TabularDataset::get_data(const string& sample_role, const string& variab
 MatrixR TabularDataset::get_data_from_indices(const vector<Index>& sample_indices, const vector<Index>& feature_indices) const
 {
     MatrixR this_data(sample_indices.size(), feature_indices.size());
-    fill_tensor_data(data, sample_indices, feature_indices, span<float>(this_data.data(), size_t(this_data.size())));
+    fill_tensor_data(data, sample_indices, feature_indices, span<float>(this_data.data(), static_cast<size_t>(this_data.size())));
     return this_data;
 }
 
@@ -1218,10 +1218,7 @@ void TabularDataset::clear_training_scaling() noexcept
 void TabularDataset::enable_device_residency()
 {
     if (training_transforms.empty())
-    {
-        Dataset::enable_device_residency();
-        return;
-    }
+        return Dataset::enable_device_residency();
 
     MatrixR staged = data;
     for (Index row = 0; row < staged.rows(); ++row)

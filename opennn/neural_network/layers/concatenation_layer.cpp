@@ -174,10 +174,7 @@ const Json* Concatenation::legacy_body(const JsonDocument& document) const
 void Concatenation::from_JSON(const JsonDocument& document)
 {
     if (const Json* legacy = legacy_body(document))
-    {
-        Layer::from_JSON(JsonDocument::wrap(get_name(), *legacy));
-        return;
-    }
+        return Layer::from_JSON(JsonDocument::wrap(get_name(), *legacy));
 
     Layer::from_JSON(document);
 }
@@ -185,10 +182,7 @@ void Concatenation::from_JSON(const JsonDocument& document)
 void Concatenation::load_state_from_JSON(const JsonDocument& document)
 {
     if (const Json* legacy = legacy_body(document))
-    {
-        Layer::load_state_from_JSON(JsonDocument::wrap(get_name(), *legacy));
-        return;
-    }
+        return Layer::load_state_from_JSON(JsonDocument::wrap(get_name(), *legacy));
 
     Layer::load_state_from_JSON(document);
 }

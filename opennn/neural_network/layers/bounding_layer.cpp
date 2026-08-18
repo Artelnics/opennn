@@ -92,10 +92,7 @@ void BoundOperator::forward_propagate(ForwardPropagation& forward_propagation, s
     TensorView& output      = get_output(forward_propagation, layer);
 
     if (method == Method::NoBounding || !lower.get_data())
-    {
-        copy(input, output);
-        return;
-    }
+        return copy(input, output);
 
     bound(input, lower, upper, output);
 }

@@ -152,9 +152,8 @@ void grouped_attention_forward(const TensorView& query, const TensorView& key, c
                                float* decode_partials, const int* position_device)
 {
     if (query.is_cuda()) {
-        grouped_attention_gpu(query, key, value, output, n_query_heads, n_kv_heads, head_dim,
-                              causal, scale, query_position_offset, decode_partials, position_device);
-        return;
+        return grouped_attention_gpu(query, key, value, output, n_query_heads, n_kv_heads, head_dim,
+                                     causal, scale, query_position_offset, decode_partials, position_device);
     }
 
     const Index batch     = query.get_shape()[0];
@@ -781,12 +780,9 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
 
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
-    {
-        forward_gpu(input, output, batch, forward_propagation.past_length,
-                    forward_propagation.get_sequence_capacity(),
-                    static_cast<const int*>(forward_propagation.position_device.data()));
-        return;
-    }
+        return forward_gpu(input, output, batch, forward_propagation.past_length,
+                           forward_propagation.get_sequence_capacity(),
+                           static_cast<const int*>(forward_propagation.position_device.data()));
 #endif
 
     const Index seq   = input.get_shape()[1];
@@ -852,8 +848,7 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
         grouped_attention_forward(qr_v, key_all, val_all, attn_v, q_heads, kv_heads, head_dim, true, scale, past);
 
         TensorView o_b(o_all, {1, seq, hidden});
-        linear_forward_transposed(attn_v, o_proj, o_b);
-        return;
+        return linear_forward_transposed(attn_v, o_proj, o_b);
     }
 
     throw_if(forward_propagation.past_length != 0,

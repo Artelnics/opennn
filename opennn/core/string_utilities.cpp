@@ -150,10 +150,7 @@ void get_token_views_maybe_quoted(string_view line, char separator, bool file_ha
     out.clear();
 
     if (!file_has_quotes || line.find('"') == string_view::npos)
-    {
-        split_views(line, separator, out);
-        return;
-    }
+        return split_views(line, separator, out);
 
     scratch.clear();
     scratch.reserve(line.size());

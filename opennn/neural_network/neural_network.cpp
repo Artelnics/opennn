@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   N E U R A L   N E T W O R K   C L A S S
@@ -141,15 +141,13 @@ void restore_transaction_file(const filesystem::path& final_path,
     if (!existed_before_transaction)
     {
         remove_transaction_artifact(final_path);
-        remove_transaction_artifact(backup_path);
-        return;
+        return remove_transaction_artifact(backup_path);
     }
 
     if (filesystem::exists(backup_path))
     {
         remove_transaction_artifact(final_path);
-        filesystem::rename(backup_path, final_path);
-        return;
+        return filesystem::rename(backup_path, final_path);
     }
 
     throw_if(!filesystem::exists(final_path),
@@ -498,6 +496,7 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& sour
 
     first_trainable_cache_ = -1;
     last_trainable_cache_  = -1;
+    linked_gradient_base   = nullptr;
 }
 
 void NeuralNetwork::compile()
@@ -512,7 +511,7 @@ void NeuralNetwork::compile(const Device device)
     compile(Configuration::instance().resolve_for(device));
 }
 
-void NeuralNetwork::compile(Configuration::Resolved new_config)
+void NeuralNetwork::compile(Configuration::EffectiveConfig new_config)
 {
     config = new_config;
 
@@ -752,6 +751,7 @@ void NeuralNetwork::clear()
 
     first_trainable_cache_ = -1;
     last_trainable_cache_  = -1;
+    linked_gradient_base   = nullptr;
 }
 
 void NeuralNetwork::steal_from(NeuralNetwork& src)
@@ -766,6 +766,11 @@ void NeuralNetwork::steal_from(NeuralNetwork& src)
     last_trainable_cache_  = src.last_trainable_cache_;
     src.first_trainable_cache_ = -1;
     src.last_trainable_cache_  = -1;
+    // Conservative on both sides: the layers moved, so neither network may claim
+    // its gradient views are still linked. Re-linking costs one pass; skipping a
+    // needed one writes gradients through dangling views.
+    linked_gradient_base       = nullptr;
+    src.linked_gradient_base   = nullptr;
     link_parameters();
 }
 
@@ -956,10 +961,7 @@ void NeuralNetwork::set_states(const VectorR& new_states)
     const Index expected_size = get_states_buffer_size();
 
     if (expected_size == 0)
-    {
-        throw_if(new_states.size() != 0, "NeuralNetwork::set_states: network has no state buffer.");
-        return;
-    }
+        return throw_if(new_states.size() != 0, "NeuralNetwork::set_states: network has no state buffer.");
 
     throw_if(new_states.size() != expected_size,
              "NeuralNetwork::set_states: size mismatch (got {}, expected {}).", new_states.size(), expected_size);
@@ -1499,6 +1501,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     layers.reserve(layers_number);
     first_trainable_cache_ = -1;
     last_trainable_cache_  = -1;
+    linked_gradient_base   = nullptr;
 
     const Json* items_array = layers_container->find("Items");
     if (items_array && items_array->is_array())
@@ -2129,10 +2132,7 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
             const Index size = slot.shape.size();
             const Index aligned = get_aligned_size(size);
             if (slot.tied)
-            {
-                skip(aligned);
-                return;
-            }
+                return skip(aligned);
 
             if (slot.dtype == Type::INT8)
                 read_bf16_quantize_int8_to_device(
@@ -2153,8 +2153,7 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
                  "unconsumed data remains in {}.",
                  file_name.string());
 
-        use_compact_parameter_storage();
-        return;
+        return use_compact_parameter_storage();
     }
 #endif
 
@@ -2195,6 +2194,12 @@ vector<string> NeuralNetwork::get_layer_labels() const
 
 void NeuralNetwork::link_parameters()
 {
+    // Every parameter-layout change comes through here, and the gradient views
+    // are laid out from the same specs. Forget the recorded gradient base so the
+    // next backward re-links: an allocator can hand the same address back for a
+    // different layout, and then a matching pointer would prove nothing.
+    linked_gradient_base = nullptr;
+
     float* fp32_base = parameters.as<float>();
     float* fp32_inference_base =
         parameters.get_device() == Device::CUDA
@@ -2308,6 +2313,26 @@ void NeuralNetwork::link_parameters()
     if (current_layer) current_layer->redistribute_parameters_to_operators();
 }
 
+// A layer writes its parameter gradients through views into a BackPropagation's
+// gradient buffer, so exactly one buffer is reachable at a time. Training with a
+// remainder batch alternates between two contexts every epoch, which used to
+// mean re-running BackPropagation::set on each switch - re-planning the deltas
+// and memsetting the gradient just to move pointers. Linking here instead, from
+// the backward pass that is about to run, makes the switch a pointer comparison.
+void NeuralNetwork::link_gradients(const Buffer& gradient) const
+{
+    void* const base = gradient.data();
+
+    if (!base || base == linked_gradient_base) return;
+
+    float* pointer = static_cast<float*>(base);
+
+    for (const auto& layer : layers)
+        pointer = layer->link_gradients(pointer, gradient.get_device());
+
+    linked_gradient_base = base;
+}
+
 void NeuralNetwork::link_states()
 {
     const Device state_device = states.empty()
@@ -2330,10 +2355,7 @@ void NeuralNetwork::link_states(Device device)
 void NeuralNetwork::copy_parameters_device()
 {
     if (parameters.empty())
-    {
-        clear_low_precision_parameter_storage();
-        return;
-    }
+        return clear_low_precision_parameter_storage();
 
     if (parameters.get_device() == Device::CUDA && !parameters.owns_memory())
     {
@@ -2341,8 +2363,7 @@ void NeuralNetwork::copy_parameters_device()
         const bool int8_released = config.training_type == Type::INT8 && !parameters_int8_storage.empty();
         throw_if(!bf16_released && !int8_released,
                  "NeuralNetwork::copy_parameters_device: parameters are a non-owning view.");
-        link_parameters();
-        return;
+        return link_parameters();
     }
 
     if (config.training_type == Type::INT8)
@@ -2350,8 +2371,7 @@ void NeuralNetwork::copy_parameters_device()
         throw_if(parameters.get_device() != Device::CPU || !parameters.owns_memory(),
                  "NeuralNetwork::copy_parameters_device: INT8 inference requires "
                  "a host FP32 master to quantize.");
-        upload_parameters_int8_inference();
-        return;
+        return upload_parameters_int8_inference();
     }
 
     cudaStream_t stream = device::get_compute_stream();
@@ -2457,10 +2477,7 @@ void NeuralNetwork::upload_parameters_bf16_inference()
         && parameters.owns_memory();
 
     if (!can_upload_low_precision_parameters)
-    {
-        copy_parameters_device();
-        return;
-    }
+        return copy_parameters_device();
 
     cudaStream_t stream = device::get_compute_stream();
     const float* const host_fp32 = parameters.as<float>();
@@ -2585,10 +2602,7 @@ void NeuralNetwork::activate_transposed_inference_weights()
 void NeuralNetwork::copy_parameters_host()
 {
     if (parameters.empty())
-    {
-        clear_low_precision_parameter_storage();
-        return;
-    }
+        return clear_low_precision_parameter_storage();
 
     throw_if(parameters.get_device() == Device::CUDA && !parameters.owns_memory(),
              "NeuralNetwork::copy_parameters_host: the fp32 CUDA parameter master "

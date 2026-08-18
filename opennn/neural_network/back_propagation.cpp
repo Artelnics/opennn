@@ -181,7 +181,6 @@ void BackPropagation::setup_gradient()
 {
     const NeuralNetwork& neural_network = require_network();
 
-    const auto& layers = neural_network.get_layers();
     const auto parameter_specs = neural_network.get_parameter_specs();
 
     const Index gradient_bytes = get_aligned_bytes(parameter_specs, Type::FP32);
@@ -190,9 +189,7 @@ void BackPropagation::setup_gradient()
     memory_debug::record("backward", "BackPropagation::gradient", gradient_bytes,
                          format("batch={}", batch_size));
 
-    float* pointer = gradient.as<float>();
-    for (size_t i = 0; i < layers.size(); ++i)
-        pointer = layers[i]->link_gradients(pointer, gradient.get_device());
+    neural_network.link_gradients(gradient);
 }
 
 BackPropagation::DeltaLayout BackPropagation::build_delta_layout(
@@ -591,10 +588,7 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
         first = std::ranges::find_if(edges, valid);
 
     if (first == edges.end())
-    {
-        destination.setZero();
-        return;
-    }
+        return destination.setZero();
 
     const TensorView& first_source = source(*first);
 

@@ -209,7 +209,7 @@ struct Shape
     }
 
     template<typename It>
-    Shape(It first, It last) : rank(size_t(distance(first, last)))
+    Shape(It first, It last) : rank(static_cast<size_t>(distance(first, last)))
     {
         throw_if(rank > MaxRank,
                  "Shape: iterator-pair rank {} exceeds MaxRank={}.",
@@ -492,10 +492,7 @@ struct Buffer
 
         Buffer target_buffer(target_device);
         if (!pointer)
-        {
-            swap(target_buffer);
-            return;
-        }
+            return swap(target_buffer);
 
         target_buffer.resize_bytes(allocated_bytes, target_device);
         device::copy_async(target_buffer.pointer, pointer, allocated_bytes,
@@ -515,7 +512,9 @@ struct Buffer
     }
 
 private:
-    static void validate_device(Device device, string_view operation)
+
+    static void validate_device(Device device, 
+                                string_view operation)
     {
         throw_if(device == Device::Auto, "{} requires a concrete device.", operation);
     }
@@ -604,20 +603,18 @@ struct TensorView
     TensorView reshape(const Shape& new_shape) const
     {
         const Index current_size = size();
-        const Index reshaped_size = new_shape.size();
-        throw_if(reshaped_size != current_size,
+        throw_if(new_shape.size() != current_size,
                  "TensorView::reshape cannot change the element count from {} to {}.",
-                 current_size, reshaped_size);
+                 current_size, new_shape.size());
         return TensorView(data, new_shape, type, device);
     }
 
     TensorView reshape_prefix(const Shape& new_shape) const
     {
         const Index current_size = size();
-        const Index reshaped_size = new_shape.size();
-        throw_if(reshaped_size > current_size,
+        throw_if(new_shape.size() > current_size,
                  "TensorView::reshape_prefix cannot grow the element count from {} to {}.",
-                 current_size, reshaped_size);
+                 current_size, new_shape.size());
         return TensorView(data, new_shape, type, device);
     }
 

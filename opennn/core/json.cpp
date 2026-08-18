@@ -250,8 +250,7 @@ static void dump_value(std::string& out, const Json& v, int indent, int depth)
             if (i + 1 < array.size()) out.push_back(',');
         }
         dump_indent(out, indent, depth);
-        out.push_back(']');
-        return;
+        return out.push_back(']');
     }
     case Object:
     {
@@ -267,8 +266,7 @@ static void dump_value(std::string& out, const Json& v, int indent, int depth)
             if (i + 1 < object.size()) out.push_back(',');
         }
         dump_indent(out, indent, depth);
-        out.push_back('}');
-        return;
+        return out.push_back('}');
     }
     }
 }
@@ -318,10 +316,10 @@ struct Parser
         return s[position++];
     }
 
-    bool match(const char* word)
+    bool match(std::string_view word)
     {
         skip_ws();
-        const std::size_t n = std::strlen(word);
+        const std::size_t n = word.size();
         if (position + n > s.size()) return false;
         if (s.compare(position, n, word) != 0) return false;
         position += n;

@@ -592,12 +592,11 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
                  "assign sdpa_gradient_slot (gradient scratch comes from the backward arena).");
 
         const auto& slots = back_propagation.slots[layer];
-        apply_sdpa_backward(query, key, value, forward_slots[attention_output_slot],
-                            output_delta,
-                            query_delta, key_delta, value_delta,
-                            span<const TensorView>(slots.data() + sdpa_gradient_slot,
-                                                   sdpa_scratch_slots_count));
-        return;
+        return apply_sdpa_backward(query, key, value, forward_slots[attention_output_slot],
+                                   output_delta,
+                                   query_delta, key_delta, value_delta,
+                                   span<const TensorView>(slots.data() + sdpa_gradient_slot,
+                                                          sdpa_scratch_slots_count));
     }
 
     if (output_delta.is_cuda())
@@ -810,8 +809,7 @@ void AttentionOperator::apply_unfused(const TensorView& query,
     {
         copy(attention_weights, attention_weights_dropped);
         dropout_forward(attention_weights_dropped, dropout.mask, dropout.rate);
-        multiply(attention_weights_dropped, false, value, false, output);
-        return;
+        return multiply(attention_weights_dropped, false, value, false, output);
     }
 
     multiply(attention_weights, false, value, false, output);

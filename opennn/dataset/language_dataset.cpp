@@ -573,10 +573,7 @@ void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
     const span<float> output(output_data, size_t(ssize(sample_indices) * sequence_length));
 
     if (storage_mode == StorageMode::Matrix)
-    {
-        fill_tensor_data(data, sample_indices, variable_indices, output, contiguous);
-        return;
-    }
+        return fill_tensor_data(data, sample_indices, variable_indices, output, contiguous);
 
     const uint64_t record_tokens = uint64_t(maximum_input_sequence_length + maximum_target_sequence_length);
     const Index n = sequence_length - shift;

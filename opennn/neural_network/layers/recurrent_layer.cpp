@@ -88,10 +88,7 @@ void RecurrentOperator::forward_propagate(ForwardPropagation& forward_propagatio
     TensorView& activation_derivatives  = forward_slots[output_slots[2]];
 
     if (input.is_cuda())
-    {
-        apply_gpu(input, hidden_states, activation_derivatives, output, is_training);
-        return;
-    }
+        return apply_gpu(input, hidden_states, activation_derivatives, output, is_training);
     apply(input, hidden_states, activation_derivatives, output, is_training);
 }
 
@@ -116,11 +113,10 @@ void RecurrentOperator::back_propagate(ForwardPropagation& forward_propagation, 
         TensorView& delta_scratch         = backward_slots[DeltaScratchSlot];
         TensorView& next_carry_scratch    = backward_slots[NextCarryScratchSlot];
         TensorView& step_in_delta_scratch = backward_slots[StepInDeltaScratchSlot];
-        apply_delta_gpu(input, hidden_states, activation_derivatives,
-                        output_delta, input_delta,
-                        step_input_scratch, step_prev_h_scratch,
-                        delta_scratch, next_carry_scratch, step_in_delta_scratch);
-        return;
+        return apply_delta_gpu(input, hidden_states, activation_derivatives,
+                               output_delta, input_delta,
+                               step_input_scratch, step_prev_h_scratch,
+                               delta_scratch, next_carry_scratch, step_in_delta_scratch);
     }
     apply_delta(input, hidden_states, activation_derivatives, output_delta, input_delta);
 }
@@ -447,10 +443,7 @@ void RecurrentOperator::apply_gpu(const TensorView& input,
     if (!input.get_data() || output_features == 0 || time_steps == 0) return;
 
     if (cudnn_rnn_eligible_(output))
-    {
-        apply_gpu_cudnn_(input, hidden_states, output, is_training);
-        return;
-    }
+        return apply_gpu_cudnn_(input, hidden_states, output, is_training);
 
     require_same_recurrent_dtype(output, {
         {&input, "input"},
@@ -540,10 +533,7 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
     if (!input.get_data() || !output_delta.get_data() || output_features == 0 || time_steps == 0) return;
 
     if (cudnn_rnn_eligible_(output_delta))
-    {
-        apply_delta_gpu_cudnn_(input, hidden_states, output_delta, input_delta);
-        return;
-    }
+        return apply_delta_gpu_cudnn_(input, hidden_states, output_delta, input_delta);
 
     require_same_recurrent_dtype(output_delta, {
         {&input, "input"},

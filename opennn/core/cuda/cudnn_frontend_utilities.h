@@ -84,10 +84,7 @@ inline void execute_graph(graph::Graph& graph,
                           const string& timing_label)
 {
     if (timing_label.empty())
-    {
-        check_status(graph.execute(Backend::get_cudnn_handle(), tensors, workspace), what);
-        return;
-    }
+        return check_status(graph.execute(Backend::get_cudnn_handle(), tensors, workspace), what);
 
     // Timing is a diagnostic; the two events live for the thread.
     thread_local CudaEvent begin(cudaEventDefault);

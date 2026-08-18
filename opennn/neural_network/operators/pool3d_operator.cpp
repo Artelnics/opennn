@@ -122,10 +122,14 @@ static void average_pooling_3d_forward_cpu(const TensorView& input, TensorView& 
     }
 }
 
-void average_pooling_3d_forward(const TensorView& input, TensorView& output,
-                                const SequenceLengths valid_lengths)
+void average_pooling_3d_forward(
+    const TensorView& input,
+    TensorView& output,
+    const SequenceLengths valid_lengths)
 {
-    if (input.is_cuda()) { average_pooling_3d_forward_gpu(input, output, valid_lengths.device); return; }
+    if (input.is_cuda())
+        return average_pooling_3d_forward_gpu(input, output, valid_lengths.device);
+
     average_pooling_3d_forward_cpu(input, output, valid_lengths.host);
 }
 
@@ -141,15 +145,14 @@ static void max_pooling_3d_backward_cpu(const TensorView& maximal_indices, const
     #pragma omp parallel for schedule(static)
     for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
         for (Index feature_index = 0; feature_index < features; ++feature_index)
-        {
-            const Index step = static_cast<Index>(max_indices(batch_index, feature_index));
-            input_delta_map(batch_index, step, feature_index) = output_delta_matrix(batch_index, feature_index);
-        }
+            input_delta_map(batch_index, static_cast<Index>(max_indices(batch_index, feature_index)), feature_index) = output_delta_matrix(batch_index, feature_index);
 }
 
 void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta)
 {
-    if (output_delta.is_cuda()) { max_pooling_3d_backward_gpu(maximal_indices, output_delta, input_delta); return; }
+    if (output_delta.is_cuda())
+        return max_pooling_3d_backward_gpu(maximal_indices, output_delta, input_delta);
+
     max_pooling_3d_backward_cpu(maximal_indices, output_delta, input_delta);
 }
 

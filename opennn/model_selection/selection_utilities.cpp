@@ -210,8 +210,7 @@ void apply_input_scaling(NeuralNetwork* neural_network, FeatureScaling input_sca
         const FeatureScaling current = endpoint->get_feature_scaling();
         input_scaling.min_range = current.min_range;
         input_scaling.max_range = current.max_range;
-        endpoint->set_feature_scaling(input_scaling);
-        return;
+        return endpoint->set_feature_scaling(input_scaling);
     }
 }
 

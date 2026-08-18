@@ -138,10 +138,7 @@ void activation_forward_cuda(const Index n, T* data, const int function)
 {
     if constexpr (std::is_same_v<T, __nv_bfloat16>)
         if ((n & 1) == 0)
-        {
-            launch_elementwise_strided(n / 2, activation_forward_kernel_bf162, reinterpret_cast<__nv_bfloat162*>(data), function);
-            return;
-        }
+            return launch_elementwise_strided(n / 2, activation_forward_kernel_bf162, reinterpret_cast<__nv_bfloat162*>(data), function);
 
     if constexpr (std::is_same_v<T, float>)
         launch_vec_on<4>(opennn::device::get_compute_stream(), n, are_aligned<16>(data),
@@ -198,35 +195,42 @@ __global__ void activation_backward_kernel_f4(const int n_vec, const int n,
 template<typename T>
 void activation_backward_cuda(const Index n, const T* outputs, T* delta, const int function)
 {
-    if constexpr (std::is_same_v<T, __nv_bfloat16>)
+    if constexpr (std::same_as<T, __nv_bfloat16>)
+    {
         if ((n & 1) == 0)
-        {
-            launch_elementwise_strided(n / 2, activation_backward_kernel_bf162,
-                               reinterpret_cast<const __nv_bfloat162*>(outputs),
-                               reinterpret_cast<__nv_bfloat162*>(delta), function);
-            return;
-        }
+            return launch_elementwise_strided(
+                n / 2, activation_backward_kernel_bf162,
+                reinterpret_cast<const __nv_bfloat162*>(outputs),
+                reinterpret_cast<__nv_bfloat162*>(delta), function);
+    }
+    else if constexpr (std::same_as<T, float>)
+    {
+        return launch_vec_on<4>(
+            opennn::device::get_compute_stream(), n,
+            are_aligned<16>(outputs, delta),
+            activation_backward_kernel_f4, outputs, delta, function);
+    }
 
-    if constexpr (std::is_same_v<T, float>)
-        launch_vec_on<4>(opennn::device::get_compute_stream(), n, are_aligned<16>(outputs, delta),
-                       activation_backward_kernel_f4, outputs, delta, function);
-    else
-        launch_elementwise_strided(n, activation_backward_kernel<T>, outputs, delta, function);
+    launch_elementwise_strided(
+        n, activation_backward_kernel<T>, outputs, delta, function);
 }
 
 template<typename T>
-__global__ void dropout_forward_kernel(const int n, T* __restrict__ output, uint8_t* __restrict__ mask, const float scale, const float rate, const unsigned long long seed)
+__global__ void dropout_forward_kernel(
+    int n, T* __restrict__ output, uint8_t* __restrict__ mask,
+    float scale, float rate, unsigned long long seed)
 {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx >= n) return;
+    if (idx >= n)
+        return;
 
     curandStatePhilox4_32_10_t state;
     curand_init(seed, idx, 0, &state);
-    const float r = curand_uniform(&state);
 
-    const uint8_t keep = (r >= rate) ? uint8_t(1) : uint8_t(0);
+    const uint8_t keep = static_cast<uint8_t>(curand_uniform(&state) >= rate);
+
     mask[idx] = keep;
-    output[idx] = static_cast<T>(static_cast<float>(output[idx]) * (keep * scale));
+    output[idx] = static_cast<T>(static_cast<float>(output[idx]) * keep * scale);
 }
 
 template<typename T>

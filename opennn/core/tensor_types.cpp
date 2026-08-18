@@ -66,10 +66,7 @@ static bool uses_cuda_fill(const TensorView& view)
 static void fill_cuda(const TensorView& view, float value)
 {
     if (value == 0.0f)
-    {
-        device::set_zero(view.get_data(), view.byte_size(), Device::CUDA);
-        return;
-    }
+        return device::set_zero(view.get_data(), view.byte_size(), Device::CUDA);
 
     CHECK_CUDNN(cudnnSetTensor(Backend::get_cudnn_handle(),
                                view.get_descriptor(), view.get_data(), &value));
@@ -98,10 +95,7 @@ void TensorView::fill(float value) const
     if (!data) return;
 
     if (uses_cuda_fill(*this))
-    {
-        fill_cuda(*this, value);
-        return;
-    }
+        return fill_cuda(*this, value);
 
     assert(type == Type::FP32);
     float* values = static_cast<float*>(data);
@@ -110,14 +104,12 @@ void TensorView::fill(float value) const
 
 string shape_to_string(const Shape& shape, const string& separator)
 {
-    const Index size = shape.get_rank();
-
     ostringstream buffer;
 
-    throw_if(size == 0,
+    throw_if(shape.empty(),
              "Dimensions size must be greater than 0.\n");
 
-    for (Index i = 0; i < size; ++i)
+    for (Index i = 0; i < shape.get_rank(); ++i)
         buffer << shape[i] << separator;
 
     return buffer.str();

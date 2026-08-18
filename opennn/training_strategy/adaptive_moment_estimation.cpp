@@ -150,19 +150,18 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
         float* const graph_epsilon = graph_scalars + 2;
         const float* const graph_base_learning_rate = graph_scalars + 3;
 
-        adam_update_capturable_cuda(
-            neural_network->get_parameters_buffer_size(),
-            neural_network->get_parameters_data(),
-            optimization_data.views[GradientMoment].as<float>(),
-            optimization_data.views[SquareGradientMoment].as<float>(),
-            back_propagation.gradient.as<float>(),
-            beta_1, beta_2, graph_base_learning_rate, EPSILON,
-            graph_step,
-            graph_learning_rate,
-            graph_epsilon,
-            neural_network->get_parameters_bf16_mirror_data(),
-            device::get_compute_stream());
-        return;
+        return adam_update_capturable_cuda(
+                   neural_network->get_parameters_buffer_size(),
+                   neural_network->get_parameters_data(),
+                   optimization_data.views[GradientMoment].as<float>(),
+                   optimization_data.views[SquareGradientMoment].as<float>(),
+                   back_propagation.gradient.as<float>(),
+                   beta_1, beta_2, graph_base_learning_rate, EPSILON,
+                   graph_step,
+                   graph_learning_rate,
+                   graph_epsilon,
+                   neural_network->get_parameters_bf16_mirror_data(),
+                   device::get_compute_stream());
 #else
         throw runtime_error("Capturable Adam parameter updates require CUDA support.");
 #endif
@@ -181,12 +180,9 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const float bias_correction_2 = 1.0f - pow(beta_2, iteration);
 
     if (neural_network->is_gpu())
-    {
-        update_parameters_cuda(back_propagation, optimization_data,
-                               beta_1, beta_2, learning_rate,
-                               bias_correction_1, bias_correction_2);
-        return;
-    }
+        return update_parameters_cuda(back_propagation, optimization_data,
+                                      beta_1, beta_2, learning_rate,
+                                      bias_correction_1, bias_correction_2);
 
     VectorMap parameters = neural_network->get_parameters_map();
 

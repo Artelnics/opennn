@@ -49,7 +49,7 @@ public:
     void add_layer(unique_ptr<Layer>,
                   const vector<Index>& = {});
 
-    const Configuration::Resolved& get_config() const noexcept { return config; }
+    const Configuration::EffectiveConfig& get_config() const noexcept { return config; }
     Device get_device() const noexcept { return config.device; }
     bool is_gpu() const noexcept { return config.device == Device::CUDA; }
     bool is_cpu() const noexcept { return config.device == Device::CPU; }
@@ -176,6 +176,13 @@ public:
     void set_parameters_glorot();
     void set_parameters_pytorch();
     void link_parameters();
+
+    // Points every layer's gradient views at this buffer, and does nothing when
+    // they already point there. Training alternates between propagation contexts
+    // - the full batch and the remainder batch - so the link belongs to the
+    // backward pass being run, not to whichever BackPropagation was built last.
+    void link_gradients(const Buffer&) const;
+
     void link_states();
     void link_states(Device);
     MatrixR calculate_outputs(const vector<TensorView>&);
@@ -266,7 +273,7 @@ protected:
 
     Buffer states;
 
-    Configuration::Resolved config;
+    Configuration::EffectiveConfig config;
 
     bool training_activation_recomputation = false;
 
@@ -275,9 +282,14 @@ protected:
     mutable Index first_trainable_cache_ = -1;
     mutable Index last_trainable_cache_  = -1;
 
+    // Base address the layers' gradient views were last linked to. Reset
+    // wherever the layer set changes, since the same address can come back from
+    // the allocator for a different parameter layout.
+    mutable const void* linked_gradient_base = nullptr;
+
 private:
 
-    void compile(Configuration::Resolved);
+    void compile(Configuration::EffectiveConfig);
 
     MatrixR calculate_outputs_device(const vector<TensorView>&, ForwardPropagation&);
 

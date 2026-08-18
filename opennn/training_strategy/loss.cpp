@@ -1352,6 +1352,10 @@ void Loss::back_propagate(const Batch& batch,
 {
     if (batch.is_empty()) return;
 
+    // Point the layers' gradient views at this context's buffer. A no-op unless
+    // the caller alternates contexts (main batch / remainder batch).
+    neural_network->link_gradients(back_propagation.gradient);
+
     {
         PROFILE_SCOPE("loss:calculate_error");
         const EvaluationResult evaluation_result = calculate_error(batch, forward_propagation);
@@ -1639,6 +1643,9 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
 
     if (!calculate_error_device_metrics(batch, forward_propagation, error_sum_device, accuracy_sum_device))
         return false;
+
+    // See Loss::back_propagate: host-only pointer work, so it stays capture-safe.
+    neural_network->link_gradients(back_propagation.gradient);
 
     if (error == Error::CrossEntropy3d)
     {

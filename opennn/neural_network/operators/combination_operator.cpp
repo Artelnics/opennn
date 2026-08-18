@@ -91,17 +91,13 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
     TensorView& output = get_output(forward_propagation, layer);
 
     if (tied_transposed)
-    {
-        linear_forward_transposed(get_input(forward_propagation, layer), weights, output, weight_scale);
-        return;
-    }
+        return linear_forward_transposed(get_input(forward_propagation, layer), weights, output, weight_scale);
 
     if (transposed_inference_active)
     {
         const TensorView transposed(weights.get_data(), {output_features, input_features},
                                     weights.get_type(), weights.get_device());
-        linear_forward_transposed(get_input(forward_propagation, layer), transposed, output, weight_scale);
-        return;
+        return linear_forward_transposed(get_input(forward_propagation, layer), transposed, output, weight_scale);
     }
 
     if (fused_activation == ActivationFunction::GELUTanh
@@ -109,9 +105,8 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
         && output.is_cuda())
     {
         TensorView& activated = forward_propagation.slots[layer][output_slots[1]];
-        linear_forward(get_input(forward_propagation, layer), weights, bias,
-                       activated, CUBLASLT_EPILOGUE_GELU_AUX_BIAS, &output, weight_scale);
-        return;
+        return linear_forward(get_input(forward_propagation, layer), weights, bias,
+                              activated, CUBLASLT_EPILOGUE_GELU_AUX_BIAS, &output, weight_scale);
     }
 
     const bool relu = (fused_activation == ActivationFunction::ReLU);
@@ -168,9 +163,8 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
     {
         try
         {
-            linear_backward(output_delta, input, weights, weight_gradient, bias_gradient,
-                            input_delta, accumulate_input_delta, &drelu_source->relu_mask_view);
-            return;
+            return linear_backward(output_delta, input, weights, weight_gradient, bias_gradient,
+                                   input_delta, accumulate_input_delta, &drelu_source->relu_mask_view);
         }
         catch (const runtime_error& error)
         {

@@ -88,10 +88,9 @@ void NonMaxSuppressionOperator::forward_propagate(ForwardPropagation& forward_pr
 
         apply(cpu_in, cpu_out);
 
-        device::copy_async(output.as<float>(), cpu_output_staging.data(),
-                           output.size() * Index(sizeof(float)),
-                           device::CopyKind::HostToDevice, stream);
-        return;
+        return device::copy_async(output.as<float>(), cpu_output_staging.data(),
+                                  output.size() * Index(sizeof(float)),
+                                  device::CopyKind::HostToDevice, stream);
     }
 #endif
     apply(input, output);

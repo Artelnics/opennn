@@ -131,9 +131,8 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
     if (interleaved_heads && input.is_cuda())
     {
         TensorView head_output_2d = head_output.reshape({rows, heads_number * head_dimension});
-        linear_forward(input_2d, weights, bias, head_output_2d,
-                       CUBLASLT_EPILOGUE_BIAS, nullptr, weight_scale);
-        return;
+        return linear_forward(input_2d, weights, bias, head_output_2d,
+                              CUBLASLT_EPILOGUE_BIAS, nullptr, weight_scale);
     }
 
     TensorView&       scratch     = forward_slots[scratch_slot];

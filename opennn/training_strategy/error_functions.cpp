@@ -142,10 +142,7 @@ void mean_squared_error_gradient(const TensorView& input, const TensorView& targ
 {
     const Index batch_size = input.get_shape()[0];
     if (input.is_cuda())
-    {
-        scaled_diff_cuda(input, target, 1.0f / to_int(batch_size), input_delta);
-        return;
-    }
+        return scaled_diff_cuda(input, target, 1.0f / to_int(batch_size), input_delta);
     input_delta.as_vector().noalias() = (input.as_vector() - target.as_vector()) / to_type(batch_size);
 }
 
@@ -215,10 +212,7 @@ void normalized_squared_error(const TensorView& input, const TensorView& target,
 void normalized_squared_error_gradient(const TensorView& input, const TensorView& target, float coefficient, const TensorView& input_delta)
 {
     if (input.is_cuda())
-    {
-        scaled_diff_cuda(input, target, 2.0f / (coefficient + EPSILON), input_delta);
-        return;
-    }
+        return scaled_diff_cuda(input, target, 2.0f / (coefficient + EPSILON), input_delta);
     input_delta.as_vector().noalias() = 2.0f * (input.as_vector() - target.as_vector()) / (coefficient + EPSILON);
 }
 
@@ -492,10 +486,7 @@ void cross_entropy_3d_gradient_device_count(const TensorView& input, const Tenso
                                             const float* active_tokens_count_device)
 {
     if (input.is_cuda())
-    {
-        cross_entropy_3d_gradient_device_count_cuda(input, target, input_delta, active_tokens_count_device);
-        return;
-    }
+        return cross_entropy_3d_gradient_device_count_cuda(input, target, input_delta, active_tokens_count_device);
 
     const Index vocabulary_size = input.get_shape().back();
 

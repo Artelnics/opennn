@@ -26,20 +26,22 @@ class Configuration
 {
 public:
 
-    struct Resolved
+    struct EffectiveConfig
     {
         Device device         = Device::CPU;
         Type   training_type  = Type::FP32;
         unsigned generation   = 0;
     };
 
+    using Resolved = EffectiveConfig;
+
     static Configuration& instance();
 
     void set(Device new_device        = Device::Auto,
              Type   new_training_type = Type::Auto);
 
-    Resolved resolve() const;
-    Resolved resolve_for(Device) const;
+    [[nodiscard]] EffectiveConfig resolve() const;
+    [[nodiscard]] EffectiveConfig resolve_for(Device) const;
 
     unsigned get_generation() const;
 
@@ -49,13 +51,12 @@ private:
 
     Configuration() = default;
 
-    Resolved resolve_unlocked(Device) const;
+    Resolved resolve_effective(Device) const;
 
     mutable std::mutex configuration_mutex;
 
     Device device         = Device::Auto;
     Type   training_type  = Type::Auto;
-
     unsigned generation   = 0;
 };
 
