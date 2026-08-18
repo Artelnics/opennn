@@ -63,14 +63,14 @@ void CombinationOperator::link_gradients(span<const TensorView> views)
 
 void CombinationOperator::set_parameters_random()
 {
-    if (weights.empty() || tied_transposed) return;
+    if (!owns_initializable_weights()) return;
     set_random_uniform(weights.as_vector());
     if (!bias.empty()) bias.setZero();
 }
 
 void CombinationOperator::set_parameters_glorot()
 {
-    if (weights.empty() || tied_transposed) return;
+    if (!owns_initializable_weights()) return;
     const float limit = glorot_limit(input_features, output_features);
     set_random_uniform(weights.as_vector(), -limit, limit);
     if (!bias.empty()) bias.setZero();
@@ -79,7 +79,7 @@ void CombinationOperator::set_parameters_glorot()
 void CombinationOperator::set_parameters_pytorch()
 {
 
-    if (weights.empty() || tied_transposed) return;
+    if (!owns_initializable_weights()) return;
     const float limit = 1.0f / sqrt(float(input_features > 0 ? input_features : 1));
     set_random_uniform(weights.as_vector(), -limit, limit);
     if (!bias.empty()) set_random_uniform(bias.as_vector(), -limit, limit);

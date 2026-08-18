@@ -558,34 +558,43 @@ static void grouped_attention_gpu(const TensorView& query, const TensorView& key
                                   bool causal, float scale, Index query_position_offset,
                                   float* decode_partials, const int* kv_length_device)
 {
-    const int batch     = to_int(query.get_shape()[0]);
-    const int query_seq = to_int(query.get_shape()[1]);
-    const int key_seq   = to_int(key.get_shape()[1]);
-    const int group     = to_int(n_kv_heads) > 0 ? to_int(n_query_heads / n_kv_heads) : 0;
+    // Narrow once: to_int range-checks, and every one of these was inside the
+    // dispatch lambda, so each was checked twice over - once per instantiated
+    // element type - on every call.
+    const int batch      = to_int(query.get_shape()[0]);
+    const int query_seq  = to_int(query.get_shape()[1]);
+    const int key_seq    = to_int(key.get_shape()[1]);
+    const int q_heads    = to_int(n_query_heads);
+    const int kv_heads   = to_int(n_kv_heads);
+    const int dim        = to_int(head_dim);
+    const int pos_offset = to_int(query_position_offset);
+    const int group      = kv_heads > 0 ? to_int(n_query_heads / n_kv_heads) : 0;
+
+    const bool has_work = batch * query_seq * q_heads > 0;
 
     const bool decode = batch == 1 && query_seq == 1 && causal && decode_partials
-                     && grouped_attention_decode_supported(to_int(head_dim), group);
+                     && grouped_attention_decode_supported(dim, group);
 
     output.dispatch([&]<typename T>() {
 
         // Variable key lengths would need the padding-mask plumbing the fused path
         // does not carry here, so those shapes stay on the materialized path.
-        if (batch * query_seq * to_int(n_query_heads) > 0 && !decode && !kv_length_device
+        if (has_work && !decode && !kv_length_device
             && grouped_attention_sdpa_gpu<T>(batch, query_seq, key_seq,
-                                             to_int(n_query_heads), to_int(n_kv_heads), to_int(head_dim),
-                                             scale, to_int(query_position_offset), causal,
+                                             q_heads, kv_heads, dim,
+                                             scale, pos_offset, causal,
                                              query.as<T>(), key.as<T>(), value.as<T>(), output.as<T>()))
             return;
 
-        if (batch * query_seq * to_int(n_query_heads) > 0 && !decode
+        if (has_work && !decode
             && grouped_attention_gemm_gpu<T>(batch, query_seq, key_seq,
-                                             to_int(n_query_heads), to_int(n_kv_heads), to_int(head_dim),
-                                             scale, to_int(query_position_offset), causal,
+                                             q_heads, kv_heads, dim,
+                                             scale, pos_offset, causal,
                                              query.as<T>(), key.as<T>(), value.as<T>(), output.as<T>()))
             return;
 
-        grouped_attention_cuda<T>(batch, query_seq, key_seq, to_int(n_query_heads), to_int(n_kv_heads),
-                                  to_int(head_dim), scale, to_int(query_position_offset), causal,
+        grouped_attention_cuda<T>(batch, query_seq, key_seq, q_heads, kv_heads,
+                                  dim, scale, pos_offset, causal,
                                   kv_length_device, decode_partials,
                                   query.as<T>(), key.as<T>(), value.as<T>(), output.as<T>());
     });

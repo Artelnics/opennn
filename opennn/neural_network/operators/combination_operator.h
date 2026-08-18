@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C O M B I N A T I O N   O P E R A T O R   H E A D E R
@@ -55,6 +55,13 @@ struct CombinationOperator : Operator
     void link_parameters(span<const TensorView>) override;
     void link_gradients (span<const TensorView>) override;
     void link_parameter_scales(span<const TensorView>) override;
+
+    // A tied projection borrows its source layer's weights, so it has nothing
+    // of its own to initialise.
+    bool owns_initializable_weights() const noexcept
+    {
+        return !weights.empty() && !tied_transposed;
+    }
 
     void set_parameters_random() override;
     void set_parameters_glorot() override;

@@ -237,6 +237,20 @@ static void require_fp32_or_bf16(const TensorView& tensor, string_view operation
              "{}: {} must use FP32 or BF16 storage.", operation, role);
 }
 
+// INT8 weights are an inference-only path: the activations must already be the
+// BF16-on-CUDA pair the quantized kernels expect, and each output feature needs
+// its own FP32 dequantization scale.
+static void require_int8_linear(const TensorView& input, const TensorView& output,
+                                const TensorView& weight_scale, string_view operation)
+{
+    throw_if(!input.is_cuda() || !input.is_bf16() || !output.is_bf16(),
+             "{}: INT8 weights require CUDA BF16 activations.", operation);
+    throw_if(weight_scale.empty() || !weight_scale.is_fp32()
+             || weight_scale.get_shape().get_rank() != 1
+             || weight_scale.size() != output.get_shape().back(),
+             "{}: INT8 weights require one FP32 scale per output feature.", operation);
+}
+
 static void require_cpu_fp32(const TensorView& tensor, string_view operation, string_view role)
 {
     throw_if(tensor.get_device() != Device::CPU || !tensor.is_fp32(),
@@ -652,13 +666,7 @@ void linear_forward(const TensorView& input, const TensorView& weights, const Te
 
     require_optional_tensor(input, weight_scale, operation, "weight scale");
     if (weights.is_int8())
-    {
-        throw_if(!input.is_cuda() || !input.is_bf16() || !output.is_bf16(),
-                 "linear_forward: INT8 weights require CUDA BF16 activations.");
-        throw_if(weight_scale.empty() || !weight_scale.is_fp32()
-                 || weight_scale.get_shape().get_rank() != 1 || weight_scale.size() != output.get_shape().back(),
-                 "linear_forward: INT8 weights require one FP32 scale per output feature.");
-    }
+        require_int8_linear(input, output, weight_scale, operation);
 
     if (input.is_cuda()) { linear_forward_gpu(input, weights, bias, output, epilogue, pre_activation, weight_scale); return; }
 
@@ -770,13 +778,7 @@ void linear_forward_transposed(const TensorView& input, const TensorView& embed_
     require_optional_tensor(input, weight_scale, operation, "weight scale");
 
     if (embed_weight.is_int8())
-    {
-        throw_if(!input.is_cuda() || !input.is_bf16() || !output.is_bf16(),
-                 "linear_forward_transposed: INT8 weights require CUDA BF16 activations.");
-        throw_if(weight_scale.empty() || !weight_scale.is_fp32()
-                 || weight_scale.get_shape().get_rank() != 1 || weight_scale.size() != output.get_shape().back(),
-                 "linear_forward_transposed: INT8 weights require one FP32 scale per output feature.");
-    }
+        require_int8_linear(input, output, weight_scale, operation);
 
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda() && embed_weight.is_int8())

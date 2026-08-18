@@ -575,20 +575,22 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
         void* residual_ptr = fuse_add ? residual.get_data() : nullptr;
         void* y_ptr        = output.get_data();
 
-        cudnn_frontend::VariantPack tensors;
-        if (fuse_add) tensors[entry.fwd_Residual] = residual_ptr;
-        tensors[entry.fwd_X]        = x_ptr;
-        tensors[entry.fwd_Scale]    = gamma.get_data();
-        tensors[entry.fwd_Bias]     = beta.get_data();
-        tensors[entry.fwd_PrevMean] = running_mean.get_data();
-        tensors[entry.fwd_PrevVar]  = running_variance.get_data();
-        tensors[entry.fwd_Eps]      = &epsilon_value;
-        tensors[entry.fwd_Mom]      = &momentum_value;
-        tensors[entry.fwd_Y]        = y_ptr;
-        tensors[entry.fwd_Mean]     = mean.get_data();
-        tensors[entry.fwd_InvVar]   = inverse_variance.get_data();
-        tensors[entry.fwd_NextMean] = running_mean.get_data();
-        tensors[entry.fwd_NextVar]  = running_variance.get_data();
+        cudnn_frontend::VariantPack tensors{
+            {entry.fwd_X,        x_ptr},
+            {entry.fwd_Scale,    gamma.get_data()},
+            {entry.fwd_Bias,     beta.get_data()},
+            {entry.fwd_PrevMean, running_mean.get_data()},
+            {entry.fwd_PrevVar,  running_variance.get_data()},
+            {entry.fwd_Eps,      &epsilon_value},
+            {entry.fwd_Mom,      &momentum_value},
+            {entry.fwd_Y,        y_ptr},
+            {entry.fwd_Mean,     mean.get_data()},
+            {entry.fwd_InvVar,   inverse_variance.get_data()},
+            {entry.fwd_NextMean, running_mean.get_data()},
+            {entry.fwd_NextVar,  running_variance.get_data()}
+        };
+
+        if (fuse_add) tensors.emplace(entry.fwd_Residual, residual_ptr);
 
         cudnn_frontend::run_slot(entry.fwd, tensors, "BatchNormOperator fwd",
                                  cudnn_frontend::timing_label("bn_fwd c{} r{}", features, input.size() / features),

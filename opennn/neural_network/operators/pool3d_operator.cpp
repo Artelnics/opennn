@@ -298,8 +298,12 @@ static void max_pooling_3d_backward_gpu(const TensorView& maximal_indices, const
 {
     const Shape& output_shape = output_delta.get_shape();
     const Shape& input_shape = input_delta.get_shape();
+
+    // Zeroing does not depend on T, and the kernel below writes only the
+    // argmax positions, so it must happen once before either instantiation.
+    input_delta.set_zero_async();
+
     input_delta.dispatch([&]<typename T>() {
-        input_delta.set_zero_async();
         max_pooling_3d_backward_cuda<T>(to_int(output_shape[0]) * to_int(output_shape[1]),
                                         output_delta.as<T>(), input_delta.as<T>(),
                                         maximal_indices.as<float>(),
@@ -338,8 +342,10 @@ static void first_token_3d_forward_gpu(const TensorView& input, TensorView& outp
 static void first_token_3d_backward_gpu(const TensorView& output_delta, TensorView& input_delta)
 {
     const Shape& shape = input_delta.get_shape();
+
+    input_delta.set_zero_async();
+
     input_delta.dispatch([&]<typename T>() {
-        input_delta.set_zero_async();
         scatter_time_slice_cuda<T>(shape[0], shape[1], shape[2], 0,
                                    output_delta.as<T>(), input_delta.as<T>());
     });

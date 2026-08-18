@@ -227,9 +227,11 @@ void weighted_squared_error(const TensorView& input, const TensorView& target, f
                                            input.as<T>(),
                                            positive_weight,
                                            negative_weight);
-
-            error = 0.5f * sum_abs_cuda(workspace_device, input.size());
         });
+
+        // The reduction does not depend on T. dispatch runs its lambda inline,
+        // so this still follows the launch.
+        error = 0.5f * sum_abs_cuda(workspace_device, input.size());
         return;
     }
 
@@ -263,8 +265,9 @@ void binary_cross_entropy(const TensorView& input, const TensorView& target, flo
         input.dispatch([&]<typename T>() {
             binary_cross_entropy_cuda<T>(input.size(),
                 workspace_device, target.as<float>(), input.as<T>(), EPSILON);
-            error = sum_abs_cuda(workspace_device, input.size()) / input.get_shape()[0];
         });
+
+        error = sum_abs_cuda(workspace_device, input.size()) / input.get_shape()[0];
         return;
     }
     const Index samples_number = input.get_shape()[0];
@@ -287,8 +290,9 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
         input.dispatch([&]<typename T>() {
             categorical_cross_entropy_cuda<T>(input.size(),
                 workspace_device, target.as<float>(), input.as<T>(), EPSILON);
-            error = sum_abs_cuda(workspace_device, input.size()) / input.get_shape()[0];
         });
+
+        error = sum_abs_cuda(workspace_device, input.size()) / input.get_shape()[0];
         return;
     }
     const Index samples_number = input.get_shape()[0];
@@ -313,9 +317,12 @@ void cross_entropy(const TensorView& input, const TensorView& target, float& err
 void cross_entropy_gradient(const TensorView& input, const TensorView& target, const TensorView& input_delta)
 {
     if (input.is_cuda()) {
+        // Neither depends on T; inside the lambda they were computed in both
+        // instantiations.
+        const Index num_classes = input.get_shape().back();
+        const float scale = 1.0f / static_cast<float>(input.get_shape()[0]);
+
         input.dispatch([&]<typename T>() {
-            const Index num_classes = input.get_shape().back();
-            const float scale = 1.0f / static_cast<float>(input.get_shape()[0]);
             if (num_classes == 1)
                 binary_cross_entropy_gradient_cuda<T>(input.size(),
                     input_delta.as<T>(), target.as<float>(), input.as<T>(), EPSILON, scale);
