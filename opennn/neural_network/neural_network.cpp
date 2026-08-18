@@ -1167,6 +1167,33 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
     return outputs;
 }
 
+void NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views,
+                                      MatrixR& outputs)
+{
+    if (layers.empty() || input_views.empty())
+    {
+        outputs.resize(0, 0);
+        return;
+    }
+
+    warn_if_stale_configuration();
+
+    // The CPU path tiles and sizes its own result; reuse only pays on the GPU
+    // path, where the per-call allocation is what costs.
+    if (!is_gpu())
+    {
+        outputs = calculate_outputs(input_views);
+        return;
+    }
+
+    const Index batch_size = input_views[0].get_shape()[0];
+
+    ForwardPropagation forward_propagation(batch_size, this,
+                                           ForwardPropagationMode::Inference);
+
+    calculate_outputs_device(input_views, forward_propagation, outputs);
+}
+
 MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
 {
     return calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.rows(), inputs.cols()}, Type::FP32)});
@@ -2694,8 +2721,9 @@ void NeuralNetwork::copy_states_host()
     link_states(Device::CPU);
 }
 
-MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,
-                                                ForwardPropagation& forward_propagation)
+void NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,
+                                             ForwardPropagation& forward_propagation,
+                                             MatrixR& outputs)
 {
     forward_propagate(input_views_cpu, forward_propagation, false);
 
@@ -2703,12 +2731,20 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
 
     const Index batch_size = input_views_cpu[0].get_shape()[0];
     const Index out_cols = out_view.size() / batch_size;
-    MatrixR result(batch_size, out_cols);
+
+    if (Index(outputs.rows()) != batch_size || Index(outputs.cols()) != out_cols)
+        outputs.resize(batch_size, out_cols);
 
     cudaStream_t stream = device::get_compute_stream();
     copy_device_to_host_float(out_view.get_data(), out_view.get_type(), out_view.size(),
-                              result.data(), stream);
+                              outputs.data(), stream);
+}
 
+MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,
+                                                ForwardPropagation& forward_propagation)
+{
+    MatrixR result;
+    calculate_outputs_device(input_views_cpu, forward_propagation, result);
     return result;
 }
 
@@ -2865,6 +2901,10 @@ void NeuralNetwork::copy_states_host()
 
 MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>&,
                                                 ForwardPropagation&) OPENNN_CUDA_STUB_BODY(NeuralNetwork::calculate_outputs_device)
+
+void NeuralNetwork::calculate_outputs_device(const vector<TensorView>&,
+                                             ForwardPropagation&,
+                                             MatrixR&) OPENNN_CUDA_STUB_BODY(NeuralNetwork::calculate_outputs_device)
 
 TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>&,
                                                      ForwardPropagation&,
