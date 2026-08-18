@@ -102,6 +102,103 @@ __global__ void l3_reduce(const __nv_bfloat16* __restrict__ a,
     if (lane == 0) y[warp] = 1.0f / (1.0f + __expf(-(acc + bias)));
 }
 
+
+// ------------------------------------------------------------ L1 candidate
+//
+// out[i][n] = relu(bias[n] + sum_j x[i][j] * w[j][n]), with j only 28 wide.
+// The contraction is tiny and the output is 32x the input, so this is a store
+// problem, not a GEMM: each block keeps a slice of the weight matrix in shared
+// memory, streams rows through registers, and writes 16 bytes per thread. K is
+// padded to a multiple of the MMA step internally, which costs four zero
+// columns and removes the ragged tail cuBLAS falls back to an align1 kernel to
+// handle.
+constexpr int L1_COLS_PER_BLOCK = 256;
+constexpr int L1_COLS_PER_THREAD = 8;      // one 16-byte store per row per lane
+constexpr int L1_WARPS = 8;                // 256 threads: enough to hide the store latency
+constexpr int L1_THREADS = L1_WARPS * 32;
+constexpr int L1_ROWS_PER_LANE = 8;        // rows carried together to reuse each weight load
+constexpr int L1_ROWS_PER_BLOCK = L1_WARPS * L1_ROWS_PER_LANE * 2;
+
+__global__ void l1_broadcast(const __nv_bfloat16* __restrict__ x,
+                             const __nv_bfloat16* __restrict__ w,
+                             const __nv_bfloat16* __restrict__ bias,
+                             __nv_bfloat16* __restrict__ out,
+                             const int rows, const int features, const int cols)
+{
+    // The weight slice stays bf16 in shared memory: 28x256x2 = 14 KB, which
+    // leaves room for several blocks per SM. Keeping it as float would triple
+    // the footprint and cost the occupancy this kernel needs to stay
+    // store-bound.
+    extern __shared__ __nv_bfloat16 w_tile[];
+
+    const int col_block = blockIdx.y * L1_COLS_PER_BLOCK;
+
+    for (int i = int(threadIdx.x); i < features * L1_COLS_PER_BLOCK; i += L1_THREADS)
+    {
+        const int j = i / L1_COLS_PER_BLOCK;
+        const int c = i - j * L1_COLS_PER_BLOCK;
+        w_tile[i] = w[size_t(j) * cols + col_block + c];
+    }
+    __syncthreads();
+
+    const int warp = int(threadIdx.x) >> 5;
+    const int lane = int(threadIdx.x) & 31;
+    const int col0 = lane * L1_COLS_PER_THREAD;
+
+    float bias_reg[L1_COLS_PER_THREAD];
+    #pragma unroll
+    for (int c = 0; c < L1_COLS_PER_THREAD; ++c)
+        bias_reg[c] = bias ? __bfloat162float(bias[col_block + col0 + c]) : 0.0f;
+
+    // Each lane carries L1_ROWS_PER_LANE rows at once so a weight value read
+    // from shared memory is reused across all of them. With one row per lane
+    // the shared traffic was 117 MB against 16.8 MB of stores and the kernel
+    // was shared-bound; blocking by 8 brings it down to roughly the store
+    // traffic, which is where it belongs.
+    const int block_start = int(blockIdx.x) * L1_ROWS_PER_BLOCK;
+    const int row_end = min(rows, block_start + L1_ROWS_PER_BLOCK);
+
+    for (int r0 = block_start + warp * L1_ROWS_PER_LANE; r0 < row_end;
+         r0 += L1_WARPS * L1_ROWS_PER_LANE)
+    {
+        const int rows_here = min(L1_ROWS_PER_LANE, row_end - r0);
+
+        float acc[L1_ROWS_PER_LANE][L1_COLS_PER_THREAD];
+        #pragma unroll
+        for (int r = 0; r < L1_ROWS_PER_LANE; ++r)
+            #pragma unroll
+            for (int c = 0; c < L1_COLS_PER_THREAD; ++c) acc[r][c] = bias_reg[c];
+
+        for (int j = 0; j < features; ++j)
+        {
+            float wv[L1_COLS_PER_THREAD];
+            const __nv_bfloat16* w_row = w_tile + j * L1_COLS_PER_BLOCK + col0;
+            #pragma unroll
+            for (int c = 0; c < L1_COLS_PER_THREAD; ++c) wv[c] = __bfloat162float(w_row[c]);
+
+            #pragma unroll
+            for (int r = 0; r < L1_ROWS_PER_LANE; ++r)
+            {
+                if (r >= rows_here) break;
+                const float xv = __bfloat162float(x[size_t(r0 + r) * features + j]);
+                #pragma unroll
+                for (int c = 0; c < L1_COLS_PER_THREAD; ++c) acc[r][c] += xv * wv[c];
+            }
+        }
+
+        for (int r = 0; r < rows_here; ++r)
+        {
+            __nv_bfloat16 packed[L1_COLS_PER_THREAD];
+            #pragma unroll
+            for (int c = 0; c < L1_COLS_PER_THREAD; ++c)
+                packed[c] = __float2bfloat16(acc[r][c] > 0.0f ? acc[r][c] : 0.0f);
+
+            *reinterpret_cast<uint4*>(out + size_t(r0 + r) * cols + col_block + col0) =
+                *reinterpret_cast<const uint4*>(packed);
+        }
+    }
+}
+
 // ---------------------------------------------------------------- harness
 
 float time_kernel(const std::function<void()>& issue)
@@ -233,6 +330,41 @@ int main(int argc, char* argv[])
         report("L3 own reduction kernel",
                time_kernel([&] { l3_reduce<<<warp_blocks, 256>>>(a, w, 0.1f, y, rows, HIDDEN); }),
                act_bytes);
+
+        // L1: cuBLAS GEMM against the candidate. Traffic is the output store
+        // plus the (much smaller) input read.
+        __nv_bfloat16 *x1 = nullptr, *w1 = nullptr, *b1 = nullptr;
+        CHECK(cudaMalloc(&x1, size_t(rows) * FEATURES * sizeof(__nv_bfloat16)));
+        CHECK(cudaMalloc(&w1, size_t(FEATURES) * HIDDEN * sizeof(__nv_bfloat16)));
+        CHECK(cudaMalloc(&b1, HIDDEN * sizeof(__nv_bfloat16)));
+        CHECK(cudaMemset(x1, 0x3c, size_t(rows) * FEATURES * sizeof(__nv_bfloat16)));
+        CHECK(cudaMemset(w1, 0x3c, size_t(FEATURES) * HIDDEN * sizeof(__nv_bfloat16)));
+        CHECK(cudaMemset(b1, 0, HIDDEN * sizeof(__nv_bfloat16)));
+
+        const double l1_bytes = act_bytes + double(rows) * FEATURES * sizeof(__nv_bfloat16);
+
+        report("L1 cuBLAS gemm (bf16)",
+               time_kernel([&] {
+                   cublasGemmEx(blas, CUBLAS_OP_N, CUBLAS_OP_N, HIDDEN, rows, FEATURES,
+                                &alpha, w1, CUDA_R_16BF, HIDDEN, x1, CUDA_R_16BF, FEATURES,
+                                &beta, y_bf, CUDA_R_16BF, HIDDEN, CUBLAS_COMPUTE_32F,
+                                CUBLAS_GEMM_DEFAULT);
+               }),
+               l1_bytes);
+
+        {
+            const size_t shared_bytes = size_t(FEATURES) * L1_COLS_PER_BLOCK * sizeof(__nv_bfloat16);
+            CHECK(cudaFuncSetAttribute(l1_broadcast, cudaFuncAttributeMaxDynamicSharedMemorySize,
+                                       int(shared_bytes)));
+            const dim3 grid((rows + L1_ROWS_PER_BLOCK - 1) / L1_ROWS_PER_BLOCK, HIDDEN / L1_COLS_PER_BLOCK);
+            report("L1 own broadcast kernel",
+                   time_kernel([&] {
+                       l1_broadcast<<<grid, L1_THREADS, shared_bytes>>>(x1, w1, b1, y_bf, rows, FEATURES, HIDDEN);
+                   }),
+                   l1_bytes);
+        }
+
+        cudaFree(x1); cudaFree(w1); cudaFree(b1);
 
         cudaFree(a); cudaFree(w); cudaFree(y); cudaFree(y_bf);
         printf("\n");
