@@ -292,19 +292,24 @@ namespace
 
 #ifdef OPENNN_HAS_CUDA
 
-// Optional reuse of freed CUDA blocks, keyed on exact size.
+// Reuse of freed CUDA blocks, keyed on exact size, gated on completion of the
+// work that last touched them.
 //
 // cudaMalloc/cudaFree is expensive enough to dominate short-lived work: a
 // malloc+free pair of 8 MB measures ~0.68 ms on an RTX 3060 Laptop, and
-// building a dense inference arena of that size was measured at 0.63 ms, more
-// than the 0.27 ms the forward pass itself took. Handing the block back instead
-// of releasing it removes that cost.
+// building a dense inference arena of that size measured 0.63 ms, more than the
+// 0.27 ms the forward pass itself took.
 //
-// OFF by default, because cudaFree implicitly synchronises and skipping it
-// removes that barrier. A recycled block is only safe when the work that used
-// it is ordered before the work that receives it next. That holds for reuse on
-// a single stream, which is how OpenNN allocates today, but not in general --
-// enable with OPENNN_DEVICE_CACHE=1 and cap it with OPENNN_DEVICE_CACHE_MB.
+// cudaFree implicitly synchronises, so simply skipping it would let a recycled
+// block reach new work while earlier work still reads it. Instead, record an
+// event on every stream a block could have been touched by when it is released,
+// and hand it back only once all of those events have completed. A block whose
+// events are still pending is left alone and the caller allocates fresh, so
+// this never blocks.
+//
+// The streams are every configured lane plus the transfer stream --
+// get_compute_stream() resolves to whichever lane is active, so recording only
+// on it would miss blocks used on another lane.
 class CudaBlockCache
 {
 public:
@@ -322,13 +327,25 @@ public:
         const lock_guard<mutex> guard(blocks_mutex);
 
         const auto entry = blocks.find(byte_count);
-        if (entry == blocks.end() || entry->second.empty()) return nullptr;
+        if (entry == blocks.end()) return nullptr;
 
-        void* pointer = entry->second.back();
-        entry->second.pop_back();
-        cached_bytes -= byte_count;
+        vector<CachedBlock>& candidates = entry->second;
 
-        return pointer;
+        for (size_t i = candidates.size(); i-- > 0;)
+        {
+            if (!is_ready(candidates[i])) continue;
+
+            void* pointer = candidates[i].pointer;
+            recycle_events(candidates[i]);
+
+            candidates[i] = std::move(candidates.back());
+            candidates.pop_back();
+            cached_bytes -= byte_count;
+
+            return pointer;
+        }
+
+        return nullptr;
     }
 
     bool give(void* pointer, Index byte_count)
@@ -339,13 +356,28 @@ public:
 
         if (cached_bytes + byte_count > byte_cap) return false;
 
-        blocks[byte_count].push_back(pointer);
+        CachedBlock block;
+        block.pointer = pointer;
+
+        // Every stream that could hold work touching this block.
+        for (int lane = 0; lane < lanes_available(); ++lane)
+            record_pending(block, lane_stream(lane));
+
+        record_pending(block, get_transfer_stream());
+
+        blocks[byte_count].push_back(std::move(block));
         cached_bytes += byte_count;
 
         return true;
     }
 
 private:
+
+    struct CachedBlock
+    {
+        void* pointer = nullptr;
+        vector<cudaEvent_t> pending_events;
+    };
 
     CudaBlockCache()
         : is_enabled(env_flag_enabled("OPENNN_DEVICE_CACHE", false)),
@@ -360,10 +392,55 @@ private:
         return (megabytes > 0 ? megabytes : Index(512)) * 1024 * 1024;
     }
 
+    void record_pending(CachedBlock& block, cudaStream_t stream)
+    {
+        if (!stream) return;
+
+        cudaEvent_t event = nullptr;
+
+        if (!event_pool.empty())
+        {
+            event = event_pool.back();
+            event_pool.pop_back();
+        }
+        else
+            event = create_event(cudaEventDisableTiming);
+
+        if (!event) return;
+
+        record_event(event, stream);
+        block.pending_events.push_back(event);
+    }
+
+    static bool is_ready(const CachedBlock& block)
+    {
+        for (cudaEvent_t event : block.pending_events)
+        {
+            const cudaError_t status = cudaEventQuery(event);
+
+            // cudaErrorNotReady is an answer, not a failure, but it still lands
+            // in the sticky last-error slot that check_last_error() reads.
+            cudaGetLastError();
+
+            if (status != cudaSuccess) return false;
+        }
+
+        return true;
+    }
+
+    void recycle_events(CachedBlock& block)
+    {
+        for (cudaEvent_t event : block.pending_events)
+            event_pool.push_back(event);
+
+        block.pending_events.clear();
+    }
+
     const bool is_enabled;
     const Index byte_cap;
     Index cached_bytes = 0;
-    unordered_map<Index, vector<void*>> blocks;
+    unordered_map<Index, vector<CachedBlock>> blocks;
+    vector<cudaEvent_t> event_pool;
     mutex blocks_mutex;
 };
 
