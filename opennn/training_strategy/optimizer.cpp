@@ -1853,18 +1853,33 @@ Loss::EvaluationResult Optimizer::train_epoch(
                                             neural_network->get_config());
             const vector<MemoryPoolEntry> delta_lifetimes =
                 BackPropagation::make_co_planned_lifetimes(*loss, tail_size);
-            tail.forward = make_unique<ForwardPropagation>(
-                tail_size,
-                neural_network,
-                ForwardPropagationMode::Training,
-                InferenceShapePolicy{},
-                true,
-                delta_lifetimes);
+
+            // The remainder is smaller than a whole batch and runs only after
+            // every whole batch has been consumed, so it lays its activations,
+            // deltas and gradients over the main context's rather than
+            // allocating a second set - the same trick the validation context
+            // already plays on this arena.
+            tail.forward = make_unique<ForwardPropagation>();
+            tail.forward->set(tail_size,
+                              neural_network,
+                              &forward_propagation.arena,
+                              ForwardPropagationMode::Training,
+                              InferenceShapePolicy{},
+                              true,
+                              delta_lifetimes);
+
+            throw_if(tail.forward->arena.owns_memory(),
+                     "Optimizer::train_epoch: the remainder batch of {} samples "
+                     "did not fit in the {}-sample arena and allocated one of "
+                     "its own, which the steady-state allocation guard forbids.",
+                     tail_size, forward_propagation.batch_size);
+
             tail.backward = make_unique<BackPropagation>(
                 tail_size,
                 *loss,
                 &tail.forward->arena,
-                tail.forward->co_planned_offsets);
+                tail.forward->co_planned_offsets,
+                &back_propagation.gradient);
             tail.size = tail_size;
         }
         // No re-set on the reused path: Loss::back_propagate links the layers'

@@ -36,9 +36,10 @@ vector<bool> find_passthrough_layers(const vector<unique_ptr<Layer>>& layers,
 BackPropagation::BackPropagation(const Index new_batch_size,
                                  Loss& new_loss,
                                  Buffer* external_arena,
-                                 span<const Index> arena_offsets)
+                                 span<const Index> arena_offsets,
+                                 Buffer* external_gradient)
 {
-    set(new_batch_size, new_loss, external_arena, arena_offsets);
+    set(new_batch_size, new_loss, external_arena, arena_offsets, external_gradient);
 }
 
 NeuralNetwork* BackPropagation::get_neural_network() const
@@ -77,7 +78,8 @@ vector<vector<pair<size_t, size_t>>> BackPropagation::make_consumer_edges() cons
 
 void BackPropagation::set(const Index new_batch_size, Loss& new_loss,
                           Buffer* external_arena,
-                          span<const Index> arena_offsets)
+                          span<const Index> arena_offsets,
+                          Buffer* external_gradient)
 {
     batch_size = new_batch_size;
     loss = &new_loss;
@@ -91,7 +93,7 @@ void BackPropagation::set(const Index new_batch_size, Loss& new_loss,
 
     metrics.reset();
 
-    setup_gradient();
+    setup_gradient(external_gradient);
 
     DeltaPlan plan = build_delta_plan();
 
@@ -177,16 +179,38 @@ const TensorView& BackPropagation::input_delta_addend(size_t layer, size_t input
     return input_delta_addends[layer][input];
 }
 
-void BackPropagation::setup_gradient()
+void BackPropagation::setup_gradient(Buffer* external_gradient)
 {
     const NeuralNetwork& neural_network = require_network();
 
     const auto parameter_specs = neural_network.get_parameter_specs();
 
     const Index gradient_bytes = get_aligned_bytes(parameter_specs, Type::FP32);
-    gradient.resize_bytes(gradient_bytes, neural_network.get_device());
+    const Device device = neural_network.get_device();
+
+    const bool share = external_gradient
+                    && external_gradient->get_device() == device
+                    && external_gradient->byte_size() >= gradient_bytes;
+
+    if (share)
+        gradient.set_view(external_gradient->data(), gradient_bytes, device);
+    else
+    {
+        // Not throw_if: its arguments are evaluated whatever the condition, and
+        // there is nothing to dereference when no buffer was offered.
+        if (external_gradient)
+            throw runtime_error(
+                format("BackPropagation::setup_gradient: the gradient buffer offered "
+                       "holds {} bytes on device {} and this layout needs {} on device {}.",
+                       external_gradient->byte_size(), int(external_gradient->get_device()),
+                       gradient_bytes, int(device)));
+
+        gradient.resize_bytes(gradient_bytes, device);
+    }
+
     gradient.setZero();
-    memory_debug::record("backward", "BackPropagation::gradient", gradient_bytes,
+    memory_debug::record(share ? "backward.aliased" : "backward",
+                         "BackPropagation::gradient", share ? 0 : gradient_bytes,
                          format("batch={}", batch_size));
 
     neural_network.link_gradients(gradient);
