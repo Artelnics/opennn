@@ -2318,13 +2318,12 @@ void TabularDataset::read_csv()
 
 static const EnumMap<TabularDataset::MissingValuesMethod>& missing_values_method_map()
 {
-    static const vector<pair<TabularDataset::MissingValuesMethod, string>> entries = {
+    static const EnumMap<TabularDataset::MissingValuesMethod> map{
         {TabularDataset::MissingValuesMethod::Unuse,         "Unuse"},
         {TabularDataset::MissingValuesMethod::Mean,          "Mean"},
         {TabularDataset::MissingValuesMethod::Median,        "Median"},
         {TabularDataset::MissingValuesMethod::Interpolation, "Interpolation"}
     };
-    static const EnumMap<TabularDataset::MissingValuesMethod> map{entries};
     return map;
 }
 

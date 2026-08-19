@@ -70,6 +70,14 @@ void set_random_uniform(VectorMap tensor, float min, float max)
     fill_random(tensor, uniform_real_distribution<float>(min, max));
 }
 
+void set_random_bernoulli(span<uint8_t> values, float probability)
+{
+    lock_guard<mutex> lock(rng_mutex);
+    bernoulli_distribution distribution(probability);
+    for (uint8_t& value : values)
+        value = uint8_t(distribution(generator));
+}
+
 void set_random_normal(MatrixMap tensor, float mean, float std_dev)
 {
     fill_random(tensor, normal_distribution<float>(mean, std_dev));

@@ -2,6 +2,8 @@
 
 #include "opennn/neural_network/layers/non_max_suppression_layer.h"
 #include "opennn/neural_network/neural_network.h"
+#include "opennn/core/configuration.h"
+#include "opennn/core/device_backend.h"
 #include "opennn/core/tensor_types.h"
 
 using namespace opennn;
@@ -200,4 +202,47 @@ TEST(NonMaxSuppression, DropsBoxesBelowConfidenceThreshold)
 
     for (Index k = 1; k < max_boxes; ++k)
         EXPECT_FLOAT_EQ(out[k * 6 + 4], 0.0f);
+}
+
+TEST(NonMaxSuppression, GpuStagingIsPropagationOwned)
+{
+    if (!device::has_cuda_device())
+        GTEST_SKIP() << "No CUDA device.";
+
+    constexpr Index batch_size = 1;
+    constexpr Index grid = 2;
+    constexpr Index channels = 6;
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<NonMaxSuppression>(
+        Shape{grid, grid, channels}, 1, 0.5f, 0.4f, "nms"));
+    neural_network.compile(Device::CUDA);
+
+    vector<float> host_input(size_t(batch_size * grid * grid * channels), 0.0f);
+    Buffer device_input(Device::CUDA);
+    const Index input_bytes = Index(host_input.size() * sizeof(float));
+    device_input.resize_bytes(input_bytes, Device::CUDA);
+    device::copy_async(device_input.data(), host_input.data(), input_bytes,
+                       device::CopyKind::HostToDevice);
+
+    ForwardPropagation first(batch_size, &neural_network,
+                             ForwardPropagationMode::Inference);
+    ForwardPropagation second(batch_size, &neural_network,
+                              ForwardPropagationMode::Inference);
+    vector<TensorView> inputs{
+        TensorView(device_input.data(), {batch_size, grid, grid, channels},
+                   Type::FP32, Device::CUDA)};
+
+    neural_network.forward_propagate(inputs, first, false);
+    neural_network.forward_propagate(inputs, second, false);
+    device::synchronize(device::get_compute_stream());
+
+    ASSERT_FALSE(first.layer_pinned_storage[0].empty());
+    ASSERT_FALSE(second.layer_pinned_storage[0].empty());
+    EXPECT_NE(first.layer_pinned_storage[0].data(),
+              second.layer_pinned_storage[0].data());
+
+    Configuration::instance().set();
 }

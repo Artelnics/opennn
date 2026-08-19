@@ -20,6 +20,7 @@ namespace opennn
 
     void set_random_uniform(MatrixR&, float = -0.1, float = 0.1);
     void set_random_uniform(VectorMap, float = -0.1, float = 0.1);
+    void set_random_bernoulli(span<uint8_t>, float);
 
     void set_random_normal(MatrixMap, float = 0, float = 1);
 

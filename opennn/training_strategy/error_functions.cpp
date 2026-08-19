@@ -25,7 +25,7 @@ static float sum_squared_diff_cuda(const TensorView& input, const TensorView& ta
     });
 
     float sum_squared = 0.0f;
-    CHECK_CUBLAS(cublasSdot(Backend::get_cublas_handle(), total_size,
+    CHECK_CUBLAS(cublasSdot(device::get_cublas_handle(), total_size,
                             workspace, 1, workspace, 1, &sum_squared));
     return sum_squared;
 }
@@ -45,14 +45,14 @@ static void scaled_diff_cuda(const TensorView& input, const TensorView& target, 
 static float sum_abs_cuda(const float* data, Index size)
 {
     float sum = 0.0f;
-    CHECK_CUBLAS(cublasSasum(Backend::get_cublas_handle(), to_int(size), data, 1, &sum));
+    CHECK_CUBLAS(cublasSasum(device::get_cublas_handle(), to_int(size), data, 1, &sum));
     return sum;
 }
 
 static float squared_norm_cuda(const float* data, Index size)
 {
     float dot = 0.0f;
-    CHECK_CUBLAS(cublasSdot(Backend::get_cublas_handle(), to_int(size),
+    CHECK_CUBLAS(cublasSdot(device::get_cublas_handle(), to_int(size),
                             data, 1, data, 1, &dot));
     return dot;
 }
@@ -391,21 +391,19 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
                 input.as<T>(), target.as<float>(),
                 errors_device, valid_mask_device, correct_mask_device, EPSILON);
 
-            thread_local Buffer device_results(Device::CUDA);
-            device_results.grow_to(Index(3 * sizeof(float)));
-            float* device_results_ptr = device_results.as<float>();
+            float* device_results = errors_device + 3 * token_count;
 
-            cublasHandle_t handle = Backend::get_cublas_handle();
+            cublasHandle_t handle = device::get_cublas_handle();
             {
                 device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
-                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), errors_device,       1, device_results_ptr + 0));
-                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,   1, device_results_ptr + 1));
-                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device, 1, device_results_ptr + 2));
+                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), errors_device,       1, device_results + 0));
+                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,   1, device_results + 1));
+                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device, 1, device_results + 2));
             }
 
             float host_results[3];
             cudaStream_t stream = device::get_compute_stream();
-            device::copy_async(host_results, device_results_ptr,
+            device::copy_async(host_results, device_results,
                                3 * Index(sizeof(float)),
                                device::CopyKind::DeviceToHost,
                                stream);
@@ -547,7 +545,7 @@ void l2_regularization_gradient(const TensorView& parameters, float lambda, cons
     if (parameters.is_cuda())
     {
         const int total_size = to_int(parameters.size());
-        CHECK_CUBLAS(cublasAxpyEx(Backend::get_cublas_handle(), total_size,
+        CHECK_CUBLAS(cublasAxpyEx(device::get_cublas_handle(), total_size,
                                   &lambda,         CUDA_R_32F,
                                   parameters.get_data(), CUDA_R_32F, 1,
                                   gradient.get_data(),   CUDA_R_32F, 1,

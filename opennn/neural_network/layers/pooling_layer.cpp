@@ -293,7 +293,7 @@ void PoolOperator::forward_propagate(ForwardPropagation& forward_propagation, si
             return;
         }
 
-        CHECK_CUDNN(cudnnPoolingForward(Backend::get_cudnn_handle(),
+        CHECK_CUDNN(cudnnPoolingForward(device::get_cudnn_handle(),
             get_pooling_descriptor(),
             &one,  input.get_descriptor(),  input.get_data(),
             &zero, output.get_descriptor(), output.get_data()));
@@ -337,7 +337,7 @@ void PoolOperator::back_propagate(ForwardPropagation& forward_propagation, BackP
             return;
         }
 
-        CHECK_CUDNN(cudnnPoolingBackward(Backend::get_cudnn_handle(),
+        CHECK_CUDNN(cudnnPoolingBackward(device::get_cudnn_handle(),
             get_pooling_descriptor(),
             &one,  output.get_descriptor(),       output.get_data(),
                    output_delta.get_descriptor(), output_delta.get_data(),
@@ -360,13 +360,12 @@ namespace
 
 const EnumMap<PoolingMethod>& pooling_method_map()
 {
-    static const vector<EnumMap<PoolingMethod>::Entry> entries = {
+    static const EnumMap<PoolingMethod> map{
         {PoolingMethod::MaxPooling,     "MaxPooling"},
         {PoolingMethod::AveragePooling, "AveragePooling"},
         {PoolingMethod::FirstToken,     "FirstToken"}
     };
-    static const EnumMap<PoolingMethod> instance{entries};
-    return instance;
+    return map;
 }
 
 void validate_pooling_configuration(const Shape& input_shape,

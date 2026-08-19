@@ -473,20 +473,12 @@ public:
 #ifdef OPENNN_HAS_CUDA
         if (token_device)
         {
-            pinned_id = static_cast<int*>(
-                device::allocate_pinned_host(Index(sizeof(int))));
+            pinned_id.resize_bytes(Index(sizeof(int)));
             gpu_candidates.resize_bytes(
                 sample_logits_scratch_floats() * Index(sizeof(float)),
                 Device::CUDA);
             gpu_id.resize_bytes(Index(sizeof(int)), Device::CUDA);
         }
-#endif
-    }
-
-    ~DecoderSampler()
-    {
-#ifdef OPENNN_HAS_CUDA
-        if (pinned_id) device::deallocate_pinned_host(pinned_id);
 #endif
     }
 
@@ -530,13 +522,13 @@ public:
                               token_device
                                   ? static_cast<float*>(token_device->data())
                                   : nullptr);
-            device::copy_async(pinned_id,
+            device::copy_async(pinned_id.data(),
                                gpu_id.data(),
                                Index(sizeof(int)),
                                device::CopyKind::DeviceToHost,
                                device::get_compute_stream());
             device::synchronize(device::get_compute_stream());
-            return Index(*pinned_id);
+            return Index(*pinned_id.as<int>());
         }
 #endif
 
@@ -694,7 +686,7 @@ private:
     vector<float> adjusted;
     vector<pair<float, Index>> candidates;
 #ifdef OPENNN_HAS_CUDA
-    int* pinned_id = nullptr;
+    device::PinnedBuffer pinned_id;
     Buffer gpu_candidates{Device::CUDA};
     Buffer gpu_id{Device::CUDA};
 #endif

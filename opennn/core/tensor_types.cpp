@@ -68,7 +68,7 @@ static void fill_cuda(const TensorView& view, float value)
     if (value == 0.0f)
         return device::set_zero(view.get_data(), view.byte_size(), Device::CUDA);
 
-    CHECK_CUDNN(cudnnSetTensor(Backend::get_cudnn_handle(),
+    CHECK_CUDNN(cudnnSetTensor(device::get_cudnn_handle(),
                                view.get_descriptor(), view.get_data(), &value));
 }
 

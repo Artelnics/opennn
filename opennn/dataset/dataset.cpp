@@ -135,12 +135,11 @@ void Dataset::set_storage_mode(StorageMode new_storage_mode)
 
 static const EnumMap<Dataset::StorageMode>& storage_mode_map()
 {
-    static const vector<pair<Dataset::StorageMode, string>> entries = {
+    static const EnumMap<Dataset::StorageMode> map{
         {Dataset::StorageMode::Matrix,            "Matrix"},
         {Dataset::StorageMode::BinaryFile,        "BinaryFile"},
         {Dataset::StorageMode::GPUPersistantData, "GPUPersistantData"}
     };
-    static const EnumMap<Dataset::StorageMode> map{entries};
     return map;
 }
 
@@ -659,11 +658,10 @@ string Dataset::get_separator_name() const
 
 static const EnumMap<Dataset::Codification>& codification_map()
 {
-    static const vector<pair<Dataset::Codification, string>> entries = {
+    static const EnumMap<Dataset::Codification> map{
         {Dataset::Codification::UTF8,      "UTF-8"},
         {Dataset::Codification::SHIFT_JIS, "SHIFT_JIS"}
     };
-    static const EnumMap<Dataset::Codification> map{entries};
     return map;
 }
 
@@ -1081,9 +1079,15 @@ void Dataset::fill_batch_host(Batch& batch,
 
     batch.device_gather.reset();
 
-    float* const input_buffer   = on_gpu ? batch.input.host   : batch.input.buffer.as<float>();
-    float* const decoder_buffer = on_gpu ? batch.decoder.host : batch.decoder.buffer.as<float>();
-    float* const target_buffer  = on_gpu ? batch.target.host  : batch.target.buffer.as<float>();
+    float* const input_buffer = on_gpu
+        ? batch.input.host.as<float>()
+        : batch.input.buffer.as<float>();
+    float* const decoder_buffer = on_gpu
+        ? batch.decoder.host.as<float>()
+        : batch.decoder.buffer.as<float>();
+    float* const target_buffer = on_gpu
+        ? batch.target.host.as<float>()
+        : batch.target.buffer.as<float>();
 
     if (!batch.input.contiguous && !input_indices.empty())
         batch.input.contiguous = is_contiguous(input_indices);

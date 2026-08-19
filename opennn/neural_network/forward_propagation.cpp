@@ -100,9 +100,6 @@ ForwardPropagation::ForwardPropagation(const Index new_batch_size,
 ForwardPropagation::~ForwardPropagation()
 {
     PROFILE_SCOPE_HOST("fp:dtor");
-#ifdef OPENNN_HAS_CUDA
-    if (position_pinned) device::deallocate_pinned_host(position_pinned);
-#endif
 }
 
 void ForwardPropagation::stage_position(cudaStream_t stream)
@@ -110,12 +107,14 @@ void ForwardPropagation::stage_position(cudaStream_t stream)
 #ifdef OPENNN_HAS_CUDA
     if (!position_pinned)
     {
-        position_pinned = device::allocate_pinned_host(Index(sizeof(int)));
+        position_pinned.resize_bytes(Index(sizeof(int)));
         position_device.resize_bytes(Index(sizeof(int)), Device::CUDA);
     }
 
-    *static_cast<int*>(position_pinned) = int(past_length);
-    device::copy_async(position_device.data(), position_pinned, Index(sizeof(int)),
+    *position_pinned.as<int>() = int(past_length);
+    device::copy_async(position_device.data(),
+                       position_pinned.data(),
+                       Index(sizeof(int)),
                        device::CopyKind::HostToDevice, stream);
 #else
     (void)stream;
@@ -164,6 +163,8 @@ void ForwardPropagation::set(
         });
 
     staged_input_storage.clear();
+    layer_state_storage.clear();
+    layer_pinned_storage.clear();
     staged_inputs.clear();
     host_bf16_input_scratch.clear();
     passthrough_overrides.clear();
@@ -174,6 +175,11 @@ void ForwardPropagation::set(
 
     inputs.resize(layers_number);
     slots.resize(layers_number);
+    drelu_fused_by_layer.assign(layers_number, uint8_t{0});
+    layer_state_storage.reserve(layers_number);
+    for (size_t i = 0; i < layers_number; ++i)
+        layer_state_storage.emplace_back(neural_network->get_device());
+    layer_pinned_storage.resize(layers_number);
     valid_lengths.resize(layers_number);
     device_valid_lengths.assign(layers_number, nullptr);
     device_valid_length_storage.resize(layers_number);

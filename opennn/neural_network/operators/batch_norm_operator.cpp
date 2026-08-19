@@ -560,7 +560,9 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
     const bool ran = cudnn_frontend::bn_frontend_enabled()
         && cudnn_frontend::run_frontend(bn_graph_cache, "BatchNormalizationOperator", [&](BatchNormalizationGraphCache& cache)
     {
-        auto& entry = cache.entries[input.get_shape()[0]];
+        auto& entry = detail::bounded_cache_entry(
+            cache.entries, input.get_shape()[0],
+            cudnn_frontend::graph_cache_capacity);
         if (!entry.fwd.graph)
         {
             const int64_t batch    = input.get_shape()[0];
@@ -601,7 +603,7 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
     {
 
         CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
-            Backend::get_cudnn_handle(),
+            device::get_cudnn_handle(),
             CUDNN_BATCHNORM_SPATIAL,
             &one, &zero,
             input.get_descriptor(),  input.get_data(),
@@ -641,7 +643,9 @@ void BatchNormalizationOperator::apply_delta_gpu(
             [&](BatchNormalizationGraphCache& cache)
     {
         const int64_t batch = input.get_shape()[0];
-        auto& entry = cache.entries[batch];
+        auto& entry = detail::bounded_cache_entry(
+            cache.entries, batch,
+            cudnn_frontend::graph_cache_capacity);
 
         if (!entry.bwd_choice)
         {
@@ -820,7 +824,7 @@ void BatchNormalizationOperator::apply_delta_gpu(
         copy(delta, residual_delta);
 
     CHECK_CUDNN(cudnnBatchNormalizationBackward(
-        Backend::get_cudnn_handle(),
+        device::get_cudnn_handle(),
         CUDNN_BATCHNORM_SPATIAL,
         &one, &zero, &one, &zero,
         input.get_descriptor(), input.get_data(),

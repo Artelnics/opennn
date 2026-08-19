@@ -130,11 +130,16 @@ void linear_forward(const TensorView&, const TensorView&, const TensorView&,
                     const TensorView& weight_scale = {});
 // `addend`, when given (and not accumulating), is summed into the input delta
 // by the same GEMM: input_delta = output_delta * W^T + addend.
+// `fused_input_relu`, when given, asks for the input delta to be masked by the
+// derivative of the ReLU that produced the input and reports whether that
+// happened: only the single-output path can do it, so a caller that gets back
+// false must still run the activation backward itself.
 void linear_backward(const TensorView&, const TensorView&, const TensorView&,
                      const TensorView&, const TensorView&,
                      TensorView&, bool accumulate_input_delta = false,
                      const TensorView* drelu_mask = nullptr,
-                     const TensorView* addend = nullptr);
+                     const TensorView* addend = nullptr,
+                     bool* fused_input_relu = nullptr);
 
 
 

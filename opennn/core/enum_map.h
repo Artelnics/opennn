@@ -8,17 +8,30 @@
 
 #pragma once
 
+#include <initializer_list>
+
 #include "opennn/core/opennn_types.h"
 
 namespace opennn
 {
 
 template <typename Enum>
-struct EnumMap
+class EnumMap
 {
+public:
     using Entry = pair<Enum, string>;
 
-    const vector<Entry>& entries;
+    EnumMap(initializer_list<Entry> new_entries)
+        : entries(new_entries)
+    {
+    }
+
+    explicit EnumMap(vector<Entry> new_entries)
+        : entries(std::move(new_entries))
+    {
+    }
+
+    const vector<Entry>& get_entries() const noexcept { return entries; }
 
     const string& to_string(Enum value) const
     {
@@ -39,6 +52,9 @@ struct EnumMap
         const auto entry = ranges::find(entries, name, &Entry::second);
         return entry != entries.end() ? entry->first : fallback;
     }
+
+private:
+    vector<Entry> entries;
 };
 
 }

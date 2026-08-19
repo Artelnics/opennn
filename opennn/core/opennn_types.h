@@ -199,6 +199,33 @@ template<typename... Args>
 // -- a guard -- into the crash it was written to prevent.
 #define throw_if(condition, ...)                                           do                                                                     {                                                                          if (condition)                                                             ::opennn::detail::throw_formatted(__VA_ARGS__);                }                                                                      while (false)
 
+namespace detail
+{
+
+template<typename Map>
+void make_bounded_cache_room(Map& entries, const size_t capacity)
+{
+    throw_if(capacity == 0, "A bounded cache requires a positive capacity.");
+
+    if (entries.size() >= capacity)
+        entries.erase(entries.begin());
+}
+
+template<typename Map, typename Key>
+typename Map::mapped_type& bounded_cache_entry(Map& entries,
+                                               const Key& key,
+                                               const size_t capacity)
+{
+    if (const auto found = entries.find(key); found != entries.end())
+        return found->second;
+
+    make_bounded_cache_room(entries, capacity);
+
+    return entries.try_emplace(key).first->second;
+}
+
+}
+
 
 
 template <typename T, typename... Candidates>

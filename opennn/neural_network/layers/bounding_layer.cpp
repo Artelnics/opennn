@@ -114,14 +114,13 @@ VectorR Bounding::get_upper_bounds() const
 
 const EnumMap<Bounding::BoundingMethod>& Bounding::bounding_method_map()
 {
-    static const vector<pair<BoundingMethod, string>> entries = {
+    static const EnumMap<BoundingMethod> map{
         {BoundingMethod::NoBounding, "NoBounding"},
         {BoundingMethod::NoBounding, "No bounding"},
         {BoundingMethod::Bounding,   "Bounding"},
         {BoundingMethod::Bounding,   "Positive outputs"},
         {BoundingMethod::Bounding,   "Data range"}
     };
-    static const EnumMap<BoundingMethod> map{entries};
     return map;
 }
 

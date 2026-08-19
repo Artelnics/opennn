@@ -9,7 +9,6 @@
 #pragma once
 
 #include <array>
-#include <mutex>
 
 #include "opennn/core/opennn_types.h"
 #include "opennn/core/configuration.h"
@@ -49,12 +48,14 @@ enum class GraphWorkspaceKind
     Int8Dequant,
     PoolingMask,
     NormPartials,
+    GradientPartials,
     Count
 };
 
 inline constexpr std::array<const char*, static_cast<size_t>(GraphWorkspaceKind::Count)>
 graph_workspace_labels = {"shared_scratch", "bf16_input", "bf16_gradient",
-                          "bf16_to_fp32", "int8_dequant", "pooling_mask", "norm_partials"};
+                          "bf16_to_fp32", "int8_dequant", "pooling_mask", "norm_partials",
+                          "gradient_partials"};
 
 struct GraphWorkspaceView
 {
@@ -70,10 +71,11 @@ class CudaGraphWorkspaceScope
 public:
     explicit CudaGraphWorkspaceScope(GraphWorkspaceRequirements&,
                                      const GraphWorkspaceViews* = nullptr);
-    ~CudaGraphWorkspaceScope() noexcept;
 
     CudaGraphWorkspaceScope(const CudaGraphWorkspaceScope&) = delete;
     CudaGraphWorkspaceScope& operator=(const CudaGraphWorkspaceScope&) = delete;
+
+    ~CudaGraphWorkspaceScope() noexcept;
 
 private:
     GraphWorkspaceRequirements* previous_requirements = nullptr;
@@ -118,10 +120,11 @@ public:
 
     explicit CudaAllocationGrowthGuard(bool,
                                        bool forbid_matmul_plan_creation = true);
-    ~CudaAllocationGrowthGuard() noexcept;
 
     CudaAllocationGrowthGuard(const CudaAllocationGrowthGuard&) = delete;
     CudaAllocationGrowthGuard& operator=(const CudaAllocationGrowthGuard&) = delete;
+
+    ~CudaAllocationGrowthGuard() noexcept;
 
 private:
     bool active = false;
@@ -143,40 +146,111 @@ void check_last_error();
 void reset_last_error() noexcept;
 
 #ifdef OPENNN_HAS_CUDA
-struct CublasPointerModeGuard
+class CublasPointerModeGuard
 {
-    cublasHandle_t handle = nullptr;
-    cublasPointerMode_t previous_mode = CUBLAS_POINTER_MODE_HOST;
+public:
 
-    CublasPointerModeGuard(cublasHandle_t new_handle, cublasPointerMode_t mode)
-        : handle(new_handle)
-    {
-        CHECK_CUBLAS(cublasGetPointerMode(handle, &previous_mode));
-        CHECK_CUBLAS(cublasSetPointerMode(handle, mode));
-    }
+    CublasPointerModeGuard(cublasHandle_t, cublasPointerMode_t);
 
     CublasPointerModeGuard(const CublasPointerModeGuard&) = delete;
     CublasPointerModeGuard& operator=(const CublasPointerModeGuard&) = delete;
 
-    ~CublasPointerModeGuard() noexcept
-    {
-        if (handle) cublasSetPointerMode(handle, previous_mode);
-    }
+    ~CublasPointerModeGuard() noexcept;
+
+private:
+
+    cublasHandle_t handle = nullptr;
+    cublasPointerMode_t previous_mode = CUBLAS_POINTER_MODE_HOST;
+};
+
+class CublasMathModeGuard
+{
+public:
+
+    CublasMathModeGuard(cublasHandle_t, cublasMath_t);
+
+    CublasMathModeGuard(const CublasMathModeGuard&) = delete;
+    CublasMathModeGuard& operator=(const CublasMathModeGuard&) = delete;
+
+    ~CublasMathModeGuard() noexcept;
+
+private:
+
+    cublasHandle_t handle = nullptr;
+    cublasMath_t previous_mode = CUBLAS_DEFAULT_MATH;
 };
 #endif
 
-cudaStream_t create_stream(unsigned);
-void destroy_stream(cudaStream_t);
+class PinnedBuffer
+{
+public:
 
-void* allocate_pinned_host(Index);
-void deallocate_pinned_host(void*);
+    PinnedBuffer() = default;
+    explicit PinnedBuffer(Index byte_count);
 
-cudaEvent_t create_event(unsigned);
-cudaEvent_t create_event();
-void destroy_event(cudaEvent_t);
+    PinnedBuffer(const PinnedBuffer&) = delete;
+    PinnedBuffer& operator=(const PinnedBuffer&) = delete;
+
+    PinnedBuffer(PinnedBuffer&&) noexcept;
+    PinnedBuffer& operator=(PinnedBuffer&&) noexcept;
+
+    ~PinnedBuffer() noexcept;
+
+    void resize_bytes(Index);
+    void grow_to(Index);
+
+    void* data() noexcept { return pointer; }
+    const void* data() const noexcept { return pointer; }
+
+    template<typename T>
+    T* as() noexcept { return static_cast<T*>(pointer); }
+
+    template<typename T>
+    const T* as() const noexcept { return static_cast<const T*>(pointer); }
+
+    Index byte_size() const noexcept { return allocated_bytes; }
+    bool empty() const noexcept { return allocated_bytes == 0; }
+    explicit operator bool() const noexcept { return pointer != nullptr; }
+
+private:
+
+    void reset() noexcept;
+    void swap(PinnedBuffer&) noexcept;
+
+    void* pointer = nullptr;
+    Index allocated_bytes = 0;
+};
+
 void record_event(cudaEvent_t, cudaStream_t);
 void synchronize_event(cudaEvent_t);
 void stream_wait_event(cudaStream_t, cudaEvent_t);
+
+class CudaEvent
+{
+public:
+
+    CudaEvent() = default;
+    explicit CudaEvent(unsigned flags);
+
+    CudaEvent(const CudaEvent&) = delete;
+    CudaEvent& operator=(const CudaEvent&) = delete;
+
+    CudaEvent(CudaEvent&&) noexcept;
+    CudaEvent& operator=(CudaEvent&&) noexcept;
+
+    ~CudaEvent() noexcept;
+
+    void create();
+
+    cudaEvent_t get() const noexcept { return handle; }
+    explicit operator bool() const noexcept { return handle != nullptr; }
+
+private:
+
+    void reset() noexcept;
+
+    cudaEvent_t handle = nullptr;
+};
 
 #ifdef OPENNN_HAS_CUDA
 struct GraphExecDeleter { void operator()(cudaGraphExec_t exec) const noexcept { cudaGraphExecDestroy(exec); } };
@@ -190,10 +264,11 @@ class StreamCapture
 {
 public:
     explicit StreamCapture(cudaStream_t);
-    ~StreamCapture() noexcept;
 
     StreamCapture(const StreamCapture&) = delete;
     StreamCapture& operator=(const StreamCapture&) = delete;
+
+    ~StreamCapture() noexcept;
 
     void end(GraphExecHandle&);
 
@@ -226,90 +301,18 @@ cudaStream_t lane_stream(int lane);
 cudaStream_t get_compute_stream();
 cudaStream_t get_transfer_stream();
 
+cublasHandle_t get_cublas_handle();
+cublasLtHandle_t get_cublas_lt_handle();
+cudnnHandle_t get_cudnn_handle();
+cudnnOpTensorDescriptor_t get_op_tensor_add_descriptor();
+
 }
 
 namespace opennn
 {
 
-struct CudaEvent
-{
-    cudaEvent_t handle = nullptr;
-
-    CudaEvent() = default;
-    explicit CudaEvent(unsigned flags) { handle = device::create_event(flags); }
-
-    CudaEvent(const CudaEvent&) = delete;
-    CudaEvent& operator=(const CudaEvent&) = delete;
-
-    ~CudaEvent() { destroy(); }
-
-    void create()
-    {
-        destroy();
-        handle = device::create_event();
-    }
-
-    void destroy() noexcept
-    {
-        device::destroy_event(handle);
-        handle = nullptr;
-    }
-
-    operator cudaEvent_t() const noexcept { return handle; }
-    explicit operator bool() const noexcept { return handle != nullptr; }
-};
-
-class Backend
-{
-public:
-
-    static Backend& instance();
-    ThreadPoolDevice* get_thread_pool_device();
-    void set_threads_number(int);
-
-    // Handles of the active lane (see device::active_lane).
-    static cublasHandle_t get_cublas_handle()                      { return instance().cublas(device::active_lane()); }
-    static cublasLtHandle_t get_cublas_lt_handle()                 { return instance().cublas_lt_handle; }
-
-    static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn(device::active_lane()); }
-    static cudnnOpTensorDescriptor_t get_op_tensor_add_descriptor()
-    {
-        Backend& backend = instance();
-        backend.cudnn(0);
-        return backend.op_tensor_add_descriptor;
-    }
-
-private:
-    Backend();
-    ~Backend();
-
-    cublasHandle_t cublas(int lane);
-    cudnnHandle_t cudnn(int lane);
-    cudaStream_t stream(int lane);
-
-    unique_ptr<ThreadPool> thread_pool;
-    unique_ptr<ThreadPoolDevice> thread_pool_device;
-
-    cublasLtHandle_t cublas_lt_handle = nullptr;
-    cudnnOpTensorDescriptor_t op_tensor_add_descriptor = nullptr;
-
-    // Per lane; lane 0 is created with the backend, the others on first use.
-    std::mutex lane_mutex;
-    std::array<cudaStream_t, device::MAX_LANES>   lane_streams{};
-    std::array<cublasHandle_t, device::MAX_LANES> cublas_handles{};
-    std::array<cudnnHandle_t, device::MAX_LANES>  cudnn_handles{};
-
-    cudaStream_t transfer_stream = nullptr;
-
-    friend cudaStream_t device::get_compute_stream();
-    friend cudaStream_t device::get_transfer_stream();
-    friend cudaStream_t device::lane_stream(int);
-};
-
-inline ThreadPoolDevice& get_device()
-{
-    return *Backend::instance().get_thread_pool_device();
-}
+ThreadPoolDevice& get_device();
+void set_threads_number(int);
 
 struct TensorView;
 

@@ -260,12 +260,15 @@ TEST(ForwardPropagationMemoryTest, SameLayerAuxiliariesNeverAlias)
         2, &network, ForwardPropagationMode::Inference);
 
     const auto& slots = inference_layout.slots.front();
-    ASSERT_FALSE(slots[1].empty());
-    ASSERT_FALSE(slots[4].empty());
-    ASSERT_FALSE(slots[5].empty());
-    EXPECT_NE(slots[1].get_data(), slots[4].get_data());
-    EXPECT_NE(slots[1].get_data(), slots[5].get_data());
-    EXPECT_NE(slots[4].get_data(), slots[5].get_data());
+    const TensorView& combination = slots[1];
+    const TensorView& activation = slots[4];
+    const TensorView& output = slots.back();
+    ASSERT_FALSE(combination.empty());
+    ASSERT_FALSE(activation.empty());
+    ASSERT_FALSE(output.empty());
+    EXPECT_NE(combination.get_data(), activation.get_data());
+    EXPECT_NE(combination.get_data(), output.get_data());
+    EXPECT_NE(activation.get_data(), output.get_data());
 
     Configuration::instance().set();
 }

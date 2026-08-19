@@ -155,7 +155,7 @@ protected:
     void TearDown() override
     {
         Configuration::instance().set(Device::CPU, Type::FP32);
-        Backend::instance().set_threads_number(0);
+        set_threads_number(0);
     }
 };
 
@@ -740,7 +740,7 @@ TEST_F(StochasticGradientDescentTest, StoppingMaximumTime)
 TEST_F(StochasticGradientDescentTest, Determinism)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
-    Backend::instance().set_threads_number(1);
+    set_threads_number(1);
 
     set_seed(13);
     TabularDataset dataset_first(16, {2}, {1});

@@ -76,7 +76,8 @@ vector<vector<pair<size_t, size_t>>> BackPropagation::make_consumer_edges() cons
     return edges;
 }
 
-void BackPropagation::set(const Index new_batch_size, Loss& new_loss,
+void BackPropagation::set(const Index new_batch_size, 
+                          Loss& new_loss,
                           Buffer* external_arena,
                           span<const Index> arena_offsets,
                           Buffer* external_gradient)
@@ -85,6 +86,11 @@ void BackPropagation::set(const Index new_batch_size, Loss& new_loss,
     loss = &new_loss;
 
     const NeuralNetwork& neural_network = require_network();
+
+    layer_scratch_storage.clear();
+    layer_scratch_storage.reserve(size_t(neural_network.get_layers_number()));
+    for (Index i = 0; i < neural_network.get_layers_number(); ++i)
+        layer_scratch_storage.emplace_back(neural_network.get_device());
 
     throw_if(neural_network.get_training_type() == Type::INT8,
              "INT8 is inference-only; training requires FP32 or BF16.");
@@ -533,13 +539,11 @@ void BackPropagation::bind_deltas(const DeltaLayout& layout,
             slots[i][2] = slots[i][1];
 
     if (layout.aliased_residual_delta_bytes > 0)
-    {
         memory_debug::record(
             "backward.delta_alias",
             "residual_input_delta_bytes",
             layout.aliased_residual_delta_bytes,
             format("batch={}", batch_size));
-    }
 
     for (Index layer_index = first_layer; layer_index < last_layer; ++layer_index)
     {

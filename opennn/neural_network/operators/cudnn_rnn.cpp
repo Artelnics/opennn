@@ -80,10 +80,10 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
         }
         size_t dropout_states_bytes = 0;
         CHECK_CUDNN(cudnnDropoutGetStatesSize(
-            Backend::get_cudnn_handle(), &dropout_states_bytes));
+            device::get_cudnn_handle(), &dropout_states_bytes));
         dropout_states_buf.grow_to(Index(dropout_states_bytes));
         CHECK_CUDNN(cudnnSetDropoutDescriptor(
-            dropout_desc, Backend::get_cudnn_handle(),
+            dropout_desc, device::get_cudnn_handle(),
              0.0f,
             dropout_states_buf.data(),
             size_t(dropout_states_buf.byte_size()),
@@ -110,33 +110,8 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
 
         size_t weight_bytes = 0;
         CHECK_CUDNN(cudnnGetRNNWeightSpaceSize(
-            Backend::get_cudnn_handle(), rnn_desc, &weight_bytes));
-        weight_space_buf.grow_to(Index(weight_bytes));
-        dweight_space_buf.grow_to(Index(weight_bytes));
-
-        device::set_zero_async(weight_space_buf.data(), weight_space_buf.byte_size(),
-                               device::get_compute_stream());
-
-        CudnnDescriptor<cudnnTensorDescriptor_t> m_desc;
-        CudnnDescriptor<cudnnTensorDescriptor_t> b_desc;
-        CHECK_CUDNN(cudnnCreateTensorDescriptor(&m_desc.handle));
-        m_desc.deleter = &cudnnDestroyTensorDescriptor;
-        CHECK_CUDNN(cudnnCreateTensorDescriptor(&b_desc.handle));
-        b_desc.deleter = &cudnnDestroyTensorDescriptor;
-
-        for (int lin = 0; lin < config.num_linear_layers; ++lin)
-        {
-            CHECK_CUDNN(cudnnGetRNNWeightParams(
-                Backend::get_cudnn_handle(), rnn_desc, 0,
-                size_t(weight_space_buf.byte_size()), weight_space_buf.data(), lin,
-                m_desc, reinterpret_cast<void**>(&cudnn_w_ptrs_[lin]),
-                b_desc, reinterpret_cast<void**>(&cudnn_b_ptrs_[lin])));
-            CHECK_CUDNN(cudnnGetRNNWeightParams(
-                Backend::get_cudnn_handle(), rnn_desc, 0,
-                size_t(dweight_space_buf.byte_size()), dweight_space_buf.data(), lin,
-                m_desc, reinterpret_cast<void**>(&cudnn_gw_ptrs_[lin]),
-                b_desc, reinterpret_cast<void**>(&cudnn_gb_ptrs_[lin])));
-        }
+            device::get_cudnn_handle(), rnn_desc, &weight_bytes));
+        weight_space_bytes_ = Index(weight_bytes);
     }
 
     if (topology_changed)
@@ -157,12 +132,11 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
         size_t work_bytes = 0;
         size_t reserve_bytes = 0;
         CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
-            Backend::get_cudnn_handle(), rnn_desc,
+            device::get_cudnn_handle(), rnn_desc,
             CUDNN_FWD_MODE_TRAINING, slot.x_desc,
             &work_bytes, &reserve_bytes));
-        workspace_buf.grow_to(Index(work_bytes));
-        reserve_space_buf.grow_to(Index(reserve_bytes));
-        dy_buf.grow_to(batch_size * T * output_features * Index(sizeof(float)));
+        slot.workspace_bytes = max(slot.workspace_bytes, Index(work_bytes));
+        slot.reserve_space_bytes = Index(reserve_bytes);
         slot.training_ready = true;
     }
 
@@ -227,28 +201,19 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
         size_t reserve_bytes = 0;
         if (for_training)
             CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
-                Backend::get_cudnn_handle(), rnn_desc,
+                device::get_cudnn_handle(), rnn_desc,
                 CUDNN_FWD_MODE_TRAINING, slot.x_desc,
                 &work_bytes, &reserve_bytes));
 
         size_t inference_work_bytes = 0;
         CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
-            Backend::get_cudnn_handle(), rnn_desc,
+            device::get_cudnn_handle(), rnn_desc,
             CUDNN_FWD_MODE_INFERENCE, slot.x_desc,
             &inference_work_bytes, nullptr));
 
         slot.training_ready = for_training;
-
-        workspace_buf.grow_to(Index(max(work_bytes, inference_work_bytes)));
-
-        const Index yh_bytes = batch_size * T * H * Index(sizeof(float));
-        if (is_lstm)
-            y_buf.grow_to(yh_bytes);
-        if (for_training)
-        {
-            reserve_space_buf.grow_to(Index(reserve_bytes));
-            dy_buf.grow_to(yh_bytes);
-        }
+        slot.workspace_bytes = Index(max(work_bytes, inference_work_bytes));
+        slot.reserve_space_bytes = Index(reserve_bytes);
 
     }
 
@@ -264,30 +229,44 @@ void CudnnRnnState::cudnn_copy_weight_regions_(int num_linear_layers,
                                                Index output_features,
                                                const TensorView* const* matrices,
                                                const TensorView* const* vectors,
+                                               Buffer& packed_weights,
                                                bool to_cudnn) const
 {
     const int F = int(input_features);
     const int H = int(output_features);
     const int input_layers = num_linear_layers / 2;
-    float* const* cudnn_matrices = to_cudnn ? cudnn_w_ptrs_ : cudnn_gw_ptrs_;
-    float* const* cudnn_vectors  = to_cudnn ? cudnn_b_ptrs_ : cudnn_gb_ptrs_;
+
+    CudnnDescriptor<cudnnTensorDescriptor_t> matrix_desc;
+    CudnnDescriptor<cudnnTensorDescriptor_t> bias_desc;
+    CHECK_CUDNN(cudnnCreateTensorDescriptor(&matrix_desc.handle));
+    matrix_desc.deleter = &cudnnDestroyTensorDescriptor;
+    CHECK_CUDNN(cudnnCreateTensorDescriptor(&bias_desc.handle));
+    bias_desc.deleter = &cudnnDestroyTensorDescriptor;
 
     RnnCopySpec specs[RNN_COPY_MAX_REGIONS];
     int count = 0;
     for (int lin = 0; lin < num_linear_layers; ++lin)
     {
+        float* cudnn_matrix = nullptr;
+        float* cudnn_vector = nullptr;
+        CHECK_CUDNN(cudnnGetRNNWeightParams(
+            device::get_cudnn_handle(), rnn_desc, 0,
+            size_t(weight_space_bytes_), packed_weights.data(), lin,
+            matrix_desc, reinterpret_cast<void**>(&cudnn_matrix),
+            bias_desc, reinterpret_cast<void**>(&cudnn_vector)));
+
         const int rows = lin < input_layers ? F : H;
-        if (cudnn_matrices[lin] && matrices[lin]->get_data())
+        if (cudnn_matrix && matrices[lin]->get_data())
         {
             float* ours = const_cast<float*>(matrices[lin]->as<float>());
-            specs[count++] = to_cudnn ? RnnCopySpec{ours, cudnn_matrices[lin], rows, H, 1}
-                                      : RnnCopySpec{cudnn_matrices[lin], ours, H, rows, 1};
+            specs[count++] = to_cudnn ? RnnCopySpec{ours, cudnn_matrix, rows, H, 1}
+                                      : RnnCopySpec{cudnn_matrix, ours, H, rows, 1};
         }
-        if (cudnn_vectors[lin] && vectors[lin] && vectors[lin]->get_data())
+        if (cudnn_vector && vectors[lin] && vectors[lin]->get_data())
         {
             float* ours = const_cast<float*>(vectors[lin]->as<float>());
-            specs[count++] = to_cudnn ? RnnCopySpec{ours, cudnn_vectors[lin], 1, H, 0}
-                                      : RnnCopySpec{cudnn_vectors[lin], ours, 1, H, 0};
+            specs[count++] = to_cudnn ? RnnCopySpec{ours, cudnn_vector, 1, H, 0}
+                                      : RnnCopySpec{cudnn_vector, ours, 1, H, 0};
         }
     }
     rnn_copy_regions_cuda(specs, count);
@@ -297,28 +276,52 @@ void CudnnRnnState::cudnn_pack_weights_(int num_linear_layers,
                                         Index input_features,
                                         Index output_features,
                                         const TensorView* const* weights,
-                                        const TensorView* const* biases) const
+                                        const TensorView* const* biases,
+                                        Buffer& forward_state) const
 {
-    cudnn_copy_weight_regions_(num_linear_layers, input_features, output_features, weights, biases, true);
+    forward_state.grow_to(get_aligned_bytes(weight_space_bytes_));
+    device::set_zero_async(forward_state.data(), weight_space_bytes_,
+                           device::get_compute_stream());
+    cudnn_copy_weight_regions_(num_linear_layers, input_features, output_features,
+                               weights, biases, forward_state, true);
 }
 
 void CudnnRnnState::cudnn_unpack_gradients_(int num_linear_layers,
                                             Index input_features,
                                             Index output_features,
                                             const TensorView* const* weight_gradients,
-                                            const TensorView* const* bias_gradients) const
+                                            const TensorView* const* bias_gradients,
+                                            Buffer& backward_scratch) const
 {
-    cudnn_copy_weight_regions_(num_linear_layers, input_features, output_features, weight_gradients, bias_gradients, false);
+    cudnn_copy_weight_regions_(num_linear_layers, input_features, output_features,
+                               weight_gradients, bias_gradients,
+                               backward_scratch, false);
+}
+
+void CudnnRnnState::prepare_cudnn_forward_state_(Buffer& forward_state,
+                                                 bool is_training) const
+{
+    const Index reserve_offset = get_aligned_bytes(weight_space_bytes_);
+    const Index reserve_bytes = is_training ? active_shape().reserve_space_bytes : 0;
+    forward_state.grow_to(detail::checked_index_add(
+        reserve_offset, reserve_bytes, "cuDNN RNN forward state"));
 }
 
 void CudnnRnnState::cudnn_rnn_forward_(bool is_training, bool has_cell_state,
                                        const void* x, void* y,
+                                       Buffer& forward_state,
                                        const function<void()>& reconfigure) const
 {
     auto run_forward = [&]() {
         const CudnnRnnShapeSlot& shape = active_shape();
+        void* workspace = shape.workspace_bytes > 0
+            ? ensure_shared_scratch(size_t(shape.workspace_bytes))
+            : nullptr;
+        void* reserve = is_training && shape.reserve_space_bytes > 0
+            ? forward_state.as<uint8_t>() + get_aligned_bytes(weight_space_bytes_)
+            : nullptr;
         return cudnnRNNForward(
-            Backend::get_cudnn_handle(),
+            device::get_cudnn_handle(),
             rnn_desc,
             is_training ? CUDNN_FWD_MODE_TRAINING : CUDNN_FWD_MODE_INFERENCE,
             shape.seq_dev.as<int32_t>(),
@@ -326,10 +329,10 @@ void CudnnRnnState::cudnn_rnn_forward_(bool is_training, bool has_cell_state,
             shape.y_desc, y,
             shape.h_desc, nullptr, nullptr,
             has_cell_state ? shape.c_desc : shape.h_desc, nullptr, nullptr,
-            size_t(weight_space_buf.byte_size()), weight_space_buf.data(),
-            size_t(workspace_buf.byte_size()), workspace_buf.data(),
-            is_training ? size_t(reserve_space_buf.byte_size()) : 0,
-            is_training ? reserve_space_buf.data() : nullptr);
+            size_t(weight_space_bytes_), forward_state.data(),
+            size_t(shape.workspace_bytes), workspace,
+            is_training ? size_t(shape.reserve_space_bytes) : 0,
+            reserve);
     };
 
     cudnnStatus_t forward_status = run_forward();
@@ -346,38 +349,47 @@ void CudnnRnnState::cudnn_rnn_forward_(bool is_training, bool has_cell_state,
 
 void CudnnRnnState::cudnn_rnn_backward_(bool has_cell_state,
                                         const void* x, const void* y, const void* dy,
-                                        void* dx) const
+                                        void* dx,
+                                        const Buffer& forward_state,
+                                        Buffer& backward_scratch) const
 {
     const CudnnRnnShapeSlot& shape = active_shape();
     const cudnnTensorDescriptor_t second_state_desc =
         has_cell_state ? shape.c_desc.handle : shape.h_desc.handle;
+    void* workspace = shape.workspace_bytes > 0
+        ? ensure_shared_scratch(size_t(shape.workspace_bytes))
+        : nullptr;
+    void* reserve = shape.reserve_space_bytes > 0
+        ? static_cast<uint8_t*>(forward_state.data()) + get_aligned_bytes(weight_space_bytes_)
+        : nullptr;
 
     CHECK_CUDNN(cudnnRNNBackwardData_v8(
-        Backend::get_cudnn_handle(),
+        device::get_cudnn_handle(),
         rnn_desc,
         shape.seq_dev.as<int32_t>(),
         shape.y_desc, y, dy,
         shape.x_desc, dx,
         shape.h_desc, nullptr, nullptr, nullptr,
         second_state_desc, nullptr, nullptr, nullptr,
-        size_t(weight_space_buf.byte_size()), weight_space_buf.data(),
-        size_t(workspace_buf.byte_size()), workspace_buf.data(),
-        size_t(reserve_space_buf.byte_size()), reserve_space_buf.data()));
+        size_t(weight_space_bytes_), forward_state.data(),
+        size_t(shape.workspace_bytes), workspace,
+        size_t(shape.reserve_space_bytes), reserve));
 
-    device::set_zero_async(dweight_space_buf.data(), dweight_space_buf.byte_size(),
+    backward_scratch.grow_to(weight_space_bytes_);
+    device::set_zero_async(backward_scratch.data(), weight_space_bytes_,
                            device::get_compute_stream());
 
     CHECK_CUDNN(cudnnRNNBackwardWeights_v8(
-        Backend::get_cudnn_handle(),
+        device::get_cudnn_handle(),
         rnn_desc,
         CUDNN_WGRAD_MODE_ADD,
         shape.seq_dev.as<int32_t>(),
         shape.x_desc, x,
         shape.h_desc, nullptr,
         shape.y_desc, y,
-        size_t(dweight_space_buf.byte_size()), dweight_space_buf.data(),
-        size_t(workspace_buf.byte_size()), workspace_buf.data(),
-        size_t(reserve_space_buf.byte_size()), reserve_space_buf.data()));
+        size_t(weight_space_bytes_), backward_scratch.data(),
+        size_t(shape.workspace_bytes), workspace,
+        size_t(shape.reserve_space_bytes), reserve));
 }
 
 }

@@ -109,8 +109,8 @@ protected:
         {
             array<unique_ptr<Batch>, group_size> slots;
             device::GraphExecHandle exec;
-            CudaEvent fork_event;
-            array<CudaEvent, group_size> copy_done_events;
+            device::CudaEvent fork_event;
+            array<device::CudaEvent, group_size> copy_done_events;
         };
 
         Batch* fixed_batch() const { return pipelines[0].slots[0].get(); }
@@ -142,7 +142,7 @@ protected:
         array<GraphPipeline, pipelines_count> pipelines;
         TailContext tail;
         Buffer device_metrics{Device::CUDA};
-        array<CudaEvent, 4> throttle_events;
+        array<device::CudaEvent, 4> throttle_events;
         size_t throttle_cursor = 0;
         bool cuda_graph_capture_allowed = false;
     };

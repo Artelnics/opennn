@@ -9,7 +9,7 @@ using namespace opennn;
 TEST(BatchTest, FreshCpuBatchUsesConfiguredDevice)
 {
     TabularDataset dataset(2, {3}, {1});
-    const Configuration::Resolved config{Device::CPU, Type::FP32, 0};
+    const EffectiveConfig config{Device::CPU, Type::FP32, 0};
 
     Batch batch(2, &dataset, config);
 
@@ -33,7 +33,7 @@ TEST(BatchTest, ValidationQueueIsDerivedFromPoolOwnership)
 TEST(BatchTest, FreshCudaBatchUsesConfiguredDevice)
 {
     TabularDataset dataset(2, {3}, {1});
-    const Configuration::Resolved config{Device::CUDA, Type::FP32, 0};
+    const EffectiveConfig config{Device::CUDA, Type::FP32, 0};
 
     Batch batch(2, &dataset, config);
 
@@ -45,7 +45,7 @@ TEST(BatchTest, FreshCudaBatchUsesConfiguredDevice)
 TEST(BatchTest, CudaPrefetchBatchKeepsDeviceIdentityWithoutDeviceStorage)
 {
     TabularDataset dataset(2, {3}, {1});
-    const Configuration::Resolved config{Device::CUDA, Type::FP32, 0};
+    const EffectiveConfig config{Device::CUDA, Type::FP32, 0};
 
     Batch batch(2, &dataset, config, true);
 

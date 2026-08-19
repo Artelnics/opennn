@@ -49,7 +49,8 @@ void ActivationOperator::back_propagate(ForwardPropagation& forward_propagation,
 
     TensorView& output_delta = get_output_delta(back_propagation, layer);
 
-    const bool fused_by_consumer = backward_fused_by_consumer && *backward_fused_by_consumer;
+    const bool fused_by_consumer = backward_fused_by_consumer
+        && forward_propagation.drelu_fused_by_layer[layer] != 0;
     if ((backward_fused || fused_by_consumer) && output_delta.is_cuda())
         return;
 

@@ -18,7 +18,7 @@ enum class VariableType { None, Numeric, Binary, Integer, Categorical, DateTime,
 
 inline const EnumMap<VariableType>& variable_type_map()
 {
-    static const vector<pair<VariableType, string>> entries = {
+    static const EnumMap<VariableType> map{
         {VariableType::None,        "None"},
         {VariableType::Numeric,     "Numeric"},
         {VariableType::Binary,      "Binary"},
@@ -27,7 +27,6 @@ inline const EnumMap<VariableType>& variable_type_map()
         {VariableType::DateTime,    "DateTime"},
         {VariableType::Constant,    "Constant"}
     };
-    static const EnumMap<VariableType> map{entries};
     return map;
 }
 
@@ -53,7 +52,7 @@ enum class ScalerMethod
 
 inline const EnumMap<ScalerMethod>& scaler_method_map()
 {
-    static const vector<pair<ScalerMethod, string>> entries = {
+    static const EnumMap<ScalerMethod> map{
         {ScalerMethod::None,                 "None"},
         {ScalerMethod::MinimumMaximum,       "MinimumMaximum"},
         {ScalerMethod::MeanStandardDeviation, "MeanStandardDeviation"},
@@ -61,7 +60,6 @@ inline const EnumMap<ScalerMethod>& scaler_method_map()
         {ScalerMethod::Logarithm,            "Logarithm"},
         {ScalerMethod::ImageMinMax,          "ImageMinMax"}
     };
-    static const EnumMap<ScalerMethod> map{entries};
     return map;
 }
 
@@ -87,7 +85,7 @@ enum class VariableRole
 
 inline const EnumMap<VariableRole>& variable_role_map()
 {
-    static const vector<pair<VariableRole, string>> entries = {
+    static const EnumMap<VariableRole> map{
         {VariableRole::None,        "None"},
         {VariableRole::Input,       "Input"},
         {VariableRole::Target,      "Target"},
@@ -95,7 +93,6 @@ inline const EnumMap<VariableRole>& variable_role_map()
         {VariableRole::InputTarget, "InputTarget"},
         {VariableRole::Time,        "Time"}
     };
-    static const EnumMap<VariableRole> map{entries};
     return map;
 }
 

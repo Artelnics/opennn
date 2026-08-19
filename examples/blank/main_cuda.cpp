@@ -51,7 +51,7 @@ int main(int argc, char** argv)
         cout << "OpenNN. ImageNet (Imagenette) ResNet-50 GPU FP32 benchmark." << endl;
 
         Configuration::instance().set(Device::CUDA, Type::FP32);
-        Backend::instance();
+        (void)get_device();
         set_seed(42);
 
         const filesystem::path dataset_path =
@@ -118,7 +118,7 @@ true);
         cout << "OpenNN. EN->DE Transformer GPU FP32 benchmark." << endl;
 
         Configuration::instance().set(Device::CUDA, Type::FP32);
-        Backend::instance();
+        (void)get_device();
         set_seed(42);
 
         const filesystem::path dataset_path =

@@ -58,6 +58,7 @@ vector<TensorSpec> MultiHeadAttention::get_forward_specs(Index batch_size) const
     const Index max_seq = max(query_sequence_length, source_sequence_length);
 
     const auto attention_scratch = attention.forward_scratch_specs(batch_size);
+    const auto sdpa_state = attention.sdpa_state_specs(batch_size);
 
     return {
         {{batch_size, heads_number, query_sequence_length, head_dimension},  compute_dtype},
@@ -68,6 +69,13 @@ vector<TensorSpec> MultiHeadAttention::get_forward_specs(Index batch_size) const
         {{batch_size, heads_number, source_sequence_length, head_dimension}, compute_dtype},
         {{batch_size, max_seq, embedding_dimension},                         compute_dtype},
         attention.sdpa_qkv_pack_spec(batch_size),
+        sdpa_state[0],
+        sdpa_state[1],
+        sdpa_state[2],
+        sdpa_state[3],
+        {attention.dropout.active() && !attention.use_sdpa
+            ? Shape{batch_size, heads_number, query_sequence_length, source_sequence_length}
+            : Shape{}, Type::INT8},
         {{batch_size, query_sequence_length, embedding_dimension},           compute_dtype},
     };
 }
@@ -162,6 +170,8 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     attention.output_delta_slots = {AttentionWeightDelta, QueryHeadDelta, KeyHeadDelta, ValueHeadDelta};
     attention.sdpa_gradient_slot = SdpaOutputGradBF16;
     attention.sdpa_qkv_pack_slot = SdpaQkvPack;
+    attention.sdpa_state_slot = SdpaStats;
+    attention.dropout_mask_slot = DropoutMask;
     attention.merged_output_delta_slot = ConcatenatedOutputDelta;
 
     output_projection.input_slots  = {ConcatenatedAttentionOutputs};

@@ -52,7 +52,7 @@ int main()
         adam->set_display_period(20);
 
         cout << "Training with "
-             << (Configuration::instance().is_gpu() ? "GPU" : "CPU")
+             << (text_classification_network.is_gpu() ? "GPU" : "CPU")
              << ", it might take some time: " << endl;
         training_strategy.train();
 

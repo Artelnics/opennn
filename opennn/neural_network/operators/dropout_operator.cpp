@@ -20,53 +20,64 @@ namespace opennn
 {
 
 // Defined below: against the CUDA kernels, or as throwing stubs.
-static void dropout_forward_gpu(TensorView&, Buffer&, float);
-static void dropout_backward_gpu(TensorView&, const Buffer&, float);
+static void dropout_forward_gpu(TensorView&, TensorView&, float);
+static void dropout_backward_gpu(TensorView&, const TensorView&, float);
 
-static void dropout_forward_cpu(TensorView& output, Buffer& mask, float rate)
+static void validate_dropout_mask(const TensorView& values,
+                                  const TensorView& mask)
+{
+    throw_if(!mask.is_int8() || mask.get_device() != values.get_device()
+             || mask.size() < values.size(),
+             "Dropout mask must provide one INT8 value per element on the same device.");
+}
+
+static void dropout_forward_cpu(TensorView& output, TensorView& mask, float rate)
 {
     const Index element_count = output.size();
-    mask.resize_bytes(element_count * Index(sizeof(float)), Device::CPU);
     if (element_count == 0) return;
 
     const float keep_scale = 1.0f / (1.0f - rate);
     float* output_data = output.as<float>();
-    VectorMap mask_values = mask.as_vector();
+    uint8_t* mask_values = mask.as<uint8_t>();
 
-    set_random_uniform(mask_values, 0.0f, 1.0f);
+    set_random_bernoulli(span<uint8_t>(mask_values, size_t(element_count)),
+                         1.0f - rate);
 
     const bool parallel = element_count >= 65536;
 
     #pragma omp parallel for schedule(static) if(parallel)
     for (Index i = 0; i < element_count; ++i)
     {
-        const float keep_value = mask_values(i) < rate ? 0.0f : keep_scale;
-        mask_values(i) = keep_value;
-        output_data[i] *= keep_value;
+        output_data[i] *= mask_values[i] ? keep_scale : 0.0f;
     }
 }
 
-void dropout_forward(TensorView& output, Buffer& mask, float rate)
+void dropout_forward(TensorView& output, TensorView& mask, float rate)
 {
     if (rate <= 0.0f) return;
+    validate_dropout_mask(output, mask);
     if (output.is_cuda()) { dropout_forward_gpu(output, mask, rate); return; }
     dropout_forward_cpu(output, mask, rate);
 }
 
-void dropout_backward(TensorView& delta, const Buffer& mask, float rate)
+void dropout_backward(TensorView& delta, const TensorView& mask, float rate)
 {
     if (rate <= 0.0f) return;
+    validate_dropout_mask(delta, mask);
     if (delta.is_cuda()) { dropout_backward_gpu(delta, mask, rate); return; }
-    delta.as_vector().array() *= mask.as_vector().array();
+
+    const float keep_scale = 1.0f / (1.0f - rate);
+    float* delta_values = delta.as<float>();
+    const uint8_t* mask_values = mask.as<uint8_t>();
+    for (Index i = 0; i < delta.size(); ++i)
+        delta_values[i] *= mask_values[i] ? keep_scale : 0.0f;
 }
 
 #ifdef OPENNN_HAS_CUDA
 
-static void dropout_forward_gpu(TensorView& output, Buffer& mask, float rate)
+static void dropout_forward_gpu(TensorView& output, TensorView& mask, float rate)
 {
     const Index element_count = output.size();
-    if (mask.get_device() != Device::CUDA || mask.byte_size() < element_count)
-        mask.resize_bytes(element_count, Device::CUDA);
 
     const unsigned long long seed = static_cast<unsigned long long>(random_integer(0, 1 << 30));
 
@@ -76,7 +87,7 @@ static void dropout_forward_gpu(TensorView& output, Buffer& mask, float rate)
     });
 }
 
-static void dropout_backward_gpu(TensorView& delta, const Buffer& mask, float rate)
+static void dropout_backward_gpu(TensorView& delta, const TensorView& mask, float rate)
 {
     delta.dispatch([&]<typename T>()
     {
@@ -86,8 +97,8 @@ static void dropout_backward_gpu(TensorView& delta, const Buffer& mask, float ra
 
 #else
 
-OPENNN_CUDA_STUB(void, dropout_forward_gpu, (TensorView&, Buffer&, float))
-OPENNN_CUDA_STUB(void, dropout_backward_gpu, (TensorView&, const Buffer&, float))
+OPENNN_CUDA_STUB(void, dropout_forward_gpu, (TensorView&, TensorView&, float))
+OPENNN_CUDA_STUB(void, dropout_backward_gpu, (TensorView&, const TensorView&, float))
 
 #endif
 
@@ -104,13 +115,16 @@ void DropoutOperator::forward_propagate(ForwardPropagation& forward_propagation,
     if (!is_training || !active()) return;
 
     TensorView& output = get_output(forward_propagation, layer);
-    dropout_forward(output, mask, rate);
+    dropout_forward(output, forward_propagation.slots[layer][mask_slot], rate);
 }
 
-void DropoutOperator::back_propagate(ForwardPropagation&, BackPropagation& back_propagation, size_t layer) const
+void DropoutOperator::back_propagate(ForwardPropagation& forward_propagation,
+                                     BackPropagation& back_propagation,
+                                     size_t layer) const
 {
     if (!active()) return;
-    dropout_backward(get_output_delta(back_propagation, layer), mask, rate);
+    dropout_backward(get_output_delta(back_propagation, layer),
+                     forward_propagation.slots[layer][mask_slot], rate);
 }
 
 void DropoutOperator::to_JSON(JsonWriter& w) const

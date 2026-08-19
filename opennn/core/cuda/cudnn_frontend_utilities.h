@@ -24,6 +24,8 @@ namespace opennn::cudnn_frontend
 {
 using namespace ::cudnn_frontend;
 
+inline constexpr size_t graph_cache_capacity = 8;
+
 inline const auto check_status = [](auto status, const string& what) {
     throw_if(status.is_bad(),
              "cudnn-frontend {}: {}", what, status.get_message());
@@ -84,20 +86,20 @@ inline void execute_graph(graph::Graph& graph,
                           const string& timing_label)
 {
     if (timing_label.empty())
-        return check_status(graph.execute(Backend::get_cudnn_handle(), tensors, workspace), what);
+        return check_status(graph.execute(device::get_cudnn_handle(), tensors, workspace), what);
 
     // Timing is a diagnostic; the two events live for the thread.
-    thread_local CudaEvent begin(cudaEventDefault);
-    thread_local CudaEvent end(cudaEventDefault);
-    device::record_event(begin, device::get_compute_stream());
+    thread_local device::CudaEvent begin(cudaEventDefault);
+    thread_local device::CudaEvent end(cudaEventDefault);
+    device::record_event(begin.get(), device::get_compute_stream());
 
-    check_status(graph.execute(Backend::get_cudnn_handle(), tensors, workspace), what);
+    check_status(graph.execute(device::get_cudnn_handle(), tensors, workspace), what);
 
-    device::record_event(end, device::get_compute_stream());
-    device::synchronize_event(end);
+    device::record_event(end.get(), device::get_compute_stream());
+    device::synchronize_event(end.get());
 
     float milliseconds = 0;
-    CHECK_CUDA(cudaEventElapsedTime(&milliseconds, begin, end));
+    CHECK_CUDA(cudaEventElapsedTime(&milliseconds, begin.get(), end.get()));
 
     graph_timing_stats().add(timing_label, milliseconds);
 }
@@ -510,7 +512,7 @@ inline bool sdpa_autotune_enabled()
 inline bool finalize_attention(graph::Graph& graph, const string& tag, int64_t& workspace_bytes,
                                bool allow_autotune = false)
 {
-    const cudnnHandle_t handle = Backend::get_cudnn_handle();
+    const cudnnHandle_t handle = device::get_cudnn_handle();
 
     check_status(graph.validate(), tag + " validate");
 
@@ -548,7 +550,7 @@ seq_len_scalar(graph::Graph& graph, const char* name, int64_t batch = 1)
 // candidates are built and timed on real tensors by autotune()).
 inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string& tag)
 {
-    const cudnnHandle_t handle = Backend::get_cudnn_handle();
+    const cudnnHandle_t handle = device::get_cudnn_handle();
     const bool request_autotune = device::conv_autotune_enabled();
 
     workspace_bytes = 0;
@@ -652,7 +654,7 @@ inline void autotune_now(bool& pending, graph::Graph& graph,
     {
         const int64_t tune_bytes = autotune_workspace_bytes(graph);
         if (tune_bytes > 0) tune_workspace.resize_bytes(Index(tune_bytes), Device::CUDA);
-        check_status(graph.autotune(Backend::get_cudnn_handle(), tensors, tune_workspace.data()), "autotune");
+        check_status(graph.autotune(device::get_cudnn_handle(), tensors, tune_workspace.data()), "autotune");
 
         // The winner is now the candidate; persist it so the next process loads
         // the tuned plan instead of re-tuning (or, worse, settling for the

@@ -26,7 +26,7 @@ bool bf16_host_input_cast_enabled() noexcept
 
 Batch::Batch(const Index new_batch_size,
              const Dataset* new_dataset,
-             const Configuration::EffectiveConfig& new_config,
+             const EffectiveConfig& new_config,
              const bool new_prefetch_only)
 {
     set(new_batch_size, new_dataset, new_config, new_prefetch_only);
@@ -34,7 +34,7 @@ Batch::Batch(const Index new_batch_size,
 
 void Batch::set(const Index new_batch_size,
                 const Dataset* new_dataset,
-                const Configuration::EffectiveConfig& new_config,
+                const EffectiveConfig& new_config,
                 const bool new_prefetch_only)
 {
     throw_if(!new_dataset, "dataset is not set.");
@@ -105,22 +105,16 @@ void Batch::set(const Index new_batch_size,
 
         if (!on_gpu) return;
 
-        const Index host_values = slot.shape.size();
+        const Index host_bytes = slot.shape.size() * Index(sizeof(float));
 
-        if (host_values > slot.host_allocated_size)
+        if (host_bytes > slot.host.byte_size())
         {
-            device::deallocate_pinned_host(slot.host);
-
-            slot.host = static_cast<float*>(
-                device::allocate_pinned_host(
-                    host_values * Index(sizeof(float))));
-
-            slot.host_allocated_size = host_values;
+            slot.host.grow_to(host_bytes);
 
             memory_debug::record(
                 "batch.pinned_host",
                 format("Batch::{}.host", role),
-                host_values * Index(sizeof(float)),
+                host_bytes,
                 format("samples={}", batch_size));
         }
     };
@@ -152,12 +146,7 @@ void Batch::set(const Index new_batch_size,
 
     if (!on_gpu)
     {
-        if (input_host_bf16)
-        {
-            device::deallocate_pinned_host(input_host_bf16);
-            input_host_bf16 = nullptr;
-            input_host_bf16_allocated_size = 0;
-        }
+        input_host_bf16.resize_bytes(0);
 
         fp32_staging.resize_bytes(0, Device::CUDA);
         gather_indices_device.resize_bytes(0, Device::CUDA);
@@ -170,30 +159,22 @@ void Batch::set(const Index new_batch_size,
         && bf16_host_input_cast_enabled();
 
     const Index input_host_values = input.shape.size();
+    const Index input_host_bf16_bytes =
+        input_host_values * Index(sizeof(uint16_t));
 
     if (host_bf16_input_cast
-        && input_host_values > input_host_bf16_allocated_size)
+        && input_host_bf16_bytes > input_host_bf16.byte_size())
     {
-        device::deallocate_pinned_host(input_host_bf16);
-
-        input_host_bf16 = static_cast<uint16_t*>(
-            device::allocate_pinned_host(
-                input_host_values * Index(sizeof(uint16_t))));
-
-        input_host_bf16_allocated_size = input_host_values;
+        input_host_bf16.grow_to(input_host_bf16_bytes);
 
         memory_debug::record(
             "batch.pinned_host",
             "Batch::input_host_bf16",
-            input_host_values * Index(sizeof(uint16_t)),
+            input_host_bf16_bytes,
             format("samples={}", batch_size));
     }
     else if (!host_bf16_input_cast && input_host_bf16)
-    {
-        device::deallocate_pinned_host(input_host_bf16);
-        input_host_bf16 = nullptr;
-        input_host_bf16_allocated_size = 0;
-    }
+        input_host_bf16.resize_bytes(0);
 
     const bool needs_fp32_staging =
         input.type == Type::BF16
@@ -220,15 +201,7 @@ void Batch::set(const Index new_batch_size,
         ? batch_size * Index(sizeof(int))
         : Index(0);
 
-    if (gather_indices_bytes > gather_indices_host_allocated_bytes)
-    {
-        device::deallocate_pinned_host(gather_indices_host);
-
-        gather_indices_host = static_cast<int*>(
-            device::allocate_pinned_host(gather_indices_bytes));
-
-        gather_indices_host_allocated_bytes = gather_indices_bytes;
-    }
+    gather_indices_host.grow_to(gather_indices_bytes);
 
     gather_indices_device.resize_bytes(
         gather_indices_bytes,
@@ -296,11 +269,6 @@ bool Batch::is_empty() const
 Batch::~Batch()
 {
     wait_h2d_complete();
-    device::deallocate_pinned_host(input.host);
-    device::deallocate_pinned_host(input_host_bf16);
-    device::deallocate_pinned_host(decoder.host);
-    device::deallocate_pinned_host(target.host);
-    device::deallocate_pinned_host(gather_indices_host);
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -330,8 +298,11 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
         const Index matrix_cols = dataset->get_device_data_columns();
 
         const Index index_bytes = current_batch_size * Index(sizeof(int));
-        memcpy(gather_indices_host, gather.row_indices.data(), size_t(index_bytes));
-        device::copy_async(gather_indices_device.data(), gather_indices_host,
+        memcpy(gather_indices_host.data(),
+               gather.row_indices.data(),
+               size_t(index_bytes));
+        device::copy_async(gather_indices_device.data(),
+                           gather_indices_host.data(),
                            index_bytes,
                            device::CopyKind::HostToDevice, stream);
 
@@ -366,10 +337,12 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
     {
         if (input_host_bf16)
         {
-            float_2_bfloat16_host(input_values_count, input.host, input_host_bf16);
+            float_2_bfloat16_host(input_values_count,
+                                  input.host.as<float>(),
+                                  input_host_bf16.as<uint16_t>());
 
             device::copy_async(destination.input.buffer.as<bfloat16>(),
-                               input_host_bf16,
+                               input_host_bf16.data(),
                                input_values_count * Index(sizeof(uint16_t)),
                                device::CopyKind::HostToDevice, stream);
         }
@@ -385,7 +358,9 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
                                      format("samples={}", current_batch_size));
             }
             
-            device::copy_async(destination.fp32_staging.as<float>(), input.host, input_values_count * sizeof(float),
+            device::copy_async(destination.fp32_staging.as<float>(),
+                               input.host.data(),
+                               input_values_count * Index(sizeof(float)),
                                device::CopyKind::HostToDevice, stream);
 
             cast_fp32_to_bf16(input_values_count,
@@ -396,18 +371,24 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
     }
     else
     {
-        device::copy_async(destination.input.buffer.as<float>(), input.host, input_values_count * sizeof(float),
+        device::copy_async(destination.input.buffer.as<float>(),
+                           input.host.data(),
+                           input_values_count * Index(sizeof(float)),
                            device::CopyKind::HostToDevice, stream);
     }
 
     if (!decoder.shape.empty())
     {
         const Index decoder_values_count = decoder.shape.size();
-        device::copy_async(destination.decoder.buffer.as<float>(), decoder.host, decoder_values_count * sizeof(float),
+        device::copy_async(destination.decoder.buffer.as<float>(),
+                           decoder.host.data(),
+                           decoder_values_count * Index(sizeof(float)),
                            device::CopyKind::HostToDevice, stream);
     }
 
-    device::copy_async(destination.target.buffer.as<float>(), target.host, target_values_count * sizeof(float),
+    device::copy_async(destination.target.buffer.as<float>(),
+                       target.host.data(),
+                       target_values_count * Index(sizeof(float)),
                        device::CopyKind::HostToDevice, stream);
 
     record_h2d_done(stream);
@@ -424,7 +405,7 @@ void Batch::record_h2d_done(cudaStream_t stream)
     if (!h2d_done_event)
         h2d_done_event.create();
 
-    device::record_event(h2d_done_event, stream);
+    device::record_event(h2d_done_event.get(), stream);
     h2d_done_recorded = true;
 }
 
@@ -432,7 +413,7 @@ void Batch::wait_h2d_complete()
 {
     if (h2d_done_recorded)
     {
-        device::synchronize_event(h2d_done_event);
+        device::synchronize_event(h2d_done_event.get());
         h2d_done_recorded = false;
     }
 }
@@ -440,7 +421,7 @@ void Batch::wait_h2d_complete()
 void Batch::wait_h2d_on_compute_stream()
 {
     if (h2d_done_recorded)
-        device::stream_wait_event(device::get_compute_stream(), h2d_done_event);
+        device::stream_wait_event(device::get_compute_stream(), h2d_done_event.get());
 }
 
 ThreadSafeQueue<Batch*>& BatchPools::validation_queue()

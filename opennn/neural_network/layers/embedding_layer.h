@@ -33,7 +33,14 @@ public:
     Index get_sequence_length() const { return sequence_length; }
     Index get_embedding_dimension() const { return embedding_dimension; }
 
+    vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override { return {}; }
+    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    {
+        return spec == size_t(DropoutMask) - 1
+            ? ForwardSlotKind::TrainingOnly
+            : ForwardSlotKind::Pooled;
+    }
 
     void set(Index = 0,
              Index = 0,
@@ -68,6 +75,8 @@ private:
 
     EmbeddingLookupOperator embedding_lookup;
     DropoutOperator         dropout;
+
+    enum Forward {Input, DropoutMask, Output};
 };
 
 }

@@ -46,7 +46,7 @@ struct ConvolutionOperator::ConvGraphCache
         bool wgrad_fp32_output = false;
         bool dgrad_adds = false;
         // Fork/join of the weight gradient onto lane 1 (see apply_delta_gpu).
-        CudaEvent fork_event, join_event;
+        device::CudaEvent fork_event, join_event;
     };
 
     unordered_map<Index, Entry> entries;
@@ -591,7 +591,9 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
     const bool ran = cudnn_frontend::frontend_enabled()
         && cudnn_frontend::run_frontend(conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
     {
-        auto& entry = cache.entries[input.get_shape()[0]];
+        auto& entry = detail::bounded_cache_entry(
+            cache.entries, input.get_shape()[0],
+            cudnn_frontend::graph_cache_capacity);
         if (!entry.fwd.graph)
             cudnn_frontend::build_forward(entry, cudnn_frontend::make_dims(*this, input.get_shape()[0]),
                                     fuse_relu, use_bias, input.get_type());
@@ -636,7 +638,9 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
     const bool ran = cudnn_frontend::frontend_enabled()
         && cudnn_frontend::run_frontend(conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
     {
-        auto& entry = cache.entries[input.get_shape()[0]];
+        auto& entry = detail::bounded_cache_entry(
+            cache.entries, input.get_shape()[0],
+            cudnn_frontend::graph_cache_capacity);
         const auto dims = cudnn_frontend::make_dims(*this, input.get_shape()[0]);
 
         // Two lanes: the weight (and bias) gradient run on lane 1 while the
@@ -655,9 +659,9 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
         {
             if (!entry.fork_event) entry.fork_event.create();
             if (!entry.join_event) entry.join_event.create();
-            device::record_event(entry.fork_event, device::lane_stream(0));
+            device::record_event(entry.fork_event.get(), device::lane_stream(0));
             device::set_active_lane(1);
-            device::stream_wait_event(device::lane_stream(1), entry.fork_event);
+            device::stream_wait_event(device::lane_stream(1), entry.fork_event.get());
         }
 
         if (!entry.wgrad.graph)
@@ -700,7 +704,7 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
 
         if (fork_wgrad)
         {
-            device::record_event(entry.join_event, device::lane_stream(1));
+            device::record_event(entry.join_event.get(), device::lane_stream(1));
             device::set_active_lane(0);
         }
 
@@ -733,7 +737,7 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
         }
 
         if (fork_wgrad)
-            device::stream_wait_event(device::lane_stream(0), entry.join_event);
+            device::stream_wait_event(device::lane_stream(0), entry.join_event.get());
     });
 
     if (!ran) cudnn_frontend::throw_frontend_unavailable("ConvolutionOperator: GPU convolution backward");

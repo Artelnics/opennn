@@ -35,8 +35,7 @@ struct BatchSlot
     
     optional<bool> contiguous;
 
-    float* host = nullptr;
-    Index  host_allocated_size = 0;
+    device::PinnedBuffer host;
 };
 
 struct DeviceGather
@@ -59,7 +58,7 @@ struct Batch
 {
     Batch(Index,
           const Dataset*,
-          const Configuration::EffectiveConfig&,
+          const EffectiveConfig&,
           bool prefetch_only = false);
     ~Batch();
 
@@ -70,7 +69,7 @@ struct Batch
 
     void set(Index,
              const Dataset*,
-             const Configuration::EffectiveConfig&,
+             const EffectiveConfig&,
              bool prefetch_only = false);
 
     void fill(const vector<Index>&,
@@ -109,11 +108,10 @@ struct Batch
 
     void record_h2d_done(cudaStream_t);
 
-    uint16_t* input_host_bf16 = nullptr;
-    Index input_host_bf16_allocated_size = 0;
+    device::PinnedBuffer input_host_bf16;
     Buffer fp32_staging{Device::CUDA};
 
-    CudaEvent h2d_done_event;
+    device::CudaEvent h2d_done_event;
     bool h2d_done_recorded = false;
 
     void wait_h2d_complete();
@@ -129,8 +127,7 @@ struct Batch
     // Pinned, like every other host staging buffer here: the per-step index
     // upload behind the device gather is a cudaMemcpyAsync, and from pageable
     // memory that goes through a driver bounce buffer and blocks the host.
-    int* gather_indices_host = nullptr;
-    Index gather_indices_host_allocated_bytes = 0;
+    device::PinnedBuffer gather_indices_host;
     Buffer gather_indices_device{Device::CUDA};
 };
 

@@ -160,7 +160,9 @@ void LongShortTermMemoryOperator::forward_propagate(ForwardPropagation& forward_
     TensorView& cell_activation = forward_slots[CellActivationSlot];
 
     if (input.is_cuda())
-        return apply_gpu(input, output, return_sequences, is_training);
+        return apply_gpu(input, output, hidden_state,
+                         forward_propagation.layer_state_storage[layer],
+                         return_sequences, is_training);
 
     apply(input, output, forget_gate, input_gate, candidate_gate, output_gate,
           cell_state, hidden_state, cell_activation);
@@ -415,8 +417,15 @@ void LongShortTermMemoryOperator::back_propagate(ForwardPropagation& forward_pro
     const TensorView& cell_activation = forward_slots[CellActivationSlot];
 
     if (input.is_cuda())
-        return apply_delta_gpu(input, forward_slots[OutputSlot], output_delta,
-                               input_delta, return_sequences);
+        return apply_delta_gpu(input,
+                               forward_slots[return_sequences ? OutputSlot : HiddenStateSlot],
+                               output_delta,
+                               input_delta,
+                               backward_slots[CudnnOutputDeltaScratchSlot],
+                               backward_slots[CudnnInputDeltaScratchSlot],
+                               forward_propagation.layer_state_storage[layer],
+                               back_propagation.layer_scratch_storage[layer],
+                               return_sequences);
 
     apply_delta(input, output_delta, input_delta, hidden_delta, cell_delta,
                 forget_delta, input_gate_delta, candidate_delta, output_gate_delta,
@@ -812,12 +821,12 @@ void LongShortTermMemoryOperator::ensure_cudnn_setup_(Index batch_size, bool for
             "Reconfigure the layer or fall back to CPU.");
     }
 
-    cudnn_setup_({CUDNN_LSTM, 8},
+    cudnn_setup_({CUDNN_LSTM},
                  input_features, output_features, time_steps,
                  batch_size, for_training);
 }
 
-void LongShortTermMemoryOperator::pack_weights_to_cudnn_() const
+void LongShortTermMemoryOperator::pack_weights_to_cudnn_(Buffer& forward_state) const
 {
     const TensorView* weights[8] = {
         &input_weights,
@@ -836,10 +845,11 @@ void LongShortTermMemoryOperator::pack_weights_to_cudnn_() const
         &output_bias,
         nullptr, nullptr, nullptr, nullptr
     };
-    cudnn_pack_weights_(8, input_features, output_features, weights, biases);
+    cudnn_pack_weights_(8, input_features, output_features,
+                        weights, biases, forward_state);
 }
 
-void LongShortTermMemoryOperator::unpack_gradients_from_cudnn_() const
+void LongShortTermMemoryOperator::unpack_gradients_from_cudnn_(Buffer& backward_scratch) const
 {
     const TensorView* weight_gradients[8] = {
         &input_weight_gradient,
@@ -858,11 +868,15 @@ void LongShortTermMemoryOperator::unpack_gradients_from_cudnn_() const
         &output_bias_gradient,
         nullptr, nullptr, nullptr, nullptr
     };
-    cudnn_unpack_gradients_(8, input_features, output_features, weight_gradients, bias_gradients);
+    cudnn_unpack_gradients_(8, input_features, output_features,
+                            weight_gradients, bias_gradients,
+                            backward_scratch);
 }
 
 void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
                                       TensorView& output,
+                                      TensorView& sequence_output_scratch,
+                                      Buffer& forward_state,
                                       bool return_seq,
                                       bool is_training) const
 {
@@ -870,16 +884,19 @@ void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
     if (!input.get_data() || output_features == 0 || time_steps == 0 || batch_size == 0) return;
 
     ensure_cudnn_setup_(batch_size, is_training);
-    pack_weights_to_cudnn_();
+    prepare_cudnn_forward_state_(forward_state, is_training);
+    pack_weights_to_cudnn_(forward_state);
 
     float* y_target = return_seq ? output.as<float>()
-                                 : static_cast<float*>(y_buf.data());
+                                 : sequence_output_scratch.as<float>();
 
     cudnn_rnn_forward_(is_training,  true,
                        input.get_data(), y_target,
+                       forward_state,
                        [&] {
                            ensure_cudnn_setup_(batch_size, is_training);
-                           pack_weights_to_cudnn_();
+                           prepare_cudnn_forward_state_(forward_state, is_training);
+                           pack_weights_to_cudnn_(forward_state);
                        });
 
     if (return_seq) return;
@@ -891,9 +908,13 @@ void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
 }
 
 void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
-                                            const TensorView& output,
+                                            const TensorView& sequence_output,
                                             const TensorView& output_delta,
                                             TensorView& input_delta,
+                                            TensorView& sequence_delta_scratch,
+                                            TensorView& input_delta_scratch,
+                                            const Buffer& forward_state,
+                                            Buffer& backward_scratch,
                                             bool return_seq) const
 {
     if (!input.get_data() || !output_delta.get_data()
@@ -910,36 +931,37 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
     const float* dy_data = output_delta.as<float>();
     if (!return_seq)
     {
-        device::set_zero_async(dy_buf.data(), batch_size * T * H * Index(sizeof(float)),
+        device::set_zero_async(sequence_delta_scratch.get_data(),
+                               sequence_delta_scratch.byte_size(),
                                device::get_compute_stream());
         scatter_time_slice_cuda<float>(
             batch_size, T, H, T - 1,
             output_delta.as<float>(),
-            static_cast<float*>(dy_buf.data()));
-        dy_data = static_cast<const float*>(dy_buf.data());
+            sequence_delta_scratch.as<float>());
+        dy_data = sequence_delta_scratch.as<float>();
     }
 
-    const float* y_data = return_seq ? output.as<float>()
-                                     : static_cast<const float*>(y_buf.data());
+    const float* y_data = sequence_output.as<float>();
 
-    void* dx_data = input_delta.get_data();
-    if (!dx_data || input_delta.empty())
-    {
-        dx_scratch_buf.grow_to(batch_size * T * input_features * Index(sizeof(float)));
-        dx_data = dx_scratch_buf.data();
-    }
+    void* dx_data = input_delta.get_data()
+        ? input_delta.get_data()
+        : input_delta_scratch.get_data();
 
     cudnn_rnn_backward_( true,
-                        input.get_data(), y_data, dy_data, dx_data);
+                        input.get_data(), y_data, dy_data, dx_data,
+                        forward_state, backward_scratch);
 
-    unpack_gradients_from_cudnn_();
+    unpack_gradients_from_cudnn_(backward_scratch);
 }
 
 #else
 
-void LongShortTermMemoryOperator::apply_gpu(const TensorView&, TensorView&, bool, bool) const OPENNN_CUDA_STUB_BODY(apply_gpu)
+void LongShortTermMemoryOperator::apply_gpu(const TensorView&, TensorView&, TensorView&,
+                                            Buffer&, bool, bool) const OPENNN_CUDA_STUB_BODY(apply_gpu)
 
-void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, bool) const OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
+void LongShortTermMemoryOperator::apply_delta_gpu(
+    const TensorView&, const TensorView&, const TensorView&, TensorView&,
+    TensorView&, TensorView&, const Buffer&, Buffer&, bool) const OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
 
 #endif
 
@@ -991,6 +1013,8 @@ vector<TensorSpec> LongShortTermMemory::get_backward_specs(Index batch_size) con
         {scratch_shape,     compute_dtype},
         {scratch_shape,     compute_dtype},
         {scratch_shape,     compute_dtype},
+        {{batch_size, get_time_steps(), output_features}, compute_dtype},
+        {input_delta_shape, compute_dtype},
     };
 }
 

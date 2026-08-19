@@ -48,7 +48,7 @@ static void clip_gradient_norm_device(Buffer& gradient, Index gradient_size, flo
         squared_norm_device.grow_to(Index(sizeof(float)));
     float* const squared_norm_ptr = squared_norm_device.as<float>();
 
-    cublasHandle_t handle = Backend::get_cublas_handle();
+    cublasHandle_t handle = device::get_cublas_handle();
     {
         device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
         CHECK_CUBLAS(cublasSdot(handle,
@@ -329,10 +329,11 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
             for (;;)
             {
                 const auto t_pop0 = chrono::steady_clock::now();
-                Batch* batch = session_ptr->empty_queue.pop();
+                Batch* batch = nullptr;
+                const bool received_batch = session_ptr->empty_queue.wait_pop(batch);
                 const auto t_fill0 = chrono::steady_clock::now();
 
-                if (!batch || stop.stop_requested())
+                if (!received_batch || !batch || stop.stop_requested())
                 {
                     if (batch) session_ptr->empty_queue.push(batch);
                     return;
@@ -1315,16 +1316,16 @@ void Optimizer::sync_device(const bool on_gpu,
 
     if (!has_recurrent_layers) return;
 
-    CudaEvent& slot = training_session.throttle_events[training_session.throttle_cursor];
+    device::CudaEvent& slot = training_session.throttle_events[training_session.throttle_cursor];
     training_session.throttle_cursor =
         (training_session.throttle_cursor + 1) % training_session.throttle_events.size();
 
-    if (slot.handle)
-        device::synchronize_event(slot.handle);
+    if (slot)
+        device::synchronize_event(slot.get());
     else
         slot.create();
 
-    device::record_event(slot.handle, device::get_compute_stream());
+    device::record_event(slot.get(), device::get_compute_stream());
 }
 
 void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
@@ -1390,7 +1391,9 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         {
             const Index values_count = from.shape.size();
             if (!from.host || !to.host || values_count <= 0) return;
-            memcpy(to.host, from.host, size_t(values_count) * sizeof(float));
+            memcpy(to.host.data(),
+                   from.host.data(),
+                   size_t(values_count) * sizeof(float));
         };
 
         copy_section(source.input,   slot.input);
@@ -1404,7 +1407,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         {
             const Index values_count = section.shape.size();
             if (!section.host || !section.buffer.data() || values_count <= 0) return;
-            device::copy_async(section.buffer.data(), section.host,
+            device::copy_async(section.buffer.data(), section.host.data(),
                                values_count * Index(sizeof(float)),
                                device::CopyKind::HostToDevice, stream);
         };
@@ -1480,7 +1483,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                 PROFILE_SCOPE_HOST("step:group_sync");
 
                 if (event_slot.h2d_done_recorded)
-                    device::synchronize_event(event_slot.h2d_done_event);
+                    device::synchronize_event(event_slot.h2d_done_event.get());
             }
 
             for (Index m = 0; m < M; ++m)
@@ -1566,16 +1569,16 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                             pipeline.copy_done_events[size_t(m)].create();
 
                     const auto run_group = [&] {
-                        device::record_event(pipeline.fork_event, compute);
-                        device::stream_wait_event(transfer, pipeline.fork_event);
+                        device::record_event(pipeline.fork_event.get(), compute);
+                        device::stream_wait_event(transfer, pipeline.fork_event.get());
                         for (Index m = 0; m < M; ++m)
                         {
                             issue_slot_h2d(*pipeline.slots[size_t(m)], transfer);
-                            device::record_event(pipeline.copy_done_events[size_t(m)], transfer);
+                            device::record_event(pipeline.copy_done_events[size_t(m)].get(), transfer);
                         }
                         for (Index m = 0; m < M; ++m)
                         {
-                            device::stream_wait_event(compute, pipeline.copy_done_events[size_t(m)]);
+                            device::stream_wait_event(compute, pipeline.copy_done_events[size_t(m)].get());
                             run_compute_step(*pipeline.slots[size_t(m)]);
                         }
                     };
@@ -1608,7 +1611,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                         PROFILE_SCOPE_HOST("step:stage_copy");
 
                         if (slot.h2d_done_recorded)
-                            device::synchronize_event(slot.h2d_done_event);
+                            device::synchronize_event(slot.h2d_done_event.get());
                         stage_into_slot(*host_batch, slot);
                         empty_queue.push(host_batch);
                         host_batch = nullptr;
@@ -1625,7 +1628,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                         PROFILE_SCOPE_HOST("step:h2d_issue");
 
                         if (slot.h2d_done_recorded)
-                            device::stream_wait_event(transfer, slot.h2d_done_event);
+                            device::stream_wait_event(transfer, slot.h2d_done_event.get());
                         host_batch->upload_to_device_batch_async(slot, transfer);
                         host_batch->wait_h2d_on_compute_stream();
                     }
@@ -1717,7 +1720,7 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
         {
             PROFILE_SCOPE_HOST("step:fixed_h2d_issue");
             if (fixed_device_batch_in_use)
-                device::stream_wait_event(device::get_transfer_stream(), fixed_device_batch->h2d_done_event);
+                device::stream_wait_event(device::get_transfer_stream(), fixed_device_batch->h2d_done_event.get());
 
             return next_batch->upload_to_device_batch_async(*fixed_device_batch, device::get_transfer_stream());
         }
@@ -1743,7 +1746,7 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
 
         if (use_fixed_device_batch)
         {
-            device::record_event(fixed_device_batch->h2d_done_event, device::get_compute_stream());
+            device::record_event(fixed_device_batch->h2d_done_event.get(), device::get_compute_stream());
             fixed_device_batch_in_use = true;
         }
 
@@ -1906,7 +1909,9 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
     if(!on_gpu)
     {
-        Batch* batch = empty_queue.pop();
+        Batch* batch = nullptr;
+        throw_if(!empty_queue.wait_pop(batch) || !batch,
+                 "Optimizer::train_epoch: batch queue did not provide a batch.");
 
         for(Index iteration = 0; iteration < batches_number; ++iteration)
         {
@@ -2166,7 +2171,9 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
     if(!on_gpu)
     {
-        Batch* batch = empty_queue.pop();
+        Batch* batch = nullptr;
+        throw_if(!empty_queue.wait_pop(batch) || !batch,
+                 "Optimizer::evaluate_epoch: batch queue did not provide a batch.");
 
         for(Index iteration = 0; iteration < batches_number; ++iteration)
         {

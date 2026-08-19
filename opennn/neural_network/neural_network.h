@@ -70,7 +70,7 @@ public:
     void add_layer(unique_ptr<Layer>,
                   const vector<Index>& = {});
 
-    const Configuration::EffectiveConfig& get_config() const noexcept { return config; }
+    const EffectiveConfig& get_config() const noexcept { return config; }
     Device get_device() const noexcept { return config.device; }
     bool is_gpu() const noexcept { return config.device == Device::CUDA; }
     bool is_cpu() const noexcept { return config.device == Device::CPU; }
@@ -321,7 +321,7 @@ protected:
 
     Buffer states;
 
-    Configuration::EffectiveConfig config;
+    EffectiveConfig config;
 
     bool training_activation_recomputation = false;
 
@@ -337,7 +337,7 @@ protected:
 
 private:
 
-    void compile(Configuration::EffectiveConfig);
+    void compile(EffectiveConfig);
 
     MatrixR calculate_outputs_device(const vector<TensorView>&, ForwardPropagation&);
 
@@ -404,7 +404,8 @@ private:
     {
         for (auto& layer_specs : specs)
             for (auto& spec : layer_specs)
-                spec.dtype = Type::FP32;
+                if (spec.dtype == Type::BF16)
+                    spec.dtype = Type::FP32;
     }
 
     template<typename Fn>

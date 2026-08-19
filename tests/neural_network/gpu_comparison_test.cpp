@@ -18,6 +18,7 @@
 #include "opennn/neural_network/layers/multihead_attention_layer.h"
 #include "opennn/neural_network/layers/normalization_layer_3d.h"
 #include "opennn/neural_network/layers/pooling_layer_3d.h"
+#include "opennn/neural_network/layers/recurrent_layer.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/neural_network/standard_networks.h"
 #include "opennn/training_strategy/loss.h"
@@ -292,12 +293,33 @@ TEST_F(GpuComparison, DenseDreluFusedGradient)
     EXPECT_TRUE(hidden_2->drelu_fusion_wired());
     EXPECT_TRUE(output_layer->drelu_fusion_wired());
 
+    MatrixR fusion_inputs(samples_number, inputs_number);
+    fusion_inputs.setRandom();
+    const vector<TensorView> fusion_input_views = {
+        TensorView(fusion_inputs.data(), {samples_number, inputs_number})
+    };
+    ForwardPropagation first_forward(samples_number, &gpu_network);
+    ForwardPropagation second_forward(samples_number, &gpu_network);
+    gpu_network.forward_propagate(fusion_input_views, first_forward, true);
+    gpu_network.forward_propagate(fusion_input_views, second_forward, true);
+
+    ASSERT_EQ(first_forward.drelu_fused_by_layer[0], 1);
+    ASSERT_EQ(first_forward.drelu_fused_by_layer[1], 1);
+    ASSERT_EQ(second_forward.drelu_fused_by_layer[0], 1);
+
+    const auto first_mask = ranges::find_if(
+        first_forward.slots[0],
+        [](const TensorView& slot) { return slot.is_int8() && !slot.empty(); });
+    const auto second_mask = ranges::find_if(
+        second_forward.slots[0],
+        [](const TensorView& slot) { return slot.is_int8() && !slot.empty(); });
+    ASSERT_NE(first_mask, first_forward.slots[0].end());
+    ASSERT_NE(second_mask, second_forward.slots[0].end());
+    EXPECT_NE(first_mask->get_data(), second_mask->get_data());
+
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
     const VectorR gpu_gradient = calculate_gradient(gpu_loss);
-
-    EXPECT_TRUE(hidden_2->drelu_fusion_ran());
-    EXPECT_TRUE(output_layer->drelu_fusion_ran());
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
@@ -1108,6 +1130,36 @@ TEST_F(GpuComparison, ForecastingRecurrentForward)
     EXPECT_LT(relative_difference(cpu_outputs, gpu_outputs), 1.0e-3f);
 }
 
+TEST_F(GpuComparison, RecurrentExecutionStateIsPropagationOwned)
+{
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    NeuralNetwork network;
+    network.add_layer(make_unique<Recurrent>(Shape{4, 3}, Shape{5}, "Tanh"));
+    network.compile();
+    network.set_parameters_random();
+
+    Tensor3 inputs(2, 4, 3);
+    inputs.setRandom();
+    const vector<TensorView> input_views = {
+        TensorView(inputs.data(), {2, 4, 3})
+    };
+
+    ForwardPropagation first(2, &network);
+    ForwardPropagation second(2, &network);
+
+    network.forward_propagate(input_views, first, true);
+    network.forward_propagate(input_views, second, true);
+
+    ASSERT_EQ(first.layer_state_storage.size(), 1);
+    ASSERT_EQ(second.layer_state_storage.size(), 1);
+    EXPECT_FALSE(first.layer_state_storage[0].empty());
+    EXPECT_FALSE(second.layer_state_storage[0].empty());
+    EXPECT_EQ(first.layer_state_storage[0].get_device(), Device::CUDA);
+    EXPECT_NE(first.layer_state_storage[0].data(),
+              second.layer_state_storage[0].data());
+}
+
 TEST_F(GpuComparison, ForecastingLstmForward)
 {
     const Index samples_number = 7;
@@ -1479,6 +1531,46 @@ TEST_F(GpuComparison, SdpaAttentionBackwardGradient)
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 2.0e-2f);
+}
+
+TEST_F(GpuComparison, SdpaDropoutBackwardUsesForwardState)
+{
+    if (!AttentionOperator::sdpa_supported(Type::FP32, Device::CUDA))
+        GTEST_SKIP() << "SDPA is not available in this build.";
+
+    constexpr Index samples_number = 4;
+    constexpr Index sequence_length = 64;
+    constexpr Index embedding_dimension = 32;
+    constexpr Index heads_number = 2;
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    TabularDataset dataset(samples_number,
+                           Shape{sequence_length, embedding_dimension},
+                           Shape{sequence_length * embedding_dimension});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    auto attention = make_unique<MultiHeadAttention>(
+        Shape{sequence_length, embedding_dimension}, heads_number);
+    attention->set_sdpa_min_sequence_length(1);
+    attention->set_dropout_rate(0.25f);
+
+    NeuralNetwork network;
+    network.add_layer(std::move(attention));
+    network.add_layer(make_unique<Flatten>(network.get_output_shape()));
+    network.compile();
+    network.set_parameters_random();
+
+    ASSERT_TRUE(static_cast<MultiHeadAttention*>(network.get_layer(0).get())
+                    ->should_use_sdpa());
+
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    const VectorR gradient = calculate_gradient(loss);
+    EXPECT_TRUE(gradient.allFinite());
+    EXPECT_GT(gradient.squaredNorm(), 0.0f);
 }
 
 // The padding an activation scan cannot see. An Embedding zeroes the row of a

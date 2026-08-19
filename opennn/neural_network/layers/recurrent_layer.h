@@ -18,6 +18,14 @@ namespace opennn
 
 struct RecurrentOperator : Operator, CudnnRnnState
 {
+    enum ForwardScratchSlot
+    {
+        StepInputForwardSlot = 3,
+        StepHiddenForwardSlot,
+        PreviousHiddenForwardSlot,
+        StepDerivativesForwardSlot
+    };
+
     enum BackwardSlot
     {
         OutputDeltaSlot = 0,
@@ -26,7 +34,9 @@ struct RecurrentOperator : Operator, CudnnRnnState
         StepPrevHScratchSlot,
         DeltaScratchSlot,
         NextCarryScratchSlot,
-        StepInDeltaScratchSlot
+        StepInDeltaScratchSlot,
+        SequenceDeltaScratchSlot,
+        CudnnInputDeltaScratchSlot
     };
 
     Index input_features  = 0;
@@ -71,6 +81,11 @@ private:
                    TensorView&,
                    TensorView&,
                    TensorView&,
+                   TensorView&,
+                   TensorView&,
+                   TensorView&,
+                   TensorView&,
+                   Buffer&,
                    bool) const;
 
     void apply_delta(const TensorView&,
@@ -87,20 +102,21 @@ private:
                          TensorView&,
                          TensorView&,
                          TensorView&,
-                         TensorView&) const;
-    mutable Buffer step_input_buf     {Device::CUDA};
-    mutable Buffer step_hidden_buf    {Device::CUDA};
-    mutable Buffer prev_hidden_buf    {Device::CUDA};
-    mutable Buffer step_derivs_buf    {Device::CUDA};
-    mutable Buffer step_seq_delta_buf {Device::CUDA};
+                         TensorView&,
+                         TensorView&,
+                         TensorView&,
+                         const Buffer&,
+                         Buffer&) const;
 
     bool cudnn_rnn_eligible_(const TensorView&) const;
     void ensure_cudnn_setup_(Index, bool) const;
-    void pack_weights_to_cudnn_() const;
-    void unpack_gradients_from_cudnn_() const;
-    void apply_gpu_cudnn_(const TensorView&, TensorView&, TensorView&, bool) const;
+    void pack_weights_to_cudnn_(Buffer&) const;
+    void unpack_gradients_from_cudnn_(Buffer&) const;
+    void apply_gpu_cudnn_(const TensorView&, TensorView&, TensorView&,
+                          Buffer&, bool) const;
     void apply_delta_gpu_cudnn_(const TensorView&, const TensorView&,
-                                const TensorView&, TensorView&) const;
+                                const TensorView&, TensorView&, TensorView&,
+                                TensorView&, const Buffer&, Buffer&) const;
 };
 
 class Recurrent final : public Layer
@@ -126,6 +142,12 @@ public:
 
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
+    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    {
+        if (spec == 1) return ForwardSlotKind::TrainingOnly;
+        if (spec >= 2 && spec <= 5) return ForwardSlotKind::Transient;
+        return ForwardSlotKind::Pooled;
+    }
 
     void set(const Shape& = {},
              const Shape& = {},
@@ -149,7 +171,17 @@ public:
 
 private:
 
-    enum Forward {Input, HiddenStates, ActivationDerivatives, Output};
+    enum Forward
+    {
+        Input,
+        HiddenStates,
+        ActivationDerivatives,
+        StepInputScratch,
+        StepHiddenScratch,
+        PreviousHiddenScratch,
+        StepDerivativesScratch,
+        Output
+    };
 
     Index time_steps      = 0;
     Index input_features  = 0;

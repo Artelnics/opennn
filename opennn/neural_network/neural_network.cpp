@@ -435,7 +435,7 @@ uint64_t read_snapshot_header(ifstream& file, uintmax_t file_bytes,
 
 const EnumMap<NetworkTask>& network_task_map()
 {
-    static const vector<EnumMap<NetworkTask>::Entry> entries = {
+    static const EnumMap<NetworkTask> map{
         {NetworkTask::Generic,             "Generic"},
         {NetworkTask::Approximation,       "Approximation"},
         {NetworkTask::Classification,      "Classification"},
@@ -446,8 +446,6 @@ const EnumMap<NetworkTask>& network_task_map()
         {NetworkTask::TextClassification,  "TextClassification"},
         {NetworkTask::LanguageModeling,    "LanguageModeling"}
     };
-
-    static const EnumMap<NetworkTask> map{entries};
     return map;
 }
 
@@ -472,13 +470,17 @@ void wire_drelu_fusions(vector<unique_ptr<Layer>>& layers,
 {
     for (auto& layer : layers)
         if (auto* dense = dynamic_cast<Dense*>(layer.get()))
+        {
             dense->reset_drelu_fusion();
+            dense->reset_single_output_relu_fusion();
+        }
 
     if (device != Device::CUDA || !is_one_of(training_type, Type::FP32, Type::BF16))
         return;
 
-    if (!env_flag_enabled("OPENNN_DRELU_FUSION"))
-        return;
+    // Only the DReLU epilogue is opt-in; the single-output fold below needs no
+    // epilogue and measured a straight gain, so it is always wired.
+    const bool drelu_enabled = env_flag_enabled("OPENNN_DRELU_FUSION");
 
     vector<Index> consumer_count(layers.size(), 0);
     for (const auto& layer_sources : source_layers)
@@ -494,8 +496,12 @@ void wire_drelu_fusions(vector<unique_ptr<Layer>>& layers,
         auto* consumer = dynamic_cast<Dense*>(layers[i].get());
         auto* producer = dynamic_cast<Dense*>(layers[size_t(sources[0])].get());
 
-        if (consumer && producer)
-            consumer->try_wire_drelu_fusion(*producer);
+        if (!consumer || !producer) continue;
+
+        // The single-output fold is tried first; the DReLU epilogue only
+        // applies where it did not, and only when asked for.
+        if (!consumer->try_wire_single_output_relu_fusion(*producer, sources[0]) && drelu_enabled)
+            consumer->try_wire_drelu_fusion(*producer, sources[0]);
     }
 }
 
@@ -565,7 +571,7 @@ void NeuralNetwork::compile(const Device device)
     compile(Configuration::instance().resolve_for(device));
 }
 
-void NeuralNetwork::compile(Configuration::EffectiveConfig new_config)
+void NeuralNetwork::compile(EffectiveConfig new_config)
 {
     config = new_config;
 
@@ -2862,7 +2868,8 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
             PROFILE_SCOPE_HOST("inference:graph_launch");
 
             if (forward_propagation.position_pinned)
-                *static_cast<int*>(forward_propagation.position_pinned) = int(forward_propagation.past_length);
+                *forward_propagation.position_pinned.as<int>() =
+                    int(forward_propagation.past_length);
             device::launch_graph(forward_propagation.inference_graph_exec, compute);
             return forward_propagation.get_outputs();
         }

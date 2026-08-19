@@ -49,9 +49,11 @@ public:
 
     ForwardSlotKind get_forward_slot_kind(size_t spec) const override
     {
-        return !gated && spec == size_t(ActivationView) - 1
-            ? ForwardSlotKind::TrainingOnly
-            : ForwardSlotKind::Pooled;
+        if ((!gated && spec == size_t(ActivationView) - 1)
+            || spec == size_t(DreluMask) - 1
+            || spec == size_t(DropoutMask) - 1)
+            return ForwardSlotKind::TrainingOnly;
+        return ForwardSlotKind::Pooled;
     }
 
     void set(const Shape& = {},
@@ -93,13 +95,18 @@ public:
     }
     void set_momentum(float);
 
-    bool try_wire_drelu_fusion(Dense& producer);
+    bool try_wire_drelu_fusion(Dense& producer, Index producer_layer);
+
+    // A single-output layer absorbs the ReLU backward of the layer feeding it:
+    // its own backward already reads that ReLU's output, so the mask costs
+    // nothing, where a separate pass costs a read and a write of the whole
+    // activation. Unrelated to the DReLU epilogue above, which needs cuBLASLt's
+    // auxiliary epilogues and measured slower.
+    bool try_wire_single_output_relu_fusion(Dense& producer, Index producer_layer);
+    void reset_single_output_relu_fusion();
+    bool single_output_relu_fusion_wired() const { return combination.fuse_input_relu; }
     void reset_drelu_fusion();
     bool drelu_fusion_wired() const { return combination.drelu_source != nullptr; }
-    bool drelu_fusion_ran() const
-    {
-        return combination.drelu_source && combination.drelu_source->relu_mask_fused_active;
-    }
 
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
@@ -123,7 +130,17 @@ private:
     BatchNormalizationOperator   batch_norm;
     DropoutOperator     dropout;
 
-    enum Forward {Input, CombinationView, BatchNormMean, BatchNormInverseVariance, ActivationView, Output};
+    enum Forward
+    {
+        Input,
+        CombinationView,
+        BatchNormMean,
+        BatchNormInverseVariance,
+        ActivationView,
+        DreluMask,
+        DropoutMask,
+        Output
+    };
 
     void configure_operators();
     bool saves_pre_dropout_activation() const;

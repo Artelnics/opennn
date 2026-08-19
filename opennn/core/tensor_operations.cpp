@@ -138,7 +138,7 @@ static bool try_linear_forward(const TensorView&, const TensorView&,
 
 const EnumMap<ActivationFunction>& activation_function_map()
 {
-    static const vector<pair<ActivationFunction, string>> entries = {
+    static const EnumMap<ActivationFunction> map{
         {ActivationFunction::Identity,  "Identity"},
         {ActivationFunction::Sigmoid,   "Sigmoid"},
         {ActivationFunction::Tanh,      "Tanh"},
@@ -156,9 +156,7 @@ const EnumMap<ActivationFunction>& activation_function_map()
         {ActivationFunction::ReLU,      "RectifiedLinear"},
         {ActivationFunction::ReLU,      "ScaledExponentialLinear"}
     };
-
-    static const EnumMap<ActivationFunction> instance{entries};
-    return instance;
+    return map;
 }
 
 bool activation_needs_input(ActivationFunction function)
@@ -185,7 +183,7 @@ ActivationFunction activation_function_from_string(const string& name)
     X(activation_forward_gpu, (TensorView&, ActivationFunction)) \
     X(activation_backward_gpu, (const TensorView&, TensorView&, ActivationFunction)) \
     X(linear_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cublasLtEpilogue_t, TensorView*, const TensorView&)) \
-    X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool, const TensorView*, const TensorView*))
+    X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool, const TensorView*, const TensorView*, bool*))
 
 #define OPENNN_DECLARE_GPU_OP(name, sig) static void name sig;
 OPENNN_GPU_OPS(OPENNN_DECLARE_GPU_OP)
@@ -681,7 +679,8 @@ void linear_forward(const TensorView& input, const TensorView& weights, const Te
 void linear_backward(const TensorView& output_delta, const TensorView& input, const TensorView& weights,
                      const TensorView& weight_gradient, const TensorView& bias_gradient,
                      TensorView& input_delta, bool accumulate_input_delta,
-                     const TensorView* drelu_mask, const TensorView* addend)
+                     const TensorView* drelu_mask, const TensorView* addend,
+                     bool* fused_input_relu)
 {
     constexpr string_view operation = "linear_backward";
     validate_linear_io(input, weights, output_delta, false, operation);
@@ -745,7 +744,9 @@ void linear_backward(const TensorView& output_delta, const TensorView& input, co
 
     if (output_delta.is_cuda())
         return linear_backward_gpu(output_delta, input, weights, weight_gradient, bias_gradient,
-                                   input_delta, accumulate_input_delta, drelu_mask, addend);
+                                   input_delta, accumulate_input_delta, drelu_mask, addend,
+                                   fused_input_relu);
+    if (fused_input_relu) *fused_input_relu = false;
     linear_backward_cpu(output_delta, input, weights, weight_gradient, bias_gradient,
                         input_delta, accumulate_input_delta, addend);
 }
@@ -840,8 +841,8 @@ static void add_gpu(const TensorView& input_1,
         return add_relu_cuda(output.size(), input_1.as<float>(), input_2.as<float>(),
                               false, output.as<float>());
 
-    CHECK_CUDNN(cudnnOpTensor(Backend::get_cudnn_handle(),
-                              Backend::get_op_tensor_add_descriptor(),
+    CHECK_CUDNN(cudnnOpTensor(device::get_cudnn_handle(),
+                              device::get_op_tensor_add_descriptor(),
                               &one, input_1.get_descriptor(), input_1.get_data(),
                               &one, input_2.get_descriptor(), input_2.get_data(),
                               &zero, output.get_descriptor(), output.get_data()));
@@ -892,7 +893,7 @@ static void softmax_gpu(TensorView& output)
 
     if (output.size() <= max_descriptor_elements)
     {
-        CHECK_CUDNN(cudnnSoftmaxForward(Backend::get_cudnn_handle(),
+        CHECK_CUDNN(cudnnSoftmaxForward(device::get_cudnn_handle(),
                                         CUDNN_SOFTMAX_ACCURATE,
                                         CUDNN_SOFTMAX_MODE_CHANNEL,
                                         &one,
@@ -916,7 +917,7 @@ static void softmax_gpu(TensorView& output)
                                Shape{chunk_rows, channels},
                                output.get_type(), output.get_device());
 
-        CHECK_CUDNN(cudnnSoftmaxForward(Backend::get_cudnn_handle(),
+        CHECK_CUDNN(cudnnSoftmaxForward(device::get_cudnn_handle(),
                                         CUDNN_SOFTMAX_ACCURATE,
                                         CUDNN_SOFTMAX_MODE_CHANNEL,
                                         &one,
@@ -1019,6 +1020,8 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
                                TensorView& output, cublasLtEpilogue_t epilogue,
                                TensorView* pre_activation, const TensorView& weight_scale)
 {
+    PROFILE_SCOPE("op:linear_fwd " + to_string(weights.flat_columns()) + "x"
+                  + to_string(input.flat_columns()) + "x" + to_string(input.flat_rows()));
     if (!weights.is_int8()
         && single_output_reduction_applies(input, weights, bias, output, epilogue, pre_activation))
     {
@@ -1065,16 +1068,74 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     linear_forward_lt_gpu(input, dequantized_weights, bias, output, epilogue, pre_activation);
 }
 
+// The backward twin of single_output_reduction_applies: the same layer shape,
+// and none of the variants the one-pass kernel does not cover (an accumulated
+// input delta, a folded addend, a fused ReLU mask).
+static bool single_output_backward_applies(const TensorView& output_delta, const TensorView& input,
+                                           const TensorView& weights, const TensorView& weight_gradient,
+                                           const TensorView& bias_gradient, const TensorView& input_delta,
+                                           bool accumulate_input_delta,
+                                           const TensorView* drelu_mask, const TensorView* addend)
+{
+    static const bool enabled = env_flag_enabled("OPENNN_SINGLE_OUTPUT_KERNEL", true);
+
+    if (!enabled || drelu_mask || addend || accumulate_input_delta) return false;
+    if (weights.get_shape().back() != 1) return false;
+    if (input.get_type() != output_delta.get_type() || input.get_type() != weights.get_type()) return false;
+    if (!input.is_bf16() && !input.is_fp32()) return false;
+    if (!weight_gradient.is_fp32()) return false;
+    if (!bias_gradient.empty() && (!bias_gradient.is_fp32() || bias_gradient.size() != 1)) return false;
+    if (!input_delta.empty() && input_delta.get_type() != input.get_type()) return false;
+
+    const Index features = input.flat_columns();
+    const Index per_vector = Index(16) / Index(type_bytes(input.get_type()));
+    if (features % (32 * per_vector) != 0) return false;
+
+    const auto aligned = [](const void* p) { return reinterpret_cast<uintptr_t>(p) % 16 == 0; };
+    return aligned(input.get_data()) && aligned(weights.get_data())
+        && (input_delta.empty() || aligned(input_delta.get_data()));
+}
+
 static void linear_backward_gpu(const TensorView& output_delta, const TensorView& input, const TensorView& weights,
                          const TensorView& weight_gradient, const TensorView& bias_gradient,
                          TensorView& input_delta, bool accumulate_input_delta,
-                         const TensorView* drelu_mask, const TensorView* addend)
+                         const TensorView* drelu_mask, const TensorView* addend,
+                         bool* fused_input_relu)
 {
+    if (single_output_backward_applies(output_delta, input, weights, weight_gradient,
+                                       bias_gradient, input_delta, accumulate_input_delta,
+                                       drelu_mask, addend))
+    {
+        PROFILE_SCOPE("op:linear_bwd_single_output");
+        const Index features = input.flat_columns();
+        const Index rows = input.flat_rows();
+        const bool has_input_delta = !input_delta.empty() && input_delta.get_data();
+        const bool fuse_relu = fused_input_relu && has_input_delta;
+
+        bool done = false;
+        input.dispatch([&]<typename T>() {
+            done = linear_backward_single_output_cuda<T>(
+                rows, features,
+                output_delta.as<T>(), input.as<T>(), weights.as<T>(),
+                has_input_delta ? input_delta.as<T>() : nullptr,
+                fuse_relu,
+                weight_gradient.as<float>(),
+                bias_gradient.empty() ? nullptr : bias_gradient.as<float>());
+        });
+        if (done)
+        {
+            if (fused_input_relu) *fused_input_relu = fuse_relu;
+            return;
+        }
+    }
+
     const int input_columns  = to_int(input.flat_columns());
     const int output_columns = to_int(output_delta.flat_columns());
     const int total_rows     = to_int(input.flat_rows());
 
     const void* input_for_gemm = data_for_gemm_dtype(input, weights.get_type());
+
+    if (fused_input_relu) *fused_input_relu = false;
 
     const bool has_bias = bias_gradient.size() > 0;
 

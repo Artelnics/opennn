@@ -35,11 +35,19 @@ struct CombinationOperator : Operator
     bool  transposed_inference_preferred = false;
     bool  transposed_inference_active    = false;
 
-    mutable bool emit_relu_mask = false;
-    mutable bool relu_mask_fused_active = false;
-    Buffer relu_mask{Device::CUDA};
-    TensorView relu_mask_view;
+    // Set by the layer when this combination's input is the output of a ReLU
+    // whose backward it can absorb (Dense::try_wire_single_output_relu_fusion),
+    // with the producing layer's index: the backward reports through
+    // drelu_fused_by_layer whether it did, the channel the DReLU epilogue
+    // already uses, and a layer is never both kinds of producer.
+    bool fuse_input_relu = false;
+    Index input_relu_source_layer = -1;
+
+    bool emit_relu_mask = false;
+    mutable bool relu_mask_fusion_disabled = false;
+    size_t relu_mask_slot = SIZE_MAX;
     const CombinationOperator* drelu_source = nullptr;
+    Index drelu_source_layer = -1;
 
     TensorView weights;
     TensorView bias;

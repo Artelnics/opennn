@@ -98,16 +98,30 @@ struct ForwardPropagation
     Index past_length = 0;
 
     Buffer arena;
+    // Opaque per-layer state whose size is known only after a backend configures
+    // an operation (for example, cuDNN RNN state or an autoregressive KV cache).
+    vector<Buffer> layer_state_storage;
+    // Host mirrors used only while an execution stages data across a device
+    // boundary. Kept per layer so independent propagation contexts never share
+    // staging addresses.
+    vector<device::PinnedBuffer> layer_pinned_storage;
     vector<Buffer> staged_input_storage;
     vector<TensorView> staged_inputs;
+
+    // Loss evaluation scratch belongs to this execution, not to the reusable
+    // Loss configuration. YOLO keeps its assembled targets separate because
+    // the target and reduction buffers are live at the same time.
+    mutable Buffer loss_workspace{Device::CUDA};
+    mutable Buffer loss_target_workspace{Device::CUDA};
 
     vector<vector<uint16_t>> host_bf16_input_scratch;
 
     Buffer position_device{Device::CUDA};
-    void* position_pinned = nullptr;
+    device::PinnedBuffer position_pinned;
 
     vector<vector<TensorView>> inputs;
     vector<vector<TensorView>> slots;
+    vector<uint8_t> drelu_fused_by_layer;
     vector<tuple<size_t, size_t, size_t>> passthrough_overrides;
 
     // Where each sequence in the batch ends, one record per layer, describing
@@ -155,7 +169,7 @@ struct ForwardPropagation
     array<Buffer, size_t(device::GraphWorkspaceKind::Count)> inference_graph_workspaces{
         Buffer{Device::CUDA}, Buffer{Device::CUDA}, Buffer{Device::CUDA},
         Buffer{Device::CUDA}, Buffer{Device::CUDA}, Buffer{Device::CUDA},
-        Buffer{Device::CUDA}};
+        Buffer{Device::CUDA}, Buffer{Device::CUDA}};
 
 private:
 

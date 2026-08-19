@@ -41,7 +41,7 @@ TEST(DropoutForwardTest, ZeroRateIsIdentity)
     const VectorR original = values;
 
     TensorView output(values.data(), { Index(values.size()) });
-    Buffer mask;
+    TensorView mask;
 
     dropout_forward(output, mask, 0.0f);
 
@@ -51,7 +51,7 @@ TEST(DropoutForwardTest, ZeroRateIsIdentity)
     EXPECT_TRUE(mask.empty());
 }
 
-TEST(DropoutForwardTest, MaskValuesAreZeroOrKeepScale)
+TEST(DropoutForwardTest, MaskValuesAreBinary)
 {
     set_seed(123u);
 
@@ -62,19 +62,18 @@ TEST(DropoutForwardTest, MaskValuesAreZeroOrKeepScale)
     VectorR values(element_count);
     values.setConstant(1.0f);
     TensorView output(values.data(), { element_count });
-    Buffer mask;
+    vector<uint8_t> mask_storage(static_cast<size_t>(element_count));
+    TensorView mask(mask_storage.data(), {element_count}, Type::INT8);
 
     dropout_forward(output, mask, rate);
 
-    const float* mask_values = mask.as<float>();
+    const uint8_t* mask_values = mask.as<uint8_t>();
 
     for (Index i = 0; i < element_count; ++i)
     {
-        const bool is_zero = mask_values[i] == 0.0f;
-        const bool is_scale = abs(mask_values[i] - keep_scale) < 1e-5f;
-        EXPECT_TRUE(is_zero || is_scale);
+        EXPECT_TRUE(mask_values[i] == 0 || mask_values[i] == 1);
 
-        if (is_zero)
+        if (mask_values[i] == 0)
             EXPECT_FLOAT_EQ(values[i], 0.0f);
         else
             EXPECT_FLOAT_EQ(values[i], keep_scale);
@@ -92,7 +91,8 @@ TEST(DropoutForwardTest, InvertedScalingPreservesMeanApproximately)
     VectorR values(element_count);
     values.setConstant(input_value);
     TensorView output(values.data(), { element_count });
-    Buffer mask;
+    vector<uint8_t> mask_storage(static_cast<size_t>(element_count));
+    TensorView mask(mask_storage.data(), {element_count}, Type::INT8);
 
     dropout_forward(output, mask, rate);
 
@@ -115,15 +115,16 @@ TEST(DropoutForwardTest, DroppedFractionMatchesRate)
     VectorR values(element_count);
     values.setConstant(1.0f);
     TensorView output(values.data(), { element_count });
-    Buffer mask;
+    vector<uint8_t> mask_storage(static_cast<size_t>(element_count));
+    TensorView mask(mask_storage.data(), {element_count}, Type::INT8);
 
     dropout_forward(output, mask, rate);
 
-    const float* mask_values = mask.as<float>();
+    const uint8_t* mask_values = mask.as<uint8_t>();
 
     Index dropped = 0;
     for (Index i = 0; i < element_count; ++i)
-        if (mask_values[i] == 0.0f) ++dropped;
+        if (mask_values[i] == 0) ++dropped;
 
     const float dropped_fraction = float(dropped) / float(element_count);
 
@@ -140,13 +141,14 @@ TEST(DropoutBackwardTest, AppliesSameMaskAsForward)
     VectorR values(element_count);
     values.setConstant(1.0f);
     TensorView output(values.data(), { element_count });
-    Buffer mask;
+    vector<uint8_t> mask_storage(static_cast<size_t>(element_count));
+    TensorView mask(mask_storage.data(), {element_count}, Type::INT8);
 
     dropout_forward(output, mask, rate);
 
-    vector<float> mask_snapshot(element_count);
+    vector<uint8_t> mask_snapshot(static_cast<size_t>(element_count));
     for (Index i = 0; i < element_count; ++i)
-        mask_snapshot[i] = mask.as<float>()[i];
+        mask_snapshot[size_t(i)] = mask.as<uint8_t>()[i];
 
     VectorR delta(element_count);
     for (Index i = 0; i < element_count; ++i)
@@ -155,8 +157,9 @@ TEST(DropoutBackwardTest, AppliesSameMaskAsForward)
     TensorView delta_view(delta.data(), { element_count });
     dropout_backward(delta_view, mask, rate);
 
+    const float keep_scale = 1.0f / (1.0f - rate);
     for (Index i = 0; i < element_count; ++i)
-        EXPECT_FLOAT_EQ(delta[i], 3.0f * mask_snapshot[i]);
+        EXPECT_FLOAT_EQ(delta[i], mask_snapshot[size_t(i)] ? 3.0f * keep_scale : 0.0f);
 }
 
 TEST(DropoutBackwardTest, ZeroRateLeavesDeltaUnchanged)
@@ -166,7 +169,7 @@ TEST(DropoutBackwardTest, ZeroRateLeavesDeltaUnchanged)
     const VectorR original = delta;
 
     TensorView delta_view(delta.data(), { Index(delta.size()) });
-    Buffer mask;
+    TensorView mask;
 
     dropout_backward(delta_view, mask, 0.0f);
 
@@ -233,6 +236,20 @@ TEST(DropoutLayerTest, TrainingPassDiffersFromInference)
     input.setConstant(type(1.0));
 
     ForwardPropagation training_propagation(batch_size, &neural_network);
+    const auto training_mask = ranges::find_if(
+        training_propagation.slots[0],
+        [](const TensorView& slot) { return slot.is_int8() && !slot.empty(); });
+    ASSERT_NE(training_mask, training_propagation.slots[0].end());
+    ASSERT_EQ(training_mask->size(), batch_size * outputs_number);
+    ASSERT_FALSE(training_mask->is_cuda());
+
+    ForwardPropagation second_propagation(batch_size, &neural_network);
+    const auto second_mask = ranges::find_if(
+        second_propagation.slots[0],
+        [](const TensorView& slot) { return slot.is_int8() && !slot.empty(); });
+    ASSERT_NE(second_mask, second_propagation.slots[0].end());
+    EXPECT_NE(training_mask->get_data(), second_mask->get_data());
+
     vector<TensorView> training_views = { TensorView(input.data(), {batch_size, inputs_number}) };
     neural_network.forward_propagate(training_views, training_propagation, true);
 

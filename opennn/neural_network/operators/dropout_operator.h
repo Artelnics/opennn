@@ -13,14 +13,13 @@
 namespace opennn
 {
 
-void dropout_forward(TensorView&, Buffer&, float);
-void dropout_backward(TensorView&, const Buffer&, float);
+void dropout_forward(TensorView&, TensorView&, float);
+void dropout_backward(TensorView&, const TensorView&, float);
 
 struct DropoutOperator : Operator
 {
     float rate = 0.0f;
-
-    Buffer mask;
+    size_t mask_slot = SIZE_MAX;
 
     bool active() const { return rate > 0.0f; }
 

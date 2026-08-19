@@ -28,6 +28,15 @@ Shape Embedding::get_output_shape() const
     return {sequence_length, embedding_dimension};
 }
 
+vector<TensorSpec> Embedding::get_forward_specs(Index batch_size) const
+{
+    const Shape output_shape = Shape{batch_size}.append(get_output_shape());
+    return {
+        {dropout.active() ? output_shape : Shape{}, Type::INT8},
+        {output_shape, compute_dtype},
+    };
+}
+
 void Embedding::set(Index new_vocabulary_size,
                     Index new_sequence_length,
                     Index new_embedding_dimension,
@@ -41,7 +50,10 @@ void Embedding::set(Index new_vocabulary_size,
 
     embedding_lookup.set(vocabulary_size, sequence_length, embedding_dimension);
 
+    embedding_lookup.output_slots = {Output};
     dropout.input_slots  = {Output};
+    dropout.output_slots = {Output};
+    dropout.mask_slot = DropoutMask;
 }
 
 void Embedding::read_JSON_body(const Json* embedding_layer_element)

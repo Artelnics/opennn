@@ -69,8 +69,10 @@ struct CudnnRnnShapeSlot
 {
     Index batch = -1;
     Index time  = -1;
-    int   stamp = 0;
-    bool  training_ready = false;
+    int  stamp = 0;
+    bool training_ready = false;
+    Index workspace_bytes = 0;
+    Index reserve_space_bytes = 0;
     CudnnDescriptor<cudnnRNNDataDescriptor_t> x_desc;
     CudnnDescriptor<cudnnRNNDataDescriptor_t> y_desc;
     CudnnDescriptor<cudnnTensorDescriptor_t>  h_desc;
@@ -79,14 +81,11 @@ struct CudnnRnnShapeSlot
     Buffer seq_dev {Device::CUDA};
 };
 
-inline constexpr int RNN_MAX_LINEAR_LAYERS = 8;
-
 #ifdef OPENNN_HAS_CUDA
 
 struct CudnnRnnConfig
 {
     cudnnRNNMode_t cell_mode;
-    int num_linear_layers;
 };
 
 #endif
@@ -94,16 +93,10 @@ struct CudnnRnnConfig
 struct CudnnRnnState
 {
 protected:
-    mutable Buffer weight_space_buf  {Device::CUDA};
-    mutable Buffer dweight_space_buf {Device::CUDA};
-    mutable Buffer workspace_buf     {Device::CUDA};
-    mutable Buffer reserve_space_buf {Device::CUDA};
-    mutable Buffer y_buf             {Device::CUDA};
-    mutable Buffer dy_buf            {Device::CUDA};
-    mutable Buffer dx_scratch_buf    {Device::CUDA};
-
     mutable CudnnDescriptor<cudnnRNNDescriptor_t>     rnn_desc;
     mutable CudnnDescriptor<cudnnDropoutDescriptor_t> dropout_desc;
+    // Descriptor backing, not per-forward execution state. cuDNN retains this
+    // address for the lifetime of dropout_desc (the configured rate is zero).
     mutable Buffer dropout_states_buf{Device::CUDA};
 
     mutable CudnnRnnShapeSlot shape_slots_[RNN_SHAPE_SLOTS];
@@ -113,11 +106,7 @@ protected:
 
     mutable Index cached_input_features  = -1;
     mutable Index cached_output_features = -1;
-
-    mutable float* cudnn_w_ptrs_[RNN_MAX_LINEAR_LAYERS]  = {};
-    mutable float* cudnn_b_ptrs_[RNN_MAX_LINEAR_LAYERS]  = {};
-    mutable float* cudnn_gw_ptrs_[RNN_MAX_LINEAR_LAYERS] = {};
-    mutable float* cudnn_gb_ptrs_[RNN_MAX_LINEAR_LAYERS] = {};
+    mutable Index weight_space_bytes_ = 0;
 
     mutable bool persist_algo_failed_ = false;
     mutable bool persist_algo_active_ = false;
@@ -126,10 +115,13 @@ protected:
 
     void cudnn_rnn_forward_(bool is_training, bool has_cell_state,
                             const void* x, void* y,
+                            Buffer& forward_state,
                             const function<void()>& reconfigure) const;
     void cudnn_rnn_backward_(bool has_cell_state,
                              const void* x, const void* y, const void* dy,
-                             void* dx) const;
+                             void* dx,
+                             const Buffer& forward_state,
+                             Buffer& backward_scratch) const;
 
     void cudnn_setup_(const CudnnRnnConfig&,
                       Index input_features, Index output_features, Index time_steps,
@@ -144,15 +136,20 @@ protected:
                                     Index output_features,
                                     const TensorView* const* matrices,
                                     const TensorView* const* vectors,
+                                    Buffer& packed_weights,
                                     bool to_cudnn) const;
     void cudnn_pack_weights_(int num_linear_layers,
                              Index input_features, Index output_features,
                              const TensorView* const* weights,
-                             const TensorView* const* biases) const;
+                             const TensorView* const* biases,
+                             Buffer& forward_state) const;
     void cudnn_unpack_gradients_(int num_linear_layers,
                                  Index input_features, Index output_features,
                                  const TensorView* const* weight_gradients,
-                                 const TensorView* const* bias_gradients) const;
+                                 const TensorView* const* bias_gradients,
+                                 Buffer& backward_scratch) const;
+
+    void prepare_cudnn_forward_state_(Buffer&, bool) const;
 #endif
 };
 

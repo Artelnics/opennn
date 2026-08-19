@@ -255,7 +255,7 @@ TEST(RegistryTest, AllComponentNamesConstruct)
         "GrowingInputs"
     };
 
-    const auto& layer_entries = layer_type_map().entries;
+    const auto& layer_entries = layer_type_map().get_entries();
     ASSERT_EQ(layer_entries.size(), static_cast<size_t>(LayerType::Count));
 
     for (size_t i = 0; i < layer_entries.size(); ++i)
@@ -280,7 +280,7 @@ TEST(RegistryTest, AllComponentNamesConstruct)
 
 TEST(RegistryTest, AliasesConstructConfiguredComponents)
 {
-    EXPECT_TRUE(ranges::none_of(layer_type_map().entries,
+    EXPECT_TRUE(ranges::none_of(layer_type_map().get_entries(),
                                [](const auto& entry) { return entry.second == "Concatenate"; }));
 
     const unique_ptr<Layer> concatenation = create_layer("Concatenate");
@@ -330,7 +330,7 @@ TEST(RegistryTest, AliasesConstructConfiguredComponents)
 
 TEST(RegistryTest, EveryLayerStateRoundTripsThroughJSONAndTheFactory)
 {
-    for (const auto& [type, name] : layer_type_map().entries)
+    for (const auto& [type, name] : layer_type_map().get_entries())
     {
         SCOPED_TRACE(name);
 

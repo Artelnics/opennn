@@ -22,13 +22,12 @@ enum class SampleRole{Training, Validation, Testing, None};
 
 inline const EnumMap<SampleRole>& sample_role_map()
 {
-    static const vector<pair<SampleRole, string>> entries = {
+    static const EnumMap<SampleRole> map{
         {SampleRole::Training,   "Training"},
         {SampleRole::Validation, "Validation"},
         {SampleRole::Testing,    "Testing"},
         {SampleRole::None,       "None"}
     };
-    static const EnumMap<SampleRole> map{entries};
     return map;
 }
 

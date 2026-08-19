@@ -11,6 +11,8 @@
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/training_strategy/loss.h"
+#include "opennn/core/configuration.h"
+#include "opennn/core/device_backend.h"
 #include "opennn/core/tensor_types.h"
 
 using namespace opennn;
@@ -164,6 +166,70 @@ TEST(Detection, ForwardPropagateSigmoidClassActivation)
 
     const float class_sum = out[5] + out[6] + out[7];
     EXPECT_GT(class_sum, 1.0f + tol);
+}
+
+TEST(Detection, GpuAnchorsRefreshAfterSameSizeReconfiguration)
+{
+    if (!device::has_cuda_device())
+        GTEST_SKIP() << "No CUDA device.";
+
+    constexpr Index batch_size = 1;
+    constexpr Index grid = 1;
+    constexpr Index channels = 6;
+    const Shape input_shape{grid, grid, channels};
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    auto detection = make_unique<Detection>(
+        input_shape,
+        vector<array<float, 2>>{{0.25f, 0.5f}},
+        "detection");
+    Detection* const detection_ptr = detection.get();
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(std::move(detection));
+    neural_network.compile(Device::CUDA);
+
+    vector<float> input(size_t(channels), 0.0f);
+    Buffer device_input(Device::CUDA);
+    const Index input_bytes = channels * Index(sizeof(float));
+    device_input.resize_bytes(input_bytes, Device::CUDA);
+    device::copy_async(device_input.data(), input.data(), input_bytes,
+                       device::CopyKind::HostToDevice);
+
+    ForwardPropagation forward_propagation(batch_size, &neural_network);
+    const vector<TensorView> inputs{
+        TensorView(device_input.data(),
+                   {batch_size, grid, grid, channels},
+                   Type::FP32,
+                   Device::CUDA)};
+
+    const auto forward_and_read = [&]
+    {
+        neural_network.forward_propagate(inputs, forward_propagation, false);
+
+        vector<float> output(static_cast<size_t>(channels), 0.0f);
+        device::copy_async(output.data(),
+                           forward_propagation.get_outputs().get_data(),
+                           input_bytes,
+                           device::CopyKind::DeviceToHost);
+        device::synchronize(device::get_compute_stream());
+        return output;
+    };
+
+    const vector<float> first = forward_and_read();
+
+    detection_ptr->set(input_shape,
+                       vector<array<float, 2>>{{0.75f, 1.25f}},
+                       "detection");
+    const vector<float> second = forward_and_read();
+
+    EXPECT_NEAR(first[2], 0.25f, tol);
+    EXPECT_NEAR(first[3], 0.5f, tol);
+    EXPECT_NEAR(second[2], 0.75f, tol);
+    EXPECT_NEAR(second[3], 1.25f, tol);
+
+    Configuration::instance().set();
 }
 
 TEST(Detection, SigmoidClassBackwardGradientMatchesNumerical)

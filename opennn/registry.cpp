@@ -197,7 +197,7 @@ unique_ptr<Base> create(const unordered_map<string_view, unique_ptr<Base>(*)()>&
 
 const EnumMap<LayerType>& layer_type_map()
 {
-    static const vector<EnumMap<LayerType>::Entry> entries = []
+    static const EnumMap<LayerType> map{[]
     {
         vector<EnumMap<LayerType>::Entry> result;
         result.reserve(layer_registrations.size());
@@ -206,9 +206,7 @@ const EnumMap<LayerType>& layer_type_map()
             result.emplace_back(registration.type, string(registration.name));
 
         return result;
-    }();
-
-    static const EnumMap<LayerType> map{entries};
+    }()};
     return map;
 }
 

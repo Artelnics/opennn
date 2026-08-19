@@ -14,8 +14,61 @@
 
 #include <atomic>
 #include <cstdlib>
+#include <mutex>
 #include <utility>
 #include "opennn/core/cuda/kernel_cast.cuh"
+
+namespace opennn
+{
+
+class Backend
+{
+public:
+
+    static Backend& instance();
+    ThreadPoolDevice* get_thread_pool_device();
+    void set_threads_number(int);
+
+    // Handles of the active lane (see device::active_lane).
+    static cublasHandle_t get_cublas_handle()      { return instance().cublas(device::active_lane()); }
+    static cublasLtHandle_t get_cublas_lt_handle() { return instance().cublas_lt_handle; }
+    static cudnnHandle_t get_cudnn_handle()        { return instance().cudnn(device::active_lane()); }
+    static cudnnOpTensorDescriptor_t get_op_tensor_add_descriptor()
+    {
+        Backend& backend = instance();
+        backend.cudnn(0);
+        return backend.op_tensor_add_descriptor;
+    }
+
+private:
+
+    Backend();
+    ~Backend();
+
+    cublasHandle_t cublas(int lane);
+    cudnnHandle_t cudnn(int lane);
+    cudaStream_t stream(int lane);
+
+    unique_ptr<ThreadPool> thread_pool;
+    unique_ptr<ThreadPoolDevice> thread_pool_device;
+
+    cublasLtHandle_t cublas_lt_handle = nullptr;
+    cudnnOpTensorDescriptor_t op_tensor_add_descriptor = nullptr;
+
+    // Per lane; lane 0 is created with the backend, the others on first use.
+    std::mutex lane_mutex;
+    std::array<cudaStream_t, device::MAX_LANES>   lane_streams{};
+    std::array<cublasHandle_t, device::MAX_LANES> cublas_handles{};
+    std::array<cudnnHandle_t, device::MAX_LANES>  cudnn_handles{};
+
+    cudaStream_t transfer_stream = nullptr;
+
+    friend cudaStream_t device::get_compute_stream();
+    friend cudaStream_t device::get_transfer_stream();
+    friend cudaStream_t device::lane_stream(int);
+};
+
+}
 
 namespace opennn::device
 {
@@ -25,6 +78,12 @@ namespace
 
 atomic_bool cuda_allocation_growth_forbidden_runtime{false};
 atomic_bool cuda_matmul_plan_creation_forbidden_runtime{false};
+
+cudaEvent_t create_event_handle(unsigned);
+cudaEvent_t create_event_handle();
+void destroy_event_handle(cudaEvent_t) noexcept;
+cudaStream_t create_stream_handle(unsigned);
+void destroy_stream_handle(cudaStream_t) noexcept;
 
 #ifdef OPENNN_HAS_CUDA
 bool cuda_matmul_plan_creation_forbidden() noexcept
@@ -460,7 +519,7 @@ private:
             event_pool.pop_back();
         }
         else
-            event = create_event(cudaEventDisableTiming);
+            event = create_event_handle(cudaEventDisableTiming);
 
         if (!event) return;
 
@@ -672,7 +731,40 @@ void reset_last_error() noexcept
 #endif
 }
 
-cudaStream_t create_stream(unsigned flags)
+#ifdef OPENNN_HAS_CUDA
+CublasPointerModeGuard::CublasPointerModeGuard(
+    const cublasHandle_t new_handle,
+    const cublasPointerMode_t mode)
+    : handle(new_handle)
+{
+    CHECK_CUBLAS(cublasGetPointerMode(handle, &previous_mode));
+    CHECK_CUBLAS(cublasSetPointerMode(handle, mode));
+}
+
+CublasPointerModeGuard::~CublasPointerModeGuard() noexcept
+{
+    if (handle) cublasSetPointerMode(handle, previous_mode);
+}
+
+CublasMathModeGuard::CublasMathModeGuard(
+    const cublasHandle_t new_handle,
+    const cublasMath_t mode)
+    : handle(new_handle)
+{
+    CHECK_CUBLAS(cublasGetMathMode(handle, &previous_mode));
+    CHECK_CUBLAS(cublasSetMathMode(handle, mode));
+}
+
+CublasMathModeGuard::~CublasMathModeGuard() noexcept
+{
+    if (handle) cublasSetMathMode(handle, previous_mode);
+}
+#endif
+
+namespace
+{
+
+cudaStream_t create_stream_handle(unsigned flags)
 {
 #ifdef OPENNN_HAS_CUDA
     cudaStream_t stream = nullptr;
@@ -684,7 +776,7 @@ cudaStream_t create_stream(unsigned flags)
 #endif
 }
 
-void destroy_stream(cudaStream_t stream)
+void destroy_stream_handle(cudaStream_t stream) noexcept
 {
     if (!stream) return;
 
@@ -710,7 +802,7 @@ void* allocate_pinned_host(Index byte_count)
 #endif
 }
 
-void deallocate_pinned_host(void* pointer)
+void deallocate_pinned_host(void* pointer) noexcept
 {
     if (!pointer) return;
 
@@ -721,7 +813,7 @@ void deallocate_pinned_host(void* pointer)
 #endif
 }
 
-cudaEvent_t create_event(unsigned flags)
+cudaEvent_t create_event_handle(unsigned flags)
 {
 #ifdef OPENNN_HAS_CUDA
     cudaEvent_t event = nullptr;
@@ -733,22 +825,116 @@ cudaEvent_t create_event(unsigned flags)
 #endif
 }
 
-cudaEvent_t create_event()
+cudaEvent_t create_event_handle()
 {
 #ifdef OPENNN_HAS_CUDA
-    return create_event(cudaEventDisableTiming);
+    return create_event_handle(cudaEventDisableTiming);
 #else
     return nullptr;
 #endif
 }
 
-void destroy_event(cudaEvent_t event)
+void destroy_event_handle(cudaEvent_t event) noexcept
 {
     if (!event) return;
 
 #ifdef OPENNN_HAS_CUDA
     cudaEventDestroy(event);
 #endif
+}
+
+}
+
+PinnedBuffer::PinnedBuffer(const Index byte_count)
+{
+    resize_bytes(byte_count);
+}
+
+PinnedBuffer::PinnedBuffer(PinnedBuffer&& other) noexcept
+    : pointer(std::exchange(other.pointer, nullptr)),
+      allocated_bytes(std::exchange(other.allocated_bytes, 0))
+{
+}
+
+PinnedBuffer& PinnedBuffer::operator=(PinnedBuffer&& other) noexcept
+{
+    if (this == &other) return *this;
+
+    reset();
+    pointer = std::exchange(other.pointer, nullptr);
+    allocated_bytes = std::exchange(other.allocated_bytes, 0);
+    return *this;
+}
+
+PinnedBuffer::~PinnedBuffer() noexcept
+{
+    reset();
+}
+
+void PinnedBuffer::resize_bytes(const Index byte_count)
+{
+    throw_if(byte_count < 0, "pinned buffer size cannot be negative.");
+    if (byte_count == allocated_bytes) return;
+
+    PinnedBuffer replacement;
+    replacement.pointer = allocate_pinned_host(byte_count);
+    replacement.allocated_bytes = byte_count;
+    swap(replacement);
+}
+
+void PinnedBuffer::grow_to(const Index minimum_bytes)
+{
+    throw_if(minimum_bytes < 0, "pinned buffer size cannot be negative.");
+    if (minimum_bytes > allocated_bytes) resize_bytes(minimum_bytes);
+}
+
+void PinnedBuffer::reset() noexcept
+{
+    deallocate_pinned_host(pointer);
+    pointer = nullptr;
+    allocated_bytes = 0;
+}
+
+void PinnedBuffer::swap(PinnedBuffer& other) noexcept
+{
+    std::swap(pointer, other.pointer);
+    std::swap(allocated_bytes, other.allocated_bytes);
+}
+
+CudaEvent::CudaEvent(const unsigned flags)
+    : handle(create_event_handle(flags))
+{
+}
+
+CudaEvent::CudaEvent(CudaEvent&& other) noexcept
+    : handle(std::exchange(other.handle, nullptr))
+{
+}
+
+CudaEvent& CudaEvent::operator=(CudaEvent&& other) noexcept
+{
+    if (this == &other) return *this;
+
+    reset();
+    handle = std::exchange(other.handle, nullptr);
+    return *this;
+}
+
+CudaEvent::~CudaEvent() noexcept
+{
+    reset();
+}
+
+void CudaEvent::create()
+{
+    reset();
+    handle = create_event_handle();
+}
+
+void CudaEvent::reset() noexcept
+{
+    destroy_event_handle(handle);
+    handle = nullptr;
 }
 
 void record_event(cudaEvent_t event, cudaStream_t stream)
@@ -904,6 +1090,26 @@ cudaStream_t get_transfer_stream()
     return Backend::instance().transfer_stream;
 }
 
+cublasHandle_t get_cublas_handle()
+{
+    return Backend::get_cublas_handle();
+}
+
+cublasLtHandle_t get_cublas_lt_handle()
+{
+    return Backend::get_cublas_lt_handle();
+}
+
+cudnnHandle_t get_cudnn_handle()
+{
+    return Backend::get_cudnn_handle();
+}
+
+cudnnOpTensorDescriptor_t get_op_tensor_add_descriptor()
+{
+    return Backend::get_op_tensor_add_descriptor();
+}
+
 }
 
 namespace opennn
@@ -925,8 +1131,8 @@ Backend::Backend()
         return;
     }
 
-    lane_streams[0] = device::create_stream(cudaStreamDefault);
-    transfer_stream = device::create_stream(cudaStreamNonBlocking);
+    lane_streams[0] = device::create_stream_handle(cudaStreamDefault);
+    transfer_stream = device::create_stream_handle(cudaStreamNonBlocking);
 
     CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
     CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&op_tensor_add_descriptor));
@@ -944,7 +1150,7 @@ cudaStream_t Backend::stream(int lane)
     if (lane == 0) return lane_streams[0];
     std::lock_guard<std::mutex> lock(lane_mutex);
     if (!lane_streams[lane])
-        lane_streams[lane] = device::create_stream(cudaStreamNonBlocking);
+        lane_streams[lane] = device::create_stream_handle(cudaStreamNonBlocking);
     return lane_streams[lane];
 #else
     (void)lane;
@@ -998,9 +1204,9 @@ Backend::~Backend()
     {
         if (cublas_handles[lane]) { cublasDestroy(cublas_handles[lane]); cublas_handles[lane] = nullptr; }
         if (cudnn_handles[lane])  { cudnnDestroy(cudnn_handles[lane]);   cudnn_handles[lane] = nullptr; }
-        device::destroy_stream(lane_streams[lane]); lane_streams[lane] = nullptr;
+        device::destroy_stream_handle(lane_streams[lane]); lane_streams[lane] = nullptr;
     }
-    device::destroy_stream(transfer_stream); transfer_stream = nullptr;
+    device::destroy_stream_handle(transfer_stream); transfer_stream = nullptr;
 #endif
 }
 
@@ -1033,6 +1239,16 @@ Backend& Backend::instance()
 ThreadPoolDevice* Backend::get_thread_pool_device()
 {
     return thread_pool_device.get();
+}
+
+ThreadPoolDevice& get_device()
+{
+    return *Backend::instance().get_thread_pool_device();
+}
+
+void set_threads_number(const int threads_number)
+{
+    Backend::instance().set_threads_number(threads_number);
 }
 
 }
@@ -1138,6 +1354,7 @@ namespace
     }
 
     constexpr size_t cublas_lt_workspace_search_bytes = 32ull * 1024 * 1024;
+    constexpr size_t cublas_lt_plan_cache_capacity = 1024;
 
     cublasComputeType_t matmul_compute_type(cudaDataType_t a_type, cudaDataType_t b_type = CUDA_R_32F)
     {
@@ -1187,6 +1404,8 @@ namespace
 
         throw_if(device::cuda_matmul_plan_creation_forbidden(),
                  "matmul plan forbidden (warmup incomplete).");
+
+        detail::make_bounded_cache_room(plans, cublas_lt_plan_cache_capacity);
 
         LtMatmulPlan plan;
 
@@ -1285,7 +1504,7 @@ namespace
             largest_workspace = max(largest_workspace, candidate.workspaceSize);
         void* const workspace = ensure_shared_scratch(largest_workspace);
 
-        const CudaEvent start(cudaEventDefault), stop(cudaEventDefault);
+        const device::CudaEvent start(cudaEventDefault), stop(cudaEventDefault);
         constexpr int timed_runs = 3;
 
         float best_ms = numeric_limits<float>::infinity();
@@ -1301,14 +1520,14 @@ namespace
                                       &candidate.algo, workspace, candidate.workspaceSize, stream);
             };
             if (run() != CUBLAS_STATUS_SUCCESS) { device::reset_last_error(); continue; }
-            device::record_event(start, stream);
+            device::record_event(start.get(), stream);
             bool ok = true;
             for (int i = 0; i < timed_runs && ok; ++i) ok = run() == CUBLAS_STATUS_SUCCESS;
-            device::record_event(stop, stream);
-            device::synchronize_event(stop);
+            device::record_event(stop.get(), stream);
+            device::synchronize_event(stop.get());
             if (!ok) { device::reset_last_error(); continue; }
             float ms = 0.0f;
-            CHECK_CUDA(cudaEventElapsedTime(&ms, start, stop));
+            CHECK_CUDA(cudaEventElapsedTime(&ms, start.get(), stop.get()));
             if (ms < best_ms) { best_ms = ms; best = index; }
         }
 

@@ -120,17 +120,26 @@ def main():
         n = x_np.shape[0]
         starts = list(range(0, n - batch + 1, batch))
 
+        # Shuffle once per epoch into a permuted copy, then slice, rather than
+        # gathering per batch. Both shuffle identically; the difference is that
+        # a per-batch gather is two eager ops dispatched from Python on top of
+        # the step call, and TensorFlow enqueues asynchronously, so that host
+        # cost is only hidden while it stays under the GPU's. It did not:
+        # measured at batch 7000, enqueueing an epoch cost 0.9167 ms/batch
+        # against 0.9295 ms to enqueue and run it -- the GPU was idle waiting on
+        # Python, and the benchmark was measuring dispatch. Gathering once moves
+        # 1.1026 -> 0.6878 ms/batch here with the same loss curve. The permuted
+        # copy costs one dataset's worth of device memory for the epoch.
+        @tf.function
+        def shuffled_epoch_data():
+            perm = tf.random.shuffle(tf.range(n))
+            return tf.gather(x, perm), tf.gather(y, perm)
+
         def run_epoch():
             last = None
-            if shuffle:
-
-                perm = tf.random.shuffle(tf.range(n))
-                for s in starts:
-                    idx = perm[s:s + batch]
-                    last = train_step(tf.gather(x, idx), tf.gather(y, idx))
-            else:
-                for s in starts:
-                    last = train_step(x[s:s + batch], y[s:s + batch])
+            xe, ye = shuffled_epoch_data() if shuffle else (x, y)
+            for s in starts:
+                last = train_step(xe[s:s + batch], ye[s:s + batch])
             return last
 
         print("warmup (XLA compiling)...")

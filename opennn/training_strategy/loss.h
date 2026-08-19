@@ -38,12 +38,11 @@ public:
 
     static const EnumMap<Regularization>& regularization_map()
     {
-        static const vector<pair<Regularization, string>> entries = {
+        static const EnumMap<Regularization> map{
             {Regularization::NoRegularization, "None"},
             {Regularization::L1,               "L1"},
             {Regularization::L2,               "L2"}
         };
-        static const EnumMap<Regularization> map{entries};
         return map;
     }
 
@@ -171,10 +170,6 @@ protected:
     float yolo_focal_gamma     = 0.0f;
     float yolo_obj_focal_gamma = 0.0f;
 
-    mutable Buffer errors_device{Device::CUDA};
-    mutable Buffer metric_results_device{Device::CUDA};
-    mutable Buffer yolo_target_device{Device::CUDA};
-
     Regularization regularization_method = Regularization::NoRegularization;
     float regularization_weight = 0.001f;
 
@@ -207,7 +202,10 @@ private:
 
     void add_regularization(BackPropagation&) const;
 
-    float* ensure_error_workspace(const TensorView&, Index batch_samples) const;
+    Index error_workspace_floats(const TensorView&) const;
+    float* ensure_error_workspace(Buffer&, const TensorView&,
+                                  Index batch_samples,
+                                  Index reduction_floats = 0) const;
 
     float get_weighted_coefficient(const Batch&) const;
 
