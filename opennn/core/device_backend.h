@@ -49,13 +49,14 @@ enum class GraphWorkspaceKind
     PoolingMask,
     NormPartials,
     GradientPartials,
+    FlashAttention,
     Count
 };
 
 inline constexpr std::array<const char*, static_cast<size_t>(GraphWorkspaceKind::Count)>
 graph_workspace_labels = {"shared_scratch", "bf16_input", "bf16_gradient",
                           "bf16_to_fp32", "int8_dequant", "pooling_mask", "norm_partials",
-                          "gradient_partials"};
+                          "gradient_partials", "flash_attention"};
 
 struct GraphWorkspaceView
 {
@@ -110,6 +111,15 @@ enum class BatchNormForwardRung { Auto, CudnnGraph, OwnKernel };
 // where the mask slot exists, and cuDNN's pooling elsewhere (inference,
 // average pooling, windows above 255 elements).
 enum class MaxPoolingRung { Auto, Cudnn, OwnKernel };
+// Scaled dot-product attention: Auto takes FlashAttention-2 wherever the build
+// has a kernel for the shape and the mask lets it (core/cuda/flash_attention.cuh
+// says which those are) and cuDNN's fused graph everywhere else, which is
+// everything on a build without FA2 kernels. CudnnGraph pins cuDNN, which is
+// the other half of an A/B; FlashAttention asks for FA2 but cannot promise it,
+// since a layer it does not cover - a causal mask over a padded batch, say -
+// still has to compute, so a measurement under it should read the call count
+// (flash_attention::call_count) rather than assume.
+enum class AttentionRung { Auto, CudnnGraph, FlashAttention };
 
 template<typename Rung> Rung rung() noexcept;
 template<typename Rung> void set_rung(Rung) noexcept;
@@ -330,6 +340,10 @@ inline bfloat16* ensure_bf16_gradient_workspace(Index n) { return ensure_workspa
 inline bfloat16* ensure_int8_dequant_workspace(Index n)  { return ensure_workspace<bfloat16>(device::GraphWorkspaceKind::Int8Dequant, n); }
 inline float*    ensure_bf16_to_fp32_workspace(Index n)  { return ensure_workspace<float>(device::GraphWorkspaceKind::Bf16ToFp32, n); }
 inline void*     ensure_shared_scratch(size_t bytes)     { return ensure_workspace_bytes(device::GraphWorkspaceKind::SharedScratch, Index(bytes)); }
+// The query-delta accumulator and the softmax delta sums FlashAttention-2's
+// backward writes; one buffer for both, and one buffer for every attention
+// layer, since only one of them is inside its backward at a time.
+inline float*    ensure_flash_attention_workspace(Index n) { return ensure_workspace<float>(device::GraphWorkspaceKind::FlashAttention, n); }
 
 void release_thread_workspaces();
 

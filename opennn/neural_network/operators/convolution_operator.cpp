@@ -24,18 +24,21 @@
 namespace opennn
 {
 
-ConvolutionOperator::ConvolutionOperator() = default;
-ConvolutionOperator::~ConvolutionOperator() = default;
-
 #ifndef OPENNN_HAS_CUDA
 
-struct ConvolutionOperator::ConvGraphCache {};
+struct ConvolutionOperator::ConvGraphCache
+{
+    mutex access_mutex;
+    bool disabled = false;
+};
 #endif
 
 #ifdef OPENNN_HAS_CUDA
 
 struct ConvolutionOperator::ConvGraphCache
 {
+    mutex access_mutex;
+
     struct Entry
     {
         cudnn_frontend::GraphSlot fwd, wgrad, bgrad, dgrad;
@@ -252,6 +255,13 @@ bool build_preferred(const ConvolutionOperator& op, const char* kind, int64_t ba
 }
 
 #endif
+
+ConvolutionOperator::ConvolutionOperator()
+    : conv_graph_cache(make_unique<ConvGraphCache>())
+{
+}
+
+ConvolutionOperator::~ConvolutionOperator() = default;
 
 void ConvolutionOperator::set(Index new_input_h, Index new_input_w,
                       Index new_kernels_n, Index new_kernel_h, Index new_kernel_w, Index new_kernel_c,
@@ -589,7 +599,7 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
     }
 
     const bool ran = cudnn_frontend::frontend_enabled()
-        && cudnn_frontend::run_frontend(conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
+        && cudnn_frontend::run_frontend(*conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
     {
         auto& entry = detail::bounded_cache_entry(
             cache.entries, input.get_shape()[0],
@@ -636,7 +646,7 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
              "ConvolutionOperator: GPU convolution backward requires FP32 or BF16.");
 
     const bool ran = cudnn_frontend::frontend_enabled()
-        && cudnn_frontend::run_frontend(conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
+        && cudnn_frontend::run_frontend(*conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
     {
         auto& entry = detail::bounded_cache_entry(
             cache.entries, input.get_shape()[0],

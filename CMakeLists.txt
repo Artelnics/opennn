@@ -115,6 +115,20 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
     FetchContent_MakeAvailable(cudnn_frontend)
     set(CUDNN_FRONTEND_INCLUDE_DIR ${cudnn_frontend_SOURCE_DIR}/include)
     message(STATUS "Using cudnn-frontend (FetchContent): ${CUDNN_FRONTEND_INCLUDE_DIR}")
+
+    # Off by default: the kernels take minutes each to compile and only exist
+    # for Ampere through Hopper. See cmake/flash_attention.cmake.
+    option(OpenNN_WITH_FLASH_ATTENTION
+           "Build FlashAttention-2 kernels and let attention take them" OFF)
+    set(OpenNN_FLASH_ATTENTION_HEAD_DIMS "32;64;128" CACHE STRING
+        "Head dimensions to build FlashAttention-2 kernels for")
+    set(OpenNN_FLASH_ATTENTION_SOURCE_DIR "" CACHE PATH
+        "An existing flash-attention checkout (empty: one is fetched)")
+
+    if(OpenNN_WITH_FLASH_ATTENTION)
+        include(${CMAKE_CURRENT_LIST_DIR}/cmake/flash_attention.cmake)
+        opennn_add_flash_attention_kernels(OPENNN_FLASH_ATTENTION_TARGET)
+    endif()
 else()
     set(OPENNN_HAS_CUDA OFF CACHE BOOL "")
 endif()

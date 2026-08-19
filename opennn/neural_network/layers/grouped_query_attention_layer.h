@@ -38,6 +38,10 @@ void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorVi
 struct GroupedQueryAttentionOperator : Operator
 {
     static constexpr size_t forward_scratch_slots_count = 9;
+    struct GraphCache;
+
+    GroupedQueryAttentionOperator();
+    ~GroupedQueryAttentionOperator() override;
 
     void set(Index new_sequence_length, Index new_hidden,
              Index new_q_heads, Index new_kv_heads, Index new_head_dim,
@@ -74,6 +78,11 @@ private:
     Index kv_dim() const { return kv_heads * head_dim; }
 
     void prepare_rope_tables(Device);
+    void apply_attention(const TensorView& query, const TensorView& key,
+                         const TensorView& value, TensorView& output,
+                         bool causal, float scale, Index query_position_offset,
+                         float* decode_partials = nullptr,
+                         const int* position_device = nullptr);
     void forward_gpu(TensorView& input, TensorView& output, Index batch, Index past,
                      Index query_capacity, const int* position_device,
                      vector<TensorView>& forward_slots, Buffer& kv_cache,
@@ -93,6 +102,7 @@ private:
     bool qkv_fused = false;
 
     Buffer rope_tables;
+    unique_ptr<GraphCache> graph_cache;
 };
 
 class GroupedQueryAttention final : public Layer

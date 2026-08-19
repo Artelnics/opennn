@@ -355,18 +355,21 @@ void BatchNormalizationOperator::apply_delta_cpu(const TensorView& input,
     }
 }
 
-BatchNormalizationOperator::BatchNormalizationOperator() = default;
-BatchNormalizationOperator::~BatchNormalizationOperator() = default;
-
 #ifndef OPENNN_HAS_CUDA
 
-struct BatchNormalizationOperator::BatchNormalizationGraphCache {};
+struct BatchNormalizationOperator::BatchNormalizationGraphCache
+{
+    mutex access_mutex;
+    bool disabled = false;
+};
 #endif
 
 #ifdef OPENNN_HAS_CUDA
 
 struct BatchNormalizationOperator::BatchNormalizationGraphCache
 {
+    mutex access_mutex;
+
     struct Entry
     {
         cudnn_frontend::GraphSlot fwd, bwd;
@@ -558,7 +561,7 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
     }
 
     const bool ran = cudnn_frontend::bn_frontend_enabled()
-        && cudnn_frontend::run_frontend(bn_graph_cache, "BatchNormalizationOperator", [&](BatchNormalizationGraphCache& cache)
+        && cudnn_frontend::run_frontend(*bn_graph_cache, "BatchNormalizationOperator", [&](BatchNormalizationGraphCache& cache)
     {
         auto& entry = detail::bounded_cache_entry(
             cache.entries, input.get_shape()[0],
@@ -639,7 +642,7 @@ void BatchNormalizationOperator::apply_delta_gpu(
 
     if (cudnn_frontend::bn_frontend_enabled()
         && cudnn_frontend::run_frontend(
-            bn_graph_cache, "BatchNormalizationOperator",
+            *bn_graph_cache, "BatchNormalizationOperator",
             [&](BatchNormalizationGraphCache& cache)
     {
         const int64_t batch = input.get_shape()[0];
@@ -848,6 +851,13 @@ void BatchNormalizationOperator::apply_delta_gpu    (const TensorView&, const Te
                                                      TensorView&, TensorView&) const                            OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
 
 #endif
+
+BatchNormalizationOperator::BatchNormalizationOperator()
+    : bn_graph_cache(make_unique<BatchNormalizationGraphCache>())
+{
+}
+
+BatchNormalizationOperator::~BatchNormalizationOperator() = default;
 
 }
 

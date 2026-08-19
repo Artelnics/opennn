@@ -182,7 +182,7 @@ private:
                               TensorView&,
                               SoftmaxBwd&&) const;
 
-    mutable unique_ptr<SDPACache> sdpa_cache;
+    unique_ptr<SDPACache> sdpa_cache;
 
 #ifdef OPENNN_HAS_CUDA
     static constexpr uint64_t sdpa_dropout_seed = 0x9E3779B97F4A7C15ULL;

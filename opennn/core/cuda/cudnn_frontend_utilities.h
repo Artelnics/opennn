@@ -110,19 +110,19 @@ inline void* shared_workspace(int64_t bytes)
 }
 
 template<typename GraphCache, typename Body>
-bool run_frontend(unique_ptr<GraphCache>& cache, const char* label, Body&& body)
+bool run_frontend(GraphCache& cache, const char* label, Body&& body)
 {
-    if (!cache) cache = make_unique<GraphCache>();
-    if (cache->disabled) return false;
+    const lock_guard lock(cache.access_mutex);
+    if (cache.disabled) return false;
 
     try
     {
-        body(*cache);
+        body(cache);
         return true;
     }
     catch (const exception& e)
     {
-        cache->disabled = true;
+        cache.disabled = true;
         cerr << label << ": cudnn-frontend path unavailable (" << e.what() << ").\n";
         return false;
     }

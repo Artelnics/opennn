@@ -1,6 +1,8 @@
 #include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
+#include <barrier>
+#include <future>
 #include <utility>
 
 #ifdef OPENNN_HAS_CUDA
@@ -26,6 +28,7 @@
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/core/device_backend.h"
+#include "opennn/core/cuda/flash_attention.cuh"
 #include "opennn/core/cuda/kernel_prelude.cuh"
 #include "opennn/core/random_utilities.h"
 #include "opennn/registry.h"
@@ -406,6 +409,56 @@ TEST_F(GpuComparison, ImageClassificationForward)
     ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
     ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
     EXPECT_LT(relative_difference(cpu_outputs, gpu_outputs), 1.0e-3f);
+}
+
+TEST_F(GpuComparison, ConvolutionGraphCacheSupportsConcurrentFirstUse)
+{
+    constexpr Index samples_number = 3;
+    const Shape input_shape{12, 12, 3};
+
+    Tensor4 first_inputs(samples_number, 12, 12, 3);
+    Tensor4 second_inputs(samples_number, 12, 12, 3);
+    first_inputs.setRandom();
+    second_inputs.setRandom();
+
+    const auto build_network = [&](NeuralNetwork& network)
+    {
+        network.add_layer(make_unique<Convolutional>(
+                              input_shape, Shape{3, 3, 3, 8}, "ReLU",
+                              Shape{1, 1}, "Same", false, "conv"),
+                          {-1});
+        network.compile();
+    };
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    NeuralNetwork cpu_network;
+    build_network(cpu_network);
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+    const MatrixR first_reference = cpu_network.calculate_outputs(first_inputs);
+    const MatrixR second_reference = cpu_network.calculate_outputs(second_inputs);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    NeuralNetwork gpu_network;
+    build_network(gpu_network);
+    gpu_network.set_parameters(parameters);
+    gpu_network.copy_parameters_device();
+
+    barrier start(2);
+    const auto calculate = [&](const Tensor4& inputs)
+    {
+        start.arrive_and_wait();
+        return gpu_network.calculate_outputs(inputs);
+    };
+
+    future<MatrixR> first = async(launch::async, calculate, cref(first_inputs));
+    future<MatrixR> second = async(launch::async, calculate, cref(second_inputs));
+
+    const MatrixR first_outputs = first.get();
+    const MatrixR second_outputs = second.get();
+
+    EXPECT_LT(relative_difference(first_reference, first_outputs), 1.0e-3f);
+    EXPECT_LT(relative_difference(second_reference, second_outputs), 1.0e-3f);
 }
 
 TEST_F(GpuComparison, ImageClassificationForwardUnderWorkspaceCap)
@@ -1367,6 +1420,102 @@ TEST_F(GpuComparison, TransformerTrainingGradient)
     const VectorR gpu_gradient = transformer_training_gradient(Device::CUDA, corpus, &parameters, nullptr, nullptr);
     ASSERT_EQ(gpu_gradient.size(), cpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
+
+    filesystem::remove(corpus);
+}
+
+// FlashAttention-2 against cuDNN's fused attention, over a transformer whose
+// samples are of different lengths: every encoder self-attention and every
+// cross-attention in it runs the FA2 rung over a padded batch, and every
+// decoder self-attention stays on cuDNN, because a causal mask and a padded
+// batch are the one combination FA2 anchors differently (see
+// core/cuda/flash_attention.cuh). Two bf16 attention kernels do not agree to
+// the last bit, so what this checks is a gradient of the same shape and size,
+// which a mask read the wrong way, a stride crossed or a log-sum-exp the
+// backward could not use would all miss by far more.
+static void write_ragged_transformer_corpus(const string& file_path)
+{
+    ofstream out(file_path);
+    for (Index sample = 0; sample < 4; ++sample)
+    {
+        const Index input_tokens = 4 - sample % 3;      // 4, 3, 2, 4
+        const Index target_tokens = 3 - sample % 2;     // 3, 2, 3, 2
+
+        for (Index token = 0; token < input_tokens; ++token)
+            out << "w" << (sample * 3 + token * 5) % 9 << (token + 1 < input_tokens ? " " : "");
+        out << "\t";
+        for (Index token = 0; token < target_tokens; ++token)
+            out << "t" << (sample * 2 + token * 3) % 7 << (token + 1 < target_tokens ? " " : "");
+        out << "\n";
+    }
+}
+
+static VectorR fused_transformer_gradient(const string& corpus, device::AttentionRung rung,
+                                          const VectorR* parameters, VectorR* parameters_out)
+{
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    set_seed(7);
+    LanguageDataset dataset(corpus);
+    dataset.set_display(false);
+    dataset.split_samples(1.0f, 0.0f, 0.0f);
+
+    // Head dimension 32 is one FA2 ships a kernel for; 64 over two heads is how
+    // this transformer gets there.
+    Transformer transformer(dataset.get_shape("Input")[0], dataset.get_shape("Decoder")[0],
+                            dataset.get_input_vocabulary_size(), dataset.get_target_vocabulary_size(),
+                            64, 2, 16, 1);
+    transformer.set_dropout_rate(0.0f);
+    transformer.set_attention_sdpa_min_sequence_length(1);   // fused attention on both rungs
+
+    if (parameters) transformer.set_parameters(*parameters);
+    else            transformer.set_parameters_random();
+    if (parameters_out) *parameters_out = read_host_parameters(transformer);
+
+    Loss loss(&transformer, &dataset);
+    loss.set_error(Loss::Error::CrossEntropy3d);
+
+    // Restored however this leaves, so a failure here does not pin the rung for
+    // every test that runs after it.
+    struct RestoreRung
+    {
+        device::AttentionRung previous = device::rung<device::AttentionRung>();
+        ~RestoreRung() { device::set_rung(previous); }
+    } restore;
+
+    device::set_rung(rung);
+
+    return calculate_gradient(loss);
+}
+
+TEST_F(GpuComparison, FlashAttentionRungMatchesCudnnAttention)
+{
+    // Whether this build has a kernel here at all: what applies() reads of a
+    // problem this small is the head dimension, the device and the mask.
+    const flash_attention::Problem probe{
+        .batch = 1, .heads = 1,
+        .query_sequence_length = 1, .source_sequence_length = 1,
+        .head_dimension = 32,
+        .causal = false, .scale = 1.0f
+    };
+
+    if (!flash_attention::applies(probe))
+        GTEST_SKIP() << "this build has no FlashAttention-2 kernel for this device";
+
+    const string corpus = (filesystem::temp_directory_path() / "opennn_flash_attention_rung.txt").string();
+    write_ragged_transformer_corpus(corpus);
+
+    VectorR parameters;
+    const Index before = flash_attention::call_count();
+    const VectorR flash_gradient = fused_transformer_gradient(corpus, device::AttentionRung::Auto,
+                                                              nullptr, &parameters);
+    EXPECT_GT(flash_attention::call_count(), before)
+        << "the FlashAttention rung never ran, so this test compared cuDNN with itself";
+
+    const VectorR cudnn_gradient = fused_transformer_gradient(corpus, device::AttentionRung::CudnnGraph,
+                                                              &parameters, nullptr);
+
+    ASSERT_EQ(flash_gradient.size(), cudnn_gradient.size());
+    EXPECT_LT(relative_difference(cudnn_gradient, flash_gradient), 5.0e-2f);
 
     filesystem::remove(corpus);
 }

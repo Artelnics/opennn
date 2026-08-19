@@ -50,7 +50,7 @@ struct ConvolutionOperator : Operator
 
     struct ConvGraphCache;
 
-    mutable unique_ptr<ConvGraphCache> conv_graph_cache;
+    unique_ptr<ConvGraphCache> conv_graph_cache;
 
 #ifdef OPENNN_HAS_CUDA
 

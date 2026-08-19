@@ -316,6 +316,7 @@ template<typename Rung> void set_rung(Rung value) noexcept
 OPENNN_RUNG(BatchNormBackwardRung)
 OPENNN_RUNG(BatchNormForwardRung)
 OPENNN_RUNG(MaxPoolingRung)
+OPENNN_RUNG(AttentionRung)
 #undef OPENNN_RUNG
 
 CudaAllocationGrowthGuard::CudaAllocationGrowthGuard(

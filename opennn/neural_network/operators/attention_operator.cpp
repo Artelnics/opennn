@@ -17,6 +17,7 @@
 
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/cuda/cudnn_frontend_utilities.h"
+#include "opennn/core/cuda/flash_attention.cuh"
 #include "opennn/core/cuda/kernel_attention.cuh"
 #include "opennn/core/cuda/kernel_cast.cuh"
 #endif
@@ -206,6 +207,8 @@ bool AttentionOperator::sdpa_supported(Type dtype, Device device)
 
 struct AttentionOperator::SDPACache
 {
+    mutex access_mutex;
+
     struct CacheKey
     {
         Index batch_size = 0;
@@ -285,6 +288,54 @@ void heads_output(shared_ptr<cudnn_frontend::graph::Tensor_attributes>& T,
                   int64_t B, int64_t H, int64_t S, int64_t D, bool interleaved)
 {
     cudnn_frontend::set_bhsd_output(T, B, H, S, D, interleaved);
+}
+
+// The same problem both directions run, or nothing when the rung does not take
+// it. Both directions must answer this the same way for one layer: the forward
+// leaves FA2's log-sum-exp where the backward reads it, and cuDNN's statistics
+// are not the same number. They do agree, because the answer is a function of
+// the cache key alone, which is what keys the graph the other rung would build.
+static optional<flash_attention::Problem>
+flash_attention_problem(const AttentionOperator::SDPACache::CacheKey& k,
+                        const int32_t* source_lengths)
+{
+    if (device::rung<device::AttentionRung>() == device::AttentionRung::CudnnGraph)
+        return nullopt;
+
+    // Dropout lives inside cuDNN's graph, and FA2's kernels are compiled
+    // without it.
+    if (k.dropout_active) return nullopt;
+
+    // Heads interleaved, (B, S, H, D), is what the projections' GEMMs write and
+    // what FA2 reads with no repacking at all. Heads separated keeps cuDNN: the
+    // attention output is merged either way, so on that layout the output and
+    // the queries would need strides of their own, for a case this library's
+    // fused attention does not reach.
+    if (!k.interleaved) return nullopt;
+
+    const Index row  = k.heads * k.head_dim;
+    const Index head = k.head_dim;
+
+    const flash_attention::Problem problem{
+        .batch = k.batch_size,
+        .heads = k.heads,
+        .query_sequence_length = k.q_seq,
+        .source_sequence_length = k.src_seq,
+        .head_dimension = k.head_dim,
+        .query_row_stride = row,
+        .query_head_stride = head,
+        .query_batch_stride = k.q_seq * k.heads * k.head_dim,
+        .source_row_stride = row,
+        .source_head_stride = head,
+        .source_batch_stride = k.src_seq * k.heads * k.head_dim,
+        .causal = k.causal,
+        .scale = attention_scale(k.head_dim),
+        .source_lengths = source_lengths
+    };
+
+    if (!flash_attention::applies(problem)) return nullopt;
+
+    return problem;
 }
 
 void refresh_sdpa_sequence_lengths(const AttentionOperator::SDPACache::CacheKey& k,
@@ -418,11 +469,14 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
 
 #else
 
-struct AttentionOperator::SDPACache {};
+struct AttentionOperator::SDPACache { mutex access_mutex; };
 
 #endif
 
-AttentionOperator::AttentionOperator() = default;
+AttentionOperator::AttentionOperator()
+    : sdpa_cache(make_unique<SDPACache>())
+{
+}
 AttentionOperator::~AttentionOperator() = default;
 AttentionOperator::AttentionOperator(AttentionOperator&&) noexcept = default;
 AttentionOperator& AttentionOperator::operator=(AttentionOperator&&) noexcept = default;
@@ -789,7 +843,7 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
              "but not supported (build without HAVE_CUDNN_FRONTEND, "
              "unsupported dtype, or CPU runtime).");
 
-    if (!sdpa_cache) sdpa_cache = make_unique<SDPACache>();
+    const lock_guard cache_lock(sdpa_cache->access_mutex);
 
     const bool dropout_in_graph = dropout.active() && is_training;
 
@@ -805,10 +859,6 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
         is_training,
         interleaved_heads
     };
-
-    auto& entry = sdpa_cache->get_or_create_entry(cache_key);
-    if (!entry.fwd_graph)
-        build_sdpa_forward_graph(entry, cache_key);
 
     throw_if(state.size() < sdpa_state_slots_count,
              "SDPA forward: {} state slots were passed, the layout needs {}.",
@@ -892,6 +942,28 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
         v_ptr = value_bf16;
         o_ptr = output_bf16;
     }
+    // Whatever produced them, the four pointers are bf16 by here, which is the
+    // only dtype FA2 has kernels for: a fp32 layer reaches this through the same
+    // pack the graph would have read, and casts back below either way. What it
+    // also needs is the statistics slot, to leave the log-sum-exp its backward
+    // re-reads; with no slot there is nowhere to put it, and cuDNN's graph,
+    // which can do without, runs instead.
+    if (const auto problem = statistics.empty()
+                           ? nullopt : flash_attention_problem(cache_key, source_length_data))
+    {
+        flash_attention::forward(*problem, q_ptr, k_ptr, v_ptr, o_ptr,
+                                 statistics.as<float>(), device::get_compute_stream());
+
+        if (fp32_via_bf16)
+            cast_bf16_to_fp32(output.size(), output_bf16, output.as<float>());
+
+        return;
+    }
+
+    auto& entry = sdpa_cache->get_or_create_entry(cache_key);
+    if (!entry.fwd_graph)
+        build_sdpa_forward_graph(entry, cache_key);
+
     cudnn_frontend::VariantPack tensor_map;
     tensor_map[entry.fwd_Q] = q_ptr;
     tensor_map[entry.fwd_K] = k_ptr;
@@ -1073,9 +1145,11 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
                                 const span<const TensorView> state,
                                 span<const TensorView> bf16_scratch) const
 {
-    throw_if(!sdpa_supported(query.get_type(), query.get_device()) || !sdpa_cache,
+    throw_if(!sdpa_supported(query.get_type(), query.get_device()),
              "AttentionOperator: SDPA backward called without a live SDPA "
              "forward graph (use_sdpa set inconsistently between fwd/bwd).");
+
+    const lock_guard cache_lock(sdpa_cache->access_mutex);
 
     const bool dropout_in_graph = dropout.active();
 
@@ -1091,10 +1165,6 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
         true,
         interleaved_heads
     };
-
-    auto& entry = sdpa_cache->get_or_create_entry(cache_key);
-    if (!entry.bwd_graph)
-        build_sdpa_backward_graph(entry, cache_key);
 
     throw_if(state.size() < sdpa_state_slots_count,
              "SDPA backward: {} state slots were passed, the layout needs {}.",
@@ -1162,6 +1232,33 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
         bdk = key_gradient_bf16.get_data();
         bdv = value_gradient_bf16.get_data();
     }
+    if (const auto problem = flash_attention_problem(cache_key, source_lengths.as<int32_t>()))
+    {
+        // One buffer for both accumulators: FA2 clears them itself, and no two
+        // attention layers are inside their backward at the same time.
+        const Index accumulator_elements = flash_attention::query_delta_accumulator_elements(*problem);
+        const Index sum_elements = flash_attention::softmax_delta_sum_elements(*problem);
+        float* const workspace = ensure_flash_attention_workspace(accumulator_elements + sum_elements);
+
+        flash_attention::backward(*problem, bq, bk, bv, bo, bdo, statistics.as<float>(),
+                                  bdq, bdk, bdv,
+                                  workspace, workspace + accumulator_elements,
+                                  device::get_compute_stream());
+
+        if (fp32_via_bf16)
+        {
+            cast_bf16_to_fp32(query.size(), query_gradient_bf16.as<bfloat16>(), query_delta.as<float>());
+            cast_bf16_to_fp32(key.size(),   key_gradient_bf16.as<bfloat16>(), key_delta.as<float>());
+            cast_bf16_to_fp32(value.size(), value_gradient_bf16.as<bfloat16>(), value_delta.as<float>());
+        }
+
+        return;
+    }
+
+    auto& entry = sdpa_cache->get_or_create_entry(cache_key);
+    if (!entry.bwd_graph)
+        build_sdpa_backward_graph(entry, cache_key);
+
     cudnn_frontend::VariantPack tensor_map;
     tensor_map[entry.bwd_Q]     = bq;
     tensor_map[entry.bwd_K]     = bk;

@@ -42,7 +42,7 @@ static pair<void*, void*> prepare_kv_cache(Buffer& storage,
 }
 
 // Defined below under OPENNN_HAS_CUDA.
-static void grouped_attention_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, float, Index, float*, const int*);
+static void grouped_attention_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, float, Index, float*, const int*, GroupedQueryAttentionOperator::GraphCache*);
 static void qk_norm_gpu(const TensorView&, const TensorView&, TensorView&, Index, float);
 static void rope_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index);
 static void rope_backward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index);
@@ -164,9 +164,13 @@ void grouped_attention_forward(const TensorView& query, const TensorView& key, c
                                bool causal, float scale, Index query_position_offset,
                                float* decode_partials, const int* position_device)
 {
-    if (query.is_cuda()) {
+    if (query.is_cuda())
+    {
+        // This free helper is stateless. Persistent frontend plans belong to
+        // GroupedQueryAttentionOperator, which passes its cache directly.
         return grouped_attention_gpu(query, key, value, output, n_query_heads, n_kv_heads, head_dim,
-                                     causal, scale, query_position_offset, decode_partials, position_device);
+                                     causal, scale, query_position_offset, decode_partials,
+                                     position_device, nullptr);
     }
 
     const Index batch     = query.get_shape()[0];
@@ -432,8 +436,10 @@ static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, con
 // shapes are native to it — K and V simply carry fewer heads than Q. Measured on
 // sm_120 at batch 8, 16:4 heads, head_dim 64: 0.88 ms against 9.03 ms for the
 // materialized path at sequence 2048, with no workspace against 2 GiB of scores.
-struct GroupedAttentionSdpaCache
+struct GroupedQueryAttentionOperator::GraphCache
 {
+    mutex access_mutex;
+
     struct Key
     {
         int batch = 0, query_seq = 0, key_seq = 0;
@@ -463,6 +469,18 @@ struct GroupedAttentionSdpaCache
     };
 
     unordered_map<Key, Entry, KeyHash> entries;
+
+    struct PrefillEntry
+    {
+        shared_ptr<cudnn_frontend::graph::Graph> graph;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes>
+            Q, K, V, O, SeqQ, SeqKV;
+        int64_t workspace_bytes = 0;
+        bool failed = false;
+    };
+
+    using PrefillKey = tuple<Index, Index, Index, Index, Index>;
+    map<PrefillKey, PrefillEntry> prefill_entries;
     bool disabled = false;
 
     Entry& get_or_create(const Key& key)
@@ -475,13 +493,12 @@ struct GroupedAttentionSdpaCache
     }
 };
 
-static thread_local unique_ptr<GroupedAttentionSdpaCache> grouped_attention_sdpa_cache;
-
 template<typename T>
 static bool grouped_attention_sdpa_gpu(const int batch, const int query_seq, const int key_seq,
                                        const int n_query_heads, const int n_kv_heads, const int head_dim,
                                        const float scale, const int query_position_offset, const bool causal,
-                                       const T* Q, const T* K, const T* V, T* O)
+                                       const T* Q, const T* K, const T* V, T* O,
+                                       GroupedQueryAttentionOperator::GraphCache* cache)
 {
     // cuDNN's fused attention is BF16-only, so FP32 keeps the path below.
     if constexpr (!is_same_v<T, bfloat16>)
@@ -490,20 +507,21 @@ static bool grouped_attention_sdpa_gpu(const int batch, const int query_seq, con
     {
         // Escape hatch for A/B-ing the fused path against the materialized one.
         static const bool disabled = env_flag_enabled("OPENNN_GQA_DISABLE_SDPA");
-        if (disabled) return false;
+        if (disabled || !cache) return false;
 
         // The fused mask places query i at absolute position i, so a decode offset
         // would have it mask against the wrong positions.
         if (query_position_offset != 0) return false;
         if (n_kv_heads <= 0 || n_query_heads % n_kv_heads != 0) return false;
 
-        const GroupedAttentionSdpaCache::Key key{batch, query_seq, key_seq,
-                                                 n_query_heads, n_kv_heads, head_dim, causal};
+        const GroupedQueryAttentionOperator::GraphCache::Key key{
+            batch, query_seq, key_seq,
+            n_query_heads, n_kv_heads, head_dim, causal};
 
-        return cudnn_frontend::run_frontend(grouped_attention_sdpa_cache, "GroupedQueryAttention",
-                                            [&](GroupedAttentionSdpaCache& cache)
+        return cudnn_frontend::run_frontend(*cache, "GroupedQueryAttention",
+                                            [&](GroupedQueryAttentionOperator::GraphCache& graph_cache)
         {
-            auto& entry = cache.get_or_create(key);
+            auto& entry = graph_cache.get_or_create(key);
 
             if (!entry.graph)
             {
@@ -568,7 +586,8 @@ static bool grouped_attention_sdpa_gpu(const int batch, const int query_seq, con
 static void grouped_attention_gpu(const TensorView& query, const TensorView& key, const TensorView& value,
                                   TensorView& output, Index n_query_heads, Index n_kv_heads, Index head_dim,
                                   bool causal, float scale, Index query_position_offset,
-                                  float* decode_partials, const int* kv_length_device)
+                                  float* decode_partials, const int* kv_length_device,
+                                  GroupedQueryAttentionOperator::GraphCache* cache)
 {
     // Narrow once: to_int range-checks, and every one of these was inside the
     // dispatch lambda, so each was checked twice over - once per instantiated
@@ -595,7 +614,8 @@ static void grouped_attention_gpu(const TensorView& query, const TensorView& key
             && grouped_attention_sdpa_gpu<T>(batch, query_seq, key_seq,
                                              q_heads, kv_heads, dim,
                                              scale, pos_offset, causal,
-                                             query.as<T>(), key.as<T>(), value.as<T>(), output.as<T>()))
+                                             query.as<T>(), key.as<T>(), value.as<T>(), output.as<T>(),
+                                             cache))
             return;
 
         if (has_work && !decode
@@ -643,6 +663,8 @@ static void qk_norm_gpu(const TensorView& input, const TensorView& weight, Tenso
 
 #else
 
+struct GroupedQueryAttentionOperator::GraphCache {};
+
 Index grouped_attention_decode_scratch_floats(Index, Index)
 {
     return 0;
@@ -655,12 +677,39 @@ void qk_rope_cache_append(const TensorView&, const TensorView&, const TensorView
     throw runtime_error("qk_rope_cache_append: CUDA support not compiled in.");
 }
 
-OPENNN_CUDA_STUB(void, grouped_attention_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, float, Index, float*, const int*))
+OPENNN_CUDA_STUB(void, grouped_attention_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, float, Index, float*, const int*, GroupedQueryAttentionOperator::GraphCache*))
 OPENNN_CUDA_STUB(void, qk_norm_gpu, (const TensorView&, const TensorView&, TensorView&, Index, float))
 OPENNN_CUDA_STUB(void, rope_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index))
 OPENNN_CUDA_STUB(void, rope_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index))
 
 #endif
+
+GroupedQueryAttentionOperator::GroupedQueryAttentionOperator()
+    : graph_cache(make_unique<GraphCache>())
+{
+}
+
+GroupedQueryAttentionOperator::~GroupedQueryAttentionOperator() = default;
+
+void GroupedQueryAttentionOperator::apply_attention(
+    const TensorView& query, const TensorView& key, const TensorView& value,
+    TensorView& output, bool causal, float scale,
+    Index query_position_offset, float* decode_partials,
+    const int* position_device)
+{
+#ifdef OPENNN_HAS_CUDA
+    if (query.is_cuda())
+        return grouped_attention_gpu(
+            query, key, value, output, q_heads, kv_heads, head_dim,
+            causal, scale, query_position_offset, decode_partials,
+            position_device, graph_cache.get());
+#endif
+
+    grouped_attention_forward(
+        query, key, value, output, q_heads, kv_heads, head_dim,
+        causal, scale, query_position_offset, decode_partials,
+        position_device);
+}
 
 
 void GroupedQueryAttentionOperator::set(Index new_sequence_length, Index new_hidden,
@@ -880,7 +929,7 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
 
         TensorView key_all(kcache, {1, total, kd}), val_all(vcache, {1, total, kd});
         TensorView attn_v(attn, {1, seq, qd});
-        grouped_attention_forward(qr_v, key_all, val_all, attn_v, q_heads, kv_heads, head_dim, true, scale, past);
+        apply_attention(qr_v, key_all, val_all, attn_v, true, scale, past);
 
         TensorView o_b(o_all, {1, seq, hidden});
         return linear_forward_transposed(attn_v, o_proj, o_b);
@@ -916,7 +965,7 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
         rotary_forward(k_v, cos_v, sin_v, kr_v, head_dim, head_dim, 0);
 
         TensorView attn_v(attn, {1, seq, qd});
-        grouped_attention_forward(qr_v, kr_v, v_v, attn_v, q_heads, kv_heads, head_dim, true, scale, 0);
+        apply_attention(qr_v, kr_v, v_v, attn_v, true, scale, 0);
 
         TensorView o_b(o_all + size_t(b) * seq * hidden, {1, seq, hidden});
         linear_forward_transposed(attn_v, o_proj, o_b);
@@ -928,23 +977,17 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
 namespace
 {
 
-struct GroupedAttentionSDPA
+GroupedQueryAttentionOperator::GraphCache::PrefillEntry& gqa_sdpa(
+    GroupedQueryAttentionOperator::GraphCache& cache,
+    Index max_q, Index max_kv,
+    Index q_heads, Index kv_heads, Index head_dim)
 {
-    shared_ptr<cudnn_frontend::graph::Graph> graph;
-    shared_ptr<cudnn_frontend::graph::Tensor_attributes> Q, K, V, O, SeqQ, SeqKV;
-    int64_t workspace_bytes = 0;
-    bool failed = false;
-};
-
-GroupedAttentionSDPA& gqa_sdpa(Index max_q, Index max_kv,
-                               Index q_heads, Index kv_heads, Index head_dim)
-{
-    thread_local map<tuple<Index, Index, Index, Index, Index>,
-                     GroupedAttentionSDPA> graphs;
-    const auto key = tuple{max_q, max_kv, q_heads, kv_heads, head_dim};
+    const GroupedQueryAttentionOperator::GraphCache::PrefillKey key{
+        max_q, max_kv, q_heads, kv_heads, head_dim};
 
     return detail::bounded_cache_entry(
-        graphs, key, cudnn_frontend::graph_cache_capacity);
+        cache.prefill_entries, key,
+        cudnn_frontend::graph_cache_capacity);
 }
 
 shared_ptr<cudnn_frontend::graph::Tensor_attributes>
@@ -957,7 +1000,8 @@ gqa_bshd_tensor(cudnn_frontend::graph::Graph& graph, const char* name,
                         .set_stride({heads * max_seq * head_dim, head_dim, heads * head_dim, 1}));
 }
 
-void gqa_sdpa_build(GroupedAttentionSDPA& s, Index max_q, Index max_kv,
+void gqa_sdpa_build(GroupedQueryAttentionOperator::GraphCache::PrefillEntry& s,
+                    Index max_q, Index max_kv,
                     Index q_heads, Index kv_heads, Index head_dim, float scale)
 {
     auto graph = cudnn_frontend::new_graph(Type::BF16);
@@ -1057,10 +1101,10 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                                      q_heads, kv_heads, head_dim, rms_epsilon, position_device);
             }
             {
-                grouped_attention_forward(qr_v, key_cache_view, val_cache_view, attn_v,
-                                          q_heads, kv_heads, head_dim,
-                                          true, scale, past,
-                                          forward_slots[DecodePartials].as<float>(), position_device);
+                apply_attention(qr_v, key_cache_view, val_cache_view, attn_v,
+                                true, scale, past,
+                                forward_slots[DecodePartials].as<float>(),
+                                position_device);
             }
             {
                 linear_forward_transposed(attn_v, o_proj, o_b, o_scale);
@@ -1099,27 +1143,29 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
         if (seq > 1 && act == Type::BF16)
         {
-            auto& sdpa = gqa_sdpa(query_capacity, table_len,
-                                  q_heads, kv_heads, head_dim);
-
-            // The entry is keyed on this geometry (gqa_sdpa), so a built graph fits.
-            if (!sdpa.graph && !sdpa.failed)
+            bool ran_sdpa = false;
             {
-                try
-                {
-                    gqa_sdpa_build(sdpa, query_capacity, table_len,
-                                   q_heads, kv_heads, head_dim, scale);
-                }
-                catch (const exception& e)
-                {
-                    sdpa.failed = true;
-                    cerr << "GroupedQueryAttention: cuDNN flash-attention prefill unavailable ("
-                         << e.what() << "); using the generic kernel.\n";
-                }
-            }
+                const lock_guard cache_lock(graph_cache->access_mutex);
+                auto& sdpa = gqa_sdpa(*graph_cache, query_capacity, table_len,
+                                      q_heads, kv_heads, head_dim);
 
-            if (sdpa.graph)
-            {
+                // The entry is keyed on this geometry, so a built graph fits.
+                if (!sdpa.graph && !sdpa.failed)
+                {
+                    try
+                    {
+                        gqa_sdpa_build(sdpa, query_capacity, table_len,
+                                       q_heads, kv_heads, head_dim, scale);
+                    }
+                    catch (const exception& e)
+                    {
+                        sdpa.failed = true;
+                        cerr << "GroupedQueryAttention: cuDNN flash-attention prefill unavailable ("
+                             << e.what() << "); using the generic kernel.\n";
+                    }
+                }
+
+                if (sdpa.graph)
                 {
                     pinned_storage.resize_bytes(Index(2 * sizeof(int32_t)));
                     TensorView& sequence_lengths_device = forward_slots[SequenceLengths];
@@ -1143,10 +1189,13 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                                                   cudnn_frontend::shared_workspace(sdpa.workspace_bytes),
                                                   "gqa sdpa execute",
                                                   cudnn_frontend::timing_label("gqa_sdpa"));
+                    ran_sdpa = true;
                 }
-                {
-                    linear_forward_transposed(attn_v, o_proj, o_b, o_scale);
-                }
+            }
+
+            if (ran_sdpa)
+            {
+                linear_forward_transposed(attn_v, o_proj, o_b, o_scale);
                 return;
             }
         }
@@ -1154,8 +1203,8 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         TensorView key_all(key_cache,   {1, total, kd}, act, Device::CUDA);
         TensorView val_all(value_cache, {1, total, kd}, act, Device::CUDA);
         {
-            grouped_attention_forward(qr_v, key_all, val_all, attn_v, q_heads, kv_heads, head_dim, true, scale, past,
-                                      forward_slots[DecodePartials].as<float>());
+            apply_attention(qr_v, key_all, val_all, attn_v, true, scale, past,
+                            forward_slots[DecodePartials].as<float>());
         }
         {
             linear_forward_transposed(attn_v, o_proj, o_b, o_scale);
@@ -1192,7 +1241,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         rotary_forward(q_v, cos_v, sin_v, qr_v, head_dim, head_dim, 0);
         rotary_forward(k_v, cos_v, sin_v, kr_v, head_dim, head_dim, 0);
 
-        grouped_attention_forward(qr_v, kr_v, v_v, attn_v, q_heads, kv_heads, head_dim, true, scale, 0);
+        apply_attention(qr_v, kr_v, v_v, attn_v, true, scale, 0);
 
         linear_forward_transposed(attn_v, o_proj, o_b, o_scale);
     }

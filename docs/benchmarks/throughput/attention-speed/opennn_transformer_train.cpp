@@ -25,6 +25,8 @@
 
 #include <cuda_runtime.h>
 
+#include "opennn/core/cuda/flash_attention.cuh"
+#include "opennn/core/device_backend.h"
 #include "opennn/neural_network/standard_networks.h"
 #include "opennn/dataset/language_dataset.h"
 #include "opennn/training_strategy/training_strategy.h"
@@ -78,6 +80,19 @@ int main(int argc, char* argv[])
             benchmark::configure_transformer_sdpa(transformer);
 
         cout << "sdpa_min_sequence_length=" << sdpa_min_sequence_length << "\n";
+
+        // Which attention kernel to measure. "auto" is what the library picks
+        // by itself; "cudnn" pins the graph it used before FlashAttention-2
+        // existed, which is the other half of an A/B.
+        const string attention_rung = getenv("OPENNN_ATTENTION_RUNG")
+                                    ? getenv("OPENNN_ATTENTION_RUNG") : "auto";
+        if (attention_rung == "cudnn")
+            device::set_rung(device::AttentionRung::CudnnGraph);
+        else if (attention_rung == "flash")
+            device::set_rung(device::AttentionRung::FlashAttention);
+        else if (attention_rung != "auto")
+            throw runtime_error("OPENNN_ATTENTION_RUNG: unknown value '" + attention_rung + "'");
+        cout << "attention_rung=" << attention_rung << "\n";
         cout << "parameters=" << transformer.get_parameters_buffer_size() << "\n";
 
         TrainingStrategy training_strategy(&transformer, &dataset);
@@ -131,6 +146,8 @@ int main(int argc, char* argv[])
         cout << "wall_s=" << wall_s << "\n";
         cout << "samples_per_sec=" << samples_per_s << "\n";
         cout << "tokens_per_sec=" << tokens_per_s << "\n";
+        // Zero here means the rung never applied, whatever it was asked for.
+        cout << "flash_attention_calls=" << flash_attention::call_count() << "\n";
 
         return 0;
     }
