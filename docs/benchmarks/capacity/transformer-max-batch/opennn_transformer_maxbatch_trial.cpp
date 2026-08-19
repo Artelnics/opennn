@@ -130,9 +130,9 @@ int main(int argc, char* argv[])
             TensorView input_view(base + decoder_bytes, {batch, input_seq}, Type::FP32, Device::CUDA);
 
             cudaStream_t stream = device::get_compute_stream();
-            device::copy_async(decoder_view.data, decoder_ids.data(), decoder_view.byte_size(),
+            device::copy_async(decoder_view.get_data(), decoder_ids.data(), decoder_view.byte_size(),
                                device::CopyKind::HostToDevice, stream);
-            device::copy_async(input_view.data, input_ids.data(), input_view.byte_size(),
+            device::copy_async(input_view.get_data(), input_ids.data(), input_view.byte_size(),
                                device::CopyKind::HostToDevice, stream);
 
             const vector<TensorView> inputs = {decoder_view, input_view};
@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
             const TensorView output_view = forward_propagation.get_outputs();
             float probe[4] = {0.0f, 0.0f, 0.0f, 0.0f};
             const Index probe_size = min<Index>(Index(4), output_view.size());
-            copy_device_to_host_float(output_view.data, output_view.type, probe_size, probe, stream);
+            copy_device_to_host_float(output_view.get_data(), output_view.get_type(), probe_size, probe, stream);
             cudaStreamSynchronize(stream);
             for (Index i = 0; i < probe_size; ++i)
                 if (!isfinite(probe[i]))

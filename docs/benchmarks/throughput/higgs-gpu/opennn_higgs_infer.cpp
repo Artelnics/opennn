@@ -12,7 +12,7 @@
 //   used on the PyTorch and TensorFlow sides. It is selected exactly like
 //   opennn_speed.cpp: Configuration::instance().set(Device::CUDA, type).
 //
-//   usage:  opennn_higgs_infer <test_csv> [batch] [runs] [fp32|bf16]
+//   usage:  opennn_higgs_infer <test_csv> [batch] [runs] [fp32|bf16] [hidden] [hidden_layers] [activation] [resident|default|reuse|construct]
 //                              [hidden] [hidden_layers] [activation]
 
 #include <algorithm>
@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
     {
         if (argc < 2)
         {
-            cerr << "usage: opennn_higgs_infer <test_csv> [batch] [runs] [fp32|bf16]"
+            cerr << "usage: opennn_higgs_infer <test_csv> [batch] [runs] [fp32|bf16] [hidden] [hidden_layers] [activation] [resident|default|reuse|construct]"
                          " [hidden] [hidden_layers] [activation]\n";
             return 2;
         }
@@ -187,18 +187,63 @@ int main(int argc, char* argv[])
         cudaDeviceSynchronize();
 #endif
 
+        // The benchmarks all measured calculate_outputs_resident, the expert
+        // path where the caller owns the ForwardPropagation and results stay on
+        // the device. `default` measures what ordinary code calls instead:
+        // calculate_outputs takes host inputs and returns host outputs. `reuse`
+        // is the same call with a caller-provided output buffer.
+        const string api_path = argc > 8 ? string(argv[8]) : "resident";
+
+        const MatrixR host_batch = inputs.topRows(batch);
+        MatrixR default_outputs;
+
+        auto run_default_pass = [&]()
+        {
+            for (Index b = 0; b < batches; ++b)
+            {
+                // `construct` isolates what the default path pays per call
+                // beyond the work itself: planning the arena and allocating it.
+                // No forward pass is run.
+                if (api_path == "construct")
+                {
+                    ForwardPropagation probe(batch, network.get(),
+                                             ForwardPropagationMode::Inference);
+                    (void)probe.get_outputs();
+                }
+                else if (api_path == "reuse")
+                    network->calculate_outputs(host_batch, default_outputs);
+                else
+                    default_outputs = network->calculate_outputs(host_batch);
+            }
+        };
+
+        if (api_path != "resident")
+        {
+            run_default_pass();
+#ifdef OPENNN_HAS_CUDA
+            cudaDeviceSynchronize();
+#endif
+        }
+
         vector<double> times;
         times.reserve(size_t(runs));
         for (Index r = 0; r < runs; ++r)
         {
             const auto t0 = clock_type::now();
-            run_pass();
+            if (api_path == "resident")
+                run_pass();
+            else
+                run_default_pass();
 #ifdef OPENNN_HAS_CUDA
             cudaDeviceSynchronize();
 #endif
             const auto t1 = clock_type::now();
             times.push_back(chrono::duration<double>(t1 - t0).count());
         }
+
+        double default_checksum = 0.0;
+        for (Index i = 0; i < Index(default_outputs.size()); ++i)
+            default_checksum += double(default_outputs.data()[i]);
 
 #ifdef OPENNN_HAS_CUDA
         if (last_outputs)
@@ -219,6 +264,9 @@ int main(int argc, char* argv[])
         const double samples_per_sec = double(processed) / median_pass_s;
         const double ms_per_batch = median_pass_s * 1000.0 / double(batches);
 
+        cout << "api_path=" << api_path << "\n";
+        if (api_path != "resident")
+            cout << "checksum=" << default_checksum << "\n";
         cout << "median_pass_s=" << median_pass_s << "\n";
         cout << "samples_per_sec=" << long(samples_per_sec) << "\n";
         cout << "ms_per_batch=" << ms_per_batch << "\n";

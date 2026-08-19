@@ -190,7 +190,12 @@ void copy_device_to_host_float(const void* device_src, Type src_dtype,
     }
     else if (src_dtype == Type::BF16)
     {
-        vector<uint16_t> staging(static_cast<size_t>(element_count));
+        // Reused across calls. Allocating this per call dominates the transfer
+        // once element_count reaches inference-sized outputs: a fresh
+        // allocation of an inference-sized buffer plus its first-touch page
+        // faults costs several times the copy it stages.
+        thread_local vector<uint16_t> staging;
+        staging.resize(static_cast<size_t>(element_count));
         device::copy_async(staging.data(), device_src,
                            element_count * Index(sizeof(uint16_t)),
                            device::CopyKind::DeviceToHost,

@@ -287,6 +287,196 @@ CudaAllocationGrowthGuard::~CudaAllocationGrowthGuard() noexcept
     }
 }
 
+namespace
+{
+
+#ifdef OPENNN_HAS_CUDA
+
+// Reuse of freed CUDA blocks, keyed on exact size, gated on completion of the
+// work that last touched them.
+//
+// cudaMalloc/cudaFree is expensive enough to dominate short-lived work: a
+// malloc+free pair of 8 MB measures ~0.68 ms on an RTX 3060 Laptop, and
+// building a dense inference arena of that size measured 0.63 ms, more than the
+// 0.27 ms the forward pass itself took.
+//
+// cudaFree implicitly synchronises, so simply skipping it would let a recycled
+// block reach new work while earlier work still reads it. Instead, record an
+// event on every stream a block could have been touched by when it is released,
+// and hand it back only once all of those events have completed. A block whose
+// events are still pending is left alone and the caller allocates fresh, so
+// this never blocks.
+//
+// The streams are every configured lane plus the transfer stream --
+// get_compute_stream() resolves to whichever lane is active, so recording only
+// on it would miss blocks used on another lane.
+class CudaBlockCache
+{
+public:
+
+    static CudaBlockCache& instance()
+    {
+        static CudaBlockCache cache;
+        return cache;
+    }
+
+    void* take(Index byte_count)
+    {
+        if (!is_enabled || byte_count <= 0) return nullptr;
+
+        const lock_guard<mutex> guard(blocks_mutex);
+
+        const auto entry = blocks.find(byte_count);
+        if (entry == blocks.end()) return nullptr;
+
+        vector<CachedBlock>& candidates = entry->second;
+
+        const auto ready = ranges::find_if(candidates, is_ready);
+
+        if (ready == candidates.end()) return nullptr;
+
+        void* pointer = ready->pointer;
+        recycle_events(*ready);
+
+        *ready = std::move(candidates.back());
+        candidates.pop_back();
+        cached_bytes -= byte_count;
+
+        return pointer;
+    }
+
+    bool give(void* pointer, Index byte_count)
+    {
+        if (!is_enabled || byte_count <= 0) return false;
+
+        const lock_guard<mutex> guard(blocks_mutex);
+
+        if (cached_bytes + byte_count > byte_cap) return false;
+
+        CachedBlock block;
+        block.pointer = pointer;
+
+        // Every stream that could hold work touching this block.
+        for (int lane = 0; lane < lanes_available(); ++lane)
+            record_pending(block, lane_stream(lane));
+
+        record_pending(block, get_transfer_stream());
+
+        blocks[byte_count].push_back(std::move(block));
+        cached_bytes += byte_count;
+
+        return true;
+    }
+
+    // Hand every cached block back to the driver. Called when an allocation
+    // fails: memory held here is memory the driver cannot use, and this
+    // library is routinely run right up against the capacity limit.
+    // Returns whether anything was actually released, so a caller can tell a
+    // retry apart from a hopeless one.
+    bool flush()
+    {
+        const lock_guard<mutex> guard(blocks_mutex);
+
+        bool released = false;
+
+        for (auto& [size_in_bytes, cached] : blocks)
+        {
+            for (CachedBlock& block : cached)
+            {
+                for (cudaEvent_t event : block.pending_events)
+                    cudaEventSynchronize(event);
+
+                recycle_events(block);
+                cudaFree(block.pointer);
+                released = true;
+            }
+
+            cached.clear();
+        }
+
+        blocks.clear();
+        cached_bytes = 0;
+
+        return released;
+    }
+
+private:
+
+    struct CachedBlock
+    {
+        void* pointer = nullptr;
+        vector<cudaEvent_t> pending_events;
+    };
+
+    CudaBlockCache()
+        : is_enabled(env_flag_enabled("OPENNN_DEVICE_CACHE", true)),
+          byte_cap(read_cap_bytes())
+    {
+    }
+
+    static Index read_cap_bytes()
+    {
+        const char* value = getenv("OPENNN_DEVICE_CACHE_MB");
+        const Index megabytes = value ? Index(strtoll(value, nullptr, 10)) : Index(512);
+        return (megabytes > 0 ? megabytes : Index(512)) * 1024 * 1024;
+    }
+
+    void record_pending(CachedBlock& block, cudaStream_t stream)
+    {
+        if (!stream) return;
+
+        cudaEvent_t event = nullptr;
+
+        if (!event_pool.empty())
+        {
+            event = event_pool.back();
+            event_pool.pop_back();
+        }
+        else
+            event = create_event(cudaEventDisableTiming);
+
+        if (!event) return;
+
+        record_event(event, stream);
+        block.pending_events.push_back(event);
+    }
+
+    static bool is_ready(const CachedBlock& block)
+    {
+        return ranges::all_of(block.pending_events,
+                              [](cudaEvent_t event)
+                              {
+                                  const cudaError_t status = cudaEventQuery(event);
+
+                                  // cudaErrorNotReady is an answer rather than a
+                                  // failure, but it still lands in the sticky
+                                  // last-error slot check_last_error() reads.
+                                  cudaGetLastError();
+
+                                  return status == cudaSuccess;
+                              });
+    }
+
+    void recycle_events(CachedBlock& block)
+    {
+        event_pool.insert(event_pool.end(),
+                          block.pending_events.begin(), block.pending_events.end());
+
+        block.pending_events.clear();
+    }
+
+    const bool is_enabled;
+    const Index byte_cap;
+    Index cached_bytes = 0;
+    unordered_map<Index, vector<CachedBlock>> blocks;
+    vector<cudaEvent_t> event_pool;
+    mutex blocks_mutex;
+};
+
+#endif
+
+}
+
 void* allocate(Device device_type, Index byte_count)
 {
     throw_if_auto(device_type);
@@ -295,7 +485,25 @@ void* allocate(Device device_type, Index byte_count)
     if (byte_count == 0) return nullptr;
 
     if (device_type == Device::CUDA)
+    {
+#ifdef OPENNN_HAS_CUDA
+        if (void* recycled = CudaBlockCache::instance().take(byte_count))
+            return recycled;
+
+        try
+        {
+            return allocate_cuda(byte_count);
+        }
+        catch (const runtime_error&)
+        {
+            // Retained blocks are memory the driver cannot hand out. Release
+            // them and try once more before failing, so enabling the cache can
+            // never turn a workload that used to fit into one that does not.
+            if (!CudaBlockCache::instance().flush()) throw;
+        }
+#endif
         return allocate_cuda(byte_count);
+    }
 
     return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
 }
@@ -309,7 +517,8 @@ void deallocate(Device device_type, void* pointer, Index byte_count)
     if (device_type == Device::CUDA)
     {
 #ifdef OPENNN_HAS_CUDA
-        cudaFree(pointer);
+        if (!CudaBlockCache::instance().give(pointer, byte_count))
+            cudaFree(pointer);
 #endif
         return;
     }

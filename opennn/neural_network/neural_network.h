@@ -216,6 +216,13 @@ public:
     void link_states(Device);
     MatrixR calculate_outputs(const vector<TensorView>&);
 
+    // Writes the result into outputs, reusing its storage when the shape
+    // already matches. Allocating a fresh result per call dominates GPU
+    // inference once the output is large, so prefer this overload when calling
+    // repeatedly. When the result can stay on the device,
+    // calculate_outputs_resident avoids the device-to-host copy entirely.
+    void calculate_outputs(const vector<TensorView>&, MatrixR& outputs);
+
     TensorView calculate_outputs_resident(const vector<TensorView>&,
                                           ForwardPropagation&,
                                           bool upload_parameters = true);
@@ -226,7 +233,19 @@ public:
 
     MatrixR calculate_outputs(const Tensor4&);
 
+    // Buffer-reusing counterparts of the three overloads above. Prefer these
+    // when calling repeatedly: the by-value versions must allocate a result
+    // every call, which costs more than the device-to-host copy itself once
+    // outputs are large.
+    void calculate_outputs(const MatrixR&, MatrixR& outputs);
+
+    void calculate_outputs(const Tensor3&, MatrixR& outputs);
+
+    void calculate_outputs(const Tensor4&, MatrixR& outputs);
+
     Tensor3 calculate_outputs(const Tensor3&, const Tensor3&);
+
+    void calculate_outputs(const Tensor3&, const Tensor3&, Tensor3& outputs);
 
     void from_JSON(const JsonDocument&);
 
@@ -321,6 +340,9 @@ private:
     void compile(Configuration::EffectiveConfig);
 
     MatrixR calculate_outputs_device(const vector<TensorView>&, ForwardPropagation&);
+
+    void calculate_outputs_device(const vector<TensorView>&, ForwardPropagation&,
+                                  MatrixR& outputs);
 
     struct HostStatesGuard
     {

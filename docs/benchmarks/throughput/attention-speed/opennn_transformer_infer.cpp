@@ -6,7 +6,7 @@
 //
 //   The forward path is CPU-vs-GPU validated by opennn_attention_validate.cpp.
 //
-//   usage: opennn_transformer_infer [seq] [d_model] [heads] [ff] [layers] [vocab] [batch] [iters]
+//   usage: opennn_transformer_infer [seq] [d_model] [heads] [ff] [layers] [vocab] [batch] [iters] [fp32|bf16] [default|reuse]
 
 #include <chrono>
 #include <cstdlib>
@@ -33,11 +33,13 @@ int main(int argc, char* argv[])
     const Index vocab   = argc > 6 ? Index(stoll(argv[6])) : 10000;
     const Index batch   = argc > 7 ? Index(stoll(argv[7])) : 8;
     const Index iters   = argc > 8 ? Index(stoll(argv[8])) : 50;
+    const bool use_bf16 = argc > 9 ? string(argv[9]) == "bf16" : false;
+    const bool reuse_outputs = argc > 10 ? string(argv[10]) == "reuse" : false;
 
     try
     {
         set_seed(0);
-        Configuration::instance().set(Device::CUDA, Type::FP32);
+        Configuration::instance().set(Device::CUDA, use_bf16 ? Type::BF16 : Type::FP32);
 
         Transformer transformer(seq, seq, vocab, vocab, d_model, heads, ff, layers);
 
@@ -47,7 +49,7 @@ int main(int argc, char* argv[])
         cout << "config seq=" << seq << " d_model=" << d_model << " heads=" << heads
                   << " ff=" << ff << " layers=" << layers << " vocab=" << vocab
                   << " batch=" << batch
-                  << " sdpa_min=" << sdpa_min_sequence_length << "\n";
+                  << " sdpa_min=" << sdpa_min_sequence_length << " precision=" << (use_bf16 ? "bf16" : "fp32") << "\n";
         cout << "parameters=" << transformer.get_parameters_buffer_size() << "\n";
 
         Tensor3 inputs(batch, seq, 1);
@@ -59,12 +61,48 @@ int main(int argc, char* argv[])
                 context(b, s, 0) = float((b * seq + s + 1) % vocab);
             }
 
-        transformer.calculate_outputs(inputs, context);
+        auto checksum = [](const float* values, Index count)
+        {
+            double total = 0.0;
+            for (Index i = 0; i < count; ++i) total += double(values[i]);
+            return total;
+        };
 
-        const auto t0 = chrono::steady_clock::now();
-        for (Index it = 0; it < iters; ++it)
-            transformer.calculate_outputs(inputs, context);
-        const auto t1 = chrono::steady_clock::now();
+        const vector<TensorView> input_views = {
+            TensorView(const_cast<float*>(inputs.data()),
+                       {{inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)}}),
+            TensorView(const_cast<float*>(context.data()),
+                       {{context.dimension(0), context.dimension(1), context.dimension(2)}})};
+
+        chrono::steady_clock::time_point t0, t1;
+        double result_checksum = 0.0;
+
+        if (reuse_outputs)
+        {
+            MatrixR outputs;
+            transformer.calculate_outputs(input_views, outputs);
+
+            t0 = chrono::steady_clock::now();
+            for (Index it = 0; it < iters; ++it)
+                transformer.calculate_outputs(input_views, outputs);
+            t1 = chrono::steady_clock::now();
+
+            result_checksum = checksum(outputs.data(), Index(outputs.size()));
+        }
+        else
+        {
+            Tensor3 outputs = transformer.calculate_outputs(inputs, context);
+
+            t0 = chrono::steady_clock::now();
+            for (Index it = 0; it < iters; ++it)
+                outputs = transformer.calculate_outputs(inputs, context);
+            t1 = chrono::steady_clock::now();
+
+            result_checksum = checksum(outputs.data(), Index(outputs.size()));
+        }
+
+        cout << "mode=" << (reuse_outputs ? "reuse" : "default") << "\n";
+        cout << "checksum=" << result_checksum << "\n";
 
         const double per = chrono::duration<double>(t1 - t0).count() / double(iters);
         const double tokens = double(batch) * double(seq);

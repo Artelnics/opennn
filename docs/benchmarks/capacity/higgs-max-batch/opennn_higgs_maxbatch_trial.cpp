@@ -137,18 +137,18 @@ public:
             return;
 
         if (config.training_type != Type::BF16
-            || parameters.device_type != Device::CUDA
+            || parameters.get_device() != Device::CUDA
             || parameters.empty()
             || parameters_bf16_mirror.empty()
-            || !parameters.owns)
+            || !parameters.owns_memory())
             return;
 
         // The layer parameter views already point at parameters_bf16_mirror
         // after copy_parameters_device(). Keep the fp32-size invariant that
         // forward_propagate() validates, but stop owning a second CUDA buffer.
-        const Index fp32_master_bytes = parameters.bytes;
+        const Index fp32_master_bytes = parameters.byte_size();
         parameters.resize_bytes(0, Device::CUDA);
-        parameters.set_view(parameters_bf16_mirror.data,
+        parameters.set_view(parameters_bf16_mirror.data(),
                             fp32_master_bytes,
                             Device::CUDA);
     }
@@ -233,8 +233,8 @@ TensorView maybe_alias_bf16_input_cast(const TensorView& fp32_input,
                          0,
                          "uses future activation slot");
 
-    return TensorView(future_activation.data,
-                      fp32_input.shape,
+    return TensorView(future_activation.get_data(),
+                      fp32_input.get_shape(),
                       Type::BF16,
                       Device::CUDA);
 }
@@ -396,8 +396,8 @@ int main(int argc, char* argv[])
                     network->release_bf16_fp32_parameter_master_for_inference();
 
                 parameters_uploaded = true;
-                output_type = outputs.type;
-                probe_source = outputs.data;
+                output_type = outputs.get_type();
+                probe_source = outputs.get_data();
             };
 
             // Warmup selects the cuDNN/cuBLAS plans, allocates the workspaces,

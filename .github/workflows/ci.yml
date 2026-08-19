@@ -49,3 +49,19 @@ jobs:
       # load via "../datasets/..." resolve (add_test sets no WORKING_DIRECTORY).
       - name: Run tests
         run: ./build/bin/opennn_tests
+
+      # Compile-only. The benchmarks are not run here (they need datasets), but
+      # building them keeps them from silently rotting when library APIs change.
+      # Note this is a CPU-only job, so CUDA-only benchmark targets are still
+      # uncovered; catching those needs a CUDA runner.
+      - name: Configure benchmarks (compile-only)
+        run: >
+          cmake -S . -B build-benchmarks -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DOpenNN_DISABLE_CUDA=ON
+          -DOpenNN_BUILD_TESTS=OFF
+          -DOpenNN_BUILD_EXAMPLES=OFF
+          -DOpenNN_BUILD_BENCHMARKS=ON
+
+      - name: Build benchmarks
+        run: cmake --build build-benchmarks --target benchmarks
