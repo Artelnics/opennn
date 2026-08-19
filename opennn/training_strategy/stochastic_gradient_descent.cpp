@@ -90,7 +90,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     if (mode == UpdateMode::Capturable)
     {
 #ifdef OPENNN_HAS_CUDA
-        clip_gradient_norm(back_propagation.gradient, gradient_clip_norm);
+        clip_gradient_norm(back_propagation, gradient_clip_norm);
 
         float* const velocity_ptr = momentum > 0.0f
             ? optimizer_data.views[Velocity].as<float>()
@@ -118,7 +118,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     throw_if(momentum > 0.0f && optimizer_data.views.empty(),
              "StochasticGradientDescent::update_parameters: velocity buffer is not initialized.");
 
-    clip_gradient_norm(back_propagation.gradient, gradient_clip_norm);
+    clip_gradient_norm(back_propagation, gradient_clip_norm);
 
     if (neural_network->is_gpu())
         return update_parameters_cuda(back_propagation, optimizer_data,

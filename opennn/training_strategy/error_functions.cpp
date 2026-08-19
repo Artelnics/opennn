@@ -375,7 +375,8 @@ void minkowski_error_gradient(const TensorView& input,
 }
 
 void cross_entropy_3d(const TensorView& input, const TensorView& target, float& error,
-                      Index& active_tokens_out, Index& correct_tokens_out, float* errors_device)
+                      Index& active_tokens_out, Index& correct_tokens_out,
+                      float* errors_device, float* reduction_device)
 {
     const Index vocabulary_size = input.get_shape().back();
 
@@ -391,19 +392,17 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
                 input.as<T>(), target.as<float>(),
                 errors_device, valid_mask_device, correct_mask_device, EPSILON);
 
-            float* device_results = errors_device + 3 * token_count;
-
             cublasHandle_t handle = device::get_cublas_handle();
             {
                 device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
-                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), errors_device,       1, device_results + 0));
-                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,   1, device_results + 1));
-                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device, 1, device_results + 2));
+                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), errors_device,       1, reduction_device + 0));
+                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,   1, reduction_device + 1));
+                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device, 1, reduction_device + 2));
             }
 
             float host_results[3];
             cudaStream_t stream = device::get_compute_stream();
-            device::copy_async(host_results, device_results,
+            device::copy_async(host_results, reduction_device,
                                3 * Index(sizeof(float)),
                                device::CopyKind::DeviceToHost,
                                stream);
@@ -422,6 +421,7 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
 #endif
 
     (void)errors_device;
+    (void)reduction_device;
 
     const Index token_count = input.size() / vocabulary_size;
     const MatrixMap outputs_flat = input.as_flat_matrix();

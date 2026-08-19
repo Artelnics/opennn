@@ -41,12 +41,12 @@ namespace opennn
 
 #ifdef OPENNN_HAS_CUDA
 
-static void clip_gradient_norm_device(Buffer& gradient, Index gradient_size, float max_norm)
+static void clip_gradient_norm_device(Buffer& gradient,
+                                      Buffer& workspace,
+                                      Index gradient_size,
+                                      float max_norm)
 {
-    thread_local Buffer squared_norm_device(Device::CUDA);
-    if (!squared_norm_device.data())
-        squared_norm_device.grow_to(Index(sizeof(float)));
-    float* const squared_norm_ptr = squared_norm_device.as<float>();
+    float* const squared_norm = workspace.ensure<float>(1);
 
     cublasHandle_t handle = device::get_cublas_handle();
     {
@@ -55,15 +55,17 @@ static void clip_gradient_norm_device(Buffer& gradient, Index gradient_size, flo
                                 to_int(gradient_size),
                                 gradient.as<float>(), 1,
                                 gradient.as<float>(), 1,
-                                squared_norm_ptr));
+                                squared_norm));
     }
 
-    clip_gradient_norm_cuda(gradient_size, gradient.as<float>(), squared_norm_ptr, max_norm, GRADIENT_NORM_EPS);
+    clip_gradient_norm_cuda(gradient_size, gradient.as<float>(),
+                            squared_norm, max_norm, GRADIENT_NORM_EPS);
 }
 
 #else
 
-static void clip_gradient_norm_device(Buffer&, Index, float) OPENNN_CUDA_STUB_BODY(clip_gradient_norm_device)
+static void clip_gradient_norm_device(Buffer&, Buffer&, Index, float)
+    OPENNN_CUDA_STUB_BODY(clip_gradient_norm_device)
 
 #endif
 
@@ -1328,13 +1330,18 @@ void Optimizer::sync_device(const bool on_gpu,
     device::record_event(slot.get(), device::get_compute_stream());
 }
 
-void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
+void Optimizer::clip_gradient_norm(BackPropagation& back_propagation,
+                                   float max_norm)
 {
+    Buffer& gradient = back_propagation.gradient;
     const Index gradient_size = gradient.size_in_floats();
     if (max_norm <= 0.0f || gradient_size <= 0) return;
 
     if (gradient.get_device() == Device::CUDA)
-        clip_gradient_norm_device(gradient, gradient_size, max_norm);
+        clip_gradient_norm_device(gradient,
+                                  back_propagation.execution_workspace,
+                                  gradient_size,
+                                  max_norm);
     else
     {
         VectorMap gradient_view = gradient.as_vector();

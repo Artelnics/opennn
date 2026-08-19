@@ -142,7 +142,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     if (mode == UpdateMode::Capturable)
     {
 #ifdef OPENNN_HAS_CUDA
-        clip_gradient_norm(back_propagation.gradient, gradient_clip_norm);
+        clip_gradient_norm(back_propagation, gradient_clip_norm);
 
         float* const graph_scalars = optimization_data.views[GraphScalars].as<float>();
         int* const graph_step = reinterpret_cast<int*>(graph_scalars);
@@ -171,7 +171,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     {
         PROFILE_SCOPE("optim:clip_gradient_norm");
-        clip_gradient_norm(back_propagation.gradient, gradient_clip_norm);
+        clip_gradient_norm(back_propagation, gradient_clip_norm);
     }
 
     const float iteration = static_cast<float>(optimization_data.iteration);

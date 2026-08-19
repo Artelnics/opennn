@@ -28,7 +28,7 @@ struct DetectionOperator : Operator
     vector<array<float, 2>> anchors;
     // Device mirror of anchors. DetectionOperator::set invalidates it whenever
     // the host configuration changes.
-    mutable Buffer device_anchors{Device::CUDA};
+    Buffer device_anchors{Device::CUDA};
 
     void set(const Shape&, const vector<array<float, 2>>&);
 

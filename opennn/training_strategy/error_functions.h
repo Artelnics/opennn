@@ -33,7 +33,9 @@ void cross_entropy_gradient(const TensorView&, const TensorView&, const TensorVi
 void minkowski_error(const TensorView&, const TensorView&, float, float&, float*);
 void minkowski_error_gradient(const TensorView&, const TensorView&, float, const TensorView&, bool on_gpu = false);
 
-void cross_entropy_3d(const TensorView&, const TensorView&, float&, Index&, Index&, float* errors_device = nullptr);
+void cross_entropy_3d(const TensorView&, const TensorView&, float&, Index&, Index&,
+                      float* errors_device = nullptr,
+                      float* reduction_device = nullptr);
 void cross_entropy_3d_gradient(const TensorView&, const TensorView&, const TensorView&, Index);
 void cross_entropy_3d_gradient_device_count(const TensorView&, const TensorView&, const TensorView&, const float*);
 

@@ -1417,7 +1417,7 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
                                         forward_propagation.loss_workspace, lam);
         yolo_gradient_gpu_multi(forward_propagation, target, *back_propagation,
                                 neural_network, detection_indices, head,
-                                back_propagation->loss_target_workspace, lam);
+                                back_propagation->execution_workspace, lam);
         return {};
     }
 #endif
@@ -1502,7 +1502,12 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
     case CrossEntropy3d:
     {
         Index correct_tokens = 0;
-        cross_entropy_3d(input, target, result.error, result.active_tokens_count, correct_tokens, workspace_device);
+        float* const reduction_device = workspace_device
+            ? workspace_device + error_workspace_floats(input)
+            : nullptr;
+        cross_entropy_3d(input, target, result.error,
+                         result.active_tokens_count, correct_tokens,
+                         workspace_device, reduction_device);
         result.accuracy = result.active_tokens_count > 0
             ? float(correct_tokens) / float(result.active_tokens_count)
             : 0.0f;

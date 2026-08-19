@@ -193,7 +193,7 @@ protected:
 
     void sync_device(bool on_gpu, bool has_recurrent_layers, TrainingSession&);
 
-    static void clip_gradient_norm(Buffer&, float);
+    static void clip_gradient_norm(BackPropagation&, float);
 
     bool should_display(Index epoch) const noexcept { return display && epoch % display_period == 0; }
 

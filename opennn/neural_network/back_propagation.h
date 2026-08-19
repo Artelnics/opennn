@@ -71,9 +71,9 @@ struct BackPropagation
     Buffer arena;
     // Opaque backend scratch kept with this backward execution, never a layer.
     vector<Buffer> layer_scratch_storage;
-    // YOLO target assembly is gradient-execution state, independent from the
-    // forward context's evaluation workspace.
-    Buffer loss_target_workspace{Device::CUDA};
+    // Scratch shared by non-overlapping stages of this backward execution,
+    // such as YOLO target assembly and optimizer reductions.
+    Buffer execution_workspace{Device::CUDA};
     vector<TensorView> output_deltas;
     vector<vector<TensorView>> slots;
 
