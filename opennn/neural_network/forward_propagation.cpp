@@ -12,6 +12,7 @@
 #include "opennn/core/memory_debug.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/memory_pool.h"
+#include "opennn/core/profiler.h"
 #include "opennn/core/string_utilities.h"
 
 namespace opennn
@@ -98,6 +99,7 @@ ForwardPropagation::ForwardPropagation(const Index new_batch_size,
 
 ForwardPropagation::~ForwardPropagation()
 {
+    PROFILE_SCOPE_HOST("fp:dtor");
 #ifdef OPENNN_HAS_CUDA
     if (position_pinned) device::deallocate_pinned_host(position_pinned);
 #endif
@@ -142,6 +144,8 @@ void ForwardPropagation::set(
              "ForwardPropagation::set: retained outputs are inference-only; "
              "training keeps every activation alive for the backward pass.");
 
+    PROFILE_SCOPE_HOST("fp:set");
+
     reset_cuda_graph();
     co_planned_offsets.clear();
 
@@ -174,7 +178,11 @@ void ForwardPropagation::set(
     device_valid_lengths.assign(layers_number, nullptr);
     device_valid_length_storage.resize(layers_number);
 
-    auto forward_specs = neural_network->get_forward_specs(batch_size);
+    auto forward_specs = [&]
+    {
+        PROFILE_SCOPE_HOST("fp:set:specs");
+        return neural_network->get_forward_specs(batch_size);
+    }();
 
     throw_if(forward_specs.size() != layers_number,
              "ForwardPropagation::set: forward specs size ({}) does not match layers number ({}).",
@@ -492,12 +500,15 @@ void ForwardPropagation::set(
         // and YoloOverfit.CSPGradientFlowsAndLossDecreases then stops learning.
         // Do not simplify this to always-Compact.
 
-        const MemoryPoolPlan persistent_plan =
-            plan_memory_pool(
+        const MemoryPoolPlan persistent_plan = [&]
+        {
+            PROFILE_SCOPE_HOST("fp:set:plan");
+            return plan_memory_pool(
                 pooled_lifetimes,
                 early_release_outputs > 0
                     ? MemoryPoolStrategy::Compact
                     : MemoryPoolStrategy::Chronological);
+        }();
 
         apply_pool_plan(persistent_plan);
 
@@ -688,10 +699,11 @@ void ForwardPropagation::set(
                     : last_consumers[i];
             });
 
-        apply_pool_plan(
-            plan_memory_pool(
-                pooled_lifetimes,
-                MemoryPoolStrategy::Compact));
+        apply_pool_plan([&]
+        {
+            PROFILE_SCOPE_HOST("fp:set:plan");
+            return plan_memory_pool(pooled_lifetimes, MemoryPoolStrategy::Compact);
+        }());
     }
 
     const Index total_bytes =
@@ -709,12 +721,16 @@ void ForwardPropagation::set(
     }
     else
     {
+        PROFILE_SCOPE_HOST("fp:set:alloc");
         arena.resize_bytes(
             total_bytes,
             neural_network->get_device());
     }
 
-    arena.setZero();
+    {
+        PROFILE_SCOPE_HOST("fp:set:zero");
+        arena.setZero();
+    }
 
     memory_debug::record(
         arena.owns_memory() ? "forward" : "forward.aliased",

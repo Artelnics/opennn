@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/core/device_backend.h"
+#include "opennn/core/profiler.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/memory_debug.h"
@@ -327,13 +328,26 @@ public:
         const lock_guard<mutex> guard(blocks_mutex);
 
         const auto entry = blocks.find(byte_count);
-        if (entry == blocks.end()) return nullptr;
+        if (entry == blocks.end())
+        {
+            note("blockcache:miss");
+            return nullptr;
+        }
 
         vector<CachedBlock>& candidates = entry->second;
 
         const auto ready = ranges::find_if(candidates, is_ready);
 
-        if (ready == candidates.end()) return nullptr;
+        if (ready == candidates.end())
+        {
+            // Blocks of the right size existed but were all still in use by
+            // work that has not completed, which is a different problem from
+            // never having cached one.
+            note(candidates.empty() ? "blockcache:miss" : "blockcache:miss_pending");
+            return nullptr;
+        }
+
+        note("blockcache:hit");
 
         void* pointer = ready->pointer;
         recycle_events(*ready);
@@ -351,7 +365,13 @@ public:
 
         const lock_guard<mutex> guard(blocks_mutex);
 
-        if (cached_bytes + byte_count > byte_cap) return false;
+        if (cached_bytes + byte_count > byte_cap)
+        {
+            note("blockcache:give_over_cap");
+            return false;
+        }
+
+        note("blockcache:give");
 
         CachedBlock block;
         block.pointer = pointer;
@@ -401,6 +421,13 @@ public:
     }
 
 private:
+
+    // Counted through the profiler so the table already in place reports them,
+    // and only when profiling is on: this sits under every allocation.
+    static void note(const char* key)
+    {
+        if (profiler::is_enabled()) profiler::stats().add(key, 0.0);
+    }
 
     struct CachedBlock
     {
@@ -479,6 +506,7 @@ private:
 
 void* allocate(Device device_type, Index byte_count)
 {
+    PROFILE_SCOPE_HOST("device:allocate");
     throw_if_auto(device_type);
     throw_if(byte_count < 0, "device allocation size cannot be negative.");
 
@@ -511,6 +539,8 @@ void* allocate(Device device_type, Index byte_count)
 void deallocate(Device device_type, void* pointer, Index byte_count)
 {
     if (!pointer) return;
+
+    PROFILE_SCOPE_HOST("device:deallocate");
 
     throw_if_auto(device_type);
 

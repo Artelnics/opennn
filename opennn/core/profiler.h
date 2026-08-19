@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <atomic>
+#include <cstdlib>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
@@ -101,10 +102,29 @@ inline Stats& stats()
 namespace detail
 {
 
+// Default from the environment so any binary can be profiled, not only the
+// training path that calls set_enabled explicitly: PROFILE_SCOPE is compiled
+// into inference too, and there was no way to read it.
 inline std::atomic_bool& enabled_flag()
 {
-    static std::atomic_bool enabled = false;
+    static std::atomic_bool enabled{std::getenv("OPENNN_PROFILE") != nullptr};
     return enabled;
+}
+
+// Nothing outside the training loop ever printed the table, so scopes compiled
+// into inference recorded into a Stats nobody read. Dump at exit when profiling
+// was asked for and no one has. Constructing this touches stats() first, so
+// Stats outlives it and the destructor is safe.
+struct ExitDump
+{
+    ExitDump() { stats(); }
+    ~ExitDump();
+};
+
+inline ExitDump& exit_dump()
+{
+    static ExitDump dump;
+    return dump;
 }
 
 }
@@ -128,6 +148,7 @@ public:
           active(is_enabled() && !key.empty())
     {
         if (!active) return;
+        detail::exit_dump();
         if (sync_gpu) device::synchronize();
         start = chrono::steady_clock::now();
     }
@@ -150,6 +171,17 @@ private:
     bool sync_gpu;
     bool active;
 };
+
+namespace detail
+{
+
+inline ExitDump::~ExitDump()
+{
+    if (is_enabled() && stats().total_ms() > 0.0)
+        stats().print(cerr, "profile (OPENNN_PROFILE)");
+}
+
+}
 
 }
 
