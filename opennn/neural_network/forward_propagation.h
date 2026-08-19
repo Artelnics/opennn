@@ -155,7 +155,7 @@ struct ForwardPropagation
     array<Buffer, size_t(device::GraphWorkspaceKind::Count)> inference_graph_workspaces{
         Buffer{Device::CUDA}, Buffer{Device::CUDA}, Buffer{Device::CUDA},
         Buffer{Device::CUDA}, Buffer{Device::CUDA}, Buffer{Device::CUDA},
-        Buffer{Device::CUDA}};
+        Buffer{Device::CUDA}, Buffer{Device::CUDA}};
 
 private:
 

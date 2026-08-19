@@ -229,6 +229,31 @@ bool Dense::try_wire_drelu_fusion(Dense& producer)
     return true;
 }
 
+bool Dense::try_wire_single_output_relu_fusion(Dense& producer)
+{
+    const bool producer_eligible = !producer.gated
+        && !producer.batch_norm.active() && !producer.dropout.active()
+        && !producer.tied_source && producer.is_trainable
+        && producer.activation_operator.activation_function == ActivationFunction::ReLU;
+
+    const bool consumer_eligible = !gated && !tied_source && is_trainable
+        && output_features == 1 && !combination.accumulate_input_delta
+        && !combination.drelu_source;
+
+    if (!producer_eligible || !consumer_eligible) return false;
+
+    combination.fuse_input_relu = true;
+    producer.activation_operator.backward_fused_by_consumer = &combination.input_relu_fused_active;
+    return true;
+}
+
+void Dense::reset_single_output_relu_fusion()
+{
+    combination.fuse_input_relu = false;
+    combination.input_relu_fused_active = false;
+    activation_operator.backward_fused_by_consumer = nullptr;
+}
+
 void Dense::reset_drelu_fusion()
 {
     combination.emit_relu_mask = false;

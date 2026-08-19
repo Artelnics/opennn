@@ -186,8 +186,11 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
         ? back_propagation.input_delta_addend(layer, 0)
         : no_addend;
 
+    bool fused_input_relu = false;
     linear_backward(output_delta, input, weights, weight_gradient, bias_gradient, input_delta,
-                    accumulate_input_delta, nullptr, addend.empty() ? nullptr : &addend);
+                    accumulate_input_delta, nullptr, addend.empty() ? nullptr : &addend,
+                    fuse_input_relu ? &fused_input_relu : nullptr);
+    input_relu_fused_active = fused_input_relu;
 
     if (recover_unfused)
         activation_backward(input, input_delta, ActivationFunction::ReLU);
