@@ -35,13 +35,6 @@ struct CombinationOperator : Operator
     bool  transposed_inference_preferred = false;
     bool  transposed_inference_active    = false;
 
-    // Set by the layer when this combination's input is the output of a ReLU
-    // whose backward it can absorb (Dense::try_wire_single_output_relu_fusion).
-    // input_relu_fused_active says whether the last backward actually did it,
-    // and the producing activation operator reads that to decide whether to run.
-    bool fuse_input_relu = false;
-    mutable bool input_relu_fused_active = false;
-
     mutable bool emit_relu_mask = false;
     mutable bool relu_mask_fused_active = false;
     Buffer relu_mask{Device::CUDA};

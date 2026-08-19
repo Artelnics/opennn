@@ -118,15 +118,54 @@ that does not show on this laptop (per-sample cost falls from 7k to 56k here),
 so it is the next thing to profile on that machine; the tail is part of it
 (the driver still trained the remainder in that sweep).
 
-## What is left on the OpenNN side
+### Earlier list
 
 * Memory: at bf16 224,000 OpenNN peaks at 4.9 GB against PyTorch's 4.1 GB
   (nvidia-smi; PyTorch's own allocator 2.7 GB) - the tail contexts were the
   larger part of the difference; the remaining is the backward arena keeping
   both hidden-layer deltas alive.
-* The output layer (1024 -> 1) costs 0.25 ms of a 2.7 ms step in three
-  GEMV-shaped calls cuBLAS runs at 0.1-0.3 TFLOPS; a fused outer-product x
-  ReLU' kernel for the single-output case would save ~0.13 ms (5%).
+* The output layer's GEMV-shaped calls: done in the second round above
+  (measured +5-9% in bf16, more than the 5% predicted).
+## Second round (2026-08-19, commit 626b5706c)
+
+The output layer's backward was the biggest non-GEMM item left: its input delta
+and weight gradient run as two cuBLAS GEMVs that read the activation twice, at
+69-82 GB/s of the card's 330, and the ReLU backward of the layer feeding it is
+a third pass over the same tensor. `linear_backward_single_output_cuda` does
+all three in one warp-per-row pass (deterministic: register accumulation,
+warp-ordered block fold, block-ordered finalize), and the ReLU mask is free
+because that ReLU's output is what the pass already reads.
+`Dense::try_wire_single_output_relu_fusion` wires the fold in `compile()`;
+`OPENNN_SINGLE_OUTPUT_KERNEL=0` disables both.
+
+Eight alternated runs per cell, medians (every kernel-on run beat every
+kernel-off run at both bf16 points):
+
+| point | kernel on | kernel off | |
+|---|---:|---:|---:|
+| bf16 7,000 | 2.75 M | 2.62 M | **+5.1%** |
+| bf16 112,000 | 3.13 M | 2.87 M | **+9.3%** |
+| fp32 7,000 | 1.21 M | 1.18 M | +2.6% |
+
+Per step at bf16 7,000 the three passes go from 0.583 to 0.369 ms (the kernel
+0.137 against the GEMVs' 0.193; the ReLU backward 0.130 -> 0.077 ms per call,
+two activations instead of three). Held-out log loss unchanged at 0.463.
+
+Against PyTorch's best config, alternated O P P O on the same thermal state:
+
+| point | OpenNN | PyTorch best | |
+|---|---:|---:|---:|
+| bf16 7,000 | 2.81 / 2.59 M | 2.40 / 2.34 M | **+14%** |
+| bf16 112,000 | 2.99 / 2.94 M | 2.70 / 2.70 M | **+10%** |
+| fp32 7,000 | 1.25 / 1.19 M | 1.13 / 1.16 M | **+6%** |
+
+The 28 commits the other machine landed between the two rounds (single-output
+forward kernel, remainder batch sharing the main arena, CUDA block reuse) are
+neutral for this step on this GPU: bf16 7,000 2.69 / 2.61 M against 2.65 / 2.63
+before them.
+
+## What is left on the OpenNN side
+
 * `OPENNN_DRELU_FUSION=1` on these shapes (the ReLU derivative as cuBLASLt's
   DRELU epilogue of the next layer's dX GEMM, mask from a RELU_AUX forward
   epilogue): measured, alternated pairs at 7,000 - bf16 2.27 / 2.31 M vs

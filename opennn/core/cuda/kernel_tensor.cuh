@@ -24,22 +24,6 @@ void linear_forward_single_output_cuda(const Index rows, const Index features,
                                        const T* input, const T* weights,
                                        const T* bias, T* output);
 
-// Backward of that layer: the input delta, the weight gradient and the bias
-// gradient in one pass over the input, where cuBLAS reads it twice through two
-// GEMVs. input_delta may be null (nothing consumes it), bias_gradient may be
-// null (the layer has no bias). Returns false without launching anything when
-// the feature count does not divide into whole 16-byte vectors per lane, which
-// is the caller's signal to keep cuBLAS. With fuse_input_relu the input
-// delta is also masked by the derivative of the ReLU that produced the
-// input, which costs nothing here: that ReLU's output is what the pass
-// already reads to build the weight gradient.
-template<typename T>
-bool linear_backward_single_output_cuda(const Index rows, const Index features,
-                                        const T* output_delta, const T* input,
-                                        const T* weights, T* input_delta,
-                                        bool fuse_input_relu,
-                                        float* weight_gradient, float* bias_gradient);
-
 #endif
 
 #endif
