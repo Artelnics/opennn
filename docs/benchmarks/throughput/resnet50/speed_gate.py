@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""ResNet-50 GPU speed gate: catch throughput regressions before they ship.
+"""GPU speed gate: catch throughput regressions before they ship.
+
+Two families so far, selected with --family: resnet50 (the default) and
+higgs, the dense classifier. Each brings its own harness, its own
+invariants and its own baselines, and both live in one file because the
+measurement protocol - best of N runs, per-machine baselines, a tolerance
+stored with the baseline - is the same argument in both cases.
 
 Runs the OpenNN ResNet-50 training harness at a few (batch, precision) points
 and fails if any of the invariants that past regressions violated no longer
@@ -51,10 +57,10 @@ DEFAULT_BENCH_DATA = Path(os.environ.get("OPENNN_BENCH_DATA",
                                          str(Path.home() / "opennn-benchmark-data")))
 
 
-def find_binary(explicit: str | None) -> str:
+def find_binary(explicit: str | None, higgs: bool = False) -> str:
     if explicit:
         return explicit
-    for env in ("OPENNN_RESNET50_BIN",):
+    for env in (("OPENNN_SPEED_BIN",) if higgs else ("OPENNN_RESNET50_BIN",)):
         if os.environ.get(env):
             return os.environ[env]
     repo = HERE.parents[3]
@@ -71,6 +77,58 @@ def git_commit() -> str:
                               capture_output=True, text=True, check=False).stdout.strip()
     except Exception:
         return "unknown"
+
+
+def parse_fields(raw: str) -> dict:
+    fields: dict[str, str] = {}
+    for line in raw.splitlines():
+        if "=" in line and " " not in line.split("=", 1)[0]:
+            key, _, value = line.partition("=")
+            fields.setdefault(key.strip(), value.strip())
+    return fields
+
+
+def run_higgs_point(binary: str, data: Path, epochs: int, batch: int, precision: str,
+                    keep_tail: bool = False) -> dict:
+    cmd = [binary, str(data / "higgs_train.csv"), str(epochs), str(batch), precision,
+           "1024", "relu", "2", str(data / "higgs_test.csv"), "none", "none", "none"]
+    env = dict(os.environ)
+    env.setdefault("LD_LIBRARY_PATH", "/usr/local/cuda/lib64:")
+    out = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env)
+    raw = out.stdout + out.stderr
+    return {
+        "batch": batch,
+        "precision": precision,
+        "keep_tail": keep_tail,
+        "returncode": out.returncode,
+        "fields": parse_fields(raw),
+        "raw_tail": raw[-1500:],
+    }
+
+
+def check_higgs_point(result: dict, baseline: float | None, tolerance: float) -> list[str]:
+    f = result["fields"]
+    failures: list[str] = []
+    if result["returncode"] != 0 or f.get("RESULT") != "OK":
+        failures.append(f"run failed (exit {result['returncode']}, RESULT={f.get('RESULT')})")
+        return failures
+
+    # Whole batches only, like the PyTorch and TensorFlow drivers.
+    if f.get("tail_kept") != "0":
+        failures.append(f"tail_kept={f.get('tail_kept')} - the remainder batch is being trained")
+    if f.get("cuda_graph") != "captured":
+        failures.append(f"cuda_graph={f.get('cuda_graph')}")
+    # The fold is worth 5-9% and changes no result, so only an invariant
+    # catches it: the throughput band on a laptop is wider than the loss.
+    if f.get("single_output_fold") != "1":
+        failures.append("the output layer no longer takes the one-pass backward")
+
+    sps = float(f.get("samples_per_sec", "0") or 0)
+    if sps <= 0:
+        failures.append("no samples_per_sec")
+    elif baseline is not None and sps < baseline * (1.0 - tolerance):
+        failures.append(f"throughput {sps:.0f} < baseline {baseline:.0f} - {tolerance:.0%}")
+    return failures
 
 
 def run_point(binary: str, data: Path, epochs: int, batch: int, precision: str,
@@ -145,7 +203,8 @@ def check_point(result: dict, baseline: float | None, tolerance: float) -> list[
 def main() -> int:
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--record", action="store_true", help="write this run as the baseline")
-    parser.add_argument("--points", default="128:bf16,128:bf16:tail,1024:bf16,1024:fp32")
+    parser.add_argument("--family", default="resnet50", choices=["resnet50", "higgs"])
+    parser.add_argument("--points", default="")
     parser.add_argument("--repeats", type=int, default=2,
                         help="runs per point; the best samples/s counts")
     parser.add_argument("--tolerance", type=float, default=0.10,
@@ -153,10 +212,17 @@ def main() -> int:
                              "the stored value wins on later checks")
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--bin")
-    parser.add_argument("--data-dir", type=Path, default=DEFAULT_BENCH_DATA / "cifar10")
+    parser.add_argument("--data-dir", type=Path)
     args = parser.parse_args()
 
-    binary = find_binary(args.bin)
+    higgs = args.family == "higgs"
+    if not args.points:
+        args.points = "7000:bf16,112000:bf16,7000:fp32" if higgs \
+            else "128:bf16,128:bf16:tail,1024:bf16,1024:fp32"
+    if args.data_dir is None:
+        args.data_dir = DEFAULT_BENCH_DATA / ("higgs" if higgs else "cifar10")
+
+    binary = find_binary(args.bin, higgs)
     if not args.data_dir.exists():
         print(f"data dir not found: {args.data_dir}", file=sys.stderr)
         return 2
@@ -170,6 +236,8 @@ def main() -> int:
         points.append((batch, precision, keep_tail))
 
     baselines = json.loads(BASELINES.read_text()) if BASELINES.exists() else {}
+    measure = run_higgs_point if higgs else run_point
+    check = check_higgs_point if higgs else check_point
 
     machine_key = None
     all_failures: dict[str, list[str]] = {}
@@ -180,16 +248,16 @@ def main() -> int:
         # invariant failure in any run counts.
         result = None
         for _ in range(max(1, args.repeats)):
-            attempt = run_point(binary, args.data_dir, args.epochs, batch, precision, keep_tail)
+            attempt = measure(binary, args.data_dir, args.epochs, batch, precision, keep_tail)
             attempt_sps = float(attempt["fields"].get("samples_per_sec", "0") or 0)
             if result is None or attempt_sps > float(result["fields"].get("samples_per_sec", "0") or 0):
-                if result is not None:
+                if result is not None and not higgs:
                     attempt["graphs_abandoned"] |= result["graphs_abandoned"]
                     attempt["bn_staged"] = max(attempt["bn_staged"], result["bn_staged"])
                 result = attempt
         f = result["fields"]
         if machine_key is None and f.get("device"):
-            machine_key = f"{f.get('device')} | cudnn {f.get('cudnn', '?')}"
+            machine_key = f"{args.family} | {f.get('device')} | cudnn {f.get('cudnn', '?')}"
         point_key = f"{precision}@{batch}" + ("+tail" if keep_tail else "")
         baseline = None
         tolerance = args.tolerance
@@ -197,11 +265,12 @@ def main() -> int:
             entry = baselines[machine_key]
             baseline = entry.get("points", {}).get(point_key, {}).get("samples_per_sec")
             tolerance = float(entry.get("tolerance", tolerance))
-        failures = check_point(result, baseline, tolerance)
+        failures = check(result, baseline, tolerance)
         sps = float(f.get("samples_per_sec", "0") or 0)
         measured[point_key] = sps
-        rows.append((point_key, sps, baseline, result["bn_staged"], result["bn_degraded"],
-                     result["wgrad_no_fp32_store"], failures))
+        rows.append((point_key, sps, baseline,
+                     result.get("bn_staged", 0), result.get("bn_degraded", 0),
+                     result.get("wgrad_no_fp32_store", 0), failures))
         if failures:
             all_failures[point_key] = failures
             if result["returncode"] != 0:

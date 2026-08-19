@@ -34,6 +34,11 @@
 #include <string>
 #include <vector>
 
+#ifdef OPENNN_HAS_CUDA
+#include <cuda_runtime.h>
+#include <cudnn.h>
+#endif
+
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/core/configuration.h"
 #include "opennn/neural_network/layers/dense_layer.h"
@@ -242,7 +247,19 @@ int main(int argc, char* argv[])
 
         cout << "engine=opennn\n";
         cout << "mode=train\n";
+#ifdef OPENNN_HAS_CUDA
+        // Machine identity for the speed gate: throughput and kernel choice are
+        // a property of (GPU, cuDNN), so baselines are keyed by both.
+        {
+            cudaDeviceProp properties{};
+            cout << "device="
+                 << (cudaGetDeviceProperties(&properties, 0) == cudaSuccess ? properties.name : "cuda")
+                 << "\n";
+            cout << "cudnn=" << cudnnGetVersion() << "\n";
+        }
+#else
         cout << "device=cuda\n";
+#endif
         cout << "samples=" << samples << "\n";
         cout << "tail_kept=" << (keep_tail ? 1 : 0) << "\n";
         cout << "batch=" << batch << "\n";
@@ -309,6 +326,18 @@ int main(int argc, char* argv[])
         // one batch, which is 6.5% at batch 896,000.
         const Index samples_per_epoch = (samples / batch) * batch;
         const double samples_per_sec = double(samples_per_epoch) / median_epoch_s;
+
+        // What the speed gate asserts besides throughput: the step was
+        // captured, and the output layer still takes the one-pass backward
+        // that folds its producer's ReLU. Both are invariants a refactor can
+        // drop without changing a single result.
+        const auto* output_dense = dynamic_cast<const opennn::Dense*>(
+            network->get_layers().back().get());
+        cout << "cuda_graph="
+             << (getenv("OPENNN_SPEED_NO_GRAPH") ? "off"
+                 : adam->get_cuda_graph_capture_failed() ? "failed" : "captured") << "\n";
+        cout << "single_output_fold="
+             << (output_dense && output_dense->single_output_relu_fusion_wired() ? 1 : 0) << "\n";
 
         const BinaryMetrics metrics = evaluate(*network, test_path, batch);
 

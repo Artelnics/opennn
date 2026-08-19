@@ -1371,6 +1371,67 @@ TEST_F(GpuComparison, TransformerTrainingGradient)
     filesystem::remove(corpus);
 }
 
+// The dense single-output backward does the input delta, the weight gradient
+// and the producing ReLU's derivative in one pass. Correctness is covered by the
+// gradient tests; what this one guards is that the fast path is still taken -
+// dropping it costs 5-9% on the HIGGS benchmark and changes no result, so
+// nothing else would notice.
+TEST_F(GpuComparison, DenseSingleOutputBackwardFoldsProducerRelu)
+{
+    const Index samples_number = 16;
+    const Index inputs_number = 28;
+    const Index hidden_number = 1024;   // 32 lanes x whole 16-byte vectors
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    TabularDataset dataset(samples_number, {inputs_number}, {1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    NeuralNetwork network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{hidden_number}, "ReLU"));
+    network.add_layer(make_unique<opennn::Dense>(Shape{hidden_number}, Shape{1}, "Sigmoid"));
+    network.compile();
+    network.set_parameters_random();
+
+    const auto* output_layer = dynamic_cast<const opennn::Dense*>(network.get_layers()[1].get());
+    ASSERT_NE(output_layer, nullptr);
+    EXPECT_TRUE(output_layer->single_output_relu_fusion_wired())
+        << "the single-output layer no longer absorbs the ReLU backward of its producer";
+
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    Batch batch(samples_number, &dataset, network.get_config());
+    batch.fill(dataset.get_sample_indices("Training"),
+               dataset.get_feature_indices("Input"),
+               dataset.get_feature_indices("Decoder"),
+               dataset.get_feature_indices("Target"));
+    batch.upload_to_device_batch_async(batch, device::get_transfer_stream());
+    batch.wait_h2d_complete();
+
+    ForwardPropagation forward_propagation(samples_number, &network);
+    BackPropagation back_propagation(samples_number, loss);
+
+    network.forward_propagate(batch.get_inputs(), forward_propagation, true);
+    loss.back_propagate(batch, forward_propagation, back_propagation);
+
+    // The consumer reports through the same per-layer flag the DReLU epilogue
+    // uses, and the producer's activation backward reads it to stay out.
+    EXPECT_NE(forward_propagation.drelu_fused_by_layer[0], 0)
+        << "the one-pass backward ran but did not report the fold, so the ReLU "
+           "backward of layer 0 ran a second time over the same tensor";
+
+    // A layer with more than one output keeps the general path.
+    NeuralNetwork wide;
+    wide.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{hidden_number}, "ReLU"));
+    wide.add_layer(make_unique<opennn::Dense>(Shape{hidden_number}, Shape{2}, "Sigmoid"));
+    wide.compile();
+    const auto* wide_output = dynamic_cast<const opennn::Dense*>(wide.get_layers()[1].get());
+    ASSERT_NE(wide_output, nullptr);
+    EXPECT_FALSE(wide_output->single_output_relu_fusion_wired());
+}
+
 TEST_F(GpuComparison, TransformerForward)
 {
     const Index batch_size = 2;

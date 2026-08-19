@@ -182,7 +182,7 @@ TEST(Detection, GpuAnchorsRefreshAfterSameSizeReconfiguration)
 
     auto detection = make_unique<Detection>(
         input_shape,
-        vector<array<float, 2>>{{0.25f, 0.5f}},
+        vector<std::array<float, 2>>{{0.25f, 0.5f}},
         "detection");
     Detection* const detection_ptr = detection.get();
 
@@ -220,7 +220,7 @@ TEST(Detection, GpuAnchorsRefreshAfterSameSizeReconfiguration)
     const vector<float> first = forward_and_read();
 
     detection_ptr->set(input_shape,
-                       vector<array<float, 2>>{{0.75f, 1.25f}},
+                       vector<std::array<float, 2>>{{0.75f, 1.25f}},
                        "detection");
     const vector<float> second = forward_and_read();
 

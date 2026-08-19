@@ -1,5 +1,23 @@
 {
-  "NVIDIA GeForce RTX 3060 Laptop GPU | cudnn 91002": {
+  "higgs | NVIDIA GeForce RTX 3060 Laptop GPU | cudnn 92400": {
+    "commit": "1921714eb",
+    "epochs": 3,
+    "points": {
+      "bf16@112000": {
+        "samples_per_sec": 3194508
+      },
+      "bf16@7000": {
+        "samples_per_sec": 2879602
+      },
+      "fp32@7000": {
+        "samples_per_sec": 1297999
+      }
+    },
+    "recorded": "2026-08-19T19:57:28Z",
+    "repeats": 2,
+    "tolerance": 0.1
+  },
+  "resnet50 | NVIDIA GeForce RTX 3060 Laptop GPU | cudnn 91002": {
     "commit": "d4b667ad2",
     "epochs": 3,
     "points": {
@@ -20,7 +38,7 @@
     "repeats": 2,
     "tolerance": 0.1
   },
-  "NVIDIA GeForce RTX 3060 Laptop GPU | cudnn 92400": {
+  "resnet50 | NVIDIA GeForce RTX 3060 Laptop GPU | cudnn 92400": {
     "commit": "5da7e73d7",
     "epochs": 3,
     "points": {
