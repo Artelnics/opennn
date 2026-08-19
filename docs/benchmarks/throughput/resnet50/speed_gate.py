@@ -43,6 +43,8 @@ Exit status 0 = pass, 1 = regression or invariant broken, 2 = could not run.
 from __future__ import annotations
 
 import argparse
+from collections.abc import Callable
+from dataclasses import dataclass
 import json
 import os
 import re
@@ -57,10 +59,10 @@ DEFAULT_BENCH_DATA = Path(os.environ.get("OPENNN_BENCH_DATA",
                                          str(Path.home() / "opennn-benchmark-data")))
 
 
-def find_binary(explicit: str | None, higgs: bool = False) -> str:
+def find_binary(explicit: str | None, binary_env: str = "OPENNN_RESNET50_BIN") -> str:
     if explicit:
         return explicit
-    for env in (("OPENNN_SPEED_BIN",) if higgs else ("OPENNN_RESNET50_BIN",)):
+    for env in (binary_env,):
         if os.environ.get(env):
             return os.environ[env]
     repo = HERE.parents[3]
@@ -77,6 +79,18 @@ def git_commit() -> str:
                               capture_output=True, text=True, check=False).stdout.strip()
     except Exception:
         return "unknown"
+
+
+# What a family brings: how to run one point, what to assert besides the
+# throughput band, the points worth gating, where its data lives, and which
+# environment variable names its binary.
+@dataclass(frozen=True)
+class Family:
+    measure: Callable
+    check: Callable
+    points: str
+    data_dir: str
+    binary_env: str
 
 
 def parse_fields(raw: str) -> dict:
@@ -200,6 +214,16 @@ def check_point(result: dict, baseline: float | None, tolerance: float) -> list[
     return failures
 
 
+FAMILIES = {
+    "resnet50": Family(run_point, check_point,
+                       "128:bf16,128:bf16:tail,1024:bf16,1024:fp32",
+                       "cifar10", "OPENNN_RESNET50_BIN"),
+    "higgs": Family(run_higgs_point, check_higgs_point,
+                    "7000:bf16,112000:bf16,7000:fp32",
+                    "higgs", "OPENNN_SPEED_BIN"),
+}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--record", action="store_true", help="write this run as the baseline")
@@ -215,14 +239,11 @@ def main() -> int:
     parser.add_argument("--data-dir", type=Path)
     args = parser.parse_args()
 
-    higgs = args.family == "higgs"
-    if not args.points:
-        args.points = "7000:bf16,112000:bf16,7000:fp32" if higgs \
-            else "128:bf16,128:bf16:tail,1024:bf16,1024:fp32"
-    if args.data_dir is None:
-        args.data_dir = DEFAULT_BENCH_DATA / ("higgs" if higgs else "cifar10")
+    family = FAMILIES[args.family]
+    args.points = args.points or family.points
+    args.data_dir = args.data_dir or DEFAULT_BENCH_DATA / family.data_dir
 
-    binary = find_binary(args.bin, higgs)
+    binary = find_binary(args.bin, family.binary_env)
     if not args.data_dir.exists():
         print(f"data dir not found: {args.data_dir}", file=sys.stderr)
         return 2
@@ -236,8 +257,7 @@ def main() -> int:
         points.append((batch, precision, keep_tail))
 
     baselines = json.loads(BASELINES.read_text()) if BASELINES.exists() else {}
-    measure = run_higgs_point if higgs else run_point
-    check = check_higgs_point if higgs else check_point
+    measure, check = family.measure, family.check
 
     machine_key = None
     all_failures: dict[str, list[str]] = {}
@@ -251,7 +271,7 @@ def main() -> int:
             attempt = measure(binary, args.data_dir, args.epochs, batch, precision, keep_tail)
             attempt_sps = float(attempt["fields"].get("samples_per_sec", "0") or 0)
             if result is None or attempt_sps > float(result["fields"].get("samples_per_sec", "0") or 0):
-                if result is not None and not higgs:
+                if result is not None and args.family == "resnet50":
                     attempt["graphs_abandoned"] |= result["graphs_abandoned"]
                     attempt["bn_staged"] = max(attempt["bn_staged"], result["bn_staged"])
                 result = attempt
