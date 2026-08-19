@@ -13,6 +13,12 @@
 #
 #   usage:  python pytorch_higgs_infer.py <test_csv> [batch] [runs] [fp32|bf16]
 #                                         [hidden] [hidden_layers] [activation]
+#   env:    PT_COMPILE_MODE=default|reduce-overhead|max-autotune -> torch.compile
+#                      the model. reduce-overhead and max-autotune bring their own
+#                      CUDA graphs, so the hand-built one is dropped for them.
+#           PT_BF16_WEIGHTS=1 -> hold the weights in bf16 instead of casting them
+#                      inside autocast on every call (what a deployment does)
+#           PT_NOGRAPH=1 -> no CUDA graph at all
 
 import contextlib
 import os
@@ -42,6 +48,8 @@ def main():
     torch.manual_seed(42)
 
     use_autocast = precision == "bf16"
+    compile_mode = os.environ.get("PT_COMPILE_MODE")        # None -> eager modules
+    bf16_weights = os.environ.get("PT_BF16_WEIGHTS") is not None and use_autocast
     # fp32 runs with TF32 tensor cores in every engine of this benchmark
     # (OpenNN's fp32 GEMMs are CUBLAS_COMPUTE_32F_FAST_TF32); "strict" disables it.
     allow_tf32 = precision != "strict"
@@ -64,6 +72,8 @@ def main():
     print(f"hidden_layers={hidden_layers}")
     print(f"activation={activation}")
     print(f"precision={precision}")
+    print(f"mode={'compile:' + compile_mode if compile_mode else 'eager'}"
+          f"{' +bf16_weights' if bf16_weights else ''}")
 
     if processed <= 0:
         print("RESULT=ERROR")
@@ -81,13 +91,28 @@ def main():
     model = torch.nn.Sequential(*layers).to(device).eval()
     print(f"parameters={sum(p.numel() for p in model.parameters())}")
 
+    # bf16 weights make the autocast casts unnecessary, so the timed pass moves
+    # only activations; the comparison keeps its bf16 arithmetic either way.
+    if bf16_weights:
+        model = model.to(torch.bfloat16)
+
+    if compile_mode:
+        model = torch.compile(model, mode=None if compile_mode == "default" else compile_mode)
+
     x = torch.from_numpy(x_np[:processed]).to(device).contiguous()
     n_batches = processed // batch
 
-    ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
-           if use_autocast else contextlib.nullcontext())
+    if bf16_weights:
+        x = x.to(torch.bfloat16)
 
-    use_graph = os.environ.get("PT_NOGRAPH") is None
+    ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
+           if use_autocast and not bf16_weights else contextlib.nullcontext())
+
+    # torch.compile's reduce-overhead / max-autotune wrap the step in their own
+    # CUDA graph; capturing a compiled model by hand fights that, so the manual
+    # graph is only for the eager path.
+    manual_graph_modes = {None, "default"}
+    use_graph = os.environ.get("PT_NOGRAPH") is None and compile_mode in manual_graph_modes
 
     if use_graph:
         static_x = x[:batch].clone()
@@ -109,10 +134,16 @@ def main():
                 static_x.copy_(x[s:s + batch], non_blocking=True)
                 graph.replay()
     else:
+        print("cuda_graph=" + ("compiled" if compile_mode else "off"))
+        static_x = x[:batch].clone()
+
         def run_pass():
             with torch.no_grad(), ctx:
                 for s in range(0, processed, batch):
-                    model(x[s:s + batch])
+                    # The same fixed-buffer staging the graph paths do, so the
+                    # engines are compared on equal terms.
+                    static_x.copy_(x[s:s + batch], non_blocking=True)
+                    model(static_x)
 
     run_pass()
     run_pass()

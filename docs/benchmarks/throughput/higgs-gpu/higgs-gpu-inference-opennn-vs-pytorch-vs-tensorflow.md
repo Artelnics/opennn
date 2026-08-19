@@ -96,6 +96,35 @@ Each engine processes the same held-out rows with the same network, batch, activ
 
 Dataset loading, process startup, model construction, the initial host-to-device upload, graph capture, and warmup are outside the measured region. The per-batch device-to-device staging copy is included.
 
+## 2026-08-19 protocol correction: PyTorch's best configuration
+
+The PyTorch cell of this benchmark was never eager - the driver builds a CUDA
+graph by hand and replays it per batch - but it was missing two things a
+deployment would use: `torch.compile` over the model, and bf16 *weights*
+instead of weights cast inside `autocast` on every replay. Both are now knobs
+(`PT_COMPILE_MODE`, `PT_BF16_WEIGHTS`) and the runner sets PyTorch's measured
+best by default: `reduce-overhead` plus bf16 weights in bf16, `max-autotune` in
+fp32 (`PYTORCH_PLAIN=1` reverts). The eager fallback now stages through the
+same fixed buffer the graph paths use, so the engines are compared on equal
+terms.
+
+What it is worth to PyTorch on an RTX 3060 Laptop at batch 8,192: bf16
+6.59 -> 7.30 M samples/s (+11%), fp32 3.85 -> 4.19 M (+9%).
+
+Three engines alternated, three rounds each, medians (RTX 3060 Laptop, WSL2,
+batch 8,192, 28-1024-1024-1):
+
+| Precision | OpenNN | PyTorch best | TensorFlow | OpenNN / PyTorch | OpenNN / TF |
+|---|---:|---:|---:|---:|---:|
+| bf16 | **9,442,101 samples/s** | 7,617,578 | 8,219,183 | **1.24x** | **1.15x** |
+| fp32 (TF32) | **4,666,954 samples/s** | 4,116,292 | 4,017,197 | **1.13x** | **1.16x** |
+
+The RTX 4080 figures below predate this correction, and so does the RTX 5070 Ti
+artifact `results/gpu-higgs-dense-inference-speed-20260819T101642Z.json`
+(OpenNN 1.28x PyTorch bf16, 1.30x fp32): both compared against the
+uncompiled-autocast path, so their PyTorch cells are ~10% low. They need a
+re-measurement with this protocol before they are quoted again.
+
 ## Results
 
 Five runs per engine, medians. Artifact:

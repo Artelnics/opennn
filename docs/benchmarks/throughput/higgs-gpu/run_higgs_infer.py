@@ -299,6 +299,16 @@ def engine_cmd(
         wsl_cuda = os.environ.get("WSL_CUDA_LIB", "/usr/lib/wsl/lib")
         prepend_env_path(env, "LD_LIBRARY_PATH", [wsl_cuda if Path(wsl_cuda).exists() else ""])
     elif engine == "pytorch":
+        # PyTorch's best one-line configuration for this benchmark, the way the
+        # training runners already give it: torch.compile over the model, and in
+        # bf16 the weights held in bf16 instead of cast inside autocast on every
+        # call. Measured on an RTX 3060: +11% bf16, +9% fp32 over the CUDA-graph
+        # eager path, which is what earlier artifacts compared against.
+        # PYTORCH_PLAIN=1 reverts to that path.
+        if not os.environ.get("PYTORCH_PLAIN"):
+            env["PT_COMPILE_MODE"] = "reduce-overhead" if precision == "bf16" else "max-autotune"
+            if precision == "bf16":
+                env["PT_BF16_WEIGHTS"] = "1"
         cmd = [
             PY,
             str(HERE / "pytorch_higgs_infer.py"),
