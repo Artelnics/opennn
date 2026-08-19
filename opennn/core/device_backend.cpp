@@ -331,21 +331,18 @@ public:
 
         vector<CachedBlock>& candidates = entry->second;
 
-        for (size_t i = candidates.size(); i-- > 0;)
-        {
-            if (!is_ready(candidates[i])) continue;
+        const auto ready = ranges::find_if(candidates, is_ready);
 
-            void* pointer = candidates[i].pointer;
-            recycle_events(candidates[i]);
+        if (ready == candidates.end()) return nullptr;
 
-            candidates[i] = std::move(candidates.back());
-            candidates.pop_back();
-            cached_bytes -= byte_count;
+        void* pointer = ready->pointer;
+        recycle_events(*ready);
 
-            return pointer;
-        }
+        *ready = std::move(candidates.back());
+        candidates.pop_back();
+        cached_bytes -= byte_count;
 
-        return nullptr;
+        return pointer;
     }
 
     bool give(void* pointer, Index byte_count)
@@ -446,24 +443,24 @@ private:
 
     static bool is_ready(const CachedBlock& block)
     {
-        for (cudaEvent_t event : block.pending_events)
-        {
-            const cudaError_t status = cudaEventQuery(event);
+        return ranges::all_of(block.pending_events,
+                              [](cudaEvent_t event)
+                              {
+                                  const cudaError_t status = cudaEventQuery(event);
 
-            // cudaErrorNotReady is an answer, not a failure, but it still lands
-            // in the sticky last-error slot that check_last_error() reads.
-            cudaGetLastError();
+                                  // cudaErrorNotReady is an answer rather than a
+                                  // failure, but it still lands in the sticky
+                                  // last-error slot check_last_error() reads.
+                                  cudaGetLastError();
 
-            if (status != cudaSuccess) return false;
-        }
-
-        return true;
+                                  return status == cudaSuccess;
+                              });
     }
 
     void recycle_events(CachedBlock& block)
     {
-        for (cudaEvent_t event : block.pending_events)
-            event_pool.push_back(event);
+        event_pool.insert(event_pool.end(),
+                          block.pending_events.begin(), block.pending_events.end());
 
         block.pending_events.clear();
     }
