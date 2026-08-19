@@ -708,7 +708,7 @@ struct TensorView
     void setZero() const { fill(0.0f); }
     void set_zero_async() const;
 
-    cudnnTensorDescriptor_t get_descriptor() const;
+    CudnnDescriptor<cudnnTensorDescriptor_t> get_descriptor() const;
 
 private:
     void require_host_fp32(string_view accessor) const
@@ -725,13 +725,10 @@ private:
         throw_if(shape.size() > 0 && !data, "{} requires non-null data.", accessor);
     }
 
-    void set_descriptor(const Shape&) const;
-
     void* data = nullptr;
     Shape shape;
     Type type = Type::FP32;
     Device device = Device::CPU;
-    mutable shared_ptr<cudnnTensorStruct> descriptor_handle;
 };
 
 inline TensorView& slot_or(vector<TensorView>& views,

@@ -27,6 +27,15 @@ struct SequenceLengths
     explicit operator bool() const noexcept { return host || device; }
 };
 
+// One device buffer per GraphWorkspaceKind. Filled by index rather than written
+// out as a list of initializers, which was a list to lengthen every time a kind
+// was added and, forgotten, left the new workspace's buffer on the host.
+template<size_t... Kind>
+array<Buffer, sizeof...(Kind)> cuda_workspace_buffers(index_sequence<Kind...>)
+{
+    return {(static_cast<void>(Kind), Buffer{Device::CUDA})...};
+}
+
 class NeuralNetwork;
 
 enum class ForwardPropagationMode
@@ -174,10 +183,8 @@ struct ForwardPropagation
     vector<const void*> captured_input_pointers;
 
     device::GraphWorkspaceRequirements inference_graph_workspace_requirements{};
-    array<Buffer, size_t(device::GraphWorkspaceKind::Count)> inference_graph_workspaces{
-        Buffer{Device::CUDA}, Buffer{Device::CUDA}, Buffer{Device::CUDA},
-        Buffer{Device::CUDA}, Buffer{Device::CUDA}, Buffer{Device::CUDA},
-        Buffer{Device::CUDA}, Buffer{Device::CUDA}};
+    array<Buffer, size_t(device::GraphWorkspaceKind::Count)> inference_graph_workspaces
+        = cuda_workspace_buffers(make_index_sequence<size_t(device::GraphWorkspaceKind::Count)>{});
 
 private:
 

@@ -13,6 +13,60 @@
 #include "opennn/core/opennn_types.h"
 #include "opennn/core/configuration.h"
 
+namespace opennn
+{
+
+template<typename Handle>
+struct CudnnDescriptor
+{
+    Handle handle = nullptr;
+#ifdef OPENNN_HAS_CUDA
+    cudnnStatus_t (*deleter)(Handle) = nullptr;
+#else
+    void (*deleter)(Handle) = nullptr;
+#endif
+
+    CudnnDescriptor() = default;
+
+    CudnnDescriptor(CudnnDescriptor&& other) noexcept
+        : handle(other.handle), deleter(other.deleter)
+    {
+        other.handle = nullptr;
+        other.deleter = nullptr;
+    }
+
+    CudnnDescriptor& operator=(CudnnDescriptor&& other) noexcept
+    {
+        if (this != &other)
+        {
+            reset();
+            handle = other.handle;
+            deleter = other.deleter;
+            other.handle = nullptr;
+            other.deleter = nullptr;
+        }
+        return *this;
+    }
+
+    CudnnDescriptor(const CudnnDescriptor&) = delete;
+    CudnnDescriptor& operator=(const CudnnDescriptor&) = delete;
+
+    ~CudnnDescriptor() { reset(); }
+
+    void reset()
+    {
+        if (handle && deleter) deleter(handle);
+        handle = nullptr;
+        deleter = nullptr;
+    }
+
+    Handle get() const noexcept { return handle; }
+    operator Handle() const noexcept { return handle; }
+    explicit operator bool() const noexcept { return handle != nullptr; }
+};
+
+}
+
 namespace opennn::device
 {
 

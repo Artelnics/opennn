@@ -16,42 +16,29 @@ namespace opennn
 
 #ifdef OPENNN_HAS_CUDA
 
-cudnnTensorDescriptor_t TensorView::get_descriptor() const
-{
-    if (!shape.empty())
-        set_descriptor(shape);
-    return descriptor_handle.get();
-}
-
-void TensorView::set_descriptor(const Shape& descriptor_shape) const
+CudnnDescriptor<cudnnTensorDescriptor_t> TensorView::get_descriptor() const
 {
     int batch_count = 1, channels = 1, height = 1, width = 1;
-    const size_t rank = descriptor_shape.get_rank();
-    if (rank >= 1) channels    = static_cast<int>(descriptor_shape[rank - 1]);
-    if (rank >= 2) batch_count = static_cast<int>(descriptor_shape[0]);
-    if (rank >= 3) width       = static_cast<int>(descriptor_shape[rank - 2]);
-    if (rank >= 4) height      = static_cast<int>(descriptor_shape[rank - 3]);
+    const size_t rank = shape.get_rank();
+    if (rank >= 1) channels    = static_cast<int>(shape[rank - 1]);
+    if (rank >= 2) batch_count = static_cast<int>(shape[0]);
+    if (rank >= 3) width       = static_cast<int>(shape[rank - 2]);
+    if (rank >= 4) height      = static_cast<int>(shape[rank - 3]);
 
+    CudnnDescriptor<cudnnTensorDescriptor_t> descriptor;
     if (batch_count <= 0 || channels <= 0 || height <= 0 || width <= 0)
-        return;
+        return descriptor;
 
     throw_if(Index(batch_count) * channels * height * width > Index(numeric_limits<int>::max()),
              "TensorView descriptor: {}x{}x{}x{} exceeds the cuDNN 4d descriptor limit of INT32_MAX elements.",
              batch_count, channels, height, width);
 
-    if (!descriptor_handle)
-    {
-        cudnnTensorDescriptor_t raw_desc;
-        CHECK_CUDNN(cudnnCreateTensorDescriptor(&raw_desc));
-
-        descriptor_handle = shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t descriptor) {
-            cudnnDestroyTensorDescriptor(descriptor);
-        });
-    }
-
-    CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC,
+    CHECK_CUDNN(cudnnCreateTensorDescriptor(&descriptor.handle));
+    descriptor.deleter = &cudnnDestroyTensorDescriptor;
+    CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor, CUDNN_TENSOR_NHWC,
                                            to_cudnn(type),
                                            batch_count, channels, height, width));
+    return descriptor;
 }
 
 static bool uses_cuda_fill(const TensorView& view)
@@ -74,9 +61,7 @@ static void fill_cuda(const TensorView& view, float value)
 
 #else
 
-cudnnTensorDescriptor_t TensorView::get_descriptor() const OPENNN_CUDA_STUB_BODY(TensorView::get_descriptor)
-
-void TensorView::set_descriptor(const Shape&) const OPENNN_CUDA_STUB_BODY(TensorView::set_descriptor)
+CudnnDescriptor<cudnnTensorDescriptor_t> TensorView::get_descriptor() const OPENNN_CUDA_STUB_BODY(TensorView::get_descriptor)
 
 static bool uses_cuda_fill(const TensorView& view)
 {
