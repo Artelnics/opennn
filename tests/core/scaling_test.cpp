@@ -1,5 +1,6 @@
 #include "tests/pch.h"
 
+#include "opennn/core/random_utilities.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
@@ -13,7 +14,7 @@ using namespace opennn;
 
 TEST(ScalingTest, ScaleDataMeanStandardDeviation)
 {
-    Index samples_number = 10 + rand() % 10;
+    const Index samples_number = random_integer(10, 19);
 
     MatrixR data(samples_number, 1);
     data.setRandom();
@@ -33,7 +34,7 @@ TEST(ScalingTest, ScaleDataMeanStandardDeviation)
 
 TEST(ScalingTest, ScaleDataMinimumMaximum)
 {
-    Index samples_number = 10 + rand() % 10;
+    const Index samples_number = random_integer(10, 19);
 
     MatrixR matrix(samples_number, 1);
     matrix.setRandom();
@@ -53,7 +54,7 @@ TEST(ScalingTest, ScaleDataMinimumMaximum)
 
 TEST(ScalingTest, ScaleDataNoScaling2d)
 {   
-    Index samples_number = 1 + rand() % 10;
+    const Index samples_number = random_integer(1, 10);
 
     MatrixR matrix(samples_number, samples_number);
     matrix.setRandom();
@@ -74,7 +75,7 @@ TEST(ScalingTest, ScaleDataNoScaling2d)
 
 TEST(ScalingTest, ScaleDataStandardDeviation)
 {
-    Index samples_number = 10 + rand() % 10;
+    const Index samples_number = random_integer(10, 19);
 
     MatrixR matrix(samples_number, 1);
     matrix.setRandom();
@@ -92,7 +93,7 @@ TEST(ScalingTest, ScaleDataStandardDeviation)
 
 TEST(ScalingTest, ScaleDataLogarithmic)
 {
-    Index samples_number = 10 + rand() % 10;
+    const Index samples_number = random_integer(10, 19);
 
     MatrixR matrix(samples_number, 1);
     MatrixR scaled_matrix;
@@ -120,7 +121,7 @@ TEST(ScalingTest, ScaleDataLogarithmic)
 
 TEST(ScalingTest, UnscaleDataMeanStandardDeviation)
 {
-    Index samples_number = 1 + rand() % 10;
+    const Index samples_number = random_integer(1, 10);
 
     MatrixR matrix(samples_number, samples_number);
     MatrixR unscaled_matrix;
@@ -145,7 +146,7 @@ TEST(ScalingTest, UnscaleDataMeanStandardDeviation)
 
 TEST(ScalingTest, UnscaleDataMinimumMaximum)
 {
-    Index samples_number = 1 + rand() % 10;
+    const Index samples_number = random_integer(1, 10);
 
     MatrixR matrix(samples_number, samples_number);
     MatrixR unscaled_matrix;
@@ -169,7 +170,7 @@ TEST(ScalingTest, UnscaleDataMinimumMaximum)
 
 TEST(ScalingTest, UnscaleDataNoScaling2d)
 {
-    Index samples_number = 1 + rand() % 10;
+    const Index samples_number = random_integer(1, 10);
 
     MatrixR matrix(samples_number, samples_number);
     MatrixR unscaled_matrix;
@@ -193,7 +194,7 @@ TEST(ScalingTest, UnscaleDataNoScaling2d)
 
 TEST(ScalingTest, UnscaleDataStandardDeviation)
 {
-    Index samples_number = 2 + rand() % 10;
+    const Index samples_number = random_integer(2, 11);
 
     MatrixR matrix(samples_number, samples_number);
     MatrixR unscaled_matrix;
@@ -216,7 +217,7 @@ TEST(ScalingTest, UnscaleDataStandardDeviation)
 
 TEST(ScalingTest, UnscaleDataLogarithmic)
 {
-    Index samples_number = 1 + rand() % 10;
+    const Index samples_number = random_integer(1, 10);
 
     MatrixR matrix(samples_number, samples_number);
     MatrixR unscaled_matrix;

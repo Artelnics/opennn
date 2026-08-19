@@ -2888,8 +2888,8 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
         return forward_propagation.get_outputs();
     }
 
-    const bool profiler_was_enabled = ::opennn::enabled();
-    ::opennn::enabled() = false;
+    const bool profiler_was_enabled = profiler::is_enabled();
+    profiler::set_enabled(false);
 
     forward_propagation.prepare_cuda_graph_workspaces();
     const device::GraphWorkspaceViews graph_workspace_views =
@@ -2934,7 +2934,7 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
     if (forward_propagation.inference_graph_exec)
         release_thread_workspaces();
 
-    ::opennn::enabled() = profiler_was_enabled;
+    profiler::set_enabled(profiler_was_enabled);
 
     return forward_propagation.get_outputs();
 }

@@ -161,13 +161,12 @@ struct Optimizer::WorkerProfileCounters
         const long calls = fills.load();
         if (calls <= 0) return;
 
-        auto& fill_entry = ::opennn::global_stats().entries["worker:fill"];
-        fill_entry.total_ms = double(fill_us.load()) / 1000.0;
-        fill_entry.calls = calls;
-
-        auto& wait_entry = ::opennn::global_stats().entries["worker:queue_wait"];
-        wait_entry.total_ms = double(pop_us.load()) / 1000.0;
-        wait_entry.calls = calls;
+        profiler::stats().set("worker:fill",
+                              double(fill_us.load()) / 1000.0,
+                              calls);
+        profiler::stats().set("worker:queue_wait",
+                              double(pop_us.load()) / 1000.0,
+                              calls);
     }
 
     void print_epoch(const chrono::steady_clock::time_point& epoch_t0,
@@ -178,10 +177,10 @@ struct Optimizer::WorkerProfileCounters
 
         const double epoch_ms =
             chrono::duration<double, milli>(chrono::steady_clock::now() - epoch_t0).count();
-        ::opennn::global_stats().print(cout, banner, epoch_ms);
+        profiler::stats().print(cout, banner, epoch_ms);
         cout << "  Wall-clock epoch time: " << fixed << setprecision(2) << epoch_ms << " ms"
              << " | workers_number=" << workers_number << "\n\n";
-        ::opennn::global_stats().clear();
+        profiler::stats().clear();
     }
 };
 
@@ -1369,8 +1368,8 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     const bool profile_this = env_flag_enabled("OPENNN_PROFILE");
     if (profile_this)
     {
-        ::opennn::enabled() = true;
-        ::opennn::global_stats().clear();
+        profiler::set_enabled(true);
+        profiler::stats().clear();
     }
     const auto epoch_t0 = chrono::steady_clock::now();
     WorkerProfileCounters worker_profile;
@@ -1438,8 +1437,8 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         if (!training_session.cuda_graph_capture_allowed)
             return operation();
 
-        const bool profiler_enabled = ::opennn::enabled();
-        ::opennn::enabled() = false;
+        const bool profiler_enabled = profiler::is_enabled();
+        profiler::set_enabled(false);
         try
         {
             device::synchronize(compute);
@@ -1454,10 +1453,10 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
             cuda_graph_capture_failed = true;
             cerr << "CUDA graph capture failed (" << capture_error.what()
                  << "); continuing without graphs.\n";
-            ::opennn::enabled() = profiler_enabled;
+            profiler::set_enabled(profiler_enabled);
             return operation();
         }
-        ::opennn::enabled() = profiler_enabled;
+        profiler::set_enabled(profiler_enabled);
     };
 
     const bool resident_gather = loss->get_dataset()->is_device_resident();
@@ -1803,8 +1802,8 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
     if(profile_this)
     {
-        ::opennn::enabled() = true;
-        ::opennn::global_stats().clear();
+        profiler::set_enabled(true);
+        profiler::stats().clear();
     }
 
     const chrono::steady_clock::time_point epoch_t0 = chrono::steady_clock::now();

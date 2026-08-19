@@ -15,29 +15,18 @@
 namespace opennn
 {
 
-static mutex rng_mutex;
-static mt19937 generator;
-static long long current_seed = -1;
-
-static void reseed_unlocked()
+namespace
 {
-    if (current_seed < 0)
-    {
-        random_device device;
-        generator.seed(device());
-    }
-    else
-        generator.seed(uint32_t(current_seed));
+
+mutex rng_mutex;
+mt19937 generator{random_device{}()};
+
 }
 
 void set_seed(unsigned seed)
 {
-    {
-        lock_guard<mutex> lock(rng_mutex);
-        current_seed = static_cast<long long>(seed);
-        reseed_unlocked();
-    }
-    srand(seed);
+    lock_guard<mutex> lock(rng_mutex);
+    generator.seed(seed);
 }
 
 float random_uniform(float min, float max)

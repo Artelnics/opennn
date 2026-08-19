@@ -1,5 +1,6 @@
 #include "tests/pch.h"
 
+#include "opennn/core/random_utilities.h"
 #include "opennn/model_selection/growing_inputs.h"
 #include "opennn/training_strategy/training_strategy.h"
 #include "opennn/dataset/dataset.h"
@@ -49,7 +50,7 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
     for(Index i = 0; i < samples; i++)
     {
         data(i, 0) = type(i) / samples;
-        data(i, 1) = type(rand()) / RAND_MAX;
+        data(i, 1) = random_uniform(0.0f, 1.0f);
         data(i, 2) = data(i, 0);
     }
     dataset.set_data(data);
@@ -79,7 +80,7 @@ TEST(GrowingInputsTest, CrossValidationKeepsPersistentRoles)
     for (Index i = 0; i < samples; i++)
     {
         data(i, 0) = type(i) / samples;
-        data(i, 1) = type(rand()) / RAND_MAX;
+        data(i, 1) = random_uniform(0.0f, 1.0f);
         data(i, 2) = data(i, 0);
     }
     dataset.set_data(data);

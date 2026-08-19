@@ -15,9 +15,10 @@
 #include <filesystem>
 #include <fstream>
 
-#include "opennn/core/tensor_types.h"
 #include "opennn/core/device_backend.h"
+#include "opennn/core/profiler.h"
 #include "opennn/core/string_utilities.h"
+#include "opennn/core/tensor_types.h"
 
 namespace opennn::cudnn_frontend
 {
@@ -57,18 +58,17 @@ inline bool graph_timing_enabled()
     return enabled;
 }
 
-inline map<string, pair<double, long>>& graph_times()
+inline profiler::Stats& graph_timing_stats()
 {
-    static map<string, pair<double, long>> times;
+    static profiler::Stats times;
     static const bool registered = [] {
         atexit(+[] {
-            double total = 0;
-            for (const auto& [label, accumulated] : graph_times()) total += accumulated.first;
-            cerr << format("[GRAPH_TIMING] total_gpu_ms={:.1f}\n", total);
-            for (const auto& [label, accumulated] : graph_times())
-                cerr << format("[GRAPH_TIMING] {:<40} total_ms={:>9.1f} calls={:>6} ms/call={:.4f}\n",
-                               label, accumulated.first, accumulated.second,
-                               accumulated.first / accumulated.second);
+            profiler::Stats& times = graph_timing_stats();
+            const double total_ms = times.total_ms();
+            times.print(cerr,
+                        format("total_gpu_ms={:.1f}", total_ms),
+                        total_ms,
+                        "GRAPH_TIMING");
         });
         return true;
     }();
@@ -99,9 +99,7 @@ inline void execute_graph(graph::Graph& graph,
     float milliseconds = 0;
     CHECK_CUDA(cudaEventElapsedTime(&milliseconds, begin, end));
 
-    auto& [total, calls] = graph_times()[timing_label];
-    total += milliseconds;
-    ++calls;
+    graph_timing_stats().add(timing_label, milliseconds);
 }
 
 inline void* shared_workspace(int64_t bytes)
