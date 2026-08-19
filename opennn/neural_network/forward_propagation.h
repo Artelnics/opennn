@@ -71,6 +71,11 @@ struct ForwardPropagation
 
     void set_active_sequence_length(Index length);
 
+    // Reuse persistent session state (such as an autoregressive KV cache)
+    // across propagation shapes that belong to the same inference session.
+    // The source and destination must execute the same network.
+    void share_session_state_from(const ForwardPropagation& source);
+
     void set_output_sequence_window(Index start, Index count);
     void gather_output_window();
 
@@ -98,9 +103,12 @@ struct ForwardPropagation
     Index past_length = 0;
 
     Buffer arena;
-    // Opaque per-layer state whose size is known only after a backend configures
-    // an operation (for example, cuDNN RNN state or an autoregressive KV cache).
+    // Opaque execution-local storage whose size is known only after a backend
+    // configures an operation (for example, cuDNN RNN state).
     vector<Buffer> layer_state_storage;
+    // Persistent state shared by the propagation shapes of one inference
+    // session (for example, an autoregressive KV cache).
+    shared_ptr<vector<Buffer>> layer_session_state_storage;
     // Host mirrors used only while an execution stages data across a device
     // boundary. Kept per layer so independent propagation contexts never share
     // staging addresses.

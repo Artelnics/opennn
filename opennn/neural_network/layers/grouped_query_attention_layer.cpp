@@ -817,7 +817,7 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
                            forward_propagation.get_sequence_capacity(),
                            static_cast<const int*>(forward_propagation.position_device.data()),
                            forward_slots,
-                           forward_propagation.layer_state_storage[layer],
+                           (*forward_propagation.layer_session_state_storage)[layer],
                            forward_propagation.layer_pinned_storage[layer]);
 #endif
 
@@ -849,7 +849,7 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
 
         const Index capacity_bytes = table_len * kd * Index(sizeof(float));
         const auto [key_cache, value_cache] = prepare_kv_cache(
-            forward_propagation.layer_state_storage[layer],
+            (*forward_propagation.layer_session_state_storage)[layer],
             capacity_bytes, Device::CPU);
         float* kcache = static_cast<float*>(key_cache);
         float* vcache = static_cast<float*>(value_cache);

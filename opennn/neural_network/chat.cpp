@@ -1011,6 +1011,7 @@ struct ChatSession::Impl
                        {.sequence_capacity = 1,
                         .final_output_capacity = 1,
                         .retained_output_layers = {}});
+            decode.share_session_state_from(prefill);
             decode.set_active_sequence_length(1);
             decode.set_cuda_graph(true);
             const cudaStream_t stream = device::get_compute_stream();
@@ -1248,6 +1249,7 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
                       {.sequence_capacity = 1,
                        .final_output_capacity = 1,
                        .retained_output_layers = {}});
+    draft->decode.share_session_state_from(draft->prefill);
     draft->decode.set_active_sequence_length(1);
     draft->decode.set_cuda_graph(true);
 
@@ -1257,6 +1259,7 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
         {.sequence_capacity = verify_capacity,
          .final_output_capacity = verify_capacity,
          .retained_output_layers = {}});
+    draft->target_verify.share_session_state_from(impl->prefill);
     draft->target_verify_inputs.resize(1);
     Impl::initialize_cuda_input(draft->target_verify);
 

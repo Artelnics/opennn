@@ -128,18 +128,28 @@ void linear_forward(const TensorView&, const TensorView&, const TensorView&,
                     TensorView&, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS,
                     TensorView* pre_activation = nullptr,
                     const TensorView& weight_scale = {});
-// `addend`, when given (and not accumulating), is summed into the input delta
-// by the same GEMM: input_delta = output_delta * W^T + addend.
-// `fused_input_relu`, when given, asks for the input delta to be masked by the
-// derivative of the ReLU that produced the input and reports whether that
-// happened: only the single-output path can do it, so a caller that gets back
-// false must still run the activation backward itself.
+// What a caller can ask the backward to fold into the input-delta GEMM instead
+// of paying for it in a pass of its own.
+struct LinearBackwardOptions
+{
+    // The ReLU derivative as a bitmask from a cuBLASLt auxiliary epilogue.
+    const TensorView* drelu_mask = nullptr;
+
+    // Another consumer's delta for the same input, summed by the GEMM:
+    // input_delta = output_delta * W^T + addend.
+    const TensorView* addend = nullptr;
+
+    // Ask for the input delta to be masked by the derivative of the ReLU that
+    // produced the input, and learn whether it happened: only the single-output
+    // path can, so a caller that reads back false must run the activation
+    // backward itself.
+    bool* fused_input_relu = nullptr;
+};
+
 void linear_backward(const TensorView&, const TensorView&, const TensorView&,
                      const TensorView&, const TensorView&,
                      TensorView&, bool accumulate_input_delta = false,
-                     const TensorView* drelu_mask = nullptr,
-                     const TensorView* addend = nullptr,
-                     bool* fused_input_relu = nullptr);
+                     const LinearBackwardOptions& options = {});
 
 
 

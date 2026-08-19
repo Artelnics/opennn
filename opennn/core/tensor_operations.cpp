@@ -183,7 +183,7 @@ ActivationFunction activation_function_from_string(const string& name)
     X(activation_forward_gpu, (TensorView&, ActivationFunction)) \
     X(activation_backward_gpu, (const TensorView&, TensorView&, ActivationFunction)) \
     X(linear_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cublasLtEpilogue_t, TensorView*, const TensorView&)) \
-    X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool, const TensorView*, const TensorView*, bool*))
+    X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool, const LinearBackwardOptions&))
 
 #define OPENNN_DECLARE_GPU_OP(name, sig) static void name sig;
 OPENNN_GPU_OPS(OPENNN_DECLARE_GPU_OP)
@@ -679,10 +679,12 @@ void linear_forward(const TensorView& input, const TensorView& weights, const Te
 void linear_backward(const TensorView& output_delta, const TensorView& input, const TensorView& weights,
                      const TensorView& weight_gradient, const TensorView& bias_gradient,
                      TensorView& input_delta, bool accumulate_input_delta,
-                     const TensorView* drelu_mask, const TensorView* addend,
-                     bool* fused_input_relu)
+                     const LinearBackwardOptions& options)
 {
     constexpr string_view operation = "linear_backward";
+    const TensorView* drelu_mask = options.drelu_mask;
+    const TensorView* addend = options.addend && !options.addend->empty() ? options.addend : nullptr;
+    bool* const fused_input_relu = options.fused_input_relu;
     validate_linear_io(input, weights, output_delta, false, operation);
     require_fp32_or_bf16(output_delta, operation, "output delta");
     require_fp32_or_bf16(input, operation, "input");
@@ -731,7 +733,6 @@ void linear_backward(const TensorView& output_delta, const TensorView& input, co
     throw_if(drelu_mask && (!output_delta.is_cuda() || accumulate_input_delta),
              "linear_backward: the DRELU fused input-delta path is CUDA, non-accumulating only.");
 
-    if (addend && addend->empty()) addend = nullptr;
     if (addend)
     {
         require_tensor(*addend, operation, "input delta addend");
@@ -744,8 +745,8 @@ void linear_backward(const TensorView& output_delta, const TensorView& input, co
 
     if (output_delta.is_cuda())
         return linear_backward_gpu(output_delta, input, weights, weight_gradient, bias_gradient,
-                                   input_delta, accumulate_input_delta, drelu_mask, addend,
-                                   fused_input_relu);
+                                   input_delta, accumulate_input_delta,
+                                   {drelu_mask, addend, fused_input_relu});
     if (fused_input_relu) *fused_input_relu = false;
     linear_backward_cpu(output_delta, input, weights, weight_gradient, bias_gradient,
                         input_delta, accumulate_input_delta, addend);
@@ -992,9 +993,29 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
 // falls back to a general GEMV there, which on the HIGGS head measured 0.0113
 // ms against 0.0058 ms for the traffic alone at batch 8192: the operation only
 // reads the activation, so a streaming reduction is close to twice as fast.
-// The own kernel needs whole 16-byte vectors and no epilogue beyond the bias;
-// anything else stays on cuBLAS. OPENNN_LINEAR_SINGLE_OUTPUT=0 pins the
-// cuBLAS path for A/B.
+static bool aligned_for_vectors(const void* pointer)
+{
+    return reinterpret_cast<uintptr_t>(pointer) % 16 == 0;
+}
+
+// The shape both single-output kernels need: one output column, one dtype
+// across the tensors they read, and a row that divides into whole 16-byte
+// vectors - one per lane for the forward reduction, one per lane and chunk for
+// the backward, which is what `lanes` says.
+static bool single_output_layer_shape(const TensorView& input, const TensorView& weights, Index lanes)
+{
+    if (weights.get_shape().back() != 1) return false;
+    if (input.get_type() != weights.get_type()) return false;
+    if (!input.is_bf16() && !input.is_fp32()) return false;
+
+    const Index per_vector = Index(16) / Index(type_bytes(input.get_type()));
+    if (input.flat_columns() % (lanes * per_vector) != 0) return false;
+
+    return aligned_for_vectors(input.get_data()) && aligned_for_vectors(weights.get_data());
+}
+
+// The forward reduction also needs no epilogue beyond the bias; anything else
+// stays on cuBLAS. OPENNN_LINEAR_SINGLE_OUTPUT=0 pins the cuBLAS path for A/B.
 static bool single_output_reduction_applies(const TensorView& input, const TensorView& weights,
                                             const TensorView& bias, const TensorView& output,
                                             cublasLtEpilogue_t epilogue, const TensorView* pre_activation)
@@ -1003,17 +1024,10 @@ static bool single_output_reduction_applies(const TensorView& input, const Tenso
     if (!enabled || pre_activation) return false;
 
     if (epilogue != CUBLASLT_EPILOGUE_DEFAULT && epilogue != CUBLASLT_EPILOGUE_BIAS) return false;
-    if (weights.get_shape().back() != 1) return false;
-    if (input.get_type() != output.get_type() || input.get_type() != weights.get_type()) return false;
-    if (!input.is_bf16() && !input.is_fp32()) return false;
+    if (input.get_type() != output.get_type()) return false;
     if (bias.get_data() && bias.get_type() != input.get_type()) return false;
 
-    const Index features = input.get_shape().back();
-    const Index per_vector = Index(16) / Index(type_bytes(input.get_type()));
-    if (features % per_vector != 0) return false;
-
-    const auto aligned = [](const void* p) { return reinterpret_cast<uintptr_t>(p) % 16 == 0; };
-    return aligned(input.get_data()) && aligned(weights.get_data());
+    return single_output_layer_shape(input, weights, 1);
 }
 
 static void linear_forward_gpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
@@ -1068,49 +1082,46 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     linear_forward_lt_gpu(input, dequantized_weights, bias, output, epilogue, pre_activation);
 }
 
-// The backward twin of single_output_reduction_applies: the same layer shape,
+// The backward twin: the same layer shape, one warp's worth of vectors per row,
 // and none of the variants the one-pass kernel does not cover (an accumulated
-// input delta, a folded addend, a fused ReLU mask).
+// input delta, a folded addend, a mask from an epilogue).
+// OPENNN_SINGLE_OUTPUT_KERNEL=0 pins the cuBLAS path for A/B.
 static bool single_output_backward_applies(const TensorView& output_delta, const TensorView& input,
                                            const TensorView& weights, const TensorView& weight_gradient,
                                            const TensorView& bias_gradient, const TensorView& input_delta,
                                            bool accumulate_input_delta,
-                                           const TensorView* drelu_mask, const TensorView* addend)
+                                           const LinearBackwardOptions& options)
 {
     static const bool enabled = env_flag_enabled("OPENNN_SINGLE_OUTPUT_KERNEL", true);
 
-    if (!enabled || drelu_mask || addend || accumulate_input_delta) return false;
-    if (weights.get_shape().back() != 1) return false;
-    if (input.get_type() != output_delta.get_type() || input.get_type() != weights.get_type()) return false;
-    if (!input.is_bf16() && !input.is_fp32()) return false;
+    if (!enabled || options.drelu_mask || options.addend || accumulate_input_delta) return false;
+    if (input.get_type() != output_delta.get_type()) return false;
     if (!weight_gradient.is_fp32()) return false;
     if (!bias_gradient.empty() && (!bias_gradient.is_fp32() || bias_gradient.size() != 1)) return false;
-    if (!input_delta.empty() && input_delta.get_type() != input.get_type()) return false;
+    if (!input_delta.empty()
+        && (input_delta.get_type() != input.get_type() || !aligned_for_vectors(input_delta.get_data())))
+        return false;
 
-    const Index features = input.flat_columns();
-    const Index per_vector = Index(16) / Index(type_bytes(input.get_type()));
-    if (features % (32 * per_vector) != 0) return false;
-
-    const auto aligned = [](const void* p) { return reinterpret_cast<uintptr_t>(p) % 16 == 0; };
-    return aligned(input.get_data()) && aligned(weights.get_data())
-        && (input_delta.empty() || aligned(input_delta.get_data()));
+    return single_output_layer_shape(input, weights, 32);
 }
 
 static void linear_backward_gpu(const TensorView& output_delta, const TensorView& input, const TensorView& weights,
                          const TensorView& weight_gradient, const TensorView& bias_gradient,
                          TensorView& input_delta, bool accumulate_input_delta,
-                         const TensorView* drelu_mask, const TensorView* addend,
-                         bool* fused_input_relu)
+                         const LinearBackwardOptions& options)
 {
+    const TensorView* const drelu_mask = options.drelu_mask;
+    const TensorView* const addend = options.addend;
+
     if (single_output_backward_applies(output_delta, input, weights, weight_gradient,
                                        bias_gradient, input_delta, accumulate_input_delta,
-                                       drelu_mask, addend))
+                                       options))
     {
         PROFILE_SCOPE("op:linear_bwd_single_output");
         const Index features = input.flat_columns();
         const Index rows = input.flat_rows();
         const bool has_input_delta = !input_delta.empty() && input_delta.get_data();
-        const bool fuse_relu = fused_input_relu && has_input_delta;
+        const bool fuse_relu = options.fused_input_relu && has_input_delta;
 
         bool done = false;
         input.dispatch([&]<typename T>() {
@@ -1124,7 +1135,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
         });
         if (done)
         {
-            if (fused_input_relu) *fused_input_relu = fuse_relu;
+            if (options.fused_input_relu) *options.fused_input_relu = fuse_relu;
             return;
         }
     }
@@ -1135,7 +1146,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 
     const void* input_for_gemm = data_for_gemm_dtype(input, weights.get_type());
 
-    if (fused_input_relu) *fused_input_relu = false;
+    if (options.fused_input_relu) *options.fused_input_relu = false;
 
     const bool has_bias = bias_gradient.size() > 0;
 

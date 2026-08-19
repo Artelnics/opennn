@@ -170,7 +170,7 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
             const TensorView& relu_mask =
                 forward_propagation.slots[size_t(drelu_source_layer)][drelu_source->relu_mask_slot];
             return linear_backward(output_delta, input, weights, weight_gradient, bias_gradient,
-                                   input_delta, accumulate_input_delta, &relu_mask);
+                                   input_delta, accumulate_input_delta, {.drelu_mask = &relu_mask});
         }
         catch (const runtime_error& error)
         {
@@ -194,8 +194,9 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
 
     bool fused_input_relu = false;
     linear_backward(output_delta, input, weights, weight_gradient, bias_gradient, input_delta,
-                    accumulate_input_delta, nullptr, addend.empty() ? nullptr : &addend,
-                    fuse_input_relu ? &fused_input_relu : nullptr);
+                    accumulate_input_delta,
+                    {.addend = addend.empty() ? nullptr : &addend,
+                     .fused_input_relu = fuse_input_relu ? &fused_input_relu : nullptr});
 
     if (fuse_input_relu && input_relu_source_layer >= 0
         && size_t(input_relu_source_layer) < forward_propagation.drelu_fused_by_layer.size())

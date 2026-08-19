@@ -194,7 +194,7 @@ void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_pro
         : planned_addend.reshape({rows, input_features});
 
     linear_backward(output_delta_2d, input_2d, weights, weight_gradient, bias_gradient, input_delta_2d, accumulate,
-                    nullptr, addend.empty() ? nullptr : &addend);
+                    {.addend = addend.empty() ? nullptr : &addend});
 }
 
 }

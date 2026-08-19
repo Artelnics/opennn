@@ -164,6 +164,7 @@ void ForwardPropagation::set(
 
     staged_input_storage.clear();
     layer_state_storage.clear();
+    layer_session_state_storage = make_shared<vector<Buffer>>();
     layer_pinned_storage.clear();
     staged_inputs.clear();
     host_bf16_input_scratch.clear();
@@ -177,8 +178,13 @@ void ForwardPropagation::set(
     slots.resize(layers_number);
     drelu_fused_by_layer.assign(layers_number, uint8_t{0});
     layer_state_storage.reserve(layers_number);
+    layer_session_state_storage->reserve(layers_number);
     for (size_t i = 0; i < layers_number; ++i)
+    {
         layer_state_storage.emplace_back(neural_network->get_device());
+        layer_session_state_storage->emplace_back(
+            neural_network->get_device());
+    }
     layer_pinned_storage.resize(layers_number);
     valid_lengths.resize(layers_number);
     device_valid_lengths.assign(layers_number, nullptr);
@@ -963,6 +969,26 @@ void ForwardPropagation::set_active_sequence_length(Index length)
         const Index count = min(final_output_capacity, length);
         set_output_sequence_window(length - count, count);
     }
+}
+
+void ForwardPropagation::share_session_state_from(
+    const ForwardPropagation& source)
+{
+    throw_if(!neural_network || neural_network != source.neural_network,
+             "ForwardPropagation::share_session_state_from requires both "
+             "propagations to execute the same network.");
+    throw_if(mode != ForwardPropagationMode::Inference
+             || source.mode != ForwardPropagationMode::Inference,
+             "ForwardPropagation::share_session_state_from is inference-only.");
+    throw_if(!layer_session_state_storage
+             || !source.layer_session_state_storage
+             || layer_session_state_storage->size()
+                    != source.layer_session_state_storage->size(),
+             "ForwardPropagation::share_session_state_from: layer counts do "
+             "not match.");
+
+    reset_cuda_graph();
+    layer_session_state_storage = source.layer_session_state_storage;
 }
 
 void ForwardPropagation::set_output_sequence_window(Index start, Index count)
