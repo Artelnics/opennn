@@ -11,7 +11,7 @@ this GPU (~+11% per training step), which is what this integration is for.*
 
 FA2 is behind a build option, off by default:
 
-```
+```sh
 cmake -DOpenNN_WITH_FLASH_ATTENTION=ON \
       -DOpenNN_FLASH_ATTENTION_HEAD_DIMS=32 \        # default 32;64;128
       [-DOpenNN_FLASH_ATTENTION_SOURCE_DIR=~/fa2]    # default: fetched
@@ -80,5 +80,48 @@ network could drop `set_zero_padded_queries` when it moved to fused attention.
 
 ## Measurements
 
-Pending on this machine and on the RTX 4080; the sweep note holds the cuDNN
-baselines to beat.
+Transformer training on the laptop, same network as the sweep (d_model 256,
+8 heads, ff 1024, 2 encoder + 2 decoder layers, sequence 256, corpus on ext4,
+5 timed epochs), `OPENNN_ATTENTION_RUNG=auto` against `=cudnn`, the two
+alternated inside each round so a thermal drift lands on both:
+
+| point | round | FA2 tokens/s | cuDNN tokens/s | ratio |
+| --- | --- | --- | --- | --- |
+| bf16, batch 128 | 1 | 876,544 | 745,738 | **1.175** |
+| bf16, batch 128 | 2 | 613,721 | 541,875 | **1.133** |
+| bf16, batch 256 | 1 | 822,267 | 672,489 | **1.223** |
+| bf16, batch 256 | 2 | 649,885 | 570,027 | **1.140** |
+| fp32, batch 128 | 1 | 362,331 | 339,893 | **1.066** |
+| fp32, batch 128 | 2 | 367,347 | 338,559 | **1.085** |
+
+The absolute numbers fall by ~30% between rounds and the ratios do not: the
+laptop throttles hard over a sustained sweep (86 C by round two), which is the
+whole reason the pairs are alternated. Two rounds, not three, for the same
+reason - a third would have measured the cooling system.
+
+The loss agrees to five digits at every point (bf16 128: 0.0537738 against
+0.0537927), and `cuda_graph=captured` throughout, so the kernels take the
+capture and the grouped 8-step training graph is unaffected. fp32 gains less
+because both rungs pay the same fp32-via-bf16 cast around an attention that is
+the only thing that changed.
+
+**Passing the lengths costs nothing.** The rung passes them always, since
+whether a batch is padded is not knowable on the host, and the expectation was
+that this would cost something, as it takes the launch off its even-shape path.
+Measured on the probe at the benchmark's shape (batch 128, sequence 256, 8
+heads, head dim 32, every sequence full, so the lengths change no result):
+1.991 ms forward+backward with them against 2.290 ms without, reproducible, the
+difference almost all in the forward (0.409 against 0.585 ms). Faster, not
+slower, and I have no mechanism to offer for it - what it settles is the
+practical question, that a "this dataset never pads" fast path is not a lever.
+
+## Next
+
+* **The RTX 4080** (sm_89), where these kernels also run and which is not
+  thermally limited; the numbers above are a laptop's.
+* **Varlen**, which lifts the causal-and-padded refusal and would put decoder
+  self-attention on FA2 as well.
+* **Grouped-query attention**, whose operator has a graph cache of its own and
+  is untouched here; FA2 takes h_k != h natively.
+* A CI job that compiles with the option on. It is off by default, so nothing
+  currently builds the FA2 side of `core/cuda/flash_attention.cu`.
