@@ -1,6 +1,6 @@
 # GPU HIGGS dense inference: OpenNN vs PyTorch vs TensorFlow
 
-OpenNN leads HIGGS dense inference on an NVIDIA GeForce RTX 5070 Ti in both precisions against PyTorch -- 37.55 million samples/s bf16 and 19.38 million fp32, 1.30x and 1.31x -- and ties TensorFlow, 1.06x and 1.03x. Medians of five runs, 2026-08-19, artifact `results/gpu-higgs-dense-inference-speed-20260819T101642Z.json`. The PyTorch margin has a measured mechanism: OpenNN fuses the ReLU into the GEMM epilogue while PyTorch runs it as a separate kernel. The TensorFlow tie is the honest result once its driver stops paying per-batch dispatch -- see the correction below. fp32 is at the hardware ceiling for every engine: one GEMM is 87% of the batch and cuBLASLt's own autotuner finds nothing faster.
+OpenNN leads HIGGS dense inference on an NVIDIA GeForce RTX 5070 Ti in both precisions and against both engines: 35.53 million samples/s bf16 and 18.36 million fp32, 1.25x and 1.11x PyTorch, 1.06x and 1.03x TensorFlow. Every cell is the median of five alternated rounds with OpenNN ahead in all five, 2026-08-20, artifact `results/gpu-higgs-dense-inference-speed-20260820T102740Z.json`. The PyTorch margin has a measured mechanism: OpenNN fuses the ReLU into the GEMM epilogue while PyTorch runs it as a separate kernel. fp32 is near the hardware ceiling for every engine -- one GEMM is 87% of the batch and cuBLASLt's own autotuner finds nothing faster.
 
 > **2026-08-11 TF32 correction.** The previously published fp32 lead (1.54x
 > PyTorch) compared OpenNN running TF32 against PyTorch/TensorFlow running
@@ -9,6 +9,23 @@ OpenNN leads HIGGS dense inference on an NVIDIA GeForce RTX 5070 Ti in both prec
 > at that point all three engines saturate the same GEMM roofline: OpenNN
 > 17.13M, PyTorch 16.97M, TensorFlow 17.22M samples/s — a tie within ±1%.
 > The honest fp32 story here is parity, and bf16 is where OpenNN's margin is.
+
+> **2026-08-20 protocol correction.** Two changes to how these are measured, and
+> both moved numbers. The runner measured engines in blocks -- all five runs of
+> one, then the next -- so GPU state drifted between blocks by more than the
+> margins being compared; on the training benchmark that was worth three points
+> on a two-point effect. Engines now alternate within a round with the starting
+> engine rotating. And the GPU clock is pinned for the measurement
+> (`docs/benchmarks/tools/gpu_clocks.sh`): this card idles near 400 MHz, takes
+> ~2.5 s of load to reach boost, and its sustained clock drifts with ambient
+> across a session, which alone moved one engine's reading 8% across a day.
+> Pinning costs ~6% of absolute throughput -- these figures are lower than the
+> 2026-08-19 run for that reason -- and every engine pays it equally, which is
+> what makes the ratios comparable.
+>
+> The PyTorch cells also moved because PyTorch is now measured at its best
+> configuration (`PT_COMPILE_MODE`, `PT_BF16_WEIGHTS`). Its fp32 margin was
+> previously reported as 1.308x and is 1.113x once it is given max-autotune.
 
 > **2026-08-19 TensorFlow dispatch correction.** The TensorFlow driver called
 > its XLA-compiled step once per batch from Python. That costs ~0.23 ms of eager
@@ -69,14 +86,14 @@ The comparison uses the same 28-1024-1024-1 ReLU network in OpenNN, PyTorch, and
 
 | Component | Value |
 |---|---|
-| GPU | NVIDIA GeForce RTX 5070 Ti, 16 GB |
+| GPU | NVIDIA GeForce RTX 5070 Ti, 16 GB, SM clock pinned to 2692 MHz |
 | Operating system | Linux 7.0 x86_64 |
 | NVIDIA driver | 610.43.02 |
 | CUDA | 13.3 |
 | PyTorch | 2.13.0+cu130 (cuDNN 9.23) |
 | TensorFlow | 2.21.0 |
-| OpenNN commit | `2ff4c2f8b` |
-| Run ID | 20260819T101642Z |
+| OpenNN commit | `e37d6f711` |
+| Run ID | 20260820T102740Z |
 
 ## Methodology
 
@@ -119,25 +136,32 @@ batch 8,192, 28-1024-1024-1):
 | bf16 | **9,442,101 samples/s** | 7,617,578 | 8,219,183 | **1.24x** | **1.15x** |
 | fp32 (TF32) | **4,666,954 samples/s** | 4,116,292 | 4,017,197 | **1.13x** | **1.16x** |
 
-The RTX 4080 figures below predate this correction, and so does the RTX 5070 Ti
+The RTX 4080 figures below predate this correction, as did the RTX 5070 Ti
 artifact `results/gpu-higgs-dense-inference-speed-20260819T101642Z.json`
 (OpenNN 1.28x PyTorch bf16, 1.30x fp32): both compared against the
-uncompiled-autocast path, so their PyTorch cells are ~10% low. They need a
-re-measurement with this protocol before they are quoted again.
+uncompiled-autocast path, so their PyTorch cells were ~10% low. The 5070 Ti
+cells have since been re-measured under this protocol and are the Results table
+below -- PyTorch's fp32 margin fell from 1.308x to 1.113x, which is the size of
+the effect. The RTX 4080 cells have not been re-measured and should not be
+quoted.
 
 ## Results
 
-Five runs per engine, medians. Artifact:
-`results/gpu-higgs-dense-inference-speed-20260819T101642Z.json`.
+Five alternated rounds per precision, medians, GPU clock pinned. OpenNN is
+ahead in all five rounds of every cell. Artifact:
+`results/gpu-higgs-dense-inference-speed-20260820T102740Z.json`.
 
 | Precision | Framework | Median throughput | Median batch time | OpenNN speedup |
 |---|---|---:|---:|---:|
-| fp32 (TF32) | OpenNN | **19,376,965 samples/s** | **0.423 ms** | 1.000x |
-| fp32 (TF32) | PyTorch | 14,812,626 samples/s | 0.553 ms | **1.308x** |
-| fp32 (TF32) | TensorFlow | 18,745,349 samples/s | 0.437 ms | 1.034x |
-| bf16 | OpenNN | **37,548,621 samples/s** | **0.218 ms** | 1.000x |
-| bf16 | PyTorch | 28,790,763 samples/s | 0.285 ms | **1.304x** |
-| bf16 | TensorFlow | 35,592,241 samples/s | 0.230 ms | 1.055x |
+| fp32 (TF32) | OpenNN | **18,364,173 samples/s** | **0.446 ms** | 1.000x |
+| fp32 (TF32) | PyTorch | 16,502,523 samples/s | 0.496 ms | **1.113x** |
+| fp32 (TF32) | TensorFlow | 17,824,397 samples/s | 0.460 ms | **1.030x** |
+| bf16 | OpenNN | **35,531,341 samples/s** | **0.231 ms** | 1.000x |
+| bf16 | PyTorch | 28,409,959 samples/s | 0.288 ms | **1.251x** |
+| bf16 | TensorFlow | 33,493,091 samples/s | 0.245 ms | **1.061x** |
+
+TensorFlow ran its compiled batch loop in bf16 and per-batch dispatch in fp32;
+each cell reports its better path.
 
 TensorFlow ran the compiled batch loop in bf16 (35.59M against 32.24M
 per-batch) and per-batch dispatch in fp32 (18.61M against 17.65M compiled).
