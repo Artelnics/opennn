@@ -135,11 +135,17 @@ void top_k_partition(vector<pair<float, Index>>& values, Index top_k)
                                   descending_first);
 }
 
-}
+struct SamplingWorkspace
+{
+    VectorR original;
+    vector<pair<float, Index>> ranked;
+    vector<char> keep;
+};
 
-Index sample_token(VectorR& probabilities,
-                   const SamplingConfig& sampling_config,
-                   const vector<Index>& history)
+Index sample_token_with_workspace(VectorR& probabilities,
+                                  const SamplingConfig& sampling_config,
+                                  const vector<Index>& history,
+                                  SamplingWorkspace& workspace)
 {
     const Index vocabulary_size = probabilities.size();
     throw_if(vocabulary_size == 0,
@@ -150,9 +156,9 @@ Index sample_token(VectorR& probabilities,
     if (config.temperature == 0.0f)
         return maximal_index(probabilities);
 
-    static thread_local VectorR original;
-    static thread_local vector<pair<float, Index>> ranked;
-    static thread_local vector<char> keep;
+    VectorR& original = workspace.original;
+    vector<pair<float, Index>>& ranked = workspace.ranked;
+    vector<char>& keep = workspace.keep;
 
     original = probabilities;
     if (config.repetition_penalty != 1.0f)
@@ -222,6 +228,16 @@ Index sample_token(VectorR& probabilities,
         if (cumulative >= threshold) return i;
     }
     return vocabulary_size - 1;
+}
+
+}
+
+Index sample_token(VectorR& probabilities,
+                   const SamplingConfig& sampling_config,
+                   const vector<Index>& history)
+{
+    SamplingWorkspace workspace;
+    return sample_token_with_workspace(probabilities, sampling_config, history, workspace);
 }
 
 ReasoningMode ChatTemplate::resolve_reasoning_mode(
@@ -757,6 +773,7 @@ struct ClassicGenerationState
     Tensor2 target;
     vector<Index> history;
     VectorR distribution;
+    SamplingWorkspace sampling_workspace;
     vector<uint16_t> bf16_staging;
 
     Index input_length = 0;
@@ -1319,7 +1336,8 @@ struct ClassicDecodeLoop
     {
         read_classic_distribution(state, position);
         const Index next =
-            sample_token(state.distribution, sampling, state.history);
+            sample_token_with_workspace(state.distribution, sampling, state.history,
+                                        state.sampling_workspace);
         ++response.generated_tokens;
         state.history.push_back(next);
         return next;

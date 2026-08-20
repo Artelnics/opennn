@@ -35,8 +35,7 @@ static void add_bias(TensorView& output, const TensorView& bias, Index rows, Ind
 
     if (!fuse_relu && columns > 1)
     {
-        static thread_local vector<float> ones;
-        if (ssize(ones) < rows) ones.assign(size_t(rows), 1.0f);
+        const vector<float> ones(size_t(rows), 1.0f);
         return cblas_sger(CblasRowMajor,
                           to_int(rows),
                           to_int(columns),

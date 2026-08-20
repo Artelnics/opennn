@@ -194,7 +194,6 @@ private:
     bool try_open_cache(const vector<array<float, 2>>&);
     void build_cache(const vector<array<float, 2>>&);
     void setup_metadata(Index);
-    void read_sample_boxes(Index, vector<Box>&) const;
     void load_images_to_ram() const;
     void load_targets_to_ram() const;
 

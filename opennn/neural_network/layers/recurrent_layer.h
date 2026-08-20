@@ -109,7 +109,7 @@ private:
                          Buffer&) const;
 
     bool cudnn_rnn_eligible_(const TensorView&) const;
-    void ensure_cudnn_setup_(Index, bool) const;
+    CudnnRnnShapeSlot& ensure_cudnn_setup_(Index, bool) const;
     void pack_weights_to_cudnn_(Buffer&) const;
     void unpack_gradients_from_cudnn_(Buffer&) const;
     void apply_gpu_cudnn_(const TensorView&, TensorView&, TensorView&,

@@ -557,32 +557,37 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     {
         string omp_error;
 
-        #pragma omp parallel for schedule(dynamic)
-        for (Index i = 0; i < batch_size; ++i)
+        const int workers = max(1, min(omp_get_max_threads(), to_int(batch_size)));
+
+        #pragma omp parallel num_threads(workers)
         {
-            try
+            vector<uint8_t> buffer(static_cast<size_t>(pixels_per_image));
+
+            #pragma omp for schedule(dynamic)
+            for (Index i = 0; i < batch_size; ++i)
             {
-                thread_local vector<uint8_t> buf;
-                buf.resize(size_t(pixels_per_image));
+                try
+                {
+                    const Index sample_index = sample_indices[size_t(i)];
+                    throw_if(sample_index < 0 || sample_index >= ssize(sample_labels),
+                             "ImageDataset input sample index is out of range.");
 
-                const Index sample_index = sample_indices[size_t(i)];
-                throw_if(sample_index < 0 || sample_index >= ssize(sample_labels),
-                         "ImageDataset input sample index is out of range.");
+                    const uint64_t off = uint64_t(sample_index) * pixel_number;
+                    cache_reader.read_at(span(buffer), off);
 
-                const uint64_t off = uint64_t(sample_index) * pixel_number;
-                cache_reader.read_at(span(buf), off);
+                    float* dst = input_data + i * pixels_per_image;
+                    Map<Array<float, Dynamic, 1>>(dst, pixels_per_image) =
+                        Map<const Array<uint8_t, Dynamic, 1>>(
+                            buffer.data(), pixels_per_image).cast<float>();
 
-                float* dst = input_data + i * pixels_per_image;
-                Map<Array<float, Dynamic, 1>>(dst, pixels_per_image) =
-                    Map<const Array<uint8_t, Dynamic, 1>>(buf.data(), pixels_per_image).cast<float>();
-
-                if (scale_in_fill)
-                    scale_sample(dst);
-            }
-            catch (const exception& e)
-            {
-                #pragma omp critical
-                { omp_error = e.what(); }
+                    if (scale_in_fill)
+                        scale_sample(dst);
+                }
+                catch (const exception& e)
+                {
+                    #pragma omp critical
+                    { if (omp_error.empty()) omp_error = e.what(); }
+                }
             }
         }
 

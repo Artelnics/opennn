@@ -1,5 +1,7 @@
 #include "tests/pch.h"
 
+#include <future>
+
 #include "opennn/neural_network/operators/tokenizer_operator.h"
 
 using namespace opennn;
@@ -245,6 +247,39 @@ TEST(BytePairTokenizer, EncodeSequenceDoesNotAssumeWordLevelFraming)
 
     EXPECT_EQ(tokenizer.encode_sequence(vector<string>{"a", "b"}, 4),
               (vector<Index>{1, 2}));
+}
+
+TEST(BytePairTokenizer, ChangingMergesInvalidatesCachedSubwords)
+{
+    BytePairTokenizer tokenizer;
+    tokenizer.set_vocabulary({"[PAD]", "a", "b", "ab"});
+    tokenizer.set_merges({"a b"});
+
+    EXPECT_EQ(tokenizer.encode("ab"), (vector<Index>{3}));
+
+    tokenizer.set_merges({});
+
+    EXPECT_EQ(tokenizer.encode("ab"), (vector<Index>{1, 2}));
+}
+
+TEST(BytePairTokenizer, SharedInstanceEncodesConcurrently)
+{
+    BytePairTokenizer tokenizer;
+    tokenizer.set_vocabulary({"[PAD]", "a", "b", "ab"});
+    tokenizer.set_merges({"a b"});
+
+    vector<future<bool>> workers;
+    for (Index worker = 0; worker < 8; ++worker)
+        workers.push_back(async(launch::async, [&tokenizer]
+        {
+            for (Index iteration = 0; iteration < 100; ++iteration)
+                if (tokenizer.encode("ab") != vector<Index>{3})
+                    return false;
+            return true;
+        }));
+
+    for (future<bool>& worker : workers)
+        EXPECT_TRUE(worker.get());
 }
 
 TEST(Qwen3Tokenizer, LoadsSpecialTokensAndPreservesThemWhenCloned)

@@ -146,7 +146,7 @@ private:
                          Buffer&,
                          bool) const;
 
-    void ensure_cudnn_setup_(Index, bool) const;
+    CudnnRnnShapeSlot& ensure_cudnn_setup_(Index, bool) const;
     void pack_weights_to_cudnn_(Buffer&) const;
     void unpack_gradients_from_cudnn_(Buffer&) const;
 

@@ -809,7 +809,8 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
 
 #ifdef OPENNN_HAS_CUDA
 
-void LongShortTermMemoryOperator::ensure_cudnn_setup_(Index batch_size, bool for_training) const
+CudnnRnnShapeSlot& LongShortTermMemoryOperator::ensure_cudnn_setup_(
+    Index batch_size, bool for_training) const
 {
     using F_ = ActivationFunction;
     if (activation_function != F_::Tanh
@@ -821,9 +822,9 @@ void LongShortTermMemoryOperator::ensure_cudnn_setup_(Index batch_size, bool for
             "Reconfigure the layer or fall back to CPU.");
     }
 
-    cudnn_setup_({CUDNN_LSTM},
-                 input_features, output_features, time_steps,
-                 batch_size, for_training);
+    return cudnn_setup_({CUDNN_LSTM},
+                        input_features, output_features, time_steps,
+                        batch_size, for_training);
 }
 
 void LongShortTermMemoryOperator::pack_weights_to_cudnn_(Buffer& forward_state) const
@@ -882,21 +883,25 @@ void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
 {
     const Index batch_size = input.get_shape()[0];
     if (!input.get_data() || output_features == 0 || time_steps == 0 || batch_size == 0) return;
+    const auto backend_lock = lock_backend_state();
 
-    ensure_cudnn_setup_(batch_size, is_training);
-    prepare_cudnn_forward_state_(forward_state, is_training);
+    CudnnRnnShapeSlot& shape = ensure_cudnn_setup_(batch_size, is_training);
+    prepare_cudnn_forward_state_(forward_state, is_training, shape);
     pack_weights_to_cudnn_(forward_state);
 
     float* y_target = return_seq ? output.as<float>()
                                  : sequence_output_scratch.as<float>();
 
-    cudnn_rnn_forward_(is_training,  true,
+    cudnn_rnn_forward_(shape, is_training, true,
                        input.get_data(), y_target,
                        forward_state,
-                       [&] {
-                           ensure_cudnn_setup_(batch_size, is_training);
-                           prepare_cudnn_forward_state_(forward_state, is_training);
+                       [&]() -> CudnnRnnShapeSlot& {
+                           CudnnRnnShapeSlot& retry_shape =
+                               ensure_cudnn_setup_(batch_size, is_training);
+                           prepare_cudnn_forward_state_(forward_state, is_training,
+                                                        retry_shape);
                            pack_weights_to_cudnn_(forward_state);
+                           return retry_shape;
                        });
 
     if (return_seq) return;
@@ -922,8 +927,9 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
 
     const Index batch_size = input.get_shape()[0];
     if (batch_size == 0) return;
+    const auto backend_lock = lock_backend_state();
 
-    ensure_cudnn_setup_(batch_size, true);
+    CudnnRnnShapeSlot& shape = ensure_cudnn_setup_(batch_size, true);
 
     const Index H = output_features;
     const Index T = time_steps;
@@ -947,7 +953,7 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
         ? input_delta.get_data()
         : input_delta_scratch.get_data();
 
-    cudnn_rnn_backward_( true,
+    cudnn_rnn_backward_(shape, true,
                         input.get_data(), y_data, dy_data, dx_data,
                         forward_state, backward_scratch);
 

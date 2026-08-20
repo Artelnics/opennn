@@ -17,6 +17,7 @@
 #include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/layers/embedding_layer.h"
 #include "opennn/neural_network/layers/flatten_layer.h"
+#include "opennn/neural_network/layers/long_short_term_memory_layer.h"
 #include "opennn/neural_network/layers/multihead_attention_layer.h"
 #include "opennn/neural_network/layers/normalization_layer_3d.h"
 #include "opennn/neural_network/layers/pooling_layer_3d.h"
@@ -55,6 +56,44 @@ float relative_difference(const MatrixR& reference, const MatrixR& other)
     const float max_abs_diff = (reference - other).array().abs().maxCoeff();
     const float scale = max(1.0f, reference.array().abs().maxCoeff());
     return max_abs_diff / scale;
+}
+
+template<typename Tensor, typename BuildNetwork>
+void expect_concurrent_gpu_outputs(const Tensor& first_inputs,
+                                   const Tensor& second_inputs,
+                                   BuildNetwork&& build_network,
+                                   float tolerance = 1.0e-3f)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    NeuralNetwork cpu_network;
+    build_network(cpu_network);
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+    const MatrixR first_reference = cpu_network.calculate_outputs(first_inputs);
+    const MatrixR second_reference = cpu_network.calculate_outputs(second_inputs);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    NeuralNetwork gpu_network;
+    build_network(gpu_network);
+    if (parameters.size() > 0)
+        gpu_network.set_parameters(parameters);
+    gpu_network.copy_parameters_device();
+
+    barrier start(2);
+    const auto calculate = [&](const Tensor& inputs)
+    {
+        start.arrive_and_wait();
+        return gpu_network.calculate_outputs(inputs);
+    };
+
+    future<MatrixR> first = async(launch::async, calculate, cref(first_inputs));
+    future<MatrixR> second = async(launch::async, calculate, cref(second_inputs));
+
+    const MatrixR first_outputs = first.get();
+    const MatrixR second_outputs = second.get();
+
+    EXPECT_LT(relative_difference(first_reference, first_outputs), tolerance);
+    EXPECT_LT(relative_difference(second_reference, second_outputs), tolerance);
 }
 
 class ExactInputProbe final : public Layer
@@ -413,11 +452,10 @@ TEST_F(GpuComparison, ImageClassificationForward)
 
 TEST_F(GpuComparison, ConvolutionGraphCacheSupportsConcurrentFirstUse)
 {
-    constexpr Index samples_number = 3;
     const Shape input_shape{12, 12, 3};
 
-    Tensor4 first_inputs(samples_number, 12, 12, 3);
-    Tensor4 second_inputs(samples_number, 12, 12, 3);
+    Tensor4 first_inputs(2, 12, 12, 3);
+    Tensor4 second_inputs(5, 12, 12, 3);
     first_inputs.setRandom();
     second_inputs.setRandom();
 
@@ -430,35 +468,33 @@ TEST_F(GpuComparison, ConvolutionGraphCacheSupportsConcurrentFirstUse)
         network.compile();
     };
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
-    NeuralNetwork cpu_network;
-    build_network(cpu_network);
-    cpu_network.set_parameters_random();
-    const VectorR parameters = read_host_parameters(cpu_network);
-    const MatrixR first_reference = cpu_network.calculate_outputs(first_inputs);
-    const MatrixR second_reference = cpu_network.calculate_outputs(second_inputs);
+    expect_concurrent_gpu_outputs(first_inputs, second_inputs, build_network);
+}
 
-    Configuration::instance().set(Device::CUDA, Type::FP32);
-    NeuralNetwork gpu_network;
-    build_network(gpu_network);
-    gpu_network.set_parameters(parameters);
-    gpu_network.copy_parameters_device();
-
-    barrier start(2);
-    const auto calculate = [&](const Tensor4& inputs)
+TEST_F(GpuComparison, PoolingDescriptorSupportsConcurrentFirstUse)
+{
+    struct RestoreRung
     {
-        start.arrive_and_wait();
-        return gpu_network.calculate_outputs(inputs);
+        ~RestoreRung() { device::set_rung(device::MaxPoolingRung::Auto); }
+    } restore;
+    device::set_rung(device::MaxPoolingRung::Cudnn);
+
+    const Shape input_shape{12, 12, 3};
+    Tensor4 first_inputs(2, 12, 12, 3);
+    Tensor4 second_inputs(5, 12, 12, 3);
+    first_inputs.setRandom();
+    second_inputs.setRandom();
+
+    const auto build_network = [&](NeuralNetwork& network)
+    {
+        network.add_layer(make_unique<Pooling>(
+                              input_shape, Shape{3, 3}, Shape{2, 2}, Shape{1, 1},
+                              "MaxPooling", "pool"),
+                          {-1});
+        network.compile();
     };
 
-    future<MatrixR> first = async(launch::async, calculate, cref(first_inputs));
-    future<MatrixR> second = async(launch::async, calculate, cref(second_inputs));
-
-    const MatrixR first_outputs = first.get();
-    const MatrixR second_outputs = second.get();
-
-    EXPECT_LT(relative_difference(first_reference, first_outputs), 1.0e-3f);
-    EXPECT_LT(relative_difference(second_reference, second_outputs), 1.0e-3f);
+    expect_concurrent_gpu_outputs(first_inputs, second_inputs, build_network);
 }
 
 TEST_F(GpuComparison, ImageClassificationForwardUnderWorkspaceCap)
@@ -1211,6 +1247,44 @@ TEST_F(GpuComparison, RecurrentExecutionStateIsPropagationOwned)
     EXPECT_EQ(first.layer_state_storage[0].get_device(), Device::CUDA);
     EXPECT_NE(first.layer_state_storage[0].data(),
               second.layer_state_storage[0].data());
+}
+
+TEST_F(GpuComparison, RnnDescriptorCacheSupportsConcurrentMixedBatches)
+{
+    constexpr Index time_steps = 4;
+    constexpr Index input_features = 3;
+    constexpr Index output_features = 5;
+
+    Tensor3 first_inputs(2, time_steps, input_features);
+    Tensor3 second_inputs(5, time_steps, input_features);
+    first_inputs.setRandom();
+    second_inputs.setRandom();
+
+    {
+        SCOPED_TRACE("Recurrent");
+        const auto build_network = [&](NeuralNetwork& network)
+        {
+            network.add_layer(make_unique<Recurrent>(
+                                  Shape{time_steps, input_features},
+                                  Shape{output_features}, "Tanh"),
+                              {-1});
+            network.compile();
+        };
+        expect_concurrent_gpu_outputs(first_inputs, second_inputs, build_network);
+    }
+
+    {
+        SCOPED_TRACE("LongShortTermMemory");
+        const auto build_network = [&](NeuralNetwork& network)
+        {
+            network.add_layer(make_unique<LongShortTermMemory>(
+                                  Shape{time_steps, input_features},
+                                  Shape{output_features}, "Tanh", "Sigmoid"),
+                              {-1});
+            network.compile();
+        };
+        expect_concurrent_gpu_outputs(first_inputs, second_inputs, build_network);
+    }
 }
 
 TEST_F(GpuComparison, ForecastingLstmForward)

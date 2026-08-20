@@ -109,6 +109,21 @@ TEST(SampleToken, DegenerateDistributionFallsBackToArgmax)
     EXPECT_LT(sampled, Index(3));
 }
 
+TEST(SampleToken, RepeatedCallsWithDifferentVocabularySizesAreIndependent)
+{
+    SamplingConfig config;
+    config.top_k = 1;
+    config.top_p = 0.5f;
+
+    VectorR first(5);
+    first << 0.1f, 0.2f, 0.3f, 0.4f, 0.9f;
+    EXPECT_EQ(sample_token(first, config, {}), Index(4));
+
+    VectorR second(2);
+    second << 0.8f, 0.2f;
+    EXPECT_EQ(sample_token(second, config, {}), Index(0));
+}
+
 TEST(TokenizerLayer, IdentityPassthroughShape)
 {
     Tokenizer tokenizer_layer(Shape{7});

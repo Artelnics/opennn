@@ -778,6 +778,10 @@ inline const float zero = 0.0f;
 void copy_device_to_host_float(const void*, Type,
                                Index, float*,
                                cudaStream_t stream);
+void copy_device_to_host_float(const void*, Type,
+                               Index, float*,
+                               cudaStream_t stream,
+                               vector<uint16_t>& bf16_staging);
 
 }
 

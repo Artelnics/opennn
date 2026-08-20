@@ -1627,31 +1627,6 @@ void YoloDataset::set_v8_mode(bool enabled)
         variables[1].features = target_record_floats;
 }
 
-void YoloDataset::read_sample_boxes(Index sample_index, vector<Box>& out) const
-{
-    throw_if(sample_index < 0 || sample_index >= samples_number,
-             "YoloDataset box sample index is out of range.");
-
-    const uint64_t begin = boxes_offsets[size_t(sample_index)];
-    const uint64_t end   = boxes_offsets[size_t(sample_index) + 1];
-    throw_if(end < begin,
-             "YoloDataset box cache offsets are invalid.");
-
-    const uint64_t count = end - begin;
-
-    out.resize(size_t(count));
-    if (count == 0) return;
-
-    thread_local vector<YoloBoxRecord> records;
-    records.resize(size_t(count));
-    boxes_cache_reader.read_at(span(records),
-                               boxes_data_offset + begin * sizeof(YoloBoxRecord));
-
-    for (size_t i = 0; i < records.size(); ++i)
-        out[i] = {records[i].class_id, records[i].x, records[i].y,
-                  records[i].w, records[i].h};
-}
-
 void YoloDataset::load_images_to_ram() const
 {
     if (!images_ram.empty() || samples_number == 0 || cache_image_record_bytes == 0) return;
@@ -1780,6 +1755,7 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
         load_images_to_ram();
 
     const AugmentationConfig cfg = augmentation;
+    const bool mosaic = augment && cfg.mosaic;
 
     string omp_error;
 
@@ -1797,86 +1773,88 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                                        + uint64_t(sample) * uint64_t(cache_image_record_bytes));
     };
 
-    #pragma omp parallel for schedule(dynamic)
-    for (Index i = 0; i < batch_size; ++i)
+    const int workers = max(1, min(omp_get_max_threads(), to_int(batch_size)));
+
+    #pragma omp parallel num_threads(workers)
     {
-        try
+        vector<uint8_t> pixels(static_cast<size_t>(cache_image_record_bytes));
+        vector<uint8_t> augmented(augment ? size_t(cache_image_record_bytes) : 0);
+        vector<uint8_t> resized(resize_needed ? size_t(image_record_bytes) : 0);
+        vector<uint8_t> mosaic_source(mosaic ? size_t(cache_image_record_bytes) : 0);
+
+        #pragma omp for schedule(dynamic)
+        for (Index i = 0; i < batch_size; ++i)
         {
-            thread_local vector<uint8_t> pixels;
-            thread_local vector<uint8_t> aug_pixels;
-            thread_local vector<uint8_t> resized_pixels;
-            pixels.resize(size_t(cache_image_record_bytes));
-
-            const Index sample_index = sample_indices[size_t(i)];
-            throw_if(sample_index < 0 || sample_index >= samples_number,
-                     "YoloDataset input sample index is out of range.");
-
-            read_image_record(sample_index, pixels.data());
-
-            const uint8_t* image_bytes = pixels.data();
-
-            if (augment && augmentation.mosaic)
+            try
             {
-                const Index H = cache_input_shape[0];
-                const Index W = cache_input_shape[1];
-                const Index C = cache_input_shape[2];
-                const array<MosaicQuad, 4> quads =
-                    compute_mosaic_layout(epoch_seed, sample_index, samples_number, H, W);
+                const Index sample_index = sample_indices[size_t(i)];
+                throw_if(sample_index < 0 || sample_index >= samples_number,
+                         "YoloDataset input sample index is out of range.");
 
-                aug_pixels.resize(size_t(H) * size_t(W) * size_t(C));
+                read_image_record(sample_index, pixels.data());
 
-                AugmentationConfig color_cfg = cfg;
-                color_cfg.jitter = 0.0f;
-                color_cfg.flip = false;
+                const uint8_t* image_bytes = pixels.data();
 
-                thread_local vector<uint8_t> mosaic_src;
-
-                for (const MosaicQuad& q : quads)
+                if (mosaic)
                 {
-                    mosaic_src.resize(size_t(cache_image_record_bytes));
-                    read_image_record(q.si, mosaic_src.data());
+                    const Index H = cache_input_shape[0];
+                    const Index W = cache_input_shape[1];
+                    const Index C = cache_input_shape[2];
+                    const array<MosaicQuad, 4> quads =
+                        compute_mosaic_layout(epoch_seed, sample_index, samples_number, H, W);
 
-                    const AugmentationParams qp = derive_augmentation_params(
-                        epoch_seed, uint64_t(q.si), color_cfg);
-                    apply_color_jitter(mosaic_src.data(), H, W, C, qp);
+                    AugmentationConfig color_cfg = cfg;
+                    color_cfg.jitter = 0.0f;
+                    color_cfg.flip = false;
 
-                    blit_resized_into_canvas(mosaic_src.data(), H, W,
-                                             aug_pixels.data(), W,
-                                             q.dst_x, q.dst_y, q.qw, q.qh, C);
+                    for (const MosaicQuad& q : quads)
+                    {
+                        read_image_record(q.si, mosaic_source.data());
+
+                        const AugmentationParams qp = derive_augmentation_params(
+                            epoch_seed, uint64_t(q.si), color_cfg);
+                        apply_color_jitter(mosaic_source.data(), H, W, C, qp);
+
+                        blit_resized_into_canvas(mosaic_source.data(), H, W,
+                                                 augmented.data(), W,
+                                                 q.dst_x, q.dst_y, q.qw, q.qh, C);
+                    }
+                    image_bytes = augmented.data();
                 }
-                image_bytes = aug_pixels.data();
+                else if (augment)
+                {
+                    const AugmentationParams p = derive_augmentation_params(
+                        epoch_seed, uint64_t(sample_index), cfg);
+
+                    apply_geometric_to_image(pixels.data(), augmented.data(),
+                                             cache_input_shape[0], cache_input_shape[1],
+                                             cache_input_shape[2], p);
+                    apply_color_jitter(augmented.data(),
+                                       cache_input_shape[0], cache_input_shape[1],
+                                       cache_input_shape[2], p);
+                    image_bytes = augmented.data();
+                }
+
+                if (resize_needed)
+                {
+                    bilinear_resize_uint8(image_bytes,
+                                          cache_input_shape[0], cache_input_shape[1],
+                                          resized.data(),
+                                          input_shape[0], input_shape[1],
+                                          input_shape[2]);
+                    image_bytes = resized.data();
+                }
+
+                Map<Array<float, Dynamic, 1>>(
+                    input_data + i * image_record_bytes, image_record_bytes) =
+                    Map<const Array<uint8_t, Dynamic, 1>>(
+                        image_bytes, image_record_bytes).cast<float>() * scale;
             }
-            else if (augment)
+            catch (const exception& e)
             {
-                const AugmentationParams p = derive_augmentation_params(
-                    epoch_seed, uint64_t(sample_index), cfg);
-
-                aug_pixels.resize(size_t(cache_image_record_bytes));
-                apply_geometric_to_image(pixels.data(), aug_pixels.data(),
-                                         cache_input_shape[0], cache_input_shape[1], cache_input_shape[2], p);
-                apply_color_jitter(aug_pixels.data(),
-                                   cache_input_shape[0], cache_input_shape[1], cache_input_shape[2], p);
-                image_bytes = aug_pixels.data();
+                #pragma omp critical
+                { if (omp_error.empty()) omp_error = e.what(); }
             }
-
-            if (resize_needed)
-            {
-                resized_pixels.resize(size_t(image_record_bytes));
-                bilinear_resize_uint8(image_bytes,
-                                      cache_input_shape[0], cache_input_shape[1],
-                                      resized_pixels.data(),
-                                      input_shape[0], input_shape[1],
-                                      input_shape[2]);
-                image_bytes = resized_pixels.data();
-            }
-
-            Map<Array<float, Dynamic, 1>>(input_data + i * image_record_bytes, image_record_bytes) =
-                Map<const Array<uint8_t, Dynamic, 1>>(image_bytes, image_record_bytes).cast<float>() * scale;
-        }
-        catch (const exception& e)
-        {
-            #pragma omp critical
-            { omp_error = e.what(); }
         }
     }
 
@@ -1899,6 +1877,7 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
         : 0;
 
     const AugmentationConfig cfg = augmentation;
+    const bool mosaic = augment && cfg.mosaic;
 
     const bool grid_changed = (grid_size != cache_grid_size);
     const bool reencode = augment || grid_changed || is_multi_scale() || v8_mode;
@@ -1908,114 +1887,142 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
 
     string omp_error;
 
-    #pragma omp parallel for
-    for (Index i = 0; i < batch_size; ++i)
+    const auto read_sample_boxes = [&](Index sample_index, vector<Box>& output,
+                                       vector<YoloBoxRecord>& records)
     {
-        try
+        throw_if(sample_index < 0 || sample_index >= samples_number,
+                 "YoloDataset box sample index is out of range.");
+
+        const uint64_t begin = boxes_offsets[size_t(sample_index)];
+        const uint64_t end = boxes_offsets[size_t(sample_index) + 1];
+        throw_if(end < begin, "YoloDataset box cache offsets are invalid.");
+
+        const size_t count = size_t(end - begin);
+        output.resize(count);
+        records.resize(count);
+        if (count == 0) return;
+
+        boxes_cache_reader.read_at(span(records),
+                                   boxes_data_offset + begin * sizeof(YoloBoxRecord));
+        for (size_t box = 0; box < count; ++box)
+            output[box] = {records[box].class_id, records[box].x, records[box].y,
+                           records[box].w, records[box].h};
+    };
+
+    const int workers = max(1, min(omp_get_max_threads(), to_int(batch_size)));
+
+    #pragma omp parallel num_threads(workers)
+    {
+        vector<Box> boxes;
+        vector<Box> mosaic_boxes;
+        vector<Box> quad_boxes;
+        vector<YoloBoxRecord> box_records;
+
+        #pragma omp for
+        for (Index i = 0; i < batch_size; ++i)
         {
-            const Index sample_index = sample_indices[size_t(i)];
-            throw_if(sample_index < 0 || sample_index >= samples_number,
-                     "YoloDataset target sample index is out of range.");
-
-            if (reencode)
+            try
             {
-                float* const target_ptr = target_data + i * target_record_floats;
+                const Index sample_index = sample_indices[size_t(i)];
+                throw_if(sample_index < 0 || sample_index >= samples_number,
+                         "YoloDataset target sample index is out of range.");
 
-                if (augment && augmentation.mosaic)
+                if (reencode)
                 {
-                    const Index H = cache_input_shape[0];
-                    const Index W = cache_input_shape[1];
-                    const array<MosaicQuad, 4> quads =
-                        compute_mosaic_layout(epoch_seed, sample_index, samples_number, H, W);
+                    float* const target_ptr = target_data + i * target_record_floats;
 
-                    thread_local vector<Box> mosaic_boxes;
-                    thread_local vector<Box> quad_boxes;
-                    mosaic_boxes.clear();
-                    quad_boxes.clear();
-
-                    for (const MosaicQuad& q : quads)
+                    if (mosaic)
                     {
-                        read_sample_boxes(q.si, quad_boxes);
-                        const float qw_frac = float(q.qw) / float(W);
-                        const float qh_frac = float(q.qh) / float(H);
-                        const float ox_frac = float(q.dst_x) / float(W);
-                        const float oy_frac = float(q.dst_y) / float(H);
+                        const Index H = cache_input_shape[0];
+                        const Index W = cache_input_shape[1];
+                        const array<MosaicQuad, 4> quads =
+                            compute_mosaic_layout(epoch_seed, sample_index, samples_number, H, W);
 
-                        for (const Box& src : quad_boxes)
+                        mosaic_boxes.clear();
+                        for (const MosaicQuad& q : quads)
                         {
-                            const float raw_cx = src.x * qw_frac + ox_frac;
-                            const float raw_cy = src.y * qh_frac + oy_frac;
-                            const float raw_w  = src.w * qw_frac;
-                            const float raw_h  = src.h * qh_frac;
+                            read_sample_boxes(q.si, quad_boxes, box_records);
+                            const float qw_frac = float(q.qw) / float(W);
+                            const float qh_frac = float(q.qh) / float(H);
+                            const float ox_frac = float(q.dst_x) / float(W);
+                            const float oy_frac = float(q.dst_y) / float(H);
 
-                            const float x0 = max(raw_cx - raw_w * 0.5f, ox_frac);
-                            const float y0 = max(raw_cy - raw_h * 0.5f, oy_frac);
-                            const float x1 = min(raw_cx + raw_w * 0.5f, ox_frac + qw_frac);
-                            const float y1 = min(raw_cy + raw_h * 0.5f, oy_frac + qh_frac);
+                            for (const Box& src : quad_boxes)
+                            {
+                                const float raw_cx = src.x * qw_frac + ox_frac;
+                                const float raw_cy = src.y * qh_frac + oy_frac;
+                                const float raw_w  = src.w * qw_frac;
+                                const float raw_h  = src.h * qh_frac;
 
-                            if (x1 - x0 < 1e-3f || y1 - y0 < 1e-3f) continue;
+                                const float x0 = max(raw_cx - raw_w * 0.5f, ox_frac);
+                                const float y0 = max(raw_cy - raw_h * 0.5f, oy_frac);
+                                const float x1 = min(raw_cx + raw_w * 0.5f, ox_frac + qw_frac);
+                                const float y1 = min(raw_cy + raw_h * 0.5f, oy_frac + qh_frac);
 
-                            Box out;
-                            out.class_id = src.class_id;
-                            out.x = 0.5f * (x0 + x1);
-                            out.y = 0.5f * (y0 + y1);
-                            out.w = x1 - x0;
-                            out.h = y1 - y0;
-                            mosaic_boxes.push_back(out);
+                                if (x1 - x0 < 1e-3f || y1 - y0 < 1e-3f) continue;
+
+                                Box transformed;
+                                transformed.class_id = src.class_id;
+                                transformed.x = 0.5f * (x0 + x1);
+                                transformed.y = 0.5f * (y0 + y1);
+                                transformed.w = x1 - x0;
+                                transformed.h = y1 - y0;
+                                mosaic_boxes.push_back(transformed);
+                            }
                         }
-                    }
 
-                    if (v8_mode)
-                        make_target_v8_gtlist(mosaic_boxes, classes_number, target_ptr);
-                    else if (is_multi_scale())
-                        make_target_multi_scale(mosaic_boxes, head_anchors, head_grid_sizes,
-                                                boxes_per_head, classes_number, target_ptr);
+                        if (v8_mode)
+                            make_target_v8_gtlist(mosaic_boxes, classes_number, target_ptr);
+                        else if (is_multi_scale())
+                            make_target_multi_scale(mosaic_boxes, head_anchors, head_grid_sizes,
+                                                    boxes_per_head, classes_number, target_ptr);
+                        else
+                            make_target(mosaic_boxes, anchors, grid_size, boxes_per_cell,
+                                        classes_number, target_ptr);
+                    }
                     else
-                        make_target(mosaic_boxes, anchors, grid_size, boxes_per_cell,
-                                    classes_number, target_ptr);
+                    {
+                        read_sample_boxes(sample_index, boxes, box_records);
+
+                        if (augment)
+                        {
+                            const AugmentationParams p = derive_augmentation_params(
+                                epoch_seed, uint64_t(sample_index), cfg);
+                            apply_geometric_to_boxes(boxes, p);
+                        }
+
+                        if (v8_mode)
+                            make_target_v8_gtlist(boxes, classes_number, target_ptr);
+                        else if (is_multi_scale())
+                            make_target_multi_scale(boxes, head_anchors, head_grid_sizes,
+                                                    boxes_per_head, classes_number, target_ptr);
+                        else
+                            make_target(boxes, anchors, grid_size, boxes_per_cell,
+                                        classes_number, target_ptr);
+                    }
+                }
+                else if (matrix_storage)
+                {
+                    copy_n(targets_ram.data()
+                               + size_t(sample_index) * size_t(cache_target_record_floats),
+                           cache_target_record_floats,
+                           target_data + i * target_record_floats);
                 }
                 else
                 {
-                    thread_local vector<Box> boxes;
-                    boxes.clear();
-                    read_sample_boxes(sample_index, boxes);
-
-                    if (augment)
-                    {
-                        const AugmentationParams p = derive_augmentation_params(
-                            epoch_seed, uint64_t(sample_index), cfg);
-                        apply_geometric_to_boxes(boxes, p);
-                    }
-
-                    if (v8_mode)
-                        make_target_v8_gtlist(boxes, classes_number, target_ptr);
-                    else if (is_multi_scale())
-                        make_target_multi_scale(boxes, head_anchors, head_grid_sizes,
-                                                boxes_per_head, classes_number, target_ptr);
-                    else
-                        make_target(boxes, anchors, grid_size, boxes_per_cell,
-                                    classes_number, target_ptr);
+                    target_cache_reader.read_at(
+                        span(target_data + i * target_record_floats,
+                             size_t(cache_target_record_floats)),
+                        target_data_offset
+                            + uint64_t(sample_index)
+                            * uint64_t(cache_target_record_floats) * sizeof(float));
                 }
             }
-            else if (matrix_storage)
+            catch (const exception& e)
             {
-                copy_n(targets_ram.data() + size_t(sample_index) * size_t(cache_target_record_floats),
-                       cache_target_record_floats,
-                       target_data + i * target_record_floats);
+                #pragma omp critical
+                { if (omp_error.empty()) omp_error = e.what(); }
             }
-            else
-            {
-                target_cache_reader.read_at(
-                                            span(target_data + i * target_record_floats,
-                                                 size_t(cache_target_record_floats)),
-                                            target_data_offset
-                                            + uint64_t(sample_index) * uint64_t(cache_target_record_floats) * sizeof(float));
-            }
-        }
-        catch (const exception& e)
-        {
-            #pragma omp critical
-            { omp_error = e.what(); }
         }
     }
 

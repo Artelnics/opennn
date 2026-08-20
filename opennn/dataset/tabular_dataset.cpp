@@ -240,8 +240,7 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
         throw_if(row < 0 || row >= rows_number,
                  "Binary data row index is out of range.");
 
-    thread_local vector<float> row_buffer;
-    if (!contiguous) row_buffer.resize(size_t(columns_number));
+    vector<float> row_buffer(contiguous ? 0 : size_t(columns_number));
 
     for (Index i = 0; i < ssize(sample_indices); ++i)
     {

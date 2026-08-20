@@ -161,7 +161,8 @@ void fill_tensor_data(const MatrixR& matrix,
 
 void copy_device_to_host_float(const void* device_src, Type src_dtype,
                                Index element_count, float* host_dst,
-                               cudaStream_t stream)
+                               cudaStream_t stream,
+                               vector<uint16_t>& bf16_staging)
 {
     if (element_count == 0) return;
 
@@ -175,21 +176,25 @@ void copy_device_to_host_float(const void* device_src, Type src_dtype,
     }
     else if (src_dtype == Type::BF16)
     {
-        // Reused across calls. Allocating this per call dominates the transfer
-        // once element_count reaches inference-sized outputs: a fresh
-        // allocation of an inference-sized buffer plus its first-touch page
-        // faults costs several times the copy it stages.
-        thread_local vector<uint16_t> staging;
-        staging.resize(static_cast<size_t>(element_count));
-        device::copy_async(staging.data(), device_src,
+        bf16_staging.resize(static_cast<size_t>(element_count));
+        device::copy_async(bf16_staging.data(), device_src,
                            element_count * Index(sizeof(uint16_t)),
                            device::CopyKind::DeviceToHost,
                            stream);
         device::synchronize(stream);
-        ranges::transform(staging, host_dst, bfloat16_to_float_host);
+        ranges::transform(bf16_staging, host_dst, bfloat16_to_float_host);
     }
     else
         throw runtime_error("copy_device_to_host_float: unsupported dtype.");
+}
+
+void copy_device_to_host_float(const void* device_src, Type src_dtype,
+                               Index element_count, float* host_dst,
+                               cudaStream_t stream)
+{
+    vector<uint16_t> bf16_staging;
+    copy_device_to_host_float(device_src, src_dtype, element_count,
+                              host_dst, stream, bf16_staging);
 }
 
 }

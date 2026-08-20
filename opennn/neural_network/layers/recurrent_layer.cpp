@@ -362,11 +362,12 @@ static CudnnRnnConfig recurrent_cudnn_config(ActivationFunction activation)
                                                    : CUDNN_RNN_TANH};
 }
 
-void RecurrentOperator::ensure_cudnn_setup_(Index batch_size, bool for_training) const
+CudnnRnnShapeSlot& RecurrentOperator::ensure_cudnn_setup_(Index batch_size,
+                                                          bool for_training) const
 {
-    cudnn_setup_(recurrent_cudnn_config(activation),
-                 input_features, output_features, time_steps,
-                 batch_size, for_training);
+    return cudnn_setup_(recurrent_cudnn_config(activation),
+                        input_features, output_features, time_steps,
+                        batch_size, for_training);
 }
 
 void RecurrentOperator::pack_weights_to_cudnn_(Buffer& forward_state) const
@@ -393,18 +394,22 @@ void RecurrentOperator::apply_gpu_cudnn_(const TensorView& input,
                                          bool is_training) const
 {
     const Index batch_size = input.get_shape()[0];
+    const auto backend_lock = lock_backend_state();
 
-    ensure_cudnn_setup_(batch_size, is_training);
-    prepare_cudnn_forward_state_(forward_state, is_training);
+    CudnnRnnShapeSlot& shape = ensure_cudnn_setup_(batch_size, is_training);
+    prepare_cudnn_forward_state_(forward_state, is_training, shape);
     pack_weights_to_cudnn_(forward_state);
 
-    cudnn_rnn_forward_(is_training,  false,
+    cudnn_rnn_forward_(shape, is_training, false,
                        input.get_data(), hidden_states.get_data(),
                        forward_state,
-                       [&] {
-                           ensure_cudnn_setup_(batch_size, is_training);
-                           prepare_cudnn_forward_state_(forward_state, is_training);
+                       [&]() -> CudnnRnnShapeSlot& {
+                           CudnnRnnShapeSlot& retry_shape =
+                               ensure_cudnn_setup_(batch_size, is_training);
+                           prepare_cudnn_forward_state_(forward_state, is_training,
+                                                        retry_shape);
                            pack_weights_to_cudnn_(forward_state);
+                           return retry_shape;
                        });
 
     if (return_sequences)
@@ -427,8 +432,9 @@ void RecurrentOperator::apply_delta_gpu_cudnn_(const TensorView& input,
     const Index batch_size = input.get_shape()[0];
     const Index H = output_features;
     const Index T = time_steps;
+    const auto backend_lock = lock_backend_state();
 
-    ensure_cudnn_setup_(batch_size, true);
+    CudnnRnnShapeSlot& shape = ensure_cudnn_setup_(batch_size, true);
 
     const float* dy_data = output_delta.as<float>();
     if (!return_sequences)
@@ -447,7 +453,7 @@ void RecurrentOperator::apply_delta_gpu_cudnn_(const TensorView& input,
         ? input_delta.get_data()
         : input_delta_scratch.get_data();
 
-    cudnn_rnn_backward_( false,
+    cudnn_rnn_backward_(shape, false,
                         input.get_data(), hidden_states.get_data(), dy_data, dx_data,
                         forward_state, backward_scratch);
 

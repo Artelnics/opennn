@@ -478,10 +478,14 @@ void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output)
     const Map<const Matrix<float, 1, Dynamic>> bias_row(use_bias ? bias.as<float>() : nullptr,
                                                         use_bias ? kernels_number : 0);
 
-    #pragma omp parallel
+    const Index col_size = output_positions * patch_size;
+    const int workers = max(1, min(omp_get_max_threads(), to_int(batch_size)));
+    vector<float> scratch(size_t(workers) * size_t(col_size));
+
+    #pragma omp parallel num_threads(workers)
     {
-        thread_local vector<float> col_storage;
-        col_storage.resize(size_t(output_positions * patch_size));
+        float* const col_data =
+            scratch.data() + size_t(omp_get_thread_num()) * size_t(col_size);
 
         #pragma omp for schedule(static)
         for (Index image_index = 0; image_index < batch_size; ++image_index)
@@ -490,9 +494,9 @@ void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output)
                    input_height, input_width, kernel_channels,
                    kernel_height, kernel_width, padding_height, padding_width,
                    row_stride, column_stride, output_height, output_width,
-                   col_storage.data());
+                   col_data);
 
-            const Map<const MatrixR> col(col_storage.data(), output_positions, patch_size);
+            const Map<const MatrixR> col(col_data, output_positions, patch_size);
             Map<MatrixR> output_matrix(output.as<float>() + image_index * output_positions * kernels_number,
                                     output_positions, kernels_number);
 
@@ -519,20 +523,21 @@ void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
 
     const bool write_input_delta = !input_delta.empty();
 
-    const int threads_number = omp_get_max_threads();
-    MatrixR weight_gradient_partials = MatrixR::Zero(threads_number, kernels_number * patch_size);
-    MatrixR bias_gradient_partials = MatrixR::Zero(use_bias ? threads_number : 0,
+    const int workers = max(1, min(omp_get_max_threads(), to_int(batch_size)));
+    MatrixR weight_gradient_partials = MatrixR::Zero(workers, kernels_number * patch_size);
+    MatrixR bias_gradient_partials = MatrixR::Zero(use_bias ? workers : 0,
                                                    use_bias ? kernels_number : 0);
 
-    #pragma omp parallel
+    const Index col_size = output_positions * patch_size;
+    const Index scratch_stride = write_input_delta ? 2 * col_size : col_size;
+    vector<float> scratch(size_t(workers) * size_t(scratch_stride));
+
+    #pragma omp parallel num_threads(workers)
     {
         const int thread = omp_get_thread_num();
-
-        thread_local vector<float> col_storage;
-        thread_local vector<float> delta_col_storage;
-        col_storage.resize(size_t(output_positions * patch_size));
-        if (write_input_delta)
-            delta_col_storage.resize(size_t(output_positions * patch_size));
+        float* const col_data =
+            scratch.data() + size_t(thread) * size_t(scratch_stride);
+        float* const delta_col_data = write_input_delta ? col_data + col_size : nullptr;
 
         Map<MatrixR> weight_gradient_partial(weight_gradient_partials.row(thread).data(),
                                           kernels_number, patch_size);
@@ -544,9 +549,9 @@ void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
                    input_height, input_width, kernel_channels,
                    kernel_height, kernel_width, padding_height, padding_width,
                    row_stride, column_stride, output_height, output_width,
-                   col_storage.data());
+                   col_data);
 
-            const Map<const MatrixR> col(col_storage.data(), output_positions, patch_size);
+            const Map<const MatrixR> col(col_data, output_positions, patch_size);
             const Map<const MatrixR> output_deltas(
                 output_delta.as<float>() + image_index * output_positions * kernels_number,
                 output_positions, kernels_number);
@@ -558,12 +563,12 @@ void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
 
             if (write_input_delta)
             {
-                Map<MatrixR> delta_col(delta_col_storage.data(), output_positions, patch_size);
+                Map<MatrixR> delta_col(delta_col_data, output_positions, patch_size);
                 delta_col.noalias() = output_deltas * weights_matrix;
 
                 float* const image_delta = input_delta.as<float>() + image_index * input_size;
                 fill_n(image_delta, input_size, 0.0f);
-                col2im(delta_col_storage.data(),
+                col2im(delta_col_data,
                        input_height, input_width, kernel_channels,
                        kernel_height, kernel_width, padding_height, padding_width,
                        row_stride, column_stride, output_height, output_width,

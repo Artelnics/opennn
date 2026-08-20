@@ -234,6 +234,65 @@ TEST(YoloDataset, FillsInputsWithExpectedShapeAndPixelValues)
     }
 }
 
+TEST(YoloDataset, RepeatedMosaicBatchesKeepWorkerScratchIndependent)
+{
+    TempDir dir;
+    const filesystem::path images_dir = dir.path / "images";
+    const filesystem::path labels_dir = dir.path / "labels";
+    filesystem::create_directories(images_dir);
+    filesystem::create_directories(labels_dir);
+    write_classes(labels_dir / "classes.names", {"only"});
+
+    constexpr Index width = 12;
+    constexpr Index height = 10;
+    constexpr Index samples = 4;
+    for (Index sample = 0; sample < samples; ++sample)
+    {
+        const string name = "sample_" + to_string(sample);
+        write_bmp_24(images_dir / (name + ".bmp"), int(width), int(height),
+                     uint8_t(40 + sample * 30), uint8_t(80 + sample * 20),
+                     uint8_t(120 + sample * 10));
+        write_label(labels_dir / (name + ".txt"), 0,
+                    0.25f + 0.1f * float(sample), 0.5f, 0.2f, 0.3f);
+    }
+
+    YoloDataset dataset;
+    dataset.set_display(false);
+    dataset.set(images_dir, labels_dir, Shape{height, width, 3}, 2, 1,
+                {{0.25f, 0.25f}});
+
+    YoloDataset::AugmentationConfig augmentation;
+    augmentation.jitter = 0.0f;
+    augmentation.exposure = 1.0f;
+    augmentation.saturation = 1.0f;
+    augmentation.hue = 0.0f;
+    augmentation.flip = false;
+    augmentation.mosaic = true;
+    dataset.set_augmentation(augmentation);
+
+    const vector<Index> sample_indices = {0, 1, 2, 3};
+    constexpr Index input_values = samples * height * width * 3;
+    constexpr Index target_values = samples * 2 * 2 * (5 + 1);
+
+    for (Index repetition = 0; repetition < 8; ++repetition)
+    {
+        vector<float> inputs(static_cast<size_t>(input_values));
+        vector<float> targets(static_cast<size_t>(target_values));
+        dataset.fill_inputs(sample_indices, {}, inputs.data(), FillMode::Training);
+        dataset.fill_targets(sample_indices, {}, targets.data(), FillMode::Training);
+
+        EXPECT_TRUE(ranges::all_of(inputs, [](float value)
+        {
+            return isfinite(value) && value >= 0.0f && value <= 1.0f;
+        }));
+        EXPECT_TRUE(ranges::all_of(targets, [](float value)
+        {
+            return isfinite(value);
+        }));
+        EXPECT_GT(ranges::count_if(targets, [](float value) { return value != 0.0f; }), 0);
+    }
+}
+
 TEST(YoloDataset, MultiScaleTargetsRouteBoxesToCorrectHead)
 {
 

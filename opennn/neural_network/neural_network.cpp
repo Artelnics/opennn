@@ -1149,7 +1149,8 @@ void NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& in
         outputs.resize(shape[0], shape[1], shape[2]);
 
     copy_device_to_host_float(out.get_data(), out.get_type(), out.size(),
-                              outputs.data(), device::get_compute_stream());
+                              outputs.data(), device::get_compute_stream(),
+                              forward_propagation.host_bf16_output_scratch);
 }
 
 Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2)
@@ -2811,7 +2812,8 @@ void NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_vie
 
     cudaStream_t stream = device::get_compute_stream();
     copy_device_to_host_float(out_view.get_data(), out_view.get_type(), out_view.size(),
-                              outputs.data(), stream);
+                              outputs.data(), stream,
+                              forward_propagation.host_bf16_output_scratch);
 }
 
 MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,

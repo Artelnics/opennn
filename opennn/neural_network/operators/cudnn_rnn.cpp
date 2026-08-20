@@ -23,14 +23,15 @@ static bool persist_env_enabled()
     return enabled;
 }
 
-void CudnnRnnState::cudnn_setup_(const CudnnRnnConfig& config,
-                                 Index input_features,
-                                 Index output_features,
-                                 Index time_steps,
-                                 Index batch_size,
-                                 bool for_training) const
+CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_(const CudnnRnnConfig& config,
+                                               Index input_features,
+                                               Index output_features,
+                                               Index time_steps,
+                                               Index batch_size,
+                                               bool for_training) const
 {
-    if (!persist_algo_failed_ && persist_env_enabled())
+    BackendState& state = backend_state;
+    if (!state.persist_algo_failed && persist_env_enabled())
     {
         try
         {
@@ -39,23 +40,24 @@ void CudnnRnnState::cudnn_setup_(const CudnnRnnConfig& config,
         }
         catch (const exception&)
         {
-            persist_algo_failed_ = true;
-            rnn_desc.reset();
-            cached_input_features = -1;
+            state.persist_algo_failed = true;
+            state.rnn_desc.reset();
+            state.cached_input_features = -1;
         }
     }
-    cudnn_setup_attempt_(config, input_features, output_features, time_steps,
-                         batch_size, for_training);
+    return cudnn_setup_attempt_(config, input_features, output_features, time_steps,
+                                batch_size, for_training);
 }
 
-void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
-                                         Index input_features,
-                                         Index output_features,
-                                         Index time_steps,
-                                         Index batch_size,
-                                         bool for_training) const
+CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
+                                                       Index input_features,
+                                                       Index output_features,
+                                                       Index time_steps,
+                                                       Index batch_size,
+                                                       bool for_training) const
 {
-    persist_algo_active_ = !persist_algo_failed_ && persist_env_enabled();
+    BackendState& state = backend_state;
+    state.persist_algo_active = !state.persist_algo_failed && persist_env_enabled();
 
     const Index F = input_features;
     const Index H = output_features;
@@ -63,36 +65,36 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
     const bool is_lstm = (config.cell_mode == CUDNN_LSTM);
 
     const bool topology_changed =
-        cached_input_features  != F ||
-        cached_output_features != H ||
-        rnn_desc == nullptr;
+        state.cached_input_features  != F ||
+        state.cached_output_features != H ||
+        state.rnn_desc == nullptr;
 
     if (topology_changed)
     {
-        rnn_desc.reset();
-        CHECK_CUDNN(cudnnCreateRNNDescriptor(&rnn_desc.handle));
-        rnn_desc.deleter = &cudnnDestroyRNNDescriptor;
+        state.rnn_desc.reset();
+        CHECK_CUDNN(cudnnCreateRNNDescriptor(&state.rnn_desc.handle));
+        state.rnn_desc.deleter = &cudnnDestroyRNNDescriptor;
 
-        if (!dropout_desc)
+        if (!state.dropout_desc)
         {
-            CHECK_CUDNN(cudnnCreateDropoutDescriptor(&dropout_desc.handle));
-            dropout_desc.deleter = &cudnnDestroyDropoutDescriptor;
+            CHECK_CUDNN(cudnnCreateDropoutDescriptor(&state.dropout_desc.handle));
+            state.dropout_desc.deleter = &cudnnDestroyDropoutDescriptor;
         }
         size_t dropout_states_bytes = 0;
         CHECK_CUDNN(cudnnDropoutGetStatesSize(
             device::get_cudnn_handle(), &dropout_states_bytes));
-        dropout_states_buf.grow_to(Index(dropout_states_bytes));
+        state.dropout_states.grow_to(Index(dropout_states_bytes));
         CHECK_CUDNN(cudnnSetDropoutDescriptor(
-            dropout_desc, device::get_cudnn_handle(),
+            state.dropout_desc, device::get_cudnn_handle(),
              0.0f,
-            dropout_states_buf.data(),
-            size_t(dropout_states_buf.byte_size()),
+            state.dropout_states.data(),
+            size_t(state.dropout_states.byte_size()),
              0ULL));
 
         CHECK_CUDNN(cudnnSetRNNDescriptor_v8(
-            rnn_desc,
-            persist_algo_active_ ? CUDNN_RNN_ALGO_PERSIST_STATIC
-                                 : CUDNN_RNN_ALGO_STANDARD,
+            state.rnn_desc,
+            state.persist_algo_active ? CUDNN_RNN_ALGO_PERSIST_STATIC
+                                      : CUDNN_RNN_ALGO_STANDARD,
             config.cell_mode,
             CUDNN_RNN_SINGLE_INP_BIAS,
             CUDNN_UNIDIRECTIONAL,
@@ -104,18 +106,18 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
             int(H),
               int(H),
             1,
-            dropout_desc,
-            persist_algo_active_ ? CUDNN_RNN_PADDED_IO_DISABLED
-                                 : CUDNN_RNN_PADDED_IO_ENABLED));
+            state.dropout_desc,
+            state.persist_algo_active ? CUDNN_RNN_PADDED_IO_DISABLED
+                                      : CUDNN_RNN_PADDED_IO_ENABLED));
 
         size_t weight_bytes = 0;
         CHECK_CUDNN(cudnnGetRNNWeightSpaceSize(
-            device::get_cudnn_handle(), rnn_desc, &weight_bytes));
-        weight_space_bytes_ = Index(weight_bytes);
+            device::get_cudnn_handle(), state.rnn_desc, &weight_bytes));
+        state.weight_space_bytes = Index(weight_bytes);
     }
 
     if (topology_changed)
-        for (CudnnRnnShapeSlot& slot : shape_slots_)
+        for (CudnnRnnShapeSlot& slot : state.shape_slots)
         {
             slot.batch = -1;
             slot.time  = -1;
@@ -123,16 +125,16 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
 
     int slot_index = -1;
     for (int s = 0; s < RNN_SHAPE_SLOTS; ++s)
-        if (shape_slots_[s].batch == batch_size && shape_slots_[s].time == T)
+        if (state.shape_slots[s].batch == batch_size && state.shape_slots[s].time == T)
             slot_index = s;
 
-    if (slot_index >= 0 && for_training && !shape_slots_[slot_index].training_ready)
+    if (slot_index >= 0 && for_training && !state.shape_slots[slot_index].training_ready)
     {
-        CudnnRnnShapeSlot& slot = shape_slots_[slot_index];
+        CudnnRnnShapeSlot& slot = state.shape_slots[slot_index];
         size_t work_bytes = 0;
         size_t reserve_bytes = 0;
         CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
-            device::get_cudnn_handle(), rnn_desc,
+            device::get_cudnn_handle(), state.rnn_desc,
             CUDNN_FWD_MODE_TRAINING, slot.x_desc,
             &work_bytes, &reserve_bytes));
         slot.workspace_bytes = max(slot.workspace_bytes, Index(work_bytes));
@@ -145,11 +147,12 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
         slot_index = 0;
         for (int s = 1; s < RNN_SHAPE_SLOTS; ++s)
         {
-            if (shape_slots_[slot_index].batch < 0) break;
-            if (shape_slots_[s].batch < 0 || shape_slots_[s].stamp < shape_slots_[slot_index].stamp)
+            if (state.shape_slots[slot_index].batch < 0) break;
+            if (state.shape_slots[s].batch < 0
+                || state.shape_slots[s].stamp < state.shape_slots[slot_index].stamp)
                 slot_index = s;
         }
-        CudnnRnnShapeSlot& slot = shape_slots_[slot_index];
+        CudnnRnnShapeSlot& slot = state.shape_slots[slot_index];
         slot.batch = batch_size;
         slot.time  = T;
 
@@ -201,13 +204,13 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
         size_t reserve_bytes = 0;
         if (for_training)
             CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
-                device::get_cudnn_handle(), rnn_desc,
+                device::get_cudnn_handle(), state.rnn_desc,
                 CUDNN_FWD_MODE_TRAINING, slot.x_desc,
                 &work_bytes, &reserve_bytes));
 
         size_t inference_work_bytes = 0;
         CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
-            device::get_cudnn_handle(), rnn_desc,
+            device::get_cudnn_handle(), state.rnn_desc,
             CUDNN_FWD_MODE_INFERENCE, slot.x_desc,
             &inference_work_bytes, nullptr));
 
@@ -217,11 +220,11 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
 
     }
 
-    shape_slots_[slot_index].stamp = ++shape_stamp_;
-    active_shape_ = slot_index;
+    state.shape_slots[slot_index].stamp = ++state.shape_stamp;
 
-    cached_input_features  = F;
-    cached_output_features = H;
+    state.cached_input_features  = F;
+    state.cached_output_features = H;
+    return state.shape_slots[slot_index];
 }
 
 void CudnnRnnState::cudnn_copy_weight_regions_(int num_linear_layers,
@@ -232,6 +235,7 @@ void CudnnRnnState::cudnn_copy_weight_regions_(int num_linear_layers,
                                                Buffer& packed_weights,
                                                bool to_cudnn) const
 {
+    BackendState& state = backend_state;
     const int F = int(input_features);
     const int H = int(output_features);
     const int input_layers = num_linear_layers / 2;
@@ -250,8 +254,8 @@ void CudnnRnnState::cudnn_copy_weight_regions_(int num_linear_layers,
         float* cudnn_matrix = nullptr;
         float* cudnn_vector = nullptr;
         CHECK_CUDNN(cudnnGetRNNWeightParams(
-            device::get_cudnn_handle(), rnn_desc, 0,
-            size_t(weight_space_bytes_), packed_weights.data(), lin,
+            device::get_cudnn_handle(), state.rnn_desc, 0,
+            size_t(state.weight_space_bytes), packed_weights.data(), lin,
             matrix_desc, reinterpret_cast<void**>(&cudnn_matrix),
             bias_desc, reinterpret_cast<void**>(&cudnn_vector)));
 
@@ -279,8 +283,9 @@ void CudnnRnnState::cudnn_pack_weights_(int num_linear_layers,
                                         const TensorView* const* biases,
                                         Buffer& forward_state) const
 {
-    forward_state.grow_to(get_aligned_bytes(weight_space_bytes_));
-    device::set_zero_async(forward_state.data(), weight_space_bytes_,
+    const Index weight_space_bytes = backend_state.weight_space_bytes;
+    forward_state.grow_to(get_aligned_bytes(weight_space_bytes));
+    device::set_zero_async(forward_state.data(), weight_space_bytes,
                            device::get_compute_stream());
     cudnn_copy_weight_regions_(num_linear_layers, input_features, output_features,
                                weights, biases, forward_state, true);
@@ -299,95 +304,100 @@ void CudnnRnnState::cudnn_unpack_gradients_(int num_linear_layers,
 }
 
 void CudnnRnnState::prepare_cudnn_forward_state_(Buffer& forward_state,
-                                                 bool is_training) const
+                                                 bool is_training,
+                                                 const CudnnRnnShapeSlot& shape) const
 {
-    const Index reserve_offset = get_aligned_bytes(weight_space_bytes_);
-    const Index reserve_bytes = is_training ? active_shape().reserve_space_bytes : 0;
+    const Index reserve_offset = get_aligned_bytes(backend_state.weight_space_bytes);
+    const Index reserve_bytes = is_training ? shape.reserve_space_bytes : 0;
     forward_state.grow_to(detail::checked_index_add(
         reserve_offset, reserve_bytes, "cuDNN RNN forward state"));
 }
 
-void CudnnRnnState::cudnn_rnn_forward_(bool is_training, bool has_cell_state,
+void CudnnRnnState::cudnn_rnn_forward_(const CudnnRnnShapeSlot& initial_shape,
+                                       bool is_training, bool has_cell_state,
                                        const void* x, void* y,
                                        Buffer& forward_state,
-                                       const function<void()>& reconfigure) const
+                                       const function<CudnnRnnShapeSlot&()>& reconfigure) const
 {
+    BackendState& state = backend_state;
+    const CudnnRnnShapeSlot* selected_shape = &initial_shape;
     auto run_forward = [&]() {
-        const CudnnRnnShapeSlot& shape = active_shape();
+        const CudnnRnnShapeSlot& shape = *selected_shape;
         void* workspace = shape.workspace_bytes > 0
             ? ensure_shared_scratch(size_t(shape.workspace_bytes))
             : nullptr;
         void* reserve = is_training && shape.reserve_space_bytes > 0
-            ? forward_state.as<uint8_t>() + get_aligned_bytes(weight_space_bytes_)
+            ? forward_state.as<uint8_t>() + get_aligned_bytes(state.weight_space_bytes)
             : nullptr;
         return cudnnRNNForward(
             device::get_cudnn_handle(),
-            rnn_desc,
+            state.rnn_desc,
             is_training ? CUDNN_FWD_MODE_TRAINING : CUDNN_FWD_MODE_INFERENCE,
             shape.seq_dev.as<int32_t>(),
             shape.x_desc, x,
             shape.y_desc, y,
             shape.h_desc, nullptr, nullptr,
             has_cell_state ? shape.c_desc : shape.h_desc, nullptr, nullptr,
-            size_t(weight_space_bytes_), forward_state.data(),
+            size_t(state.weight_space_bytes), forward_state.data(),
             size_t(shape.workspace_bytes), workspace,
             is_training ? size_t(shape.reserve_space_bytes) : 0,
             reserve);
     };
 
     cudnnStatus_t forward_status = run_forward();
-    if (forward_status == CUDNN_STATUS_NOT_SUPPORTED && persist_algo_active_)
+    if (forward_status == CUDNN_STATUS_NOT_SUPPORTED && state.persist_algo_active)
     {
-        persist_algo_failed_ = true;
-        rnn_desc.reset();
-        cached_input_features = -1;
-        reconfigure();
+        state.persist_algo_failed = true;
+        state.rnn_desc.reset();
+        state.cached_input_features = -1;
+        selected_shape = &reconfigure();
         forward_status = run_forward();
     }
     CHECK_CUDNN(forward_status);
 }
 
-void CudnnRnnState::cudnn_rnn_backward_(bool has_cell_state,
+void CudnnRnnState::cudnn_rnn_backward_(const CudnnRnnShapeSlot& shape,
+                                        bool has_cell_state,
                                         const void* x, const void* y, const void* dy,
                                         void* dx,
                                         const Buffer& forward_state,
                                         Buffer& backward_scratch) const
 {
-    const CudnnRnnShapeSlot& shape = active_shape();
+    BackendState& state = backend_state;
     const cudnnTensorDescriptor_t second_state_desc =
         has_cell_state ? shape.c_desc.handle : shape.h_desc.handle;
     void* workspace = shape.workspace_bytes > 0
         ? ensure_shared_scratch(size_t(shape.workspace_bytes))
         : nullptr;
     void* reserve = shape.reserve_space_bytes > 0
-        ? static_cast<uint8_t*>(forward_state.data()) + get_aligned_bytes(weight_space_bytes_)
+        ? static_cast<uint8_t*>(forward_state.data()) + get_aligned_bytes(state.weight_space_bytes)
         : nullptr;
 
     CHECK_CUDNN(cudnnRNNBackwardData_v8(
         device::get_cudnn_handle(),
-        rnn_desc,
+        state.rnn_desc,
         shape.seq_dev.as<int32_t>(),
         shape.y_desc, y, dy,
         shape.x_desc, dx,
         shape.h_desc, nullptr, nullptr, nullptr,
         second_state_desc, nullptr, nullptr, nullptr,
-        size_t(weight_space_bytes_), forward_state.data(),
+        size_t(state.weight_space_bytes), forward_state.data(),
         size_t(shape.workspace_bytes), workspace,
         size_t(shape.reserve_space_bytes), reserve));
 
-    backward_scratch.grow_to(weight_space_bytes_);
-    device::set_zero_async(backward_scratch.data(), weight_space_bytes_,
+    backward_scratch.grow_to(state.weight_space_bytes);
+    device::set_zero_async(backward_scratch.data(), state.weight_space_bytes,
                            device::get_compute_stream());
 
     CHECK_CUDNN(cudnnRNNBackwardWeights_v8(
         device::get_cudnn_handle(),
-        rnn_desc,
+        state.rnn_desc,
         CUDNN_WGRAD_MODE_ADD,
         shape.seq_dev.as<int32_t>(),
         shape.x_desc, x,
         shape.h_desc, nullptr,
         shape.y_desc, y,
-        size_t(weight_space_bytes_), backward_scratch.data(),
+        size_t(state.weight_space_bytes), backward_scratch.data(),
         size_t(shape.workspace_bytes), workspace,
         size_t(shape.reserve_space_bytes), reserve));
 }

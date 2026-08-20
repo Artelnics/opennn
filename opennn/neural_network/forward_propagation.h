@@ -132,6 +132,7 @@ struct ForwardPropagation
     mutable Buffer loss_target_workspace{Device::CUDA};
 
     vector<vector<uint16_t>> host_bf16_input_scratch;
+    vector<uint16_t> host_bf16_output_scratch;
 
     Buffer position_device{Device::CUDA};
     device::PinnedBuffer position_pinned;

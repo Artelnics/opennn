@@ -1,6 +1,7 @@
 #include "tests/pch.h"
 
 #include <array>
+#include <future>
 
 #include "opennn/core/io_utilities.h"
 #include "opennn/core/json.h"
@@ -128,6 +129,56 @@ TEST(IoUtilitiesTest, FileReaderReadAtOffset)
     std::array<char, 3> chunk = {0, 0, 0};
     reader.read_at(span(chunk), 4);
     EXPECT_EQ(string(chunk.data(), chunk.size()), "EFG");
+
+    reader.close();
+    remove_quietly(path);
+}
+
+TEST(IoUtilitiesTest, ReadInt32BatchSupportsConcurrentMixedWidths)
+{
+    const filesystem::path tmp = make_temp_path("int32_batch.tmp");
+    const filesystem::path path = make_temp_path("int32_batch.bin");
+    remove_quietly(tmp);
+    remove_quietly(path);
+
+    constexpr Index rows = 5;
+    constexpr Index columns = 6;
+    vector<int32_t> records(size_t(rows * columns));
+    for (Index row = 0; row < rows; ++row)
+        for (Index column = 0; column < columns; ++column)
+            records[size_t(row * columns + column)] = int32_t(row * 100 + column);
+
+    FileWriter writer;
+    writer.open(tmp);
+    writer.write(span(records));
+    writer.finish_with_rename(path);
+
+    FileReader reader;
+    reader.open(path);
+    const vector<Index> samples = {4, 1, 3};
+
+    const auto read_columns = [&](Index offset, Index count)
+    {
+        vector<float> output(size_t(ssize(samples) * count));
+        read_int32_batch(reader, samples, rows, columns, offset, count,
+                         output, count, 0, "IoUtilitiesTest");
+        return output;
+    };
+
+    future<vector<float>> narrow = async(launch::async, read_columns, 1, 2);
+    future<vector<float>> wide = async(launch::async, read_columns, 0, 5);
+
+    const vector<float> narrow_values = narrow.get();
+    const vector<float> wide_values = wide.get();
+    for (Index row = 0; row < ssize(samples); ++row)
+    {
+        for (Index column = 0; column < 2; ++column)
+            EXPECT_FLOAT_EQ(narrow_values[size_t(row * 2 + column)],
+                            float(samples[size_t(row)] * 100 + column + 1));
+        for (Index column = 0; column < 5; ++column)
+            EXPECT_FLOAT_EQ(wide_values[size_t(row * 5 + column)],
+                            float(samples[size_t(row)] * 100 + column));
+    }
 
     reader.close();
     remove_quietly(path);

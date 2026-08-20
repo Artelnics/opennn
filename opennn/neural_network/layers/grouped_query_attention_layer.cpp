@@ -191,7 +191,7 @@ void grouped_attention_forward(const TensorView& query, const TensorView& key, c
     };
 
     const auto calculate_weights = [&](Index b, Index i, Index hq, Index hkv,
-                                       Index valid, vector<float>& scores) {
+                                       Index valid, float* scores) {
         const Map<const VectorR> q_map(Q + q_off(b, i, hq), head_dim);
 
         float max_score = NEG_INFINITY;
@@ -199,30 +199,26 @@ void grouped_attention_forward(const TensorView& query, const TensorView& key, c
         {
             const float dot =
                 q_map.dot(Map<const VectorR>(K + kv_off(b, j, hkv), head_dim)) * scale;
-            scores[size_t(j)] = dot;
+            scores[j] = dot;
             max_score = max(max_score, dot);
         }
 
-        Map<Array<float, Dynamic, 1>> score_map(scores.data(), valid);
+        Map<Array<float, Dynamic, 1>> score_map(scores, valid);
         score_map = (score_map - max_score).exp();
         return 1.0f / score_map.sum();
     };
 
     const auto write_output = [&](Index b, Index i, Index hq, Index hkv,
-                                  Index valid, const vector<float>& scores, float inv_sum) {
+                                  Index valid, const float* scores, float inv_sum) {
         Map<VectorR> o_map(O + q_off(b, i, hq), head_dim);
         o_map.setZero();
         for (Index j = 0; j < valid; ++j)
-            o_map += (scores[size_t(j)] * inv_sum)
+            o_map += (scores[j] * inv_sum)
                    * Map<const VectorR>(V + kv_off(b, j, hkv), head_dim);
     };
 
-    const auto attend_head = [&](Index b, Index hq) {
+    const auto attend_head = [&](Index b, Index hq, float* scores) {
         const Index hkv = hq / group;
-
-        thread_local vector<float> scores;
-        if (scores.size() < size_t(key_seq))
-            scores.resize(size_t(key_seq));
 
         for (Index i = 0; i < query_seq; ++i)
         {
@@ -233,10 +229,18 @@ void grouped_attention_forward(const TensorView& query, const TensorView& key, c
     };
 
     const Index heads_count = batch * n_query_heads;
+    const int workers = max(1, min(omp_get_max_threads(), to_int(heads_count)));
+    vector<float> score_storage(size_t(workers) * size_t(key_seq));
 
-    #pragma omp parallel for schedule(static)
-    for (Index head = 0; head < heads_count; ++head)
-        attend_head(head / n_query_heads, head % n_query_heads);
+    #pragma omp parallel num_threads(workers)
+    {
+        float* const scores = score_storage.data()
+            + size_t(omp_get_thread_num()) * size_t(key_seq);
+
+        #pragma omp for schedule(static)
+        for (Index head = 0; head < heads_count; ++head)
+            attend_head(head / n_query_heads, head % n_query_heads, scores);
+    }
 }
 
 void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorView& output,
