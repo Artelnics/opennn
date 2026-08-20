@@ -433,6 +433,43 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
     if (data_set_element->has("ClassificationTarget"))
         set_classification_target(read_json_bool(data_set_element, "ClassificationTarget"));
 
+    // A deployment folder ships the model without the training corpus, and the
+    // model file already carries everything inference needs: the vocabularies,
+    // the sequence lengths and the roles of the variables. Rebuild the dataset
+    // from those instead of failing, and leave it with no samples -- training
+    // and analysis need the corpus and report their own errors without it.
+
+    if (!data_path.empty() && !filesystem::exists(data_path)
+     && data_set_element->has("InputVocabulary"))
+    {
+        cout << "Warning: data file not found (" << data_path.string()
+             << ") - continuing without samples (deployment mode)." << "\n";
+
+        input_tokenizer->set_vocabulary(read_json_strings(data_set_element, "InputVocabulary"));
+        target_tokenizer->set_vocabulary(read_json_strings(data_set_element, "TargetVocabulary"));
+
+        maximum_input_sequence_length = read_json_index(data_set_element, "MaximumInputSequenceLength");
+        maximum_target_sequence_length = read_json_index(data_set_element, "MaximumTargetSequenceLength");
+
+        // Whether the model has a decoder is not stored as such, but the roles
+        // of the variables say it exactly: only a sequence-to-sequence dataset
+        // declares a Decoder variable.
+
+        bool has_decoder = false;
+
+        if (const Json* variables_element = data_set_element->find("Variables"))
+            if (const Json* variable_array = variables_element->find("Variable"))
+                for (const Json& variable : variable_array->as_array())
+                    if (variable.has("Role") && read_json_string(&variable, "Role") == "Decoder")
+                        has_decoder = true;
+
+        configure(0, has_decoder);
+
+        data.resize(0, 0);
+
+        return;
+    }
+
     read_txt();
 }
 
