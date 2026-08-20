@@ -20,6 +20,7 @@
 
 #ifdef EIGEN_USE_MKL_ALL
 #include <mkl_cblas.h>
+#include <mkl_service.h>
 #include <mkl_vml.h>
 #endif
 
@@ -28,19 +29,27 @@ namespace opennn
 
 #ifdef EIGEN_USE_MKL_ALL
 
-// The GEMM's epilogue: one bias per column added to every row, and the ReLU
-// where the layer fuses it.
+// The GEMM's epilogue over the rows [first, last): one bias per column added to
+// every row, and the ReLU where the layer fuses it.
 //
-// This pass reads and writes the whole output, so it should run at memory
-// bandwidth. It did not: a profile of HIGGS inference put it at 1.36 ms per
-// call against 5.63 ms for the 1024-cube GEMM beside it - 40% of the forward,
-// about 3 GB/s for a 4 MB output. Two reasons, both fixed here. The ReLU was a
-// branch inside the inner loop, which kept the loop from vectorizing; it is
-// now chosen once, outside. And the row loop went through cblas_sger on the
-// unfused path, which allocated a vector of ones per call to express a
-// broadcast, or through an OpenMP region opened per layer per batch.
+// This pass reads and writes the output, so it should run at memory bandwidth.
+// It did not, and the history is worth keeping because two of the three causes
+// are invisible in the code. The ReLU was a branch inside the inner loop, which
+// kept the loop from vectorizing - it is chosen once, outside, now. The row loop
+// went through cblas_sger, which allocated a vector of ones per call to express
+// a broadcast. And spreading these rows over cores never paid at this size:
+// against a serial pass at 0.121 ms per call, an OpenMP region per layer per
+// batch measured 1.550 and the library's thread pool 0.173 (96,589 / 143,090 /
+// 154,219 samples/s). It is not spread at all now - it runs inside the block
+// whose GEMM just wrote those rows, while they are still in cache.
+//
+// There is exactly one caller of this function, and deliberately so: when a
+// second one appeared, GCC left the original call site on an out-of-line copy
+// that ran at about 2 GB/s against 60, and the pass went from 0.128 ms per call
+// to 3.4 - a 28x regression from adding a caller, with no other change.
 template<bool FuseRelu>
-static void add_bias_span(float* const y, const float* const b, Index first, Index last, Index columns)
+static void add_bias_span(float* const __restrict__ y, const float* const __restrict__ b,
+                          Index first, Index last, Index columns)
 {
     for (Index i = first; i < last; ++i)
     {
@@ -53,70 +62,6 @@ static void add_bias_span(float* const y, const float* const b, Index first, Ind
             else                    row[j] = value;
         }
     }
-}
-
-// How the rows are spread over the cores - and the answer, measured, is that
-// they are not. This pass used to open an OpenMP region per layer per batch,
-// which a gdb count of one HIGGS inference run saw as about ten thousand thread
-// creations, and which a profile put at 1.55 ms per call against 5.3 ms for the
-// 1024-cube GEMM beside it. The work itself is one pass over the output, memory
-// bound and short, so every way of spreading it costs more than it saves:
-//
-//   omp     96,589 samples/s   1.550 ms per call
-//   pool   143,090 samples/s   0.173 ms per call
-//   serial 154,219 samples/s   0.121 ms per call
-//
-// Serial it is. The other two stay reachable through OPENNN_BIAS_MODE for the
-// A/B, and because a much larger output than this benchmark's four megabytes
-// may yet be worth a thread pool - that boundary is not measured here.
-enum class BiasParallelism { Omp, Pool, Serial };
-
-static BiasParallelism bias_parallelism()
-{
-    static const BiasParallelism mode = []
-    {
-        const char* const requested = getenv("OPENNN_BIAS_MODE");
-        if (!requested) return BiasParallelism::Serial;
-        if (string(requested) == "pool") return BiasParallelism::Pool;
-        if (string(requested) == "omp") return BiasParallelism::Omp;
-        return BiasParallelism::Serial;
-    }();
-
-    return mode;
-}
-
-template<bool FuseRelu>
-static void add_bias_rows(float* const y, const float* const b, Index rows, Index columns)
-{
-    if (rows * columns < 65536 || bias_parallelism() == BiasParallelism::Serial)
-        return add_bias_span<FuseRelu>(y, b, 0, rows, columns);
-
-    if (bias_parallelism() == BiasParallelism::Pool)
-    {
-        // The pool is the one the backend already keeps alive, so this costs a
-        // task enqueue rather than a thread creation.
-        const double row_bytes = double(columns) * double(sizeof(float));
-        const Eigen::TensorOpCost cost(row_bytes, row_bytes, double(columns));
-
-        return get_device().parallelFor(rows, cost,
-            [&](Index first, Index last)
-            {
-                add_bias_span<FuseRelu>(y, b, first, last, columns);
-            });
-    }
-
-    #pragma omp parallel for schedule(static)
-    for (Index i = 0; i < rows; ++i)
-        add_bias_span<FuseRelu>(y, b, i, i + 1, columns);
-}
-
-static void add_bias(TensorView& output, const TensorView& bias, Index rows, Index columns, bool fuse_relu)
-{
-    float* const y = output.as<float>();
-    const float* const b = bias.as<float>();
-
-    if (fuse_relu) add_bias_rows<true>(y, b, rows, columns);
-    else           add_bias_rows<false>(y, b, rows, columns);
 }
 
 static bool try_activation_forward(TensorView& output, ActivationFunction function)
@@ -148,6 +93,331 @@ struct MklLinearReport
 };
 
 static MklLinearReport mkl_linear_report;
+
+// How the GEMM's rows are spread over the cores. MKL spreads them itself, and
+// that is what to take away from it here. It runs at most ten threads whatever
+// MKL_NUM_THREADS asks for - one per core it can see, and this twenty-thread
+// laptop presents as a synthetic 10x2 under WSL2 - and it splits the rows evenly
+// across them, so its barrier waits on the slowest slice. Blocks of rows handed
+// out of an atomic counter, single-threaded MKL inside each, have neither limit:
+// twenty workers rather than ten, and a worker that finishes early takes the
+// next block instead of waiting.
+//
+// Measured on the HIGGS inference benchmark at batch 1024, alternated three
+// rounds:
+//
+//   MKL's own threading   172,792  162,733  170,537 samples/s
+//   blocks                216,761  212,332  214,211
+//
+// The team matters as much as the blocking: the same blocks on the library's
+// Eigen pool measured *below* MKL (179,350 against 187,395), so `pool` stays
+// only as the A/B. OPENNN_GEMM_MODE=mkl|pool, OPENNN_GEMM_BLOCK the block
+// height, OPENNN_GEMM_MIN_OUTPUT the size below which a layer is left whole.
+enum class GemmParallelism { Mkl, Pool, Omp };
+
+static GemmParallelism gemm_parallelism()
+{
+    static const GemmParallelism mode = []
+    {
+        const char* const requested = getenv("OPENNN_GEMM_MODE");
+        if (!requested) return GemmParallelism::Omp;
+        if (string(requested) == "pool") return GemmParallelism::Pool;
+        if (string(requested) == "mkl") return GemmParallelism::Mkl;
+        return GemmParallelism::Omp;
+    }();
+
+    return mode;
+}
+
+// The block height is not a constant: it is whatever gives every worker a few
+// blocks to take. Fixing it at sixteen rows was right at batch 1024 with sixteen
+// workers - sixty-four blocks, four each - and wrong on both sides of that, too
+// few blocks to balance at batch 256 and a thousand of them at batch 16384, each
+// re-entering MKL with the same weight panel to walk.
+static Index gemm_block_rows(Index rows, Index threads)
+{
+    static const Index requested_rows = []
+    {
+        const char* const requested = getenv("OPENNN_GEMM_BLOCK");
+
+        return requested ? Index(atoll(requested)) : 0;
+    }();
+
+    if (requested_rows > 0) return requested_rows;
+
+    const Index blocks_wanted = max<Index>(1, threads * 4);
+    const Index height = (rows + blocks_wanted - 1) / blocks_wanted;
+
+    return max<Index>(8, (height + 7) / 8 * 8);
+}
+
+static Index gemm_min_output()
+{
+    static const Index elements = []
+    {
+        const char* const requested = getenv("OPENNN_GEMM_MIN_OUTPUT");
+        const Index requested_elements = requested ? Index(atoll(requested)) : -1;
+
+        return requested_elements >= 0 ? requested_elements : Index(256) * 1024;
+    }();
+
+    return elements;
+}
+
+// How many MKL threads each worker gets, trading workers for threads inside a
+// block at a fixed total. One is the default and is what measured best here -
+// twenty workers of one against ten of two and five of four, batches 1024/4096/
+// 16384, two rounds:
+//
+//   1   197,439  208,157  207,427   |   207,095  204,903  223,168
+//   2   194,689  197,289  219,575   |   197,551  207,980  218,102
+//   4   147,882  161,331  181,857   |   151,362  157,553  177,228
+//
+// Two is within the noise at the largest batch and four is far behind, so the
+// knob stays for a machine with more cores than this one, where MKL's own
+// blocking of a wider GEMM may yet be worth the workers it costs.
+// Guided hands out a share of the rows that remain instead of a fixed block, so
+// the tail goes out in small pieces and a worker running slow cannot hold the
+// barrier with a full-size block. It costs the packed panel, which is prepared
+// for one block height, and that trade decides where each is used: guided
+// exactly where the panel is not packed, which is the tall blocks of a large
+// batch. Measured against fixed blocks, three rounds:
+//
+//   batch     256      1024     4096     16384
+//            -9%      -14%      -4%       -2%
+//           -13%       -1%      +4.7%     +7.7%
+//           -15%      -10%      +4.9%     +1.5%
+//
+// The two small batches are where packing pays, and losing it costs more than
+// the balance gains - hence the rule rather than a preference. -1 is that rule,
+// 0 and 1 force it either way.
+static int gemm_guided_setting()
+{
+    static const int setting = []
+    {
+        const char* const requested = getenv("OPENNN_GEMM_GUIDED");
+
+        return requested ? atoi(requested) : -1;
+    }();
+
+    return setting;
+}
+
+static Index gemm_mkl_threads()
+{
+    static const Index threads = []
+    {
+        const char* const requested = getenv("OPENNN_GEMM_MKL_THREADS");
+        const Index requested_threads = requested ? Index(atoll(requested)) : 0;
+
+        return requested_threads > 0 ? requested_threads : 1;
+    }();
+
+    return threads;
+}
+
+static void sgemm_rows(int m, int n, int k, const float* a, const float* b, float* c)
+{
+    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                m, n, k, 1.0f, a, k, b, n, 0.0f, c, n);
+}
+
+// MKL rearranges the weight panel into its kernel's order inside every sgemm
+// call, so blocking the rows means walking the same panel once per block. The
+// rearranged copy can be made once for the whole layer and read by the whole
+// team, which is what cblas_sgemm_pack is for. It is per call, not cached across
+// calls: in training the weights change under us every step, and a stale panel
+// would be wrong rather than slow. OPENNN_GEMM_PACK=0 turns it off.
+struct PackedWeights
+{
+    float* data = nullptr;
+    size_t bytes = 0;
+
+    ~PackedWeights() { if (data) mkl_free(data); }
+
+    float* reserve(size_t wanted)
+    {
+        if (wanted <= bytes) return data;
+
+        if (data) mkl_free(data);
+        data = static_cast<float*>(mkl_malloc(wanted, 64));
+        bytes = data ? wanted : 0;
+
+        return data;
+    }
+};
+
+// Worth it only while the blocks are short. Measured across the batch sizes,
+// three rounds each, packed against not (block height in brackets):
+//
+//   batch    256 [8]    1024 [16]   4096 [64]   16384 [256]
+//            -0.5%      -2.5%       +1.8%       -6.7%
+//           +5.9%      +1.1%       +2.5%       -2.7%
+//          +14.3%      +2.6%       +2.9%       -7.9%
+//
+// Once a block is 256 rows deep, MKL's own rearrangement inside the call is
+// amortised over enough arithmetic that ours only adds a pass.
+static bool gemm_pack_weights(Index block_rows)
+{
+    static const int requested = []
+    {
+        const char* const setting = getenv("OPENNN_GEMM_PACK");
+
+        return setting ? atoi(setting) : -1;
+    }();
+
+    if (requested >= 0) return requested != 0;
+
+    return block_rows <= 64;
+}
+
+// The dense forward on the CPU: the GEMM and the epilogue that belongs to it.
+// The epilogue goes in with the blocks, which is the point of blocking this way
+// - a block's rows are still in cache when its bias and ReLU run, so the pass
+// over the whole output disappears rather than moving.
+static void blocked_linear_forward(int m, int n, int k, const float* a, const float* b, float* c,
+                                   const float* bias, bool fuse_relu)
+{
+    const Index threads = get_device().numThreads();
+    const Index block_rows = gemm_block_rows(Index(m), threads);
+    const Index blocks = (Index(m) + block_rows - 1) / block_rows;
+
+    // Rows only. Sharding the columns as well - which is what XLA's contraction
+    // does, and the one structural difference left between the two schedules -
+    // was implemented and measured, and it is much worse here: two column blocks
+    // took batch 1024 from 224,379 to 101,856 samples/s. A column slice leaves
+    // both the weight panel and the output strided, and MKL's kernel would
+    // rather have them contiguous than have a narrower panel to keep.
+    //
+    // Never open a team so wide that a worker has only one block: the point of
+    // handing blocks out is that a worker which finishes early takes another,
+    // and a worker with nothing to take is a barrier wait. Measured at twenty
+    // threads, batch 256 (32 blocks): 169,463 with a worker per thread against
+    // 189,815 at sixteen, which is what half the block count gives.
+    const Index workers = max<Index>(1, min<Index>(threads / gemm_mkl_threads(), blocks / 2));
+
+    const auto epilogue = [&](Index first, Index last)
+    {
+        if (!bias) return;
+
+        if (fuse_relu) add_bias_span<true>(c, bias, first, last, n);
+        else           add_bias_span<false>(c, bias, first, last, n);
+    };
+
+    // A layer small enough is a fraction of a millisecond whole, and spreading
+    // it costs more than it takes; the threshold is on the output rather than on
+    // the arithmetic because the epilogue rides along with it. Sizing it instead
+    // by the wider of n and k - so that a 1024->1 output layer, which reads 64 MB
+    // to write 64 KB at batch 16384, would be blocked too - was measured and is
+    // not worth it: that layer is bound by the read, which MKL's ten threads
+    // already saturate (1.868 ms against 1.797), and blocking it costs 3-5% at
+    // batch 256.
+    if (gemm_parallelism() == GemmParallelism::Mkl
+        || workers < 2
+        || Index(m) * Index(n) < gemm_min_output())
+    {
+        sgemm_rows(m, n, k, a, b, c);
+        return epilogue(0, m);
+    }
+
+    atomic<Index> next_block{0};
+
+    // One rearranged copy of the weights for the whole team. Only the blocks of
+    // the full height can use it - the tail is a different problem size - and
+    // only if MKL gives us the buffer. A column split would need one panel per
+    // column block, which is not worth it where the split pays.
+    thread_local PackedWeights panel;
+    const float* packed = nullptr;
+
+    if (gemm_pack_weights(block_rows) && blocks > 1)
+    {
+        const int packed_rows = to_int(block_rows);
+        float* const buffer = panel.reserve(cblas_sgemm_pack_get_size(CblasBMatrix, packed_rows, n, k));
+
+        if (buffer)
+        {
+            cblas_sgemm_pack(CblasRowMajor, CblasBMatrix, CblasNoTrans,
+                             packed_rows, n, k, 1.0f, b, n, buffer);
+            packed = buffer;
+        }
+    }
+
+    const auto take_blocks = [&]
+    {
+        mkl_set_num_threads_local(to_int(gemm_mkl_threads()));
+
+        for (Index block = next_block++; block < blocks; block = next_block++)
+        {
+            const Index first = block * block_rows;
+            const int rows = to_int(min<Index>(block_rows, Index(m) - first));
+
+            if (packed && Index(rows) == block_rows)
+                cblas_sgemm_compute(CblasRowMajor, CblasNoTrans, CblasPacked,
+                                    rows, n, k, a + first * Index(k), k, packed, n,
+                                    0.0f, c + first * Index(n), n);
+            else
+                sgemm_rows(rows, n, k, a + first * Index(k), b, c + first * Index(n));
+
+            epilogue(first, first + rows);
+        }
+    };
+
+    // The guided variant: take a share of whatever is left rather than a fixed
+    // block, so the last rows are handed out in small pieces and a worker that
+    // is running slow cannot hold up the barrier with a full-size block. Costs
+    // the packed panel, which is prepared for one block height.
+    atomic<Index> next_row{0};
+
+    const auto take_share = [&]
+    {
+        mkl_set_num_threads_local(to_int(gemm_mkl_threads()));
+
+        for (;;)
+        {
+            Index first = next_row.load(memory_order_relaxed);
+            Index rows = 0;
+
+            do
+            {
+                if (first >= Index(m)) return;
+                rows = max<Index>(8, (Index(m) - first) / (2 * workers));
+                rows = min<Index>(rows, Index(m) - first);
+            }
+            while (!next_row.compare_exchange_weak(first, first + rows));
+
+            sgemm_rows(to_int(rows), n, k, a + first * Index(k), b, c + first * Index(n));
+            epilogue(first, first + rows);
+        }
+    };
+
+    const bool guided = gemm_guided_setting() >= 0 ? gemm_guided_setting() == 1
+                                                   : packed == nullptr;
+
+    if (gemm_parallelism() == GemmParallelism::Omp)
+    {
+        if (guided)
+        {
+            #pragma omp parallel num_threads(to_int(workers))
+            take_share();
+        }
+        else
+        {
+            #pragma omp parallel num_threads(to_int(workers))
+            take_blocks();
+        }
+    }
+    else
+    {
+        const Eigen::TensorOpCost cost(0.0, 0.0, double(block_rows) * double(n) * double(k));
+
+        get_device().parallelFor(workers, cost, [&](Index, Index) { take_blocks(); });
+    }
+
+    // Both spreads run one share on the calling thread, so the caller is one of
+    // the threads just pinned to a single MKL thread; 0 puts it back on the
+    // global setting for the thin GEMMs that follow.
+    mkl_set_num_threads_local(0);
+}
 
 static bool try_linear_forward(const TensorView& input,
                                 const TensorView& weights,
@@ -187,25 +457,8 @@ static bool try_linear_forward(const TensorView& input,
     {
     PROFILE_SCOPE_HOST(n >= 1024 && k >= 1024 ? "cpu:sgemm_wide"
                      : (k < 64 ? "cpu:sgemm_thin_k" : "cpu:sgemm_thin_n"));
-    cblas_sgemm(CblasRowMajor,
-                CblasNoTrans,
-                CblasNoTrans,
-                m,
-                n,
-                k,
-                1.0f,
-                input.as<float>(),
-                k,
-                weights.as<float>(),
-                n,
-                0.0f,
-                output.as<float>(),
-                n);
-    }
-
-    {
-    PROFILE_SCOPE_HOST("cpu:add_bias");
-    add_bias(output, bias, rows, output_columns, fuse_relu);
+    blocked_linear_forward(m, n, k, input.as<float>(), weights.as<float>(),
+                           output.as<float>(), bias.as<float>(), fuse_relu);
     }
     --mkl_linear_refusals;
     ++mkl_linear_calls;

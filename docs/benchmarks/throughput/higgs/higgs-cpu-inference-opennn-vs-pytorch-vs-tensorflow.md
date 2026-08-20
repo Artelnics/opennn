@@ -180,6 +180,114 @@ implementation, MKL and oneDNN alike, degrades at twenty threads while
 TensorFlow's best point is twenty: the next thing to measure is what XLA is
 scheduling across the batch loop, not another kernel.
 
+## Who threads the GEMM, and across batch sizes (2026-08-20)
+
+The answer to that last question turned out to be about *who splits the rows*,
+not about the kernel. MKL threads a GEMM itself, and here that is two limits at
+once: it runs at most ten threads whatever `MKL_NUM_THREADS` says - one per core
+it can see, and WSL2 presents this twenty-thread laptop as a synthetic 10x2 -
+and it splits the rows evenly across them, so its barrier waits on the slowest
+slice. Handing blocks of rows out of an atomic counter to an OpenMP team, with
+`mkl_set_num_threads_local(1)` inside each block, has neither limit. Alternated
+three rounds at batch 1024:
+
+| round | MKL's own threading | blocks |
+|---|---:|---:|
+| 1 | 172,792 | **216,761** |
+| 2 | 162,733 | **212,332** |
+| 3 | 170,537 | **214,211** |
+
+**+25% to +30%, and it is the team that matters as much as the blocking**: the
+same blocks dispatched on the library's own Eigen thread pool measured *below*
+MKL (179,350 against 187,395). `OPENNN_GEMM_MODE=mkl|pool` keeps both for the
+A/B. Training gains from the same change too, 41,698 to 44,771 samples/s, with
+the held-out metrics agreeing to three digits (accuracy 0.765149 against
+0.764929, ROC AUC 0.849500 against 0.849126 - a reordered summation over an
+epoch of Adam, which is what that should look like).
+
+Four further pieces, each measured:
+
+* **The epilogue rides with the block.** Bias and ReLU run on a block's rows
+  immediately after that block's GEMM, while they are still in cache, instead of
+  as a pass over the whole output afterwards.
+* **The block height scales with the batch** - enough blocks that every worker
+  gets about four. A fixed sixteen rows was right at batch 1024 and wrong on
+  both sides: too few blocks to balance at 256, and a thousand of them at 16384.
+* **The weight panel is packed once per layer** with `cblas_sgemm_pack` and read
+  by the whole team, which is *not* the packed GEMM rejected above - that one
+  packed for a single whole-layer call, where MKL already packs once internally.
+  It pays only while the blocks are short: +1.8/+2.5/+2.9% at batch 4096, and
+  -6.7/-2.7/-7.9% at 16384, where a 256-row block amortises MKL's own
+  rearrangement anyway. On below 64-row blocks, off above.
+* **A guided schedule** - take a share of the rows that remain rather than a
+  fixed block - is used exactly where the packed panel is not, since it costs
+  the panel. It measured -9/-13/-15% at batch 256 and +4.7/+7.7% at 4096/16384.
+
+### Where the three engines stand
+
+Each engine sweeps the batch sizes inside one process (the drivers take a
+comma-separated list now: parsing the test split costs about forty seconds and
+this machine drifts 10%, so a row of the table has to share one load and one
+thermal window), and the three are alternated inside each round.
+
+Samples/s, three rounds, best settings each (OpenNN 20 threads, PyTorch 20
+eager under `inference_mode`, TensorFlow 20 with XLA):
+
+| batch | OpenNN | PyTorch | TensorFlow | vs PyTorch | vs TensorFlow |
+|---|---:|---:|---:|---:|---:|
+| 256 | 174,644 / 139,584 / 135,346 | 116,054 / 99,967 / 104,285 | 128,162 / 123,507 / 131,109 | **1.51 / 1.40 / 1.30** | **1.36 / 1.13 / 1.03** |
+| 1,024 | 204,580 / 175,712 / 168,826 | 140,198 / 133,905 / 127,657 | 198,783 / 194,342 / 198,515 | **1.46 / 1.31 / 1.32** | 1.03 / 0.90 / 0.85 |
+| 4,096 | 215,830 / 185,509 / 185,203 | 131,953 / 136,431 / 123,836 | 236,941 / 237,494 / 222,810 | **1.64 / 1.36 / 1.50** | 0.91 / 0.78 / 0.83 |
+| 16,384 | 223,822 / 196,711 / 203,415 | 138,242 / 145,113 / 141,466 | 220,599 / 239,004 / 237,276 | **1.62 / 1.36 / 1.44** | 1.01 / 0.82 / 0.86 |
+
+**PyTorch is beaten at every batch size in every round**, by 1.30x to 1.64x.
+TensorFlow is beaten at batch 256 in every round, and at 1024 and 16384 in the
+first round only.
+
+Read the rounds, not the averages: OpenNN and PyTorch both fall about 20%
+between round one and round two while TensorFlow holds within 3%, on a laptop
+whose host is running a browser, an editor and a file-sync daemon. Whatever that
+is - it is not thermal, since OpenNN runs *first* in each round - it is not
+measured here, and it is the largest single source of doubt in this table.
+
+### What was tried for the two large batches and did not work
+
+At batch 16384 the profile is one number again: `cpu:sgemm_wide` is 90% of the
+step at about 590 GFLOP/s, the 28->1024 layer 7% (writing 64 MB), and the
+1024->1 layer 3% (reading 64 MB to produce 64 KB). TensorFlow's throughput
+implies about 660 GFLOP/s on the same GEMM, and it *pays back* 8-12% on an
+epilogue we fuse and it does not. So the whole remaining gap is the GEMM
+schedule.
+
+* **Sharding the columns as well as the rows**, which is exactly what XLA's
+  `DotThunk` does through Eigen's contraction, and the one structural difference
+  left between the two schedules. Implemented and measured: two column blocks
+  took batch 1024 from 224,379 to **101,856**. A column slice leaves both the
+  weight panel and the output strided, and MKL would rather have them contiguous
+  than have a narrower panel to keep.
+* **MKL threads inside each worker** (twenty workers of one thread against ten
+  of two and five of four): one is best or tied everywhere, four is 25% behind.
+* **Sizing the blocking decision by the work touched** rather than by the output,
+  so the 1024->1 layer is blocked too: it does not help (1.868 ms against 1.797),
+  because that layer is bound by a 64 MB read that MKL's ten threads already
+  saturate, and it costs 3-5% at batch 256.
+* **A row-panel schedule across layers**, carrying a panel of rows through all
+  three layers to keep the intermediates in cache, was refuted from data already
+  taken rather than built: it predicts smaller effective panels are faster, and
+  the measured batch curve says the opposite - 4096 runs slower than 16384 in
+  every round. Per-call cost dominates the DRAM round trip here.
+
+### A 28x regression that came from adding a caller
+
+Worth recording because it is invisible in a diff. Fusing the epilogue into the
+blocks added a second caller of the bias-and-ReLU template. That alone left the
+*original* call site on an out-of-line copy running at about 2 GB/s instead of
+60: `cpu:add_bias` went from 0.128 ms per call to **3.4**, and inference fell to
+65,000 samples/s. It was not the new path - a build that never executed the new
+code was equally slow - and a stash-and-rebuild control confirmed the machine
+was fine. The fix was to route every epilogue through one call site, which is
+what the code does now, with a comment at the function saying why.
+
 ### What the harness was doing wrong
 
 The table above came from a harness that did not let the other two engines run

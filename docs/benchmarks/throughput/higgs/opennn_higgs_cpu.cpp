@@ -2,7 +2,12 @@
 //
 // Modes:
 //   opennn_higgs_cpu train <train_csv> <test_csv> [epochs] [batch] [hidden] [hidden_layers] [activation] [warmup_epochs]
-//   opennn_higgs_cpu infer <test_csv> [reps] [batch] [hidden] [hidden_layers] [activation]
+//   opennn_higgs_cpu infer <test_csv> [reps] [batch[,batch...]] [hidden] [hidden_layers] [activation]
+//
+// A comma-separated batch list is measured in one process. That matters on a
+// laptop: the test split costs about forty seconds to parse and the machine
+// drifts ten per cent over a sweep, so the batch sizes have to share one load
+// and one thermal window if they are to be comparable with each other.
 
 #include <algorithm>
 #include <chrono>
@@ -235,6 +240,26 @@ int train_mode(int argc, char* argv[])
     return 0;
 }
 
+vector<Index> parse_batches(const string& text)
+{
+    vector<Index> batches;
+    size_t start = 0;
+
+    while (start <= text.size())
+    {
+        const size_t comma = text.find(',', start);
+        const string item = text.substr(start, comma == string::npos ? string::npos : comma - start);
+
+        if (!item.empty()) batches.push_back(Index(stoll(item)));
+        if (comma == string::npos) break;
+        start = comma + 1;
+    }
+
+    if (batches.empty()) batches.push_back(1024);
+
+    return batches;
+}
+
 int infer_mode(int argc, char* argv[])
 {
     if (argc < 3)
@@ -245,7 +270,7 @@ int infer_mode(int argc, char* argv[])
 
     const string test_path = argv[2];
     const Index reps = argc > 3 ? Index(stoll(argv[3])) : 10;
-    const Index batch = argc > 4 ? Index(stoll(argv[4])) : 1024;
+    const vector<Index> batches = parse_batches(argc > 4 ? argv[4] : "1024");
     const Index hidden = argc > 5 ? Index(stoll(argv[5])) : 1024;
     const Index hidden_layers = argc > 6 ? Index(stoll(argv[6])) : 2;
     const string activation = argc > 7 ? argv[7] : "relu";
@@ -258,7 +283,6 @@ int infer_mode(int argc, char* argv[])
     const MatrixR& all = dataset.get_data();
     const Index samples = dataset.get_samples_number();
     const Index inputs_number = dataset.get_input_shape()[0];
-    const Index processed = (samples / batch) * batch;
     const MatrixR inputs = all.leftCols(inputs_number);
 
     auto network = make_network(dataset.get_input_shape(),
@@ -266,51 +290,68 @@ int infer_mode(int argc, char* argv[])
                                 hidden,
                                 hidden_layers,
                                 activation);
-    ForwardPropagation forward_propagation(batch, network.get());
-
-    auto run_pass = [&]()
-    {
-        double sink = 0.0;
-        for (Index i = 0; i + batch <= samples; i += batch)
-        {
-            float* batch_data = const_cast<float*>(inputs.data()) + i * inputs_number;
-            TensorView view(batch_data, Shape{batch, inputs_number}, Type::FP32);
-            network->forward_propagate({view}, forward_propagation, false);
-            const MatrixMap outputs = forward_propagation.get_outputs().as_matrix();
-            sink += outputs(0, 0);
-        }
-        return sink;
-    };
-
-    volatile double sink = run_pass();
-    sink += run_pass();
-
-    vector<double> times;
-    times.reserve(size_t(reps));
-    for (Index r = 0; r < reps; ++r)
-    {
-        const auto t0 = clock_type::now();
-        sink += run_pass();
-        const auto t1 = clock_type::now();
-        times.push_back(chrono::duration<double>(t1 - t0).count());
-    }
-    (void)sink;
-
-    sort(times.begin(), times.end());
-    const double median_pass_s = times[times.size() / 2];
-    const double samples_per_sec = double(processed) / median_pass_s;
 
     cout << "engine=opennn\n";
     cout << "mode=infer\n";
     cout << "device=cpu\n";
-    cout << "samples=" << processed << "\n";
-    cout << "batch=" << batch << "\n";
     cout << "reps=" << reps << "\n";
     cout << "hidden=" << hidden << "\n";
     cout << "hidden_layers=" << hidden_layers << "\n";
     cout << "activation=" << activation << "\n";
-    cout << "median_pass_s=" << median_pass_s << "\n";
-    cout << "samples_per_sec=" << long(samples_per_sec) << "\n";
+
+    for (const Index batch : batches)
+    {
+        const Index processed = (samples / batch) * batch;
+        ForwardPropagation forward_propagation(batch, network.get());
+
+        auto run_pass = [&]()
+        {
+            double sink = 0.0;
+            for (Index i = 0; i + batch <= samples; i += batch)
+            {
+                float* batch_data = const_cast<float*>(inputs.data()) + i * inputs_number;
+                TensorView view(batch_data, Shape{batch, inputs_number}, Type::FP32);
+                network->forward_propagate({view}, forward_propagation, false);
+                const MatrixMap outputs = forward_propagation.get_outputs().as_matrix();
+                sink += outputs(0, 0);
+            }
+            return sink;
+        };
+
+        volatile double sink = run_pass();
+        sink += run_pass();
+
+        vector<double> times;
+        times.reserve(size_t(reps));
+        for (Index r = 0; r < reps; ++r)
+        {
+            const auto t0 = clock_type::now();
+            sink += run_pass();
+            const auto t1 = clock_type::now();
+            times.push_back(chrono::duration<double>(t1 - t0).count());
+        }
+        (void)sink;
+
+        sort(times.begin(), times.end());
+        const double median_pass_s = times[times.size() / 2];
+        const double samples_per_sec = double(processed) / median_pass_s;
+
+        if (batches.size() == 1)
+        {
+            cout << "samples=" << processed << "\n";
+            cout << "batch=" << batch << "\n";
+            cout << "median_pass_s=" << median_pass_s << "\n";
+            cout << "samples_per_sec=" << long(samples_per_sec) << "\n";
+        }
+        else
+        {
+            cout << "batch_" << batch << "_samples_per_sec=" << long(samples_per_sec)
+                 << " median_pass_s=" << median_pass_s << "\n";
+        }
+
+        cout.flush();
+    }
+
     cout << "RESULT=OK\n";
     return 0;
 }

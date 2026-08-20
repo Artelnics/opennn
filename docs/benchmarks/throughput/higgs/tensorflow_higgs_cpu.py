@@ -128,23 +128,36 @@ def run_tensorflow(args: argparse.Namespace) -> None:
     def infer_step(xb):
         return model(xb, training=False)
 
-    def run_pass() -> None:
-        for start, end in batches(x_np.shape[0], args.batch):
-            infer_step(x[start:end])
+    def measure(batch: int) -> tuple[int, float]:
+        def run_pass() -> None:
+            for start, end in batches(x_np.shape[0], batch):
+                infer_step(x[start:end])
 
-    run_pass()
-    run_pass()
-    times = []
-    for _ in range(args.reps):
-        t0 = time.perf_counter()
+        run_pass()                      # each batch size is its own XLA compile
         run_pass()
-        times.append(time.perf_counter() - t0)
-    times.sort()
-    processed = (x_np.shape[0] // args.batch) * args.batch
-    median_pass_s = times[len(times) // 2]
-    print_common("tensorflow", args, processed)
-    print(f"median_pass_s={median_pass_s:.9g}")
-    print(f"samples_per_sec={processed / median_pass_s:.0f}")
+        times = []
+        for _ in range(args.reps):
+            t0 = time.perf_counter()
+            run_pass()
+            times.append(time.perf_counter() - t0)
+        times.sort()
+        return (x_np.shape[0] // batch) * batch, times[len(times) // 2]
+
+    batch_list = [int(item) for item in args.batches.split(",") if item] or [args.batch]
+
+    if len(batch_list) == 1:
+        processed, median_pass_s = measure(batch_list[0])
+        print_common("tensorflow", args, processed)
+        print(f"median_pass_s={median_pass_s:.9g}")
+        print(f"samples_per_sec={processed / median_pass_s:.0f}")
+        print("RESULT=OK")
+        return
+
+    print_common("tensorflow", args, x_np.shape[0])
+    for batch in batch_list:
+        processed, median_pass_s = measure(batch)
+        print(f"batch_{batch}_samples_per_sec={processed / median_pass_s:.0f}"
+              f" median_pass_s={median_pass_s:.9g}", flush=True)
     print("RESULT=OK")
 
 def print_common(engine: str, args: argparse.Namespace, samples: int) -> None:
@@ -170,6 +183,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--warmup-epochs", type=int, default=0)
     parser.add_argument("--reps", type=int, default=10)
     parser.add_argument("--batch", type=int, default=1024)
+    # Inference only: a comma-separated list is measured in one process, so the
+    # whole batch-size row of a comparison shares one model, one load and one
+    # thermal window on a laptop that drifts ten per cent over a sweep.
+    parser.add_argument("--batches", default="")
     parser.add_argument("--hidden", type=int, default=1024)
     parser.add_argument("--hidden-layers", type=int, default=2)
     parser.add_argument("--activation", choices=["relu", "tanh"], default="relu")
