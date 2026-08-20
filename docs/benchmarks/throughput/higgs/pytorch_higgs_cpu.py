@@ -145,6 +145,10 @@ def run_pytorch(args: argparse.Namespace) -> None:
             t0 = time.perf_counter()
             run_pass()
             times.append(time.perf_counter() - t0)
+        # In temporal order, before the sort: a median hides a drifting machine,
+        # and this one drifts - whatever is measured first after an idle gap runs
+        # in the processor's boost window and what follows does not.
+        print(f"batch_{batch}_pass_times=" + ",".join(f"{t:.6f}" for t in times), flush=True)
         times.sort()
         return (x.shape[0] // batch) * batch, times[len(times) // 2]
 

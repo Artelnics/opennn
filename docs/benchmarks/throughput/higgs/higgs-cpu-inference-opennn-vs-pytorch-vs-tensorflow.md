@@ -223,12 +223,16 @@ Four further pieces, each measured:
   fixed block - is used exactly where the packed panel is not, since it costs
   the panel. It measured -9/-13/-15% at batch 256 and +4.7/+7.7% at 4096/16384.
 
-### Where the three engines stand
+### Where the three engines stand - superseded, kept for the record
+
+*These numbers were taken with a fixed engine order and are biased; the table
+that supersedes them is under "The instrument was the problem". Read this one
+only to see how large the bias was.*
 
 Each engine sweeps the batch sizes inside one process (the drivers take a
-comma-separated list now: parsing the test split costs about forty seconds and
-this machine drifts 10%, so a row of the table has to share one load and one
-thermal window), and the three are alternated inside each round.
+comma-separated list now, because this machine drifts 10% over a sweep, so a
+row of the table has to share one load and one thermal window), and the three
+are alternated inside each round.
 
 Samples/s, three rounds, best settings each (OpenNN 20 threads, PyTorch 20
 eager under `inference_mode`, TensorFlow 20 with XLA):
@@ -244,11 +248,13 @@ eager under `inference_mode`, TensorFlow 20 with XLA):
 TensorFlow is beaten at batch 256 in every round, and at 1024 and 16384 in the
 first round only.
 
-Read the rounds, not the averages: OpenNN and PyTorch both fall about 20%
-between round one and round two while TensorFlow holds within 3%, on a laptop
-whose host is running a browser, an editor and a file-sync daemon. Whatever that
-is - it is not thermal, since OpenNN runs *first* in each round - it is not
-measured here, and it is the largest single source of doubt in this table.
+*Superseded - see "The instrument was the problem" below. The reasoning in this
+paragraph was wrong: OpenNN and PyTorch both fall about 20% between round one and
+round two while TensorFlow holds within 3%, and this note concluded "it is not
+thermal, since OpenNN runs first in each round". Running first is exactly what
+exposes a run to the processor's short-duration boost window, so the ordering
+argument proves the opposite of what it claimed, and the bias flattered whichever
+engine held slot one - which was always OpenNN.*
 
 ### What was tried for the two large batches and did not work
 
@@ -276,6 +282,113 @@ schedule.
   taken rather than built: it predicts smaller effective panels are faster, and
   the measured batch curve says the opposite - 4096 runs slower than 16384 in
   every round. Per-call cost dominates the DRAM round trip here.
+
+## The instrument was the problem (2026-08-21)
+
+Every table above this line was taken with a **fixed engine order**, and that
+turns out to be worth more than most of the levers in this note. Whatever runs
+first after an idle gap runs inside the processor's short-duration boost window;
+what follows it does not. The engine in slot one was always OpenNN.
+
+The evidence is a control that was measured by accident. A three-arm A/B of the
+contraction's size gate included batches where the contraction *cannot fire* -
+its gate needs 8e9 or 2e9 flops and those layers are 2.7e8 and 1.1e9 - so all
+three arms ran identical code at batch 256 and 1024. They did not measure the
+same:
+
+| arm (identical code) | batch 256 | batch 1024 |
+|---|---:|---:|
+| slot 1 | 172,781 / 190,092 / 180,510 | 219,453 / 209,612 / 212,635 |
+| slot 2 | 137,996 / 150,839 / 157,591 | 176,965 / 190,465 / 198,846 |
+| slot 3 | 136,653 / 146,998 / - | 180,440 / 190,069 / - |
+
+**A 20% spread with no code difference at all**, ordered by position. The same
+decay repeats across batch position *inside* one process, so a fixed batch order
+hands the window to the same batch every time as well.
+
+This also inverts the reasoning recorded earlier in this note, which dismissed
+thermals because "OpenNN runs first". Running first is exactly what exposes a run
+to the boost window. The bias was in OpenNN's favour throughout.
+
+### The protocol that replaces it
+
+* **Rotate the engine order** every round, and **rotate the batch order** too.
+* **Soak first**: run one full sweep and discard it.
+* **Report medians of six rounds**, not of three.
+* All three drivers print `batch_<B>_pass_times=` in temporal order, before the
+  median, so a drifting machine is visible in the data instead of averaged away.
+
+Spreads fall from about 20% to 2-4%, which is what makes a 3% difference
+decidable at all.
+
+### Result
+
+Medians of six rotated rounds, each engine at its best (OpenNN 20 threads,
+PyTorch 20 eager under `inference_mode`, TensorFlow 20 with XLA):
+
+| batch | OpenNN | PyTorch | TensorFlow | vs PyTorch | vs TensorFlow |
+|---|---:|---:|---:|---:|---:|
+| 256 | **158,464** | 148,244 | 141,437 | **1.07x** | **1.12x** |
+| 1,024 | **215,452** | 177,750 | 210,395 | **1.21x** | **1.02x** |
+| 4,096 | 247,748 | 183,050 | 246,899 | **1.35x** | 1.00x |
+| 16,384 | **265,035** | 161,684 | 255,324 | **1.64x** | **1.04x** |
+
+**OpenNN is ahead of PyTorch at every batch size, and ahead of TensorFlow at
+256, 1024 and 16,384. Batch 4,096 is a tie** - two independent six-round runs
+put it at 0.94x and 1.00x, which is within what this machine can resolve.
+
+Note what the honest instrument did to the earlier claims: the PyTorch margins
+reported before rotation (up to 2.07x at batch 256) were mostly slot bias, and
+the real figure there is 1.07x.
+
+## Eigen's contraction, which is the kernel TensorFlow uses (2026-08-21)
+
+XLA:CPU lowers each dot to a `DotThunk` running an Eigen `TensorContraction`.
+That kernel is reachable from OpenNN directly, and `EIGEN_USE_MKL_ALL` does not
+divert it: Eigen routes *Matrix* products to BLAS and keeps its own kernels for
+*tensor* contractions (the whole `unsupported/Eigen/CXX11` tree contains no
+reference to `EIGEN_USE_BLAS`, `cblas_` or `general_matrix_matrix_product`).
+Standalone, twenty threads, GFLOP/s over two rounds:
+
+| m (n = k = 1024) | 256 | 512 | 1024 | 2048 | 4096 | 8192 | 16384 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| blocked MKL | 523 | 484 | 490 | 652 | 704 | 744 | 726 |
+| contraction | 598 | **854** | **749** | 746 | 703 | 747 | 719 |
+
+And the epilogue rides in its **output kernel**, which Eigen calls on each output
+block as it is produced - so bias and ReLU land while that block is in cache,
+exactly where the blocked schedule puts them. It is free and then some: 790
+against 723 GFLOP/s fused against not, and bitwise identical to a separate pass.
+TensorFlow does *not* fuse there; its bias and ReLU are separate whole-tensor
+thunks on about five threads.
+
+**The standalone result did not transfer whole, and that is the lesson.** In the
+app the contraction is worse at batch 1024 and better only on the wide layer at
+16,384, because a microbenchmark that loops one shape keeps the pool hot and
+never shows two things: the advantage needs a call long enough to absorb waking
+the pool, and the kernel is poor when the contraction dimension is small - the
+28->1024 layer measured 0.464 ms against the blocked schedule's 0.188.
+
+So it is gated: `k >= 64`, and enough arithmetic to absorb the wake-up
+(`OPENNN_GEMM_CONTRACT_FLOPS`, 8e9). Sweeping that gate one rung at a time, six
+rotated rounds each, says the gate is where it should be - at 4,096 the two
+kernels are indistinguishable, which is what the standalone table also says:
+
+| batch | gate 8e9 (ships) | gate 4e9 (+4096) | gate 1e9 (+1024) |
+|---|---:|---:|---:|
+| 256 | 159,747 | 160,526 | 159,062 |
+| 1,024 | 226,964 | 224,640 | 230,216 |
+| 4,096 | 251,302 | 251,249 | 248,460 |
+| 16,384 | 272,713 | 275,810 | 275,009 |
+
+One thing it needed: Eigen asks its *device* for the buffers it packs operands
+into, on every call, and `LinearForwardMemoryTest` caps the process precisely to
+prove that a steady-state forward allocates nothing. It caught this immediately.
+The contraction therefore runs on a device that shares the library's threads but
+whose allocator recycles - the free list settles at the first call's peak.
+
+`ContractionForwardTest` covers the numerics, at a batch just over the gate,
+because no other test in the suite reaches a shape that takes this path.
 
 ### A 28x regression that came from adding a caller
 

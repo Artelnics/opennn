@@ -17,6 +17,7 @@
 #include "opennn/core/cuda/kernel_tensor.cuh"
 
 #include <atomic>
+#include <mutex>
 #include <omp.h>
 
 #ifdef EIGEN_USE_MKL_ALL
@@ -114,20 +115,145 @@ static MklLinearReport mkl_linear_report;
 // Eigen pool measured *below* MKL (179,350 against 187,395), so `pool` stays
 // only as the A/B. OPENNN_GEMM_MODE=mkl|pool, OPENNN_GEMM_BLOCK the block
 // height, OPENNN_GEMM_MIN_OUTPUT the size below which a layer is left whole.
-enum class GemmParallelism { Mkl, Pool, Omp };
+enum class GemmParallelism { Mkl, Pool, Omp, Contract };
 
 static GemmParallelism gemm_parallelism()
 {
     static const GemmParallelism mode = []
     {
         const char* const requested = getenv("OPENNN_GEMM_MODE");
-        if (!requested) return GemmParallelism::Omp;
+        if (!requested) return GemmParallelism::Contract;
         if (string(requested) == "pool") return GemmParallelism::Pool;
         if (string(requested) == "mkl") return GemmParallelism::Mkl;
-        return GemmParallelism::Omp;
+        if (string(requested) == "omp") return GemmParallelism::Omp;
+        return GemmParallelism::Contract;
     }();
 
     return mode;
+}
+
+// Eigen's tensor contraction, which is the kernel XLA:CPU calls for a dot, and
+// on this machine it beats every arrangement of MKL we could find - at
+// 1024x1024x1024 with twenty threads, 749 and 655 GFLOP/s over two rounds
+// against the row-blocked MKL schedule's 490 and 401. It is never behind:
+//
+//   m        256   512  1024  2048  4096  8192  16384
+//   blocked  523   484   490   652   704   744    726 GFLOP/s
+//   contract 598   854   749   746   703   747    719
+//
+// That is standalone, where one shape is timed in a loop and the pool never
+// sleeps. It does not transfer whole - see the gate at the call site, which is
+// what the same comparison measures inside a forward pass.
+//
+// EIGEN_USE_MKL_ALL does not divert it - Eigen routes Matrix products to BLAS
+// and keeps its own kernels for tensor contractions - so this really is a
+// different kernel and not MKL under another name.
+//
+// The epilogue rides along in the contraction's output kernel, which Eigen
+// calls on each output block as it is produced, so the bias and the ReLU land
+// while that block is still in cache. It is free, and then some: 790 against
+// 723 GFLOP/s at 1024 cubed, fused against not, and bitwise identical to doing
+// it in a separate pass.
+struct BiasRelu
+{
+    const float* bias = nullptr;
+    bool relu = true;
+
+    // A row-major contraction is evaluated with the operands swapped, so this
+    // mapper's first index runs over the output columns - which is the axis the
+    // bias is indexed by. Verified against a separate pass: zero difference.
+    template<typename Index, typename Scalar>
+    void operator()(const Eigen::internal::blas_data_mapper<Scalar, Index, Eigen::ColMajor>& output,
+                    const Eigen::TensorContractionParams& params,
+                    Index i, Index j, Index rows, Index columns) const
+    {
+        EIGEN_UNUSED_VARIABLE(params);
+        EIGEN_UNUSED_VARIABLE(j);
+
+        for (Index column = 0; column < columns; ++column)
+            for (Index row = 0; row < rows; ++row)
+            {
+                const float value = output(row, column) + bias[i + row];
+                output(row, column) = relu && value < 0.0f ? 0.0f : value;
+            }
+    }
+};
+
+// The contraction asks its device for the buffers it packs the operands into,
+// on every call. A dense forward in steady state must not be asking the system
+// for memory - LinearForwardMemoryTest caps the process and requires exactly
+// that, and it caught this - so the device handed to the contraction keeps the
+// blocks it is given and hands the same ones back. Sizes repeat call after call
+// for a fixed shape, so the free list settles at the first call's peak.
+class ContractionScratch final : public Eigen::Allocator
+{
+public:
+
+    ~ContractionScratch() override
+    {
+        for (const auto& block : blocks)
+            Eigen::internal::aligned_free(block.first);
+    }
+
+    void* allocate(size_t bytes) const override
+    {
+        const lock_guard<mutex> lock(guard);
+
+        for (size_t i = 0; i < free_list.size(); ++i)
+            if (blocks.at(free_list[i]) >= bytes)
+            {
+                void* const reused = free_list[i];
+                free_list[i] = free_list.back();
+                free_list.pop_back();
+
+                return reused;
+            }
+
+        void* const fresh = Eigen::internal::aligned_malloc(bytes);
+        if (fresh) blocks.emplace(fresh, bytes);
+
+        return fresh;
+    }
+
+    void deallocate(void* buffer) const override
+    {
+        if (!buffer) return;
+
+        const lock_guard<mutex> lock(guard);
+
+        if (blocks.count(buffer)) free_list.push_back(buffer);
+        else                      Eigen::internal::aligned_free(buffer);
+    }
+
+private:
+
+    mutable mutex guard;
+    mutable unordered_map<void*, size_t> blocks;
+    mutable vector<void*> free_list;
+};
+
+// The same worker threads as everything else; only the allocator differs.
+static Eigen::ThreadPoolDevice& contraction_device()
+{
+    static ContractionScratch scratch;
+    static Eigen::ThreadPoolDevice device(get_device().getPool(),
+                                          get_device().numThreads(),
+                                          &scratch);
+    return device;
+}
+
+static void contract_linear_forward(int m, int n, int k, const float* a, const float* b, float* c,
+                                    const float* bias, bool fuse_relu)
+{
+    using RowTensor = Eigen::Tensor<float, 2, Eigen::RowMajor>;
+
+    const Eigen::TensorMap<const RowTensor> left(a, m, k);
+    const Eigen::TensorMap<const RowTensor> right(b, k, n);
+    Eigen::TensorMap<RowTensor> out(c, m, n);
+
+    const Eigen::array<Eigen::IndexPair<int>, 1> dimensions = {Eigen::IndexPair<int>(1, 0)};
+
+    out.device(contraction_device()) = left.contract(right, dimensions, BiasRelu{bias, fuse_relu});
 }
 
 // The block height is not a constant: it is whatever gives every worker a few
@@ -150,6 +276,19 @@ static Index gemm_block_rows(Index rows, Index threads)
     const Index height = (rows + blocks_wanted - 1) / blocks_wanted;
 
     return max<Index>(8, (height + 7) / 8 * 8);
+}
+
+static double gemm_contract_flops()
+{
+    static const double flops = []
+    {
+        const char* const requested = getenv("OPENNN_GEMM_CONTRACT_FLOPS");
+        const double requested_flops = requested ? atof(requested) : -1.0;
+
+        return requested_flops >= 0.0 ? requested_flops : 8.0e9;
+    }();
+
+    return flops;
 }
 
 static Index gemm_min_output()
@@ -279,6 +418,23 @@ static bool gemm_pack_weights(Index block_rows)
 static void blocked_linear_forward(int m, int n, int k, const float* a, const float* b, float* c,
                                    const float* bias, bool fuse_relu)
 {
+    const bool has_bias = bias != nullptr;
+
+    // Where the contraction is taken. It is not a straight win in the app the
+    // way it is standalone: its advantage needs a call long enough to absorb
+    // waking the pool, and it is poor when k is small - at the 28->1024 layer it
+    // measured 0.464 ms against the blocked schedule's 0.188 at batch 1024, and
+    // 9.512 against 4.315 at 16384. On the wide layer at batch 16384 it is 57.98
+    // against 63.25. So: a wide enough contraction dimension, and enough
+    // arithmetic to be worth the wake-up. OPENNN_GEMM_CONTRACT_FLOPS moves the
+    // second threshold, OPENNN_GEMM_MODE=omp|mkl|pool leaves it entirely.
+    if (gemm_parallelism() == GemmParallelism::Contract
+        && has_bias
+        && Index(k) >= 64
+        && double(m) * double(n) * double(k) >= gemm_contract_flops()
+        && Index(m) * Index(n) >= gemm_min_output())
+        return contract_linear_forward(m, n, k, a, b, c, bias, fuse_relu);
+
     const Index threads = get_device().numThreads();
     const Index block_rows = gemm_block_rows(Index(m), threads);
     const Index blocks = (Index(m) + block_rows - 1) / block_rows;

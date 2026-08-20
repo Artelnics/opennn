@@ -5,11 +5,14 @@
 //   opennn_higgs_cpu infer <test_csv> [reps] [batch[,batch...]] [hidden] [hidden_layers] [activation]
 //
 // A comma-separated batch list is measured in one process. That matters on a
-// laptop: the test split costs about forty seconds to parse and the machine
-// drifts ten per cent over a sweep, so the batch sizes have to share one load
-// and one thermal window if they are to be comparable with each other.
+// laptop that drifts ten per cent over a sweep: the batch sizes have to share
+// one load and one thermal window if they are to be comparable with each other.
 
 #include <algorithm>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <system_error>
 #include <chrono>
 #include <cmath>
 #include <iostream>
@@ -38,6 +41,87 @@ float clamp_probability(float value)
     if (value < 1.0e-7f) return 1.0e-7f;
     if (value > 1.0f - 1.0e-7f) return 1.0f - 1.0e-7f;
     return value;
+}
+
+// Parsing the 500k-row split costs about 1.4 s of a 9 s run - measured, 8.891
+// against 7.503 with the cache warm. Small, but it is 1.4 s of full-machine
+// work immediately before a measurement, so it is worth not doing twice. The
+// parsed floats are cached beside the CSV, the way the Python drivers already
+// cache theirs as .npy, and re-read whenever the cache is newer than the CSV.
+// Nothing timed changes: the cache holds exactly what the parser produced.
+struct Table
+{
+    Index rows = 0;
+    Index columns = 0;
+    vector<float> values;
+};
+
+const char table_magic[8] = {'O', 'N', 'N', 'T', 'B', 'L', '0', '1'};
+
+bool read_table_cache(const filesystem::path& cache, Table& table)
+{
+    ifstream file(cache, ios::binary);
+    if (!file) return false;
+
+    char magic[sizeof(table_magic)] = {};
+    int64_t rows = 0;
+    int64_t columns = 0;
+
+    file.read(magic, sizeof(magic));
+    file.read(reinterpret_cast<char*>(&rows), sizeof(rows));
+    file.read(reinterpret_cast<char*>(&columns), sizeof(columns));
+
+    if (!file || memcmp(magic, table_magic, sizeof(magic)) != 0 || rows <= 0 || columns <= 0)
+        return false;
+
+    table.rows = Index(rows);
+    table.columns = Index(columns);
+    table.values.resize(size_t(rows) * size_t(columns));
+    file.read(reinterpret_cast<char*>(table.values.data()),
+              streamsize(table.values.size() * sizeof(float)));
+
+    return bool(file);
+}
+
+void write_table_cache(const filesystem::path& cache, const Table& table)
+{
+    ofstream file(cache, ios::binary);
+    if (!file) return;                          // read-only data directory: parse next time
+
+    const int64_t rows = int64_t(table.rows);
+    const int64_t columns = int64_t(table.columns);
+
+    file.write(table_magic, sizeof(table_magic));
+    file.write(reinterpret_cast<const char*>(&rows), sizeof(rows));
+    file.write(reinterpret_cast<const char*>(&columns), sizeof(columns));
+    file.write(reinterpret_cast<const char*>(table.values.data()),
+               streamsize(table.values.size() * sizeof(float)));
+}
+
+Table load_table(const string& csv_path)
+{
+    const filesystem::path csv(csv_path);
+    const filesystem::path cache = filesystem::path(csv_path + ".bin");
+
+    Table table;
+
+    error_code error;
+    const auto cache_time = filesystem::last_write_time(cache, error);
+
+    if (!error && cache_time >= filesystem::last_write_time(csv)
+        && read_table_cache(cache, table))
+        return table;
+
+    TabularDataset dataset(csv_path, ",", false, false);
+    const MatrixR& data = dataset.get_data();
+
+    table.rows = data.rows();
+    table.columns = data.cols();
+    table.values.assign(data.data(), data.data() + data.size());
+
+    write_table_cache(cache, table);
+
+    return table;
 }
 
 unique_ptr<NeuralNetwork> make_network(const Shape& input_shape,
@@ -118,11 +202,10 @@ BinaryMetrics evaluate(NeuralNetwork& network,
                        const string& test_path,
                        Index batch)
 {
-    TabularDataset test_dataset(test_path, ",", false, false);
-    test_dataset.set_sample_roles("Testing");
-    const MatrixR& all = test_dataset.get_data();
-    const Index samples = all.rows();
-    const Index inputs_number = test_dataset.get_input_shape()[0];
+    const Table table = load_table(test_path);
+    const Eigen::Map<const MatrixR> all(table.values.data(), table.rows, table.columns);
+    const Index samples = table.rows;
+    const Index inputs_number = table.columns - 1;
     const Index processed = (samples / batch) * batch;
     const MatrixR inputs = all.leftCols(inputs_number);
 
@@ -278,15 +361,15 @@ int infer_mode(int argc, char* argv[])
     set_seed(42);
     Configuration::instance().set(Device::CPU, Type::FP32);
 
-    TabularDataset dataset(test_path, ",", false, false);
-    dataset.set_sample_roles("Testing");
-    const MatrixR& all = dataset.get_data();
-    const Index samples = dataset.get_samples_number();
-    const Index inputs_number = dataset.get_input_shape()[0];
-    const MatrixR inputs = all.leftCols(inputs_number);
+    const Table table = load_table(test_path);
+    const Index samples = table.rows;
+    const Index inputs_number = table.columns - 1;
+    const MatrixR inputs = Eigen::Map<const MatrixR>(table.values.data(),
+                                                    table.rows,
+                                                    table.columns).leftCols(inputs_number);
 
-    auto network = make_network(dataset.get_input_shape(),
-                                dataset.get_target_shape(),
+    auto network = make_network(Shape{inputs_number},
+                                Shape{table.columns - inputs_number},
                                 hidden,
                                 hidden_layers,
                                 activation);
@@ -331,6 +414,15 @@ int infer_mode(int argc, char* argv[])
             times.push_back(chrono::duration<double>(t1 - t0).count());
         }
         (void)sink;
+
+        // In temporal order, before the sort: a median hides a drifting machine
+        // entirely, and this one drifts - the first thing measured after an idle
+        // gap runs in the processor's boost window and everything after it does
+        // not. If these fall monotonically, the run is measuring the clock.
+        cout << "batch_" << batch << "_pass_times=";
+        for (size_t i = 0; i < times.size(); ++i)
+            cout << (i ? "," : "") << times[i];
+        cout << "\n";
 
         sort(times.begin(), times.end());
         const double median_pass_s = times[times.size() / 2];
