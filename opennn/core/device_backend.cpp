@@ -1225,7 +1225,13 @@ void Backend::set_threads_number(int num_threads)
 
     Eigen::setNbThreads(num_threads);
     omp_set_num_threads(num_threads);
-    omp_set_dynamic(1);
+    // Dynamic teams let the runtime resize a parallel region's team, and with
+    // this OpenMP that means creating and destroying worker threads rather than
+    // reusing them: a single inference pass over the HIGGS split was measured
+    // spawning about seven threads per batch. OPENNN_OMP_DYNAMIC=0 pins the
+    // team instead; the default is unchanged until the A/B says otherwise.
+    const char* const omp_dynamic = getenv("OPENNN_OMP_DYNAMIC");
+    omp_set_dynamic(omp_dynamic ? atoi(omp_dynamic) : 1);
 #if defined(_OPENMP) && _OPENMP >= 200805
     omp_set_max_active_levels(1);
 #endif

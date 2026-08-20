@@ -74,12 +74,31 @@ static bool try_activation_forward(TensorView& output, ActivationFunction functi
     return true;
 }
 
+// OPENNN_MKL_REPORT=1 prints, at exit, how many dense forwards went to MKL and
+// how many were refused. A path that silently stops applying is otherwise
+// invisible: every result stays correct and only the throughput moves.
+static atomic<long long> mkl_linear_calls{0};
+static atomic<long long> mkl_linear_refusals{0};
+
+struct MklLinearReport
+{
+    ~MklLinearReport()
+    {
+        if (getenv("OPENNN_MKL_REPORT"))
+            fprintf(stderr, "mkl_linear_forward_calls=%lld refusals=%lld\n",
+                    mkl_linear_calls.load(), mkl_linear_refusals.load());
+    }
+};
+
+static MklLinearReport mkl_linear_report;
+
 static bool try_linear_forward(const TensorView& input,
                                 const TensorView& weights,
                                 const TensorView& bias,
                                 TensorView& output,
                                 bool fuse_relu)
 {
+    ++mkl_linear_refusals;
     if (!input.is_fp32()
         || !weights.is_fp32()
         || !bias.is_fp32()
@@ -124,6 +143,8 @@ static bool try_linear_forward(const TensorView& input,
                 n);
 
     add_bias(output, bias, rows, output_columns, fuse_relu);
+    --mkl_linear_refusals;
+    ++mkl_linear_calls;
     return true;
 }
 

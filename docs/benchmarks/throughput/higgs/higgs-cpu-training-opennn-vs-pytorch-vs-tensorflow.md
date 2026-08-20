@@ -45,6 +45,24 @@ hardware.
 Best thread count is 12 for every engine that was swept, i.e. the six P-cores'
 worth of threads rather than all 20 logical CPUs.
 
+### How much of this machine to believe
+
+The single runs above were taken on a laptop that turned out to swing far more
+than the 10% they were reported with: the same binary, the same arguments and
+the same thread count measured 56,173 and 101,182 samples/s back to back, and a
+standalone MKL sgemm at one shape measured 128, 233 and 359 GFLOP/s across three
+runs. Only **alternated** pairs survive that, and those are stable:
+
+| round | OpenNN | PyTorch | ratio |
+|---|---:|---:|---:|
+| 1 | 102,215 | 143,106 | 1.40x |
+| 2 | 100,466 | 143,830 | 1.43x |
+
+So take **PyTorch at 1.40-1.43x OpenNN on CPU inference; the training rows here were single runs and carry the same warning** as the result, and
+treat the single-run TensorFlow figures as indicative of a large gap rather than
+as a measured ratio. Anything smaller than about 2x cannot be attributed on this
+machine from single runs.
+
 ### What the harness was doing wrong
 
 The table above came from a harness that did not let the other two engines run

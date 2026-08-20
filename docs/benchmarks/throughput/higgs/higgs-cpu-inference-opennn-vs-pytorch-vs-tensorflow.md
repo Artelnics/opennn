@@ -37,6 +37,56 @@ five timed runs.
 **At best settings OpenNN infers at 0.49x TensorFlow and 0.66x PyTorch here**,
 again the opposite of the table above.
 
+### How much of this machine to believe
+
+The single runs above were taken on a laptop that turned out to swing far more
+than the 10% they were reported with: the same binary, the same arguments and
+the same thread count measured 56,173 and 101,182 samples/s back to back, and a
+standalone MKL sgemm at one shape measured 128, 233 and 359 GFLOP/s across three
+runs. Only **alternated** pairs survive that, and those are stable:
+
+| round | OpenNN | PyTorch | ratio |
+|---|---:|---:|---:|
+| 1 | 102,215 | 143,106 | 1.40x |
+| 2 | 100,466 | 143,830 | 1.43x |
+
+So take **PyTorch at 1.40-1.43x OpenNN on CPU inference** as the result, and
+treat the single-run TensorFlow figures as indicative of a large gap rather than
+as a measured ratio. Anything smaller than about 2x cannot be attributed on this
+machine from single runs.
+
+## Where OpenNN's CPU inference time goes
+
+Profiled over 5,856 layer calls, and isolated by adding and removing hidden
+layers:
+
+* `op:combination_fwd` (the GEMM and its bias) is **96.5%** of the time;
+  `op:activation_fwd` is 3.4%.
+* One 1024x1024 hidden layer costs about **7.4 ms per batch of 1024**.
+* The two thin layers (28->1024 and 1024->1) cost about **2.9 ms per batch
+  between them** - for 3% of the arithmetic. MKL runs those same two shapes
+  standalone in **0.21 ms**, so roughly 2.7 ms per batch, a quarter of the whole
+  step, is spent around the thin GEMMs rather than inside them.
+* Throughput rises with batch size - 28,977 at 1,024, 72,277 at 4,096, 84,722
+  at 16,384 samples/s in one back-to-back sweep - which is the signature of a
+  fixed per-call cost rather than of the arithmetic.
+
+Three explanations were tested and rejected:
+
+* **"MKL is not being used."** It is: an instrumented counter records 7,320
+  calls into `cblas_sgemm` with zero refusals for a five-pass run, exactly three
+  per batch. (`MKL_VERBOSE` prints nothing for these calls, which is misleading.)
+* **"The OpenMP teams churn."** They do - `add_bias` opens a parallel region per
+  layer per batch, and one run creates about 10,000 threads - but pinning the
+  team (`OPENNN_OMP_DYNAMIC=0`) measured **2.5x slower** (39,812 against
+  100,426), and `MKL_THREADING_LAYER=GNU` measured neutral.
+* **"MKL's GEMM is slower than PyTorch's."** Not supported: alternated at
+  1024x1024x1024, MKL measured 359/279/128 GFLOP/s against PyTorch's
+  221/233/343. Same class.
+
+What is left, and what the next attempt should attack, is the fixed cost of a
+forward call outside the GEMM.
+
 ### What the harness was doing wrong
 
 The table above came from a harness that did not let the other two engines run
