@@ -63,6 +63,28 @@ treat the single-run TensorFlow figures as indicative of a large gap rather than
 as a measured ratio. Anything smaller than about 2x cannot be attributed on this
 machine from single runs.
 
+## After the bias-pass fix (2026-08-20)
+
+The dense forward's bias pass used to open an OpenMP region per layer per batch;
+it is serial now, which is worth 58% to CPU inference (see the inference note).
+Training uses the same pass and gains from it as well - 34,209 to about 42,900
+samples/s, **+25%** - with the held-out metrics unchanged to every digit printed.
+
+That is enough to reach PyTorch but not to pass it. Alternated, three rounds,
+each engine at its best setting:
+
+| round | OpenNN | PyTorch | |
+|---|---:|---:|---|
+| 1 | 43,974 | 43,477 | OpenNN +1.1% |
+| 2 | 42,709 | 43,588 | PyTorch +2.1% |
+| 3 | 41,909 | 42,179 | PyTorch +0.6% |
+
+PyTorch takes two rounds of three, by margins under the drift between rounds:
+**CPU training is a tie**, where inference is now a win. The backward pass has
+its own bias-gradient and input-delta passes, none of them profiled yet, and
+they are the obvious place to look for the same class of problem that the
+forward had.
+
 ### What the harness was doing wrong
 
 The table above came from a harness that did not let the other two engines run
