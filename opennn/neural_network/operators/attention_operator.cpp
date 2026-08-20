@@ -944,15 +944,30 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
     }
     // Whatever produced them, the four pointers are bf16 by here, which is the
     // only dtype FA2 has kernels for: a fp32 layer reaches this through the same
-    // pack the graph would have read, and casts back below either way. What it
-    // also needs is the statistics slot, to leave the log-sum-exp its backward
-    // re-reads; with no slot there is nowhere to put it, and cuDNN's graph,
-    // which can do without, runs instead.
-    if (const auto problem = statistics.empty()
+    // pack the graph would have read, and casts back below either way.
+    // An empty statistics slot means inference: that slot is training-only, and
+    // its absence is the cheapest way to tell the two apart here. Auto keeps
+    // inference on cuDNN, because FA2 measured parity to 3% slower there on
+    // Ampere - a forward-only step, where cuDNN's graph generates no statistics
+    // while FA2 writes its log-sum-exp regardless, and where attention is a
+    // small share of a 6+6-layer step anyway. Asking for the rung by name still
+    // runs it, so the A/B stays available on hardware that may disagree.
+    const bool inference = statistics.empty();
+    const bool inference_allowed =
+        device::rung<device::AttentionRung>() == device::AttentionRung::FlashAttention;
+
+    if (const auto problem = inference && !inference_allowed
                            ? nullopt : flash_attention_problem(cache_key, source_length_data))
     {
+        // In training the log-sum-exp goes to the statistics state, which is
+        // where the backward reads it; in inference nothing reads it, and it
+        // goes to the scratch the kernels already share.
+        float* const softmax_lse = inference
+            ? ensure_flash_attention_workspace(flash_attention::softmax_lse_elements(*problem))
+            : statistics.as<float>();
+
         flash_attention::forward(*problem, q_ptr, k_ptr, v_ptr, o_ptr,
-                                 statistics.as<float>(), device::get_compute_stream());
+                                 softmax_lse, device::get_compute_stream());
 
         if (fp32_via_bf16)
             cast_bf16_to_fp32(output.size(), output_bf16, output.as<float>());

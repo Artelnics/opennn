@@ -14,6 +14,7 @@
 
 #include <cuda_runtime.h>
 
+#include "opennn/core/cuda/flash_attention.cuh"
 #include "opennn/neural_network/standard_networks.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/core/device_backend.h"
@@ -56,6 +57,18 @@ int main(int argc, char* argv[])
                   << " sdpa_min=" << sdpa_min_sequence_length << "\n";
         cout << "parameters=" << transformer.get_parameters_buffer_size() << "\n";
 
+        // Which attention kernel to measure; "cudnn" pins the graph that ran
+        // before FlashAttention-2 existed, which is the other half of an A/B.
+        const string attention_rung = getenv("OPENNN_ATTENTION_RUNG")
+                                    ? getenv("OPENNN_ATTENTION_RUNG") : "auto";
+        if (attention_rung == "cudnn")
+            device::set_rung(device::AttentionRung::CudnnGraph);
+        else if (attention_rung == "flash")
+            device::set_rung(device::AttentionRung::FlashAttention);
+        else if (attention_rung != "auto")
+            throw runtime_error("OPENNN_ATTENTION_RUNG: unknown value '" + attention_rung + "'");
+        cout << "attention_rung=" << attention_rung << "\n";
+
         Tensor3 host_in(batch, seq, 1), host_ctx(batch, seq, 1);
         for (Index b = 0; b < batch; ++b)
             for (Index s = 0; s < seq; ++s)
@@ -84,8 +97,8 @@ int main(int argc, char* argv[])
 
         if (getenv("OPENNN_PROFILE"))
         {
-            ::opennn::enabled() = true;
-            ::opennn::global_stats().clear();
+            profiler::set_enabled(true);
+            profiler::stats().clear();
             const auto p0 = chrono::steady_clock::now();
             const Index prof_iters = 10;
             for (Index it = 0; it < prof_iters; ++it)
@@ -93,9 +106,9 @@ int main(int argc, char* argv[])
             device::synchronize();
             const double prof_ms =
                 chrono::duration<double, milli>(chrono::steady_clock::now() - p0).count();
-            ::opennn::global_stats().print(cout, "Transformer forward op breakdown", prof_ms);
-            ::opennn::enabled() = false;
-            ::opennn::global_stats().clear();
+            profiler::stats().print(cout, "Transformer forward op breakdown", prof_ms);
+            profiler::set_enabled(false);
+            profiler::stats().clear();
         }
 
         forward_propagation.set_cuda_graph(true);
@@ -129,6 +142,8 @@ int main(int argc, char* argv[])
                   << " (" << long((per - gpu_per) / per * 100) << "% of step)\n";
         cout << "tokens_per_sec=" << long(tokens / per) << "\n";
         cout << "gpu_bound_tokens_per_sec=" << long(tokens / gpu_per) << "\n";
+        // Zero here means the rung never applied, whatever it was asked for.
+        cout << "flash_attention_calls=" << flash_attention::call_count() << "\n";
         cout << "sequences_per_sec=" << long(double(batch) / per) << "\n";
         cout << "RESULT=OK\n";
         return 0;

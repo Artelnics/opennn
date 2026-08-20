@@ -7,12 +7,15 @@
 //   The forward path is CPU-vs-GPU validated by opennn_attention_validate.cpp.
 //
 //   usage: opennn_transformer_infer [seq] [d_model] [heads] [ff] [layers] [vocab] [batch] [iters] [fp32|bf16] [default|reuse]
+//   env:   OPENNN_BF16=1 -> bf16, when no precision argument is given
 
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
 #include <string>
 
+#include "opennn/core/cuda/flash_attention.cuh"
+#include "opennn/core/device_backend.h"
 #include "opennn/neural_network/standard_networks.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/core/configuration.h"
@@ -33,7 +36,13 @@ int main(int argc, char* argv[])
     const Index vocab   = argc > 6 ? Index(stoll(argv[6])) : 10000;
     const Index batch   = argc > 7 ? Index(stoll(argv[7])) : 8;
     const Index iters   = argc > 8 ? Index(stoll(argv[8])) : 50;
-    const bool use_bf16 = argc > 9 ? string(argv[9]) == "bf16" : false;
+    // Precision as an argument, or, when there is none, as the environment
+    // variable every other driver here takes it in - which is how the runner
+    // asks for it, and asking the way the runner asks used to leave this one
+    // in fp32 while PyTorch and TensorFlow ran bf16.
+    const bool use_bf16 = argc > 9
+        ? string(argv[9]) == "bf16"
+        : getenv("OPENNN_BF16") != nullptr;
     const bool reuse_outputs = argc > 10 ? string(argv[10]) == "reuse" : false;
 
     try
@@ -51,6 +60,18 @@ int main(int argc, char* argv[])
                   << " batch=" << batch
                   << " sdpa_min=" << sdpa_min_sequence_length << " precision=" << (use_bf16 ? "bf16" : "fp32") << "\n";
         cout << "parameters=" << transformer.get_parameters_buffer_size() << "\n";
+
+        // Which attention kernel to measure; "cudnn" pins the graph that ran
+        // before FlashAttention-2 existed, which is the other half of an A/B.
+        const string attention_rung = getenv("OPENNN_ATTENTION_RUNG")
+                                    ? getenv("OPENNN_ATTENTION_RUNG") : "auto";
+        if (attention_rung == "cudnn")
+            device::set_rung(device::AttentionRung::CudnnGraph);
+        else if (attention_rung == "flash")
+            device::set_rung(device::AttentionRung::FlashAttention);
+        else if (attention_rung != "auto")
+            throw runtime_error("OPENNN_ATTENTION_RUNG: unknown value '" + attention_rung + "'");
+        cout << "attention_rung=" << attention_rung << "\n";
 
         Tensor3 inputs(batch, seq, 1);
         Tensor3 context(batch, seq, 1);
@@ -109,6 +130,8 @@ int main(int argc, char* argv[])
         cout << "step_s=" << per << "\n";
         cout << "tokens_per_sec=" << long(tokens / per) << "\n";
         cout << "sequences_per_sec=" << long(double(batch) / per) << "\n";
+        // Zero here means the rung never applied, whatever it was asked for.
+        cout << "flash_attention_calls=" << flash_attention::call_count() << "\n";
         cout << "RESULT=OK\n";
         return 0;
     }

@@ -34,7 +34,7 @@ otherwise:
 | bf16 tensors | the only dtype FA2 has kernels for; a fp32 layer arrives through the same fp32-via-bf16 pack cuDNN's graph reads |
 | heads interleaved, (B, S, H, D) | what the projections write and FA2 reads unchanged; the separated layout would need strides of its own for the merged attention output |
 | dropout off | the kernels are compiled without it |
-| an lse slot planned | FA2's forward writes the log-sum-exp its backward re-reads; that is the statistics state |
+| training, under `Auto` | measured slower for inference; see below. The named rung takes it either way |
 | **not (causal and padded)** | see below |
 
 In the encoder-decoder transformer that is every encoder self-attention and
@@ -104,6 +104,25 @@ The loss agrees to five digits at every point (bf16 128: 0.0537738 against
 capture and the grouped 8-step training graph is unaffected. fp32 gains less
 because both rungs pay the same fp32-via-bf16 cast around an attention that is
 the only thing that changed.
+
+**Inference: measured, and not taken.** The same rung applies to a forward-only
+step, so it looked like a second family to win for free. It is not. Three
+alternated rounds of the inference benchmark's own configuration (the resident
+path, paper base shape, batch 32, bf16, head dimension 64), FA2 over cuDNN:
+
+| seq | round 1 | round 2 | round 3 |
+| ---: | ---: | ---: | ---: |
+| 128 | 0.955 | 0.997 | 0.983 |
+| 256 | 0.997 | 0.992 | 0.998 |
+| 512 | 0.933 | 0.970 | 1.005 |
+
+Parity to 3% slower, consistently on the wrong side of 1. In hindsight the
+reasons are all visible in the probe: the large win is in the backward, which
+inference does not run; cuDNN's forward generates no statistics when it is not
+training, while FA2 writes its log-sum-exp regardless; and attention is a small
+share of a 6+6-layer step at batch 32. So `Auto` keeps inference on cuDNN.
+`OPENNN_ATTENTION_RUNG=flash` still takes it, because the balance may differ on
+another GPU and the A/B should stay one environment variable away.
 
 **Passing the lengths costs nothing.** The rung passes them always, since
 whether a batch is padded is not knowable on the host, and the expectation was
