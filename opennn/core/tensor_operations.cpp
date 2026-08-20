@@ -28,38 +28,95 @@ namespace opennn
 
 #ifdef EIGEN_USE_MKL_ALL
 
-static void add_bias(TensorView& output, const TensorView& bias, Index rows, Index columns, bool fuse_relu)
+// The GEMM's epilogue: one bias per column added to every row, and the ReLU
+// where the layer fuses it.
+//
+// This pass reads and writes the whole output, so it should run at memory
+// bandwidth. It did not: a profile of HIGGS inference put it at 1.36 ms per
+// call against 5.63 ms for the 1024-cube GEMM beside it - 40% of the forward,
+// about 3 GB/s for a 4 MB output. Two reasons, both fixed here. The ReLU was a
+// branch inside the inner loop, which kept the loop from vectorizing; it is
+// now chosen once, outside. And the row loop went through cblas_sger on the
+// unfused path, which allocated a vector of ones per call to express a
+// broadcast, or through an OpenMP region opened per layer per batch.
+template<bool FuseRelu>
+static void add_bias_span(float* const y, const float* const b, Index first, Index last, Index columns)
 {
-    float* y = output.as<float>();
-    const float* b = bias.as<float>();
-
-    if (!fuse_relu && columns > 1)
+    for (Index i = first; i < last; ++i)
     {
-        const vector<float> ones(size_t(rows), 1.0f);
-        return cblas_sger(CblasRowMajor,
-                          to_int(rows),
-                          to_int(columns),
-                          1.0f,
-                          ones.data(),
-                          1,
-                          b,
-                          1,
-                          y,
-                          to_int(columns));
-    }
+        float* const row = y + i * columns;
 
-    const bool parallel_bias = rows * columns >= 65536;
-
-    #pragma omp parallel for schedule(static) if(parallel_bias)
-    for (Index i = 0; i < rows; ++i)
-    {
-        float* row = y + i * columns;
         for (Index j = 0; j < columns; ++j)
         {
             const float value = row[j] + b[j];
-            row[j] = fuse_relu ? max(value, 0.0f) : value;
+            if constexpr (FuseRelu) row[j] = value > 0.0f ? value : 0.0f;
+            else                    row[j] = value;
         }
     }
+}
+
+// How the rows are spread over the cores - and the answer, measured, is that
+// they are not. This pass used to open an OpenMP region per layer per batch,
+// which a gdb count of one HIGGS inference run saw as about ten thousand thread
+// creations, and which a profile put at 1.55 ms per call against 5.3 ms for the
+// 1024-cube GEMM beside it. The work itself is one pass over the output, memory
+// bound and short, so every way of spreading it costs more than it saves:
+//
+//   omp     96,589 samples/s   1.550 ms per call
+//   pool   143,090 samples/s   0.173 ms per call
+//   serial 154,219 samples/s   0.121 ms per call
+//
+// Serial it is. The other two stay reachable through OPENNN_BIAS_MODE for the
+// A/B, and because a much larger output than this benchmark's four megabytes
+// may yet be worth a thread pool - that boundary is not measured here.
+enum class BiasParallelism { Omp, Pool, Serial };
+
+static BiasParallelism bias_parallelism()
+{
+    static const BiasParallelism mode = []
+    {
+        const char* const requested = getenv("OPENNN_BIAS_MODE");
+        if (!requested) return BiasParallelism::Serial;
+        if (string(requested) == "pool") return BiasParallelism::Pool;
+        if (string(requested) == "omp") return BiasParallelism::Omp;
+        return BiasParallelism::Serial;
+    }();
+
+    return mode;
+}
+
+template<bool FuseRelu>
+static void add_bias_rows(float* const y, const float* const b, Index rows, Index columns)
+{
+    if (rows * columns < 65536 || bias_parallelism() == BiasParallelism::Serial)
+        return add_bias_span<FuseRelu>(y, b, 0, rows, columns);
+
+    if (bias_parallelism() == BiasParallelism::Pool)
+    {
+        // The pool is the one the backend already keeps alive, so this costs a
+        // task enqueue rather than a thread creation.
+        const double row_bytes = double(columns) * double(sizeof(float));
+        const Eigen::TensorOpCost cost(row_bytes, row_bytes, double(columns));
+
+        return get_device().parallelFor(rows, cost,
+            [&](Index first, Index last)
+            {
+                add_bias_span<FuseRelu>(y, b, first, last, columns);
+            });
+    }
+
+    #pragma omp parallel for schedule(static)
+    for (Index i = 0; i < rows; ++i)
+        add_bias_span<FuseRelu>(y, b, i, i + 1, columns);
+}
+
+static void add_bias(TensorView& output, const TensorView& bias, Index rows, Index columns, bool fuse_relu)
+{
+    float* const y = output.as<float>();
+    const float* const b = bias.as<float>();
+
+    if (fuse_relu) add_bias_rows<true>(y, b, rows, columns);
+    else           add_bias_rows<false>(y, b, rows, columns);
 }
 
 static bool try_activation_forward(TensorView& output, ActivationFunction function)
@@ -127,6 +184,9 @@ static bool try_linear_forward(const TensorView& input,
     const int n = to_int(output_columns);
     const int k = to_int(input_columns);
 
+    {
+    PROFILE_SCOPE_HOST(n >= 1024 && k >= 1024 ? "cpu:sgemm_wide"
+                     : (k < 64 ? "cpu:sgemm_thin_k" : "cpu:sgemm_thin_n"));
     cblas_sgemm(CblasRowMajor,
                 CblasNoTrans,
                 CblasNoTrans,
@@ -141,8 +201,12 @@ static bool try_linear_forward(const TensorView& input,
                 0.0f,
                 output.as<float>(),
                 n);
+    }
 
+    {
+    PROFILE_SCOPE_HOST("cpu:add_bias");
     add_bias(output, bias, rows, output_columns, fuse_relu);
+    }
     --mkl_linear_refusals;
     ++mkl_linear_calls;
     return true;
@@ -611,6 +675,8 @@ void activation_backward(const TensorView& outputs, TensorView& delta, Activatio
 static void linear_forward_cpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
                         TensorView& output, cublasLtEpilogue_t epilogue)
 {
+    PROFILE_SCOPE_HOST("cpu:linear_fwd");
+
     const bool fuse_relu = epilogue == CUBLASLT_EPILOGUE_RELU_BIAS;
 
     if (try_linear_forward(input, weights, bias, output, fuse_relu)) return;

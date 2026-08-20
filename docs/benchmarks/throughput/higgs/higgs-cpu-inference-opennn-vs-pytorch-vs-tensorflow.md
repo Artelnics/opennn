@@ -87,6 +87,57 @@ Three explanations were tested and rejected:
 What is left, and what the next attempt should attack, is the fixed cost of a
 forward call outside the GEMM.
 
+## The bias pass, and what fixing it was worth (2026-08-20)
+
+Instrumenting the dense forward by part found the cost, and it was not the
+GEMM:
+
+| scope | ms per call | calls per batch |
+|---|---:|---:|
+| `cpu:sgemm_wide` (1024 cube) | 5.634 | 1 |
+| **`cpu:add_bias`** | **1.361** | **3** |
+| `cpu:sgemm_thin_k` (28->1024) | 0.180 | 1 |
+| `cpu:sgemm_thin_n` (1024->1) | 0.056 | 1 |
+| `op:activation_fwd` | 0.128 | 3 |
+
+Adding a bias to a 4 MB output is one pass over memory and should cost a
+fraction of a millisecond; at 1.36 ms per call it was 40% of the forward, more
+than every GEMM combined. The cause was the OpenMP region the pass opened per
+layer per batch - about ten thousand thread creations in one inference run.
+Hoisting the fused ReLU out of the inner loop changed nothing (97,672 against a
+96,996 baseline), which ruled out vectorisation and left the threading. Three
+ways of spreading the rows, measured in one binary:
+
+| bias parallelism | inference (samples/s) | `add_bias` ms/call |
+|---|---:|---:|
+| OpenMP region per call (what it did) | 96,589 | 1.550 |
+| the library's persistent thread pool | 143,090 | 0.173 |
+| **none at all** | **154,219** | **0.121** |
+
+The work is memory bound and short enough that every way of spreading it costs
+more than it saves, so the pass is serial now, with `OPENNN_BIAS_MODE=pool|omp`
+kept for the A/B.
+
+### Result
+
+Alternated against PyTorch at its own best setting, three rounds:
+
+| round | OpenNN | PyTorch | ratio |
+|---|---:|---:|---:|
+| 1 | 157,897 | 152,673 | **1.03x** |
+| 2 | 153,276 | 150,506 | **1.02x** |
+| 3 | 153,238 | 149,510 | **1.02x** |
+
+**OpenNN is now ahead of PyTorch on CPU inference in every round**, where before
+this change it ran at 0.65x - a 58% gain on the same machine, same build, same
+protocol. Training gains too, 34,209 to 43,047 samples/s (+26%), with the
+held-out metrics unchanged to every digit printed (accuracy 0.73236, ROC AUC
+0.815341), which is what one expects from a change that only reorders how the
+same additions are spread over cores.
+
+TensorFlow with XLA remains ahead of both on this benchmark and is the next
+target.
+
 ### What the harness was doing wrong
 
 The table above came from a harness that did not let the other two engines run
