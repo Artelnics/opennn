@@ -17,7 +17,19 @@ import numpy as np
 from metrics import binary_metrics
 
 def load_csv(path: Path) -> tuple[np.ndarray, np.ndarray]:
-    data = np.loadtxt(path, delimiter=",", dtype=np.float32)
+    # np.loadtxt on the full split is minutes of wall clock per engine per run,
+    # none of it measured, so the parsed array is cached next to the CSV and
+    # re-read with np.load. OpenNN's own driver reads the CSV directly and is
+    # unaffected; nothing here is inside a timed region either way.
+    cache = path.with_suffix(path.suffix + ".npy")
+    if cache.exists() and cache.stat().st_mtime >= path.stat().st_mtime:
+        data = np.load(cache, mmap_mode="r")
+    else:
+        data = np.loadtxt(path, delimiter=",", dtype=np.float32)
+        try:
+            np.save(cache, data)
+        except OSError:              # read-only data directory: parse next time
+            pass
     x = np.ascontiguousarray(data[:, :-1])
     y = np.ascontiguousarray(data[:, -1:].astype(np.float32))
     return x, y
@@ -26,6 +38,13 @@ def batches(n: int, batch: int):
     stop = (n // batch) * batch
     for start in range(0, stop, batch):
         yield start, start + batch
+
+# XLA is TensorFlow's fast path on CPU as well as GPU, and the GPU family
+# has always measured it with XLA on; this one was pinned to jit_compile=False,
+# which measured TensorFlow below its own best. TF_PLAIN=1 restores that for
+# an A/B.
+def tensorflow_jit() -> bool:
+    return not os.environ.get("TF_PLAIN")
 
 def run_tensorflow(args: argparse.Namespace) -> None:
 
@@ -62,7 +81,7 @@ def run_tensorflow(args: argparse.Namespace) -> None:
         optimizer = tf.keras.optimizers.Adam()
         loss_fn = tf.keras.losses.BinaryCrossentropy()
 
-        @tf.function(jit_compile=False)
+        @tf.function(jit_compile=tensorflow_jit())
         def train_step(xb, yb):
             with tf.GradientTape() as tape:
                 pred = model(xb, training=True)
@@ -105,7 +124,7 @@ def run_tensorflow(args: argparse.Namespace) -> None:
     x = tf.constant(x_np)
     model = make_model(x_np.shape[1])
 
-    @tf.function(jit_compile=False)
+    @tf.function(jit_compile=tensorflow_jit())
     def infer_step(xb):
         return model(xb, training=False)
 

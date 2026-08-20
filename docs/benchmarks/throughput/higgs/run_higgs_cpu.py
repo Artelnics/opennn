@@ -209,9 +209,11 @@ def engine_cmd(engine: str, args: argparse.Namespace) -> tuple[list[str], dict[s
     if args.threads:
 
         env["OMP_NUM_THREADS"] = str(args.threads)
-        if engine in ("opennn", "pytorch"):
-            env["OMP_PLACES"] = "cores"
-            env["OMP_PROC_BIND"] = "close"
+        # Every engine gets the same pinning. It used to skip TensorFlow, which
+        # on a hybrid CPU is not a neutral omission: unpinned threads land on
+        # efficiency cores.
+        env["OMP_PLACES"] = "cores"
+        env["OMP_PROC_BIND"] = "close"
         if engine == "opennn":
             env["OPENNN_THREADS"] = str(args.threads)
             env["MKL_NUM_THREADS"] = str(args.threads)
