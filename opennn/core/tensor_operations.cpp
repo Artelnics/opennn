@@ -17,6 +17,7 @@
 #include "opennn/core/cuda/kernel_tensor.cuh"
 
 #include <atomic>
+#include <omp.h>
 
 #ifdef EIGEN_USE_MKL_ALL
 #include <mkl_cblas.h>
@@ -312,8 +313,13 @@ static void blocked_linear_forward(int m, int n, int k, const float* a, const fl
     // not worth it: that layer is bound by the read, which MKL's ten threads
     // already saturate (1.868 ms against 1.797), and blocking it costs 3-5% at
     // batch 256.
+    // A team opened inside someone else's parallel region is one thread by
+    // default, which would leave every block to that thread with MKL kept
+    // sequential inside it - an order of magnitude slower, and silent. Hand the
+    // whole layer to MKL instead and let it decide what it can do from there.
     if (gemm_parallelism() == GemmParallelism::Mkl
         || workers < 2
+        || omp_in_parallel()
         || Index(m) * Index(n) < gemm_min_output())
     {
         sgemm_rows(m, n, k, a, b, c);
