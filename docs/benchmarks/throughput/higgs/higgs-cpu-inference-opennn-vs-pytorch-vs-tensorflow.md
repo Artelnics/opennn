@@ -138,6 +138,48 @@ same additions are spread over cores.
 TensorFlow with XLA remains ahead of both on this benchmark and is the next
 target.
 
+## Chasing TensorFlow: what has been ruled out (2026-08-20)
+
+With each engine at the thread count it likes best - OpenNN with `MKL_NUM_THREADS=6`
+(183,903 against 170,681 at twelve), TensorFlow at twenty (211,328 against
+189,442 at six) - TensorFlow leads by 1.19-1.25x over three alternated rounds:
+
+| round | OpenNN | TensorFlow |
+|---|---:|---:|
+| 1 | 185,695 | 220,085 |
+| 2 | 174,173 | 213,489 |
+| 3 | 167,964 | 210,648 |
+
+That the two engines want opposite thread counts is itself worth knowing, and
+is why both were swept rather than one.
+
+By then the forward is one number: `cpu:sgemm_wide` is about 90% of it, and
+everything else - bias 0.32 ms, thin GEMMs 0.24 ms, activations now nil - sums
+under 0.6 ms per batch. Four ways of attacking it, all measured, none kept:
+
+* **MKL packed weights** (`cblas_sgemm_pack`, the obvious trick when B never
+  changes between batches): **9% slower** than plain, 4.933 ms against 4.526.
+* **`beta = 1` with the bias pre-broadcast into C**: rejected on arithmetic
+  before building. It trades one 12 MB round trip for 20 MB, because the ReLU
+  then needs a pass of its own.
+* **Thread placement**: pinning to physical P-cores 182,186, six OpenMP threads
+  182,319, `MKL_DYNAMIC=FALSE` 177,848 - all below the plain 206,985.
+* **oneDNN with fused post-ops**, which is the mechanism TensorFlow and PyTorch
+  actually use: a standalone prototype of this exact network through
+  `inner_product` with bias and eltwise as post-ops and the weights reordered
+  once, measured **169,984 / 182,350 / 101,151** samples/s at six, twelve and
+  twenty threads. Its best is level with what OpenNN already gets from MKL plus
+  separate passes, and 14% short of TensorFlow.
+
+The last one is the informative failure. Fusion was the leading hypothesis for
+the 0.8 ms between the in-app GEMM and standalone MKL at the same shape, and an
+implementation with no separate passes at all lands in the same place - so the
+gap is not epilogue fusion, and building post-ops into the dense CPU path would
+not have paid. What is left to explain is why every one-GEMM-at-a-time
+implementation, MKL and oneDNN alike, degrades at twenty threads while
+TensorFlow's best point is twenty: the next thing to measure is what XLA is
+scheduling across the batch loop, not another kernel.
+
 ### What the harness was doing wrong
 
 The table above came from a harness that did not let the other two engines run
