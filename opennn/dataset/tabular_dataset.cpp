@@ -135,10 +135,7 @@ void TabularDataset::set_storage_mode(StorageMode new_storage_mode)
     if (new_storage_mode != StorageMode::BinaryFile)
     {
         cache_columns_number = 0;
-        cache_feature_descriptives.clear();
-        cache_transform_descriptives.clear();
-        cache_feature_transforms.clear();
-        cache_feature_replacement.clear();
+        clear_cache_derived_state();
         cache_reader.close();
     }
 }
@@ -156,16 +153,28 @@ void TabularDataset::set_binary_cache_path(const filesystem::path& new_cache_pat
 {
     cache_path_override = new_cache_path;
     cache_reader.close();
+    clear_cache_derived_state();
     cache_path = cache_file_path();
 
     if (storage_mode == StorageMode::BinaryFile && filesystem::exists(cache_path))
+    {
         cache_reader.open(cache_path);
+        if (cache_columns_number > 0 && get_samples_number() > 0)
+            refresh_cache_statistics();
+    }
 }
 
-void TabularDataset::compute_cache_replacement() const
+void TabularDataset::clear_cache_derived_state()
 {
+    cache_feature_descriptives.clear();
+    cache_transform_descriptives.clear();
+    cache_feature_transforms.clear();
+    cache_feature_replacement.clear();
+}
 
-    if (cache_feature_descriptives.empty()) compute_cache_descriptives();
+void TabularDataset::refresh_cache_statistics()
+{
+    cache_feature_descriptives = compute_descriptives_streaming(get_used_sample_indices());
 
     const Index columns_number = cache_columns_number;
     cache_feature_replacement.assign(static_cast<size_t>(columns_number), 0.0f);
@@ -207,6 +216,14 @@ void TabularDataset::compute_cache_replacement() const
     }
 }
 
+void TabularDataset::on_used_samples_changed()
+{
+    if (storage_mode == StorageMode::BinaryFile
+        && cache_columns_number > 0
+        && cache_reader.is_open())
+        refresh_cache_statistics();
+}
+
 void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
                                             const vector<Index>& feature_indices,
                                             float* output,
@@ -221,7 +238,8 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
                           ? static_cast<bool>(contiguous_hint)
                           : is_contiguous(feature_indices);
 
-    if (cache_feature_replacement.empty()) compute_cache_replacement();
+    throw_if(ssize(cache_feature_replacement) != columns_number,
+             "TabularDataset: binary-cache statistics are not initialized.");
 
     const Index first_column = feature_indices.front();
     if (contiguous)
@@ -289,11 +307,6 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
             value = scale_value(method, desc, value);
         }
     }
-}
-
-void TabularDataset::compute_cache_descriptives() const
-{
-    cache_feature_descriptives = compute_descriptives_streaming(get_used_sample_indices());
 }
 
 vector<Descriptives> TabularDataset::compute_descriptives_streaming(const vector<Index>& sample_indices) const
@@ -786,8 +799,8 @@ vector<Descriptives> TabularDataset::calculate_feature_descriptives() const
 {
     if (storage_mode == StorageMode::BinaryFile)
     {
-        if (cache_feature_descriptives.empty()) compute_cache_descriptives();
-
+        throw_if(ssize(cache_feature_descriptives) != cache_columns_number,
+                 "TabularDataset: binary-cache descriptives are not initialized.");
         return cache_feature_descriptives;
     }
 
@@ -798,8 +811,8 @@ vector<Descriptives> TabularDataset::calculate_feature_descriptives(const string
 {
     if (storage_mode == StorageMode::BinaryFile)
     {
-        if (cache_feature_descriptives.empty()) compute_cache_descriptives();
-
+        throw_if(ssize(cache_feature_descriptives) != cache_columns_number,
+                 "TabularDataset: binary-cache descriptives are not initialized.");
         const vector<Index> feature_indices = get_feature_indices(variable_role);
 
         vector<Descriptives> result(feature_indices.size());
@@ -1262,6 +1275,10 @@ void TabularDataset::set_data_integer(const Index vocabulary_size)
 
 void TabularDataset::from_JSON(const JsonDocument& data_set_document)
 {
+    cache_reader.close();
+    cache_columns_number = 0;
+    clear_cache_derived_state();
+
     const Json* root = get_json_root(data_set_document, "Dataset");
 
     const Json* src = require_json_field(root, "DataSource");
@@ -1300,10 +1317,6 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
     {
         const vector<vector<Index>> feature_indices = get_feature_indices();
         cache_columns_number = feature_indices.empty() ? 0 : feature_indices.back().back() + 1;
-        cache_feature_descriptives.clear();
-        cache_transform_descriptives.clear();
-        cache_feature_transforms.clear();
-        cache_feature_replacement.clear();
 
         cache_path = cache_file_path();
 
@@ -1317,6 +1330,8 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
             throw_if(cache_reader.file_size() != expected_bytes,
                      "Binary data cache size mismatch for {} (got {} bytes, expected {}).",
                             cache_path.string(), cache_reader.file_size(), expected_bytes);
+
+            refresh_cache_statistics();
         }
     }
 
@@ -1862,6 +1877,8 @@ void TabularDataset::read_csv()
 
     if(binary_storage)
     {
+        cache_reader.close();
+        clear_cache_derived_state();
         cache_path = cache_file_path();
 
         filesystem::create_directories(
@@ -1871,11 +1888,6 @@ void TabularDataset::read_csv()
             cache_path.string() + ".tmp");
 
         cache_columns_number = feature_columns_number;
-
-        cache_feature_descriptives.clear();
-        cache_transform_descriptives.clear();
-        cache_feature_transforms.clear();
-        cache_feature_replacement.clear();
 
         row_values.resize(size_t(feature_columns_number));
     }
@@ -2268,7 +2280,6 @@ void TabularDataset::read_csv()
 
     if(binary_storage)
     {
-        cache_reader.close();
         cache_writer.finish_with_rename(cache_path);
         cache_reader.open(cache_path);
     }
@@ -2313,6 +2324,9 @@ void TabularDataset::read_csv()
     }
 
     split_samples_random();
+
+    if (binary_storage)
+        refresh_cache_statistics();
 }
 
 static const EnumMap<TabularDataset::MissingValuesMethod>& missing_values_method_map()
@@ -2461,6 +2475,8 @@ void TabularDataset::reuse_input_incomplete_rows_binary()
 
     vector<float> row(static_cast<size_t>(columns_number));
 
+    bool roles_changed = false;
+
     for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
     {
         cache_reader.read_at(span(row),
@@ -2470,10 +2486,18 @@ void TabularDataset::reuse_input_incomplete_rows_binary()
             [&](const Index target_index) { return isnan(row[size_t(target_index)]); });
 
         if (target_missing)
-            set_sample_role(sample_index, "None");
+        {
+            roles_changed |= sample_roles[size_t(sample_index)] != SampleRole::None;
+            sample_roles[size_t(sample_index)] = SampleRole::None;
+        }
         else if (sample_roles[size_t(sample_index)] == SampleRole::None)
-            set_sample_role(sample_index, "Training");
+        {
+            sample_roles[size_t(sample_index)] = SampleRole::Training;
+            roles_changed = true;
+        }
     }
+
+    if (roles_changed) on_used_samples_changed();
 }
 
 void TabularDataset::impute_missing_values_interpolate()

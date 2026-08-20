@@ -65,9 +65,9 @@ inline profiler::Stats& graph_timing_stats()
     static profiler::Stats times;
     static const bool registered = [] {
         atexit(+[] {
-            profiler::Stats& times = graph_timing_stats();
-            const double total_ms = times.total_ms();
-            times.print(cerr,
+            profiler::Stats& stats = graph_timing_stats();
+            const double total_ms = stats.total_ms();
+            stats.print(cerr,
                         format("total_gpu_ms={:.1f}", total_ms),
                         total_ms,
                         "GRAPH_TIMING");

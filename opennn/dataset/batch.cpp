@@ -432,21 +432,13 @@ ThreadSafeQueue<Batch*>& BatchPools::validation_queue()
         : validation_empty_queue;
 }
 
-// Non-null marker published into still-idle ready slots when a worker fails. A consumer
-// parked in atomic::wait() only unblocks on a value change, so the failure has to change
-// the value it is waiting on; without this it would sleep through the error.
-static Batch* aborted_slot()
-{
-    static int marker = 0;
-    return reinterpret_cast<Batch*>(&marker);
-}
-
 BatchPrefetchSession::BatchPrefetchSession(ThreadSafeQueue<Batch*>& queue, const Index batches_number)
     : empty_queue(queue),
-      ready_batches(size_t(batches_number))
+      ready_batches(size_t(batches_number), nullptr),
+      slot_states(size_t(batches_number))
 {
-    for (atomic<Batch*>& batch : ready_batches)
-        batch.store(nullptr, memory_order_relaxed);
+    for (atomic<SlotState>& state : slot_states)
+        state.store(SlotState::Pending, memory_order_relaxed);
 }
 
 BatchPrefetchSession::~BatchPrefetchSession()
@@ -463,21 +455,36 @@ BatchPrefetchSession::~BatchPrefetchSession()
 
 Batch* BatchPrefetchSession::wait(const Index iteration)
 {
-    atomic<Batch*>& ready = ready_batches[size_t(iteration)];
+    atomic<SlotState>& state = slot_states[size_t(iteration)];
 
     while (true)
     {
-        Batch* const batch = ready.load(memory_order_acquire);
-
+        const SlotState value = state.load(memory_order_acquire);
         rethrow_if_error();
 
-        throw_if(batch == aborted_slot(),
-                 "BatchPrefetchSession: prefetch worker aborted without an exception.");
+        if (value == SlotState::Ready)
+            return ready_batches[size_t(iteration)];
+        if (value == SlotState::Aborted)
+            throw runtime_error("BatchPrefetchSession: prefetch worker aborted without an exception.");
 
-        if (batch) return batch;
-
-        ready.wait(nullptr, memory_order_acquire);
+        state.wait(SlotState::Pending, memory_order_acquire);
     }
+}
+
+bool BatchPrefetchSession::publish(const Index iteration, Batch* batch)
+{
+    ready_batches[size_t(iteration)] = batch;
+    atomic<SlotState>& state = slot_states[size_t(iteration)];
+    SlotState pending = SlotState::Pending;
+    if (!state.compare_exchange_strong(pending, SlotState::Ready,
+                                       memory_order_release, memory_order_relaxed))
+    {
+        ready_batches[size_t(iteration)] = nullptr;
+        return false;
+    }
+
+    state.notify_one();
+    return true;
 }
 
 void BatchPrefetchSession::capture_current_exception()
@@ -489,13 +496,12 @@ void BatchPrefetchSession::capture_current_exception()
         error_pending.store(true, memory_order_release);
     }
 
-    // Publish the abort marker before waking, so a consumer that parks between its error
-    // check and its wait() still sees a changed value and cannot miss the notification.
-    for (atomic<Batch*>& ready : ready_batches)
+    for (atomic<SlotState>& state : slot_states)
     {
-        Batch* idle = nullptr;
-        ready.compare_exchange_strong(idle, aborted_slot(), memory_order_release, memory_order_relaxed);
-        ready.notify_all();
+        SlotState pending = SlotState::Pending;
+        state.compare_exchange_strong(pending, SlotState::Aborted,
+                                      memory_order_release, memory_order_relaxed);
+        state.notify_all();
     }
 }
 

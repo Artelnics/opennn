@@ -94,7 +94,7 @@ string shape_to_string(const Shape& shape, const string& separator)
     throw_if(shape.empty(),
              "Dimensions size must be greater than 0.\n");
 
-    for (Index i = 0; i < shape.get_rank(); ++i)
+    for (size_t i = 0; i < shape.get_rank(); ++i)
         buffer << shape[i] << separator;
 
     return buffer.str();

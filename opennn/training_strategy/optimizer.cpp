@@ -332,19 +332,19 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
             {
                 const auto t_pop0 = chrono::steady_clock::now();
                 Batch* batch = nullptr;
-                const bool received_batch = session_ptr->empty_queue.wait_pop(batch);
+                const bool received_batch = session_ptr->acquire(batch);
                 const auto t_fill0 = chrono::steady_clock::now();
 
                 if (!received_batch || !batch || stop.stop_requested())
                 {
-                    if (batch) session_ptr->empty_queue.push(batch);
+                    if (batch) session_ptr->release(batch);
                     return;
                 }
 
-                const Index it = session_ptr->next_iteration.fetch_add(1);
+                const Index it = session_ptr->claim_iteration();
                 if (it >= batches_number)
                 {
-                    session_ptr->empty_queue.push(batch);
+                    session_ptr->release(batch);
                     return;
                 }
 
@@ -356,8 +356,11 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
                             mode);
 
                 const auto t_fill1 = chrono::steady_clock::now();
-                session_ptr->ready_batches[size_t(it)].store(batch, memory_order_release);
-                session_ptr->ready_batches[size_t(it)].notify_one();
+                if (!session_ptr->publish(it, batch))
+                {
+                    session_ptr->release(batch);
+                    return;
+                }
 
                 if (profile_counters)
                     profile_counters->record(t_pop0, t_fill0, t_fill1);
@@ -372,9 +375,8 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
     NeuralNetwork* neural_network = loss->get_neural_network();
     const int batch_workers_number = get_batch_workers_number(*neural_network);
 
-    session->threads.reserve(size_t(batch_workers_number));
     for (int i = 0; i < batch_workers_number; ++i)
-        session->threads.emplace_back(worker_body);
+        session->add_worker(worker_body);
 
     return session;
 }

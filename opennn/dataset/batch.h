@@ -15,6 +15,7 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include <utility>
 
 namespace opennn
 {
@@ -152,12 +153,29 @@ struct BatchPrefetchSession
 
     Batch* wait(Index iteration);
 
+    bool publish(Index iteration, Batch* batch);
+
+    bool acquire(Batch*& batch) { return empty_queue.wait_pop(batch); }
+    void release(Batch* batch) { empty_queue.push(batch); }
+    Index claim_iteration() { return next_iteration.fetch_add(1); }
+
+    template <typename Worker>
+    void add_worker(Worker&& worker)
+    {
+        threads.emplace_back(std::forward<Worker>(worker));
+    }
+
     void capture_current_exception();
 
     void rethrow_if_error();
 
+private:
+
+    enum class SlotState : uint8_t { Pending, Ready, Aborted };
+
     ThreadSafeQueue<Batch*>& empty_queue;
-    vector<atomic<Batch*>> ready_batches;
+    vector<Batch*> ready_batches;
+    vector<atomic<SlotState>> slot_states;
     atomic<Index> next_iteration{0};
     mutex error_mutex;
     exception_ptr worker_error;

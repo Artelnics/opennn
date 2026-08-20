@@ -28,6 +28,37 @@ TEST(BatchTest, ValidationQueueIsDerivedFromPoolOwnership)
     EXPECT_EQ(&pools.validation_queue(), &pools.validation_empty_queue);
 }
 
+TEST(BatchTest, PrefetchSessionPublishesBatchesWithoutPointerSentinels)
+{
+    TabularDataset dataset(2, {3}, {1});
+    const EffectiveConfig config{Device::CPU, Type::FP32, 0};
+    Batch batch(2, &dataset, config);
+    ThreadSafeQueue<Batch*> queue;
+    BatchPrefetchSession session(queue, 1);
+
+    EXPECT_TRUE(session.publish(0, &batch));
+
+    EXPECT_EQ(session.wait(0), &batch);
+}
+
+TEST(BatchTest, PrefetchSessionWakesWaitersWithTheWorkerError)
+{
+    ThreadSafeQueue<Batch*> queue;
+    BatchPrefetchSession session(queue, 1);
+
+    try
+    {
+        throw runtime_error("prefetch failed");
+    }
+    catch (...)
+    {
+        session.capture_current_exception();
+    }
+
+    EXPECT_FALSE(session.publish(0, nullptr));
+    EXPECT_THROW(session.wait(0), runtime_error);
+}
+
 #ifdef OPENNN_HAS_CUDA
 
 TEST(BatchTest, FreshCudaBatchUsesConfiguredDevice)

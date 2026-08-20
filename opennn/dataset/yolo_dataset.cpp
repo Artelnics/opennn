@@ -14,8 +14,6 @@
 #include "opennn/core/json.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/dataset/image_processing.h"
-#include "opennn/neural_network/layers/convolutional_layer.h"
-#include "opennn/neural_network/neural_network.h"
 
 namespace opennn
 {
@@ -1279,6 +1277,9 @@ void YoloDataset::set(const filesystem::path& new_images_dir,
 
 void YoloDataset::set_storage_mode(StorageMode new_storage_mode)
 {
+    if (new_storage_mode == StorageMode::Matrix)
+        load_cache_to_ram();
+
     Dataset::set_storage_mode(new_storage_mode);
 
     if (new_storage_mode == StorageMode::BinaryFile)
@@ -1465,7 +1466,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
         image_writer.write(span(pixels));
 
         if (display && (i % 1000 == 0 || i + 1 == image_paths.size()))
-            display_progress_bar(Index(i + 1), Index(image_paths.size()));
+            display_progress_bar(Index(i + 1), ssize(image_paths));
     }
 
     image_writer.finish_with_rename(image_cache_path);
@@ -1627,27 +1628,28 @@ void YoloDataset::set_v8_mode(bool enabled)
         variables[1].features = target_record_floats;
 }
 
-void YoloDataset::load_images_to_ram() const
+void YoloDataset::load_cache_to_ram()
 {
-    if (!images_ram.empty() || samples_number == 0 || cache_image_record_bytes == 0) return;
+    if (samples_number == 0) return;
+
+    const size_t image_bytes = size_t(samples_number) * size_t(cache_image_record_bytes);
+    const size_t target_values = size_t(samples_number) * size_t(cache_target_record_floats);
+    if (images_ram.size() == image_bytes && targets_ram.size() == target_values)
+        return;
 
     throw_if(!image_cache_reader.is_open(),
-             "YoloDataset::load_images_to_ram: image cache is not open.");
-
-    images_ram.resize(size_t(samples_number) * size_t(cache_image_record_bytes));
-    image_cache_reader.read_at(span(images_ram), sizeof(YoloImageCacheHeader));
-}
-
-void YoloDataset::load_targets_to_ram() const
-{
-    if (!targets_ram.empty() || samples_number == 0 || cache_target_record_floats == 0) return;
-
+             "YoloDataset::load_cache_to_ram: image cache is not open.");
     throw_if(!target_cache_reader.is_open(),
-             "YoloDataset::load_targets_to_ram: target cache is not open.");
+             "YoloDataset::load_cache_to_ram: target cache is not open.");
 
-    targets_ram.resize(size_t(samples_number) * size_t(cache_target_record_floats));
-    target_cache_reader.read_at(span(targets_ram),
-                                target_data_offset);
+    vector<uint8_t> loaded_images(image_bytes);
+    vector<float> loaded_targets(target_values);
+
+    image_cache_reader.read_at(span(loaded_images), sizeof(YoloImageCacheHeader));
+    target_cache_reader.read_at(span(loaded_targets), target_data_offset);
+
+    images_ram = std::move(loaded_images);
+    targets_ram = std::move(loaded_targets);
 }
 
 void blit_resized_into_canvas(const uint8_t* src, Index src_h, Index src_w,
@@ -1750,9 +1752,6 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
     const uint64_t epoch_seed = augment
         ? augmentation_counter.fetch_add(1, memory_order_relaxed) + 1
         : 0;
-
-    if (matrix_storage)
-        load_images_to_ram();
 
     const AugmentationConfig cfg = augmentation;
     const bool mosaic = augment && cfg.mosaic;
@@ -1881,9 +1880,6 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
 
     const bool grid_changed = (grid_size != cache_grid_size);
     const bool reencode = augment || grid_changed || is_multi_scale() || v8_mode;
-
-    if (matrix_storage && !reencode)
-        load_targets_to_ram();
 
     string omp_error;
 
