@@ -17,7 +17,7 @@
 
 #include "opennn/neural_network/layers/activation_layer.h"
 #include "opennn/neural_network/layers/addition_layer.h"
-#include "opennn/neural_network/layers/bounding_layer.h"
+#include "opennn/neural_network/layers/clamping_layer.h"
 #include "opennn/neural_network/layers/c2psa_layer.h"
 #include "opennn/neural_network/layers/concatenation_layer.h"
 #include "opennn/neural_network/layers/dense_layer.h"
@@ -27,7 +27,7 @@
 #include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/layers/tokenizer_layer.h"
 #include "opennn/neural_network/layers/unscaling_layer.h"
-#include "opennn/neural_network/layers/upsample_layer.h"
+#include "opennn/neural_network/layers/upsampling_layer.h"
 #ifndef OPENNN_NO_VISION
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/neural_network/layers/detection_layer.h"
@@ -96,7 +96,7 @@ constexpr size_t layer_types_number = static_cast<size_t>(LayerType::Count);
 constexpr std::array<LayerRegistration, layer_types_number> layer_registrations = {{
     {LayerType::Activation,             "Activation",             construct_layer<Activation>},
     {LayerType::Addition,               "Addition",               construct_layer<Addition>},
-    {LayerType::Bounding,               "Bounding",               construct_layer<Bounding>},
+    {LayerType::Clamping,               "Clamping",               construct_layer<Clamping>},
     {LayerType::Concatenation,          "Concatenation",          construct_layer<Concatenation>},
     {LayerType::Convolutional,          "Convolutional",
      OPENNN_VISION_FACTORY(construct_layer<Convolutional>)},
@@ -125,7 +125,7 @@ constexpr std::array<LayerRegistration, layer_types_number> layer_registrations 
     {LayerType::Scaling,                "Scaling",                construct_layer<Scaling>},
     {LayerType::Tokenizer,              "Tokenizer",              construct_layer<Tokenizer>},
     {LayerType::Unscaling,              "Unscaling",              construct_layer<Unscaling>},
-    {LayerType::Upsample,               "Upsample",               construct_layer<Upsample>},
+    {LayerType::Upsampling,             "Upsampling",             construct_layer<Upsampling>},
     {LayerType::C2PSA,                  "C2PSA",                  construct_layer<C2PSA>}
 }};
 

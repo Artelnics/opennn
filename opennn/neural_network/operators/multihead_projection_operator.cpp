@@ -20,7 +20,7 @@ namespace opennn
 
 // Defined below: against the CUDA kernels, or as throwing stubs.
 static void split_heads_gpu(const TensorView&, TensorView&);
-static void merge_heads_gpu(const TensorView&, TensorView&);
+static void concatenate_heads_gpu(const TensorView&, TensorView&);
 
 static void transpose_middle_axes(const float* src, float* dst,
                                   Index batch_size, Index src_m1, Index src_m2, Index D)
@@ -50,9 +50,9 @@ void split_heads(const TensorView& source, TensorView& destination)
                           shape[0], shape[1], shape[2], shape[3]);
 }
 
-void merge_heads(const TensorView& source, TensorView& destination)
+void concatenate_heads(const TensorView& source, TensorView& destination)
 {
-    if (source.is_cuda()) { merge_heads_gpu(source, destination); return; }
+    if (source.is_cuda()) { concatenate_heads_gpu(source, destination); return; }
 
     const Shape& shape = source.get_shape();
     transpose_middle_axes(source.as<float>(), destination.as<float>(),
@@ -76,7 +76,7 @@ static void split_heads_gpu(const TensorView& source, TensorView& destination)
     });
 }
 
-static void merge_heads_gpu(const TensorView& source, TensorView& destination)
+static void concatenate_heads_gpu(const TensorView& source, TensorView& destination)
 {
     const Shape& shape = source.get_shape();
     const Index heads_number = shape[1];
@@ -84,7 +84,7 @@ static void merge_heads_gpu(const TensorView& source, TensorView& destination)
     const Index head_dimension = shape[3];
 
     destination.dispatch([&]<typename T>() {
-        merge_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
+        concatenate_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
                             to_int(sequence_length),
                             to_int(heads_number),
                             to_int(head_dimension));
@@ -94,7 +94,7 @@ static void merge_heads_gpu(const TensorView& source, TensorView& destination)
 #else
 
 OPENNN_CUDA_STUB(void, split_heads_gpu, (const TensorView&, TensorView&))
-OPENNN_CUDA_STUB(void, merge_heads_gpu, (const TensorView&, TensorView&))
+OPENNN_CUDA_STUB(void, concatenate_heads_gpu, (const TensorView&, TensorView&))
 
 #endif
 
@@ -173,7 +173,7 @@ void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_pro
         ? head_delta.reshape({rows, heads_number * head_dimension})
         : scratch.reshape_prefix({rows, input_features});
 
-    if (!interleaved) merge_heads(head_delta, scratch_4d);
+    if (!interleaved) concatenate_heads(head_delta, scratch_4d);
 
     TensorView& input_delta    = backward_slots[self_attention ? input_delta_slot_self : input_delta_slot_cross];
 

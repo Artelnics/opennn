@@ -308,7 +308,7 @@ flash_attention_problem(const AttentionOperator::SDPACache::CacheKey& k,
 
     // Heads interleaved, (B, S, H, D), is what the projections' GEMMs write and
     // what FA2 reads with no repacking at all. Heads separated keeps cuDNN: the
-    // attention output is merged either way, so on that layout the output and
+    // attention output is concatenated either way, so on that layout the output and
     // the queries would need strides of their own, for a case this library's
     // fused attention does not reach.
     if (!k.interleaved) return nullopt;
@@ -424,7 +424,7 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
     entry.bwd_SeqLenQ  = cudnn_frontend::seq_len_scalar(*graph, "SeqLenQ_bwd",  k.batch_size);
     entry.bwd_SeqLenKV = cudnn_frontend::seq_len_scalar(*graph, "SeqLenKV_bwd", k.batch_size);
 
-    // O is read from the merged (B, S, H*D) attention output whichever layout
+    // O is read from the concatenated (B, S, H*D) attention output whichever layout
     // the head tensors use.
     entry.bwd_O = heads_input(*graph, "O_bwd", k.batch_size, k.heads, k.q_seq, k.head_dim, true);
 
@@ -492,7 +492,7 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
     const TensorView& query = get_input(forward_propagation, layer);
     const Shape& query_shape = query.get_shape();
 
-    // Interleaved heads: SDPA writes the merged (B, S, H*D) output directly.
+    // Interleaved heads: SDPA writes the concatenated (B, S, H*D) output directly.
     const bool sdpa_interleaved = use_sdpa && interleaved_heads && query.is_cuda();
 
     TensorView attention_out = sdpa_interleaved
@@ -528,20 +528,20 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
                   forward_slots[scratch_slot].as<float>(), is_training,
                   explicit_lengths);
 
-    if (!sdpa_interleaved) merge_output_heads(forward_propagation, layer);
+    if (!sdpa_interleaved) concatenate_output_heads(forward_propagation, layer);
 }
 
-void AttentionOperator::merge_output_heads(ForwardPropagation& forward_propagation, size_t layer) const
+void AttentionOperator::concatenate_output_heads(ForwardPropagation& forward_propagation, size_t layer) const
 {
     const Index batch_size = forward_propagation.batch_size;
     auto& forward_slots = forward_propagation.slots[layer];
 
     const TensorView heads = forward_slots[scratch_slot].reshape_prefix(
         {batch_size, heads_number, query_sequence_length, head_dimension});
-    TensorView merged = forward_slots[attention_output_slot].reshape_prefix(
+    TensorView concatenated = forward_slots[attention_output_slot].reshape_prefix(
         {batch_size, query_sequence_length, heads_number, head_dimension});
 
-    merge_heads(heads, merged);
+    concatenate_heads(heads, concatenated);
 }
 
 void AttentionOperator::split_output_delta(ForwardPropagation& forward_propagation,
@@ -550,13 +550,13 @@ void AttentionOperator::split_output_delta(ForwardPropagation& forward_propagati
 {
     const Index batch_size = forward_propagation.batch_size;
 
-    const TensorView merged_delta =
-        back_propagation.slots[layer][merged_output_delta_slot].reshape_prefix(
+    const TensorView concatenated_delta =
+        back_propagation.slots[layer][concatenated_output_delta_slot].reshape_prefix(
             {batch_size, query_sequence_length, heads_number, head_dimension});
     TensorView heads_delta = forward_propagation.slots[layer][scratch_slot].reshape_prefix(
         {batch_size, heads_number, query_sequence_length, head_dimension});
 
-    split_heads(merged_delta, heads_delta);
+    split_heads(concatenated_delta, heads_delta);
 }
 
 void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
@@ -571,13 +571,13 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
     const TensorView& attention_weights_dropped = get_output(forward_propagation, layer, 1);
     const TensorView& dropout_mask = forward_slots[dropout_mask_slot];
 
-    // Interleaved heads: the merged (B, S, H*D) output delta is dO as it is.
+    // Interleaved heads: the concatenated (B, S, H*D) output delta is dO as it is.
     const bool sdpa_interleaved = use_sdpa && interleaved_heads && query.is_cuda();
     if (!sdpa_interleaved) split_output_delta(forward_propagation, back_propagation, layer);
 
     const Shape& query_shape = query.get_shape();
     const TensorView output_delta = sdpa_interleaved
-        ? back_propagation.slots[layer][merged_output_delta_slot]
+        ? back_propagation.slots[layer][concatenated_output_delta_slot]
         : forward_slots[scratch_slot].reshape_prefix(
               {forward_propagation.batch_size, query_shape[1], query_shape[2], query_shape[3]});
 

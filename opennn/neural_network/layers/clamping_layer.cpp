@@ -1,12 +1,12 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   B O U N D I N G   L A Y E R   C L A S S
+//   C L A M P I N G   L A Y E R   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/neural_network/layers/bounding_layer.h"
+#include "opennn/neural_network/layers/clamping_layer.h"
 
 #include "opennn/core/device_backend.h"
 #include "opennn/core/json.h"
@@ -24,9 +24,9 @@ namespace opennn
 {
 
 // Defined below: against the CUDA kernel, or as a throwing stub.
-static void bound_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&);
+static void apply_clamping_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&);
 
-static void bound_cpu(const TensorView& input,
+static void apply_clamping_cpu(const TensorView& input,
                const TensorView& lower_bounds,
                const TensorView& upper_bounds,
                TensorView& output)
@@ -52,24 +52,24 @@ static void bound_cpu(const TensorView& input,
     }
 }
 
-void bound(const TensorView& input,
+void apply_clamping(const TensorView& input,
            const TensorView& lower_bounds,
            const TensorView& upper_bounds,
            TensorView& output)
 {
-    if (input.is_cuda()) { bound_gpu(input, lower_bounds, upper_bounds, output); return; }
-    bound_cpu(input, lower_bounds, upper_bounds, output);
+    if (input.is_cuda()) { apply_clamping_gpu(input, lower_bounds, upper_bounds, output); return; }
+    apply_clamping_cpu(input, lower_bounds, upper_bounds, output);
 }
 
 #ifdef OPENNN_HAS_CUDA
 
-static void bound_gpu(const TensorView& input,
+static void apply_clamping_gpu(const TensorView& input,
                const TensorView& lower_bounds,
                const TensorView& upper_bounds,
                TensorView& output)
 {
     visit_type_pair<Type::FP32, Type::BF16>(input.get_type(), output.get_type(), [&]<typename TIn, typename TOut>() {
-        bounding_cuda<TIn, TOut>(output.size(), to_int(lower_bounds.size()),
+        clamping_cuda<TIn, TOut>(output.size(), to_int(lower_bounds.size()),
                                  input.as<TIn>(),
                                  lower_bounds.as_float(),
                                  upper_bounds.as_float(),
@@ -79,107 +79,107 @@ static void bound_gpu(const TensorView& input,
 
 #else
 
-OPENNN_CUDA_STUB(void, bound_gpu,
+OPENNN_CUDA_STUB(void, apply_clamping_gpu,
                  (const TensorView&, const TensorView&, const TensorView&, TensorView&))
 
 #endif
 
-void BoundOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void ClampingOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);
 
-    if (method == Method::NoBounding || !lower.get_data())
+    if (method == Method::NoClamping || !lower.get_data())
         return copy(input, output);
 
-    bound(input, lower, upper, output);
+    apply_clamping(input, lower, upper, output);
 }
 
-Bounding::Bounding(const Shape& new_output_shape, const string& new_name)
-    : Layer(LayerType::Bounding, false)
+Clamping::Clamping(const Shape& new_output_shape, const string& new_name)
+    : Layer(LayerType::Clamping, false)
 {
-    operators = {&bound};
+    operators = {&clamping};
     set(new_output_shape, new_name);
 }
 
-VectorR Bounding::get_lower_bounds() const
+VectorR Clamping::get_lower_bounds() const
 {
     return Map<const VectorR>(lower_bounds.data(), ssize(lower_bounds));
 }
 
-VectorR Bounding::get_upper_bounds() const
+VectorR Clamping::get_upper_bounds() const
 {
     return Map<const VectorR>(upper_bounds.data(), ssize(upper_bounds));
 }
 
-const EnumMap<Bounding::BoundingMethod>& Bounding::bounding_method_map()
+const EnumMap<Clamping::ClampingMethod>& Clamping::clamping_method_map()
 {
-    static const EnumMap<BoundingMethod> map{
-        {BoundingMethod::NoBounding, "NoBounding"},
-        {BoundingMethod::NoBounding, "No bounding"},
-        {BoundingMethod::Bounding,   "Bounding"},
-        {BoundingMethod::Bounding,   "Positive outputs"},
-        {BoundingMethod::Bounding,   "Data range"}
+    static const EnumMap<ClampingMethod> map{
+        {ClampingMethod::NoClamping, "NoClamping"},
+        {ClampingMethod::NoClamping, "No clamping"},
+        {ClampingMethod::Clamping,   "Clamping"},
+        {ClampingMethod::Clamping,   "Positive outputs"},
+        {ClampingMethod::Clamping,   "Data range"}
     };
     return map;
 }
 
-void Bounding::set(const Shape& new_output_shape, const string& new_label)
+void Clamping::set(const Shape& new_output_shape, const string& new_label)
 {
     output_shape = new_output_shape;
 
     set_label(new_label);
 
     const Index features = output_shape.dim_or_zero(0);
-    bound.method = BoundingMethod::Bounding;
+    clamping.method = ClampingMethod::Clamping;
 
     lower_bounds.assign(size_t(features), -MAX);
     upper_bounds.assign(size_t(features),  MAX);
     op_storage_dirty = true;
 }
 
-void Bounding::apply_input_shape(const Shape& new_input_shape)
+void Clamping::apply_input_shape(const Shape& new_input_shape)
 {
     set(new_input_shape, label);
 }
 
-void Bounding::set_bounding_method(const BoundingMethod& new_method)
+void Clamping::set_clamping_method(const ClampingMethod& new_method)
 {
-    bound.method = new_method;
+    clamping.method = new_method;
 }
 
-void Bounding::set_bounding_method(const string& new_method_string)
+void Clamping::set_clamping_method(const string& new_method_string)
 {
-    bound.method = bounding_method_map().from_string(new_method_string);
+    clamping.method = clamping_method_map().from_string(new_method_string);
 }
 
-void Bounding::set_lower_bound(Index index, float new_lower_bound)
+void Clamping::set_lower_bound(Index index, float new_lower_bound)
 {
     throw_if(index < 0 || size_t(index) >= lower_bounds.size(),
-             "Bounding::set_lower_bound: index {} out of range [0, {}).",
+             "Clamping::set_lower_bound: index {} out of range [0, {}).",
                     index, lower_bounds.size());
     lower_bounds[size_t(index)] = new_lower_bound;
     op_storage_dirty = true;
     refresh_op_storage(op_storage.get_device());
 }
 
-void Bounding::set_upper_bound(Index index, float new_upper_bound)
+void Clamping::set_upper_bound(Index index, float new_upper_bound)
 {
     throw_if(index < 0 || size_t(index) >= upper_bounds.size(),
-             "Bounding::set_upper_bound: index {} out of range [0, {}).",
+             "Clamping::set_upper_bound: index {} out of range [0, {}).",
                     index, upper_bounds.size());
     upper_bounds[size_t(index)] = new_upper_bound;
     op_storage_dirty = true;
     refresh_op_storage(op_storage.get_device());
 }
 
-float* Bounding::link_states(float* pointer, Device device)
+float* Clamping::link_states(float* pointer, Device device)
 {
     refresh_op_storage(device);
     return pointer;
 }
 
-void Bounding::refresh_op_storage(Device device)
+void Clamping::refresh_op_storage(Device device)
 {
     const Index features = ssize(lower_bounds);
 
@@ -193,21 +193,21 @@ void Bounding::refresh_op_storage(Device device)
 
     if (features == 0)
     {
-        bound.lower = bound.upper = TensorView();
+        clamping.lower = clamping.upper = TensorView();
         return;
     }
 
     float* const base = op_storage.as<float>();
     const Shape shape{features};
-    bound.lower = TensorView(base, shape, Type::FP32, device);
-    bound.upper = TensorView(base + 1 * features, shape, Type::FP32, device);
+    clamping.lower = TensorView(base, shape, Type::FP32, device);
+    clamping.upper = TensorView(base + 1 * features, shape, Type::FP32, device);
 }
 
-void Bounding::read_JSON_body(const Json* root_element)
+void Clamping::read_JSON_body(const Json* root_element)
 {
     if (!root_element) return;
 
-    set_bounding_method(read_json_string(root_element, "BoundingMethod"));
+    set_clamping_method(read_json_string(root_element, "ClampingMethod"));
 
     const auto parse_bounds = [&](const string& field, vector<float>& dest)
     {
@@ -215,7 +215,7 @@ void Bounding::read_JSON_body(const Json* root_element)
         VectorR values;
         string_to_vector(read_json_string(root_element, field), values);
         throw_if(values.size() != ssize(dest),
-                 "Bounding::read_JSON_body: field \"{}\" has size {}, expected {}.",
+                 "Clamping::read_JSON_body: field \"{}\" has size {}, expected {}.",
                         field, values.size(), dest.size());
         for (Index i = 0; i < values.size(); ++i)
             dest[size_t(i)] = values(i);
@@ -228,21 +228,21 @@ void Bounding::read_JSON_body(const Json* root_element)
     refresh_op_storage(op_storage.get_device());
 }
 
-void Bounding::write_JSON_body(JsonWriter& printer) const
+void Clamping::write_JSON_body(JsonWriter& printer) const
 {
-    if (bound.method == BoundingMethod::Bounding && !lower_bounds.empty())
+    if (clamping.method == ClampingMethod::Clamping && !lower_bounds.empty())
     {
         add_json_field(printer, "LowerBounds", vector_to_string(get_lower_bounds()));
         add_json_field(printer, "UpperBounds", vector_to_string(get_upper_bounds()));
     }
 
-    add_json_field(printer, "BoundingMethod", bounding_method_map().to_string(bound.method));
+    add_json_field(printer, "ClampingMethod", clamping_method_map().to_string(clamping.method));
 }
 
-string Bounding::write_expression(const vector<string>& input_names,
+string Clamping::write_expression(const vector<string>& input_names,
                                   const vector<string>& output_names) const
 {
-    if (get_bounding_method() == BoundingMethod::NoBounding)
+    if (get_clamping_method() == ClampingMethod::NoClamping)
         return {};
 
     ostringstream buffer;

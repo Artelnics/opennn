@@ -86,7 +86,7 @@ struct AttentionOperator : Operator
     size_t scratch_slot = 0;
     size_t attention_output_slot = 0;
 
-    size_t merged_output_delta_slot = 0;
+    size_t concatenated_output_delta_slot = 0;
 
     size_t sdpa_gradient_slot = 0;
 
@@ -97,7 +97,7 @@ struct AttentionOperator : Operator
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
-    void merge_output_heads(ForwardPropagation&, size_t) const;
+    void concatenate_output_heads(ForwardPropagation&, size_t) const;
     void split_output_delta(ForwardPropagation&, BackPropagation&, size_t) const;
 
     AttentionOperator();

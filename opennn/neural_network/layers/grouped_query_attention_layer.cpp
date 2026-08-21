@@ -420,7 +420,7 @@ static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, con
                                    Ot, dtype, head_dim, Index(mq) * head_dim,
                                    batch_count);
 
-            merge_heads_cuda<T>(Index(bc) * q_elems, Ot, O + Index(b0) * q_elems,
+            concatenate_heads_cuda<T>(Index(bc) * q_elems, Ot, O + Index(b0) * q_elems,
                                 query_seq, n_query_heads, head_dim);
         }
     }
@@ -539,7 +539,7 @@ static bool grouped_attention_sdpa_gpu(const int batch, const int query_seq, con
 
                 // Q, K and V arrive as [batch][seq][heads][dim], so the head stride is
                 // just depth and the sequence stride steps over every head. Addressing
-                // that layout directly is what makes the split_heads/merge_heads copies
+                // that layout directly is what makes the split_heads/concatenate_heads copies
                 // the materialized path needs unnecessary here.
                 const auto strides = [&](int64_t heads, int64_t seq)
                     { return vector<int64_t>{seq * heads * depth, depth, heads * depth, 1}; };

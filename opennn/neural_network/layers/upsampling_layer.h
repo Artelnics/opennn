@@ -1,7 +1,7 @@
 ﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   U P S A M P L E   L A Y E R   C L A S S   H E A D E R
+//   U P S A M P L I N G   L A Y E R   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-struct UpsampleOperator : Operator
+struct UpsamplingOperator : Operator
 {
     Index input_height = 0;
     Index input_width = 0;
@@ -27,13 +27,13 @@ struct UpsampleOperator : Operator
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 };
 
-class Upsample final : public Layer
+class Upsampling final : public Layer
 {
 public:
 
-    Upsample(const Shape& = {},
-             Index scale_factor = 2,
-             const string& = "upsample_layer");
+    Upsampling(const Shape& = {},
+               Index scale_factor = 2,
+               const string& = "upsampling_layer");
 
     Shape get_output_shape() const override;
 
@@ -48,7 +48,7 @@ public:
 
 private:
 
-    UpsampleOperator upsample;
+    UpsamplingOperator upsampling;
 
     void configure_operator();
 };

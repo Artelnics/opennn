@@ -19,7 +19,7 @@ class NeuralNetwork;
 
 struct NetworkDifferential
 {
-    enum class Kind { Scale, Dense, Unscale, Bound, Activate };
+    enum class Kind { Scale, Dense, Unscale, Clamp, Activate };
 
     struct LayerSnapshot
     {
@@ -30,7 +30,7 @@ struct NetworkDifferential
         vector<ScalerMethod> methods;
         VectorR minimum, maximum, mean, deviation;
         float min_range = -1.0f, max_range = 1.0f;
-        bool bounding_active = true;
+        bool clamping_active = true;
     };
 
     vector<LayerSnapshot> layers;
@@ -117,9 +117,9 @@ struct NetworkDifferential
         return d;
     }
 
-    VectorR bound_derivative(const LayerSnapshot& layer, const VectorR& in) const
+    VectorR clamp_derivative(const LayerSnapshot& layer, const VectorR& in) const
     {
-        if (!layer.bounding_active) return VectorR::Ones(in.size());
+        if (!layer.clamping_active) return VectorR::Ones(in.size());
 
         VectorR d(in.size());
         for (Index j = 0; j < in.size(); ++j)
@@ -145,8 +145,8 @@ struct NetworkDifferential
                 activation = scale_forward(layer, activation);
             else if (layer.kind == Kind::Unscale)
                 activation = unscale_forward(layer, activation);
-            else if (layer.kind == Kind::Bound)
-                activation = layer.bounding_active ? activation.cwiseMax(layer.minimum).cwiseMin(layer.maximum).eval() : activation;
+            else if (layer.kind == Kind::Clamp)
+                activation = layer.clamping_active ? activation.cwiseMax(layer.minimum).cwiseMin(layer.maximum).eval() : activation;
             else if (layer.kind == Kind::Activate)
                 activation = activation_forward_values(layer.activation, activation);
             else
@@ -175,8 +175,8 @@ struct NetworkDifferential
                 carried = (carried.array() * scale_derivative(layer, layer_inputs[i]).array()).matrix();
             else if (layer.kind == Kind::Unscale)
                 carried = (carried.array() * unscale_derivative(layer, layer_inputs[i]).array()).matrix();
-            else if (layer.kind == Kind::Bound)
-                carried = (carried.array() * bound_derivative(layer, layer_inputs[i]).array()).matrix();
+            else if (layer.kind == Kind::Clamp)
+                carried = (carried.array() * clamp_derivative(layer, layer_inputs[i]).array()).matrix();
             else if (layer.kind == Kind::Activate)
                 carried = (carried.array()
                          * activation_derivative_from_output_values(layer.activation, layer_outputs[i]).array()).matrix();

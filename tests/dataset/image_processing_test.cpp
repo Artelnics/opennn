@@ -76,7 +76,7 @@ TEST(ImageProcessingTest, ResizeKeepsTopLeftCorner)
     EXPECT_NEAR(output(0, 0, 0), 100.0f, 1e-5f);
 }
 
-TEST(ImageProcessingTest, ResizeUpsampleMidpointInterpolation)
+TEST(ImageProcessingTest, ResizeUpsamplingMidpointInterpolation)
 {
     const Index channels = 1;
 

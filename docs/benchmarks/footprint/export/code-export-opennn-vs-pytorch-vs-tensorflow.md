@@ -86,7 +86,7 @@ an interpreter you ship and link, not compilable source with the weights baked i
 - This is a **deployment-format** comparison, not a speed one. The generated code is a
   straightforward implementation of the forward pass; it is meant for portability, not maximum
   throughput.
-- The C export covers the layers used by standard feed-forward / scaling / bounding models; very
+- The C export covers the layers used by standard feed-forward / scaling / clamping models; very
   large or exotic architectures produce correspondingly large source and are better served by a
   runtime.
 - PyTorch's TorchScript/ONNX are the right tools when the target *can* host an inference runtime —

@@ -13,7 +13,7 @@
 #include "opennn/registry.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/layers/unscaling_layer.h"
-#include "opennn/neural_network/layers/bounding_layer.h"
+#include "opennn/neural_network/layers/clamping_layer.h"
 #include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/layers/recurrent_layer.h"
 #include "opennn/neural_network/layers/long_short_term_memory_layer.h"
@@ -363,7 +363,7 @@ string ModelExpression::build_expression() const
                  && layer_type != LayerType::Recurrent
                  && layer_type != LayerType::LongShortTermMemory
                  && layer_type != LayerType::Unscaling
-                 && layer_type != LayerType::Bounding,
+                 && layer_type != LayerType::Clamping,
                  "ModelExpression: layer '{}' ({}) is not supported for export.",
                         layer_labels[i], layer_type_map().to_string(layer_type));
 
@@ -1154,13 +1154,13 @@ string ModelExpression::get_expression_c_embedded() const
 
                 max_width = max(max_width, layer_outputs);
             }
-            else if(layer_type == LayerType::Bounding)
+            else if(layer_type == LayerType::Clamping)
             {
-                const Bounding* bounding =
-                    static_cast<const Bounding*>(layers[i].get());
+                const Clamping* clamping =
+                    static_cast<const Clamping*>(layers[i].get());
 
-                if(bounding->get_bounding_method()
-                   == Bounding::BoundingMethod::NoBounding)
+                if(clamping->get_clamping_method()
+                   == Clamping::ClampingMethod::NoClamping)
                 {
                     continue;
                 }
@@ -1169,10 +1169,10 @@ string ModelExpression::get_expression_c_embedded() const
                     layers[i]->get_outputs_number();
 
                 const VectorR lower =
-                    bounding->get_lower_bounds();
+                    clamping->get_lower_bounds();
 
                 const VectorR upper =
-                    bounding->get_upper_bounds();
+                    clamping->get_upper_bounds();
 
                 throw_if(
                     ssize(lower) < features_number

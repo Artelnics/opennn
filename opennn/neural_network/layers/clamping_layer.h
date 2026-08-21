@@ -1,7 +1,7 @@
 ﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   B O U N D I N G   L A Y E R   C L A S S   H E A D E R
+//   C L A M P I N G   L A Y E R   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -14,13 +14,13 @@
 namespace opennn
 {
 
-void bound(const TensorView&, const TensorView&, const TensorView&, TensorView&);
+void apply_clamping(const TensorView&, const TensorView&, const TensorView&, TensorView&);
 
-struct BoundOperator : Operator
+struct ClampingOperator : Operator
 {
-    enum class Method { NoBounding, Bounding };
+    enum class Method { NoClamping, Clamping };
 
-    Method method = Method::Bounding;
+    Method method = Method::Clamping;
 
     TensorView lower;
     TensorView upper;
@@ -28,31 +28,31 @@ struct BoundOperator : Operator
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
 };
 
-class Bounding final : public Layer
+class Clamping final : public Layer
 {
 public:
 
-    using BoundingMethod = BoundOperator::Method;
+    using ClampingMethod = ClampingOperator::Method;
 
-    Bounding(const Shape& = {0}, const string& = "bounding_layer");
+    Clamping(const Shape& = {0}, const string& = "clamping_layer");
 
     Shape get_input_shape() const noexcept override { return output_shape; }
     Shape get_output_shape() const noexcept override { return output_shape; }
 
-    const BoundingMethod& get_bounding_method() const noexcept { return bound.method; }
+    const ClampingMethod& get_clamping_method() const noexcept { return clamping.method; }
 
     VectorR get_lower_bounds() const;
     VectorR get_upper_bounds() const;
 
-    void set(const Shape& = {0}, const string& = "bounding_layer");
+    void set(const Shape& = {0}, const string& = "clamping_layer");
 
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 1, 2, 3); }
     bool allows_successors() const noexcept override { return false; }
 
     void apply_input_shape(const Shape&) override;
 
-    void set_bounding_method(const BoundingMethod&);
-    void set_bounding_method(const string&);
+    void set_clamping_method(const ClampingMethod&);
+    void set_clamping_method(const string&);
 
     void set_lower_bound(Index, float);
 
@@ -78,11 +78,11 @@ private:
     Buffer op_storage;
     bool   op_storage_dirty = true;
 
-    BoundOperator bound;
+    ClampingOperator clamping;
 
     void refresh_op_storage(Device);
 
-    static const EnumMap<BoundingMethod>& bounding_method_map();
+    static const EnumMap<ClampingMethod>& clamping_method_map();
 };
 
 }

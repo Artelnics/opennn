@@ -1,44 +1,44 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   U P S A M P L E   L A Y E R   C L A S S
+//   U P S A M P L I N G   L A Y E R   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/neural_network/layers/upsample_layer.h"
+#include "opennn/neural_network/layers/upsampling_layer.h"
 #include "opennn/registry.h"
 #include "opennn/core/json.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
 #ifdef OPENNN_HAS_CUDA
-#include "opennn/neural_network/layers/kernel_upsample.cuh"
+#include "opennn/neural_network/layers/kernel_upsampling.cuh"
 #endif
 
 namespace opennn
 {
 
-void UpsampleOperator::set(Index in_h, Index in_w, Index ch, Index scale)
+void UpsamplingOperator::set(Index in_h, Index in_w, Index ch, Index scale)
 {
     throw_if(scale < 1,
-             "Upsample: scale_factor must be >= 1.");
+             "Upsampling: scale_factor must be >= 1.");
     input_height = in_h;
     input_width = in_w;
     channels = ch;
     scale_factor = scale;
 }
 
-void UpsampleOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void UpsamplingOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);
 
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
-        return upsample_forward_cuda(to_int(input.get_shape()[0]), to_int(input_height), to_int(input_width),
-                                     to_int(channels), to_int(scale_factor),
-                                     input.as<float>(), output.as<float>());
+        return upsampling_forward_cuda(to_int(input.get_shape()[0]), to_int(input_height), to_int(input_width),
+                                       to_int(channels), to_int(scale_factor),
+                                       input.as<float>(), output.as<float>());
 #endif
 
     const Index batch_size = input.get_shape()[0];
@@ -67,7 +67,7 @@ void UpsampleOperator::forward_propagate(ForwardPropagation& forward_propagation
     }
 }
 
-void UpsampleOperator::back_propagate(ForwardPropagation&, BackPropagation& back_propagation, size_t layer) const
+void UpsamplingOperator::back_propagate(ForwardPropagation&, BackPropagation& back_propagation, size_t layer) const
 {
     const TensorView& output_delta = get_output_delta(back_propagation, layer);
     TensorView& input_delta = get_input_delta(back_propagation, layer);
@@ -75,9 +75,9 @@ void UpsampleOperator::back_propagate(ForwardPropagation&, BackPropagation& back
 
 #ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
-        return upsample_backward_cuda(to_int(input_delta.get_shape()[0]), to_int(input_height), to_int(input_width),
-                                      to_int(channels), to_int(scale_factor),
-                                      output_delta.as<float>(), input_delta.as<float>());
+        return upsampling_backward_cuda(to_int(input_delta.get_shape()[0]), to_int(input_height), to_int(input_width),
+                                        to_int(channels), to_int(scale_factor),
+                                        output_delta.as<float>(), input_delta.as<float>());
 #endif
 
     const Index batch_size = input_delta.get_shape()[0];
@@ -113,59 +113,59 @@ void UpsampleOperator::back_propagate(ForwardPropagation&, BackPropagation& back
     }
 }
 
-Upsample::Upsample(const Shape& new_input_shape, Index new_scale_factor, const string& new_label)
-    : Layer(LayerType::Upsample)
+Upsampling::Upsampling(const Shape& new_input_shape, Index new_scale_factor, const string& new_label)
+    : Layer(LayerType::Upsampling)
 {
-    operators = {&upsample};
+    operators = {&upsampling};
     set(new_input_shape, new_scale_factor, new_label);
 }
 
-Shape Upsample::get_output_shape() const
+Shape Upsampling::get_output_shape() const
 {
     if (input_shape.empty()) return {};
-    return { input_shape[0] * upsample.scale_factor,
-             input_shape[1] * upsample.scale_factor,
+    return { input_shape[0] * upsampling.scale_factor,
+             input_shape[1] * upsampling.scale_factor,
              input_shape[2] };
 }
 
-void Upsample::set(const Shape& new_input_shape,
-                   Index new_scale_factor,
-                   const string& new_label)
+void Upsampling::set(const Shape& new_input_shape,
+                     Index new_scale_factor,
+                     const string& new_label)
 {
     if (!new_input_shape.empty())
-        check_rank(new_input_shape, {3}, "Upsample", "input");
+        check_rank(new_input_shape, {3}, "Upsampling", "input");
 
     input_shape = new_input_shape;
-    upsample.scale_factor = new_scale_factor;
+    upsampling.scale_factor = new_scale_factor;
     set_label(new_label);
     configure_operator();
 }
 
-void Upsample::apply_input_shape(const Shape& new_input_shape)
+void Upsampling::apply_input_shape(const Shape& new_input_shape)
 {
-    set(new_input_shape, upsample.scale_factor, label);
+    set(new_input_shape, upsampling.scale_factor, label);
 }
 
-void Upsample::set_scale_factor(Index new_scale_factor)
+void Upsampling::set_scale_factor(Index new_scale_factor)
 {
-    upsample.scale_factor = new_scale_factor;
+    upsampling.scale_factor = new_scale_factor;
     configure_operator();
 }
 
-void Upsample::configure_operator()
+void Upsampling::configure_operator()
 {
     if (input_shape.empty()) return;
-    upsample.set(input_shape[0], input_shape[1], input_shape[2], upsample.scale_factor);
+    upsampling.set(input_shape[0], input_shape[1], input_shape[2], upsampling.scale_factor);
 }
 
-void Upsample::read_JSON_body(const Json* root)
+void Upsampling::read_JSON_body(const Json* root)
 {
     set_scale_factor(read_json_index(root, "ScaleFactor"));
 }
 
-void Upsample::write_JSON_body(JsonWriter& writer) const
+void Upsampling::write_JSON_body(JsonWriter& writer) const
 {
-    add_json_field(writer, "ScaleFactor", upsample.scale_factor);
+    add_json_field(writer, "ScaleFactor", upsampling.scale_factor);
 }
 
 }

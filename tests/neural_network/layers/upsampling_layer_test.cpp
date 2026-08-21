@@ -1,7 +1,7 @@
 #include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
-#include "opennn/neural_network/layers/upsample_layer.h"
+#include "opennn/neural_network/layers/upsampling_layer.h"
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/layers/flatten_layer.h"
@@ -11,7 +11,7 @@
 
 using namespace opennn;
 
-class UpsampleLayerTest : public ::testing::Test
+class UpsamplingLayerTest : public ::testing::Test
 {
 protected:
     const Index height = 2;
@@ -21,14 +21,14 @@ protected:
     const Shape input_shape{ height, width, channels };
 };
 
-TEST_F(UpsampleLayerTest, Constructor)
+TEST_F(UpsamplingLayerTest, Constructor)
 {
-    Upsample upsample_layer(input_shape, scale_factor, "upsample_test");
+    Upsampling upsampling_layer(input_shape, scale_factor, "upsampling_test");
 
-    EXPECT_EQ(upsample_layer.get_name(), "Upsample");
-    EXPECT_EQ(upsample_layer.get_input_shape(), input_shape);
+    EXPECT_EQ(upsampling_layer.get_name(), "Upsampling");
+    EXPECT_EQ(upsampling_layer.get_input_shape(), input_shape);
 
-    const Shape output_shape = upsample_layer.get_output_shape();
+    const Shape output_shape = upsampling_layer.get_output_shape();
 
     ASSERT_EQ(output_shape.get_rank(), 3);
     EXPECT_EQ(output_shape[0], height * scale_factor);
@@ -36,15 +36,15 @@ TEST_F(UpsampleLayerTest, Constructor)
     EXPECT_EQ(output_shape[2], channels);
 }
 
-TEST_F(UpsampleLayerTest, GeneralConstructorLabel)
+TEST_F(UpsamplingLayerTest, GeneralConstructorLabel)
 {
-    Upsample upsample_layer(input_shape, scale_factor, "upsample_test");
+    Upsampling upsampling_layer(input_shape, scale_factor, "upsampling_test");
 
-    EXPECT_EQ(upsample_layer.get_name(), "Upsample");
-    EXPECT_EQ(upsample_layer.get_label(), "upsample_test");
-    EXPECT_EQ(upsample_layer.get_input_shape(), input_shape);
+    EXPECT_EQ(upsampling_layer.get_name(), "Upsampling");
+    EXPECT_EQ(upsampling_layer.get_label(), "upsampling_test");
+    EXPECT_EQ(upsampling_layer.get_input_shape(), input_shape);
 
-    const Shape output_shape = upsample_layer.get_output_shape();
+    const Shape output_shape = upsampling_layer.get_output_shape();
 
     ASSERT_EQ(output_shape.get_rank(), 3);
     EXPECT_EQ(output_shape[0], height * scale_factor);
@@ -52,14 +52,14 @@ TEST_F(UpsampleLayerTest, GeneralConstructorLabel)
     EXPECT_EQ(output_shape[2], channels);
 }
 
-TEST_F(UpsampleLayerTest, EmptyInputShapeOutputEmpty)
+TEST_F(UpsamplingLayerTest, EmptyInputShapeOutputEmpty)
 {
-    Upsample upsample_layer;
+    Upsampling upsampling_layer;
 
-    EXPECT_TRUE(upsample_layer.get_output_shape().empty());
+    EXPECT_TRUE(upsampling_layer.get_output_shape().empty());
 }
 
-TEST_F(UpsampleLayerTest, ForwardPropagateNearestNeighborReplication)
+TEST_F(UpsamplingLayerTest, ForwardPropagateNearestNeighborReplication)
 {
     const Index batch_size = 1;
     const Index single_channel = 1;
@@ -69,7 +69,7 @@ TEST_F(UpsampleLayerTest, ForwardPropagateNearestNeighborReplication)
     const Shape shape{ in_h, in_w, single_channel };
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<Upsample>(shape, scale, "upsample_test"));
+    neural_network.add_layer(make_unique<Upsampling>(shape, scale, "upsampling_test"));
     neural_network.compile();
 
     Tensor4 inputs_data(batch_size, in_h, in_w, single_channel);
@@ -104,7 +104,7 @@ TEST_F(UpsampleLayerTest, ForwardPropagateNearestNeighborReplication)
             EXPECT_NEAR(out[oh * out_w + ow], expected[oh][ow], 1e-6f);
 }
 
-TEST_F(UpsampleLayerTest, ForwardPropagateChannelsPreserved)
+TEST_F(UpsamplingLayerTest, ForwardPropagateChannelsPreserved)
 {
     const Index batch_size = 1;
     const Index in_h = 1;
@@ -114,7 +114,7 @@ TEST_F(UpsampleLayerTest, ForwardPropagateChannelsPreserved)
     const Shape shape{ in_h, in_w, ch };
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<Upsample>(shape, scale, "upsample_test"));
+    neural_network.add_layer(make_unique<Upsampling>(shape, scale, "upsampling_test"));
     neural_network.compile();
 
     Tensor4 inputs_data(batch_size, in_h, in_w, ch);
@@ -144,7 +144,7 @@ TEST_F(UpsampleLayerTest, ForwardPropagateChannelsPreserved)
     }
 }
 
-TEST_F(UpsampleLayerTest, UpsampleBackwardGradientMatchesNumerical)
+TEST_F(UpsamplingLayerTest, UpsamplingBackwardGradientMatchesNumerical)
 {
     const Index samples_number = 5;
     const Index in_h = 2;
@@ -170,12 +170,12 @@ TEST_F(UpsampleLayerTest, UpsampleBackwardGradientMatchesNumerical)
                              { -1 });
     const Index conv_index = neural_network.get_layers_number() - 1;
 
-    neural_network.add_layer(make_unique<Upsample>(neural_network.get_layer(conv_index)->get_output_shape(), scale, "upsample_test"),
+    neural_network.add_layer(make_unique<Upsampling>(neural_network.get_layer(conv_index)->get_output_shape(), scale, "upsampling_test"),
                              { conv_index });
-    const Index upsample_index = neural_network.get_layers_number() - 1;
+    const Index upsampling_index = neural_network.get_layers_number() - 1;
 
-    neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(upsample_index)->get_output_shape()),
-                             { upsample_index });
+    neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(upsampling_index)->get_output_shape()),
+                             { upsampling_index });
 
     neural_network.add_layer(make_unique<opennn::Dense>(neural_network.get_output_shape(), Shape{ targets_number }, "Identity"));
 

@@ -13,7 +13,7 @@
 #include "opennn/core/string_utilities.h"
 #include "opennn/neural_network/layers/activation_layer.h"
 #include "opennn/neural_network/layers/addition_layer.h"
-#include "opennn/neural_network/layers/bounding_layer.h"
+#include "opennn/neural_network/layers/clamping_layer.h"
 #include "opennn/neural_network/layers/c2psa_layer.h"
 #include "opennn/neural_network/layers/concatenation_layer.h"
 #include "opennn/neural_network/layers/convolutional_layer.h"
@@ -33,7 +33,7 @@
 #include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/layers/tokenizer_layer.h"
 #include "opennn/neural_network/layers/unscaling_layer.h"
-#include "opennn/neural_network/layers/upsample_layer.h"
+#include "opennn/neural_network/layers/upsampling_layer.h"
 
 namespace opennn
 {
@@ -99,7 +99,7 @@ static void add_recurrent_stack(NeuralNetwork& network,
 static void add_regression_output(NeuralNetwork& network,
                                   const Shape& output_shape,
                                   const string& output_label,
-                                  const char* bounding_method)
+                                  const char* clamping_method)
 {
     network.add_layer(make_unique<Dense>(network.get_output_shape(),
                                          output_shape,
@@ -109,9 +109,9 @@ static void add_regression_output(NeuralNetwork& network,
 
     network.add_layer(make_unique<Unscaling>(output_shape));
 
-    auto bounding = make_unique<Bounding>(output_shape);
-    if (bounding_method) bounding->set_bounding_method(bounding_method);
-    network.add_layer(std::move(bounding));
+    auto clamping = make_unique<Clamping>(output_shape);
+    if (clamping_method) clamping->set_clamping_method(clamping_method);
+    network.add_layer(std::move(clamping));
 }
 
 ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
@@ -158,7 +158,7 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
                         [](const Shape& in, const Shape& out, const string& label)
                         { return make_unique<Recurrent>(in, out, "Tanh", label); });
 
-    add_regression_output(*this, output_shape, "forecasting_layer", "NoBounding");
+    add_regression_output(*this, output_shape, "forecasting_layer", "NoClamping");
 
     finalize_build(*this);
 }
@@ -174,7 +174,7 @@ ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
                         [](const Shape& in, const Shape& out, const string& label)
                         { return make_unique<LongShortTermMemory>(in, out, "Tanh", "Sigmoid", label); });
 
-    add_regression_output(*this, output_shape, "forecasting_layer", "NoBounding");
+    add_regression_output(*this, output_shape, "forecasting_layer", "NoClamping");
 
     finalize_build(*this);
 }
@@ -582,8 +582,8 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
     auto add_top_down = [&](Index lateral_index, Index c_index,
                             const string& upper, const string& lower) -> Index {
-        add_layer(make_unique<Upsample>(get_layer(lateral_index)->get_output_shape(),
-                                         2, "fpn_" + upper + "_upsample"),
+        add_layer(make_unique<Upsampling>(get_layer(lateral_index)->get_output_shape(),
+                                          2, "fpn_" + upper + "_upsampling"),
                   {lateral_index});
         const Index up_index = get_layers_number() - 1;
 
@@ -817,13 +817,13 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const Index nd_n   = scale_d(3);      // neck C2f repeat count (1 for 's')
 
             // FPN top-down path
-            add_layer(make_unique<Upsample>(get_layer(p5_idx)->get_output_shape(), 2, "c8_fpn_p5_up"), {p5_idx});
+            add_layer(make_unique<Upsampling>(get_layer(p5_idx)->get_output_shape(), 2, "c8_fpn_p5_upsampling"), {p5_idx});
             add_layer(make_unique<Concatenation>(get_layer(p4_idx)->get_output_shape(),
                                                  vector<Index>{c5,c4}, "c8_fpn_p4_cat"),
                       {get_layers_number()-1, p4_idx});
             const Index c8_n12 = add_c2f(get_layers_number()-1, c5+c4, n12_ch, nd_n, false, "c8_n12");
 
-            add_layer(make_unique<Upsample>(get_layer(c8_n12)->get_output_shape(), 2, "c8_fpn_p4_up"), {c8_n12});
+            add_layer(make_unique<Upsampling>(get_layer(c8_n12)->get_output_shape(), 2, "c8_fpn_p4_upsampling"), {c8_n12});
             add_layer(make_unique<Concatenation>(get_layer(p3_idx)->get_output_shape(),
                                                  vector<Index>{n12_ch,c3}, "c8_fpn_p3_cat"),
                       {get_layers_number()-1, p3_idx});
@@ -942,7 +942,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const Index p5n = add_yolo_neck(entry, 1024, 512, 1024, pfx + "neck_p5");
 
             const Index p5l = add_conv(p5n, Shape{1, 1, 512, 256}, act, stride, true, pfx + "neck_p5_lat");
-            add_layer(make_unique<Upsample>(get_layer(p5l)->get_output_shape(), 2, pfx + "fpn_p5_up"), {p5l});
+            add_layer(make_unique<Upsampling>(get_layer(p5l)->get_output_shape(), 2, pfx + "fpn_p5_upsampling"), {p5l});
             const Index p5u = get_layers_number() - 1;
 
             add_layer(make_unique<Concatenation>(get_layer(c4_index)->get_output_shape(),
@@ -951,7 +951,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const Index p4n = add_yolo_neck(get_layers_number() - 1, 768, 256, 512, pfx + "neck_p4");
 
             const Index p4l = add_conv(p4n, Shape{1, 1, 256, 128}, act, stride, true, pfx + "neck_p4_lat");
-            add_layer(make_unique<Upsample>(get_layer(p4l)->get_output_shape(), 2, pfx + "fpn_p4_up"), {p4l});
+            add_layer(make_unique<Upsampling>(get_layer(p4l)->get_output_shape(), 2, pfx + "fpn_p4_upsampling"), {p4l});
             const Index p4u = get_layers_number() - 1;
 
             add_layer(make_unique<Concatenation>(get_layer(c3_index)->get_output_shape(),

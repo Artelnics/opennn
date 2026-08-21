@@ -16,7 +16,7 @@ namespace opennn
 
 // Transpose the two middle axes: (batch, sequence, heads, dim) <-> (batch, heads, sequence, dim).
 void split_heads(const TensorView&, TensorView&);
-void merge_heads(const TensorView&, TensorView&);
+void concatenate_heads(const TensorView&, TensorView&);
 
 struct MultiHeadProjectionOperator : CombinationOperator
 {

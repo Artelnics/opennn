@@ -17,7 +17,7 @@
 #include "opennn/neural_network/standard_networks.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/layers/unscaling_layer.h"
-#include "opennn/neural_network/layers/bounding_layer.h"
+#include "opennn/neural_network/layers/clamping_layer.h"
 #include "opennn/training_strategy/training_strategy.h"
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/core/random_utilities.h"
@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 
     static_cast<Scaling*>(network.get_first(LayerType::Scaling))->set_scalers("None");
     static_cast<Unscaling*>(network.get_first(LayerType::Unscaling))->set_scalers("None");
-    static_cast<Bounding*>(network.get_first(LayerType::Bounding))->set_bounding_method("NoBounding");
+    static_cast<Clamping*>(network.get_first(LayerType::Clamping))->set_clamping_method("NoClamping");
 
     VectorMap parameters = network.get_parameters_map();
     set_random_uniform(parameters, -1.0f, 1.0f);

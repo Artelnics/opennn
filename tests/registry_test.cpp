@@ -4,7 +4,7 @@
 #include "opennn/registry.h"
 #include "opennn/neural_network/layers/activation_layer.h"
 #include "opennn/neural_network/layers/addition_layer.h"
-#include "opennn/neural_network/layers/bounding_layer.h"
+#include "opennn/neural_network/layers/clamping_layer.h"
 #include "opennn/neural_network/layers/c2psa_layer.h"
 #include "opennn/neural_network/layers/concatenation_layer.h"
 #include "opennn/neural_network/layers/convolutional_layer.h"
@@ -25,7 +25,7 @@
 #include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/layers/tokenizer_layer.h"
 #include "opennn/neural_network/layers/unscaling_layer.h"
-#include "opennn/neural_network/layers/upsample_layer.h"
+#include "opennn/neural_network/layers/upsampling_layer.h"
 #include "opennn/training_strategy/optimizer.h"
 #include "opennn/model_selection/inputs_selection.h"
 
@@ -46,9 +46,9 @@ unique_ptr<Layer> make_serializable_layer(LayerType type)
     case Addition:
         return make_unique<opennn::Addition>(Shape{2, 3}, "addition_roundtrip", 3);
 
-    case Bounding:
+    case Clamping:
     {
-        auto layer = make_unique<opennn::Bounding>(Shape{3}, "bounding_roundtrip");
+        auto layer = make_unique<opennn::Clamping>(Shape{3}, "clamping_roundtrip");
         layer->set_lower_bound(0, -2.0f);
         layer->set_upper_bound(1, 3.0f);
         return layer;
@@ -186,8 +186,8 @@ unique_ptr<Layer> make_serializable_layer(LayerType type)
         return layer;
     }
 
-    case Upsample:
-        return make_unique<opennn::Upsample>(Shape{3, 4, 2}, 3, "upsample_roundtrip");
+    case Upsampling:
+        return make_unique<opennn::Upsampling>(Shape{3, 4, 2}, 3, "upsampling_roundtrip");
 
     case C2PSA:
         return make_unique<opennn::C2PSA>(Shape{4, 4, 8}, "c2psa_roundtrip");

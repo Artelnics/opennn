@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// bounding, scaling and unscaling
+// clamping, scaling and unscaling
 
 #include <cfloat>
 
@@ -14,7 +14,7 @@
 #include "opennn/neural_network/layers/kernel_scaling.cuh"
 
 template<typename TIn, typename TOut>
-__global__ void bounding_kernel(const int n, const int features,
+__global__ void clamping_kernel(const int n, const int features,
                                 const TIn* __restrict__ input,
                                 const float* __restrict__ lower,
                                 const float* __restrict__ upper,
@@ -29,11 +29,11 @@ __global__ void bounding_kernel(const int n, const int features,
 }
 
 template<typename TIn, typename TOut>
-void bounding_cuda(const Index n, const int features,
+void clamping_cuda(const Index n, const int features,
                    const TIn* input, const float* lower, const float* upper,
                    TOut* output)
 {
-    launch_elementwise_strided(n, bounding_kernel<TIn, TOut>, features, input, lower, upper, output);
+    launch_elementwise_strided(n, clamping_kernel<TIn, TOut>, features, input, lower, upper, output);
 }
 
 template<typename TIn, typename TOut, bool Inverse>
@@ -123,7 +123,7 @@ void scale_cuda(const Index n, const int features,
 }
 
 #define INSTANTIATE(TIn, TOut) \
-    template void bounding_cuda<TIn, TOut>(const Index, const int, const TIn*, const float*, const float*, TOut*); \
+    template void clamping_cuda<TIn, TOut>(const Index, const int, const TIn*, const float*, const float*, TOut*); \
     template void scale_cuda<TIn, TOut>(const Index, const int, const TIn*, const float*, const float*, const float*, const float*, const float*, float, float, TOut*, bool);
 
 OPENNN_INSTANTIATE_FLOAT_BF16_2(INSTANTIATE)

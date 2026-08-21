@@ -710,7 +710,7 @@ TEST(NeuralNetworkTest, ApproximationConstructor)
     EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Dense");
     EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Dense");
     EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Unscaling");
-    EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Bounding");
+    EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Clamping");
     EXPECT_EQ(neural_network.get_task(), NetworkTask::Approximation);
 }
 
@@ -734,7 +734,7 @@ TEST(NeuralNetworkTest, AproximationConstructor)
     EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Dense");
     EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Dense");
     EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Unscaling");
-    EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Bounding");
+    EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Clamping");
 }
 
 TEST(NeuralNetworkTest, ForecastingConstructor)
@@ -746,7 +746,7 @@ TEST(NeuralNetworkTest, ForecastingConstructor)
     EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Recurrent");
     EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Dense");
     EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Unscaling");
-    EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Bounding");
+    EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Clamping");
     EXPECT_EQ(neural_network.get_task(), NetworkTask::Forecasting);
 }
 

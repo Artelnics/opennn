@@ -33,7 +33,7 @@ __device__ __forceinline__ bool token_is_padding_strided(const T* token, int fea
 
 }
 
-// (b, p, q, d) -> (b, q, p, d): split_heads and merge_heads are the same
+// (b, p, q, d) -> (b, q, p, d): split_heads and concatenate_heads are the same
 // transpose with P/Q swapped; the 16-byte vector form runs over float4 when
 // the innermost dimension allows it.
 template<typename T>
@@ -64,7 +64,7 @@ void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int
 }
 
 template<typename T>
-void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D)
+void concatenate_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D)
 {
     split_heads_cuda(n, in, out, H, S, D);
 }
@@ -851,7 +851,7 @@ void grouped_attention_cuda(const int batch, const int query_seq, const int key_
 
 #define INSTANTIATE(T) \
     template void split_heads_cuda<T>(const Index, const T*, T*, const int, const int, const int); \
-    template void merge_heads_cuda<T>(const Index, const T*, T*, const int, const int, const int); \
+    template void concatenate_heads_cuda<T>(const Index, const T*, T*, const int, const int, const int); \
     template void attention_masked_softmax_cuda<T>(int, int, int, int, int, const T*, T*, T*, bool, bool); \
     template void attention_length_masked_softmax_cuda<T>(int, int, int, int, const int*, T*, T*, bool, bool); \
     template void attention_sequence_lengths_cuda<T>(int, int, int, int, const T*, int32_t*, int32_t*); \

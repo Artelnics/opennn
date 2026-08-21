@@ -172,7 +172,7 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     attention.sdpa_qkv_pack_slot = SdpaQkvPack;
     attention.sdpa_state_slot = SdpaStats;
     attention.dropout_mask_slot = DropoutMask;
-    attention.merged_output_delta_slot = ConcatenatedOutputDelta;
+    attention.concatenated_output_delta_slot = ConcatenatedOutputDelta;
 
     output_projection.input_slots  = {ConcatenatedAttentionOutputs};
     output_projection.output_slots = {Output};

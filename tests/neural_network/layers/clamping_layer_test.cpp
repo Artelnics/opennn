@@ -1,7 +1,7 @@
 #include "tests/pch.h"
 
 #include "opennn/core/tensor_types.h"
-#include "opennn/neural_network/layers/bounding_layer.h"
+#include "opennn/neural_network/layers/clamping_layer.h"
 #include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/neural_network.h"
 
@@ -9,41 +9,41 @@ using namespace opennn;
 
 const type tolerance = 1e-9;
 
-TEST(BoundingTest, Constructor)
+TEST(ClampingTest, Constructor)
 {
-    Bounding bounding_layer;
+    Clamping clamping_layer;
 
-    EXPECT_EQ(bounding_layer.get_output_shape(), Shape{0});
+    EXPECT_EQ(clamping_layer.get_output_shape(), Shape{0});
 }
 
-TEST(BoundingTest, GeneralConstructor)
+TEST(ClampingTest, GeneralConstructor)
 {
     const Index features = 4;
 
-    Bounding bounding_layer(Shape{features}, "my_bounding");
+    Clamping clamping_layer(Shape{features}, "my_clamping");
 
-    EXPECT_EQ(bounding_layer.get_name(), "Bounding");
-    EXPECT_EQ(bounding_layer.get_label(), "my_bounding");
-    EXPECT_EQ(bounding_layer.get_input_shape(), Shape{features});
-    EXPECT_EQ(bounding_layer.get_output_shape(), Shape{features});
-    EXPECT_EQ(bounding_layer.get_bounding_method(), Bounding::BoundingMethod::Bounding);
+    EXPECT_EQ(clamping_layer.get_name(), "Clamping");
+    EXPECT_EQ(clamping_layer.get_label(), "my_clamping");
+    EXPECT_EQ(clamping_layer.get_input_shape(), Shape{features});
+    EXPECT_EQ(clamping_layer.get_output_shape(), Shape{features});
+    EXPECT_EQ(clamping_layer.get_clamping_method(), Clamping::ClampingMethod::Clamping);
 }
 
-TEST(BoundingTest, RejectsSuccessors)
+TEST(ClampingTest, RejectsSuccessors)
 {
     NeuralNetwork neural_network;
-    auto bounding = make_unique<Bounding>(Shape{2});
+    auto clamping = make_unique<Clamping>(Shape{2});
     auto dense = make_unique<opennn::Dense>(Shape{2}, Shape{1}, "Identity");
 
-    EXPECT_FALSE(bounding->allows_successors());
+    EXPECT_FALSE(clamping->allows_successors());
     EXPECT_TRUE(dense->allows_successors());
 
-    neural_network.add_layer(std::move(bounding));
+    neural_network.add_layer(std::move(clamping));
     EXPECT_THROW(neural_network.add_layer(std::move(dense)), runtime_error);
     EXPECT_EQ(neural_network.get_layers_number(), 1);
 }
 
-TEST(BoundingTest, ForwardPropagate)
+TEST(ClampingTest, ForwardPropagate)
 {
     const Index columns_number = 3;
     const Index rows_number = 2;
@@ -53,11 +53,11 @@ TEST(BoundingTest, ForwardPropagate)
         type(-1.0), type(0.0), type(1.0);
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<Bounding>(Shape{columns_number}));
+    neural_network.add_layer(make_unique<Clamping>(Shape{columns_number}));
     neural_network.compile();
 
-    Bounding* layer = static_cast<Bounding*>(neural_network.get_layer(0).get());
-    layer->set_bounding_method(Bounding::BoundingMethod::Bounding);
+    Clamping* layer = static_cast<Clamping*>(neural_network.get_layer(0).get());
+    layer->set_clamping_method(Clamping::ClampingMethod::Clamping);
     for (Index j = 0; j < columns_number; ++j)
     {
         layer->set_lower_bound(j, type(-1.0));
@@ -85,7 +85,7 @@ TEST(BoundingTest, ForwardPropagate)
     EXPECT_EQ(layer->get_output_shape(), Shape{ columns_number });
 }
 
-TEST(BoundingTest, NoBoundingModePassThrough)
+TEST(ClampingTest, NoClampingModePassThrough)
 {
     const Index columns_number = 3;
     const Index rows_number = 2;
@@ -95,11 +95,11 @@ TEST(BoundingTest, NoBoundingModePassThrough)
         type(-1.0), type(0.0), type(1.0);
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<Bounding>(Shape{columns_number}));
+    neural_network.add_layer(make_unique<Clamping>(Shape{columns_number}));
     neural_network.compile();
 
-    Bounding* layer = static_cast<Bounding*>(neural_network.get_layer(0).get());
-    layer->set_bounding_method(Bounding::BoundingMethod::NoBounding);
+    Clamping* layer = static_cast<Clamping*>(neural_network.get_layer(0).get());
+    layer->set_clamping_method(Clamping::ClampingMethod::NoClamping);
     for (Index j = 0; j < columns_number; ++j)
     {
         layer->set_lower_bound(j, type(-1.0));

@@ -19,7 +19,7 @@
 
 #include "opennn/neural_network/layers/layer.h"
 #include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/layers/bounding_layer.h"
+#include "opennn/neural_network/layers/clamping_layer.h"
 #include "opennn/neural_network/layers/embedding_layer.h"
 #include "opennn/neural_network/layers/normalization_layer_3d.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
@@ -67,10 +67,10 @@ TEST(LayerInputShape, NormalizationRefusesInsteadOfIgnoring)
     expect_accepts(layer, 2);
 }
 
-// Bounding validated nothing at all.
-TEST(LayerInputShape, BoundingRefusesARankItCannotRepresent)
+// Clamping validated nothing at all.
+TEST(LayerInputShape, ClampingRefusesARankItCannotRepresent)
 {
-    Bounding layer(Shape{2});
+    Clamping layer(Shape{2});
 
     expect_refuses(layer, 4);
     expect_accepts(layer, 1);

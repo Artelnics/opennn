@@ -32,7 +32,7 @@ otherwise:
 | --- | --- |
 | head dimension 32, 64 or 128, and built | FA2 ships kernels for those |
 | bf16 tensors | the only dtype FA2 has kernels for; a fp32 layer arrives through the same fp32-via-bf16 pack cuDNN's graph reads |
-| heads interleaved, (B, S, H, D) | what the projections write and FA2 reads unchanged; the separated layout would need strides of its own for the merged attention output |
+| heads interleaved, (B, S, H, D) | what the projections write and FA2 reads unchanged; the separated layout would need strides of its own for the concatenated attention output |
 | dropout off | the kernels are compiled without it |
 | training, under `Auto` | measured slower for inference; see below. The named rung takes it either way |
 | **not (causal and padded)** | see below |

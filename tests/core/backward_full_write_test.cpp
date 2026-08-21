@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// average_pooling_3d_backward and upsample_backward used to pre-zero their
+// average_pooling_3d_backward and upsampling_backward used to pre-zero their
 // gradient before launching, so a kernel that skipped an element still came out
 // zero and nobody noticed. Both now rely on the kernel writing every element
 // itself, which is a promise nothing in the type system enforces.
@@ -29,13 +29,13 @@
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/layers/flatten_layer.h"
-#include "opennn/neural_network/layers/upsample_layer.h"
+#include "opennn/neural_network/layers/upsampling_layer.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/neural_network/operators/pool3d_operator.h"
 #include "opennn/training_strategy/loss.h"
 
 #ifdef OPENNN_HAS_CUDA
-#include "opennn/neural_network/layers/kernel_upsample.cuh"
+#include "opennn/neural_network/layers/kernel_upsampling.cuh"
 #endif
 
 using namespace opennn;
@@ -179,8 +179,8 @@ vector<float> pooling_backward_on_gpu(const PoolingCase& test_case)
 
 }
 
-// The CPU upsample gradient is not reachable on its own - it lives inside
-// UpsampleOperator::back_propagate - so instead of poisoning one buffer this
+// The CPU upsampling gradient is not reachable on its own - it lives inside
+// UpsamplingOperator::back_propagate - so instead of poisoning one buffer this
 // stamps the whole delta arena and asks for the gradient twice. A layer that
 // accumulates into a delta it never cleared reads the stamp and produces a
 // different answer, which makes this a check on every layer in the network, not
@@ -220,7 +220,7 @@ VectorR gradient_with_stamped_arena(Loss& loss, float stamp)
 
 }
 
-TEST(BackwardFullWrite, UpsampleGradientIgnoresPriorArenaContents)
+TEST(BackwardFullWrite, UpsamplingGradientIgnoresPriorArenaContents)
 {
     const Index samples_number = 5;
     const Index height = 2, width = 2, channels = 2, kernels = 2, scale = 2, targets = 2;
@@ -237,17 +237,17 @@ TEST(BackwardFullWrite, UpsampleGradientIgnoresPriorArenaContents)
                              {-1});
     const Index convolutional_index = neural_network.get_layers_number() - 1;
 
-    // Upsample must sit above a trainable layer, or its input delta never
+    // Upsampling must sit above a trainable layer, or its input delta never
     // reaches a gradient and the stamp cannot show up in the comparison.
-    neural_network.add_layer(make_unique<Upsample>(
+    neural_network.add_layer(make_unique<Upsampling>(
                                  neural_network.get_layer(convolutional_index)->get_output_shape(),
-                                 scale, "upsample"),
+                                 scale, "upsampling"),
                              {convolutional_index});
-    const Index upsample_index = neural_network.get_layers_number() - 1;
+    const Index upsampling_index = neural_network.get_layers_number() - 1;
 
     neural_network.add_layer(make_unique<Flatten>(
-                                 neural_network.get_layer(upsample_index)->get_output_shape()),
-                             {upsample_index});
+                                 neural_network.get_layer(upsampling_index)->get_output_shape()),
+                             {upsampling_index});
     const Index flatten_index = neural_network.get_layers_number() - 1;
 
     neural_network.add_layer(make_unique<opennn::Dense>(
@@ -325,7 +325,7 @@ TEST(BackwardFullWrite, AveragePoolingGpuMatchesCpu)
     }
 }
 
-TEST(BackwardFullWrite, UpsampleGpuWritesEveryElementAndMatchesReference)
+TEST(BackwardFullWrite, UpsamplingGpuWritesEveryElementAndMatchesReference)
 {
     if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
 
@@ -359,7 +359,7 @@ TEST(BackwardFullWrite, UpsampleGpuWritesEveryElementAndMatchesReference)
     DeviceArray output_delta_device(output_delta);
     DeviceArray input_delta_device(vector<float>(input_size, poison));
 
-    upsample_backward_cuda(batch, in_h, in_w, channels, scale,
+    upsampling_backward_cuda(batch, in_h, in_w, channels, scale,
                            output_delta_device.data, input_delta_device.data);
     device::synchronize();
 
@@ -369,8 +369,8 @@ TEST(BackwardFullWrite, UpsampleGpuWritesEveryElementAndMatchesReference)
 
     for (size_t i = 0; i < result.size(); ++i)
     {
-        EXPECT_NE(result[i], poison) << "upsample backward left element " << i << " unwritten";
-        EXPECT_NEAR(result[i], expected[i], 1e-5f) << "upsample backward diverges at element " << i;
+        EXPECT_NE(result[i], poison) << "upsampling backward left element " << i << " unwritten";
+        EXPECT_NEAR(result[i], expected[i], 1e-5f) << "upsampling backward diverges at element " << i;
     }
 }
 

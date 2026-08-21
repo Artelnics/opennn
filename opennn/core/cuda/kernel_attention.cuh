@@ -9,7 +9,7 @@ template<typename T>
 void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D);
 
 template<typename T>
-void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D);
+void concatenate_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D);
 
 template<typename T>
 void attention_masked_softmax_cuda(const int batch_size, const int heads_number, const int query_sequence_length,

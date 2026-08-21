@@ -1,15 +1,15 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   U P S A M P L E   K E R N E L S
+//   U P S A M P L I N G   K E R N E L S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #include "opennn/core/cuda/kernel_common.cuh"
-#include "opennn/neural_network/layers/kernel_upsample.cuh"
+#include "opennn/neural_network/layers/kernel_upsampling.cuh"
 
-__global__ void upsample_forward_kernel(
+__global__ void upsampling_forward_kernel(
     const int n,
     const float* __restrict__ src,
     float* __restrict__ dst,
@@ -28,7 +28,7 @@ __global__ void upsample_forward_kernel(
     }
 }
 
-__global__ void upsample_backward_kernel(
+__global__ void upsampling_backward_kernel(
     const int n,
     const float* __restrict__ out_delta,
     float* __restrict__ in_delta,
@@ -53,20 +53,20 @@ __global__ void upsample_backward_kernel(
     }
 }
 
-void upsample_forward_cuda(const int batch, const int in_h, const int in_w, const int channels, const int scale,
-                           const float* src, float* dst)
+void upsampling_forward_cuda(const int batch, const int in_h, const int in_w, const int channels, const int scale,
+                             const float* src, float* dst)
 {
     const int n = batch * (in_h * scale) * (in_w * scale) * channels;
-    launch_elementwise_strided(n, upsample_forward_kernel,
+    launch_elementwise_strided(n, upsampling_forward_kernel,
                        src, dst, in_h, in_w, in_h * scale, in_w * scale, channels, scale);
 }
 
-void upsample_backward_cuda(const int batch, const int in_h, const int in_w, const int channels, const int scale,
-                            const float* out_delta, float* in_delta)
+void upsampling_backward_cuda(const int batch, const int in_h, const int in_w, const int channels, const int scale,
+                              const float* out_delta, float* in_delta)
 {
     const int n = batch * in_h * in_w * channels;
     // No pre-zeroing: the kernel assigns in_delta[i] for every i below n.
-    launch_elementwise_strided(n, upsample_backward_kernel,
+    launch_elementwise_strided(n, upsampling_backward_kernel,
                        out_delta, in_delta, in_h, in_w, in_h * scale, in_w * scale, channels, scale);
 }
 

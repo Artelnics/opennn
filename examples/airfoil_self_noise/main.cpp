@@ -11,7 +11,7 @@
 
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/neural_network/standard_networks.h"
-#include "opennn/neural_network/layers/bounding_layer.h"
+#include "opennn/neural_network/layers/clamping_layer.h"
 #include "opennn/training_strategy/training_strategy.h"
 #include "opennn/testing_analysis/testing_analysis.h"
 #include "opennn/model_selection/model_selection.h"
@@ -40,10 +40,10 @@ int main()
 
         ApproximationNetwork approximation_network(dataset.get_input_shape(), {neurons_number}, dataset.get_target_shape());
 
-        Bounding* bounding_layer = (Bounding*)approximation_network.get_first("Bounding");
+        Clamping* clamping_layer = (Clamping*)approximation_network.get_first("Clamping");
 
-        if(bounding_layer)
-            bounding_layer->set_bounding_method("NoBounding");
+        if(clamping_layer)
+            clamping_layer->set_clamping_method("NoClamping");
 
         TrainingStrategy training_strategy(&approximation_network, &dataset);
 

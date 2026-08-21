@@ -20,7 +20,7 @@ enum class LayerType
 {
     Activation,
     Addition,
-    Bounding,
+    Clamping,
     Concatenation,
     Convolutional,
     Dense,
@@ -39,7 +39,7 @@ enum class LayerType
     Scaling,
     Tokenizer,
     Unscaling,
-    Upsample,
+    Upsampling,
     C2PSA,
     Count
 };

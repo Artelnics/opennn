@@ -15,7 +15,7 @@
 #include "opennn/neural_network/layers/activation_layer.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/neural_network/layers/unscaling_layer.h"
-#include "opennn/neural_network/layers/bounding_layer.h"
+#include "opennn/neural_network/layers/clamping_layer.h"
 
 namespace opennn
 {
@@ -101,14 +101,14 @@ void NetworkDifferential::build(const NeuralNetwork& network)
                      "NetworkDifferential: softmax activation is not supported");
             break;
         }
-        case LayerType::Bounding:
+        case LayerType::Clamping:
         {
-            const Bounding* bounding = static_cast<const Bounding*>(layer.get());
-            snapshot.kind = Kind::Bound;
-            snapshot.minimum = bounding->get_lower_bounds();
-            snapshot.maximum = bounding->get_upper_bounds();
-            snapshot.bounding_active =
-                (bounding->get_bounding_method() == Bounding::BoundingMethod::Bounding);
+            const Clamping* clamping = static_cast<const Clamping*>(layer.get());
+            snapshot.kind = Kind::Clamp;
+            snapshot.minimum = clamping->get_lower_bounds();
+            snapshot.maximum = clamping->get_upper_bounds();
+            snapshot.clamping_active =
+                (clamping->get_clamping_method() == Clamping::ClampingMethod::Clamping);
             break;
         }
         default:
