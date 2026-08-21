@@ -73,7 +73,7 @@ BATCH_METRIC = re.compile(
     r"(?:\s+samples_per_epoch=(\S+))?")
 BATCH_TIMES = re.compile(r"^batch_(\d+)_(?:epoch|pass)_times=(.+)$")
 BATCH_QUALITY = re.compile(
-    r"^batch_(\d+)_test_accuracy=(\S+)\s+test_log_loss=(\S+)\s+test_roc_auc=(\S+)")
+    r"^batch_(\d+)_test_accuracy=(\S+)(?:\s+test_log_loss=(\S+))?\s+test_roc_auc=(\S+)")
 
 
 def rotate(items: list, by: int) -> list:
@@ -168,7 +168,8 @@ def parse_sweep(text: str) -> dict[str, dict[str, Any]]:
         if match:
             entry = per_batch.setdefault(match.group(1), {})
             entry["test_accuracy"] = float(match.group(2))
-            entry["test_log_loss"] = float(match.group(3))
+            if match.group(3):
+                entry["test_log_loss"] = float(match.group(3))
             entry["test_roc_auc"] = float(match.group(4))
 
     return per_batch

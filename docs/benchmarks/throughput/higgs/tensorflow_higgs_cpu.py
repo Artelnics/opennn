@@ -121,16 +121,8 @@ def run_train(tf, args: argparse.Namespace) -> None:
         print(f"batch_{batch}_samples_per_sec={x_np.shape[0] / median_epoch_s:.0f}"
               f" median_epoch_s={median_epoch_s:.9g}")
         print(f"batch_{batch}_test_accuracy={m['test_accuracy']:.9g}"
-              f" test_log_loss={m['test_log_loss']:.9g}"
               f" test_roc_auc={m['test_roc_auc']:.9g}", flush=True)
 
-        if len(batch_list(args)) == 1:
-            print(f"batch={batch}")
-            print(f"median_epoch_s={median_epoch_s:.9g}")
-            print(f"samples_per_sec={x_np.shape[0] / median_epoch_s:.0f}")
-            print(f"test_samples={pred_np.shape[0]}")
-            for key, value in m.items():
-                print(f"{key}={value:.9g}")
 
     print("RESULT=OK")
 
@@ -169,11 +161,6 @@ def run_infer(tf, args: argparse.Namespace) -> None:
         print(f"batch_{batch}_samples_per_sec={processed / median_pass_s:.0f}"
               f" median_pass_s={median_pass_s:.9g}", flush=True)
 
-        if len(batch_list(args)) == 1:
-            print(f"samples={processed}")
-            print(f"batch={batch}")
-            print(f"median_pass_s={median_pass_s:.9g}")
-            print(f"samples_per_sec={processed / median_pass_s:.0f}")
 
     print("RESULT=OK")
 

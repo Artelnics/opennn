@@ -56,12 +56,32 @@ def parse_scalar(text: str) -> Any:
     except ValueError:
         return value
 
+BATCH_PREFIX = re.compile(r"^batch_(\d+)_(\w+)$")
+
 def parse_metrics(raw: str) -> dict[str, Any]:
     metrics: dict[str, Any] = {}
     for line in raw.splitlines():
-        match = KEY_VALUE.match(line.strip())
+        # A line may carry several key=value tokens (the drivers pack the
+        # throughput and its median on one line).
+        for token in line.strip().split():
+            match = KEY_VALUE.match(token)
+            if match:
+                metrics[match.group(1)] = parse_scalar(match.group(2))
+
+    # The drivers print batch-prefixed keys; a single-configuration run also
+    # needs them under their plain names for the summary.
+    prefixed = {}
+    for key, value in metrics.items():
+        match = BATCH_PREFIX.match(key)
         if match:
-            metrics[match.group(1)] = parse_scalar(match.group(2))
+            prefixed.setdefault(match.group(1), {})[match.group(2)] = value
+
+    if len(prefixed) == 1:
+        (batch, plain), = prefixed.items()
+        metrics.setdefault("batch", int(batch))
+        for key, value in plain.items():
+            metrics.setdefault(key, value)
+
     return metrics
 
 def file_info(path: Path) -> dict[str, Any]:
