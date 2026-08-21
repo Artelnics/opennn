@@ -16,15 +16,25 @@ static inline int row_threads(const int cols)
     return cols < block_size ? ((cols + 31) / 32) * 32 : block_size;
 }
 
+// One block per row wastes the launch when rows are narrow: a HIGGS batch is
+// 7,000 rows of 28 inputs, so that shape asked for 7,000 blocks of 32 threads to
+// move 784 KB, and 7,000 more to move the 28 KB target column -- the latter
+// measured 4.9 us, about 11 GB/s on a card that does ~900. Pack several rows
+// into a block instead: threadIdx.x walks the columns of one row, threadIdx.y
+// selects the row, so a block is a full 256 threads whatever the row width and
+// the column reads stay contiguous.
 template<typename TDst>
 __global__ void gather_rows_kernel(const float* __restrict__ matrix,
                                    const int* __restrict__ row_indices,
                                    TDst* __restrict__ out,
+                                   const int n_rows,
                                    const int n_cols,
                                    const int matrix_cols,
                                    const int col_offset)
 {
-    const int row = blockIdx.x;
+    const int row = blockIdx.x * blockDim.y + threadIdx.y;
+
+    if (row >= n_rows) return;
 
     const float* __restrict__ src = matrix + size_t(row_indices[row]) * matrix_cols + col_offset;
     TDst* __restrict__ dst = out + size_t(row) * n_cols;
@@ -44,10 +54,18 @@ void gather_rows_cuda(const float* matrix, const int* row_indices, void* out, co
     const int rows = checked_int(n_rows);
     const int cols = checked_int(n_cols);
 
+    // Columns first, then as many rows as fit in a 256-thread block.
+    constexpr int block_threads = 256;
+    int col_threads = 1;
+    while (col_threads < cols && col_threads < 32) col_threads *= 2;
+    const int rows_per_block = block_threads / col_threads;
+    const int blocks = (rows + rows_per_block - 1) / rows_per_block;
+
     dispatch_float_bf16(out_bf16, [&]<typename TDst>()
     {
-        OPENNN_CUDA_LAUNCH(gather_rows_kernel<TDst><<<rows, row_threads(cols), 0, stream>>>(
-            matrix, row_indices, static_cast<TDst*>(out), cols,
+        OPENNN_CUDA_LAUNCH(gather_rows_kernel<TDst>
+            <<<blocks, dim3(col_threads, rows_per_block), 0, stream>>>(
+            matrix, row_indices, static_cast<TDst*>(out), rows, cols,
             checked_int(matrix_cols), checked_int(col_offset)));
     });
 }

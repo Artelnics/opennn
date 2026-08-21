@@ -383,7 +383,7 @@ string get_time(float time)
     return format("{:02}:{:02}:{:02}", hours, minutes, seconds);
 }
 
-void display_progress_bar(int completed, int total)
+void display_progress_bar(Index completed, Index total)
 {
     const int width = 50;
     const float progress = total > 0 ? static_cast<float>(completed) / total : 0.0f;

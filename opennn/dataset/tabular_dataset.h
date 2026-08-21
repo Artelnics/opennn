@@ -217,8 +217,9 @@ protected:
 
     void unuse_samples_with_missing_targets(const vector<Index>&, const vector<Index>&);
 
-    void compute_cache_descriptives() const;
-    void compute_cache_replacement() const;
+    void on_used_samples_changed() override;
+    void clear_cache_derived_state();
+    void refresh_cache_statistics();
     vector<Descriptives> compute_descriptives_streaming(const vector<Index>&) const;
 
     filesystem::path cache_path;
@@ -226,9 +227,9 @@ protected:
     mutable FileReader cache_reader;
     Index cache_columns_number = 0;
 
-    mutable vector<Descriptives> cache_feature_descriptives;
+    vector<Descriptives> cache_feature_descriptives;
     vector<Descriptives> cache_transform_descriptives;
-    mutable vector<float> cache_feature_replacement;
+    vector<float> cache_feature_replacement;
     vector<ScalerMethod> cache_feature_transforms;
 
     struct TrainingTransform

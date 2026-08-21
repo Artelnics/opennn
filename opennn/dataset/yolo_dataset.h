@@ -194,11 +194,10 @@ private:
     bool try_open_cache(const vector<array<float, 2>>&);
     void build_cache(const vector<array<float, 2>>&);
     void setup_metadata(Index);
-    void load_images_to_ram() const;
-    void load_targets_to_ram() const;
+    void load_cache_to_ram();
 
-    mutable vector<uint8_t> images_ram;
-    mutable vector<float> targets_ram;
+    vector<uint8_t> images_ram;
+    vector<float> targets_ram;
 };
 
 }

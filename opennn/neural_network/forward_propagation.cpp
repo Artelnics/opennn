@@ -1150,13 +1150,13 @@ SequenceLengths ForwardPropagation::input_sequence_lengths(const size_t layer,
             input_device_valid_lengths(layer, input_ordinal)};
 }
 
-int* ForwardPropagation::device_valid_lengths_slot(const size_t layer, const Index batch_size)
+int* ForwardPropagation::device_valid_lengths_slot(const size_t layer, const Index requested_batch_size)
 {
     Buffer& storage = device_valid_length_storage[layer];
     if (storage.get_device() != Device::CUDA)
-        storage.resize_bytes(batch_size * Index(sizeof(int)), Device::CUDA);
+        storage.resize_bytes(requested_batch_size * Index(sizeof(int)), Device::CUDA);
     else
-        storage.grow_to(batch_size * Index(sizeof(int)));
+        storage.grow_to(requested_batch_size * Index(sizeof(int)));
 
     device_valid_lengths[layer] = storage.as<int>();
     return storage.as<int>();

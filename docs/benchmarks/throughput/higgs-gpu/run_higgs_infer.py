@@ -473,33 +473,47 @@ def main() -> None:
         "results": {},
     }
 
+    # Engines alternate within a round, starting engine rotating, for the reason
+    # recorded in run_higgs_dense.py: measuring one engine's runs as a block and
+    # then the next lets GPU state drift between the blocks, and that drift is
+    # larger than the margins being compared. The training cell read 0.987x
+    # blocked against 1.019x alternated -- three points on a two-point effect.
     for precision in precisions:
         print(f"\n=== HIGGS dense inference {precision} ===")
         result["results"][precision] = {}
+
+        commands = {}
         for engine in engines:
             cmd, env_over = engine_cmd(engine, precision, args, test_path)
+            commands[engine] = (cmd, env_over)
             command_text = display_command(cmd, env_over)
             result["commands"][f"{engine}_{precision}"] = command_text
             print(f"  {engine}: {command_text}")
 
-            runs = []
-            for index in range(1, args.runs + 1):
+        per_engine = {engine: [] for engine in engines}
+        for index in range(1, args.runs + 1):
+            order = engines[(index - 1) % len(engines):] + engines[:(index - 1) % len(engines)]
+            print(f"  round {index} ({' -> '.join(order)})")
+            for engine in order:
+                cmd, env_over = commands[engine]
                 run = run_once(cmd, env_over, index)
-                runs.append(run)
+                per_engine[engine].append(run)
                 sps = run.get("metrics", {}).get("samples_per_sec")
                 ms = run.get("metrics", {}).get("ms_per_batch")
                 status = run.get("metrics", {}).get("RESULT", "NO_RESULT")
                 if isinstance(sps, (int, float)):
-                    print(f"    run {index}: {sps:.0f} samples/s, {ms} ms/batch, result={status}")
+                    print(f"    {engine:11s}: {sps:.0f} samples/s, {ms} ms/batch, result={status}")
                 else:
-                    print(f"    run {index}: failed, result={status}, returncode={run.get('returncode')}")
+                    print(f"    {engine:11s}: failed, result={status}, returncode={run.get('returncode')}")
 
-            summary = summarize_runs(runs)
+        for engine in engines:
+            cmd, env_over = commands[engine]
+            summary = summarize_runs(per_engine[engine])
             summary.update({
-                "command": command_text,
+                "command": display_command(cmd, env_over),
                 "argv": cmd,
                 "env": env_over,
-                "runs": runs,
+                "runs": per_engine[engine],
             })
             result["results"][precision][engine] = summary
 

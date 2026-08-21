@@ -90,16 +90,16 @@ Json& Json::operator[](std::string_view key)
     return object.back().second;
 }
 
-Json& Json::set(std::string_view key, Json value)
+Json& Json::set(std::string_view key, Json new_value)
 {
-    (*this)[key] = std::move(value);
+    (*this)[key] = std::move(new_value);
     return *this;
 }
 
-void Json::push_back(Json value)
+void Json::push_back(Json new_value)
 {
     if (!is_array()) this->value.emplace<Array>();
-    as_array().push_back(std::move(value));
+    as_array().push_back(std::move(new_value));
 }
 
 std::string Json::as_string() const
@@ -149,13 +149,13 @@ double Json::as_double() const
     case String: {
         const std::string& string = std::get<std::string>(value);
         if (string.empty()) return 0.0;
-        double value = 0.0;
+        double number = 0.0;
         const char* const first = string.data();
         const char* const last = first + string.size();
-        const auto [end, error] = std::from_chars(first, last, value);
+        const auto [end, error] = std::from_chars(first, last, number);
         throw_if(error != std::errc{} || end != last,
                  "JSON: invalid numeric value '{}'", string);
-        return value;
+        return number;
     }
     case Null:
     case Array:

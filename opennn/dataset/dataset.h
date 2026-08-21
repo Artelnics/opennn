@@ -323,6 +323,7 @@ protected:
     void check_separators(string_view) const;
     void samples_from_JSON(const Json*);
     virtual void resize_data_from_JSON(Index) {}
+    virtual void on_used_samples_changed() {}
 
     StorageMode storage_mode = StorageMode::Matrix;
 

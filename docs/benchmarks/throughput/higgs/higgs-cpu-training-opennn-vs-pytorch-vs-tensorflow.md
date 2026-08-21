@@ -22,6 +22,94 @@ OpenNN trained at **1.07x PyTorch speed** and **1.05x TensorFlow speed** on
 this full-split CPU run, using the MKL-linked OpenNN binary, with held-out
 quality in the same band as the best engine.
 
+## Re-measured with every engine at its best (2026-08-20)
+
+*Laptop, WSL2, i7-12700H (6 P-cores / 20 threads), MKL-linked OpenNN, 1M-row
+training subset, batch 1024, one epoch, single runs on a machine that drifts
+about 10%. Absolute numbers are not comparable with the i9 table above - the
+machine, the OS layer and the split all differ - but the engines here ran on the
+same machine, the same data and the same protocol as each other.*
+
+| Engine | Best setting | Training (samples/s) | Also measured |
+|---|---|---:|---|
+| TensorFlow | XLA, 20 threads | **68,752** | 66,461 at 12 threads; 50,460 with XLA off |
+| PyTorch | eager, 12 threads | **41,523** | 29,449 compiled at 12; 29,624 compiled at 20 |
+| OpenNN (MKL) | 12 threads | **34,209** | 32,575 at 6; 32,289 at 14; 33,772 at 20 |
+
+**With each engine at its best, OpenNN trains at 0.50x TensorFlow and 0.82x
+PyTorch here** - the opposite of the ordering above. Note that TensorFlow beats
+OpenNN on this machine even with XLA off (50,460 against 34,209), so the gap is
+not only the protocol: OpenNN's dense CPU training path is behind on this
+hardware.
+
+Best thread count is 12 for every engine that was swept, i.e. the six P-cores'
+worth of threads rather than all 20 logical CPUs.
+
+### How much of this machine to believe
+
+The single runs above were taken on a laptop that turned out to swing far more
+than the 10% they were reported with: the same binary, the same arguments and
+the same thread count measured 56,173 and 101,182 samples/s back to back, and a
+standalone MKL sgemm at one shape measured 128, 233 and 359 GFLOP/s across three
+runs. Only **alternated** pairs survive that, and those are stable:
+
+| round | OpenNN | PyTorch | ratio |
+|---|---:|---:|---:|
+| 1 | 102,215 | 143,106 | 1.40x |
+| 2 | 100,466 | 143,830 | 1.43x |
+
+So take **PyTorch at 1.40-1.43x OpenNN on CPU inference; the training rows here were single runs and carry the same warning** as the result, and
+treat the single-run TensorFlow figures as indicative of a large gap rather than
+as a measured ratio. Anything smaller than about 2x cannot be attributed on this
+machine from single runs.
+
+## After the bias-pass fix (2026-08-20)
+
+The dense forward's bias pass used to open an OpenMP region per layer per batch;
+it is serial now, which is worth 58% to CPU inference (see the inference note).
+Training uses the same pass and gains from it as well - 34,209 to about 42,900
+samples/s, **+25%** - with the held-out metrics unchanged to every digit printed.
+
+That is enough to reach PyTorch but not to pass it. Alternated, three rounds,
+each engine at its best setting:
+
+| round | OpenNN | PyTorch | |
+|---|---:|---:|---|
+| 1 | 43,974 | 43,477 | OpenNN +1.1% |
+| 2 | 42,709 | 43,588 | PyTorch +2.1% |
+| 3 | 41,909 | 42,179 | PyTorch +0.6% |
+
+PyTorch takes two rounds of three, by margins under the drift between rounds:
+**CPU training is a tie**, where inference is now a win. The backward pass has
+its own bias-gradient and input-delta passes, none of them profiled yet, and
+they are the obvious place to look for the same class of problem that the
+forward had.
+
+### What the harness was doing wrong
+
+The table above came from a harness that did not let the other two engines run
+their own fast paths:
+
+* `tensorflow_higgs_cpu.py` pinned `@tf.function(jit_compile=False)` in both
+  training and inference - XLA off - while the GPU family has always measured
+  TensorFlow with XLA on. XLA is worth **+32% training / +29% inference** to it
+  here, so the published rows measured TensorFlow below itself.
+* `pytorch_higgs_cpu.py` had no `torch.compile` at all and ran inference under
+  `no_grad` rather than `inference_mode`.
+* `run_higgs_cpu.py` applied `OMP_PLACES=cores OMP_PROC_BIND=close` to OpenNN
+  and PyTorch but **not** to TensorFlow, which on a hybrid CPU is not a neutral
+  omission: unpinned threads land on efficiency cores.
+
+All three are fixed. Every engine now runs its best configuration by default,
+and `TF_PLAIN=1` / `PYTORCH_PLAIN=1` restore the old behaviour for an A/B.
+One surprise worth recording: on this CPU `torch.compile` is a *pessimisation*
+for this model - 29,449 samples/s against eager's 41,523, inductor's CPU codegen
+losing to eager on a three-GEMM MLP - so compilation is opt-in (`PT_COMPILE=1`)
+and eager is what the driver measures.
+
+The i9 rows above were measured under the old harness and cannot be cited as
+they stand; they need re-running on that machine with the corrected drivers.
+
 ## Setup
 
 | Item | Value |
