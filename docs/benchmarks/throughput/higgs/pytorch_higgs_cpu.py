@@ -20,8 +20,6 @@ os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
 
 import numpy as np
 
-from metrics import binary_metrics
-
 
 def load_csv(path: Path) -> tuple[np.ndarray, np.ndarray]:
     # np.loadtxt on the 500k-row split is minutes of wall clock, none of it
@@ -109,17 +107,20 @@ def run_train(torch, args: argparse.Namespace) -> None:
         median_epoch_s = sorted(times)[len(times) // 2]
 
         model.eval()
-        preds = []
+        predictions = np.empty((xt.shape[0], 1), dtype=np.float32)
         with torch.inference_mode():
-            for start, end in batches(xt.shape[0], batch):
-                preds.append(model(xt[start:end]).numpy())
-        pred_np = np.vstack(preds) if preds else np.empty((0, 1), dtype=np.float32)
-        m = binary_metrics(yt_np[: pred_np.shape[0]], pred_np)
+            for start, end in batches(xt.shape[0], 8192):
+                predictions[start:end] = model(xt[start:end]).numpy()
+        predictions = predictions[: (xt.shape[0] // 8192) * 8192]
+
+        from sklearn.metrics import accuracy_score, roc_auc_score
+        accuracy = accuracy_score(yt_np[: len(predictions)], predictions >= 0.5)
+        auc = roc_auc_score(yt_np[: len(predictions)], predictions)
 
         print(f"batch_{batch}_samples_per_sec={x.shape[0] / median_epoch_s:.0f}"
               f" median_epoch_s={median_epoch_s:.9g}")
-        print(f"batch_{batch}_test_accuracy={m['test_accuracy']:.9g}"
-              f" test_roc_auc={m['test_roc_auc']:.9g}", flush=True)
+        print(f"batch_{batch}_test_accuracy={accuracy:.9g}"
+              f" test_roc_auc={auc:.9g}", flush=True)
 
 
     print("RESULT=OK")

@@ -18,8 +18,6 @@ os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
 import numpy as np
 
-from metrics import binary_metrics
-
 
 def load_csv(path: Path) -> tuple[np.ndarray, np.ndarray]:
     # np.loadtxt on the 500k-row split is minutes of wall clock, none of it
@@ -112,16 +110,17 @@ def run_train(tf, args: argparse.Namespace) -> None:
 
         median_epoch_s = sorted(times)[len(times) // 2]
 
-        preds = []
-        for start, end in batches(xt_np.shape[0], batch):
-            preds.append(model(xt[start:end], training=False).numpy())
-        pred_np = np.vstack(preds) if preds else np.empty((0, 1), dtype=np.float32)
-        m = binary_metrics(yt_np[: pred_np.shape[0]], pred_np)
+        accuracy = tf.keras.metrics.BinaryAccuracy()
+        auc = tf.keras.metrics.AUC()
+        for start, end in batches(xt_np.shape[0], 8192):
+            predictions = model(xt[start:end], training=False)
+            accuracy.update_state(yt_np[start:end], predictions)
+            auc.update_state(yt_np[start:end], predictions)
 
         print(f"batch_{batch}_samples_per_sec={x_np.shape[0] / median_epoch_s:.0f}"
               f" median_epoch_s={median_epoch_s:.9g}")
-        print(f"batch_{batch}_test_accuracy={m['test_accuracy']:.9g}"
-              f" test_roc_auc={m['test_roc_auc']:.9g}", flush=True)
+        print(f"batch_{batch}_test_accuracy={float(accuracy.result()):.9g}"
+              f" test_roc_auc={float(auc.result()):.9g}", flush=True)
 
 
     print("RESULT=OK")
