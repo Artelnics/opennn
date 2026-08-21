@@ -1,26 +1,31 @@
 #!/usr/bin/env python3
-"""PyTorch CPU HIGGS dense benchmark counterpart."""
+"""PyTorch CPU HIGGS dense benchmark, written the way a PyTorch user writes it:
+nn.Sequential, an eager training loop, inference_mode for the forward. The
+measurement protocol - arm rotation, soaking, medians over rounds - lives in
+run_higgs_cpu_sweep.py, not here.
+
+Eager is this model's fast path, not a simplification: torch.compile measured
+29,449 samples/s against eager's 41,523 on this machine, inductor's CPU codegen
+losing to eager on a three-GEMM MLP.
+"""
 
 from __future__ import annotations
 
 import argparse
 import os
-import sys
 import time
 from pathlib import Path
 
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
-os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
 import numpy as np
 
 from metrics import binary_metrics
 
+
 def load_csv(path: Path) -> tuple[np.ndarray, np.ndarray]:
-    # np.loadtxt on the full split is minutes of wall clock per engine per run,
-    # none of it measured, so the parsed array is cached next to the CSV and
-    # re-read with np.load. OpenNN's own driver reads the CSV directly and is
-    # unaffected; nothing here is inside a timed region either way.
+    # np.loadtxt on the 500k-row split is minutes of wall clock, none of it
+    # measured, so the parsed array is cached next to the CSV.
     cache = path.with_suffix(path.suffix + ".npy")
     if cache.exists() and cache.stat().st_mtime >= path.stat().st_mtime:
         data = np.load(cache, mmap_mode="r")
@@ -34,148 +39,117 @@ def load_csv(path: Path) -> tuple[np.ndarray, np.ndarray]:
     y = np.ascontiguousarray(data[:, -1:].astype(np.float32))
     return x, y
 
+
 def batches(n: int, batch: int):
     stop = (n // batch) * batch
     for start in range(0, stop, batch):
         yield start, start + batch
 
-# PyTorch's fast path on this workload is eager, which is worth stating because
-# it is not the obvious answer: on an i7-12700H, torch.compile measured 29,449
-# samples/s against eager's 41,523 on the same 1M-row epoch, inductor's CPU
-# codegen losing to eager for a three-GEMM MLP. So compilation is opt-in
-# (PT_COMPILE=1, mode via PT_COMPILE_MODE) rather than the default, and what
-# the driver always takes is inference_mode over no_grad.
-def compiled(fn, torch):
-    if not os.environ.get("PT_COMPILE"):
-        return fn
-    mode = os.environ.get("PT_COMPILE_MODE", "default")
-    try:
-        return torch.compile(fn, mode=mode)
-    except Exception as error:          # inductor needs a C++ toolchain
-        print(f"note=torch.compile unavailable ({error})")
-        return fn
 
-def run_pytorch(args: argparse.Namespace) -> None:
-    import torch
+def batch_list(args: argparse.Namespace) -> list[int]:
+    return [int(item) for item in args.batches.split(",") if item] or [args.batch]
 
-    torch.manual_seed(42)
-    torch.set_num_threads(args.threads or torch.get_num_threads())
-    activation_layer = torch.nn.ReLU if args.activation == "relu" else torch.nn.Tanh
 
-    def make_model(features: int):
-        layers: list[torch.nn.Module] = []
-        current = features
-        for _ in range(args.hidden_layers):
-            layers.append(torch.nn.Linear(current, args.hidden))
-            layers.append(activation_layer())
-            current = args.hidden
-        layers.append(torch.nn.Linear(current, 1))
-        layers.append(torch.nn.Sigmoid())
-        return torch.nn.Sequential(*layers)
+def make_model(torch, features: int, args: argparse.Namespace):
+    activation = torch.nn.ReLU if args.activation == "relu" else torch.nn.Tanh
+    layers: list = []
+    current = features
+    for _ in range(args.hidden_layers):
+        layers += [torch.nn.Linear(current, args.hidden), activation()]
+        current = args.hidden
+    layers += [torch.nn.Linear(current, 1), torch.nn.Sigmoid()]
+    return torch.nn.Sequential(*layers)
 
-    if args.mode == "train":
-        x_np, y_np = load_csv(args.train)
-        xt_np, yt_np = load_csv(args.test)
-        x = torch.from_numpy(x_np)
-        y = torch.from_numpy(y_np)
-        xt = torch.from_numpy(xt_np)
 
-        def measure_train(batch: int) -> dict:
-            # A fresh model and optimizer per rung, so a batch size never
-            # inherits the previous rung's weights and its held-out metrics stay
-            # comparable with the other engines'.
-            model = make_model(x.shape[1])
-            loss_fn = torch.nn.BCELoss()
-            optimizer = torch.optim.Adam(model.parameters())
+def print_common(args: argparse.Namespace) -> None:
+    print("engine=pytorch")
+    print(f"mode={args.mode}")
+    print("device=cpu")
+    print(f"hidden={args.hidden}")
+    print(f"hidden_layers={args.hidden_layers}")
+    print(f"activation={args.activation}")
 
-            def train_step(xb, yb):
+
+def run_train(torch, args: argparse.Namespace) -> None:
+    x_np, y_np = load_csv(args.train)
+    xt_np, yt_np = load_csv(args.test)
+    x = torch.from_numpy(np.array(x_np))
+    y = torch.from_numpy(np.array(y_np))
+    xt = torch.from_numpy(np.array(xt_np))
+
+    print_common(args)
+    print(f"samples={x.shape[0]}")
+    print(f"epochs={args.epochs}")
+
+    for batch in batch_list(args):
+        torch.manual_seed(42)
+        model = make_model(torch, x.shape[1], args)
+        loss_fn = torch.nn.BCELoss()
+        optimizer = torch.optim.Adam(model.parameters())
+
+        def run_epoch() -> None:
+            model.train()
+            for start, end in batches(x.shape[0], batch):
                 optimizer.zero_grad(set_to_none=True)
-                loss = loss_fn(model(xb), yb)
+                loss = loss_fn(model(x[start:end]), y[start:end])
                 loss.backward()
                 optimizer.step()
-                return loss
 
-            step = compiled(train_step, torch)
+        for _ in range(args.warmup_epochs):
+            run_epoch()
 
-            def run_epoch() -> None:
-                model.train()
-                for start, end in batches(x.shape[0], batch):
-                    step(x[start:end], y[start:end])
+        times: list[float] = []
+        for _ in range(args.epochs):
+            t0 = time.perf_counter()
+            run_epoch()
+            times.append(time.perf_counter() - t0)
 
-            for _ in range(args.warmup_epochs):
-                run_epoch()
+        print(f"batch_{batch}_epoch_times=" + ",".join(f"{t:.6f}" for t in times))
 
-            times: list[float] = []
-            for _ in range(args.epochs):
-                t0 = time.perf_counter()
-                run_epoch()
-                times.append(time.perf_counter() - t0)
+        median_epoch_s = sorted(times)[len(times) // 2]
 
-            # In temporal order, before the sort: a median hides a drifting
-            # machine entirely. If these fall monotonically, the run is
-            # measuring the clock rather than the code.
-            print(f"batch_{batch}_epoch_times=" + ",".join(f"{t:.9g}" for t in times),
-                  flush=True)
+        model.eval()
+        preds = []
+        with torch.inference_mode():
+            for start, end in batches(xt.shape[0], batch):
+                preds.append(model(xt[start:end]).numpy())
+        pred_np = np.vstack(preds) if preds else np.empty((0, 1), dtype=np.float32)
+        m = binary_metrics(yt_np[: pred_np.shape[0]], pred_np)
 
-            median_epoch_s = sorted(times)[len(times) // 2]
+        print(f"batch_{batch}_samples_per_sec={x.shape[0] / median_epoch_s:.0f}"
+              f" median_epoch_s={median_epoch_s:.9g}")
+        print(f"batch_{batch}_test_accuracy={m['test_accuracy']:.9g}"
+              f" test_log_loss={m['test_log_loss']:.9g}"
+              f" test_roc_auc={m['test_roc_auc']:.9g}", flush=True)
 
-            model.eval()
-            preds = []
-            with torch.no_grad():
-                for start, end in batches(xt.shape[0], batch):
-                    preds.append(model(xt[start:end]).numpy())
-            pred_np = np.vstack(preds) if preds else np.empty((0, 1), dtype=np.float32)
-            metrics = binary_metrics(yt_np[: pred_np.shape[0]], pred_np)
+        if len(batch_list(args)) == 1:
+            print(f"batch={batch}")
+            print(f"median_epoch_s={median_epoch_s:.9g}")
+            print(f"samples_per_sec={x.shape[0] / median_epoch_s:.0f}")
+            print(f"test_samples={pred_np.shape[0]}")
+            for key, value in m.items():
+                print(f"{key}={value:.9g}")
 
-            # Whole batches only; the remainder is not trained and must not be
-            # counted, or throughput is overstated by up to one batch.
-            samples_per_epoch = (x.shape[0] // batch) * batch
-            return {
-                "batch": batch,
-                "median_epoch_s": median_epoch_s,
-                "samples_per_epoch": samples_per_epoch,
-                "samples_per_sec": samples_per_epoch / median_epoch_s,
-                "test_samples": pred_np.shape[0],
-                "metrics": metrics,
-            }
+    print("RESULT=OK")
 
-        batch_list = [int(item) for item in args.batches.split(",") if item] or [args.batch]
 
-        print_common("pytorch", args, x.shape[0])
-        for batch in batch_list:
-            r = measure_train(batch)
-            if len(batch_list) == 1:
-                print(f"batch={r['batch']}")
-                print(f"samples_per_epoch={r['samples_per_epoch']}")
-                print(f"median_epoch_s={r['median_epoch_s']:.9g}")
-                print(f"samples_per_sec={r['samples_per_sec']:.0f}")
-                print(f"test_samples={r['test_samples']}")
-                for key, value in r["metrics"].items():
-                    print(f"{key}={value:.9g}")
-            else:
-                print(f"batch_{batch}_samples_per_sec={r['samples_per_sec']:.0f}"
-                      f" median_epoch_s={r['median_epoch_s']:.9g}"
-                      f" samples_per_epoch={r['samples_per_epoch']}")
-                m = r["metrics"]
-                print(f"batch_{batch}_test_accuracy={m['test_accuracy']:.9g}"
-                      f" test_log_loss={m['test_log_loss']:.9g}"
-                      f" test_roc_auc={m['test_roc_auc']:.9g}")
-            sys.stdout.flush()
-        print("RESULT=OK")
-        return
-
+def run_infer(torch, args: argparse.Namespace) -> None:
     x_np, _ = load_csv(args.test)
-    x = torch.from_numpy(x_np)
-    model = make_model(x.shape[1])
+    x = torch.from_numpy(np.array(x_np))
+    torch.manual_seed(42)
+    model = make_model(torch, x.shape[1], args)
     model.eval()
 
-    forward = compiled(model, torch)
+    print_common(args)
+    print(f"reps={args.reps}")
 
-    def measure(batch: int) -> tuple[int, float]:
+    for batch in batch_list(args):
+        processed = (x.shape[0] // batch) * batch
+
         def run_pass() -> None:
             with torch.inference_mode():
                 for start, end in batches(x.shape[0], batch):
-                    forward(x[start:end])
+                    model(x[start:end])
 
         run_pass()
         run_pass()
@@ -184,45 +158,23 @@ def run_pytorch(args: argparse.Namespace) -> None:
             t0 = time.perf_counter()
             run_pass()
             times.append(time.perf_counter() - t0)
-        # In temporal order, before the sort: a median hides a drifting machine,
-        # and this one drifts - whatever is measured first after an idle gap runs
-        # in the processor's boost window and what follows does not.
-        print(f"batch_{batch}_pass_times=" + ",".join(f"{t:.6f}" for t in times), flush=True)
-        times.sort()
-        return (x.shape[0] // batch) * batch, times[len(times) // 2]
 
-    batch_list = [int(item) for item in args.batches.split(",") if item] or [args.batch]
+        print(f"batch_{batch}_pass_times=" + ",".join(f"{t:.6f}" for t in times))
 
-    if len(batch_list) == 1:
-        processed, median_pass_s = measure(batch_list[0])
-        print_common("pytorch", args, processed)
-        print(f"median_pass_s={median_pass_s:.9g}")
-        print(f"samples_per_sec={processed / median_pass_s:.0f}")
-        print("RESULT=OK")
-        return
-
-    print_common("pytorch", args, x.shape[0])
-    for batch in batch_list:
-        processed, median_pass_s = measure(batch)
+        median_pass_s = sorted(times)[len(times) // 2]
         print(f"batch_{batch}_samples_per_sec={processed / median_pass_s:.0f}"
               f" median_pass_s={median_pass_s:.9g}", flush=True)
+
+        if len(batch_list(args)) == 1:
+            print(f"samples={processed}")
+            print(f"batch={batch}")
+            print(f"median_pass_s={median_pass_s:.9g}")
+            print(f"samples_per_sec={processed / median_pass_s:.0f}")
+
     print("RESULT=OK")
 
-def print_common(engine: str, args: argparse.Namespace, samples: int) -> None:
-    print(f"engine={engine}")
-    print(f"mode={args.mode}")
-    print("device=cpu")
-    print(f"samples={samples}")
-    print(f"batch={args.batch}")
-    print(f"hidden={args.hidden}")
-    print(f"hidden_layers={args.hidden_layers}")
-    print(f"activation={args.activation}")
-    if args.mode == "train":
-        print(f"epochs={args.epochs}")
-    else:
-        print(f"reps={args.reps}")
 
-def parse_args() -> argparse.Namespace:
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", choices=["train", "infer"])
     parser.add_argument("--train", type=Path)
@@ -231,27 +183,23 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--warmup-epochs", type=int, default=0)
     parser.add_argument("--reps", type=int, default=10)
     parser.add_argument("--batch", type=int, default=1024)
-    # A comma-separated list is measured in one process, in both modes, so the
-    # whole batch-size row of a comparison shares one load and one thermal
-    # window on a machine that drifts over a sweep.
     parser.add_argument("--batches", default="")
     parser.add_argument("--hidden", type=int, default=1024)
     parser.add_argument("--hidden-layers", type=int, default=2)
     parser.add_argument("--activation", choices=["relu", "tanh"], default="relu")
     parser.add_argument("--threads", type=int, default=0)
     args = parser.parse_args()
-    if args.mode == "train" and args.train is None:
-        parser.error("--train is required in train mode")
-    return args
 
-def main() -> None:
-    args = parse_args()
-    run_pytorch(args)
+    import torch
+
+    if args.threads:
+        torch.set_num_threads(args.threads)
+
+    if args.mode == "train":
+        run_train(torch, args)
+    else:
+        run_infer(torch, args)
+
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        print(f"error={exc}", file=sys.stderr)
-        print("RESULT=ERROR")
-        raise
+    main()
