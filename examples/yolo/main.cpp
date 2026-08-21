@@ -299,9 +299,10 @@ int main(int argc, char* argv[])
         const std::string experiment = (argc >= 2) ? argv[1] : "v3-pretrained";
         const bool from_scratch  = (experiment.find("scratch") != std::string::npos);
         const bool use_v8_exp    = (experiment.find("v8")      != std::string::npos);
+        const bool eval_only     = (experiment.find("eval")    != std::string::npos);
 
         const bool quick_test  = false;   // ← 5-epoch smoke test; set false for full run
-        const bool use_voc     = false;   // ← VOC PASCAL training
+        const bool use_voc     = (experiment.find("voc") != std::string::npos);
         const bool use_raccoon = false;
         const bool use_coco    = false;
 
@@ -321,7 +322,7 @@ int main(int argc, char* argv[])
         const bool use_csp     = use_c11; // use_c11 implies CSP
         const bool use_panet   = false;
         // SPPF: tested on VOC 2007 — 48.9% mAP vs 54.9% plain FPN (-6pp). Disabled.
-        const bool use_sppf    = false;
+        const bool use_sppf    = use_v8;
         // reg_max=1: sigmoid box (Phase 5a). reg_max=16: DFL (Phase 5b, default).
         const Index reg_max    = 16;
 
@@ -340,7 +341,8 @@ int main(int argc, char* argv[])
         // cell, DFL with reg_max 16) around a Single head trains straight to NaN.
         const bool is_v8_head = (head_style == YoloNetwork::HeadStyle::FPNv8);
 
-        const auto body_activation = YoloNetwork::BodyActivation::LeakyReLU;
+        const auto body_activation = use_v8 ? YoloNetwork::BodyActivation::SiLU
+                                            : YoloNetwork::BodyActivation::LeakyReLU;
 
         const filesystem::path voc_root =
             resolve_data_path("VOC_ROOT", {"VOCdevkit/VOC2007",
@@ -719,7 +721,8 @@ int main(int argc, char* argv[])
                       head_style == YoloNetwork::HeadStyle::PANet   ? "PANet"  :
                       head_style == YoloNetwork::HeadStyle::FPNv8   ? "FPNv8"  : "Single")
                   << ", body_activation="
-                  << (body_activation == YoloNetwork::BodyActivation::LeakyReLU ? "LeakyReLU" : "ReLU")
+                  << (body_activation == YoloNetwork::BodyActivation::SiLU      ? "SiLU"
+                    : body_activation == YoloNetwork::BodyActivation::LeakyReLU ? "LeakyReLU" : "ReLU")
                   << (use_c11 ? ", c3k2=on" : use_csp ? ", csp=on" : "")
                   << (use_sppf && is_large_backbone ? ", sppf=on" : "")
                   << ", layers=" << yolo_network.get_layers_number()
@@ -961,10 +964,10 @@ int main(int argc, char* argv[])
             csv_log.flush();
         };
 
-        // 10-minute cap per experiment.
-        adam->set_maximum_time(600.0f);
+        // Short cap for quick experiments; effectively unlimited for large datasets.
+        adam->set_maximum_time((use_voc || use_coco || use_raccoon) ? float(1e9) : 600.0f);
 
-        if (resume_training || !std::filesystem::exists(weights_path))
+        if (!eval_only && (resume_training || !std::filesystem::exists(weights_path)))
         {
 
             {
@@ -1491,10 +1494,17 @@ input_shape[1],
         cout << "\nLegend: green = GT, red = top-1, orange = top-2, "
                   << "yellow = top-3, cyan = best-IoU-vs-GT (if outside top-3).\n";
 
-        // Use EMA weights for mAP only when training ran this session (post_batch_callback
-        // fired at least once), so we never evaluate with a stale or corrupt EMA file.
+        // Use EMA weights for mAP:
+        //  - During normal training: only when EMA was updated this run (post_batch_callback
+        //    fired at least once) to avoid stale or corrupt in-memory EMA state.
+        //  - In eval-only mode: load from the saved EMA file if it exists.
         // Skip EMA for small datasets or quick tests: 0.9999^N stays close to initial weights
         // until N >> 10k batches. With prior bias and EMA≈init, all scores ≈ 0.0001 < mAP threshold.
+        if (eval_only && filesystem::exists(ema_weights_path) && !is_synthetic && !quick_test)
+        {
+            yolo_network.load_parameters_binary(ema_weights_path);
+            cout << "Eval-only mode: loaded EMA weights from \"" << ema_weights_path.string() << "\".\n";
+        }
         const bool use_ema_for_map = ema_updated_this_run && !is_synthetic && !quick_test;
         if (use_ema_for_map)
         {
@@ -1503,7 +1513,7 @@ input_shape[1],
         }
         else
         {
-            cout << "Using live (best-epoch checkpoint) weights for final mAP evaluation.\n";
+            cout << "Using checkpoint weights for final mAP evaluation.\n";
         }
 
         {

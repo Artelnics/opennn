@@ -246,10 +246,21 @@ void Convolutional::set(const Shape& new_input_shape,
     const ActivationFunction function = ActivationOperator::from_string(new_activation_function);
     throw_if(function == ActivationFunction::Softmax,
              "Softmax is not a valid activation for a convolutional layer.");
-    throw_if(activation_needs_input(function),
-             "Convolutional: input-derivative activations (e.g. GELU, SiLU) are not supported; "
-             "use a standalone Activation layer after the convolution.");
-    activation_operator.set_activation_function(function);
+    if(activation_needs_input(function))
+    {
+        // SiLU/GELU require the pre-activation input, which fused conv doesn't store.
+        // Demote to Identity so old saved models load cleanly; the caller is responsible
+        // for inserting a separate Activation layer (which buildYoloNetworkFromConfig does).
+        std::cerr << "[Warning] Convolutional layer '" << new_label
+                  << "': activation '" << new_activation_function
+                  << "' is not supported inline; using Identity instead. "
+                     "Add a standalone Activation layer after the convolution.\n";
+        activation_operator.set_activation_function(ActivationFunction::Identity);
+    }
+    else
+    {
+        activation_operator.set_activation_function(function);
+    }
 
     batch_norm.features = new_batch_normalization ? kernels_number : 0;
 

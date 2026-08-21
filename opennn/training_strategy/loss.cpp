@@ -570,7 +570,11 @@ void yolo_gradient_cpu_multi(const ForwardPropagation& forward_propagation,
         });
 }
 
-static constexpr float TAL_ALPHA = 0.5f;
+// TAL_ALPHA=0: pure IoU-based assignment so all classes get positive supervision
+// even when the class head is randomly initialised (e.g. fine-tuning a COCO head
+// on VOC). With ALPHA=0.5 classes that start at near-zero confidence never get
+// positive assignments and the class head collapses.
+static constexpr float TAL_ALPHA = 0.0f;
 static constexpr float TAL_BETA  = 6.0f;
 static constexpr Index TAL_TOP_K = 10;
 
