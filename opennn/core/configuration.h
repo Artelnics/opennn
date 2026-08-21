@@ -22,44 +22,39 @@ inline constexpr float LEAKY_RELU_SLOPE = 0.1f;
 
 inline Type activation_dtype(Type type) { return type == Type::INT8 ? Type::BF16 : type; }
 
+struct EffectiveConfig
+{
+    Device device         = Device::CPU;
+    Type   training_type  = Type::FP32;
+    unsigned generation   = 0;
+};
+
 class Configuration
 {
 public:
-
-    struct Resolved
-    {
-        Device device         = Device::CPU;
-        Type   training_type  = Type::FP32;
-        unsigned generation   = 0;
-    };
 
     static Configuration& instance();
 
     void set(Device new_device        = Device::Auto,
              Type   new_training_type = Type::Auto);
 
-    Resolved resolve() const;
-    Resolved resolve_for(Device) const;
+    [[nodiscard]] EffectiveConfig resolve() const;
+    [[nodiscard]] EffectiveConfig resolve_for(Device) const;
 
     unsigned get_generation() const;
-
-    bool is_gpu() const { return resolve().device == Device::CUDA; }
 
 private:
 
     Configuration() = default;
 
-    Resolved resolve_unlocked(Device) const;
+    EffectiveConfig resolve_effective(Device) const;
 
     mutable std::mutex configuration_mutex;
 
     Device device         = Device::Auto;
     Type   training_type  = Type::Auto;
-
     unsigned generation   = 0;
 };
-
-inline bool   is_gpu()            { return Configuration::instance().is_gpu(); }
 
 }
 

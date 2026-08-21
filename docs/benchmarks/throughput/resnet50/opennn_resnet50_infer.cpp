@@ -154,7 +154,7 @@ true);
 #ifdef OPENNN_HAS_CUDA
         float probe[4] = {0.0f, 0.0f, 0.0f, 0.0f};
         const Index probe_size = min<Index>(Index(4), outputs.size());
-        copy_device_to_host_float(outputs.data, outputs.type, probe_size,
+        copy_device_to_host_float(outputs.get_data(), outputs.get_type(), probe_size,
                                   probe, device::get_compute_stream());
         cudaStreamSynchronize(device::get_compute_stream());
         for (Index i = 0; i < probe_size; ++i)

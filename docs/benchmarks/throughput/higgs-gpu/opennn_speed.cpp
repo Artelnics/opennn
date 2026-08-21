@@ -34,6 +34,11 @@
 #include <string>
 #include <vector>
 
+#ifdef OPENNN_HAS_CUDA
+#include <cuda_runtime.h>
+#include <cudnn.h>
+#endif
+
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/core/configuration.h"
 #include "opennn/neural_network/layers/dense_layer.h"
@@ -228,10 +233,35 @@ int main(int argc, char* argv[])
             dataset.set_variable_scalers("None");
         const Index samples = dataset.get_samples_number();
 
+        // Whole batches only, like the PyTorch and TensorFlow drivers
+        // (range(0, n - batch + 1, batch)): the remainder is left out of the
+        // epoch instead of trained as a smaller tail batch. The tail is real
+        // work the throughput figure does not count (up to 6.5% at 896,000),
+        // and the library keeps a second set of activation contexts for it,
+        // which at 6 GB is the difference between fitting and paging at
+        // 448,000. OPENNN_SPEED_KEEP_TAIL=1 trains it anyway.
+        const bool keep_tail = getenv("OPENNN_SPEED_KEEP_TAIL") != nullptr;
+        const Index whole_samples = (batch > 0 && !keep_tail) ? (samples / batch) * batch : samples;
+        for (Index sample = whole_samples; sample < samples; ++sample)
+            dataset.set_sample_role(sample, SampleRole::None);
+
         cout << "engine=opennn\n";
         cout << "mode=train\n";
+#ifdef OPENNN_HAS_CUDA
+        // Machine identity for the speed gate: throughput and kernel choice are
+        // a property of (GPU, cuDNN), so baselines are keyed by both.
+        {
+            cudaDeviceProp properties{};
+            cout << "device="
+                 << (cudaGetDeviceProperties(&properties, 0) == cudaSuccess ? properties.name : "cuda")
+                 << "\n";
+            cout << "cudnn=" << cudnnGetVersion() << "\n";
+        }
+#else
         cout << "device=cuda\n";
+#endif
         cout << "samples=" << samples << "\n";
+        cout << "tail_kept=" << (keep_tail ? 1 : 0) << "\n";
         cout << "batch=" << batch << "\n";
         cout << "epochs=" << epochs << "\n";
         cout << "hidden=" << hidden << "\n";
@@ -296,6 +326,18 @@ int main(int argc, char* argv[])
         // one batch, which is 6.5% at batch 896,000.
         const Index samples_per_epoch = (samples / batch) * batch;
         const double samples_per_sec = double(samples_per_epoch) / median_epoch_s;
+
+        // What the speed gate asserts besides throughput: the step was
+        // captured, and the output layer still takes the one-pass backward
+        // that folds its producer's ReLU. Both are invariants a refactor can
+        // drop without changing a single result.
+        const auto* output_dense = dynamic_cast<const opennn::Dense*>(
+            network->get_layers().back().get());
+        cout << "cuda_graph="
+             << (getenv("OPENNN_SPEED_NO_GRAPH") ? "off"
+                 : adam->get_cuda_graph_capture_failed() ? "failed" : "captured") << "\n";
+        cout << "single_output_fold="
+             << (output_dense && output_dense->single_output_relu_fusion_wired() ? 1 : 0) << "\n";
 
         const BinaryMetrics metrics = evaluate(*network, test_path, batch);
 

@@ -74,24 +74,27 @@ void NonMaxSuppressionOperator::forward_propagate(ForwardPropagation& forward_pr
     if (input.is_cuda())
     {
         cudaStream_t stream = device::get_compute_stream();
+        device::PinnedBuffer& staging =
+            forward_propagation.layer_pinned_storage[layer];
+        const Index input_bytes = input.size() * Index(sizeof(float));
+        const Index output_bytes = output.size() * Index(sizeof(float));
+        staging.resize_bytes(input_bytes + output_bytes);
 
-        cpu_input_staging.resize(size_t(input.size()));
-        device::copy_async(cpu_input_staging.data(), input.as<float>(),
-                           input.size() * Index(sizeof(float)),
+        float* const cpu_input = staging.as<float>();
+        float* const cpu_output = reinterpret_cast<float*>(
+            staging.as<uint8_t>() + input_bytes);
+
+        device::copy_async(cpu_input, input.as<float>(), input_bytes,
                            device::CopyKind::DeviceToHost, stream);
         device::synchronize(stream);
 
-        TensorView cpu_in{cpu_input_staging.data(), input.get_shape()};
-
-        cpu_output_staging.resize(size_t(output.size()));
-        TensorView cpu_out{cpu_output_staging.data(), output.get_shape()};
+        TensorView cpu_in{cpu_input, input.get_shape()};
+        TensorView cpu_out{cpu_output, output.get_shape()};
 
         apply(cpu_in, cpu_out);
 
-        device::copy_async(output.as<float>(), cpu_output_staging.data(),
-                           output.size() * Index(sizeof(float)),
-                           device::CopyKind::HostToDevice, stream);
-        return;
+        return device::copy_async(output.as<float>(), cpu_output, output_bytes,
+                                  device::CopyKind::HostToDevice, stream);
     }
 #endif
     apply(input, output);

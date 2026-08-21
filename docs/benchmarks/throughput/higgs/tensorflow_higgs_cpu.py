@@ -17,7 +17,19 @@ import numpy as np
 from metrics import binary_metrics
 
 def load_csv(path: Path) -> tuple[np.ndarray, np.ndarray]:
-    data = np.loadtxt(path, delimiter=",", dtype=np.float32)
+    # np.loadtxt on the full split is minutes of wall clock per engine per run,
+    # none of it measured, so the parsed array is cached next to the CSV and
+    # re-read with np.load. OpenNN's own driver reads the CSV directly and is
+    # unaffected; nothing here is inside a timed region either way.
+    cache = path.with_suffix(path.suffix + ".npy")
+    if cache.exists() and cache.stat().st_mtime >= path.stat().st_mtime:
+        data = np.load(cache, mmap_mode="r")
+    else:
+        data = np.loadtxt(path, delimiter=",", dtype=np.float32)
+        try:
+            np.save(cache, data)
+        except OSError:              # read-only data directory: parse next time
+            pass
     x = np.ascontiguousarray(data[:, :-1])
     y = np.ascontiguousarray(data[:, -1:].astype(np.float32))
     return x, y
@@ -26,6 +38,13 @@ def batches(n: int, batch: int):
     stop = (n // batch) * batch
     for start in range(0, stop, batch):
         yield start, start + batch
+
+# XLA is TensorFlow's fast path on CPU as well as GPU, and the GPU family
+# has always measured it with XLA on; this one was pinned to jit_compile=False,
+# which measured TensorFlow below its own best. TF_PLAIN=1 restores that for
+# an A/B.
+def tensorflow_jit() -> bool:
+    return not os.environ.get("TF_PLAIN")
 
 def run_tensorflow(args: argparse.Namespace) -> None:
 
@@ -62,7 +81,7 @@ def run_tensorflow(args: argparse.Namespace) -> None:
         optimizer = tf.keras.optimizers.Adam()
         loss_fn = tf.keras.losses.BinaryCrossentropy()
 
-        @tf.function(jit_compile=False)
+        @tf.function(jit_compile=tensorflow_jit())
         def train_step(xb, yb):
             with tf.GradientTape() as tape:
                 pred = model(xb, training=True)
@@ -105,27 +124,44 @@ def run_tensorflow(args: argparse.Namespace) -> None:
     x = tf.constant(x_np)
     model = make_model(x_np.shape[1])
 
-    @tf.function(jit_compile=False)
+    @tf.function(jit_compile=tensorflow_jit())
     def infer_step(xb):
         return model(xb, training=False)
 
-    def run_pass() -> None:
-        for start, end in batches(x_np.shape[0], args.batch):
-            infer_step(x[start:end])
+    def measure(batch: int) -> tuple[int, float]:
+        def run_pass() -> None:
+            for start, end in batches(x_np.shape[0], batch):
+                infer_step(x[start:end])
 
-    run_pass()
-    run_pass()
-    times = []
-    for _ in range(args.reps):
-        t0 = time.perf_counter()
+        run_pass()                      # each batch size is its own XLA compile
         run_pass()
-        times.append(time.perf_counter() - t0)
-    times.sort()
-    processed = (x_np.shape[0] // args.batch) * args.batch
-    median_pass_s = times[len(times) // 2]
-    print_common("tensorflow", args, processed)
-    print(f"median_pass_s={median_pass_s:.9g}")
-    print(f"samples_per_sec={processed / median_pass_s:.0f}")
+        times = []
+        for _ in range(args.reps):
+            t0 = time.perf_counter()
+            run_pass()
+            times.append(time.perf_counter() - t0)
+        # In temporal order, before the sort: a median hides a drifting machine,
+        # and this one drifts - whatever is measured first after an idle gap runs
+        # in the processor's boost window and what follows does not.
+        print(f"batch_{batch}_pass_times=" + ",".join(f"{t:.6f}" for t in times), flush=True)
+        times.sort()
+        return (x_np.shape[0] // batch) * batch, times[len(times) // 2]
+
+    batch_list = [int(item) for item in args.batches.split(",") if item] or [args.batch]
+
+    if len(batch_list) == 1:
+        processed, median_pass_s = measure(batch_list[0])
+        print_common("tensorflow", args, processed)
+        print(f"median_pass_s={median_pass_s:.9g}")
+        print(f"samples_per_sec={processed / median_pass_s:.0f}")
+        print("RESULT=OK")
+        return
+
+    print_common("tensorflow", args, x_np.shape[0])
+    for batch in batch_list:
+        processed, median_pass_s = measure(batch)
+        print(f"batch_{batch}_samples_per_sec={processed / median_pass_s:.0f}"
+              f" median_pass_s={median_pass_s:.9g}", flush=True)
     print("RESULT=OK")
 
 def print_common(engine: str, args: argparse.Namespace, samples: int) -> None:
@@ -151,6 +187,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--warmup-epochs", type=int, default=0)
     parser.add_argument("--reps", type=int, default=10)
     parser.add_argument("--batch", type=int, default=1024)
+    # Inference only: a comma-separated list is measured in one process, so the
+    # whole batch-size row of a comparison shares one model, one load and one
+    # thermal window on a laptop that drifts ten per cent over a sweep.
+    parser.add_argument("--batches", default="")
     parser.add_argument("--hidden", type=int, default=1024)
     parser.add_argument("--hidden-layers", type=int, default=2)
     parser.add_argument("--activation", choices=["relu", "tanh"], default="relu")

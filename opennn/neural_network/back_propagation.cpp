@@ -36,9 +36,10 @@ vector<bool> find_passthrough_layers(const vector<unique_ptr<Layer>>& layers,
 BackPropagation::BackPropagation(const Index new_batch_size,
                                  Loss& new_loss,
                                  Buffer* external_arena,
-                                 span<const Index> arena_offsets)
+                                 span<const Index> arena_offsets,
+                                 Buffer* external_gradient)
 {
-    set(new_batch_size, new_loss, external_arena, arena_offsets);
+    set(new_batch_size, new_loss, external_arena, arena_offsets, external_gradient);
 }
 
 NeuralNetwork* BackPropagation::get_neural_network() const
@@ -75,14 +76,21 @@ vector<vector<pair<size_t, size_t>>> BackPropagation::make_consumer_edges() cons
     return edges;
 }
 
-void BackPropagation::set(const Index new_batch_size, Loss& new_loss,
+void BackPropagation::set(const Index new_batch_size, 
+                          Loss& new_loss,
                           Buffer* external_arena,
-                          span<const Index> arena_offsets)
+                          span<const Index> arena_offsets,
+                          Buffer* external_gradient)
 {
     batch_size = new_batch_size;
     loss = &new_loss;
 
     const NeuralNetwork& neural_network = require_network();
+
+    layer_scratch_storage.clear();
+    layer_scratch_storage.reserve(size_t(neural_network.get_layers_number()));
+    for (Index i = 0; i < neural_network.get_layers_number(); ++i)
+        layer_scratch_storage.emplace_back(neural_network.get_device());
 
     throw_if(neural_network.get_training_type() == Type::INT8,
              "INT8 is inference-only; training requires FP32 or BF16.");
@@ -91,7 +99,7 @@ void BackPropagation::set(const Index new_batch_size, Loss& new_loss,
 
     metrics.reset();
 
-    setup_gradient();
+    setup_gradient(external_gradient);
 
     DeltaPlan plan = build_delta_plan();
 
@@ -177,22 +185,41 @@ const TensorView& BackPropagation::input_delta_addend(size_t layer, size_t input
     return input_delta_addends[layer][input];
 }
 
-void BackPropagation::setup_gradient()
+void BackPropagation::setup_gradient(Buffer* external_gradient)
 {
     const NeuralNetwork& neural_network = require_network();
 
-    const auto& layers = neural_network.get_layers();
     const auto parameter_specs = neural_network.get_parameter_specs();
 
     const Index gradient_bytes = get_aligned_bytes(parameter_specs, Type::FP32);
-    gradient.resize_bytes(gradient_bytes, neural_network.get_device());
+    const Device device = neural_network.get_device();
+
+    const bool share = external_gradient
+                    && external_gradient->get_device() == device
+                    && external_gradient->byte_size() >= gradient_bytes;
+
+    if (share)
+        gradient.set_view(external_gradient->data(), gradient_bytes, device);
+    else
+    {
+        // Not throw_if: its arguments are evaluated whatever the condition, and
+        // there is nothing to dereference when no buffer was offered.
+        if (external_gradient)
+            throw runtime_error(
+                format("BackPropagation::setup_gradient: the gradient buffer offered "
+                       "holds {} bytes on device {} and this layout needs {} on device {}.",
+                       external_gradient->byte_size(), int(external_gradient->get_device()),
+                       gradient_bytes, int(device)));
+
+        gradient.resize_bytes(gradient_bytes, device);
+    }
+
     gradient.setZero();
-    memory_debug::record("backward", "BackPropagation::gradient", gradient_bytes,
+    memory_debug::record(share ? "backward.aliased" : "backward",
+                         "BackPropagation::gradient", share ? 0 : gradient_bytes,
                          format("batch={}", batch_size));
 
-    float* pointer = gradient.as<float>();
-    for (size_t i = 0; i < layers.size(); ++i)
-        pointer = layers[i]->link_gradients(pointer, gradient.get_device());
+    neural_network.link_gradients(gradient);
 }
 
 BackPropagation::DeltaLayout BackPropagation::build_delta_layout(
@@ -402,7 +429,7 @@ vector<MemoryPoolEntry> BackPropagation::make_co_planned_lifetimes(
     const NeuralNetwork& neural_network = planner.require_network();
     const DeltaPlan plan = planner.build_delta_plan();
 
-    const Index backward_base = Index(2 * neural_network.get_layers_number() - 1);
+    const Index backward_base = backward_step(neural_network.get_layers_number(), 0);
     const Index step_offset =
         backward_base - neural_network.get_last_trainable_layer_index();
 
@@ -476,6 +503,11 @@ void BackPropagation::bind_deltas(const DeltaLayout& layout,
 {
     const NeuralNetwork& neural_network = require_network();
 
+    throw_if(byte_offsets.size() != layout.entries.size(),
+             "BackPropagation::bind_deltas: got {} byte offsets for {} delta "
+             "entries; the forward co-plan and this layout disagree.",
+             byte_offsets.size(), layout.entries.size());
+
     const auto& layers = neural_network.get_layers();
     const Index layers_number = neural_network.get_layers_number();
     const Index first_layer = neural_network.get_first_trainable_layer_index();
@@ -507,13 +539,11 @@ void BackPropagation::bind_deltas(const DeltaLayout& layout,
             slots[i][2] = slots[i][1];
 
     if (layout.aliased_residual_delta_bytes > 0)
-    {
         memory_debug::record(
             "backward.delta_alias",
             "residual_input_delta_bytes",
             layout.aliased_residual_delta_bytes,
             format("batch={}", batch_size));
-    }
 
     for (Index layer_index = first_layer; layer_index < last_layer; ++layer_index)
     {
@@ -591,10 +621,7 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
         first = std::ranges::find_if(edges, valid);
 
     if (first == edges.end())
-    {
-        destination.setZero();
-        return;
-    }
+        return destination.setZero();
 
     const TensorView& first_source = source(*first);
 

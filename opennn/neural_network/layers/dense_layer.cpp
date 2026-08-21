@@ -40,6 +40,11 @@ vector<TensorSpec> Dense::get_forward_specs(Index batch_size) const
 {
     const Shape full   = Shape{batch_size}.append(get_output_shape());
     const Shape stats  = Shape{output_features};
+    const Shape dropout_mask = dropout.active() ? full : Shape{};
+    const Index rows = output_features > 0 ? full.size() / output_features : 0;
+    const Shape drelu_mask = combination.emit_relu_mask
+        ? Shape{rows, output_features / 8}
+        : Shape{};
 
     if (gated)
         return {
@@ -47,6 +52,8 @@ vector<TensorSpec> Dense::get_forward_specs(Index batch_size) const
             {Shape{}, Type::FP32   },
             {Shape{}, Type::FP32   },
             {full,    compute_dtype},
+            {Shape{}, Type::INT8   },
+            {dropout_mask, Type::INT8},
             {full,    compute_dtype},
         };
 
@@ -57,6 +64,8 @@ vector<TensorSpec> Dense::get_forward_specs(Index batch_size) const
         {batch_norm.active() ? stats : Shape{}, Type::FP32   },
         {batch_norm.active() ? stats : Shape{}, Type::FP32   },
         {saves_pre_dropout_activation() ? full : Shape{}, compute_dtype},
+        {drelu_mask,                             Type::INT8   },
+        {dropout_mask,                           Type::INT8   },
         {full,                                  compute_dtype},
     };
 }
@@ -132,6 +141,8 @@ void Dense::configure_operators()
 
         dropout.input_slots  = {Output};
         dropout.output_slots = {Output};
+        dropout.mask_slot = DropoutMask;
+        combination.relu_mask_slot = DreluMask;
 
         activation_operator.forward_fused = false;
         activation_operator.save_slot = SIZE_MAX;
@@ -170,10 +181,10 @@ void Dense::configure_operators()
 
     if (input_deriv)
     {
-        activation_operator.input_slots        = {CombinationView};
-        activation_operator.output_slots       = {Output};
-        activation_operator.input_delta_slots  = {2};
-        combination.output_delta_slots         = {2};
+        activation_operator.input_slots       = {CombinationView};
+        activation_operator.output_slots      = {Output};
+        activation_operator.input_delta_slots = {2};
+        combination.output_delta_slots        = {2};
     }
     else
     {
@@ -199,6 +210,8 @@ void Dense::configure_operators()
 
     dropout.input_slots  = {Output};
     dropout.output_slots = {Output};
+    dropout.mask_slot = DropoutMask;
+    combination.relu_mask_slot = DreluMask;
 
     activation_operator.save_slot = saves_pre_dropout_activation() ? ActivationView : SIZE_MAX;
 }
@@ -209,7 +222,7 @@ void Dense::set_batch_normalization(bool enable)
     configure_operators();
 }
 
-bool Dense::try_wire_drelu_fusion(Dense& producer)
+bool Dense::try_wire_drelu_fusion(Dense& producer, Index producer_layer)
 {
     const bool producer_eligible = !producer.gated
         && !producer.batch_norm.active() && !producer.dropout.active()
@@ -223,20 +236,45 @@ bool Dense::try_wire_drelu_fusion(Dense& producer)
     if (!producer_eligible || !consumer_eligible) return false;
 
     producer.combination.emit_relu_mask = true;
-    producer.activation_operator.backward_fused_by_consumer =
-        &producer.combination.relu_mask_fused_active;
+    producer.activation_operator.backward_fused_by_consumer = true;
     combination.drelu_source = &producer.combination;
+    combination.drelu_source_layer = producer_layer;
     return true;
+}
+
+bool Dense::try_wire_single_output_relu_fusion(Dense& producer, Index producer_layer)
+{
+    const bool producer_eligible = !producer.gated
+        && !producer.batch_norm.active() && !producer.dropout.active()
+        && !producer.tied_source && producer.is_trainable
+        && producer.activation_operator.activation_function == ActivationFunction::ReLU;
+
+    const bool consumer_eligible = !gated && !tied_source && is_trainable
+        && output_features == 1 && !combination.accumulate_input_delta
+        && !combination.drelu_source;
+
+    if (!producer_eligible || !consumer_eligible) return false;
+
+    combination.fuse_input_relu = true;
+    combination.input_relu_source_layer = producer_layer;
+    producer.activation_operator.backward_fused_by_consumer = true;
+    return true;
+}
+
+void Dense::reset_single_output_relu_fusion()
+{
+    combination.fuse_input_relu = false;
+    combination.input_relu_source_layer = -1;
+    activation_operator.backward_fused_by_consumer = false;
 }
 
 void Dense::reset_drelu_fusion()
 {
     combination.emit_relu_mask = false;
-    combination.relu_mask_fused_active = false;
-    combination.relu_mask.resize_bytes(0, Device::CUDA);
-    combination.relu_mask_view = {};
+    combination.relu_mask_fusion_disabled = false;
     combination.drelu_source = nullptr;
-    activation_operator.backward_fused_by_consumer = nullptr;
+    combination.drelu_source_layer = -1;
+    activation_operator.backward_fused_by_consumer = false;
 }
 
 void Dense::set_gated(bool new_gated)

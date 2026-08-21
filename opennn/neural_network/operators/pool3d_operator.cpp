@@ -122,10 +122,14 @@ static void average_pooling_3d_forward_cpu(const TensorView& input, TensorView& 
     }
 }
 
-void average_pooling_3d_forward(const TensorView& input, TensorView& output,
-                                const SequenceLengths valid_lengths)
+void average_pooling_3d_forward(
+    const TensorView& input,
+    TensorView& output,
+    const SequenceLengths valid_lengths)
 {
-    if (input.is_cuda()) { average_pooling_3d_forward_gpu(input, output, valid_lengths.device); return; }
+    if (input.is_cuda())
+        return average_pooling_3d_forward_gpu(input, output, valid_lengths.device);
+
     average_pooling_3d_forward_cpu(input, output, valid_lengths.host);
 }
 
@@ -141,15 +145,14 @@ static void max_pooling_3d_backward_cpu(const TensorView& maximal_indices, const
     #pragma omp parallel for schedule(static)
     for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
         for (Index feature_index = 0; feature_index < features; ++feature_index)
-        {
-            const Index step = static_cast<Index>(max_indices(batch_index, feature_index));
-            input_delta_map(batch_index, step, feature_index) = output_delta_matrix(batch_index, feature_index);
-        }
+            input_delta_map(batch_index, static_cast<Index>(max_indices(batch_index, feature_index)), feature_index) = output_delta_matrix(batch_index, feature_index);
 }
 
 void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta)
 {
-    if (output_delta.is_cuda()) { max_pooling_3d_backward_gpu(maximal_indices, output_delta, input_delta); return; }
+    if (output_delta.is_cuda())
+        return max_pooling_3d_backward_gpu(maximal_indices, output_delta, input_delta);
+
     max_pooling_3d_backward_cpu(maximal_indices, output_delta, input_delta);
 }
 
@@ -295,8 +298,12 @@ static void max_pooling_3d_backward_gpu(const TensorView& maximal_indices, const
 {
     const Shape& output_shape = output_delta.get_shape();
     const Shape& input_shape = input_delta.get_shape();
+
+    // Zeroing does not depend on T, and the kernel below writes only the
+    // argmax positions, so it must happen once before either instantiation.
+    input_delta.set_zero_async();
+
     input_delta.dispatch([&]<typename T>() {
-        input_delta.set_zero_async();
         max_pooling_3d_backward_cuda<T>(to_int(output_shape[0]) * to_int(output_shape[1]),
                                         output_delta.as<T>(), input_delta.as<T>(),
                                         maximal_indices.as<float>(),
@@ -335,8 +342,10 @@ static void first_token_3d_forward_gpu(const TensorView& input, TensorView& outp
 static void first_token_3d_backward_gpu(const TensorView& output_delta, TensorView& input_delta)
 {
     const Shape& shape = input_delta.get_shape();
+
+    input_delta.set_zero_async();
+
     input_delta.dispatch([&]<typename T>() {
-        input_delta.set_zero_async();
         scatter_time_slice_cuda<T>(shape[0], shape[1], shape[2], 0,
                                    output_delta.as<T>(), input_delta.as<T>());
     });
@@ -344,12 +353,12 @@ static void first_token_3d_backward_gpu(const TensorView& output_delta, TensorVi
 
 #else
 
-static void max_pooling_3d_forward_gpu(const TensorView&, TensorView&, TensorView&, bool, const int*) { throw runtime_error("max_pooling_3d_forward_gpu: CUDA support not compiled in."); }
-static void average_pooling_3d_forward_gpu(const TensorView&, TensorView&, const int*) { throw runtime_error("average_pooling_3d_forward_gpu: CUDA support not compiled in."); }
-static void max_pooling_3d_backward_gpu(const TensorView&, const TensorView&, TensorView&) { throw runtime_error("max_pooling_3d_backward_gpu: CUDA support not compiled in."); }
-static void average_pooling_3d_backward_gpu(const TensorView&, const TensorView&, TensorView&, const int*) { throw runtime_error("average_pooling_3d_backward_gpu: CUDA support not compiled in."); }
-static void first_token_3d_forward_gpu(const TensorView&, TensorView&) { throw runtime_error("first_token_3d_forward_gpu: CUDA support not compiled in."); }
-static void first_token_3d_backward_gpu(const TensorView&, TensorView&) { throw runtime_error("first_token_3d_backward_gpu: CUDA support not compiled in."); }
+OPENNN_CUDA_STUB(void, max_pooling_3d_forward_gpu, (const TensorView&, TensorView&, TensorView&, bool, const int*))
+OPENNN_CUDA_STUB(void, average_pooling_3d_forward_gpu, (const TensorView&, TensorView&, const int*))
+OPENNN_CUDA_STUB(void, max_pooling_3d_backward_gpu, (const TensorView&, const TensorView&, TensorView&))
+OPENNN_CUDA_STUB(void, average_pooling_3d_backward_gpu, (const TensorView&, const TensorView&, TensorView&, const int*))
+OPENNN_CUDA_STUB(void, first_token_3d_forward_gpu, (const TensorView&, TensorView&))
+OPENNN_CUDA_STUB(void, first_token_3d_backward_gpu, (const TensorView&, TensorView&))
 
 #endif
 

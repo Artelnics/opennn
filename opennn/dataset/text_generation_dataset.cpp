@@ -331,10 +331,7 @@ void TextGenerationDataset::fill_blocks(const vector<Index>& sample_indices,
     const span<float> output(output_data, size_t(ssize(sample_indices) * sequence_length));
 
     if (storage_mode == StorageMode::Matrix)
-    {
-        fill_tensor_data(data, sample_indices, variable_indices, output, contiguous);
-        return;
-    }
+        return fill_tensor_data(data, sample_indices, variable_indices, output, contiguous);
 
     read_int32_batch(cache_reader,
                      sample_indices,

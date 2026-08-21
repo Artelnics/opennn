@@ -79,7 +79,7 @@ struct PoolOperator : Operator
 
 private:
 
-    mutable shared_ptr<cudnnPoolingStruct> pooling_descriptor;
+    CudnnDescriptor<cudnnPoolingDescriptor_t> pooling_descriptor;
 #endif
 };
 

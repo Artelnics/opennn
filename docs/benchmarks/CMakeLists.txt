@@ -113,3 +113,10 @@ endif()
 foreach(benchmark_target ${_benchmark_targets})
     target_link_libraries(${benchmark_target} PRIVATE opennn)
 endforeach()
+
+# Aggregate target so CI can compile every benchmark without running any of
+# them (most need datasets that CI does not have). OpenNN_BUILD_BENCHMARKS
+# defaults to OFF and CI never turned it on, so these targets went unbuilt for
+# long enough to drift out of sync with library refactors and stop compiling.
+add_custom_target(benchmarks)
+add_dependencies(benchmarks ${_benchmark_targets})

@@ -2334,7 +2334,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
         constraint_set.disjunctive = saved_disjunctive;
     };
 
-    struct ScopeGuard { function<void()> run; ~ScopeGuard() { run(); } } guard{ restore_state };
+    ScopeExit guard(restore_state);
 
     expand_fixed_objectives();
 

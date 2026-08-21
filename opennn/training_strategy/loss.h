@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L O S S   C L A S S   H E A D E R
@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "opennn/core/device_backend.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/neural_network/back_propagation.h"
 
@@ -37,12 +38,11 @@ public:
 
     static const EnumMap<Regularization>& regularization_map()
     {
-        static const vector<pair<Regularization, string>> entries = {
+        static const EnumMap<Regularization> map{
             {Regularization::NoRegularization, "None"},
             {Regularization::L1,               "L1"},
             {Regularization::L2,               "L2"}
         };
-        static const EnumMap<Regularization> map{entries};
         return map;
     }
 
@@ -175,10 +175,6 @@ protected:
     float yolo_focal_gamma     = 0.0f;
     float yolo_obj_focal_gamma = 0.0f;
 
-    mutable Buffer errors_device{Device::CUDA};
-    mutable Buffer metric_results_device{Device::CUDA};
-    mutable Buffer yolo_target_device{Device::CUDA};
-
     Regularization regularization_method = Regularization::NoRegularization;
     float regularization_weight = 0.001f;
 
@@ -194,9 +190,27 @@ private:
         throw_if(!neural_network, "Loss error: neural network is not set.");
     }
 
+    // The device paths need a CUDA build as well as a CUDA-configured network:
+    // is_gpu() alone only says what the configuration asked for.
+    bool runs_on_gpu() const noexcept
+    {
+        return device::is_cuda_build() && neural_network && neural_network->is_gpu();
+    }
+
+    // A zero weight is as good as no regularization, and skipping it here keeps
+    // the four regularization entry points asking the same question.
+    bool has_regularization() const noexcept
+    {
+        return regularization_method != Regularization::NoRegularization
+            && regularization_weight != 0.0f;
+    }
+
     void add_regularization(BackPropagation&) const;
 
-    float* ensure_error_workspace(const TensorView&, Index batch_samples) const;
+    Index error_workspace_floats(const TensorView&) const;
+    float* ensure_error_workspace(Buffer&, const TensorView&,
+                                  Index batch_samples,
+                                  Index reduction_floats = 0) const;
 
     float get_weighted_coefficient(const Batch&) const;
 

@@ -531,19 +531,22 @@ TEST(ChatSessionTest, ClassicDecoderUsesCommonResponseAndStreaming)
         session.default_sampling(ReasoningMode::Disabled);
     options.sampling->maximum_tokens = 3;
 
-    string streamed;
-    const ChatResponse response = session.send(
-        "alpha", options,
-        [&](const ChatDelta& delta)
-        {
-            EXPECT_EQ(delta.channel, GenerationChannel::Content);
-            streamed += delta.text;
-        });
+    for (Index turn = 0; turn < 2; ++turn)
+    {
+        string streamed;
+        const ChatResponse response = session.send(
+            "alpha", options,
+            [&](const ChatDelta& delta)
+            {
+                EXPECT_EQ(delta.channel, GenerationChannel::Content);
+                streamed += delta.text;
+            });
 
-    EXPECT_EQ(response.reasoning_tokens, 0);
-    EXPECT_EQ(response.generated_tokens, 3);
-    EXPECT_EQ(response.finish_reason, FinishReason::MaximumTokens);
-    EXPECT_EQ(streamed, response.content);
+        EXPECT_EQ(response.reasoning_tokens, 0);
+        EXPECT_EQ(response.generated_tokens, 3);
+        EXPECT_EQ(response.finish_reason, FinishReason::MaximumTokens);
+        EXPECT_EQ(streamed, response.content);
+    }
 
     ChatOptions unsupported;
     unsupported.reasoning_mode = ReasoningMode::Enabled;

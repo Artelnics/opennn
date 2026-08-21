@@ -40,7 +40,9 @@ struct LongShortTermMemoryOperator : Operator, CudnnRnnState
         ForgetDeltaScratchSlot,
         InputDeltaScratchSlot,
         CandidateDeltaScratchSlot,
-        OutputDeltaScratchSlot
+        OutputDeltaScratchSlot,
+        CudnnOutputDeltaScratchSlot,
+        CudnnInputDeltaScratchSlot
     };
 
     Index input_features  = 0;
@@ -129,6 +131,8 @@ private:
 
     void apply_gpu(const TensorView&,
                    TensorView&,
+                   TensorView&,
+                   Buffer&,
                    bool,
                    bool) const;
 
@@ -136,11 +140,15 @@ private:
                          const TensorView&,
                          const TensorView&,
                          TensorView&,
+                         TensorView&,
+                         TensorView&,
+                         const Buffer&,
+                         Buffer&,
                          bool) const;
 
-    void ensure_cudnn_setup_(Index, bool) const;
-    void pack_weights_to_cudnn_() const;
-    void unpack_gradients_from_cudnn_() const;
+    CudnnRnnShapeSlot& ensure_cudnn_setup_(Index, bool) const;
+    void pack_weights_to_cudnn_(Buffer&) const;
+    void unpack_gradients_from_cudnn_(Buffer&) const;
 
 };
 

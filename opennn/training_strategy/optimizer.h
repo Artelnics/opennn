@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   O P T I M I Z E R   C L A S S   H E A D E R
@@ -15,6 +15,7 @@
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/core/json.h"
 #include "opennn/training_strategy/loss.h"
+#include "opennn/training_strategy/training_context.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/thread_safe_queue.h"
 #include "opennn/training_strategy/training_result.h"
@@ -113,8 +114,8 @@ protected:
         {
             array<unique_ptr<Batch>, group_size> slots;
             device::GraphExecHandle exec;
-            CudaEvent fork_event;
-            array<CudaEvent, group_size> copy_done_events;
+            device::CudaEvent fork_event;
+            array<device::CudaEvent, group_size> copy_done_events;
         };
 
         Batch* fixed_batch() const { return pipelines[0].slots[0].get(); }
@@ -139,15 +140,14 @@ protected:
         struct TailContext
         {
             unique_ptr<Batch> batch;
-            unique_ptr<ForwardPropagation> forward;
-            unique_ptr<BackPropagation> backward;
+            unique_ptr<TrainingContext> context;
             Index size = 0;
         };
 
         array<GraphPipeline, pipelines_count> pipelines;
         TailContext tail;
         Buffer device_metrics{Device::CUDA};
-        array<CudaEvent, 4> throttle_events;
+        array<device::CudaEvent, 4> throttle_events;
         size_t throttle_cursor = 0;
         bool cuda_graph_capture_allowed = false;
     };
@@ -182,8 +182,7 @@ protected:
     void setup_device_training();
     void teardown_device_training();
 
-    void warmup_device_training(ForwardPropagation&,
-                                BackPropagation&,
+    void warmup_device_training(TrainingContext&,
                                 ThreadSafeQueue<Batch*>&,
                                 const vector<vector<Index>>&,
                                 const vector<Index>&,
@@ -199,7 +198,7 @@ protected:
 
     void sync_device(bool on_gpu, bool has_recurrent_layers, TrainingSession&);
 
-    static void clip_gradient_norm(Buffer&, float);
+    static void clip_gradient_norm(BackPropagation&, float);
 
     bool should_display(Index epoch) const noexcept { return display && epoch % display_period == 0; }
 
@@ -293,8 +292,7 @@ protected:
                                            const vector<Index>&,
                                            const vector<Index>&);
 
-    Loss::EvaluationResult train_epoch(ForwardPropagation&,
-                                       BackPropagation&,
+    Loss::EvaluationResult train_epoch(TrainingContext&,
                                        ThreadSafeQueue<Batch*>&,
                                        const vector<vector<Index>>&,
                                        const vector<Index>&,

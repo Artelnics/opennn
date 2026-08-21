@@ -31,7 +31,6 @@ void C2PSAOperator::set(Index new_h, Index new_w, Index new_channels)
     h        = new_h;
     w        = new_w;
     channels = new_channels;
-    output_slots = {7};
 }
 
 vector<TensorSpec> C2PSAOperator::parameter_specs() const
@@ -92,8 +91,6 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
         const int T      = int(tokens);
         const int C_int  = int(C);
         const cudaDataType_t dtype = x.cuda_dtype();
-        const Index esz  = (dtype == CUDA_R_32F) ? sizeof(float) : sizeof(uint16_t);
-
         void* xa_gpu   = fp.slots[layer][1].get_data();
         void* Q_gpu    = fp.slots[layer][2].get_data();
         void* K_gpu    = fp.slots[layer][3].get_data();
@@ -102,12 +99,7 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
         void* cat_gpu  = fp.slots[layer][6].get_data();
         void* out_gpu  = output.get_data();
 
-        const Index scratch_needed = (Index(BT) * H
-                                    + Index(BT) * C_int
-                                    + Index(BT) * T
-                                    + Index(BT) * H * 4) * esz;
-        gpu_scratch.resize_bytes(scratch_needed, Device::CUDA);
-        void* attn_v_gpu = gpu_scratch.data();
+        void* attn_v_gpu = fp.slots[layer][forward_scratch_slot].get_data();
 
         c2psa_split_cuda(x.get_data(), xa_gpu, cat_gpu, BT, C_int, H, dtype);
 
@@ -147,12 +139,11 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
 
         c2psa_fill_cat_left_cuda(attn_v_gpu, cat_gpu, BT, C_int, H, dtype);
 
-        gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-            C_int, BT, C_int,
-            Wout.get_data(), dtype, C_int, 0LL,
-            cat_gpu,   dtype, C_int, 0LL,
-            out_gpu,   dtype, C_int, 0LL, 1);
-        return;
+        return gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+                   C_int, BT, C_int,
+                   Wout.get_data(), dtype, C_int, 0LL,
+                   cat_gpu,   dtype, C_int, 0LL,
+                   out_gpu,   dtype, C_int, 0LL, 1);
     }
 #endif
 
@@ -233,7 +224,8 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
         const void* V_gpu    = fp.slots[layer][5].get_data();
         const void* cat_gpu  = fp.slots[layer][6].get_data();
 
-        uint8_t* scratch = static_cast<uint8_t*>(gpu_scratch.data());
+        uint8_t* scratch = static_cast<uint8_t*>(
+            bp.slots[layer][backward_scratch_slot].get_data());
         void* compact_d_ao = scratch;
         void* d_cat_gpu    = scratch + (size_t)BT * H    * esz;
         void* d_A_gpu      = scratch + (size_t)BT * (H + C_int) * esz;

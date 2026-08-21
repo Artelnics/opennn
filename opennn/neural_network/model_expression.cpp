@@ -327,9 +327,8 @@ void ModelExpression::check_parameters_are_finite() const
 
 string ModelExpression::build_expression() const
 {
-    auto* network = const_cast<NeuralNetwork*>(neural_network);
-    const bool was_on_device = (neural_network->get_parameters_device() == Device::CUDA);
-    if (was_on_device) network->copy_parameters_host();
+    const NeuralNetwork::HostParametersGuard host_parameters(
+        *const_cast<NeuralNetwork*>(neural_network));
 
     const size_t layers_number = neural_network->get_layers_number();
     const vector<string> layer_labels = neural_network->get_layer_labels();
@@ -395,8 +394,6 @@ string ModelExpression::build_expression() const
         if (!is_last)
             new_input_names = std::move(layer_output_names);
     }
-
-    if (was_on_device) network->copy_parameters_device();
 
     return buffer.str();
 }
@@ -715,17 +712,11 @@ string ModelExpression::c_float_literal(float value)
 
 string ModelExpression::get_expression_c_embedded() const
 {
-    NeuralNetwork* network = const_cast<NeuralNetwork*>(neural_network);
-
-    const bool was_on_device =
-        neural_network->get_parameters_device() == Device::CUDA;
-
-    if(was_on_device)
-        network->copy_parameters_host();
+    const NeuralNetwork::HostParametersGuard host_parameters(
+        *const_cast<NeuralNetwork*>(neural_network));
 
     string result;
 
-    try
     {
         const auto& layers = neural_network->get_layers();
         const size_t layers_number = layers.size();
@@ -1677,17 +1668,6 @@ string ModelExpression::get_expression_c_embedded() const
 
         result = buffer.str();
     }
-    catch(...)
-    {
-        if(was_on_device)
-            network->copy_parameters_device();
-
-        throw;
-    }
-
-    if(was_on_device)
-        network->copy_parameters_device();
-
     return result;
 }
 

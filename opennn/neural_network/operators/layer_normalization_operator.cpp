@@ -134,8 +134,8 @@ void layer_normalization_add_forward(const TensorView& input, const TensorView& 
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
-        const int rows = to_int(input.size() / input.get_shape().back());
-        const int cols = to_int(input.get_shape().back());
+        const int rows = to_int(input.flat_rows());
+        const int cols = to_int(input.flat_columns());
         output.dispatch([&]<typename T>() {
             layernorm_add_forward_cuda<T>(rows, cols,
                                           input.as<T>(), residual.as<T>(),
@@ -157,11 +157,8 @@ void layer_normalization_backward(const TensorView& input, const TensorView& out
                          TensorView& input_delta, TensorView* residual_delta)
 {
     if (input.is_cuda())
-    {
-        layer_normalization_backward_gpu(input, output_delta, means, standard_deviations, gamma,
-                                gamma_gradient, beta_gradient, input_delta, residual_delta);
-        return;
-    }
+        return layer_normalization_backward_gpu(input, output_delta, means, standard_deviations, gamma,
+                                       gamma_gradient, beta_gradient, input_delta, residual_delta);
     layer_normalization_backward_cpu(output_delta, standard_deviations, normalized, gamma,
                             gamma_gradient, beta_gradient, input_delta);
     if (residual_delta) copy(input_delta, *residual_delta);
@@ -262,11 +259,8 @@ void rms_normalization_backward(const TensorView& input, const TensorView& outpu
                        TensorView& input_delta)
 {
     if (input.is_cuda())
-    {
-        rms_normalization_backward_gpu(input, output_delta, inverse_rms, weight,
-                              weight_gradient, input_delta);
-        return;
-    }
+        return rms_normalization_backward_gpu(input, output_delta, inverse_rms, weight,
+                                     weight_gradient, input_delta);
     rms_normalization_backward_cpu(output_delta, inverse_rms, normalized, weight,
                           weight_gradient, input_delta);
 }
@@ -276,8 +270,8 @@ void rms_normalization_backward(const TensorView& input, const TensorView& outpu
 static void layer_normalization_forward_gpu(const TensorView& input, const TensorView& gamma, const TensorView& beta,
                             TensorView& means, TensorView& standard_deviations, TensorView& output, float epsilon)
 {
-    const int rows = to_int(input.size() / input.get_shape().back());
-    const int cols = to_int(input.get_shape().back());
+    const int rows = to_int(input.flat_rows());
+    const int cols = to_int(input.flat_columns());
 
     output.dispatch([&]<typename T>() {
         layernorm_forward_cuda<T>(rows, cols,
@@ -293,8 +287,8 @@ static void layer_normalization_backward_gpu(const TensorView& input, const Tens
                              const TensorView& gamma_gradient, const TensorView& beta_gradient,
                              TensorView& input_delta, TensorView* residual_delta)
 {
-    const int rows = to_int(input.size() / input.get_shape().back());
-    const int cols = to_int(input.get_shape().back());
+    const int rows = to_int(input.flat_rows());
+    const int cols = to_int(input.flat_columns());
 
     input.dispatch([&]<typename T>() {
         T* input_delta_data = input_delta.empty() ? nullptr : input_delta.as<T>();
@@ -312,8 +306,8 @@ static void layer_normalization_backward_gpu(const TensorView& input, const Tens
 static void rms_normalization_forward_gpu(const TensorView& input, const TensorView& weight,
                             TensorView& inverse_rms, TensorView& output, float epsilon)
 {
-    const int rows = to_int(input.size() / input.get_shape().back());
-    const int cols = to_int(input.get_shape().back());
+    const int rows = to_int(input.flat_rows());
+    const int cols = to_int(input.flat_columns());
 
     output.dispatch([&]<typename T>() {
         rmsnorm_forward_cuda<T>(rows, cols,
@@ -327,8 +321,8 @@ static void rms_normalization_backward_gpu(const TensorView& input, const Tensor
                              const TensorView& inverse_rms, const TensorView& weight,
                              const TensorView& weight_gradient, TensorView& input_delta)
 {
-    const int rows = to_int(input.size() / input.get_shape().back());
-    const int cols = to_int(input.get_shape().back());
+    const int rows = to_int(input.flat_rows());
+    const int cols = to_int(input.flat_columns());
 
     input.dispatch([&]<typename T>() {
         T* input_delta_data = input_delta.empty() ? nullptr : input_delta.as<T>();
@@ -342,10 +336,10 @@ static void rms_normalization_backward_gpu(const TensorView& input, const Tensor
 
 #else
 
-static void layer_normalization_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&, float) { throw runtime_error("layer_normalization_forward_gpu: CUDA support not compiled in."); }
-static void layer_normalization_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView*) { throw runtime_error("layer_normalization_backward_gpu: CUDA support not compiled in."); }
-static void rms_normalization_forward_gpu(const TensorView&, const TensorView&, TensorView&, TensorView&, float) { throw runtime_error("rms_normalization_forward_gpu: CUDA support not compiled in."); }
-static void rms_normalization_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&) { throw runtime_error("rms_normalization_backward_gpu: CUDA support not compiled in."); }
+OPENNN_CUDA_STUB(void, layer_normalization_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&, float))
+OPENNN_CUDA_STUB(void, layer_normalization_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView*))
+OPENNN_CUDA_STUB(void, rms_normalization_forward_gpu, (const TensorView&, const TensorView&, TensorView&, TensorView&, float))
+OPENNN_CUDA_STUB(void, rms_normalization_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&))
 
 #endif
 
@@ -402,8 +396,7 @@ void LayerNormalizationOperator::forward_propagate(ForwardPropagation& forward_p
         TensorView& normalized  = get_output(forward_propagation, layer, 2);
         TensorView& output      = get_output(forward_propagation, layer, 3);
 
-        rms_normalization_forward(input, gamma, inverse_rms, normalized, output, epsilon);
-        return;
+        return rms_normalization_forward(input, gamma, inverse_rms, normalized, output, epsilon);
     }
 
     TensorView& means       = get_output(forward_propagation, layer);
@@ -415,8 +408,7 @@ void LayerNormalizationOperator::forward_propagate(ForwardPropagation& forward_p
     {
 
         const TensorView& residual = forward_propagation.inputs[layer][1];
-        layer_normalization_add_forward(input, residual, gamma, beta, means, stds, normalized, normalized, output, epsilon);
-        return;
+        return layer_normalization_add_forward(input, residual, gamma, beta, means, stds, normalized, normalized, output, epsilon);
     }
 
     layer_normalization_forward(input, gamma, beta, means, stds, normalized, output, epsilon);
@@ -432,9 +424,8 @@ void LayerNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
         const TensorView& inverse_rms = get_output(forward_propagation, layer);
         const TensorView& normalized  = get_output(forward_propagation, layer, 2);
 
-        rms_normalization_backward(get_input(forward_propagation, layer), output_delta,
-                                   inverse_rms, normalized, gamma, gamma_gradient, input_delta);
-        return;
+        return rms_normalization_backward(get_input(forward_propagation, layer), output_delta,
+                                          inverse_rms, normalized, gamma, gamma_gradient, input_delta);
     }
 
     const TensorView& stds       = get_output(forward_propagation, layer, 1);

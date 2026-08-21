@@ -461,7 +461,7 @@ ScenarioVerdict run_scenario(const Scenario& s)
     cout << "    dataset=" << DATA_FILE
               << "  past="    << s.past
               << "  future="  << s.future
-              << "  hidden_layers=" << s.hidden.rank
+              << "  hidden_layers=" << s.hidden.get_rank()
               << "  epochs<=" << s.max_epochs
               << "  patience=" << s.patience
               << "  seeds="   << forecasting_seed_count()

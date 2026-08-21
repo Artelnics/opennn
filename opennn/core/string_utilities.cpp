@@ -150,10 +150,7 @@ void get_token_views_maybe_quoted(string_view line, char separator, bool file_ha
     out.clear();
 
     if (!file_has_quotes || line.find('"') == string_view::npos)
-    {
-        split_views(line, separator, out);
-        return;
-    }
+        return split_views(line, separator, out);
 
     scratch.clear();
     scratch.reserve(line.size());
@@ -386,7 +383,7 @@ string get_time(float time)
     return format("{:02}:{:02}:{:02}", hours, minutes, seconds);
 }
 
-void display_progress_bar(int completed, int total)
+void display_progress_bar(Index completed, Index total)
 {
     const int width = 50;
     const float progress = total > 0 ? static_cast<float>(completed) / total : 0.0f;

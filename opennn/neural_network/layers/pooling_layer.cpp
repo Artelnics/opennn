@@ -204,7 +204,17 @@ void PoolOperator::set(Index input_h, Index input_w, Index input_c,
     method          = new_method;
 
 #ifdef OPENNN_HAS_CUDA
-    pooling_descriptor.reset();
+    CudnnDescriptor<cudnnPoolingDescriptor_t> descriptor;
+    CHECK_CUDNN(cudnnCreatePoolingDescriptor(&descriptor.handle));
+    descriptor.deleter = &cudnnDestroyPoolingDescriptor;
+    CHECK_CUDNN(cudnnSetPooling2dDescriptor(
+        descriptor,
+        method == Max ? CUDNN_POOLING_MAX : CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING,
+        CUDNN_PROPAGATE_NAN,
+        to_int(pool_height), to_int(pool_width),
+        to_int(padding_height), to_int(padding_width),
+        to_int(row_stride), to_int(column_stride)));
+    pooling_descriptor = std::move(descriptor);
 #endif
 }
 
@@ -222,23 +232,9 @@ Index PoolOperator::get_output_width() const noexcept
 
 cudnnPoolingDescriptor_t PoolOperator::get_pooling_descriptor() const
 {
-    if (!pooling_descriptor)
-    {
-        cudnnPoolingDescriptor_t raw_descriptor;
-        CHECK_CUDNN(cudnnCreatePoolingDescriptor(&raw_descriptor));
-
-        pooling_descriptor = shared_ptr<cudnnPoolingStruct>(raw_descriptor,
-            [](cudnnPoolingDescriptor_t descriptor) { cudnnDestroyPoolingDescriptor(descriptor); });
-
-        CHECK_CUDNN(cudnnSetPooling2dDescriptor(raw_descriptor,
-            method == Max ? CUDNN_POOLING_MAX : CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING,
-            CUDNN_PROPAGATE_NAN,
-            to_int(pool_height), to_int(pool_width),
-            to_int(padding_height), to_int(padding_width),
-            to_int(row_stride), to_int(column_stride)));
-    }
-
-    return pooling_descriptor.get();
+    throw_if(!pooling_descriptor,
+             "PoolOperator: pooling descriptor requested before set().");
+    return pooling_descriptor;
 }
 
 #endif
@@ -293,7 +289,7 @@ void PoolOperator::forward_propagate(ForwardPropagation& forward_propagation, si
             return;
         }
 
-        CHECK_CUDNN(cudnnPoolingForward(Backend::get_cudnn_handle(),
+        CHECK_CUDNN(cudnnPoolingForward(device::get_cudnn_handle(),
             get_pooling_descriptor(),
             &one,  input.get_descriptor(),  input.get_data(),
             &zero, output.get_descriptor(), output.get_data()));
@@ -337,7 +333,7 @@ void PoolOperator::back_propagate(ForwardPropagation& forward_propagation, BackP
             return;
         }
 
-        CHECK_CUDNN(cudnnPoolingBackward(Backend::get_cudnn_handle(),
+        CHECK_CUDNN(cudnnPoolingBackward(device::get_cudnn_handle(),
             get_pooling_descriptor(),
             &one,  output.get_descriptor(),       output.get_data(),
                    output_delta.get_descriptor(), output_delta.get_data(),
@@ -360,13 +356,12 @@ namespace
 
 const EnumMap<PoolingMethod>& pooling_method_map()
 {
-    static const vector<EnumMap<PoolingMethod>::Entry> entries = {
+    static const EnumMap<PoolingMethod> map{
         {PoolingMethod::MaxPooling,     "MaxPooling"},
         {PoolingMethod::AveragePooling, "AveragePooling"},
         {PoolingMethod::FirstToken,     "FirstToken"}
     };
-    static const EnumMap<PoolingMethod> instance{entries};
-    return instance;
+    return map;
 }
 
 void validate_pooling_configuration(const Shape& input_shape,

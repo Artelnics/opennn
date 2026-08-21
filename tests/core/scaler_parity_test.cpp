@@ -76,22 +76,57 @@ struct ScalerInputs
     }
 };
 
+// A TensorView promises its data is ALIGN_BYTES-aligned - the accessors build
+// Eigen maps with AlignedMax, and Eigen then emits aligned vector loads and
+// stores. std::vector does not promise that much, so host storage for a view
+// goes through Buffer, which allocates the alignment the views assume.
+struct AlignedFloats
+{
+    explicit AlignedFloats(const vector<float>& values)
+    {
+        buffer.resize_bytes(Index(values.size() * sizeof(float)), Device::CPU);
+        copy(values.begin(), values.end(), buffer.as<float>());
+    }
+
+    explicit AlignedFloats(size_t count)
+    {
+        buffer.resize_bytes(Index(count * sizeof(float)), Device::CPU);
+        buffer.setZero();
+    }
+
+    float* data() { return buffer.as<float>(); }
+
+    vector<float> to_vector(size_t count) const
+    {
+        return vector<float>(buffer.as<float>(), buffer.as<float>() + count);
+    }
+
+    Buffer buffer;
+};
+
 // Runs scale() or unscale() on the host and returns the result.
 vector<float> run_on_cpu(const ScalerInputs& in, bool inverse, float min_range, float max_range)
 {
     ScalerInputs data = in;
-    vector<float> output(data.input.size());
+
+    AlignedFloats input_data(data.input);
+    AlignedFloats minimums_data(data.minimums);
+    AlignedFloats maximums_data(data.maximums);
+    AlignedFloats means_data(data.means);
+    AlignedFloats deviations_data(data.standard_deviations);
+    AlignedFloats scalers_data(data.scalers);
+    AlignedFloats output_data(data.input.size());
 
     const Shape matrix_shape{data.rows, data.features};
     const Shape vector_shape{data.features};
 
-    const TensorView input_view(data.input.data(), matrix_shape);
-    const TensorView minimums_view(data.minimums.data(), vector_shape);
-    const TensorView maximums_view(data.maximums.data(), vector_shape);
-    const TensorView means_view(data.means.data(), vector_shape);
-    const TensorView deviations_view(data.standard_deviations.data(), vector_shape);
-    const TensorView scalers_view(data.scalers.data(), vector_shape);
-    TensorView output_view(output.data(), matrix_shape);
+    const TensorView input_view(input_data.data(), matrix_shape);
+    const TensorView minimums_view(minimums_data.data(), vector_shape);
+    const TensorView maximums_view(maximums_data.data(), vector_shape);
+    const TensorView means_view(means_data.data(), vector_shape);
+    const TensorView deviations_view(deviations_data.data(), vector_shape);
+    const TensorView scalers_view(scalers_data.data(), vector_shape);
+    TensorView output_view(output_data.data(), matrix_shape);
 
     if (inverse)
         unscale(input_view, minimums_view, maximums_view, means_view, deviations_view,
@@ -100,7 +135,7 @@ vector<float> run_on_cpu(const ScalerInputs& in, bool inverse, float min_range, 
         scale(input_view, minimums_view, maximums_view, means_view, deviations_view,
               scalers_view, min_range, max_range, output_view);
 
-    return output;
+    return output_data.to_vector(data.input.size());
 }
 
 #ifdef OPENNN_HAS_CUDA

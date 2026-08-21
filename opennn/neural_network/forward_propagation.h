@@ -27,6 +27,15 @@ struct SequenceLengths
     explicit operator bool() const noexcept { return host || device; }
 };
 
+// One device buffer per GraphWorkspaceKind. Filled by index rather than written
+// out as a list of initializers, which was a list to lengthen every time a kind
+// was added and, forgotten, left the new workspace's buffer on the host.
+template<size_t... Kind>
+array<Buffer, sizeof...(Kind)> cuda_workspace_buffers(index_sequence<Kind...>)
+{
+    return {(static_cast<void>(Kind), Buffer{Device::CUDA})...};
+}
+
 class NeuralNetwork;
 
 enum class ForwardPropagationMode
@@ -71,6 +80,11 @@ struct ForwardPropagation
 
     void set_active_sequence_length(Index length);
 
+    // Reuse persistent session state (such as an autoregressive KV cache)
+    // across propagation shapes that belong to the same inference session.
+    // The source and destination must execute the same network.
+    void share_session_state_from(const ForwardPropagation& source);
+
     void set_output_sequence_window(Index start, Index count);
     void gather_output_window();
 
@@ -98,16 +112,34 @@ struct ForwardPropagation
     Index past_length = 0;
 
     Buffer arena;
+    // Opaque execution-local storage whose size is known only after a backend
+    // configures an operation (for example, cuDNN RNN state).
+    vector<Buffer> layer_state_storage;
+    // Persistent state shared by the propagation shapes of one inference
+    // session (for example, an autoregressive KV cache).
+    shared_ptr<vector<Buffer>> layer_session_state_storage;
+    // Host mirrors used only while an execution stages data across a device
+    // boundary. Kept per layer so independent propagation contexts never share
+    // staging addresses.
+    vector<device::PinnedBuffer> layer_pinned_storage;
     vector<Buffer> staged_input_storage;
     vector<TensorView> staged_inputs;
 
+    // Loss evaluation scratch belongs to this execution, not to the reusable
+    // Loss configuration. YOLO keeps its assembled targets separate because
+    // the target and reduction buffers are live at the same time.
+    mutable Buffer loss_workspace{Device::CUDA};
+    mutable Buffer loss_target_workspace{Device::CUDA};
+
     vector<vector<uint16_t>> host_bf16_input_scratch;
+    vector<uint16_t> host_bf16_output_scratch;
 
     Buffer position_device{Device::CUDA};
-    void* position_pinned = nullptr;
+    device::PinnedBuffer position_pinned;
 
     vector<vector<TensorView>> inputs;
     vector<vector<TensorView>> slots;
+    vector<uint8_t> drelu_fused_by_layer;
     vector<tuple<size_t, size_t, size_t>> passthrough_overrides;
 
     // Where each sequence in the batch ends, one record per layer, describing
@@ -152,10 +184,8 @@ struct ForwardPropagation
     vector<const void*> captured_input_pointers;
 
     device::GraphWorkspaceRequirements inference_graph_workspace_requirements{};
-    array<Buffer, size_t(device::GraphWorkspaceKind::Count)> inference_graph_workspaces{
-        Buffer{Device::CUDA}, Buffer{Device::CUDA}, Buffer{Device::CUDA},
-        Buffer{Device::CUDA}, Buffer{Device::CUDA}, Buffer{Device::CUDA},
-        Buffer{Device::CUDA}};
+    array<Buffer, size_t(device::GraphWorkspaceKind::Count)> inference_graph_workspaces
+        = cuda_workspace_buffers(make_index_sequence<size_t(device::GraphWorkspaceKind::Count)>{});
 
 private:
 

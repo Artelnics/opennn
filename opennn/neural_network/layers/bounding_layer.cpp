@@ -79,10 +79,8 @@ static void bound_gpu(const TensorView& input,
 
 #else
 
-static void bound_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&)
-{
-    throw runtime_error("bound_gpu: CUDA support not compiled in.");
-}
+OPENNN_CUDA_STUB(void, bound_gpu,
+                 (const TensorView&, const TensorView&, const TensorView&, TensorView&))
 
 #endif
 
@@ -92,10 +90,7 @@ void BoundOperator::forward_propagate(ForwardPropagation& forward_propagation, s
     TensorView& output      = get_output(forward_propagation, layer);
 
     if (method == Method::NoBounding || !lower.get_data())
-    {
-        copy(input, output);
-        return;
-    }
+        return copy(input, output);
 
     bound(input, lower, upper, output);
 }
@@ -119,14 +114,13 @@ VectorR Bounding::get_upper_bounds() const
 
 const EnumMap<Bounding::BoundingMethod>& Bounding::bounding_method_map()
 {
-    static const vector<pair<BoundingMethod, string>> entries = {
+    static const EnumMap<BoundingMethod> map{
         {BoundingMethod::NoBounding, "NoBounding"},
         {BoundingMethod::NoBounding, "No bounding"},
         {BoundingMethod::Bounding,   "Bounding"},
         {BoundingMethod::Bounding,   "Positive outputs"},
         {BoundingMethod::Bounding,   "Data range"}
     };
-    static const EnumMap<BoundingMethod> map{entries};
     return map;
 }
 

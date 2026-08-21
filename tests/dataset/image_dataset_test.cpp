@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <fstream>
 #include <cstdint>
+#include <future>
 
 using namespace opennn;
 
@@ -322,6 +323,51 @@ TEST(ImageDataset, FillInputsRawWhenNotTraining)
     }
 
     EXPECT_GT(maximum, 1.0f);
+}
+
+TEST(ImageDataset, ConcurrentMixedSizeLoadsAndCacheReadsAreIndependent)
+{
+    ImageFixture small_fixture(3, 2, 3);
+    ImageFixture large_fixture(7, 5, 4);
+
+    const auto load = [](const filesystem::path& root)
+    {
+        ImageDataset dataset(root);
+        dataset.set_display(false);
+
+        vector<Index> samples(size_t(dataset.get_samples_number()));
+        iota(samples.begin(), samples.end(), Index(0));
+        const Shape& shape = dataset.get_input_shape();
+        const Index sample_size = shape[0] * shape[1] * shape[2];
+        vector<float> output(size_t(ssize(samples) * sample_size));
+        dataset.fill_inputs(samples, dataset.get_feature_indices("Input"),
+                            output.data(), FillMode::Inference);
+        return pair{shape, std::move(output)};
+    };
+
+    future<pair<Shape, vector<float>>> small =
+        async(launch::async, load, small_fixture.root);
+    future<pair<Shape, vector<float>>> large =
+        async(launch::async, load, large_fixture.root);
+
+    const auto validate = [](const pair<Shape, vector<float>>& result)
+    {
+        const Shape& shape = result.first;
+        const vector<float>& pixels = result.second;
+        EXPECT_EQ(shape.get_rank(), 3);
+        ASSERT_EQ(pixels.size() % 3, size_t(0));
+        for (size_t i = 0; i < pixels.size(); i += 3)
+        {
+            const bool red = pixels[i] == 200.0f && pixels[i + 1] == 10.0f
+                          && pixels[i + 2] == 10.0f;
+            const bool blue = pixels[i] == 10.0f && pixels[i + 1] == 10.0f
+                           && pixels[i + 2] == 200.0f;
+            EXPECT_TRUE(red || blue);
+        }
+    };
+
+    validate(small.get());
+    validate(large.get());
 }
 
 TEST(ImageDataset, SetInputScalingMinimumMaximum)

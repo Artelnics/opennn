@@ -177,7 +177,7 @@ TEST(Dataset, BatchFill)
     const vector<Index> input_variables_indices = { 0, 1 };
     const vector<Index> target_variables_indices = { 2 };
 
-    Batch batch(samples_number, &dataset, Configuration::Resolved{});
+    Batch batch(samples_number, &dataset, EffectiveConfig{});
     batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
     MatrixR input_data(3, 2);

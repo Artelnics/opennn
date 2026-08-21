@@ -8,9 +8,9 @@
 
 #pragma once
 
-#include <queue>
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
+#include <queue>
 #include <utility>
 
 namespace opennn
@@ -27,20 +27,15 @@ public:
         cond_.notify_one();
     }
 
-    T pop()
+    bool wait_pop(T& item)
     {
         std::unique_lock<std::mutex> lock(mutex_);
         cond_.wait(lock, [this] { return !queue_.empty() || closed_; });
-        if (queue_.empty()) return T{};
-        T item = std::move(queue_.front());
-        queue_.pop();
-        return item;
-    }
+        if (queue_.empty()) return false;
 
-    bool empty() const
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return queue_.empty();
+        item = std::move(queue_.front());
+        queue_.pop();
+        return true;
     }
 
     void close()
@@ -58,7 +53,7 @@ public:
 private:
 
     std::queue<T> queue_;
-    mutable std::mutex mutex_;
+    std::mutex mutex_;
     std::condition_variable cond_;
     bool closed_ = false;
 };

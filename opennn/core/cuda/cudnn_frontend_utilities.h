@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C U D N N   F R O N T E N D   U T I L I T I E S   H E A D E R
@@ -15,13 +15,16 @@
 #include <filesystem>
 #include <fstream>
 
-#include "opennn/core/tensor_types.h"
 #include "opennn/core/device_backend.h"
+#include "opennn/core/profiler.h"
 #include "opennn/core/string_utilities.h"
+#include "opennn/core/tensor_types.h"
 
 namespace opennn::cudnn_frontend
 {
 using namespace ::cudnn_frontend;
+
+inline constexpr size_t graph_cache_capacity = 8;
 
 inline const auto check_status = [](auto status, const string& what) {
     throw_if(status.is_bad(),
@@ -57,18 +60,17 @@ inline bool graph_timing_enabled()
     return enabled;
 }
 
-inline map<string, pair<double, long>>& graph_times()
+inline profiler::Stats& graph_timing_stats()
 {
-    static map<string, pair<double, long>> times;
+    static profiler::Stats times;
     static const bool registered = [] {
         atexit(+[] {
-            double total = 0;
-            for (const auto& [label, accumulated] : graph_times()) total += accumulated.first;
-            cerr << format("[GRAPH_TIMING] total_gpu_ms={:.1f}\n", total);
-            for (const auto& [label, accumulated] : graph_times())
-                cerr << format("[GRAPH_TIMING] {:<40} total_ms={:>9.1f} calls={:>6} ms/call={:.4f}\n",
-                               label, accumulated.first, accumulated.second,
-                               accumulated.first / accumulated.second);
+            profiler::Stats& stats = graph_timing_stats();
+            const double total_ms = stats.total_ms();
+            stats.print(cerr,
+                        format("total_gpu_ms={:.1f}", total_ms),
+                        total_ms,
+                        "GRAPH_TIMING");
         });
         return true;
     }();
@@ -84,27 +86,22 @@ inline void execute_graph(graph::Graph& graph,
                           const string& timing_label)
 {
     if (timing_label.empty())
-    {
-        check_status(graph.execute(Backend::get_cudnn_handle(), tensors, workspace), what);
-        return;
-    }
+        return check_status(graph.execute(device::get_cudnn_handle(), tensors, workspace), what);
 
     // Timing is a diagnostic; the two events live for the thread.
-    thread_local CudaEvent begin(cudaEventDefault);
-    thread_local CudaEvent end(cudaEventDefault);
-    device::record_event(begin, device::get_compute_stream());
+    thread_local device::CudaEvent begin(cudaEventDefault);
+    thread_local device::CudaEvent end(cudaEventDefault);
+    device::record_event(begin.get(), device::get_compute_stream());
 
-    check_status(graph.execute(Backend::get_cudnn_handle(), tensors, workspace), what);
+    check_status(graph.execute(device::get_cudnn_handle(), tensors, workspace), what);
 
-    device::record_event(end, device::get_compute_stream());
-    device::synchronize_event(end);
+    device::record_event(end.get(), device::get_compute_stream());
+    device::synchronize_event(end.get());
 
     float milliseconds = 0;
-    CHECK_CUDA(cudaEventElapsedTime(&milliseconds, begin, end));
+    CHECK_CUDA(cudaEventElapsedTime(&milliseconds, begin.get(), end.get()));
 
-    auto& [total, calls] = graph_times()[timing_label];
-    total += milliseconds;
-    ++calls;
+    graph_timing_stats().add(timing_label, milliseconds);
 }
 
 inline void* shared_workspace(int64_t bytes)
@@ -113,19 +110,19 @@ inline void* shared_workspace(int64_t bytes)
 }
 
 template<typename GraphCache, typename Body>
-bool run_frontend(unique_ptr<GraphCache>& cache, const char* label, Body&& body)
+bool run_frontend(GraphCache& cache, const char* label, Body&& body)
 {
-    if (!cache) cache = make_unique<GraphCache>();
-    if (cache->disabled) return false;
+    const lock_guard lock(cache.access_mutex);
+    if (cache.disabled) return false;
 
     try
     {
-        body(*cache);
+        body(cache);
         return true;
     }
     catch (const exception& e)
     {
-        cache->disabled = true;
+        cache.disabled = true;
         cerr << label << ": cudnn-frontend path unavailable (" << e.what() << ").\n";
         return false;
     }
@@ -190,6 +187,81 @@ inline void set_nhwc_output(shared_ptr<graph::Tensor_attributes>& tensor,
     tensor->set_output(true)
            .set_dim({n, c, h, w})
            .set_stride(nhwc_strides(c, h, w));
+}
+
+// The pointer bindings a graph execution consumes: one device pointer per
+// Tensor_attributes the graph declared.
+using VariantPack = unordered_map<shared_ptr<graph::Tensor_attributes>, void*>;
+
+// A (B, H, S, D) tensor over memory that is laid out either that way or,
+// interleaved, as (B, S, H, D) - the layout the projection GEMMs write.
+inline vector<int64_t> bhsd_strides(int64_t h, int64_t s, int64_t d, bool interleaved)
+{
+    return interleaved ? vector<int64_t>{s * h * d, d, h * d, 1}
+                       : vector<int64_t>{h * s * d, s * d, d, 1};
+}
+
+inline shared_ptr<graph::Tensor_attributes>
+bhsd_tensor(graph::Graph& graph, const char* name,
+            int64_t b, int64_t h, int64_t s, int64_t d, bool interleaved)
+{
+    return graph.tensor(graph::Tensor_attributes()
+                        .set_name(name)
+                        .set_dim   ({b, h, s, d})
+                        .set_stride(bhsd_strides(h, s, d, interleaved)));
+}
+
+inline void set_bhsd_output(shared_ptr<graph::Tensor_attributes>& tensor,
+                            int64_t b, int64_t h, int64_t s, int64_t d, bool interleaved)
+{
+    tensor->set_output(true)
+           .set_dim   ({b, h, s, d})
+           .set_stride(bhsd_strides(h, s, d, interleaved));
+}
+
+// A (1, C, 1, 1) FP32 tensor: the per-channel parameters and statistics batch
+// normalization and a convolution bias work in. The strides are the NHWC ones
+// for a 1x1 image, which is what the layout amounts to.
+inline shared_ptr<graph::Tensor_attributes>
+per_channel_tensor(graph::Graph& graph, const char* name, int64_t channels)
+{
+    return graph.tensor(graph::Tensor_attributes()
+                        .set_name(name)
+                        .set_data_type(DataType_t::FLOAT)
+                        .set_dim({1, channels, 1, 1})
+                        .set_stride(nhwc_strides(channels, 1, 1)));
+}
+
+inline void set_per_channel_output(shared_ptr<graph::Tensor_attributes>& tensor, int64_t channels)
+{
+    tensor->set_output(true)
+           .set_data_type(DataType_t::FLOAT)
+           .set_dim({1, channels, 1, 1})
+           .set_stride(nhwc_strides(channels, 1, 1));
+}
+
+// Empty unless graph timing is on, and execute_graph reads an empty label as
+// "do not time" - so the format cost is not paid when timing is off, and a
+// non-empty constant would silently turn timing on.
+template <typename... Args>
+inline string timing_label(format_string<Args...> fmt, Args&&... args)
+{
+    if (!graph_timing_enabled()) return {};
+    return format(fmt, std::forward<Args>(args)...);
+}
+
+// A one-element tensor. Pass by value for a host scalar the graph reads
+// directly; leave it false for a device pointer.
+inline shared_ptr<graph::Tensor_attributes>
+scalar_tensor(graph::Graph& graph, const char* name, DataType_t dtype,
+              bool pass_by_value = false, int64_t batch = 1)
+{
+    return graph.tensor(graph::Tensor_attributes()
+                        .set_name(name)
+                        .set_dim   ({batch, 1, 1, 1})
+                        .set_stride({1, 1, 1, 1})
+                        .set_data_type(dtype)
+                        .set_is_pass_by_value(pass_by_value));
 }
 
 // Execution-plan disk cache. Building plans dominates process startup: on
@@ -440,7 +512,7 @@ inline bool sdpa_autotune_enabled()
 inline bool finalize_attention(graph::Graph& graph, const string& tag, int64_t& workspace_bytes,
                                bool allow_autotune = false)
 {
-    const cudnnHandle_t handle = Backend::get_cudnn_handle();
+    const cudnnHandle_t handle = device::get_cudnn_handle();
 
     check_status(graph.validate(), tag + " validate");
 
@@ -470,11 +542,7 @@ inline bool finalize_attention(graph::Graph& graph, const string& tag, int64_t& 
 inline shared_ptr<graph::Tensor_attributes>
 seq_len_scalar(graph::Graph& graph, const char* name, int64_t batch = 1)
 {
-    return graph.tensor(graph::Tensor_attributes()
-                        .set_name(name)
-                        .set_dim({batch, 1, 1, 1})
-                        .set_stride({1, 1, 1, 1})
-                        .set_data_type(DataType_t::INT32));
+    return scalar_tensor(graph, name, DataType_t::INT32, false, batch);
 }
 
 // Builds the plan(s) of a graph. Returns true when the plan choice is left to
@@ -482,7 +550,7 @@ seq_len_scalar(graph::Graph& graph, const char* name, int64_t batch = 1)
 // candidates are built and timed on real tensors by autotune()).
 inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string& tag)
 {
-    const cudnnHandle_t handle = Backend::get_cudnn_handle();
+    const cudnnHandle_t handle = device::get_cudnn_handle();
     const bool request_autotune = device::conv_autotune_enabled();
 
     workspace_bytes = 0;
@@ -586,7 +654,7 @@ inline void autotune_now(bool& pending, graph::Graph& graph,
     {
         const int64_t tune_bytes = autotune_workspace_bytes(graph);
         if (tune_bytes > 0) tune_workspace.resize_bytes(Index(tune_bytes), Device::CUDA);
-        check_status(graph.autotune(Backend::get_cudnn_handle(), tensors, tune_workspace.data()), "autotune");
+        check_status(graph.autotune(device::get_cudnn_handle(), tensors, tune_workspace.data()), "autotune");
 
         // The winner is now the candidate; persist it so the next process loads
         // the tuned plan instead of re-tuning (or, worse, settling for the

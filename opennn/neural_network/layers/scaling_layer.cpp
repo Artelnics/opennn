@@ -153,11 +153,8 @@ void scale(const TensorView& input,
            TensorView& output)
 {
     if (input.is_cuda())
-    {
-        scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
-                  min_range, max_range, output, false);
-        return;
-    }
+        return scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
+                         min_range, max_range, output, false);
     scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
               min_range, max_range, output, false);
 }
@@ -170,11 +167,8 @@ void unscale(const TensorView& input,
              TensorView& output)
 {
     if (input.is_cuda())
-    {
-        scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
-                  min_range, max_range, output, true);
-        return;
-    }
+        return scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
+                         min_range, max_range, output, true);
 
     scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
               min_range, max_range, output, true);
@@ -207,12 +201,10 @@ static void scale_gpu(const TensorView& input,
 
 #else
 
-static void scale_gpu(const TensorView&, const TensorView&, const TensorView&,
-                      const TensorView&, const TensorView&, const TensorView&,
-                      float, float, TensorView&, bool)
-{
-    throw runtime_error("scale_gpu: CUDA support not compiled in.");
-}
+OPENNN_CUDA_STUB(void, scale_gpu,
+                 (const TensorView&, const TensorView&, const TensorView&,
+                  const TensorView&, const TensorView&, const TensorView&,
+                  float, float, TensorView&, bool))
 
 #endif
 
@@ -222,10 +214,7 @@ void ScaleOperator::forward_propagate(ForwardPropagation& forward_propagation, s
     TensorView& output      = get_output(forward_propagation, layer);
 
     if (!minimums.get_data())
-    {
-        copy(input, output);
-        return;
-    }
+        return copy(input, output);
 
     if (invert)
         unscale(input, minimums, maximums, means, standard_deviations, scalers,

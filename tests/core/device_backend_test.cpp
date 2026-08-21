@@ -78,6 +78,22 @@ TEST(DeviceBackendTest, AllocateNegativeBytesThrows)
     EXPECT_THROW(device::allocate(Device::CPU, -1), runtime_error);
 }
 
+TEST(DeviceBackendTest, BoundedCacheRetainsHitsAndLimitsEntries)
+{
+    unordered_map<int, string> entries;
+
+    detail::bounded_cache_entry(entries, 1, 2) = "one";
+    detail::bounded_cache_entry(entries, 2, 2) = "two";
+
+    EXPECT_EQ(detail::bounded_cache_entry(entries, 1, 2), "one");
+    EXPECT_EQ(entries.size(), 2);
+
+    detail::bounded_cache_entry(entries, 3, 2) = "three";
+
+    EXPECT_EQ(entries.size(), 2);
+    EXPECT_TRUE(entries.contains(3));
+}
+
 TEST(DeviceBackendTest, AllocateAutoDeviceThrows)
 {
     EXPECT_THROW(device::allocate(Device::Auto, 16), runtime_error);
@@ -242,28 +258,24 @@ TEST(DeviceBackendTest, SynchronizeAndCheckLastErrorAreNoOps)
     EXPECT_NO_THROW(device::check_last_error());
 }
 
-TEST(DeviceBackendTest, CreateStreamMatchesBuild)
+TEST(DeviceBackendTest, CudaEventOwnsAndTransfersHandle)
 {
-    cudaStream_t stream = device::create_stream(0);
+    device::CudaEvent event;
+    event.create();
+    const cudaEvent_t handle = event.get();
 
-    if (device::has_cuda_device())
-        EXPECT_NE(stream, nullptr);
-    else
-        EXPECT_EQ(stream, nullptr);
+    EXPECT_EQ(static_cast<bool>(event), device::has_cuda_device());
 
-    EXPECT_NO_THROW(device::destroy_stream(stream));
-}
+    device::CudaEvent moved(std::move(event));
 
-TEST(DeviceBackendTest, CreateEventMatchesBuild)
-{
-    cudaEvent_t event = device::create_event();
+    EXPECT_FALSE(event);
+    EXPECT_EQ(moved.get(), handle);
 
-    if (device::has_cuda_device())
-        EXPECT_NE(event, nullptr);
-    else
-        EXPECT_EQ(event, nullptr);
+    device::CudaEvent assigned;
+    assigned = std::move(moved);
 
-    EXPECT_NO_THROW(device::destroy_event(event));
+    EXPECT_FALSE(moved);
+    EXPECT_EQ(assigned.get(), handle);
 }
 
 TEST(DeviceBackendTest, EventOperationsTolerateNull)
@@ -272,26 +284,47 @@ TEST(DeviceBackendTest, EventOperationsTolerateNull)
     EXPECT_NO_THROW(device::stream_wait_event(nullptr, nullptr));
 }
 
-TEST(DeviceBackendTest, PinnedHostAllocationRoundTrips)
+TEST(DeviceBackendTest, PinnedBufferOwnsAndTransfersAllocation)
 {
     const Index byte_count = 128;
+    device::PinnedBuffer buffer(byte_count);
+    ASSERT_NE(buffer.data(), nullptr);
+    EXPECT_EQ(buffer.byte_size(), byte_count);
 
-    void* pointer = device::allocate_pinned_host(byte_count);
-    ASSERT_NE(pointer, nullptr);
+    memset(buffer.data(), 0, static_cast<size_t>(byte_count));
+    void* const pointer = buffer.data();
 
-    memset(pointer, 0, static_cast<size_t>(byte_count));
+    device::PinnedBuffer moved(std::move(buffer));
+    EXPECT_TRUE(buffer.empty());
+    EXPECT_EQ(moved.data(), pointer);
 
-    EXPECT_NO_THROW(device::deallocate_pinned_host(pointer));
+    device::PinnedBuffer assigned;
+    assigned = std::move(moved);
+    EXPECT_TRUE(moved.empty());
+    EXPECT_EQ(assigned.data(), pointer);
 }
 
-TEST(DeviceBackendTest, PinnedHostZeroBytesReturnsNull)
+TEST(DeviceBackendTest, PinnedBufferGrowthDoesNotShrink)
 {
-    EXPECT_EQ(device::allocate_pinned_host(0), nullptr);
+    device::PinnedBuffer buffer;
+    EXPECT_TRUE(buffer.empty());
+
+    buffer.grow_to(128);
+    void* const pointer = buffer.data();
+    buffer.grow_to(64);
+
+    EXPECT_EQ(buffer.data(), pointer);
+    EXPECT_EQ(buffer.byte_size(), 128);
+
+    buffer.resize_bytes(0);
+    EXPECT_TRUE(buffer.empty());
 }
 
-TEST(DeviceBackendTest, PinnedHostNegativeBytesThrows)
+TEST(DeviceBackendTest, PinnedBufferRejectsNegativeSize)
 {
-    EXPECT_THROW(device::allocate_pinned_host(-8), runtime_error);
+    device::PinnedBuffer buffer;
+    EXPECT_THROW(buffer.resize_bytes(-8), runtime_error);
+    EXPECT_THROW(buffer.grow_to(-8), runtime_error);
 }
 
 TEST(DeviceBackendTest, ComputeStreamMatchesBuild)
@@ -309,15 +342,86 @@ TEST(DeviceBackendTest, ComputeStreamMatchesBuild)
     }
 }
 
-TEST(DeviceBackendTest, BackendProvidesThreadPoolDevice)
+TEST(DeviceBackendTest, LibraryHandlesMatchBuild)
 {
-    ThreadPoolDevice* thread_pool_device = Backend::instance().get_thread_pool_device();
-    EXPECT_NE(thread_pool_device, nullptr);
-    EXPECT_GT(thread_pool_device->numThreads(), 0);
+    if (device::has_cuda_device())
+    {
+        EXPECT_NE(device::get_cublas_handle(), nullptr);
+        EXPECT_NE(device::get_cublas_lt_handle(), nullptr);
+        EXPECT_NE(device::get_cudnn_handle(), nullptr);
+        EXPECT_NE(device::get_op_tensor_add_descriptor(), nullptr);
+    }
+    else
+    {
+        EXPECT_EQ(device::get_cublas_handle(), nullptr);
+        EXPECT_EQ(device::get_cublas_lt_handle(), nullptr);
+        EXPECT_EQ(device::get_cudnn_handle(), nullptr);
+        EXPECT_EQ(device::get_op_tensor_add_descriptor(), nullptr);
+    }
 }
 
-TEST(DeviceBackendTest, GetDeviceReturnsBackendThreadPoolDevice)
+#ifdef OPENNN_HAS_CUDA
+TEST(DeviceBackendTest, CublasPointerModeGuardRestoresMode)
 {
-    ThreadPoolDevice& reference = get_device();
-    EXPECT_EQ(&reference, Backend::instance().get_thread_pool_device());
+    if (!device::has_cuda_device()) GTEST_SKIP() << "CUDA device unavailable.";
+
+    const cublasHandle_t handle = device::get_cublas_handle();
+    cublasPointerMode_t original_mode = CUBLAS_POINTER_MODE_HOST;
+    ASSERT_EQ(cublasGetPointerMode(handle, &original_mode), CUBLAS_STATUS_SUCCESS);
+
+    const cublasPointerMode_t temporary_mode =
+        original_mode == CUBLAS_POINTER_MODE_HOST
+            ? CUBLAS_POINTER_MODE_DEVICE
+            : CUBLAS_POINTER_MODE_HOST;
+
+    {
+        const device::CublasPointerModeGuard guard(handle, temporary_mode);
+        cublasPointerMode_t current_mode = original_mode;
+        ASSERT_EQ(cublasGetPointerMode(handle, &current_mode), CUBLAS_STATUS_SUCCESS);
+        EXPECT_EQ(current_mode, temporary_mode);
+    }
+
+    cublasPointerMode_t restored_mode = temporary_mode;
+    ASSERT_EQ(cublasGetPointerMode(handle, &restored_mode), CUBLAS_STATUS_SUCCESS);
+    EXPECT_EQ(restored_mode, original_mode);
+}
+
+TEST(DeviceBackendTest, CublasMathModeGuardRestoresMode)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "CUDA device unavailable.";
+
+    const cublasHandle_t handle = device::get_cublas_handle();
+    cublasMath_t original_mode = CUBLAS_DEFAULT_MATH;
+    ASSERT_EQ(cublasGetMathMode(handle, &original_mode), CUBLAS_STATUS_SUCCESS);
+
+    const cublasMath_t temporary_mode =
+        original_mode == CUBLAS_DEFAULT_MATH
+            ? CUBLAS_TF32_TENSOR_OP_MATH
+            : CUBLAS_DEFAULT_MATH;
+
+    {
+        const device::CublasMathModeGuard guard(handle, temporary_mode);
+        cublasMath_t current_mode = original_mode;
+        ASSERT_EQ(cublasGetMathMode(handle, &current_mode), CUBLAS_STATUS_SUCCESS);
+        EXPECT_EQ(current_mode, temporary_mode);
+    }
+
+    cublasMath_t restored_mode = temporary_mode;
+    ASSERT_EQ(cublasGetMathMode(handle, &restored_mode), CUBLAS_STATUS_SUCCESS);
+    EXPECT_EQ(restored_mode, original_mode);
+}
+#endif
+
+TEST(DeviceBackendTest, GetDeviceProvidesThreadPoolDevice)
+{
+    ThreadPoolDevice& thread_pool_device = get_device();
+    EXPECT_GT(thread_pool_device.numThreads(), 0);
+}
+
+TEST(DeviceBackendTest, GetDeviceReturnsStableThreadPoolDevice)
+{
+    ThreadPoolDevice& first = get_device();
+    ThreadPoolDevice& second = get_device();
+
+    EXPECT_EQ(&first, &second);
 }

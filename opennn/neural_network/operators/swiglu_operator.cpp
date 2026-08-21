@@ -100,8 +100,8 @@ static void swiglu_backward_gpu(const TensorView& output_delta, const TensorView
 
 #else
 
-static void swiglu_forward_gpu(const TensorView&, const TensorView&, TensorView&) { throw runtime_error("swiglu_forward_gpu: CUDA support not compiled in."); }
-static void swiglu_backward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&) { throw runtime_error("swiglu_backward_gpu: CUDA support not compiled in."); }
+OPENNN_CUDA_STUB(void, swiglu_forward_gpu, (const TensorView&, const TensorView&, TensorView&))
+OPENNN_CUDA_STUB(void, swiglu_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&))
 
 #endif
 

@@ -135,11 +135,17 @@ void top_k_partition(vector<pair<float, Index>>& values, Index top_k)
                                   descending_first);
 }
 
-}
+struct SamplingWorkspace
+{
+    VectorR original;
+    vector<pair<float, Index>> ranked;
+    vector<char> keep;
+};
 
-Index sample_token(VectorR& probabilities,
-                   const SamplingConfig& sampling_config,
-                   const vector<Index>& history)
+Index sample_token_with_workspace(VectorR& probabilities,
+                                  const SamplingConfig& sampling_config,
+                                  const vector<Index>& history,
+                                  SamplingWorkspace& workspace)
 {
     const Index vocabulary_size = probabilities.size();
     throw_if(vocabulary_size == 0,
@@ -150,9 +156,9 @@ Index sample_token(VectorR& probabilities,
     if (config.temperature == 0.0f)
         return maximal_index(probabilities);
 
-    static thread_local VectorR original;
-    static thread_local vector<pair<float, Index>> ranked;
-    static thread_local vector<char> keep;
+    VectorR& original = workspace.original;
+    vector<pair<float, Index>>& ranked = workspace.ranked;
+    vector<char>& keep = workspace.keep;
 
     original = probabilities;
     if (config.repetition_penalty != 1.0f)
@@ -222,6 +228,16 @@ Index sample_token(VectorR& probabilities,
         if (cumulative >= threshold) return i;
     }
     return vocabulary_size - 1;
+}
+
+}
+
+Index sample_token(VectorR& probabilities,
+                   const SamplingConfig& sampling_config,
+                   const vector<Index>& history)
+{
+    SamplingWorkspace workspace;
+    return sample_token_with_workspace(probabilities, sampling_config, history, workspace);
 }
 
 ReasoningMode ChatTemplate::resolve_reasoning_mode(
@@ -473,20 +489,12 @@ public:
 #ifdef OPENNN_HAS_CUDA
         if (token_device)
         {
-            pinned_id = static_cast<int*>(
-                device::allocate_pinned_host(Index(sizeof(int))));
+            pinned_id.resize_bytes(Index(sizeof(int)));
             gpu_candidates.resize_bytes(
                 sample_logits_scratch_floats() * Index(sizeof(float)),
                 Device::CUDA);
             gpu_id.resize_bytes(Index(sizeof(int)), Device::CUDA);
         }
-#endif
-    }
-
-    ~DecoderSampler()
-    {
-#ifdef OPENNN_HAS_CUDA
-        if (pinned_id) device::deallocate_pinned_host(pinned_id);
 #endif
     }
 
@@ -530,13 +538,13 @@ public:
                               token_device
                                   ? static_cast<float*>(token_device->data())
                                   : nullptr);
-            device::copy_async(pinned_id,
+            device::copy_async(pinned_id.data(),
                                gpu_id.data(),
                                Index(sizeof(int)),
                                device::CopyKind::DeviceToHost,
                                device::get_compute_stream());
             device::synchronize(device::get_compute_stream());
-            return Index(*pinned_id);
+            return Index(*pinned_id.as<int>());
         }
 #endif
 
@@ -571,8 +579,7 @@ private:
                                    vocabulary * Index(sizeof(float)),
                                    device::CopyKind::DeviceToHost,
                                    device::get_compute_stream());
-                device::synchronize(device::get_compute_stream());
-                return;
+                return device::synchronize(device::get_compute_stream());
             }
 
             throw_if(!row.is_bf16(),
@@ -695,7 +702,7 @@ private:
     vector<float> adjusted;
     vector<pair<float, Index>> candidates;
 #ifdef OPENNN_HAS_CUDA
-    int* pinned_id = nullptr;
+    device::PinnedBuffer pinned_id;
     Buffer gpu_candidates{Device::CUDA};
     Buffer gpu_id{Device::CUDA};
 #endif
@@ -766,6 +773,7 @@ struct ClassicGenerationState
     Tensor2 target;
     vector<Index> history;
     VectorR distribution;
+    SamplingWorkspace sampling_workspace;
     vector<uint16_t> bf16_staging;
 
     Index input_length = 0;
@@ -926,6 +934,7 @@ void read_classic_distribution(ClassicGenerationState& state,
     const TensorView output = state.propagation->get_outputs();
     const Index vocabulary = output.get_shape().back();
     const Index offset = position * vocabulary;
+    const cudaStream_t stream = device::get_compute_stream();
 
     if (output.is_bf16())
     {
@@ -933,8 +942,8 @@ void read_classic_distribution(ClassicGenerationState& state,
                            output.as<bfloat16>() + offset,
                            vocabulary * Index(sizeof(uint16_t)),
                            device::CopyKind::DeviceToHost,
-                           device::get_compute_stream());
-        device::synchronize(device::get_compute_stream());
+                           stream);
+        device::synchronize(stream);
         ranges::transform(state.bf16_staging | views::take(vocabulary),
                           state.distribution.data(), bfloat16_to_float_host);
         return;
@@ -946,8 +955,8 @@ void read_classic_distribution(ClassicGenerationState& state,
                        output.as<float>() + offset,
                        vocabulary * Index(sizeof(float)),
                        device::CopyKind::DeviceToHost,
-                       device::get_compute_stream());
-    device::synchronize(device::get_compute_stream());
+                       stream);
+    device::synchronize(stream);
 }
 
 }
@@ -1019,6 +1028,7 @@ struct ChatSession::Impl
                        {.sequence_capacity = 1,
                         .final_output_capacity = 1,
                         .retained_output_layers = {}});
+            decode.share_session_state_from(prefill);
             decode.set_active_sequence_length(1);
             decode.set_cuda_graph(true);
             const cudaStream_t stream = device::get_compute_stream();
@@ -1256,6 +1266,7 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
                       {.sequence_capacity = 1,
                        .final_output_capacity = 1,
                        .retained_output_layers = {}});
+    draft->decode.share_session_state_from(draft->prefill);
     draft->decode.set_active_sequence_length(1);
     draft->decode.set_cuda_graph(true);
 
@@ -1265,6 +1276,7 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
         {.sequence_capacity = verify_capacity,
          .final_output_capacity = verify_capacity,
          .retained_output_layers = {}});
+    draft->target_verify.share_session_state_from(impl->prefill);
     draft->target_verify_inputs.resize(1);
     Impl::initialize_cuda_input(draft->target_verify);
 
@@ -1324,7 +1336,8 @@ struct ClassicDecodeLoop
     {
         read_classic_distribution(state, position);
         const Index next =
-            sample_token(state.distribution, sampling, state.history);
+            sample_token_with_workspace(state.distribution, sampling, state.history,
+                                        state.sampling_workspace);
         ++response.generated_tokens;
         state.history.push_back(next);
         return next;

@@ -8,6 +8,8 @@
 
 #include "opennn/neural_network/operators/tokenizer_operator.h"
 
+#include <mutex>
+
 #include <atomic>
 #include <utility>
 
@@ -556,10 +558,7 @@ void WordPieceTokenizer::wordpiece(const string& word,
     };
 
     if (Index(characters) > max_input_chars_per_word)
-    {
-        append_unknown();
-        return;
-    }
+        return append_unknown();
 
     const size_t token_start = tokens ? tokens->size() : 0;
     const size_t id_start = ids ? ids->size() : 0;
@@ -592,8 +591,7 @@ void WordPieceTokenizer::wordpiece(const string& word,
         {
             if (tokens) tokens->resize(token_start);
             if (ids) ids->resize(id_start);
-            append_unknown();
-            return;
+            return append_unknown();
         }
         start = end;
     }
@@ -643,7 +641,16 @@ uint64_t WordPieceTokenizer::fingerprint() const
     return hash;
 }
 
+struct BytePairTokenizer::Cache
+{
+    static constexpr size_t maximum_entries = 4096;
+
+    mutex guard;
+    StringMap<vector<string>> entries;
+};
+
 BytePairTokenizer::BytePairTokenizer()
+    : bpe_cache(make_shared<Cache>())
 {
     reserved_tokens = {string(PAD_TOKEN)};
 
@@ -743,8 +750,7 @@ void BytePairTokenizer::set_merges(const vector<string>& merges)
         merge_ranks.emplace(merge_line, rank++);
     }
 
-    static atomic<uint64_t> revision_counter{0};
-    merges_revision = ++revision_counter;
+    bpe_cache = make_shared<Cache>();
 }
 
 void BytePairTokenizer::set_special_tokens(const vector<string>& new_special_tokens)
@@ -938,11 +944,7 @@ void BytePairTokenizer::tokenize_into(string_view text,
         if (ids) ids->push_back(token_to_id(token));
     };
 
-    constexpr size_t maximum_cache_entries = 4096;
-    static thread_local unordered_map<uint64_t, StringMap<vector<string>>> caches;
-    if (caches.size() > 8 && !caches.contains(merges_revision))
-        caches.clear();
-    StringMap<vector<string>>& cache = caches[merges_revision];
+    const shared_ptr<Cache> cache = bpe_cache;
 
     auto append_segment = [&](string_view segment)
     {
@@ -953,27 +955,25 @@ void BytePairTokenizer::tokenize_into(string_view text,
             for (const char raw : piece)
                 append_utf8(byte_unicode, byte_encoder[static_cast<unsigned char>(raw)]);
 
-            const vector<string>* subwords = nullptr;
-            vector<string> uncached;
-
-            const auto cached = cache.find(byte_unicode);
-            if (cached != cache.end())
             {
-                subwords = &cached->second;
-            }
-            else if (cache.size() < maximum_cache_entries)
-            {
-                auto iterator = cache.try_emplace(byte_unicode).first;
-                iterator->second = bpe(iterator->first);
-                subwords = &iterator->second;
-            }
-            else
-            {
-                uncached = bpe(byte_unicode);
-                subwords = &uncached;
+                lock_guard lock(cache->guard);
+                const auto cached = cache->entries.find(byte_unicode);
+                if (cached != cache->entries.end())
+                {
+                    for (const string& subword : cached->second)
+                        append(subword);
+                    continue;
+                }
             }
 
-            for (const string& subword : *subwords)
+            vector<string> subwords = bpe(byte_unicode);
+            {
+                lock_guard lock(cache->guard);
+                if (cache->entries.size() < Cache::maximum_entries)
+                    cache->entries.try_emplace(byte_unicode, subwords);
+            }
+
+            for (const string& subword : subwords)
                 append(subword);
         }
     };

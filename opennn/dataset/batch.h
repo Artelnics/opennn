@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   B A T C H   S T R U C T   H E A D E R
@@ -15,6 +15,7 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include <utility>
 
 namespace opennn
 {
@@ -25,13 +26,17 @@ enum class FillMode { Training, Validation, Inference };
 
 struct BatchSlot
 {
+    // A slot carries data once it has both a shape and a buffer behind it;
+    // an unused slot (a network with no decoder input, say) has neither.
+    bool has_data() const noexcept { return !shape.empty() && buffer.data(); }
+
     Buffer buffer;
     Shape  shape;
     Type   type = Type::FP32;
+    
     optional<bool> contiguous;
 
-    float* host = nullptr;
-    Index  host_allocated_size = 0;
+    device::PinnedBuffer host;
 };
 
 struct DeviceGather
@@ -54,7 +59,7 @@ struct Batch
 {
     Batch(Index,
           const Dataset*,
-          const Configuration::Resolved&,
+          const EffectiveConfig&,
           bool prefetch_only = false);
     ~Batch();
 
@@ -65,7 +70,7 @@ struct Batch
 
     void set(Index,
              const Dataset*,
-             const Configuration::Resolved&,
+             const EffectiveConfig&,
              bool prefetch_only = false);
 
     void fill(const vector<Index>&,
@@ -76,14 +81,12 @@ struct Batch
 
     const vector<TensorView>& get_inputs() const
     {
-        if (uses_cuda()) return input_views_cache;
-        return input_views_host_cache;
+        return uses_cuda() ? input_views_cache : input_views_host_cache;
     }
 
     const TensorView& get_targets() const
     {
-        if (uses_cuda()) return target_view_cache;
-        return target_view_host_cache;
+        return uses_cuda() ? target_view_cache : target_view_host_cache;
     }
 
     bool uses_cuda() const
@@ -106,11 +109,10 @@ struct Batch
 
     void record_h2d_done(cudaStream_t);
 
-    uint16_t* input_host_bf16 = nullptr;
-    Index input_host_bf16_allocated_size = 0;
+    device::PinnedBuffer input_host_bf16;
     Buffer fp32_staging{Device::CUDA};
 
-    CudaEvent h2d_done_event;
+    device::CudaEvent h2d_done_event;
     bool h2d_done_recorded = false;
 
     void wait_h2d_complete();
@@ -126,8 +128,7 @@ struct Batch
     // Pinned, like every other host staging buffer here: the per-step index
     // upload behind the device gather is a cudaMemcpyAsync, and from pageable
     // memory that goes through a driver bounce buffer and blocks the host.
-    int* gather_indices_host = nullptr;
-    Index gather_indices_host_allocated_bytes = 0;
+    device::PinnedBuffer gather_indices_host;
     Buffer gather_indices_device{Device::CUDA};
 };
 
@@ -152,12 +153,29 @@ struct BatchPrefetchSession
 
     Batch* wait(Index iteration);
 
+    bool publish(Index iteration, Batch* batch);
+
+    bool acquire(Batch*& batch) { return empty_queue.wait_pop(batch); }
+    void release(Batch* batch) { empty_queue.push(batch); }
+    Index claim_iteration() { return next_iteration.fetch_add(1); }
+
+    template <typename Worker>
+    void add_worker(Worker&& worker)
+    {
+        threads.emplace_back(std::forward<Worker>(worker));
+    }
+
     void capture_current_exception();
 
     void rethrow_if_error();
 
+private:
+
+    enum class SlotState : uint8_t { Pending, Ready, Aborted };
+
     ThreadSafeQueue<Batch*>& empty_queue;
-    vector<atomic<Batch*>> ready_batches;
+    vector<Batch*> ready_batches;
+    vector<atomic<SlotState>> slot_states;
     atomic<Index> next_iteration{0};
     mutex error_mutex;
     exception_ptr worker_error;

@@ -11,57 +11,10 @@
 #include "opennn/neural_network/operators/operator.h"
 
 #include <functional>
+#include <mutex>
 
 namespace opennn
 {
-
-template<typename Handle>
-struct CudnnDescriptor
-{
-    Handle handle = nullptr;
-#ifdef OPENNN_HAS_CUDA
-    cudnnStatus_t (*deleter)(Handle) = nullptr;
-#else
-    void (*deleter)(Handle) = nullptr;
-#endif
-
-    CudnnDescriptor() = default;
-
-    CudnnDescriptor(CudnnDescriptor&& other) noexcept
-        : handle(other.handle), deleter(other.deleter)
-    {
-        other.handle = nullptr;
-        other.deleter = nullptr;
-    }
-
-    CudnnDescriptor& operator=(CudnnDescriptor&& other) noexcept
-    {
-        if (this != &other)
-        {
-            reset();
-            handle = other.handle;
-            deleter = other.deleter;
-            other.handle = nullptr;
-            other.deleter = nullptr;
-        }
-        return *this;
-    }
-
-    CudnnDescriptor(const CudnnDescriptor&) = delete;
-    CudnnDescriptor& operator=(const CudnnDescriptor&) = delete;
-
-    ~CudnnDescriptor() { reset(); }
-
-    void reset()
-    {
-        if (handle && deleter) deleter(handle);
-        handle = nullptr;
-        deleter = nullptr;
-    }
-
-    operator Handle() const { return handle; }
-    explicit operator bool() const { return handle != nullptr; }
-};
 
 inline constexpr int RNN_SHAPE_SLOTS = 3;
 
@@ -69,8 +22,10 @@ struct CudnnRnnShapeSlot
 {
     Index batch = -1;
     Index time  = -1;
-    int   stamp = 0;
-    bool  training_ready = false;
+    int  stamp = 0;
+    bool training_ready = false;
+    Index workspace_bytes = 0;
+    Index reserve_space_bytes = 0;
     CudnnDescriptor<cudnnRNNDataDescriptor_t> x_desc;
     CudnnDescriptor<cudnnRNNDataDescriptor_t> y_desc;
     CudnnDescriptor<cudnnTensorDescriptor_t>  h_desc;
@@ -79,14 +34,11 @@ struct CudnnRnnShapeSlot
     Buffer seq_dev {Device::CUDA};
 };
 
-inline constexpr int RNN_MAX_LINEAR_LAYERS = 8;
-
 #ifdef OPENNN_HAS_CUDA
 
 struct CudnnRnnConfig
 {
     cudnnRNNMode_t cell_mode;
-    int num_linear_layers;
 };
 
 #endif
@@ -94,49 +46,50 @@ struct CudnnRnnConfig
 struct CudnnRnnState
 {
 protected:
-    mutable Buffer weight_space_buf  {Device::CUDA};
-    mutable Buffer dweight_space_buf {Device::CUDA};
-    mutable Buffer workspace_buf     {Device::CUDA};
-    mutable Buffer reserve_space_buf {Device::CUDA};
-    mutable Buffer y_buf             {Device::CUDA};
-    mutable Buffer dy_buf            {Device::CUDA};
-    mutable Buffer dx_scratch_buf    {Device::CUDA};
+    struct BackendState
+    {
+        mutex access_mutex;
+        CudnnDescriptor<cudnnRNNDescriptor_t> rnn_desc;
+        CudnnDescriptor<cudnnDropoutDescriptor_t> dropout_desc;
+        // cuDNN retains this address for the lifetime of the zero-rate
+        // dropout descriptor.
+        Buffer dropout_states{Device::CUDA};
+        CudnnRnnShapeSlot shape_slots[RNN_SHAPE_SLOTS];
+        int shape_stamp = 0;
+        Index cached_input_features = -1;
+        Index cached_output_features = -1;
+        Index weight_space_bytes = 0;
+        bool persist_algo_failed = false;
+        bool persist_algo_active = false;
+    };
 
-    mutable CudnnDescriptor<cudnnRNNDescriptor_t>     rnn_desc;
-    mutable CudnnDescriptor<cudnnDropoutDescriptor_t> dropout_desc;
-    mutable Buffer dropout_states_buf{Device::CUDA};
-
-    mutable CudnnRnnShapeSlot shape_slots_[RNN_SHAPE_SLOTS];
-    mutable int active_shape_ = -1;
-    mutable int shape_stamp_  = 0;
-    CudnnRnnShapeSlot& active_shape() const { return shape_slots_[active_shape_]; }
-
-    mutable Index cached_input_features  = -1;
-    mutable Index cached_output_features = -1;
-
-    mutable float* cudnn_w_ptrs_[RNN_MAX_LINEAR_LAYERS]  = {};
-    mutable float* cudnn_b_ptrs_[RNN_MAX_LINEAR_LAYERS]  = {};
-    mutable float* cudnn_gw_ptrs_[RNN_MAX_LINEAR_LAYERS] = {};
-    mutable float* cudnn_gb_ptrs_[RNN_MAX_LINEAR_LAYERS] = {};
-
-    mutable bool persist_algo_failed_ = false;
-    mutable bool persist_algo_active_ = false;
+    unique_lock<mutex> lock_backend_state() const
+    {
+        return unique_lock(backend_state.access_mutex);
+    }
 
 #ifdef OPENNN_HAS_CUDA
 
-    void cudnn_rnn_forward_(bool is_training, bool has_cell_state,
+    void cudnn_rnn_forward_(const CudnnRnnShapeSlot&,
+                            bool is_training, bool has_cell_state,
                             const void* x, void* y,
-                            const function<void()>& reconfigure) const;
-    void cudnn_rnn_backward_(bool has_cell_state,
+                            Buffer& forward_state,
+                            const function<CudnnRnnShapeSlot&()>& reconfigure) const;
+    void cudnn_rnn_backward_(const CudnnRnnShapeSlot&,
+                             bool has_cell_state,
                              const void* x, const void* y, const void* dy,
-                             void* dx) const;
+                             void* dx,
+                             const Buffer& forward_state,
+                             Buffer& backward_scratch) const;
 
-    void cudnn_setup_(const CudnnRnnConfig&,
-                      Index input_features, Index output_features, Index time_steps,
-                      Index batch_size, bool for_training) const;
-    void cudnn_setup_attempt_(const CudnnRnnConfig&,
-                              Index input_features, Index output_features, Index time_steps,
-                              Index batch_size, bool for_training) const;
+    CudnnRnnShapeSlot& cudnn_setup_(const CudnnRnnConfig&,
+                                    Index input_features, Index output_features,
+                                    Index time_steps, Index batch_size,
+                                    bool for_training) const;
+    CudnnRnnShapeSlot& cudnn_setup_attempt_(const CudnnRnnConfig&,
+                                            Index input_features, Index output_features,
+                                            Index time_steps, Index batch_size,
+                                            bool for_training) const;
     // Weights and biases between the library's per-linear-layer tensors and
     // cuDNN's packed weight space (to_cudnn) or the gradients back (!to_cudnn).
     void cudnn_copy_weight_regions_(int num_linear_layers,
@@ -144,16 +97,24 @@ protected:
                                     Index output_features,
                                     const TensorView* const* matrices,
                                     const TensorView* const* vectors,
+                                    Buffer& packed_weights,
                                     bool to_cudnn) const;
     void cudnn_pack_weights_(int num_linear_layers,
                              Index input_features, Index output_features,
                              const TensorView* const* weights,
-                             const TensorView* const* biases) const;
+                             const TensorView* const* biases,
+                             Buffer& forward_state) const;
     void cudnn_unpack_gradients_(int num_linear_layers,
                                  Index input_features, Index output_features,
                                  const TensorView* const* weight_gradients,
-                                 const TensorView* const* bias_gradients) const;
+                                 const TensorView* const* bias_gradients,
+                                 Buffer& backward_scratch) const;
+
+    void prepare_cudnn_forward_state_(Buffer&, bool,
+                                      const CudnnRnnShapeSlot&) const;
 #endif
+
+    mutable BackendState backend_state;
 };
 
 }

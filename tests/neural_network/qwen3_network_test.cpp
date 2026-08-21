@@ -223,6 +223,8 @@ float chunked_prefill_and_decode_max_diff(const Dims& d,
         1, full_network.get(), ForwardPropagationMode::Inference, {1, 1});
     ForwardPropagation chunked_decode(
         1, chunked_network.get(), ForwardPropagationMode::Inference, {1, 1});
+    full_decode.share_session_state_from(full_prefill);
+    chunked_decode.share_session_state_from(chunked_prefill);
     run(*full_network, full_decode, full_window,
         {decode_id}, d.prompt2);
     run(*chunked_network, chunked_decode, chunk_window,
@@ -456,6 +458,7 @@ TEST(Qwen3NetworkTest, DecodeGraphSurvivesFiveSuffixPrefillsGpu)
         1, &network, ForwardPropagationMode::Inference);
     ForwardPropagation decode;
     decode.set(1, &network, &prefill.arena, ForwardPropagationMode::Inference);
+    decode.share_session_state_from(prefill);
     decode.set_active_sequence_length(1);
     decode.set_cuda_graph(true);
 

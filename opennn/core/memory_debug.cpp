@@ -22,30 +22,96 @@ struct Entry
     Index count = 0;
 };
 
-map<string, Entry>& entries()
+class State
 {
-    static map<string, Entry> e;
-    return e;
-}
+public:
+    State()
+        : active(env_flag_enabled("OPENNN_MEMORY_DEBUG"))
+    {
+    }
 
-mutex& entries_mutex()
+    bool is_enabled() const noexcept { return active; }
+
+    void reset()
+    {
+        lock_guard lock(entries_mutex);
+        entries.clear();
+    }
+
+    void record(const string& category,
+                const string& name,
+                Index bytes,
+                const string& note)
+    {
+        if (!active || bytes <= 0) return;
+
+        lock_guard lock(entries_mutex);
+        const string key = category + "\t" + name + "\t" + note;
+        Entry& entry = entries[key];
+        if (entry.count == 0)
+        {
+            entry.category = category;
+            entry.name = name;
+            entry.note = note;
+        }
+
+        entry.bytes += bytes;
+        ++entry.count;
+    }
+
+    void print(ostream& os) const
+    {
+        if (!active) return;
+
+        vector<Entry> rows;
+        {
+            lock_guard lock(entries_mutex);
+            ranges::copy(entries | views::values, back_inserter(rows));
+        }
+
+        ranges::sort(rows, greater<>{}, &Entry::bytes);
+
+        const Index total = transform_reduce(rows.begin(), rows.end(), Index(0), plus<>{},
+                                             [](const Entry& row) { return row.bytes; });
+
+        os << "[MEMORY_DEBUG] rows=" << rows.size()
+           << " total_recorded_mib=" << fixed << setprecision(2)
+           << double(total) / (1024.0 * 1024.0) << "\n"
+           << "[MEMORY_DEBUG] category,name,count,MiB,note\n";
+
+        for (const Entry& row : rows)
+        {
+            os << "[MEMORY_DEBUG] "
+               << row.category << ","
+               << row.name << ","
+               << row.count << ","
+               << fixed << setprecision(2) << double(row.bytes) / (1024.0 * 1024.0) << ","
+               << row.note << "\n";
+        }
+    }
+
+private:
+    const bool active;
+    map<string, Entry> entries;
+    mutable mutex entries_mutex;
+};
+
+State& state()
 {
-    static mutex m;
-    return m;
+    static State instance;
+    return instance;
 }
 
 }
 
 bool enabled()
 {
-    static const bool on = env_flag_enabled("OPENNN_MEMORY_DEBUG");
-    return on;
+    return state().is_enabled();
 }
 
 void reset()
 {
-    lock_guard lock(entries_mutex());
-    entries().clear();
+    state().reset();
 }
 
 void record(const string& category,
@@ -53,20 +119,7 @@ void record(const string& category,
             Index bytes,
             const string& note)
 {
-    if (!enabled() || bytes <= 0) return;
-
-    lock_guard lock(entries_mutex());
-    const string key = category + "\t" + name + "\t" + note;
-    Entry& entry = entries()[key];
-    if (entry.count == 0)
-    {
-        entry.category = category;
-        entry.name = name;
-        entry.note = note;
-    }
-
-    entry.bytes += bytes;
-    ++entry.count;
+    state().record(category, name, bytes, note);
 }
 
 void record_pool_lifetimes(const string& category_prefix,
@@ -86,33 +139,7 @@ void record_pool_lifetimes(const string& category_prefix,
 
 void print(ostream& os)
 {
-    if (!enabled()) return;
-
-    vector<Entry> rows;
-    {
-        lock_guard lock(entries_mutex());
-        ranges::copy(entries() | views::values, back_inserter(rows));
-    }
-
-    ranges::sort(rows, greater<>{}, &Entry::bytes);
-
-    const Index total = transform_reduce(rows.begin(), rows.end(), Index(0), plus<>{},
-                                         [](const Entry& row) { return row.bytes; });
-
-    os << "[MEMORY_DEBUG] rows=" << rows.size()
-       << " total_recorded_mib=" << fixed << setprecision(2)
-       << double(total) / (1024.0 * 1024.0) << "\n"
-       << "[MEMORY_DEBUG] category,name,count,MiB,note\n";
-
-    for (const Entry& row : rows)
-    {
-        os << "[MEMORY_DEBUG] "
-           << row.category << ","
-           << row.name << ","
-           << row.count << ","
-           << fixed << setprecision(2) << double(row.bytes) / (1024.0 * 1024.0) << ","
-           << row.note << "\n";
-    }
+    state().print(os);
 }
 
 }

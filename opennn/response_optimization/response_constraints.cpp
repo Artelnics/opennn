@@ -551,21 +551,17 @@ void emit_bytecode(const Ast& node, vector<RpnOp>& bytecode)
     {
         using enum Ast::Kind;
     case Const:
-        bytecode.push_back({RpnOp::Kind::PushConst, 0, node.constant});
-        return;
+        return bytecode.push_back({RpnOp::Kind::PushConst, 0, node.constant});
 
     case Input:
-        bytecode.push_back({RpnOp::Kind::PushInput, node.index, 0.0f});
-        return;
+        return bytecode.push_back({RpnOp::Kind::PushInput, node.index, 0.0f});
 
     case Output:
-        bytecode.push_back({RpnOp::Kind::PushOutput, node.index, 0.0f});
-        return;
+        return bytecode.push_back({RpnOp::Kind::PushOutput, node.index, 0.0f});
 
     case UnaryNeg:
         emit_bytecode(*node.children[0], bytecode);
-        bytecode.push_back({RpnOp::Kind::Neg, 0, 0.0f});
-        return;
+        return bytecode.push_back({RpnOp::Kind::Neg, 0, 0.0f});
 
     case Add:
     case Sub:
@@ -583,8 +579,7 @@ void emit_bytecode(const Ast& node, vector<RpnOp>& bytecode)
             node.kind == Ast::Kind::Div ? RpnOp::Kind::Div :
                                           RpnOp::Kind::Pow;
 
-        bytecode.push_back({rpn_kind, 0, 0.0f});
-        return;
+        return bytecode.push_back({rpn_kind, 0, 0.0f});
     }
 
     case Func:
@@ -592,8 +587,7 @@ void emit_bytecode(const Ast& node, vector<RpnOp>& bytecode)
         for (const AstPtr& child : node.children)
             emit_bytecode(*child, bytecode);
 
-        bytecode.push_back({function_info(node.function_name).kind, 0, 0.0f});
-        return;
+        return bytecode.push_back({function_info(node.function_name).kind, 0, 0.0f});
     }
     }
 }

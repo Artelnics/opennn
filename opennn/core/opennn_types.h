@@ -173,26 +173,100 @@ class Json;
 class JsonDocument;
 class JsonWriter;
 
-inline void throw_if(bool condition, string_view message,
-                     const source_location& loc = source_location::current())
+namespace detail
 {
-    if (condition)
-        throw runtime_error(format("{} [at {}:{}]",
-                                        message, loc.file_name(), loc.line()));
+
+[[noreturn]] inline void throw_formatted(string_view message,
+                                         const source_location& loc = source_location::current())
+{
+    throw runtime_error(format("{} [at {}:{}]",
+                                    message, loc.file_name(), loc.line()));
 }
 
-template <typename... Args>
-inline void throw_if(bool condition, format_string<Args...> message, Args&&... args)
+
+template<typename... Args>
+[[noreturn]] inline void throw_formatted(format_string<Args...> message, Args&&... args)
 {
-    if (condition)
-        throw runtime_error(format(message, std::forward<Args>(args)...));
+    throw runtime_error(format(message, std::forward<Args>(args)...));
 }
+
+}
+
+
+// A macro, so the message arguments are evaluated only when the condition
+// holds. As a function it evaluated them unconditionally, which turned
+//     throw_if(!buffer, "... {} ...", buffer->byte_size());
+// -- a guard -- into the crash it was written to prevent.
+#define throw_if(condition, ...)                                           do                                                                     {                                                                          if (condition)                                                             ::opennn::detail::throw_formatted(__VA_ARGS__);                }                                                                      while (false)
+
+namespace detail
+{
+
+template<typename Map>
+void make_bounded_cache_room(Map& entries, const size_t capacity)
+{
+    throw_if(capacity == 0, "A bounded cache requires a positive capacity.");
+
+    if (entries.size() >= capacity)
+        entries.erase(entries.begin());
+}
+
+template<typename Map, typename Key>
+typename Map::mapped_type& bounded_cache_entry(Map& entries,
+                                               const Key& key,
+                                               const size_t capacity)
+{
+    if (const auto found = entries.find(key); found != entries.end())
+        return found->second;
+
+    make_bounded_cache_room(entries, capacity);
+
+    return entries.try_emplace(key).first->second;
+}
+
+}
+
+
 
 template <typename T, typename... Candidates>
 constexpr bool is_one_of(const T& value, const Candidates&... candidates)
 {
     return ((value == candidates) || ...);
 }
+
+// Runs its cleanup when the scope ends, however it ends. The destructor
+// swallows: cleanup runs while an exception may already be in flight, and a
+// second one leaving a destructor would terminate. release() disarms it for the
+// paths that hand ownership on instead.
+template <typename F>
+class ScopeExit
+{
+public:
+
+    explicit ScopeExit(F new_cleanup)
+        : cleanup(std::move(new_cleanup))
+    {
+    }
+
+    ~ScopeExit() noexcept
+    {
+        if (!active) return;
+        try { cleanup(); }
+        catch (...) {}
+    }
+
+    ScopeExit(const ScopeExit&) = delete;
+    ScopeExit& operator=(const ScopeExit&) = delete;
+
+    void release() noexcept { active = false; }
+
+private:
+
+    F cleanup;
+    bool active = true;
+};
+
+template <typename F> ScopeExit(F) -> ScopeExit<F>;
 
 constexpr float EPSILON = numeric_limits<float>::epsilon();
 constexpr float MAX = numeric_limits<float>::max();

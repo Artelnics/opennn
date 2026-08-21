@@ -179,3 +179,40 @@ TEST(GroupedQueryAttentionTest, PrefillAfterDecodeRestartsCache)
     for (Index i = 0; i < out_fresh.size(); ++i)
         EXPECT_NEAR(got[size_t(i)], out_fresh.as<float>()[i], 1.0e-5f) << "at " << i;
 }
+
+TEST(GroupedQueryAttentionTest, KvCacheIsIsolatedUntilExplicitlyShared)
+{
+    constexpr Index max_sequence = 8;
+    constexpr Index hidden = 16;
+
+    NeuralNetwork network;
+    network.add_layer(make_unique<GroupedQueryAttention>(
+        Shape{max_sequence, hidden}, 2, 1, 8,
+        1000000.0f, 1.0e-6f, true, "attn"));
+    network.compile();
+    network.set_parameters_random();
+
+    ForwardPropagation first(
+        1, &network, ForwardPropagationMode::Inference);
+    ForwardPropagation second(
+        1, &network, ForwardPropagationMode::Inference);
+    ForwardPropagation shared(
+        1, &network, ForwardPropagationMode::Inference);
+    shared.share_session_state_from(first);
+
+    vector<float> first_input(size_t(2 * hidden), 0.25f);
+    vector<float> second_input(size_t(2 * hidden), -0.5f);
+
+    network.forward_propagate(
+        {TensorView(first_input.data(), {1, 2, hidden})}, first, false);
+    network.forward_propagate(
+        {TensorView(second_input.data(), {1, 2, hidden})}, second, false);
+
+    ASSERT_FALSE((*first.layer_session_state_storage)[0].empty());
+    ASSERT_FALSE((*second.layer_session_state_storage)[0].empty());
+    EXPECT_NE((*first.layer_session_state_storage)[0].data(),
+              (*second.layer_session_state_storage)[0].data());
+
+    EXPECT_EQ(shared.layer_session_state_storage,
+              first.layer_session_state_storage);
+}

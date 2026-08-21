@@ -3,6 +3,8 @@
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 
+#include <future>
+
 using namespace opennn;
 
 namespace
@@ -1046,4 +1048,52 @@ TEST(TabularDataset, BinaryFileStorageStreamsCsvToCache)
 
     filesystem::remove(csv_path);
     filesystem::remove(cache_path);
+}
+
+TEST(TabularDataset, ConcurrentBinaryFillsReadPreparedStatistics)
+{
+    const filesystem::path csv_path =
+        filesystem::temp_directory_path() / "opennn_test_concurrent_binary_storage.csv";
+    const filesystem::path cache_path =
+        csv_path.parent_path() / ".cache" / "opennn_test_concurrent_binary_storage.bin";
+
+    create_temp_csv_file(csv_path.string(),
+                         "a,b,target\n"
+                         "1,NA,0\n"
+                         "3,5,1\n"
+                         "5,7,0\n"
+                         "7,9,1\n");
+
+    {
+        TabularDataset dataset;
+        dataset.set_storage_mode(Dataset::StorageMode::BinaryFile);
+        dataset.set_data_path(csv_path);
+        dataset.set_separator(Dataset::Separator::Comma);
+        dataset.set_has_header(true);
+        dataset.set_display(false);
+        dataset.read_csv();
+        dataset.set_sample_role(3, SampleRole::None);
+
+        const auto read_inputs = [&dataset]
+        {
+            vector<float> inputs(8);
+            for (Index repetition = 0; repetition < 16; ++repetition)
+                dataset.fill_inputs({0, 1, 2, 3}, {0, 1}, inputs.data(), FillMode::Inference);
+            return inputs;
+        };
+
+        future<vector<float>> first = async(launch::async, read_inputs);
+        future<vector<float>> second = async(launch::async, read_inputs);
+        const vector<float> first_inputs = first.get();
+        const vector<float> second_inputs = second.get();
+
+        EXPECT_EQ(first_inputs, second_inputs);
+        EXPECT_FLOAT_EQ(first_inputs[0], 1.0f);
+        EXPECT_FLOAT_EQ(first_inputs[1], 6.0f);
+        EXPECT_FLOAT_EQ(first_inputs[7], 9.0f);
+    }
+
+    error_code error;
+    filesystem::remove(csv_path, error);
+    filesystem::remove(cache_path, error);
 }

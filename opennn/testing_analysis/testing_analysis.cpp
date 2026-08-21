@@ -135,7 +135,7 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
     MatrixR target_data(samples_number, target_width);
     MatrixR output_data;
 
-    Configuration::Resolved host_config;
+    EffectiveConfig host_config;
     host_config.device = Device::CPU;
     host_config.training_type = Type::FP32;
 

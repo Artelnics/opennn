@@ -9,6 +9,7 @@
 #pragma once
 
 #include <array>
+#include <memory>
 #include <unordered_set>
 
 #include "opennn/neural_network/operators/operator.h"
@@ -177,6 +178,8 @@ public:
 
 protected:
 
+    struct Cache;
+
     virtual vector<string> pre_tokenize(string_view text) const;
     vector<string> bpe(const string& token) const;
     void tokenize_into(string_view, vector<string>*, vector<Index>*) const;
@@ -185,7 +188,7 @@ protected:
     unordered_map<uint32_t, unsigned char> byte_decoder;
     StringMap<int> merge_ranks;
 
-    uint64_t merges_revision = 0;
+    shared_ptr<Cache> bpe_cache;
     vector<string> special_strings;
     unordered_set<Index> special_ids;
 };

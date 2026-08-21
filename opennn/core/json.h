@@ -38,12 +38,8 @@ public:
 
     Json() = default;
     Json(bool new_value) : value(new_value) {}
-    Json(int new_value) : value(double(new_value)) {}
-    Json(long new_value) : value(double(new_value)) {}
-    Json(long long new_value) : value(double(new_value)) {}
-    Json(unsigned int new_value) : value(double(new_value)) {}
-    Json(unsigned long new_value) : value(double(new_value)) {}
-    Json(unsigned long long new_value) : value(double(new_value)) {}
+    template <typename Int, typename = std::enable_if_t<std::is_integral_v<Int> && !std::is_same_v<Int, bool>>>
+    Json(Int new_value) : value(double(new_value)) {}
     Json(double new_value) : value(new_value) {}
     Json(float new_value) : value(double(new_value)) {}
     Json(const char* new_value) : value(std::string(new_value)) {}

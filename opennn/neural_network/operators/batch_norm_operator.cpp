@@ -122,8 +122,8 @@ void BatchNormalizationOperator::link_states(span<const TensorView> views)
 
 void BatchNormalizationOperator::init_defaults()
 {
-    if (gamma.get_data())            gamma.as_vector().setOnes();
-    if (beta.get_data())             beta.as_vector().setZero();
+    if (gamma.get_data()) gamma.as_vector().setOnes();
+    if (beta.get_data())  beta.as_vector().setZero();
     initialize_states();
 }
 
@@ -254,10 +254,8 @@ void BatchNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
 
     if (!delta.is_cuda())
     {
-
         if (!residual_delta.empty()) copy(delta, residual_delta);
-        apply_delta_cpu(input, mean, inverse_variance, delta);
-        return;
+        return apply_delta_cpu(input, mean, inverse_variance, delta);
     }
 
     apply_delta_gpu(input, output, mean, inverse_variance, relu_mask(forward_propagation, layer),
@@ -357,18 +355,21 @@ void BatchNormalizationOperator::apply_delta_cpu(const TensorView& input,
     }
 }
 
-BatchNormalizationOperator::BatchNormalizationOperator() = default;
-BatchNormalizationOperator::~BatchNormalizationOperator() = default;
-
 #ifndef OPENNN_HAS_CUDA
 
-struct BatchNormalizationOperator::BatchNormalizationGraphCache {};
+struct BatchNormalizationOperator::BatchNormalizationGraphCache
+{
+    mutex access_mutex;
+    bool disabled = false;
+};
 #endif
 
 #ifdef OPENNN_HAS_CUDA
 
 struct BatchNormalizationOperator::BatchNormalizationGraphCache
 {
+    mutex access_mutex;
+
     struct Entry
     {
         cudnn_frontend::GraphSlot fwd, bwd;
@@ -397,36 +398,6 @@ using namespace ::cudnn_frontend;
 namespace
 {
 
-shared_ptr<graph::Tensor_attributes>
-per_channel_tensor(graph::Graph& graph, const char* name, int64_t channels)
-{
-
-    return graph.tensor(graph::Tensor_attributes()
-                        .set_name(name)
-                        .set_data_type(DataType_t::FLOAT)
-                        .set_dim({1, channels, 1, 1})
-                        .set_stride({channels, 1, channels, channels}));
-}
-
-shared_ptr<graph::Tensor_attributes>
-scalar_tensor(graph::Graph& graph, const char* name)
-{
-    return graph.tensor(graph::Tensor_attributes()
-                        .set_name(name)
-                        .set_data_type(DataType_t::FLOAT)
-                        .set_dim({1, 1, 1, 1})
-                        .set_stride({1, 1, 1, 1})
-                        .set_is_pass_by_value(true));
-}
-
-void set_per_channel_output(shared_ptr<graph::Tensor_attributes>& tensor, int64_t channels)
-{
-    tensor->set_output(true)
-           .set_data_type(DataType_t::FLOAT)
-           .set_dim({1, channels, 1, 1})
-           .set_stride({channels, 1, channels, channels});
-}
-
 void build_bn_forward(BatchNormalizationOperator::BatchNormalizationGraphCache::Entry& entry,
                       int64_t batch, int64_t channels, int64_t spatial,
                       bool fuse_relu, bool fuse_add, Type dtype)
@@ -438,8 +409,8 @@ void build_bn_forward(BatchNormalizationOperator::BatchNormalizationGraphCache::
     entry.fwd_Bias     = per_channel_tensor(*graph, "BIAS", channels);
     entry.fwd_PrevMean = per_channel_tensor(*graph, "PREV_MEAN", channels);
     entry.fwd_PrevVar  = per_channel_tensor(*graph, "PREV_VAR", channels);
-    entry.fwd_Eps      = scalar_tensor(*graph, "BN_EPSILON");
-    entry.fwd_Mom      = scalar_tensor(*graph, "MOMENTUM");
+    entry.fwd_Eps      = scalar_tensor(*graph, "BN_EPSILON", DataType_t::FLOAT, true);
+    entry.fwd_Mom      = scalar_tensor(*graph, "MOMENTUM", DataType_t::FLOAT, true);
 
     auto attributes = graph::Batchnorm_attributes()
                       .set_epsilon(entry.fwd_Eps)
@@ -590,9 +561,11 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
     }
 
     const bool ran = cudnn_frontend::bn_frontend_enabled()
-        && cudnn_frontend::run_frontend(bn_graph_cache, "BatchNormalizationOperator", [&](BatchNormalizationGraphCache& cache)
+        && cudnn_frontend::run_frontend(*bn_graph_cache, "BatchNormalizationOperator", [&](BatchNormalizationGraphCache& cache)
     {
-        auto& entry = cache.entries[input.get_shape()[0]];
+        auto& entry = detail::bounded_cache_entry(
+            cache.entries, input.get_shape()[0],
+            cudnn_frontend::graph_cache_capacity);
         if (!entry.fwd.graph)
         {
             const int64_t batch    = input.get_shape()[0];
@@ -607,24 +580,25 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
         void* residual_ptr = fuse_add ? residual.get_data() : nullptr;
         void* y_ptr        = output.get_data();
 
-        unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
-        if (fuse_add) tensors[entry.fwd_Residual] = residual_ptr;
-        tensors[entry.fwd_X]        = x_ptr;
-        tensors[entry.fwd_Scale]    = gamma.get_data();
-        tensors[entry.fwd_Bias]     = beta.get_data();
-        tensors[entry.fwd_PrevMean] = running_mean.get_data();
-        tensors[entry.fwd_PrevVar]  = running_variance.get_data();
-        tensors[entry.fwd_Eps]      = &epsilon_value;
-        tensors[entry.fwd_Mom]      = &momentum_value;
-        tensors[entry.fwd_Y]        = y_ptr;
-        tensors[entry.fwd_Mean]     = mean.get_data();
-        tensors[entry.fwd_InvVar]   = inverse_variance.get_data();
-        tensors[entry.fwd_NextMean] = running_mean.get_data();
-        tensors[entry.fwd_NextVar]  = running_variance.get_data();
+        cudnn_frontend::VariantPack tensors{
+            {entry.fwd_X,        x_ptr},
+            {entry.fwd_Scale,    gamma.get_data()},
+            {entry.fwd_Bias,     beta.get_data()},
+            {entry.fwd_PrevMean, running_mean.get_data()},
+            {entry.fwd_PrevVar,  running_variance.get_data()},
+            {entry.fwd_Eps,      &epsilon_value},
+            {entry.fwd_Mom,      &momentum_value},
+            {entry.fwd_Y,        y_ptr},
+            {entry.fwd_Mean,     mean.get_data()},
+            {entry.fwd_InvVar,   inverse_variance.get_data()},
+            {entry.fwd_NextMean, running_mean.get_data()},
+            {entry.fwd_NextVar,  running_variance.get_data()}
+        };
+
+        if (fuse_add) tensors.emplace(entry.fwd_Residual, residual_ptr);
 
         cudnn_frontend::run_slot(entry.fwd, tensors, "BatchNormOperator fwd",
-                                 cudnn_frontend::graph_timing_enabled()
-                                 ? format("bn_fwd c{} r{}", features, input.size() / features) : string(),
+                                 cudnn_frontend::timing_label("bn_fwd c{} r{}", features, input.size() / features),
                                  true);
     });
 
@@ -632,7 +606,7 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
     {
 
         CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
-            Backend::get_cudnn_handle(),
+            device::get_cudnn_handle(),
             CUDNN_BATCHNORM_SPATIAL,
             &one, &zero,
             input.get_descriptor(),  input.get_data(),
@@ -648,75 +622,78 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
     }
 }
 
-void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
-                                const TensorView& output,
-                                const TensorView& mean,
-                                const TensorView& inverse_variance,
-                                const TensorView& mask,
-                                TensorView& delta,
-                                TensorView& residual_delta) const
+void BatchNormalizationOperator::apply_delta_gpu(
+    const TensorView& input,
+    const TensorView& output,
+    const TensorView& mean,
+    const TensorView& inverse_variance,
+    const TensorView& mask,
+    TensorView& delta,
+    TensorView& residual_delta) const
 {
     PROFILE_SCOPE("op:bn_bwd");
 
     const bool bf16 = input.is_bf16();
-    const bool fork_capable =
-        fuse_add
-        && fuse_relu
-        && !residual_delta.empty();
+    const bool has_residual = fuse_add && !residual_delta.empty();
+    const bool fork_capable = fuse_relu && has_residual;
 
     throw_if(!input.is_fp32() && !bf16,
              "BatchNormalizationOperator: GPU backward requires FP32 or BF16.");
 
-    const bool ran = cudnn_frontend::bn_frontend_enabled()
-        && cudnn_frontend::run_frontend(bn_graph_cache, "BatchNormalizationOperator", [&](BatchNormalizationGraphCache& cache)
+    if (cudnn_frontend::bn_frontend_enabled()
+        && cudnn_frontend::run_frontend(
+            *bn_graph_cache, "BatchNormalizationOperator",
+            [&](BatchNormalizationGraphCache& cache)
     {
-        auto& entry = cache.entries[input.get_shape()[0]];
+        const int64_t batch = input.get_shape()[0];
+        auto& entry = detail::bounded_cache_entry(
+            cache.entries, batch,
+            cudnn_frontend::graph_cache_capacity);
+
         if (!entry.bwd_choice)
         {
-            const int64_t batch   = input.get_shape()[0];
             const int64_t spatial = int64_t(input.size()) / (batch * features);
 
-            // cuDNN's BF16 fused-backward coverage is partial. Auto tries the
-            // exact fused graph once, then uses the library kernel to retain the
-            // dReLU and residual fork without FP32 staging. The other rungs remain
-            // available for direct comparison in the GPU gradient test.
             using Attempt = BatchNormalizationGraphCache::Entry::BackwardChoice;
 
-            const device::BatchNormBackwardRung rung = device::rung<device::BatchNormBackwardRung>();
+            const auto rung = device::rung<device::BatchNormBackwardRung>();
 
             vector<Attempt> attempts;
+
             switch (rung)
             {
             case device::BatchNormBackwardRung::StagedFp32:
                 attempts.push_back({Type::FP32, fuse_relu && !fuse_add, false, false});
                 break;
+
             case device::BatchNormBackwardRung::PlainNative:
                 attempts.push_back({input.get_type(), false, false, false});
                 break;
+
             case device::BatchNormBackwardRung::Auto:
                 attempts.push_back({input.get_type(), fuse_relu, fork_capable, false});
                 break;
+
             case device::BatchNormBackwardRung::OwnKernel:
                 break;
             }
 
-            // The first attempt with an engine wins; with none, Auto and OwnKernel
-            // take the library kernel and a pinned cuDNN rung reports its failure.
             exception_ptr last_failure;
-            for (const Attempt& attempt : attempts)
+
+            for (const auto& attempt : attempts)
             {
                 try
                 {
-                    cudnn_frontend::build_bn_backward(entry, batch, features, spatial,
-                                                      attempt.fuse_relu, attempt.dtype, attempt.fork);
+                    cudnn_frontend::build_bn_backward(
+                        entry, batch, features, spatial,
+                        attempt.fuse_relu, attempt.dtype, attempt.fork);
+
                     entry.bwd_choice = attempt;
                     break;
                 }
                 catch (...)
                 {
-                    // build_bn_backward assigns entry.bwd.graph last, so a throw leaves the
-                    // tensor handles it already overwrote pointing at a dead graph.
-                    entry.bwd_Y    = nullptr;
+                    entry.bwd_Y = nullptr;
                     entry.bwd_DPre = nullptr;
                     last_failure = current_exception();
                 }
@@ -727,44 +704,49 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                 if (rung == device::BatchNormBackwardRung::StagedFp32
                     || rung == device::BatchNormBackwardRung::PlainNative)
                     rethrow_exception(last_failure);
-                entry.bwd_choice = Attempt{input.get_type(), fuse_relu, fuse_add, true};
+
+                entry.bwd_choice =
+                    Attempt{input.get_type(), fuse_relu, has_residual, true};
             }
 
-            // Once per shape: what this backward runs on when it is not the fully
-            // fused cuDNN graph. Anything else costs extra full-tensor passes
-            // (a standalone dReLU, a residual-delta copy, three FP32 staging
-            // casts), and this line is the only signal of it.
-            const Attempt& chosen = *entry.bwd_choice;
-            const bool fully_fused = !chosen.own_kernel && chosen.dtype == input.get_type()
-                && chosen.fuse_relu == fuse_relu && (chosen.fork || !fuse_add);
+            const auto& chosen = *entry.bwd_choice;
+
+            const bool fully_fused =
+                !chosen.own_kernel
+                && chosen.dtype == input.get_type()
+                && chosen.fuse_relu == fuse_relu
+                && (chosen.fork || !has_residual);
+
             if (!fully_fused)
                 cerr << "BatchNormalizationOperator backward c" << features
-                     << " r" << input.size() / features << " batch " << batch << ": "
+                     << " r" << input.size() / features
+                     << " batch " << batch << ": "
                      << (chosen.own_kernel
                             ? (fuse_relu && own_forward_kernel(mask)
                                    ? "own fused kernel, ReLU from the forward mask (no fused cuDNN engine)"
                                    : "own fused kernel (no fused cuDNN engine)")
-                         : chosen.dtype != input.get_type() ? "FP32-staged cuDNN graph"
-                         : chosen.fuse_relu ? "cuDNN graph, fused ReLU, no residual fork"
-                         : "plain cuDNN graph; ReLU/copy run separately")
+                          : chosen.dtype != input.get_type()
+                            ? "FP32-staged cuDNN graph"
+                          : chosen.fuse_relu
+                            ? "cuDNN graph, fused ReLU, no residual fork"
+                            : "plain cuDNN graph; ReLU/copy run separately")
                      << ".\n";
         }
+
         const auto& chosen = *entry.bwd_choice;
 
         if (chosen.own_kernel)
         {
             const Index rows = input.size() / features;
+
             float* partials = ensure_bf16_to_fp32_workspace(
                 2 * batchnorm_partial_rows(rows) * features);
-            // The ReLU gate comes from the packed mask the library's own forward
-            // left, when it ran; otherwise from Y.
-            const uint8_t* mask_bits = fuse_relu && own_forward_kernel(mask) && !mask.empty()
-                ? mask.as<uint8_t>() : nullptr;
 
-            // Without a mask, for a ReLU output that is BN(x) itself the reduce
-            // pass rebuilds x_hat from Y and skips X (six passes, not seven).
-            // Kept to FP32: in BF16 the (y - beta) / gamma reconstruction
-            // amplifies y's rounding by 1/gamma.
+            const uint8_t* mask_bits =
+                fuse_relu && own_forward_kernel(mask) && !mask.empty()
+                    ? mask.as<uint8_t>()
+                    : nullptr;
+
             const bool xhat_from_y = fuse_relu && !fuse_add && !bf16;
 
             input.dispatch([&]<typename T>()
@@ -772,81 +754,91 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                 batchnorm_backward_fused_cuda<T>(
                     rows, features,
                     input.as<T>(), delta.as<T>(),
-                    fuse_relu ? output.as<T>() : nullptr, mask_bits,
-                    gamma.as<float>(), beta.as<float>(), mean.as<float>(), inverse_variance.as<float>(),
+                    fuse_relu ? output.as<T>() : nullptr,
+                    mask_bits,
+                    gamma.as<float>(), beta.as<float>(),
+                    mean.as<float>(), inverse_variance.as<float>(),
                     xhat_from_y,
-                    fuse_add && !residual_delta.empty() ? residual_delta.as<T>() : nullptr,
+                    has_residual ? residual_delta.as<T>() : nullptr,
                     gamma_gradient.as<float>(), beta_gradient.as<float>(),
                     partials);
             });
+
             return;
         }
 
-        // Whatever the chosen graph does not fuse runs here instead, ahead of it.
         if (fuse_relu && !chosen.fuse_relu)
             activation_backward(output, delta, ActivationFunction::ReLU);
 
-        if (fuse_add && !chosen.fork && !residual_delta.empty())
+        if (has_residual && !chosen.fork)
             copy(delta, residual_delta);
 
         const bool stage_fp32 = bf16 && chosen.dtype != input.get_type();
 
-        void* x_ptr    = input.get_data();
-        void* dy_ptr   = delta.get_data();
+        void* x_ptr = input.get_data();
+        void* dy_ptr = delta.get_data();
+
         span<float> dx_fp32;
         optional<Fp32Staging> staging;
+
         if (stage_fp32)
         {
-
             staging.emplace(delta.size(), 2);
-            x_ptr   = staging->read(input.get_data()).data();
+            x_ptr = staging->read(input.get_data()).data();
             dx_fp32 = staging->read(delta.get_data());
-            dy_ptr  = dx_fp32.data();
+            dy_ptr = dx_fp32.data();
         }
 
-        unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
-        tensors[entry.bwd_DY]     = dy_ptr;
-        if (entry.bwd_Bias)     tensors[entry.bwd_Bias]     = beta.get_data();
+        cudnn_frontend::VariantPack tensors{
+            {entry.bwd_DY,     dy_ptr},
+            {entry.bwd_X,      x_ptr},
+            {entry.bwd_Scale,  gamma.get_data()},
+            {entry.bwd_Mean,   mean.get_data()},
+            {entry.bwd_InvVar, inverse_variance.get_data()},
+            {entry.bwd_DX,     dy_ptr},
+            {entry.bwd_DScale, gamma_gradient.get_data()},
+            {entry.bwd_DBias,  beta_gradient.get_data()}
+        };
+
+        if (entry.bwd_Bias)
+            tensors.emplace(entry.bwd_Bias, beta.get_data());
+
         if (chosen.fork)
         {
-            tensors[entry.bwd_Y]    = output.get_data();
-            tensors[entry.bwd_DPre] = residual_delta.get_data();
+            tensors.emplace(entry.bwd_Y, output.get_data());
+            tensors.emplace(entry.bwd_DPre, residual_delta.get_data());
         }
-        tensors[entry.bwd_X]      = x_ptr;
-        tensors[entry.bwd_Scale]  = gamma.get_data();
-        tensors[entry.bwd_Mean]   = mean.get_data();
-        tensors[entry.bwd_InvVar] = inverse_variance.get_data();
-        tensors[entry.bwd_DX]     = dy_ptr;
-        tensors[entry.bwd_DScale] = gamma_gradient.get_data();
-        tensors[entry.bwd_DBias]  = beta_gradient.get_data();
 
-        cudnn_frontend::run_slot(entry.bwd, tensors, "BatchNormOperator bwd",
-                                 cudnn_frontend::graph_timing_enabled()
-                                 ? format("bn_bwd c{} r{}", features, input.size() / features) : string(),
-                                 true);
+        cudnn_frontend::run_slot(
+            entry.bwd, tensors, "BatchNormOperator bwd",
+            cudnn_frontend::timing_label("bn_bwd c{} r{}", features, input.size() / features),
+            true);
 
-        if (stage_fp32) store_as_bfloat16(*staging, dx_fp32, delta.get_data());
-    });
+        if (stage_fp32)
+            store_as_bfloat16(*staging, dx_fp32, delta.get_data());
+    }))
+        return;
 
-    if (!ran)
-    {
+    // Legacy cuDNN fallback.
+    if (fuse_relu)
+        activation_backward(output, delta, ActivationFunction::ReLU);
 
-        if (fuse_relu) activation_backward(output, delta, ActivationFunction::ReLU);
-        if (fuse_add && !residual_delta.empty()) copy(delta, residual_delta);
-        CHECK_CUDNN(cudnnBatchNormalizationBackward(
-            Backend::get_cudnn_handle(),
-            CUDNN_BATCHNORM_SPATIAL,
-            &one, &zero, &one, &zero,
-            input.get_descriptor(),  input.get_data(),
-            delta.get_descriptor(),  delta.get_data(),
-            delta.get_descriptor(),  delta.get_data(),
-            gamma.get_descriptor(),  gamma.get_data(),
-            gamma_gradient.get_data(),
-            beta_gradient.get_data(),
-            BN_EPSILON,
-            mean.get_data(),
-            inverse_variance.get_data()));
-    }
+    if (has_residual)
+        copy(delta, residual_delta);
+
+    CHECK_CUDNN(cudnnBatchNormalizationBackward(
+        device::get_cudnn_handle(),
+        CUDNN_BATCHNORM_SPATIAL,
+        &one, &zero, &one, &zero,
+        input.get_descriptor(), input.get_data(),
+        delta.get_descriptor(), delta.get_data(),
+        delta.get_descriptor(), delta.get_data(),
+        gamma.get_descriptor(), gamma.get_data(),
+        gamma_gradient.get_data(),
+        beta_gradient.get_data(),
+        BN_EPSILON,
+        mean.get_data(),
+        inverse_variance.get_data()));
 }
 
 #else
@@ -859,6 +851,13 @@ void BatchNormalizationOperator::apply_delta_gpu    (const TensorView&, const Te
                                                      TensorView&, TensorView&) const                            OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
 
 #endif
+
+BatchNormalizationOperator::BatchNormalizationOperator()
+    : bn_graph_cache(make_unique<BatchNormalizationGraphCache>())
+{
+}
+
+BatchNormalizationOperator::~BatchNormalizationOperator() = default;
 
 }
 

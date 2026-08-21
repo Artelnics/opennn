@@ -141,15 +141,13 @@ void restore_transaction_file(const filesystem::path& final_path,
     if (!existed_before_transaction)
     {
         remove_transaction_artifact(final_path);
-        remove_transaction_artifact(backup_path);
-        return;
+        return remove_transaction_artifact(backup_path);
     }
 
     if (filesystem::exists(backup_path))
     {
         remove_transaction_artifact(final_path);
-        filesystem::rename(backup_path, final_path);
-        return;
+        return filesystem::rename(backup_path, final_path);
     }
 
     throw_if(!filesystem::exists(final_path),
@@ -277,20 +275,71 @@ uint64_t load_uint64_le(const unsigned char* source)
          | uint64_t{source[7]} << 56;
 }
 
+// Sequential little-endian cursors over the snapshot header. Fields are laid out
+// in the order they are appended, so writer and reader cannot disagree about an
+// offset, and SNAPSHOT_FILE_HEADER_SIZE is whatever the writer ends up having
+// written rather than a total kept by hand.
+class HeaderWriter
+{
+public:
+
+    explicit HeaderWriter(span<unsigned char> destination) : buffer(destination) {}
+
+    void bytes(span<const unsigned char> value)
+    {
+        ranges::copy(value, buffer.begin() + used);
+        used += Index(value.size());
+    }
+
+    void u32(uint32_t value) { store_uint32_le(buffer.data() + used, value); used += 4; }
+    void u64(uint64_t value) { store_uint64_le(buffer.data() + used, value); used += 8; }
+
+    Index size() const noexcept { return used; }
+
+private:
+
+    span<unsigned char> buffer;
+    Index used = 0;
+};
+
+class HeaderReader
+{
+public:
+
+    explicit HeaderReader(span<const unsigned char> source) : buffer(source) {}
+
+    void skip(Index count) noexcept { used += count; }
+
+    uint32_t u32() { const uint32_t v = load_uint32_le(buffer.data() + used); used += 4; return v; }
+    uint64_t u64() { const uint64_t v = load_uint64_le(buffer.data() + used); used += 8; return v; }
+
+private:
+
+    span<const unsigned char> buffer;
+    Index used = 0;
+};
+
 array<unsigned char, SNAPSHOT_FILE_HEADER_SIZE> make_snapshot_header(
     const SnapshotMagic& magic, uint64_t elements, uint64_t payload_bytes,
     uint64_t layout, uint64_t checksum)
 {
     array<unsigned char, SNAPSHOT_FILE_HEADER_SIZE> header{};
-    ranges::copy(magic, header.begin());
-    store_uint32_le(header.data() + 8, SNAPSHOT_FILE_VERSION);
-    store_uint32_le(header.data() + 12, SNAPSHOT_FILE_HEADER_SIZE);
-    store_uint32_le(header.data() + 16, SNAPSHOT_FILE_ENDIAN_MARKER);
-    store_uint32_le(header.data() + 20, SNAPSHOT_FILE_SCALAR_FP32);
-    store_uint64_le(header.data() + 24, elements);
-    store_uint64_le(header.data() + 32, payload_bytes);
-    store_uint64_le(header.data() + 40, layout);
-    store_uint64_le(header.data() + 48, checksum);
+
+    HeaderWriter write(header);
+    write.bytes(magic);
+    write.u32(SNAPSHOT_FILE_VERSION);
+    write.u32(SNAPSHOT_FILE_HEADER_SIZE);
+    write.u32(SNAPSHOT_FILE_ENDIAN_MARKER);
+    write.u32(SNAPSHOT_FILE_SCALAR_FP32);
+    write.u64(elements);
+    write.u64(payload_bytes);
+    write.u64(layout);
+    write.u64(checksum);
+
+    throw_if(write.size() != SNAPSHOT_FILE_HEADER_SIZE,
+             "make_snapshot_header: wrote {} header bytes, expected {}.",
+             write.size(), Index(SNAPSHOT_FILE_HEADER_SIZE));
+
     return header;
 }
 
@@ -338,14 +387,17 @@ uint64_t read_snapshot_header(ifstream& file, uintmax_t file_bytes,
              "legacy raw snapshot of the expected size.",
              caller, file_name.string());
 
-    const uint32_t version = load_uint32_le(header.data() + 8);
-    const uint32_t header_size = load_uint32_le(header.data() + 12);
-    const uint32_t endian_marker = load_uint32_le(header.data() + 16);
-    const uint32_t scalar_type = load_uint32_le(header.data() + 20);
-    const uint64_t stored_elements = load_uint64_le(header.data() + 24);
-    const uint64_t stored_payload_bytes = load_uint64_le(header.data() + 32);
-    const uint64_t stored_layout = load_uint64_le(header.data() + 40);
-    const uint64_t stored_checksum = load_uint64_le(header.data() + 48);
+    HeaderReader read(header);
+    read.skip(Index(magic.size()));                 // matched above
+
+    const uint32_t version = read.u32();
+    const uint32_t header_size = read.u32();
+    const uint32_t endian_marker = read.u32();
+    const uint32_t scalar_type = read.u32();
+    const uint64_t stored_elements = read.u64();
+    const uint64_t stored_payload_bytes = read.u64();
+    const uint64_t stored_layout = read.u64();
+    const uint64_t stored_checksum = read.u64();
 
     throw_if(version != SNAPSHOT_FILE_VERSION,
              "NeuralNetwork::{}: unsupported {} file version {} in {} "
@@ -383,7 +435,7 @@ uint64_t read_snapshot_header(ifstream& file, uintmax_t file_bytes,
 
 const EnumMap<NetworkTask>& network_task_map()
 {
-    static const vector<EnumMap<NetworkTask>::Entry> entries = {
+    static const EnumMap<NetworkTask> map{
         {NetworkTask::Generic,             "Generic"},
         {NetworkTask::Approximation,       "Approximation"},
         {NetworkTask::Classification,      "Classification"},
@@ -394,8 +446,6 @@ const EnumMap<NetworkTask>& network_task_map()
         {NetworkTask::TextClassification,  "TextClassification"},
         {NetworkTask::LanguageModeling,    "LanguageModeling"}
     };
-
-    static const EnumMap<NetworkTask> map{entries};
     return map;
 }
 
@@ -420,13 +470,17 @@ void wire_drelu_fusions(vector<unique_ptr<Layer>>& layers,
 {
     for (auto& layer : layers)
         if (auto* dense = dynamic_cast<Dense*>(layer.get()))
+        {
             dense->reset_drelu_fusion();
+            dense->reset_single_output_relu_fusion();
+        }
 
     if (device != Device::CUDA || !is_one_of(training_type, Type::FP32, Type::BF16))
         return;
 
-    if (!env_flag_enabled("OPENNN_DRELU_FUSION"))
-        return;
+    // Only the DReLU epilogue is opt-in; the single-output fold below needs no
+    // epilogue and measured a straight gain, so it is always wired.
+    const bool drelu_enabled = env_flag_enabled("OPENNN_DRELU_FUSION");
 
     vector<Index> consumer_count(layers.size(), 0);
     for (const auto& layer_sources : source_layers)
@@ -442,8 +496,12 @@ void wire_drelu_fusions(vector<unique_ptr<Layer>>& layers,
         auto* consumer = dynamic_cast<Dense*>(layers[i].get());
         auto* producer = dynamic_cast<Dense*>(layers[size_t(sources[0])].get());
 
-        if (consumer && producer)
-            consumer->try_wire_drelu_fusion(*producer);
+        if (!consumer || !producer) continue;
+
+        // The single-output fold is tried first; the DReLU epilogue only
+        // applies where it did not, and only when asked for.
+        if (!consumer->try_wire_single_output_relu_fusion(*producer, sources[0]) && drelu_enabled)
+            consumer->try_wire_drelu_fusion(*producer, sources[0]);
     }
 }
 
@@ -498,6 +556,7 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& sour
 
     first_trainable_cache_ = -1;
     last_trainable_cache_  = -1;
+    linked_gradient_base   = nullptr;
 }
 
 void NeuralNetwork::compile()
@@ -512,7 +571,7 @@ void NeuralNetwork::compile(const Device device)
     compile(Configuration::instance().resolve_for(device));
 }
 
-void NeuralNetwork::compile(Configuration::Resolved new_config)
+void NeuralNetwork::compile(EffectiveConfig new_config)
 {
     config = new_config;
 
@@ -752,6 +811,7 @@ void NeuralNetwork::clear()
 
     first_trainable_cache_ = -1;
     last_trainable_cache_  = -1;
+    linked_gradient_base   = nullptr;
 }
 
 void NeuralNetwork::steal_from(NeuralNetwork& src)
@@ -766,6 +826,11 @@ void NeuralNetwork::steal_from(NeuralNetwork& src)
     last_trainable_cache_  = src.last_trainable_cache_;
     src.first_trainable_cache_ = -1;
     src.last_trainable_cache_  = -1;
+    // Conservative on both sides: the layers moved, so neither network may claim
+    // its gradient views are still linked. Re-linking costs one pass; skipping a
+    // needed one writes gradients through dangling views.
+    linked_gradient_base       = nullptr;
+    src.linked_gradient_base   = nullptr;
     link_parameters();
 }
 
@@ -993,12 +1058,61 @@ void NeuralNetwork::set_parameters_pytorch()
     initialize_parameters(&Operator::set_parameters_pytorch);
 }
 
-Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2)
+namespace
 {
-    const Index layers_number = get_layers_number();
 
-    if (layers_number == 0)
-        return {};
+// Every calculate_outputs overload wraps a single Eigen input in one view.
+// Kept in one place so each shape is written once.
+
+TensorView single_input_view(const MatrixR& inputs)
+{
+    return TensorView(const_cast<float*>(inputs.data()),
+                      {inputs.rows(), inputs.cols()}, Type::FP32);
+}
+
+
+TensorView single_input_view(const Tensor3& inputs)
+{
+    return TensorView(const_cast<float*>(inputs.data()),
+                      {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)},
+                      Type::FP32);
+}
+
+
+TensorView single_input_view(const Tensor4& inputs)
+{
+    return TensorView(const_cast<float*>(inputs.data()),
+                      {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2),
+                       inputs.dimension(3)},
+                      Type::FP32);
+}
+
+}
+
+
+void NeuralNetwork::calculate_outputs(const MatrixR& inputs, MatrixR& outputs)
+{
+    calculate_outputs(vector<TensorView>{single_input_view(inputs)}, outputs);
+}
+
+void NeuralNetwork::calculate_outputs(const Tensor3& inputs, MatrixR& outputs)
+{
+    calculate_outputs(vector<TensorView>{single_input_view(inputs)}, outputs);
+}
+
+void NeuralNetwork::calculate_outputs(const Tensor4& inputs, MatrixR& outputs)
+{
+    calculate_outputs(vector<TensorView>{single_input_view(inputs)}, outputs);
+}
+
+void NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2,
+                                      Tensor3& outputs)
+{
+    if (get_layers_number() == 0)
+    {
+        outputs = Tensor3();
+        return;
+    }
 
     warn_if_stale_configuration();
 
@@ -1007,26 +1121,43 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
     ForwardPropagation forward_propagation(batch_size, this,
                                            ForwardPropagationMode::Inference);
 
-    const vector<TensorView> input_views = {TensorView(const_cast<float*>(inputs_1.data()), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}}),
-                                            TensorView(const_cast<float*>(inputs_2.data()), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}})};
-
-    if (is_gpu())
-    {
-        const MatrixR result_matrix = calculate_outputs_device(input_views, forward_propagation);
-        const TensorView out = forward_propagation.get_outputs();
-        throw_if(out.get_shape().get_rank() < 3,
-                 "calculate_outputs(Tensor3, Tensor3): expected rank-3 output, got rank {}",
-                        out.get_shape().get_rank());
-        const Shape& shape = out.get_shape();
-        Tensor3 result(shape[0], shape[1], shape[2]);
-        memcpy(result.data(), result_matrix.data(),
-                    size_t(result.size()) * sizeof(float));
-        return result;
-    }
+    const vector<TensorView> input_views = {single_input_view(inputs_1),
+                                            single_input_view(inputs_2)};
 
     forward_propagate(input_views, forward_propagation, false);
 
-    return forward_propagation.get_outputs().as_tensor<3>();
+    if (!is_gpu())
+    {
+        outputs = forward_propagation.get_outputs().as_tensor<3>();
+        return;
+    }
+
+    const TensorView out = forward_propagation.get_outputs();
+
+    throw_if(out.get_shape().get_rank() < 3,
+             "calculate_outputs(Tensor3, Tensor3): expected rank-3 output, got rank {}",
+             out.get_shape().get_rank());
+
+    const Shape& shape = out.get_shape();
+
+    // Copy straight into the caller's tensor. Going through an intermediate
+    // MatrixR meant a second allocation of the same size plus a memcpy, and at
+    // inference sizes the allocation costs more than the transfer itself.
+    if (outputs.dimension(0) != shape[0]
+        || outputs.dimension(1) != shape[1]
+        || outputs.dimension(2) != shape[2])
+        outputs.resize(shape[0], shape[1], shape[2]);
+
+    copy_device_to_host_float(out.get_data(), out.get_type(), out.size(),
+                              outputs.data(), device::get_compute_stream(),
+                              forward_propagation.host_bf16_output_scratch);
+}
+
+Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2)
+{
+    Tensor3 outputs;
+    calculate_outputs(inputs_1, inputs_2, outputs);
+    return outputs;
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
@@ -1111,19 +1242,46 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
     return outputs;
 }
 
+void NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views,
+                                      MatrixR& outputs)
+{
+    if (layers.empty() || input_views.empty())
+    {
+        outputs.resize(0, 0);
+        return;
+    }
+
+    warn_if_stale_configuration();
+
+    // The CPU path tiles and sizes its own result; reuse only pays on the GPU
+    // path, where the per-call allocation is what costs.
+    if (!is_gpu())
+    {
+        outputs = calculate_outputs(input_views);
+        return;
+    }
+
+    const Index batch_size = input_views[0].get_shape()[0];
+
+    ForwardPropagation forward_propagation(batch_size, this,
+                                           ForwardPropagationMode::Inference);
+
+    calculate_outputs_device(input_views, forward_propagation, outputs);
+}
+
 MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
 {
-    return calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.rows(), inputs.cols()}, Type::FP32)});
+    return calculate_outputs(vector<TensorView>{single_input_view(inputs)});
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs)
 {
-    return calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)}, Type::FP32)});
+    return calculate_outputs(vector<TensorView>{single_input_view(inputs)});
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs)
 {
-    return calculate_outputs(vector<TensorView>{TensorView(const_cast<float*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}, Type::FP32)});
+    return calculate_outputs(vector<TensorView>{single_input_view(inputs)});
 }
 
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
@@ -1499,6 +1657,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     layers.reserve(layers_number);
     first_trainable_cache_ = -1;
     last_trainable_cache_  = -1;
+    linked_gradient_base   = nullptr;
 
     const Json* items_array = layers_container->find("Items");
     if (items_array && items_array->is_array())
@@ -2129,10 +2288,7 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
             const Index size = slot.shape.size();
             const Index aligned = get_aligned_size(size);
             if (slot.tied)
-            {
-                skip(aligned);
-                return;
-            }
+                return skip(aligned);
 
             if (slot.dtype == Type::INT8)
                 read_bf16_quantize_int8_to_device(
@@ -2153,8 +2309,7 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
                  "unconsumed data remains in {}.",
                  file_name.string());
 
-        use_compact_parameter_storage();
-        return;
+        return use_compact_parameter_storage();
     }
 #endif
 
@@ -2195,10 +2350,15 @@ vector<string> NeuralNetwork::get_layer_labels() const
 
 void NeuralNetwork::link_parameters()
 {
+    // Every parameter-layout change comes through here, and the gradient views
+    // are laid out from the same specs. Forget the recorded gradient base so the
+    // next backward re-links: an allocator can hand the same address back for a
+    // different layout, and then a matching pointer would prove nothing.
+    linked_gradient_base = nullptr;
+
     float* fp32_base = parameters.as<float>();
     float* fp32_inference_base =
-        parameters.get_device() == Device::CUDA
-        && !parameters.owns_memory()
+        fp32_master_released()
         && !parameters_fp32_inference_storage.empty()
         ? parameters_fp32_inference_storage.as<float>()
         : nullptr;
@@ -2308,6 +2468,26 @@ void NeuralNetwork::link_parameters()
     if (current_layer) current_layer->redistribute_parameters_to_operators();
 }
 
+// A layer writes its parameter gradients through views into a BackPropagation's
+// gradient buffer, so exactly one buffer is reachable at a time. Training with a
+// remainder batch alternates between two contexts every epoch, which used to
+// mean re-running BackPropagation::set on each switch - re-planning the deltas
+// and memsetting the gradient just to move pointers. Linking here instead, from
+// the backward pass that is about to run, makes the switch a pointer comparison.
+void NeuralNetwork::link_gradients(const Buffer& gradient) const
+{
+    void* const base = gradient.data();
+
+    if (!base || base == linked_gradient_base) return;
+
+    float* pointer = static_cast<float*>(base);
+
+    for (const auto& layer : layers)
+        pointer = layer->link_gradients(pointer, gradient.get_device());
+
+    linked_gradient_base = base;
+}
+
 void NeuralNetwork::link_states()
 {
     const Device state_device = states.empty()
@@ -2330,19 +2510,15 @@ void NeuralNetwork::link_states(Device device)
 void NeuralNetwork::copy_parameters_device()
 {
     if (parameters.empty())
-    {
-        clear_low_precision_parameter_storage();
-        return;
-    }
+        return clear_low_precision_parameter_storage();
 
-    if (parameters.get_device() == Device::CUDA && !parameters.owns_memory())
+    if (fp32_master_released())
     {
         const bool bf16_released = config.training_type == Type::BF16 && !parameters_bf16_mirror.empty();
         const bool int8_released = config.training_type == Type::INT8 && !parameters_int8_storage.empty();
         throw_if(!bf16_released && !int8_released,
                  "NeuralNetwork::copy_parameters_device: parameters are a non-owning view.");
-        link_parameters();
-        return;
+        return link_parameters();
     }
 
     if (config.training_type == Type::INT8)
@@ -2350,8 +2526,7 @@ void NeuralNetwork::copy_parameters_device()
         throw_if(parameters.get_device() != Device::CPU || !parameters.owns_memory(),
                  "NeuralNetwork::copy_parameters_device: INT8 inference requires "
                  "a host FP32 master to quantize.");
-        upload_parameters_int8_inference();
-        return;
+        return upload_parameters_int8_inference();
     }
 
     cudaStream_t stream = device::get_compute_stream();
@@ -2391,6 +2566,13 @@ void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
 
     if (!can_release_parameter_master) return;
 
+    // This walks the specs itself rather than reusing for_each_parameter_slot's
+    // slot.fp32_offset, and the two are not interchangeable: fp32_offset skips
+    // tied slots and counts INT8 scale channels, while the layout written below
+    // counts every non-BF16 slot and no scales. They agree today only because a
+    // tied slot is bias-free, so its one spec carries weights_dtype - BF16 in a
+    // BF16 run - and INT8 never appears in training. Substituting one for the
+    // other would misplace every parameter after the first tied FP32 slot.
     const auto specs = get_parameter_specs();
 
     Index fp32_keep_floats = 0;
@@ -2457,10 +2639,7 @@ void NeuralNetwork::upload_parameters_bf16_inference()
         && parameters.owns_memory();
 
     if (!can_upload_low_precision_parameters)
-    {
-        copy_parameters_device();
-        return;
-    }
+        return copy_parameters_device();
 
     cudaStream_t stream = device::get_compute_stream();
     const float* const host_fp32 = parameters.as<float>();
@@ -2585,12 +2764,9 @@ void NeuralNetwork::activate_transposed_inference_weights()
 void NeuralNetwork::copy_parameters_host()
 {
     if (parameters.empty())
-    {
-        clear_low_precision_parameter_storage();
-        return;
-    }
+        return clear_low_precision_parameter_storage();
 
-    throw_if(parameters.get_device() == Device::CUDA && !parameters.owns_memory(),
+    throw_if(fp32_master_released(),
              "NeuralNetwork::copy_parameters_host: the fp32 CUDA parameter master "
              "was released for quantized inference and cannot be copied back.");
 
@@ -2620,8 +2796,9 @@ void NeuralNetwork::copy_states_host()
     link_states(Device::CPU);
 }
 
-MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,
-                                                ForwardPropagation& forward_propagation)
+void NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,
+                                             ForwardPropagation& forward_propagation,
+                                             MatrixR& outputs)
 {
     forward_propagate(input_views_cpu, forward_propagation, false);
 
@@ -2629,12 +2806,21 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
 
     const Index batch_size = input_views_cpu[0].get_shape()[0];
     const Index out_cols = out_view.size() / batch_size;
-    MatrixR result(batch_size, out_cols);
+
+    if (Index(outputs.rows()) != batch_size || Index(outputs.cols()) != out_cols)
+        outputs.resize(batch_size, out_cols);
 
     cudaStream_t stream = device::get_compute_stream();
     copy_device_to_host_float(out_view.get_data(), out_view.get_type(), out_view.size(),
-                              result.data(), stream);
+                              outputs.data(), stream,
+                              forward_propagation.host_bf16_output_scratch);
+}
 
+MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,
+                                                ForwardPropagation& forward_propagation)
+{
+    MatrixR result;
+    calculate_outputs_device(input_views_cpu, forward_propagation, result);
     return result;
 }
 
@@ -2684,7 +2870,8 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
             PROFILE_SCOPE_HOST("inference:graph_launch");
 
             if (forward_propagation.position_pinned)
-                *static_cast<int*>(forward_propagation.position_pinned) = int(forward_propagation.past_length);
+                *forward_propagation.position_pinned.as<int>() =
+                    int(forward_propagation.past_length);
             device::launch_graph(forward_propagation.inference_graph_exec, compute);
             return forward_propagation.get_outputs();
         }
@@ -2710,8 +2897,8 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
         return forward_propagation.get_outputs();
     }
 
-    const bool profiler_was_enabled = ::opennn::enabled();
-    ::opennn::enabled() = false;
+    const bool profiler_was_enabled = profiler::is_enabled();
+    profiler::set_enabled(false);
 
     forward_propagation.prepare_cuda_graph_workspaces();
     const device::GraphWorkspaceViews graph_workspace_views =
@@ -2756,7 +2943,7 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
     if (forward_propagation.inference_graph_exec)
         release_thread_workspaces();
 
-    ::opennn::enabled() = profiler_was_enabled;
+    profiler::set_enabled(profiler_was_enabled);
 
     return forward_propagation.get_outputs();
 }
@@ -2791,6 +2978,10 @@ void NeuralNetwork::copy_states_host()
 
 MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>&,
                                                 ForwardPropagation&) OPENNN_CUDA_STUB_BODY(NeuralNetwork::calculate_outputs_device)
+
+void NeuralNetwork::calculate_outputs_device(const vector<TensorView>&,
+                                             ForwardPropagation&,
+                                             MatrixR&) OPENNN_CUDA_STUB_BODY(NeuralNetwork::calculate_outputs_device)
 
 TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>&,
                                                      ForwardPropagation&,

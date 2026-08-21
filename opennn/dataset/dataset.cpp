@@ -135,12 +135,11 @@ void Dataset::set_storage_mode(StorageMode new_storage_mode)
 
 static const EnumMap<Dataset::StorageMode>& storage_mode_map()
 {
-    static const vector<pair<Dataset::StorageMode, string>> entries = {
+    static const EnumMap<Dataset::StorageMode> map{
         {Dataset::StorageMode::Matrix,            "Matrix"},
         {Dataset::StorageMode::BinaryFile,        "BinaryFile"},
         {Dataset::StorageMode::GPUPersistantData, "GPUPersistantData"}
     };
-    static const EnumMap<Dataset::StorageMode> map{entries};
     return map;
 }
 
@@ -213,9 +212,11 @@ void Dataset::upload_device_matrix(const MatrixR& matrix)
 
     const Index bytes = Index(matrix.size()) * Index(sizeof(float));
     data_device.resize_bytes(bytes, Device::CUDA);
+
+    const cudaStream_t stream = device::get_compute_stream();
     device::copy_async(data_device.data(), matrix.data(), bytes,
-                       device::CopyKind::HostToDevice, device::get_compute_stream());
-    device::synchronize(device::get_compute_stream());
+                       device::CopyKind::HostToDevice, stream);
+    device::synchronize(stream);
 }
 
 void Dataset::set_data_constant(float new_value)
@@ -235,23 +236,46 @@ Index Dataset::get_used_samples_number() const
 
 void Dataset::set_sample_roles(SampleRole role_type)
 {
+    const bool used_samples_changed = ranges::any_of(sample_roles,
+        [role_type](SampleRole role)
+        {
+            return (role == SampleRole::None) != (role_type == SampleRole::None);
+        });
     ranges::fill(sample_roles, role_type);
+    if (used_samples_changed) on_used_samples_changed();
 }
 
 void Dataset::set_sample_role(const Index index, SampleRole new_role)
 {
+    const bool used_samples_changed = (sample_roles[index] == SampleRole::None)
+                                   != (new_role == SampleRole::None);
     sample_roles[index] = new_role;
+    if (used_samples_changed) on_used_samples_changed();
 }
 
 void Dataset::set_sample_roles(const vector<string>& new_roles)
 {
-    ranges::transform(new_roles, sample_roles.begin(), string_to_sample_role);
+    bool used_samples_changed = false;
+    for (Index i = 0; i < ssize(new_roles); ++i)
+    {
+        const SampleRole new_role = string_to_sample_role(new_roles[size_t(i)]);
+        used_samples_changed |= (sample_roles[i] == SampleRole::None)
+                              != (new_role == SampleRole::None);
+        sample_roles[i] = new_role;
+    }
+    if (used_samples_changed) on_used_samples_changed();
 }
 
 void Dataset::set_sample_roles(const vector<Index>& indices, SampleRole role_type)
 {
+    bool used_samples_changed = false;
     for (const auto& i : indices)
+    {
+        used_samples_changed |= (sample_roles[i] == SampleRole::None)
+                              != (role_type == SampleRole::None);
         sample_roles[i] = role_type;
+    }
+    if (used_samples_changed) on_used_samples_changed();
 }
 
 VectorI Dataset::filter_data(const VectorR& minimums, const VectorR& maximums)
@@ -657,11 +681,10 @@ string Dataset::get_separator_name() const
 
 static const EnumMap<Dataset::Codification>& codification_map()
 {
-    static const vector<pair<Dataset::Codification, string>> entries = {
+    static const EnumMap<Dataset::Codification> map{
         {Dataset::Codification::UTF8,      "UTF-8"},
         {Dataset::Codification::SHIFT_JIS, "SHIFT_JIS"}
     };
-    static const EnumMap<Dataset::Codification> map{entries};
     return map;
 }
 
@@ -1079,9 +1102,15 @@ void Dataset::fill_batch_host(Batch& batch,
 
     batch.device_gather.reset();
 
-    float* const input_buffer   = on_gpu ? batch.input.host   : batch.input.buffer.as<float>();
-    float* const decoder_buffer = on_gpu ? batch.decoder.host : batch.decoder.buffer.as<float>();
-    float* const target_buffer  = on_gpu ? batch.target.host  : batch.target.buffer.as<float>();
+    float* const input_buffer = on_gpu
+        ? batch.input.host.as<float>()
+        : batch.input.buffer.as<float>();
+    float* const decoder_buffer = on_gpu
+        ? batch.decoder.host.as<float>()
+        : batch.decoder.buffer.as<float>();
+    float* const target_buffer = on_gpu
+        ? batch.target.host.as<float>()
+        : batch.target.buffer.as<float>();
 
     if (!batch.input.contiguous && !input_indices.empty())
         batch.input.contiguous = is_contiguous(input_indices);

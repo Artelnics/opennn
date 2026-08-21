@@ -16,42 +16,29 @@ namespace opennn
 
 #ifdef OPENNN_HAS_CUDA
 
-cudnnTensorDescriptor_t TensorView::get_descriptor() const
-{
-    if (!shape.empty())
-        set_descriptor(shape);
-    return descriptor_handle.get();
-}
-
-void TensorView::set_descriptor(const Shape& descriptor_shape) const
+CudnnDescriptor<cudnnTensorDescriptor_t> TensorView::get_descriptor() const
 {
     int batch_count = 1, channels = 1, height = 1, width = 1;
-    const size_t rank = descriptor_shape.get_rank();
-    if (rank >= 1) channels    = static_cast<int>(descriptor_shape[rank - 1]);
-    if (rank >= 2) batch_count = static_cast<int>(descriptor_shape[0]);
-    if (rank >= 3) width       = static_cast<int>(descriptor_shape[rank - 2]);
-    if (rank >= 4) height      = static_cast<int>(descriptor_shape[rank - 3]);
+    const size_t rank = shape.get_rank();
+    if (rank >= 1) channels    = static_cast<int>(shape[rank - 1]);
+    if (rank >= 2) batch_count = static_cast<int>(shape[0]);
+    if (rank >= 3) width       = static_cast<int>(shape[rank - 2]);
+    if (rank >= 4) height      = static_cast<int>(shape[rank - 3]);
 
+    CudnnDescriptor<cudnnTensorDescriptor_t> descriptor;
     if (batch_count <= 0 || channels <= 0 || height <= 0 || width <= 0)
-        return;
+        return descriptor;
 
     throw_if(Index(batch_count) * channels * height * width > Index(numeric_limits<int>::max()),
              "TensorView descriptor: {}x{}x{}x{} exceeds the cuDNN 4d descriptor limit of INT32_MAX elements.",
              batch_count, channels, height, width);
 
-    if (!descriptor_handle)
-    {
-        cudnnTensorDescriptor_t raw_desc;
-        CHECK_CUDNN(cudnnCreateTensorDescriptor(&raw_desc));
-
-        descriptor_handle = shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t descriptor) {
-            cudnnDestroyTensorDescriptor(descriptor);
-        });
-    }
-
-    CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC,
+    CHECK_CUDNN(cudnnCreateTensorDescriptor(&descriptor.handle));
+    descriptor.deleter = &cudnnDestroyTensorDescriptor;
+    CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor, CUDNN_TENSOR_NHWC,
                                            to_cudnn(type),
                                            batch_count, channels, height, width));
+    return descriptor;
 }
 
 static bool uses_cuda_fill(const TensorView& view)
@@ -66,20 +53,15 @@ static bool uses_cuda_fill(const TensorView& view)
 static void fill_cuda(const TensorView& view, float value)
 {
     if (value == 0.0f)
-    {
-        device::set_zero(view.get_data(), view.byte_size(), Device::CUDA);
-        return;
-    }
+        return device::set_zero(view.get_data(), view.byte_size(), Device::CUDA);
 
-    CHECK_CUDNN(cudnnSetTensor(Backend::get_cudnn_handle(),
+    CHECK_CUDNN(cudnnSetTensor(device::get_cudnn_handle(),
                                view.get_descriptor(), view.get_data(), &value));
 }
 
 #else
 
-cudnnTensorDescriptor_t TensorView::get_descriptor() const OPENNN_CUDA_STUB_BODY(TensorView::get_descriptor)
-
-void TensorView::set_descriptor(const Shape&) const OPENNN_CUDA_STUB_BODY(TensorView::set_descriptor)
+CudnnDescriptor<cudnnTensorDescriptor_t> TensorView::get_descriptor() const OPENNN_CUDA_STUB_BODY(TensorView::get_descriptor)
 
 static bool uses_cuda_fill(const TensorView& view)
 {
@@ -98,10 +80,7 @@ void TensorView::fill(float value) const
     if (!data) return;
 
     if (uses_cuda_fill(*this))
-    {
-        fill_cuda(*this, value);
-        return;
-    }
+        return fill_cuda(*this, value);
 
     assert(type == Type::FP32);
     float* values = static_cast<float*>(data);
@@ -110,14 +89,12 @@ void TensorView::fill(float value) const
 
 string shape_to_string(const Shape& shape, const string& separator)
 {
-    const Index size = shape.get_rank();
-
     ostringstream buffer;
 
-    throw_if(size == 0,
+    throw_if(shape.empty(),
              "Dimensions size must be greater than 0.\n");
 
-    for (Index i = 0; i < size; ++i)
+    for (size_t i = 0; i < shape.get_rank(); ++i)
         buffer << shape[i] << separator;
 
     return buffer.str();
@@ -184,7 +161,8 @@ void fill_tensor_data(const MatrixR& matrix,
 
 void copy_device_to_host_float(const void* device_src, Type src_dtype,
                                Index element_count, float* host_dst,
-                               cudaStream_t stream)
+                               cudaStream_t stream,
+                               vector<uint16_t>& bf16_staging)
 {
     if (element_count == 0) return;
 
@@ -198,16 +176,25 @@ void copy_device_to_host_float(const void* device_src, Type src_dtype,
     }
     else if (src_dtype == Type::BF16)
     {
-        vector<uint16_t> staging(static_cast<size_t>(element_count));
-        device::copy_async(staging.data(), device_src,
+        bf16_staging.resize(static_cast<size_t>(element_count));
+        device::copy_async(bf16_staging.data(), device_src,
                            element_count * Index(sizeof(uint16_t)),
                            device::CopyKind::DeviceToHost,
                            stream);
         device::synchronize(stream);
-        ranges::transform(staging, host_dst, bfloat16_to_float_host);
+        ranges::transform(bf16_staging, host_dst, bfloat16_to_float_host);
     }
     else
         throw runtime_error("copy_device_to_host_float: unsupported dtype.");
+}
+
+void copy_device_to_host_float(const void* device_src, Type src_dtype,
+                               Index element_count, float* host_dst,
+                               cudaStream_t stream)
+{
+    vector<uint16_t> bf16_staging;
+    copy_device_to_host_float(device_src, src_dtype, element_count,
+                              host_dst, stream, bf16_staging);
 }
 
 }

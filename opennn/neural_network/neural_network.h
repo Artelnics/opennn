@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   N E U R A L   N E T W O R K   C L A S S   H E A D E R
@@ -37,6 +37,27 @@ class NeuralNetwork
 
 public:
 
+    // Stages the parameters on the host for as long as it lives, and puts them
+    // back on the device when it dies - however it dies. Anything that reads
+    // parameter values directly (expression export, reporting) needs this;
+    // doing it by hand leaves them stranded on the host when a read throws.
+    struct HostParametersGuard
+    {
+        explicit HostParametersGuard(NeuralNetwork& n)
+            : network(n), was_on_device(n.parameters.get_device() == Device::CUDA)
+        {
+            if (was_on_device) network.copy_parameters_host();
+        }
+
+        ~HostParametersGuard() { if (was_on_device) network.copy_parameters_device(); }
+
+        HostParametersGuard(const HostParametersGuard&) = delete;
+        HostParametersGuard& operator=(const HostParametersGuard&) = delete;
+
+        NeuralNetwork& network;
+        const bool was_on_device;
+    };
+
     NeuralNetwork();
 
     virtual ~NeuralNetwork() = default;
@@ -49,7 +70,7 @@ public:
     void add_layer(unique_ptr<Layer>,
                   const vector<Index>& = {});
 
-    const Configuration::Resolved& get_config() const noexcept { return config; }
+    const EffectiveConfig& get_config() const noexcept { return config; }
     Device get_device() const noexcept { return config.device; }
     bool is_gpu() const noexcept { return config.device == Device::CUDA; }
     bool is_cpu() const noexcept { return config.device == Device::CPU; }
@@ -176,9 +197,31 @@ public:
     void set_parameters_glorot();
     void set_parameters_pytorch();
     void link_parameters();
+
+    // True once release_bf16_fp32_parameter_master_for_inference() has handed
+    // the fp32 master back to the allocator: the CUDA parameter view is alive
+    // but non-owning, and only the quantized mirror holds real weights.
+    bool fp32_master_released() const noexcept
+    {
+        return parameters.get_device() == Device::CUDA && !parameters.owns_memory();
+    }
+
+    // Points every layer's gradient views at this buffer, and does nothing when
+    // they already point there. Training alternates between propagation contexts
+    // - the full batch and the remainder batch - so the link belongs to the
+    // backward pass being run, not to whichever BackPropagation was built last.
+    void link_gradients(const Buffer&) const;
+
     void link_states();
     void link_states(Device);
     MatrixR calculate_outputs(const vector<TensorView>&);
+
+    // Writes the result into outputs, reusing its storage when the shape
+    // already matches. Allocating a fresh result per call dominates GPU
+    // inference once the output is large, so prefer this overload when calling
+    // repeatedly. When the result can stay on the device,
+    // calculate_outputs_resident avoids the device-to-host copy entirely.
+    void calculate_outputs(const vector<TensorView>&, MatrixR& outputs);
 
     TensorView calculate_outputs_resident(const vector<TensorView>&,
                                           ForwardPropagation&,
@@ -190,7 +233,19 @@ public:
 
     MatrixR calculate_outputs(const Tensor4&);
 
+    // Buffer-reusing counterparts of the three overloads above. Prefer these
+    // when calling repeatedly: the by-value versions must allocate a result
+    // every call, which costs more than the device-to-host copy itself once
+    // outputs are large.
+    void calculate_outputs(const MatrixR&, MatrixR& outputs);
+
+    void calculate_outputs(const Tensor3&, MatrixR& outputs);
+
+    void calculate_outputs(const Tensor4&, MatrixR& outputs);
+
     Tensor3 calculate_outputs(const Tensor3&, const Tensor3&);
+
+    void calculate_outputs(const Tensor3&, const Tensor3&, Tensor3& outputs);
 
     void from_JSON(const JsonDocument&);
 
@@ -266,7 +321,7 @@ protected:
 
     Buffer states;
 
-    Configuration::Resolved config;
+    EffectiveConfig config;
 
     bool training_activation_recomputation = false;
 
@@ -275,28 +330,19 @@ protected:
     mutable Index first_trainable_cache_ = -1;
     mutable Index last_trainable_cache_  = -1;
 
+    // Base address the layers' gradient views were last linked to. Reset
+    // wherever the layer set changes, since the same address can come back from
+    // the allocator for a different parameter layout.
+    mutable const void* linked_gradient_base = nullptr;
+
 private:
 
-    void compile(Configuration::Resolved);
+    void compile(EffectiveConfig);
 
     MatrixR calculate_outputs_device(const vector<TensorView>&, ForwardPropagation&);
 
-    struct HostParametersGuard
-    {
-        explicit HostParametersGuard(NeuralNetwork& n)
-            : network(n), was_on_device(n.parameters.get_device() == Device::CUDA)
-        {
-            if (was_on_device) network.copy_parameters_host();
-        }
-
-        ~HostParametersGuard() { if (was_on_device) network.copy_parameters_device(); }
-
-        HostParametersGuard(const HostParametersGuard&) = delete;
-        HostParametersGuard& operator=(const HostParametersGuard&) = delete;
-
-        NeuralNetwork& network;
-        const bool was_on_device;
-    };
+    void calculate_outputs_device(const vector<TensorView>&, ForwardPropagation&,
+                                  MatrixR& outputs);
 
     struct HostStatesGuard
     {
@@ -358,7 +404,8 @@ private:
     {
         for (auto& layer_specs : specs)
             for (auto& spec : layer_specs)
-                spec.dtype = Type::FP32;
+                if (spec.dtype == Type::BF16)
+                    spec.dtype = Type::FP32;
     }
 
     template<typename Fn>

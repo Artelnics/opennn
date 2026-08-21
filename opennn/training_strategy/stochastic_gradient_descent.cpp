@@ -90,23 +90,22 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     if (mode == UpdateMode::Capturable)
     {
 #ifdef OPENNN_HAS_CUDA
-        clip_gradient_norm(back_propagation.gradient, gradient_clip_norm);
+        clip_gradient_norm(back_propagation, gradient_clip_norm);
 
         float* const velocity_ptr = momentum > 0.0f
             ? optimizer_data.views[Velocity].as<float>()
             : nullptr;
 
-        sgd_update_capturable_cuda(
-            neural_network->get_parameters_buffer_size(),
-            neural_network->get_parameters_data(),
-            velocity_ptr,
-            back_propagation.gradient.as<float>(),
-            optimizer_data.views[GraphLearningRate].as<float>(),
-            momentum,
-            nesterov,
-            neural_network->get_parameters_bf16_mirror_data(),
-            device::get_compute_stream());
-        return;
+        return sgd_update_capturable_cuda(
+                   neural_network->get_parameters_buffer_size(),
+                   neural_network->get_parameters_data(),
+                   velocity_ptr,
+                   back_propagation.gradient.as<float>(),
+                   optimizer_data.views[GraphLearningRate].as<float>(),
+                   momentum,
+                   nesterov,
+                   neural_network->get_parameters_bf16_mirror_data(),
+                   device::get_compute_stream());
 #else
         throw runtime_error("Capturable SGD parameter updates require CUDA support.");
 #endif
@@ -119,14 +118,11 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     throw_if(momentum > 0.0f && optimizer_data.views.empty(),
              "StochasticGradientDescent::update_parameters: velocity buffer is not initialized.");
 
-    clip_gradient_norm(back_propagation.gradient, gradient_clip_norm);
+    clip_gradient_norm(back_propagation, gradient_clip_norm);
 
     if (neural_network->is_gpu())
-    {
-        update_parameters_cuda(back_propagation, optimizer_data,
-                               current_learning_rate, momentum, nesterov);
-        return;
-    }
+        return update_parameters_cuda(back_propagation, optimizer_data,
+                                      current_learning_rate, momentum, nesterov);
 
     VectorMap parameters = neural_network->get_parameters_map();
 

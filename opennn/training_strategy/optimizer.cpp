@@ -41,60 +41,36 @@ namespace opennn
 
 #ifdef OPENNN_HAS_CUDA
 
-static void clip_gradient_norm_device(Buffer& gradient, Index gradient_size, float max_norm)
+static void clip_gradient_norm_device(Buffer& gradient,
+                                      Buffer& workspace,
+                                      Index gradient_size,
+                                      float max_norm)
 {
-    thread_local Buffer squared_norm_device(Device::CUDA);
-    if (!squared_norm_device.data())
-        squared_norm_device.grow_to(Index(sizeof(float)));
-    float* const squared_norm_ptr = squared_norm_device.as<float>();
+    float* const squared_norm = workspace.ensure<float>(1);
 
-    cublasHandle_t handle = Backend::get_cublas_handle();
+    cublasHandle_t handle = device::get_cublas_handle();
     {
         device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
         CHECK_CUBLAS(cublasSdot(handle,
                                 to_int(gradient_size),
                                 gradient.as<float>(), 1,
                                 gradient.as<float>(), 1,
-                                squared_norm_ptr));
+                                squared_norm));
     }
 
-    clip_gradient_norm_cuda(gradient_size, gradient.as<float>(), squared_norm_ptr, max_norm, GRADIENT_NORM_EPS);
+    clip_gradient_norm_cuda(gradient_size, gradient.as<float>(),
+                            squared_norm, max_norm, GRADIENT_NORM_EPS);
 }
 
 #else
 
-static void clip_gradient_norm_device(Buffer&, Index, float) OPENNN_CUDA_STUB_BODY(clip_gradient_norm_device)
+static void clip_gradient_norm_device(Buffer&, Buffer&, Index, float)
+    OPENNN_CUDA_STUB_BODY(clip_gradient_norm_device)
 
 #endif
 
 namespace
 {
-
-template<typename F>
-class ScopeExit
-{
-public:
-    explicit ScopeExit(F new_cleanup)
-        : cleanup(std::move(new_cleanup))
-    {
-    }
-
-    ~ScopeExit() noexcept
-    {
-        if (!active) return;
-        try { cleanup(); }
-        catch (...) {}
-    }
-
-    ScopeExit(const ScopeExit&) = delete;
-    ScopeExit& operator=(const ScopeExit&) = delete;
-
-    void release() noexcept { active = false; }
-
-private:
-    F cleanup;
-    bool active = true;
-};
 
 FeatureScalingEndpoint* find_scaling_endpoint(NeuralNetwork& neural_network,
                                               VariableRole role)
@@ -187,13 +163,12 @@ struct Optimizer::WorkerProfileCounters
         const long calls = fills.load();
         if (calls <= 0) return;
 
-        auto& fill_entry = ::opennn::global_stats().entries["worker:fill"];
-        fill_entry.total_ms = double(fill_us.load()) / 1000.0;
-        fill_entry.calls = calls;
-
-        auto& wait_entry = ::opennn::global_stats().entries["worker:queue_wait"];
-        wait_entry.total_ms = double(pop_us.load()) / 1000.0;
-        wait_entry.calls = calls;
+        profiler::stats().set("worker:fill",
+                              double(fill_us.load()) / 1000.0,
+                              calls);
+        profiler::stats().set("worker:queue_wait",
+                              double(pop_us.load()) / 1000.0,
+                              calls);
     }
 
     void print_epoch(const chrono::steady_clock::time_point& epoch_t0,
@@ -204,10 +179,10 @@ struct Optimizer::WorkerProfileCounters
 
         const double epoch_ms =
             chrono::duration<double, milli>(chrono::steady_clock::now() - epoch_t0).count();
-        ::opennn::global_stats().print(cout, banner, epoch_ms);
+        profiler::stats().print(cout, banner, epoch_ms);
         cout << "  Wall-clock epoch time: " << fixed << setprecision(2) << epoch_ms << " ms"
              << " | workers_number=" << workers_number << "\n\n";
-        ::opennn::global_stats().clear();
+        profiler::stats().clear();
     }
 };
 
@@ -356,19 +331,20 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
             for (;;)
             {
                 const auto t_pop0 = chrono::steady_clock::now();
-                Batch* batch = session_ptr->empty_queue.pop();
+                Batch* batch = nullptr;
+                const bool received_batch = session_ptr->acquire(batch);
                 const auto t_fill0 = chrono::steady_clock::now();
 
-                if (!batch || stop.stop_requested())
+                if (!received_batch || !batch || stop.stop_requested())
                 {
-                    if (batch) session_ptr->empty_queue.push(batch);
+                    if (batch) session_ptr->release(batch);
                     return;
                 }
 
-                const Index it = session_ptr->next_iteration.fetch_add(1);
+                const Index it = session_ptr->claim_iteration();
                 if (it >= batches_number)
                 {
-                    session_ptr->empty_queue.push(batch);
+                    session_ptr->release(batch);
                     return;
                 }
 
@@ -380,8 +356,11 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
                             mode);
 
                 const auto t_fill1 = chrono::steady_clock::now();
-                session_ptr->ready_batches[size_t(it)].store(batch, memory_order_release);
-                session_ptr->ready_batches[size_t(it)].notify_one();
+                if (!session_ptr->publish(it, batch))
+                {
+                    session_ptr->release(batch);
+                    return;
+                }
 
                 if (profile_counters)
                     profile_counters->record(t_pop0, t_fill0, t_fill1);
@@ -396,9 +375,8 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
     NeuralNetwork* neural_network = loss->get_neural_network();
     const int batch_workers_number = get_batch_workers_number(*neural_network);
 
-    session->threads.reserve(size_t(batch_workers_number));
     for (int i = 0; i < batch_workers_number; ++i)
-        session->threads.emplace_back(worker_body);
+        session->add_worker(worker_body);
 
     return session;
 }
@@ -620,8 +598,7 @@ void Optimizer::prepare_training_scaling()
 }
 
 void Optimizer::warmup_device_training(
-    ForwardPropagation& training_forward_propagation,
-    BackPropagation& training_back_propagation,
+    TrainingContext& training_context,
     ThreadSafeQueue<Batch*>& training_empty_queue,
     const vector<vector<Index>>& training_batches,
     const vector<Index>& input_feature_indices,
@@ -720,7 +697,14 @@ void Optimizer::warmup_device_training(
     const function<void(NeuralNetwork*)> saved_post_batch_callback = post_batch_callback;
     post_batch_callback = {};
 
-    try
+    // However the warm-up ends, the pre-warm-up state and the caller's callback
+    // come back.
+    ScopeExit warmup_cleanup([&]
+    {
+        restore_pre_warmup_state();
+        post_batch_callback = saved_post_batch_callback;
+    });
+
     {
         if(validation_forward_propagation
            && validation_empty_queue
@@ -740,8 +724,7 @@ void Optimizer::warmup_device_training(
                            training_session);
         }
 
-        train_epoch(training_forward_propagation,
-                    training_back_propagation,
+        train_epoch(training_context,
                     training_empty_queue,
                     training_warmup_batch,
                     input_feature_indices,
@@ -750,14 +733,6 @@ void Optimizer::warmup_device_training(
                     training_session,
                     optimizer_data);
 
-        restore_pre_warmup_state();
-        post_batch_callback = saved_post_batch_callback;
-    }
-    catch(...)
-    {
-        restore_pre_warmup_state();
-        post_batch_callback = saved_post_batch_callback;
-        throw;
     }
 }
 
@@ -856,24 +831,12 @@ TrainingResult Optimizer::train()
                       has_validation,
                       training_session);
 
-    // BackPropagation owns the delta layout; ForwardPropagation only co-plans the
-    // lifetimes, so it never needs to see the Loss.
-    const vector<MemoryPoolEntry> delta_lifetimes =
-        BackPropagation::make_co_planned_lifetimes(*loss, training_batch_size);
+    TrainingContext training_context(training_batch_size, *loss, /*inputs_pre_scaled*/ true);
 
-    ForwardPropagation training_forward_propagation(
-        training_batch_size,
-        neural_network,
-        ForwardPropagationMode::Training,
-        {},
-        true,
-        delta_lifetimes);
+    ForwardPropagation& training_forward_propagation = training_context.forward;
+    BackPropagation& training_back_propagation = training_context.backward;
 
     loss->set_normalization_coefficient();
-
-    BackPropagation training_back_propagation(training_batch_size, *loss,
-                                              &training_forward_propagation.arena,
-                                              training_forward_propagation.co_planned_offsets);
 
     unique_ptr<ForwardPropagation> validation_forward_propagation;
     if (has_validation)
@@ -913,8 +876,7 @@ TrainingResult Optimizer::train()
         if (has_validation)
             dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
 
-        warmup_device_training(training_forward_propagation,
-                               training_back_propagation,
+        warmup_device_training(training_context,
                                batch_pools.training_empty_queue,
                                training_batches,
                                input_feature_indices,
@@ -973,8 +935,7 @@ TrainingResult Optimizer::train()
 
             on_epoch_begin(epoch, optimizer_data);
 
-            const Loss::EvaluationResult training_evaluation_result = train_epoch(training_forward_propagation,
-                                                                                 training_back_propagation,
+            const Loss::EvaluationResult training_evaluation_result = train_epoch(training_context,
                                                                                  batch_pools.training_empty_queue,
                                                                                  training_batches,
                                                                                  input_feature_indices,
@@ -1359,25 +1320,30 @@ void Optimizer::sync_device(const bool on_gpu,
 
     if (!has_recurrent_layers) return;
 
-    CudaEvent& slot = training_session.throttle_events[training_session.throttle_cursor];
+    device::CudaEvent& slot = training_session.throttle_events[training_session.throttle_cursor];
     training_session.throttle_cursor =
         (training_session.throttle_cursor + 1) % training_session.throttle_events.size();
 
-    if (slot.handle)
-        device::synchronize_event(slot.handle);
+    if (slot)
+        device::synchronize_event(slot.get());
     else
         slot.create();
 
-    device::record_event(slot.handle, device::get_compute_stream());
+    device::record_event(slot.get(), device::get_compute_stream());
 }
 
-void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
+void Optimizer::clip_gradient_norm(BackPropagation& back_propagation,
+                                   float max_norm)
 {
+    Buffer& gradient = back_propagation.gradient;
     const Index gradient_size = gradient.size_in_floats();
     if (max_norm <= 0.0f || gradient_size <= 0) return;
 
     if (gradient.get_device() == Device::CUDA)
-        clip_gradient_norm_device(gradient, gradient_size, max_norm);
+        clip_gradient_norm_device(gradient,
+                                  back_propagation.execution_workspace,
+                                  gradient_size,
+                                  max_norm);
     else
     {
         VectorMap gradient_view = gradient.as_vector();
@@ -1412,8 +1378,8 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     const bool profile_this = env_flag_enabled("OPENNN_PROFILE");
     if (profile_this)
     {
-        ::opennn::enabled() = true;
-        ::opennn::global_stats().clear();
+        profiler::set_enabled(true);
+        profiler::stats().clear();
     }
     const auto epoch_t0 = chrono::steady_clock::now();
     WorkerProfileCounters worker_profile;
@@ -1434,7 +1400,9 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         {
             const Index values_count = from.shape.size();
             if (!from.host || !to.host || values_count <= 0) return;
-            memcpy(to.host, from.host, size_t(values_count) * sizeof(float));
+            memcpy(to.host.data(),
+                   from.host.data(),
+                   size_t(values_count) * sizeof(float));
         };
 
         copy_section(source.input,   slot.input);
@@ -1448,7 +1416,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         {
             const Index values_count = section.shape.size();
             if (!section.host || !section.buffer.data() || values_count <= 0) return;
-            device::copy_async(section.buffer.data(), section.host,
+            device::copy_async(section.buffer.data(), section.host.data(),
                                values_count * Index(sizeof(float)),
                                device::CopyKind::HostToDevice, stream);
         };
@@ -1476,17 +1444,13 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         if (exec)
         {
             PROFILE_SCOPE_HOST("step:graph_launch");
-            device::launch_graph(exec, compute);
-            return;
+            return device::launch_graph(exec, compute);
         }
         if (!training_session.cuda_graph_capture_allowed)
-        {
-            operation();
-            return;
-        }
+            return operation();
 
-        const bool profiler_enabled = ::opennn::enabled();
-        ::opennn::enabled() = false;
+        const bool profiler_enabled = profiler::is_enabled();
+        profiler::set_enabled(false);
         try
         {
             device::synchronize(compute);
@@ -1501,11 +1465,10 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
             cuda_graph_capture_failed = true;
             cerr << "CUDA graph capture failed (" << capture_error.what()
                  << "); continuing without graphs.\n";
-            ::opennn::enabled() = profiler_enabled;
-            operation();
-            return;
+            profiler::set_enabled(profiler_enabled);
+            return operation();
         }
-        ::opennn::enabled() = profiler_enabled;
+        profiler::set_enabled(profiler_enabled);
     };
 
     const bool resident_gather = loss->get_dataset()->is_device_resident();
@@ -1529,7 +1492,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                 PROFILE_SCOPE_HOST("step:group_sync");
 
                 if (event_slot.h2d_done_recorded)
-                    device::synchronize_event(event_slot.h2d_done_event);
+                    device::synchronize_event(event_slot.h2d_done_event.get());
             }
 
             for (Index m = 0; m < M; ++m)
@@ -1615,16 +1578,16 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                             pipeline.copy_done_events[size_t(m)].create();
 
                     const auto run_group = [&] {
-                        device::record_event(pipeline.fork_event, compute);
-                        device::stream_wait_event(transfer, pipeline.fork_event);
+                        device::record_event(pipeline.fork_event.get(), compute);
+                        device::stream_wait_event(transfer, pipeline.fork_event.get());
                         for (Index m = 0; m < M; ++m)
                         {
                             issue_slot_h2d(*pipeline.slots[size_t(m)], transfer);
-                            device::record_event(pipeline.copy_done_events[size_t(m)], transfer);
+                            device::record_event(pipeline.copy_done_events[size_t(m)].get(), transfer);
                         }
                         for (Index m = 0; m < M; ++m)
                         {
-                            device::stream_wait_event(compute, pipeline.copy_done_events[size_t(m)]);
+                            device::stream_wait_event(compute, pipeline.copy_done_events[size_t(m)].get());
                             run_compute_step(*pipeline.slots[size_t(m)]);
                         }
                     };
@@ -1657,7 +1620,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                         PROFILE_SCOPE_HOST("step:stage_copy");
 
                         if (slot.h2d_done_recorded)
-                            device::synchronize_event(slot.h2d_done_event);
+                            device::synchronize_event(slot.h2d_done_event.get());
                         stage_into_slot(*host_batch, slot);
                         empty_queue.push(host_batch);
                         host_batch = nullptr;
@@ -1674,7 +1637,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                         PROFILE_SCOPE_HOST("step:h2d_issue");
 
                         if (slot.h2d_done_recorded)
-                            device::stream_wait_event(transfer, slot.h2d_done_event);
+                            device::stream_wait_event(transfer, slot.h2d_done_event.get());
                         host_batch->upload_to_device_batch_async(slot, transfer);
                         host_batch->wait_h2d_on_compute_stream();
                     }
@@ -1766,10 +1729,9 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
         {
             PROFILE_SCOPE_HOST("step:fixed_h2d_issue");
             if (fixed_device_batch_in_use)
-                device::stream_wait_event(device::get_transfer_stream(), fixed_device_batch->h2d_done_event);
+                device::stream_wait_event(device::get_transfer_stream(), fixed_device_batch->h2d_done_event.get());
 
-            next_batch->upload_to_device_batch_async(*fixed_device_batch, device::get_transfer_stream());
-            return;
+            return next_batch->upload_to_device_batch_async(*fixed_device_batch, device::get_transfer_stream());
         }
 
         PROFILE_SCOPE_HOST("step:prefetch_h2d_issue");
@@ -1793,7 +1755,7 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
 
         if (use_fixed_device_batch)
         {
-            device::record_event(fixed_device_batch->h2d_done_event, device::get_compute_stream());
+            device::record_event(fixed_device_batch->h2d_done_event.get(), device::get_compute_stream());
             fixed_device_batch_in_use = true;
         }
 
@@ -1816,8 +1778,7 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
 }
 
 Loss::EvaluationResult Optimizer::train_epoch(
-    ForwardPropagation& forward_propagation,
-    BackPropagation& back_propagation,
+    TrainingContext& main_context,
     ThreadSafeQueue<Batch*>& empty_queue,
     const vector<vector<Index>>& batches,
     const vector<Index>& input_feature_indices,
@@ -1827,6 +1788,9 @@ Loss::EvaluationResult Optimizer::train_epoch(
     OptimizerData& optimizer_data)
 {
     Loss::EvaluationResult epoch_result;
+
+    ForwardPropagation& forward_propagation = main_context.forward;
+    BackPropagation& back_propagation = main_context.backward;
 
     NeuralNetwork* neural_network = loss->get_neural_network();
     const Index all_batches_number = Index(batches.size());
@@ -1850,8 +1814,8 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
     if(profile_this)
     {
-        ::opennn::enabled() = true;
-        ::opennn::global_stats().clear();
+        profiler::set_enabled(true);
+        profiler::stats().clear();
     }
 
     const chrono::steady_clock::time_point epoch_t0 = chrono::steady_clock::now();
@@ -1877,43 +1841,23 @@ Loss::EvaluationResult Optimizer::train_epoch(
         const Index tail_size = Index(sample_indices.size());
 
         TrainingSession::TailContext& tail = training_session.tail;
-        if (!tail.forward || tail.size != tail_size)
+        if (!tail.context || tail.size != tail_size)
         {
             // First tail of the run (the warm-up pass, before the allocation
             // guard arms); a different remainder can only come from a new
             // dataset or batch size, which restarts the session anyway.
             tail.batch = make_unique<Batch>(tail_size, loss->get_dataset(),
                                             neural_network->get_config());
-            const vector<MemoryPoolEntry> delta_lifetimes =
-                BackPropagation::make_co_planned_lifetimes(*loss, tail_size);
-            tail.forward = make_unique<ForwardPropagation>(
-                tail_size,
-                neural_network,
-                ForwardPropagationMode::Training,
-                InferenceShapePolicy{},
-                true,
-                delta_lifetimes);
-            tail.backward = make_unique<BackPropagation>(
-                tail_size,
-                *loss,
-                &tail.forward->arena,
-                tail.forward->co_planned_offsets);
+            tail.context = make_unique<TrainingContext>(tail_size, *loss, true, &main_context);
             tail.size = tail_size;
         }
-        else
-        {
-            // Constructing a BackPropagation links every layer's gradient view
-            // to its buffer, and the last one constructed - or set - wins. Point
-            // the layers at the tail's buffers for this step; the main context
-            // is re-linked below.
-            tail.backward->set(tail_size, *loss,
-                               &tail.forward->arena,
-                               tail.forward->co_planned_offsets);
-        }
+        // No re-set on the reused path: Loss::back_propagate links the layers'
+        // gradient views to whichever context it is handed, so the tail keeps its
+        // delta layout and its gradient buffer from one epoch to the next.
 
         Batch& batch = *tail.batch;
-        ForwardPropagation& tail_forward_propagation = *tail.forward;
-        BackPropagation& tail_back_propagation = *tail.backward;
+        ForwardPropagation& tail_forward_propagation = tail.context->forward;
+        BackPropagation& tail_back_propagation = tail.context->backward;
 
         batch.fill(sample_indices,
                    input_feature_indices,
@@ -1948,12 +1892,6 @@ Loss::EvaluationResult Optimizer::train_epoch(
         if(on_gpu)
             device::synchronize(device::get_compute_stream());
 
-        // Re-link the layers' gradient views to the main context (see above).
-        back_propagation.set(forward_propagation.batch_size,
-                             *loss,
-                             &forward_propagation.arena,
-                             forward_propagation.co_planned_offsets);
-
         return result;
     };
 
@@ -1980,7 +1918,9 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
     if(!on_gpu)
     {
-        Batch* batch = empty_queue.pop();
+        Batch* batch = nullptr;
+        throw_if(!empty_queue.wait_pop(batch) || !batch,
+                 "Optimizer::train_epoch: batch queue did not provide a batch.");
 
         for(Index iteration = 0; iteration < batches_number; ++iteration)
         {
@@ -2240,7 +2180,9 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
     if(!on_gpu)
     {
-        Batch* batch = empty_queue.pop();
+        Batch* batch = nullptr;
+        throw_if(!empty_queue.wait_pop(batch) || !batch,
+                 "Optimizer::evaluate_epoch: batch queue did not provide a batch.");
 
         for(Index iteration = 0; iteration < batches_number; ++iteration)
         {

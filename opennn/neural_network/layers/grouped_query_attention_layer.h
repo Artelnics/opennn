@@ -37,29 +37,18 @@ void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorVi
 
 struct GroupedQueryAttentionOperator : Operator
 {
-    Index sequence_length = 0;
-    Index hidden          = 0;
-    Index q_heads         = 0;
-    Index kv_heads        = 0;
-    Index head_dim        = 0;
-    float rope_theta      = 1000000.0f;
-    float rms_epsilon     = 1.0e-6f;
+    static constexpr size_t forward_scratch_slots_count = 9;
+    struct GraphCache;
 
-    bool use_qk_norm = true;
-
-    TensorView q_proj, k_proj, v_proj, o_proj, q_norm, k_norm;
-    TensorView q_scale, k_scale, v_scale, o_scale, qkv_scale;
-
-    bool qkv_fused = false;
+    GroupedQueryAttentionOperator();
+    ~GroupedQueryAttentionOperator() override;
 
     void set(Index new_sequence_length, Index new_hidden,
              Index new_q_heads, Index new_kv_heads, Index new_head_dim,
              float new_rope_theta, float new_rms_epsilon, bool new_use_qk_norm);
 
-    Index q_dim()  const { return q_heads  * head_dim; }
-    Index kv_dim() const { return kv_heads * head_dim; }
-
     vector<TensorSpec> parameter_specs() const override;
+    vector<TensorSpec> forward_scratch_specs() const;
     vector<SlotQuantization> parameter_quantization() const override;
     void link_parameters(span<const TensorView>) override;
     void link_parameter_scales(span<const TensorView>) override;
@@ -68,12 +57,52 @@ struct GroupedQueryAttentionOperator : Operator
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
-    void forward_gpu(TensorView& input, TensorView& output, Index batch, Index past,
-                     Index query_capacity, const int* position_device);
+private:
 
-    Buffer kv_key, kv_value;
-    Index cache_capacity = 0;
-    Type cache_dtype = Type::FP32;
+    enum ForwardSlot : size_t
+    {
+        Input,
+        Query,
+        Key,
+        Value,
+        RotatedQuery,
+        RotatedKey,
+        AttentionOutput,
+        FusedQkv,
+        DecodePartials,
+        SequenceLengths,
+        Output
+    };
+
+    Index q_dim()  const { return q_heads  * head_dim; }
+    Index kv_dim() const { return kv_heads * head_dim; }
+
+    void prepare_rope_tables(Device);
+    void apply_attention(const TensorView& query, const TensorView& key,
+                         const TensorView& value, TensorView& output,
+                         bool causal, float scale, Index query_position_offset,
+                         float* decode_partials = nullptr,
+                         const int* position_device = nullptr);
+    void forward_gpu(TensorView& input, TensorView& output, Index batch, Index past,
+                     Index query_capacity, const int* position_device,
+                     vector<TensorView>& forward_slots, Buffer& kv_cache,
+                     device::PinnedBuffer& pinned_storage);
+
+    Index sequence_length = 0;
+    Index hidden          = 0;
+    Index q_heads         = 0;
+    Index kv_heads        = 0;
+    Index head_dim        = 0;
+    float rope_theta      = 1000000.0f;
+    float rms_epsilon     = 1.0e-6f;
+    bool use_qk_norm      = true;
+
+    TensorView q_proj, k_proj, v_proj, o_proj, q_norm, k_norm;
+    TensorView q_scale, k_scale, v_scale, o_scale, qkv_scale;
+    bool qkv_fused = false;
+
+    Buffer rope_tables;
+    unique_ptr<GraphCache> graph_cache;
 };
 
 class GroupedQueryAttention final : public Layer
@@ -95,6 +124,15 @@ public:
     Index get_kv_heads() const { return kv_heads; }
     Index get_head_dim() const { return head_dim; }
     bool  get_use_qk_norm() const { return use_qk_norm; }
+
+    vector<TensorSpec> get_forward_specs(Index) const override;
+
+    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    {
+        return spec < GroupedQueryAttentionOperator::forward_scratch_slots_count
+            ? ForwardSlotKind::Transient
+            : ForwardSlotKind::Pooled;
+    }
 
     void set(const Shape&, Index, Index, Index, float, float, bool, const string&);
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 2, 3); }

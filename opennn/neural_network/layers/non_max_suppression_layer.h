@@ -32,9 +32,6 @@ struct NonMaxSuppressionOperator : Operator
 
 private:
     void apply(const TensorView&, TensorView&) const;
-
-    mutable vector<float> cpu_input_staging;
-    mutable vector<float> cpu_output_staging;
 };
 
 class NonMaxSuppression final : public Layer

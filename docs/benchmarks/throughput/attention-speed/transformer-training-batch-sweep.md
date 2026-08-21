@@ -177,6 +177,12 @@ non-causal forward/backward instantiations, ~4 .cu files) take exactly the
 would need the varlen entry (packed sequences) or the cuDNN graph as the
 fallback. That is a dependency decision, noted below.
 
+**Done, 2026-08-19**, and padded batches turned out to need neither: see
+[`flash-attention-integration.md`](flash-attention-integration.md). Measured
+here, alternated against the cuDNN rung: bf16 +13-22%, fp32 +7-9%, same loss,
+CUDA graph still captured. Decoder self-attention keeps cuDNN, because FA2
+anchors a causal mask to the other corner when the batch is padded.
+
 ## The ladder (RTX 3060 Laptop, 5 timed epochs, samples/s)
 
 PyTorch = compile(reduce-overhead) + fused Adam; TensorFlow = XLA; OpenNN with

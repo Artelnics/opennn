@@ -7,14 +7,68 @@
 //   artelnics@artelnics.com
 
 #include "opennn/core/device_backend.h"
+#include "opennn/core/profiler.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/memory_debug.h"
 
 #include <atomic>
 #include <cstdlib>
+#include <mutex>
 #include <utility>
 #include "opennn/core/cuda/kernel_cast.cuh"
+
+namespace opennn
+{
+
+class Backend
+{
+public:
+
+    static Backend& instance();
+    ThreadPoolDevice* get_thread_pool_device();
+    void set_threads_number(int);
+
+    // Handles of the active lane (see device::active_lane).
+    static cublasHandle_t get_cublas_handle()      { return instance().cublas(device::active_lane()); }
+    static cublasLtHandle_t get_cublas_lt_handle() { return instance().cublas_lt_handle; }
+    static cudnnHandle_t get_cudnn_handle()        { return instance().cudnn(device::active_lane()); }
+    static cudnnOpTensorDescriptor_t get_op_tensor_add_descriptor()
+    {
+        Backend& backend = instance();
+        backend.cudnn(0);
+        return backend.op_tensor_add_descriptor;
+    }
+
+private:
+
+    Backend();
+    ~Backend();
+
+    cublasHandle_t cublas(int lane);
+    cudnnHandle_t cudnn(int lane);
+    cudaStream_t stream(int lane);
+
+    unique_ptr<ThreadPool> thread_pool;
+    unique_ptr<ThreadPoolDevice> thread_pool_device;
+
+    cublasLtHandle_t cublas_lt_handle = nullptr;
+    cudnnOpTensorDescriptor_t op_tensor_add_descriptor = nullptr;
+
+    // Per lane; lane 0 is created with the backend, the others on first use.
+    std::mutex lane_mutex;
+    std::array<cudaStream_t, device::MAX_LANES>   lane_streams{};
+    std::array<cublasHandle_t, device::MAX_LANES> cublas_handles{};
+    std::array<cudnnHandle_t, device::MAX_LANES>  cudnn_handles{};
+
+    cudaStream_t transfer_stream = nullptr;
+
+    friend cudaStream_t device::get_compute_stream();
+    friend cudaStream_t device::get_transfer_stream();
+    friend cudaStream_t device::lane_stream(int);
+};
+
+}
 
 namespace opennn::device
 {
@@ -24,6 +78,12 @@ namespace
 
 atomic_bool cuda_allocation_growth_forbidden_runtime{false};
 atomic_bool cuda_matmul_plan_creation_forbidden_runtime{false};
+
+cudaEvent_t create_event_handle(unsigned);
+cudaEvent_t create_event_handle();
+void destroy_event_handle(cudaEvent_t) noexcept;
+cudaStream_t create_stream_handle(unsigned);
+void destroy_stream_handle(cudaStream_t) noexcept;
 
 #ifdef OPENNN_HAS_CUDA
 bool cuda_matmul_plan_creation_forbidden() noexcept
@@ -256,6 +316,7 @@ template<typename Rung> void set_rung(Rung value) noexcept
 OPENNN_RUNG(BatchNormBackwardRung)
 OPENNN_RUNG(BatchNormForwardRung)
 OPENNN_RUNG(MaxPoolingRung)
+OPENNN_RUNG(AttentionRung)
 #undef OPENNN_RUNG
 
 CudaAllocationGrowthGuard::CudaAllocationGrowthGuard(
@@ -287,15 +348,250 @@ CudaAllocationGrowthGuard::~CudaAllocationGrowthGuard() noexcept
     }
 }
 
+namespace
+{
+
+#ifdef OPENNN_HAS_CUDA
+
+// Reuse of freed CUDA blocks, keyed on exact size, gated on completion of the
+// work that last touched them.
+//
+// cudaMalloc/cudaFree is expensive enough to dominate short-lived work: a
+// malloc+free pair of 8 MB measures ~0.68 ms on an RTX 3060 Laptop, and
+// building a dense inference arena of that size measured 0.63 ms, more than the
+// 0.27 ms the forward pass itself took.
+//
+// cudaFree implicitly synchronises, so simply skipping it would let a recycled
+// block reach new work while earlier work still reads it. Instead, record an
+// event on every stream a block could have been touched by when it is released,
+// and hand it back only once all of those events have completed. A block whose
+// events are still pending is left alone and the caller allocates fresh, so
+// this never blocks.
+//
+// The streams are every configured lane plus the transfer stream --
+// get_compute_stream() resolves to whichever lane is active, so recording only
+// on it would miss blocks used on another lane.
+class CudaBlockCache
+{
+public:
+
+    static CudaBlockCache& instance()
+    {
+        static CudaBlockCache cache;
+        return cache;
+    }
+
+    void* take(Index byte_count)
+    {
+        if (!is_enabled || byte_count <= 0) return nullptr;
+
+        const lock_guard<mutex> guard(blocks_mutex);
+
+        const auto entry = blocks.find(byte_count);
+        if (entry == blocks.end())
+        {
+            note("blockcache:miss");
+            return nullptr;
+        }
+
+        vector<CachedBlock>& candidates = entry->second;
+
+        const auto ready = ranges::find_if(candidates, is_ready);
+
+        if (ready == candidates.end())
+        {
+            // Blocks of the right size existed but were all still in use by
+            // work that has not completed, which is a different problem from
+            // never having cached one.
+            note(candidates.empty() ? "blockcache:miss" : "blockcache:miss_pending");
+            return nullptr;
+        }
+
+        note("blockcache:hit");
+
+        void* pointer = ready->pointer;
+        recycle_events(*ready);
+
+        *ready = std::move(candidates.back());
+        candidates.pop_back();
+        cached_bytes -= byte_count;
+
+        return pointer;
+    }
+
+    bool give(void* pointer, Index byte_count)
+    {
+        if (!is_enabled || byte_count <= 0) return false;
+
+        const lock_guard<mutex> guard(blocks_mutex);
+
+        if (cached_bytes + byte_count > byte_cap)
+        {
+            note("blockcache:give_over_cap");
+            return false;
+        }
+
+        note("blockcache:give");
+
+        CachedBlock block;
+        block.pointer = pointer;
+
+        // Every stream that could hold work touching this block.
+        for (int lane = 0; lane < lanes_available(); ++lane)
+            record_pending(block, lane_stream(lane));
+
+        record_pending(block, get_transfer_stream());
+
+        blocks[byte_count].push_back(std::move(block));
+        cached_bytes += byte_count;
+
+        return true;
+    }
+
+    // Hand every cached block back to the driver. Called when an allocation
+    // fails: memory held here is memory the driver cannot use, and this
+    // library is routinely run right up against the capacity limit.
+    // Returns whether anything was actually released, so a caller can tell a
+    // retry apart from a hopeless one.
+    bool flush()
+    {
+        const lock_guard<mutex> guard(blocks_mutex);
+
+        bool released = false;
+
+        for (auto& [size_in_bytes, cached] : blocks)
+        {
+            for (CachedBlock& block : cached)
+            {
+                for (cudaEvent_t event : block.pending_events)
+                    cudaEventSynchronize(event);
+
+                recycle_events(block);
+                cudaFree(block.pointer);
+                released = true;
+            }
+
+            cached.clear();
+        }
+
+        blocks.clear();
+        cached_bytes = 0;
+
+        return released;
+    }
+
+private:
+
+    // Counted through the profiler so the table already in place reports them,
+    // and only when profiling is on: this sits under every allocation.
+    static void note(const char* key)
+    {
+        if (profiler::is_enabled()) profiler::stats().add(key, 0.0);
+    }
+
+    struct CachedBlock
+    {
+        void* pointer = nullptr;
+        vector<cudaEvent_t> pending_events;
+    };
+
+    CudaBlockCache()
+        : is_enabled(env_flag_enabled("OPENNN_DEVICE_CACHE", true)),
+          byte_cap(read_cap_bytes())
+    {
+    }
+
+    static Index read_cap_bytes()
+    {
+        const char* value = getenv("OPENNN_DEVICE_CACHE_MB");
+        const Index megabytes = value ? Index(strtoll(value, nullptr, 10)) : Index(512);
+        return (megabytes > 0 ? megabytes : Index(512)) * 1024 * 1024;
+    }
+
+    void record_pending(CachedBlock& block, cudaStream_t stream)
+    {
+        if (!stream) return;
+
+        cudaEvent_t event = nullptr;
+
+        if (!event_pool.empty())
+        {
+            event = event_pool.back();
+            event_pool.pop_back();
+        }
+        else
+            event = create_event_handle(cudaEventDisableTiming);
+
+        if (!event) return;
+
+        record_event(event, stream);
+        block.pending_events.push_back(event);
+    }
+
+    static bool is_ready(const CachedBlock& block)
+    {
+        return ranges::all_of(block.pending_events,
+                              [](cudaEvent_t event)
+                              {
+                                  const cudaError_t status = cudaEventQuery(event);
+
+                                  // cudaErrorNotReady is an answer rather than a
+                                  // failure, but it still lands in the sticky
+                                  // last-error slot check_last_error() reads.
+                                  cudaGetLastError();
+
+                                  return status == cudaSuccess;
+                              });
+    }
+
+    void recycle_events(CachedBlock& block)
+    {
+        event_pool.insert(event_pool.end(),
+                          block.pending_events.begin(), block.pending_events.end());
+
+        block.pending_events.clear();
+    }
+
+    const bool is_enabled;
+    const Index byte_cap;
+    Index cached_bytes = 0;
+    unordered_map<Index, vector<CachedBlock>> blocks;
+    vector<cudaEvent_t> event_pool;
+    mutex blocks_mutex;
+};
+
+#endif
+
+}
+
 void* allocate(Device device_type, Index byte_count)
 {
+    PROFILE_SCOPE_HOST("device:allocate");
     throw_if_auto(device_type);
     throw_if(byte_count < 0, "device allocation size cannot be negative.");
 
     if (byte_count == 0) return nullptr;
 
     if (device_type == Device::CUDA)
+    {
+#ifdef OPENNN_HAS_CUDA
+        if (void* recycled = CudaBlockCache::instance().take(byte_count))
+            return recycled;
+
+        try
+        {
+            return allocate_cuda(byte_count);
+        }
+        catch (const runtime_error&)
+        {
+            // Retained blocks are memory the driver cannot hand out. Release
+            // them and try once more before failing, so enabling the cache can
+            // never turn a workload that used to fit into one that does not.
+            if (!CudaBlockCache::instance().flush()) throw;
+        }
+#endif
         return allocate_cuda(byte_count);
+    }
 
     return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
 }
@@ -304,12 +600,15 @@ void deallocate(Device device_type, void* pointer, Index byte_count)
 {
     if (!pointer) return;
 
+    PROFILE_SCOPE_HOST("device:deallocate");
+
     throw_if_auto(device_type);
 
     if (device_type == Device::CUDA)
     {
 #ifdef OPENNN_HAS_CUDA
-        cudaFree(pointer);
+        if (!CudaBlockCache::instance().give(pointer, byte_count))
+            cudaFree(pointer);
 #endif
         return;
     }
@@ -433,7 +732,40 @@ void reset_last_error() noexcept
 #endif
 }
 
-cudaStream_t create_stream(unsigned flags)
+#ifdef OPENNN_HAS_CUDA
+CublasPointerModeGuard::CublasPointerModeGuard(
+    const cublasHandle_t new_handle,
+    const cublasPointerMode_t mode)
+    : handle(new_handle)
+{
+    CHECK_CUBLAS(cublasGetPointerMode(handle, &previous_mode));
+    CHECK_CUBLAS(cublasSetPointerMode(handle, mode));
+}
+
+CublasPointerModeGuard::~CublasPointerModeGuard() noexcept
+{
+    if (handle) cublasSetPointerMode(handle, previous_mode);
+}
+
+CublasMathModeGuard::CublasMathModeGuard(
+    const cublasHandle_t new_handle,
+    const cublasMath_t mode)
+    : handle(new_handle)
+{
+    CHECK_CUBLAS(cublasGetMathMode(handle, &previous_mode));
+    CHECK_CUBLAS(cublasSetMathMode(handle, mode));
+}
+
+CublasMathModeGuard::~CublasMathModeGuard() noexcept
+{
+    if (handle) cublasSetMathMode(handle, previous_mode);
+}
+#endif
+
+namespace
+{
+
+cudaStream_t create_stream_handle(unsigned flags)
 {
 #ifdef OPENNN_HAS_CUDA
     cudaStream_t stream = nullptr;
@@ -445,7 +777,7 @@ cudaStream_t create_stream(unsigned flags)
 #endif
 }
 
-void destroy_stream(cudaStream_t stream)
+void destroy_stream_handle(cudaStream_t stream) noexcept
 {
     if (!stream) return;
 
@@ -471,7 +803,7 @@ void* allocate_pinned_host(Index byte_count)
 #endif
 }
 
-void deallocate_pinned_host(void* pointer)
+void deallocate_pinned_host(void* pointer) noexcept
 {
     if (!pointer) return;
 
@@ -482,7 +814,7 @@ void deallocate_pinned_host(void* pointer)
 #endif
 }
 
-cudaEvent_t create_event(unsigned flags)
+cudaEvent_t create_event_handle(unsigned flags)
 {
 #ifdef OPENNN_HAS_CUDA
     cudaEvent_t event = nullptr;
@@ -494,22 +826,116 @@ cudaEvent_t create_event(unsigned flags)
 #endif
 }
 
-cudaEvent_t create_event()
+cudaEvent_t create_event_handle()
 {
 #ifdef OPENNN_HAS_CUDA
-    return create_event(cudaEventDisableTiming);
+    return create_event_handle(cudaEventDisableTiming);
 #else
     return nullptr;
 #endif
 }
 
-void destroy_event(cudaEvent_t event)
+void destroy_event_handle(cudaEvent_t event) noexcept
 {
     if (!event) return;
 
 #ifdef OPENNN_HAS_CUDA
     cudaEventDestroy(event);
 #endif
+}
+
+}
+
+PinnedBuffer::PinnedBuffer(const Index byte_count)
+{
+    resize_bytes(byte_count);
+}
+
+PinnedBuffer::PinnedBuffer(PinnedBuffer&& other) noexcept
+    : pointer(std::exchange(other.pointer, nullptr)),
+      allocated_bytes(std::exchange(other.allocated_bytes, 0))
+{
+}
+
+PinnedBuffer& PinnedBuffer::operator=(PinnedBuffer&& other) noexcept
+{
+    if (this == &other) return *this;
+
+    reset();
+    pointer = std::exchange(other.pointer, nullptr);
+    allocated_bytes = std::exchange(other.allocated_bytes, 0);
+    return *this;
+}
+
+PinnedBuffer::~PinnedBuffer() noexcept
+{
+    reset();
+}
+
+void PinnedBuffer::resize_bytes(const Index byte_count)
+{
+    throw_if(byte_count < 0, "pinned buffer size cannot be negative.");
+    if (byte_count == allocated_bytes) return;
+
+    PinnedBuffer replacement;
+    replacement.pointer = allocate_pinned_host(byte_count);
+    replacement.allocated_bytes = byte_count;
+    swap(replacement);
+}
+
+void PinnedBuffer::grow_to(const Index minimum_bytes)
+{
+    throw_if(minimum_bytes < 0, "pinned buffer size cannot be negative.");
+    if (minimum_bytes > allocated_bytes) resize_bytes(minimum_bytes);
+}
+
+void PinnedBuffer::reset() noexcept
+{
+    deallocate_pinned_host(pointer);
+    pointer = nullptr;
+    allocated_bytes = 0;
+}
+
+void PinnedBuffer::swap(PinnedBuffer& other) noexcept
+{
+    std::swap(pointer, other.pointer);
+    std::swap(allocated_bytes, other.allocated_bytes);
+}
+
+CudaEvent::CudaEvent(const unsigned flags)
+    : handle(create_event_handle(flags))
+{
+}
+
+CudaEvent::CudaEvent(CudaEvent&& other) noexcept
+    : handle(std::exchange(other.handle, nullptr))
+{
+}
+
+CudaEvent& CudaEvent::operator=(CudaEvent&& other) noexcept
+{
+    if (this == &other) return *this;
+
+    reset();
+    handle = std::exchange(other.handle, nullptr);
+    return *this;
+}
+
+CudaEvent::~CudaEvent() noexcept
+{
+    reset();
+}
+
+void CudaEvent::create()
+{
+    reset();
+    handle = create_event_handle();
+}
+
+void CudaEvent::reset() noexcept
+{
+    destroy_event_handle(handle);
+    handle = nullptr;
 }
 
 void record_event(cudaEvent_t event, cudaStream_t stream)
@@ -665,6 +1091,26 @@ cudaStream_t get_transfer_stream()
     return Backend::instance().transfer_stream;
 }
 
+cublasHandle_t get_cublas_handle()
+{
+    return Backend::get_cublas_handle();
+}
+
+cublasLtHandle_t get_cublas_lt_handle()
+{
+    return Backend::get_cublas_lt_handle();
+}
+
+cudnnHandle_t get_cudnn_handle()
+{
+    return Backend::get_cudnn_handle();
+}
+
+cudnnOpTensorDescriptor_t get_op_tensor_add_descriptor()
+{
+    return Backend::get_op_tensor_add_descriptor();
+}
+
 }
 
 namespace opennn
@@ -686,8 +1132,8 @@ Backend::Backend()
         return;
     }
 
-    lane_streams[0] = device::create_stream(cudaStreamDefault);
-    transfer_stream = device::create_stream(cudaStreamNonBlocking);
+    lane_streams[0] = device::create_stream_handle(cudaStreamDefault);
+    transfer_stream = device::create_stream_handle(cudaStreamNonBlocking);
 
     CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
     CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&op_tensor_add_descriptor));
@@ -705,7 +1151,7 @@ cudaStream_t Backend::stream(int lane)
     if (lane == 0) return lane_streams[0];
     std::lock_guard<std::mutex> lock(lane_mutex);
     if (!lane_streams[lane])
-        lane_streams[lane] = device::create_stream(cudaStreamNonBlocking);
+        lane_streams[lane] = device::create_stream_handle(cudaStreamNonBlocking);
     return lane_streams[lane];
 #else
     (void)lane;
@@ -759,9 +1205,9 @@ Backend::~Backend()
     {
         if (cublas_handles[lane]) { cublasDestroy(cublas_handles[lane]); cublas_handles[lane] = nullptr; }
         if (cudnn_handles[lane])  { cudnnDestroy(cudnn_handles[lane]);   cudnn_handles[lane] = nullptr; }
-        device::destroy_stream(lane_streams[lane]); lane_streams[lane] = nullptr;
+        device::destroy_stream_handle(lane_streams[lane]); lane_streams[lane] = nullptr;
     }
-    device::destroy_stream(transfer_stream); transfer_stream = nullptr;
+    device::destroy_stream_handle(transfer_stream); transfer_stream = nullptr;
 #endif
 }
 
@@ -779,7 +1225,13 @@ void Backend::set_threads_number(int num_threads)
 
     Eigen::setNbThreads(num_threads);
     omp_set_num_threads(num_threads);
-    omp_set_dynamic(1);
+    // Dynamic teams let the runtime resize a parallel region's team, and with
+    // this OpenMP that means creating and destroying worker threads rather than
+    // reusing them: a single inference pass over the HIGGS split was measured
+    // spawning about seven threads per batch. OPENNN_OMP_DYNAMIC=0 pins the
+    // team instead; the default is unchanged until the A/B says otherwise.
+    const char* const omp_dynamic = getenv("OPENNN_OMP_DYNAMIC");
+    omp_set_dynamic(omp_dynamic ? atoi(omp_dynamic) : 1);
 #if defined(_OPENMP) && _OPENMP >= 200805
     omp_set_max_active_levels(1);
 #endif
@@ -794,6 +1246,16 @@ Backend& Backend::instance()
 ThreadPoolDevice* Backend::get_thread_pool_device()
 {
     return thread_pool_device.get();
+}
+
+ThreadPoolDevice& get_device()
+{
+    return *Backend::instance().get_thread_pool_device();
+}
+
+void set_threads_number(const int threads_number)
+{
+    Backend::instance().set_threads_number(threads_number);
 }
 
 }
@@ -874,7 +1336,7 @@ namespace
     {
         // One workspace set per lane: lanes run concurrently, so they cannot
         // share scratch.
-        using LaneWorkspaces = std::array<Buffer, size_t(device::GraphWorkspaceKind::Count)>;
+        using LaneWorkspaces = std::array<Buffer, static_cast<size_t>(device::GraphWorkspaceKind::Count)>;
         std::array<LaneWorkspaces, device::MAX_LANES> workspaces =
             make_lanes(make_index_sequence<device::MAX_LANES>{});
 
@@ -888,7 +1350,7 @@ namespace
         template<size_t... L>
         static std::array<LaneWorkspaces, sizeof...(L)> make_lanes(index_sequence<L...>)
         {
-            return {((void)L, make_workspaces(make_index_sequence<size_t(device::GraphWorkspaceKind::Count)>{}))...};
+            return {((void)L, make_workspaces(make_index_sequence<static_cast<size_t>(device::GraphWorkspaceKind::Count)>{}))...};
         }
     };
 
@@ -899,6 +1361,7 @@ namespace
     }
 
     constexpr size_t cublas_lt_workspace_search_bytes = 32ull * 1024 * 1024;
+    constexpr size_t cublas_lt_plan_cache_capacity = 1024;
 
     cublasComputeType_t matmul_compute_type(cudaDataType_t a_type, cudaDataType_t b_type = CUDA_R_32F)
     {
@@ -915,7 +1378,7 @@ namespace
                     device::graph_workspace_override(kind, minimum_bytes))
                 return *graph_workspace;
 
-        Buffer& buffer = thread_state().workspaces[size_t(device::active_lane())][size_t(kind)];
+        Buffer& buffer = thread_state().workspaces[static_cast<size_t>(device::active_lane())][static_cast<size_t>(kind)];
         if (minimum_bytes > buffer.byte_size() && buffer.data())
         {
             throw_if(device::cuda_allocation_growth_forbidden(),
@@ -925,8 +1388,8 @@ namespace
         const Index before = buffer.byte_size();
         void* pointer = buffer.ensure<uint8_t>(minimum_bytes);
         if (buffer.byte_size() > before)
-            memory_debug::record(string("workspace.") + device::graph_workspace_labels[size_t(kind)],
-                                 device::graph_workspace_labels[size_t(kind)],
+            memory_debug::record(string("workspace.") + device::graph_workspace_labels[static_cast<size_t>(kind)],
+                                 device::graph_workspace_labels[static_cast<size_t>(kind)],
                                  buffer.byte_size() - before, "high_water");
         return pointer;
     }
@@ -948,6 +1411,8 @@ namespace
 
         throw_if(device::cuda_matmul_plan_creation_forbidden(),
                  "matmul plan forbidden (warmup incomplete).");
+
+        detail::make_bounded_cache_room(plans, cublas_lt_plan_cache_capacity);
 
         LtMatmulPlan plan;
 
@@ -996,7 +1461,7 @@ namespace
         // (autotune_lt_plan). OPENNN_LT_AUTOTUNE_CANDIDATES=1 keeps the
         // heuristic choice.
         const int requested = int(clamp(env_int_or("OPENNN_LT_AUTOTUNE_CANDIDATES", 8), 1LL, 32LL));
-        vector<cublasLtMatmulHeuristicResult_t> heuristics(size_t(requested), cublasLtMatmulHeuristicResult_t{});
+        vector<cublasLtMatmulHeuristicResult_t> heuristics(static_cast<size_t>(requested), cublasLtMatmulHeuristicResult_t{});
         int returned_results = 0;
         CHECK_CUBLAS(cublasLtMatmulAlgoGetHeuristic(Backend::get_cublas_lt_handle(),
                                                     plan.matmul_descriptor,
@@ -1008,7 +1473,7 @@ namespace
                                                     heuristics.data(), &returned_results));
         cublasLtMatmulPreferenceDestroy(pref);
 
-        heuristics.resize(size_t(max(returned_results, 0)));
+        heuristics.resize(static_cast<size_t>(max(returned_results, 0)));
         erase_if(heuristics, [](const cublasLtMatmulHeuristicResult_t& h) { return h.state != CUBLAS_STATUS_SUCCESS; });
 
         if (!heuristics.empty())
@@ -1037,10 +1502,7 @@ namespace
         cudaStreamCaptureStatus capture_status = cudaStreamCaptureStatusNone;
         if (cudaStreamIsCapturing(stream, &capture_status) != cudaSuccess
             || capture_status != cudaStreamCaptureStatusNone)
-        {
-            device::reset_last_error();
-            return;
-        }
+            return device::reset_last_error();
 
         if (device::lanes_available() > 1) device::synchronize();
 
@@ -1049,7 +1511,7 @@ namespace
             largest_workspace = max(largest_workspace, candidate.workspaceSize);
         void* const workspace = ensure_shared_scratch(largest_workspace);
 
-        const CudaEvent start(cudaEventDefault), stop(cudaEventDefault);
+        const device::CudaEvent start(cudaEventDefault), stop(cudaEventDefault);
         constexpr int timed_runs = 3;
 
         float best_ms = numeric_limits<float>::infinity();
@@ -1065,14 +1527,14 @@ namespace
                                       &candidate.algo, workspace, candidate.workspaceSize, stream);
             };
             if (run() != CUBLAS_STATUS_SUCCESS) { device::reset_last_error(); continue; }
-            device::record_event(start, stream);
+            device::record_event(start.get(), stream);
             bool ok = true;
             for (int i = 0; i < timed_runs && ok; ++i) ok = run() == CUBLAS_STATUS_SUCCESS;
-            device::record_event(stop, stream);
-            device::synchronize_event(stop);
+            device::record_event(stop.get(), stream);
+            device::synchronize_event(stop.get());
             if (!ok) { device::reset_last_error(); continue; }
             float ms = 0.0f;
-            CHECK_CUDA(cudaEventElapsedTime(&ms, start, stop));
+            CHECK_CUDA(cudaEventElapsedTime(&ms, start.get(), stop.get()));
             if (ms < best_ms) { best_ms = ms; best = index; }
         }
 

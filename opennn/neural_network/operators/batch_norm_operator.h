@@ -36,7 +36,7 @@ struct BatchNormalizationOperator : Operator
 
     struct BatchNormalizationGraphCache;
 
-    mutable unique_ptr<BatchNormalizationGraphCache> bn_graph_cache;
+    unique_ptr<BatchNormalizationGraphCache> bn_graph_cache;
 
     void set(Index, float new_momentum = 0.1f);
 

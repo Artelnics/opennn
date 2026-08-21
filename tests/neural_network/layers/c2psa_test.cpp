@@ -125,3 +125,33 @@ TEST(C2PSA, CpuAndGpuForwardOutputsMatch)
             << "Max CPU vs GPU forward output diff: " << max_diff;
     }
 }
+
+TEST(C2PSA, GpuScratchIsPropagationOwned)
+{
+    if (!opennn::device::has_cuda_device())
+        GTEST_SKIP() << "No CUDA device.";
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    C2PSANet net;
+    auto loss = net.make_loss();
+
+    ForwardPropagation first_forward(SAMPLES, &net.nn);
+    ForwardPropagation second_forward(SAMPLES, &net.nn);
+    BackPropagation first_backward(SAMPLES, *loss);
+    BackPropagation second_backward(SAMPLES, *loss);
+
+    const TensorView& first_forward_scratch =
+        first_forward.slots[0][first_forward.slots[0].size() - 2];
+    const TensorView& second_forward_scratch =
+        second_forward.slots[0][second_forward.slots[0].size() - 2];
+    const TensorView& first_backward_scratch = first_backward.slots[0].back();
+    const TensorView& second_backward_scratch = second_backward.slots[0].back();
+
+    ASSERT_FALSE(first_forward_scratch.empty());
+    ASSERT_FALSE(first_backward_scratch.empty());
+    EXPECT_NE(first_forward_scratch.get_data(), second_forward_scratch.get_data());
+    EXPECT_NE(first_backward_scratch.get_data(), second_backward_scratch.get_data());
+
+    Configuration::instance().set();
+}

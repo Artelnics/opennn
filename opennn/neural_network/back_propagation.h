@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   B A C K   P R O P A G A T I O N   H E A D E R
@@ -31,15 +31,22 @@ struct BackPropagation
     // handed it separately. It is a borrowed pointer: a BackPropagation must not
     // outlive the Loss it was built from, and must be re-set if that Loss is
     // pointed at a different network.
+    // external_gradient lets a second context (the remainder batch) write its
+    // parameter gradients into the main context's buffer instead of owning a
+    // parameters-sized one of its own. Safe because the two never run at the
+    // same time and each step's weight gradient is an overwrite, not an
+    // accumulation - the tail runs after the whole batches have been consumed.
     BackPropagation(Index, Loss&,
                     Buffer* external_arena = nullptr,
-                    span<const Index> arena_offsets = {});
+                    span<const Index> arena_offsets = {},
+                    Buffer* external_gradient = nullptr);
 
     virtual ~BackPropagation() = default;
 
     void set(Index, Loss&,
              Buffer* external_arena = nullptr,
-             span<const Index> arena_offsets = {});
+             span<const Index> arena_offsets = {},
+             Buffer* external_gradient = nullptr);
 
     Loss* get_loss() const noexcept { return loss; }
     NeuralNetwork* get_neural_network() const;
@@ -62,6 +69,11 @@ struct BackPropagation
     Buffer gradient;
 
     Buffer arena;
+    // Opaque backend scratch kept with this backward execution, never a layer.
+    vector<Buffer> layer_scratch_storage;
+    // Scratch shared by non-overlapping stages of this backward execution,
+    // such as YOLO target assembly and optimizer reductions.
+    Buffer execution_workspace{Device::CUDA};
     vector<TensorView> output_deltas;
     vector<vector<TensorView>> slots;
 
@@ -114,7 +126,11 @@ private:
     // Planning-only instance: make_co_planned_lifetimes must produce the delta
     // layout before any BackPropagation is built into the arena that layout sizes,
     // so it borrows a Loss and a batch size into an object that allocates nothing.
+    // TrainingContext holds one as a member and sets it once the forward arena
+    // it binds into exists.
     BackPropagation() = default;
+
+    friend struct TrainingContext;
 
     vector<vector<pair<size_t, size_t>>> make_consumer_edges() const;
     DeltaLayout build_delta_layout(const vector<vector<TensorSpec>>&) const;
@@ -124,7 +140,7 @@ private:
 
     const NeuralNetwork& require_network() const;
 
-    void setup_gradient();
+    void setup_gradient(Buffer* external_gradient);
 
     void setup_arena(const vector<vector<TensorSpec>>&,
                      const DeltaLayout&);

@@ -3,6 +3,9 @@
 #include "tests/numerical_derivatives.h"
 
 #include "opennn/core/tensor_types.h"
+#include "opennn/core/configuration.h"
+#include "opennn/core/device_backend.h"
+#include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/dataset/language_dataset.h"
@@ -11,6 +14,7 @@
 #include "opennn/neural_network/layers/pooling_layer.h"
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/neural_network/neural_network.h"
+#include "opennn/neural_network/forward_propagation.h"
 #include "opennn/training_strategy/loss.h"
 #include "opennn/neural_network/standard_networks.h"
 #include "opennn/neural_network/layers/recurrent_layer.h"
@@ -37,6 +41,51 @@ TEST(MeanSquaredErrorTest, GeneralConstructor)
 
     EXPECT_NE(loss.get_neural_network(), nullptr);
     EXPECT_NE(loss.get_dataset(), nullptr);
+}
+
+TEST(MeanSquaredErrorTest, GpuWorkspaceIsForwardPropagationOwned)
+{
+    if (!device::has_cuda_device())
+        GTEST_SKIP() << "No CUDA device.";
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    constexpr Index samples_number = 2;
+    TabularDataset dataset(samples_number, {1}, {1});
+    MatrixR data(samples_number, 2);
+    data << 0.25f, 0.5f,
+            0.75f, 1.0f;
+    dataset.set_data(data);
+    dataset.set_variable_indices({0}, {1});
+    dataset.set_sample_roles("Training");
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(
+        make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
+    neural_network.compile(Device::CUDA);
+    neural_network.get_parameters_map().setConstant(0.25f);
+
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    Batch batch(samples_number, &dataset, neural_network.get_config());
+    batch.fill({0, 1}, {0}, {}, {1});
+    batch.wait_h2d_on_compute_stream();
+
+    ForwardPropagation first(samples_number, &neural_network);
+    ForwardPropagation second(samples_number, &neural_network);
+    neural_network.forward_propagate(batch.get_inputs(), first, false);
+    neural_network.forward_propagate(batch.get_inputs(), second, false);
+
+    const Loss::EvaluationResult first_result = loss.calculate_error(batch, first);
+    const Loss::EvaluationResult second_result = loss.calculate_error(batch, second);
+
+    ASSERT_FALSE(first.loss_workspace.empty());
+    ASSERT_FALSE(second.loss_workspace.empty());
+    EXPECT_NE(first.loss_workspace.data(), second.loss_workspace.data());
+    EXPECT_FLOAT_EQ(first_result.error, second_result.error);
+
+    Configuration::instance().set();
 }
 
 TEST(MeanSquaredErrorTest, BackPropagateDense2d)

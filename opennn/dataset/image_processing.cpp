@@ -68,7 +68,7 @@ void read_image_file(const filesystem::path& path, vector<uint8_t>& buffer)
     throw_if(size < 8,
              "File too small to be an image: {}", path.string());
 
-    buffer.resize(size_t(size));
+    buffer.resize(static_cast<size_t>(size));
     file.read_at(span(buffer), 0);
 }
 
@@ -371,12 +371,11 @@ void decode_png_rows(const PngHeader& h,
 
 void decode_png_pixels(const PngHeader& h,
                        const vector<uint8_t>& compressed,
+                       vector<uint8_t>& inflated,
+                       vector<uint8_t>& unfiltered,
                        float* dst,
                        const string& path_str)
 {
-    thread_local vector<uint8_t> inflated;
-    thread_local vector<uint8_t> unfiltered;
-
     inflate_png_data_into(compressed, h, inflated, path_str);
     unfilter_png_rows_into(inflated, h, unfiltered, path_str);
 
@@ -585,7 +584,7 @@ bool is_supported_image_file(const filesystem::path& path)
 
 Tensor3 load_image(const filesystem::path& path)
 {
-    thread_local vector<uint8_t> buffer;
+    vector<uint8_t> buffer;
 
     read_image_file(path, buffer);
 
@@ -601,11 +600,14 @@ Tensor3 load_image(const filesystem::path& path)
 
     if (has_png_signature(buffer))
     {
-        thread_local vector<uint8_t> compressed;
+        vector<uint8_t> compressed;
+        vector<uint8_t> inflated;
+        vector<uint8_t> unfiltered;
         const PngHeader h = parse_png_chunks(buffer, compressed, path.string());
 
         Tensor3 image(h.height, h.width, h.channels);
-        decode_png_pixels(h, compressed, image.data(), path.string());
+        decode_png_pixels(h, compressed, inflated, unfiltered,
+                          image.data(), path.string());
 
         return image;
     }
@@ -733,8 +735,7 @@ void rotate_image(const TensorMap3& input, TensorMap3& output, float angle_degre
         Tensor3 copy(height, width, channels);
         copy_n(input.data(), pixels, copy.data());
         TensorMap3 copy_map(copy.data(), height, width, channels);
-        rotate_image(copy_map, output, angle_degree);
-        return;
+        return rotate_image(copy_map, output, angle_degree);
     }
 
     const float center_x = float(width) / 2.0f;
@@ -792,10 +793,7 @@ void translate_image_x(TensorMap3& image, Index shift)
     float* data = image.data();
 
     if (abs(shift) >= width)
-    {
-        fill(data, data + height * row_size, 0.0f);
-        return;
-    }
+        return fill(data, data + height * row_size, 0.0f);
 
     const Index move_columns = width - abs(shift);
     const Index move_size = move_columns * channels;
@@ -817,10 +815,7 @@ void translate_image_y(TensorMap3& image, Index shift)
     float* data = image.data();
 
     if (abs(shift) >= height)
-    {
-        fill(data, data + pixels, 0.0f);
-        return;
-    }
+        return fill(data, data + pixels, 0.0f);
 
     const Index move_rows = height - abs(shift);
     const Index move_size = move_rows * row_size;

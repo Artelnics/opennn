@@ -1,8 +1,10 @@
 #include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
 
+#include <future>
 #include <utility>
 
+#include "opennn/core/configuration.h"
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/layers/flatten_layer.h"
@@ -45,6 +47,34 @@ Json convolution_json_body(const Shape& kernel_shape,
     body.set("BatchNormalization", batch_normalization);
     body.set("Residual", residual);
     return body;
+}
+
+bool convolution_forward_matches_constant_result(const Shape& input_shape,
+                                                 const Shape& kernel_shape,
+                                                 Index batch_size)
+{
+    NeuralNetwork network;
+    network.add_layer(make_unique<Convolutional>(
+        input_shape, kernel_shape, "Identity", Shape{1, 1}, "Valid"));
+    network.compile();
+    network.get_parameters_map().setConstant(type(0.25));
+
+    const Index input_size = batch_size * input_shape[0] * input_shape[1] * input_shape[2];
+    vector<type> input(size_t(input_size), type(1));
+    ForwardPropagation propagation(batch_size, &network);
+    network.forward_propagate(
+        {TensorView(input.data(),
+                    {batch_size, input_shape[0], input_shape[1], input_shape[2]})},
+        propagation, false);
+
+    const type expected =
+        type(kernel_shape[0] * kernel_shape[1] * kernel_shape[2]) * type(0.25)
+        + type(0.25);
+    const TensorView output = propagation.get_outputs();
+    for (Index i = 0; i < output.size(); ++i)
+        if (abs(output.as<type>()[i] - expected) > type(1.0e-5))
+            return false;
+    return true;
 }
 
 }
@@ -260,6 +290,27 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
         for (Index i = 0; i < output_view.size(); ++i)
             EXPECT_GE(output_data[i], type(0));
     }
+}
+
+TEST(ConvolutionalLayerTest, ConcurrentMixedShapesUseIndependentCpuScratch)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    future<bool> first = async(launch::async, []
+    {
+        return convolution_forward_matches_constant_result(
+            Shape{12, 10, 2}, Shape{3, 2, 2, 4}, 3);
+    });
+    future<bool> second = async(launch::async, []
+    {
+        return convolution_forward_matches_constant_result(
+            Shape{7, 9, 1}, Shape{2, 3, 1, 3}, 2);
+    });
+
+    EXPECT_TRUE(first.get());
+    EXPECT_TRUE(second.get());
+
+    Configuration::instance().set();
 }
 
 TEST_P(ConvolutionalLayerTest, BackwardGradientMatchesNumerical)

@@ -73,6 +73,8 @@ private:
     vector<float> lower_bounds;
     vector<float> upper_bounds;
 
+    // Device mirror of the configured bounds. This is model state, not
+    // per-execution scratch, and is refreshed only when configuration changes.
     Buffer op_storage;
     bool   op_storage_dirty = true;
 

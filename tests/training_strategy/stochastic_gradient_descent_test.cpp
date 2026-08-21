@@ -2,6 +2,8 @@
 #include "opennn/core/configuration.h"
 #include "opennn/dataset/language_dataset.h"
 #include "opennn/core/random_utilities.h"
+#include "opennn/neural_network/back_propagation.h"
+#include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/standard_networks.h"
 #include "opennn/training_strategy/stochastic_gradient_descent.h"
 #include "opennn/dataset/tabular_dataset.h"
@@ -147,6 +149,15 @@ namespace
         filesystem::remove(file_path, error);
         filesystem::remove_all(file_path + ".cache", error);
     }
+
+    class GradientClipProbe final : public Optimizer
+    {
+    public:
+        static void clip(BackPropagation& back_propagation, float max_norm)
+        {
+            clip_gradient_norm(back_propagation, max_norm);
+        }
+    };
 }
 
 class StochasticGradientDescentTest : public ::testing::Test
@@ -155,9 +166,81 @@ protected:
     void TearDown() override
     {
         Configuration::instance().set(Device::CPU, Type::FP32);
-        Backend::instance().set_threads_number(0);
+        set_threads_number(0);
     }
 };
+
+TEST_F(StochasticGradientDescentTest, GpuClipWorkspaceIsBackwardOwned)
+{
+    if (!device::has_cuda_device())
+        GTEST_SKIP() << "No CUDA device.";
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(
+        make_unique<opennn::Dense>(Shape{2}, Shape{1}, "Identity"));
+    neural_network.compile(Device::CUDA);
+    neural_network.set_parameters_random();
+
+    Loss loss(&neural_network);
+    BackPropagation first(1, loss);
+    BackPropagation second(1, loss);
+
+    const Index gradient_size = first.gradient.size_in_floats();
+    vector<float> gradient(size_t(gradient_size), 2.0f);
+    const Index gradient_bytes = gradient_size * Index(sizeof(float));
+    device::copy_async(first.gradient.data(), gradient.data(), gradient_bytes,
+                       device::CopyKind::HostToDevice);
+    device::copy_async(second.gradient.data(), gradient.data(), gradient_bytes,
+                       device::CopyKind::HostToDevice);
+
+    GradientClipProbe::clip(first, 1.0f);
+    GradientClipProbe::clip(second, 1.0f);
+
+    vector<float> clipped(static_cast<size_t>(gradient_size), 0.0f);
+    device::copy_async(clipped.data(), first.gradient.data(), gradient_bytes,
+                       device::CopyKind::DeviceToHost);
+    device::synchronize(device::get_compute_stream());
+
+    ASSERT_FALSE(first.execution_workspace.empty());
+    ASSERT_FALSE(second.execution_workspace.empty());
+    EXPECT_NE(first.execution_workspace.data(), second.execution_workspace.data());
+
+    const float clipped_norm = sqrt(inner_product(
+        clipped.begin(), clipped.end(), clipped.begin(), 0.0f));
+    EXPECT_NEAR(clipped_norm, 1.0f, 1.0e-5f);
+
+    Configuration::instance().set();
+}
+
+TEST_F(StochasticGradientDescentTest, GpuClipSupportsTailAndCudaGraph)
+{
+    if (!device::has_cuda_device())
+        GTEST_SKIP() << "No CUDA device.";
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    TabularDataset dataset(10, {2}, {1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    ApproximationNetwork neural_network({2}, {4}, {1});
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    StochasticGradientDescent optimizer(&loss);
+    optimizer.set_initial_learning_rate(0.01f);
+    optimizer.set_batch_size(4);
+    optimizer.set_gradient_clip_norm(0.5f);
+    optimizer.set_cuda_graph(true);
+    optimizer.set_maximum_epochs(2);
+    optimizer.set_display(false);
+
+    EXPECT_TRUE(isfinite(optimizer.train().get_training_error()));
+
+    Configuration::instance().set();
+}
 
 TEST_F(StochasticGradientDescentTest, DefaultConstructor)
 {
@@ -740,7 +823,7 @@ TEST_F(StochasticGradientDescentTest, StoppingMaximumTime)
 TEST_F(StochasticGradientDescentTest, Determinism)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
-    Backend::instance().set_threads_number(1);
+    set_threads_number(1);
 
     set_seed(13);
     TabularDataset dataset_first(16, {2}, {1});

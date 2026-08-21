@@ -12,6 +12,7 @@
 #include "opennn/core/memory_debug.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/memory_pool.h"
+#include "opennn/core/profiler.h"
 #include "opennn/core/string_utilities.h"
 
 namespace opennn
@@ -98,9 +99,7 @@ ForwardPropagation::ForwardPropagation(const Index new_batch_size,
 
 ForwardPropagation::~ForwardPropagation()
 {
-#ifdef OPENNN_HAS_CUDA
-    if (position_pinned) device::deallocate_pinned_host(position_pinned);
-#endif
+    PROFILE_SCOPE_HOST("fp:dtor");
 }
 
 void ForwardPropagation::stage_position(cudaStream_t stream)
@@ -108,12 +107,14 @@ void ForwardPropagation::stage_position(cudaStream_t stream)
 #ifdef OPENNN_HAS_CUDA
     if (!position_pinned)
     {
-        position_pinned = device::allocate_pinned_host(Index(sizeof(int)));
+        position_pinned.resize_bytes(Index(sizeof(int)));
         position_device.resize_bytes(Index(sizeof(int)), Device::CUDA);
     }
 
-    *static_cast<int*>(position_pinned) = int(past_length);
-    device::copy_async(position_device.data(), position_pinned, Index(sizeof(int)),
+    *position_pinned.as<int>() = int(past_length);
+    device::copy_async(position_device.data(),
+                       position_pinned.data(),
+                       Index(sizeof(int)),
                        device::CopyKind::HostToDevice, stream);
 #else
     (void)stream;
@@ -142,6 +143,8 @@ void ForwardPropagation::set(
              "ForwardPropagation::set: retained outputs are inference-only; "
              "training keeps every activation alive for the backward pass.");
 
+    PROFILE_SCOPE_HOST("fp:set");
+
     reset_cuda_graph();
     co_planned_offsets.clear();
 
@@ -160,6 +163,9 @@ void ForwardPropagation::set(
         });
 
     staged_input_storage.clear();
+    layer_state_storage.clear();
+    layer_session_state_storage = make_shared<vector<Buffer>>();
+    layer_pinned_storage.clear();
     staged_inputs.clear();
     host_bf16_input_scratch.clear();
     passthrough_overrides.clear();
@@ -170,11 +176,25 @@ void ForwardPropagation::set(
 
     inputs.resize(layers_number);
     slots.resize(layers_number);
+    drelu_fused_by_layer.assign(layers_number, uint8_t{0});
+    layer_state_storage.reserve(layers_number);
+    layer_session_state_storage->reserve(layers_number);
+    for (size_t i = 0; i < layers_number; ++i)
+    {
+        layer_state_storage.emplace_back(neural_network->get_device());
+        layer_session_state_storage->emplace_back(
+            neural_network->get_device());
+    }
+    layer_pinned_storage.resize(layers_number);
     valid_lengths.resize(layers_number);
     device_valid_lengths.assign(layers_number, nullptr);
     device_valid_length_storage.resize(layers_number);
 
-    auto forward_specs = neural_network->get_forward_specs(batch_size);
+    auto forward_specs = [&]
+    {
+        PROFILE_SCOPE_HOST("fp:set:specs");
+        return neural_network->get_forward_specs(batch_size);
+    }();
 
     throw_if(forward_specs.size() != layers_number,
              "ForwardPropagation::set: forward specs size ({}) does not match layers number ({}).",
@@ -456,7 +476,7 @@ void ForwardPropagation::set(
     if(is_training)
     {
         const Index backward_base =
-            Index(2 * layers_number - 1);
+            backward_step(Index(layers_number), 0);
 
         collect_pooled_slots(
             [&](const size_t i, const bool is_output)
@@ -492,12 +512,15 @@ void ForwardPropagation::set(
         // and YoloOverfit.CSPGradientFlowsAndLossDecreases then stops learning.
         // Do not simplify this to always-Compact.
 
-        const MemoryPoolPlan persistent_plan =
-            plan_memory_pool(
+        const MemoryPoolPlan persistent_plan = [&]
+        {
+            PROFILE_SCOPE_HOST("fp:set:plan");
+            return plan_memory_pool(
                 pooled_lifetimes,
                 early_release_outputs > 0
                     ? MemoryPoolStrategy::Compact
                     : MemoryPoolStrategy::Chronological);
+        }();
 
         apply_pool_plan(persistent_plan);
 
@@ -688,10 +711,11 @@ void ForwardPropagation::set(
                     : last_consumers[i];
             });
 
-        apply_pool_plan(
-            plan_memory_pool(
-                pooled_lifetimes,
-                MemoryPoolStrategy::Compact));
+        apply_pool_plan([&]
+        {
+            PROFILE_SCOPE_HOST("fp:set:plan");
+            return plan_memory_pool(pooled_lifetimes, MemoryPoolStrategy::Compact);
+        }());
     }
 
     const Index total_bytes =
@@ -709,12 +733,16 @@ void ForwardPropagation::set(
     }
     else
     {
+        PROFILE_SCOPE_HOST("fp:set:alloc");
         arena.resize_bytes(
             total_bytes,
             neural_network->get_device());
     }
 
-    arena.setZero();
+    {
+        PROFILE_SCOPE_HOST("fp:set:zero");
+        arena.setZero();
+    }
 
     memory_debug::record(
         arena.owns_memory() ? "forward" : "forward.aliased",
@@ -943,6 +971,26 @@ void ForwardPropagation::set_active_sequence_length(Index length)
     }
 }
 
+void ForwardPropagation::share_session_state_from(
+    const ForwardPropagation& source)
+{
+    throw_if(!neural_network || neural_network != source.neural_network,
+             "ForwardPropagation::share_session_state_from requires both "
+             "propagations to execute the same network.");
+    throw_if(mode != ForwardPropagationMode::Inference
+             || source.mode != ForwardPropagationMode::Inference,
+             "ForwardPropagation::share_session_state_from is inference-only.");
+    throw_if(!layer_session_state_storage
+             || !source.layer_session_state_storage
+             || layer_session_state_storage->size()
+                    != source.layer_session_state_storage->size(),
+             "ForwardPropagation::share_session_state_from: layer counts do "
+             "not match.");
+
+    reset_cuda_graph();
+    layer_session_state_storage = source.layer_session_state_storage;
+}
+
 void ForwardPropagation::set_output_sequence_window(Index start, Index count)
 {
     throw_if(!output_window,
@@ -1102,13 +1150,13 @@ SequenceLengths ForwardPropagation::input_sequence_lengths(const size_t layer,
             input_device_valid_lengths(layer, input_ordinal)};
 }
 
-int* ForwardPropagation::device_valid_lengths_slot(const size_t layer, const Index batch_size)
+int* ForwardPropagation::device_valid_lengths_slot(const size_t layer, const Index requested_batch_size)
 {
     Buffer& storage = device_valid_length_storage[layer];
     if (storage.get_device() != Device::CUDA)
-        storage.resize_bytes(batch_size * Index(sizeof(int)), Device::CUDA);
+        storage.resize_bytes(requested_batch_size * Index(sizeof(int)), Device::CUDA);
     else
-        storage.grow_to(batch_size * Index(sizeof(int)));
+        storage.grow_to(requested_batch_size * Index(sizeof(int)));
 
     device_valid_lengths[layer] = storage.as<int>();
     return storage.as<int>();

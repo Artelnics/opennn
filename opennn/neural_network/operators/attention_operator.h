@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   A T T E N T I O N   O P E R A T O R   H E A D E R
@@ -51,7 +51,37 @@ struct AttentionOperator : Operator
 
     vector<TensorSpec> sdpa_gradient_scratch_specs(Index) const;
 
+    // The transient BF16 pack the FP32 SDPA path stages Q/K/V/O through. One
+    // definition serves both the size ForwardPropagation must plan and the
+    // pointers the graph is handed, so the two cannot drift apart.
+    struct SdpaBf16Pack
+    {
+        Index query_elements = 0;
+        Index source_elements = 0;
+
+        static Index slot_elements(Index elements)
+        {
+            return get_aligned_bytes(elements * Index(sizeof(bfloat16))) / Index(sizeof(bfloat16));
+        }
+
+        Index total_elements() const
+        {
+            return 2 * slot_elements(query_elements) + 2 * slot_elements(source_elements);
+        }
+
+        struct Pointers { bfloat16* query; bfloat16* key; bfloat16* value; bfloat16* output; };
+
+        Pointers over(bfloat16* base) const
+        {
+            bfloat16* const key   = base + slot_elements(query_elements);
+            bfloat16* const value = key  + slot_elements(source_elements);
+            return {base, key, value, value + slot_elements(source_elements)};
+        }
+    };
+
     TensorSpec sdpa_qkv_pack_spec(Index) const;
+    static constexpr size_t sdpa_state_slots_count = 4;
+    vector<TensorSpec> sdpa_state_specs(Index) const;
 
     size_t scratch_slot = 0;
     size_t attention_output_slot = 0;
@@ -61,6 +91,8 @@ struct AttentionOperator : Operator
     size_t sdpa_gradient_slot = 0;
 
     size_t sdpa_qkv_pack_slot = 0;
+    size_t sdpa_state_slot = 0;
+    size_t dropout_mask_slot = 0;
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
@@ -87,6 +119,7 @@ private:
                        TensorView&,
                        TensorView&,
                        TensorView&,
+                       TensorView&,
                        void*,
                        bool,
                        SequenceLengths explicit_lengths = {});
@@ -98,11 +131,13 @@ private:
                             const TensorView&,
                             TensorView&,
                             const TensorView&,
+                            span<const TensorView>,
                             bool,
                             const int* explicit_lengths = nullptr);
 #endif
 
     void apply_delta_cpu(const TensorView&,
+                         const TensorView&,
                          const TensorView&,
                          const TensorView&,
                          const TensorView&,
@@ -122,6 +157,7 @@ private:
                              TensorView&,
                              TensorView&,
                              TensorView&,
+                             span<const TensorView>,
                              span<const TensorView>) const;
 #endif
 
@@ -139,18 +175,18 @@ private:
                               const TensorView&,
                               const TensorView&,
                               const TensorView&,
+                              const TensorView&,
                               TensorView&,
                               TensorView&,
                               TensorView&,
                               TensorView&,
                               SoftmaxBwd&&) const;
 
-    mutable unique_ptr<SDPACache> sdpa_cache;
+    unique_ptr<SDPACache> sdpa_cache;
 
 #ifdef OPENNN_HAS_CUDA
     static constexpr uint64_t sdpa_dropout_seed = 0x9E3779B97F4A7C15ULL;
     uint64_t sdpa_dropout_offset = 0;
-    mutable uint64_t sdpa_last_used_offset = 0;
 #endif
 };
 

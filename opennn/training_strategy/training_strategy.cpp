@@ -26,8 +26,7 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_datas
     if (!neural_network)
     {
         optimizer.reset();
-        loss.reset();
-        return;
+        return loss.reset();
     }
 
     set_default();

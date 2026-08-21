@@ -214,6 +214,12 @@ if(OPENNN_HAS_CUDA)
     set_property(
         SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/neural_network/operators/attention_operator.cpp
         APPEND PROPERTY COMPILE_DEFINITIONS HAVE_CUDNN_FRONTEND)
+
+    if(OPENNN_FLASH_ATTENTION_TARGET)
+        target_link_libraries(opennn PRIVATE ${OPENNN_FLASH_ATTENTION_TARGET})
+        target_compile_definitions(opennn PUBLIC
+            $<BUILD_INTERFACE:OPENNN_HAS_FLASH_ATTENTION>)
+    endif()
 endif()
 
 if(MSVC)
@@ -275,7 +281,9 @@ endif()
 if(OpenNN_INSTALL)
     include(CMakePackageConfigHelpers)
 
-    install(TARGETS opennn
+    # The FlashAttention-2 kernels go with it: a static opennn carries the calls
+    # into them, so an installed one needs the archive that defines them.
+    install(TARGETS opennn ${OPENNN_FLASH_ATTENTION_TARGET}
         EXPORT OpenNNTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

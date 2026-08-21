@@ -1,6 +1,8 @@
 #include "tests/pch.h"
 
 #include <cmath>
+#include <future>
+#include <limits>
 #include <vector>
 
 #include "opennn/core/tensor_types.h"
@@ -13,6 +15,51 @@
 #endif
 
 using namespace opennn;
+
+namespace
+{
+
+vector<float> run_grouped_attention(Index batch, Index sequence,
+                                    Index query_heads, Index key_value_heads,
+                                    Index head_dimension)
+{
+    const Index query_width = query_heads * head_dimension;
+    const Index key_value_width = key_value_heads * head_dimension;
+
+    vector<float> query(size_t(batch * sequence * query_width));
+    vector<float> key(size_t(batch * sequence * key_value_width));
+    vector<float> value(size_t(batch * sequence * key_value_width));
+    vector<float> output(query.size());
+
+    for (size_t i = 0; i < query.size(); ++i)
+        query[i] = sin(0.017f * float(i)) + 0.2f;
+    for (size_t i = 0; i < key.size(); ++i)
+        key[i] = cos(0.013f * float(i));
+    for (size_t i = 0; i < value.size(); ++i)
+        value[i] = sin(0.009f * float(i)) - 0.1f;
+
+    TensorView query_view(query.data(), {batch, sequence, query_width});
+    TensorView key_view(key.data(), {batch, sequence, key_value_width});
+    TensorView value_view(value.data(), {batch, sequence, key_value_width});
+    TensorView output_view(output.data(), {batch, sequence, query_width});
+
+    grouped_attention_forward(query_view, key_view, value_view, output_view,
+                              query_heads, key_value_heads, head_dimension,
+                              true, 1.0f / sqrt(float(head_dimension)));
+    return output;
+}
+
+float maximum_difference(const vector<float>& left, const vector<float>& right)
+{
+    if (left.size() != right.size()) return numeric_limits<float>::infinity();
+
+    float difference = 0.0f;
+    for (size_t i = 0; i < left.size(); ++i)
+        difference = max(difference, abs(left[i] - right[i]));
+    return difference;
+}
+
+}
 
 TEST(GroupedAttentionTest, CausalFirstPositionEqualsValue)
 {
@@ -78,6 +125,24 @@ TEST(GroupedAttentionTest, GroupedHeadsShareKeyValue)
             const float head1 = output[size_t((t * q_heads + 1) * head_dim + d)];
             EXPECT_NEAR(head0, head1, 1.0e-6f);
         }
+}
+
+TEST(GroupedAttentionTest, ConcurrentMixedShapesMatchSequentialResults)
+{
+    const vector<float> expected_small = run_grouped_attention(1, 5, 4, 2, 8);
+    const vector<float> expected_large = run_grouped_attention(2, 11, 8, 2, 16);
+
+    future<vector<float>> small = async(launch::async, []
+    {
+        return run_grouped_attention(1, 5, 4, 2, 8);
+    });
+    future<vector<float>> large = async(launch::async, []
+    {
+        return run_grouped_attention(2, 11, 8, 2, 16);
+    });
+
+    EXPECT_LT(maximum_difference(small.get(), expected_small), 1.0e-6f);
+    EXPECT_LT(maximum_difference(large.get(), expected_large), 1.0e-6f);
 }
 
 #ifdef OPENNN_HAS_CUDA

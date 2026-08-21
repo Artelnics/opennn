@@ -93,8 +93,8 @@ static void merge_heads_gpu(const TensorView& source, TensorView& destination)
 
 #else
 
-static void split_heads_gpu(const TensorView&, TensorView&) { throw runtime_error("split_heads_gpu: CUDA support not compiled in."); }
-static void merge_heads_gpu(const TensorView&, TensorView&) { throw runtime_error("merge_heads_gpu: CUDA support not compiled in."); }
+OPENNN_CUDA_STUB(void, split_heads_gpu, (const TensorView&, TensorView&))
+OPENNN_CUDA_STUB(void, merge_heads_gpu, (const TensorView&, TensorView&))
 
 #endif
 
@@ -131,9 +131,8 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
     if (interleaved_heads && input.is_cuda())
     {
         TensorView head_output_2d = head_output.reshape({rows, heads_number * head_dimension});
-        linear_forward(input_2d, weights, bias, head_output_2d,
-                       CUBLASLT_EPILOGUE_BIAS, nullptr, weight_scale);
-        return;
+        return linear_forward(input_2d, weights, bias, head_output_2d,
+                              CUBLASLT_EPILOGUE_BIAS, nullptr, weight_scale);
     }
 
     TensorView&       scratch     = forward_slots[scratch_slot];
@@ -195,7 +194,7 @@ void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_pro
         : planned_addend.reshape({rows, input_features});
 
     linear_backward(output_delta_2d, input_2d, weights, weight_gradient, bias_gradient, input_delta_2d, accumulate,
-                    nullptr, addend.empty() ? nullptr : &addend);
+                    {.addend = addend.empty() ? nullptr : &addend});
 }
 
 }

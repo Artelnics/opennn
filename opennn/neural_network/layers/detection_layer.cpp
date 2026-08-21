@@ -34,6 +34,7 @@ void DetectionOperator::set(const Shape& input_shape, const vector<array<float, 
     grid_width = input_shape[1];
     boxes_per_cell = ssize(new_anchors);
     anchors = new_anchors;
+    device_anchors.resize_bytes(0, Device::CUDA);
 
     throw_if(input_shape[2] % boxes_per_cell != 0,
              "DetectionOperator: channels must be divisible by boxes_per_cell.");
@@ -158,12 +159,9 @@ void DetectionOperator::back_propagate(ForwardPropagation& forward_propagation, 
 
 #ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
-    {
-        detection_backward_cuda(output.get_shape()[0], grid_size, boxes_per_cell, classes_number,
-                                static_cast<int>(class_activation),
-                                output.as<float>(), output_delta.as<float>(), input_delta.as<float>());
-        return;
-    }
+        return detection_backward_cuda(output.get_shape()[0], grid_size, boxes_per_cell, classes_number,
+                                       static_cast<int>(class_activation),
+                                       output.as<float>(), output_delta.as<float>(), input_delta.as<float>());
 #endif
 
     const Index batch_size = output.get_shape()[0];
@@ -216,12 +214,11 @@ namespace
 const EnumMap<DetectionOperator::ClassActivation>& class_activation_map()
 {
     using ClassActivation = DetectionOperator::ClassActivation;
-    static const vector<EnumMap<ClassActivation>::Entry> entries = {
+    static const EnumMap<ClassActivation> map{
         {ClassActivation::Softmax, "Softmax"},
         {ClassActivation::Sigmoid, "Sigmoid"}
     };
-    static const EnumMap<ClassActivation> instance{entries};
-    return instance;
+    return map;
 }
 
 string anchors_to_string(const vector<array<float, 2>>& anchors)

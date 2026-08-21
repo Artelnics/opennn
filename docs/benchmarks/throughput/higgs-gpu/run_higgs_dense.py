@@ -517,33 +517,49 @@ def main() -> None:
         "results": {},
     }
 
+    # Engines alternate within a round rather than running as blocks. Blocking
+    # them lets the GPU's state drift between one engine's runs and the next's,
+    # and that drift is larger than the margins being measured: HIGGS bf16
+    # training read 0.987x OpenNN/TensorFlow blocked and 1.019x alternated, a
+    # three-point swing on a two-point effect. The starting engine also rotates
+    # each round, so no engine always gets the cooler GPU -- measured worth
+    # under 0.1% here, but it costs nothing to remove.
     for precision in precisions:
         print(f"\n=== HIGGS dense {precision} ===")
         result["results"][precision] = {}
+
+        commands = {}
         for engine in engines:
             cmd, env_over = engine_cmd(engine, precision, args, train_path, test_path)
+            commands[engine] = (cmd, env_over)
             command_text = display_command(cmd, env_over)
             result["commands"][f"{engine}_{precision}"] = command_text
             print(f"  {engine}: {command_text}")
 
-            runs = []
-            for index in range(1, args.runs + 1):
+        per_engine = {engine: [] for engine in engines}
+        for index in range(1, args.runs + 1):
+            order = engines[(index - 1) % len(engines):] + engines[:(index - 1) % len(engines)]
+            print(f"  round {index} ({' -> '.join(order)})")
+            for engine in order:
+                cmd, env_over = commands[engine]
                 run = run_once(cmd, env_over, index)
-                runs.append(run)
+                per_engine[engine].append(run)
                 sps = run.get("metrics", {}).get("samples_per_sec")
                 gate = run.get("metrics", {}).get("quality_gate")
                 status = run.get("metrics", {}).get("RESULT", "NO_RESULT")
                 if isinstance(sps, (int, float)):
-                    print(f"    run {index}: {sps:.0f} samples/s, gate={gate}, result={status}")
+                    print(f"    {engine:11s}: {sps:.0f} samples/s, gate={gate}, result={status}")
                 else:
-                    print(f"    run {index}: failed, result={status}, returncode={run.get('returncode')}")
+                    print(f"    {engine:11s}: failed, result={status}, returncode={run.get('returncode')}")
 
-            summary = summarize_runs(runs)
+        for engine in engines:
+            cmd, env_over = commands[engine]
+            summary = summarize_runs(per_engine[engine])
             summary.update({
-                "command": command_text,
+                "command": display_command(cmd, env_over),
                 "argv": cmd,
                 "env": env_over,
-                "runs": runs,
+                "runs": per_engine[engine],
             })
             result["results"][precision][engine] = summary
 

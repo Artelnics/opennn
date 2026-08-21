@@ -1356,6 +1356,10 @@ void Loss::back_propagate(const Batch& batch,
 {
     if (batch.is_empty()) return;
 
+    // Point the layers' gradient views at this context's buffer. A no-op unless
+    // the caller alternates contexts (main batch / remainder batch).
+    neural_network->link_gradients(back_propagation.gradient);
+
     {
         PROFILE_SCOPE("loss:calculate_error");
         const EvaluationResult evaluation_result = calculate_error(batch, forward_propagation);
@@ -1406,17 +1410,18 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
     }
 
 #ifdef OPENNN_HAS_CUDA
-    const bool on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
+    const bool on_gpu = runs_on_gpu();
     if (on_gpu)
     {
 
         if (!is_gradient)
             return yolo_error_gpu_multi(forward_propagation, target, neural_network,
                                         detection_indices, head,
-                                        yolo_target_device, errors_device, lam);
+                                        forward_propagation.loss_target_workspace,
+                                        forward_propagation.loss_workspace, lam);
         yolo_gradient_gpu_multi(forward_propagation, target, *back_propagation,
                                 neural_network, detection_indices, head,
-                                yolo_target_device, lam);
+                                back_propagation->execution_workspace, lam);
         return {};
     }
 #endif
@@ -1439,17 +1444,27 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
 
 #endif
 
-float* Loss::ensure_error_workspace(const TensorView& input, Index batch_samples) const
+Index Loss::error_workspace_floats(const TensorView& input) const
 {
-    const Index workspace_floats = (error == Error::CrossEntropy3d)
+    return (error == Error::CrossEntropy3d)
         ? 3 * (input.size() / input.get_shape().back())
         : input.size();
-    errors_device.grow_to(workspace_floats * Index(sizeof(float)));
+}
+
+float* Loss::ensure_error_workspace(Buffer& storage,
+                                    const TensorView& input,
+                                    Index batch_samples,
+                                    Index reduction_floats) const
+{
+    const Index workspace_floats = error_workspace_floats(input);
+    storage.grow_to((workspace_floats + reduction_floats)
+                    * Index(sizeof(float)));
     if (memory_debug::enabled())
-        memory_debug::record("loss", "Loss::errors_device",
-                             workspace_floats * Index(sizeof(float)),
+        memory_debug::record("loss", "ForwardPropagation::loss_workspace",
+                             (workspace_floats + reduction_floats)
+                                 * Index(sizeof(float)),
                              format("batch={}", batch_samples));
-    return errors_device.as<float>();
+    return storage.as<float>();
 }
 
 Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
@@ -1461,9 +1476,13 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
     EvaluationResult result;
 
     float* workspace_device = nullptr;
-    const bool device_on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
+    const bool device_on_gpu = runs_on_gpu();
     if (device_on_gpu && error != Error::Yolo)
-        workspace_device = ensure_error_workspace(input, batch.get_batch_size());
+        workspace_device = ensure_error_workspace(
+            forward_propagation.loss_workspace,
+            input,
+            batch.get_batch_size(),
+            error == Error::CrossEntropy3d ? 3 : 0);
 
     using enum Error;
     switch (error)
@@ -1487,7 +1506,12 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
     case CrossEntropy3d:
     {
         Index correct_tokens = 0;
-        cross_entropy_3d(input, target, result.error, result.active_tokens_count, correct_tokens, workspace_device);
+        float* const reduction_device = workspace_device
+            ? workspace_device + error_workspace_floats(input)
+            : nullptr;
+        cross_entropy_3d(input, target, result.error,
+                         result.active_tokens_count, correct_tokens,
+                         workspace_device, reduction_device);
         result.accuracy = result.active_tokens_count > 0
             ? float(correct_tokens) / float(result.active_tokens_count)
             : 0.0f;
@@ -1511,10 +1535,7 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
 bool Loss::supports_device_epoch_metrics() const
 {
     if (error == Error::Yolo) return false;
-    return device::is_cuda_build()
-        && neural_network
-        && neural_network->is_gpu()
-        && error != Error::MinkowskiError;
+    return runs_on_gpu() && error != Error::MinkowskiError;
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -1530,18 +1551,14 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     const TensorView target = batch.get_targets();
     if (input.empty() || target.empty()) return false;
 
-    ensure_error_workspace(input, batch.get_batch_size());
-    metric_results_device.grow_to(Index(3 * sizeof(float)));
-    if (memory_debug::enabled())
-    {
-        memory_debug::record("loss", "Loss::metric_results_device",
-                             Index(3 * sizeof(float)),
-                             format("batch={}", batch.get_batch_size()));
-    }
-
-    float* const workspace = errors_device.as<float>();
-    float* const results_device = metric_results_device.as<float>();
-    cublasHandle_t handle = Backend::get_cublas_handle();
+    const Index workspace_floats = error_workspace_floats(input);
+    float* const workspace = ensure_error_workspace(
+        forward_propagation.loss_workspace,
+        input,
+        batch.get_batch_size(),
+        3);
+    float* const results_device = workspace + workspace_floats;
+    cublasHandle_t handle = device::get_cublas_handle();
 
     auto reduce_abs_and_accumulate = [&](Index n, float scale)
     {
@@ -1644,6 +1661,9 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
     if (!calculate_error_device_metrics(batch, forward_propagation, error_sum_device, accuracy_sum_device))
         return false;
 
+    // See Loss::back_propagate: host-only pointer work, so it stays capture-safe.
+    neural_network->link_gradients(back_propagation.gradient);
+
     if (error == Error::CrossEntropy3d)
     {
         const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
@@ -1654,7 +1674,11 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
 
         TensorView& input_delta = back_propagation.get_output_delta();
 
-        cross_entropy_3d_gradient_device_count(input, target, input_delta, metric_results_device.as<float>() + 1);
+        const float* const results_device =
+            forward_propagation.loss_workspace.as<float>()
+            + error_workspace_floats(input);
+        cross_entropy_3d_gradient_device_count(input, target, input_delta,
+                                               results_device + 1);
     }
     else
     {
@@ -1773,7 +1797,7 @@ void Loss::back_propagate_layers(ForwardPropagation& forward_propagation,
 
 void Loss::add_regularization(BackPropagation& back_propagation) const
 {
-    if (regularization_method == Regularization::NoRegularization) return;
+    if (!has_regularization()) return;
 
     check_neural_network();
 
@@ -1794,7 +1818,7 @@ float Loss::calculate_regularization(const VectorR& parameters_vec) const
 
 float Loss::calculate_regularization(const TensorView& parameters) const
 {
-    if (regularization_method == Regularization::NoRegularization || regularization_weight == 0.0f) return 0.0f;
+    if (!has_regularization()) return 0.0f;
 
     float penalty = 0.0f;
 
@@ -1818,7 +1842,7 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
     back_propagate_layers(forward_propagation, back_propagation);
 }
 
-static const vector<pair<Loss::Error, string>> error_entries = {
+static const EnumMap<Loss::Error> error_map{
     {Loss::Error::MeanSquaredError,       "MeanSquaredError"},
     {Loss::Error::MeanAbsoluteError,      "MeanAbsoluteError"},
     {Loss::Error::NormalizedSquaredError, "NormalizedSquaredError"},
@@ -1829,8 +1853,6 @@ static const vector<pair<Loss::Error, string>> error_entries = {
     {Loss::Error::Yolo,                   "Yolo"},
     {Loss::Error::Yolo,                   "YoloError"}
 };
-
-static const EnumMap<Loss::Error> error_map{error_entries};
 
 void Loss::set_error(const Error& new_error)
 {
@@ -1845,7 +1867,7 @@ void Loss::set_error(const string& new_name)
 
 void Loss::add_regularization_gradient(const TensorView& gradient) const
 {
-    if (regularization_method == Regularization::NoRegularization || regularization_weight == 0.0f) return;
+    if (!has_regularization()) return;
 
     check_neural_network();
 
@@ -1869,7 +1891,7 @@ void Loss::add_regularization_gradient(const TensorView& gradient) const
 
 void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
 {
-    if (regularization_method == Regularization::NoRegularization || regularization_weight == 0.0f) return;
+    if (!has_regularization()) return;
 
     check_neural_network();
 

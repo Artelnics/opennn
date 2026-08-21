@@ -24,18 +24,21 @@
 namespace opennn
 {
 
-ConvolutionOperator::ConvolutionOperator() = default;
-ConvolutionOperator::~ConvolutionOperator() = default;
-
 #ifndef OPENNN_HAS_CUDA
 
-struct ConvolutionOperator::ConvGraphCache {};
+struct ConvolutionOperator::ConvGraphCache
+{
+    mutex access_mutex;
+    bool disabled = false;
+};
 #endif
 
 #ifdef OPENNN_HAS_CUDA
 
 struct ConvolutionOperator::ConvGraphCache
 {
+    mutex access_mutex;
+
     struct Entry
     {
         cudnn_frontend::GraphSlot fwd, wgrad, bgrad, dgrad;
@@ -46,7 +49,7 @@ struct ConvolutionOperator::ConvGraphCache
         bool wgrad_fp32_output = false;
         bool dgrad_adds = false;
         // Fork/join of the weight gradient onto lane 1 (see apply_delta_gpu).
-        CudaEvent fork_event, join_event;
+        device::CudaEvent fork_event, join_event;
     };
 
     unordered_map<Index, Entry> entries;
@@ -175,10 +178,7 @@ void build_bgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
                                       graph::Reduction_attributes()
                                       .set_mode(ReductionMode_t::ADD));
 
-    entry.bgrad_DB->set_output(true)
-                   .set_data_type(DataType_t::FLOAT)
-                   .set_dim({1, d.kernels, 1, 1})
-                   .set_stride({d.kernels, 1, d.kernels, d.kernels});
+    set_per_channel_output(entry.bgrad_DB, d.kernels);
 
     entry.bgrad.build(graph, "bgrad");
 }
@@ -218,12 +218,12 @@ void build_dgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
     entry.dgrad.build(graph, "dgrad");
 }
 
-string timing_label(const ConvolutionOperator& op, const char* kind)
+string conv_timing_label(const ConvolutionOperator& op, const char* kind)
 {
-    if (!graph_timing_enabled()) return {};
-    return format("{} {}x{}x{} k{}x{}x{} s{}", kind,
-                  op.input_height, op.input_width, op.kernel_channels,
-                  op.kernel_height, op.kernel_width, op.kernels_number, op.row_stride);
+    return timing_label("{} {}x{}x{} k{}x{}x{} s{}", kind,
+                                          op.input_height, op.input_width, op.kernel_channels,
+                                          op.kernel_height, op.kernel_width, op.kernels_number,
+                                          op.row_stride);
 }
 
 // Builds a graph the operator would rather have (an FP32 gradient store, an ADD
@@ -255,6 +255,13 @@ bool build_preferred(const ConvolutionOperator& op, const char* kind, int64_t ba
 }
 
 #endif
+
+ConvolutionOperator::ConvolutionOperator()
+    : conv_graph_cache(make_unique<ConvGraphCache>())
+{
+}
+
+ConvolutionOperator::~ConvolutionOperator() = default;
 
 void ConvolutionOperator::set(Index new_input_h, Index new_input_w,
                       Index new_kernels_n, Index new_kernel_h, Index new_kernel_w, Index new_kernel_c,
@@ -471,10 +478,14 @@ void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output)
     const Map<const Matrix<float, 1, Dynamic>> bias_row(use_bias ? bias.as<float>() : nullptr,
                                                         use_bias ? kernels_number : 0);
 
-    #pragma omp parallel
+    const Index col_size = output_positions * patch_size;
+    const int workers = max(1, min(omp_get_max_threads(), to_int(batch_size)));
+    vector<float> scratch(size_t(workers) * size_t(col_size));
+
+    #pragma omp parallel num_threads(workers)
     {
-        thread_local vector<float> col_storage;
-        col_storage.resize(size_t(output_positions * patch_size));
+        float* const col_data =
+            scratch.data() + size_t(omp_get_thread_num()) * size_t(col_size);
 
         #pragma omp for schedule(static)
         for (Index image_index = 0; image_index < batch_size; ++image_index)
@@ -483,9 +494,9 @@ void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output)
                    input_height, input_width, kernel_channels,
                    kernel_height, kernel_width, padding_height, padding_width,
                    row_stride, column_stride, output_height, output_width,
-                   col_storage.data());
+                   col_data);
 
-            const Map<const MatrixR> col(col_storage.data(), output_positions, patch_size);
+            const Map<const MatrixR> col(col_data, output_positions, patch_size);
             Map<MatrixR> output_matrix(output.as<float>() + image_index * output_positions * kernels_number,
                                     output_positions, kernels_number);
 
@@ -512,20 +523,21 @@ void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
 
     const bool write_input_delta = !input_delta.empty();
 
-    const int threads_number = omp_get_max_threads();
-    MatrixR weight_gradient_partials = MatrixR::Zero(threads_number, kernels_number * patch_size);
-    MatrixR bias_gradient_partials = MatrixR::Zero(use_bias ? threads_number : 0,
+    const int workers = max(1, min(omp_get_max_threads(), to_int(batch_size)));
+    MatrixR weight_gradient_partials = MatrixR::Zero(workers, kernels_number * patch_size);
+    MatrixR bias_gradient_partials = MatrixR::Zero(use_bias ? workers : 0,
                                                    use_bias ? kernels_number : 0);
 
-    #pragma omp parallel
+    const Index col_size = output_positions * patch_size;
+    const Index scratch_stride = write_input_delta ? 2 * col_size : col_size;
+    vector<float> scratch(size_t(workers) * size_t(scratch_stride));
+
+    #pragma omp parallel num_threads(workers)
     {
         const int thread = omp_get_thread_num();
-
-        thread_local vector<float> col_storage;
-        thread_local vector<float> delta_col_storage;
-        col_storage.resize(size_t(output_positions * patch_size));
-        if (write_input_delta)
-            delta_col_storage.resize(size_t(output_positions * patch_size));
+        float* const col_data =
+            scratch.data() + size_t(thread) * size_t(scratch_stride);
+        float* const delta_col_data = write_input_delta ? col_data + col_size : nullptr;
 
         Map<MatrixR> weight_gradient_partial(weight_gradient_partials.row(thread).data(),
                                           kernels_number, patch_size);
@@ -537,9 +549,9 @@ void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
                    input_height, input_width, kernel_channels,
                    kernel_height, kernel_width, padding_height, padding_width,
                    row_stride, column_stride, output_height, output_width,
-                   col_storage.data());
+                   col_data);
 
-            const Map<const MatrixR> col(col_storage.data(), output_positions, patch_size);
+            const Map<const MatrixR> col(col_data, output_positions, patch_size);
             const Map<const MatrixR> output_deltas(
                 output_delta.as<float>() + image_index * output_positions * kernels_number,
                 output_positions, kernels_number);
@@ -551,12 +563,12 @@ void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
 
             if (write_input_delta)
             {
-                Map<MatrixR> delta_col(delta_col_storage.data(), output_positions, patch_size);
+                Map<MatrixR> delta_col(delta_col_data, output_positions, patch_size);
                 delta_col.noalias() = output_deltas * weights_matrix;
 
                 float* const image_delta = input_delta.as<float>() + image_index * input_size;
                 fill_n(image_delta, input_size, 0.0f);
-                col2im(delta_col_storage.data(),
+                col2im(delta_col_data,
                        input_height, input_width, kernel_channels,
                        kernel_height, kernel_width, padding_height, padding_width,
                        row_stride, column_stride, output_height, output_width,
@@ -592,21 +604,23 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
     }
 
     const bool ran = cudnn_frontend::frontend_enabled()
-        && cudnn_frontend::run_frontend(conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
+        && cudnn_frontend::run_frontend(*conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
     {
-        auto& entry = cache.entries[input.get_shape()[0]];
+        auto& entry = detail::bounded_cache_entry(
+            cache.entries, input.get_shape()[0],
+            cudnn_frontend::graph_cache_capacity);
         if (!entry.fwd.graph)
             cudnn_frontend::build_forward(entry, cudnn_frontend::make_dims(*this, input.get_shape()[0]),
                                     fuse_relu, use_bias, input.get_type());
 
-        unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
+        cudnn_frontend::VariantPack tensors;
         tensors[entry.fwd_X] = input.get_data();
         tensors[entry.fwd_W] = weights_data;
         if (use_bias) tensors[entry.fwd_B] = bias.get_data();
         tensors[entry.fwd_Y] = output.get_data();
 
         cudnn_frontend::run_slot(entry.fwd, tensors, "ConvolutionOperator fwd",
-                                 cudnn_frontend::timing_label(*this, "conv_fwd"), true);
+                                 cudnn_frontend::conv_timing_label(*this, "conv_fwd"), true);
     });
 
     if (!ran) cudnn_frontend::throw_frontend_unavailable("ConvolutionOperator: GPU convolution");
@@ -637,9 +651,11 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
              "ConvolutionOperator: GPU convolution backward requires FP32 or BF16.");
 
     const bool ran = cudnn_frontend::frontend_enabled()
-        && cudnn_frontend::run_frontend(conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
+        && cudnn_frontend::run_frontend(*conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
     {
-        auto& entry = cache.entries[input.get_shape()[0]];
+        auto& entry = detail::bounded_cache_entry(
+            cache.entries, input.get_shape()[0],
+            cudnn_frontend::graph_cache_capacity);
         const auto dims = cudnn_frontend::make_dims(*this, input.get_shape()[0]);
 
         // Two lanes: the weight (and bias) gradient run on lane 1 while the
@@ -650,15 +666,17 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
         // captured graph the two become parallel branches.
         const bool fork_wgrad = device::lanes_available() > 1 && device::active_lane() == 0
             && input_delta.get_data() && input_delta.size() != 0;
-        // Whatever exits this scope leaves the active lane at 0.
-        struct LaneRestore { bool armed; ~LaneRestore() { if (armed) device::set_active_lane(0); } } lane_restore{fork_wgrad};
+        // Whatever exits this scope leaves the active lane at 0. ScopeExit
+        // swallows, which matters here: set_active_lane throws, and throwing out
+        // of a destructor during unwinding would terminate.
+        ScopeExit lane_restore([armed = fork_wgrad] { if (armed) device::set_active_lane(0); });
         if (fork_wgrad)
         {
             if (!entry.fork_event) entry.fork_event.create();
             if (!entry.join_event) entry.join_event.create();
-            device::record_event(entry.fork_event, device::lane_stream(0));
+            device::record_event(entry.fork_event.get(), device::lane_stream(0));
             device::set_active_lane(1);
-            device::stream_wait_event(device::lane_stream(1), entry.fork_event);
+            device::stream_wait_event(device::lane_stream(1), entry.fork_event.get());
         }
 
         if (!entry.wgrad.graph)
@@ -676,13 +694,13 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
         const bool wgrad_bf16 = input.is_bf16() && !entry.wgrad_fp32_output;
         bfloat16* dw_bf16 = wgrad_bf16 ? ensure_bf16_gradient_workspace(weight_gradient.size()) : nullptr;
 
-        unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
+        cudnn_frontend::VariantPack tensors;
         tensors[entry.wgrad_DY] = output_delta.get_data();
         tensors[entry.wgrad_X]  = input.get_data();
         tensors[entry.wgrad_DW] = wgrad_bf16 ? static_cast<void*>(dw_bf16) : weight_gradient.get_data();
 
         cudnn_frontend::run_slot(entry.wgrad, tensors, "ConvolutionOperator wgrad",
-                                 cudnn_frontend::timing_label(*this, "conv_wgrad"), false);
+                                 cudnn_frontend::conv_timing_label(*this, "conv_wgrad"), false);
 
         if (wgrad_bf16)
             cast_bf16_to_fp32(weight_gradient.size(), dw_bf16, weight_gradient.as<float>());
@@ -691,17 +709,17 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
         {
             if (!entry.bgrad.graph) cudnn_frontend::build_bgrad(entry, dims, input.get_type());
 
-            unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> bgrad_tensors;
+            cudnn_frontend::VariantPack bgrad_tensors;
             bgrad_tensors[entry.bgrad_DY] = output_delta.get_data();
             bgrad_tensors[entry.bgrad_DB] = bias_gradient.get_data();
 
             cudnn_frontend::run_slot(entry.bgrad, bgrad_tensors, "ConvolutionOperator bgrad",
-                                     cudnn_frontend::timing_label(*this, "conv_bgrad"), false);
+                                     cudnn_frontend::conv_timing_label(*this, "conv_bgrad"), false);
         }
 
         if (fork_wgrad)
         {
-            device::record_event(entry.join_event, device::lane_stream(1));
+            device::record_event(entry.join_event.get(), device::lane_stream(1));
             device::set_active_lane(0);
         }
 
@@ -719,14 +737,14 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
                     cudnn_frontend::build_dgrad(entry, dims, input.get_type(), false);
             }
 
-            unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> dgrad_tensors;
+            cudnn_frontend::VariantPack dgrad_tensors;
             dgrad_tensors[entry.dgrad_DY] = output_delta.get_data();
             dgrad_tensors[entry.dgrad_W]  = weights.get_data();
             dgrad_tensors[entry.dgrad_DX] = input_delta.get_data();
             if (entry.dgrad_adds) dgrad_tensors[entry.dgrad_R] = addend.get_data();
 
             cudnn_frontend::run_slot(entry.dgrad, dgrad_tensors, "ConvolutionOperator dgrad",
-                                     cudnn_frontend::timing_label(*this, "conv_dgrad"), false);
+                                     cudnn_frontend::conv_timing_label(*this, "conv_dgrad"), false);
 
             // The planner counts on this operator consuming the addend either way.
             if (want_add && !entry.dgrad_adds)
@@ -734,7 +752,7 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
         }
 
         if (fork_wgrad)
-            device::stream_wait_event(device::lane_stream(0), entry.join_event);
+            device::stream_wait_event(device::lane_stream(0), entry.join_event.get());
     });
 
     if (!ran) cudnn_frontend::throw_frontend_unavailable("ConvolutionOperator: GPU convolution backward");

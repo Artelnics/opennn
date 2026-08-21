@@ -149,7 +149,7 @@ namespace opennn
 
     void replace(string&, const string&, const string&);
 
-    void display_progress_bar(int, int);
+    void display_progress_bar(Index, Index);
 
     float get_elapsed_time(const time_t& beginning_time);
 

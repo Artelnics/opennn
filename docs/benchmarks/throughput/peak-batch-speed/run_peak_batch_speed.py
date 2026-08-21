@@ -48,9 +48,12 @@ OOM_MARKERS = (
     "CUDA Error: 2 ", "cudaMalloc(",
 )
 
-def run_text(cmd: list[str]) -> str:
+def run_text(cmd: list[str], timeout_s: float = 60.0) -> str:
+    # Bounded: `git status` on a network / 9p-mounted tree can take minutes,
+    # and the metadata is not worth stalling a sweep for.
     try:
-        return subprocess.run(cmd, capture_output=True, text=True, check=False).stdout.strip()
+        return subprocess.run(cmd, capture_output=True, text=True, check=False,
+                              timeout=timeout_s).stdout.strip()
     except Exception:
         return ""
 
@@ -122,9 +125,24 @@ class HiggsFamily(Family):
         env = {}
         if engine == "tensorflow":
             env["LD_LIBRARY_PATH"] = os.pathsep.join(tensorflow_library_dirs(PY))
+        # PyTorch's best config for this family, as for the others: the whole
+        # train step compiled with CUDA graphs and fused Adam (PYTORCH_PLAIN=1
+        # reverts to the eager driver).
+        if engine == "pytorch" and not os.environ.get("PYTORCH_PLAIN"):
+            env["PT_COMPILE_MODE"] = "reduce-overhead"
+            env["PT_COMPILE_STEP"] = "1"
+            env["PT_FUSED_ADAM"] = "1"
         return ([PY, str(self.drivers / script), str(self.train), str(epochs),
                  str(batch), precision, "shuffle", "1024", "relu", "2",
                  str(self.test), "none", "none", "none"], env)
+
+    def engine_paths(self):
+        return {
+            "opennn": "GPU-resident data, device gather, CUDA graphs",
+            "pytorch": ("eager + autocast (PYTORCH_PLAIN)" if os.environ.get("PYTORCH_PLAIN") else
+                        "autocast + torch.compile(mode=reduce-overhead) of the whole train step + Adam(fused=True)"),
+            "tensorflow": "mixed_bfloat16 + tf.function(jit_compile=True) over the whole step",
+        }
 
 class ResnetFamily(Family):
     def __init__(self) -> None:

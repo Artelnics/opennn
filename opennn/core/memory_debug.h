@@ -6,7 +6,6 @@
 #pragma once
 
 #include "opennn/core/opennn_types.h"
-#include "opennn/core/configuration.h"
 
 namespace opennn
 {

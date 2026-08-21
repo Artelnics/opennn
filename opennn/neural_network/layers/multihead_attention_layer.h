@@ -48,7 +48,10 @@ public:
     {
         if (spec == size_t(TransposeScratch) - 1 || spec == size_t(SdpaQkvPack) - 1)
             return ForwardSlotKind::Transient;
-        if (spec == size_t(AttentionWeightsDropped) - 1)
+        if (spec == size_t(AttentionWeightsDropped) - 1
+            || spec == size_t(SdpaStats) - 1
+            || spec == size_t(SdpaDropoutState) - 1
+            || spec == size_t(DropoutMask) - 1)
             return ForwardSlotKind::TrainingOnly;
         return ForwardSlotKind::Pooled;
     }
@@ -110,7 +113,9 @@ private:
     AttentionOperator           attention;
 
     enum Forward {Input, Query, Key, AttentionWeights, AttentionWeightsDropped,
-                  ConcatenatedAttentionOutputs, Value, TransposeScratch, SdpaQkvPack, Output};
+                  ConcatenatedAttentionOutputs, Value, TransposeScratch, SdpaQkvPack,
+                  SdpaStats, SdpaQueryLengths, SdpaSourceLengths, SdpaDropoutState,
+                  DropoutMask, Output};
     enum Backward {
         OutputDelta,
         InputQueryDelta,

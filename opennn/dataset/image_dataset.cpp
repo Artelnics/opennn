@@ -287,6 +287,38 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
                          ? read_json_bool(data_source_element, "RandomAugmentation")
                          : has_augmentation_transform(augmentation);
 
+    // A deployment folder ships the model without the images it was trained on,
+    // and inference does not need them: the shape of the input and the names of
+    // the classes are already in the model file. Rebuild the dataset from it
+    // instead of failing, and leave it with no samples - training and analysis
+    // need the images and report their own errors without them.
+
+    if (!data_path.empty() && !filesystem::exists(data_path)
+     && image_dataset_element->has("Variables")
+     && requested_input_shape.get_rank() == 3)
+    {
+        cout << "Warning: image folder not found (" << data_path.string()
+             << ") - continuing without samples (deployment mode)." << "\n";
+
+        read_json_blocks(image_dataset_element);
+
+        pixel_number = uint64_t(input_shape[0])*uint64_t(input_shape[1])*uint64_t(input_shape[2]);
+
+        target_shape = { get_features_number(VariableRole::Target) };
+
+        const vector<Variable> target_variables = get_variables(VariableRole::Target);
+
+        classes_number = target_variables.empty()
+                       ? 0
+                       : uint32_t(target_variables[0].get_categories_number());
+
+        data.resize(0, 0);
+        sample_labels.clear();
+        sample_roles.clear();
+
+        return;
+    }
+
     read_images();
 }
 
@@ -557,32 +589,37 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     {
         string omp_error;
 
-        #pragma omp parallel for schedule(dynamic)
-        for (Index i = 0; i < batch_size; ++i)
+        const int workers = max(1, min(omp_get_max_threads(), to_int(batch_size)));
+
+        #pragma omp parallel num_threads(workers)
         {
-            try
+            vector<uint8_t> buffer(static_cast<size_t>(pixels_per_image));
+
+            #pragma omp for schedule(dynamic)
+            for (Index i = 0; i < batch_size; ++i)
             {
-                thread_local vector<uint8_t> buf;
-                buf.resize(size_t(pixels_per_image));
+                try
+                {
+                    const Index sample_index = sample_indices[size_t(i)];
+                    throw_if(sample_index < 0 || sample_index >= ssize(sample_labels),
+                             "ImageDataset input sample index is out of range.");
 
-                const Index sample_index = sample_indices[size_t(i)];
-                throw_if(sample_index < 0 || sample_index >= ssize(sample_labels),
-                         "ImageDataset input sample index is out of range.");
+                    const uint64_t off = uint64_t(sample_index) * pixel_number;
+                    cache_reader.read_at(span(buffer), off);
 
-                const uint64_t off = uint64_t(sample_index) * pixel_number;
-                cache_reader.read_at(span(buf), off);
+                    float* dst = input_data + i * pixels_per_image;
+                    Map<Array<float, Dynamic, 1>>(dst, pixels_per_image) =
+                        Map<const Array<uint8_t, Dynamic, 1>>(
+                            buffer.data(), pixels_per_image).cast<float>();
 
-                float* dst = input_data + i * pixels_per_image;
-                Map<Array<float, Dynamic, 1>>(dst, pixels_per_image) =
-                    Map<const Array<uint8_t, Dynamic, 1>>(buf.data(), pixels_per_image).cast<float>();
-
-                if (scale_in_fill)
-                    scale_sample(dst);
-            }
-            catch (const exception& e)
-            {
-                #pragma omp critical
-                { omp_error = e.what(); }
+                    if (scale_in_fill)
+                        scale_sample(dst);
+                }
+                catch (const exception& e)
+                {
+                    #pragma omp critical
+                    { if (omp_error.empty()) omp_error = e.what(); }
+                }
             }
         }
 

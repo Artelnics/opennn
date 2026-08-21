@@ -25,7 +25,7 @@ static float sum_squared_diff_cuda(const TensorView& input, const TensorView& ta
     });
 
     float sum_squared = 0.0f;
-    CHECK_CUBLAS(cublasSdot(Backend::get_cublas_handle(), total_size,
+    CHECK_CUBLAS(cublasSdot(device::get_cublas_handle(), total_size,
                             workspace, 1, workspace, 1, &sum_squared));
     return sum_squared;
 }
@@ -45,14 +45,14 @@ static void scaled_diff_cuda(const TensorView& input, const TensorView& target, 
 static float sum_abs_cuda(const float* data, Index size)
 {
     float sum = 0.0f;
-    CHECK_CUBLAS(cublasSasum(Backend::get_cublas_handle(), to_int(size), data, 1, &sum));
+    CHECK_CUBLAS(cublasSasum(device::get_cublas_handle(), to_int(size), data, 1, &sum));
     return sum;
 }
 
 static float squared_norm_cuda(const float* data, Index size)
 {
     float dot = 0.0f;
-    CHECK_CUBLAS(cublasSdot(Backend::get_cublas_handle(), to_int(size),
+    CHECK_CUBLAS(cublasSdot(device::get_cublas_handle(), to_int(size),
                             data, 1, data, 1, &dot));
     return dot;
 }
@@ -142,10 +142,7 @@ void mean_squared_error_gradient(const TensorView& input, const TensorView& targ
 {
     const Index batch_size = input.get_shape()[0];
     if (input.is_cuda())
-    {
-        scaled_diff_cuda(input, target, 1.0f / to_int(batch_size), input_delta);
-        return;
-    }
+        return scaled_diff_cuda(input, target, 1.0f / to_int(batch_size), input_delta);
     input_delta.as_vector().noalias() = (input.as_vector() - target.as_vector()) / to_type(batch_size);
 }
 
@@ -215,10 +212,7 @@ void normalized_squared_error(const TensorView& input, const TensorView& target,
 void normalized_squared_error_gradient(const TensorView& input, const TensorView& target, float coefficient, const TensorView& input_delta)
 {
     if (input.is_cuda())
-    {
-        scaled_diff_cuda(input, target, 2.0f / (coefficient + EPSILON), input_delta);
-        return;
-    }
+        return scaled_diff_cuda(input, target, 2.0f / (coefficient + EPSILON), input_delta);
     input_delta.as_vector().noalias() = 2.0f * (input.as_vector() - target.as_vector()) / (coefficient + EPSILON);
 }
 
@@ -233,9 +227,11 @@ void weighted_squared_error(const TensorView& input, const TensorView& target, f
                                            input.as<T>(),
                                            positive_weight,
                                            negative_weight);
-
-            error = 0.5f * sum_abs_cuda(workspace_device, input.size());
         });
+
+        // The reduction does not depend on T. dispatch runs its lambda inline,
+        // so this still follows the launch.
+        error = 0.5f * sum_abs_cuda(workspace_device, input.size());
         return;
     }
 
@@ -269,8 +265,9 @@ void binary_cross_entropy(const TensorView& input, const TensorView& target, flo
         input.dispatch([&]<typename T>() {
             binary_cross_entropy_cuda<T>(input.size(),
                 workspace_device, target.as<float>(), input.as<T>(), EPSILON);
-            error = sum_abs_cuda(workspace_device, input.size()) / input.get_shape()[0];
         });
+
+        error = sum_abs_cuda(workspace_device, input.size()) / input.get_shape()[0];
         return;
     }
     const Index samples_number = input.get_shape()[0];
@@ -293,8 +290,9 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
         input.dispatch([&]<typename T>() {
             categorical_cross_entropy_cuda<T>(input.size(),
                 workspace_device, target.as<float>(), input.as<T>(), EPSILON);
-            error = sum_abs_cuda(workspace_device, input.size()) / input.get_shape()[0];
         });
+
+        error = sum_abs_cuda(workspace_device, input.size()) / input.get_shape()[0];
         return;
     }
     const Index samples_number = input.get_shape()[0];
@@ -319,9 +317,12 @@ void cross_entropy(const TensorView& input, const TensorView& target, float& err
 void cross_entropy_gradient(const TensorView& input, const TensorView& target, const TensorView& input_delta)
 {
     if (input.is_cuda()) {
+        // Neither depends on T; inside the lambda they were computed in both
+        // instantiations.
+        const Index num_classes = input.get_shape().back();
+        const float scale = 1.0f / static_cast<float>(input.get_shape()[0]);
+
         input.dispatch([&]<typename T>() {
-            const Index num_classes = input.get_shape().back();
-            const float scale = 1.0f / static_cast<float>(input.get_shape()[0]);
             if (num_classes == 1)
                 binary_cross_entropy_gradient_cuda<T>(input.size(),
                     input_delta.as<T>(), target.as<float>(), input.as<T>(), EPSILON, scale);
@@ -374,7 +375,8 @@ void minkowski_error_gradient(const TensorView& input,
 }
 
 void cross_entropy_3d(const TensorView& input, const TensorView& target, float& error,
-                      Index& active_tokens_out, Index& correct_tokens_out, float* errors_device)
+                      Index& active_tokens_out, Index& correct_tokens_out,
+                      float* errors_device, float* reduction_device)
 {
     const Index vocabulary_size = input.get_shape().back();
 
@@ -390,21 +392,17 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
                 input.as<T>(), target.as<float>(),
                 errors_device, valid_mask_device, correct_mask_device, EPSILON);
 
-            thread_local Buffer device_results(Device::CUDA);
-            device_results.grow_to(Index(3 * sizeof(float)));
-            float* device_results_ptr = device_results.as<float>();
-
-            cublasHandle_t handle = Backend::get_cublas_handle();
+            cublasHandle_t handle = device::get_cublas_handle();
             {
                 device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
-                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), errors_device,       1, device_results_ptr + 0));
-                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,   1, device_results_ptr + 1));
-                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device, 1, device_results_ptr + 2));
+                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), errors_device,       1, reduction_device + 0));
+                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,   1, reduction_device + 1));
+                CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device, 1, reduction_device + 2));
             }
 
             float host_results[3];
             cudaStream_t stream = device::get_compute_stream();
-            device::copy_async(host_results, device_results_ptr,
+            device::copy_async(host_results, reduction_device,
                                3 * Index(sizeof(float)),
                                device::CopyKind::DeviceToHost,
                                stream);
@@ -423,6 +421,7 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
 #endif
 
     (void)errors_device;
+    (void)reduction_device;
 
     const Index token_count = input.size() / vocabulary_size;
     const MatrixMap outputs_flat = input.as_flat_matrix();
@@ -492,10 +491,7 @@ void cross_entropy_3d_gradient_device_count(const TensorView& input, const Tenso
                                             const float* active_tokens_count_device)
 {
     if (input.is_cuda())
-    {
-        cross_entropy_3d_gradient_device_count_cuda(input, target, input_delta, active_tokens_count_device);
-        return;
-    }
+        return cross_entropy_3d_gradient_device_count_cuda(input, target, input_delta, active_tokens_count_device);
 
     const Index vocabulary_size = input.get_shape().back();
 
@@ -549,7 +545,7 @@ void l2_regularization_gradient(const TensorView& parameters, float lambda, cons
     if (parameters.is_cuda())
     {
         const int total_size = to_int(parameters.size());
-        CHECK_CUBLAS(cublasAxpyEx(Backend::get_cublas_handle(), total_size,
+        CHECK_CUBLAS(cublasAxpyEx(device::get_cublas_handle(), total_size,
                                   &lambda,         CUDA_R_32F,
                                   parameters.get_data(), CUDA_R_32F, 1,
                                   gradient.get_data(),   CUDA_R_32F, 1,

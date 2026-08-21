@@ -55,8 +55,15 @@ void download_files_if_missing(const filesystem::path& directory,
                                const string_view base_url,
                                const vector<string_view>& filenames)
 {
+    // Not `string base(string(base_url))`: that parses as a function declaration
+    // (most vexing parse) and g++ rejects the later use as a value.
+    const string base(base_url);
     for (const string_view filename : filenames)
-        download_if_missing(directory / filename, string(base_url) + string(filename));
+    {
+        string url = base;
+        url += string(filename);
+        download_if_missing(directory / filename, url);
+    }
 }
 
 string read_text_file(const filesystem::path& path)
@@ -86,7 +93,7 @@ namespace
 template <typename Kind>
 vector<filesystem::path> list_entries(const filesystem::path& directory,
                                       Kind is_wanted_kind,
-                                      bool (*predicate)(const filesystem::path&))
+                                      std::function<bool(const filesystem::path&)> predicate)
 {
     vector<filesystem::path> paths;
 
@@ -101,7 +108,7 @@ vector<filesystem::path> list_entries(const filesystem::path& directory,
 }
 
 vector<filesystem::path> list_files(const filesystem::path& directory,
-                                    bool (*predicate)(const filesystem::path&))
+                                    std::function<bool(const filesystem::path&)> predicate)
 {
     return list_entries(directory,
                         [](const filesystem::directory_entry& e) { return e.is_regular_file(); },
@@ -109,7 +116,7 @@ vector<filesystem::path> list_files(const filesystem::path& directory,
 }
 
 vector<filesystem::path> list_directories(const filesystem::path& directory,
-                                          bool (*predicate)(const filesystem::path&))
+                                          std::function<bool(const filesystem::path&)> predicate)
 {
     return list_entries(directory,
                         [](const filesystem::directory_entry& e) { return e.is_directory(); },
@@ -390,31 +397,35 @@ void read_int32_batch(const FileReader& reader,
     float* const output_data = output.data();
 
     string omp_error;
+    const int workers = static_cast<int>(
+        max<Index>(1, min<Index>(omp_get_max_threads(), ssize(sample_indices))));
 
-    #pragma omp parallel for
-    for (Index i = 0; i < ssize(sample_indices); ++i)
+    #pragma omp parallel num_threads(workers)
     {
-        try
+        vector<int32_t> buffer(static_cast<size_t>(values_number));
+
+        #pragma omp for
+        for (Index i = 0; i < ssize(sample_indices); ++i)
         {
-            const Index sample_index = sample_indices[size_t(i)];
-            throw_if(sample_index < 0 || sample_index >= samples_number,
-                     "{} sample index is out of range.", context);
-
-            thread_local vector<int32_t> buffer;
-            buffer.resize(size_t(values_number));
-
-            reader.read_at(span(buffer),
-                           (uint64_t(sample_index) * record_values
-                            + uint64_t(source_offset)) * sizeof(int32_t));
-
-            for (Index j = 0; j < values_number; ++j)
-                output_data[i * output_stride + output_offset + j] = float(buffer[size_t(j)]);
-        }
-        catch (const exception& exception)
-        {
-            #pragma omp critical
+            try
             {
-                if (omp_error.empty()) omp_error = exception.what();
+                const Index sample_index = sample_indices[size_t(i)];
+                throw_if(sample_index < 0 || sample_index >= samples_number,
+                         "{} sample index is out of range.", context);
+
+                reader.read_at(span(buffer),
+                               (uint64_t(sample_index) * record_values
+                                + uint64_t(source_offset)) * sizeof(int32_t));
+
+                for (Index j = 0; j < values_number; ++j)
+                    output_data[i * output_stride + output_offset + j] = float(buffer[size_t(j)]);
+            }
+            catch (const exception& exception)
+            {
+                #pragma omp critical
+                {
+                    if (omp_error.empty()) omp_error = exception.what();
+                }
             }
         }
     }

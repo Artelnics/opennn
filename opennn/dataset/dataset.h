@@ -22,13 +22,12 @@ enum class SampleRole{Training, Validation, Testing, None};
 
 inline const EnumMap<SampleRole>& sample_role_map()
 {
-    static const vector<pair<SampleRole, string>> entries = {
+    static const EnumMap<SampleRole> map{
         {SampleRole::Training,   "Training"},
         {SampleRole::Validation, "Validation"},
         {SampleRole::Testing,    "Testing"},
         {SampleRole::None,       "None"}
     };
-    static const EnumMap<SampleRole> map{entries};
     return map;
 }
 
@@ -324,6 +323,7 @@ protected:
     void check_separators(string_view) const;
     void samples_from_JSON(const Json*);
     virtual void resize_data_from_JSON(Index) {}
+    virtual void on_used_samples_changed() {}
 
     StorageMode storage_mode = StorageMode::Matrix;
 

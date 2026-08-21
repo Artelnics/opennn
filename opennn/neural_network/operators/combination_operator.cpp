@@ -63,14 +63,14 @@ void CombinationOperator::link_gradients(span<const TensorView> views)
 
 void CombinationOperator::set_parameters_random()
 {
-    if (weights.empty() || tied_transposed) return;
+    if (!owns_initializable_weights()) return;
     set_random_uniform(weights.as_vector());
     if (!bias.empty()) bias.setZero();
 }
 
 void CombinationOperator::set_parameters_glorot()
 {
-    if (weights.empty() || tied_transposed) return;
+    if (!owns_initializable_weights()) return;
     const float limit = glorot_limit(input_features, output_features);
     set_random_uniform(weights.as_vector(), -limit, limit);
     if (!bias.empty()) bias.setZero();
@@ -79,7 +79,7 @@ void CombinationOperator::set_parameters_glorot()
 void CombinationOperator::set_parameters_pytorch()
 {
 
-    if (weights.empty() || tied_transposed) return;
+    if (!owns_initializable_weights()) return;
     const float limit = 1.0f / sqrt(float(input_features > 0 ? input_features : 1));
     set_random_uniform(weights.as_vector(), -limit, limit);
     if (!bias.empty()) set_random_uniform(bias.as_vector(), -limit, limit);
@@ -91,17 +91,13 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
     TensorView& output = get_output(forward_propagation, layer);
 
     if (tied_transposed)
-    {
-        linear_forward_transposed(get_input(forward_propagation, layer), weights, output, weight_scale);
-        return;
-    }
+        return linear_forward_transposed(get_input(forward_propagation, layer), weights, output, weight_scale);
 
     if (transposed_inference_active)
     {
         const TensorView transposed(weights.get_data(), {output_features, input_features},
                                     weights.get_type(), weights.get_device());
-        linear_forward_transposed(get_input(forward_propagation, layer), transposed, output, weight_scale);
-        return;
+        return linear_forward_transposed(get_input(forward_propagation, layer), transposed, output, weight_scale);
     }
 
     if (fused_activation == ActivationFunction::GELUTanh
@@ -109,27 +105,28 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
         && output.is_cuda())
     {
         TensorView& activated = forward_propagation.slots[layer][output_slots[1]];
-        linear_forward(get_input(forward_propagation, layer), weights, bias,
-                       activated, CUBLASLT_EPILOGUE_GELU_AUX_BIAS, &output, weight_scale);
-        return;
+        return linear_forward(get_input(forward_propagation, layer), weights, bias,
+                              activated, CUBLASLT_EPILOGUE_GELU_AUX_BIAS, &output, weight_scale);
     }
 
     const bool relu = (fused_activation == ActivationFunction::ReLU);
+    uint8_t* const relu_mask_fused = emit_relu_mask
+        ? &forward_propagation.drelu_fused_by_layer[layer]
+        : nullptr;
+    if (relu_mask_fused) *relu_mask_fused = 0;
 
-    if (relu && emit_relu_mask && is_training && output.is_cuda()
+    if (relu && emit_relu_mask && !relu_mask_fusion_disabled
+        && is_training && output.is_cuda()
         && (output.is_fp32() || output.is_bf16()))
     {
-        const Index rows = output.size() / output_features;
         try
         {
-            relu_mask.ensure<uint8_t>(rows * (output_features / 8));
-            if (relu_mask_view.get_data() != relu_mask.data() || relu_mask_view.get_shape().empty()
-                || relu_mask_view.get_shape()[0] != rows)
-                relu_mask_view = TensorView(relu_mask.data(), Shape{rows, output_features / 8},
-                                            Type::INT8, Device::CUDA);
+            TensorView& relu_mask = forward_propagation.slots[layer][relu_mask_slot];
+            throw_if(relu_mask.empty(),
+                     "CombinationOperator: fused ReLU mask slot was not planned.");
             linear_forward(get_input(forward_propagation, layer), weights, bias, output,
-                           CUBLASLT_EPILOGUE_RELU_AUX_BIAS, &relu_mask_view, weight_scale);
-            relu_mask_fused_active = true;
+                           CUBLASLT_EPILOGUE_RELU_AUX_BIAS, &relu_mask, weight_scale);
+            *relu_mask_fused = 1;
             return;
         }
         catch (const runtime_error& error)
@@ -138,8 +135,7 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
             call_once(reported, [&]{
                 cerr << "linear_forward: ReLU-mask epilogue unavailable ("
                      << error.what() << "); ReLU backward runs unfused.\n"; });
-            emit_relu_mask = false;
-            relu_mask_fused_active = false;
+            relu_mask_fusion_disabled = true;
         }
     }
 
@@ -163,14 +159,18 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
                                       empty_input_delta);
 
     bool recover_unfused = false;
-    if (drelu_source && drelu_source->relu_mask_fused_active
+    const bool drelu_fused = drelu_source && drelu_source_layer >= 0
+        && size_t(drelu_source_layer) < forward_propagation.drelu_fused_by_layer.size()
+        && forward_propagation.drelu_fused_by_layer[size_t(drelu_source_layer)] != 0;
+    if (drelu_fused
         && input_delta.get_data() && !input_delta.empty())
     {
         try
         {
-            linear_backward(output_delta, input, weights, weight_gradient, bias_gradient,
-                            input_delta, accumulate_input_delta, &drelu_source->relu_mask_view);
-            return;
+            const TensorView& relu_mask =
+                forward_propagation.slots[size_t(drelu_source_layer)][drelu_source->relu_mask_slot];
+            return linear_backward(output_delta, input, weights, weight_gradient, bias_gradient,
+                                   input_delta, accumulate_input_delta, {.drelu_mask = &relu_mask});
         }
         catch (const runtime_error& error)
         {
@@ -178,8 +178,8 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
             call_once(reported, [&]{
                 cerr << "linear_backward: DReLU epilogue unavailable ("
                      << error.what() << "); ReLU backward runs unfused.\n"; });
-            drelu_source->relu_mask_fused_active = false;
-            drelu_source->emit_relu_mask = false;
+            drelu_source->relu_mask_fusion_disabled = true;
+            forward_propagation.drelu_fused_by_layer[size_t(drelu_source_layer)] = 0;
             recover_unfused = true;
         }
     }
@@ -192,8 +192,16 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
         ? back_propagation.input_delta_addend(layer, 0)
         : no_addend;
 
+    bool fused_input_relu = false;
     linear_backward(output_delta, input, weights, weight_gradient, bias_gradient, input_delta,
-                    accumulate_input_delta, nullptr, addend.empty() ? nullptr : &addend);
+                    accumulate_input_delta,
+                    {.addend = addend.empty() ? nullptr : &addend,
+                     .fused_input_relu = fuse_input_relu ? &fused_input_relu : nullptr});
+
+    if (fuse_input_relu && input_relu_source_layer >= 0
+        && size_t(input_relu_source_layer) < forward_propagation.drelu_fused_by_layer.size())
+        forward_propagation.drelu_fused_by_layer[size_t(input_relu_source_layer)] =
+            fused_input_relu ? 1 : 0;
 
     if (recover_unfused)
         activation_backward(input, input_delta, ActivationFunction::ReLU);
