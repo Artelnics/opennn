@@ -131,12 +131,13 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
 
 ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
                                              const Shape& complexity_dimensions,
-                                             const Shape& output_shape)
+                                             const Shape& output_shape,
+                                             const string& hidden_activation)
     : NeuralNetwork(NetworkTask::Classification)
 {
     add_layer(make_unique<Scaling>(input_shape));
 
-    add_dense_stack(*this, complexity_dimensions, "Tanh");
+    add_dense_stack(*this, complexity_dimensions, hidden_activation);
 
     add_layer(make_unique<Dense>(get_output_shape(),
                                    output_shape,

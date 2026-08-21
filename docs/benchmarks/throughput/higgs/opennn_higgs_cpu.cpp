@@ -19,8 +19,8 @@
 #include "opennn/core/random_utilities.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/neural_network/standard_networks.h"
 #include "opennn/testing_analysis/testing_analysis.h"
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/training_strategy/training_strategy.h"
@@ -45,24 +45,6 @@ vector<Index> parse_batches(const string& text)
     return batches.empty() ? vector<Index>{1024} : batches;
 }
 
-unique_ptr<NeuralNetwork> make_network(Index inputs, Index hidden, Index hidden_layers,
-                                       const string& activation)
-{
-    auto network = make_unique<NeuralNetwork>();
-    Shape current{inputs};
-
-    for (Index i = 0; i < hidden_layers; ++i)
-    {
-        network->add_layer(make_unique<opennn::Dense>(current, Shape{hidden}, activation));
-        current = network->get_output_shape();
-    }
-
-    network->add_layer(make_unique<opennn::Dense>(current, Shape{1}, "Sigmoid"));
-    network->compile();
-    network->set_parameters_glorot();
-    return network;
-}
-
 int train_mode(int argc, char* argv[])
 {
     const string train_path = argv[2];
@@ -78,6 +60,7 @@ int train_mode(int argc, char* argv[])
 
     TabularDataset dataset(train_path, ",", false, false);
     dataset.set_sample_roles("Training");
+    dataset.set_variable_scalers("None");   // prepare_higgs.py already normalized
 
     TabularDataset test_dataset(test_path, ",", false, false);
     test_dataset.set_sample_roles("Testing");
@@ -91,10 +74,12 @@ int train_mode(int argc, char* argv[])
     {
         set_seed(42);
 
-        auto network = make_network(dataset.get_input_shape()[0],
-                                    hidden, hidden_layers, activation);
+        ClassificationNetwork network(dataset.get_input_shape(),
+                                      Shape(size_t(hidden_layers), hidden),
+                                      Shape{1},
+                                      activation);
 
-        TrainingStrategy training_strategy(network.get(), &dataset);
+        TrainingStrategy training_strategy(&network, &dataset);
         training_strategy.set_loss("CrossEntropy");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
 
@@ -119,7 +104,7 @@ int train_mode(int argc, char* argv[])
         // observable from user code.
         const double epoch_s = chrono::duration<double>(t1 - t0).count() / double(epochs);
 
-        TestingAnalysis analysis(network.get(), &test_dataset);
+        TestingAnalysis analysis(&network, &test_dataset);
         const float accuracy = analysis.calculate_binary_classification_tests()[0];
         const float auc = analysis.perform_roc_analysis().area_under_curve;
 
@@ -154,14 +139,21 @@ int infer_mode(int argc, char* argv[])
     const Index inputs_number = dataset.get_input_shape()[0];
     const MatrixR inputs = data.leftCols(inputs_number);
 
-    auto network = make_network(inputs_number, hidden, hidden_layers, activation);
+    ClassificationNetwork network(Shape{inputs_number},
+                                  Shape(size_t(hidden_layers), hidden),
+                                  Shape{1},
+                                  activation);
+
+    // Nothing trains here, so nothing computes scaling statistics; the CSV is
+    // already normalized, and None makes the scaling layer a passthrough.
+    dynamic_cast<Scaling&>(*network.get_layer(0)).set_scalers("None");
 
     cout << "engine=opennn\nmode=infer\ndevice=cpu\nreps=" << reps << "\n";
 
     for (const Index batch : batches)
     {
         const Index processed = (samples / batch) * batch;
-        ForwardPropagation forward_propagation(batch, network.get());
+        ForwardPropagation forward_propagation(batch, &network);
 
         double sink = 0.0;              // reading one output keeps LTO honest
 
@@ -171,7 +163,7 @@ int infer_mode(int argc, char* argv[])
             {
                 TensorView view(const_cast<float*>(inputs.data()) + i * inputs_number,
                                 Shape{batch, inputs_number}, Type::FP32);
-                network->forward_propagate({view}, forward_propagation, false);
+                network.forward_propagate({view}, forward_propagation, false);
                 sink += forward_propagation.get_outputs().as_matrix()(0, 0);
             }
         };

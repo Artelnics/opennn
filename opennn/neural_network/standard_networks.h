@@ -34,7 +34,8 @@ public:
 
     ClassificationNetwork(const Shape&,
                           const Shape&,
-                          const Shape&);
+                          const Shape&,
+                          const string& hidden_activation = "Tanh");
 };
 
 class ForecastingNetwork : public NeuralNetwork
