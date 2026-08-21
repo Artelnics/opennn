@@ -1,0 +1,2927 @@
+{
+  "benchmark": "gpu-higgs-dense-inference-sweep",
+  "label": "headtohead-chunked",
+  "run_id": "20260821T101330Z",
+  "protocol": {
+    "batches": [
+      256,
+      1024,
+      4096,
+      8192,
+      16384,
+      65536
+    ],
+    "arms": [
+      {
+        "engine": "opennn",
+        "label": "opennn",
+        "env": {}
+      },
+      {
+        "engine": "pytorch",
+        "label": "pytorch",
+        "env": {}
+      },
+      {
+        "engine": "tensorflow",
+        "label": "tensorflow",
+        "env": {}
+      }
+    ],
+    "rounds_kept": 6,
+    "soak_rounds": 1,
+    "passes_per_batch": 5,
+    "rotation": "arm order and batch order both rotate by round index"
+  },
+  "git": {
+    "commit": "3524cf5b8cf1849a5d7cdc4631f6a2b67df0a999",
+    "branch": "dev",
+    "dirty": true,
+    "status_short": [
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-baseline-3524cf5b8-20260821T085448Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-confirm-20260821T094905Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-headtohead-best-20260821T093203Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-lever-ab-20260821T092745Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-pt-config-bf16-20260821T090136Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-pt-config-fp32-20260821T091146Z.json",
+      " M docs/benchmarks/throughput/higgs-gpu/README.md",
+      " M docs/benchmarks/throughput/higgs-gpu/higgs-gpu-inference-opennn-vs-pytorch-vs-tensorflow.md",
+      " M docs/benchmarks/throughput/higgs-gpu/opennn_higgs_infer.cpp",
+      " M docs/benchmarks/throughput/higgs-gpu/pytorch_higgs_infer.py",
+      " M docs/benchmarks/throughput/higgs-gpu/run_higgs_infer.py",
+      " M docs/benchmarks/throughput/higgs-gpu/tensorflow_higgs_infer.py",
+      " M opennn/core/cuda/kernel_activation.cu",
+      " M opennn/core/cuda/kernel_common.cuh",
+      " M opennn/core/cuda/kernel_tensor.cu",
+      " M opennn/core/cuda/kernel_tensor.cuh",
+      " M opennn/core/tensor_operations.cpp",
+      " M opennn/core/tensor_operations.h",
+      " M opennn/neural_network/layers/dense_layer.cpp",
+      " M opennn/neural_network/layers/kernel_recurrent.cu",
+      " M opennn/neural_network/operators/combination_operator.cpp",
+      "?? docs/benchmarks/throughput/higgs-gpu/gemm_chunk_probe.cu",
+      "?? docs/benchmarks/throughput/higgs-gpu/l1_align_probe.cu",
+      "?? docs/benchmarks/throughput/higgs-gpu/run_higgs_infer_sweep.py",
+      "?? tests/neural_network/layers/single_output_activation_fusion_test.cpp"
+    ]
+  },
+  "rounds": [
+    {
+      "index": 0,
+      "soak": true,
+      "arm_order": [
+        "opennn",
+        "pytorch",
+        "tensorflow"
+      ],
+      "batch_order": [
+        256,
+        1024,
+        4096,
+        8192,
+        16384,
+        65536
+      ],
+      "results": {
+        "opennn/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "pass_times": [
+                0.0326972,
+                0.0326945,
+                0.0328118,
+                0.0327643,
+                0.0328959
+              ],
+              "samples_per_sec": 15259532.0,
+              "median_pass_s": 0.0327643,
+              "ms_per_batch": 0.0167764
+            },
+            "1024": {
+              "pass_times": [
+                0.0186065,
+                0.0184115,
+                0.018414,
+                0.0184208,
+                0.0184194
+              ],
+              "samples_per_sec": 27129628.0,
+              "median_pass_s": 0.0184194,
+              "ms_per_batch": 0.0377447
+            },
+            "4096": {
+              "pass_times": [
+                0.0146514,
+                0.0147155,
+                0.0145963,
+                0.0144049,
+                0.0144292
+              ],
+              "samples_per_sec": 34235570.0,
+              "median_pass_s": 0.0145963,
+              "ms_per_batch": 0.119642
+            },
+            "8192": {
+              "pass_times": [
+                0.0140552,
+                0.0138086,
+                0.0138189,
+                0.0140073,
+                0.0140124
+              ],
+              "samples_per_sec": 35675168.0,
+              "median_pass_s": 0.0140073,
+              "ms_per_batch": 0.229628
+            },
+            "16384": {
+              "pass_times": [
+                0.0138158,
+                0.0135584,
+                0.0136859,
+                0.013819,
+                0.0138175
+              ],
+              "samples_per_sec": 35576576.0,
+              "median_pass_s": 0.0138158,
+              "ms_per_batch": 0.460528
+            },
+            "65536": {
+              "pass_times": [
+                0.0132944,
+                0.0130533,
+                0.0131682,
+                0.0132999,
+                0.0132985
+              ],
+              "samples_per_sec": 34507083.0,
+              "median_pass_s": 0.0132944,
+              "ms_per_batch": 1.8992
+            }
+          },
+          "tail": ""
+        },
+        "pytorch/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "samples_per_sec": 12492099.0,
+              "median_pass_s": 0.0400227379,
+              "ms_per_batch": 0.020493
+            },
+            "1024": {
+              "samples_per_sec": 19155422.0,
+              "median_pass_s": 0.0260872351,
+              "ms_per_batch": 0.053457
+            },
+            "4096": {
+              "samples_per_sec": 33735542.0,
+              "median_pass_s": 0.014812627,
+              "ms_per_batch": 0.121415
+            },
+            "8192": {
+              "samples_per_sec": 36918594.0,
+              "median_pass_s": 0.0135355101,
+              "ms_per_batch": 0.221894
+            },
+            "16384": {
+              "samples_per_sec": 37507434.0,
+              "median_pass_s": 0.013104602,
+              "ms_per_batch": 0.43682
+            },
+            "65536": {
+              "samples_per_sec": 36696247.0,
+              "median_pass_s": 0.012501333,
+              "ms_per_batch": 1.785905
+            }
+          },
+          "tail": ""
+        },
+        "tensorflow/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 12335668.0,
+              "median_pass_s": 0.040530273,
+              "ms_per_batch": 0.020753
+            },
+            "1024": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 23339286.0,
+              "median_pass_s": 0.0214107661,
+              "ms_per_batch": 0.043875
+            },
+            "4096": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 30916574.0,
+              "median_pass_s": 0.01616324,
+              "ms_per_batch": 0.132486
+            },
+            "8192": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 34478978.0,
+              "median_pass_s": 0.014493237,
+              "ms_per_batch": 0.237594
+            },
+            "16384": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 31165962.0,
+              "median_pass_s": 0.015771052,
+              "ms_per_batch": 0.525702
+            },
+            "65536": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 25609179.0,
+              "median_pass_s": 0.017913577,
+              "ms_per_batch": 2.559082
+            }
+          },
+          "tail": ""
+        },
+        "opennn/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "pass_times": [
+                0.0440227,
+                0.0440219,
+                0.0441865,
+                0.044016,
+                0.0440208
+              ],
+              "samples_per_sec": 11357261.0,
+              "median_pass_s": 0.0440219,
+              "ms_per_batch": 0.0225406
+            },
+            "1024": {
+              "pass_times": [
+                0.0310615,
+                0.0310648,
+                0.0311116,
+                0.0310558,
+                0.0310819
+              ],
+              "samples_per_sec": 16086110.0,
+              "median_pass_s": 0.0310648,
+              "ms_per_batch": 0.0636574
+            },
+            "4096": {
+              "pass_times": [
+                0.0267512,
+                0.0267675,
+                0.0267804,
+                0.0267785,
+                0.0267845
+              ],
+              "samples_per_sec": 18660953.0,
+              "median_pass_s": 0.0267785,
+              "ms_per_batch": 0.219496
+            },
+            "8192": {
+              "pass_times": [
+                0.0270105,
+                0.0270121,
+                0.0272443,
+                0.0276988,
+                0.0270126
+              ],
+              "samples_per_sec": 18499206.0,
+              "median_pass_s": 0.0270126,
+              "ms_per_batch": 0.44283
+            },
+            "16384": {
+              "pass_times": [
+                0.0268515,
+                0.0268314,
+                0.0268268,
+                0.0268463,
+                0.0268424
+              ],
+              "samples_per_sec": 18311311.0,
+              "median_pass_s": 0.0268424,
+              "ms_per_batch": 0.894747
+            },
+            "65536": {
+              "pass_times": [
+                0.0254581,
+                0.025465,
+                0.0254602,
+                0.0254604,
+                0.0255141
+              ],
+              "samples_per_sec": 18018238.0,
+              "median_pass_s": 0.0254604,
+              "ms_per_batch": 3.6372
+            }
+          },
+          "tail": ""
+        },
+        "pytorch/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "samples_per_sec": 9550309.0,
+              "median_pass_s": 0.0523509739,
+              "ms_per_batch": 0.026805
+            },
+            "1024": {
+              "samples_per_sec": 13846513.0,
+              "median_pass_s": 0.036089375,
+              "ms_per_batch": 0.073954
+            },
+            "4096": {
+              "samples_per_sec": 16392019.0,
+              "median_pass_s": 0.03048508,
+              "ms_per_batch": 0.249878
+            },
+            "8192": {
+              "samples_per_sec": 16559027.0,
+              "median_pass_s": 0.0301776179,
+              "ms_per_batch": 0.494715
+            },
+            "16384": {
+              "samples_per_sec": 15289296.0,
+              "median_pass_s": 0.032147981,
+              "ms_per_batch": 1.071599
+            },
+            "65536": {
+              "samples_per_sec": 15230814.0,
+              "median_pass_s": 0.030119993,
+              "ms_per_batch": 4.302856
+            }
+          },
+          "tail": ""
+        },
+        "tensorflow/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 9962504.0,
+              "median_pass_s": 0.050184974,
+              "ms_per_batch": 0.025696
+            },
+            "1024": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 13438754.0,
+              "median_pass_s": 0.0371844,
+              "ms_per_batch": 0.076198
+            },
+            "4096": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16789942.0,
+              "median_pass_s": 0.0297625801,
+              "ms_per_batch": 0.243956
+            },
+            "8192": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 17316835.0,
+              "median_pass_s": 0.0288570049,
+              "ms_per_batch": 0.473066
+            },
+            "16384": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16788952.0,
+              "median_pass_s": 0.029276395,
+              "ms_per_batch": 0.97588
+            },
+            "65536": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 17263067.0,
+              "median_pass_s": 0.026574188,
+              "ms_per_batch": 3.796313
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 1,
+      "soak": false,
+      "arm_order": [
+        "pytorch",
+        "tensorflow",
+        "opennn"
+      ],
+      "batch_order": [
+        1024,
+        4096,
+        8192,
+        16384,
+        65536,
+        256
+      ],
+      "results": {
+        "pytorch/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "1024": {
+              "samples_per_sec": 18865650.0,
+              "median_pass_s": 0.026487929,
+              "ms_per_batch": 0.054279
+            },
+            "4096": {
+              "samples_per_sec": 31715354.0,
+              "median_pass_s": 0.015756154,
+              "ms_per_batch": 0.129149
+            },
+            "8192": {
+              "samples_per_sec": 35680120.0,
+              "median_pass_s": 0.014005334,
+              "ms_per_batch": 0.229596
+            },
+            "16384": {
+              "samples_per_sec": 36166898.0,
+              "median_pass_s": 0.0135903279,
+              "ms_per_batch": 0.453011
+            },
+            "65536": {
+              "samples_per_sec": 34259420.0,
+              "median_pass_s": 0.013390536,
+              "ms_per_batch": 1.912934
+            },
+            "256": {
+              "samples_per_sec": 12315908.0,
+              "median_pass_s": 0.0405953031,
+              "ms_per_batch": 0.020786
+            }
+          },
+          "tail": ""
+        },
+        "tensorflow/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "1024": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 22550339.0,
+              "median_pass_s": 0.0221598441,
+              "ms_per_batch": 0.04541
+            },
+            "4096": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 29254897.0,
+              "median_pass_s": 0.017081311,
+              "ms_per_batch": 0.140011
+            },
+            "8192": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 34137101.0,
+              "median_pass_s": 0.014638384,
+              "ms_per_batch": 0.239974
+            },
+            "16384": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 32319985.0,
+              "median_pass_s": 0.015207928,
+              "ms_per_batch": 0.506931
+            },
+            "65536": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 25488006.0,
+              "median_pass_s": 0.0179987401,
+              "ms_per_batch": 2.571249
+            },
+            "256": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 12244405.0,
+              "median_pass_s": 0.040832364,
+              "ms_per_batch": 0.020908
+            }
+          },
+          "tail": ""
+        },
+        "opennn/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "1024": {
+              "pass_times": [
+                0.0187677,
+                0.0181016,
+                0.0180091,
+                0.018001,
+                0.0180018
+              ],
+              "samples_per_sec": 27747774.0,
+              "median_pass_s": 0.0180091,
+              "ms_per_batch": 0.0369039
+            },
+            "4096": {
+              "pass_times": [
+                0.0153987,
+                0.0142546,
+                0.0142575,
+                0.0142493,
+                0.0142503
+              ],
+              "samples_per_sec": 35056244.0,
+              "median_pass_s": 0.0142546,
+              "ms_per_batch": 0.116841
+            },
+            "8192": {
+              "pass_times": [
+                0.0136331,
+                0.0136325,
+                0.014239,
+                0.0144301,
+                0.0136385
+              ],
+              "samples_per_sec": 36639817.0,
+              "median_pass_s": 0.0136385,
+              "ms_per_batch": 0.223582
+            },
+            "16384": {
+              "pass_times": [
+                0.014135,
+                0.013925,
+                0.0133646,
+                0.0133767,
+                0.0133936
+              ],
+              "samples_per_sec": 36698020.0,
+              "median_pass_s": 0.0133936,
+              "ms_per_batch": 0.446455
+            },
+            "65536": {
+              "pass_times": [
+                0.0134732,
+                0.0134253,
+                0.0128775,
+                0.0128797,
+                0.0128831
+              ],
+              "samples_per_sec": 35608859.0,
+              "median_pass_s": 0.0128831,
+              "ms_per_batch": 1.84044
+            },
+            "256": {
+              "pass_times": [
+                0.0321932,
+                0.0328842,
+                0.0320059,
+                0.031994,
+                0.0329362
+              ],
+              "samples_per_sec": 15530251.0,
+              "median_pass_s": 0.0321932,
+              "ms_per_batch": 0.016484
+            }
+          },
+          "tail": ""
+        },
+        "pytorch/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "1024": {
+              "samples_per_sec": 13855108.0,
+              "median_pass_s": 0.036066986,
+              "ms_per_batch": 0.073908
+            },
+            "4096": {
+              "samples_per_sec": 16478677.0,
+              "median_pass_s": 0.0303247641,
+              "ms_per_batch": 0.248564
+            },
+            "8192": {
+              "samples_per_sec": 16538135.0,
+              "median_pass_s": 0.030215741,
+              "ms_per_batch": 0.49534
+            },
+            "16384": {
+              "samples_per_sec": 15189885.0,
+              "median_pass_s": 0.0323583761,
+              "ms_per_batch": 1.078613
+            },
+            "65536": {
+              "samples_per_sec": 14705548.0,
+              "median_pass_s": 0.031195846,
+              "ms_per_batch": 4.456549
+            },
+            "256": {
+              "samples_per_sec": 9605075.0,
+              "median_pass_s": 0.052052483,
+              "ms_per_batch": 0.026653
+            }
+          },
+          "tail": ""
+        },
+        "tensorflow/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "1024": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 14533240.0,
+              "median_pass_s": 0.034384075,
+              "ms_per_batch": 0.070459
+            },
+            "4096": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16318801.0,
+              "median_pass_s": 0.030621857,
+              "ms_per_batch": 0.250999
+            },
+            "8192": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16935675.0,
+              "median_pass_s": 0.02950647,
+              "ms_per_batch": 0.483713
+            },
+            "16384": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16658938.0,
+              "median_pass_s": 0.0295048821,
+              "ms_per_batch": 0.983496
+            },
+            "65536": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16327082.0,
+              "median_pass_s": 0.028097611,
+              "ms_per_batch": 4.013944
+            },
+            "256": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 9224008.0,
+              "median_pass_s": 0.0542029011,
+              "ms_per_batch": 0.027754
+            }
+          },
+          "tail": ""
+        },
+        "opennn/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "1024": {
+              "pass_times": [
+                0.0324174,
+                0.0324719,
+                0.0324518,
+                0.0325699,
+                0.0324885
+              ],
+              "samples_per_sec": 15389051.0,
+              "median_pass_s": 0.0324719,
+              "ms_per_batch": 0.0665408
+            },
+            "4096": {
+              "pass_times": [
+                0.0276182,
+                0.0281946,
+                0.028114,
+                0.0276254,
+                0.0282481
+              ],
+              "samples_per_sec": 17774516.0,
+              "median_pass_s": 0.028114,
+              "ms_per_batch": 0.230442
+            },
+            "8192": {
+              "pass_times": [
+                0.0282808,
+                0.0278248,
+                0.0284199,
+                0.0284171,
+                0.0277321
+              ],
+              "samples_per_sec": 17669658.0,
+              "median_pass_s": 0.0282808,
+              "ms_per_batch": 0.46362
+            },
+            "16384": {
+              "pass_times": [
+                0.0276405,
+                0.02832,
+                0.0281316,
+                0.0277802,
+                0.028398
+              ],
+              "samples_per_sec": 17472144.0,
+              "median_pass_s": 0.0281316,
+              "ms_per_batch": 0.937721
+            },
+            "65536": {
+              "pass_times": [
+                0.0261744,
+                0.026937,
+                0.0268,
+                0.02628,
+                0.0269145
+              ],
+              "samples_per_sec": 17117608.0,
+              "median_pass_s": 0.0268,
+              "ms_per_batch": 3.82857
+            },
+            "256": {
+              "pass_times": [
+                0.0455607,
+                0.0458143,
+                0.0457571,
+                0.0458541,
+                0.0453541
+              ],
+              "samples_per_sec": 10926576.0,
+              "median_pass_s": 0.0457571,
+              "ms_per_batch": 0.0234291
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 2,
+      "soak": false,
+      "arm_order": [
+        "tensorflow",
+        "opennn",
+        "pytorch"
+      ],
+      "batch_order": [
+        4096,
+        8192,
+        16384,
+        65536,
+        256,
+        1024
+      ],
+      "results": {
+        "tensorflow/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "4096": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 29773357.0,
+              "median_pass_s": 0.0167838649,
+              "ms_per_batch": 0.137573
+            },
+            "8192": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 32441780.0,
+              "median_pass_s": 0.015403347,
+              "ms_per_batch": 0.252514
+            },
+            "16384": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 30620306.0,
+              "median_pass_s": 0.016052093,
+              "ms_per_batch": 0.53507
+            },
+            "65536": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 24438088.0,
+              "median_pass_s": 0.0187720091,
+              "ms_per_batch": 2.681716
+            },
+            "256": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 11813856.0,
+              "median_pass_s": 0.042320475,
+              "ms_per_batch": 0.021669
+            },
+            "1024": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 22244307.0,
+              "median_pass_s": 0.022464714,
+              "ms_per_batch": 0.046034
+            }
+          },
+          "tail": ""
+        },
+        "opennn/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "4096": {
+              "pass_times": [
+                0.0152123,
+                0.0152429,
+                0.0153651,
+                0.0153501,
+                0.0151727
+              ],
+              "samples_per_sec": 32783247.0,
+              "median_pass_s": 0.0152429,
+              "ms_per_batch": 0.124942
+            },
+            "8192": {
+              "pass_times": [
+                0.0145359,
+                0.014327,
+                0.0146213,
+                0.0143071,
+                0.0143413
+              ],
+              "samples_per_sec": 34844224.0,
+              "median_pass_s": 0.0143413,
+              "ms_per_batch": 0.235104
+            },
+            "16384": {
+              "pass_times": [
+                0.0143021,
+                0.0141453,
+                0.0140091,
+                0.0143291,
+                0.013957
+              ],
+              "samples_per_sec": 34747971.0,
+              "median_pass_s": 0.0141453,
+              "ms_per_batch": 0.47151
+            },
+            "65536": {
+              "pass_times": [
+                0.0136709,
+                0.0138038,
+                0.0136953,
+                0.0138214,
+                0.0134871
+              ],
+              "samples_per_sec": 33496980.0,
+              "median_pass_s": 0.0136953,
+              "ms_per_batch": 1.95647
+            },
+            "256": {
+              "pass_times": [
+                0.0336388,
+                0.0335628,
+                0.0338238,
+                0.033743,
+                0.0336378
+              ],
+              "samples_per_sec": 14862826.0,
+              "median_pass_s": 0.0336388,
+              "ms_per_batch": 0.0172242
+            },
+            "1024": {
+              "pass_times": [
+                0.0190856,
+                0.0192649,
+                0.0188757,
+                0.0188683,
+                0.0189847
+              ],
+              "samples_per_sec": 26321835.0,
+              "median_pass_s": 0.0189847,
+              "ms_per_batch": 0.0389031
+            }
+          },
+          "tail": ""
+        },
+        "pytorch/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "4096": {
+              "samples_per_sec": 31957409.0,
+              "median_pass_s": 0.0156368121,
+              "ms_per_batch": 0.128171
+            },
+            "8192": {
+              "samples_per_sec": 34299842.0,
+              "median_pass_s": 0.0145689299,
+              "ms_per_batch": 0.238835
+            },
+            "16384": {
+              "samples_per_sec": 34740137.0,
+              "median_pass_s": 0.0141484761,
+              "ms_per_batch": 0.471616
+            },
+            "65536": {
+              "samples_per_sec": 34748143.0,
+              "median_pass_s": 0.0132022019,
+              "ms_per_batch": 1.886029
+            },
+            "256": {
+              "samples_per_sec": 11918924.0,
+              "median_pass_s": 0.041947409,
+              "ms_per_batch": 0.021478
+            },
+            "1024": {
+              "samples_per_sec": 18043794.0,
+              "median_pass_s": 0.027694398,
+              "ms_per_batch": 0.056751
+            }
+          },
+          "tail": ""
+        },
+        "tensorflow/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "4096": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 17163305.0,
+              "median_pass_s": 0.029115138,
+              "ms_per_batch": 0.238649
+            },
+            "8192": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 17823025.0,
+              "median_pass_s": 0.0280374411,
+              "ms_per_batch": 0.45963
+            },
+            "16384": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 17290123.0,
+              "median_pass_s": 0.028427791,
+              "ms_per_batch": 0.947593
+            },
+            "65536": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 17290636.0,
+              "median_pass_s": 0.026531817,
+              "ms_per_batch": 3.79026
+            },
+            "256": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 10307583.0,
+              "median_pass_s": 0.048504874,
+              "ms_per_batch": 0.024836
+            },
+            "1024": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 13799988.0,
+              "median_pass_s": 0.036211046,
+              "ms_per_batch": 0.074203
+            }
+          },
+          "tail": ""
+        },
+        "opennn/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "4096": {
+              "pass_times": [
+                0.0269676,
+                0.0274443,
+                0.0267532,
+                0.0267514,
+                0.0267503
+              ],
+              "samples_per_sec": 18678583.0,
+              "median_pass_s": 0.0267532,
+              "ms_per_batch": 0.219289
+            },
+            "8192": {
+              "pass_times": [
+                0.0269515,
+                0.0269554,
+                0.0269657,
+                0.0269577,
+                0.0269503
+              ],
+              "samples_per_sec": 18538445.0,
+              "median_pass_s": 0.0269554,
+              "ms_per_batch": 0.441892
+            },
+            "16384": {
+              "pass_times": [
+                0.0268443,
+                0.0268454,
+                0.0268614,
+                0.0268417,
+                0.0270395
+              ],
+              "samples_per_sec": 18309249.0,
+              "median_pass_s": 0.0268454,
+              "ms_per_batch": 0.894848
+            },
+            "65536": {
+              "pass_times": [
+                0.0254623,
+                0.0254589,
+                0.0254984,
+                0.0254497,
+                0.0254515
+              ],
+              "samples_per_sec": 18019304.0,
+              "median_pass_s": 0.0254589,
+              "ms_per_batch": 3.63699
+            },
+            "256": {
+              "pass_times": [
+                0.0440276,
+                0.0463645,
+                0.0479996,
+                0.0458981,
+                0.0469052
+              ],
+              "samples_per_sec": 10783419.0,
+              "median_pass_s": 0.0463645,
+              "ms_per_batch": 0.0237402
+            },
+            "1024": {
+              "pass_times": [
+                0.0311376,
+                0.0323263,
+                0.03279,
+                0.0317981,
+                0.0311184
+              ],
+              "samples_per_sec": 15715142.0,
+              "median_pass_s": 0.0317981,
+              "ms_per_batch": 0.0651601
+            }
+          },
+          "tail": ""
+        },
+        "pytorch/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "4096": {
+              "samples_per_sec": 16464650.0,
+              "median_pass_s": 0.0303506,
+              "ms_per_batch": 0.248775
+            },
+            "8192": {
+              "samples_per_sec": 16562585.0,
+              "median_pass_s": 0.030171136,
+              "ms_per_batch": 0.494609
+            },
+            "16384": {
+              "samples_per_sec": 15276192.0,
+              "median_pass_s": 0.032175557,
+              "ms_per_batch": 1.072519
+            },
+            "65536": {
+              "samples_per_sec": 15243038.0,
+              "median_pass_s": 0.0300958379,
+              "ms_per_batch": 4.299405
+            },
+            "256": {
+              "samples_per_sec": 9253531.0,
+              "median_pass_s": 0.0540299671,
+              "ms_per_batch": 0.027665
+            },
+            "1024": {
+              "samples_per_sec": 13497460.0,
+              "median_pass_s": 0.03702267,
+              "ms_per_batch": 0.075866
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 3,
+      "soak": false,
+      "arm_order": [
+        "opennn",
+        "pytorch",
+        "tensorflow"
+      ],
+      "batch_order": [
+        8192,
+        16384,
+        65536,
+        256,
+        1024,
+        4096
+      ],
+      "results": {
+        "opennn/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0136426,
+                0.0136399,
+                0.0138206,
+                0.0136311,
+                0.0136283
+              ],
+              "samples_per_sec": 36635991.0,
+              "median_pass_s": 0.0136399,
+              "ms_per_batch": 0.223605
+            },
+            "16384": {
+              "pass_times": [
+                0.0133973,
+                0.0133984,
+                0.0133982,
+                0.0133974,
+                0.0134026
+              ],
+              "samples_per_sec": 36685571.0,
+              "median_pass_s": 0.0133982,
+              "ms_per_batch": 0.446606
+            },
+            "65536": {
+              "pass_times": [
+                0.0135494,
+                0.0129164,
+                0.0129198,
+                0.0128987,
+                0.0130619
+              ],
+              "samples_per_sec": 35507774.0,
+              "median_pass_s": 0.0129198,
+              "ms_per_batch": 1.84568
+            },
+            "256": {
+              "pass_times": [
+                0.0319876,
+                0.0319888,
+                0.0319917,
+                0.0319871,
+                0.0319876
+              ],
+              "samples_per_sec": 15630037.0,
+              "median_pass_s": 0.0319876,
+              "ms_per_batch": 0.0163787
+            },
+            "1024": {
+              "pass_times": [
+                0.0181709,
+                0.0180018,
+                0.0180033,
+                0.0180038,
+                0.0180021
+              ],
+              "samples_per_sec": 27756736.0,
+              "median_pass_s": 0.0180033,
+              "ms_per_batch": 0.0368919
+            },
+            "4096": {
+              "pass_times": [
+                0.0142498,
+                0.0142515,
+                0.0142491,
+                0.0142446,
+                0.0142486
+              ],
+              "samples_per_sec": 35069726.0,
+              "median_pass_s": 0.0142491,
+              "ms_per_batch": 0.116796
+            }
+          },
+          "tail": ""
+        },
+        "pytorch/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "samples_per_sec": 37034421.0,
+              "median_pass_s": 0.013493177,
+              "ms_per_batch": 0.2212
+            },
+            "16384": {
+              "samples_per_sec": 36957802.0,
+              "median_pass_s": 0.0132994921,
+              "ms_per_batch": 0.443316
+            },
+            "65536": {
+              "samples_per_sec": 36562798.0,
+              "median_pass_s": 0.0125469611,
+              "ms_per_batch": 1.792423
+            },
+            "256": {
+              "samples_per_sec": 12246143.0,
+              "median_pass_s": 0.040826569,
+              "ms_per_batch": 0.020905
+            },
+            "1024": {
+              "samples_per_sec": 19198730.0,
+              "median_pass_s": 0.026028389,
+              "ms_per_batch": 0.053337
+            },
+            "4096": {
+              "samples_per_sec": 33051390.0,
+              "median_pass_s": 0.0151192431,
+              "ms_per_batch": 0.123928
+            }
+          },
+          "tail": ""
+        },
+        "tensorflow/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 34413676.0,
+              "median_pass_s": 0.014520739,
+              "ms_per_batch": 0.238045
+            },
+            "16384": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 31257401.0,
+              "median_pass_s": 0.015724916,
+              "ms_per_batch": 0.524164
+            },
+            "65536": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 25388803.0,
+              "median_pass_s": 0.018069068,
+              "ms_per_batch": 2.581295
+            },
+            "256": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 12203411.0,
+              "median_pass_s": 0.040969529,
+              "ms_per_batch": 0.020978
+            },
+            "1024": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 23219071.0,
+              "median_pass_s": 0.0215216189,
+              "ms_per_batch": 0.044102
+            },
+            "4096": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 30555695.0,
+              "median_pass_s": 0.0163541361,
+              "ms_per_batch": 0.13405
+            }
+          },
+          "tail": ""
+        },
+        "opennn/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0269088,
+                0.0269069,
+                0.0269265,
+                0.0273532,
+                0.0275556
+              ],
+              "samples_per_sec": 18558405.0,
+              "median_pass_s": 0.0269265,
+              "ms_per_batch": 0.441417
+            },
+            "16384": {
+              "pass_times": [
+                0.0268133,
+                0.0268213,
+                0.026845,
+                0.0270778,
+                0.0275923
+              ],
+              "samples_per_sec": 18309539.0,
+              "median_pass_s": 0.026845,
+              "ms_per_batch": 0.894834
+            },
+            "65536": {
+              "pass_times": [
+                0.0254506,
+                0.025477,
+                0.0254498,
+                0.0254554,
+                0.0254808
+              ],
+              "samples_per_sec": 18021811.0,
+              "median_pass_s": 0.0254554,
+              "ms_per_batch": 3.63648
+            },
+            "256": {
+              "pass_times": [
+                0.0440235,
+                0.0440227,
+                0.0440198,
+                0.044022,
+                0.0442261
+              ],
+              "samples_per_sec": 11357051.0,
+              "median_pass_s": 0.0440227,
+              "ms_per_batch": 0.0225411
+            },
+            "1024": {
+              "pass_times": [
+                0.0311961,
+                0.0320866,
+                0.031245,
+                0.0312661,
+                0.0312763
+              ],
+              "samples_per_sec": 15982563.0,
+              "median_pass_s": 0.0312661,
+              "ms_per_batch": 0.0640698
+            },
+            "4096": {
+              "pass_times": [
+                0.0267852,
+                0.0267834,
+                0.0267853,
+                0.0267999,
+                0.0270948
+              ],
+              "samples_per_sec": 18656223.0,
+              "median_pass_s": 0.0267853,
+              "ms_per_batch": 0.219551
+            }
+          },
+          "tail": ""
+        },
+        "pytorch/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "samples_per_sec": 16283767.0,
+              "median_pass_s": 0.0306877401,
+              "ms_per_batch": 0.503078
+            },
+            "16384": {
+              "samples_per_sec": 15280368.0,
+              "median_pass_s": 0.032166764,
+              "ms_per_batch": 1.072225
+            },
+            "65536": {
+              "samples_per_sec": 15212779.0,
+              "median_pass_s": 0.030155701,
+              "ms_per_batch": 4.307957
+            },
+            "256": {
+              "samples_per_sec": 9572955.0,
+              "median_pass_s": 0.052227136,
+              "ms_per_batch": 0.026742
+            },
+            "1024": {
+              "samples_per_sec": 13855845.0,
+              "median_pass_s": 0.036065069,
+              "ms_per_batch": 0.073904
+            },
+            "4096": {
+              "samples_per_sec": 15499445.0,
+              "median_pass_s": 0.0322406391,
+              "ms_per_batch": 0.264268
+            }
+          },
+          "tail": ""
+        },
+        "tensorflow/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 17015467.0,
+              "median_pass_s": 0.0293681029,
+              "ms_per_batch": 0.481444
+            },
+            "16384": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16385871.0,
+              "median_pass_s": 0.0299965739,
+              "ms_per_batch": 0.999886
+            },
+            "65536": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16465168.0,
+              "median_pass_s": 0.027861969,
+              "ms_per_batch": 3.980281
+            },
+            "256": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 9118302.0,
+              "median_pass_s": 0.054831263,
+              "ms_per_batch": 0.028075
+            },
+            "1024": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 13339005.0,
+              "median_pass_s": 0.037462465,
+              "ms_per_batch": 0.076767
+            },
+            "4096": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16241008.0,
+              "median_pass_s": 0.030768533,
+              "ms_per_batch": 0.252201
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 4,
+      "soak": false,
+      "arm_order": [
+        "pytorch",
+        "tensorflow",
+        "opennn"
+      ],
+      "batch_order": [
+        16384,
+        65536,
+        256,
+        1024,
+        4096,
+        8192
+      ],
+      "results": {
+        "pytorch/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "samples_per_sec": 35268785.0,
+              "median_pass_s": 0.013936403,
+              "ms_per_batch": 0.464547
+            },
+            "65536": {
+              "samples_per_sec": 34644853.0,
+              "median_pass_s": 0.013241563,
+              "ms_per_batch": 1.891652
+            },
+            "256": {
+              "samples_per_sec": 11975896.0,
+              "median_pass_s": 0.041747859,
+              "ms_per_batch": 0.021376
+            },
+            "1024": {
+              "samples_per_sec": 18342132.0,
+              "median_pass_s": 0.027243943,
+              "ms_per_batch": 0.055828
+            },
+            "4096": {
+              "samples_per_sec": 33737011.0,
+              "median_pass_s": 0.0148119819,
+              "ms_per_batch": 0.12141
+            },
+            "8192": {
+              "samples_per_sec": 37012458.0,
+              "median_pass_s": 0.0135011839,
+              "ms_per_batch": 0.221331
+            }
+          },
+          "tail": ""
+        },
+        "tensorflow/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 32148509.0,
+              "median_pass_s": 0.0152890451,
+              "ms_per_batch": 0.509635
+            },
+            "65536": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 25427137.0,
+              "median_pass_s": 0.0180418269,
+              "ms_per_batch": 2.577404
+            },
+            "256": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 12232151.0,
+              "median_pass_s": 0.0408732679,
+              "ms_per_batch": 0.020928
+            },
+            "1024": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 23832581.0,
+              "median_pass_s": 0.020967599,
+              "ms_per_batch": 0.042966
+            },
+            "4096": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 30988045.0,
+              "median_pass_s": 0.016125961,
+              "ms_per_batch": 0.13218
+            },
+            "8192": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 34522265.0,
+              "median_pass_s": 0.014475064,
+              "ms_per_batch": 0.237296
+            }
+          },
+          "tail": ""
+        },
+        "opennn/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0133958,
+                0.0133895,
+                0.0133909,
+                0.0133866,
+                0.0133932
+              ],
+              "samples_per_sec": 36705600.0,
+              "median_pass_s": 0.0133909,
+              "ms_per_batch": 0.446362
+            },
+            "65536": {
+              "pass_times": [
+                0.0131083,
+                0.0133958,
+                0.0129821,
+                0.0128843,
+                0.0128806
+              ],
+              "samples_per_sec": 35337277.0,
+              "median_pass_s": 0.0129821,
+              "ms_per_batch": 1.85459
+            },
+            "256": {
+              "pass_times": [
+                0.0319873,
+                0.0319873,
+                0.0326262,
+                0.0319982,
+                0.0319866
+              ],
+              "samples_per_sec": 15630190.0,
+              "median_pass_s": 0.0319873,
+              "ms_per_batch": 0.0163786
+            },
+            "1024": {
+              "pass_times": [
+                0.0180043,
+                0.0180011,
+                0.0180037,
+                0.0180097,
+                0.0180076
+              ],
+              "samples_per_sec": 27755196.0,
+              "median_pass_s": 0.0180043,
+              "ms_per_batch": 0.036894
+            },
+            "4096": {
+              "pass_times": [
+                0.0142431,
+                0.0142412,
+                0.0142461,
+                0.0142415,
+                0.0142492
+              ],
+              "samples_per_sec": 35084484.0,
+              "median_pass_s": 0.0142431,
+              "ms_per_batch": 0.116747
+            },
+            "8192": {
+              "pass_times": [
+                0.0136351,
+                0.0136436,
+                0.0136419,
+                0.0136372,
+                0.0136483
+              ],
+              "samples_per_sec": 36630728.0,
+              "median_pass_s": 0.0136419,
+              "ms_per_batch": 0.223637
+            }
+          },
+          "tail": ""
+        },
+        "pytorch/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "samples_per_sec": 15282827.0,
+              "median_pass_s": 0.032161588,
+              "ms_per_batch": 1.072053
+            },
+            "65536": {
+              "samples_per_sec": 15230753.0,
+              "median_pass_s": 0.030120113,
+              "ms_per_batch": 4.302873
+            },
+            "256": {
+              "samples_per_sec": 9047283.0,
+              "median_pass_s": 0.055261676,
+              "ms_per_batch": 0.028296
+            },
+            "1024": {
+              "samples_per_sec": 13853882.0,
+              "median_pass_s": 0.036070178,
+              "ms_per_batch": 0.073914
+            },
+            "4096": {
+              "samples_per_sec": 15592708.0,
+              "median_pass_s": 0.0320477999,
+              "ms_per_batch": 0.262687
+            },
+            "8192": {
+              "samples_per_sec": 16529343.0,
+              "median_pass_s": 0.030231812,
+              "ms_per_batch": 0.495603
+            }
+          },
+          "tail": ""
+        },
+        "tensorflow/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 17499892.0,
+              "median_pass_s": 0.028087031,
+              "ms_per_batch": 0.936234
+            },
+            "65536": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 17251150.0,
+              "median_pass_s": 0.026592546,
+              "ms_per_batch": 3.798935
+            },
+            "256": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 10292497.0,
+              "median_pass_s": 0.048575966,
+              "ms_per_batch": 0.024872
+            },
+            "1024": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 13277550.0,
+              "median_pass_s": 0.03763586,
+              "ms_per_batch": 0.077123
+            },
+            "4096": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16369533.0,
+              "median_pass_s": 0.0305269561,
+              "ms_per_batch": 0.250221
+            },
+            "8192": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 17038292.0,
+              "median_pass_s": 0.029328761,
+              "ms_per_batch": 0.480799
+            }
+          },
+          "tail": ""
+        },
+        "opennn/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0281225,
+                0.0281365,
+                0.0276981,
+                0.0282489,
+                0.0280045
+              ],
+              "samples_per_sec": 17477822.0,
+              "median_pass_s": 0.0281225,
+              "ms_per_batch": 0.937417
+            },
+            "65536": {
+              "pass_times": [
+                0.0268365,
+                0.0267594,
+                0.026278,
+                0.0268464,
+                0.0261689
+              ],
+              "samples_per_sec": 17143558.0,
+              "median_pass_s": 0.0267594,
+              "ms_per_batch": 3.82278
+            },
+            "256": {
+              "pass_times": [
+                0.0460116,
+                0.0460042,
+                0.0452283,
+                0.0458424,
+                0.0456506
+              ],
+              "samples_per_sec": 10906242.0,
+              "median_pass_s": 0.0458424,
+              "ms_per_batch": 0.0234728
+            },
+            "1024": {
+              "pass_times": [
+                0.0323447,
+                0.0324016,
+                0.032274,
+                0.0323603,
+                0.0319449
+              ],
+              "samples_per_sec": 15449563.0,
+              "median_pass_s": 0.0323447,
+              "ms_per_batch": 0.0662802
+            },
+            "4096": {
+              "pass_times": [
+                0.0281202,
+                0.0283435,
+                0.027506,
+                0.0281369,
+                0.028217
+              ],
+              "samples_per_sec": 17760042.0,
+              "median_pass_s": 0.0281369,
+              "ms_per_batch": 0.23063
+            },
+            "8192": {
+              "pass_times": [
+                0.027662,
+                0.0283083,
+                0.0284356,
+                0.0280131,
+                0.0281458
+              ],
+              "samples_per_sec": 17754434.0,
+              "median_pass_s": 0.0281458,
+              "ms_per_batch": 0.461406
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 5,
+      "soak": false,
+      "arm_order": [
+        "tensorflow",
+        "opennn",
+        "pytorch"
+      ],
+      "batch_order": [
+        65536,
+        256,
+        1024,
+        4096,
+        8192,
+        16384
+      ],
+      "results": {
+        "tensorflow/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 24431008.0,
+              "median_pass_s": 0.0187774489,
+              "ms_per_batch": 2.682493
+            },
+            "256": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 10749635.0,
+              "median_pass_s": 0.0465102319,
+              "ms_per_batch": 0.023815
+            },
+            "1024": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 22225901.0,
+              "median_pass_s": 0.022483318,
+              "ms_per_batch": 0.046072
+            },
+            "4096": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 29838914.0,
+              "median_pass_s": 0.01674699,
+              "ms_per_batch": 0.13727
+            },
+            "8192": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 33186650.0,
+              "median_pass_s": 0.0150576209,
+              "ms_per_batch": 0.246846
+            },
+            "16384": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 30716072.0,
+              "median_pass_s": 0.0160020461,
+              "ms_per_batch": 0.533402
+            }
+          },
+          "tail": ""
+        },
+        "opennn/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.013517,
+                0.0129923,
+                0.0136573,
+                0.0136723,
+                0.0136709
+              ],
+              "samples_per_sec": 33590295.0,
+              "median_pass_s": 0.0136573,
+              "ms_per_batch": 1.95104
+            },
+            "256": {
+              "pass_times": [
+                0.033338,
+                0.0333631,
+                0.0333332,
+                0.0333386,
+                0.0333692
+              ],
+              "samples_per_sec": 14996689.0,
+              "median_pass_s": 0.0333386,
+              "ms_per_batch": 0.0170704
+            },
+            "1024": {
+              "pass_times": [
+                0.0187783,
+                0.0187203,
+                0.0188703,
+                0.0190805,
+                0.0188835
+              ],
+              "samples_per_sec": 26481345.0,
+              "median_pass_s": 0.0188703,
+              "ms_per_batch": 0.0386687
+            },
+            "4096": {
+              "pass_times": [
+                0.0148571,
+                0.0145413,
+                0.0147563,
+                0.0149522,
+                0.0150219
+              ],
+              "samples_per_sec": 33634479.0,
+              "median_pass_s": 0.0148571,
+              "ms_per_batch": 0.12178
+            },
+            "8192": {
+              "pass_times": [
+                0.0139308,
+                0.0141724,
+                0.0144262,
+                0.0144411,
+                0.0144232
+              ],
+              "samples_per_sec": 34646434.0,
+              "median_pass_s": 0.0144232,
+              "ms_per_batch": 0.236446
+            },
+            "16384": {
+              "pass_times": [
+                0.0140654,
+                0.0137727,
+                0.0138537,
+                0.0150813,
+                0.0156468
+              ],
+              "samples_per_sec": 34945356.0,
+              "median_pass_s": 0.0140654,
+              "ms_per_batch": 0.468846
+            }
+          },
+          "tail": ""
+        },
+        "pytorch/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "samples_per_sec": 34672889.0,
+              "median_pass_s": 0.013230856,
+              "ms_per_batch": 1.890122
+            },
+            "256": {
+              "samples_per_sec": 11887303.0,
+              "median_pass_s": 0.042058993,
+              "ms_per_batch": 0.021536
+            },
+            "1024": {
+              "samples_per_sec": 18324879.0,
+              "median_pass_s": 0.027269593,
+              "ms_per_batch": 0.05588
+            },
+            "4096": {
+              "samples_per_sec": 31972487.0,
+              "median_pass_s": 0.015629438,
+              "ms_per_batch": 0.12811
+            },
+            "8192": {
+              "samples_per_sec": 34799661.0,
+              "median_pass_s": 0.01435968,
+              "ms_per_batch": 0.235405
+            },
+            "16384": {
+              "samples_per_sec": 35233196.0,
+              "median_pass_s": 0.01395048,
+              "ms_per_batch": 0.465016
+            }
+          },
+          "tail": ""
+        },
+        "tensorflow/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16382833.0,
+              "median_pass_s": 0.028001994,
+              "ms_per_batch": 4.000285
+            },
+            "256": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 9146850.0,
+              "median_pass_s": 0.054660129,
+              "ms_per_batch": 0.027988
+            },
+            "1024": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 13094279.0,
+              "median_pass_s": 0.038162621,
+              "ms_per_batch": 0.078202
+            },
+            "4096": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16497937.0,
+              "median_pass_s": 0.0302893621,
+              "ms_per_batch": 0.248273
+            },
+            "8192": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16925087.0,
+              "median_pass_s": 0.029524929,
+              "ms_per_batch": 0.484015
+            },
+            "16384": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16562633.0,
+              "median_pass_s": 0.0296764401,
+              "ms_per_batch": 0.989215
+            }
+          },
+          "tail": ""
+        },
+        "opennn/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.0269644,
+                0.0264124,
+                0.0268558,
+                0.0269687,
+                0.0262814
+              ],
+              "samples_per_sec": 17082044.0,
+              "median_pass_s": 0.0268558,
+              "ms_per_batch": 3.83654
+            },
+            "256": {
+              "pass_times": [
+                0.0461676,
+                0.046266,
+                0.0463945,
+                0.0455186,
+                0.0461007
+              ],
+              "samples_per_sec": 10829403.0,
+              "median_pass_s": 0.0461676,
+              "ms_per_batch": 0.0236393
+            },
+            "1024": {
+              "pass_times": [
+                0.0326292,
+                0.0326648,
+                0.0328235,
+                0.0327446,
+                0.0327968
+              ],
+              "samples_per_sec": 15260908.0,
+              "median_pass_s": 0.0327446,
+              "ms_per_batch": 0.0670995
+            },
+            "4096": {
+              "pass_times": [
+                0.0276845,
+                0.0283716,
+                0.0284532,
+                0.0275762,
+                0.0283039
+              ],
+              "samples_per_sec": 17655243.0,
+              "median_pass_s": 0.0283039,
+              "ms_per_batch": 0.231999
+            },
+            "8192": {
+              "pass_times": [
+                0.0285635,
+                0.0279746,
+                0.0283136,
+                0.0285627,
+                0.0279896
+              ],
+              "samples_per_sec": 17649185.0,
+              "median_pass_s": 0.0283136,
+              "ms_per_batch": 0.464157
+            },
+            "16384": {
+              "pass_times": [
+                0.028415,
+                0.0282564,
+                0.0277064,
+                0.0283838,
+                0.0282479
+              ],
+              "samples_per_sec": 17395001.0,
+              "median_pass_s": 0.0282564,
+              "ms_per_batch": 0.94188
+            }
+          },
+          "tail": ""
+        },
+        "pytorch/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "samples_per_sec": 14054246.0,
+              "median_pass_s": 0.032641524,
+              "ms_per_batch": 4.663075
+            },
+            "256": {
+              "samples_per_sec": 8995783.0,
+              "median_pass_s": 0.055578043,
+              "ms_per_batch": 0.028458
+            },
+            "1024": {
+              "samples_per_sec": 12971926.0,
+              "median_pass_s": 0.0385225749,
+              "ms_per_batch": 0.07894
+            },
+            "4096": {
+              "samples_per_sec": 15498621.0,
+              "median_pass_s": 0.032242353,
+              "ms_per_batch": 0.264282
+            },
+            "8192": {
+              "samples_per_sec": 15605688.0,
+              "median_pass_s": 0.032021145,
+              "ms_per_batch": 0.524937
+            },
+            "16384": {
+              "samples_per_sec": 14182767.0,
+              "median_pass_s": 0.034656142,
+              "ms_per_batch": 1.155205
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 6,
+      "soak": false,
+      "arm_order": [
+        "opennn",
+        "pytorch",
+        "tensorflow"
+      ],
+      "batch_order": [
+        256,
+        1024,
+        4096,
+        8192,
+        16384,
+        65536
+      ],
+      "results": {
+        "opennn/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "pass_times": [
+                0.0332399,
+                0.033579,
+                0.0334551,
+                0.0332476,
+                0.0334335
+              ],
+              "samples_per_sec": 14954089.0,
+              "median_pass_s": 0.0334335,
+              "ms_per_batch": 0.0171191
+            },
+            "1024": {
+              "pass_times": [
+                0.0189873,
+                0.0188981,
+                0.0190821,
+                0.0188754,
+                0.0189676
+              ],
+              "samples_per_sec": 26345603.0,
+              "median_pass_s": 0.0189676,
+              "ms_per_batch": 0.038868
+            },
+            "4096": {
+              "pass_times": [
+                0.0150433,
+                0.0151765,
+                0.0147827,
+                0.0144864,
+                0.0147989
+              ],
+              "samples_per_sec": 33766888.0,
+              "median_pass_s": 0.0147989,
+              "ms_per_batch": 0.121302
+            },
+            "8192": {
+              "pass_times": [
+                0.0144171,
+                0.0144467,
+                0.0145111,
+                0.0139222,
+                0.0143282
+              ],
+              "samples_per_sec": 34661028.0,
+              "median_pass_s": 0.0144171,
+              "ms_per_batch": 0.236346
+            },
+            "16384": {
+              "pass_times": [
+                0.0142082,
+                0.0141897,
+                0.0142331,
+                0.0139703,
+                0.0141565
+              ],
+              "samples_per_sec": 34639156.0,
+              "median_pass_s": 0.0141897,
+              "ms_per_batch": 0.472991
+            },
+            "65536": {
+              "pass_times": [
+                0.0136791,
+                0.0137228,
+                0.0138119,
+                0.0132241,
+                0.0140807
+              ],
+              "samples_per_sec": 33430012.0,
+              "median_pass_s": 0.0137228,
+              "ms_per_batch": 1.96039
+            }
+          },
+          "tail": ""
+        },
+        "pytorch/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "samples_per_sec": 12006341.0,
+              "median_pass_s": 0.041641994,
+              "ms_per_batch": 0.021322
+            },
+            "1024": {
+              "samples_per_sec": 18285517.0,
+              "median_pass_s": 0.0273282949,
+              "ms_per_batch": 0.056001
+            },
+            "4096": {
+              "samples_per_sec": 32024900.0,
+              "median_pass_s": 0.015603858,
+              "ms_per_batch": 0.1279
+            },
+            "8192": {
+              "samples_per_sec": 34723239.0,
+              "median_pass_s": 0.014391284,
+              "ms_per_batch": 0.235923
+            },
+            "16384": {
+              "samples_per_sec": 35373318.0,
+              "median_pass_s": 0.013895219,
+              "ms_per_batch": 0.463174
+            },
+            "65536": {
+              "samples_per_sec": 34685624.0,
+              "median_pass_s": 0.013225998,
+              "ms_per_batch": 1.889428
+            }
+          },
+          "tail": ""
+        },
+        "tensorflow/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 11775692.0,
+              "median_pass_s": 0.042457631,
+              "ms_per_batch": 0.02174
+            },
+            "1024": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 22292445.0,
+              "median_pass_s": 0.022416204,
+              "ms_per_batch": 0.045935
+            },
+            "4096": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 29347496.0,
+              "median_pass_s": 0.017027415,
+              "ms_per_batch": 0.139569
+            },
+            "8192": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 32597380.0,
+              "median_pass_s": 0.0153298209,
+              "ms_per_batch": 0.251309
+            },
+            "16384": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 30479282.0,
+              "median_pass_s": 0.016126364,
+              "ms_per_batch": 0.537545
+            },
+            "65536": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 24074515.0,
+              "median_pass_s": 0.0190555031,
+              "ms_per_batch": 2.722215
+            }
+          },
+          "tail": ""
+        },
+        "opennn/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "pass_times": [
+                0.0468851,
+                0.046791,
+                0.0463166,
+                0.0462356,
+                0.0459361
+              ],
+              "samples_per_sec": 10794581.0,
+              "median_pass_s": 0.0463166,
+              "ms_per_batch": 0.0237156
+            },
+            "1024": {
+              "pass_times": [
+                0.0329319,
+                0.0328433,
+                0.0325444,
+                0.0326348,
+                0.032887
+              ],
+              "samples_per_sec": 15215054.0,
+              "median_pass_s": 0.0328433,
+              "ms_per_batch": 0.0673018
+            },
+            "4096": {
+              "pass_times": [
+                0.0283217,
+                0.0279126,
+                0.0282593,
+                0.0284351,
+                0.027804
+              ],
+              "samples_per_sec": 17683100.0,
+              "median_pass_s": 0.0282593,
+              "ms_per_batch": 0.231634
+            },
+            "8192": {
+              "pass_times": [
+                0.0282954,
+                0.0287947,
+                0.0283471,
+                0.0278592,
+                0.028576
+              ],
+              "samples_per_sec": 17628352.0,
+              "median_pass_s": 0.0283471,
+              "ms_per_batch": 0.464706
+            },
+            "16384": {
+              "pass_times": [
+                0.0284295,
+                0.0282563,
+                0.0278916,
+                0.0284537,
+                0.0285727
+              ],
+              "samples_per_sec": 17289069.0,
+              "median_pass_s": 0.0284295,
+              "ms_per_batch": 0.947651
+            },
+            "65536": {
+              "pass_times": [
+                0.0269979,
+                0.0271382,
+                0.026569,
+                0.0270152,
+                0.0269274
+              ],
+              "samples_per_sec": 16992165.0,
+              "median_pass_s": 0.0269979,
+              "ms_per_batch": 3.85684
+            }
+          },
+          "tail": ""
+        },
+        "pytorch/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "samples_per_sec": 8938639.0,
+              "median_pass_s": 0.0559333459,
+              "ms_per_batch": 0.02864
+            },
+            "1024": {
+              "samples_per_sec": 13205746.0,
+              "median_pass_s": 0.037840497,
+              "ms_per_batch": 0.077542
+            },
+            "4096": {
+              "samples_per_sec": 15505509.0,
+              "median_pass_s": 0.032228029,
+              "ms_per_batch": 0.264164
+            },
+            "8192": {
+              "samples_per_sec": 15647792.0,
+              "median_pass_s": 0.0319349851,
+              "ms_per_batch": 0.523524
+            },
+            "16384": {
+              "samples_per_sec": 14416543.0,
+              "median_pass_s": 0.034094165,
+              "ms_per_batch": 1.136472
+            },
+            "65536": {
+              "samples_per_sec": 14387139.0,
+              "median_pass_s": 0.0318862561,
+              "ms_per_batch": 4.555179
+            }
+          },
+          "tail": ""
+        },
+        "tensorflow/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 9913251.0,
+              "median_pass_s": 0.0504343121,
+              "ms_per_batch": 0.025824
+            },
+            "1024": {
+              "tf_path": "compiled_loop",
+              "samples_per_sec": 13139886.0,
+              "median_pass_s": 0.038030163,
+              "ms_per_batch": 0.077931
+            },
+            "4096": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16144409.0,
+              "median_pass_s": 0.030952635,
+              "ms_per_batch": 0.25371
+            },
+            "8192": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16900605.0,
+              "median_pass_s": 0.0295676991,
+              "ms_per_batch": 0.484716
+            },
+            "16384": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 16191720.0,
+              "median_pass_s": 0.0303562559,
+              "ms_per_batch": 1.011875
+            },
+            "65536": {
+              "tf_path": "per_batch",
+              "samples_per_sec": 15678567.0,
+              "median_pass_s": 0.0292598171,
+              "ms_per_batch": 4.179974
+            }
+          },
+          "tail": ""
+        }
+      }
+    }
+  ],
+  "summary": {
+    "bf16": {
+      "1024": {
+        "pytorch": {
+          "median": 18333505.5,
+          "min": 18043794.0,
+          "max": 19198730.0,
+          "rounds": [
+            18865650.0,
+            18043794.0,
+            19198730.0,
+            18342132.0,
+            18324879.0,
+            18285517.0
+          ]
+        },
+        "tensorflow": {
+          "median": 22421392.0,
+          "min": 22225901.0,
+          "max": 23832581.0,
+          "rounds": [
+            22550339.0,
+            22244307.0,
+            23219071.0,
+            23832581.0,
+            22225901.0,
+            22292445.0
+          ]
+        },
+        "opennn": {
+          "median": 27114559.5,
+          "min": 26321835.0,
+          "max": 27756736.0,
+          "rounds": [
+            27747774.0,
+            26321835.0,
+            27756736.0,
+            27755196.0,
+            26481345.0,
+            26345603.0
+          ]
+        }
+      },
+      "4096": {
+        "pytorch": {
+          "median": 31998693.5,
+          "min": 31715354.0,
+          "max": 33737011.0,
+          "rounds": [
+            31715354.0,
+            31957409.0,
+            33051390.0,
+            33737011.0,
+            31972487.0,
+            32024900.0
+          ]
+        },
+        "tensorflow": {
+          "median": 29806135.5,
+          "min": 29254897.0,
+          "max": 30988045.0,
+          "rounds": [
+            29254897.0,
+            29773357.0,
+            30555695.0,
+            30988045.0,
+            29838914.0,
+            29347496.0
+          ]
+        },
+        "opennn": {
+          "median": 34411566.0,
+          "min": 32783247.0,
+          "max": 35084484.0,
+          "rounds": [
+            35056244.0,
+            32783247.0,
+            35069726.0,
+            35084484.0,
+            33634479.0,
+            33766888.0
+          ]
+        }
+      },
+      "8192": {
+        "pytorch": {
+          "median": 35239890.5,
+          "min": 34299842.0,
+          "max": 37034421.0,
+          "rounds": [
+            35680120.0,
+            34299842.0,
+            37034421.0,
+            37012458.0,
+            34799661.0,
+            34723239.0
+          ]
+        },
+        "tensorflow": {
+          "median": 33661875.5,
+          "min": 32441780.0,
+          "max": 34522265.0,
+          "rounds": [
+            34137101.0,
+            32441780.0,
+            34413676.0,
+            34522265.0,
+            33186650.0,
+            32597380.0
+          ]
+        },
+        "opennn": {
+          "median": 35737476.0,
+          "min": 34646434.0,
+          "max": 36639817.0,
+          "rounds": [
+            36639817.0,
+            34844224.0,
+            36635991.0,
+            36630728.0,
+            34646434.0,
+            34661028.0
+          ]
+        }
+      },
+      "16384": {
+        "pytorch": {
+          "median": 35321051.5,
+          "min": 34740137.0,
+          "max": 36957802.0,
+          "rounds": [
+            36166898.0,
+            34740137.0,
+            36957802.0,
+            35268785.0,
+            35233196.0,
+            35373318.0
+          ]
+        },
+        "tensorflow": {
+          "median": 30986736.5,
+          "min": 30479282.0,
+          "max": 32319985.0,
+          "rounds": [
+            32319985.0,
+            30620306.0,
+            31257401.0,
+            32148509.0,
+            30716072.0,
+            30479282.0
+          ]
+        },
+        "opennn": {
+          "median": 35815463.5,
+          "min": 34639156.0,
+          "max": 36705600.0,
+          "rounds": [
+            36698020.0,
+            34747971.0,
+            36685571.0,
+            36705600.0,
+            34945356.0,
+            34639156.0
+          ]
+        }
+      },
+      "65536": {
+        "pytorch": {
+          "median": 34679256.5,
+          "min": 34259420.0,
+          "max": 36562798.0,
+          "rounds": [
+            34259420.0,
+            34748143.0,
+            36562798.0,
+            34644853.0,
+            34672889.0,
+            34685624.0
+          ]
+        },
+        "tensorflow": {
+          "median": 24913445.5,
+          "min": 24074515.0,
+          "max": 25488006.0,
+          "rounds": [
+            25488006.0,
+            24438088.0,
+            25388803.0,
+            25427137.0,
+            24431008.0,
+            24074515.0
+          ]
+        },
+        "opennn": {
+          "median": 34463786.0,
+          "min": 33430012.0,
+          "max": 35608859.0,
+          "rounds": [
+            35608859.0,
+            33496980.0,
+            35507774.0,
+            35337277.0,
+            33590295.0,
+            33430012.0
+          ]
+        }
+      },
+      "256": {
+        "pytorch": {
+          "median": 11991118.5,
+          "min": 11887303.0,
+          "max": 12315908.0,
+          "rounds": [
+            12315908.0,
+            11918924.0,
+            12246143.0,
+            11975896.0,
+            11887303.0,
+            12006341.0
+          ]
+        },
+        "tensorflow": {
+          "median": 12008633.5,
+          "min": 10749635.0,
+          "max": 12244405.0,
+          "rounds": [
+            12244405.0,
+            11813856.0,
+            12203411.0,
+            12232151.0,
+            10749635.0,
+            11775692.0
+          ]
+        },
+        "opennn": {
+          "median": 15263470.0,
+          "min": 14862826.0,
+          "max": 15630190.0,
+          "rounds": [
+            15530251.0,
+            14862826.0,
+            15630037.0,
+            15630190.0,
+            14996689.0,
+            14954089.0
+          ]
+        }
+      }
+    },
+    "fp32": {
+      "1024": {
+        "pytorch": {
+          "median": 13675671.0,
+          "min": 12971926.0,
+          "max": 13855845.0,
+          "rounds": [
+            13855108.0,
+            13497460.0,
+            13855845.0,
+            13853882.0,
+            12971926.0,
+            13205746.0
+          ]
+        },
+        "tensorflow": {
+          "median": 13308277.5,
+          "min": 13094279.0,
+          "max": 14533240.0,
+          "rounds": [
+            14533240.0,
+            13799988.0,
+            13339005.0,
+            13277550.0,
+            13094279.0,
+            13139886.0
+          ]
+        },
+        "opennn": {
+          "median": 15419307.0,
+          "min": 15215054.0,
+          "max": 15982563.0,
+          "rounds": [
+            15389051.0,
+            15715142.0,
+            15982563.0,
+            15449563.0,
+            15260908.0,
+            15215054.0
+          ]
+        }
+      },
+      "4096": {
+        "pytorch": {
+          "median": 15549108.5,
+          "min": 15498621.0,
+          "max": 16478677.0,
+          "rounds": [
+            16478677.0,
+            16464650.0,
+            15499445.0,
+            15592708.0,
+            15498621.0,
+            15505509.0
+          ]
+        },
+        "tensorflow": {
+          "median": 16344167.0,
+          "min": 16144409.0,
+          "max": 17163305.0,
+          "rounds": [
+            16318801.0,
+            17163305.0,
+            16241008.0,
+            16369533.0,
+            16497937.0,
+            16144409.0
+          ]
+        },
+        "opennn": {
+          "median": 17767279.0,
+          "min": 17655243.0,
+          "max": 18678583.0,
+          "rounds": [
+            17774516.0,
+            18678583.0,
+            18656223.0,
+            17760042.0,
+            17655243.0,
+            17683100.0
+          ]
+        }
+      },
+      "8192": {
+        "pytorch": {
+          "median": 16406555.0,
+          "min": 15605688.0,
+          "max": 16562585.0,
+          "rounds": [
+            16538135.0,
+            16562585.0,
+            16283767.0,
+            16529343.0,
+            15605688.0,
+            15647792.0
+          ]
+        },
+        "tensorflow": {
+          "median": 16975571.0,
+          "min": 16900605.0,
+          "max": 17823025.0,
+          "rounds": [
+            16935675.0,
+            17823025.0,
+            17015467.0,
+            17038292.0,
+            16925087.0,
+            16900605.0
+          ]
+        },
+        "opennn": {
+          "median": 17712046.0,
+          "min": 17628352.0,
+          "max": 18558405.0,
+          "rounds": [
+            17669658.0,
+            18538445.0,
+            18558405.0,
+            17754434.0,
+            17649185.0,
+            17628352.0
+          ]
+        }
+      },
+      "16384": {
+        "pytorch": {
+          "median": 15233038.5,
+          "min": 14182767.0,
+          "max": 15282827.0,
+          "rounds": [
+            15189885.0,
+            15276192.0,
+            15280368.0,
+            15282827.0,
+            14182767.0,
+            14416543.0
+          ]
+        },
+        "tensorflow": {
+          "median": 16610785.5,
+          "min": 16191720.0,
+          "max": 17499892.0,
+          "rounds": [
+            16658938.0,
+            17290123.0,
+            16385871.0,
+            17499892.0,
+            16562633.0,
+            16191720.0
+          ]
+        },
+        "opennn": {
+          "median": 17474983.0,
+          "min": 17289069.0,
+          "max": 18309539.0,
+          "rounds": [
+            17472144.0,
+            18309249.0,
+            18309539.0,
+            17477822.0,
+            17395001.0,
+            17289069.0
+          ]
+        }
+      },
+      "65536": {
+        "pytorch": {
+          "median": 14959163.5,
+          "min": 14054246.0,
+          "max": 15243038.0,
+          "rounds": [
+            14705548.0,
+            15243038.0,
+            15212779.0,
+            15230753.0,
+            14054246.0,
+            14387139.0
+          ]
+        },
+        "tensorflow": {
+          "median": 16424000.5,
+          "min": 15678567.0,
+          "max": 17290636.0,
+          "rounds": [
+            16327082.0,
+            17290636.0,
+            16465168.0,
+            17251150.0,
+            16382833.0,
+            15678567.0
+          ]
+        },
+        "opennn": {
+          "median": 17130583.0,
+          "min": 16992165.0,
+          "max": 18021811.0,
+          "rounds": [
+            17117608.0,
+            18019304.0,
+            18021811.0,
+            17143558.0,
+            17082044.0,
+            16992165.0
+          ]
+        }
+      },
+      "256": {
+        "pytorch": {
+          "median": 9150407.0,
+          "min": 8938639.0,
+          "max": 9605075.0,
+          "rounds": [
+            9605075.0,
+            9253531.0,
+            9572955.0,
+            9047283.0,
+            8995783.0,
+            8938639.0
+          ]
+        },
+        "tensorflow": {
+          "median": 9568629.5,
+          "min": 9118302.0,
+          "max": 10307583.0,
+          "rounds": [
+            9224008.0,
+            10307583.0,
+            9118302.0,
+            10292497.0,
+            9146850.0,
+            9913251.0
+          ]
+        },
+        "opennn": {
+          "median": 10867822.5,
+          "min": 10783419.0,
+          "max": 11357051.0,
+          "rounds": [
+            10926576.0,
+            10783419.0,
+            11357051.0,
+            10906242.0,
+            10829403.0,
+            10794581.0
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,3890 @@
+{
+  "benchmark": "gpu-higgs-dense-inference-sweep",
+  "label": "lever-ab",
+  "run_id": "20260821T092745Z",
+  "protocol": {
+    "batches": [
+      256,
+      1024,
+      4096,
+      8192,
+      16384,
+      65536
+    ],
+    "arms": [
+      {
+        "engine": "opennn",
+        "label": "both",
+        "env": {}
+      },
+      {
+        "engine": "opennn",
+        "label": "no-fusion",
+        "env": {
+          "OPENNN_SINGLE_OUTPUT_ACTIVATION": "0"
+        }
+      },
+      {
+        "engine": "opennn",
+        "label": "stage-fp32",
+        "env": {
+          "OPENNN_INFER_STAGE": "fp32"
+        }
+      },
+      {
+        "engine": "opennn",
+        "label": "neither",
+        "env": {
+          "OPENNN_INFER_STAGE": "fp32",
+          "OPENNN_SINGLE_OUTPUT_ACTIVATION": "0"
+        }
+      }
+    ],
+    "rounds_kept": 4,
+    "soak_rounds": 1,
+    "passes_per_batch": 5,
+    "rotation": "arm order and batch order both rotate by round index"
+  },
+  "git": {
+    "commit": "3524cf5b8cf1849a5d7cdc4631f6a2b67df0a999",
+    "branch": "dev",
+    "dirty": true,
+    "status_short": [
+      "M docs/benchmarks/throughput/higgs-gpu/opennn_higgs_infer.cpp",
+      " M docs/benchmarks/throughput/higgs-gpu/pytorch_higgs_infer.py",
+      " M docs/benchmarks/throughput/higgs-gpu/tensorflow_higgs_infer.py",
+      " M opennn/core/cuda/kernel_activation.cu",
+      " M opennn/core/cuda/kernel_common.cuh",
+      " M opennn/core/cuda/kernel_tensor.cu",
+      " M opennn/core/cuda/kernel_tensor.cuh",
+      " M opennn/core/tensor_operations.cpp",
+      " M opennn/core/tensor_operations.h",
+      " M opennn/neural_network/layers/dense_layer.cpp",
+      " M opennn/neural_network/layers/kernel_recurrent.cu",
+      " M opennn/neural_network/operators/combination_operator.cpp",
+      "?? docs/benchmarks/throughput/higgs-gpu/l1_align_probe.cu",
+      "?? docs/benchmarks/throughput/higgs-gpu/run_higgs_infer_sweep.py",
+      "?? tests/neural_network/layers/single_output_activation_fusion_test.cpp"
+    ]
+  },
+  "rounds": [
+    {
+      "index": 0,
+      "soak": true,
+      "arm_order": [
+        "both",
+        "no-fusion",
+        "stage-fp32",
+        "neither"
+      ],
+      "batch_order": [
+        256,
+        1024,
+        4096,
+        8192,
+        16384,
+        65536
+      ],
+      "results": {
+        "both/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "pass_times": [
+                0.0334262,
+                0.0335206,
+                0.033399,
+                0.0333819,
+                0.0334294
+              ],
+              "samples_per_sec": 14957389.0,
+              "median_pass_s": 0.0334262,
+              "ms_per_batch": 0.0171153
+            },
+            "1024": {
+              "pass_times": [
+                0.0188272,
+                0.018775,
+                0.0189462,
+                0.0192119,
+                0.0189905
+              ],
+              "samples_per_sec": 26375350.0,
+              "median_pass_s": 0.0189462,
+              "ms_per_batch": 0.0388241
+            },
+            "4096": {
+              "pass_times": [
+                0.0149079,
+                0.0150022,
+                0.0145305,
+                0.0147896,
+                0.0149419
+              ],
+              "samples_per_sec": 33519896.0,
+              "median_pass_s": 0.0149079,
+              "ms_per_batch": 0.122196
+            },
+            "8192": {
+              "pass_times": [
+                0.0143134,
+                0.0139303,
+                0.0141968,
+                0.014595,
+                0.0144638
+              ],
+              "samples_per_sec": 34912197.0,
+              "median_pass_s": 0.0143134,
+              "ms_per_batch": 0.234646
+            },
+            "16384": {
+              "pass_times": [
+                0.0142633,
+                0.0144514,
+                0.0137927,
+                0.0139096,
+                0.0142824
+              ],
+              "samples_per_sec": 34460565.0,
+              "median_pass_s": 0.0142633,
+              "ms_per_batch": 0.475442
+            },
+            "65536": {
+              "pass_times": [
+                0.014368,
+                0.014379,
+                0.0141803,
+                0.0137893,
+                0.0142067
+              ],
+              "samples_per_sec": 32291283.0,
+              "median_pass_s": 0.0142067,
+              "ms_per_batch": 2.02953
+            }
+          },
+          "tail": ""
+        },
+        "no-fusion/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "pass_times": [
+                0.0335264,
+                0.0333305,
+                0.0334562,
+                0.0334267,
+                0.0333794
+              ],
+              "samples_per_sec": 14957147.0,
+              "median_pass_s": 0.0334267,
+              "ms_per_batch": 0.0171156
+            },
+            "1024": {
+              "pass_times": [
+                0.0199024,
+                0.020013,
+                0.0198991,
+                0.0199719,
+                0.0204147
+              ],
+              "samples_per_sec": 25020744.0,
+              "median_pass_s": 0.0199719,
+              "ms_per_batch": 0.040926
+            },
+            "4096": {
+              "pass_times": [
+                0.0146404,
+                0.0151434,
+                0.0148913,
+                0.0151196,
+                0.0151395
+              ],
+              "samples_per_sec": 33050712.0,
+              "median_pass_s": 0.0151196,
+              "ms_per_batch": 0.123931
+            },
+            "8192": {
+              "pass_times": [
+                0.0139716,
+                0.0142374,
+                0.0144838,
+                0.0145015,
+                0.0144819
+              ],
+              "samples_per_sec": 34505893.0,
+              "median_pass_s": 0.0144819,
+              "ms_per_batch": 0.237409
+            },
+            "16384": {
+              "pass_times": [
+                0.0140813,
+                0.0138386,
+                0.0148448,
+                0.0142494,
+                0.0143557
+              ],
+              "samples_per_sec": 34494030.0,
+              "median_pass_s": 0.0142494,
+              "ms_per_batch": 0.474981
+            },
+            "65536": {
+              "pass_times": [
+                0.0144081,
+                0.014189,
+                0.0138041,
+                0.0142188,
+                0.0143923
+              ],
+              "samples_per_sec": 32263849.0,
+              "median_pass_s": 0.0142188,
+              "ms_per_batch": 2.03125
+            }
+          },
+          "tail": ""
+        },
+        "stage-fp32/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "pass_times": [
+                0.0335633,
+                0.0335279,
+                0.0336322,
+                0.0335118,
+                0.0335228
+              ],
+              "samples_per_sec": 14912010.0,
+              "median_pass_s": 0.0335279,
+              "ms_per_batch": 0.0171674
+            },
+            "1024": {
+              "pass_times": [
+                0.0203952,
+                0.0198502,
+                0.0197682,
+                0.0197728,
+                0.0197588
+              ],
+              "samples_per_sec": 25272752.0,
+              "median_pass_s": 0.0197728,
+              "ms_per_batch": 0.0405179
+            },
+            "4096": {
+              "pass_times": [
+                0.015195,
+                0.0151622,
+                0.015248,
+                0.015329,
+                0.0152078
+              ],
+              "samples_per_sec": 32858871.0,
+              "median_pass_s": 0.0152078,
+              "ms_per_batch": 0.124654
+            },
+            "8192": {
+              "pass_times": [
+                0.0145853,
+                0.0146558,
+                0.014631,
+                0.0145797,
+                0.0146282
+              ],
+              "samples_per_sec": 34160848.0,
+              "median_pass_s": 0.0146282,
+              "ms_per_batch": 0.239807
+            },
+            "16384": {
+              "pass_times": [
+                0.0142289,
+                0.0141956,
+                0.0142994,
+                0.0144365,
+                0.0143021
+              ],
+              "samples_per_sec": 34373537.0,
+              "median_pass_s": 0.0142994,
+              "ms_per_batch": 0.476646
+            },
+            "65536": {
+              "pass_times": [
+                0.0137657,
+                0.0142062,
+                0.0143211,
+                0.0143175,
+                0.0143104
+              ],
+              "samples_per_sec": 32057180.0,
+              "median_pass_s": 0.0143104,
+              "ms_per_batch": 2.04435
+            }
+          },
+          "tail": ""
+        },
+        "neither/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "pass_times": [
+                0.0374013,
+                0.0379252,
+                0.0375451,
+                0.0374685,
+                0.0373955
+              ],
+              "samples_per_sec": 13343692.0,
+              "median_pass_s": 0.0374685,
+              "ms_per_batch": 0.0191851
+            },
+            "1024": {
+              "pass_times": [
+                0.0198262,
+                0.0198249,
+                0.0199538,
+                0.0205464,
+                0.0198207
+              ],
+              "samples_per_sec": 25204601.0,
+              "median_pass_s": 0.0198262,
+              "ms_per_batch": 0.0406275
+            },
+            "4096": {
+              "pass_times": [
+                0.0153459,
+                0.0152308,
+                0.0152713,
+                0.0147981,
+                0.0150703
+              ],
+              "samples_per_sec": 32809410.0,
+              "median_pass_s": 0.0152308,
+              "ms_per_batch": 0.124842
+            },
+            "8192": {
+              "pass_times": [
+                0.0147167,
+                0.0147571,
+                0.0145526,
+                0.0141621,
+                0.0144582
+              ],
+              "samples_per_sec": 34338324.0,
+              "median_pass_s": 0.0145526,
+              "ms_per_batch": 0.238567
+            },
+            "16384": {
+              "pass_times": [
+                0.014319,
+                0.0143229,
+                0.0145644,
+                0.0141163,
+                0.0137778
+              ],
+              "samples_per_sec": 34326510.0,
+              "median_pass_s": 0.014319,
+              "ms_per_batch": 0.477299
+            },
+            "65536": {
+              "pass_times": [
+                0.014216,
+                0.0142886,
+                0.0143149,
+                0.0143015,
+                0.0141476
+              ],
+              "samples_per_sec": 32106201.0,
+              "median_pass_s": 0.0142886,
+              "ms_per_batch": 2.04123
+            }
+          },
+          "tail": ""
+        },
+        "both/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "pass_times": [
+                0.0463381,
+                0.0464311,
+                0.0454936,
+                0.0458982,
+                0.0461814
+              ],
+              "samples_per_sec": 10826180.0,
+              "median_pass_s": 0.0461814,
+              "ms_per_batch": 0.0236464
+            },
+            "1024": {
+              "pass_times": [
+                0.032644,
+                0.0332228,
+                0.032787,
+                0.0327489,
+                0.0327262
+              ],
+              "samples_per_sec": 15258883.0,
+              "median_pass_s": 0.0327489,
+              "ms_per_batch": 0.0671085
+            },
+            "4096": {
+              "pass_times": [
+                0.0276124,
+                0.0285162,
+                0.0284809,
+                0.0278077,
+                0.0281959
+              ],
+              "samples_per_sec": 17722876.0,
+              "median_pass_s": 0.0281959,
+              "ms_per_batch": 0.231114
+            },
+            "8192": {
+              "pass_times": [
+                0.0285846,
+                0.0284434,
+                0.0279298,
+                0.0287024,
+                0.0284343
+              ],
+              "samples_per_sec": 17568667.0,
+              "median_pass_s": 0.0284434,
+              "ms_per_batch": 0.466285
+            },
+            "16384": {
+              "pass_times": [
+                0.0283503,
+                0.0277511,
+                0.0285368,
+                0.0285806,
+                0.0276651
+              ],
+              "samples_per_sec": 17337364.0,
+              "median_pass_s": 0.0283503,
+              "ms_per_batch": 0.945011
+            },
+            "65536": {
+              "pass_times": [
+                0.028058,
+                0.0276843,
+                0.0276187,
+                0.0280766,
+                0.0279712
+              ],
+              "samples_per_sec": 16400855.0,
+              "median_pass_s": 0.0279712,
+              "ms_per_batch": 3.99589
+            }
+          },
+          "tail": ""
+        },
+        "no-fusion/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "pass_times": [
+                0.0501718,
+                0.0501815,
+                0.0501353,
+                0.0502847,
+                0.0502121
+              ],
+              "samples_per_sec": 9963195.0,
+              "median_pass_s": 0.0501815,
+              "ms_per_batch": 0.0256946
+            },
+            "1024": {
+              "pass_times": [
+                0.033388,
+                0.0333496,
+                0.0335399,
+                0.0334501,
+                0.033692
+              ],
+              "samples_per_sec": 14939038.0,
+              "median_pass_s": 0.0334501,
+              "ms_per_batch": 0.0685452
+            },
+            "4096": {
+              "pass_times": [
+                0.02855,
+                0.0284078,
+                0.0278213,
+                0.028682,
+                0.0286021
+              ],
+              "samples_per_sec": 17503019.0,
+              "median_pass_s": 0.02855,
+              "ms_per_batch": 0.234017
+            },
+            "8192": {
+              "pass_times": [
+                0.0278388,
+                0.0288383,
+                0.0288325,
+                0.0280748,
+                0.028405
+              ],
+              "samples_per_sec": 17592371.0,
+              "median_pass_s": 0.028405,
+              "ms_per_batch": 0.465656
+            },
+            "16384": {
+              "pass_times": [
+                0.0282332,
+                0.0285176,
+                0.0283526,
+                0.0278005,
+                0.0286266
+              ],
+              "samples_per_sec": 17335969.0,
+              "median_pass_s": 0.0283526,
+              "ms_per_batch": 0.945087
+            },
+            "65536": {
+              "pass_times": [
+                0.0278993,
+                0.0273177,
+                0.028157,
+                0.0278568,
+                0.027328
+              ],
+              "samples_per_sec": 16468249.0,
+              "median_pass_s": 0.0278568,
+              "ms_per_batch": 3.97954
+            }
+          },
+          "tail": ""
+        },
+        "stage-fp32/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "pass_times": [
+                0.0462084,
+                0.046164,
+                0.0458958,
+                0.0460144,
+                0.0462208
+              ],
+              "samples_per_sec": 10830257.0,
+              "median_pass_s": 0.046164,
+              "ms_per_batch": 0.0236375
+            },
+            "1024": {
+              "pass_times": [
+                0.0324206,
+                0.0326839,
+                0.0327191,
+                0.0327038,
+                0.0325836
+              ],
+              "samples_per_sec": 15289217.0,
+              "median_pass_s": 0.0326839,
+              "ms_per_batch": 0.0669753
+            },
+            "4096": {
+              "pass_times": [
+                0.02759,
+                0.0283371,
+                0.0284362,
+                0.0277963,
+                0.0281712
+              ],
+              "samples_per_sec": 17738421.0,
+              "median_pass_s": 0.0281712,
+              "ms_per_batch": 0.230911
+            },
+            "8192": {
+              "pass_times": [
+                0.0287361,
+                0.0279521,
+                0.0283826,
+                0.0286282,
+                0.0284225
+              ],
+              "samples_per_sec": 17581544.0,
+              "median_pass_s": 0.0284225,
+              "ms_per_batch": 0.465943
+            },
+            "16384": {
+              "pass_times": [
+                0.0283354,
+                0.0278531,
+                0.0284196,
+                0.0282959,
+                0.0277468
+              ],
+              "samples_per_sec": 17370710.0,
+              "median_pass_s": 0.0282959,
+              "ms_per_batch": 0.943197
+            },
+            "65536": {
+              "pass_times": [
+                0.0280539,
+                0.0277151,
+                0.0277067,
+                0.0284377,
+                0.0277124
+              ],
+              "samples_per_sec": 16552449.0,
+              "median_pass_s": 0.0277151,
+              "ms_per_batch": 3.95929
+            }
+          },
+          "tail": ""
+        },
+        "neither/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "pass_times": [
+                0.0501676,
+                0.0519222,
+                0.0511088,
+                0.0504867,
+                0.05037
+              ],
+              "samples_per_sec": 9902955.0,
+              "median_pass_s": 0.0504867,
+              "ms_per_batch": 0.0258509
+            },
+            "1024": {
+              "pass_times": [
+                0.0333399,
+                0.0333515,
+                0.0334497,
+                0.0334485,
+                0.0334982
+              ],
+              "samples_per_sec": 14939740.0,
+              "median_pass_s": 0.0334485,
+              "ms_per_batch": 0.068542
+            },
+            "4096": {
+              "pass_times": [
+                0.027952,
+                0.0283713,
+                0.0287155,
+                0.0279798,
+                0.0284062
+              ],
+              "samples_per_sec": 17613290.0,
+              "median_pass_s": 0.0283713,
+              "ms_per_batch": 0.232552
+            },
+            "8192": {
+              "pass_times": [
+                0.0286772,
+                0.0286702,
+                0.0279388,
+                0.0286773,
+                0.0287403
+              ],
+              "samples_per_sec": 17425420.0,
+              "median_pass_s": 0.0286772,
+              "ms_per_batch": 0.470118
+            },
+            "16384": {
+              "pass_times": [
+                0.0284817,
+                0.0276663,
+                0.0285986,
+                0.0285696,
+                0.0278915
+              ],
+              "samples_per_sec": 17257381.0,
+              "median_pass_s": 0.0284817,
+              "ms_per_batch": 0.949391
+            },
+            "65536": {
+              "pass_times": [
+                0.0278304,
+                0.028129,
+                0.0274287,
+                0.0281194,
+                0.0280591
+              ],
+              "samples_per_sec": 16349491.0,
+              "median_pass_s": 0.0280591,
+              "ms_per_batch": 4.00844
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 1,
+      "soak": false,
+      "arm_order": [
+        "no-fusion",
+        "stage-fp32",
+        "neither",
+        "both"
+      ],
+      "batch_order": [
+        1024,
+        4096,
+        8192,
+        16384,
+        65536,
+        256
+      ],
+      "results": {
+        "no-fusion/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "1024": {
+              "pass_times": [
+                0.0196935,
+                0.0200059,
+                0.0202226,
+                0.0199331,
+                0.0197463
+              ],
+              "samples_per_sec": 25069420.0,
+              "median_pass_s": 0.0199331,
+              "ms_per_batch": 0.0408466
+            },
+            "4096": {
+              "pass_times": [
+                0.0152073,
+                0.0151268,
+                0.0151805,
+                0.0150841,
+                0.0151326
+              ],
+              "samples_per_sec": 33022144.0,
+              "median_pass_s": 0.0151326,
+              "ms_per_batch": 0.124038
+            },
+            "8192": {
+              "pass_times": [
+                0.0145164,
+                0.0145486,
+                0.0147102,
+                0.0143811,
+                0.014071
+              ],
+              "samples_per_sec": 34423990.0,
+              "median_pass_s": 0.0145164,
+              "ms_per_batch": 0.237974
+            },
+            "16384": {
+              "pass_times": [
+                0.014293,
+                0.0142815,
+                0.0143049,
+                0.0143202,
+                0.0141389
+              ],
+              "samples_per_sec": 34388866.0,
+              "median_pass_s": 0.014293,
+              "ms_per_batch": 0.476433
+            },
+            "65536": {
+              "pass_times": [
+                0.0142459,
+                0.014118,
+                0.0143139,
+                0.0142435,
+                0.0142897
+              ],
+              "samples_per_sec": 32202426.0,
+              "median_pass_s": 0.0142459,
+              "ms_per_batch": 2.03513
+            },
+            "256": {
+              "pass_times": [
+                0.0336157,
+                0.0338062,
+                0.0334643,
+                0.0336653,
+                0.0338394
+              ],
+              "samples_per_sec": 14851142.0,
+              "median_pass_s": 0.0336653,
+              "ms_per_batch": 0.0172377
+            }
+          },
+          "tail": ""
+        },
+        "stage-fp32/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "1024": {
+              "pass_times": [
+                0.0196106,
+                0.0199262,
+                0.0201737,
+                0.0196416,
+                0.018983
+              ],
+              "samples_per_sec": 25441531.0,
+              "median_pass_s": 0.0196416,
+              "ms_per_batch": 0.0402491
+            },
+            "4096": {
+              "pass_times": [
+                0.0146631,
+                0.0150451,
+                0.0143793,
+                0.0143645,
+                0.0143844
+              ],
+              "samples_per_sec": 34739861.0,
+              "median_pass_s": 0.0143844,
+              "ms_per_batch": 0.117905
+            },
+            "8192": {
+              "pass_times": [
+                0.0138079,
+                0.0138064,
+                0.0138236,
+                0.0138273,
+                0.0138271
+              ],
+              "samples_per_sec": 36149303.0,
+              "median_pass_s": 0.0138236,
+              "ms_per_batch": 0.226616
+            },
+            "16384": {
+              "pass_times": [
+                0.0134647,
+                0.0134651,
+                0.0134638,
+                0.0134673,
+                0.0136716
+              ],
+              "samples_per_sec": 36503191.0,
+              "median_pass_s": 0.0134651,
+              "ms_per_batch": 0.448837
+            },
+            "65536": {
+              "pass_times": [
+                0.01344,
+                0.0134578,
+                0.0134439,
+                0.0134406,
+                0.013446
+              ],
+              "samples_per_sec": 34123421.0,
+              "median_pass_s": 0.0134439,
+              "ms_per_batch": 1.92056
+            },
+            "256": {
+              "pass_times": [
+                0.032018,
+                0.0320175,
+                0.0324975,
+                0.0326078,
+                0.0320192
+              ],
+              "samples_per_sec": 15614615.0,
+              "median_pass_s": 0.0320192,
+              "ms_per_batch": 0.0163949
+            }
+          },
+          "tail": ""
+        },
+        "neither/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "1024": {
+              "pass_times": [
+                0.0192172,
+                0.0190022,
+                0.0190026,
+                0.0192524,
+                0.0196158
+              ],
+              "samples_per_sec": 26003330.0,
+              "median_pass_s": 0.0192172,
+              "ms_per_batch": 0.0393796
+            },
+            "4096": {
+              "pass_times": [
+                0.0145119,
+                0.0145143,
+                0.014518,
+                0.0149698,
+                0.0149321
+              ],
+              "samples_per_sec": 34420265.0,
+              "median_pass_s": 0.014518,
+              "ms_per_batch": 0.119
+            },
+            "8192": {
+              "pass_times": [
+                0.0142226,
+                0.0140711,
+                0.0142864,
+                0.0138887,
+                0.0138743
+              ],
+              "samples_per_sec": 35513364.0,
+              "median_pass_s": 0.0140711,
+              "ms_per_batch": 0.230674
+            },
+            "16384": {
+              "pass_times": [
+                0.0134837,
+                0.0134827,
+                0.013488,
+                0.0134825,
+                0.0134852
+              ],
+              "samples_per_sec": 36452986.0,
+              "median_pass_s": 0.0134837,
+              "ms_per_batch": 0.449456
+            },
+            "65536": {
+              "pass_times": [
+                0.0134612,
+                0.0134533,
+                0.0134731,
+                0.0134576,
+                0.0134428
+              ],
+              "samples_per_sec": 34088792.0,
+              "median_pass_s": 0.0134576,
+              "ms_per_batch": 1.92251
+            },
+            "256": {
+              "pass_times": [
+                0.0364174,
+                0.0366611,
+                0.0359898,
+                0.0359968,
+                0.0359894
+              ],
+              "samples_per_sec": 13889236.0,
+              "median_pass_s": 0.0359968,
+              "ms_per_batch": 0.0184315
+            }
+          },
+          "tail": ""
+        },
+        "both/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "1024": {
+              "pass_times": [
+                0.0180029,
+                0.0180021,
+                0.0180009,
+                0.0180129,
+                0.0180106
+              ],
+              "samples_per_sec": 27757253.0,
+              "median_pass_s": 0.0180029,
+              "ms_per_batch": 0.0368913
+            },
+            "4096": {
+              "pass_times": [
+                0.0142447,
+                0.014248,
+                0.0144518,
+                0.0142449,
+                0.0142517
+              ],
+              "samples_per_sec": 35072337.0,
+              "median_pass_s": 0.014248,
+              "ms_per_batch": 0.116787
+            },
+            "8192": {
+              "pass_times": [
+                0.0136304,
+                0.0136353,
+                0.013641,
+                0.0136329,
+                0.0136406
+              ],
+              "samples_per_sec": 36648364.0,
+              "median_pass_s": 0.0136353,
+              "ms_per_batch": 0.22353
+            },
+            "16384": {
+              "pass_times": [
+                0.0134135,
+                0.0134138,
+                0.0134136,
+                0.0136336,
+                0.0134171
+              ],
+              "samples_per_sec": 36642748.0,
+              "median_pass_s": 0.0134138,
+              "ms_per_batch": 0.447128
+            },
+            "65536": {
+              "pass_times": [
+                0.0133754,
+                0.0133769,
+                0.0133817,
+                0.0136977,
+                0.0140659
+              ],
+              "samples_per_sec": 34281982.0,
+              "median_pass_s": 0.0133817,
+              "ms_per_batch": 1.91167
+            },
+            "256": {
+              "pass_times": [
+                0.0319896,
+                0.0319876,
+                0.0319869,
+                0.03199,
+                0.0319877
+              ],
+              "samples_per_sec": 15630006.0,
+              "median_pass_s": 0.0319877,
+              "ms_per_batch": 0.0163788
+            }
+          },
+          "tail": ""
+        },
+        "no-fusion/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "1024": {
+              "pass_times": [
+                0.0321909,
+                0.0319834,
+                0.0319994,
+                0.0319888,
+                0.031988
+              ],
+              "samples_per_sec": 15621459.0,
+              "median_pass_s": 0.0319888,
+              "ms_per_batch": 0.0655509
+            },
+            "4096": {
+              "pass_times": [
+                0.0269194,
+                0.0271412,
+                0.0269124,
+                0.0268894,
+                0.026906
+              ],
+              "samples_per_sec": 18568123.0,
+              "median_pass_s": 0.0269124,
+              "ms_per_batch": 0.220593
+            },
+            "8192": {
+              "pass_times": [
+                0.0270283,
+                0.0270284,
+                0.0270343,
+                0.0272451,
+                0.0270207
+              ],
+              "samples_per_sec": 18488425.0,
+              "median_pass_s": 0.0270284,
+              "ms_per_batch": 0.443088
+            },
+            "16384": {
+              "pass_times": [
+                0.0278082,
+                0.0268285,
+                0.0268161,
+                0.0268381,
+                0.0277334
+              ],
+              "samples_per_sec": 18314266.0,
+              "median_pass_s": 0.0268381,
+              "ms_per_batch": 0.894603
+            },
+            "65536": {
+              "pass_times": [
+                0.0263877,
+                0.0263603,
+                0.0263604,
+                0.026364,
+                0.0263829
+              ],
+              "samples_per_sec": 17400710.0,
+              "median_pass_s": 0.026364,
+              "ms_per_batch": 3.76628
+            },
+            "256": {
+              "pass_times": [
+                0.0479865,
+                0.0479848,
+                0.0479927,
+                0.0481808,
+                0.0482519
+              ],
+              "samples_per_sec": 10417579.0,
+              "median_pass_s": 0.0479927,
+              "ms_per_batch": 0.0245738
+            }
+          },
+          "tail": ""
+        },
+        "stage-fp32/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "1024": {
+              "pass_times": [
+                0.0311598,
+                0.0311723,
+                0.0320286,
+                0.0312075,
+                0.0313922
+              ],
+              "samples_per_sec": 16012540.0,
+              "median_pass_s": 0.0312075,
+              "ms_per_batch": 0.0639499
+            },
+            "4096": {
+              "pass_times": [
+                0.0268099,
+                0.0267941,
+                0.0267985,
+                0.0267773,
+                0.0267923
+              ],
+              "samples_per_sec": 18650050.0,
+              "median_pass_s": 0.0267941,
+              "ms_per_batch": 0.219624
+            },
+            "8192": {
+              "pass_times": [
+                0.0272001,
+                0.0269903,
+                0.0270078,
+                0.026988,
+                0.0269827
+              ],
+              "samples_per_sec": 18514502.0,
+              "median_pass_s": 0.0269903,
+              "ms_per_batch": 0.442464
+            },
+            "16384": {
+              "pass_times": [
+                0.0267976,
+                0.0270292,
+                0.0268199,
+                0.0267995,
+                0.0268158
+              ],
+              "samples_per_sec": 18329515.0,
+              "median_pass_s": 0.0268158,
+              "ms_per_batch": 0.893859
+            },
+            "65536": {
+              "pass_times": [
+                0.0263797,
+                0.0263411,
+                0.0273686,
+                0.0265609,
+                0.0263487
+              ],
+              "samples_per_sec": 17390326.0,
+              "median_pass_s": 0.0263797,
+              "ms_per_batch": 3.76853
+            },
+            "256": {
+              "pass_times": [
+                0.0440224,
+                0.044021,
+                0.0442124,
+                0.044024,
+                0.0447318
+              ],
+              "samples_per_sec": 11356716.0,
+              "median_pass_s": 0.044024,
+              "ms_per_batch": 0.0225417
+            }
+          },
+          "tail": ""
+        },
+        "neither/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "1024": {
+              "pass_times": [
+                0.0319995,
+                0.031999,
+                0.032164,
+                0.0320023,
+                0.032008
+              ],
+              "samples_per_sec": 15614881.0,
+              "median_pass_s": 0.0320023,
+              "ms_per_batch": 0.0655785
+            },
+            "4096": {
+              "pass_times": [
+                0.0269212,
+                0.0269122,
+                0.0269139,
+                0.0269119,
+                0.0271413
+              ],
+              "samples_per_sec": 18567067.0,
+              "median_pass_s": 0.0269139,
+              "ms_per_batch": 0.220606
+            },
+            "8192": {
+              "pass_times": [
+                0.0270259,
+                0.0270213,
+                0.0279912,
+                0.0270318,
+                0.0270293
+              ],
+              "samples_per_sec": 18487763.0,
+              "median_pass_s": 0.0270293,
+              "ms_per_batch": 0.443104
+            },
+            "16384": {
+              "pass_times": [
+                0.0272264,
+                0.0268562,
+                0.0268131,
+                0.026835,
+                0.0268217
+              ],
+              "samples_per_sec": 18316347.0,
+              "median_pass_s": 0.026835,
+              "ms_per_batch": 0.894501
+            },
+            "65536": {
+              "pass_times": [
+                0.0265596,
+                0.0263498,
+                0.0263418,
+                0.0263944,
+                0.0263547
+              ],
+              "samples_per_sec": 17406821.0,
+              "median_pass_s": 0.0263547,
+              "ms_per_batch": 3.76496
+            },
+            "256": {
+              "pass_times": [
+                0.0479854,
+                0.0481533,
+                0.0487846,
+                0.0479852,
+                0.0479848
+              ],
+              "samples_per_sec": 10419172.0,
+              "median_pass_s": 0.0479854,
+              "ms_per_batch": 0.0245701
+            }
+          },
+          "tail": ""
+        },
+        "both/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "1024": {
+              "pass_times": [
+                0.0312696,
+                0.0313613,
+                0.0316594,
+                0.0311223,
+                0.0312925
+              ],
+              "samples_per_sec": 15969069.0,
+              "median_pass_s": 0.0312925,
+              "ms_per_batch": 0.064124
+            },
+            "4096": {
+              "pass_times": [
+                0.0268013,
+                0.0269487,
+                0.0267849,
+                0.02678,
+                0.0267975
+              ],
+              "samples_per_sec": 18647731.0,
+              "median_pass_s": 0.0267975,
+              "ms_per_batch": 0.219651
+            },
+            "8192": {
+              "pass_times": [
+                0.0269722,
+                0.0269608,
+                0.0269822,
+                0.0271336,
+                0.0269788
+              ],
+              "samples_per_sec": 18522375.0,
+              "median_pass_s": 0.0269788,
+              "ms_per_batch": 0.442276
+            },
+            "16384": {
+              "pass_times": [
+                0.0267997,
+                0.0268199,
+                0.0267928,
+                0.0268131,
+                0.027327
+              ],
+              "samples_per_sec": 18331353.0,
+              "median_pass_s": 0.0268131,
+              "ms_per_batch": 0.893769
+            },
+            "65536": {
+              "pass_times": [
+                0.0263348,
+                0.0263438,
+                0.0263796,
+                0.0263327,
+                0.0263325
+              ],
+              "samples_per_sec": 17420001.0,
+              "median_pass_s": 0.0263348,
+              "ms_per_batch": 3.76211
+            },
+            "256": {
+              "pass_times": [
+                0.0440206,
+                0.044732,
+                0.0440236,
+                0.044022,
+                0.0441817
+              ],
+              "samples_per_sec": 11356828.0,
+              "median_pass_s": 0.0440236,
+              "ms_per_batch": 0.0225415
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 2,
+      "soak": false,
+      "arm_order": [
+        "stage-fp32",
+        "neither",
+        "both",
+        "no-fusion"
+      ],
+      "batch_order": [
+        4096,
+        8192,
+        16384,
+        65536,
+        256,
+        1024
+      ],
+      "results": {
+        "stage-fp32/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "4096": {
+              "pass_times": [
+                0.0143639,
+                0.0143904,
+                0.0143966,
+                0.0143645,
+                0.0143844
+              ],
+              "samples_per_sec": 34739893.0,
+              "median_pass_s": 0.0143844,
+              "ms_per_batch": 0.117905
+            },
+            "8192": {
+              "pass_times": [
+                0.0137927,
+                0.0138206,
+                0.0138317,
+                0.0141165,
+                0.0138317
+              ],
+              "samples_per_sec": 36128110.0,
+              "median_pass_s": 0.0138317,
+              "ms_per_batch": 0.226749
+            },
+            "16384": {
+              "pass_times": [
+                0.0134647,
+                0.0134651,
+                0.0134629,
+                0.013454,
+                0.0134592
+              ],
+              "samples_per_sec": 36509134.0,
+              "median_pass_s": 0.0134629,
+              "ms_per_batch": 0.448764
+            },
+            "65536": {
+              "pass_times": [
+                0.0136843,
+                0.0141749,
+                0.0134511,
+                0.0134659,
+                0.0134539
+              ],
+              "samples_per_sec": 34067732.0,
+              "median_pass_s": 0.0134659,
+              "ms_per_batch": 1.9237
+            },
+            "256": {
+              "pass_times": [
+                0.032019,
+                0.0320208,
+                0.0321773,
+                0.0320184,
+                0.0320155
+              ],
+              "samples_per_sec": 15614715.0,
+              "median_pass_s": 0.032019,
+              "ms_per_batch": 0.0163948
+            },
+            "1024": {
+              "pass_times": [
+                0.0189837,
+                0.0189842,
+                0.018986,
+                0.0189838,
+                0.0189856
+              ],
+              "samples_per_sec": 26322540.0,
+              "median_pass_s": 0.0189842,
+              "ms_per_batch": 0.038902
+            }
+          },
+          "tail": ""
+        },
+        "neither/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "4096": {
+              "pass_times": [
+                0.0145226,
+                0.0145169,
+                0.0145119,
+                0.0145216,
+                0.0145122
+              ],
+              "samples_per_sec": 34422835.0,
+              "median_pass_s": 0.0145169,
+              "ms_per_batch": 0.118991
+            },
+            "8192": {
+              "pass_times": [
+                0.0138768,
+                0.0138651,
+                0.0140889,
+                0.014574,
+                0.0138781
+              ],
+              "samples_per_sec": 36007120.0,
+              "median_pass_s": 0.0138781,
+              "ms_per_batch": 0.227511
+            },
+            "16384": {
+              "pass_times": [
+                0.0134778,
+                0.0134844,
+                0.0140098,
+                0.0141601,
+                0.0134821
+              ],
+              "samples_per_sec": 36450939.0,
+              "median_pass_s": 0.0134844,
+              "ms_per_batch": 0.449481
+            },
+            "65536": {
+              "pass_times": [
+                0.0134454,
+                0.0134467,
+                0.0136734,
+                0.0134566,
+                0.0134586
+              ],
+              "samples_per_sec": 34091330.0,
+              "median_pass_s": 0.0134566,
+              "ms_per_batch": 1.92237
+            },
+            "256": {
+              "pass_times": [
+                0.0334354,
+                0.0335003,
+                0.0334931,
+                0.0337531,
+                0.0334213
+              ],
+              "samples_per_sec": 14927505.0,
+              "median_pass_s": 0.0334931,
+              "ms_per_batch": 0.0171495
+            },
+            "1024": {
+              "pass_times": [
+                0.0190685,
+                0.0190813,
+                0.0190927,
+                0.0190977,
+                0.0190977
+              ],
+              "samples_per_sec": 26172947.0,
+              "median_pass_s": 0.0190927,
+              "ms_per_batch": 0.0391244
+            }
+          },
+          "tail": ""
+        },
+        "both/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "4096": {
+              "pass_times": [
+                0.0142527,
+                0.0142504,
+                0.0142436,
+                0.0142438,
+                0.0142457
+              ],
+              "samples_per_sec": 35078155.0,
+              "median_pass_s": 0.0142457,
+              "ms_per_batch": 0.116768
+            },
+            "8192": {
+              "pass_times": [
+                0.0136313,
+                0.0136306,
+                0.0136277,
+                0.0139399,
+                0.0143926
+              ],
+              "samples_per_sec": 36659172.0,
+              "median_pass_s": 0.0136313,
+              "ms_per_batch": 0.223464
+            },
+            "16384": {
+              "pass_times": [
+                0.0133942,
+                0.0134006,
+                0.013424,
+                0.0133978,
+                0.0134025
+              ],
+              "samples_per_sec": 36678878.0,
+              "median_pass_s": 0.0134006,
+              "ms_per_batch": 0.446688
+            },
+            "65536": {
+              "pass_times": [
+                0.0136129,
+                0.0133908,
+                0.0133914,
+                0.0133897,
+                0.01338
+              ],
+              "samples_per_sec": 34258706.0,
+              "median_pass_s": 0.0133908,
+              "ms_per_batch": 1.91297
+            },
+            "256": {
+              "pass_times": [
+                0.0319871,
+                0.0319857,
+                0.0321858,
+                0.0320041,
+                0.0319872
+              ],
+              "samples_per_sec": 15630245.0,
+              "median_pass_s": 0.0319872,
+              "ms_per_batch": 0.0163785
+            },
+            "1024": {
+              "pass_times": [
+                0.0185234,
+                0.018605,
+                0.0186336,
+                0.0187057,
+                0.0192442
+              ],
+              "samples_per_sec": 26817834.0,
+              "median_pass_s": 0.0186336,
+              "ms_per_batch": 0.0381835
+            }
+          },
+          "tail": ""
+        },
+        "no-fusion/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "4096": {
+              "pass_times": [
+                0.0143922,
+                0.0143838,
+                0.0143671,
+                0.0143501,
+                0.0143694
+              ],
+              "samples_per_sec": 34776218.0,
+              "median_pass_s": 0.0143694,
+              "ms_per_batch": 0.117782
+            },
+            "8192": {
+              "pass_times": [
+                0.014292,
+                0.0136737,
+                0.0136527,
+                0.0136982,
+                0.0139023
+              ],
+              "samples_per_sec": 36480060.0,
+              "median_pass_s": 0.0136982,
+              "ms_per_batch": 0.224561
+            },
+            "16384": {
+              "pass_times": [
+                0.0134159,
+                0.013421,
+                0.0134204,
+                0.0134189,
+                0.0134137
+              ],
+              "samples_per_sec": 36628950.0,
+              "median_pass_s": 0.0134189,
+              "ms_per_batch": 0.447296
+            },
+            "65536": {
+              "pass_times": [
+                0.0133938,
+                0.0133851,
+                0.0133871,
+                0.0133865,
+                0.0133898
+              ],
+              "samples_per_sec": 34268159.0,
+              "median_pass_s": 0.0133871,
+              "ms_per_batch": 1.91245
+            },
+            "256": {
+              "pass_times": [
+                0.032101,
+                0.0321097,
+                0.0322444,
+                0.0328813,
+                0.0321137
+              ],
+              "samples_per_sec": 15568684.0,
+              "median_pass_s": 0.0321137,
+              "ms_per_batch": 0.0164433
+            },
+            "1024": {
+              "pass_times": [
+                0.0195849,
+                0.0189968,
+                0.0189908,
+                0.0189864,
+                0.0191987
+              ],
+              "samples_per_sec": 26305108.0,
+              "median_pass_s": 0.0189968,
+              "ms_per_batch": 0.0389278
+            }
+          },
+          "tail": ""
+        },
+        "stage-fp32/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "4096": {
+              "pass_times": [
+                0.0267522,
+                0.0269428,
+                0.0276381,
+                0.0267878,
+                0.0267823
+              ],
+              "samples_per_sec": 18654457.0,
+              "median_pass_s": 0.0267878,
+              "ms_per_batch": 0.219572
+            },
+            "8192": {
+              "pass_times": [
+                0.0272093,
+                0.0270005,
+                0.0269904,
+                0.0269814,
+                0.0269887
+              ],
+              "samples_per_sec": 18514412.0,
+              "median_pass_s": 0.0269904,
+              "ms_per_batch": 0.442466
+            },
+            "16384": {
+              "pass_times": [
+                0.0270571,
+                0.0277037,
+                0.0268011,
+                0.0268191,
+                0.0267944
+              ],
+              "samples_per_sec": 18327265.0,
+              "median_pass_s": 0.0268191,
+              "ms_per_batch": 0.893969
+            },
+            "65536": {
+              "pass_times": [
+                0.0263579,
+                0.0264136,
+                0.0266066,
+                0.0263621,
+                0.0263568
+              ],
+              "samples_per_sec": 17401965.0,
+              "median_pass_s": 0.0263621,
+              "ms_per_batch": 3.76601
+            },
+            "256": {
+              "pass_times": [
+                0.0440225,
+                0.0440233,
+                0.0442037,
+                0.0440234,
+                0.044021
+              ],
+              "samples_per_sec": 11356903.0,
+              "median_pass_s": 0.0440233,
+              "ms_per_batch": 0.0225414
+            },
+            "1024": {
+              "pass_times": [
+                0.0311895,
+                0.0314399,
+                0.031236,
+                0.0312193,
+                0.0312205
+              ],
+              "samples_per_sec": 16005909.0,
+              "median_pass_s": 0.0312205,
+              "ms_per_batch": 0.0639764
+            }
+          },
+          "tail": ""
+        },
+        "neither/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "4096": {
+              "pass_times": [
+                0.0268381,
+                0.0270428,
+                0.0268456,
+                0.0268817,
+                0.0268813
+              ],
+              "samples_per_sec": 18589607.0,
+              "median_pass_s": 0.0268813,
+              "ms_per_batch": 0.220338
+            },
+            "8192": {
+              "pass_times": [
+                0.0270135,
+                0.027036,
+                0.0270385,
+                0.0272554,
+                0.0280378
+              ],
+              "samples_per_sec": 18481528.0,
+              "median_pass_s": 0.0270385,
+              "ms_per_batch": 0.443253
+            },
+            "16384": {
+              "pass_times": [
+                0.0268299,
+                0.0268239,
+                0.026829,
+                0.0268371,
+                0.0270346
+              ],
+              "samples_per_sec": 18319871.0,
+              "median_pass_s": 0.0268299,
+              "ms_per_batch": 0.894329
+            },
+            "65536": {
+              "pass_times": [
+                0.0263621,
+                0.0263497,
+                0.0263616,
+                0.0263748,
+                0.0263818
+              ],
+              "samples_per_sec": 17401960.0,
+              "median_pass_s": 0.0263621,
+              "ms_per_batch": 3.76601
+            },
+            "256": {
+              "pass_times": [
+                0.0479857,
+                0.0483632,
+                0.0483844,
+                0.0484053,
+                0.0485945
+              ],
+              "samples_per_sec": 10333250.0,
+              "median_pass_s": 0.0483844,
+              "ms_per_batch": 0.0247744
+            },
+            "1024": {
+              "pass_times": [
+                0.0320004,
+                0.0319994,
+                0.032,
+                0.0321622,
+                0.0320108
+              ],
+              "samples_per_sec": 15615814.0,
+              "median_pass_s": 0.0320004,
+              "ms_per_batch": 0.0655746
+            }
+          },
+          "tail": ""
+        },
+        "both/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "4096": {
+              "pass_times": [
+                0.0267665,
+                0.0267642,
+                0.026785,
+                0.0267755,
+                0.0269964
+              ],
+              "samples_per_sec": 18663012.0,
+              "median_pass_s": 0.0267755,
+              "ms_per_batch": 0.219472
+            },
+            "8192": {
+              "pass_times": [
+                0.0270025,
+                0.0272231,
+                0.0276686,
+                0.0269854,
+                0.0269918
+              ],
+              "samples_per_sec": 18506146.0,
+              "median_pass_s": 0.0270025,
+              "ms_per_batch": 0.442664
+            },
+            "16384": {
+              "pass_times": [
+                0.0270015,
+                0.0268099,
+                0.026802,
+                0.0268033,
+                0.0268112
+              ],
+              "samples_per_sec": 18333552.0,
+              "median_pass_s": 0.0268099,
+              "ms_per_batch": 0.893662
+            },
+            "65536": {
+              "pass_times": [
+                0.0272583,
+                0.0263784,
+                0.0263411,
+                0.0263362,
+                0.0263482
+              ],
+              "samples_per_sec": 17411125.0,
+              "median_pass_s": 0.0263482,
+              "ms_per_batch": 3.76403
+            },
+            "256": {
+              "pass_times": [
+                0.0440228,
+                0.0442145,
+                0.0440219,
+                0.0440272,
+                0.0440209
+              ],
+              "samples_per_sec": 11357018.0,
+              "median_pass_s": 0.0440228,
+              "ms_per_batch": 0.0225411
+            },
+            "1024": {
+              "pass_times": [
+                0.0315441,
+                0.0314118,
+                0.0313504,
+                0.0313954,
+                0.0313722
+              ],
+              "samples_per_sec": 15916712.0,
+              "median_pass_s": 0.0313954,
+              "ms_per_batch": 0.0643349
+            }
+          },
+          "tail": ""
+        },
+        "no-fusion/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "4096": {
+              "pass_times": [
+                0.0268117,
+                0.0270516,
+                0.0268651,
+                0.0268711,
+                0.0268501
+              ],
+              "samples_per_sec": 18600793.0,
+              "median_pass_s": 0.0268651,
+              "ms_per_batch": 0.220206
+            },
+            "8192": {
+              "pass_times": [
+                0.0280972,
+                0.0270356,
+                0.0272498,
+                0.0270245,
+                0.0270242
+              ],
+              "samples_per_sec": 18483464.0,
+              "median_pass_s": 0.0270356,
+              "ms_per_batch": 0.443207
+            },
+            "16384": {
+              "pass_times": [
+                0.0268191,
+                0.0268276,
+                0.0268279,
+                0.0270421,
+                0.0268304
+              ],
+              "samples_per_sec": 18321256.0,
+              "median_pass_s": 0.0268279,
+              "ms_per_batch": 0.894262
+            },
+            "65536": {
+              "pass_times": [
+                0.0263559,
+                0.0263971,
+                0.0263641,
+                0.0263479,
+                0.026345
+              ],
+              "samples_per_sec": 17406023.0,
+              "median_pass_s": 0.0263559,
+              "ms_per_batch": 3.76513
+            },
+            "256": {
+              "pass_times": [
+                0.0479856,
+                0.0487888,
+                0.0479855,
+                0.0481472,
+                0.0479851
+              ],
+              "samples_per_sec": 10419133.0,
+              "median_pass_s": 0.0479856,
+              "ms_per_batch": 0.0245702
+            },
+            "1024": {
+              "pass_times": [
+                0.0323529,
+                0.0323493,
+                0.0324961,
+                0.0323443,
+                0.0323143
+              ],
+              "samples_per_sec": 15447368.0,
+              "median_pass_s": 0.0323493,
+              "ms_per_batch": 0.0662896
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 3,
+      "soak": false,
+      "arm_order": [
+        "neither",
+        "both",
+        "no-fusion",
+        "stage-fp32"
+      ],
+      "batch_order": [
+        8192,
+        16384,
+        65536,
+        256,
+        1024,
+        4096
+      ],
+      "results": {
+        "neither/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0138732,
+                0.0138707,
+                0.0138649,
+                0.0138688,
+                0.0138684
+              ],
+              "samples_per_sec": 36031330.0,
+              "median_pass_s": 0.0138688,
+              "ms_per_batch": 0.227358
+            },
+            "16384": {
+              "pass_times": [
+                0.0141739,
+                0.0134897,
+                0.0134838,
+                0.0134874,
+                0.0134915
+              ],
+              "samples_per_sec": 36436672.0,
+              "median_pass_s": 0.0134897,
+              "ms_per_batch": 0.449657
+            },
+            "65536": {
+              "pass_times": [
+                0.0134498,
+                0.0136854,
+                0.013448,
+                0.0134584,
+                0.0134528
+              ],
+              "samples_per_sec": 34100815.0,
+              "median_pass_s": 0.0134528,
+              "ms_per_batch": 1.92183
+            },
+            "256": {
+              "pass_times": [
+                0.0365074,
+                0.0359947,
+                0.0361538,
+                0.0359917,
+                0.0359905
+              ],
+              "samples_per_sec": 13890035.0,
+              "median_pass_s": 0.0359947,
+              "ms_per_batch": 0.0184305
+            },
+            "1024": {
+              "pass_times": [
+                0.0190012,
+                0.0190014,
+                0.0190127,
+                0.0190217,
+                0.0190017
+              ],
+              "samples_per_sec": 26298281.0,
+              "median_pass_s": 0.0190017,
+              "ms_per_batch": 0.0389379
+            },
+            "4096": {
+              "pass_times": [
+                0.0145392,
+                0.0145185,
+                0.014539,
+                0.0145161,
+                0.0145306
+              ],
+              "samples_per_sec": 34390408.0,
+              "median_pass_s": 0.0145306,
+              "ms_per_batch": 0.119103
+            }
+          },
+          "tail": ""
+        },
+        "both/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0136303,
+                0.013631,
+                0.0136322,
+                0.0136314,
+                0.0138569
+              ],
+              "samples_per_sec": 36659022.0,
+              "median_pass_s": 0.0136314,
+              "ms_per_batch": 0.223465
+            },
+            "16384": {
+              "pass_times": [
+                0.0133922,
+                0.013392,
+                0.0133918,
+                0.013391,
+                0.0133896
+              ],
+              "samples_per_sec": 36703136.0,
+              "median_pass_s": 0.0133918,
+              "ms_per_batch": 0.446392
+            },
+            "65536": {
+              "pass_times": [
+                0.0133671,
+                0.0136689,
+                0.0140512,
+                0.0133664,
+                0.0133748
+              ],
+              "samples_per_sec": 34299840.0,
+              "median_pass_s": 0.0133748,
+              "ms_per_batch": 1.91068
+            },
+            "256": {
+              "pass_times": [
+                0.0319935,
+                0.0319912,
+                0.0322429,
+                0.0320333,
+                0.0320026
+              ],
+              "samples_per_sec": 15622726.0,
+              "median_pass_s": 0.0320026,
+              "ms_per_batch": 0.0163864
+            },
+            "1024": {
+              "pass_times": [
+                0.0180036,
+                0.0180074,
+                0.0180028,
+                0.0180153,
+                0.0181775
+              ],
+              "samples_per_sec": 27750375.0,
+              "median_pass_s": 0.0180074,
+              "ms_per_batch": 0.0369004
+            },
+            "4096": {
+              "pass_times": [
+                0.0142515,
+                0.0142501,
+                0.014246,
+                0.0142494,
+                0.0142501
+              ],
+              "samples_per_sec": 35067341.0,
+              "median_pass_s": 0.0142501,
+              "ms_per_batch": 0.116804
+            }
+          },
+          "tail": ""
+        },
+        "no-fusion/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.013675,
+                0.0136648,
+                0.0138796,
+                0.0136661,
+                0.01366
+              ],
+              "samples_per_sec": 36565707.0,
+              "median_pass_s": 0.0136661,
+              "ms_per_batch": 0.224035
+            },
+            "16384": {
+              "pass_times": [
+                0.0134063,
+                0.013407,
+                0.0134081,
+                0.0134005,
+                0.0134079
+              ],
+              "samples_per_sec": 36661505.0,
+              "median_pass_s": 0.013407,
+              "ms_per_batch": 0.446899
+            },
+            "65536": {
+              "pass_times": [
+                0.0134012,
+                0.013404,
+                0.0134056,
+                0.013412,
+                0.0134066
+              ],
+              "samples_per_sec": 34220820.0,
+              "median_pass_s": 0.0134056,
+              "ms_per_batch": 1.91509
+            },
+            "256": {
+              "pass_times": [
+                0.0320468,
+                0.0322791,
+                0.0320434,
+                0.0320312,
+                0.0328185
+              ],
+              "samples_per_sec": 15601204.0,
+              "median_pass_s": 0.0320468,
+              "ms_per_batch": 0.016409
+            },
+            "1024": {
+              "pass_times": [
+                0.0189815,
+                0.0189837,
+                0.0189841,
+                0.019147,
+                0.0189867
+              ],
+              "samples_per_sec": 26322678.0,
+              "median_pass_s": 0.0189841,
+              "ms_per_batch": 0.0389018
+            },
+            "4096": {
+              "pass_times": [
+                0.014369,
+                0.0143741,
+                0.0143943,
+                0.0144184,
+                0.0144253
+              ],
+              "samples_per_sec": 34715988.0,
+              "median_pass_s": 0.0143943,
+              "ms_per_batch": 0.117986
+            }
+          },
+          "tail": ""
+        },
+        "stage-fp32/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.013802,
+                0.0137994,
+                0.0137926,
+                0.0140158,
+                0.0138219
+              ],
+              "samples_per_sec": 36205824.0,
+              "median_pass_s": 0.013802,
+              "ms_per_batch": 0.226262
+            },
+            "16384": {
+              "pass_times": [
+                0.0134372,
+                0.0134526,
+                0.0134496,
+                0.0134554,
+                0.0134573
+              ],
+              "samples_per_sec": 36537226.0,
+              "median_pass_s": 0.0134526,
+              "ms_per_batch": 0.448419
+            },
+            "65536": {
+              "pass_times": [
+                0.0138506,
+                0.0140263,
+                0.0134688,
+                0.0134382,
+                0.0134374
+              ],
+              "samples_per_sec": 34060453.0,
+              "median_pass_s": 0.0134688,
+              "ms_per_batch": 1.92411
+            },
+            "256": {
+              "pass_times": [
+                0.0320182,
+                0.0321805,
+                0.0320194,
+                0.0320165,
+                0.0320166
+              ],
+              "samples_per_sec": 15615111.0,
+              "median_pass_s": 0.0320182,
+              "ms_per_batch": 0.0163944
+            },
+            "1024": {
+              "pass_times": [
+                0.0189857,
+                0.0189833,
+                0.0189849,
+                0.0192041,
+                0.0189843
+              ],
+              "samples_per_sec": 26321533.0,
+              "median_pass_s": 0.0189849,
+              "ms_per_batch": 0.0389035
+            },
+            "4096": {
+              "pass_times": [
+                0.014451,
+                0.0144533,
+                0.0144788,
+                0.0144903,
+                0.0147993
+              ],
+              "samples_per_sec": 34513359.0,
+              "median_pass_s": 0.0144788,
+              "ms_per_batch": 0.118679
+            }
+          },
+          "tail": ""
+        },
+        "neither/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0269902,
+                0.026981,
+                0.0279608,
+                0.0271082,
+                0.0270007
+              ],
+              "samples_per_sec": 18507341.0,
+              "median_pass_s": 0.0270007,
+              "ms_per_batch": 0.442635
+            },
+            "16384": {
+              "pass_times": [
+                0.0274683,
+                0.0268281,
+                0.0268428,
+                0.0270624,
+                0.0268332
+              ],
+              "samples_per_sec": 18311046.0,
+              "median_pass_s": 0.0268428,
+              "ms_per_batch": 0.89476
+            },
+            "65536": {
+              "pass_times": [
+                0.0263896,
+                0.0263709,
+                0.0263549,
+                0.0263591,
+                0.0266324
+              ],
+              "samples_per_sec": 17396139.0,
+              "median_pass_s": 0.0263709,
+              "ms_per_batch": 3.76727
+            },
+            "256": {
+              "pass_times": [
+                0.0479856,
+                0.0479853,
+                0.0479854,
+                0.0481368,
+                0.0482333
+              ],
+              "samples_per_sec": 10419120.0,
+              "median_pass_s": 0.0479856,
+              "ms_per_batch": 0.0245702
+            },
+            "1024": {
+              "pass_times": [
+                0.0324515,
+                0.0324765,
+                0.032594,
+                0.03242,
+                0.0324529
+              ],
+              "samples_per_sec": 15398073.0,
+              "median_pass_s": 0.0324529,
+              "ms_per_batch": 0.0665018
+            },
+            "4096": {
+              "pass_times": [
+                0.0268574,
+                0.0268497,
+                0.0277629,
+                0.0270608,
+                0.0268386
+              ],
+              "samples_per_sec": 18606123.0,
+              "median_pass_s": 0.0268574,
+              "ms_per_batch": 0.220143
+            }
+          },
+          "tail": ""
+        },
+        "both/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0269188,
+                0.0269211,
+                0.0269356,
+                0.0269409,
+                0.0269481
+              ],
+              "samples_per_sec": 18552115.0,
+              "median_pass_s": 0.0269356,
+              "ms_per_batch": 0.441567
+            },
+            "16384": {
+              "pass_times": [
+                0.0268264,
+                0.0268267,
+                0.0268216,
+                0.0268223,
+                0.0268215
+              ],
+              "samples_per_sec": 18325043.0,
+              "median_pass_s": 0.0268223,
+              "ms_per_batch": 0.894077
+            },
+            "65536": {
+              "pass_times": [
+                0.0263733,
+                0.0270753,
+                0.0269646,
+                0.0263673,
+                0.0263665
+              ],
+              "samples_per_sec": 17394550.0,
+              "median_pass_s": 0.0263733,
+              "ms_per_batch": 3.76762
+            },
+            "256": {
+              "pass_times": [
+                0.0442232,
+                0.0440217,
+                0.0440219,
+                0.0440211,
+                0.0442196
+              ],
+              "samples_per_sec": 11357260.0,
+              "median_pass_s": 0.0440219,
+              "ms_per_batch": 0.0225406
+            },
+            "1024": {
+              "pass_times": [
+                0.0311576,
+                0.0312189,
+                0.0311745,
+                0.0311863,
+                0.0311804
+              ],
+              "samples_per_sec": 16026476.0,
+              "median_pass_s": 0.0311804,
+              "ms_per_batch": 0.0638943
+            },
+            "4096": {
+              "pass_times": [
+                0.0270781,
+                0.0274307,
+                0.0267653,
+                0.0267809,
+                0.0267653
+              ],
+              "samples_per_sec": 18659283.0,
+              "median_pass_s": 0.0267809,
+              "ms_per_batch": 0.219515
+            }
+          },
+          "tail": ""
+        },
+        "no-fusion/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0271969,
+                0.0273239,
+                0.0276446,
+                0.0270078,
+                0.0270065
+              ],
+              "samples_per_sec": 18373854.0,
+              "median_pass_s": 0.0271969,
+              "ms_per_batch": 0.445851
+            },
+            "16384": {
+              "pass_times": [
+                0.026827,
+                0.0268339,
+                0.0270451,
+                0.0268098,
+                0.0268249
+              ],
+              "samples_per_sec": 18321846.0,
+              "median_pass_s": 0.026827,
+              "ms_per_batch": 0.894233
+            },
+            "65536": {
+              "pass_times": [
+                0.0264159,
+                0.0263742,
+                0.0263692,
+                0.0265882,
+                0.0263758
+              ],
+              "samples_per_sec": 17392934.0,
+              "median_pass_s": 0.0263758,
+              "ms_per_batch": 3.76797
+            },
+            "256": {
+              "pass_times": [
+                0.0479888,
+                0.0479847,
+                0.0488898,
+                0.0479882,
+                0.0479857
+              ],
+              "samples_per_sec": 10418557.0,
+              "median_pass_s": 0.0479882,
+              "ms_per_batch": 0.0245715
+            },
+            "1024": {
+              "pass_times": [
+                0.031999,
+                0.0321618,
+                0.0319995,
+                0.0319994,
+                0.0328109
+              ],
+              "samples_per_sec": 15616220.0,
+              "median_pass_s": 0.0319995,
+              "ms_per_batch": 0.0655728
+            },
+            "4096": {
+              "pass_times": [
+                0.026835,
+                0.0268597,
+                0.0270519,
+                0.0268492,
+                0.0268435
+              ],
+              "samples_per_sec": 18611804.0,
+              "median_pass_s": 0.0268492,
+              "ms_per_batch": 0.220075
+            }
+          },
+          "tail": ""
+        },
+        "stage-fp32/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0269279,
+                0.0269319,
+                0.0269319,
+                0.026952,
+                0.0271763
+              ],
+              "samples_per_sec": 18554638.0,
+              "median_pass_s": 0.0269319,
+              "ms_per_batch": 0.441507
+            },
+            "16384": {
+              "pass_times": [
+                0.0268231,
+                0.0268312,
+                0.0268152,
+                0.026831,
+                0.027123
+              ],
+              "samples_per_sec": 18319083.0,
+              "median_pass_s": 0.026831,
+              "ms_per_batch": 0.894368
+            },
+            "65536": {
+              "pass_times": [
+                0.0263506,
+                0.0265773,
+                0.0271065,
+                0.0263489,
+                0.0263474
+              ],
+              "samples_per_sec": 17409558.0,
+              "median_pass_s": 0.0263506,
+              "ms_per_batch": 3.76437
+            },
+            "256": {
+              "pass_times": [
+                0.0440224,
+                0.0440228,
+                0.0440192,
+                0.0440229,
+                0.0442139
+              ],
+              "samples_per_sec": 11357023.0,
+              "median_pass_s": 0.0440228,
+              "ms_per_batch": 0.0225411
+            },
+            "1024": {
+              "pass_times": [
+                0.0321483,
+                0.0321365,
+                0.0321154,
+                0.0329948,
+                0.0323935
+              ],
+              "samples_per_sec": 15543943.0,
+              "median_pass_s": 0.0321483,
+              "ms_per_batch": 0.0658777
+            },
+            "4096": {
+              "pass_times": [
+                0.0267598,
+                0.0267741,
+                0.0267725,
+                0.0267667,
+                0.0267674
+              ],
+              "samples_per_sec": 18668708.0,
+              "median_pass_s": 0.0267674,
+              "ms_per_batch": 0.219405
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 4,
+      "soak": false,
+      "arm_order": [
+        "both",
+        "no-fusion",
+        "stage-fp32",
+        "neither"
+      ],
+      "batch_order": [
+        16384,
+        65536,
+        256,
+        1024,
+        4096,
+        8192
+      ],
+      "results": {
+        "both/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0133886,
+                0.0134023,
+                0.013389,
+                0.0134069,
+                0.0133997
+              ],
+              "samples_per_sec": 36681382.0,
+              "median_pass_s": 0.0133997,
+              "ms_per_batch": 0.446657
+            },
+            "65536": {
+              "pass_times": [
+                0.0133792,
+                0.0133658,
+                0.0133759,
+                0.0133662,
+                0.0133887
+              ],
+              "samples_per_sec": 34296866.0,
+              "median_pass_s": 0.0133759,
+              "ms_per_batch": 1.91085
+            },
+            "256": {
+              "pass_times": [
+                0.0319946,
+                0.0320002,
+                0.0320035,
+                0.0321686,
+                0.0319929
+              ],
+              "samples_per_sec": 15623894.0,
+              "median_pass_s": 0.0320002,
+              "ms_per_batch": 0.0163852
+            },
+            "1024": {
+              "pass_times": [
+                0.0185017,
+                0.0185701,
+                0.0180152,
+                0.0180164,
+                0.0180048
+              ],
+              "samples_per_sec": 27736438.0,
+              "median_pass_s": 0.0180164,
+              "ms_per_batch": 0.0369189
+            },
+            "4096": {
+              "pass_times": [
+                0.014246,
+                0.0142479,
+                0.0142502,
+                0.0142464,
+                0.0142501
+              ],
+              "samples_per_sec": 35072593.0,
+              "median_pass_s": 0.0142479,
+              "ms_per_batch": 0.116786
+            },
+            "8192": {
+              "pass_times": [
+                0.0136374,
+                0.013644,
+                0.0136468,
+                0.0136428,
+                0.0136418
+              ],
+              "samples_per_sec": 36628389.0,
+              "median_pass_s": 0.0136428,
+              "ms_per_batch": 0.223652
+            }
+          },
+          "tail": ""
+        },
+        "no-fusion/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0134107,
+                0.0134149,
+                0.0134093,
+                0.0134084,
+                0.0134089
+              ],
+              "samples_per_sec": 36655277.0,
+              "median_pass_s": 0.0134093,
+              "ms_per_batch": 0.446975
+            },
+            "65536": {
+              "pass_times": [
+                0.0133521,
+                0.0133602,
+                0.0133598,
+                0.0133613,
+                0.0133569
+              ],
+              "samples_per_sec": 34338233.0,
+              "median_pass_s": 0.0133598,
+              "ms_per_batch": 1.90854
+            },
+            "256": {
+              "pass_times": [
+                0.0322134,
+                0.0321721,
+                0.0323965,
+                0.0324611,
+                0.0328284
+              ],
+              "samples_per_sec": 15432773.0,
+              "median_pass_s": 0.0323965,
+              "ms_per_batch": 0.0165881
+            },
+            "1024": {
+              "pass_times": [
+                0.0189859,
+                0.0196846,
+                0.0190829,
+                0.0192092,
+                0.0189861
+              ],
+              "samples_per_sec": 26186422.0,
+              "median_pass_s": 0.0190829,
+              "ms_per_batch": 0.0391042
+            },
+            "4096": {
+              "pass_times": [
+                0.0143478,
+                0.0143478,
+                0.014388,
+                0.0144273,
+                0.0144073
+              ],
+              "samples_per_sec": 34731075.0,
+              "median_pass_s": 0.014388,
+              "ms_per_batch": 0.117935
+            },
+            "8192": {
+              "pass_times": [
+                0.0136875,
+                0.0136887,
+                0.0136917,
+                0.0136941,
+                0.0139299
+              ],
+              "samples_per_sec": 36497450.0,
+              "median_pass_s": 0.0136917,
+              "ms_per_batch": 0.224454
+            }
+          },
+          "tail": ""
+        },
+        "stage-fp32/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0134229,
+                0.0134274,
+                0.0134122,
+                0.0134262,
+                0.0134373
+              ],
+              "samples_per_sec": 36608895.0,
+              "median_pass_s": 0.0134262,
+              "ms_per_batch": 0.447541
+            },
+            "65536": {
+              "pass_times": [
+                0.0134662,
+                0.0134677,
+                0.0134715,
+                0.0134589,
+                0.0134675
+              ],
+              "samples_per_sec": 34063751.0,
+              "median_pass_s": 0.0134675,
+              "ms_per_batch": 1.92392
+            },
+            "256": {
+              "pass_times": [
+                0.0320157,
+                0.032393,
+                0.032615,
+                0.0320163,
+                0.0320155
+              ],
+              "samples_per_sec": 15616066.0,
+              "median_pass_s": 0.0320163,
+              "ms_per_batch": 0.0163934
+            },
+            "1024": {
+              "pass_times": [
+                0.0189827,
+                0.0189828,
+                0.0189834,
+                0.0192029,
+                0.0189849
+              ],
+              "samples_per_sec": 26323650.0,
+              "median_pass_s": 0.0189834,
+              "ms_per_batch": 0.0389004
+            },
+            "4096": {
+              "pass_times": [
+                0.0143432,
+                0.0143712,
+                0.0143914,
+                0.0144212,
+                0.0143768
+              ],
+              "samples_per_sec": 34758248.0,
+              "median_pass_s": 0.0143768,
+              "ms_per_batch": 0.117843
+            },
+            "8192": {
+              "pass_times": [
+                0.0138477,
+                0.01385,
+                0.0138339,
+                0.0138518,
+                0.0140617
+              ],
+              "samples_per_sec": 36080213.0,
+              "median_pass_s": 0.01385,
+              "ms_per_batch": 0.22705
+            }
+          },
+          "tail": ""
+        },
+        "neither/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0140644,
+                0.0134543,
+                0.0134549,
+                0.013451,
+                0.0134585
+              ],
+              "samples_per_sec": 36531013.0,
+              "median_pass_s": 0.0134549,
+              "ms_per_batch": 0.448496
+            },
+            "65536": {
+              "pass_times": [
+                0.0134685,
+                0.0134825,
+                0.0134743,
+                0.0134823,
+                0.0134721
+              ],
+              "samples_per_sec": 34046570.0,
+              "median_pass_s": 0.0134743,
+              "ms_per_batch": 1.92489
+            },
+            "256": {
+              "pass_times": [
+                0.0365634,
+                0.0362174,
+                0.0359876,
+                0.0359887,
+                0.035989
+              ],
+              "samples_per_sec": 13892239.0,
+              "median_pass_s": 0.035989,
+              "ms_per_batch": 0.0184276
+            },
+            "1024": {
+              "pass_times": [
+                0.019001,
+                0.0190028,
+                0.0192181,
+                0.0190045,
+                0.0190016
+              ],
+              "samples_per_sec": 26296777.0,
+              "median_pass_s": 0.0190028,
+              "ms_per_batch": 0.0389401
+            },
+            "4096": {
+              "pass_times": [
+                0.0145153,
+                0.0145115,
+                0.0145255,
+                0.0145247,
+                0.0145268
+              ],
+              "samples_per_sec": 34404330.0,
+              "median_pass_s": 0.0145247,
+              "ms_per_batch": 0.119055
+            },
+            "8192": {
+              "pass_times": [
+                0.0138708,
+                0.0138754,
+                0.0140865,
+                0.0139024,
+                0.0138754
+              ],
+              "samples_per_sec": 36014282.0,
+              "median_pass_s": 0.0138754,
+              "ms_per_batch": 0.227465
+            }
+          },
+          "tail": ""
+        },
+        "both/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0267957,
+                0.0267957,
+                0.026772,
+                0.0268381,
+                0.026848
+              ],
+              "samples_per_sec": 18343234.0,
+              "median_pass_s": 0.0267957,
+              "ms_per_batch": 0.89319
+            },
+            "65536": {
+              "pass_times": [
+                0.026362,
+                0.0263488,
+                0.0274028,
+                0.0263903,
+                0.0265186
+              ],
+              "samples_per_sec": 17383367.0,
+              "median_pass_s": 0.0263903,
+              "ms_per_batch": 3.77004
+            },
+            "256": {
+              "pass_times": [
+                0.0440237,
+                0.0440219,
+                0.0440208,
+                0.0440216,
+                0.0441822
+              ],
+              "samples_per_sec": 11357255.0,
+              "median_pass_s": 0.0440219,
+              "ms_per_batch": 0.0225407
+            },
+            "1024": {
+              "pass_times": [
+                0.0312811,
+                0.0312621,
+                0.0313312,
+                0.0312816,
+                0.0321749
+              ],
+              "samples_per_sec": 15974624.0,
+              "median_pass_s": 0.0312816,
+              "ms_per_batch": 0.0641017
+            },
+            "4096": {
+              "pass_times": [
+                0.0267779,
+                0.0272797,
+                0.0271932,
+                0.0267783,
+                0.0267692
+              ],
+              "samples_per_sec": 18661097.0,
+              "median_pass_s": 0.0267783,
+              "ms_per_batch": 0.219494
+            },
+            "8192": {
+              "pass_times": [
+                0.0271729,
+                0.0269498,
+                0.0269535,
+                0.0269512,
+                0.0269442
+              ],
+              "samples_per_sec": 18541334.0,
+              "median_pass_s": 0.0269512,
+              "ms_per_batch": 0.441824
+            }
+          },
+          "tail": ""
+        },
+        "no-fusion/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0268202,
+                0.0268113,
+                0.0270441,
+                0.0268507,
+                0.0268269
+              ],
+              "samples_per_sec": 18321880.0,
+              "median_pass_s": 0.0268269,
+              "ms_per_batch": 0.894231
+            },
+            "65536": {
+              "pass_times": [
+                0.0263622,
+                0.0272939,
+                0.0263592,
+                0.0266114,
+                0.0263593
+              ],
+              "samples_per_sec": 17401900.0,
+              "median_pass_s": 0.0263622,
+              "ms_per_batch": 3.76603
+            },
+            "256": {
+              "pass_times": [
+                0.0479853,
+                0.0479846,
+                0.0484405,
+                0.0485482,
+                0.047986
+              ],
+              "samples_per_sec": 10419048.0,
+              "median_pass_s": 0.047986,
+              "ms_per_batch": 0.0245704
+            },
+            "1024": {
+              "pass_times": [
+                0.0319992,
+                0.0319993,
+                0.0321652,
+                0.0319986,
+                0.0319994
+              ],
+              "samples_per_sec": 15616324.0,
+              "median_pass_s": 0.0319993,
+              "ms_per_batch": 0.0655724
+            },
+            "4096": {
+              "pass_times": [
+                0.0268545,
+                0.0268624,
+                0.0270781,
+                0.0268709,
+                0.0268544
+              ],
+              "samples_per_sec": 18602655.0,
+              "median_pass_s": 0.0268624,
+              "ms_per_batch": 0.220184
+            },
+            "8192": {
+              "pass_times": [
+                0.0270106,
+                0.0270114,
+                0.0270097,
+                0.0270034,
+                0.0280926
+              ],
+              "samples_per_sec": 18500567.0,
+              "median_pass_s": 0.0270106,
+              "ms_per_batch": 0.442797
+            }
+          },
+          "tail": ""
+        },
+        "stage-fp32/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0267983,
+                0.0268008,
+                0.0267921,
+                0.0268411,
+                0.0271187
+              ],
+              "samples_per_sec": 18339748.0,
+              "median_pass_s": 0.0268008,
+              "ms_per_batch": 0.89336
+            },
+            "65536": {
+              "pass_times": [
+                0.026365,
+                0.0263631,
+                0.0263457,
+                0.0263451,
+                0.0263412
+              ],
+              "samples_per_sec": 17412789.0,
+              "median_pass_s": 0.0263457,
+              "ms_per_batch": 3.76367
+            },
+            "256": {
+              "pass_times": [
+                0.0441822,
+                0.0440252,
+                0.0440207,
+                0.044021,
+                0.0440213
+              ],
+              "samples_per_sec": 11357419.0,
+              "median_pass_s": 0.0440213,
+              "ms_per_batch": 0.0225403
+            },
+            "1024": {
+              "pass_times": [
+                0.0316408,
+                0.0317031,
+                0.0312915,
+                0.0316037,
+                0.0318913
+              ],
+              "samples_per_sec": 15793265.0,
+              "median_pass_s": 0.0316408,
+              "ms_per_batch": 0.0648378
+            },
+            "4096": {
+              "pass_times": [
+                0.0269996,
+                0.0267691,
+                0.0267725,
+                0.026778,
+                0.0267776
+              ],
+              "samples_per_sec": 18661597.0,
+              "median_pass_s": 0.0267776,
+              "ms_per_batch": 0.219488
+            },
+            "8192": {
+              "pass_times": [
+                0.0269352,
+                0.0269467,
+                0.0271224,
+                0.026953,
+                0.0269475
+              ],
+              "samples_per_sec": 18543879.0,
+              "median_pass_s": 0.0269475,
+              "ms_per_batch": 0.441763
+            }
+          },
+          "tail": ""
+        },
+        "neither/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0268141,
+                0.0268183,
+                0.0268139,
+                0.0277199,
+                0.0270522
+              ],
+              "samples_per_sec": 18327774.0,
+              "median_pass_s": 0.0268183,
+              "ms_per_batch": 0.893944
+            },
+            "65536": {
+              "pass_times": [
+                0.0263497,
+                0.0263799,
+                0.0263767,
+                0.0263992,
+                0.026365
+              ],
+              "samples_per_sec": 17392288.0,
+              "median_pass_s": 0.0263767,
+              "ms_per_batch": 3.76811
+            },
+            "256": {
+              "pass_times": [
+                0.048783,
+                0.0479889,
+                0.0479847,
+                0.0481895,
+                0.0479847
+              ],
+              "samples_per_sec": 10418403.0,
+              "median_pass_s": 0.0479889,
+              "ms_per_batch": 0.0245719
+            },
+            "1024": {
+              "pass_times": [
+                0.0319987,
+                0.0319983,
+                0.0321618,
+                0.0319989,
+                0.0319985
+              ],
+              "samples_per_sec": 15616616.0,
+              "median_pass_s": 0.0319987,
+              "ms_per_batch": 0.0655712
+            },
+            "4096": {
+              "pass_times": [
+                0.0268618,
+                0.0268488,
+                0.0268601,
+                0.0270464,
+                0.0268266
+              ],
+              "samples_per_sec": 18604258.0,
+              "median_pass_s": 0.0268601,
+              "ms_per_batch": 0.220165
+            },
+            "8192": {
+              "pass_times": [
+                0.0276805,
+                0.0270124,
+                0.0270109,
+                0.0279124,
+                0.0270123
+              ],
+              "samples_per_sec": 18499329.0,
+              "median_pass_s": 0.0270124,
+              "ms_per_batch": 0.442827
+            }
+          },
+          "tail": ""
+        }
+      }
+    }
+  ],
+  "summary": {
+    "bf16": {
+      "1024": {
+        "no-fusion": {
+          "median": 26245765.0,
+          "min": 25069420.0,
+          "max": 26322678.0,
+          "rounds": [
+            25069420.0,
+            26305108.0,
+            26322678.0,
+            26186422.0
+          ]
+        },
+        "stage-fp32": {
+          "median": 26322036.5,
+          "min": 25441531.0,
+          "max": 26323650.0,
+          "rounds": [
+            25441531.0,
+            26322540.0,
+            26321533.0,
+            26323650.0
+          ]
+        },
+        "neither": {
+          "median": 26234862.0,
+          "min": 26003330.0,
+          "max": 26298281.0,
+          "rounds": [
+            26003330.0,
+            26172947.0,
+            26298281.0,
+            26296777.0
+          ]
+        },
+        "both": {
+          "median": 27743406.5,
+          "min": 26817834.0,
+          "max": 27757253.0,
+          "rounds": [
+            27757253.0,
+            26817834.0,
+            27750375.0,
+            27736438.0
+          ]
+        }
+      },
+      "4096": {
+        "no-fusion": {
+          "median": 34723531.5,
+          "min": 33022144.0,
+          "max": 34776218.0,
+          "rounds": [
+            33022144.0,
+            34776218.0,
+            34715988.0,
+            34731075.0
+          ]
+        },
+        "stage-fp32": {
+          "median": 34739877.0,
+          "min": 34513359.0,
+          "max": 34758248.0,
+          "rounds": [
+            34739861.0,
+            34739893.0,
+            34513359.0,
+            34758248.0
+          ]
+        },
+        "neither": {
+          "median": 34412297.5,
+          "min": 34390408.0,
+          "max": 34422835.0,
+          "rounds": [
+            34420265.0,
+            34422835.0,
+            34390408.0,
+            34404330.0
+          ]
+        },
+        "both": {
+          "median": 35072465.0,
+          "min": 35067341.0,
+          "max": 35078155.0,
+          "rounds": [
+            35072337.0,
+            35078155.0,
+            35067341.0,
+            35072593.0
+          ]
+        }
+      },
+      "8192": {
+        "no-fusion": {
+          "median": 36488755.0,
+          "min": 34423990.0,
+          "max": 36565707.0,
+          "rounds": [
+            34423990.0,
+            36480060.0,
+            36565707.0,
+            36497450.0
+          ]
+        },
+        "stage-fp32": {
+          "median": 36138706.5,
+          "min": 36080213.0,
+          "max": 36205824.0,
+          "rounds": [
+            36149303.0,
+            36128110.0,
+            36205824.0,
+            36080213.0
+          ]
+        },
+        "neither": {
+          "median": 36010701.0,
+          "min": 35513364.0,
+          "max": 36031330.0,
+          "rounds": [
+            35513364.0,
+            36007120.0,
+            36031330.0,
+            36014282.0
+          ]
+        },
+        "both": {
+          "median": 36653693.0,
+          "min": 36628389.0,
+          "max": 36659172.0,
+          "rounds": [
+            36648364.0,
+            36659172.0,
+            36659022.0,
+            36628389.0
+          ]
+        }
+      },
+      "16384": {
+        "no-fusion": {
+          "median": 36642113.5,
+          "min": 34388866.0,
+          "max": 36661505.0,
+          "rounds": [
+            34388866.0,
+            36628950.0,
+            36661505.0,
+            36655277.0
+          ]
+        },
+        "stage-fp32": {
+          "median": 36523180.0,
+          "min": 36503191.0,
+          "max": 36608895.0,
+          "rounds": [
+            36503191.0,
+            36509134.0,
+            36537226.0,
+            36608895.0
+          ]
+        },
+        "neither": {
+          "median": 36451962.5,
+          "min": 36436672.0,
+          "max": 36531013.0,
+          "rounds": [
+            36452986.0,
+            36450939.0,
+            36436672.0,
+            36531013.0
+          ]
+        },
+        "both": {
+          "median": 36680130.0,
+          "min": 36642748.0,
+          "max": 36703136.0,
+          "rounds": [
+            36642748.0,
+            36678878.0,
+            36703136.0,
+            36681382.0
+          ]
+        }
+      },
+      "65536": {
+        "no-fusion": {
+          "median": 34244489.5,
+          "min": 32202426.0,
+          "max": 34338233.0,
+          "rounds": [
+            32202426.0,
+            34268159.0,
+            34220820.0,
+            34338233.0
+          ]
+        },
+        "stage-fp32": {
+          "median": 34065741.5,
+          "min": 34060453.0,
+          "max": 34123421.0,
+          "rounds": [
+            34123421.0,
+            34067732.0,
+            34060453.0,
+            34063751.0
+          ]
+        },
+        "neither": {
+          "median": 34090061.0,
+          "min": 34046570.0,
+          "max": 34100815.0,
+          "rounds": [
+            34088792.0,
+            34091330.0,
+            34100815.0,
+            34046570.0
+          ]
+        },
+        "both": {
+          "median": 34289424.0,
+          "min": 34258706.0,
+          "max": 34299840.0,
+          "rounds": [
+            34281982.0,
+            34258706.0,
+            34299840.0,
+            34296866.0
+          ]
+        }
+      },
+      "256": {
+        "no-fusion": {
+          "median": 15500728.5,
+          "min": 14851142.0,
+          "max": 15601204.0,
+          "rounds": [
+            14851142.0,
+            15568684.0,
+            15601204.0,
+            15432773.0
+          ]
+        },
+        "stage-fp32": {
+          "median": 15614913.0,
+          "min": 15614615.0,
+          "max": 15616066.0,
+          "rounds": [
+            15614615.0,
+            15614715.0,
+            15615111.0,
+            15616066.0
+          ]
+        },
+        "neither": {
+          "median": 13891137.0,
+          "min": 13889236.0,
+          "max": 14927505.0,
+          "rounds": [
+            13889236.0,
+            14927505.0,
+            13890035.0,
+            13892239.0
+          ]
+        },
+        "both": {
+          "median": 15626950.0,
+          "min": 15622726.0,
+          "max": 15630245.0,
+          "rounds": [
+            15630006.0,
+            15630245.0,
+            15622726.0,
+            15623894.0
+          ]
+        }
+      }
+    },
+    "fp32": {
+      "1024": {
+        "no-fusion": {
+          "median": 15616272.0,
+          "min": 15447368.0,
+          "max": 15621459.0,
+          "rounds": [
+            15621459.0,
+            15447368.0,
+            15616220.0,
+            15616324.0
+          ]
+        },
+        "stage-fp32": {
+          "median": 15899587.0,
+          "min": 15543943.0,
+          "max": 16012540.0,
+          "rounds": [
+            16012540.0,
+            16005909.0,
+            15543943.0,
+            15793265.0
+          ]
+        },
+        "neither": {
+          "median": 15615347.5,
+          "min": 15398073.0,
+          "max": 15616616.0,
+          "rounds": [
+            15614881.0,
+            15615814.0,
+            15398073.0,
+            15616616.0
+          ]
+        },
+        "both": {
+          "median": 15971846.5,
+          "min": 15916712.0,
+          "max": 16026476.0,
+          "rounds": [
+            15969069.0,
+            15916712.0,
+            16026476.0,
+            15974624.0
+          ]
+        }
+      },
+      "4096": {
+        "no-fusion": {
+          "median": 18601724.0,
+          "min": 18568123.0,
+          "max": 18611804.0,
+          "rounds": [
+            18568123.0,
+            18600793.0,
+            18611804.0,
+            18602655.0
+          ]
+        },
+        "stage-fp32": {
+          "median": 18658027.0,
+          "min": 18650050.0,
+          "max": 18668708.0,
+          "rounds": [
+            18650050.0,
+            18654457.0,
+            18668708.0,
+            18661597.0
+          ]
+        },
+        "neither": {
+          "median": 18596932.5,
+          "min": 18567067.0,
+          "max": 18606123.0,
+          "rounds": [
+            18567067.0,
+            18589607.0,
+            18606123.0,
+            18604258.0
+          ]
+        },
+        "both": {
+          "median": 18660190.0,
+          "min": 18647731.0,
+          "max": 18663012.0,
+          "rounds": [
+            18647731.0,
+            18663012.0,
+            18659283.0,
+            18661097.0
+          ]
+        }
+      },
+      "8192": {
+        "no-fusion": {
+          "median": 18485944.5,
+          "min": 18373854.0,
+          "max": 18500567.0,
+          "rounds": [
+            18488425.0,
+            18483464.0,
+            18373854.0,
+            18500567.0
+          ]
+        },
+        "stage-fp32": {
+          "median": 18529190.5,
+          "min": 18514412.0,
+          "max": 18554638.0,
+          "rounds": [
+            18514502.0,
+            18514412.0,
+            18554638.0,
+            18543879.0
+          ]
+        },
+        "neither": {
+          "median": 18493546.0,
+          "min": 18481528.0,
+          "max": 18507341.0,
+          "rounds": [
+            18487763.0,
+            18481528.0,
+            18507341.0,
+            18499329.0
+          ]
+        },
+        "both": {
+          "median": 18531854.5,
+          "min": 18506146.0,
+          "max": 18552115.0,
+          "rounds": [
+            18522375.0,
+            18506146.0,
+            18552115.0,
+            18541334.0
+          ]
+        }
+      },
+      "16384": {
+        "no-fusion": {
+          "median": 18321551.0,
+          "min": 18314266.0,
+          "max": 18321880.0,
+          "rounds": [
+            18314266.0,
+            18321256.0,
+            18321846.0,
+            18321880.0
+          ]
+        },
+        "stage-fp32": {
+          "median": 18328390.0,
+          "min": 18319083.0,
+          "max": 18339748.0,
+          "rounds": [
+            18329515.0,
+            18327265.0,
+            18319083.0,
+            18339748.0
+          ]
+        },
+        "neither": {
+          "median": 18318109.0,
+          "min": 18311046.0,
+          "max": 18327774.0,
+          "rounds": [
+            18316347.0,
+            18319871.0,
+            18311046.0,
+            18327774.0
+          ]
+        },
+        "both": {
+          "median": 18332452.5,
+          "min": 18325043.0,
+          "max": 18343234.0,
+          "rounds": [
+            18331353.0,
+            18333552.0,
+            18325043.0,
+            18343234.0
+          ]
+        }
+      },
+      "65536": {
+        "no-fusion": {
+          "median": 17401305.0,
+          "min": 17392934.0,
+          "max": 17406023.0,
+          "rounds": [
+            17400710.0,
+            17406023.0,
+            17392934.0,
+            17401900.0
+          ]
+        },
+        "stage-fp32": {
+          "median": 17405761.5,
+          "min": 17390326.0,
+          "max": 17412789.0,
+          "rounds": [
+            17390326.0,
+            17401965.0,
+            17409558.0,
+            17412789.0
+          ]
+        },
+        "neither": {
+          "median": 17399049.5,
+          "min": 17392288.0,
+          "max": 17406821.0,
+          "rounds": [
+            17406821.0,
+            17401960.0,
+            17396139.0,
+            17392288.0
+          ]
+        },
+        "both": {
+          "median": 17402837.5,
+          "min": 17383367.0,
+          "max": 17420001.0,
+          "rounds": [
+            17420001.0,
+            17411125.0,
+            17394550.0,
+            17383367.0
+          ]
+        }
+      },
+      "256": {
+        "no-fusion": {
+          "median": 10418802.5,
+          "min": 10417579.0,
+          "max": 10419133.0,
+          "rounds": [
+            10417579.0,
+            10419133.0,
+            10418557.0,
+            10419048.0
+          ]
+        },
+        "stage-fp32": {
+          "median": 11356963.0,
+          "min": 11356716.0,
+          "max": 11357419.0,
+          "rounds": [
+            11356716.0,
+            11356903.0,
+            11357023.0,
+            11357419.0
+          ]
+        },
+        "neither": {
+          "median": 10418761.5,
+          "min": 10333250.0,
+          "max": 10419172.0,
+          "rounds": [
+            10419172.0,
+            10333250.0,
+            10419120.0,
+            10418403.0
+          ]
+        },
+        "both": {
+          "median": 11357136.5,
+          "min": 11356828.0,
+          "max": 11357260.0,
+          "rounds": [
+            11356828.0,
+            11357018.0,
+            11357260.0,
+            11357255.0
+          ]
+        }
+      }
+    }
+  }
+}

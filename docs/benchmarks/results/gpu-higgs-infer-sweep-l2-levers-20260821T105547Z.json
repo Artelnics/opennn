@@ -1,0 +1,1432 @@
+{
+  "benchmark": "gpu-higgs-dense-inference-sweep",
+  "label": "l2-levers",
+  "run_id": "20260821T105547Z",
+  "protocol": {
+    "batches": [
+      16384,
+      32768,
+      65536
+    ],
+    "arms": [
+      {
+        "engine": "opennn",
+        "label": "base",
+        "env": {}
+      },
+      {
+        "engine": "opennn",
+        "label": "cand32",
+        "env": {
+          "OPENNN_LT_AUTOTUNE_CANDIDATES": "32"
+        }
+      },
+      {
+        "engine": "opennn",
+        "label": "c12288",
+        "env": {
+          "OPENNN_GEMM_ROW_CHUNK": "12288"
+        }
+      },
+      {
+        "engine": "opennn",
+        "label": "c20480",
+        "env": {
+          "OPENNN_GEMM_ROW_CHUNK": "20480"
+        }
+      },
+      {
+        "engine": "opennn",
+        "label": "c8192cand32",
+        "env": {
+          "OPENNN_GEMM_ROW_CHUNK": "8192",
+          "OPENNN_LT_AUTOTUNE_CANDIDATES": "32"
+        }
+      }
+    ],
+    "rounds_kept": 4,
+    "soak_rounds": 1,
+    "passes_per_batch": 5,
+    "rotation": "arm order and batch order both rotate by round index"
+  },
+  "git": {
+    "commit": "3524cf5b8cf1849a5d7cdc4631f6a2b67df0a999",
+    "branch": "dev",
+    "dirty": true,
+    "status_short": [
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-baseline-3524cf5b8-20260821T085448Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-bigbatch-20260821T104141Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-chunk-small-20260821T102040Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-confirm-20260821T094905Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-gemm-chunk-20260821T100613Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-headtohead-best-20260821T093203Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-headtohead-chunked-20260821T101330Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-lever-ab-20260821T092745Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-pt-config-bf16-20260821T090136Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-pt-config-fp32-20260821T091146Z.json",
+      " M docs/benchmarks/throughput/higgs-gpu/README.md",
+      " M docs/benchmarks/throughput/higgs-gpu/higgs-gpu-inference-opennn-vs-pytorch-vs-tensorflow.md",
+      " M docs/benchmarks/throughput/higgs-gpu/opennn_higgs_infer.cpp",
+      " M docs/benchmarks/throughput/higgs-gpu/pytorch_higgs_infer.py",
+      " M docs/benchmarks/throughput/higgs-gpu/run_higgs_infer.py",
+      " M docs/benchmarks/throughput/higgs-gpu/tensorflow_higgs_infer.py",
+      " M opennn/core/cuda/kernel_activation.cu",
+      " M opennn/core/cuda/kernel_common.cuh",
+      " M opennn/core/cuda/kernel_tensor.cu",
+      " M opennn/core/cuda/kernel_tensor.cuh",
+      " M opennn/core/tensor_operations.cpp",
+      " M opennn/core/tensor_operations.h",
+      " M opennn/neural_network/layers/dense_layer.cpp",
+      " M opennn/neural_network/layers/kernel_recurrent.cu",
+      " M opennn/neural_network/operators/combination_operator.cpp",
+      "?? docs/benchmarks/throughput/higgs-gpu/gemm_chunk_probe.cu",
+      "?? docs/benchmarks/throughput/higgs-gpu/l1_align_probe.cu",
+      "?? docs/benchmarks/throughput/higgs-gpu/l1_kernel_probe.cu",
+      "?? docs/benchmarks/throughput/higgs-gpu/run_higgs_infer_sweep.py",
+      "?? tests/core/gemm_row_chunk_test.cpp",
+      "?? tests/neural_network/layers/single_output_activation_fusion_test.cpp"
+    ]
+  },
+  "rounds": [
+    {
+      "index": 0,
+      "soak": true,
+      "arm_order": [
+        "base",
+        "cand32",
+        "c12288",
+        "c20480",
+        "c8192cand32"
+      ],
+      "batch_order": [
+        16384,
+        32768,
+        65536
+      ],
+      "results": {
+        "base/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0142159,
+                0.0142197,
+                0.0140358,
+                0.0136725,
+                0.0141037
+              ],
+              "samples_per_sec": 34850365.0,
+              "median_pass_s": 0.0141037,
+              "ms_per_batch": 0.470124
+            },
+            "32768": {
+              "pass_times": [
+                0.0147726,
+                0.014867,
+                0.0146058,
+                0.0145692,
+                0.0144263
+              ],
+              "samples_per_sec": 33652472.0,
+              "median_pass_s": 0.0146058,
+              "ms_per_batch": 0.973717
+            },
+            "65536": {
+              "pass_times": [
+                0.013439,
+                0.0136777,
+                0.0136912,
+                0.0136807,
+                0.0135409
+              ],
+              "samples_per_sec": 33540240.0,
+              "median_pass_s": 0.0136777,
+              "ms_per_batch": 1.95395
+            }
+          },
+          "tail": ""
+        },
+        "cand32/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0139471,
+                0.0141591,
+                0.0143437,
+                0.0141961,
+                0.0141992
+              ],
+              "samples_per_sec": 34623627.0,
+              "median_pass_s": 0.0141961,
+              "ms_per_batch": 0.473203
+            },
+            "32768": {
+              "pass_times": [
+                0.0140688,
+                0.0143166,
+                0.0145254,
+                0.0145694,
+                0.0146016
+              ],
+              "samples_per_sec": 33838713.0,
+              "median_pass_s": 0.0145254,
+              "ms_per_batch": 0.968358
+            },
+            "65536": {
+              "pass_times": [
+                0.0136764,
+                0.0135548,
+                0.0131358,
+                0.0135399,
+                0.0136807
+              ],
+              "samples_per_sec": 33844212.0,
+              "median_pass_s": 0.0135548,
+              "ms_per_batch": 1.9364
+            }
+          },
+          "tail": ""
+        },
+        "c12288/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0139287,
+                0.0143112,
+                0.0144902,
+                0.0145381,
+                0.0144014
+              ],
+              "samples_per_sec": 34129944.0,
+              "median_pass_s": 0.0144014,
+              "ms_per_batch": 0.480048
+            },
+            "32768": {
+              "pass_times": [
+                0.0144873,
+                0.0145504,
+                0.0145893,
+                0.0145747,
+                0.0145575
+              ],
+              "samples_per_sec": 33764127.0,
+              "median_pass_s": 0.0145575,
+              "ms_per_batch": 0.970497
+            },
+            "65536": {
+              "pass_times": [
+                0.0131916,
+                0.0135666,
+                0.013719,
+                0.0137311,
+                0.013727
+              ],
+              "samples_per_sec": 33439254.0,
+              "median_pass_s": 0.013719,
+              "ms_per_batch": 1.95985
+            }
+          },
+          "tail": ""
+        },
+        "c20480/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0140242,
+                0.0136797,
+                0.0141057,
+                0.0142217,
+                0.0142086
+              ],
+              "samples_per_sec": 34845406.0,
+              "median_pass_s": 0.0141057,
+              "ms_per_batch": 0.470191
+            },
+            "32768": {
+              "pass_times": [
+                0.0144635,
+                0.0143043,
+                0.0139815,
+                0.0143299,
+                0.0144515
+              ],
+              "samples_per_sec": 34300328.0,
+              "median_pass_s": 0.0143299,
+              "ms_per_batch": 0.955326
+            },
+            "65536": {
+              "pass_times": [
+                0.0136755,
+                0.013808,
+                0.0136686,
+                0.0132168,
+                0.0135909
+              ],
+              "samples_per_sec": 33562564.0,
+              "median_pass_s": 0.0136686,
+              "ms_per_batch": 1.95265
+            }
+          },
+          "tail": ""
+        },
+        "c8192cand32/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0138608,
+                0.0143923,
+                0.0144187,
+                0.014485,
+                0.0144462
+              ],
+              "samples_per_sec": 34089086.0,
+              "median_pass_s": 0.0144187,
+              "ms_per_batch": 0.480623
+            },
+            "32768": {
+              "pass_times": [
+                0.0147718,
+                0.0145542,
+                0.0142294,
+                0.0144943,
+                0.014698
+              ],
+              "samples_per_sec": 33771620.0,
+              "median_pass_s": 0.0145542,
+              "ms_per_batch": 0.970282
+            },
+            "65536": {
+              "pass_times": [
+                0.0139078,
+                0.0139113,
+                0.0139128,
+                0.0136539,
+                0.0134643
+              ],
+              "samples_per_sec": 32985269.0,
+              "median_pass_s": 0.0139078,
+              "ms_per_batch": 1.98683
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 1,
+      "soak": false,
+      "arm_order": [
+        "cand32",
+        "c12288",
+        "c20480",
+        "c8192cand32",
+        "base"
+      ],
+      "batch_order": [
+        32768,
+        65536,
+        16384
+      ],
+      "results": {
+        "cand32/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0145406,
+                0.0145942,
+                0.0146058,
+                0.01458,
+                0.0145768
+              ],
+              "samples_per_sec": 33711996.0,
+              "median_pass_s": 0.01458,
+              "ms_per_batch": 0.971998
+            },
+            "65536": {
+              "pass_times": [
+                0.0131638,
+                0.0135462,
+                0.0136759,
+                0.0136775,
+                0.0136943
+              ],
+              "samples_per_sec": 33544544.0,
+              "median_pass_s": 0.0136759,
+              "ms_per_batch": 1.9537
+            },
+            "16384": {
+              "pass_times": [
+                0.0141212,
+                0.0141067,
+                0.0141302,
+                0.0142023,
+                0.0143855
+              ],
+              "samples_per_sec": 34785082.0,
+              "median_pass_s": 0.0141302,
+              "ms_per_batch": 0.471006
+            }
+          },
+          "tail": ""
+        },
+        "c12288/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0147032,
+                0.0146085,
+                0.0145718,
+                0.014555,
+                0.0143997
+              ],
+              "samples_per_sec": 33730914.0,
+              "median_pass_s": 0.0145718,
+              "ms_per_batch": 0.971453
+            },
+            "65536": {
+              "pass_times": [
+                0.0135444,
+                0.0133797,
+                0.013784,
+                0.0137039,
+                0.0137239
+              ],
+              "samples_per_sec": 33476081.0,
+              "median_pass_s": 0.0137039,
+              "ms_per_batch": 1.9577
+            },
+            "16384": {
+              "pass_times": [
+                0.0141021,
+                0.0138893,
+                0.0142969,
+                0.0145333,
+                0.0145437
+              ],
+              "samples_per_sec": 34379382.0,
+              "median_pass_s": 0.0142969,
+              "ms_per_batch": 0.476565
+            }
+          },
+          "tail": ""
+        },
+        "c20480/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0142059,
+                0.0145816,
+                0.0146325,
+                0.0146354,
+                0.0145578
+              ],
+              "samples_per_sec": 33708218.0,
+              "median_pass_s": 0.0145816,
+              "ms_per_batch": 0.972107
+            },
+            "65536": {
+              "pass_times": [
+                0.0136805,
+                0.0135225,
+                0.0131499,
+                0.013717,
+                0.0136719
+              ],
+              "samples_per_sec": 33554409.0,
+              "median_pass_s": 0.0136719,
+              "ms_per_batch": 1.95313
+            },
+            "16384": {
+              "pass_times": [
+                0.0143555,
+                0.0141283,
+                0.0137009,
+                0.014172,
+                0.0142573
+              ],
+              "samples_per_sec": 34682543.0,
+              "median_pass_s": 0.014172,
+              "ms_per_batch": 0.472399
+            }
+          },
+          "tail": ""
+        },
+        "c8192cand32/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.014806,
+                0.0146074,
+                0.0142855,
+                0.0146591,
+                0.014704
+              ],
+              "samples_per_sec": 33529934.0,
+              "median_pass_s": 0.0146591,
+              "ms_per_batch": 0.977276
+            },
+            "65536": {
+              "pass_times": [
+                0.0139279,
+                0.0139209,
+                0.0139456,
+                0.0136577,
+                0.0136936
+              ],
+              "samples_per_sec": 32954297.0,
+              "median_pass_s": 0.0139209,
+              "ms_per_batch": 1.98869
+            },
+            "16384": {
+              "pass_times": [
+                0.0146963,
+                0.014737,
+                0.0145705,
+                0.0145595,
+                0.0143808
+              ],
+              "samples_per_sec": 33733919.0,
+              "median_pass_s": 0.0145705,
+              "ms_per_batch": 0.485683
+            }
+          },
+          "tail": ""
+        },
+        "base/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0145817,
+                0.0146116,
+                0.0145822,
+                0.0145823,
+                0.0144054
+              ],
+              "samples_per_sec": 33706905.0,
+              "median_pass_s": 0.0145822,
+              "ms_per_batch": 0.972145
+            },
+            "65536": {
+              "pass_times": [
+                0.0131561,
+                0.0135475,
+                0.0137927,
+                0.0136937,
+                0.0136985
+              ],
+              "samples_per_sec": 33500979.0,
+              "median_pass_s": 0.0136937,
+              "ms_per_batch": 1.95624
+            },
+            "16384": {
+              "pass_times": [
+                0.0139812,
+                0.014353,
+                0.0144171,
+                0.0144539,
+                0.0143378
+              ],
+              "samples_per_sec": 34245167.0,
+              "median_pass_s": 0.014353,
+              "ms_per_batch": 0.478432
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 2,
+      "soak": false,
+      "arm_order": [
+        "c12288",
+        "c20480",
+        "c8192cand32",
+        "base",
+        "cand32"
+      ],
+      "batch_order": [
+        65536,
+        16384,
+        32768
+      ],
+      "results": {
+        "c12288/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.0137205,
+                0.0138747,
+                0.0137215,
+                0.0131988,
+                0.0136156
+              ],
+              "samples_per_sec": 33435496.0,
+              "median_pass_s": 0.0137205,
+              "ms_per_batch": 1.96007
+            },
+            "16384": {
+              "pass_times": [
+                0.0143756,
+                0.014447,
+                0.014368,
+                0.0142146,
+                0.0138609
+              ],
+              "samples_per_sec": 34209411.0,
+              "median_pass_s": 0.014368,
+              "ms_per_batch": 0.478933
+            },
+            "32768": {
+              "pass_times": [
+                0.0145656,
+                0.0143914,
+                0.0140406,
+                0.0144894,
+                0.0146769
+              ],
+              "samples_per_sec": 33922757.0,
+              "median_pass_s": 0.0144894,
+              "ms_per_batch": 0.965959
+            }
+          },
+          "tail": ""
+        },
+        "c20480/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.013664,
+                0.0135234,
+                0.0129585,
+                0.0136619,
+                0.0136756
+              ],
+              "samples_per_sec": 33579027.0,
+              "median_pass_s": 0.0136619,
+              "ms_per_batch": 1.95169
+            },
+            "16384": {
+              "pass_times": [
+                0.0142455,
+                0.01392,
+                0.013852,
+                0.0144879,
+                0.0144429
+              ],
+              "samples_per_sec": 34503566.0,
+              "median_pass_s": 0.0142455,
+              "ms_per_batch": 0.474849
+            },
+            "32768": {
+              "pass_times": [
+                0.0143071,
+                0.0139444,
+                0.0143681,
+                0.0145806,
+                0.014629
+              ],
+              "samples_per_sec": 34209042.0,
+              "median_pass_s": 0.0143681,
+              "ms_per_batch": 0.957875
+            }
+          },
+          "tail": ""
+        },
+        "c8192cand32/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.0139416,
+                0.0139886,
+                0.0133959,
+                0.0137744,
+                0.0138911
+              ],
+              "samples_per_sec": 33024917.0,
+              "median_pass_s": 0.0138911,
+              "ms_per_batch": 1.98444
+            },
+            "16384": {
+              "pass_times": [
+                0.0145824,
+                0.0146543,
+                0.0143918,
+                0.0140973,
+                0.0142924
+              ],
+              "samples_per_sec": 34152793.0,
+              "median_pass_s": 0.0143918,
+              "ms_per_batch": 0.479727
+            },
+            "32768": {
+              "pass_times": [
+                0.0147482,
+                0.0148089,
+                0.014802,
+                0.0148993,
+                0.0148034
+              ],
+              "samples_per_sec": 33203187.0,
+              "median_pass_s": 0.0148034,
+              "ms_per_batch": 0.986893
+            }
+          },
+          "tail": ""
+        },
+        "base/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.0128814,
+                0.0128781,
+                0.0128802,
+                0.0128764,
+                0.0128846
+              ],
+              "samples_per_sec": 35616860.0,
+              "median_pass_s": 0.0128802,
+              "ms_per_batch": 1.84003
+            },
+            "16384": {
+              "pass_times": [
+                0.013396,
+                0.0141167,
+                0.013495,
+                0.0136197,
+                0.0140655
+              ],
+              "samples_per_sec": 36088998.0,
+              "median_pass_s": 0.0136197,
+              "ms_per_batch": 0.453989
+            },
+            "32768": {
+              "pass_times": [
+                0.0146801,
+                0.0146232,
+                0.0137988,
+                0.0138028,
+                0.0137963
+              ],
+              "samples_per_sec": 35610176.0,
+              "median_pass_s": 0.0138028,
+              "ms_per_batch": 0.920186
+            }
+          },
+          "tail": ""
+        },
+        "cand32/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.0131696,
+                0.0135144,
+                0.0136101,
+                0.0135946,
+                0.0135967
+              ],
+              "samples_per_sec": 33745131.0,
+              "median_pass_s": 0.0135946,
+              "ms_per_batch": 1.94209
+            },
+            "16384": {
+              "pass_times": [
+                0.0138624,
+                0.0140587,
+                0.014166,
+                0.0141313,
+                0.0141506
+              ],
+              "samples_per_sec": 34782478.0,
+              "median_pass_s": 0.0141313,
+              "ms_per_batch": 0.471042
+            },
+            "32768": {
+              "pass_times": [
+                0.0145209,
+                0.0140781,
+                0.0142533,
+                0.014513,
+                0.0145509
+              ],
+              "samples_per_sec": 33867473.0,
+              "median_pass_s": 0.014513,
+              "ms_per_batch": 0.967536
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 3,
+      "soak": false,
+      "arm_order": [
+        "c20480",
+        "c8192cand32",
+        "base",
+        "cand32",
+        "c12288"
+      ],
+      "batch_order": [
+        16384,
+        32768,
+        65536
+      ],
+      "results": {
+        "c20480/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0141267,
+                0.013939,
+                0.01348,
+                0.0140515,
+                0.0142431
+              ],
+              "samples_per_sec": 34979987.0,
+              "median_pass_s": 0.0140515,
+              "ms_per_batch": 0.468382
+            },
+            "32768": {
+              "pass_times": [
+                0.0143722,
+                0.0142175,
+                0.0139555,
+                0.0141309,
+                0.0143907
+              ],
+              "samples_per_sec": 34571391.0,
+              "median_pass_s": 0.0142175,
+              "ms_per_batch": 0.947836
+            },
+            "65536": {
+              "pass_times": [
+                0.0135872,
+                0.0135788,
+                0.0134298,
+                0.0131378,
+                0.013442
+              ],
+              "samples_per_sec": 34128178.0,
+              "median_pass_s": 0.013442,
+              "ms_per_batch": 1.92029
+            }
+          },
+          "tail": ""
+        },
+        "c8192cand32/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0143682,
+                0.0140095,
+                0.0141945,
+                0.0144906,
+                0.0144545
+              ],
+              "samples_per_sec": 34208873.0,
+              "median_pass_s": 0.0143682,
+              "ms_per_batch": 0.47894
+            },
+            "32768": {
+              "pass_times": [
+                0.0146086,
+                0.0146985,
+                0.0145286,
+                0.0142495,
+                0.0144348
+              ],
+              "samples_per_sec": 33831139.0,
+              "median_pass_s": 0.0145286,
+              "ms_per_batch": 0.968575
+            },
+            "65536": {
+              "pass_times": [
+                0.0138344,
+                0.0138377,
+                0.0138339,
+                0.0133016,
+                0.0137012
+              ],
+              "samples_per_sec": 33161549.0,
+              "median_pass_s": 0.0138339,
+              "ms_per_batch": 1.97626
+            }
+          },
+          "tail": ""
+        },
+        "base/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0136836,
+                0.0138737,
+                0.0141443,
+                0.0141481,
+                0.0141172
+              ],
+              "samples_per_sec": 34817188.0,
+              "median_pass_s": 0.0141172,
+              "ms_per_batch": 0.470572
+            },
+            "32768": {
+              "pass_times": [
+                0.0143182,
+                0.0140515,
+                0.0142381,
+                0.0144562,
+                0.0145026
+              ],
+              "samples_per_sec": 34328397.0,
+              "median_pass_s": 0.0143182,
+              "ms_per_batch": 0.954545
+            },
+            "65536": {
+              "pass_times": [
+                0.0136077,
+                0.0134522,
+                0.0131706,
+                0.0135177,
+                0.0136116
+              ],
+              "samples_per_sec": 33937166.0,
+              "median_pass_s": 0.0135177,
+              "ms_per_batch": 1.9311
+            }
+          },
+          "tail": ""
+        },
+        "cand32/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0140538,
+                0.0141155,
+                0.0141431,
+                0.0139463,
+                0.0136756
+              ],
+              "samples_per_sec": 34974267.0,
+              "median_pass_s": 0.0140538,
+              "ms_per_batch": 0.468459
+            },
+            "32768": {
+              "pass_times": [
+                0.0144968,
+                0.0145188,
+                0.0144938,
+                0.0145148,
+                0.0143454
+              ],
+              "samples_per_sec": 33905497.0,
+              "median_pass_s": 0.0144968,
+              "ms_per_batch": 0.966451
+            },
+            "65536": {
+              "pass_times": [
+                0.0134652,
+                0.0136072,
+                0.0136,
+                0.0136048,
+                0.0134507
+              ],
+              "samples_per_sec": 33731824.0,
+              "median_pass_s": 0.0136,
+              "ms_per_batch": 1.94285
+            }
+          },
+          "tail": ""
+        },
+        "c12288/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0142659,
+                0.0142468,
+                0.0143159,
+                0.0144031,
+                0.0141121
+              ],
+              "samples_per_sec": 34454197.0,
+              "median_pass_s": 0.0142659,
+              "ms_per_batch": 0.47553
+            },
+            "32768": {
+              "pass_times": [
+                0.0144839,
+                0.0145087,
+                0.0143023,
+                0.0140425,
+                0.0142288
+              ],
+              "samples_per_sec": 34366433.0,
+              "median_pass_s": 0.0143023,
+              "ms_per_batch": 0.953489
+            },
+            "65536": {
+              "pass_times": [
+                0.0136101,
+                0.0136489,
+                0.0136251,
+                0.013094,
+                0.0135981
+              ],
+              "samples_per_sec": 33706640.0,
+              "median_pass_s": 0.0136101,
+              "ms_per_batch": 1.94431
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 4,
+      "soak": false,
+      "arm_order": [
+        "c8192cand32",
+        "base",
+        "cand32",
+        "c12288",
+        "c20480"
+      ],
+      "batch_order": [
+        32768,
+        65536,
+        16384
+      ],
+      "results": {
+        "c8192cand32/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0142461,
+                0.014423,
+                0.0146107,
+                0.0146793,
+                0.0147171
+              ],
+              "samples_per_sec": 33641034.0,
+              "median_pass_s": 0.0146107,
+              "ms_per_batch": 0.974049
+            },
+            "65536": {
+              "pass_times": [
+                0.0138369,
+                0.0137094,
+                0.0134132,
+                0.0137118,
+                0.0138545
+              ],
+              "samples_per_sec": 33456755.0,
+              "median_pass_s": 0.0137118,
+              "ms_per_batch": 1.95883
+            },
+            "16384": {
+              "pass_times": [
+                0.0144859,
+                0.0144799,
+                0.0143463,
+                0.0140307,
+                0.0142002
+              ],
+              "samples_per_sec": 34261070.0,
+              "median_pass_s": 0.0143463,
+              "ms_per_batch": 0.47821
+            }
+          },
+          "tail": ""
+        },
+        "base/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0145214,
+                0.0144924,
+                0.014514,
+                0.0143244,
+                0.0140668
+              ],
+              "samples_per_sec": 33915667.0,
+              "median_pass_s": 0.0144924,
+              "ms_per_batch": 0.966161
+            },
+            "65536": {
+              "pass_times": [
+                0.0134498,
+                0.0135911,
+                0.0136153,
+                0.0134559,
+                0.0131787
+              ],
+              "samples_per_sec": 34093078.0,
+              "median_pass_s": 0.0134559,
+              "ms_per_batch": 1.92227
+            },
+            "16384": {
+              "pass_times": [
+                0.0141446,
+                0.0141413,
+                0.0141671,
+                0.0139521,
+                0.0136872
+              ],
+              "samples_per_sec": 34757876.0,
+              "median_pass_s": 0.0141413,
+              "ms_per_batch": 0.471375
+            }
+          },
+          "tail": ""
+        },
+        "cand32/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0144936,
+                0.0143434,
+                0.0140618,
+                0.0142332,
+                0.0145012
+              ],
+              "samples_per_sec": 34268142.0,
+              "median_pass_s": 0.0143434,
+              "ms_per_batch": 0.956223
+            },
+            "65536": {
+              "pass_times": [
+                0.0136066,
+                0.0136071,
+                0.0134602,
+                0.0129869,
+                0.0136047
+              ],
+              "samples_per_sec": 33720012.0,
+              "median_pass_s": 0.0136047,
+              "ms_per_batch": 1.94353
+            },
+            "16384": {
+              "pass_times": [
+                0.014125,
+                0.0141491,
+                0.0135842,
+                0.0138744,
+                0.0140653
+              ],
+              "samples_per_sec": 34945508.0,
+              "median_pass_s": 0.0140653,
+              "ms_per_batch": 0.468844
+            }
+          },
+          "tail": ""
+        },
+        "c12288/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0142047,
+                0.0144024,
+                0.0144736,
+                0.0144719,
+                0.0146108
+              ],
+              "samples_per_sec": 33963846.0,
+              "median_pass_s": 0.0144719,
+              "ms_per_batch": 0.964791
+            },
+            "65536": {
+              "pass_times": [
+                0.0136398,
+                0.0130916,
+                0.0135302,
+                0.0136292,
+                0.0136277
+              ],
+              "samples_per_sec": 33663146.0,
+              "median_pass_s": 0.0136277,
+              "ms_per_batch": 1.94682
+            },
+            "16384": {
+              "pass_times": [
+                0.0141276,
+                0.0138274,
+                0.0140115,
+                0.0142726,
+                0.0142785
+              ],
+              "samples_per_sec": 34791410.0,
+              "median_pass_s": 0.0141276,
+              "ms_per_batch": 0.470921
+            }
+          },
+          "tail": ""
+        },
+        "c20480/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0142942,
+                0.0143669,
+                0.0144018,
+                0.0144089,
+                0.0143935
+              ],
+              "samples_per_sec": 34148686.0,
+              "median_pass_s": 0.0143935,
+              "ms_per_batch": 0.959568
+            },
+            "65536": {
+              "pass_times": [
+                0.0134362,
+                0.0131922,
+                0.013509,
+                0.013592,
+                0.0135989
+              ],
+              "samples_per_sec": 33958927.0,
+              "median_pass_s": 0.013509,
+              "ms_per_batch": 1.92986
+            },
+            "16384": {
+              "pass_times": [
+                0.0136974,
+                0.0140541,
+                0.0141756,
+                0.0141562,
+                0.0141437
+              ],
+              "samples_per_sec": 34751924.0,
+              "median_pass_s": 0.0141437,
+              "ms_per_batch": 0.471456
+            }
+          },
+          "tail": ""
+        }
+      }
+    }
+  ],
+  "summary": {
+    "bf16": {
+      "32768": {
+        "cand32": {
+          "median": 33886485.0,
+          "min": 33711996.0,
+          "max": 34268142.0,
+          "rounds": [
+            33711996.0,
+            33867473.0,
+            33905497.0,
+            34268142.0
+          ]
+        },
+        "c12288": {
+          "median": 33943301.5,
+          "min": 33730914.0,
+          "max": 34366433.0,
+          "rounds": [
+            33730914.0,
+            33922757.0,
+            34366433.0,
+            33963846.0
+          ]
+        },
+        "c20480": {
+          "median": 34178864.0,
+          "min": 33708218.0,
+          "max": 34571391.0,
+          "rounds": [
+            33708218.0,
+            34209042.0,
+            34571391.0,
+            34148686.0
+          ]
+        },
+        "c8192cand32": {
+          "median": 33585484.0,
+          "min": 33203187.0,
+          "max": 33831139.0,
+          "rounds": [
+            33529934.0,
+            33203187.0,
+            33831139.0,
+            33641034.0
+          ]
+        },
+        "base": {
+          "median": 34122032.0,
+          "min": 33706905.0,
+          "max": 35610176.0,
+          "rounds": [
+            33706905.0,
+            35610176.0,
+            34328397.0,
+            33915667.0
+          ]
+        }
+      },
+      "65536": {
+        "cand32": {
+          "median": 33725918.0,
+          "min": 33544544.0,
+          "max": 33745131.0,
+          "rounds": [
+            33544544.0,
+            33745131.0,
+            33731824.0,
+            33720012.0
+          ]
+        },
+        "c12288": {
+          "median": 33569613.5,
+          "min": 33435496.0,
+          "max": 33706640.0,
+          "rounds": [
+            33476081.0,
+            33435496.0,
+            33706640.0,
+            33663146.0
+          ]
+        },
+        "c20480": {
+          "median": 33768977.0,
+          "min": 33554409.0,
+          "max": 34128178.0,
+          "rounds": [
+            33554409.0,
+            33579027.0,
+            34128178.0,
+            33958927.0
+          ]
+        },
+        "c8192cand32": {
+          "median": 33093233.0,
+          "min": 32954297.0,
+          "max": 33456755.0,
+          "rounds": [
+            32954297.0,
+            33024917.0,
+            33161549.0,
+            33456755.0
+          ]
+        },
+        "base": {
+          "median": 34015122.0,
+          "min": 33500979.0,
+          "max": 35616860.0,
+          "rounds": [
+            33500979.0,
+            35616860.0,
+            33937166.0,
+            34093078.0
+          ]
+        }
+      },
+      "16384": {
+        "cand32": {
+          "median": 34865295.0,
+          "min": 34782478.0,
+          "max": 34974267.0,
+          "rounds": [
+            34785082.0,
+            34782478.0,
+            34974267.0,
+            34945508.0
+          ]
+        },
+        "c12288": {
+          "median": 34416789.5,
+          "min": 34209411.0,
+          "max": 34791410.0,
+          "rounds": [
+            34379382.0,
+            34209411.0,
+            34454197.0,
+            34791410.0
+          ]
+        },
+        "c20480": {
+          "median": 34717233.5,
+          "min": 34503566.0,
+          "max": 34979987.0,
+          "rounds": [
+            34682543.0,
+            34503566.0,
+            34979987.0,
+            34751924.0
+          ]
+        },
+        "c8192cand32": {
+          "median": 34180833.0,
+          "min": 33733919.0,
+          "max": 34261070.0,
+          "rounds": [
+            33733919.0,
+            34152793.0,
+            34208873.0,
+            34261070.0
+          ]
+        },
+        "base": {
+          "median": 34787532.0,
+          "min": 34245167.0,
+          "max": 36088998.0,
+          "rounds": [
+            34245167.0,
+            36088998.0,
+            34817188.0,
+            34757876.0
+          ]
+        }
+      }
+    }
+  }
+}

@@ -124,10 +124,16 @@ void softmax(TensorView&);
 void activation_forward(TensorView&, ActivationFunction);
 void activation_backward(const TensorView&, TensorView&, ActivationFunction);
 
+// `fused_activation` is applied to the output after the bias. It exists for the
+// activations cuBLASLt has no epilogue for: the single-output forward folds it
+// into its own store, and every other path runs it as the separate pass it
+// would have been anyway - so a caller may always ask, and asking is only ever
+// a performance decision, never a correctness one.
 void linear_forward(const TensorView&, const TensorView&, const TensorView&,
                     TensorView&, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS,
                     TensorView* pre_activation = nullptr,
-                    const TensorView& weight_scale = {});
+                    const TensorView& weight_scale = {},
+                    ActivationFunction fused_activation = ActivationFunction::Identity);
 // What a caller can ask the backward to fold into the input-delta GEMM instead
 // of paying for it in a pass of its own.
 struct LinearBackwardOptions

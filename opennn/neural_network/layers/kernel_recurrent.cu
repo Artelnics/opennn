@@ -11,9 +11,6 @@
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/neural_network/layers/kernel_recurrent.cuh"
 
-static constexpr int activation_identity = int(opennn::ActivationFunction::Identity);
-static constexpr int activation_softmax  = int(opennn::ActivationFunction::Softmax);
-
 __device__ inline void rnn_activation(int activation_id, float z, float& h, float& dh)
 {
     switch (activation_id)

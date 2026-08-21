@@ -22,9 +22,11 @@ cudaStream_t get_compute_stream();
 
 static constexpr int block_size = 256;
 
+static constexpr int activation_identity   = int(opennn::ActivationFunction::Identity);
 static constexpr int activation_sigmoid    = int(opennn::ActivationFunction::Sigmoid);
 static constexpr int activation_tanh       = int(opennn::ActivationFunction::Tanh);
 static constexpr int activation_relu       = int(opennn::ActivationFunction::ReLU);
+static constexpr int activation_softmax    = int(opennn::ActivationFunction::Softmax);
 static constexpr int activation_leaky_relu = int(opennn::ActivationFunction::LeakyReLU);
 static constexpr int activation_gelu       = int(opennn::ActivationFunction::GELU);
 static constexpr int activation_gelu_tanh  = int(opennn::ActivationFunction::GELUTanh);
@@ -206,6 +208,26 @@ static inline void dispatch_float_bf16(bool bf16, F&& f)
 __device__ __forceinline__ float sigmoid_f(float x)
 {
     return 1.0f / (1.0f + expf(-x));
+}
+
+// Elementwise activations by enum value. Here rather than beside the activation
+// kernels because a kernel that produces a value can apply this to it before
+// the store, which is what fusing an activation into an epilogue means; the
+// single-output dense forward does exactly that.
+__device__ __forceinline__ float opennn_activation_value(float x, int function)
+{
+    if (function == activation_sigmoid)    return sigmoid_f(x);
+    if (function == activation_tanh)       return tanhf(x);
+    if (function == activation_relu)       return fmaxf(x, 0.0f);
+    if (function == activation_leaky_relu) return x >= 0.0f ? x : leaky_relu_slope * x;
+    if (function == activation_gelu)       return 0.5f * x * (1.0f + erff(x * 0.70710678118654752440f));
+    if (function == activation_gelu_tanh)
+    {
+        constexpr float sqrt_2_over_pi = 0.7978845608028654f;
+        return 0.5f * x * (1.0f + tanhf(sqrt_2_over_pi * (x + 0.044715f * x * x * x)));
+    }
+    if (function == activation_silu)       return x * sigmoid_f(x);
+    return x;
 }
 
 static constexpr float padding_epsilon = 1e-7f;

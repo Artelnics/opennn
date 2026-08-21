@@ -211,6 +211,22 @@ if(OPENNN_HAS_CUDA)
 
     target_include_directories(opennn SYSTEM PRIVATE ${CUDNN_FRONTEND_INCLUDE_DIR})
 
+    # CUTLASS is optional and header-only. Without it the narrow-contraction
+    # dense forward compiles to a stub that declines every shape and cuBLASLt
+    # runs everything, which is what the library did before. With it, a first
+    # layer whose contraction is at most 32 is 1.03x to 1.48x faster - see
+    # opennn/core/cuda/cutlass_narrow_gemm.cu for the measurement.
+    if(OpenNN_CUTLASS_INCLUDE_DIR)
+        if(NOT EXISTS "${OpenNN_CUTLASS_INCLUDE_DIR}/cutlass/cutlass.h")
+            message(FATAL_ERROR
+                "OpenNN_CUTLASS_INCLUDE_DIR is set but cutlass/cutlass.h is not under it: "
+                "${OpenNN_CUTLASS_INCLUDE_DIR}")
+        endif()
+        target_include_directories(opennn SYSTEM PRIVATE ${OpenNN_CUTLASS_INCLUDE_DIR})
+        set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/core/cuda/cutlass_narrow_gemm.cu
+                     APPEND PROPERTY COMPILE_DEFINITIONS OPENNN_HAS_CUTLASS)
+    endif()
+
     set_property(
         SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/neural_network/operators/attention_operator.cpp
         APPEND PROPERTY COMPILE_DEFINITIONS HAVE_CUDNN_FRONTEND)

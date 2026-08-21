@@ -168,8 +168,8 @@ true);
 
             forward_propagation.set_cuda_graph(false);
             const Index profile_runs = 20;
-            ::opennn::enabled() = true;
-            ::opennn::global_stats().clear();
+            profiler::set_enabled(true);
+            profiler::stats().clear();
             const auto p0 = clock_type::now();
             for (Index run = 0; run < profile_runs; ++run)
                 network.calculate_outputs_resident(inputs, forward_propagation, false);
@@ -178,8 +178,8 @@ true);
 #endif
             const double profile_ms =
                 chrono::duration<double, milli>(clock_type::now() - p0).count();
-            ::opennn::enabled() = false;
-            ::opennn::global_stats().print(cout, "ResNet-50 inference forward breakdown",
+            profiler::set_enabled(false);
+            profiler::stats().print(cout, "ResNet-50 inference forward breakdown",
                                            profile_ms);
             cout << "profile_ms_per_batch=" << profile_ms / double(profile_runs) << "\n";
         }

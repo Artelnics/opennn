@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/core/string_utilities.h"
 #include "opennn/registry.h"
 
 namespace opennn
@@ -199,14 +200,37 @@ void Dense::configure_operators()
                                 && !batch_norm.active()
                                 && output_features % 8 == 0;
 
-    combination.fused_activation = fuse_relu      ? ActivationFunction::ReLU
-                                 : fuse_gelu_tanh ? ActivationFunction::GELUTanh
-                                                  : ActivationFunction::Identity;
+    // A single-output layer - a classifier head, a regression output - runs its
+    // combination as a row-wise reduction on CUDA, and that kernel can carry
+    // any elementwise activation in the register it has just accumulated. Its
+    // own activation pass would be a launch to read and write one number per
+    // row: about a microsecond, which is five per cent of what a batch of 256
+    // costs. The activations excluded are the ones whose backward reads the
+    // pre-activation value, which this does not keep.
+    // Dropout is excluded because the pre-dropout activation is saved by the
+    // activation pass this fusion removes; ReLU and GELU-tanh reach the same
+    // exclusion through saves_pre_dropout_activation's own two clauses.
+    // OPENNN_SINGLE_OUTPUT_ACTIVATION=0 keeps the separate pass for the A/B.
+    static const bool fuse_single_output_enabled =
+        env_flag_enabled("OPENNN_SINGLE_OUTPUT_ACTIVATION", true);
+
+    const bool fuse_single_output = fuse_single_output_enabled
+                                    && output_features == 1
+                                    && !batch_norm.active()
+                                    && !input_deriv
+                                    && !saves_pre_dropout_activation()
+                                    && activation_operator.activation_function != ActivationFunction::Softmax
+                                    && activation_operator.activation_function != ActivationFunction::Identity;
+
+    combination.fused_activation = fuse_relu          ? ActivationFunction::ReLU
+                                 : fuse_gelu_tanh     ? ActivationFunction::GELUTanh
+                                 : fuse_single_output ? activation_operator.activation_function
+                                                      : ActivationFunction::Identity;
 
     if (fuse_gelu_tanh)
         combination.output_slots = {CombinationView, Output};
 
-    activation_operator.forward_fused = fuse_relu || fuse_gelu_tanh;
+    activation_operator.forward_fused = fuse_relu || fuse_gelu_tanh || fuse_single_output;
 
     dropout.input_slots  = {Output};
     dropout.output_slots = {Output};

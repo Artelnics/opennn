@@ -130,8 +130,10 @@ int main(int argc, char* argv[])
         cout << "step_s=" << per << "\n";
         cout << "tokens_per_sec=" << long(tokens / per) << "\n";
         cout << "sequences_per_sec=" << long(double(batch) / per) << "\n";
+#ifdef OPENNN_HAS_CUDA
         // Zero here means the rung never applied, whatever it was asked for.
         cout << "flash_attention_calls=" << flash_attention::call_count() << "\n";
+#endif
         cout << "RESULT=OK\n";
         return 0;
     }

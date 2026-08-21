@@ -19,10 +19,15 @@ void bias_grad_sum_cuda(const Index batch, const Index features,
 // bandwidth a streaming reduction reaches, which matters because the operation
 // is entirely limited by reading the input. Requires the feature count to fill
 // whole 16-byte vectors; callers check that and keep cuBLAS otherwise.
+//
+// `activation` is an ActivationFunction value applied to each result before it
+// is stored, or Identity for none. A single-output layer produces one element
+// per row, so an activation of its own would be a launch that reads and writes
+// one number per row; here it is a register operation.
 template<typename T>
 void linear_forward_single_output_cuda(const Index rows, const Index features,
                                        const T* input, const T* weights,
-                                       const T* bias, T* output);
+                                       const T* bias, const int activation, T* output);
 
 // Backward of that layer: the input delta, the weight gradient and the bias
 // gradient in one pass over the input, where cuBLAS reads it twice through two

@@ -146,8 +146,10 @@ int main(int argc, char* argv[])
         cout << "wall_s=" << wall_s << "\n";
         cout << "samples_per_sec=" << samples_per_s << "\n";
         cout << "tokens_per_sec=" << tokens_per_s << "\n";
+#ifdef OPENNN_HAS_CUDA
         // Zero here means the rung never applied, whatever it was asked for.
         cout << "flash_attention_calls=" << flash_attention::call_count() << "\n";
+#endif
 
         return 0;
     }

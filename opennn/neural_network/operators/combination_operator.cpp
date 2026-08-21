@@ -139,6 +139,17 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
         }
     }
 
+    // A layer with one output does not go through cuBLASLt at all on CUDA - it
+    // takes the row-wise reduction, which has no epilogue vocabulary - so its
+    // activation travels as an argument instead of as an epilogue, and covers
+    // the ones cuBLASLt has no epilogue for either. linear_forward runs it as a
+    // separate pass wherever it cannot fold it, so this is only ever a speed
+    // decision.
+    if (output_features == 1 && fused_activation != ActivationFunction::Identity)
+        return linear_forward(get_input(forward_propagation, layer), weights, bias, output,
+                              use_bias ? CUBLASLT_EPILOGUE_BIAS : CUBLASLT_EPILOGUE_DEFAULT,
+                              nullptr, weight_scale, fused_activation);
+
     const cublasLtEpilogue_t epilogue = use_bias
         ? (relu ? CUBLASLT_EPILOGUE_RELU_BIAS : CUBLASLT_EPILOGUE_BIAS)
         : (relu ? CUBLASLT_EPILOGUE_RELU      : CUBLASLT_EPILOGUE_DEFAULT);

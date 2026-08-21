@@ -77,46 +77,85 @@ def run_tensorflow(args: argparse.Namespace) -> None:
         x = tf.constant(x_np)
         y = tf.constant(y_np)
         xt = tf.constant(xt_np)
-        model = make_model(x_np.shape[1])
-        optimizer = tf.keras.optimizers.Adam()
-        loss_fn = tf.keras.losses.BinaryCrossentropy()
 
-        @tf.function(jit_compile=tensorflow_jit())
-        def train_step(xb, yb):
-            with tf.GradientTape() as tape:
-                pred = model(xb, training=True)
-                loss = loss_fn(yb, pred)
-            grads = tape.gradient(loss, model.trainable_variables)
-            optimizer.apply_gradients(zip(grads, model.trainable_variables))
-            return loss
+        def measure_train(batch: int) -> dict:
+            # A fresh model and optimizer per rung, so a batch size never
+            # inherits the previous rung's weights and its held-out metrics stay
+            # comparable with the other engines'.
+            model = make_model(x_np.shape[1])
+            optimizer = tf.keras.optimizers.Adam()
+            loss_fn = tf.keras.losses.BinaryCrossentropy()
 
-        def run_epoch() -> None:
-            for start, end in batches(x_np.shape[0], args.batch):
-                train_step(x[start:end], y[start:end])
+            @tf.function(jit_compile=tensorflow_jit())
+            def train_step(xb, yb):
+                with tf.GradientTape() as tape:
+                    pred = model(xb, training=True)
+                    loss = loss_fn(yb, pred)
+                grads = tape.gradient(loss, model.trainable_variables)
+                optimizer.apply_gradients(zip(grads, model.trainable_variables))
+                return loss
 
-        for _ in range(args.warmup_epochs):
-            run_epoch()
+            def run_epoch() -> None:
+                for start, end in batches(x_np.shape[0], batch):
+                    train_step(x[start:end], y[start:end])
 
-        times: list[float] = []
-        for _ in range(args.epochs):
-            t0 = time.perf_counter()
-            run_epoch()
-            times.append(time.perf_counter() - t0)
-        times.sort()
-        median_epoch_s = times[len(times) // 2]
+            for _ in range(args.warmup_epochs):
+                run_epoch()
 
-        preds = []
-        for start, end in batches(xt_np.shape[0], args.batch):
-            preds.append(model(xt[start:end], training=False).numpy())
-        pred_np = np.vstack(preds) if preds else np.empty((0, 1), dtype=np.float32)
-        metrics = binary_metrics(yt_np[: pred_np.shape[0]], pred_np)
+            times: list[float] = []
+            for _ in range(args.epochs):
+                t0 = time.perf_counter()
+                run_epoch()
+                times.append(time.perf_counter() - t0)
+
+            # In temporal order, before the sort: a median hides a drifting
+            # machine entirely. If these fall monotonically, the run is
+            # measuring the clock rather than the code.
+            print(f"batch_{batch}_epoch_times=" + ",".join(f"{t:.9g}" for t in times),
+                  flush=True)
+
+            median_epoch_s = sorted(times)[len(times) // 2]
+
+            preds = []
+            for start, end in batches(xt_np.shape[0], batch):
+                preds.append(model(xt[start:end], training=False).numpy())
+            pred_np = np.vstack(preds) if preds else np.empty((0, 1), dtype=np.float32)
+            metrics = binary_metrics(yt_np[: pred_np.shape[0]], pred_np)
+
+            # Whole batches only; the remainder is not trained and must not be
+            # counted, or throughput is overstated by up to one batch.
+            samples_per_epoch = (x_np.shape[0] // batch) * batch
+            return {
+                "batch": batch,
+                "median_epoch_s": median_epoch_s,
+                "samples_per_epoch": samples_per_epoch,
+                "samples_per_sec": samples_per_epoch / median_epoch_s,
+                "test_samples": pred_np.shape[0],
+                "metrics": metrics,
+            }
+
+        batch_list = [int(item) for item in args.batches.split(",") if item] or [args.batch]
 
         print_common("tensorflow", args, x_np.shape[0])
-        print(f"median_epoch_s={median_epoch_s:.9g}")
-        print(f"samples_per_sec={x_np.shape[0] / median_epoch_s:.0f}")
-        print(f"test_samples={pred_np.shape[0]}")
-        for key, value in metrics.items():
-            print(f"{key}={value:.9g}")
+        for batch in batch_list:
+            r = measure_train(batch)
+            if len(batch_list) == 1:
+                print(f"batch={r['batch']}")
+                print(f"samples_per_epoch={r['samples_per_epoch']}")
+                print(f"median_epoch_s={r['median_epoch_s']:.9g}")
+                print(f"samples_per_sec={r['samples_per_sec']:.0f}")
+                print(f"test_samples={r['test_samples']}")
+                for key, value in r["metrics"].items():
+                    print(f"{key}={value:.9g}")
+            else:
+                print(f"batch_{batch}_samples_per_sec={r['samples_per_sec']:.0f}"
+                      f" median_epoch_s={r['median_epoch_s']:.9g}"
+                      f" samples_per_epoch={r['samples_per_epoch']}")
+                m = r["metrics"]
+                print(f"batch_{batch}_test_accuracy={m['test_accuracy']:.9g}"
+                      f" test_log_loss={m['test_log_loss']:.9g}"
+                      f" test_roc_auc={m['test_roc_auc']:.9g}")
+            sys.stdout.flush()
         print("RESULT=OK")
         return
 
@@ -187,9 +226,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--warmup-epochs", type=int, default=0)
     parser.add_argument("--reps", type=int, default=10)
     parser.add_argument("--batch", type=int, default=1024)
-    # Inference only: a comma-separated list is measured in one process, so the
-    # whole batch-size row of a comparison shares one model, one load and one
-    # thermal window on a laptop that drifts ten per cent over a sweep.
+    # A comma-separated list is measured in one process, in both modes, so the
+    # whole batch-size row of a comparison shares one load and one thermal
+    # window on a machine that drifts over a sweep.
     parser.add_argument("--batches", default="")
     parser.add_argument("--hidden", type=int, default=1024)
     parser.add_argument("--hidden-layers", type=int, default=2)

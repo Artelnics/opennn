@@ -22,6 +22,25 @@ width `1024`, two hidden layers. CSV layout `feature_0,...,feature_27,label`.
 Each engine runs its fair fast path: OpenNN GPU-resident data + CUDA graph,
 PyTorch `torch.compile` + AMP + TF32, TensorFlow XLA + `mixed_bfloat16`.
 
+## Building with CUTLASS
+
+The first layer of this network contracts 28 features, and cuBLASLt is poor at
+that shape - it can only promise two-element alignment on the input and picks an
+`align2` kernel. A CUTLASS kernel instantiated for the shape is 1.03x to 1.48x
+faster with bit-identical output, worth 2-3% of the whole bf16 batch between
+4,096 and 65,536 rows and nothing at all below.
+
+CUTLASS is header-only and opt-in. Without it the path compiles to a stub that
+declines every shape and cuBLASLt runs everything, exactly as before:
+
+```bash
+cmake -S ../../.. -B ../../../build-benchmarks \
+  -DOpenNN_BUILD_BENCHMARKS=ON \
+  -DOpenNN_CUTLASS_INCLUDE_DIR=/path/to/cutlass/include
+```
+
+`OPENNN_CUTLASS_NARROW_K=0` keeps cuBLASLt at runtime for the A/B.
+
 ## Training — `gpu-higgs-dense-training-speed`
 
 ```bash
@@ -60,7 +79,38 @@ python run_higgs_infer.py \
 
 Writes `../../results/gpu-higgs-dense-inference-speed-<run_id>.json`. Reports
 `samples_per_sec` and `ms_per_batch`. Each engine can also be driven directly
-with the shared CLI `<test_csv> [batch] [runs] [fp32|bf16] [hidden] [hidden_layers] [activation]`.
+with the shared CLI `<test_csv> [batch[,batch...]] [runs] [fp32|bf16] [hidden] [hidden_layers] [activation]`.
+
+## Inference across a batch ladder — `run_higgs_infer_sweep.py`
+
+Batch size decides which cost dominates - a batch of 256 is 18 microseconds and
+mostly kernel launches, a batch of 65,536 is two milliseconds and entirely GEMM -
+so the inference claim is measured over a ladder, not at one point:
+
+```bash
+sudo ../../tools/gpu_clocks.sh lock 2700
+
+python run_higgs_infer_sweep.py \
+  --batches 256,1024,4096,8192,16384,65536 \
+  --runs 5 --rounds 6 --soak 1 --precision both
+```
+
+Each engine sweeps the whole ladder inside one process, the engine order and the
+batch order rotate every round, the first round is discarded as a soak, and the
+per-pass times are kept in the artifact in temporal order. The same runner takes
+`--arm engine:label:KEY=VAL,...` repeatedly, which alternates two configurations
+of one engine against each other under the same protocol - that is how every
+lever in the note is decided:
+
+```bash
+python run_higgs_infer_sweep.py --batches 256,1024,8192 --rounds 4 \
+  --arm "opennn:on:" --arm "opennn:off:OPENNN_SINGLE_OUTPUT_ACTIVATION=0"
+```
+
+Each engine picks its own fastest path at each rung and names it: `pt_path`
+(hand-captured CUDA graph vs `torch.compile`) and `tf_path` (per-batch dispatch
+vs the batch loop compiled into one `tf.function`). Neither is the same at every
+batch size, which is why neither is pinned.
 
 ## Result metrics
 

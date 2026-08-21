@@ -74,12 +74,25 @@ void bias_grad_sum_cuda(const Index batch, const Index features, const T* delta,
 // of the weight vector, and a shuffle tree folds the 32 partial sums; lane 0
 // adds the bias on the way out. Accumulation is fp32 whatever T is and the
 // reduction order is fixed, so the result is deterministic.
+//
+// Two rewrites were measured against this and neither is kept, both recorded
+// because the reasoning for them was sound and the machine disagreed. Splitting
+// the lane's accumulator into one chain per vector slot: 23,424 ns against
+// 23,456 at fp32 batch 8,192, so the kernel is not latency-bound on that chain.
+// Loading the weight slice once per warp and reusing it across a group of rows,
+// which halves the load traffic the profile shows (33 MB of input arrives as
+// 67 MB of loads because every warp re-reads the whole weight vector): fp32
+// 24.1 -> 29.8 us at a group of four and 28.6 at a group of two, because at
+// 8,192 rows a group of four leaves 64 blocks for 70 SMs and the occupancy
+// costs more than the traffic saves. It helps bf16 slightly (7.44 -> 6.62 us)
+// and that is not worth a kernel whose behaviour inverts with the dtype.
 template<typename T>
 __global__ void linear_forward_single_output_kernel(const int rows,
                                                     const int features,
                                                     const T* __restrict__ input,
                                                     const T* __restrict__ weights,
                                                     const T* __restrict__ bias,
+                                                    const int activation,
                                                     T* __restrict__ output)
 {
     constexpr int VEC = int(sizeof(uint4) / sizeof(T));
@@ -109,6 +122,13 @@ __global__ void linear_forward_single_output_kernel(const int rows,
     if (lane != 0) return;
 
     if (bias) sum += element_to_float(bias[0]);
+
+    // The activation rides here rather than in a kernel of its own. The value
+    // is already in a register and this layer produces one element per row, so
+    // a separate pass is a whole launch - about a microsecond of the eighteen a
+    // batch of 256 costs - to read and write one number per row.
+    if (activation != activation_identity) sum = opennn_activation_value(sum, activation);
+
     element_from_float(sum, output[row]);
 }
 
@@ -118,6 +138,7 @@ void linear_forward_single_output_cuda(const Index rows,
                                        const T* input,
                                        const T* weights,
                                        const T* bias,
+                                       const int activation,
                                        T* output)
 {
     constexpr int block_size = 256;
@@ -126,7 +147,7 @@ void linear_forward_single_output_cuda(const Index rows,
 
     OPENNN_CUDA_LAUNCH(linear_forward_single_output_kernel<T>
                        <<<blocks, block_size, 0, opennn::device::get_compute_stream()>>>(
-                           row_count, checked_int(features), input, weights, bias, output));
+                           row_count, checked_int(features), input, weights, bias, activation, output));
 }
 
 
@@ -314,7 +335,7 @@ bool linear_backward_single_output_cuda(const Index rows,
     template void transpose_2d_cuda<T>(const Index, const Index, const T*, T*); \
     template void bias_grad_sum_cuda<T>(const Index, const Index, const T*, float*); \
     template void linear_forward_single_output_cuda<T>(const Index, const Index, \
-                                                       const T*, const T*, const T*, T*); \
+                                                       const T*, const T*, const T*, const int, T*); \
     template bool linear_backward_single_output_cuda<T>(const Index, const Index, \
                                                         const T*, const T*, const T*, T*, bool, float*, float*);
 

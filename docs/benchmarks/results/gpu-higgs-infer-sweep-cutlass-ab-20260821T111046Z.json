@@ -1,0 +1,1294 @@
+{
+  "benchmark": "gpu-higgs-dense-inference-sweep",
+  "label": "cutlass-ab",
+  "run_id": "20260821T111046Z",
+  "protocol": {
+    "batches": [
+      256,
+      1024,
+      4096,
+      8192,
+      16384,
+      65536
+    ],
+    "arms": [
+      {
+        "engine": "opennn",
+        "label": "cutlass",
+        "env": {}
+      },
+      {
+        "engine": "opennn",
+        "label": "cublas",
+        "env": {
+          "OPENNN_CUTLASS_NARROW_K": "0"
+        }
+      }
+    ],
+    "rounds_kept": 5,
+    "soak_rounds": 1,
+    "passes_per_batch": 5,
+    "rotation": "arm order and batch order both rotate by round index"
+  },
+  "git": {
+    "commit": "3524cf5b8cf1849a5d7cdc4631f6a2b67df0a999",
+    "branch": "dev",
+    "dirty": true,
+    "status_short": [
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-baseline-3524cf5b8-20260821T085448Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-bigbatch-20260821T104141Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-chunk-small-20260821T102040Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-confirm-20260821T094905Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-gemm-chunk-20260821T100613Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-headtohead-best-20260821T093203Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-headtohead-chunked-20260821T101330Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-l2-levers-20260821T105547Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-lever-ab-20260821T092745Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-pt-config-bf16-20260821T090136Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-pt-config-fp32-20260821T091146Z.json",
+      " M docs/benchmarks/throughput/higgs-gpu/README.md",
+      " M docs/benchmarks/throughput/higgs-gpu/higgs-gpu-inference-opennn-vs-pytorch-vs-tensorflow.md",
+      " M docs/benchmarks/throughput/higgs-gpu/opennn_higgs_infer.cpp",
+      " M docs/benchmarks/throughput/higgs-gpu/pytorch_higgs_infer.py",
+      " M docs/benchmarks/throughput/higgs-gpu/run_higgs_infer.py",
+      " M docs/benchmarks/throughput/higgs-gpu/tensorflow_higgs_infer.py",
+      " M opennn/CMakeLists.txt",
+      " M opennn/core/cuda/kernel_activation.cu",
+      " M opennn/core/cuda/kernel_common.cuh",
+      " M opennn/core/cuda/kernel_tensor.cu",
+      " M opennn/core/cuda/kernel_tensor.cuh",
+      " M opennn/core/tensor_operations.cpp",
+      " M opennn/core/tensor_operations.h",
+      " M opennn/neural_network/layers/dense_layer.cpp",
+      " M opennn/neural_network/layers/kernel_recurrent.cu",
+      " M opennn/neural_network/operators/combination_operator.cpp",
+      "?? docs/benchmarks/throughput/higgs-gpu/gemm_chunk_probe.cu",
+      "?? docs/benchmarks/throughput/higgs-gpu/l1_align_probe.cu",
+      "?? docs/benchmarks/throughput/higgs-gpu/l1_cutlass_probe.cu",
+      "?? docs/benchmarks/throughput/higgs-gpu/l1_kernel_probe.cu",
+      "?? docs/benchmarks/throughput/higgs-gpu/run_higgs_infer_sweep.py",
+      "?? opennn/core/cuda/cutlass_narrow_gemm.cu",
+      "?? opennn/core/cuda/cutlass_narrow_gemm.cuh",
+      "?? tests/core/gemm_row_chunk_test.cpp",
+      "?? tests/neural_network/layers/single_output_activation_fusion_test.cpp"
+    ]
+  },
+  "rounds": [
+    {
+      "index": 0,
+      "soak": true,
+      "arm_order": [
+        "cutlass",
+        "cublas"
+      ],
+      "batch_order": [
+        256,
+        1024,
+        4096,
+        8192,
+        16384,
+        65536
+      ],
+      "results": {
+        "cutlass/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "pass_times": [
+                0.0319876,
+                0.0319859,
+                0.031987,
+                0.0319864,
+                0.0319858
+              ],
+              "samples_per_sec": 15630618.0,
+              "median_pass_s": 0.0319864,
+              "ms_per_batch": 0.0163781
+            },
+            "1024": {
+              "pass_times": [
+                0.017988,
+                0.0179848,
+                0.0179848,
+                0.0179848,
+                0.0179853
+              ],
+              "samples_per_sec": 27785233.0,
+              "median_pass_s": 0.0179848,
+              "ms_per_batch": 0.0368541
+            },
+            "4096": {
+              "pass_times": [
+                0.0139894,
+                0.0139897,
+                0.0139911,
+                0.0139849,
+                0.0139908
+              ],
+              "samples_per_sec": 35720011.0,
+              "median_pass_s": 0.0139897,
+              "ms_per_batch": 0.11467
+            },
+            "8192": {
+              "pass_times": [
+                0.0132528,
+                0.0132593,
+                0.0132515,
+                0.0134753,
+                0.01389
+              ],
+              "samples_per_sec": 37687802.0,
+              "median_pass_s": 0.0132593,
+              "ms_per_batch": 0.217365
+            },
+            "16384": {
+              "pass_times": [
+                0.0133043,
+                0.0136472,
+                0.0130505,
+                0.0130447,
+                0.0130424
+              ],
+              "samples_per_sec": 37663005.0,
+              "median_pass_s": 0.0130505,
+              "ms_per_batch": 0.435016
+            },
+            "65536": {
+              "pass_times": [
+                0.0127085,
+                0.0127172,
+                0.0127642,
+                0.0127259,
+                0.0127119
+              ],
+              "samples_per_sec": 36073318.0,
+              "median_pass_s": 0.0127172,
+              "ms_per_batch": 1.81674
+            }
+          },
+          "tail": ""
+        },
+        "cublas/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "256": {
+              "pass_times": [
+                0.0319935,
+                0.0319908,
+                0.0319909,
+                0.0319858,
+                0.0319857
+              ],
+              "samples_per_sec": 15628511.0,
+              "median_pass_s": 0.0319908,
+              "ms_per_batch": 0.0163803
+            },
+            "1024": {
+              "pass_times": [
+                0.0180007,
+                0.0180001,
+                0.0179997,
+                0.018002,
+                0.0180021
+              ],
+              "samples_per_sec": 27760716.0,
+              "median_pass_s": 0.0180007,
+              "ms_per_batch": 0.0368867
+            },
+            "4096": {
+              "pass_times": [
+                0.0148471,
+                0.0142538,
+                0.0142487,
+                0.0142467,
+                0.0142475
+              ],
+              "samples_per_sec": 35070735.0,
+              "median_pass_s": 0.0142487,
+              "ms_per_batch": 0.116793
+            },
+            "8192": {
+              "pass_times": [
+                0.0136292,
+                0.013631,
+                0.0136351,
+                0.0136244,
+                0.0136279
+              ],
+              "samples_per_sec": 36664743.0,
+              "median_pass_s": 0.0136292,
+              "ms_per_batch": 0.22343
+            },
+            "16384": {
+              "pass_times": [
+                0.013392,
+                0.0134023,
+                0.0136608,
+                0.0140172,
+                0.0133979
+              ],
+              "samples_per_sec": 36674381.0,
+              "median_pass_s": 0.0134023,
+              "ms_per_batch": 0.446742
+            },
+            "65536": {
+              "pass_times": [
+                0.0128826,
+                0.0128894,
+                0.0128812,
+                0.0128779,
+                0.012881
+              ],
+              "samples_per_sec": 35613962.0,
+              "median_pass_s": 0.0128812,
+              "ms_per_batch": 1.84018
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 1,
+      "soak": false,
+      "arm_order": [
+        "cublas",
+        "cutlass"
+      ],
+      "batch_order": [
+        1024,
+        4096,
+        8192,
+        16384,
+        65536,
+        256
+      ],
+      "results": {
+        "cublas/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "1024": {
+              "pass_times": [
+                0.0180007,
+                0.0188079,
+                0.018004,
+                0.0180017,
+                0.018003
+              ],
+              "samples_per_sec": 27757162.0,
+              "median_pass_s": 0.018003,
+              "ms_per_batch": 0.0368914
+            },
+            "4096": {
+              "pass_times": [
+                0.0142462,
+                0.0142473,
+                0.0142476,
+                0.0152165,
+                0.0142468
+              ],
+              "samples_per_sec": 35074053.0,
+              "median_pass_s": 0.0142473,
+              "ms_per_batch": 0.116781
+            },
+            "8192": {
+              "pass_times": [
+                0.013629,
+                0.0136322,
+                0.0136271,
+                0.0136335,
+                0.0136336
+              ],
+              "samples_per_sec": 36656607.0,
+              "median_pass_s": 0.0136322,
+              "ms_per_batch": 0.223479
+            },
+            "16384": {
+              "pass_times": [
+                0.0134001,
+                0.013398,
+                0.0133958,
+                0.013401,
+                0.013391
+              ],
+              "samples_per_sec": 36686039.0,
+              "median_pass_s": 0.013398,
+              "ms_per_batch": 0.4466
+            },
+            "65536": {
+              "pass_times": [
+                0.0128781,
+                0.0128714,
+                0.0128755,
+                0.012865,
+                0.0128725
+              ],
+              "samples_per_sec": 35638182.0,
+              "median_pass_s": 0.0128725,
+              "ms_per_batch": 1.83893
+            },
+            "256": {
+              "pass_times": [
+                0.0319872,
+                0.0319872,
+                0.032216,
+                0.0325662,
+                0.0319878
+              ],
+              "samples_per_sec": 15629972.0,
+              "median_pass_s": 0.0319878,
+              "ms_per_batch": 0.0163788
+            }
+          },
+          "tail": ""
+        },
+        "cutlass/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "1024": {
+              "pass_times": [
+                0.0187727,
+                0.0179883,
+                0.0179872,
+                0.0187683,
+                0.0180099
+              ],
+              "samples_per_sec": 27746584.0,
+              "median_pass_s": 0.0180099,
+              "ms_per_batch": 0.0369054
+            },
+            "4096": {
+              "pass_times": [
+                0.0139962,
+                0.0139959,
+                0.0139898,
+                0.0139937,
+                0.0139914
+              ],
+              "samples_per_sec": 35709740.0,
+              "median_pass_s": 0.0139937,
+              "ms_per_batch": 0.114703
+            },
+            "8192": {
+              "pass_times": [
+                0.0132436,
+                0.0132569,
+                0.0132519,
+                0.0132483,
+                0.0132502
+              ],
+              "samples_per_sec": 37713609.0,
+              "median_pass_s": 0.0132502,
+              "ms_per_batch": 0.217216
+            },
+            "16384": {
+              "pass_times": [
+                0.0130026,
+                0.013016,
+                0.0130179,
+                0.0130001,
+                0.0130118
+              ],
+              "samples_per_sec": 37774939.0,
+              "median_pass_s": 0.0130118,
+              "ms_per_batch": 0.433727
+            },
+            "65536": {
+              "pass_times": [
+                0.0127148,
+                0.0127091,
+                0.0127171,
+                0.0127132,
+                0.012722
+              ],
+              "samples_per_sec": 36080252.0,
+              "median_pass_s": 0.0127148,
+              "ms_per_batch": 1.8164
+            },
+            "256": {
+              "pass_times": [
+                0.0319866,
+                0.0319871,
+                0.0319884,
+                0.0319892,
+                0.0327547
+              ],
+              "samples_per_sec": 15629667.0,
+              "median_pass_s": 0.0319884,
+              "ms_per_batch": 0.0163791
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 2,
+      "soak": false,
+      "arm_order": [
+        "cutlass",
+        "cublas"
+      ],
+      "batch_order": [
+        4096,
+        8192,
+        16384,
+        65536,
+        256,
+        1024
+      ],
+      "results": {
+        "cutlass/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "4096": {
+              "pass_times": [
+                0.0139835,
+                0.0139726,
+                0.0139719,
+                0.0139833,
+                0.0139807
+              ],
+              "samples_per_sec": 35743106.0,
+              "median_pass_s": 0.0139807,
+              "ms_per_batch": 0.114596
+            },
+            "8192": {
+              "pass_times": [
+                0.0138268,
+                0.0132471,
+                0.013253,
+                0.0132512,
+                0.0132439
+              ],
+              "samples_per_sec": 37710800.0,
+              "median_pass_s": 0.0132512,
+              "ms_per_batch": 0.217232
+            },
+            "16384": {
+              "pass_times": [
+                0.0129966,
+                0.0129982,
+                0.0129944,
+                0.0129965,
+                0.0129983
+              ],
+              "samples_per_sec": 37819244.0,
+              "median_pass_s": 0.0129966,
+              "ms_per_batch": 0.433219
+            },
+            "65536": {
+              "pass_times": [
+                0.012711,
+                0.0127098,
+                0.0127076,
+                0.0127147,
+                0.0127405
+              ],
+              "samples_per_sec": 36091012.0,
+              "median_pass_s": 0.012711,
+              "ms_per_batch": 1.81585
+            },
+            "256": {
+              "pass_times": [
+                0.0319884,
+                0.0319909,
+                0.0319852,
+                0.031986,
+                0.0319867
+              ],
+              "samples_per_sec": 15630505.0,
+              "median_pass_s": 0.0319867,
+              "ms_per_batch": 0.0163782
+            },
+            "1024": {
+              "pass_times": [
+                0.0179855,
+                0.0179846,
+                0.0179846,
+                0.0179846,
+                0.0179855
+              ],
+              "samples_per_sec": 27785528.0,
+              "median_pass_s": 0.0179846,
+              "ms_per_batch": 0.0368537
+            }
+          },
+          "tail": ""
+        },
+        "cublas/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "4096": {
+              "pass_times": [
+                0.014254,
+                0.0142455,
+                0.014244,
+                0.0142421,
+                0.0142438
+              ],
+              "samples_per_sec": 35082228.0,
+              "median_pass_s": 0.014244,
+              "ms_per_batch": 0.116754
+            },
+            "8192": {
+              "pass_times": [
+                0.0136523,
+                0.0136355,
+                0.0145775,
+                0.013632,
+                0.013631
+              ],
+              "samples_per_sec": 36647787.0,
+              "median_pass_s": 0.0136355,
+              "ms_per_batch": 0.223533
+            },
+            "16384": {
+              "pass_times": [
+                0.0133878,
+                0.0133865,
+                0.013389,
+                0.0133857,
+                0.0133873
+              ],
+              "samples_per_sec": 36715325.0,
+              "median_pass_s": 0.0133873,
+              "ms_per_batch": 0.446244
+            },
+            "65536": {
+              "pass_times": [
+                0.0128739,
+                0.0128842,
+                0.0128789,
+                0.0128752,
+                0.0128824
+              ],
+              "samples_per_sec": 35620372.0,
+              "median_pass_s": 0.0128789,
+              "ms_per_batch": 1.83985
+            },
+            "256": {
+              "pass_times": [
+                0.032095,
+                0.0319877,
+                0.0319858,
+                0.0319859,
+                0.0319858
+              ],
+              "samples_per_sec": 15630892.0,
+              "median_pass_s": 0.0319859,
+              "ms_per_batch": 0.0163778
+            },
+            "1024": {
+              "pass_times": [
+                0.0180017,
+                0.0179998,
+                0.018,
+                0.018,
+                0.0182225
+              ],
+              "samples_per_sec": 27761720.0,
+              "median_pass_s": 0.018,
+              "ms_per_batch": 0.0368853
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 3,
+      "soak": false,
+      "arm_order": [
+        "cublas",
+        "cutlass"
+      ],
+      "batch_order": [
+        8192,
+        16384,
+        65536,
+        256,
+        1024,
+        4096
+      ],
+      "results": {
+        "cublas/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.013646,
+                0.0136367,
+                0.0136324,
+                0.0136284,
+                0.013623
+              ],
+              "samples_per_sec": 36656217.0,
+              "median_pass_s": 0.0136324,
+              "ms_per_batch": 0.223482
+            },
+            "16384": {
+              "pass_times": [
+                0.0133846,
+                0.0133851,
+                0.0133845,
+                0.0133892,
+                0.0141459
+              ],
+              "samples_per_sec": 36721335.0,
+              "median_pass_s": 0.0133851,
+              "ms_per_batch": 0.446171
+            },
+            "65536": {
+              "pass_times": [
+                0.0128728,
+                0.0128759,
+                0.0128741,
+                0.0128743,
+                0.012879
+              ],
+              "samples_per_sec": 35633166.0,
+              "median_pass_s": 0.0128743,
+              "ms_per_batch": 1.83919
+            },
+            "256": {
+              "pass_times": [
+                0.0319874,
+                0.0319868,
+                0.0319868,
+                0.0319869,
+                0.0319868
+              ],
+              "samples_per_sec": 15630442.0,
+              "median_pass_s": 0.0319868,
+              "ms_per_batch": 0.0163783
+            },
+            "1024": {
+              "pass_times": [
+                0.0182252,
+                0.0186703,
+                0.018004,
+                0.0180062,
+                0.0180063
+              ],
+              "samples_per_sec": 27752113.0,
+              "median_pass_s": 0.0180063,
+              "ms_per_batch": 0.0368981
+            },
+            "4096": {
+              "pass_times": [
+                0.0142497,
+                0.014244,
+                0.0142447,
+                0.0142463,
+                0.0142477
+              ],
+              "samples_per_sec": 35076596.0,
+              "median_pass_s": 0.0142463,
+              "ms_per_batch": 0.116773
+            }
+          },
+          "tail": ""
+        },
+        "cutlass/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0132558,
+                0.0132474,
+                0.0132543,
+                0.0132505,
+                0.0132502
+              ],
+              "samples_per_sec": 37712769.0,
+              "median_pass_s": 0.0132505,
+              "ms_per_batch": 0.217221
+            },
+            "16384": {
+              "pass_times": [
+                0.0130357,
+                0.0130198,
+                0.0130172,
+                0.0130253,
+                0.0130241
+              ],
+              "samples_per_sec": 37739169.0,
+              "median_pass_s": 0.0130241,
+              "ms_per_batch": 0.434138
+            },
+            "65536": {
+              "pass_times": [
+                0.0127144,
+                0.0127139,
+                0.0136264,
+                0.0127067,
+                0.0127071
+              ],
+              "samples_per_sec": 36082650.0,
+              "median_pass_s": 0.0127139,
+              "ms_per_batch": 1.81627
+            },
+            "256": {
+              "pass_times": [
+                0.0319864,
+                0.0321609,
+                0.0326004,
+                0.0319904,
+                0.0319856
+              ],
+              "samples_per_sec": 15628668.0,
+              "median_pass_s": 0.0319904,
+              "ms_per_batch": 0.0163802
+            },
+            "1024": {
+              "pass_times": [
+                0.0180007,
+                0.0179998,
+                0.0179999,
+                0.0179999,
+                0.0179979
+              ],
+              "samples_per_sec": 27761987.0,
+              "median_pass_s": 0.0179999,
+              "ms_per_batch": 0.036885
+            },
+            "4096": {
+              "pass_times": [
+                0.0139891,
+                0.0139872,
+                0.0139809,
+                0.0139909,
+                0.0139883
+              ],
+              "samples_per_sec": 35723632.0,
+              "median_pass_s": 0.0139883,
+              "ms_per_batch": 0.114658
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 4,
+      "soak": false,
+      "arm_order": [
+        "cutlass",
+        "cublas"
+      ],
+      "batch_order": [
+        16384,
+        65536,
+        256,
+        1024,
+        4096,
+        8192
+      ],
+      "results": {
+        "cutlass/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0130609,
+                0.0130554,
+                0.0130607,
+                0.0130504,
+                0.0130583
+              ],
+              "samples_per_sec": 37640531.0,
+              "median_pass_s": 0.0130583,
+              "ms_per_batch": 0.435275
+            },
+            "65536": {
+              "pass_times": [
+                0.0127145,
+                0.0127443,
+                0.0127113,
+                0.012716,
+                0.0127194
+              ],
+              "samples_per_sec": 36076884.0,
+              "median_pass_s": 0.012716,
+              "ms_per_batch": 1.81656
+            },
+            "256": {
+              "pass_times": [
+                0.0326022,
+                0.0327156,
+                0.0320072,
+                0.0319881,
+                0.0319876
+              ],
+              "samples_per_sec": 15620486.0,
+              "median_pass_s": 0.0320072,
+              "ms_per_batch": 0.0163887
+            },
+            "1024": {
+              "pass_times": [
+                0.0179851,
+                0.0179858,
+                0.0179855,
+                0.0179854,
+                0.0179847
+              ],
+              "samples_per_sec": 27784386.0,
+              "median_pass_s": 0.0179854,
+              "ms_per_batch": 0.0368552
+            },
+            "4096": {
+              "pass_times": [
+                0.0139874,
+                0.0139898,
+                0.0139917,
+                0.0139916,
+                0.0139864
+              ],
+              "samples_per_sec": 35719649.0,
+              "median_pass_s": 0.0139898,
+              "ms_per_batch": 0.114671
+            },
+            "8192": {
+              "pass_times": [
+                0.01325,
+                0.0132523,
+                0.0132525,
+                0.0132598,
+                0.0132517
+              ],
+              "samples_per_sec": 37707636.0,
+              "median_pass_s": 0.0132523,
+              "ms_per_batch": 0.21725
+            }
+          },
+          "tail": ""
+        },
+        "cublas/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.013417,
+                0.0133978,
+                0.0136448,
+                0.0140998,
+                0.0133978
+              ],
+              "samples_per_sec": 36634134.0,
+              "median_pass_s": 0.013417,
+              "ms_per_batch": 0.447233
+            },
+            "65536": {
+              "pass_times": [
+                0.0128778,
+                0.0128796,
+                0.0128758,
+                0.0128718,
+                0.0128695
+              ],
+              "samples_per_sec": 35628948.0,
+              "median_pass_s": 0.0128758,
+              "ms_per_batch": 1.8394
+            },
+            "256": {
+              "pass_times": [
+                0.0320152,
+                0.0320142,
+                0.0324336,
+                0.0325455,
+                0.0320193
+              ],
+              "samples_per_sec": 15614572.0,
+              "median_pass_s": 0.0320193,
+              "ms_per_batch": 0.0163949
+            },
+            "1024": {
+              "pass_times": [
+                0.0180007,
+                0.018001,
+                0.0180009,
+                0.0180005,
+                0.0180015
+              ],
+              "samples_per_sec": 27760391.0,
+              "median_pass_s": 0.0180009,
+              "ms_per_batch": 0.0368871
+            },
+            "4096": {
+              "pass_times": [
+                0.014244,
+                0.0142505,
+                0.0142449,
+                0.0142439,
+                0.0142451
+              ],
+              "samples_per_sec": 35080115.0,
+              "median_pass_s": 0.0142449,
+              "ms_per_batch": 0.116761
+            },
+            "8192": {
+              "pass_times": [
+                0.0136442,
+                0.0136393,
+                0.0136414,
+                0.0136347,
+                0.0136324
+              ],
+              "samples_per_sec": 36637574.0,
+              "median_pass_s": 0.0136393,
+              "ms_per_batch": 0.223596
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 5,
+      "soak": false,
+      "arm_order": [
+        "cublas",
+        "cutlass"
+      ],
+      "batch_order": [
+        65536,
+        256,
+        1024,
+        4096,
+        8192,
+        16384
+      ],
+      "results": {
+        "cublas/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.0128818,
+                0.0128715,
+                0.0128672,
+                0.0128733,
+                0.0128793
+              ],
+              "samples_per_sec": 35636028.0,
+              "median_pass_s": 0.0128733,
+              "ms_per_batch": 1.83904
+            },
+            "256": {
+              "pass_times": [
+                0.0319873,
+                0.0319868,
+                0.0321455,
+                0.0319867,
+                0.0319857
+              ],
+              "samples_per_sec": 15630458.0,
+              "median_pass_s": 0.0319868,
+              "ms_per_batch": 0.0163783
+            },
+            "1024": {
+              "pass_times": [
+                0.0180011,
+                0.0188422,
+                0.0180039,
+                0.0180021,
+                0.0180029
+              ],
+              "samples_per_sec": 27757375.0,
+              "median_pass_s": 0.0180029,
+              "ms_per_batch": 0.0368911
+            },
+            "4096": {
+              "pass_times": [
+                0.0142508,
+                0.0142564,
+                0.0142627,
+                0.0142668,
+                0.0142622
+              ],
+              "samples_per_sec": 35037430.0,
+              "median_pass_s": 0.0142622,
+              "ms_per_batch": 0.116904
+            },
+            "8192": {
+              "pass_times": [
+                0.0136321,
+                0.0136398,
+                0.01364,
+                0.0136294,
+                0.0136287
+              ],
+              "samples_per_sec": 36657016.0,
+              "median_pass_s": 0.0136321,
+              "ms_per_batch": 0.223477
+            },
+            "16384": {
+              "pass_times": [
+                0.0133658,
+                0.0133719,
+                0.0133845,
+                0.0133804,
+                0.0133809
+              ],
+              "samples_per_sec": 36734349.0,
+              "median_pass_s": 0.0133804,
+              "ms_per_batch": 0.446013
+            }
+          },
+          "tail": ""
+        },
+        "cutlass/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.0127156,
+                0.0127103,
+                0.0127008,
+                0.0127093,
+                0.0127246
+              ],
+              "samples_per_sec": 36092904.0,
+              "median_pass_s": 0.0127103,
+              "ms_per_batch": 1.81576
+            },
+            "256": {
+              "pass_times": [
+                0.0322866,
+                0.0319861,
+                0.0319871,
+                0.0319923,
+                0.0319863
+              ],
+              "samples_per_sec": 15630319.0,
+              "median_pass_s": 0.0319871,
+              "ms_per_batch": 0.0163784
+            },
+            "1024": {
+              "pass_times": [
+                0.0179853,
+                0.0179846,
+                0.0187373,
+                0.0180861,
+                0.0179876
+              ],
+              "samples_per_sec": 27780920.0,
+              "median_pass_s": 0.0179876,
+              "ms_per_batch": 0.0368598
+            },
+            "4096": {
+              "pass_times": [
+                0.0139896,
+                0.0139909,
+                0.0139904,
+                0.013988,
+                0.0139875
+              ],
+              "samples_per_sec": 35720180.0,
+              "median_pass_s": 0.0139896,
+              "ms_per_batch": 0.114669
+            },
+            "8192": {
+              "pass_times": [
+                0.0132529,
+                0.0132504,
+                0.0132452,
+                0.0132557,
+                0.0132498
+              ],
+              "samples_per_sec": 37713062.0,
+              "median_pass_s": 0.0132504,
+              "ms_per_batch": 0.217219
+            },
+            "16384": {
+              "pass_times": [
+                0.013053,
+                0.0130549,
+                0.0130512,
+                0.0130551,
+                0.0130494
+              ],
+              "samples_per_sec": 37655624.0,
+              "median_pass_s": 0.013053,
+              "ms_per_batch": 0.435101
+            }
+          },
+          "tail": ""
+        }
+      }
+    }
+  ],
+  "summary": {
+    "bf16": {
+      "1024": {
+        "cublas": {
+          "median": 27757375.0,
+          "min": 27752113.0,
+          "max": 27761720.0,
+          "rounds": [
+            27757162.0,
+            27761720.0,
+            27752113.0,
+            27760391.0,
+            27757375.0
+          ]
+        },
+        "cutlass": {
+          "median": 27780920.0,
+          "min": 27746584.0,
+          "max": 27785528.0,
+          "rounds": [
+            27746584.0,
+            27785528.0,
+            27761987.0,
+            27784386.0,
+            27780920.0
+          ]
+        }
+      },
+      "4096": {
+        "cublas": {
+          "median": 35076596.0,
+          "min": 35037430.0,
+          "max": 35082228.0,
+          "rounds": [
+            35074053.0,
+            35082228.0,
+            35076596.0,
+            35080115.0,
+            35037430.0
+          ]
+        },
+        "cutlass": {
+          "median": 35720180.0,
+          "min": 35709740.0,
+          "max": 35743106.0,
+          "rounds": [
+            35709740.0,
+            35743106.0,
+            35723632.0,
+            35719649.0,
+            35720180.0
+          ]
+        }
+      },
+      "8192": {
+        "cublas": {
+          "median": 36656217.0,
+          "min": 36637574.0,
+          "max": 36657016.0,
+          "rounds": [
+            36656607.0,
+            36647787.0,
+            36656217.0,
+            36637574.0,
+            36657016.0
+          ]
+        },
+        "cutlass": {
+          "median": 37712769.0,
+          "min": 37707636.0,
+          "max": 37713609.0,
+          "rounds": [
+            37713609.0,
+            37710800.0,
+            37712769.0,
+            37707636.0,
+            37713062.0
+          ]
+        }
+      },
+      "16384": {
+        "cublas": {
+          "median": 36715325.0,
+          "min": 36634134.0,
+          "max": 36734349.0,
+          "rounds": [
+            36686039.0,
+            36715325.0,
+            36721335.0,
+            36634134.0,
+            36734349.0
+          ]
+        },
+        "cutlass": {
+          "median": 37739169.0,
+          "min": 37640531.0,
+          "max": 37819244.0,
+          "rounds": [
+            37774939.0,
+            37819244.0,
+            37739169.0,
+            37640531.0,
+            37655624.0
+          ]
+        }
+      },
+      "65536": {
+        "cublas": {
+          "median": 35633166.0,
+          "min": 35620372.0,
+          "max": 35638182.0,
+          "rounds": [
+            35638182.0,
+            35620372.0,
+            35633166.0,
+            35628948.0,
+            35636028.0
+          ]
+        },
+        "cutlass": {
+          "median": 36082650.0,
+          "min": 36076884.0,
+          "max": 36092904.0,
+          "rounds": [
+            36080252.0,
+            36091012.0,
+            36082650.0,
+            36076884.0,
+            36092904.0
+          ]
+        }
+      },
+      "256": {
+        "cublas": {
+          "median": 15630442.0,
+          "min": 15614572.0,
+          "max": 15630892.0,
+          "rounds": [
+            15629972.0,
+            15630892.0,
+            15630442.0,
+            15614572.0,
+            15630458.0
+          ]
+        },
+        "cutlass": {
+          "median": 15629667.0,
+          "min": 15620486.0,
+          "max": 15630505.0,
+          "rounds": [
+            15629667.0,
+            15630505.0,
+            15628668.0,
+            15620486.0,
+            15630319.0
+          ]
+        }
+      }
+    }
+  }
+}

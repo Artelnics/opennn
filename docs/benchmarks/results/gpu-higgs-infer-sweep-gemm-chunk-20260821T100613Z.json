@@ -1,0 +1,2745 @@
+{
+  "benchmark": "gpu-higgs-dense-inference-sweep",
+  "label": "gemm-chunk",
+  "run_id": "20260821T100613Z",
+  "protocol": {
+    "batches": [
+      8192,
+      16384,
+      32768,
+      65536
+    ],
+    "arms": [
+      {
+        "engine": "opennn",
+        "label": "off",
+        "env": {
+          "OPENNN_GEMM_ROW_CHUNK": "0"
+        }
+      },
+      {
+        "engine": "opennn",
+        "label": "c8192",
+        "env": {
+          "OPENNN_GEMM_ROW_CHUNK": "8192"
+        }
+      },
+      {
+        "engine": "opennn",
+        "label": "c16384",
+        "env": {
+          "OPENNN_GEMM_ROW_CHUNK": "16384"
+        }
+      },
+      {
+        "engine": "opennn",
+        "label": "c32768",
+        "env": {
+          "OPENNN_GEMM_ROW_CHUNK": "32768"
+        }
+      }
+    ],
+    "rounds_kept": 4,
+    "soak_rounds": 1,
+    "passes_per_batch": 5,
+    "rotation": "arm order and batch order both rotate by round index"
+  },
+  "git": {
+    "commit": "3524cf5b8cf1849a5d7cdc4631f6a2b67df0a999",
+    "branch": "dev",
+    "dirty": true,
+    "status_short": [
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-baseline-3524cf5b8-20260821T085448Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-confirm-20260821T094905Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-headtohead-best-20260821T093203Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-lever-ab-20260821T092745Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-pt-config-bf16-20260821T090136Z.json",
+      "A  docs/benchmarks/results/gpu-higgs-infer-sweep-pt-config-fp32-20260821T091146Z.json",
+      " M docs/benchmarks/throughput/higgs-gpu/README.md",
+      " M docs/benchmarks/throughput/higgs-gpu/higgs-gpu-inference-opennn-vs-pytorch-vs-tensorflow.md",
+      " M docs/benchmarks/throughput/higgs-gpu/opennn_higgs_infer.cpp",
+      " M docs/benchmarks/throughput/higgs-gpu/pytorch_higgs_infer.py",
+      " M docs/benchmarks/throughput/higgs-gpu/run_higgs_infer.py",
+      " M docs/benchmarks/throughput/higgs-gpu/tensorflow_higgs_infer.py",
+      " M opennn/core/cuda/kernel_activation.cu",
+      " M opennn/core/cuda/kernel_common.cuh",
+      " M opennn/core/cuda/kernel_tensor.cu",
+      " M opennn/core/cuda/kernel_tensor.cuh",
+      " M opennn/core/tensor_operations.cpp",
+      " M opennn/core/tensor_operations.h",
+      " M opennn/neural_network/layers/dense_layer.cpp",
+      " M opennn/neural_network/layers/kernel_recurrent.cu",
+      " M opennn/neural_network/operators/combination_operator.cpp",
+      "?? docs/benchmarks/throughput/higgs-gpu/gemm_chunk_probe.cu",
+      "?? docs/benchmarks/throughput/higgs-gpu/l1_align_probe.cu",
+      "?? docs/benchmarks/throughput/higgs-gpu/run_higgs_infer_sweep.py",
+      "?? tests/neural_network/layers/single_output_activation_fusion_test.cpp"
+    ]
+  },
+  "rounds": [
+    {
+      "index": 0,
+      "soak": true,
+      "arm_order": [
+        "off",
+        "c8192",
+        "c16384",
+        "c32768"
+      ],
+      "batch_order": [
+        8192,
+        16384,
+        32768,
+        65536
+      ],
+      "results": {
+        "off/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0143252,
+                0.0143741,
+                0.0143675,
+                0.0142332,
+                0.0139192
+              ],
+              "samples_per_sec": 34883441.0,
+              "median_pass_s": 0.0143252,
+              "ms_per_batch": 0.234839
+            },
+            "16384": {
+              "pass_times": [
+                0.0140614,
+                0.0141318,
+                0.0141141,
+                0.013929,
+                0.0136693
+              ],
+              "samples_per_sec": 34955329.0,
+              "median_pass_s": 0.0140614,
+              "ms_per_batch": 0.468712
+            },
+            "32768": {
+              "pass_times": [
+                0.015141,
+                0.0152317,
+                0.015266,
+                0.0152513,
+                0.0152392
+              ],
+              "samples_per_sec": 32253703.0,
+              "median_pass_s": 0.0152392,
+              "ms_per_batch": 1.01595
+            },
+            "65536": {
+              "pass_times": [
+                0.0139365,
+                0.0136476,
+                0.014006,
+                0.014101,
+                0.0141139
+              ],
+              "samples_per_sec": 32753866.0,
+              "median_pass_s": 0.014006,
+              "ms_per_batch": 2.00086
+            }
+          },
+          "tail": ""
+        },
+        "c8192/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0139822,
+                0.0144261,
+                0.0143136,
+                0.0143811,
+                0.0143682
+              ],
+              "samples_per_sec": 34779100.0,
+              "median_pass_s": 0.0143682,
+              "ms_per_batch": 0.235544
+            },
+            "16384": {
+              "pass_times": [
+                0.0143469,
+                0.0140636,
+                0.0141974,
+                0.0143515,
+                0.014461
+              ],
+              "samples_per_sec": 34259620.0,
+              "median_pass_s": 0.0143469,
+              "ms_per_batch": 0.478231
+            },
+            "32768": {
+              "pass_times": [
+                0.014676,
+                0.0146974,
+                0.0145143,
+                0.0142436,
+                0.0144265
+              ],
+              "samples_per_sec": 33864435.0,
+              "median_pass_s": 0.0145143,
+              "ms_per_batch": 0.967623
+            },
+            "65536": {
+              "pass_times": [
+                0.0138421,
+                0.0138614,
+                0.0138435,
+                0.0137479,
+                0.0134143
+              ],
+              "samples_per_sec": 33141780.0,
+              "median_pass_s": 0.0138421,
+              "ms_per_batch": 1.97744
+            }
+          },
+          "tail": ""
+        },
+        "c16384/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0137473,
+                0.0143056,
+                0.0143654,
+                0.0144019,
+                0.0143742
+              ],
+              "samples_per_sec": 34785780.0,
+              "median_pass_s": 0.0143654,
+              "ms_per_batch": 0.235499
+            },
+            "16384": {
+              "pass_times": [
+                0.0136887,
+                0.0138639,
+                0.0141239,
+                0.0141518,
+                0.0141313
+              ],
+              "samples_per_sec": 34800603.0,
+              "median_pass_s": 0.0141239,
+              "ms_per_batch": 0.470796
+            },
+            "32768": {
+              "pass_times": [
+                0.0144312,
+                0.0140537,
+                0.0142325,
+                0.0144281,
+                0.0145027
+              ],
+              "samples_per_sec": 34066742.0,
+              "median_pass_s": 0.0144281,
+              "ms_per_batch": 0.961877
+            },
+            "65536": {
+              "pass_times": [
+                0.0135972,
+                0.0134571,
+                0.0131636,
+                0.0135258,
+                0.0136456
+              ],
+              "samples_per_sec": 33916878.0,
+              "median_pass_s": 0.0135258,
+              "ms_per_batch": 1.93225
+            }
+          },
+          "tail": ""
+        },
+        "c32768/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0143702,
+                0.0144128,
+                0.014158,
+                0.0139212,
+                0.0141338
+              ],
+              "samples_per_sec": 35295290.0,
+              "median_pass_s": 0.014158,
+              "ms_per_batch": 0.232099
+            },
+            "16384": {
+              "pass_times": [
+                0.014127,
+                0.0141195,
+                0.0141223,
+                0.013941,
+                0.0134861
+              ],
+              "samples_per_sec": 34811361.0,
+              "median_pass_s": 0.0141195,
+              "ms_per_batch": 0.470651
+            },
+            "32768": {
+              "pass_times": [
+                0.0152306,
+                0.0152367,
+                0.0153879,
+                0.0152496,
+                0.0151599
+              ],
+              "samples_per_sec": 32258974.0,
+              "median_pass_s": 0.0152367,
+              "ms_per_batch": 1.01578
+            },
+            "65536": {
+              "pass_times": [
+                0.0141453,
+                0.0138489,
+                0.0141442,
+                0.0143199,
+                0.0143404
+              ],
+              "samples_per_sec": 32431334.0,
+              "median_pass_s": 0.0141453,
+              "ms_per_batch": 2.02076
+            }
+          },
+          "tail": ""
+        },
+        "off/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0287421,
+                0.0278875,
+                0.0282224,
+                0.0283579,
+                0.0282642
+              ],
+              "samples_per_sec": 17680022.0,
+              "median_pass_s": 0.0282642,
+              "ms_per_batch": 0.463348
+            },
+            "16384": {
+              "pass_times": [
+                0.0276888,
+                0.0279585,
+                0.028156,
+                0.0280662,
+                0.0276128
+              ],
+              "samples_per_sec": 17580371.0,
+              "median_pass_s": 0.0279585,
+              "ms_per_batch": 0.931948
+            },
+            "32768": {
+              "pass_times": [
+                0.0293441,
+                0.0296547,
+                0.0299463,
+                0.0299029,
+                0.029762
+              ],
+              "samples_per_sec": 16514992.0,
+              "median_pass_s": 0.029762,
+              "ms_per_batch": 1.98414
+            },
+            "65536": {
+              "pass_times": [
+                0.0275259,
+                0.0278955,
+                0.0275096,
+                0.027511,
+                0.0279798
+              ],
+              "samples_per_sec": 16666203.0,
+              "median_pass_s": 0.0275259,
+              "ms_per_batch": 3.93227
+            }
+          },
+          "tail": ""
+        },
+        "c8192/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0283383,
+                0.0282198,
+                0.0277954,
+                0.028368,
+                0.0285705
+              ],
+              "samples_per_sec": 17633787.0,
+              "median_pass_s": 0.0283383,
+              "ms_per_batch": 0.464563
+            },
+            "16384": {
+              "pass_times": [
+                0.028579,
+                0.0286235,
+                0.0285895,
+                0.0282485,
+                0.0287418
+              ],
+              "samples_per_sec": 17192351.0,
+              "median_pass_s": 0.0285895,
+              "ms_per_batch": 0.952982
+            },
+            "32768": {
+              "pass_times": [
+                0.0288557,
+                0.0283463,
+                0.0289505,
+                0.0291722,
+                0.028511
+              ],
+              "samples_per_sec": 17033726.0,
+              "median_pass_s": 0.0288557,
+              "ms_per_batch": 1.92371
+            },
+            "65536": {
+              "pass_times": [
+                0.0273556,
+                0.0268206,
+                0.0271896,
+                0.0273226,
+                0.0267644
+              ],
+              "samples_per_sec": 16872354.0,
+              "median_pass_s": 0.0271896,
+              "ms_per_batch": 3.88422
+            }
+          },
+          "tail": ""
+        },
+        "c16384/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0282021,
+                0.0283313,
+                0.0282351,
+                0.0277447,
+                0.0283439
+              ],
+              "samples_per_sec": 17698257.0,
+              "median_pass_s": 0.0282351,
+              "ms_per_batch": 0.46287
+            },
+            "16384": {
+              "pass_times": [
+                0.0282657,
+                0.027714,
+                0.0280152,
+                0.0281832,
+                0.0280711
+              ],
+              "samples_per_sec": 17509797.0,
+              "median_pass_s": 0.0280711,
+              "ms_per_batch": 0.935705
+            },
+            "32768": {
+              "pass_times": [
+                0.0284087,
+                0.0285518,
+                0.0279289,
+                0.028525,
+                0.0285592
+              ],
+              "samples_per_sec": 17231218.0,
+              "median_pass_s": 0.028525,
+              "ms_per_batch": 1.90166
+            },
+            "65536": {
+              "pass_times": [
+                0.026556,
+                0.0269062,
+                0.0261825,
+                0.0269167,
+                0.026619
+              ],
+              "samples_per_sec": 17234010.0,
+              "median_pass_s": 0.026619,
+              "ms_per_batch": 3.80271
+            }
+          },
+          "tail": ""
+        },
+        "c32768/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0283913,
+                0.0282116,
+                0.0278281,
+                0.0283085,
+                0.0284397
+              ],
+              "samples_per_sec": 17652339.0,
+              "median_pass_s": 0.0283085,
+              "ms_per_batch": 0.464074
+            },
+            "16384": {
+              "pass_times": [
+                0.0280756,
+                0.027628,
+                0.028298,
+                0.0281023,
+                0.0276313
+              ],
+              "samples_per_sec": 17507008.0,
+              "median_pass_s": 0.0280756,
+              "ms_per_batch": 0.935854
+            },
+            "32768": {
+              "pass_times": [
+                0.0300038,
+                0.029464,
+                0.0299158,
+                0.0300159,
+                0.0299087
+              ],
+              "samples_per_sec": 16430104.0,
+              "median_pass_s": 0.0299158,
+              "ms_per_batch": 1.99439
+            },
+            "65536": {
+              "pass_times": [
+                0.027443,
+                0.0282809,
+                0.0280208,
+                0.0277719,
+                0.0281755
+              ],
+              "samples_per_sec": 16371832.0,
+              "median_pass_s": 0.0280208,
+              "ms_per_batch": 4.00297
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 1,
+      "soak": false,
+      "arm_order": [
+        "c8192",
+        "c16384",
+        "c32768",
+        "off"
+      ],
+      "batch_order": [
+        16384,
+        32768,
+        65536,
+        8192
+      ],
+      "results": {
+        "c8192/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0144082,
+                0.0144231,
+                0.0143634,
+                0.0142707,
+                0.0139621
+              ],
+              "samples_per_sec": 34220307.0,
+              "median_pass_s": 0.0143634,
+              "ms_per_batch": 0.47878
+            },
+            "32768": {
+              "pass_times": [
+                0.0146623,
+                0.0146619,
+                0.0147039,
+                0.0146775,
+                0.0146911
+              ],
+              "samples_per_sec": 33487950.0,
+              "median_pass_s": 0.0146775,
+              "ms_per_batch": 0.978501
+            },
+            "65536": {
+              "pass_times": [
+                0.0134296,
+                0.013732,
+                0.0138201,
+                0.0138511,
+                0.0138184
+              ],
+              "samples_per_sec": 33198549.0,
+              "median_pass_s": 0.0138184,
+              "ms_per_batch": 1.97406
+            },
+            "8192": {
+              "pass_times": [
+                0.0139297,
+                0.0141025,
+                0.0144404,
+                0.0143841,
+                0.014347
+              ],
+              "samples_per_sec": 34830429.0,
+              "median_pass_s": 0.014347,
+              "ms_per_batch": 0.235197
+            }
+          },
+          "tail": ""
+        },
+        "c16384/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0140341,
+                0.0140329,
+                0.0140937,
+                0.0140896,
+                0.0141004
+              ],
+              "samples_per_sec": 34885228.0,
+              "median_pass_s": 0.0140896,
+              "ms_per_batch": 0.469654
+            },
+            "32768": {
+              "pass_times": [
+                0.0140393,
+                0.0142165,
+                0.0144217,
+                0.0144815,
+                0.0144858
+              ],
+              "samples_per_sec": 34081898.0,
+              "median_pass_s": 0.0144217,
+              "ms_per_batch": 0.961449
+            },
+            "65536": {
+              "pass_times": [
+                0.0135945,
+                0.0130963,
+                0.0134815,
+                0.0136641,
+                0.013593
+              ],
+              "samples_per_sec": 33749075.0,
+              "median_pass_s": 0.013593,
+              "ms_per_batch": 1.94186
+            },
+            "8192": {
+              "pass_times": [
+                0.0143628,
+                0.0143815,
+                0.0143677,
+                0.0143482,
+                0.0142081
+              ],
+              "samples_per_sec": 34792186.0,
+              "median_pass_s": 0.0143628,
+              "ms_per_batch": 0.235455
+            }
+          },
+          "tail": ""
+        },
+        "c32768/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0140804,
+                0.0141098,
+                0.0140959,
+                0.013923,
+                0.0136412
+              ],
+              "samples_per_sec": 34908004.0,
+              "median_pass_s": 0.0140804,
+              "ms_per_batch": 0.469348
+            },
+            "32768": {
+              "pass_times": [
+                0.0153466,
+                0.0152686,
+                0.0152643,
+                0.0152696,
+                0.0152577
+              ],
+              "samples_per_sec": 32191486.0,
+              "median_pass_s": 0.0152686,
+              "ms_per_batch": 1.01791
+            },
+            "65536": {
+              "pass_times": [
+                0.0143408,
+                0.0141477,
+                0.013859,
+                0.0141675,
+                0.0143229
+              ],
+              "samples_per_sec": 32380685.0,
+              "median_pass_s": 0.0141675,
+              "ms_per_batch": 2.02392
+            },
+            "8192": {
+              "pass_times": [
+                0.0143122,
+                0.0153005,
+                0.0149596,
+                0.0143832,
+                0.0143658
+              ],
+              "samples_per_sec": 34742830.0,
+              "median_pass_s": 0.0143832,
+              "ms_per_batch": 0.23579
+            }
+          },
+          "tail": ""
+        },
+        "off/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0140568,
+                0.0140497,
+                0.0141023,
+                0.0140884,
+                0.0139274
+              ],
+              "samples_per_sec": 34966661.0,
+              "median_pass_s": 0.0140568,
+              "ms_per_batch": 0.468561
+            },
+            "32768": {
+              "pass_times": [
+                0.014946,
+                0.0151777,
+                0.0152571,
+                0.0152576,
+                0.015244
+              ],
+              "samples_per_sec": 32243541.0,
+              "median_pass_s": 0.015244,
+              "ms_per_batch": 1.01627
+            },
+            "65536": {
+              "pass_times": [
+                0.0141131,
+                0.0135624,
+                0.0141609,
+                0.013963,
+                0.0141297
+              ],
+              "samples_per_sec": 32505310.0,
+              "median_pass_s": 0.0141131,
+              "ms_per_batch": 2.01616
+            },
+            "8192": {
+              "pass_times": [
+                0.0141212,
+                0.0143678,
+                0.0143852,
+                0.0143645,
+                0.0143928
+              ],
+              "samples_per_sec": 34780103.0,
+              "median_pass_s": 0.0143678,
+              "ms_per_batch": 0.235537
+            }
+          },
+          "tail": ""
+        },
+        "c8192/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0285818,
+                0.0286647,
+                0.0285695,
+                0.0280674,
+                0.0286527
+              ],
+              "samples_per_sec": 17196979.0,
+              "median_pass_s": 0.0285818,
+              "ms_per_batch": 0.952725
+            },
+            "32768": {
+              "pass_times": [
+                0.0285138,
+                0.0289029,
+                0.0289771,
+                0.0289905,
+                0.0285344
+              ],
+              "samples_per_sec": 17005924.0,
+              "median_pass_s": 0.0289029,
+              "ms_per_batch": 1.92686
+            },
+            "65536": {
+              "pass_times": [
+                0.0273225,
+                0.0266397,
+                0.0273313,
+                0.0269817,
+                0.0272329
+              ],
+              "samples_per_sec": 16845478.0,
+              "median_pass_s": 0.0272329,
+              "ms_per_batch": 3.89042
+            },
+            "8192": {
+              "pass_times": [
+                0.028322,
+                0.0278008,
+                0.0283449,
+                0.0284785,
+                0.0276941
+              ],
+              "samples_per_sec": 17643937.0,
+              "median_pass_s": 0.028322,
+              "ms_per_batch": 0.464295
+            }
+          },
+          "tail": ""
+        },
+        "c16384/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0279953,
+                0.0282476,
+                0.0276991,
+                0.0279938,
+                0.0283017
+              ],
+              "samples_per_sec": 17557219.0,
+              "median_pass_s": 0.0279953,
+              "ms_per_batch": 0.933177
+            },
+            "32768": {
+              "pass_times": [
+                0.0279215,
+                0.0285211,
+                0.0285348,
+                0.0282786,
+                0.0283198
+              ],
+              "samples_per_sec": 17356076.0,
+              "median_pass_s": 0.0283198,
+              "ms_per_batch": 1.88798
+            },
+            "65536": {
+              "pass_times": [
+                0.0263896,
+                0.0266614,
+                0.026903,
+                0.0261964,
+                0.0269055
+              ],
+              "samples_per_sec": 17206606.0,
+              "median_pass_s": 0.0266614,
+              "ms_per_batch": 3.80877
+            },
+            "8192": {
+              "pass_times": [
+                0.0278408,
+                0.0281642,
+                0.0285417,
+                0.0283029,
+                0.0277805
+              ],
+              "samples_per_sec": 17742804.0,
+              "median_pass_s": 0.0281642,
+              "ms_per_batch": 0.461708
+            }
+          },
+          "tail": ""
+        },
+        "c32768/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.0281494,
+                0.0280748,
+                0.0276175,
+                0.0283593,
+                0.0280946
+              ],
+              "samples_per_sec": 17495166.0,
+              "median_pass_s": 0.0280946,
+              "ms_per_batch": 0.936487
+            },
+            "32768": {
+              "pass_times": [
+                0.0299109,
+                0.0299099,
+                0.029346,
+                0.0296331,
+                0.0298887
+              ],
+              "samples_per_sec": 16445012.0,
+              "median_pass_s": 0.0298887,
+              "ms_per_batch": 1.99258
+            },
+            "65536": {
+              "pass_times": [
+                0.0280566,
+                0.0276229,
+                0.0284945,
+                0.0280191,
+                0.027538
+              ],
+              "samples_per_sec": 16372856.0,
+              "median_pass_s": 0.0280191,
+              "ms_per_batch": 4.00272
+            },
+            "8192": {
+              "pass_times": [
+                0.0284017,
+                0.0282665,
+                0.027782,
+                0.0283774,
+                0.0285144
+              ],
+              "samples_per_sec": 17609509.0,
+              "median_pass_s": 0.0283774,
+              "ms_per_batch": 0.465203
+            }
+          },
+          "tail": ""
+        },
+        "off/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "16384": {
+              "pass_times": [
+                0.027599,
+                0.0283505,
+                0.028239,
+                0.0274814,
+                0.0282159
+              ],
+              "samples_per_sec": 17419938.0,
+              "median_pass_s": 0.0282159,
+              "ms_per_batch": 0.940531
+            },
+            "32768": {
+              "pass_times": [
+                0.0294448,
+                0.0297516,
+                0.0298939,
+                0.0298971,
+                0.0293347
+              ],
+              "samples_per_sec": 16520769.0,
+              "median_pass_s": 0.0297516,
+              "ms_per_batch": 1.98344
+            },
+            "65536": {
+              "pass_times": [
+                0.0277618,
+                0.0278655,
+                0.0272911,
+                0.0277078,
+                0.0278668
+              ],
+              "samples_per_sec": 16524586.0,
+              "median_pass_s": 0.0277618,
+              "ms_per_batch": 3.96597
+            },
+            "8192": {
+              "pass_times": [
+                0.0276838,
+                0.0284136,
+                0.0283442,
+                0.0276772,
+                0.028571
+              ],
+              "samples_per_sec": 17630113.0,
+              "median_pass_s": 0.0283442,
+              "ms_per_batch": 0.46466
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 2,
+      "soak": false,
+      "arm_order": [
+        "c16384",
+        "c32768",
+        "off",
+        "c8192"
+      ],
+      "batch_order": [
+        32768,
+        65536,
+        8192,
+        16384
+      ],
+      "results": {
+        "c16384/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0145055,
+                0.0144611,
+                0.0144905,
+                0.0143567,
+                0.0140411
+              ],
+              "samples_per_sec": 33989216.0,
+              "median_pass_s": 0.0144611,
+              "ms_per_batch": 0.96407
+            },
+            "65536": {
+              "pass_times": [
+                0.0134928,
+                0.0135944,
+                0.0135789,
+                0.0135991,
+                0.0132672
+              ],
+              "samples_per_sec": 33784174.0,
+              "median_pass_s": 0.0135789,
+              "ms_per_batch": 1.93984
+            },
+            "8192": {
+              "pass_times": [
+                0.0143993,
+                0.014158,
+                0.0137407,
+                0.0143014,
+                0.0143672
+              ],
+              "samples_per_sec": 34941596.0,
+              "median_pass_s": 0.0143014,
+              "ms_per_batch": 0.234448
+            },
+            "16384": {
+              "pass_times": [
+                0.0141413,
+                0.0141539,
+                0.0135904,
+                0.0140672,
+                0.0140746
+              ],
+              "samples_per_sec": 34922491.0,
+              "median_pass_s": 0.0140746,
+              "ms_per_batch": 0.469153
+            }
+          },
+          "tail": ""
+        },
+        "c32768/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0151887,
+                0.0151807,
+                0.0150246,
+                0.0147479,
+                0.0151118
+              ],
+              "samples_per_sec": 32525477.0,
+              "median_pass_s": 0.0151118,
+              "ms_per_batch": 1.00746
+            },
+            "65536": {
+              "pass_times": [
+                0.014029,
+                0.0143892,
+                0.0143013,
+                0.0143073,
+                0.0142903
+              ],
+              "samples_per_sec": 32077712.0,
+              "median_pass_s": 0.0143013,
+              "ms_per_batch": 2.04304
+            },
+            "8192": {
+              "pass_times": [
+                0.0143739,
+                0.0143956,
+                0.0143875,
+                0.0143919,
+                0.0143048
+              ],
+              "samples_per_sec": 34732437.0,
+              "median_pass_s": 0.0143875,
+              "ms_per_batch": 0.23586
+            },
+            "16384": {
+              "pass_times": [
+                0.0140562,
+                0.014077,
+                0.0141346,
+                0.014137,
+                0.0139684
+              ],
+              "samples_per_sec": 34916505.0,
+              "median_pass_s": 0.014077,
+              "ms_per_batch": 0.469234
+            }
+          },
+          "tail": ""
+        },
+        "off/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0149814,
+                0.0151547,
+                0.0152583,
+                0.0152766,
+                0.01537
+              ],
+              "samples_per_sec": 32213190.0,
+              "median_pass_s": 0.0152583,
+              "ms_per_batch": 1.01722
+            },
+            "65536": {
+              "pass_times": [
+                0.0141267,
+                0.0139556,
+                0.0136616,
+                0.0139559,
+                0.0141258
+              ],
+              "samples_per_sec": 32871601.0,
+              "median_pass_s": 0.0139559,
+              "ms_per_batch": 1.9937
+            },
+            "8192": {
+              "pass_times": [
+                0.0138189,
+                0.0141116,
+                0.0142981,
+                0.0144915,
+                0.0143866
+              ],
+              "samples_per_sec": 34949453.0,
+              "median_pass_s": 0.0142981,
+              "ms_per_batch": 0.234396
+            },
+            "16384": {
+              "pass_times": [
+                0.0139622,
+                0.0136878,
+                0.0138785,
+                0.0141773,
+                0.0141499
+              ],
+              "samples_per_sec": 35203656.0,
+              "median_pass_s": 0.0139622,
+              "ms_per_batch": 0.465406
+            }
+          },
+          "tail": ""
+        },
+        "c8192/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0146079,
+                0.0146994,
+                0.0146886,
+                0.0145117,
+                0.0142382
+              ],
+              "samples_per_sec": 33647445.0,
+              "median_pass_s": 0.0146079,
+              "ms_per_batch": 0.973863
+            },
+            "65536": {
+              "pass_times": [
+                0.013753,
+                0.0138218,
+                0.0138413,
+                0.0138381,
+                0.0134981
+              ],
+              "samples_per_sec": 33190570.0,
+              "median_pass_s": 0.0138218,
+              "ms_per_batch": 1.97454
+            },
+            "8192": {
+              "pass_times": [
+                0.0143006,
+                0.0143691,
+                0.0143595,
+                0.0143755,
+                0.0141507
+              ],
+              "samples_per_sec": 34800114.0,
+              "median_pass_s": 0.0143595,
+              "ms_per_batch": 0.235402
+            },
+            "16384": {
+              "pass_times": [
+                0.0138792,
+                0.014435,
+                0.0145203,
+                0.0144921,
+                0.0144973
+              ],
+              "samples_per_sec": 33916388.0,
+              "median_pass_s": 0.0144921,
+              "ms_per_batch": 0.48307
+            }
+          },
+          "tail": ""
+        },
+        "c16384/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0286947,
+                0.0287309,
+                0.0281009,
+                0.0283362,
+                0.0285616
+              ],
+              "samples_per_sec": 17209138.0,
+              "median_pass_s": 0.0285616,
+              "ms_per_batch": 1.9041
+            },
+            "65536": {
+              "pass_times": [
+                0.0263237,
+                0.0269028,
+                0.0263812,
+                0.0267693,
+                0.0268968
+              ],
+              "samples_per_sec": 17137213.0,
+              "median_pass_s": 0.0267693,
+              "ms_per_batch": 3.82419
+            },
+            "8192": {
+              "pass_times": [
+                0.0276922,
+                0.0284308,
+                0.0284398,
+                0.0276899,
+                0.0283666
+              ],
+              "samples_per_sec": 17616196.0,
+              "median_pass_s": 0.0283666,
+              "ms_per_batch": 0.465027
+            },
+            "16384": {
+              "pass_times": [
+                0.0277183,
+                0.0280146,
+                0.0285573,
+                0.0281323,
+                0.0276618
+              ],
+              "samples_per_sec": 17545156.0,
+              "median_pass_s": 0.0280146,
+              "ms_per_batch": 0.933819
+            }
+          },
+          "tail": ""
+        },
+        "c32768/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0294351,
+                0.0298813,
+                0.029936,
+                0.0301696,
+                0.029545
+              ],
+              "samples_per_sec": 16449057.0,
+              "median_pass_s": 0.0298813,
+              "ms_per_batch": 1.99209
+            },
+            "65536": {
+              "pass_times": [
+                0.0281623,
+                0.0282029,
+                0.02765,
+                0.0281788,
+                0.0282112
+              ],
+              "samples_per_sec": 16280058.0,
+              "median_pass_s": 0.0281788,
+              "ms_per_batch": 4.02554
+            },
+            "8192": {
+              "pass_times": [
+                0.0278887,
+                0.0281623,
+                0.0284565,
+                0.0278721,
+                0.0281526
+              ],
+              "samples_per_sec": 17750102.0,
+              "median_pass_s": 0.0281526,
+              "ms_per_batch": 0.461518
+            },
+            "16384": {
+              "pass_times": [
+                0.0280132,
+                0.0282862,
+                0.0277603,
+                0.028034,
+                0.0282986
+              ],
+              "samples_per_sec": 17532986.0,
+              "median_pass_s": 0.028034,
+              "ms_per_batch": 0.934467
+            }
+          },
+          "tail": ""
+        },
+        "off/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0296411,
+                0.0305179,
+                0.0298962,
+                0.0299358,
+                0.0293553
+              ],
+              "samples_per_sec": 16440904.0,
+              "median_pass_s": 0.0298962,
+              "ms_per_batch": 1.99308
+            },
+            "65536": {
+              "pass_times": [
+                0.0279427,
+                0.027681,
+                0.027261,
+                0.0278944,
+                0.0277036
+              ],
+              "samples_per_sec": 16559298.0,
+              "median_pass_s": 0.0277036,
+              "ms_per_batch": 3.95766
+            },
+            "8192": {
+              "pass_times": [
+                0.0277886,
+                0.0283669,
+                0.0285278,
+                0.0276897,
+                0.0283656
+              ],
+              "samples_per_sec": 17616844.0,
+              "median_pass_s": 0.0283656,
+              "ms_per_batch": 0.465009
+            },
+            "16384": {
+              "pass_times": [
+                0.0284146,
+                0.0282743,
+                0.0275731,
+                0.0282314,
+                0.0282756
+              ],
+              "samples_per_sec": 17384008.0,
+              "median_pass_s": 0.0282743,
+              "ms_per_batch": 0.942475
+            }
+          },
+          "tail": ""
+        },
+        "c8192/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "32768": {
+              "pass_times": [
+                0.0289852,
+                0.0289469,
+                0.028872,
+                0.0283697,
+                0.0290061
+              ],
+              "samples_per_sec": 16980032.0,
+              "median_pass_s": 0.0289469,
+              "ms_per_batch": 1.9298
+            },
+            "65536": {
+              "pass_times": [
+                0.0267653,
+                0.0273313,
+                0.0271476,
+                0.0267793,
+                0.0273653
+              ],
+              "samples_per_sec": 16898462.0,
+              "median_pass_s": 0.0271476,
+              "ms_per_batch": 3.87822
+            },
+            "8192": {
+              "pass_times": [
+                0.0277545,
+                0.0283964,
+                0.0283074,
+                0.0277875,
+                0.0283604
+              ],
+              "samples_per_sec": 17653080.0,
+              "median_pass_s": 0.0283074,
+              "ms_per_batch": 0.464055
+            },
+            "16384": {
+              "pass_times": [
+                0.028552,
+                0.0280763,
+                0.0286648,
+                0.0288091,
+                0.0279976
+              ],
+              "samples_per_sec": 17214927.0,
+              "median_pass_s": 0.028552,
+              "ms_per_batch": 0.951732
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 3,
+      "soak": false,
+      "arm_order": [
+        "c32768",
+        "off",
+        "c8192",
+        "c16384"
+      ],
+      "batch_order": [
+        65536,
+        8192,
+        16384,
+        32768
+      ],
+      "results": {
+        "c32768/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.0143593,
+                0.0143324,
+                0.0141344,
+                0.0138569,
+                0.0143259
+              ],
+              "samples_per_sec": 32022486.0,
+              "median_pass_s": 0.0143259,
+              "ms_per_batch": 2.04656
+            },
+            "8192": {
+              "pass_times": [
+                0.0143671,
+                0.0143903,
+                0.0142093,
+                0.013946,
+                0.014124
+              ],
+              "samples_per_sec": 35167990.0,
+              "median_pass_s": 0.0142093,
+              "ms_per_batch": 0.232939
+            },
+            "16384": {
+              "pass_times": [
+                0.0141456,
+                0.0141504,
+                0.0141468,
+                0.0139517,
+                0.0134901
+              ],
+              "samples_per_sec": 34747097.0,
+              "median_pass_s": 0.0141456,
+              "ms_per_batch": 0.471521
+            },
+            "32768": {
+              "pass_times": [
+                0.0152718,
+                0.0152391,
+                0.0152554,
+                0.0152465,
+                0.0152409
+              ],
+              "samples_per_sec": 32238178.0,
+              "median_pass_s": 0.0152465,
+              "ms_per_batch": 1.01643
+            }
+          },
+          "tail": ""
+        },
+        "off/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.0142993,
+                0.0141073,
+                0.0138083,
+                0.0141209,
+                0.0143733
+              ],
+              "samples_per_sec": 32487431.0,
+              "median_pass_s": 0.0141209,
+              "ms_per_batch": 2.01727
+            },
+            "8192": {
+              "pass_times": [
+                0.0141541,
+                0.0139228,
+                0.0140989,
+                0.0143073,
+                0.0143637
+              ],
+              "samples_per_sec": 35305188.0,
+              "median_pass_s": 0.0141541,
+              "ms_per_batch": 0.232034
+            },
+            "16384": {
+              "pass_times": [
+                0.0144465,
+                0.0139652,
+                0.0136854,
+                0.0138826,
+                0.0141651
+              ],
+              "samples_per_sec": 35195968.0,
+              "median_pass_s": 0.0139652,
+              "ms_per_batch": 0.465508
+            },
+            "32768": {
+              "pass_times": [
+                0.0154313,
+                0.0152519,
+                0.0151667,
+                0.0150591,
+                0.0147619
+              ],
+              "samples_per_sec": 32407770.0,
+              "median_pass_s": 0.0151667,
+              "ms_per_batch": 1.01112
+            }
+          },
+          "tail": ""
+        },
+        "c8192/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.0137039,
+                0.0138311,
+                0.0138166,
+                0.0139247,
+                0.013658
+              ],
+              "samples_per_sec": 33202853.0,
+              "median_pass_s": 0.0138166,
+              "ms_per_batch": 1.97381
+            },
+            "8192": {
+              "pass_times": [
+                0.0142727,
+                0.0143641,
+                0.0143845,
+                0.0143678,
+                0.0143922
+              ],
+              "samples_per_sec": 34780020.0,
+              "median_pass_s": 0.0143678,
+              "ms_per_batch": 0.235538
+            },
+            "16384": {
+              "pass_times": [
+                0.0140189,
+                0.0142178,
+                0.0144747,
+                0.0145431,
+                0.0144841
+              ],
+              "samples_per_sec": 33957257.0,
+              "median_pass_s": 0.0144747,
+              "ms_per_batch": 0.482489
+            },
+            "32768": {
+              "pass_times": [
+                0.014711,
+                0.0145328,
+                0.0142682,
+                0.0144246,
+                0.0146876
+              ],
+              "samples_per_sec": 33821347.0,
+              "median_pass_s": 0.0145328,
+              "ms_per_batch": 0.968856
+            }
+          },
+          "tail": ""
+        },
+        "c16384/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.0136123,
+                0.0136,
+                0.0137717,
+                0.0130712,
+                0.0134557
+              ],
+              "samples_per_sec": 33731744.0,
+              "median_pass_s": 0.0136,
+              "ms_per_batch": 1.94286
+            },
+            "8192": {
+              "pass_times": [
+                0.0138259,
+                0.0141114,
+                0.0143053,
+                0.0144023,
+                0.0143845
+              ],
+              "samples_per_sec": 34932045.0,
+              "median_pass_s": 0.0143053,
+              "ms_per_batch": 0.234512
+            },
+            "16384": {
+              "pass_times": [
+                0.0141742,
+                0.0137571,
+                0.0138694,
+                0.0140648,
+                0.0141699
+              ],
+              "samples_per_sec": 34946872.0,
+              "median_pass_s": 0.0140648,
+              "ms_per_batch": 0.468826
+            },
+            "32768": {
+              "pass_times": [
+                0.014512,
+                0.0145364,
+                0.014348,
+                0.014067,
+                0.014481
+              ],
+              "samples_per_sec": 33942486.0,
+              "median_pass_s": 0.014481,
+              "ms_per_batch": 0.965398
+            }
+          },
+          "tail": ""
+        },
+        "c32768/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.0283243,
+                0.0281941,
+                0.0276513,
+                0.0282333,
+                0.0278159
+              ],
+              "samples_per_sec": 16271180.0,
+              "median_pass_s": 0.0281941,
+              "ms_per_batch": 4.02773
+            },
+            "8192": {
+              "pass_times": [
+                0.0276633,
+                0.028332,
+                0.0286283,
+                0.0276567,
+                0.0283393
+              ],
+              "samples_per_sec": 17637728.0,
+              "median_pass_s": 0.028332,
+              "ms_per_batch": 0.464459
+            },
+            "16384": {
+              "pass_times": [
+                0.0282138,
+                0.0283906,
+                0.0277417,
+                0.0280155,
+                0.0282188
+              ],
+              "samples_per_sec": 17421251.0,
+              "median_pass_s": 0.0282138,
+              "ms_per_batch": 0.940461
+            },
+            "32768": {
+              "pass_times": [
+                0.0294447,
+                0.0297346,
+                0.029975,
+                0.0299014,
+                0.0297652
+              ],
+              "samples_per_sec": 16513269.0,
+              "median_pass_s": 0.0297652,
+              "ms_per_batch": 1.98434
+            }
+          },
+          "tail": ""
+        },
+        "off/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.0272712,
+                0.0276403,
+                0.0276363,
+                0.0272697,
+                0.0278825
+              ],
+              "samples_per_sec": 16599641.0,
+              "median_pass_s": 0.0276363,
+              "ms_per_batch": 3.94804
+            },
+            "8192": {
+              "pass_times": [
+                0.0283808,
+                0.027845,
+                0.0281325,
+                0.0283856,
+                0.0280339
+              ],
+              "samples_per_sec": 17762823.0,
+              "median_pass_s": 0.0281325,
+              "ms_per_batch": 0.461188
+            },
+            "16384": {
+              "pass_times": [
+                0.0276911,
+                0.0280055,
+                0.0282086,
+                0.0277208,
+                0.027988
+              ],
+              "samples_per_sec": 17561781.0,
+              "median_pass_s": 0.027988,
+              "ms_per_batch": 0.932935
+            },
+            "32768": {
+              "pass_times": [
+                0.0298212,
+                0.029789,
+                0.0299084,
+                0.0299362,
+                0.0293394
+              ],
+              "samples_per_sec": 16482235.0,
+              "median_pass_s": 0.0298212,
+              "ms_per_batch": 1.98808
+            }
+          },
+          "tail": ""
+        },
+        "c8192/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.0270096,
+                0.0269855,
+                0.0272861,
+                0.0268205,
+                0.0272061
+              ],
+              "samples_per_sec": 16984761.0,
+              "median_pass_s": 0.0270096,
+              "ms_per_batch": 3.85852
+            },
+            "8192": {
+              "pass_times": [
+                0.0278516,
+                0.0281439,
+                0.0283981,
+                0.0282381,
+                0.0277974
+              ],
+              "samples_per_sec": 17755624.0,
+              "median_pass_s": 0.0281439,
+              "ms_per_batch": 0.461375
+            },
+            "16384": {
+              "pass_times": [
+                0.0287616,
+                0.0282521,
+                0.0286254,
+                0.0287643,
+                0.0286015
+              ],
+              "samples_per_sec": 17170790.0,
+              "median_pass_s": 0.0286254,
+              "ms_per_batch": 0.954179
+            },
+            "32768": {
+              "pass_times": [
+                0.0291267,
+                0.0290038,
+                0.0288194,
+                0.0284263,
+                0.0290006
+              ],
+              "samples_per_sec": 16948596.0,
+              "median_pass_s": 0.0290006,
+              "ms_per_batch": 1.93338
+            }
+          },
+          "tail": ""
+        },
+        "c16384/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "65536": {
+              "pass_times": [
+                0.0265299,
+                0.0269532,
+                0.0266381,
+                0.0265538,
+                0.0268796
+              ],
+              "samples_per_sec": 17221649.0,
+              "median_pass_s": 0.0266381,
+              "ms_per_batch": 3.80544
+            },
+            "8192": {
+              "pass_times": [
+                0.0278462,
+                0.0281434,
+                0.0283333,
+                0.0282436,
+                0.028044
+              ],
+              "samples_per_sec": 17755904.0,
+              "median_pass_s": 0.0281434,
+              "ms_per_batch": 0.461368
+            },
+            "16384": {
+              "pass_times": [
+                0.0280961,
+                0.0290906,
+                0.0282008,
+                0.0282863,
+                0.0277222
+              ],
+              "samples_per_sec": 17429265.0,
+              "median_pass_s": 0.0282008,
+              "ms_per_batch": 0.940028
+            },
+            "32768": {
+              "pass_times": [
+                0.0285895,
+                0.0284512,
+                0.0279858,
+                0.0285804,
+                0.0284105
+              ],
+              "samples_per_sec": 17275876.0,
+              "median_pass_s": 0.0284512,
+              "ms_per_batch": 1.89675
+            }
+          },
+          "tail": ""
+        }
+      }
+    },
+    {
+      "index": 4,
+      "soak": false,
+      "arm_order": [
+        "off",
+        "c8192",
+        "c16384",
+        "c32768"
+      ],
+      "batch_order": [
+        8192,
+        16384,
+        32768,
+        65536
+      ],
+      "results": {
+        "off/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0141682,
+                0.0139226,
+                0.0142764,
+                0.0143709,
+                0.0144087
+              ],
+              "samples_per_sec": 35002610.0,
+              "median_pass_s": 0.0142764,
+              "ms_per_batch": 0.23404
+            },
+            "16384": {
+              "pass_times": [
+                0.0141336,
+                0.013577,
+                0.0138836,
+                0.0140756,
+                0.0141805
+              ],
+              "samples_per_sec": 34919933.0,
+              "median_pass_s": 0.0140756,
+              "ms_per_batch": 0.469188
+            },
+            "32768": {
+              "pass_times": [
+                0.0151523,
+                0.0150506,
+                0.015138,
+                0.0147539,
+                0.0149119
+              ],
+              "samples_per_sec": 32657790.0,
+              "median_pass_s": 0.0150506,
+              "ms_per_batch": 1.00337
+            },
+            "65536": {
+              "pass_times": [
+                0.0142989,
+                0.0142921,
+                0.0142896,
+                0.0141233,
+                0.0137846
+              ],
+              "samples_per_sec": 32103896.0,
+              "median_pass_s": 0.0142896,
+              "ms_per_batch": 2.04137
+            }
+          },
+          "tail": ""
+        },
+        "c8192/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0145456,
+                0.0143672,
+                0.0143825,
+                0.0143822,
+                0.0143978
+              ],
+              "samples_per_sec": 34744414.0,
+              "median_pass_s": 0.0143825,
+              "ms_per_batch": 0.235779
+            },
+            "16384": {
+              "pass_times": [
+                0.0139184,
+                0.014223,
+                0.0144486,
+                0.0144773,
+                0.0144656
+              ],
+              "samples_per_sec": 34018589.0,
+              "median_pass_s": 0.0144486,
+              "ms_per_batch": 0.481619
+            },
+            "32768": {
+              "pass_times": [
+                0.0146999,
+                0.0145409,
+                0.0142516,
+                0.0144264,
+                0.0146324
+              ],
+              "samples_per_sec": 33802605.0,
+              "median_pass_s": 0.0145409,
+              "ms_per_batch": 0.969393
+            },
+            "65536": {
+              "pass_times": [
+                0.0138349,
+                0.0138463,
+                0.0140193,
+                0.0133138,
+                0.0136993
+              ],
+              "samples_per_sec": 33159075.0,
+              "median_pass_s": 0.0138349,
+              "ms_per_batch": 1.97641
+            }
+          },
+          "tail": ""
+        },
+        "c16384/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0143761,
+                0.0143353,
+                0.0143615,
+                0.0143933,
+                0.0141665
+              ],
+              "samples_per_sec": 34795297.0,
+              "median_pass_s": 0.0143615,
+              "ms_per_batch": 0.235434
+            },
+            "16384": {
+              "pass_times": [
+                0.014069,
+                0.0141632,
+                0.014142,
+                0.0141609,
+                0.0139592
+              ],
+              "samples_per_sec": 34755964.0,
+              "median_pass_s": 0.014142,
+              "ms_per_batch": 0.471401
+            },
+            "32768": {
+              "pass_times": [
+                0.0142347,
+                0.0144444,
+                0.01449,
+                0.0145307,
+                0.0144997
+              ],
+              "samples_per_sec": 33921311.0,
+              "median_pass_s": 0.01449,
+              "ms_per_batch": 0.966
+            },
+            "65536": {
+              "pass_times": [
+                0.0134458,
+                0.01298,
+                0.0136074,
+                0.0136066,
+                0.0136001
+              ],
+              "samples_per_sec": 33731534.0,
+              "median_pass_s": 0.0136001,
+              "ms_per_batch": 1.94287
+            }
+          },
+          "tail": ""
+        },
+        "c32768/bf16": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0143958,
+                0.0143595,
+                0.0144112,
+                0.0142183,
+                0.0139182
+              ],
+              "samples_per_sec": 34800165.0,
+              "median_pass_s": 0.0143595,
+              "ms_per_batch": 0.235401
+            },
+            "16384": {
+              "pass_times": [
+                0.0140603,
+                0.0141352,
+                0.0141087,
+                0.0139542,
+                0.0136805
+              ],
+              "samples_per_sec": 34957915.0,
+              "median_pass_s": 0.0140603,
+              "ms_per_batch": 0.468678
+            },
+            "32768": {
+              "pass_times": [
+                0.0151816,
+                0.0152611,
+                0.015261,
+                0.0152551,
+                0.0152573
+              ],
+              "samples_per_sec": 32215377.0,
+              "median_pass_s": 0.0152573,
+              "ms_per_batch": 1.01715
+            },
+            "65536": {
+              "pass_times": [
+                0.0143619,
+                0.0141465,
+                0.0138662,
+                0.0141714,
+                0.0143353
+              ],
+              "samples_per_sec": 32371637.0,
+              "median_pass_s": 0.0141714,
+              "ms_per_batch": 2.02449
+            }
+          },
+          "tail": ""
+        },
+        "off/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0278246,
+                0.0281651,
+                0.0285232,
+                0.0284468,
+                0.0278073
+              ],
+              "samples_per_sec": 17742256.0,
+              "median_pass_s": 0.0281651,
+              "ms_per_batch": 0.461723
+            },
+            "16384": {
+              "pass_times": [
+                0.0279856,
+                0.0281746,
+                0.0280705,
+                0.0279193,
+                0.0282585
+              ],
+              "samples_per_sec": 17510188.0,
+              "median_pass_s": 0.0280705,
+              "ms_per_batch": 0.935684
+            },
+            "32768": {
+              "pass_times": [
+                0.0297643,
+                0.0301008,
+                0.0299315,
+                0.0297481,
+                0.0294566
+              ],
+              "samples_per_sec": 16513718.0,
+              "median_pass_s": 0.0297643,
+              "ms_per_batch": 1.98429
+            },
+            "65536": {
+              "pass_times": [
+                0.0279626,
+                0.0275386,
+                0.027521,
+                0.0278979,
+                0.0275147
+              ],
+              "samples_per_sec": 16658498.0,
+              "median_pass_s": 0.0275386,
+              "ms_per_batch": 3.93409
+            }
+          },
+          "tail": ""
+        },
+        "c8192/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0283171,
+                0.0277307,
+                0.0283773,
+                0.0286837,
+                0.0277011
+              ],
+              "samples_per_sec": 17647024.0,
+              "median_pass_s": 0.0283171,
+              "ms_per_batch": 0.464214
+            },
+            "16384": {
+              "pass_times": [
+                0.0287571,
+                0.0285536,
+                0.0280893,
+                0.028939,
+                0.0287809
+              ],
+              "samples_per_sec": 17092130.0,
+              "median_pass_s": 0.0287571,
+              "ms_per_batch": 0.95857
+            },
+            "32768": {
+              "pass_times": [
+                0.0288038,
+                0.0291757,
+                0.0289842,
+                0.0287087,
+                0.028983
+              ],
+              "samples_per_sec": 16958920.0,
+              "median_pass_s": 0.028983,
+              "ms_per_batch": 1.9322
+            },
+            "65536": {
+              "pass_times": [
+                0.0270046,
+                0.0270169,
+                0.0274181,
+                0.0268196,
+                0.0272758
+              ],
+              "samples_per_sec": 16980214.0,
+              "median_pass_s": 0.0270169,
+              "ms_per_batch": 3.85955
+            }
+          },
+          "tail": ""
+        },
+        "c16384/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0277387,
+                0.028387,
+                0.0283003,
+                0.0278033,
+                0.0283526
+              ],
+              "samples_per_sec": 17657483.0,
+              "median_pass_s": 0.0283003,
+              "ms_per_batch": 0.463939
+            },
+            "16384": {
+              "pass_times": [
+                0.0282112,
+                0.0280959,
+                0.0276164,
+                0.0281931,
+                0.0282722
+              ],
+              "samples_per_sec": 17434054.0,
+              "median_pass_s": 0.0281931,
+              "ms_per_batch": 0.93977
+            },
+            "32768": {
+              "pass_times": [
+                0.0284768,
+                0.028592,
+                0.0284745,
+                0.0279928,
+                0.0287502
+              ],
+              "samples_per_sec": 17260371.0,
+              "median_pass_s": 0.0284768,
+              "ms_per_batch": 1.89845
+            },
+            "65536": {
+              "pass_times": [
+                0.0265536,
+                0.0268881,
+                0.0268716,
+                0.0262922,
+                0.0269022
+              ],
+              "samples_per_sec": 17071981.0,
+              "median_pass_s": 0.0268716,
+              "ms_per_batch": 3.8388
+            }
+          },
+          "tail": ""
+        },
+        "c32768/fp32": {
+          "returncode": 0,
+          "ok": true,
+          "batches": {
+            "8192": {
+              "pass_times": [
+                0.0283901,
+                0.0283762,
+                0.0278554,
+                0.0281676,
+                0.0284111
+              ],
+              "samples_per_sec": 17610261.0,
+              "median_pass_s": 0.0283762,
+              "ms_per_batch": 0.465183
+            },
+            "16384": {
+              "pass_times": [
+                0.0282544,
+                0.0279293,
+                0.0279848,
+                0.0282643,
+                0.0277382
+              ],
+              "samples_per_sec": 17563791.0,
+              "median_pass_s": 0.0279848,
+              "ms_per_batch": 0.932828
+            },
+            "32768": {
+              "pass_times": [
+                0.0299278,
+                0.0299393,
+                0.0294508,
+                0.0299197,
+                0.0299766
+              ],
+              "samples_per_sec": 16423537.0,
+              "median_pass_s": 0.0299278,
+              "ms_per_batch": 1.99519
+            },
+            "65536": {
+              "pass_times": [
+                0.0280203,
+                0.0276263,
+                0.0282848,
+                0.0280692,
+                0.0276051
+              ],
+              "samples_per_sec": 16372152.0,
+              "median_pass_s": 0.0280203,
+              "ms_per_batch": 4.00289
+            }
+          },
+          "tail": ""
+        }
+      }
+    }
+  ],
+  "summary": {
+    "bf16": {
+      "16384": {
+        "c8192": {
+          "median": 33987923.0,
+          "min": 33916388.0,
+          "max": 34220307.0,
+          "rounds": [
+            34220307.0,
+            33916388.0,
+            33957257.0,
+            34018589.0
+          ]
+        },
+        "c16384": {
+          "median": 34903859.5,
+          "min": 34755964.0,
+          "max": 34946872.0,
+          "rounds": [
+            34885228.0,
+            34922491.0,
+            34946872.0,
+            34755964.0
+          ]
+        },
+        "c32768": {
+          "median": 34912254.5,
+          "min": 34747097.0,
+          "max": 34957915.0,
+          "rounds": [
+            34908004.0,
+            34916505.0,
+            34747097.0,
+            34957915.0
+          ]
+        },
+        "off": {
+          "median": 35081314.5,
+          "min": 34919933.0,
+          "max": 35203656.0,
+          "rounds": [
+            34966661.0,
+            35203656.0,
+            35195968.0,
+            34919933.0
+          ]
+        }
+      },
+      "32768": {
+        "c8192": {
+          "median": 33725025.0,
+          "min": 33487950.0,
+          "max": 33821347.0,
+          "rounds": [
+            33487950.0,
+            33647445.0,
+            33821347.0,
+            33802605.0
+          ]
+        },
+        "c16384": {
+          "median": 33965851.0,
+          "min": 33921311.0,
+          "max": 34081898.0,
+          "rounds": [
+            34081898.0,
+            33989216.0,
+            33942486.0,
+            33921311.0
+          ]
+        },
+        "c32768": {
+          "median": 32226777.5,
+          "min": 32191486.0,
+          "max": 32525477.0,
+          "rounds": [
+            32191486.0,
+            32525477.0,
+            32238178.0,
+            32215377.0
+          ]
+        },
+        "off": {
+          "median": 32325655.5,
+          "min": 32213190.0,
+          "max": 32657790.0,
+          "rounds": [
+            32243541.0,
+            32213190.0,
+            32407770.0,
+            32657790.0
+          ]
+        }
+      },
+      "65536": {
+        "c8192": {
+          "median": 33194559.5,
+          "min": 33159075.0,
+          "max": 33202853.0,
+          "rounds": [
+            33198549.0,
+            33190570.0,
+            33202853.0,
+            33159075.0
+          ]
+        },
+        "c16384": {
+          "median": 33740409.5,
+          "min": 33731534.0,
+          "max": 33784174.0,
+          "rounds": [
+            33749075.0,
+            33784174.0,
+            33731744.0,
+            33731534.0
+          ]
+        },
+        "c32768": {
+          "median": 32224674.5,
+          "min": 32022486.0,
+          "max": 32380685.0,
+          "rounds": [
+            32380685.0,
+            32077712.0,
+            32022486.0,
+            32371637.0
+          ]
+        },
+        "off": {
+          "median": 32496370.5,
+          "min": 32103896.0,
+          "max": 32871601.0,
+          "rounds": [
+            32505310.0,
+            32871601.0,
+            32487431.0,
+            32103896.0
+          ]
+        }
+      },
+      "8192": {
+        "c8192": {
+          "median": 34790067.0,
+          "min": 34744414.0,
+          "max": 34830429.0,
+          "rounds": [
+            34830429.0,
+            34800114.0,
+            34780020.0,
+            34744414.0
+          ]
+        },
+        "c16384": {
+          "median": 34863671.0,
+          "min": 34792186.0,
+          "max": 34941596.0,
+          "rounds": [
+            34792186.0,
+            34941596.0,
+            34932045.0,
+            34795297.0
+          ]
+        },
+        "c32768": {
+          "median": 34771497.5,
+          "min": 34732437.0,
+          "max": 35167990.0,
+          "rounds": [
+            34742830.0,
+            34732437.0,
+            35167990.0,
+            34800165.0
+          ]
+        },
+        "off": {
+          "median": 34976031.5,
+          "min": 34780103.0,
+          "max": 35305188.0,
+          "rounds": [
+            34780103.0,
+            34949453.0,
+            35305188.0,
+            35002610.0
+          ]
+        }
+      }
+    },
+    "fp32": {
+      "16384": {
+        "c8192": {
+          "median": 17183884.5,
+          "min": 17092130.0,
+          "max": 17214927.0,
+          "rounds": [
+            17196979.0,
+            17214927.0,
+            17170790.0,
+            17092130.0
+          ]
+        },
+        "c16384": {
+          "median": 17489605.0,
+          "min": 17429265.0,
+          "max": 17557219.0,
+          "rounds": [
+            17557219.0,
+            17545156.0,
+            17429265.0,
+            17434054.0
+          ]
+        },
+        "c32768": {
+          "median": 17514076.0,
+          "min": 17421251.0,
+          "max": 17563791.0,
+          "rounds": [
+            17495166.0,
+            17532986.0,
+            17421251.0,
+            17563791.0
+          ]
+        },
+        "off": {
+          "median": 17465063.0,
+          "min": 17384008.0,
+          "max": 17561781.0,
+          "rounds": [
+            17419938.0,
+            17384008.0,
+            17561781.0,
+            17510188.0
+          ]
+        }
+      },
+      "32768": {
+        "c8192": {
+          "median": 16969476.0,
+          "min": 16948596.0,
+          "max": 17005924.0,
+          "rounds": [
+            17005924.0,
+            16980032.0,
+            16948596.0,
+            16958920.0
+          ]
+        },
+        "c16384": {
+          "median": 17268123.5,
+          "min": 17209138.0,
+          "max": 17356076.0,
+          "rounds": [
+            17356076.0,
+            17209138.0,
+            17275876.0,
+            17260371.0
+          ]
+        },
+        "c32768": {
+          "median": 16447034.5,
+          "min": 16423537.0,
+          "max": 16513269.0,
+          "rounds": [
+            16445012.0,
+            16449057.0,
+            16513269.0,
+            16423537.0
+          ]
+        },
+        "off": {
+          "median": 16497976.5,
+          "min": 16440904.0,
+          "max": 16520769.0,
+          "rounds": [
+            16520769.0,
+            16440904.0,
+            16482235.0,
+            16513718.0
+          ]
+        }
+      },
+      "65536": {
+        "c8192": {
+          "median": 16939338.0,
+          "min": 16845478.0,
+          "max": 16984761.0,
+          "rounds": [
+            16845478.0,
+            16898462.0,
+            16984761.0,
+            16980214.0
+          ]
+        },
+        "c16384": {
+          "median": 17171909.5,
+          "min": 17071981.0,
+          "max": 17221649.0,
+          "rounds": [
+            17206606.0,
+            17137213.0,
+            17221649.0,
+            17071981.0
+          ]
+        },
+        "c32768": {
+          "median": 16326105.0,
+          "min": 16271180.0,
+          "max": 16372856.0,
+          "rounds": [
+            16372856.0,
+            16280058.0,
+            16271180.0,
+            16372152.0
+          ]
+        },
+        "off": {
+          "median": 16579469.5,
+          "min": 16524586.0,
+          "max": 16658498.0,
+          "rounds": [
+            16524586.0,
+            16559298.0,
+            16599641.0,
+            16658498.0
+          ]
+        }
+      },
+      "8192": {
+        "c8192": {
+          "median": 17650052.0,
+          "min": 17643937.0,
+          "max": 17755624.0,
+          "rounds": [
+            17643937.0,
+            17653080.0,
+            17755624.0,
+            17647024.0
+          ]
+        },
+        "c16384": {
+          "median": 17700143.5,
+          "min": 17616196.0,
+          "max": 17755904.0,
+          "rounds": [
+            17742804.0,
+            17616196.0,
+            17755904.0,
+            17657483.0
+          ]
+        },
+        "c32768": {
+          "median": 17623994.5,
+          "min": 17609509.0,
+          "max": 17750102.0,
+          "rounds": [
+            17609509.0,
+            17750102.0,
+            17637728.0,
+            17610261.0
+          ]
+        },
+        "off": {
+          "median": 17686184.5,
+          "min": 17616844.0,
+          "max": 17762823.0,
+          "rounds": [
+            17630113.0,
+            17616844.0,
+            17762823.0,
+            17742256.0
+          ]
+        }
+      }
+    }
+  }
+}

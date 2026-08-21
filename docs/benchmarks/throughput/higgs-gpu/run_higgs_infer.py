@@ -299,14 +299,16 @@ def engine_cmd(
         wsl_cuda = os.environ.get("WSL_CUDA_LIB", "/usr/lib/wsl/lib")
         prepend_env_path(env, "LD_LIBRARY_PATH", [wsl_cuda if Path(wsl_cuda).exists() else ""])
     elif engine == "pytorch":
-        # PyTorch's best one-line configuration for this benchmark, the way the
-        # training runners already give it: torch.compile over the model, and in
-        # bf16 the weights held in bf16 instead of cast inside autocast on every
-        # call. Measured on an RTX 3060: +11% bf16, +9% fp32 over the CUDA-graph
-        # eager path, which is what earlier artifacts compared against.
-        # PYTORCH_PLAIN=1 reverts to that path.
+        # PyTorch's best configuration for this benchmark is not one
+        # configuration: the hand-captured CUDA graph over eager modules wins
+        # below about 4,096 rows and torch.compile's max-autotune wins above it,
+        # by 2.9x and 1.44x respectively at the ends of the ladder. The driver
+        # therefore times its candidate paths at each batch size and reports the
+        # faster, naming it in `pt_path`, the way the TensorFlow driver reports
+        # the faster of its two dispatch paths. What is set here is the weight
+        # dtype: bf16 weights spare the autocast a cast on every replay, which is
+        # what a deployment would do. PYTORCH_PLAIN=1 reverts.
         if not os.environ.get("PYTORCH_PLAIN"):
-            env["PT_COMPILE_MODE"] = "reduce-overhead" if precision == "bf16" else "max-autotune"
             if precision == "bf16":
                 env["PT_BF16_WEIGHTS"] = "1"
         cmd = [

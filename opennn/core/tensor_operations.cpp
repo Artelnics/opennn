@@ -8,6 +8,7 @@
 
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/device_backend.h"
+#include "opennn/core/cuda/cutlass_narrow_gemm.cuh"
 #include "opennn/core/profiler.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/cuda/kernel_activation.cuh"
@@ -291,6 +292,22 @@ static double gemm_contract_flops()
     return flops;
 }
 
+// Below this much arithmetic a GEMM is a fraction of a millisecond whole and
+// every way of spreading it costs more than it takes. 64 Mi multiply-adds leaves
+// the 28->1024 and 1024->1 layers of a classifier whole and blocks the wide one.
+static double gemm_min_flops()
+{
+    static const double flops = []
+    {
+        const char* const requested = getenv("OPENNN_GEMM_MIN_FLOPS");
+        const double requested_flops = requested ? atof(requested) : -1.0;
+
+        return requested_flops >= 0.0 ? requested_flops : 64.0 * 1024.0 * 1024.0;
+    }();
+
+    return flops;
+}
+
 static Index gemm_min_output()
 {
     static const Index elements = []
@@ -409,6 +426,112 @@ static bool gemm_pack_weights(Index block_rows)
     if (requested >= 0) return requested != 0;
 
     return block_rows <= 64;
+}
+
+// Hand `rows` out in blocks to an OpenMP team, single-threaded MKL inside each
+// block, and call `work(first, count)` for each. This is the schedule the whole
+// dense CPU path runs on, forward and backward: MKL threads a GEMM itself, but
+// it runs at most one thread per core it can see - ten here - and splits the
+// rows evenly across them, so its barrier waits on the slowest slice.
+//
+// Returns false when the team would not be worth opening, in which case the
+// caller does the whole thing in one call and lets MKL thread it.
+//
+// The forward keeps a loop of its own rather than calling this: it also carries
+// the epilogue, the packed weight panel and the guided variant, none of which
+// the backward has any use for.
+template<typename Work>
+static bool blocked_rows(Index rows, double work_flops, Work&& work)
+{
+    const Index threads = get_device().numThreads();
+    const Index block_rows = gemm_block_rows(rows, threads);
+    const Index blocks = (rows + block_rows - 1) / block_rows;
+
+    // Never open a team so wide that a worker has only one block: the point of
+    // handing blocks out is that a worker which finishes early takes another,
+    // and a worker with nothing to take is a barrier wait. Measured at twenty
+    // threads, batch 256 (32 blocks): 169,463 with a worker per thread against
+    // 189,815 at sixteen, which is what half the block count gives.
+    const Index workers = max<Index>(1, min<Index>(threads / gemm_mkl_threads(), blocks / 2));
+
+    if (gemm_parallelism() == GemmParallelism::Mkl
+        || workers < 2
+        || omp_in_parallel()                 // a nested team would be one thread
+        || work_flops < gemm_min_flops())
+        return false;
+
+    atomic<Index> next_block{0};
+
+    #pragma omp parallel num_threads(to_int(workers))
+    {
+        mkl_set_num_threads_local(to_int(gemm_mkl_threads()));
+
+        for (Index block = next_block++; block < blocks; block = next_block++)
+        {
+            const Index first = block * block_rows;
+
+            work(first, min<Index>(block_rows, rows - first));
+        }
+    }
+
+    // The team runs one share on the calling thread, so the caller is one of the
+    // threads just pinned to a single MKL thread; 0 puts it back on the global
+    // setting for whatever follows.
+    mkl_set_num_threads_local(0);
+
+    return true;
+}
+
+// The two GEMMs of the dense backward. Both are blocked over the rows of their
+// OWN output, which is what keeps this safe: the weight gradient reduces over
+// the batch, and splitting a reduction would need partial buffers and would
+// change the summation order, but splitting its output rows does not touch the
+// reduction at all - each block still sums the whole batch inside one MKL call.
+static bool backward_input_delta(int rows, int in_features, int out_features,
+                                 const float* delta, const float* weights, float* input_delta,
+                                 float beta)
+{
+    PROFILE_SCOPE_HOST("cpu:bwd_input_delta");
+
+    const auto slice = [&](Index first, Index count)
+    {
+        cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+                    to_int(count), in_features, out_features, 1.0f,
+                    delta + first * Index(out_features), out_features,
+                    weights, out_features,
+                    beta, input_delta + first * Index(in_features), in_features);
+    };
+
+    const double flops = double(rows) * double(in_features) * double(out_features);
+
+    if (blocked_rows(Index(rows), flops, slice)) return true;
+
+    slice(0, Index(rows));
+
+    return true;
+}
+
+static bool backward_weight_gradient(int rows, int in_features, int out_features,
+                                     const float* input, const float* delta, float* weight_gradient)
+{
+    PROFILE_SCOPE_HOST("cpu:bwd_weight_gradient");
+
+    const auto slice = [&](Index first, Index count)
+    {
+        cblas_sgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+                    to_int(count), out_features, rows, 1.0f,
+                    input + first, in_features,
+                    delta, out_features,
+                    0.0f, weight_gradient + first * Index(out_features), out_features);
+    };
+
+    const double flops = double(rows) * double(in_features) * double(out_features);
+
+    if (blocked_rows(Index(in_features), flops, slice)) return true;
+
+    slice(0, Index(in_features));
+
+    return true;
 }
 
 // The dense forward on the CPU: the GEMM and the epilogue that belongs to it.
@@ -627,11 +750,73 @@ static bool try_linear_forward(const TensorView& input,
     return true;
 }
 
+// True when this backward's two GEMMs went through the blocked schedule. The
+// forward was moved off Eigen's Matrix products - which EIGEN_USE_MKL_ALL sends
+// to BLAS, where MKL threads them itself - and this is the same move for the
+// backward, which is roughly two thirds of a training step.
+//
+// The addend variant stays on Eigen: it is a fused add that a GEMM cannot
+// express with beta alone, and it is not on this benchmark's path.
+static bool try_linear_backward(const TensorView& output_delta, const TensorView& input,
+                                const TensorView& weights, const TensorView& weight_gradient,
+                                TensorView& input_delta, bool accumulate, const TensorView* addend)
+{
+    static const bool eigen_backward = []
+    {
+        const char* const requested = getenv("OPENNN_BACKWARD");
+
+        return requested && string(requested) == "eigen";
+    }();
+
+    if (eigen_backward
+        || addend
+        || !output_delta.is_fp32() || !input.is_fp32() || !weights.is_fp32()
+        || !weight_gradient.is_fp32()
+        || weights.get_shape().get_rank() != 2)
+        return false;
+
+    const Index out_features = weights.get_shape().back();
+    const Index in_features = weights.get_shape()[0];
+
+    if (in_features <= 0 || out_features <= 0
+        || output_delta.size() % out_features != 0
+        || input.size() % in_features != 0
+        || weight_gradient.size() != in_features * out_features)
+        return false;
+
+    const Index rows = output_delta.size() / out_features;
+
+    if (rows <= 0 || input.size() != rows * in_features) return false;
+
+    // Everything is checked before anything is written: a refusal after the
+    // weight gradient had been computed would send the caller into the fallback,
+    // which computes it again - harmless while both assign, wrong the day either
+    // accumulates.
+    const bool wants_input_delta = input_delta.get_data() && !input_delta.empty();
+
+    if (wants_input_delta
+        && (!input_delta.is_fp32() || input_delta.size() != rows * in_features))
+        return false;
+
+    backward_weight_gradient(to_int(rows), to_int(in_features), to_int(out_features),
+                             input.as<float>(), output_delta.as<float>(), weight_gradient.as<float>());
+
+    if (wants_input_delta)
+        backward_input_delta(to_int(rows), to_int(in_features), to_int(out_features),
+                             output_delta.as<float>(), weights.as<float>(), input_delta.as<float>(),
+                             accumulate ? 1.0f : 0.0f);
+
+    return true;
+}
+
+
 #else
 
 static bool try_activation_forward(TensorView&, ActivationFunction)  { return false; }
 static bool try_linear_forward(const TensorView&, const TensorView&,
                                const TensorView&, TensorView&, bool) { return false; }
+static bool try_linear_backward(const TensorView&, const TensorView&, const TensorView&,
+                                const TensorView&, TensorView&, bool, const TensorView*) { return false; }
 
 #endif
 
@@ -681,7 +866,7 @@ ActivationFunction activation_function_from_string(const string& name)
     X(softmax_gpu, (TensorView&)) \
     X(activation_forward_gpu, (TensorView&, ActivationFunction)) \
     X(activation_backward_gpu, (const TensorView&, TensorView&, ActivationFunction)) \
-    X(linear_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cublasLtEpilogue_t, TensorView*, const TensorView&)) \
+    X(linear_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cublasLtEpilogue_t, TensorView*, const TensorView&, ActivationFunction)) \
     X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool, const LinearBackwardOptions&))
 
 #define OPENNN_DECLARE_GPU_OP(name, sig) static void name sig;
@@ -1109,9 +1294,20 @@ static void linear_backward_cpu(const TensorView& output_delta, const TensorView
                          const TensorView& weight_gradient, const TensorView& bias_gradient,
                          TensorView& input_delta, bool accumulate, const TensorView* addend)
 {
-    weight_gradient.as_matrix().noalias() = input.as_flat_matrix().transpose() * output_delta.as_flat_matrix();
+    {
+    PROFILE_SCOPE_HOST("cpu:bwd_bias");
     if (!bias_gradient.empty())
         bias_gradient.as_vector().noalias() = output_delta.as_flat_matrix().colwise().sum();
+    }
+
+    // One scope over both paths, so the A/B compares like with like.
+    PROFILE_SCOPE_HOST("cpu:bwd_gemms");
+
+    if (try_linear_backward(output_delta, input, weights, weight_gradient,
+                            input_delta, accumulate, addend))
+        return;
+
+    weight_gradient.as_matrix().noalias() = input.as_flat_matrix().transpose() * output_delta.as_flat_matrix();
 
     if (!input_delta.get_data() || input_delta.empty()) return;
 
@@ -1125,7 +1321,7 @@ static void linear_backward_cpu(const TensorView& output_delta, const TensorView
 
 void linear_forward(const TensorView& input, const TensorView& weights, const TensorView& bias,
                     TensorView& output, cublasLtEpilogue_t epilogue, TensorView* pre_activation,
-                    const TensorView& weight_scale)
+                    const TensorView& weight_scale, ActivationFunction fused_activation)
 {
     constexpr string_view operation = "linear_forward";
     validate_linear_io(input, weights, output, false, operation);
@@ -1167,7 +1363,12 @@ void linear_forward(const TensorView& input, const TensorView& weights, const Te
     if (weights.is_int8())
         require_int8_linear(input, output, weight_scale, operation);
 
-    if (input.is_cuda()) { linear_forward_gpu(input, weights, bias, output, epilogue, pre_activation, weight_scale); return; }
+    if (input.is_cuda())
+    {
+        linear_forward_gpu(input, weights, bias, output, epilogue, pre_activation, weight_scale,
+                           fused_activation);
+        return;
+    }
 
     throw_if(weights.is_int8(), "linear_forward: INT8 weights are CUDA-only.");
 
@@ -1175,6 +1376,9 @@ void linear_forward(const TensorView& input, const TensorView& weights, const Te
              "linear_forward: the GELU_AUX_BIAS epilogue is CUDA-only.");
 
     linear_forward_cpu(input, weights, bias, output, epilogue);
+
+    if (fused_activation != ActivationFunction::Identity)
+        activation_forward(output, fused_activation);
 }
 
 void linear_backward(const TensorView& output_delta, const TensorView& input, const TensorView& weights,
@@ -1448,6 +1652,30 @@ static void activation_backward_gpu(const TensorView& outputs, TensorView& delta
     device::check_last_error();
 }
 
+// Above this many rows the forward GEMM is issued in chunks of
+// `gemm_row_chunk()` rows rather than as one call. cuBLASLt loses throughput on
+// a very tall B: measured on the HIGGS hidden layer (1024x1024) with the top-8
+// heuristics timed for each shape, TFLOP/s one-call against best-chunked -
+// fp32 41.5 -> 44.3 at 65,536 rows and 41.5 -> 44.5 at 32,768; bf16 82.3 ->
+// 88.5 and 81.1 -> 86.6. At 16,384 rows and below one call is already best,
+// which is where the gate sits. The chunks re-read the weight panel, but it is
+// four megabytes and stays in L2, and the extra launches are inside the
+// measurement above. `gemm_chunk_probe.cu` is the probe.
+//
+// OPENNN_GEMM_ROW_CHUNK sets the chunk (0 disables chunking entirely).
+static Index gemm_row_chunk()
+{
+    static const Index rows = []
+    {
+        const char* const requested = getenv("OPENNN_GEMM_ROW_CHUNK");
+        const long long requested_rows = requested ? atoll(requested) : -1;
+
+        return requested_rows >= 0 ? Index(requested_rows) : Index(16384);
+    }();
+
+    return rows;
+}
+
 static void linear_forward_lt_gpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
                                   TensorView& output, cublasLtEpilogue_t epilogue,
                                   TensorView* pre_activation)
@@ -1463,8 +1691,72 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
         ? bias_for_gemm_bf16(bias)
         : bias.get_data();
 
+    // An auxiliary epilogue writes a second tensor whose leading dimension is
+    // the whole call's, so chunking would have to slice that too; it is a
+    // training path and not what this is for.
+    const Index chunk = pre_activation ? Index(0) : gemm_row_chunk();
+    const bool chunked = chunk > 0 && Index(total_rows) > chunk;
+
+    // A narrow contraction is the one shape cuBLASLt is measurably poor at, and
+    // a CUTLASS kernel instantiated for it is 1.03x to 1.48x faster with
+    // bit-identical output. It declines anything it does not cover - including
+    // every build without CUTLASS, where it is a stub - so this is a fast path
+    // and never a behaviour change.
+    //
+    // Chunking goes first when both apply. CUTLASS's margin over cuBLASLt is
+    // widest at 16,384 rows (1.48x) and narrowest at 65,536 (1.06x), so running
+    // the whole call would take the worse of the two: the chunk loop below asks
+    // per chunk instead, and every large batch then meets this layer at the row
+    // count where the kernel is strongest.
+    const bool narrow_k_applies = !pre_activation
+        && (epilogue == CUBLASLT_EPILOGUE_RELU_BIAS || epilogue == CUBLASLT_EPILOGUE_BIAS)
+        && input.is_bf16() && weights.is_bf16() && output.is_bf16()
+        && bias.get_data() && bias.is_bf16();
+
+    if (!chunked && narrow_k_applies
+        && narrow_k_linear_forward_cutlass(total_rows, input_columns, output_columns,
+                                           input_for_gemm, weights.get_data(), bias_for_gemm,
+                                           output.get_data(),
+                                           epilogue == CUBLASLT_EPILOGUE_RELU_BIAS,
+                                           device::get_compute_stream()))
+        return;
+
     try
     {
+        if (chunked)
+        {
+            const Index input_row_bytes  = Index(input_columns) * type_bytes(weights.get_type());
+            const Index output_row_bytes = Index(output_columns) * type_bytes(output.get_type());
+
+            const char* const input_base = static_cast<const char*>(input_for_gemm);
+            char* const output_base = static_cast<char*>(output.get_data());
+
+            for (Index start = 0; start < Index(total_rows); start += chunk)
+            {
+                const int rows = to_int(min(chunk, Index(total_rows) - start));
+
+                if (narrow_k_applies
+                    && narrow_k_linear_forward_cutlass(rows, input_columns, output_columns,
+                                                       input_base + start * input_row_bytes,
+                                                       weights.get_data(), bias_for_gemm,
+                                                       output_base + start * output_row_bytes,
+                                                       epilogue == CUBLASLT_EPILOGUE_RELU_BIAS,
+                                                       device::get_compute_stream()))
+                    continue;
+
+                run_lt_matmul_cached(
+                    output_columns, rows, input_columns,
+                    CUBLAS_OP_N, CUBLAS_OP_N,
+                    epilogue,
+                    weights.get_data(),
+                    input_base + start * input_row_bytes,
+                    output_base + start * output_row_bytes,
+                    bias_for_gemm,
+                    io_type, io_type,
+                    nullptr);
+            }
+        }
+        else
         run_lt_matmul_cached(
             output_columns, total_rows, input_columns,
             CUBLAS_OP_N, CUBLAS_OP_N,
@@ -1533,7 +1825,8 @@ static bool single_output_reduction_applies(const TensorView& input, const Tenso
 
 static void linear_forward_gpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
                                TensorView& output, cublasLtEpilogue_t epilogue,
-                               TensorView* pre_activation, const TensorView& weight_scale)
+                               TensorView* pre_activation, const TensorView& weight_scale,
+                               ActivationFunction fused_activation)
 {
     PROFILE_SCOPE("op:linear_fwd " + to_string(weights.flat_columns()) + "x"
                   + to_string(input.flat_columns()) + "x" + to_string(input.flat_rows()));
@@ -1548,13 +1841,27 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
             linear_forward_single_output_cuda<T>(rows, features,
                                                  input.as<T>(), weights.as<T>(),
                                                  static_cast<const T*>(bias_data),
+                                                 int(fused_activation),
                                                  output.as<T>());
         });
         return;
     }
 
+    // Everything below produces the output through a kernel that cannot carry
+    // the activation, so it runs afterwards as its own pass - the same pass the
+    // caller would have run, which is what makes asking for the fusion safe.
+    const auto run_fused_activation = [&]
+    {
+        if (fused_activation != ActivationFunction::Identity)
+            activation_forward_gpu(output, fused_activation);
+    };
+
     if (!weights.is_int8())
-        return linear_forward_lt_gpu(input, weights, bias, output, epilogue, pre_activation);
+    {
+        linear_forward_lt_gpu(input, weights, bias, output, epilogue, pre_activation);
+        run_fused_activation();
+        return;
+    }
 
     throw_if(weight_scale.empty() || !input.is_bf16() || !output.is_bf16(),
              "linear_forward: INT8 weights require BF16 activations and a per-channel scale vector.");
@@ -1569,11 +1876,14 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
         && (!bias.get_data() || bias.is_bf16());
 
     if (gemv_path)
-        return w8a16_linear_rows(total_rows, input_columns, output_columns, false,
-                                 input.as<bfloat16>(), weights.as<int8_t>(), weight_scale.as<float>(),
-                                 epilogue == CUBLASLT_EPILOGUE_BIAS && bias.get_data()
-                                     ? bias.as<bfloat16>() : nullptr,
-                                 output.as<bfloat16>());
+    {
+        w8a16_linear_rows(total_rows, input_columns, output_columns, false,
+                          input.as<bfloat16>(), weights.as<int8_t>(), weight_scale.as<float>(),
+                          epilogue == CUBLASLT_EPILOGUE_BIAS && bias.get_data()
+                              ? bias.as<bfloat16>() : nullptr,
+                          output.as<bfloat16>());
+        return run_fused_activation();
+    }
 
     bfloat16* dequantized = ensure_int8_dequant_workspace(weights.size());
     w8_dequant_cuda<bfloat16>(input_columns, output_columns, false, weights.as<int8_t>(),
@@ -1581,6 +1891,7 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     const TensorView dequantized_weights(dequantized, weights.get_shape(),
                                          Type::BF16, Device::CUDA);
     linear_forward_lt_gpu(input, dequantized_weights, bias, output, epilogue, pre_activation);
+    run_fused_activation();
 }
 
 // The backward twin: the same layer shape, one warp's worth of vectors per row,

@@ -12,22 +12,6 @@
 #include "opennn/core/cuda/kernel_activation.cuh"
 #include <curand_kernel.h>
 
-__device__ __forceinline__ float opennn_activation_value(float x, int function)
-{
-    if (function == activation_sigmoid)    return sigmoid_f(x);
-    if (function == activation_tanh)       return tanhf(x);
-    if (function == activation_relu)       return fmaxf(x, 0.0f);
-    if (function == activation_leaky_relu) return x >= 0.0f ? x : leaky_relu_slope * x;
-    if (function == activation_gelu)       return 0.5f * x * (1.0f + erff(x * 0.70710678118654752440f));
-    if (function == activation_gelu_tanh)
-    {
-        constexpr float sqrt_2_over_pi = 0.7978845608028654f;
-        return 0.5f * x * (1.0f + tanhf(sqrt_2_over_pi * (x + 0.044715f * x * x * x)));
-    }
-    if (function == activation_silu)       return x * sigmoid_f(x);
-    return x;
-}
-
 // `y` is the saved output for sigmoid/tanh/relu/leaky_relu and the saved input
 // (pre-activation) for gelu/gelu_tanh/silu, as ActivationOperator arranges
 // (activation_needs_input).

@@ -246,83 +246,6 @@ BinaryMetrics evaluate(NeuralNetwork& network,
     return metrics;
 }
 
-int train_mode(int argc, char* argv[])
-{
-    if (argc < 4)
-    {
-        cerr << "usage: opennn_higgs_cpu train <train_csv> <test_csv> [epochs] [batch] [hidden] [hidden_layers] [activation] [warmup_epochs]\n";
-        return 2;
-    }
-
-    const string train_path = argv[2];
-    const string test_path = argv[3];
-    const Index epochs = argc > 4 ? Index(stoll(argv[4])) : 1;
-    const Index batch = argc > 5 ? Index(stoll(argv[5])) : 1024;
-    const Index hidden = argc > 6 ? Index(stoll(argv[6])) : 1024;
-    const Index hidden_layers = argc > 7 ? Index(stoll(argv[7])) : 2;
-    const string activation = argc > 8 ? argv[8] : "relu";
-    const Index warmup_epochs = argc > 9 ? Index(stoll(argv[9])) : 0;
-
-    set_seed(42);
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
-    TabularDataset dataset(train_path, ",", false, false);
-    dataset.set_sample_roles("Training");
-    const Index samples = dataset.get_samples_number();
-
-    cout << "engine=opennn\n";
-    cout << "mode=train\n";
-    cout << "device=cpu\n";
-    cout << "samples=" << samples << "\n";
-    cout << "batch=" << batch << "\n";
-    cout << "epochs=" << epochs << "\n";
-    cout << "hidden=" << hidden << "\n";
-    cout << "hidden_layers=" << hidden_layers << "\n";
-    cout << "activation=" << activation << "\n";
-
-    auto network = make_network(dataset.get_input_shape(),
-                                dataset.get_target_shape(),
-                                hidden,
-                                hidden_layers,
-                                activation);
-
-    TrainingStrategy training_strategy(network.get(), &dataset);
-    training_strategy.set_loss("CrossEntropy");
-    training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-
-    auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
-        training_strategy.get_optimization_algorithm());
-    adam->set_batch_size(batch);
-    adam->set_display_period(1000000);
-    adam->set_gradient_clip_norm(0.0f);
-
-    if (warmup_epochs > 0)
-    {
-        adam->set_maximum_epochs(warmup_epochs);
-        training_strategy.train();
-    }
-
-    adam->set_maximum_epochs(epochs);
-    const auto t0 = clock_type::now();
-    training_strategy.train();
-    const auto t1 = clock_type::now();
-
-    const double total_s = chrono::duration<double>(t1 - t0).count();
-    const double median_epoch_s = total_s / double(epochs);
-    const double samples_per_sec = double(samples) / median_epoch_s;
-
-    BinaryMetrics metrics = evaluate(*network, test_path, batch);
-
-    cout << "median_epoch_s=" << median_epoch_s << "\n";
-    cout << "samples_per_sec=" << long(samples_per_sec) << "\n";
-    cout << "test_samples=" << metrics.samples << "\n";
-    cout << "test_accuracy=" << metrics.accuracy << "\n";
-    cout << "test_log_loss=" << metrics.log_loss << "\n";
-    cout << "test_roc_auc=" << metrics.auc << "\n";
-    cout << "RESULT=OK\n";
-    return 0;
-}
-
 vector<Index> parse_batches(const string& text)
 {
     vector<Index> batches;
@@ -341,6 +264,140 @@ vector<Index> parse_batches(const string& text)
     if (batches.empty()) batches.push_back(1024);
 
     return batches;
+}
+
+int train_mode(int argc, char* argv[])
+{
+    if (argc < 4)
+    {
+        cerr << "usage: opennn_higgs_cpu train <train_csv> <test_csv> [epochs] [batch[,batch...]] [hidden] [hidden_layers] [activation] [warmup_epochs]\n";
+        return 2;
+    }
+
+    const string train_path = argv[2];
+    const string test_path = argv[3];
+    const Index epochs = argc > 4 ? Index(stoll(argv[4])) : 1;
+    const vector<Index> batches = parse_batches(argc > 5 ? argv[5] : "1024");
+    const Index hidden = argc > 6 ? Index(stoll(argv[6])) : 1024;
+    const Index hidden_layers = argc > 7 ? Index(stoll(argv[7])) : 2;
+    const string activation = argc > 8 ? argv[8] : "relu";
+    const Index warmup_epochs = argc > 9 ? Index(stoll(argv[9])) : 0;
+
+    set_seed(42);
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    TabularDataset dataset(train_path, ",", false, false);
+    dataset.set_sample_roles("Training");
+    const Index samples = dataset.get_samples_number();
+
+    cout << "engine=opennn\n";
+    cout << "mode=train\n";
+    cout << "device=cpu\n";
+    cout << "samples=" << samples << "\n";
+    cout << "epochs=" << epochs << "\n";
+    cout << "warmup_epochs=" << warmup_epochs << "\n";
+    cout << "hidden=" << hidden << "\n";
+    cout << "hidden_layers=" << hidden_layers << "\n";
+    cout << "activation=" << activation << "\n";
+
+    for (const Index batch : batches)
+    {
+        // A fresh network per rung. A batch size that inherited the previous
+        // rung's weights would be training a different problem, and its
+        // held-out metrics would not be comparable with the other engines',
+        // which build one model per rung as well.
+        auto network = make_network(dataset.get_input_shape(),
+                                    dataset.get_target_shape(),
+                                    hidden,
+                                    hidden_layers,
+                                    activation);
+
+        TrainingStrategy training_strategy(network.get(), &dataset);
+        training_strategy.set_loss("CrossEntropy");
+        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+
+        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
+            training_strategy.get_optimization_algorithm());
+        adam->set_batch_size(batch);
+        adam->set_display_period(1000000);
+        adam->set_gradient_clip_norm(0.0f);
+
+        // The warmup epochs run inside the SAME train() call as the timed ones
+        // and are discarded by the callback, rather than in a train() of their
+        // own. Two calls would leave the second one's setup - allocating the
+        // batch arena, building the forward contexts - inside the timed window,
+        // which is exactly what the PyTorch and TensorFlow drivers keep out of
+        // theirs. It used to be timed as one wall-clock span over a whole
+        // train() divided by the epoch count, which is a mean with the setup
+        // folded in, not a median of epochs.
+        vector<double> epoch_seconds;
+        auto previous_mark = clock_type::now();
+
+        adam->set_maximum_epochs(warmup_epochs + epochs);
+        adam->post_epoch_callback = [&](Index epoch, float, float, NeuralNetwork*)
+        {
+            const auto now = clock_type::now();
+            const double elapsed = chrono::duration<double>(now - previous_mark).count();
+            previous_mark = now;
+
+            if (epoch >= warmup_epochs) epoch_seconds.push_back(elapsed);
+        };
+
+        training_strategy.train();
+
+        if (Index(epoch_seconds.size()) != epochs)
+        {
+            cerr << "epoch timing marks missing: " << epoch_seconds.size()
+                 << " of " << epochs << "\n";
+            cout << "RESULT=ERROR\n";
+            return 1;
+        }
+
+        // In temporal order, before the sort: a median hides a drifting machine
+        // entirely. If these fall monotonically, the run is measuring the clock.
+        cout << "batch_" << batch << "_epoch_times=";
+        for (size_t i = 0; i < epoch_seconds.size(); ++i)
+            cout << (i ? "," : "") << epoch_seconds[i];
+        cout << "\n";
+
+        vector<double> sorted_seconds = epoch_seconds;
+        sort(sorted_seconds.begin(), sorted_seconds.end());
+        const double median_epoch_s = sorted_seconds[sorted_seconds.size() / 2];
+
+        // An epoch runs whole batches only and drops the remainder. Dividing the
+        // whole split by the epoch time would overstate throughput by up to one
+        // batch: nothing at 1,024 rows, 1.6% at 16,384.
+        const Index samples_per_epoch = (samples / batch) * batch;
+        const double samples_per_sec = double(samples_per_epoch) / median_epoch_s;
+
+        const BinaryMetrics metrics = evaluate(*network, test_path, batch);
+
+        if (batches.size() == 1)
+        {
+            cout << "batch=" << batch << "\n";
+            cout << "samples_per_epoch=" << samples_per_epoch << "\n";
+            cout << "median_epoch_s=" << median_epoch_s << "\n";
+            cout << "samples_per_sec=" << long(samples_per_sec) << "\n";
+            cout << "test_samples=" << metrics.samples << "\n";
+            cout << "test_accuracy=" << metrics.accuracy << "\n";
+            cout << "test_log_loss=" << metrics.log_loss << "\n";
+            cout << "test_roc_auc=" << metrics.auc << "\n";
+        }
+        else
+        {
+            cout << "batch_" << batch << "_samples_per_sec=" << long(samples_per_sec)
+                 << " median_epoch_s=" << median_epoch_s
+                 << " samples_per_epoch=" << samples_per_epoch << "\n";
+            cout << "batch_" << batch << "_test_accuracy=" << metrics.accuracy
+                 << " test_log_loss=" << metrics.log_loss
+                 << " test_roc_auc=" << metrics.auc << "\n";
+        }
+
+        cout.flush();
+    }
+
+    cout << "RESULT=OK\n";
+    return 0;
 }
 
 int infer_mode(int argc, char* argv[])
