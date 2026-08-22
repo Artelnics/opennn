@@ -134,39 +134,31 @@ string Unscaling::write_expression(const vector<string>& input_names,
     for (Index i = 0; i < outputs_number; ++i)
     {
         const size_t feature = size_t(i % ssize(scalers));
-        const Descriptives& descriptive = descriptives[feature];
-        using enum ScalerMethod;
-        switch (scalers[feature])
+        const ScalerMethod scaler = scalers[feature];
+
+        // Logarithm is the one method that is not affine.
+        if (scaler == ScalerMethod::Logarithm)
         {
-        case None:
-            buffer << output_names[i] << " = " << input_names[i] << ";\n";
-            break;
-        case MinimumMaximum:
-            if (abs(descriptive.minimum - descriptive.maximum) < EPSILON)
-                buffer << output_names[i] << "=" << descriptive.minimum << ";\n";
-            else
-                buffer << output_names[i] << "=" << input_names[i] << "*"
-                       << "(" << (descriptive.maximum - descriptive.minimum) / (max_range - min_range)
-                       << ")+" << (descriptive.minimum - min_range * (descriptive.maximum - descriptive.minimum) / (max_range - min_range)) << ";\n";
-            break;
-        case MeanStandardDeviation:
-            buffer << output_names[i] << "=" << input_names[i] << "*" << descriptive.standard_deviation << "+" << descriptive.mean << ";\n";
-            break;
-        case StandardDeviation:
-            if (descriptive.standard_deviation < EPSILON)
-                buffer << output_names[i] << "=" << descriptive.mean << ";\n";
-            else
-                buffer << output_names[i] << "=" << input_names[i] << "*" << descriptive.standard_deviation << ";\n";
-            break;
-        case Logarithm:
-            buffer << output_names[i] << "=" << "exp(" << input_names[i] << ");\n";
-            break;
-        case ImageMinMax:
-            buffer << output_names[i] << "=" << input_names[i] << " * 255.0;\n";
-            break;
-        default:
-            throw runtime_error("Unknown inputs scaling method.\n");
+            buffer << output_names[i] << "=exp(" << input_names[i] << ");\n";
+            continue;
         }
+
+        // Same slope and offset forward_propagate runs on, so the exported
+        // text cannot drift away from the layer it is supposed to mirror.
+        const auto [slope, offset] = unscaling_affine(scaler, descriptives[feature], min_range, max_range);
+
+        buffer << output_names[i] << "=";
+
+        if (slope == 0.0f)                          // the feature was constant
+            buffer << offset;
+        else if (slope == 1.0f && offset == 0.0f)
+            buffer << input_names[i];
+        else if (offset == 0.0f)
+            buffer << input_names[i] << "*" << slope;
+        else
+            buffer << input_names[i] << "*" << slope << "+" << offset;
+
+        buffer << ";\n";
     }
 
     string expression = buffer.str();

@@ -916,123 +916,21 @@ string ModelExpression::get_expression_c_embedded() const
 
                 for(Index f = 0; f < features_number; ++f)
                 {
-                    const Descriptives& d =
-                        descriptives[size_t(f)];
+                    const ScalerMethod scaler = scalers[size_t(f)];
 
-                    float slope = 1.0f;
-                    float offset = 0.0f;
+                    // Same slope/offset the layer itself runs on, so an
+                    // exported model and the library cannot drift apart.
+                    const auto [slope, offset] = is_unscaling
+                        ? unscaling_affine(scaler, descriptives[size_t(f)], min_range, max_range)
+                        : scaling_affine(scaler, descriptives[size_t(f)], min_range, max_range);
 
-                    using enum ScalerMethod;
-
-                    switch(scalers[size_t(f)])
+                    // Logarithm is the one method that is not affine: the
+                    // tables carry {1, 0} and the emitted code takes the log
+                    // before, or the exponential after, the affine step.
+                    if(scaler == ScalerMethod::Logarithm)
                     {
-                        case None:
-                            break;
-
-                        case MinimumMaximum:
-                        {
-                            if(is_unscaling)
-                            {
-                                if(abs(d.maximum - d.minimum) < EPSILON)
-                                {
-                                    slope = 0.0f;
-                                    offset = d.minimum;
-                                }
-                                else
-                                {
-                                    slope =
-                                        (d.maximum - d.minimum)
-                                        / (max_range - min_range);
-
-                                    offset =
-                                        d.minimum - min_range * slope;
-                                }
-                            }
-                            else
-                            {
-                                if(d.maximum - d.minimum < EPSILON)
-                                {
-                                    slope = 0.0f;
-                                }
-                                else
-                                {
-                                    slope =
-                                        (max_range - min_range)
-                                        / (d.maximum - d.minimum);
-
-                                    offset =
-                                        min_range - d.minimum * slope;
-                                }
-                            }
-
-                            break;
-                        }
-
-                        case MeanStandardDeviation:
-                        {
-                            if(is_unscaling)
-                            {
-                                slope = d.standard_deviation;
-                                offset = d.mean;
-                            }
-                            else if(d.standard_deviation > EPSILON)
-                            {
-                                slope = 1.0f / d.standard_deviation;
-                                offset = -d.mean / d.standard_deviation;
-                            }
-                            else
-                            {
-                                slope = 0.0f;
-                            }
-
-                            break;
-                        }
-
-                        case StandardDeviation:
-                        {
-                            if(is_unscaling)
-                            {
-                                if(d.standard_deviation < EPSILON)
-                                {
-                                    slope = 0.0f;
-                                    offset = d.mean;
-                                }
-                                else
-                                {
-                                    slope = d.standard_deviation;
-                                }
-                            }
-                            else if(d.standard_deviation > EPSILON)
-                            {
-                                slope = 1.0f / d.standard_deviation;
-                            }
-                            else
-                            {
-                                slope = 0.0f;
-                            }
-
-                            break;
-                        }
-
-                        case Logarithm:
-                        {
-                            (is_unscaling ? exp_post : log_pre)[size_t(f)] = 1;
-                            any_flag = true;
-                            break;
-                        }
-
-                        case ImageMinMax:
-                        {
-                            slope = is_unscaling
-                                ? 255.0f
-                                : 1.0f / 255.0f;
-
-                            break;
-                        }
-
-                        default:
-                            throw runtime_error(
-                                "ModelExpression: unknown scaling method.");
+                        (is_unscaling ? exp_post : log_pre)[size_t(f)] = 1;
+                        any_flag = true;
                     }
 
                     slopes[size_t(f)] = slope;

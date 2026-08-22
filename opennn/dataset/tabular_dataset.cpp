@@ -2712,66 +2712,15 @@ DateFormat TabularDataset::infer_column_types(
         }
     }
 
-    DateFormat date_format = Auto;
-
-    if(ranges::any_of(
-           variables,
-           [](const Variable& variable)
-           {
-               return variable.type == VariableType::DateTime;
-           }))
-    {
-        size_t hit_row = rows_to_check;
-
-        for(size_t i = 0;
-            i < rows_to_check && date_format == Auto;
-            ++i)
-        {
-            const vector<string_view>& tokens = sampled_tokens[i];
-
-            for(Index col_index = 0;
-                col_index < variables_number;
-                ++col_index)
-            {
-                const Variable& variable =
-                    variables[size_t(col_index)];
-
-                if(variable.type != VariableType::DateTime)
-                    continue;
-
-                const size_t token_index =
-                    size_t(col_index) + id_offset;
-
-                if(token_index >= tokens.size())
-                    continue;
-
-                const string_view token =
-                    tokens[token_index];
-
-                if(is_missing_token(token, missing_values_label))
-                    continue;
-
-                date_format = detect_date_format(token);
-
-                if(date_format != Auto)
-                {
-                    hit_row = i;
-                    break;
-                }
-            }
-        }
-
-        if(rows_to_check != total_rows && hit_row != 0)
-        {
-            date_format = infer_dataset_date_format(
-                variables,
-                sample_lines,
-                file_separator,
-                has_sample_ids,
-                missing_values_label,
-                has_quotes);
-        }
-    }
+    // infer_dataset_date_format already stops at the first parseable DateTime
+    // token, scanning rows then columns, and returns Auto when no variable is
+    // a DateTime. A sampled pass ahead of it can only reach the same answer.
+    const DateFormat date_format = infer_dataset_date_format(variables,
+                                                             sample_lines,
+                                                             file_separator,
+                                                             has_sample_ids,
+                                                             missing_values_label,
+                                                             has_quotes);
 
     if(ranges::none_of(
            variables,

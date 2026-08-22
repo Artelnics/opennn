@@ -130,6 +130,43 @@ namespace opennn
         throw runtime_error("scaling_affine: invalid scaler method.");
     }
 
+    // The inverse of scaling_affine, as a slope and offset. Mirrors the
+    // degenerate rules unscale_column_cpu applies: a feature the forward pass
+    // flattened to zero unscales to the constant it came from, minimum for
+    // MinimumMaximum and mean for StandardDeviation. Logarithm is not affine;
+    // it reports {1, 0} and the caller applies exp afterwards, as with the log
+    // that scaling_affine leaves to the caller.
+    inline pair<float, float> unscaling_affine(ScalerMethod scaler,
+                                               const Descriptives& descriptives,
+                                               float min_range,
+                                               float max_range)
+    {
+        using enum ScalerMethod;
+        switch (scaler)
+        {
+        case MinimumMaximum:
+        {
+            const float range = descriptives.maximum - descriptives.minimum;
+            if (range < EPSILON) return {0.0f, descriptives.minimum};
+
+            const float scale = range / (max_range - min_range);
+            return {scale, descriptives.minimum - min_range * scale};
+        }
+        case MeanStandardDeviation:
+            return {descriptives.standard_deviation, descriptives.mean};
+        case StandardDeviation:
+            if (descriptives.standard_deviation < EPSILON) return {0.0f, descriptives.mean};
+            return {descriptives.standard_deviation, 0.0f};
+        case ImageMinMax:
+            return {255.0f, 0.0f};
+        case None:
+        case Logarithm:
+            return {1.0f, 0.0f};
+        }
+
+        throw runtime_error("unscaling_affine: invalid scaler method.");
+    }
+
 }
 
 // OpenNN: Open Neural Networks Library.
