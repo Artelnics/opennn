@@ -41,15 +41,15 @@ public:
 
     const ClampingMethod& get_clamping_method() const noexcept { return clamping.method; }
 
-    VectorR get_lower_bounds() const;
-    VectorR get_upper_bounds() const;
+    VectorR get_lower_bounds() const { return Map<const VectorR>(lower_bounds.data(), ssize(lower_bounds)); }
+    VectorR get_upper_bounds() const { return Map<const VectorR>(upper_bounds.data(), ssize(upper_bounds)); }
 
     void set(const Shape& = {0}, const string& = "clamping_layer");
 
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 1, 2, 3); }
     bool allows_successors() const noexcept override { return false; }
 
-    void apply_input_shape(const Shape&) override;
+    void apply_input_shape(const Shape& new_input_shape) override { set(new_input_shape, label); }
 
     void set_clamping_method(const ClampingMethod&);
     void set_clamping_method(const string&);

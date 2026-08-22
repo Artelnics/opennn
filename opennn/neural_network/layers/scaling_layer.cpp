@@ -237,9 +237,6 @@ Scaling::Scaling(LayerType type, bool invert)
     operators = {&scale_op};
 }
 
-VectorR Scaling::get_minimums()            const { return descriptives_field(descriptives, &Descriptives::minimum); }
-VectorR Scaling::get_maximums()            const { return descriptives_field(descriptives, &Descriptives::maximum); }
-VectorR Scaling::get_means()               const { return descriptives_field(descriptives, &Descriptives::mean); }
 VectorR Scaling::get_standard_deviations() const { return descriptives_field(descriptives, &Descriptives::standard_deviation); }
 
 void Scaling::set(const Shape& new_input_shape)

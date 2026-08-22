@@ -55,11 +55,6 @@ void C2PSAOperator::link_gradients(span<const TensorView> views)
     link_views(views, {&dWq, &dWk, &dWv, &dWout});
 }
 
-void C2PSAOperator::set_parameters_random()
-{
-    set_parameters_glorot();
-}
-
 void C2PSAOperator::set_parameters_glorot()
 {
     if (Wq.empty()) return;

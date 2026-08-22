@@ -25,7 +25,7 @@ struct C2PSAOperator : Operator
     vector<TensorSpec> parameter_specs() const override;
     void link_parameters(span<const TensorView>) override;
     void link_gradients (span<const TensorView>) override;
-    void set_parameters_random() override;
+    void set_parameters_random() override { set_parameters_glorot(); }
     void set_parameters_glorot() override;
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;

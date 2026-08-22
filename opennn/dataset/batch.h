@@ -96,7 +96,7 @@ struct Batch
 
     Index get_batch_size() const { return batch_size; }
 
-    bool is_empty() const;
+    bool is_empty() const { return input.buffer.empty() && decoder.buffer.empty() && target.buffer.empty(); }
 
     Index batch_size = 0;
     const Dataset* dataset = nullptr;

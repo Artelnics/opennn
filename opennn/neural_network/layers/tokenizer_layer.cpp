@@ -62,11 +62,6 @@ const TokenizerOperator::VocabularyMap& Tokenizer::get_vocabulary_map() const
     return tokenizer ? tokenizer->get_vocabulary_map() : empty_vocabulary_map;
 }
 
-Index Tokenizer::get_vocabulary_size() const
-{
-    return tokenizer ? tokenizer->get_vocabulary_size() : 0;
-}
-
 void Tokenizer::read_JSON_body(const Json* tokenizer_layer_element)
 {
     if (!tokenizer_layer_element->has("TokenizerKind")) return;

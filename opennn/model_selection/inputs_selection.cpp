@@ -33,11 +33,6 @@ InputsSelectionResult::InputsSelectionResult(const Index maximum_epochs)
     set(maximum_epochs);
 }
 
-Index InputsSelectionResult::get_epochs_number() const
-{
-    return training_error_history.size();
-}
-
 void InputsSelectionResult::set(const Index maximum_epochs)
 {
     training_error_history = VectorR::Constant(maximum_epochs, QUIET_NAN);

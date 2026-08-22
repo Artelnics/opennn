@@ -138,8 +138,8 @@ struct Variable
     VariableRole get_role_type() const noexcept { return role; }
     const string& get_scaler() const { return scaler_method_to_string(scaler); }
     ScalerMethod get_scaler_type() const noexcept { return scaler; }
-    const string& get_type_string() const;
-    Index get_categories_number() const;
+    const string& get_type_string() const { return variable_type_to_string(type); }
+    Index get_categories_number() const { return ssize(categories); }
 
     void set_scaler(const string& new_scaler) { scaler = string_to_scaler_method(new_scaler); }
     void set_scaler(ScalerMethod new_scaler) { scaler = new_scaler; }

@@ -47,11 +47,6 @@ Shape MultiHeadAttention::get_input_shape() const noexcept
     return { query_sequence_length, embedding_dimension };
 }
 
-Shape MultiHeadAttention::get_output_shape() const
-{
-    return get_input_shape();
-}
-
 vector<TensorSpec> MultiHeadAttention::get_forward_specs(Index batch_size) const
 {
     const Index head_dimension = get_head_dimension();

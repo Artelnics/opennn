@@ -221,21 +221,6 @@ void Dataset::upload_device_matrix(const MatrixR& matrix)
     device::synchronize(stream);
 }
 
-void Dataset::set_data_constant(float new_value)
-{
-    data.setConstant(new_value);
-}
-
-Index Dataset::get_samples_number(SampleRole role_type) const
-{
-    return ranges::count(active_sample_roles(), role_type);
-}
-
-Index Dataset::get_used_samples_number() const
-{
-    return get_samples_number() - get_samples_number(SampleRole::None);
-}
-
 void Dataset::set_sample_roles(SampleRole role_type)
 {
     const bool used_samples_changed = ranges::any_of(sample_roles,
@@ -395,11 +380,6 @@ void Dataset::split_samples_sequential(const float training_ratio,
     split_samples(training_ratio, validation_ratio, testing_ratio, false);
 }
 
-void Dataset::set_default_variable_roles()
-{
-    set_default_variable_roles_implementation(false);
-}
-
 void Dataset::set_default_variable_roles_implementation(bool forecasting)
 {
     const Index variables_number = variables.size();
@@ -452,11 +432,6 @@ void Dataset::set_default_variable_roles_implementation(bool forecasting)
             }
         }
     }
-}
-
-void Dataset::set_default_variable_roles_forecasting()
-{
-    set_default_variable_roles_implementation(true);
 }
 
 void Dataset::set_default_variable_names()
@@ -649,11 +624,6 @@ void Dataset::set_variable_names(const vector<string>& new_names)
 
     for (Index i = 0; i < variables_number; ++i)
         variables[i].name = trim_view(new_names[i]);
-}
-
-void Dataset::set_variables_number(const Index new_size)
-{
-    variables.resize(new_size);
 }
 
 void Dataset::set_variable_roles(VariableRole variable_role)

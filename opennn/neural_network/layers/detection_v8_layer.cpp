@@ -141,11 +141,6 @@ void DetectionV8::set(const Shape& new_input_shape, Index reg_max, const string&
     configure_operator();
 }
 
-void DetectionV8::apply_input_shape(const Shape& new_input_shape)
-{
-    set(new_input_shape, detection.reg_max, label);
-}
-
 void DetectionV8::configure_operator()
 {
     if (input_shape.empty()) return;

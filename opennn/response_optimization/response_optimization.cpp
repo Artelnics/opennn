@@ -362,16 +362,6 @@ UnivariateConstraint ResponseOptimization::get_constraint(const string& name) co
     return it != constraint_set.univariate.end() ? it->second : UnivariateConstraint(ComparisonOperator::None);
 }
 
-bool ResponseOptimization::is_objective(const string& name) const
-{
-    return objectives.contains(name);
-}
-
-ResponseOptimization::Sense ResponseOptimization::get_sense(const string& name) const
-{
-    return objectives.at(name);
-}
-
 void ResponseOptimization::set_evaluations_number(const int new_evaluations_number)
 {
     evaluations_number = new_evaluations_number;

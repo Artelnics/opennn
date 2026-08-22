@@ -96,11 +96,6 @@ vector<TensorSpec> BatchNormalizationOperator::parameter_specs() const
     return vector<TensorSpec>(2, {Shape{features}, Type::FP32});
 }
 
-vector<TensorSpec> BatchNormalizationOperator::state_specs() const
-{
-    return parameter_specs();
-}
-
 void BatchNormalizationOperator::link_parameters(span<const TensorView> views)
 {
     if (link_views(views, {&gamma, &beta}))

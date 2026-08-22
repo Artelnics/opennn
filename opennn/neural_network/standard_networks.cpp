@@ -1430,16 +1430,6 @@ void Transformer::set_attention_sdpa_min_sequence_length(Index new_threshold)
     });
 }
 
-Index Transformer::get_input_sequence_length() const
-{
-    return get_layer("encoder_embedding")->get_input_shape()[0];
-}
-
-Index Transformer::get_decoder_sequence_length() const
-{
-    return get_layer("decoder_embedding")->get_input_shape()[0];
-}
-
 TextGenerationNetwork::TextGenerationNetwork()
     : NeuralNetwork(NetworkTask::LanguageModeling)
 {
@@ -1702,11 +1692,6 @@ void TextGenerationNetwork::set_attention_sdpa_auto(bool new_sdpa_auto)
         if (auto* mha = dynamic_cast<MultiHeadAttention*>(&layer))
             mha->set_sdpa_auto(new_sdpa_auto);
     });
-}
-
-Index TextGenerationNetwork::get_sequence_length() const
-{
-    return get_layer("embedding")->get_input_shape()[0];
 }
 
 namespace

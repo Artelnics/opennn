@@ -35,7 +35,7 @@ public:
     void set_vocabulary(const vector<string>&);
     const vector<string>& get_vocabulary() const;
     const TokenizerOperator::VocabularyMap& get_vocabulary_map() const;
-    Index get_vocabulary_size() const;
+    Index get_vocabulary_size() const { return tokenizer ? tokenizer->get_vocabulary_size() : 0; }
 
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;

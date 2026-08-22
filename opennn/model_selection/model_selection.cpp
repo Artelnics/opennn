@@ -41,16 +41,6 @@ void ModelSelection::set_inputs_selection(const string& new_inputs_selection)
     inputs_selection->set(training_strategy);
 }
 
-NeuronsSelectionResult ModelSelection::perform_neurons_selection()
-{
-    return neurons_selection.perform_neurons_selection();
-}
-
-InputsSelectionResult ModelSelection::perform_input_selection()
-{
-    return inputs_selection->perform_input_selection();
-}
-
 void ModelSelection::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("ModelSelection");

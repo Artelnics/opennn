@@ -59,10 +59,10 @@ public:
 
     virtual Index get_samples_number() const noexcept { return ssize(sample_roles); }
 
-    Index get_samples_number(SampleRole) const;
+    Index get_samples_number(SampleRole role_type) const { return ranges::count(active_sample_roles(), role_type); }
     Index get_samples_number(string_view role) const { return get_samples_number(string_to_sample_role(role)); }
 
-    Index get_used_samples_number() const;
+    Index get_used_samples_number() const { return get_samples_number() - get_samples_number(SampleRole::None); }
 
     vector<Index> get_sample_indices(SampleRole) const;
     vector<Index> get_sample_indices(string_view role) const { return get_sample_indices(string_to_sample_role(role)); }
@@ -153,7 +153,7 @@ public:
     const MatrixR& get_data() const noexcept { return data; }
     void set_data(const MatrixR&);
     void set_data(MatrixR&&);
-    void set_data_constant(float);
+    void set_data_constant(float new_value) { data.setConstant(new_value); }
 
     virtual void enable_device_residency();
     void disable_device_residency() { data_device.resize_bytes(0, Device::CUDA); }
@@ -188,7 +188,7 @@ public:
     }
 
     void set_default_variable_names();
-    void set_default_variable_roles();
+    void set_default_variable_roles() { set_default_variable_roles_implementation(false); }
 
     void set_variable_roles(const vector<string>&);
 
@@ -206,7 +206,7 @@ public:
 
     void set_variable_names(const vector<string>&);
 
-    void set_variables_number(const Index);
+    void set_variables_number(const Index new_size) { variables.resize(new_size); }
 
     void set_variable_roles(VariableRole);
     void set_variable_roles(string_view role) { set_variable_roles(string_to_variable_role(role)); }
@@ -318,7 +318,7 @@ protected:
                                       const vector<Index>& input_indices,
                                       const vector<Index>& target_indices) const;
 
-    void set_default_variable_roles_forecasting();
+    void set_default_variable_roles_forecasting() { set_default_variable_roles_implementation(true); }
     void set_default_variable_roles_implementation(bool);
 
     void read_data_file_preview(const vector<string_view>&, char, bool has_quotes = false);

@@ -86,7 +86,7 @@ public:
     void set_root(Json new_root) { root = std::move(new_root); }
     Json& get_root() noexcept { return root; }
     const Json& get_root() const noexcept { return root; }
-    const Json* first_child(std::string_view) const;
+    const Json* first_child(std::string_view name) const { return root.find(name); }
     const Json* first_child() const noexcept { return &root; }
 
 private:
@@ -97,12 +97,12 @@ class JsonWriter
 {
 public:
     void open_element(std::string_view);
-    void close_element();
+    void close_element() { pop_scope(); }
 
     void begin_array(std::string_view);
-    void end_array();
+    void end_array() { pop_scope(); }
     void begin_array_object();
-    void end_array_object();
+    void end_array_object() { pop_scope(); }
     void add_field(std::string_view, Json);
 
     template <typename Value>
@@ -111,7 +111,7 @@ public:
         add_field(name, Json(std::forward<Value>(value)));
     }
 
-    std::string c_str(int indent = 2) const;
+    std::string c_str(int indent = 2) const { return root.dump(indent); }
 
 private:
     void pop_scope();

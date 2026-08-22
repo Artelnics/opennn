@@ -27,9 +27,9 @@ public:
 
     void set_default();
 
-    NeuronsSelectionResult perform_neurons_selection();
+    NeuronsSelectionResult perform_neurons_selection() { return neurons_selection.perform_neurons_selection(); }
 
-    InputsSelectionResult perform_input_selection();
+    InputsSelectionResult perform_input_selection() { return inputs_selection->perform_input_selection(); }
 
     string get_inputs_selection_name() const { return inputs_selection ? inputs_selection->get_name() : string(); }
 

@@ -520,11 +520,6 @@ void save_json_file(const std::filesystem::path& file_name, const JsonWriter& wr
     throw_if(!file, "Cannot write file: {}", file_name.string());
 }
 
-const Json* JsonDocument::first_child(std::string_view name) const
-{
-    return root.find(name);
-}
-
 JsonDocument JsonDocument::wrap(std::string_view tag, Json value)
 {
     JsonDocument doc;
@@ -557,11 +552,6 @@ void JsonWriter::open_element(std::string_view name)
     }
 }
 
-void JsonWriter::close_element()
-{
-    pop_scope();
-}
-
 void JsonWriter::begin_array(std::string_view name)
 {
     Json* parent = stack.empty() ? &root : stack.back();
@@ -573,11 +563,6 @@ void JsonWriter::begin_array(std::string_view name)
     stack.push_back(&object.back().second);
 }
 
-void JsonWriter::end_array()
-{
-    pop_scope();
-}
-
 void JsonWriter::begin_array_object()
 {
     throw_if(stack.empty() || !stack.back()->is_array(),
@@ -586,11 +571,6 @@ void JsonWriter::begin_array_object()
     Json::Array& array = parent->as_array();
     array.push_back(Json::make_object());
     stack.push_back(&array.back());
-}
-
-void JsonWriter::end_array_object()
-{
-    pop_scope();
 }
 
 void JsonWriter::pop_scope()
@@ -608,10 +588,6 @@ void JsonWriter::add_field(std::string_view name, Json value)
     parent->set(name, std::move(value));
 }
 
-std::string JsonWriter::c_str(int indent) const
-{
-    return root.dump(indent);
-}
 void write_json(JsonWriter& writer,
                 std::initializer_list<std::pair<const char*, Json>> props)
 {

@@ -50,7 +50,7 @@ struct TrainingResult
 
     float get_validation_error() const;
 
-    Index get_epochs_number() const;
+    Index get_epochs_number() const { return training_error_history.size(); }
 
     void save(const filesystem::path&) const;
 
@@ -60,7 +60,7 @@ struct TrainingResult
 
     Tensor<string, 2> write_override_results(const Index = 3) const;
 
-    void resize_training_error_history(const Index);
+    void resize_training_error_history(const Index new_size) { training_error_history.conservativeResize(new_size); }
 
     void resize_validation_error_history(const Index);
 

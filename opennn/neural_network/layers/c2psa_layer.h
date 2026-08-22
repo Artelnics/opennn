@@ -20,12 +20,12 @@ public:
 
     C2PSA(const Shape& = {}, const string& = "c2psa_layer");
 
-    Shape get_output_shape() const override;
+    Shape get_output_shape() const override { return input_shape; }
 
     void set(const Shape&, const string&);
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 3); }
 
-    void apply_input_shape(const Shape&) override;
+    void apply_input_shape(const Shape& new_input_shape) override { set(new_input_shape, label); }
 
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;

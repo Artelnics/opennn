@@ -63,7 +63,7 @@ public:
     }
 
 
-    void apply_input_shape(const Shape&) override;
+    void apply_input_shape(const Shape& new_input_shape) override { set(new_input_shape, detection.reg_max, label); }
 
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;

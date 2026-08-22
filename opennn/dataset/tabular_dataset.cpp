@@ -120,8 +120,6 @@ bool TabularDataset::has_nan() const
     return false;
 }
 
-bool TabularDataset::has_nan_row(Index row_index) const { return data.row(row_index).array().isNaN().any(); }
-
 // One entry per variable, matching what read_csv counts and what
 // missing_values_to_JSON writes. The per-feature-column sum this used to
 // return gave a categorical variable one entry per one-hot column - so the same
@@ -149,10 +147,6 @@ VectorI TabularDataset::count_nans_per_variable() const
 
     return per_variable;
 }
-
-Index TabularDataset::count_rows_with_nan() const { return data.array().isNaN().rowwise().any().count(); }
-
-Index TabularDataset::count_nan() const { return data.array().isNaN().count(); }
 
 void TabularDataset::set_storage_mode(StorageMode new_storage_mode)
 {

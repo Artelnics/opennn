@@ -28,7 +28,7 @@ struct ActivationOperator : Operator
     bool backward_fused_by_consumer = false;
 
     void set_activation_function(ActivationFunction new_function) { activation_function = new_function; }
-    void set_activation_function(const string&);
+    void set_activation_function(const string& name) { set_activation_function(from_string(name)); }
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;

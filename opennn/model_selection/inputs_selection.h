@@ -92,7 +92,7 @@ struct InputsSelectionResult
 {
     InputsSelectionResult(const Index = 0);
 
-    Index get_epochs_number() const;
+    Index get_epochs_number() const { return training_error_history.size(); }
 
     void set(const Index = 0);
 

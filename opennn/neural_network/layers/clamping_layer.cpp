@@ -102,16 +102,6 @@ Clamping::Clamping(const Shape& new_output_shape, const string& new_name)
     set(new_output_shape, new_name);
 }
 
-VectorR Clamping::get_lower_bounds() const
-{
-    return Map<const VectorR>(lower_bounds.data(), ssize(lower_bounds));
-}
-
-VectorR Clamping::get_upper_bounds() const
-{
-    return Map<const VectorR>(upper_bounds.data(), ssize(upper_bounds));
-}
-
 const EnumMap<Clamping::ClampingMethod>& Clamping::clamping_method_map()
 {
     static const EnumMap<ClampingMethod> map{
@@ -141,11 +131,6 @@ void Clamping::set(const Shape& new_output_shape, const string& new_label)
     lower_bounds.assign(size_t(features), -MAX);
     upper_bounds.assign(size_t(features),  MAX);
     op_storage_dirty = true;
-}
-
-void Clamping::apply_input_shape(const Shape& new_input_shape)
-{
-    set(new_input_shape, label);
 }
 
 void Clamping::set_clamping_method(const ClampingMethod& new_method)

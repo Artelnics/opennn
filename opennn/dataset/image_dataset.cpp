@@ -76,11 +76,6 @@ ImageDataset::ImageDataset(const filesystem::path& new_data_path,
     read_images();
 }
 
-Index ImageDataset::get_channels_number() const
-{
-    return input_shape[2];
-}
-
 void ImageDataset::enable_device_residency()
 {
     if (!device::is_cuda_build()) return;

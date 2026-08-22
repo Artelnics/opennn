@@ -19,11 +19,6 @@ C2PSA::C2PSA(const Shape& new_input_shape, const string& new_label)
     set(new_input_shape, new_label);
 }
 
-Shape C2PSA::get_output_shape() const
-{
-    return input_shape;
-}
-
 void C2PSA::set(const Shape& new_input_shape, const string& new_label)
 {
     if (!new_input_shape.empty())
@@ -31,11 +26,6 @@ void C2PSA::set(const Shape& new_input_shape, const string& new_label)
     input_shape = new_input_shape;
     set_label(new_label);
     configure_operator();
-}
-
-void C2PSA::apply_input_shape(const Shape& new_input_shape)
-{
-    set(new_input_shape, label);
 }
 
 void C2PSA::configure_operator()

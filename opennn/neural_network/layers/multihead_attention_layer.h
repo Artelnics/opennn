@@ -30,7 +30,7 @@ public:
                        const string& = {});
 
     Shape get_input_shape() const noexcept override;
-    Shape get_output_shape() const override;
+    Shape get_output_shape() const override { return get_input_shape(); }
 
     Index get_query_sequence_length() const noexcept { return query_sequence_length; }
     Index get_source_sequence_length() const noexcept { return source_sequence_length; }

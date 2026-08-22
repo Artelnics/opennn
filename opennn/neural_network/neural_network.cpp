@@ -647,16 +647,6 @@ bool NeuralNetwork::has_recurrent_layers() const
     });
 }
 
-vector<string> NeuralNetwork::get_input_feature_names() const
-{
-    return get_variable_feature_names(input_variables);
-}
-
-vector<string> NeuralNetwork::get_output_feature_names() const
-{
-    return get_variable_feature_names(output_variables);
-}
-
 const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& label) const
 {
     auto it = ranges::find_if(layers,
@@ -854,16 +844,6 @@ static void validate_source_arity(const Layer& layer,
              layer.get_name(), layer_index, expected_sources, sources.size());
 }
 
-Index NeuralNetwork::get_inputs_number() const
-{
-    return get_input_shape().size();
-}
-
-Index NeuralNetwork::get_outputs_number() const
-{
-    return get_output_shape().size();
-}
-
 Shape NeuralNetwork::get_input_shape() const
 {
     if (layers.empty())
@@ -1056,21 +1036,6 @@ void NeuralNetwork::initialize_parameters(void (Operator::*initializer)())
     for (const auto& layer : layers)
         for (Operator* op : layer->get_operators())
             (op->*initializer)();
-}
-
-void NeuralNetwork::set_parameters_random()
-{
-    initialize_parameters(&Operator::set_parameters_random);
-}
-
-void NeuralNetwork::set_parameters_glorot()
-{
-    initialize_parameters(&Operator::set_parameters_glorot);
-}
-
-void NeuralNetwork::set_parameters_pytorch()
-{
-    initialize_parameters(&Operator::set_parameters_pytorch);
 }
 
 namespace

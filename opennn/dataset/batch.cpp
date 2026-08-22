@@ -261,11 +261,6 @@ void Batch::fill(const vector<Index>& sample_indices,
                         mode);
 }
 
-bool Batch::is_empty() const
-{
-    return input.buffer.empty() && decoder.buffer.empty() && target.buffer.empty();
-}
-
 Batch::~Batch()
 {
     // A destructor is noexcept, and synchronize_event throws on any non-zero

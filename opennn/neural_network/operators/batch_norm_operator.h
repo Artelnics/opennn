@@ -41,7 +41,7 @@ struct BatchNormalizationOperator : Operator
     void set(Index, float new_momentum = 0.1f);
 
     vector<TensorSpec> parameter_specs() const override;
-    vector<TensorSpec> state_specs()     const override;
+    vector<TensorSpec> state_specs() const override { return parameter_specs(); }
     void link_parameters(span<const TensorView>) override;
     void link_gradients (span<const TensorView>) override;
     void link_states    (span<const TensorView>) override;

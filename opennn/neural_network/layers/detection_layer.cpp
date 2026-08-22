@@ -275,11 +275,6 @@ void Detection::set(const Shape& new_input_shape,
     configure_operator();
 }
 
-void Detection::apply_input_shape(const Shape& new_input_shape)
-{
-    set(new_input_shape, detection.anchors, label);
-}
-
 void Detection::configure_operator()
 {
     if (input_shape.empty() || detection.anchors.empty()) return;

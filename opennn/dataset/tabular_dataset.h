@@ -142,11 +142,11 @@ public:
     vector<vector<Index>> replace_Tukey_outliers_with_NaN(const float = 1.5f);
 
     bool has_nan() const override;
-    bool has_nan_row(Index) const;
+    bool has_nan_row(Index row_index) const { return data.row(row_index).array().isNaN().any(); }
 
     VectorI count_nans_per_variable() const;
-    Index count_rows_with_nan() const;
-    Index count_nan() const;
+    Index count_rows_with_nan() const { return data.array().isNaN().rowwise().any().count(); }
+    Index count_nan() const { return data.array().isNaN().count(); }
 
 
     void set_data_random();

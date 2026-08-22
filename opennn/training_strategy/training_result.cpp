@@ -56,16 +56,6 @@ float TrainingResult::get_validation_error() const
     return 0.0f;
 }
 
-Index TrainingResult::get_epochs_number() const
-{
-    return training_error_history.size();
-}
-
-void TrainingResult::resize_training_error_history(const Index new_size)
-{
-    training_error_history.conservativeResize(new_size);
-}
-
 void TrainingResult::resize_validation_error_history(const Index new_size)
 {
     validation_error_history.conservativeResize(new_size);

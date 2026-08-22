@@ -73,7 +73,7 @@ public:
     }
 
 
-    void apply_input_shape(const Shape&) override;
+    void apply_input_shape(const Shape& new_input_shape) override { set(new_input_shape, detection.anchors, label); }
     void set_class_activation(ClassActivation new_class_activation) { detection.class_activation = new_class_activation; }
 
     void read_JSON_body(const Json*) override;

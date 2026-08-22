@@ -154,10 +154,10 @@ public:
     Index get_states_buffer_size() const noexcept { return states.size_in_floats(); }
 
     const vector<Variable>& get_input_variables() const noexcept { return input_variables; }
-    vector<string> get_input_feature_names() const;
+    vector<string> get_input_feature_names() const { return get_variable_feature_names(input_variables); }
 
     const vector<Variable>& get_output_variables() const noexcept { return output_variables; }
-    vector<string> get_output_feature_names() const;
+    vector<string> get_output_feature_names() const { return get_variable_feature_names(output_variables); }
 
     const vector<unique_ptr<Layer>>& get_layers() const noexcept { return layers; }
     const unique_ptr<Layer>& get_layer(const Index layer_index) const { return layers[layer_index]; }
@@ -192,8 +192,8 @@ public:
 
     void invalidate_trainable_layer_cache() { first_trainable_cache_ = -1; last_trainable_cache_ = -1; }
 
-    Index get_inputs_number() const;
-    Index get_outputs_number() const;
+    Index get_inputs_number() const { return get_input_shape().size(); }
+    Index get_outputs_number() const { return get_output_shape().size(); }
 
     Shape get_input_shape() const;
     Shape get_output_shape() const;
@@ -204,9 +204,9 @@ public:
 
     void set_parameters(const VectorR&);
     void set_states(const VectorR&);
-    void set_parameters_random();
-    void set_parameters_glorot();
-    void set_parameters_pytorch();
+    void set_parameters_random() { initialize_parameters(&Operator::set_parameters_random); }
+    void set_parameters_glorot() { initialize_parameters(&Operator::set_parameters_glorot); }
+    void set_parameters_pytorch() { initialize_parameters(&Operator::set_parameters_pytorch); }
     void link_parameters();
 
     // True once release_bf16_fp32_parameter_master_for_inference() has handed

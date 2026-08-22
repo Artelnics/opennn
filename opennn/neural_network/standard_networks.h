@@ -157,8 +157,8 @@ public:
 
     explicit Transformer(const filesystem::path&);
 
-    Index get_input_sequence_length() const;
-    Index get_decoder_sequence_length() const;
+    Index get_input_sequence_length() const { return get_layer("encoder_embedding")->get_input_shape()[0]; }
+    Index get_decoder_sequence_length() const { return get_layer("decoder_embedding")->get_input_shape()[0]; }
 
     void set_dropout_rate(const float);
     void set_attention_sdpa_min_sequence_length(Index);
@@ -191,7 +191,7 @@ public:
 
     explicit TextGenerationNetwork(const filesystem::path&);
 
-    Index get_sequence_length() const;
+    Index get_sequence_length() const { return get_layer("embedding")->get_input_shape()[0]; }
 
     void set_dropout_rate(const float);
     void set_attention_sdpa_auto(bool);

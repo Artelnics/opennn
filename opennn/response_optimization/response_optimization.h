@@ -199,8 +199,8 @@ public:
     vector<NamedColumn> build_output_columns(const vector<Variable>&) const;
 
     UnivariateConstraint get_constraint(const string&) const;
-    bool is_objective(const string&) const;
-    Sense get_sense(const string&) const;
+    bool is_objective(const string& name) const { return objectives.contains(name); }
+    Sense get_sense(const string& name) const { return objectives.at(name); }
 
 
     bool row_satisfies_formula_constraints(const VectorR&,

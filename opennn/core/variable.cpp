@@ -32,16 +32,6 @@ void Variable::set_type(const string& new_variable_type)
     type = string_to_variable_type(new_variable_type);
 }
 
-const string& Variable::get_type_string() const
-{
-    return variable_type_to_string(type);
-}
-
-Index Variable::get_categories_number() const
-{
-    return ssize(categories);
-}
-
 void Variable::to_JSON(JsonWriter& printer) const
 {
     write_json(printer, {

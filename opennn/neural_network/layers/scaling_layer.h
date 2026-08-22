@@ -56,9 +56,9 @@ public:
     const vector<Descriptives>& get_descriptives() const noexcept { return descriptives; }
     const vector<ScalerMethod>& get_scalers()      const noexcept { return scalers; }
 
-    VectorR get_minimums()            const;
-    VectorR get_maximums()            const;
-    VectorR get_means()               const;
+    VectorR get_minimums() const { return descriptives_field(descriptives, &Descriptives::minimum); }
+    VectorR get_maximums() const { return descriptives_field(descriptives, &Descriptives::maximum); }
+    VectorR get_means() const { return descriptives_field(descriptives, &Descriptives::mean); }
     VectorR get_standard_deviations() const;
 
     float get_min_range() const noexcept { return min_range; }
