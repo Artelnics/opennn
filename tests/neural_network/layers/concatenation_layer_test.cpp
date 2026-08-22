@@ -248,25 +248,22 @@ TEST_F(ConcatenationLayerTest, ConcatBackwardGradientMatchesNumerical)
 
     NeuralNetwork neural_network;
 
-    neural_network.add_layer(make_unique<Convolutional>(data_input_shape,
-                                                        Shape{ 1, 1, in_channels, branch_a_channels },
-                                                        "Identity", Shape{ 1, 1 }, "Same", true,
-                                                        "branch_a"),
-                             vector<Index>{ -1 });
-    const Index branch_a_index = neural_network.get_layers_number() - 1;
+    const Index branch_a_index = neural_network.add_layer(make_unique<Convolutional>(data_input_shape,
+                                                                                     Shape{ 1, 1, in_channels, branch_a_channels },
+                                                                                     "Identity", Shape{ 1, 1 }, "Same", true,
+                                                                                     "branch_a"),
+                                                          vector<Index>{ -1 });
 
-    neural_network.add_layer(make_unique<Convolutional>(data_input_shape,
-                                                        Shape{ 1, 1, in_channels, branch_b_channels },
-                                                        "Identity", Shape{ 1, 1 }, "Same", true,
-                                                        "branch_b"),
-                             vector<Index>{ -1 });
-    const Index branch_b_index = neural_network.get_layers_number() - 1;
+    const Index branch_b_index = neural_network.add_layer(make_unique<Convolutional>(data_input_shape,
+                                                                                     Shape{ 1, 1, in_channels, branch_b_channels },
+                                                                                     "Identity", Shape{ 1, 1 }, "Same", true,
+                                                                                     "branch_b"),
+                                                          vector<Index>{ -1 });
 
-    neural_network.add_layer(make_unique<Concatenation>(Shape{ in_height, in_width, branch_a_channels },
-                                                        vector<Index>{ branch_a_channels, branch_b_channels },
-                                                        "concat"),
-                             vector<Index>{ branch_a_index, branch_b_index });
-    const Index concat_index = neural_network.get_layers_number() - 1;
+    const Index concat_index = neural_network.add_layer(make_unique<Concatenation>(Shape{ in_height, in_width, branch_a_channels },
+                                                                                   vector<Index>{ branch_a_channels, branch_b_channels },
+                                                                                   "concat"),
+                                                        vector<Index>{ branch_a_index, branch_b_index });
 
     neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(concat_index)->get_output_shape()),
                              vector<Index>{ concat_index });

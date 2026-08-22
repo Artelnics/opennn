@@ -81,9 +81,8 @@ TEST_F(FlattenLayerTest, FlattenBackwardGradientMatchesNumerical)
 
     NeuralNetwork neural_network;
 
-    neural_network.add_layer(make_unique<opennn::Dense>(network_input_shape, Shape{embedding_dimension}, "Identity"),
-                             {-1});
-    const Index dense_index = neural_network.get_layers_number() - 1;
+    const Index dense_index = neural_network.add_layer(make_unique<opennn::Dense>(network_input_shape, Shape{embedding_dimension}, "Identity"),
+                                                       {-1});
 
     neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(dense_index)->get_output_shape()),
                              {dense_index});

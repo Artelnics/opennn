@@ -159,17 +159,15 @@ TEST(YoloLoss, OutputDeltaLayersFollowSelectedLoss)
         const vector<std::array<float, 2>> anchors{{0.5f, 0.5f}};
 
         NeuralNetwork network;
-        network.add_layer(make_unique<Convolutional>(
-            Shape{height, width, 3}, Shape{1, 1, 3, features},
-            "Identity", Shape{1, 1}, "Same", false, "stem"));
-        const Index stem = network.get_layers_number() - 1;
+        const Index stem = network.add_layer(make_unique<Convolutional>(
+                               Shape{height, width, 3}, Shape{1, 1, 3, features},
+                               "Identity", Shape{1, 1}, "Same", false, "stem"));
 
         const auto add_head = [&](const string& suffix)
         {
-            network.add_layer(make_unique<Convolutional>(
-                Shape{height, width, features}, Shape{1, 1, features, head_channels},
-                "Identity", Shape{1, 1}, "Same", false, "logits_" + suffix), {stem});
-            const Index logits = network.get_layers_number() - 1;
+            const Index logits = network.add_layer(make_unique<Convolutional>(
+                                     Shape{height, width, features}, Shape{1, 1, features, head_channels},
+                                     "Identity", Shape{1, 1}, "Same", false, "logits_" + suffix), {stem});
 
             if (v8)
                 network.add_layer(make_unique<DetectionV8>(
@@ -230,27 +228,23 @@ TEST(YoloLoss, InferencePolicyRetainsConsumedHead)
     const vector<std::array<float, 2>> anchors{{0.5f, 0.5f}};
 
     NeuralNetwork network;
-    network.add_layer(make_unique<Convolutional>(
-        Shape{height, width, 3}, Shape{1, 1, 3, features},
-        "Identity", Shape{1, 1}, "Same", false, "stem"));
-    const Index stem = network.get_layers_number() - 1;
+    const Index stem = network.add_layer(make_unique<Convolutional>(
+                           Shape{height, width, 3}, Shape{1, 1, 3, features},
+                           "Identity", Shape{1, 1}, "Same", false, "stem"));
 
-    network.add_layer(make_unique<Convolutional>(
-        Shape{height, width, features}, Shape{1, 1, features, head_channels},
-        "Identity", Shape{1, 1}, "Same", false, "logits"), {stem});
-    const Index logits = network.get_layers_number() - 1;
+    const Index logits = network.add_layer(make_unique<Convolutional>(
+                             Shape{height, width, features}, Shape{1, 1, features, head_channels},
+                             "Identity", Shape{1, 1}, "Same", false, "logits"), {stem});
 
-    network.add_layer(make_unique<Detection>(
-        Shape{height, width, head_channels}, anchors, "detection"), {logits});
-    const Index detection = network.get_layers_number() - 1;
+    const Index detection = network.add_layer(make_unique<Detection>(
+                                Shape{height, width, head_channels}, anchors, "detection"), {logits});
 
     network.add_layer(make_unique<NonMaxSuppression>(
         Shape{height, width, head_channels}, 1, 0.5f, 0.4f, "nms"), {detection});
 
-    network.add_layer(make_unique<Convolutional>(
-        Shape{height, width, features}, Shape{1, 1, features, features},
-        "Identity", Shape{1, 1}, "Same", false, "tail"), {stem});
-    const Index tail = network.get_layers_number() - 1;
+    const Index tail = network.add_layer(make_unique<Convolutional>(
+                           Shape{height, width, features}, Shape{1, 1, features, features},
+                           "Identity", Shape{1, 1}, "Same", false, "tail"), {stem});
     network.compile();
 
     Loss yolo_loss(&network);
@@ -452,23 +446,19 @@ TEST(YoloLoss, V8DecoupledHeadGradientMatchesNumericalGradient)
     constexpr Index head_ch = 4;
     const Shape feat{f.H, f.W, head_ch};
 
-    net.add_layer(make_unique<Convolutional>(Shape{f.H, f.W, 3},
-                                             Shape{1, 1, 3, head_ch},
-                                             "Identity", Shape{1, 1}, "Same", false, "stem"));
-    const Index stem = net.get_layers_number() - 1;
+    const Index stem = net.add_layer(make_unique<Convolutional>(Shape{f.H, f.W, 3},
+                                                                Shape{1, 1, 3, head_ch},
+                                                                "Identity", Shape{1, 1}, "Same", false, "stem"));
 
-    net.add_layer(make_unique<Convolutional>(feat, Shape{1, 1, head_ch, 4},
-                                             "Identity", Shape{1, 1}, "Same", false, "box_out"), {stem});
-    const Index box_out = net.get_layers_number() - 1;
+    const Index box_out = net.add_layer(make_unique<Convolutional>(feat, Shape{1, 1, head_ch, 4},
+                                                                   "Identity", Shape{1, 1}, "Same", false, "box_out"), {stem});
 
-    net.add_layer(make_unique<Convolutional>(feat, Shape{1, 1, head_ch, f.C},
-                                             "Identity", Shape{1, 1}, "Same", false, "cls_out"), {stem});
-    const Index cls_out = net.get_layers_number() - 1;
+    const Index cls_out = net.add_layer(make_unique<Convolutional>(feat, Shape{1, 1, head_ch, f.C},
+                                                                   "Identity", Shape{1, 1}, "Same", false, "cls_out"), {stem});
 
     const Shape box_shape{f.grid, f.grid, 4};
-    net.add_layer(make_unique<Concatenation>(box_shape, vector<Index>{4, f.C}, "cat"),
-                  {box_out, cls_out});
-    const Index cat = net.get_layers_number() - 1;
+    const Index cat = net.add_layer(make_unique<Concatenation>(box_shape, vector<Index>{4, f.C}, "cat"),
+                                    {box_out, cls_out});
     net.add_layer(make_unique<DetectionV8>(Shape{f.grid, f.grid, f.ch}, "det_v8"), {cat});
 
     net.compile();

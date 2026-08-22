@@ -211,9 +211,8 @@ TEST(ActivationsTest, BackwardGradientMatchesNumerical)
 
     NeuralNetwork neural_network;
 
-    neural_network.add_layer(make_unique<opennn::Dense>(input_shape, Shape{ features }, "Identity"),
-                             { -1 });
-    const Index dense_index = neural_network.get_layers_number() - 1;
+    const Index dense_index = neural_network.add_layer(make_unique<opennn::Dense>(input_shape, Shape{ features }, "Identity"),
+                                                       { -1 });
 
     neural_network.add_layer(make_unique<Activation>(Shape{ features }, "Tanh", "act"),
                              { dense_index });

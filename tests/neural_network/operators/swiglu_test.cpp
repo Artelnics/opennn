@@ -137,8 +137,7 @@ float gated_dense_max_gradient_error(bool use_bias)
     auto gate_up = make_unique<opennn::Dense>(input_shape, Shape{intermediate}, "Identity", false, "gate_up");
     gate_up->set_use_bias(use_bias);
     gate_up->set_gated(true);
-    neural_network.add_layer(std::move(gate_up), {-1});
-    const Index gated_index = neural_network.get_layers_number() - 1;
+    const Index gated_index = neural_network.add_layer(std::move(gate_up), {-1});
 
     neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(gated_index)->get_output_shape()), {gated_index});
     neural_network.add_layer(make_unique<opennn::Dense>(neural_network.get_output_shape(), Shape{targets_number}, "Identity"));

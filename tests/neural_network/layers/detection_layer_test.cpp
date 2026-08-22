@@ -251,20 +251,18 @@ TEST(Detection, SigmoidClassBackwardGradientMatchesNumerical)
 
     NeuralNetwork neural_network;
 
-    neural_network.add_layer(make_unique<Convolutional>(input_shape,
-                                                        Shape{1, 1, 3, channels},
-                                                        "Identity",
-                                                        Shape{1, 1},
-                                                        "Same",
-                                                        false,
-                                                        "logits"),
-                             {-1});
-    const Index conv_index = neural_network.get_layers_number() - 1;
+    const Index conv_index = neural_network.add_layer(make_unique<Convolutional>(input_shape,
+                                                                                 Shape{1, 1, 3, channels},
+                                                                                 "Identity",
+                                                                                 Shape{1, 1},
+                                                                                 "Same",
+                                                                                 false,
+                                                                                 "logits"),
+                                                      {-1});
 
     auto detection = make_unique<Detection>(neural_network.get_layer(conv_index)->get_output_shape(), anchors, "detection");
     detection->set_class_activation(Detection::ClassActivation::Sigmoid);
-    neural_network.add_layer(std::move(detection), {conv_index});
-    const Index detection_index = neural_network.get_layers_number() - 1;
+    const Index detection_index = neural_network.add_layer(std::move(detection), {conv_index});
 
     neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(detection_index)->get_output_shape()),
                              {detection_index});

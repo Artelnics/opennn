@@ -163,13 +163,11 @@ TEST(AdditionLayerTest, ResidualBackwardGradientMatchesNumerical)
 
     NeuralNetwork neural_network;
 
-    neural_network.add_layer(make_unique<opennn::Dense>(input_shape, Shape{embedding_dimension}, "Identity"),
-                             {-1});
-    const Index dense_index = neural_network.get_layers_number() - 1;
+    const Index dense_index = neural_network.add_layer(make_unique<opennn::Dense>(input_shape, Shape{embedding_dimension}, "Identity"),
+                                                       {-1});
 
-    neural_network.add_layer(make_unique<Addition>(input_shape, "residual_add", 2),
-                             {dense_index, -1});
-    const Index addition_index = neural_network.get_layers_number() - 1;
+    const Index addition_index = neural_network.add_layer(make_unique<Addition>(input_shape, "residual_add", 2),
+                                                          {dense_index, -1});
 
     neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(addition_index)->get_output_shape()),
                              {addition_index});

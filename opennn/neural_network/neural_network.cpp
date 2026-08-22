@@ -532,7 +532,7 @@ NeuralNetwork::NeuralNetwork(const filesystem::path& file_name, NetworkTask new_
     load(file_name);
 }
 
-void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& sources)
+Index NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& sources)
 {
     throw_if(!layer, "NeuralNetwork: cannot add a null layer.");
 
@@ -557,6 +557,8 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& sour
     first_trainable_cache_ = -1;
     last_trainable_cache_  = -1;
     linked_gradient_base   = nullptr;
+
+    return ssize(layers) - 1;
 }
 
 void NeuralNetwork::compile()

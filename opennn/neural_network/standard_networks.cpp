@@ -349,12 +349,11 @@ ResNet::ResNet(const Shape& input_shape,
     auto add_conv = [&](Index input_index,
                         const Shape& kernel_shape, const char* activation,
                         const Shape& stride, const string& name) -> Index {
-        add_layer(make_unique<Convolutional>(
-                      get_layer(input_index)->get_output_shape(),
-                      kernel_shape, activation, stride, "Same",
-                       true, name),
-                  {input_index});
-        return get_layers_number() - 1;
+        return add_layer(make_unique<Convolutional>(
+                             get_layer(input_index)->get_output_shape(),
+                             kernel_shape, activation, stride, "Same",
+                              true, name),
+                         {input_index});
     };
 
     auto add_skip = [&](Index input_index, Index in_channels, Index out_channels,
@@ -373,8 +372,7 @@ ResNet::ResNet(const Shape& input_shape,
             kernel_shape, "ReLU", Shape{1, 1}, "Same",
              true, name);
         conv->set_residual(true);
-        add_layer(std::move(conv), {input_index, skip_index});
-        return get_layers_number() - 1;
+        return add_layer(std::move(conv), {input_index, skip_index});
     };
 
     auto add_basic_block = [&](Index input_index, size_t stage, Index block,
@@ -425,11 +423,10 @@ ResNet::ResNet(const Shape& input_shape,
         Shape{7, 7, input_shape[2], initial_filters[0]}, "ReLU",
         Shape{2, 2}, "stem_conv");
 
-    add_layer(make_unique<Pooling>(get_layer(last_index)->get_output_shape(),
-                                   Shape{3, 3}, Shape{2, 2}, Shape{1, 1},
-                                   "MaxPooling", "stem_pool"),
-              {last_index});
-    last_index = get_layers_number() - 1;
+    last_index = add_layer(make_unique<Pooling>(get_layer(last_index)->get_output_shape(),
+                                                Shape{3, 3}, Shape{2, 2}, Shape{1, 1},
+                                                "MaxPooling", "stem_pool"),
+                           {last_index});
 
     for (size_t i = 0; i < blocks_per_stage.size(); ++i)
         for (Index j = 0; j < blocks_per_stage[i]; ++j)
@@ -438,16 +435,14 @@ ResNet::ResNet(const Shape& input_shape,
                 : add_basic_block(last_index, i, j, initial_filters[i]);
 
     const Shape pre_pool = get_layer(last_index)->get_output_shape();
-    add_layer(make_unique<Pooling>(pre_pool,
-                                   Shape{pre_pool[0], pre_pool[1]},
-                                   Shape{1, 1}, Shape{0, 0},
-                                   "AveragePooling", "global_avg_pool"),
-              {last_index});
-    last_index = get_layers_number() - 1;
+    last_index = add_layer(make_unique<Pooling>(pre_pool,
+                                                Shape{pre_pool[0], pre_pool[1]},
+                                                Shape{1, 1}, Shape{0, 0},
+                                                "AveragePooling", "global_avg_pool"),
+                           {last_index});
 
-    add_layer(make_unique<Flatten>(get_layer(last_index)->get_output_shape()),
-              {last_index});
-    last_index = get_layers_number() - 1;
+    last_index = add_layer(make_unique<Flatten>(get_layer(last_index)->get_output_shape()),
+                           {last_index});
 
     add_layer(make_unique<Dense>(get_layer(last_index)->get_output_shape(),
                                  output_shape, "Softmax", false, "classifier"),
@@ -525,20 +520,18 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
         const bool needs_own_layer =
             activation_needs_input(ActivationOperator::from_string(activation));
 
-        add_layer(make_unique<Convolutional>(
-                      get_layer(input_index)->get_output_shape(),
-                      kernel_shape, needs_own_layer ? "Identity" : activation,
-                      kernel_stride, "Same",
-                      batch_norm, name),
-                  {input_index});
+        const Index convolution_index = add_layer(make_unique<Convolutional>(
+                                                      get_layer(input_index)->get_output_shape(),
+                                                      kernel_shape, needs_own_layer ? "Identity" : activation,
+                                                      kernel_stride, "Same",
+                                                      batch_norm, name),
+                                                  {input_index});
 
-        if (!needs_own_layer) return get_layers_number() - 1;
+        if (!needs_own_layer) return convolution_index;
 
-        const Index convolution_index = get_layers_number() - 1;
-        add_layer(make_unique<Activation>(get_layer(convolution_index)->get_output_shape(),
-                                          activation, name + "_act"),
-                  {convolution_index});
-        return get_layers_number() - 1;
+        return add_layer(make_unique<Activation>(get_layer(convolution_index)->get_output_shape(),
+                                                 activation, name + "_act"),
+                         {convolution_index});
     };
 
     // Prior bias for anchor-based fused detection heads ("yolo_logits*"):
@@ -578,15 +571,15 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                   3 * (5 + classes_number)},
             "Identity", stride, false, "yolo_logits_" + name);
 
-        add_layer(make_unique<Detection>(
-                      get_layer(logits_index)->get_output_shape(),
-                      head_anchors, "detection_" + name),
-                  {logits_index});
+        const Index detection_index = add_layer(make_unique<Detection>(
+                                                    get_layer(logits_index)->get_output_shape(),
+                                                    head_anchors, "detection_" + name),
+                                                {logits_index});
         static_cast<Detection&>(*get_layers().back()).set_class_activation(
             class_activation == ClassActivation::Sigmoid
             ? Detection::ClassActivation::Sigmoid
             : Detection::ClassActivation::Softmax);
-        return get_layers_number() - 1;
+        return detection_index;
     };
 
     auto add_residual_block = [&](Index input_index, Index channels, Index mid,
@@ -594,10 +587,8 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                                   const char* c2_suffix, const char* act_suffix) -> Index {
         Index x = add_conv(input_index, Shape{1, 1, channels, mid},      act,        stride, true, prefix + c1_suffix);
         x       = add_conv(x,           Shape{3, 3, mid,      channels}, "Identity", stride, true, prefix + c2_suffix);
-        add_layer(make_unique<Addition>(get_layer(x)->get_output_shape(), prefix + "_add"), {x, input_index});
-        const Index add_index = get_layers_number() - 1;
-        add_layer(make_unique<Activation>(get_layer(add_index)->get_output_shape(), act, prefix + act_suffix), {add_index});
-        return get_layers_number() - 1;
+        const Index add_index = add_layer(make_unique<Addition>(get_layer(x)->get_output_shape(), prefix + "_add"), {x, input_index});
+        return add_layer(make_unique<Activation>(get_layer(add_index)->get_output_shape(), act, prefix + act_suffix), {add_index});
     };
 
     auto add_yolo_neck = [&](Index idx, Index in_ch,
@@ -612,17 +603,15 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
     auto add_top_down = [&](Index lateral_index, Index c_index,
                             const string& upper, const string& lower) -> Index {
-        add_layer(make_unique<Upsampling>(get_layer(lateral_index)->get_output_shape(),
-                                          2, "fpn_" + upper + "_upsampling"),
-                  {lateral_index});
-        const Index up_index = get_layers_number() - 1;
+        const Index up_index = add_layer(make_unique<Upsampling>(get_layer(lateral_index)->get_output_shape(),
+                                                                 2, "fpn_" + upper + "_upsampling"),
+                                         {lateral_index});
 
-        add_layer(make_unique<Concatenation>(get_layer(c_index)->get_output_shape(),
-                      vector<Index>{get_layer(up_index)->get_output_shape()[2],
-                                    get_layer(c_index)->get_output_shape()[2]},
-                      "fpn_" + lower + "_concatenation"),
-                  {up_index, c_index});
-        return get_layers_number() - 1;
+        return add_layer(make_unique<Concatenation>(get_layer(c_index)->get_output_shape(),
+                             vector<Index>{get_layer(up_index)->get_output_shape()[2],
+                                           get_layer(c_index)->get_output_shape()[2]},
+                             "fpn_" + lower + "_concatenation"),
+                         {up_index, c_index});
     };
 
     if (backbone == Backbone::Vgg)
@@ -676,19 +665,17 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const Index  out_ch   = stage.channels;
             const Index  ksize    = stage.one_by_one ? 1 : 3;
 
-            add_layer(make_unique<Convolutional>(in_shape,
-                                                 Shape{ksize, ksize, in_ch, out_ch},
-                                                 act, stride, "Same", true,
-                                                 format("dntv3_conv_{}", i + 1)));
-            last_index = get_layers_number() - 1;
+            last_index = add_layer(make_unique<Convolutional>(in_shape,
+                                                              Shape{ksize, ksize, in_ch, out_ch},
+                                                              act, stride, "Same", true,
+                                                              format("dntv3_conv_{}", i + 1)));
 
             if (stage.pool)
             {
-                add_layer(make_unique<Pooling>(get_layer(last_index)->get_output_shape(),
-                                               pool, pool_stride, no_padding,
-                                               "MaxPooling",
-                                               format("dntv3_pool_{}", i + 1)));
-                last_index = get_layers_number() - 1;
+                last_index = add_layer(make_unique<Pooling>(get_layer(last_index)->get_output_shape(),
+                                                            pool, pool_stride, no_padding,
+                                                            "MaxPooling",
+                                                            format("dntv3_pool_{}", i + 1)));
             }
 
             if (i == 4) c3_index = get_layers_number() - 1 - (stage.pool ? 1 : 0);
@@ -752,8 +739,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
         auto add_cba = [&](Index in, const Shape& kernel, const Shape& kstride,
                             const string& name) -> Index {
             Index c = add_conv(in, kernel, "Identity", kstride, true, name);
-            add_layer(make_unique<Activation>(get_layer(c)->get_output_shape(), act, name+"_act"), {c});
-            return get_layers_number() - 1;
+            return add_layer(make_unique<Activation>(get_layer(c)->get_output_shape(), act, name+"_act"), {c});
         };
 
         // C2f: two independent 1×1 convs (cv1a, cv1b) equivalent to official cv1→chunk(2),
@@ -770,15 +756,13 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 Index bx = add_cba(bn_in, Shape{3,3,half,half}, stride, bpfx+"_cv1");
                 bx       = add_cba(bx,   Shape{3,3,half,half}, stride, bpfx+"_cv2");
                 if (shortcut) {
-                    add_layer(make_unique<Addition>(get_layer(bx)->get_output_shape(), bpfx+"_add"), {bx, bn_in});
-                    bx = get_layers_number() - 1;
+                    bx = add_layer(make_unique<Addition>(get_layer(bx)->get_output_shape(), bpfx+"_add"), {bx, bn_in});
                 }
                 cat_inputs.push_back(bx);
                 bn_in = bx;
             }
             const Shape hw = get_layer(cv1a)->get_output_shape();
-            add_layer(make_unique<Concatenation>(hw, vector<Index>(2 + n, half), prefix+"_cat"), cat_inputs);
-            const Index cat_idx = get_layers_number() - 1;
+            const Index cat_idx = add_layer(make_unique<Concatenation>(hw, vector<Index>(2 + n, half), prefix+"_cat"), cat_inputs);
             return add_cba(cat_idx, Shape{1,1,(2+n)*half,out_ch}, stride, prefix+"_cv2");
         };
 
@@ -796,11 +780,9 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
         const Index d4 = scale_d(3);
 
         // Stem: Conv(k=3, s=2) + act
-        add_layer(make_unique<Convolutional>(input_shape, Shape{3,3,input_shape[2],c1},
-                                             "Identity", stride_2, "Same", true, "c8_stem"));
-        Index x = get_layers_number() - 1;
-        add_layer(make_unique<Activation>(get_layer(x)->get_output_shape(), act, "c8_stem_act"), {x});
-        x = get_layers_number() - 1;
+        Index x = add_layer(make_unique<Convolutional>(input_shape, Shape{3,3,input_shape[2],c1},
+                                                       "Identity", stride_2, "Same", true, "c8_stem"));
+        x = add_layer(make_unique<Activation>(get_layer(x)->get_output_shape(), act, "c8_stem_act"), {x});
 
         // Stage 1: Conv(s=2) + C2f
         x = add_cba(x, Shape{3,3,c1,c2}, stride_2, "c8_s1_down");
@@ -825,12 +807,9 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const Index half = c5 / 2;
             const Index si   = add_cba(x, Shape{1,1,c5,half}, stride, "c8_sppf_in");
             const Shape ss   = get_layer(si)->get_output_shape();
-            add_layer(make_unique<Pooling>(ss, Shape{5,5}, Shape{1,1}, Shape{2,2}, "MaxPooling", "c8_sppf_p1"), {si});
-            const Index sp1 = get_layers_number() - 1;
-            add_layer(make_unique<Pooling>(ss, Shape{5,5}, Shape{1,1}, Shape{2,2}, "MaxPooling", "c8_sppf_p2"), {sp1});
-            const Index sp2 = get_layers_number() - 1;
-            add_layer(make_unique<Pooling>(ss, Shape{5,5}, Shape{1,1}, Shape{2,2}, "MaxPooling", "c8_sppf_p3"), {sp2});
-            const Index sp3 = get_layers_number() - 1;
+            const Index sp1 = add_layer(make_unique<Pooling>(ss, Shape{5,5}, Shape{1,1}, Shape{2,2}, "MaxPooling", "c8_sppf_p1"), {si});
+            const Index sp2 = add_layer(make_unique<Pooling>(ss, Shape{5,5}, Shape{1,1}, Shape{2,2}, "MaxPooling", "c8_sppf_p2"), {sp1});
+            const Index sp3 = add_layer(make_unique<Pooling>(ss, Shape{5,5}, Shape{1,1}, Shape{2,2}, "MaxPooling", "c8_sppf_p3"), {sp2});
             add_layer(make_unique<Concatenation>(ss, vector<Index>{half,half,half,half}, "c8_sppf_cat"),
                       {si, sp1, sp2, sp3});
             x = add_cba(get_layers_number()-1, Shape{1,1,4*half,c5}, stride, "c8_sppf_out");
@@ -934,17 +913,15 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const Index branch1 = add_conv(down, Shape{1, 1, out_ch, branch_ch}, act, stride, true, prefix+"_s1");
 
             const Shape hw = get_layer(branch1)->get_output_shape();
-            add_layer(make_unique<Concatenation>(hw, vector<Index>{branch_ch, branch_ch}, prefix+"_cat"),
-                      {trans, branch1});
-            const Index cat = get_layers_number() - 1;
+            const Index cat = add_layer(make_unique<Concatenation>(hw, vector<Index>{branch_ch, branch_ch}, prefix+"_cat"),
+                                        {trans, branch1});
             return add_conv(cat, Shape{1, 1, 2 * branch_ch, out_ch}, act, stride, true, prefix+"_merge");
         };
 
         const vector<pair<Index,Index>> stages = {{64,1},{128,2},{256,8},{512,8},{1024,4}};
 
-        add_layer(make_unique<Convolutional>(input_shape, Shape{3, 3, input_shape[2], 32},
-                                             act, stride, "Same", true, use_csp ? "csp53_stem" : "dn53_stem"));
-        Index last_index = get_layers_number() - 1;
+        Index last_index = add_layer(make_unique<Convolutional>(input_shape, Shape{3, 3, input_shape[2], 32},
+                                                                act, stride, "Same", true, use_csp ? "csp53_stem" : "dn53_stem"));
 
         Index c3_index = -1, c4_index = -1, c5_index = -1;
 
@@ -972,22 +949,20 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const Index p5n = add_yolo_neck(entry, 1024, 512, 1024, pfx + "neck_p5");
 
             const Index p5l = add_conv(p5n, Shape{1, 1, 512, 256}, act, stride, true, pfx + "neck_p5_lat");
-            add_layer(make_unique<Upsampling>(get_layer(p5l)->get_output_shape(), 2, pfx + "fpn_p5_upsampling"), {p5l});
-            const Index p5u = get_layers_number() - 1;
+            const Index p5u = add_layer(make_unique<Upsampling>(get_layer(p5l)->get_output_shape(), 2, pfx + "fpn_p5_upsampling"), {p5l});
 
-            add_layer(make_unique<Concatenation>(get_layer(c4_index)->get_output_shape(),
-                                                 vector<Index>{256, 512}, pfx + "fpn_p4_cat"),
-                      {p5u, c4_index});
-            const Index p4n = add_yolo_neck(get_layers_number() - 1, 768, 256, 512, pfx + "neck_p4");
+            const Index p4c = add_layer(make_unique<Concatenation>(get_layer(c4_index)->get_output_shape(),
+                                                                   vector<Index>{256, 512}, pfx + "fpn_p4_cat"),
+                                        {p5u, c4_index});
+            const Index p4n = add_yolo_neck(p4c, 768, 256, 512, pfx + "neck_p4");
 
             const Index p4l = add_conv(p4n, Shape{1, 1, 256, 128}, act, stride, true, pfx + "neck_p4_lat");
-            add_layer(make_unique<Upsampling>(get_layer(p4l)->get_output_shape(), 2, pfx + "fpn_p4_upsampling"), {p4l});
-            const Index p4u = get_layers_number() - 1;
+            const Index p4u = add_layer(make_unique<Upsampling>(get_layer(p4l)->get_output_shape(), 2, pfx + "fpn_p4_upsampling"), {p4l});
 
-            add_layer(make_unique<Concatenation>(get_layer(c3_index)->get_output_shape(),
-                                                 vector<Index>{128, 256}, pfx + "fpn_p3_cat"),
-                      {p4u, c3_index});
-            return {p5n, p4n, add_yolo_neck(get_layers_number() - 1, 384, 128, 256, pfx + "neck_p3")};
+            const Index p3c = add_layer(make_unique<Concatenation>(get_layer(c3_index)->get_output_shape(),
+                                                                   vector<Index>{128, 256}, pfx + "fpn_p3_cat"),
+                                        {p4u, c3_index});
+            return {p5n, p4n, add_yolo_neck(p3c, 384, 128, 256, pfx + "neck_p3")};
         };
 
         if (head_style == HeadStyle::FPN || head_style == HeadStyle::PANet)
@@ -1009,17 +984,13 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 const Index sppf_in = add_conv(c5_index, Shape{1, 1, c5_ch, half_ch}, act, stride, true, "sppf_in");
                 const Shape s_shape = get_layer(sppf_in)->get_output_shape();
 
-                add_layer(make_unique<Pooling>(s_shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", "sppf_p1"), {sppf_in});
-                const Index p1 = get_layers_number() - 1;
-                add_layer(make_unique<Pooling>(s_shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", "sppf_p2"), {p1});
-                const Index p2 = get_layers_number() - 1;
-                add_layer(make_unique<Pooling>(s_shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", "sppf_p3"), {p2});
-                const Index p3 = get_layers_number() - 1;
+                const Index p1 = add_layer(make_unique<Pooling>(s_shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", "sppf_p1"), {sppf_in});
+                const Index p2 = add_layer(make_unique<Pooling>(s_shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", "sppf_p2"), {p1});
+                const Index p3 = add_layer(make_unique<Pooling>(s_shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", "sppf_p3"), {p2});
 
-                add_layer(make_unique<Concatenation>(s_shape,
-                                                     vector<Index>{half_ch, half_ch, half_ch, half_ch}, "sppf_cat"),
-                          {sppf_in, p1, p2, p3});
-                const Index sppf_cat = get_layers_number() - 1;
+                const Index sppf_cat = add_layer(make_unique<Concatenation>(s_shape,
+                                                                            vector<Index>{half_ch, half_ch, half_ch, half_ch}, "sppf_cat"),
+                                                 {sppf_in, p1, p2, p3});
 
                 fpn_entry = add_conv(sppf_cat, Shape{1, 1, 2 * c5_ch, c5_ch}, act, stride, true, "sppf_out");
             }
@@ -1050,19 +1021,17 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 };
 
                 const Index n3_down = add_conv(p3n, Shape{3, 3, 128, 256}, act, stride_2, true, "pan_n3_down");
-                add_layer(make_unique<Concatenation>(get_layer(p4n)->get_output_shape(),
-                                                     vector<Index>{256, 256}, "pan_n4_cat"),
-                          {n3_down, p4n});
-                const Index n4c = get_layers_number() - 1;
+                const Index n4c = add_layer(make_unique<Concatenation>(get_layer(p4n)->get_output_shape(),
+                                                                       vector<Index>{256, 256}, "pan_n4_cat"),
+                                            {n3_down, p4n});
                 const Index n4n = add_pan_block(n4c, 512, 256, 512, "pan_n4");
                 const Index n4d = add_conv(n4n, Shape{3, 3, 256, 512}, act, stride, true, "pan_n4_pre");
                 add_det_head(n4d, anchors_medium, "medium");
 
                 const Index n4_down = add_conv(n4n, Shape{3, 3, 256, 512}, act, stride_2, true, "pan_n4_down");
-                add_layer(make_unique<Concatenation>(get_layer(p5n)->get_output_shape(),
-                                                     vector<Index>{512, 512}, "pan_n5_cat"),
-                          {n4_down, p5n});
-                const Index n5c = get_layers_number() - 1;
+                const Index n5c = add_layer(make_unique<Concatenation>(get_layer(p5n)->get_output_shape(),
+                                                                       vector<Index>{512, 512}, "pan_n5_cat"),
+                                            {n4_down, p5n});
                 const Index n5n = add_pan_block(n5c, 1024, 512, 1024, "pan_n5");
                 const Index n5d = add_conv(n5n, Shape{3, 3, 512, 1024}, act, stride, true, "pan_n5_pre");
                 add_det_head(n5d, anchors_large, "large");
@@ -1091,9 +1060,8 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 cls       = add_conv(cls,      Shape{1,1,head_ch,classes_number},      "Identity", stride, false, name+"_cls_out");
 
                 const Shape hw = get_layer(box)->get_output_shape();
-                add_layer(make_unique<Concatenation>(hw, vector<Index>{box_ch, classes_number}, name+"_cat"),
-                          {box, cls});
-                const Index cat = get_layers_number() - 1;
+                const Index cat = add_layer(make_unique<Concatenation>(hw, vector<Index>{box_ch, classes_number}, name+"_cat"),
+                                            {box, cls});
                 add_layer(make_unique<DetectionV8>(get_layer(cat)->get_output_shape(), reg_max, name+"_det"), {cat});
             };
 
@@ -1132,11 +1100,10 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             {512, 1},
         };
 
-        add_layer(make_unique<Convolutional>(input_shape,
-                                             Shape{3, 3, input_shape[2], 32},
-                                             act, stride_2, "Same", true,
-                                             "darknet_stem"));
-        Index last_index = get_layers_number() - 1;
+        Index last_index = add_layer(make_unique<Convolutional>(input_shape,
+                                                                Shape{3, 3, input_shape[2], 32},
+                                                                act, stride_2, "Same", true,
+                                                                "darknet_stem"));
 
         Index c3_index = -1;
         Index c4_index = -1;
@@ -1286,8 +1253,7 @@ static Index add_residual_and_norm(NeuralNetwork& network,
 {
     auto norm = make_unique<Normalization3d>(shape, norm_label);
     norm->set_fuse_add(true);
-    network.add_layer(std::move(norm), {left_index, right_index});
-    return network.get_layers_number() - 1;
+    return network.add_layer(std::move(norm), {left_index, right_index});
 }
 
 static Index add_feed_forward(NeuralNetwork& network,
@@ -1300,9 +1266,8 @@ static Index add_feed_forward(NeuralNetwork& network,
     const Index emb_dim = input_shape[1];
     network.add_layer(make_unique<Dense>(input_shape, Shape{ff_dim},
                                          internal_activation, false, internal_label));
-    network.add_layer(make_unique<Dense>(Shape{seq_len, ff_dim}, Shape{emb_dim},
-                                         "Identity", false, external_label));
-    return network.get_layers_number() - 1;
+    return network.add_layer(make_unique<Dense>(Shape{seq_len, ff_dim}, Shape{emb_dim},
+                                                "Identity", false, external_label));
 }
 
 Transformer::Transformer()
@@ -1333,8 +1298,7 @@ Transformer::Transformer(Index input_sequence_length,
     throw_if(embedding_dimension % heads_number != 0,
              "Transformer: embedding_dimension must be divisible by heads_number.");
 
-    add_layer(make_unique<Tokenizer>(Shape{decoder_sequence_length}, "decoder_tokenizer"), {-1});
-    const Index decoder_tokenizer_index = get_layers_number() - 1;
+    const Index decoder_tokenizer_index = add_layer(make_unique<Tokenizer>(Shape{decoder_sequence_length}, "decoder_tokenizer"), {-1});
 
     auto decoder_embedding = make_unique<Embedding>(
         Shape{output_vocabulary_size, decoder_sequence_length},
@@ -1346,11 +1310,9 @@ Transformer::Transformer(Index input_sequence_length,
     // off zero as soon as training moves their bias, and from there no layer
     // downstream can recover where a sequence ended by looking at it.
     decoder_embedding->set_export_valid_lengths(true);
-    add_layer(std::move(decoder_embedding), {decoder_tokenizer_index});
-    Index current_decoder_index = get_layers_number() - 1;
+    Index current_decoder_index = add_layer(std::move(decoder_embedding), {decoder_tokenizer_index});
 
-    add_layer(make_unique<Tokenizer>(Shape{input_sequence_length}, "encoder_tokenizer"), {-2});
-    const Index encoder_tokenizer_index = get_layers_number() - 1;
+    const Index encoder_tokenizer_index = add_layer(make_unique<Tokenizer>(Shape{input_sequence_length}, "encoder_tokenizer"), {-2});
 
     auto encoder_embedding = make_unique<Embedding>(
         Shape{input_vocabulary_size, input_sequence_length},
@@ -1358,8 +1320,7 @@ Transformer::Transformer(Index input_sequence_length,
     encoder_embedding->set_scale_embedding(true);
     encoder_embedding->set_add_positional_encoding(true);
     encoder_embedding->set_export_valid_lengths(true);
-    add_layer(std::move(encoder_embedding), {encoder_tokenizer_index});
-    Index current_encoder_index = get_layers_number() - 1;
+    Index current_encoder_index = add_layer(std::move(encoder_embedding), {encoder_tokenizer_index});
 
     const Shape encoder_shape{input_sequence_length, embedding_dimension};
 
@@ -1367,10 +1328,9 @@ Transformer::Transformer(Index input_sequence_length,
     {
         const string suffix = format("_{}", i + 1);
 
-        add_layer(make_unique<MultiHeadAttention>(encoder_shape, heads_number,
-                                                  "encoder_self_attention" + suffix),
-                  {current_encoder_index});
-        const Index attn_index = get_layers_number() - 1;
+        const Index attn_index = add_layer(make_unique<MultiHeadAttention>(encoder_shape, heads_number,
+                                                                           "encoder_self_attention" + suffix),
+                                           {current_encoder_index});
 
         const Index norm1_index = add_residual_and_norm(*this, encoder_shape,
             "encoder_self_attention_normalization" + suffix,
@@ -1399,18 +1359,16 @@ Transformer::Transformer(Index input_sequence_length,
                                     embedding_dimension, heads_number,
                                     true,
                                     "decoder_self_attention" + suffix);
-        add_layer(std::move(decoder_self_attention), {current_decoder_index});
-        const Index self_attn_index = get_layers_number() - 1;
+        const Index self_attn_index = add_layer(std::move(decoder_self_attention), {current_decoder_index});
 
         const Index norm1_index = add_residual_and_norm(*this, decoder_shape,
             "decoder_self_attention_normalization" + suffix,
             current_decoder_index, self_attn_index);
 
-        add_layer(make_unique<MultiHeadAttention>(decoder_shape, encoder_shape,
-                                                  heads_number,
-                                                  "cross_attention" + suffix),
-                  {norm1_index, encoder_final_output_index});
-        const Index cross_attn_index = get_layers_number() - 1;
+        const Index cross_attn_index = add_layer(make_unique<MultiHeadAttention>(decoder_shape, encoder_shape,
+                                                                                 heads_number,
+                                                                                 "cross_attention" + suffix),
+                                                 {norm1_index, encoder_final_output_index});
 
         const Index norm2_index = add_residual_and_norm(*this, decoder_shape,
             "cross_attention_normalization" + suffix,
@@ -1510,8 +1468,7 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
     throw_if(embedding_dimension % heads_number != 0,
              "TextGenerationNetwork: embedding_dimension must be divisible by heads_number.");
 
-    add_layer(make_unique<Tokenizer>(Shape{sequence_length}, "tokenizer"), {-1});
-    const Index tokenizer_index = get_layers_number() - 1;
+    const Index tokenizer_index = add_layer(make_unique<Tokenizer>(Shape{sequence_length}, "tokenizer"), {-1});
 
     auto embedding = make_unique<Embedding>(
         Shape{vocabulary_size, sequence_length},
@@ -1521,8 +1478,7 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
         embedding->set_learned_positional(true);
     else
         embedding->set_add_positional_encoding(true);
-    add_layer(std::move(embedding), {tokenizer_index});
-    Index current_index = get_layers_number() - 1;
+    Index current_index = add_layer(std::move(embedding), {tokenizer_index});
 
     const Shape block_shape{sequence_length, embedding_dimension};
 
@@ -1534,10 +1490,9 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
 
         if (pre_normalization)
         {
-            add_layer(make_unique<Normalization3d>(block_shape,
-                                                   "attention_normalization" + suffix),
-                      {current_index});
-            attention_input_index = get_layers_number() - 1;
+            attention_input_index = add_layer(make_unique<Normalization3d>(block_shape,
+                                                                           "attention_normalization" + suffix),
+                                              {current_index});
         }
 
         auto self_attention = make_unique<MultiHeadAttention>(
@@ -1546,14 +1501,12 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
                             embedding_dimension, heads_number,
                             true,
                             "self_attention" + suffix);
-        add_layer(std::move(self_attention), {attention_input_index});
-        const Index attn_index = get_layers_number() - 1;
+        const Index attn_index = add_layer(std::move(self_attention), {attention_input_index});
 
         if (pre_normalization)
         {
-            add_layer(make_unique<Addition>(block_shape, "attention_addition" + suffix),
-                      {current_index, attn_index});
-            const Index residual_index = get_layers_number() - 1;
+            const Index residual_index = add_layer(make_unique<Addition>(block_shape, "attention_addition" + suffix),
+                                                   {current_index, attn_index});
 
             add_layer(make_unique<Normalization3d>(block_shape,
                                                    "dense_normalization" + suffix),
@@ -1564,9 +1517,8 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
                 "external_dense" + suffix,
                 feed_forward_activation);
 
-            add_layer(make_unique<Addition>(block_shape, "dense_addition" + suffix),
-                      {residual_index, ff_index});
-            current_index = get_layers_number() - 1;
+            current_index = add_layer(make_unique<Addition>(block_shape, "dense_addition" + suffix),
+                                      {residual_index, ff_index});
         }
         else
         {
@@ -1614,13 +1566,11 @@ static Index add_bert_encoder(NeuralNetwork& net,
         Shape{vocabulary_size, sequence_length}, hidden_size, "word_embeddings");
     word_embeddings->set_learned_positional(true);
     word_embeddings->set_export_valid_lengths(true);
-    net.add_layer(std::move(word_embeddings), {-1});
-    const Index word_index = net.get_layers_number() - 1;
+    const Index word_index = net.add_layer(std::move(word_embeddings), {-1});
 
-    net.add_layer(make_unique<Embedding>(
-                      Shape{type_vocabulary_size + 1, sequence_length}, hidden_size, "token_type_embeddings"),
-                  {-2});
-    const Index type_index = net.get_layers_number() - 1;
+    const Index type_index = net.add_layer(make_unique<Embedding>(
+                                               Shape{type_vocabulary_size + 1, sequence_length}, hidden_size, "token_type_embeddings"),
+                                           {-2});
 
     Index current = add_residual_and_norm(net, seq_hidden, "embeddings_layer_norm", word_index, type_index);
 
@@ -1628,9 +1578,8 @@ static Index add_bert_encoder(NeuralNetwork& net,
     {
         const string sfx = format("_{}", i + 1);
 
-        net.add_layer(make_unique<MultiHeadAttention>(seq_hidden, heads_number, "attention" + sfx),
-                      {current});
-        const Index attention_index = net.get_layers_number() - 1;
+        const Index attention_index = net.add_layer(make_unique<MultiHeadAttention>(seq_hidden, heads_number, "attention" + sfx),
+                                                    {current});
 
         const Index attention_norm_index =
             add_residual_and_norm(net, seq_hidden, "attention_layer_norm" + sfx, current, attention_index);
@@ -1691,8 +1640,7 @@ Qwen3::Qwen3(Index sequence_length,
     auto embedding = make_unique<Embedding>(Shape{vocabulary_size + 1, sequence_length}, hidden_size, "embed_tokens");
     embedding->set_scale_embedding(false);
     embedding->set_weights_follow_compute_dtype(true);
-    add_layer(std::move(embedding), {-1});
-    Index current = get_layers_number() - 1;
+    Index current = add_layer(std::move(embedding), {-1});
 
     const Shape block{sequence_length, hidden_size};
 
@@ -1701,16 +1649,14 @@ Qwen3::Qwen3(Index sequence_length,
         auto norm = make_unique<Normalization3d>(block, name);
         norm->set_method(NormalizationMethod::RMS);
         norm->set_epsilon(rms_epsilon);
-        add_layer(std::move(norm), {source});
-        return get_layers_number() - 1;
+        return add_layer(std::move(norm), {source});
     };
 
     auto add_linear = [&](const Shape& in_shape, Index out_features, const string& name, Index source)
     {
         auto dense = make_unique<Dense>(in_shape, Shape{out_features}, "Identity", false, name);
         dense->set_use_bias(false);
-        add_layer(std::move(dense), {source});
-        return get_layers_number() - 1;
+        return add_layer(std::move(dense), {source});
     };
 
     for (Index i = 0; i < layers_number; ++i)
@@ -1718,28 +1664,23 @@ Qwen3::Qwen3(Index sequence_length,
         const string suffix = "_" + to_string(i);
 
         const Index input_norm = add_norm("input_norm" + suffix, current);
-        add_layer(make_unique<GroupedQueryAttention>(block, query_heads, key_value_heads, head_dimension,
-                                                     rope_theta, rms_epsilon,   true,
-                                                     "attn" + suffix), {input_norm});
-        const Index attention = get_layers_number() - 1;
-        add_layer(make_unique<Addition>(block, "attn_add" + suffix), {current, attention});
-        const Index residual = get_layers_number() - 1;
+        const Index attention = add_layer(make_unique<GroupedQueryAttention>(block, query_heads, key_value_heads, head_dimension,
+                                                                             rope_theta, rms_epsilon,   true,
+                                                                             "attn" + suffix), {input_norm});
+        const Index residual = add_layer(make_unique<Addition>(block, "attn_add" + suffix), {current, attention});
 
         const Index post_norm = add_norm("post_norm" + suffix, residual);
 
         auto gate_up = make_unique<Dense>(block, Shape{intermediate_size}, "Identity", false, "gate_up" + suffix);
         gate_up->set_use_bias(false);
         gate_up->set_gated(true);
-        add_layer(std::move(gate_up), {post_norm});
-        const Index ffn = get_layers_number() - 1;
+        const Index ffn = add_layer(std::move(gate_up), {post_norm});
         const Index down = add_linear(Shape{sequence_length, intermediate_size}, hidden_size, "down" + suffix, ffn);
         static_cast<Dense*>(layers[size_t(down)].get())->set_transposed_inference(true);
-        add_layer(make_unique<Addition>(block, "ffn_add" + suffix), {residual, down});
-        current = get_layers_number() - 1;
+        current = add_layer(make_unique<Addition>(block, "ffn_add" + suffix), {residual, down});
     }
 
-    add_norm("final_norm", current);
-    current = get_layers_number() - 1;
+    current = add_norm("final_norm", current);
 
     const Index lm_head = add_linear(block, vocabulary_size + 1, "lm_head", current);
     static_cast<Dense*>(layers[size_t(lm_head)].get())->set_tied_weight_source(layers.front().get());

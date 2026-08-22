@@ -197,20 +197,16 @@ TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
         const Shape feat{H, W, ch};
         const Index stem_idx = net->get_layers_number() - 1;
 
-        net->add_layer(make_unique<Pooling>(feat, Shape{5,5}, Shape{1,1}, Shape{2,2},
-                                                  "MaxPooling", "sppf_p1"), {stem_idx});
-        const Index p1_idx = net->get_layers_number() - 1;
-        net->add_layer(make_unique<Pooling>(feat, Shape{5,5}, Shape{1,1}, Shape{2,2},
-                                                  "MaxPooling", "sppf_p2"), {p1_idx});
-        const Index p2_idx = net->get_layers_number() - 1;
-        net->add_layer(make_unique<Pooling>(feat, Shape{5,5}, Shape{1,1}, Shape{2,2},
-                                                  "MaxPooling", "sppf_p3"), {p2_idx});
-        const Index p3_idx = net->get_layers_number() - 1;
+        const Index p1_idx = net->add_layer(make_unique<Pooling>(feat, Shape{5,5}, Shape{1,1}, Shape{2,2},
+                                                                       "MaxPooling", "sppf_p1"), {stem_idx});
+        const Index p2_idx = net->add_layer(make_unique<Pooling>(feat, Shape{5,5}, Shape{1,1}, Shape{2,2},
+                                                                       "MaxPooling", "sppf_p2"), {p1_idx});
+        const Index p3_idx = net->add_layer(make_unique<Pooling>(feat, Shape{5,5}, Shape{1,1}, Shape{2,2},
+                                                                       "MaxPooling", "sppf_p3"), {p2_idx});
 
-        net->add_layer(make_unique<Concatenation>(feat,
-                                                        vector<Index>{ch, ch, ch, ch}, "sppf_cat"),
-                       {stem_idx, p1_idx, p2_idx, p3_idx});
-        const Index cat_idx = net->get_layers_number() - 1;
+        const Index cat_idx = net->add_layer(make_unique<Concatenation>(feat,
+                                                                              vector<Index>{ch, ch, ch, ch}, "sppf_cat"),
+                                             {stem_idx, p1_idx, p2_idx, p3_idx});
 
         net->add_layer(make_unique<Convolutional>(
             Shape{H, W, 4*ch}, Shape{1,1, 4*ch, ch}, "LeakyReLU", Shape{1,1}, "Same", true, "sppf_out"), {cat_idx});
@@ -280,37 +276,28 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
         auto net = make_unique<NeuralNetwork>();
 
         const Shape input{H, W, 3};
-        net->add_layer(make_unique<Convolutional>(
-            input, Shape{3, 3, 3, ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "stem"));
-        const Index stem = net->get_layers_number() - 1;
+        const Index stem = net->add_layer(make_unique<Convolutional>(
+                               input, Shape{3, 3, 3, ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "stem"));
         const Shape feat{H, W, ch};
 
-        net->add_layer(make_unique<Convolutional>(
-            feat, Shape{1, 1, ch, half}, "Identity", Shape{1, 1}, "Same", true, "csp_s1"), {stem});
-        const Index branch1 = net->get_layers_number() - 1;
+        const Index branch1 = net->add_layer(make_unique<Convolutional>(
+                                  feat, Shape{1, 1, ch, half}, "Identity", Shape{1, 1}, "Same", true, "csp_s1"), {stem});
 
-        net->add_layer(make_unique<Convolutional>(
-            feat, Shape{1, 1, ch, half}, "LeakyReLU", Shape{1, 1}, "Same", true, "csp_s2"), {stem});
-        const Index b2_start = net->get_layers_number() - 1;
+        const Index b2_start = net->add_layer(make_unique<Convolutional>(
+                                   feat, Shape{1, 1, ch, half}, "LeakyReLU", Shape{1, 1}, "Same", true, "csp_s2"), {stem});
 
         const Shape hfeat{H, W, half};
-        net->add_layer(make_unique<Convolutional>(
-            hfeat, Shape{1, 1, half, half}, "LeakyReLU", Shape{1, 1}, "Same", true, "csp_b1_c1"), {b2_start});
-        const Index b1c1 = net->get_layers_number() - 1;
-        net->add_layer(make_unique<Convolutional>(
-            hfeat, Shape{3, 3, half, half}, "Identity", Shape{1, 1}, "Same", true, "csp_b1_c2"), {b1c1});
-        const Index b1c2 = net->get_layers_number() - 1;
-        net->add_layer(make_unique<Addition>(hfeat, "csp_b1_add"), {b1c2, b2_start});
-        const Index add = net->get_layers_number() - 1;
-        net->add_layer(make_unique<Activation>(hfeat, "LeakyReLU", "csp_b1_act"), {add});
-        const Index branch2 = net->get_layers_number() - 1;
+        const Index b1c1 = net->add_layer(make_unique<Convolutional>(
+                               hfeat, Shape{1, 1, half, half}, "LeakyReLU", Shape{1, 1}, "Same", true, "csp_b1_c1"), {b2_start});
+        const Index b1c2 = net->add_layer(make_unique<Convolutional>(
+                               hfeat, Shape{3, 3, half, half}, "Identity", Shape{1, 1}, "Same", true, "csp_b1_c2"), {b1c1});
+        const Index add = net->add_layer(make_unique<Addition>(hfeat, "csp_b1_add"), {b1c2, b2_start});
+        const Index branch2 = net->add_layer(make_unique<Activation>(hfeat, "LeakyReLU", "csp_b1_act"), {add});
 
-        net->add_layer(make_unique<Concatenation>(hfeat, vector<Index>{half, half}, "csp_cat"),
-                       {branch1, branch2});
-        const Index cat = net->get_layers_number() - 1;
-        net->add_layer(make_unique<Convolutional>(
-            feat, Shape{1, 1, ch, ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "csp_merge"), {cat});
-        const Index merge = net->get_layers_number() - 1;
+        const Index cat = net->add_layer(make_unique<Concatenation>(hfeat, vector<Index>{half, half}, "csp_cat"),
+                                         {branch1, branch2});
+        const Index merge = net->add_layer(make_unique<Convolutional>(
+                                feat, Shape{1, 1, ch, ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "csp_merge"), {cat});
 
         net->add_layer(make_unique<Convolutional>(
             feat, Shape{1, 1, ch, logit_ch}, "Identity", Shape{1, 1}, "Same", false, "logits"), {merge});
@@ -377,35 +364,27 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
         auto net = make_unique<NeuralNetwork>();
 
         const Shape input{H, W, 3};
-        net->add_layer(make_unique<Convolutional>(
-            input, Shape{3, 3, 3, head_ch}, "LeakyReLU", Shape{8, 8}, "Same", true, "stem"));
-        const Index stem = net->get_layers_number() - 1;
+        const Index stem = net->add_layer(make_unique<Convolutional>(
+                               input, Shape{3, 3, 3, head_ch}, "LeakyReLU", Shape{8, 8}, "Same", true, "stem"));
         const Shape feat{grid, grid, head_ch};
 
-        net->add_layer(make_unique<Convolutional>(
-            feat, Shape{3, 3, head_ch, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "box_c1"), {stem});
-        const Index bc1 = net->get_layers_number() - 1;
-        net->add_layer(make_unique<Convolutional>(
-            feat, Shape{3, 3, head_ch, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "box_c2"), {bc1});
-        const Index bc2 = net->get_layers_number() - 1;
-        net->add_layer(make_unique<Convolutional>(
-            feat, Shape{1, 1, head_ch, 4}, "Identity", Shape{1, 1}, "Same", false, "box_out"), {bc2});
-        const Index box_out = net->get_layers_number() - 1;
+        const Index bc1 = net->add_layer(make_unique<Convolutional>(
+                              feat, Shape{3, 3, head_ch, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "box_c1"), {stem});
+        const Index bc2 = net->add_layer(make_unique<Convolutional>(
+                              feat, Shape{3, 3, head_ch, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "box_c2"), {bc1});
+        const Index box_out = net->add_layer(make_unique<Convolutional>(
+                                  feat, Shape{1, 1, head_ch, 4}, "Identity", Shape{1, 1}, "Same", false, "box_out"), {bc2});
 
-        net->add_layer(make_unique<Convolutional>(
-            feat, Shape{3, 3, head_ch, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "cls_c1"), {stem});
-        const Index cc1 = net->get_layers_number() - 1;
-        net->add_layer(make_unique<Convolutional>(
-            feat, Shape{3, 3, head_ch, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "cls_c2"), {cc1});
-        const Index cc2 = net->get_layers_number() - 1;
-        net->add_layer(make_unique<Convolutional>(
-            feat, Shape{1, 1, head_ch, C}, "Identity", Shape{1, 1}, "Same", false, "cls_out"), {cc2});
-        const Index cls_out = net->get_layers_number() - 1;
+        const Index cc1 = net->add_layer(make_unique<Convolutional>(
+                              feat, Shape{3, 3, head_ch, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "cls_c1"), {stem});
+        const Index cc2 = net->add_layer(make_unique<Convolutional>(
+                              feat, Shape{3, 3, head_ch, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "cls_c2"), {cc1});
+        const Index cls_out = net->add_layer(make_unique<Convolutional>(
+                                  feat, Shape{1, 1, head_ch, C}, "Identity", Shape{1, 1}, "Same", false, "cls_out"), {cc2});
 
         const Shape box_shape{grid, grid, 4};
-        net->add_layer(make_unique<Concatenation>(box_shape, vector<Index>{4, C}, "cat"),
-                       {box_out, cls_out});
-        const Index cat = net->get_layers_number() - 1;
+        const Index cat = net->add_layer(make_unique<Concatenation>(box_shape, vector<Index>{4, C}, "cat"),
+                                         {box_out, cls_out});
         net->add_layer(make_unique<DetectionV8>(Shape{grid, grid, det_ch}, "det"));
 
         net->compile();

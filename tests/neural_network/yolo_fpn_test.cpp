@@ -271,20 +271,17 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
 
     NeuralNetwork neural_network;
 
-    neural_network.add_layer(make_unique<Convolutional>(
-        Shape{input_H, input_W, 3}, Shape{3, 3, 3, 4},
-        "Identity", Shape{1, 1}, "Same", false, "stage1"));
-    const Index s1 = neural_network.get_layers_number() - 1;
+    const Index s1 = neural_network.add_layer(make_unique<Convolutional>(
+                         Shape{input_H, input_W, 3}, Shape{3, 3, 3, 4},
+                         "Identity", Shape{1, 1}, "Same", false, "stage1"));
 
-    neural_network.add_layer(make_unique<Convolutional>(
-        Shape{input_H, input_W, 4}, Shape{3, 3, 4, 4},
-        "Identity", Shape{2, 2}, "Same", false, "stage2"));
-    const Index s2 = neural_network.get_layers_number() - 1;
+    const Index s2 = neural_network.add_layer(make_unique<Convolutional>(
+                         Shape{input_H, input_W, 4}, Shape{3, 3, 4, 4},
+                         "Identity", Shape{2, 2}, "Same", false, "stage2"));
 
-    neural_network.add_layer(make_unique<Convolutional>(
-        Shape{4, 4, 4}, Shape{3, 3, 4, 4},
-        "Identity", Shape{2, 2}, "Same", false, "stage3"));
-    const Index s3 = neural_network.get_layers_number() - 1;
+    const Index s3 = neural_network.add_layer(make_unique<Convolutional>(
+                         Shape{4, 4, 4}, Shape{3, 3, 4, 4},
+                         "Identity", Shape{2, 2}, "Same", false, "stage3"));
 
     neural_network.add_layer(make_unique<Convolutional>(
         Shape{2, 2, 4}, Shape{1, 1, 4, head_channels},

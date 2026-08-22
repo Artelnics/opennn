@@ -231,24 +231,21 @@ TEST(BackwardFullWrite, UpsamplingGradientIgnoresPriorArenaContents)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<Convolutional>(spatial_shape,
-                                                        Shape{3, 3, channels, kernels},
-                                                        "Identity", Shape{1, 1}, "Same"),
-                             {-1});
-    const Index convolutional_index = neural_network.get_layers_number() - 1;
+    const Index convolutional_index = neural_network.add_layer(make_unique<Convolutional>(spatial_shape,
+                                                                                          Shape{3, 3, channels, kernels},
+                                                                                          "Identity", Shape{1, 1}, "Same"),
+                                                               {-1});
 
     // Upsampling must sit above a trainable layer, or its input delta never
     // reaches a gradient and the stamp cannot show up in the comparison.
-    neural_network.add_layer(make_unique<Upsampling>(
-                                 neural_network.get_layer(convolutional_index)->get_output_shape(),
-                                 scale, "upsampling"),
-                             {convolutional_index});
-    const Index upsampling_index = neural_network.get_layers_number() - 1;
+    const Index upsampling_index = neural_network.add_layer(make_unique<Upsampling>(
+                                                                neural_network.get_layer(convolutional_index)->get_output_shape(),
+                                                                scale, "upsampling"),
+                                                            {convolutional_index});
 
-    neural_network.add_layer(make_unique<Flatten>(
-                                 neural_network.get_layer(upsampling_index)->get_output_shape()),
-                             {upsampling_index});
-    const Index flatten_index = neural_network.get_layers_number() - 1;
+    const Index flatten_index = neural_network.add_layer(make_unique<Flatten>(
+                                                             neural_network.get_layer(upsampling_index)->get_output_shape()),
+                                                         {upsampling_index});
 
     neural_network.add_layer(make_unique<opennn::Dense>(
                                  neural_network.get_layer(flatten_index)->get_output_shape(),

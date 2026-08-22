@@ -91,8 +91,7 @@ TEST(Normalization3dTest, BackwardGradientMatchesNumerical)
 
     NeuralNetwork neural_network;
 
-    neural_network.add_layer(make_unique<Normalization3d>(input_shape, "norm"), {-1});
-    const Index norm_index = neural_network.get_layers_number() - 1;
+    const Index norm_index = neural_network.add_layer(make_unique<Normalization3d>(input_shape, "norm"), {-1});
 
     neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(norm_index)->get_output_shape()),
                              {norm_index});
@@ -168,26 +167,22 @@ TEST(Normalization3dTest, FusedResidualAddAliasesSafeBranchDelta)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(
-        make_unique<opennn::Dense>(input_shape, Shape{3}, "Identity", false,
-                                   "residual"),
-        {-1});
-    const Index residual_index = neural_network.get_layers_number() - 1;
+    const Index residual_index = neural_network.add_layer(
+                                     make_unique<opennn::Dense>(input_shape, Shape{3}, "Identity", false,
+                                                                "residual"),
+                                     {-1});
 
-    neural_network.add_layer(
-        make_unique<opennn::Dense>(input_shape, Shape{3}, "Identity", false,
-                                   "branch"),
-        {residual_index});
-    const Index branch_index = neural_network.get_layers_number() - 1;
+    const Index branch_index = neural_network.add_layer(
+                                   make_unique<opennn::Dense>(input_shape, Shape{3}, "Identity", false,
+                                                              "branch"),
+                                   {residual_index});
 
     auto normalization =
         make_unique<Normalization3d>(input_shape, "fused_norm");
     normalization->set_fuse_add(true);
-    neural_network.add_layer(
+    const Index normalization_index = neural_network.add_layer(
         std::move(normalization),
         {residual_index, branch_index});
-    const Index normalization_index =
-        neural_network.get_layers_number() - 1;
 
     neural_network.add_layer(
         make_unique<Flatten>(input_shape),
@@ -319,8 +314,7 @@ TEST(Normalization3dTest, RMSBackwardGradientMatchesNumerical)
 
     auto norm = make_unique<Normalization3d>(input_shape, "norm");
     norm->set_method(NormalizationMethod::RMS);
-    neural_network.add_layer(std::move(norm), {-1});
-    const Index norm_index = neural_network.get_layers_number() - 1;
+    const Index norm_index = neural_network.add_layer(std::move(norm), {-1});
 
     neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(norm_index)->get_output_shape()),
                              {norm_index});
@@ -449,14 +443,12 @@ TEST(Normalization3dTest, FusedResidualAddGradientMatchesNumerical)
 
     NeuralNetwork neural_network;
 
-    neural_network.add_layer(make_unique<opennn::Dense>(input_shape, Shape{embedding_dimension}, "Identity"),
-                             {-1});
-    const Index dense_index = neural_network.get_layers_number() - 1;
+    const Index dense_index = neural_network.add_layer(make_unique<opennn::Dense>(input_shape, Shape{embedding_dimension}, "Identity"),
+                                                       {-1});
 
     auto norm = make_unique<Normalization3d>(input_shape, "fused_norm");
     norm->set_fuse_add(true);
-    neural_network.add_layer(std::move(norm), {dense_index, -1});
-    const Index norm_index = neural_network.get_layers_number() - 1;
+    const Index norm_index = neural_network.add_layer(std::move(norm), {dense_index, -1});
 
     neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(norm_index)->get_output_shape()),
                              {norm_index});

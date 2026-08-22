@@ -162,17 +162,15 @@ TEST_F(UpsamplingLayerTest, UpsamplingBackwardGradientMatchesNumerical)
 
     NeuralNetwork neural_network;
 
-    neural_network.add_layer(make_unique<Convolutional>(spatial_shape,
-                                                        Shape{ 3, 3, ch, kernels_number },
-                                                        "Identity",
-                                                        Shape{ 1, 1 },
-                                                        "Same"),
-                             { -1 });
-    const Index conv_index = neural_network.get_layers_number() - 1;
+    const Index conv_index = neural_network.add_layer(make_unique<Convolutional>(spatial_shape,
+                                                                                 Shape{ 3, 3, ch, kernels_number },
+                                                                                 "Identity",
+                                                                                 Shape{ 1, 1 },
+                                                                                 "Same"),
+                                                      { -1 });
 
-    neural_network.add_layer(make_unique<Upsampling>(neural_network.get_layer(conv_index)->get_output_shape(), scale, "upsampling_test"),
-                             { conv_index });
-    const Index upsampling_index = neural_network.get_layers_number() - 1;
+    const Index upsampling_index = neural_network.add_layer(make_unique<Upsampling>(neural_network.get_layer(conv_index)->get_output_shape(), scale, "upsampling_test"),
+                                                            { conv_index });
 
     neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(upsampling_index)->get_output_shape()),
                              { upsampling_index });

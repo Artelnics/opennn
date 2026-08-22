@@ -75,8 +75,9 @@ public:
     NetworkTask get_task() const noexcept { return task; }
     void set_task(NetworkTask new_task) noexcept { task = new_task; }
 
-    void add_layer(unique_ptr<Layer>,
-                  const vector<Index>& = {});
+    // Returns the new layer's index, which is what every builder needs next.
+    Index add_layer(unique_ptr<Layer>,
+                    const vector<Index>& = {});
 
     const EffectiveConfig& get_config() const noexcept { return config; }
     Device get_device() const noexcept { return config.device; }
