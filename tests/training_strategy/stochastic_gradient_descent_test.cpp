@@ -11,75 +11,15 @@
 #include "opennn/dataset/image_dataset.h"
 #include "opennn/training_strategy/loss.h"
 #include "opennn/core/device_backend.h"
+
+#include "tests/test_helpers.h"
 #include "gtest/gtest.h"
 
 using namespace opennn;
+using namespace opennn_test;
 
 namespace
 {
-    void write_u16(vector<uint8_t>& bytes, uint16_t value)
-    {
-        bytes.push_back(uint8_t(value & 0xFF));
-        bytes.push_back(uint8_t((value >> 8) & 0xFF));
-    }
-
-    void write_u32(vector<uint8_t>& bytes, uint32_t value)
-    {
-        bytes.push_back(uint8_t(value & 0xFF));
-        bytes.push_back(uint8_t((value >> 8) & 0xFF));
-        bytes.push_back(uint8_t((value >> 16) & 0xFF));
-        bytes.push_back(uint8_t((value >> 24) & 0xFF));
-    }
-
-    void write_bmp_24(const filesystem::path& path, int width, int height, uint8_t red, uint8_t green, uint8_t blue)
-    {
-        const int bytes_per_pixel = 3;
-        const int row_stride = ((width * bytes_per_pixel + 3) / 4) * 4;
-        const uint32_t pixel_array_size = uint32_t(row_stride * height);
-        const uint32_t header_size = 54;
-        const uint32_t file_size = header_size + pixel_array_size;
-
-        vector<uint8_t> bytes;
-        bytes.push_back('B');
-        bytes.push_back('M');
-        write_u32(bytes, file_size);
-        write_u16(bytes, 0);
-        write_u16(bytes, 0);
-        write_u32(bytes, header_size);
-        write_u32(bytes, 40);
-        write_u32(bytes, uint32_t(width));
-        write_u32(bytes, uint32_t(height));
-        write_u16(bytes, 1);
-        write_u16(bytes, 24);
-        write_u32(bytes, 0);
-        write_u32(bytes, pixel_array_size);
-        write_u32(bytes, 2835);
-        write_u32(bytes, 2835);
-        write_u32(bytes, 0);
-        write_u32(bytes, 0);
-
-        for (int y = 0; y < height; ++y)
-        {
-            int written = 0;
-            for (int x = 0; x < width; ++x)
-            {
-                bytes.push_back(blue);
-                bytes.push_back(green);
-                bytes.push_back(red);
-                written += bytes_per_pixel;
-            }
-            while (written < row_stride)
-            {
-                bytes.push_back(0);
-                ++written;
-            }
-        }
-
-        ofstream out(path, ios::binary);
-        out.write(reinterpret_cast<const char*>(bytes.data()), streamsize(bytes.size()));
-        out.close();
-    }
-
     filesystem::path write_sgd_image_classification_dataset()
     {
         const filesystem::path root = filesystem::temp_directory_path() / "opennn_sgd_image_classification";

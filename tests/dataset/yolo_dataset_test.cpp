@@ -2,6 +2,8 @@
 
 #include "opennn/dataset/yolo_dataset.h"
 
+#include "tests/test_helpers.h"
+
 #include <array>
 #include <cstdint>
 #include <filesystem>
@@ -11,96 +13,11 @@
 #include <system_error>
 
 using namespace opennn;
-
-namespace {
-
-void write_bmp_24(const filesystem::path& path, int width, int height, uint8_t r, uint8_t g, uint8_t b)
-{
-    const int row_bytes_unpadded = width * 3;
-    const int row_pad = (4 - row_bytes_unpadded % 4) % 4;
-    const int row_stride = row_bytes_unpadded + row_pad;
-    const int pixel_data_size = row_stride * height;
-    const int file_size = 54 + pixel_data_size;
-
-    vector<uint8_t> file(static_cast<size_t>(file_size), 0);
-
-    file[0] = 'B'; file[1] = 'M';
-    file[2] = static_cast<uint8_t>(file_size & 0xff);
-    file[3] = static_cast<uint8_t>((file_size >> 8) & 0xff);
-    file[4] = static_cast<uint8_t>((file_size >> 16) & 0xff);
-    file[5] = static_cast<uint8_t>((file_size >> 24) & 0xff);
-    file[10] = 54;
-
-    file[14] = 40;
-    file[18] = static_cast<uint8_t>(width & 0xff);
-    file[19] = static_cast<uint8_t>((width >> 8) & 0xff);
-    file[22] = static_cast<uint8_t>(height & 0xff);
-    file[23] = static_cast<uint8_t>((height >> 8) & 0xff);
-    file[26] = 1;
-    file[28] = 24;
-
-    for (int y = 0; y < height; ++y)
-    {
-        const int row_offset = 54 + y * row_stride;
-        for (int x = 0; x < width; ++x)
-        {
-            file[row_offset + x * 3 + 0] = b;
-            file[row_offset + x * 3 + 1] = g;
-            file[row_offset + x * 3 + 2] = r;
-        }
-    }
-
-    ofstream out(path, ios::binary);
-    out.write(reinterpret_cast<const char*>(file.data()), file.size());
-}
-
-void write_label(const filesystem::path& path, int class_id, float cx, float cy, float w, float h)
-{
-    ofstream out(path);
-    out << class_id << ' ' << cx << ' ' << cy << ' ' << w << ' ' << h << '\n';
-}
-
-void write_classes(const filesystem::path& path, initializer_list<const char*> names)
-{
-    ofstream out(path);
-    for (auto* n : names) out << n << '\n';
-}
-
-struct TempDir
-{
-    filesystem::path path;
-
-    TempDir()
-    {
-        const auto base = filesystem::temp_directory_path();
-        for (int i = 0; i < 10000; ++i)
-        {
-            filesystem::path candidate = base / ("opennn_yolo_test_" + to_string(i));
-            error_code ec;
-            if (filesystem::create_directories(candidate, ec) && !ec)
-            {
-                path = candidate;
-                return;
-            }
-        }
-        throw runtime_error("Could not create temp dir for YoloDataset test");
-    }
-
-    ~TempDir()
-    {
-        error_code ec;
-        filesystem::remove_all(path, ec);
-    }
-
-    TempDir(const TempDir&) = delete;
-    TempDir& operator=(const TempDir&) = delete;
-};
-
-}
+using namespace opennn_test;
 
 TEST(YoloDataset, EncodesTargetsIntoExpectedGridCellAndAnchor)
 {
-    TempDir dir;
+    TempDir dir("opennn_yolo_test_");
     const filesystem::path images_dir = dir.path / "images";
     const filesystem::path labels_dir = dir.path / "labels";
     filesystem::create_directories(images_dir);
@@ -196,7 +113,7 @@ TEST(YoloDataset, EncodesTargetsIntoExpectedGridCellAndAnchor)
 
 TEST(YoloDataset, FillsInputsWithExpectedShapeAndPixelValues)
 {
-    TempDir dir;
+    TempDir dir("opennn_yolo_test_");
     const filesystem::path images_dir = dir.path / "images";
     const filesystem::path labels_dir = dir.path / "labels";
     filesystem::create_directories(images_dir);
@@ -237,7 +154,7 @@ TEST(YoloDataset, FillsInputsWithExpectedShapeAndPixelValues)
 
 TEST(YoloDataset, MatrixStorageSupportsConcurrentReadsOfOneDataset)
 {
-    TempDir dir;
+    TempDir dir("opennn_yolo_test_");
     const filesystem::path images_dir = dir.path / "images";
     const filesystem::path labels_dir = dir.path / "labels";
     filesystem::create_directories(images_dir);
@@ -283,7 +200,7 @@ TEST(YoloDataset, MatrixStorageSupportsConcurrentReadsOfOneDataset)
 
 TEST(YoloDataset, RepeatedMosaicBatchesKeepWorkerScratchIndependent)
 {
-    TempDir dir;
+    TempDir dir("opennn_yolo_test_");
     const filesystem::path images_dir = dir.path / "images";
     const filesystem::path labels_dir = dir.path / "labels";
     filesystem::create_directories(images_dir);
@@ -343,7 +260,7 @@ TEST(YoloDataset, RepeatedMosaicBatchesKeepWorkerScratchIndependent)
 TEST(YoloDataset, MultiScaleTargetsRouteBoxesToCorrectHead)
 {
 
-    TempDir dir;
+    TempDir dir("opennn_yolo_test_");
     const filesystem::path images_dir = dir.path / "images";
     const filesystem::path labels_dir = dir.path / "labels";
     filesystem::create_directories(images_dir);
