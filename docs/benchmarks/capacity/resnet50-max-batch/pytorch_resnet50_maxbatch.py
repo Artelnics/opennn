@@ -85,19 +85,15 @@ def make_batch(data_dir, batch):
     yb = np.asarray(labels[idx], dtype=np.int64)
     return xb, yb, classes
 
-def default_data():
-    root = os.environ.get("OPENNN_BENCH_DATA",
-                          os.path.expanduser("~/opennn-benchmark-data"))
-    return os.path.join(root, "cifar10")
-
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--data", default=default_data())
+    ap.add_argument("--data", default=os.path.join(
+        os.environ.get("OPENNN_BENCH_DATA", os.path.expanduser("~/opennn-benchmark-data")),
+        "cifar10"))
     ap.add_argument("--batch", type=int, required=True)
     ap.add_argument("--path", choices=["compile", "eager"], default="compile")
     ap.add_argument("--precision", choices=["fp32", "bf16"], default="fp32")
     ap.add_argument("--memory-fraction", type=float, default=None)
-
     ap.add_argument("--cudnn-benchmark", type=int, default=0)
     ap.add_argument("--target", type=float, default=None,
                     help="optional training-loss target")

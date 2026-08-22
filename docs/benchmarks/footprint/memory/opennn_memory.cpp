@@ -7,7 +7,6 @@
 //     one tiny CUDA matrix multiply, or NA when unavailable
 
 #include <algorithm>
-#include <cctype>
 #include <cstdio>
 #include <fstream>
 #include <optional>
@@ -21,11 +20,9 @@
 #include <psapi.h>
 #define popen _popen
 #define pclose _pclose
-static int current_pid() { return _getpid(); }
 #else
 #include <sys/resource.h>
 #include <unistd.h>
-static int current_pid() { return getpid(); }
 #endif
 
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
@@ -37,136 +34,135 @@ static int current_pid() { return getpid(); }
 
 using namespace opennn;
 
-static double current_rss_mb()
-{
-#ifdef _WIN32
-    PROCESS_MEMORY_COUNTERS counters{};
-    if (GetProcessMemoryInfo(GetCurrentProcess(), &counters, sizeof(counters)))
-        return double(counters.WorkingSetSize) / (1024.0 * 1024.0);
-    return 0.0;
-#else
-    ifstream status("/proc/self/status");
-    string line;
-
-    while (getline(status, line))
-    {
-        if (line.rfind("VmRSS:", 0) == 0)
-        {
-            istringstream stream(line.substr(6));
-            double kb = 0.0;
-            stream >> kb;
-            return kb / 1024.0;
-        }
-    }
-
-    rusage usage{};
-    getrusage(RUSAGE_SELF, &usage);
-    return usage.ru_maxrss / 1024.0;
-#endif
-}
-
-static optional<double> current_process_vram_mb()
-{
-    const int pid = current_pid();
-#ifdef _WIN32
-    const char* command = "nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader,nounits 2>NUL";
-#else
-    const char* command = "nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader,nounits 2>/dev/null";
-#endif
-
-    FILE* pipe = popen(command, "r");
-    if (!pipe) return nullopt;
-
-    optional<double> total;
-    char buffer[256];
-
-    while (fgets(buffer, sizeof(buffer), pipe))
-    {
-        string line(buffer);
-        replace(line.begin(), line.end(), ',', ' ');
-
-        istringstream stream(line);
-        int row_pid = 0;
-        double used_mb = 0.0;
-
-        if (stream >> row_pid >> used_mb && row_pid == pid)
-            total = total.value_or(0.0) + used_mb;
-    }
-
-    pclose(pipe);
-    return total;
-}
-
-static optional<double> gpu_used_memory_mb()
-{
-#ifdef _WIN32
-    const char* command = "nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>NUL";
-#else
-    const char* command = "nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null";
-#endif
-
-    FILE* pipe = popen(command, "r");
-    if (!pipe) return nullopt;
-
-    char buffer[256];
-    optional<double> used;
-
-    while (fgets(buffer, sizeof(buffer), pipe))
-    {
-        istringstream stream(buffer);
-        double value = 0.0;
-        if (stream >> value)
-        {
-            used = value;
-            break;
-        }
-    }
-
-    pclose(pipe);
-    return used;
-}
-
-static bool run_tiny_gpu_matmul()
-{
-    if (!device::is_cuda_build() || !device::has_cuda_device())
-        return false;
-
-    Configuration::instance().set(Device::CUDA, Type::FP32);
-
-#ifdef OPENNN_HAS_CUDA
-    constexpr int n = 32;
-    constexpr Index bytes = Index(n * n * sizeof(float));
-
-    auto* a = static_cast<float*>(device::allocate(Device::CUDA, bytes));
-    auto* b = static_cast<float*>(device::allocate(Device::CUDA, bytes));
-    auto* c = static_cast<float*>(device::allocate(Device::CUDA, bytes));
-
-    cudaStream_t stream = device::get_compute_stream();
-    device::set_zero_async(a, bytes, stream);
-    device::set_zero_async(b, bytes, stream);
-
-    const float alpha = 1.0f;
-    const float beta = 0.0f;
-    CHECK_CUBLAS(cublasSgemm(Backend::get_cublas_handle(),
-                             CUBLAS_OP_N, CUBLAS_OP_N,
-                             n, n, n,
-                             &alpha,
-                             a, n,
-                             b, n,
-                             &beta,
-                             c, n));
-    device::synchronize(stream);
-
-    device::deallocate(Device::CUDA, a, bytes);
-    device::deallocate(Device::CUDA, b, bytes);
-    device::deallocate(Device::CUDA, c, bytes);
-#endif
-
-    return true;
-}
-
 int main()
 {
+    const auto current_rss_mb = []() -> double
+    {
+#ifdef _WIN32
+        PROCESS_MEMORY_COUNTERS counters{};
+        if (GetProcessMemoryInfo(GetCurrentProcess(), &counters, sizeof(counters)))
+            return double(counters.WorkingSetSize) / (1024.0 * 1024.0);
+        return 0.0;
+#else
+        ifstream status("/proc/self/status");
+        string line;
+
+        while (getline(status, line))
+        {
+            if (line.rfind("VmRSS:", 0) == 0)
+            {
+                istringstream stream(line.substr(6));
+                double kb = 0.0;
+                stream >> kb;
+                return kb / 1024.0;
+            }
+        }
+
+        rusage usage{};
+        getrusage(RUSAGE_SELF, &usage);
+        return usage.ru_maxrss / 1024.0;
+#endif
+    };
+
+    const auto current_process_vram_mb = []() -> optional<double>
+    {
+#ifdef _WIN32
+        const int pid = _getpid();
+        const char* command = "nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader,nounits 2>NUL";
+#else
+        const int pid = getpid();
+        const char* command = "nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader,nounits 2>/dev/null";
+#endif
+
+        FILE* pipe = popen(command, "r");
+        if (!pipe) return nullopt;
+
+        optional<double> total;
+        char buffer[256];
+
+        while (fgets(buffer, sizeof(buffer), pipe))
+        {
+            string line(buffer);
+            replace(line.begin(), line.end(), ',', ' ');
+
+            istringstream stream(line);
+            int row_pid = 0;
+            double used_mb = 0.0;
+
+            if (stream >> row_pid >> used_mb && row_pid == pid)
+                total = total.value_or(0.0) + used_mb;
+        }
+
+        pclose(pipe);
+        return total;
+    };
+
+    const auto gpu_used_memory_mb = []() -> optional<double>
+    {
+#ifdef _WIN32
+        const char* command = "nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>NUL";
+#else
+        const char* command = "nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null";
+#endif
+
+        FILE* pipe = popen(command, "r");
+        if (!pipe) return nullopt;
+
+        char buffer[256];
+        optional<double> used;
+
+        while (fgets(buffer, sizeof(buffer), pipe))
+        {
+            istringstream stream(buffer);
+            double value = 0.0;
+            if (stream >> value)
+            {
+                used = value;
+                break;
+            }
+        }
+
+        pclose(pipe);
+        return used;
+    };
+
+    const auto run_tiny_gpu_matmul = []
+    {
+        if (!device::is_cuda_build() || !device::has_cuda_device())
+            return;
+
+        Configuration::instance().set(Device::CUDA, Type::FP32);
+
+#ifdef OPENNN_HAS_CUDA
+        constexpr int n = 32;
+        constexpr Index bytes = Index(n * n * sizeof(float));
+
+        auto* a = static_cast<float*>(device::allocate(Device::CUDA, bytes));
+        auto* b = static_cast<float*>(device::allocate(Device::CUDA, bytes));
+        auto* c = static_cast<float*>(device::allocate(Device::CUDA, bytes));
+
+        cudaStream_t stream = device::get_compute_stream();
+        device::set_zero_async(a, bytes, stream);
+        device::set_zero_async(b, bytes, stream);
+
+        const float alpha = 1.0f;
+        const float beta = 0.0f;
+        CHECK_CUBLAS(cublasSgemm(Backend::get_cublas_handle(),
+                                 CUBLAS_OP_N, CUBLAS_OP_N,
+                                 n, n, n,
+                                 &alpha,
+                                 a, n,
+                                 b, n,
+                                 &beta,
+                                 c, n));
+        device::synchronize(stream);
+
+        device::deallocate(Device::CUDA, a, bytes);
+        device::deallocate(Device::CUDA, b, bytes);
+        device::deallocate(Device::CUDA, c, bytes);
+#endif
+    };
+
     const auto vram_before_mb = gpu_used_memory_mb();
 
     Configuration::instance().set(Device::CPU, Type::FP32);

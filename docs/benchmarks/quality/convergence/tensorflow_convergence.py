@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""TensorFlow convergence-gate benchmark on the HIGGS classification dataset.
+"""TensorFlow convergence-gate benchmark on the HIGGS classification dataset,
+written the way a TensorFlow user writes it: keras Sequential, a tf.function
+train step, a plain forward for the evaluation. The protocol lives in
+run_convergence.py.
 
 MLPerf-style metric: WALL-CLOCK TIME TO REACH A FIXED QUALITY TARGET, not
 throughput at a fixed epoch count. Trains the canonical HIGGS dense classifier
@@ -28,18 +31,42 @@ os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
 import numpy as np
 
+
 def load_csv(path: Path) -> tuple[np.ndarray, np.ndarray]:
-    data = np.loadtxt(path, delimiter=",", dtype=np.float32)
+    # np.loadtxt on the 10.5M-row split is minutes of wall clock, none of it
+    # measured, so the parsed array is cached next to the CSV.
+    cache = path.with_suffix(path.suffix + ".npy")
+    if cache.exists() and cache.stat().st_mtime >= path.stat().st_mtime:
+        data = np.load(cache, mmap_mode="r")
+    else:
+        data = np.loadtxt(path, delimiter=",", dtype=np.float32)
+        try:
+            np.save(cache, data)
+        except OSError:              # read-only data directory: parse next time
+            pass
     x = np.ascontiguousarray(data[:, :-1])
     y = np.ascontiguousarray(data[:, -1:].astype(np.float32))
     return x, y
+
 
 def batches(n: int, batch: int):
     stop = (n // batch) * batch
     for start in range(0, stop, batch):
         yield start, start + batch
 
-def run(args: argparse.Namespace) -> None:
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--train", type=Path, required=True)
+    parser.add_argument("--test", type=Path, required=True)
+    parser.add_argument("--target", type=float, default=0.60)
+    parser.add_argument("--max-epochs", type=int, default=50)
+    parser.add_argument("--batch", type=int, default=1024)
+    parser.add_argument("--hidden", type=int, default=1024)
+    parser.add_argument("--hidden-layers", type=int, default=2)
+    parser.add_argument("--threads", type=int, default=0)
+    args = parser.parse_args()
+
     import tensorflow as tf
 
     tf.random.set_seed(42)
@@ -57,7 +84,7 @@ def run(args: argparse.Namespace) -> None:
     y = tf.constant(y_np)
     xt = tf.constant(xt_np)
 
-    layers: list[tf.keras.layers.Layer] = [tf.keras.layers.Input(shape=(x_np.shape[1],))]
+    layers = [tf.keras.layers.Input(shape=(x_np.shape[1],))]
     for _ in range(args.hidden_layers):
         layers.append(tf.keras.layers.Dense(args.hidden, activation="relu"))
     layers.append(tf.keras.layers.Dense(1, activation="sigmoid"))
@@ -69,35 +96,31 @@ def run(args: argparse.Namespace) -> None:
     @tf.function(jit_compile=False)
     def train_step(xb, yb):
         with tf.GradientTape() as tape:
-            pred = model(xb, training=True)
-            loss = loss_fn(yb, pred)
+            loss = loss_fn(yb, model(xb, training=True))
         grads = tape.gradient(loss, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
         return loss
-
-    def run_epoch() -> None:
-        for start, end in batches(x_np.shape[0], args.batch):
-            train_step(x[start:end], y[start:end])
-
-    def eval_log_loss() -> float:
-        preds = []
-        for start, end in batches(xt_np.shape[0], args.batch):
-            preds.append(model(xt[start:end], training=False).numpy())
-        if not preds:
-            return float("nan")
-        p = np.clip(np.vstack(preds).reshape(-1), 1.0e-7, 1.0 - 1.0e-7)
-        yb = yt_np[: p.shape[0]].reshape(-1)
-        return float(-(yb * np.log(p) + (1.0 - yb) * np.log(1.0 - p)).mean())
 
     reached = False
     epochs_taken = args.max_epochs
     test_log_loss = float("nan")
     train_s = 0.0
+
     for epoch in range(1, args.max_epochs + 1):
         t0 = time.perf_counter()
-        run_epoch()
+        for start, end in batches(x_np.shape[0], args.batch):
+            train_step(x[start:end], y[start:end])
         train_s += time.perf_counter() - t0
-        test_log_loss = eval_log_loss()
+
+        # The gate: mean clamped binary cross entropy over the held-out split
+        # (whole batches only), outside the clock.
+        predictions = np.empty((xt_np.shape[0] // args.batch * args.batch, 1), dtype=np.float32)
+        for start, end in batches(xt_np.shape[0], args.batch):
+            predictions[start:end] = model(xt[start:end], training=False).numpy()
+        p = np.clip(predictions.reshape(-1), 1.0e-7, 1.0 - 1.0e-7)
+        yb = yt_np[: p.shape[0]].reshape(-1)
+        test_log_loss = float(-(yb * np.log(p) + (1.0 - yb) * np.log(1.0 - p)).mean())
+
         if test_log_loss <= args.target:
             reached = True
             epochs_taken = epoch
@@ -117,20 +140,6 @@ def run(args: argparse.Namespace) -> None:
     print(f"time_to_target_s={train_s:.6f}")
     print(f"RESULT={'OK' if reached else 'DID_NOT_CONVERGE'}")
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--train", type=Path, required=True)
-    parser.add_argument("--test", type=Path, required=True)
-    parser.add_argument("--target", type=float, default=0.60)
-    parser.add_argument("--max-epochs", type=int, default=50)
-    parser.add_argument("--batch", type=int, default=1024)
-    parser.add_argument("--hidden", type=int, default=1024)
-    parser.add_argument("--hidden-layers", type=int, default=2)
-    parser.add_argument("--threads", type=int, default=0)
-    return parser.parse_args()
-
-def main() -> None:
-    run(parse_args())
 
 if __name__ == "__main__":
     try:

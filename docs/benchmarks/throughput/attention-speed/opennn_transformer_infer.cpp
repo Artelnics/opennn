@@ -7,7 +7,9 @@
 //   The forward path is CPU-vs-GPU validated by opennn_attention_validate.cpp.
 //
 //   usage: opennn_transformer_infer [seq] [d_model] [heads] [ff] [layers] [vocab] [batch] [iters] [fp32|bf16] [default|reuse]
-//   env:   OPENNN_BF16=1 -> bf16, when no precision argument is given
+//   env:   OPENNN_BF16=1   -> bf16, when no precision argument is given
+//          OPENNN_SDPA_MIN -> lower the fused-attention sequence-length threshold
+//          OPENNN_ATTENTION_RUNG=auto|cudnn|flash -> which attention kernel to measure
 
 #include <chrono>
 #include <cstdlib>
@@ -17,7 +19,6 @@
 #include "opennn/core/cuda/flash_attention.cuh"
 #include "opennn/core/device_backend.h"
 #include "opennn/neural_network/standard_networks.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
 #include "opennn/core/configuration.h"
 #include "opennn/core/random_utilities.h"
 #include "docs/benchmarks/transformer_benchmark.h"
@@ -56,9 +57,9 @@ int main(int argc, char* argv[])
             benchmark::configure_transformer_sdpa(transformer);
 
         cout << "config seq=" << seq << " d_model=" << d_model << " heads=" << heads
-                  << " ff=" << ff << " layers=" << layers << " vocab=" << vocab
-                  << " batch=" << batch
-                  << " sdpa_min=" << sdpa_min_sequence_length << " precision=" << (use_bf16 ? "bf16" : "fp32") << "\n";
+             << " ff=" << ff << " layers=" << layers << " vocab=" << vocab
+             << " batch=" << batch
+             << " sdpa_min=" << sdpa_min_sequence_length << " precision=" << (use_bf16 ? "bf16" : "fp32") << "\n";
         cout << "parameters=" << transformer.get_parameters_buffer_size() << "\n";
 
         // Which attention kernel to measure; "cudnn" pins the graph that ran

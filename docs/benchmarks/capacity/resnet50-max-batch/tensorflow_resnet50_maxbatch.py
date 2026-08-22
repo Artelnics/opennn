@@ -12,13 +12,6 @@ os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 import numpy as np
 import tensorflow as tf
 
-def configure_gpu(memory_limit_mb):
-    gpus = tf.config.list_physical_devices("GPU")
-    assert gpus, "CUDA GPU required"
-
-    tf.config.experimental.set_memory_growth(gpus[0], True)
-    return gpus[0].name
-
 K = tf.keras.layers
 
 def bottleneck(x, mid, stride):
@@ -66,16 +59,16 @@ def make_batch(data_dir, batch):
     yb = np.asarray(labels[idx], dtype=np.int64)
     return xb, yb, classes
 
-def default_data():
-    root = os.environ.get("OPENNN_BENCH_DATA",
-                          os.path.expanduser("~/opennn-benchmark-data"))
-    return os.path.join(root, "cifar10")
-
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--data", default=default_data())
+    ap.add_argument("--data", default=os.path.join(
+        os.environ.get("OPENNN_BENCH_DATA", os.path.expanduser("~/opennn-benchmark-data")),
+        "cifar10"))
     ap.add_argument("--batch", type=int, required=True)
     ap.add_argument("--precision", choices=["fp32", "bf16"], default="fp32")
+    # The runner always passes the VRAM cap here; it is accepted and unused:
+    # memory grows on demand, and the cap is enforced by the runner's peak
+    # monitor.
     ap.add_argument("--memory-limit-mb", type=int, default=0)
     ap.add_argument("--target", type=float, default=None,
                     help="optional training-loss target")
@@ -83,7 +76,10 @@ def main():
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
 
-    device_name = configure_gpu(args.memory_limit_mb or None)
+    gpus = tf.config.list_physical_devices("GPU")
+    assert gpus, "CUDA GPU required"
+    tf.config.experimental.set_memory_growth(gpus[0], True)
+    device_name = gpus[0].name
     if args.precision == "bf16":
         tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
     tf.keras.utils.set_random_seed(args.seed)

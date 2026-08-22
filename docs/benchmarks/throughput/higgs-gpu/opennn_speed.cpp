@@ -1,29 +1,27 @@
-//   OpenNN GPU HIGGS dense training-speed benchmark.
+// OpenNN GPU HIGGS dense training benchmark: one main function, written the
+// way a user writes an OpenNN training application, plus a timer and the
+// test-set quality gate. The measurement protocol lives in run_higgs_dense.py.
 //
-//   Trains the canonical HIGGS dense classifier
-//   (28 -> hidden -> hidden -> 1, ReLU hidden, sigmoid output, binary cross
-//   entropy -- see docs/benchmarks/throughput/higgs/README.md) on the GPU with
-//   Adam, then reports training throughput and a test-set quality gate.
+//   opennn_speed <train_csv> <epochs> <batch> <fp32|bf16> <hidden> <activation> <hidden_layers> <test_csv>
+//                <min_accuracy> <max_log_loss> <min_auc>
 //
-//   The training split is loaded once and made device-resident
-//   (StorageMode::GPUPersistantData); Adam runs for N epochs at the given batch
-//   with the CUDA-graph training step. After training the test CSV is scored on
-//   the same network and accuracy / log-loss / ROC-AUC are computed exactly like
-//   the CPU reference (../higgs/opennn_higgs_cpu.cpp).
+// The canonical HIGGS dense classifier (28 -> hidden -> hidden -> 1, ReLU
+// hidden, sigmoid output, binary cross-entropy) trains with Adam on the GPU:
+// the training split is device-resident, the step runs as a captured CUDA
+// graph, and two warmup epochs precede the timed ones. bf16 is OpenNN's
+// mixed-precision training path, matching the autocast / mixed_bfloat16 cells
+// of the PyTorch and TensorFlow drivers. After training the test CSV is scored
+// on the same network and accuracy / log-loss / ROC-AUC are computed the way
+// those drivers compute them (../higgs/metrics.py): whole batches only,
+// probabilities clamped to [1e-7, 1 - 1e-7], AUC from average ranks with ties.
 //
-//   Precision is selectable fp32 or bf16 (bf16 is OpenNN's mixed-precision
-//   training path), matching the autocast / mixed_bfloat16 used on the PyTorch
-//   and TensorFlow sides. It is selected exactly like opennn_higgs_infer.cpp:
-//   Configuration::instance().set(Device::CUDA, type).
+// A threshold argument is "none" when unset; a threshold is enforced, and
+// quality_gate=PASS|FAIL printed, only when a number is given.
 //
-//   The CLI arg order matches run_higgs_dense.py's opennn command exactly:
-//
-//   usage:  opennn_speed <train_csv> <epochs> <batch> <fp32|bf16>
-//                        <hidden> <activation> <hidden_layers> <test_csv>
-//                        <min_accuracy> <max_log_loss> <min_auc>
-//
-//   The three threshold args are "none" when unset; a threshold is enforced only
-//   when a finite number is given.
+// OPENNN_SPEED_KEEP_TAIL=1 trains the remainder batch too (tail_kept=1),
+// OPENNN_SPEED_NO_GRAPH=1 runs the step without the CUDA graph, and
+// OPENNN_BENCH_SCALERS=1 keeps the dataset's default scalers, which are off
+// because prepare_higgs.py already normalized the CSV.
 
 #include <algorithm>
 #include <chrono>
@@ -32,6 +30,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #ifdef OPENNN_HAS_CUDA
@@ -39,158 +38,17 @@
 #include <cudnn.h>
 #endif
 
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/core/configuration.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/neural_network.h"
 #include "opennn/core/random_utilities.h"
-#include "opennn/dataset/tabular_dataset.h"
 #include "opennn/core/tensor_types.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/training_strategy/training_strategy.h"
 
 using namespace opennn;
 using clock_type = chrono::steady_clock;
-
-namespace
-{
-
-float clamp_probability(float value)
-{
-    if (value < 1.0e-7f) return 1.0e-7f;
-    if (value > 1.0f - 1.0e-7f) return 1.0f - 1.0e-7f;
-    return value;
-}
-
-unique_ptr<NeuralNetwork> make_network(const Shape& input_shape,
-                                            const Shape& target_shape,
-                                            Index hidden,
-                                            Index hidden_layers,
-                                            const string& activation)
-{
-    auto network = make_unique<NeuralNetwork>();
-    Shape current = input_shape;
-    const string hidden_activation = (activation == "relu" || activation == "ReLU")
-        ? "ReLU"
-        : "Tanh";
-
-    for (Index i = 0; i < hidden_layers; ++i)
-    {
-        network->add_layer(make_unique<opennn::Dense>(
-            current,
-            Shape{hidden},
-            hidden_activation,
-            false,
-            "higgs_dense_" + to_string(i + 1)));
-        current = network->get_output_shape();
-    }
-
-    network->add_layer(make_unique<opennn::Dense>(
-        current,
-        target_shape,
-        "Sigmoid",
-        false,
-        "higgs_output"));
-
-    network->compile();
-    network->set_parameters_glorot();
-    return network;
-}
-
-struct BinaryMetrics
-{
-    double accuracy = 0.0;
-    double log_loss = 0.0;
-    double auc = 0.0;
-    Index samples = 0;
-};
-
-double calculate_auc(const vector<pair<float, int>>& scored)
-{
-    const Index n = Index(scored.size());
-    if (n == 0) return 0.0;
-
-    Index positives = 0;
-    for (const auto& item : scored)
-        positives += item.second ? 1 : 0;
-    const Index negatives = n - positives;
-    if (positives == 0 || negatives == 0) return 0.0;
-
-    vector<pair<float, int>> sorted = scored;
-    sort(sorted.begin(), sorted.end(),
-              [](const auto& a, const auto& b) { return a.first < b.first; });
-
-    double positive_rank_sum = 0.0;
-    Index i = 0;
-    while (i < n)
-    {
-        Index j = i + 1;
-        while (j < n && sorted[j].first == sorted[i].first) ++j;
-        const double average_rank = (double(i + 1) + double(j)) * 0.5;
-        for (Index k = i; k < j; ++k)
-            if (sorted[k].second) positive_rank_sum += average_rank;
-        i = j;
-    }
-
-    return (positive_rank_sum - double(positives) * double(positives + 1) * 0.5)
-         / (double(positives) * double(negatives));
-}
-
-BinaryMetrics evaluate(NeuralNetwork& network,
-                       const string& test_path,
-                       Index batch)
-{
-    TabularDataset test_dataset(test_path, ",", false, false);
-    test_dataset.set_sample_roles("Testing");
-    const MatrixR& all = test_dataset.get_data();
-    const Index samples = all.rows();
-    const Index inputs_number = test_dataset.get_input_shape()[0];
-    const Index processed = (samples / batch) * batch;
-    const MatrixR inputs = all.leftCols(inputs_number);
-
-    vector<pair<float, int>> scored;
-    scored.reserve(size_t(processed));
-
-    double log_loss = 0.0;
-    Index correct = 0;
-    for (Index i = 0; i + batch <= samples; i += batch)
-    {
-        float* batch_data = const_cast<float*>(inputs.data()) + i * inputs_number;
-        const TensorView view(batch_data, Shape{batch, inputs_number}, Type::FP32);
-        const MatrixR outputs = network.calculate_outputs(vector<TensorView>{view});
-
-        for (Index r = 0; r < batch; ++r)
-        {
-            const float probability = clamp_probability(float(outputs(r, 0)));
-            const int label = all(i + r, inputs_number) >= 0.5f ? 1 : 0;
-            const int predicted = probability >= 0.5f ? 1 : 0;
-            correct += predicted == label ? 1 : 0;
-            log_loss += label
-                ? -log(double(probability))
-                : -log(double(1.0f - probability));
-            scored.emplace_back(probability, label);
-        }
-    }
-
-    BinaryMetrics metrics;
-    metrics.samples = processed;
-    if (processed > 0)
-    {
-        metrics.accuracy = double(correct) / double(processed);
-        metrics.log_loss = log_loss / double(processed);
-        metrics.auc = calculate_auc(scored);
-    }
-    return metrics;
-}
-
-bool has_threshold(const string& value)
-{
-    if (value.empty() || value == "none" || value == "None" || value == "nan")
-        return false;
-    return true;
-}
-
-}
 
 int main(int argc, char* argv[])
 {
@@ -201,8 +59,8 @@ int main(int argc, char* argv[])
         if (argc < 5)
         {
             cerr << "usage: opennn_speed <train_csv> <epochs> <batch> <fp32|bf16>"
-                         " <hidden> <activation> <hidden_layers> <test_csv>"
-                         " <min_accuracy> <max_log_loss> <min_auc>\n";
+                    " <hidden> <activation> <hidden_layers> <test_csv>"
+                    " <min_accuracy> <max_log_loss> <min_auc>\n";
             return 2;
         }
 
@@ -214,13 +72,17 @@ int main(int argc, char* argv[])
         const string activation = argc > 6 ? argv[6] : "relu";
         const Index hidden_layers = argc > 7 ? Index(stoll(argv[7])) : 2;
         const string test_path = argc > 8 ? argv[8] : "";
-
         const string min_accuracy_arg = argc > 9 ? argv[9] : "none";
         const string max_log_loss_arg = argc > 10 ? argv[10] : "none";
         const string min_auc_arg = argc > 11 ? argv[11] : "none";
 
         if (test_path.empty())
             throw runtime_error("test CSV path is required for the quality gate");
+
+        const auto has_threshold = [](const string& value)
+        {
+            return !(value.empty() || value == "none" || value == "None" || value == "nan");
+        };
 
         set_seed(42);
         const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
@@ -250,13 +112,11 @@ int main(int argc, char* argv[])
 #ifdef OPENNN_HAS_CUDA
         // Machine identity for the speed gate: throughput and kernel choice are
         // a property of (GPU, cuDNN), so baselines are keyed by both.
-        {
-            cudaDeviceProp properties{};
-            cout << "device="
-                 << (cudaGetDeviceProperties(&properties, 0) == cudaSuccess ? properties.name : "cuda")
-                 << "\n";
-            cout << "cudnn=" << cudnnGetVersion() << "\n";
-        }
+        cudaDeviceProp properties{};
+        cout << "device="
+             << (cudaGetDeviceProperties(&properties, 0) == cudaSuccess ? properties.name : "cuda")
+             << "\n";
+        cout << "cudnn=" << cudnnGetVersion() << "\n";
 #else
         cout << "device=cuda\n";
 #endif
@@ -269,19 +129,28 @@ int main(int argc, char* argv[])
         cout << "activation=" << activation << "\n";
         cout << "precision=" << precision << "\n";
 
-        auto network = make_network(dataset.get_input_shape(),
-                                    dataset.get_target_shape(),
-                                    hidden,
-                                    hidden_layers,
-                                    activation);
-        cout << "parameters=" << network->get_parameters_number() << "\n";
+        NeuralNetwork network;
+        const string hidden_activation = (activation == "relu" || activation == "ReLU") ? "ReLU" : "Tanh";
+        Shape current = dataset.get_input_shape();
 
-        TrainingStrategy training_strategy(network.get(), &dataset);
+        for (Index i = 0; i < hidden_layers; ++i)
+        {
+            network.add_layer(make_unique<opennn::Dense>(current, Shape{hidden}, hidden_activation, false,
+                                                         "higgs_dense_" + to_string(i + 1)));
+            current = network.get_output_shape();
+        }
+
+        network.add_layer(make_unique<opennn::Dense>(current, dataset.get_target_shape(), "Sigmoid", false,
+                                                     "higgs_output"));
+        network.compile();
+        network.set_parameters_glorot();
+        cout << "parameters=" << network.get_parameters_number() << "\n";
+
+        TrainingStrategy training_strategy(&network, &dataset);
         training_strategy.set_loss("CrossEntropy");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
 
-        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
-            training_strategy.get_optimization_algorithm());
+        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_batch_size(batch);
         adam->set_cuda_graph(getenv("OPENNN_SPEED_NO_GRAPH") == nullptr);
         adam->set_display_period(1000000);
@@ -290,10 +159,13 @@ int main(int argc, char* argv[])
         const Index warmup_epochs = 2;
         adam->set_maximum_epochs(warmup_epochs + epochs);
 
+        // The strategy owns the epoch loop, so the epochs are timed from its
+        // post-epoch callback: the warmup epochs are dropped, and the wall
+        // clock at the edges of the timed window is printed for the energy
+        // runner, which integrates power between the two marks.
         const auto unix_now = []
         {
-            return chrono::duration<double>(
-                chrono::system_clock::now().time_since_epoch()).count();
+            return chrono::duration<double>(chrono::system_clock::now().time_since_epoch()).count();
         };
 
         vector<double> epoch_seconds;
@@ -305,14 +177,12 @@ int main(int argc, char* argv[])
             previous_mark = now;
 
             if (epoch == warmup_epochs - 1)
-                cout << "TRAIN_START_UNIX=" << fixed << setprecision(3)
-                     << unix_now() << "\n" << defaultfloat;
+                cout << "TRAIN_START_UNIX=" << fixed << setprecision(3) << unix_now() << "\n" << defaultfloat;
             else if (epoch >= warmup_epochs)
                 epoch_seconds.push_back(elapsed);
 
             if (epoch == warmup_epochs + epochs - 1)
-                cout << "TRAIN_END_UNIX=" << fixed << setprecision(3)
-                     << unix_now() << "\n" << defaultfloat;
+                cout << "TRAIN_END_UNIX=" << fixed << setprecision(3) << unix_now() << "\n" << defaultfloat;
         };
 
         training_strategy.train();
@@ -331,38 +201,101 @@ int main(int argc, char* argv[])
         // captured, and the output layer still takes the one-pass backward
         // that folds its producer's ReLU. Both are invariants a refactor can
         // drop without changing a single result.
-        const auto* output_dense = dynamic_cast<const opennn::Dense*>(
-            network->get_layers().back().get());
+        const auto* output_dense = dynamic_cast<const opennn::Dense*>(network.get_layers().back().get());
         cout << "cuda_graph="
              << (getenv("OPENNN_SPEED_NO_GRAPH") ? "off"
                  : adam->get_cuda_graph_capture_failed() ? "failed" : "captured") << "\n";
         cout << "single_output_fold="
              << (output_dense && output_dense->single_output_relu_fusion_wired() ? 1 : 0) << "\n";
 
-        const BinaryMetrics metrics = evaluate(*network, test_path, batch);
+        // The test split is scored on the trained network, whole batches only.
+        TabularDataset test_dataset(test_path, ",", false, false);
+        test_dataset.set_sample_roles("Testing");
+        const MatrixR& test_data = test_dataset.get_data();
+        const Index test_samples = test_data.rows();
+        const Index inputs_number = test_dataset.get_input_shape()[0];
+        const Index test_processed = (test_samples / batch) * batch;
+        const MatrixR test_inputs = test_data.leftCols(inputs_number);
+
+        vector<pair<float, int>> scored;
+        scored.reserve(size_t(test_processed));
+        double log_loss_sum = 0.0;
+        Index correct = 0;
+
+        for (Index i = 0; i + batch <= test_samples; i += batch)
+        {
+            const TensorView view(const_cast<float*>(test_inputs.data()) + i * inputs_number,
+                                  Shape{batch, inputs_number}, Type::FP32);
+            const MatrixR outputs = network.calculate_outputs(vector<TensorView>{view});
+
+            for (Index r = 0; r < batch; ++r)
+            {
+                float probability = float(outputs(r, 0));
+                if (probability < 1.0e-7f) probability = 1.0e-7f;
+                if (probability > 1.0f - 1.0e-7f) probability = 1.0f - 1.0e-7f;
+
+                const int label = test_data(i + r, inputs_number) >= 0.5f ? 1 : 0;
+                const int predicted = probability >= 0.5f ? 1 : 0;
+                correct += predicted == label ? 1 : 0;
+                log_loss_sum += label ? -log(double(probability)) : -log(double(1.0f - probability));
+                scored.emplace_back(probability, label);
+            }
+        }
+
+        double accuracy = 0.0;
+        double log_loss = 0.0;
+        double auc = 0.0;
+
+        if (test_processed > 0)
+        {
+            accuracy = double(correct) / double(test_processed);
+            log_loss = log_loss_sum / double(test_processed);
+
+            // ROC-AUC as the rank statistic with average ranks for ties; 0 when
+            // the split holds a single class.
+            Index positives = 0;
+            for (const auto& item : scored)
+                positives += item.second ? 1 : 0;
+            const Index negatives = test_processed - positives;
+
+            if (positives > 0 && negatives > 0)
+            {
+                sort(scored.begin(), scored.end(),
+                     [](const auto& a, const auto& b) { return a.first < b.first; });
+
+                double positive_rank_sum = 0.0;
+                for (Index i = 0; i < test_processed;)
+                {
+                    Index j = i + 1;
+                    while (j < test_processed && scored[j].first == scored[i].first) ++j;
+                    const double average_rank = (double(i + 1) + double(j)) * 0.5;
+                    for (Index k = i; k < j; ++k)
+                        if (scored[k].second) positive_rank_sum += average_rank;
+                    i = j;
+                }
+
+                auc = (positive_rank_sum - double(positives) * double(positives + 1) * 0.5)
+                    / (double(positives) * double(negatives));
+            }
+        }
 
         cout << "samples_per_epoch=" << samples_per_epoch << "\n";
         cout << "median_epoch_s=" << median_epoch_s << "\n";
         cout << "samples_per_sec=" << long(samples_per_sec) << "\n";
-        cout << "test_samples=" << metrics.samples << "\n";
-        cout << "test_accuracy=" << metrics.accuracy << "\n";
-        cout << "test_log_loss=" << metrics.log_loss << "\n";
-        cout << "test_roc_auc=" << metrics.auc << "\n";
+        cout << "test_samples=" << test_processed << "\n";
+        cout << "test_accuracy=" << accuracy << "\n";
+        cout << "test_log_loss=" << log_loss << "\n";
+        cout << "test_roc_auc=" << auc << "\n";
 
         bool gate_pass = true;
-        if (has_threshold(min_accuracy_arg)
-            && metrics.accuracy < stod(min_accuracy_arg))
+        if (has_threshold(min_accuracy_arg) && accuracy < stod(min_accuracy_arg))
             gate_pass = false;
-        if (has_threshold(max_log_loss_arg)
-            && metrics.log_loss > stod(max_log_loss_arg))
+        if (has_threshold(max_log_loss_arg) && log_loss > stod(max_log_loss_arg))
             gate_pass = false;
-        if (has_threshold(min_auc_arg)
-            && (!isfinite(metrics.auc) || metrics.auc < stod(min_auc_arg)))
+        if (has_threshold(min_auc_arg) && (!isfinite(auc) || auc < stod(min_auc_arg)))
             gate_pass = false;
 
-        if (has_threshold(min_accuracy_arg)
-            || has_threshold(max_log_loss_arg)
-            || has_threshold(min_auc_arg))
+        if (has_threshold(min_accuracy_arg) || has_threshold(max_log_loss_arg) || has_threshold(min_auc_arg))
             cout << "quality_gate=" << (gate_pass ? "PASS" : "FAIL") << "\n";
 
         cout << "RESULT=OK\n";

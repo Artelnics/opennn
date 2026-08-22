@@ -7,6 +7,10 @@
 //   Forward correctness is validated by opennn_attention_validate.cpp.
 //
 //   usage: opennn_transformer_resident [seq] [d_model] [heads] [ff] [layers] [vocab] [batch] [iters]
+//   env:   OPENNN_BF16=1   -> bf16 (else fp32, via the fp32-via-bf16 SDPA path)
+//          OPENNN_SDPA_MIN -> lower the fused-attention sequence-length threshold
+//          OPENNN_ATTENTION_RUNG=auto|cudnn|flash -> which attention kernel to measure
+//          OPENNN_PROFILE=1 -> print the per-op breakdown before the timed loop
 
 #include <chrono>
 #include <iostream>
@@ -52,9 +56,9 @@ int main(int argc, char* argv[])
             benchmark::configure_transformer_sdpa(transformer);
 
         cout << "config seq=" << seq << " d_model=" << d_model << " heads=" << heads
-                  << " ff=" << ff << " layers=" << layers << " vocab=" << vocab
-                  << " batch=" << batch
-                  << " sdpa_min=" << sdpa_min_sequence_length << "\n";
+             << " ff=" << ff << " layers=" << layers << " vocab=" << vocab
+             << " batch=" << batch
+             << " sdpa_min=" << sdpa_min_sequence_length << "\n";
         cout << "parameters=" << transformer.get_parameters_buffer_size() << "\n";
 
         // Which attention kernel to measure; "cudnn" pins the graph that ran
@@ -92,7 +96,7 @@ int main(int argc, char* argv[])
         ForwardPropagation forward_propagation(
             batch, &transformer, ForwardPropagationMode::Inference);
 
-        transformer.calculate_outputs_resident(gpu_inputs, forward_propagation,            true);
+        transformer.calculate_outputs_resident(gpu_inputs, forward_propagation, true);
         device::synchronize();
 
         if (getenv("OPENNN_PROFILE"))
@@ -102,7 +106,7 @@ int main(int argc, char* argv[])
             const auto p0 = chrono::steady_clock::now();
             const Index prof_iters = 10;
             for (Index it = 0; it < prof_iters; ++it)
-                transformer.calculate_outputs_resident(gpu_inputs, forward_propagation,            false);
+                transformer.calculate_outputs_resident(gpu_inputs, forward_propagation, false);
             device::synchronize();
             const double prof_ms =
                 chrono::duration<double, milli>(chrono::steady_clock::now() - p0).count();
@@ -113,7 +117,7 @@ int main(int argc, char* argv[])
 
         forward_propagation.set_cuda_graph(true);
         for (Index it = 0; it < 2; ++it)
-            transformer.calculate_outputs_resident(gpu_inputs, forward_propagation,            false);
+            transformer.calculate_outputs_resident(gpu_inputs, forward_propagation, false);
         device::synchronize();
         cout << "cuda_graph=on\n";
 
@@ -124,7 +128,7 @@ int main(int argc, char* argv[])
         const auto t0 = chrono::steady_clock::now();
         cudaEventRecord(ev0, stream);
         for (Index it = 0; it < iters; ++it)
-            transformer.calculate_outputs_resident(gpu_inputs, forward_propagation,            false);
+            transformer.calculate_outputs_resident(gpu_inputs, forward_propagation, false);
         cudaEventRecord(ev1, stream);
         device::synchronize();
         const auto t1 = chrono::steady_clock::now();
@@ -139,7 +143,7 @@ int main(int argc, char* argv[])
         cout << "step_s=" << per << "\n";
         cout << "gpu_step_s=" << gpu_per << "\n";
         cout << "host_overhead_s=" << (per - gpu_per)
-                  << " (" << long((per - gpu_per) / per * 100) << "% of step)\n";
+             << " (" << long((per - gpu_per) / per * 100) << "% of step)\n";
         cout << "tokens_per_sec=" << long(tokens / per) << "\n";
         cout << "gpu_bound_tokens_per_sec=" << long(tokens / gpu_per) << "\n";
         // Zero here means the rung never applied, whatever it was asked for.

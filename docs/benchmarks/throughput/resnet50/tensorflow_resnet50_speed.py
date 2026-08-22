@@ -36,7 +36,7 @@ if bf16:
 
 K = tf.keras.layers
 
-def bottleneck(x, mid, stride, name):
+def bottleneck(x, mid, stride):
     out = mid * 4
     shortcut = x
     if stride != 1 or x.shape[-1] != out:
@@ -55,12 +55,10 @@ def build_resnet50(classes, hw):
     x = K.Conv2D(64, 7, strides=2, padding="same", use_bias=False)(inp)
     x = K.ReLU()(K.BatchNormalization()(x))
     x = K.MaxPool2D(3, strides=2, padding="same")(x)
-    in_ch = 64
     for stage, (mid, blocks) in enumerate(zip([64, 128, 256, 512], [3, 4, 6, 3])):
         for block in range(blocks):
             stride = 2 if (block == 0 and stage > 0) else 1
-            x = bottleneck(x, mid, stride, f"s{stage}b{block}")
-            in_ch = mid * 4
+            x = bottleneck(x, mid, stride)
     x = K.GlobalAveragePooling2D()(x)
 
     out = K.Dense(classes, dtype="float32")(x)

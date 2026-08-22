@@ -4,11 +4,14 @@
 # sinusoidal positional encoding, N encoder layers and N decoder layers
 # (multi-head attention + position-wise feed-forward, post-LayerNorm), and a
 # final linear projection to the vocabulary. Times the steady-state forward pass
-# on the GPU after a warmup; reports tokens/sec. fp32 to match OpenNN's config.
+# on the GPU after a warmup; reports tokens/sec.
 #
 #   usage: python pytorch_transformer_infer.py [seq] [d_model] [heads] [ff] [layers] [vocab] [batch] [iters]
+#   env:   PT_BF16=1   -> run under autocast(bf16) (matches OpenNN OPENNN_BF16)
+#          PT_NOGRAPH=1 -> eager forward loop instead of CUDA-graph replay
 
 import sys
+import os
 import math
 import time
 
@@ -69,7 +72,6 @@ print(f"parameters={params}")
 src = torch.randint(0, vocab, (batch, seq), device=dev)
 tgt = torch.randint(0, vocab, (batch, seq), device=dev)
 
-import os
 use_bf16 = os.environ.get("PT_BF16") is not None
 print(f"precision={'bf16' if use_bf16 else 'fp32'}")
 ctx = torch.autocast("cuda", dtype=torch.bfloat16) if use_bf16 else torch.autocast("cuda", enabled=False)

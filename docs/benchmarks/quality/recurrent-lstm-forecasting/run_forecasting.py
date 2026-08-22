@@ -39,8 +39,8 @@ PROTOCOL = {
         "status": "reported_not_gated_until_reference_linux_calibration",
     },
     "measurement_rule": {
-        "timed_region": "training loop per network/scenario/seed (each engine)",
-        "warmup": "none; full training wall time is measured",
+        "timed_region": "steady-state training loop only; validation is excluded",
+        "warmup": "exact full/tail shapes and validation, followed by model/optimizer/RNG reset",
         "runs": 5,
         "aggregation": "mean +/- sample std over 5 seeds (0..4); best = min test RMSE",
     },
@@ -158,7 +158,7 @@ def parse_key_values(line):
 def parse_metrics(raw, metrics, speedups, default_engine="opennn"):
     """Merge METRIC/SPEEDUP lines from one engine's output into metrics/speedups.
 
-    metrics is keyed engine -> phase -> scenario -> net. OpenNN lines carry no
+    metrics is keyed engine -> phase -> scenario/batch -> net. OpenNN lines carry no
     'engine'/'seed' token (default_engine, single aggregated value); PyTorch and
     TensorFlow emit per-seed lines plus one 'seed=aggregate' line, and only the
     aggregate is kept as the headline value.
@@ -175,9 +175,12 @@ def parse_metrics(raw, metrics, speedups, default_engine="opennn"):
                 continue
             if not phase or not scenario or not net:
                 continue
+            batch_size = fields.get("batch_size")
+            scenario_key = (f"{scenario}/batch={batch_size}"
+                            if batch_size is not None else scenario)
             scenario_entry = (metrics.setdefault(engine, {})
                                      .setdefault(phase, {})
-                                     .setdefault(scenario, {}))
+                                     .setdefault(scenario_key, {}))
             scenario_entry[net] = fields
             if "winner" in fields:
                 scenario_entry["winner"] = fields["winner"]
@@ -187,7 +190,10 @@ def parse_metrics(raw, metrics, speedups, default_engine="opennn"):
             net = fields.pop("net", None)
             if not scenario or not net:
                 continue
-            speedups.setdefault(scenario, {})[net] = fields
+            batch_size = fields.get("batch_size")
+            scenario_key = (f"{scenario}/batch={batch_size}"
+                            if batch_size is not None else scenario)
+            speedups.setdefault(scenario_key, {})[net] = fields
 
 PYTHON_ENGINES = {
     "pytorch": {"script": HERE / "pytorch_forecasting.py",
@@ -199,13 +205,14 @@ PYTHON_ENGINES = {
 def python_engine_version(snippet):
     return command_output([sys.executable, "-c", snippet])
 
-def run_python_engine(name, gpu_index, force_cpu, timeout):
+def run_python_engine(name, gpu_index, force_cpu, timeout, benchmark_env):
     """Run a PyTorch/TensorFlow engine script from HERE (so xf_common finds
     data/). force_cpu hides the GPU via CUDA_VISIBLE_DEVICES="" and passes
     --allow-cpu; without it the scripts abort on a silent CPU fallback.
     Returns the combined stdout+stderr, or None on failure."""
     script = PYTHON_ENGINES[name]["script"]
     env = dict(os.environ)
+    env.update(benchmark_env)
     if force_cpu:
         env["CUDA_VISIBLE_DEVICES"] = ""
     elif gpu_index is not None:
@@ -270,11 +277,31 @@ def main():
     parser.add_argument("--python-cpu", action="store_true",
                         help="Also run a forced-CPU pass of each Python engine "
                              "(CUDA_VISIBLE_DEVICES=\"\") so their CPU phase is recorded")
+    parser.add_argument("--batch-sizes", default="",
+                        help="Comma-separated matched batch-size matrix (default: scenario batch 128)")
+    parser.add_argument("--scenarios", default="",
+                        help="Comma-separated scenarios (default: B1,B2,B3,B4)")
+    parser.add_argument("--epochs", type=int, default=0,
+                        help="Fixed matched-work epochs; 0 retains the quality/early-stop protocol")
+    parser.add_argument("--seeds", type=int, default=5,
+                        help="Seed count from 1 through 5")
+    parser.add_argument("--cpu-threads", type=int, default=0,
+                        help="CPU worker threads for Python engines; 0 uses framework defaults")
+    parser.add_argument("--pytorch-compile", default="0",
+                        help="torch.compile mode: 0, default, reduce-overhead, or max-autotune")
+    parser.add_argument("--tf-jit", default="auto", choices=["auto", "on", "off"],
+                        help="TensorFlow XLA setting")
+    parser.add_argument("--precision", default="fp32", choices=["fp32", "bf16"],
+                        help="Matched recurrent compute precision (BF16 requires CUDA)")
     parser.add_argument("--opennn-phase", default="", choices=["", "gpu", "cpu", "both"],
                         help="Restrict the OpenNN driver to one phase via "
                              "OPENNN_FORECASTING_PHASE (default: both)")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
+    if not 1 <= args.seeds <= 5:
+        raise SystemExit("--seeds must be from 1 through 5")
+    if args.epochs < 0:
+        raise SystemExit("--epochs cannot be negative")
 
     frameworks = [f.strip() for f in args.frameworks.split(",") if f.strip()]
     python_frameworks = [f for f in frameworks if f in PYTHON_ENGINES]
@@ -289,8 +316,23 @@ def main():
     command = [str(binary)]
     cwd = binary.parent
     env = dict(os.environ)
-    env["OPENNN_FORECASTING_DATASET"] = DATASET_PROFILE
-    env["OPENNN_FORECASTING_DATA_DIR"] = str(data_dir)
+    benchmark_env = {
+        "OPENNN_FORECASTING_DATASET": DATASET_PROFILE,
+        "OPENNN_FORECASTING_DATA_DIR": str(data_dir),
+        "OPENNN_FORECASTING_SEEDS": str(args.seeds),
+        "OPENNN_FORECASTING_PYTORCH_COMPILE": args.pytorch_compile,
+        "OPENNN_FORECASTING_TF_JIT": "0" if args.tf_jit == "off" else args.tf_jit,
+        "OPENNN_FORECASTING_PRECISION": args.precision,
+    }
+    if args.batch_sizes:
+        benchmark_env["OPENNN_FORECASTING_BATCH_SIZES"] = args.batch_sizes
+    if args.scenarios:
+        benchmark_env["OPENNN_FORECASTING_SCENARIOS"] = args.scenarios
+    if args.epochs:
+        benchmark_env["OPENNN_FORECASTING_EPOCHS"] = str(args.epochs)
+    if args.cpu_threads:
+        benchmark_env["OPENNN_FORECASTING_CPU_THREADS"] = str(args.cpu_threads)
+    env.update(benchmark_env)
     if args.opennn_phase in ("gpu", "cpu"):
         env["OPENNN_FORECASTING_PHASE"] = args.opennn_phase
     if args.gpu_index is not None:
@@ -331,7 +373,7 @@ def main():
         framework_versions[name] = python_engine_version(PYTHON_ENGINES[name]["version"])
         passes = [False, True] if args.python_cpu else [False]
         for force_cpu in passes:
-            out = run_python_engine(name, args.gpu_index, force_cpu, timeout)
+            out = run_python_engine(name, args.gpu_index, force_cpu, timeout, benchmark_env)
             if out is None:
                 continue
             parse_metrics(out, metrics, speedups, default_engine=name)
@@ -355,7 +397,7 @@ def main():
         },
         "configuration": {
             "task": "Time-series forecasting: Recurrent vs LSTM",
-            "engines": ["opennn"] + python_frameworks,
+            "engines": (["opennn"] if run_opennn else []) + python_frameworks,
             "driver": str(binary),
             "working_directory": str(cwd),
             "data_dir": str(data_dir),
@@ -365,8 +407,14 @@ def main():
                                "errs(2)=sqrt(sum/2N) is reported as "
                                "test_rmse_native_halfconv_mean",
             "precision": "fp32",
-            "seed_count": 5,
-            "seeds": [0, 1, 2, 3, 4],
+            "seed_count": args.seeds,
+            "seeds": list(range(args.seeds)),
+            "batch_sizes": args.batch_sizes or "scenario-default",
+            "scenarios": args.scenarios or "B1,B2,B3,B4",
+            "fixed_epochs": args.epochs or None,
+            "cpu_threads": args.cpu_threads or "framework-default",
+            "pytorch_compile": args.pytorch_compile,
+            "tensorflow_jit": args.tf_jit,
             "dataset_profile_env": DATASET_PROFILE,
             "opennn_phase": args.opennn_phase or "both",
             "device_check": device_check(metrics),

@@ -1,8 +1,9 @@
-//   OpenNN GPU ResNet-50 max-batch trial.
+//   OpenNN GPU ResNet-50 max-batch trial: one main function, written the way a
+//   user writes an OpenNN application, plus a timer.
 //
 //   One invocation = one batch attempt in its own process. The Python driver
-//   grows and binary-searches the batch size around this program so CUDA OOMs
-//   cannot poison later trials.
+//   (run_resnet50_maxbatch.py) grows and binary-searches the batch size around
+//   this program so CUDA OOMs cannot poison later trials.
 //
 //   CUDA graph and sample shuffle are turned off in code. The prefetch-pool
 //   depth and convolution workspace policy are explicit trial arguments so a
@@ -12,10 +13,19 @@
 //          workspace_mib: positive integer (default 16) = explicit cap
 //                         auto = library auto cap, heur = uncapped heuristic,
 //                         off = uncapped autotune (throughput/debug only)
+//          recompute:     1 (default) = training activation recomputation,
+//                         0 = the non-recomputed control
+//   env:   OPENNN_BENCH_DATA   -> default <cifar10_dir> is $OPENNN_BENCH_DATA/cifar10
+//                                (else ~/opennn-benchmark-data/cifar10)
+//          OPENNN_BENCH_SEED=N -> seed (default 42)
+//          OPENNN_TARGET_LOSS=x
+//              stop at the first step at or below x (OPENNN_MAX_STEPS is the
+//              ceiling, default 1) and print the TRAIN_*_UNIX markers and
+//              history a time/energy-to-target harness reads
 
 #include <algorithm>
-#include <cmath>
 #include <chrono>
+#include <cmath>
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
@@ -24,133 +34,20 @@
 
 #ifdef _WIN32
 #include <process.h>
-static int current_pid() { return _getpid(); }
 #else
 #include <unistd.h>
-static int current_pid() { return getpid(); }
 #endif
 
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/core/configuration.h"
 #include "opennn/core/device_backend.h"
-#include "opennn/dataset/image_dataset.h"
 #include "opennn/core/memory_debug.h"
 #include "opennn/core/random_utilities.h"
+#include "opennn/dataset/image_dataset.h"
 #include "opennn/neural_network/standard_networks.h"
+#include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/training_strategy/training_strategy.h"
 
 using namespace opennn;
-
-namespace
-{
-
-constexpr Index kClasses = 10;
-
-struct TempImageTree
-{
-    filesystem::path root;
-
-    ~TempImageTree()
-    {
-        if (!root.empty())
-        {
-            error_code ec;
-            filesystem::remove_all(root, ec);
-        }
-    }
-};
-
-vector<pair<filesystem::path, string>>
-collect_cifar_images(const filesystem::path& train_dir)
-{
-    namespace fs = filesystem;
-
-    throw_if(!fs::is_directory(train_dir), "Missing CIFAR-10 train directory: " + train_dir.string());
-
-    vector<fs::path> class_dirs;
-    for (const fs::directory_entry& entry : fs::directory_iterator(train_dir))
-        if (entry.is_directory() && !entry.path().filename().string().starts_with('.'))
-            class_dirs.push_back(entry.path());
-    ranges::sort(class_dirs);
-
-    throw_if(ssize(class_dirs) != kClasses,
-             "Expected 10 CIFAR-10 class folders under: " + train_dir.string());
-
-    vector<pair<fs::path, string>> samples;
-    for (const fs::path& class_dir : class_dirs)
-    {
-        vector<fs::path> files;
-        for (const fs::directory_entry& entry : fs::directory_iterator(class_dir))
-            if (entry.is_regular_file() || entry.is_symlink())
-                files.push_back(entry.path());
-        ranges::sort(files, [](const fs::path& left, const fs::path& right)
-        {
-            const auto sample_index = [](const fs::path& path)
-            {
-                const string stem = path.stem().string();
-                const size_t separator = stem.rfind('_');
-                return separator == string::npos
-                    ? Index(0) : Index(stoll(stem.substr(separator + 1)));
-            };
-            return sample_index(left) < sample_index(right);
-        });
-
-        const string class_name = class_dir.filename().string();
-        for (const fs::path& file : files)
-            samples.emplace_back(file, class_name);
-    }
-
-    throw_if(samples.empty(), "No CIFAR-10 images found under: " + train_dir.string());
-    return samples;
-}
-
-filesystem::path make_repeated_image_tree(const string& data_dir,
-                                               Index batch,
-                                               TempImageTree& temp)
-{
-    namespace fs = filesystem;
-
-    const fs::path train_dir = fs::path(data_dir) / "train";
-    const auto samples = collect_cifar_images(train_dir);
-    vector<vector<pair<fs::path, string>>> by_class(kClasses);
-    vector<string> class_names;
-    for (const auto& sample : samples)
-    {
-        if (class_names.empty() || class_names.back() != sample.second)
-            class_names.push_back(sample.second);
-        const auto class_it = ranges::find(class_names, sample.second);
-        by_class[size_t(class_it - class_names.begin())].push_back(sample);
-    }
-
-    temp.root = fs::temp_directory_path()
-              / ("opennn_resnet50_maxbatch_"
-                 + to_string(static_cast<long long>(current_pid()))
-                 + "_" + to_string(static_cast<long long>(batch)));
-
-    fs::create_directories(temp.root);
-
-    for (const auto& sample : samples)
-        fs::create_directories(temp.root / sample.second);
-
-    for (Index i = 0; i < batch; ++i)
-    {
-        const size_t class_index = size_t(i % kClasses);
-        const size_t within_class = size_t(i / kClasses)
-                                  % by_class[class_index].size();
-        const auto& [source, class_name] = by_class[class_index][within_class];
-        const fs::path link = temp.root / class_name
-            / ("sample_" + to_string(static_cast<long long>(i)) + source.extension().string());
-
-        error_code ec;
-        fs::create_symlink(fs::absolute(source), link, ec);
-        if (ec)
-            fs::copy_file(source, link, fs::copy_options::overwrite_existing);
-    }
-
-    return temp.root;
-}
-
-}
 
 int main(int argc, char* argv[])
 {
@@ -170,6 +67,10 @@ int main(int argc, char* argv[])
     const int batch_pool = argc > 4 ? stoi(argv[4]) : 0;
     const string workspace_arg = argc > 5 ? argv[5] : "16";
     const bool recompute_activations = argc <= 6 || stoi(argv[6]) != 0;
+
+    // The trial's own image tree (built below), removed on every exit path.
+    filesystem::path trial_data_path;
+    int exit_code = 0;
 
     try
     {
@@ -194,12 +95,82 @@ int main(int argc, char* argv[])
             device::set_conv_workspace_cap(stoll(workspace_arg) * 1024 * 1024);
         cout << "workspace_mode=" << workspace_arg << "\n";
         cout << "workspace_cap_mib="
-                  << device::conv_workspace_limit_bytes() / (1024 * 1024) << "\n";
+             << device::conv_workspace_limit_bytes() / (1024 * 1024) << "\n";
         cout << "conv_autotune=" << (device::conv_autotune_enabled() ? 1 : 0) << "\n";
 
-        TempImageTree temp_images;
-        const filesystem::path trial_data_path =
-            make_repeated_image_tree(data_dir, batch, temp_images);
+        // ImageDataset reads a class-folder tree, so the trial builds one of
+        // exactly `batch` samples from the CIFAR-10 training images: cycling
+        // through the ten classes and, within a class, through its images in
+        // index order, repeating modulo when the batch exceeds the source --
+        // the same convention as the PyTorch and TensorFlow trials. Symlinks
+        // where the filesystem allows them, copies otherwise.
+        namespace fs = filesystem;
+        constexpr Index classes_number = 10;
+
+        const fs::path train_dir = fs::path(data_dir) / "train";
+        throw_if(!fs::is_directory(train_dir), "Missing CIFAR-10 train directory: " + train_dir.string());
+
+        vector<fs::path> class_dirs;
+        for (const fs::directory_entry& entry : fs::directory_iterator(train_dir))
+            if (entry.is_directory() && !entry.path().filename().string().starts_with('.'))
+                class_dirs.push_back(entry.path());
+        ranges::sort(class_dirs);
+
+        throw_if(ssize(class_dirs) != classes_number,
+                 "Expected 10 CIFAR-10 class folders under: " + train_dir.string());
+
+        vector<vector<fs::path>> images_by_class(class_dirs.size());
+        Index images_number = 0;
+        for (size_t c = 0; c < class_dirs.size(); ++c)
+        {
+            vector<fs::path>& files = images_by_class[c];
+            for (const fs::directory_entry& entry : fs::directory_iterator(class_dirs[c]))
+                if (entry.is_regular_file() || entry.is_symlink())
+                    files.push_back(entry.path());
+            ranges::sort(files, [](const fs::path& left, const fs::path& right)
+            {
+                const auto sample_index = [](const fs::path& path)
+                {
+                    const string stem = path.stem().string();
+                    const size_t separator = stem.rfind('_');
+                    return separator == string::npos
+                        ? Index(0) : Index(stoll(stem.substr(separator + 1)));
+                };
+                return sample_index(left) < sample_index(right);
+            });
+            images_number += ssize(files);
+        }
+
+        throw_if(images_number == 0, "No CIFAR-10 images found under: " + train_dir.string());
+
+#ifdef _WIN32
+        const int pid = _getpid();
+#else
+        const int pid = getpid();
+#endif
+        trial_data_path = fs::temp_directory_path()
+            / ("opennn_resnet50_maxbatch_" + to_string(static_cast<long long>(pid))
+               + "_" + to_string(static_cast<long long>(batch)));
+
+        fs::create_directories(trial_data_path);
+
+        for (size_t c = 0; c < class_dirs.size(); ++c)
+            if (!images_by_class[c].empty())
+                fs::create_directories(trial_data_path / class_dirs[c].filename());
+
+        for (Index i = 0; i < batch; ++i)
+        {
+            const size_t class_index = size_t(i % classes_number);
+            const vector<fs::path>& sources = images_by_class[class_index];
+            const fs::path& source = sources[size_t(i / classes_number) % sources.size()];
+            const fs::path link = trial_data_path / class_dirs[class_index].filename()
+                / ("sample_" + to_string(static_cast<long long>(i)) + source.extension().string());
+
+            error_code ec;
+            fs::create_symlink(fs::absolute(source), link, ec);
+            if (ec)
+                fs::copy_file(source, link, fs::copy_options::overwrite_existing);
+        }
 
         ImageDataset dataset(trial_data_path);
         dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
@@ -238,6 +209,9 @@ int main(int argc, char* argv[])
         adam->set_shuffle(false);
         adam->set_batch_pool_size(batch_pool);
 
+        // OPENNN_TARGET_LOSS turns the capacity probe into a time-to-target
+        // run: up to OPENNN_MAX_STEPS epochs, stopping at the first at or
+        // below the target, with the markers and history a harness reads.
         const char* target_env = getenv("OPENNN_TARGET_LOSS");
         const bool target_mode = target_env && *target_env;
         const float target = target_mode ? stof(target_env) : 0.0f;
@@ -251,31 +225,28 @@ int main(int argc, char* argv[])
             adam->set_loss_goal(target);
         }
 
-        const auto unix_now = []
-        {
-            return chrono::duration<double>(
-                chrono::system_clock::now().time_since_epoch()).count();
-        };
         if (target_mode)
             cout << "TRAIN_START_UNIX=" << fixed << setprecision(3)
-                      << unix_now() << "\n" << defaultfloat;
+                 << chrono::duration<double>(chrono::system_clock::now().time_since_epoch()).count()
+                 << "\n" << defaultfloat;
         const auto train_start = chrono::steady_clock::now();
         const TrainingResult result = training_strategy.train();
         const auto train_end = chrono::steady_clock::now();
         if (target_mode)
             cout << "TRAIN_END_UNIX=" << fixed << setprecision(3)
-                      << unix_now() << "\n" << defaultfloat;
+                 << chrono::duration<double>(chrono::system_clock::now().time_since_epoch()).count()
+                 << "\n" << defaultfloat;
         const float training_error = result.get_training_error();
         throw_if(!isfinite(training_error), "Training error is not finite.");
 
         cout << "engine=opennn\n";
         cout << "model=ResNet-50-v1.5-CIFAR\n";
         cout << "samples=" << batch << " batch=" << batch
-                  << " precision=" << precision << "\n";
+             << " precision=" << precision << "\n";
         cout << "storage=ImageDataset GPU-persistent cache\n";
         cout << "gpu_resident_data=1\n";
         cout << "training_activation_recomputation="
-                  << (recompute_activations ? 1 : 0) << "\n";
+             << (recompute_activations ? 1 : 0) << "\n";
         cout << "parameters=" << network.get_parameters_buffer_size() << "\n";
         cout << "training_error=" << training_error << "\n";
         if (target_mode)
@@ -294,17 +265,24 @@ int main(int argc, char* argv[])
             cout << "\n";
             cout << "wall_s=" << wall_s << "\n";
             cout << "samples_per_sec="
-                      << double(batch) * double(steps_run) / wall_s << "\n";
+                 << double(batch) * double(steps_run) / wall_s << "\n";
         }
         memory_debug::print(cout);
         cout << "RESULT=OK\n";
-        return 0;
     }
     catch (const exception& e)
     {
         cerr << "FAIL batch=" << batch << " : " << e.what() << "\n";
         memory_debug::print(cout);
         cout << "RESULT=ERROR\n";
-        return 1;
+        exit_code = 1;
     }
+
+    if (!trial_data_path.empty())
+    {
+        error_code ec;
+        filesystem::remove_all(trial_data_path, ec);
+    }
+
+    return exit_code;
 }

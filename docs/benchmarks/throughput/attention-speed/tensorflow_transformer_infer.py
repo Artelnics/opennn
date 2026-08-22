@@ -52,7 +52,7 @@ def sinusoidal_pe(length, depth):
     pe[:, 1::2] = np.cos(angle[:, 1::2])
     return tf.constant(pe[None])
 
-def encoder_layer(x, pe_unused):
+def encoder_layer(x):
     a = K.MultiHeadAttention(num_heads=heads, key_dim=d_model // heads)(x, x)
     x = K.LayerNormalization()(x + a)
     h = K.Dense(ff, activation="relu")(x)
@@ -78,7 +78,7 @@ def build():
     s = src_emb(src) * scale + pe
     t = tgt_emb(tgt) * scale + pe
     for _ in range(layers):
-        s = encoder_layer(s, pe)
+        s = encoder_layer(s)
     for _ in range(layers):
         t = decoder_layer(t, s)
 

@@ -16,7 +16,8 @@ import os
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-CSV = os.path.join(HERE, "data", "beijing_pm25_forecasting.csv")
+DATA_DIR = os.environ.get("OPENNN_FORECASTING_DATA_DIR", os.path.join(HERE, "data"))
+CSV = os.path.join(DATA_DIR, "beijing_pm25_forecasting.csv")
 
 SCENARIOS = [
     ("B1", 24, 1, 32, 0.003, 128, 120, 20, False),

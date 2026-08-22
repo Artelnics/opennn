@@ -9,7 +9,8 @@
 //   from environment variables. The graph is on by default and can be turned off
 //   with the optional [cuda_graph 0|1] argument (used by the ImageNet runner's
 //   --no-cuda-graph). Data is kept GPU-resident automatically for the small CIFAR
-//   path (image_size==0); the 224px ImageNet path is too large and stays host-staged.
+//   path (image_size==0); the 224px ImageNet path is too large and stays
+//   host-staged (a negative image_size forces it resident anyway).
 //
 //   The optional [workspace] argument selects how cuDNN convolution plans are
 //   chosen (an A/B knob; the default is the library's own configuration):
@@ -21,25 +22,31 @@
 //                      shapes then takes ~4 MiB of scratch per sample, is slower
 //                      than the budgeted plan, and OOMs past batch ~2048.
 //
+//   Environment A/B levers: OPENNN_RESNET50_KEEP_TAIL=1 trains the remainder
+//   batch too (see below); OPENNN_BN_FORWARD_RUNG=auto|cudnn|own,
+//   OPENNN_BN_BACKWARD_RUNG=auto|staged|plain|own and
+//   OPENNN_POOLING_RUNG=auto|cudnn|own pin the library's own kernels against
+//   cuDNN's; OPENNN_MEMORY_DEBUG=1 turns on the library's allocation table.
+//
 //   usage:  opennn_resnet50_speed <data_path> [epochs] [batch] [fp32|bf16] [image_size] [cuda_graph 0|1] [cache_dir] [workspace]
 
 #include <algorithm>
 #include <chrono>
-#include <functional>
+#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "opennn/dataset/image_dataset.h"
-#include "opennn/neural_network/standard_networks.h"
-#include "opennn/training_strategy/training_strategy.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
-#include "opennn/core/random_utilities.h"
 #include "opennn/core/configuration.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/memory_debug.h"
+#include "opennn/core/random_utilities.h"
+#include "opennn/dataset/image_dataset.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/training_strategy/adaptive_moment_estimation.h"
+#include "opennn/training_strategy/training_strategy.h"
 
 #ifdef OPENNN_HAS_CUDA
 #include <cuda_runtime.h>
@@ -61,7 +68,6 @@ int main(int argc, char* argv[])
         const string precision = argc > 4 ? argv[4] : "fp32";
         const Index image_size_arg = argc > 5 ? Index(stoll(argv[5])) : 0;
         const Index image_size = image_size_arg < 0 ? -image_size_arg : image_size_arg;
-        const bool force_resident = image_size_arg < 0;
         const bool cuda_graph = argc > 6 ? (stoi(argv[6]) != 0) : true;
         const string cache_dir = argc > 7 ? argv[7] : "";
         const string workspace_arg = argc > 8 ? argv[8] : "auto";
@@ -69,8 +75,7 @@ int main(int argc, char* argv[])
         memory_debug::reset();
 
         set_seed(42);
-        const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
-        Configuration::instance().set(Device::CUDA, training_type);
+        Configuration::instance().set(Device::CUDA, precision == "bf16" ? Type::BF16 : Type::FP32);
 
         if (workspace_arg == "auto")
             { device::set_conv_autotune(true);  device::set_conv_workspace_cap(-1); }
@@ -80,68 +85,62 @@ int main(int argc, char* argv[])
             { device::set_conv_autotune(true);  device::set_conv_workspace_cap(0); }
         else
             { device::set_conv_autotune(true);  device::set_conv_workspace_cap(stoll(workspace_arg) * 1024 * 1024); }
+
 #ifdef OPENNN_HAS_CUDA
         // Machine identity for the speed gate: engine choice and throughput are
         // a property of (GPU, cuDNN), so baselines are keyed by both.
-        {
-            cudaDeviceProp properties{};
-            if (cudaGetDeviceProperties(&properties, 0) == cudaSuccess)
-                cout << "device=" << properties.name << "\n";
-            cout << "cudnn=" << cudnnGetVersion() << "\n";
-        }
+        cudaDeviceProp properties{};
+        if (cudaGetDeviceProperties(&properties, 0) == cudaSuccess)
+            cout << "device=" << properties.name << "\n";
+        cout << "cudnn=" << cudnnGetVersion() << "\n";
 #endif
         cout << "workspace_mode=" << workspace_arg << "\n";
         cout << "workspace_cap_mib=" << device::conv_workspace_limit_bytes() / (1024 * 1024) << "\n";
         cout << "conv_autotune=" << (device::conv_autotune_enabled() ? 1 : 0) << "\n";
 
         // Kernel rungs, for A/B runs of the library's own kernels against
-        // cuDNN's (Auto when unset): OPENNN_BN_FORWARD_RUNG=auto|cudnn|own,
-        // OPENNN_BN_BACKWARD_RUNG=auto|staged|plain|own, OPENNN_POOLING_RUNG=auto|cudnn|own.
+        // cuDNN's (Auto when unset).
+        const auto env = [](const char* name, const char* fallback)
         {
-            const auto rung = [](const char* variable, initializer_list<pair<const char*, function<void()>>> choices)
-            {
-                const string value = getenv(variable) ? getenv(variable) : "auto";
-                for (const auto& [name, apply] : choices)
-                    if (value == name) { apply(); return value; }
-                throw runtime_error(string(variable) + ": unknown value '" + value + "'");
-            };
-            using device::BatchNormForwardRung; using device::BatchNormBackwardRung; using device::MaxPoolingRung;
-            const string bn_forward = rung("OPENNN_BN_FORWARD_RUNG", {
-                {"auto",  [] {}},
-                {"cudnn", [] { device::set_rung(BatchNormForwardRung::CudnnGraph); }},
-                {"own",   [] { device::set_rung(BatchNormForwardRung::OwnKernel); }}});
-            const string bn_backward = rung("OPENNN_BN_BACKWARD_RUNG", {
-                {"auto",   [] {}},
-                {"staged", [] { device::set_rung(BatchNormBackwardRung::StagedFp32); }},
-                {"plain",  [] { device::set_rung(BatchNormBackwardRung::PlainNative); }},
-                {"own",    [] { device::set_rung(BatchNormBackwardRung::OwnKernel); }}});
-            const string pooling = rung("OPENNN_POOLING_RUNG", {
-                {"auto",  [] {}},
-                {"cudnn", [] { device::set_rung(MaxPoolingRung::Cudnn); }},
-                {"own",   [] { device::set_rung(MaxPoolingRung::OwnKernel); }}});
-            cout << "bn_forward_rung=" << bn_forward << " bn_backward_rung=" << bn_backward
-                 << " pooling_rung=" << pooling << " lanes=" << device::lanes_available() << "\n";
-        }
+            const char* value = getenv(name);
+            return string(value ? value : fallback);
+        };
+
+        const string bn_forward = env("OPENNN_BN_FORWARD_RUNG", "auto");
+        if (bn_forward == "cudnn") device::set_rung(device::BatchNormForwardRung::CudnnGraph);
+        else if (bn_forward == "own") device::set_rung(device::BatchNormForwardRung::OwnKernel);
+        else throw_if(bn_forward != "auto", "OPENNN_BN_FORWARD_RUNG: unknown value '{}'", bn_forward);
+
+        const string bn_backward = env("OPENNN_BN_BACKWARD_RUNG", "auto");
+        if (bn_backward == "staged") device::set_rung(device::BatchNormBackwardRung::StagedFp32);
+        else if (bn_backward == "plain") device::set_rung(device::BatchNormBackwardRung::PlainNative);
+        else if (bn_backward == "own") device::set_rung(device::BatchNormBackwardRung::OwnKernel);
+        else throw_if(bn_backward != "auto", "OPENNN_BN_BACKWARD_RUNG: unknown value '{}'", bn_backward);
+
+        const string pooling = env("OPENNN_POOLING_RUNG", "auto");
+        if (pooling == "cudnn") device::set_rung(device::MaxPoolingRung::Cudnn);
+        else if (pooling == "own") device::set_rung(device::MaxPoolingRung::OwnKernel);
+        else throw_if(pooling != "auto", "OPENNN_POOLING_RUNG: unknown value '{}'", pooling);
+
+        cout << "bn_forward_rung=" << bn_forward << " bn_backward_rung=" << bn_backward
+             << " pooling_rung=" << pooling << " lanes=" << device::lanes_available() << "\n";
 
         if (!cache_dir.empty())
-            cerr << "note: custom cache dir ignored (OpenNN caches in "
-                         "<data_path>/.cache): " << cache_dir << "\n";
+            cerr << "note: custom cache dir ignored (OpenNN caches in <data_path>/.cache): " << cache_dir << "\n";
 
-        unique_ptr<ImageDataset> dataset_ptr =
-            image_size > 0
-                ? make_unique<ImageDataset>(data_path, Shape{image_size, image_size, 3})
-                : make_unique<ImageDataset>(data_path);
+        const unique_ptr<ImageDataset> dataset_ptr = image_size > 0
+            ? make_unique<ImageDataset>(data_path, Shape{image_size, image_size, 3})
+            : make_unique<ImageDataset>(data_path);
         ImageDataset& dataset = *dataset_ptr;
         dataset.set_sample_roles("Training");
 
         // Whole batches only, like the PyTorch and TensorFlow drivers
         // (range(0, n - batch + 1, batch)): the remainder is left out of the
         // epoch rather than trained as a smaller tail batch. A tail batch would
-        // change what is being measured — the library trains it eagerly, outside
-        // the CUDA graph, and disables graph capture for the whole run — and
-        // 50,000 CIFAR rows leave a tail at every power-of-two batch. Throughput
-        // is then rows processed / epoch time, the same count the other drivers
-        // report.
+        // change what is being measured - the library trains it eagerly, outside
+        // the CUDA graph - and 50,000 CIFAR rows leave a tail at every
+        // power-of-two batch. Throughput is then rows processed / epoch time,
+        // the same count the other drivers report.
         // OPENNN_RESNET50_KEEP_TAIL=1 trains the remainder too (the library's
         // tail path, eager, after the graph epoch) - not the benchmark contract,
         // but what the speed gate uses to check that a tail no longer costs the
@@ -153,16 +152,14 @@ int main(int argc, char* argv[])
             dataset.set_sample_role(sample, SampleRole::None);
         cout << "tail_kept=" << (keep_tail ? 1 : 0) << "\n";
 
-        const bool gpu_resident = (image_size == 0) || force_resident;
-        if (gpu_resident)
-            dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
-        else
-            dataset.set_storage_mode(Dataset::StorageMode::BinaryFile);
+        const bool gpu_resident = image_size == 0 || image_size_arg < 0;
+        dataset.set_storage_mode(gpu_resident ? Dataset::StorageMode::GPUPersistantData
+                                              : Dataset::StorageMode::BinaryFile);
 
         cout << "processed_samples=" << samples << "\n";
         cout << "samples=" << all_samples << " batch=" << batch
-                  << " epochs=" << timed_epochs << " precision=" << precision
-                  << " cuda_graph=" << cuda_graph << " gpu_resident=" << gpu_resident;
+             << " epochs=" << timed_epochs << " precision=" << precision
+             << " cuda_graph=" << cuda_graph << " gpu_resident=" << gpu_resident;
         if (image_size > 0) cout << " image_size=" << image_size;
         cout << "\n";
 
@@ -170,10 +167,10 @@ int main(int argc, char* argv[])
                        {3, 4, 6, 3},
                        Shape{64, 128, 256, 512},
                        dataset.get_shape("Target"),
-                                          true);
+                       true);
 
         cout << "layers=" << network.get_layers_number()
-                  << " parameters=" << network.get_parameters_buffer_size() << "\n";
+             << " parameters=" << network.get_parameters_buffer_size() << "\n";
 
         TrainingStrategy training_strategy(&network, &dataset);
         training_strategy.set_loss("CrossEntropy");
@@ -189,6 +186,7 @@ int main(int argc, char* argv[])
 
         if (timed_epochs <= 0)
         {
+            // Build and capture only, for the memory table: no timed epoch.
             adam->set_display(false);
             adam->set_maximum_epochs(0);
             training_strategy.train();
@@ -197,13 +195,16 @@ int main(int argc, char* argv[])
             return 0;
         }
 
+        // One train() of 2 warmup + timed epochs, so graph capture and setup are
+        // paid outside the timed window, where PyTorch pays torch.compile and
+        // TensorFlow its XLA tracing. The strategy owns the epoch loop, so the
+        // per-epoch times come from its callback.
         const Index warmup_epochs = 2;
         adam->set_maximum_epochs(warmup_epochs + timed_epochs);
 
         const auto unix_now = []
         {
-            return chrono::duration<double>(
-                chrono::system_clock::now().time_since_epoch()).count();
+            return chrono::duration<double>(chrono::system_clock::now().time_since_epoch()).count();
         };
 
         vector<double> epoch_seconds;
@@ -215,14 +216,12 @@ int main(int argc, char* argv[])
             previous_mark = now;
 
             if (epoch == warmup_epochs - 1)
-                cout << "TRAIN_START_UNIX=" << fixed << setprecision(3)
-                     << unix_now() << "\n" << defaultfloat;
+                cout << "TRAIN_START_UNIX=" << fixed << setprecision(3) << unix_now() << "\n" << defaultfloat;
             else if (epoch >= warmup_epochs)
                 epoch_seconds.push_back(elapsed);
 
             if (epoch == warmup_epochs + timed_epochs - 1)
-                cout << "TRAIN_END_UNIX=" << fixed << setprecision(3)
-                     << unix_now() << "\n" << defaultfloat;
+                cout << "TRAIN_END_UNIX=" << fixed << setprecision(3) << unix_now() << "\n" << defaultfloat;
         };
 
         const TrainingResult results = training_strategy.train();

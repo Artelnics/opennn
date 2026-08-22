@@ -19,21 +19,15 @@
 
 #include <cuda_runtime.h>
 
-#include "opennn/neural_network/standard_networks.h"
-#include "opennn/dataset/language_dataset.h"
-#include "opennn/training_strategy/training_strategy.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/core/configuration.h"
 #include "opennn/core/random_utilities.h"
+#include "opennn/dataset/language_dataset.h"
+#include "opennn/neural_network/standard_networks.h"
+#include "opennn/training_strategy/adaptive_moment_estimation.h"
+#include "opennn/training_strategy/training_strategy.h"
 #include "docs/benchmarks/transformer_benchmark.h"
 
 using namespace opennn;
-
-static double unix_seconds()
-{
-    return chrono::duration<double>(
-        chrono::system_clock::now().time_since_epoch()).count();
-}
 
 int main(int argc, char* argv[])
 {
@@ -49,14 +43,10 @@ int main(int argc, char* argv[])
 
         const bool probe_only = (target_arg == "probe");
 
-        const bool use_bf16 = []() {
-            const char* v = getenv("OPENNN_BF16");
-            return v && string(v) != "0";
-        }();
-        const bool use_graph = []() {
-            const char* v = getenv("OPENNN_GRAPH");
-            return !v || string(v) != "0";
-        }();
+        const char* bf16_env = getenv("OPENNN_BF16");
+        const char* graph_env = getenv("OPENNN_GRAPH");
+        const bool use_bf16 = bf16_env && string(bf16_env) != "0";
+        const bool use_graph = !graph_env || string(graph_env) != "0";
 
         if (!probe_only)
             Configuration::instance().set(Device::CUDA, use_bf16 ? Type::BF16 : Type::FP32);
@@ -125,6 +115,12 @@ int main(int argc, char* argv[])
         adam->set_loss_goal(target);
         adam->set_display_period(1);
         adam->set_cuda_graph(use_graph);
+
+        const auto unix_seconds = []
+        {
+            return chrono::duration<double>(
+                chrono::system_clock::now().time_since_epoch()).count();
+        };
 
         cout << "TRAIN_START_UNIX=" << fixed << unix_seconds() << "\n";
         const auto t0 = chrono::high_resolution_clock::now();

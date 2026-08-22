@@ -95,7 +95,6 @@ x = (torch.from_numpy(np.load(f"{data_dir}/cifar_images.npy"))
      .permute(0, 3, 1, 2).div(255.0).contiguous().cuda())
 y = torch.from_numpy(np.load(f"{data_dir}/cifar_labels.npy")).cuda()
 if fast:
-
     x = x.to(memory_format=torch.channels_last)
 n = x.shape[0]
 batch = min(batch, n)
@@ -108,7 +107,6 @@ model = ResNet50(classes).cuda()
 print(f"parameters={sum(p.numel() for p in model.parameters())}")
 if fast:
     model = model.to(memory_format=torch.channels_last)
-
     model = torch.compile(model, mode="reduce-overhead")
 model.eval()
 

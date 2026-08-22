@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
         const Index in_bytes = batch * seq * Index(sizeof(float));
         Buffer in_gpu;
         in_gpu.resize_bytes(in_bytes, Device::CUDA);
-        device::copy_async(in_gpu.data, host_in.data(), in_bytes, device::CopyKind::HostToDevice);
+        device::copy_async(in_gpu.data(), host_in.data(), in_bytes, device::CopyKind::HostToDevice);
         device::synchronize();
 
         const vector<TensorView> gpu_inputs{
@@ -84,17 +84,17 @@ int main(int argc, char* argv[])
 
         if (getenv("OPENNN_PROFILE"))
         {
-            ::opennn::enabled() = true;
-            ::opennn::global_stats().clear();
+            profiler::set_enabled(true);
+            profiler::stats().clear();
             const auto p0 = chrono::steady_clock::now();
             for (Index it = 0; it < 10; ++it)
                 qwen.calculate_outputs_resident(gpu_inputs, forward_propagation, false);
             device::synchronize();
             const double prof_ms =
                 chrono::duration<double, milli>(chrono::steady_clock::now() - p0).count();
-            ::opennn::global_stats().print(cout, "Qwen3 forward op breakdown", prof_ms);
-            ::opennn::enabled() = false;
-            ::opennn::global_stats().clear();
+            profiler::stats().print(cout, "Qwen3 forward op breakdown", prof_ms);
+            profiler::set_enabled(false);
+            profiler::stats().clear();
         }
 
         for (Index it = 0; it < 5; ++it)

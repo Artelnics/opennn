@@ -100,7 +100,6 @@ x = (torch.from_numpy(np.load(f"{data_dir}/cifar_images.npy"))
      .permute(0, 3, 1, 2).div(255.0).contiguous().cuda())
 y = torch.from_numpy(np.load(f"{data_dir}/cifar_labels.npy")).cuda()
 if fast:
-
     x = x.to(memory_format=torch.channels_last)
 n = x.shape[0]
 classes = int(y.max().item()) + 1
@@ -167,7 +166,7 @@ if os.environ.get("PT_PROFILE"):
         if t <= 0:
             continue
         k = e.key.lower()
-        if "wgrad" in k or ("conv" in k and "dgrad" not in k and "bwd" in k and "filter" in k) or "backward_weight" in k or "cudnn::bn_bw" in k and False:
+        if "wgrad" in k or ("conv" in k and "dgrad" not in k and "bwd" in k and "filter" in k) or "backward_weight" in k:
             c = "conv_wgrad"
         elif "dgrad" in k or ("conv" in k and "backward_data" in k):
             c = "conv_dgrad"

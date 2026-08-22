@@ -1,15 +1,15 @@
-//   OpenNN HIGGS dense max-batch trial, GPU.
+//   OpenNN HIGGS dense max-batch trial, GPU and CPU: one main function, written
+//   the way a user writes an OpenNN application, plus a timer. The search
+//   protocol lives in run_higgs_maxbatch.py, which spawns this program once per
+//   (mode, batch, precision) attempt so a CUDA out-of-memory fault cannot
+//   contaminate later trials.
 //
-//   One process = one (mode, batch, precision) attempt at the canonical HIGGS
-//   dense classifier (28 -> hidden -> hidden -> 1, ReLU hidden, sigmoid
-//   output, binary cross-entropy -- see docs/benchmarks/throughput/higgs/README.md), so
-//   a CUDA out-of-memory fault cannot contaminate later trials. The Python
-//   driver (run_higgs_maxbatch.py) does the exponential-grow + binary-search
-//   by spawning this repeatedly.
-//
-//   Both modes run the batch MONOLITHICALLY -- one optimizer step / one
-//   forward over the whole batch with activations O(batch) -- the same
-//   protocol as the PyTorch and TensorFlow trials.
+//   The network is the canonical HIGGS dense classifier (28 -> hidden -> hidden
+//   -> 1, ReLU hidden, sigmoid output, binary cross-entropy -- see
+//   docs/benchmarks/throughput/higgs/README.md). Both modes run the batch
+//   MONOLITHICALLY -- one optimizer step / one forward over the whole batch with
+//   activations O(batch) -- the same protocol as the PyTorch and TensorFlow
+//   trials.
 //
 //   mode "train" runs one full-batch training step (forward + backward + Adam
 //   update) with prefetch-pool depth 1 (this is a capacity benchmark; the
@@ -17,7 +17,9 @@
 //
 //   mode "infer" runs forward-only on the device-resident path
 //   (calculate_outputs_resident): no optimizer state, no gradients, input
-//   uploaded once, output left on the GPU. `iterations` timed forwards.
+//   uploaded once, output left on the GPU. `iterations` timed forwards. On
+//   the CPU it uses the host forward_propagate path with a caller-owned
+//   ForwardPropagation, the same protocol as the CPU HIGGS speed benchmark.
 //
 //   The data is synthetic with the HIGGS contract shapes -- capacity depends
 //   on the shapes and the training step, not on the feature values. Features
@@ -25,14 +27,27 @@
 //   targets are binarized to {0, 1} for the binary cross-entropy.
 //
 //   device "cpu" runs the same trial CPU-only (fp32; the driver caps the
-//   process's memory instead of VRAM). CPU inference uses the host
-//   forward_propagate path with a caller-owned ForwardPropagation, the same
-//   protocol as the CPU HIGGS speed benchmark.
+//   process's memory instead of VRAM).
 //
 //   usage: opennn_higgs_maxbatch_trial <train|infer> <batch>
 //                                      [hidden] [hidden_layers] [iterations]
 //                                      [cuda|cpu]
 //   env:   OPENNN_BF16=1  -> bf16 (CUDA only; else fp32)
+//          OPENNN_HIGGS_BIN=<file>
+//              real HIGGS rows from a prepared float32 binary (rows x 29: 28
+//              standardized features then the {0,1} label), repeated modulo
+//              beyond the file, instead of synthetic data
+//          OPENNN_BENCH_SEED=N  -> seed (default 0)
+//          OPENNN_TARGET_LOSS=x
+//              train: stop at the first epoch at or below x (`iterations` is
+//              the ceiling) and print the TRAIN_*_UNIX markers and history
+//          OPENNN_HIGGS_BF16_RESIDENT_INPUT=0
+//              bf16 infer: keep the device-resident input fp32
+//          OPENNN_HIGGS_ALIAS_BF16_INPUT=0
+//              bf16 infer with an fp32 input: cast through the library's
+//              workspace instead of layer 1's dead output slot
+//          OPENNN_HIGGS_RELEASE_BF16_FP32_MASTER=0
+//              bf16 infer: keep the fp32 parameter master (debug A/B)
 
 #include <algorithm>
 #include <chrono>
@@ -50,14 +65,14 @@
 #include "opennn/core/cuda/kernel_cast.cuh"
 #endif
 
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/core/configuration.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/forward_propagation.h"
 #include "opennn/core/memory_debug.h"
-#include "opennn/neural_network/neural_network.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/dataset/tabular_dataset.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/neural_network.h"
+#include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/training_strategy/training_strategy.h"
 
 #ifndef _WIN32
@@ -66,193 +81,19 @@
 
 using namespace opennn;
 
-namespace
-{
-
-constexpr Index inputs_number = 28;   // HIGGS contract: 28 features, 1 target
-
-// Real HIGGS rows from a prepared float32 binary (rows x 29: 28 standardized
-// features then the {0,1} label), selected with OPENNN_HIGGS_BIN. Rows repeat
-// modulo when the requested batch exceeds the file -- the same convention as
-// the ResNet-50 capacity runner. Returns false when the env var is unset, so
-// the trial falls back to synthetic contract-shaped data.
-bool load_higgs_rows(MatrixR& destination)
-{
-    const char* path = getenv("OPENNN_HIGGS_BIN");
-    if (!path) return false;
-
-    constexpr Index row_floats = inputs_number + 1;
-
-    ifstream file(path, ios::binary | ios::ate);
-    if (!file) throw runtime_error(string("cannot open OPENNN_HIGGS_BIN: ") + path);
-
-    const Index rows_available = Index(file.tellg()) / (row_floats * Index(sizeof(float)));
-    if (rows_available <= 0) throw runtime_error("OPENNN_HIGGS_BIN is empty");
-
-    vector<float> rows(size_t(rows_available) * row_floats);
-    file.seekg(0);
-    file.read(reinterpret_cast<char*>(rows.data()),
-              streamsize(rows.size() * sizeof(float)));
-
-    const Index columns = destination.cols();   // 28 (infer) or 29 (train)
-    for (Index r = 0; r < destination.rows(); ++r)
-        memcpy(destination.data() + r * columns,
-               rows.data() + size_t(r % rows_available) * row_floats,
-               size_t(columns) * sizeof(float));
-
-    cout << "data=higgs_bin rows=" << rows_available << "\n";
-    return true;
-}
-
-// Peak memory of this process, for the CPU-capped runs: RSS high-water mark
-// (getrusage) and peak virtual address space (VmPeak -- what RLIMIT_AS caps,
-// including mapped libraries). No-op on Windows.
-void print_peak_memory()
-{
-#ifndef _WIN32
-    struct rusage usage {};
-    if (getrusage(RUSAGE_SELF, &usage) == 0)
-        cout << "peak_rss_mib=" << usage.ru_maxrss / 1024 << "\n";
-
-    ifstream status("/proc/self/status");
-    string line;
-    while (getline(status, line))
-        if (line.rfind("VmPeak:", 0) == 0)
-        {
-            const long kib = stol(line.substr(7));
-            cout << "vm_peak_mib=" << kib / 1024 << "\n";
-            break;
-        }
-#endif
-}
-
-class HiggsBenchmarkNetwork final : public NeuralNetwork
-{
-public:
-#ifdef OPENNN_HAS_CUDA
-    void release_bf16_fp32_parameter_master_for_inference()
-    {
-        if (const char* flag = getenv("OPENNN_HIGGS_RELEASE_BF16_FP32_MASTER");
-            flag && string(flag) == "0")
-            return;
-
-        if (config.training_type != Type::BF16
-            || parameters.get_device() != Device::CUDA
-            || parameters.empty()
-            || parameters_bf16_mirror.empty()
-            || !parameters.owns_memory())
-            return;
-
-        // The layer parameter views already point at parameters_bf16_mirror
-        // after copy_parameters_device(). Keep the fp32-size invariant that
-        // forward_propagate() validates, but stop owning a second CUDA buffer.
-        const Index fp32_master_bytes = parameters.byte_size();
-        parameters.resize_bytes(0, Device::CUDA);
-        parameters.set_view(parameters_bf16_mirror.data(),
-                            fp32_master_bytes,
-                            Device::CUDA);
-    }
-#endif
-};
-
-unique_ptr<HiggsBenchmarkNetwork> make_network(Index hidden, Index hidden_layers)
-{
-    auto network = make_unique<HiggsBenchmarkNetwork>();
-    Shape current = Shape{inputs_number};
-
-    for (Index i = 0; i < hidden_layers; ++i)
-    {
-        network->add_layer(make_unique<opennn::Dense>(
-            current,
-            Shape{hidden},
-            "ReLU",
-            false,
-            "higgs_dense_" + to_string(i + 1)));
-        current = network->get_output_shape();
-    }
-
-    network->add_layer(make_unique<opennn::Dense>(
-        current,
-        Shape{1},
-        "Sigmoid",
-        false,
-        "higgs_output"));
-
-    network->compile();
-    network->set_parameters_glorot();
-    return network;
-}
-
-#ifdef OPENNN_HAS_CUDA
-bool bf16_resident_input_enabled()
-{
-    if (const char* flag = getenv("OPENNN_HIGGS_BF16_RESIDENT_INPUT");
-        flag && string(flag) == "0")
-        return false;
-
-    return true;
-}
-
-uint16_t fp32_to_bf16_bits(float value)
-{
-    const uint32_t bits = bit_cast<uint32_t>(value);
-    const uint32_t lsb = (bits >> 16) & 1u;
-    return uint16_t((bits + 0x7fffu + lsb) >> 16);
-}
-
-TensorView maybe_alias_bf16_input_cast(const TensorView& fp32_input,
-                                       ForwardPropagation& propagation)
-{
-    if (const char* flag = getenv("OPENNN_HIGGS_ALIAS_BF16_INPUT");
-        flag && string(flag) == "0")
-        return fp32_input;
-
-    if (!fp32_input.is_fp32() || !fp32_input.is_cuda())
-        return fp32_input;
-
-    // In the canonical HIGGS network, layer 0 consumes the external input and
-    // layer 1's output slot is still dead. Reusing that future activation for
-    // the fp32->bf16 input cast removes the persistent thread-local cast
-    // workspace while preserving the same GEMM path and resident fp32 input.
-    if (propagation.slots.size() < 2
-        || propagation.slots[1].empty())
-        return fp32_input;
-
-    TensorView& future_activation = propagation.slots[1].back();
-    if (!future_activation.is_bf16()
-        || future_activation.size() < fp32_input.size())
-        return fp32_input;
-
-    cast_fp32_to_bf16(fp32_input.size(),
-                      fp32_input.as<float>(),
-                      future_activation.as<__nv_bfloat16>(),
-                      device::get_compute_stream());
-
-    memory_debug::record("forward.aliased",
-                         "HIGGS bf16 input cast",
-                         0,
-                         "uses future activation slot");
-
-    return TensorView(future_activation.get_data(),
-                      fp32_input.get_shape(),
-                      Type::BF16,
-                      Device::CUDA);
-}
-#endif
-
-}
-
 int main(int argc, char* argv[])
 {
     cout << unitbuf;
     cerr << unitbuf;
 
-    const string mode  = argc > 1 ? argv[1] : "train";
-    const Index batch       = argc > 2 ? Index(stoll(argv[2])) : 1024;
-    const Index hidden      = argc > 3 ? Index(stoll(argv[3])) : 1024;
-    const Index layers      = argc > 4 ? Index(stoll(argv[4])) : 2;
-    const Index iterations  = argc > 5 ? max<Index>(Index(1), Index(stoll(argv[5]))) : 1;
+    const string mode = argc > 1 ? argv[1] : "train";
+    const Index batch = argc > 2 ? Index(stoll(argv[2])) : 1024;
+    const Index hidden = argc > 3 ? Index(stoll(argv[3])) : 1024;
+    const Index layers = argc > 4 ? Index(stoll(argv[4])) : 2;
+    const Index iterations = argc > 5 ? max<Index>(Index(1), Index(stoll(argv[5]))) : 1;
     const string device = argc > 6 ? argv[6] : "cuda";
+
+    constexpr Index inputs_number = 28;   // HIGGS contract: 28 features, 1 target
 
     try
     {
@@ -268,15 +109,116 @@ int main(int argc, char* argv[])
                                       use_bf16 ? Type::BF16 : Type::FP32);
 
         cout << "precision=" << (use_bf16 ? "bf16" : "fp32")
-                  << " mode=" << mode
-                  << " device=" << device
-                  << " inputs=" << inputs_number
-                  << " hidden=" << hidden << " hidden_layers=" << layers
-                  << " batch=" << batch << " iterations=" << iterations << "\n";
+             << " mode=" << mode
+             << " device=" << device
+             << " inputs=" << inputs_number
+             << " hidden=" << hidden << " hidden_layers=" << layers
+             << " batch=" << batch << " iterations=" << iterations << "\n";
 
-        auto network = make_network(hidden, layers);
+        // bf16 inference keeps its weights in the bf16 mirror, so the fp32
+        // master is dead weight: this trial drops it outright (the library's
+        // own release keeps fp32 copies of the non-bf16 slots and re-links,
+        // which is not what the trial measures). That touches the network's
+        // protected buffers, hence the one-method network type.
+        struct HiggsNetwork final : NeuralNetwork
+        {
+#ifdef OPENNN_HAS_CUDA
+            void release_fp32_master()
+            {
+                if (const char* flag = getenv("OPENNN_HIGGS_RELEASE_BF16_FP32_MASTER");
+                    flag && string(flag) == "0")
+                    return;
 
-        cout << "parameters=" << network->get_parameters_number() << "\n";
+                if (config.training_type != Type::BF16
+                    || parameters.get_device() != Device::CUDA
+                    || parameters.empty()
+                    || parameters_bf16_mirror.empty()
+                    || !parameters.owns_memory())
+                    return;
+
+                // The layer parameter views already point at parameters_bf16_mirror
+                // after copy_parameters_device(). Keep the fp32-size invariant that
+                // forward_propagate() validates, but stop owning a second CUDA buffer.
+                const Index fp32_master_bytes = parameters.byte_size();
+                parameters.resize_bytes(0, Device::CUDA);
+                parameters.set_view(parameters_bf16_mirror.data(),
+                                    fp32_master_bytes,
+                                    Device::CUDA);
+            }
+#endif
+        };
+
+        HiggsNetwork network;
+        Shape current = Shape{inputs_number};
+
+        for (Index i = 0; i < layers; ++i)
+        {
+            network.add_layer(make_unique<opennn::Dense>(
+                current, Shape{hidden}, "ReLU", false, "higgs_dense_" + to_string(i + 1)));
+            current = network.get_output_shape();
+        }
+
+        network.add_layer(make_unique<opennn::Dense>(
+            current, Shape{1}, "Sigmoid", false, "higgs_output"));
+
+        network.compile();
+        network.set_parameters_glorot();
+
+        cout << "parameters=" << network.get_parameters_number() << "\n";
+
+        // Real HIGGS rows from the OPENNN_HIGGS_BIN binary (rows x 29), repeated
+        // modulo when the batch exceeds the file -- the same convention as the
+        // ResNet-50 capacity runner. False when the variable is unset, so the
+        // caller falls back to synthetic contract-shaped data.
+        const auto load_higgs_rows = [&](MatrixR& destination)
+        {
+            const char* path = getenv("OPENNN_HIGGS_BIN");
+            if (!path) return false;
+
+            constexpr Index row_floats = inputs_number + 1;
+
+            ifstream file(path, ios::binary | ios::ate);
+            if (!file) throw runtime_error(string("cannot open OPENNN_HIGGS_BIN: ") + path);
+
+            const Index rows_available = Index(file.tellg()) / (row_floats * Index(sizeof(float)));
+            if (rows_available <= 0) throw runtime_error("OPENNN_HIGGS_BIN is empty");
+
+            vector<float> rows(size_t(rows_available) * row_floats);
+            file.seekg(0);
+            file.read(reinterpret_cast<char*>(rows.data()),
+                      streamsize(rows.size() * sizeof(float)));
+
+            const Index columns = destination.cols();   // 28 (infer) or 29 (train)
+            for (Index r = 0; r < destination.rows(); ++r)
+                memcpy(destination.data() + r * columns,
+                       rows.data() + size_t(r % rows_available) * row_floats,
+                       size_t(columns) * sizeof(float));
+
+            cout << "data=higgs_bin rows=" << rows_available << "\n";
+            return true;
+        };
+
+        // Peak memory of this process, for the CPU-capped runs: RSS high-water
+        // mark (getrusage) and peak virtual address space (VmPeak -- what
+        // RLIMIT_AS caps, including mapped libraries). No-op on Windows.
+        const auto print_peak_memory = []
+        {
+#ifndef _WIN32
+            struct rusage usage {};
+            if (getrusage(RUSAGE_SELF, &usage) == 0)
+                cout << "peak_rss_mib=" << usage.ru_maxrss / 1024 << "\n";
+
+            ifstream status("/proc/self/status");
+            string line;
+            while (getline(status, line))
+                if (line.rfind("VmPeak:", 0) == 0)
+                {
+                    const long kib = stol(line.substr(7));
+                    cout << "vm_peak_mib=" << kib / 1024 << "\n";
+                    break;
+                }
+#endif
+        };
 
         if (mode == "infer" && use_cpu)
         {
@@ -291,22 +233,18 @@ int main(int argc, char* argv[])
                 cout << "data=synthetic\n";
             }
 
-            ForwardPropagation propagation(batch, network.get());
+            ForwardPropagation propagation(batch, &network);
 
             const TensorView input_view(
                 const_cast<float*>(inputs_host.data()),
                 Shape{batch, inputs_number}, Type::FP32);
 
-            auto run_pass = [&]()
-            {
-                network->forward_propagate({input_view}, propagation, false);
-            };
-
-            run_pass();   // warmup: pages workspaces and BLAS scratch in
+            // Warmup pages workspaces and BLAS scratch in; excluded from timing.
+            network.forward_propagate({input_view}, propagation, false);
 
             const auto t0 = chrono::high_resolution_clock::now();
             for (Index i = 0; i < iterations; ++i)
-                run_pass();
+                network.forward_propagate({input_view}, propagation, false);
             const auto t1 = chrono::high_resolution_clock::now();
 
             const TensorView outputs = propagation.get_outputs();
@@ -338,7 +276,9 @@ int main(int argc, char* argv[])
                 cout << "data=synthetic\n";
             }
 
-            const bool bf16_resident_input = use_bf16 && bf16_resident_input_enabled();
+            const char* resident_flag = getenv("OPENNN_HIGGS_BF16_RESIDENT_INPUT");
+            const bool bf16_resident_input =
+                use_bf16 && !(resident_flag && string(resident_flag) == "0");
             const Type input_type = bf16_resident_input ? Type::BF16 : Type::FP32;
             cout << "input_type=" << (input_type == Type::BF16 ? "bf16" : "fp32") << "\n";
 
@@ -350,11 +290,16 @@ int main(int argc, char* argv[])
             cudaStream_t stream = device::get_compute_stream();
             if (bf16_resident_input)
             {
+                // Rounded to nearest even on the host, so the device never
+                // holds an fp32 copy of the input.
                 vector<uint16_t> inputs_bf16(size_t(batch * inputs_number));
                 const float* src = inputs_host.data();
                 #pragma omp parallel for if(batch * inputs_number > 4096)
                 for (Index i = 0; i < batch * inputs_number; ++i)
-                    inputs_bf16[size_t(i)] = fp32_to_bf16_bits(src[i]);
+                {
+                    const uint32_t bits = bit_cast<uint32_t>(src[i]);
+                    inputs_bf16[size_t(i)] = uint16_t((bits + 0x7fffu + ((bits >> 16) & 1u)) >> 16);
+                }
 
                 device::copy_async(base, inputs_bf16.data(),
                                    batch * inputs_number * Index(sizeof(uint16_t)),
@@ -370,30 +315,69 @@ int main(int argc, char* argv[])
             bool parameters_uploaded = false;
             if (use_bf16)
             {
-                network->copy_parameters_device();
-                network->copy_states_device();
-                network->release_bf16_fp32_parameter_master_for_inference();
+                network.copy_parameters_device();
+                network.copy_states_device();
+                network.release_fp32_master();
                 parameters_uploaded = true;
             }
 
-            ForwardPropagation propagation(batch, network.get());
+            ForwardPropagation propagation(batch, &network);
+
+            // In the canonical HIGGS network, layer 0 consumes the external
+            // input and layer 1's output slot is still dead. Reusing that
+            // future activation for the fp32->bf16 input cast removes the
+            // persistent thread-local cast workspace while preserving the same
+            // GEMM path and resident fp32 input.
+            const auto alias_bf16_input_cast = [&](const TensorView& fp32_input) -> TensorView
+            {
+                if (const char* flag = getenv("OPENNN_HIGGS_ALIAS_BF16_INPUT");
+                    flag && string(flag) == "0")
+                    return fp32_input;
+
+                if (!fp32_input.is_fp32() || !fp32_input.is_cuda())
+                    return fp32_input;
+
+                if (propagation.slots.size() < 2
+                    || propagation.slots[1].empty())
+                    return fp32_input;
+
+                TensorView& future_activation = propagation.slots[1].back();
+                if (!future_activation.is_bf16()
+                    || future_activation.size() < fp32_input.size())
+                    return fp32_input;
+
+                cast_fp32_to_bf16(fp32_input.size(),
+                                  fp32_input.as<float>(),
+                                  future_activation.as<__nv_bfloat16>(),
+                                  device::get_compute_stream());
+
+                memory_debug::record("forward.aliased",
+                                     "HIGGS bf16 input cast",
+                                     0,
+                                     "uses future activation slot");
+
+                return TensorView(future_activation.get_data(),
+                                  fp32_input.get_shape(),
+                                  Type::BF16,
+                                  Device::CUDA);
+            };
 
             Type output_type = Type::FP32;
             const void* probe_source = nullptr;
 
-            auto run_pass = [&]()
+            const auto run_pass = [&]
             {
                 const TensorView input_view(base, Shape{batch, inputs_number},
                                             input_type, Device::CUDA);
                 const TensorView compute_view = use_bf16 && input_view.is_fp32()
-                    ? maybe_alias_bf16_input_cast(input_view, propagation)
+                    ? alias_bf16_input_cast(input_view)
                     : input_view;
 
                 const bool upload_parameters = !parameters_uploaded;
-                const TensorView outputs = network->calculate_outputs_resident(
+                const TensorView outputs = network.calculate_outputs_resident(
                     {compute_view}, propagation, upload_parameters);
                 if (use_bf16 && upload_parameters)
-                    network->release_bf16_fp32_parameter_master_for_inference();
+                    network.release_fp32_master();
 
                 parameters_uploaded = true;
                 output_type = outputs.get_type();
@@ -447,7 +431,7 @@ int main(int argc, char* argv[])
         data.resize(0, 0);   // free the staging copy: the dataset owns the rows now
         dataset.set_sample_roles("Training");
 
-        TrainingStrategy training_strategy(network.get(), &dataset);
+        TrainingStrategy training_strategy(&network, &dataset);
         training_strategy.set_loss("CrossEntropy");
         training_strategy.get_loss()->set_regularization("NoRegularization");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
@@ -462,23 +446,19 @@ int main(int argc, char* argv[])
         adam->set_gradient_clip_norm(0.0f);
         adam->set_batch_pool_size(1);   // capacity: one device batch copy, not three
 
+        // OPENNN_TARGET_LOSS turns `iterations` into a ceiling: training stops
+        // at the first epoch at or below the target, and the markers and
+        // history below are what a time/energy-to-target harness reads.
         const char* target_env = getenv("OPENNN_TARGET_LOSS");
         const bool target_mode = target_env && *target_env;
         const float target = target_mode ? stof(target_env) : 0.0f;
         if (target_mode)
-        {
-            adam->set_maximum_epochs(iterations);
             adam->set_loss_goal(target);
-        }
 
-        const auto unix_now = []
-        {
-            return chrono::duration<double>(
-                chrono::system_clock::now().time_since_epoch()).count();
-        };
         if (target_mode)
             cout << "TRAIN_START_UNIX=" << fixed << setprecision(3)
-                      << unix_now() << "\n" << defaultfloat;
+                 << chrono::duration<double>(chrono::system_clock::now().time_since_epoch()).count()
+                 << "\n" << defaultfloat;
         const auto t0 = chrono::high_resolution_clock::now();
         const TrainingResult result = training_strategy.train();
 #ifdef OPENNN_HAS_CUDA
@@ -487,7 +467,8 @@ int main(int argc, char* argv[])
         const auto t1 = chrono::high_resolution_clock::now();
         if (target_mode)
             cout << "TRAIN_END_UNIX=" << fixed << setprecision(3)
-                      << unix_now() << "\n" << defaultfloat;
+                 << chrono::duration<double>(chrono::system_clock::now().time_since_epoch()).count()
+                 << "\n" << defaultfloat;
 
         if (!isfinite(result.loss))
             throw runtime_error("non-finite loss");

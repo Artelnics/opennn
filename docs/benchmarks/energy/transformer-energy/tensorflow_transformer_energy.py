@@ -83,39 +83,36 @@ def ffn(x, d, ff):
     h = L.Dense(ff, activation="relu")(x)
     return L.Dense(d)(h)
 
-def build_model():
-    d, h, ff_dim, n = args.d, args.h, args.ff, args.layers
-    src = L.Input(shape=(args.in_seq,), dtype="int32", name="src")
-    dec = L.Input(shape=(args.dec_seq,), dtype="int32", name="dec")
+d, h, ff_dim, n = args.d, args.h, args.ff, args.layers
+src = L.Input(shape=(args.in_seq,), dtype="int32", name="src")
+dec = L.Input(shape=(args.dec_seq,), dtype="int32", name="dec")
 
-    src_keys = L.Lambda(lambda t: tf.not_equal(t, 0)[:, None, :])(src)
-    dec_keys = L.Lambda(lambda t: tf.not_equal(t, 0)[:, None, :])(dec)
+src_keys = L.Lambda(lambda t: tf.not_equal(t, 0)[:, None, :])(src)
+dec_keys = L.Lambda(lambda t: tf.not_equal(t, 0)[:, None, :])(dec)
 
-    pe_enc = positional_encoding(args.in_seq, d)
-    pe_dec = positional_encoding(args.dec_seq, d)
+pe_enc = positional_encoding(args.in_seq, d)
+pe_dec = positional_encoding(args.dec_seq, d)
 
-    x = L.Embedding(args.in_vocab, d,
-                    embeddings_initializer="glorot_uniform")(src) * math.sqrt(d) + pe_enc
-    for _ in range(n):
-        a = L.MultiHeadAttention(h, d // h)(x, x, attention_mask=src_keys)
-        x = L.LayerNormalization()(x + a)
-        x = L.LayerNormalization()(x + ffn(x, d, ff_dim))
-    enc = x
+x = L.Embedding(args.in_vocab, d,
+                embeddings_initializer="glorot_uniform")(src) * math.sqrt(d) + pe_enc
+for _ in range(n):
+    a = L.MultiHeadAttention(h, d // h)(x, x, attention_mask=src_keys)
+    x = L.LayerNormalization()(x + a)
+    x = L.LayerNormalization()(x + ffn(x, d, ff_dim))
+enc = x
 
-    y = L.Embedding(args.out_vocab, d,
-                    embeddings_initializer="glorot_uniform")(dec) * math.sqrt(d) + pe_dec
-    for _ in range(n):
-        sa = L.MultiHeadAttention(h, d // h)(y, y, attention_mask=dec_keys,
-                                             use_causal_mask=True)
-        y = L.LayerNormalization()(y + sa)
-        ca = L.MultiHeadAttention(h, d // h)(y, enc, attention_mask=src_keys)
-        y = L.LayerNormalization()(y + ca)
-        y = L.LayerNormalization()(y + ffn(y, d, ff_dim))
+y = L.Embedding(args.out_vocab, d,
+                embeddings_initializer="glorot_uniform")(dec) * math.sqrt(d) + pe_dec
+for _ in range(n):
+    sa = L.MultiHeadAttention(h, d // h)(y, y, attention_mask=dec_keys,
+                                         use_causal_mask=True)
+    y = L.LayerNormalization()(y + sa)
+    ca = L.MultiHeadAttention(h, d // h)(y, enc, attention_mask=src_keys)
+    y = L.LayerNormalization()(y + ca)
+    y = L.LayerNormalization()(y + ffn(y, d, ff_dim))
 
-    logits = L.Dense(args.out_vocab, dtype="float32")(y)
-    return tf.keras.Model([src, dec], logits)
-
-model = build_model()
+logits = L.Dense(args.out_vocab, dtype="float32")(y)
+model = tf.keras.Model([src, dec], logits)
 
 for layer in model.layers:
     if isinstance(layer, L.Embedding):
