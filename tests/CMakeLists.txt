@@ -15,17 +15,14 @@ if(NOT GTest_FOUND)
   FetchContent_MakeAvailable(googletest)
 endif()
 
-set(PCH_HEADER pch.h)
-
 file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 list(FILTER TEST_SOURCES EXCLUDE REGEX "-DESKTOP-[^/\\\\]*\\.cpp$")
-list(REMOVE_ITEM TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/pch.cpp")
 
 add_executable(opennn_tests ${TEST_SOURCES})
 
 target_link_libraries(opennn_tests gtest gtest_main opennn)
 
-target_precompile_headers(opennn_tests PRIVATE ${PCH_HEADER})
+target_precompile_headers(opennn_tests PRIVATE pch.h)
 
 add_test(NAME run_tests COMMAND opennn_tests)
 set_tests_properties(run_tests PROPERTIES TIMEOUT 600)

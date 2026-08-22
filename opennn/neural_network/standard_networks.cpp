@@ -1698,7 +1698,11 @@ namespace
 {
 
 template <typename Network>
-auto& get_tokenizer_layer(Network& network, const string& label, const char* method)
+// label is a const char*, not a const string&: every call site passes a literal,
+// and a reference parameter bound to the resulting temporary makes GCC's
+// -Wdangling-reference fire on a reference that actually points into the
+// network's layer storage.
+auto& get_tokenizer_layer(Network& network, const char* label, const char* method)
 {
     using TokenizerType = conditional_t<is_const_v<Network>, const Tokenizer, Tokenizer>;
     TokenizerType* tokenizer_layer = nullptr;

@@ -75,10 +75,11 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_G
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    # No -Wno-unused-result here: it also turns off [[nodiscard]], which this
+    # library relies on for resolve() and the device:: handles.
     add_compile_options(
         $<$<COMPILE_LANGUAGE:CXX>:-Wno-switch-enum>
-        $<$<COMPILE_LANGUAGE:CXX>:-Wno-unused-parameter>
-        $<$<COMPILE_LANGUAGE:CXX>:-Wno-unused-result>)
+        $<$<COMPILE_LANGUAGE:CXX>:-Wno-unused-parameter>)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
