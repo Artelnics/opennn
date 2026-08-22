@@ -90,8 +90,6 @@ Index count_delta_views_outside(const BackPropagation& back_propagation,
 // Co-planning must engage when lifetimes are supplied and stay disengaged otherwise.
 TEST(JointArenaTest, CoPlanningEngagesOnlyWhenLifetimesAreSupplied)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index batch_size = 64;
     Model model(batch_size, 32, 4);
 
@@ -112,8 +110,6 @@ TEST(JointArenaTest, CoPlanningEngagesOnlyWhenLifetimesAreSupplied)
 // and every delta view must land inside the forward arena.
 TEST(JointArenaTest, BackPropagationBindsIntoTheForwardArena)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index batch_size = 64;
     Model model(batch_size, 32, 4);
 
@@ -138,8 +134,6 @@ TEST(JointArenaTest, BackPropagationBindsIntoTheForwardArena)
 // This is the other half of the branch in BackPropagation::set and must keep working.
 TEST(JointArenaTest, SeparatePoolIsUsedWithoutTheJointPlan)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index batch_size = 64;
     Model model(batch_size, 32, 4);
 
@@ -166,8 +160,6 @@ TEST(JointArenaTest, SeparatePoolIsUsedWithoutTheJointPlan)
 // against separate pools. Pin the gap so it cannot grow unnoticed.
 TEST(JointArenaTest, JointArenaOverheadStaysBounded)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index batch_size = 64;
     const Index targets_number = 4;
     Model model(batch_size, 32, targets_number);

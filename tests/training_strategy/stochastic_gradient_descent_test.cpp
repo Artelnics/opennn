@@ -150,8 +150,6 @@ TEST_F(StochasticGradientDescentTest, GpuClipWorkspaceIsBackwardOwned)
     const float clipped_norm = sqrt(inner_product(
         clipped.begin(), clipped.end(), clipped.begin(), 0.0f));
     EXPECT_NEAR(clipped_norm, 1.0f, 1.0e-5f);
-
-    Configuration::instance().set();
 }
 
 TEST_F(StochasticGradientDescentTest, GpuClipSupportsTailAndCudaGraph)
@@ -178,8 +176,6 @@ TEST_F(StochasticGradientDescentTest, GpuClipSupportsTailAndCudaGraph)
     optimizer.set_display(false);
 
     EXPECT_TRUE(isfinite(optimizer.train().get_training_error()));
-
-    Configuration::instance().set();
 }
 
 TEST_F(StochasticGradientDescentTest, DefaultConstructor)
@@ -199,8 +195,6 @@ TEST_F(StochasticGradientDescentTest, GeneralConstructor)
 
 TEST_F(StochasticGradientDescentTest, TrainApproximationCPU)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(1);
     TabularDataset dataset_short(16, {2}, {1});
     dataset_short.set_data_random();
@@ -267,8 +261,6 @@ TEST_F(StochasticGradientDescentTest, TrainApproximationGPU)
 
 TEST_F(StochasticGradientDescentTest, TrainClassificationCPU)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const MatrixR classification_data = separable_classification_data(16, 3);
 
     set_seed(2);
@@ -339,8 +331,6 @@ TEST_F(StochasticGradientDescentTest, TrainClassificationGPU)
 
 TEST_F(StochasticGradientDescentTest, TrainForecastingCPU)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(3);
     TimeSeriesDataset dataset_short(24, {1}, {1});
     dataset_short.set_data_random();
@@ -415,8 +405,6 @@ TEST_F(StochasticGradientDescentTest, TrainForecastingGPU)
 
 TEST_F(StochasticGradientDescentTest, TrainImageClassificationCPU)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const filesystem::path root = write_sgd_image_classification_dataset();
 
     set_seed(4);
@@ -487,8 +475,6 @@ TEST_F(StochasticGradientDescentTest, TrainImageClassificationGPU)
 
 TEST_F(StochasticGradientDescentTest, TrainTextClassificationCPU)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const string file_path = write_sgd_text_classification_file();
 
     set_seed(5);
@@ -595,8 +581,6 @@ TEST_F(StochasticGradientDescentTest, TrainTextClassificationGPU)
 
 TEST_F(StochasticGradientDescentTest, MomentumConverges)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(6);
     TabularDataset dataset(16, {2}, {1});
     dataset.set_data_random();
@@ -619,8 +603,6 @@ TEST_F(StochasticGradientDescentTest, MomentumConverges)
 
 TEST_F(StochasticGradientDescentTest, NesterovConverges)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(7);
     TabularDataset dataset(16, {2}, {1});
     dataset.set_data_random();
@@ -644,8 +626,6 @@ TEST_F(StochasticGradientDescentTest, NesterovConverges)
 
 TEST_F(StochasticGradientDescentTest, InitialDecayConverges)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(8);
     TabularDataset dataset(16, {2}, {1});
     dataset.set_data_random();
@@ -668,8 +648,6 @@ TEST_F(StochasticGradientDescentTest, InitialDecayConverges)
 
 TEST_F(StochasticGradientDescentTest, BatchSizeConverges)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(9);
     TabularDataset dataset(16, {2}, {1});
     dataset.set_data_random();
@@ -692,8 +670,6 @@ TEST_F(StochasticGradientDescentTest, BatchSizeConverges)
 
 TEST_F(StochasticGradientDescentTest, StoppingMaximumEpochs)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(10);
     TabularDataset dataset(16, {2}, {1});
     dataset.set_data_random();
@@ -713,8 +689,6 @@ TEST_F(StochasticGradientDescentTest, StoppingMaximumEpochs)
 
 TEST_F(StochasticGradientDescentTest, StoppingLossGoal)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(11);
     TabularDataset dataset(4, {1}, {1});
     dataset.set_data_random();
@@ -738,8 +712,6 @@ TEST_F(StochasticGradientDescentTest, StoppingLossGoal)
 
 TEST_F(StochasticGradientDescentTest, StoppingMaximumTime)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(12);
     TabularDataset dataset(16, {2}, {1});
     dataset.set_data_random();
@@ -762,7 +734,6 @@ TEST_F(StochasticGradientDescentTest, StoppingMaximumTime)
 
 TEST_F(StochasticGradientDescentTest, Determinism)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
     set_threads_number(1);
 
     set_seed(13);

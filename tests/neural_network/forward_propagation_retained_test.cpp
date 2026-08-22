@@ -82,8 +82,6 @@ void expect_identical_plans(ForwardPropagation& left,
 TEST(ForwardPropagationRetainedOutputsTest,
      RetainedEncoderOutputDoesNotOverlapDecoderSlots)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     Transformer network(4, 5, 12, 14, 8, 2, 16, 1);
     const Seq2SeqLayout layout = find_layout(network);
 
@@ -111,14 +109,10 @@ TEST(ForwardPropagationRetainedOutputsTest,
                 << ") overlaps retained [" << retained_low << ", "
                 << retained_high << ")";
         }
-
-    Configuration::instance().set();
 }
 
 TEST(ForwardPropagationRetainedOutputsTest, EmptyPolicyKeepsDefaultPlan)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     Transformer network(5, 4, 8, 8, 8, 2, 16, 1);
     const Seq2SeqLayout layout = find_layout(network);
 
@@ -140,15 +134,11 @@ TEST(ForwardPropagationRetainedOutputsTest, EmptyPolicyKeepsDefaultPlan)
     EXPECT_LE(retained_propagation.arena.byte_size(),
               default_propagation.arena.byte_size()
                   + get_aligned_bytes(retained.byte_size()));
-
-    Configuration::instance().set();
 }
 
 TEST(ForwardPropagationRetainedOutputsTest,
      DecoderOnlyPlanUnchangedByRetainedField)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     Qwen3 network(64, 32, 32, 1, 4, 2, 8, 64);
 
     ForwardPropagation default_propagation(
@@ -158,14 +148,10 @@ TEST(ForwardPropagationRetainedOutputsTest,
 
     expect_identical_plans(default_propagation, explicit_propagation);
     EXPECT_TRUE(default_propagation.needs_position_staging());
-
-    Configuration::instance().set();
 }
 
 TEST(ForwardPropagationRetainedOutputsTest, RetainedOutputRejectsInvalidLayer)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     Transformer network(5, 4, 8, 8, 8, 2, 16, 1);
 
     InferenceShapePolicy policy;
@@ -178,8 +164,6 @@ TEST(ForwardPropagationRetainedOutputsTest, RetainedOutputRejectsInvalidLayer)
     EXPECT_THROW(ForwardPropagation(
                      1, &network, ForwardPropagationMode::Training, policy),
                  runtime_error);
-
-    Configuration::instance().set();
 }
 
 TEST(ForwardPropagationRetainedOutputsTest,
@@ -254,15 +238,11 @@ TEST(ForwardPropagationRetainedOutputsTest,
         decoder_inputs(0, position, 0) = float(best);
         target(0, position) = float(best);
     }
-
-    Configuration::instance().set();
 }
 
 TEST(ForwardPropagationRetainedOutputsTest,
      SequenceCapacityDoesNotRequireCompactFinalOutput)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     Qwen3 network(64, 32, 32, 1, 4, 2, 8, 64);
 
     InferenceShapePolicy policy;
@@ -286,8 +266,6 @@ TEST(ForwardPropagationRetainedOutputsTest,
     EXPECT_EQ(Index(propagation.valid_lengths.size()), network.get_layers_number());
     EXPECT_TRUE(ranges::all_of(propagation.valid_lengths,
                                [](const vector<Index>& lengths) { return lengths.empty(); }));
-
-    Configuration::instance().set();
 }
 
 TEST(ForwardPropagationRetainedOutputsTest, OutputWindowMatchesFullForwardForEverySample)
@@ -349,6 +327,4 @@ TEST(ForwardPropagationRetainedOutputsTest, OutputWindowMatchesFullForwardForEve
             EXPECT_NEAR(outputs.as<float>()[sample * target_vocabulary + v],
                         reference(sample, decoder_length - 1, v), 1.0e-5)
                 << "sample " << sample << " vocabulary index " << v;
-
-    Configuration::instance().set();
 }

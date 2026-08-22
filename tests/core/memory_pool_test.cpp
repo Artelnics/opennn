@@ -119,8 +119,6 @@ TEST(MemoryPoolTest, BothStrategiesRespectRecordedLifetimes)
 
 TEST(BackPropagationMemoryTest, FanoutAccumulationReusesConsumerDelta)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     constexpr Index batch = 3;
     const Shape sequence_shape{2, 4};
     const Shape feature_shape{4};
@@ -176,14 +174,10 @@ TEST(BackPropagationMemoryTest, FanoutAccumulationReusesConsumerDelta)
 
     for (Index i = 0; i < stem_output_delta.size(); ++i)
         EXPECT_FLOAT_EQ(stem_output_delta.as<float>()[i], 1.0f);
-
-    Configuration::instance().set();
 }
 
 TEST(ForwardPropagationMemoryTest, InferenceReusesResidualAndPassthroughOutputs)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     constexpr Index batch = 3;
     const Shape sequence_shape{2, 4};
 
@@ -241,14 +235,10 @@ TEST(ForwardPropagationMemoryTest, InferenceReusesResidualAndPassthroughOutputs)
 
     EXPECT_EQ(inference_layout.slots[0].back().get_data(),
               inference_layout.slots[4].back().get_data());
-
-    Configuration::instance().set();
 }
 
 TEST(ForwardPropagationMemoryTest, SameLayerAuxiliariesNeverAlias)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     NeuralNetwork network;
     auto gated = make_unique<opennn::Dense>(Shape{2, 4}, Shape{8}, "Identity",
                                             false, "gated");
@@ -269,14 +259,10 @@ TEST(ForwardPropagationMemoryTest, SameLayerAuxiliariesNeverAlias)
     EXPECT_NE(combination.get_data(), activation.get_data());
     EXPECT_NE(combination.get_data(), output.get_data());
     EXPECT_NE(activation.get_data(), output.get_data());
-
-    Configuration::instance().set();
 }
 
 TEST(ForwardPropagationMemoryTest, TrainingRecomputeScratchUsesFutureActivations)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     constexpr Index batch = 2;
     const Shape feature_shape{4, 4, 4};
 
@@ -311,14 +297,10 @@ TEST(ForwardPropagationMemoryTest, TrainingRecomputeScratchUsesFutureActivations
               layout.slots[1][2].get_data());
     EXPECT_EQ(layout.slots[1][1].get_data(),
               layout.slots[2].back().get_data());
-
-    Configuration::instance().set();
 }
 
 TEST(ForwardPropagationMemoryTest, RecomputeOverlayUsesLifetimesAcrossLayerTypes)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     constexpr Index batch = 2;
     const Shape feature_shape{4, 4, 4};
 
@@ -344,14 +326,10 @@ TEST(ForwardPropagationMemoryTest, RecomputeOverlayUsesLifetimesAcrossLayerTypes
 
     EXPECT_EQ(layout.slots[0][1].get_data(), layout.slots[1][2].get_data());
     EXPECT_EQ(layout.slots[1][1].get_data(), layout.slots[2].back().get_data());
-
-    Configuration::instance().set();
 }
 
 TEST(ForwardPropagationMemoryTest, TrainingDoesNotAllocateSkippedLeadingScaling)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     constexpr Index batch = 3;
     const Shape feature_shape{4};
 
@@ -383,14 +361,10 @@ TEST(ForwardPropagationMemoryTest, TrainingDoesNotAllocateSkippedLeadingScaling)
 
     ASSERT_FALSE(layout.inputs[1].empty());
     EXPECT_EQ(layout.inputs[1][0].get_data(), inputs.data());
-
-    Configuration::instance().set();
 }
 
 TEST(ForwardPropagationMemoryTest, TrainingReusesProjectionResidualOutput)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     constexpr Index batch = 2;
     const Shape input_shape{4, 4, 2};
     const Shape stage_shape{4, 4, 8};
@@ -432,14 +406,10 @@ TEST(ForwardPropagationMemoryTest, TrainingReusesProjectionResidualOutput)
     EXPECT_EQ(projection_output.byte_size(), later_output.byte_size());
     EXPECT_EQ(projection_output.get_data(), later_output.get_data());
     EXPECT_EQ(layout.inputs[3][1].get_data(), projection_output.get_data());
-
-    Configuration::instance().set();
 }
 
 TEST(ForwardPropagationMemoryTest, InferenceLayoutRejectsTraining)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     NeuralNetwork network;
     network.add_layer(make_unique<opennn::Dense>(Shape{4}, Shape{2}, "Identity"),
                       {-1});
@@ -454,6 +424,4 @@ TEST(ForwardPropagationMemoryTest, InferenceLayoutRejectsTraining)
 
     EXPECT_THROW(network.forward_propagate(input_views, inference_layout, true),
                  runtime_error);
-
-    Configuration::instance().set();
 }

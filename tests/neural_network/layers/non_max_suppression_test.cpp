@@ -243,6 +243,4 @@ TEST(NonMaxSuppression, GpuStagingIsPropagationOwned)
     ASSERT_FALSE(second.layer_pinned_storage[0].empty());
     EXPECT_NE(first.layer_pinned_storage[0].data(),
               second.layer_pinned_storage[0].data());
-
-    Configuration::instance().set();
 }

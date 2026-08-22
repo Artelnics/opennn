@@ -84,8 +84,6 @@ TEST(MeanSquaredErrorTest, GpuWorkspaceIsForwardPropagationOwned)
     ASSERT_FALSE(second.loss_workspace.empty());
     EXPECT_NE(first.loss_workspace.data(), second.loss_workspace.data());
     EXPECT_FLOAT_EQ(first_result.error, second_result.error);
-
-    Configuration::instance().set();
 }
 
 TEST(MeanSquaredErrorTest, BackPropagateDense2d)

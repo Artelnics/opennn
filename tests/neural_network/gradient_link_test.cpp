@@ -54,7 +54,6 @@ float gradient_magnitude(BackPropagation& back_propagation)
 
 TEST(GradientLink, BackPropagateWritesTheContextItIsGiven)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
     set_seed(7u);
 
     TabularDataset dataset(4, {2}, {1});

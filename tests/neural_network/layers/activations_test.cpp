@@ -265,7 +265,6 @@ static void expect_dense_fanout_gradient(Device device)
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
-    Configuration::instance().set();
 }
 
 TEST(ActivationsTest, DenseFanoutFoldedResidualGradientCPU)
@@ -385,8 +384,6 @@ TEST(ActivationsTest, GeluTanhFromString)
 
 TEST(ActivationsTest, GeluActivationLayerForward)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index batch_size = 2;
     const Index features = 5;
 
@@ -406,14 +403,10 @@ TEST(ActivationsTest, GeluActivationLayerForward)
     for (Index i = 0; i < batch_size; ++i)
         for (Index j = 0; j < features; ++j)
             EXPECT_NEAR(result(i, j), float(gelu_ref(input_data(i, j))), 1e-5f);
-
-    Configuration::instance().set();
 }
 
 TEST(ActivationsTest, GeluGradientCheckThroughActivationLayer)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index samples_number = 6;
     const Index inputs_number = 4;
     const Index hidden_number = 5;
@@ -437,14 +430,10 @@ TEST(ActivationsTest, GeluGradientCheckThroughActivationLayer)
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(5.0e-3));
-
-    Configuration::instance().set();
 }
 
 TEST(ActivationsTest, GeluDenseFusedGradientCheck)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index samples_number = 6;
     const Index inputs_number  = 4;
     const Index hidden_number  = 5;
@@ -467,8 +456,6 @@ TEST(ActivationsTest, GeluDenseFusedGradientCheck)
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(5.0e-3));
-
-    Configuration::instance().set();
 }
 
 TEST(ActivationsTest, GeluDenseFusedRejectsBatchNorm)
@@ -488,8 +475,6 @@ TEST(ActivationsTest, ConvolutionalRejectsInputDerivativeActivations)
 
 TEST(ActivationsTest, GeluTanhDenseGradientCheck)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index samples_number = 6;
     const Index inputs_number  = 4;
     const Index hidden_number  = 8;
@@ -512,8 +497,6 @@ TEST(ActivationsTest, GeluTanhDenseGradientCheck)
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(5.0e-3));
-
-    Configuration::instance().set();
 }
 
 TEST(ActivationsTest, SiluForwardClosedForm)
@@ -555,8 +538,6 @@ TEST(ActivationsTest, SiluFromString)
 
 TEST(ActivationsTest, SiluActivationLayerForward)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index batch_size = 2;
     const Index features = 5;
 
@@ -576,14 +557,10 @@ TEST(ActivationsTest, SiluActivationLayerForward)
     for (Index i = 0; i < batch_size; ++i)
         for (Index j = 0; j < features; ++j)
             EXPECT_NEAR(result(i, j), float(silu_ref(input_data(i, j))), 1e-5f);
-
-    Configuration::instance().set();
 }
 
 TEST(ActivationsTest, SiluGradientCheckThroughActivationLayer)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index samples_number = 6;
     const Index inputs_number = 4;
     const Index hidden_number = 5;
@@ -607,14 +584,10 @@ TEST(ActivationsTest, SiluGradientCheckThroughActivationLayer)
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(5.0e-3));
-
-    Configuration::instance().set();
 }
 
 TEST(ActivationsTest, SiluDenseFusedGradientCheck)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index samples_number = 6;
     const Index inputs_number  = 4;
     const Index hidden_number  = 5;
@@ -637,6 +610,4 @@ TEST(ActivationsTest, SiluDenseFusedGradientCheck)
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(5.0e-3));
-
-    Configuration::instance().set();
 }

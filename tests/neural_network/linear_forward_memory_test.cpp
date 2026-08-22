@@ -172,8 +172,6 @@ struct CommitCap
 
 TEST(LinearForwardMemoryTest, SteadyStateForwardAllocatesNoLargeTemporaries)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index batch = 32768;
 
     NeuralNetwork network;

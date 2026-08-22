@@ -72,19 +72,15 @@ namespace
 TEST(BertTest, EmbeddingPlainSaveLoad)
 {
     EXPECT_EQ(embedding_roundtrip_mismatches(                       false,                    false), 0);
-    Configuration::instance().set();
 }
 
 TEST(BertTest, EmbeddingLearnedPositionalSaveLoad)
 {
     EXPECT_EQ(embedding_roundtrip_mismatches(                       true,                    true), 0);
-    Configuration::instance().set();
 }
 
 TEST(BertTest, SaveLoadRoundTripSegmentZero)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index batch = 2, seq = 6, vocab = 30, hidden = 8, heads = 2;
     const Index intermediate = 16, layers = 2;
 
@@ -130,13 +126,10 @@ TEST(BertTest, SaveLoadRoundTripSegmentZero)
     error_code error;
     filesystem::remove(path, error);
     filesystem::remove(filesystem::path(path).replace_extension(".bin"), error);
-    Configuration::instance().set();
 }
 
 TEST(BertTest, AttentionSaveLoad)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index batch = 2, seq = 6, vocab = 10, hidden = 8, heads = 2;
 
     NeuralNetwork net;
@@ -178,13 +171,10 @@ TEST(BertTest, AttentionSaveLoad)
     error_code error;
     filesystem::remove(path, error);
     filesystem::remove(filesystem::path(path).replace_extension(".bin"), error);
-    Configuration::instance().set();
 }
 
 TEST(BertTest, ForwardShapeAndFinite)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index batch        = 2;
     const Index seq          = 6;
     const Index vocab        = 30;
@@ -220,14 +210,10 @@ TEST(BertTest, ForwardShapeAndFinite)
     const float* values = output.as<float>();
     for (Index i = 0; i < output.size(); ++i)
         EXPECT_TRUE(isfinite(values[i])) << "non-finite output at " << i;
-
-    Configuration::instance().set();
 }
 
 TEST(BertTest, ForSequenceClassificationForward)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index batch = 2, seq = 6, vocab = 30, hidden = 8, heads = 2;
     const Index intermediate = 16, layers = 2, labels = 3;
 
@@ -268,14 +254,10 @@ TEST(BertTest, ForSequenceClassificationForward)
         }
         EXPECT_NEAR(row_sum, 1.0f, 1e-4f);
     }
-
-    Configuration::instance().set();
 }
 
 TEST(BertTest, FirstTokenPoolGradientCheck)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index samples_number = 6;
     const Index seq            = 4;
     const Index features_in    = 5;
@@ -300,14 +282,10 @@ TEST(BertTest, FirstTokenPoolGradientCheck)
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
-
-    Configuration::instance().set();
 }
 
 TEST(BertTest, SaveLoadRoundTrip)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index batch = 2, seq = 6, vocab = 30, hidden = 8, heads = 2;
     const Index intermediate = 16, layers = 2;
 
@@ -374,6 +352,4 @@ TEST(BertTest, SaveLoadRoundTrip)
     error_code error;
     filesystem::remove(path, error);
     filesystem::remove(filesystem::path(path).replace_extension(".bin"), error);
-
-    Configuration::instance().set();
 }

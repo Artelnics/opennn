@@ -40,8 +40,6 @@ TEST_F(LevenbergMarquardtAlgorithmTest, GeneralConstructor)
 
 TEST_F(LevenbergMarquardtAlgorithmTest, TrainApproximationCPU)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(1);
     TabularDataset dataset_short(16, {2}, {1});
     dataset_short.set_data_random();
@@ -75,8 +73,6 @@ TEST_F(LevenbergMarquardtAlgorithmTest, TrainApproximationCPU)
 
 TEST_F(LevenbergMarquardtAlgorithmTest, DampingParametersConverge)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(2);
     TabularDataset dataset(16, {2}, {1});
     dataset.set_data_random();
@@ -100,8 +96,6 @@ TEST_F(LevenbergMarquardtAlgorithmTest, DampingParametersConverge)
 
 TEST_F(LevenbergMarquardtAlgorithmTest, StoppingMaximumEpochs)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(3);
     TabularDataset dataset(16, {2}, {1});
     dataset.set_data_random();
@@ -123,8 +117,6 @@ TEST_F(LevenbergMarquardtAlgorithmTest, StoppingMaximumEpochs)
 
 TEST_F(LevenbergMarquardtAlgorithmTest, StoppingLossGoal)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(4);
     TabularDataset dataset(4, {1}, {1});
     dataset.set_data_random();
@@ -149,8 +141,6 @@ TEST_F(LevenbergMarquardtAlgorithmTest, StoppingLossGoal)
 
 TEST_F(LevenbergMarquardtAlgorithmTest, StoppingMaximumTime)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(5);
     TabularDataset dataset(16, {2}, {1});
     dataset.set_data_random();
@@ -175,7 +165,6 @@ TEST_F(LevenbergMarquardtAlgorithmTest, StoppingMaximumTime)
 
 TEST_F(LevenbergMarquardtAlgorithmTest, Determinism)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
     set_threads_number(1);
 
     set_seed(6);

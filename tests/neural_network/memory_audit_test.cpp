@@ -104,19 +104,16 @@ void audit_lstm(const string& label)
 
 TEST(MemoryAudit, TransformerCpuFp32DropoutOn)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
     audit_transformer("transformer cpu fp32", 0.1f);
 }
 
 TEST(MemoryAudit, TransformerCpuFp32DropoutOff)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
     audit_transformer("transformer cpu fp32", 0.0f);
 }
 
 TEST(MemoryAudit, LstmCpuFp32)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
     audit_lstm("lstm cpu fp32");
 }
 

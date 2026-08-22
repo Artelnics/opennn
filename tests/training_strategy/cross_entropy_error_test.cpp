@@ -25,8 +25,6 @@ TEST(CrossEntropyError2d, DefaultConstructor)
 
 TEST(CrossEntropyError2d, BackPropagate)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index samples_number = random_integer(2, 10);
 
     const Index inputs_number = random_integer(1, 10);

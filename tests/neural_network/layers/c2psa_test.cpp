@@ -49,8 +49,6 @@ struct C2PSANet
 
 TEST(C2PSA, CpuGradientMatchesNumerical)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     C2PSANet net;
     auto loss = net.make_loss();
 
@@ -152,6 +150,4 @@ TEST(C2PSA, GpuScratchIsPropagationOwned)
     ASSERT_FALSE(first_backward_scratch.empty());
     EXPECT_NE(first_forward_scratch.get_data(), second_forward_scratch.get_data());
     EXPECT_NE(first_backward_scratch.get_data(), second_backward_scratch.get_data());
-
-    Configuration::instance().set();
 }

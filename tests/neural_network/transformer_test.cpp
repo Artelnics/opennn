@@ -102,8 +102,6 @@ TEST(Transformer, EveryAttentionLayerKnowsWhereItsSourceSequenceEnds)
     }
 
     EXPECT_EQ(attention_layers, 3 * layers_number);
-
-    Configuration::instance().set();
 }
 
 // The lengths reaching every attention layer is plumbing; this is the outcome.
@@ -201,8 +199,6 @@ TEST(Transformer, EncoderPaddingDoesNotChangeTheOutput)
     const type scale = max(type(1), exact_outputs.array().abs().maxCoeff());
 
     EXPECT_LT(difference / scale, type(1.0e-4));
-
-    Configuration::instance().set();
 }
 
 TEST(Transformer, GeneralConstructor)

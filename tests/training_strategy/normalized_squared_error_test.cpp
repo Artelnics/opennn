@@ -88,8 +88,6 @@ TEST(NormalizedSquaredErrorTest, SetNormalizationCoefficientFromTrainingTargets)
 
 TEST(NormalizedSquaredErrorTest, MiniBatchErrorMeanMatchesFullBatch)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     constexpr Index samples_number = 8;
     constexpr Index inputs_number = 3;
     constexpr Index targets_number = 1;

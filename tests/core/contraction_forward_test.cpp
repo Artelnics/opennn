@@ -20,8 +20,6 @@ using namespace opennn;
 // agreement with the definition to a tolerance, not to the bit.
 TEST(ContractionForwardTest, LargeBatchDenseForwardMatchesTheDefinition)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index batch = 8192;
     const Index inputs_number = 1024;
     const Index outputs_number = 1024;

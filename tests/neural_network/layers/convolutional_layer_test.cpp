@@ -294,8 +294,6 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
 
 TEST(ConvolutionalLayerTest, ConcurrentMixedShapesUseIndependentCpuScratch)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     future<bool> first = async(launch::async, []
     {
         return convolution_forward_matches_constant_result(
@@ -309,8 +307,6 @@ TEST(ConvolutionalLayerTest, ConcurrentMixedShapesUseIndependentCpuScratch)
 
     EXPECT_TRUE(first.get());
     EXPECT_TRUE(second.get());
-
-    Configuration::instance().set();
 }
 
 TEST_P(ConvolutionalLayerTest, BackwardGradientMatchesNumerical)

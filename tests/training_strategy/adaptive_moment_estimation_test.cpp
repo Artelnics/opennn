@@ -116,8 +116,6 @@ TEST_F(AdaptiveMomentEstimationTest, GeneralConstructor)
 
 TEST_F(AdaptiveMomentEstimationTest, TrainApproximationCPU)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(1);
     TabularDataset dataset_short(16, {2}, {1});
     dataset_short.set_data_random();
@@ -147,8 +145,6 @@ TEST_F(AdaptiveMomentEstimationTest, TrainApproximationCPU)
 
 TEST_F(AdaptiveMomentEstimationTest, TrainsRemainderBatchCPU)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     TabularDataset dataset(5, { 2 }, { 1 });
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
@@ -171,8 +167,6 @@ TEST_F(AdaptiveMomentEstimationTest, TrainsRemainderBatchCPU)
 
 TEST_F(AdaptiveMomentEstimationTest, TrainingScalingCleanupSurvivesCallbackException)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     TabularDataset dataset(4, {1}, {1});
     MatrixR raw(4, 2);
     raw << 10.0f, 100.0f,
@@ -370,8 +364,6 @@ TEST_F(AdaptiveMomentEstimationTest, CudaGraphGroupedResidentBf16Replay)
 
 TEST_F(AdaptiveMomentEstimationTest, TrainClassificationCPU)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const MatrixR classification_data = separable_classification_data(16, 3);
 
     set_seed(2);
@@ -467,7 +459,6 @@ static void expect_forecasting_training_reduces_error()
 
 TEST_F(AdaptiveMomentEstimationTest, TrainForecastingCPU)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
     expect_forecasting_training_reduces_error();
 }
 
@@ -481,8 +472,6 @@ TEST_F(AdaptiveMomentEstimationTest, TrainForecastingGPU)
 
 TEST_F(AdaptiveMomentEstimationTest, TrainImageClassificationCPU)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const filesystem::path root = write_image_classification_dataset();
 
     set_seed(4);
@@ -553,8 +542,6 @@ TEST_F(AdaptiveMomentEstimationTest, TrainImageClassificationGPU)
 
 TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationCPU)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const string file_path = write_text_classification_file();
 
     set_seed(5);
@@ -657,8 +644,6 @@ TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationGPU)
 
 TEST_F(AdaptiveMomentEstimationTest, LearningRateEffect)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(6);
     TabularDataset dataset_trained(16, {2}, {1});
     dataset_trained.set_data_random();
@@ -694,8 +679,6 @@ TEST_F(AdaptiveMomentEstimationTest, LearningRateEffect)
 
 TEST_F(AdaptiveMomentEstimationTest, BetaSettersConverge)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(7);
     TabularDataset dataset(16, {2}, {1});
     dataset.set_data_random();
@@ -719,8 +702,6 @@ TEST_F(AdaptiveMomentEstimationTest, BetaSettersConverge)
 
 TEST_F(AdaptiveMomentEstimationTest, StoppingMaximumEpochs)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(8);
     TabularDataset dataset(16, {2}, {1});
     dataset.set_data_random();
@@ -740,8 +721,6 @@ TEST_F(AdaptiveMomentEstimationTest, StoppingMaximumEpochs)
 
 TEST_F(AdaptiveMomentEstimationTest, StoppingLossGoal)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(9);
     TabularDataset dataset(4, {1}, {1});
     dataset.set_data_random();
@@ -765,8 +744,6 @@ TEST_F(AdaptiveMomentEstimationTest, StoppingLossGoal)
 
 TEST_F(AdaptiveMomentEstimationTest, StoppingMaximumTime)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(10);
     TabularDataset dataset(16, {2}, {1});
     dataset.set_data_random();
@@ -789,7 +766,6 @@ TEST_F(AdaptiveMomentEstimationTest, StoppingMaximumTime)
 
 TEST_F(AdaptiveMomentEstimationTest, Determinism)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
     set_threads_number(1);
 
     set_seed(11);

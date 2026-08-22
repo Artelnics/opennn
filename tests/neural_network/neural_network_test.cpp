@@ -425,8 +425,6 @@ TEST(NeuralNetworkTest, SerializesTiedWeightRelationships)
 
 TEST(NeuralNetworkTest, CompleteSaveLoadPreservesModelOwnedState)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const filesystem::path directory = filesystem::temp_directory_path();
     const filesystem::path model_path = directory / "opennn_complete_persistence_test.json";
     filesystem::path parameters_path = model_path;
@@ -555,13 +553,10 @@ TEST(NeuralNetworkTest, CompleteSaveLoadPreservesModelOwnedState)
     filesystem::remove(model_path, error);
     filesystem::remove(parameters_path, error);
     filesystem::remove(states_path, error);
-    Configuration::instance().set();
 }
 
 TEST(NeuralNetworkTest, ModelSaveCommitsOrRecoversJsonAndParametersTogether)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const filesystem::path directory = filesystem::temp_directory_path();
     const filesystem::path model_path = directory / "opennn_atomic_model_save_test.json";
     const filesystem::path candidate_path =
@@ -660,25 +655,20 @@ TEST(NeuralNetworkTest, ModelSaveCommitsOrRecoversJsonAndParametersTogether)
     EXPECT_FALSE(filesystem::exists(marker_path));
 
     for (const filesystem::path& path : artifacts) filesystem::remove(path, error);
-    Configuration::instance().set();
 }
 
 TEST(NeuralNetworkTest, ParameterSnapshotsValidateVersionIntegrityAndLayout)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
     validate_snapshot_format(SnapshotKind::Parameters,
                              "opennn_parameter_format_test",
                              0.017f, -0.31f, 42.0f);
-    Configuration::instance().set();
 }
 
 TEST(NeuralNetworkTest, StateSnapshotsValidateVersionIntegrityAndLayout)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
     validate_snapshot_format(SnapshotKind::States,
                              "opennn_state_format_test",
                              0.021f, 0.19f, 23.0f);
-    Configuration::instance().set();
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -688,7 +678,6 @@ TEST(NeuralNetworkTest, VersionedParameterSnapshotRoundTripsCudaStorage)
     validate_cuda_snapshot_roundtrip(
         SnapshotKind::Parameters, "opennn_parameter_format_cuda.bin",
         0.029f, -0.43f, 17.0f);
-    Configuration::instance().set();
 }
 
 TEST(NeuralNetworkTest, VersionedStateSnapshotRoundTripsCudaStorage)
@@ -697,7 +686,6 @@ TEST(NeuralNetworkTest, VersionedStateSnapshotRoundTripsCudaStorage)
     validate_cuda_snapshot_roundtrip(
         SnapshotKind::States, "opennn_state_format_cuda.bin",
         0.031f, 0.27f, 29.0f);
-    Configuration::instance().set();
 }
 #endif
 

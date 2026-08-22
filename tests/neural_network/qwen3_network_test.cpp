@@ -266,25 +266,21 @@ void write_logical_bf16_parameters(
 TEST(Qwen3NetworkTest, MultiTurnPrefillRestartsCacheCpu)
 {
     EXPECT_LT(multi_turn_max_logit_diff(TINY), 1.0e-4f);
-    Configuration::instance().set();
 }
 
 TEST(Qwen3NetworkTest, CompactLogitsEqualFullLastRowCpu)
 {
     EXPECT_LT(compact_last_row_max_diff(TINY, false), 1.0e-4f);
-    Configuration::instance().set();
 }
 
 TEST(Qwen3NetworkTest, ChunkedPrefillAndDecodeEqualFullPassCpu)
 {
     EXPECT_LT(chunked_prefill_and_decode_max_diff(TINY, 3, false),
               1.0e-4f);
-    Configuration::instance().set();
 }
 
 TEST(Qwen3NetworkTest, CompactPoolDependsOnBlockNotModelContext)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
     Dims short_dims = TINY;
     Dims long_dims = TINY;
     short_dims.seq = 16;
@@ -302,12 +298,10 @@ TEST(Qwen3NetworkTest, CompactPoolDependsOnBlockNotModelContext)
     EXPECT_EQ(long_compact.get_sequence_capacity(), 4);
     EXPECT_EQ(short_compact.get_final_output_capacity(), 1);
     EXPECT_EQ(long_compact.get_final_output_capacity(), 1);
-    Configuration::instance().set();
 }
 
 TEST(Qwen3NetworkTest, CompactOutputWindowMatchesSelectedFullRowsCpu)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
     unique_ptr<Qwen3> network = make_tiny_qwen(TINY);
     vector<float> window(size_t(TINY.seq), 0.0f);
     const vector<Index> ids = {2, 3, 5, 7, 11, 13};
@@ -330,12 +324,10 @@ TEST(Qwen3NetworkTest, CompactOutputWindowMatchesSelectedFullRowsCpu)
         EXPECT_LT(max_difference(logits_row(full, row + 1),
                                  logits_row(selected, row)),
                   1.0e-4f);
-    Configuration::instance().set();
 }
 
 TEST(Qwen3NetworkTest, DirectLogicalBf16WeightsMatchRoundedCpu)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
     Qwen3 expected(
         TINY.seq, TINY.vocab, TINY.hidden, TINY.layers,
         TINY.q_heads, TINY.kv_heads, TINY.head_dim, TINY.intermediate,
@@ -365,7 +357,6 @@ TEST(Qwen3NetworkTest, DirectLogicalBf16WeightsMatchRoundedCpu)
                              logits_row(loaded_fp, ssize(ids) - 1)),
               1.0e-6f);
     filesystem::remove(path);
-    Configuration::instance().set();
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -374,14 +365,12 @@ TEST(Qwen3NetworkTest, MultiTurnPrefillRestartsCacheGpu)
     Configuration::instance().set(Device::CUDA, Type::BF16);
 
     EXPECT_LT(multi_turn_max_logit_diff(TINY), 1.0e-2f);
-    Configuration::instance().set();
 }
 
 TEST(Qwen3NetworkTest, MultiTurnPrefillRestartsCacheGpuBf16Upload)
 {
     Configuration::instance().set(Device::CUDA, Type::BF16);
     EXPECT_LT(multi_turn_max_logit_diff(TINY,  true), 1.0e-2f);
-    Configuration::instance().set();
 }
 
 TEST(Qwen3NetworkTest, DirectLogicalBf16WeightsMatchUploadGpu)
@@ -417,14 +406,12 @@ TEST(Qwen3NetworkTest, DirectLogicalBf16WeightsMatchUploadGpu)
                              logits_row(direct_fp, ssize(ids) - 1)),
               1.0e-2f);
     filesystem::remove(path);
-    Configuration::instance().set();
 }
 
 TEST(Qwen3NetworkTest, CompactLogitsEqualFullLastRowGpuBf16)
 {
     Configuration::instance().set(Device::CUDA, Type::BF16);
     EXPECT_LT(compact_last_row_max_diff(TINY, true), 1.0e-2f);
-    Configuration::instance().set();
 }
 
 TEST(Qwen3NetworkTest, ChunkedPrefillAndDecodeEqualFullPassGpuBf16)
@@ -432,7 +419,6 @@ TEST(Qwen3NetworkTest, ChunkedPrefillAndDecodeEqualFullPassGpuBf16)
     Configuration::instance().set(Device::CUDA, Type::BF16);
     EXPECT_LT(chunked_prefill_and_decode_max_diff(TINY, 3, true),
               1.0e-2f);
-    Configuration::instance().set();
 }
 
 TEST(Qwen3NetworkTest, MultiTurnGrowingPrefillGpu)
@@ -440,7 +426,6 @@ TEST(Qwen3NetworkTest, MultiTurnGrowingPrefillGpu)
     Configuration::instance().set(Device::CUDA, Type::FP32);
     const Dims d { 64, 50, 2560, 2, 4, 2, 8, 64, 17, 0, 48 };
     EXPECT_LT(multi_turn_max_logit_diff(d, false), 1.0e-3f);
-    Configuration::instance().set();
 }
 
 TEST(Qwen3NetworkTest, DecodeGraphSurvivesFiveSuffixPrefillsGpu)
@@ -526,7 +511,5 @@ TEST(Qwen3NetworkTest, DecodeGraphSurvivesFiveSuffixPrefillsGpu)
         EXPECT_EQ(decode.inference_graph_exec.get(), graph_identity);
         EXPECT_FALSE(decode.cuda_graph_workspaces_need_growth());
     }
-
-    Configuration::instance().set();
 }
 #endif

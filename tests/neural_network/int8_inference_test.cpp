@@ -173,7 +173,6 @@ TEST(Int8InferenceTest, Int8CpuConfigurationThrows)
 {
     Configuration::instance().set(Device::CPU, Type::INT8);
     EXPECT_THROW(make_qwen(TINY), exception);
-    Configuration::instance().set();
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -184,7 +183,6 @@ TEST(Int8InferenceTest, Int8TrainingThrowsGpu)
     unique_ptr<Qwen3> network = make_qwen(TINY);
     Loss loss(network.get());
     EXPECT_THROW(BackPropagation(1, loss), exception);
-    Configuration::instance().set();
 }
 
 TEST(Int8InferenceTest, DirectLogicalBf16WeightsMatchUploadGpuInt8)
@@ -214,7 +212,6 @@ TEST(Int8InferenceTest, DirectLogicalBf16WeightsMatchUploadGpuInt8)
                              logits_row(direct_fp, ssize(ids) - 1)),
               1.0e-6f);
     filesystem::remove(path);
-    Configuration::instance().set();
 }
 
 TEST(Int8InferenceTest, Int8MultiTurnPrefillRestartsCacheGpu)
@@ -250,7 +247,6 @@ TEST(Int8InferenceTest, Int8MultiTurnPrefillRestartsCacheGpu)
     const vector<float> expected = logits_row(fp_fresh, TINY.prompt2 - 1);
 
     EXPECT_LT(max_difference(got, expected), 1.0e-2f);
-    Configuration::instance().set();
 }
 
 TEST(Int8InferenceTest, Int8ChunkedPrefillAndDecodeEqualFullPassGpu)
@@ -299,7 +295,6 @@ TEST(Int8InferenceTest, Int8ChunkedPrefillAndDecodeEqualFullPassGpu)
     EXPECT_LT(max_difference(logits_row(full_decode, 0),
                              logits_row(chunked_decode, 0)),
               1.0e-2f);
-    Configuration::instance().set();
 }
 
 TEST(Int8InferenceTest, Int8MatchesFakeQuantBf16ReferenceGpu)
@@ -326,7 +321,6 @@ TEST(Int8InferenceTest, Int8MatchesFakeQuantBf16ReferenceGpu)
     EXPECT_LT(max_difference(logits_row(quantized_fp, ssize(ids) - 1),
                              logits_row(reference_fp, ssize(ids) - 1)),
               5.0e-2f);
-    Configuration::instance().set();
 }
 
 #endif

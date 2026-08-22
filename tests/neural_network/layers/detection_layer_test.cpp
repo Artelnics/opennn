@@ -228,8 +228,6 @@ TEST(Detection, GpuAnchorsRefreshAfterSameSizeReconfiguration)
     EXPECT_NEAR(first[3], 0.5f, tol);
     EXPECT_NEAR(second[2], 0.75f, tol);
     EXPECT_NEAR(second[3], 1.25f, tol);
-
-    Configuration::instance().set();
 }
 
 TEST(Detection, SigmoidClassBackwardGradientMatchesNumerical)

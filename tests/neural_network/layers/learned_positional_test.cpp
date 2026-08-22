@@ -16,8 +16,6 @@ using namespace opennn;
 
 TEST(LearnedPositionalTest, EmbeddingGradientCheck)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const Index samples_number  = 6;
     const Index vocabulary_size = 12;
     const Index sequence_length = 5;
@@ -50,6 +48,4 @@ TEST(LearnedPositionalTest, EmbeddingGradientCheck)
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-2));
-
-    Configuration::instance().set();
 }

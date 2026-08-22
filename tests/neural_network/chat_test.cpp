@@ -441,8 +441,6 @@ TEST(GenerationParserTest, HoldsIncompleteUtf8AndMissingClose)
 
 TEST(ChatSessionTest, StoresOnlyFinalContentAndTrimsTurns)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const TemplateTokenizer tokenizer;
     NeuralNetwork network;
     make_tiny_decoder(network, 8, tokenizer.get_vocabulary_size());
@@ -480,14 +478,10 @@ TEST(ChatSessionTest, StoresOnlyFinalContentAndTrimsTurns)
     EXPECT_EQ(trimmed.finish_reason, FinishReason::ContextLimit);
     ASSERT_EQ(session.get_messages().size(), 8);
     EXPECT_EQ(session.get_messages().front().content, "u2");
-
-    Configuration::instance().set();
 }
 
 TEST(ChatSessionTest, PreservesSystemMessageWhenTrimming)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const TemplateTokenizer tokenizer;
     NeuralNetwork network;
     make_tiny_decoder(network, 8, tokenizer.get_vocabulary_size());
@@ -508,8 +502,6 @@ TEST(ChatSessionTest, PreservesSystemMessageWhenTrimming)
     EXPECT_EQ(session.get_messages().front().role, ChatRole::System);
     EXPECT_EQ(session.get_messages().front().content, "system");
     EXPECT_EQ(session.get_messages()[1].content, "u3");
-
-    Configuration::instance().set();
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -551,8 +543,6 @@ TEST(ChatSessionTest, ClassicDecoderUsesCommonResponseAndStreaming)
     ChatOptions unsupported;
     unsupported.reasoning_mode = ReasoningMode::Enabled;
     EXPECT_THROW(session.send("alpha", unsupported), runtime_error);
-
-    Configuration::instance().set();
 }
 
 TEST(ChatSessionTest, SequenceToSequenceUsesCommonSendApi)
@@ -587,8 +577,6 @@ TEST(ChatSessionTest, SequenceToSequenceUsesCommonSendApi)
     EXPECT_EQ(streamed, response.content);
     EXPECT_GE(response.prefill_milliseconds, 0.0);
     EXPECT_GE(response.decode_milliseconds, 0.0);
-
-    Configuration::instance().set();
 }
 
 TEST(ChatSessionTest, SequenceToSequenceGreedyMatchesFullForwardReference)
@@ -653,8 +641,6 @@ TEST(ChatSessionTest, SequenceToSequenceGreedyMatchesFullForwardReference)
 
     EXPECT_EQ(response.content,
               network.get_target_tokenizer()->decode(expected_ids));
-
-    Configuration::instance().set();
 }
 
 TEST(ChatSessionTest, ReusesCudaGraphAcrossFiveTurns)
@@ -711,8 +697,6 @@ TEST(ChatSessionTest, ReusesCudaGraphAcrossFiveTurns)
     for (size_t i = 1; i < session.get_messages().size(); i += 2)
         EXPECT_EQ(session.get_messages()[i].role,
                   ChatRole::Assistant);
-
-    Configuration::instance().set();
 }
 
 TEST(ChatSessionTest, NoCudaBufferGrowthFromFirstSend)
@@ -743,8 +727,6 @@ TEST(ChatSessionTest, NoCudaBufferGrowthFromFirstSend)
         EXPECT_NO_THROW(session.send("first", options));
         EXPECT_NO_THROW(session.send("a longer second turn", options));
     }
-
-    Configuration::instance().set();
 }
 
 TEST(ChatSessionTest, SpeculativeGreedyFullAcceptanceMatchesBaseline)
@@ -799,8 +781,6 @@ TEST(ChatSessionTest, SpeculativeGreedyFullAcceptanceMatchesBaseline)
     EXPECT_EQ(actual.content, string(7, 'A'));
     EXPECT_EQ(streamed, actual.content);
     EXPECT_EQ(actual.finish_reason, FinishReason::MaximumTokens);
-
-    Configuration::instance().set();
 }
 
 TEST(ChatSessionTest, SpeculativeGreedyRejectsWrongDraftAndHonorsContext)
@@ -850,8 +830,6 @@ TEST(ChatSessionTest, SpeculativeGreedyRejectsWrongDraftAndHonorsContext)
         speculative.send("second", options);
     expect_same_response(expected_second, actual_second);
     EXPECT_EQ(actual_second.finish_reason, FinishReason::ContextLimit);
-
-    Configuration::instance().set();
 }
 
 TEST(ChatSessionTest, SpeculativeStopInsideAcceptedBatchRestartsCleanly)
@@ -896,8 +874,6 @@ TEST(ChatSessionTest, SpeculativeStopInsideAcceptedBatchRestartsCleanly)
         EXPECT_EQ(actual.control_tokens, 2);
         EXPECT_EQ(actual.finish_reason, FinishReason::Stop);
     }
-
-    Configuration::instance().set();
 }
 
 TEST(ChatSessionTest, SpeculativeDraftRejectsInvalidConfiguration)
@@ -943,7 +919,5 @@ TEST(ChatSessionTest, SpeculativeDraftRejectsInvalidConfiguration)
     const ChatResponse response =
         session.send("valid", greedy_options(3));
     EXPECT_EQ(response.content, string(3, 'A'));
-
-    Configuration::instance().set();
 }
 #endif

@@ -89,8 +89,6 @@ TEST_F(QuasiNewtonMethodTest, BFGS_Update)
 
 TEST_F(QuasiNewtonMethodTest, TrainApproximationCPU)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(1);
     TabularDataset dataset_short(16, {2}, {1});
     dataset_short.set_data_random();
@@ -120,8 +118,6 @@ TEST_F(QuasiNewtonMethodTest, TrainApproximationCPU)
 
 TEST_F(QuasiNewtonMethodTest, TrainClassificationCPU)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const MatrixR classification_data = separable_classification_data(16, 3);
 
     set_seed(2);
@@ -153,8 +149,6 @@ TEST_F(QuasiNewtonMethodTest, TrainClassificationCPU)
 
 TEST_F(QuasiNewtonMethodTest, MinimumLossDecreaseConverges)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(3);
     TabularDataset dataset(16, {2}, {1});
     dataset.set_data_random();
@@ -176,8 +170,6 @@ TEST_F(QuasiNewtonMethodTest, MinimumLossDecreaseConverges)
 
 TEST_F(QuasiNewtonMethodTest, StoppingMaximumEpochs)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(4);
     TabularDataset dataset(16, {2}, {1});
     dataset.set_data_random();
@@ -198,8 +190,6 @@ TEST_F(QuasiNewtonMethodTest, StoppingMaximumEpochs)
 
 TEST_F(QuasiNewtonMethodTest, StoppingLossGoal)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(5);
     TabularDataset dataset(4, {1}, {1});
     dataset.set_data_random();
@@ -223,8 +213,6 @@ TEST_F(QuasiNewtonMethodTest, StoppingLossGoal)
 
 TEST_F(QuasiNewtonMethodTest, StoppingMaximumTime)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(6);
     TabularDataset dataset(16, {2}, {1});
     dataset.set_data_random();
@@ -248,7 +236,6 @@ TEST_F(QuasiNewtonMethodTest, StoppingMaximumTime)
 
 TEST_F(QuasiNewtonMethodTest, Determinism)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
     set_threads_number(1);
 
     set_seed(7);

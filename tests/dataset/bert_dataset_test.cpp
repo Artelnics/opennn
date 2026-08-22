@@ -55,8 +55,6 @@ namespace
 
 TEST(BertDatasetTest, TokenizesAndWiresRoles)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const string vocab_path = write_lines("opennn_bertds_vocab.txt", bert_vocabulary);
     const string text_path  = write_lines("opennn_bertds_text.txt",  labelled_text);
 
@@ -82,13 +80,10 @@ TEST(BertDatasetTest, TokenizesAndWiresRoles)
     EXPECT_TRUE(cached_dataset.get_data().isApprox(data));
 
     clean_up(vocab_path, text_path, seq);
-    Configuration::instance().set();
 }
 
 TEST(BertDatasetTest, FeedsBertClassifierForward)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const string vocab_path = write_lines("opennn_bertds_vocab2.txt", bert_vocabulary);
     const string text_path  = write_lines("opennn_bertds_text2.txt",  labelled_text);
 
@@ -130,13 +125,10 @@ TEST(BertDatasetTest, FeedsBertClassifierForward)
         EXPECT_TRUE(isfinite(values[i])) << "non-finite output at " << i;
 
     clean_up(vocab_path, text_path, seq);
-    Configuration::instance().set();
 }
 
 TEST(BertDatasetTest, BertClassifierGradientOnCpu)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const string vocab_path = write_lines("opennn_bertds_vocab3.txt", bert_vocabulary);
     const string text_path  = write_lines("opennn_bertds_text3.txt",  labelled_text);
 
@@ -158,13 +150,10 @@ TEST(BertDatasetTest, BertClassifierGradientOnCpu)
     EXPECT_TRUE(gradient.allFinite());
 
     clean_up(vocab_path, text_path, seq);
-    Configuration::instance().set();
 }
 
 TEST(BertDatasetTest, TestingAnalysisSupportsMultipleInputs)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     const string vocab_path = write_lines("opennn_bertds_vocab4.txt", bert_vocabulary);
     const string text_path  = write_lines("opennn_bertds_text4.txt", labelled_text);
 
@@ -187,5 +176,4 @@ TEST(BertDatasetTest, TestingAnalysisSupportsMultipleInputs)
     EXPECT_EQ(confusion.bottomRightCorner(1, 1)(0, 0), dataset.get_samples_number());
 
     clean_up(vocab_path, text_path, seq);
-    Configuration::instance().set();
 }

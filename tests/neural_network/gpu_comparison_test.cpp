@@ -1351,8 +1351,6 @@ TEST_F(GpuComparison, ForecastingRecurrentAndLstmBf16Forward)
 
 TEST_F(GpuComparison, ForecastingRecurrentGradient)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(7);
     TimeSeriesDataset dataset(30, {2}, {1});
     dataset.set_data_random();
@@ -1382,8 +1380,6 @@ TEST_F(GpuComparison, ForecastingRecurrentGradient)
 
 TEST_F(GpuComparison, ForecastingLstmGradient)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(7);
     TimeSeriesDataset dataset(30, {2}, {1});
     dataset.set_data_random();
@@ -1413,8 +1409,6 @@ TEST_F(GpuComparison, ForecastingLstmGradient)
 
 TEST_F(GpuComparison, ForecastingRecurrentAndLstmBf16Gradient)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(17);
     TimeSeriesDataset dataset(30, {2}, {1});
     dataset.set_data_random();
@@ -1457,8 +1451,6 @@ TEST_F(GpuComparison, ForecastingRecurrentAndLstmBf16Gradient)
 
 TEST_F(GpuComparison, ForecastingLstmFusedGradient)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(11);
     TimeSeriesDataset dataset(40, {2}, {1});
     dataset.set_data_random();
@@ -1488,8 +1480,6 @@ TEST_F(GpuComparison, ForecastingLstmFusedGradient)
 
 TEST_F(GpuComparison, ForecastingRecurrentWideGradient)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     set_seed(11);
     TimeSeriesDataset dataset(40, {2}, {1});
     dataset.set_data_random();

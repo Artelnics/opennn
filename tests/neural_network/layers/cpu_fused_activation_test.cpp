@@ -52,8 +52,6 @@ vector<float> forward_once(NeuralNetwork& neural_network,
 
 TEST(CpuFusedActivationTest, BiasFreeDenseAppliesRelu)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     NeuralNetwork neural_network;
     auto dense = make_unique<opennn::Dense>(Shape{2}, Shape{3}, "ReLU");
     dense->set_use_bias(false);
@@ -81,8 +79,6 @@ TEST(CpuFusedActivationTest, BiasFreeDenseAppliesRelu)
 
 TEST(CpuFusedActivationTest, WidthEightDenseAppliesGeluTanh)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     constexpr Index output_features = 8;
 
     NeuralNetwork neural_network;
@@ -110,8 +106,6 @@ TEST(CpuFusedActivationTest, WidthEightDenseAppliesGeluTanh)
 
 TEST(CpuFusedActivationTest, ConvolutionAppliesReluWithoutBatchNorm)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Convolutional>(
         Shape{3, 3, 1}, Shape{3, 3, 1, 2}, "ReLU", Shape{1, 1}, "Valid", false));
@@ -137,8 +131,6 @@ TEST(CpuFusedActivationTest, ConvolutionAppliesReluWithoutBatchNorm)
 
 TEST(CpuFusedActivationTest, ConvolutionAppliesReluWithBatchNorm)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Convolutional>(
         Shape{3, 3, 1}, Shape{3, 3, 1, 2}, "ReLU", Shape{1, 1}, "Valid", true));
