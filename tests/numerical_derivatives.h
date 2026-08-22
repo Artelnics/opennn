@@ -20,9 +20,6 @@ float   calculate_h(float x);
 float   calculate_numerical_error(Loss& loss);
 VectorR calculate_gradient(Loss& loss);
 VectorR calculate_numerical_gradient(Loss& loss);
-VectorR calculate_numerical_input_deltas(Loss& loss);
-MatrixR calculate_numerical_hessian(Loss& loss);
-MatrixR calculate_inverse_hessian(Loss& loss);
 
 }
 

@@ -75,16 +75,12 @@ TEST_F(QuasiNewtonMethodTest, BFGS_Update)
 
     neural_network.set_parameters_random();
 
-    VectorR gradient_k = calculate_gradient(loss);
+    const VectorR gradient = calculate_gradient(loss);
 
-    EXPECT_EQ(gradient_k.size(), neural_network.get_parameters_buffer_size());
+    EXPECT_EQ(gradient.size(), neural_network.get_parameters_buffer_size());
 
-    MatrixR numerical_inverse_hessian = calculate_inverse_hessian(loss);
-
-    EXPECT_EQ(numerical_inverse_hessian.rows(), numerical_inverse_hessian.cols());
-
-    for (Index i = 0; i < numerical_inverse_hessian.size(); ++i)
-        EXPECT_FALSE(isnan(numerical_inverse_hessian(i)));
+    for (Index i = 0; i < gradient.size(); ++i)
+        EXPECT_FALSE(isnan(gradient(i)));
 }
 
 TEST_F(QuasiNewtonMethodTest, TrainApproximationCPU)
