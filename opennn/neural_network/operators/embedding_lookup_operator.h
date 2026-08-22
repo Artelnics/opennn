@@ -53,6 +53,7 @@ struct EmbeddingLookupOperator : Operator
     void link_parameters(span<const TensorView>) override;
     void link_gradients (span<const TensorView>) override;
     void link_states    (span<const TensorView>) override;
+    void initialize_states() override;
     void link_parameter_scales(span<const TensorView>) override;
 
     void set_parameters_random() override;

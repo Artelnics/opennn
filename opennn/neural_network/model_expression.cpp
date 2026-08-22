@@ -57,8 +57,8 @@ static constexpr const char* php_subheader = R"HTML(
 <meta charset = "utf-8">
 <meta name = "viewport" content = "width=device-width, initial-scale=1">
 <link rel = "stylesheet" href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-<script source = "https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
-<script source = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 </head>
 <style>
 .btn{
@@ -146,7 +146,7 @@ text-align: right;
 width: 50%;
 }
 
-.neural-cell input[float="range"] {
+.neural-cell input[type="range"] {
 display: block;
 margin-left: auto;
 margin-right: 0;
@@ -155,8 +155,8 @@ max-width: 200px;
 width: 90%;
 }
 
-.neural-cell input[float="number"],
-.neural-cell input[float="text"],
+.neural-cell input[type="number"],
+.neural-cell input[type="text"],
 .neural-cell select {
 display: block;
 margin-left: auto;
@@ -169,7 +169,7 @@ text-align: right;
 text-align-last: right;
 }
 
-.neural-cell input[float="number"] {
+.neural-cell input[type="number"] {
 margin-top: 8px;
 }
 
@@ -192,17 +192,17 @@ font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 background-color: #4b92d3;
 }
 
-input[float="range"]::-webkit-slider-runnable-track {
+input[type="range"]::-webkit-slider-runnable-track {
 background: #8fc4f0;
 height: 0.5rem;
 }
 
-input[float="range"]::-moz-range-track {
+input[type="range"]::-moz-range-track {
 background: #8fc4f0;
 height: 0.5rem;
 }
 
-input[float="range"]::-webkit-slider-thumb {
+input[type="range"]::-webkit-slider-thumb {
 -webkit-appearance: none;
 appearance: none;
 margin-top: -5px;
@@ -215,7 +215,7 @@ box-shadow: 0 0 5px rgba(0,0,0,0.25);
 cursor: pointer;
 }
 
-input[float="range"]::-moz-range-thumb {
+input[type="range"]::-moz-range-thumb {
 background-color: #5da9e9;
 border-radius: 50%;
 margin-top: -5px;
@@ -694,10 +694,31 @@ void ModelExpression::emit_c_main(ostringstream& buffer) const
               "\tprintf(\"These are your outputs:\\n\");\n";
 
     for (Index i = 0; i < outputs_number; ++i)
-        buffer << "\tprintf(\""<< output_names[i] << ": %f \\n\", outputs[" << i << "]);\n";
+        // The name travels as a %s argument rather than inside the format
+        // string: a '%' in a column name ("Humidity (%)") made the exported
+        // printf read a conversion specification that is not there.
+        buffer << "\tprintf(\"%s: %f \\n\", \"" << c_string_literal(output_names[i])
+               << "\", outputs[" << i << "]);\n";
 
     buffer << "\n\treturn 0;\n} \n\n"
               "#endif // OPENNN_EXPORT_NO_MAIN\n";
+}
+
+// Escapes a feature name for use inside a C string literal: names reach the
+// generated driver verbatim, and a quote or a backslash in one made the
+// exported program fail to compile.
+string ModelExpression::c_string_literal(string_view text)
+{
+    string out;
+    out.reserve(text.size());
+
+    for (const char character : text)
+    {
+        if (character == '\\' || character == '\"') out += '\\';
+        out += character;
+    }
+
+    return out;
 }
 
 string ModelExpression::c_float_literal(float value)
@@ -1527,6 +1548,10 @@ string ModelExpression::get_expression_c_embedded() const
 
         if(uses_affine_flags)
         {
+            // The library scales with log(max(x, EPSILON)); without the same
+            // clamp the exported firmware returned -inf/NaN for an input of
+            // zero, which is exactly where a log scaler is most fragile.
+            buffer << "#define NN_LOG_EPSILON " << c_float_literal(EPSILON) << "\n";
             buffer
                 << "static void nn_affine_flags_forward(const float* inputs, const unsigned char* log_pre,\n"
                    "                                    const float* a, const float* b,\n"
@@ -1535,7 +1560,8 @@ string ModelExpression::get_expression_c_embedded() const
                    "\tint f = 0;\n"
                    "\tfor (int i = 0; i < total; ++i)\n"
                    "\t{\n"
-                   "\t\tfloat value = NN_READ_BYTE(&log_pre[f]) ? logf(inputs[i]) : inputs[i];\n"
+                   "\t\tconst float clamped = inputs[i] > NN_LOG_EPSILON ? inputs[i] : NN_LOG_EPSILON;\n"
+                   "\t\tfloat value = NN_READ_BYTE(&log_pre[f]) ? logf(clamped) : inputs[i];\n"
                    "\t\tvalue = NN_READ_FLOAT(&a[f]) * value + NN_READ_FLOAT(&b[f]);\n"
                    "\t\toutputs[i] = NN_READ_BYTE(&exp_post[f]) ? expf(value) : value;\n"
                    "\t\tif (++f == features) f = 0;\n"
@@ -1909,7 +1935,13 @@ void ModelExpression::emit_js_outputs_html(ostringstream& buffer, bool use_categ
                << "<td class=\"neural-cell\">\n"
                << "<select id=\"category_select\" onchange=\"updateSelectedCategory()\">\n";
         for (Index i = 0; i < outputs_number; ++i)
-            buffer << "<option value=\"" << output_names[i] << "\">" << output_names[i] << "</option>\n";
+            // The value carries the sanitized id, because that is what
+            // updateSelectedCategory compares against and what the hidden
+            // input is keyed by; the label keeps the readable name. With the
+            // raw name in both places any output whose name is not already an
+            // identifier never matched and the Value box stayed empty.
+            buffer << "<option value=\"" << fixes_output_names[i] << "\">"
+                   << output_names[i] << "</option>\n";
         buffer << "</select>\n"
                << "</td>\n"
                << "</tr>\n\n"
@@ -1990,7 +2022,9 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
         buffer << "\tvar " << fixes_feature_names[i] << " = +inputs[" << to_string(i) << "];\n";
     buffer << "\n";
 
-    static const char* const math_keywords[] = {"exp", "tanh", "max", "min"};
+    // "log" belongs here: a Logarithm scaler emits a bare log(x), which is not
+    // a global in JavaScript, so the exported page threw a ReferenceError.
+    static const char* const math_keywords[] = {"exp", "log", "tanh", "max", "min"};
 
     const LanguageSyntax syntax = language_syntax(ProgrammingLanguage::JavaScript);
 
@@ -2071,7 +2105,7 @@ void ModelExpression::emit_python_class_header(ostringstream& buffer) const
     for (size_t i = 0; i < input_names.size(); ++i)
     {
         if (i) inputs_list_str += ", ";
-        inputs_list_str += "'" + replace_reserved_keywords(input_names[i]) + "'";
+        inputs_list_str += "'" + fix_names(input_names, "input_")[i] + "'";
     }
 
     buffer << "\tdef __init__(self):\n"
@@ -2100,8 +2134,11 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
 
     buffer << "\tdef calculate_outputs(self, inputs):\n";
 
-    vector<string> python_mapped(input_names.size());
-    ranges::transform(input_names, python_mapped.begin(), replace_reserved_keywords);
+    // fix_names, not replace_reserved_keywords: an empty name becomes the
+    // literal "variable" through the latter, while build_expression named that
+    // same input input_{i} - so the body referred to one identifier and the
+    // unpacking defined another, and every unnamed input raised NameError.
+    const vector<string> python_mapped = fix_names(input_names, "input_");
 
     for (size_t i = 0; i < input_names.size(); ++i)
         buffer << "\t\t" << python_mapped[i] << " = inputs[" << i << "]\n";
@@ -2229,9 +2266,10 @@ string ModelExpression::replace_reserved_keywords(const string& input)
 
     string out;
 
-    if (input[0] == '$')
-        out = input;
-
+    // No '$' special case: it used to seed `out` with the whole raw name and
+    // then append every character again, so "$price" came out as "$priceprice"
+    // - not an identifier in any target language. The loop below already drops
+    // the '$' and leaves a clean name.
     for (const char character : input)
     {
         const auto it = char_replacements.find(character);
@@ -2332,10 +2370,26 @@ vector<string> ModelExpression::fix_names(const vector<string>& names, const str
 {
     vector<string> fixed(names.size());
 
+    // Uniqueness matters as much as validity: replace_reserved_keywords drops
+    // every character it does not recognise, so "Temp (C)" and "Temp [C]" both
+    // collapse to TempC and the second assignment silently shadowed the first
+    // in the exported code.
+    unordered_set<string> emitted;
+
     for (size_t i = 0; i < names.size(); ++i)
-        fixed[i] = names[i].empty()
+    {
+        string candidate = names[i].empty()
             ? format("{}{}", default_prefix, i)
             : replace_reserved_keywords(names[i]);
+
+        if (!emitted.insert(candidate).second)
+        {
+            candidate = format("{}_{}", candidate, i);
+            emitted.insert(candidate);
+        }
+
+        fixed[i] = std::move(candidate);
+    }
 
     return fixed;
 }

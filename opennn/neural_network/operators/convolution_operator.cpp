@@ -504,6 +504,12 @@ void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output)
 
             if (use_bias)
                 output_matrix.rowwise() += bias_row;
+
+            // The layer marks its activation operator "fused" from the
+            // activation alone, on either device, so the epilogue the GPU graph
+            // carries has to exist here too or the ReLU is simply lost.
+            if (fuse_relu)
+                output_matrix = output_matrix.cwiseMax(0.0f);
         }
     }
 }

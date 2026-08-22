@@ -52,7 +52,10 @@ namespace opennn
         }
         else
         {
-            return from_chars(first, last, value);
+            // std:: is load-bearing. Unqualified lookup finds this overload
+            // first - it is in the same namespace - and the call recursed until
+            // the stack ran out for every integer parse on macOS.
+            return std::from_chars(first, last, value);
         }
     }
 #endif

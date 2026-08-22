@@ -107,20 +107,6 @@ void AttentionOperator::softmax_rows_prefix(float* matrix, Index rows, Index col
     }
 }
 
-Index AttentionOperator::infer_attention_prefix_length(const TensorView& attention_weights,
-                                                 Index batch_index)
-{
-    const auto& shape = attention_weights.get_shape();
-    const float* first_row = attention_weights.as<float>()
-        + batch_index * shape[1] * shape[2] * shape[3];
-
-    Index length = shape[3];
-    while (length > 0 && first_row[length - 1] == 0.0f)
-        --length;
-
-    return length;
-}
-
 vector<TensorSpec> AttentionOperator::forward_scratch_specs(Index batch_size) const
 {
     // SDPA never touches these buffers: dropout runs inside the cuDNN graph
@@ -631,11 +617,15 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
         return;
     }
 #endif
+    const SequenceLengths backward_lengths =
+        forward_propagation.input_sequence_lengths(layer, forward_propagation.inputs[layer].size() - 1);
+
     apply_delta_cpu(query, key, value,
                     attention_weights, attention_weights_dropped,
                     dropout_mask, output_delta,
                     attention_weight_delta,
-                    query_delta, key_delta, value_delta);
+                    query_delta, key_delta, value_delta,
+                    backward_lengths.host);
 }
 
 void AttentionOperator::apply_unfused(const TensorView& query,
@@ -764,6 +754,15 @@ void AttentionOperator::apply_unfused(const TensorView& query,
     {
         const Index att_rows_per_batch = heads_number * query_length;
 
+        // The exported lengths, when the Embedding recorded them, exactly as the
+        // CUDA branch above uses them. The all-zero-row scan below can only
+        // recognise padding in the FIRST attention layer: one normalization
+        // later a padded row is no longer zero, so every deeper layer on the CPU
+        // masked nothing while CUDA masked correctly, and the two devices
+        // diverged after layer 1.
+        const bool use_exported_lengths =
+            explicit_lengths.host && Index(explicit_lengths.host->size()) == batch_size;
+
         #pragma omp parallel for
         for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
         {
@@ -772,8 +771,11 @@ void AttentionOperator::apply_unfused(const TensorView& query,
 
             for (Index source_index = 0; source_index < source_length; ++source_index)
             {
-                const float* source_row = source_batch + source_index * embedding_dimension;
-                if (row_nonzero(source_row, embedding_dimension)) continue;
+                const bool is_padding = use_exported_lengths
+                    ? source_index >= (*explicit_lengths.host)[size_t(batch_index)]
+                    : !row_nonzero(source_batch + source_index * embedding_dimension, embedding_dimension);
+
+                if (!is_padding) continue;
 
                 for (Index row_index = 0; row_index < att_rows_per_batch; ++row_index)
                     attention_batch[row_index * source_length + source_index] = SOFTMAX_MASK_VALUE;
@@ -1051,7 +1053,8 @@ void AttentionOperator::apply_delta_cpu(const TensorView& query,
                                 TensorView& attention_weight_delta,
                                 TensorView& query_delta,
                                 TensorView& key_delta,
-                                TensorView& value_delta) const
+                                TensorView& value_delta,
+                                const vector<Index>* forward_valid_lengths) const
 {
     const bool use_cpu_fast_path =
         !query.is_cuda()
@@ -1067,20 +1070,20 @@ void AttentionOperator::apply_delta_cpu(const TensorView& query,
         const Index source_length = key.get_shape()[2];
         vector<Index> valid_lengths(batch_size);
         bool has_padding = false;
-        bool valid_prefixes = true;
+        bool valid_prefixes = false;
 
-        for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
+        // The lengths the forward actually masked with. Counting trailing zeros
+        // of head 0, query 0 - what this used to do - cannot tell padding from a
+        // sharply peaked head whose tail underflowed to exactly zero, and when
+        // it guessed wrong the fast path zeroed real key and value gradients for
+        // every head in that batch element.
+        if (forward_valid_lengths && Index(forward_valid_lengths->size()) == batch_size)
         {
-            const Index valid_length = infer_attention_prefix_length(attention_weights, batch_index);
-            if (valid_length <= 0 || valid_length > source_length)
-            {
-                valid_prefixes = false;
-                break;
-            }
-
-            valid_lengths[batch_index] = valid_length;
-            if (valid_length < source_length)
-                has_padding = true;
+            valid_lengths = *forward_valid_lengths;
+            valid_prefixes = ranges::all_of(valid_lengths,
+                [&](const Index length) { return length > 0 && length <= source_length; });
+            has_padding = valid_prefixes && ranges::any_of(valid_lengths,
+                [&](const Index length) { return length < source_length; });
         }
 
         if (valid_prefixes && has_padding)

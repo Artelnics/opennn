@@ -49,7 +49,15 @@ public:
             if (was_on_device) network.copy_parameters_host();
         }
 
-        ~HostParametersGuard() { if (was_on_device) network.copy_parameters_device(); }
+        // A destructor is noexcept: an upload that throws here - a sticky CUDA
+        // error, or an out-of-memory - would terminate instead of letting the
+        // original failure propagate. The state is already inconsistent at that
+        // point; losing the diagnostic on top of it helps nobody.
+        ~HostParametersGuard()
+        {
+            if (!was_on_device) return;
+            try { network.copy_parameters_device(); } catch (...) {}
+        }
 
         HostParametersGuard(const HostParametersGuard&) = delete;
         HostParametersGuard& operator=(const HostParametersGuard&) = delete;
@@ -123,7 +131,9 @@ public:
     bool is_empty() const noexcept { return layers.empty(); }
 
     float* get_parameters_data() { return parameters.as<float>(); }
-    const float* get_parameters_data() const noexcept { return parameters.as<float>(); }
+    // Not noexcept: Buffer::as validates its state and throws on an
+    // inconsistent one, and declaring otherwise turned that into a terminate.
+    const float* get_parameters_data() const { return parameters.as<float>(); }
     // Non-owning Eigen views over the full aligned parameter buffer.
     VectorMap get_parameters_map() &
     {
@@ -139,7 +149,7 @@ public:
     Index get_parameters_buffer_size() const noexcept { return parameters.size_in_floats(); }
     Device get_parameters_device() const noexcept { return parameters.get_device(); }
     float* get_states_data() { return states.as<float>(); }
-    const float* get_states_data() const noexcept { return states.as<float>(); }
+    const float* get_states_data() const { return states.as<float>(); }
     Index get_states_buffer_size() const noexcept { return states.size_in_floats(); }
 
     const vector<Variable>& get_input_variables() const noexcept { return input_variables; }
@@ -355,7 +365,11 @@ private:
             if (was_on_device) network.copy_states_host();
         }
 
-        ~HostStatesGuard() { if (was_on_device) network.copy_states_device(); }
+        ~HostStatesGuard()
+        {
+            if (!was_on_device) return;
+            try { network.copy_states_device(); } catch (...) {}
+        }
 
         HostStatesGuard(const HostStatesGuard&) = delete;
         HostStatesGuard& operator=(const HostStatesGuard&) = delete;

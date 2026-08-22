@@ -39,6 +39,7 @@ private:
     string get_expression_php() const;
     string get_expression_javascript() const;
 
+    static string c_string_literal(string_view);
     static string c_float_literal(float);
 
     vector<string> get_flat_input_names() const;

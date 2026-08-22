@@ -260,7 +260,30 @@ void Scaling::set(const Shape& new_input_shape)
 
 void Scaling::apply_input_shape(const Shape& new_input_shape)
 {
+    // set() is the full reset a constructor wants; propagating a shape through
+    // the graph is not. It used to take the label back to the class default and
+    // discard the fitted statistics, so resizing a network silently unfitted its
+    // scaling. The label always survives, and the statistics survive whenever the
+    // feature count is unchanged.
+
+    const string previous_label = get_label();
+    const vector<Descriptives> previous_descriptives = descriptives;
+    const vector<ScalerMethod> previous_scalers = scalers;
+    const float previous_min_range = min_range;
+    const float previous_max_range = max_range;
+
     set(new_input_shape);
+
+    set_label(previous_label);
+
+    if (ssize(previous_descriptives) == ssize(descriptives))
+    {
+        descriptives = previous_descriptives;
+        scalers = previous_scalers;
+        min_range = previous_min_range;
+        max_range = previous_max_range;
+        op_storage_dirty = true;
+    }
 }
 
 void Scaling::set_descriptives(const vector<Descriptives>& new_descriptives)
@@ -508,7 +531,10 @@ string Scaling::write_expression(const vector<string>& input_names,
                 buffer << "scaled_" << input_names[i] << " = 0;\n";
             break;
         case Logarithm:
-            buffer << "scaled_" << input_names[i] << " = log(" << input_names[i] << ");\n";
+            // max() first, as the layer itself does: an input of zero or below
+            // otherwise evaluates to -inf in every exported language.
+            buffer << "scaled_" << input_names[i] << " = log(max(" << input_names[i]
+                   << ", " << EPSILON << "));\n";
             break;
         case ImageMinMax:
             buffer << "scaled_" << input_names[i] << " = " << input_names[i] << " / 255.0;\n";

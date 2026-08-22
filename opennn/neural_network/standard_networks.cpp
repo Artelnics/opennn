@@ -185,6 +185,13 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
                                                const Shape& output_shape)
     : NeuralNetwork(NetworkTask::AutoAssociation)
 {
+    // Shape::operator[] is unchecked; its four-argument sibling below already
+    // validates the same two inputs.
+    throw_if(input_shape.empty(),
+             "AutoAssociationNetwork: input shape cannot be empty.");
+    throw_if(complexity_dimensions.empty(),
+             "AutoAssociationNetwork: complexity dimensions cannot be empty.");
+
     add_layer(make_unique<Scaling>(input_shape));
 
     const Shape mapping_shape{ 10 };
@@ -482,6 +489,12 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                  "YoloNetwork: HeadStyle::FPN requires DarknetTiny, DarknetTinyV3, Darknet53, or CSPDarknet53.");
         throw_if(ssize(anchors) != 9 && ssize(anchors) != 6,
                  "YoloNetwork: HeadStyle::FPN expects 6 anchors (2-head) or 9 anchors (3-head).");
+        // DarknetTinyV3 is the only 2-head FPN backbone: it slices
+        // anchors[3..end) for its large head, so nine anchors put six of them
+        // on a conv sized for three and the failure surfaced much later as an
+        // unrelated divisibility message from DetectionOperator::set.
+        throw_if(backbone == Backbone::DarknetTinyV3 && ssize(anchors) != 6,
+                 "YoloNetwork: DarknetTinyV3 with HeadStyle::FPN is 2-head and requires exactly 6 anchors.");
     }
     if (head_style == HeadStyle::PANet)
     {
@@ -504,11 +517,27 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
     auto add_conv = [&](Index input_index, const Shape& kernel_shape,
                         const char* activation, const Shape& kernel_stride,
                         bool batch_norm, const string& name) -> Index {
+        // SiLU and the GELUs need their pre-activation input, which a fused
+        // convolution does not keep, so they travel as a standalone Activation
+        // layer - what the v8 path spells out as add_cba. The convolution used
+        // to accept them and quietly substitute Identity, which built a
+        // linear neck and said nothing.
+        const bool needs_own_layer =
+            activation_needs_input(ActivationOperator::from_string(activation));
+
         add_layer(make_unique<Convolutional>(
                       get_layer(input_index)->get_output_shape(),
-                      kernel_shape, activation, kernel_stride, "Same",
+                      kernel_shape, needs_own_layer ? "Identity" : activation,
+                      kernel_stride, "Same",
                       batch_norm, name),
                   {input_index});
+
+        if (!needs_own_layer) return get_layers_number() - 1;
+
+        const Index convolution_index = get_layers_number() - 1;
+        add_layer(make_unique<Activation>(get_layer(convolution_index)->get_output_shape(),
+                                          activation, name + "_act"),
+                  {convolution_index});
         return get_layers_number() - 1;
     };
 
@@ -1195,6 +1224,16 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                                      PoolingMethod pooling_method)
     : NeuralNetwork(NetworkTask::TextClassification)
 {
+    // Shape::operator[] is unchecked, so a short shape read past the end of the
+    // fixed dims array and built the network from whatever was there.
+    throw_if(input_shape.get_rank() < 3,
+             "TextClassificationNetwork: the input shape must be "
+             "{{vocabulary_size, sequence_length, embedding_dimension}}, got rank {}.",
+             input_shape.get_rank());
+    throw_if(complexity_dimensions.get_rank() < 1,
+             "TextClassificationNetwork: the complexity dimensions must name at least the "
+             "number of heads.");
+
     const Index vocabulary_size = input_shape[0];
     const Index sequence_length = input_shape[1];
     const Index embedding_dimension = input_shape[2];
@@ -1895,24 +1934,43 @@ void BertForSequenceClassification::set_dropout_rate(const float new_dropout_rat
 
 #endif
 
-Index load_darknet_backbone(NeuralNetwork& network,
-                            const filesystem::path& weights_path,
-                            Index n_backbone_convs)
+// Both loaders open the same file format, and both used to leak the handle:
+// Convolutional::load_darknet_weights throws on any short read, and a bare
+// fopen/fclose pair around the loop never runs its fclose on that path - on
+// Windows the file then stays locked for the life of the process.
+namespace
 {
-    FILE* f = fopen(weights_path.string().c_str(), "rb");
-    throw_if(!f, "load_darknet_backbone: cannot open file: " + weights_path.string());
+
+using DarknetFile = unique_ptr<FILE, int (*)(FILE*)>;
+
+DarknetFile open_darknet_weights(const filesystem::path& weights_path, const char* who)
+{
+    DarknetFile file(fopen(weights_path.string().c_str(), "rb"), &fclose);
+    throw_if(!file, "{}: cannot open file: {}", who, weights_path.string());
 
     int32_t header[3];
     int64_t seen;
-    throw_if(fread(header, sizeof(int32_t), 3, f) != 3,
-             "load_darknet_backbone: failed to read header int32s.");
-    throw_if(fread(&seen, sizeof(int64_t), 1, f) != 1,
-             "load_darknet_backbone: failed to read header seen.");
+    throw_if(fread(header, sizeof(int32_t), 3, file.get()) != 3,
+             "{}: failed to read header.", who);
+    throw_if(fread(&seen, sizeof(int64_t), 1, file.get()) != 1,
+             "{}: failed to read header seen.", who);
 
     cout << "Darknet weights header: major=" << header[0]
          << " minor=" << header[1]
          << " revision=" << header[2]
          << " seen=" << seen << "\n";
+
+    return file;
+}
+
+}
+
+Index load_darknet_backbone(NeuralNetwork& network,
+                            const filesystem::path& weights_path,
+                            Index n_backbone_convs)
+{
+    const DarknetFile file = open_darknet_weights(weights_path, "load_darknet_backbone");
+    FILE* const f = file.get();
 
     Index loaded = 0;
     const auto& layers = network.get_layers();
@@ -1926,35 +1984,25 @@ Index load_darknet_backbone(NeuralNetwork& network,
         cout << format("Loaded backbone conv {}/{} from {}\n", loaded, n_backbone_convs, weights_path.string());
     }
 
-    fclose(f);
     return loaded;
 }
 
 Index load_darknet_backbone_v11(NeuralNetwork& network,
                                 const filesystem::path& weights_path)
 {
-    FILE* f = fopen(weights_path.string().c_str(), "rb");
-    throw_if(!f, "load_darknet_backbone_v11: cannot open file: " + weights_path.string());
+    const DarknetFile file = open_darknet_weights(weights_path, "load_darknet_backbone_v11");
+    FILE* const f = file.get();
 
-    int32_t header[3];
-    int64_t seen;
-    throw_if(fread(header, sizeof(int32_t), 3, f) != 3,
-             "load_darknet_backbone_v11: failed to read header.");
-    throw_if(fread(&seen, sizeof(int64_t), 1, f) != 1,
-             "load_darknet_backbone_v11: failed to read header seen.");
-
-    cout << "Darknet weights header: major=" << header[0]
-         << " minor=" << header[1]
-         << " revision=" << header[2]
-         << " seen=" << seen << "\n";
-
+    // The CSPDarknet53v11 builder labels its layers c8_*; these were the labels
+    // of the older C3k2 implementation it replaced, so every lookup missed, the
+    // function printed six warnings and returned 0 - and the caller reported
+    // that pretrained weights had been loaded.
     static const pair<const char*, size_t> targets[] = {
-        {"c11_stem",    0},
-        {"c11_s1_down", 0},
-        {"c11_s2_down", 42368},
-        {"c11_s3_down", 79872},
-        {"c11_s4_down", 811520},
-        {"c11_s5_down", 3228672},
+        {"c8_stem",    0},
+        {"c8_s1_down", 0},
+        {"c8_s2_down", 42368},
+        {"c8_s3_down", 79872},
+        {"c8_s4_down", 811520},
     };
 
     map<string, Convolutional*> label_to_conv;
@@ -1971,18 +2019,17 @@ Index load_darknet_backbone_v11(NeuralNetwork& network,
             fseek(f, long(skip_floats) * long(sizeof(float)), SEEK_CUR);
 
         auto it = label_to_conv.find(label);
-        if (it == label_to_conv.end())
-        {
-            cout << "load_darknet_backbone_v11: layer \"" << label << "\" not found — skipping.\n";
-            continue;
-        }
+        // Throwing, not skipping: loading nothing while reporting success is
+        // exactly how this went unnoticed once the backbone was relabelled.
+        throw_if(it == label_to_conv.end(),
+                 "load_darknet_backbone_v11: layer {} is not in the network; "
+                 "the backbone does not match this loader.", label);
 
         it->second->load_darknet_weights(f);
         ++loaded;
         cout << "Loaded pretrained downsampling conv \"" << label << "\" from yolov4.conv.137\n";
     }
 
-    fclose(f);
     return loaded;
 }
 

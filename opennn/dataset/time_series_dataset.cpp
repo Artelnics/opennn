@@ -253,26 +253,38 @@ void TimeSeriesDataset::configure_forecasting()
 void TimeSeriesDataset::impute_missing_values_unuse()
 {
     const Index samples_number = get_samples_number();
-    const Index lags = get_past_time_steps();
+
+    // The window a sample actually reads is past + future rows, which is what
+    // refresh_forecasting_roles uses. Checking only past + 1 left samples whose
+    // target row held a NaN in use, and with future_time_steps > 1 it also kept
+    // the tail samples whose targets run off the end of the data.
+    const Index window_span = get_past_time_steps() + get_future_time_steps();
+
+    if (samples_number == 0 || window_span <= 0) return;
 
     vector<char> row_has_nan(samples_number);
     for (Index i = 0; i < samples_number; ++i)
         row_has_nan[i] = has_nan_row(i);
 
-    const Index num_sequences = samples_number - lags;
-    if (num_sequences < 0) return;
+    const Index num_sequences = samples_number - window_span + 1;
 
-    #pragma omp parallel for
+    // Collected first and applied in one call: set_sample_role fires
+    // on_used_samples_changed on every flip, which in BinaryFile mode restreams
+    // the whole cache to rebuild its statistics.
+    vector<Index> unused_samples;
+
     for (Index i = 0; i < num_sequences; ++i)
     {
         const auto first = row_has_nan.begin() + i;
 
-        if (any_of(first, first + lags + 1, [](char value) { return value != 0; }))
-            set_sample_role(i, "None");
+        if (any_of(first, first + window_span, [](char value) { return value != 0; }))
+            unused_samples.push_back(i);
     }
 
-    for (Index i = num_sequences; i < samples_number; ++i)
-        set_sample_role(i, "None");
+    for (Index i = max(Index(0), num_sequences); i < samples_number; ++i)
+        unused_samples.push_back(i);
+
+    if (!unused_samples.empty()) set_sample_roles(unused_samples, SampleRole::None);
 }
 
 void TimeSeriesDataset::impute_missing_values_interpolate()
@@ -319,6 +331,61 @@ void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
     for (const Index input_index : input_indices)
         throw_if(input_index < 0 || input_index >= data.cols(),
                  "TimeSeriesDataset input feature index is out of range.");
+
+    const bool contiguous_features =
+        adjacent_find(input_indices.begin(), input_indices.end(),
+                      [](Index left, Index right) { return right != left + 1; })
+        == input_indices.end();
+
+    if (contiguous_features)
+    {
+        const Index first_feature = input_indices.front();
+        const Index data_columns = data.cols();
+        const Index values_per_sample = past_time_steps * inputs_number;
+        const bool whole_rows = first_feature == 0 && inputs_number == data_columns;
+
+        #pragma omp parallel for schedule(static) if(batch_size * values_per_sample >= 262144)
+        for (Index i = 0; i < batch_size; ++i)
+        {
+            const Index start_row = sample_indices[size_t(i)];
+            float* const destination = input_data + i * values_per_sample;
+
+            if (start_row + past_time_steps <= data_rows_number)
+            {
+                if (whole_rows)
+                {
+                    memcpy(destination,
+                           data.data() + start_row * data_columns,
+                           size_t(values_per_sample) * sizeof(float));
+                }
+                else
+                {
+                    for (Index j = 0; j < past_time_steps; ++j)
+                        memcpy(destination + j * inputs_number,
+                               data.data() + (start_row + j) * data_columns + first_feature,
+                               size_t(inputs_number) * sizeof(float));
+                }
+            }
+            else
+            {
+                for (Index j = 0; j < past_time_steps; ++j)
+                {
+                    const Index actual_row = start_row + j;
+                    float* const destination_row = destination + j * inputs_number;
+                    if (actual_row < data_rows_number)
+                        memcpy(destination_row,
+                               data.data() + actual_row * data_columns + first_feature,
+                               size_t(inputs_number) * sizeof(float));
+                    else
+                        fill_n(destination_row, inputs_number, 0.0f);
+                }
+            }
+        }
+
+        apply_training_scaling(input_indices, input_data,
+                               batch_size * past_time_steps);
+        return;
+    }
 
     TensorMap3 inputs(input_data, batch_size, past_time_steps, inputs_number);
 
@@ -507,9 +574,12 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index lags_number)
 
     const Index variables_number = get_variables_number();
 
-    const Index effective_lags_number = (samples_number == lags_number) ? (lags_number - 2)
-                                      : (samples_number == lags_number + 1) ? (lags_number - 1)
-                                      : lags_number;
+    // Guarded like the calculate_autocorrelations twin: without the lag floor a
+    // one- or two-sample series produced a negative third dimension below.
+    const Index effective_lags_number =
+        ((samples_number <= lags_number) && lags_number > 2) ? lags_number - 2 :
+         (samples_number == lags_number + 1 && lags_number > 1) ? lags_number - 1 :
+         lags_number;
 
     vector<Index> numeric_variable_indices;
 

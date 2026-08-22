@@ -10,6 +10,7 @@
 #include "opennn/registry.h"
 #include "opennn/core/enum_map.h"
 #include "opennn/core/json.h"
+#include "opennn/core/device_backend.h"
 #include "opennn/core/string_utilities.h"
 
 #include "opennn/core/tensor_operations.h"
@@ -68,11 +69,16 @@ void DetectionOperator::forward_propagate(ForwardPropagation& forward_propagatio
             flat.reserve(anchors.size() * 2);
             ranges::copy(anchors | views::join, back_inserter(flat));
 
-            cudaMemcpyAsync(device_anchors.as<float>(),
-                            flat.data(),
-                            size_t(anchor_bytes),
-                            cudaMemcpyHostToDevice,
-                            device::get_compute_stream());
+            // Through the checked helper, like every other upload in the layer
+            // code. The raw call discarded its status, so a failed copy left the
+            // anchors zero-filled - every decoded box then had width and height
+            // zero - and the size check above made sure it was never retried.
+            device::copy_async(device_anchors.as<float>(),
+                               flat.data(),
+                               anchor_bytes,
+                               device::CopyKind::HostToDevice,
+                               device::get_compute_stream());
+            device::synchronize(device::get_compute_stream());
         }
 
         detection_forward_cuda(input.get_shape()[0],

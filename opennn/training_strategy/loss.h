@@ -214,6 +214,13 @@ private:
 
     float get_weighted_coefficient(const Batch&) const;
 
+    // training_samples / batch_samples. The optimizer averages the per-batch
+    // errors, so an error normalized by a whole-training-set constant has to
+    // carry this factor or the epoch value comes out divided by the batch
+    // count. get_weighted_coefficient is this same factor over the
+    // normalization coefficient.
+    float get_batch_scale(const Batch&) const;
+
     void calculate_layers_error_gradient(const Batch&,
                                          ForwardPropagation&,
                                          BackPropagation&) const;

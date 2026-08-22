@@ -275,12 +275,14 @@ void binary_cross_entropy(const TensorView& input, const TensorView& target, flo
     const MatrixMap outputs = input.as_matrix();
     const MatrixMap targets = target.as_matrix();
 
-    const auto clamped_outputs = outputs.array().cwiseMax(EPSILON).cwiseMin(1.0f - EPSILON);
-
-    error = -(targets.array() * clamped_outputs.log() + (1.0f - targets.array()) * (1.0f - clamped_outputs).log()).sum()
+    // The same epsilon-shifted logs the CUDA kernel and the CPU gradient use,
+    // so error and gradient are evaluated on one function on both devices. The
+    // NaN was previously reported as a finite 10.0, which the optimizer took
+    // for a valid batch and kept stepping on, while the GPU produced a NaN and
+    // the batch was skipped: identical inputs, different early stopping.
+    error = -(targets.array() * (outputs.array() + EPSILON).log()
+            + (1.0f - targets.array()) * (1.0f - outputs.array() + EPSILON).log()).sum()
             / to_type(samples_number);
-
-    if (isnan(error) || isinf(error)) error = 10.0f;
 }
 
 void categorical_cross_entropy(const TensorView& input, const TensorView& target, float& error,
@@ -300,9 +302,9 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
     const MatrixMap outputs = input.as_matrix();
     const MatrixMap targets = target.as_matrix();
 
+    // No NaN mask, for the same reason as the binary case above: a diverged
+    // network has to reach the optimizer's NaN handling, not arrive as 10.0.
     error = (targets.array() * (outputs.array() + EPSILON).log()).sum() / to_type(-samples_number);
-
-    if (isnan(error) || isinf(error)) error = 10.0f;
 }
 
 void cross_entropy(const TensorView& input, const TensorView& target, float& error,

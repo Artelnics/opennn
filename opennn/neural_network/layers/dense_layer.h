@@ -108,6 +108,10 @@ public:
     void reset_drelu_fusion();
     bool drelu_fusion_wired() const { return combination.drelu_source != nullptr; }
 
+    // The producer this layer's DReLU fusion made changes to, so that
+    // reset_drelu_fusion can undo both halves rather than only its own.
+    Dense* drelu_producer = nullptr;
+
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
     void on_loaded() override { configure_operators(); }

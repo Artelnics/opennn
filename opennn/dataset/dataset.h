@@ -123,7 +123,11 @@ public:
     Shape get_shape(VariableRole) const;
     Shape get_shape(string_view role) const { return get_shape(string_to_variable_role(role)); }
 
-    void get_batches(const vector<Index>&, Index, bool, vector<vector<Index>>&) const;
+    // The last parameter, when given, shuffles with a generator seeded from it
+    // instead of the shared global one - required when the call runs on a
+    // helper thread (see Optimizer::train's next-epoch prefetch).
+    void get_batches(const vector<Index>&, Index, bool, vector<vector<Index>>&,
+                     optional<unsigned> shuffle_seed = nullopt) const;
 
     const vector<vector<string>>& get_data_file_preview() const noexcept { return data_file_preview; }
 
@@ -324,6 +328,18 @@ protected:
     void samples_from_JSON(const Json*);
     virtual void resize_data_from_JSON(Index) {}
     virtual void on_used_samples_changed() {}
+
+    // BinaryFile storage empties `data` and streams rows from the cache
+    // instead, but get_samples_number() still reports the full count, so an
+    // analysis method that loops the samples and indexes `data` dereferenced a
+    // null Eigen buffer - silently, since eigen_assert is compiled out in
+    // release. Anything that reads the matrix directly says so here first.
+    void require_in_memory_data(string_view what) const
+    {
+        throw_if(storage_mode == StorageMode::BinaryFile,
+                 "{} is not available with BinaryFile storage; it needs the data matrix in memory.",
+                 what);
+    }
 
     StorageMode storage_mode = StorageMode::Matrix;
 

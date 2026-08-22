@@ -196,9 +196,16 @@ void Dense::configure_operators()
     const bool fuse_relu = (activation_operator.activation_function == ActivationFunction::ReLU)
                            && !batch_norm.active();
 
+    // CUDA-only: the fusion is the cuBLASLt GELU_AUX_BIAS epilogue, which writes
+    // the activated result to a second slot. The CPU combination has no such
+    // epilogue and would leave that slot untouched while the activation operator
+    // skipped its pass, so the layer would output zeros. configure_operators runs
+    // again from on_compute_dtype_changed, which compile() calls after
+    // set_compute_device, so the flag is correct by the time the arena is planned.
     const bool fuse_gelu_tanh = (activation_operator.activation_function == ActivationFunction::GELUTanh)
                                 && !batch_norm.active()
-                                && output_features % 8 == 0;
+                                && output_features % 8 == 0
+                                && get_compute_device() == Device::CUDA;
 
     // A single-output layer - a classifier head, a regression output - runs its
     // combination as a row-wise reduction on CUDA, and that kernel can carry
@@ -263,6 +270,7 @@ bool Dense::try_wire_drelu_fusion(Dense& producer, Index producer_layer)
     producer.activation_operator.backward_fused_by_consumer = true;
     combination.drelu_source = &producer.combination;
     combination.drelu_source_layer = producer_layer;
+    drelu_producer = &producer;
     return true;
 }
 
@@ -294,6 +302,17 @@ void Dense::reset_single_output_relu_fusion()
 
 void Dense::reset_drelu_fusion()
 {
+    // The producer half is cleared too. Reconfiguring only the consumer used to
+    // leave the producer still emitting its ReLU mask and still believing a
+    // consumer would apply the ReLU backward for it - so that derivative was
+    // simply dropped and the producer's gradient came out wrong.
+    if (drelu_producer)
+    {
+        drelu_producer->combination.emit_relu_mask = false;
+        drelu_producer->activation_operator.backward_fused_by_consumer = false;
+        drelu_producer = nullptr;
+    }
+
     combination.emit_relu_mask = false;
     combination.relu_mask_fusion_disabled = false;
     combination.drelu_source = nullptr;

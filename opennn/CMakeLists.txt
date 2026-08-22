@@ -11,6 +11,8 @@ list(FILTER HEADER_FILES EXCLUDE REGEX "-DESKTOP-[^/\\\\]*\\.h$")
 option(OpenNN_BUILD_VISION "Build vision/seq layers, networks, and datasets" ON)
 option(OpenNN_ENABLE_MKL "Use Intel MKL as Eigen BLAS/LAPACK backend" OFF)
 set(OpenNN_MKL_ROOT "" CACHE PATH "Intel MKL root prefix (e.g. /opt/intel/oneapi/mkl/latest or extracted /usr prefix)")
+option(OpenNN_ENABLE_ONEDNN "Use oneDNN optimized CPU recurrent primitives" OFF)
+set(OpenNN_ONEDNN_ROOT "" CACHE PATH "oneDNN prefix (for example /usr or an extracted package root/usr)")
 
 if(NOT OpenNN_BUILD_VISION)
     set(_opennn_vision_pattern
@@ -166,10 +168,44 @@ if(OpenNN_ENABLE_MKL)
     message(STATUS "OpenNN: MKL backend via MKLConfig.cmake (${MKL_ROOT})")
 endif()
 
+if(OpenNN_ENABLE_ONEDNN)
+    find_path(OpenNN_ONEDNN_INCLUDE_DIR
+        NAMES oneapi/dnnl/dnnl.hpp
+        HINTS "${OpenNN_ONEDNN_ROOT}/include")
+    find_library(OpenNN_ONEDNN_LIBRARY
+        NAMES dnnl
+        HINTS
+            "${OpenNN_ONEDNN_ROOT}/lib"
+            "${OpenNN_ONEDNN_ROOT}/lib64"
+            "${OpenNN_ONEDNN_ROOT}/lib/x86_64-linux-gnu")
+    if(NOT OpenNN_ONEDNN_INCLUDE_DIR OR NOT OpenNN_ONEDNN_LIBRARY)
+        message(FATAL_ERROR
+            "OpenNN_ENABLE_ONEDNN=ON but oneDNN headers or library were not found. "
+            "Set OpenNN_ONEDNN_ROOT to the oneDNN installation prefix.")
+    endif()
+
+    target_compile_definitions(opennn PRIVATE OPENNN_HAS_ONEDNN)
+    target_include_directories(opennn SYSTEM PRIVATE "${OpenNN_ONEDNN_INCLUDE_DIR}")
+    target_link_libraries(opennn PUBLIC "${OpenNN_ONEDNN_LIBRARY}")
+    message(STATUS "OpenNN: oneDNN CPU recurrent backend (${OpenNN_ONEDNN_LIBRARY})")
+endif()
+
 if(APPLE)
     target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
 elseif(OpenMP_FOUND)
-    target_compile_options(opennn PRIVATE ${OpenMP_CXX_FLAGS})
+    # MSVC's plain -openmp is OpenMP 2.0 and rejects `#pragma omp simd` with
+    # C7660, which stops the whole build the first time a kernel uses one.
+    # -openmp:experimental is the same runtime plus the OpenMP 3/4 constructs,
+    # and it replaces -openmp rather than joining it - so the imported target's
+    # interface flag is patched too, or the plain one would arrive after this
+    # one on every command line and win.
+    if(MSVC)
+        target_compile_options(opennn PRIVATE -openmp:experimental)
+        set_property(TARGET OpenMP::OpenMP_CXX PROPERTY INTERFACE_COMPILE_OPTIONS
+            "$<$<COMPILE_LANGUAGE:CXX>:-openmp:experimental>")
+    else()
+        target_compile_options(opennn PRIVATE ${OpenMP_CXX_FLAGS})
+    endif()
 
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         target_link_options(opennn PUBLIC -fopenmp)

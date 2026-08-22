@@ -136,7 +136,10 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
     }
 
     TensorView&       scratch     = forward_slots[scratch_slot];
-    TensorView        scratch_2d  = scratch.reshape_prefix({rows, input_features});
+    // The scratch holds the GEMM OUTPUT, so its width is the projected width,
+    // not the input width - the interleaved branch above already spells that
+    // out. They coincide only for a square projection.
+    TensorView        scratch_2d  = scratch.reshape_prefix({rows, heads_number * head_dimension});
     const TensorView  scratch_4d  = scratch.reshape_prefix(
         {batch_size, seq_len, heads_number, head_dimension});
 
@@ -171,7 +174,7 @@ void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_pro
         {batch_size, seq_len, heads_number, head_dimension});
     const TensorView  output_delta_2d = interleaved
         ? head_delta.reshape({rows, heads_number * head_dimension})
-        : scratch.reshape_prefix({rows, input_features});
+        : scratch.reshape_prefix({rows, heads_number * head_dimension});
 
     if (!interleaved) concatenate_heads(head_delta, scratch_4d);
 

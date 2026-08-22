@@ -181,10 +181,14 @@ TEST(BatchNormalizationOperatoreratorTest, ForwardInferenceUsesRunningStatistics
 }
 
 // Batch norm only means anything if inference reproduces training. Drive the
-// running statistics onto a fixed batch, and the two modes must then agree: the
-// batch statistics they each normalize by are the same numbers. This caught an
-// inference epsilon of 1e-2 against training's 1e-5, which shrank every channel
-// whose variance was near or below it - here to 50-66% of its trained value.
+// running statistics onto a fixed batch and the two modes must then agree - to
+// within one known factor: the running variance is Bessel-corrected (the cuDNN
+// and PyTorch convention) while training normalizes by the biased batch
+// variance, so inference divides by sqrt(M/(M-1)) more and the outputs differ
+// by exactly 1 - sqrt((M-1)/M). Anything beyond that is a real divergence; this
+// caught an inference epsilon of 1e-2 against training's 1e-5, which shrank
+// every channel whose variance was near or below it to 50-66% of its trained
+// value - two orders of magnitude above the tolerance below.
 TEST(BatchNormalizationOperatoreratorTest, InferenceMatchesTrainingOnConvergedStatistics)
 {
     const Index batch_size = 32, inputs_number = 5, outputs_number = 4;
@@ -214,7 +218,12 @@ TEST(BatchNormalizationOperatoreratorTest, InferenceMatchesTrainingOnConvergedSt
 
     const float divergence = (inference_output - training_output).cwiseAbs().maxCoeff() / scale;
 
-    EXPECT_LT(divergence, 1.0e-2f);
+    // The Bessel factor alone, with room for float noise and for gamma/beta
+    // spreading it unevenly across channels.
+    const float bessel_divergence =
+        1.0f - sqrt(float(batch_size - 1) / float(batch_size));
+
+    EXPECT_LT(divergence, 2.0f * bessel_divergence);
 }
 
 TEST(BatchNormalizationOperatoreratorTest, InferenceIsDeterministicAcrossRows)
@@ -245,12 +254,14 @@ TEST(BatchNormalizationOperatoreratorTest, InferenceIsDeterministicAcrossRows)
     }
 }
 
-// The running variance takes the BIASED batch variance, with no Bessel
-// correction. Most frameworks apply M/(M-1) here and OpenNN does not, so the
-// convention is easy to "correct" by mistake - and since inference reproduces
-// training only when both sides agree, changing it silently rescales the output
-// of every model already saved to disk. Nothing else in the suite pinned it.
-TEST(BatchNormalizationOperatoreratorTest, RunningVarianceUsesBiasedEstimate)
+// The running variance takes the SAMPLE (Bessel-corrected) batch variance, the
+// convention cuDNN stores, the library's own GPU kernel applies and every other
+// framework uses. The CPU folded in the biased variance until 2026-08-22, so the
+// same model trained on the two devices inferred differently by M/(M-1); cuDNN's
+// side cannot be changed, so the CPU moved. Pinned here because the convention
+// is invisible in any single-device run and a model saved before that date
+// reloads with a running variance scaled by (M-1)/M.
+TEST(BatchNormalizationOperatoreratorTest, RunningVarianceUsesSampleEstimate)
 {
     const Index batch_size = 8;
     const Index features   = 3;
@@ -310,9 +321,9 @@ TEST(BatchNormalizationOperatoreratorTest, RunningVarianceUsesBiasedEstimate)
         const float bessel   = (1.0f - momentum) + momentum * normalizing_variance
                              * float(batch_size) / float(batch_size - 1);
 
-        EXPECT_NEAR(observed, biased, 1.0e-3f);
+        EXPECT_NEAR(observed, bessel, 1.0e-3f * max(1.0f, abs(bessel)));
         ASSERT_GT(abs(bessel - biased), 1.0e-2f) << "variance too small to tell the conventions apart";
-        EXPECT_GT(abs(observed - bessel), 1.0e-2f) << "running variance is Bessel-corrected";
+        EXPECT_GT(abs(observed - biased), 1.0e-2f) << "running variance is not the biased estimate";
     }
 }
 

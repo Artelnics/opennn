@@ -91,7 +91,8 @@ vector<Index> Dataset::get_used_sample_indices() const
 void Dataset::get_batches(const vector<Index>& sample_indices,
                           Index batch_size,
                           bool shuffle,
-                          vector<vector<Index>>& batches) const
+                          vector<vector<Index>>& batches,
+                          optional<unsigned> shuffle_seed) const
 {
     const Index samples_number = sample_indices.size();
 
@@ -110,7 +111,8 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
     if (shuffle)
     {
         shuffled_indices = sample_indices;
-        shuffle_vector(shuffled_indices);
+        if (shuffle_seed) shuffle_vector_seeded(shuffled_indices, *shuffle_seed);
+        else              shuffle_vector(shuffled_indices);
     }
 
     const vector<Index>& indices = shuffle ? shuffled_indices : sample_indices;
@@ -247,6 +249,13 @@ void Dataset::set_sample_roles(SampleRole role_type)
 
 void Dataset::set_sample_role(const Index index, SampleRole new_role)
 {
+    // Bounds-checked like the variable-side siblings: samples_from_JSON feeds
+    // these setters straight from file text, so a role list longer than
+    // SamplesNumber wrote past the end of the vector.
+    throw_if(index < 0 || index >= ssize(sample_roles),
+             "Dataset::set_sample_role: sample index {} is out of range for {} samples.",
+             index, ssize(sample_roles));
+
     const bool used_samples_changed = (sample_roles[index] == SampleRole::None)
                                    != (new_role == SampleRole::None);
     sample_roles[index] = new_role;
@@ -255,6 +264,10 @@ void Dataset::set_sample_role(const Index index, SampleRole new_role)
 
 void Dataset::set_sample_roles(const vector<string>& new_roles)
 {
+    throw_if(ssize(new_roles) != ssize(sample_roles),
+             "Dataset::set_sample_roles: {} roles given for {} samples.",
+             ssize(new_roles), ssize(sample_roles));
+
     bool used_samples_changed = false;
     for (Index i = 0; i < ssize(new_roles); ++i)
     {
@@ -271,6 +284,10 @@ void Dataset::set_sample_roles(const vector<Index>& indices, SampleRole role_typ
     bool used_samples_changed = false;
     for (const auto& i : indices)
     {
+        throw_if(i < 0 || i >= ssize(sample_roles),
+                 "Dataset::set_sample_roles: sample index {} is out of range for {} samples.",
+                 i, ssize(sample_roles));
+
         used_samples_changed |= (sample_roles[i] == SampleRole::None)
                               != (role_type == SampleRole::None);
         sample_roles[i] = role_type;
@@ -280,6 +297,8 @@ void Dataset::set_sample_roles(const vector<Index>& indices, SampleRole role_typ
 
 VectorI Dataset::filter_data(const VectorR& minimums, const VectorR& maximums)
 {
+    require_in_memory_data("Dataset::filter_data");
+
     const vector<Index> used_feature_indices = get_used_feature_indices();
     const vector<Index> used_sample_indices = get_used_sample_indices();
 
@@ -547,7 +566,10 @@ vector<Variable> Dataset::get_variables(VariableRole role_type) const
 
 Index Dataset::get_features_number() const
 {
-    return accumulate(variables.begin(), variables.end(), 0,
+    // Index(0), not 0: accumulate takes its accumulator type from the initial
+    // value, so every partial sum was narrowed to int. The role overload below
+    // already gets this right.
+    return accumulate(variables.begin(), variables.end(), Index(0),
                       [](Index sum, const Variable& var) { return sum + var.get_feature_count(); });
 }
 
@@ -816,10 +838,15 @@ void Dataset::preview_data_to_JSON(JsonWriter &printer) const
     const vector<string> vector_data_file_preview = convert_string_vector(data_file_preview, ",");
 
     printer.begin_array("Row");
-    for (const string& row_text : vector_data_file_preview)
+    for (Index i = 0; i < ssize(data_file_preview); ++i)
     {
         printer.begin_array_object();
-        add_json_field(printer, "Text", row_text);
+        // "Text" stays for readers that already expect it, but it joins the
+        // cells with a comma and so cannot survive a cell that contains one -
+        // a decimal comma, or any quoted field in a semicolon file. "Cells"
+        // carries them separately and is what the reader below prefers.
+        add_json_field(printer, "Text", vector_data_file_preview[size_t(i)]);
+        add_json_field(printer, "Cells", json_array(data_file_preview[size_t(i)]));
         printer.end_array_object();
     }
     printer.end_array();
@@ -870,6 +897,14 @@ void Dataset::preview_data_from_JSON(const Json *preview_data_element)
 
     for_json_items(preview_data_element, "Row", size_t(preview_size), [&](Index i, const Json* row)
     {
+        // Prefer the cell array; fall back to splitting the legacy joined text
+        // so files written before it existed still load.
+        if (row && row->find("Cells"))
+        {
+            data_file_preview[i] = read_json_strings(row, "Cells");
+            return;
+        }
+
         const string text = read_json_string(row, "Text");
         if (!text.empty())
             data_file_preview[i] = get_tokens(text, ",");

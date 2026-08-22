@@ -316,10 +316,20 @@ optional<uint32_t> next_utf8_codepoint(string_view text, size_t& position)
 
     uint32_t codepoint = length == 1 ? lead : (lead & (0xFFu >> (length + 1)));
 
-    if (length == 1 || start + length > text.size())
+    if (length == 1)
     {
         ++position;
         return codepoint;
+    }
+
+    // Truncated at the end of the text: return the lead BYTE, as the
+    // invalid-continuation branch below already does. Returning `codepoint`
+    // handed back the lead's masked payload bits instead - a different, and
+    // meaningless, character.
+    if (start + length > text.size())
+    {
+        ++position;
+        return lead;
     }
 
     for (size_t k = 1; k < length; ++k)

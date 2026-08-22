@@ -30,9 +30,12 @@ void CsvReader::parse(Result& out, const string_view content) const
         line_start = line_end + 1;
 
         if (!line.empty() && line.back() == '\r') line.remove_suffix(1);
-        line = trim_view(line);
-
-        if (line.empty()) continue;
+        // Only the carriage return is stripped above. trim_view also eats tabs
+        // and spaces, which ARE the separator for a TSV or space-separated file,
+        // so trimming the line silently dropped its leading and trailing empty
+        // fields and the row then failed the column count. Blankness is still
+        // judged on the trimmed view.
+        if (trim_view(line).empty()) continue;
 
         if (line_validator) line_validator(line);
 

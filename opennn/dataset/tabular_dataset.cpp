@@ -122,7 +122,33 @@ bool TabularDataset::has_nan() const
 
 bool TabularDataset::has_nan_row(Index row_index) const { return data.row(row_index).array().isNaN().any(); }
 
-VectorI TabularDataset::count_nans_per_variable() const { return data.array().isNaN().cast<Index>().colwise().sum(); }
+// One entry per variable, matching what read_csv counts and what
+// missing_values_to_JSON writes. The per-feature-column sum this used to
+// return gave a categorical variable one entry per one-hot column - so the same
+// missing value was counted once per category, and the vector changed length
+// depending on which of the two writers had run last.
+VectorI TabularDataset::count_nans_per_variable() const
+{
+    const VectorI per_column = data.array().isNaN().cast<Index>().colwise().sum();
+
+    VectorI per_variable = VectorI::Zero(ssize(variables));
+
+    Index column = 0;
+
+    for (Index i = 0; i < ssize(variables); ++i)
+    {
+        const Index feature_count = variables[size_t(i)].get_feature_count();
+
+        // Every one-hot column of a categorical is NaN together, so the first
+        // column of the variable already carries its count.
+        if (feature_count > 0 && column < per_column.size())
+            per_variable(i) = per_column(column);
+
+        column += feature_count;
+    }
+
+    return per_variable;
+}
 
 Index TabularDataset::count_rows_with_nan() const { return data.array().isNaN().rowwise().any().count(); }
 
@@ -679,11 +705,20 @@ vector<string> TabularDataset::unuse_collinear_variables(const float maximum_cor
         unused_variables.push_back(variable.name);
     }
 
+    // The cached input/target shapes are separate from the roles, and every
+    // other unuse_* resyncs them here. Skipping it left get_shape("Input")
+    // reporting more features than get_feature_indices returns, so Batch::set
+    // sized the input slot for a width fill_inputs no longer writes.
+    resize_input_shape(get_features_number(VariableRole::Input));
+    set_shape(VariableRole::Target, { get_features_number(VariableRole::Target) });
+
     return unused_variables;
 }
 
 vector<Histogram> TabularDataset::calculate_variable_distributions(const Index bins_number) const
 {
+    require_in_memory_data("TabularDataset::calculate_variable_distributions");
+
     const Index used_variables_number = get_used_variables_number();
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const Index used_samples_number = used_sample_indices.size();
@@ -773,6 +808,8 @@ vector<Histogram> TabularDataset::calculate_variable_distributions(const Index b
 
 vector<BoxPlot> TabularDataset::calculate_variables_box_plots() const
 {
+    require_in_memory_data("TabularDataset::calculate_variables_box_plots");
+
     const Index variables_number = get_variables_number();
 
     const vector<Index> used_sample_indices = get_used_sample_indices();
@@ -934,6 +971,7 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
     if (display) cout << "Calculating " << method_name << " inputs correlations..." << "\n";
 
     const vector<Index> input_variable_indices = get_variable_indices(VariableRole::Input);
+    const vector<Index> used_sample_indices = get_used_sample_indices();
 
     const Index input_variables_number = input_variable_indices.size();
 
@@ -943,7 +981,11 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
     {
         if (display) cout << "Correlation " << i + 1 << " of " << input_variables_number << "\n";
 
-        const MatrixR input_i = get_variable_data(input_variable_indices[i]);
+        // Restricted to the used samples, as the input-target twin already is.
+        // Reading every row meant samples excluded by filtering, Tukey cleaning
+        // or the user still steered the collinearity analysis while being
+        // absent from the relevance one.
+        const MatrixR input_i = get_variable_data(input_variable_indices[i], used_sample_indices);
 
         if (is_constant(input_i)) continue;
 
@@ -952,7 +994,7 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
 
         for (Index j = i + 1; j < input_variables_number; ++j)
         {
-            const MatrixR input_j = get_variable_data(input_variable_indices[j]);
+            const MatrixR input_j = get_variable_data(input_variable_indices[j], used_sample_indices);
 
             correlations(i, j) = correlation_function(input_i, input_j);
 
@@ -1341,6 +1383,8 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
 
 VectorI TabularDataset::calculate_target_distribution() const
 {
+    require_in_memory_data("TabularDataset::calculate_target_distribution");
+
     const Index samples_number = get_samples_number();
     const Index targets_number = get_features_number(VariableRole::Target);
     const vector<Index> target_feature_indices = get_feature_indices(VariableRole::Target);
@@ -1383,6 +1427,8 @@ VectorI TabularDataset::calculate_target_distribution() const
 
 vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float cleaning_parameter, bool replace_with_nan)
 {
+    require_in_memory_data("TabularDataset::calculate_Tukey_outliers");
+
     const Index samples_number = get_used_samples_number();
     const vector<Index> sample_indices = get_used_sample_indices();
 
@@ -1469,7 +1515,9 @@ void TabularDataset::set_data_binary_classification()
 
     set_data_random();
 
-#pragma omp parallel for
+    // Serial on purpose: random_bool() draws from one mutex-guarded generator,
+    // so a parallel loop both contends on the lock and makes the draw order -
+    // and therefore a seeded run - depend on thread scheduling.
     for (Index i = 0; i < samples_number; ++i)
         data(i, features_number - 1) = float(random_bool());
 
@@ -1819,8 +1867,13 @@ void TabularDataset::read_csv()
         variable.scaler = previous->scaler;
     }
 
-    sample_roles.resize(size_t(samples_number), SampleRole::Training);
-    sample_ids.resize(size_t(samples_number));
+    // assign, not resize: re-reading a file into a live dataset is supported
+    // (the variable roles and scalers are restored by name just above), but
+    // resize keeps the existing elements, so rows another file had marked None
+    // stayed None here and never trained. Binary mode re-marks incomplete rows
+    // below as it always did.
+    sample_roles.assign(size_t(samples_number), SampleRole::Training);
+    sample_ids.assign(size_t(samples_number), {});
 
     const vector<vector<Index>> all_feature_indices =
         get_feature_indices();
@@ -2424,6 +2477,8 @@ void TabularDataset::unuse_samples_with_missing_targets(const vector<Index>& sam
 
 void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& method)
 {
+    require_in_memory_data("TabularDataset::impute_missing_values_statistic");
+
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const vector<Index> used_feature_indices = get_used_feature_indices();
     const vector<Index> target_feature_indices = get_feature_indices(VariableRole::Target);
@@ -2502,6 +2557,8 @@ void TabularDataset::reuse_input_incomplete_rows_binary()
 
 void TabularDataset::impute_missing_values_interpolate()
 {
+    require_in_memory_data("TabularDataset::impute_missing_values_interpolate");
+
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const vector<Index> input_feature_indices = get_feature_indices(VariableRole::Input);
     const vector<Index> target_feature_indices = get_feature_indices(VariableRole::Target);
@@ -2516,15 +2573,20 @@ void TabularDataset::impute_missing_values_interpolate()
 
             if (!isnan(data(current_sample, current_variable))) continue;
 
-            Index left_sample_index = 0, right_sample_index = 0;
-            float current_sample_position = 0.0f, interpolated_value = 0.0f, left_value = 0.0f, right_value = 0.0f;
+            // "No neighbour" and "the neighbour is sample 0 holding 0.0" used
+            // to be the same state, so a leading NaN was interpolated against a
+            // phantom point at the origin and a trailing one was extrapolated
+            // towards zero. Optional keeps them apart: two neighbours
+            // interpolate, one is carried across, none leaves the NaN for
+            // unuse_samples_with_missing_targets to deal with.
+            optional<pair<Index, float>> left;
+            optional<pair<Index, float>> right;
 
             for (Index k = i - 1; k >= 0; k--)
             {
                 if (isnan(data(used_sample_indices[k], current_variable))) continue;
 
-                left_sample_index = used_sample_indices[k];
-                left_value = data(left_sample_index, current_variable);
+                left = {used_sample_indices[k], data(used_sample_indices[k], current_variable)};
                 break;
             }
 
@@ -2532,19 +2594,23 @@ void TabularDataset::impute_missing_values_interpolate()
             {
                 if (isnan(data(used_sample_indices[k], current_variable))) continue;
 
-                right_sample_index = used_sample_indices[k];
-                right_value = data(right_sample_index, current_variable);
+                right = {used_sample_indices[k], data(used_sample_indices[k], current_variable)};
                 break;
             }
 
-            if (right_sample_index != left_sample_index)
+            if (!left && !right) continue;
+
+            float interpolated_value = 0.0f;
+
+            if (left && right && right->first != left->first)
             {
-                current_sample_position = float(current_sample);
-                interpolated_value = left_value + (current_sample_position - left_sample_index) * (right_value - left_value) / (right_sample_index - left_sample_index);
+                const float span = float(right->first - left->first);
+                interpolated_value = left->second
+                    + (float(current_sample) - float(left->first)) * (right->second - left->second) / span;
             }
             else
             {
-                interpolated_value = left_value;
+                interpolated_value = left ? left->second : right->second;
             }
 
             data(current_sample, current_variable) = interpolated_value;

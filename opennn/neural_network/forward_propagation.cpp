@@ -1166,8 +1166,11 @@ void ForwardPropagation::inherit_valid_lengths(const size_t layer)
 {
     if (layer >= valid_lengths.size()) return;
 
-    // An Embedding writes its own record while it runs; nothing overwrites it.
-    if (!valid_lengths[layer].empty() || device_valid_lengths[layer]) return;
+    // Re-inherited on every pass. The copy used to be taken once and then kept
+    // forever, so a second batch with different padding left every layer below
+    // the first consumer masking against the first batch's lengths. An
+    // Embedding overwrites its own entry as it runs, and its source is a
+    // network input, so it is unaffected by re-inheriting here.
 
     const vector<Index>* source_lengths = input_valid_lengths(layer, 0);
     const int* device_source_lengths = input_device_valid_lengths(layer, 0);

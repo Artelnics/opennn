@@ -153,9 +153,6 @@ Index sample_token_with_workspace(VectorR& probabilities,
 
     const SamplingConfig config = clamp_sampling(sampling_config);
 
-    if (config.temperature == 0.0f)
-        return maximal_index(probabilities);
-
     VectorR& original = workspace.original;
     vector<pair<float, Index>>& ranked = workspace.ranked;
     vector<char>& keep = workspace.keep;
@@ -165,6 +162,14 @@ Index sample_token_with_workspace(VectorR& probabilities,
         for (const Index token : history)
             if (token >= 0 && token < vocabulary_size)
                 probabilities(token) /= config.repetition_penalty;
+
+    // The greedy exit comes after the penalty, not before it. Returning the raw
+    // argmax first meant temperature 0 ignored repetition_penalty entirely and
+    // looped on the same token, while DecoderSampler - the other sampler in
+    // this file, used by the generic sessions - penalised first and then took
+    // the argmax. Same config, two behaviours.
+    if (config.temperature == 0.0f)
+        return maximal_index(probabilities);
 
     if (config.temperature != 1.0f)
     {

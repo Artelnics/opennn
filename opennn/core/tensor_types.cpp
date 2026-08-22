@@ -82,7 +82,19 @@ void TensorView::fill(float value) const
     if (uses_cuda_fill(*this))
         return fill_cuda(*this, value);
 
-    assert(type == Type::FP32);
+    // byte_size() is dtype-aware; size() is a float count. Zeroing through the
+    // byte count is correct for every dtype, and a non-zero fill of a narrow
+    // type now says so instead of writing twice or four times its storage
+    // behind an assert that Release compiles away.
+    if (value == 0.0f)
+    {
+        memset(data, 0, size_t(byte_size()));
+        return;
+    }
+
+    throw_if(type != Type::FP32,
+             "TensorView::fill: a non-zero fill requires FP32 storage.");
+
     float* values = static_cast<float*>(data);
     std::fill(values, values + size(), value);
 }

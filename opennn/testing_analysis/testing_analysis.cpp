@@ -229,19 +229,28 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
 vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives() const
 {
 
-    const Index outputs_number = neural_network->get_outputs_number();
+    // calculate_error_data() runs check(), so it comes before anything that
+    // dereferences the network or the dataset.
+    const Tensor3 error_data = calculate_error_data();
 
-    const Index testing_samples_number = dataset->get_samples_number(SampleRole::Testing);
+    const Index testing_samples_number = error_data.dimension(0);
+    const Index outputs_number = error_data.dimension(2);
+
     vector<vector<Descriptives>> descriptives(outputs_number);
 
-    Tensor3 error_data = calculate_error_data();
-
-    const Index stride = testing_samples_number * 3;
-
+    // error_data is row-major and shaped (samples, 3, outputs), so one output's
+    // three error columns are strided by outputs_number, not a contiguous block
+    // of samples*3 floats. Mapping it as a block read the wrong elements for
+    // every multi-output network, and left the map unaligned besides.
     for (Index i = 0; i < outputs_number; ++i)
     {
-        const MatrixMap matrix_error(error_data.data() + i * stride, testing_samples_number, 3);
-        descriptives[i] = opennn::descriptives(MatrixR(matrix_error));
+        MatrixR matrix_error(testing_samples_number, 3);
+
+        for (Index sample = 0; sample < testing_samples_number; ++sample)
+            for (Index column = 0; column < 3; ++column)
+                matrix_error(sample, column) = error_data(sample, column, i);
+
+        descriptives[i] = opennn::descriptives(matrix_error);
     }
 
     return descriptives;
@@ -282,11 +291,15 @@ VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
         (targets.rowwise() - targets_mean.transpose()).squaredNorm();
     errors(3) = sum_squared / (2.0f * (normalization_coefficient + EPSILON));
 
+    // Normalized by the sample count like its four siblings. It used to divide
+    // by the member batch_size - the inference chunk size, zero by default - so
+    // the Minkowski error came back infinite unless a batch size happened to be
+    // set, and wrong by the chunk-to-sample ratio when one was.
     const float p = 1.5f;
     errors(4) = (outputs.array() - targets.array())
                     .abs()
                     .pow(p)
-                    .sum() / static_cast<float>(batch_size);
+                    .sum() / float(samples_number);
 
     return errors;
 }
@@ -654,28 +667,30 @@ MatrixR TestingAnalysis::calculate_cumulative_gain(const MatrixR& targets, const
     const VectorR sorted_targets = targets(sorted_indices, 0);
 
     const Index points_number = 21;
-    const float percentage_increment = 0.05f;
+    const Index buckets_number = points_number - 1;
 
     MatrixR cumulative_gain(points_number, 2);
 
     cumulative_gain(0, 0) = 0.0f;
     cumulative_gain(0, 1) = 0.0f;
 
-    float percentage = 0.0f;
+    // The bucket edge is computed exactly rather than accumulated: twenty
+    // additions of 0.05f reach 1.0000001f, which multiplied by the sample count
+    // indexes one past the end above ~8.4M samples. One cursor over the sorted
+    // targets also replaces the rescan-from-zero this loop did per bucket.
+    Index positives = 0;
+    Index next_row = 0;
 
-    for (Index i = 0; i < points_number - 1; ++i)
+    for (Index i = 0; i < buckets_number; ++i)
     {
-        percentage += percentage_increment;
+        const Index maximum_index = min((i + 1) * testing_samples_number / buckets_number,
+                                        testing_samples_number);
 
-        const Index maximum_index = Index(percentage * float(testing_samples_number));
-
-        Index positives = 0;
-
-        for (Index j = 0; j < maximum_index; ++j)
-            if (sorted_targets(j) >= 0.5f)
+        for (; next_row < maximum_index; ++next_row)
+            if (sorted_targets(next_row) >= 0.5f)
                 ++positives;
 
-        cumulative_gain(i + 1, 0) = percentage;
+        cumulative_gain(i + 1, 0) = float(i + 1) / float(buckets_number);
         cumulative_gain(i + 1, 1) = float(positives) / float(total_positives);
     }
 
@@ -780,6 +795,15 @@ Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates(cons
     const Index samples_number = targets.rows();
     const Index targets_number = targets.cols();
 
+    // One column per class is the contract: calculate_confusion turns a single
+    // column into a two-class problem, and the rates tensor built from the
+    // column count would then be 1x1 while the loop below indexes two classes -
+    // writing past the end of the only cell.
+    throw_if(targets_number < 2 || outputs.cols() != targets_number,
+             "TestingAnalysis::calculate_multiple_classification_rates requires one column per class "
+             "(got {} target and {} output columns); use calculate_binary_classification_rates for a single output.",
+             targets_number, outputs.cols());
+
     Tensor< VectorI, 2> multiple_classification_rates(targets_number, targets_number);
 
     const MatrixI confusion = calculate_confusion(targets, outputs);
@@ -866,11 +890,17 @@ VectorR TestingAnalysis::calculate_binary_classification_tests(const MatrixR& ta
 
     const float negative_predictive_value = (tn_plus_fn == 0) ? 0.0f : float(true_negative) / float(tn_plus_fn);
 
-    const Index matthews_denominator_squared = tp_plus_fp * tp_plus_fn * fp_plus_tn * tn_plus_fn;
+    // In double: the product of the four counts passes 2^63 at about 110,000
+    // balanced testing samples, and the signed overflow turned the coefficient
+    // into a NaN just as the test set got big enough to trust.
+    const double matthews_denominator = sqrt(double(tp_plus_fp) * double(tp_plus_fn)
+                                           * double(fp_plus_tn) * double(tn_plus_fn));
 
-    const float Matthews_correlation_coefficient = (matthews_denominator_squared == 0)
+    const float Matthews_correlation_coefficient = (matthews_denominator == 0.0)
                                                       ? 0.0f
-                                                      : float(true_positive * true_negative - false_positive * false_negative) / float(sqrt(matthews_denominator_squared));
+                                                      : float((double(true_positive) * double(true_negative)
+                                                             - double(false_positive) * double(false_negative))
+                                                              / matthews_denominator);
 
     const float informedness = sensitivity + specificity - 1.0f;
 
@@ -922,6 +952,8 @@ void TestingAnalysis::GoodnessOfFitAnalysis::set(const VectorR& new_targets,
 void TestingAnalysis::GoodnessOfFitAnalysis::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
+
+    throw_if(!file.is_open(), "Cannot open file {}.", file_name.string());
 
     file << "Goodness-of-fit analysis\n"
          << "Determination: " << determination << "\n";

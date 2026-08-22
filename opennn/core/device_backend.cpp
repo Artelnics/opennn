@@ -121,8 +121,6 @@ void throw_if_auto(Device device_type)
 void* allocate_cuda(Index byte_count)
 {
 #ifdef OPENNN_HAS_CUDA
-    throw_if(cuda_allocation_growth_forbidden(),
-             "CUDA alloc of {} bytes forbidden (warmup incomplete).", byte_count);
     void* device_pointer = nullptr;
     const cudaError_t cuda_err = cudaMalloc(&device_pointer, static_cast<size_t>(byte_count));
     if (cuda_err != cudaSuccess)
@@ -419,7 +417,7 @@ public:
         return pointer;
     }
 
-    bool give(void* pointer, Index byte_count)
+    bool give(void* pointer, Index byte_count) noexcept
     {
         if (!is_enabled || byte_count <= 0) return false;
 
@@ -436,11 +434,21 @@ public:
         CachedBlock block;
         block.pointer = pointer;
 
-        // Every stream that could hold work touching this block.
-        for (int lane = 0; lane < lanes_available(); ++lane)
-            record_pending(block, lane_stream(lane));
+        // Every stream that could hold work touching this block. If any event
+        // cannot be recorded the block is not safe to hand out again, so it is
+        // refused outright and the caller frees it.
+        bool recorded = true;
 
-        record_pending(block, get_transfer_stream());
+        for (int lane = 0; lane < lanes_available(); ++lane)
+            recorded = record_pending(block, lane_stream(lane)) && recorded;
+
+        recorded = record_pending(block, get_transfer_stream()) && recorded;
+
+        if (!recorded)
+        {
+            recycle_events(block);
+            return false;
+        }
 
         blocks[byte_count].push_back(std::move(block));
         cached_bytes += byte_count;
@@ -508,9 +516,15 @@ private:
         return (megabytes > 0 ? megabytes : Index(512)) * 1024 * 1024;
     }
 
-    void record_pending(CachedBlock& block, cudaStream_t stream)
+    // Reached from ~Buffer, which is noexcept: every CUDA call here is made
+    // directly and its status inspected rather than routed through CHECK_CUDA.
+    // A sticky error (an earlier kernel fault) used to throw out of a
+    // destructor while that very fault was unwinding, and std::terminate
+    // replaced the diagnostic the user needed to see. Returning false instead
+    // lets the caller fall back to cudaFree, whose status is already ignored.
+    bool record_pending(CachedBlock& block, cudaStream_t stream) noexcept
     {
-        if (!stream) return;
+        if (!stream) return true;
 
         cudaEvent_t event = nullptr;
 
@@ -519,13 +533,23 @@ private:
             event = event_pool.back();
             event_pool.pop_back();
         }
-        else
-            event = create_event_handle(cudaEventDisableTiming);
+        else if (cudaEventCreateWithFlags(&event, cudaEventDisableTiming) != cudaSuccess)
+        {
+            cudaGetLastError();
+            return false;
+        }
 
-        if (!event) return;
+        if (!event) return false;
 
-        record_event(event, stream);
+        if (cudaEventRecord(event, stream) != cudaSuccess)
+        {
+            cudaGetLastError();
+            event_pool.push_back(event);
+            return false;
+        }
+
         block.pending_events.push_back(event);
+        return true;
     }
 
     static bool is_ready(const CachedBlock& block)
@@ -544,7 +568,8 @@ private:
                               });
     }
 
-    void recycle_events(CachedBlock& block)
+    // noexcept: reached from give(), which runs inside ~Buffer.
+    void recycle_events(CachedBlock& block) noexcept
     {
         event_pool.insert(event_pool.end(),
                           block.pending_events.begin(), block.pending_events.end());
@@ -578,6 +603,16 @@ void* allocate(Device device_type, Index byte_count)
         if (void* recycled = CudaBlockCache::instance().take(byte_count))
             return recycled;
 
+        // The growth guard is checked here rather than inside allocate_cuda, so
+        // that recycling a cached block stays legal during warmup and capture
+        // while a real cudaMalloc is refused. Inside allocate_cuda the refusal
+        // was a runtime_error indistinguishable from an out-of-memory, so the
+        // catch below flushed the whole block cache - a device-wide
+        // synchronization and a round of cudaFree - purely to re-raise a
+        // diagnostic, and did it in the middle of a stream capture.
+        throw_if(cuda_allocation_growth_forbidden(),
+                 "CUDA alloc of {} bytes forbidden (warmup incomplete).", byte_count);
+
         try
         {
             return allocate_cuda(byte_count);
@@ -596,13 +631,15 @@ void* allocate(Device device_type, Index byte_count)
     return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
 }
 
-void deallocate(Device device_type, void* pointer, Index byte_count)
+// noexcept: every caller is a destructor (Buffer, PinnedBuffer) or a swap on a
+// destruction path, and a release that throws turns a reportable CUDA fault
+// into std::terminate. Device::Auto is a programming error rather than a
+// runtime one, so it is treated as host memory here instead of throwing.
+void deallocate(Device device_type, void* pointer, Index byte_count) noexcept
 {
     if (!pointer) return;
 
     PROFILE_SCOPE_HOST("device:deallocate");
-
-    throw_if_auto(device_type);
 
     if (device_type == Device::CUDA)
     {

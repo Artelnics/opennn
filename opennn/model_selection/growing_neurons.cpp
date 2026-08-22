@@ -217,7 +217,12 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
             {validation_failures >= maximum_validation_failures, StoppingCondition::MaximumValidationFailures,
              format("Epoch {}\nMaximum validation failures reached: {}\n", epoch, validation_failures)},
             {neurons_number >= maximum_neurons, StoppingCondition::MaximumNeurons,
-             format("Epoch {}\nMaximum number of neurons reached: {}\n", epoch, neurons_number)}
+             format("Epoch {}\nMaximum number of neurons reached: {}\n", epoch, neurons_number)},
+            // Last, so a real reason wins the report; without it the loop could
+            // run out and leave the result with no stopping condition, no
+            // elapsed time and an untrimmed history.
+            {epoch + 1 >= maximum_epochs, StoppingCondition::MaximumEpochs,
+             format("Epoch {}\nMaximum number of epochs reached.\n", epoch)}
         });
 
         if (neuron_selection_results.stopping_condition)
@@ -261,6 +266,7 @@ void GrowingNeurons::to_JSON(JsonWriter& printer) const
         {"WarmStart", warm_start},
         {"ValidationErrorGoal", validation_error_goal},
         {"MaximumValidationFailures", maximum_validation_failures},
+        {"MaximumEpochsNumber", maximum_epochs},
         {"MaximumTime", maximum_time},
         {"FoldsNumber", folds_number}
     });
@@ -279,6 +285,11 @@ void GrowingNeurons::from_JSON(const JsonDocument& document)
     set_validation_error_goal(read_json_float_alias(root_element, "ValidationErrorGoal", "SelectionErrorGoal"));
     set_maximum_validation_failures(read_json_index_alias(root_element, "MaximumValidationFailures", "MaximumSelectionFailures"));
     set_maximum_time(read_json_float(root_element, "MaximumTime"));
+
+    // Same key GrowingInputs uses, and guarded so files written before it was
+    // serialized still load.
+    if (root_element->has("MaximumEpochsNumber"))
+        set_maximum_epochs(read_json_index(root_element, "MaximumEpochsNumber"));
 
     if (root_element->has("FoldsNumber"))
         set_folds_number(read_json_index(root_element, "FoldsNumber"));

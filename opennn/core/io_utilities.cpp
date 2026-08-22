@@ -447,7 +447,11 @@ void FileWriter::open(const filesystem::path& tmp_path)
 {
     tmp_path_ = tmp_path;
 
-    filesystem::create_directories(tmp_path.parent_path());
+    // A bare filename has no parent, and create_directories on an empty path
+    // reports an error, so writing "cache.bin" next to the executable threw
+    // before the first byte. The sibling download_if_missing guards the same way.
+    if (tmp_path.has_parent_path())
+        filesystem::create_directories(tmp_path.parent_path());
 
     stream_.open(tmp_path, ios::binary | ios::trunc);
     throw_if(!stream_.is_open(),

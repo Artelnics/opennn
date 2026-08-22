@@ -47,6 +47,14 @@ struct NetworkDifferential
         return floor_value;
     }
 
+    // The Scaling/Unscaling layers treat a degenerate range as a constant
+    // column rather than dividing by a floor: scaling gives 0, unscaling gives
+    // the minimum. Dividing by 1e-12 here instead produced derivatives of order
+    // 1e12, the forward probe failed its own validation, and every dataset with
+    // a constant input column silently fell back to the finite-difference
+    // surrogate - the slowest path in the module.
+    static bool is_degenerate(const float span) { return abs(span) < EPSILON; }
+
     VectorR scale_forward(const LayerSnapshot& layer, const VectorR& in) const
     {
         VectorR out(in.size());
@@ -56,9 +64,9 @@ struct NetworkDifferential
             switch (layer.methods[j])
             {
             case ScalerMethod::None:                  out(j) = x; break;
-            case ScalerMethod::MinimumMaximum:        out(j) = (x - layer.minimum(j)) / guarded(layer.maximum(j) - layer.minimum(j)) * (layer.max_range - layer.min_range) + layer.min_range; break;
-            case ScalerMethod::MeanStandardDeviation: out(j) = (x - layer.mean(j)) / guarded(layer.deviation(j)); break;
-            case ScalerMethod::StandardDeviation:     out(j) = x / guarded(layer.deviation(j)); break;
+            case ScalerMethod::MinimumMaximum:        out(j) = is_degenerate(layer.maximum(j) - layer.minimum(j)) ? 0.0f : (x - layer.minimum(j)) / (layer.maximum(j) - layer.minimum(j)) * (layer.max_range - layer.min_range) + layer.min_range; break;
+            case ScalerMethod::MeanStandardDeviation: out(j) = is_degenerate(layer.deviation(j)) ? 0.0f : (x - layer.mean(j)) / layer.deviation(j); break;
+            case ScalerMethod::StandardDeviation:     out(j) = is_degenerate(layer.deviation(j)) ? 0.0f : x / layer.deviation(j); break;
             case ScalerMethod::Logarithm:             out(j) = log(guarded(x)); break;
             case ScalerMethod::ImageMinMax:           out(j) = x / 255.0f; break;
             }
@@ -73,9 +81,9 @@ struct NetworkDifferential
             switch (layer.methods[j])
             {
             case ScalerMethod::None:                  d(j) = 1.0f; break;
-            case ScalerMethod::MinimumMaximum:        d(j) = (layer.max_range - layer.min_range) / guarded(layer.maximum(j) - layer.minimum(j)); break;
-            case ScalerMethod::MeanStandardDeviation: d(j) = 1.0f / guarded(layer.deviation(j)); break;
-            case ScalerMethod::StandardDeviation:     d(j) = 1.0f / guarded(layer.deviation(j)); break;
+            case ScalerMethod::MinimumMaximum:        d(j) = is_degenerate(layer.maximum(j) - layer.minimum(j)) ? 0.0f : (layer.max_range - layer.min_range) / (layer.maximum(j) - layer.minimum(j)); break;
+            case ScalerMethod::MeanStandardDeviation: d(j) = is_degenerate(layer.deviation(j)) ? 0.0f : 1.0f / layer.deviation(j); break;
+            case ScalerMethod::StandardDeviation:     d(j) = is_degenerate(layer.deviation(j)) ? 0.0f : 1.0f / layer.deviation(j); break;
             case ScalerMethod::Logarithm:             d(j) = 1.0f / guarded(in(j)); break;
             case ScalerMethod::ImageMinMax:           d(j) = 1.0f / 255.0f; break;
             }
@@ -91,7 +99,7 @@ struct NetworkDifferential
             switch (layer.methods[j])
             {
             case ScalerMethod::None:                  out(j) = x; break;
-            case ScalerMethod::MinimumMaximum:        out(j) = (x - layer.min_range) / guarded(layer.max_range - layer.min_range) * (layer.maximum(j) - layer.minimum(j)) + layer.minimum(j); break;
+            case ScalerMethod::MinimumMaximum:        out(j) = is_degenerate(layer.maximum(j) - layer.minimum(j)) ? layer.minimum(j) : (x - layer.min_range) / guarded(layer.max_range - layer.min_range) * (layer.maximum(j) - layer.minimum(j)) + layer.minimum(j); break;
             case ScalerMethod::MeanStandardDeviation: out(j) = x * layer.deviation(j) + layer.mean(j); break;
             case ScalerMethod::StandardDeviation:     out(j) = x * layer.deviation(j); break;
             case ScalerMethod::Logarithm:             out(j) = exp(x); break;
@@ -108,7 +116,7 @@ struct NetworkDifferential
             switch (layer.methods[j])
             {
             case ScalerMethod::None:                  d(j) = 1.0f; break;
-            case ScalerMethod::MinimumMaximum:        d(j) = (layer.maximum(j) - layer.minimum(j)) / guarded(layer.max_range - layer.min_range); break;
+            case ScalerMethod::MinimumMaximum:        d(j) = is_degenerate(layer.maximum(j) - layer.minimum(j)) ? 0.0f : (layer.maximum(j) - layer.minimum(j)) / guarded(layer.max_range - layer.min_range); break;
             case ScalerMethod::MeanStandardDeviation: d(j) = layer.deviation(j); break;
             case ScalerMethod::StandardDeviation:     d(j) = layer.deviation(j); break;
             case ScalerMethod::Logarithm:             d(j) = exp(in(j)); break;

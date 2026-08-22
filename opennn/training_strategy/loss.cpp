@@ -983,9 +983,13 @@ static void for_each_v8_head(const ForwardPropagation& forward_propagation,
     if (on_device)
     {
         tgt_cpu.resize(size_t(target_flat.size()));
-        cudaStreamSynchronize(device::get_compute_stream());
-        cudaMemcpy(tgt_cpu.data(), target_flat.as<float>(),
-                   size_t(target_flat.size()) * sizeof(float), cudaMemcpyDeviceToHost);
+        // Through the device:: helpers, which check every status. These were
+        // bare calls: a failed copy left the staging buffer zero-filled and the
+        // batch then trained on an all-background gradient, silently.
+        device::copy_async(tgt_cpu.data(), target_flat.as<float>(),
+                           Index(target_flat.size()) * Index(sizeof(float)),
+                           device::CopyKind::DeviceToHost, device::get_compute_stream());
+        device::synchronize(device::get_compute_stream());
         tgt = tgt_cpu.data();
     }
 #endif
@@ -1011,8 +1015,10 @@ static void for_each_v8_head(const ForwardPropagation& forward_propagation,
         if (on_device)
         {
             out_cpu.resize(size_t(head_view.size()));
-            cudaMemcpy(out_cpu.data(), head_view.as<float>(),
-                       size_t(head_view.size()) * sizeof(float), cudaMemcpyDeviceToHost);
+            device::copy_async(out_cpu.data(), head_view.as<float>(),
+                               Index(head_view.size()) * Index(sizeof(float)),
+                               device::CopyKind::DeviceToHost, device::get_compute_stream());
+            device::synchronize(device::get_compute_stream());
             head_output = TensorView(out_cpu.data(), head_view.get_shape(), Type::FP32);
         }
 #endif
@@ -1033,9 +1039,14 @@ static void for_each_v8_head(const ForwardPropagation& forward_propagation,
 
 #ifdef OPENNN_HAS_CUDA
         if (back_propagation && on_device)
-            cudaMemcpy(back_propagation->output_deltas[size_t(detection_idx)].as<float>(),
-                       delta_cpu.data(),
-                       size_t(head_view.size()) * sizeof(float), cudaMemcpyHostToDevice);
+            // On the compute stream, which is where the consumer runs. The
+            // synchronous copy went to the legacy stream and was ordered with
+            // the consumer only because lane 0 happens to be a blocking stream.
+            device::copy_async(back_propagation->output_deltas[size_t(detection_idx)].as<float>(),
+                               delta_cpu.data(),
+                               Index(head_view.size()) * Index(sizeof(float)),
+                               device::CopyKind::HostToDevice, device::get_compute_stream());
+            device::synchronize(device::get_compute_stream());
 #endif
     }
 }
@@ -1142,8 +1153,9 @@ void for_each_yolo_head_gpu(const ForwardPropagation& forward_propagation,
         {
             const Index target_bytes = head_target.size() * Index(sizeof(float));
             target_device.grow_to(target_bytes);
-            cudaMemcpyAsync(target_device.as<float>(), head_target.as<float>(),
-                            size_t(target_bytes), cudaMemcpyHostToDevice, device::get_compute_stream());
+            device::copy_async(target_device.as<float>(), head_target.as<float>(),
+                               Index(target_bytes),
+                               device::CopyKind::HostToDevice, device::get_compute_stream());
 
             fn(detection_idx, head_output,
                TensorView(target_device.as<float>(), head_target.get_shape(),
@@ -1166,7 +1178,7 @@ void yolo_error_gpu_accumulate(const ForwardPropagation& forward_propagation,
     const Index values_per_box = 5 + classes_number;
     const Index batch_size = target_flat.get_shape()[0];
 
-    cudaMemsetAsync(error_accum, 0, sizeof(float), device::get_compute_stream());
+    device::set_zero_async(error_accum, Index(sizeof(float)), device::get_compute_stream());
 
     for_each_yolo_head_gpu(forward_propagation, nn, detection_indices, target_flat, target_device,
         [&](Index, const TensorView& head_output, const TensorView& head_target)
@@ -1195,9 +1207,11 @@ Loss::EvaluationResult yolo_error_gpu_multi(const ForwardPropagation& forward_pr
                               detection_indices, head, target_device,
                               error_device.as<float>(), lam);
 
-    cudaStreamSynchronize(device::get_compute_stream());
+    device::synchronize(device::get_compute_stream());
     float total_error = 0.0f;
-    cudaMemcpy(&total_error, error_device.as<float>(), sizeof(float), cudaMemcpyDeviceToHost);
+    device::copy_async(&total_error, error_device.as<float>(), Index(sizeof(float)),
+                       device::CopyKind::DeviceToHost, device::get_compute_stream());
+    device::synchronize(device::get_compute_stream());
 
     return {.error = total_error / float(batch_size)};
 }
@@ -1380,11 +1394,17 @@ void Loss::back_propagate(const Batch& batch,
 
 float Loss::get_weighted_coefficient(const Batch& batch) const
 {
+    return get_batch_scale(batch) / (normalization_coefficient + EPSILON);
+}
+
+float Loss::get_batch_scale(const Batch& batch) const
+{
     const Index total = weighted_samples_number > 0 ? weighted_samples_number
                       : dataset                     ? dataset->get_samples_number("Training")
                                                     : batch.get_batch_size();
     const Index samples = batch.get_batch_size();
-    return float(total) / (float(samples) * (normalization_coefficient + EPSILON));
+
+    return samples > 0 ? float(total) / float(samples) : 1.0f;
 }
 
 #ifndef OPENNN_NO_VISION
@@ -1495,6 +1515,11 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
         break;
     case NormalizedSquaredError:
         normalized_squared_error(input, target, normalization_coefficient, result.error, workspace_device);
+        // Scaled to the whole training set, exactly as WeightedSquaredError is
+        // below: the coefficient is a full-set constant, so without this the
+        // epoch error came out as the true one divided by the batch count and
+        // the validation error was not comparable with it.
+        result.error *= get_batch_scale(batch);
         break;
     case WeightedSquaredError:
         weighted_squared_error(input, target, positives_weight, negatives_weight, result.error, workspace_device);
@@ -1600,7 +1625,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         reduce_dot_and_accumulate(input.size(),
                                   error == MeanSquaredError
                                       ? 1.0f / static_cast<float>(2 * input.get_shape()[0])
-                                      : 1.0f / (normalization_coefficient + EPSILON));
+                                      : get_weighted_coefficient(batch));
         return true;
 
     case WeightedSquaredError:
@@ -1658,7 +1683,29 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
 {
     if (!supports_device_epoch_metrics()) return false;
 
-    if (!calculate_error_device_metrics(batch, forward_propagation, error_sum_device, accuracy_sum_device))
+    bool output_delta_ready = false;
+    if (error == Error::MeanSquaredError && error_sum_device)
+    {
+        const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
+        const TensorView target = batch.get_targets();
+        const TensorView input_delta = back_propagation.get_output_delta();
+
+        if (input.empty() || target.empty() || input_delta.empty()) return false;
+
+        visit_type_pair<Type::FP32, Type::BF16>(
+            input.get_type(), input_delta.get_type(),
+            [&]<typename TIn, typename TOut>()
+            {
+                mean_squared_error_metrics_gradient_cuda<TIn, TOut>(
+                    input.size(), batch.get_batch_size(),
+                    input.as<TIn>(), target.as_float(),
+                    input_delta.as<TOut>(), error_sum_device);
+            });
+        output_delta_ready = true;
+    }
+    else if (!calculate_error_device_metrics(batch, forward_propagation,
+                                              error_sum_device,
+                                              accuracy_sum_device))
         return false;
 
     // See Loss::back_propagate: host-only pointer work, so it stays capture-safe.
@@ -1680,7 +1727,7 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
         cross_entropy_3d_gradient_device_count(input, target, input_delta,
                                                results_device + 1);
     }
-    else
+    else if (!output_delta_ready)
     {
         calculate_output_deltas(batch, forward_propagation, back_propagation);
     }
@@ -1744,7 +1791,10 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
         mean_absolute_error_gradient(input, target, input_delta);
         break;
     case NormalizedSquaredError:
-        normalized_squared_error_gradient(input, target, normalization_coefficient, input_delta);
+        // The gradient carries the same scale as the error above.
+        normalized_squared_error_gradient(input, target,
+                                          normalization_coefficient / get_batch_scale(batch),
+                                          input_delta);
         break;
     case WeightedSquaredError:
         weighted_squared_error_gradient(input, target, positives_weight, negatives_weight, get_weighted_coefficient(batch), input_delta);

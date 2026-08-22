@@ -35,7 +35,24 @@ void Unscaling::set(Index new_neurons_number, const string& new_label)
 
 void Unscaling::apply_input_shape(const Shape& new_input_shape)
 {
-    set(new_input_shape.dim_or_zero(0));
+    // set() is the full reset a constructor wants; propagating a shape through
+    // the graph is not. It used to take the label back to the class default and
+    // discard the fitted statistics, so resizing a network silently unfitted its
+    // scaling. The label always survives, and the statistics survive whenever the
+    // feature count is unchanged.
+
+    const string previous_label = get_label();
+    const vector<Descriptives> previous_descriptives = descriptives;
+    const vector<ScalerMethod> previous_scalers = scalers;
+
+    // Feature-last, like Scaling and like the forward's flattened view.
+    set(new_input_shape.empty() ? 0 : new_input_shape.back(), previous_label);
+
+    if (ssize(previous_descriptives) == ssize(descriptives))
+    {
+        descriptives = previous_descriptives;
+        scalers = previous_scalers;
+    }
 }
 
 void Unscaling::read_JSON_body(const Json* root_element)

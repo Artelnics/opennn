@@ -278,10 +278,18 @@ void EmbeddingLookupOperator::link_gradients(span<const TensorView> views)
 
 void EmbeddingLookupOperator::link_states(span<const TensorView> views)
 {
+    // Linking only binds the view. Filling the table is initialize_states'
+    // job, which compile() calls after zeroing the state buffer - the table
+    // used to be written only on the first link, so a second compile() left it
+    // all zeros and the model silently lost its positional information.
     if (positional_trainable || views.empty()) return;
-    const bool needs_init = !positional_encoding.get_data();
     positional_encoding = views[0];
-    if (needs_init) init_positional_encoding();
+}
+
+void EmbeddingLookupOperator::initialize_states()
+{
+    if (positional_trainable || !positional_encoding.get_data()) return;
+    init_positional_encoding();
 }
 
 void EmbeddingLookupOperator::set_parameters_random()

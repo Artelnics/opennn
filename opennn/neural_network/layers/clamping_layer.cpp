@@ -130,7 +130,12 @@ void Clamping::set(const Shape& new_output_shape, const string& new_label)
 
     set_label(new_label);
 
-    const Index features = output_shape.dim_or_zero(0);
+    // The last dimension is the feature axis: apply_clamping_cpu cycles the
+    // bounds over as_flat_matrix's columns, which are the last dimension. Sizing
+    // from dimension 0 meant a rank-2 or rank-3 input - both of which this layer
+    // accepts - silently reused the wrong feature's bounds for every column past
+    // the first few. Scaling already keys on back().
+    const Index features = output_shape.empty() ? 0 : output_shape.back();
     clamping.method = ClampingMethod::Clamping;
 
     lower_bounds.assign(size_t(features), -MAX);

@@ -56,7 +56,10 @@ __global__ void upsampling_backward_kernel(
 void upsampling_forward_cuda(const int batch, const int in_h, const int in_w, const int channels, const int scale,
                              const float* src, float* dst)
 {
-    const int n = batch * (in_h * scale) * (in_w * scale) * channels;
+    // Widened before multiplying, then checked: the product is the whole
+    // upsampled activation and overflowed int well before the tensors did.
+    const int n = checked_int(Index(batch) * Index(in_h * scale)
+                            * Index(in_w * scale) * Index(channels));
     launch_elementwise_strided(n, upsampling_forward_kernel,
                        src, dst, in_h, in_w, in_h * scale, in_w * scale, channels, scale);
 }
@@ -64,7 +67,7 @@ void upsampling_forward_cuda(const int batch, const int in_h, const int in_w, co
 void upsampling_backward_cuda(const int batch, const int in_h, const int in_w, const int channels, const int scale,
                               const float* out_delta, float* in_delta)
 {
-    const int n = batch * in_h * in_w * channels;
+    const int n = checked_int(Index(batch) * Index(in_h) * Index(in_w) * Index(channels));
     // No pre-zeroing: the kernel assigns in_delta[i] for every i below n.
     launch_elementwise_strided(n, upsampling_backward_kernel,
                        out_delta, in_delta, in_h, in_w, in_h * scale, in_w * scale, channels, scale);

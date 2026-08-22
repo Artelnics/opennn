@@ -141,7 +141,13 @@ TEST(ScalingTest, UnscaleDataMeanStandardDeviation)
 
     unscaled_matrix = dataset.get_data();
 
-    EXPECT_LT((matrix - unscaled_matrix).array().abs().maxCoeff(), EPSILON);
+    // A scale/unscale round trip is a subtract, a divide, a multiply and an add:
+    // the residue is a few ULP of the data magnitude, not zero. Asserting it
+    // strictly below one EPSILON put the test exactly on the boundary, so it
+    // passed alone and failed inside the suite, where the summation order of the
+    // descriptives differs.
+    EXPECT_LT((matrix - unscaled_matrix).array().abs().maxCoeff(),
+              8.0f * EPSILON * max(1.0f, matrix.array().abs().maxCoeff()));
 }
 
 TEST(ScalingTest, UnscaleDataMinimumMaximum)
@@ -165,7 +171,9 @@ TEST(ScalingTest, UnscaleDataMinimumMaximum)
 
     unscaled_matrix = dataset.get_data();
 
-    EXPECT_LT((matrix - unscaled_matrix).array().abs().maxCoeff(), EPSILON);
+    // Same few-ULP round-trip residue as the MeanStandardDeviation case above.
+    EXPECT_LT((matrix - unscaled_matrix).array().abs().maxCoeff(),
+              8.0f * EPSILON * max(1.0f, matrix.array().abs().maxCoeff()));
 }
 
 TEST(ScalingTest, UnscaleDataNoScaling2d)
@@ -441,12 +449,15 @@ TEST(ScalerDegenerateAgreement, AffinePathAgreesWithScaleValue)
     }
 }
 
-// NetworkDifferential floors the divisor at 1e-12 while the forward paths guard
-// at EPSILON (~1.19e-7) -- about five orders of magnitude apart. For a constant
-// feature the forward output is 0 (derivative 0), but the analytic Jacobian uses
-// 1/1e-12. Pinned so the mismatch is visible if the Jacobian is ever checked
-// against the forward pass on degenerate inputs.
-TEST(ScalerDegenerateAgreement, JacobianGuardFloorDiffersFromForwardGuard)
+// guarded() still floors at 1e-12, five orders of magnitude below the EPSILON
+// the forward paths use, so it must never be what decides a degenerate feature:
+// 1/1e-12 as a slope is what made the analytic Jacobian disagree with the
+// forward pass and sent every dataset with a constant column to the
+// finite-difference surrogate. NetworkDifferential now tests the span against
+// EPSILON first, like the Scaling layer, and only reaches guarded() for a span
+// it has already accepted. These bounds are pinned so the floor cannot quietly
+// drift into the range where it would start deciding again.
+TEST(ScalerDegenerateAgreement, JacobianGuardFloorStaysBelowTheForwardGuard)
 {
     EXPECT_NEAR(NetworkDifferential::guarded(type(0)), type(1e-12), type(1e-18));
 

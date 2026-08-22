@@ -1159,11 +1159,17 @@ LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstra
         case LessEqualTo:
             linear_set.upper(i) = up - c + bound_tolerance(up);
             break;
+        // Inclusive with the same tolerance as GreaterEqualTo/LessEqualTo,
+        // because that is how constraint_is_satisfied, constraint_residual and
+        // Domain::bound all treat these two. The strict epsilon here meant a
+        // point exactly on the bound was feasible or not depending only on
+        // whether some other constraint in the problem happened to be
+        // nonlinear, which is the branch that picks the other filter.
         case GreaterThan:
-            linear_set.lower(i) = low - c + EPSILON;
+            linear_set.lower(i) = low - c - bound_tolerance(low);
             break;
         case LessThan:
-            linear_set.upper(i) = up - c - EPSILON;
+            linear_set.upper(i) = up - c + bound_tolerance(up);
             break;
         case None:
         case AllowedSet:
@@ -1185,6 +1191,15 @@ bool constraint_is_satisfied(const MultivariateConstraint& constraint,
 
     if (constraint.comparison_operator == ComparisonOperator::None)
         return true;
+
+    // AllowedSet has no interval, so the check below would wave it through.
+    // Only the branch-and-bound driver rewrites it into per-branch equalities;
+    // a direct solve_once() or filter call therefore returned points the
+    // constraint forbids, with nothing said.
+    if (constraint.comparison_operator == ComparisonOperator::AllowedSet)
+        return ranges::any_of(constraint.allowed_values,
+                              [&](float allowed)
+                              { return abs(value - allowed) <= bound_tolerance(allowed); });
 
     float low, up;
     if (!interval_from_comparison(constraint.comparison_operator, constraint.low_bound, constraint.up_bound, low, up))

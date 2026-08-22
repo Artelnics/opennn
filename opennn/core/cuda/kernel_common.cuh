@@ -14,7 +14,7 @@ namespace opennn::device
 
 void check_last_error();
 void* allocate(Device, Index);
-void deallocate(Device, void*, Index);
+void deallocate(Device, void*, Index) noexcept;
 void set_zero_async(void*, Index, cudaStream_t);
 cudaStream_t get_compute_stream();
 

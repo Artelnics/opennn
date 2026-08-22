@@ -9,6 +9,13 @@ template<typename TIn, typename TOut>
 void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target,
                             float scale, TOut* output);
 
+// One-pass MSE training operation: accumulate sum(diff^2)/(2*batch) directly
+// into the epoch metric while writing diff/batch to the output delta.
+template<typename TIn, typename TOut>
+void mean_squared_error_metrics_gradient_cuda(const Index n, const Index batch,
+                                              const TIn* input, const float* target,
+                                              TOut* delta, float* error_sum);
+
 template<typename T>
 void mean_absolute_error_gradient_cuda(const Index, T*, const float*, const T*, float);
 

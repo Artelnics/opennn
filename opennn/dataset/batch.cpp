@@ -268,7 +268,19 @@ bool Batch::is_empty() const
 
 Batch::~Batch()
 {
-    wait_h2d_complete();
+    // A destructor is noexcept, and synchronize_event throws on any non-zero
+    // status. After a kernel fault the status is sticky, so unwinding out of
+    // that fault destroyed the pooled batches and the throw here terminated the
+    // process on top of the error the user was about to be told about. The
+    // status is deliberately dropped: there is nobody left to report it to.
+#ifdef OPENNN_HAS_CUDA
+    if (h2d_done_recorded && h2d_done_event)
+    {
+        (void)cudaEventSynchronize(h2d_done_event.get());
+        cudaGetLastError();
+    }
+#endif
+    h2d_done_recorded = false;
 }
 
 #ifdef OPENNN_HAS_CUDA

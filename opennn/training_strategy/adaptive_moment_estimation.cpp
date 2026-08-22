@@ -139,7 +139,19 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    if (mode == UpdateMode::Capturable)
+    // The device step counter is the single source of truth whenever the graph
+    // scalars exist, not only inside a capture. The whole batches of a
+    // graph-enabled epoch advance that counter while the remainder batch used
+    // to take the Standard path and its own host counter, which therefore
+    // counted one step per epoch: the tail update got a bias correction for a
+    // step number many times too small, and its effective learning rate was
+    // correspondingly wrong for the first epochs of every run.
+    const bool has_graph_scalars =
+        optimization_data.views.size() > size_t(GraphScalars)
+        && optimization_data.views[GraphScalars].size() >= 4;
+
+    if (mode == UpdateMode::Capturable
+        || (has_graph_scalars && neural_network->is_gpu() && can_use_cuda_graph()))
     {
 #ifdef OPENNN_HAS_CUDA
         clip_gradient_norm(back_propagation, gradient_clip_norm);
@@ -199,18 +211,24 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const float effective_learning_rate = learning_rate * sqrt_bias_correction_2 / bias_correction_1;
     const float effective_epsilon = EPSILON * sqrt_bias_correction_2;
 
-    #pragma omp parallel for if(parameters_size > 4096)
-    for (Index i = 0; i < parameters_size; ++i)
     {
-        const float gradient_value = gradient(i);
+        PROFILE_SCOPE_HOST("optim:adam_update_cpu");
 
-        auto& first_moment = gradient_exponential_decay(i);
-        auto& second_moment = square_gradient_exponential_decay(i);
+        // Starting an OpenMP team is substantially more expensive than this
+        // element-wise update for small recurrent forecasting models.
+        #pragma omp parallel for if(parameters_size > 65536)
+        for (Index i = 0; i < parameters_size; ++i)
+        {
+            const float gradient_value = gradient(i);
 
-        first_moment = beta_1 * first_moment + one_minus_beta_1 * gradient_value;
-        second_moment = beta_2 * second_moment + one_minus_beta_2 * gradient_value * gradient_value;
+            auto& first_moment = gradient_exponential_decay(i);
+            auto& second_moment = square_gradient_exponential_decay(i);
 
-        parameters(i) -= effective_learning_rate * first_moment / (sqrt(second_moment) + effective_epsilon);
+            first_moment = beta_1 * first_moment + one_minus_beta_1 * gradient_value;
+            second_moment = beta_2 * second_moment + one_minus_beta_2 * gradient_value * gradient_value;
+
+            parameters(i) -= effective_learning_rate * first_moment / (sqrt(second_moment) + effective_epsilon);
+        }
     }
 }
 

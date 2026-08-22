@@ -116,7 +116,11 @@ Index Convolutional::get_padding_height() const
 {
     if (!use_padding) return 0;
 
-    const Index total_padding = (get_output_height() - 1) * row_stride + kernel_height - input_height;
+    // Clamped at zero: with a stride wider than the kernel the total is
+    // negative and integer truncation turned it into -1, which then reached the
+    // im2col loops and the cuDNN descriptor as a negative padding.
+    const Index total_padding =
+        max(Index(0), (get_output_height() - 1) * row_stride + kernel_height - input_height);
 
     return (total_padding + 1) / 2;
 }
@@ -125,7 +129,8 @@ Index Convolutional::get_padding_width() const
 {
     if (!use_padding) return 0;
 
-    const Index total_padding = (get_output_width() - 1) * column_stride + kernel_width - input_width;
+    const Index total_padding =
+        max(Index(0), (get_output_width() - 1) * column_stride + kernel_width - input_width);
 
     return (total_padding + 1) / 2;
 }
@@ -243,24 +248,14 @@ void Convolutional::set(const Shape& new_input_shape,
 
     set_label(new_label);
 
-    const ActivationFunction function = ActivationOperator::from_string(new_activation_function);
-    throw_if(function == ActivationFunction::Softmax,
-             "Softmax is not a valid activation for a convolutional layer.");
-    if(activation_needs_input(function))
-    {
-        // SiLU/GELU require the pre-activation input, which fused conv doesn't store.
-        // Demote to Identity so old saved models load cleanly; the caller is responsible
-        // for inserting a separate Activation layer (which buildYoloNetworkFromConfig does).
-        std::cerr << "[Warning] Convolutional layer '" << new_label
-                  << "': activation '" << new_activation_function
-                  << "' is not supported inline; using Identity instead. "
-                     "Add a standalone Activation layer after the convolution.\n";
-        activation_operator.set_activation_function(ActivationFunction::Identity);
-    }
-    else
-    {
-        activation_operator.set_activation_function(function);
-    }
+    // One policy, shared with set_activation_function below: refuse what the
+    // layer cannot represent. This used to substitute Identity and warn on
+    // cerr, so a network asking for SiLU trained, saved and exported as a
+    // mostly linear model with nothing in its results to say so - and a library
+    // writing to stderr from a constructor is a diagnostic no caller can catch
+    // or silence. Saved models are unaffected: JSON restores the activation
+    // through ActivationOperator::from_JSON, not through this function.
+    set_activation_function(new_activation_function);
 
     batch_norm.features = new_batch_normalization ? kernels_number : 0;
 

@@ -10,26 +10,26 @@ on:
   push:
     branches: [master, dev, dev-refactor]
     paths:
-      - 'opennn/model_expression.*'
-      - 'opennn/scaling_layer.*'
-      - 'opennn/unscaling_layer.*'
+      - 'opennn/neural_network/model_expression.*'
+      - 'opennn/neural_network/layers/scaling_layer.*'
+      - 'opennn/neural_network/layers/unscaling_layer.*'
       - 'opennn/neural_network/layers/clamping_layer.*'
-      - 'opennn/dense_layer.*'
-      - 'opennn/recurrent_layer.*'
-      - 'opennn/long_short_term_memory_layer.*'
+      - 'opennn/neural_network/layers/dense_layer.*'
+      - 'opennn/neural_network/layers/recurrent_layer.*'
+      - 'opennn/neural_network/layers/long_short_term_memory_layer.*'
       - 'examples/iris_plant/**'
       - 'examples/forecasting_tinyml/**'
       - '.github/workflows/tinyml-parity.yml'
   pull_request:
     branches: [master, dev, dev-refactor]
     paths:
-      - 'opennn/model_expression.*'
-      - 'opennn/scaling_layer.*'
-      - 'opennn/unscaling_layer.*'
+      - 'opennn/neural_network/model_expression.*'
+      - 'opennn/neural_network/layers/scaling_layer.*'
+      - 'opennn/neural_network/layers/unscaling_layer.*'
       - 'opennn/neural_network/layers/clamping_layer.*'
-      - 'opennn/dense_layer.*'
-      - 'opennn/recurrent_layer.*'
-      - 'opennn/long_short_term_memory_layer.*'
+      - 'opennn/neural_network/layers/dense_layer.*'
+      - 'opennn/neural_network/layers/recurrent_layer.*'
+      - 'opennn/neural_network/layers/long_short_term_memory_layer.*'
       - 'examples/iris_plant/**'
       - 'examples/forecasting_tinyml/**'
       - '.github/workflows/tinyml-parity.yml'

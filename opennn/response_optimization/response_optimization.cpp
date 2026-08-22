@@ -89,8 +89,15 @@ vector<Index> filter_selected_indices_by_column(const MatrixR& matrix,
     filtered.reserve(selected_indices.size());
     for (const Index row_index : selected_indices)
     {
+        // The module's own relative tolerance, as used by constraint_is_satisfied
+        // and the fixed-objective expansion. The fixed 1e-6 band made an
+        // equality constraint on an output effectively infeasible: no randomly
+        // sampled float output lands within 2e-6 of a target value, so the
+        // search reported zero feasible points.
         const float value = matrix(row_index, column_index);
-        if (isfinite(value) && value >= (minimum - 1e-6f) && value <= (maximum + 1e-6f))
+        if (isfinite(value)
+            && value >= minimum - bound_tolerance(minimum)
+            && value <= maximum + bound_tolerance(maximum))
             filtered.push_back(row_index);
     }
     return filtered;
@@ -1136,7 +1143,13 @@ void ResponseOptimization::Domain::reshape(const float zoom_factor,
     {
         const Index categories_number = feature_dimensions[input_variable];
 
-        if(categories_number == 1 && variables[input_variable].type != VariableType::Binary)
+        // A Binary scalar takes the continuous branch too. It used to go with
+        // the one-hot categories, where both frontiers are pinned to the
+        // maximum seen; a one-hot column only ever reads the superior frontier
+        // so that is harmless there, but sample_scalar reads both, so the box
+        // collapsed to [1, 1] the moment any nearby point held a 1 and never
+        // reopened. The lattice snap already keeps the values integral.
+        if(categories_number == 1)
         {
             const float half_span = (superior_frontier(current_feature_index) - inferior_frontier(current_feature_index)) * zoom_factor / 2;
             inferior_frontier(current_feature_index) = max(center(current_feature_index) - half_span, inferior_frontier(current_feature_index));
@@ -1175,25 +1188,39 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
     vector<Index> feasible_indices(rows_number);
     iota(feasible_indices.begin(), feasible_indices.end(), 0);
 
-    Index domain_index = 0;
+    // Both the output matrix and the Domain are laid out per FEATURE, while the
+    // variable list is per variable: a categorical target occupies as many
+    // columns as it has categories. Walking them with the variable index made
+    // every column after the first categorical output line up with the wrong
+    // constraint and the wrong frontier.
+    Index feature_index = 0;
 
-    for (Index column_index = 0; column_index < ssize(all_target_variables); ++column_index)
+    for (Index variable_index = 0; variable_index < ssize(all_target_variables); ++variable_index)
     {
-        const string& variable_name = all_target_variables[column_index].name;
+        const Variable& variable = all_target_variables[size_t(variable_index)];
+        const Index feature_count = variable.get_feature_count();
 
-        if (is_history(variable_name))
-            continue;
-
-        if (get_constraint(variable_name).comparison != ComparisonOperator::None)
+        if (is_history(variable.name))
         {
-            feasible_indices = filter_selected_indices_by_column(outputs,
-                                                                 feasible_indices,
-                                                                 column_index,
-                                                                 output_domain.inferior_frontier(domain_index),
-                                                                 output_domain.superior_frontier(domain_index));
+            feature_index += feature_count;
+            continue;
         }
 
-        ++domain_index;
+        if (get_constraint(variable.name).comparison != ComparisonOperator::None)
+            for (Index feature = 0; feature < feature_count; ++feature)
+            {
+                const Index column = feature_index + feature;
+
+                feasible_indices = filter_selected_indices_by_column(outputs,
+                                                                     feasible_indices,
+                                                                     column,
+                                                                     output_domain.inferior_frontier(column),
+                                                                     output_domain.superior_frontier(column));
+
+                if (feasible_indices.empty()) break;
+            }
+
+        feature_index += feature_count;
 
         if (feasible_indices.empty())
             break;
@@ -2248,6 +2275,8 @@ static bool branch_is_dominated(const MatrixR& branch_objective,
 
 MatrixR ResponseOptimization::solve_once() const
 {
+    throw_if(!neural_network, "ResponseOptimization: the neural network is not set.");
+
     const Index objectives_number = get_objectives_number();
 
     throw_if(objectives_number == 0, "No objectives found\n");
@@ -2322,6 +2351,10 @@ void ResponseOptimization::expand_fixed_objectives()
 
 MatrixR ResponseOptimization::perform_response_optimization()
 {
+    // Guarded like set_formula_constraint: the constructor accepts a null
+    // network, and every path below dereferences it.
+    throw_if(!neural_network, "ResponseOptimization: the neural network is not set.");
+
     const auto restore_state = [this, saved_objectives = objectives, saved_fixed_values = fixed_values,
                                 saved_univariate = constraint_set.univariate,
                                 saved_multivariate = constraint_set.multivariate,

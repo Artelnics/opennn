@@ -17,9 +17,13 @@ __global__ void norm_forward_kernel(const int N, const int D, const T* __restric
 {
     const int idx = blockIdx.x;
 
-    const T* x_row = X + idx * D;
-    T* y_row = Y + idx * D;
-    T* s_row = FuseResidual ? sum + idx * D : nullptr;
+    // Index, not int: the warp-per-row siblings already widen here, and a
+    // row offset of rows x features passes 2^31 on a long-sequence BF16 batch.
+    const Index row_base = Index(idx) * Index(D);
+
+    const T* x_row = X + row_base;
+    T* y_row = Y + row_base;
+    T* s_row = FuseResidual ? sum + row_base : nullptr;
 
     float local_sum = 0.0f;
     float local_sum_sq = 0.0f;
@@ -950,10 +954,12 @@ __global__ void norm_backward_kernel(const int N, const int D, const T* __restri
 {
     const int idx = blockIdx.x;
 
-    const T* dy_row = dY + idx * D;
-    const T* x_row = X + idx * D;
-    T* dx_row = dX + idx * D;
-    T* dx2_row = dX2 ? dX2 + idx * D : nullptr;
+    const Index row_base = Index(idx) * Index(D);
+
+    const T* dy_row = dY + row_base;
+    const T* x_row = X + row_base;
+    T* dx_row = dX + row_base;
+    T* dx2_row = dX2 ? dX2 + row_base : nullptr;
 
     float mean = 0.0f;
     if constexpr (HasMean) mean = means[idx];
@@ -1027,10 +1033,11 @@ __global__ void norm_weight_gradient_coalesced_kernel(const int N, const int D,
     {
         for (int n = n0 + warp_id; n < n1; n += NUM_WARPS)
         {
-            const float dy    = static_cast<float>(dY[n * D + d]);
+            const Index element = Index(n) * Index(D) + Index(d);
+            const float dy    = static_cast<float>(dY[element]);
             float x_hat;
-            if constexpr (HasMean) x_hat = (static_cast<float>(X[n * D + d]) - means[n]) * inv_vars[n];
-            else                   x_hat = static_cast<float>(X[n * D + d]) * inv_vars[n];
+            if constexpr (HasMean) x_hat = (static_cast<float>(X[element]) - means[n]) * inv_vars[n];
+            else                   x_hat = static_cast<float>(X[element]) * inv_vars[n];
             local_gamma += dy * x_hat;
             if constexpr (HasMean) local_beta += dy;
         }

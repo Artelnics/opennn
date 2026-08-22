@@ -136,6 +136,10 @@ private:
                             const int* explicit_lengths = nullptr);
 #endif
 
+    // The trailing parameter carries the sequence lengths the forward masked
+    // with, rather than letting the backward re-derive them from the attention
+    // weights: an exact zero there is as likely to be softmax underflow as
+    // padding.
     void apply_delta_cpu(const TensorView&,
                          const TensorView&,
                          const TensorView&,
@@ -146,7 +150,8 @@ private:
                          TensorView&,
                          TensorView&,
                          TensorView&,
-                         TensorView&) const;
+                         TensorView&,
+                         const vector<Index>* = nullptr) const;
 
 #ifdef OPENNN_HAS_CUDA
     void apply_sdpa_backward(const TensorView&,
@@ -165,8 +170,6 @@ private:
                                               vector<Index>&,
                                               bool&);
     static void softmax_rows_prefix(float*, Index, Index, Index);
-    static Index infer_attention_prefix_length(const TensorView&,
-                                               Index);
 
     template<typename SoftmaxBwd>
     void apply_delta_unfused(const TensorView&,

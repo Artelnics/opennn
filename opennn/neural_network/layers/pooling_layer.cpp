@@ -559,6 +559,14 @@ void Pooling::apply_input_shape(const Shape& new_input_shape)
 {
     throw_if(new_input_shape.get_rank() != 3, "Input shape must be 3");
 
+    // The geometry checks set() performs belong here too: a shape propagated
+    // through the graph could leave a window larger than the input, which the
+    // constructor refuses but this path used to accept - and the output shape
+    // then came out zero or negative.
+    throw_if(new_input_shape[0] < pool_height || new_input_shape[1] < pool_width,
+             "Pooling layer '{}': pool size {}x{} does not fit an input of {}x{}.",
+             get_label(), pool_height, pool_width, new_input_shape[0], new_input_shape[1]);
+
     input_height = new_input_shape[0];
     input_width = new_input_shape[1];
     input_channels = new_input_shape[2];

@@ -79,3 +79,60 @@ TEST(NormalizedSquaredErrorTest, SetNormalizationCoefficientFromTrainingTargets)
 
     EXPECT_NEAR(calculate_numerical_error(loss), 1.2f, 1.0e-6f);
 }
+
+// The normalization coefficient is a constant over the whole training set, and
+// the optimizer averages the per-batch errors, so a mini-batch error has to
+// carry the training/batch sample ratio or the epoch value comes out as the
+// true one divided by the batch count. WeightedSquaredError has always applied
+// that factor; NormalizedSquaredError had lost it.
+
+TEST(NormalizedSquaredErrorTest, MiniBatchErrorMeanMatchesFullBatch)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    constexpr Index samples_number = 8;
+    constexpr Index inputs_number = 3;
+    constexpr Index targets_number = 1;
+
+    TabularDataset dataset(samples_number, { inputs_number }, { targets_number });
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    ApproximationNetwork neural_network({inputs_number}, {4}, {targets_number});
+    neural_network.set_parameters_random();
+
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::NormalizedSquaredError);
+    loss.set_normalization_coefficient();
+    loss.set_regularization_weight(0.0f);
+
+    const vector<Index> training_indices        = dataset.get_sample_indices("Training");
+    const vector<Index> input_feature_indices   = dataset.get_feature_indices("Input");
+    const vector<Index> decoder_feature_indices = dataset.get_feature_indices("Decoder");
+    const vector<Index> target_feature_indices  = dataset.get_feature_indices("Target");
+
+    const auto error_over = [&](const vector<Index>& indices)
+    {
+        const Index count = ssize(indices);
+
+        Batch batch(count, &dataset, neural_network.get_config());
+        batch.fill(indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
+
+        ForwardPropagation forward_propagation(count, &neural_network);
+        neural_network.forward_propagate(batch.get_inputs(), forward_propagation);
+
+        return loss.calculate_error(batch, forward_propagation).error;
+    };
+
+    const float full_batch_error = error_over(training_indices);
+
+    const vector<Index> first_half(training_indices.begin(),
+                                   training_indices.begin() + samples_number / 2);
+    const vector<Index> second_half(training_indices.begin() + samples_number / 2,
+                                    training_indices.end());
+
+    const float mean_of_halves = 0.5f * (error_over(first_half) + error_over(second_half));
+
+    EXPECT_GT(full_batch_error, 0.0f);
+    EXPECT_NEAR(mean_of_halves, full_batch_error, 1.0e-4f * max(1.0f, full_batch_error));
+}

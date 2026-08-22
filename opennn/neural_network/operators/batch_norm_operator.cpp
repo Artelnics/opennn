@@ -202,6 +202,7 @@ void BatchNormalizationOperator::forward_propagate(ForwardPropagation& forward_p
         {
             apply_inference_cpu(input, output);
             if (fuse_add) add(output, residual, output);
+            if (fuse_relu) activation_forward(output, ActivationFunction::ReLU);
         }
         return;
     }
@@ -215,6 +216,7 @@ void BatchNormalizationOperator::forward_propagate(ForwardPropagation& forward_p
     {
         apply_training_cpu(input, mean, inv_variance, output);
         if (fuse_add) add(output, residual, output);
+        if (fuse_relu) activation_forward(output, ActivationFunction::ReLU);
     }
 
     invalidate_inference_cache();
@@ -294,8 +296,17 @@ void BatchNormalizationOperator::apply_training_cpu(const TensorView& input,
 
     inverse_variances.noalias() = output_matrix.array().square().colwise().mean().matrix();
 
+    // The running variance keeps the SAMPLE (Bessel-corrected) variance, which
+    // is what cuDNN stores and what batchnorm_forward_finalize_kernel applies
+    // on the GPU. The CPU folded in the population variance instead, so the
+    // same model trained on the two devices inferred differently - by M/(M-1),
+    // about 3% of the variance at batch 32. cuDNN's convention cannot be
+    // changed, so the CPU is the side that moves.
+    const float batch_rows = float(output_matrix.rows());
+    const float unbias = batch_rows > 1.0f ? batch_rows / (batch_rows - 1.0f) : 1.0f;
+
     running_means     = running_means     * (1.0f - momentum) + means             * momentum;
-    running_variances = running_variances * (1.0f - momentum) + inverse_variances * momentum;
+    running_variances = running_variances * (1.0f - momentum) + inverse_variances * unbias * momentum;
 
     inverse_variances.array() = 1.0f / (inverse_variances.array().max(0.0f) + BN_EPSILON).sqrt();
     const VectorR scale = inverse_variances.array() * gamma.as_vector().array();

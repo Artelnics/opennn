@@ -38,6 +38,10 @@ string TrainingResult::write_stopping_condition() const
 
 float TrainingResult::get_training_error() const
 {
+    // Guarded like get_validation_error below: a default-constructed result has
+    // an empty history and this read one element before the buffer.
+    if (training_error_history.size() == 0) return QUIET_NAN;
+
     return training_error_history(training_error_history.size() - 1);
 }
 
@@ -140,8 +144,11 @@ Tensor<string, 2> TrainingResult::write_override_results(const Index precision) 
 
     override_results(3, 1) = format("{:.{}g}", training_error_history(size - 1), precision);
 
+    // "NA", as in the empty branch above. The old placeholder was the literal
+    // text "QUIET_NAN", a search-and-replace of the constant that caught this
+    // string too, and it was written into the user's saved results.
     override_results(4, 1) = validation_error_history.size() == 0
-        ? "QUIET_NAN"
+        ? "NA"
         : format("{:.{}g}", validation_error_history(validation_error_history.size() - 1), precision);
 
     return override_results;

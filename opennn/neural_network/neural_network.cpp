@@ -1001,6 +1001,15 @@ static bool upload_host_vector(Buffer& buffer, const VectorR& values)
 
 void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 {
+    // Once the fp32 master has been released for quantized inference the
+    // parameter buffer is a non-owning view over a compact bf16 mirror that is
+    // smaller than size_in_floats(): writing through it reallocated an owning
+    // fp32 buffer and then cast past the end of the mirror. save_parameters_binary
+    // and copy_parameters_host refuse the same state.
+    throw_if(fp32_master_released(),
+             "NeuralNetwork::set_parameters: the fp32 parameter master was released for "
+             "quantized inference; reload the model before replacing parameters.");
+
     throw_if(new_parameters.size() == 0,
              "NeuralNetwork::set_parameters: refusing to apply an empty parameter vector.");
 
@@ -1036,7 +1045,11 @@ void NeuralNetwork::set_states(const VectorR& new_states)
 
 void NeuralNetwork::initialize_parameters(void (Operator::*initializer)())
 {
+    // The states are staged too: batch norm re-initializes its running
+    // statistics from here, and after any GPU forward those live on the device,
+    // where as_vector() refuses to touch them.
     const HostParametersGuard guard(*this);
+    const HostStatesGuard states_guard(*this);
 
     for (const auto& layer : layers)
         for (Operator* op : layer->get_operators())
@@ -1497,8 +1510,11 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 void NeuralNetwork::to_JSON(JsonWriter& printer) const
 {
 
-    const HostStatesGuard guard(*const_cast<NeuralNetwork*>(this),
-                                parameters.get_device() == Device::CUDA);
+    // The guard moves the states, so it has to test where the states are.
+    // Keyed on the parameters it did nothing for a network whose parameters had
+    // been staged to the host while a GPU forward left the states on the
+    // device, and BatchNorm's to_JSON then threw from inside save().
+    const HostStatesGuard guard(*const_cast<NeuralNetwork*>(this));
 
     const Index inputs_number = get_inputs_number();
     const Index layers_number = get_layers_number();
@@ -1700,6 +1716,23 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
                 source_layers[layer_index] = sources;
             }
         }
+    }
+
+    // add_layer resolves an omitted source list to the preceding layer and then
+    // validates arity; a file with a missing or empty SourceLayer entry used to
+    // skip both, leaving an empty source list that the operators later treated
+    // as a wired input. The same defaulting and the same checks are applied here
+    // so a loaded graph carries the invariants a built one does.
+    for (Index i = 0; i < ssize(layers); ++i)
+    {
+        if (!source_layers[size_t(i)].empty()) continue;
+
+        throw_if(i == 0,
+                 "NeuralNetwork::from_JSON: layer 0 has no source; the first layer must name "
+                 "its input.");
+
+        source_layers[size_t(i)] = vector<Index>{i - 1};
+        validate_source_arity(*layers[size_t(i)], source_layers[size_t(i)], i);
     }
 
     if (const Json* tied_weights = layers_container->find("TiedWeights");
@@ -2121,6 +2154,10 @@ void NeuralNetwork::load(const filesystem::path& file_name)
 
 void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 {
+    throw_if(fp32_master_released(),
+             "NeuralNetwork::load_parameters_binary: the fp32 parameter master was released "
+             "for quantized inference; reload the model before loading parameters.");
+
     load_binary_snapshot(file_name, parameters, PARAMETER_FILE_MAGIC,
                          parameter_layout_fingerprint(),
                          "load_parameters_binary", "parameter");
@@ -2509,6 +2546,9 @@ void NeuralNetwork::link_states(Device device)
 
 void NeuralNetwork::copy_parameters_device()
 {
+    throw_if(config.device != Device::CUDA,
+             "NeuralNetwork::copy_parameters_device: the network is compiled for the CPU.");
+
     if (parameters.empty())
         return clear_low_precision_parameter_storage();
 

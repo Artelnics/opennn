@@ -330,12 +330,13 @@ __global__ void rope_apply_kernel(const int seq, const int model_dim, const int 
     const float* cr = cos + pos * rotary_dim;
     const float* sr = sin + pos * rotary_dim;
 
-    const int row_base = row * model_dim;
+    // Index, not int: row x model_dim is the whole activation offset.
+    const Index row_base = Index(row) * Index(model_dim);
 
     for (int e = threadIdx.x; e < model_dim; e += blockDim.x)
     {
         const int d = e % head_dim;
-        const int base_e = row_base + e;
+        const Index base_e = row_base + Index(e);
 
         if (d < rotary_dim)
         {
@@ -790,6 +791,11 @@ void sample_logits_row_cuda(const int n, const float temperature, const int top_
                             const unsigned long long seed, const unsigned long long step,
                             const T* logits, float2* candidates_scratch, int* id_out, float* token_out)
 {
+    static_assert(LOGITS_SAMPLE_CAPACITY == LOGITS_SAMPLE_BLOCKS * SAMPLING_BLOCK_THREADS * 8,
+                  "LOGITS_SAMPLE_CAPACITY must match the launch geometry below.");
+    checked_host_condition(n > LOGITS_SAMPLE_CAPACITY,
+                           "sample_logits_row_cuda: vocabulary exceeds the GPU sampler capacity.");
+
     cudaStream_t stream = opennn::device::get_compute_stream();
     const int k = temperature <= 0.0f ? 1 : std::max(1, std::min(top_k, 32));
     const int blocks = LOGITS_SAMPLE_BLOCKS;

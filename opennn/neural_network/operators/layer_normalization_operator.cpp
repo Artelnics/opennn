@@ -49,11 +49,13 @@ static void layer_normalization_forward_cpu(const TensorView& input, const Tenso
 
         const Map<const Array<float, Dynamic, 1>> input_map(input_row, embedding_dimension);
         const float sum    = input_map.sum();
-        const float sum_sq = input_map.square().sum();
 
         const float mean    = sum * inv_D;
 
-        const float variance = max(sum_sq * inv_D - mean * mean, 0.0f);
+        // Two-pass: E[x^2] - mean^2 cancels catastrophically once the row has a
+        // large offset relative to its spread (activations after a residual add
+        // routinely do), and the variance came out as noise or zero.
+        const float variance = max((input_map - mean).square().sum() * inv_D, 0.0f);
         const float std_val = sqrt(variance + epsilon);
         const float inv_std = 1.0f / std_val;
 

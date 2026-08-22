@@ -366,7 +366,17 @@ int main(int argc, char* argv[])
             streamsize xsputn(const char* s, streamsize n) override { a->sputn(s,n); b->sputn(s,n); return n; }
             streambuf *a, *b;
         } tee_buf(cout.rdbuf(), log_file.rdbuf());
-        auto* old_rdbuf = cout.rdbuf(&tee_buf);
+
+        // RAII, because the redirect outlives the buffer otherwise: on any
+        // throw the stack unwinds, tee_buf and log_file are destroyed, and cout
+        // still points at them - so the flush that ios_base::Init performs at
+        // exit writes through a dangling streambuf. Declared after tee_buf, it
+        // is destroyed before it.
+        struct RdbufGuard
+        {
+            streambuf* previous;
+            ~RdbufGuard() { cout.rdbuf(previous); }
+        } rdbuf_guard{cout.rdbuf(&tee_buf)};
         cout << "\n[Log file: " << log_path << "]\n";
 
         filesystem::path images_dir;
@@ -1803,7 +1813,6 @@ input_shape[1],
 
         cout << "Bye!" << endl;
 
-        cout.rdbuf(old_rdbuf);
         return 0;
     }
     catch (const exception& e)

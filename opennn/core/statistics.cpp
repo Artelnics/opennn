@@ -237,7 +237,10 @@ float variance(const VectorR& vector)
     const double sum = new_vector_d.sum();
     const double squared_sum = new_vector_d.squaredNorm();
 
-    return (squared_sum - (sum * sum) / count) / (count - 1);
+    // Clamped like the descriptives path: on a near-constant column the
+    // cancellation in this one-pass form lands slightly below zero, and the
+    // negative went on to standard_deviation() as a NaN.
+    return float(max(0.0, (squared_sum - (sum * sum) / count) / (count - 1)));
 }
 
 float variance(const VectorR& vector, const VectorI& indices)
@@ -251,7 +254,7 @@ float variance(const VectorR& vector, const VectorI& indices)
 
     if (count <= 1) return 0.0f;
 
-    return float(squared_sum/(count - 1) - (sum/count)*(sum/count)*count/(count-1));
+    return float(max(0.0L, squared_sum/(count - 1) - (sum/count)*(sum/count)*count/(count-1)));
 }
 
 float standard_deviation(const VectorR& vector)
@@ -366,6 +369,8 @@ BoxPlot box_plot(const VectorR& data, const vector<Index>& indices)
 
 Histogram histogram(const VectorR& new_vector, Index bins_number)
 {
+    throw_if(bins_number <= 0, "histogram: bins_number must be positive (got {}).", bins_number);
+
     const Index size = new_vector.size();
 
     if (size == 0) return Histogram(bins_number);
@@ -449,6 +454,8 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
 
 Histogram histogram_centered(const VectorR& vector, float center, Index bins_number)
 {
+    throw_if(bins_number <= 0, "histogram_centered: bins_number must be positive (got {}).", bins_number);
+
     const Index bin_center = (bins_number % 2 == 0)
         ? Index(float(bins_number) / 2.0f)
         : Index(float(bins_number) / 2.0f + 0.5f);
@@ -694,9 +701,25 @@ VectorI calculate_rank(const VectorR& vector, bool ascending)
     VectorI rank(size);
     iota(rank.data(), rank.data() + rank.size(), 0);
 
+    // NaN compares false against everything, which is not a strict weak
+    // ordering and is undefined behaviour for sort. NaNs do reach here: a
+    // correlation over a constant column is quiet NaN by design. Sorting them
+    // to the end keeps the order total, and the index tie-break keeps it stable
+    // across the parallel and serial paths.
+    const auto key = [&](Index i)
+    {
+        return isnan(vector[i]) ? (ascending ? POS_INFINITY : NEG_INFINITY) : vector[i];
+    };
+
     sort_parallel_if_large(
         rank.data(), rank.data() + rank.size(),
-        [&](Index i, Index j) { return ascending ? vector[i] < vector[j] : vector[i] > vector[j]; });
+        [&](Index i, Index j)
+        {
+            const float left = key(i);
+            const float right = key(j);
+            if (left == right) return i < j;
+            return ascending ? left < right : left > right;
+        });
 
     return rank;
 }

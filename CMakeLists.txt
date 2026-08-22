@@ -38,6 +38,8 @@ if(OpenNN_ENABLE_LTO)
     check_ipo_supported(RESULT OPENNN_LTO_OK)
     if(OPENNN_LTO_OK)
         set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+    else()
+        message(STATUS "OpenNN: IPO/LTO is not supported by this toolchain; building without it.")
     endif()
 else()
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE OFF)
@@ -87,8 +89,12 @@ endif()
 
 option(OpenNN_DISABLE_CUDA "Disable CUDA even if toolkit is found" OFF)
 
+# The probe itself is skipped when CUDA is disabled: it costs an nvcc invocation
+# on every configure of a CPU-only tree.
 include(CheckLanguage)
-check_language(CUDA)
+if(NOT OpenNN_DISABLE_CUDA)
+    check_language(CUDA)
+endif()
 
 if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
 
@@ -98,7 +104,12 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
     endif()
     enable_language(CUDA)
     find_package(CUDAToolkit REQUIRED)
-    set(OPENNN_HAS_CUDA ON CACHE BOOL "")
+    # A normal variable, not a cache entry: `set(... CACHE ...)` without FORCE
+    # does nothing once the entry exists, so a build directory kept whichever
+    # CUDA decision its first configure made - silently producing a CPU build
+    # for a user who had just enabled CUDA. Every consumer is a subdirectory of
+    # this configure run and inherits it.
+    set(OPENNN_HAS_CUDA ON)
     find_package(CUDNN 9.0 REQUIRED)
     set(HAVE_CUDNN ON)
 
@@ -130,7 +141,7 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
         opennn_add_flash_attention_kernels(OPENNN_FLASH_ATTENTION_TARGET)
     endif()
 else()
-    set(OPENNN_HAS_CUDA OFF CACHE BOOL "")
+    set(OPENNN_HAS_CUDA OFF)
 endif()
 
 include(FetchContent)

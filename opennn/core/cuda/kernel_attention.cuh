@@ -73,6 +73,13 @@ void qk_rope_cache_append_cuda(const int n_q_heads, const int n_kv_heads, const 
 
 inline constexpr int LOGITS_SAMPLE_BLOCKS = 128;
 
+// Each of the 128x256 threads keeps at most 8 candidates while striding the
+// row, so the sampler can only see this many logits. Every shipped vocabulary
+// is far below it (Qwen3 is 151,936), but a larger one would silently drop its
+// tail - including, sometimes, the argmax - so the entry point refuses it and
+// the caller can fall back to the host sampler.
+inline constexpr int LOGITS_SAMPLE_CAPACITY = LOGITS_SAMPLE_BLOCKS * 256 * 8;
+
 template<typename T>
 void sample_logits_row_cuda(const int n, const float temperature, const int top_k, const float top_p,
                             const unsigned long long seed, const unsigned long long step,

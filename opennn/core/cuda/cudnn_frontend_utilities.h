@@ -373,15 +373,32 @@ inline bool plan_cache_enabled()
     return enabled;
 }
 
+// Defined below, next to the attention path it belongs to; declared here
+// because the cache key has to account for it.
+inline bool sdpa_autotune_enabled();
+
 inline const std::filesystem::path& plan_cache_directory()
 {
     static const std::filesystem::path directory = []
     {
         const char* override_path = getenv("OPENNN_CUDNN_PLAN_CACHE_DIR");
 
-        const std::filesystem::path root = override_path && *override_path
-            ? std::filesystem::path(override_path)
-            : std::filesystem::temp_directory_path() / "opennn-cudnn-plans";
+        std::filesystem::path root;
+
+        if (override_path && *override_path)
+            root = std::filesystem::path(override_path);
+        else
+        {
+            // The error_code overload, like every other filesystem call on this
+            // path. The throwing one propagated out of a static initializer,
+            // through GraphSlot::build, into run_frontend's catch, which
+            // disabled the cudnn-frontend for the rest of the process and then
+            // blamed a missing plan - all because TMP pointed somewhere unusable.
+            std::error_code error;
+            const std::filesystem::path temporary = std::filesystem::temp_directory_path(error);
+            if (error) return std::filesystem::path{};
+            root = temporary / "opennn-cudnn-plans";
+        }
 
         // cuDNN picks engines per architecture and revises them between releases,
         // so a plan may only be reloaded by the exact pair that produced it.
@@ -409,6 +426,12 @@ inline std::filesystem::path plan_cache_file(const graph::Graph& graph)
     for (const HeurMode_t mode : heuristic_modes()) selection = selection * 31 + size_t(mode) + 1;
     for (const NumericalNote_t note : conv_engine_notes()) selection = selection * 31 + size_t(note) + 7;
 
+    // The attention autotune knob belongs in the key for the same reason the
+    // conv one does. Without it, a warm cache written with OPENNN_SDPA_AUTOTUNE
+    // unset was reloaded under the identical key on the next run with it set,
+    // so autotune never ran and the A/B the knob exists for measured nothing.
+    selection = selection * 31 + (sdpa_autotune_enabled() ? 3u : 0u);
+
     const size_t key = std::hash<json>{}(structure)
         ^ (std::hash<int64_t>{}(device::conv_workspace_limit_bytes()) << 1)
         ^ (std::hash<bool>{}(device::conv_autotune_enabled()) << 2)
@@ -420,7 +443,9 @@ inline std::filesystem::path plan_cache_file(const graph::Graph& graph)
 inline bool load_cached_plan(graph::Graph& graph, const cudnnHandle_t handle,
                              int64_t& workspace_bytes)
 {
-    if (!plan_cache_enabled()) return false;
+    // An empty directory means temp_directory_path failed: no cache, but the
+    // frontend itself carries on building plans normally.
+    if (!plan_cache_enabled() || plan_cache_directory().empty()) return false;
 
     std::error_code failed;
     const std::filesystem::path file = plan_cache_file(graph);
@@ -448,7 +473,7 @@ inline bool load_cached_plan(graph::Graph& graph, const cudnnHandle_t handle,
 
 inline void store_cached_plan(graph::Graph& graph)
 {
-    if (!plan_cache_enabled()) return;
+    if (!plan_cache_enabled() || plan_cache_directory().empty()) return;
 
     vector<uint8_t> blob;
 

@@ -234,13 +234,17 @@ private:
 };
 
 // The same worker threads as everything else; only the allocator differs.
-static Eigen::ThreadPoolDevice& contraction_device()
+//
+// Rebuilt per call rather than cached: ThreadPoolDevice is a three-pointer
+// handle, and set_threads_number() destroys the pool it points at. A cached
+// static went on referring to the freed pool and the next contraction enqueued
+// work into it. The scratch allocator, which is what this exists for, stays.
+static Eigen::ThreadPoolDevice contraction_device()
 {
     static ContractionScratch scratch;
-    static Eigen::ThreadPoolDevice device(get_device().getPool(),
-                                          get_device().numThreads(),
-                                          &scratch);
-    return device;
+    return Eigen::ThreadPoolDevice(get_device().getPool(),
+                                   get_device().numThreads(),
+                                   &scratch);
 }
 
 static void contract_linear_forward(int m, int n, int k, const float* a, const float* b, float* c,
@@ -1277,7 +1281,11 @@ static void linear_forward_cpu(const TensorView& input, const TensorView& weight
 {
     PROFILE_SCOPE_HOST("cpu:linear_fwd");
 
-    const bool fuse_relu = epilogue == CUBLASLT_EPILOGUE_RELU_BIAS;
+    // RELU without BIAS is what a bias-free Dense asks for; honouring only the
+    // BIAS pair left that layer with no activation at all, because the
+    // activation operator skips its pass whenever the layer says "fused".
+    const bool fuse_relu = epilogue == CUBLASLT_EPILOGUE_RELU_BIAS
+                        || epilogue == CUBLASLT_EPILOGUE_RELU;
 
     if (try_linear_forward(input, weights, bias, output, fuse_relu)) return;
 
@@ -1577,9 +1585,12 @@ static void multiply_gpu(const TensorView& input_a, bool transpose_a,
     const cublasOperation_t operation_b = transpose_b ? CUBLAS_OP_T : CUBLAS_OP_N;
     const cublasOperation_t operation_a = transpose_a ? CUBLAS_OP_T : CUBLAS_OP_N;
 
-    const int batch_count = to_int(input_a.size() / (rows_a * cols_a));
-    const long long stride_a = rows_a * cols_a;
-    const long long stride_b = rows_b * cols_b;
+    // Widened before the multiply, not after: rows_a * cols_a is the whole
+    // flattened activation, which reaches 2^31 elements on a large BF16 batch
+    // and wrapped negative while still in int - taking batch_count with it.
+    const long long stride_a = 1LL * rows_a * cols_a;
+    const long long stride_b = 1LL * rows_b * cols_b;
+    const int batch_count = to_int(input_a.size() / stride_a);
     const long long stride_output = output.get_shape()[output.get_rank() - 2]
                                   * output.get_shape()[output.get_rank() - 1];
 

@@ -1505,6 +1505,14 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
         ||  target_cache_reader.file_size() != expected_target_size)
             return false;
 
+        // The sources hash covers the images and the per-image label files but
+        // not the .names file, so editing a class list left a cache whose
+        // targets carry the old class count while get_classes_number() reports
+        // the new one - and the detection head is sized from the latter.
+        // Rejecting the cache here sends it to the rebuild path.
+        if (!class_names.empty() && Index(target_header.classes_number) != ssize(class_names))
+            return false;
+
         anchors = std::move(cached_anchors);
         classes_number = Index(target_header.classes_number);
         assign_default_class_names(class_names, classes_number);

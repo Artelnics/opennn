@@ -226,9 +226,17 @@ static void dump_value(std::string& out, const Json& v, int indent, int depth)
     case Number: {
         const double number = v.as_double();
         char buf[32];
-        const long long as_int = static_cast<long long>(number);
-        if (number == static_cast<double>(as_int) && std::abs(number) < 1e15)
-            std::snprintf(buf, sizeof(buf), "%lld", as_int);
+
+        // Before the cast, not after: converting a NaN, an infinity or anything
+        // past 2^63 to long long is undefined, and to_chars would then write
+        // "nan"/"inf", which this parser rejects on the way back in.
+        if (!std::isfinite(number)) { out += "null"; return; }
+
+        // The integrality test is a trunc comparison rather than a round trip
+        // through long long, so the cast happens only where 1e15 has already
+        // proved it is in range.
+        if (std::abs(number) < 1e15 && number == std::trunc(number))
+            std::snprintf(buf, sizeof(buf), "%lld", static_cast<long long>(number));
         else
         {
             auto [ptr, ec] = std::to_chars(buf, buf + sizeof(buf) - 1, number);
@@ -356,35 +364,43 @@ struct Parser
             case 'f':  out.push_back('\f'); break;
             case 'u':
             {
-                if (position + 4 > s.size()) fail("bad \\u");
-
-                unsigned code = 0;
-                for (int i = 0; i < 4; ++i)
+                const auto read_four_hex = [&]() -> unsigned
                 {
-                    const char h = s[position++];
-                    code <<= 4;
-                    if (h >= '0' && h <= '9')      code |= unsigned(h - '0');
-                    else if (h >= 'a' && h <= 'f') code |= unsigned(h - 'a' + 10);
-                    else if (h >= 'A' && h <= 'F') code |= unsigned(h - 'A' + 10);
-                    else fail("bad hex in \\u");
+                    if (position + 4 > s.size()) fail("bad \\u");
+
+                    unsigned value = 0;
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        const char h = s[position++];
+                        value <<= 4;
+                        if (h >= '0' && h <= '9')      value |= unsigned(h - '0');
+                        else if (h >= 'a' && h <= 'f') value |= unsigned(h - 'a' + 10);
+                        else if (h >= 'A' && h <= 'F') value |= unsigned(h - 'A' + 10);
+                        else fail("bad hex in \\u");
+                    }
+                    return value;
+                };
+
+                unsigned code = read_four_hex();
+
+                // A non-BMP character is written as a surrogate pair, which is
+                // how json.dumps escapes every emoji in a vocabulary file. Each
+                // half encoded on its own produced six bytes of CESU-8 that no
+                // tokenizer could match against the real four-byte character.
+                if (code >= 0xD800 && code <= 0xDBFF
+                    && position + 1 < s.size() && s[position] == '\\' && s[position + 1] == 'u')
+                {
+                    const size_t saved_position = position;
+                    position += 2;
+                    const unsigned low = read_four_hex();
+
+                    if (low >= 0xDC00 && low <= 0xDFFF)
+                        code = 0x10000 + ((code - 0xD800) << 10) + (low - 0xDC00);
+                    else
+                        position = saved_position;
                 }
 
-                if (code < 0x80)
-                {
-                    out.push_back(char(code));
-                    break;
-                }
-
-                if (code < 0x800)
-                {
-                    out.push_back(char(0xC0 | (code >> 6)));
-                    out.push_back(char(0x80 | (code & 0x3F)));
-                    break;
-                }
-
-                out.push_back(char(0xE0 | (code >> 12)));
-                out.push_back(char(0x80 | ((code >> 6) & 0x3F)));
-                out.push_back(char(0x80 | (code & 0x3F)));
+                append_utf8(out, code);
                 break;
             }
             default: fail("bad escape");
@@ -468,6 +484,11 @@ struct Parser
 
 Json Json::parse(std::string_view text)
 {
+    // RFC 8259 lets a parser ignore a leading byte-order mark, and PowerShell
+    // writes one on every redirect, so a model file merely touched by a Windows
+    // tool stopped loading with "unexpected character" at position 0.
+    if (text.starts_with("\xEF\xBB\xBF")) text.remove_prefix(3);
+
     Parser p(text);
     Json v = p.parse_value();
     p.skip_ws();

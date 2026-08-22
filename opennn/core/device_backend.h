@@ -198,7 +198,9 @@ private:
 };
 
 void* allocate(Device, Index);
-void deallocate(Device, void*, Index);
+// noexcept: called from Buffer/PinnedBuffer destructors, where a throw would
+// terminate instead of reporting the CUDA error that caused it.
+void deallocate(Device, void*, Index) noexcept;
 
 void set_zero(void*, Index, Device);
 void set_zero_async(void*, Index, cudaStream_t = nullptr);

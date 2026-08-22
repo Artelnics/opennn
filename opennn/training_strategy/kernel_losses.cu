@@ -299,11 +299,15 @@ void cross_entropy_3d_metrics_cuda(const Index total_tokens, const int vocab_siz
 }
 
 template<typename T>
+// outputs and output_deltas are deliberately not __restrict__: the loss aliases
+// the delta view onto the outputs when it can overwrite them in place
+// (output_delta_overwrites_outputs), so promising the compiler they do not
+// overlap would be a lie it is entitled to act on.
 __global__ void cross_entropy_3d_multiple_backward_kernel(const int n,
                                                           const int vocab_size,
-                                                          const T* __restrict__ outputs,
+                                                          const T* outputs,
                                                           const float* __restrict__ targets,
-                                                          T* __restrict__ output_deltas,
+                                                          T* output_deltas,
                                                           float scale_factor,
                                                           const float* __restrict__ active_count_device)
 {
@@ -836,8 +840,47 @@ void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target
     launch_elementwise_strided(n, scaled_diff_kernel<TIn, TOut>, input, target, scale, output);
 }
 
+template<typename TIn, typename TOut>
+__global__ void mean_squared_error_metrics_gradient_kernel(
+    const int n, const int batch,
+    const TIn* __restrict__ input,
+    const float* __restrict__ target,
+    TOut* __restrict__ delta,
+    float* __restrict__ error_sum)
+{
+    const float inverse_batch = 1.0f / float(batch);
+    float squared_sum = 0.0f;
+
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x;
+         i < n;
+         i += Index(blockDim.x) * gridDim.x)
+    {
+        const float difference = static_cast<float>(input[i]) - target[i];
+        delta[i] = static_cast<TOut>(difference * inverse_batch);
+        squared_sum = fmaf(difference, difference, squared_sum);
+    }
+
+    if (block_reduce_sum(squared_sum))
+        atomicAdd(error_sum, squared_sum * (0.5f * inverse_batch));
+}
+
+template<typename TIn, typename TOut>
+void mean_squared_error_metrics_gradient_cuda(
+    const Index n, const Index batch,
+    const TIn* input, const float* target,
+    TOut* delta, float* error_sum)
+{
+    if (n == 0 || batch == 0) return;
+    const int total = checked_int(n);
+    OPENNN_CUDA_LAUNCH((mean_squared_error_metrics_gradient_kernel<TIn, TOut>
+        <<<grid_size_strided_for(total), block_size, 0,
+           opennn::device::get_compute_stream()>>>(
+            total, checked_int(batch), input, target, delta, error_sum)));
+}
+
 #define INSTANTIATE2(TIn, TOut) \
-    template void scaled_diff_cuda_typed<TIn, TOut>(const Index, const TIn*, const float*, float, TOut*);
+    template void scaled_diff_cuda_typed<TIn, TOut>(const Index, const TIn*, const float*, float, TOut*); \
+    template void mean_squared_error_metrics_gradient_cuda<TIn, TOut>(const Index, const Index, const TIn*, const float*, TOut*, float*);
 
 OPENNN_INSTANTIATE_FLOAT_BF16_2(INSTANTIATE2)
 #undef INSTANTIATE2

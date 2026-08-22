@@ -118,6 +118,16 @@ void shuffle_vector(vector<T>& vec)
 template void shuffle_vector<Index>(vector<Index>&);
 template void shuffle_vector<size_t>(vector<size_t>&);
 
+template<typename T>
+void shuffle_vector_seeded(vector<T>& vec, unsigned seed)
+{
+    mt19937 local_generator(seed);
+    ranges::shuffle(vec, local_generator);
+}
+
+template void shuffle_vector_seeded<Index>(vector<Index>&, unsigned);
+template void shuffle_vector_seeded<size_t>(vector<size_t>&, unsigned);
+
 bool draw_k_hot(const Index count, const Index k,
                 const vector<char>& force_on,
                 const vector<char>& force_off,
