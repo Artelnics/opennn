@@ -45,7 +45,6 @@ static pair<void*, void*> prepare_kv_cache(Buffer& storage,
 static void grouped_attention_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, float, Index, float*, const int*, GroupedQueryAttentionOperator::GraphCache*);
 static void qk_norm_gpu(const TensorView&, const TensorView&, TensorView&, Index, float);
 static void rope_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index);
-static void rope_backward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index);
 
 void rotary_build_tables(TensorView& cos_table, TensorView& sin_table,
                          Index sequence_length, Index rotary_dim, float base)
@@ -107,56 +106,11 @@ static void rotary_forward_cpu(const TensorView& input, const TensorView& cos_ta
     }
 }
 
-static void rotary_backward_cpu(const TensorView& output_delta, const TensorView& cos_table, const TensorView& sin_table,
-                         TensorView& input_delta, Index head_dim, Index rotary_dim, Index position_offset)
-{
-    const Index seq       = output_delta.get_shape()[1];
-    const Index model_dim = output_delta.get_shape().back();
-    const Index num_heads = model_dim / head_dim;
-    const Index rows      = output_delta.size() / model_dim;
-    const Index half      = rotary_dim / 2;
-
-    const float* dout     = output_delta.as<float>();
-    float* din            = input_delta.as<float>();
-    const float* cos_data = cos_table.as<float>();
-    const float* sin_data = sin_table.as<float>();
-
-    const bool parallel = rows * model_dim >= 65536;
-
-    #pragma omp parallel for schedule(static) if(parallel)
-    for (Index row = 0; row < rows; ++row)
-    {
-        const Index pos = (row % seq) + position_offset;
-        const float* cr = cos_data + pos * rotary_dim;
-        const float* sr = sin_data + pos * rotary_dim;
-
-        for (Index h = 0; h < num_heads; ++h)
-        {
-            const Index base = row * model_dim + h * head_dim;
-
-            for (Index j = 0; j < rotary_dim; ++j)
-            {
-                const float rotated = (j < half) ? -dout[base + j + half] : dout[base + j - half];
-                din[base + j] = dout[base + j] * cr[j] - rotated * sr[j];
-            }
-            for (Index j = rotary_dim; j < head_dim; ++j)
-                din[base + j] = dout[base + j];
-        }
-    }
-}
-
 void rotary_forward(const TensorView& input, const TensorView& cos_table, const TensorView& sin_table,
                     TensorView& output, Index head_dim, Index rotary_dim, Index position_offset)
 {
     if (input.is_cuda()) { rope_forward_gpu(input, cos_table, sin_table, output, head_dim, rotary_dim, position_offset); return; }
     rotary_forward_cpu(input, cos_table, sin_table, output, head_dim, rotary_dim, position_offset);
-}
-
-void rotary_backward(const TensorView& output_delta, const TensorView& cos_table, const TensorView& sin_table,
-                     TensorView& input_delta, Index head_dim, Index rotary_dim, Index position_offset)
-{
-    if (output_delta.is_cuda()) { rope_backward_gpu(output_delta, cos_table, sin_table, input_delta, head_dim, rotary_dim, position_offset); return; }
-    rotary_backward_cpu(output_delta, cos_table, sin_table, input_delta, head_dim, rotary_dim, position_offset);
 }
 
 void grouped_attention_forward(const TensorView& query, const TensorView& key, const TensorView& value,
@@ -283,20 +237,6 @@ static void rope_forward_gpu(const TensorView& input, const TensorView& cos_tabl
         rope_forward_cuda<T>(rows, seq, model_dim, to_int(head_dim), to_int(rotary_dim), to_int(position_offset),
                              input.as<T>(), output.as<T>(),
                              cos_table.as<float>(), sin_table.as<float>());
-    });
-}
-
-static void rope_backward_gpu(const TensorView& output_delta, const TensorView& cos_table, const TensorView& sin_table,
-                              TensorView& input_delta, Index head_dim, Index rotary_dim, Index position_offset)
-{
-    const int seq       = to_int(output_delta.get_shape()[1]);
-    const int model_dim = to_int(output_delta.flat_columns());
-    const int rows      = to_int(output_delta.flat_rows());
-
-    input_delta.dispatch([&]<typename T>() {
-        rope_backward_cuda<T>(rows, seq, model_dim, to_int(head_dim), to_int(rotary_dim), to_int(position_offset),
-                              output_delta.as<T>(), input_delta.as<T>(),
-                              cos_table.as<float>(), sin_table.as<float>());
     });
 }
 
@@ -684,7 +624,6 @@ void qk_rope_cache_append(const TensorView&, const TensorView&, const TensorView
 OPENNN_CUDA_STUB(void, grouped_attention_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, float, Index, float*, const int*, GroupedQueryAttentionOperator::GraphCache*))
 OPENNN_CUDA_STUB(void, qk_norm_gpu, (const TensorView&, const TensorView&, TensorView&, Index, float))
 OPENNN_CUDA_STUB(void, rope_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index))
-OPENNN_CUDA_STUB(void, rope_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index))
 
 #endif
 

@@ -18,7 +18,7 @@ Two modes (`--modes train,infer`):
 Two supported corpora (`--corpus`, format `source <TAB> target`):
 
 - **Alpaca chat pairs** (`chat_pairs.txt`, 47 k pairs — same data the ChatGPT
-  example in `blank_cuda` trains on): the original configuration.
+  energy benchmark trains on): the original configuration.
 - **WMT14 En-De** (prepare with [`prepare_wmt14.py`](prepare_wmt14.py)): the
   standard dataset the paper's base model was trained and reported on — use
   this configuration for publishable runs. Capacity depends on the corpus

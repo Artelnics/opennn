@@ -45,8 +45,6 @@ public:
 
     void set(Loss* new_loss) { loss = new_loss; }
 
-    virtual void set_loss(Loss* new_loss) { set(new_loss); }
-
     virtual void set_display(bool new_display) { display = new_display; }
 
     // Positive: should_display() and train() take `epoch % period`, so a zero
@@ -77,7 +75,6 @@ public:
 
     void set_loss_goal(const float new_loss_goal) { training_loss_goal = new_loss_goal; }
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
-    Index get_maximum_validation_failures() const noexcept { return maximum_validation_failures; }
     void set_validation_period(const Index n)
     {
         throw_if(n <= 0, "Optimizer::set_validation_period: period must be positive.");
@@ -87,10 +84,9 @@ public:
     void set_restore_best(bool enabled) { restore_best = enabled; }
 
     void set_gradient_clip_norm(const float new_clip) { gradient_clip_norm = new_clip; }
-    float get_gradient_clip_norm() const noexcept { return gradient_clip_norm; }
 
     Index get_batch_size() const noexcept { return batch_size; }
-    Index get_display_period() const noexcept { return display_period; }
+    void set_batch_size(const Index new_batch_size) { batch_size = new_batch_size; }
 
     virtual void configure_for_task(NetworkTask);
 
@@ -99,8 +95,6 @@ public:
     Index get_maximum_batch_size() const;
 
     const string& get_name() const noexcept { return name; }
-
-    virtual void print() const {}
 
     virtual void from_JSON(const JsonDocument&);
 
@@ -241,7 +235,7 @@ protected:
         FillMode,
         WorkerProfileCounters* profile_counters = nullptr);
 
-    int get_batch_workers_number(const NeuralNetwork&) const { return workers_number; }
+    int get_batch_workers_number() const { return workers_number; }
     int get_batch_pool_size(const NeuralNetwork&) const;
 
     struct EpochLoopContext;

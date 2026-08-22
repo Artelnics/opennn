@@ -464,39 +464,6 @@ void TabularDataset::fill_targets(const vector<Index>& sample_indices, const vec
     fill_features(sample_indices, target_indices, target_data, contiguous);
 }
 
-void TabularDataset::infer_variable_types_from_data()
-{
-    Index feature_index = 0;
-
-    const Index variables_number = get_variables_number();
-
-    for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
-    {
-        Variable& variable = variables[variable_index];
-        const Index advance = variable.get_feature_count();
-
-        if (variable.type == VariableType::Numeric)
-        {
-            const VectorR data_column = data.col(feature_index);
-
-            if (is_constant(data_column))
-                variable.set(variable.name, "None", VariableType::Constant);
-            else if (is_binary(data_column))
-            {
-                variable.type = VariableType::Binary;
-                variable.categories = { "0", "1" };
-            }
-        }
-        else if (is_one_of(variable.type, VariableType::Binary, VariableType::Categorical)
-              && variable.get_categories_number() == 1)
-            variable.set(variable.name, "None", VariableType::Constant);
-
-        feature_index += advance;
-    }
-}
-
-void TabularDataset::set_binary_variables() { infer_variable_types_from_data(); }
-
 void TabularDataset::resize_data_from_JSON(Index samples_number)
 {
     if (storage_mode == StorageMode::BinaryFile || variables.empty())
@@ -1016,16 +983,6 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_variable_pearson_correlat
 Tensor<Correlation, 2> TabularDataset::calculate_input_variable_spearman_correlations() const
 {
     return calculate_input_variable_correlations(correlation_spearman, Correlation::Method::Spearman, "spearman");
-}
-
-VectorI TabularDataset::calculate_correlations_rank() const
-{
-    const MatrixR absolute_correlations =
-        calculate_input_target_correlation_values().array().abs();
-
-    const VectorR absolute_mean_correlations = absolute_correlations.rowwise().mean();
-
-    return calculate_rank(absolute_mean_correlations);
 }
 
 FeatureScaling TabularDataset::calculate_used_feature_scaling(VariableRole role) const

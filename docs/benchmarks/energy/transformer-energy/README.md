@@ -12,7 +12,7 @@ its full budget and the discarded runs made the aggregate unstable.)
 
 ## Workload
 
-The ChatGPT example from `blank_cuda` (block 6): the encoder-decoder Transformer
+The ChatGPT example: the encoder-decoder Transformer
 from *Attention Is All You Need* (paper base **d512 / h8 / ff2048 / 6L**, ~84.8 M
 parameters) trained sequence-to-sequence on the chat corpus (`prompt <TAB>
 response`, Stanford Alpaca 47,487 pairs, vocab 19,443 in / 30,000 out, sequences

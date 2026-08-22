@@ -96,6 +96,7 @@ private:
     bool warm_start = true;
 };
 
+// Kept for Neural Designer, which spells the type NeuronSelection::StoppingCondition.
 using NeuronSelection = GrowingNeurons;
 
 struct NeuronsSelectionResult

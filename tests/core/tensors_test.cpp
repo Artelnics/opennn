@@ -178,16 +178,6 @@ TEST(Shape, InitializerListConstructor)
     EXPECT_EQ(shape.size(), 24);
 }
 
-TEST(Shape, FillConstructor)
-{
-    Shape shape(size_t(3), Index(5));
-
-    EXPECT_EQ(shape.get_rank(), 3u);
-    EXPECT_EQ(shape[0], 5);
-    EXPECT_EQ(shape[2], 5);
-    EXPECT_EQ(shape.size(), 125);
-}
-
 TEST(Shape, Equality)
 {
     EXPECT_EQ((Shape{ 2, 3 }), (Shape{ 2, 3 }));
@@ -235,7 +225,6 @@ TEST(Shape, AppendRejectsRankOverflow)
 TEST(Shape, RejectsNegativeDimensions)
 {
     EXPECT_THROW((Shape{2, -1}), runtime_error);
-    EXPECT_THROW((Shape(size_t(2), Index(-1))), runtime_error);
 
     const vector<Index> dimensions{2, -1};
     EXPECT_THROW((Shape(dimensions.begin(), dimensions.end())), runtime_error);

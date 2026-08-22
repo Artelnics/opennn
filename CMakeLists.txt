@@ -166,7 +166,6 @@ endif()
 add_subdirectory(opennn)
 
 if(OPENNN_HAS_CUDA)
-    option(OpenNN_BUILD_BLANK_CUDA "Build OpenNN CUDA blank example" ON)
 endif()
 
 option(OpenNN_BUILD_TESTS "Build OpenNN tests" ON)

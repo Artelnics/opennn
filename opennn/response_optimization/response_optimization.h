@@ -34,8 +34,6 @@ public:
 
     enum class Sense { Minimize, Maximize, Fixed };
 
-    enum class TimeType { PresentContinuous, PresentBatch, PastContinuous, PastBatch };
-
     enum class BranchMode { Budgeted, Exhaustive };
 
     struct ConstraintSet
@@ -160,8 +158,6 @@ public:
                                                       float,
                                                       MatrixR&) const;
 
-    Tensor3 combine_input(const MatrixR&) const;
-
     MatrixR calculate_outputs(const MatrixR&) const;
 
     pair<MatrixR, MatrixR> filter_feasible_points(const MatrixR&,
@@ -205,10 +201,7 @@ public:
     UnivariateConstraint get_constraint(const string&) const;
     bool is_objective(const string&) const;
     Sense get_sense(const string&) const;
-    bool is_history(const string&) const;
-    static bool is_past(const TimeType);
 
-    bool is_forecasting() const { return fixed_history.size() > 0; }
 
     bool row_satisfies_formula_constraints(const VectorR&,
                                                          const VectorR&) const;
@@ -237,9 +230,7 @@ private:
 
     map<string, float> fixed_values;
 
-    map<string, TimeType> time_roles;
 
-    Tensor3 fixed_history;
 
     Index evaluations_number = 2000;
     Index max_iterations = 20;

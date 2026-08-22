@@ -24,7 +24,6 @@ public:
 
     explicit AdaptiveMomentEstimation(Loss* = nullptr);
 
-    void set_batch_size(const Index new_batch_size) { batch_size = new_batch_size; }
 
     void set_default();
 

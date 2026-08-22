@@ -69,10 +69,7 @@ struct LayerRegistration
 };
 
 template<typename Class>
-unique_ptr<Layer> construct_layer()
-{
-    return make_unique<Class>();
-}
+constexpr auto construct_layer = construct<Layer, Class>;
 
 #ifndef OPENNN_NO_VISION
 

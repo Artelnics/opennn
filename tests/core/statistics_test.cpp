@@ -373,10 +373,10 @@ TEST(StatisticsTest, Histogram)
 
     vector.resize(11);
     vector << type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(7),type(8),type(9),type(10);
-    Histogram histogram(vector, 10);
+    const Histogram bins = histogram(vector, 10);
 
-    centers = histogram.centers;
-    frequencies = histogram.frequencies;
+    centers = bins.centers;
+    frequencies = bins.frequencies;
 
     EXPECT_NEAR(abs(centers[0]), type(0.5), type(1.0e-3));
     EXPECT_NEAR(abs(centers[1]), type(1.5), type(1.0e-3));
@@ -407,10 +407,10 @@ TEST(StatisticsTest, Histogram)
     vector.resize(20);
     vector.setRandom();
 
-    Histogram histogram_2(vector, 10);
+    const Histogram bins_2 = histogram(vector, 10);
 
-    centers = histogram_2.centers;
-    frequencies = histogram_2.frequencies;
+    centers = bins_2.centers;
+    frequencies = bins_2.frequencies;
 
     type sum_frec_2 = frequencies.sum();
 

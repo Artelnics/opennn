@@ -65,8 +65,6 @@ public:
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
-    virtual void print() const {}
-
 protected:
 
     void configure_neural_network_inputs(NeuralNetwork*, Dataset*, Index) const;

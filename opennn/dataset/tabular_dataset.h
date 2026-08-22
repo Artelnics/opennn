@@ -123,7 +123,6 @@ public:
     Tensor<Correlation, 2> calculate_input_target_variable_spearman_correlations() const;
 
     MatrixR calculate_input_target_correlation_values() const override;
-    VectorI calculate_correlations_rank() const;
 
     FeatureScaling calculate_used_feature_scaling(VariableRole) const override;
 
@@ -149,7 +148,6 @@ public:
     Index count_rows_with_nan() const;
     Index count_nan() const;
 
-    void set_binary_variables();
 
     void set_data_random();
     void set_data_integer(const Index);
@@ -191,7 +189,6 @@ protected:
     void missing_values_to_JSON(JsonWriter&) const;
     void missing_values_from_JSON(const Json*) override;
 
-    void infer_variable_types_from_data();
     void resize_data_from_JSON(Index) override;
 
     filesystem::path cache_file_path() const;

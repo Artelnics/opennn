@@ -638,19 +638,6 @@ void Dataset::set_variable_role(const string& name, VariableRole new_role)
     set_variable_role(get_variable_index(name), new_role);
 }
 
-void Dataset::set_variable_type(const Index index, const VariableType& new_type)
-{
-    throw_if(index < 0 || index >= ssize(variables),
-             "Dataset::set_variable_type: index {} out of range [0, {}).",
-                    index, variables.size());
-    variables[index].type = new_type;
-}
-
-void Dataset::set_variable_type(const string& name, const VariableType& new_type)
-{
-    set_variable_type(get_variable_index(name), new_type);
-}
-
 void Dataset::set_variable_names(const vector<string>& new_names)
 {
     const Index new_names_size = new_names.size();

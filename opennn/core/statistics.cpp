@@ -148,35 +148,6 @@ Histogram::Histogram(const Index bins_number)
     frequencies.resize(bins_number);
 }
 
-Histogram::Histogram(const VectorR& new_centers,
-                     const VectorR& new_frequencies)
-    : centers(new_centers),
-      frequencies(new_frequencies)
-{
-}
-
-Histogram::Histogram(const VectorR& data, Index bins_number)
-{
-    if (bins_number <= 0 || data.size() == 0) return;
-
-    const float data_maximum = maximum(data);
-    const float data_minimum = minimum(data);
-    const float step = (data_maximum - data_minimum) / float(bins_number);
-
-    centers = VectorR::LinSpaced(bins_number, data_minimum + 0.5f * step, data_maximum - 0.5f * step);
-    frequencies = VectorR::Zero(bins_number);
-
-    const float inv_step = (step < EPSILON) ? 0.0f : 1.0f / step;
-
-    for (Index i = 0; i < data.size(); ++i)
-    {
-        const float value = data(i);
-        if (isnan(value)) continue;
-
-        frequencies(clamped_bin(value, data_minimum, inv_step, bins_number))++;
-    }
-}
-
 float minimum(const MatrixR& matrix)
 {
     return matrix.size() == 0 ? QUIET_NAN : matrix.minCoeff();

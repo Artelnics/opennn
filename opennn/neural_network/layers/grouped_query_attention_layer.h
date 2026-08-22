@@ -19,8 +19,6 @@ namespace opennn
 void rotary_build_tables(TensorView&, TensorView&, Index sequence_length, Index rotary_dim, float base);
 void rotary_forward(const TensorView&, const TensorView&, const TensorView&,
                     TensorView&, Index head_dim, Index rotary_dim, Index position_offset);
-void rotary_backward(const TensorView&, const TensorView&, const TensorView&,
-                     TensorView&, Index head_dim, Index rotary_dim, Index position_offset);
 void grouped_attention_forward(const TensorView& query, const TensorView& key, const TensorView& value,
                                TensorView& output, Index n_query_heads, Index n_kv_heads, Index head_dim,
                                bool causal, float scale, Index query_position_offset = 0,

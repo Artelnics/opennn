@@ -203,8 +203,6 @@ public:
         set_variable_role(name, string_to_variable_role(role));
     }
 
-    void set_variable_type(const Index, const VariableType&);
-    void set_variable_type(const string&, const VariableType&);
 
     void set_variable_names(const vector<string>&);
 

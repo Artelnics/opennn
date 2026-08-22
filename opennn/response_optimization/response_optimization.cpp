@@ -247,8 +247,8 @@ static vector<NamedColumn> collect_scalar_columns(const vector<Variable>& variab
 
 vector<NamedColumn> ResponseOptimization::build_input_columns(const vector<Variable>& variables) const
 {
-    return collect_scalar_columns(variables, [this](const Variable& variable)
-        { return variable.get_role() == "Input" && !is_history(variable.name); });
+    return collect_scalar_columns(variables, [](const Variable& variable)
+        { return variable.get_role() == "Input"; });
 }
 
 vector<NamedColumn> ResponseOptimization::build_output_columns(const vector<Variable>& variables) const
@@ -372,17 +372,6 @@ ResponseOptimization::Sense ResponseOptimization::get_sense(const string& name) 
     return objectives.at(name);
 }
 
-bool ResponseOptimization::is_past(const TimeType role)
-{
-    return role == TimeType::PastContinuous || role == TimeType::PastBatch;
-}
-
-bool ResponseOptimization::is_history(const string& name) const
-{
-    const auto it = time_roles.find(name);
-    return it != time_roles.end() && is_past(it->second);
-}
-
 void ResponseOptimization::set_evaluations_number(const int new_evaluations_number)
 {
     evaluations_number = new_evaluations_number;
@@ -478,9 +467,6 @@ const pair<vector<Variable>, vector<Descriptives>>& ResponseOptimization::get_va
         feature_cursor += feature_dimensions[i];
 
         const string& variable_role = variables_unchecked[i].get_role();
-
-        if (is_history(variables_unchecked[i].name))
-            continue;
 
         const bool keep = is_input_request ? (variable_role == "Input")
                                            : (variable_role == "Target" || variable_role == "InputTarget");
@@ -1074,54 +1060,8 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
     return random_inputs;
 }
 
-Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
-{
-    const vector<Variable>& input_variables = neural_network->get_input_variables();
-    const Index batch_size = input_control.rows();
-    const Shape input_shape = neural_network->get_input_shape();
-    const Index total_lags = input_shape[0];
-    const Index total_features = input_shape[1];
-
-    Tensor3 input_combined(batch_size, total_lags, total_features);
-
-    input_combined.device(get_device()) = fixed_history.broadcast(array<Index, 3>{batch_size, 1, 1});
-
-    Index feature_cursor = 0;
-    Index candidate_cursor = 0;
-
-    for (const Variable& variable : input_variables)
-    {
-        const Index feature_count = variable.get_feature_count();
-
-        if (variable.get_role() == "Input" && !is_history(variable.name))
-        {
-            const MatrixR block_data = input_control.block(0, candidate_cursor, batch_size, feature_count);
-
-            TensorMap<const Tensor<float, 3, Layout>> block_tensor(block_data.data(), batch_size, 1, feature_count);
-
-            input_combined.slice(array<Index, 3>{0, total_lags - 1, feature_cursor}, array<Index, 3>{batch_size, 1, feature_count}).device(get_device()) = block_tensor;
-
-            candidate_cursor += feature_count;
-        }
-
-        feature_cursor += feature_count;
-    }
-
-    return input_combined;
-}
-
 MatrixR ResponseOptimization::calculate_outputs(const MatrixR& input) const
 {
-    if (is_forecasting())
-    {
-        throw_if(fixed_history.size() == 0,
-                 "ResponseOptimization: Model is forecasting but fixed_history is empty. Call set_fixed_history() first.");
-
-        const Tensor3 formatted_input = combine_input(input);
-
-        return neural_network->calculate_outputs(formatted_input);
-    }
-
     return neural_network->calculate_outputs(input);
 }
 
@@ -1199,12 +1139,6 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
     {
         const Variable& variable = all_target_variables[size_t(variable_index)];
         const Index feature_count = variable.get_feature_count();
-
-        if (is_history(variable.name))
-        {
-            feature_index += feature_count;
-            continue;
-        }
 
         if (get_constraint(variable.name).comparison != ComparisonOperator::None)
             for (Index feature = 0; feature < feature_count; ++feature)
@@ -2141,7 +2075,7 @@ void ResponseOptimization::initialize_network_differential() const
     network_jacobian.ready = true;
     network_jacobian.differential.reset();
 
-    if (!neural_network || is_forecasting())
+    if (!neural_network)
         return;
 
     const auto has_output_constraint = [](const vector<MultivariateConstraint>& list)

@@ -26,7 +26,6 @@ public:
 
     void set_default();
 
-    void set_batch_size(const Index new_batch_size) { batch_size = new_batch_size; }
 
     void set_initial_learning_rate(const float new_learning_rate) { initial_learning_rate = new_learning_rate; }
     float get_initial_learning_rate() const { return initial_learning_rate; }

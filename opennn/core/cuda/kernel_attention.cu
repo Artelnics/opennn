@@ -374,12 +374,6 @@ void rope_forward_cuda(const int rows, const int seq, const int model_dim, const
 }
 
 template<typename T>
-void rope_backward_cuda(const int rows, const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* dout, T* din, const float* cos, const float* sin)
-{
-    rope_launch<T, -1>(rows, seq, model_dim, head_dim, rotary_dim, offset, dout, din, cos, sin);
-}
-
-template<typename T>
 __global__ void qk_rope_cache_append_kernel(const int n_q_heads, const int n_kv_heads, const int head_dim,
                                             const float eps, const int* __restrict__ position,
                                             const T* __restrict__ qkv,
@@ -862,7 +856,6 @@ void grouped_attention_cuda(const int batch, const int query_seq, const int key_
     template void attention_length_masked_softmax_cuda<T>(int, int, int, int, const int*, T*, T*, bool, bool); \
     template void attention_sequence_lengths_cuda<T>(int, int, int, int, const T*, int32_t*, int32_t*); \
     template void rope_forward_cuda<T>(const int, const int, const int, const int, const int, const int, const T*, T*, const float*, const float*); \
-    template void rope_backward_cuda<T>(const int, const int, const int, const int, const int, const int, const T*, T*, const float*, const float*); \
     template void qk_rope_cache_append_cuda<T>(const int, const int, const int, const float, const int*, const T*, const float*, const float*, const float*, const float*, T*, T*, T*); \
     template void sample_logits_row_cuda<T>(const int, const float, const int, const float, const unsigned long long, const unsigned long long, const T*, float2*, int*, float*); \
     template void grouped_attention_cuda<T>(const int, const int, const int, const int, const int, const int, const float, const int, const bool, const int*, float*, const T*, const T*, const T*, T*); \

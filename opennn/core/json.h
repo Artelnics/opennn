@@ -119,10 +119,6 @@ private:
     Json               root;
     std::vector<Json*> stack;
 };
-void add_json_field(JsonWriter&,
-                    std::string_view,
-                    Json);
-
 template <typename Value>
 void add_json_field(JsonWriter& writer, std::string_view name, Value&& value)
 {

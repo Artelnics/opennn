@@ -75,31 +75,3 @@ TEST(RopeTest, PreservesNorm)
         }
 }
 
-TEST(RopeTest, BackwardIsInverseRotation)
-{
-    const Index batch = 2, seq = 4, num_heads = 2, head_dim = 6, rotary_dim = 6;
-    const Index model_dim = num_heads * head_dim;
-    const float base = 1.0e6f;
-
-    vector<float> cos(size_t(seq * rotary_dim)), sin(size_t(seq * rotary_dim));
-    TensorView cos_view(cos.data(), {seq, rotary_dim});
-    TensorView sin_view(sin.data(), {seq, rotary_dim});
-    rotary_build_tables(cos_view, sin_view, seq, rotary_dim, base);
-
-    const size_t total = size_t(batch * seq * model_dim);
-    vector<float> input(total), rotated(total, 0.0f), recovered(total, 0.0f);
-    for (size_t i = 0; i < total; ++i)
-        input[i] = std::cos(0.011f * float(i)) - 0.5f * std::sin(0.003f * float(i));
-
-    TensorView in_view(input.data(), {batch, seq, model_dim});
-    TensorView rot_view(rotated.data(), {batch, seq, model_dim});
-    TensorView rec_view(recovered.data(), {batch, seq, model_dim});
-
-    rotary_forward(in_view, cos_view, sin_view, rot_view, head_dim, rotary_dim, 0);
-    rotary_backward(rot_view, cos_view, sin_view, rec_view, head_dim, rotary_dim, 0);
-
-    double max_abs = 0.0;
-    for (size_t i = 0; i < total; ++i)
-        max_abs = max(max_abs, abs(double(recovered[i]) - double(input[i])));
-    EXPECT_LT(max_abs, 1.0e-4);
-}

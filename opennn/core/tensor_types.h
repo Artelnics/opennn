@@ -180,7 +180,6 @@ inline bool is_aligned(const void* ptr)
     return reinterpret_cast<uintptr_t>(ptr) % ALIGN_BYTES == 0;
 }
 
-constexpr cudaDataType_t      CUDA_REDUCTION_DTYPE   = CUDA_R_32F;
 constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE   = CUBLAS_COMPUTE_32F_FAST_TF32;
 
 struct Shape
@@ -188,15 +187,6 @@ struct Shape
     static constexpr size_t MaxRank = 4;
 
     Shape() noexcept = default;
-
-    Shape(size_t new_rank, Index value) : rank(new_rank)
-    {
-        throw_if(new_rank > MaxRank,
-                 "Shape: rank {} exceeds MaxRank={}.",
-                        new_rank, MaxRank);
-        throw_if(value < 0, "Shape: dimensions cannot be negative.");
-        fill_n(dims, rank, value);
-    }
 
     Shape(initializer_list<Index> list) : rank(list.size())
     {

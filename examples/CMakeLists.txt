@@ -23,7 +23,7 @@ endfunction()
 
 if(OpenNN_BUILD_EXAMPLES)
     if(OpenNN_BUILD_BLANK)
-        add_subdirectory(blank)
+        opennn_example(blank)
     endif()
 
     set(examples_with_data

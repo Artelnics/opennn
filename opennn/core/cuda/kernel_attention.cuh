@@ -40,9 +40,6 @@ void attention_sdpa_lengths_cuda(const int batch_size, const int query_sequence_
 template<typename T>
 void rope_forward_cuda(const int rows, const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* in, T* out, const float* cos, const float* sin);
 
-template<typename T>
-void rope_backward_cuda(const int rows, const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* dout, T* din, const float* cos, const float* sin);
-
 inline constexpr int GROUPED_ATTENTION_DECODE_SPLITS = 128;
 
 constexpr bool grouped_attention_decode_supported(const int head_dim, const int group)

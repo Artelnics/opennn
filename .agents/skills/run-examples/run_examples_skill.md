@@ -22,8 +22,6 @@ The skill accepts one optional argument: `basic`, `image`, or `text`. With no ar
 | `image` | mnist, melanoma_cancer |
 | `text`  | amazon_reviews, emotion_analysis, translation |
 
-`blank_cuda` is explicitly NOT in this skill — it's a benchmark, run it manually when measuring performance.
-
 ## The matrix
 
 | Example | CPU | GPU FP32 | GPU BF16 | Category | Notes |

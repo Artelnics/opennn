@@ -612,13 +612,6 @@ std::string JsonWriter::c_str(int indent) const
 {
     return root.dump(indent);
 }
-void add_json_field(JsonWriter& writer,
-                    std::string_view name,
-                    Json value)
-{
-    writer.add_field(name, std::move(value));
-}
-
 void write_json(JsonWriter& writer,
                 std::initializer_list<std::pair<const char*, Json>> props)
 {

@@ -318,7 +318,6 @@ using Tensor4 = Eigen::Tensor<float, 4, Layout | Eigen::AlignedMax>;
 template <int Rank>
 using TensorR = Eigen::Tensor<float, Rank, Layout | Eigen::AlignedMax>;
 
-using TensorMap2 = Eigen::TensorMap<Eigen::Tensor<float, 2, Layout | Eigen::AlignedMax>, Eigen::AlignedMax>;
 using TensorMap3 = Eigen::TensorMap<Eigen::Tensor<float, 3, Layout | Eigen::AlignedMax>, Eigen::AlignedMax>;
 using TensorMap4 = Eigen::TensorMap<Eigen::Tensor<float, 4, Layout | Eigen::AlignedMax>, Eigen::AlignedMax>;
 

@@ -19,15 +19,13 @@ struct Descriptives
 
     void set(const float = QUIET_NAN, float = QUIET_NAN, float = QUIET_NAN, float = QUIET_NAN);
 
-    string name = "Descriptives";
+    float minimum;
 
-    float minimum = -1.0f;
+    float maximum;
 
-    float maximum = 1.0f;
+    float mean;
 
-    float mean = 0.0f;
-
-    float standard_deviation = 1.0f;
+    float standard_deviation;
 
 };
 
@@ -62,10 +60,6 @@ struct BoxPlot
 struct Histogram
 {
     Histogram(const Index = 0);
-
-    Histogram(const VectorR&, const VectorR&);
-
-    Histogram(const VectorR&, Index);
 
     VectorR minimums;
 
