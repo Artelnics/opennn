@@ -279,6 +279,17 @@ MatrixR sample_inputs()
     return inputs;
 }
 
+// Four time steps of two features, flattened the way the network takes them.
+MatrixR forecasting_inputs()
+{
+    MatrixR inputs(3, 8);
+    inputs <<  0.10f, -0.20f,  0.30f,  0.40f, -0.50f,  0.60f,  0.70f, -0.80f,
+               1.10f,  0.90f, -0.30f,  0.25f,  0.05f, -0.15f,  0.45f,  0.35f,
+              -0.60f,  0.55f,  0.15f, -0.05f,  0.85f,  0.20f, -0.40f,  0.65f;
+    return inputs;
+}
+
+
 // A feature with no spread is the case the scalers kept getting wrong, so the
 // exported model has to reproduce that constant too.
 unique_ptr<ApproximationNetwork> build_degenerate_network()
@@ -533,6 +544,39 @@ TEST(ExpressionExecution, EmbeddedModelReproducesDegenerateScaling)
     expect_export_matches(Target::CEmbedded, "opennn_degenerate_embedded",
                           *network, inputs, expected);
 }
+
+// The embedded exporter is the only one that emits Recurrent and LSTM: it packs
+// their weights into flat tables and calls nn_recurrent_forward /
+// nn_lstm_forward. Until these two tests, nothing checked the values in those
+// tables - SaveCEmbeddedLstm and SaveCEmbeddedRecurrent only look for tokens -
+// so a transposed or mis-strided table would have exported silently.
+TEST(ExpressionExecution, EmbeddedRecurrentModelMatchesTheNetworkItCameFrom)
+{
+    if (!target_available(Target::CEmbedded)) GTEST_SKIP() << target_missing(Target::CEmbedded);
+
+    ForecastingNetwork network(Shape{4, 2}, Shape{3}, Shape{1});
+    network.set_parameters_random();
+
+    const MatrixR inputs = forecasting_inputs();
+
+    expect_export_matches(Target::CEmbedded, "opennn_expression_embedded_recurrent",
+                          network, inputs, network.calculate_outputs(inputs));
+}
+
+
+TEST(ExpressionExecution, EmbeddedLstmModelMatchesTheNetworkItCameFrom)
+{
+    if (!target_available(Target::CEmbedded)) GTEST_SKIP() << target_missing(Target::CEmbedded);
+
+    ForecastingLstmNetwork network(Shape{4, 2}, Shape{3}, Shape{1});
+    network.set_parameters_random();
+
+    const MatrixR inputs = forecasting_inputs();
+
+    expect_export_matches(Target::CEmbedded, "opennn_expression_embedded_lstm",
+                          network, inputs, network.calculate_outputs(inputs));
+}
+
 
 // The layer emitters are reached through the executed exports above, but this
 // one runs without an interpreter or a compiler - so the degenerate-scaler rule

@@ -597,7 +597,7 @@ string ModelExpression::get_expression_c() const
 
     ostringstream buffer;
     emit_c_prelude(buffer);
-    emit_c_activations(buffer, expression);
+    emit_activations(buffer, expression, &ActivationBodies::c, {"Identity"});
     emit_c_calculate_outputs(buffer, expression, lines, has_softmax);
     emit_c_main(buffer);
     return buffer.str();
@@ -620,13 +620,18 @@ void ModelExpression::emit_c_prelude(ostringstream& buffer) const
               "static double min(double a, double b) { return a < b ? a : b; }\n\n";
 }
 
-void ModelExpression::emit_c_activations(ostringstream& buffer, const string& expression) const
+void ModelExpression::emit_activations(ostringstream& buffer,
+                                       const string& expression,
+                                       const char* ActivationBodies::* body,
+                                       initializer_list<string_view> always)
 {
     for (const auto& [activation, bodies] : activation_table())
     {
         const string& name = activation_function_to_string(activation);
-        if (name == "Identity" || expression.find(name + "(") != string::npos)
-            buffer << bodies.c;
+
+        if (ranges::find(always, name) != always.end()
+         || expression.find(name + "(") != string::npos)
+            buffer << bodies.*body;
     }
 }
 
@@ -1159,42 +1164,19 @@ string ModelExpression::get_expression_c_embedded() const
                 const MatrixMap recurrent_w_map =
                     parameter_views[2].as_matrix();
 
-                vector<float> recurrent_biases(
-                    static_cast<size_t>(hidden));
-
-                vector<float> recurrent_input_weights(
-                    size_t(features * hidden));
-
-                vector<float> recurrent_recurrent_weights(
-                    size_t(hidden * hidden));
-
-                for(Index j = 0; j < hidden; ++j)
-                    recurrent_biases[size_t(j)] =
-                        biases_map(j);
-
-                for(Index f = 0; f < features; ++f)
-                    for(Index j = 0; j < hidden; ++j)
-                        recurrent_input_weights[
-                            size_t(f * hidden + j)] =
-                            input_w_map(f, j);
-
-                for(Index p = 0; p < hidden; ++p)
-                    for(Index j = 0; j < hidden; ++j)
-                        recurrent_recurrent_weights[
-                            size_t(p * hidden + j)] =
-                            recurrent_w_map(p, j);
-
+                // MatrixMap is row-major, so element (f, j) already sits at
+                // f * hidden + j: the tables are the parameter buffers verbatim.
                 emit_float_array(
                     table_prefix + "_biases",
-                    recurrent_biases);
+                    span(biases_map.data(), size_t(hidden)));
 
                 emit_float_array(
                     table_prefix + "_input_weights",
-                    recurrent_input_weights);
+                    span(input_w_map.data(), size_t(features * hidden)));
 
                 emit_float_array(
                     table_prefix + "_recurrent_weights",
-                    recurrent_recurrent_weights);
+                    span(recurrent_w_map.data(), size_t(hidden * hidden)));
 
                 const string_view activation_constant =
                     activation_constant_for(
@@ -1282,30 +1264,16 @@ string ModelExpression::get_expression_c_embedded() const
                     const MatrixMap gate_u =
                         parameter_views[size_t(8 + gate)].as_matrix();
 
-                    for(Index j = 0; j < hidden; ++j)
-                    {
-                        lstm_biases[
-                            size_t(gate * hidden + j)] =
-                            gate_biases(j);
-                    }
+                    // Every gate's buffer is already row-major and contiguous;
+                    // the tables only lay the four of them end to end.
+                    ranges::copy_n(gate_biases.data(), hidden,
+                                   lstm_biases.begin() + gate * hidden);
 
-                    for(Index f = 0; f < features; ++f)
-                        for(Index j = 0; j < hidden; ++j)
-                            lstm_input_weights[
-                                size_t(
-                                    gate * features * hidden
-                                    + f * hidden
-                                    + j)] =
-                                gate_w(f, j);
+                    ranges::copy_n(gate_w.data(), features * hidden,
+                                   lstm_input_weights.begin() + gate * features * hidden);
 
-                    for(Index p = 0; p < hidden; ++p)
-                        for(Index j = 0; j < hidden; ++j)
-                            lstm_recurrent_weights[
-                                size_t(
-                                    gate * hidden * hidden
-                                    + p * hidden
-                                    + j)] =
-                                gate_u(p, j);
+                    ranges::copy_n(gate_u.data(), hidden * hidden,
+                                   lstm_recurrent_weights.begin() + gate * hidden * hidden);
                 }
 
                 emit_float_array(
@@ -1638,7 +1606,7 @@ string ModelExpression::get_expression_php() const
 
     ostringstream buffer;
     emit_php_prelude(buffer);
-    emit_php_activations(buffer, expression);
+    emit_activations(buffer, expression, &ActivationBodies::php, {});
     emit_php_inputs_setup(buffer);
     emit_php_body(buffer, lines, has_softmax);
     emit_php_response(buffer);
@@ -1653,16 +1621,6 @@ void ModelExpression::emit_php_prelude(ostringstream& buffer) const
     for (size_t i = 0; i < input_names.size(); ++i)
         buffer << "\n\t\t" << i << ")  " << input_names[i];
     buffer << php_subheader;
-}
-
-void ModelExpression::emit_php_activations(ostringstream& buffer, const string& expression) const
-{
-    for (const auto& [activation, bodies] : activation_table())
-    {
-        const string& name = activation_function_to_string(activation);
-        if (expression.find(name + "(") != string::npos)
-            buffer << bodies.php;
-    }
 }
 
 void ModelExpression::emit_php_inputs_setup(ostringstream& buffer) const
@@ -1892,12 +1850,7 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
         buffer << "}\n\n";
     }
 
-    for (const auto& [activation, bodies] : activation_table())
-    {
-        const string& name = activation_function_to_string(activation);
-        if (contains({"Identity", "Tanh"}, name) || expression.find(name + "(") != string::npos)
-            buffer << bodies.javascript;
-    }
+    emit_activations(buffer, expression, &ActivationBodies::javascript, {"Identity", "Tanh"});
     buffer << "\n";
 
     buffer << "function neuralNetwork()\n{\n\tvar inputs = [];\n";
@@ -1971,7 +1924,7 @@ string ModelExpression::get_expression_python() const
     ostringstream buffer;
     emit_python_prelude(buffer);
     emit_python_class_header(buffer);
-    emit_python_activations(buffer, expression);
+    emit_activations(buffer, expression, &ActivationBodies::python, {"Identity"});
     emit_python_calculate_outputs(buffer, expression, lines, has_softmax);
     emit_python_batch_and_main(buffer);
 
@@ -2009,16 +1962,6 @@ void ModelExpression::emit_python_class_header(ostringstream& buffer) const
     buffer << "\tdef __init__(self):\n"
            << "\t\tself.inputs_number = " << input_names.size() << "\n"
            << "\t\tself.input_names = [" << inputs_list_str << "]\n\n";
-}
-
-void ModelExpression::emit_python_activations(ostringstream& buffer, const string& expression) const
-{
-    for (const auto& [activation, bodies] : activation_table())
-    {
-        const string& name = activation_function_to_string(activation);
-        if (name == "Identity" || expression.find(name + "(") != string::npos)
-            buffer << bodies.python;
-    }
 }
 
 void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,

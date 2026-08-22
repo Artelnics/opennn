@@ -47,19 +47,16 @@ private:
     void check_parameters_are_finite() const;
 
     void emit_c_prelude(ostringstream&) const;
-    void emit_c_activations(ostringstream&, const string&) const;
     void emit_c_calculate_outputs(ostringstream&, const string&, const vector<string>&, bool) const;
     void emit_c_main(ostringstream&) const;
 
     void emit_php_prelude(ostringstream&) const;
-    void emit_php_activations(ostringstream&, const string&) const;
     void emit_php_inputs_setup(ostringstream&) const;
     void emit_php_body(ostringstream&, const vector<string>&, bool) const;
     void emit_php_response(ostringstream&) const;
 
     void emit_python_prelude(ostringstream&) const;
     void emit_python_class_header(ostringstream&) const;
-    void emit_python_activations(ostringstream&, const string&) const;
     void emit_python_calculate_outputs(ostringstream&, const string&, const vector<string>&, bool) const;
     void emit_python_batch_and_main(ostringstream&) const;
 
@@ -101,6 +98,13 @@ private:
         const char* python;
         const char* php;
     };
+
+    // The four language emitters differ only in which ActivationBodies member
+    // they take and which activations they define unconditionally.
+    static void emit_activations(ostringstream&,
+                                 const string& expression,
+                                 const char* ActivationBodies::* body,
+                                 initializer_list<string_view> always);
 
     static const vector<pair<ActivationFunction, ActivationBodies>>& activation_table();
 };
