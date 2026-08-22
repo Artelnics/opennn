@@ -1175,75 +1175,123 @@ void softmax(TensorView& output)
     softmax_cpu(output);
 }
 
+// Elementwise activations, run one contiguous chunk at a time so the pass can
+// use more than one core. Every kernel below reads and writes only its own
+// element, so chunking is bitwise identical to one flat expression. The 65536
+// threshold and schedule(static) match softmax_cpu and multiply_cpu above.
+template <typename Apply>
+static void for_each_activation_chunk(Index size, Apply apply)
+{
+    constexpr Index chunk_size = 16384;
+    constexpr Index parallel_threshold = 65536;
+
+    if (size < parallel_threshold)
+    {
+        apply(Index(0), size);
+        return;
+    }
+
+    const Index chunks = (size + chunk_size - 1) / chunk_size;
+
+    #pragma omp parallel for schedule(static)
+    for (Index chunk = 0; chunk < chunks; ++chunk)
+    {
+        const Index begin = chunk * chunk_size;
+        apply(begin, min(chunk_size, size - begin));
+    }
+}
+
+
 static void activation_forward_cpu(TensorView& output, ActivationFunction function)
 {
     if (try_activation_forward(output, function)) return;
 
-    auto a = output.as_vector().array();
-
     using enum ActivationFunction;
-    switch (function)
+
+    if (function == Identity || function == Softmax) return;
+
+    VectorMap flat = output.as_vector();
+    float* const data = flat.data();
+
+    for_each_activation_chunk(flat.size(), [data, function](Index begin, Index count)
     {
-    case Identity:
-    case Softmax:
-        return;
-    case Sigmoid:
-        a = (1.0f + (-a).exp()).inverse();
-        return;
-    case Tanh:
-        a = a.tanh();
-        return;
-    case ReLU:
-        a = a.cwiseMax(0.0f);
-        return;
-    case LeakyReLU:
-        a = (a >= 0.0f).select(a, a * LEAKY_RELU_SLOPE);
-        return;
-    case GELU:
-        a = a.unaryExpr([](float x) { return gelu_value(x); });
-        return;
-    case GELUTanh:
-        a = 0.5f * a * (1.0f + (SQRT_2_OVER_PI * (a + GELU_TANH_CUBIC * a * a * a)).tanh());
-        return;
-    case SiLU:
-        a = a / (1.0f + (-a).exp());
-        return;
-    }
+        auto a = Map<ArrayXf>(data + begin, count);
+
+        switch (function)
+        {
+        case Identity:
+        case Softmax:
+            return;
+        case Sigmoid:
+            a = (1.0f + (-a).exp()).inverse();
+            return;
+        case Tanh:
+            a = a.tanh();
+            return;
+        case ReLU:
+            a = a.cwiseMax(0.0f);
+            return;
+        case LeakyReLU:
+            a = (a >= 0.0f).select(a, a * LEAKY_RELU_SLOPE);
+            return;
+        case GELU:
+            a = a.unaryExpr([](float x) { return gelu_value(x); });
+            return;
+        case GELUTanh:
+            a = 0.5f * a * (1.0f + (SQRT_2_OVER_PI * (a + GELU_TANH_CUBIC * a * a * a)).tanh());
+            return;
+        case SiLU:
+            a = a / (1.0f + (-a).exp());
+            return;
+        }
+    });
 }
 
 static void activation_backward_cpu(const TensorView& outputs, TensorView& delta, ActivationFunction function)
 {
-    const auto y = outputs.as_vector().array();
-    auto       d = delta.as_vector().array();
-
     using enum ActivationFunction;
-    switch (function)
+
+    if (function == Identity || function == Softmax) return;
+
+    auto outputs_flat = outputs.as_vector();
+    VectorMap delta_flat = delta.as_vector();
+
+    const float* const outputs_data = outputs_flat.data();
+    float* const delta_data = delta_flat.data();
+
+    for_each_activation_chunk(delta_flat.size(), [outputs_data, delta_data, function](Index begin, Index count)
     {
-    case Identity:
-    case Softmax:
-        return;
-    case Sigmoid:
-        d *= y * (1.0f - y);
-        return;
-    case Tanh:
-        d *= (1.0f - y.square());
-        return;
-    case ReLU:
-        d = (y > 0.0f).select(d, 0.0f);
-        return;
-    case LeakyReLU:
-        d = (y >= 0.0f).select(d, d * LEAKY_RELU_SLOPE);
-        return;
-    case GELU:
-        d *= y.unaryExpr([](float x) { return gelu_derivative(x); });
-        return;
-    case GELUTanh:
-        d *= y.unaryExpr([](float x) { return gelu_tanh_derivative(x); });
-        return;
-    case SiLU:
-        d *= y.unaryExpr([](float x) { return silu_derivative(x); });
-        return;
-    }
+        const auto y = Map<const ArrayXf>(outputs_data + begin, count);
+        auto d = Map<ArrayXf>(delta_data + begin, count);
+
+        switch (function)
+        {
+        case Identity:
+        case Softmax:
+            return;
+        case Sigmoid:
+            d *= y * (1.0f - y);
+            return;
+        case Tanh:
+            d *= (1.0f - y.square());
+            return;
+        case ReLU:
+            d = (y > 0.0f).select(d, 0.0f);
+            return;
+        case LeakyReLU:
+            d = (y >= 0.0f).select(d, d * LEAKY_RELU_SLOPE);
+            return;
+        case GELU:
+            d *= y.unaryExpr([](float x) { return gelu_derivative(x); });
+            return;
+        case GELUTanh:
+            d *= y.unaryExpr([](float x) { return gelu_tanh_derivative(x); });
+            return;
+        case SiLU:
+            d *= y.unaryExpr([](float x) { return silu_derivative(x); });
+            return;
+        }
+    });
 }
 
 void activation_forward(TensorView& output, ActivationFunction function)

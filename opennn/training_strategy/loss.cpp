@@ -336,6 +336,11 @@ Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
 
 }
 
+// MSVC 19.50 still crashes its optimizer (C1001) generating code for this
+// function at /O2 with the Eigen-heavy PCH in scope; re-tested 2026-08-22 on
+// 19.50.35729. It is the cold CPU reference kernel, so /Od costs nothing here.
+// The pragma is deliberately NOT applied to yolo_v8_gradient_kernel_tal below:
+// that one is the GPU training path, and it no longer triggers the ICE.
 #ifdef _MSC_VER
 #pragma optimize("", off)
 #endif
@@ -804,9 +809,6 @@ static float yolo_v8_error_kernel_tal(const TensorView& output,
     return lam.giou * coord_loss + lam.dfl * dfl_loss + lam.cls * cls_loss;
 }
 
-#ifdef _MSC_VER
-#pragma optimize("", off)
-#endif
 static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                                          const float* gt_list,
                                          const TensorView& output_delta,
@@ -963,9 +965,6 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
             }
     }
 }
-#ifdef _MSC_VER
-#pragma optimize("", on)
-#endif
 
 template<typename HeadFn>
 static void for_each_v8_head(const ForwardPropagation& forward_propagation,
