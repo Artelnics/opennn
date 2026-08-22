@@ -23,7 +23,9 @@ struct RecurrentOperator : Operator, CudnnRnnState
         StepInputForwardSlot = 3,
         StepHiddenForwardSlot,
         PreviousHiddenForwardSlot,
-        StepDerivativesForwardSlot
+        StepDerivativesForwardSlot,
+        CudnnInputSequenceForwardSlot,
+        CudnnOutputSequenceForwardSlot
     };
 
     enum BackwardSlot
@@ -85,6 +87,8 @@ private:
                    TensorView&,
                    TensorView&,
                    TensorView&,
+                   TensorView&,
+                   TensorView&,
                    Buffer&,
                    bool) const;
 
@@ -92,7 +96,9 @@ private:
                      const TensorView&,
                      const TensorView&,
                      const TensorView&,
-                     TensorView&) const;
+                     TensorView&,
+                     TensorView&,
+                     Buffer&) const;
     void apply_delta_gpu(const TensorView&,
                          const TensorView&,
                          const TensorView&,
@@ -105,6 +111,8 @@ private:
                          TensorView&,
                          TensorView&,
                          TensorView&,
+                         const TensorView&,
+                         const TensorView&,
                          const Buffer&,
                          Buffer&) const;
 
@@ -113,8 +121,9 @@ private:
     void pack_weights_to_cudnn_(Buffer&) const;
     void unpack_gradients_from_cudnn_(Buffer&) const;
     void apply_gpu_cudnn_(const TensorView&, TensorView&, TensorView&,
-                          Buffer&, bool) const;
+                          TensorView&, TensorView&, Buffer&, bool) const;
     void apply_delta_gpu_cudnn_(const TensorView&, const TensorView&,
+                                const TensorView&, const TensorView&,
                                 const TensorView&, TensorView&, TensorView&,
                                 TensorView&, const Buffer&, Buffer&) const;
 };
@@ -180,6 +189,8 @@ private:
         StepHiddenScratch,
         PreviousHiddenScratch,
         StepDerivativesScratch,
+        CudnnInputSequence,
+        CudnnOutputSequence,
         Output
     };
 

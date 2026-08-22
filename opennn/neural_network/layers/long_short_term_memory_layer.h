@@ -28,6 +28,8 @@ struct LongShortTermMemoryOperator : Operator, CudnnRnnState
         CellStateSlot,
         HiddenStateSlot,
         CellActivationSlot,
+        CudnnInputSequenceSlot,
+        CudnnOutputSequenceSlot,
         OutputSlot
     };
 
@@ -88,7 +90,8 @@ struct LongShortTermMemoryOperator : Operator, CudnnRnnState
              Index,
              Index,
              ActivationFunction new_activation_function = ActivationFunction::Tanh,
-             ActivationFunction new_recurrent_activation_function = ActivationFunction::Sigmoid);
+             ActivationFunction new_recurrent_activation_function = ActivationFunction::Sigmoid,
+             Type new_compute_dtype = Type::FP32);
 
     vector<TensorSpec> parameter_specs() const override;
     void link_parameters(span<const TensorView>) override;
@@ -132,11 +135,15 @@ private:
     void apply_gpu(const TensorView&,
                    TensorView&,
                    TensorView&,
+                   TensorView&,
+                   TensorView&,
                    Buffer&,
                    bool,
                    bool) const;
 
     void apply_delta_gpu(const TensorView&,
+                         const TensorView&,
+                         const TensorView&,
                          const TensorView&,
                          const TensorView&,
                          TensorView&,

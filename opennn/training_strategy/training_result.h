@@ -70,6 +70,10 @@ struct TrainingResult
 
     string elapsed_time;
 
+    // High-resolution duration of the measured epoch loop. Device setup,
+    // warm-up/graph capture and teardown are intentionally excluded.
+    double training_seconds = 0.0;
+
     float loss = QUIET_NAN;
 
     optional<Index> restored_epoch;

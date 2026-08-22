@@ -147,11 +147,11 @@ TEST(LstmFusedPath, ForwardMatchesAcrossBoundary)
 TEST(LstmFusedPath, ScalarAndFusedAgree)
 {
 
-    check_constant_forward(63, "Tanh");
-    check_constant_forward(64, "Tanh");
+    check_constant_forward(95, "Tanh");
+    check_constant_forward(96, "Tanh");
 
-    check_gradient(63, false);
-    check_gradient(64, false);
+    check_gradient(95, false);
+    check_gradient(96, false);
 }
 
 TEST(LstmFusedPath, DISABLED_BenchmarkBoundary)
@@ -211,7 +211,7 @@ TEST(LstmFusedPath, DISABLED_BenchmarkBoundary)
             chrono::duration<double, micro>(t2 - t1).count() / iterations;
 
         printf("%6lld  %-6s  %10.1f  %10.1f\n",
-                    (long long)neurons, neurons < 64 ? "scalar" : "fused",
+                    (long long)neurons, neurons < 96 ? "scalar" : "fused",
                     forward_us, backward_us);
     }
 

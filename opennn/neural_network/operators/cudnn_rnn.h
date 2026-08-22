@@ -22,8 +22,10 @@ struct CudnnRnnShapeSlot
 {
     Index batch = -1;
     Index time  = -1;
+    Index input_features = -1;
     int  stamp = 0;
     bool training_ready = false;
+    bool time_major = true;
     Index workspace_bytes = 0;
     Index reserve_space_bytes = 0;
     CudnnDescriptor<cudnnRNNDataDescriptor_t> x_desc;
@@ -39,6 +41,7 @@ struct CudnnRnnShapeSlot
 struct CudnnRnnConfig
 {
     cudnnRNNMode_t cell_mode;
+    Type data_type = Type::FP32;
 };
 
 #endif
@@ -51,16 +54,19 @@ protected:
         mutex access_mutex;
         CudnnDescriptor<cudnnRNNDescriptor_t> rnn_desc;
         CudnnDescriptor<cudnnDropoutDescriptor_t> dropout_desc;
-        // cuDNN retains this address for the lifetime of the zero-rate
-        // dropout descriptor.
+        // Reserved for non-zero recurrent dropout; zero-rate descriptors use
+        // no RNG state.
         Buffer dropout_states{Device::CUDA};
         CudnnRnnShapeSlot shape_slots[RNN_SHAPE_SLOTS];
         int shape_stamp = 0;
         Index cached_input_features = -1;
         Index cached_output_features = -1;
+        Type cached_data_type = Type::Auto;
         Index weight_space_bytes = 0;
         bool persist_algo_failed = false;
         bool persist_algo_active = false;
+        bool double_bias = false;
+        bool packed_layout = false;
     };
 
     unique_lock<mutex> lock_backend_state() const

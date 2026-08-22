@@ -7,12 +7,15 @@
 //   artelnics@artelnics.com
 
 #include "opennn/neural_network/layers/recurrent_layer.h"
+
 #include "opennn/registry.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
 
 #include "opennn/core/device_backend.h"
 #include "opennn/core/random_utilities.h"
+#include "opennn/core/profiler.h"
+#include "opennn/core/string_utilities.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/layers/kernel_recurrent.cuh"
 #include "opennn/core/cuda/kernel_tensor.cuh"
@@ -93,6 +96,8 @@ void RecurrentOperator::forward_propagate(ForwardPropagation& forward_propagatio
                          forward_slots[StepHiddenForwardSlot],
                          forward_slots[PreviousHiddenForwardSlot],
                          forward_slots[StepDerivativesForwardSlot],
+                         forward_slots[CudnnInputSequenceForwardSlot],
+                         forward_slots[CudnnOutputSequenceForwardSlot],
                          forward_propagation.layer_state_storage[layer],
                          is_training);
     apply(input, hidden_states, activation_derivatives, output, is_training);
@@ -102,6 +107,12 @@ void RecurrentOperator::back_propagate(ForwardPropagation& forward_propagation, 
 {
     auto& forward_slots = forward_propagation.slots[layer];
     auto& backward_slots = back_propagation.slots[layer];
+
+    // A frozen layer gets no backward specs, so only the input-delta slot
+    // exists. Loss still walks every layer between the first and last trainable
+    // one, and the scratch indices below then ran off the end of the vector.
+    // LongShortTermMemoryOperator::back_propagate has the same guard.
+    if (backward_slots.size() <= size_t(CudnnInputDeltaScratchSlot)) return;
 
     const TensorView& input                    = get_input(forward_propagation, layer);
     const TensorView& hidden_states            = forward_slots[output_slots[1]];
@@ -126,10 +137,14 @@ void RecurrentOperator::back_propagate(ForwardPropagation& forward_propagation, 
                                step_input_scratch, step_prev_h_scratch,
                                delta_scratch, next_carry_scratch, step_in_delta_scratch,
                                sequence_delta_scratch, cudnn_input_delta_scratch,
+                               forward_slots[CudnnInputSequenceForwardSlot],
+                               forward_slots[CudnnOutputSequenceForwardSlot],
                                forward_propagation.layer_state_storage[layer],
                                back_propagation.layer_scratch_storage[layer]);
     }
-    apply_delta(input, hidden_states, activation_derivatives, output_delta, input_delta);
+    apply_delta(input, hidden_states, activation_derivatives, output_delta, input_delta,
+                backward_slots[SequenceDeltaScratchSlot],
+                back_propagation.layer_scratch_storage[layer]);
 }
 
 namespace
@@ -137,6 +152,24 @@ namespace
 
 using StridedMap      = Eigen::Map<MatrixR, 0, Eigen::OuterStride<>>;
 using ConstStridedMap = Eigen::Map<const MatrixR, 0, Eigen::OuterStride<>>;
+
+class EigenThreadCountScope
+{
+public:
+    explicit EigenThreadCountScope(int count)
+        : previous_count(Eigen::nbThreads())
+    {
+        Eigen::setNbThreads(count);
+    }
+
+    ~EigenThreadCountScope()
+    {
+        Eigen::setNbThreads(previous_count);
+    }
+
+private:
+    int previous_count;
+};
 
 constexpr bool supports_recurrent_activation(const ActivationFunction activation) noexcept
 {
@@ -199,54 +232,65 @@ void RecurrentOperator::apply(const TensorView& input,
     Eigen::Map<const MatrixR> all_input(input_data, BT, input_features);
     MatrixMap all_hidden(hidden_data, BT, output_features);
 
-    all_hidden.noalias() = all_input * w_in_map;
-    all_hidden.rowwise() += bias_map.transpose();
+    {
+        PROFILE_SCOPE_HOST("rnn_cpu:fwd_input_projection");
+        all_hidden.noalias() = all_input * w_in_map;
+        all_hidden.rowwise() += bias_map.transpose();
+    }
 
     MatrixR h_c(batch_size, output_features);
     MatrixR rec_acc(batch_size, output_features);
 
-    const int eigen_threads = Eigen::nbThreads();
-    Eigen::setNbThreads(1);
-
-    for (Index t = 0; t < time_steps; ++t)
     {
-        StridedMap h_t(hidden_data + t * output_features,
-                       batch_size, output_features, Eigen::OuterStride<>(h_stride_b));
+        PROFILE_SCOPE_HOST("rnn_cpu:fwd_recurrence");
 
-        if (t > 0)
-        {
-            rec_acc.noalias() = h_c * w_rec_map;
-            h_t += rec_acc;
-        }
+        // Each time step performs a small, latency-bound GEMM. A full Eigen
+        // thread team costs more than the multiply at forecasting cell sizes.
+        const EigenThreadCountScope single_thread(1);
 
-        if (derivs_data)
+        for (Index t = 0; t < time_steps; ++t)
         {
-            StridedMap d_t(derivs_data + t * output_features,
+            StridedMap h_t(hidden_data + t * output_features,
                            batch_size, output_features, Eigen::OuterStride<>(h_stride_b));
-            activate_in_place(activation, h_t, &d_t);
-        }
-        else
-            activate_in_place(activation, h_t, nullptr);
 
-        h_c = h_t;
+            if (t > 0)
+            {
+                rec_acc.noalias() = h_c * w_rec_map;
+                h_t += rec_acc;
+            }
+
+            if (derivs_data)
+            {
+                StridedMap d_t(derivs_data + t * output_features,
+                               batch_size, output_features, Eigen::OuterStride<>(h_stride_b));
+                activate_in_place(activation, h_t, &d_t);
+            }
+            else
+                activate_in_place(activation, h_t, nullptr);
+
+            h_c = h_t;
+        }
     }
 
-    Eigen::setNbThreads(eigen_threads);
-
-    if (return_sequences)
-        memcpy(output.as<float>(), hidden_data,
-               size_t(BT) * output_features * sizeof(float));
-    else
-        output.as_matrix() = ConstStridedMap(hidden_data + (time_steps - 1) * output_features,
-                                             batch_size, output_features,
-                                             Eigen::OuterStride<>(h_stride_b));
+    {
+        PROFILE_SCOPE_HOST("rnn_cpu:fwd_output");
+        if (return_sequences)
+            memcpy(output.as<float>(), hidden_data,
+                   size_t(BT) * output_features * sizeof(float));
+        else
+            output.as_matrix() = ConstStridedMap(hidden_data + (time_steps - 1) * output_features,
+                                                 batch_size, output_features,
+                                                 Eigen::OuterStride<>(h_stride_b));
+    }
 }
 
 void RecurrentOperator::apply_delta(const TensorView& input,
                               const TensorView& hidden_states,
                               const TensorView& activation_derivatives,
                               const TensorView& output_delta,
-                              TensorView& input_delta) const
+                              TensorView& input_delta,
+                              TensorView& sequence_delta_scratch,
+                              Buffer& cpu_scratch) const
 {
     const Index batch_size = input.get_shape()[0];
 
@@ -277,61 +321,193 @@ void RecurrentOperator::apply_delta(const TensorView& input,
 
     const Index BT = batch_size * time_steps;
 
-    MatrixR all_delta(BT, output_features);
+    Eigen::Map<MatrixR> all_delta(sequence_delta_scratch.as<float>(),
+                                  BT, output_features);
+
+    const char* const fused_sequences_env =
+        getenv("OPENNN_RNN_CPU_FUSED_SEQUENCES");
+    const bool use_fused_sequences = fused_sequences_env
+        ? atoi(fused_sequences_env) != 0
+        : output_features < 96;
+
+    if (use_fused_sequences)
+    {
+        PROFILE_SCOPE_HOST("rnn_cpu:bwd_fused_sequences");
+
+        const Index F = input_features;
+        const Index H = output_features;
+        const Index T = time_steps;
+        const float* const W = input_weights.as<float>();
+        const float* const U = recurrent_weights.as<float>();
+        const int threads = max(1, omp_get_max_threads());
+        const Index bias_values = H;
+        const Index input_weight_values = F * H;
+        const Index recurrent_weight_values = H * H;
+        const Index per_thread_values =
+            bias_values + input_weight_values + recurrent_weight_values;
+        const Index thread_values = Index(threads) * per_thread_values;
+        float* const scratch = cpu_scratch.ensure<float>(
+            thread_values + batch_size * H);
+        fill_n(scratch, thread_values, 0.0f);
+        float* const next_all = scratch + thread_values;
+
+        // A sequence is an independent dependency chain. Parallelizing across
+        // sequences creates one worker team for the whole BPTT pass and fuses
+        // delta propagation with all three parameter-gradient reductions.
+        #pragma omp parallel for schedule(static)
+        for (Index b = 0; b < batch_size; ++b)
+        {
+            const int thread = omp_get_thread_num();
+            float* const local = scratch + Index(thread) * per_thread_values;
+            float* const local_bias = local;
+            float* const local_input_weight = local_bias + bias_values;
+            float* const local_recurrent_weight =
+                local_input_weight + input_weight_values;
+            float* const next = next_all + b * H;
+            fill_n(next, H, 0.0f);
+
+            for (Index t = T; t-- > 0;)
+            {
+                const Index step = (b * T + t) * H;
+                float* const delta = all_delta.data() + step;
+                const float* const derivatives = derivs_data + step;
+                const float* const x = input_data + (b * T + t) * F;
+                const float* const previous =
+                    t > 0 ? hidden_data + (b * T + t - 1) * H : nullptr;
+                const float* const external_delta = return_sequences
+                    ? seq_delta_data + step
+                    : (t == T - 1 ? final_delta_data + b * H : nullptr);
+
+                #pragma omp simd
+                for (Index h = 0; h < H; ++h)
+                {
+                    delta[h] = (next[h]
+                                + (external_delta ? external_delta[h] : 0.0f))
+                             * derivatives[h];
+                    local_bias[h] += delta[h];
+                }
+
+                for (Index k = 0; k < F; ++k)
+                {
+                    const float xk = x[k];
+                    float input_gradient = 0.0f;
+
+                    #pragma omp simd reduction(+:input_gradient)
+                    for (Index h = 0; h < H; ++h)
+                    {
+                        const Index weight = k * H + h;
+                        local_input_weight[weight] += xk * delta[h];
+                        if (write_input_delta)
+                            input_gradient += delta[h] * W[weight];
+                    }
+
+                    if (write_input_delta)
+                        input_delta_data[(b * T + t) * F + k] = input_gradient;
+                }
+
+                if (previous)
+                {
+                    for (Index k = 0; k < H; ++k)
+                    {
+                        const float previous_value = previous[k];
+                        float carry = 0.0f;
+
+                        #pragma omp simd reduction(+:carry)
+                        for (Index h = 0; h < H; ++h)
+                        {
+                            const Index weight = k * H + h;
+                            local_recurrent_weight[weight] +=
+                                previous_value * delta[h];
+                            carry += delta[h] * U[weight];
+                        }
+
+                        next[k] = carry;
+                    }
+                }
+            }
+        }
+
+        for (int thread = 0; thread < threads; ++thread)
+        {
+            const float* const local =
+                scratch + Index(thread) * per_thread_values;
+            const float* const local_bias = local;
+            const float* const local_input_weight = local_bias + bias_values;
+            const float* const local_recurrent_weight =
+                local_input_weight + input_weight_values;
+
+            #pragma omp simd
+            for (Index h = 0; h < H; ++h)
+                bias_grad(h) += local_bias[h];
+            #pragma omp simd
+            for (Index i = 0; i < input_weight_values; ++i)
+                w_in_grad.data()[i] += local_input_weight[i];
+            #pragma omp simd
+            for (Index i = 0; i < recurrent_weight_values; ++i)
+                w_rec_grad.data()[i] += local_recurrent_weight[i];
+        }
+
+        return;
+    }
+
     MatrixR d_c(batch_size, output_features);
     MatrixR h_prev_c(batch_size, output_features);
     MatrixR next_carry = MatrixR::Zero(batch_size, output_features);
 
-    const int eigen_threads = Eigen::nbThreads();
-    Eigen::setNbThreads(1);
-
-    for (Index t = time_steps - 1; t >= 0; --t)
     {
-        const ConstStridedMap derivs_t(derivs_data + t * output_features,
-                                       batch_size, output_features,
-                                       Eigen::OuterStride<>(h_stride_b));
+        PROFILE_SCOPE_HOST("rnn_cpu:bwd_recurrence");
+        const EigenThreadCountScope single_thread(1);
 
-        if (return_sequences)
+        for (Index t = time_steps - 1; t >= 0; --t)
         {
-            const ConstStridedMap out_delta_t(seq_delta_data + t * output_features,
-                                              batch_size, output_features,
-                                              Eigen::OuterStride<>(h_stride_b));
-            d_c.array() = (next_carry.array() + out_delta_t.array()) * derivs_t.array();
-        }
-        else if (t == time_steps - 1)
-        {
-            d_c.array() = Eigen::Map<const MatrixR>(final_delta_data, batch_size, output_features)
-                              .array() * derivs_t.array();
-        }
-        else
-        {
-            d_c.array() = next_carry.array() * derivs_t.array();
-        }
+            const ConstStridedMap derivs_t(derivs_data + t * output_features,
+                                           batch_size, output_features,
+                                           Eigen::OuterStride<>(h_stride_b));
 
-        StridedMap(all_delta.data() + t * output_features,
-                   batch_size, output_features, Eigen::OuterStride<>(h_stride_b)) = d_c;
+            if (return_sequences)
+            {
+                const ConstStridedMap out_delta_t(seq_delta_data + t * output_features,
+                                                  batch_size, output_features,
+                                                  Eigen::OuterStride<>(h_stride_b));
+                d_c.array() = (next_carry.array() + out_delta_t.array()) * derivs_t.array();
+            }
+            else if (t == time_steps - 1)
+            {
+                d_c.array() = Eigen::Map<const MatrixR>(final_delta_data, batch_size, output_features)
+                                  .array() * derivs_t.array();
+            }
+            else
+            {
+                d_c.array() = next_carry.array() * derivs_t.array();
+            }
 
-        if (t > 0)
-        {
-            h_prev_c = ConstStridedMap(hidden_data + (t - 1) * output_features,
-                                       batch_size, output_features,
-                                       Eigen::OuterStride<>(h_stride_b));
-            w_rec_grad.noalias() += h_prev_c.transpose() * d_c;
-            next_carry.noalias()  = d_c * w_rec_map.transpose();
+            StridedMap(all_delta.data() + t * output_features,
+                       batch_size, output_features, Eigen::OuterStride<>(h_stride_b)) = d_c;
+
+            if (t > 0)
+            {
+                h_prev_c = ConstStridedMap(hidden_data + (t - 1) * output_features,
+                                           batch_size, output_features,
+                                           Eigen::OuterStride<>(h_stride_b));
+                w_rec_grad.noalias() += h_prev_c.transpose() * d_c;
+                next_carry.noalias()  = d_c * w_rec_map.transpose();
+            }
         }
     }
 
-    Eigen::setNbThreads(eigen_threads);
-
     const Eigen::Map<const MatrixR> all_input(input_data, BT, input_features);
-    const Eigen::Map<const MatrixR> all_delta_map(all_delta.data(), BT, output_features);
-
-    w_in_grad.noalias() = all_input.transpose() * all_delta_map;
-    bias_grad.noalias() = all_delta_map.colwise().sum().transpose();
+    {
+        PROFILE_SCOPE_HOST("rnn_cpu:bwd_parameter_reduction");
+        w_in_grad.noalias() = all_input.transpose() * all_delta;
+        bias_grad.noalias() = all_delta.colwise().sum().transpose();
+    }
 
     if (write_input_delta)
+    {
+        PROFILE_SCOPE_HOST("rnn_cpu:bwd_input_delta");
         Eigen::Map<MatrixR>(input_delta_data, BT, input_features).noalias()
-            = all_delta_map * w_in_map.transpose();
+            = all_delta * w_in_map.transpose();
+    }
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -353,19 +529,20 @@ static void require_same_recurrent_dtype(const TensorView& reference,
 bool RecurrentOperator::cudnn_rnn_eligible_(const TensorView& reference) const
 {
     return is_one_of(activation, ActivationFunction::Tanh, ActivationFunction::ReLU)
-        && reference.is_fp32();
+        && is_one_of(reference.get_type(), Type::FP32, Type::BF16);
 }
 
-static CudnnRnnConfig recurrent_cudnn_config(ActivationFunction activation)
+static CudnnRnnConfig recurrent_cudnn_config(ActivationFunction activation, Type data_type)
 {
     return {activation == ActivationFunction::ReLU ? CUDNN_RNN_RELU
-                                                   : CUDNN_RNN_TANH};
+                                                   : CUDNN_RNN_TANH,
+            data_type};
 }
 
 CudnnRnnShapeSlot& RecurrentOperator::ensure_cudnn_setup_(Index batch_size,
                                                           bool for_training) const
 {
-    return cudnn_setup_(recurrent_cudnn_config(activation),
+    return cudnn_setup_(recurrent_cudnn_config(activation, compute_dtype),
                         input_features, output_features, time_steps,
                         batch_size, for_training);
 }
@@ -390,6 +567,8 @@ void RecurrentOperator::unpack_gradients_from_cudnn_(Buffer& backward_scratch) c
 void RecurrentOperator::apply_gpu_cudnn_(const TensorView& input,
                                          TensorView& hidden_states,
                                          TensorView& output,
+                                         TensorView& cudnn_input_sequence,
+                                         TensorView& cudnn_output_sequence,
                                          Buffer& forward_state,
                                          bool is_training) const
 {
@@ -400,8 +579,24 @@ void RecurrentOperator::apply_gpu_cudnn_(const TensorView& input,
     prepare_cudnn_forward_state_(forward_state, is_training, shape);
     pack_weights_to_cudnn_(forward_state);
 
+    const void* x_data = input.get_data();
+    void* y_data = hidden_states.get_data();
+    if (shape.time_major)
+    {
+        PROFILE_SCOPE("rnn:transpose_input");
+        const Index cudnn_input_features = shape.input_features;
+        input.dispatch([&]<typename Scalar>()
+        {
+            batch_time_to_time_batch_padded_cuda<Scalar>(
+                batch_size, time_steps, input_features, cudnn_input_features,
+                input.as<Scalar>(), cudnn_input_sequence.as<Scalar>());
+        });
+        x_data = cudnn_input_sequence.get_data();
+        y_data = cudnn_output_sequence.get_data();
+    }
+
     cudnn_rnn_forward_(shape, is_training, false,
-                       input.get_data(), hidden_states.get_data(),
+                       x_data, y_data,
                        forward_state,
                        [&]() -> CudnnRnnShapeSlot& {
                            CudnnRnnShapeSlot& retry_shape =
@@ -412,17 +607,39 @@ void RecurrentOperator::apply_gpu_cudnn_(const TensorView& input,
                            return retry_shape;
                        });
 
-    if (return_sequences)
+    if (return_sequences && shape.time_major)
+    {
+        PROFILE_SCOPE("rnn:transpose_output");
+        output.dispatch([&]<typename Scalar>()
+        {
+            time_batch_to_batch_time_cuda<Scalar>(
+                batch_size, time_steps, output_features,
+                cudnn_output_sequence.as<Scalar>(), output.as<Scalar>());
+        });
+    }
+    else if (return_sequences)
         copy(hidden_states, output);
+    else if (shape.time_major)
+        output.dispatch([&]<typename Scalar>()
+        {
+            gather_time_major_slice_cuda<Scalar>(
+                batch_size, time_steps, output_features, time_steps - 1,
+                cudnn_output_sequence.as<Scalar>(), output.as<Scalar>());
+        });
     else
-        gather_time_slice_cuda<float>(
-            batch_size, time_steps, output_features, time_steps - 1,
-            hidden_states.as<float>(), output.as<float>());
+        output.dispatch([&]<typename Scalar>()
+        {
+            gather_time_slice_cuda<Scalar>(
+                batch_size, time_steps, output_features, time_steps - 1,
+                hidden_states.as<Scalar>(), output.as<Scalar>());
+        });
 }
 
 void RecurrentOperator::apply_delta_gpu_cudnn_(const TensorView& input,
                                                const TensorView& hidden_states,
                                                const TensorView& output_delta,
+                                               const TensorView& cudnn_input_sequence,
+                                               const TensorView& cudnn_output_sequence,
                                                TensorView& input_delta,
                                                TensorView& sequence_delta_scratch,
                                                TensorView& input_delta_scratch,
@@ -436,26 +653,61 @@ void RecurrentOperator::apply_delta_gpu_cudnn_(const TensorView& input,
 
     CudnnRnnShapeSlot& shape = ensure_cudnn_setup_(batch_size, true);
 
-    const float* dy_data = output_delta.as<float>();
-    if (!return_sequences)
+    const void* dy_data = output_delta.get_data();
+    if (return_sequences && shape.time_major)
+    {
+        PROFILE_SCOPE("rnn:transpose_delta");
+        output_delta.dispatch([&]<typename Scalar>()
+        {
+            batch_time_to_time_batch_cuda<Scalar>(
+                batch_size, T, H,
+                output_delta.as<Scalar>(), sequence_delta_scratch.as<Scalar>());
+        });
+        dy_data = sequence_delta_scratch.get_data();
+    }
+    else if (!return_sequences)
     {
         device::set_zero_async(sequence_delta_scratch.get_data(),
                                sequence_delta_scratch.byte_size(),
                                device::get_compute_stream());
-        scatter_time_slice_cuda<float>(
-            batch_size, T, H, T - 1,
-            output_delta.as<float>(),
-            sequence_delta_scratch.as<float>());
-        dy_data = sequence_delta_scratch.as<float>();
+        if (shape.time_major)
+            output_delta.dispatch([&]<typename Scalar>()
+            {
+                scatter_time_major_slice_cuda<Scalar>(
+                    batch_size, T, H, T - 1,
+                    output_delta.as<Scalar>(), sequence_delta_scratch.as<Scalar>());
+            });
+        else
+            output_delta.dispatch([&]<typename Scalar>()
+            {
+                scatter_time_slice_cuda<Scalar>(
+                    batch_size, T, H, T - 1,
+                    output_delta.as<Scalar>(), sequence_delta_scratch.as<Scalar>());
+            });
+        dy_data = sequence_delta_scratch.get_data();
     }
 
-    void* dx_data = input_delta.get_data()
-        ? input_delta.get_data()
-        : input_delta_scratch.get_data();
+    const void* x_data = shape.time_major
+        ? cudnn_input_sequence.get_data() : input.get_data();
+    const void* y_data = shape.time_major
+        ? cudnn_output_sequence.get_data() : hidden_states.get_data();
+    void* dx_data = shape.time_major || !input_delta.get_data()
+        ? input_delta_scratch.get_data() : input_delta.get_data();
 
     cudnn_rnn_backward_(shape, false,
-                        input.get_data(), hidden_states.get_data(), dy_data, dx_data,
+                        x_data, y_data, dy_data, dx_data,
                         forward_state, backward_scratch);
+
+    if (shape.time_major && input_delta.get_data())
+    {
+        PROFILE_SCOPE("rnn:transpose_input_delta");
+        input_delta.dispatch([&]<typename Scalar>()
+        {
+            time_batch_to_batch_time_cropped_cuda<Scalar>(
+                batch_size, T, input_features, shape.input_features,
+                input_delta_scratch.as<Scalar>(), input_delta.as<Scalar>());
+        });
+    }
 
     unpack_gradients_from_cudnn_(backward_scratch);
 }
@@ -466,15 +718,18 @@ void RecurrentOperator::apply_gpu(const TensorView& input,
                             TensorView& output,
                             TensorView& step_input_scratch,
                             TensorView& step_hidden_scratch,
-                            TensorView& previous_hidden_scratch,
-                            TensorView& step_derivatives_scratch,
-                            Buffer& forward_state,
+                                  TensorView& previous_hidden_scratch,
+                                  TensorView& step_derivatives_scratch,
+                                  TensorView& cudnn_input_sequence,
+                                  TensorView& cudnn_output_sequence,
+                                  Buffer& forward_state,
                             bool is_training) const
 {
     if (!input.get_data() || output_features == 0 || time_steps == 0) return;
 
     if (cudnn_rnn_eligible_(output))
         return apply_gpu_cudnn_(input, hidden_states, output,
+                                cudnn_input_sequence, cudnn_output_sequence,
                                 forward_state, is_training);
 
     require_same_recurrent_dtype(output, {
@@ -549,6 +804,8 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
                                   TensorView& step_in_delta_scratch,
                                   TensorView& sequence_delta_scratch,
                                   TensorView& cudnn_input_delta_scratch,
+                                  const TensorView& cudnn_input_sequence,
+                                  const TensorView& cudnn_output_sequence,
                                   const Buffer& forward_state,
                                   Buffer& backward_scratch) const
 {
@@ -556,6 +813,7 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
 
     if (cudnn_rnn_eligible_(output_delta))
         return apply_delta_gpu_cudnn_(input, hidden_states, output_delta,
+                                      cudnn_input_sequence, cudnn_output_sequence,
                                       input_delta, sequence_delta_scratch,
                                       cudnn_input_delta_scratch,
                                       forward_state, backward_scratch);
@@ -661,12 +919,13 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
 
 void RecurrentOperator::apply_gpu(const TensorView&, TensorView&, TensorView&, TensorView&,
                                   TensorView&, TensorView&, TensorView&, TensorView&,
-                                  Buffer&, bool) const OPENNN_CUDA_STUB_BODY(apply_gpu)
+                                  TensorView&, TensorView&, Buffer&, bool) const OPENNN_CUDA_STUB_BODY(apply_gpu)
 
 void RecurrentOperator::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&,
                                   const TensorView&, TensorView&,
                                   TensorView&, TensorView&, TensorView&,
                                   TensorView&, TensorView&, TensorView&, TensorView&,
+                                  const TensorView&, const TensorView&,
                                   const Buffer&, Buffer&) const OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
 
 #endif
@@ -686,6 +945,8 @@ vector<TensorSpec> Recurrent::get_forward_specs(Index batch_size) const
     const Shape state_history {batch_size, time_steps, output_features};
     const Shape step_input {batch_size, input_features};
     const Shape step_hidden {batch_size, output_features};
+    const Shape input_sequence {
+        batch_size, time_steps, ((input_features + 7) / 8) * 8};
 
     return {
         {state_history, compute_dtype},
@@ -694,6 +955,8 @@ vector<TensorSpec> Recurrent::get_forward_specs(Index batch_size) const
         {step_hidden, compute_dtype},
         {step_hidden, compute_dtype},
         {step_hidden, compute_dtype},
+        {input_sequence, compute_dtype},
+        {state_history, compute_dtype},
         {return_sequences ? state_history : Shape{batch_size, output_features}, compute_dtype},
     };
 }
@@ -713,7 +976,7 @@ vector<TensorSpec> Recurrent::get_backward_specs(Index batch_size) const
         {step_out_shape,    compute_dtype},
         {step_in_shape,     compute_dtype},
         {{batch_size, time_steps, output_features}, compute_dtype},
-        {Shape{batch_size}.append(get_input_shape()), compute_dtype},
+        {{batch_size, time_steps, ((input_features + 7) / 8) * 8}, compute_dtype},
     };
 }
 

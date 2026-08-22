@@ -49,7 +49,14 @@ public:
 
     virtual void set_display(bool new_display) { display = new_display; }
 
-    void set_display_period(const Index new_display_period) { display_period = new_display_period; }
+    // Positive: should_display() and train() take `epoch % period`, so a zero
+    // from a setter or a saved file was an integer division by zero on the
+    // first epoch.
+    void set_display_period(const Index new_display_period)
+    {
+        throw_if(new_display_period <= 0, "Optimizer::set_display_period: period must be positive.");
+        display_period = new_display_period;
+    }
 
     void set_workers_number(int new_workers_number) { workers_number = max(1, new_workers_number); }
 
@@ -71,7 +78,13 @@ public:
     void set_loss_goal(const float new_loss_goal) { training_loss_goal = new_loss_goal; }
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
     Index get_maximum_validation_failures() const noexcept { return maximum_validation_failures; }
-    void set_validation_period(const Index n) { validation_period = n; }
+    void set_validation_period(const Index n)
+    {
+        throw_if(n <= 0, "Optimizer::set_validation_period: period must be positive.");
+        validation_period = n;
+    }
+
+    void set_restore_best(bool enabled) { restore_best = enabled; }
 
     void set_gradient_clip_norm(const float new_clip) { gradient_clip_norm = new_clip; }
     float get_gradient_clip_norm() const noexcept { return gradient_clip_norm; }
@@ -141,7 +154,9 @@ protected:
         {
             unique_ptr<Batch> batch;
             unique_ptr<TrainingContext> context;
+            device::GraphExecHandle exec;
             Index size = 0;
+            bool capture_failed = false;
         };
 
         array<GraphPipeline, pipelines_count> pipelines;
@@ -272,13 +287,22 @@ protected:
     }
 
     virtual bool supports_cuda_graph() const noexcept { return false; }
+
+    // A dropout mask is drawn from a seed the host passes by value, so capturing
+    // the step bakes that seed into the graph and every replay reuses the same
+    // mask - the regulariser degenerates into one fixed sparse sub-network for
+    // the whole run. Until the seed lives in device memory and is advanced
+    // inside the captured step, a network with dropout trains eagerly.
+    bool network_has_active_dropout() const;
+
     bool can_use_cuda_graph() const
     {
         return use_cuda_graph
             && supports_cuda_graph()
             && device::is_cuda_build()
             && loss
-            && loss->supports_device_epoch_metrics();
+            && loss->supports_device_epoch_metrics()
+            && !network_has_active_dropout();
     }
     virtual void on_epoch_begin(Index, OptimizerData&) {}
 

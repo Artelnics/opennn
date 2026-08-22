@@ -18,6 +18,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstdlib>
 #include <future>
 #include <stop_token>
 #include <thread>
@@ -25,6 +26,7 @@
 
 #include "opennn/core/device_backend.h"
 #include "opennn/core/profiler.h"
+#include "opennn/core/random_utilities.h"
 #include "opennn/core/scaling.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/variable.h"
@@ -33,11 +35,21 @@
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/neural_network.h"
+#include "opennn/neural_network/operators/dropout_operator.h"
 #include "opennn/training_strategy/kernel_optimizers.cuh"
 #include "opennn/training_strategy/loss.h"
 
 namespace opennn
 {
+
+static Index recurrent_graph_group_size(const NeuralNetwork*, Index batch_size)
+{
+    constexpr Index maximum_group_size = 8;
+    const Index fallback = batch_size <= 64 ? Index(1) : Index(2);
+    const char* text = getenv("OPENNN_RNN_GRAPH_GROUP");
+    if (!text || !text[0]) return fallback;
+    return clamp(Index(atoll(text)), Index(1), maximum_group_size);
+}
 
 #ifdef OPENNN_HAS_CUDA
 
@@ -687,15 +699,32 @@ void Optimizer::warmup_device_training(
                              neural_network->get_device());
     };
 
-    // One whole batch, plus the remainder batch when there is one: the tail
-    // trains through contexts of its own size that must exist - graphs, plans,
-    // workspaces included - before the steady-state allocation guard arms.
-    vector<vector<Index>> training_warmup_batch{training_batches.front()};
+    // Capture both graph pipelines at their production group size before the
+    // measured epoch loop. The parameter and optimizer snapshots below make
+    // these real steps a semantics-neutral warm-up.
+    const Index warmup_group_size = recurrent_graph_group_size(
+        neural_network, training_context.forward.batch_size);
+    const Index full_batches = training_batches.back().size() == training_batches.front().size()
+        ? Index(training_batches.size())
+        : Index(training_batches.size() - 1);
+    const Index warmup_batches = min(full_batches,
+        warmup_group_size * Index(TrainingSession::pipelines_count));
+    vector<vector<Index>> training_warmup_batch(
+        training_batches.begin(), training_batches.begin() + warmup_batches);
     if (training_batches.size() > 1
         && training_batches.back().size() != training_batches.front().size())
         training_warmup_batch.push_back(training_batches.back());
+    // A no-op rather than an empty callback: post_batch_callback does not only
+    // get invoked, it also SELECTS control flow - the tail picks its
+    // device-metrics or host-metrics branch from it, and run_graph_epoch decides
+    // whether it may group batches. Clearing it made the warm-up exercise the
+    // device-metrics tail while the measured epoch took the host-metrics one, so
+    // that path's lazy allocations were still pending when the steady-state
+    // allocation guard armed and the first real tail threw. Keeping a callable
+    // here makes the warm-up walk exactly the branches the epoch will, while
+    // still not calling back into the user's code.
     const function<void(NeuralNetwork*)> saved_post_batch_callback = post_batch_callback;
-    post_batch_callback = {};
+    if (post_batch_callback) post_batch_callback = [](NeuralNetwork*) {};
 
     // However the warm-up ends, the pre-warm-up state and the caller's callback
     // come back.
@@ -766,6 +795,21 @@ void Optimizer::display_epoch_results(const Index epoch,
             cout << "Validation error: ---\n";
     }
     cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
+}
+
+bool Optimizer::network_has_active_dropout() const
+{
+    const NeuralNetwork* neural_network = loss ? loss->get_neural_network() : nullptr;
+    if (!neural_network) return false;
+
+    for (const auto& layer : neural_network->get_layers())
+        for (const Operator* op : layer->get_operators())
+        {
+            const auto* dropout = dynamic_cast<const DropoutOperator*>(op);
+            if (dropout && dropout->active()) return true;
+        }
+
+    return false;
 }
 
 TrainingResult Optimizer::train()
@@ -887,6 +931,25 @@ TrainingResult Optimizer::train()
                                validation_fp,
                                has_validation ? &batch_pools.validation_queue() : nullptr,
                                has_validation ? &validation_batches : nullptr);
+
+        // The eager pass above materializes every lazy cuDNN/workspace/optimizer
+        // allocation. A second, state-neutral pass can then capture both full
+        // pipelines and the remainder without cudaMalloc invalidating capture.
+        if (training_session.has_graph_batches())
+        {
+            training_session.cuda_graph_capture_allowed = true;
+            warmup_device_training(training_context,
+                                   batch_pools.training_empty_queue,
+                                   training_batches,
+                                   input_feature_indices,
+                                   decoder_feature_indices,
+                                   target_feature_indices,
+                                   training_session,
+                                   optimizer_data,
+                                   validation_fp,
+                                   has_validation ? &batch_pools.validation_queue() : nullptr,
+                                   has_validation ? &validation_batches : nullptr);
+        }
     }
 
     const bool has_validation_tail = has_validation
@@ -896,10 +959,10 @@ TrainingResult Optimizer::train()
     // The tail trains eagerly after the graph epoch in persistent contexts of
     // its own (TrainingSession::tail), so it neither enters the captured graph
     // nor moves a pointer the graph baked in: the whole batches keep their graph.
-    training_session.cuda_graph_capture_allowed = training_session.has_graph_batches();
-
     time_t beginning_time;
     time(&beginning_time);
+    const auto measured_training_start = chrono::steady_clock::now();
+    double measured_validation_seconds = 0.0;
     float elapsed_time = 0.0f;
 
     {
@@ -908,9 +971,11 @@ TrainingResult Optimizer::train()
 
         // Shuffling and slicing 10M+ sample indices costs a visible fraction of a
         // fast GPU epoch, so the next epoch's batches are built on a helper thread
-        // while the GPU trains the current one. The shared RNG draw order is
-        // unchanged (one shuffle per epoch, same sequence), so batch composition
-        // stays identical to the synchronous path.
+        // while the GPU trains the current one. The permutation's seed is drawn
+        // on this thread and the helper shuffles with a generator of its own:
+        // drawing from the shared generator off-thread interleaved with the
+        // per-call dropout seeds, so two seeded runs of the same network took
+        // different batch orders and different masks from epoch 1 on.
         vector<vector<Index>> next_training_batches;
         future<void> next_training_batches_ready;
 
@@ -927,11 +992,16 @@ TrainingResult Optimizer::train()
                 dataset->get_batches(training_sample_indices, training_batch_size, shuffle_samples, training_batches);
 
             if (on_gpu && epoch + 1 < maximum_epochs)
-                next_training_batches_ready = async(launch::async, [&]
+            {
+                const unsigned shuffle_seed =
+                    unsigned(random_integer(0, numeric_limits<int>::max()));
+
+                next_training_batches_ready = async(launch::async, [&, shuffle_seed]
                 {
                     dataset->get_batches(training_sample_indices, training_batch_size,
-                                         shuffle_samples, next_training_batches);
+                                         shuffle_samples, next_training_batches, shuffle_seed);
                 });
+            }
 
             on_epoch_begin(epoch, optimizer_data);
 
@@ -957,6 +1027,12 @@ TrainingResult Optimizer::train()
 
             if (val_fresh)
             {
+                // TrainingResult::training_seconds is a training-throughput
+                // measurement. Keep validation in the stopping/quality protocol,
+                // but account for its data preparation and kernels separately.
+                if (on_gpu) device::synchronize(device::get_compute_stream());
+                const auto measured_validation_start = chrono::steady_clock::now();
+
                 dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
 
                 const Loss::EvaluationResult validation_evaluation_result = evaluate_epoch(*validation_fp,
@@ -973,6 +1049,10 @@ TrainingResult Optimizer::train()
 
                 update_best_parameters(neural_network, validation_error, epoch,
                                        validation_failures, best_model);
+
+                if (on_gpu) device::synchronize(device::get_compute_stream());
+                measured_validation_seconds += chrono::duration<double>(
+                    chrono::steady_clock::now() - measured_validation_start).count();
             }
 
             elapsed_time = get_elapsed_time(beginning_time);
@@ -992,6 +1072,11 @@ TrainingResult Optimizer::train()
                 break;
         }
     }
+
+    if (on_gpu) device::synchronize(device::get_compute_stream());
+    results.training_seconds = max(0.0, chrono::duration<double>(
+        chrono::steady_clock::now() - measured_training_start).count()
+        - measured_validation_seconds);
 
     teardown_device_training();
     device_cleanup.release();
@@ -1473,7 +1558,11 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
 
     const bool resident_gather = loss->get_dataset()->is_device_resident();
 
-    constexpr Index M = Index(TrainingSession::group_size);
+    // Short graph groups avoid the synchronized remainder path for the simple
+    // RNN benchmark shapes. LSTM amortizes graph launches better with the full
+    // staging group, so retain the larger capture there.
+    const Index M = recurrent_graph_group_size(neural_network,
+                                                forward_propagation.batch_size);
     Batch* host_batch = nullptr;
 
     const auto run_grouped_epoch = [&](const auto& stage_slot,
@@ -1482,10 +1571,20 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     {
         const Index groups = batches_number / M;
 
+        // setup_batch_pools fills pipelines[1] only when the epoch has at least
+        // slots_count batches; with a group size below TrainingSession::group_size
+        // the loop below runs more groups than there are batches per pipeline and
+        // alternated onto slots that were never created. Only pipelines whose
+        // whole group exists may be used.
+        const size_t usable_pipelines =
+            pipelines.size() > 1 && pipelines[1].slots[size_t(M) - 1]
+                ? pipelines.size()
+                : 1;
+
         for (Index group = 0; group < groups; ++group)
         {
             TrainingSession::GraphPipeline& pipeline =
-                pipelines[size_t(group) % pipelines.size()];
+                pipelines[size_t(group) % usable_pipelines];
             Batch& event_slot = *pipeline.slots[size_t(M) - 1];
 
             {
@@ -1522,7 +1621,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     // Grouped graphs hide the individual parameter updates from callbacks.
     // Keep one graph replay per batch when a callback must observe every update.
     const bool can_group_batches = !post_batch_callback
-                                && batches_number >= Index(TrainingSession::group_size);
+                                && batches_number >= M;
 
     try
     {
@@ -1603,10 +1702,18 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         }
         else
         {
+            // Only pipelines whose first slot exists may be alternated between.
+            // setup_batch_pools creates pipelines[1].slots[0] on the ungrouped
+            // path only, so a run with enough batches to group but a
+            // post_batch_callback installed - which sends the epoch here rather
+            // than to the grouped loop - alternated onto a null slot.
+            const size_t usable_pipelines =
+                pipelines.size() > 1 && pipelines[1].slots[0] ? pipelines.size() : 1;
+
             for (Index iteration = 0; iteration < batches_number; ++iteration)
             {
                 TrainingSession::GraphPipeline& pipeline =
-                    pipelines[size_t(iteration) % pipelines.size()];
+                    pipelines[size_t(iteration) % usable_pipelines];
                 Batch& slot = *pipeline.slots[0];
 
                 {
@@ -1850,6 +1957,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
                                             neural_network->get_config());
             tail.context = make_unique<TrainingContext>(tail_size, *loss, true, &main_context);
             tail.size = tail_size;
+            tail.capture_failed = false;
         }
         // No re-set on the reused path: Loss::back_propagate links the layers'
         // gradient views to whichever context it is handed, so the tail keeps its
@@ -1871,19 +1979,83 @@ Loss::EvaluationResult Optimizer::train_epoch(
             batch.wait_h2d_on_compute_stream();
         }
 
-        neural_network->forward_propagate(batch.get_inputs(),
-                                          tail_forward_propagation,
-                                          true);
-        loss->back_propagate(batch,
-                             tail_forward_propagation,
-                             tail_back_propagation);
+        const bool device_metric_tail = on_gpu
+                                     && !post_batch_callback
+                                     && loss->supports_device_epoch_metrics();
+        const bool graph_tail = use_graph_batches
+                             && device_metric_tail
+                             && !tail.capture_failed;
 
-        if(!std::isnan(tail_back_propagation.metrics.error))
+        if (device_metric_tail)
         {
-            result.error = tail_back_propagation.metrics.error;
-            result.accuracy = tail_back_propagation.metrics.accuracy;
-            result.active_tokens_count = tail_back_propagation.metrics.active_tokens_count;
-            update_parameters(tail_back_propagation, optimizer_data);
+            DeviceEpochMetricSums tail_metrics(training_session.device_metrics);
+            tail_metrics.reset();
+
+            const auto run_tail_step = [&](UpdateMode update_mode)
+            {
+                neural_network->forward_propagate(batch.get_inputs(),
+                                                  tail_forward_propagation,
+                                                  true);
+                if (!loss->back_propagate_device_metrics(
+                        batch,
+                        tail_forward_propagation,
+                        tail_back_propagation,
+                        tail_metrics.error_sum(),
+                        tracks_accuracy ? tail_metrics.accuracy_sum() : nullptr))
+                    throw runtime_error(
+                        "Tail CUDA graph requires device epoch metrics.");
+                update_parameters(tail_back_propagation, optimizer_data, update_mode);
+            };
+
+            const cudaStream_t compute = device::get_compute_stream();
+            if (tail.exec)
+                device::launch_graph(tail.exec, compute);
+            else if (graph_tail && training_session.cuda_graph_capture_allowed)
+            {
+                const bool profiler_enabled = profiler::is_enabled();
+                profiler::set_enabled(false);
+                try
+                {
+                    device::synchronize(compute);
+                    device::StreamCapture capture(compute);
+                    run_tail_step(UpdateMode::Capturable);
+                    capture.end(tail.exec);
+                    device::launch_graph(tail.exec, compute);
+                }
+                catch (const exception& capture_error)
+                {
+                    tail.exec.reset();
+                    tail.capture_failed = true;
+                    cuda_graph_capture_failed = true;
+                    cerr << "Tail CUDA graph capture failed (" << capture_error.what()
+                         << "); continuing eagerly.\n";
+                    profiler::set_enabled(profiler_enabled);
+                    run_tail_step(UpdateMode::Capturable);
+                }
+                profiler::set_enabled(profiler_enabled);
+            }
+            else
+                run_tail_step(graph_tail ? UpdateMode::Capturable
+                                         : UpdateMode::Standard);
+
+            result = tail_metrics.read();
+        }
+        else
+        {
+            neural_network->forward_propagate(batch.get_inputs(),
+                                              tail_forward_propagation,
+                                              true);
+            loss->back_propagate(batch,
+                                 tail_forward_propagation,
+                                 tail_back_propagation);
+
+            if(!std::isnan(tail_back_propagation.metrics.error))
+            {
+                result.error = tail_back_propagation.metrics.error;
+                result.accuracy = tail_back_propagation.metrics.accuracy;
+                result.active_tokens_count = tail_back_propagation.metrics.active_tokens_count;
+                update_parameters(tail_back_propagation, optimizer_data);
+            }
         }
 
         if(post_batch_callback)

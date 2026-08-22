@@ -9,11 +9,15 @@ inline constexpr int RNN_COPY_MAX_REGIONS = 16;
 
 struct RnnCopySpec
 {
-    const float* src = nullptr;
-    float*       dst = nullptr;
+    const void* src = nullptr;
+    void*       dst = nullptr;
     int rows = 0;
     int cols = 0;
     int transpose = 0;
+    int src_stride = 0;
+    int dst_stride = 0;
+    int src_bf16 = 0;
+    int dst_bf16 = 0;
 };
 
 void rnn_copy_regions_cuda(const RnnCopySpec* specs, int count,
@@ -30,6 +34,39 @@ template<typename T>
 void scatter_time_slice_cuda(const Index batch, const Index time_steps,
                              const Index features, const Index t,
                              const T* src, T* dst);
+
+// cuDNN's fastest recurrent layout is time-major while OpenNN tensors are
+// batch-major. These kernels transpose only the two outer sequence axes and
+// keep each feature vector contiguous.
+template<typename T>
+void batch_time_to_time_batch_cuda(const Index batch, const Index time_steps,
+                                   const Index features, const T* src, T* dst);
+
+template<typename T>
+void batch_time_to_time_batch_padded_cuda(const Index batch, const Index time_steps,
+                                          const Index features,
+                                          const Index padded_features,
+                                          const T* src, T* dst);
+
+template<typename T>
+void time_batch_to_batch_time_cuda(const Index batch, const Index time_steps,
+                                   const Index features, const T* src, T* dst);
+
+template<typename T>
+void time_batch_to_batch_time_cropped_cuda(const Index batch, const Index time_steps,
+                                           const Index features,
+                                           const Index padded_features,
+                                           const T* src, T* dst);
+
+template<typename T>
+void gather_time_major_slice_cuda(const Index batch, const Index time_steps,
+                                  const Index features, const Index t,
+                                  const T* src, T* dst);
+
+template<typename T>
+void scatter_time_major_slice_cuda(const Index batch, const Index time_steps,
+                                   const Index features, const Index t,
+                                   const T* src, T* dst);
 
 template<typename T>
 void rnn_step_fused_forward_cuda(const Index batch,

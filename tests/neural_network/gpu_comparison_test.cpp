@@ -1312,6 +1312,43 @@ TEST_F(GpuComparison, ForecastingLstmForward)
     EXPECT_LT(relative_difference(cpu_outputs, gpu_outputs), 1.0e-3f);
 }
 
+TEST_F(GpuComparison, ForecastingRecurrentAndLstmBf16Forward)
+{
+    constexpr Index samples_number = 7;
+    constexpr Index past = 5;
+    constexpr Index features = 3;
+
+    Tensor3 inputs(samples_number, past, features);
+    inputs.setRandom();
+
+    const auto compare = [&](bool lstm)
+    {
+        Configuration::instance().set(Device::CPU, Type::FP32);
+        unique_ptr<NeuralNetwork> cpu = lstm
+            ? unique_ptr<NeuralNetwork>(make_unique<ForecastingLstmNetwork>(
+                  Shape{past, features}, Shape{6, 5}, Shape{1}))
+            : unique_ptr<NeuralNetwork>(make_unique<ForecastingNetwork>(
+                  Shape{past, features}, Shape{6, 5}, Shape{1}));
+        cpu->set_parameters_random();
+        const VectorR parameters = read_host_parameters(*cpu);
+        const MatrixR reference = cpu->calculate_outputs(inputs);
+
+        Configuration::instance().set(Device::CUDA, Type::BF16);
+        unique_ptr<NeuralNetwork> gpu = lstm
+            ? unique_ptr<NeuralNetwork>(make_unique<ForecastingLstmNetwork>(
+                  Shape{past, features}, Shape{6, 5}, Shape{1}))
+            : unique_ptr<NeuralNetwork>(make_unique<ForecastingNetwork>(
+                  Shape{past, features}, Shape{6, 5}, Shape{1}));
+        gpu->set_parameters(parameters);
+        const MatrixR actual = gpu->calculate_outputs(inputs);
+
+        EXPECT_LT(relative_difference(reference, actual), 5.0e-2f);
+    };
+
+    compare(false);
+    compare(true);
+}
+
 TEST_F(GpuComparison, ForecastingRecurrentGradient)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -1372,6 +1409,50 @@ TEST_F(GpuComparison, ForecastingLstmGradient)
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
+}
+
+TEST_F(GpuComparison, ForecastingRecurrentAndLstmBf16Gradient)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    set_seed(17);
+    TimeSeriesDataset dataset(30, {2}, {1});
+    dataset.set_data_random();
+    dataset.set_past_time_steps(5);
+    dataset.set_future_time_steps(1);
+    dataset.set_sample_roles("Training");
+
+    const auto compare = [&](bool lstm)
+    {
+        Configuration::instance().set(Device::CPU, Type::FP32);
+        unique_ptr<NeuralNetwork> cpu = lstm
+            ? unique_ptr<NeuralNetwork>(make_unique<ForecastingLstmNetwork>(
+                  dataset.get_input_shape(), Shape{6, 5}, dataset.get_target_shape()))
+            : unique_ptr<NeuralNetwork>(make_unique<ForecastingNetwork>(
+                  dataset.get_input_shape(), Shape{6, 5}, dataset.get_target_shape()));
+        cpu->set_parameters_random();
+        const VectorR parameters = read_host_parameters(*cpu);
+        Loss cpu_loss(cpu.get(), &dataset);
+        cpu_loss.set_error(Loss::Error::MeanSquaredError);
+        const VectorR reference = calculate_gradient(cpu_loss);
+
+        Configuration::instance().set(Device::CUDA, Type::BF16);
+        unique_ptr<NeuralNetwork> gpu = lstm
+            ? unique_ptr<NeuralNetwork>(make_unique<ForecastingLstmNetwork>(
+                  dataset.get_input_shape(), Shape{6, 5}, dataset.get_target_shape()))
+            : unique_ptr<NeuralNetwork>(make_unique<ForecastingNetwork>(
+                  dataset.get_input_shape(), Shape{6, 5}, dataset.get_target_shape()));
+        gpu->set_parameters(parameters);
+        Loss gpu_loss(gpu.get(), &dataset);
+        gpu_loss.set_error(Loss::Error::MeanSquaredError);
+        const VectorR actual = calculate_gradient(gpu_loss);
+
+        ASSERT_EQ(reference.size(), actual.size());
+        EXPECT_LT(relative_difference(reference, actual), 1.0e-1f);
+    };
+
+    compare(false);
+    compare(true);
 }
 
 TEST_F(GpuComparison, ForecastingLstmFusedGradient)

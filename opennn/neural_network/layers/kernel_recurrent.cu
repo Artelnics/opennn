@@ -84,6 +84,75 @@ void scatter_time_slice_cuda(const Index batch,
                        checked_int(time_steps), checked_int(features), checked_int(t), src, dst);
 }
 
+template<typename T, bool ToTimeMajor>
+__global__ void transpose_batch_time_kernel(const Index n,
+                                            const int batch,
+                                            const int time_steps,
+                                            const int features,
+                                            const T* __restrict__ src,
+                                            T* __restrict__ dst)
+{
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x;
+         idx < n;
+         idx += Index(blockDim.x) * gridDim.x)
+    {
+        const int f = int(idx % features);
+        const Index outer = idx / features;
+        const int second = int(outer % time_steps);
+        const int first = int(outer / time_steps);
+
+        if constexpr (ToTimeMajor)
+            dst[(Index(second) * batch + first) * features + f] = src[idx];
+        else
+        {
+            const int t = int(outer / batch);
+            const int b = int(outer - Index(t) * batch);
+            dst[(Index(b) * time_steps + t) * features + f] = src[idx];
+        }
+    }
+}
+
+template<typename T>
+void batch_time_to_time_batch_cuda(const Index batch, const Index time_steps,
+                                   const Index features, const T* src, T* dst)
+{
+    const Index n = batch * time_steps * features;
+    launch_elementwise(n, transpose_batch_time_kernel<T, true>,
+                       checked_int(batch), checked_int(time_steps),
+                       checked_int(features), src, dst);
+}
+
+template<typename T>
+void time_batch_to_batch_time_cuda(const Index batch, const Index time_steps,
+                                   const Index features, const T* src, T* dst)
+{
+    const Index n = batch * time_steps * features;
+    launch_elementwise(n, transpose_batch_time_kernel<T, false>,
+                       checked_int(batch), checked_int(time_steps),
+                       checked_int(features), src, dst);
+}
+
+template<typename T>
+void gather_time_major_slice_cuda(const Index batch, const Index time_steps,
+                                  const Index features, const Index t,
+                                  const T* src, T* dst)
+{
+    launch_elementwise(batch * features, time_slice_kernel<T, true>,
+                       1, checked_int(features), 0,
+                       src + t * batch * features, dst);
+}
+
+template<typename T>
+void scatter_time_major_slice_cuda(const Index batch, const Index time_steps,
+                                   const Index features, const Index t,
+                                   const T* src, T* dst)
+{
+    // A time-major time slice is contiguous.
+    launch_elementwise(batch * features, time_slice_kernel<T, false>,
+                       1, checked_int(features), 0,
+                       src, dst + t * batch * features);
+}
+
 __global__ void rnn_copy_regions_kernel(const RnnCopyParams params)
 {
     const int region = blockIdx.y;
@@ -96,15 +165,79 @@ __global__ void rnn_copy_regions_kernel(const RnnCopyParams params)
          idx < total;
          idx += gridDim.x * blockDim.x)
     {
+        int src_index = idx;
+        int dst_index = idx;
         if (spec.transpose)
         {
             const int r = idx / spec.cols;
             const int c = idx - r * spec.cols;
-            spec.dst[c * spec.rows + r] = spec.src[idx];
+            const int src_stride = spec.src_stride > 0 ? spec.src_stride : spec.cols;
+            const int dst_stride = spec.dst_stride > 0 ? spec.dst_stride : spec.rows;
+            src_index = r * src_stride + c;
+            dst_index = c * dst_stride + r;
+        }
+
+        const float value = spec.src_bf16
+            ? __bfloat162float(static_cast<const __nv_bfloat16*>(spec.src)[src_index])
+            : static_cast<const float*>(spec.src)[src_index];
+        if (spec.dst_bf16)
+            static_cast<__nv_bfloat16*>(spec.dst)[dst_index] = __float2bfloat16(value);
+        else
+            static_cast<float*>(spec.dst)[dst_index] = value;
+    }
+}
+
+template<typename T, bool Crop>
+__global__ void transpose_padded_batch_time_kernel(
+    const Index n, const int batch, const int time_steps,
+    const int features, const int padded_features,
+    const T* __restrict__ src, T* __restrict__ dst)
+{
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x;
+         idx < n;
+         idx += Index(blockDim.x) * gridDim.x)
+    {
+        if constexpr (!Crop)
+        {
+            const int f = int(idx % padded_features);
+            const Index outer = idx / padded_features;
+            const int t = int(outer % time_steps);
+            const int b = int(outer / time_steps);
+            dst[(Index(t) * batch + b) * padded_features + f] =
+                f < features ? src[(Index(b) * time_steps + t) * features + f]
+                             : T(0);
         }
         else
-            spec.dst[idx] = spec.src[idx];
+        {
+            const int f = int(idx % features);
+            const Index outer = idx / features;
+            const int t = int(outer % time_steps);
+            const int b = int(outer / time_steps);
+            dst[idx] = src[(Index(t) * batch + b) * padded_features + f];
+        }
     }
+}
+
+template<typename T>
+void batch_time_to_time_batch_padded_cuda(
+    const Index batch, const Index time_steps, const Index features,
+    const Index padded_features, const T* src, T* dst)
+{
+    launch_elementwise(batch * time_steps * padded_features,
+                       transpose_padded_batch_time_kernel<T, false>,
+                       checked_int(batch), checked_int(time_steps),
+                       checked_int(features), checked_int(padded_features), src, dst);
+}
+
+template<typename T>
+void time_batch_to_batch_time_cropped_cuda(
+    const Index batch, const Index time_steps, const Index features,
+    const Index padded_features, const T* src, T* dst)
+{
+    launch_elementwise(batch * time_steps * features,
+                       transpose_padded_batch_time_kernel<T, true>,
+                       checked_int(batch), checked_int(time_steps),
+                       checked_int(features), checked_int(padded_features), src, dst);
 }
 
 void rnn_copy_regions_cuda(const RnnCopySpec* specs, int count,
@@ -112,6 +245,11 @@ void rnn_copy_regions_cuda(const RnnCopySpec* specs, int count,
 {
     if (count <= 0) return;
     if (stream == nullptr) stream = opennn::device::get_compute_stream();
+
+    // Anything past the fixed capacity used to be truncated away, so the copies
+    // simply did not happen and the weights they carried stayed stale.
+    checked_host_condition(count > RNN_COPY_MAX_REGIONS,
+                           "rnn_copy_regions_cuda: more regions than the launch can carry.");
 
     RnnCopyParams params;
     int max_total = 0;
@@ -249,6 +387,12 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
 #define INSTANTIATE(T) \
     template void gather_time_slice_cuda<T>(const Index, const Index, const Index, const Index, const T*, T*); \
     template void scatter_time_slice_cuda<T>(const Index, const Index, const Index, const Index, const T*, T*); \
+    template void batch_time_to_time_batch_cuda<T>(const Index, const Index, const Index, const T*, T*); \
+    template void batch_time_to_time_batch_padded_cuda<T>(const Index, const Index, const Index, const Index, const T*, T*); \
+    template void time_batch_to_batch_time_cuda<T>(const Index, const Index, const Index, const T*, T*); \
+    template void time_batch_to_batch_time_cropped_cuda<T>(const Index, const Index, const Index, const Index, const T*, T*); \
+    template void gather_time_major_slice_cuda<T>(const Index, const Index, const Index, const Index, const T*, T*); \
+    template void scatter_time_major_slice_cuda<T>(const Index, const Index, const Index, const Index, const T*, T*); \
     template void rnn_step_fused_forward_cuda<T>(const Index, const Index, const Index, const T*, const T*, const T*, const T*, const T*, T*, T*, const int); \
     template void rnn_step_fused_backward_pre_cuda<T>(const Index, const Index, const Index, const Index, const T*, const T*, const T*, T*);
 

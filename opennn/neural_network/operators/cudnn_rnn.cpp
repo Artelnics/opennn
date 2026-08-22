@@ -9,6 +9,7 @@
 #include "opennn/neural_network/operators/cudnn_rnn.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/device_backend.h"
+#include "opennn/core/profiler.h"
 #include "opennn/neural_network/layers/kernel_recurrent.cuh"
 
 #ifdef OPENNN_HAS_CUDA
@@ -16,10 +17,32 @@
 namespace opennn
 {
 
-// OPENNN_RNN_PERSIST=0 turns the persistent cuDNN RNN algorithm off.
+// cuDNN's small-hidden-state persistent algorithm is the fastest FP32 path for
+// the forecasting topology (H=64). Unsupported topologies fall back to the
+// standard algorithm in cudnn_setup_().
 static bool persist_env_enabled()
 {
     static const bool enabled = env_flag_enabled("OPENNN_RNN_PERSIST", true);
+    return enabled;
+}
+
+static bool time_major_env_enabled()
+{
+    static const bool enabled = env_flag_enabled("OPENNN_RNN_TIME_MAJOR", true);
+    return enabled;
+}
+
+static Index cudnn_input_features(Index logical_features, bool persistent)
+{
+    static const bool pad_features = env_flag_enabled("OPENNN_RNN_PAD_FEATURES", true);
+    return !persistent && time_major_env_enabled() && pad_features
+        ? ((logical_features + 7) / 8) * 8
+        : logical_features;
+}
+
+static bool tensor_math_env_enabled()
+{
+    static const bool enabled = env_flag_enabled("OPENNN_RNN_TENSOR_MATH", false);
     return enabled;
 }
 
@@ -38,11 +61,15 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_(const CudnnRnnConfig& config,
             return cudnn_setup_attempt_(config, input_features, output_features, time_steps,
                                         batch_size, for_training);
         }
-        catch (const exception&)
+        catch (const exception& error)
         {
+            if (env_flag_enabled("OPENNN_RNN_DEBUG", false))
+                cerr << "OpenNN cuDNN RNN: persistent algorithm unavailable: "
+                     << error.what() << '\n';
             state.persist_algo_failed = true;
             state.rnn_desc.reset();
             state.cached_input_features = -1;
+            state.cached_data_type = Type::Auto;
         }
     }
     return cudnn_setup_attempt_(config, input_features, output_features, time_steps,
@@ -57,20 +84,46 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& con
                                                        bool for_training) const
 {
     BackendState& state = backend_state;
-    state.persist_algo_active = !state.persist_algo_failed && persist_env_enabled();
-
-    const Index F = input_features;
+    const Index logical_F = input_features;
     const Index H = output_features;
     const Index T = time_steps;
     const bool is_lstm = (config.cell_mode == CUDNN_LSTM);
+    const bool bf16 = config.data_type == Type::BF16;
+    throw_if(!is_one_of(config.data_type, Type::FP32, Type::BF16),
+             "cuDNN RNN supports FP32 or BF16 data.");
+    const cudnnDataType_t cudnn_data_type = bf16 ? CUDNN_DATA_BFLOAT16
+                                                 : CUDNN_DATA_FLOAT;
+    // PERSIST_STATIC_SMALL_H is an FP32-specific cuDNN specialization. Keep
+    // BF16 on the standard tensor-core path and cap the hidden size so larger
+    // models do not repeatedly probe an ineligible algorithm.
+    state.persist_algo_active = !state.persist_algo_failed
+                             && persist_env_enabled()
+                             && !bf16 && H <= 128
+                             && (!is_lstm || batch_size < 512);
+    const Index F = cudnn_input_features(logical_F,
+                                         state.persist_algo_active);
 
     const bool topology_changed =
         state.cached_input_features  != F ||
         state.cached_output_features != H ||
+        state.cached_data_type       != config.data_type ||
         state.rnn_desc == nullptr;
 
     if (topology_changed)
     {
+        // cuDNN's double-bias/default-math kernel is decisively faster for
+        // small LSTMs (and slower for the simple RNN and larger batches).
+        // Environment variables remain explicit overrides for reproducible
+        // tuning runs.
+        const bool small_lstm = is_lstm && batch_size <= 64;
+        const bool large_lstm = is_lstm && batch_size >= 512 && !bf16;
+        state.double_bias = env_flag_enabled(
+            "OPENNN_RNN_DOUBLE_BIAS",
+            state.persist_algo_active || small_lstm || large_lstm);
+        state.packed_layout = env_flag_enabled(
+            "OPENNN_RNN_PACKED_LAYOUT", false) && !state.persist_algo_active;
+        const bool use_default_math = env_flag_enabled(
+            "OPENNN_RNN_DEFAULT_MATH", state.persist_algo_active || small_lstm);
         state.rnn_desc.reset();
         CHECK_CUDNN(cudnnCreateRNNDescriptor(&state.rnn_desc.handle));
         state.rnn_desc.deleter = &cudnnDestroyRNNDescriptor;
@@ -80,35 +133,38 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& con
             CHECK_CUDNN(cudnnCreateDropoutDescriptor(&state.dropout_desc.handle));
             state.dropout_desc.deleter = &cudnnDestroyDropoutDescriptor;
         }
-        size_t dropout_states_bytes = 0;
-        CHECK_CUDNN(cudnnDropoutGetStatesSize(
-            device::get_cudnn_handle(), &dropout_states_bytes));
-        state.dropout_states.grow_to(Index(dropout_states_bytes));
+        // A zero-rate descriptor has no RNG state. Supplying a null/zero state
+        // avoids allocating and initializing cuDNN's otherwise large dropout
+        // buffer during recurrent setup.
+        state.dropout_states.resize_bytes(0, Device::CUDA);
         CHECK_CUDNN(cudnnSetDropoutDescriptor(
             state.dropout_desc, device::get_cudnn_handle(),
              0.0f,
-            state.dropout_states.data(),
-            size_t(state.dropout_states.byte_size()),
+            nullptr,
+            0,
              0ULL));
 
         CHECK_CUDNN(cudnnSetRNNDescriptor_v8(
             state.rnn_desc,
-            state.persist_algo_active ? CUDNN_RNN_ALGO_PERSIST_STATIC
+            state.persist_algo_active ? CUDNN_RNN_ALGO_PERSIST_STATIC_SMALL_H
                                       : CUDNN_RNN_ALGO_STANDARD,
             config.cell_mode,
-            CUDNN_RNN_SINGLE_INP_BIAS,
+            state.double_bias ? CUDNN_RNN_DOUBLE_BIAS
+                              : CUDNN_RNN_SINGLE_INP_BIAS,
             CUDNN_UNIDIRECTIONAL,
             CUDNN_LINEAR_INPUT,
+            cudnn_data_type,
             CUDNN_DATA_FLOAT,
-            CUDNN_DATA_FLOAT,
-            CUDNN_TENSOR_OP_MATH,
+            use_default_math ? CUDNN_DEFAULT_MATH
+            : tensor_math_env_enabled() ? CUDNN_TENSOR_OP_MATH
+                                        : CUDNN_TENSOR_OP_MATH_ALLOW_CONVERSION,
             int(F),
             int(H),
               int(H),
             1,
             state.dropout_desc,
-            state.persist_algo_active ? CUDNN_RNN_PADDED_IO_DISABLED
-                                      : CUDNN_RNN_PADDED_IO_ENABLED));
+            state.packed_layout ? CUDNN_RNN_PADDED_IO_DISABLED
+                                : CUDNN_RNN_PADDED_IO_ENABLED));
 
         size_t weight_bytes = 0;
         CHECK_CUDNN(cudnnGetRNNWeightSpaceSize(
@@ -155,6 +211,8 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& con
         CudnnRnnShapeSlot& slot = state.shape_slots[slot_index];
         slot.batch = batch_size;
         slot.time  = T;
+        slot.input_features = F;
+        slot.time_major = time_major_env_enabled();
 
         slot.x_desc.reset();
         slot.y_desc.reset();
@@ -173,17 +231,24 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& con
                            device::CopyKind::HostToDevice,
                            device::get_compute_stream());
 
-        static float zero_pad_fill = 0.0f;
+        // Every sequence in an OpenNN batch has the full logical length, so
+        // there are no padded positions to fill. A null fill matches cuDNN's
+        // fastest full-sequence path (and PyTorch's descriptor setup).
+        void* const padding_fill = nullptr;
+        const cudnnRNNDataLayout_t layout = state.packed_layout
+            ? CUDNN_RNN_DATA_LAYOUT_SEQ_MAJOR_PACKED
+            : (slot.time_major ? CUDNN_RNN_DATA_LAYOUT_SEQ_MAJOR_UNPACKED
+                               : CUDNN_RNN_DATA_LAYOUT_BATCH_MAJOR_UNPACKED);
         CHECK_CUDNN(cudnnSetRNNDataDescriptor(
-            slot.x_desc, CUDNN_DATA_FLOAT,
-            CUDNN_RNN_DATA_LAYOUT_BATCH_MAJOR_UNPACKED,
+            slot.x_desc, cudnn_data_type,
+            layout,
             int(T), int(batch_size), int(F),
-            seq_h, &zero_pad_fill));
+            seq_h, padding_fill));
         CHECK_CUDNN(cudnnSetRNNDataDescriptor(
-            slot.y_desc, CUDNN_DATA_FLOAT,
-            CUDNN_RNN_DATA_LAYOUT_BATCH_MAJOR_UNPACKED,
+            slot.y_desc, cudnn_data_type,
+            layout,
             int(T), int(batch_size), int(H),
-            seq_h, &zero_pad_fill));
+            seq_h, padding_fill));
 
         slot.h_desc.reset();
         if (is_lstm) slot.c_desc.reset();
@@ -194,11 +259,14 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& con
             CHECK_CUDNN(cudnnCreateTensorDescriptor(&slot.c_desc.handle));
             slot.c_desc.deleter = &cudnnDestroyTensorDescriptor;
         }
-        const int dimA[3]    = {1, int(batch_size), int(H)};
-        const int strideA[3] = {int(batch_size * H), int(H), 1};
-        CHECK_CUDNN(cudnnSetTensorNdDescriptor(slot.h_desc, CUDNN_DATA_FLOAT, 3, dimA, strideA));
+        // Keep the two singleton spatial dimensions used by cuDNN's native
+        // framework integrations. They select the same logical tensor but
+        // avoid an internal descriptor normalization on recurrent entry.
+        const int dimA[5]    = {1, int(batch_size), int(H), 1, 1};
+        const int strideA[5] = {int(batch_size * H), int(H), 1, 1, 1};
+        CHECK_CUDNN(cudnnSetTensorNdDescriptor(slot.h_desc, cudnn_data_type, 5, dimA, strideA));
         if (is_lstm)
-            CHECK_CUDNN(cudnnSetTensorNdDescriptor(slot.c_desc, CUDNN_DATA_FLOAT, 3, dimA, strideA));
+            CHECK_CUDNN(cudnnSetTensorNdDescriptor(slot.c_desc, cudnn_data_type, 5, dimA, strideA));
 
         size_t work_bytes = 0;
         size_t reserve_bytes = 0;
@@ -224,6 +292,7 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& con
 
     state.cached_input_features  = F;
     state.cached_output_features = H;
+    state.cached_data_type       = config.data_type;
     return state.shape_slots[slot_index];
 }
 
@@ -237,6 +306,7 @@ void CudnnRnnState::cudnn_copy_weight_regions_(int num_linear_layers,
 {
     BackendState& state = backend_state;
     const int F = int(input_features);
+    const int cudnn_F = int(state.cached_input_features);
     const int H = int(output_features);
     const int input_layers = num_linear_layers / 2;
 
@@ -251,26 +321,37 @@ void CudnnRnnState::cudnn_copy_weight_regions_(int num_linear_layers,
     int count = 0;
     for (int lin = 0; lin < num_linear_layers; ++lin)
     {
-        float* cudnn_matrix = nullptr;
-        float* cudnn_vector = nullptr;
+        void* cudnn_matrix = nullptr;
+        void* cudnn_vector = nullptr;
         CHECK_CUDNN(cudnnGetRNNWeightParams(
             device::get_cudnn_handle(), state.rnn_desc, 0,
             size_t(state.weight_space_bytes), packed_weights.data(), lin,
-            matrix_desc, reinterpret_cast<void**>(&cudnn_matrix),
-            bias_desc, reinterpret_cast<void**>(&cudnn_vector)));
+            matrix_desc, &cudnn_matrix,
+            bias_desc, &cudnn_vector));
 
         const int rows = lin < input_layers ? F : H;
+        const int cudnn_rows = lin < input_layers ? cudnn_F : H;
         if (cudnn_matrix && matrices[lin]->get_data())
         {
-            float* ours = const_cast<float*>(matrices[lin]->as<float>());
-            specs[count++] = to_cudnn ? RnnCopySpec{ours, cudnn_matrix, rows, H, 1}
-                                      : RnnCopySpec{cudnn_matrix, ours, H, rows, 1};
+            void* ours = const_cast<void*>(matrices[lin]->get_data());
+            const int ours_bf16 = matrices[lin]->get_type() == Type::BF16;
+            const int packed_bf16 = state.cached_data_type == Type::BF16;
+            specs[count++] = to_cudnn
+                ? RnnCopySpec{ours, cudnn_matrix, rows, H, 1, H, cudnn_rows,
+                              ours_bf16, packed_bf16}
+                : RnnCopySpec{cudnn_matrix, ours, H, rows, 1, cudnn_rows, H,
+                              packed_bf16, ours_bf16};
         }
         if (cudnn_vector && vectors[lin] && vectors[lin]->get_data())
         {
-            float* ours = const_cast<float*>(vectors[lin]->as<float>());
-            specs[count++] = to_cudnn ? RnnCopySpec{ours, cudnn_vector, 1, H, 0}
-                                      : RnnCopySpec{cudnn_vector, ours, 1, H, 0};
+            void* ours = const_cast<void*>(vectors[lin]->get_data());
+            const int ours_bf16 = vectors[lin]->get_type() == Type::BF16;
+            const int packed_bf16 = state.cached_data_type == Type::BF16;
+            specs[count++] = to_cudnn
+                ? RnnCopySpec{ours, cudnn_vector, 1, H, 0, 0, 0,
+                              ours_bf16, packed_bf16}
+                : RnnCopySpec{cudnn_vector, ours, 1, H, 0, 0, 0,
+                              packed_bf16, ours_bf16};
         }
     }
     rnn_copy_regions_cuda(specs, count);
@@ -283,10 +364,20 @@ void CudnnRnnState::cudnn_pack_weights_(int num_linear_layers,
                                         const TensorView* const* biases,
                                         Buffer& forward_state) const
 {
+    PROFILE_SCOPE("rnn:pack_weights");
     const Index weight_space_bytes = backend_state.weight_space_bytes;
+    const Index previous_bytes = forward_state.byte_size();
     forward_state.grow_to(get_aligned_bytes(weight_space_bytes));
-    device::set_zero_async(forward_state.data(), weight_space_bytes,
-                           device::get_compute_stream());
+    // Double-bias mode has recurrent bias regions that OpenNN intentionally
+    // leaves at zero, and feature padding has unused matrix rows. Initialize
+    // those holes once per persistent forward context; live regions are
+    // overwritten below on every step, so clearing the whole weight space on
+    // every batch only adds bandwidth and a graph node.
+    if (previous_bytes < get_aligned_bytes(weight_space_bytes)
+        && (backend_state.double_bias
+            || backend_state.cached_input_features != input_features))
+        device::set_zero_async(forward_state.data(), weight_space_bytes,
+                               device::get_compute_stream());
     cudnn_copy_weight_regions_(num_linear_layers, input_features, output_features,
                                weights, biases, forward_state, true);
 }
@@ -298,6 +389,7 @@ void CudnnRnnState::cudnn_unpack_gradients_(int num_linear_layers,
                                             const TensorView* const* bias_gradients,
                                             Buffer& backward_scratch) const
 {
+    PROFILE_SCOPE("rnn:unpack_gradients");
     cudnn_copy_weight_regions_(num_linear_layers, input_features, output_features,
                                weight_gradients, bias_gradients,
                                backward_scratch, false);
@@ -319,6 +411,7 @@ void CudnnRnnState::cudnn_rnn_forward_(const CudnnRnnShapeSlot& initial_shape,
                                        Buffer& forward_state,
                                        const function<CudnnRnnShapeSlot&()>& reconfigure) const
 {
+    PROFILE_SCOPE("rnn:cudnn_forward");
     BackendState& state = backend_state;
     const CudnnRnnShapeSlot* selected_shape = &initial_shape;
     auto run_forward = [&]() {
@@ -350,6 +443,7 @@ void CudnnRnnState::cudnn_rnn_forward_(const CudnnRnnShapeSlot& initial_shape,
         state.persist_algo_failed = true;
         state.rnn_desc.reset();
         state.cached_input_features = -1;
+        state.cached_data_type = Type::Auto;
         selected_shape = &reconfigure();
         forward_status = run_forward();
     }
@@ -363,6 +457,7 @@ void CudnnRnnState::cudnn_rnn_backward_(const CudnnRnnShapeSlot& shape,
                                         const Buffer& forward_state,
                                         Buffer& backward_scratch) const
 {
+    PROFILE_SCOPE("rnn:cudnn_backward");
     BackendState& state = backend_state;
     const cudnnTensorDescriptor_t second_state_desc =
         has_cell_state ? shape.c_desc.handle : shape.h_desc.handle;

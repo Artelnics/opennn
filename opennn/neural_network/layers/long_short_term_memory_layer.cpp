@@ -11,11 +11,17 @@
 
 #include "opennn/core/device_backend.h"
 #include "opennn/core/random_utilities.h"
+#include "opennn/core/profiler.h"
+#include "opennn/core/string_utilities.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
 #include <initializer_list>
 #include "opennn/neural_network/layers/kernel_recurrent.cuh"
+
+#ifdef EIGEN_USE_MKL_ALL
+#include <mkl_vml.h>
+#endif
 
 namespace opennn
 {
@@ -44,13 +50,15 @@ void LongShortTermMemoryOperator::set(Index new_input_features,
                                 Index new_output_features,
                                 Index new_time_steps,
                                 ActivationFunction new_activation_function,
-                                ActivationFunction new_recurrent_activation_function)
+                                ActivationFunction new_recurrent_activation_function,
+                                Type new_compute_dtype)
 {
     input_features = new_input_features;
     output_features = new_output_features;
     time_steps = new_time_steps;
     activation_function = new_activation_function;
     recurrent_activation_function = new_recurrent_activation_function;
+    compute_dtype = new_compute_dtype;
 }
 
 vector<TensorSpec> LongShortTermMemoryOperator::parameter_specs() const
@@ -63,18 +71,18 @@ vector<TensorSpec> LongShortTermMemoryOperator::parameter_specs() const
     const Shape recurrent_weight_shape{output_features, output_features};
 
     return {
-        {bias_shape, Type::FP32},
-        {bias_shape, Type::FP32},
-        {bias_shape, Type::FP32},
-        {bias_shape, Type::FP32},
-        {input_weight_shape, Type::FP32},
-        {input_weight_shape, Type::FP32},
-        {input_weight_shape, Type::FP32},
-        {input_weight_shape, Type::FP32},
-        {recurrent_weight_shape, Type::FP32},
-        {recurrent_weight_shape, Type::FP32},
-        {recurrent_weight_shape, Type::FP32},
-        {recurrent_weight_shape, Type::FP32},
+        {bias_shape, compute_dtype},
+        {bias_shape, compute_dtype},
+        {bias_shape, compute_dtype},
+        {bias_shape, compute_dtype},
+        {input_weight_shape, compute_dtype},
+        {input_weight_shape, compute_dtype},
+        {input_weight_shape, compute_dtype},
+        {input_weight_shape, compute_dtype},
+        {recurrent_weight_shape, compute_dtype},
+        {recurrent_weight_shape, compute_dtype},
+        {recurrent_weight_shape, compute_dtype},
+        {recurrent_weight_shape, compute_dtype},
     };
 }
 
@@ -161,6 +169,8 @@ void LongShortTermMemoryOperator::forward_propagate(ForwardPropagation& forward_
 
     if (input.is_cuda())
         return apply_gpu(input, output, hidden_state,
+                         forward_slots[CudnnInputSequenceSlot],
+                         forward_slots[CudnnOutputSequenceSlot],
                          forward_propagation.layer_state_storage[layer],
                          return_sequences, is_training);
 
@@ -210,7 +220,9 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
     const float* Ug = candidate_recurrent_weights.as<float>();
     const float* Uo = output_recurrent_weights.as<float>();
 
-    if (H >= 64)
+    // Below 96 units the contiguous per-sequence kernel avoids the repeated
+    // GEMM/barrier overhead of the matrix path on forecasting-sized cells.
+    if (H >= 96)
     {
         const MatrixMap Wf_m = forget_weights.as_matrix();
         const MatrixMap Wi_m = input_weights.as_matrix();
@@ -327,9 +339,23 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
         return;
     }
 
+    // Keep one preactivation row per sequence.  Iterating features before
+    // hidden units makes every weight access contiguous; the previous h-k
+    // ordering stepped through the matrices with a stride of H.
+    vector<float> gate_preactivations(
+        size_t(batch_size) * size_t(4 * H));
+    const bool standard_gates =
+        recurrent_activation_function == ActivationFunction::Sigmoid
+        && activation_function == ActivationFunction::Tanh;
+
     #pragma omp parallel for
     for (Index b = 0; b < batch_size; ++b)
     {
+        float* zf = gate_preactivations.data() + b * 4 * H;
+        float* zi = zf + H;
+        float* zg = zi + H;
+        float* zo = zg + H;
+
         for (Index t = 0; t < T; ++t)
         {
             const float* xt = x + (b * T + t) * F;
@@ -337,52 +363,118 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
             const float* c_prev = t > 0 ? cells + (b * T + t - 1) * H : nullptr;
             const Index step = (b * T + t) * H;
 
-            for (Index h = 0; h < H; ++h)
+            copy_n(bf, H, zf);
+            copy_n(bi, H, zi);
+            copy_n(bg, H, zg);
+            copy_n(bo, H, zo);
+
+            for (Index k = 0; k < F; ++k)
             {
-                float zf = bf[h];
-                float zi = bi[h];
-                float zg = bg[h];
-                float zo = bo[h];
+                const float xk = xt[k];
+                const Index row = k * H;
 
-                for (Index k = 0; k < F; ++k)
+                #pragma omp simd
+                for (Index h = 0; h < H; ++h)
                 {
-                    const float xk = xt[k];
-                    zf += xk * Wf[k * H + h];
-                    zi += xk * Wi[k * H + h];
-                    zg += xk * Wg[k * H + h];
-                    zo += xk * Wo[k * H + h];
+                    zf[h] += xk * Wf[row + h];
+                    zi[h] += xk * Wi[row + h];
+                    zg[h] += xk * Wg[row + h];
+                    zo[h] += xk * Wo[row + h];
                 }
+            }
 
-                if (h_prev)
+            if (h_prev)
+            {
+                for (Index j = 0; j < H; ++j)
                 {
-                    for (Index j = 0; j < H; ++j)
+                    const float hp = h_prev[j];
+                    const Index row = j * H;
+
+                    #pragma omp simd
+                    for (Index h = 0; h < H; ++h)
                     {
-                        const float hp = h_prev[j];
-                        zf += hp * Uf[j * H + h];
-                        zi += hp * Ui[j * H + h];
-                        zg += hp * Ug[j * H + h];
-                        zo += hp * Uo[j * H + h];
+                        zf[h] += hp * Uf[row + h];
+                        zi[h] += hp * Ui[row + h];
+                        zg[h] += hp * Ug[row + h];
+                        zo[h] += hp * Uo[row + h];
                     }
                 }
+            }
 
-                const float f = activation_forward_value(recurrent_activation_function, zf);
-                const float i = activation_forward_value(recurrent_activation_function, zi);
-                const float g = activation_forward_value(activation_function, zg);
-                const float o = activation_forward_value(recurrent_activation_function, zo);
-                const float c = f * (c_prev ? c_prev[h] : 0.0f) + i * g;
-                const float a = activation_forward_value(activation_function, c);
-                const float h_value = o * a;
+            if (standard_gates)
+            {
+#ifdef EIGEN_USE_MKL_ALL
+                #pragma omp simd
+                for (Index h = 0; h < H; ++h)
+                {
+                    zf[h] = -zf[h];
+                    zi[h] = -zi[h];
+                    zo[h] = -zo[h];
+                }
+                vsExp(MKL_INT(H), zf, zf);
+                vsExp(MKL_INT(H), zi, zi);
+                vsExp(MKL_INT(H), zo, zo);
+                vsTanh(MKL_INT(H), zg, zg);
 
-                f_gate[step + h] = f;
-                i_gate[step + h] = i;
-                g_gate[step + h] = g;
-                o_gate[step + h] = o;
-                cells[step + h] = c;
-                cell_act[step + h] = a;
-                hidden[step + h] = h_value;
+                #pragma omp simd
+                for (Index h = 0; h < H; ++h)
+                {
+                    const float f = 1.0f / (1.0f + zf[h]);
+                    const float i = 1.0f / (1.0f + zi[h]);
+                    const float g = zg[h];
+                    const float o = 1.0f / (1.0f + zo[h]);
+                    const float c = f * (c_prev ? c_prev[h] : 0.0f) + i * g;
+                    f_gate[step + h] = f; i_gate[step + h] = i;
+                    g_gate[step + h] = g; o_gate[step + h] = o;
+                    cells[step + h] = c;
+                }
+                vsTanh(MKL_INT(H), cells + step, cell_act + step);
 
-                if (return_sequences)
-                    y[step + h] = h_value;
+                #pragma omp simd
+                for (Index h = 0; h < H; ++h)
+                {
+                    const float h_value = o_gate[step + h] * cell_act[step + h];
+                    hidden[step + h] = h_value;
+                    if (return_sequences) y[step + h] = h_value;
+                }
+#else
+                #pragma omp simd
+                for (Index h = 0; h < H; ++h)
+                {
+                    const float f = 1.0f / (1.0f + expf(-zf[h]));
+                    const float i = 1.0f / (1.0f + expf(-zi[h]));
+                    const float g = tanhf(zg[h]);
+                    const float o = 1.0f / (1.0f + expf(-zo[h]));
+                    const float c = f * (c_prev ? c_prev[h] : 0.0f) + i * g;
+                    const float a = tanhf(c);
+                    const float h_value = o * a;
+
+                    f_gate[step + h] = f; i_gate[step + h] = i;
+                    g_gate[step + h] = g; o_gate[step + h] = o;
+                    cells[step + h] = c; cell_act[step + h] = a;
+                    hidden[step + h] = h_value;
+                    if (return_sequences) y[step + h] = h_value;
+                }
+#endif
+            }
+            else
+            {
+                for (Index h = 0; h < H; ++h)
+                {
+                    const float f = activation_forward_value(recurrent_activation_function, zf[h]);
+                    const float i = activation_forward_value(recurrent_activation_function, zi[h]);
+                    const float g = activation_forward_value(activation_function, zg[h]);
+                    const float o = activation_forward_value(recurrent_activation_function, zo[h]);
+                    const float c = f * (c_prev ? c_prev[h] : 0.0f) + i * g;
+                    const float a = activation_forward_value(activation_function, c);
+                    const float h_value = o * a;
+
+                    f_gate[step + h] = f; i_gate[step + h] = i;
+                    g_gate[step + h] = g; o_gate[step + h] = o;
+                    cells[step + h] = c; cell_act[step + h] = a;
+                    hidden[step + h] = h_value;
+                    if (return_sequences) y[step + h] = h_value;
+                }
             }
         }
 
@@ -420,6 +512,8 @@ void LongShortTermMemoryOperator::back_propagate(ForwardPropagation& forward_pro
         return apply_delta_gpu(input,
                                forward_slots[return_sequences ? OutputSlot : HiddenStateSlot],
                                output_delta,
+                               forward_slots[CudnnInputSequenceSlot],
+                               forward_slots[CudnnOutputSequenceSlot],
                                input_delta,
                                backward_slots[CudnnOutputDeltaScratchSlot],
                                backward_slots[CudnnInputDeltaScratchSlot],
@@ -502,7 +596,7 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
     float* gUg = candidate_recurrent_weight_gradient.as<float>();
     float* gUo = output_recurrent_weight_gradient.as<float>();
 
-    if (H >= 64)
+    if (H >= 96)
     {
         const MatrixMap Wf_m = forget_weights.as_matrix();
         const MatrixMap Wi_m = input_weights.as_matrix();
@@ -628,6 +722,10 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
         return;
     }
 
+    const bool standard_gates =
+        recurrent_activation_function == ActivationFunction::Sigmoid
+        && activation_function == ActivationFunction::Tanh;
+
     float* dh_next_all = hidden_delta_scratch.as<float>();
     float* dc_next_all = cell_delta_scratch.as<float>();
     float* df_all = forget_delta_scratch.as<float>();
@@ -689,6 +787,7 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
             else if (t == T - 1)
                 for (Index h = 0; h < H; ++h) dh_next[h] += out_delta[b * H + h];
 
+            #pragma omp simd
             for (Index h = 0; h < H; ++h)
             {
                 const float f = f_gate[step + h];
@@ -698,17 +797,27 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
                 const float a = cell_act[step + h];
 
                 const float dc = dh_next[h] * o
-                               * activation_derivative_from_output_value(activation_function, a)
+                               * (standard_gates ? 1.0f - a * a
+                                   : activation_derivative_from_output_value(
+                                       activation_function, a))
                                + dc_next[h];
 
                 do_gate[h] = dh_next[h] * a
-                            * activation_derivative_from_output_value(recurrent_activation_function, o);
+                            * (standard_gates ? o * (1.0f - o)
+                                : activation_derivative_from_output_value(
+                                    recurrent_activation_function, o));
                 df[h] = dc * (c_prev ? c_prev[h] : 0.0f)
-                      * activation_derivative_from_output_value(recurrent_activation_function, f);
+                      * (standard_gates ? f * (1.0f - f)
+                          : activation_derivative_from_output_value(
+                              recurrent_activation_function, f));
                 di[h] = dc * g
-                      * activation_derivative_from_output_value(recurrent_activation_function, i);
+                      * (standard_gates ? i * (1.0f - i)
+                          : activation_derivative_from_output_value(
+                              recurrent_activation_function, i));
                 dg[h] = dc * i
-                      * activation_derivative_from_output_value(activation_function, g);
+                      * (standard_gates ? 1.0f - g * g
+                          : activation_derivative_from_output_value(
+                              activation_function, g));
                 dc_next[h] = dc * f;
 
                 tls_gbf[h] += df[h];
@@ -722,6 +831,7 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
                 float dx = 0.0f;
                 const float xk = xt[k];
 
+                #pragma omp simd reduction(+:dx)
                 for (Index h = 0; h < H; ++h)
                 {
                     const Index wh = k * H + h;
@@ -746,6 +856,7 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
                 float dh_prev = 0.0f;
                 const float hp = h_prev ? h_prev[j] : 0.0f;
 
+                #pragma omp simd reduction(+:dh_prev)
                 for (Index h = 0; h < H; ++h)
                 {
                     const Index uh = j * H + h;
@@ -789,16 +900,19 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
         const float* t_gUg = t_gUi + H * H;
         const float* t_gUo = t_gUg + H * H;
 
+        #pragma omp simd
         for (Index h = 0; h < H; ++h)
         {
             gbf[h] += t_gbf[h]; gbi[h] += t_gbi[h];
             gbg[h] += t_gbg[h]; gbo[h] += t_gbo[h];
         }
+        #pragma omp simd
         for (Index k = 0; k < F * H; ++k)
         {
             gWf[k] += t_gWf[k]; gWi[k] += t_gWi[k];
             gWg[k] += t_gWg[k]; gWo[k] += t_gWo[k];
         }
+        #pragma omp simd
         for (Index k = 0; k < H * H; ++k)
         {
             gUf[k] += t_gUf[k]; gUi[k] += t_gUi[k];
@@ -822,7 +936,7 @@ CudnnRnnShapeSlot& LongShortTermMemoryOperator::ensure_cudnn_setup_(
             "Reconfigure the layer or fall back to CPU.");
     }
 
-    return cudnn_setup_({CUDNN_LSTM},
+    return cudnn_setup_({CUDNN_LSTM, compute_dtype},
                         input_features, output_features, time_steps,
                         batch_size, for_training);
 }
@@ -877,23 +991,39 @@ void LongShortTermMemoryOperator::unpack_gradients_from_cudnn_(Buffer& backward_
 void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
                                       TensorView& output,
                                       TensorView& sequence_output_scratch,
+                                      TensorView& cudnn_input_sequence,
+                                      TensorView& cudnn_output_sequence,
                                       Buffer& forward_state,
                                       bool return_seq,
                                       bool is_training) const
 {
     const Index batch_size = input.get_shape()[0];
     if (!input.get_data() || output_features == 0 || time_steps == 0 || batch_size == 0) return;
+
     const auto backend_lock = lock_backend_state();
 
     CudnnRnnShapeSlot& shape = ensure_cudnn_setup_(batch_size, is_training);
     prepare_cudnn_forward_state_(forward_state, is_training, shape);
     pack_weights_to_cudnn_(forward_state);
 
-    float* y_target = return_seq ? output.as<float>()
-                                 : sequence_output_scratch.as<float>();
+    const void* x_data = input.get_data();
+    void* y_data = sequence_output_scratch.get_data();
+    if (shape.time_major)
+    {
+        PROFILE_SCOPE("rnn:transpose_input");
+        const Index cudnn_input_features = shape.input_features;
+        input.dispatch([&]<typename Scalar>()
+        {
+            batch_time_to_time_batch_padded_cuda<Scalar>(
+                batch_size, time_steps, input_features, cudnn_input_features,
+                input.as<Scalar>(), cudnn_input_sequence.as<Scalar>());
+        });
+        x_data = cudnn_input_sequence.get_data();
+        y_data = cudnn_output_sequence.get_data();
+    }
 
     cudnn_rnn_forward_(shape, is_training, true,
-                       input.get_data(), y_target,
+                       x_data, y_data,
                        forward_state,
                        [&]() -> CudnnRnnShapeSlot& {
                            CudnnRnnShapeSlot& retry_shape =
@@ -904,17 +1034,39 @@ void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
                            return retry_shape;
                        });
 
-    if (return_seq) return;
-
-    gather_time_slice_cuda<float>(
-        batch_size, time_steps, output_features, time_steps - 1,
-        y_target,
-        output.as<float>());
+    if (return_seq && shape.time_major)
+    {
+        PROFILE_SCOPE("rnn:transpose_output");
+        output.dispatch([&]<typename Scalar>()
+        {
+            time_batch_to_batch_time_cuda<Scalar>(
+                batch_size, time_steps, output_features,
+                cudnn_output_sequence.as<Scalar>(), output.as<Scalar>());
+        });
+    }
+    else if (return_seq)
+        copy(sequence_output_scratch, output);
+    else if (shape.time_major)
+        output.dispatch([&]<typename Scalar>()
+        {
+            gather_time_major_slice_cuda<Scalar>(
+                batch_size, time_steps, output_features, time_steps - 1,
+                cudnn_output_sequence.as<Scalar>(), output.as<Scalar>());
+        });
+    else
+        output.dispatch([&]<typename Scalar>()
+        {
+            gather_time_slice_cuda<Scalar>(
+                batch_size, time_steps, output_features, time_steps - 1,
+                sequence_output_scratch.as<Scalar>(), output.as<Scalar>());
+        });
 }
 
 void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
                                             const TensorView& sequence_output,
                                             const TensorView& output_delta,
+                                            const TensorView& cudnn_input_sequence,
+                                            const TensorView& cudnn_output_sequence,
                                             TensorView& input_delta,
                                             TensorView& sequence_delta_scratch,
                                             TensorView& input_delta_scratch,
@@ -934,28 +1086,58 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
     const Index H = output_features;
     const Index T = time_steps;
 
-    const float* dy_data = output_delta.as<float>();
-    if (!return_seq)
+    const void* dy_data = output_delta.get_data();
+    if (return_seq && shape.time_major)
+    {
+        PROFILE_SCOPE("rnn:transpose_delta");
+        output_delta.dispatch([&]<typename Scalar>()
+        {
+            batch_time_to_time_batch_cuda<Scalar>(
+                batch_size, T, H,
+                output_delta.as<Scalar>(), sequence_delta_scratch.as<Scalar>());
+        });
+        dy_data = sequence_delta_scratch.get_data();
+    }
+    else if (!return_seq)
     {
         device::set_zero_async(sequence_delta_scratch.get_data(),
                                sequence_delta_scratch.byte_size(),
                                device::get_compute_stream());
-        scatter_time_slice_cuda<float>(
-            batch_size, T, H, T - 1,
-            output_delta.as<float>(),
-            sequence_delta_scratch.as<float>());
-        dy_data = sequence_delta_scratch.as<float>();
+        output_delta.dispatch([&]<typename Scalar>()
+        {
+            if (shape.time_major)
+                scatter_time_major_slice_cuda<Scalar>(
+                    batch_size, T, H, T - 1,
+                    output_delta.as<Scalar>(), sequence_delta_scratch.as<Scalar>());
+            else
+                scatter_time_slice_cuda<Scalar>(
+                    batch_size, T, H, T - 1,
+                    output_delta.as<Scalar>(), sequence_delta_scratch.as<Scalar>());
+        });
+        dy_data = sequence_delta_scratch.get_data();
     }
 
-    const float* y_data = sequence_output.as<float>();
-
-    void* dx_data = input_delta.get_data()
-        ? input_delta.get_data()
-        : input_delta_scratch.get_data();
+    const void* x_data = shape.time_major
+        ? cudnn_input_sequence.get_data() : input.get_data();
+    const void* y_data = shape.time_major
+        ? cudnn_output_sequence.get_data() : sequence_output.get_data();
+    void* dx_data = shape.time_major || !input_delta.get_data()
+        ? input_delta_scratch.get_data() : input_delta.get_data();
 
     cudnn_rnn_backward_(shape, true,
-                        input.get_data(), y_data, dy_data, dx_data,
+                        x_data, y_data, dy_data, dx_data,
                         forward_state, backward_scratch);
+
+    if (shape.time_major && input_delta.get_data())
+    {
+        PROFILE_SCOPE("rnn:transpose_input_delta");
+        input_delta.dispatch([&]<typename Scalar>()
+        {
+            time_batch_to_batch_time_cropped_cuda<Scalar>(
+                batch_size, T, input_features, shape.input_features,
+                input_delta_scratch.as<Scalar>(), input_delta.as<Scalar>());
+        });
+    }
 
     unpack_gradients_from_cudnn_(backward_scratch);
 }
@@ -963,11 +1145,12 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
 #else
 
 void LongShortTermMemoryOperator::apply_gpu(const TensorView&, TensorView&, TensorView&,
-                                            Buffer&, bool, bool) const OPENNN_CUDA_STUB_BODY(apply_gpu)
+                                            TensorView&, TensorView&, Buffer&, bool, bool) const OPENNN_CUDA_STUB_BODY(apply_gpu)
 
 void LongShortTermMemoryOperator::apply_delta_gpu(
-    const TensorView&, const TensorView&, const TensorView&, TensorView&,
-    TensorView&, TensorView&, const Buffer&, Buffer&, bool) const OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
+    const TensorView&, const TensorView&, const TensorView&, const TensorView&,
+    const TensorView&, TensorView&, TensorView&, TensorView&,
+    const Buffer&, Buffer&, bool) const OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
 
 #endif
 
@@ -991,6 +1174,8 @@ vector<TensorSpec> LongShortTermMemory::get_forward_specs(Index batch_size) cons
 {
     const Index T = get_time_steps();
     const Shape sequence_shape{batch_size, T, output_features};
+    const Shape input_sequence_shape{
+        batch_size, T, ((get_input_features() + 7) / 8) * 8};
 
     return {
         {sequence_shape,  compute_dtype},
@@ -999,6 +1184,8 @@ vector<TensorSpec> LongShortTermMemory::get_forward_specs(Index batch_size) cons
         {sequence_shape,  compute_dtype},
         {sequence_shape,  compute_dtype},
         {sequence_shape,  compute_dtype},
+        {sequence_shape,  compute_dtype},
+        {input_sequence_shape, compute_dtype},
         {sequence_shape,  compute_dtype},
         {return_sequences ? sequence_shape : Shape{batch_size, output_features}, compute_dtype},
     };
@@ -1020,7 +1207,7 @@ vector<TensorSpec> LongShortTermMemory::get_backward_specs(Index batch_size) con
         {scratch_shape,     compute_dtype},
         {scratch_shape,     compute_dtype},
         {{batch_size, get_time_steps(), output_features}, compute_dtype},
-        {input_delta_shape, compute_dtype},
+        {{batch_size, get_time_steps(), ((get_input_features() + 7) / 8) * 8}, compute_dtype},
     };
 }
 
@@ -1030,7 +1217,8 @@ void LongShortTermMemory::configure_operators()
                 output_features,
                 get_time_steps(),
                 lstm_op.activation_function,
-                lstm_op.recurrent_activation_function);
+                lstm_op.recurrent_activation_function,
+                compute_dtype);
 
     lstm_op.return_sequences = return_sequences;
 
