@@ -1,5 +1,7 @@
 #include "tests/pch.h"
 
+#include "tests/neural_network/llm_test_helpers.h"
+
 #include <filesystem>
 #include <random>
 #include <vector>
@@ -12,103 +14,14 @@
 #include "opennn/neural_network/back_propagation.h"
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/device_backend.h"
+
 #endif
 
 using namespace opennn;
+using namespace opennn_test;
 
 namespace
 {
-
-struct Dims
-{
-    Index seq, vocab, hidden, layers, q_heads, kv_heads, head_dim, intermediate;
-    Index prompt1, decodes, prompt2;
-};
-
-constexpr Dims TINY { 16, 50, 32, 2, 4, 2, 8, 64, 5, 2, 8 };
-constexpr Dims WIDE { 32, 50, 32, 2, 4, 2, 8, 64, 20, 2, 24 };
-
-unique_ptr<Qwen3> make_qwen(const Dims& d)
-{
-    return make_unique<Qwen3>(
-        d.seq, d.vocab, d.hidden, d.layers, d.q_heads, d.kv_heads,
-        d.head_dim, d.intermediate, 1000000.0f, 1.0e-6f);
-}
-
-void fill_parameters(NeuralNetwork& network)
-{
-    mt19937 rng(21);
-    normal_distribution<float> nd(0.0f, 0.05f);
-    for (auto& layer : network.get_layers())
-        for (auto& view : layer->get_parameter_views())
-            for (Index i = 0; i < view.size(); ++i)
-                view.as<float>()[i] = nd(rng);
-}
-
-void run(NeuralNetwork& network, ForwardPropagation& forward_propagation,
-         vector<float>& window, const vector<Index>& ids, Index past)
-{
-    const Index count = Index(ids.size());
-    for (Index i = 0; i < count; ++i) window[size_t(i)] = float(ids[size_t(i)]);
-    forward_propagation.past_length = past;
-    forward_propagation.set_active_sequence_length(count);
-    vector<TensorView> inputs = { TensorView(window.data(), {1, count}) };
-    network.forward_propagate(inputs, forward_propagation, false);
-}
-
-vector<float> logits_row(const ForwardPropagation& forward_propagation, Index pos)
-{
-    const TensorView output = forward_propagation.get_outputs();
-    const Index vocabulary = output.get_shape().back();
-    vector<float> row(size_t(vocabulary), 0.0f);
-
-    const Index elem = Index(type_bytes(output.get_type()));
-    vector<char> host(size_t(vocabulary) * size_t(elem));
-    const char* src = static_cast<const char*>(output.get_data()) + size_t(pos) * vocabulary * elem;
-
-#ifdef OPENNN_HAS_CUDA
-    if (output.is_cuda())
-    {
-        cudaStream_t stream = device::get_compute_stream();
-        device::copy_async(host.data(), src, Index(host.size()), Device::CUDA, Device::CPU, stream);
-        device::synchronize(stream);
-    }
-    else
-#endif
-        memcpy(host.data(), src, host.size());
-
-    if (output.is_fp32())
-        memcpy(row.data(), host.data(), size_t(vocabulary) * sizeof(float));
-    else
-    {
-        const uint16_t* bf16 = reinterpret_cast<const uint16_t*>(host.data());
-        for (Index i = 0; i < vocabulary; ++i)
-        {
-            const uint32_t bits = uint32_t(bf16[size_t(i)]) << 16;
-            memcpy(&row[size_t(i)], &bits, sizeof(float));
-        }
-    }
-    return row;
-}
-
-float max_difference(const vector<float>& a,
-                     const vector<float>& b)
-{
-    EXPECT_EQ(a.size(), b.size());
-    float result = 0.0f;
-    for (size_t i = 0; i < min(a.size(), b.size()); ++i)
-        result = max(result, abs(a[i] - b[i]));
-    return result;
-}
-
-void round_parameters_to_bf16(NeuralNetwork& network)
-{
-    for (auto& layer : network.get_layers())
-        for (TensorView& view : layer->get_parameter_views())
-            for (Index i = 0; i < view.size(); ++i)
-                view.as<float>()[i] =
-                    bfloat16_to_float_host(float_to_bfloat16_host(view.as<float>()[i]));
-}
 
 void write_logical_bf16_parameters(
     const NeuralNetwork& network,
