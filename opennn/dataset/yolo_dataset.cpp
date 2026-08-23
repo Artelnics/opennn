@@ -555,6 +555,51 @@ void apply_geometric_to_image(const uint8_t* src, uint8_t* dst,
     }
 }
 
+// Bilinear resample of src into a rectangle of a destination image, sampling at
+// half-pixel centres -- the convention OpenCV, PIL and PyTorch's
+// align_corners=false use. It maps pixel centres rather than corners, so it
+// does not shift the image by half a pixel when the scale is not 1.
+//
+// Both resize paths go through here now. They used to disagree: the mosaic blit
+// sampled at half-pixel centres while the plain resize was corner-aligned,
+// (src-1)/(dst-1), so one dataset resized images two different ways.
+void resize_bilinear_into(const uint8_t* src, Index src_h, Index src_w,
+                          uint8_t* destination, Index destination_w,
+                          Index dst_x, Index dst_y,
+                          Index out_w, Index out_h,
+                          Index channels)
+{
+    for (Index oy = 0; oy < out_h; ++oy)
+    {
+        const float sy_f = (float(oy) + 0.5f) * float(src_h) / float(out_h) - 0.5f;
+        const Index sy0 = max<Index>(0, min(src_h - 1, Index(sy_f)));
+        const Index sy1 = min(sy0 + 1, src_h - 1);
+        const float dy  = sy_f - float(sy0);
+
+        for (Index ox = 0; ox < out_w; ++ox)
+        {
+            const float sx_f = (float(ox) + 0.5f) * float(src_w) / float(out_w) - 0.5f;
+            const Index sx0 = max<Index>(0, min(src_w - 1, Index(sx_f)));
+            const Index sx1 = min(sx0 + 1, src_w - 1);
+            const float dx  = sx_f - float(sx0);
+
+            const Index destination_offset =
+                ((dst_y + oy) * destination_w + (dst_x + ox)) * channels;
+
+            for (Index c = 0; c < channels; ++c)
+            {
+                const float v = bilinear_blend(src[(sy0 * src_w + sx0) * channels + c],
+                                               src[(sy0 * src_w + sx1) * channels + c],
+                                               src[(sy1 * src_w + sx0) * channels + c],
+                                               src[(sy1 * src_w + sx1) * channels + c],
+                                               dx, dy);
+                destination[destination_offset + c] = round_to_byte(v);
+            }
+        }
+    }
+}
+
+
 void bilinear_resize_uint8(const uint8_t* src,
                            Index src_h, Index src_w,
                            uint8_t* dst,
@@ -567,37 +612,7 @@ void bilinear_resize_uint8(const uint8_t* src,
         return;
     }
 
-    const float scale_y = (dst_h <= 1) ? 0.0f : float(src_h - 1) / float(dst_h - 1);
-    const float scale_x = (dst_w <= 1) ? 0.0f : float(src_w - 1) / float(dst_w - 1);
-
-    for (Index y = 0; y < dst_h; ++y)
-    {
-        const float sy = float(y) * scale_y;
-        const Index y0 = Index(sy);
-        const Index y1 = min(y0 + 1, src_h - 1);
-        const float dy = sy - float(y0);
-
-        for (Index x = 0; x < dst_w; ++x)
-        {
-            const float sx = float(x) * scale_x;
-            const Index x0 = Index(sx);
-            const Index x1 = min(x0 + 1, src_w - 1);
-            const float dx = sx - float(x0);
-
-            const uint8_t* p00 = src + (y0 * src_w + x0) * channels;
-            const uint8_t* p01 = src + (y0 * src_w + x1) * channels;
-            const uint8_t* p10 = src + (y1 * src_w + x0) * channels;
-            const uint8_t* p11 = src + (y1 * src_w + x1) * channels;
-
-            uint8_t* dst_pixel = dst + (y * dst_w + x) * channels;
-
-            for (Index c = 0; c < channels; ++c)
-            {
-                const float v = bilinear_blend(p00[c], p01[c], p10[c], p11[c], dx, dy);
-                dst_pixel[c] = round_to_byte(v);
-            }
-        }
-    }
+    resize_bilinear_into(src, src_h, src_w, dst, dst_w, 0, 0, dst_w, dst_h, channels);
 }
 
 void apply_geometric_to_boxes(vector<YoloDataset::Box>& boxes,
@@ -1821,32 +1836,7 @@ void blit_resized_into_canvas(const uint8_t* src, Index src_h, Index src_w,
                                Index dst_x, Index dst_y, Index qw, Index qh,
                                Index channels)
 {
-    for (Index oy = 0; oy < qh; ++oy)
-    {
-        const float sy_f = (float(oy) + 0.5f) * float(src_h) / float(qh) - 0.5f;
-        const Index sy0 = max<Index>(0, min(src_h - 1, Index(sy_f)));
-        const Index sy1 = min(sy0 + 1, src_h - 1);
-        const float dy  = sy_f - float(sy0);
-
-        for (Index ox = 0; ox < qw; ++ox)
-        {
-            const float sx_f = (float(ox) + 0.5f) * float(src_w) / float(qw) - 0.5f;
-            const Index sx0 = max<Index>(0, min(src_w - 1, Index(sx_f)));
-            const Index sx1 = min(sx0 + 1, src_w - 1);
-            const float dx  = sx_f - float(sx0);
-
-            const Index dst_off = ((dst_y + oy) * canvas_w + (dst_x + ox)) * channels;
-            for (Index c = 0; c < channels; ++c)
-            {
-                const float v = bilinear_blend(src[(sy0 * src_w + sx0) * channels + c],
-                                               src[(sy0 * src_w + sx1) * channels + c],
-                                               src[(sy1 * src_w + sx0) * channels + c],
-                                               src[(sy1 * src_w + sx1) * channels + c],
-                                               dx, dy);
-                canvas[dst_off + c] = round_to_byte(v);
-            }
-        }
-    }
+    resize_bilinear_into(src, src_h, src_w, canvas, canvas_w, dst_x, dst_y, qw, qh, channels);
 }
 
 struct MosaicParams
