@@ -174,6 +174,34 @@ Current CPU suite on a rebuilt binary: 929 passed, 2 failed: ActivationsTest.Con
 - `opennn/model_selection/cross_validation.cpp:138-160` — k-fold finalisation re-trains all k folds just to recover an epoch count the selection loop already had (medium, loc +6, M)
 - `opennn/model_selection/genetic_algorithm.cpp:185-238` — GeneticAlgorithm keeps a full parameter vector for every individual of every generation; only the best is ever read (medium, loc -8, S)
 
+## Progress
+
+Closed so far: **all 115 bug/UB findings**, **all 21 high-severity findings**, and 48 quality
+items. Remaining: ~215, all medium or low.
+
+Two golden harnesses were added to make the larger refactors verifiable rather than
+argued about. Both skip unless their environment variable is set, so neither costs
+anything in CI:
+
+- `tests/neural_network/model_expression_golden_test.cpp` -- dumps all five language
+  emitters for three networks to `OPENNN_EXPRESSION_DUMP_DIR` (15 files).
+- `tests/neural_network/network_topology_golden_test.cpp` -- dumps every layer's label,
+  type, shapes, parameter count and source indices for 17 configurations to
+  `OPENNN_TOPOLOGY_DUMP_DIR` (1,961 lines), covering each branch `YoloNetwork` can take.
+
+Every emitter and builder change since has been verified byte-identical against them.
+
+Declined, with reasons in the commit messages: `nn-expression-19` (rewriting the name
+mapping as a tokenizer risks the multi-word and `scaled_` cases for 8 lines in a cold
+export path) and `nn-builders-chat-8` (the audit's own fix note says it changes
+classic-session sampling behaviour).
+
+Largest remaining single items: `nn-expression-13` (-120, one `LanguageSyntax`-driven
+emitter replacing four per-neuron exporters), `nn-builders-chat-6`'s remaining half
+(lifting the `YoloNetwork` helpers to file scope as a `YoloBuilder`, which is what would
+actually shorten the 745-line constructor), and `xcut-build-tests-16` (+400, the 24
+library files with no mirrored test).
+
 ## Fewer effective lines
 
 | Item | Kind | Lines | Effort | Risk |
