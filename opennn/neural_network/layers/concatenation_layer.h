@@ -51,7 +51,6 @@ public:
     }
 
 
-    void apply_input_shape(const Shape&) override;
 
     void from_JSON(const JsonDocument&) override;
     void load_state_from_JSON(const JsonDocument&) override;

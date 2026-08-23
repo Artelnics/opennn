@@ -159,12 +159,6 @@ void Concatenation::set(const Shape& new_input_shape,
 
 }
 
-void Concatenation::apply_input_shape(const Shape& new_input_shape)
-{
-    check_rank(new_input_shape, {3}, "Concatenation", "input");
-    input_shape = new_input_shape;
-}
-
 const Json* Concatenation::legacy_body(const JsonDocument& document) const
 {
     if (document.first_child(get_name())) return nullptr;

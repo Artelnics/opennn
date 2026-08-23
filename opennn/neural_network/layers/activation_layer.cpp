@@ -32,13 +32,6 @@ void Activation::set(const Shape& new_input_shape,
     set_label(new_label);
 }
 
-void Activation::apply_input_shape(const Shape& new_input_shape)
-{
-    check_rank(new_input_shape, {1, 2, 3}, "Activation", "input");
-
-    input_shape = new_input_shape;
-}
-
 }
 
 // OpenNN: Open Neural Networks Library.
