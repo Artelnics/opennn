@@ -133,6 +133,11 @@ using cudnnRNNDataDescriptor_t     = void*;
 #define OPENNN_CUDA_STUB_BODY(name) { throw runtime_error(#name " requires CUDA support."); }
 #define OPENNN_CUDA_STUB(ret, name, sig) static ret name sig OPENNN_CUDA_STUB_BODY(name)
 
+// The same, for a stub that is called with explicit template arguments. Those
+// bind to Ts; the call arguments deduce into As, so one line replaces a
+// signature that has to be kept in step with the real CUDA overload by hand.
+#define OPENNN_CUDA_TEMPLATE_STUB(name)                        template<typename... Ts, typename... As>                   static void name(As&&...) OPENNN_CUDA_STUB_BODY(name)
+
 using namespace std;
 using Eigen::Index;
 
