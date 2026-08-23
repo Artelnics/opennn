@@ -202,6 +202,49 @@ emitter replacing four per-neuron exporters), `nn-builders-chat-6`'s remaining h
 actually shorten the 745-line constructor), and `xcut-build-tests-16` (+400, the 24
 library files with no mirrored test).
 
+## Uninitialised device memory: the poison mode
+
+`device::allocate` promises nothing about contents -- `set_zero` is a separate call --
+but fresh CUDA pages arrive zeroed from the driver, so a site that reads before writing
+is correct until the block cache hands it a recycled block instead. That is a class of
+defect no amount of reading the source finds, and the cuDNN RNN weight-space bug
+(`ebc6cb14e`) was a real instance: it silently corrupted GPU training results and
+survived twenty audit agents.
+
+`OPENNN_DEVICE_POISON` makes the class visible. It is off by default and costs nothing.
+
+| value | behaviour |
+|---|---|
+| `1` | recycled blocks come back as `0xFF` -- NaN as fp32 and as bf16 |
+| `2` | recycled blocks come back as zeros; **the control** |
+| `3` | as `1`, and fresh `cudaMalloc` too, so a site fails on its own allocation rather than on the pool's history |
+
+**Always read mode 1 against mode 2.** The fill has to be ordered against all work or the
+diagnostic accuses the wrong code -- a memset landing after the kernel that filled a
+buffer looks exactly like a read of uninitialised memory. An unordered fill reported 16
+failures where 3 were real; the control passing at 1051/0 is what makes a mode 1 result
+trustworthy. `compute-sanitizer --tool initcheck` (with `OPENNN_DEVICE_CACHE=0` and no
+poison) is the independent second opinion.
+
+### Open leads
+
+Three tests fail under mode 1 with the control clean. All three involve a network whose
+parameters are set on the host and used on the GPU:
+
+- `GpuComparison.RnnDescriptorCacheSupportsConcurrentMixedBatches`
+- `AdaptiveMomentEstimationTest.TrainForecastingGPU`
+- `MeanSquaredErrorTest.GpuWorkspaceIsForwardPropagationOwned` -- was missing
+  `copy_parameters_device()` after writing through `get_parameters_map()`; added, which
+  fixes it in isolation but not in a full-suite run, so there is a second cause too.
+
+Already ruled out: `OptimizerData::set` zeroes Adam's moments, `cudnn_unpack_gradients_`
+zeroes the RNN backward weight space before `cudnnRNNBackwardWeights_v8` accumulates into
+it, and both propagation arenas zero themselves at construction.
+
+Not urgent -- the library is green with poison off. Worth revisiting if anyone reports
+non-reproducible GPU training results, or if the block cache is made to recycle more
+aggressively. Worth adding mode 1 as a CI job once the three are cleared.
+
 ## Fewer effective lines
 
 | Item | Kind | Lines | Effort | Risk |
