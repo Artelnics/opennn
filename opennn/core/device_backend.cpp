@@ -107,10 +107,20 @@ static int device_poison_byte()
 
 #ifdef OPENNN_HAS_CUDA
 
+// On the compute stream, never the null stream: OpenNN's streams are created
+// with cudaStreamNonBlocking, so a plain cudaMemset is not ordered against them
+// and can land after the kernel that fills the buffer rather than before it,
+// wiping good data instead of the previous tenant's.
+static void fill_device_memory(void* pointer, int value, Index byte_count)
+{
+    if (cudaMemsetAsync(pointer, value, size_t(byte_count),
+                        device::get_compute_stream()) != cudaSuccess)
+        cudaGetLastError();
+}
+
 static void poison_device_memory(void* pointer, Index byte_count)
 {
-    if (cudaMemset(pointer, device_poison_byte(), size_t(byte_count)) != cudaSuccess)
-        cudaGetLastError();
+    fill_device_memory(pointer, device_poison_byte(), byte_count);
 }
 
 #endif
@@ -454,13 +464,10 @@ public:
         candidates.pop_back();
         cached_bytes -= byte_count;
 
-        // OPENNN_DEVICE_POISON=1 hands the block back full of 0xFF, which is a
-        // NaN as fp32 and as bf16 and -1 as int32, rather than the previous
-        // tenant's bytes. A buffer whose contents are only correct because the
-        // allocator happened to return something harmless then fails loudly
-        // and deterministically instead of drifting a few percent depending on
-        // what ran before it -- which is exactly how the stale recurrent-bias
-        // holes in the cuDNN RNN weight space read before they were found.
+        // OPENNN_DEVICE_POISON=1 hands the block back full of 0xFF -- a NaN as
+        // fp32 and as bf16 -- rather than the previous tenant's bytes, so a
+        // buffer that is only correct because the allocator returned something
+        // harmless fails loudly instead of drifting.
         if (poison_on_reuse) poison_device_memory(pointer, byte_count);
 
         return pointer;
