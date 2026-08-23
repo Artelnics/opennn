@@ -67,6 +67,14 @@ protected:
         bool persist_algo_active = false;
         bool double_bias = false;
         bool packed_layout = false;
+
+        // Which weight space the padding and recurrent-bias holes were last
+        // zeroed in, and for which layout. Anything else and they have to be
+        // zeroed again -- see cudnn_pack_weights_.
+        const void* zeroed_weight_space = nullptr;
+        Index zeroed_weight_space_bytes = 0;
+        Index zeroed_input_features = -1;
+        bool zeroed_double_bias = false;
     };
 
     unique_lock<mutex> lock_backend_state() const

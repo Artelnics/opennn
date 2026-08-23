@@ -366,18 +366,39 @@ void CudnnRnnState::cudnn_pack_weights_(int num_linear_layers,
 {
     PROFILE_SCOPE("rnn:pack_weights");
     const Index weight_space_bytes = backend_state.weight_space_bytes;
-    const Index previous_bytes = forward_state.byte_size();
     forward_state.grow_to(get_aligned_bytes(weight_space_bytes));
+
     // Double-bias mode has recurrent bias regions that OpenNN intentionally
-    // leaves at zero, and feature padding has unused matrix rows. Initialize
-    // those holes once per persistent forward context; live regions are
-    // overwritten below on every step, so clearing the whole weight space on
-    // every batch only adds bandwidth and a graph node.
-    if (previous_bytes < get_aligned_bytes(weight_space_bytes)
-        && (backend_state.double_bias
-            || backend_state.cached_input_features != input_features))
+    // leaves at zero, and feature padding has unused matrix rows. Nothing
+    // below writes those holes -- only the live regions are copied, on every
+    // step -- so they have to be zeroed whenever this weight space has not
+    // already been zeroed for this exact layout.
+    //
+    // This used to be conditioned on the buffer having grown, which is not the
+    // same question: a buffer handed back by the device pool already large
+    // enough skipped the zeroing and left a previous tenant's bytes sitting in
+    // the recurrent bias. The RNN then trained and inferred against garbage
+    // biases, a few percent off, and only when some earlier work had dirtied
+    // the pool -- so it reproduced in a full suite run and never in isolation.
+    const bool has_holes = backend_state.double_bias
+                        || backend_state.cached_input_features != input_features;
+
+    const bool already_zeroed =
+        backend_state.zeroed_weight_space == forward_state.data()
+        && backend_state.zeroed_weight_space_bytes == weight_space_bytes
+        && backend_state.zeroed_input_features == input_features
+        && backend_state.zeroed_double_bias == backend_state.double_bias;
+
+    if (has_holes && !already_zeroed)
+    {
         device::set_zero_async(forward_state.data(), weight_space_bytes,
                                device::get_compute_stream());
+
+        backend_state.zeroed_weight_space = forward_state.data();
+        backend_state.zeroed_weight_space_bytes = weight_space_bytes;
+        backend_state.zeroed_input_features = input_features;
+        backend_state.zeroed_double_bias = backend_state.double_bias;
+    }
     cudnn_copy_weight_regions_(num_linear_layers, input_features, output_features,
                                weights, biases, forward_state, true);
 }
