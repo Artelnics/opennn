@@ -297,36 +297,6 @@ void replace_all_word_appearances(string& text, const string& to_replace, const 
     }
 }
 
-void replace_all_appearances(string& text, const string& to_replace, const string& replace_with)
-{
-    if (to_replace.empty()) return;
-
-    string buffer;
-    size_t position = 0;
-    size_t previous_position;
-
-    buffer.reserve(text.size());
-
-    while (true)
-    {
-        previous_position = position;
-
-        position = text.find(to_replace, position);
-
-        if (position == string::npos) break;
-
-        buffer.append(text, previous_position, position - previous_position);
-
-        buffer += (!buffer.empty() && buffer.back() == '_') ? to_replace : replace_with;
-
-        position += to_replace.size();
-    }
-
-    buffer.append(text, previous_position, text.size() - previous_position);
-
-    text.swap(buffer);
-}
-
 string join_strings(span<const string> values, string_view separator)
 {
     if (values.empty()) return {};

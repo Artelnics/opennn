@@ -422,8 +422,8 @@ void ModelExpression::apply_name_mapping(string& text, const vector<string>& ori
 string ModelExpression::process_body_line(const string& line, const vector<string>& input_names, const vector<string>& fixed_input_names)
 {
     string processed = line;
-    replace_all_appearances(processed, "[", "_");
-    replace_all_appearances(processed, "]", "_");
+    replace(processed, "[", "_");
+    replace(processed, "]", "_");
     const size_t count = min(input_names.size(), fixed_input_names.size());
     for (size_t i = 0; i < count; ++i)
     {
@@ -469,7 +469,7 @@ void ModelExpression::rename_spaced_var_definitions(vector<string>& lines)
         ranges::replace(fixed_var, ' ', '_');
 
         for (size_t j = 0; j < lines.size(); ++j)
-            replace_all_appearances(lines[j], clean_var, fixed_var);
+            replace(lines[j], clean_var, fixed_var);
     }
 }
 
@@ -1628,8 +1628,8 @@ string ModelExpression::get_expression_php() const
     vector<string> lines = split_expression_lines(expression);
     for (string& l : lines)
     {
-        replace_all_appearances(l, "[", "_");
-        replace_all_appearances(l, "]", "_");
+        replace(l, "[", "_");
+        replace(l, "]", "_");
     }
     rename_spaced_var_definitions(lines);
     lines.insert(lines.end(), output_assignments.begin(), output_assignments.end());
@@ -1716,8 +1716,8 @@ string ModelExpression::get_expression_javascript() const
 
     string expression = build_expression();
     apply_name_mapping(expression, output_names, fixes_output_names);
-    replace_all_appearances(expression, "[", "_");
-    replace_all_appearances(expression, "]", "_");
+    replace(expression, "[", "_");
+    replace(expression, "]", "_");
 
     // The bracket replacement above already ran over the whole expression, so
     // this is the same input the other three emitters split.

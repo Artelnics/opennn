@@ -98,7 +98,6 @@ namespace opennn
 
     vector<string> convert_string_vector(const vector<vector<string>>&, const string&);
 
-    void replace_all_appearances(string&, const string&, const string&);
     void replace_all_word_appearances(string&, const string&, const string&);
 
     string join_strings(span<const string>, string_view = " ");

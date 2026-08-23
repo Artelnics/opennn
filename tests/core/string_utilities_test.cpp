@@ -161,27 +161,32 @@ TEST(StringUtilitiesTest, ConvertStringVector)
     EXPECT_TRUE(convert_string_vector({}, ",").empty());
 }
 
-TEST(StringUtilitiesTest, ReplaceAllAppearances)
+// replace_all_appearances used to live beside replace() and differed only by a
+// silent rule: a match preceded by '_' was left alone. Its callers -- the
+// expression emitters replacing brackets and renaming spaced variables -- never
+// wanted that, and for the bracket case it was actively wrong, turning "a_[0]"
+// into "a_[0_" and leaving an unmatched bracket in generated code. They use
+// replace() now and the generated corpus is byte-identical, so the rule never
+// fired in practice; the function is gone. This pins what replace() does at the
+// case that used to differ.
+TEST(StringUtilitiesTest, ReplaceDoesNotSkipMatchesAfterAnUnderscore)
 {
-    string text = "ababab";
-    replace_all_appearances(text, "a", "X");
-    EXPECT_EQ(text, "XbXbXb");
+    string underscore = "foo_bar bar";
+    replace(underscore, "bar", "X");
+    EXPECT_EQ(underscore, "foo_X X");
+
+    string bracketed = "a_[0]";
+    replace(bracketed, "[", "_");
+    replace(bracketed, "]", "_");
+    EXPECT_EQ(bracketed, "a__0_");
 
     string overlap = "aaaa";
-    replace_all_appearances(overlap, "aa", "b");
+    replace(overlap, "aa", "b");
     EXPECT_EQ(overlap, "bb");
 
-    string none = "hello";
-    replace_all_appearances(none, "z", "Y");
-    EXPECT_EQ(none, "hello");
-
     string empty_pattern = "hello";
-    replace_all_appearances(empty_pattern, "", "Y");
+    replace(empty_pattern, "", "Y");
     EXPECT_EQ(empty_pattern, "hello");
-
-    string underscore_guard = "foo_bar bar";
-    replace_all_appearances(underscore_guard, "bar", "X");
-    EXPECT_EQ(underscore_guard, "foo_bar X");
 }
 
 TEST(StringUtilitiesTest, ReplaceAllWordAppearances)
