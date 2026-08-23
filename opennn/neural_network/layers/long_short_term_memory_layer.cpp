@@ -29,6 +29,49 @@ namespace opennn
 namespace
 {
 
+// The fused path wants the four gate weights side by side in one matrix so the
+// input projection is a single GEMM. Forward and backward each built these by
+// hand, in the same forget/input/candidate/output order, with twelve MatrixMap
+// locals apiece to name the pieces.
+MatrixR concat_gate_columns(const TensorView& forget,
+                            const TensorView& input,
+                            const TensorView& candidate,
+                            const TensorView& output)
+{
+    const MatrixMap forget_matrix = forget.as_matrix();
+    const Index rows = forget_matrix.rows();
+    const Index columns = forget_matrix.cols();
+
+    MatrixR concatenated(rows, 4 * columns);
+
+    concatenated.leftCols(columns)                 = forget_matrix;
+    concatenated.middleCols(columns, columns)      = input.as_matrix();
+    concatenated.middleCols(2 * columns, columns)  = candidate.as_matrix();
+    concatenated.rightCols(columns)                = output.as_matrix();
+
+    return concatenated;
+}
+
+
+VectorR concat_gate_biases(const TensorView& forget,
+                           const TensorView& input,
+                           const TensorView& candidate,
+                           const TensorView& output)
+{
+    const VectorMap forget_vector = forget.as_vector();
+    const Index size = forget_vector.size();
+
+    VectorR concatenated(4 * size);
+
+    concatenated.segment(0, size)        = forget_vector;
+    concatenated.segment(size, size)     = input.as_vector();
+    concatenated.segment(2 * size, size) = candidate.as_vector();
+    concatenated.segment(3 * size, size) = output.as_vector();
+
+    return concatenated;
+}
+
+
 void zero_if_linked(const TensorView& view)
 {
     if (view.get_data()) view.setZero();
@@ -224,34 +267,12 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
     // GEMM/barrier overhead of the matrix path on forecasting-sized cells.
     if (H >= 96)
     {
-        const MatrixMap Wf_m = forget_weights.as_matrix();
-        const MatrixMap Wi_m = input_weights.as_matrix();
-        const MatrixMap Wg_m = candidate_weights.as_matrix();
-        const MatrixMap Wo_m = output_weights.as_matrix();
-        const MatrixMap Uf_m = forget_recurrent_weights.as_matrix();
-        const MatrixMap Ui_m = input_recurrent_weights.as_matrix();
-        const MatrixMap Ug_m = candidate_recurrent_weights.as_matrix();
-        const MatrixMap Uo_m = output_recurrent_weights.as_matrix();
-        const VectorMap bf_m = forget_bias.as_vector();
-        const VectorMap bi_m = input_bias.as_vector();
-        const VectorMap bg_m = candidate_bias.as_vector();
-        const VectorMap bo_m = output_bias.as_vector();
-
-        MatrixR Wcat(F, 4 * H);
-        Wcat.leftCols(H)          = Wf_m;
-        Wcat.middleCols(H, H)     = Wi_m;
-        Wcat.middleCols(2 * H, H) = Wg_m;
-        Wcat.rightCols(H)         = Wo_m;
-        MatrixR Ucat(H, 4 * H);
-        Ucat.leftCols(H)          = Uf_m;
-        Ucat.middleCols(H, H)     = Ui_m;
-        Ucat.middleCols(2 * H, H) = Ug_m;
-        Ucat.rightCols(H)         = Uo_m;
-        VectorR bcat(4 * H);
-        bcat.segment(0, H)        = bf_m;
-        bcat.segment(H, H)        = bi_m;
-        bcat.segment(2 * H, H)    = bg_m;
-        bcat.segment(3 * H, H)    = bo_m;
+        const MatrixR Wcat = concat_gate_columns(forget_weights, input_weights,
+                                                 candidate_weights, output_weights);
+        const MatrixR Ucat = concat_gate_columns(forget_recurrent_weights, input_recurrent_weights,
+                                                 candidate_recurrent_weights, output_recurrent_weights);
+        const VectorR bcat = concat_gate_biases(forget_bias, input_bias,
+                                                candidate_bias, output_bias);
 
         const Index BT = batch_size * T;
         MatrixR Zin(BT, 4 * H);
@@ -598,15 +619,6 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
 
     if (H >= 96)
     {
-        const MatrixMap Wf_m = forget_weights.as_matrix();
-        const MatrixMap Wi_m = input_weights.as_matrix();
-        const MatrixMap Wg_m = candidate_weights.as_matrix();
-        const MatrixMap Wo_m = output_weights.as_matrix();
-        const MatrixMap Uf_m = forget_recurrent_weights.as_matrix();
-        const MatrixMap Ui_m = input_recurrent_weights.as_matrix();
-        const MatrixMap Ug_m = candidate_recurrent_weights.as_matrix();
-        const MatrixMap Uo_m = output_recurrent_weights.as_matrix();
-
         MatrixMap gWf_m = forget_weight_gradient.as_matrix();
         MatrixMap gWi_m = input_weight_gradient.as_matrix();
         MatrixMap gWg_m = candidate_weight_gradient.as_matrix();
@@ -620,16 +632,10 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
         VectorMap gbg_v = candidate_bias_gradient.as_vector();
         VectorMap gbo_v = output_bias_gradient.as_vector();
 
-        MatrixR Wcat(F, 4 * H);
-        Wcat.leftCols(H)          = Wf_m;
-        Wcat.middleCols(H, H)     = Wi_m;
-        Wcat.middleCols(2 * H, H) = Wg_m;
-        Wcat.rightCols(H)         = Wo_m;
-        MatrixR Ucat(H, 4 * H);
-        Ucat.leftCols(H)          = Uf_m;
-        Ucat.middleCols(H, H)     = Ui_m;
-        Ucat.middleCols(2 * H, H) = Ug_m;
-        Ucat.rightCols(H)         = Uo_m;
+        const MatrixR Wcat = concat_gate_columns(forget_weights, input_weights,
+                                                 candidate_weights, output_weights);
+        const MatrixR Ucat = concat_gate_columns(forget_recurrent_weights, input_recurrent_weights,
+                                                 candidate_recurrent_weights, output_recurrent_weights);
 
         MatrixR gWcat = MatrixR::Zero(F, 4 * H);
         MatrixR gUcat = MatrixR::Zero(H, 4 * H);
