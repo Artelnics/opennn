@@ -4,6 +4,9 @@
 #include "opennn/core/random_utilities.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
+#include "opennn/dataset/batch.h"
+#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/neural_network/back_propagation.h"
 #include "opennn/neural_network/standard_networks.h"
 #include "opennn/training_strategy/loss.h"
 #include "opennn/training_strategy/quasi_newton_method.h"
@@ -263,4 +266,54 @@ TEST_F(QuasiNewtonMethodTest, Determinism)
     const type error_second = quasi_newton_second.train().get_training_error();
 
     EXPECT_FLOAT_EQ(error_first, error_second);
+}
+
+
+// Loss::back_propagate deliberately leaves metrics.regularization at zero: on
+// GPU the penalty is a cuBLAS reduction with a host result pointer, so paying
+// it per batch costs a full sync, and the mini-batch optimizers overwrite it
+// once per epoch anyway. Full-batch QuasiNewtonMethod reads loss_value on every
+// line-search step, so it adds the term itself. Both halves are pinned here
+// because every other test in the suite runs with regularization switched off.
+TEST_F(QuasiNewtonMethodTest, BackPropagateLeavesRegularizationToTheOptimizer)
+{
+    set_seed(1);
+
+    TabularDataset dataset(16, {2}, {1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    ApproximationNetwork network({2}, {6}, {1});
+
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+    loss.set_regularization(Loss::Regularization::L2);
+    loss.set_regularization_weight(0.5f);
+
+    const TensorView parameters(network.get_parameters_data(),
+                                {network.get_parameters_buffer_size()},
+                                Type::FP32,
+                                network.get_device());
+
+    // The configuration is not degenerate: there is a penalty to be had.
+    EXPECT_GT(loss.calculate_regularization(parameters), 0.0f);
+
+    // Through the base class: TabularDataset hides the role-taking overloads.
+    Dataset& base_dataset = dataset;
+    const Index samples_number = base_dataset.get_samples_number("Training");
+
+    Batch batch(samples_number, &dataset, network.get_config());
+    batch.fill(base_dataset.get_sample_indices("Training"),
+               base_dataset.get_feature_indices("Input"),
+               base_dataset.get_feature_indices("Decoder"),
+               base_dataset.get_feature_indices("Target"));
+
+    ForwardPropagation forward_propagation(samples_number, &network);
+    BackPropagation back_propagation(samples_number, loss);
+
+    network.forward_propagate(batch.get_inputs(), forward_propagation, true);
+    loss.back_propagate(batch, forward_propagation, back_propagation);
+
+    EXPECT_FLOAT_EQ(back_propagation.metrics.regularization, 0.0f);
+    EXPECT_FLOAT_EQ(back_propagation.metrics.loss_value, back_propagation.metrics.error);
 }

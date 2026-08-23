@@ -1383,10 +1383,13 @@ void Loss::back_propagate(const Batch& batch,
 
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
+    // The regularization term is not computed here. On GPU it is a cuBLAS
+    // reduction with a host result pointer, i.e. a full sync, and the
+    // mini-batch optimizers overwrite whatever it produced once per epoch in
+    // finalize_epoch. Whoever actually reads loss_value per step computes it:
+    // QuasiNewtonMethod for its line search, LM for its own metrics.
     back_propagation.metrics.regularization = 0.0f;
     back_propagation.metrics.loss_value = back_propagation.metrics.error;
-
-    add_regularization(back_propagation);
 
     add_regularization_gradient(back_propagation);
 }
@@ -1842,21 +1845,6 @@ void Loss::back_propagate_layers(ForwardPropagation& forward_propagation,
         PROFILE_SCOPE("bwd:" + layers[i]->get_name());
         layers[i]->back_propagate(forward_propagation, back_propagation, i);
     }
-}
-
-void Loss::add_regularization(BackPropagation& back_propagation) const
-{
-    if (!has_regularization()) return;
-
-    check_neural_network();
-
-    const TensorView parameters(neural_network->get_parameters_data(),
-                                {neural_network->get_parameters_buffer_size()},
-                                Type::FP32,
-                                neural_network->get_parameters_device());
-
-    back_propagation.metrics.regularization = calculate_regularization(parameters);
-    back_propagation.metrics.loss_value += back_propagation.metrics.regularization;
 }
 
 float Loss::calculate_regularization(const VectorR& parameters_vec) const

@@ -199,7 +199,6 @@ private:
             && regularization_weight != 0.0f;
     }
 
-    void add_regularization(BackPropagation&) const;
 
     Index error_workspace_floats(const TensorView&) const;
     float* ensure_error_workspace(Buffer&, const TensorView&,

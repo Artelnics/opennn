@@ -229,6 +229,25 @@ TrainingResult QuasiNewtonMethod::train()
                              *context.training_forward_propagation,
                              training_back_propagation);
 
+        // back_propagate leaves this at zero: the mini-batch optimizers get it
+        // once per epoch, but the line search below reads loss_value on every
+        // step, so full-batch training pays for it here. One reduction per
+        // step, not per batch -- and this optimizer has one batch per step.
+        NeuralNetwork* const network = loss->get_neural_network();
+
+        const TensorView parameters(network->get_parameters_data(),
+                                    {network->get_parameters_buffer_size()},
+                                    Type::FP32,
+                                    network->get_device());
+
+        // Returns zero without touching the parameters when regularization is
+        // off, so there is no guard here.
+        training_back_propagation.metrics.regularization =
+            loss->calculate_regularization(parameters);
+
+        training_back_propagation.metrics.loss_value +=
+            training_back_propagation.metrics.regularization;
+
         const float training_error = training_back_propagation.metrics.error;
 
         update_full_batch_parameters(*context.training_batch,
