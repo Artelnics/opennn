@@ -499,6 +499,34 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                  "YoloNetwork: HeadStyle::PANet requires exactly 9 anchors.");
     }
 
+    // The remaining parameters are read by some branches and not others, and a
+    // branch that does not read one used to build a network that silently
+    // ignored it -- reg_max on an anchor head, model_size on anything but v11,
+    // use_sppf on a backbone with no SPPF to insert. Rejected here instead, so
+    // the caller learns at construction rather than from a model that trains
+    // to the wrong shape.
+    const bool is_darknet53_family =
+        backbone == Backbone::Darknet53 || backbone == Backbone::CSPDarknet53;
+
+    throw_if(head_style == HeadStyle::FPNv8
+             && !is_darknet53_family && backbone != Backbone::CSPDarknet53v11,
+             "YoloNetwork: HeadStyle::FPNv8 requires Darknet53, CSPDarknet53 or CSPDarknet53v11.");
+
+    // Moved up from the end of the CSPDarknet53v11 branch, which threw only
+    // after building the whole backbone.
+    throw_if(backbone == Backbone::CSPDarknet53v11 && head_style != HeadStyle::FPNv8,
+             "YoloNetwork: CSPDarknet53v11 backbone only supports FPNv8 head style.");
+
+    throw_if(reg_max > 1 && head_style != HeadStyle::FPNv8,
+             "YoloNetwork: reg_max applies to HeadStyle::FPNv8 only; the anchor heads ignore it.");
+
+    throw_if(use_sppf && !(is_darknet53_family
+                           && (head_style == HeadStyle::FPN || head_style == HeadStyle::PANet)),
+             "YoloNetwork: use_sppf applies to Darknet53/CSPDarknet53 with FPN or PANet only.");
+
+    throw_if(model_size != ModelSize::l && backbone != Backbone::CSPDarknet53v11,
+             "YoloNetwork: model_size applies to the CSPDarknet53v11 backbone only.");
+
     const char* act = (body_activation == BodyActivation::LeakyReLU) ? "LeakyReLU"
                     : (body_activation == BodyActivation::SiLU)      ? "SiLU"
                     :                                                   "ReLU";
@@ -890,7 +918,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             return;
         }
 
-        throw runtime_error("YoloNetwork: CSPDarknet53v11 backbone only supports FPNv8 head style.");
     }
     else if (backbone == Backbone::Darknet53 || backbone == Backbone::CSPDarknet53)
     {

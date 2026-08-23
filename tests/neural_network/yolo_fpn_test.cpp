@@ -279,3 +279,44 @@ TEST(YoloFPN, C3k2ScalingParameterCountsMonotonic)
         prev_params = params;
     }
 }
+
+
+// reg_max, use_sppf and model_size are read by some backbone/head branches and
+// ignored by the rest. A combination that ignores one used to build a network
+// that quietly disagreed with what the caller asked for, so each is rejected.
+TEST(YoloFPN, RejectsParametersTheChosenBackboneAndHeadIgnore)
+{
+    const Shape input_shape{320, 320, 3};
+    const Index classes = 4;
+    const vector<std::array<float, 2>> anchors(9, {0.1f, 0.1f});
+    const Index grid_size = 10;
+
+    using B  = YoloNetwork::Backbone;
+    using CA = YoloNetwork::ClassActivation;
+    using HS = YoloNetwork::HeadStyle;
+    using BA = YoloNetwork::BodyActivation;
+    using MS = YoloNetwork::ModelSize;
+
+    const auto build = [&](B backbone, HS head, bool use_sppf, Index reg_max, MS model_size)
+    {
+        YoloNetwork network(input_shape, classes, anchors, grid_size,
+                            backbone, CA::Sigmoid, head, BA::LeakyReLU,
+                            use_sppf, reg_max, model_size);
+    };
+
+    // reg_max is a distribution-focal parameter: only the v8 head reads it.
+    EXPECT_THROW(build(B::Darknet53, HS::PANet, false, 16, MS::l), runtime_error);
+
+    // SPPF is inserted by the Darknet53 FPN/PANet neck and nowhere else.
+    EXPECT_THROW(build(B::Darknet53, HS::FPNv8, true, 16, MS::l), runtime_error);
+
+    // model_size scales the v11 backbone's width and depth multipliers.
+    EXPECT_THROW(build(B::Darknet53, HS::PANet, false, 1, MS::n), runtime_error);
+
+    // v11 builds a v8 head only, and used to throw after building the backbone.
+    EXPECT_THROW(build(B::CSPDarknet53v11, HS::PANet, false, 16, MS::l), runtime_error);
+
+    // The combinations each parameter does apply to still build.
+    EXPECT_NO_THROW(build(B::Darknet53, HS::PANet, true, 1, MS::l));
+    EXPECT_NO_THROW(build(B::CSPDarknet53v11, HS::FPNv8, false, 16, MS::n));
+}
