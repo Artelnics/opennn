@@ -773,6 +773,113 @@ string ModelExpression::c_float_literal(float value)
     return text + "f";
 }
 
+// The C runtime the embedded backend ships with the model. Kept here rather
+// than inline in get_expression_c_embedded so the generated C is one
+// searchable block per routine instead of a wall of escapes mid-function.
+
+constexpr const char* nn_dense_forward_source =
+    "static void nn_dense_forward(const float* inputs, int inputs_number,\n"
+                   "                             const float* weights, const float* biases,\n"
+                   "                             int outputs_number, nn_activation activation, float* outputs)\n{\n"
+                   "\tfor (int j = 0; j < outputs_number; ++j)\n\t{\n"
+                   "\t\tfloat sum = NN_READ_FLOAT(&biases[j]);\n"
+                   "\t\tfor (int i = 0; i < inputs_number; ++i)\n"
+                   "\t\t\tsum += inputs[i] * NN_READ_FLOAT(&weights[i * outputs_number + j]);\n"
+                   "\t\toutputs[j] = nn_activation_forward(activation, sum);\n"
+                   "\t}\n}\n\n";
+
+constexpr const char* nn_affine_forward_source =
+    "static void nn_affine_forward(const float* inputs, const float* a, const float* b,\n"
+                   "                              int features, int total, float* outputs)\n{\n"
+                   "\tint f = 0;\n"
+                   "\tfor (int i = 0; i < total; ++i)\n"
+                   "\t{\n"
+                   "\t\toutputs[i] = NN_READ_FLOAT(&a[f]) * inputs[i] + NN_READ_FLOAT(&b[f]);\n"
+                   "\t\tif (++f == features) f = 0;\n"
+                   "\t}\n}\n\n";
+
+constexpr const char* nn_recurrent_forward_source =
+    "static void nn_recurrent_forward(const float* inputs, int time_steps, int input_features,\n"
+                   "                                 const float* input_weights, const float* recurrent_weights,\n"
+                   "                                 const float* biases, int hidden, nn_activation activation,\n"
+                   "                                 int return_sequences, float* state_previous, float* state_current,\n"
+                   "                                 float* outputs)\n{\n"
+                   "\tfor (int t = 0; t < time_steps; ++t)\n\t{\n"
+                   "\t\tconst float* x = inputs + t * input_features;\n"
+                   "\t\tfor (int j = 0; j < hidden; ++j)\n\t\t{\n"
+                   "\t\t\tfloat sum = NN_READ_FLOAT(&biases[j]);\n"
+                   "\t\t\tfor (int i = 0; i < input_features; ++i)\n"
+                   "\t\t\t\tsum += x[i] * NN_READ_FLOAT(&input_weights[i * hidden + j]);\n"
+                   "\t\t\tif (t > 0)\n"
+                   "\t\t\t\tfor (int p = 0; p < hidden; ++p)\n"
+                   "\t\t\t\t\tsum += state_previous[p] * NN_READ_FLOAT(&recurrent_weights[p * hidden + j]);\n"
+                   "\t\t\tstate_current[j] = nn_activation_forward(activation, sum);\n"
+                   "\t\t}\n"
+                   "\t\tif (return_sequences)\n"
+                   "\t\t\tfor (int j = 0; j < hidden; ++j) outputs[t * hidden + j] = state_current[j];\n"
+                   "\t\t{ float* swap = state_previous; state_previous = state_current; state_current = swap; }\n"
+                   "\t}\n"
+                   "\tif (!return_sequences)\n"
+                   "\t\tfor (int j = 0; j < hidden; ++j) outputs[j] = state_previous[j];\n"
+                   "}\n\n";
+
+constexpr const char* nn_lstm_forward_source =
+    "// Packed tables, gate order: forget, input, candidate, output.\n"
+                   "// c_t = f * c_(t-1) + i * g ; h_t = o * activation(c_t) ; h_(-1) = c_(-1) = 0.\n"
+                   "static void nn_lstm_forward(const float* inputs, int time_steps, int input_features,\n"
+                   "                            const float* biases, const float* input_weights,\n"
+                   "                            const float* recurrent_weights, int hidden,\n"
+                   "                            nn_activation activation, nn_activation recurrent_activation,\n"
+                   "                            int return_sequences, float* state_previous, float* state_current,\n"
+                   "                            float* cell_state, float* outputs)\n{\n"
+                   "\tfor (int t = 0; t < time_steps; ++t)\n\t{\n"
+                   "\t\tconst float* x = inputs + t * input_features;\n"
+                   "\t\tfor (int j = 0; j < hidden; ++j)\n\t\t{\n"
+                   "\t\t\tfloat gates[4];\n"
+                   "\t\t\tfor (int gate = 0; gate < 4; ++gate)\n"
+                   "\t\t\t{\n"
+                   "\t\t\t\tfloat sum = NN_READ_FLOAT(&biases[gate * hidden + j]);\n"
+                   "\t\t\t\tconst float* w = input_weights + gate * input_features * hidden;\n"
+                   "\t\t\t\tfor (int i = 0; i < input_features; ++i)\n"
+                   "\t\t\t\t\tsum += x[i] * NN_READ_FLOAT(&w[i * hidden + j]);\n"
+                   "\t\t\t\tif (t > 0)\n"
+                   "\t\t\t\t{\n"
+                   "\t\t\t\t\tconst float* u = recurrent_weights + gate * hidden * hidden;\n"
+                   "\t\t\t\t\tfor (int p = 0; p < hidden; ++p)\n"
+                   "\t\t\t\t\t\tsum += state_previous[p] * NN_READ_FLOAT(&u[p * hidden + j]);\n"
+                   "\t\t\t\t}\n"
+                   "\t\t\t\tgates[gate] = nn_activation_forward(gate == 2 ? activation : recurrent_activation, sum);\n"
+                   "\t\t\t}\n"
+                   "\t\t\tcell_state[j] = (t > 0 ? gates[0] * cell_state[j] : 0.0f) + gates[1] * gates[2];\n"
+                   "\t\t\tstate_current[j] = gates[3] * nn_activation_forward(activation, cell_state[j]);\n"
+                   "\t\t}\n"
+                   "\t\tif (return_sequences)\n"
+                   "\t\t\tfor (int j = 0; j < hidden; ++j) outputs[t * hidden + j] = state_current[j];\n"
+                   "\t\t{ float* swap = state_previous; state_previous = state_current; state_current = swap; }\n"
+                   "\t}\n"
+                   "\tif (!return_sequences)\n"
+                   "\t\tfor (int j = 0; j < hidden; ++j) outputs[j] = state_previous[j];\n"
+                   "}\n\n";
+
+constexpr const char* nn_softmax_source =
+    "static void nn_softmax_inplace(float* values, int n)\n{\n"
+                   "\tfloat max_value = values[0];\n"
+                   "\tfor (int i = 1; i < n; ++i) if (values[i] > max_value) max_value = values[i];\n"
+                   "\tfloat sum = 0.0f;\n"
+                   "\tfor (int i = 0; i < n; ++i) { values[i] = expf(values[i] - max_value); sum += values[i]; }\n"
+                   "\tfor (int i = 0; i < n; ++i) values[i] /= sum;\n"
+                   "}\n\n";
+
+constexpr const char* nn_clamp_source =
+    "static void nn_clamp_inplace(float* values, const float* lower, const float* upper, int n)\n{\n"
+                   "\tfor (int i = 0; i < n; ++i)\n"
+                   "\t{\n"
+                   "\t\tconst float low = NN_READ_FLOAT(&lower[i]);\n"
+                   "\t\tconst float high = NN_READ_FLOAT(&upper[i]);\n"
+                   "\t\tif (values[i] < low) values[i] = low;\n"
+                   "\t\tif (values[i] > high) values[i] = high;\n"
+                   "\t}\n}\n\n";
+
 string ModelExpression::get_expression_c_embedded() const
 {
     const NeuralNetwork::HostParametersGuard host_parameters(
@@ -1417,32 +1524,9 @@ string ModelExpression::get_expression_c_embedded() const
                    "\t}\n}\n\n";
         }
 
-        if(uses_dense)
-        {
-            buffer
-                << "static void nn_dense_forward(const float* inputs, int inputs_number,\n"
-                   "                             const float* weights, const float* biases,\n"
-                   "                             int outputs_number, nn_activation activation, float* outputs)\n{\n"
-                   "\tfor (int j = 0; j < outputs_number; ++j)\n\t{\n"
-                   "\t\tfloat sum = NN_READ_FLOAT(&biases[j]);\n"
-                   "\t\tfor (int i = 0; i < inputs_number; ++i)\n"
-                   "\t\t\tsum += inputs[i] * NN_READ_FLOAT(&weights[i * outputs_number + j]);\n"
-                   "\t\toutputs[j] = nn_activation_forward(activation, sum);\n"
-                   "\t}\n}\n\n";
-        }
+        if(uses_dense) buffer << nn_dense_forward_source;
 
-        if(uses_affine)
-        {
-            buffer
-                << "static void nn_affine_forward(const float* inputs, const float* a, const float* b,\n"
-                   "                              int features, int total, float* outputs)\n{\n"
-                   "\tint f = 0;\n"
-                   "\tfor (int i = 0; i < total; ++i)\n"
-                   "\t{\n"
-                   "\t\toutputs[i] = NN_READ_FLOAT(&a[f]) * inputs[i] + NN_READ_FLOAT(&b[f]);\n"
-                   "\t\tif (++f == features) f = 0;\n"
-                   "\t}\n}\n\n";
-        }
+        if(uses_affine) buffer << nn_affine_forward_source;
 
         if(uses_affine_flags)
         {
@@ -1466,99 +1550,13 @@ string ModelExpression::get_expression_c_embedded() const
                    "\t}\n}\n\n";
         }
 
-        if(uses_recurrent)
-        {
-            buffer
-                << "static void nn_recurrent_forward(const float* inputs, int time_steps, int input_features,\n"
-                   "                                 const float* input_weights, const float* recurrent_weights,\n"
-                   "                                 const float* biases, int hidden, nn_activation activation,\n"
-                   "                                 int return_sequences, float* state_previous, float* state_current,\n"
-                   "                                 float* outputs)\n{\n"
-                   "\tfor (int t = 0; t < time_steps; ++t)\n\t{\n"
-                   "\t\tconst float* x = inputs + t * input_features;\n"
-                   "\t\tfor (int j = 0; j < hidden; ++j)\n\t\t{\n"
-                   "\t\t\tfloat sum = NN_READ_FLOAT(&biases[j]);\n"
-                   "\t\t\tfor (int i = 0; i < input_features; ++i)\n"
-                   "\t\t\t\tsum += x[i] * NN_READ_FLOAT(&input_weights[i * hidden + j]);\n"
-                   "\t\t\tif (t > 0)\n"
-                   "\t\t\t\tfor (int p = 0; p < hidden; ++p)\n"
-                   "\t\t\t\t\tsum += state_previous[p] * NN_READ_FLOAT(&recurrent_weights[p * hidden + j]);\n"
-                   "\t\t\tstate_current[j] = nn_activation_forward(activation, sum);\n"
-                   "\t\t}\n"
-                   "\t\tif (return_sequences)\n"
-                   "\t\t\tfor (int j = 0; j < hidden; ++j) outputs[t * hidden + j] = state_current[j];\n"
-                   "\t\t{ float* swap = state_previous; state_previous = state_current; state_current = swap; }\n"
-                   "\t}\n"
-                   "\tif (!return_sequences)\n"
-                   "\t\tfor (int j = 0; j < hidden; ++j) outputs[j] = state_previous[j];\n"
-                   "}\n\n";
-        }
+        if(uses_recurrent) buffer << nn_recurrent_forward_source;
 
-        if(uses_lstm)
-        {
-            buffer
-                << "// Packed tables, gate order: forget, input, candidate, output.\n"
-                   "// c_t = f * c_(t-1) + i * g ; h_t = o * activation(c_t) ; h_(-1) = c_(-1) = 0.\n"
-                   "static void nn_lstm_forward(const float* inputs, int time_steps, int input_features,\n"
-                   "                            const float* biases, const float* input_weights,\n"
-                   "                            const float* recurrent_weights, int hidden,\n"
-                   "                            nn_activation activation, nn_activation recurrent_activation,\n"
-                   "                            int return_sequences, float* state_previous, float* state_current,\n"
-                   "                            float* cell_state, float* outputs)\n{\n"
-                   "\tfor (int t = 0; t < time_steps; ++t)\n\t{\n"
-                   "\t\tconst float* x = inputs + t * input_features;\n"
-                   "\t\tfor (int j = 0; j < hidden; ++j)\n\t\t{\n"
-                   "\t\t\tfloat gates[4];\n"
-                   "\t\t\tfor (int gate = 0; gate < 4; ++gate)\n"
-                   "\t\t\t{\n"
-                   "\t\t\t\tfloat sum = NN_READ_FLOAT(&biases[gate * hidden + j]);\n"
-                   "\t\t\t\tconst float* w = input_weights + gate * input_features * hidden;\n"
-                   "\t\t\t\tfor (int i = 0; i < input_features; ++i)\n"
-                   "\t\t\t\t\tsum += x[i] * NN_READ_FLOAT(&w[i * hidden + j]);\n"
-                   "\t\t\t\tif (t > 0)\n"
-                   "\t\t\t\t{\n"
-                   "\t\t\t\t\tconst float* u = recurrent_weights + gate * hidden * hidden;\n"
-                   "\t\t\t\t\tfor (int p = 0; p < hidden; ++p)\n"
-                   "\t\t\t\t\t\tsum += state_previous[p] * NN_READ_FLOAT(&u[p * hidden + j]);\n"
-                   "\t\t\t\t}\n"
-                   "\t\t\t\tgates[gate] = nn_activation_forward(gate == 2 ? activation : recurrent_activation, sum);\n"
-                   "\t\t\t}\n"
-                   "\t\t\tcell_state[j] = (t > 0 ? gates[0] * cell_state[j] : 0.0f) + gates[1] * gates[2];\n"
-                   "\t\t\tstate_current[j] = gates[3] * nn_activation_forward(activation, cell_state[j]);\n"
-                   "\t\t}\n"
-                   "\t\tif (return_sequences)\n"
-                   "\t\t\tfor (int j = 0; j < hidden; ++j) outputs[t * hidden + j] = state_current[j];\n"
-                   "\t\t{ float* swap = state_previous; state_previous = state_current; state_current = swap; }\n"
-                   "\t}\n"
-                   "\tif (!return_sequences)\n"
-                   "\t\tfor (int j = 0; j < hidden; ++j) outputs[j] = state_previous[j];\n"
-                   "}\n\n";
-        }
+        if(uses_lstm) buffer << nn_lstm_forward_source;
 
-        if(uses_softmax)
-        {
-            buffer
-                << "static void nn_softmax_inplace(float* values, int n)\n{\n"
-                   "\tfloat max_value = values[0];\n"
-                   "\tfor (int i = 1; i < n; ++i) if (values[i] > max_value) max_value = values[i];\n"
-                   "\tfloat sum = 0.0f;\n"
-                   "\tfor (int i = 0; i < n; ++i) { values[i] = expf(values[i] - max_value); sum += values[i]; }\n"
-                   "\tfor (int i = 0; i < n; ++i) values[i] /= sum;\n"
-                   "}\n\n";
-        }
+        if(uses_softmax) buffer << nn_softmax_source;
 
-        if(uses_clamp)
-        {
-            buffer
-                << "static void nn_clamp_inplace(float* values, const float* lower, const float* upper, int n)\n{\n"
-                   "\tfor (int i = 0; i < n; ++i)\n"
-                   "\t{\n"
-                   "\t\tconst float low = NN_READ_FLOAT(&lower[i]);\n"
-                   "\t\tconst float high = NN_READ_FLOAT(&upper[i]);\n"
-                   "\t\tif (values[i] < low) values[i] = low;\n"
-                   "\t\tif (values[i] > high) values[i] = high;\n"
-                   "\t}\n}\n\n";
-        }
+        if(uses_clamp) buffer << nn_clamp_source;
 
         buffer << tables.str();
 
