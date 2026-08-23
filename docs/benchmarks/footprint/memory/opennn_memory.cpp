@@ -147,7 +147,7 @@ int main()
 
         const float alpha = 1.0f;
         const float beta = 0.0f;
-        CHECK_CUBLAS(cublasSgemm(Backend::get_cublas_handle(),
+        CHECK_CUBLAS(cublasSgemm(device::get_cublas_handle(),
                                  CUBLAS_OP_N, CUBLAS_OP_N,
                                  n, n, n,
                                  &alpha,

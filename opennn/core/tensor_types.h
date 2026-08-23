@@ -188,6 +188,21 @@ struct Shape
 
     Shape() noexcept = default;
 
+    // Named, because Shape(3, 128) next to Shape{3, 128} reads as the same
+    // thing and means the opposite: this is {128, 128, 128}. The constructor
+    // form was the vector(n, v) trap and is gone; say filled() instead.
+    static Shape filled(size_t rank, Index value)
+    {
+        throw_if(rank > MaxRank, "Shape::filled: rank {} exceeds MaxRank={}.", rank, MaxRank);
+        throw_if(value < 0, "Shape::filled: dimensions cannot be negative.");
+
+        Shape shape;
+        shape.rank = rank;
+        fill_n(shape.dims, rank, value);
+
+        return shape;
+    }
+
     Shape(initializer_list<Index> list) : rank(list.size())
     {
         throw_if(list.size() > MaxRank,

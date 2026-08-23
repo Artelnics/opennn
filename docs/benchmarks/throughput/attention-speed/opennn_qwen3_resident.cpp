@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
         // same thing rather than merely finishing sooner.
         const TensorView outputs = forward_propagation.get_outputs();
         vector<float> host(size_t(outputs.size()));
-        device::copy_async(host.data(), outputs.data, outputs.size(),
+        device::copy_async(host.data(), outputs.get_data(), outputs.size(),
                            Device::CPU, Device::CUDA, device::get_compute_stream());
         device::synchronize();
 

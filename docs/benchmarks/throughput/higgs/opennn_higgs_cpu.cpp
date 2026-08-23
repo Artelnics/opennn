@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
             set_seed(42);
 
             ClassificationNetwork network(dataset.get_input_shape(),
-                                          Shape(size_t(layers), hidden),
+                                          Shape::filled(size_t(layers), hidden),
                                           Shape{1},
                                           activation);
 
@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
         set_seed(42);
 
         ClassificationNetwork network(Shape{inputs_number},
-                                      Shape(size_t(layers), hidden),
+                                      Shape::filled(size_t(layers), hidden),
                                       Shape{1},
                                       activation);
 

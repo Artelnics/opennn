@@ -103,9 +103,10 @@ int main(int argc, char* argv[])
         const vector<Index> decoder_feature_indices = dataset.get_feature_indices("Decoder");
         const vector<Index> target_feature_indices = dataset.get_feature_indices("Target");
 
-        vector<Index> sample_indices(size_t(effective_batch));
-        for (Index i = 0; i < effective_batch; ++i)
-            sample_indices[size_t(i)] = i;
+        // Braces, not parens: vector<Index> v(size_t(n)) is a function
+        // declaration, which is why this file stopped compiling.
+        vector<Index> sample_indices(size_t(effective_batch), Index(0));
+        iota(sample_indices.begin(), sample_indices.end(), Index(0));
 
         Batch batch_data(effective_batch, &dataset, network.get_config());
         batch_data.fill(sample_indices,
