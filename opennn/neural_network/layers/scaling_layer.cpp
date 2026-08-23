@@ -473,18 +473,6 @@ string expression_literal(float value)
     return text;
 }
 
-// Folded through scaling_affine, the same map the numeric paths use, so the
-// exported model cannot drift away from what the layer computes.
-string affine_line(const string& input_name, ScalerMethod scaler,
-                   const Descriptives& descriptives, float min_range, float max_range)
-{
-    const auto [scale, offset] = scaling_affine(scaler, descriptives, min_range, max_range);
-
-    return "scaled_" + input_name + " = " + input_name
-         + "*" + expression_literal(scale)
-         + "+" + expression_literal(offset) + ";\n";
-}
-
 }
 
 string Scaling::write_expression(const vector<string>& input_names,
@@ -501,44 +489,37 @@ string Scaling::write_expression(const vector<string>& input_names,
     for (Index i = 0; i < outputs_number; ++i)
     {
         const size_t feature = size_t(i % ssize(scalers));
-        const Descriptives& d = descriptives[feature];
-        using enum ScalerMethod;
-        switch (scalers[feature])
-        {
-        case None:
-            buffer << "scaled_" << input_names[i] << " = " << input_names[i] << ";\n";
-            break;
+        const ScalerMethod scaler = scalers[feature];
 
-        case MinimumMaximum:
-            if (d.maximum - d.minimum < EPSILON)
-                buffer << "scaled_" << input_names[i] << " = 0;\n";
-            else
-                buffer << affine_line(input_names[i], MinimumMaximum, d, min_range, max_range);
-            break;
-        case MeanStandardDeviation:
-            if (d.standard_deviation > EPSILON)
-                buffer << affine_line(input_names[i], MeanStandardDeviation, d, min_range, max_range);
-            else
-                buffer << "scaled_" << input_names[i] << " = 0;\n";
-            break;
-        case StandardDeviation:
-            if (d.standard_deviation > EPSILON)
-                buffer << affine_line(input_names[i], StandardDeviation, d, min_range, max_range);
-            else
-                buffer << "scaled_" << input_names[i] << " = 0;\n";
-            break;
-        case Logarithm:
-            // max() first, as the layer itself does: an input of zero or below
-            // otherwise evaluates to -inf in every exported language.
+        // Logarithm is the one method that is not affine. max() first, as the
+        // layer itself does: an input of zero or below otherwise evaluates to
+        // -inf in every exported language.
+        if (scaler == ScalerMethod::Logarithm)
+        {
             buffer << "scaled_" << input_names[i] << " = log(max(" << input_names[i]
                    << ", " << EPSILON << "));\n";
-            break;
-        case ImageMinMax:
-            buffer << "scaled_" << input_names[i] << " = " << input_names[i] << " / 255.0;\n";
-            break;
-        default:
-            throw runtime_error("Unknown inputs scaling method.\n");
+            continue;
         }
+
+        // Same slope and offset forward_propagate runs on, degenerate rules
+        // included, so the exported text cannot drift from the layer it
+        // mirrors. Written out the way Unscaling already does it.
+        const auto [slope, offset] =
+            scaling_affine(scaler, descriptives[feature], min_range, max_range);
+
+        buffer << "scaled_" << input_names[i] << " = ";
+
+        if (slope == 0.0f)                          // the feature was constant
+            buffer << expression_literal(offset);
+        else if (slope == 1.0f && offset == 0.0f)
+            buffer << input_names[i];
+        else if (offset == 0.0f)
+            buffer << input_names[i] << "*" << expression_literal(slope);
+        else
+            buffer << input_names[i] << "*" << expression_literal(slope)
+                   << "+" << expression_literal(offset);
+
+        buffer << ";\n";
     }
 
     string expression = buffer.str();
