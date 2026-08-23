@@ -241,6 +241,23 @@ Already ruled out: `OptimizerData::set` zeroes Adam's moments, `cudnn_unpack_gra
 zeroes the RNN backward weight space before `cudnnRNNBackwardWeights_v8` accumulates into
 it, and both propagation arenas zero themselves at construction.
 
+With the fill correctly ordered all three now reproduce **in isolation** under mode 1,
+which is the part that was hard before. What is still unexplained:
+
+    poison off, cache on      pass
+    poison off, cache off     pass
+    NaN-poison, cache on      FAIL
+    zero-poison, cache on     pass
+    initcheck, cache off      0 uninitialised reads
+
+A plain read-before-write should show up in initcheck. It does not, and the failure needs
+the block cache to be on. Two candidates left: a buffer that is read before being written
+and happens to be correct at zero (which initcheck should still have caught, so something
+about the cache-off path must write it), or the poison landing on a block that is back in
+the cache while something still holds a pointer into it -- which would be a use-after-free
+in the library rather than a read of uninitialised memory. Distinguishing them needs
+per-allocation instrumentation, not another sweep of the whole suite.
+
 Not urgent -- the library is green with poison off. Worth revisiting if anyone reports
 non-reproducible GPU training results, or if the block cache is made to recycle more
 aggressively. Worth adding mode 1 as a CI job once the three are cleared.
