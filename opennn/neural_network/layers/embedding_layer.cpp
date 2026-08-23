@@ -66,15 +66,11 @@ void Embedding::read_JSON_body(const Json* embedding_layer_element)
         new_output_shape.dim_or_zero(1),
         get_label());
 
-    if (embedding_layer_element->has("LearnedPositional"))
-        set_learned_positional(read_json_bool(embedding_layer_element, "LearnedPositional"));
+    set_learned_positional(read_json_bool(embedding_layer_element, "LearnedPositional", get_learned_positional()));
     set_scale_embedding(read_json_bool(embedding_layer_element, "ScaleEmbedding"));
     set_add_positional_encoding(read_json_bool(embedding_layer_element, "AddPositionalEncoding"));
-    if (embedding_layer_element->has("ExportValidLengths"))
-        set_export_valid_lengths(read_json_bool(embedding_layer_element, "ExportValidLengths"));
-    if (embedding_layer_element->has("WeightsFollowComputeDtype"))
-        set_weights_follow_compute_dtype(
-            read_json_bool(embedding_layer_element, "WeightsFollowComputeDtype"));
+    set_export_valid_lengths(read_json_bool(embedding_layer_element, "ExportValidLengths", get_export_valid_lengths()));
+    set_weights_follow_compute_dtype(read_json_bool(embedding_layer_element, "WeightsFollowComputeDtype", embedding_lookup.weights_follow_compute_dtype));
 }
 
 void Embedding::write_JSON_body(JsonWriter& printer) const

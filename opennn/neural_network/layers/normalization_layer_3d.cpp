@@ -117,11 +117,9 @@ void Normalization3d::read_JSON_body(const Json* element)
                                     : NormalizationMethod::LayerNorm);
     }
 
-    if (element->has("FuseAdd"))
-        set_fuse_add(read_json_bool(element, "FuseAdd"));
+    set_fuse_add(read_json_bool(element, "FuseAdd", layer_normalization.fuse_add));
 
-    if (element->has("Epsilon"))
-        set_epsilon(read_json_float(element, "Epsilon"));
+    set_epsilon(read_json_float(element, "Epsilon", get_epsilon()));
 }
 
 void Normalization3d::write_JSON_body(JsonWriter& printer) const

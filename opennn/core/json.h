@@ -143,6 +143,15 @@ bool                     read_json_bool   (const Json*, std::string_view);
 std::string              read_json_string (const Json*, std::string_view);
 std::vector<std::string> read_json_strings(const Json*, std::string_view);
 
+// Overloads that keep the caller's value when the field is absent. Without
+// them every optional field costs a `if (el->has("X")) set_x(read_json_x(...))`
+// pair, because the no-fallback readers return 0/false/"" for a missing field
+// and would otherwise overwrite a perfectly good default.
+float       read_json_float (const Json*, std::string_view, float fallback);
+long long   read_json_index (const Json*, std::string_view, long long fallback);
+bool        read_json_bool  (const Json*, std::string_view, bool fallback);
+std::string read_json_string(const Json*, std::string_view, std::string_view fallback);
+
 std::string read_json_string_fallback(const Json*,
                                       std::initializer_list<std::string_view>);
 

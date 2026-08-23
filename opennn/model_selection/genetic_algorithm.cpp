@@ -629,8 +629,7 @@ void GeneticAlgorithm::from_JSON(const JsonDocument& document)
     set_maximum_epochs(read_json_index(root, "MaximumGenerationsNumber"));
     set_maximum_time(read_json_float(root, "MaximumTime"));
 
-    if (root->has("FoldsNumber"))
-        set_folds_number(read_json_index(root, "FoldsNumber"));
+    set_folds_number(Index(read_json_index(root, "FoldsNumber", folds_number)));
 }
 
 }

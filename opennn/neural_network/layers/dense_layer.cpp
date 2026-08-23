@@ -452,17 +452,14 @@ void Dense::read_JSON_body(const Json* dense_layer_element)
 {
     batch_norm.features = read_json_bool(dense_layer_element, "BatchNormalization") ? output_features : 0;
 
-    if (dense_layer_element->has("UseBias"))
-        set_use_bias(read_json_bool(dense_layer_element, "UseBias"));
+    set_use_bias(read_json_bool(dense_layer_element, "UseBias", get_use_bias()));
 
     if (dense_layer_element->has("Activation"))
         set_activation_function(read_json_string(dense_layer_element, "Activation"));
 
-    if (dense_layer_element->has("Gated"))
-        set_gated(read_json_bool(dense_layer_element, "Gated"));
+    set_gated(read_json_bool(dense_layer_element, "Gated", gated));
 
-    if (dense_layer_element->has("TransposedInference"))
-        set_transposed_inference(read_json_bool(dense_layer_element, "TransposedInference"));
+    set_transposed_inference(read_json_bool(dense_layer_element, "TransposedInference", get_transposed_inference()));
 }
 
 void Dense::write_JSON_body(JsonWriter& printer) const

@@ -288,14 +288,11 @@ void GrowingNeurons::from_JSON(const JsonDocument& document)
 
     // Same key GrowingInputs uses, and guarded so files written before it was
     // serialized still load.
-    if (root_element->has("MaximumEpochsNumber"))
-        set_maximum_epochs(read_json_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_epochs(Index(read_json_index(root_element, "MaximumEpochsNumber", maximum_epochs)));
 
-    if (root_element->has("FoldsNumber"))
-        set_folds_number(read_json_index(root_element, "FoldsNumber"));
+    set_folds_number(Index(read_json_index(root_element, "FoldsNumber", folds_number)));
 
-    if (root_element->has("WarmStart"))
-        set_warm_start(read_json_bool(root_element, "WarmStart"));
+    set_warm_start(read_json_bool(root_element, "WarmStart", warm_start));
 }
 
 NeuronsSelectionResult::NeuronsSelectionResult(const Index maximum_epochs)

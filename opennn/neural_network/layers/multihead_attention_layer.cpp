@@ -269,15 +269,10 @@ void MultiHeadAttention::read_JSON_body(const Json* root_element)
         new_input_shape.dim_or_zero(1),
         new_heads_number, new_use_causal_mask, get_label());
 
-    if (root_element->has("ZeroPaddedQueries"))
-        set_zero_padded_queries(read_json_bool(root_element, "ZeroPaddedQueries"));
-    if (root_element->has("DropoutRate"))
-        set_dropout_rate(read_json_float(root_element, "DropoutRate"));
-    if (root_element->has("SdpaAuto"))
-        set_sdpa_auto(read_json_bool(root_element, "SdpaAuto"));
-    if (root_element->has("SdpaMinSequenceLength"))
-        set_sdpa_min_sequence_length(
-            read_json_index(root_element, "SdpaMinSequenceLength"));
+    set_zero_padded_queries(read_json_bool(root_element, "ZeroPaddedQueries", attention.zero_padded_queries));
+    set_dropout_rate(read_json_float(root_element, "DropoutRate", attention.dropout.rate));
+    set_sdpa_auto(read_json_bool(root_element, "SdpaAuto", sdpa_auto));
+    set_sdpa_min_sequence_length(Index(read_json_index(root_element, "SdpaMinSequenceLength", sdpa_min_sequence_length)));
 }
 
 void MultiHeadAttention::write_JSON_body(JsonWriter& printer) const

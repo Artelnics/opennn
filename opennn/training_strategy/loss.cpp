@@ -1956,8 +1956,7 @@ void Loss::regularization_from_JSON(const JsonDocument& document)
 
     set_regularization(read_json_string(root_element, "Type"));
 
-    if (root_element->has("RegularizationWeight"))
-        set_regularization_weight(read_json_float(root_element, "RegularizationWeight"));
+    set_regularization_weight(read_json_float(root_element, "RegularizationWeight", regularization_weight));
 }
 
 void Loss::regularization_to_JSON(JsonWriter& file_stream) const

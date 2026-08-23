@@ -353,11 +353,9 @@ void GrowingInputs::from_JSON(const JsonDocument& document)
     set_maximum_inputs_number(read_json_index(root_element, "MaximumInputsNumber"));
     set_maximum_validation_failures(read_json_index_alias(root_element, "MaximumValidationFailures", "MaximumSelectionFailures"));
 
-    if (root_element->has("FoldsNumber"))
-        set_folds_number(read_json_index(root_element, "FoldsNumber"));
+    set_folds_number(Index(read_json_index(root_element, "FoldsNumber", folds_number)));
 
-    if (root_element->has("WarmStart"))
-        set_warm_start(read_json_bool(root_element, "WarmStart"));
+    set_warm_start(read_json_bool(root_element, "WarmStart", warm_start));
 }
 
 }

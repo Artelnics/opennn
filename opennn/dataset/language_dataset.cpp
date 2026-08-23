@@ -425,13 +425,12 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_display(read_json_bool(data_set_element, "Display"));
 
-    if (data_source_element->has("InputSequenceLengthLimit"))
-        set_input_sequence_length_limit(read_json_index(data_source_element, "InputSequenceLengthLimit"));
-    else if (data_set_element->has("InputSequenceLengthLimit"))
-        set_input_sequence_length_limit(read_json_index(data_set_element, "InputSequenceLengthLimit"));
+    // Older files carried the limit on the data set rather than the source.
+    set_input_sequence_length_limit(Index(read_json_index(
+        data_source_element, "InputSequenceLengthLimit",
+        read_json_index(data_set_element, "InputSequenceLengthLimit", input_sequence_length_limit))));
 
-    if (data_set_element->has("ClassificationTarget"))
-        set_classification_target(read_json_bool(data_set_element, "ClassificationTarget"));
+    set_classification_target(read_json_bool(data_set_element, "ClassificationTarget", classification_target));
 
     // A deployment folder ships the model without the training corpus, and the
     // model file already carries everything inference needs: the vocabularies,

@@ -202,14 +202,13 @@ void StochasticGradientDescent::from_JSON(const JsonDocument& document)
 
     set_batch_size(read_json_index(root_element, "BatchSize"));
 
-    if (root_element->has("InitialLearningRate")) set_initial_learning_rate(read_json_float(root_element, "InitialLearningRate"));
-    if (root_element->has("InitialDecay"))        set_initial_decay(read_json_float(root_element, "InitialDecay"));
-    if (root_element->has("Nesterov"))            set_nesterov(read_json_bool(root_element, "Nesterov"));
+    set_initial_learning_rate(read_json_float(root_element, "InitialLearningRate", initial_learning_rate));
+    set_initial_decay(read_json_float(root_element, "InitialDecay", initial_decay));
+    set_nesterov(read_json_bool(root_element, "Nesterov", nesterov));
 
-    if (root_element->has("Momentum"))
-        set_momentum(read_json_float(root_element, "Momentum"));
-    else
-        set_momentum(read_json_bool(root_element, "ApplyMomentum") ? 0.9f : 0.0f);
+    // Files written before Momentum became a float carry a bool instead.
+    set_momentum(read_json_float(root_element, "Momentum",
+                                 read_json_bool(root_element, "ApplyMomentum") ? 0.9f : 0.0f));
 
     read_common_json(root_element);
 }

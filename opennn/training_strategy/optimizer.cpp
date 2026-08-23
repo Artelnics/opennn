@@ -1357,11 +1357,9 @@ void Optimizer::read_common_json(const Json* root_element)
     set_maximum_epochs(read_json_index(root_element, "MaximumEpochsNumber"));
     set_maximum_time(read_json_float(root_element, "MaximumTime"));
 
-    if (root_element->has("GradientClipNorm"))
-        set_gradient_clip_norm(read_json_float(root_element, "GradientClipNorm"));
+    set_gradient_clip_norm(read_json_float(root_element, "GradientClipNorm", gradient_clip_norm));
 
-    if (root_element->has("DisplayPeriod"))
-        set_display_period(read_json_index(root_element, "DisplayPeriod"));
+    set_display_period(Index(read_json_index(root_element, "DisplayPeriod", display_period)));
 }
 
 void Optimizer::setup_device_training()

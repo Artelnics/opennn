@@ -250,9 +250,9 @@ void AdaptiveMomentEstimation::from_JSON(const JsonDocument& document)
     const Json* root_element = get_json_root(document, "AdaptiveMomentEstimation");
 
     set_batch_size(read_json_index(root_element, "BatchSize"));
-    if (root_element->has("LearningRate"))     set_learning_rate(read_json_float(root_element, "LearningRate"));
-    if (root_element->has("Beta1"))            set_beta_1(read_json_float(root_element, "Beta1"));
-    if (root_element->has("Beta2"))            set_beta_2(read_json_float(root_element, "Beta2"));
+    set_learning_rate(read_json_float(root_element, "LearningRate", learning_rate));
+    set_beta_1(read_json_float(root_element, "Beta1", beta_1));
+    set_beta_2(read_json_float(root_element, "Beta2", beta_2));
     read_common_json(root_element);
 }
 

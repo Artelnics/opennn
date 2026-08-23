@@ -623,6 +623,30 @@ std::string read_json_string(const Json* root, std::string_view field)
     return v ? v->as_string() : std::string();
 }
 
+float read_json_float(const Json* root, std::string_view field, float fallback)
+{
+    const Json* const value = root ? root->find(field) : nullptr;
+    return value ? float(value->as_double()) : fallback;
+}
+
+long long read_json_index(const Json* root, std::string_view field, long long fallback)
+{
+    const Json* const value = root ? root->find(field) : nullptr;
+    return value ? value->as_long() : fallback;
+}
+
+bool read_json_bool(const Json* root, std::string_view field, bool fallback)
+{
+    const Json* const value = root ? root->find(field) : nullptr;
+    return value ? value->as_bool() : fallback;
+}
+
+std::string read_json_string(const Json* root, std::string_view field, std::string_view fallback)
+{
+    const Json* const value = root ? root->find(field) : nullptr;
+    return value ? value->as_string() : std::string(fallback);
+}
+
 std::vector<std::string> read_json_strings(const Json* root, std::string_view field)
 {
     const Json* const value = root ? root->find(field) : nullptr;
