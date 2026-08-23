@@ -1642,7 +1642,13 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     throw_if(ssize(anchors) != boxes_per_cell,
              "YoloDataset: anchors size must equal boxes_per_cell.");
 
-    target_record_floats = grid_size * grid_size * boxes_per_cell * (5 + classes_number);
+    // The same rule try_rebuild_target_from_boxes applies. It is currently
+    // unobservable here -- v8 forces per-batch re-encoding, so nothing reads
+    // the target records this writes -- but the two writers disagreeing while
+    // a third place decides whether that matters is not a property to rely on.
+    target_record_floats = v8_mode
+        ? MAX_GT_BOXES * 5
+        : grid_size * grid_size * boxes_per_cell * (5 + classes_number);
 
     const filesystem::path target_tmp_path = target_cache_path.string() + ".tmp";
     FileWriter target_writer;
