@@ -41,15 +41,6 @@ CudnnDescriptor<cudnnTensorDescriptor_t> TensorView::get_descriptor() const
     return descriptor;
 }
 
-static bool uses_cuda_fill(const TensorView& view)
-{
-    cudaPointerAttributes attr{};
-    const cudaError_t err = cudaPointerGetAttributes(&attr, view.get_data());
-    const bool gpu_data = (err == cudaSuccess) && (attr.type == cudaMemoryTypeDevice);
-    if (err != cudaSuccess) cudaGetLastError();
-    return gpu_data;
-}
-
 static void fill_cuda(const TensorView& view, float value)
 {
     if (value == 0.0f)
@@ -63,11 +54,6 @@ static void fill_cuda(const TensorView& view, float value)
 
 CudnnDescriptor<cudnnTensorDescriptor_t> TensorView::get_descriptor() const OPENNN_CUDA_STUB_BODY(TensorView::get_descriptor)
 
-static bool uses_cuda_fill(const TensorView& view)
-{
-    return view.is_cuda();
-}
-
 static void fill_cuda(const TensorView&, float)
 {
     throw runtime_error("TensorView::fill requires CUDA support for CUDA tensors.");
@@ -79,7 +65,10 @@ void TensorView::fill(float value) const
 {
     if (!data) return;
 
-    if (uses_cuda_fill(*this))
+    // The view's own device, not a cudaPointerGetAttributes round-trip per
+    // fill: every other dispatch in the library keys on is_cuda(), and a view
+    // whose device disagreed with its pointer would already be wrong there.
+    if (is_cuda())
         return fill_cuda(*this, value);
 
     // byte_size() is dtype-aware; size() is a float count. Zeroing through the
