@@ -699,6 +699,39 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                          {up_index, c_index});
     };
 
+    // The v8 detection head: two 3x3 blocks into a 1x1 projection, once for the
+    // box branch and once for the class branch, concatenated and handed to
+    // DetectionV8. Like SPPF, the two FPNv8 branches build the same graph and
+    // differ only in how they wrap a 3x3 block, so that is the parameter. The
+    // two 1x1 output projections are identical in both and stay here.
+    const auto add_v8_detection_head =
+        [&](Index feature_index,
+            const string& name,
+            Index head_channels,
+            Index box_channels,
+            const function<Index(Index, const Shape&, const string&)>& add_block)
+    {
+        const Index input_channels = get_layer(feature_index)->get_output_shape()[2];
+
+        Index box = add_block(feature_index, Shape{3, 3, input_channels, head_channels}, name + "_box_c1");
+        box       = add_block(box, Shape{3, 3, head_channels, head_channels}, name + "_box_c2");
+        box       = add_conv(box, Shape{1, 1, head_channels, box_channels},
+                             "Identity", stride, false, name + "_box_out");
+
+        Index classes = add_block(feature_index, Shape{3, 3, input_channels, head_channels}, name + "_cls_c1");
+        classes       = add_block(classes, Shape{3, 3, head_channels, head_channels}, name + "_cls_c2");
+        classes       = add_conv(classes, Shape{1, 1, head_channels, classes_number},
+                                 "Identity", stride, false, name + "_cls_out");
+
+        const Shape spatial = get_layer(box)->get_output_shape();
+
+        const Index concatenated = add_layer(make_unique<Concatenation>(
+            spatial, vector<Index>{box_channels, classes_number}, name + "_cat"), {box, classes});
+
+        add_layer(make_unique<DetectionV8>(get_layer(concatenated)->get_output_shape(),
+                                           reg_max, name + "_det"), {concatenated});
+    };
+
     if (backbone == Backbone::Vgg)
     {
         const vector<Index> filters = {32, 64, 128, 256, 512};
@@ -931,23 +964,12 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             constexpr Index head_ch = 64;
             const Index box_ch = 4 * max(reg_max, Index(1));
 
-            auto add_det_v8 = [&](Index feat_idx, const string& name) {
-                const Index inch = get_layer(feat_idx)->get_output_shape()[2];
-                Index box = add_cba(feat_idx, Shape{3,3,inch,head_ch},         stride, name+"_box_c1");
-                box       = add_cba(box,      Shape{3,3,head_ch,head_ch},      stride, name+"_box_c2");
-                box       = add_conv(box,     Shape{1,1,head_ch,box_ch},       "Identity", stride, false, name+"_box_out");
-                Index cls = add_cba(feat_idx, Shape{3,3,inch,head_ch},         stride, name+"_cls_c1");
-                cls       = add_cba(cls,      Shape{3,3,head_ch,head_ch},      stride, name+"_cls_c2");
-                cls       = add_conv(cls,     Shape{1,1,head_ch,classes_number},"Identity", stride, false, name+"_cls_out");
-                const Shape hw = get_layer(box)->get_output_shape();
-                add_layer(make_unique<Concatenation>(hw, vector<Index>{box_ch,classes_number}, name+"_cat"), {box,cls});
-                add_layer(make_unique<DetectionV8>(get_layer(get_layers_number()-1)->get_output_shape(),
-                                                   reg_max, name+"_det"), {get_layers_number()-1});
-            };
+            const auto cba_block = [&](Index in, const Shape& kernel, const string& label)
+                                   { return add_cba(in, kernel, stride, label); };
 
-            add_det_v8(c8_n15, "c8_small");
-            add_det_v8(c8_n18, "c8_medium");
-            add_det_v8(c8_n21, "c8_large");
+            add_v8_detection_head(c8_n15, "c8_small",  head_ch, box_ch, cba_block);
+            add_v8_detection_head(c8_n18, "c8_medium", head_ch, box_ch, cba_block);
+            add_v8_detection_head(c8_n21, "c8_large",  head_ch, box_ch, cba_block);
 
             compile();
             set_parameters_random();
@@ -1097,31 +1119,17 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             const Index box_ch = 4 * max(reg_max, Index(1));
 
-            auto add_det_head_v8 = [&](Index feat_idx, const string& name) {
-                const Index in_ch = get_layer(feat_idx)->get_output_shape()[2];
-
-                Index box = add_conv(feat_idx, Shape{3,3,in_ch,head_ch},        act,        stride, true,  name+"_box_c1");
-                box       = add_conv(box,      Shape{3,3,head_ch,head_ch},      act,        stride, true,  name+"_box_c2");
-                box       = add_conv(box,      Shape{1,1,head_ch,box_ch},       "Identity", stride, false, name+"_box_out");
-
-                Index cls = add_conv(feat_idx, Shape{3,3,in_ch,head_ch},               act,        stride, true,  name+"_cls_c1");
-                cls       = add_conv(cls,      Shape{3,3,head_ch,head_ch},             act,        stride, true,  name+"_cls_c2");
-                cls       = add_conv(cls,      Shape{1,1,head_ch,classes_number},      "Identity", stride, false, name+"_cls_out");
-
-                const Shape hw = get_layer(box)->get_output_shape();
-                const Index cat = add_layer(make_unique<Concatenation>(hw, vector<Index>{box_ch, classes_number}, name+"_cat"),
-                                            {box, cls});
-                add_layer(make_unique<DetectionV8>(get_layer(cat)->get_output_shape(), reg_max, name+"_det"), {cat});
-            };
+            const auto conv_block = [&](Index in, const Shape& kernel, const string& label)
+                                    { return add_conv(in, kernel, act, stride, true, label); };
 
             const auto [p5n, p4n, p3n] = build_fpn_trunk(c5_index, "v8_");
 
             const Index p5d = add_conv(p5n, Shape{3, 3, 512, 1024}, act, stride, true, "v8_neck_p5_pre");
-            add_det_head_v8(p5d, "v8_large");
+            add_v8_detection_head(p5d, "v8_large", head_ch, box_ch, conv_block);
             const Index p4d = add_conv(p4n, Shape{3, 3, 256, 512}, act, stride, true, "v8_neck_p4_pre");
-            add_det_head_v8(p4d, "v8_medium");
+            add_v8_detection_head(p4d, "v8_medium", head_ch, box_ch, conv_block);
             const Index p3d = add_conv(p3n, Shape{3, 3, 128, 256}, act, stride, true, "v8_neck_p3_pre");
-            add_det_head_v8(p3d, "v8_small");
+            add_v8_detection_head(p3d, "v8_small", head_ch, box_ch, conv_block);
 
             compile();
             set_parameters_random();
