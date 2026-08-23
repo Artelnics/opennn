@@ -79,7 +79,6 @@ private:
         const char* body_indent = "";
         const char* body_declaration = "";
         bool declare_first_assignment_only = false;
-        bool blank_short_lines = false;
         const char* softmax_declaration = "";
         const char* softmax_counter = "";
         const char* softmax_zero = "";
@@ -91,19 +90,21 @@ private:
     static void emit_body_lines(ostringstream&, const vector<string>&, const LanguageSyntax&, const function<string(const string&)>&);
     static void emit_softmax_block(ostringstream&, const LanguageSyntax&);
 
+    // string, not const char*: the LeakyReLU bodies interpolate LEAKY_RELU_SLOPE
+    // so the exported code cannot drift from the library's own constant.
     struct ActivationBodies
     {
-        const char* c;
-        const char* javascript;
-        const char* python;
-        const char* php;
+        string c;
+        string javascript;
+        string python;
+        string php;
     };
 
     // The four language emitters differ only in which ActivationBodies member
     // they take and which activations they define unconditionally.
     static void emit_activations(ostringstream&,
                                  const string& expression,
-                                 const char* ActivationBodies::* body,
+                                 string ActivationBodies::* body,
                                  initializer_list<string_view> always);
 
     static const vector<pair<ActivationFunction, ActivationBodies>>& activation_table();

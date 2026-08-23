@@ -17,6 +17,7 @@
 #include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/layers/recurrent_layer.h"
 #include "opennn/neural_network/layers/long_short_term_memory_layer.h"
+#include "opennn/core/enum_map.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/neural_network.h"
@@ -459,9 +460,37 @@ void ModelExpression::rename_spaced_var_definitions(vector<string>& lines)
     }
 }
 
+// The embedded C backend names every activation twice: once in the generated
+// `nn_activation` enum and once at each layer's call site. Both come from here
+// so the enumerator list and the constants cannot drift apart. Softmax is
+// absent by design -- it is applied to the whole output vector, not per neuron.
+const EnumMap<ActivationFunction>& embedded_activation_map()
+{
+    using enum ActivationFunction;
+
+    static const EnumMap<ActivationFunction> map{
+        {Identity,  "NN_IDENTITY"},
+        {Sigmoid,   "NN_SIGMOID"},
+        {Tanh,      "NN_TANH"},
+        {ReLU,      "NN_RELU"},
+        {LeakyReLU, "NN_LEAKY_RELU"},
+        {GELU,      "NN_GELU"},
+        {GELUTanh,  "NN_GELU_TANH"},
+        {SiLU,      "NN_SILU"}
+    };
+
+    return map;
+}
+
+
 const vector<pair<ActivationFunction, ModelExpression::ActivationBodies>>& ModelExpression::activation_table()
 {
     using enum ActivationFunction;
+
+    // c_float_literal keeps the `f` suffix C needs; the other three languages
+    // take the bare decimal.
+    static const string slope_c = c_float_literal(LEAKY_RELU_SLOPE);
+    static const string slope = slope_c.substr(0, slope_c.size() - 1);
 
     static const vector<pair<ActivationFunction, ActivationBodies>> table = {
         {Identity, {
@@ -495,10 +524,10 @@ const vector<pair<ActivationFunction, ModelExpression::ActivationBodies>>& Model
             "// Returns the raw logit: the numerically stable softmax is applied over the whole output vector afterwards.\nfunction Softmax($x) { return $x; }\n"
         }},
         {LeakyReLU, {
-            "float LeakyReLU(float x) {\n\treturn x >= 0.0f ? x : 0.1f * x;\n}\n\n",
-            "function LeakyReLU(x) {\n\treturn x >= 0 ? x : 0.1 * x;\n}\n",
-            "\t@staticmethod\n\tdef LeakyReLU(x):\n\t\treturn x if x >= 0 else 0.1 * x\n\n",
-            "function LeakyReLU($x) { return $x >= 0 ? $x : 0.1 * $x; }\n"
+            format("float LeakyReLU(float x) {{\n\treturn x >= 0.0f ? x : {} * x;\n}}\n\n", slope_c),
+            format("function LeakyReLU(x) {{\n\treturn x >= 0 ? x : {} * x;\n}}\n", slope),
+            format("\t@staticmethod\n\tdef LeakyReLU(x):\n\t\treturn x if x >= 0 else {} * x\n\n", slope),
+            format("function LeakyReLU($x) {{ return $x >= 0 ? $x : {} * $x; }}\n", slope)
         }},
         {GELU, {
             "float GELU(float x) {\n\treturn 0.5f * x * (1.0f + erff(0.7071067811865475f * x));\n}\n\n",
@@ -528,8 +557,8 @@ ModelExpression::LanguageSyntax ModelExpression::language_syntax(ProgrammingLang
     switch (language)
     {
     case C:
-    case CEmbedded:  return {"\t", "double ", true, false, "float ", "int", "0.0f", "expf", to_string(outputs_number)};
-    case JavaScript: return {"\t", "var ", false, true, "var ", "var", "0", "Math.exp", "out.length"};
+    case CEmbedded:  return {"\t", "double ", true, "float ", "int", "0.0f", "expf", to_string(outputs_number)};
+    case JavaScript: return {"\t", "var ", false, "var ", "var", "0", "Math.exp", "out.length"};
     case Python:
     {
         LanguageSyntax syntax;
@@ -552,12 +581,6 @@ void ModelExpression::emit_body_lines(ostringstream& buffer,
     for (const string& line : lines)
     {
         const string processed = transform ? transform(line) : line;
-
-        if (syntax.blank_short_lines && processed.size() <= 1)
-        {
-            buffer << "\n";
-            continue;
-        }
 
         const char* declaration = syntax.body_declaration;
 
@@ -622,7 +645,7 @@ void ModelExpression::emit_c_prelude(ostringstream& buffer) const
 
 void ModelExpression::emit_activations(ostringstream& buffer,
                                        const string& expression,
-                                       const char* ActivationBodies::* body,
+                                       string ActivationBodies::* body,
                                        initializer_list<string_view> always)
 {
     for (const auto& [activation, bodies] : activation_table())
@@ -783,26 +806,12 @@ string ModelExpression::get_expression_c_embedded() const
         size_t next_buffer = 0;
 
         const auto activation_constant_for =
-            [](const ActivationFunction activation) -> string_view
+            [](const ActivationFunction activation) -> const string&
         {
-            using enum ActivationFunction;
+            throw_if(activation == ActivationFunction::Softmax,
+                     "ModelExpression: Softmax must be applied to the complete output vector.");
 
-            switch(activation)
-            {
-                case Identity:  return "NN_IDENTITY";
-                case Sigmoid:   return "NN_SIGMOID";
-                case Tanh:      return "NN_TANH";
-                case ReLU:      return "NN_RELU";
-                case LeakyReLU: return "NN_LEAKY_RELU";
-                case GELU:      return "NN_GELU";
-                case GELUTanh:  return "NN_GELU_TANH";
-                case SiLU:      return "NN_SILU";
-                case Softmax:
-                    throw runtime_error(
-                        "ModelExpression: Softmax must be applied to the complete output vector.");
-            }
-
-            throw runtime_error("ModelExpression: unknown activation function.");
+            return embedded_activation_map().to_string(activation);
         };
 
         const auto emit_float_array =
@@ -1368,8 +1377,15 @@ string ModelExpression::get_expression_c_embedded() const
 
         if(uses_dense || uses_recurrent || uses_lstm)
         {
+            buffer << "typedef enum {";
+
+            const auto& activation_entries = embedded_activation_map().get_entries();
+
+            for (size_t i = 0; i < activation_entries.size(); ++i)
+                buffer << (i ? ", " : " ") << activation_entries[i].second;
+
             buffer
-                << "typedef enum { NN_IDENTITY, NN_SIGMOID, NN_TANH, NN_RELU, NN_LEAKY_RELU, NN_GELU, NN_GELU_TANH, NN_SILU } nn_activation;\n\n"
+                << " } nn_activation;\n\n"
                    "static float nn_activation_forward(nn_activation activation, float x)\n{\n"
                    "\tswitch (activation)\n\t{\n"
                    "\tcase NN_SIGMOID:    return 1.0f / (1.0f + expf(-x));\n"
@@ -1685,16 +1701,9 @@ string ModelExpression::get_expression_javascript() const
     replace_all_appearances(expression, "[", "_");
     replace_all_appearances(expression, "]", "_");
 
-    vector<string> lines;
-    for (string_view token_view : get_token_views(expression, '\n'))
-    {
-        if (token_view.empty()) continue;
-        string token(token_view);
-        if (token.size() > 1 && token.back() == '{') break;
-        if (token.size() > 1 && token.back() != ';') token += ';';
-        lines.push_back(std::move(token));
-    }
-    rename_spaced_var_definitions(lines);
+    // The bracket replacement above already ran over the whole expression, so
+    // this is the same input the other three emitters split.
+    const vector<string> lines = prepare_body_lines(expression);
 
     const bool has_softmax = expression.find("Softmax") != string::npos;
     const bool use_category_select = output_names.size() > 5;
