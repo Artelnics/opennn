@@ -77,13 +77,15 @@ private:
                          const ForwardPropagation&,
                          BackPropagationLM&) const;
 
-   float initial_damping_parameter = 0.0f;
+   // The real values. These used to read 0.0f here and be assigned properly in
+   // set_default(), so the declaration said the damping started at nothing.
+   float initial_damping_parameter = 1.0e-3f;
 
-   float minimum_damping_parameter = 0.0f;
+   float minimum_damping_parameter = 1.0e-6f;
 
-   float maximum_damping_parameter = 0.0f;
+   float maximum_damping_parameter = 1.0e6f;
 
-   float damping_parameter_factor = 0.0f;
+   float damping_parameter_factor = 10.0f;
 
    float minimum_loss_decrease = 0.0f;
 

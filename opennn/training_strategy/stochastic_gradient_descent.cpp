@@ -68,10 +68,6 @@ void StochasticGradientDescent::set_default()
 {
     name = "StochasticGradientDescent";
 
-    initial_learning_rate = 0.001f;
-    initial_decay = 0.001f;
-    momentum = 0.0f;
-    nesterov = false;
     batch_size = 0;
 
     training_loss_goal = 0.0f;

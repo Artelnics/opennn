@@ -40,13 +40,6 @@ void LevenbergMarquardtAlgorithm::set_default()
     maximum_time = 3600.0f;
 
     display_period = 10;
-
-    initial_damping_parameter = 1.0e-3f;
-
-    damping_parameter_factor = 10.0f;
-
-    minimum_damping_parameter = 1.0e-6f;
-    maximum_damping_parameter = 1.0e6f;
 }
 
 void LevenbergMarquardtAlgorithm::back_propagate(const Batch& batch,

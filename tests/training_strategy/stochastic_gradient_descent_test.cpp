@@ -768,3 +768,17 @@ TEST_F(StochasticGradientDescentTest, Determinism)
 
     EXPECT_FLOAT_EQ(error_first, error_second);
 }
+
+
+// initial_learning_rate and initial_decay used to be declared without an
+// initialiser and filled in by set_default(). They now carry their values in
+// the header, so this pins them: a default-constructed SGD must still report
+// what set_default() used to assign.
+TEST_F(StochasticGradientDescentTest, HeaderDefaultsMatchWhatSetDefaultUsedToAssign)
+{
+    const StochasticGradientDescent stochastic_gradient_descent;
+
+    EXPECT_FLOAT_EQ(stochastic_gradient_descent.get_initial_learning_rate(), 0.001f);
+    EXPECT_EQ(stochastic_gradient_descent.get_batch_size(), 0);
+    EXPECT_EQ(stochastic_gradient_descent.get_maximum_epochs(), 1000);
+}

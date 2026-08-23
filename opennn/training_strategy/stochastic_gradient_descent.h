@@ -47,9 +47,12 @@ private:
     void setup_optimizer_data(OptimizerData&, Index, Device) override;
     void on_epoch_begin(Index, OptimizerData&) override;
 
-    float initial_learning_rate;
+    // Previously left uninitialised and filled in by set_default(): a second
+    // constructor, or any path that skipped it, would have read indeterminate
+    // values.
+    float initial_learning_rate = 0.001f;
 
-    float initial_decay;
+    float initial_decay = 0.001f;
 
     float momentum = 0.0f;
 
