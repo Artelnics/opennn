@@ -1882,6 +1882,35 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
     return epoch_result;
 }
 
+// An epoch's batches minus the remainder. The tail is the last batch and only
+// exists when its size differs from the context's -- a rule train_epoch and
+// evaluate_epoch each spelled out for themselves, including the copy that has
+// to be owned somewhere because `whole` points into it.
+struct EpochBatches
+{
+    vector<vector<Index>> trimmed;
+    const vector<vector<Index>>* whole = nullptr;
+    bool has_tail = false;
+
+    Index number() const { return Index(whole->size()); }
+};
+
+
+static EpochBatches split_off_tail(const vector<vector<Index>>& batches, Index batch_size)
+{
+    EpochBatches split;
+
+    split.has_tail = Index(batches.back().size()) != batch_size;
+
+    if (split.has_tail)
+        split.trimmed.assign(batches.begin(), batches.end() - 1);
+
+    split.whole = split.has_tail ? &split.trimmed : &batches;
+
+    return split;
+}
+
+
 Loss::EvaluationResult Optimizer::train_epoch(
     TrainingContext& main_context,
     ThreadSafeQueue<Batch*>& empty_queue,
@@ -1902,13 +1931,10 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
     if(all_batches_number == 0) return epoch_result;
 
-    const bool has_tail = Index(batches.back().size()) != forward_propagation.batch_size;
-    vector<vector<Index>> complete_batches;
-    if(has_tail)
-        complete_batches.assign(batches.begin(), batches.end() - 1);
-
-    const vector<vector<Index>>& epoch_batches = has_tail ? complete_batches : batches;
-    const Index batches_number = Index(epoch_batches.size());
+    const EpochBatches split = split_off_tail(batches, forward_propagation.batch_size);
+    const bool has_tail = split.has_tail;
+    const vector<vector<Index>>& epoch_batches = *split.whole;
+    const Index batches_number = split.number();
 
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
     const bool on_gpu = neural_network->is_gpu();
@@ -2282,13 +2308,10 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
     if(all_batches_number == 0) return epoch_result;
 
-    const bool has_tail = Index(batches.back().size()) != forward_propagation.batch_size;
-    vector<vector<Index>> complete_batches;
-    if(has_tail)
-        complete_batches.assign(batches.begin(), batches.end() - 1);
-
-    const vector<vector<Index>>& epoch_batches = has_tail ? complete_batches : batches;
-    const Index batches_number = Index(epoch_batches.size());
+    const EpochBatches split = split_off_tail(batches, forward_propagation.batch_size);
+    const bool has_tail = split.has_tail;
+    const vector<vector<Index>>& epoch_batches = *split.whole;
+    const Index batches_number = split.number();
 
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
     const bool on_gpu = neural_network->is_gpu();
