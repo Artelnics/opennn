@@ -1349,6 +1349,76 @@ TEST_F(GpuComparison, ForecastingRecurrentAndLstmBf16Forward)
     compare(true);
 }
 
+// The cuDNN RNN keeps a descriptor, a weight space and three shape slots alive
+// across calls and rebuilds parts of them when the shape changes. Every other
+// RNN test drives one configuration once, so nothing covered the transitions:
+// this cycles one network through batch sizes that straddle the boundaries the
+// setup keys on, returning to sizes already seen so cached slots are reused
+// rather than only created, and checks every call against the CPU.
+//
+// What it does NOT catch, and this was measured rather than assumed: the stale
+// recurrent-bias holes fixed in ebc6cb14e. Reintroduce that bug and this test
+// still passes, because it needs a pooled buffer that is both already large
+// enough to skip the growth path and dirty, and a growing shape cycle supplies
+// neither. That class is caught by OPENNN_DEVICE_POISON=1, not by a functional
+// test -- which is the argument for putting the poison mode in CI.
+TEST_F(GpuComparison, RnnStateSurvivesRepeatedShapeChanges)
+{
+    constexpr Index past = 5;
+    constexpr Index features = 3;
+
+    // Straddles the batch<=64 boundary the LSTM setup keys its bias mode on,
+    // and returns to sizes already seen so cached slots are reused, not just
+    // created.
+    const vector<Index> batch_cycle = {2, 70, 5, 2, 96, 70, 2};
+
+    const auto check = [&](bool lstm)
+    {
+        SCOPED_TRACE(lstm ? "LongShortTermMemory" : "Recurrent");
+
+        const auto build = [&]() -> unique_ptr<NeuralNetwork>
+        {
+            if (lstm)
+                return make_unique<ForecastingLstmNetwork>(
+                    Shape{past, features}, Shape{6, 5}, Shape{1});
+
+            return make_unique<ForecastingNetwork>(
+                Shape{past, features}, Shape{6, 5}, Shape{1});
+        };
+
+        Configuration::instance().set(Device::CPU, Type::FP32);
+        unique_ptr<NeuralNetwork> cpu = build();
+        cpu->set_parameters_random();
+        const VectorR parameters = read_host_parameters(*cpu);
+
+        Configuration::instance().set(Device::CUDA, Type::FP32);
+        unique_ptr<NeuralNetwork> gpu = build();
+        gpu->set_parameters(parameters);
+        gpu->copy_parameters_device();
+
+        for (size_t step = 0; step < batch_cycle.size(); ++step)
+        {
+            const Index batch_size = batch_cycle[step];
+
+            SCOPED_TRACE("step " + to_string(step) + ", batch " + to_string(batch_size));
+
+            Tensor3 inputs(batch_size, past, features);
+            inputs.setRandom();
+
+            // No Configuration::set here: each network resolved its device at
+            // compile() and setting it again only warns.
+            const MatrixR reference = cpu->calculate_outputs(inputs);
+            const MatrixR actual = gpu->calculate_outputs(inputs);
+
+            EXPECT_LT(relative_difference(reference, actual), 1.0e-3f);
+        }
+    };
+
+    check(false);
+    check(true);
+}
+
+
 TEST_F(GpuComparison, ForecastingRecurrentGradient)
 {
     set_seed(7);
