@@ -314,6 +314,19 @@ vector<string> ModelExpression::split_expression_lines(const string& expression)
     return lines;
 }
 
+ModelExpression::ExportNames ModelExpression::collect_names() const
+{
+    ExportNames names;
+
+    names.inputs = get_flat_input_names();
+    names.outputs = neural_network->get_output_feature_names();
+    names.fixed_inputs = fix_names(names.inputs, "input_");
+    names.fixed_outputs = fix_names(names.outputs, "output_");
+
+    return names;
+}
+
+
 void ModelExpression::check_parameters_are_finite() const
 {
     if (neural_network->get_parameters_device() != Device::CPU)
@@ -611,24 +624,24 @@ void ModelExpression::emit_softmax_block(ostringstream& buffer, const LanguageSy
 
 string ModelExpression::get_expression_c() const
 {
-    const vector<string> output_names = neural_network->get_output_feature_names();
+    const ExportNames names = collect_names();
 
     string expression = build_expression();
-    apply_name_mapping(expression, output_names, fix_names(output_names, "output_"));
+    apply_name_mapping(expression, names.outputs, names.fixed_outputs);
     const vector<string> lines = prepare_body_lines(expression);
     const bool has_softmax = expression.find("Softmax") != string::npos;
 
     ostringstream buffer;
-    emit_c_prelude(buffer);
+    emit_c_prelude(buffer, names);
     emit_activations(buffer, expression, &ActivationBodies::c, {"Identity"});
-    emit_c_calculate_outputs(buffer, expression, lines, has_softmax);
-    emit_c_main(buffer);
+    emit_c_calculate_outputs(buffer, expression, lines, has_softmax, names);
+    emit_c_main(buffer, names);
     return buffer.str();
 }
 
-void ModelExpression::emit_c_prelude(ostringstream& buffer) const
+void ModelExpression::emit_c_prelude(ostringstream& buffer, const ExportNames& names) const
 {
-    const vector<string> input_names = get_flat_input_names();
+    const vector<string>& input_names = names.inputs;
 
     buffer << c_header;
 
@@ -661,12 +674,13 @@ void ModelExpression::emit_activations(ostringstream& buffer,
 void ModelExpression::emit_c_calculate_outputs(ostringstream& buffer,
                                                const string& expression,
                                                const vector<string>& lines,
-                                               bool has_softmax) const
+                                               bool has_softmax,
+                                               const ExportNames& names) const
 {
-    const vector<string> input_names = get_flat_input_names();
-    const vector<string> output_names = neural_network->get_output_feature_names();
-    const vector<string> fixed_input_names = fix_names(input_names, "input_");
-    const vector<string> fixed_output_names = fix_names(output_names, "output_");
+    const vector<string>& input_names = names.inputs;
+    const vector<string>& output_names = names.outputs;
+    const vector<string>& fixed_input_names = names.fixed_inputs;
+    const vector<string>& fixed_output_names = names.fixed_outputs;
 
     const Index inputs_number = input_names.size();
     const Index outputs_number = output_names.size();
@@ -702,10 +716,10 @@ void ModelExpression::emit_c_calculate_outputs(ostringstream& buffer,
     buffer << "\n\treturn out;\n}\n\n";
 }
 
-void ModelExpression::emit_c_main(ostringstream& buffer) const
+void ModelExpression::emit_c_main(ostringstream& buffer, const ExportNames& names) const
 {
-    const vector<string> input_names = get_flat_input_names();
-    const vector<string> output_names = neural_network->get_output_feature_names();
+    const vector<string>& input_names = names.inputs;
+    const vector<string>& output_names = names.outputs;
 
     const Index inputs_number = input_names.size();
     const Index outputs_number = output_names.size();
@@ -764,6 +778,8 @@ string ModelExpression::get_expression_c_embedded() const
     const NeuralNetwork::HostParametersGuard host_parameters(
         *const_cast<NeuralNetwork*>(neural_network));
 
+    const ExportNames names = collect_names();
+
     string result;
 
     {
@@ -776,7 +792,7 @@ string ModelExpression::get_expression_c_embedded() const
 
         check_parameters_are_finite();
 
-        const vector<string> input_names = get_flat_input_names();
+        const vector<string>& input_names = names.inputs;
         const Index inputs_number = neural_network->get_inputs_number();
         const Index outputs_number = neural_network->get_outputs_number();
 
@@ -1572,7 +1588,7 @@ string ModelExpression::get_expression_c_embedded() const
                << current
                << ";\n}\n\n";
 
-        emit_c_main(buffer);
+        emit_c_main(buffer, names);
 
         result = buffer.str();
     }
@@ -1581,10 +1597,12 @@ string ModelExpression::get_expression_c_embedded() const
 
 string ModelExpression::get_expression_php() const
 {
-    const vector<string> input_names = get_flat_input_names();
-    const vector<string> output_names = neural_network->get_output_feature_names();
-    const vector<string> fixed_input_names = fix_names(input_names, "input_");
-    const vector<string> fixed_output_names = fix_names(output_names, "output_");
+    const ExportNames names = collect_names();
+
+    const vector<string>& input_names = names.inputs;
+    const vector<string>& output_names = names.outputs;
+    const vector<string>& fixed_input_names = names.fixed_inputs;
+    const vector<string>& fixed_output_names = names.fixed_outputs;
 
     string expression = build_expression();
 
@@ -1621,17 +1639,17 @@ string ModelExpression::get_expression_php() const
     const bool has_softmax = expression.find("Softmax") != string::npos;
 
     ostringstream buffer;
-    emit_php_prelude(buffer);
+    emit_php_prelude(buffer, names);
     emit_activations(buffer, expression, &ActivationBodies::php, {});
-    emit_php_inputs_setup(buffer);
-    emit_php_body(buffer, lines, has_softmax);
-    emit_php_response(buffer);
+    emit_php_inputs_setup(buffer, names);
+    emit_php_body(buffer, lines, has_softmax, names);
+    emit_php_response(buffer, names);
     return buffer.str();
 }
 
-void ModelExpression::emit_php_prelude(ostringstream& buffer) const
+void ModelExpression::emit_php_prelude(ostringstream& buffer, const ExportNames& names) const
 {
-    const vector<string> input_names = get_flat_input_names();
+    const vector<string>& input_names = names.inputs;
 
     buffer << php_header;
     for (size_t i = 0; i < input_names.size(); ++i)
@@ -1639,9 +1657,9 @@ void ModelExpression::emit_php_prelude(ostringstream& buffer) const
     buffer << php_subheader;
 }
 
-void ModelExpression::emit_php_inputs_setup(ostringstream& buffer) const
+void ModelExpression::emit_php_inputs_setup(ostringstream& buffer, const ExportNames& names) const
 {
-    const vector<string> fixed_input_names = fix_names(get_flat_input_names(), "input_");
+    const vector<string>& fixed_input_names = names.fixed_inputs;
 
     buffer << "\nsession_start();\n"
               "if (isset($_GET['num0'])) { \n"
@@ -1653,9 +1671,9 @@ void ModelExpression::emit_php_inputs_setup(ostringstream& buffer) const
     buffer << "\n";
 }
 
-void ModelExpression::emit_php_body(ostringstream& buffer, const vector<string>& lines, bool has_softmax) const
+void ModelExpression::emit_php_body(ostringstream& buffer, const vector<string>& lines, bool has_softmax, const ExportNames& names) const
 {
-    const vector<string> fixed_output_names = fix_names(neural_network->get_output_feature_names(), "output_");
+    const vector<string>& fixed_output_names = names.fixed_outputs;
 
     emit_body_lines(buffer, lines, language_syntax(ProgrammingLanguage::PHP), nullptr);
 
@@ -1673,10 +1691,10 @@ void ModelExpression::emit_php_body(ostringstream& buffer, const vector<string>&
     }
 }
 
-void ModelExpression::emit_php_response(ostringstream& buffer) const
+void ModelExpression::emit_php_response(ostringstream& buffer, const ExportNames& names) const
 {
-    const vector<string> output_names = neural_network->get_output_feature_names();
-    const vector<string> fixed_output_names = fix_names(output_names, "output_");
+    const vector<string>& output_names = names.outputs;
+    const vector<string>& fixed_output_names = names.fixed_outputs;
 
     buffer << "\n$response = ['status' => 200,  'status_message' => 'ok'";
 
@@ -1693,8 +1711,10 @@ void ModelExpression::emit_php_response(ostringstream& buffer) const
 
 string ModelExpression::get_expression_javascript() const
 {
-    const vector<string> output_names = neural_network->get_output_feature_names();
-    const vector<string> fixes_output_names = fix_names(output_names, "output_");
+    const ExportNames names = collect_names();
+
+    const vector<string>& output_names = names.outputs;
+    const vector<string>& fixes_output_names = names.fixed_outputs;
 
     string expression = build_expression();
     apply_name_mapping(expression, output_names, fixes_output_names);
@@ -1709,16 +1729,16 @@ string ModelExpression::get_expression_javascript() const
     const bool use_category_select = output_names.size() > 5;
 
     ostringstream buffer;
-    emit_js_prelude(buffer);
-    emit_js_inputs_html(buffer);
-    emit_js_outputs_html(buffer, use_category_select);
-    emit_js_runtime(buffer, expression, lines, has_softmax, use_category_select);
+    emit_js_prelude(buffer, names);
+    emit_js_inputs_html(buffer, names);
+    emit_js_outputs_html(buffer, use_category_select, names);
+    emit_js_runtime(buffer, expression, lines, has_softmax, use_category_select, names);
     return buffer.str();
 }
 
-void ModelExpression::emit_js_prelude(ostringstream& buffer) const
+void ModelExpression::emit_js_prelude(ostringstream& buffer, const ExportNames& names) const
 {
-    const vector<string> input_names = get_flat_input_names();
+    const vector<string>& input_names = names.inputs;
 
     buffer << javascript_header;
     for (size_t i = 0; i < input_names.size(); ++i)
@@ -1726,10 +1746,10 @@ void ModelExpression::emit_js_prelude(ostringstream& buffer) const
     buffer << javascript_subheader;
 }
 
-void ModelExpression::emit_js_inputs_html(ostringstream& buffer) const
+void ModelExpression::emit_js_inputs_html(ostringstream& buffer, const ExportNames& names) const
 {
-    const vector<string> input_names = get_flat_input_names();
-    const vector<string> fixes_feature_names = fix_names(input_names, "input_");
+    const vector<string>& input_names = names.inputs;
+    const vector<string>& fixes_feature_names = names.fixed_inputs;
 
     const Scaling* scaling_layer = neural_network->has(LayerType::Scaling)
         ? static_cast<const Scaling*>(neural_network->get_first(LayerType::Scaling))
@@ -1772,7 +1792,7 @@ void ModelExpression::emit_js_inputs_html(ostringstream& buffer) const
     buffer << "</table>\n";
 }
 
-void ModelExpression::emit_js_outputs_html(ostringstream& buffer, bool use_category_select) const
+void ModelExpression::emit_js_outputs_html(ostringstream& buffer, bool use_category_select, const ExportNames& names) const
 {
     const vector<string> output_names = neural_network->get_output_feature_names();
     const vector<string> fixes_output_names = fix_names(output_names, "output_");
@@ -1835,12 +1855,13 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
                                       const string& expression,
                                       const vector<string>& lines,
                                       bool has_softmax,
-                                      bool use_category_select) const
+                                      bool use_category_select,
+                                      const ExportNames& names) const
 {
-    const vector<string> input_names = get_flat_input_names();
-    const vector<string> output_names = neural_network->get_output_feature_names();
-    const vector<string> fixes_feature_names = fix_names(input_names, "input_");
-    const vector<string> fixes_output_names = fix_names(output_names, "output_");
+    const vector<string>& input_names = names.inputs;
+    const vector<string>& output_names = names.outputs;
+    const vector<string>& fixes_feature_names = names.fixed_inputs;
+    const vector<string>& fixes_output_names = names.fixed_outputs;
 
     const Index inputs_number = input_names.size();
     const Index outputs_number = output_names.size();
@@ -1923,6 +1944,8 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
 
 string ModelExpression::get_expression_python() const
 {
+    const ExportNames names = collect_names();
+
     string expression = build_expression();
     for (const string& name : neural_network->get_output_feature_names())
         replace_all_word_appearances(expression, name, replace_reserved_keywords(name));
@@ -1931,18 +1954,18 @@ string ModelExpression::get_expression_python() const
     const bool has_softmax = expression.find("Softmax") != string::npos;
 
     ostringstream buffer;
-    emit_python_prelude(buffer);
-    emit_python_class_header(buffer);
+    emit_python_prelude(buffer, names);
+    emit_python_class_header(buffer, names);
     emit_activations(buffer, expression, &ActivationBodies::python, {"Identity"});
-    emit_python_calculate_outputs(buffer, expression, lines, has_softmax);
-    emit_python_batch_and_main(buffer);
+    emit_python_calculate_outputs(buffer, expression, lines, has_softmax, names);
+    emit_python_batch_and_main(buffer, names);
 
     string out = buffer.str();
     replace(out, ";", "");
     return out;
 }
 
-void ModelExpression::emit_python_prelude(ostringstream& buffer) const
+void ModelExpression::emit_python_prelude(ostringstream& buffer, const ExportNames& names) const
 {
     const vector<string> input_names = get_flat_input_names();
 
@@ -1952,7 +1975,7 @@ void ModelExpression::emit_python_prelude(ostringstream& buffer) const
     buffer << python_subheader;
 }
 
-void ModelExpression::emit_python_class_header(ostringstream& buffer) const
+void ModelExpression::emit_python_class_header(ostringstream& buffer, const ExportNames& names) const
 {
     const vector<string> input_names = get_flat_input_names();
 
@@ -1965,7 +1988,7 @@ void ModelExpression::emit_python_class_header(ostringstream& buffer) const
     for (size_t i = 0; i < input_names.size(); ++i)
     {
         if (i) inputs_list_str += ", ";
-        inputs_list_str += "'" + fix_names(input_names, "input_")[i] + "'";
+        inputs_list_str += "'" + names.fixed_inputs[i] + "'";
     }
 
     buffer << "\tdef __init__(self):\n"
@@ -1976,11 +1999,12 @@ void ModelExpression::emit_python_class_header(ostringstream& buffer) const
 void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
                                                     const string& expression,
                                                     const vector<string>& lines,
-                                                    bool has_softmax) const
+                                                    bool has_softmax,
+                                                    const ExportNames& names) const
 {
-    const vector<string> input_names = get_flat_input_names();
-    const vector<string> output_names = neural_network->get_output_feature_names();
-    const vector<string> fixed_output_names = fix_names(output_names, "output_");
+    const vector<string>& input_names = names.inputs;
+    const vector<string>& output_names = names.outputs;
+    const vector<string>& fixed_output_names = names.fixed_outputs;
 
     buffer << "\tdef calculate_outputs(self, inputs):\n";
 
@@ -2036,10 +2060,10 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
     buffer << "\t\treturn outputs\n\n";
 }
 
-void ModelExpression::emit_python_batch_and_main(ostringstream& buffer) const
+void ModelExpression::emit_python_batch_and_main(ostringstream& buffer, const ExportNames& names) const
 {
     const vector<string> input_names = get_flat_input_names();
-    const vector<string> fixed_output_names = fix_names(neural_network->get_output_feature_names(), "output_");
+    const vector<string>& fixed_output_names = names.fixed_outputs;
 
     const Index inputs_number = input_names.size();
     const Index outputs_number = fixed_output_names.size();

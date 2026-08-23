@@ -44,26 +44,42 @@ private:
 
     vector<string> get_flat_input_names() const;
 
+    // Every emitter needs the same four vectors, and each used to rebuild them
+    // from the network -- sixteen times for the inputs alone, once per loop
+    // iteration in the Python driver. Collected once per export instead.
+    struct ExportNames
+    {
+        vector<string> inputs;
+        vector<string> outputs;
+        vector<string> fixed_inputs;
+        vector<string> fixed_outputs;
+
+        Index inputs_number() const noexcept { return Index(inputs.size()); }
+        Index outputs_number() const noexcept { return Index(outputs.size()); }
+    };
+
+    ExportNames collect_names() const;
+
     void check_parameters_are_finite() const;
 
-    void emit_c_prelude(ostringstream&) const;
-    void emit_c_calculate_outputs(ostringstream&, const string&, const vector<string>&, bool) const;
-    void emit_c_main(ostringstream&) const;
+    void emit_c_prelude(ostringstream&, const ExportNames&) const;
+    void emit_c_calculate_outputs(ostringstream&, const string&, const vector<string>&, bool, const ExportNames&) const;
+    void emit_c_main(ostringstream&, const ExportNames&) const;
 
-    void emit_php_prelude(ostringstream&) const;
-    void emit_php_inputs_setup(ostringstream&) const;
-    void emit_php_body(ostringstream&, const vector<string>&, bool) const;
-    void emit_php_response(ostringstream&) const;
+    void emit_php_prelude(ostringstream&, const ExportNames&) const;
+    void emit_php_inputs_setup(ostringstream&, const ExportNames&) const;
+    void emit_php_body(ostringstream&, const vector<string>&, bool, const ExportNames&) const;
+    void emit_php_response(ostringstream&, const ExportNames&) const;
 
-    void emit_python_prelude(ostringstream&) const;
-    void emit_python_class_header(ostringstream&) const;
-    void emit_python_calculate_outputs(ostringstream&, const string&, const vector<string>&, bool) const;
-    void emit_python_batch_and_main(ostringstream&) const;
+    void emit_python_prelude(ostringstream&, const ExportNames&) const;
+    void emit_python_class_header(ostringstream&, const ExportNames&) const;
+    void emit_python_calculate_outputs(ostringstream&, const string&, const vector<string>&, bool, const ExportNames&) const;
+    void emit_python_batch_and_main(ostringstream&, const ExportNames&) const;
 
-    void emit_js_prelude(ostringstream&) const;
-    void emit_js_inputs_html(ostringstream&) const;
-    void emit_js_outputs_html(ostringstream&, bool) const;
-    void emit_js_runtime(ostringstream&, const string&, const vector<string>&, bool, bool) const;
+    void emit_js_prelude(ostringstream&, const ExportNames&) const;
+    void emit_js_inputs_html(ostringstream&, const ExportNames&) const;
+    void emit_js_outputs_html(ostringstream&, bool, const ExportNames&) const;
+    void emit_js_runtime(ostringstream&, const string&, const vector<string>&, bool, bool, const ExportNames&) const;
 
     static vector<string> split_expression_lines(const string&);
     static void rename_spaced_var_definitions(vector<string>&);
