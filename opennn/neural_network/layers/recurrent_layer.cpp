@@ -942,11 +942,11 @@ Recurrent::Recurrent(const Shape& new_input_shape,
 
 vector<TensorSpec> Recurrent::get_forward_specs(Index batch_size) const
 {
-    const Shape state_history {batch_size, time_steps, output_features};
-    const Shape step_input {batch_size, input_features};
+    const Shape state_history {batch_size, input_shape[0], output_features};
+    const Shape step_input {batch_size, input_shape[1]};
     const Shape step_hidden {batch_size, output_features};
     const Shape input_sequence {
-        batch_size, time_steps, ((input_features + 7) / 8) * 8};
+        batch_size, input_shape[0], ((input_shape[1] + 7) / 8) * 8};
 
     return {
         {state_history, compute_dtype},
@@ -965,7 +965,7 @@ vector<TensorSpec> Recurrent::get_backward_specs(Index batch_size) const
 {
     if (!is_trainable) return {};
 
-    const Shape step_in_shape  {batch_size, input_features};
+    const Shape step_in_shape  {batch_size, input_shape[1]};
     const Shape step_out_shape {batch_size, output_features};
 
     return {
@@ -975,14 +975,14 @@ vector<TensorSpec> Recurrent::get_backward_specs(Index batch_size) const
         {step_out_shape,    compute_dtype},
         {step_out_shape,    compute_dtype},
         {step_in_shape,     compute_dtype},
-        {{batch_size, time_steps, output_features}, compute_dtype},
-        {{batch_size, time_steps, ((input_features + 7) / 8) * 8}, compute_dtype},
+        {{batch_size, input_shape[0], output_features}, compute_dtype},
+        {{batch_size, input_shape[0], ((input_shape[1] + 7) / 8) * 8}, compute_dtype},
     };
 }
 
 void Recurrent::configure_operators()
 {
-    recurrent_op.set(input_features, time_steps, output_features,
+    recurrent_op.set(input_shape[1], input_shape[0], output_features,
                      recurrent_op.activation, compute_dtype);
 
     recurrent_op.return_sequences = return_sequences;
@@ -1004,8 +1004,7 @@ void Recurrent::set(const Shape& new_input_shape,
 {
     if (new_input_shape.empty() && new_output_shape.empty())
     {
-        time_steps      = 0;
-        input_features  = 0;
+        input_shape = {};
         output_features = 0;
         return;
     }
@@ -1013,8 +1012,7 @@ void Recurrent::set(const Shape& new_input_shape,
     check_rank(new_input_shape,  {2}, "Recurrent", "input");
     check_rank(new_output_shape, {1}, "Recurrent", "output");
 
-    time_steps      = new_input_shape[0];
-    input_features  = new_input_shape[1];
+    input_shape = new_input_shape;
     output_features = new_output_shape[0];
 
     set_activation_function(new_activation_function);
@@ -1026,8 +1024,7 @@ void Recurrent::set(const Shape& new_input_shape,
 void Recurrent::apply_input_shape(const Shape& new_input_shape)
 {
     check_rank(new_input_shape, {2}, "Recurrent", "input");
-    time_steps     = new_input_shape[0];
-    input_features = new_input_shape[1];
+    input_shape = new_input_shape;
     configure_operators();
 }
 
@@ -1079,7 +1076,7 @@ string Recurrent::write_expression(const vector<string>& feature_names,
             if (linear < ssize(output_names)) return output_names[linear];
             return internal;
         }
-        if (t == time_steps - 1)
+        if (t == input_shape[0] - 1)
         {
             if (j < ssize(output_names)) return output_names[j];
             return format("recurrent_output_{}", j);
@@ -1090,16 +1087,16 @@ string Recurrent::write_expression(const vector<string>& feature_names,
     ostringstream buffer;
     buffer.precision(10);
 
-    for (Index time_step = 0; time_step < time_steps; ++time_step)
+    for (Index time_step = 0; time_step < input_shape[0]; ++time_step)
     {
         for (Index j = 0; j < output_features; ++j)
         {
             const string current_var = step_var(time_step, j);
             buffer << current_var << " = " << activation_name << "( " << biases_map(j);
 
-            for (Index i = 0; i < input_features; ++i)
+            for (Index i = 0; i < input_shape[1]; ++i)
             {
-                const Index feature_index = time_step * input_features + i;
+                const Index feature_index = time_step * input_shape[1] + i;
                 if (feature_index < ssize(feature_names))
                     buffer << " + (" << feature_names[feature_index] << "*" << input_w_map(i, j) << ")";
             }

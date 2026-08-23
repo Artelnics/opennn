@@ -137,10 +137,10 @@ public:
               const string& = "Tanh",
               const string& = "recurrent_layer");
 
-    Shape get_input_shape() const noexcept override { return {time_steps, input_features}; }
+    Shape get_input_shape() const noexcept override { return input_shape; }
     Shape get_output_shape() const override
     {
-        return return_sequences ? Shape{time_steps, output_features}
+        return return_sequences ? Shape{input_shape[0], output_features}
                                 : Shape{output_features};
     }
 
@@ -194,8 +194,8 @@ private:
         Output
     };
 
-    Index time_steps      = 0;
-    Index input_features  = 0;
+    // Shape lives in Layer::input_shape, as it does for LongShortTermMemory;
+    // the two copies here had to be assigned in step with it by hand.
     Index output_features = 0;
     bool  return_sequences = false;
 
