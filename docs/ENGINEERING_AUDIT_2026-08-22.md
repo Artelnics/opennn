@@ -245,6 +245,25 @@ Not urgent -- the library is green with poison off. Worth revisiting if anyone r
 non-reproducible GPU training results, or if the block cache is made to recycle more
 aggressively. Worth adding mode 1 as a CI job once the three are cleared.
 
+## Benchmarks rot because nothing compiles them with CUDA
+
+CI compiles the benchmark set, but with `OpenNN_DISABLE_CUDA=ON`, so every target
+inside the `if(OPENNN_HAS_CUDA)` block -- `cudnn_fusion_probe`, `pooling_probe`, the
+transformer resident/train/energy drivers -- is never built by anything automatic.
+`cudnn_fusion_probe` had accumulated 36 calls to `Buffer::data` without parentheses and
+a `finalize()` call carrying an argument removed some time ago.
+
+Closing this needs a CUDA runner, which the CI file's own comment already notes.
+
+One correction to a claim in commit 60782dc47: that message wonders whether the CI
+benchmark job is green, because `opennn_higgs_cpu` is CPU-only and was broken. It was
+not a CI failure. `git log -S` puts the deletion of `Shape(size_t, Index)` in b6d49f4b9,
+earlier the same day -- the audit called it zero-caller, it had two in a file no local
+build compiles, and the benchmark set was not rebuilt after the deletion. CI would have
+caught it on that push. Verify locally with:
+
+    cmake --build build-<cuda-dir> --target benchmarks
+
 ## Where the GPU time actually goes, and the cuDNN fusion question
 
 Measured on ResNet-50 / CIFAR-10 (the datasets live in `$OPENNN_BENCH_DATA`, default
