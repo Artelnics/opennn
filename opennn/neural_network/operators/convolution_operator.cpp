@@ -263,26 +263,6 @@ ConvolutionOperator::ConvolutionOperator()
 
 ConvolutionOperator::~ConvolutionOperator() = default;
 
-void ConvolutionOperator::set(Index new_input_h, Index new_input_w,
-                      Index new_kernels_n, Index new_kernel_h, Index new_kernel_w, Index new_kernel_c,
-                      Index new_row_stride, Index new_column_stride,
-                      Index new_padding_h, Index new_padding_w,
-                      Type new_compute_dtype)
-{
-    input_height     = new_input_h;
-    input_width      = new_input_w;
-    kernels_number   = new_kernels_n;
-    kernel_height    = new_kernel_h;
-    kernel_width     = new_kernel_w;
-    kernel_channels  = new_kernel_c;
-    row_stride       = new_row_stride;
-    column_stride    = new_column_stride;
-    padding_height   = new_padding_h;
-    padding_width    = new_padding_w;
-    compute_dtype    = new_compute_dtype;
-
-}
-
 vector<TensorSpec> ConvolutionOperator::parameter_specs() const
 {
 

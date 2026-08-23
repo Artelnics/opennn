@@ -29,19 +29,20 @@ public:
                   bool = false,
                   const string& = "convolutional_layer");
 
-    Shape get_input_shape() const noexcept override { return {input_height, input_width, input_channels}; }
+    Shape get_input_shape() const noexcept override
+    { return {convolution.input_height, convolution.input_width, input_channels}; }
     Shape get_output_shape() const override;
 
     Index get_output_height() const;
     Index get_output_width() const;
 
-    Index get_kernel_height() const noexcept { return kernel_height; }
-    Index get_kernel_width() const noexcept { return kernel_width; }
-    Index get_kernel_channels() const noexcept { return kernel_channels; }
-    Index get_kernels_number() const noexcept { return kernels_number; }
+    Index get_kernel_height() const noexcept { return convolution.kernel_height; }
+    Index get_kernel_width() const noexcept { return convolution.kernel_width; }
+    Index get_kernel_channels() const noexcept { return convolution.kernel_channels; }
+    Index get_kernels_number() const noexcept { return convolution.kernels_number; }
 
-    Index get_row_stride() const noexcept { return row_stride; }
-    Index get_column_stride() const noexcept { return column_stride; }
+    Index get_row_stride() const noexcept { return convolution.row_stride; }
+    Index get_column_stride() const noexcept { return convolution.column_stride; }
 
     Index get_padding_height() const;
     Index get_padding_width() const;
@@ -107,17 +108,9 @@ private:
     bool forward_propagate_folded(ForwardPropagation&, size_t);
 #endif
 
-    Index input_height = 0;
-    Index input_width = 0;
+    // The geometry lives in the operator, not in a second copy here; only the
+    // input channel count and the two policy flags are the layer's own.
     Index input_channels = 0;
-
-    Index kernels_number = 0;
-    Index kernel_height = 0;
-    Index kernel_width = 0;
-    Index kernel_channels = 0;
-
-    Index row_stride = 1;
-    Index column_stride = 1;
 
     bool use_padding = false;
     bool residual = false;

@@ -60,11 +60,6 @@ struct ConvolutionOperator : Operator
                           bool relu, TensorView& output) const;
 #endif
 
-    void set(Index, Index,
-             Index, Index, Index, Index,
-             Index, Index,
-             Index, Index,
-             Type);
 
     vector<TensorSpec> parameter_specs() const override;
     vector<SlotQuantization> parameter_quantization() const override;

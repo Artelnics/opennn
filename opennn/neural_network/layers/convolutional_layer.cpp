@@ -95,21 +95,21 @@ Convolutional::Convolutional(const Shape& new_input_shape,
 
 Shape Convolutional::get_output_shape() const
 {
-    return { get_output_height(), get_output_width(), kernels_number };
+    return { get_output_height(), get_output_width(), convolution.kernels_number };
 }
 
 Index Convolutional::get_output_height() const
 {
     return use_padding
-        ? ceil_div(input_height, row_stride)
-        : (input_height - kernel_height) / row_stride + 1;
+        ? ceil_div(convolution.input_height, convolution.row_stride)
+        : (convolution.input_height - convolution.kernel_height) / convolution.row_stride + 1;
 }
 
 Index Convolutional::get_output_width() const
 {
     return use_padding
-        ? ceil_div(input_width, column_stride)
-        : (input_width - kernel_width) / column_stride + 1;
+        ? ceil_div(convolution.input_width, convolution.column_stride)
+        : (convolution.input_width - convolution.kernel_width) / convolution.column_stride + 1;
 }
 
 Index Convolutional::get_padding_height() const
@@ -120,7 +120,7 @@ Index Convolutional::get_padding_height() const
     // negative and integer truncation turned it into -1, which then reached the
     // im2col loops and the cuDNN descriptor as a negative padding.
     const Index total_padding =
-        max(Index(0), (get_output_height() - 1) * row_stride + kernel_height - input_height);
+        max(Index(0), (get_output_height() - 1) * convolution.row_stride + convolution.kernel_height - convolution.input_height);
 
     return (total_padding + 1) / 2;
 }
@@ -130,26 +130,26 @@ Index Convolutional::get_padding_width() const
     if (!use_padding) return 0;
 
     const Index total_padding =
-        max(Index(0), (get_output_width() - 1) * column_stride + kernel_width - input_width);
+        max(Index(0), (get_output_width() - 1) * convolution.column_stride + convolution.kernel_width - convolution.input_width);
 
     return (total_padding + 1) / 2;
 }
 
 vector<TensorSpec> Convolutional::get_forward_specs(Index batch_size) const
 {
-    const Shape output_shape = {batch_size, get_output_height(), get_output_width(), kernels_number};
+    const Shape output_shape = {batch_size, get_output_height(), get_output_width(), convolution.kernels_number};
     const Type act = compute_dtype;
 
     const Shape convolution_view_shape = batch_norm.active() ? output_shape          : Shape{};
-    const Shape bn_stat_shape          = batch_norm.active() ? Shape{kernels_number} : Shape{};
+    const Shape bn_stat_shape          = batch_norm.active() ? Shape{convolution.kernels_number} : Shape{};
 
     // Packed ReLU mask of the BN output, one bit per element, written by the
     // library's own BN forward and read by its backward in place of Y (see
     // BatchNormForwardRung). Eight channels per byte, so only for channel
     // counts that pack.
-    const bool relu_mask = batch_norm.active() && batch_norm.fuse_relu && kernels_number % 8 == 0;
+    const bool relu_mask = batch_norm.active() && batch_norm.fuse_relu && convolution.kernels_number % 8 == 0;
     const Shape relu_mask_shape = relu_mask
-        ? Shape{batch_size, get_output_height(), get_output_width(), kernels_number / 8}
+        ? Shape{batch_size, get_output_height(), get_output_width(), convolution.kernels_number / 8}
         : Shape{};
 
     return {
@@ -185,11 +185,11 @@ void Convolutional::update_convolution_operator()
 {
     convolution.use_bias = !batch_norm.active();
 
-    convolution.set(input_height, input_width,
-                    kernels_number, kernel_height, kernel_width, kernel_channels,
-                    row_stride, column_stride,
-                    get_padding_height(), get_padding_width(),
-                    compute_dtype);
+    // The geometry already lives in the operator -- the layer writes straight
+    // into it -- so only the derived padding and the dtype are set here.
+    convolution.padding_height = get_padding_height();
+    convolution.padding_width  = get_padding_width();
+    convolution.compute_dtype  = compute_dtype;
 
     convolution.output_slots = batch_norm.active()
         ? vector<size_t>{ConvolutionView}
@@ -232,17 +232,17 @@ void Convolutional::set(const Shape& new_input_shape,
                                        residual,
                                        new_label);
 
-    input_height    = new_input_shape[0];
-    input_width     = new_input_shape[1];
+    convolution.input_height    = new_input_shape[0];
+    convolution.input_width     = new_input_shape[1];
     input_channels  = new_input_shape[2];
 
-    kernel_height   = new_kernel_shape[0];
-    kernel_width    = new_kernel_shape[1];
-    kernel_channels = new_kernel_shape[2];
-    kernels_number  = new_kernel_shape[3];
+    convolution.kernel_height   = new_kernel_shape[0];
+    convolution.kernel_width    = new_kernel_shape[1];
+    convolution.kernel_channels = new_kernel_shape[2];
+    convolution.kernels_number  = new_kernel_shape[3];
 
-    row_stride      = new_stride_shape[0];
-    column_stride   = new_stride_shape[1];
+    convolution.row_stride      = new_stride_shape[0];
+    convolution.column_stride   = new_stride_shape[1];
 
     use_padding     = (new_convolution_type == "Same");
 
@@ -257,7 +257,7 @@ void Convolutional::set(const Shape& new_input_shape,
     // through ActivationOperator::from_JSON, not through this function.
     set_activation_function(new_activation_function);
 
-    batch_norm.features = new_batch_normalization ? kernels_number : 0;
+    batch_norm.features = new_batch_normalization ? convolution.kernels_number : 0;
 
     update_convolution_operator();
 }
@@ -266,8 +266,8 @@ void Convolutional::apply_input_shape(const Shape& new_input_shape)
 {
     throw_if(new_input_shape.get_rank() != 3, "Input shape rank must be 3.");
 
-    input_height = new_input_shape[0];
-    input_width = new_input_shape[1];
+    convolution.input_height = new_input_shape[0];
+    convolution.input_width = new_input_shape[1];
     input_channels = new_input_shape[2];
 
     update_convolution_operator();
@@ -289,7 +289,7 @@ void Convolutional::set_activation_function(const string& new_activation_functio
 
 void Convolutional::set_batch_normalization(bool new_batch_normalization)
 {
-    batch_norm.features = new_batch_normalization ? kernels_number : 0;
+    batch_norm.features = new_batch_normalization ? convolution.kernels_number : 0;
     update_convolution_operator();
 }
 
@@ -321,14 +321,14 @@ void Convolutional::read_JSON_body(const Json* convolutional_layer_element)
                                        new_residual,
                                        label);
 
-    kernel_height   = new_kernel_height;
-    kernel_width    = new_kernel_width;
-    kernel_channels = new_kernel_channels;
-    kernels_number  = new_kernels_number;
-    row_stride      = stride_shape[0];
-    column_stride   = stride_shape[1];
+    convolution.kernel_height   = new_kernel_height;
+    convolution.kernel_width    = new_kernel_width;
+    convolution.kernel_channels = new_kernel_channels;
+    convolution.kernels_number  = new_kernels_number;
+    convolution.row_stride      = stride_shape[0];
+    convolution.column_stride   = stride_shape[1];
     use_padding     = (convolution_type == "Same");
-    batch_norm.features = new_batch_normalization ? kernels_number : 0;
+    batch_norm.features = new_batch_normalization ? convolution.kernels_number : 0;
     residual = new_residual;
 }
 
@@ -350,10 +350,10 @@ void Convolutional::load_darknet_weights(FILE* f)
 {
     throw_if(!f, "load_darknet_weights: file handle is null.");
 
-    const Index O  = kernels_number;
-    const Index kH = kernel_height;
-    const Index kW = kernel_width;
-    const Index I  = kernel_channels;
+    const Index O  = convolution.kernels_number;
+    const Index kH = convolution.kernel_height;
+    const Index kW = convolution.kernel_width;
+    const Index I  = convolution.kernel_channels;
     const Index total_weights = O * kH * kW * I;
 
     if (batch_norm.active())
@@ -442,13 +442,13 @@ bool Convolutional::forward_propagate_folded(ForwardPropagation& forward_propaga
     }
 
     const Index weight_count = convolution.weights.size();
-    const Index kernel_size  = kernel_height * kernel_width * kernel_channels;
+    const Index kernel_size  = convolution.kernel_height * convolution.kernel_width * convolution.kernel_channels;
 
     if (folded_dirty)
     {
-        folded_parameters.resize_bytes((weight_count + kernels_number) * Index(sizeof(float)),
+        folded_parameters.resize_bytes((weight_count + convolution.kernels_number) * Index(sizeof(float)),
                                        Device::CUDA);
-        conv_bn_fold_cuda(kernels_number, kernel_size,
+        conv_bn_fold_cuda(convolution.kernels_number, kernel_size,
                           convolution.weights.as<float>(),
                           batch_norm.gamma.as<float>(), batch_norm.beta.as<float>(),
                           batch_norm.running_mean.as<float>(),
@@ -460,10 +460,10 @@ bool Convolutional::forward_propagate_folded(ForwardPropagation& forward_propaga
     }
 
     const TensorView folded_weights(folded_parameters.data(),
-        Shape{kernel_channels, kernels_number}, Type::FP32, Device::CUDA);
+        Shape{convolution.kernel_channels, convolution.kernels_number}, Type::FP32, Device::CUDA);
 
     const TensorView folded_bias(folded_parameters.as<float>() + weight_count,
-                                 Shape{kernels_number}, Type::FP32, Device::CUDA);
+                                 Shape{convolution.kernels_number}, Type::FP32, Device::CUDA);
 
     const bool relu = batch_norm.fuse_relu;
     TensorView& output = batch_norm.get_output(forward_propagation, layer);
