@@ -22,42 +22,6 @@
 namespace opennn
 {
 
-#ifdef OPENNN_HAS_CUDA
-
-static void update_parameters_cuda(BackPropagation& back_propagation,
-                                   OptimizerData& optimizer_data,
-                                   float current_learning_rate,
-                                   float momentum,
-                                   bool nesterov)
-{
-    NeuralNetwork* const neural_network = back_propagation.get_neural_network();
-
-    const Index parameters_number = neural_network->get_parameters_buffer_size();
-
-    float* const velocity_ptr = momentum > 0.0f
-        ? optimizer_data.views[StochasticGradientDescent::Velocity].as<float>()
-        : nullptr;
-
-    PROFILE_SCOPE("optim:sgd_update_cuda");
-    sgd_update_cuda(
-        parameters_number,
-        neural_network->get_parameters_data(),
-        velocity_ptr,
-        back_propagation.gradient.as<float>(),
-        current_learning_rate,
-        momentum,
-        nesterov,
-        neural_network->get_parameters_bf16_mirror_data());
-}
-
-#else
-
-OPENNN_CUDA_STUB(void, update_parameters_cuda,
-                 (BackPropagation&, OptimizerData&,
-                  float, float, bool))
-
-#endif
-
 StochasticGradientDescent::StochasticGradientDescent(Loss* new_loss)
     : Optimizer(new_loss)
 {
@@ -117,8 +81,25 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     clip_gradient_norm(back_propagation, gradient_clip_norm);
 
     if (neural_network->is_gpu())
-        return update_parameters_cuda(back_propagation, optimizer_data,
-                                      current_learning_rate, momentum, nesterov);
+    {
+#ifdef OPENNN_HAS_CUDA
+        float* const velocity_ptr = momentum > 0.0f
+            ? optimizer_data.views[Velocity].as<float>()
+            : nullptr;
+
+        PROFILE_SCOPE("optim:sgd_update_cuda");
+
+        return sgd_update_cuda(
+                   neural_network->get_parameters_buffer_size(),
+                   neural_network->get_parameters_data(),
+                   velocity_ptr,
+                   back_propagation.gradient.as<float>(),
+                   current_learning_rate, momentum, nesterov,
+                   neural_network->get_parameters_bf16_mirror_data());
+#else
+        throw runtime_error("SGD parameter updates on GPU require CUDA support.");
+#endif
+    }
 
     VectorMap parameters = neural_network->get_parameters_map();
 

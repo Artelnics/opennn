@@ -22,44 +22,6 @@
 namespace opennn
 {
 
-#ifdef OPENNN_HAS_CUDA
-
-static void update_parameters_cuda(BackPropagation& back_propagation,
-                                   OptimizerData& optimization_data,
-                                   float beta_1,
-                                   float beta_2,
-                                   float learning_rate,
-                                   float bias_correction_1,
-                                   float bias_correction_2)
-{
-    NeuralNetwork* const neural_network = back_propagation.get_neural_network();
-
-    PROFILE_SCOPE("optim:adam_update_cuda");
-    const Index parameters_number = neural_network->get_parameters_buffer_size();
-
-    adam_update_cuda(
-        parameters_number,
-        neural_network->get_parameters_data(),
-        optimization_data.views[AdaptiveMomentEstimation::GradientMoment].as<float>(),
-        optimization_data.views[AdaptiveMomentEstimation::SquareGradientMoment].as<float>(),
-        back_propagation.gradient.as<float>(),
-        beta_1,
-        beta_2,
-        learning_rate,
-        EPSILON,
-        bias_correction_1,
-        bias_correction_2,
-        neural_network->get_parameters_bf16_mirror_data());
-}
-
-#else
-
-OPENNN_CUDA_STUB(void, update_parameters_cuda,
-                 (BackPropagation&, OptimizerData&,
-                  float, float, float, float, float))
-
-#endif
-
 AdaptiveMomentEstimation::AdaptiveMomentEstimation(Loss* new_loss)
     : Optimizer(new_loss)
 {
@@ -192,9 +154,23 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const float bias_correction_2 = 1.0f - pow(beta_2, iteration);
 
     if (neural_network->is_gpu())
-        return update_parameters_cuda(back_propagation, optimization_data,
-                                      beta_1, beta_2, learning_rate,
-                                      bias_correction_1, bias_correction_2);
+    {
+#ifdef OPENNN_HAS_CUDA
+        PROFILE_SCOPE("optim:adam_update_cuda");
+
+        return adam_update_cuda(
+                   neural_network->get_parameters_buffer_size(),
+                   neural_network->get_parameters_data(),
+                   optimization_data.views[GradientMoment].as<float>(),
+                   optimization_data.views[SquareGradientMoment].as<float>(),
+                   back_propagation.gradient.as<float>(),
+                   beta_1, beta_2, learning_rate, EPSILON,
+                   bias_correction_1, bias_correction_2,
+                   neural_network->get_parameters_bf16_mirror_data());
+#else
+        throw runtime_error("Adam parameter updates on GPU require CUDA support.");
+#endif
+    }
 
     VectorMap parameters = neural_network->get_parameters_map();
 
