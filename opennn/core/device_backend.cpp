@@ -414,6 +414,20 @@ public:
         candidates.pop_back();
         cached_bytes -= byte_count;
 
+        // OPENNN_DEVICE_POISON=1 hands the block back full of 0xFF, which is a
+        // NaN as fp32 and as bf16 and -1 as int32, rather than the previous
+        // tenant's bytes. A buffer whose contents are only correct because the
+        // allocator happened to return something harmless then fails loudly
+        // and deterministically instead of drifting a few percent depending on
+        // what ran before it -- which is exactly how the stale recurrent-bias
+        // holes in the cuDNN RNN weight space read before they were found.
+        if (poison_on_reuse)
+        {
+            const cudaError_t status = cudaMemset(pointer, poison_byte(), size_t(byte_count));
+
+            if (status != cudaSuccess) cudaGetLastError();
+        }
+
         return pointer;
     }
 
@@ -505,8 +519,20 @@ private:
 
     CudaBlockCache()
         : is_enabled(env_flag_enabled("OPENNN_DEVICE_CACHE", true)),
+          poison_on_reuse(env_flag_enabled("OPENNN_DEVICE_POISON", false)),
           byte_cap(read_cap_bytes())
     {
+    }
+
+    // 0xFF (NaN as fp32 and bf16) by default; OPENNN_DEVICE_POISON=2 writes
+    // zeros instead, which is the control: a site that genuinely reads memory
+    // it never wrote and expects zero passes under 2 and fails under 1, while
+    // anything that fails under both means the poison is landing on a block
+    // that is still live -- a bug in this cache, not in the caller.
+    static int poison_byte()
+    {
+        const char* const value = getenv("OPENNN_DEVICE_POISON");
+        return (value && value[0] == '2') ? 0x00 : 0xFF;
     }
 
     static Index read_cap_bytes()
@@ -578,6 +604,7 @@ private:
     }
 
     const bool is_enabled;
+    const bool poison_on_reuse;
     const Index byte_cap;
     Index cached_bytes = 0;
     unordered_map<Index, vector<CachedBlock>> blocks;
