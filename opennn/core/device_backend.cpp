@@ -113,8 +113,15 @@ static int device_poison_byte()
 // wiping good data instead of the previous tenant's.
 static void fill_device_memory(void* pointer, int value, Index byte_count)
 {
-    if (cudaMemsetAsync(pointer, value, size_t(byte_count),
-                        device::get_compute_stream()) != cudaSuccess)
+    // Ordering has to be airtight or the diagnostic accuses the wrong code: a
+    // fill that lands after the kernel which filled the buffer looks exactly
+    // like a read of uninitialised memory. The compute stream alone is not
+    // enough, because a block can be taken on one lane and used on another, so
+    // this is a full device sync. It is slow, and it is a debug mode.
+    if (cudaMemset(pointer, value, size_t(byte_count)) != cudaSuccess)
+        cudaGetLastError();
+
+    if (cudaDeviceSynchronize() != cudaSuccess)
         cudaGetLastError();
 }
 

@@ -64,6 +64,7 @@ TEST(MeanSquaredErrorTest, GpuWorkspaceIsForwardPropagationOwned)
         make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
     neural_network.compile(Device::CUDA);
     neural_network.get_parameters_map().setConstant(0.25f);
+    neural_network.copy_parameters_device();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
