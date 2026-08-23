@@ -68,6 +68,62 @@ jobs:
       - name: Build benchmarks
         run: cmake --build build-benchmarks --target benchmarks
 
+  # No GPU is needed to *compile* CUDA, only to run it, and compiling is what
+  # stops the rot: this would have caught all five benchmarks found broken in
+  # one sweep, and the Shape(size_t, Index) deletion that broke opennn_higgs_cpu
+  # because the audit called a constructor zero-caller when a file nothing
+  # compiles had two.
+  #
+  # Runs on a hosted runner. CMAKE_CUDA_ARCHITECTURES must be explicit: the
+  # default is "native", which needs a GPU present to interrogate.
+  cuda-compile-only:
+    name: CUDA compile-only (Ubuntu, no GPU)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+
+      # NVIDIA's own apt repository, so no third-party action is trusted with
+      # the build. cuDNN comes from the same place: the library's CMake makes
+      # it REQUIRED once CUDA is enabled.
+      - name: Install the CUDA toolkit and cuDNN
+        run: |
+          wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+          sudo dpkg -i cuda-keyring_1.1-1_all.deb
+          sudo apt-get update
+          sudo apt-get install -y cuda-toolkit-12-6 libcudnn9-dev-cuda-12
+          echo "/usr/local/cuda/bin" >> $GITHUB_PATH
+
+      - name: Cache CMake dependencies
+        uses: actions/cache@v4
+        with:
+          path: build-cuda-compile/_deps
+          key: deps-cuda-${{ runner.os }}-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: deps-cuda-${{ runner.os }}-
+
+      # Tests and benchmarks both on: the point is to compile everything the
+      # CPU job cannot reach, which includes the CUDA-only benchmark targets.
+      - name: Configure (CUDA on, no GPU present)
+        run: >
+          cmake -S . -B build-cuda-compile -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_CUDA_ARCHITECTURES=75
+          -DOpenNN_BUILD_TESTS=ON
+          -DOpenNN_BUILD_EXAMPLES=OFF
+          -DOpenNN_BUILD_BENCHMARKS=ON
+
+      - name: Build the library and tests
+        run: cmake --build build-cuda-compile
+
+      - name: Build the benchmarks
+        run: cmake --build build-cuda-compile --target benchmarks
+
   # Everything above is CPU-only, so every CUDA-guarded target -- the library's
   # own .cu files aside, the cudnn_fusion_probe, pooling_probe and the
   # transformer drivers -- is built by nothing automatic. They rot: five
