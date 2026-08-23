@@ -65,6 +65,33 @@ static void finalize_build(NeuralNetwork& network)
     network.set_parameters_glorot();
 }
 
+
+// Every v8 detection head starts with its classification logits biased low, so
+// the first epochs are not spent unlearning a prior that says every cell holds
+// an object. Both FPNv8 branches -- CSPDarknet53v11 and Darknet53/CSPDarknet53
+// -- built this loop for themselves, character for character.
+static void bias_v8_class_logits(NeuralNetwork& network)
+{
+    constexpr float PRIOR_BIAS = -4.5951f;
+
+    for (const unique_ptr<Layer>& layer : network.get_layers())
+    {
+        auto* const convolutional = dynamic_cast<Convolutional*>(layer.get());
+
+        if (!convolutional || !convolutional->get_label().ends_with("_cls_out"))
+            continue;
+
+        vector<TensorView>& views = convolutional->get_parameter_views();
+
+        if (views.empty() || views[0].empty())
+            continue;
+
+        float* const biases = views[0].as<float>();
+
+        fill(biases, biases + convolutional->get_kernels_number(), PRIOR_BIAS);
+    }
+}
+
 static void add_dense_stack(NeuralNetwork& network,
                             const Shape& complexity_dimensions,
                             const string& hidden_activation)
@@ -537,6 +564,36 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
     const Shape pool_stride{2, 2};
     const Shape no_padding{0, 0};
 
+    // Spatial pyramid pooling - fast: a 1x1 down-projection, three chained
+    // 5x5 max-pools at stride 1, the four streams concatenated, and a 1x1 back
+    // up. Both users build the same graph but wrap their convolutions
+    // differently -- the v11 branch splits the activation into its own layer --
+    // so the block builder is a parameter rather than baked in.
+    const auto add_sppf =
+        [&](Index input_index,
+            Index channels,
+            const string& prefix,
+            const function<Index(Index, const Shape&, const string&)>& add_block) -> Index
+    {
+        const Index half = channels / 2;
+
+        const Index projected = add_block(input_index, Shape{1, 1, channels, half}, prefix + "_in");
+        const Shape shape = get_layer(projected)->get_output_shape();
+
+        const Index pool_1 = add_layer(make_unique<Pooling>(
+            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", prefix + "_p1"), {projected});
+        const Index pool_2 = add_layer(make_unique<Pooling>(
+            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", prefix + "_p2"), {pool_1});
+        const Index pool_3 = add_layer(make_unique<Pooling>(
+            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", prefix + "_p3"), {pool_2});
+
+        const Index concatenated = add_layer(make_unique<Concatenation>(
+            shape, vector<Index>{half, half, half, half}, prefix + "_cat"),
+            {projected, pool_1, pool_2, pool_3});
+
+        return add_block(concatenated, Shape{1, 1, 4 * half, channels}, prefix + "_out");
+    };
+
     auto add_conv = [&](Index input_index, const Shape& kernel_shape,
                         const char* activation, const Shape& kernel_stride,
                         bool batch_norm, const string& name) -> Index {
@@ -830,18 +887,9 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
         x = add_cba(x, Shape{3,3,c4,c5}, stride_2, "c8_s4_down");
         x = add_c2f(x, c5, c5, d4, true, "c8_s4");
 
-        // SPPF: cv_in → 3 sequential MaxPool(k=5,s=1,p=2) → concat(4 streams) → cv_out
-        {
-            const Index half = c5 / 2;
-            const Index si   = add_cba(x, Shape{1,1,c5,half}, stride, "c8_sppf_in");
-            const Shape ss   = get_layer(si)->get_output_shape();
-            const Index sp1 = add_layer(make_unique<Pooling>(ss, Shape{5,5}, Shape{1,1}, Shape{2,2}, "MaxPooling", "c8_sppf_p1"), {si});
-            const Index sp2 = add_layer(make_unique<Pooling>(ss, Shape{5,5}, Shape{1,1}, Shape{2,2}, "MaxPooling", "c8_sppf_p2"), {sp1});
-            const Index sp3 = add_layer(make_unique<Pooling>(ss, Shape{5,5}, Shape{1,1}, Shape{2,2}, "MaxPooling", "c8_sppf_p3"), {sp2});
-            add_layer(make_unique<Concatenation>(ss, vector<Index>{half,half,half,half}, "c8_sppf_cat"),
-                      {si, sp1, sp2, sp3});
-            x = add_cba(get_layers_number()-1, Shape{1,1,4*half,c5}, stride, "c8_sppf_out");
-        }
+        x = add_sppf(x, c5, "c8_sppf",
+                     [&](Index in, const Shape& kernel, const string& name)
+                     { return add_cba(in, kernel, stride, name); });
         const Index p5_idx = x;  // SPPF output (stride=32)
 
         if (head_style == HeadStyle::FPNv8)
@@ -903,18 +951,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             compile();
             set_parameters_random();
-            {
-                static constexpr float PRIOR_BIAS = -4.5951f;
-                for (const auto& layer : get_layers())
-                {
-                    auto* conv = dynamic_cast<Convolutional*>(layer.get());
-                    if (!conv || !conv->get_label().ends_with("_cls_out")) continue;
-                    auto& views = conv->get_parameter_views();
-                    if (views.empty() || views[0].empty()) continue;
-                    float* b = views[0].as<float>();
-                    fill(b, b + conv->get_kernels_number(), PRIOR_BIAS);
-                }
-            }
+            bias_v8_class_logits(*this);
             return;
         }
 
@@ -1003,24 +1040,9 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             Index fpn_entry = c5_index;
             if (use_sppf)
-            {
-                const Shape c5_shape = get_layer(c5_index)->get_output_shape();
-                const Index c5_ch   = c5_shape[2];
-                const Index half_ch = c5_ch / 2;
-
-                const Index sppf_in = add_conv(c5_index, Shape{1, 1, c5_ch, half_ch}, act, stride, true, "sppf_in");
-                const Shape s_shape = get_layer(sppf_in)->get_output_shape();
-
-                const Index p1 = add_layer(make_unique<Pooling>(s_shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", "sppf_p1"), {sppf_in});
-                const Index p2 = add_layer(make_unique<Pooling>(s_shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", "sppf_p2"), {p1});
-                const Index p3 = add_layer(make_unique<Pooling>(s_shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", "sppf_p3"), {p2});
-
-                const Index sppf_cat = add_layer(make_unique<Concatenation>(s_shape,
-                                                                            vector<Index>{half_ch, half_ch, half_ch, half_ch}, "sppf_cat"),
-                                                 {sppf_in, p1, p2, p3});
-
-                fpn_entry = add_conv(sppf_cat, Shape{1, 1, 2 * c5_ch, c5_ch}, act, stride, true, "sppf_out");
-            }
+                fpn_entry = add_sppf(c5_index, get_layer(c5_index)->get_output_shape()[2], "sppf",
+                                     [&](Index in, const Shape& kernel, const string& name)
+                                     { return add_conv(in, kernel, act, stride, true, name); });
 
             const auto [p5n, p4n, p3n] = build_fpn_trunk(fpn_entry, "");
 
@@ -1103,18 +1125,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             compile();
             set_parameters_random();
-            {
-                static constexpr float PRIOR_BIAS = -4.5951f;
-                for (const auto& layer : get_layers())
-                {
-                    auto* conv = dynamic_cast<Convolutional*>(layer.get());
-                    if (!conv || !conv->get_label().ends_with("_cls_out")) continue;
-                    auto& views = conv->get_parameter_views();
-                    if (views.empty() || views[0].empty()) continue;
-                    float* b = views[0].as<float>();
-                    fill(b, b + conv->get_kernels_number(), PRIOR_BIAS);
-                }
-            }
+            bias_v8_class_logits(*this);
             return;
         }
     }
