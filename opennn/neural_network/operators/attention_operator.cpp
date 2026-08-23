@@ -263,19 +263,6 @@ constexpr size_t sdpa_dropout_state = 3;
 // A (B, H, S, D) tensor as the graph sees it, over memory that is either
 // (B, H, S, D) or, interleaved, (B, S, H, D): the layout the projections'
 // GEMMs write and the output projection reads.
-shared_ptr<cudnn_frontend::graph::Tensor_attributes>
-heads_input(cudnn_frontend::graph::Graph& graph, const char* name,
-            int64_t B, int64_t H, int64_t S, int64_t D, bool interleaved)
-{
-    return cudnn_frontend::bhsd_tensor(graph, name, B, H, S, D, interleaved);
-}
-
-void heads_output(shared_ptr<cudnn_frontend::graph::Tensor_attributes>& T,
-                  int64_t B, int64_t H, int64_t S, int64_t D, bool interleaved)
-{
-    cudnn_frontend::set_bhsd_output(T, B, H, S, D, interleaved);
-}
-
 // The same problem both directions run, or nothing when the rung does not take
 // it. Both directions must answer this the same way for one layer: the forward
 // leaves FA2's log-sum-exp where the backward reads it, and cuDNN's statistics
@@ -356,9 +343,9 @@ static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
 {
     const auto graph = cudnn_frontend::new_graph(Type::BF16);
 
-    entry.fwd_Q = heads_input(*graph, "Q", k.batch_size, k.heads, k.q_seq,   k.head_dim, k.interleaved);
-    entry.fwd_K = heads_input(*graph, "K", k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
-    entry.fwd_V = heads_input(*graph, "V", k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
+    entry.fwd_Q = cudnn_frontend::bhsd_tensor(*graph, "Q", k.batch_size, k.heads, k.q_seq,   k.head_dim, k.interleaved);
+    entry.fwd_K = cudnn_frontend::bhsd_tensor(*graph, "K", k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
+    entry.fwd_V = cudnn_frontend::bhsd_tensor(*graph, "V", k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
     entry.fwd_SeqLenQ  = cudnn_frontend::seq_len_scalar(*graph, "SeqLenQ",  k.batch_size);
     entry.fwd_SeqLenKV = cudnn_frontend::seq_len_scalar(*graph, "SeqLenKV", k.batch_size);
 
@@ -380,7 +367,7 @@ static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
 
     auto [O, Stats] = graph->sdpa(entry.fwd_Q, entry.fwd_K, entry.fwd_V, sdpa_options);
 
-    heads_output(O, k.batch_size, k.heads, k.q_seq, k.head_dim, k.interleaved);
+    cudnn_frontend::set_bhsd_output(O, k.batch_size, k.heads, k.q_seq, k.head_dim, k.interleaved);
     entry.fwd_O = O;
 
     if (k.is_training && Stats)
@@ -403,16 +390,16 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
 {
     const auto graph = cudnn_frontend::new_graph(Type::BF16);
 
-    entry.bwd_Q  = heads_input(*graph, "Q_bwd",  k.batch_size, k.heads, k.q_seq,   k.head_dim, k.interleaved);
-    entry.bwd_K  = heads_input(*graph, "K_bwd",  k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
-    entry.bwd_V  = heads_input(*graph, "V_bwd",  k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
-    entry.bwd_dO = heads_input(*graph, "dO_bwd", k.batch_size, k.heads, k.q_seq,   k.head_dim, k.interleaved);
+    entry.bwd_Q  = cudnn_frontend::bhsd_tensor(*graph, "Q_bwd",  k.batch_size, k.heads, k.q_seq,   k.head_dim, k.interleaved);
+    entry.bwd_K  = cudnn_frontend::bhsd_tensor(*graph, "K_bwd",  k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
+    entry.bwd_V  = cudnn_frontend::bhsd_tensor(*graph, "V_bwd",  k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
+    entry.bwd_dO = cudnn_frontend::bhsd_tensor(*graph, "dO_bwd", k.batch_size, k.heads, k.q_seq,   k.head_dim, k.interleaved);
     entry.bwd_SeqLenQ  = cudnn_frontend::seq_len_scalar(*graph, "SeqLenQ_bwd",  k.batch_size);
     entry.bwd_SeqLenKV = cudnn_frontend::seq_len_scalar(*graph, "SeqLenKV_bwd", k.batch_size);
 
     // O is read from the concatenated (B, S, H*D) attention output whichever layout
     // the head tensors use.
-    entry.bwd_O = heads_input(*graph, "O_bwd", k.batch_size, k.heads, k.q_seq, k.head_dim, true);
+    entry.bwd_O = cudnn_frontend::bhsd_tensor(*graph, "O_bwd", k.batch_size, k.heads, k.q_seq, k.head_dim, true);
 
     entry.bwd_Stats = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
                                     .set_name("Stats_bwd")
@@ -439,9 +426,9 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
                                               entry.bwd_O, entry.bwd_dO, entry.bwd_Stats,
                                               sdpa_bwd_options);
 
-    heads_output(dQ, k.batch_size, k.heads, k.q_seq,   k.head_dim, k.interleaved);
-    heads_output(dK, k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
-    heads_output(dV, k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
+    cudnn_frontend::set_bhsd_output(dQ, k.batch_size, k.heads, k.q_seq,   k.head_dim, k.interleaved);
+    cudnn_frontend::set_bhsd_output(dK, k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
+    cudnn_frontend::set_bhsd_output(dV, k.batch_size, k.heads, k.src_seq, k.head_dim, k.interleaved);
 
     entry.bwd_dQ = dQ;
     entry.bwd_dK = dK;
