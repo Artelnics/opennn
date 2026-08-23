@@ -144,6 +144,23 @@ bool run_frontend(GraphCache& cache, const char* label, Body&& body)
         "with device::set_conv_workspace_cap().");
 }
 
+// Bytes per element for a cudnn-frontend tensor's dtype. NOT_SET falls back to
+// four, which is what the scratch sizing assumed for everything before this.
+inline int64_t element_bytes(DataType_t dtype)
+{
+    switch (dtype)
+    {
+        case DataType_t::BFLOAT16:
+        case DataType_t::HALF:      return 2;
+        case DataType_t::INT8:
+        case DataType_t::UINT8:
+        case DataType_t::FP8_E4M3:
+        case DataType_t::FP8_E5M2:  return 1;
+        default:                    return 4;
+    }
+}
+
+
 inline DataType_t to_dtype(Type t)
 {
     switch (t)
@@ -726,7 +743,11 @@ inline void autotune_with_scratch(bool& pending, graph::Graph& graph,
             for (const int64_t dimension : tensor->get_dim()) elements *= dimension;
 
             Buffer& buffer = buffers.emplace_back(Device::CUDA);
-            buffer.resize_bytes(Index(elements * int64_t(sizeof(float))), Device::CUDA);
+            // By the tensor's own dtype, not fp32 for everything: this scratch
+            // duplicates every tensor in the graph, so on a bf16 graph the old
+            // sizing reserved twice the transient the autotune actually needs.
+            buffer.resize_bytes(Index(elements * element_bytes(tensor->get_data_type())),
+                                Device::CUDA);
             pointer = buffer.data();
         }
     }
