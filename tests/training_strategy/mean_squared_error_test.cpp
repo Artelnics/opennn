@@ -64,6 +64,12 @@ TEST(MeanSquaredErrorTest, GpuWorkspaceIsForwardPropagationOwned)
         make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
     neural_network.compile(Device::CUDA);
     neural_network.get_parameters_map().setConstant(0.25f);
+
+    // get_parameters_map writes the fp32 master; the device mirror the forward
+    // pass actually reads is only updated here. Without this the mirror holds
+    // whatever the allocator handed over, which is harmless only while that
+    // happens to be zero.
+    neural_network.copy_parameters_device();
     neural_network.copy_parameters_device();
 
     Loss loss(&neural_network, &dataset);
