@@ -76,6 +76,46 @@ namespace opennn::device
 namespace
 {
 
+// OPENNN_DEVICE_POISON:
+//   1  recycled blocks come back as 0xFF -- NaN as fp32 and as bf16
+//   2  recycled blocks come back as zeros; the control, see the mode below
+//   3  fresh cudaMalloc is poisoned too, so a read-before-write fails on the
+//      first allocation instead of waiting for the pool to recycle something.
+//      Mode 1 needs whatever ran earlier to have left the right block behind,
+//      which makes a failure depend on test order; mode 3 removes that and
+//      makes each site reproduce on its own.
+//
+// The control matters: a site that reads memory it never wrote and expects
+// zero passes under 2 and fails under 1 or 3, while anything failing under 2
+// as well means the poison is landing on a block that is still live, which
+// would be a bug in the cache rather than in the caller.
+static int device_poison_mode()
+{
+    static const int mode = []
+    {
+        const char* const value = getenv("OPENNN_DEVICE_POISON");
+        return value ? atoi(value) : 0;
+    }();
+
+    return mode;
+}
+
+static int device_poison_byte()
+{
+    return device_poison_mode() == 2 ? 0x00 : 0xFF;
+}
+
+#ifdef OPENNN_HAS_CUDA
+
+static void poison_device_memory(void* pointer, Index byte_count)
+{
+    if (cudaMemset(pointer, device_poison_byte(), size_t(byte_count)) != cudaSuccess)
+        cudaGetLastError();
+}
+
+#endif
+
+
 atomic_bool cuda_allocation_growth_forbidden_runtime{false};
 atomic_bool cuda_matmul_plan_creation_forbidden_runtime{false};
 
@@ -421,12 +461,7 @@ public:
         // and deterministically instead of drifting a few percent depending on
         // what ran before it -- which is exactly how the stale recurrent-bias
         // holes in the cuDNN RNN weight space read before they were found.
-        if (poison_on_reuse)
-        {
-            const cudaError_t status = cudaMemset(pointer, poison_byte(), size_t(byte_count));
-
-            if (status != cudaSuccess) cudaGetLastError();
-        }
+        if (poison_on_reuse) poison_device_memory(pointer, byte_count);
 
         return pointer;
     }
@@ -519,20 +554,9 @@ private:
 
     CudaBlockCache()
         : is_enabled(env_flag_enabled("OPENNN_DEVICE_CACHE", true)),
-          poison_on_reuse(env_flag_enabled("OPENNN_DEVICE_POISON", false)),
+          poison_on_reuse(device_poison_mode() != 0),
           byte_cap(read_cap_bytes())
     {
-    }
-
-    // 0xFF (NaN as fp32 and bf16) by default; OPENNN_DEVICE_POISON=2 writes
-    // zeros instead, which is the control: a site that genuinely reads memory
-    // it never wrote and expects zero passes under 2 and fails under 1, while
-    // anything that fails under both means the poison is landing on a block
-    // that is still live -- a bug in this cache, not in the caller.
-    static int poison_byte()
-    {
-        const char* const value = getenv("OPENNN_DEVICE_POISON");
-        return (value && value[0] == '2') ? 0x00 : 0xFF;
     }
 
     static Index read_cap_bytes()
@@ -642,7 +666,13 @@ void* allocate(Device device_type, Index byte_count)
 
         try
         {
-            return allocate_cuda(byte_count);
+            void* const fresh = allocate_cuda(byte_count);
+
+            // Mode 3 only: the driver hands out zeroed pages, which is exactly
+            // the assumption a read-before-write is leaning on.
+            if (device_poison_mode() == 3) poison_device_memory(fresh, byte_count);
+
+            return fresh;
         }
         catch (const runtime_error&)
         {
