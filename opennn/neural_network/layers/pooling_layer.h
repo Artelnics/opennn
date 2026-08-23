@@ -54,6 +54,8 @@ struct PoolOperator : Operator
     Index get_output_height() const noexcept;
     Index get_output_width() const noexcept;
 
+    void refresh_descriptor();
+
     void set(Index, Index, Index,
              Index, Index,
              Index, Index,
@@ -104,22 +106,24 @@ public:
             const string& = "MaxPooling",
             const string& = "pooling_layer");
 
-    Shape get_input_shape() const noexcept override { return {input_height, input_width, input_channels}; }
+    Shape get_input_shape() const noexcept override
+    { return {pool.input_height, pool.input_width, pool.input_channels}; }
     Shape get_output_shape() const override;
 
     Index get_output_height() const;
     Index get_output_width() const;
 
-    Index get_pool_height() const noexcept { return pool_height; }
-    Index get_pool_width() const noexcept { return pool_width; }
+    Index get_pool_height() const noexcept { return pool.pool_height; }
+    Index get_pool_width() const noexcept { return pool.pool_width; }
 
-    Index get_row_stride() const noexcept { return row_stride; }
-    Index get_column_stride() const noexcept { return column_stride; }
+    Index get_row_stride() const noexcept { return pool.row_stride; }
+    Index get_column_stride() const noexcept { return pool.column_stride; }
 
-    Index get_padding_height() const noexcept { return padding_height; }
-    Index get_padding_width() const noexcept { return padding_width; }
+    Index get_padding_height() const noexcept { return pool.padding_height; }
+    Index get_padding_width() const noexcept { return pool.padding_width; }
 
-    PoolingMethod get_pooling_method() const noexcept { return pooling_method; }
+    PoolingMethod get_pooling_method() const noexcept
+    { return pool.method == PoolOperator::Max ? PoolingMethod::MaxPooling : PoolingMethod::AveragePooling; }
 
     bool is_passthrough() const noexcept;
 
@@ -146,21 +150,7 @@ public:
 
 private:
 
-    Index input_height = 0;
-    Index input_width = 0;
-    Index input_channels = 0;
-
-    Index pool_height = 1;
-    Index pool_width = 1;
-
-    Index padding_height = 0;
-    Index padding_width = 0;
-
-    Index row_stride = 1;
-    Index column_stride = 1;
-
-    PoolingMethod pooling_method = PoolingMethod::MaxPooling;
-
+    // The geometry lives in the operator, not in a second copy here.
     PoolOperator pool;
 
     enum Forward {Input, MaximalIndices, Output};

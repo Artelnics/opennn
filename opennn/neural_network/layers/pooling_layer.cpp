@@ -203,6 +203,15 @@ void PoolOperator::set(Index input_h, Index input_w, Index input_c,
     padding_width   = padding_w;
     method          = new_method;
 
+    refresh_descriptor();
+}
+
+
+// The cuDNN descriptor caches the geometry, so it has to be rebuilt whenever
+// any of the fields above changes -- including when the owning layer writes
+// them directly rather than through set().
+void PoolOperator::refresh_descriptor()
+{
 #ifdef OPENNN_HAS_CUDA
     CudnnDescriptor<cudnnPoolingDescriptor_t> descriptor;
     CHECK_CUDNN(cudnnCreatePoolingDescriptor(&descriptor.handle));
@@ -440,27 +449,27 @@ Pooling::Pooling(const Shape& new_input_shape,
 
 Shape Pooling::get_output_shape() const
 {
-    return { get_output_height(), get_output_width(), input_channels };
+    return { get_output_height(), get_output_width(), pool.input_channels };
 }
 
 Index Pooling::get_output_height() const
 {
-    return (input_height - pool_height + 2 * padding_height) / row_stride + 1;
+    return pool.get_output_height();
 }
 
 Index Pooling::get_output_width() const
 {
-    return (input_width - pool_width + 2 * padding_width) / column_stride + 1;
+    return pool.get_output_width();
 }
 
 bool Pooling::is_passthrough() const noexcept
 {
-    return pool_height == 1
-        && pool_width == 1
-        && row_stride == 1
-        && column_stride == 1
-        && padding_height == 0
-        && padding_width == 0;
+    return pool.pool_height == 1
+        && pool.pool_width == 1
+        && pool.row_stride == 1
+        && pool.column_stride == 1
+        && pool.padding_height == 0
+        && pool.padding_width == 0;
 }
 
 vector<TensorSpec> Pooling::get_forward_specs(Index batch_size) const
@@ -473,9 +482,9 @@ vector<TensorSpec> Pooling::get_forward_specs(Index batch_size) const
     // The argmax of each output window, for the backward: on the CPU as a
     // float per output; on CUDA a byte per output (the window position, see
     // max_pooling_forward_cuda), so a window has to fit a byte.
-    const bool max_pooling = pooling_method == PoolingMethod::MaxPooling;
+    const bool max_pooling = pool.method == PoolOperator::Max;
     const bool cuda = compute_device == Device::CUDA;
-    const bool argmax_saved = max_pooling && (!cuda || pool_height * pool_width <= 255);
+    const bool argmax_saved = max_pooling && (!cuda || pool.pool_height * pool.pool_width <= 255);
 
     return {
         {argmax_saved ? Shape{batch_size}.append(out_shape) : Shape{}, cuda ? Type::INT8 : Type::FP32},
@@ -513,11 +522,9 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
 
 void Pooling::update_pool_operator()
 {
-    pool.set(input_height, input_width, input_channels,
-             pool_height, pool_width,
-             row_stride, column_stride,
-             padding_height, padding_width,
-             pooling_method == PoolingMethod::MaxPooling ? PoolOperator::Max : PoolOperator::Average);
+    // The geometry already lives in the operator -- the layer writes straight
+    // into it -- so this only has to rebuild the descriptor and wire the slots.
+    pool.refresh_descriptor();
 
     pool.output_slots = {Output, MaximalIndices};
 }
@@ -535,20 +542,22 @@ void Pooling::set(const Shape& new_input_shape,
                                    new_padding_dimensions,
                                    new_label);
 
-    input_height    = new_input_shape[0];
-    input_width     = new_input_shape[1];
-    input_channels  = new_input_shape[2];
+    pool.input_height    = new_input_shape[0];
+    pool.input_width     = new_input_shape[1];
+    pool.input_channels  = new_input_shape[2];
 
-    pool_height     = new_pool_dimensions[0];
-    pool_width      = new_pool_dimensions[1];
+    pool.pool_height     = new_pool_dimensions[0];
+    pool.pool_width      = new_pool_dimensions[1];
 
-    row_stride      = new_stride_shape[0];
-    column_stride   = new_stride_shape[1];
+    pool.row_stride      = new_stride_shape[0];
+    pool.column_stride   = new_stride_shape[1];
 
-    padding_height  = new_padding_dimensions[0];
-    padding_width   = new_padding_dimensions[1];
+    pool.padding_height  = new_padding_dimensions[0];
+    pool.padding_width   = new_padding_dimensions[1];
 
-    pooling_method  = string_to_pooling_method(new_pooling_method);
+    pool.method = string_to_pooling_method(new_pooling_method) == PoolingMethod::MaxPooling
+                ? PoolOperator::Max
+                : PoolOperator::Average;
 
     set_label(new_label);
 
@@ -563,20 +572,22 @@ void Pooling::apply_input_shape(const Shape& new_input_shape)
     // through the graph could leave a window larger than the input, which the
     // constructor refuses but this path used to accept - and the output shape
     // then came out zero or negative.
-    throw_if(new_input_shape[0] < pool_height || new_input_shape[1] < pool_width,
+    throw_if(new_input_shape[0] < pool.pool_height || new_input_shape[1] < pool.pool_width,
              "Pooling layer '{}': pool size {}x{} does not fit an input of {}x{}.",
-             get_label(), pool_height, pool_width, new_input_shape[0], new_input_shape[1]);
+             get_label(), pool.pool_height, pool.pool_width, new_input_shape[0], new_input_shape[1]);
 
-    input_height = new_input_shape[0];
-    input_width = new_input_shape[1];
-    input_channels = new_input_shape[2];
+    pool.input_height = new_input_shape[0];
+    pool.input_width = new_input_shape[1];
+    pool.input_channels = new_input_shape[2];
 
     update_pool_operator();
 }
 
 void Pooling::set_pooling_method(const string& new_pooling_method)
 {
-    pooling_method = string_to_pooling_method(new_pooling_method);
+    pool.method = string_to_pooling_method(new_pooling_method) == PoolingMethod::MaxPooling
+                ? PoolOperator::Max
+                : PoolOperator::Average;
 
     update_pool_operator();
 }
@@ -605,13 +616,15 @@ void Pooling::read_JSON_body(const Json* pooling_layer_element)
     const PoolingMethod new_pooling_method =
         string_to_pooling_method(read_json_string(pooling_layer_element, "PoolingMethod"));
 
-    pool_height     = pool_shape[0];
-    pool_width      = pool_shape[1];
-    row_stride      = stride_shape[0];
-    column_stride   = stride_shape[1];
-    padding_height  = padding_shape[0];
-    padding_width   = padding_shape[1];
-    pooling_method  = new_pooling_method;
+    pool.pool_height     = pool_shape[0];
+    pool.pool_width      = pool_shape[1];
+    pool.row_stride      = stride_shape[0];
+    pool.column_stride   = stride_shape[1];
+    pool.padding_height  = padding_shape[0];
+    pool.padding_width   = padding_shape[1];
+    pool.method = new_pooling_method == PoolingMethod::MaxPooling
+                ? PoolOperator::Max
+                : PoolOperator::Average;
 
     update_pool_operator();
 }
@@ -621,7 +634,7 @@ void Pooling::write_JSON_body(JsonWriter& printer) const
     write_json(printer, {
         {"PoolHeight", get_pool_height()},
         {"PoolWidth", get_pool_width()},
-        {"PoolingMethod", pooling_method_to_string(pooling_method)},
+        {"PoolingMethod", pooling_method_to_string(get_pooling_method())},
         {"ColumnStride", get_column_stride()},
         {"RowStride", get_row_stride()},
         {"PaddingHeight", get_padding_height()},
