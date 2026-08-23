@@ -245,6 +245,52 @@ Not urgent -- the library is green with poison off. Worth revisiting if anyone r
 non-reproducible GPU training results, or if the block cache is made to recycle more
 aggressively. Worth adding mode 1 as a CI job once the three are cleared.
 
+## Where the GPU time actually goes, and the cuDNN fusion question
+
+Measured on ResNet-50 / CIFAR-10 (the datasets live in `$OPENNN_BENCH_DATA`, default
+`~/opennn-benchmark-data`; the benchmark binaries take positional arguments, not the
+`--flags` the READMEs show). Baseline batch 64: 3,224 samples/s fp32, 5,794 bf16.
+
+Steady-state epoch profile (`OPENNN_PROFILE=1`), 405 ms epoch:
+
+| scope | ms | % |
+|---|---|---|
+| `bwd:Convolutional` | 108.6 | 26.8 |
+| `fwd:Convolutional` | 41.7 | 10.3 |
+| `op:bn_bwd` + `op:bn_fwd` | 28.2 | 6.9 |
+| `step:wait_fill` | 0.2 | 0.1 |
+
+**The input pipeline is not a bottleneck.** `worker:queue_wait` looks enormous (>100%)
+but that is the worker idling because it is ahead of the consumer; the main thread's
+wait is `step:wait_fill`, 0.2 ms.
+
+**Most overhead findings are not where the time is.** `operators-b-6` measures 0.6% of
+RNN time; `dataset-a-9` is a `TabularDataset` path ResNet never enters. Measure before
+taking one on.
+
+### Fusion: measured and negative on sm_86
+
+`cudnn_fusion_probe` (bit-rotted, repaired) tests the premise behind the planned Phase 3
+MLPerf fusion architecture -- that cuDNN's fused engines run near plain-conv speed on
+CIFAR geometry. On an RTX 3060 (sm_86) with cuDNN 9.19, batch 256 bf16, nine real
+ResNet-50 shapes:
+
+| pattern | engines found | speed vs plain |
+|---|---|---|
+| `fprop + genstats` | **0 of 9** | -- |
+| `SBRCS` (BN-apply+ReLU prologue+genstats) | **0 of 9** | -- |
+| `DBAR` (dgrad+dReLU+dbn_weight) | **0 of 9** | -- |
+| `dgrad + dReLU` | 9 of 9 | 0.88-7.13x, median ~1.03x |
+
+Three of the four patterns have no engine at all; the one that exists is a wash at best
+and 7x worse on one shape. **Phase 3 is not viable on this hardware.** The result is
+hardware-specific -- the fused engines very likely exist on A100/H100 -- so re-run the
+probe before concluding anything about a datacenter target.
+
+That leaves "call cuDNN better" pointing at plan selection and layout rather than
+fusion. The workspace cap is already known to matter (see the note in `finalize`:
+capping to the auto budget measured 1.5-2x faster than cuDNN's unbounded first choice).
+
 ## Fewer effective lines
 
 | Item | Kind | Lines | Effort | Risk |

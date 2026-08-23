@@ -101,7 +101,7 @@ Timed time_graph(const std::string& tag, Type dtype, int iterations, Build&& bui
         auto graph = ocf::new_graph(dtype);
         auto handles = build(*graph);
         int64_t workspace_bytes = 0;
-        bool pending = ocf::finalize(*graph, workspace_bytes, tag, device::conv_autotune_enabled());
+        bool pending = ocf::finalize(*graph, workspace_bytes, tag);
         ProbeTensorMap tensors;
         bind(handles, tensors);
         ocf::autotune_now(pending, *graph, tensors, workspace_bytes, tag.c_str());
@@ -136,7 +136,7 @@ void fill(Buffer& buffer, Index bytes)
 {
     buffer.resize_bytes(bytes, Device::CUDA);
     // 0x3f3f... is ~0.75 in fp32 and bf16 alike: keeps ReLU masks live.
-    cudaMemset(buffer.data, 0x3f, size_t(bytes));
+    cudaMemset(buffer.data(), 0x3f, size_t(bytes));
 }
 
 void print(const char* pattern, const Timed& t, const Timed& base)
@@ -188,7 +188,7 @@ int main(int argc, char** argv)
             [&](fe::graph::Graph& g) { F h; h.X = nhwc(g, "X", n, d.c, d.h, d.w); h.W = krsc(g, d);
                 h.Y = g.conv_fprop(h.X, h.W, conv_attributes<fe::graph::Conv_fprop_attributes>(d));
                 ocf::set_nhwc_output(h.Y, n, d.k, ho, wo); return h; },
-            [&](const F& h, ProbeTensorMap& t) { t[h.X] = X.data; t[h.W] = W.data; t[h.Y] = Y.data; });
+            [&](const F& h, ProbeTensorMap& t) { t[h.X] = X.data(); t[h.W] = W.data(); t[h.Y] = Y.data(); });
 
         const Timed f_genstats = time_graph("probe fprop+genstats", dtype, iterations,
             [&](fe::graph::Graph& g) { F h; h.X = nhwc(g, "X", n, d.c, d.h, d.w); h.W = krsc(g, d);
@@ -198,7 +198,7 @@ int main(int argc, char** argv)
                 SUM->set_output(true).set_data_type(fe::DataType_t::FLOAT).set_dim({1, d.k, 1, 1}).set_stride({d.k, 1, d.k, d.k});
                 SQ->set_output(true).set_data_type(fe::DataType_t::FLOAT).set_dim({1, d.k, 1, 1}).set_stride({d.k, 1, d.k, d.k});
                 h.SUM = SUM; h.SQ = SQ; return h; },
-            [&](const F& h, ProbeTensorMap& t) { t[h.X] = X.data; t[h.W] = W.data; t[h.Y] = Y.data; t[h.SUM] = sum.data; t[h.SQ] = sqsum.data; });
+            [&](const F& h, ProbeTensorMap& t) { t[h.X] = X.data(); t[h.W] = W.data(); t[h.Y] = Y.data(); t[h.SUM] = sum.data(); t[h.SQ] = sqsum.data(); });
 
         const Timed f_sbrcs = time_graph("probe SBRCS", dtype, iterations,
             [&](fe::graph::Graph& g) { F h; h.X = nhwc(g, "X", n, d.c, d.h, d.w); h.W = krsc(g, d);
@@ -212,8 +212,8 @@ int main(int argc, char** argv)
                 SUM->set_output(true).set_data_type(fe::DataType_t::FLOAT).set_dim({1, d.k, 1, 1}).set_stride({d.k, 1, d.k, d.k});
                 SQ->set_output(true).set_data_type(fe::DataType_t::FLOAT).set_dim({1, d.k, 1, 1}).set_stride({d.k, 1, d.k, d.k});
                 h.SUM = SUM; h.SQ = SQ; return h; },
-            [&](const F& h, ProbeTensorMap& t) { t[h.X] = X.data; t[h.W] = W.data; t[h.S] = scale.data; t[h.B] = bias.data;
-                t[h.Y] = Y.data; t[h.SUM] = sum.data; t[h.SQ] = sqsum.data; });
+            [&](const F& h, ProbeTensorMap& t) { t[h.X] = X.data(); t[h.W] = W.data(); t[h.S] = scale.data(); t[h.B] = bias.data();
+                t[h.Y] = Y.data(); t[h.SUM] = sum.data(); t[h.SQ] = sqsum.data(); });
 
         print("fprop plain", f_plain, f_plain);
         print("fprop + genstats", f_genstats, f_plain);
@@ -226,7 +226,7 @@ int main(int argc, char** argv)
             [&](fe::graph::Graph& g) { Bw h; h.DY = nhwc(g, "DY", n, d.k, ho, wo); h.W = krsc(g, d);
                 h.DX = g.conv_dgrad(h.DY, h.W, conv_attributes<fe::graph::Conv_dgrad_attributes>(d));
                 ocf::set_nhwc_output(h.DX, n, d.c, d.h, d.w); return h; },
-            [&](const Bw& h, ProbeTensorMap& t) { t[h.DY] = DY.data; t[h.W] = W.data; t[h.DX] = DX.data; });
+            [&](const Bw& h, ProbeTensorMap& t) { t[h.DY] = DY.data(); t[h.W] = W.data(); t[h.DX] = DX.data(); });
 
         const Timed b_drelu = time_graph("probe dgrad+drelu", dtype, iterations,
             [&](fe::graph::Graph& g) { Bw h; h.DY = nhwc(g, "DY", n, d.k, ho, wo); h.W = krsc(g, d);
@@ -235,7 +235,7 @@ int main(int argc, char** argv)
                 h.Yref = nhwc(g, "Yref", n, d.c, d.h, d.w);
                 h.DX = g.pointwise(dgrad, h.Yref, fe::graph::Pointwise_attributes().set_mode(fe::PointwiseMode_t::RELU_BWD));
                 ocf::set_nhwc_output(h.DX, n, d.c, d.h, d.w); return h; },
-            [&](const Bw& h, ProbeTensorMap& t) { t[h.DY] = DY.data; t[h.W] = W.data; t[h.Yref] = Yref.data; t[h.DX] = DX.data; });
+            [&](const Bw& h, ProbeTensorMap& t) { t[h.DY] = DY.data(); t[h.W] = W.data(); t[h.Yref] = Yref.data(); t[h.DX] = DX.data(); });
 
         const Timed b_dbar = time_graph("probe DBAR", dtype, iterations,
             [&](fe::graph::Graph& g) { Bw h; h.DY = nhwc(g, "DY", n, d.k, ho, wo); h.W = krsc(g, d);
@@ -251,9 +251,9 @@ int main(int argc, char** argv)
                 for (auto& o : {ds, db, e1, e2, e3})
                     o->set_output(true).set_data_type(fe::DataType_t::FLOAT).set_dim({1, d.c, 1, 1}).set_stride({d.c, 1, d.c, d.c});
                 h.DS = ds; h.DB = db; h.E1 = e1; h.E2 = e2; h.E3 = e3; return h; },
-            [&](const Bw& h, ProbeTensorMap& t) { t[h.DY] = DY.data; t[h.W] = W.data; t[h.Yref] = Yref.data; t[h.DX] = DX.data;
-                t[h.X] = X.data; t[h.M] = mean.data; t[h.V] = invvar.data; t[h.S] = scale.data;
-                t[h.DS] = dscale.data; t[h.DB] = dbias.data; t[h.E1] = eq1.data; t[h.E2] = eq2.data; t[h.E3] = eq3.data; });
+            [&](const Bw& h, ProbeTensorMap& t) { t[h.DY] = DY.data(); t[h.W] = W.data(); t[h.Yref] = Yref.data(); t[h.DX] = DX.data();
+                t[h.X] = X.data(); t[h.M] = mean.data(); t[h.V] = invvar.data(); t[h.S] = scale.data();
+                t[h.DS] = dscale.data(); t[h.DB] = dbias.data(); t[h.E1] = eq1.data(); t[h.E2] = eq2.data(); t[h.E3] = eq3.data(); });
 
         print("dgrad plain", b_plain, b_plain);
         print("dgrad + dReLU", b_drelu, b_plain);
