@@ -251,12 +251,23 @@ which is the part that was hard before. What is still unexplained:
     initcheck, cache off      0 uninitialised reads
 
 A plain read-before-write should show up in initcheck. It does not, and the failure needs
-the block cache to be on. Two candidates left: a buffer that is read before being written
-and happens to be correct at zero (which initcheck should still have caught, so something
-about the cache-off path must write it), or the poison landing on a block that is back in
-the cache while something still holds a pointer into it -- which would be a use-after-free
-in the library rather than a read of uninitialised memory. Distinguishing them needs
-per-allocation instrumentation, not another sweep of the whole suite.
+the block cache to be on. Two candidates: a buffer read before being written that happens
+to be correct at zero, or a block being read after it was handed back -- a use-after-free,
+and much the more serious of the two.
+
+**Settled by mode 4, and it is the benign one.** Mode 4 poisons on `give()` and zeroes on
+`take()`, which separates them: a new owner reading before writing gets zeros and is
+happy, while an old owner still holding the block sees NaN. Mode 4 passes the whole suite,
+1052/0, where mode 1 fails three. So nothing reads a block after returning it, and the
+cache's event guard is doing its job.
+
+That leaves the three as buffers read before being written whose contents happen to be
+correct at zero. It also means the zeroing guarantee is semantically the right fix for
+them -- what defeated it earlier was stream ordering, not the idea (see the poison fill
+note: OpenNN's streams are non-blocking, so a fill has to be ordered against all of them).
+
+Still unexplained: why initcheck reports nothing. Lower priority now that the serious
+possibility is ruled out.
 
 Not urgent -- the library is green with poison off. Worth revisiting if anyone reports
 non-reproducible GPU training results, or if the block cache is made to recycle more

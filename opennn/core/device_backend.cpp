@@ -84,6 +84,12 @@ namespace
 //      Mode 1 needs whatever ran earlier to have left the right block behind,
 //      which makes a failure depend on test order; mode 3 removes that and
 //      makes each site reproduce on its own.
+//   4  poison on give(), zero on take(). This one separates the two things
+//      mode 1 cannot tell apart. A new owner that reads before writing gets
+//      zeros here and is happy; an old owner still reading a block it already
+//      handed back sees NaN. So mode 4 failing means a use-after-free, and
+//      mode 4 passing while mode 1 fails means a buffer that is merely
+//      correct-at-zero.
 //
 // The control matters: a site that reads memory it never wrote and expects
 // zero passes under 2 and fails under 1 or 3, while anything failing under 2
@@ -475,7 +481,13 @@ public:
         // fp32 and as bf16 -- rather than the previous tenant's bytes, so a
         // buffer that is only correct because the allocator returned something
         // harmless fails loudly instead of drifting.
-        if (poison_on_reuse) poison_device_memory(pointer, byte_count);
+        // Mode 4 hands the block back clean: the poison went in at give(), so
+        // anything that still reads zeros correctly here is a new owner, not a
+        // stale one.
+        if (device_poison_mode() == 4)
+            fill_device_memory(pointer, 0x00, byte_count);
+        else if (poison_on_reuse)
+            poison_device_memory(pointer, byte_count);
 
         return pointer;
     }
@@ -493,6 +505,15 @@ public:
         }
 
         note("blockcache:give");
+
+        // Mode 4 only. The sync is mandatory: events are recorded below but not
+        // waited on, so without it this would overwrite work still legitimately
+        // in flight and accuse the wrong code.
+        if (device_poison_mode() == 4)
+        {
+            if (cudaDeviceSynchronize() != cudaSuccess) cudaGetLastError();
+            fill_device_memory(pointer, 0xFF, byte_count);
+        }
 
         CachedBlock block;
         block.pointer = pointer;
