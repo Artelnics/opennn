@@ -486,6 +486,199 @@ static vector<array<float, 2>> sort_anchors_by_area(const vector<array<float, 2>
     return sorted;
 }
 
+// The YoloNetwork constructor's shared builders. They were eight lambdas
+// declared before the backbone branches, capturing the same six things: the
+// network being built and the five configuration values below. As a struct they
+// live outside the constructor, which is what lets the constructor shrink and
+// the per-backbone branches eventually move out too.
+struct YoloBuilder
+{
+    NeuralNetwork& network;
+    const char* act;
+    Shape stride;
+    Index classes_number;
+    YoloNetwork::ClassActivation class_activation;
+    Index reg_max;
+
+    Index add_layer(unique_ptr<Layer> layer, const vector<Index>& sources) const
+    {
+        return network.add_layer(std::move(layer), sources);
+    }
+
+    const unique_ptr<Layer>& get_layer(Index index) const { return network.get_layer(index); }
+    const vector<unique_ptr<Layer>>& get_layers() const { return network.get_layers(); }
+    Index get_layers_number() const { return network.get_layers_number(); }
+
+    Index add_sppf(Index input_index,
+                   Index channels,
+                   const string& prefix,
+                   const function<Index(Index, const Shape&, const string&)>& add_block) const
+    {
+        const Index half = channels / 2;
+
+        const Index projected = add_block(input_index, Shape{1, 1, channels, half}, prefix + "_in");
+        const Shape shape = get_layer(projected)->get_output_shape();
+
+        const Index pool_1 = add_layer(make_unique<Pooling>(
+            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", prefix + "_p1"), {projected});
+        const Index pool_2 = add_layer(make_unique<Pooling>(
+            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", prefix + "_p2"), {pool_1});
+        const Index pool_3 = add_layer(make_unique<Pooling>(
+            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", prefix + "_p3"), {pool_2});
+
+        const Index concatenated = add_layer(make_unique<Concatenation>(
+            shape, vector<Index>{half, half, half, half}, prefix + "_cat"),
+            {projected, pool_1, pool_2, pool_3});
+
+        return add_block(concatenated, Shape{1, 1, 4 * half, channels}, prefix + "_out");
+    }
+
+    Index add_conv(Index input_index, const Shape& kernel_shape,
+                   const char* activation, const Shape& kernel_stride,
+                   bool batch_norm, const string& name) const
+    {
+        // SiLU and the GELUs need their pre-activation input, which a fused
+        // convolution does not keep, so they travel as a standalone Activation
+        // layer - what the v8 path spells out as add_cba. The convolution used
+        // to accept them and quietly substitute Identity, which built a
+        // linear neck and said nothing.
+        const bool needs_own_layer =
+            activation_needs_input(ActivationOperator::from_string(activation));
+
+        const Index convolution_index = add_layer(make_unique<Convolutional>(
+                                                      get_layer(input_index)->get_output_shape(),
+                                                      kernel_shape, needs_own_layer ? "Identity" : activation,
+                                                      kernel_stride, "Same",
+                                                      batch_norm, name),
+                                                  {input_index});
+
+        if (!needs_own_layer) return convolution_index;
+
+        return add_layer(make_unique<Activation>(get_layer(convolution_index)->get_output_shape(),
+                                                 activation, name + "_act"),
+                         {convolution_index});
+    }
+
+    // Prior bias for anchor-based fused detection heads ("yolo_logits*"):
+    // Each fused conv bias has layout [tx,ty,tw,th,obj,c0..cN] × bpc.
+    // Set objectness (pos 4) and class (pos 5..4+C) biases to -4.5951 per anchor.
+    // Box coord biases (pos 0..3 per anchor) stay at 0.
+    void apply_yolo_prior_bias(Index n_classes) const
+    {
+        static constexpr float PRIOR_BIAS = -4.5951f;
+        const Index vpb = 5 + n_classes;
+        for (const auto& layer : get_layers())
+        {
+            auto* conv = dynamic_cast<Convolutional*>(layer.get());
+            if (!conv) continue;
+            if (conv->get_label().rfind("yolo_logits", 0) != 0) continue;
+            auto& views = conv->get_parameter_views();
+            if (views.empty() || views[0].empty()) continue;
+            float* b = views[0].as<float>();
+            const Index n = conv->get_kernels_number();
+            for (Index k = 0; k * vpb <= n - vpb; ++k)
+                std::fill(b + k * vpb + 4, b + (k + 1) * vpb, PRIOR_BIAS);
+        }
+    }
+
+    // Every backbone below ends the same way, and the prior bias has to be
+    // applied after the parameters are randomised or it is overwritten.
+    void finish_yolo_network() const
+    {
+        network.compile();
+        network.set_parameters_random();
+        apply_yolo_prior_bias(classes_number);
+    }
+
+    Index add_det_head(Index feature_index,
+                       const vector<array<float, 2>>& head_anchors,
+                       const string& name) const
+    {
+        const Index logits_index = add_conv(feature_index,
+            Shape{1, 1, get_layer(feature_index)->get_output_shape()[2],
+                  3 * (5 + classes_number)},
+            "Identity", stride, false, "yolo_logits_" + name);
+
+        const Index detection_index = add_layer(make_unique<Detection>(
+                                                    get_layer(logits_index)->get_output_shape(),
+                                                    head_anchors, "detection_" + name),
+                                                {logits_index});
+        static_cast<Detection&>(*get_layers().back()).set_class_activation(
+            class_activation == YoloNetwork::ClassActivation::Sigmoid
+            ? Detection::ClassActivation::Sigmoid
+            : Detection::ClassActivation::Softmax);
+        return detection_index;
+    }
+
+    Index add_residual_block(Index input_index, Index channels, Index mid,
+                             const string& prefix, const char* c1_suffix,
+                             const char* c2_suffix, const char* act_suffix) const
+    {
+        Index x = add_conv(input_index, Shape{1, 1, channels, mid},      act,        stride, true, prefix + c1_suffix);
+        x       = add_conv(x,           Shape{3, 3, mid,      channels}, "Identity", stride, true, prefix + c2_suffix);
+        const Index add_index = add_layer(make_unique<Addition>(get_layer(x)->get_output_shape(), prefix + "_add"), {x, input_index});
+        return add_layer(make_unique<Activation>(get_layer(add_index)->get_output_shape(), act, prefix + act_suffix), {add_index});
+    }
+
+    Index add_yolo_neck(Index idx, Index in_ch,
+                        Index ch_small, Index ch_large, const string& pfx) const
+    {
+        Index x = add_conv(idx, Shape{1, 1, in_ch,     ch_small}, act, stride, true, pfx+"_c1");
+        x       = add_conv(x,   Shape{3, 3, ch_small, ch_large},  act, stride, true, pfx+"_c2");
+        x       = add_conv(x,   Shape{1, 1, ch_large, ch_small},  act, stride, true, pfx+"_c3");
+        x       = add_conv(x,   Shape{3, 3, ch_small, ch_large},  act, stride, true, pfx+"_c4");
+        x       = add_conv(x,   Shape{1, 1, ch_large, ch_small},  act, stride, true, pfx+"_c5");
+        return x;
+    }
+
+    Index add_top_down(Index lateral_index, Index c_index,
+                       const string& upper, const string& lower) const
+    {
+        const Index up_index = add_layer(make_unique<Upsampling>(get_layer(lateral_index)->get_output_shape(),
+                                                                 2, "fpn_" + upper + "_upsampling"),
+                                         {lateral_index});
+
+        return add_layer(make_unique<Concatenation>(get_layer(c_index)->get_output_shape(),
+                             vector<Index>{get_layer(up_index)->get_output_shape()[2],
+                                           get_layer(c_index)->get_output_shape()[2]},
+                             "fpn_" + lower + "_concatenation"),
+                         {up_index, c_index});
+    }
+
+    // The v8 detection head: two 3x3 blocks into a 1x1 projection, once for the
+    // box branch and once for the class branch, concatenated and handed to
+    // DetectionV8. Like SPPF, the two FPNv8 branches build the same graph and
+    // differ only in how they wrap a 3x3 block, so that is the parameter. The
+    // two 1x1 output projections are identical in both and stay here.
+    void add_v8_detection_head(Index feature_index,
+                               const string& name,
+                               Index head_channels,
+                               Index box_channels,
+                               const function<Index(Index, const Shape&, const string&)>& add_block) const
+    {
+        const Index input_channels = get_layer(feature_index)->get_output_shape()[2];
+
+        Index box = add_block(feature_index, Shape{3, 3, input_channels, head_channels}, name + "_box_c1");
+        box       = add_block(box, Shape{3, 3, head_channels, head_channels}, name + "_box_c2");
+        box       = add_conv(box, Shape{1, 1, head_channels, box_channels},
+                             "Identity", stride, false, name + "_box_out");
+
+        Index classes = add_block(feature_index, Shape{3, 3, input_channels, head_channels}, name + "_cls_c1");
+        classes       = add_block(classes, Shape{3, 3, head_channels, head_channels}, name + "_cls_c2");
+        classes       = add_conv(classes, Shape{1, 1, head_channels, classes_number},
+                                 "Identity", stride, false, name + "_cls_out");
+
+        const Shape spatial = get_layer(box)->get_output_shape();
+
+        const Index concatenated = add_layer(make_unique<Concatenation>(
+            spatial, vector<Index>{box_channels, classes_number}, name + "_cat"), {box, classes});
+
+        add_layer(make_unique<DetectionV8>(get_layer(concatenated)->get_output_shape(),
+                                           reg_max, name + "_det"), {concatenated});
+    }
+};
+
+
 YoloNetwork::YoloNetwork(const Shape& input_shape,
                          Index classes_number,
                          const vector<array<float, 2>>& anchors,
@@ -559,6 +752,9 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                     :                                                   "ReLU";
 
     const Shape stride{1, 1};
+
+    // Everything the shared builders need; they live outside the constructor.
+    const YoloBuilder builder{*this, act, stride, classes_number, class_activation, reg_max};
     const Shape stride_2{2, 2};
     const Shape pool{2, 2};
     const Shape pool_stride{2, 2};
@@ -569,169 +765,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
     // up. Both users build the same graph but wrap their convolutions
     // differently -- the v11 branch splits the activation into its own layer --
     // so the block builder is a parameter rather than baked in.
-    const auto add_sppf =
-        [&](Index input_index,
-            Index channels,
-            const string& prefix,
-            const function<Index(Index, const Shape&, const string&)>& add_block) -> Index
-    {
-        const Index half = channels / 2;
-
-        const Index projected = add_block(input_index, Shape{1, 1, channels, half}, prefix + "_in");
-        const Shape shape = get_layer(projected)->get_output_shape();
-
-        const Index pool_1 = add_layer(make_unique<Pooling>(
-            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", prefix + "_p1"), {projected});
-        const Index pool_2 = add_layer(make_unique<Pooling>(
-            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", prefix + "_p2"), {pool_1});
-        const Index pool_3 = add_layer(make_unique<Pooling>(
-            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", prefix + "_p3"), {pool_2});
-
-        const Index concatenated = add_layer(make_unique<Concatenation>(
-            shape, vector<Index>{half, half, half, half}, prefix + "_cat"),
-            {projected, pool_1, pool_2, pool_3});
-
-        return add_block(concatenated, Shape{1, 1, 4 * half, channels}, prefix + "_out");
-    };
-
-    auto add_conv = [&](Index input_index, const Shape& kernel_shape,
-                        const char* activation, const Shape& kernel_stride,
-                        bool batch_norm, const string& name) -> Index {
-        // SiLU and the GELUs need their pre-activation input, which a fused
-        // convolution does not keep, so they travel as a standalone Activation
-        // layer - what the v8 path spells out as add_cba. The convolution used
-        // to accept them and quietly substitute Identity, which built a
-        // linear neck and said nothing.
-        const bool needs_own_layer =
-            activation_needs_input(ActivationOperator::from_string(activation));
-
-        const Index convolution_index = add_layer(make_unique<Convolutional>(
-                                                      get_layer(input_index)->get_output_shape(),
-                                                      kernel_shape, needs_own_layer ? "Identity" : activation,
-                                                      kernel_stride, "Same",
-                                                      batch_norm, name),
-                                                  {input_index});
-
-        if (!needs_own_layer) return convolution_index;
-
-        return add_layer(make_unique<Activation>(get_layer(convolution_index)->get_output_shape(),
-                                                 activation, name + "_act"),
-                         {convolution_index});
-    };
-
-    // Prior bias for anchor-based fused detection heads ("yolo_logits*"):
-    // Each fused conv bias has layout [tx,ty,tw,th,obj,c0..cN] × bpc.
-    // Set objectness (pos 4) and class (pos 5..4+C) biases to -4.5951 per anchor.
-    // Box coord biases (pos 0..3 per anchor) stay at 0.
-    auto apply_yolo_prior_bias = [&](Index n_classes) {
-        static constexpr float PRIOR_BIAS = -4.5951f;
-        const Index vpb = 5 + n_classes;
-        for (const auto& layer : get_layers())
-        {
-            auto* conv = dynamic_cast<Convolutional*>(layer.get());
-            if (!conv) continue;
-            if (conv->get_label().rfind("yolo_logits", 0) != 0) continue;
-            auto& views = conv->get_parameter_views();
-            if (views.empty() || views[0].empty()) continue;
-            float* b = views[0].as<float>();
-            const Index n = conv->get_kernels_number();
-            for (Index k = 0; k * vpb <= n - vpb; ++k)
-                std::fill(b + k * vpb + 4, b + (k + 1) * vpb, PRIOR_BIAS);
-        }
-    };
-
-    // Every backbone below ends the same way, and the prior bias has to be
-    // applied after the parameters are randomised or it is overwritten.
-    auto finish_yolo_network = [&] {
-        compile();
-        set_parameters_random();
-        apply_yolo_prior_bias(classes_number);
-    };
-
-    auto add_det_head = [&](Index feature_index,
-                            const vector<array<float, 2>>& head_anchors,
-                            const string& name) -> Index {
-        const Index logits_index = add_conv(feature_index,
-            Shape{1, 1, get_layer(feature_index)->get_output_shape()[2],
-                  3 * (5 + classes_number)},
-            "Identity", stride, false, "yolo_logits_" + name);
-
-        const Index detection_index = add_layer(make_unique<Detection>(
-                                                    get_layer(logits_index)->get_output_shape(),
-                                                    head_anchors, "detection_" + name),
-                                                {logits_index});
-        static_cast<Detection&>(*get_layers().back()).set_class_activation(
-            class_activation == ClassActivation::Sigmoid
-            ? Detection::ClassActivation::Sigmoid
-            : Detection::ClassActivation::Softmax);
-        return detection_index;
-    };
-
-    auto add_residual_block = [&](Index input_index, Index channels, Index mid,
-                                  const string& prefix, const char* c1_suffix,
-                                  const char* c2_suffix, const char* act_suffix) -> Index {
-        Index x = add_conv(input_index, Shape{1, 1, channels, mid},      act,        stride, true, prefix + c1_suffix);
-        x       = add_conv(x,           Shape{3, 3, mid,      channels}, "Identity", stride, true, prefix + c2_suffix);
-        const Index add_index = add_layer(make_unique<Addition>(get_layer(x)->get_output_shape(), prefix + "_add"), {x, input_index});
-        return add_layer(make_unique<Activation>(get_layer(add_index)->get_output_shape(), act, prefix + act_suffix), {add_index});
-    };
-
-    auto add_yolo_neck = [&](Index idx, Index in_ch,
-                             Index ch_small, Index ch_large, const string& pfx) -> Index {
-        Index x = add_conv(idx, Shape{1, 1, in_ch,     ch_small}, act, stride, true, pfx+"_c1");
-        x       = add_conv(x,   Shape{3, 3, ch_small, ch_large},  act, stride, true, pfx+"_c2");
-        x       = add_conv(x,   Shape{1, 1, ch_large, ch_small},  act, stride, true, pfx+"_c3");
-        x       = add_conv(x,   Shape{3, 3, ch_small, ch_large},  act, stride, true, pfx+"_c4");
-        x       = add_conv(x,   Shape{1, 1, ch_large, ch_small},  act, stride, true, pfx+"_c5");
-        return x;
-    };
-
-    auto add_top_down = [&](Index lateral_index, Index c_index,
-                            const string& upper, const string& lower) -> Index {
-        const Index up_index = add_layer(make_unique<Upsampling>(get_layer(lateral_index)->get_output_shape(),
-                                                                 2, "fpn_" + upper + "_upsampling"),
-                                         {lateral_index});
-
-        return add_layer(make_unique<Concatenation>(get_layer(c_index)->get_output_shape(),
-                             vector<Index>{get_layer(up_index)->get_output_shape()[2],
-                                           get_layer(c_index)->get_output_shape()[2]},
-                             "fpn_" + lower + "_concatenation"),
-                         {up_index, c_index});
-    };
-
-    // The v8 detection head: two 3x3 blocks into a 1x1 projection, once for the
-    // box branch and once for the class branch, concatenated and handed to
-    // DetectionV8. Like SPPF, the two FPNv8 branches build the same graph and
-    // differ only in how they wrap a 3x3 block, so that is the parameter. The
-    // two 1x1 output projections are identical in both and stay here.
-    const auto add_v8_detection_head =
-        [&](Index feature_index,
-            const string& name,
-            Index head_channels,
-            Index box_channels,
-            const function<Index(Index, const Shape&, const string&)>& add_block)
-    {
-        const Index input_channels = get_layer(feature_index)->get_output_shape()[2];
-
-        Index box = add_block(feature_index, Shape{3, 3, input_channels, head_channels}, name + "_box_c1");
-        box       = add_block(box, Shape{3, 3, head_channels, head_channels}, name + "_box_c2");
-        box       = add_conv(box, Shape{1, 1, head_channels, box_channels},
-                             "Identity", stride, false, name + "_box_out");
-
-        Index classes = add_block(feature_index, Shape{3, 3, input_channels, head_channels}, name + "_cls_c1");
-        classes       = add_block(classes, Shape{3, 3, head_channels, head_channels}, name + "_cls_c2");
-        classes       = add_conv(classes, Shape{1, 1, head_channels, classes_number},
-                                 "Identity", stride, false, name + "_cls_out");
-
-        const Shape spatial = get_layer(box)->get_output_shape();
-
-        const Index concatenated = add_layer(make_unique<Concatenation>(
-            spatial, vector<Index>{box_channels, classes_number}, name + "_cat"), {box, classes});
-
-        add_layer(make_unique<DetectionV8>(get_layer(concatenated)->get_output_shape(),
-                                           reg_max, name + "_det"), {concatenated});
-    };
-
     if (backbone == Backbone::Vgg)
     {
         const vector<Index> filters = {32, 64, 128, 256, 512};
@@ -807,23 +840,23 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const vector<array<float, 2>> anchors_small(anchors_sorted.begin(),     anchors_sorted.begin() + 3);
             const vector<array<float, 2>> anchors_large(anchors_sorted.begin() + 3, anchors_sorted.end());
 
-            const Index p5_conv = add_conv(last_index,
+            const Index p5_conv = builder.add_conv(last_index,
                 Shape{3, 3, get_layer(last_index)->get_output_shape()[2], 512},
                 act, stride, true, "fpn_p5_conv");
-            add_det_head(p5_conv, anchors_large, "large");
+            builder.add_det_head(p5_conv, anchors_large, "large");
 
-            const Index p5_lateral = add_conv(last_index,
+            const Index p5_lateral = builder.add_conv(last_index,
                 Shape{1, 1, get_layer(last_index)->get_output_shape()[2], 128},
                 act, stride, true, "fpn_p5_lateral");
 
-            const Index p4_concat = add_top_down(p5_lateral, c3_index, "p5", "p4");
+            const Index p4_concat = builder.add_top_down(p5_lateral, c3_index, "p5", "p4");
 
-            const Index p4_conv = add_conv(p4_concat,
+            const Index p4_conv = builder.add_conv(p4_concat,
                 Shape{3, 3, get_layer(p4_concat)->get_output_shape()[2], 256},
                 act, stride, true, "fpn_p4_conv");
-            add_det_head(p4_conv, anchors_small, "small");
+            builder.add_det_head(p4_conv, anchors_small, "small");
 
-            finish_yolo_network();
+            builder.finish_yolo_network();
             return;
         }
     }
@@ -856,7 +889,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
         // Conv+BN+act block (activation in a separate layer so SiLU works)
         auto add_cba = [&](Index in, const Shape& kernel, const Shape& kstride,
                             const string& name) -> Index {
-            Index c = add_conv(in, kernel, "Identity", kstride, true, name);
+            Index c = builder.add_conv(in, kernel, "Identity", kstride, true, name);
             return add_layer(make_unique<Activation>(get_layer(c)->get_output_shape(), act, name+"_act"), {c});
         };
 
@@ -920,7 +953,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
         x = add_cba(x, Shape{3,3,c4,c5}, stride_2, "c8_s4_down");
         x = add_c2f(x, c5, c5, d4, true, "c8_s4");
 
-        x = add_sppf(x, c5, "c8_sppf",
+        x = builder.add_sppf(x, c5, "c8_sppf",
                      [&](Index in, const Shape& kernel, const string& name)
                      { return add_cba(in, kernel, stride, name); });
         const Index p5_idx = x;  // SPPF output (stride=32)
@@ -967,9 +1000,9 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const auto cba_block = [&](Index in, const Shape& kernel, const string& label)
                                    { return add_cba(in, kernel, stride, label); };
 
-            add_v8_detection_head(c8_n15, "c8_small",  head_ch, box_ch, cba_block);
-            add_v8_detection_head(c8_n18, "c8_medium", head_ch, box_ch, cba_block);
-            add_v8_detection_head(c8_n21, "c8_large",  head_ch, box_ch, cba_block);
+            builder.add_v8_detection_head(c8_n15, "c8_small",  head_ch, box_ch, cba_block);
+            builder.add_v8_detection_head(c8_n18, "c8_medium", head_ch, box_ch, cba_block);
+            builder.add_v8_detection_head(c8_n21, "c8_large",  head_ch, box_ch, cba_block);
 
             compile();
             set_parameters_random();
@@ -988,20 +1021,20 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const Index half      = out_ch / 2;
             const Index branch_ch = first_stage ? out_ch : half;
 
-            const Index down = add_conv(input_index, Shape{3, 3, in_ch, out_ch}, act, stride_2, true, prefix+"_down");
+            const Index down = builder.add_conv(input_index, Shape{3, 3, in_ch, out_ch}, act, stride_2, true, prefix+"_down");
 
-            Index branch2 = add_conv(down, Shape{1, 1, out_ch, branch_ch}, act, stride, true, prefix+"_s2");
+            Index branch2 = builder.add_conv(down, Shape{1, 1, out_ch, branch_ch}, act, stride, true, prefix+"_s2");
             for (Index j = 0; j < n_blocks; ++j)
-                branch2 = add_residual_block(branch2, branch_ch, half,
+                branch2 = builder.add_residual_block(branch2, branch_ch, half,
                                              prefix + format("_b{}", j+1), "_c1", "_c2", "_act");
-            const Index trans = add_conv(branch2, Shape{1, 1, branch_ch, branch_ch}, act, stride, true, prefix+"_trans");
+            const Index trans = builder.add_conv(branch2, Shape{1, 1, branch_ch, branch_ch}, act, stride, true, prefix+"_trans");
 
-            const Index branch1 = add_conv(down, Shape{1, 1, out_ch, branch_ch}, act, stride, true, prefix+"_s1");
+            const Index branch1 = builder.add_conv(down, Shape{1, 1, out_ch, branch_ch}, act, stride, true, prefix+"_s1");
 
             const Shape hw = get_layer(branch1)->get_output_shape();
             const Index cat = add_layer(make_unique<Concatenation>(hw, vector<Index>{branch_ch, branch_ch}, prefix+"_cat"),
                                         {trans, branch1});
-            return add_conv(cat, Shape{1, 1, 2 * branch_ch, out_ch}, act, stride, true, prefix+"_merge");
+            return builder.add_conv(cat, Shape{1, 1, 2 * branch_ch, out_ch}, act, stride, true, prefix+"_merge");
         };
 
         const vector<pair<Index,Index>> stages = {{64,1},{128,2},{256,8},{512,8},{1024,4}};
@@ -1019,10 +1052,10 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 last_index = add_csp_stage(last_index, in_ch, ch, nblocks, format("csp53_s{}", i+1), i == 0);
             else
             {
-                last_index = add_conv(last_index, Shape{3, 3, in_ch, ch}, act, stride_2, true,
+                last_index = builder.add_conv(last_index, Shape{3, 3, in_ch, ch}, act, stride_2, true,
                                       format("dn53_down_{}", i+1));
                 for (Index j = 0; j < nblocks; ++j)
-                    last_index = add_residual_block(last_index, ch, ch / 2,
+                    last_index = builder.add_residual_block(last_index, ch, ch / 2,
                                                     format("dn53_s{}_b{}", i+1, j+1), "_c1", "_c2", "_act");
             }
             in_ch = ch;
@@ -1032,23 +1065,23 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
         }
 
         auto build_fpn_trunk = [&](Index entry, const string& pfx) -> array<Index, 3> {
-            const Index p5n = add_yolo_neck(entry, 1024, 512, 1024, pfx + "neck_p5");
+            const Index p5n = builder.add_yolo_neck(entry, 1024, 512, 1024, pfx + "neck_p5");
 
-            const Index p5l = add_conv(p5n, Shape{1, 1, 512, 256}, act, stride, true, pfx + "neck_p5_lat");
+            const Index p5l = builder.add_conv(p5n, Shape{1, 1, 512, 256}, act, stride, true, pfx + "neck_p5_lat");
             const Index p5u = add_layer(make_unique<Upsampling>(get_layer(p5l)->get_output_shape(), 2, pfx + "fpn_p5_upsampling"), {p5l});
 
             const Index p4c = add_layer(make_unique<Concatenation>(get_layer(c4_index)->get_output_shape(),
                                                                    vector<Index>{256, 512}, pfx + "fpn_p4_cat"),
                                         {p5u, c4_index});
-            const Index p4n = add_yolo_neck(p4c, 768, 256, 512, pfx + "neck_p4");
+            const Index p4n = builder.add_yolo_neck(p4c, 768, 256, 512, pfx + "neck_p4");
 
-            const Index p4l = add_conv(p4n, Shape{1, 1, 256, 128}, act, stride, true, pfx + "neck_p4_lat");
+            const Index p4l = builder.add_conv(p4n, Shape{1, 1, 256, 128}, act, stride, true, pfx + "neck_p4_lat");
             const Index p4u = add_layer(make_unique<Upsampling>(get_layer(p4l)->get_output_shape(), 2, pfx + "fpn_p4_upsampling"), {p4l});
 
             const Index p3c = add_layer(make_unique<Concatenation>(get_layer(c3_index)->get_output_shape(),
                                                                    vector<Index>{128, 256}, pfx + "fpn_p3_cat"),
                                         {p4u, c3_index});
-            return {p5n, p4n, add_yolo_neck(p3c, 384, 128, 256, pfx + "neck_p3")};
+            return {p5n, p4n, builder.add_yolo_neck(p3c, 384, 128, 256, pfx + "neck_p3")};
         };
 
         if (head_style == HeadStyle::FPN || head_style == HeadStyle::PANet)
@@ -1062,53 +1095,53 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             Index fpn_entry = c5_index;
             if (use_sppf)
-                fpn_entry = add_sppf(c5_index, get_layer(c5_index)->get_output_shape()[2], "sppf",
+                fpn_entry = builder.add_sppf(c5_index, get_layer(c5_index)->get_output_shape()[2], "sppf",
                                      [&](Index in, const Shape& kernel, const string& name)
-                                     { return add_conv(in, kernel, act, stride, true, name); });
+                                     { return builder.add_conv(in, kernel, act, stride, true, name); });
 
             const auto [p5n, p4n, p3n] = build_fpn_trunk(fpn_entry, "");
 
             if (head_style == HeadStyle::FPN)
             {
 
-                const Index p5d = add_conv(p5n, Shape{3, 3, 512, 1024}, act, stride, true, "neck_p5_pre");
-                add_det_head(p5d, anchors_large, "large");
-                const Index p4d = add_conv(p4n, Shape{3, 3, 256, 512}, act, stride, true, "neck_p4_pre");
-                add_det_head(p4d, anchors_medium, "medium");
-                const Index p3d = add_conv(p3n, Shape{3, 3, 128, 256}, act, stride, true, "neck_p3_pre");
-                add_det_head(p3d, anchors_small, "small");
+                const Index p5d = builder.add_conv(p5n, Shape{3, 3, 512, 1024}, act, stride, true, "neck_p5_pre");
+                builder.add_det_head(p5d, anchors_large, "large");
+                const Index p4d = builder.add_conv(p4n, Shape{3, 3, 256, 512}, act, stride, true, "neck_p4_pre");
+                builder.add_det_head(p4d, anchors_medium, "medium");
+                const Index p3d = builder.add_conv(p3n, Shape{3, 3, 128, 256}, act, stride, true, "neck_p3_pre");
+                builder.add_det_head(p3d, anchors_small, "small");
             }
             else
             {
 
-                const Index p3d = add_conv(p3n, Shape{3, 3, 128, 256}, act, stride, true, "neck_p3_pre");
-                add_det_head(p3d, anchors_small, "small");
+                const Index p3d = builder.add_conv(p3n, Shape{3, 3, 128, 256}, act, stride, true, "neck_p3_pre");
+                builder.add_det_head(p3d, anchors_small, "small");
 
                 auto add_pan_block = [&](Index idx, Index in_ch, Index ch_s, Index ch_l, const string& pfx) -> Index {
-                    Index x = add_conv(idx, Shape{1, 1, in_ch, ch_s}, act, stride, true, pfx+"_c1");
-                    x       = add_conv(x,   Shape{3, 3, ch_s,  ch_l}, act, stride, true, pfx+"_c2");
-                    x       = add_conv(x,   Shape{1, 1, ch_l,  ch_s}, act, stride, true, pfx+"_c3");
+                    Index x = builder.add_conv(idx, Shape{1, 1, in_ch, ch_s}, act, stride, true, pfx+"_c1");
+                    x       = builder.add_conv(x,   Shape{3, 3, ch_s,  ch_l}, act, stride, true, pfx+"_c2");
+                    x       = builder.add_conv(x,   Shape{1, 1, ch_l,  ch_s}, act, stride, true, pfx+"_c3");
                     return x;
                 };
 
-                const Index n3_down = add_conv(p3n, Shape{3, 3, 128, 256}, act, stride_2, true, "pan_n3_down");
+                const Index n3_down = builder.add_conv(p3n, Shape{3, 3, 128, 256}, act, stride_2, true, "pan_n3_down");
                 const Index n4c = add_layer(make_unique<Concatenation>(get_layer(p4n)->get_output_shape(),
                                                                        vector<Index>{256, 256}, "pan_n4_cat"),
                                             {n3_down, p4n});
                 const Index n4n = add_pan_block(n4c, 512, 256, 512, "pan_n4");
-                const Index n4d = add_conv(n4n, Shape{3, 3, 256, 512}, act, stride, true, "pan_n4_pre");
-                add_det_head(n4d, anchors_medium, "medium");
+                const Index n4d = builder.add_conv(n4n, Shape{3, 3, 256, 512}, act, stride, true, "pan_n4_pre");
+                builder.add_det_head(n4d, anchors_medium, "medium");
 
-                const Index n4_down = add_conv(n4n, Shape{3, 3, 256, 512}, act, stride_2, true, "pan_n4_down");
+                const Index n4_down = builder.add_conv(n4n, Shape{3, 3, 256, 512}, act, stride_2, true, "pan_n4_down");
                 const Index n5c = add_layer(make_unique<Concatenation>(get_layer(p5n)->get_output_shape(),
                                                                        vector<Index>{512, 512}, "pan_n5_cat"),
                                             {n4_down, p5n});
                 const Index n5n = add_pan_block(n5c, 1024, 512, 1024, "pan_n5");
-                const Index n5d = add_conv(n5n, Shape{3, 3, 512, 1024}, act, stride, true, "pan_n5_pre");
-                add_det_head(n5d, anchors_large, "large");
+                const Index n5d = builder.add_conv(n5n, Shape{3, 3, 512, 1024}, act, stride, true, "pan_n5_pre");
+                builder.add_det_head(n5d, anchors_large, "large");
             }
 
-            finish_yolo_network();
+            builder.finish_yolo_network();
             return;
         }
 
@@ -1120,16 +1153,16 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const Index box_ch = 4 * max(reg_max, Index(1));
 
             const auto conv_block = [&](Index in, const Shape& kernel, const string& label)
-                                    { return add_conv(in, kernel, act, stride, true, label); };
+                                    { return builder.add_conv(in, kernel, act, stride, true, label); };
 
             const auto [p5n, p4n, p3n] = build_fpn_trunk(c5_index, "v8_");
 
-            const Index p5d = add_conv(p5n, Shape{3, 3, 512, 1024}, act, stride, true, "v8_neck_p5_pre");
-            add_v8_detection_head(p5d, "v8_large", head_ch, box_ch, conv_block);
-            const Index p4d = add_conv(p4n, Shape{3, 3, 256, 512}, act, stride, true, "v8_neck_p4_pre");
-            add_v8_detection_head(p4d, "v8_medium", head_ch, box_ch, conv_block);
-            const Index p3d = add_conv(p3n, Shape{3, 3, 128, 256}, act, stride, true, "v8_neck_p3_pre");
-            add_v8_detection_head(p3d, "v8_small", head_ch, box_ch, conv_block);
+            const Index p5d = builder.add_conv(p5n, Shape{3, 3, 512, 1024}, act, stride, true, "v8_neck_p5_pre");
+            builder.add_v8_detection_head(p5d, "v8_large", head_ch, box_ch, conv_block);
+            const Index p4d = builder.add_conv(p4n, Shape{3, 3, 256, 512}, act, stride, true, "v8_neck_p4_pre");
+            builder.add_v8_detection_head(p4d, "v8_medium", head_ch, box_ch, conv_block);
+            const Index p3d = builder.add_conv(p3n, Shape{3, 3, 128, 256}, act, stride, true, "v8_neck_p3_pre");
+            builder.add_v8_detection_head(p3d, "v8_small", head_ch, box_ch, conv_block);
 
             compile();
             set_parameters_random();
@@ -1160,12 +1193,12 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const auto& [channels, blocks_number] = stages[i];
             const Index input_channels = get_layer(last_index)->get_output_shape()[2];
 
-            last_index = add_conv(last_index,
+            last_index = builder.add_conv(last_index,
                 Shape{3, 3, input_channels, channels}, act,
                 stride_2, true, format("darknet_down_{}", i + 1));
 
             for (Index j = 0; j < blocks_number; ++j)
-                last_index = add_residual_block(last_index, channels,
+                last_index = builder.add_residual_block(last_index, channels,
                     max<Index>(channels / 2, 1),
                     format("darknet_s{}_b{}", i + 1, j), "_conv1", "_conv2", "_relu");
 
@@ -1184,26 +1217,26 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const vector<array<float, 2>> anchors_medium(anchors_sorted.begin() + 3, anchors_sorted.begin() + 6);
             const vector<array<float, 2>> anchors_large (anchors_sorted.begin() + 6, anchors_sorted.end());
 
-            const Index p5_lateral = add_conv(c5_index,
+            const Index p5_lateral = builder.add_conv(c5_index,
                 Shape{1, 1, get_layer(c5_index)->get_output_shape()[2], 256},
                 act, stride, true, "fpn_p5_lateral");
-            add_det_head(p5_lateral, anchors_large, "large");
+            builder.add_det_head(p5_lateral, anchors_large, "large");
 
-            const Index p4_concatenation = add_top_down(p5_lateral, c4_index, "p5", "p4");
+            const Index p4_concatenation = builder.add_top_down(p5_lateral, c4_index, "p5", "p4");
 
-            const Index p4_lateral = add_conv(p4_concatenation,
+            const Index p4_lateral = builder.add_conv(p4_concatenation,
                 Shape{1, 1, get_layer(p4_concatenation)->get_output_shape()[2], 256},
                 act, stride, true, "fpn_p4_lateral");
-            add_det_head(p4_lateral, anchors_medium, "medium");
+            builder.add_det_head(p4_lateral, anchors_medium, "medium");
 
-            const Index p3_concatenation = add_top_down(p4_lateral, c3_index, "p4", "p3");
+            const Index p3_concatenation = builder.add_top_down(p4_lateral, c3_index, "p4", "p3");
 
-            const Index p3_lateral = add_conv(p3_concatenation,
+            const Index p3_lateral = builder.add_conv(p3_concatenation,
                 Shape{1, 1, get_layer(p3_concatenation)->get_output_shape()[2], 128},
                 act, stride, true, "fpn_p3_lateral");
-            add_det_head(p3_lateral, anchors_small, "small");
+            builder.add_det_head(p3_lateral, anchors_small, "small");
 
-            finish_yolo_network();
+            builder.finish_yolo_network();
             return;
         }
     }
@@ -1228,7 +1261,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                                              0.4f,
                                              "non_max_suppression_layer"));
 
-    finish_yolo_network();
+    builder.finish_yolo_network();
 }
 
 TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
