@@ -81,6 +81,19 @@ private:
                          bool causal, float scale, Index query_position_offset,
                          float* decode_partials = nullptr,
                          const int* position_device = nullptr);
+    // One CPU sequence through the pipeline: three projections, optional
+    // qk_norm, rope, attention, output projection. The cached-decode path and
+    // the plain path differ only in where K and V land and what attention
+    // reads back, so those are parameters rather than two copies.
+    void attend_sequence_cpu(const TensorView& x_b,
+                             TensorView& q_v, TensorView& k_v,
+                             TensorView& v_target, TensorView& k_target,
+                             TensorView& qr_v,
+                             const TensorView& key_all, const TensorView& value_all,
+                             TensorView& attn_v, TensorView& o_b,
+                             const TensorView& cos_v, const TensorView& sin_v,
+                             float scale, Index position_offset);
+
     void forward_gpu(TensorView& input, TensorView& output, Index batch, Index past,
                      Index query_capacity, const int* position_device,
                      vector<TensorView>& forward_slots, Buffer& kv_cache,

@@ -795,6 +795,35 @@ void GroupedQueryAttentionOperator::back_propagate(ForwardPropagation&, BackProp
     throw runtime_error("GroupedQueryAttention is inference-only: back-propagation is not implemented.");
 }
 
+void GroupedQueryAttentionOperator::attend_sequence_cpu(
+    const TensorView& x_b,
+    TensorView& q_v, TensorView& k_v,
+    TensorView& v_target, TensorView& k_target,
+    TensorView& qr_v,
+    const TensorView& key_all, const TensorView& value_all,
+    TensorView& attn_v, TensorView& o_b,
+    const TensorView& cos_v, const TensorView& sin_v,
+    float scale, Index position_offset)
+{
+    linear_forward_transposed(x_b, q_proj, q_v);
+    linear_forward_transposed(x_b, k_proj, k_v);
+    linear_forward_transposed(x_b, v_proj, v_target);
+
+    if (use_qk_norm)
+    {
+        qk_norm_forward(q_v, q_norm, q_v, head_dim, rms_epsilon);
+        qk_norm_forward(k_v, k_norm, k_v, head_dim, rms_epsilon);
+    }
+
+    rotary_forward(q_v, cos_v, sin_v, qr_v,     head_dim, head_dim, position_offset);
+    rotary_forward(k_v, cos_v, sin_v, k_target, head_dim, head_dim, position_offset);
+
+    apply_attention(qr_v, key_all, value_all, attn_v, true, scale, position_offset);
+
+    linear_forward_transposed(attn_v, o_proj, o_b);
+}
+
+
 void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
 {
     TensorView& input  = get_input(forward_propagation, layer);
@@ -856,26 +885,16 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
         TensorView v_slot(vcache + size_t(past) * kd, {1, seq, kd});
         TensorView k_slot(kcache + size_t(past) * kd, {1, seq, kd});
 
-        linear_forward_transposed(x_b, q_proj, q_v);
-        linear_forward_transposed(x_b, k_proj, k_v);
-        linear_forward_transposed(x_b, v_proj, v_slot);
-
-        if (use_qk_norm)
-        {
-            qk_norm_forward(q_v, q_norm, q_v, head_dim, rms_epsilon);
-            qk_norm_forward(k_v, k_norm, k_v, head_dim, rms_epsilon);
-        }
-
         TensorView qr_v(qr, {1, seq, qd});
-        rotary_forward(q_v, cos_v, sin_v, qr_v,   head_dim, head_dim, past);
-        rotary_forward(k_v, cos_v, sin_v, k_slot, head_dim, head_dim, past);
-
         TensorView key_all(kcache, {1, total, kd}), val_all(vcache, {1, total, kd});
         TensorView attn_v(attn, {1, seq, qd});
-        apply_attention(qr_v, key_all, val_all, attn_v, true, scale, past);
-
         TensorView o_b(o_all, {1, seq, hidden});
-        return linear_forward_transposed(attn_v, o_proj, o_b);
+
+        // K and V go straight into the cache slot, and attention reads the
+        // whole cache back.
+        return attend_sequence_cpu(x_b, q_v, k_v, v_slot, k_slot, qr_v,
+                                   key_all, val_all, attn_v, o_b,
+                                   cos_v, sin_v, scale, past);
     }
 
     throw_if(forward_propagation.past_length != 0,
@@ -893,25 +912,14 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
         TensorView x_b(x_all + size_t(b) * seq * hidden, {1, seq, hidden});
         TensorView q_v(q, {1, seq, qd}), k_v(k, {1, seq, kd}), v_v(v, {1, seq, kd});
 
-        linear_forward_transposed(x_b, q_proj, q_v);
-        linear_forward_transposed(x_b, k_proj, k_v);
-        linear_forward_transposed(x_b, v_proj, v_v);
-
-        if (use_qk_norm)
-        {
-            qk_norm_forward(q_v, q_norm, q_v, head_dim, rms_epsilon);
-            qk_norm_forward(k_v, k_norm, k_v, head_dim, rms_epsilon);
-        }
-
         TensorView qr_v(qr, {1, seq, qd}), kr_v(kr, {1, seq, kd});
-        rotary_forward(q_v, cos_v, sin_v, qr_v, head_dim, head_dim, 0);
-        rotary_forward(k_v, cos_v, sin_v, kr_v, head_dim, head_dim, 0);
-
         TensorView attn_v(attn, {1, seq, qd});
-        apply_attention(qr_v, kr_v, v_v, attn_v, true, scale, 0);
-
         TensorView o_b(o_all + size_t(b) * seq * hidden, {1, seq, hidden});
-        linear_forward_transposed(attn_v, o_proj, o_b);
+
+        // No cache: attention reads the rotated K and the V it just wrote.
+        attend_sequence_cpu(x_b, q_v, k_v, v_v, kr_v, qr_v,
+                            kr_v, v_v, attn_v, o_b,
+                            cos_v, sin_v, scale, 0);
     }
 }
 
