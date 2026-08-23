@@ -2,9 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [master, dev-refactor]
+    # dev is where the work lands; it was not covered, so nothing that went
+    # into it was ever built by CI.
+    branches: [master, dev, dev-refactor]
   pull_request:
-    branches: [master, dev-refactor]
+    branches: [master, dev, dev-refactor]
 
 # Cancel superseded runs on the same ref to save runner time.
 concurrency:
@@ -65,3 +67,61 @@ jobs:
 
       - name: Build benchmarks
         run: cmake --build build-benchmarks --target benchmarks
+
+  # Everything above is CPU-only, so every CUDA-guarded target -- the library's
+  # own .cu files aside, the cudnn_fusion_probe, pooling_probe and the
+  # transformer drivers -- is built by nothing automatic. They rot: five
+  # benchmarks were found broken at once, one of them carrying 36 calls to
+  # Buffer::data written without parentheses.
+  #
+  # This job needs a self-hosted runner with a CUDA toolkit and a GPU. It stays
+  # inert until the repository variable HAS_CUDA_RUNNER is set to 'true', so
+  # merging it changes nothing until someone provisions the machine.
+  cuda-build-and-test:
+    name: CUDA build + tests + poison
+    if: vars.HAS_CUDA_RUNNER == 'true'
+    runs-on: [self-hosted, linux, cuda]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure (CUDA, tests on)
+        run: >
+          cmake -S . -B build-cuda -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DOpenNN_BUILD_TESTS=ON
+          -DOpenNN_BUILD_EXAMPLES=OFF
+
+      - name: Build
+        run: cmake --build build-cuda --config Release
+
+      - name: Run tests
+        run: ./build-cuda/bin/opennn_tests
+
+      # The class of defect no functional test reaches: a buffer read before it
+      # is written, correct only while the allocator happens to hand back zeros.
+      # One such bug was silently corrupting GPU training results
+      # (see ebc6cb14e). Mode 1 poisons recycled blocks with NaN; mode 2 fills
+      # them with zeros instead and is the control -- if mode 2 fails, the
+      # poison itself is at fault and mode 1's output means nothing.
+      #
+      # Three known sites still fail mode 1. Until they are cleared this step
+      # reports without failing the job; drop continue-on-error once they are.
+      - name: Run tests with the device pool poisoned (control)
+        run: OPENNN_DEVICE_POISON=2 ./build-cuda/bin/opennn_tests
+
+      - name: Run tests with the device pool poisoned
+        continue-on-error: true
+        run: OPENNN_DEVICE_POISON=1 ./build-cuda/bin/opennn_tests
+
+      - name: Configure benchmarks (compile-only, CUDA)
+        run: >
+          cmake -S . -B build-cuda-benchmarks -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DOpenNN_BUILD_TESTS=OFF
+          -DOpenNN_BUILD_EXAMPLES=OFF
+          -DOpenNN_BUILD_BENCHMARKS=ON
+
+      - name: Build benchmarks
+        run: cmake --build build-cuda-benchmarks --target benchmarks
