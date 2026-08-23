@@ -38,6 +38,61 @@ using namespace opennn;
 
 namespace {
 
+// A ground-truth box in normalised centre form, as the label files store it.
+struct GtBox { int cls; float cx, cy, w, h; };
+
+
+// Walk the network's detection layers and gather their outputs as FPN heads,
+// copying to host first when they are device-resident. Both the training-loop
+// diagnostic and the mAP pass need exactly this, and each had written it out.
+// The scratch vector must outlive the returned heads: they hold spans into it.
+vector<YoloFpnHead> collect_fpn_heads(const NeuralNetwork& network,
+                                      const ForwardPropagation& forward_propagation,
+                                      bool is_v8_head,
+                                      Index classes_number,
+                                      vector<vector<float>>& scratch)
+{
+    vector<YoloFpnHead> heads;
+
+    const auto& layers = network.get_layers();
+
+    for (size_t index = 0; index < layers.size(); ++index)
+    {
+        const bool is_detection = layers[index] && (
+            (!is_v8_head && layers[index]->get_type() == LayerType::Detection) ||
+            ( is_v8_head && layers[index]->get_type() == LayerType::DetectionV8));
+
+        if (!is_detection) continue;
+
+        const Shape head_shape = layers[index]->get_output_shape();
+        const TensorView view = forward_propagation.slots[index].back();
+
+        // A v8 head carries one box per cell; an anchor head packs
+        // (5 + classes) channels per box.
+        const Index boxes_per_head = is_v8_head
+            ? 1
+            : head_shape[2] / (5 + classes_number);
+
+        const float* data = view.as<float>();
+
+#ifdef OPENNN_HAS_CUDA
+        if (view.is_cuda())
+        {
+            scratch.emplace_back(size_t(view.size()));
+            cudaMemcpy(scratch.back().data(), data,
+                       size_t(view.size()) * sizeof(float), cudaMemcpyDeviceToHost);
+            data = scratch.back().data();
+        }
+#endif
+
+        heads.push_back({span<const float>(data, size_t(view.size())),
+                         head_shape[0], boxes_per_head, classes_number});
+    }
+
+    return heads;
+}
+
+
 struct Image24
 {
     int width = 0;
@@ -1148,37 +1203,10 @@ int main(int argc, char* argv[])
                 };
                 yolo_network.forward_propagate(input_views, forward_propagation, false);
 
-                vector<YoloFpnHead> fpn_heads;
                 vector<vector<float>> fpn_cpu_buffers;
-                const auto& layers = yolo_network.get_layers();
-                for (size_t li = 0; li < layers.size(); ++li)
-                {
-                    const bool is_det = layers[li] && (
-                        (!is_v8_head && layers[li]->get_type() == LayerType::Detection) ||
-                        ( is_v8_head && layers[li]->get_type() == LayerType::DetectionV8));
-                    if (!is_det) continue;
-                    const Shape head_shape = layers[li]->get_output_shape();
-                    const TensorView view = forward_propagation.slots[li].back();
-                    const Index channels = head_shape[2];
-                    const Index classes_n = Index(dataset.get_classes_number());
-
-                    const Index boxes_per_head = is_v8_head ? 1 : channels / (5 + classes_n);
-
-                    const float* data_ptr = view.as<float>();
-#ifdef OPENNN_HAS_CUDA
-                    if (view.is_cuda())
-                    {
-                        fpn_cpu_buffers.emplace_back(size_t(view.size()));
-                        cudaMemcpy(fpn_cpu_buffers.back().data(), data_ptr,
-                                   size_t(view.size()) * sizeof(float), cudaMemcpyDeviceToHost);
-                        data_ptr = fpn_cpu_buffers.back().data();
-                    }
-#endif
-                    fpn_heads.push_back({
-                        span<const float>(data_ptr, size_t(view.size())),
-                        head_shape[0], boxes_per_head, classes_n
-                    });
-                }
+                const vector<YoloFpnHead> fpn_heads =
+                    collect_fpn_heads(yolo_network, forward_propagation, is_v8_head,
+                                      Index(dataset.get_classes_number()), fpn_cpu_buffers);
 
                 {
                     float max_score = 0.f;
@@ -1269,7 +1297,6 @@ input_shape[1],
             filesystem::path label_path = labels_dir / image_path.filename();
             label_path.replace_extension(".txt");
 
-            struct GtBox { int cls; float cx, cy, w, h; };
             vector<GtBox> gt_boxes;
             {
                 ifstream lf(label_path);
@@ -1539,7 +1566,6 @@ input_shape[1],
             std::cout << "\nComputing VOC mAP@0.5 on "
                       << selection_indices.size() << " validation images...\n";
 
-            struct GtBox { int cls; float cx, cy, w, h; };
             struct Pred  { int img_k, cls; float score, cx, cy, w, h; };
 
             const int N_cls = int(dataset.get_classes_number());
@@ -1638,34 +1664,11 @@ input_shape[1],
                     };
                     yolo_network.forward_propagate(iv, fp_m, false);
 
-                    vector<YoloFpnHead> heads;
                     vector<vector<float>> cpu_bufs;
-                    const auto& all_layers = yolo_network.get_layers();
                     const bool is_v8_map = (head_style == YoloNetwork::HeadStyle::FPNv8);
-                    for (size_t li = 0; li < all_layers.size(); ++li)
-                    {
-                        const bool is_det = all_layers[li] && (
-                            (!is_v8_map && all_layers[li]->get_type() == LayerType::Detection) ||
-                            ( is_v8_map && all_layers[li]->get_type() == LayerType::DetectionV8));
-                        if (!is_det) continue;
-                        const Shape hs = all_layers[li]->get_output_shape();
-                        const TensorView view = fp_m.slots[li].back();
-                        const Index classes_n = Index(N_cls);
-                        const Index bph = is_v8_map ? 1 : hs[2] / (5 + classes_n);
-                        const float* ptr = view.as<float>();
-#ifdef OPENNN_HAS_CUDA
-                        if (view.is_cuda())
-                        {
-                            cpu_bufs.emplace_back(size_t(view.size()));
-                            cudaMemcpy(cpu_bufs.back().data(), ptr,
-                                       size_t(view.size()) * sizeof(float),
-                                       cudaMemcpyDeviceToHost);
-                            ptr = cpu_bufs.back().data();
-                        }
-#endif
-                        heads.push_back({span<const float>(ptr, size_t(view.size())),
-                                         hs[0], bph, classes_n});
-                    }
+                    const vector<YoloFpnHead> heads =
+                        collect_fpn_heads(yolo_network, fp_m, is_v8_map,
+                                          Index(N_cls), cpu_bufs);
                     dets = is_v8_map
                         ? decode_yolo_v8_fpn_detections(heads,
                               input_shape[0], input_shape[1],
