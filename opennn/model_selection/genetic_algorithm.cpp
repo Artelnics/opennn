@@ -572,20 +572,9 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
         perform_mutation();
     }
 
-    const vector<Index> optimal_variable_indices = genes_to_variable_indices(input_selection_results.optimal_inputs);
-
-    dataset->set_variable_indices(optimal_variable_indices, original_target_indices);
-
-    const FeatureScaling input_scaling = capture_input_scaling(dataset);
-
-    const Index optimal_variables_number = dataset->get_features_number(VariableRole::Input);
-
-    if (time_variable_indices.size() == 1)
-        dataset->set_variable_role(time_variable_indices[0], "Time");
-
-    configure_neural_network_inputs(neural_network, dataset, optimal_variables_number);
-
-    apply_input_scaling(neural_network, input_scaling);
+    install_optimal_inputs(neural_network, dataset,
+                           genes_to_variable_indices(input_selection_results.optimal_inputs),
+                           original_target_indices, time_variable_indices);
 
     finalize_selected_model(training_strategy, neural_network,
                             input_selection_results.optimal_parameters, folds_number, display, "inputs");

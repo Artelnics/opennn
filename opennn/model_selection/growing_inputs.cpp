@@ -298,21 +298,11 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     input_selection_results.elapsed_time = get_time(elapsed_time);
     input_selection_results.resize_history(epoch);
 
-    dataset->set_variable_indices(input_selection_results.optimal_input_variables_indices,
-        target_variable_indices);
-
-    const Index optimal_processed_variables_number = dataset->get_features_number(VariableRole::Input);
-
-    if (time_variable_indices.size() == 1)
-        dataset->set_variable_role(time_variable_indices[0], "Time");
-
-    configure_neural_network_inputs(neural_network, dataset, optimal_processed_variables_number);
-
-    const FeatureScaling input_scaling = capture_input_scaling(dataset);
+    install_optimal_inputs(neural_network, dataset,
+                           input_selection_results.optimal_input_variables_indices,
+                           target_variable_indices, time_variable_indices);
 
     set_maximum_inputs_number(dataset->get_variables_number(VariableRole::Input));
-
-    apply_input_scaling(neural_network, input_scaling);
 
     finalize_selected_model(training_strategy, neural_network,
                             input_selection_results.optimal_parameters, folds_number, display, "inputs");

@@ -9,6 +9,7 @@
 #include "opennn/model_selection/inputs_selection.h"
 
 #include "opennn/dataset/dataset.h"
+#include "opennn/model_selection/selection_utilities.h"
 #include "opennn/neural_network/neural_network.h"
 
 namespace opennn
@@ -27,6 +28,24 @@ void InputsSelection::configure_neural_network_inputs(NeuralNetwork* neural_netw
 
     neural_network->compile();
 }
+
+void InputsSelection::install_optimal_inputs(NeuralNetwork* neural_network,
+                                             Dataset* dataset,
+                                             const vector<Index>& optimal_input_indices,
+                                             const vector<Index>& target_indices,
+                                             const vector<Index>& time_indices) const
+{
+    dataset->set_variable_indices(optimal_input_indices, target_indices);
+
+    if (time_indices.size() == 1)
+        dataset->set_variable_role(time_indices[0], "Time");
+
+    configure_neural_network_inputs(neural_network, dataset,
+                                    dataset->get_features_number(VariableRole::Input));
+
+    apply_input_scaling(neural_network, capture_input_scaling(dataset));
+}
+
 
 InputsSelectionResult::InputsSelectionResult(const Index maximum_epochs)
 {

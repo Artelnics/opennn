@@ -69,6 +69,19 @@ protected:
 
     void configure_neural_network_inputs(NeuralNetwork*, Dataset*, Index) const;
 
+    // The tail both GrowingInputs and GeneticAlgorithm run once they have
+    // chosen their inputs: point the dataset at them, restore the time role,
+    // reshape and recompile the network, and carry the dataset's scaling onto
+    // it. The two used to spell it out separately and captured the scaling on
+    // opposite sides of configure_neural_network_inputs -- equivalent, because
+    // that only calls set_shape while the scaling is keyed on feature roles,
+    // but it is one order now rather than two.
+    void install_optimal_inputs(NeuralNetwork*,
+                                Dataset*,
+                                const vector<Index>& optimal_input_indices,
+                                const vector<Index>& target_indices,
+                                const vector<Index>& time_indices) const;
+
     TrainingStrategy* training_strategy = nullptr;
 
     Index trials_number = 1;
