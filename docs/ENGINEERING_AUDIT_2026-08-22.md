@@ -306,9 +306,25 @@ and 7x worse on one shape. **Phase 3 is not viable on this hardware.** The resul
 hardware-specific -- the fused engines very likely exist on A100/H100 -- so re-run the
 probe before concluding anything about a datacenter target.
 
-That leaves "call cuDNN better" pointing at plan selection and layout rather than
-fusion. The workspace cap is already known to matter (see the note in `finalize`:
-capping to the auto budget measured 1.5-2x faster than cuDNN's unbounded first choice).
+### Plan selection and layout: also already tuned
+
+Sweeping the conv workspace cap (bf16, batch 64, 3 runs each, median samples/s):
+
+| cap | auto | 16 MiB | 64 MiB | 256 MiB | 1024 MiB |
+|---|---|---|---|---|---|
+| samples/s | **8682** | 8676 | 8603 | 8655 | 8489 |
+
+`auto` is the best of them and larger caps are slightly worse, which is what the note in
+`finalize` already claims. Nothing to gain here. Layout is already NHWC.
+
+So "call cuDNN better" is answered, and the answer is mostly no: fusion has no engines on
+this hardware, the workspace cap is tuned, the layout is right. The convolution time is
+cuDNN's own.
+
+**Measurement caution.** Absolute throughput moves a lot with GPU clock and thermal state
+-- the same bf16 configuration measured 6,994 and 8,682 samples/s in two sessions an hour
+apart. Only A/B comparisons taken back-to-back in one session mean anything; never
+compare a number against one from an earlier run.
 
 ## Fewer effective lines
 
