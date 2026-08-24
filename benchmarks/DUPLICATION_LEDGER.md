@@ -679,3 +679,91 @@ those builders. Confirm whether that is deliberate before the CNN quality
 numbers are re-baselined; against Glorot's ~0.026 limit for a 3x3 convolution
 with 512 input channels, a flat +-0.1 is about four times too wide, fifty layers
 deep.
+
+---
+
+## Step 3 — `common/`
+
+Measured before extracting anything: **2,217 duplicated lines** across the
+runners, against the plan's estimate of ~350. The gap is not that the plan
+counted badly; it counted the GPU monitor and provenance helpers, and the
+duplication is wider than that.
+
+The more useful number is how many *distinct* bodies each helper has:
+
+| helper | copies | distinct bodies |
+|---|---|---|
+| `engine_cmd` | 10 | **10** |
+| `versions` | 13 | **9** |
+| `run_once` | 10 | 9 |
+| `git_commit` | 10 | 6 |
+| `cmd_env` | 5 | 5 |
+| `git_metadata` | 8 | 5 |
+| `repo_root` | 9 | 3 |
+| `gpu_state`, `measure_idle`, `file_info`, `batches` | 3-6 | **1** |
+
+Most of these are not copies waiting to be lifted. `engine_cmd` has ten bodies
+in ten files: that is ten things sharing a name, and merging them is a decision
+about which behaviour is right, not an extraction. Only the bottom row can be
+moved as-is.
+
+### What this explains
+
+The plan records that most results cannot be regenerated — 39 of 107 carry
+`git.dirty = true` and 42 more have no such field. The second half of that is
+not carelessness. `versions()` collects a different set of fields in each
+family, so **what a result says about its own provenance depends on which
+directory produced it**:
+
+| runner | fields recorded |
+|---|---|
+| `capacity/resnet50-max-batch` | python, torch, torch_cuda, torch_cudnn, tensorflow, tensorflow_built_* |
+| `energy/higgs-dense-energy` | python, bench_python, torch, tensorflow, gpu |
+| `energy/transformer-energy` | the same minus `bench_python` |
+| `quality/convergence` | python, platform, version_error — **no framework versions, no GPU** |
+| `quality/precision` | python |
+
+`git_metadata()` splits the same way on how it records a dirty tree: full status
+text, a count only, or a count plus a truncated sample. A field that a family's
+helper never collected cannot be true or false in its results.
+
+So `common/` is not a line-count exercise. It is the difference between a result
+that can be regenerated and one that cannot.
+
+### What was extracted
+
+`benchmarks/common/` — `provenance.py` and `gpu.py`:
+
+- `git_metadata`, `framework_versions`, `file_info`, `repo_root`, `run_text`
+- `gpu_state`, `measure_idle`, `used_mib`, `wait_for_idle`
+
+`framework_versions` is the **union** of the nine variants, so porting a runner
+adds fields and removes none. Absent frameworks record *why* — "not installed"
+and "installed but failed to import" are different facts about the machine — and
+anything uncollectable is omitted rather than guessed.
+
+`wait_for_idle` is the one that is not a lift. `cooldown` had three bodies with
+different meanings: the capacity runners wait for VRAM to drain, the energy ones
+wait for VRAM *and* for power to settle near idle. Those are different
+questions, so the power bound is an option instead of one family's answer
+becoming everyone's.
+
+One rename: `bench_python` becomes `python_executable`. Both spellings exist in
+the stored results for the same fact; nothing reads either programmatically, and
+this is the one the newer artifacts use. Old results keep their key — step 7
+covers the corpus.
+
+### Ported so far
+
+`quality/accuracy/run_accuracy.py`, with the before/after diff the plan asks
+for: every field it recorded before is still recorded, `cuda_nvcc`, `gpu`,
+`torch_built_cuda` and `torch_built_cudnn` are new, and the file is 48 lines
+shorter. `tensorflow_error` gained the exception type.
+
+### Still outstanding
+
+The drifted helpers — `engine_cmd`, `versions` at the call sites, `run_once`,
+`cmd_env`, `git_commit` — are a merge and need the same treatment the model
+definitions got: read the variants, decide which behaviour is correct, record
+why. They are the larger half of the 2,217 lines and none of them should be
+lifted without that.
