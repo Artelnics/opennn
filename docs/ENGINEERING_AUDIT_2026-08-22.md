@@ -4658,3 +4658,116 @@ backward_full_write_test, cutlass_narrow_gemm_test, device_backend_test and mean
 **Fix:** Add `#define OPENNN_SKIP_WITHOUT_CUDA() if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device."` to tests/numerical_derivatives.h (already includes the library) or a tiny tests/cuda_guard.h, and use it as the first line of the ~23 GPU tests in those nine files; replace the four existing ad-hoc spellings with it.
 
 *Verifier:* Guard mechanism confirmed (configuration.cpp:66-68 throws). qwen3_network_test.cpp:372-375 `Configuration::instance().set(Device::CUDA, Type::BF16)` under #ifdef only, no has_cuda_device/GTEST_SKIP in the file; same for adaptive_moment_estimation_test (9 sites), int8_inference_test (6), grouped_attention_test, neural_network_test, memory_audit. Corrections: (a) the biggest unguarded file is…
+
+---
+
+## Status — 2026-08-24
+
+Everything below was checked against the tree at the time of writing rather than
+against the notes, because the notes had drifted: several findings recorded as
+open had been fixed weeks earlier, and one recorded as understood was still
+live. The commits since `509857699` are the record of what changed; this section
+is the record of what is *true now*.
+
+### The fifteen high-severity bugs are closed
+
+Fourteen were already fixed, each verified by reading the code rather than the
+commit log. Most carry a comment at the site describing the original defect,
+which is what made them quick to confirm:
+
+| finding | how it reads now |
+| --- | --- |
+| `CudaBlockCache::give` throwing from a destructor | `deallocate` is `noexcept`; the comment names `~Buffer`/`~PinnedBuffer` as the callers |
+| `set_threads_number` destroying a cached `ThreadPool` | `contraction_device()` rebuilds the handle per call; the comment records the use-after-free |
+| Apple `from_chars` recursing forever | the integral branch calls `std::from_chars`; the comment marks `std::` as load-bearing |
+| quoted-field tokenizer eating `,` and `;` | proper `in_quote` state machine keyed on the actual separator |
+| `BinaryFile` analysis indexing an empty matrix | `require_in_memory_data(...)` guards the analysis entry points |
+| float-only layers accepting BF16 | `Concatenation::on_compute_dtype_changed` refuses anything but FP32 |
+| LSTM on CUDA with no FP32 guard | `cudnn_rnn.cpp` selects the descriptor from `config.data_type` and rejects the rest |
+| `load_darknet_backbone_v11` targeting dead labels | targets `c8_*`, the labels the builder emits |
+| `set_parameters` overflowing the compact bf16 mirror | `throw_if(fp32_master_released())` on all three entry points |
+| Logarithm scaler exporting broken Python/JS | handled as the one non-affine method, via `log_pre`/`exp_post` |
+| CPU valid-length record frozen after the first pass | re-inherited every pass; the comment records the stale-mask bug |
+| `run_graph_epoch` null pipeline slot | the warm-up keeps a callable so it walks the branches the epoch will |
+| Minkowski divided by `batch_size` | divided by the sample count, like its four siblings |
+| NSE dropping its batch scaling | `result.error *= get_batch_scale(batch)`, as WSE does |
+
+The fifteenth was still open and is fixed now.
+
+**Dropout under CUDA graphs redrew one fixed mask.** The seed was chosen on the
+host and passed as a kernel launch argument. A captured graph records the
+arguments its kernels were launched with, so once a training step was captured
+every replay reused the mask captured with it — one dropout pattern for the rest
+of the run. Nothing fails when that happens: shapes, scaling and loss all stay
+plausible, and the only symptom is that the regularisation quietly stops
+varying, which is why it survived. The seed now lives in device memory with a
+one-thread kernel advancing it before each draw, so the advance is inside
+whatever capture is running.
+
+`DropoutDeviceTest.GraphReplayDrawsANewMask` reproduces it: it reported the
+replayed mask identical to the captured one before the change.
+`ConsecutiveCallsDrawDifferentMasks` sits next to it so the first cannot pass
+for the wrong reason.
+
+A sample of the medium bugs was checked the same way — batch-norm's running
+variance, the attention CPU padding inference, the GPU sampler's logit cap — and
+all were fixed. The medium and low tiers were not verified exhaustively.
+
+### Raised during this pass, not in the original audit
+
+**Twenty gradient checks were running on networks of all zeros.** `compile()`
+zeroes the parameters and only the `StandardNetworks` builders randomise them
+afterwards, so a network assembled by hand from `add_layer()` reached its
+gradient check with every weight still zero. With zero weights the delta
+reaching every layer but the last is zero, so most of the gradient is
+identically zero *on both sides of the comparison*: `BackPropagateConvolutional`
+had 1 live component out of 432, `BackPropagateMultiheadAttention` 80 out of
+25,920. A deliberate 1000x error on the attention gradient changed nothing any
+of them measured.
+
+`calculate_gradient()` now refuses an all-zero network so this cannot come back
+quietly, and the twenty fixtures randomise after `compile()`.
+
+The one test that then failed was not a library bug. Two of the three
+convolution configurations use ReLU, and a central difference steps across its
+corner: the error falls in proportion to `h` (7.8e-3 at 1e-3, 1.9e-3 at 1e-4)
+where roundoff would grow and a smooth truncation error would fall as `h²`, and
+the Identity configuration agrees to 2e-7. The bound was the problem — absolute,
+across configurations whose gradients differ by 300x — and is now relative to
+the largest component with the old value as its floor.
+
+**The C2PSA suite could not fail.** Its fixture never randomised either, and
+`CpuAndGpuForwardOutputsMatch` forward-propagated one network on both devices
+though a network is compiled for one — so which device it measured depended on
+what the previous test left in the global configuration. It builds two networks
+now, and `CpuAndGpuGradientsMatch` compares them component by component relative
+to each component, which reports 1.9e-2 against a real 2x error where it allows
+5e-3.
+
+### Deliberately not done
+
+- **`xcut-build-tests-7` (remove 143 `Configuration::instance().set` calls from
+  tests as redundant).** They are load-bearing, and the C2PSA bug above is the
+  proof: a test that does not set its own device inherits whatever the previous
+  one left behind. This finding should be treated as refuted.
+- **`core-utils-8` (delete the free `tokenize`).** Neural Designer uses it. Same
+  for several others that look dead from inside this repo — grep that tree
+  first, as the audit header already says.
+- **`training-optimizers-12` (move optimizer defaults to member initialisers).**
+  The two class-owned cases named are already fixed. What is left are
+  assignments to *inherited* members, which a derived class cannot express as a
+  default member initialiser, so the proposed fix does not apply.
+- **`neural_network.cpp` trivial-member inlining.** Its one-line definitions sit
+  inside the non-CUDA branch of an `#ifdef` where the CUDA build has its own;
+  hoisting them into the class defines them twice.
+
+### Still open
+
+Blocked on hardware: the self-hosted CUDA runner job in CI is written but inert
+until `HAS_CUDA_RUNNER` is set, so nothing runs the GPU suite except this
+machine.
+
+The remaining duplication and boilerplate findings are individually small. The
+larger ones named in the original list — the per-test image helpers, the numeric
+Hessian stub, the rope backward, the GQA pipeline, the expression-emission
+loops — were checked and are already done.
