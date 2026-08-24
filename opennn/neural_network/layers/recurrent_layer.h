@@ -20,7 +20,8 @@ struct RecurrentOperator : Operator, CudnnRnnState
 {
     enum ForwardScratchSlot
     {
-        StepInputForwardSlot = 3,
+        PreviousStateHistoryForwardSlot = 2,
+        StepInputForwardSlot,
         StepHiddenForwardSlot,
         PreviousHiddenForwardSlot,
         StepDerivativesForwardSlot,
@@ -151,11 +152,15 @@ public:
 
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
-    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    ForwardSlotKind get_forward_slot_kind(size_t slot) const override
     {
-        if (spec == 1) return ForwardSlotKind::TrainingOnly;
-        if (spec >= 2 && spec <= 5) return ForwardSlotKind::Transient;
-        return ForwardSlotKind::Pooled;
+        if (slot == RecurrentOperator::PreviousStateHistoryForwardSlot)
+            return ForwardSlotKind::TrainingOnly;
+
+        return slot >= RecurrentOperator::StepInputForwardSlot
+            && slot <= RecurrentOperator::StepDerivativesForwardSlot
+            ? ForwardSlotKind::Transient
+            : ForwardSlotKind::Pooled;
     }
 
     void set(const Shape& = {},

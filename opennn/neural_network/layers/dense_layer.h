@@ -47,11 +47,11 @@ public:
             && !combination.accumulate_input_delta && !combination.drelu_source;
     }
 
-    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    ForwardSlotKind get_forward_slot_kind(size_t slot) const override
     {
-        if ((!gated && spec == size_t(ActivationView) - 1)
-            || spec == size_t(DreluMask) - 1
-            || spec == size_t(DropoutMask) - 1)
+        if ((!gated && slot == ActivationView)
+            || slot == DreluMask
+            || slot == DropoutMask)
             return ForwardSlotKind::TrainingOnly;
         return ForwardSlotKind::Pooled;
     }

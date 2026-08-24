@@ -148,9 +148,9 @@ private:
 
     enum Forward {Input, MaximalIndices, Output};
 
-    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    ForwardSlotKind get_forward_slot_kind(size_t slot) const override
     {
-        return spec == size_t(MaximalIndices) - 1 ? ForwardSlotKind::TrainingOnly : ForwardSlotKind::Pooled;
+        return slot == MaximalIndices ? ForwardSlotKind::TrainingOnly : ForwardSlotKind::Pooled;
     }
 
     void update_pool_operator();

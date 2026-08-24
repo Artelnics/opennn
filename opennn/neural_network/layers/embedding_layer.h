@@ -40,9 +40,9 @@ public:
 
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override { return {}; }
-    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    ForwardSlotKind get_forward_slot_kind(size_t slot) const override
     {
-        return spec == size_t(DropoutMask) - 1
+        return slot == DropoutMask
             ? ForwardSlotKind::TrainingOnly
             : ForwardSlotKind::Pooled;
     }

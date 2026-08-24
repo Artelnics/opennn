@@ -30,9 +30,9 @@ public:
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
 
-    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    ForwardSlotKind get_forward_slot_kind(size_t slot) const override
     {
-        return spec == size_t(ForwardScratch) - 1
+        return slot == ForwardScratch
             ? ForwardSlotKind::Transient
             : ForwardSlotKind::Pooled;
     }

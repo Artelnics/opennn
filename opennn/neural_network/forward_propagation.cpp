@@ -302,7 +302,8 @@ void ForwardPropagation::set(
             recomputable_slots.begin(),
             [](const auto& layer)
             {
-                return layer->get_recomputable_forward_slot();
+                const size_t slot = layer->get_recomputable_forward_slot();
+                return slot == SIZE_MAX ? SIZE_MAX : slot - 1;
             });
     }
 
@@ -312,7 +313,7 @@ void ForwardPropagation::set(
         {
             for(size_t j = 0; j < forward_specs[i].size(); ++j)
             {
-                if(layers[i]->get_forward_slot_kind(j)
+                if(layers[i]->get_forward_slot_kind(j + 1)
                    == ForwardSlotKind::TrainingOnly)
                 {
                     forward_specs[i][j] = {};
@@ -325,7 +326,7 @@ void ForwardPropagation::set(
         [&](const size_t layer, const size_t slot)
     {
         return is_training
-            && (layers[layer]->get_forward_slot_kind(slot)
+            && (layers[layer]->get_forward_slot_kind(slot + 1)
                     == ForwardSlotKind::Transient
                 || recomputable_slots[layer] == slot);
     };

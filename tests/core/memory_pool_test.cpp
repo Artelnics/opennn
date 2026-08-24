@@ -286,10 +286,12 @@ TEST(ForwardPropagationMemoryTest, TrainingRecomputeScratchUsesFutureActivations
 
     const auto specs = network.get_forward_specs(batch);
     Index expected_persistent_bytes = 0;
+    // get_recomputable_forward_slot answers in slot ids, and spec i is slot
+    // i + 1 -- slot 0 is the layer input, which is not allocated from a spec.
     for (size_t layer = 0; layer < specs.size(); ++layer)
-        for (size_t slot = 0; slot < specs[layer].size(); ++slot)
-            if (slot != network.get_layers()[layer]->get_recomputable_forward_slot())
-                expected_persistent_bytes += get_aligned_bytes(specs[layer][slot]);
+        for (size_t spec = 0; spec < specs[layer].size(); ++spec)
+            if (spec + 1 != network.get_layers()[layer]->get_recomputable_forward_slot())
+                expected_persistent_bytes += get_aligned_bytes(specs[layer][spec]);
 
     EXPECT_EQ(layout.arena.byte_size(), expected_persistent_bytes);
 

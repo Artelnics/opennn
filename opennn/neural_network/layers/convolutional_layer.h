@@ -60,14 +60,14 @@ public:
     vector<TensorSpec> get_backward_specs(Index) const override;
     bool backward_uses_forward_output() const noexcept override { return get_output_activation() != ActivationFunction::Identity; }
     bool backward_uses_input(size_t input) const noexcept override { return input != 1 || !residual; }
-    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    ForwardSlotKind get_forward_slot_kind(size_t slot) const override
     {
-        return spec == size_t(ReluMask) - 1 ? ForwardSlotKind::TrainingOnly : ForwardSlotKind::Pooled;
+        return slot == ReluMask ? ForwardSlotKind::TrainingOnly : ForwardSlotKind::Pooled;
     }
     bool folds_input_delta_addend(size_t input) const noexcept override { return input == 0; }
     size_t get_recomputable_forward_slot() const noexcept override
     {
-        return batch_norm.active() ? size_t(0) : SIZE_MAX;
+        return batch_norm.active() ? size_t(ConvolutionView) : SIZE_MAX;
     }
     void recompute_forward_slot(ForwardPropagation&, size_t) override;
 

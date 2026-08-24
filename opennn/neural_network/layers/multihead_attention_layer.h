@@ -44,14 +44,14 @@ public:
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
 
-    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    ForwardSlotKind get_forward_slot_kind(size_t slot) const override
     {
-        if (spec == size_t(TransposeScratch) - 1 || spec == size_t(SdpaQkvPack) - 1)
+        if (slot == TransposeScratch || slot == SdpaQkvPack)
             return ForwardSlotKind::Transient;
-        if (spec == size_t(AttentionWeightsDropped) - 1
-            || spec == size_t(SdpaStats) - 1
-            || spec == size_t(SdpaDropoutState) - 1
-            || spec == size_t(DropoutMask) - 1)
+        if (slot == AttentionWeightsDropped
+            || slot == SdpaStats
+            || slot == SdpaDropoutState
+            || slot == DropoutMask)
             return ForwardSlotKind::TrainingOnly;
         return ForwardSlotKind::Pooled;
     }

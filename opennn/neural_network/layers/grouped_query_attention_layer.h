@@ -132,9 +132,10 @@ public:
 
     vector<TensorSpec> get_forward_specs(Index) const override;
 
-    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    ForwardSlotKind get_forward_slot_kind(size_t slot) const override
     {
-        return spec < GroupedQueryAttentionOperator::forward_scratch_slots_count
+        return slot != Input
+            && slot <= GroupedQueryAttentionOperator::forward_scratch_slots_count
             ? ForwardSlotKind::Transient
             : ForwardSlotKind::Pooled;
     }

@@ -293,7 +293,7 @@ TEST(Transformer, TrainingArenaReusesResidualBranchOutputs)
         {
             if (specs[i][j].shape.empty()) continue;
             const Index bytes = get_aligned_bytes(specs[i][j]);
-            if (layers[i]->get_forward_slot_kind(j) == ForwardSlotKind::Transient)
+            if (layers[i]->get_forward_slot_kind(j + 1) == ForwardSlotKind::Transient)
                 maximum_transient_bytes =
                     max(maximum_transient_bytes, bytes);
             else
