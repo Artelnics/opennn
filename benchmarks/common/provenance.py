@@ -73,12 +73,16 @@ def git_metadata(root: Path | None = None) -> dict[str, Any]:
 
     status_lines = status.splitlines()
 
+    # `status_short` keeps the name and the list type used by 46 of the stored
+    # results -- more than any other spelling -- but capped, which is what the
+    # count-and-sample variant was for: a very dirty tree should not dominate
+    # the artifact. The count is the total, so truncation stays visible.
     return {
         "commit": commit or "unknown",
         "branch": branch or "unknown",
         "dirty": bool(status_lines),
+        "status_short": status_lines[:50],
         "status_short_count": len(status_lines),
-        "status_short_sample": status_lines[:50],
         "status_short_truncated": len(status_lines) > 50,
     }
 

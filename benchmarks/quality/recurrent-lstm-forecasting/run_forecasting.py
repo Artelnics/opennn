@@ -270,7 +270,10 @@ def main():
                         help="Require the prepared CSV to already exist")
     parser.add_argument("--gpu-index", type=int, default=env_gpu_index())
     parser.add_argument("--timeout-s", type=int, default=0, help="0 means no timeout")
-    parser.add_argument("--frameworks", default="opennn",
+    # All three by default: this directory exists to compare them, and with the
+    # old "opennn" default a plain invocation produced a one-engine result that
+    # looked like a comparison. Narrow it explicitly when only one is wanted.
+    parser.add_argument("--frameworks", default="opennn,pytorch,tensorflow",
                         help="Comma list of engines to run: opennn,pytorch,tensorflow "
                              "(pytorch/tensorflow read data/ prepared by this runner). "
                              "The OpenNN binary only runs when 'opennn' is listed.")

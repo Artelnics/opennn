@@ -631,10 +631,21 @@ drop the output activation for training and keep it for inference.
 
 **Interim rule, so step 4 is not blocked on the library:** the merged definition
 declares its formulation per engine in `suite.json` rather than claiming the
-three are identical, and the one *unintended* divergence gets fixed now —
-`pytorch_speed.py` moves to sigmoid + `BCELoss`, matching the other two engines
-at site 5 and its own five sibling sites. Site 1 stays as it is: its two logits
-drivers are deliberate and documented, and will be correct once (b) lands.
+three are identical. Nothing changes engine-side until the from-logits loss
+lands, and then all of them change together.
+
+*Corrected 2026-08-24.* The first version of this rule said to move
+`pytorch_speed.py` to sigmoid + `BCELoss` now, to make site 5 internally
+consistent. That is the same mistake as option (a), applied to one file: it
+removes PyTorch's fused path to match a limitation OpenNN has. It is also worse
+than it looks — `BCEWithLogitsLoss` is the numerically stable formulation
+precisely because it never materialises the sigmoid, and site 5 runs quality
+gates (accuracy, log-loss, ROC-AUC) off the same run, so trading stability for
+uniformity there risks the gate rather than only the throughput.
+
+Site 5 stays mixed and declared until (b) lands. A divergence that is written
+down is not the same problem as one nobody knows about, and this one is now in
+the table above.
 
 ### D2 — Initialisation: Glorot, pinned explicitly in all three
 
@@ -748,17 +759,44 @@ wait for VRAM *and* for power to settle near idle. Those are different
 questions, so the power bound is an option instead of one family's answer
 becoming everyone's.
 
-One rename: `bench_python` becomes `python_executable`. Both spellings exist in
-the stored results for the same fact; nothing reads either programmatically, and
-this is the one the newer artifacts use. Old results keep their key — step 7
+Two renames, both where the same fact had two spellings across the corpus:
+
+- `bench_python` -> `python_executable` (the spelling the newer artifacts use)
+- `status_short_sample` -> `status_short`
+
+The second was a correction. The union first took `status_short_count` +
+`status_short_sample` + `status_short_truncated` — the three-field variant — and
+dropped `status_short`, which is the name in **46** stored results against 19
+for the count form. Same content, same list type, minority name kept. It now
+emits `status_short` capped at 50 entries, with the count and a truncation flag
+beside it, so the dominant name survives and a very dirty tree still cannot
+dominate the artifact. Nothing reads either spelling programmatically; step 7
 covers the corpus.
 
 ### Ported so far
 
-`quality/accuracy/run_accuracy.py`, with the before/after diff the plan asks
-for: every field it recorded before is still recorded, `cuda_nvcc`, `gpu`,
-`torch_built_cuda` and `torch_built_cudnn` are new, and the file is 48 lines
-shorter. `tensorflow_error` gained the exception type.
+Seven runners, each verified to still run:
+
+| runner | lines shed |
+|---|---|
+| `quality/accuracy/run_accuracy.py` | 48 |
+| `quality/convergence/run_convergence.py` | 50 |
+| `throughput/higgs/run_higgs_cpu.py` | 57 |
+| `throughput/higgs-gpu/run_higgs_dense.py` | 86 |
+| `throughput/higgs-gpu/run_higgs_infer.py` | 86 |
+| `throughput/peak-batch-speed/run_peak_batch_speed.py` | 38 |
+
+With the before/after diff the plan asks for. For `run_higgs_dense`, which used
+the `status_short` variant, git metadata goes from four keys to six — the four
+preserved, `status_short_count` and `status_short_truncated` added. Framework
+versions gain `cuda_nvcc`, `gpu`, `torch_built_cuda` and `torch_built_cudnn`
+wherever the runner did not collect them, and `tensorflow_error` gains the
+exception type.
+
+`quality/recurrent-lstm-forecasting/run_forecasting.py` is also changed, but for
+the defect in its own section rather than for `common/`: `--frameworks` now
+defaults to all three engines. With the old default a plain invocation produced
+a one-engine result that read like a comparison.
 
 ### Still outstanding
 
