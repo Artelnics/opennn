@@ -314,10 +314,8 @@ void attention_sdpa_lengths_cuda(const int batch_size, const int query_sequence_
                                  const int source_sequence_length, const int* record,
                                  int32_t* query_lengths, int32_t* source_lengths)
 {
-    if (batch_size <= 0) return;
-    OPENNN_CUDA_LAUNCH(attention_sdpa_lengths_kernel<<<(batch_size + block_size - 1) / block_size, block_size, 0,
-                                                       opennn::device::get_compute_stream()>>>(
-        batch_size, query_sequence_length, source_sequence_length, record, query_lengths, source_lengths));
+    launch_elementwise(batch_size, attention_sdpa_lengths_kernel,
+                       query_sequence_length, source_sequence_length, record, query_lengths, source_lengths);
 }
 
 template<typename T, int SIGN>
@@ -353,18 +351,11 @@ __global__ void rope_apply_kernel(const int seq, const int model_dim, const int 
     }
 }
 
-static inline int rope_threads(int model_dim)
-{
-    if (model_dim <= 64)  return 64;
-    if (model_dim <= 128) return 128;
-    return 256;
-}
-
 template<typename T, int SIGN>
 static void rope_launch(const int rows, const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* in, T* out, const float* cos, const float* sin)
 {
     if (rows == 0 || model_dim == 0) return;
-    OPENNN_CUDA_LAUNCH((rope_apply_kernel<T, SIGN><<<rows, rope_threads(model_dim), 0, opennn::device::get_compute_stream()>>>(seq, model_dim, head_dim, rotary_dim, offset, in, out, cos, sin)));
+    OPENNN_CUDA_LAUNCH((rope_apply_kernel<T, SIGN><<<rows, threads_for_width(model_dim), 0, opennn::device::get_compute_stream()>>>(seq, model_dim, head_dim, rotary_dim, offset, in, out, cos, sin)));
 }
 
 template<typename T>
@@ -435,7 +426,7 @@ void qk_rope_cache_append_cuda(const int n_q_heads, const int n_kv_heads, const 
                                T* q_out, T* k_cache, T* v_cache)
 {
     const int blocks = n_q_heads + 2 * n_kv_heads;
-    const int threads = rope_threads(head_dim);
+    const int threads = threads_for_width(head_dim);
     const int smem = head_dim * int(sizeof(float));
     OPENNN_CUDA_LAUNCH((qk_rope_cache_append_kernel<T><<<blocks, threads, smem, opennn::device::get_compute_stream()>>>(
         n_q_heads, n_kv_heads, head_dim, eps, position, qkv, q_norm_w, k_norm_w,

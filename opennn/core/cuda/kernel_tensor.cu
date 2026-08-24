@@ -141,13 +141,8 @@ void linear_forward_single_output_cuda(const Index rows,
                                        const int activation,
                                        T* output)
 {
-    constexpr int block_size = 256;
-    const int row_count = checked_int(rows);
-    const int blocks = (row_count * 32 + block_size - 1) / block_size;
-
-    OPENNN_CUDA_LAUNCH(linear_forward_single_output_kernel<T>
-                       <<<blocks, block_size, 0, opennn::device::get_compute_stream()>>>(
-                           row_count, checked_int(features), input, weights, bias, activation, output));
+    launch_warp_rows(nullptr, rows, linear_forward_single_output_kernel<T>,
+                     checked_int(features), input, weights, bias, activation, output);
 }
 
 
@@ -245,8 +240,10 @@ __global__ void linear_backward_single_output_kernel(const int rows,
         bias_gradient_partials[blockIdx.x] = block_gradient[features];
 }
 
-__global__ void single_output_gradient_finalize_kernel(const int blocks,
-                                                       const int features,
+// features first: launch_elementwise_on hands the launch count to the kernel
+// as its first parameter.
+__global__ void single_output_gradient_finalize_kernel(const int features,
+                                                       const int blocks,
                                                        const float* __restrict__ weight_partials,
                                                        const float* __restrict__ bias_partials,
                                                        float* __restrict__ weight_gradient,
@@ -324,10 +321,8 @@ bool linear_backward_single_output_cuda(const Index rows,
     default: return false;
     }
 
-    OPENNN_CUDA_LAUNCH((single_output_gradient_finalize_kernel
-                        <<<(feature_count + block_size - 1) / block_size, block_size, 0, stream>>>(
-                            blocks, feature_count, partials, bias_partials,
-                            weight_gradient, bias_gradient)));
+    launch_elementwise_on(stream, feature_count, single_output_gradient_finalize_kernel,
+                          blocks, partials, bias_partials, weight_gradient, bias_gradient);
     return true;
 }
 

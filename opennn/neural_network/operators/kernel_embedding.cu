@@ -98,10 +98,8 @@ __global__ void token_valid_lengths_kernel(const int batch_size, const int seque
 void token_valid_lengths_cuda(const Index batch_size, const Index sequence_length,
                               const float* token_ids, int* lengths, cudaStream_t stream)
 {
-    if (batch_size <= 0) return;
-    const int blocks = int((batch_size * 32 + block_size - 1) / block_size);
-    OPENNN_CUDA_LAUNCH(token_valid_lengths_kernel<<<blocks, block_size, 0, stream>>>(
-        int(batch_size), int(sequence_length), token_ids, lengths));
+    launch_warp_rows(stream, batch_size, token_valid_lengths_kernel,
+                     int(sequence_length), token_ids, lengths);
 }
 
 #define INSTANTIATE(T) \

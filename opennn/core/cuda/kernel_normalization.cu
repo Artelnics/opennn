@@ -88,14 +88,6 @@ __global__ void norm_forward_kernel(const int N, const int D, const T* __restric
     }
 }
 
-static inline int layernorm_threads(int D)
-{
-    if (D <= 32) return 32;
-    if (D <= 64) return 64;
-    if (D <= 128) return 128;
-    return 256;
-}
-
 template<typename T>
 __global__ void batchnorm_inference_kernel(const Index total, const int channels,
                                            const T* __restrict__ x,
@@ -933,7 +925,7 @@ static void norm_forward_launch(const int N, const int D, const T* X, const T* R
          || norm_forward_warp_try<T, FuseResidual, HasMean, 4>(N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)))
         return;
 
-    OPENNN_CUDA_LAUNCH((norm_forward_kernel<T, FuseResidual, HasMean><<<N, layernorm_threads(D), 0, opennn::device::get_compute_stream()>>>(
+    OPENNN_CUDA_LAUNCH((norm_forward_kernel<T, FuseResidual, HasMean><<<N, threads_for_width(D), 0, opennn::device::get_compute_stream()>>>(
         N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)));
 }
 
@@ -1084,7 +1076,7 @@ static void norm_backward_launch(const int N, const int D, const T* dY, const T*
         return;
 
     if (dX)
-        OPENNN_CUDA_LAUNCH((norm_backward_kernel<T, HasMean><<<N, layernorm_threads(D), 0, opennn::device::get_compute_stream()>>>(N, D, dY, X, means, inv_vars, gamma, dX, dX2)));
+        OPENNN_CUDA_LAUNCH((norm_backward_kernel<T, HasMean><<<N, threads_for_width(D), 0, opennn::device::get_compute_stream()>>>(N, D, dY, X, means, inv_vars, gamma, dX, dX2)));
 
     constexpr int NUM_WARPS = 8;
     const dim3 block(32, NUM_WARPS);

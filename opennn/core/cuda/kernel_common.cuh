@@ -79,12 +79,43 @@ static inline void checked_host_condition(bool condition, const char* message)
         opennn::device::check_last_error(); \
     } while (false)
 
+// One thread per element, on a caller-chosen stream. The kernel takes the
+// element count as its first parameter. A null stream means the compute stream.
+template<typename K, typename... Args>
+static inline void launch_elementwise_on(cudaStream_t stream, Index n, K kernel, Args... args)
+{
+    if (n <= 0) return;
+    if (stream == nullptr) stream = opennn::device::get_compute_stream();
+    const int total = checked_int(n);
+    OPENNN_CUDA_LAUNCH(kernel<<<grid_size_for(total), block_size, 0, stream>>>(total, args...));
+}
+
 template<typename K, typename... Args>
 static inline void launch_elementwise(Index n, K kernel, Args... args)
 {
-    if (n == 0) return;
-    const int total = checked_int(n);
-    OPENNN_CUDA_LAUNCH(kernel<<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, args...));
+    launch_elementwise_on(nullptr, n, kernel, args...);
+}
+
+// One warp per row: the kernel derives its row from the global warp id and
+// takes the row count as its first parameter.
+template<typename K, typename... Args>
+static inline void launch_warp_rows(cudaStream_t stream, Index rows, K kernel, Args... args)
+{
+    if (rows <= 0) return;
+    if (stream == nullptr) stream = opennn::device::get_compute_stream();
+    const int blocks = checked_int(ceil_div(rows * 32, Index(block_size)));
+    OPENNN_CUDA_LAUNCH(kernel<<<blocks, block_size, 0, stream>>>(checked_int(rows), args...));
+}
+
+// Threads for one row of the given width. A row narrower than the block does
+// not need the rest of the block standing idle; below a warp there is nothing
+// left to save.
+static inline int threads_for_width(int width)
+{
+    if (width <= 32)  return 32;
+    if (width <= 64)  return 64;
+    if (width <= 128) return 128;
+    return block_size;
 }
 
 template<typename K, typename... Args>
