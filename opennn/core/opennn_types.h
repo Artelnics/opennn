@@ -181,6 +181,16 @@ class JsonWriter;
 namespace detail
 {
 
+#if defined(__CUDA_ARCH__)
+
+template<typename Message, typename... Args>
+[[noreturn]] __device__ inline void throw_formatted(Message&&, Args&&...)
+{
+    __trap();
+}
+
+#else
+
 [[noreturn]] inline void throw_formatted(string_view message,
                                          const source_location& loc = source_location::current())
 {
@@ -194,6 +204,8 @@ template<typename... Args>
 {
     throw runtime_error(format(message, std::forward<Args>(args)...));
 }
+
+#endif
 
 }
 

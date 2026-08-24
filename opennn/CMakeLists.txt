@@ -200,11 +200,13 @@ elseif(OpenMP_FOUND)
     # interface flag is patched too, or the plain one would arrive after this
     # one on every command line and win.
     if(MSVC)
-        target_compile_options(opennn PRIVATE -openmp:experimental)
+        target_compile_options(opennn PRIVATE
+            "$<$<COMPILE_LANGUAGE:CXX>:-openmp:experimental>")
         set_property(TARGET OpenMP::OpenMP_CXX PROPERTY INTERFACE_COMPILE_OPTIONS
             "$<$<COMPILE_LANGUAGE:CXX>:-openmp:experimental>")
     else()
-        target_compile_options(opennn PRIVATE ${OpenMP_CXX_FLAGS})
+        target_compile_options(opennn PRIVATE
+            "$<$<COMPILE_LANGUAGE:CXX>:${OpenMP_CXX_FLAGS}>")
     endif()
 
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

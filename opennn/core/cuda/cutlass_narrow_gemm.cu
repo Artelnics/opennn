@@ -33,9 +33,10 @@
 
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/core/cuda/cutlass_narrow_gemm.cuh"
-#include "opennn/core/string_utilities.h"
 
 #ifdef OPENNN_HAS_CUTLASS
+
+#include "opennn/core/string_utilities.h"
 
 #include "cutlass/cutlass.h"
 #include "cutlass/gemm/device/gemm.h"
