@@ -14,6 +14,7 @@
 #include "opennn/core/json.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/dataset/image_processing.h"
+#include "opennn/neural_network/detection_head.h"
 
 namespace opennn
 {
@@ -965,26 +966,6 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
 namespace
 {
 
-float candidate_iou(const array<float, 6>& a, const array<float, 6>& b)
-{
-    const float a_left = a[0] - 0.5f * a[2];
-    const float a_top = a[1] - 0.5f * a[3];
-    const float a_right = a[0] + 0.5f * a[2];
-    const float a_bottom = a[1] + 0.5f * a[3];
-
-    const float b_left = b[0] - 0.5f * b[2];
-    const float b_top = b[1] - 0.5f * b[3];
-    const float b_right = b[0] + 0.5f * b[2];
-    const float b_bottom = b[1] + 0.5f * b[3];
-
-    const float inter_w = max(0.0f, min(a_right, b_right) - max(a_left, b_left));
-    const float inter_h = max(0.0f, min(a_bottom, b_bottom) - max(a_top, b_top));
-    const float inter = inter_w * inter_h;
-    const float area = a[2] * a[3] + b[2] * b[3] - inter;
-
-    return area > 0.0f ? inter / area : 0.0f;
-}
-
 struct LetterboxUnwarp
 {
     float scale;
@@ -1051,7 +1032,7 @@ vector<YoloDetection> nms_and_unwarp(vector<array<float, 6>>& candidates,
         const bool suppressed = ranges::any_of(kept, [&](const array<float, 6>& kept_candidate)
         {
             return Index(kept_candidate[5]) == Index(candidate[5])
-                && candidate_iou(candidate, kept_candidate) > iou_threshold;
+                && yolo_box_iou(candidate, kept_candidate) > iou_threshold;
         });
         if (!suppressed) kept.push_back(candidate);
     }
@@ -1131,16 +1112,6 @@ vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>& head
                           network_height, network_width, iou_threshold);
 }
 
-static float v8_dfl_decode(const float* logits, Index reg_max)
-{
-    float max_l = *max_element(logits, logits + reg_max);
-    float sum = 0.0f;
-    for (Index i = 0; i < reg_max; ++i) sum += expf(logits[i] - max_l);
-    float d = 0.0f;
-    for (Index i = 0; i < reg_max; ++i) d += float(i) * expf(logits[i] - max_l) / sum;
-    return d;
-}
-
 vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>& heads,
                                                      Index original_height,
                                                      Index original_width,
@@ -1188,10 +1159,10 @@ vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>& h
                 {
                     const float cell_cx = (float(col) + 0.5f) * inv_grid;
                     const float cell_cy = (float(row) + 0.5f) * inv_grid;
-                    const float d_l = v8_dfl_decode(head.data.data() + base, reg_max);
-                    const float d_t = v8_dfl_decode(head.data.data() + base + reg_max, reg_max);
-                    const float d_r = v8_dfl_decode(head.data.data() + base + 2 * reg_max, reg_max);
-                    const float d_b = v8_dfl_decode(head.data.data() + base + 3 * reg_max, reg_max);
+                    const float d_l = dfl_decode(head.data.data() + base, reg_max);
+                    const float d_t = dfl_decode(head.data.data() + base + reg_max, reg_max);
+                    const float d_r = dfl_decode(head.data.data() + base + 2 * reg_max, reg_max);
+                    const float d_b = dfl_decode(head.data.data() + base + 3 * reg_max, reg_max);
                     pred_cx = cell_cx + (d_r - d_l) * inv_grid * 0.5f;
                     pred_cy = cell_cy + (d_b - d_t) * inv_grid * 0.5f;
                     pred_w  = (d_l + d_r) * inv_grid;

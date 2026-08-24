@@ -577,16 +577,6 @@ static float iou_cxcywh(float cx1, float cy1, float w1, float h1,
     return inter / (w1*h1 + w2*h2 - inter + 1e-7f);
 }
 
-static float dfl_decode(const float* logits, Index reg_max)
-{
-    float max_l = *max_element(logits, logits + reg_max);
-    float sum = 0.0f;
-    for (Index i = 0; i < reg_max; ++i) sum += expf(logits[i] - max_l);
-    float d = 0.0f;
-    for (Index i = 0; i < reg_max; ++i) d += float(i) * expf(logits[i] - max_l) / sum;
-    return d;
-}
-
 // reg_max == 1 is the plain head: the four channels are the box directly, with
 // the centre offset by the cell. Folded in here so callers do not each carry
 // the branch -- three of them did, identically.

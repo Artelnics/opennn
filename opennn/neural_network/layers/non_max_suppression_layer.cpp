@@ -13,30 +13,11 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/neural_network/forward_propagation.h"
+#include "opennn/neural_network/detection_head.h"
 #include <algorithm>
 
 namespace opennn
 {
-
-static float yolo_iou_xywh(const array<float, 6>& a, const array<float, 6>& b)
-{
-    const float a_left = a[0] - 0.5f * a[2];
-    const float a_top = a[1] - 0.5f * a[3];
-    const float a_right = a[0] + 0.5f * a[2];
-    const float a_bottom = a[1] + 0.5f * a[3];
-
-    const float b_left = b[0] - 0.5f * b[2];
-    const float b_top = b[1] - 0.5f * b[3];
-    const float b_right = b[0] + 0.5f * b[2];
-    const float b_bottom = b[1] + 0.5f * b[3];
-
-    const float inter_w = max(0.0f, min(a_right, b_right) - max(a_left, b_left));
-    const float inter_h = max(0.0f, min(a_bottom, b_bottom) - max(a_top, b_top));
-    const float inter = inter_w * inter_h;
-    const float area = a[2] * a[3] + b[2] * b[3] - inter;
-
-    return area > 0.0f ? inter / area : 0.0f;
-}
 
 void NonMaxSuppressionOperator::set(const Shape& input_shape,
                               Index new_boxes_per_cell,
@@ -157,7 +138,7 @@ void NonMaxSuppressionOperator::apply(const TensorView& input, TensorView& outpu
                 const array<float, 6> kept_box{kept[0], kept[1], kept[2], kept[3], kept[4], kept[5]};
 
                 if (Index(kept_box[5]) == Index(candidate[5])
-                &&  yolo_iou_xywh(candidate, kept_box) > iou_threshold)
+                &&  yolo_box_iou(candidate, kept_box) > iou_threshold)
                 {
                     suppressed = true;
                     break;

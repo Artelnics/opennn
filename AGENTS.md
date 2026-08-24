@@ -64,6 +64,21 @@ cmake -S . -B build-resnet-capacity -G Ninja \
 cmake --build build-resnet-capacity
 ```
 
+On Windows, cuDNN is installed outside the CUDA toolkit and `FindCUDNN.cmake`
+only hints at `CUDAToolkit_INCLUDE_DIRS` and the Linux paths, so the CUDA
+configure above fails with `Could NOT find CUDNN` until it is told where to
+look:
+
+```sh
+      -DCUDNN_INCLUDE_DIR="C:/Program Files/NVIDIA/CUDNN/v9.19/include/13.1"       -DCUDNN_LIBRARY="C:/Program Files/NVIDIA/CUDNN/v9.19/lib/13.1/x64/cudnn.lib"
+```
+
+The trailing directory is the CUDA major version cuDNN was built for, not the
+cuDNN version: a v9.19 install for CUDA 13 puts its headers under `include/13.1`.
+Running the tests needs `bin/13.1/x64` ahead of `bin/12.9/x64` on PATH for the
+same reason — with the 12.9 directory first the binary loads a cuBLASLt built
+for CUDA 12 and dies part-way through the suite.
+
 `OpenNN_BUILD_TESTS` and `OpenNN_BUILD_EXAMPLES` default to `ON`, so neither needs a
 flag; `OpenNN_BUILD_BENCHMARKS` defaults to `OFF`. `CMAKE_CUDA_ARCHITECTURES` defaults
 to `native`, which is right whenever the GPU is visible at configure time — if it is
