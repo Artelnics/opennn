@@ -270,6 +270,9 @@ TEST_F(ModelExpressionTest, SavePhpExpression)
     EXPECT_TRUE(contains_token(source, "<?php"));
     EXPECT_TRUE(contains_token(source, "session_start"));
     EXPECT_TRUE(contains_token(source, "json_encode"));
+    EXPECT_TRUE(contains_token(source, "function OpenNNTanh"));
+    EXPECT_TRUE(contains_token(source, "OpenNNTanh("));
+    EXPECT_FALSE(contains_token(source, "function Tanh("));
 
     filesystem::remove(path);
 }
@@ -444,8 +447,13 @@ TEST(ModelExpressionActivationTest, ExportsEveryActivationToEveryLanguage)
             const string source = read_whole_file(path);
             filesystem::remove(path);
 
+            const string exported_activation_name =
+                language.language == PHP && string(activation.name) == "Tanh"
+                    ? "OpenNNTanh"
+                    : activation.name;
+
             EXPECT_TRUE(contains_token(source,
-                string(language.definition_prefix) + activation.name));
+                string(language.definition_prefix) + exported_activation_name));
         }
 
         const filesystem::path embedded_path = unique_model_expression_path(

@@ -522,7 +522,7 @@ const vector<pair<ActivationFunction, ModelExpression::ActivationBodies>>& Model
             "float Tanh(float x) {\n\treturn tanhf(x);\n}\n\n",
             "function Tanh(x) {\n\treturn Math.tanh(x);\n}\n",
             "\t@staticmethod\n\tdef Tanh(x):\n\t\treturn np.tanh(x)\n\n",
-            "function Tanh($x) { return tanh($x); }\n"
+            "function OpenNNTanh($x) { return tanh($x); }\n"
         }},
         {ReLU, {
             "float ReLU(float x) {\n\tfloat z = fmaxf(0.0f, x);\n\treturn z;\n}\n\n",
@@ -1603,6 +1603,10 @@ string ModelExpression::get_expression_php() const
     const vector<string>& fixed_output_names = names.fixed_outputs;
 
     string expression = build_expression();
+
+    // PHP function names are case-insensitive, so Tanh would collide with
+    // PHP's built-in tanh function.
+    replace_all_word_appearances(expression, "Tanh", "OpenNNTanh");
 
     apply_name_mapping(expression, input_names, fixed_input_names);
     apply_name_mapping(expression, output_names, fixed_output_names);
