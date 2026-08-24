@@ -145,7 +145,7 @@ struct Variable
     void set_scaler(ScalerMethod new_scaler) { scaler = new_scaler; }
     void set_role(const string& new_role) { role = string_to_variable_role(new_role); }
     void set_role(VariableRole new_role) { role = new_role; }
-    void set_type(const string&);
+    void set_type(const string& new_variable_type) { type = string_to_variable_type(new_variable_type); }
     void set_categories(const vector<string>& new_categories) { categories = new_categories; }
 
     void to_JSON(JsonWriter&) const;

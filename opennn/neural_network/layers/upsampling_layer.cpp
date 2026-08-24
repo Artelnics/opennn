@@ -141,10 +141,6 @@ void Upsampling::set(const Shape& new_input_shape,
     configure_operator();
 }
 
-void Upsampling::apply_input_shape(const Shape& new_input_shape)
-{
-    set(new_input_shape, upsampling.scale_factor, label);
-}
 
 void Upsampling::set_scale_factor(Index new_scale_factor)
 {

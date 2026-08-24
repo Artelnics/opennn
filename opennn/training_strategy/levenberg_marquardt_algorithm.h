@@ -70,7 +70,9 @@ private:
                                      OptimizerData&);
 
    void calculate_errors(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
-   void calculate_squared_errors(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
+   void calculate_squared_errors(const Batch&,
+                                                           const ForwardPropagation&,
+                                                           BackPropagationLM& back_propagation_lm) const { back_propagation_lm.squared_errors = back_propagation_lm.errors.array().square(); }
    void calculate_error(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
 
    void compute_jacobian(const Batch&,

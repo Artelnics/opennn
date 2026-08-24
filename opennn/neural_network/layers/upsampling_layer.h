@@ -52,7 +52,7 @@ public:
     }
 
 
-    void apply_input_shape(const Shape&) override;
+    void apply_input_shape(const Shape& new_input_shape) override { set(new_input_shape, upsampling.scale_factor, label); }
     void set_scale_factor(Index);
 
     void read_JSON_body(const Json*) override;

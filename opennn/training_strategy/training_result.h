@@ -62,7 +62,7 @@ struct TrainingResult
 
     void resize_training_error_history(const Index new_size) { training_error_history.conservativeResize(new_size); }
 
-    void resize_validation_error_history(const Index);
+    void resize_validation_error_history(const Index new_size) { validation_error_history.conservativeResize(new_size); }
 
     VectorR training_error_history;
 

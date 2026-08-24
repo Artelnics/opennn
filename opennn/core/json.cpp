@@ -59,10 +59,6 @@ const Json::Object& Json::as_object() const
     return std::get<Object>(value);
 }
 
-bool Json::has(std::string_view key) const
-{
-    return find(key) != nullptr;
-}
 
 const Json* Json::find(std::string_view key) const
 {

@@ -90,12 +90,6 @@ void LevenbergMarquardtAlgorithm::calculate_errors(const Batch& batch,
     back_propagation_lm.errors.noalias() = output - target;
 }
 
-void LevenbergMarquardtAlgorithm::calculate_squared_errors(const Batch&,
-                                                           const ForwardPropagation&,
-                                                           BackPropagationLM& back_propagation_lm) const
-{
-    back_propagation_lm.squared_errors = back_propagation_lm.errors.array().square();
-}
 
 void LevenbergMarquardtAlgorithm::calculate_error(const Batch&,
                                                    const ForwardPropagation&,

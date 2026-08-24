@@ -57,7 +57,7 @@ public:
     const Array& as_array() const;
     Object& as_object();
     const Object& as_object() const;
-    bool         has(std::string_view) const;
+    bool         has(std::string_view key) const { return find(key) != nullptr; }
     const Json*  find(std::string_view) const;
     const Json&  at(std::string_view) const;
     Json&        operator[](std::string_view);

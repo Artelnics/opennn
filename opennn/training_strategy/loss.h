@@ -205,7 +205,7 @@ private:
                                   Index batch_samples,
                                   Index reduction_floats = 0) const;
 
-    float get_weighted_coefficient(const Batch&) const;
+    float get_weighted_coefficient(const Batch& batch) const { return get_batch_scale(batch) / (normalization_coefficient + EPSILON); }
 
     // training_samples / batch_samples. The optimizer averages the per-batch
     // errors, so an error normalized by a whole-training-set constant has to

@@ -1363,10 +1363,6 @@ void Loss::back_propagate(const Batch& batch,
     add_regularization_gradient(back_propagation);
 }
 
-float Loss::get_weighted_coefficient(const Batch& batch) const
-{
-    return get_batch_scale(batch) / (normalization_coefficient + EPSILON);
-}
 
 float Loss::get_batch_scale(const Batch& batch) const
 {
