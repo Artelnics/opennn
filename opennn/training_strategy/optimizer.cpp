@@ -1911,6 +1911,30 @@ static EpochBatches split_off_tail(const vector<vector<Index>>& batches, Index b
 }
 
 
+// Both epoch drivers run the whole batches and then, if the last batch is
+// short, that tail on its own -- and both then have to put the two numbers
+// back together. error and accuracy are per-sample means over different sample
+// counts, so they weight; active_tokens_count is a total, so it adds. Getting
+// that wrong is silent, and it was written out twice.
+static void merge_tail_result(Loss::EvaluationResult& result,
+                              const Loss::EvaluationResult& tail_result,
+                              const Index complete_samples,
+                              const Index tail_samples,
+                              const bool tracks_accuracy)
+{
+    const float total_samples = float(complete_samples + tail_samples);
+
+    result.error = (result.error * float(complete_samples)
+                    + tail_result.error * float(tail_samples)) / total_samples;
+
+    if (tracks_accuracy)
+        result.accuracy = (result.accuracy * float(complete_samples)
+                           + tail_result.accuracy * float(tail_samples)) / total_samples;
+
+    result.active_tokens_count += tail_result.active_tokens_count;
+}
+
+
 Loss::EvaluationResult Optimizer::train_epoch(
     TrainingContext& main_context,
     ThreadSafeQueue<Batch*>& empty_queue,
@@ -2096,16 +2120,10 @@ Loss::EvaluationResult Optimizer::train_epoch(
         if(!has_tail) return;
 
         const Loss::EvaluationResult tail_result = train_tail();
-        const Index complete_samples = batches_number * forward_propagation.batch_size;
-        const Index tail_samples = Index(batches.back().size());
-        const float total_samples = float(complete_samples + tail_samples);
-
-        result.error = (result.error * float(complete_samples)
-                        + tail_result.error * float(tail_samples)) / total_samples;
-        if(tracks_accuracy)
-            result.accuracy = (result.accuracy * float(complete_samples)
-                               + tail_result.accuracy * float(tail_samples)) / total_samples;
-        result.active_tokens_count += tail_result.active_tokens_count;
+        merge_tail_result(result, tail_result,
+                          batches_number * forward_propagation.batch_size,
+                          Index(batches.back().size()),
+                          tracks_accuracy);
 
         back_propagation.metrics.error = result.error;
         back_propagation.metrics.accuracy = result.accuracy;
@@ -2359,16 +2377,10 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
         if(!has_tail) return;
 
         const Loss::EvaluationResult tail_result = evaluate_tail();
-        const Index complete_samples = batches_number * forward_propagation.batch_size;
-        const Index tail_samples = Index(batches.back().size());
-        const float total_samples = float(complete_samples + tail_samples);
-
-        result.error = (result.error * float(complete_samples)
-                        + tail_result.error * float(tail_samples)) / total_samples;
-        if(tracks_accuracy)
-            result.accuracy = (result.accuracy * float(complete_samples)
-                               + tail_result.accuracy * float(tail_samples)) / total_samples;
-        result.active_tokens_count += tail_result.active_tokens_count;
+        merge_tail_result(result, tail_result,
+                          batches_number * forward_propagation.batch_size,
+                          Index(batches.back().size()),
+                          tracks_accuracy);
     };
 
     if(!on_gpu)
