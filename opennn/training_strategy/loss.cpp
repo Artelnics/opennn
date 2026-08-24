@@ -607,10 +607,23 @@ static float dfl_decode(const float* logits, Index reg_max)
     return d;
 }
 
+// reg_max == 1 is the plain head: the four channels are the box directly, with
+// the centre offset by the cell. Folded in here so callers do not each carry
+// the branch -- three of them did, identically.
 static void dfl_decode_box(const float* box_logits, Index reg_max, Index col, Index row, Index G,
                             float& pred_cx, float& pred_cy, float& pred_w, float& pred_h)
 {
     const float inv_g   = 1.0f / float(G);
+
+    if (reg_max <= 1)
+    {
+        pred_cx = (float(col) + box_logits[0]) * inv_g;
+        pred_cy = (float(row) + box_logits[1]) * inv_g;
+        pred_w  = box_logits[2];
+        pred_h  = box_logits[3];
+        return;
+    }
+
     const float cell_cx = (float(col) + 0.5f) * inv_g;
     const float cell_cy = (float(row) + 0.5f) * inv_g;
     const float d_l = dfl_decode(box_logits + 0          , reg_max);
@@ -671,16 +684,8 @@ static TalResult tal_assign_head(const TensorView& output,
 
                     const Index base_o = (row * G + col) * ch_out;
                     float pred_cx, pred_cy, pred_w, pred_h;
-                    if (reg_max > 1)
-                        dfl_decode_box(out_n + base_o, reg_max, col, row, G,
-                                       pred_cx, pred_cy, pred_w, pred_h);
-                    else
-                    {
-                        pred_cx = (float(col) + out_n[base_o + 0]) * inv_g;
-                        pred_cy = (float(row) + out_n[base_o + 1]) * inv_g;
-                        pred_w  = out_n[base_o + 2];
-                        pred_h  = out_n[base_o + 3];
-                    }
+                    dfl_decode_box(out_n + base_o, reg_max, col, row, G,
+                                   pred_cx, pred_cy, pred_w, pred_h);
                     const float cls_p = (gt_cls < C) ? out_n[base_o + box_ch + gt_cls] : 0.0f;
                     const float iou   = iou_cxcywh(pred_cx, pred_cy, pred_w, pred_h,
                                                     gt_cx,   gt_cy,   gt_w,   gt_h);
@@ -743,16 +748,8 @@ static float yolo_v8_error_kernel_tal(const TensorView& output,
                     const Index gt_cls = Index(gr[4]) - 1;
 
                     float pred_cx, pred_cy, pred_w, pred_h;
-                    if (reg_max > 1)
-                        dfl_decode_box(out + base_o, reg_max, col, row, G,
-                                       pred_cx, pred_cy, pred_w, pred_h);
-                    else
-                    {
-                        pred_cx = (float(col) + out[base_o + 0]) * inv_g;
-                        pred_cy = (float(row) + out[base_o + 1]) * inv_g;
-                        pred_w  = out[base_o + 2];
-                        pred_h  = out[base_o + 3];
-                    }
+                    dfl_decode_box(out + base_o, reg_max, col, row, G,
+                                   pred_cx, pred_cy, pred_w, pred_h);
                     const float ob[4] = {pred_cx, pred_cy, pred_w, pred_h};
                     const float tb[4] = {gr[0], gr[1], gr[2], gr[3]};
                     coord_loss += 1.0f - yolo_loss_giou_forward(ob, tb).giou;
@@ -851,16 +848,8 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                     const Index gt_cls = Index(gr[4]) - 1;
 
                     float pred_cx, pred_cy, pred_w, pred_h;
-                    if (reg_max > 1)
-                        dfl_decode_box(out + base_o, reg_max, col, row, G,
-                                       pred_cx, pred_cy, pred_w, pred_h);
-                    else
-                    {
-                        pred_cx = (float(col) + out[base_o + 0]) * inv_g;
-                        pred_cy = (float(row) + out[base_o + 1]) * inv_g;
-                        pred_w  = out[base_o + 2];
-                        pred_h  = out[base_o + 3];
-                    }
+                    dfl_decode_box(out + base_o, reg_max, col, row, G,
+                                   pred_cx, pred_cy, pred_w, pred_h);
                     const float ob[4] = {pred_cx, pred_cy, pred_w, pred_h};
                     const float tb[4] = {gr[0], gr[1], gr[2], gr[3]};
                     const GIoUResult gr_res = yolo_loss_giou_grad(ob, tb);
