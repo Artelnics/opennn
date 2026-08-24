@@ -8,7 +8,51 @@ this says why.
 Everything below was read out of the tree, not estimated. Line references are as
 of the commit that adds this file.
 
-Status: **dense and transformer done**, CNN / recurrent pending.
+Status: **complete** -- all four families.
+
+---
+
+## What the four families say together
+
+**There is no suite-wide convention to restore.** 42 is the majority seed, but
+the exceptions do not form a pattern: dense seeds 0 at its capacity site,
+transformer seeds 0 at three of four, and CNN seeds 42 everywhere including
+capacity. "Capacity benchmarks use 0" looks true from two families and is
+refuted by the third. Each family is separately inconsistent, so the merge picks
+a value rather than discovers one.
+
+**The patterns worth adopting already exist in the tree.** None of them needs
+inventing:
+
+| pattern | where it already works |
+|---|---|
+| a driver reusing definitions instead of copying them | `run_resnet50_energy.py` invokes the throughput drivers |
+| configuration in one shared module | `xf_common.py` holds the scenarios for both Python engines |
+| aggregating over several seeds | recurrent averages seeds 0-4 in all three engines |
+| execution mode as one flag, not a second file | `PT_FAST` switches channels_last + compile + TF32 together |
+
+The merge should propagate these four rather than design something new.
+
+**Loss formulation is the recurring fairness axis.** It appears in three of the
+four families and in a different form each time: dense site 5 has PyTorch on
+logits while the other two take the sigmoid in the forward; transformer training
+has OpenNN materialising a softmax the other two fuse into the loss; dense site
+1 makes the logits choice deliberately and applies it to all three engines,
+which is the only place it is handled consistently. This needs one decision
+applied everywhere, not four local ones.
+
+**Initialisation is unreconciled in every family, and differently each time.**
+Dense: OpenNN and TensorFlow on Glorot, PyTorch on Kaiming. Transformer: bodies
+agree on Xavier, embeddings and output projections do not. CNN: three different
+initialisers, and OpenNN's is not fan-scaled at all. There is no single
+statement that covers the suite -- each family has to be settled on its own
+evidence.
+
+**Two findings point outside the benchmarks.** The CNN initialisation
+(`ResNet` and `YoloNetwork` bypassing the Glorot path) is a library-level
+question about shipped builders. The recurrent scenario table, duplicated across
+the C++/Python boundary because no module can span it, is the concrete argument
+for section 7's `suite.json`.
 
 ---
 
@@ -282,28 +326,244 @@ WMT14 scale, which changes the output projection, which is exactly where finding
 
 ## CNN (ResNet-50)
 
-Pending. 12 definitions across `throughput/resnet50`,
-`capacity/resnet50-max-batch`, `energy/resnet50-energy`.
+10 model definitions plus 2 diagnostic probes. Target 3.
 
-**Correction to the plan.** Section 2 of REORGANIZATION_PLAN.md heads this
-"CNN has no TensorFlow at all". That is too strong — the evidence cell under it
-is accurate but the headline is not. `tensorflow_resnet50_speed.py` and
-`tensorflow_resnet50_infer.py` both exist, and two of the three runners default
-to all three engines:
+| # | Site | OpenNN | PyTorch | TensorFlow |
+|---|---|---|---|---|
+| 1 | `throughput/resnet50` (train) | `opennn_resnet50_speed.cpp` | `pytorch_resnet50_speed.py` | `tensorflow_resnet50_speed.py` |
+| 2 | `throughput/resnet50` (infer) | `opennn_resnet50_infer.cpp` | `pytorch_resnet50_infer.py` | `tensorflow_resnet50_infer.py` |
+| 3 | `capacity/resnet50-max-batch` | `opennn_resnet50_maxbatch_trial.cpp` | `pytorch_resnet50_maxbatch.py` | `tensorflow_resnet50_maxbatch.py` |
+| 4 | `energy/resnet50-energy` | — reuses site 1 — | — reuses site 1 — | — reuses site 1 — |
+| — | ImageNet variant | reuses site 1 | `pytorch_resnet50_lazy.py` | **missing** |
 
-| runner | `--engines` default |
+`cudnn_fusion_probe.cpp` and `pooling_probe.cpp` are diagnostics, not benchmarks.
+
+**This is the family the other three should look like.** Recording what it gets
+right matters as much as what it does not, because the merge should not
+regress it.
+
+### What is already right
+
+**The energy site has no definitions of its own.** `run_resnet50_energy.py`
+invokes `opennn_resnet50_speed`, `pytorch_resnet50_speed.py` and
+`tensorflow_resnet50_speed.py` (lines 63-64, 108, 116) rather than carrying
+copies. That is exactly the target architecture from section 8 of the plan —
+one definition, several drivers — already working in the tree. Dense and
+transformer both have a separate energy or capacity definition; this one does
+not.
+
+**The seed is 42 everywhere**, in all three engines and at every site, including
+capacity:
+
+| | OpenNN | PyTorch | TensorFlow |
+|---|---|---|---|
+| sites 1-2 | `set_seed(42)` | `manual_seed(42)` | `tf.random.set_seed(42)` |
+| site 3 | `OPENNN_BENCH_SEED` else **42** | `--seed` default **42** | `--seed` default **42** |
+
+This kills a tempting generalisation. The dense capacity site seeds 0 and the
+transformer capacity site seeds 0, which looks like "capacity benchmarks use 0"
+— it is not a convention, because the ResNet capacity site seeds 42 like
+everything around it. Dense and transformer are simply each wrong in their own
+way, and 42 is the majority across the suite.
+
+**All three engines build the same network and say so.** Each header names
+ResNet-50 v1.5 with the stride on the 3x3 convolution, torchvision's
+convention: OpenNN through `opennn::ResNet` with bottleneck counts [3,4,6,3],
+PyTorch and TensorFlow written out explicitly rather than pulled from
+`torchvision.models` or `keras.applications` so that the layer set is visible
+and cannot drift with a library version.
+
+**The geometry caveat is documented and mitigated.** ResNet-50 at CIFAR's 32x32
+is not ResNet-50's intended shape — the stem reduces to 8x8 before the first
+stage. The README knows: it lists "keep the CIFAR-vs-ImageNet geometry caveat
+explicit" as a goal and ships `prepare_imagenet_like.py`, a 224x224 dataset
+built from CIFAR content, to check whether a conclusion survives the real
+geometry. Recorded here as handled, not as a defect.
+
+### What silently diverges
+
+**1. `pytorch_resnet50_lazy.py` is a second copy of the model.** Its
+`Bottleneck` class is byte-identical to `pytorch_resnet50_speed.py`'s. Its
+`ResNet` class differs in exactly one thing that matters — `classes=1000`
+against `classes=10`, which is correct for ImageNet — and two that do not: the
+stride expression is inlined into the `Bottleneck` call, and the final flatten
+is inlined into the `return`.
+
+The cosmetic drift is harmless in itself and is the point: the two copies have
+already diverged in formatting without anyone intending it, which is how a real
+change reaches one and not the other. This is the family's one genuine
+duplicate.
+
+**2. Every engine initialises this network differently, and OpenNN's is not
+fan-scaled.** Neither hand-written model sets an initialiser, so each takes its
+framework default, and OpenNN's builder makes a third choice:
+
+| | initialiser |
 |---|---|
-| `run_resnet50.py` | `opennn,pytorch,tensorflow` |
-| `run_resnet50_infer.py` | `opennn,pytorch,tensorflow` |
-| `run_imagenet_resnet50.py` | `opennn,pytorch_fast,pytorch_eager` |
+| PyTorch | Kaiming uniform, fan-in scaled -- the `nn.Conv2d` default |
+| TensorFlow | `glorot_uniform`, fan-avg scaled -- the `Conv2D` default |
+| OpenNN | `set_parameters_random()` -> `set_random_uniform()` -> **uniform(-0.1, 0.1)**, independent of fan-in |
 
-So the gap is narrower and more specific: the **ImageNet** ResNet-50 runner is
-two-way, while the CIFAR/imagenet-like ones are three-way. What is missing is a
-TensorFlow arm for the ImageNet runner, not a TensorFlow ResNet-50.
+`ResNet::ResNet` (`standard_networks.cpp:477-478`) calls `compile()` and
+`set_parameters_random()` directly instead of `finalize_build`, which is what
+gives every other builder in that file its Glorot init. `ConvolutionOperator`
+has a `set_parameters_glorot` that computes a proper fan-scaled limit
+(`convolution_operator.cpp:314-321`); the ResNet builder does not reach it.
 
-## Recurrent
+The gap is not small at depth. For a 3x3 convolution with 512 input channels
+Glorot's limit is about 0.026, so a flat +-0.1 is roughly four times too wide,
+and ResNet-50 stacks fifty of these. Throughput does not care. Any accuracy or
+convergence claim does, and so does every library user who builds a `ResNet` --
+this is the shipped builder, not a benchmark-local choice.
 
-Pending. 3 definitions in `quality/recurrent-lstm-forecasting`; already flat, so
-nothing to merge. The defect here is different: `run_forecasting.py` defaults to
-`--frameworks opennn`, so it does not currently run as a three-way comparison at
-all.
+Worth confirming against Neural Designer and the library's own ResNet tests
+whether this is deliberate. `YoloNetwork` makes the same call
+(`standard_networks.cpp:589`), so if it is an oversight it is not confined to
+one builder.
+
+**3. The TensorFlow max-batch seeds more than the others do.**
+`tensorflow_resnet50_maxbatch.py:85` calls `tf.keras.utils.set_random_seed`,
+which seeds Python's `random`, NumPy and TensorFlow; sites 1 and 2 call
+`tf.random.set_seed`, which seeds only TensorFlow. Where NumPy draws the data
+order or the initial arrays, sites 1 and 2 are not reproducible from the seed
+alone. Minor, but it is a difference in what "seed 42" means between sites.
+
+### The ImageNet gap, stated precisely
+
+The plan's section 2 heads this "CNN has no TensorFlow at all" and its step 4
+asks to "write the missing TensorFlow ResNet-50". Both overstate the work.
+
+`tensorflow_resnet50_speed.py` and `tensorflow_resnet50_infer.py` exist, build
+the same v1.5 network as the other two engines, and two of the three runners
+default to all three engines:
+
+| runner | `--engines` default | dataset |
+|---|---|---|
+| `run_resnet50.py` | `opennn,pytorch,tensorflow` | cifar10 |
+| `run_resnet50_infer.py` | `opennn,pytorch,tensorflow` | cifar10 |
+| `run_imagenet_resnet50.py` | `opennn,pytorch_fast,pytorch_eager` | imagenet |
+
+What TensorFlow is missing is not the model but a **streaming data path**.
+`tensorflow_resnet50_speed.py:67-68` loads the whole set with `np.load` into
+memory, which is fine for CIFAR and cannot hold decoded 224x224 ImageNet. Both
+other engines solved this and neither did it in the model: PyTorch added
+`pytorch_resnet50_lazy.py` with a `Dataset`/`DataLoader`, and OpenNN host-stages
+instead of going resident (`opennn_resnet50_speed.cpp:12-13` — "the 224px
+ImageNet path is too large and stays host-staged").
+
+So the task is a `tf.data` input pipeline for the existing TensorFlow driver,
+not a new definition. Worth correcting before step 4 estimates the work.
+
+### What is genuinely distinct
+
+- **The two probes.** `cudnn_fusion_probe.cpp` and `pooling_probe.cpp` answer
+  "which fusion engines does this cuDNN offer for these shapes" and are
+  diagnostics, not comparisons. The engineering audit's note applies to the
+  first: its 0-of-9 result was measured on sm_86 and should be re-run before
+  anything is concluded on other hardware.
+- **`PT_FAST`.** One env flag switches channels_last + `torch.compile` + TF32
+  together, so the eager and optimised paths are one file rather than two.
+  This is the pattern the plan wants for execution mode.
+- **`image_size` on the OpenNN driver.** Selects CIFAR geometry, ImageNet
+  geometry, and whether the data goes device-resident — a flag, not a fork.
+
+### What the three survivors must pin
+
+Less than the other families, because most of it already agrees: the input
+geometry and class count (32x32/10 against 224x224/1000, currently the
+difference between the two PyTorch copies), and which seeding call is meant by
+"seed 42".
+
+The merge here is small and mostly mechanical: fold `pytorch_resnet50_lazy.py`
+back into `pytorch_resnet50_speed.py` behind the existing `image_size` argument
+so the model exists once, and give the TensorFlow driver the input pipeline
+that lets it join the ImageNet runner.
+
+## Recurrent (Beijing PM2.5 forecasting)
+
+3 definitions, one site. Already flat — nothing to merge. Target 3, met.
+
+| Site | OpenNN | PyTorch | TensorFlow |
+|---|---|---|---|
+| `quality/recurrent-lstm-forecasting` | `recurrent_lstm_forecasting_benchmark.cpp` | `pytorch_forecasting.py` | `tensorflow_forecasting.py` |
+
+Shared: `xf_common.py` (scenario table, data loading, env controls), consumed by
+both Python drivers and by `run_forecasting.py`.
+
+### What is already right
+
+**This family is the most rigorously measured in the suite, and by some
+distance.** Two things nothing else does:
+
+**It averages over five seeds.** Every other family in this ledger reports a
+single run at a single seed. Here all three engines loop seeds 0-4 and
+aggregate — `pytorch_forecasting.py:123` and `tensorflow_forecasting.py:52`
+both compute `SEEDS = list(range(min(env_ints("OPENNN_FORECASTING_SEEDS",
+[5])[0], 5)))`, and `recurrent_lstm_forecasting_benchmark.cpp:211` loops
+`for (int seed = 0; seed < seed_count; ++seed)` with `seed_count` defaulting to
+5 (line 89). Same seeds, same count, all three engines.
+
+Given the audit's finding that the same configuration measured 6,994 and 8,682
+samples/s an hour apart, a five-seed aggregate is the only place in the suite
+where a quality number carries any statement about its own variance.
+
+**Its configuration lives in one place for the two engines that can share it.**
+`xf_common.py:22-27` holds the four scenarios and both Python drivers import
+them. That is section 8's target architecture, working.
+
+### What silently diverges
+
+**1. The scenario table is duplicated across the language boundary.**
+`recurrent_lstm_forecasting_benchmark.cpp:117-120` restates all four scenarios
+in C++ syntax. They agree with `xf_common.py:23-26` exactly today — checked
+field by field:
+
+| id | past | future | hidden | lr | batch | max epochs | patience | multi |
+|---|---|---|---|---|---|---|---|---|
+| B1 | 24 | 1 | 32 | 0.003 | 128 | 120 | 20 | false |
+| B2 | 48 | 1 | 48 | 0.003 | 128 | 100 | 20 | false |
+| B3 | 72 | 24 | 64 | 0.002 | 128 | 80 | 20 | true |
+| B4 | 168 | 24 | 64 | 0.001 | 128 | 60 | 15 | true |
+
+Nothing here is wrong yet. It is worth recording because it is the one
+duplication in the suite that cannot be fixed by importing a module: C++ cannot
+read `xf_common.py`. This family is therefore the concrete argument for section
+7's `suite.json` — a data file both sides read is the only way a definition is
+shared across the boundary rather than transcribed and hoped over.
+
+**2. `SEEDS` is copied where `SCENARIOS` is shared.** The identical `SEEDS`
+expression appears in both Python drivers rather than in `xf_common.py` next to
+the scenarios it belongs with. Harmless today, and the same class of thing as
+the scenario table, one import away from being fixed.
+
+**3. The runner does not run the comparison by default.**
+`run_forecasting.py:273` sets `--frameworks` to `"opennn"`. A default invocation
+produces OpenNN numbers only — so the three-way comparison this directory is
+built for happens only when someone remembers to ask for it. The two Python
+drivers, the shared scenario module and the aggregation are all in place; the
+default just does not reach them.
+
+This is the family's one actual defect, and it is a one-word fix
+(`default="opennn,pytorch,tensorflow"`). Worth doing before step 6 re-baselines,
+because a five-seed three-way forecasting comparison is the strongest quality
+evidence the suite is capable of producing and it is currently not being run.
+
+### What is genuinely distinct
+
+- **The CPU/GPU second phase.** The OpenNN driver trains every scenario on GPU
+  and then reruns them on CPU to report a speedup per scenario and network
+  (`recurrent_lstm_forecasting_benchmark.cpp:9-12`). That is a
+  device-comparison protocol, not a duplicate definition.
+- **Two networks per scenario.** Each engine trains both a plain `Recurrent`
+  and an `LSTM` for every scenario, which doubles the definitions in a way that
+  is the point of the benchmark rather than redundancy.
+
+### What the three survivors must pin
+
+Nothing to merge. What this family needs is the opposite of the others: keep it
+as it is, fix the `--frameworks` default, and move its scenario table into
+whatever `suite.json` becomes so the C++ side stops transcribing it.
+
+It should also be the model for the rest. If the merged dense, transformer and
+CNN definitions end up with a shared scenario table, five-seed aggregation and
+one driver per protocol, they will look like this directory does now.
