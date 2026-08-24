@@ -7,6 +7,8 @@
 #include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/core/random_utilities.h"
+#include "opennn/core/configuration.h"
+#include "opennn/core/device_backend.h"
 
 using namespace opennn;
 
@@ -262,3 +264,110 @@ TEST(DropoutLayerTest, TrainingPassDiffersFromInference)
     EXPECT_GT(zero_count, 0);
     EXPECT_LT(zero_count, training_output.size());
 }
+
+
+#ifdef OPENNN_HAS_CUDA
+
+namespace
+{
+
+constexpr Index graph_elements = 8192;
+constexpr float graph_rate = 0.5f;
+
+vector<uint8_t> read_device_mask(const Buffer& mask)
+{
+    vector<uint8_t> host(size_t(graph_elements), uint8_t(0));
+    device::copy_async(host.data(), mask.data(), Index(host.size()),
+                       device::CopyKind::DeviceToHost,
+                       device::get_compute_stream());
+    device::synchronize(device::get_compute_stream());
+    return host;
+}
+
+Index differing(const vector<uint8_t>& a, const vector<uint8_t>& b)
+{
+    Index n = 0;
+    for (size_t i = 0; i < a.size(); ++i)
+        if (a[i] != b[i]) ++n;
+    return n;
+}
+
+}
+
+// Two draws in a row have to differ, or the graph test below would pass for
+// the wrong reason.
+TEST(DropoutDeviceTest, ConsecutiveCallsDrawDifferentMasks)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    Buffer values(Device::CUDA);
+    Buffer mask(Device::CUDA);
+    values.resize_bytes(graph_elements * Index(sizeof(float)), Device::CUDA);
+    mask.resize_bytes(graph_elements, Device::CUDA);
+
+    TensorView values_view(values.data(), Shape{graph_elements}, Type::FP32, Device::CUDA);
+    TensorView mask_view(mask.data(), Shape{graph_elements}, Type::INT8, Device::CUDA);
+
+    dropout_forward(values_view, mask_view, graph_rate);
+    const vector<uint8_t> first = read_device_mask(mask);
+
+    dropout_forward(values_view, mask_view, graph_rate);
+    const vector<uint8_t> second = read_device_mask(mask);
+
+    EXPECT_GT(differing(first, second), Index(graph_elements / 8))
+        << "two consecutive dropout draws produced nearly the same mask";
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+}
+
+// A captured CUDA graph records the arguments its kernels were launched with,
+// so a seed chosen on the host at call time is frozen into the graph and every
+// replay redraws the mask it was captured with. Training under graphs would
+// then hold one fixed dropout pattern for the whole run -- which is not
+// dropout, and shows up only as a quiet loss of regularisation.
+TEST(DropoutDeviceTest, GraphReplayDrawsANewMask)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    Buffer values(Device::CUDA);
+    Buffer mask(Device::CUDA);
+    values.resize_bytes(graph_elements * Index(sizeof(float)), Device::CUDA);
+    mask.resize_bytes(graph_elements, Device::CUDA);
+
+    TensorView values_view(values.data(), Shape{graph_elements}, Type::FP32, Device::CUDA);
+    TensorView mask_view(mask.data(), Shape{graph_elements}, Type::INT8, Device::CUDA);
+
+    cudaStream_t compute = device::get_compute_stream();
+
+    // Warm up outside the capture: a lazy allocation inside one aborts it.
+    dropout_forward(values_view, mask_view, graph_rate);
+    device::synchronize(compute);
+
+    device::GraphExecHandle exec;
+    {
+        device::StreamCapture capture(compute);
+        dropout_forward(values_view, mask_view, graph_rate);
+        capture.end(exec);
+    }
+    ASSERT_TRUE(exec);
+
+    device::launch_graph(exec, compute);
+    device::synchronize(compute);
+    const vector<uint8_t> first = read_device_mask(mask);
+
+    device::launch_graph(exec, compute);
+    device::synchronize(compute);
+    const vector<uint8_t> second = read_device_mask(mask);
+
+    EXPECT_GT(differing(first, second), Index(graph_elements / 8))
+        << "replaying the captured graph reproduced the mask it was captured "
+           "with, so a training run under CUDA graphs keeps one fixed pattern";
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+}
+
+#endif

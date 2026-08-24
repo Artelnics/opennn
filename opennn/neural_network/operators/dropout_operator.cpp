@@ -75,15 +75,43 @@ void dropout_backward(TensorView& delta, const TensorView& mask, float rate)
 
 #ifdef OPENNN_HAS_CUDA
 
+// One counter for the process, advanced on the device before every draw. It is
+// seeded from the host RNG on first use -- outside any capture, since the
+// allocation would abort one -- so separate runs still differ.
+static unsigned long long* dropout_seed_state()
+{
+    static Buffer state = []
+    {
+        Buffer buffer(Device::CUDA);
+        buffer.resize_bytes(Index(sizeof(unsigned long long)), Device::CUDA);
+
+        const unsigned long long initial =
+            static_cast<unsigned long long>(random_integer(0, 1 << 30));
+
+        device::copy_async(buffer.data(), &initial, Index(sizeof(initial)),
+                           device::CopyKind::HostToDevice,
+                           device::get_compute_stream());
+        device::synchronize(device::get_compute_stream());
+
+        return buffer;
+    }();
+
+    return state.as<unsigned long long>();
+}
+
 static void dropout_forward_gpu(TensorView& output, TensorView& mask, float rate)
 {
     const Index element_count = output.size();
 
-    const unsigned long long seed = static_cast<unsigned long long>(random_integer(0, 1 << 30));
+    unsigned long long* const seed_state = dropout_seed_state();
+
+    // Advance first, on the device and on the compute stream, so this launch
+    // and the draw below are both inside whatever graph capture is running.
+    advance_dropout_seed_cuda(seed_state);
 
     output.dispatch([&]<typename T>()
     {
-        dropout_forward_cuda<T>(element_count, output.as<T>(), mask.as<uint8_t>(), rate, seed);
+        dropout_forward_cuda<T>(element_count, output.as<T>(), mask.as<uint8_t>(), rate, seed_state);
     });
 }
 

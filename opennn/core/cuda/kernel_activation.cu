@@ -149,17 +149,22 @@ void activation_backward_cuda(const Index n, const T* outputs, T* delta, const i
                             outputs, delta, function);
 }
 
+// The seed is read from device memory rather than taken as a launch argument.
+// A captured CUDA graph records the arguments its kernels were launched with,
+// so a seed chosen on the host at call time is frozen into the graph and every
+// replay redraws the mask it was captured with -- one fixed dropout pattern for
+// a whole training run, which fails silently as a quiet loss of regularisation.
 template<typename T>
 __global__ void dropout_forward_kernel(
     int n, T* __restrict__ output, uint8_t* __restrict__ mask,
-    float scale, float rate, unsigned long long seed)
+    float scale, float rate, const unsigned long long* __restrict__ seed_state)
 {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= n)
         return;
 
     curandStatePhilox4_32_10_t state;
-    curand_init(seed, idx, 0, &state);
+    curand_init(seed_state[0], idx, 0, &state);
 
     const uint8_t keep = static_cast<uint8_t>(curand_uniform(&state) >= rate);
 
@@ -167,10 +172,22 @@ __global__ void dropout_forward_kernel(
     output[idx] = static_cast<T>(static_cast<float>(output[idx]) * keep * scale);
 }
 
-template<typename T>
-void dropout_forward_cuda(const Index n, T* output, uint8_t* mask, const float rate, const unsigned long long seed)
+// Philox is counter-based, so seeds one apart already give independent streams;
+// the odd stride costs nothing and keeps consecutive seeds from sharing bits.
+__global__ void advance_dropout_seed_kernel(unsigned long long* seed_state)
 {
-    launch_elementwise(n, dropout_forward_kernel<T>, output, mask, 1.0f / (1.0f - rate), rate, seed);
+    seed_state[0] += 0x9E3779B97F4A7C15ull;
+}
+
+void advance_dropout_seed_cuda(unsigned long long* seed_state)
+{
+    launch_single(nullptr, advance_dropout_seed_kernel, seed_state);
+}
+
+template<typename T>
+void dropout_forward_cuda(const Index n, T* output, uint8_t* mask, const float rate, const unsigned long long* seed_state)
+{
+    launch_elementwise(n, dropout_forward_kernel<T>, output, mask, 1.0f / (1.0f - rate), rate, seed_state);
 }
 
 template<typename T>
@@ -195,7 +212,7 @@ void dropout_backward_cuda(const Index n, const T* output_delta, T* input_delta,
     template void swiglu_backward_cuda<T>(const int, const T*, const T*, const T*, T*, T*); \
     template void activation_forward_cuda<T>(const Index, T*, const int); \
     template void activation_backward_cuda<T>(const Index, const T*, T*, const int); \
-    template void dropout_forward_cuda<T>(const Index, T*, uint8_t*, const float, const unsigned long long); \
+    template void dropout_forward_cuda<T>(const Index, T*, uint8_t*, const float, const unsigned long long*); \
     template void dropout_backward_cuda<T>(const Index, const T*, T*, const uint8_t*, const float);
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
