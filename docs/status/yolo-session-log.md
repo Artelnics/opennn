@@ -1,160 +1,14 @@
-﻿# YOLO in OpenNN — Audit & Roadmap
+# YOLO session log
 
-Audit date: 2026-05-22
-Branch: `dev-refactor`
-Scope: assessment only — no code changes.
+Working notes from the YOLO implementation effort, newest entries first for the
+2026-07 sessions and chronological from 2026-05-25 onward. Split out of the old
+root-level `YOLO_TODO.md` on 2026-08-24; the roadmap and punch list that used to
+sit above it now live in [engineering-audit.md](engineering-audit.md#yolo-roadmap).
 
----
+Entries are kept verbatim. They record what was tried, what broke, and why — the
+reasoning is often more useful than the conclusion, so nothing here is summarised.
 
-## 1. What already exists
 
-| Component | Location | Status | Notes |
-|---|---|---|---|
-| `YoloDataset` (label parsing, cache, letterbox, k-means anchors, target encoding) | `opennn/yolo_dataset.{h,cpp}` | Complete (CPU) | BMP-only |
-| `DetectionOperator` forward (sigmoid x/y/obj, exp·anchor for w/h, softmax classes) | `opennn/operators.cpp:3046-3098` | Complete (CPU) | GPU path throws |
-| `DetectionOperator::apply_delta` (backward) | `opennn/operators.cpp:3100-3149` | Complete (CPU) | Math verified: see §3 |
-| `Detection` layer wrapper + JSON I/O | `opennn/detection_layer.{h,cpp}` | Complete | |
-| `NonMaxSuppressionOperator` (per-class greedy NMS) | `opennn/operators.cpp:3151-3261` | Complete (CPU) | GPU path throws |
-| `NonMaxSuppression` layer wrapper | `opennn/non_max_suppression_layer.{h,cpp}` | Partial | Missing JSON I/O — see §2.1 |
-| YOLO loss (`Loss::Error::Yolo`, `yolo_error_cpu`, `yolo_gradient_cpu`, `yolo_loss_iou`) | `opennn/loss.cpp:27-181, 315-317, 534-536` | Complete (CPU) | GPU path explicitly returns `false`/throws |
-| `YoloNetwork` minimal builder (5×conv+pool → conv1024 → 1×1 logits → Detection → NMS) | `opennn/standard_networks.cpp:363-420` | Complete | v2-style: anchors + softmax class, single scale |
-| Unit test `tests/yolo_dataset_test.cpp` | `tests/yolo_dataset_test.cpp` | Wired in CMakeLists.txt:58, file is untracked — needs commit |
-
-**Conclusion:** the existing scaffold is closer to **YOLO v2 (single-scale)** than v1 — it already has anchor boxes, softmax-per-class, and sigmoid xy decoding. A v1-equivalent demo can run end-to-end today, in principle.
-
----
-
-## 2. Punch list — what blocks a first runnable YOLO
-
-### 2.1 Bugs / inconsistencies
-
-- **`YoloDataset::fill_inputs` only normalizes during training** (`opennn/yolo_dataset.cpp:610`)
-  - `is_training ? (1.0f / 255.0f) : 1.0f` — inference returns raw [0,255], training returns [0,1].
-  - Action: scale unconditionally, or only when no upstream `Scaling` layer exists.
-
-- **Double-scaling in `YoloNetwork`** (`opennn/standard_networks.cpp:375-377`)
-  - Adds `Scaling` with `ImageMinMax` on top of an already-normalized dataset feed during training.
-  - Action: either remove the Scaling layer from `YoloNetwork` or change `fill_inputs` to always pass raw bytes.
-
-- **`NonMaxSuppression` layer missing `read_JSON_body` / `write_JSON_body`** (`opennn/non_max_suppression_layer.h`)
-  - Confidence threshold, IoU threshold, and `boxes_per_cell` won't survive save/load.
-  - Action: mirror what `Detection::{read,write}_JSON_body` does.
-
-- **NMS runs during training** even though gradients can't flow through it.
-  - It's marked non-trainable, so the loss skips it via `get_last_trainable_layer_outputs()`, but the forward pass still computes it every batch. Wasted compute, not incorrect.
-  - Action (optional): gate NMS forward on `is_training==false`, or move NMS out of the network into a post-processing helper.
-
-- **k-means anchor calculation is not seeded** (`opennn/yolo_dataset.cpp:154-221`)
-  - Initial assignment uses `boxes[i % ssize(boxes)]` — deterministic but order-dependent on filesystem listing.
-  - Probably fine, just flag for reproducibility audit.
-
-### 2.2 Missing components
-
-- **No `examples/yolo/main.cpp`.** Every other capability (mnist, breast_cancer, …) has an example; YOLO has none. This is the single most visible gap.
-- **No tests for `DetectionOperator` forward/backward.** Only `YoloDataset` is covered.
-- **No tests for `NonMaxSuppressionOperator`.**
-- **No test for `yolo_error_cpu` / `yolo_gradient_cpu` against numerical derivatives.** This is the highest-risk code (gradient math is easy to get subtly wrong).
-- **No end-to-end smoke test** (`YoloNetwork` + `Loss::Error::Yolo` + `YoloDataset` + `TrainingStrategy` → assert loss decreases over N steps).
-- **No inference helper** to:
-  - Inverse the letterbox transform (apply scale/offset undo to map predictions back to original image coords).
-  - Read `Detection` layer output OR `NonMaxSuppression` output into a friendly `vector<Box>`.
-  - Draw boxes / serialize results to JSON for a demo image.
-- **`augment_inputs()` is an empty stub** (`opennn/yolo_dataset.h:72`). Limits training quality; required at v2+ for usable accuracy.
-
-### 2.3 Format / dataset limitations
-
-- **BMP-only** ingest (`opennn/yolo_dataset.cpp:55-58`). Common YOLO datasets ship PNG/JPG. Need to either reuse `load_image` for PNG/JPG or document the BMP restriction in the example.
-- **Letterbox is applied at cache build**, so changing input size invalidates cache. That's correct but worth documenting.
-
----
-
-## 3. Gradient math verification
-
-I verified the YOLO backward chain by hand:
-
-- **Coordinate loss**: `(sqrt(out_w) - sqrt(target_w))^2`. Gradient wrt `out_w` = `(sqrt_out − sqrt_target) / sqrt_out`. Code at `loss.cpp:167-168` matches.
-- **DetectionOperator w/h backward**: `out_w = exp(logit) · anchor`, so `d(out_w)/d(logit) = out_w`. Hence `in_delta[w] = delta[w] · out[w]`. `operators.cpp:3137-3138` matches.
-- **Objectness**: target=IoU when object present, else 0; loss is `(out − target)^2`; sigmoid Jacobian `out·(1−out)` applied in `apply_delta`. Matches.
-- **Class softmax + cross-entropy**: loss gradient wrt softmax probability is `−t/p`; DetectionOperator's `apply_delta` performs the softmax-Jacobian transform (`delta[c] − dot`). Chain rule is correct.
-
-**No math errors found.** The non-obvious risk is that the loss reads the *decoded* output (post-DetectionOperator), so all gradients must pass through DetectionOperator's backward — they do, since Detection is a trainable layer.
-
-**Confirmed approximation (v1 paper):** `yolo_gradient_cpu` treats `iou(target_box, output_box)` as a constant when computing `dE/d(out[0..3])`, missing the chain-rule contribution from the objectness loss `(out[4] - iou)^2` back through the box coords. This is the documented v1 formulation and matches reference implementations; numerical-vs-analytical gradient differs by ~0.1-0.2 on the affected coordinates as expected. A v3+ rewrite would differentiate through (G)IoU.
-
----
-
-## 4. Plan — phased path from current state to modern YOLO
-
-### Phase 1 — First runnable YOLO (this is the immediate punch list)
-
-1. ✅ Commit `tests/yolo_dataset_test.cpp` + the `tests/CMakeLists.txt` edit that wires it in.
-2. ✅ Fix the double-scaling bug (§2.1 items 1 & 2): `Scaling` removed from `YoloNetwork`, `fill_inputs` normalizes unconditionally.
-3. ✅ Add `NonMaxSuppression::{read,write}_JSON_body`.
-4. ✅ `tests/detection_layer_test.cpp` (forward shape, sigmoid/exp/softmax values).
-5. ✅ `tests/yolo_loss_test.cpp` (numerical-gradient check of `yolo_gradient_cpu` against `yolo_error_cpu`).
-6. ✅ `tests/non_max_suppression_test.cpp` (handcrafted boxes, verify suppression).
-7. ✅ `examples/yolo/main.cpp`: generates synthetic 128×128 BMP dataset → trains 10 epochs Adam → runs inference → prints top boxes. Wired into `examples/CMakeLists.txt`.
-8. ✅ Inference helper: `decode_yolo_detections()` undoes the letterbox transform and returns `vector<YoloDetection>`. Covered by `tests/yolo_inference_test.cpp`.
-
-**Definition of done:** the example builds, trains, prints sensible clamping boxes, and the test suite passes on CPU. **Done.** All 12 YOLO-related tests pass on CPU; example runs end-to-end in ~3 minutes.
-
-**Bug discovered during Phase 1 (fixed):** removing the `Scaling` layer from `YoloNetwork` (double-scaling fix) broke input-shape propagation — the first `Convolutional` then received an empty shape from `get_output_shape()` and threw "kernel shape cannot be bigger than input shape". Fixed in `standard_networks.cpp` by passing `input_shape` explicitly to the first conv.
-
-### Phase 2 — YOLO v2 polish ✅ COMPLETE (2026-05-27)
-
-9. ✅ BatchNorm in conv stack (already used elsewhere in OpenNN — reuse).
-10. ✅ Multi-scale training (random input resize per epoch). Requires `set_input_shape` to propagate cleanly through the whole `YoloNetwork`.
-11. ✅ PNG/JPG support in `YoloDataset` (delegate to existing `load_image`).
-12. ✅ Basic augmentation (flip, hue/sat jitter, random crop) in `augment_inputs`.
-
-### Phase 3 — YOLO v3 (multi-scale heads) — 4 of 4 done (training validated; cross-scale NMS for inference still TODO)
-
-13. ✅ Replace VGG-style stack with Darknet-53 residual blocks. Needs a residual/route layer (or reuse `Addition` layer). *(Darknet-Tiny variant, opt-in via `Backbone::DarknetTiny`, 2026-05-28.)*
-14. ✅ Three detection heads at strides 32/16/8 with FPN-style upsampling+concat. *(Smoke-tested 2026-05-29: 34-layer DarknetTiny+FPN, 3.64M params, trained epoch 0 in 5m32s on synthetic 359 samples. Training error 37.45 → validation error 13.62, no NaN. Cross-scale NMS for inference still TODO.)*
-15. ✅ Per-class **sigmoid** instead of softmax (independent class probabilities). *(Opt-in via `ClassActivation::Sigmoid`; BCE replaces CE in the loss when active, 2026-05-29.)*
-16. ✅ Loss: replace squared-error on (x,y,w,h) with **GIoU** or **DIoU** (recommended now even before v3 — measurable accuracy lift). *(GIoU shipped with L2+clip stabilizers, 2026-05-28.)*
-
-### Phase 4 — YOLO v4/v5
-
-17. CSP backbones (cross-stage partial). Needs split-and-concat pattern; can be expressed with existing primitives plus a split helper.
-18. SPP / SPPF block (multi-scale max-pool concat). New layer or composition of existing pooling.
-19. PANet head (bidirectional FPN). Same primitive needs as v3 plus another concat path.
-20. Mosaic augmentation (4 images stitched) in `augment_inputs`.
-
-### Phase 5 — YOLO v8 (anchor-free) — this is the biggest jump
-
-21. **Anchor-free detection head**: replace `DetectionOperator`'s `exp·anchor` decode with direct distance-to-grid-boundary regression. New op + new dataset target encoding.
-22. **Decoupled head**: separate conv branches for box-regression vs class-classification.
-23. **Distribution Focal Loss (DFL)**: regress box edges as a discrete distribution over 16 bins, integrate via softmax expectation. New op.
-24. **Task-Aligned Assigner**: replace fixed IoU-best-anchor assignment with dynamic assignment using `score^α · IoU^β` per gt-anchor pair. New code path in `YoloDataset`.
-25. **Varifocal loss** for classification.
-
-### Phase 6 — YOLO v11 (on top of v8)
-
-26. C3k2 block (efficient C3 variant). Layer composition.
-27. C2PSA attention (partial self-attention). Reuse `MultiHeadAttention`.
-28. Backbone reorganization for v11's depth/width scaling rules.
-
----
-
-## 5. Risks / open questions
-
-- **GPU YOLO path is now fully implemented** (as of 2026-06-16). DetectionOperator, NMS, GIoU loss, UpsamplingOperator, and ConcatenationOperator all have working CUDA kernels. VOC training on RTX 2080 runs at ~69 sec/epoch. No longer a blocker.
-- **`YoloNetwork` enforces `input_H/W == grid_size * 32`** (`standard_networks.cpp:372-373`). That's a 5-pool stride-32 architecture — locks input to 13×32=416 or 7×32=224. Multi-scale training needs this relaxed.
-- **No pretrained weights loader.** v3+ practically requires ImageNet-pretrained backbones; without that, training a usable detector from scratch is slow.
-- **No mAP / COCO evaluation harness.** Hard to know if "training works" actually means "detector is good." Phase 1 should add at least a per-class precision/recall test on a held-out tiny set.
-
----
-
-## 6. Recommendation
-
-Phase 1 is ~1-2 weeks of focused work and gives you a public-facing demo. Phases 2-3 together get you to a competitive-on-paper detector. Phase 5 (anchor-free / v8) is genuinely a different architecture and will dwarf the rest in effort — plan it as its own milestone, not an incremental upgrade.
-
-For dev-refactor specifically: keep YOLO **CPU-only** until Roberto's GPU mixed-precision validation lands. Doing both at once would mix two debug surfaces.
-
----
-
-## 7. Session log
 
 ### 2026-07-22 — Phase 5a: YOLOv8 anchor-free head (§21 + §22)
 
@@ -498,7 +352,7 @@ Started the day with the prep already shipped (Upsampling + Concatenate layers l
 - `opennn/yolo_dataset.{h,cpp}` — `set_multi_scale_heads`, `make_target_multi_scale`, fill_targets dispatch.
 - `opennn/loss.cpp` — kernel extraction + multi-head helpers + dispatch in `calculate_error` / `calculate_output_deltas`.
 - `examples/yolo/main.cpp` — `head_style` toggle, FPN-mode anchor list + multi-scale dataset config, NMS layer guard, visualization skip in FPN mode.
-- `YOLO_TODO.md` — this entry.
+- `YOLO_TODO.md` — this entry. *(that file is now `docs/status/yolo-session-log.md`)*
 
 **Phase 3 status: 4 of 4 architecturally complete.** Remaining for *production-grade* FPN:
 - **Cross-scale NMS for inference** — combine candidate boxes from all 3 heads, single greedy suppression pass, return as YoloDetection list. ~100 LOC. Required for the visualization pipeline / actual production use.

@@ -5,7 +5,7 @@ description: Run an OpenNN example category across CPU / GPU FP32 / GPU BF16, re
 
 # Run example matrix across CPU / GPU FP32 / GPU BF16
 
-Build dir: `build-resnet-capacity/` for the GPU modes and `build-consolidated/` for CPU-only. Both are Ninja + Release + single-config, so the `cmake --build .` commands below take no `--config` flag; if you are on a multi-config Visual Studio solution instead, add `--config Release` to every build command. Each example's `main.cpp` lives in `examples/<name>/main.cpp`; the resulting binary lands in `<build>/bin/<name>`.
+Build dir: `build-resnet-capacity/` for the GPU modes and `build-consolidated/` for CPU-only. **Neither is checked in — both are gitignored, so expect to create them first**; the configure commands are in [AGENTS.md](../../../AGENTS.md#creating-the-two-build-directories). Both are Ninja + Release + single-config, so the `cmake --build .` commands below take no `--config` flag; if you are on a multi-config Visual Studio solution instead, add `--config Release` to every build command. Each example's `main.cpp` lives in `examples/<name>/main.cpp`; the resulting binary lands in `<build>/bin/<name>`.
 
 ### Environment prerequisites (check these FIRST — they cost a full failed build to discover otherwise)
 

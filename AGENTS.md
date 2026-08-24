@@ -1,6 +1,20 @@
-# OpenNN — instructions for Codex
+# OpenNN — instructions for coding agents
 
 See [README.md](README.md) for what this project is and generic build instructions.
+This file is the single entry point for agent-facing documentation; everything else
+is linked from here.
+
+| Topic | Where |
+| --- | --- |
+| Code organization, header layout, class member order, `std::` caveats | [docs/architecture.md](docs/architecture.md) |
+| Current engineering status, audit findings, YOLO roadmap | [docs/status/engineering-audit.md](docs/status/engineering-audit.md) |
+| YOLO implementation notes, session by session | [docs/status/yolo-session-log.md](docs/status/yolo-session-log.md) |
+| Project-local skills | [.agents/skills/](.agents/skills/) |
+
+Before deleting anything that looks unused, read
+[Before deleting anything: Neural Designer](docs/status/engineering-audit.md#before-deleting-anything-neural-designer).
+Neural Designer links against this library and uses many symbols that look orphaned
+from inside this repo, so dead-code analysis run only here produces false positives.
 
 ## Build environment on this machine (Windows)
 
@@ -12,20 +26,44 @@ To get a working MSVC environment (`cl`, `link`, `INCLUDE`/`LIB`), source one of
 - `C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat`
 - `C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat`
 
-### Existing build directories
+### Creating the two build directories
 
-Two, both Ninja + Release + single-config, so `cmake --build <dir>` needs no
-`--config` flag, and both have `bin/opennn_tests.exe`:
+No build directory is checked in, and they are all gitignored — expect to create
+these yourself. Two configurations cover the work; both are Ninja + Release +
+single-config, so `cmake --build <dir>` needs no `--config` flag, and both produce
+`bin/opennn_tests.exe`.
 
-| Dir | CUDA | Also builds | Use it for |
-| --- | --- | --- | --- |
-| `build-consolidated` | OFF | tests, examples | the fast CPU check |
-| `build-resnet-capacity` | ON | tests, examples, benchmarks | anything touching GPU paths |
+The fast CPU check:
+
+```sh
+cmake -S . -B build-consolidated -G Ninja \
+      -DCMAKE_BUILD_TYPE=Release -DOpenNN_DISABLE_CUDA=ON
+cmake --build build-consolidated
+```
+
+Anything touching GPU paths, plus the benchmark targets:
+
+```sh
+cmake -S . -B build-resnet-capacity -G Ninja \
+      -DCMAKE_BUILD_TYPE=Release -DOpenNN_BUILD_BENCHMARKS=ON
+cmake --build build-resnet-capacity
+```
+
+`OpenNN_BUILD_TESTS` and `OpenNN_BUILD_EXAMPLES` default to `ON`, so neither needs a
+flag; `OpenNN_BUILD_BENCHMARKS` defaults to `OFF`. `CMAKE_CUDA_ARCHITECTURES` defaults
+to `native`, which is right whenever the GPU is visible at configure time — if it is
+not, CMake falls back to a value that cannot compile the packed-bf16 kernels, so pass
+it explicitly (`-DCMAKE_CUDA_ARCHITECTURES=89` for Ada, `86` for Ampere).
+
+`OPENNN_HAS_CUDA` is set from a non-FORCE cache entry, so **a reconfigure keeps
+whichever CUDA decision the directory made first**. To flip a tree between CPU and
+CUDA, delete it and configure again rather than re-running `cmake` over it.
 
 A library change should be built and run in **both** before you call it done.
-Older directories (`build-ninja`, `build-fresh`, `build-cpu-audit`,
-`build-std-cleanup`, `build_cmake`, ...) referred to here in the past no longer
-exist; do not go looking for them.
+
+Directory names referred to in older notes (`build-ninja`, `build-fresh`,
+`build-cpu-audit`, `build-std-cleanup`, `build_cmake`, `build-benchmarks`,
+`build-mkl`, `build-cpu-verification`, ...) do not exist; do not go looking for them.
 
 ## Project-local skills
 
@@ -34,109 +72,8 @@ exist; do not go looking for them.
 
 ## Code organization
 
-### Folder layout
-
-The library is split by responsibility, and the folders are ordered by
-dependency — each one may include the ones above it, never the ones below:
-
-```text
-opennn/core/                    types, tensors, device backend, memory, utilities
-opennn/core/cuda/               .cu/.cuh kernels
-opennn/neural_network/          network, propagation, expression export
-opennn/neural_network/layers/
-opennn/neural_network/operators/
-opennn/dataset/                 tabular, image, language, time series, YOLO
-opennn/training_strategy/       losses and optimizers
-opennn/model_selection/
-opennn/testing_analysis/
-opennn/                         pch.h and registry.{h,cpp} only
-```
-
-Datasets sit *above* the network on purpose: the language datasets need
-`tokenizer_operator.h` and `yolo_dataset` needs the convolutional layer, while
-nothing under `neural_network/` includes a dataset.
-
-`registry.{h,cpp}` stays at the root because it constructs `Layer`, `Optimizer`
-and `InputsSelection` — it spans three folders and belongs above all of them.
-
-`tests/` mirrors those folders one for one, so a test sits at the same
-relative path as what it exercises — `dense_layer.cpp` is tested by
-`tests/neural_network/layers/dense_layer_test.cpp`. Only the harness stays at
-`tests/`: `pch`, `numerical_derivatives`, `test.cpp`, and `registry_test.cpp`
-beside the `registry` it covers. A new test goes in the folder of the thing it
-tests; CMake globs recursively, so nothing else needs touching.
-
-Every include names its folder, from the repo root, with no exceptions:
-`#include "opennn/neural_network/layers/dense_layer.h"`, and
-`#include "tests/pch.h"` for the harness. Bare neighbour includes do not
-resolve — only the repo root is on the include path.
-
-Two known upward includes remain, both `.cpp`-only, both deliberate:
-`back_propagation.cpp` needs `Loss` (its header only forward-declares it), and
-`correlations.cpp` trains a small network to get a nonlinear correlation.
-
-One ordering rule, so a reader meets concepts in the same sequence in every file.
-
-### Header layout
-
-```text
-license/title comment
-#pragma once
-includes            (own header first in .cpp, then C, C++ std, third-party, project)
-forward declarations
-namespace-scope constants
-namespace-scope enums
-types (structs, classes)
-free-function declarations
-```
-
-Enums go at the **top of the scope that owns them** — first thing inside
-`namespace opennn`, or first thing inside the class — *when the enum is bare
-vocabulary*. Two deliberate exceptions, both about keeping an enum next to its
-meaning:
-
-- **An enum with an attached helper cluster stays with it.** `variable.h`
-  declares `VariableType`, then its `EnumMap` + `to_string` + `from_string`,
-  then `ScalerMethod` and its cluster. Hoisting the enums to the top would
-  separate each from its own converters. Concept grouping wins.
-- **A sub-topic enum in a multi-topic header stays local.** `io_utilities.h`
-  keeps `DateFormat` beside `detect_date_format`/`date_to_timestamp` rather
-  than 190 lines away from its only users.
-
-So: never sweep enums to the top mechanically. Hoist one only when it is
-loose vocabulary with no attached helpers, as in `chat.h` and `memory_pool.h`.
-
-### Class members
-
-`public:` → `protected:` → `private:`, each appearing once. Within a section:
-
-1. types and aliases (`using`, nested `enum`/`struct`)
-2. static constants
-3. factory functions
-4. constructors and assignment operators
-5. destructor
-6. all other member functions
-7. **data members last**
-
-This is the Google C++ Style Guide order; `dense_layer.h` is the reference
-example in this repo.
-
-### Do not reorder data members mechanically
-
-C++ initializes non-static data members in **declaration order**, not in
-constructor-initializer-list order. Moving a data member can therefore change
-initialization order and behavior, and will trip `-Wreorder`. Reorder members
-only deliberately, with the constructors in view.
-
-### `std::` is sometimes load-bearing
-
-`opennn_types.h` does `using namespace std` globally and `using namespace
-Eigen` inside `namespace opennn`, so unqualified names can resolve to Eigen or
-to a class member instead of `std`. Keep the qualification when the name is
-shadowed — `std::swap` inside a member named `swap`, `std::fill` inside a class
-with a `fill` member, `std::set` inside a class with a `set` method,
-`std::copy` where `opennn::copy` is the tensor overload, and `std::array`
-anywhere `Eigen::array` is visible.
-
-Never add `using namespace std` to a header. In `kernel.cuh`/`kernel_common.cuh`
-it preceded Eigen's Tensor includes and broke nvcc's parse of them entirely.
+Moved to [docs/architecture.md](docs/architecture.md) — folder layout and the
+dependency order between folders, header layout, class member order, the two
+deliberate upward includes, and the places where `std::` qualification is
+load-bearing. Read it before moving a file, hoisting an enum, or reordering data
+members.

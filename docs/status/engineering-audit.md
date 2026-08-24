@@ -1,10 +1,181 @@
-# OpenNN engineering audit — 2026-08-22
+# OpenNN engineering status
+
+Consolidated on 2026-08-24 from three documents that used to live apart:
+
+| Was | Now |
+| --- | --- |
+| `docs/ENGINEERING_AUDIT_2026-08-22.md` | the body of this file, [Fix first](#fix-first) → [All findings](#all-findings) |
+| `docs/ENGINEERING_AUDIT.md` (2026-08-06) | [Earlier audit](#earlier-audit--2026-08-06) and [Before deleting anything](#before-deleting-anything-neural-designer) |
+| `YOLO_TODO.md` §1–6 (root) | [YOLO roadmap](#yolo-roadmap) |
+| `YOLO_TODO.md` §7 (root) | [yolo-session-log.md](yolo-session-log.md), verbatim |
+
+**Start at [Status — 2026-08-24](#status--2026-08-24).** It is the newest record and
+was written against the tree rather than against the notes, so where it disagrees with
+[Fix first](#fix-first) or [Progress](#progress) it wins. It was moved to the front
+during this consolidation; it used to sit below 4,000 lines of finding detail.
+
+Read [Before deleting anything](#before-deleting-anything-neural-designer) before any
+deletion campaign — that constraint invalidates naive dead-code analysis in this
+repository, and the 2026-08-22 pass could not apply it itself.
+
+Everything from [Fix first](#fix-first) to [All findings](#all-findings) is the
+2026-08-22 audit as written, unedited. [All findings](#all-findings) and the per-finding
+detail below it are a reference dump, not reading material.
+
+## Audit scope and method — 2026-08-22
 
 Scope: `opennn/` (80,476 raw / 61,562 effective lines, 219 source files), `tests/`, build and CI; `core/` read most closely. Method: 20 scoped auditors + 3 cross-cutting lenses, one adversarial verifier per scope, a completeness critic and a partial second round (50 agents, 1,914 tool calls). Kept 379 findings (273 confirmed, 88 confirmed with corrections, 3 verifier-added, 15 unverified; 2 refuted). 115 are bugs/UB; severity 21 high / 129 medium / 229 low; per-item line estimates sum to -3,374 (-4,556 removed, +1,182 added). Line numbers are as of commit 509857699. Neural Designer (external consumer) was not available: grep its tree before any deletion.
 
 Companion HTML report with a filterable explorer of every finding: see the published artifact (same date).
 
+## Before deleting anything: Neural Designer
+
+`opennn` is not the only consumer of this library. The Neural Designer product tree
+(`neuraldesigner/{neuralengine,neuraleditor,neurallabeler,neuralviewer,tests,tools}`,
+excluding its vendored `opennn/` copy) links against it, and the 2026-08-06 cross-check
+found it uses almost every symbol that looks orphaned from inside this repo.
+
+**The real API surface is `opennn` callers ∪ Neural Designer callers.** Any deletion
+campaign must grep the ND tree first. The 2026-08-22 audit could not reach that tree —
+this is the caveat attached to every dead-code finding below.
+
+Alive in Neural Designer despite looking dead here — **do not delete**: the entire
+Tukey/box-plot chain, the lift-chart chain, `filter_data`, `get_advised_point`, the
+descriptives-by-class cluster, the classification-errors chain and
+`calculate_binary_classification_rates` + struct, both Spearman wrappers (and
+transitively `correlation_spearman` / `logistic_correlation_spearman`), Histogram
+`calculate_minimal_centers` / `calculate_maximal_centers`, `steal_from`,
+`calculate_missing_values_statistics`, `set_binary_cache_path` / `cache_path_override`,
+`set_cache_directory` / `cache_directory`, `invalidate_trainable_layer_cache`,
+`sample_role_to_string`, `get_data_path`, `get_header_line`, `get_has_sample_ids`,
+`get_sample_ids`, `has_categorical_variables`, `get_missing_values_method`,
+`get_missing_values_label`, `get_images_directory`, `get_labels_directory`,
+`get_inputs_selection_name`, Adam `get_learning_rate`, SGD `get_initial_learning_rate`,
+and the `type` alias (`opennn_types.h:149` — ND writes `type(0)`).
+
+Do not delete for a separate reason (known ND tasks and live env toggles):
+`unuse_least_correlated_variables` / `unuse_collinear_variables`, `OPENNN_DRELU_FUSION`,
+`OPENNN_GRAPH_TIMING`, `OPENNN_MEMORY_DEBUG`, `OPENNN_THREADS`, `OPENNN_PROFILE`.
+
+Worth doing once: a comment in the affected headers naming Neural Designer as an
+external consumer, so the next audit does not re-flag them.
+
+## Status — 2026-08-24
+
+Everything below was checked against the tree at the time of writing rather than
+against the notes, because the notes had drifted: several findings recorded as
+open had been fixed weeks earlier, and one recorded as understood was still
+live. The commits since `509857699` are the record of what changed; this section
+is the record of what is *true now*.
+
+### The fifteen high-severity bugs are closed
+
+Fourteen were already fixed, each verified by reading the code rather than the
+commit log. Most carry a comment at the site describing the original defect,
+which is what made them quick to confirm:
+
+| finding | how it reads now |
+| --- | --- |
+| `CudaBlockCache::give` throwing from a destructor | `deallocate` is `noexcept`; the comment names `~Buffer`/`~PinnedBuffer` as the callers |
+| `set_threads_number` destroying a cached `ThreadPool` | `contraction_device()` rebuilds the handle per call; the comment records the use-after-free |
+| Apple `from_chars` recursing forever | the integral branch calls `std::from_chars`; the comment marks `std::` as load-bearing |
+| quoted-field tokenizer eating `,` and `;` | proper `in_quote` state machine keyed on the actual separator |
+| `BinaryFile` analysis indexing an empty matrix | `require_in_memory_data(...)` guards the analysis entry points |
+| float-only layers accepting BF16 | `Concatenation::on_compute_dtype_changed` refuses anything but FP32 |
+| LSTM on CUDA with no FP32 guard | `cudnn_rnn.cpp` selects the descriptor from `config.data_type` and rejects the rest |
+| `load_darknet_backbone_v11` targeting dead labels | targets `c8_*`, the labels the builder emits |
+| `set_parameters` overflowing the compact bf16 mirror | `throw_if(fp32_master_released())` on all three entry points |
+| Logarithm scaler exporting broken Python/JS | handled as the one non-affine method, via `log_pre`/`exp_post` |
+| CPU valid-length record frozen after the first pass | re-inherited every pass; the comment records the stale-mask bug |
+| `run_graph_epoch` null pipeline slot | the warm-up keeps a callable so it walks the branches the epoch will |
+| Minkowski divided by `batch_size` | divided by the sample count, like its four siblings |
+| NSE dropping its batch scaling | `result.error *= get_batch_scale(batch)`, as WSE does |
+
+The fifteenth was still open and is fixed now.
+
+**Dropout under CUDA graphs redrew one fixed mask.** The seed was chosen on the
+host and passed as a kernel launch argument. A captured graph records the
+arguments its kernels were launched with, so once a training step was captured
+every replay reused the mask captured with it — one dropout pattern for the rest
+of the run. Nothing fails when that happens: shapes, scaling and loss all stay
+plausible, and the only symptom is that the regularisation quietly stops
+varying, which is why it survived. The seed now lives in device memory with a
+one-thread kernel advancing it before each draw, so the advance is inside
+whatever capture is running.
+
+`DropoutDeviceTest.GraphReplayDrawsANewMask` reproduces it: it reported the
+replayed mask identical to the captured one before the change.
+`ConsecutiveCallsDrawDifferentMasks` sits next to it so the first cannot pass
+for the wrong reason.
+
+A sample of the medium bugs was checked the same way — batch-norm's running
+variance, the attention CPU padding inference, the GPU sampler's logit cap — and
+all were fixed. The medium and low tiers were not verified exhaustively.
+
+### Raised during this pass, not in the original audit
+
+**Twenty gradient checks were running on networks of all zeros.** `compile()`
+zeroes the parameters and only the `StandardNetworks` builders randomise them
+afterwards, so a network assembled by hand from `add_layer()` reached its
+gradient check with every weight still zero. With zero weights the delta
+reaching every layer but the last is zero, so most of the gradient is
+identically zero *on both sides of the comparison*: `BackPropagateConvolutional`
+had 1 live component out of 432, `BackPropagateMultiheadAttention` 80 out of
+25,920. A deliberate 1000x error on the attention gradient changed nothing any
+of them measured.
+
+`calculate_gradient()` now refuses an all-zero network so this cannot come back
+quietly, and the twenty fixtures randomise after `compile()`.
+
+The one test that then failed was not a library bug. Two of the three
+convolution configurations use ReLU, and a central difference steps across its
+corner: the error falls in proportion to `h` (7.8e-3 at 1e-3, 1.9e-3 at 1e-4)
+where roundoff would grow and a smooth truncation error would fall as `h²`, and
+the Identity configuration agrees to 2e-7. The bound was the problem — absolute,
+across configurations whose gradients differ by 300x — and is now relative to
+the largest component with the old value as its floor.
+
+**The C2PSA suite could not fail.** Its fixture never randomised either, and
+`CpuAndGpuForwardOutputsMatch` forward-propagated one network on both devices
+though a network is compiled for one — so which device it measured depended on
+what the previous test left in the global configuration. It builds two networks
+now, and `CpuAndGpuGradientsMatch` compares them component by component relative
+to each component, which reports 1.9e-2 against a real 2x error where it allows
+5e-3.
+
+### Deliberately not done
+
+- **`xcut-build-tests-7` (remove 143 `Configuration::instance().set` calls from
+  tests as redundant).** They are load-bearing, and the C2PSA bug above is the
+  proof: a test that does not set its own device inherits whatever the previous
+  one left behind. This finding should be treated as refuted.
+- **`core-utils-8` (delete the free `tokenize`).** Neural Designer uses it. Same
+  for several others that look dead from inside this repo — grep that tree
+  first, as the audit header already says.
+- **`training-optimizers-12` (move optimizer defaults to member initialisers).**
+  The two class-owned cases named are already fixed. What is left are
+  assignments to *inherited* members, which a derived class cannot express as a
+  default member initialiser, so the proposed fix does not apply.
+- **`neural_network.cpp` trivial-member inlining.** Its one-line definitions sit
+  inside the non-CUDA branch of an `#ifdef` where the CUDA build has its own;
+  hoisting them into the class defines them twice.
+
+### Still open
+
+Blocked on hardware: the self-hosted CUDA runner job in CI is written but inert
+until `HAS_CUDA_RUNNER` is set, so nothing runs the GPU suite except this
+machine.
+
+The remaining duplication and boilerplate findings are individually small. The
+larger ones named in the original list — the per-test image helpers, the numeric
+Hessian stub, the rope backward, the GQA pipeline, the expression-emission
+loops — were checked and are already done.
+
 ## Fix first
+
+> As written on 2026-08-22. All three items here have since been resolved, and all
+> fifteen high-severity bugs are closed — see [Status — 2026-08-24](#status--2026-08-24).
+> Kept unedited because the diagnoses explain the fixes.
 
 ### 1. Unbreak the Windows CPU build
 
@@ -175,6 +346,10 @@ Current CPU suite on a rebuilt binary: 929 passed, 2 failed: ActivationsTest.Con
 - `opennn/model_selection/genetic_algorithm.cpp:185-238` — GeneticAlgorithm keeps a full parameter vector for every individual of every generation; only the best is ever read (medium, loc -8, S)
 
 ## Progress
+
+> As written on 2026-08-22, and partly superseded — the 2026-08-24 pass found the notes
+> had drifted in both directions. See [Status — 2026-08-24](#status--2026-08-24) for what
+> is true now.
 
 Closed so far: **all 115 bug/UB findings**, **all 21 high-severity findings**, and 48 quality
 items. Remaining: ~215, all medium or low.
@@ -505,6 +680,213 @@ compare a number against one from an earlier run.
 3. Hot paths, benchmark-gated: public inference overload + resident default, validation tail context and per-batch sync, OpenMP CPU activations, conv CPU scratch, YOLO v8 single pass, CE3d kernel, Addition copy pass.
 4. Structural splits, one seam per commit.
 5. Tests and tooling: operator tests for the nine never-included files, CPU/GPU parity tests per drifting twin, `.clang-tidy`, CI path filter, `GTest::gtest`, drop `-Wno-unused-result`.
+
+## Earlier audit — 2026-08-06
+
+Scope: `opennn/` (219 files, ~54.5k effective lines), `tests/`, `docs/benchmarks/`.
+Method: five parallel audit passes (duplication, dead code, structure, consistency,
+tests/benchmarks), every finding verified with repo-wide reference checks. The goal was
+incremental simplification, no grand redesign. Kept here because it records outcomes the
+2026-08-22 pass did not re-derive — most usefully the two Level 0 corrections and the
+Neural Designer constraint above.
+
+### What it verified as healthy
+
+- Error handling is uniform: `throw_if` dominates (582 calls, ~78%); the plain `throw`
+  sites are legitimately unconditional (CUDA-absent stubs, switch defaults). CUDA error
+  checking is one macro family.
+- No commented-out code blocks, no `#if 0`, no TODO/FIXME debt markers, no dead enum
+  values (all 88 enum classes checked).
+- Layer JSON serialization is centralized in `Layer::to_JSON/from_JSON`; optimizers share
+  `write_common_json`; datasets delegate `fill_*`.
+- `cudnn_frontend` containment is clean (1 header, 4 consumers).
+- `opennn/CMakeLists.txt` GLOBs sources: file splits cost zero build edits.
+
+### Level 0 — the test suite, and two corrections worth keeping
+
+Both suites reached green on 2026-08-06 (CUDA 831/0, CPU 773/0). Two of the five
+diagnosed failures were misdiagnosed in the original table, and the corrections are the
+reusable part:
+
+- **`Normalization3dTest.FusedResidualAddAliasesSafeBranchDelta` was NOT a product bug.**
+  The fused-aliased gradient is bit-identical to an unfused reference (explicit Addition
+  + plain LN), and the finite-difference estimate converges monotonically to the
+  analytical value as h shrinks — the failure was FD truncation error in an
+  ill-conditioned 3-feature LN. The test now compares against the exact unfused reference
+  instead of finite differences.
+- **`YoloLoss.V8DFLGradientMatchesNumerical` WAS a real product bug**, but not the
+  suspected TAL discontinuity: `yolo_v8_gradient_kernel_tal` scaled the DFL cross-entropy
+  gradient with `lam.giou` while the forward weighs that term with `lam.dfl` (a constant
+  5.0/1.5 mix mismatch, measured as a stable ~1.8x analytical/numerical ratio; the FD
+  estimate was flat across h, proving the analytical side wrong). Fixed by scaling each
+  term with its own lambda; the shared host kernel also serves the GPU path.
+
+The transferable lesson: a flat FD estimate across shrinking h indicts the analytical
+side, a converging one indicts the test.
+
+### Level 1 and 2 — what was executed
+
+Level 1 (2026-08-06, suites stayed green): dead accessors and env toggles removed
+(`OPENNN_CUDA_DEBUG_SYNC`, `OPENNN_CUDA_SYNC_EACH_BATCH`, `OPENNN_CONV_LEGACY`),
+`get_regularization_method` returns by value (dangling hazard removed, ND-compatible),
+`pooling_scratch_` converted to an immortal function-local (static destruction ran after
+the CUDA context died), 34 shadowed-local renames in `attention_operator.cpp`, 28
+trailing `Configuration` restores and two empty test stubs removed.
+
+Still open from Level 1: `OPENNN_BF16_HOST_INPUT_CAST` and its fp32-staging fallback (~30
+lines) was postponed — verify the fallback is truly unneeded first.
+
+Level 2 completed: `link_views` promoted to `operator.h` (23 bodies across 10 operators),
+`OPENNN_CUDA_STUB*` moved to `opennn_types.h` (23 stub bodies across 9 files), shared
+`finalize_attention` and `seq_len_scalar` in `cudnn_frontend_utilities.h`, `scale_gpu` /
+`unscale_gpu` merged with an `inverse` flag, and shared cuDNN RNN drivers
+(`CudnnRnnState::cudnn_rnn_forward_` / `cudnn_rnn_backward_` with a `has_cell_state` flag).
+
+Level 2 deliberately **not** done, with reasons that still hold:
+
+- Weight-init triples — the variation axes (orthogonal recurrent init, `tied_transposed`
+  guards, conv kernel fans, bias policies) make a single helper a forced abstraction.
+- Launch-scaffolding, LayerNorm/rope row-loop and YOLO-context items — hot paths,
+  deferred until verifiable with benchmarks rather than suites alone.
+
+Still open from Level 2, and independently re-found by the 2026-08-22 pass: shared
+`tests/llm_test_helpers.{h,cpp}` for the 9 helpers duplicated between
+`qwen3_network_test.cpp` and `int8_inference_test.cpp`, and shared vision fixtures for the
+YOLO test files.
+
+Also still open: `docs/benchmarks/tools/benchlib/` with `gpu.py` (`nvidia_used_mib`,
+`PeakMonitor`, `cooldown`, `measure_idle`, idle-delta trial wrapper) and `provenance.py`
+(`git_commit`, `sha256`, `file_info`, `framework_versions`) — about 350 of 923 duplicated
+Python lines. The monitors define published numbers, so port one runner at a time and
+diff a JSON artifact before and after.
+
+### Level 3 — splits proposed then, superseded now
+
+The 2026-08-22 [Structural splits](#structural-splits) section is the current list. Two
+items from the older one are not restated there and remain valid: `loss.cpp` lines
+30–1294 are a self-contained `#ifndef OPENNN_NO_VISION` YOLO block that can move verbatim
+to `loss_yolo.cpp` (the `Loss` class proper starts at line 1296), and
+`tensor_operations.cpp`'s 828-line `#ifdef OPENNN_HAS_CUDA` block can become
+`tensor_operations_gpu.cpp` plus a stubs file, with the `OPENNN_GPU_OPS` X-macro already
+serving as the declared boundary.
+
+Sizeable but explicitly **not** recommended without a concrete trigger: unifying `Index`
+vs `size_t` at the Layer/Operator seam (~670 casts), `Device::PinnedHost` in `Buffer`,
+converting the remaining `SDPACache`/GQA raw allocations and the 25 `mutable Buffer`
+caches to pool specs (cuDNN RNN reserve space needs persistent-lifetime treatment), `get_`
+naming unification, the six class/file renames, and the Eigen Tensor include split.
+
+## Benchmarks hygiene
+
+Open items from the 2026-08-06 tests/benchmarks pass. Distinct from
+[Benchmarks rot](#benchmarks-rot-because-nothing-compiles-them-with-cuda), which is about
+nothing compiling them with CUDA:
+
+- Capacity READMEs never mention the idle-delta protocol the runners now implement — one
+  paragraph each in the three capacity READMEs.
+- Dead link: `energy/transformer-energy/...md:99` points at a nonexistent
+  `rosenbrock-max-batch/run_energy.py`.
+- `--result-json` semantics differ across the three capacity runners (opt-out, opt-in,
+  always) — align them to the higgs runner's opt-out.
+- 5 folders are absent from `benchmark_manifest.json`, and `throughput/string-processing`
+  has a CMake target but no README or manifest entry. Extend
+  `tools/validate_benchmarks.py` with an unlisted-folder check (~10 lines) so it cannot
+  recur.
+- `capacity/data-capacity` ships two overlapping PowerShell sweeps — keep one.
+
+## YOLO roadmap
+
+Originally `YOLO_TODO.md`, audited 2026-05-22 on branch `dev-refactor`. The
+implementation notes behind every phase below are in
+[yolo-session-log.md](yolo-session-log.md).
+
+### What exists
+
+| Component | Location | Status |
+|---|---|---|
+| `YoloDataset` (label parsing, cache, letterbox, k-means anchors, target encoding) | `opennn/dataset/yolo_dataset.{h,cpp}` | Complete |
+| `DetectionOperator` forward/backward (sigmoid x/y/obj, exp·anchor w/h, softmax classes) | `opennn/neural_network/operators/` | Complete, CPU + GPU |
+| `Detection` layer wrapper + JSON I/O | `opennn/neural_network/layers/detection_layer.{h,cpp}` | Complete |
+| `NonMaxSuppressionOperator` (per-class greedy NMS) | `opennn/neural_network/operators/` | Complete, CPU + GPU |
+| YOLO loss (`Loss::Error::Yolo`, GIoU, DFL, TAL) | `opennn/training_strategy/loss.cpp` | Complete, CPU + GPU |
+| `YoloNetwork` builder | `opennn/neural_network/standard_networks.cpp` | Complete, multiple backbones |
+| `DetectionV8Operator` / `DetectionV8Layer` (anchor-free) | `opennn/neural_network/` | Complete, CPU + GPU |
+
+The original 2026-05-22 scaffold was closer to **YOLO v2 (single-scale)** than v1 — it
+already had anchor boxes, softmax-per-class and sigmoid xy decoding.
+
+### Gradient math verification (2026-05-22, hand-verified)
+
+- **Coordinate loss** `(sqrt(out_w) − sqrt(target_w))²` gives a gradient wrt `out_w` of
+  `(sqrt_out − sqrt_target) / sqrt_out`. Code matched.
+- **`DetectionOperator` w/h backward**: `out_w = exp(logit) · anchor`, so
+  `d(out_w)/d(logit) = out_w`, hence `in_delta[w] = delta[w] · out[w]`. Matched.
+- **Objectness**: target is IoU when an object is present and 0 otherwise, loss
+  `(out − target)²`, sigmoid Jacobian `out·(1−out)` applied in `apply_delta`. Matched.
+- **Class softmax + cross-entropy**: the gradient wrt softmax probability is `−t/p`, and
+  `apply_delta` performs the softmax-Jacobian transform (`delta[c] − dot`). Matched.
+
+No math errors were found. The non-obvious risk is that the loss reads the *decoded*
+output, so every gradient must pass through `DetectionOperator`'s backward — they do,
+since Detection is a trainable layer.
+
+**Confirmed v1-paper approximation:** `yolo_gradient_cpu` treats `iou(target, output)` as
+constant when computing `dE/d(out[0..3])`, missing the chain-rule contribution from the
+objectness loss back through the box coordinates. This matches reference implementations;
+numerical-vs-analytical differs by ~0.1–0.2 on the affected coordinates, as expected. A
+v3+ rewrite would differentiate through (G)IoU.
+
+### Phase status
+
+| Phase | Scope | Status |
+|---|---|---|
+| 1 | First runnable YOLO: tests, double-scaling fix, NMS JSON I/O, example, decode helper | complete |
+| 2 | v2 polish: BatchNorm, multi-scale training, PNG/JPG, augmentation | complete 2026-05-27 |
+| 3 | v3: Darknet-Tiny backbone, three FPN heads, per-class sigmoid, GIoU loss | complete 2026-06-18 |
+| 4 | v4/v5: CSP backbones, SPP/SPPF, PANet head, mosaic augmentation | partial — SPPF and PAN/neck blocks exist in `YoloNetwork`; mosaic not started |
+| 5 | v8 anchor-free: decoupled head, DFL, Task-Aligned Assigner, varifocal loss | 5a (anchor-free head, decoupled head) complete 2026-07-22, GPU 2026-07-23/24; DFL and TAL shipped; varifocal not started |
+| 6 | v11: C3k2 block, C2PSA attention, depth/width scaling | partial — `C2PSAOperator` and `kernel_c2psa.cu` exist |
+
+**Phase 4–6 status is inferred** from the 2026-08-22 audit's file inventory rather than
+from a roadmap update. Treat the "partial" rows as leads to verify, not as claims.
+
+Known-broken along this path: `load_darknet_backbone_v11` targets `c11_*` labels the
+builder no longer emits and always loads 0 layers (high severity, see
+[All findings](#all-findings)).
+
+### Original punch list (2026-05-22)
+
+Kept for provenance. The first three were closed in Phase 1; the rest are still open.
+
+- ~~`YoloDataset::fill_inputs` only normalizes during training~~ — fixed, it now
+  normalizes unconditionally.
+- ~~Double-scaling in `YoloNetwork`~~ — fixed, `Scaling` removed. Removing it broke
+  input-shape propagation (the first `Convolutional` received an empty shape from
+  `get_output_shape()` and threw "kernel shape cannot be bigger than input shape"); fixed
+  by passing `input_shape` explicitly.
+- ~~`NonMaxSuppression` missing `read_JSON_body` / `write_JSON_body`~~ — added.
+- **NMS runs during training** even though gradients cannot flow through it. It is marked
+  non-trainable so the loss skips it via `get_last_trainable_layer_outputs()`, but the
+  forward pass still computes it every batch. Wasted compute, not incorrect. Optional fix:
+  gate NMS forward on `is_training == false`, or move it out of the network into a
+  post-processing helper.
+- **k-means anchor calculation is not seeded** — the initial assignment uses
+  `boxes[i % ssize(boxes)]`, deterministic but order-dependent on the filesystem listing.
+  Flagged for a reproducibility audit.
+- **Letterbox is applied at cache build**, so changing the input size invalidates the
+  cache. Correct behaviour, but worth documenting.
+
+### Open risks
+
+- **`YoloNetwork` enforces `input_H/W == grid_size * 32`** — a five-pool stride-32
+  architecture locks the input to 416 or 224. Multi-scale training needs this relaxed.
+- **No pretrained weights loader.** v3+ practically requires ImageNet-pretrained
+  backbones; training a usable detector from scratch is slow without one.
+- **No mAP / COCO evaluation harness** beyond the per-class metric added 2026-06-18, so it
+  is hard to know whether "training works" also means "the detector is good".
+
+Phase 5 (anchor-free v8) was correctly predicted to dwarf the rest in effort, and Phase 6
+(v11) sits on top of it.
 
 ## All findings
 
@@ -4659,115 +5041,3 @@ backward_full_write_test, cutlass_narrow_gemm_test, device_backend_test and mean
 
 *Verifier:* Guard mechanism confirmed (configuration.cpp:66-68 throws). qwen3_network_test.cpp:372-375 `Configuration::instance().set(Device::CUDA, Type::BF16)` under #ifdef only, no has_cuda_device/GTEST_SKIP in the file; same for adaptive_moment_estimation_test (9 sites), int8_inference_test (6), grouped_attention_test, neural_network_test, memory_audit. Corrections: (a) the biggest unguarded file is…
 
----
-
-## Status — 2026-08-24
-
-Everything below was checked against the tree at the time of writing rather than
-against the notes, because the notes had drifted: several findings recorded as
-open had been fixed weeks earlier, and one recorded as understood was still
-live. The commits since `509857699` are the record of what changed; this section
-is the record of what is *true now*.
-
-### The fifteen high-severity bugs are closed
-
-Fourteen were already fixed, each verified by reading the code rather than the
-commit log. Most carry a comment at the site describing the original defect,
-which is what made them quick to confirm:
-
-| finding | how it reads now |
-| --- | --- |
-| `CudaBlockCache::give` throwing from a destructor | `deallocate` is `noexcept`; the comment names `~Buffer`/`~PinnedBuffer` as the callers |
-| `set_threads_number` destroying a cached `ThreadPool` | `contraction_device()` rebuilds the handle per call; the comment records the use-after-free |
-| Apple `from_chars` recursing forever | the integral branch calls `std::from_chars`; the comment marks `std::` as load-bearing |
-| quoted-field tokenizer eating `,` and `;` | proper `in_quote` state machine keyed on the actual separator |
-| `BinaryFile` analysis indexing an empty matrix | `require_in_memory_data(...)` guards the analysis entry points |
-| float-only layers accepting BF16 | `Concatenation::on_compute_dtype_changed` refuses anything but FP32 |
-| LSTM on CUDA with no FP32 guard | `cudnn_rnn.cpp` selects the descriptor from `config.data_type` and rejects the rest |
-| `load_darknet_backbone_v11` targeting dead labels | targets `c8_*`, the labels the builder emits |
-| `set_parameters` overflowing the compact bf16 mirror | `throw_if(fp32_master_released())` on all three entry points |
-| Logarithm scaler exporting broken Python/JS | handled as the one non-affine method, via `log_pre`/`exp_post` |
-| CPU valid-length record frozen after the first pass | re-inherited every pass; the comment records the stale-mask bug |
-| `run_graph_epoch` null pipeline slot | the warm-up keeps a callable so it walks the branches the epoch will |
-| Minkowski divided by `batch_size` | divided by the sample count, like its four siblings |
-| NSE dropping its batch scaling | `result.error *= get_batch_scale(batch)`, as WSE does |
-
-The fifteenth was still open and is fixed now.
-
-**Dropout under CUDA graphs redrew one fixed mask.** The seed was chosen on the
-host and passed as a kernel launch argument. A captured graph records the
-arguments its kernels were launched with, so once a training step was captured
-every replay reused the mask captured with it — one dropout pattern for the rest
-of the run. Nothing fails when that happens: shapes, scaling and loss all stay
-plausible, and the only symptom is that the regularisation quietly stops
-varying, which is why it survived. The seed now lives in device memory with a
-one-thread kernel advancing it before each draw, so the advance is inside
-whatever capture is running.
-
-`DropoutDeviceTest.GraphReplayDrawsANewMask` reproduces it: it reported the
-replayed mask identical to the captured one before the change.
-`ConsecutiveCallsDrawDifferentMasks` sits next to it so the first cannot pass
-for the wrong reason.
-
-A sample of the medium bugs was checked the same way — batch-norm's running
-variance, the attention CPU padding inference, the GPU sampler's logit cap — and
-all were fixed. The medium and low tiers were not verified exhaustively.
-
-### Raised during this pass, not in the original audit
-
-**Twenty gradient checks were running on networks of all zeros.** `compile()`
-zeroes the parameters and only the `StandardNetworks` builders randomise them
-afterwards, so a network assembled by hand from `add_layer()` reached its
-gradient check with every weight still zero. With zero weights the delta
-reaching every layer but the last is zero, so most of the gradient is
-identically zero *on both sides of the comparison*: `BackPropagateConvolutional`
-had 1 live component out of 432, `BackPropagateMultiheadAttention` 80 out of
-25,920. A deliberate 1000x error on the attention gradient changed nothing any
-of them measured.
-
-`calculate_gradient()` now refuses an all-zero network so this cannot come back
-quietly, and the twenty fixtures randomise after `compile()`.
-
-The one test that then failed was not a library bug. Two of the three
-convolution configurations use ReLU, and a central difference steps across its
-corner: the error falls in proportion to `h` (7.8e-3 at 1e-3, 1.9e-3 at 1e-4)
-where roundoff would grow and a smooth truncation error would fall as `h²`, and
-the Identity configuration agrees to 2e-7. The bound was the problem — absolute,
-across configurations whose gradients differ by 300x — and is now relative to
-the largest component with the old value as its floor.
-
-**The C2PSA suite could not fail.** Its fixture never randomised either, and
-`CpuAndGpuForwardOutputsMatch` forward-propagated one network on both devices
-though a network is compiled for one — so which device it measured depended on
-what the previous test left in the global configuration. It builds two networks
-now, and `CpuAndGpuGradientsMatch` compares them component by component relative
-to each component, which reports 1.9e-2 against a real 2x error where it allows
-5e-3.
-
-### Deliberately not done
-
-- **`xcut-build-tests-7` (remove 143 `Configuration::instance().set` calls from
-  tests as redundant).** They are load-bearing, and the C2PSA bug above is the
-  proof: a test that does not set its own device inherits whatever the previous
-  one left behind. This finding should be treated as refuted.
-- **`core-utils-8` (delete the free `tokenize`).** Neural Designer uses it. Same
-  for several others that look dead from inside this repo — grep that tree
-  first, as the audit header already says.
-- **`training-optimizers-12` (move optimizer defaults to member initialisers).**
-  The two class-owned cases named are already fixed. What is left are
-  assignments to *inherited* members, which a derived class cannot express as a
-  default member initialiser, so the proposed fix does not apply.
-- **`neural_network.cpp` trivial-member inlining.** Its one-line definitions sit
-  inside the non-CUDA branch of an `#ifdef` where the CUDA build has its own;
-  hoisting them into the class defines them twice.
-
-### Still open
-
-Blocked on hardware: the self-hosted CUDA runner job in CI is written but inert
-until `HAS_CUDA_RUNNER` is set, so nothing runs the GPU suite except this
-machine.
-
-The remaining duplication and boilerplate findings are individually small. The
-larger ones named in the original list — the per-test image helpers, the numeric
-Hessian stub, the rope backward, the GQA pipeline, the expression-emission
-loops — were checked and are already done.
