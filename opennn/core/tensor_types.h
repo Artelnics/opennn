@@ -71,43 +71,36 @@ void visit_type_pair(Type t_in, Type t_out, F&& f)
     });
 }
 
-inline cudnnDataType_t to_cudnn(Type type)
+// The lookups below differ only in which TypeInfo member they read, so the
+// walk over the concrete types lives here once. Adding a Type means adding a
+// case here rather than in each of them.
+template<typename F>
+inline auto with_type_info(Type type, const char* caller, F&& f)
 {
     switch (type)
     {
-    case Type::FP32: return TypeInfo<Type::FP32>::cudnn;
-    case Type::BF16: return TypeInfo<Type::BF16>::cudnn;
-    case Type::INT8: return TypeInfo<Type::INT8>::cudnn;
+    case Type::FP32: return f(TypeInfo<Type::FP32>{});
+    case Type::BF16: return f(TypeInfo<Type::BF16>{});
+    case Type::INT8: return f(TypeInfo<Type::INT8>{});
     case Type::Auto: break;
     }
 
-    throw runtime_error("to_cudnn: Type::Auto must be resolved before tensor use.");
+    throw runtime_error(string(caller) + ": Type::Auto must be resolved before tensor use.");
+}
+
+inline cudnnDataType_t to_cudnn(Type type)
+{
+    return with_type_info(type, "to_cudnn", [](auto info) { return info.cudnn; });
 }
 
 inline cudaDataType_t to_cuda(Type type)
 {
-    switch (type)
-    {
-    case Type::FP32: return TypeInfo<Type::FP32>::cuda;
-    case Type::BF16: return TypeInfo<Type::BF16>::cuda;
-    case Type::INT8: return TypeInfo<Type::INT8>::cuda;
-    case Type::Auto: break;
-    }
-
-    throw runtime_error("to_cuda: Type::Auto must be resolved before tensor use.");
+    return with_type_info(type, "to_cuda", [](auto info) { return info.cuda; });
 }
 
 inline Index type_bytes(Type type)
 {
-    switch (type)
-    {
-    case Type::FP32: return TypeInfo<Type::FP32>::bytes;
-    case Type::BF16: return TypeInfo<Type::BF16>::bytes;
-    case Type::INT8: return TypeInfo<Type::INT8>::bytes;
-    case Type::Auto: break;
-    }
-
-    throw runtime_error("type_bytes: Type::Auto must be resolved before tensor use.");
+    return with_type_info(type, "type_bytes", [](auto info) { return info.bytes; });
 }
 
 static constexpr Index ALIGN_BYTES = EIGEN_MAX_ALIGN_BYTES;
