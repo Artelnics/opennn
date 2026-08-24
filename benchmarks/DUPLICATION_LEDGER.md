@@ -8,7 +8,7 @@ this says why.
 Everything below was read out of the tree, not estimated. Line references are as
 of the commit that adds this file.
 
-Status: **complete** -- all four families.
+Status: **complete** -- all four families, plus the two decisions they raised.
 
 ---
 
@@ -109,10 +109,32 @@ because `tensorflow_speed.py` also scores accuracy / log-loss / ROC-AUC from
 the same run (its `--min-accuracy` / `--max-log-loss` / `--min-auc` gates), and
 those numbers come from a different formulation than PyTorch's.
 
-Site 1 makes the same choice deliberately and says so — its header calls logits
-plus `BCEWithLogitsLoss` / `from_logits=True` "the standard formulation" — and
-there it is applied to **all three** engines, so it stays like-for-like. Site 5
-applies it to one of three.
+Site 1 is mixed the other way. Its PyTorch and TensorFlow drivers both use
+logits — the header calls that "the standard formulation" — while
+`opennn_higgs_maxbatch_trial.cpp:162` builds a `"Sigmoid"` output like every
+other OpenNN dense definition. So two of three on logits at site 1, one of three
+at site 5, and three of three on sigmoid at sites 2, 3, 4 and 6:
+
+| site | OpenNN | PyTorch | TensorFlow |
+|---|---|---|---|
+| 1 capacity | sigmoid | **logits** | **logits** |
+| 2 accuracy | sigmoid | sigmoid | sigmoid |
+| 3 convergence | sigmoid | sigmoid | sigmoid |
+| 4 CPU | sigmoid | sigmoid | sigmoid |
+| 5 GPU train | sigmoid | **logits** | sigmoid |
+| 6 infer | sigmoid | sigmoid | — |
+
+Read down the OpenNN column and the pattern is not author whim: **OpenNN takes
+the activation in the forward everywhere, in this family and in the transformer
+one, because it has no from-logits loss to take.** `Loss::Error` offers
+`CrossEntropy` and `CrossEntropy3d`, and both consume probabilities —
+`error_functions.cpp:254` and `:414` read `log(output)` directly. PyTorch and
+TensorFlow diverge from it wherever an author reached for the formulation their
+framework makes natural.
+
+The divergence therefore tracks a library capability gap rather than a
+convention that was never agreed, which changes what fixing it means. See
+"Decisions" below.
 
 **3. Weight initialisation was never reconciled.** No PyTorch dense file sets an
 initialiser, so each engine uses its own default:
@@ -567,3 +589,93 @@ whatever `suite.json` becomes so the C++ side stops transcribing it.
 It should also be the model for the rest. If the merged dense, transformer and
 CNN definitions end up with a shared scenario table, five-seed aggregation and
 one driver per protocol, they will look like this directory does now.
+
+---
+
+## Decisions
+
+Settled 2026-08-24 from the evidence above, for plan steps 4-6. Both were listed
+in the family sections as "must be made before the merge".
+
+### D1 — Output formulation: logits, once OpenNN can express them
+
+**Decided: all three engines emit logits into a fused loss for training, and
+keep the activation for inference. Blocked on a library change; the interim rule
+is below.**
+
+The reading changed the question. This looked like a convention nobody agreed —
+some sites on logits, some on sigmoid. It is not. OpenNN takes the activation in
+the forward at *every* dense and transformer site, because `Loss::Error` has no
+from-logits member: `CrossEntropy` and `CrossEntropy3d` both consume
+probabilities (`error_functions.cpp:254`, `:414`). PyTorch and TensorFlow depart
+from it wherever an author wrote what their framework makes natural.
+
+So "pick a convention" is not available. The two real options:
+
+| | consequence |
+|---|---|
+| **(a) everyone takes the activation in the forward** | matches OpenNN today, no library work — but strips PyTorch and TensorFlow of a fused path they genuinely have, and makes all three slower in the same way. A benchmark that removes a competitor's real optimisation to match its own limitation flatters itself. |
+| **(b) everyone emits logits into a fused loss** | the formulation practitioners write, the numerically stable one, and the faster one. Needs a from-logits loss in OpenNN. |
+
+**(b).** (a) would be measuring OpenNN's ceiling and calling it everyone's.
+
+The cost is not only fairness. At the transformer, OpenNN materialises a
+`[batch, seq, vocab]` probability tensor that PyTorch and TensorFlow never
+write. That is real throughput OpenNN is leaving on the table, in the library
+rather than in the benchmark, so the fix helps users and not just this suite.
+
+**Library task, prerequisite to step 4:** add a from-logits cross-entropy —
+binary and 3d — that consumes pre-activation outputs and fuses the log-softmax
+(or log-sigmoid) into the loss and its gradient. Then the merged definitions
+drop the output activation for training and keep it for inference.
+
+**Interim rule, so step 4 is not blocked on the library:** the merged definition
+declares its formulation per engine in `suite.json` rather than claiming the
+three are identical, and the one *unintended* divergence gets fixed now —
+`pytorch_speed.py` moves to sigmoid + `BCELoss`, matching the other two engines
+at site 5 and its own five sibling sites. Site 1 stays as it is: its two logits
+drivers are deliberate and documented, and will be correct once (b) lands.
+
+### D2 — Initialisation: Glorot, pinned explicitly in all three
+
+**Decided: every merged definition sets its initialiser explicitly. Glorot
+(Xavier uniform) where the three must agree. No definition inherits a framework
+default.**
+
+Nothing agrees today, and differently in each family: dense has OpenNN and
+TensorFlow on Glorot against PyTorch's Kaiming; transformer bodies agree on
+Xavier while embeddings and output projections do not; CNN has three different
+initialisers and OpenNN's is not fan-scaled at all.
+
+Glorot because it is already the majority — OpenNN's `finalize_build` and both
+Keras `Dense`/`Conv2D` defaults — so it is the smallest change, and because all
+three can express it explicitly: `nn.init.xavier_uniform_`,
+`kernel_initializer="glorot_uniform"`, `set_parameters_glorot()`.
+
+Explicitly, not by default, because "each framework as a practitioner would use
+it" is the wrong instinct for the quality track. A convergence benchmark that
+lets three engines start from three distributions is partly measuring
+initialisation, and reports it as engine quality.
+
+Two consequences worth stating:
+
+- **It moves the published accuracy and convergence numbers.** Re-baseline
+  material (step 6), not a silent fix.
+- **It does not matter for speed, capacity or energy.** Those tracks may keep
+  framework defaults; pinning them costs nothing and is simpler to state, so
+  pin them anyway.
+
+**OpenNN already ships the alternative.** `NeuralNetwork::set_parameters_pytorch()`
+exists and is overridden where PyTorch's scheme genuinely differs — `Recurrent`,
+`LongShortTermMemory`, `Combination` — defaulting to Glorot elsewhere. If a
+future decision prefers matching PyTorch instead, the mechanism is there and
+unused; nothing in the benchmarks calls it.
+
+**Library task, separate from the merge:** `ResNet::ResNet` and `YoloNetwork`
+call `set_parameters_random()` — flat `uniform(-0.1, 0.1)`, no fan scaling —
+instead of going through `finalize_build`'s Glorot, and
+`ConvolutionOperator::set_parameters_glorot` exists but is never reached from
+those builders. Confirm whether that is deliberate before the CNN quality
+numbers are re-baselined; against Glorot's ~0.026 limit for a 3x3 convolution
+with 512 input channels, a flat +-0.1 is about four times too wide, fifty layers
+deep.
