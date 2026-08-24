@@ -84,10 +84,6 @@ MatrixR TabularDataset::get_feature_data(const string& variable_role) const
     return get_data_from_indices(indices, get_feature_indices(variable_role));
 }
 
-MatrixR TabularDataset::get_data(const string& sample_role, const string& variable_role) const
-{
-    return get_data_from_indices(get_sample_indices(sample_role), get_feature_indices(variable_role));
-}
 
 MatrixR TabularDataset::get_data_from_indices(const vector<Index>& sample_indices, const vector<Index>& feature_indices) const
 {
@@ -859,15 +855,7 @@ vector<Descriptives> TabularDataset::calculate_variable_descriptives_samples(boo
                         get_feature_indices(VariableRole::Input));
 }
 
-vector<Descriptives> TabularDataset::calculate_variable_descriptives_positive_samples() const
-{
-    return calculate_variable_descriptives_samples(true);
-}
 
-vector<Descriptives> TabularDataset::calculate_variable_descriptives_negative_samples() const
-{
-    return calculate_variable_descriptives_samples(false);
-}
 
 vector<Descriptives> TabularDataset::calculate_variable_descriptives_categories(Index class_index) const
 {
@@ -909,20 +897,8 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_target_variable_correlati
     return correlations;
 }
 
-Tensor<Correlation, 2> TabularDataset::calculate_input_target_variable_pearson_correlations() const
-{
-    return calculate_input_target_variable_correlations(correlation, "pearson");
-}
 
-Tensor<Correlation, 2> TabularDataset::calculate_input_target_variable_spearman_correlations() const
-{
-    return calculate_input_target_variable_correlations(correlation_spearman, "spearman");
-}
 
-MatrixR TabularDataset::calculate_input_target_correlation_values() const
-{
-    return get_correlation_values(calculate_input_target_variable_pearson_correlations());
-}
 
 Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
     Correlation (*correlation_function)(const MatrixR&, const MatrixR&),
@@ -969,15 +945,7 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
     return correlations;
 }
 
-Tensor<Correlation, 2> TabularDataset::calculate_input_variable_pearson_correlations() const
-{
-    return calculate_input_variable_correlations(correlation, Correlation::Method::Pearson, "pearson");
-}
 
-Tensor<Correlation, 2> TabularDataset::calculate_input_variable_spearman_correlations() const
-{
-    return calculate_input_variable_correlations(correlation_spearman, Correlation::Method::Spearman, "spearman");
-}
 
 FeatureScaling TabularDataset::calculate_used_feature_scaling(VariableRole role) const
 {

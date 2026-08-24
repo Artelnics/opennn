@@ -340,15 +340,7 @@ void ResponseOptimization::set_formula_constraint(const string& expression, cons
     network_jacobian.ready = false;
 }
 
-void ResponseOptimization::set_max_oversample_factor(Index new_factor)
-{
-    max_oversample_factor = new_factor;
-}
 
-void ResponseOptimization::set_exploration_ratio(float new_ratio)
-{
-    exploration_ratio = new_ratio;
-}
 
 void ResponseOptimization::clear_objectives()
 {
@@ -362,30 +354,10 @@ UnivariateConstraint ResponseOptimization::get_constraint(const string& name) co
     return it != constraint_set.univariate.end() ? it->second : UnivariateConstraint(ComparisonOperator::None);
 }
 
-void ResponseOptimization::set_evaluations_number(const int new_evaluations_number)
-{
-    evaluations_number = new_evaluations_number;
-}
 
-void ResponseOptimization::set_iterations(const int new_max_iterations)
-{
-    max_iterations = new_max_iterations;
-}
 
-void ResponseOptimization::set_relative_tolerance(float new_relative_tolerance)
-{
-    relative_tolerance = new_relative_tolerance;
-}
 
-void ResponseOptimization::set_max_total_evaluations(const Index new_max_total_evaluations)
-{
-    max_total_evaluations = new_max_total_evaluations;
-}
 
-void ResponseOptimization::set_branch_mode(const BranchMode new_branch_mode)
-{
-    branch_mode = new_branch_mode;
-}
 
 Index ResponseOptimization::get_optimizing_objectives_number() const
 {

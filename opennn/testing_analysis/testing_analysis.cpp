@@ -406,15 +406,7 @@ VectorR TestingAnalysis::calculate_classification_errors(const string& sample_ro
     return errors;
 }
 
-VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sample_role) const
-{
-    return calculate_classification_errors(sample_role, true);
-}
 
-VectorR TestingAnalysis::calculate_multiple_classification_errors(const string& sample_role) const
-{
-    return calculate_classification_errors(sample_role, false);
-}
 
 float TestingAnalysis::calculate_determination(const VectorR& outputs, const VectorR& targets) const
 {
@@ -755,29 +747,9 @@ vector<Index> TestingAnalysis::filter_classification_samples(const MatrixR& targ
     return result;
 }
 
-vector<Index> TestingAnalysis::calculate_true_positive_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                               const vector<Index>& testing_indices, float threshold) const
-{
-    return filter_classification_samples(targets, outputs, testing_indices, threshold, true, true);
-}
 
-vector<Index> TestingAnalysis::calculate_false_positive_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                                const vector<Index>& testing_indices, float threshold) const
-{
-    return filter_classification_samples(targets, outputs, testing_indices, threshold, false, true);
-}
 
-vector<Index> TestingAnalysis::calculate_false_negative_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                                const vector<Index>& testing_indices, float threshold) const
-{
-    return filter_classification_samples(targets, outputs, testing_indices, threshold, true, false);
-}
 
-vector<Index> TestingAnalysis::calculate_true_negative_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                               const vector<Index>& testing_indices, float threshold) const
-{
-    return filter_classification_samples(targets, outputs, testing_indices, threshold, false, false);
-}
 
 Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates() const
 {

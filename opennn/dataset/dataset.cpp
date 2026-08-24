@@ -196,10 +196,6 @@ FeatureScaling Dataset::prepare_training_scaling(
         variable_role_to_string(role)));
 }
 
-MatrixR Dataset::calculate_input_target_correlation_values() const
-{
-    throw runtime_error("Dataset does not support input-target correlations.");
-}
 
 FeatureScaling Dataset::calculate_used_feature_scaling(VariableRole role) const
 {
@@ -1001,10 +997,6 @@ void Dataset::check_separators(string_view line) const
                     found_other_name, found_other, data_path.string(), separator_name, separator_string);
 }
 
-bool Dataset::has_validation() const
-{
-    return get_samples_number(SampleRole::Validation) != 0;
-}
 
 void Dataset::fill_inputs(const vector<Index>&, const vector<Index>&, float*, FillMode, int) const
 {

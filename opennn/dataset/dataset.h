@@ -111,7 +111,7 @@ public:
 
     virtual bool sample_order_matters() const noexcept { return false; }
 
-    virtual MatrixR calculate_input_target_correlation_values() const;
+    virtual MatrixR calculate_input_target_correlation_values() const { throw runtime_error("Dataset does not support input-target correlations."); }
     virtual FeatureScaling calculate_used_feature_scaling(VariableRole) const;
 
     vector<vector<Index>> get_feature_indices() const;
@@ -242,7 +242,7 @@ public:
 
     void set_display(bool new_display) { display = new_display; }
 
-    bool has_validation() const;
+    bool has_validation() const { return get_samples_number(SampleRole::Validation) != 0; }
 
     void split_samples(const float training_ratio = 0.6f,
                        float validation_ratio = 0.2f,

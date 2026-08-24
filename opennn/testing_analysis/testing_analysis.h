@@ -90,9 +90,9 @@ public:
     VectorR calculate_errors(const MatrixR&, const MatrixR&) const;
     VectorR calculate_errors(const string&) const;
 
-    VectorR calculate_binary_classification_errors(const string&) const;
+    VectorR calculate_binary_classification_errors(const string& sample_role) const { return calculate_classification_errors(sample_role, true); }
 
-    VectorR calculate_multiple_classification_errors(const string&) const;
+    VectorR calculate_multiple_classification_errors(const string& sample_role) const { return calculate_classification_errors(sample_role, false); }
 
     float calculate_determination(const VectorR&, const VectorR&) const;
 
@@ -127,10 +127,14 @@ public:
 
     BinaryClassificationRates calculate_binary_classification_rates(const float = 0.50) const;
 
-    vector<Index> calculate_true_positive_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;
-    vector<Index> calculate_false_positive_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;
-    vector<Index> calculate_false_negative_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;
-    vector<Index> calculate_true_negative_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;
+    vector<Index> calculate_true_positive_samples(const MatrixR& targets, const MatrixR& outputs,
+                                                               const vector<Index>& testing_indices, float threshold) const { return filter_classification_samples(targets, outputs, testing_indices, threshold, true, true); }
+    vector<Index> calculate_false_positive_samples(const MatrixR& targets, const MatrixR& outputs,
+                                                                const vector<Index>& testing_indices, float threshold) const { return filter_classification_samples(targets, outputs, testing_indices, threshold, false, true); }
+    vector<Index> calculate_false_negative_samples(const MatrixR& targets, const MatrixR& outputs,
+                                                                const vector<Index>& testing_indices, float threshold) const { return filter_classification_samples(targets, outputs, testing_indices, threshold, true, false); }
+    vector<Index> calculate_true_negative_samples(const MatrixR& targets, const MatrixR& outputs,
+                                                               const vector<Index>& testing_indices, float threshold) const { return filter_classification_samples(targets, outputs, testing_indices, threshold, false, false); }
     Tensor<VectorI, 2> calculate_multiple_classification_rates() const;
 
     Tensor<VectorI, 2> calculate_multiple_classification_rates(const MatrixR&, const MatrixR&, const vector<Index>&) const;

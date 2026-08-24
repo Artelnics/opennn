@@ -44,7 +44,7 @@ public:
     }
 
     using Dataset::get_data;
-    MatrixR get_data(const string&, const string&) const;
+    MatrixR get_data(const string& sample_role, const string& variable_role) const { return get_data_from_indices(get_sample_indices(sample_role), get_feature_indices(variable_role)); }
     MatrixR get_data_from_indices(const vector<Index>&, const vector<Index>&) const;
 
     MatrixR get_variable_data(Index) const;
@@ -105,8 +105,8 @@ public:
     vector<Descriptives> calculate_feature_descriptives(const string&) const;
     vector<Descriptives> calculate_feature_descriptives(const string&, const vector<Index>&) const;
 
-    vector<Descriptives> calculate_variable_descriptives_positive_samples() const;
-    vector<Descriptives> calculate_variable_descriptives_negative_samples() const;
+    vector<Descriptives> calculate_variable_descriptives_positive_samples() const { return calculate_variable_descriptives_samples(true); }
+    vector<Descriptives> calculate_variable_descriptives_negative_samples() const { return calculate_variable_descriptives_samples(false); }
     vector<Descriptives> calculate_variable_descriptives_categories(Index) const;
 
     vector<Histogram> calculate_variable_distributions(const Index = 10) const;
@@ -114,15 +114,15 @@ public:
 
     Tensor<Correlation, 2> calculate_input_variable_correlations(
         Correlation (*)(const MatrixR&, const MatrixR&), Correlation::Method, const string&) const;
-    Tensor<Correlation, 2> calculate_input_variable_pearson_correlations() const;
-    Tensor<Correlation, 2> calculate_input_variable_spearman_correlations() const;
+    Tensor<Correlation, 2> calculate_input_variable_pearson_correlations() const { return calculate_input_variable_correlations(correlation, Correlation::Method::Pearson, "pearson"); }
+    Tensor<Correlation, 2> calculate_input_variable_spearman_correlations() const { return calculate_input_variable_correlations(correlation_spearman, Correlation::Method::Spearman, "spearman"); }
 
     Tensor<Correlation, 2> calculate_input_target_variable_correlations(
         Correlation (*)(const MatrixR&, const MatrixR&), const string&) const;
-    Tensor<Correlation, 2> calculate_input_target_variable_pearson_correlations() const;
-    Tensor<Correlation, 2> calculate_input_target_variable_spearman_correlations() const;
+    Tensor<Correlation, 2> calculate_input_target_variable_pearson_correlations() const { return calculate_input_target_variable_correlations(correlation, "pearson"); }
+    Tensor<Correlation, 2> calculate_input_target_variable_spearman_correlations() const { return calculate_input_target_variable_correlations(correlation_spearman, "spearman"); }
 
-    MatrixR calculate_input_target_correlation_values() const override;
+    MatrixR calculate_input_target_correlation_values() const override { return get_correlation_values(calculate_input_target_variable_pearson_correlations()); }
 
     FeatureScaling calculate_used_feature_scaling(VariableRole) const override;
 

@@ -126,15 +126,15 @@ public:
 
     void set_formula_constraint(const string&, const vector<float>&);
 
-    void set_max_oversample_factor(Index);
-    void set_exploration_ratio(float);
+    void set_max_oversample_factor(Index new_factor) { max_oversample_factor = new_factor; }
+    void set_exploration_ratio(float new_ratio) { exploration_ratio = new_ratio; }
 
-    void set_iterations(const int);
-    void set_evaluations_number(const int);
-    void set_relative_tolerance(float);
-    void set_max_total_evaluations(const Index);
+    void set_iterations(const int new_max_iterations) { max_iterations = new_max_iterations; }
+    void set_evaluations_number(const int new_evaluations_number) { evaluations_number = new_evaluations_number; }
+    void set_relative_tolerance(float new_relative_tolerance) { relative_tolerance = new_relative_tolerance; }
+    void set_max_total_evaluations(const Index new_max_total_evaluations) { max_total_evaluations = new_max_total_evaluations; }
 
-    void set_branch_mode(const BranchMode);
+    void set_branch_mode(const BranchMode new_branch_mode) { branch_mode = new_branch_mode; }
 
     vector<Descriptives> get_descriptives(const string&) const;
 
