@@ -269,27 +269,16 @@ void TextGenerationDataset::save_cache_metadata(const filesystem::path& metadata
 
 vector<Index> TextGenerationDataset::encode_corpus(const vector<string_view>& corpus_tokens) const
 {
-    const vector<string>& vocabulary = tokenizer->get_vocabulary();
-    const unordered_map<string_view, Index> vocabulary_views = [&vocabulary]
-    {
-        unordered_map<string_view, Index> map;
-        map.reserve(vocabulary.size());
-        for (Index i = 0; i < ssize(vocabulary); ++i)
-            map.emplace(string_view(vocabulary[i]), i);
-        return map;
-    }();
-
+    // The tokenizer already holds this map; this used to rebuild a parallel
+    // copy of it on every call. token_to_id answers from the real one, and
+    // resolves the unknown id from the vocabulary rather than assuming it.
     const Index tokens_number = ssize(corpus_tokens);
 
     vector<Index> token_indices(corpus_tokens.size());
 
     #pragma omp parallel for
     for (Index i = 0; i < tokens_number; ++i)
-    {
-        const auto iterator = vocabulary_views.find(corpus_tokens[size_t(i)]);
-        token_indices[size_t(i)] =
-            iterator != vocabulary_views.end() ? iterator->second : UNK_INDEX;
-    }
+        token_indices[size_t(i)] = tokenizer->token_to_id(corpus_tokens[size_t(i)]);
 
     return token_indices;
 }

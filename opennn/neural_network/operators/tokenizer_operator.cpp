@@ -58,6 +58,17 @@ void TokenizerOperator::set_vocabulary(const vector<string>& new_vocabulary)
 {
     vocabulary = new_vocabulary;
     rebuild_map();
+
+    // unk_id is resolved from the reserved tokens at construction, which is
+    // correct as long as the vocabulary installed here puts [UNK] at the same
+    // index -- true for every vocabulary the datasets build, since
+    // make_vocabulary emits the reserved tokens first. Re-resolving keeps the
+    // two consistent for a vocabulary that does not, rather than leaving
+    // token_to_id answering with a stale index.
+    const auto unknown = ranges::find(vocabulary, "[UNK]");
+
+    if (unknown != vocabulary.end())
+        unk_id = Index(distance(vocabulary.begin(), unknown));
 }
 
 vector<string> make_vocabulary(const unordered_map<string_view, size_t>& token_count,

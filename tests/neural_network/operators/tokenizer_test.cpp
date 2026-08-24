@@ -320,3 +320,37 @@ TEST(Qwen3Tokenizer, KeepsDigitsAsSeparatePretokens)
     error_code error;
     filesystem::remove_all(directory, error);
 }
+
+
+// unk_id comes from the reserved tokens at construction. That matches the
+// vocabulary whenever make_vocabulary built it, since reserved tokens go first
+// -- so the interesting case is a vocabulary that puts [UNK] somewhere else,
+// where the constructor's answer is stale and set_vocabulary has to re-resolve.
+TEST(TokenizerOperator, SetVocabularyReResolvesTheUnknownId)
+{
+    WordLevelTokenizer tokenizer;
+
+    // Constructed with [PAD], [UNK], [START], [END], so unk_id starts at 1.
+    ASSERT_EQ(tokenizer.get_unk_id(), 1);
+
+    // This vocabulary puts [UNK] at 2 instead.
+    tokenizer.set_vocabulary({"alpha", "beta", "[UNK]", "gamma"});
+
+    EXPECT_EQ(tokenizer.get_unk_id(), 2) << "unk_id is stale from construction";
+    EXPECT_EQ(tokenizer.token_to_id("delta"), 2) << "an unknown token maps to [UNK]";
+
+    // And it must not answer with the token that happens to sit at the old id.
+    EXPECT_NE(tokenizer.token_to_id("delta"), 1);
+}
+
+
+TEST(TokenizerOperator, AVocabularyWithoutUnkKeepsWhateverUnknownIdItHad)
+{
+    WordLevelTokenizer tokenizer;
+
+    // Nothing to resolve: the id is left alone rather than guessed at.
+    tokenizer.set_vocabulary({"alpha", "beta"});
+
+    EXPECT_EQ(tokenizer.token_to_id("alpha"), 0);
+    EXPECT_EQ(tokenizer.token_to_id("beta"), 1);
+}
