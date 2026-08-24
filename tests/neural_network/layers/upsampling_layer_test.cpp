@@ -178,6 +178,7 @@ TEST_F(UpsamplingLayerTest, UpsamplingBackwardGradientMatchesNumerical)
     neural_network.add_layer(make_unique<opennn::Dense>(neural_network.get_output_shape(), Shape{ targets_number }, "Identity"));
 
     neural_network.compile();
+    neural_network.set_parameters_random();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);

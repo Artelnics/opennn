@@ -181,6 +181,7 @@ TEST(RecurrentLayerTest, BackwardGradientMatchesNumerical)
     neural_network.add_layer(make_unique<opennn::Dense>(Shape{outputs_number}, Shape{targets_number}, "Identity"));
 
     neural_network.compile();
+    neural_network.set_parameters_random();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);

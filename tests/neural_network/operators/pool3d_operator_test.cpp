@@ -149,6 +149,7 @@ TEST(Pool3dOperatoreratorTest, BackPropagateMaxGradient)
     const Shape pool_output_shape = neural_network.get_layer(0)->get_output_shape();
     neural_network.add_layer(make_unique<opennn::Dense>(pool_output_shape, dataset.get_target_shape()));
     neural_network.compile();
+    neural_network.set_parameters_random();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
@@ -178,6 +179,7 @@ TEST(Pool3dOperatoreratorTest, BackPropagateAverageGradient)
     const Shape pool_output_shape = neural_network.get_layer(0)->get_output_shape();
     neural_network.add_layer(make_unique<opennn::Dense>(pool_output_shape, dataset.get_target_shape()));
     neural_network.compile();
+    neural_network.set_parameters_random();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);

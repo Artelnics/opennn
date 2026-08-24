@@ -218,6 +218,7 @@ TEST(ActivationsTest, BackwardGradientMatchesNumerical)
                              { dense_index });
 
     neural_network.compile();
+    neural_network.set_parameters_random();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);

@@ -220,6 +220,7 @@ TEST_F(UpsamplingOperatorTest, BackPropagateDeltaAccumulation)
     const Shape dense_input_shape = neural_network.get_layer(1)->get_output_shape();
     neural_network.add_layer(make_unique<opennn::Dense>(dense_input_shape, dataset.get_target_shape()));
     neural_network.compile();
+    neural_network.set_parameters_random();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);

@@ -90,9 +90,32 @@ float calculate_numerical_error(Loss& loss)
 }
 
 
+// NeuralNetwork::compile() zeroes the parameters, and only the StandardNetworks
+// builders randomise them afterwards -- a network assembled by hand from
+// add_layer() reaches here with every weight at zero unless the test says
+// otherwise. That is not a harmless starting point for a gradient check: with
+// zero weights the delta reaching every layer but the last is zero, so most of
+// the gradient is identically zero on both sides of the comparison and the
+// check passes whatever the backward pass does. Twenty tests were in that state
+// -- one had 1 live gradient component out of 432 -- so this is a hard failure
+// rather than a warning, to keep them from drifting back.
+static void require_live_parameters(NeuralNetwork& network)
+{
+    network.copy_parameters_host();
+    const VectorMap parameters = network.get_parameters_map();
+
+    if (parameters.size() == 0) return;
+
+    ASSERT_GT(parameters.array().abs().maxCoeff(), 0.0f)
+        << "every parameter of this network is zero, which makes the gradient "
+           "check vacuous: call set_parameters_random() after compile()";
+}
+
 VectorR calculate_gradient(Loss& loss)
 {
     TrainingSetup setup(loss, "calculate_gradient");
+
+    require_live_parameters(*setup.neural_network);
 
     setup.neural_network->forward_propagate(setup.batch.get_inputs(), setup.forward_propagation, true);
 

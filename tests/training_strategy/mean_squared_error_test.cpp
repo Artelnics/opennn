@@ -107,6 +107,7 @@ TEST(MeanSquaredErrorTest, BackPropagateDense2d)
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<opennn::Dense>(Shape{ inputs_number }, Shape{ dataset.get_target_shape()}));
     neural_network.compile();
+    neural_network.set_parameters_random();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
@@ -134,6 +135,7 @@ TEST(MeanSquaredErrorTest, BackPropagateRecurrent)
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Recurrent>(Shape{time_steps, inputs_number}, Shape{targets_number}));
     neural_network.compile();
+    neural_network.set_parameters_random();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
@@ -166,6 +168,7 @@ TEST(MeanSquaredErrorTest, BackPropagateConvolutional)
     const Shape dense_layer_input_dimensions = neural_network.get_layer(1)->get_output_shape();
     neural_network.add_layer(make_unique<opennn::Dense>(dense_layer_input_dimensions, dataset.get_target_shape()));
     neural_network.compile();
+    neural_network.set_parameters_random();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
@@ -201,6 +204,7 @@ TEST(MeanSquaredErrorTest, BackPropagatePooling)
     const Shape flatten_output_dimensions = neural_network.get_layer(2)->get_output_shape();
     neural_network.add_layer(make_unique<opennn::Dense>(flatten_output_dimensions, dataset.get_target_shape()));
     neural_network.compile();
+    neural_network.set_parameters_random();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
@@ -235,6 +239,7 @@ TEST(MeanSquaredErrorTest, BackPropagateEmbedding)
     neural_network.add_layer(make_unique<Flatten>(Shape{ flatten_layer_input_dimensions }));
     neural_network.add_layer(make_unique<opennn::Dense>(Shape{ flattened_size }, Shape{ targets_number }));
     neural_network.compile();
+    neural_network.set_parameters_random();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
@@ -271,6 +276,7 @@ TEST(MeanSquaredErrorTest, BackPropagateMultiheadAttention)
     neural_network.add_layer(make_unique<MultiHeadAttention>(dataset.get_input_shape(), heads_number));
     neural_network.add_layer(make_unique<Flatten>(neural_network.get_output_shape()));
     neural_network.compile();
+    neural_network.set_parameters_random();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);

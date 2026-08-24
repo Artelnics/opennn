@@ -272,6 +272,7 @@ TEST_F(ConcatenationLayerTest, ConcatBackwardGradientMatchesNumerical)
                                                         Shape{ targets_number }, "Identity"));
 
     neural_network.compile();
+    neural_network.set_parameters_random();
 
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
