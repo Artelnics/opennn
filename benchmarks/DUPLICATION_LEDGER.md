@@ -8,7 +8,7 @@ this says why.
 Everything below was read out of the tree, not estimated. Line references are as
 of the commit that adds this file.
 
-Status: **dense done**, transformer / CNN / recurrent pending.
+Status: **dense and transformer done**, CNN / recurrent pending.
 
 ---
 
@@ -158,10 +158,127 @@ Both are re-baseline material (plan step 6), not silent fixes.
 
 ## Transformer
 
-Pending. 15 definitions across `throughput/attention-speed`,
-`capacity/transformer-max-batch`, `energy/transformer-energy`.
-Known before starting: the three sites use three different datasets — a
-synthetic LCG corpus, WMT14, and `chat_pairs`.
+15 definitions: 4 sites x 3 frameworks, plus 3 OpenNN-only variants. Target 3.
+
+| # | Site | OpenNN | PyTorch | TensorFlow |
+|---|---|---|---|---|
+| 1 | `throughput/attention-speed` (train) | `opennn_transformer_train.cpp` | `pytorch_transformer_train.py` | `tensorflow_transformer_train.py` |
+| 2 | `throughput/attention-speed` (infer) | `opennn_transformer_infer.cpp` | `pytorch_transformer_infer.py` | `tensorflow_transformer_infer.py` |
+| 3 | `capacity/transformer-max-batch` | `opennn_transformer_maxbatch_trial.cpp` | `pytorch_transformer_maxbatch.py` | `tensorflow_transformer_maxbatch.py` |
+| 4 | `energy/transformer-energy` | `opennn_transformer_energy.cpp` | `pytorch_transformer_energy.py` | `tensorflow_transformer_energy.py` |
+
+OpenNN-only, not duplicates — see "genuinely distinct" below:
+`opennn_transformer_resident.cpp`, `opennn_qwen3_resident.cpp`,
+`opennn_attention_validate.cpp`.
+
+### What silently diverges
+
+**1. The training benchmark is a different model from the other three sites.**
+Not a different seed or a different loss — a different network.
+
+| | d_model | heads | ff | layers | source |
+|---|---|---|---|---|---|
+| site 1 (train) | **256** | 8 | **1024** | **2** | `run_transformer_train.py:122-125` |
+| site 2 (infer) | 512 | 8 | 2048 | 6 | `pytorch_transformer_infer.py:22-25`, `opennn_transformer_infer.cpp:33-36` |
+| site 3 (capacity) | 512 | 8 | 2048 | 6 | `run_transformer_maxbatch.py:39` |
+| site 4 (energy) | 512 | 8 | 2048 | 6 | `run_transformer_energy.py:49` |
+
+Each encoder/decoder layer is about four times the parameters at d=512/ff=2048
+than at d=256/ff=1024, and there are three times as many of them — so the
+training benchmark exercises roughly an order of magnitude less model than the
+inference, capacity and energy ones. All three engines agree with each other at
+each site, so every individual number is internally fair. What is not true is
+the sentence "the transformer benchmark": there are two transformers, and which
+one a reader gets depends on which metric they are looking at.
+
+**2. Three sites, three datasets** — as the plan says, now confirmed at the
+file level: site 1-2 a synthetic LCG corpus (`make_synthetic_corpus.py`), site 3
+WMT14 (`prepare_wmt14.py`), site 4 chat pairs (`prepare_chat.py`). Vocabulary
+and sequence length follow the corpus, so they differ too: site 1 defaults to
+vocab 256 / seq 256, site 2 to vocab 10,000 / seq 64.
+
+**3. The seed split is inverted from the dense family.** There, one site used 0
+and five used 42. Here three sites use 0 and the odd one out uses 42:
+
+| | seed |
+|---|---|
+| sites 1-3 | `0`, hardcoded in all three engines |
+| site 4 (energy) | `42` — `--seed` default in PyTorch/TF, `argv[10]` default in `opennn_transformer_energy.cpp:41` |
+
+So there is no suite-wide convention to appeal to: dense and transformer
+disagree about which value is the default, and both disagree internally.
+
+**4. Training fuses the loss in two engines and not in the third.**
+
+| | output projection | loss |
+|---|---|---|
+| OpenNN | `Dense(..., "Softmax")` (`standard_networks.cpp:1465-1466`) | `CrossEntropyError3d` |
+| PyTorch | `nn.Linear(d_model, vocab)` — logits | `nn.CrossEntropyLoss()` |
+| TensorFlow | `Dense(vocab)` — logits | `SparseCategoricalCrossentropy(from_logits=True)` |
+
+The mathematics agree. The execution does not: OpenNN materialises a
+`[batch, seq, vocab]` probability tensor in the forward and
+`error_functions.cpp:414` then reads `log(p + EPSILON)` at the target index,
+while PyTorch and TensorFlow hand logits to a fused loss that computes
+log-softmax without ever writing the probability tensor.
+
+The extra cost is memory traffic over the largest tensor in the model, and it
+falls on OpenNN — this is the library handicapping itself in its own benchmark,
+not the other way round. It is also the numerically weaker formulation:
+`log(softmax(x))` guarded by an epsilon rather than `log_softmax(x)`.
+
+Worth measuring before site 1 is merged: at WMT14 vocabulary this tensor is
+large enough that the fusion difference may be a visible share of the step.
+
+**5. Only site 4 pins `padding_idx`.** `pytorch_transformer_energy.py:87-88`
+builds its embeddings with `padding_idx=0`; sites 1 and 3 do not
+(`pytorch_transformer_train.py:82-83`, `pytorch_transformer_maxbatch.py:74-75`).
+With it, token 0's embedding is held at zero and excluded from the gradient;
+without it, it trains like any other token. On a padded corpus that changes both
+the arithmetic and the number of live parameters.
+
+**6. Initialisation agrees in the body and not at the edges** — the opposite of
+the dense family, and worth stating because the dense finding does not carry
+over. All three PyTorch sites build the body with `nn.Transformer`, whose
+`_reset_parameters()` applies `xavier_uniform_` to every parameter of dim > 1,
+so the encoder/decoder stack matches OpenNN's Glorot (`finalize_build` ->
+`set_parameters_glorot`). The embeddings and the output projection do not:
+`nn.Embedding` defaults to `N(0, 1)` and the output `nn.Linear` to Kaiming
+uniform, against Glorot on the OpenNN side.
+
+### What is verified equal
+
+Checked because it is the obvious place to expect the divergence found at
+training, and it is not there: **inference applies softmax in all three
+engines** — `pytorch_transformer_infer.py:65` calls `torch.softmax` explicitly,
+`tensorflow_transformer_infer.py:85` uses `Dense(vocab, activation="softmax")`,
+and OpenNN's `Transformer` ends in a Softmax `Dense`. Site 2 is like-for-like on
+this axis.
+
+### What is genuinely distinct
+
+- **`opennn_transformer_resident.cpp`** — the GPU-resident inference path, where
+  tokens and parameters both stay on the device. It is the counterpart to
+  PyTorch's inference loop rather than a second copy of site 2.
+- **`opennn_qwen3_resident.cpp`** — the same resident path for a decoder-only
+  model, deliberately mirroring the file above so the two are comparable.
+- **`opennn_attention_validate.cpp`** — a correctness check, not a benchmark. Its
+  header records why it exists: the library's MHA unit tests only cover
+  construction, so nothing else exercises the forward/backward on GPU.
+
+### What the three survivors must pin
+
+Which of the two transformers is *the* transformer — d=256/ff=1024/2 layers or
+d=512/ff=2048/6 layers — and then the same list as dense: seed; the loss
+formulation and whether the softmax is in the forward or fused into the loss;
+embedding and output-projection initialisers; `padding_idx`; and the dataset.
+
+The dataset question is the one that cannot be deferred. Section 4 of the plan
+already decides it — settle on WMT14, retire `chat_pairs` — but that leaves the
+synthetic corpus carrying sites 1 and 2, which are the throughput numbers most
+often quoted. Moving those to WMT14 changes vocabulary from 256 or 10,000 to
+WMT14 scale, which changes the output projection, which is exactly where finding
+4 says the engines already differ. These two decisions have to be made together.
 
 ## CNN (ResNet-50)
 
