@@ -515,15 +515,10 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
 
     vector<Descriptives> descriptives_results(column_indices_size);
 
-    VectorR minimums = VectorR::Zero(column_indices_size);
-    VectorR maximums = VectorR::Zero(column_indices_size);
-
-    VectorXd sums = VectorXd::Zero(column_indices_size);
-    VectorXd squared_sums = VectorXd::Zero(column_indices_size);
-
-    VectorI count = VectorI::Zero(column_indices_size);
-
-#pragma omp parallel for
+    // One pass, one loop, no scratch: each column is independent, so its four
+    // statistics can be written straight into the result. This used to run two
+    // OMP loops over five parallel vectors to carry the moments between them.
+    #pragma omp parallel for
     for (Index j = 0; j < column_indices_size; ++j)
     {
         const Index column_index = column_indices[j];
@@ -531,30 +526,24 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
         const auto moments = masked_moments<double, double>(row_indices_size,
             [&](Index i) { return matrix(row_indices[i], column_index); });
 
-        minimums(j) = (moments.count == 0) ? 0 : moments.minimum;
-        maximums(j) = (moments.count == 0) ? 0 : moments.maximum;
-        sums(j) = moments.sum;
-        squared_sums(j) = moments.squared_sum;
-        count(j) = moments.count;
-    }
+        const double count = double(moments.count);
 
-    const VectorXd mean = sums.array() / count.cast<double>().array();
-    VectorXd standard_deviation = VectorXd::Zero(column_indices_size);
+        const double mean = moments.count > 0 ? moments.sum / count : 0.0;
 
-    #pragma omp parallel for
-    for (Index i = 0; i < column_indices_size; ++i)
-    {
-        if (count(i) > 1)
+        double standard_deviation = 0.0;
+
+        if (moments.count > 1)
         {
-            const double sample_count = static_cast<double>(count(i));
-            const double variance = (squared_sums(i) - (sums(i) * sums(i) / sample_count)) / (sample_count - 1.0);
-            standard_deviation(i) = sqrt(max(0.0, variance));
+            const double variance =
+                (moments.squared_sum - moments.sum * moments.sum / count) / (count - 1.0);
+
+            standard_deviation = sqrt(max(0.0, variance));
         }
 
-        descriptives_results[i].set(minimums(i),
-                                    maximums(i),
-                                    static_cast<float>(mean(i)),
-                                    static_cast<float>(standard_deviation(i)));
+        descriptives_results[j].set(moments.count == 0 ? 0.0f : float(moments.minimum),
+                                    moments.count == 0 ? 0.0f : float(moments.maximum),
+                                    float(mean),
+                                    float(standard_deviation));
     }
 
     return descriptives_results;
