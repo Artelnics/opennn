@@ -319,21 +319,6 @@ float yolo_error_kernel(const TensorView& output,
 namespace
 {
 
-Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
-                                      const TensorView& target,
-                                      const DetectionHeadMetadata& head,
-                                      YoloLambdas lam)
-{
-    const Index batch_size = output.get_shape()[0];
-    const bool sigmoid_classes = head.uses_sigmoid_classes();
-
-    return {.error = yolo_error_kernel(output, target,
-                                       head.boxes_per_cell,
-                                       head.classes_number,
-                                       sigmoid_classes,
-                                       lam) / float(batch_size)};
-}
-
 }
 
 // MSVC 19.50 still crashes its optimizer (C1001) generating code for this
@@ -445,22 +430,6 @@ void yolo_gradient_kernel(const TensorView& output,
 namespace
 {
 
-void yolo_gradient_cpu(const TensorView& output,
-                       const TensorView& target,
-                       const TensorView& output_delta,
-                       const DetectionHeadMetadata& head,
-                       YoloLambdas lam)
-{
-    const float inv_batch = 1.0f / float(output.get_shape()[0]);
-    const bool sigmoid_classes = head.uses_sigmoid_classes();
-    yolo_gradient_kernel(output, target, output_delta,
-                         head.boxes_per_cell,
-                         head.classes_number,
-                         sigmoid_classes,
-                         inv_batch,
-                         lam);
-}
-
 vector<float> assemble_head_target(const float* tgt,
                                    Index batch_size,
                                    Index per_sample_floats,
@@ -514,11 +483,22 @@ void for_each_yolo_head(const ForwardPropagation& forward_propagation,
         {
             const TensorView head_output = forward_propagation.slots[size_t(detection_idx)].back();
 
+            const Shape target_shape({batch_size, head_shape[0], head_shape[1], channels});
+
+            // One head owns the whole per-sample block, so the assembly would
+            // be a copy of tgt onto itself. Point at it instead; that is what
+            // the separate single-head entry points existed to avoid.
+            if (head_floats == per_sample_floats)
+            {
+                const TensorView whole(const_cast<float*>(tgt), target_shape, Type::FP32);
+
+                fn(detection_idx, head_output, whole);
+                return;
+            }
+
             vector<float> head_target = assemble_head_target(tgt, batch_size, per_sample_floats,
                                                              head_offset, head_floats);
-            const TensorView head_target_view(head_target.data(),
-                                              Shape({batch_size, head_shape[0], head_shape[1], channels}),
-                                              Type::FP32);
+            const TensorView head_target_view(head_target.data(), target_shape, Type::FP32);
 
             fn(detection_idx, head_output, head_target_view);
         });
@@ -1436,20 +1416,14 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
         return {};
     }
 #endif
-    const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
-
+    // One head or several: for_each_yolo_head walks the list either way, and
+    // no longer copies the target when a single head owns all of it.
     if (!is_gradient)
-        return detection_indices.size() > 1
-            ? yolo_error_cpu_multi(forward_propagation, target, neural_network,
-                                   detection_indices, head, lam)
-            : yolo_error_cpu(input, target, head, lam);
+        return yolo_error_cpu_multi(forward_propagation, target, neural_network,
+                                    detection_indices, head, lam);
 
-    if (detection_indices.size() > 1)
-        yolo_gradient_cpu_multi(forward_propagation, target, *back_propagation,
-                                neural_network, detection_indices, head, lam);
-    else
-        yolo_gradient_cpu(input, target, back_propagation->get_output_delta(),
-                          head, lam);
+    yolo_gradient_cpu_multi(forward_propagation, target, *back_propagation,
+                            neural_network, detection_indices, head, lam);
     return {};
 }
 
