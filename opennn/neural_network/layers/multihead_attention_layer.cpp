@@ -180,6 +180,7 @@ bool MultiHeadAttention::should_use_sdpa() const
 {
     if (!sdpa_auto) return false;
     if (!AttentionOperator::sdpa_supported(compute_dtype, compute_device)) return false;
+    if (attention.head_dimension % 8 != 0) return false;
 
     if (attention.zero_padded_queries) return false;
 
