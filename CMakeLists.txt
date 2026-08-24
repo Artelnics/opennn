@@ -182,7 +182,7 @@ endif()
 
 option(OpenNN_BUILD_BENCHMARKS "Build OpenNN benchmark targets" OFF)
 if(OpenNN_BUILD_BENCHMARKS)
-    add_subdirectory(docs/benchmarks)
+    add_subdirectory(benchmarks)
 endif()
 
 option(OpenNN_CHECK_HEADERS "Add a ctest that compiles each opennn header in isolation" OFF)

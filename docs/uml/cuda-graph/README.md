@@ -67,7 +67,7 @@ cmake --build build-refactor-cuda \
 OPENNN_CUDA_GRAPH_DOT="$PWD/docs/uml/cuda-graph/opennn-transformer-training.cuda.dot" \
 OPENNN_BF16=1 OPENNN_SDPA_MIN=1 \
 build-refactor-cuda/bin/opennn_transformer_train \
-  docs/benchmarks/attention-speed/corpus.txt 32 4 64 1 128 0
+  benchmarks/attention-speed/corpus.txt 32 4 64 1 128 0
 ```
 
 `epochs=0` ejecuta la epoca de indice cero; OpenNN recorre los ocho batches y

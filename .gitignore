@@ -133,30 +133,30 @@ build-wrapper-dump.json
 /tests/data/*.xml
 
 # Benchmark binaries and generated outputs
-/docs/benchmarks/inference-speed/opennn_inference
-/docs/benchmarks/inference-speed/opennn_inference_mkl
-/docs/benchmarks/inference-speed/opennn_inference_mkl_auto
-/docs/benchmarks/inference-speed/rosenbrock_infer.csv
-/docs/benchmarks/accuracy/opennn_accuracy
-/docs/benchmarks/export/opennn_export
-/docs/benchmarks/export/model.c
-/docs/benchmarks/export/model.py
-/docs/benchmarks/export/sum.csv
-/docs/benchmarks/memory/opennn_memory
-/docs/benchmarks/memory/opennn_memory_cpu
-/docs/benchmarks/memory/sum.csv
-/docs/benchmarks/startup/opennn_startup
-/docs/benchmarks/startup/opennn_startup_cpu
-/docs/benchmarks/training-speed/opennn_speed
-/docs/benchmarks/**/*.onnx
-/docs/benchmarks/**/*.onnx.data
-/docs/benchmarks/**/*.csv
-/docs/benchmarks/**/pred_*.txt
-/docs/benchmarks/results/*
-!/docs/benchmarks/results/README.md
+/benchmarks/inference-speed/opennn_inference
+/benchmarks/inference-speed/opennn_inference_mkl
+/benchmarks/inference-speed/opennn_inference_mkl_auto
+/benchmarks/inference-speed/rosenbrock_infer.csv
+/benchmarks/accuracy/opennn_accuracy
+/benchmarks/export/opennn_export
+/benchmarks/export/model.c
+/benchmarks/export/model.py
+/benchmarks/export/sum.csv
+/benchmarks/memory/opennn_memory
+/benchmarks/memory/opennn_memory_cpu
+/benchmarks/memory/sum.csv
+/benchmarks/startup/opennn_startup
+/benchmarks/startup/opennn_startup_cpu
+/benchmarks/training-speed/opennn_speed
+/benchmarks/**/*.onnx
+/benchmarks/**/*.onnx.data
+/benchmarks/**/*.csv
+/benchmarks/**/pred_*.txt
+/benchmarks/results/*
+!/benchmarks/results/README.md
 
 # Session-generated benchmark reports
-/docs/benchmarks/*.md
-!/docs/benchmarks/PRESENTATION_CLAIMS.md
-!/docs/benchmarks/README.md
-!/docs/benchmarks/DATA_POLICY.md
+/benchmarks/*.md
+!/benchmarks/PRESENTATION_CLAIMS.md
+!/benchmarks/README.md
+!/benchmarks/DATA_POLICY.md

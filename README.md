@@ -39,7 +39,7 @@ OpenNN is a high-performance C++ library for neural networks, deep learning, and
 - `examples/` - example applications and bundled small example datasets
 - `tests/` - GoogleTest-based unit and validation tests, in folders mirroring
   the library so each test sits beside what it exercises
-- `docs/benchmarks/` - reproducible benchmark suite and benchmark methodology
+- `benchmarks/` - reproducible benchmark suite and benchmark methodology
 
 The library itself is split by responsibility, and every include spells out the
 folder it comes from — `#include "opennn/neural_network/layers/dense_layer.h"`:
@@ -108,7 +108,7 @@ When using a multi-config generator such as Visual Studio, the test binary may b
 | `OpenNN_DISABLE_CUDA` | `OFF` | Force a CPU-only build even when CUDA is available. |
 | `OpenNN_BUILD_TESTS` | `ON` | Build the GoogleTest test suite. |
 | `OpenNN_BUILD_EXAMPLES` | `ON` | Build example applications. |
-| `OpenNN_BUILD_BENCHMARKS` | `OFF` | Build benchmark drivers from `docs/benchmarks/`. |
+| `OpenNN_BUILD_BENCHMARKS` | `OFF` | Build benchmark drivers from `benchmarks/`. |
 | `OpenNN_BUILD_VISION` | `ON` | Build vision, sequence, transformer, and detection components. |
 | `OpenNN_BUILD_SHARED` | `OFF` | Build OpenNN as a shared library instead of a static library. |
 | `OpenNN_ENABLE_MKL` | `OFF` | Use Intel MKL as Eigen's BLAS/LAPACK backend. |
@@ -141,10 +141,10 @@ microcontroller-oriented AVR and ARM Cortex-M flows.
 
 ## Benchmarks
 
-Reproducible benchmark recipes live in `docs/benchmarks/`. They compare OpenNN with
+Reproducible benchmark recipes live in `benchmarks/`. They compare OpenNN with
 PyTorch and TensorFlow across quality, throughput, capacity, energy, and footprint
 metrics. Large benchmark datasets and generated result artifacts are kept outside
-the repository; see `docs/benchmarks/DATA_POLICY.md`.
+the repository; see `benchmarks/DATA_POLICY.md`.
 
 ## Documentation
 
@@ -152,7 +152,7 @@ Full documentation and tutorials are available on the official website:
 
 - http://opennn.net
 
-Repository-local benchmark documentation is available in `docs/benchmarks/`.
+Repository-local benchmark documentation is available in `benchmarks/`.
 
 ## Contributing
 

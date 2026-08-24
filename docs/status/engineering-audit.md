@@ -683,7 +683,7 @@ compare a number against one from an earlier run.
 
 ## Earlier audit — 2026-08-06
 
-Scope: `opennn/` (219 files, ~54.5k effective lines), `tests/`, `docs/benchmarks/`.
+Scope: `opennn/` (219 files, ~54.5k effective lines), `tests/`, `benchmarks/`.
 Method: five parallel audit passes (duplication, dead code, structure, consistency,
 tests/benchmarks), every finding verified with repo-wide reference checks. The goal was
 incremental simplification, no grand redesign. Kept here because it records outcomes the
@@ -754,7 +754,7 @@ Still open from Level 2, and independently re-found by the 2026-08-22 pass: shar
 `qwen3_network_test.cpp` and `int8_inference_test.cpp`, and shared vision fixtures for the
 YOLO test files.
 
-Also still open: `docs/benchmarks/tools/benchlib/` with `gpu.py` (`nvidia_used_mib`,
+Also still open: `benchmarks/tools/benchlib/` with `gpu.py` (`nvidia_used_mib`,
 `PeakMonitor`, `cooldown`, `measure_idle`, idle-delta trial wrapper) and `provenance.py`
 (`git_commit`, `sha256`, `file_info`, `framework_versions`) — about 350 of 923 duplicated
 Python lines. The monitors define published numbers, so port one runner at a time and
@@ -1146,7 +1146,7 @@ Phase 5 (anchor-free v8) was correctly predicted to dwarf the rest in effort, an
 | operators-b-10 | low | duplication | `opennn/neural_network/operators/tokenizer_operator.cpp:173-216` | encode_sequence overloads and WordLevel tokenize/encode duplicate the same bodies | -12 | S/low | confirmed |
 | response-opt-19 | low | boilerplate | `opennn/response_optimization/response_optimization.h:57-82` | Small boilerplate: virtual Domain dtor, UnivariateConstraint ctor, append_rows vs stack_rows, std::function find | -12 | S/low | partial |
 | training-loss-12 | low | dead code | `opennn/training_strategy/error_functions.cpp:490-508` | cross_entropy_3d_gradient_device_count CPU fallback is unreachable | -12 | S/medium | confirmed |
-| xcut-api-7 | low | dead code | `opennn/training_strategy/optimizer.h:73-80` | Eleven accessors with zero callers in opennn/, tests/, examples/ and docs/benchmarks/ | -12 | S/medium | confirmed |
+| xcut-api-7 | low | dead code | `opennn/training_strategy/optimizer.h:73-80` | Eleven accessors with zero callers in opennn/, tests/, examples/ and benchmarks/ | -12 | S/medium | confirmed |
 | core-utils-15 | low | duplication | `opennn/core/string_utilities.cpp:428-453` | env_flag_enabled(name) duplicates env_flag_enabled(name, false) | -11 | S/low | confirmed |
 | response-opt-14 | low | boilerplate | `opennn/response_optimization/network_differential.cpp:39-57` | Scaling/Unscaling snapshot branch duplicated although Unscaling derives from Scaling | -11 | S/low | confirmed |
 | core-device-8 | low | duplication | `opennn/core/cuda/cudnn_frontend_utilities.h:512-622` | finalize and finalize_attention duplicate the validate/load/build/workspace/store skeleton | -10 | M/medium | partial |
@@ -1475,7 +1475,7 @@ Still pending from the prior audit, with more copies than it counted. `write_bmp
 
 `main_cuda.cpp` has two `#if 0` blocks (50-115 ResNet/Imagenette, 117-218 WMT14 transformer) with absolute `/home/artelnics/Documents/datasets/...` paths and 25 includes that serve only that dead code; the live body is an empty try/catch identical to blank/main.cpp. Around it: the `OpenNN_BUILD_BLANK_CUDA` option (root CMakeLists.txt:157-159), examples/blank/CMakeLists.txt:11-26 (a nested `project(blank)` and a `blank_cuda` target that re-links CUDA::cudart/cublas and `${CUDNN_LIBRARY}` although opennn already exports them PUBLIC), and `target_include_directories(... ${CMAKE_CURRENT_SOURCE_DIR}/../opennn)` (lines 6-8, 13-15) which puts `opennn/` itself on the include path, contradicting…
 
-**Fix:** Delete main_cuda.cpp, the blank_cuda target and the OpenNN_BUILD_BLANK_CUDA option; replace examples/blank/CMakeLists.txt with `opennn_example(blank)` in examples/CMakeLists.txt (drop the `../opennn` include dir). If a GPU scratch target is wanted, keep it untracked (.gitignore) or move the two experiments to docs/benchmarks where such drivers live.
+**Fix:** Delete main_cuda.cpp, the blank_cuda target and the OpenNN_BUILD_BLANK_CUDA option; replace examples/blank/CMakeLists.txt with `opennn_example(blank)` in examples/CMakeLists.txt (drop the `../opennn` include dir). If a GPU scratch target is wanted, keep it untracked (.gitignore) or move the two experiments to benchmarks where such drivers live.
 
 *Verifier:* examples/blank/main_cuda.cpp is 231 lines: `#if 0` at 50-115 and 117-218 with /home/artelnics/... paths at 58, 125, 128, 172; 25 includes at 9-40. examples/blank/CMakeLists.txt: nested project(blank) line 3, `../opennn` include dir on both targets (lines 6-8, 13-15) violating AGENTS.md 'only the repo root is on the include path', blank_cuda re-links CUDA::cudart/cublas and ${CUDNN_LIBRARY}. Root…
 
@@ -1927,7 +1927,7 @@ Both setters store the value unchecked. should_display (optimizer.h:203) compute
 
 **Fix:** throw_if(new_display_period <= 0, "Optimizer::set_display_period: period must be positive.") and the same in set_validation_period (move both bodies to optimizer.cpp or keep inline, +2 lines each). read_common_json already routes through the setter so JSON input is covered.
 
-*Verifier:* optimizer.h:52 and :74 store unchecked; should_display at optimizer.h:203 does `epoch % display_period`; optimizer.cpp:956 does `epoch % validation_period`; read_common_json (optimizer.cpp:1278-1279) routes JSON DisplayPeriod through set_display_period. No caller passes 0 today (grep examples/, docs/benchmarks/, tests/), but nothing prevents it. Fix respects the throw_if convention used elsewhere…
+*Verifier:* optimizer.h:52 and :74 store unchecked; should_display at optimizer.h:203 does `epoch % display_period`; optimizer.cpp:956 does `epoch % validation_period`; read_common_json (optimizer.cpp:1278-1279) routes JSON DisplayPeriod through set_display_period. No caller passes 0 today (grep examples/, benchmarks/, tests/), but nothing prevents it. Fix respects the throw_if convention used elsewhere…
 
 #### r2-set-vs-compile-device-ordering-5 — DReLU wiring is reset one-sided: reconfiguring the consumer after compile drops the producer's ReLU backward
 
@@ -2031,11 +2031,11 @@ The following definitions are single expressions or two-line delegations and bel
 
 `opennn/response_optimization/response_optimization.h:240-242` · medium · dead code · lines -75 · effort S · risk medium · confirmed
 
-`time_roles` and `fixed_history` are private members with no setter, no JSON loader and no friend; grep over opennn/, tests/, examples/, docs/benchmarks finds no writer. Hence is_forecasting() is always false, is_history() always false, and the entire forecasting machinery is dead: combine_input (response_optimization.cpp:1070-1104, 35 lines incl. an Eigen device broadcast), the forecasting branch in calculate_outputs (1108-1116, whose error message tells the user to call a set_fixed_history() that does not exist), is_past/is_history/TimeType, and the four `!is_history(...)` filters in build_input_columns, get_variables_and_descriptives, combine_input and filter_feasible_points. Neural…
+`time_roles` and `fixed_history` are private members with no setter, no JSON loader and no friend; grep over opennn/, tests/, examples/, benchmarks finds no writer. Hence is_forecasting() is always false, is_history() always false, and the entire forecasting machinery is dead: combine_input (response_optimization.cpp:1070-1104, 35 lines incl. an Eigen device broadcast), the forecasting branch in calculate_outputs (1108-1116, whose error message tells the user to call a set_fixed_history() that does not exist), is_past/is_history/TimeType, and the four `!is_history(...)` filters in build_input_columns, get_variables_and_descriptives, combine_input and filter_feasible_points. Neural…
 
 **Fix:** Either add the missing set_fixed_history(const Tensor3&, map<string,TimeType>) and a test, or (recommended) delete combine_input, the forecasting branch of calculate_outputs, is_forecasting/is_history/is_past, TimeType, time_roles, fixed_history and the is_history filters. Verify against Neural Designer that is_forecasting/is_history/is_past are not called before deleting the public predicates.
 
-*Verifier:* time_roles and fixed_history are private (response_optimization.h:240-242) with no setter, no friend and no JSON path; grep over opennn/, tests/, examples/, docs/benchmarks for time_roles|fixed_history|set_fixed_history|is_forecasting|is_history|is_past|combine_input|TimeType finds nothing outside response_optimization.{h,cpp}. Inside the file: is_past/is_history (368-377), combine_input…
+*Verifier:* time_roles and fixed_history are private (response_optimization.h:240-242) with no setter, no friend and no JSON path; grep over opennn/, tests/, examples/, benchmarks for time_roles|fixed_history|set_fixed_history|is_forecasting|is_history|is_past|combine_input|TimeType finds nothing outside response_optimization.{h,cpp}. Inside the file: is_past/is_history (368-377), combine_input…
 
 #### xcut-build-tests-6 — Qwen3/INT8 test helpers are still duplicated verbatim between two files
 
@@ -2201,11 +2201,11 @@ get_flat_input_names() is called 14 times, get_output_feature_names() 12 times a
 
 `opennn/dataset/tabular_dataset.cpp:2287-2324` · medium · duplication · lines -30 · effort S · risk medium · confirmed
 
-Lines 2287-2324 (Numeric -> Constant if constant, -> Binary if only 0/1; Binary/Categorical with one category -> Constant) are the same rules as infer_variable_types_from_data (441-470), which derives the facts from `data` via is_constant/is_binary while read_csv derives them from the streaming NumericColumnValues accumulator (1933-1939, 2011-2046) because binary storage has no `data`. infer_variable_types_from_data is only called by set_binary_variables (472), and neither set_binary_variables nor infer_variable_types_from_data has any caller in opennn/, tests/, examples/ or docs/benchmarks/ (grep verified).
+Lines 2287-2324 (Numeric -> Constant if constant, -> Binary if only 0/1; Binary/Categorical with one category -> Constant) are the same rules as infer_variable_types_from_data (441-470), which derives the facts from `data` via is_constant/is_binary while read_csv derives them from the streaming NumericColumnValues accumulator (1933-1939, 2011-2046) because binary storage has no `data`. infer_variable_types_from_data is only called by set_binary_variables (472), and neither set_binary_variables nor infer_variable_types_from_data has any caller in opennn/, tests/, examples/ or benchmarks/ (grep verified).
 
 **Fix:** Factor the rule into one file-local `refine_variable_type(Variable&, bool constant, bool zero_one)` used by read_csv; make infer_variable_types_from_data call it with is_constant/is_binary, or delete infer_variable_types_from_data and set_binary_variables outright after verifying against Neural Designer (they are not in the prior audit's ND alive list).
 
-*Verifier:* read_csv 2287-2324 applies Numeric->Constant/Binary and single-category->Constant from NumericColumnValues (1933-1939, refine_numeric 2011-2046); infer_variable_types_from_data (441-470) applies the same rules from is_constant/is_binary on data. set_binary_variables (472) is its only caller and grep over opennn/, tests/, examples/, docs/benchmarks/ finds no caller of set_binary_variables or…
+*Verifier:* read_csv 2287-2324 applies Numeric->Constant/Binary and single-category->Constant from NumericColumnValues (1933-1939, refine_numeric 2011-2046); infer_variable_types_from_data (441-470) applies the same rules from is_constant/is_binary on data. set_binary_variables (472) is its only caller and grep over opennn/, tests/, examples/, benchmarks/ finds no caller of set_binary_variables or…
 
 #### selection-testing-8 — GrowingNeurons re-declares InputsSelection's whole configuration block (7 knobs, 8 setters, save/load)
 
@@ -2347,11 +2347,11 @@ Convolutional::set (constructor path) turns an input-derivative activation into 
 
 `opennn/core/tensor_types.h:192-199` · medium · API · lines -8 · effort S · risk medium · confirmed
 
-grep over opennn/, tests/, examples/, docs/benchmarks finds no two-argument parenthesised Shape construction (the only paren two-arg use is the iterator-pair form in tensors_test.cpp:241). Yet the overload makes `Shape(2, 3)` mean rank-2 filled with 3 ([3, 3]) while `Shape{2, 3}` means [2, 3]; with Index-typed arguments both compile silently. Every real construction in the repo uses braces or push_back/append, so the constructor only exists to be misread.
+grep over opennn/, tests/, examples/, benchmarks finds no two-argument parenthesised Shape construction (the only paren two-arg use is the iterator-pair form in tensors_test.cpp:241). Yet the overload makes `Shape(2, 3)` mean rank-2 filled with 3 ([3, 3]) while `Shape{2, 3}` means [2, 3]; with Index-typed arguments both compile silently. Every real construction in the repo uses braces or push_back/append, so the constructor only exists to be misread.
 
 **Fix:** Delete the (rank, value) constructor. Verify against Neural Designer first; if ND needs a filled shape, replace it with a named factory `static Shape filled(size_t rank, Index value)` so the intent is spelled out at the call site.
 
-*Verifier:* tensor_types.h:192-199 matches the quote. grep for two-argument parenthesised Shape(...) over opennn/, tests/, examples/, docs/benchmarks finds only the iterator-pair template at tensor_types.h:212 and its test use at tensors_test.cpp:241 (`Shape(dimensions.begin(), dimensions.end())`). The (rank, value) overload has zero callers; the vector(n,v)-style trap is real. Deleting it is -8 lines; ND…
+*Verifier:* tensor_types.h:192-199 matches the quote. grep for two-argument parenthesised Shape(...) over opennn/, tests/, examples/, benchmarks finds only the iterator-pair template at tensor_types.h:212 and its test use at tensors_test.cpp:241 (`Shape(dimensions.begin(), dimensions.end())`). The (rank, value) overload has zero callers; the vector(n,v)-style trap is real. Deleting it is -8 lines; ND…
 
 #### selection-testing-7 — GeneticAlgorithm keeps a full parameter vector for every individual of every generation; only the best is ever read
 
@@ -2529,9 +2529,9 @@ The resident fast path takes bool upload_parameters = true. With the default, ev
 
 The file's own header says it is a measurement driver, not a regression test, to be run with OPENNN_MEMORY_DEBUG=1 and a gtest filter. But none of its seven TEST()s is DISABLED_, so every `opennn_tests` run (CI included) builds a 4-layer seq=256/batch=32 Transformer plus a T=200/hidden=256 LSTM, allocates their joint forward/backward arenas (CPU and, in the CUDA build, three more on the GPU) and dumps `memory_debug::print` to stdout, with zero EXPECT/ASSERT. It adds runtime, output noise, and GPU memory pressure to the suite while never being able to fail.
 
-**Fix:** Prefix the seven tests with `DISABLED_` (they stay runnable via `--gtest_also_run_disabled_tests --gtest_filter=MemoryAudit.*`), or move the driver to docs/benchmarks/footprint where opennn_memory already lives. Alternatively turn them into real tests by asserting the arena byte sizes against recorded values.
+**Fix:** Prefix the seven tests with `DISABLED_` (they stay runnable via `--gtest_also_run_disabled_tests --gtest_filter=MemoryAudit.*`), or move the driver to benchmarks/footprint where opennn_memory already lives. Alternatively turn them into real tests by asserting the arena byte sizes against recorded values.
 
-*Verifier:* memory_audit_test.cpp header lines 4-9 say 'TEMPORARY DRIVER ... Run with OPENNN_MEMORY_DEBUG=1 and --gtest_filter=MemoryAudit.*'; seven TEST(MemoryAudit, ...) at 105/111/117/125/131/137/143, none DISABLED_; grep finds zero EXPECT/ASSERT; memory_debug::print(cout) at 53. DISABLED_ prefix or moving to docs/benchmarks/footprint is right.
+*Verifier:* memory_audit_test.cpp header lines 4-9 say 'TEMPORARY DRIVER ... Run with OPENNN_MEMORY_DEBUG=1 and --gtest_filter=MemoryAudit.*'; seven TEST(MemoryAudit, ...) at 105/111/117/125/131/137/143, none DISABLED_; grep finds zero EXPECT/ASSERT; memory_debug::print(cout) at 53. DISABLED_ prefix or moving to benchmarks/footprint is right.
 
 #### r2-arena-planner-and-propagation-structs-3 — calculate_outputs tail tile builds a second ForwardPropagation with its own arena instead of sharing the tile's
 
@@ -3271,7 +3271,7 @@ The helper thread shuffles via shuffle_vector, which draws from the single mutex
 
 `opennn/neural_network/layers/grouped_query_attention_layer.cpp:110-160` · low · dead code · lines -90 · effort S · risk medium · partial
 
-GroupedQueryAttentionOperator::back_propagate throws "inference-only" (line 801-804), and the header comment says the layer is the only caller of these helpers. grep across opennn/, examples/ and docs/benchmarks/ finds no caller of rotary_backward or rope_backward_gpu; the only call is tests/neural_network/layers/rope_test.cpp:99. The prior audit listed the "rope fwd/bwd sign twin" as a deferred dedup target; the new evidence is that the backward half is dead, so it should be deleted (rotary_backward_cpu 42 lines, rotary_backward 6, rope_backward_gpu 13, the forward declaration at line 48, the CUDA stub at 687, the header declaration at grouped_query_attention_layer.h:22-23, and the…
+GroupedQueryAttentionOperator::back_propagate throws "inference-only" (line 801-804), and the header comment says the layer is the only caller of these helpers. grep across opennn/, examples/ and benchmarks/ finds no caller of rotary_backward or rope_backward_gpu; the only call is tests/neural_network/layers/rope_test.cpp:99. The prior audit listed the "rope fwd/bwd sign twin" as a deferred dedup target; the new evidence is that the backward half is dead, so it should be deleted (rotary_backward_cpu 42 lines, rotary_backward 6, rope_backward_gpu 13, the forward declaration at line 48, the CUDA stub at 687, the header declaration at grouped_query_attention_layer.h:22-23, and the…
 
 **Fix:** Delete rotary_backward, rotary_backward_cpu, rope_backward_gpu (both the CUDA definition and the OPENNN_CUDA_STUB), the static forward declaration, the header declaration, and the rope_test backward case; rope_backward_cuda in core/cuda/kernel_attention.cu(h) becomes deletable in the same PR. Verify against Neural Designer first (it links this library's public API; the symbol is declared in a public header).
 
@@ -3311,11 +3311,11 @@ calculate_yolo keeps four CPU entry points: yolo_error_cpu (322-335) / yolo_grad
 
 `opennn/core/string_utilities.cpp:47-77` · low · dead code · lines -33 · effort S · risk medium · confirmed
 
-opennn::tokenize(const string&) (lowercasing, allocating a string per token) is called only from tests/core/string_utilities_test.cpp:109-126. Every library user goes through tokenize_views (text_generation_dataset.cpp:123, tokenizer_operator.cpp:290/298); the `tokenize(text)` at tokenizer_operator.cpp:164 resolves to the virtual member TokenizerOperator::tokenize. Nothing under docs/benchmarks uses it either. It is 31 lines of a second tokenizer that can drift from the first.
+opennn::tokenize(const string&) (lowercasing, allocating a string per token) is called only from tests/core/string_utilities_test.cpp:109-126. Every library user goes through tokenize_views (text_generation_dataset.cpp:123, tokenizer_operator.cpp:290/298); the `tokenize(text)` at tokenizer_operator.cpp:164 resolves to the virtual member TokenizerOperator::tokenize. Nothing under benchmarks uses it either. It is 31 lines of a second tokenizer that can drift from the first.
 
 **Fix:** Delete tokenize(const string&) from string_utilities.{h,cpp} and its test, or reduce it to a 3-line wrapper over tokenize_views + ascii_lowercase if the lowercasing form is wanted. Verify against Neural Designer first.
 
-*Verifier:* string_utilities.cpp:47-77 tokenize(const string&) (declared .h:80). Grep across opennn/, tests/, examples/, docs/benchmarks: only tests/core/string_utilities_test.cpp:109-126 call it; tokenizer_operator.cpp:164 `tokenize(text)` inside TokenizerOperator::encode resolves to the virtual member; chat_test.cpp:47 is an override. tokenize_views is the live function. Fix and LOC (-33) fine; Neural…
+*Verifier:* string_utilities.cpp:47-77 tokenize(const string&) (declared .h:80). Grep across opennn/, tests/, examples/, benchmarks: only tests/core/string_utilities_test.cpp:109-126 call it; tokenizer_operator.cpp:164 `tokenize(text)` inside TokenizerOperator::encode resolves to the virtual member; chat_test.cpp:47 is an override. tokenize_views is the live function. Fix and LOC (-33) fine; Neural…
 
 #### xcut-build-tests-11 — Arch/warning/optimisation flags are set twice (root add_compile_options and opennn target) and partly contradict
 
@@ -3331,11 +3331,11 @@ The same flags are applied at directory level in the root file and again on the 
 
 `opennn/dataset/tabular_dataset.cpp:979-987` · low · dead code · lines -30 · effort S · risk medium · confirmed
 
-grep across opennn/, tests/, examples/ and docs/benchmarks/ finds no use of TabularDataset::calculate_correlations_rank (979-987), Dataset::get_used_variables_indices (495-499), Dataset::set_variable_type(Index, ...) (619-625) or set_variable_type(string, ...) (627-630) outside their own definitions/declarations. None of them appears in the prior audit's Neural Designer alive list, but the product was not cross-checked for these four.
+grep across opennn/, tests/, examples/ and benchmarks/ finds no use of TabularDataset::calculate_correlations_rank (979-987), Dataset::get_used_variables_indices (495-499), Dataset::set_variable_type(Index, ...) (619-625) or set_variable_type(string, ...) (627-630) outside their own definitions/declarations. None of them appears in the prior audit's Neural Designer alive list, but the product was not cross-checked for these four.
 
 **Fix:** Verify against Neural Designer; delete whichever are unused there too (declarations in dataset.h:91,202-203 and tabular_dataset.h:126, bodies in the two .cpp files).
 
-*Verifier:* grep over opennn/, tests/, examples/, docs/benchmarks/ finds calculate_correlations_rank only at tabular_dataset.h:126 and its body (979-987); get_used_variables_indices only at dataset.h:91 and 495-499; set_variable_type only at dataset.h:202-203 and 619-630. None appears in the ENGINEERING_AUDIT alive/do-not-delete lists (lines 84-110), but those lists are not exhaustive, so the ND grep the…
+*Verifier:* grep over opennn/, tests/, examples/, benchmarks/ finds calculate_correlations_rank only at tabular_dataset.h:126 and its body (979-987); get_used_variables_indices only at dataset.h:91 and 495-499; set_variable_type only at dataset.h:202-203 and 619-630. None appears in the ENGINEERING_AUDIT alive/do-not-delete lists (lines 84-110), but those lists are not exhaustive, so the ND grep the…
 
 #### dataset-b-5 — Target-cache writer duplicated in try_rebuild_target_from_boxes and build_cache, with a v8 divergence
 
@@ -3411,7 +3411,7 @@ The non-template stubs were collapsed to the OPENNN_CUDA_STUB X-macro in the pri
 
 `opennn/core/statistics.cpp:151-178` · low · dead code · lines -22 · effort S · risk medium · partial
 
-Histogram(const VectorR& centers, const VectorR& frequencies) and Histogram(const VectorR& data, Index bins) have no callers in opennn/, tests/, examples/ or docs/benchmarks (grep 'Histogram(' outside statistics.* returns nothing). The second is a reduced copy of the free function histogram() (lines 367-448) with different edge semantics (no unique-value path, no minimums/maximums), so it silently returns a different histogram for the same input.
+Histogram(const VectorR& centers, const VectorR& frequencies) and Histogram(const VectorR& data, Index bins) have no callers in opennn/, tests/, examples/ or benchmarks (grep 'Histogram(' outside statistics.* returns nothing). The second is a reduced copy of the free function histogram() (lines 367-448) with different edge semantics (no unique-value path, no minimums/maximums), so it silently returns a different histogram for the same input.
 
 **Fix:** Delete both constructors (statistics.h:66-68, statistics.cpp:151-178); keep Histogram(Index) which statistics.cpp itself uses. Verify against Neural Designer before removal.
 
@@ -3569,11 +3569,11 @@ find_early_output_release_steps (lines 43-50) and the inference branch's last_co
 
 `opennn/response_optimization/response_constraints.h:168-211` · low · API · lines -15 · effort S · risk medium · confirmed
 
-repair_affine_inputs (batch LDLT projection with slacks) and repair_affine_inputs_with_fixed (per-row Gauss-Newton over affine AND nonlinear constraints) are different algorithms with names that differ by a suffix; repair_nonlinear_inputs is a 10-line wrapper that just forwards to repair_affine_inputs_with_fixed; repair_single_affine_input/_integer are two one-line wrappers around a file-local bool flag. Of the nine, repair_affine_inputs, repair_nonlinear_inputs, repair_single_affine_input and repair_affine_inputs_with_fixed are not referenced outside response_constraints.cpp except one test call each for the latter two (grep over opennn/, tests/, examples/, docs/benchmarks). compile_ast…
+repair_affine_inputs (batch LDLT projection with slacks) and repair_affine_inputs_with_fixed (per-row Gauss-Newton over affine AND nonlinear constraints) are different algorithms with names that differ by a suffix; repair_nonlinear_inputs is a 10-line wrapper that just forwards to repair_affine_inputs_with_fixed; repair_single_affine_input/_integer are two one-line wrappers around a file-local bool flag. Of the nine, repair_affine_inputs, repair_nonlinear_inputs, repair_single_affine_input and repair_affine_inputs_with_fixed are not referenced outside response_constraints.cpp except one test call each for the latter two (grep over opennn/, tests/, examples/, benchmarks). compile_ast…
 
 **Fix:** Keep the public surface to what response_optimization.cpp and the tests use (repair_inputs, repair_mixed_integer_inputs, repair_output_constraints x2, repair_single_affine_integer, repair_affine_inputs_with_fixed, snap_to_lattice); move the rest plus compile_ast/parse_to_ast into the anonymous namespace and rename repair_affine_inputs_with_fixed to repair_inputs_gauss_newton. Verify against Neural Designer before removing declarations.
 
-*Verifier:* Header 168-233 declares nine repair_* entries. grep over opennn/, tests/, examples/, docs/benchmarks: repair_affine_inputs, repair_nonlinear_inputs and repair_single_affine_input are referenced only inside response_constraints.cpp (1740-1745); repair_affine_inputs_with_fixed only at tests/...:992, repair_single_affine_integer at tests/...:1046,1075; repair_inputs at response_optimization.cpp:1057…
+*Verifier:* Header 168-233 declares nine repair_* entries. grep over opennn/, tests/, examples/, benchmarks: repair_affine_inputs, repair_nonlinear_inputs and repair_single_affine_input are referenced only inside response_constraints.cpp (1740-1745); repair_affine_inputs_with_fixed only at tests/...:992, repair_single_affine_integer at tests/...:1046,1075; repair_inputs at response_optimization.cpp:1057…
 
 #### response-opt-10 — Finite-difference Jacobian written twice; the validation copy issues 2n single-row forwards per probe
 
@@ -3669,7 +3669,7 @@ The signature `set(Index, Index, Index, Index, Index, Index, Index, Index, Index
 
 `opennn/CMakeLists.txt:169-180` · low · boilerplate · lines -12 · effort S · risk medium · confirmed
 
-For GNU the target links `gomp pthread` by bare name and adds `-fopenmp` as a link option, while Clang/MSVC use `OpenMP::OpenMP_CXX`. This forces `_opennn_needs_openmp` (328-331) and the conditional `find_dependency(OpenMP)` in OpenNNConfig.cmake.in:9-11. Because the compile flag is PRIVATE on the GNU path, any in-tree consumer with `#pragma omp` (docs/benchmarks/capacity/higgs-max-batch/opennn_higgs_maxbatch_trial.cpp:297, the benchmark machine is Linux/GCC) is compiled without -fopenmp and runs that loop serially, whereas the same file built with Clang/MSVC gets the flag through the imported target.
+For GNU the target links `gomp pthread` by bare name and adds `-fopenmp` as a link option, while Clang/MSVC use `OpenMP::OpenMP_CXX`. This forces `_opennn_needs_openmp` (328-331) and the conditional `find_dependency(OpenMP)` in OpenNNConfig.cmake.in:9-11. Because the compile flag is PRIVATE on the GNU path, any in-tree consumer with `#pragma omp` (benchmarks/capacity/higgs-max-batch/opennn_higgs_maxbatch_trial.cpp:297, the benchmark machine is Linux/GCC) is compiled without -fopenmp and runs that loop serially, whereas the same file built with Clang/MSVC gets the flag through the imported target.
 
 **Fix:** `target_link_libraries(opennn PUBLIC OpenMP::OpenMP_CXX)` for every non-Apple compiler (it carries -fopenmp for both compile and link on GCC), delete the GNU branch, `_opennn_needs_openmp`, and make the Config file always `find_dependency(OpenMP)` when built with it. Verify the installed static-library link on Linux once.
 
@@ -3759,7 +3759,7 @@ to_JSON never writes a 'Parameters' element (parameters go to the .bin snapshot)
 
 `opennn/neural_network/neural_network.cpp:967-976` · low · dead code · lines -12 · effort S · risk medium · confirmed
 
-Both overloads (header 176-177, bodies 967-976) are unused in opennn/, tests/, examples/ and docs/benchmarks/ (grep for `get_layers_number(` with any argument finds only the definitions). has(LayerType)/get_first(LayerType) cover the 'is there one' case and get_layers() the counting case.
+Both overloads (header 176-177, bodies 967-976) are unused in opennn/, tests/, examples/ and benchmarks/ (grep for `get_layers_number(` with any argument finds only the definitions). has(LayerType)/get_first(LayerType) cover the 'is there one' case and get_layers() the counting case.
 
 **Fix:** Delete both overloads. Verify against Neural Designer first (the prior audit's ND alive-list does not mention them, but it is not exhaustive).
 
@@ -3805,7 +3805,7 @@ The only caller is Loss::back_propagate_device_metrics (loss.cpp:1680), which is
 
 *Verifier:* error_functions.cpp:490-508: CUDA branch returns first; the host count + delegate follows. Only caller is loss.cpp:1680 inside back_propagate_device_metrics, which sits in the `#ifdef OPENNN_HAS_CUDA` block (the `#else` stub starts at 1697) and is gated by runs_on_gpu, with `input` the device-resident output. Header is public (error_functions.h:40) so the ND check in the fix is warranted.
 
-#### xcut-api-7 — Eleven accessors with zero callers in opennn/, tests/, examples/ and docs/benchmarks/
+#### xcut-api-7 — Eleven accessors with zero callers in opennn/, tests/, examples/ and benchmarks/
 
 `opennn/training_strategy/optimizer.h:73-80` · low · dead code · lines -12 · effort S · risk medium · confirmed
 
@@ -3813,7 +3813,7 @@ Counting every call site across the four trees (definitions excluded): Optimizer
 
 **Fix:** Verify each against Neural Designer (the prior audit found ND uses many orphaned accessors). Delete the ones ND does not use; for set_validation_period decide whether validation_period is a feature (then expose it in JSON too) or dead (then delete the member and the gate). Drop the unused NeuralNetwork& parameter from get_batch_workers_number (or inline workers_number at its 3 callers and delete it).
 
-*Verifier:* Grep over opennn/, tests/, examples/, docs/benchmarks/: set_validation_period, get_maximum_validation_failures, get_gradient_clip_norm, get_display_period (optimizer.h:73-80), get_yolo_lambda_noobj/class/giou/dfl, get_yolo_focal_gamma (loss.h:155-159) and Dataset::get_display (dataset.h:142; the only get_display() call at training_strategy.cpp:145 is Optimizer's) each appear only at their…
+*Verifier:* Grep over opennn/, tests/, examples/, benchmarks/: set_validation_period, get_maximum_validation_failures, get_gradient_clip_norm, get_display_period (optimizer.h:73-80), get_yolo_lambda_noobj/class/giou/dfl, get_yolo_focal_gamma (loss.h:155-159) and Dataset::get_display (dataset.h:142; the only get_display() call at training_strategy.cpp:145 is Optimizer's) each appear only at their…
 
 #### core-utils-15 — env_flag_enabled(name) duplicates env_flag_enabled(name, false)
 
@@ -3889,11 +3889,11 @@ The lambda switches over ActivationFunction to produce NN_* constants; AGENTS.md
 
 `opennn/core/opennn_types.h:312-321` · low · dead code · lines -9 · effort S · risk medium · confirmed
 
-Tensor0, Tensor1, TensorR<Rank> and TensorMap2 have zero references in opennn/, tests/, examples/ and docs/benchmarks (Tensor2/3/4, TensorMap3/4 and TensorMapR are used). tensor_types.h:183 `CUDA_REDUCTION_DTYPE` has zero references anywhere (CUBLAS_COMPUTE_DTYPE beside it is used by device_backend.cpp:1370). The header also repeats `using namespace std;` (line 84 inside the CUDA block and line 136 unconditionally) and `using type = float;` (line 139 at global scope and line 170 inside namespace opennn), and carries both `#pragma once` and a classic include guard. Each is a line a reader has to rule out before trusting the public surface.
+Tensor0, Tensor1, TensorR<Rank> and TensorMap2 have zero references in opennn/, tests/, examples/ and benchmarks (Tensor2/3/4, TensorMap3/4 and TensorMapR are used). tensor_types.h:183 `CUDA_REDUCTION_DTYPE` has zero references anywhere (CUBLAS_COMPUTE_DTYPE beside it is used by device_backend.cpp:1370). The header also repeats `using namespace std;` (line 84 inside the CUDA block and line 136 unconditionally) and `using type = float;` (line 139 at global scope and line 170 inside namespace opennn), and carries both `#pragma once` and a classic include guard. Each is a line a reader has to rule out before trusting the public surface.
 
 **Fix:** Delete Tensor0, Tensor1, TensorR, TensorMap2 and CUDA_REDUCTION_DTYPE after verifying against Neural Designer; drop the `using namespace std;` at line 84 (line 136 covers both branches) and the `using type = float;` inside namespace opennn at line 170 (the prior audit notes ND writes `type(0)`, which the global alias at line 139 serves); keep one include-guard mechanism.
 
-*Verifier:* opennn_types.h:312-313 Tensor0/Tensor1, :318-319 TensorR, :321 TensorMap2: whole-word greps over opennn/, tests/, examples/, docs/benchmarks return zero uses. tensor_types.h:183 CUDA_REDUCTION_DTYPE: zero uses; CUBLAS_COMPUTE_DTYPE (:184) used at device_backend.cpp:1370. `using namespace std;` at opennn_types.h:84 (inside #ifdef OPENNN_HAS_CUDA) and :136 (unconditional); `using type = float;` at…
+*Verifier:* opennn_types.h:312-313 Tensor0/Tensor1, :318-319 TensorR, :321 TensorMap2: whole-word greps over opennn/, tests/, examples/, benchmarks return zero uses. tensor_types.h:183 CUDA_REDUCTION_DTYPE: zero uses; CUBLAS_COMPUTE_DTYPE (:184) used at device_backend.cpp:1370. `using namespace std;` at opennn_types.h:84 (inside #ifdef OPENNN_HAS_CUDA) and :136 (unconditional); `using type = float;` at…
 
 #### core-types-3 — uses_cuda_fill queries the driver per fill and ignores TensorView::device
 
@@ -4029,7 +4029,7 @@ bias_grad_sum_cuda (kernel_tensor.cu:55-70) and norm_backward_launch's weight-gr
 
 `opennn/core/statistics.h:16-32` · low · design · lines -6 · effort S · risk medium · confirmed
 
-Descriptives declares defaults minimum=-1, maximum=1, mean=0, standard_deviation=1, but its only constructor defaults every argument to QUIET_NAN and always assigns all four, so a reader who trusts the header believes Descriptives() is (-1,1,0,1) when it is (NaN,NaN,NaN,NaN). vector_descriptives (statistics.cpp:508-509) returns Descriptives() for an empty input precisely because of the NaN behaviour, while the very next branch returns explicit zeros -- the contradiction is already confusing callers. The `string name = "Descriptives"` member is never read or written anywhere in opennn/, tests/, examples/ or docs/benchmarks, yet it is copied in every vector<Descriptives> and shared across the…
+Descriptives declares defaults minimum=-1, maximum=1, mean=0, standard_deviation=1, but its only constructor defaults every argument to QUIET_NAN and always assigns all four, so a reader who trusts the header believes Descriptives() is (-1,1,0,1) when it is (NaN,NaN,NaN,NaN). vector_descriptives (statistics.cpp:508-509) returns Descriptives() for an empty input precisely because of the NaN behaviour, while the very next branch returns explicit zeros -- the contradiction is already confusing callers. The `string name = "Descriptives"` member is never read or written anywhere in opennn/, tests/, examples/ or benchmarks, yet it is copied in every vector<Descriptives> and shared across the…
 
 **Fix:** Set the member initializers to QUIET_NAN (matching the constructor) or drop the constructor's defaults; delete `name` (verify against Neural Designer). Descriptives::set can then be `*this = Descriptives(a,b,c,d);` or dropped.
 
@@ -4139,11 +4139,11 @@ Lines 1106-1112 print Training error / Validation error / extra / Elapsed time b
 
 `opennn/training_strategy/optimizer.h:46-321` · low · dead code · lines -6 · effort S · risk medium · confirmed
 
-`bool restore_best = true;` (line 321) is protected, has no setter and no reader other than the guard at optimizer.cpp:1236, so the guard is constant-true (grep across opennn/, tests/, examples/, docs/benchmarks/: only those two sites). `virtual void print() const {}` (line 90) has no override in the four optimizers and no caller (the only print() calls are TrainingResult::print). `set(Loss*)` (46) and `virtual set_loss(Loss*)` (48) do the same thing and nothing overrides set_loss. `get_batch_workers_number(const NeuralNetwork&)` (229) returns workers_number and ignores its parameter at all four call sites (optimizer.cpp:376, 390, 1679, 2093).
+`bool restore_best = true;` (line 321) is protected, has no setter and no reader other than the guard at optimizer.cpp:1236, so the guard is constant-true (grep across opennn/, tests/, examples/, benchmarks/: only those two sites). `virtual void print() const {}` (line 90) has no override in the four optimizers and no caller (the only print() calls are TrainingResult::print). `set(Loss*)` (46) and `virtual set_loss(Loss*)` (48) do the same thing and nothing overrides set_loss. `get_batch_workers_number(const NeuralNetwork&)` (229) returns workers_number and ignores its parameter at all four call sites (optimizer.cpp:376, 390, 1679, 2093).
 
 **Fix:** Delete restore_best and its guard term (or, if the option is wanted, add set_restore_best and keep it), delete print(), keep one of set/set_loss, and drop the unused parameter from get_batch_workers_number (four call sites). Verify against Neural Designer before removing set_loss/print.
 
-*Verifier:* grep across opennn/, tests/, examples/, docs/benchmarks/: restore_best appears only at optimizer.h:321 and optimizer.cpp:1236. `virtual void print() const {}` at optimizer.h:90 has no override (`grep 'void print() const' opennn/training_strategy/` finds only that line) and the only print() calls are results.print() (TrainingResult, optimizer.cpp:1001,1136) and tests/training_result_test.cpp:17.…
+*Verifier:* grep across opennn/, tests/, examples/, benchmarks/: restore_best appears only at optimizer.h:321 and optimizer.cpp:1236. `virtual void print() const {}` at optimizer.h:90 has no override (`grep 'void print() const' opennn/training_strategy/` finds only that line) and the only print() calls are results.print() (TrainingResult, optimizer.cpp:1001,1136) and tests/training_result_test.cpp:17.…
 
 #### training-optimizers-18 — display_epoch_results takes 9 positional scalars including 3 adjacent bools; train() keeps the same four floats as loose locals
 
@@ -4517,7 +4517,7 @@ Line 139 declares `using type = float;` at global scope (the alias Neural Design
 
 `opennn/neural_network/back_propagation.h:44-44` · low · boilerplate · lines -1 · effort S · risk medium · unverified
 
-`virtual ~BackPropagation() = default;` is the struct's only virtual member; grep finds no `: BackPropagation` / `public BackPropagation` anywhere in opennn/, tests/, examples/ or docs/benchmarks/ (BackPropagationLM in levenberg_marquardt_algorithm.h is an unrelated struct with its own virtual dtor). ForwardPropagation, its sibling, is non-polymorphic. The virtual adds a vtable pointer to a value member of TrainingContext and, as a user-declared destructor, suppresses the implicit move operations for no reason.
+`virtual ~BackPropagation() = default;` is the struct's only virtual member; grep finds no `: BackPropagation` / `public BackPropagation` anywhere in opennn/, tests/, examples/ or benchmarks/ (BackPropagationLM in levenberg_marquardt_algorithm.h is an unrelated struct with its own virtual dtor). ForwardPropagation, its sibling, is non-polymorphic. The virtual adds a vtable pointer to a value member of TrainingContext and, as a user-declared destructor, suppresses the implicit move operations for no reason.
 
 **Fix:** Delete the line (or make it a non-virtual `~BackPropagation() = default;` only if a destructor declaration is wanted for documentation). Verify against Neural Designer that no product type derives from BackPropagation before removing the virtual.
 
@@ -4567,7 +4567,7 @@ Shape has a (size_t rank, Index value) fill constructor next to the initializer_
 
 **Fix:** Replace the constructor with static Shape filled(size_t rank, Index value) (same body), update the two benchmark call sites and the test. Verify against Neural Designer for uses of the two-argument parenthesized form.
 
-*Verifier:* tensor_types.h:192-199 Shape(size_t, Index) fill constructor next to the initializer_list constructor at 201-209. In-repo users are exactly docs/benchmarks/throughput/higgs/opennn_higgs_cpu.cpp:75 and :127 (both with the explicit size_t cast) and tests/core/tensors_test.cpp:238 (negative-value throw). A static factory is a sound replacement; ND check required as stated.
+*Verifier:* tensor_types.h:192-199 Shape(size_t, Index) fill constructor next to the initializer_list constructor at 201-209. In-repo users are exactly benchmarks/throughput/higgs/opennn_higgs_cpu.cpp:75 and :127 (both with the explicit size_t cast) and tests/core/tensors_test.cpp:238 (negative-value throw). A static factory is a sound replacement; ND check required as stated.
 
 #### r2-batch-pipeline-and-device-gather-10 — gather_rows_cuda caps column threads at 32, so wide rows (images) launch only batch/8 blocks
 
