@@ -868,6 +868,7 @@ ActivationFunction activation_function_from_string(const string& name)
     X(add_gpu, (const TensorView&, const TensorView&, TensorView&)) \
     X(multiply_gpu, (const TensorView&, bool, const TensorView&, bool, TensorView&, float, float)) \
     X(softmax_gpu, (TensorView&)) \
+    X(softmax_backward_gpu, (const TensorView&, TensorView&, float)) \
     X(activation_forward_gpu, (TensorView&, ActivationFunction)) \
     X(activation_backward_gpu, (const TensorView&, TensorView&, ActivationFunction)) \
     X(linear_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cublasLtEpilogue_t, TensorView*, const TensorView&, ActivationFunction)) \
@@ -1173,6 +1174,45 @@ void softmax(TensorView& output)
 
     require_cpu_fp32(output, "softmax", "output");
     softmax_cpu(output);
+}
+
+static void softmax_backward_cpu(const TensorView& outputs, TensorView& delta, float alpha)
+{
+    const MatrixMap output_matrix = outputs.as_flat_matrix();
+    MatrixMap delta_matrix = delta.as_flat_matrix();
+    const Index rows = delta_matrix.rows();
+
+    const bool parallel = delta_matrix.size() >= 65536;
+
+    #pragma omp parallel for schedule(static) if(parallel)
+    for (Index i = 0; i < rows; ++i)
+    {
+        const float dot = output_matrix.row(i).dot(delta_matrix.row(i));
+        delta_matrix.row(i).array() =
+            alpha * output_matrix.row(i).array() * (delta_matrix.row(i).array() - dot);
+    }
+}
+
+// The backward of softmax over the last axis, in place: given the softmax
+// outputs y and the incoming delta dy, dy becomes alpha * y * (dy - <y, dy>)
+// row by row. alpha folds in whatever scale the caller would otherwise apply
+// afterwards, which is free here and a second pass over the tensor there.
+void softmax_backward(const TensorView& outputs, TensorView& delta, float alpha)
+{
+    if (delta.empty()) return;
+
+    require_tensor(outputs, "softmax_backward", "outputs");
+    require_tensor(delta, "softmax_backward", "delta");
+    require_same_device(outputs, delta, "softmax_backward");
+    throw_if(outputs.size() != delta.size()
+             || outputs.get_shape().back() != delta.get_shape().back(),
+             "softmax_backward: outputs and delta must have the same shape.");
+    require_fp32_or_bf16(delta, "softmax_backward", "delta");
+    if (delta.is_cuda()) { softmax_backward_gpu(outputs, delta, alpha); return; }
+
+    require_cpu_fp32(outputs, "softmax_backward", "outputs");
+    require_cpu_fp32(delta, "softmax_backward", "delta");
+    softmax_backward_cpu(outputs, delta, alpha);
 }
 
 // Elementwise activations, run one contiguous chunk at a time so the pass can
@@ -1651,36 +1691,39 @@ static void multiply_gpu(const TensorView& input_a, bool transpose_a,
                               alpha, beta);
 }
 
+// cuDNN 4d descriptors hold at most INT32_MAX elements, so a softmax over a
+// larger tensor has to run in row chunks. apply() is called with the row range
+// of each chunk; a tensor that already fits is one chunk covering all of it.
+template<typename Apply>
+static void for_each_softmax_chunk(const TensorView& reference, Apply apply)
+{
+    const Index channels = reference.get_shape().back();
+    const Index rows = reference.size() / channels;
+    const Index max_rows = Index(numeric_limits<int>::max()) / channels;
+
+    for (Index row = 0; row < rows; row += max_rows)
+        apply(row, min(max_rows, rows - row));
+}
+
+// The rows [first, first + count) of view as a flat 2d view -- or the view
+// itself when that is all of it, so the common single-chunk case reuses the
+// descriptor it already has instead of building one per call.
+static TensorView softmax_chunk(const TensorView& view, Index first, Index count)
+{
+    const Index channels = view.get_shape().back();
+
+    if (first == 0 && count * channels == view.size()) return view;
+
+    return TensorView(static_cast<char*>(view.get_data()) + first * channels * type_bytes(view.get_type()),
+                      Shape{count, channels},
+                      view.get_type(), view.get_device());
+}
+
 static void softmax_gpu(TensorView& output)
 {
-    // cuDNN 4d descriptors hold at most INT32_MAX elements; larger tensors run row-chunked.
-    constexpr Index max_descriptor_elements = numeric_limits<int>::max();
-
-    if (output.size() <= max_descriptor_elements)
+    for_each_softmax_chunk(output, [&](Index first, Index count)
     {
-        CHECK_CUDNN(cudnnSoftmaxForward(device::get_cudnn_handle(),
-                                        CUDNN_SOFTMAX_ACCURATE,
-                                        CUDNN_SOFTMAX_MODE_CHANNEL,
-                                        &one,
-                                        output.get_descriptor(), output.get_data(),
-                                        &zero,
-                                        output.get_descriptor(), output.get_data()));
-        return;
-    }
-
-    const Index channels = output.get_shape().back();
-    const Index total_rows = output.size() / channels;
-    const Index max_rows = max_descriptor_elements / channels;
-    char* const base = static_cast<char*>(output.get_data());
-    const Index row_bytes = channels * type_bytes(output.get_type());
-
-    for (Index row = 0; row < total_rows; row += max_rows)
-    {
-        const Index chunk_rows = min(max_rows, total_rows - row);
-
-        const TensorView chunk(base + row * row_bytes,
-                               Shape{chunk_rows, channels},
-                               output.get_type(), output.get_device());
+        const TensorView chunk = softmax_chunk(output, first, count);
 
         CHECK_CUDNN(cudnnSoftmaxForward(device::get_cudnn_handle(),
                                         CUDNN_SOFTMAX_ACCURATE,
@@ -1689,7 +1732,25 @@ static void softmax_gpu(TensorView& output)
                                         chunk.get_descriptor(), chunk.get_data(),
                                         &zero,
                                         chunk.get_descriptor(), chunk.get_data()));
-    }
+    });
+}
+
+static void softmax_backward_gpu(const TensorView& outputs, TensorView& delta, float alpha)
+{
+    for_each_softmax_chunk(delta, [&](Index first, Index count)
+    {
+        const TensorView output_chunk = softmax_chunk(outputs, first, count);
+        const TensorView delta_chunk = softmax_chunk(delta, first, count);
+
+        CHECK_CUDNN(cudnnSoftmaxBackward(device::get_cudnn_handle(),
+                                         CUDNN_SOFTMAX_ACCURATE,
+                                         CUDNN_SOFTMAX_MODE_CHANNEL,
+                                         &alpha,
+                                         output_chunk.get_descriptor(), output_chunk.get_data(),
+                                         delta_chunk.get_descriptor(), delta_chunk.get_data(),
+                                         &zero,
+                                         delta_chunk.get_descriptor(), delta_chunk.get_data()));
+    });
 }
 
 static void activation_forward_gpu(TensorView& output, ActivationFunction function)

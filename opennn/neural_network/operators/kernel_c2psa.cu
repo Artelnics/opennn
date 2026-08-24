@@ -11,30 +11,6 @@
 #include "opennn/neural_network/layers/kernel_concat.cuh"
 #include "opennn/neural_network/operators/kernel_c2psa.cuh"
 
-template<typename T>
-__global__ void c2psa_row_softmax_kernel(const int rows, T* __restrict__ A, int T_sz)
-{
-    const int row = blockIdx.x * blockDim.x + threadIdx.x;
-    if (row >= rows) return;
-    T* p = A + row * T_sz;
-    row_softmax<T>(p, p, T_sz, 0.0f);
-}
-
-template<typename T>
-__global__ void c2psa_softmax_bwd_kernel(
-    const int rows,
-    const T* __restrict__ A,
-    T* __restrict__ dA,
-    float scale,
-    int T_sz)
-{
-    const int row = blockIdx.x * blockDim.x + threadIdx.x;
-    if (row >= rows) return;
-    const T* Ap  = A  + row * T_sz;
-    T*       dAp = dA + row * T_sz;
-    row_softmax_backward<T>(Ap, dAp, dAp, T_sz, scale);
-}
-
 void c2psa_gather_left_cuda(
     const void* x, void* xa,
     int BT, int C, int H, cudaDataType_t dtype)
@@ -68,20 +44,6 @@ void c2psa_fill_cat_left_cuda(
 {
     dispatch_float_bf16(dtype != CUDA_R_32F, [&]<typename T>() {
         slice_channels_cuda<T, true>(BT, 1, 1, H, C, 0, (const T*)attn_v, (T*)cat);
-    });
-}
-
-void c2psa_row_softmax_cuda(void* A, int rows, int T_sz, cudaDataType_t dtype)
-{
-    dispatch_float_bf16(dtype != CUDA_R_32F, [&]<typename T>() {
-        launch_elementwise(Index(rows), c2psa_row_softmax_kernel<T>, (T*)A, T_sz);
-    });
-}
-
-void c2psa_softmax_bwd_cuda(const void* A, void* dA, float scale, int rows, int T_sz, cudaDataType_t dtype)
-{
-    dispatch_float_bf16(dtype != CUDA_R_32F, [&]<typename T>() {
-        launch_elementwise(Index(rows), c2psa_softmax_bwd_kernel<T>, (const T*)A, (T*)dA, scale, T_sz);
     });
 }
 

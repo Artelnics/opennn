@@ -37,6 +37,11 @@ struct C2PSANet
         nn.add_layer(make_unique<opennn::Dense>(flat_out, Shape{TARGETS}));
 
         nn.compile();
+
+        // Without this every parameter is zero, and a C2PSA with zero weights
+        // emits zeros: Q, K and V are zero, so the attention gradient is zero
+        // too and every check below compares zero against zero.
+        nn.set_parameters_random();
     }
 
     unique_ptr<Loss> make_loss()
@@ -49,6 +54,8 @@ struct C2PSANet
 
 TEST(C2PSA, CpuGradientMatchesNumerical)
 {
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
     C2PSANet net;
     auto loss = net.make_loss();
 
@@ -87,41 +94,46 @@ TEST(C2PSA, CpuAndGpuForwardOutputsMatch)
 
     const Index batch_size = SAMPLES;
 
-    C2PSANet net;
-    const vector<Index> training_idx = net.dataset.get_sample_indices("Training");
-    const vector<Index> input_idx    = net.dataset.get_feature_indices("Input");
-
     Configuration::instance().set(Device::CPU, Type::FP32);
-    {
-        Batch batch(batch_size, &net.dataset, net.nn.get_config());
-        batch.fill(training_idx, input_idx, {}, {});
-        ForwardPropagation fp(batch_size, &net.nn);
-        net.nn.forward_propagate(batch.get_inputs(), fp, false);
-        TensorView out = fp.get_outputs();
-        const Index n = out.size();
-        vector<float> cpu_out(n);
-        copy_n(out.as<float>(), n, cpu_out.data());
 
-        Configuration::instance().set(Device::CUDA, Type::FP32);
-        Batch batch_gpu(batch_size, &net.dataset, net.nn.get_config());
-        batch_gpu.fill(training_idx, input_idx, {}, {});
-        ForwardPropagation fp_gpu(batch_size, &net.nn);
-        net.nn.forward_propagate(batch_gpu.get_inputs(), fp_gpu, false);
-        TensorView out_gpu = fp_gpu.get_outputs();
+    C2PSANet cpu_net;
+    const VectorR parameters = cpu_net.nn.get_parameters_map();
+    const vector<Index> training_idx = cpu_net.dataset.get_sample_indices("Training");
+    const vector<Index> input_idx    = cpu_net.dataset.get_feature_indices("Input");
 
-        vector<float> gpu_out(n);
+    Batch batch(batch_size, &cpu_net.dataset, cpu_net.nn.get_config());
+    batch.fill(training_idx, input_idx, {}, {});
+    ForwardPropagation fp(batch_size, &cpu_net.nn);
+    cpu_net.nn.forward_propagate(batch.get_inputs(), fp, false);
+
+    const TensorView out = fp.get_outputs();
+    const Index n = out.size();
+    vector<float> cpu_out(n);
+    copy_n(out.as<float>(), n, cpu_out.data());
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    C2PSANet gpu_net;
+    gpu_net.nn.set_parameters(parameters);
+
+    Batch batch_gpu(batch_size, &cpu_net.dataset, gpu_net.nn.get_config());
+    batch_gpu.fill(training_idx, input_idx, {}, {});
+    ForwardPropagation fp_gpu(batch_size, &gpu_net.nn);
+    gpu_net.nn.forward_propagate(batch_gpu.get_inputs(), fp_gpu, false);
+    const TensorView out_gpu = fp_gpu.get_outputs();
+
+    vector<float> gpu_out(n);
 #ifdef OPENNN_HAS_CUDA
-        cudaMemcpy(gpu_out.data(), out_gpu.as<float>(), n * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(gpu_out.data(), out_gpu.as<float>(), n * sizeof(float), cudaMemcpyDeviceToHost);
 #endif
-        Configuration::instance().set(Device::CPU, Type::FP32);
+    Configuration::instance().set(Device::CPU, Type::FP32);
 
-        float max_diff = 0.0f;
-        for (Index i = 0; i < n; ++i)
-            max_diff = max(max_diff, abs(cpu_out[i] - gpu_out[i]));
+    float max_diff = 0.0f;
+    for (Index i = 0; i < n; ++i)
+        max_diff = max(max_diff, abs(cpu_out[i] - gpu_out[i]));
 
-        EXPECT_LT(max_diff, 1e-4f)
-            << "Max CPU vs GPU forward output diff: " << max_diff;
-    }
+    EXPECT_LT(max_diff, 1e-4f)
+        << "Max CPU vs GPU forward output diff: " << max_diff;
 }
 
 TEST(C2PSA, GpuScratchIsPropagationOwned)
@@ -150,4 +162,60 @@ TEST(C2PSA, GpuScratchIsPropagationOwned)
     ASSERT_FALSE(first_backward_scratch.empty());
     EXPECT_NE(first_forward_scratch.get_data(), second_forward_scratch.get_data());
     EXPECT_NE(first_backward_scratch.get_data(), second_backward_scratch.get_data());
+}
+
+// The numerical checks above compare against an absolute 1e-3, and this network
+// is small enough that its gradient sits near that -- loose enough to let a
+// wrong constant factor on the attention gradient pass. The CPU backward is the
+// reference for the GPU one here: same data, same weights, compared component
+// by component relative to the size of the component, so an error in one block
+// of the gradient cannot hide behind a larger block somewhere else.
+TEST(C2PSA, CpuAndGpuGradientsMatch)
+{
+    if (!opennn::device::has_cuda_device())
+        GTEST_SKIP() << "No CUDA device.";
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    C2PSANet cpu_net;
+    const VectorR parameters = cpu_net.nn.get_parameters_map();
+    auto cpu_loss = cpu_net.make_loss();
+    const VectorR cpu_gradient = calculate_gradient(*cpu_loss);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    C2PSANet gpu_net;
+    gpu_net.nn.set_parameters(parameters);
+
+    Loss gpu_loss(&gpu_net.nn, &cpu_net.dataset);
+    gpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR gpu_gradient = calculate_gradient(gpu_loss);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
+    ASSERT_GT(cpu_gradient.size(), 0);
+
+    // Components far below the largest one carry no signal worth holding the
+    // two backends to; everything above that is compared on its own scale.
+    const float largest = cpu_gradient.array().abs().maxCoeff();
+    ASSERT_GT(largest, 0.0f);
+    const float floor_value = 1e-3f * largest;
+
+    float worst = 0.0f;
+    Index worst_index = 0;
+
+    for (Index i = 0; i < cpu_gradient.size(); ++i)
+    {
+        const float relative = abs(cpu_gradient(i) - gpu_gradient(i))
+                             / max(floor_value, abs(cpu_gradient(i)));
+
+        if (relative > worst) { worst = relative; worst_index = i; }
+    }
+
+    EXPECT_LT(worst, 5e-3f)
+        << "Worst relative CPU vs GPU gradient difference " << worst
+        << " at parameter " << worst_index
+        << " (cpu " << cpu_gradient(worst_index)
+        << ", gpu " << gpu_gradient(worst_index) << ")";
 }

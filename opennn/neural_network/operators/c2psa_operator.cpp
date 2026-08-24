@@ -123,7 +123,7 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
             Attn_gpu, dtype, T, (long long)T * T,
             int(B), scale);
 
-        c2psa_row_softmax_cuda(Attn_gpu, BT, T, dtype);
+        softmax(fp.slots[layer][4]);
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, T, T,
@@ -261,7 +261,9 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             d_A_gpu,      dtype, T, (long long)T * T,
             int(B));
 
-        c2psa_softmax_bwd_cuda(Attn_gpu, d_A_gpu, scale, BT, T, dtype);
+        TensorView attention_delta(d_A_gpu, Shape{B, tokens, tokens},
+                                   x.get_type(), Device::CUDA);
+        softmax_backward(fp.slots[layer][4], attention_delta, scale);
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, T, T,

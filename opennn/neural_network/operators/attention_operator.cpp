@@ -587,20 +587,7 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
         apply_delta_unfused(query, key, value,
                             attention_weights, attention_weights_dropped,
                             dropout_mask, output_delta, attention_weight_delta,
-                            query_delta, key_delta, value_delta,
-            [&]() {
-                CHECK_CUDNN(cudnnSoftmaxBackward(device::get_cudnn_handle(),
-                                                 CUDNN_SOFTMAX_ACCURATE,
-                                                 CUDNN_SOFTMAX_MODE_CHANNEL,
-                                                 &one,
-                                                 attention_weights.get_descriptor(),
-                                                 attention_weights.get_data(),
-                                                 attention_weight_delta.get_descriptor(),
-                                                 attention_weight_delta.get_data(),
-                                                 &zero,
-                                                 attention_weight_delta.get_descriptor(),
-                                                 attention_weight_delta.get_data()));
-            });
+                            query_delta, key_delta, value_delta);
         return;
     }
 #endif
@@ -998,7 +985,6 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
 
 #endif
 
-template<typename SoftmaxBwd>
 void AttentionOperator::apply_delta_unfused(const TensorView& query,
                                      const TensorView& key,
                                      const TensorView& value,
@@ -1009,8 +995,7 @@ void AttentionOperator::apply_delta_unfused(const TensorView& query,
                                      TensorView& attention_weight_delta,
                                      TensorView& query_delta,
                                      TensorView& key_delta,
-                                     TensorView& value_delta,
-                                     SoftmaxBwd&& softmax_bwd) const
+                                     TensorView& value_delta) const
 {
     const TensorView& attention_used = dropout.active()
         ? attention_weights_dropped
@@ -1022,8 +1007,7 @@ void AttentionOperator::apply_delta_unfused(const TensorView& query,
     if (dropout.active())
         dropout_backward(attention_weight_delta, dropout_mask, dropout.rate);
 
-    if (!attention_weight_delta.empty())
-        softmax_bwd();
+    softmax_backward(attention_weights, attention_weight_delta);
 
     const float scale = scaling_factor();
     multiply(attention_weight_delta, false, key,   false, query_delta, scale, 0.0f);
@@ -1128,13 +1112,7 @@ void AttentionOperator::apply_delta_cpu(const TensorView& query,
     apply_delta_unfused(query, key, value,
                         attention_weights, attention_weights_dropped,
                         dropout_mask, output_delta, attention_weight_delta,
-                        query_delta, key_delta, value_delta,
-        [&]() {
-            const MatrixMap y  = attention_weights.as_flat_matrix();
-            MatrixMap       dY = attention_weight_delta.as_flat_matrix();
-            const VectorR dot = (y.array() * dY.array()).rowwise().sum();
-            dY.array() = y.array() * (dY.colwise() - dot).array();
-        });
+                        query_delta, key_delta, value_delta);
 }
 
 #ifdef OPENNN_HAS_CUDA

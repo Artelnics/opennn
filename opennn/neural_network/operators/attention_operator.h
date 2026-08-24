@@ -171,7 +171,6 @@ private:
                                               bool&);
     static void softmax_rows_prefix(float*, Index, Index, Index);
 
-    template<typename SoftmaxBwd>
     void apply_delta_unfused(const TensorView&,
                               const TensorView&,
                               const TensorView&,
@@ -182,8 +181,7 @@ private:
                               TensorView&,
                               TensorView&,
                               TensorView&,
-                              TensorView&,
-                              SoftmaxBwd&&) const;
+                              TensorView&) const;
 
     unique_ptr<SDPACache> sdpa_cache;
 

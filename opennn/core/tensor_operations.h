@@ -120,6 +120,7 @@ void add(const TensorView&, const TensorView&, TensorView&);
 void multiply(const TensorView&, bool, const TensorView&, bool, TensorView&, float alpha = 1.0f, float beta = 0.0f);
 
 void softmax(TensorView&);
+void softmax_backward(const TensorView&, TensorView&, float alpha = 1.0f);
 
 void activation_forward(TensorView&, ActivationFunction);
 void activation_backward(const TensorView&, TensorView&, ActivationFunction);
