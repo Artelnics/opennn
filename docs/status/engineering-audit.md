@@ -297,12 +297,6 @@ Current CPU suite on a rebuilt binary: 929 passed, 2 failed: ActivationsTest.Con
 
 **Inference API cliff (per-call arena)**
 
-> Diagram of the inference path as it actually runs, including the two facts behind
-> this group — no CUDA graph is captured in inference, and there is no KV cache, so
-> the whole decoder is recomputed per token:
-> [opennn-transformer-inference-cuda-graph.png](../images/opennn-transformer-inference-cuda-graph.png).
-> The training-side graph is dumped in [docs/uml/cuda-graph/](../uml/cuda-graph/).
-
 - `opennn/neural_network/neural_network.h:219-226` — GPU 'buffer-reusing' calculate_outputs still allocates a ForwardPropagation arena per call (medium, loc +15, S)
 - `opennn/neural_network/neural_network.h:226-228` — calculate_outputs_resident defaults upload_parameters=true, which discards the CUDA graph every call (medium, loc 0, S)
 - `opennn/neural_network/neural_network.cpp:1202-1217` — calculate_outputs tail tile builds a second ForwardPropagation with its own arena instead of sharing the tile's (medium, loc +1, S)

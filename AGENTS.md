@@ -9,7 +9,7 @@ is linked from here.
 | Code organization, header layout, class member order, `std::` caveats | [docs/architecture.md](docs/architecture.md) |
 | Current engineering status, audit findings, YOLO roadmap | [docs/status/engineering-audit.md](docs/status/engineering-audit.md) |
 | YOLO implementation notes, session by session | [docs/status/yolo-session-log.md](docs/status/yolo-session-log.md) |
-| Diagrams: GPU inference flow, CUDA-graph capture boundary | [docs/images/](docs/images/), [docs/uml/cuda-graph/](docs/uml/cuda-graph/) |
+| CUDA-graph topology dumps (training) | [docs/uml/cuda-graph/](docs/uml/cuda-graph/) |
 | Project-local skills | [.agents/skills/](.agents/skills/) |
 
 Before deleting anything that looks unused, read
