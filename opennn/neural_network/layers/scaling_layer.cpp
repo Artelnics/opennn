@@ -482,20 +482,20 @@ string Scaling::write_expression(const vector<string>& input_names,
             continue;
         }
 
-        const auto [slope, offset] =
+        const AffineMap affine =
             scaling_affine(scaler, descriptives[feature], min_range, max_range);
 
         buffer << "scaled_" << input_names[i] << " = ";
 
-        if (slope == 0.0f)
-            buffer << expression_literal(offset);
-        else if (slope == 1.0f && offset == 0.0f)
+        if (affine.slope == 0.0f)
+            buffer << expression_literal(affine.offset);
+        else if (affine.slope == 1.0f && affine.offset == 0.0f)
             buffer << input_names[i];
-        else if (offset == 0.0f)
-            buffer << input_names[i] << "*" << expression_literal(slope);
+        else if (affine.offset == 0.0f)
+            buffer << input_names[i] << "*" << expression_literal(affine.slope);
         else
-            buffer << input_names[i] << "*" << expression_literal(slope)
-                   << "+" << expression_literal(offset);
+            buffer << input_names[i] << "*" << expression_literal(affine.slope)
+                   << "+" << expression_literal(affine.offset);
 
         buffer << ";\n";
     }

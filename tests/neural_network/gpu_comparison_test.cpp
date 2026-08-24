@@ -1110,6 +1110,68 @@ TEST_F(GpuComparison, ResidentInferenceGraphReplay)
 
 }
 
+TEST_F(GpuComparison, ResidentInferenceKeepsTheGraphWhenParametersDidNotMove)
+{
+    const Index samples_number = 4;
+    const Index height = 32;
+    const Index width = 32;
+    const Index channels = 3;
+    const Index classes_number = 5;
+
+    Tensor4 inputs(samples_number, height, width, channels);
+    inputs.setRandom();
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    ResNet network({height, width, channels}, {1, 1, 1, 1}, Shape{8, 16, 32, 64},
+                   Shape{classes_number}, true);
+    network.set_parameters_random();
+
+    const Index input_bytes = inputs.size() * Index(sizeof(float));
+    Buffer input_buffer;
+    input_buffer.resize_bytes(input_bytes, Device::CUDA);
+    device::copy_async(input_buffer.data(), inputs.data(), input_bytes,
+                       device::CopyKind::HostToDevice);
+    device::synchronize();
+
+    const TensorView input_view(input_buffer.data(),
+                                Shape{samples_number, height, width, channels},
+                                Type::FP32, Device::CUDA);
+
+    ForwardPropagation forward_propagation(samples_number, &network);
+    forward_propagation.set_cuda_graph(true);
+
+    network.calculate_outputs_resident({input_view}, forward_propagation, true);
+    network.calculate_outputs_resident({input_view}, forward_propagation, false);
+    ASSERT_TRUE(static_cast<bool>(forward_propagation.inference_graph_exec));
+
+    const auto read_outputs = [](const TensorView& outputs)
+    {
+        vector<float> host(size_t(outputs.size()));
+        device::synchronize();
+        copy_device_to_host_float(outputs.get_data(), outputs.get_type(), outputs.size(),
+                                  host.data(), device::get_compute_stream());
+        device::synchronize();
+        return host;
+    };
+
+    const vector<float> reference =
+        read_outputs(network.calculate_outputs_resident({input_view}, forward_propagation, false));
+
+    // upload_parameters = true re-uploads into the buffers the graph already
+    // captured, so the addresses do not move and the graph stays valid. It used
+    // to be reset unconditionally here, which discarded the graph on every call
+    // and left the argument's default -- true -- as the slow path.
+    const vector<float> uploaded =
+        read_outputs(network.calculate_outputs_resident({input_view}, forward_propagation, true));
+
+    EXPECT_TRUE(static_cast<bool>(forward_propagation.inference_graph_exec))
+        << "re-uploading unchanged parameters discarded the captured CUDA graph";
+
+    ASSERT_EQ(reference.size(), uploaded.size());
+    for (size_t i = 0; i < reference.size(); ++i)
+        EXPECT_NEAR(reference[i], uploaded[i], 1.0e-6f);
+}
+
 TEST_F(GpuComparison, ResidentInferenceGraphInvalidation)
 {
     const Index samples_number = 4;
@@ -1173,22 +1235,34 @@ TEST_F(GpuComparison, ResidentInferenceGraphInvalidation)
         ASSERT_NEAR(first_outputs[j], mismatch_outputs[j], 1.0e-6f);
 
     network.set_parameters(shifted_parameters);
+
+    // set_parameters copies into the device buffer the graph already captured,
+    // so the addresses do not move and a replay reads the new values. This used
+    // to discard the graph unconditionally, which made upload_parameters = true
+    // -- the argument's default -- recapture on every single call.
     network.calculate_outputs_resident({input_view}, forward_propagation, true);
-    ASSERT_FALSE(static_cast<bool>(forward_propagation.inference_graph_exec));
-    const TensorView second_eager_view =
-        network.calculate_outputs_resident({input_view}, forward_propagation, false);
-    const vector<float> second_reference = read_outputs(second_eager_view);
     ASSERT_TRUE(static_cast<bool>(forward_propagation.inference_graph_exec));
+
+    // The reference comes from a propagation of its own with no graph, so it is
+    // independent of whatever the graph under test does.
+    ForwardPropagation eager_propagation(samples_number, &network);
+    const vector<float> second_reference =
+        read_outputs(network.calculate_outputs_resident({input_view}, eager_propagation, true));
 
     const TensorView replay_view =
         network.calculate_outputs_resident({input_view}, forward_propagation, false);
     const vector<float> replayed = read_outputs(replay_view);
+
+    ASSERT_TRUE(static_cast<bool>(forward_propagation.inference_graph_exec));
 
     float max_change = 0.0f;
     for (size_t j = 0; j < first_outputs.size(); ++j)
         max_change = max(max_change, abs(first_outputs[j] - second_reference[j]));
     EXPECT_GT(max_change, 1.0e-4f);
 
+    // The point of the test: the graph that survived the parameter change still
+    // produces the values that change implies, rather than the ones it was
+    // captured with.
     for (size_t j = 0; j < second_reference.size(); ++j)
         ASSERT_NEAR(second_reference[j], replayed[j], 1.0e-6f);
 

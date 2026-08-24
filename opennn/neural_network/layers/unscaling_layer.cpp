@@ -136,18 +136,18 @@ string Unscaling::write_expression(const vector<string>& input_names,
             continue;
         }
 
-        const auto [slope, offset] = unscaling_affine(scaler, descriptives[feature], min_range, max_range);
+        const AffineMap affine = unscaling_affine(scaler, descriptives[feature], min_range, max_range);
 
         buffer << output_names[i] << "=";
 
-        if (slope == 0.0f)
-            buffer << offset;
-        else if (slope == 1.0f && offset == 0.0f)
+        if (affine.slope == 0.0f)
+            buffer << affine.offset;
+        else if (affine.slope == 1.0f && affine.offset == 0.0f)
             buffer << input_names[i];
-        else if (offset == 0.0f)
-            buffer << input_names[i] << "*" << slope;
+        else if (affine.offset == 0.0f)
+            buffer << input_names[i] << "*" << affine.slope;
         else
-            buffer << input_names[i] << "*" << slope << "+" << offset;
+            buffer << input_names[i] << "*" << affine.slope << "+" << affine.offset;
 
         buffer << ";\n";
     }

@@ -20,6 +20,14 @@ struct Descriptives;
 struct Histogram;
 struct Correlation;
 
+enum class ConfusionCell
+{
+    TruePositive,
+    FalsePositive,
+    FalseNegative,
+    TrueNegative
+};
+
 class TestingAnalysis
 {
 
@@ -128,13 +136,13 @@ public:
     BinaryClassificationRates calculate_binary_classification_rates(const float = 0.50) const;
 
     vector<Index> calculate_true_positive_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                               const vector<Index>& testing_indices, float threshold) const { return filter_classification_samples(targets, outputs, testing_indices, threshold, true, true); }
+                                                               const vector<Index>& testing_indices, float threshold) const { return filter_classification_samples(targets, outputs, testing_indices, threshold, ConfusionCell::TruePositive); }
     vector<Index> calculate_false_positive_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                                const vector<Index>& testing_indices, float threshold) const { return filter_classification_samples(targets, outputs, testing_indices, threshold, false, true); }
+                                                                const vector<Index>& testing_indices, float threshold) const { return filter_classification_samples(targets, outputs, testing_indices, threshold, ConfusionCell::FalsePositive); }
     vector<Index> calculate_false_negative_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                                const vector<Index>& testing_indices, float threshold) const { return filter_classification_samples(targets, outputs, testing_indices, threshold, true, false); }
+                                                                const vector<Index>& testing_indices, float threshold) const { return filter_classification_samples(targets, outputs, testing_indices, threshold, ConfusionCell::FalseNegative); }
     vector<Index> calculate_true_negative_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                               const vector<Index>& testing_indices, float threshold) const { return filter_classification_samples(targets, outputs, testing_indices, threshold, false, false); }
+                                                               const vector<Index>& testing_indices, float threshold) const { return filter_classification_samples(targets, outputs, testing_indices, threshold, ConfusionCell::TrueNegative); }
     Tensor<VectorI, 2> calculate_multiple_classification_rates() const;
 
     Tensor<VectorI, 2> calculate_multiple_classification_rates(const MatrixR&, const MatrixR&, const vector<Index>&) const;
@@ -144,7 +152,7 @@ public:
 private:
 
     vector<Index> filter_classification_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float,
-                                                bool, bool) const;
+                                                ConfusionCell) const;
 
     VectorR calculate_classification_errors(const string&, bool binary) const;
 

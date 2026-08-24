@@ -85,10 +85,16 @@ namespace opennn
         return value;
     }
 
-    inline pair<float, float> scaling_affine(ScalerMethod scaler,
-                                             const Descriptives& descriptives,
-                                             float min_range,
-                                             float max_range)
+    struct AffineMap
+    {
+        float slope = 1.0f;
+        float offset = 0.0f;
+    };
+
+    inline AffineMap scaling_affine(ScalerMethod scaler,
+                                    const Descriptives& descriptives,
+                                    float min_range,
+                                    float max_range)
     {
         using enum ScalerMethod;
         switch (scaler)
@@ -121,8 +127,8 @@ namespace opennn
         throw runtime_error("scaling_affine: invalid scaler method.");
     }
 
-    inline pair<float, float> unscaling_affine(ScalerMethod scaler,
-                                               const Descriptives& descriptives,
+    inline AffineMap unscaling_affine(ScalerMethod scaler,
+                                      const Descriptives& descriptives,
                                                float min_range,
                                                float max_range)
     {

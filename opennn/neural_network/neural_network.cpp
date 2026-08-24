@@ -2714,6 +2714,15 @@ void NeuralNetwork::copy_parameters_host()
     link_parameters();
 }
 
+NeuralNetwork::DeviceResidency NeuralNetwork::get_device_residency() const noexcept
+{
+    return {parameters.data(),
+            parameters_bf16_mirror.data(),
+            parameters_fp32_inference_storage.data(),
+            parameters_int8_storage.data(),
+            states.data()};
+}
+
 void NeuralNetwork::copy_states_device()
 {
     if (!states.empty())
@@ -2783,10 +2792,13 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
 
     if (upload_parameters)
     {
+        const DeviceResidency before = get_device_residency();
+
         copy_parameters_device();
         copy_states_device();
 
-        forward_propagation.reset_cuda_graph();
+        if (get_device_residency() != before)
+            forward_propagation.reset_cuda_graph();
     }
 
     if (!forward_propagation.use_cuda_graph || forward_propagation.cuda_graph_failed)

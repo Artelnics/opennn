@@ -119,12 +119,12 @@ void ImageDataset::set_input_scaling(const vector<Descriptives>& descriptives,
 
     for (Index i = 0; i < channels; ++i)
     {
-        const auto [scale, offset] = scaling_affine(scalers[size_t(i)],
+        const AffineMap affine = scaling_affine(scalers[size_t(i)],
                                                     descriptives[size_t(i)],
                                                     min_range,
                                                     max_range);
-        input_scale[size_t(i)] = scale;
-        input_offset[size_t(i)] = offset;
+        input_scale[size_t(i)] = affine.slope;
+        input_offset[size_t(i)] = affine.offset;
     }
 }
 

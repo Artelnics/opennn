@@ -708,9 +708,14 @@ vector<Index> TestingAnalysis::filter_classification_samples(const MatrixR& targ
                                                               const MatrixR& outputs,
                                                               const vector<Index>& testing_indices,
                                                               float decision_threshold,
-                                                              bool target_positive,
-                                                              bool output_positive) const
+                                                              ConfusionCell cell) const
 {
+    const bool target_positive = cell == ConfusionCell::TruePositive
+                              || cell == ConfusionCell::FalseNegative;
+
+    const bool output_positive = cell == ConfusionCell::TruePositive
+                              || cell == ConfusionCell::FalsePositive;
+
     const Index rows_number = targets.rows();
 
     vector<Index> result;

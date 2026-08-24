@@ -291,6 +291,19 @@ protected:
 
     vector<vector<Index>> source_layers;
 
+    struct DeviceResidency
+    {
+        const void* parameters = nullptr;
+        const void* bf16_mirror = nullptr;
+        const void* fp32_inference = nullptr;
+        const void* int8_storage = nullptr;
+        const void* states = nullptr;
+
+        friend bool operator==(const DeviceResidency&, const DeviceResidency&) = default;
+    };
+
+    DeviceResidency get_device_residency() const noexcept;
+
     Buffer parameters;
     Buffer parameters_bf16_mirror{Device::CUDA};
     Buffer parameters_fp32_inference_storage{Device::CUDA};
