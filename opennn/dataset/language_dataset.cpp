@@ -425,18 +425,11 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_display(read_json_bool(data_set_element, "Display"));
 
-    // Older files carried the limit on the data set rather than the source.
     set_input_sequence_length_limit(Index(read_json_index(
         data_source_element, "InputSequenceLengthLimit",
         read_json_index(data_set_element, "InputSequenceLengthLimit", input_sequence_length_limit))));
 
     set_classification_target(read_json_bool(data_set_element, "ClassificationTarget", classification_target));
-
-    // A deployment folder ships the model without the training corpus, and the
-    // model file already carries everything inference needs: the vocabularies,
-    // the sequence lengths and the roles of the variables. Rebuild the dataset
-    // from those instead of failing, and leave it with no samples -- training
-    // and analysis need the corpus and report their own errors without it.
 
     if (!data_path.empty() && !filesystem::exists(data_path)
      && data_set_element->has("InputVocabulary"))
@@ -449,10 +442,6 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
 
         maximum_input_sequence_length = read_json_index(data_set_element, "MaximumInputSequenceLength");
         maximum_target_sequence_length = read_json_index(data_set_element, "MaximumTargetSequenceLength");
-
-        // Whether the model has a decoder is not stored as such, but the roles
-        // of the variables say it exactly: only a sequence-to-sequence dataset
-        // declares a Decoder variable.
 
         bool has_decoder = false;
 

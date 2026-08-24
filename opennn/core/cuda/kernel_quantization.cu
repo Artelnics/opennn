@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// INT8 weight-only quantized linear, dequantization and embedding
-
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/core/cuda/kernel_quantization.cuh"
 
@@ -138,8 +136,6 @@ void w8a16_linear_cuda(const int m, const int in_features, const int out_feature
         return;
     }
 
-    // Wide vocabularies spread a row over eight warps: one block per row; else
-    // a block covers eight rows, a warp each.
     if (out_features >= 32768)
         OPENNN_CUDA_LAUNCH((w8a16_linear_out_major_kernel<T, 8>
             <<<out_features, block_size, 0, stream>>>(
@@ -150,8 +146,6 @@ void w8a16_linear_cuda(const int m, const int in_features, const int out_feature
                 m, in_features, out_features, x, w, scales, bias, y)));
 }
 
-// One scale per row (row_scale_stride 1, column_scale_stride 0) or per column
-// (0, 1).
 template<typename T>
 __global__ void w8_dequant_kernel(const int rows,
                                   const int row_length,
@@ -227,15 +221,12 @@ void embedding_forward_w8_cuda(const Index n, const float* inputs, const int8_t*
                        sequence_length, embedding_dimension, vocabulary_size, scale_embedding);
 }
 
-// The W8A16 linear and the dequant have BF16 callers only; the embedding
-// lookup serves both types.
 template void w8a16_linear_cuda<__nv_bfloat16>(const int, const int, const int, const bool, const __nv_bfloat16*, const int8_t*, const float*, const __nv_bfloat16*, __nv_bfloat16*);
 template void w8_dequant_cuda<__nv_bfloat16>(const Index, const Index, const bool, const int8_t*, const float*, __nv_bfloat16*);
 #define INSTANTIATE(T) \
     template void embedding_forward_w8_cuda<T>(const Index, const float*, const int8_t*, const float*, const float*, T*, const int, const int, const int, const bool);
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence, SL.

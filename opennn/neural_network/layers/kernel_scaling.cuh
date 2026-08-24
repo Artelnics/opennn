@@ -8,7 +8,6 @@
 template<typename TIn, typename TOut>
 void clamping_cuda(const Index n, const int features, const TIn* input, const float* lower, const float* upper, TOut* output);
 
-// Per-feature scaler codes in `scalers`; `inverse` applies the unscaling.
 template<typename TIn, typename TOut>
 void scale_cuda(const Index n, const int features,
                 const TIn* input,

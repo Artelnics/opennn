@@ -52,9 +52,6 @@ namespace opennn
         }
         else
         {
-            // std:: is load-bearing. Unqualified lookup finds this overload
-            // first - it is in the same namespace - and the call recursed until
-            // the stack ran out for every integer parse on macOS.
             return std::from_chars(first, last, value);
         }
     }
@@ -201,10 +198,7 @@ namespace opennn
     bool contains(initializer_list<string_view>, string_view);
     bool starts_with_any(string_view, initializer_list<string_view>);
     bool env_flag_enabled(const char*) noexcept;
-    // Flag with a default: unset/empty -> default_value; "0"/"false"/"off"/"no"
-    // -> false; "1"/"true"/"on"/"yes" -> true; anything else -> default_value.
     bool env_flag_enabled(const char*, bool default_value) noexcept;
-    // Integer with a default for unset/empty/unparsable.
     long long env_int_or(const char*, long long default_value) noexcept;
 
 }

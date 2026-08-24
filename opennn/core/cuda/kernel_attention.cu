@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// attention: heads, masks, softmax, rotary and decode sampling
-
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/core/cuda/kernel_attention.cuh"
 #include <curand_kernel.h>
@@ -16,13 +14,9 @@
 namespace
 {
 
-// The sampling kernels' block width; the launches use it, so cub's block
-// reduce and the actual blockDim can never disagree.
 constexpr int SAMPLING_BLOCK_THREADS = 256;
 using BlockArgMaxReduce = cub::BlockReduce<cub::KeyValuePair<int, float>, SAMPLING_BLOCK_THREADS>;
 
-// A token is padding when every feature is (numerically) zero; each lane
-// checks features [lane, lane + stride, ...] and the caller combines lanes.
 template<typename T>
 __device__ __forceinline__ bool token_is_padding_strided(const T* token, int features, int lane, int stride)
 {
@@ -33,9 +27,6 @@ __device__ __forceinline__ bool token_is_padding_strided(const T* token, int fea
 
 }
 
-// (b, p, q, d) -> (b, q, p, d): split_heads and concatenate_heads are the same
-// transpose with P/Q swapped; the 16-byte vector form runs over float4 when
-// the innermost dimension allows it.
 template<typename T>
 __global__ void swap_heads_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int P, const int Q, const int D)
 {
@@ -248,7 +239,6 @@ __global__ void attention_sequence_lengths_kernel(const int query_sequence_lengt
     const int warp = threadIdx.x >> 5;
     const int warps = blockDim.x >> 5;
 
-    // length = index of the first all-zero token (padding is a suffix), clamped to [1, seq]
     int first_padded = source_sequence_length;
 
     for (int s = warp; s < source_sequence_length; s += warps)
@@ -291,12 +281,6 @@ void attention_sequence_lengths_cuda(const int batch_size,
             source_lengths));
 }
 
-// The two length tensors the SDPA graph masks with, from the record an
-// Embedding exported. Only the key side carries padding: the query side stays
-// at the full sequence because the unfused path also computes every query row.
-// cuDNN reads a key length of zero as "skip this batch entry", which leaves
-// that sample's output unwritten, so the length is floored at one -- the same
-// floor the activation scan applies.
 __global__ void attention_sdpa_lengths_kernel(const int batch_size, const int query_sequence_length,
                                               const int source_sequence_length,
                                               const int* __restrict__ record,
@@ -328,7 +312,6 @@ __global__ void rope_apply_kernel(const int seq, const int model_dim, const int 
     const float* cr = cos + pos * rotary_dim;
     const float* sr = sin + pos * rotary_dim;
 
-    // Index, not int: row x model_dim is the whole activation offset.
     const Index row_base = Index(row) * Index(model_dim);
 
     for (int e = threadIdx.x; e < model_dim; e += blockDim.x)
@@ -854,7 +837,6 @@ void grouped_attention_cuda(const int batch, const int query_seq, const int key_
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence, SL.

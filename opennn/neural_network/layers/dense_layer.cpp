@@ -196,28 +196,11 @@ void Dense::configure_operators()
     const bool fuse_relu = (activation_operator.activation_function == ActivationFunction::ReLU)
                            && !batch_norm.active();
 
-    // CUDA-only: the fusion is the cuBLASLt GELU_AUX_BIAS epilogue, which writes
-    // the activated result to a second slot. The CPU combination has no such
-    // epilogue and would leave that slot untouched while the activation operator
-    // skipped its pass, so the layer would output zeros. configure_operators runs
-    // again from on_compute_dtype_changed, which compile() calls after
-    // set_compute_device, so the flag is correct by the time the arena is planned.
     const bool fuse_gelu_tanh = (activation_operator.activation_function == ActivationFunction::GELUTanh)
                                 && !batch_norm.active()
                                 && output_features % 8 == 0
                                 && get_compute_device() == Device::CUDA;
 
-    // A single-output layer - a classifier head, a regression output - runs its
-    // combination as a row-wise reduction on CUDA, and that kernel can carry
-    // any elementwise activation in the register it has just accumulated. Its
-    // own activation pass would be a launch to read and write one number per
-    // row: about a microsecond, which is five per cent of what a batch of 256
-    // costs. The activations excluded are the ones whose backward reads the
-    // pre-activation value, which this does not keep.
-    // Dropout is excluded because the pre-dropout activation is saved by the
-    // activation pass this fusion removes; ReLU and GELU-tanh reach the same
-    // exclusion through saves_pre_dropout_activation's own two clauses.
-    // OPENNN_SINGLE_OUTPUT_ACTIVATION=0 keeps the separate pass for the A/B.
     static const bool fuse_single_output_enabled =
         env_flag_enabled("OPENNN_SINGLE_OUTPUT_ACTIVATION", true);
 
@@ -302,10 +285,6 @@ void Dense::reset_single_output_relu_fusion()
 
 void Dense::reset_drelu_fusion()
 {
-    // The producer half is cleared too. Reconfiguring only the consumer used to
-    // leave the producer still emitting its ReLU mask and still believing a
-    // consumer would apply the ReLU backward for it - so that derivative was
-    // simply dropped and the producer's gradient came out wrong.
     if (drelu_producer)
     {
         drelu_producer->combination.emit_relu_mask = false;

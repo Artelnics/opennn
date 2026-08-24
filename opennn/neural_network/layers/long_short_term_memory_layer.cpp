@@ -29,10 +29,6 @@ namespace opennn
 namespace
 {
 
-// The fused path wants the four gate weights side by side in one matrix so the
-// input projection is a single GEMM. Forward and backward each built these by
-// hand, in the same forget/input/candidate/output order, with twelve MatrixMap
-// locals apiece to name the pieces.
 MatrixR concat_gate_columns(const TensorView& forget,
                             const TensorView& input,
                             const TensorView& candidate,
@@ -52,7 +48,6 @@ MatrixR concat_gate_columns(const TensorView& forget,
     return concatenated;
 }
 
-
 VectorR concat_gate_biases(const TensorView& forget,
                            const TensorView& input,
                            const TensorView& candidate,
@@ -70,7 +65,6 @@ VectorR concat_gate_biases(const TensorView& forget,
 
     return concatenated;
 }
-
 
 void zero_if_linked(const TensorView& view)
 {
@@ -263,8 +257,6 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
     const float* Ug = candidate_recurrent_weights.as<float>();
     const float* Uo = output_recurrent_weights.as<float>();
 
-    // Below 96 units the contiguous per-sequence kernel avoids the repeated
-    // GEMM/barrier overhead of the matrix path on forecasting-sized cells.
     if (H >= 96)
     {
         const MatrixR Wcat = concat_gate_columns(forget_weights, input_weights,
@@ -360,9 +352,6 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
         return;
     }
 
-    // Keep one preactivation row per sequence.  Iterating features before
-    // hidden units makes every weight access contiguous; the previous h-k
-    // ordering stepped through the matrices with a stride of H.
     vector<float> gate_preactivations(
         size_t(batch_size) * size_t(4 * H));
     const bool standard_gates =

@@ -8,8 +8,6 @@
 template<typename T>
 void dropout_forward_cuda(const Index n, T* output, uint8_t* mask, const float rate, const unsigned long long* seed_state);
 
-// Moves the device-side dropout seed on by one draw. Kept separate so it can be
-// captured into a CUDA graph alongside the draw it precedes.
 void advance_dropout_seed_cuda(unsigned long long* seed_state);
 
 template<typename T>

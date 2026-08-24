@@ -24,7 +24,6 @@ public:
 
     explicit AdaptiveMomentEstimation(Loss* = nullptr);
 
-
     void set_default();
 
     void configure_for_task(NetworkTask) override;

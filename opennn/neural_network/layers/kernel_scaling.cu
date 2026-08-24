@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// clamping, scaling and unscaling
-
 #include <cfloat>
 
 #include "opennn/core/cuda/kernel_common.cuh"
@@ -76,7 +74,6 @@ __global__ void scale_kernel(const int n, const int features,
                 y = (stds[f] > FLT_EPSILON) ? (x - means[f]) / stds[f] : 0.0f;
             break;
         case 3:
-            // Degenerate feature: recover the constant it held, as scale_cpu does.
             if constexpr (Inverse)
                 y = (stds[f] > FLT_EPSILON) ? x * stds[f] : means[f];
             else
@@ -128,7 +125,6 @@ void scale_cuda(const Index n, const int features,
 
 OPENNN_INSTANTIATE_FLOAT_BF16_2(INSTANTIATE)
 #undef INSTANTIATE
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence, SL.

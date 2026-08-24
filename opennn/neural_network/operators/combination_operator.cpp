@@ -139,12 +139,6 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
         }
     }
 
-    // A layer with one output does not go through cuBLASLt at all on CUDA - it
-    // takes the row-wise reduction, which has no epilogue vocabulary - so its
-    // activation travels as an argument instead of as an epilogue, and covers
-    // the ones cuBLASLt has no epilogue for either. linear_forward runs it as a
-    // separate pass wherever it cannot fold it, so this is only ever a speed
-    // decision.
     if (output_features == 1 && fused_activation != ActivationFunction::Identity)
         return linear_forward(get_input(forward_propagation, layer), weights, bias, output,
                               use_bias ? CUBLASLT_EPILOGUE_BIAS : CUBLASLT_EPILOGUE_DEFAULT,
@@ -195,9 +189,6 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
         }
     }
 
-    // A residual read of this layer's input by another consumer: its delta is
-    // summed by the same GEMM (BackPropagation::plan_delta_addends) instead of
-    // an accumulate pass afterwards.
     static const TensorView no_addend;
     const TensorView& addend = folds_input_delta_addend && !accumulate_input_delta && !recover_unfused
         ? back_propagation.input_delta_addend(layer, 0)

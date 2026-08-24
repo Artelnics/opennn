@@ -189,7 +189,6 @@ void GeneticAlgorithm::evaluate_population()
     NeuralNetwork* neural_network = loss->get_neural_network();
     const Index individuals_number = get_individuals_number();
 
-    // Restored on the way out: the flag belongs to the caller, not to the search.
     Optimizer* optimizer = training_strategy->get_optimization_algorithm();
     const bool optimizer_display = optimizer->get_display();
     optimizer->set_display(false);

@@ -79,8 +79,6 @@ static inline void checked_host_condition(bool condition, const char* message)
         opennn::device::check_last_error(); \
     } while (false)
 
-// One thread per element, on a caller-chosen stream. The kernel takes the
-// element count as its first parameter. A null stream means the compute stream.
 template<typename K, typename... Args>
 static inline void launch_elementwise_on(cudaStream_t stream, Index n, K kernel, Args... args)
 {
@@ -96,8 +94,6 @@ static inline void launch_elementwise(Index n, K kernel, Args... args)
     launch_elementwise_on(nullptr, n, kernel, args...);
 }
 
-// One warp per row: the kernel derives its row from the global warp id and
-// takes the row count as its first parameter.
 template<typename K, typename... Args>
 static inline void launch_warp_rows(cudaStream_t stream, Index rows, K kernel, Args... args)
 {
@@ -107,9 +103,6 @@ static inline void launch_warp_rows(cudaStream_t stream, Index rows, K kernel, A
     OPENNN_CUDA_LAUNCH(kernel<<<blocks, block_size, 0, stream>>>(checked_int(rows), args...));
 }
 
-// Threads for one row of the given width. A row narrower than the block does
-// not need the rest of the block standing idle; below a warp there is nothing
-// left to save.
 static inline int threads_for_width(int width)
 {
     if (width <= 32)  return 32;
@@ -126,7 +119,6 @@ static inline void launch_elementwise_strided(Index n, K kernel, Args... args)
     OPENNN_CUDA_LAUNCH(kernel<<<grid_size_strided_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, args...));
 }
 
-// One-thread kernel (scalar bookkeeping such as folding a metric into a sum).
 template<typename K, typename... Args>
 static inline void launch_single(cudaStream_t stream, K kernel, Args... args)
 {
@@ -144,10 +136,6 @@ static inline void launch_single(cudaStream_t stream, K kernel, Args... args)
     X(__nv_bfloat16, float)                \
     X(__nv_bfloat16, __nv_bfloat16)
 
-// VecIO<T, VEC>: VEC adjacent elements moved as one aligned raw load/store (up
-// to 16 bytes: eight BF16, four FP32 or sixteen bytes) and, for the float
-// variants, converted element by element. The caller guarantees the address
-// is VEC * sizeof(T) aligned.
 template<int BYTES> struct RawBytes;
 template<> struct RawBytes<1>  { unsigned char v; };
 template<> struct RawBytes<2>  { unsigned short v; };
@@ -200,8 +188,6 @@ static inline int vector_work_size(int total, int n_vec, int vec_width)
     return n_vec > n_tail ? n_vec : n_tail;
 }
 
-// Pointer alignment for vector loads; a null pointer counts as aligned so an
-// optional operand does not disable the vector path.
 template<int BYTES>
 static inline bool is_aligned(const void* ptr)
 {
@@ -212,12 +198,8 @@ static inline bool are_aligned(const Ptrs*... ptrs)
 {
     return (is_aligned<BYTES>(ptrs) && ...);
 }
-// Elements of T in a 16-byte vector: eight BF16, four FP32.
 template<typename T> constexpr int vec16 = 16 / int(sizeof(T));
 
-// Launches a kernel of the form (n_vec, n, args...): the first n_vec * VEC
-// elements go through the vector path, the tail through the scalar one; with
-// `aligned` false everything is scalar.
 template<int VEC, typename K, typename... Args>
 static inline void launch_vec_on(cudaStream_t stream, Index n, bool aligned, K kernel, Args... args)
 {
@@ -228,7 +210,6 @@ static inline void launch_vec_on(cudaStream_t stream, Index n, bool aligned, K k
                        stream>>>(n_vec, total, args...));
 }
 
-// Runtime float/bf16 choice for a templated call: f.template operator()<T>().
 template<typename F>
 static inline void dispatch_float_bf16(bool bf16, F&& f)
 {
@@ -241,10 +222,6 @@ __device__ __forceinline__ float sigmoid_f(float x)
     return 1.0f / (1.0f + expf(-x));
 }
 
-// Elementwise activations by enum value. Here rather than beside the activation
-// kernels because a kernel that produces a value can apply this to it before
-// the store, which is what fusing an activation into an epilogue means; the
-// single-output dense forward does exactly that.
 __device__ __forceinline__ float opennn_activation_value(float x, int function)
 {
     if (function == activation_sigmoid)    return sigmoid_f(x);
@@ -271,9 +248,6 @@ __device__ __forceinline__ bool token_is_padding(const T* token, int features)
     return true;
 }
 
-// One-thread row softmax over n contiguous elements: max, exp, sum, normalize
-// by 1 / (sum + epsilon). dst may alias src. FastExp selects __expf over expf
-// so each caller keeps its own numerics.
 template<typename T, bool FastExp = false>
 __device__ __forceinline__ void row_softmax(const T* src, T* dst, int n, float epsilon)
 {
@@ -292,7 +266,6 @@ __device__ __forceinline__ void row_softmax(const T* src, T* dst, int n, float e
     for (int j = 0; j < n; ++j) dst[j] = static_cast<T>(static_cast<float>(dst[j]) * inv_sum);
 }
 
-// Its backward for one row: dx = y * (dy - <y, dy>) * scale. dx may alias dy.
 template<typename T>
 __device__ __forceinline__ void row_softmax_backward(const T* y, const T* dy, T* dx, int n, float scale)
 {
@@ -302,9 +275,6 @@ __device__ __forceinline__ void row_softmax_backward(const T* y, const T* dy, T*
         dx[j] = static_cast<T>(static_cast<float>(y[j]) * (static_cast<float>(dy[j]) - dot) * scale);
 }
 
-// Warp reductions (all 32 lanes must participate). warp_reduce_sum/max use
-// xor shuffles and leave the result in every lane; warp_reduce_sum2 folds two
-// sums in one pass with down shuffles and leaves them in lane 0.
 __device__ __forceinline__ float warp_reduce_sum(float x)
 {
     #pragma unroll
@@ -331,7 +301,6 @@ __device__ __forceinline__ void warp_reduce_sum2(float& a, float& b)
     }
 }
 
-// Block-wide reductions; the result is valid in thread 0, which they report.
 __device__ __forceinline__ bool block_reduce_sum(float& a)
 {
     a = warp_reduce_sum(a);
@@ -375,7 +344,6 @@ __device__ __forceinline__ bool block_reduce_sum2(float& a, float& b)
     return threadIdx.x == 0;
 }
 
-// NHWC index arithmetic: flat element index -> (n, h, w, c).
 __device__ __forceinline__ void nhwc_decompose(Index i, int channels, int width, int height,
                                                Index& n, int& h, int& w, int& c)
 {
@@ -385,6 +353,6 @@ __device__ __forceinline__ void nhwc_decompose(Index i, int channels, int width,
     n = i / height;
 }
 
-#endif // OPENNN_HAS_CUDA
+#endif
 
 #endif

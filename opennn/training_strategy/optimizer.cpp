@@ -663,13 +663,6 @@ void Optimizer::warmup_device_training(
                            stream);
     }
 
-    // The warmup runs a real training step, so undoing it means the optimizer
-    // state as well as the model: train_epoch advances Adam's moments and its
-    // bias-correction counter, and SGD's momentum buffer. setup_optimizer_data
-    // clears all of them -- it zeroes the slot buffer unconditionally, not only
-    // when the buffer is resized. Resetting here rather than after the call
-    // keeps the invariant on the throwing path too, and stops a future optimizer
-    // from silently opting out.
     const auto restore_pre_warmup_state = [&]()
     {
         if(parameters_bytes > 0)
@@ -699,9 +692,6 @@ void Optimizer::warmup_device_training(
                              neural_network->get_device());
     };
 
-    // Capture both graph pipelines at their production group size before the
-    // measured epoch loop. The parameter and optimizer snapshots below make
-    // these real steps a semantics-neutral warm-up.
     const Index warmup_group_size = recurrent_graph_group_size(
         neural_network, training_context.forward.batch_size);
     const Index full_batches = training_batches.back().size() == training_batches.front().size()
@@ -714,20 +704,9 @@ void Optimizer::warmup_device_training(
     if (training_batches.size() > 1
         && training_batches.back().size() != training_batches.front().size())
         training_warmup_batch.push_back(training_batches.back());
-    // A no-op rather than an empty callback: post_batch_callback does not only
-    // get invoked, it also SELECTS control flow - the tail picks its
-    // device-metrics or host-metrics branch from it, and run_graph_epoch decides
-    // whether it may group batches. Clearing it made the warm-up exercise the
-    // device-metrics tail while the measured epoch took the host-metrics one, so
-    // that path's lazy allocations were still pending when the steady-state
-    // allocation guard armed and the first real tail threw. Keeping a callable
-    // here makes the warm-up walk exactly the branches the epoch will, while
-    // still not calling back into the user's code.
     const function<void(NeuralNetwork*)> saved_post_batch_callback = post_batch_callback;
     if (post_batch_callback) post_batch_callback = [](NeuralNetwork*) {};
 
-    // However the warm-up ends, the pre-warm-up state and the caller's callback
-    // come back.
     ScopeExit warmup_cleanup([&]
     {
         restore_pre_warmup_state();
@@ -932,9 +911,6 @@ TrainingResult Optimizer::train()
                                has_validation ? &batch_pools.validation_queue() : nullptr,
                                has_validation ? &validation_batches : nullptr);
 
-        // The eager pass above materializes every lazy cuDNN/workspace/optimizer
-        // allocation. A second, state-neutral pass can then capture both full
-        // pipelines and the remainder without cudaMalloc invalidating capture.
         if (training_session.has_graph_batches())
         {
             training_session.cuda_graph_capture_allowed = true;
@@ -956,9 +932,6 @@ TrainingResult Optimizer::train()
         && validation_batch_size > 0
         && validation_samples_number % validation_batch_size != 0;
 
-    // The tail trains eagerly after the graph epoch in persistent contexts of
-    // its own (TrainingSession::tail), so it neither enters the captured graph
-    // nor moves a pointer the graph baked in: the whole batches keep their graph.
     time_t beginning_time;
     time(&beginning_time);
     const auto measured_training_start = chrono::steady_clock::now();
@@ -969,13 +942,6 @@ TrainingResult Optimizer::train()
         device::CudaAllocationGrowthGuard steady_state_guard(
             needs_cuda_warmup && !has_validation_tail);
 
-        // Shuffling and slicing 10M+ sample indices costs a visible fraction of a
-        // fast GPU epoch, so the next epoch's batches are built on a helper thread
-        // while the GPU trains the current one. The permutation's seed is drawn
-        // on this thread and the helper shuffles with a generator of its own:
-        // drawing from the shared generator off-thread interleaved with the
-        // per-call dropout seeds, so two seeded runs of the same network took
-        // different batch orders and different masks from epoch 1 on.
         vector<vector<Index>> next_training_batches;
         future<void> next_training_batches_ready;
 
@@ -1018,18 +984,10 @@ TrainingResult Optimizer::train()
             training_accuracy = training_evaluation_result.accuracy;
             results.training_error_history(epoch) = training_error;
 
-            // validation_period, not display_period: this gate decides whether validation
-            // is *computed*, and everything downstream reads the result. Gating it on the
-            // printing cadence left validation_error_history at its -1 sentinel on every
-            // epoch that was not a multiple of display_period, which get_validation_error()
-            // and the minimal_index() best-epoch search then consumed as real values.
             const bool val_fresh = has_validation && (epoch % validation_period == 0);
 
             if (val_fresh)
             {
-                // TrainingResult::training_seconds is a training-throughput
-                // measurement. Keep validation in the stopping/quality protocol,
-                // but account for its data preparation and kernels separately.
                 if (on_gpu) device::synchronize(device::get_compute_stream());
                 const auto measured_validation_start = chrono::steady_clock::now();
 
@@ -1556,9 +1514,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
 
     const bool resident_gather = loss->get_dataset()->is_device_resident();
 
-    // Short graph groups avoid the synchronized remainder path for the simple
-    // RNN benchmark shapes. LSTM amortizes graph launches better with the full
-    // staging group, so retain the larger capture there.
     const Index M = recurrent_graph_group_size(neural_network,
                                                 forward_propagation.batch_size);
     Batch* host_batch = nullptr;
@@ -1569,11 +1524,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     {
         const Index groups = batches_number / M;
 
-        // setup_batch_pools fills pipelines[1] only when the epoch has at least
-        // slots_count batches; with a group size below TrainingSession::group_size
-        // the loop below runs more groups than there are batches per pipeline and
-        // alternated onto slots that were never created. Only pipelines whose
-        // whole group exists may be used.
         const size_t usable_pipelines =
             pipelines.size() > 1 && pipelines[1].slots[size_t(M) - 1]
                 ? pipelines.size()
@@ -1616,8 +1566,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         }
     };
 
-    // Grouped graphs hide the individual parameter updates from callbacks.
-    // Keep one graph replay per batch when a callback must observe every update.
     const bool can_group_batches = !post_batch_callback
                                 && batches_number >= M;
 
@@ -1700,11 +1648,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         }
         else
         {
-            // Only pipelines whose first slot exists may be alternated between.
-            // setup_batch_pools creates pipelines[1].slots[0] on the ungrouped
-            // path only, so a run with enough batches to group but a
-            // post_batch_callback installed - which sends the epoch here rather
-            // than to the grouped loop - alternated onto a null slot.
             const size_t usable_pipelines =
                 pipelines.size() > 1 && pipelines[1].slots[0] ? pipelines.size() : 1;
 
@@ -1882,10 +1825,6 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
     return epoch_result;
 }
 
-// An epoch's batches minus the remainder. The tail is the last batch and only
-// exists when its size differs from the context's -- a rule train_epoch and
-// evaluate_epoch each spelled out for themselves, including the copy that has
-// to be owned somewhere because `whole` points into it.
 struct EpochBatches
 {
     vector<vector<Index>> trimmed;
@@ -1894,7 +1833,6 @@ struct EpochBatches
 
     Index number() const { return Index(whole->size()); }
 };
-
 
 static EpochBatches split_off_tail(const vector<vector<Index>>& batches, Index batch_size)
 {
@@ -1910,12 +1848,6 @@ static EpochBatches split_off_tail(const vector<vector<Index>>& batches, Index b
     return split;
 }
 
-
-// Both epoch drivers run the whole batches and then, if the last batch is
-// short, that tail on its own -- and both then have to put the two numbers
-// back together. error and accuracy are per-sample means over different sample
-// counts, so they weight; active_tokens_count is a total, so it adds. Getting
-// that wrong is silent, and it was written out twice.
 static void merge_tail_result(Loss::EvaluationResult& result,
                               const Loss::EvaluationResult& tail_result,
                               const Index complete_samples,
@@ -1933,7 +1865,6 @@ static void merge_tail_result(Loss::EvaluationResult& result,
 
     result.active_tokens_count += tail_result.active_tokens_count;
 }
-
 
 Loss::EvaluationResult Optimizer::train_epoch(
     TrainingContext& main_context,
@@ -1998,18 +1929,12 @@ Loss::EvaluationResult Optimizer::train_epoch(
         TrainingSession::TailContext& tail = training_session.tail;
         if (!tail.context || tail.size != tail_size)
         {
-            // First tail of the run (the warm-up pass, before the allocation
-            // guard arms); a different remainder can only come from a new
-            // dataset or batch size, which restarts the session anyway.
             tail.batch = make_unique<Batch>(tail_size, loss->get_dataset(),
                                             neural_network->get_config());
             tail.context = make_unique<TrainingContext>(tail_size, *loss, true, &main_context);
             tail.size = tail_size;
             tail.capture_failed = false;
         }
-        // No re-set on the reused path: Loss::back_propagate links the layers'
-        // gradient views to whichever context it is handed, so the tail keeps its
-        // delta layout and its gradient buffer from one epoch to the next.
 
         Batch& batch = *tail.batch;
         ForwardPropagation& tail_forward_propagation = tail.context->forward;

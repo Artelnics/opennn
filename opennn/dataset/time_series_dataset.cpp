@@ -254,10 +254,6 @@ void TimeSeriesDataset::impute_missing_values_unuse()
 {
     const Index samples_number = get_samples_number();
 
-    // The window a sample actually reads is past + future rows, which is what
-    // refresh_forecasting_roles uses. Checking only past + 1 left samples whose
-    // target row held a NaN in use, and with future_time_steps > 1 it also kept
-    // the tail samples whose targets run off the end of the data.
     const Index window_span = get_past_time_steps() + get_future_time_steps();
 
     if (samples_number == 0 || window_span <= 0) return;
@@ -268,9 +264,6 @@ void TimeSeriesDataset::impute_missing_values_unuse()
 
     const Index num_sequences = samples_number - window_span + 1;
 
-    // Collected first and applied in one call: set_sample_role fires
-    // on_used_samples_changed on every flip, which in BinaryFile mode restreams
-    // the whole cache to rebuild its statistics.
     vector<Index> unused_samples;
 
     for (Index i = 0; i < num_sequences; ++i)
@@ -505,7 +498,6 @@ void TimeSeriesDataset::fill_batch(Batch& batch,
     throw_if(Index(sample_indices.size()) != batch.batch_size,
              "fill_batch sample count does not match the batch size.");
 
-    // The window kernels only write float, so a bf16 batch falls back to the host path.
     if (batch.input.type != Type::BF16
         && can_device_gather(batch, input_indices, target_indices))
     {
@@ -574,8 +566,6 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index lags_number)
 
     const Index variables_number = get_variables_number();
 
-    // Guarded like the calculate_autocorrelations twin: without the lag floor a
-    // one- or two-sample series produced a negative third dimension below.
     const Index effective_lags_number =
         ((samples_number <= lags_number) && lags_number > 2) ? lags_number - 2 :
          (samples_number == lags_number + 1 && lags_number > 1) ? lags_number - 1 :

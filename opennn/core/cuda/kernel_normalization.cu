@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// layer, RMS and batch normalization
-
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/cuda/kernel_normalization.cuh"
@@ -17,8 +15,6 @@ __global__ void norm_forward_kernel(const int N, const int D, const T* __restric
 {
     const int idx = blockIdx.x;
 
-    // Index, not int: the warp-per-row siblings already widen here, and a
-    // row offset of rows x features passes 2^31 on a long-sequence BF16 batch.
     const Index row_base = Index(idx) * Index(D);
 
     const T* x_row = X + row_base;
@@ -125,62 +121,25 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
                        epsilon, apply_relu ? 1 : 0, y);
 }
 
-// ---- fused batch-norm training forward and backward (NHWC) -----------------
-//
-// One thread owns VEC adjacent channels and strides down a slice of rows, so a
-// warp reads consecutive channels of one row: coalesced, vector loads along C,
-// which is contiguous in NHWC. Reduce blocks hold BN_THREADS threads laid out
-// as (channel-group lanes, row lanes); grid (channel-group blocks, row blocks).
-// Row-block partials are summed by a second, tiny kernel so the reduction order
-// is fixed - no float atomics.
-//
-// ReLU mask: the forward apply pass packs (y > 0) eight channels per byte,
-// mask[(row * channels + c0) / 8] (one lane's eight BF16 channels, or two
-// adjacent lanes' four FP32 channels each). The backward gates dY with that
-// byte instead of re-reading Y: one bit per element in place of a second
-// full-width tensor in each of its two passes.
-//
-// x_hat: from X as (x - mean) * inv_var. Without a mask, in the reduce pass
-// only, and only for a ReLU output that is BN(x) with no residual add
-// (XHAT_FROM_Y), it is rebuilt as (y - beta) / gamma instead: where y == 0 the
-// masked dY is 0 and x_hat drops out of both sums, so X need not be read there.
-// The apply pass always reads X: dX = gamma * inv_var * (g - dbeta/M - x_hat *
-// dgamma/M) is non-zero on masked elements too, and there y says nothing about
-// x_hat.
-
 constexpr int BN_THREADS = 256;
 constexpr Index BN_MAX_ROW_BLOCKS = 128;
 
-// The wide rung is a 16-byte channel group (vec16: eight BF16 or four FP32
-// channels per lane); eight FP32 channels per lane put the reduce kernel at
-// ~90 registers and measured slower.
-
-// The mask byte covers eight channels; a lane with a four-channel group takes
-// its nibble. No mask: every element passes.
 __device__ static inline unsigned batchnorm_mask_bits(const uint8_t* mask, const Index i, const int c0)
 {
     return mask ? unsigned(mask[i / 8]) >> (c0 & 4) : 0xFFu;
 }
 
-// Upper bound on the row blocks a launch uses for `rows`: what the caller's
-// partials scratch must hold.
 Index batchnorm_partial_rows(const Index rows)
 {
     return rows < BN_MAX_ROW_BLOCKS ? (rows <= 0 ? 1 : rows) : BN_MAX_ROW_BLOCKS;
 }
 
-// As many channel-group lanes as the tensor has, up to a warp; the rest of the
-// block strides down the rows, so narrow layers (64 channels) still fill it.
 static dim3 batchnorm_reduce_block(const Index channel_groups)
 {
     const int lanes = int(channel_groups < 32 ? channel_groups : 32);
     return dim3(unsigned(lanes), unsigned(BN_THREADS / lanes));
 }
 
-// Row blocks for a launch: enough to fill the GPU when there are rows to
-// spare, but at least four rows per row lane, so a late ResNet stage at a small
-// batch (128-512 rows) is not spread over 128 nearly idle blocks whose partials
-// then have to be summed again.
 static Index batchnorm_row_blocks(const Index rows, const dim3& reduce_block)
 {
     const Index wanted = rows / (Index(reduce_block.y) * 4);
@@ -188,9 +147,6 @@ static Index batchnorm_row_blocks(const Index rows, const dim3& reduce_block)
     return wanted < 1 ? 1 : (wanted > cap ? cap : wanted);
 }
 
-// Sums the row-block partials of a channel: a warp of channels per block, eight
-// lanes striding the row blocks, so a 128-block reduction is 16 loads per lane
-// and a shared sum, not 128 dependent loads on one thread.
 constexpr int BN_FINALIZE_LANES = 8;
 
 __device__ static bool batchnorm_sum_partials(const int channels, const int row_blocks,
@@ -222,8 +178,6 @@ __device__ static bool batchnorm_sum_partials(const int channels, const int row_
     return true;
 }
 
-// Sums a reduce block's per-thread (s1, s2) down its row lanes and stores one
-// (s1, s2) pair per channel for this row block.
 template<int VEC>
 __device__ static void batchnorm_store_partials(const int channels, const int c0,
                                                 const float* s1, const float* s2,
@@ -259,8 +213,6 @@ __device__ static void batchnorm_store_partials(const int channels, const int c0
     }
 }
 
-// Grid of a reduce launch over `rows` x `channels` in VEC-channel groups, and
-// of the finalize that sums its row-block partials.
 struct BnReduceLaunch
 {
     dim3 reduce_grid, reduce_block;
@@ -280,8 +232,6 @@ static BnReduceLaunch batchnorm_reduce_launch(const Index rows, const Index chan
     launch.finalize_block = dim3(32, BN_FINALIZE_LANES);
     return launch;
 }
-
-// ---- forward -----------------------------------------------------------------
 
 template<typename T, int VEC>
 __global__ void batchnorm_forward_reduce_kernel(const Index rows, const int channels,
@@ -315,10 +265,6 @@ __global__ void batchnorm_forward_reduce_kernel(const Index rows, const int chan
     batchnorm_store_partials<VEC>(channels, c0, s1, s2, partials);
 }
 
-// Batch statistics from the row-block partials, the running-statistics update,
-// and the per-channel scale/shift the apply pass uses. Population variance for
-// the batch, as the CPU path; the running variance keeps the sample variance
-// cuDNN's forward stores.
 __global__ void batchnorm_forward_finalize_kernel(const int channels, const int row_blocks,
                                                   const float inv_rows, const float unbias,
                                                   const float epsilon, const float momentum,
@@ -346,13 +292,6 @@ __global__ void batchnorm_forward_finalize_kernel(const int channels, const int 
     scale_shift[channels + c] = beta[c] - m * scale;
 }
 
-// y = relu?(x * scale + shift [+ residual]) for a lane's VEC channels, and the
-// ReLU bits. The mask byte covers eight channels: a VEC == 8 lane writes its
-// own byte; with VEC == 4 two adjacent lanes hold the two nibbles - the group
-// index is even for the low nibble and consecutive groups are consecutive
-// lanes of one warp - so the odd lane's bits are shuffled down and the even
-// lane writes. Every lane runs the loop body for the shuffle's sake; lanes past
-// the end do no work.
 template<typename T, int VEC, bool RELU, bool ADD>
 __global__ void batchnorm_forward_apply_kernel(const Index groups, const int channels,
                                                const T* __restrict__ x,
@@ -435,8 +374,6 @@ void batchnorm_forward_fused_cuda(const Index rows, const Index channels,
     else if (add)          launch_elementwise_strided(groups, batchnorm_forward_apply_kernel<T, VEC, false, true >, checked_int(channels), x, residual, scale_shift, y, mask);
     else                   launch_elementwise_strided(groups, batchnorm_forward_apply_kernel<T, VEC, false, false>, checked_int(channels), x, residual, scale_shift, y, mask);
 }
-
-// ---- backward ----------------------------------------------------------------
 
 template<typename T, int VEC, bool XHAT_FROM_Y>
 __global__ void batchnorm_backward_reduce_kernel(const Index rows, const int channels,
@@ -581,14 +518,11 @@ void batchnorm_backward_fused_cuda(const Index rows, const Index channels,
     if (rows == 0 || channels == 0) return;
     cudaStream_t stream = opennn::device::get_compute_stream();
 
-    // Wide 16-byte groups where the count allows it; the mask needs that
-    // layout (eight channels per byte), and with it Y is not read at all.
     const bool wide = channels % 8 == 0;
     const bool vec2 = channels % 2 == 0;
     if (!wide) mask = nullptr;
     if (mask) y = nullptr;
 
-    // x_hat from Y needs the ReLU output and its parameters.
     const bool from_y = xhat_from_y && y != nullptr && beta != nullptr;
 
     const auto launch = [&]<int VEC>()
@@ -656,17 +590,7 @@ void add_relu_cuda(const Index total, const float* a, const float* b,
     launch_elementwise_strided(total, add_relu_kernel, a, b, apply_relu ? 1 : 0, y);
 }
 
-
-// ---- warp-per-row layer norm --------------------------------------------------
-//
-// One warp per row when D is a small multiple of one 16-byte vector per lane
-// (D = 32 * VEC * ITER, ITER <= 4: 256..1024 for BF16, 128..512 for FP32) and
-// every row-shaped operand is 16-byte aligned. Each lane keeps its ITER * VEC
-// values in registers, so a row is read once, the statistics cost a couple of
-// warp shuffles instead of a block reduction, and the loads and stores are
-// full 128-bit transactions. Anything else takes the block-per-row kernels.
-
-static constexpr int norm_warp_rows_per_block = 8;   // 256 threads
+static constexpr int norm_warp_rows_per_block = 8;
 
 template<typename T, int ITER>
 __device__ __forceinline__ bool norm_warp_shape(const int D)
@@ -752,11 +676,6 @@ norm_forward_warp_kernel(const int N, const int D, const T* __restrict__ X, cons
     }
 }
 
-// dX for its rows and, in the same pass, this warp's share of dgamma / dbeta:
-// each lane owns the columns it loads, accumulates over the warp's rows in
-// registers, and the block folds its warps into one row of `partials`
-// ([gridDim.x][2][D]: gamma then beta) that norm_weight_gradient_finalize_kernel
-// sums. Deterministic, and dY / X are read once instead of twice.
 template<typename T, bool HasMean, int ITER>
 __global__ void __launch_bounds__(256)
 norm_backward_warp_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X,
@@ -828,8 +747,7 @@ norm_backward_warp_kernel(const int N, const int D, const T* __restrict__ dY, co
         }
     }
 
-    // Fold the block's warps: warp w adds its columns into shared, in turn.
-    __shared__ float block_gamma[32 * 8 * 4];   // D <= 1024
+    __shared__ float block_gamma[32 * 8 * 4];
     __shared__ float block_beta [32 * 8 * 4];
     for (int i = threadIdx.x; i < D; i += blockDim.x) { block_gamma[i] = 0.0f; block_beta[i] = 0.0f; }
     __syncthreads();
@@ -876,8 +794,6 @@ __global__ void norm_weight_gradient_finalize_kernel(const int blocks, const int
     if constexpr (HasMean) dBeta[d] = b;
 }
 
-// The block count for the warp-per-row backward: enough warps to fill the
-// device several times over, few enough that the finalize sum stays short.
 static inline int norm_warp_blocks(const int N)
 {
     const int needed = ceil_div(N, norm_warp_rows_per_block);
@@ -1130,7 +1046,6 @@ void rmsnorm_backward_cuda(const int N, const int D, const T* dY, const T* X, co
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence, SL.

@@ -17,7 +17,6 @@
 namespace opennn
 {
 
-// Defined below: against the CUDA kernels, or as throwing stubs.
 static void swiglu_forward_gpu(const TensorView&, const TensorView&, TensorView&);
 static void swiglu_backward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&);
 
@@ -104,7 +103,6 @@ OPENNN_CUDA_STUB(void, swiglu_forward_gpu, (const TensorView&, const TensorView&
 OPENNN_CUDA_STUB(void, swiglu_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&))
 
 #endif
-
 
 void SwiGLUOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
 {

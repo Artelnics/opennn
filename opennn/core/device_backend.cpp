@@ -29,7 +29,6 @@ public:
     ThreadPoolDevice* get_thread_pool_device();
     void set_threads_number(int);
 
-    // Handles of the active lane (see device::active_lane).
     static cublasHandle_t get_cublas_handle()      { return instance().cublas(device::active_lane()); }
     static cublasLtHandle_t get_cublas_lt_handle() { return instance().cublas_lt_handle; }
     static cudnnHandle_t get_cudnn_handle()        { return instance().cudnn(device::active_lane()); }
@@ -55,7 +54,6 @@ private:
     cublasLtHandle_t cublas_lt_handle = nullptr;
     cudnnOpTensorDescriptor_t op_tensor_add_descriptor = nullptr;
 
-    // Per lane; lane 0 is created with the backend, the others on first use.
     std::mutex lane_mutex;
     std::array<cudaStream_t, device::MAX_LANES>   lane_streams{};
     std::array<cublasHandle_t, device::MAX_LANES> cublas_handles{};
@@ -76,25 +74,6 @@ namespace opennn::device
 namespace
 {
 
-// OPENNN_DEVICE_POISON:
-//   1  recycled blocks come back as 0xFF -- NaN as fp32 and as bf16
-//   2  recycled blocks come back as zeros; the control, see the mode below
-//   3  fresh cudaMalloc is poisoned too, so a read-before-write fails on the
-//      first allocation instead of waiting for the pool to recycle something.
-//      Mode 1 needs whatever ran earlier to have left the right block behind,
-//      which makes a failure depend on test order; mode 3 removes that and
-//      makes each site reproduce on its own.
-//   4  poison on give(), zero on take(). This one separates the two things
-//      mode 1 cannot tell apart. A new owner that reads before writing gets
-//      zeros here and is happy; an old owner still reading a block it already
-//      handed back sees NaN. So mode 4 failing means a use-after-free, and
-//      mode 4 passing while mode 1 fails means a buffer that is merely
-//      correct-at-zero.
-//
-// The control matters: a site that reads memory it never wrote and expects
-// zero passes under 2 and fails under 1 or 3, while anything failing under 2
-// as well means the poison is landing on a block that is still live, which
-// would be a bug in the cache rather than in the caller.
 static int device_poison_mode()
 {
     static const int mode = []
@@ -113,17 +92,8 @@ static int device_poison_byte()
 
 #ifdef OPENNN_HAS_CUDA
 
-// On the compute stream, never the null stream: OpenNN's streams are created
-// with cudaStreamNonBlocking, so a plain cudaMemset is not ordered against them
-// and can land after the kernel that fills the buffer rather than before it,
-// wiping good data instead of the previous tenant's.
 static void fill_device_memory(void* pointer, int value, Index byte_count)
 {
-    // Ordering has to be airtight or the diagnostic accuses the wrong code: a
-    // fill that lands after the kernel which filled the buffer looks exactly
-    // like a read of uninitialised memory. The compute stream alone is not
-    // enough, because a block can be taken on one lane and used on another, so
-    // this is a full device sync. It is slow, and it is a debug mode.
     if (cudaMemset(pointer, value, size_t(byte_count)) != cudaSuccess)
         cudaGetLastError();
 
@@ -137,7 +107,6 @@ static void poison_device_memory(void* pointer, Index byte_count)
 }
 
 #endif
-
 
 atomic_bool cuda_allocation_growth_forbidden_runtime{false};
 atomic_bool cuda_matmul_plan_creation_forbidden_runtime{false};
@@ -414,24 +383,6 @@ namespace
 
 #ifdef OPENNN_HAS_CUDA
 
-// Reuse of freed CUDA blocks, keyed on exact size, gated on completion of the
-// work that last touched them.
-//
-// cudaMalloc/cudaFree is expensive enough to dominate short-lived work: a
-// malloc+free pair of 8 MB measures ~0.68 ms on an RTX 3060 Laptop, and
-// building a dense inference arena of that size measured 0.63 ms, more than the
-// 0.27 ms the forward pass itself took.
-//
-// cudaFree implicitly synchronises, so simply skipping it would let a recycled
-// block reach new work while earlier work still reads it. Instead, record an
-// event on every stream a block could have been touched by when it is released,
-// and hand it back only once all of those events have completed. A block whose
-// events are still pending is left alone and the caller allocates fresh, so
-// this never blocks.
-//
-// The streams are every configured lane plus the transfer stream --
-// get_compute_stream() resolves to whichever lane is active, so recording only
-// on it would miss blocks used on another lane.
 class CudaBlockCache
 {
 public:
@@ -461,9 +412,6 @@ public:
 
         if (ready == candidates.end())
         {
-            // Blocks of the right size existed but were all still in use by
-            // work that has not completed, which is a different problem from
-            // never having cached one.
             note(candidates.empty() ? "blockcache:miss" : "blockcache:miss_pending");
             return nullptr;
         }
@@ -477,13 +425,6 @@ public:
         candidates.pop_back();
         cached_bytes -= byte_count;
 
-        // OPENNN_DEVICE_POISON=1 hands the block back full of 0xFF -- a NaN as
-        // fp32 and as bf16 -- rather than the previous tenant's bytes, so a
-        // buffer that is only correct because the allocator returned something
-        // harmless fails loudly instead of drifting.
-        // Mode 4 hands the block back clean: the poison went in at give(), so
-        // anything that still reads zeros correctly here is a new owner, not a
-        // stale one.
         if (device_poison_mode() == 4)
             fill_device_memory(pointer, 0x00, byte_count);
         else if (poison_on_reuse)
@@ -506,9 +447,6 @@ public:
 
         note("blockcache:give");
 
-        // Mode 4 only. The sync is mandatory: events are recorded below but not
-        // waited on, so without it this would overwrite work still legitimately
-        // in flight and accuse the wrong code.
         if (device_poison_mode() == 4)
         {
             if (cudaDeviceSynchronize() != cudaSuccess) cudaGetLastError();
@@ -518,9 +456,6 @@ public:
         CachedBlock block;
         block.pointer = pointer;
 
-        // Every stream that could hold work touching this block. If any event
-        // cannot be recorded the block is not safe to hand out again, so it is
-        // refused outright and the caller frees it.
         bool recorded = true;
 
         for (int lane = 0; lane < lanes_available(); ++lane)
@@ -540,11 +475,6 @@ public:
         return true;
     }
 
-    // Hand every cached block back to the driver. Called when an allocation
-    // fails: memory held here is memory the driver cannot use, and this
-    // library is routinely run right up against the capacity limit.
-    // Returns whether anything was actually released, so a caller can tell a
-    // retry apart from a hopeless one.
     bool flush()
     {
         const lock_guard<mutex> guard(blocks_mutex);
@@ -574,8 +504,6 @@ public:
 
 private:
 
-    // Counted through the profiler so the table already in place reports them,
-    // and only when profiling is on: this sits under every allocation.
     static void note(const char* key)
     {
         if (profiler::is_enabled()) profiler::stats().add(key, 0.0);
@@ -601,12 +529,6 @@ private:
         return (megabytes > 0 ? megabytes : Index(512)) * 1024 * 1024;
     }
 
-    // Reached from ~Buffer, which is noexcept: every CUDA call here is made
-    // directly and its status inspected rather than routed through CHECK_CUDA.
-    // A sticky error (an earlier kernel fault) used to throw out of a
-    // destructor while that very fault was unwinding, and std::terminate
-    // replaced the diagnostic the user needed to see. Returning false instead
-    // lets the caller fall back to cudaFree, whose status is already ignored.
     bool record_pending(CachedBlock& block, cudaStream_t stream) noexcept
     {
         if (!stream) return true;
@@ -644,16 +566,12 @@ private:
                               {
                                   const cudaError_t status = cudaEventQuery(event);
 
-                                  // cudaErrorNotReady is an answer rather than a
-                                  // failure, but it still lands in the sticky
-                                  // last-error slot check_last_error() reads.
                                   cudaGetLastError();
 
                                   return status == cudaSuccess;
                               });
     }
 
-    // noexcept: reached from give(), which runs inside ~Buffer.
     void recycle_events(CachedBlock& block) noexcept
     {
         event_pool.insert(event_pool.end(),
@@ -689,13 +607,6 @@ void* allocate(Device device_type, Index byte_count)
         if (void* recycled = CudaBlockCache::instance().take(byte_count))
             return recycled;
 
-        // The growth guard is checked here rather than inside allocate_cuda, so
-        // that recycling a cached block stays legal during warmup and capture
-        // while a real cudaMalloc is refused. Inside allocate_cuda the refusal
-        // was a runtime_error indistinguishable from an out-of-memory, so the
-        // catch below flushed the whole block cache - a device-wide
-        // synchronization and a round of cudaFree - purely to re-raise a
-        // diagnostic, and did it in the middle of a stream capture.
         throw_if(cuda_allocation_growth_forbidden(),
                  "CUDA alloc of {} bytes forbidden (warmup incomplete).", byte_count);
 
@@ -703,17 +614,12 @@ void* allocate(Device device_type, Index byte_count)
         {
             void* const fresh = allocate_cuda(byte_count);
 
-            // Mode 3 only: the driver hands out zeroed pages, which is exactly
-            // the assumption a read-before-write is leaning on.
             if (device_poison_mode() == 3) poison_device_memory(fresh, byte_count);
 
             return fresh;
         }
         catch (const runtime_error&)
         {
-            // Retained blocks are memory the driver cannot hand out. Release
-            // them and try once more before failing, so enabling the cache can
-            // never turn a workload that used to fit into one that does not.
             if (!CudaBlockCache::instance().flush()) throw;
         }
 #endif
@@ -723,10 +629,6 @@ void* allocate(Device device_type, Index byte_count)
     return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
 }
 
-// noexcept: every caller is a destructor (Buffer, PinnedBuffer) or a swap on a
-// destruction path, and a release that throws turns a reportable CUDA fault
-// into std::terminate. Device::Auto is a programming error rather than a
-// runtime one, so it is treated as host memory here instead of throwing.
 void deallocate(Device device_type, void* pointer, Index byte_count) noexcept
 {
     if (!pointer) return;
@@ -1140,9 +1042,6 @@ void StreamCapture::end(GraphExecHandle& exec)
 
     const GraphHandle graph(raw_graph);
 
-    // Node count, once per capture, when profiling: each node is a launch the
-    // GPU pays ~2-3 us for regardless of batch, so at small batch this number
-    // is the step's floor.
     if (env_flag_enabled("OPENNN_PROFILE") || env_flag_enabled("OPENNN_GRAPH_NODES"))
     {
         size_t nodes = 0;
@@ -1276,7 +1175,7 @@ Backend::Backend()
 cudaStream_t Backend::stream(int lane)
 {
 #ifdef OPENNN_HAS_CUDA
-    if (!lane_streams[0]) return nullptr;   // no CUDA device
+    if (!lane_streams[0]) return nullptr;
     if (lane == 0) return lane_streams[0];
     std::lock_guard<std::mutex> lock(lane_mutex);
     if (!lane_streams[lane])
@@ -1354,11 +1253,6 @@ void Backend::set_threads_number(int num_threads)
 
     Eigen::setNbThreads(num_threads);
     omp_set_num_threads(num_threads);
-    // Dynamic teams let the runtime resize a parallel region's team, and with
-    // this OpenMP that means creating and destroying worker threads rather than
-    // reusing them: a single inference pass over the HIGGS split was measured
-    // spawning about seven threads per batch. OPENNN_OMP_DYNAMIC=0 pins the
-    // team instead; the default is unchanged until the A/B says otherwise.
     const char* const omp_dynamic = getenv("OPENNN_OMP_DYNAMIC");
     omp_set_dynamic(omp_dynamic ? atoi(omp_dynamic) : 1);
 #if defined(_OPENMP) && _OPENMP >= 200805
@@ -1406,8 +1300,6 @@ namespace
         bool                   has_algorithm = false;
         size_t                 workspace_bytes = 0;
 
-        // The heuristics' top candidates, timed on the first real execution
-        // (autotune_lt_plan); `tuned` once the winner is pinned in `algorithm`.
         vector<cublasLtMatmulHeuristicResult_t> candidates;
         bool                   tuned = true;
 
@@ -1463,8 +1355,6 @@ namespace
 
     struct CudaMatmulThreadState
     {
-        // One workspace set per lane: lanes run concurrently, so they cannot
-        // share scratch.
         using LaneWorkspaces = std::array<Buffer, static_cast<size_t>(device::GraphWorkspaceKind::Count)>;
         std::array<LaneWorkspaces, device::MAX_LANES> workspaces =
             make_lanes(make_index_sequence<device::MAX_LANES>{});
@@ -1501,7 +1391,6 @@ namespace
 
     void* thread_workspace(device::GraphWorkspaceKind kind, Index minimum_bytes)
     {
-        // The pinned inference-graph workspaces belong to lane 0.
         if (device::active_lane() == 0)
             if (const optional<void*> graph_workspace =
                     device::graph_workspace_override(kind, minimum_bytes))
@@ -1585,10 +1474,6 @@ namespace
             CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
             &cublas_lt_workspace_search_bytes, sizeof(cublas_lt_workspace_search_bytes)));
 
-        // The heuristics' first choice is what cuBLASLt would run; asking for
-        // the top-K and timing them on the first real call picks among them
-        // (autotune_lt_plan). OPENNN_LT_AUTOTUNE_CANDIDATES=1 keeps the
-        // heuristic choice.
         const int requested = int(clamp(env_int_or("OPENNN_LT_AUTOTUNE_CANDIDATES", 8), 1LL, 32LL));
         vector<cublasLtMatmulHeuristicResult_t> heuristics(static_cast<size_t>(requested), cublasLtMatmulHeuristicResult_t{});
         int returned_results = 0;
@@ -1617,10 +1502,6 @@ namespace
         return plans.emplace(key, std::move(plan)).first->second;
     }
 
-    // Times every candidate of the plan on the call's real operands (the
-    // outputs are rewritten by each run and end with the winner's values, which
-    // is what the call would have produced anyway) and pins the fastest. Not
-    // during stream capture, and with the device idle when several lanes run.
     void autotune_lt_plan(LtMatmulPlan& plan,
                           const void* a_data, const void* b_data, void* c_data,
                           cudaStream_t stream)

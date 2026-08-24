@@ -76,8 +76,6 @@ GIoUResult yolo_loss_giou_forward(const float* pred, const float* gt)
 
     const float v_diff = atan2f(gt[2], gt[3]) - atan2f(pred[2], pred[3]);
     const float v     = INV_PI2 * v_diff * v_diff;
-    // Guard on union_area (not iou) so the aspect-ratio term matches the gradient
-    // for disjoint boxes; the CIoU definition keeps alpha = v/(1-iou+v) at iou = 0.
     const float alpha = (union_area > 0.0f) ? v / (1.0f - r.iou + v + EPSILON) : 0.0f;
 
     r.giou -= rho2/c2 + alpha*v;
@@ -321,11 +319,6 @@ namespace
 
 }
 
-// MSVC 19.50 still crashes its optimizer (C1001) generating code for this
-// function at /O2 with the Eigen-heavy PCH in scope; re-tested 2026-08-22 on
-// 19.50.35729. It is the cold CPU reference kernel, so /Od costs nothing here.
-// The pragma is deliberately NOT applied to yolo_v8_gradient_kernel_tal below:
-// that one is the GPU training path, and it no longer triggers the ICE.
 #ifdef _MSC_VER
 #pragma optimize("", off)
 #endif
@@ -390,10 +383,6 @@ void yolo_gradient_kernel(const TensorView& output,
                                 const float p = out[base + 5 + c];
                                 const float t = tgt[base + 5 + c];
                                 const float p_t   = (t > 0.5f) ? p : (1.0f - p);
-                                // Deliberate approximation: the focal weight (1-p_t)^gamma is
-                                // treated as a constant modulating factor rather than
-                                // differentiated (unlike the background objectness term, which
-                                // uses the full derivative). Exact at the default gamma = 0.
                                 const float focal = pow(1.0f - p_t, lam.focal_gamma);
                                 delta[base + 5 + c] = lambda_class * focal * (p - t) / (p * (1.0f - p) + EPSILON) * inv_batch;
                             }
@@ -485,9 +474,6 @@ void for_each_yolo_head(const ForwardPropagation& forward_propagation,
 
             const Shape target_shape({batch_size, head_shape[0], head_shape[1], channels});
 
-            // One head owns the whole per-sample block, so the assembly would
-            // be a copy of tgt onto itself. Point at it instead; that is what
-            // the separate single-head entry points existed to avoid.
             if (head_floats == per_sample_floats)
             {
                 const TensorView whole(const_cast<float*>(tgt), target_shape, Type::FP32);
@@ -555,10 +541,6 @@ void yolo_gradient_cpu_multi(const ForwardPropagation& forward_propagation,
         });
 }
 
-// TAL_ALPHA=0: pure IoU-based assignment so all classes get positive supervision
-// even when the class head is randomly initialised (e.g. fine-tuning a COCO head
-// on VOC). With ALPHA=0.5 classes that start at near-zero confidence never get
-// positive assignments and the class head collapses.
 static constexpr float TAL_ALPHA = 0.0f;
 static constexpr float TAL_BETA  = 6.0f;
 static constexpr Index TAL_TOP_K = 10;
@@ -577,9 +559,6 @@ static float iou_cxcywh(float cx1, float cy1, float w1, float h1,
     return inter / (w1*h1 + w2*h2 - inter + 1e-7f);
 }
 
-// reg_max == 1 is the plain head: the four channels are the box directly, with
-// the centre offset by the cell. Folded in here so callers do not each carry
-// the branch -- three of them did, identically.
 static void dfl_decode_box(const float* box_logits, Index reg_max, Index col, Index row, Index G,
                             float& pred_cx, float& pred_cy, float& pred_w, float& pred_h)
 {
@@ -881,7 +860,6 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                                 float w_tgt = 0.0f;
                                 if (i == df) w_tgt += wl;
                                 if (i == dc) w_tgt += wu;
-                                // DFL target gradient (scaled by lam.dfl) + CIoU chain (scaled by lam.giou)
                                 dlogit[i] = dfl_s * (p - w_tgt)
                                           + box_s * d_ciou_dd[g] * p * (float(i) - d_g[g]);
                             }
@@ -941,9 +919,6 @@ static void for_each_v8_head(const ForwardPropagation& forward_propagation,
     if (on_device)
     {
         tgt_cpu.resize(size_t(target_flat.size()));
-        // Through the device:: helpers, which check every status. These were
-        // bare calls: a failed copy left the staging buffer zero-filled and the
-        // batch then trained on an all-background gradient, silently.
         device::copy_async(tgt_cpu.data(), target_flat.as<float>(),
                            Index(target_flat.size()) * Index(sizeof(float)),
                            device::CopyKind::DeviceToHost, device::get_compute_stream());
@@ -997,9 +972,6 @@ static void for_each_v8_head(const ForwardPropagation& forward_propagation,
 
 #ifdef OPENNN_HAS_CUDA
         if (back_propagation && on_device)
-            // On the compute stream, which is where the consumer runs. The
-            // synchronous copy went to the legacy stream and was ordered with
-            // the consumer only because lane 0 happens to be a blocking stream.
             device::copy_async(back_propagation->output_deltas[size_t(detection_idx)].as<float>(),
                                delta_cpu.data(),
                                Index(head_view.size()) * Index(sizeof(float)),
@@ -1312,9 +1284,6 @@ void Loss::set_normalization_coefficient()
     if (error == Error::CrossEntropy && neural_network
         && dataset->get_features_number(VariableRole::Target) > 1)
     {
-        // The multi-class cross-entropy gradient is emitted in the fused softmax form
-        // (y - t)/B and the softmax backward step is a no-op, so any other output
-        // activation would train on a silently wrong gradient.
         const auto& layers = neural_network->get_layers();
         const Index last_trainable = neural_network->get_last_trainable_layer_index();
         throw_if(layers[last_trainable]->get_output_activation() != ActivationFunction::Softmax,
@@ -1328,8 +1297,6 @@ void Loss::back_propagate(const Batch& batch,
 {
     if (batch.is_empty()) return;
 
-    // Point the layers' gradient views at this context's buffer. A no-op unless
-    // the caller alternates contexts (main batch / remainder batch).
     neural_network->link_gradients(back_propagation.gradient);
 
     {
@@ -1342,17 +1309,11 @@ void Loss::back_propagate(const Batch& batch,
 
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
-    // The regularization term is not computed here. On GPU it is a cuBLAS
-    // reduction with a host result pointer, i.e. a full sync, and the
-    // mini-batch optimizers overwrite whatever it produced once per epoch in
-    // finalize_epoch. Whoever actually reads loss_value per step computes it:
-    // QuasiNewtonMethod for its line search, LM for its own metrics.
     back_propagation.metrics.regularization = 0.0f;
     back_propagation.metrics.loss_value = back_propagation.metrics.error;
 
     add_regularization_gradient(back_propagation);
 }
-
 
 float Loss::get_batch_scale(const Batch& batch) const
 {
@@ -1402,8 +1363,6 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
         return {};
     }
 #endif
-    // One head or several: for_each_yolo_head walks the list either way, and
-    // no longer copies the target when a single head owns all of it.
     if (!is_gradient)
         return yolo_error_cpu_multi(forward_propagation, target, neural_network,
                                     detection_indices, head, lam);
@@ -1466,10 +1425,6 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
         break;
     case NormalizedSquaredError:
         normalized_squared_error(input, target, normalization_coefficient, result.error, workspace_device);
-        // Scaled to the whole training set, exactly as WeightedSquaredError is
-        // below: the coefficient is a full-set constant, so without this the
-        // epoch error came out as the true one divided by the batch count and
-        // the validation error was not comparable with it.
         result.error *= get_batch_scale(batch);
         break;
     case WeightedSquaredError:
@@ -1605,8 +1560,6 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         const Index vocabulary_size = input.get_shape().back();
         const Index token_count = input.size() / vocabulary_size;
 
-        // One pass: loss, active-token and argmax-hit sums land in
-        // results_device[0..2] (the backward reads the active count from [1]).
         device::set_zero_async(results_device, 3 * Index(sizeof(float)), device::get_compute_stream());
         input.dispatch([&]<typename T>()
         {
@@ -1659,7 +1612,6 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
                                               accuracy_sum_device))
         return false;
 
-    // See Loss::back_propagate: host-only pointer work, so it stays capture-safe.
     neural_network->link_gradients(back_propagation.gradient);
 
     if (error == Error::CrossEntropy3d)
@@ -1742,7 +1694,6 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
         mean_absolute_error_gradient(input, target, input_delta);
         break;
     case NormalizedSquaredError:
-        // The gradient carries the same scale as the error above.
         normalized_squared_error_gradient(input, target,
                                           normalization_coefficient / get_batch_scale(batch),
                                           input_delta);

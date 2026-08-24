@@ -23,12 +23,6 @@ struct AttentionOperator : Operator
     bool  use_causal_mask = false;
     bool use_sdpa = false;
 
-    // Q, K, V, the attention output and all their deltas laid out as the
-    // projections' GEMMs produce them, (batch, sequence, heads, head_dim), instead
-    // of (batch, heads, sequence, head_dim). Only the SDPA path can read that
-    // layout (through strides), and doing so drops the eight head transposes a
-    // layer otherwise pays per step. The owning layer keeps this in step with
-    // use_sdpa and with the projections' interleaved_heads.
     bool interleaved_heads = false;
 
     bool zero_padded_queries = false;
@@ -51,9 +45,6 @@ struct AttentionOperator : Operator
 
     vector<TensorSpec> sdpa_gradient_scratch_specs(Index) const;
 
-    // The transient BF16 pack the FP32 SDPA path stages Q/K/V/O through. One
-    // definition serves both the size ForwardPropagation must plan and the
-    // pointers the graph is handed, so the two cannot drift apart.
     struct SdpaBf16Pack
     {
         Index query_elements = 0;
@@ -136,10 +127,6 @@ private:
                             const int* explicit_lengths = nullptr);
 #endif
 
-    // The trailing parameter carries the sequence lengths the forward masked
-    // with, rather than letting the backward re-derive them from the attention
-    // weights: an exact zero there is as likely to be softmax underflow as
-    // padding.
     void apply_delta_cpu(const TensorView&,
                          const TensorView&,
                          const TensorView&,

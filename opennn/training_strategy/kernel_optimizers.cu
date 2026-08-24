@@ -9,8 +9,6 @@
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/training_strategy/kernel_optimizers.cuh"
 
-// The bf16 mirror of the parameters, when there is one, follows the fp32
-// master: four lanes at a time on the vector path, one on the tail.
 __device__ __forceinline__ void store_bf16_mirror4(__nv_bfloat162* __restrict__ mirror2, const Index i, const float4& P)
 {
     if (mirror2)
@@ -100,7 +98,6 @@ __global__ void adam_update_kernel(
     }
 }
 
-// Vector path: fp32 operands on 16-byte boundaries, the bf16 mirror on 4.
 static bool adam_vector_aligned(const float* parameters, const float* m, const float* v,
                                 const float* gradients, const __nv_bfloat16* mirror)
 {
@@ -135,11 +132,6 @@ void adam_update_cuda(
                    static_cast<const float*>(nullptr), static_cast<const float*>(nullptr));
 }
 
-// The learning rate is read from device memory, not baked into the kernel
-// arguments: this kernel is captured into the training CUDA graph once and
-// replayed for the rest of the run, so a by-value rate would freeze whatever
-// schedule the optimizer applies afterwards. The optimizer refreshes the device
-// scalar at each epoch start (same arrangement as SGD's GraphLearningRate).
 __global__ void adam_prepare_kernel(int* __restrict__ step,
                                     float beta_1, float beta_2,
                                     const float* __restrict__ learning_rate,
@@ -184,7 +176,6 @@ void adam_update_capturable_cuda(
                    static_cast<const float*>(effective_eps_device));
 }
 
-// Momentum step (momentum > 0; the plain step is inlined in the kernel).
 __device__ __forceinline__ void sgd_update_one(
     float& p,
     float& v,

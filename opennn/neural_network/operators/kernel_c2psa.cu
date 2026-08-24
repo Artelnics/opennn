@@ -26,8 +26,6 @@ void c2psa_split_cuda(
 {
     c2psa_gather_left_cuda(x, xa, BT, C, H, dtype);
 
-    // The right half is a strided column copy, which cudaMemcpy2DAsync
-    // expresses directly: BT rows of (C - H) elements, pitch C on both sides.
     dispatch_float_bf16(dtype != CUDA_R_32F, [&]<typename T>() {
         const size_t pitch = size_t(C) * sizeof(T);
         CHECK_CUDA(cudaMemcpy2DAsync((T*)cat + H, pitch,
@@ -51,8 +49,6 @@ void c2psa_scatter_dx_cuda(
     const void* d_xa, const void* d_cat, void* din,
     int BT, int C, int H, cudaDataType_t dtype)
 {
-    // Left half from the attention gradient, right half straight through: a
-    // channel scatter and a pitched copy, the same two shapes as the split.
     dispatch_float_bf16(dtype != CUDA_R_32F, [&]<typename T>() {
         slice_channels_cuda<T, true>(BT, 1, 1, H, C, 0, (const T*)d_xa, (T*)din);
 

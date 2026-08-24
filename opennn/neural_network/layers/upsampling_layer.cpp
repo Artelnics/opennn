@@ -86,9 +86,6 @@ void UpsamplingOperator::back_propagate(ForwardPropagation&, BackPropagation& ba
     const float* delta = output_delta.as<float>();
     float* in_delta = input_delta.as<float>();
 
-    // The loop visits every input pixel exactly once, so each one clears its own
-    // channels before accumulating into them. Zeroing the whole gradient up front
-    // instead would be a serial pass over memory the parallel loop rewrites.
     const Index rows_count = batch_size * input_height;
 
     #pragma omp parallel for
@@ -140,7 +137,6 @@ void Upsampling::set(const Shape& new_input_shape,
     set_label(new_label);
     configure_operator();
 }
-
 
 void Upsampling::set_scale_factor(Index new_scale_factor)
 {

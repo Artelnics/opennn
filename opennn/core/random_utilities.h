@@ -33,11 +33,6 @@ namespace opennn
     template<typename T>
     void shuffle_vector(vector<T>&);
 
-    // Shuffles with a generator of its own, seeded by the caller. The global
-    // generator is mutex-guarded but not ordered, so drawing from it on a
-    // helper thread makes the draw order depend on scheduling and a seeded run
-    // stops being reproducible; a caller that shuffles off-thread takes one
-    // seed on the main thread and uses this instead.
     template<typename T>
     void shuffle_vector_seeded(vector<T>&, unsigned seed);
 

@@ -22,7 +22,6 @@ TrainingContext::TrainingContext(const Index batch_size, Loss& loss,
     throw_if(!neural_network, "TrainingContext: the loss has no neural network.");
     throw_if(share_memory_with == this, "TrainingContext: a context cannot share with itself.");
 
-    // The delta layout first: the forward arena is planned around it.
     const vector<MemoryPoolEntry> delta_lifetimes =
         BackPropagation::make_co_planned_lifetimes(loss, batch_size);
 

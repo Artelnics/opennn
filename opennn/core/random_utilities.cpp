@@ -50,8 +50,6 @@ bool random_bool(float probability)
     return distribution(generator);
 }
 
-// One draw per element under one lock, whatever the container and whatever the
-// distribution: the three fillers below differ in nothing else.
 template <typename Tensor, typename Distribution>
 static void fill_random(Tensor&& tensor, Distribution distribution)
 {

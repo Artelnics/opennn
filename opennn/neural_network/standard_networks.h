@@ -255,8 +255,6 @@ public:
 
 #endif
 
-// Pretrained Darknet .weights into an already-built network. Model I/O, not
-// dataset code: they populate the network YoloNetwork above constructs.
 Index load_darknet_backbone(NeuralNetwork&, const filesystem::path&, Index);
 Index load_darknet_backbone_v11(NeuralNetwork&, const filesystem::path&);
 

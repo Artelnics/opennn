@@ -13,7 +13,6 @@
 namespace opennn
 {
 
-// The lookup itself. EmbeddingLookupOperator is the only caller.
 void embedding_lookup_forward(const TensorView&, const TensorView&,
                               const TensorView&, TensorView&,
                               Index, Index, Index,

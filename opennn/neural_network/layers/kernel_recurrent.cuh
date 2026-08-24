@@ -28,16 +28,11 @@ void gather_time_slice_cuda(const Index batch, const Index time_steps,
                             const Index features, const Index t,
                             const T* src, T* dst);
 
-// Writes only the (batch, features) slice at time step t of dst (batch, time_steps,
-// features); the caller pre-zeroes dst when the other steps must read as zero.
 template<typename T>
 void scatter_time_slice_cuda(const Index batch, const Index time_steps,
                              const Index features, const Index t,
                              const T* src, T* dst);
 
-// cuDNN's fastest recurrent layout is time-major while OpenNN tensors are
-// batch-major. These kernels transpose only the two outer sequence axes and
-// keep each feature vector contiguous.
 template<typename T>
 void batch_time_to_time_batch_cuda(const Index batch, const Index time_steps,
                                    const Index features, const T* src, T* dst);

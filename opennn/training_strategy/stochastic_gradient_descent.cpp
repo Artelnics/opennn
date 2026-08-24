@@ -183,7 +183,6 @@ void StochasticGradientDescent::from_JSON(const JsonDocument& document)
     set_initial_decay(read_json_float(root_element, "InitialDecay", initial_decay));
     set_nesterov(read_json_bool(root_element, "Nesterov", nesterov));
 
-    // Files written before Momentum became a float carry a bool instead.
     set_momentum(read_json_float(root_element, "Momentum",
                                  read_json_bool(root_element, "ApplyMomentum") ? 0.9f : 0.0f));
 

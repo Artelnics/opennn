@@ -90,7 +90,6 @@ void LevenbergMarquardtAlgorithm::calculate_errors(const Batch& batch,
     back_propagation_lm.errors.noalias() = output - target;
 }
 
-
 void LevenbergMarquardtAlgorithm::calculate_error(const Batch&,
                                                    const ForwardPropagation&,
                                                    BackPropagationLM& back_propagation_lm) const
@@ -399,7 +398,6 @@ void LevenbergMarquardtAlgorithm::update_full_batch_parameters(const Batch& batc
                                 .select(-gradient.array().sign() * EPSILON, 0.0f);
         parameters += parameter_updates;
     }
-    // parameters is a map aliasing the network's own buffer; no copy-back is needed.
 }
 
 void LevenbergMarquardtAlgorithm::to_JSON(JsonWriter& printer) const

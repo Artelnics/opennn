@@ -65,16 +65,9 @@ void TensorView::fill(float value) const
 {
     if (!data) return;
 
-    // The view's own device, not a cudaPointerGetAttributes round-trip per
-    // fill: every other dispatch in the library keys on is_cuda(), and a view
-    // whose device disagreed with its pointer would already be wrong there.
     if (is_cuda())
         return fill_cuda(*this, value);
 
-    // byte_size() is dtype-aware; size() is a float count. Zeroing through the
-    // byte count is correct for every dtype, and a non-zero fill of a narrow
-    // type now says so instead of writing twice or four times its storage
-    // behind an assert that Release compiles away.
     if (value == 0.0f)
     {
         memset(data, 0, size_t(byte_size()));

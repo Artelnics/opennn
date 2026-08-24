@@ -13,7 +13,6 @@
 namespace opennn
 {
 
-// SwiGLU itself. SwiGLUOperator is the only caller.
 void swiglu_forward(const TensorView&, const TensorView&, TensorView&);
 void swiglu_backward(const TensorView&, const TensorView&, const TensorView&,
                      TensorView&, TensorView&);

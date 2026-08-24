@@ -8,7 +8,6 @@
 
 #include "opennn/neural_network/operators/convolution_operator.h"
 
-
 #include "opennn/core/cuda/cudnn_frontend_utilities.h"
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/cuda/kernel_cast.cuh"
@@ -48,7 +47,6 @@ struct ConvolutionOperator::ConvGraphCache
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> dgrad_W, dgrad_DY, dgrad_DX, dgrad_R;
         bool wgrad_fp32_output = false;
         bool dgrad_adds = false;
-        // Fork/join of the weight gradient onto lane 1 (see apply_delta_gpu).
         device::CudaEvent fork_event, join_event;
     };
 
@@ -141,13 +139,6 @@ void build_forward(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims
     entry.fwd.build(graph, "forward");
 }
 
-// The weight gradient is accumulated in FP32 whatever the IO type (new_graph sets
-// the compute and intermediate types to FLOAT), so a BF16 graph can store it as
-// FLOAT directly - the same per-tensor override bgrad_DB already uses - instead
-// of narrowing it to 8 mantissa bits and paying a cast per convolution per step
-// to widen it again. Whether cuDNN has an engine for that store is per shape,
-// so the caller asks for it and falls back to the BF16 store when the build
-// throws.
 void build_wgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& d, Type dtype,
                  bool fp32_output = false)
 {
@@ -183,11 +174,6 @@ void build_bgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
     entry.bgrad.build(graph, "bgrad");
 }
 
-// With `add_residual` the graph is DX = conv_dgrad(DY, W) + R: the other
-// consumer's delta of the block input folded into the epilogue, so the block's
-// two input deltas are summed without a pass of their own (see
-// BackPropagation::plan_delta_addends). Engine availability is per shape; the
-// caller falls back to the plain graph plus a separate add.
 void build_dgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& d, Type dtype,
                  bool add_residual = false)
 {
@@ -202,9 +188,6 @@ void build_dgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
 
     if (add_residual)
     {
-        // A dgrad output shape cannot be inferred from DY and W (stride and
-        // padding make it ambiguous), so the virtual intermediate needs its dims
-        // set before a pointwise node can consume it.
         entry.dgrad_DX->set_dim({d.batch, d.channels, d.height, d.width})
                       .set_stride(nhwc_strides(d.channels, d.height, d.width));
         entry.dgrad_R  = nhwc_tensor(*graph, "R", d.batch, d.channels, d.height, d.width);
@@ -226,10 +209,6 @@ string conv_timing_label(const ConvolutionOperator& op, const char* kind)
                                           op.row_stride);
 }
 
-// Builds a graph the operator would rather have (an FP32 gradient store, an ADD
-// epilogue); false when this shape has no engine for it, so the caller builds
-// the plain form. The report is once per shape and the only signal of the
-// extra passes the plain form costs.
 template<typename Build>
 bool build_preferred(const ConvolutionOperator& op, const char* kind, int64_t batch,
                      const char* consequence, Build&& build)
@@ -485,9 +464,6 @@ void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output)
             if (use_bias)
                 output_matrix.rowwise() += bias_row;
 
-            // The layer marks its activation operator "fused" from the
-            // activation alone, on either device, so the epilogue the GPU graph
-            // carries has to exist here too or the ReLU is simply lost.
             if (fuse_relu)
                 output_matrix = output_matrix.cwiseMax(0.0f);
         }
@@ -644,17 +620,8 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
             cudnn_frontend::graph_cache_capacity);
         const auto dims = cudnn_frontend::make_dims(*this, input.get_shape()[0]);
 
-        // Two lanes: the weight (and bias) gradient run on lane 1 while the
-        // input gradient runs on lane 0 - they read the same dY and X and
-        // write different tensors. Lane 1 waits for dY through the fork event
-        // and lane 0 waits for the gradients through the join event before
-        // returning, so nothing outside this call sees two lanes; inside a
-        // captured graph the two become parallel branches.
         const bool fork_wgrad = device::lanes_available() > 1 && device::active_lane() == 0
             && input_delta.get_data() && input_delta.size() != 0;
-        // Whatever exits this scope leaves the active lane at 0. ScopeExit
-        // swallows, which matters here: set_active_lane throws, and throwing out
-        // of a destructor during unwinding would terminate.
         ScopeExit lane_restore([armed = fork_wgrad] { if (armed) device::set_active_lane(0); });
         if (fork_wgrad)
         {
@@ -667,8 +634,6 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
 
         if (!entry.wgrad.graph)
         {
-            // Prefer an FP32 weight-gradient store (see build_wgrad). A failed
-            // build rebuilds every handle, so there is nothing to undo.
             entry.wgrad_fp32_output = input.is_bf16()
                 && cudnn_frontend::build_preferred(*this, "wgrad", input.get_shape()[0],
                        "BF16 store + widening cast per step",
@@ -732,7 +697,6 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
             cudnn_frontend::run_slot(entry.dgrad, dgrad_tensors, "ConvolutionOperator dgrad",
                                      cudnn_frontend::conv_timing_label(*this, "conv_dgrad"), false);
 
-            // The planner counts on this operator consuming the addend either way.
             if (want_add && !entry.dgrad_adds)
                 add(input_delta, addend, input_delta);
         }

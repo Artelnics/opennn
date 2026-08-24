@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// recurrent and LSTM steps, time-slice gather/scatter
-
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/neural_network/layers/kernel_recurrent.cuh"
 
@@ -147,7 +145,6 @@ void scatter_time_major_slice_cuda(const Index batch, const Index time_steps,
                                    const Index features, const Index t,
                                    const T* src, T* dst)
 {
-    // A time-major time slice is contiguous.
     launch_elementwise(batch * features, time_slice_kernel<T, false>,
                        1, checked_int(features), 0,
                        src, dst + t * batch * features);
@@ -246,8 +243,6 @@ void rnn_copy_regions_cuda(const RnnCopySpec* specs, int count,
     if (count <= 0) return;
     if (stream == nullptr) stream = opennn::device::get_compute_stream();
 
-    // Anything past the fixed capacity used to be truncated away, so the copies
-    // simply did not happen and the weights they carried stayed stale.
     checked_host_condition(count > RNN_COPY_MAX_REGIONS,
                            "rnn_copy_regions_cuda: more regions than the launch can carry.");
 
@@ -398,7 +393,6 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence, SL.

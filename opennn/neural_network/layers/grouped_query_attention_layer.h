@@ -14,8 +14,6 @@
 namespace opennn
 {
 
-// Attention, rotary embedding and QK normalisation. This layer is the
-// only caller; the tests reach them through this header.
 void rotary_build_tables(TensorView&, TensorView&, Index sequence_length, Index rotary_dim, float base);
 void rotary_forward(const TensorView&, const TensorView&, const TensorView&,
                     TensorView&, Index head_dim, Index rotary_dim, Index position_offset);
@@ -81,10 +79,6 @@ private:
                          bool causal, float scale, Index query_position_offset,
                          float* decode_partials = nullptr,
                          const int* position_device = nullptr);
-    // One CPU sequence through the pipeline: three projections, optional
-    // qk_norm, rope, attention, output projection. The cached-decode path and
-    // the plain path differ only in where K and V land and what attention
-    // reads back, so those are parameters rather than two copies.
     void attend_sequence_cpu(const TensorView& x_b,
                              TensorView& q_v, TensorView& k_v,
                              TensorView& v_target, TensorView& k_target,

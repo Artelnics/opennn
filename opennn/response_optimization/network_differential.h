@@ -47,12 +47,6 @@ struct NetworkDifferential
         return floor_value;
     }
 
-    // The Scaling/Unscaling layers treat a degenerate range as a constant
-    // column rather than dividing by a floor: scaling gives 0, unscaling gives
-    // the minimum. Dividing by 1e-12 here instead produced derivatives of order
-    // 1e12, the forward probe failed its own validation, and every dataset with
-    // a constant input column silently fell back to the finite-difference
-    // surrogate - the slowest path in the module.
     static bool is_degenerate(const float span) { return abs(span) < EPSILON; }
 
     VectorR scale_forward(const LayerSnapshot& layer, const VectorR& in) const

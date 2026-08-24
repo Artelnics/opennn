@@ -17,7 +17,6 @@
 namespace opennn
 {
 
-// Defined below: against the CUDA kernels, or as throwing stubs.
 static void layer_normalization_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&, float);
 static void layer_normalization_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView*);
 static void rms_normalization_forward_gpu(const TensorView&, const TensorView&, TensorView&, TensorView&, float);
@@ -52,9 +51,6 @@ static void layer_normalization_forward_cpu(const TensorView& input, const Tenso
 
         const float mean    = sum * inv_D;
 
-        // Two-pass: E[x^2] - mean^2 cancels catastrophically once the row has a
-        // large offset relative to its spread (activations after a residual add
-        // routinely do), and the variance came out as noise or zero.
         const float variance = max((input_map - mean).square().sum() * inv_D, 0.0f);
         const float std_val = sqrt(variance + epsilon);
         const float inv_std = 1.0f / std_val;
@@ -345,7 +341,6 @@ OPENNN_CUDA_STUB(void, rms_normalization_backward_gpu, (const TensorView&, const
 
 #endif
 
-
 void LayerNormalizationOperator::set(Index new_sequence_length, Index new_embedding_dimension)
 {
     sequence_length     = new_sequence_length;
@@ -435,8 +430,6 @@ void LayerNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
 
     const TensorView& norm_input = fuse_add ? normalized : get_input(forward_propagation, layer);
 
-    // With a fused add both inputs get the same delta: the kernel stores it
-    // twice rather than a copy pass reading it back.
     TensorView* residual_delta = nullptr;
     if (fuse_add)
     {

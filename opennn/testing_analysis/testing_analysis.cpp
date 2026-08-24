@@ -229,8 +229,6 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
 vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives() const
 {
 
-    // calculate_error_data() runs check(), so it comes before anything that
-    // dereferences the network or the dataset.
     const Tensor3 error_data = calculate_error_data();
 
     const Index testing_samples_number = error_data.dimension(0);
@@ -238,10 +236,6 @@ vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives(
 
     vector<vector<Descriptives>> descriptives(outputs_number);
 
-    // error_data is row-major and shaped (samples, 3, outputs), so one output's
-    // three error columns are strided by outputs_number, not a contiguous block
-    // of samples*3 floats. Mapping it as a block read the wrong elements for
-    // every multi-output network, and left the map unaligned besides.
     for (Index i = 0; i < outputs_number; ++i)
     {
         MatrixR matrix_error(testing_samples_number, 3);
@@ -291,10 +285,6 @@ VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
         (targets.rowwise() - targets_mean.transpose()).squaredNorm();
     errors(3) = sum_squared / (2.0f * (normalization_coefficient + EPSILON));
 
-    // Normalized by the sample count like its four siblings. It used to divide
-    // by the member batch_size - the inference chunk size, zero by default - so
-    // the Minkowski error came back infinite unless a batch size happened to be
-    // set, and wrong by the chunk-to-sample ratio when one was.
     const float p = 1.5f;
     errors(4) = (outputs.array() - targets.array())
                     .abs()
@@ -405,8 +395,6 @@ VectorR TestingAnalysis::calculate_classification_errors(const string& sample_ro
 
     return errors;
 }
-
-
 
 float TestingAnalysis::calculate_determination(const VectorR& outputs, const VectorR& targets) const
 {
@@ -544,7 +532,6 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
             else                                         ++true_negative;
         }
 
-        // Standard ROC coordinates: (false positive rate, true positive rate).
         roc_curve(i,0) = float(false_positive)/float(false_positive + true_negative);
         roc_curve(i,1) = float(true_positive)/float(true_positive + false_negative);
         roc_curve(i,2) = threshold;
@@ -556,7 +543,6 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
             roc_curve(i,1) = 0.0f;
     }
 
-    // Threshold 0 predicts everything positive (1,1); threshold 1 predicts everything negative (0,0).
     roc_curve(0,0) = 1.0f;
     roc_curve(0,1) = 1.0f;
     roc_curve(0,2) = 0.0f;
@@ -574,7 +560,6 @@ float TestingAnalysis::calculate_area_under_curve(const MatrixR& roc_curve) cons
     for (Index i = 1; i < roc_curve.rows(); ++i)
         area_under_curve += (roc_curve(i,0) - roc_curve(i-1,0))*(roc_curve(i,1) + roc_curve(i-1,1));
 
-    // The curve runs from (1,1) to (0,0), so the signed trapezoidal sum is negative.
     return fabs(area_under_curve) / 2.0f;
 }
 
@@ -666,10 +651,6 @@ MatrixR TestingAnalysis::calculate_cumulative_gain(const MatrixR& targets, const
     cumulative_gain(0, 0) = 0.0f;
     cumulative_gain(0, 1) = 0.0f;
 
-    // The bucket edge is computed exactly rather than accumulated: twenty
-    // additions of 0.05f reach 1.0000001f, which multiplied by the sample count
-    // indexes one past the end above ~8.4M samples. One cursor over the sorted
-    // targets also replaces the rescan-from-zero this loop did per bucket.
     Index positives = 0;
     Index next_row = 0;
 
@@ -747,10 +728,6 @@ vector<Index> TestingAnalysis::filter_classification_samples(const MatrixR& targ
     return result;
 }
 
-
-
-
-
 Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates() const
 {
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
@@ -767,10 +744,6 @@ Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates(cons
     const Index samples_number = targets.rows();
     const Index targets_number = targets.cols();
 
-    // One column per class is the contract: calculate_confusion turns a single
-    // column into a two-class problem, and the rates tensor built from the
-    // column count would then be 1x1 while the loop below indexes two classes -
-    // writing past the end of the only cell.
     throw_if(targets_number < 2 || outputs.cols() != targets_number,
              "TestingAnalysis::calculate_multiple_classification_rates requires one column per class "
              "(got {} target and {} output columns); use calculate_binary_classification_rates for a single output.",
@@ -862,9 +835,6 @@ VectorR TestingAnalysis::calculate_binary_classification_tests(const MatrixR& ta
 
     const float negative_predictive_value = (tn_plus_fn == 0) ? 0.0f : float(true_negative) / float(tn_plus_fn);
 
-    // In double: the product of the four counts passes 2^63 at about 110,000
-    // balanced testing samples, and the signed overflow turned the coefficient
-    // into a NaN just as the test set got big enough to trust.
     const double matthews_denominator = sqrt(double(tp_plus_fp) * double(tp_plus_fn)
                                            * double(fp_plus_tn) * double(tn_plus_fn));
 

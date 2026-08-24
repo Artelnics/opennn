@@ -15,8 +15,6 @@ namespace opennn
 
 enum class NormalizationMethod { LayerNorm, RMS };
 
-// The normalization kernels. LayerNormalizationOperator is their only
-// caller, so they live beside it rather than in core.
 void layer_normalization_forward(const TensorView&, const TensorView&, const TensorView&,
                         TensorView&, TensorView&,
                         TensorView&, TensorView&, float);
@@ -24,8 +22,6 @@ void layer_normalization_add_forward(const TensorView&, const TensorView&,
                             const TensorView&, const TensorView&,
                             TensorView&, TensorView&,
                             TensorView&, TensorView&, TensorView&, float);
-// The trailing view, when non-null, receives a second copy of the input delta
-// (the residual branch of a fused add + norm) without a separate copy pass.
 void layer_normalization_backward(const TensorView&, const TensorView&,
                          const TensorView&, const TensorView&,
                          const TensorView&, const TensorView&,

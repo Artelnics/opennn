@@ -59,12 +59,6 @@ void TokenizerOperator::set_vocabulary(const vector<string>& new_vocabulary)
     vocabulary = new_vocabulary;
     rebuild_map();
 
-    // unk_id is resolved from the reserved tokens at construction, which is
-    // correct as long as the vocabulary installed here puts [UNK] at the same
-    // index -- true for every vocabulary the datasets build, since
-    // make_vocabulary emits the reserved tokens first. Re-resolving keeps the
-    // two consistent for a vocabulary that does not, rather than leaving
-    // token_to_id answering with a stale index.
     const auto unknown = ranges::find(vocabulary, "[UNK]");
 
     if (unknown != vocabulary.end())
@@ -333,10 +327,6 @@ optional<uint32_t> next_utf8_codepoint(string_view text, size_t& position)
         return codepoint;
     }
 
-    // Truncated at the end of the text: return the lead BYTE, as the
-    // invalid-continuation branch below already does. Returning `codepoint`
-    // handed back the lead's masked payload bits instead - a different, and
-    // meaningless, character.
     if (start + length > text.size())
     {
         ++position;

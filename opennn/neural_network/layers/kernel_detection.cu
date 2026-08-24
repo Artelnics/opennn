@@ -6,16 +6,11 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// YOLO detection heads, anchor-based and anchor-free
-
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/neural_network/layers/kernel_detection.cuh"
 
 static constexpr int class_activation_sigmoid = 1;
 
-// Anchor-based head: flat box index -> (batch, row, col, box) -> offset of the
-// box's first value in the (B, S, S, boxes_per_cell * values_per_box) tensor;
-// `box` selects its anchor.
 __device__ __forceinline__ int detection_box_base(const Index idx, const int grid_size, const int boxes_per_cell,
                                                   const int values_per_box, int& box)
 {
@@ -31,8 +26,6 @@ __device__ __forceinline__ int detection_box_base(const Index idx, const int gri
     return cell + box * values_per_box;
 }
 
-// Anchor-free head: flat cell index -> (batch, row, col) -> offset of the
-// cell's first channel in the (B, S, W, channels) tensor.
 __device__ __forceinline__ int detection_v8_cell_base(const Index idx, const int grid_size, const int grid_width,
                                                       const int channels)
 {
@@ -151,8 +144,6 @@ void detection_backward_cuda(const Index batch_size,
                                class_activation, output, output_delta, input_delta);
 }
 
-// Anchor-free head channel layout: 4 * max(reg_max, 1) box channels (plain
-// (x, y, w, h) when there are no DFL bins) followed by the class channels.
 static void detection_v8_channels(const Index classes_number, const Index reg_max, int& box_ch, int& channels)
 {
     box_ch   = checked_int(4 * max(reg_max, Index(1)));
@@ -167,7 +158,6 @@ __global__ void detection_v8_forward_kernel(const int n,
                                             const float* __restrict__ src,
                                             float* __restrict__ dst)
 {
-    // Plain (x, y, w, h) boxes go through a sigmoid; DFL bins stay raw.
     const bool sigmoid_box = box_ch == 4;
 
     for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x;
@@ -250,7 +240,6 @@ void detection_v8_backward_cuda(const Index batch_size,
                                checked_int(grid_size), checked_int(grid_width), channels, box_ch,
                                output, output_delta, input_delta);
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence, SL.

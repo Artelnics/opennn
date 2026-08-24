@@ -93,12 +93,8 @@ private:
                          TensorView&,
                          TensorView&) const;
 
-    // The library's own training forward runs, and leaves the packed ReLU
-    // mask in `mask`, when the host layer gave it a mask slot (a ReLU output
-    // with a channel count that packs), unless the forward rung is pinned.
     bool own_forward_kernel(const TensorView& mask) const noexcept;
 
-    // The optional fourth output slot: the packed ReLU mask.
     TensorView& relu_mask(ForwardPropagation&, size_t layer) const noexcept;
 };
 

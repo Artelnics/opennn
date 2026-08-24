@@ -6,15 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// elementwise activations, SwiGLU and dropout
-
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/core/cuda/kernel_activation.cuh"
 #include <curand_kernel.h>
 
-// `y` is the saved output for sigmoid/tanh/relu/leaky_relu and the saved input
-// (pre-activation) for gelu/gelu_tanh/silu, as ActivationOperator arranges
-// (activation_needs_input).
 __device__ __forceinline__ float opennn_activation_grad(float y, float d, int function)
 {
     if (function == activation_sigmoid)    return d * y * (1.0f - y);
@@ -79,11 +74,6 @@ void swiglu_backward_cuda(const int n, const T* dout, const T* gate, const T* up
     launch_elementwise(n, swiglu_backward_kernel<T>, dout, gate, up, dgate, dup);
 }
 
-// One kernel for every dtype and width. VecIO moves vec16<T> adjacent elements
-// as a single aligned 16-byte access and converts them to float element by
-// element, which is what the three hand-written variants -- scalar, bf16x2 and
-// float4 -- each did for one case. bf16 gains from it: eight elements per
-// access instead of two.
 template<typename T, int VEC>
 __global__ void activation_forward_kernel(const int n_vec, const int n,
                                           T* __restrict__ data, const int function)
@@ -149,11 +139,6 @@ void activation_backward_cuda(const Index n, const T* outputs, T* delta, const i
                             outputs, delta, function);
 }
 
-// The seed is read from device memory rather than taken as a launch argument.
-// A captured CUDA graph records the arguments its kernels were launched with,
-// so a seed chosen on the host at call time is frozen into the graph and every
-// replay redraws the mask it was captured with -- one fixed dropout pattern for
-// a whole training run, which fails silently as a quiet loss of regularisation.
 template<typename T>
 __global__ void dropout_forward_kernel(
     int n, T* __restrict__ output, uint8_t* __restrict__ mask,
@@ -172,8 +157,6 @@ __global__ void dropout_forward_kernel(
     output[idx] = static_cast<T>(static_cast<float>(output[idx]) * keep * scale);
 }
 
-// Philox is counter-based, so seeds one apart already give independent streams;
-// the odd stride costs nothing and keeps consecutive seeds from sharing bits.
 __global__ void advance_dropout_seed_kernel(unsigned long long* seed_state)
 {
     seed_state[0] += 0x9E3779B97F4A7C15ull;
@@ -217,7 +200,6 @@ void dropout_backward_cuda(const Index n, const T* output_delta, T* input_delta,
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence, SL.

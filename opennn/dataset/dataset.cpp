@@ -196,7 +196,6 @@ FeatureScaling Dataset::prepare_training_scaling(
         variable_role_to_string(role)));
 }
 
-
 FeatureScaling Dataset::calculate_used_feature_scaling(VariableRole role) const
 {
     throw runtime_error(format(
@@ -230,9 +229,6 @@ void Dataset::set_sample_roles(SampleRole role_type)
 
 void Dataset::set_sample_role(const Index index, SampleRole new_role)
 {
-    // Bounds-checked like the variable-side siblings: samples_from_JSON feeds
-    // these setters straight from file text, so a role list longer than
-    // SamplesNumber wrote past the end of the vector.
     throw_if(index < 0 || index >= ssize(sample_roles),
              "Dataset::set_sample_role: sample index {} is out of range for {} samples.",
              index, ssize(sample_roles));
@@ -537,9 +533,6 @@ vector<Variable> Dataset::get_variables(VariableRole role_type) const
 
 Index Dataset::get_features_number() const
 {
-    // Index(0), not 0: accumulate takes its accumulator type from the initial
-    // value, so every partial sum was narrowed to int. The role overload below
-    // already gets this right.
     return accumulate(variables.begin(), variables.end(), Index(0),
                       [](Index sum, const Variable& var) { return sum + var.get_feature_count(); });
 }
@@ -794,10 +787,6 @@ void Dataset::preview_data_to_JSON(JsonWriter &printer) const
     for (Index i = 0; i < ssize(data_file_preview); ++i)
     {
         printer.begin_array_object();
-        // "Text" stays for readers that already expect it, but it joins the
-        // cells with a comma and so cannot survive a cell that contains one -
-        // a decimal comma, or any quoted field in a semicolon file. "Cells"
-        // carries them separately and is what the reader below prefers.
         add_json_field(printer, "Text", vector_data_file_preview[size_t(i)]);
         add_json_field(printer, "Cells", json_array(data_file_preview[size_t(i)]));
         printer.end_array_object();
@@ -850,8 +839,6 @@ void Dataset::preview_data_from_JSON(const Json *preview_data_element)
 
     for_json_items(preview_data_element, "Row", size_t(preview_size), [&](Index i, const Json* row)
     {
-        // Prefer the cell array; fall back to splitting the legacy joined text
-        // so files written before it existed still load.
         if (row && row->find("Cells"))
         {
             data_file_preview[i] = read_json_strings(row, "Cells");
@@ -996,7 +983,6 @@ void Dataset::check_separators(string_view line) const
              "Found {} ('{}') in data file {}, but separator is {} ('{}').",
                     found_other_name, found_other, data_path.string(), separator_name, separator_string);
 }
-
 
 void Dataset::fill_inputs(const vector<Index>&, const vector<Index>&, float*, FillMode, int) const
 {

@@ -10,8 +10,6 @@
 #include "opennn/core/device_backend.h"
 #include "opennn/neural_network/operators/kernel_pool3d.cuh"
 
-// Where a sequence ends, clamped to what this tensor actually holds. A null
-// lengths pointer means no record was exported, and every row counts.
 __device__ inline int clamped_length(const int* __restrict__ lengths, const int b, const int S)
 {
     if (lengths == nullptr) return S;
@@ -31,9 +29,6 @@ __global__ void max_pooling_3d_forward_kernel(const int n, const T* __restrict__
 
         const int steps = clamped_length(lengths, b, S);
 
-        // Nothing to take a maximum over. Zero matches what the average does
-        // with a fully padded sequence, and keeps the recorded index in range
-        // for the backward pass.
         if (steps == 0)
         {
             out[idx] = static_cast<T>(0.0f);
@@ -122,10 +117,6 @@ __global__ void average_pooling_3d_forward_kernel(const int n, const T* __restri
     }
 }
 
-// Exact lengths make the mask a prefix, so it can be written straight out
-// rather than reduced into: one thread per row decides that row, and the thread
-// holding the first row of a sequence writes the count the whole sequence
-// divides by.
 __global__ void pooling_3d_length_mask_kernel(const int BS, const int S,
                                               const int* __restrict__ lengths,
                                               float* __restrict__ valid_mask,
@@ -150,8 +141,6 @@ static void prepare_pooling_valid_mask(const int B, const int S, const int F, co
     const int BS = checked_int(Index(B) * S);
     const cudaStream_t stream = opennn::device::get_compute_stream();
 
-    // Per-row mask followed by the per-sequence counts, in the library workspace
-    // (pinned by a captured graph like every other kind).
     float* const scratch = opennn::ensure_workspace<float>(opennn::device::GraphWorkspaceKind::PoolingMask,
                                                            Index(BS) + Index(B));
     valid_mask = scratch;
@@ -192,9 +181,6 @@ __global__ void average_pooling_3d_backward_kernel(const int n, const T* __restr
         const int f = idx % F;
         const int b = idx / F;
 
-        // A fully padded row has nothing to divide by. Zeroing the gradient
-        // instead of skipping the row keeps every element of in_gradient
-        // written here, so the caller does not have to pre-zero the tensor.
         const float count = counts[b];
         const float gradient_val = count > 0.0f
                                  ? static_cast<float>(delta[idx]) / count

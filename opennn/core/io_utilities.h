@@ -22,8 +22,6 @@ void download_files_if_missing(const filesystem::path& directory,
 
 string read_text_file(const filesystem::path&);
 
-// Entries matching the predicate, sorted. Callers rely on the ordering being
-// deterministic: it is what fixes dataset sample order and class-label indices.
 vector<filesystem::path> list_files(const filesystem::path& directory,
                                     std::function<bool(const filesystem::path&)> predicate);
 vector<filesystem::path> list_directories(const filesystem::path& directory,
@@ -106,8 +104,6 @@ private:
     ofstream stream_;
 };
 
-// These copy the object representation verbatim, so anything with indirection
-// (string, vector, ...) would serialize a pointer instead of its contents.
 template <typename T>
 concept RawStorable = is_trivially_copyable_v<T>;
 
@@ -170,7 +166,6 @@ private:
     int fd_ = -1;
 #endif
 };
-
 
 }
 

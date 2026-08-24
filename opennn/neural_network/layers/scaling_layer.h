@@ -107,8 +107,6 @@ protected:
     float min_range = -1.0f;
     float max_range = 1.0f;
 
-    // Device mirror of the configured feature statistics and scaler methods.
-    // It belongs to the model; propagation contexts own only transient data.
     Buffer op_storage;
     bool   op_storage_dirty = true;
 

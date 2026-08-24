@@ -15,15 +15,6 @@ namespace opennn
 
 class TrainingStrategy;
 
-// What every selection algorithm needs regardless of what it selects: the
-// training strategy it drives, how many trials and folds each candidate gets,
-// and the four stopping conditions. InputsSelection and GrowingNeurons each
-// declared this block for themselves, setters included, and the two copies had
-// to be kept in step by hand.
-//
-// The setter names and signatures are the ones both classes already exposed --
-// Neural Designer calls several of them -- so this changes where they are
-// declared and nothing else.
 class SelectionAlgorithm
 {
 public:
@@ -48,7 +39,6 @@ public:
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
-    // Never below one: a zero here would divide by zero in the fold loop.
     void set_folds_number(const Index new_folds_number) { folds_number = max<Index>(new_folds_number, Index(1)); }
 
 protected:

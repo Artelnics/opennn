@@ -45,9 +45,6 @@ public:
     void set_maximum_neurons(const Index new_maximum_neurons) { maximum_neurons = new_maximum_neurons; }
     void set_minimum_neurons(const Index new_minimum_neurons) { minimum_neurons = new_minimum_neurons; }
 
-
-
-
     void set_neurons_increment(const Index new_neurons_increment) { neurons_increment = new_neurons_increment; }
 
     void set_warm_start(bool new_warm_start) { warm_start = new_warm_start; }
@@ -74,7 +71,6 @@ private:
     bool warm_start = true;
 };
 
-// Kept for Neural Designer, which spells the type NeuronSelection::StoppingCondition.
 using NeuronSelection = GrowingNeurons;
 
 struct NeuronsSelectionResult

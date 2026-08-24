@@ -15,9 +15,6 @@ namespace opennn
 
 TrainingResult::TrainingResult(const Index epochs_number)
 {
-    // NaN, not -1: with validation_period > 1 some epochs are never evaluated, and the
-    // marker for those is read back by minimum searches. -1 sorts below every real error,
-    // so an unevaluated epoch always won; NaN is skipped instead of preferred.
     training_error_history = VectorR::Constant(epochs_number, QUIET_NAN);
     validation_error_history = VectorR::Constant(epochs_number, QUIET_NAN);
 }
@@ -38,8 +35,6 @@ string TrainingResult::write_stopping_condition() const
 
 float TrainingResult::get_training_error() const
 {
-    // Guarded like get_validation_error below: a default-constructed result has
-    // an empty history and this read one element before the buffer.
     if (training_error_history.size() == 0) return QUIET_NAN;
 
     return training_error_history(training_error_history.size() - 1);
@@ -47,15 +42,12 @@ float TrainingResult::get_training_error() const
 
 float TrainingResult::get_validation_error() const
 {
-    // The final epoch is not necessarily a validation epoch, so walk back to the last one
-    // that produced a number rather than handing back the not-evaluated marker.
     for (Index i = validation_error_history.size() - 1; i >= 0; --i)
         if (isfinite(validation_error_history(i)))
             return validation_error_history(i);
 
     return 0.0f;
 }
-
 
 void TrainingResult::save(const filesystem::path& file_name) const
 {
@@ -130,9 +122,6 @@ Tensor<string, 2> TrainingResult::write_override_results(const Index precision) 
 
     override_results(3, 1) = format("{:.{}g}", training_error_history(size - 1), precision);
 
-    // "NA", as in the empty branch above. The old placeholder was the literal
-    // text "QUIET_NAN", a search-and-replace of the constant that caught this
-    // string too, and it was written into the user's saved results.
     override_results(4, 1) = validation_error_history.size() == 0
         ? "NA"
         : format("{:.{}g}", validation_error_history(validation_error_history.size() - 1), precision);

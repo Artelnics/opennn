@@ -57,9 +57,6 @@ public:
     }
     bool backward_uses_forward_output() const noexcept override { return false; }
     bool preserves_output_delta_during_backward() const noexcept override { return true; }
-    // The query projection writes the query input's delta first (self and
-    // cross), the key projection the source input's (cross): each folds the
-    // addend the planner assigns to that input.
     bool folds_input_delta_addend(size_t input) const noexcept override
     {
         return input == 0 || (cross_attention && input == 1);
@@ -88,8 +85,6 @@ public:
 
     bool should_use_sdpa() const;
 
-    // Applies should_use_sdpa() to the attention and to the three projections
-    // (the head layout follows the attention path).
     void apply_sdpa_choice();
 
     void read_JSON_body(const Json*) override;

@@ -19,7 +19,6 @@
 namespace opennn
 {
 
-// Defined below: against the CUDA kernels, or as throwing stubs.
 static void dropout_forward_gpu(TensorView&, TensorView&, float);
 static void dropout_backward_gpu(TensorView&, const TensorView&, float);
 
@@ -75,9 +74,6 @@ void dropout_backward(TensorView& delta, const TensorView& mask, float rate)
 
 #ifdef OPENNN_HAS_CUDA
 
-// One counter for the process, advanced on the device before every draw. It is
-// seeded from the host RNG on first use -- outside any capture, since the
-// allocation would abort one -- so separate runs still differ.
 static unsigned long long* dropout_seed_state()
 {
     static Buffer state = []
@@ -105,8 +101,6 @@ static void dropout_forward_gpu(TensorView& output, TensorView& mask, float rate
 
     unsigned long long* const seed_state = dropout_seed_state();
 
-    // Advance first, on the device and on the compute stream, so this launch
-    // and the draw below are both inside whatever graph capture is running.
     advance_dropout_seed_cuda(seed_state);
 
     output.dispatch([&]<typename T>()

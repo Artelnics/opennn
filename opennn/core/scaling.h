@@ -13,8 +13,6 @@
 
 namespace opennn
 {
-    // Complete per-feature transform shared by a Scaling layer and the Dataset
-    // that prepares already-scaled training batches.
     struct FeatureScaling
     {
         vector<Descriptives> descriptives;
@@ -28,8 +26,6 @@ namespace opennn
         }
     };
 
-    // A network endpoint whose feature transform can be coordinated with a
-    // Dataset without exposing the concrete layer that implements it.
     class FeatureScalingEndpoint
     {
     public:
@@ -52,8 +48,6 @@ namespace opennn
         return (x - d.mean) / d.standard_deviation;
     }
 
-    // Inverses of the two above. Every caller that unscales used to write these
-    // out by hand, so the forward and backward directions could drift apart.
     template<typename X>
     auto unscale_minimum_maximum_formula(const X& x, const Descriptives& d, float min_range, float max_range)
     {
@@ -96,9 +90,6 @@ namespace opennn
                                              float min_range,
                                              float max_range)
     {
-        // Guards must match scale_value above: a feature with no spread scales to
-        // zero. Adding EPSILON to the denominator instead would turn a constant
-        // image channel into a ~1.7e7 multiplier, and nothing downstream checks it.
         using enum ScalerMethod;
         switch (scaler)
         {
@@ -130,12 +121,6 @@ namespace opennn
         throw runtime_error("scaling_affine: invalid scaler method.");
     }
 
-    // The inverse of scaling_affine, as a slope and offset. Mirrors the
-    // degenerate rules unscale_column_cpu applies: a feature the forward pass
-    // flattened to zero unscales to the constant it came from, minimum for
-    // MinimumMaximum and mean for StandardDeviation. Logarithm is not affine;
-    // it reports {1, 0} and the caller applies exp afterwards, as with the log
-    // that scaling_affine leaves to the caller.
     inline pair<float, float> unscaling_affine(ScalerMethod scaler,
                                                const Descriptives& descriptives,
                                                float min_range,

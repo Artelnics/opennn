@@ -200,8 +200,6 @@ void weighted_squared_error(const TensorView& input, const TensorView& target, f
                                            negative_weight);
         });
 
-        // The reduction does not depend on T. dispatch runs its lambda inline,
-        // so this still follows the launch.
         error = 0.5f * sum_abs_cuda(workspace_device, input.size());
         return;
     }
@@ -246,11 +244,6 @@ void binary_cross_entropy(const TensorView& input, const TensorView& target, flo
     const MatrixMap outputs = input.as_matrix();
     const MatrixMap targets = target.as_matrix();
 
-    // The same epsilon-shifted logs the CUDA kernel and the CPU gradient use,
-    // so error and gradient are evaluated on one function on both devices. The
-    // NaN was previously reported as a finite 10.0, which the optimizer took
-    // for a valid batch and kept stepping on, while the GPU produced a NaN and
-    // the batch was skipped: identical inputs, different early stopping.
     error = -(targets.array() * (outputs.array() + EPSILON).log()
             + (1.0f - targets.array()) * (1.0f - outputs.array() + EPSILON).log()).sum()
             / to_type(samples_number);
@@ -273,8 +266,6 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
     const MatrixMap outputs = input.as_matrix();
     const MatrixMap targets = target.as_matrix();
 
-    // No NaN mask, for the same reason as the binary case above: a diverged
-    // network has to reach the optimizer's NaN handling, not arrive as 10.0.
     error = (targets.array() * (outputs.array() + EPSILON).log()).sum() / to_type(-samples_number);
 }
 
@@ -290,8 +281,6 @@ void cross_entropy(const TensorView& input, const TensorView& target, float& err
 void cross_entropy_gradient(const TensorView& input, const TensorView& target, const TensorView& input_delta)
 {
     if (input.is_cuda()) {
-        // Neither depends on T; inside the lambda they were computed in both
-        // instantiations.
         const Index num_classes = input.get_shape().back();
         const float scale = 1.0f / static_cast<float>(input.get_shape()[0]);
 

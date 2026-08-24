@@ -23,11 +23,6 @@ namespace opennn
 namespace
 {
 
-// Neuron selection builds a rank-1 shape and hands it to the last trainable
-// layer. Only layers that accept rank 1 can honour that. Layers which cannot
-// used to react in three different ways - a throw, or silently keeping their
-// previous shape while selection went on to report results for a network it
-// never actually changed. Ask first, and say plainly what is wrong.
 void require_grows_by_neurons(const Layer& layer)
 {
     throw_if(!layer.accepts_input_rank(1),
@@ -37,7 +32,6 @@ void require_grows_by_neurons(const Layer& layer)
 }
 
 }
-
 
 GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy)
 {
@@ -218,9 +212,6 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
              format("Epoch {}\nMaximum validation failures reached: {}\n", epoch, validation_failures)},
             {neurons_number >= maximum_neurons, StoppingCondition::MaximumNeurons,
              format("Epoch {}\nMaximum number of neurons reached: {}\n", epoch, neurons_number)},
-            // Last, so a real reason wins the report; without it the loop could
-            // run out and leave the result with no stopping condition, no
-            // elapsed time and an untrimmed history.
             {epoch + 1 >= maximum_epochs, StoppingCondition::MaximumEpochs,
              format("Epoch {}\nMaximum number of epochs reached.\n", epoch)}
         });
@@ -286,8 +277,6 @@ void GrowingNeurons::from_JSON(const JsonDocument& document)
     set_maximum_validation_failures(read_json_index_alias(root_element, "MaximumValidationFailures", "MaximumSelectionFailures"));
     set_maximum_time(read_json_float(root_element, "MaximumTime"));
 
-    // Same key GrowingInputs uses, and guarded so files written before it was
-    // serialized still load.
     set_maximum_epochs(Index(read_json_index(root_element, "MaximumEpochsNumber", maximum_epochs)));
 
     set_folds_number(Index(read_json_index(root_element, "FoldsNumber", folds_number)));

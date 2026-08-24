@@ -24,10 +24,6 @@ struct CombinationOperator : Operator
 
     bool  accumulate_input_delta = false;
 
-    // Set by a layer whose input 0 this combination consumes directly (Dense):
-    // the backward then folds BackPropagation::input_delta_addend(layer, 0)
-    // into the input delta it writes. Combinations inside other layers (an
-    // attention layer's output projection) leave it off.
     bool  folds_input_delta_addend = false;
 
     bool  tied_transposed = false;
@@ -35,11 +31,6 @@ struct CombinationOperator : Operator
     bool  transposed_inference_preferred = false;
     bool  transposed_inference_active    = false;
 
-    // Set by the layer when this combination's input is the output of a ReLU
-    // whose backward it can absorb (Dense::try_wire_single_output_relu_fusion),
-    // with the producing layer's index: the backward reports through
-    // drelu_fused_by_layer whether it did, the channel the DReLU epilogue
-    // already uses, and a layer is never both kinds of producer.
     bool fuse_input_relu = false;
     Index input_relu_source_layer = -1;
 
@@ -64,8 +55,6 @@ struct CombinationOperator : Operator
     void link_gradients (span<const TensorView>) override;
     void link_parameter_scales(span<const TensorView>) override;
 
-    // A tied projection borrows its source layer's weights, so it has nothing
-    // of its own to initialise.
     bool owns_initializable_weights() const noexcept
     {
         return !weights.empty() && !tied_transposed;

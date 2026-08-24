@@ -44,9 +44,6 @@ struct Operator
     virtual void link_states    (span<const TensorView>) {}
     virtual void link_parameter_scales(span<const TensorView>) {}
 
-    // Default values of the operator's states (batch-norm running statistics),
-    // applied when the network is compiled: a fresh network must infer sanely
-    // before its first training step, whatever initializer the parameters get.
     virtual void initialize_states() {}
 
     virtual void set_weights_dtype(Type new_weights_dtype) { weights_dtype = new_weights_dtype; }

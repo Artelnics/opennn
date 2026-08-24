@@ -35,17 +35,11 @@ void Unscaling::set(Index new_neurons_number, const string& new_label)
 
 void Unscaling::apply_input_shape(const Shape& new_input_shape)
 {
-    // set() is the full reset a constructor wants; propagating a shape through
-    // the graph is not. It used to take the label back to the class default and
-    // discard the fitted statistics, so resizing a network silently unfitted its
-    // scaling. The label always survives, and the statistics survive whenever the
-    // feature count is unchanged.
 
     const string previous_label = get_label();
     const vector<Descriptives> previous_descriptives = descriptives;
     const vector<ScalerMethod> previous_scalers = scalers;
 
-    // Feature-last, like Scaling and like the forward's flattened view.
     set(new_input_shape.empty() ? 0 : new_input_shape.back(), previous_label);
 
     if (ssize(previous_descriptives) == ssize(descriptives))
@@ -136,20 +130,17 @@ string Unscaling::write_expression(const vector<string>& input_names,
         const size_t feature = size_t(i % ssize(scalers));
         const ScalerMethod scaler = scalers[feature];
 
-        // Logarithm is the one method that is not affine.
         if (scaler == ScalerMethod::Logarithm)
         {
             buffer << output_names[i] << "=exp(" << input_names[i] << ");\n";
             continue;
         }
 
-        // Same slope and offset forward_propagate runs on, so the exported
-        // text cannot drift away from the layer it is supposed to mirror.
         const auto [slope, offset] = unscaling_affine(scaler, descriptives[feature], min_range, max_range);
 
         buffer << output_names[i] << "=";
 
-        if (slope == 0.0f)                          // the feature was constant
+        if (slope == 0.0f)
             buffer << offset;
         else if (slope == 1.0f && offset == 0.0f)
             buffer << input_names[i];

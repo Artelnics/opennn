@@ -26,8 +26,6 @@ enum class FillMode { Training, Validation, Inference };
 
 struct BatchSlot
 {
-    // A slot carries data once it has both a shape and a buffer behind it;
-    // an unused slot (a network with no decoder input, say) has neither.
     bool has_data() const noexcept { return !shape.empty() && buffer.data(); }
 
     Buffer buffer;
@@ -125,9 +123,6 @@ struct Batch
     TensorView target_view_cache;
 
     optional<DeviceGather> device_gather;
-    // Pinned, like every other host staging buffer here: the per-step index
-    // upload behind the device gather is a cudaMemcpyAsync, and from pageable
-    // memory that goes through a driver bounce buffer and blocks the host.
     device::PinnedBuffer gather_indices_host;
     Buffer gather_indices_device{Device::CUDA};
 };

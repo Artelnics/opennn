@@ -501,17 +501,6 @@ void ForwardPropagation::set(
             co_planned_lifetimes.begin(),
             co_planned_lifetimes.end());
 
-        // Chronological is load-bearing here, not a default. Activation
-        // recomputation relies on a scratch slot landing on top of a future
-        // activation, which first_step ordering produces and largest-first does
-        // not. Forcing Compact was measured: the joint arena gets strictly smaller
-        // (an MLP drops batch * outputs * sizeof(float); ResNet-50 and Transformer
-        // are byte-identical, already taking that branch), but it breaks the
-        // recompute aliasing pinned by
-        // ForwardPropagationMemoryTest.TrainingRecomputeScratchUsesFutureActivations
-        // and YoloOverfit.CSPGradientFlowsAndLossDecreases then stops learning.
-        // Do not simplify this to always-Compact.
-
         const MemoryPoolPlan persistent_plan = [&]
         {
             PROFILE_SCOPE_HOST("fp:set:plan");
@@ -1108,9 +1097,6 @@ TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
         : TensorView{};
 }
 
-// The layer whose record feeds one of `layer`'s inputs, or -1 when that input
-// is one of the network's own inputs: raw token ids that nothing has had the
-// chance to describe yet.
 Index ForwardPropagation::valid_lengths_source(const size_t layer, const size_t input_ordinal) const
 {
     if (!neural_network) return -1;
@@ -1166,19 +1152,10 @@ void ForwardPropagation::inherit_valid_lengths(const size_t layer)
 {
     if (layer >= valid_lengths.size()) return;
 
-    // Re-inherited on every pass. The copy used to be taken once and then kept
-    // forever, so a second batch with different padding left every layer below
-    // the first consumer masking against the first batch's lengths. An
-    // Embedding overwrites its own entry as it runs, and its source is a
-    // network input, so it is unaffected by re-inheriting here.
-
     const vector<Index>* source_lengths = input_valid_lengths(layer, 0);
     const int* device_source_lengths = input_device_valid_lengths(layer, 0);
     if (!source_lengths && !device_source_lengths) return;
 
-    // The record travels only as far as the sequence it describes. A layer that
-    // pools the sequence away, or reshapes it, ends the record here rather than
-    // handing on lengths for something that no longer exists.
     const auto& layers = neural_network->get_layers();
     const Index source = neural_network->get_source_layers()[layer][0];
 

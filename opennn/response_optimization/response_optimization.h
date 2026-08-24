@@ -17,8 +17,6 @@
 namespace opennn
 {
 
-// Host-matrix helpers for the Pareto search below: candidate sets get appended,
-// ranked by distance to a reference point, and thinned by outlier score.
 MatrixR append_rows(const MatrixR&, const MatrixR&);
 MatrixR append_columns(const MatrixR&, const MatrixR&);
 VectorI get_nearest_points(const MatrixR&, const VectorR&, int = 1);
@@ -202,7 +200,6 @@ public:
     bool is_objective(const string& name) const { return objectives.contains(name); }
     Sense get_sense(const string& name) const { return objectives.at(name); }
 
-
     bool row_satisfies_formula_constraints(const VectorR&,
                                                          const VectorR&) const;
 
@@ -229,8 +226,6 @@ private:
     map<string, Sense> objectives;
 
     map<string, float> fixed_values;
-
-
 
     Index evaluations_number = 2000;
     Index max_iterations = 20;

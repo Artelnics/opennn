@@ -6,31 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// The first layer of a tabular classifier contracts a handful of features into
-// a wide hidden layer, and cuBLASLt is poor at it. On the HIGGS 28 -> 1024
-// layer it reaches 23.8 TFLOP/s: the input's leading dimension is 28 elements,
-// so cuBLASLt can only promise two-element alignment and picks an `align2`
-// kernel out of a catalogue compiled for sm_80.
-//
-// The kernels in that catalogue are CUTLASS kernels - the profiles name them
-// `cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_...` - so the fix is not a
-// different library but the same one instantiated for this shape: alignment 4
-// on the input, which 28 does divide, and a threadblock tile picked by row
-// count rather than by heuristic. Milliseconds against cuBLASLt's best of eight
-// heuristics, bf16, and bit-identical output at every point:
-//
-//     rows        256    1,024    4,096    8,192   16,384   65,536
-//     cuBLASLt  0.0022   0.0042   0.0114   0.0216   0.0415   0.1831
-//     CUTLASS   0.0022   0.0034   0.0090   0.0156   0.0281   0.1730
-//                1.03x    1.25x    1.27x    1.39x    1.48x    1.06x
-//
-// 16,384 is the one that matters most, because the forward chunks its rows at
-// 16,384 above that count, so every large batch runs this layer at that shape.
-//
-// The bias arrives as a C operand whose row stride is zero, which broadcasts one
-// vector down the whole output and lets the ReLU ride in the same epilogue -
-// the same fusion the cuBLASLt path gets from CUBLASLT_EPILOGUE_RELU_BIAS.
-
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/core/cuda/cutlass_narrow_gemm.cuh"
 
@@ -50,9 +25,6 @@ namespace
 using Element = cutlass::bfloat16_t;
 using Accumulator = float;
 
-// A is the input (rows x k, row-major), B the weight panel (k x out, row-major),
-// C the broadcast bias and D the output. Alignment 4 on A is what 28 allows;
-// 8 on B and D is what an output width that is a multiple of 8 allows.
 template<typename ThreadblockShape, typename WarpShape, int Stages, bool Relu>
 struct NarrowGemm
 {
@@ -92,9 +64,6 @@ struct NarrowGemm
         Gemm gemm;
         if (gemm.can_implement(arguments) != cutlass::Status::kSuccess) return false;
 
-        // Split-K is the only thing that needs a workspace and this never asks
-        // for it, which is what makes the call safe to capture in a CUDA graph:
-        // a steady-state forward must not allocate.
         if (Gemm::get_workspace_size(arguments) != 0) return false;
         if (gemm.initialize(arguments, nullptr, stream) != cutlass::Status::kSuccess) return false;
 
@@ -102,9 +71,6 @@ struct NarrowGemm
     }
 };
 
-// The tile that wins moves with the row count, so it is chosen rather than
-// fixed: measured, 64x64 below 512 rows, 64x128 to 2,048 and above 32,768, and
-// 128x128 between - which is where the chunked forward spends every large batch.
 template<bool Relu>
 bool dispatch(int rows, int contraction, int out_features,
               const Element* input, const Element* weights, const Element* bias,
@@ -140,7 +106,7 @@ bool narrow_k_linear_forward_cutlass(Index rows, Index contraction, Index out_fe
     if (contraction <= 0 || contraction > 32 || contraction % 4 != 0) return false;
     if (out_features <= 0 || out_features % 8 != 0) return false;
     if (rows <= 0 || rows > Index(std::numeric_limits<int>::max())) return false;
-    if (!bias) return false;                    // the broadcast C operand needs a vector
+    if (!bias) return false;
 
     const auto aligned = [](const void* pointer) {
         return reinterpret_cast<uintptr_t>(pointer) % 16 == 0;

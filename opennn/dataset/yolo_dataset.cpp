@@ -92,7 +92,6 @@ constexpr char YOLO_IMAGE_MAGIC[8] = {'O','P','E','N','N','Y','I','M'};
 constexpr char YOLO_TARGET_MAGIC[8] = {'O','P','E','N','N','Y','T','G'};
 constexpr char YOLO_BOXES_MAGIC[8] = {'O','P','E','N','N','Y','B','X'};
 
-
 vector<string> read_yolo_classes(const filesystem::path& labels_directory)
 {
     vector<filesystem::path> search_dirs = { labels_directory };
@@ -556,14 +555,6 @@ void apply_geometric_to_image(const uint8_t* src, uint8_t* dst,
     }
 }
 
-// Bilinear resample of src into a rectangle of a destination image, sampling at
-// half-pixel centres -- the convention OpenCV, PIL and PyTorch's
-// align_corners=false use. It maps pixel centres rather than corners, so it
-// does not shift the image by half a pixel when the scale is not 1.
-//
-// Both resize paths go through here now. They used to disagree: the mosaic blit
-// sampled at half-pixel centres while the plain resize was corner-aligned,
-// (src-1)/(dst-1), so one dataset resized images two different ways.
 void resize_bilinear_into(const uint8_t* src, Index src_h, Index src_w,
                           uint8_t* destination, Index destination_w,
                           Index dst_x, Index dst_y,
@@ -599,7 +590,6 @@ void resize_bilinear_into(const uint8_t* src, Index src_h, Index src_w,
         }
     }
 }
-
 
 void bilinear_resize_uint8(const uint8_t* src,
                            Index src_h, Index src_w,
@@ -1284,9 +1274,6 @@ void YoloDataset::open_or_build_cache(const vector<array<float, 2>>& requested_a
     target_cache_reader.close();
     boxes_cache_reader.close();
 
-    // Fast path: image + boxes caches are still valid (same resolution and sources),
-    // only the target tensor layout changed (different grid/bpc/anchors).
-    // Rebuilding only the target cache avoids re-decoding and letterboxing all images.
     if (try_rebuild_target_from_boxes(requested_anchors))
         return;
 
@@ -1491,11 +1478,6 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
         ||  target_cache_reader.file_size() != expected_target_size)
             return false;
 
-        // The sources hash covers the images and the per-image label files but
-        // not the .names file, so editing a class list left a cache whose
-        // targets carry the old class count while get_classes_number() reports
-        // the new one - and the detection head is sized from the latter.
-        // Rejecting the cache here sends it to the rebuild path.
         if (!class_names.empty() && Index(target_header.classes_number) != ssize(class_names))
             return false;
 
@@ -1628,10 +1610,6 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     throw_if(ssize(anchors) != boxes_per_cell,
              "YoloDataset: anchors size must equal boxes_per_cell.");
 
-    // The same rule try_rebuild_target_from_boxes applies. It is currently
-    // unobservable here -- v8 forces per-batch re-encoding, so nothing reads
-    // the target records this writes -- but the two writers disagreeing while
-    // a third place decides whether that matters is not a property to rely on.
     target_record_floats = v8_mode
         ? MAX_GT_BOXES * 5
         : grid_size * grid_size * boxes_per_cell * (5 + classes_number);
@@ -2215,13 +2193,10 @@ void YoloDataset::from_JSON(const JsonDocument& document)
     aug.mosaic     = source->has("AugMosaic")     ? (read_json_index(source, "AugMosaic")    != 0) : false;
     set_augmentation(aug);
 
-    // Restore saved sample roles (train/val/test assignments set by user via "Set Roles").
-    // set() unconditionally calls split_samples_random(), so we must overwrite its result here.
     const Json* samples_element = yolo_element->find("Samples");
     if (samples_element)
         samples_from_JSON(samples_element);
 }
-
 
 }
 

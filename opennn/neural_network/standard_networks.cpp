@@ -65,11 +65,6 @@ static void finalize_build(NeuralNetwork& network)
     network.set_parameters_glorot();
 }
 
-
-// Every v8 detection head starts with its classification logits biased low, so
-// the first epochs are not spent unlearning a prior that says every cell holds
-// an object. Both FPNv8 branches -- CSPDarknet53v11 and Darknet53/CSPDarknet53
-// -- built this loop for themselves, character for character.
 static void bias_v8_class_logits(NeuralNetwork& network)
 {
     constexpr float PRIOR_BIAS = -4.5951f;
@@ -212,8 +207,6 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
                                                const Shape& output_shape)
     : NeuralNetwork(NetworkTask::AutoAssociation)
 {
-    // Shape::operator[] is unchecked; its four-argument sibling below already
-    // validates the same two inputs.
     throw_if(input_shape.empty(),
              "AutoAssociationNetwork: input shape cannot be empty.");
     throw_if(complexity_dimensions.empty(),
@@ -486,11 +479,6 @@ static vector<array<float, 2>> sort_anchors_by_area(const vector<array<float, 2>
     return sorted;
 }
 
-// The YoloNetwork constructor's shared builders. They were eight lambdas
-// declared before the backbone branches, capturing the same six things: the
-// network being built and the five configuration values below. As a struct they
-// live outside the constructor, which is what lets the constructor shrink and
-// the per-backbone branches eventually move out too.
 struct YoloBuilder
 {
     NeuralNetwork& network;
@@ -537,11 +525,6 @@ struct YoloBuilder
                    const char* activation, const Shape& kernel_stride,
                    bool batch_norm, const string& name) const
     {
-        // SiLU and the GELUs need their pre-activation input, which a fused
-        // convolution does not keep, so they travel as a standalone Activation
-        // layer - what the v8 path spells out as add_cba. The convolution used
-        // to accept them and quietly substitute Identity, which built a
-        // linear neck and said nothing.
         const bool needs_own_layer =
             activation_needs_input(ActivationOperator::from_string(activation));
 
@@ -559,10 +542,6 @@ struct YoloBuilder
                          {convolution_index});
     }
 
-    // Prior bias for anchor-based fused detection heads ("yolo_logits*"):
-    // Each fused conv bias has layout [tx,ty,tw,th,obj,c0..cN] × bpc.
-    // Set objectness (pos 4) and class (pos 5..4+C) biases to -4.5951 per anchor.
-    // Box coord biases (pos 0..3 per anchor) stay at 0.
     void apply_yolo_prior_bias(Index n_classes) const
     {
         static constexpr float PRIOR_BIAS = -4.5951f;
@@ -581,8 +560,6 @@ struct YoloBuilder
         }
     }
 
-    // Every backbone below ends the same way, and the prior bias has to be
-    // applied after the parameters are randomised or it is overwritten.
     void finish_yolo_network() const
     {
         network.compile();
@@ -645,11 +622,6 @@ struct YoloBuilder
                          {up_index, c_index});
     }
 
-    // The v8 detection head: two 3x3 blocks into a 1x1 projection, once for the
-    // box branch and once for the class branch, concatenated and handed to
-    // DetectionV8. Like SPPF, the two FPNv8 branches build the same graph and
-    // differ only in how they wrap a 3x3 block, so that is the parameter. The
-    // two 1x1 output projections are identical in both and stay here.
     void add_v8_detection_head(Index feature_index,
                                const string& name,
                                Index head_channels,
@@ -678,7 +650,6 @@ struct YoloBuilder
     }
 };
 
-
 YoloNetwork::YoloNetwork(const Shape& input_shape,
                          Index classes_number,
                          const vector<array<float, 2>>& anchors,
@@ -704,10 +675,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                  "YoloNetwork: HeadStyle::FPN requires DarknetTiny, DarknetTinyV3, Darknet53, or CSPDarknet53.");
         throw_if(ssize(anchors) != 9 && ssize(anchors) != 6,
                  "YoloNetwork: HeadStyle::FPN expects 6 anchors (2-head) or 9 anchors (3-head).");
-        // DarknetTinyV3 is the only 2-head FPN backbone: it slices
-        // anchors[3..end) for its large head, so nine anchors put six of them
-        // on a conv sized for three and the failure surfaced much later as an
-        // unrelated divisibility message from DetectionOperator::set.
         throw_if(backbone == Backbone::DarknetTinyV3 && ssize(anchors) != 6,
                  "YoloNetwork: DarknetTinyV3 with HeadStyle::FPN is 2-head and requires exactly 6 anchors.");
     }
@@ -719,12 +686,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                  "YoloNetwork: HeadStyle::PANet requires exactly 9 anchors.");
     }
 
-    // The remaining parameters are read by some branches and not others, and a
-    // branch that does not read one used to build a network that silently
-    // ignored it -- reg_max on an anchor head, model_size on anything but v11,
-    // use_sppf on a backbone with no SPPF to insert. Rejected here instead, so
-    // the caller learns at construction rather than from a model that trains
-    // to the wrong shape.
     const bool is_darknet53_family =
         backbone == Backbone::Darknet53 || backbone == Backbone::CSPDarknet53;
 
@@ -732,8 +693,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
              && !is_darknet53_family && backbone != Backbone::CSPDarknet53v11,
              "YoloNetwork: HeadStyle::FPNv8 requires Darknet53, CSPDarknet53 or CSPDarknet53v11.");
 
-    // Moved up from the end of the CSPDarknet53v11 branch, which threw only
-    // after building the whole backbone.
     throw_if(backbone == Backbone::CSPDarknet53v11 && head_style != HeadStyle::FPNv8,
              "YoloNetwork: CSPDarknet53v11 backbone only supports FPNv8 head style.");
 
@@ -753,18 +712,12 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
     const Shape stride{1, 1};
 
-    // Everything the shared builders need; they live outside the constructor.
     const YoloBuilder builder{*this, act, stride, classes_number, class_activation, reg_max};
     const Shape stride_2{2, 2};
     const Shape pool{2, 2};
     const Shape pool_stride{2, 2};
     const Shape no_padding{0, 0};
 
-    // Spatial pyramid pooling - fast: a 1x1 down-projection, three chained
-    // 5x5 max-pools at stride 1, the four streams concatenated, and a 1x1 back
-    // up. Both users build the same graph but wrap their convolutions
-    // differently -- the v11 branch splits the activation into its own layer --
-    // so the block builder is a parameter rather than baked in.
     if (backbone == Backbone::Vgg)
     {
         const vector<Index> filters = {32, 64, 128, 256, 512};
@@ -862,13 +815,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
     }
     else if (backbone == Backbone::CSPDarknet53v11)
     {
-        // Official YOLOv8-compatible backbone: C2f blocks, SiLU, SPPF, PANet C2f neck.
-        // Layer prefix "c8_" distinguishes from the old C3k2 ("c11_") implementation.
-        //
-        // SiLU is not supported as an inline activation in Convolutional (it needs the
-        // pre-activation input for its derivative). Every Conv block is therefore built
-        // as Conv(Identity, BN) + Activation(act) — matching the official YOLOv8 Conv
-        // module: Conv2d → BatchNorm2d → SiLU.
 
         auto scale_ch = [&](Index base) -> Index {
             const float w = model_size == ModelSize::n ? 0.25f
@@ -886,15 +832,12 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             return max(Index(1), Index(round(float(base) * d)));
         };
 
-        // Conv+BN+act block (activation in a separate layer so SiLU works)
         auto add_cba = [&](Index in, const Shape& kernel, const Shape& kstride,
                             const string& name) -> Index {
             Index c = builder.add_conv(in, kernel, "Identity", kstride, true, name);
             return add_layer(make_unique<Activation>(get_layer(c)->get_output_shape(), act, name+"_act"), {c});
         };
 
-        // C2f: two independent 1×1 convs (cv1a, cv1b) equivalent to official cv1→chunk(2),
-        // followed by n bottleneck blocks, all outputs concatenated, merged by cv2.
         auto add_c2f = [&](Index input_idx, Index in_ch, Index out_ch, Index n,
                             bool shortcut, const string& prefix) -> Index {
             const Index half = out_ch / 2;
@@ -917,57 +860,48 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             return add_cba(cat_idx, Shape{1,1,(2+n)*half,out_ch}, stride, prefix+"_cv2");
         };
 
-        // Backbone channel widths (YOLOv8s at width=0.5: 32/64/128/256/512)
-        const Index c1 = scale_ch(64);    // stem out
-        const Index c2 = scale_ch(128);   // stage 1 out
-        const Index c3 = scale_ch(256);   // stage 2 out  (P3, stride=8)
-        const Index c4 = scale_ch(512);   // stage 3 out  (P4, stride=16)
-        const Index c5 = scale_ch(1024);  // stage 4 out + SPPF (P5, stride=32)
+        const Index c1 = scale_ch(64);
+        const Index c2 = scale_ch(128);
+        const Index c3 = scale_ch(256);
+        const Index c4 = scale_ch(512);
+        const Index c5 = scale_ch(1024);
 
-        // Backbone depths (YOLOv8s at depth=0.33: 1/2/2/1)
         const Index d1 = scale_d(3);
         const Index d2 = scale_d(6);
         const Index d3 = scale_d(6);
         const Index d4 = scale_d(3);
 
-        // Stem: Conv(k=3, s=2) + act
         Index x = add_layer(make_unique<Convolutional>(input_shape, Shape{3,3,input_shape[2],c1},
                                                        "Identity", stride_2, "Same", true, "c8_stem"));
         x = add_layer(make_unique<Activation>(get_layer(x)->get_output_shape(), act, "c8_stem_act"), {x});
 
-        // Stage 1: Conv(s=2) + C2f
         x = add_cba(x, Shape{3,3,c1,c2}, stride_2, "c8_s1_down");
         x = add_c2f(x, c2, c2, d1, true, "c8_s1");
 
-        // Stage 2: Conv(s=2) + C2f  — P3 feature (stride=8)
         x = add_cba(x, Shape{3,3,c2,c3}, stride_2, "c8_s2_down");
         x = add_c2f(x, c3, c3, d2, true, "c8_s2");
         const Index p3_idx = x;
 
-        // Stage 3: Conv(s=2) + C2f  — P4 feature (stride=16)
         x = add_cba(x, Shape{3,3,c3,c4}, stride_2, "c8_s3_down");
         x = add_c2f(x, c4, c4, d3, true, "c8_s3");
         const Index p4_idx = x;
 
-        // Stage 4: Conv(s=2) + C2f
         x = add_cba(x, Shape{3,3,c4,c5}, stride_2, "c8_s4_down");
         x = add_c2f(x, c5, c5, d4, true, "c8_s4");
 
         x = builder.add_sppf(x, c5, "c8_sppf",
                      [&](Index in, const Shape& kernel, const string& name)
                      { return add_cba(in, kernel, stride, name); });
-        const Index p5_idx = x;  // SPPF output (stride=32)
+        const Index p5_idx = x;
 
         if (head_style == HeadStyle::FPNv8)
         {
-            // Head channel widths
-            const Index n12_ch = scale_ch(512);   // FPN P4 C2f output (256 for 's')
-            const Index n15_ch = scale_ch(256);   // FPN P3 C2f output (128 for 's')
-            const Index n18_ch = scale_ch(512);   // PAN P4 C2f output (256 for 's')
-            const Index n21_ch = scale_ch(1024);  // PAN P5 C2f output (512 for 's')
-            const Index nd_n   = scale_d(3);      // neck C2f repeat count (1 for 's')
+            const Index n12_ch = scale_ch(512);
+            const Index n15_ch = scale_ch(256);
+            const Index n18_ch = scale_ch(512);
+            const Index n21_ch = scale_ch(1024);
+            const Index nd_n   = scale_d(3);
 
-            // FPN top-down path
             add_layer(make_unique<Upsampling>(get_layer(p5_idx)->get_output_shape(), 2, "c8_fpn_p5_upsampling"), {p5_idx});
             add_layer(make_unique<Concatenation>(get_layer(p4_idx)->get_output_shape(),
                                                  vector<Index>{c5,c4}, "c8_fpn_p4_cat"),
@@ -980,7 +914,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                       {get_layers_number()-1, p3_idx});
             const Index c8_n15 = add_c2f(get_layers_number()-1, n12_ch+c3, n15_ch, nd_n, false, "c8_n15");
 
-            // PAN bottom-up path
             const Index n15_down = add_cba(c8_n15, Shape{3,3,n15_ch,n15_ch}, stride_2, "c8_pan_n4_down");
             add_layer(make_unique<Concatenation>(get_layer(c8_n12)->get_output_shape(),
                                                  vector<Index>{n15_ch,n12_ch}, "c8_pan_n4_cat"),
@@ -993,7 +926,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                       {n18_down, p5_idx});
             const Index c8_n21 = add_c2f(get_layers_number()-1, n18_ch+c5, n21_ch, nd_n, false, "c8_n21");
 
-            // Decoupled box+cls detection heads with DFL (box_c1/c2 and cls_c1/c2 use SiLU)
             constexpr Index head_ch = 64;
             const Index box_ch = 4 * max(reg_max, Index(1));
 
@@ -1247,7 +1179,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                                          Shape{1, 1, get_output_shape()[2], detection_channels},
                                          "Identity", stride, "Same", false,
                                          "yolo_logits"));
-    // Note: prior bias for this single-head path is applied below after set_parameters_random().
 
     add_layer(make_unique<Detection>(get_output_shape(), anchors, "detection_layer"));
     static_cast<Detection&>(*get_layers().back()).set_class_activation(
@@ -1270,8 +1201,6 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                                      PoolingMethod pooling_method)
     : NeuralNetwork(NetworkTask::TextClassification)
 {
-    // Shape::operator[] is unchecked, so a short shape read past the end of the
-    // fixed dims array and built the network from whatever was there.
     throw_if(input_shape.get_rank() < 3,
              "TextClassificationNetwork: the input shape must be "
              "{{vocabulary_size, sequence_length, embedding_dimension}}, got rank {}.",
@@ -1293,9 +1222,6 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                                   "embedding_layer");
     embedding_layer->set_scale_embedding(true);
     embedding_layer->set_add_positional_encoding(true);
-    // The pooling below has to know where each sequence ends, and the positional
-    // encoding this Embedding adds already means a padded row is not the zero
-    // row anyone downstream could recognise it by.
     embedding_layer->set_export_valid_lengths(true);
     add_layer(std::move(embedding_layer));
 
@@ -1304,12 +1230,6 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
         heads_number,
         "multihead_attention_layer");
 
-    // No set_zero_padded_queries here. It asked attention to write exactly-zero
-    // rows at padded query positions, and paid for them by vetoing cuDNN's
-    // fused attention for the whole network. The only reader of those zeros was
-    // the pooling below, recovering the sequence length by looking for them;
-    // it reads the Embedding's exported lengths now, so the demand is gone and
-    // this network's attention can be fused.
     add_layer(std::move(attention_layer));
 
     add_layer(make_unique<Pooling3d>(get_output_shape(), pooling_method));
@@ -1384,10 +1304,6 @@ Transformer::Transformer(Index input_sequence_length,
         embedding_dimension, "decoder_embedding");
     decoder_embedding->set_scale_embedding(true);
     decoder_embedding->set_add_positional_encoding(true);
-    // Both embeddings export, and the two records stay apart because they are
-    // held per layer. The normalizations between the blocks shift a padded row
-    // off zero as soon as training moves their bias, and from there no layer
-    // downstream can recover where a sequence ended by looking at it.
     decoder_embedding->set_export_valid_lengths(true);
     Index current_decoder_index = add_layer(std::move(decoder_embedding), {decoder_tokenizer_index});
 
@@ -1777,10 +1693,6 @@ namespace
 {
 
 template <typename Network>
-// label is a const char*, not a const string&: every call site passes a literal,
-// and a reference parameter bound to the resulting temporary makes GCC's
-// -Wdangling-reference fire on a reference that actually points into the
-// network's layer storage.
 auto& get_tokenizer_layer(Network& network, const char* label, const char* method)
 {
     using TokenizerType = conditional_t<is_const_v<Network>, const Tokenizer, Tokenizer>;
@@ -1943,10 +1855,6 @@ void BertForSequenceClassification::set_dropout_rate(const float new_dropout_rat
 
 #endif
 
-// Both loaders open the same file format, and both used to leak the handle:
-// Convolutional::load_darknet_weights throws on any short read, and a bare
-// fopen/fclose pair around the loop never runs its fclose on that path - on
-// Windows the file then stays locked for the life of the process.
 namespace
 {
 
@@ -2002,10 +1910,6 @@ Index load_darknet_backbone_v11(NeuralNetwork& network,
     const DarknetFile file = open_darknet_weights(weights_path, "load_darknet_backbone_v11");
     FILE* const f = file.get();
 
-    // The CSPDarknet53v11 builder labels its layers c8_*; these were the labels
-    // of the older C3k2 implementation it replaced, so every lookup missed, the
-    // function printed six warnings and returned 0 - and the caller reported
-    // that pretrained weights had been loaded.
     static const pair<const char*, size_t> targets[] = {
         {"c8_stem",    0},
         {"c8_s1_down", 0},
@@ -2028,8 +1932,6 @@ Index load_darknet_backbone_v11(NeuralNetwork& network,
             fseek(f, long(skip_floats) * long(sizeof(float)), SEEK_CUR);
 
         auto it = label_to_conv.find(label);
-        // Throwing, not skipping: loading nothing while reporting success is
-        // exactly how this went unnoticed once the backbone was relabelled.
         throw_if(it == label_to_conv.end(),
                  "load_darknet_backbone_v11: layer {} is not in the network; "
                  "the backbone does not match this loader.", label);

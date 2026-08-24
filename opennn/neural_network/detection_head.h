@@ -30,14 +30,6 @@ struct DetectionHeadMetadata
     bool uses_sigmoid_classes() const noexcept { return class_activation == DetectionClassActivation::Sigmoid; }
 };
 
-// Two primitives the dataset, the loss and non-max suppression all have to
-// agree on, because they describe the same encoding from three sides: the
-// dataset builds targets in it, the loss scores against it, and suppression
-// reads it back. Each kept its own copy -- identical today, and exactly the
-// kind of thing that fails silently if one of them is ever tuned alone.
-
-// Intersection over union of two boxes held as centre-x, centre-y, width and
-// height in the first four slots of a candidate.
 inline float yolo_box_iou(const std::array<float, 6>& a, const std::array<float, 6>& b)
 {
     const float a_left = a[0] - 0.5f * a[2];
@@ -59,10 +51,6 @@ inline float yolo_box_iou(const std::array<float, 6>& a, const std::array<float,
     return area > 0.0f ? inter / area : 0.0f;
 }
 
-// Distribution Focal Loss decode: the expected bin of a softmax over reg_max
-// logits, which is what turns a v8 head's distribution into a distance.
-// Shifted by the maximum before exponentiating, so a confident head cannot
-// overflow.
 inline float dfl_decode(const float* logits, Index reg_max)
 {
     float max_l = *max_element(logits, logits + reg_max);

@@ -18,7 +18,6 @@
 namespace opennn
 {
 
-// Defined below: against the CUDA kernels, or as throwing stubs.
 static void split_heads_gpu(const TensorView&, TensorView&);
 static void concatenate_heads_gpu(const TensorView&, TensorView&);
 
@@ -136,9 +135,6 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
     }
 
     TensorView&       scratch     = forward_slots[scratch_slot];
-    // The scratch holds the GEMM OUTPUT, so its width is the projected width,
-    // not the input width - the interleaved branch above already spells that
-    // out. They coincide only for a square projection.
     TensorView        scratch_2d  = scratch.reshape_prefix({rows, heads_number * head_dimension});
     const TensorView  scratch_4d  = scratch.reshape_prefix(
         {batch_size, seq_len, heads_number, head_dimension});
@@ -188,8 +184,6 @@ void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_pro
         ? accumulate_input_delta_self
         : accumulate_input_delta_cross;
 
-    // The projection that writes an input delta first also folds in the delta
-    // another consumer of that input left (BackPropagation::plan_delta_addends).
     const size_t input_ordinal = min(input_view_index, input_views.size() - 1);
     const TensorView& planned_addend = back_propagation.input_delta_addend(layer, input_ordinal);
     const TensorView addend = accumulate || planned_addend.empty()

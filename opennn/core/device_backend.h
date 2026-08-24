@@ -145,34 +145,9 @@ void    set_conv_workspace_auto_limit_bytes(int64_t) noexcept;
 bool conv_autotune_enabled() noexcept;
 void set_conv_autotune(bool) noexcept;
 
-// Diagnostic kernel choices ("rungs"): Auto in production; the other values
-// pin one path so a gradient or an output can be checked against the reference
-// on purpose (a shape may never take a rung by itself on a given GPU), and so
-// the benchmark harness can A/B them. Read with rung<R>(), set with set_rung().
-//
-// Batch-norm backward: Auto takes cuDNN's fully fused engine when the shape
-// has one and the library's own fused kernel (batchnorm_backward_fused_cuda)
-// otherwise.
 enum class BatchNormBackwardRung { Auto, StagedFp32, PlainNative, OwnKernel };
-// Batch-norm training forward: Auto takes the library's own kernel
-// (batchnorm_forward_fused_cuda) wherever it can leave the packed ReLU mask
-// the backward reads in place of Y - a ReLU output with a channel count that
-// is a multiple of 8, i.e. every BN of a ResNet - and cuDNN's fused graph
-// elsewhere.
 enum class BatchNormForwardRung { Auto, CudnnGraph, OwnKernel };
-// Max pooling on CUDA: Auto takes the library's own forward + argmax-mask
-// backward (max_pooling_forward_cuda / max_pooling_backward_cuda) in training,
-// where the mask slot exists, and cuDNN's pooling elsewhere (inference,
-// average pooling, windows above 255 elements).
 enum class MaxPoolingRung { Auto, Cudnn, OwnKernel };
-// Scaled dot-product attention: Auto takes FlashAttention-2 wherever the build
-// has a kernel for the shape and the mask lets it (core/cuda/flash_attention.cuh
-// says which those are) and cuDNN's fused graph everywhere else, which is
-// everything on a build without FA2 kernels. CudnnGraph pins cuDNN, which is
-// the other half of an A/B; FlashAttention asks for FA2 but cannot promise it,
-// since a layer it does not cover - a causal mask over a padded batch, say -
-// still has to compute, so a measurement under it should read the call count
-// (flash_attention::call_count) rather than assume.
 enum class AttentionRung { Auto, CudnnGraph, FlashAttention };
 
 template<typename Rung> Rung rung() noexcept;
@@ -198,8 +173,6 @@ private:
 };
 
 void* allocate(Device, Index);
-// noexcept: called from Buffer/PinnedBuffer destructors, where a throw would
-// terminate instead of reporting the CUDA error that caused it.
 void deallocate(Device, void*, Index) noexcept;
 
 void set_zero(void*, Index, Device);
@@ -347,23 +320,12 @@ private:
 
 void launch_graph(const GraphExecHandle&, cudaStream_t);
 
-// Execution lanes. Lane 0 is the compute stream every kernel and cuDNN/cuBLAS
-// call has always run on; lanes 1.. are extra streams, each with its own
-// cuDNN/cuBLAS handles and thread scratch, for work the schedule forks off -
-// kernels on different lanes run concurrently, inside a captured graph too
-// (a forked lane joins the capture through the fork event and must be joined
-// back before the capture ends). The active lane is a thread-local index the
-// accessors below read; a scheduler sets it around the ops it forks and
-// restores it. lanes_available() is the configured count (OPENNN_LANES,
-// default 1: no forking anywhere).
 constexpr int MAX_LANES = 4;
 int lanes_available() noexcept;
 int active_lane() noexcept;
 void set_active_lane(int lane);
 cudaStream_t lane_stream(int lane);
 
-// The active lane's stream; host<->device staging copies use the transfer
-// stream, joined to compute with events (see Batch::wait_h2d_on_compute_stream).
 cudaStream_t get_compute_stream();
 cudaStream_t get_transfer_stream();
 
@@ -382,10 +344,6 @@ void set_threads_number(int);
 
 struct TensorView;
 
-// Per-thread device scratch, one growable buffer per GraphWorkspaceKind
-// (a captured inference graph pins them through CudaGraphWorkspaceScope).
-// Growth is forbidden while a CudaAllocationGrowthGuard is active - warm-up
-// must have sized them.
 void* ensure_workspace_bytes(device::GraphWorkspaceKind, Index bytes);
 template<typename T>
 T* ensure_workspace(device::GraphWorkspaceKind kind, Index count)
@@ -396,9 +354,6 @@ inline bfloat16* ensure_bf16_gradient_workspace(Index n) { return ensure_workspa
 inline bfloat16* ensure_int8_dequant_workspace(Index n)  { return ensure_workspace<bfloat16>(device::GraphWorkspaceKind::Int8Dequant, n); }
 inline float*    ensure_bf16_to_fp32_workspace(Index n)  { return ensure_workspace<float>(device::GraphWorkspaceKind::Bf16ToFp32, n); }
 inline void*     ensure_shared_scratch(size_t bytes)     { return ensure_workspace_bytes(device::GraphWorkspaceKind::SharedScratch, Index(bytes)); }
-// The query-delta accumulator and the softmax delta sums FlashAttention-2's
-// backward writes; one buffer for both, and one buffer for every attention
-// layer, since only one of them is inside its backward at a time.
 inline float*    ensure_flash_attention_workspace(Index n) { return ensure_workspace<float>(device::GraphWorkspaceKind::FlashAttention, n); }
 
 void release_thread_workspaces();
@@ -407,9 +362,6 @@ const void* data_for_gemm_dtype(const TensorView&, Type);
 
 const void* bias_for_gemm_bf16(const TensorView&);
 
-// D = epilogue(A * B [+ addend]): with `addend` the matmul reads it as C with
-// beta = 1 (same layout as D), so a sum that would otherwise be a separate
-// pass costs one read inside the epilogue.
 void run_lt_matmul_cached(
     int, int, int,
     cublasOperation_t transA,

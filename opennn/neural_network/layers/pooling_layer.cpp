@@ -185,7 +185,6 @@ void pooling_2d_backward(const TensorView& output_delta, const TensorView& maxim
         });
 }
 
-
 void PoolOperator::set(Index input_h, Index input_w, Index input_c,
                Index pool_h, Index pool_w,
                Index new_row_stride, Index new_column_stride,
@@ -206,10 +205,6 @@ void PoolOperator::set(Index input_h, Index input_w, Index input_c,
     refresh_descriptor();
 }
 
-
-// The cuDNN descriptor caches the geometry, so it has to be rebuilt whenever
-// any of the fields above changes -- including when the owning layer writes
-// them directly rather than through set().
 void PoolOperator::refresh_descriptor()
 {
 #ifdef OPENNN_HAS_CUDA
@@ -331,7 +326,6 @@ void PoolOperator::back_propagate(ForwardPropagation& forward_propagation, BackP
         const TensorView& input  = get_input(forward_propagation, layer);
         const TensorView& output = get_output(forward_propagation, layer);
 
-        // The forward left the argmax mask exactly when it ran the library kernel.
         if (own_max_pooling(input, indices) && !indices.empty())
         {
             output_delta.dispatch([&]<typename T>()
@@ -401,8 +395,6 @@ void validate_pooling_configuration(const Shape& input_shape,
     throw_if(padding_shape[0] < 0 || padding_shape[1] < 0,
              "Pooling layer '{}': padding cannot be negative, read {}.",
              label, shape_to_string(padding_shape));
-    // Padding >= pool size would let a max-pooling window sit entirely inside the
-    // padding, producing -infinity outputs.
     throw_if(padding_shape[0] >= pool_shape[0] || padding_shape[1] >= pool_shape[1],
              "Pooling layer '{}': padding {} must be smaller than the pool size {}.",
              label, shape_to_string(padding_shape), shape_to_string(pool_shape));
@@ -479,9 +471,6 @@ vector<TensorSpec> Pooling::get_forward_specs(Index batch_size) const
 
     const Shape out_shape = get_output_shape();
 
-    // The argmax of each output window, for the backward: on the CPU as a
-    // float per output; on CUDA a byte per output (the window position, see
-    // max_pooling_forward_cuda), so a window has to fit a byte.
     const bool max_pooling = pool.method == PoolOperator::Max;
     const bool cuda = compute_device == Device::CUDA;
     const bool argmax_saved = max_pooling && (!cuda || pool.pool_height * pool.pool_width <= 255);
@@ -522,8 +511,6 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
 
 void Pooling::update_pool_operator()
 {
-    // The geometry already lives in the operator -- the layer writes straight
-    // into it -- so this only has to rebuild the descriptor and wire the slots.
     pool.refresh_descriptor();
 
     pool.output_slots = {Output, MaximalIndices};
@@ -568,10 +555,6 @@ void Pooling::apply_input_shape(const Shape& new_input_shape)
 {
     throw_if(new_input_shape.get_rank() != 3, "Input shape must be 3");
 
-    // The geometry checks set() performs belong here too: a shape propagated
-    // through the graph could leave a window larger than the input, which the
-    // constructor refuses but this path used to accept - and the output shape
-    // then came out zero or negative.
     throw_if(new_input_shape[0] < pool.pool_height || new_input_shape[1] < pool.pool_width,
              "Pooling layer '{}': pool size {}x{} does not fit an input of {}x{}.",
              get_label(), pool.pool_height, pool.pool_width, new_input_shape[0], new_input_shape[1]);
