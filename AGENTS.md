@@ -19,13 +19,27 @@ from inside this repo, so dead-code analysis run only here produces false positi
 
 ## Build environment on this machine (Windows)
 
-`cl.exe` and `ninja.exe` are not on PATH in a plain shell. Ninja ships bundled with
-Visual Studio at:
-`C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\ninja.exe`
+`cl.exe` and `ninja.exe` are not on PATH in a plain shell. Both ship inside the Visual
+Studio install, so locate it rather than hard-coding a version — this repo is used from
+more than one machine and the VS version differs between them:
 
-To get a working MSVC environment (`cl`, `link`, `INCLUDE`/`LIB`), source one of:
-- `C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat`
-- `C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat`
+```bat
+for /f "usebackq tokens=*" %i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do set VSROOT=%i
+call "%VSROOT%\VC\Auxiliary\Build\vcvars64.bat"
+set "PATH=%VSROOT%\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja;%PATH%"
+```
+
+`vcvars64.bat` needs `vswhere.exe` on PATH to resolve the toolset; if it prints
+`'vswhere.exe' is not recognized`, prepend
+`%ProgramFiles(x86)%\Microsoft Visual Studio\Installer` first.
+
+`VsDevCmd.bat` (in `%VSROOT%\Common7\Tools\`) is the equivalent for a non-x64 default.
+
+**Known gap on the Windows box as of 2026-08-24:** VS 2022 Community 17.14 is installed
+with the MSVC toolset (14.44.35207), but the Windows SDK resource tools are missing —
+`rc.exe` is not found and CMake reports `CMAKE_MT-NOTFOUND`. `cl` compiles, but linking
+fails, so CMake cannot get past its own compiler probe. Install the Windows SDK
+component before expecting a local build here.
 
 ### Creating the two build directories
 
