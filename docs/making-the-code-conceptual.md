@@ -7,9 +7,22 @@ section into a fresh session. It asks for a **plan**, not an implementation.
 
 ## Your task
 
-Find places in OpenNN where the code makes the reader reconstruct a concept that
-the code should have named, and **produce a plan** for naming it. Do not lose
-performance. Do not add comments.
+Find places in OpenNN where the naming and the reality have come apart, and
+**produce a plan** for closing the gap. That runs in two directions:
+
+- **A concept with no name.** The code already does something coherent and makes
+  every reader reconstruct it. Name it.
+- **A name with no concept.** A struct, class, or enum whose name claims an idea
+  it does not deliver — a bag of unrelated fields, one name covering several
+  ideas, or several names covering one. Refactor it into what it actually is.
+
+The second direction matters more, and is the one usually skipped. A missing
+concept costs the reader work. A false one costs them trust: they take the name
+at face value, reason from it, and are wrong. For an agent this is worse still,
+because a name is most of what it has to go on.
+
+The goal is that a human or an agent arriving cold can read a file and act on it
+correctly. Do not lose performance. Do not add comments.
 
 **Deliver a plan, not an implementation.** Stop when the plan is written and wait
 for approval. Do not edit source files, do not start with "the small obvious one
@@ -81,6 +94,70 @@ concept. Structs must represent one idea.
 **Rejected — a struct wrapping two values that always travel together but have
 no name anyone would recognise.** Pairs are not automatically concepts. If you
 cannot say what the thing *is* in three words, it is not one.
+
+---
+
+## What counts as a false concept
+
+The same test, run backwards. A type is not one concept when its members do
+**not** share a lifetime, or when disjoint parts of the code use disjoint subsets
+of it. Ask what each field is for and who reads it; if the answers form separate
+clusters, the type is several concepts wearing one name.
+
+**Field count is not the test.** `ForwardPropagation` has 45 fields and is a
+genuine concept — one arena for one pass — and a proposal to split it was
+examined and rejected on those grounds. A large type that is really one thing is
+fine. A small type that is really two is not.
+
+The signals worth scanning for:
+
+- **A name that describes nothing.** `...Data`, `...Info`, `...Context`,
+  `...Params`, `...State`, `...Manager`, `...Helper`. These are not banned words,
+  but each one is a place where somebody could not say what the thing was. Check
+  whether they could have.
+- **Disjoint readers.** Different call sites, or different subclasses, touching
+  non-overlapping subsets of the fields.
+- **Several names for one idea**, or one name spanning several.
+- **A name that was true once.** The type still carries the name of what it did
+  before the code moved on.
+
+Two real ones in this repo, both still open:
+
+**`OptimizerData` — [training_result.h:23](../opennn/training_strategy/training_result.h#L23), 11 fields.**
+Three unrelated things in one struct: a scratch arena (`data`, `views`),
+line-search state (`training_direction`, `training_slope`, four separate
+learning-rate fields), and `damping_parameter`, which only Levenberg-Marquardt
+uses. Different optimizers touch disjoint subsets — stochastic gradient descent
+uses none of the line-search fields. The name says only that an optimizer owns
+it, which the reader already knew. It also lives in `training_result.h`, which
+is not where anyone would look for it.
+
+**`AugmentationSettings` / `AugmentationConfig` / `AugmentationParams` —
+[image_dataset.h:19](../opennn/dataset/image_dataset.h#L19),
+[yolo_dataset.h:132](../opennn/dataset/yolo_dataset.h#L132),
+[yolo_dataset.cpp:399](../opennn/dataset/yolo_dataset.cpp#L399).**
+Three interchangeable-looking suffixes hiding the distinction that actually
+matters. The first two are the same kind of thing — the augmentation policy a
+user configured, diverging by dataset type. The third is not configuration at
+all: it is the random draw realised for one specific image. Policy and realised
+draw are genuinely different concepts, and the names are exactly the wrong way
+round to show it. The fix is not to merge all three; it is to name the two ideas
+that are really there.
+
+### Fixing one
+
+In rough order of preference:
+
+1. **Rename**, if the members really are one concept and only the name is wrong.
+   Cheapest, and often enough.
+2. **Split by cohesion** into the clusters the readers already imply. Each part
+   must survive the concept test on its own, or you have only made more bags.
+3. **Dissolve** it back into parameters, if it exists only because somebody
+   wanted a shorter signature.
+
+Splitting changes far more code than naming something new does, and it moves
+call sites that were not broken. Say so in the plan, with the count. Prefer the
+smallest change that makes the name true.
 
 ---
 
@@ -207,6 +284,9 @@ through `template<typename Rung> rung()`).
 
 These are leads, not a work queue. Each still needs the audit in step 2 before it
 becomes a plan, and the counts below are from an earlier scan — re-derive them.
+
+- The two false concepts above, `OptimizerData` and the augmentation trio, are
+  both still open.
 
 - `multiply(a, bool, b, bool, out, alpha, beta)` in `core/tensor_operations.h` —
   two adjacent unnamed transpose flags, 16 unreadable call sites. Wants
