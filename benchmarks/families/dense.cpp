@@ -32,10 +32,15 @@
 #include <algorithm>
 #include <chrono>
 #include <iomanip>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#ifdef __linux__
+#include <unistd.h>
+#endif
 
 #include "opennn/core/configuration.h"
 #include "opennn/core/random_utilities.h"
@@ -54,6 +59,18 @@ using clock_type = chrono::steady_clock;
 
 namespace
 {
+
+double resident_mb()
+{
+#ifdef __linux__
+    // statm reports pages; the second field is resident.
+    ifstream statm("/proc/self/statm");
+    long total = 0, resident = 0;
+    if (statm >> total >> resident)
+        return double(resident) * double(sysconf(_SC_PAGESIZE)) / (1024.0 * 1024.0);
+#endif
+    return 0.0;
+}
 
 constexpr Index SEED = 42;        // the value five of six sites already used
 
@@ -167,6 +184,7 @@ int main(int argc, char* argv[])
         const Options options = parse_options(argc, argv, 6);
 
         Configuration::instance().set(options.device, options.precision);
+        cout << "baseline_rss_mib=" << resident_mb() << "\n";
         cout << "engine=opennn\nmode=" << mode
              << "\ndevice=" << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
 
@@ -300,6 +318,7 @@ int main(int argc, char* argv[])
         const Options options = parse_options(argc, argv, 5);
 
         Configuration::instance().set(options.device, options.precision);
+        cout << "baseline_rss_mib=" << resident_mb() << "\n";
         cout << "engine=opennn\nmode=infer\ndevice="
              << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
 
@@ -389,6 +408,7 @@ int main(int argc, char* argv[])
         const Options options = parse_options(argc, argv, 4);
 
         Configuration::instance().set(options.device, options.precision);
+        cout << "baseline_rss_mib=" << resident_mb() << "\n";
         cout << "engine=opennn\nmode=capacity\ndevice="
              << (options.device == Device::CPU ? "cpu" : "cuda")
              << "\nbatch=" << batch << "\n";

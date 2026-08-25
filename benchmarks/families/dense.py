@@ -67,6 +67,17 @@ def build(features: int, opts: dict) -> torch.nn.Module:
     layers.append(torch.nn.Linear(current, 1))
     return torch.nn.Sequential(*layers).to(opts["device"])
 
+def resident_mib() -> float:
+    """Resident set, MiB. The framework baseline is subtracted from the peak,
+    because torch's import alone is ~816 MiB here against OpenNN's 209 -- so a
+    raw RSS comparison measures which framework is bigger, not which run costs
+    more, and the answer flips with dataset size."""
+    try:
+        with open("/proc/self/statm") as handle:
+            return int(handle.read().split()[1]) * os.sysconf("SC_PAGE_SIZE") / (1024.0 * 1024.0)
+    except Exception:
+        return 0.0
+
 def parse_opts(argv: list[str], first: int) -> dict:
     """Trailing options, positional and shared by every mode -- the same five
     in the same order as model_opennn.cpp."""
@@ -146,6 +157,7 @@ def train_like(argv: list[str], mode: str) -> int:
     x_np, y_np = load_csv(argv[2])
     xt_np, yt_np = load_csv(argv[3])
 
+    print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode={mode}\ndevice={opts['device']}")
 
     x = torch.from_numpy(x_np).to(opts["device"]).contiguous()
@@ -224,6 +236,7 @@ def infer(argv: list[str]) -> int:
     opts = parse_opts(argv, 5)
 
     x_np, _ = load_csv(argv[2])
+    print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode=infer\ndevice={opts['device']}")
 
     x = torch.from_numpy(x_np).to(opts["device"]).contiguous()
@@ -272,6 +285,7 @@ def capacity(argv: list[str]) -> int:
     opts = parse_opts(argv, 4)
 
     x_np, y_np = load_csv(argv[2])
+    print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode=capacity\ndevice={opts['device']}\nbatch={batch}")
 
     try:

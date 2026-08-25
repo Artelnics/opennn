@@ -21,7 +21,7 @@
 
 #include "opennn/neural_network/model_expression.h"
 #include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/models/models.h"
 
 #include <cstdlib>
 #include <filesystem>

@@ -2,6 +2,8 @@
 
 #include "opennn/dataset/image_dataset.h"
 #include "opennn/dataset/dataset.h"
+#include "opennn/core/device_backend.h"
+#include "opennn/core/json.h"
 #include "opennn/core/variable.h"
 #include "opennn/core/statistics.h"
 
@@ -360,15 +362,57 @@ TEST(ImageDataset, SetInputScalingChannelMismatchThrows)
 
 TEST(ImageDataset, SetAugmentationDisablesDeviceResidency)
 {
+    if (!device::has_cuda_device()) GTEST_SKIP() << "CUDA device unavailable.";
+
     ImageFixture fixture(2, 2, 1);
 
     ImageDataset image_dataset(fixture.root);
+    image_dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+
+    image_dataset.enable_device_residency();
+    ASSERT_TRUE(image_dataset.is_device_resident());
 
     AugmentationSettings augmentation;
     augmentation.enabled = true;
     augmentation.reflection_axis_x = true;
 
-    EXPECT_NO_THROW(image_dataset.set_augmentation(augmentation));
+    image_dataset.set_augmentation(augmentation);
+
+    EXPECT_FALSE(image_dataset.is_device_resident());
+
+    image_dataset.enable_device_residency();
+    EXPECT_FALSE(image_dataset.is_device_resident());
+}
+
+TEST(ImageDataset, LoadingAugmentationDisablesDeviceResidency)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "CUDA device unavailable.";
+
+    ImageFixture fixture(2, 2, 1);
+
+    ImageDataset configured_dataset(fixture.root);
+    AugmentationSettings augmentation;
+    augmentation.enabled = true;
+    augmentation.reflection_axis_x = true;
+    configured_dataset.set_augmentation(augmentation);
+
+    JsonWriter writer;
+    configured_dataset.to_JSON(writer);
+
+    JsonDocument document;
+    document.set_root(Json::parse(writer.c_str()));
+
+    ImageDataset resident_dataset(fixture.root);
+    resident_dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+    resident_dataset.enable_device_residency();
+    ASSERT_TRUE(resident_dataset.is_device_resident());
+
+    resident_dataset.from_JSON(document);
+
+    EXPECT_FALSE(resident_dataset.is_device_resident());
+
+    resident_dataset.enable_device_residency();
+    EXPECT_FALSE(resident_dataset.is_device_resident());
 }
 
 TEST(ImageDataset, AugmentInputsDisabledLeavesDataUnchanged)

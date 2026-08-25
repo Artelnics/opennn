@@ -17,7 +17,7 @@
 #include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/layers/long_short_term_memory_layer.h"
 #include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/models/models.h"
 #include "opennn/training_strategy/loss.h"
 
 using namespace opennn;

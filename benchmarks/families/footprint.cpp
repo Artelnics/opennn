@@ -34,7 +34,7 @@
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/neural_network/model_expression.h"
 #include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/models/models.h"
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/training_strategy/training_strategy.h"
 

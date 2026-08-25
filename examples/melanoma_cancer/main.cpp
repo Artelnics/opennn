@@ -9,7 +9,7 @@
 #include <iostream>
 
 #include "opennn/dataset/image_dataset.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/models/models.h"
 #include "opennn/training_strategy/training_strategy.h"
 #include "opennn/testing_analysis/testing_analysis.h"
 #include "opennn/training_strategy/adaptive_moment_estimation.h"

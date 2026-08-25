@@ -33,7 +33,7 @@
 
 #include "opennn/neural_network/chat.h"
 #include "opennn/core/io_utilities.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/models/models.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/neural_network/operators/tokenizer_operator.h"
 #include "opennn/core/configuration.h"

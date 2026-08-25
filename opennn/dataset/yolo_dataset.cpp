@@ -1265,6 +1265,24 @@ void YoloDataset::set_storage_mode(StorageMode new_storage_mode)
     }
 }
 
+void YoloDataset::enable_device_residency()
+{
+    if (augmentation.enabled)
+    {
+        if (is_device_resident()) disable_device_residency();
+        return;
+    }
+
+    ImageDataset::enable_device_residency();
+}
+
+void YoloDataset::set_augmentation(const AugmentationConfig& new_augmentation)
+{
+    if (is_device_resident()) disable_device_residency();
+
+    augmentation = new_augmentation;
+}
+
 void YoloDataset::open_or_build_cache(const vector<array<float, 2>>& requested_anchors)
 {
     if (try_open_cache(requested_anchors))

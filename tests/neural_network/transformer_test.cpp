@@ -1,7 +1,7 @@
 #include "tests/pch.h"
 
 #include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/models/models.h"
 
 using namespace opennn;
 

@@ -7,7 +7,7 @@
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/training_strategy/loss.h"
 #include "opennn/dataset/batch.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/models/models.h"
 
 #include "tests/test_helpers.h"
 

@@ -2,7 +2,7 @@
 
 #include "opennn/core/json.h"
 #include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/models/models.h"
 #include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/layers/embedding_layer.h"
 #include "opennn/neural_network/layers/layer.h"

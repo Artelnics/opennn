@@ -146,17 +146,42 @@ def session_id() -> str:
     """
     return os.environ.get(SESSION_ENV) or f"adhoc-{os.getpid()}"
 
-def result_destination(dirty: bool | None = None) -> Path:
-    """The evidence store, or `scratch/` when the tree is dirty.
+def clocks_locked() -> bool:
+    """Whether the GPU clock has been pinned for measurement.
 
-    Enforced here rather than asked for in prose: the suite this replaces
-    stated the rule and checked it nowhere, which is how 39 of its 107
-    artifacts came to be dirty-tree results filed as reproducible ones.
+    Inferred from persistence mode, which `gpu_clocks.sh lock` enables
+    alongside `-lgc`. It is a proxy rather than a direct read: the applications
+    -clock query this would otherwise use reports "Requested functionality has
+    been deprecated" on this driver. A false positive needs someone to enable
+    persistence by hand and not lock the clock, which is not an accident
+    anyone has.
+    """
+    return run_text(["nvidia-smi", "--query-gpu=persistence_mode",
+                     "--format=csv,noheader"], timeout=10).strip() == "Enabled"
+
+def result_destination(dirty: bool | None = None, device: str = "cuda") -> Path:
+    """The evidence store, or `scratch/` when the run cannot be evidence.
+
+    Two conditions, both enforced here rather than asked for in prose.
+
+    A dirty tree, because a result that cannot be regenerated is not evidence.
+    The suite this replaces stated that rule and checked it nowhere, which is
+    how 39 of its 107 artifacts came to be dirty-tree results filed as
+    reproducible ones.
+
+    And an unlocked GPU clock, for the same reason at one remove: this card
+    drifts about 8% across a day, so margins under ~2% are not resolvable while
+    it floats, and a transformer run read 986 and 482 samples/s for identical
+    work fifteen minutes apart. Numbers taken that way are worth having --
+    they catch gross regressions and prove the plumbing -- but they are not
+    worth citing, and the filesystem should be the thing that remembers the
+    difference.
     """
     if dirty is None:
         dirty = bool(git_metadata().get("dirty", True))
 
-    destination = RESULTS / "scratch" if dirty else RESULTS
+    unlocked = device == "cuda" and not clocks_locked()
+    destination = RESULTS / "scratch" if (dirty or unlocked) else RESULTS
     destination.mkdir(parents=True, exist_ok=True)
     return destination
 

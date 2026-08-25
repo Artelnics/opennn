@@ -52,6 +52,17 @@ def build(opts: dict) -> torch.nn.Module:
         model = model.to(memory_format=torch.channels_last)
     return model
 
+def resident_mib() -> float:
+    """Resident set, MiB. The framework baseline is subtracted from the peak,
+    because torch's import alone is ~816 MiB here against OpenNN's 209 -- so a
+    raw RSS comparison measures which framework is bigger, not which run costs
+    more, and the answer flips with dataset size."""
+    try:
+        with open("/proc/self/statm") as handle:
+            return int(handle.read().split()[1]) * os.sysconf("SC_PAGE_SIZE") / (1024.0 * 1024.0)
+    except Exception:
+        return 0.0
+
 def parse_opts(argv: list[str], first: int) -> dict:
     def at(index: int, default: str) -> str:
         return argv[index] if len(argv) > index else default
@@ -146,6 +157,7 @@ def train_like(argv: list[str], mode: str) -> int:
     batches = batches_of(argv[5] if len(argv) > 5 else "128")
     opts = parse_opts(argv, 6)
 
+    print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode={mode}\ndevice={opts['device']}")
     warmup = 1 if mode == "train" else 0
 
@@ -202,6 +214,7 @@ def infer(argv: list[str]) -> int:
     batches = batches_of(argv[4] if len(argv) > 4 else "128")
     opts = parse_opts(argv, 5)
 
+    print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode=infer\ndevice={opts['device']}")
 
     for batch in batches:
@@ -248,6 +261,7 @@ def capacity(argv: list[str]) -> int:
     batch = int(argv[3]) if len(argv) > 3 else 128
     opts = parse_opts(argv, 4)
 
+    print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode=capacity\ndevice={opts['device']}\nbatch={batch}")
 
     try:

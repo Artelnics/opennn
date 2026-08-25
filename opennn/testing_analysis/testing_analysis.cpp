@@ -11,7 +11,7 @@
 #include "opennn/dataset/correlations.h"
 #include "opennn/core/parallel_algorithms.h"
 #include "opennn/core/scaling.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/neural_network/neural_network.h"
 #include "opennn/core/statistics.h"
 #include "opennn/training_strategy/error_functions.h"
 #include "opennn/neural_network/forward_propagation.h"

@@ -2,7 +2,7 @@
 
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/models/models.h"
 #include "opennn/training_strategy/training_strategy.h"
 #include "opennn/model_selection/genetic_algorithm.h"
 #include "opennn/core/random_utilities.h"

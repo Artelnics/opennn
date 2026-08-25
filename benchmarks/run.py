@@ -45,6 +45,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (  # noqa: E402
     BENCHMARKS,
+    clocks_locked,
     core_layout,
     cpu_state,
     physical_cores,
@@ -209,6 +210,18 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
 
     start, end = mark("TIMED_START_UNIX"), mark("TIMED_END_UNIX")
 
+    instruments = monitor.summary(start, end)
+
+    # Workload memory: peak minus the engine's own framework baseline. On CPU a
+    # raw resident set compares which framework is bigger, not which run costs
+    # more -- torch's import alone is ~730 MiB against OpenNN's ~209, so the
+    # answer flips with dataset size. Subtracting the baseline is the same
+    # correction the GPU path already makes by subtracting idle.
+    baseline = mark("baseline_rss_mib")
+    if baseline is not None and instruments.get("memory_metric") == "process_peak_rss":
+        instruments["baseline_mib"] = round(baseline, 1)
+        instruments["workload_mib"] = round(max(instruments["peak_mib"] - baseline, 0.0), 1)
+
     throughput = next((int(v) for k, v in fields.items()
                        if k.endswith("_samples_per_sec")), 0)
 
@@ -222,7 +235,7 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
         "quality": {k: float(v) for k, v in fields.items()
                     if k.endswith(("_test_accuracy", "test_roc_auc", "test_log_loss"))
                     and _is_number(v)},
-        "instruments": monitor.summary(start, end),
+        "instruments": instruments,
         "timed_window": {"start_unix": start, "end_unix": end},
         "fields": fields,
         "stderr_tail": completed.stderr[-1500:] if completed.returncode else "",
@@ -318,7 +331,7 @@ def main() -> int:
         }
         name = (f"{artifact['benchmark_id']}"
                 f"{'-' + args.label if args.label else ''}-{run_id}.json")
-        path = result_destination(git.get("dirty")) / name
+        path = result_destination(git.get("dirty"), "cpu") / name
         path.write_text(json.dumps(artifact, indent=2, default=str))
         if git.get("dirty"):
             print("\n  dirty tree -> results/scratch/, not the evidence store")
@@ -369,7 +382,7 @@ def main() -> int:
                     status = "OK" if outcome["returncode"] == 0 else f"rc={outcome['returncode']}"
                     print(f"    {engine:<8} b{batch:<7} "
                           f"{outcome['samples_per_sec']:>12,}/s  "
-                          f"{instruments['peak_mib']:>7.0f} MiB  "
+                          f"{instruments.get('workload_mib', instruments['peak_mib']):>7.0f} MiB  "
                           f"{watt_hours(instruments):>9}  {status}")
 
     summary: dict = {}
@@ -384,6 +397,8 @@ def main() -> int:
             "min_samples_per_sec": rates[0],
             "max_samples_per_sec": rates[-1],
             "peak_mib": max(l["instruments"]["peak_mib"] for l in ok),
+            "workload_mib": max(l["instruments"].get("workload_mib",
+                                                     l["instruments"]["peak_mib"]) for l in ok),
             "energy_wh": median_energy(ok),
             "launches": len(ok),
         }
@@ -451,6 +466,7 @@ def main() -> int:
         "cpu": cpu_state(),
         "frameworks": framework_versions(),
         "datasets": {name: file_info(Path(path)) for name, path in data.items()},
+        "clocks_locked": clocks_locked(),
         "quality_gate": {"agrees": gate, "tolerance": args.tolerance,
                          "accuracies": accuracies},
         "shape_gate": {"agrees": shape_agrees, "reported": shapes},
@@ -459,13 +475,13 @@ def main() -> int:
     }
 
     name = f"{artifact['benchmark_id']}{'-' + args.label if args.label else ''}-{run_id}.json"
-    path = result_destination(git.get("dirty")) / name
+    path = result_destination(git.get("dirty"), args.device) / name
     path.write_text(json.dumps(artifact, indent=2, default=str))
 
     print()
     for engine, stats in summary.items():
         line = (f"  {engine:<8} {stats['median_samples_per_sec']:>12,}/s  "
-                f"{stats['peak_mib']:>7.0f} MiB  "
+                f"{stats.get('workload_mib', stats['peak_mib']):>7.0f} MiB  "
                 f"{format_wh(stats['energy_wh']):>9}")
         if "max_batch" in stats:
             line += f"  max batch {stats['max_batch']:,}"
@@ -488,6 +504,9 @@ def main() -> int:
               f" -- the speed numbers above are not a like-for-like comparison")
     if git.get("dirty"):
         print("\n  dirty tree -> results/scratch/, not the evidence store")
+    elif args.device == "cuda" and not clocks_locked():
+        print("\n  clocks unlocked -> results/scratch/. Provisional: margins under"
+              "\n  ~2% are not resolvable while the clock floats.")
 
     print(f"\nwrote {path}")
     return 0

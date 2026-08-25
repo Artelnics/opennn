@@ -113,6 +113,7 @@ public:
              const vector<array<float, 2>>& anchors = {});
     using Dataset::set_storage_mode;
     void set_storage_mode(StorageMode) override;
+    void enable_device_residency() override;
 
     void from_JSON(const JsonDocument&) override;
     void to_JSON(JsonWriter&) const override;
@@ -140,7 +141,7 @@ public:
         bool mosaic = false;
     };
 
-    void set_augmentation(const AugmentationConfig& cfg) { augmentation = cfg; }
+    void set_augmentation(const AugmentationConfig&);
     const AugmentationConfig& get_augmentation() const { return augmentation; }
 
     static Index convert_voc_to_yolo(const filesystem::path&,

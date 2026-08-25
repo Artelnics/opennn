@@ -16,7 +16,6 @@
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/training_strategy/loss.h"
-#include "opennn/neural_network/standard_networks.h"
 #include "opennn/neural_network/layers/recurrent_layer.h"
 #include "opennn/neural_network/layers/flatten_layer.h"
 #include "opennn/neural_network/layers/embedding_layer.h"

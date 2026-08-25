@@ -6,7 +6,7 @@
 #include "opennn/training_strategy/loss.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/models/models.h"
 #include "opennn/training_strategy/levenberg_marquardt_algorithm.h"
 #include "opennn/core/device_backend.h"
 #include "gtest/gtest.h"

@@ -1,6 +1,7 @@
 #include "tests/pch.h"
 
 #include "opennn/dataset/yolo_dataset.h"
+#include "opennn/core/device_backend.h"
 
 #include "tests/test_helpers.h"
 
@@ -14,6 +15,42 @@
 
 using namespace opennn;
 using namespace opennn_test;
+
+TEST(YoloDataset, AugmentationControlsDeviceResidency)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "CUDA device unavailable.";
+
+    TempDir dir("opennn_yolo_test_");
+    const filesystem::path images_dir = dir.path / "images";
+    const filesystem::path labels_dir = dir.path / "labels";
+    filesystem::create_directories(images_dir);
+    filesystem::create_directories(labels_dir);
+
+    write_bmp_24(images_dir / "sample.bmp", 8, 8, 200, 100, 50);
+    write_label(labels_dir / "sample.txt", 0, 0.5f, 0.5f, 0.4f, 0.4f);
+    write_classes(labels_dir / "classes.names", {"only"});
+
+    YoloDataset dataset;
+    dataset.set_display(false);
+    dataset.set(images_dir, labels_dir, Shape{8, 8, 3}, 2, 1,
+                {{0.2f, 0.2f}});
+    dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+
+    Dataset& base_dataset = dataset;
+    base_dataset.enable_device_residency();
+    EXPECT_FALSE(dataset.is_device_resident());
+
+    YoloDataset::AugmentationConfig augmentation;
+    augmentation.enabled = false;
+    dataset.set_augmentation(augmentation);
+
+    base_dataset.enable_device_residency();
+    ASSERT_TRUE(dataset.is_device_resident());
+
+    augmentation.enabled = true;
+    dataset.set_augmentation(augmentation);
+    EXPECT_FALSE(dataset.is_device_resident());
+}
 
 TEST(YoloDataset, EncodesTargetsIntoExpectedGridCellAndAnchor)
 {

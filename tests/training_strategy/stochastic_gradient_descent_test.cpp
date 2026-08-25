@@ -4,7 +4,7 @@
 #include "opennn/core/random_utilities.h"
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/models/models.h"
 #include "opennn/training_strategy/stochastic_gradient_descent.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/dataset/time_series_dataset.h"

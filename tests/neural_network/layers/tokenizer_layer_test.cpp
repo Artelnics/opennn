@@ -1,7 +1,7 @@
 #include "tests/pch.h"
 
 #include "opennn/neural_network/chat.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/models/models.h"
 #include "opennn/neural_network/layers/tokenizer_layer.h"
 
 using namespace opennn;

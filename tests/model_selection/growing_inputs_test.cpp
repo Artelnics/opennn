@@ -6,7 +6,7 @@
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/neural_network/neural_network.h"
 
 using namespace opennn;
 

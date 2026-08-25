@@ -40,7 +40,7 @@ public:
 
     Index get_channels_number() const { return input_shape[2]; }
 
-    void set_augmentation(const AugmentationSettings& new_augmentation) { augmentation = new_augmentation; }
+    void set_augmentation(const AugmentationSettings&);
     void set_input_scaling(const vector<Descriptives>&,
                            const vector<ScalerMethod>&,
                            float,

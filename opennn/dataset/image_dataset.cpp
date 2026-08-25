@@ -76,11 +76,22 @@ ImageDataset::ImageDataset(const filesystem::path& new_data_path,
     read_images();
 }
 
+void ImageDataset::set_augmentation(const AugmentationSettings& new_augmentation)
+{
+    if (is_device_resident()) disable_device_residency();
+
+    augmentation = new_augmentation;
+}
+
 void ImageDataset::enable_device_residency()
 {
     if (!device::is_cuda_build()) return;
+    if (augmentation.enabled)
+    {
+        if (is_device_resident()) disable_device_residency();
+        return;
+    }
     if (is_device_resident()) return;
-    if (augmentation.enabled) return;
     if (get_samples_number() == 0) return;
 
     const Index samples_number = get_samples_number();
@@ -270,17 +281,19 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
                    ? read_json_string(data_source_element, "StorageMode")
                    : "BinaryFile");
 
-    augmentation.reflection_axis_x = read_json_bool(data_source_element, "RandomReflectionAxisX");
-    augmentation.reflection_axis_y = read_json_bool(data_source_element, "RandomReflectionAxisY");
-    augmentation.rotation_minimum = read_json_float(data_source_element, "RandomRotationMinimum");
-    augmentation.rotation_maximum = read_json_float(data_source_element, "RandomRotationMaximum");
-    augmentation.horizontal_translation_minimum = read_json_float(data_source_element, "RandomHorizontalTranslationMinimum");
-    augmentation.horizontal_translation_maximum = read_json_float(data_source_element, "RandomHorizontalTranslationMaximum");
-    augmentation.vertical_translation_minimum = read_json_float(data_source_element, "RandomVerticalTranslationMinimum");
-    augmentation.vertical_translation_maximum = read_json_float(data_source_element, "RandomVerticalTranslationMaximum");
-    augmentation.enabled = data_source_element->has("RandomAugmentation")
-                         ? read_json_bool(data_source_element, "RandomAugmentation")
-                         : has_augmentation_transform(augmentation);
+    AugmentationSettings parsed_augmentation;
+    parsed_augmentation.reflection_axis_x = read_json_bool(data_source_element, "RandomReflectionAxisX");
+    parsed_augmentation.reflection_axis_y = read_json_bool(data_source_element, "RandomReflectionAxisY");
+    parsed_augmentation.rotation_minimum = read_json_float(data_source_element, "RandomRotationMinimum");
+    parsed_augmentation.rotation_maximum = read_json_float(data_source_element, "RandomRotationMaximum");
+    parsed_augmentation.horizontal_translation_minimum = read_json_float(data_source_element, "RandomHorizontalTranslationMinimum");
+    parsed_augmentation.horizontal_translation_maximum = read_json_float(data_source_element, "RandomHorizontalTranslationMaximum");
+    parsed_augmentation.vertical_translation_minimum = read_json_float(data_source_element, "RandomVerticalTranslationMinimum");
+    parsed_augmentation.vertical_translation_maximum = read_json_float(data_source_element, "RandomVerticalTranslationMaximum");
+    parsed_augmentation.enabled = data_source_element->has("RandomAugmentation")
+                                ? read_json_bool(data_source_element, "RandomAugmentation")
+                                : has_augmentation_transform(parsed_augmentation);
+    set_augmentation(parsed_augmentation);
 
     if (!data_path.empty() && !filesystem::exists(data_path)
      && image_dataset_element->has("Variables")

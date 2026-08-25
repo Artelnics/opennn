@@ -11,7 +11,7 @@
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/core/random_utilities.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/models/models.h"
 #include "opennn/neural_network/operators/tokenizer_operator.h"
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/device_backend.h"

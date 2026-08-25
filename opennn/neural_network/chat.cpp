@@ -18,7 +18,7 @@
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/core/parallel_algorithms.h"
 #include "opennn/core/random_utilities.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/models/models.h"
 #include "opennn/core/statistics.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/operators/tokenizer_operator.h"

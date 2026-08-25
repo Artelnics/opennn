@@ -29,7 +29,7 @@
 #include "opennn/neural_network/layers/layer.h"
 #include "opennn/neural_network/layers/non_max_suppression_layer.h"
 #include "opennn/core/random_utilities.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/models/models.h"
 #include "opennn/training_strategy/loss.h"
 #include "opennn/training_strategy/training_strategy.h"
 #include "opennn/dataset/yolo_dataset.h"

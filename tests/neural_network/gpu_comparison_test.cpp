@@ -23,7 +23,7 @@
 #include "opennn/neural_network/layers/pooling_layer_3d.h"
 #include "opennn/neural_network/layers/recurrent_layer.h"
 #include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/models/models.h"
 #include "opennn/training_strategy/loss.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/back_propagation.h"
