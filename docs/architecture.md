@@ -18,6 +18,7 @@ opennn/core/cuda/               .cu/.cuh kernels
 opennn/neural_network/          network, propagation, expression export
 opennn/neural_network/layers/
 opennn/neural_network/operators/
+opennn/models/                  ready-to-use task, vision and language networks
 opennn/dataset/                 tabular, image, language, time series, YOLO
 opennn/training_strategy/       losses and optimizers
 opennn/model_selection/
@@ -25,9 +26,16 @@ opennn/testing_analysis/
 opennn/                         pch.h and registry.{h,cpp} only
 ```
 
-Datasets sit *above* the network on purpose: the language datasets need
-`tokenizer_operator.h` and `yolo_dataset` needs the convolutional layer, while
-nothing under `neural_network/` includes a dataset.
+Models sit above the network primitives: they assemble layers and operators into
+ready-to-use networks without depending on datasets or training. Datasets sit
+above both on purpose: the language datasets need `tokenizer_operator.h` and
+`yolo_dataset` needs the convolutional layer, while neither `neural_network/` nor
+`models/` includes a dataset.
+
+`models/` is deliberately flat. `models.h` is its public header; `models.cpp`,
+`vision_models.cpp` and `language_models.cpp` divide the implementations without
+creating a directory or class hierarchy for every architecture. The old
+`neural_network/standard_networks.h` remains a compatibility include only.
 
 `registry.{h,cpp}` stays at the root because it constructs `Layer`, `Optimizer`
 and `InputsSelection` — it spans three folders and belongs above all of them.
