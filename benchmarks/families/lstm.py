@@ -59,6 +59,8 @@ def load_series(path: str, past: int) -> tuple[np.ndarray, np.ndarray]:
     OpenNN side treats as such, and it is standardised on training statistics
     so neither engine pays a scaling stage the other does not.
     """
+    report_opened(path)
+
     with open(path, newline="") as handle:
         rows = list(csv.reader(handle))
 
@@ -84,6 +86,10 @@ def resident_mib() -> float:
             return int(handle.read().split()[1]) * os.sysconf("SC_PAGE_SIZE") / (1024.0 * 1024.0)
     except Exception:
         return 0.0
+
+def report_opened(path: str) -> None:
+    """Announce the file actually opened, not the one passed in."""
+    print(f"dataset_opened={Path(path).resolve()}", flush=True)
 
 def parse_opts(argv: list[str], first: int) -> dict:
     def at(index: int, default: str) -> str:

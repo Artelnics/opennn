@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <iomanip>
 #include <fstream>
 #include <iostream>
@@ -163,6 +164,7 @@ int main(int argc, char* argv[])
         cout << "engine=opennn\nmode=" << mode
              << "\ndevice=" << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
 
+        cout << "dataset_opened=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
         LanguageDataset dataset(argv[2]);
         dataset.set_sample_roles("Training");
 

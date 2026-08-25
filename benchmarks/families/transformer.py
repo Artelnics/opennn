@@ -94,6 +94,8 @@ def load_corpus(path: str, sequence: int | None = None) -> tuple[torch.Tensor, t
     sources, targets = [], []
     counter: collections.Counter = collections.Counter()
 
+    report_opened(path)
+
     with open(path, encoding="utf-8") as handle:
         for line in handle:
             parts = line.rstrip("\n").split("\t")
@@ -135,6 +137,10 @@ def resident_mib() -> float:
             return int(handle.read().split()[1]) * os.sysconf("SC_PAGE_SIZE") / (1024.0 * 1024.0)
     except Exception:
         return 0.0
+
+def report_opened(path: str) -> None:
+    """Announce the file actually opened, not the one passed in."""
+    print(f"dataset_opened={Path(path).resolve()}", flush=True)
 
 def parse_opts(argv: list[str], first: int) -> dict:
     def at(index: int, default: str) -> str:

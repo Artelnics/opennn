@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <iomanip>
 #include <fstream>
 #include <iostream>
@@ -188,6 +189,7 @@ int main(int argc, char* argv[])
         cout << "engine=opennn\nmode=" << mode
              << "\ndevice=" << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
 
+        cout << "dataset_opened=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
         TabularDataset dataset(argv[2], ",", false, false);
 
         // Contract item 3 again: the training split lives on the device, so an
@@ -322,6 +324,7 @@ int main(int argc, char* argv[])
         cout << "engine=opennn\nmode=infer\ndevice="
              << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
 
+        cout << "dataset_opened=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
         TabularDataset dataset(argv[2], ",", false, false);
         dataset.set_sample_roles("Testing");
 
@@ -418,7 +421,8 @@ int main(int argc, char* argv[])
         // of the first. The runner re-launches and reads the exit code.
         try
         {
-            TabularDataset dataset(argv[2], ",", false, false);
+            cout << "dataset_opened=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
+        TabularDataset dataset(argv[2], ",", false, false);
             dataset.set_sample_roles("Training");
             dataset.set_variable_scalers("None");
 

@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <iomanip>
 #include <fstream>
 #include <iostream>
@@ -82,6 +83,7 @@ unique_ptr<ForecastingLstmNetwork> build(TimeSeriesDataset& dataset, const Optio
 
 unique_ptr<TimeSeriesDataset> open_dataset(const string& path, const Options& options)
 {
+    cout << "dataset_opened=" << filesystem::absolute(path).string() << "\n" << flush;
     auto dataset = make_unique<TimeSeriesDataset>(path, ",", true, false);
     dataset->set_past_time_steps(options.past);
     dataset->set_future_time_steps(1);

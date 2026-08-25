@@ -43,12 +43,35 @@ from common import binary_metrics  # noqa: E402
 
 SEED = 42
 
+def report_opened(path: str) -> None:
+    """Announce the file actually opened, not the one passed in.
+
+    The gate that compares these across engines exists because of the bug
+    below: an engine substituting its own input is invisible in every other
+    field an artifact records.
+    """
+    print(f"dataset_opened={Path(path).resolve()}", flush=True)
+
 def load_csv(path: str) -> tuple[np.ndarray, np.ndarray]:
-    """Inputs and target, float32. `.npy` beside the CSV wins -- same content,
-    and parsing 3 GB of text per trial would dominate a capacity sweep."""
-    cached = Path(str(path) + ".npy")
-    data = np.load(cached) if cached.exists() else np.loadtxt(path, delimiter=",", dtype=np.float32)
-    data = np.ascontiguousarray(data, dtype=np.float32)
+    """Inputs and target, float32, parsed from the CSV both engines are given.
+
+    This used to prefer a `.npy` cache sitting beside the CSV, inherited from a
+    driver where it kept minutes of np.loadtxt out of the *timed* window.
+    Harmless for timing, which excludes loading either way. Fatal for memory:
+    OpenNN parsed 151 MB of text while this side was handed a 55 MB
+    pre-digested binary, and that single difference inverted the result --
+    OpenNN measured 1.8x worse with the cache and 2.6x better without it on
+    the same data.
+
+    pandas rather than np.loadtxt because the parse has to be fast enough to
+    do honestly rather than fast enough to skip.
+    """
+    import pandas as pd
+
+    report_opened(path)
+    frame = pd.read_csv(path, header=None, dtype=np.float32)
+
+    data = np.ascontiguousarray(frame.to_numpy(dtype=np.float32))
     return data[:, :-1], data[:, -1:]
 
 def build(features: int, opts: dict) -> torch.nn.Module:

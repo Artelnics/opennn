@@ -448,7 +448,8 @@ def main() -> int:
             continue
         reported = {k: v for k, v in launch_result["fields"].items()
                     if k in ("sequence", "input_vocab", "target_vocab", "samples",
-                             "parameters", "hidden", "inputs", "past")}
+                             "parameters", "hidden", "inputs", "past",
+                             "dataset_opened")}
         if reported:
             shapes.setdefault(launch_result["engine"], reported)
 
