@@ -16,7 +16,7 @@
 namespace opennn
 {
 
-struct AugmentationSettings
+struct ImageAugmentationPolicy
 {
     bool enabled = false;
     bool reflection_axis_x = false;
@@ -40,7 +40,7 @@ public:
 
     Index get_channels_number() const { return input_shape[2]; }
 
-    void set_augmentation(const AugmentationSettings&);
+    void set_augmentation_policy(const ImageAugmentationPolicy&);
     void set_input_scaling(const vector<Descriptives>&,
                            const vector<ScalerMethod>&,
                            float,
@@ -79,7 +79,7 @@ private:
 
     void write_image_cache(const vector<filesystem::path>&, const string& trailer) const;
 
-    AugmentationSettings augmentation;
+    ImageAugmentationPolicy augmentation_policy;
 
     vector<float> input_scale;
     vector<float> input_offset;

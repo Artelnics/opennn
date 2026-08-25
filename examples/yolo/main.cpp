@@ -719,30 +719,30 @@ int main(int argc, char* argv[])
             }
         }
 
-        YoloDataset::AugmentationConfig aug;
+        YoloDataset::AugmentationPolicy augmentation_policy;
         if (use_voc || use_raccoon || use_coco)
         {
 
-            aug.jitter      = 0.2f;
-            aug.flip        = true;
-            aug.exposure    = 1.5f;
-            aug.saturation  = 1.5f;
-            aug.hue         = 0.1f;
-            aug.enabled     = true;
+            augmentation_policy.jitter      = 0.2f;
+            augmentation_policy.flip        = true;
+            augmentation_policy.exposure    = 1.5f;
+            augmentation_policy.saturation  = 1.5f;
+            augmentation_policy.hue         = 0.1f;
+            augmentation_policy.enabled     = true;
 
-            aug.mosaic      = use_voc || use_coco;
+            augmentation_policy.mosaic      = use_voc || use_coco;
         }
         else
         {
 
-            aug.jitter      = 0.2f;
-            aug.flip        = true;
-            aug.exposure    = 1.2f;
-            aug.saturation  = 1.0f;
-            aug.hue         = 0.0f;
-            aug.enabled     = false;
+            augmentation_policy.jitter      = 0.2f;
+            augmentation_policy.flip        = true;
+            augmentation_policy.exposure    = 1.2f;
+            augmentation_policy.saturation  = 1.0f;
+            augmentation_policy.hue         = 0.0f;
+            augmentation_policy.enabled     = false;
         }
-        dataset.set_augmentation(aug);
+        dataset.set_augmentation_policy(augmentation_policy);
         dataset.set_storage_mode(Dataset::StorageMode::Matrix);
 
         const float train_frac = use_raccoon ? 0.8f : (use_voc ? 0.85f : 0.7f);

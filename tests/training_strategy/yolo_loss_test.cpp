@@ -201,9 +201,9 @@ TEST(YoloLoss, NoObjectGradientMatchesNumericalGradient)
     dataset.set_display(false);
     dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, f.B, f.anchors);
 
-    YoloDataset::AugmentationConfig no_aug;
+    YoloDataset::AugmentationPolicy no_aug;
     no_aug.enabled = false;
-    dataset.set_augmentation(no_aug);
+    dataset.set_augmentation_policy(no_aug);
 
     NeuralNetwork neural_network;
     build_yolo_network(neural_network, f);
@@ -231,9 +231,9 @@ TEST(YoloLoss, WithObjectGradientMatchesV1Approximation)
     dataset.set_display(false);
     dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, f.B, f.anchors);
 
-    YoloDataset::AugmentationConfig no_aug;
+    YoloDataset::AugmentationPolicy no_aug;
     no_aug.enabled = false;
-    dataset.set_augmentation(no_aug);
+    dataset.set_augmentation_policy(no_aug);
 
     NeuralNetwork neural_network;
     build_yolo_network(neural_network, f);
@@ -326,9 +326,9 @@ TEST(YoloLoss, V8WithObjectGradientMatchesNumericalGradient)
     dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, 0, {});
     dataset.set_v8_mode(true);
 
-    YoloDataset::AugmentationConfig no_aug;
+    YoloDataset::AugmentationPolicy no_aug;
     no_aug.enabled = false;
-    dataset.set_augmentation(no_aug);
+    dataset.set_augmentation_policy(no_aug);
 
     NeuralNetwork neural_network;
     build_yolo_v8_network(neural_network, f);
@@ -357,9 +357,9 @@ TEST(YoloLoss, V8DecoupledHeadGradientMatchesNumericalGradient)
     dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, 0, {});
     dataset.set_v8_mode(true);
 
-    YoloDataset::AugmentationConfig no_aug;
+    YoloDataset::AugmentationPolicy no_aug;
     no_aug.enabled = false;
-    dataset.set_augmentation(no_aug);
+    dataset.set_augmentation_policy(no_aug);
 
     NeuralNetwork net;
     constexpr Index head_ch = 4;
@@ -406,9 +406,9 @@ TEST(YoloLoss, V8TALVFLGradientMatchesNumerical)
     dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, 0, {});
     dataset.set_v8_mode(true);
 
-    YoloDataset::AugmentationConfig no_aug;
+    YoloDataset::AugmentationPolicy no_aug;
     no_aug.enabled = false;
-    dataset.set_augmentation(no_aug);
+    dataset.set_augmentation_policy(no_aug);
 
     NeuralNetwork neural_network;
     build_yolo_v8_network(neural_network, f);
@@ -441,9 +441,9 @@ TEST(YoloLoss, V8DFLGradientMatchesNumerical)
     dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, grid, 0, {});
     dataset.set_v8_mode(true);
 
-    YoloDataset::AugmentationConfig no_aug;
+    YoloDataset::AugmentationPolicy no_aug;
     no_aug.enabled = false;
-    dataset.set_augmentation(no_aug);
+    dataset.set_augmentation_policy(no_aug);
 
     NeuralNetwork net;
     net.add_layer(make_unique<Convolutional>(Shape{f.H, f.W, 3},

@@ -130,7 +130,7 @@ public:
                       FillMode,
                       int contiguous = -1) const override;
 
-    struct AugmentationConfig
+    struct AugmentationPolicy
     {
         float jitter = 0.2f;
         float exposure = 1.5f;
@@ -141,8 +141,8 @@ public:
         bool mosaic = false;
     };
 
-    void set_augmentation(const AugmentationConfig&);
-    const AugmentationConfig& get_augmentation() const { return augmentation; }
+    void set_augmentation_policy(const AugmentationPolicy&);
+    const AugmentationPolicy& get_augmentation_policy() const { return augmentation_policy; }
 
     static Index convert_voc_to_yolo(const filesystem::path&,
                                      const string&,
@@ -176,7 +176,7 @@ private:
     uint64_t boxes_data_offset = 0;
     vector<uint64_t> boxes_offsets;
 
-    AugmentationConfig augmentation{};
+    AugmentationPolicy augmentation_policy{};
     float display_confidence_threshold = 0.25f;
 
     vector<filesystem::path> image_filenames;

@@ -21,16 +21,16 @@
 namespace opennn
 {
 
-static bool has_augmentation_transform(const AugmentationSettings& augmentation)
+static bool has_configured_augmentation(const ImageAugmentationPolicy& policy)
 {
-    return augmentation.reflection_axis_x
-        || augmentation.reflection_axis_y
-        || augmentation.rotation_minimum != 0.0f
-        || augmentation.rotation_maximum != 0.0f
-        || augmentation.horizontal_translation_minimum != 0.0f
-        || augmentation.horizontal_translation_maximum != 0.0f
-        || augmentation.vertical_translation_minimum != 0.0f
-        || augmentation.vertical_translation_maximum != 0.0f;
+    return policy.reflection_axis_x
+        || policy.reflection_axis_y
+        || policy.rotation_minimum != 0.0f
+        || policy.rotation_maximum != 0.0f
+        || policy.horizontal_translation_minimum != 0.0f
+        || policy.horizontal_translation_maximum != 0.0f
+        || policy.vertical_translation_minimum != 0.0f
+        || policy.vertical_translation_maximum != 0.0f;
 }
 
 static float sample_augmentation_value(float minimum, float maximum)
@@ -76,17 +76,17 @@ ImageDataset::ImageDataset(const filesystem::path& new_data_path,
     read_images();
 }
 
-void ImageDataset::set_augmentation(const AugmentationSettings& new_augmentation)
+void ImageDataset::set_augmentation_policy(const ImageAugmentationPolicy& new_policy)
 {
     if (is_device_resident()) disable_device_residency();
 
-    augmentation = new_augmentation;
+    augmentation_policy = new_policy;
 }
 
 void ImageDataset::enable_device_residency()
 {
     if (!device::is_cuda_build()) return;
-    if (augmentation.enabled)
+    if (augmentation_policy.enabled)
     {
         if (is_device_resident()) disable_device_residency();
         return;
@@ -174,15 +174,15 @@ void ImageDataset::to_JSON(JsonWriter& printer) const
         {"Channels", to_string(input_shape[2])},
         {"Width", to_string(input_shape[1])},
         {"Height", to_string(input_shape[0])},
-        {"RandomAugmentation", to_string(augmentation.enabled)},
-        {"RandomReflectionAxisX", to_string(augmentation.reflection_axis_x)},
-        {"RandomReflectionAxisY", to_string(augmentation.reflection_axis_y)},
-        {"RandomRotationMinimum", to_string(augmentation.rotation_minimum)},
-        {"RandomRotationMaximum", to_string(augmentation.rotation_maximum)},
-        {"RandomHorizontalTranslationMinimum", to_string(augmentation.horizontal_translation_minimum)},
-        {"RandomHorizontalTranslationMaximum", to_string(augmentation.horizontal_translation_maximum)},
-        {"RandomVerticalTranslationMinimum", to_string(augmentation.vertical_translation_minimum)},
-        {"RandomVerticalTranslationMaximum", to_string(augmentation.vertical_translation_maximum)},
+        {"RandomAugmentation", to_string(augmentation_policy.enabled)},
+        {"RandomReflectionAxisX", to_string(augmentation_policy.reflection_axis_x)},
+        {"RandomReflectionAxisY", to_string(augmentation_policy.reflection_axis_y)},
+        {"RandomRotationMinimum", to_string(augmentation_policy.rotation_minimum)},
+        {"RandomRotationMaximum", to_string(augmentation_policy.rotation_maximum)},
+        {"RandomHorizontalTranslationMinimum", to_string(augmentation_policy.horizontal_translation_minimum)},
+        {"RandomHorizontalTranslationMaximum", to_string(augmentation_policy.horizontal_translation_maximum)},
+        {"RandomVerticalTranslationMinimum", to_string(augmentation_policy.vertical_translation_minimum)},
+        {"RandomVerticalTranslationMaximum", to_string(augmentation_policy.vertical_translation_maximum)},
         {"Codification", get_codification_string()},
         {"StorageMode", get_storage_mode_string()}
     });
@@ -192,7 +192,7 @@ void ImageDataset::to_JSON(JsonWriter& printer) const
 
 void ImageDataset::augment_inputs(const span<float> input_data, Index batch_size) const
 {
-    if (!augmentation.enabled || batch_size <= 0) return;
+    if (!augmentation_policy.enabled || batch_size <= 0) return;
 
     const Index height = input_shape[0];
     const Index width = input_shape[1];
@@ -205,39 +205,39 @@ void ImageDataset::augment_inputs(const span<float> input_data, Index batch_size
 
     float* const input_values = input_data.data();
 
-    const bool use_rotation = augmentation.rotation_minimum != 0.0f
-                           || augmentation.rotation_maximum != 0.0f;
-    const bool use_horizontal_translation = augmentation.horizontal_translation_minimum != 0.0f
-                                         || augmentation.horizontal_translation_maximum != 0.0f;
-    const bool use_vertical_translation = augmentation.vertical_translation_minimum != 0.0f
-                                       || augmentation.vertical_translation_maximum != 0.0f;
+    const bool use_rotation = augmentation_policy.rotation_minimum != 0.0f
+                           || augmentation_policy.rotation_maximum != 0.0f;
+    const bool use_horizontal_translation = augmentation_policy.horizontal_translation_minimum != 0.0f
+                                         || augmentation_policy.horizontal_translation_maximum != 0.0f;
+    const bool use_vertical_translation = augmentation_policy.vertical_translation_minimum != 0.0f
+                                       || augmentation_policy.vertical_translation_maximum != 0.0f;
 
     const auto augment_sample = [&](Index i, Tensor3* scratch_storage)
     {
         float* sample = input_values + i * pixels;
         TensorMap3 image(sample, height, width, channels);
 
-        if (augmentation.reflection_axis_x && random_bool(0.5f))
+        if (augmentation_policy.reflection_axis_x && random_bool(0.5f))
             reflect_image_horizontal(image);
 
-        if (augmentation.reflection_axis_y && random_bool(0.5f))
+        if (augmentation_policy.reflection_axis_y && random_bool(0.5f))
             reflect_image_vertical(image);
 
         if (use_rotation)
         {
             copy_n(sample, pixels, scratch_storage->data());
             const TensorMap3 scratch(scratch_storage->data(), height, width, channels);
-            rotate_image(scratch, image, sample_augmentation_value(augmentation.rotation_minimum,
-                                                                   augmentation.rotation_maximum));
+            rotate_image(scratch, image, sample_augmentation_value(augmentation_policy.rotation_minimum,
+                                                                   augmentation_policy.rotation_maximum));
         }
 
         if (use_horizontal_translation)
-            translate_image_x(image, sample_augmentation_shift(augmentation.horizontal_translation_minimum,
-                                                               augmentation.horizontal_translation_maximum));
+            translate_image_x(image, sample_augmentation_shift(augmentation_policy.horizontal_translation_minimum,
+                                                               augmentation_policy.horizontal_translation_maximum));
 
         if (use_vertical_translation)
-            translate_image_y(image, sample_augmentation_shift(augmentation.vertical_translation_minimum,
-                                                               augmentation.vertical_translation_maximum));
+            translate_image_y(image, sample_augmentation_shift(augmentation_policy.vertical_translation_minimum,
+                                                               augmentation_policy.vertical_translation_maximum));
     };
 
     #pragma omp parallel
@@ -281,19 +281,19 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
                    ? read_json_string(data_source_element, "StorageMode")
                    : "BinaryFile");
 
-    AugmentationSettings parsed_augmentation;
-    parsed_augmentation.reflection_axis_x = read_json_bool(data_source_element, "RandomReflectionAxisX");
-    parsed_augmentation.reflection_axis_y = read_json_bool(data_source_element, "RandomReflectionAxisY");
-    parsed_augmentation.rotation_minimum = read_json_float(data_source_element, "RandomRotationMinimum");
-    parsed_augmentation.rotation_maximum = read_json_float(data_source_element, "RandomRotationMaximum");
-    parsed_augmentation.horizontal_translation_minimum = read_json_float(data_source_element, "RandomHorizontalTranslationMinimum");
-    parsed_augmentation.horizontal_translation_maximum = read_json_float(data_source_element, "RandomHorizontalTranslationMaximum");
-    parsed_augmentation.vertical_translation_minimum = read_json_float(data_source_element, "RandomVerticalTranslationMinimum");
-    parsed_augmentation.vertical_translation_maximum = read_json_float(data_source_element, "RandomVerticalTranslationMaximum");
-    parsed_augmentation.enabled = data_source_element->has("RandomAugmentation")
-                                ? read_json_bool(data_source_element, "RandomAugmentation")
-                                : has_augmentation_transform(parsed_augmentation);
-    set_augmentation(parsed_augmentation);
+    ImageAugmentationPolicy parsed_policy;
+    parsed_policy.reflection_axis_x = read_json_bool(data_source_element, "RandomReflectionAxisX");
+    parsed_policy.reflection_axis_y = read_json_bool(data_source_element, "RandomReflectionAxisY");
+    parsed_policy.rotation_minimum = read_json_float(data_source_element, "RandomRotationMinimum");
+    parsed_policy.rotation_maximum = read_json_float(data_source_element, "RandomRotationMaximum");
+    parsed_policy.horizontal_translation_minimum = read_json_float(data_source_element, "RandomHorizontalTranslationMinimum");
+    parsed_policy.horizontal_translation_maximum = read_json_float(data_source_element, "RandomHorizontalTranslationMaximum");
+    parsed_policy.vertical_translation_minimum = read_json_float(data_source_element, "RandomVerticalTranslationMinimum");
+    parsed_policy.vertical_translation_maximum = read_json_float(data_source_element, "RandomVerticalTranslationMaximum");
+    parsed_policy.enabled = data_source_element->has("RandomAugmentation")
+                          ? read_json_bool(data_source_element, "RandomAugmentation")
+                          : has_configured_augmentation(parsed_policy);
+    set_augmentation_policy(parsed_policy);
 
     if (!data_path.empty() && !filesystem::exists(data_path)
      && image_dataset_element->has("Variables")
@@ -559,7 +559,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     const bool apply_scaling = mode != FillMode::Inference;
     const bool has_scaling = ssize(input_scale) == channels
                           && ssize(input_offset) == channels;
-    const bool apply_augmentation = mode == FillMode::Training && augmentation.enabled;
+    const bool apply_augmentation = mode == FillMode::Training && augmentation_policy.enabled;
 
     const auto scale_sample = [&](float* sample)
     {

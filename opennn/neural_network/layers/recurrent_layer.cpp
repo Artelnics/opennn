@@ -879,7 +879,7 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
             gather_time_slice_cuda<Scalar>(batch_size, time_steps, input_features, t,
                                            input.as<Scalar>(), step_input_scratch.as<Scalar>());
 
-            multiply(step_input_scratch, true, delta_scratch, false,
+            multiply(step_input_scratch, Transpose::Yes, delta_scratch, Transpose::No,
                      const_cast<TensorView&>(input_weight_gradient), 1.0f, 1.0f);
 
             if (t > 0)
@@ -887,16 +887,16 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
                 gather_time_slice_cuda<Scalar>(batch_size, time_steps, output_features, t - 1,
                                                hidden_states.as<Scalar>(), step_prev_h_scratch.as<Scalar>());
 
-                multiply(step_prev_h_scratch, true, delta_scratch, false,
+                multiply(step_prev_h_scratch, Transpose::Yes, delta_scratch, Transpose::No,
                          const_cast<TensorView&>(recurrent_weight_gradient), 1.0f, 1.0f);
 
-                multiply(delta_scratch, false, recurrent_weights, true,
+                multiply(delta_scratch, Transpose::No, recurrent_weights, Transpose::Yes,
                          next_carry_scratch, 1.0f, 0.0f);
             }
 
             if (input_delta.get_data() && !input_delta.empty())
             {
-                multiply(delta_scratch, false, input_weights, true,
+                multiply(delta_scratch, Transpose::No, input_weights, Transpose::Yes,
                          step_in_delta_scratch, 1.0f, 0.0f);
 
                 scatter_time_slice_cuda<Scalar>(batch_size, time_steps, input_features, t,

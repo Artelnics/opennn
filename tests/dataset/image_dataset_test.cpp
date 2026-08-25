@@ -360,7 +360,7 @@ TEST(ImageDataset, SetInputScalingChannelMismatchThrows)
     EXPECT_ANY_THROW(image_dataset.set_input_scaling(descriptives, scalers, 0.0f, 1.0f));
 }
 
-TEST(ImageDataset, SetAugmentationDisablesDeviceResidency)
+TEST(ImageDataset, SetAugmentationPolicyDisablesDeviceResidency)
 {
     if (!device::has_cuda_device()) GTEST_SKIP() << "CUDA device unavailable.";
 
@@ -372,11 +372,11 @@ TEST(ImageDataset, SetAugmentationDisablesDeviceResidency)
     image_dataset.enable_device_residency();
     ASSERT_TRUE(image_dataset.is_device_resident());
 
-    AugmentationSettings augmentation;
-    augmentation.enabled = true;
-    augmentation.reflection_axis_x = true;
+    ImageAugmentationPolicy policy;
+    policy.enabled = true;
+    policy.reflection_axis_x = true;
 
-    image_dataset.set_augmentation(augmentation);
+    image_dataset.set_augmentation_policy(policy);
 
     EXPECT_FALSE(image_dataset.is_device_resident());
 
@@ -391,10 +391,10 @@ TEST(ImageDataset, LoadingAugmentationDisablesDeviceResidency)
     ImageFixture fixture(2, 2, 1);
 
     ImageDataset configured_dataset(fixture.root);
-    AugmentationSettings augmentation;
-    augmentation.enabled = true;
-    augmentation.reflection_axis_x = true;
-    configured_dataset.set_augmentation(augmentation);
+    ImageAugmentationPolicy policy;
+    policy.enabled = true;
+    policy.reflection_axis_x = true;
+    configured_dataset.set_augmentation_policy(policy);
 
     JsonWriter writer;
     configured_dataset.to_JSON(writer);
@@ -421,9 +421,9 @@ TEST(ImageDataset, AugmentInputsDisabledLeavesDataUnchanged)
 
     ImageDataset image_dataset(fixture.root);
 
-    AugmentationSettings augmentation;
-    augmentation.enabled = false;
-    image_dataset.set_augmentation(augmentation);
+    ImageAugmentationPolicy policy;
+    policy.enabled = false;
+    image_dataset.set_augmentation_policy(policy);
 
     const Index pixels = image_dataset.get_input_shape()[0]
                        * image_dataset.get_input_shape()[1]

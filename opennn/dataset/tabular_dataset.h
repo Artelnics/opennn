@@ -42,6 +42,7 @@ public:
              ? ssize(sample_roles)
              : data.rows();
     }
+    using Dataset::get_samples_number;
 
     using Dataset::get_data;
     MatrixR get_data(const string& sample_role, const string& variable_role) const { return get_data_from_indices(get_sample_indices(sample_role), get_feature_indices(variable_role)); }

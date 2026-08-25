@@ -52,7 +52,7 @@ TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
     constexpr Index channels = B * (5 + C);
     const vector<std::array<float, 2>> anchors{{0.4f, 0.4f}};
 
-    YoloDataset::AugmentationConfig no_aug;
+    YoloDataset::AugmentationPolicy no_aug;
     no_aug.enabled = false;
 
     auto build_net = [&]() {
@@ -72,7 +72,7 @@ TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
         YoloDataset ds;
         ds.set_display(false);
         ds.set(images_dir, labels_dir, Shape{H, W, 3}, grid, B, anchors);
-        ds.set_augmentation(no_aug);
+        ds.set_augmentation_policy(no_aug);
         auto net = build_net();
         Loss loss(net.get(), &ds);
         loss.set_error(Loss::Error::Yolo);
@@ -88,7 +88,7 @@ TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
         YoloDataset ds;
         ds.set_display(false);
         ds.set(images_dir, labels_dir, Shape{H, W, 3}, grid, B, anchors);
-        ds.set_augmentation(no_aug);
+        ds.set_augmentation_policy(no_aug);
         auto net = build_net();
         Loss loss(net.get(), &ds);
         loss.set_error(Loss::Error::Yolo);
@@ -131,7 +131,7 @@ TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
     constexpr Index ch = 16;
     constexpr Index logit_ch = B * (5 + C);
 
-    YoloDataset::AugmentationConfig no_aug; no_aug.enabled = false;
+    YoloDataset::AugmentationPolicy no_aug; no_aug.enabled = false;
 
     auto build_sppf_net = [&]() {
         auto net = make_unique<NeuralNetwork>();
@@ -167,7 +167,7 @@ TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
     auto run = [&](Index epochs) -> float {
         YoloDataset ds; ds.set_display(false);
         ds.set(images_dir, labels_dir, Shape{H, W, 3}, grid, B, anchors);
-        ds.set_augmentation(no_aug);
+        ds.set_augmentation_policy(no_aug);
         auto net = build_sppf_net();
         Loss loss(net.get(), &ds);
         loss.set_error(Loss::Error::Yolo);
@@ -215,7 +215,7 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
     constexpr Index half = ch / 2;
     constexpr Index logit_ch = B * (5 + C);
 
-    YoloDataset::AugmentationConfig no_aug; no_aug.enabled = false;
+    YoloDataset::AugmentationPolicy no_aug; no_aug.enabled = false;
 
     auto build_csp_net = [&]() {
         auto net = make_unique<NeuralNetwork>();
@@ -256,7 +256,7 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
     auto run = [&](Index epochs) -> float {
         YoloDataset ds; ds.set_display(false);
         ds.set(images_dir, labels_dir, Shape{H, W, 3}, grid, B, anchors);
-        ds.set_augmentation(no_aug);
+        ds.set_augmentation_policy(no_aug);
         auto net = build_csp_net();
         Loss loss(net.get(), &ds);
         loss.set_error(Loss::Error::Yolo);
@@ -303,7 +303,7 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
     constexpr Index head_ch = 8;
     constexpr Index det_ch  = 4 + C;
 
-    YoloDataset::AugmentationConfig no_aug; no_aug.enabled = false;
+    YoloDataset::AugmentationPolicy no_aug; no_aug.enabled = false;
 
     auto build_v8_net = [&]() {
         auto net = make_unique<NeuralNetwork>();
@@ -341,7 +341,7 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
         YoloDataset ds; ds.set_display(false);
         ds.set(images_dir, labels_dir, Shape{H, W, 3}, grid, 0, {});
         ds.set_v8_mode(true);
-        ds.set_augmentation(no_aug);
+        ds.set_augmentation_policy(no_aug);
         auto net = build_v8_net();
         Loss loss(net.get(), &ds);
         loss.set_error(Loss::Error::Yolo);

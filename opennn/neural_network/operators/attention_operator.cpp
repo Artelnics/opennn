@@ -655,7 +655,7 @@ void AttentionOperator::apply_unfused(const TensorView& query,
         }
     }
 
-    multiply(query, false, key, true, attention_weights, scaling_factor(), 0.0f);
+    multiply(query, Transpose::No, key, Transpose::Yes, attention_weights, scaling_factor(), 0.0f);
 
     const Index batch_size = source_input.get_shape()[0];
     const Index source_length = source_input.get_shape()[1];
@@ -757,10 +757,10 @@ void AttentionOperator::apply_unfused(const TensorView& query,
     {
         copy(attention_weights, attention_weights_dropped);
         dropout_forward(attention_weights_dropped, dropout_mask, dropout.rate);
-        return multiply(attention_weights_dropped, false, value, false, output);
+        return multiply(attention_weights_dropped, Transpose::No, value, Transpose::No, output);
     }
 
-    multiply(attention_weights, false, value, false, output);
+    multiply(attention_weights, Transpose::No, value, Transpose::No, output);
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -942,8 +942,8 @@ void AttentionOperator::apply_delta_unfused(const TensorView& query,
         ? attention_weights_dropped
         : attention_weights;
 
-    multiply(attention_used, true, output_delta, false, value_delta);
-    multiply(output_delta, false, value, true, attention_weight_delta);
+    multiply(attention_used, Transpose::Yes, output_delta, Transpose::No, value_delta);
+    multiply(output_delta, Transpose::No, value, Transpose::Yes, attention_weight_delta);
 
     if (dropout.active())
         dropout_backward(attention_weight_delta, dropout_mask, dropout.rate);
@@ -951,8 +951,8 @@ void AttentionOperator::apply_delta_unfused(const TensorView& query,
     softmax_backward(attention_weights, attention_weight_delta);
 
     const float scale = scaling_factor();
-    multiply(attention_weight_delta, false, key,   false, query_delta, scale, 0.0f);
-    multiply(attention_weight_delta, true,  query, false, key_delta,   scale, 0.0f);
+    multiply(attention_weight_delta, Transpose::No,  key,   Transpose::No, query_delta, scale, 0.0f);
+    multiply(attention_weight_delta, Transpose::Yes, query, Transpose::No, key_delta,   scale, 0.0f);
 }
 
 void AttentionOperator::apply_delta_cpu(const TensorView& query,

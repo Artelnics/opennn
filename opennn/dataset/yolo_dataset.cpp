@@ -396,7 +396,7 @@ Index best_anchor_for_box(const YoloDataset::Box& box,
     return best;
 }
 
-struct AugmentationParams
+struct AugmentationTransform
 {
     float crop_left;
     float crop_top;
@@ -416,9 +416,9 @@ uint64_t splitmix64(uint64_t x)
     return x ^ (x >> 31);
 }
 
-AugmentationParams derive_augmentation_params(uint64_t epoch_counter,
-                                              uint64_t sample_index,
-                                              const YoloDataset::AugmentationConfig& cfg)
+AugmentationTransform sample_augmentation_transform(uint64_t epoch_counter,
+                                                    uint64_t sample_index,
+                                                    const YoloDataset::AugmentationPolicy& policy)
 {
     auto rand_unit = [](uint64_t& rng_state) -> float
     {
@@ -440,16 +440,16 @@ AugmentationParams derive_augmentation_params(uint64_t epoch_counter,
 
     uint64_t state = splitmix64(epoch_counter * 0x9E3779B97F4A7C15ull + sample_index);
 
-    AugmentationParams p{};
-    p.crop_left   = rand_signed(state, cfg.jitter);
-    p.crop_right  = rand_signed(state, cfg.jitter);
-    p.crop_top    = rand_signed(state, cfg.jitter);
-    p.crop_bottom = rand_signed(state, cfg.jitter);
-    p.flip = cfg.flip && (rand_unit(state) < 0.5f);
-    p.exposure_mul = rand_scale(state, cfg.exposure);
-    p.saturation_mul = rand_scale(state, cfg.saturation);
-    p.hue_shift = rand_signed(state, cfg.hue);
-    return p;
+    AugmentationTransform transform{};
+    transform.crop_left   = rand_signed(state, policy.jitter);
+    transform.crop_right  = rand_signed(state, policy.jitter);
+    transform.crop_top    = rand_signed(state, policy.jitter);
+    transform.crop_bottom = rand_signed(state, policy.jitter);
+    transform.flip = policy.flip && (rand_unit(state) < 0.5f);
+    transform.exposure_mul = rand_scale(state, policy.exposure);
+    transform.saturation_mul = rand_scale(state, policy.saturation);
+    transform.hue_shift = rand_signed(state, policy.hue);
+    return transform;
 }
 
 void rgb_to_hsv(float r, float g, float b, float& h, float& s, float& v)
@@ -488,7 +488,7 @@ void hsv_to_rgb(float h, float s, float v, float& r, float& g, float& b)
 }
 
 void apply_color_jitter(uint8_t* rgb, Index height, Index width, Index channels,
-                        const AugmentationParams& p)
+                        const AugmentationTransform& transform)
 {
     if (channels < 3) return;
     const Index pixels = height * width;
@@ -500,9 +500,9 @@ void apply_color_jitter(uint8_t* rgb, Index height, Index width, Index channels,
         float b = float(rgb[base + 2]) / 255.0f;
         float h, s, v;
         rgb_to_hsv(r, g, b, h, s, v);
-        h += p.hue_shift;
-        s = clamp_unit(s * p.saturation_mul);
-        v = clamp_unit(v * p.exposure_mul);
+        h += transform.hue_shift;
+        s = clamp_unit(s * transform.saturation_mul);
+        v = clamp_unit(v * transform.exposure_mul);
         hsv_to_rgb(h, s, v, r, g, b);
         rgb[base + 0] = round_to_byte(r * 255.0f);
         rgb[base + 1] = round_to_byte(g * 255.0f);
@@ -512,14 +512,14 @@ void apply_color_jitter(uint8_t* rgb, Index height, Index width, Index channels,
 
 void apply_geometric_to_image(const uint8_t* src, uint8_t* dst,
                               Index height, Index width, Index channels,
-                              const AugmentationParams& p)
+                              const AugmentationTransform& transform)
 {
     const float original_width = float(width);
     const float original_height = float(height);
-    const float source_x0 = p.crop_left * original_width;
-    const float source_y0 = p.crop_top * original_height;
-    const float source_x1 = (1.0f - p.crop_right) * original_width;
-    const float source_y1 = (1.0f - p.crop_bottom) * original_height;
+    const float source_x0 = transform.crop_left * original_width;
+    const float source_y0 = transform.crop_top * original_height;
+    const float source_x1 = (1.0f - transform.crop_right) * original_width;
+    const float source_y1 = (1.0f - transform.crop_bottom) * original_height;
     const float crop_width = max(1.0f, source_x1 - source_x0);
     const float crop_height = max(1.0f, source_y1 - source_y0);
 
@@ -527,7 +527,7 @@ void apply_geometric_to_image(const uint8_t* src, uint8_t* dst,
     {
         for (Index dx = 0; dx < width; ++dx)
         {
-            const Index out_x = p.flip ? (width - 1 - dx) : dx;
+            const Index out_x = transform.flip ? (width - 1 - dx) : dx;
             const float fx = source_x0 + (float(dx) + 0.5f) * crop_width / original_width - 0.5f;
             const float fy = source_y0 + (float(dy) + 0.5f) * crop_height / original_height - 0.5f;
 
@@ -607,10 +607,10 @@ void bilinear_resize_uint8(const uint8_t* src,
 }
 
 void apply_geometric_to_boxes(vector<YoloDataset::Box>& boxes,
-                              const AugmentationParams& p)
+                              const AugmentationTransform& transform)
 {
-    const float crop_width = max(1e-6f, 1.0f - p.crop_left - p.crop_right);
-    const float crop_height = max(1e-6f, 1.0f - p.crop_top - p.crop_bottom);
+    const float crop_width = max(1e-6f, 1.0f - transform.crop_left - transform.crop_right);
+    const float crop_height = max(1e-6f, 1.0f - transform.crop_top - transform.crop_bottom);
 
     vector<YoloDataset::Box> out;
     out.reserve(boxes.size());
@@ -622,10 +622,10 @@ void apply_geometric_to_boxes(vector<YoloDataset::Box>& boxes,
         const float box_x1 = box.x + 0.5f * box.w;
         const float box_y1 = box.y + 0.5f * box.h;
 
-        float nx0 = (box_x0 - p.crop_left) / crop_width;
-        float ny0 = (box_y0 - p.crop_top)  / crop_height;
-        float nx1 = (box_x1 - p.crop_left) / crop_width;
-        float ny1 = (box_y1 - p.crop_top)  / crop_height;
+        float nx0 = (box_x0 - transform.crop_left) / crop_width;
+        float ny0 = (box_y0 - transform.crop_top)  / crop_height;
+        float nx1 = (box_x1 - transform.crop_left) / crop_width;
+        float ny1 = (box_y1 - transform.crop_top)  / crop_height;
 
         nx0 = max(0.0f, min(1.0f, nx0));
         ny0 = max(0.0f, min(1.0f, ny0));
@@ -640,7 +640,7 @@ void apply_geometric_to_boxes(vector<YoloDataset::Box>& boxes,
         box.y = 0.5f * (ny0 + ny1);
         box.w = nw;
         box.h = nh;
-        if (p.flip) box.x = 1.0f - box.x;
+        if (transform.flip) box.x = 1.0f - box.x;
 
         out.push_back(box);
     }
@@ -1267,7 +1267,7 @@ void YoloDataset::set_storage_mode(StorageMode new_storage_mode)
 
 void YoloDataset::enable_device_residency()
 {
-    if (augmentation.enabled)
+    if (augmentation_policy.enabled)
     {
         if (is_device_resident()) disable_device_residency();
         return;
@@ -1276,11 +1276,11 @@ void YoloDataset::enable_device_residency()
     ImageDataset::enable_device_residency();
 }
 
-void YoloDataset::set_augmentation(const AugmentationConfig& new_augmentation)
+void YoloDataset::set_augmentation_policy(const AugmentationPolicy& new_policy)
 {
     if (is_device_resident()) disable_device_residency();
 
-    augmentation = new_augmentation;
+    augmentation_policy = new_policy;
 }
 
 void YoloDataset::open_or_build_cache(const vector<array<float, 2>>& requested_anchors)
@@ -1868,7 +1868,7 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
     const Index batch_size = ssize(sample_indices);
     const float scale = 1.0f / 255.0f;
 
-    const bool augment = mode == FillMode::Training && augmentation.enabled;
+    const bool augment = mode == FillMode::Training && augmentation_policy.enabled;
     const bool matrix_storage = storage_mode == StorageMode::Matrix;
     const uint64_t epoch_seed = [&]() -> uint64_t {
         if (!augment) return 0;
@@ -1877,8 +1877,8 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
         return h ? h : 1;
     }();
 
-    const AugmentationConfig cfg = augmentation;
-    const bool mosaic = augment && cfg.mosaic;
+    const AugmentationPolicy policy = augmentation_policy;
+    const bool mosaic = augment && policy.mosaic;
 
     string omp_error;
 
@@ -1926,17 +1926,17 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                     const array<MosaicQuad, 4> quads =
                         compute_mosaic_layout(epoch_seed, sample_index, samples_number, H, W);
 
-                    AugmentationConfig color_cfg = cfg;
-                    color_cfg.jitter = 0.0f;
-                    color_cfg.flip = false;
+                    AugmentationPolicy color_policy = policy;
+                    color_policy.jitter = 0.0f;
+                    color_policy.flip = false;
 
                     for (const MosaicQuad& q : quads)
                     {
                         read_image_record(q.si, mosaic_source.data());
 
-                        const AugmentationParams qp = derive_augmentation_params(
-                            epoch_seed, uint64_t(q.si), color_cfg);
-                        apply_color_jitter(mosaic_source.data(), H, W, C, qp);
+                        const AugmentationTransform transform = sample_augmentation_transform(
+                            epoch_seed, uint64_t(q.si), color_policy);
+                        apply_color_jitter(mosaic_source.data(), H, W, C, transform);
 
                         blit_resized_into_canvas(mosaic_source.data(), H, W,
                                                  augmented.data(), W,
@@ -1946,15 +1946,15 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                 }
                 else if (augment)
                 {
-                    const AugmentationParams p = derive_augmentation_params(
-                        epoch_seed, uint64_t(sample_index), cfg);
+                    const AugmentationTransform transform = sample_augmentation_transform(
+                        epoch_seed, uint64_t(sample_index), policy);
 
                     apply_geometric_to_image(pixels.data(), augmented.data(),
                                              cache_input_shape[0], cache_input_shape[1],
-                                             cache_input_shape[2], p);
+                                             cache_input_shape[2], transform);
                     apply_color_jitter(augmented.data(),
                                        cache_input_shape[0], cache_input_shape[1],
-                                       cache_input_shape[2], p);
+                                       cache_input_shape[2], transform);
                     image_bytes = augmented.data();
                 }
 
@@ -1993,7 +1993,7 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
 {
     const Index batch_size = ssize(sample_indices);
 
-    const bool augment = mode == FillMode::Training && augmentation.enabled;
+    const bool augment = mode == FillMode::Training && augmentation_policy.enabled;
     const bool matrix_storage = storage_mode == StorageMode::Matrix;
     const uint64_t epoch_seed = [&]() -> uint64_t {
         if (!augment) return 0;
@@ -2002,8 +2002,8 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
         return h ? h : 1;
     }();
 
-    const AugmentationConfig cfg = augmentation;
-    const bool mosaic = augment && cfg.mosaic;
+    const AugmentationPolicy policy = augmentation_policy;
+    const bool mosaic = augment && policy.mosaic;
 
     const bool grid_changed = (grid_size != cache_grid_size);
     const bool reencode = augment || grid_changed || is_multi_scale() || v8_mode;
@@ -2109,9 +2109,9 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
 
                         if (augment)
                         {
-                            const AugmentationParams p = derive_augmentation_params(
-                                epoch_seed, uint64_t(sample_index), cfg);
-                            apply_geometric_to_boxes(boxes, p);
+                            const AugmentationTransform transform = sample_augmentation_transform(
+                                epoch_seed, uint64_t(sample_index), policy);
+                            apply_geometric_to_boxes(boxes, transform);
                         }
 
                         if (v8_mode)
@@ -2167,13 +2167,13 @@ void YoloDataset::to_JSON(JsonWriter& printer) const
         {"GridSize", grid_size},
         {"BoxesPerCell", boxes_per_cell},
         {"DisplayConfidenceThreshold", display_confidence_threshold},
-        {"AugEnabled",    augmentation.enabled    ? 1 : 0},
-        {"AugJitter",     augmentation.jitter},
-        {"AugExposure",   augmentation.exposure},
-        {"AugSaturation", augmentation.saturation},
-        {"AugHue",        augmentation.hue},
-        {"AugFlip",       augmentation.flip    ? 1 : 0},
-        {"AugMosaic",     augmentation.mosaic  ? 1 : 0}
+        {"AugEnabled",    augmentation_policy.enabled    ? 1 : 0},
+        {"AugJitter",     augmentation_policy.jitter},
+        {"AugExposure",   augmentation_policy.exposure},
+        {"AugSaturation", augmentation_policy.saturation},
+        {"AugHue",        augmentation_policy.hue},
+        {"AugFlip",       augmentation_policy.flip    ? 1 : 0},
+        {"AugMosaic",     augmentation_policy.mosaic  ? 1 : 0}
     });
     printer.close_element();
     variables_to_JSON(printer);
@@ -2201,15 +2201,15 @@ void YoloDataset::from_JSON(const JsonDocument& document)
     if (source->has("DisplayConfidenceThreshold"))
         display_confidence_threshold = read_json_float(source, "DisplayConfidenceThreshold");
 
-    AugmentationConfig aug;
-    aug.enabled    = source->has("AugEnabled")    ? (read_json_index(source, "AugEnabled")    != 0) : true;
-    aug.jitter     = source->has("AugJitter")     ? read_json_float(source, "AugJitter")     : 0.2f;
-    aug.exposure   = source->has("AugExposure")   ? read_json_float(source, "AugExposure")   : 1.5f;
-    aug.saturation = source->has("AugSaturation") ? read_json_float(source, "AugSaturation") : 1.5f;
-    aug.hue        = source->has("AugHue")        ? read_json_float(source, "AugHue")        : 0.1f;
-    aug.flip       = source->has("AugFlip")       ? (read_json_index(source, "AugFlip")      != 0) : true;
-    aug.mosaic     = source->has("AugMosaic")     ? (read_json_index(source, "AugMosaic")    != 0) : false;
-    set_augmentation(aug);
+    AugmentationPolicy parsed_policy;
+    parsed_policy.enabled    = source->has("AugEnabled")    ? (read_json_index(source, "AugEnabled")    != 0) : true;
+    parsed_policy.jitter     = source->has("AugJitter")     ? read_json_float(source, "AugJitter")     : 0.2f;
+    parsed_policy.exposure   = source->has("AugExposure")   ? read_json_float(source, "AugExposure")   : 1.5f;
+    parsed_policy.saturation = source->has("AugSaturation") ? read_json_float(source, "AugSaturation") : 1.5f;
+    parsed_policy.hue        = source->has("AugHue")        ? read_json_float(source, "AugHue")        : 0.1f;
+    parsed_policy.flip       = source->has("AugFlip")       ? (read_json_index(source, "AugFlip")      != 0) : true;
+    parsed_policy.mosaic     = source->has("AugMosaic")     ? (read_json_index(source, "AugMosaic")    != 0) : false;
+    set_augmentation_policy(parsed_policy);
 
     const Json* samples_element = yolo_element->find("Samples");
     if (samples_element)

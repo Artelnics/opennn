@@ -619,11 +619,11 @@ TEST(TensorOperationsValidation, MultiplyValidatesMatrixAndOutputShapes)
     TensorView wrong_inner(input_b_storage.data(), {4, 5});
     TensorView output(output_storage.data(), {2, 4});
 
-    EXPECT_THROW(multiply(input_a, false, wrong_inner, false, output), runtime_error);
+    EXPECT_THROW(multiply(input_a, opennn::Transpose::No, wrong_inner, opennn::Transpose::No, output), runtime_error);
 
     TensorView input_b(input_b_storage.data(), {3, 4});
     TensorView wrong_output(output_storage.data(), {1, 8});
-    EXPECT_THROW(multiply(input_a, false, input_b, false, wrong_output), runtime_error);
+    EXPECT_THROW(multiply(input_a, opennn::Transpose::No, input_b, opennn::Transpose::No, wrong_output), runtime_error);
 }
 
 TEST(TensorOperationsValidation, ActivationBackwardRequiresMatchingTensors)

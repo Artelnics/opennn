@@ -121,7 +121,7 @@ The signals worth scanning for:
 - **A name that was true once.** The type still carries the name of what it did
   before the code moved on.
 
-Two real ones in this repo, both still open:
+Two real ones from this repo, one still open and one now fixed:
 
 **`OptimizerData` — [training_result.h:23](../opennn/training_strategy/training_result.h#L23), 11 fields.**
 Three unrelated things in one struct: a scratch arena (`data`, `views`),
@@ -132,17 +132,15 @@ uses none of the line-search fields. The name says only that an optimizer owns
 it, which the reader already knew. It also lives in `training_result.h`, which
 is not where anyone would look for it.
 
-**`AugmentationSettings` / `AugmentationConfig` / `AugmentationParams` —
+**Fixed — augmentation policy versus sampled transform —
 [image_dataset.h:19](../opennn/dataset/image_dataset.h#L19),
 [yolo_dataset.h:132](../opennn/dataset/yolo_dataset.h#L132),
 [yolo_dataset.cpp:399](../opennn/dataset/yolo_dataset.cpp#L399).**
-Three interchangeable-looking suffixes hiding the distinction that actually
-matters. The first two are the same kind of thing — the augmentation policy a
-user configured, diverging by dataset type. The third is not configuration at
-all: it is the random draw realised for one specific image. Policy and realised
-draw are genuinely different concepts, and the names are exactly the wrong way
-round to show it. The fix is not to merge all three; it is to name the two ideas
-that are really there.
+The former `AugmentationSettings` and `AugmentationConfig` were configured,
+dataset-specific policies; the former `AugmentationParams` was the random
+transform realised for one image. They are now `ImageAugmentationPolicy`,
+`YoloDataset::AugmentationPolicy`, and the file-local `AugmentationTransform`.
+The two lifetimes remain separate and their names now expose the distinction.
 
 ### Fixing one
 
@@ -254,8 +252,9 @@ Then, and only if asked:
 - **Both builds must pass, both suites at baseline.** `build-cpu-verification`
   and `build-resnet-capacity`. The CUDA build compiles `.cu` paths the CPU build
   never sees, so a green CPU build proves little on its own.
-- **Current baseline: CPU 976 passed, GPU 1094 passed, zero failures.** Update
-  this line if the count legitimately changes, and say why in the commit.
+- **Current baseline: CPU 975 passed / 28 skipped, GPU 1096 passed / 6 skipped,
+  zero failures, one disabled test.** Update this line if the count legitimately
+  changes, and say why in the commit.
 
 Build recipe, environment traps (the cuDNN configure flags and the `PATH`
 ordering hazard that kills the GPU suite mid-run), and how to create the two
@@ -274,6 +273,9 @@ build directories are in [../AGENTS.md](../AGENTS.md). Read it first.
 | `AffineMap` | `core/scaling.h` |
 | `ConfusionCell` | `testing_analysis/testing_analysis.h` |
 | Slot virtuals speaking slot ids, not spec indices | `neural_network/layers/*.h` |
+| Augmentation policies separated from sampled transforms | `dataset/image_dataset.h`, `dataset/yolo_dataset.h`, `dataset/yolo_dataset.cpp` |
+| `Transpose { No, Yes }` replacing the two adjacent `multiply` flags | `core/tensor_operations.h` and 16 call sites |
+| Dataset role-count overloads remain visible on derived datasets | `dataset/tabular_dataset.h`, `dataset/yolo_dataset.h` |
 
 Deliberately **not** merged, with reasons in the commit messages: `SampleRole`
 and `FillMode` into `ForwardPropagationMode`; the `Rung` family in
@@ -285,16 +287,8 @@ through `template<typename Rung> rung()`).
 These are leads, not a work queue. Each still needs the audit in step 2 before it
 becomes a plan, and the counts below are from an earlier scan — re-derive them.
 
-- The two false concepts above, `OptimizerData` and the augmentation trio, are
-  both still open.
+- The `OptimizerData` false concept above is still open.
 
-- `multiply(a, bool, b, bool, out, alpha, beta)` in `core/tensor_operations.h` —
-  two adjacent unnamed transpose flags, 16 unreadable call sites. Wants
-  `Transpose { No, Yes }`, the way every BLAS names it.
 - 29 further declarations taking a bare unnamed `bool`. Most only need the
   parameter named; `get_batches`'s shuffle flag and `Layer(LayerType, bool
   trainable)` are the two passed as literals often enough to earn an enum.
-- Derived datasets hide the role-taking overloads of `get_samples_number` and
-  friends, which is why two tests carry a `Dataset& base_dataset` alias to work
-  around it. A `using` declaration per derived class fixes it. Note that the
-  string overloads themselves must stay: Neural Designer calls them in 236 places.

@@ -860,8 +860,8 @@ static void multiply_cpu(const TensorView& input_a, bool transpose_a,
     }
 }
 
-void multiply(const TensorView& input_a, bool transpose_a,
-              const TensorView& input_b, bool transpose_b,
+void multiply(const TensorView& input_a, Transpose transpose_a,
+              const TensorView& input_b, Transpose transpose_b,
               TensorView& output,
               float alpha, float beta)
 {
@@ -899,16 +899,18 @@ void multiply(const TensorView& input_a, bool transpose_a,
              || rows_output <= 0 || cols_output <= 0,
              "multiply: matrix dimensions must be positive.");
 
-    const Index inner_a = transpose_a ? rows_a : cols_a;
-    const Index inner_b = transpose_b ? cols_b : rows_b;
-    const Index result_rows = transpose_a ? cols_a : rows_a;
-    const Index result_columns = transpose_b ? rows_b : cols_b;
+    const bool transpose_first = transpose_a == Transpose::Yes;
+    const bool transpose_second = transpose_b == Transpose::Yes;
+    const Index inner_a = transpose_first ? rows_a : cols_a;
+    const Index inner_b = transpose_second ? cols_b : rows_b;
+    const Index result_rows = transpose_first ? cols_a : rows_a;
+    const Index result_columns = transpose_second ? rows_b : cols_b;
     throw_if(inner_a != inner_b, "multiply: inner matrix dimensions do not match.");
 
     const bool flattened_cuda_rhs = input_a.is_cuda() && rank_a > 2 && rank_b == 2;
     if (flattened_cuda_rhs)
     {
-        throw_if(transpose_a, "multiply: a flattened CUDA left operand cannot be transposed.");
+        throw_if(transpose_first, "multiply: a flattened CUDA left operand cannot be transposed.");
         const Index flat_rows = input_a.size() / cols_a;
         throw_if(output_shape.back() != result_columns
                  || output.size() != flat_rows * result_columns,
@@ -929,8 +931,8 @@ void multiply(const TensorView& input_a, bool transpose_a,
                  "multiply: output matrix dimensions do not match the product.");
     }
 
-    if (input_a.is_cuda()) { multiply_gpu(input_a, transpose_a, input_b, transpose_b, output, alpha, beta); return; }
-    multiply_cpu(input_a, transpose_a, input_b, transpose_b, output, alpha, beta);
+    if (input_a.is_cuda()) { multiply_gpu(input_a, transpose_first, input_b, transpose_second, output, alpha, beta); return; }
+    multiply_cpu(input_a, transpose_first, input_b, transpose_second, output, alpha, beta);
 }
 
 static void softmax_cpu(TensorView& output)
@@ -1389,7 +1391,7 @@ void linear_forward_transposed(const TensorView& input, const TensorView& embed_
     }
 #endif
 
-    if (input.is_cuda()) { multiply(input, false, embed_weight, true, output, 1.0f, 0.0f); return; }
+    if (input.is_cuda()) { multiply(input, Transpose::No, embed_weight, Transpose::Yes, output, 1.0f, 0.0f); return; }
     output.as_flat_matrix().noalias() =
         input.as_flat_matrix() * embed_weight.as_matrix().transpose();
 }
@@ -1820,7 +1822,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
                                          output_delta.get_type(), Device::CUDA);
         TensorView weight_gradient_2d(weight_gradient.get_data(), Shape{input_columns, output_columns},
                                       Type::FP32, Device::CUDA);
-        multiply(input_2d, true, output_delta_2d, false, weight_gradient_2d, 1.0f, 0.0f);
+        multiply(input_2d, Transpose::Yes, output_delta_2d, Transpose::No, weight_gradient_2d, 1.0f, 0.0f);
 
         if (has_bias)
         {
@@ -1894,7 +1896,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
                    drelu_mask ? drelu_mask->get_data() : nullptr,
                    addend ? addend->get_data() : nullptr);
 
-    multiply(output_delta, false, weights, true, input_delta, 1.0f,
+    multiply(output_delta, Transpose::No, weights, Transpose::Yes, input_delta, 1.0f,
              accumulate_input_delta ? 1.0f : 0.0f);
 }
 

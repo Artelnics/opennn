@@ -40,15 +40,15 @@ TEST(YoloDataset, AugmentationControlsDeviceResidency)
     base_dataset.enable_device_residency();
     EXPECT_FALSE(dataset.is_device_resident());
 
-    YoloDataset::AugmentationConfig augmentation;
-    augmentation.enabled = false;
-    dataset.set_augmentation(augmentation);
+    YoloDataset::AugmentationPolicy policy;
+    policy.enabled = false;
+    dataset.set_augmentation_policy(policy);
 
     base_dataset.enable_device_residency();
     ASSERT_TRUE(dataset.is_device_resident());
 
-    augmentation.enabled = true;
-    dataset.set_augmentation(augmentation);
+    policy.enabled = true;
+    dataset.set_augmentation_policy(policy);
     EXPECT_FALSE(dataset.is_device_resident());
 }
 
@@ -168,9 +168,9 @@ TEST(YoloDataset, FillsInputsWithExpectedShapeAndPixelValues)
     dataset.set_display(false);
     dataset.set(images_dir, labels_dir, Shape{H, W, 3}, 2, 1, anchors);
 
-    YoloDataset::AugmentationConfig no_aug;
+    YoloDataset::AugmentationPolicy no_aug;
     no_aug.enabled = false;
-    dataset.set_augmentation(no_aug);
+    dataset.set_augmentation_policy(no_aug);
 
     const Index pixels = H * W * 3;
     vector<float> inputs(static_cast<size_t>(pixels), -1.0f);
@@ -211,9 +211,9 @@ TEST(YoloDataset, MatrixStorageSupportsConcurrentReadsOfOneDataset)
                 {{0.25f, 0.25f}});
     dataset.set_storage_mode(Dataset::StorageMode::Matrix);
 
-    YoloDataset::AugmentationConfig no_augmentation;
+    YoloDataset::AugmentationPolicy no_augmentation;
     no_augmentation.enabled = false;
-    dataset.set_augmentation(no_augmentation);
+    dataset.set_augmentation_policy(no_augmentation);
 
     const auto read_batch = [&dataset]
     {
@@ -262,14 +262,14 @@ TEST(YoloDataset, RepeatedMosaicBatchesKeepWorkerScratchIndependent)
     dataset.set(images_dir, labels_dir, Shape{height, width, 3}, 2, 1,
                 {{0.25f, 0.25f}});
 
-    YoloDataset::AugmentationConfig augmentation;
-    augmentation.jitter = 0.0f;
-    augmentation.exposure = 1.0f;
-    augmentation.saturation = 1.0f;
-    augmentation.hue = 0.0f;
-    augmentation.flip = false;
-    augmentation.mosaic = true;
-    dataset.set_augmentation(augmentation);
+    YoloDataset::AugmentationPolicy policy;
+    policy.jitter = 0.0f;
+    policy.exposure = 1.0f;
+    policy.saturation = 1.0f;
+    policy.hue = 0.0f;
+    policy.flip = false;
+    policy.mosaic = true;
+    dataset.set_augmentation_policy(policy);
 
     const vector<Index> sample_indices = {0, 1, 2, 3};
     constexpr Index input_values = samples * height * width * 3;

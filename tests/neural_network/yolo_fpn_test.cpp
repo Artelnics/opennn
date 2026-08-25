@@ -44,8 +44,8 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
     dataset.set(images_dir, labels_dir, Shape{input_H, input_W, 3},
                               8, boxes_per_cell, anchors);
     {
-        YoloDataset::AugmentationConfig no_aug; no_aug.enabled = false;
-        dataset.set_augmentation(no_aug);
+        YoloDataset::AugmentationPolicy no_aug; no_aug.enabled = false;
+        dataset.set_augmentation_policy(no_aug);
     }
 
     NeuralNetwork neural_network;
@@ -187,8 +187,8 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
                               2,                    3, anchors_large);
     dataset.set_multi_scale_heads(head_grids, {anchors_large, anchors_medium, anchors_small});
     {
-        YoloDataset::AugmentationConfig no_aug; no_aug.enabled = false;
-        dataset.set_augmentation(no_aug);
+        YoloDataset::AugmentationPolicy no_aug; no_aug.enabled = false;
+        dataset.set_augmentation_policy(no_aug);
     }
 
     NeuralNetwork neural_network;

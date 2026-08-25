@@ -35,6 +35,8 @@ TEST(TabularDataset, DimensionsConstructor)
     TabularDataset dataset(1, { 1 }, { 1 });
 
     EXPECT_EQ(dataset.get_samples_number(), 1);
+    EXPECT_EQ(dataset.get_samples_number(SampleRole::Training), 1);
+    EXPECT_EQ(dataset.get_samples_number("Training"), 1);
     EXPECT_EQ(dataset.get_variables_number(), 2);
     EXPECT_EQ(dataset.get_variables_number("Input"), 1);
     EXPECT_EQ(dataset.get_variables_number("Target"), 1);

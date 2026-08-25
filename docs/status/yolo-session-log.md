@@ -117,7 +117,7 @@ Built the Phase 1 deployment demo and trained 50 epochs / 512 synthetic samples 
    - New `yolo_boxes.bin` side-cache holding raw box lists per sample (header + offsets table + box records).
    - `fill_inputs(is_training=true)` and `fill_targets(is_training=true)` now apply augmentation on-the-fly: random crop+scale (Darknet-style, jitter=0.2 by default), horizontal flip, HSV jitter (exposure/saturation/hue). Geometric transforms applied to both image (bilinear resample) and box list (clip, drop degenerate, mirror). `make_target` is re-run per batch on the augmented box list.
    - Seed: `splitmix64(epoch_counter * golden_ratio + sample_index)`. `epoch_counter` is `atomic<uint64_t>` bumped once per `fill_inputs(training)` call so fill_inputs and the matching fill_targets see the same seed within a batch.
-   - `YoloDataset::AugmentationConfig` (jitter / exposure / saturation / hue / flip / enabled) is user-settable via `set_augmentation`. Defaults are YOLO-standard (1.5/1.5/0.1) for real images; the synthetic block demo overrides to `exposure=1.2, sat=1.0, hue=0.0` so it doesn't erase the color-based class signal.
+   - `YoloDataset::AugmentationPolicy` (jitter / exposure / saturation / hue / flip / enabled) is user-settable via `set_augmentation_policy`. Defaults are YOLO-standard (1.5/1.5/0.1) for real images; the synthetic block demo overrides to `exposure=1.2, sat=1.0, hue=0.0` so it doesn't erase the color-based class signal.
    - Inference (`is_training=false`) takes the existing fast path through pre-encoded target cache — zero overhead.
 
 ### 2026-05-26 — Late afternoon: the "Y-flip" was a fiction
@@ -365,7 +365,7 @@ Pulled 8 remote commits (`3c339bbf8 → c7efeb553`, mostly RubyAM's rename refac
 
 **Test suite: 267 → 270 passing.** Three pre-existing failures plus two regressions from the merge, all root-caused and fixed:
 
-1. **Augmentation noise in YOLO gradient tests** (3 tests: `YoloDataset.FillsInputsWithExpectedShapeAndPixelValues`, `YoloLoss.NoObjectGradientMatchesNumericalGradient`, `YoloLoss.WithObjectGradientMatchesV1Approximation`). Tests pre-date Phase 1+2 augmentation and pass `is_training=true`, which now triggers per-call random color jitter. Finite-difference probes see different augmented inputs each pass, so the analytical-vs-numerical gradient diff appears huge (max 2.77 vs 0.5 bound). Fix: explicitly disable augmentation (`set_augmentation({.enabled = false})`) in the three tests that are checking pixel/gradient correctness, not augmentation behavior.
+1. **Augmentation noise in YOLO gradient tests** (3 tests: `YoloDataset.FillsInputsWithExpectedShapeAndPixelValues`, `YoloLoss.NoObjectGradientMatchesNumericalGradient`, `YoloLoss.WithObjectGradientMatchesV1Approximation`). Tests pre-date Phase 1+2 augmentation and pass `is_training=true`, which now triggers per-call random color jitter. Finite-difference probes see different augmented inputs each pass, so the analytical-vs-numerical gradient diff appears huge (max 2.77 vs 0.5 bound). Fix: explicitly disable augmentation (`set_augmentation_policy({.enabled = false})`) in the three tests that are checking pixel/gradient correctness, not augmentation behavior.
 
 2. **LM restricted to single Dense layer** (`LevenbergMarquardtAlgorithmTest.TrainReducesError`). The teammate's LM refactor now throws on networks with >1 trainable Dense layer (the Jacobian impl only handles one). Test built a 2-Dense network — updated to single Dense.
 
