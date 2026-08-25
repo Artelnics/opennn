@@ -81,6 +81,13 @@ FAMILIES = {
         "data": lambda root: {"train": root / "wmt14/wmt14_pairs.txt"},
         "options": lambda a: [str(a.hidden), str(a.layers)],
     },
+    # footprint has no dataset and no batch: it measures what the framework
+    # costs before any of that exists. Its "modes" are its three questions.
+    "footprint": {
+        "data": lambda root: {},
+        "options": lambda a: [],
+        "modes": ("memory", "startup", "export"),
+    },
     "lstm": {
         "data": lambda root: {"train": root / "beijing_pm25/beijing_pm25_forecasting.csv"},
         "options": lambda a: [str(a.lstm_hidden), str(a.past)],
@@ -219,6 +226,40 @@ def main() -> int:
 
     print(f"=== {args.family} {args.mode} {args.precision} {args.device} ===")
     launches: list[dict] = []
+
+    if "modes" in FAMILIES[args.family]:
+        # One process per question, because a startup cost is already paid by
+        # anything sharing a process with it.
+        for question in FAMILIES[args.family]["modes"]:
+            for engine in engines:
+                outcome = launch(engine_command(args.family, engine) + [question],
+                                 not args.no_wait)
+                outcome.update(engine=engine, batch=0, round=1, question=question)
+                launches.append(outcome)
+                reported = {k: v for k, v in outcome["fields"].items()
+                            if k not in ("engine", "mode", "RESULT")}
+                print(f"  {question:<8} {engine:<8} {reported}")
+
+        artifact = {
+            "schema_version": 1,
+            "benchmark_id": f"{args.device}-{args.family}",
+            "run_id": run_id,
+            "session_id": session_id(),
+            "label": args.label,
+            "configuration": vars(args) | {"data_root": str(BENCH_DATA)},
+            "git": git,
+            "machine": gpu_state(),
+            "frameworks": framework_versions(),
+            "launches": launches,
+        }
+        name = (f"{artifact['benchmark_id']}"
+                f"{'-' + args.label if args.label else ''}-{run_id}.json")
+        path = result_destination(git.get("dirty")) / name
+        path.write_text(json.dumps(artifact, indent=2, default=str))
+        if git.get("dirty"):
+            print("\n  dirty tree -> results/scratch/, not the evidence store")
+        print(f"\nwrote {path}")
+        return 0
 
     if to_oom:
         # Capacity: double until a launch fails, per engine. The last rung that

@@ -15,22 +15,17 @@ set(_benchmark_targets
         transformer_opennn
         lstm_opennn)
 
-# footprint/ is the one part of the previous suite not yet folded into a
-# family. It asks what a framework costs *before* it runs anything -- baseline
-# memory, time to first prediction, exported model size -- which cannot ride
-# along on a training run the way speed, peak memory and energy now do.
-add_executable(opennn_memory  footprint/memory/opennn_memory.cpp)
-add_executable(opennn_startup footprint/startup/opennn_startup.cpp)
-add_executable(opennn_export  footprint/export/opennn_export.cpp)
+# footprint asks what a framework costs *before* it runs anything, so unlike
+# the families above it cannot ride along on a training run: each mode is its
+# own process, because a cost paid at startup is already paid by anything
+# sharing a process with it.
+add_executable(footprint_opennn families/footprint.cpp)
 
 if(WIN32)
-    target_link_libraries(opennn_memory PRIVATE psapi)
+    target_link_libraries(footprint_opennn PRIVATE psapi)
 endif()
 
-list(APPEND _benchmark_targets
-        opennn_memory
-        opennn_startup
-        opennn_export)
+list(APPEND _benchmark_targets footprint_opennn)
 
 foreach(benchmark_target ${_benchmark_targets})
     target_link_libraries(${benchmark_target} PRIVATE opennn)

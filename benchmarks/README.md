@@ -19,6 +19,10 @@ That prints throughput, peak memory and energy for each engine, and writes an
 artifact. `--family` is `dense`, `cnn`, `transformer` or `lstm`; `--mode` is
 `train` or `infer`.
 
+`footprint` is the exception: it takes no batch and no dataset, and its modes
+are `memory`, `startup` and `export` — one process each, since a startup cost
+is already paid by anything sharing a process with it.
+
 `--batch` is the only sweep axis:
 
 | | |
@@ -35,6 +39,7 @@ artifact. `--family` is `dense`, `cnn`, `transformer` or `lstm`; `--mode` is
 | `cnn` | ResNet-50 v1.5 | ImageNet subset, 1000 classes × 50 | the citable convolution benchmark |
 | `transformer` | d512 · h8 · ff2048 · 6L | WMT14 English-German | the *Attention Is All You Need* base model, on its own corpus |
 | `lstm` | LSTM(14→128) → Linear | Beijing PM2.5, hourly | both engines reach the same cuDNN kernel here |
+| `footprint` | — | — | what a framework costs *before* it runs anything |
 
 Each family is two files in [`families/`](families/) — one definition per
 engine, four modes each. Adding a family means adding those two files and one
@@ -79,7 +84,6 @@ enforced in code.
 | [`PLAN.md`](PLAN.md) | how the suite got this shape, and what is left |
 | [`DATA_POLICY.md`](DATA_POLICY.md) | where datasets live; what stays out of git |
 | [`gpu_clocks.sh`](gpu_clocks.sh) | lock the clock before measuring |
-| [`footprint/`](footprint/) | not yet folded into a family — see PLAN.md |
 
 Datasets never enter the repository. The one committed artefact is
 `imagenet_subset.manifest`, which pins exactly which images the CNN family
