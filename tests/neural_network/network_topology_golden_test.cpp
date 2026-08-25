@@ -144,7 +144,7 @@ TEST_F(NetworkTopologyGolden, YoloEveryBackboneAndHead)
     {
         SCOPED_TRACE(test_case.name);
 
-        const vector<array<float, 2>> anchors(size_t(test_case.anchors_number), {0.1f, 0.1f});
+        const vector<std::array<float, 2>> anchors(size_t(test_case.anchors_number), {0.1f, 0.1f});
 
         YoloNetwork network(input_shape, classes, anchors, grid_size,
                             test_case.backbone, CA::Sigmoid, test_case.head,
