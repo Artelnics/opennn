@@ -1532,18 +1532,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         }
     };
 
-    // The grouped path needs slots[0..M-1] to exist, and whether they do is
-    // decided in set_up_batches by a *different* threshold: it fills them only
-    // when the epoch has at least TrainingSession::group_size (8) batches,
-    // while M here is 2 for any batch above 64. An epoch of 2..7 batches
-    // therefore used to enter this path and dereference a slot that was never
-    // allocated -- a null unique_ptr, so a segfault rather than an error.
-    //
-    // Reached whenever samples/batch lands in that window: on HIGGS 250k that
-    // is batch 32,768 (7 batches) through 65,536 (3), which crashed in both
-    // precisions while 28,672 (8 batches) and 131,072 (1, below M) were fine.
-    // Checking the precondition here, rather than widening the allocation,
-    // keeps the fallback that already exists for every other unallocated case.
     const bool grouped_slots_ready = pipelines[0].slots[size_t(M) - 1] != nullptr;
 
     const bool can_group_batches = !post_batch_callback

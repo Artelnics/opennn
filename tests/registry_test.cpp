@@ -282,6 +282,42 @@ TEST(RegistryTest, AliasesConstructConfiguredComponents)
 {
     EXPECT_TRUE(ranges::none_of(layer_type_map().get_entries(),
                                [](const auto& entry) { return entry.second == "Concatenate"; }));
+    EXPECT_TRUE(ranges::none_of(layer_type_map().get_entries(),
+                               [](const auto& entry) { return entry.second == "Bounding"; }));
+
+    const unique_ptr<Layer> legacy_bounding = create_layer("Bounding");
+    EXPECT_EQ(string_to_layer_type("Bounding"), LayerType::Clamping);
+    EXPECT_EQ(legacy_bounding->get_type(), LayerType::Clamping);
+    EXPECT_EQ(legacy_bounding->get_name(), "Clamping");
+
+    Json legacy_bounding_body = Json::make_object();
+    legacy_bounding_body.set("Label", "legacy_bounding");
+    legacy_bounding_body.set("InputDimensions", "2");
+    legacy_bounding_body.set("OutputDimensions", "2");
+    legacy_bounding_body.set("Trainable", false);
+    legacy_bounding_body.set("BoundingMethod", "Bounding");
+    legacy_bounding_body.set("LowerBounds", "-2 -1");
+    legacy_bounding_body.set("UpperBounds", "3 4");
+    const JsonDocument legacy_bounding_document =
+        JsonDocument::wrap("Bounding", std::move(legacy_bounding_body));
+
+    legacy_bounding->from_JSON(legacy_bounding_document);
+    const auto* restored_clamping =
+        dynamic_cast<const Clamping*>(legacy_bounding.get());
+    ASSERT_NE(restored_clamping, nullptr);
+    EXPECT_EQ(restored_clamping->get_clamping_method(),
+              Clamping::ClampingMethod::Clamping);
+    EXPECT_FLOAT_EQ(restored_clamping->get_lower_bounds()(0), -2.0f);
+    EXPECT_FLOAT_EQ(restored_clamping->get_upper_bounds()(1), 4.0f);
+
+    const string migrated_json = serialize_layer(*restored_clamping);
+    JsonDocument migrated_document;
+    migrated_document.set_root(Json::parse(migrated_json));
+    EXPECT_EQ(migrated_document.first_child("Bounding"), nullptr);
+    const Json* migrated_root = migrated_document.first_child("Clamping");
+    ASSERT_NE(migrated_root, nullptr);
+    EXPECT_EQ(migrated_root->find("BoundingMethod"), nullptr);
+    EXPECT_EQ(read_json_string(migrated_root, "ClampingMethod"), "Clamping");
 
     const unique_ptr<Layer> concatenation = create_layer("Concatenate");
     EXPECT_EQ(string_to_layer_type("Concatenate"), LayerType::Concatenation);

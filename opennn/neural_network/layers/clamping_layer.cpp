@@ -106,7 +106,10 @@ const EnumMap<Clamping::ClampingMethod>& Clamping::clamping_method_map()
         {ClampingMethod::NoClamping, "No clamping"},
         {ClampingMethod::Clamping,   "Clamping"},
         {ClampingMethod::Clamping,   "Positive outputs"},
-        {ClampingMethod::Clamping,   "Data range"}
+        {ClampingMethod::Clamping,   "Data range"},
+        {ClampingMethod::NoClamping, "NoBounding"},
+        {ClampingMethod::NoClamping, "No bounding"},
+        {ClampingMethod::Clamping,   "Bounding"}
     };
     return map;
 }
@@ -189,7 +192,8 @@ void Clamping::read_JSON_body(const Json* root_element)
 {
     if (!root_element) return;
 
-    set_clamping_method(read_json_string(root_element, "ClampingMethod"));
+    set_clamping_method(read_json_string_fallback(
+        root_element, {"ClampingMethod", "BoundingMethod"}));
 
     const auto parse_bounds = [&](const string& field, vector<float>& dest)
     {

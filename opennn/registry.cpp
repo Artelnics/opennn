@@ -126,7 +126,8 @@ constexpr std::array<LayerRegistration, layer_types_number> layer_registrations 
     {LayerType::C2PSA,                  "C2PSA",                  construct_layer<C2PSA>}
 }};
 
-constexpr std::array<LayerRegistration, 2> layer_aliases = {{
+constexpr std::array<LayerRegistration, 3> layer_aliases = {{
+    {LayerType::Clamping,       "Bounding",           construct_layer<Clamping>},
     {LayerType::Concatenation,   "Concatenate",        construct_layer<Concatenation>},
     {LayerType::Normalization3d, "RMSNormalization3d",
      OPENNN_VISION_FACTORY(construct_rms_normalization)}
