@@ -1,6 +1,0 @@
-# compiled benchmark binary, local data copies, caches
-opennn_accuracy
-opennn_accuracy.exe
-*.csv
-*.log
-__pycache__/

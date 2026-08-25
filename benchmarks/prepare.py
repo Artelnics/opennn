@@ -243,6 +243,46 @@ def prepare_cnn(root: Path, args) -> None:
 # answers 403, and statmt.org is the primary source anyway.
 NC_URL = "https://www.statmt.org/wmt14/training-parallel-nc-v9.tgz"
 
+def opennn_tokens(text: str) -> list[str]:
+    """Exactly what OpenNN's WordLevelTokenizer sees, reproduced here.
+
+    `opennn::tokenize_views` ASCII-lowercases, then emits runs of `isalnum` as
+    one token and every `ispunct` character as its own, skipping everything
+    else. In the C locale "everything else" includes every non-ASCII byte, so
+    German text loses its umlauts and the surrounding word splits -- `aeussert`
+    written with the umlaut yields two tokens, not one.
+
+    Reproducing the rule rather than approximating it is the point. Writing the
+    corpus already split this way makes OpenNN's own tokeniser idempotent over
+    it and lets a whitespace split give PyTorch the identical tokens, so the
+    two engines process the same sequence length and the same vocabulary. When
+    they did not, OpenNN was doing 158 positions per sequence against PyTorch's
+    128 -- 23% more arithmetic, invisible in a throughput number.
+    """
+    raw = text.encode("utf-8")
+    tokens: list[str] = []
+    index = 0
+
+    while index < len(raw):
+        byte = raw[index]
+        character = chr(byte)
+
+        if character.isascii() and character.isalnum():
+            start = index
+            while index < len(raw):
+                nxt = chr(raw[index])
+                if not (nxt.isascii() and nxt.isalnum()):
+                    break
+                index += 1
+            tokens.append(raw[start:index].decode("ascii").lower())
+        elif character.isascii() and 33 <= byte <= 126 and not character.isalnum():
+            tokens.append(character)
+            index += 1
+        else:
+            index += 1
+
+    return tokens
+
 def prepare_transformer(root: Path, args) -> None:
     """`source <TAB> target` pairs, bounded on both axes.
 
@@ -273,14 +313,32 @@ def prepare_transformer(root: Path, args) -> None:
     out.mkdir(parents=True, exist_ok=True)
     kept = 0
     with open(pairs, "w", encoding="utf-8") as handle:
-        for en_line, de_line in zip(english.splitlines(), german.splitlines()):
+        # splitlines() would also break on VT, FF, NEL and U+2028, which occur
+        # inside natural prose and would silently misalign the two sides
+        # against each other from that point on. Only newlines separate records.
+        for en_line, de_line in zip(english.split("\n"), german.split("\n")):
             en, de = en_line.strip(), de_line.strip()
             if not en or not de or "\t" in en or "\t" in de:
                 continue
-            en_tokens, de_tokens = en.split(), de.split()
-            if len(en_tokens) > args.max_tokens or len(de_tokens) > args.max_tokens:
-                en, de = " ".join(en_tokens[:args.max_tokens]), " ".join(de_tokens[:args.max_tokens])
-            handle.write(f"{en}\t{de}\n")
+
+            # LanguageDataset reads this file with CSV quote semantics, so an
+            # unterminated double quote swallows the tab and the record then
+            # "does not contain exactly two fields". Natural prose has
+            # unbalanced quotes routinely -- a sentence opening with one and
+            # closing with a typographic one, for instance -- so those pairs
+            # are dropped rather than rewritten. It costs 0.5% of the corpus
+            # and keeps every surviving line exactly as the source wrote it.
+            if en.count('"') % 2 or de.count('"') % 2:
+                continue
+            # Pre-tokenised with OpenNN's own rule, so both engines agree on
+            # the token stream, and truncated after tokenising so the cap
+            # bounds what the model actually sees.
+            en_tokens = opennn_tokens(en)[:args.max_tokens]
+            de_tokens = opennn_tokens(de)[:args.max_tokens]
+            if not en_tokens or not de_tokens:
+                continue
+
+            handle.write(f"{' '.join(en_tokens)}\t{' '.join(de_tokens)}\n")
             kept += 1
             if args.max_pairs and kept >= args.max_pairs:
                 break

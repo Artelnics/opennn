@@ -216,6 +216,8 @@ int main(int argc, char* argv[])
             drop_tail(batch);
 
             auto network = build(dataset.get_input_shape(), dataset.get_target_shape(), options);
+            if (batch == batches.front())
+                cout << "parameters=" << network->get_parameters_number() << "\n" << flush;
 
             TrainingStrategy strategy(network.get(), &dataset);
             const bool graph = options.device == Device::CUDA
@@ -310,6 +312,7 @@ int main(int argc, char* argv[])
         const MatrixR inputs = data.leftCols(inputs_number);
 
         auto network = build(Shape{inputs_number}, Shape{1}, options);
+        cout << "parameters=" << network->get_parameters_number() << "\n" << flush;
 
         for (const Index batch : batches)
         {

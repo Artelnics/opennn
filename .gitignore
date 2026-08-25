@@ -157,9 +157,7 @@ build-wrapper-dump.json
 
 # Session-generated benchmark reports
 /benchmarks/*.md
-!/benchmarks/PRESENTATION_CLAIMS.md
 !/benchmarks/README.md
 !/benchmarks/DATA_POLICY.md
-!/benchmarks/REORGANIZATION_PLAN.md
-!/benchmarks/DUPLICATION_LEDGER.md
 !/benchmarks/PLAN.md
+!/benchmarks/PROTOCOL.md

@@ -135,6 +135,8 @@ def train_like(argv: list[str], mode: str) -> int:
 
     for batch in batches:
         model = build(x.shape[1], opts)
+        if batch == batches[0]:
+            print(f"parameters={sum(p.numel() for p in model.parameters())}", flush=True)
         loss_fn = torch.nn.BCEWithLogitsLoss()
         optimizer = torch.optim.Adam(model.parameters())
         ctx = autocast_ctx(opts)
@@ -210,6 +212,8 @@ def infer(argv: list[str]) -> int:
 
     for batch in batches:
         model = build(x.shape[1], opts).eval()
+        if batch == batches[0]:
+            print(f"parameters={sum(p.numel() for p in model.parameters())}", flush=True)
         forward, _ = compiled(model, opts)
         processed = (samples // batch) * batch
 

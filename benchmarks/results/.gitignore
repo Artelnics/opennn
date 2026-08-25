@@ -1,5 +1,0 @@
-# Benchmark runs are ignored by default. Reviewed immutable JSON evidence can
-# still be committed explicitly with `git add -f`.
-*
-!.gitignore
-!README.md

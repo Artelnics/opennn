@@ -64,12 +64,27 @@ BENCH_DATA = Path(os.environ.get("OPENNN_BENCH_DATA",
 
 # The only per-family knowledge here. Everything else -- which binary, which
 # script -- follows from the family name, so adding a family adds one entry.
-DATASETS = {
-    "dense": lambda root: {"train": root / "higgs/higgs_train_250k.csv",
-                           "test": root / "higgs/higgs_test.csv"},
-    "cnn": lambda root: {"train": root / "imagenet_subset/train"},
-    "transformer": lambda root: {"train": root / "wmt14/wmt14_pairs.txt"},
-    "recurrent": lambda root: {"train": root / "beijing_pm25/beijing_pm25_forecasting.csv"},
+# The only per-family knowledge here: where its data is, and the model
+# options only it understands. Everything else -- which binary, which script --
+# follows from the family name.
+FAMILIES = {
+    "dense": {
+        "data": lambda root: {"train": root / "higgs/higgs_train_250k.csv",
+                              "test": root / "higgs/higgs_test.csv"},
+        "options": lambda a: [str(a.hidden), str(a.layers), a.activation],
+    },
+    "cnn": {
+        "data": lambda root: {"train": root / "imagenet_subset/train"},
+        "options": lambda a: [str(a.image_size)],
+    },
+    "transformer": {
+        "data": lambda root: {"train": root / "wmt14/wmt14_pairs.txt"},
+        "options": lambda a: [str(a.hidden), str(a.layers)],
+    },
+    "lstm": {
+        "data": lambda root: {"train": root / "beijing_pm25/beijing_pm25_forecasting.csv"},
+        "options": lambda a: [str(a.lstm_hidden), str(a.past)],
+    },
 }
 
 def engine_command(family: str, engine: str) -> list[str]:
@@ -87,11 +102,11 @@ def engine_command(family: str, engine: str) -> list[str]:
 
 def engine_arguments(mode: str, data: dict, batch: int, args) -> list[str]:
     """The positional tail both engines share, so neither is special-cased."""
-    options = [str(args.hidden), str(args.layers), args.activation,
-               args.device, args.precision]
+    options = [*FAMILIES[args.family]["options"](args), args.device, args.precision]
 
     if mode == "infer":
-        return [mode, str(data["test"]), str(args.repeats), str(batch), *options]
+        return [mode, str(data.get("test", data["train"])), str(args.repeats),
+                str(batch), *options]
     return [mode, str(data["train"]), str(data.get("test", data["train"])),
             str(args.epochs), str(batch), *options]
 
@@ -168,7 +183,7 @@ def _is_number(text: str) -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--family", default="dense", choices=sorted(DATASETS))
+    parser.add_argument("--family", default="dense", choices=sorted(FAMILIES))
     parser.add_argument("--mode", default="train", choices=("train", "infer"))
     parser.add_argument("--engines", default="opennn,pytorch")
     parser.add_argument("--batch", default="8192",
@@ -181,6 +196,9 @@ def main() -> int:
     parser.add_argument("--hidden", type=int, default=1024)
     parser.add_argument("--layers", type=int, default=2)
     parser.add_argument("--activation", default="relu", choices=("relu", "tanh"))
+    parser.add_argument("--image-size", type=int, default=224, help="cnn")
+    parser.add_argument("--lstm-hidden", type=int, default=128, help="lstm")
+    parser.add_argument("--past", type=int, default=24, help="lstm window")
     parser.add_argument("--tolerance", type=float, default=0.02,
                         help="cross-engine quality agreement band")
     parser.add_argument("--label", default="")
@@ -188,7 +206,7 @@ def main() -> int:
                         help="skip the cooldown between launches")
     args = parser.parse_args()
 
-    data = DATASETS[args.family](BENCH_DATA)
+    data = FAMILIES[args.family]["data"](BENCH_DATA)
     missing = [str(p) for p in data.values() if not Path(p).exists()]
     if missing:
         raise SystemExit("missing dataset:\n  " + "\n  ".join(missing)
@@ -298,6 +316,24 @@ def main() -> int:
     accuracies = {str(batch): values for batch, values in sorted(per_batch.items())}
     gate = all(agrees(values, args.tolerance) for values in per_batch.values())
 
+    # A shape gate, alongside the quality gate. Two engines can only be
+    # compared on the same tensor shape: transformer.cpp derives sequence
+    # length from OpenNN's tokeniser and transformer.py from whitespace, and
+    # on WMT14 those give 158 against 128 -- 23% more positions per sequence
+    # for one engine. That is invisible in a throughput number and fatal to
+    # what it means, so it is checked rather than assumed.
+    shapes: dict[str, dict[str, str]] = {}
+    for launch_result in launches:
+        if launch_result["returncode"] != 0:
+            continue
+        reported = {k: v for k, v in launch_result["fields"].items()
+                    if k in ("sequence", "input_vocab", "target_vocab", "samples",
+                             "parameters", "hidden", "inputs", "past")}
+        if reported:
+            shapes.setdefault(launch_result["engine"], reported)
+
+    shape_agrees = len({tuple(sorted(v.items())) for v in shapes.values()}) <= 1
+
     artifact = {
         "schema_version": 1,
         "benchmark_id": f"{args.device}-{args.family}-{args.mode}",
@@ -311,6 +347,7 @@ def main() -> int:
         "datasets": {name: file_info(Path(path)) for name, path in data.items()},
         "quality_gate": {"agrees": gate, "tolerance": args.tolerance,
                          "accuracies": accuracies},
+        "shape_gate": {"agrees": shape_agrees, "reported": shapes},
         "summary": summary,
         "launches": launches,
     }
@@ -333,6 +370,12 @@ def main() -> int:
         ratio = (summary[names[0]]["median_samples_per_sec"]
                  / max(summary[names[1]]["median_samples_per_sec"], 1))
         print(f"  {names[0]} / {names[1]} = {ratio:.3f}x")
+
+    if not shape_agrees:
+        print("\n  SHAPE GATE FAILED: engines report different tensor shapes --")
+        for engine, reported in shapes.items():
+            print(f"    {engine:<8} {reported}")
+        print("    the throughput numbers above are not measuring the same work")
 
     if not gate:
         print(f"\n  QUALITY GATE FAILED: accuracies disagree beyond {args.tolerance:.0%}"
