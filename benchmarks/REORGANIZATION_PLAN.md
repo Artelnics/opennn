@@ -59,6 +59,51 @@ print(b.build_info['cuda_version'], b.build_info['cudnn_version'])
 card are provisional** — including the 6 existing RTX 5070 Ti results, which were
 all produced with this build and should be re-baselined rather than trusted.
 
+#### Resolved 2026-08-25: no wheel fixes this. Measuring two-way instead.
+
+**"A newer `tensorflow[and-cuda]` wheel" does not exist.** 2.21.0 *is* the latest
+PyPI release, and `tf-nightly` 2.22.0.dev20260823 was installed into a throwaway
+venv and inspected directly. Do not trust `build_info` here — the nightly returns
+`None` for every CUDA key. Dump the compiled kernels instead:
+
+```bash
+cuobjdump --list-elf .../site-packages/tensorflow/libtensorflow_cc.so.2 \
+  | grep -oE "sm_[0-9]+" | sort -u
+```
+
+| build | cubin targets | `sm_120` |
+|---|---|---|
+| TF 2.21.0 (CUDA 12.5.1) | `sm_60 70 80 89` + `compute_90` PTX | no |
+| tf-nightly 2.22.0.dev20260823 (CUDA 12.9) | `sm_60 70 80 89 90` | no |
+
+The nightly pulls CUDA 12.9 — past the 12.8 threshold — and *still* ships no
+Blackwell cubin, so the CUDA version was never the gating factor. TensorFlow
+itself confirms the fallback at import: `TensorFlow was not built with CUDA
+kernel binaries compatible with compute capability 12.0a. CUDA kernels will be
+jit-compiled from PTX`.
+
+**The handicap, measured.** Identical 4096³ matmul, same card, same session:
+
+| | time | throughput |
+|---|---:|---:|
+| PyTorch — native `sm_120` | 3.03 ms | 45.4 TFLOP/s |
+| TensorFlow — PTX JIT | 3.78 ms | 36.4 TFLOP/s |
+
+~25% on the simplest op available. Treat that as indicative, not as the isolated
+JIT cost: the two go through different cuBLAS paths and TF32 policies, and the
+handicap cannot be cleanly separated *because there is no native-`sm_120`
+TensorFlow to difference against*. Being unattributable is precisely what
+disqualifies it — a published deficit would partly measure NVIDIA's release
+schedule, and would move on a rebuild.
+
+**Decision — the matrix is two-way for now.** OpenNN vs PyTorch, both native
+`sm_120`, is fair today and blocks nothing. TensorFlow re-enters when a native
+build exists; the only route identified is the NGC container
+(`nvcr.io/nvidia/tensorflow`), which needs `sudo`: the Docker daemon is not
+running and `nvidia-container-toolkit` is not installed. Building TF from source
+for `sm_120` is the fallback. **Every cell measured before that lands records
+`engines: [opennn, pytorch]` and is not a three-way claim.**
+
 ### 0.3 Confirm PyTorch really has Blackwell
 
 ```bash
@@ -363,6 +408,35 @@ peak-batch run, then freeze.
 
 ---
 
+### 9.4 Contract item 8 is specified but not implemented
+
+"A dirty tree writes to `results/scratch/`, never to the evidence store" is
+written down and enforced by nothing. `git_metadata()` *records* `dirty`; no code
+*routes* on it. Demonstrated 2026-08-25: a smoke run on a tree with 250
+uncommitted files wrote `gpu-higgs-dense-training-speed-smoke-2way.json` straight
+into `results/`, carrying `git.dirty: true`. It was moved to `results/scratch/`
+by hand.
+
+This is how 39 of the 107 artifacts came to be dirty-tree results in the evidence
+store — nothing stopped them. The gate belongs in `common/`, as the single
+function every runner asks for its output path, alongside the session id contract
+item 8 also requires. Until it exists, every new artifact needs the same manual
+check.
+
+### 9.5 Runners cannot find the binary the plan tells you to build
+
+Section 0.4 builds into `build-bench`. Ten runners resolve the OpenNN binary
+through a hardcoded directory list — `build`, `build-gpu`, `build-cuda`,
+`build-benchmarks` — that **does not include `build-bench`**, so following this
+plan literally produces a tree where no runner finds the executable it just told
+you to compile. The 2026-08-25 smoke run only worked via the `OPENNN_SPEED_BIN`
+environment override.
+
+Two defects in one: the plan and the runners disagree on the directory name, and
+the resolver is copied ten times so fixing it once fixes nothing. It joins the
+`common/` extraction in step 3 — one resolver, honouring the override, covering
+both names.
+
 ## 10. Sequence
 
 Nothing published changes meaning until step 6.
@@ -408,6 +482,37 @@ withdrawn — including the 6 existing RTX 5070 Ti results, whose TensorFlow num
 came from the sm_120-less build.
 
 ---
+
+## Progress log
+
+Ticked off on the Linux machine. Update as steps land.
+
+| Step | State | Evidence |
+|---|---|---|
+| 0.1 hardware | done | RTX 5070 Ti, 16,303 MiB, driver 610.43.02, cc 12.0 — matches section 1 |
+| 0.2 TF `sm_120` | **closed as unfixable for now** | No wheel exists; two-way matrix adopted. See 0.2 above. |
+| 0.3 PyTorch Blackwell | done | 2.13.0+cu130, arch list includes `sm_120` |
+| 0.4 build OpenNN | done | `build-bench`, CUDA 13.3.73 + cuDNN 9.25.0, 23 targets; `cuobjdump` on the binary reports `sm_120` and nothing else |
+| 1 duplication ledger | done | `DUPLICATION_LEDGER.md`, all four families |
+| 2 move scratch artifacts | done | 6 unregistered ids / 37 artifacts moved to `results/scratch/`; `results/` now holds 70 reviewed. Matches the predicted "14 sweep + 5 ids" exactly. |
+| 2 `suite.json` | not started | blocked on 9.1 and 9.2 |
+| 3 extract `common/` | partial | `provenance`, `gpu`, and now `metrics` lifted; 7 runners ported. Binary resolver (9.5) and dirty-tree gate (9.4) still outstanding. |
+| 4 consolidate families | not started | |
+| 5 protocols | not started | |
+| 6 re-baseline | not started | needs 2–5 |
+
+**First fair measurement on this machine**, 2026-08-25, HIGGS dense bf16
+training, 250k rows, batch 8,192, 2 epochs, 1 run — a pipeline smoke test, not
+evidence, and written to `results/scratch/` accordingly:
+
+| engine | throughput |
+|---|---:|
+| OpenNN | 11,322,601 samples/s |
+| PyTorch | 8,774,977 samples/s |
+
+Both `result=OK`, both native `sm_120`. Single run on a dirty tree with unlocked
+clocks, so the ratio is provisional in exactly the way section 6 warns about —
+its value is that the two-way path runs end to end, not the number.
 
 ## Notes on measurement, carried over from the engineering audit
 

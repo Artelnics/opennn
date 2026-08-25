@@ -16,6 +16,7 @@ treat a missing key as "not available here", never as a value.
 
 from __future__ import annotations
 
+import os
 import platform
 import re
 import subprocess
@@ -165,3 +166,47 @@ def file_info(path: Path) -> dict[str, Any]:
         info["exists"] = False
 
     return info
+
+
+SESSION_ENV = "OPENNN_BENCH_SESSION"
+
+
+def session_id() -> str:
+    """The measurement session this run belongs to.
+
+    Contract item 7.8: numbers may only be compared with others carrying the
+    same session id. A session is one sitting on one machine with the clocks
+    left alone -- section 6's warning about a 6,994 vs 8,682 samples/s swing an
+    hour apart is what the id exists to make visible.
+
+    A session normally spans several runner invocations, so it cannot be
+    generated per process: export `$OPENNN_BENCH_SESSION` once and every runner
+    launched under it agrees. Without it, each process gets its own
+    `pid`-suffixed id, which is deliberately awkward -- an artifact whose
+    session id nothing else shares is exactly what an un-anchored run is.
+    """
+    declared = os.environ.get(SESSION_ENV)
+    if declared:
+        return declared
+    return f"adhoc-{os.getpid()}"
+
+
+def result_destination(results_root: Path, dirty: bool | None = None) -> Path:
+    """Where an artifact may be written: the evidence store, or `scratch/`.
+
+    Contract item 7.8: a dirty tree writes to `results/scratch/`, never to the
+    evidence store. That rule was written down and enforced by nothing --
+    `git_metadata()` reported `dirty` and no code acted on it, which is how 39
+    of the 107 existing artifacts came to be dirty-tree results sitting in
+    `results/` as though they were reproducible.
+
+    Pass `dirty` if the caller already has git metadata in hand; otherwise it is
+    determined here. The directory is created, so a runner can write straight
+    into the returned path.
+    """
+    if dirty is None:
+        dirty = bool(git_metadata().get("dirty", True))
+
+    destination = results_root / "scratch" if dirty else results_root
+    destination.mkdir(parents=True, exist_ok=True)
+    return destination

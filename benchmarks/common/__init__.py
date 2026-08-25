@@ -25,7 +25,14 @@ from .provenance import (
     framework_versions,
     git_metadata,
     repo_root,
+    result_destination,
     run_text,
+    session_id,
+)
+
+from .binaries import (
+    candidate_names,
+    find_binary,
 )
 
 from .gpu import (
@@ -35,15 +42,30 @@ from .gpu import (
     wait_for_idle,
 )
 
+from .metrics import (
+    binary_metrics,
+    parse_optional_float,
+    passes_quality_gate,
+    roc_auc,
+)
+
 __all__ = [
     "REPO_ROOT",
     "file_info",
     "framework_versions",
     "git_metadata",
     "repo_root",
+    "result_destination",
     "run_text",
+    "session_id",
+    "candidate_names",
+    "find_binary",
     "gpu_state",
     "measure_idle",
     "used_mib",
     "wait_for_idle",
+    "binary_metrics",
+    "parse_optional_float",
+    "passes_quality_gate",
+    "roc_auc",
 ]
