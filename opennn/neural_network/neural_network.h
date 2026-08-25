@@ -193,9 +193,40 @@ public:
     void set_parameters_pytorch() { initialize_parameters(&Operator::set_parameters_pytorch); }
     void link_parameters();
 
+    enum class ParameterStorage
+    {
+        Host,
+        DeviceMaster,
+        DeviceMasterWithMirror,
+        DeviceCompact
+    };
+
+    ParameterStorage get_parameter_storage() const noexcept
+    {
+        if (parameters.get_device() != Device::CUDA)
+            return ParameterStorage::Host;
+
+        if (!parameters.owns_memory())
+            return ParameterStorage::DeviceCompact;
+
+        return parameters_bf16_mirror.empty() && parameters_int8_storage.empty()
+            ? ParameterStorage::DeviceMaster
+            : ParameterStorage::DeviceMasterWithMirror;
+    }
+
     bool fp32_master_released() const noexcept
     {
-        return parameters.get_device() == Device::CUDA && !parameters.owns_memory();
+        return get_parameter_storage() == ParameterStorage::DeviceCompact;
+    }
+
+    // Whether the derived storage this precision needs has been built yet. A
+    // separate question from where the master lives: FP32 needs nothing derived,
+    // so it is always ready.
+    bool low_precision_storage_ready() const noexcept
+    {
+        if (config.training_type == Type::BF16) return !parameters_bf16_mirror.empty();
+        if (config.training_type == Type::INT8) return !parameters_int8_storage.empty();
+        return true;
     }
 
     void link_gradients(const Buffer&) const;

@@ -1237,9 +1237,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
         const bool needs_parameter_device_copy =
             parameters.get_device() != Device::CUDA
-            || (!parameters.empty()
-                && ((config.training_type == Type::BF16 && parameters_bf16_mirror.empty())
-                    || (config.training_type == Type::INT8 && parameters_int8_storage.empty())));
+            || (!parameters.empty() && !low_precision_storage_ready());
 
         if (needs_parameter_device_copy)
             self->copy_parameters_device();
@@ -2300,18 +2298,26 @@ void NeuralNetwork::link_parameters()
 {
     linked_gradient_base = nullptr;
 
+    const ParameterStorage storage = get_parameter_storage();
+
+    const bool low_precision_live = storage == ParameterStorage::DeviceMasterWithMirror
+                                 || storage == ParameterStorage::DeviceCompact;
+
     float* fp32_base = parameters.as<float>();
+
+    // The compact fp32 storage only exists once the master has gone; before
+    // that the master is the fp32 source and this buffer is empty.
     float* fp32_inference_base =
-        fp32_master_released()
+        storage == ParameterStorage::DeviceCompact
         && !parameters_fp32_inference_storage.empty()
         ? parameters_fp32_inference_storage.as<float>()
         : nullptr;
 
-    bfloat16* bf16_mirror_base = (parameters.get_device() == Device::CUDA && !parameters_bf16_mirror.empty())
+    bfloat16* bf16_mirror_base = low_precision_live && !parameters_bf16_mirror.empty()
         ? parameters_bf16_mirror.as<bfloat16>()
         : nullptr;
 
-    int8_t* int8_base = (parameters.get_device() == Device::CUDA && !parameters_int8_storage.empty())
+    int8_t* int8_base = low_precision_live && !parameters_int8_storage.empty()
         ? parameters_int8_storage.as<int8_t>()
         : nullptr;
 
