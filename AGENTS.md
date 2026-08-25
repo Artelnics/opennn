@@ -11,6 +11,7 @@ is linked from here.
 | YOLO implementation notes, session by session | [docs/status/yolo-session-log.md](docs/status/yolo-session-log.md) |
 | CUDA-graph topology dumps (training) | [docs/uml/cuda-graph/](docs/uml/cuda-graph/) |
 | Project-local skills | [.agents/skills/](.agents/skills/) |
+| Making the code conceptual and self-explanatory (standing task prompt) | [docs/making-the-code-conceptual.md](docs/making-the-code-conceptual.md) |
 
 Before deleting anything that looks unused, read
 [Before deleting anything: Neural Designer](docs/status/engineering-audit.md#before-deleting-anything-neural-designer).
