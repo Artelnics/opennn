@@ -90,7 +90,7 @@ vector<Index> Dataset::get_used_sample_indices() const
 
 void Dataset::get_batches(const vector<Index>& sample_indices,
                           Index batch_size,
-                          bool shuffle,
+                          Shuffle shuffle,
                           vector<vector<Index>>& batches,
                           optional<unsigned> shuffle_seed) const
 {
@@ -108,14 +108,14 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
 
     vector<Index> shuffled_indices;
 
-    if (shuffle)
+    if (shuffle == Shuffle::Yes)
     {
         shuffled_indices = sample_indices;
         if (shuffle_seed) shuffle_vector_seeded(shuffled_indices, *shuffle_seed);
         else              shuffle_vector(shuffled_indices);
     }
 
-    const vector<Index>& indices = shuffle ? shuffled_indices : sample_indices;
+    const vector<Index>& indices = shuffle == Shuffle::Yes ? shuffled_indices : sample_indices;
 
     #pragma omp parallel for if (batches_number > 64)
     for (Index i = 0; i < batches_number; ++i)

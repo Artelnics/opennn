@@ -161,7 +161,7 @@ NonMaxSuppression::NonMaxSuppression(const Shape& new_input_shape,
                                      float new_confidence_threshold,
                                      float new_iou_threshold,
                                      const string& new_label)
-    : Layer(LayerType::NonMaxSuppression, false)
+    : Layer(LayerType::NonMaxSuppression, Trainability::Frozen)
 {
     operators = {&nms};
 

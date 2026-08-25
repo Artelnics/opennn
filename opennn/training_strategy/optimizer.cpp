@@ -870,6 +870,7 @@ TrainingResult Optimizer::train()
     BestModelSnapshot best_model;
 
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
+    const Shuffle training_shuffle = shuffle_samples ? Shuffle::Yes : Shuffle::No;
 
     setup_optimizer_data(optimizer_data, parameters_buffer_size, device);
 
@@ -877,9 +878,9 @@ TrainingResult Optimizer::train()
 
     if (needs_cuda_warmup)
     {
-        dataset->get_batches(training_sample_indices, training_batch_size, false, training_batches);
+        dataset->get_batches(training_sample_indices, training_batch_size, Shuffle::No, training_batches);
         if (has_validation)
-            dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
+            dataset->get_batches(validation_sample_indices, validation_batch_size, Shuffle::No, validation_batches);
 
         warmup_device_training(training_context,
                                batch_pools.training_empty_queue,
@@ -933,7 +934,8 @@ TrainingResult Optimizer::train()
                 training_batches.swap(next_training_batches);
             }
             else
-                dataset->get_batches(training_sample_indices, training_batch_size, shuffle_samples, training_batches);
+                dataset->get_batches(training_sample_indices, training_batch_size,
+                                     training_shuffle, training_batches);
 
             if (on_gpu && epoch + 1 < maximum_epochs)
             {
@@ -943,7 +945,7 @@ TrainingResult Optimizer::train()
                 next_training_batches_ready = async(launch::async, [&, shuffle_seed]
                 {
                     dataset->get_batches(training_sample_indices, training_batch_size,
-                                         shuffle_samples, next_training_batches, shuffle_seed);
+                                         training_shuffle, next_training_batches, shuffle_seed);
                 });
             }
 
@@ -967,7 +969,8 @@ TrainingResult Optimizer::train()
                 if (on_gpu) device::synchronize(device::get_compute_stream());
                 const auto measured_validation_start = chrono::steady_clock::now();
 
-                dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
+                dataset->get_batches(validation_sample_indices, validation_batch_size,
+                                     Shuffle::No, validation_batches);
 
                 const Loss::EvaluationResult validation_evaluation_result = evaluate_epoch(*validation_fp,
                                                                                           batch_pools.validation_queue(),

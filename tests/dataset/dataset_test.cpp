@@ -76,7 +76,7 @@ TEST(Dataset, GetBatchesIncludesRemainder)
     const vector<Index> sample_indices = { 0, 1, 2, 3, 4 };
     vector<vector<Index>> batches;
 
-    dataset.get_batches(sample_indices, 2, false, batches);
+    dataset.get_batches(sample_indices, 2, Shuffle::No, batches);
 
     ASSERT_EQ(batches.size(), 3);
     EXPECT_EQ(batches[0], (vector<Index>{ 0, 1 }));

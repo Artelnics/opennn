@@ -45,6 +45,8 @@ inline SampleRole string_to_sample_role(string_view name)
     return sample_role_map().from_string(name);
 }
 
+enum class Shuffle { No, Yes };
+
 class Dataset
 {
 
@@ -123,7 +125,7 @@ public:
     Shape get_shape(VariableRole) const;
     Shape get_shape(string_view role) const { return get_shape(string_to_variable_role(role)); }
 
-    void get_batches(const vector<Index>&, Index, bool, vector<vector<Index>>&,
+    void get_batches(const vector<Index>&, Index, Shuffle, vector<vector<Index>>&,
                      optional<unsigned> shuffle_seed = nullopt) const;
 
     const vector<vector<string>>& get_data_file_preview() const noexcept { return data_file_preview; }

@@ -277,6 +277,7 @@ build directories are in [../AGENTS.md](../AGENTS.md). Read it first.
 | `Transpose { No, Yes }` replacing the two adjacent `multiply` flags | `core/tensor_operations.h` and 16 call sites |
 | Dataset role-count overloads remain visible on derived datasets | `dataset/tabular_dataset.h`, `dataset/yolo_dataset.h` |
 | Optimizer workspace separated from algorithm-specific state | `training_strategy/optimizer.h`, four optimizer implementations |
+| `Shuffle { No, Yes }` for batch ordering and `Trainability { Frozen, Trainable }` for layer construction | `dataset/dataset.h`, `neural_network/layers/layer.h` |
 
 Deliberately **not** merged, with reasons in the commit messages: `SampleRole`
 and `FillMode` into `ForwardPropagationMode`; the `Rung` family in
@@ -288,6 +289,6 @@ through `template<typename Rung> rung()`).
 These are leads, not a work queue. Each still needs the audit in step 2 before it
 becomes a plan, and the counts below are from an earlier scan — re-derive them.
 
-- 29 further declarations taking a bare unnamed `bool`. Most only need the
-  parameter named; `get_batches`'s shuffle flag and `Layer(LayerType, bool
-  trainable)` are the two passed as literals often enough to earn an enum.
+- Remaining declarations taking a bare unnamed `bool`. Most only need the
+  parameter named; re-derive the count and audit literal call sites before
+  introducing another enum.

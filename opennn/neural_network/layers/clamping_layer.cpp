@@ -93,7 +93,7 @@ void ClampingOperator::forward_propagate(ForwardPropagation& forward_propagation
 }
 
 Clamping::Clamping(const Shape& new_output_shape, const string& new_name)
-    : Layer(LayerType::Clamping, false)
+    : Layer(LayerType::Clamping, Trainability::Frozen)
 {
     operators = {&clamping};
     set(new_output_shape, new_name);

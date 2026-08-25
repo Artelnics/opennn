@@ -21,6 +21,7 @@ namespace opennn
 {
 
 enum class ForwardSlotKind { Pooled, Transient, TrainingOnly };
+enum class Trainability { Frozen, Trainable };
 enum class LayerType;
 
 inline void check_rank(const Shape& shape, initializer_list<int> allowed,
@@ -201,8 +202,8 @@ protected:
                                         Index features, Index columns,
                                         const function<void(float*)>& fill);
 
-    Layer(LayerType type, bool trainable = true)
-        : layer_type(type), is_trainable(trainable) {}
+    Layer(LayerType type, Trainability trainability = Trainability::Trainable)
+        : layer_type(type), is_trainable(trainability == Trainability::Trainable) {}
 
     enum Forward {Input, Output};
 

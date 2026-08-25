@@ -228,7 +228,7 @@ Scaling::Scaling(const Shape& new_input_shape)
 }
 
 Scaling::Scaling(LayerType type, bool invert)
-    : Layer(type, false)
+    : Layer(type, Trainability::Frozen)
 {
     scale_op.invert = invert;
     operators = {&scale_op};

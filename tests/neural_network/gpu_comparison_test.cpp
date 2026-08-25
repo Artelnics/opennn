@@ -100,7 +100,7 @@ class ExactInputProbe final : public Layer
 {
 public:
     ExactInputProbe()
-        : Layer(LayerType::Activation, false)
+        : Layer(LayerType::Activation, Trainability::Frozen)
     {
         input_shape = {1};
     }

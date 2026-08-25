@@ -18,7 +18,7 @@ namespace opennn
 {
 
 Tokenizer::Tokenizer(const Shape& new_input_shape, const string& new_label)
-    : Layer(LayerType::Tokenizer, false)
+    : Layer(LayerType::Tokenizer, Trainability::Frozen)
 {
     input_shape = new_input_shape;
     set_label(new_label);
