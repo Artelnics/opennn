@@ -44,12 +44,12 @@ void NonMaxSuppressionOperator::set(const Shape& input_shape,
              "NonMaxSuppressionOperator: classes_number must be positive.");
 }
 
-void NonMaxSuppressionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void NonMaxSuppressionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output = get_output(forward_propagation, layer);
 
-    if (is_training) return;
+    if (is_training(pass)) return;
 
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())

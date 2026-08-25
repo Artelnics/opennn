@@ -429,7 +429,7 @@ AttentionOperator::~AttentionOperator() = default;
 AttentionOperator::AttentionOperator(AttentionOperator&&) noexcept = default;
 AttentionOperator& AttentionOperator::operator=(AttentionOperator&&) noexcept = default;
 
-void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
     PROFILE_SCOPE("op:attention_fwd");
     auto& forward_slots = forward_propagation.slots[layer];
@@ -460,7 +460,7 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
                            attention_out, forward_slots[sdpa_qkv_pack_slot],
                            span<const TensorView>(forward_slots.data() + sdpa_state_slot,
                                                   sdpa_state_slots_count),
-                           is_training,
+                           is_training(pass),
                            explicit_lengths.device);
     }
     else
@@ -468,7 +468,7 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
     apply_unfused(query, get_input(forward_propagation, layer, 1), get_input(forward_propagation, layer, 2), source_input,
                   get_output(forward_propagation, layer), get_output(forward_propagation, layer, 1),
                   attention_out, forward_slots[dropout_mask_slot],
-                  forward_slots[scratch_slot].as<float>(), is_training,
+                  forward_slots[scratch_slot].as<float>(), is_training(pass),
                   explicit_lengths);
 
     if (!sdpa_interleaved) concatenate_output_heads(forward_propagation, layer);

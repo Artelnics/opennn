@@ -81,7 +81,7 @@ OPENNN_CUDA_STUB(void, apply_clamping_gpu,
 
 #endif
 
-void ClampingOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void ClampingOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);

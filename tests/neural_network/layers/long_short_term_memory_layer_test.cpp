@@ -81,7 +81,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagate)
             TensorView(inputs.data(),
                        {samples_number, time_steps, inputs_number})
         };
-        neural_network.forward_propagate(input_views, forward_propagation, true);
+        neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Training);
 
         TensorView outputs_view = forward_propagation.get_outputs();
         EXPECT_EQ(outputs_view.get_shape()[0], samples_number)
@@ -119,7 +119,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
         vector<TensorView> input_views = {
             TensorView(inputs.data(), {samples_number, time_steps, inputs_number})
         };
-        neural_network.forward_propagate(input_views, forward_propagation, false);
+        neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
         const TensorView outputs_view = forward_propagation.get_outputs();
         ASSERT_EQ(outputs_view.get_shape().get_rank(), size_t(2));
@@ -150,7 +150,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
         vector<TensorView> input_views = {
             TensorView(inputs.data(), {samples_number, time_steps, inputs_number})
         };
-        neural_network.forward_propagate(input_views, forward_propagation, false);
+        neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
         const TensorView outputs_view = forward_propagation.get_outputs();
         ASSERT_EQ(outputs_view.get_shape().get_rank(), size_t(3));

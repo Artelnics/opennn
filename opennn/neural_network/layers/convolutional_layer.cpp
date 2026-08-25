@@ -384,16 +384,16 @@ void Convolutional::load_darknet_weights(FILE* f)
 #endif
 }
 
-void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
 #ifdef OPENNN_HAS_CUDA
-    if (is_training)
+    if (is_training(pass))
         folded_dirty = true;
     else if (forward_propagate_folded(forward_propagation, layer))
         return;
 #endif
 
-    Layer::forward_propagate(forward_propagation, layer, is_training);
+    Layer::forward_propagate(forward_propagation, layer, pass);
 }
 
 void Convolutional::recompute_forward_slot(ForwardPropagation& forward_propagation,
@@ -401,7 +401,7 @@ void Convolutional::recompute_forward_slot(ForwardPropagation& forward_propagati
 {
     throw_if(!batch_norm.active(),
              "Convolutional::recompute_forward_slot requires batch normalization.");
-    convolution.forward_propagate(forward_propagation, layer, true);
+    convolution.forward_propagate(forward_propagation, layer, ForwardPropagationMode::Training);
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -460,7 +460,7 @@ bool Convolutional::forward_propagate_folded(ForwardPropagation& forward_propaga
     else
         convolution.apply_gpu_folded(input, folded_weights, folded_bias, relu, output);
 
-    activation_operator.forward_propagate(forward_propagation, layer, false);
+    activation_operator.forward_propagate(forward_propagation, layer, ForwardPropagationMode::Inference);
 
     return true;
 }

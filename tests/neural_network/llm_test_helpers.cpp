@@ -66,7 +66,7 @@ void run(NeuralNetwork& network,
 
     vector<TensorView> inputs = { TensorView(window.data(), {1, count}) };
 
-    network.forward_propagate(inputs, forward_propagation, false);
+    network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 }
 
 

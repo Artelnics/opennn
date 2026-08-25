@@ -104,7 +104,7 @@ HeadRun run_head(Index features)
                                 Shape{rows, features}, Type::FP32);
 
     ForwardPropagation forward_propagation(rows, &network);
-    network.forward_propagate({input_view}, forward_propagation, false);
+    network.forward_propagate({input_view}, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView& outputs = forward_propagation.get_outputs();
     run.measured.assign(static_cast<size_t>(rows), 0.0f);

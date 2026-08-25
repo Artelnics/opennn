@@ -580,10 +580,8 @@ struct YoloBuilder
                                                     get_layer(logits_index)->get_output_shape(),
                                                     head_anchors, "detection_" + name),
                                                 {logits_index});
-        static_cast<Detection&>(*get_layers().back()).set_class_activation(
-            class_activation == YoloNetwork::ClassActivation::Sigmoid
-            ? Detection::ClassActivation::Sigmoid
-            : Detection::ClassActivation::Softmax);
+        static_cast<Detection&>(*get_layers().back())
+            .set_class_activation(class_activation);
         return detection_index;
     }
 
@@ -1181,10 +1179,8 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                                          "yolo_logits"));
 
     add_layer(make_unique<Detection>(get_output_shape(), anchors, "detection_layer"));
-    static_cast<Detection&>(*get_layers().back()).set_class_activation(
-        class_activation == ClassActivation::Sigmoid
-        ? Detection::ClassActivation::Sigmoid
-        : Detection::ClassActivation::Softmax);
+    static_cast<Detection&>(*get_layers().back())
+        .set_class_activation(class_activation);
 
     add_layer(make_unique<NonMaxSuppression>(get_output_shape(),
                                              ssize(anchors),

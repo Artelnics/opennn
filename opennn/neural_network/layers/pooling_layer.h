@@ -64,7 +64,7 @@ struct PoolOperator : Operator
     PoolOperator(const PoolOperator&) = delete;
     PoolOperator& operator=(const PoolOperator&) = delete;
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
 #ifdef OPENNN_HAS_CUDA
@@ -124,7 +124,7 @@ public:
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
     void set(const Shape& = { 0, 0, 0 },

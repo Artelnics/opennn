@@ -105,7 +105,7 @@ void MultiHeadProjectionOperator::set(Index new_input_features, Index new_heads_
                              new_compute_dtype);
 }
 
-void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
 {
     PROFILE_SCOPE("op:projection_fwd");
 

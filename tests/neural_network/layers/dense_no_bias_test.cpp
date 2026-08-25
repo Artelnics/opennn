@@ -44,7 +44,7 @@ TEST(DenseNoBiasTest, ForwardIsPureMatmul)
 
     ForwardPropagation forward_propagation(1, &neural_network);
     vector<TensorView> input_views = { TensorView(inputs.data(), {1, 2}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     const float* output = forward_propagation.get_outputs().as<type>();
     EXPECT_NEAR(output[0], type(3), 1.0e-5f);

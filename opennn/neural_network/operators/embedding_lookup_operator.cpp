@@ -335,7 +335,7 @@ void EmbeddingLookupOperator::init_positional_encoding()
     }
 }
 
-void EmbeddingLookupOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
+void EmbeddingLookupOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode  )
 {
     const TensorView& indices = get_input(forward_propagation, layer);
     TensorView& output        = get_output(forward_propagation, layer);

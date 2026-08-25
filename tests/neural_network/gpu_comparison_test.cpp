@@ -110,7 +110,7 @@ public:
     Shape get_output_shape() const override { return input_shape; }
     vector<TensorSpec> get_forward_specs(Index) const override { return {}; }
 
-    void forward_propagate(ForwardPropagation& propagation, size_t layer, bool) override
+    void forward_propagate(ForwardPropagation& propagation, size_t layer, ForwardPropagationMode) override
     {
         called = true;
         observed_input = propagation.inputs[layer].front();
@@ -141,7 +141,8 @@ TEST_F(GpuComparison, LayerContractPreservesExactExternalInput)
     input(0, 0) = 257.0f; // BF16 rounds this identifier to 256.
 
     ForwardPropagation propagation(1, &network, ForwardPropagationMode::Inference);
-    network.forward_propagate({TensorView(input.data(), {1, 1})}, propagation, false);
+    network.forward_propagate({TensorView(input.data(), {1, 1})}, propagation,
+                              ForwardPropagationMode::Inference);
 
     ASSERT_TRUE(probe_ptr->called);
     ASSERT_EQ(probe_ptr->observed_input.get_type(), Type::FP32);
@@ -342,8 +343,8 @@ TEST_F(GpuComparison, DenseDreluFusedGradient)
     };
     ForwardPropagation first_forward(samples_number, &gpu_network);
     ForwardPropagation second_forward(samples_number, &gpu_network);
-    gpu_network.forward_propagate(fusion_input_views, first_forward, true);
-    gpu_network.forward_propagate(fusion_input_views, second_forward, true);
+    gpu_network.forward_propagate(fusion_input_views, first_forward, ForwardPropagationMode::Training);
+    gpu_network.forward_propagate(fusion_input_views, second_forward, ForwardPropagationMode::Training);
 
     ASSERT_EQ(first_forward.drelu_fused_by_layer[0], 1);
     ASSERT_EQ(first_forward.drelu_fused_by_layer[1], 1);
@@ -1311,8 +1312,8 @@ TEST_F(GpuComparison, RecurrentExecutionStateIsPropagationOwned)
     ForwardPropagation first(2, &network);
     ForwardPropagation second(2, &network);
 
-    network.forward_propagate(input_views, first, true);
-    network.forward_propagate(input_views, second, true);
+    network.forward_propagate(input_views, first, ForwardPropagationMode::Training);
+    network.forward_propagate(input_views, second, ForwardPropagationMode::Training);
 
     ASSERT_EQ(first.layer_state_storage.size(), 1);
     ASSERT_EQ(second.layer_state_storage.size(), 1);
@@ -1848,7 +1849,7 @@ TEST_F(GpuComparison, DenseSingleOutputBackwardFoldsProducerRelu)
     ForwardPropagation forward_propagation(samples_number, &network);
     BackPropagation back_propagation(samples_number, loss);
 
-    network.forward_propagate(batch.get_inputs(), forward_propagation, true);
+    network.forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Training);
     loss.back_propagate(batch, forward_propagation, back_propagation);
 
     // The consumer reports through the same per-layer flag the DReLU epilogue
@@ -1957,7 +1958,7 @@ TEST_F(GpuComparison, SdpaAttentionRefreshesPaddingBetweenBatches)
     {
         vector<TensorView> inputs = {
             TensorView(batch.data(), {batch_size, sequence_length, embedding_dimension})};
-        network.forward_propagate(inputs, forward_propagation, true);
+        network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Training);
 
         const TensorView outputs = forward_propagation.get_outputs();
         VectorR host(outputs.size());

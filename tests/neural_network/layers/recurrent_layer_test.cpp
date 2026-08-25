@@ -71,7 +71,7 @@ TEST(RecurrentLayerTest, ForwardPropagateValues)
 
         ForwardPropagation forward_propagation(samples_number, &neural_network);
         vector<TensorView> input_views = { TensorView(inputs.data(), {samples_number, time_steps, inputs_number}) };
-        neural_network.forward_propagate(input_views, forward_propagation, false);
+        neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
         const TensorView outputs_view = forward_propagation.get_outputs();
 
@@ -101,7 +101,7 @@ TEST(RecurrentLayerTest, ForwardPropagateValues)
 
         ForwardPropagation forward_propagation(samples_number, &neural_network);
         vector<TensorView> input_views = { TensorView(inputs.data(), {samples_number, time_steps, inputs_number}) };
-        neural_network.forward_propagate(input_views, forward_propagation, false);
+        neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
         const TensorView outputs_view = forward_propagation.get_outputs();
 
@@ -139,7 +139,7 @@ TEST(RecurrentLayerTest, ReturnSequences)
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);
     vector<TensorView> input_views = { TensorView(inputs.data(), {samples_number, time_steps, inputs_number}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView outputs_view = forward_propagation.get_outputs();
 

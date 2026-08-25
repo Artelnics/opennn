@@ -114,7 +114,7 @@ VectorR calculate_gradient(Loss& loss)
 
     require_live_parameters(*setup.neural_network);
 
-    setup.neural_network->forward_propagate(setup.batch.get_inputs(), setup.forward_propagation, true);
+    setup.neural_network->forward_propagate(setup.batch.get_inputs(), setup.forward_propagation, ForwardPropagationMode::Training);
 
     loss.back_propagate(setup.batch, setup.forward_propagation, setup.back_propagation);
 

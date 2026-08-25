@@ -214,8 +214,8 @@ TEST(ForwardPropagationMemoryTest, InferenceReusesResidualAndPassthroughOutputs)
     ForwardPropagation inference_layout(
         batch, &network, ForwardPropagationMode::Inference);
 
-    network.forward_propagate(input_views, training_layout, false);
-    network.forward_propagate(input_views, inference_layout, false);
+    network.forward_propagate(input_views, training_layout, ForwardPropagationMode::Inference);
+    network.forward_propagate(input_views, inference_layout, ForwardPropagationMode::Inference);
 
     const TensorView expected = training_layout.get_outputs();
     const TensorView actual = inference_layout.get_outputs();
@@ -359,7 +359,7 @@ TEST(ForwardPropagationMemoryTest, TrainingDoesNotAllocateSkippedLeadingScaling)
     network.forward_propagate(
         {TensorView(inputs.data(), Shape{batch}.append(feature_shape))},
         layout,
-        true);
+        ForwardPropagationMode::Training);
 
     ASSERT_FALSE(layout.inputs[1].empty());
     EXPECT_EQ(layout.inputs[1][0].get_data(), inputs.data());
@@ -424,6 +424,6 @@ TEST(ForwardPropagationMemoryTest, InferenceLayoutRejectsTraining)
     ForwardPropagation inference_layout(
         3, &network, ForwardPropagationMode::Inference);
 
-    EXPECT_THROW(network.forward_propagate(input_views, inference_layout, true),
+    EXPECT_THROW(network.forward_propagate(input_views, inference_layout, ForwardPropagationMode::Training),
                  runtime_error);
 }

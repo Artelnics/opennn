@@ -76,7 +76,7 @@ TEST(ActivationsTest, ForwardPropagateReLU)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(input_data.data(), {batch_size, features}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
 
@@ -105,7 +105,7 @@ TEST(ActivationsTest, ForwardPropagateTanh)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(input_data.data(), {batch_size, features}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
 
@@ -134,7 +134,7 @@ TEST(ActivationsTest, ForwardPropagateSigmoid)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(input_data.data(), {batch_size, features}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
 
@@ -163,7 +163,7 @@ TEST(ActivationsTest, ForwardPropagateSoftmax)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(input_data.data(), {batch_size, features}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
 

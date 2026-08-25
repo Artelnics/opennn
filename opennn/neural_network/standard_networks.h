@@ -10,6 +10,7 @@
 
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/neural_network/layers/pooling_layer.h"
+#include "opennn/neural_network/detection_head.h"
 
 namespace opennn
 {
@@ -103,7 +104,7 @@ public:
 
     enum class Backbone { Vgg, DarknetTiny, DarknetTinyV3, Darknet53, CSPDarknet53, CSPDarknet53v11 };
 
-    enum class ClassActivation { Softmax, Sigmoid };
+    using ClassActivation = DetectionClassActivation;
 
     enum class HeadStyle { Single, FPN, PANet, FPNv8 };
 

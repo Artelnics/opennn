@@ -132,9 +132,9 @@ void DropoutOperator::set_rate(float new_rate)
     rate = new_rate;
 }
 
-void DropoutOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void DropoutOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
-    if (!is_training || !active()) return;
+    if (!is_training(pass) || !active()) return;
 
     TensorView& output = get_output(forward_propagation, layer);
     dropout_forward(output, forward_propagation.slots[layer][mask_slot], rate);

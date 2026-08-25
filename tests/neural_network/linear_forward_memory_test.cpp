@@ -188,8 +188,8 @@ TEST(LinearForwardMemoryTest, SteadyStateForwardAllocatesNoLargeTemporaries)
                                 Shape{batch, 28}, Type::FP32);
     const vector<TensorView> inputs = {input_view};
 
-    network.forward_propagate(inputs, forward_propagation, false);
-    network.forward_propagate(inputs, forward_propagation, false);
+    network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
+    network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     // Both warmups are done, so the arena and the allocator are settled: any
     // growth from here is the forward itself asking for new memory.
@@ -226,7 +226,7 @@ TEST(LinearForwardMemoryTest, SteadyStateForwardAllocatesNoLargeTemporaries)
 
         EXPECT_THROW(oversized_allocation(), bad_alloc) << instrument_broken;
 
-        EXPECT_NO_THROW(network.forward_propagate(inputs, forward_propagation, false))
+        EXPECT_NO_THROW(network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference))
             << diagnosis;
     }
 

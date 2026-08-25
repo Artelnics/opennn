@@ -47,7 +47,7 @@ void DetectionOperator::set(const Shape& input_shape, const vector<array<float, 
 
 void DetectionOperator::forward_propagate(ForwardPropagation& forward_propagation,
                                           size_t layer,
-                                          bool)
+                                          ForwardPropagationMode)
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output = get_output(forward_propagation, layer);

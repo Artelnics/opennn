@@ -53,7 +53,7 @@ TEST_F(FlattenLayerTest, ForwardPropagate)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(inputs_data.data(), {batch_size, height, width, channels}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
     const Shape& output_dims = output_view.get_shape();

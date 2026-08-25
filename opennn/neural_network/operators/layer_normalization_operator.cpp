@@ -382,7 +382,7 @@ void LayerNormalizationOperator::init_defaults()
     if (beta.get_data())  beta.as_vector().setZero();
 }
 
-void LayerNormalizationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
+void LayerNormalizationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode  )
 {
     const TensorView& input = get_input(forward_propagation, layer);
 

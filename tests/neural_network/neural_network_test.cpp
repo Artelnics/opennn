@@ -332,8 +332,8 @@ TEST(NeuralNetworkTest, PreScaledInputBoundaryIsPlannedOnce)
     const vector<TensorView> input_views = {
         TensorView(inputs.data(), {2, 1})};
 
-    network.forward_propagate(input_views, raw_training, true);
-    network.forward_propagate(input_views, preprocessed_inference, false);
+    network.forward_propagate(input_views, raw_training, ForwardPropagationMode::Training);
+    network.forward_propagate(input_views, preprocessed_inference, ForwardPropagationMode::Inference);
 
     EXPECT_NE(raw_training.inputs[1][0].get_data(), inputs.data());
     EXPECT_EQ(preprocessed_inference.inputs[1][0].get_data(), inputs.data());
@@ -365,7 +365,7 @@ TEST(NeuralNetworkTest, PreScaledInputIsOutputWhenEveryLayerIsSkipped)
     const vector<TensorView> input_views = {
         TensorView(inputs.data(), {2, 1})};
 
-    network.forward_propagate(input_views, propagation, false);
+    network.forward_propagate(input_views, propagation, ForwardPropagationMode::Inference);
 
     const TensorView outputs = propagation.get_outputs();
     ASSERT_EQ(outputs.get_data(), inputs.data());

@@ -84,7 +84,7 @@ void check_tall_dense_forward(Type precision, float tolerance)
                                 Shape{rows, features}, Type::FP32);
 
     ForwardPropagation forward_propagation(rows, &network);
-    network.forward_propagate({input_view}, forward_propagation, false);
+    network.forward_propagate({input_view}, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView& output = forward_propagation.get_outputs();
     vector<float> measured(static_cast<size_t>(rows * outputs), 0.0f);

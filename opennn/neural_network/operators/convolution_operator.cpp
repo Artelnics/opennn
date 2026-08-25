@@ -299,7 +299,7 @@ void ConvolutionOperator::set_parameters_glorot()
     if (!bias.empty()) bias.setZero();
 }
 
-void ConvolutionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
+void ConvolutionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode  )
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);

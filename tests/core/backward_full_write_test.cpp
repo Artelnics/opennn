@@ -207,7 +207,7 @@ VectorR gradient_with_stamped_arena(Loss& loss, float stamp)
         fill_n(back_propagation.arena.as<float>(),
                size_t(back_propagation.arena.size_in_floats()), stamp);
 
-    neural_network->forward_propagate(batch.get_inputs(), forward_propagation, true);
+    neural_network->forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Training);
     loss.back_propagate(batch, forward_propagation, back_propagation);
 
     back_propagation.gradient.migrate_to(Device::CPU);

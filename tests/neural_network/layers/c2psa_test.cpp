@@ -104,7 +104,7 @@ TEST(C2PSA, CpuAndGpuForwardOutputsMatch)
     Batch batch(batch_size, &cpu_net.dataset, cpu_net.nn.get_config());
     batch.fill(training_idx, FeatureSelection{input_idx, {}, {}});
     ForwardPropagation fp(batch_size, &cpu_net.nn);
-    cpu_net.nn.forward_propagate(batch.get_inputs(), fp, false);
+    cpu_net.nn.forward_propagate(batch.get_inputs(), fp, ForwardPropagationMode::Inference);
 
     const TensorView out = fp.get_outputs();
     const Index n = out.size();
@@ -119,7 +119,7 @@ TEST(C2PSA, CpuAndGpuForwardOutputsMatch)
     Batch batch_gpu(batch_size, &cpu_net.dataset, gpu_net.nn.get_config());
     batch_gpu.fill(training_idx, FeatureSelection{input_idx, {}, {}});
     ForwardPropagation fp_gpu(batch_size, &gpu_net.nn);
-    gpu_net.nn.forward_propagate(batch_gpu.get_inputs(), fp_gpu, false);
+    gpu_net.nn.forward_propagate(batch_gpu.get_inputs(), fp_gpu, ForwardPropagationMode::Inference);
     const TensorView out_gpu = fp_gpu.get_outputs();
 
     vector<float> gpu_out(n);

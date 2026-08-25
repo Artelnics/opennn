@@ -273,11 +273,11 @@ public:
 
     void forward_propagate(const vector<TensorView>&,
                           ForwardPropagation&,
-                          bool = false) const;
+                          ForwardPropagationMode = ForwardPropagationMode::Inference) const;
 
     void forward_propagate(const vector<TensorView>&,
                           ForwardPropagation&,
-                          bool,
+                          ForwardPropagationMode,
                           Index,
                           Index) const;
 

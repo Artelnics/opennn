@@ -16,7 +16,7 @@
 namespace opennn
 {
 
-void ActivationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void ActivationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
 {
     PROFILE_SCOPE("op:activation_fwd");
 

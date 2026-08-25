@@ -85,7 +85,7 @@ void CombinationOperator::set_parameters_pytorch()
     if (!bias.empty()) set_random_uniform(bias.as_vector(), -limit, limit);
 }
 
-void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
     PROFILE_SCOPE("op:combination_fwd");
     TensorView& output = get_output(forward_propagation, layer);
@@ -116,7 +116,7 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
     if (relu_mask_fused) *relu_mask_fused = 0;
 
     if (relu && emit_relu_mask && !relu_mask_fusion_disabled
-        && is_training && output.is_cuda()
+        && is_training(pass) && output.is_cuda()
         && (output.is_fp32() || output.is_bf16()))
     {
         try

@@ -39,6 +39,11 @@ enum class ForwardPropagationMode
     Inference
 };
 
+inline bool is_training(ForwardPropagationMode pass) noexcept
+{
+    return pass == ForwardPropagationMode::Training;
+}
+
 struct InferenceShapePolicy
 {
     Index sequence_capacity = 0;

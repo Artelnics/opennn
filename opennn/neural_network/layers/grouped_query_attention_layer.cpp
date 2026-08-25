@@ -795,7 +795,7 @@ void GroupedQueryAttentionOperator::attend_sequence_cpu(
     linear_forward_transposed(attn_v, o_proj, o_b);
 }
 
-void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
+void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode  )
 {
     TensorView& input  = get_input(forward_propagation, layer);
     TensorView& output = get_output(forward_propagation, layer);

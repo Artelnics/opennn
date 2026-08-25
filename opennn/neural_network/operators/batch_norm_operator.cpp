@@ -170,7 +170,7 @@ void BatchNormalizationOperator::update_inference_cache()
     inference_cache_dirty = false;
 }
 
-void BatchNormalizationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void BatchNormalizationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
     if (!active()) return;
 
@@ -180,7 +180,7 @@ void BatchNormalizationOperator::forward_propagate(ForwardPropagation& forward_p
     TensorView& output         = get_output(forward_propagation, layer);
     const TensorView& residual = fuse_add ? forward_propagation.inputs[layer][1] : empty;
 
-    if (!is_training)
+    if (!is_training(pass))
     {
         if (input.is_cuda()) apply_inference_gpu(input, output, residual);
         else

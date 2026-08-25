@@ -66,7 +66,7 @@ TEST(ClampingTest, ForwardPropagate)
 
     ForwardPropagation forward_propagation(rows_number, &neural_network);
     vector<TensorView> inputs = { TensorView(input_data.data(), {rows_number, columns_number}) };
-    neural_network.forward_propagate(inputs, forward_propagation, false);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
     MatrixMap outputs = output_view.as_matrix();
@@ -108,7 +108,7 @@ TEST(ClampingTest, NoClampingModePassThrough)
 
     ForwardPropagation forward_propagation(rows_number, &neural_network);
     vector<TensorView> inputs = { TensorView(input_data.data(), {rows_number, columns_number}) };
-    neural_network.forward_propagate(inputs, forward_propagation, false);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
     MatrixMap outputs = output_view.as_matrix();

@@ -76,7 +76,7 @@ TEST_P(EmbeddingLayerTest, ForwardPropagate)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(inputs_mat.data(), {batch_size, parameters.sequence_length}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
 
@@ -116,7 +116,7 @@ TEST(Embedding, ForwardValuesMatchExpected)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(inputs_mat.data(), {batch_size, sequence_length}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView output_view = forward_propagation.get_outputs();
     ASSERT_EQ(output_view.get_shape().get_rank(), 3);
@@ -162,7 +162,7 @@ TEST(Embedding, ScaleEmbeddingForwardValues)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(inputs_mat.data(), {batch_size, sequence_length}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView output_view = forward_propagation.get_outputs();
     ASSERT_EQ(output_view.size(), batch_size * sequence_length * embedding_dimension);
@@ -210,7 +210,7 @@ TEST(Embedding, PositionalEncodingForwardValues)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(inputs_mat.data(), {batch_size, sequence_length}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView output_view = forward_propagation.get_outputs();
     ASSERT_EQ(output_view.size(), batch_size * sequence_length * embedding_dimension);

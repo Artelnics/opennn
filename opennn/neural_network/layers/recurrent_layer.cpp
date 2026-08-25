@@ -82,7 +82,7 @@ void RecurrentOperator::set_parameters_pytorch()
     if (!bias.empty())              set_random_uniform(bias.as_vector(), -limit, limit);
 }
 
-void RecurrentOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void RecurrentOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
     auto& forward_slots = forward_propagation.slots[layer];
     const TensorView& input             = get_input(forward_propagation, layer);
@@ -99,8 +99,8 @@ void RecurrentOperator::forward_propagate(ForwardPropagation& forward_propagatio
                          forward_slots[CudnnInputSequenceForwardSlot],
                          forward_slots[CudnnOutputSequenceForwardSlot],
                          forward_propagation.layer_state_storage[layer],
-                         is_training);
-    apply(input, hidden_states, activation_derivatives, output, is_training);
+                         is_training(pass));
+    apply(input, hidden_states, activation_derivatives, output, is_training(pass));
 }
 
 void RecurrentOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const

@@ -190,7 +190,7 @@ void LongShortTermMemoryOperator::set_parameters_pytorch()
                                    &candidate_recurrent_weights, &output_recurrent_weights}, -limit, limit);
 }
 
-void LongShortTermMemoryOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void LongShortTermMemoryOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
     auto& forward_slots = forward_propagation.slots[layer];
 
@@ -209,7 +209,7 @@ void LongShortTermMemoryOperator::forward_propagate(ForwardPropagation& forward_
                          forward_slots[CudnnInputSequenceSlot],
                          forward_slots[CudnnOutputSequenceSlot],
                          forward_propagation.layer_state_storage[layer],
-                         return_sequences, is_training);
+                         return_sequences, is_training(pass));
 
     apply(input, output, forget_gate, input_gate, candidate_gate, output_gate,
           cell_state, hidden_state, cell_activation);

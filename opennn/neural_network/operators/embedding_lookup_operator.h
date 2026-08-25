@@ -61,7 +61,7 @@ struct EmbeddingLookupOperator : Operator
     void init_positional_encoding();
     void init_trainable_positional();
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
     void load_state_from_JSON(const Json*) override;

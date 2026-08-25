@@ -270,7 +270,7 @@ bool PoolOperator::own_max_pooling(const TensorView& input, const TensorView& ma
 
 #endif
 
-void PoolOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void PoolOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
 {
     auto& forward_slots = forward_propagation.slots[layer];
     const TensorView& input = get_input(forward_propagation, layer);
@@ -491,12 +491,12 @@ vector<TensorSpec> Pooling::get_backward_specs(Index batch_size) const
 
 void Pooling::forward_propagate(ForwardPropagation& forward_propagation,
                                 size_t layer,
-                                bool is_training)
+                                ForwardPropagationMode pass)
 {
     if (is_passthrough())
         return;
 
-    Layer::forward_propagate(forward_propagation, layer, is_training);
+    Layer::forward_propagate(forward_propagation, layer, pass);
 }
 
 void Pooling::back_propagate(ForwardPropagation& forward_propagation,

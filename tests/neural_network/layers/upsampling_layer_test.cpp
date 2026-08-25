@@ -81,7 +81,7 @@ TEST_F(UpsamplingLayerTest, ForwardPropagateNearestNeighborReplication)
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(inputs_data.data(),
         { batch_size, in_h, in_w, single_channel }) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
 
@@ -125,7 +125,7 @@ TEST_F(UpsamplingLayerTest, ForwardPropagateChannelsPreserved)
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(inputs_data.data(),
         { batch_size, in_h, in_w, ch }) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
 

@@ -94,7 +94,7 @@ public:
     void write_JSON_body(JsonWriter&) const override;
     void on_loaded() override { update_convolution_operator(); }
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
 
 private:
 

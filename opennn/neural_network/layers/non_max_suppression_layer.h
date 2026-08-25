@@ -28,7 +28,7 @@ struct NonMaxSuppressionOperator : Operator
              float,
              float);
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
 
 private:
     void apply(const TensorView&, TensorView&) const;

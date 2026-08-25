@@ -1093,7 +1093,7 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
 
         neural_network->forward_propagate(context.training_batch->get_inputs(),
                                           *context.training_forward_propagation,
-                                          true);
+                                          ForwardPropagationMode::Training);
 
         const FullBatchStep step = hooks.train_step();
 
@@ -1105,7 +1105,7 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
         {
             neural_network->forward_propagate(context.validation_batch->get_inputs(),
                                               *context.validation_forward_propagation,
-                                              false);
+                                              ForwardPropagationMode::Inference);
 
             validation_error = hooks.validation_error();
 
@@ -1436,7 +1436,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     const auto run_compute_step = [&](Batch& slot)
     {
         neural_network->forward_propagate(slot.get_inputs(),
-                                          forward_propagation, true);
+                                          forward_propagation, ForwardPropagationMode::Training);
         if (!loss->back_propagate_device_metrics(slot,
                                                  forward_propagation, back_propagation,
                                                  device_metrics.error_sum(),
@@ -1924,7 +1924,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
             {
                 neural_network->forward_propagate(batch.get_inputs(),
                                                   tail_forward_propagation,
-                                                  true);
+                                                  ForwardPropagationMode::Training);
                 if (!loss->back_propagate_device_metrics(
                         batch,
                         tail_forward_propagation,
@@ -1973,7 +1973,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
         {
             neural_network->forward_propagate(batch.get_inputs(),
                                               tail_forward_propagation,
-                                              true);
+                                              ForwardPropagationMode::Training);
             loss->back_propagate(batch,
                                  tail_forward_propagation,
                                  tail_back_propagation);
@@ -2028,7 +2028,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
                 PROFILE_SCOPE("step:fwd_total");
                 neural_network->forward_propagate(batch->get_inputs(),
                                                   forward_propagation,
-                                                  true);
+                                                  ForwardPropagationMode::Training);
             }
 
             {
@@ -2108,7 +2108,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
             PROFILE_SCOPE("step:fwd_total");
             neural_network->forward_propagate(batch.get_inputs(),
                                               forward_propagation,
-                                              true);
+                                              ForwardPropagationMode::Training);
         }
 
         {
@@ -2230,7 +2230,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
             true);
         neural_network->forward_propagate(batch.get_inputs(),
                                           tail_forward_propagation,
-                                          false);
+                                          ForwardPropagationMode::Inference);
         result = loss->calculate_error(batch, tail_forward_propagation);
 
         if(on_gpu)
@@ -2262,7 +2262,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
             neural_network->forward_propagate(batch->get_inputs(),
                                               forward_propagation,
-                                              false);
+                                              ForwardPropagationMode::Inference);
 
             const Loss::EvaluationResult result =
                 loss->calculate_error(*batch, forward_propagation);
@@ -2306,7 +2306,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     {
         neural_network->forward_propagate(batch.get_inputs(),
                                           forward_propagation,
-                                          false);
+                                          ForwardPropagationMode::Inference);
 
         if(use_device_metrics)
         {

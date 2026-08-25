@@ -104,7 +104,7 @@ OPENNN_CUDA_STUB(void, swiglu_backward_gpu, (const TensorView&, const TensorView
 
 #endif
 
-void SwiGLUOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
+void SwiGLUOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode  )
 {
     const TensorView& gate = get_input(forward_propagation, layer, 0);
     const TensorView& up   = get_input(forward_propagation, layer, 1);

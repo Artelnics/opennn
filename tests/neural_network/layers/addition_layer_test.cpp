@@ -92,7 +92,7 @@ TEST(AdditionLayerTest, ForwardPropagateSumsTwoInputs)
         TensorView(input_b.data(), {batch_size, rows, cols})
     };
 
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView output_view = forward_propagation.get_outputs();
 
@@ -136,7 +136,7 @@ TEST(AdditionLayerTest, ForwardPropagateSumsThreeInputs)
         TensorView(input_c.data(), {batch_size, rows, cols})
     };
 
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView output_view = forward_propagation.get_outputs();
 

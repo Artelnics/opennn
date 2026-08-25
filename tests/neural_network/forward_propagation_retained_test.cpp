@@ -207,7 +207,7 @@ TEST(ForwardPropagationRetainedOutputsTest,
         TensorView(target.data(), {1, decoder_length}),
         TensorView(source.data(), {1, input_length})};
 
-    network.forward_propagate(inputs, propagation, false,
+    network.forward_propagate(inputs, propagation, ForwardPropagationMode::Inference,
                               layout.encoder_embedding, layout.encoder_last);
 
     for (Index position = 1; position < decoder_length; ++position)
@@ -215,10 +215,10 @@ TEST(ForwardPropagationRetainedOutputsTest,
         const Tensor3 reference =
             network.calculate_outputs(decoder_inputs, encoder_inputs);
 
-        network.forward_propagate(inputs, propagation, false,
+        network.forward_propagate(inputs, propagation, ForwardPropagationMode::Inference,
                                   layout.decoder_embedding,
                                   layout.decoder_embedding);
-        network.forward_propagate(inputs, propagation, false,
+        network.forward_propagate(inputs, propagation, ForwardPropagationMode::Inference,
                                   layout.decoder_first,
                                   layout.output_projection);
 
@@ -317,7 +317,7 @@ TEST(ForwardPropagationRetainedOutputsTest, OutputWindowMatchesFullForwardForEve
         TensorView(target.data(), {batch_size, decoder_length}),
         TensorView(source.data(), {batch_size, input_length})};
 
-    network.forward_propagate(inputs, windowed, false);
+    network.forward_propagate(inputs, windowed, ForwardPropagationMode::Inference);
 
     const TensorView outputs = windowed.get_outputs();
     ASSERT_EQ(outputs.size(), batch_size * target_vocabulary);

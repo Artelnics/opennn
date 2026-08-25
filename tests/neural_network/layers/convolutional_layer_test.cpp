@@ -65,7 +65,7 @@ bool convolution_forward_matches_constant_result(const Shape& input_shape,
     network.forward_propagate(
         {TensorView(input.data(),
                     {batch_size, input_shape[0], input_shape[1], input_shape[2]})},
-        propagation, false);
+        propagation, ForwardPropagationMode::Inference);
 
     const type expected =
         type(kernel_shape[0] * kernel_shape[1] * kernel_shape[2]) * type(0.25)
@@ -238,7 +238,7 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
                            parameters.input_shape[1],
                            parameters.input_shape[2] }) };
 
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
     const Shape expected_output_dims = neural_network.get_layer(0)->get_output_shape();

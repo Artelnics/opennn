@@ -75,7 +75,7 @@ struct ConvolutionOperator : Operator
     ConvolutionOperator(const ConvolutionOperator&) = delete;
     ConvolutionOperator& operator=(const ConvolutionOperator&) = delete;
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
 private:

@@ -70,7 +70,7 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
         Batch batch_diag(sn, &dataset, neural_network.get_config());
         batch_diag.fill(ti, dataset.get_feature_selection());
         ForwardPropagation fp_diag(sn, &neural_network);
-        neural_network.forward_propagate(batch_diag.get_inputs(), fp_diag, true);
+        neural_network.forward_propagate(batch_diag.get_inputs(), fp_diag, ForwardPropagationMode::Training);
         BackPropagation bp_diag(sn, loss);
         const float L0 = loss.calculate_error(batch_diag, fp_diag).error;
 

@@ -29,7 +29,7 @@ void UpsamplingOperator::set(Index in_h, Index in_w, Index ch, Index scale)
     scale_factor = scale;
 }
 
-void UpsamplingOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void UpsamplingOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);

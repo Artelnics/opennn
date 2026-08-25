@@ -355,7 +355,7 @@ static SequenceLengths exported_valid_lengths(const ForwardPropagation& forward_
     return lengths;
 }
 
-void Pool3dOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void Pool3dOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);
@@ -364,7 +364,7 @@ void Pool3dOperator::forward_propagate(ForwardPropagation& forward_propagation, 
     const SequenceLengths valid_lengths = exported_valid_lengths(forward_propagation, input, layer);
 
     if (method == Max)
-        max_pooling_3d_forward(input, output, indices, is_training, valid_lengths);
+        max_pooling_3d_forward(input, output, indices, is_training(pass), valid_lengths);
     else if (method == First)
         first_token_3d_forward(input, output);
     else

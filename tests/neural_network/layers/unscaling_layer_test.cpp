@@ -48,7 +48,7 @@ TEST(UnscalingTest, ForwardPropagate)
 
         ForwardPropagation forward_propagation(samples_number, &neural_network);
         vector<TensorView> input_views = { TensorView(data_to_unscale.data(), {samples_number, inputs_number}) };
-        neural_network.forward_propagate(input_views, forward_propagation, false);
+        neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
         TensorView output_view = forward_propagation.get_outputs();
 
@@ -79,7 +79,7 @@ TEST(UnscalingTest, ForwardPropagate)
 
         ForwardPropagation forward_propagation(samples_number, &neural_network);
         vector<TensorView> input_views = { TensorView(scaled_data.data(), {samples_number, inputs_number}) };
-        neural_network.forward_propagate(input_views, forward_propagation, false);
+        neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
         TensorView output_view = forward_propagation.get_outputs();
 

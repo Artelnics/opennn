@@ -68,7 +68,7 @@ void check_constant_forward(const Index neurons, const string& cell_activation)
     ForwardPropagation forward_propagation(samples_number, &neural_network);
     vector<TensorView> input_views = {
         TensorView(inputs.data(), {samples_number, time_steps, features})};
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView outputs_view = forward_propagation.get_outputs();
     ASSERT_EQ(outputs_view.get_shape().size(), samples_number * time_steps * neurons);
@@ -190,13 +190,13 @@ TEST(LstmFusedPath, DISABLED_BenchmarkBoundary)
 
         for (int i = 0; i < warmup; ++i)
         {
-            neural_network.forward_propagate(batch.get_inputs(), forward_propagation, true);
+            neural_network.forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Training);
             loss.back_propagate(batch, forward_propagation, back_propagation);
         }
 
         const auto t0 = chrono::steady_clock::now();
         for (int i = 0; i < iterations; ++i)
-            neural_network.forward_propagate(batch.get_inputs(), forward_propagation, true);
+            neural_network.forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Training);
         const auto t1 = chrono::steady_clock::now();
         for (int i = 0; i < iterations; ++i)
             loss.back_propagate(batch, forward_propagation, back_propagation);

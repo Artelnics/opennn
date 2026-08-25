@@ -85,7 +85,7 @@ struct AttentionOperator : Operator
     size_t sdpa_state_slot = 0;
     size_t dropout_mask_slot = 0;
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
     void concatenate_output_heads(ForwardPropagation&, size_t) const;

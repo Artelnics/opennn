@@ -289,12 +289,9 @@ void ForwardPropagation::set(
         output_spec.shape.set_dimension(1, final_output_capacity);
     }
 
-    const bool is_training =
-        mode == ForwardPropagationMode::Training;
-
     recomputable_slots.assign(layers_number, SIZE_MAX);
 
-    if(is_training
+    if(is_training(mode)
        && neural_network->get_training_activation_recomputation())
     {
         ranges::transform(
@@ -307,7 +304,7 @@ void ForwardPropagation::set(
             });
     }
 
-    if(!is_training)
+    if(!is_training(mode))
     {
         for(size_t i = 0; i < layers_number; ++i)
         {
@@ -325,7 +322,7 @@ void ForwardPropagation::set(
     const auto is_transient_slot =
         [&](const size_t layer, const size_t slot)
     {
-        return is_training
+        return is_training(mode)
             && (layers[layer]->get_forward_slot_kind(slot + 1)
                     == ForwardSlotKind::Transient
                 || recomputable_slots[layer] == slot);
@@ -334,7 +331,7 @@ void ForwardPropagation::set(
     Index early_release_logical_bytes = 0;
 
     const vector<Index> output_release_steps =
-        is_training
+        is_training(mode)
         ? find_early_output_release_steps(
               layers,
               source_layers,
@@ -474,7 +471,7 @@ void ForwardPropagation::set(
         fragmentation_bytes = plan.fragmentation_bytes();
     };
 
-    if(is_training)
+    if(is_training(mode))
     {
         const Index backward_base =
             backward_step(Index(layers_number), 0);
@@ -740,7 +737,7 @@ void ForwardPropagation::set(
         arena.owns_memory() ? total_bytes : 0,
         format("batch={},mode={}",
                batch_size,
-               is_training ? "training" : "inference"));
+               is_training(mode) ? "training" : "inference"));
 
     if(transient_block_bytes > 0)
     {
@@ -770,7 +767,7 @@ void ForwardPropagation::set(
                 return slot != SIZE_MAX;
             });
 
-    if(!is_training)
+    if(!is_training(mode))
     {
         memory_debug::record(
             "forward.inference_pool_analysis",

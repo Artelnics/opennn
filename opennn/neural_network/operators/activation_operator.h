@@ -30,7 +30,7 @@ struct ActivationOperator : Operator
     void set_activation_function(ActivationFunction new_function) { activation_function = new_function; }
     void set_activation_function(const string& name) { set_activation_function(from_string(name)); }
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
     void to_JSON(JsonWriter&) const override;

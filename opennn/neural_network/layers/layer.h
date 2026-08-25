@@ -118,10 +118,10 @@ public:
 
     Index get_outputs_number() const { return get_output_shape().size(); }
 
-    virtual void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+    virtual void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
     {
         for (Operator* op : get_operators())
-            op->forward_propagate(forward_propagation, layer, is_training);
+            op->forward_propagate(forward_propagation, layer, pass);
     }
 
     virtual void back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t i) const

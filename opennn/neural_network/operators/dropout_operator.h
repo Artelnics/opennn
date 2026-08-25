@@ -25,7 +25,7 @@ struct DropoutOperator : Operator
 
     void set_rate(float);
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
     void to_JSON(JsonWriter&) const override;

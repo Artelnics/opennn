@@ -1114,7 +1114,7 @@ struct ChatSession::Impl
             propagation.set_output_sequence_window(block - 1, 1);
             inputs[0] =
                 TensorView(token_window.data() + offset, {1, block});
-            propagated.forward_propagate(inputs, propagation, false);
+            propagated.forward_propagate(inputs, propagation, ForwardPropagationMode::Inference);
         }
     }
 
@@ -1153,7 +1153,7 @@ struct ChatSession::Impl
         draft->target_verify_inputs[0] =
             TensorView(token_window.data(), {1, count});
         network->forward_propagate(
-            draft->target_verify_inputs, draft->target_verify, false);
+            draft->target_verify_inputs, draft->target_verify, ForwardPropagationMode::Inference);
         return draft->target_verify;
     }
 
@@ -1397,7 +1397,7 @@ ChatResponse send_sequence_to_sequence(
 
     const auto prefill_start = Clock::now();
     state.transformer->forward_propagate(
-        state.inputs, *state.propagation, false,
+        state.inputs, *state.propagation, ForwardPropagationMode::Inference,
         state.encoder_embedding, state.encoder_last);
     device::synchronize(device::get_compute_stream());
     const auto prefill_end = Clock::now();
@@ -1417,10 +1417,10 @@ ChatResponse send_sequence_to_sequence(
     for (Index position = 1; position < limit; ++position)
     {
         state.transformer->forward_propagate(
-            state.inputs, *state.propagation, false,
+            state.inputs, *state.propagation, ForwardPropagationMode::Inference,
             state.decoder_embedding, state.decoder_embedding);
         state.transformer->forward_propagate(
-            state.inputs, *state.propagation, false,
+            state.inputs, *state.propagation, ForwardPropagationMode::Inference,
             state.decoder_first, state.output_projection);
 
         const Index next = loop.sample_at(position - 1);
@@ -1484,7 +1484,7 @@ ChatResponse send_classic_decoder(
 
         const auto step_start = Clock::now();
         state.decoder->forward_propagate(
-            state.inputs, *state.propagation, false);
+            state.inputs, *state.propagation, ForwardPropagationMode::Inference);
         const Index next = loop.sample_at(window_length - 1);
         const auto step_end = Clock::now();
         const double elapsed =

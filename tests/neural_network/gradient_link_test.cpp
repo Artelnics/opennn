@@ -86,7 +86,7 @@ TEST(GradientLink, BackPropagateWritesTheContextItIsGiven)
     ASSERT_EQ(gradient_magnitude(first), 0.0f);
     ASSERT_EQ(gradient_magnitude(second), 0.0f);
 
-    network.forward_propagate(batch.get_inputs(), forward_propagation, true);
+    network.forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Training);
     loss.back_propagate(batch, forward_propagation, first);
 
     EXPECT_GT(gradient_magnitude(first), 0.0f)
@@ -95,7 +95,7 @@ TEST(GradientLink, BackPropagateWritesTheContextItIsGiven)
         << "back_propagate wrote into a context it was not given";
 
     // And back again, which is the per-epoch switch the tail batch performs.
-    network.forward_propagate(batch.get_inputs(), forward_propagation, true);
+    network.forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Training);
     loss.back_propagate(batch, forward_propagation, second);
 
     EXPECT_GT(gradient_magnitude(second), 0.0f);

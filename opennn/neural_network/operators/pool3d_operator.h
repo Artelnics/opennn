@@ -25,7 +25,7 @@ struct Pool3dOperator : Operator
     enum Method { Max, Average, First };
     Method method = Average;
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 };
 

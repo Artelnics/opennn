@@ -28,7 +28,7 @@ struct C2PSAOperator : Operator
     void set_parameters_random() override { set_parameters_glorot(); }
     void set_parameters_glorot() override;
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
     size_t forward_scratch_slot = SIZE_MAX;

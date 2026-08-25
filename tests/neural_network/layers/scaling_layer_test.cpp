@@ -69,7 +69,7 @@ TEST(ScalingLayerTest, ForwardPropagate)
 
         ForwardPropagation forward_propagation(samples_number, &neural_network);
         vector<TensorView> input_views = { TensorView(inputs.data(), {samples_number, inputs_number}) };
-        neural_network.forward_propagate(input_views, forward_propagation, false);
+        neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
         TensorView output_view = forward_propagation.get_outputs();
         EXPECT_NEAR(output_view.as<type>()[0], 10.0, TOLERANCE);
@@ -91,7 +91,7 @@ TEST(ScalingLayerTest, ForwardPropagate)
 
         ForwardPropagation forward_propagation(samples_number, &neural_network);
         vector<TensorView> input_views = { TensorView(inputs.data(), {samples_number, inputs_number}) };
-        neural_network.forward_propagate(input_views, forward_propagation, false);
+        neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
         TensorView output_view = forward_propagation.get_outputs();
         EXPECT_NEAR(output_view.as<type>()[0], type(2), TOLERANCE);
@@ -118,7 +118,7 @@ TEST(ScalingLayerTest, ForwardPropagateScalesValues)
 
         ForwardPropagation forward_propagation(samples_number, &neural_network);
         vector<TensorView> input_views = { TensorView(inputs.data(), {samples_number, 1}) };
-        neural_network.forward_propagate(input_views, forward_propagation, false);
+        neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
         TensorView output_view = forward_propagation.get_outputs();
         EXPECT_NEAR(output_view.as<type>()[0], type(-1), TOLERANCE);
@@ -140,7 +140,7 @@ TEST(ScalingLayerTest, ForwardPropagateScalesValues)
 
         ForwardPropagation forward_propagation(samples_number, &neural_network);
         vector<TensorView> input_views = { TensorView(inputs.data(), {samples_number, 1}) };
-        neural_network.forward_propagate(input_views, forward_propagation, false);
+        neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
         TensorView output_view = forward_propagation.get_outputs();
         EXPECT_NEAR(output_view.as<type>()[0], type(-1), TOLERANCE);
@@ -168,7 +168,7 @@ TEST(ScalingLayerTest, ForwardPropagateScalerModes)
 
         ForwardPropagation forward_propagation(samples_number, &neural_network);
         vector<TensorView> input_views = { TensorView(inputs.data(), {samples_number, 1}) };
-        neural_network.forward_propagate(input_views, forward_propagation, false);
+        neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
         TensorView output_view = forward_propagation.get_outputs();
         EXPECT_NEAR(output_view.as<type>()[0], type(1), TOLERANCE);
@@ -189,7 +189,7 @@ TEST(ScalingLayerTest, ForwardPropagateScalerModes)
 
         ForwardPropagation forward_propagation(samples_number, &neural_network);
         vector<TensorView> input_views = { TensorView(inputs.data(), {samples_number, 1}) };
-        neural_network.forward_propagate(input_views, forward_propagation, false);
+        neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
         TensorView output_view = forward_propagation.get_outputs();
         EXPECT_NEAR(output_view.as<type>()[0], type(0), TOLERANCE);
@@ -210,7 +210,7 @@ TEST(ScalingLayerTest, ForwardPropagateScalerModes)
 
         ForwardPropagation forward_propagation(samples_number, &neural_network);
         vector<TensorView> input_views = { TensorView(inputs.data(), {samples_number, 1}) };
-        neural_network.forward_propagate(input_views, forward_propagation, false);
+        neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
         TensorView output_view = forward_propagation.get_outputs();
         EXPECT_NEAR(output_view.as<type>()[0], type(0), TOLERANCE);

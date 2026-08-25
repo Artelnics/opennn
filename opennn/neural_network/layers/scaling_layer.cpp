@@ -205,7 +205,7 @@ OPENNN_CUDA_STUB(void, scale_gpu,
 
 #endif
 
-void ScaleOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void ScaleOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);
@@ -334,11 +334,11 @@ vector<TensorSpec> Scaling::get_forward_specs(Index batch_size) const
     return Layer::get_forward_specs(batch_size);
 }
 
-void Scaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void Scaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
     if (is_passthrough())
         return;
-    Layer::forward_propagate(forward_propagation, layer, is_training);
+    Layer::forward_propagate(forward_propagation, layer, pass);
 }
 
 float* Scaling::link_states(float* pointer, Device device)

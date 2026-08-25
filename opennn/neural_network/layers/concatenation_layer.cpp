@@ -21,7 +21,7 @@
 namespace opennn
 {
 
-void ConcatenationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void ConcatenationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
 {
     const vector<TensorView>& inputs = get_inputs(forward_propagation, layer);
     TensorView& output = get_output(forward_propagation, layer);

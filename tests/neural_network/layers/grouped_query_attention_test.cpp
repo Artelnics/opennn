@@ -67,7 +67,7 @@ float layer_vs_recipe_max_diff(bool use_qk_norm)
 
     ForwardPropagation forward_propagation(batch, &neural_network);
     vector<TensorView> inputs = { TensorView(x.data(), {batch, seq, hidden}) };
-    neural_network.forward_propagate(inputs, forward_propagation, false);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
     const TensorView output = forward_propagation.get_outputs();
     const float* got = output.as<float>();
 
@@ -158,7 +158,7 @@ TEST(GroupedQueryAttentionTest, PrefillAfterDecodeRestartsCache)
         fp.past_length = past;
         fp.set_active_sequence_length(count);
         vector<TensorView> inputs = { TensorView(data, {1, count, hidden}) };
-        net.forward_propagate(inputs, fp, false);
+        net.forward_propagate(inputs, fp, ForwardPropagationMode::Inference);
     };
 
     run(used, fp_used, tokens.data(), 4, 0);
@@ -204,9 +204,9 @@ TEST(GroupedQueryAttentionTest, KvCacheIsIsolatedUntilExplicitlyShared)
     vector<float> second_input(size_t(2 * hidden), -0.5f);
 
     network.forward_propagate(
-        {TensorView(first_input.data(), {1, 2, hidden})}, first, false);
+        {TensorView(first_input.data(), {1, 2, hidden})}, first, ForwardPropagationMode::Inference);
     network.forward_propagate(
-        {TensorView(second_input.data(), {1, 2, hidden})}, second, false);
+        {TensorView(second_input.data(), {1, 2, hidden})}, second, ForwardPropagationMode::Inference);
 
     ASSERT_FALSE((*first.layer_session_state_storage)[0].empty());
     ASSERT_FALSE((*second.layer_session_state_storage)[0].empty());

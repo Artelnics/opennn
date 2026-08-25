@@ -1065,7 +1065,7 @@ void NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& in
     const vector<TensorView> input_views = {single_input_view(inputs_1),
                                             single_input_view(inputs_2)};
 
-    forward_propagate(input_views, forward_propagation, false);
+    forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     if (!is_gpu())
     {
@@ -1133,7 +1133,7 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
     {
         ForwardPropagation forward_propagation(batch_size, this,
                                                ForwardPropagationMode::Inference);
-        forward_propagate(input_views, forward_propagation, false);
+        forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
         return forward_propagation.get_outputs().as_matrix();
     }
 
@@ -1166,7 +1166,7 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
                                     tile_shape, Type::FP32);
         }
 
-        forward_propagate(tile_views, *propagation, false);
+        forward_propagate(tile_views, *propagation, ForwardPropagationMode::Inference);
 
         const TensorView tile_outputs = propagation->get_outputs();
         const Index output_columns = tile_outputs.size() / rows;
@@ -1222,7 +1222,7 @@ MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs)
 
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       ForwardPropagation& forward_propagation,
-                                      bool is_training) const
+                                      ForwardPropagationMode pass) const
 {
     throw_if(parameters.size_in_floats() != get_aligned_size(get_parameter_specs()),
              "Network shapes changed since compile(); call compile() again.");
@@ -1329,7 +1329,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
             inputs_staged = true;
         }
 
-        forward_propagate(device_inputs, forward_propagation, is_training, first_layer_index, last_layer_index);
+        forward_propagate(device_inputs, forward_propagation, pass, first_layer_index, last_layer_index);
 
         if (inputs_staged)
             device::synchronize(stream);
@@ -1338,16 +1338,16 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
     }
 #endif
 
-    forward_propagate(input_view, forward_propagation, is_training, first_layer_index, last_layer_index);
+    forward_propagate(input_view, forward_propagation, pass, first_layer_index, last_layer_index);
 }
 
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       ForwardPropagation& forward_propagation,
-                                      bool is_training,
+                                      ForwardPropagationMode pass,
                                       Index first_layer_index,
                                       Index last_layer_index) const
 {
-    throw_if(is_training
+    throw_if(pass == ForwardPropagationMode::Training
              && forward_propagation.mode != ForwardPropagationMode::Training,
              "NeuralNetwork::forward_propagate: an inference ForwardPropagation "
              "cannot be used for training.");
@@ -1389,7 +1389,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
             forward_propagation.gather_output_window();
 
         PROFILE_SCOPE("fwd:" + layers[i]->get_name());
-        layers[i]->forward_propagate(forward_propagation, i, is_training);
+        layers[i]->forward_propagate(forward_propagation, i, pass);
 
         forward_propagation.inherit_valid_lengths(size_t(i));
     }
@@ -1416,7 +1416,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                size_t(parameters_size) * sizeof(float));
 
     set_parameters(new_parameters);
-    forward_propagate(input_view, forward_propagation, true);
+    forward_propagate(input_view, forward_propagation, ForwardPropagationMode::Training);
     set_parameters(saved_parameters);
 
     if (parameters.get_device() != original_parameters_device)
@@ -2749,7 +2749,7 @@ void NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_vie
                                              ForwardPropagation& forward_propagation,
                                              MatrixR& outputs)
 {
-    forward_propagate(input_views_cpu, forward_propagation, false);
+    forward_propagate(input_views_cpu, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView out_view = forward_propagation.get_outputs();
 
@@ -2809,7 +2809,7 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
 
     if (!forward_propagation.use_cuda_graph || forward_propagation.cuda_graph_failed)
     {
-        forward_propagate(gpu_inputs, forward_propagation, false);
+        forward_propagate(gpu_inputs, forward_propagation, ForwardPropagationMode::Inference);
         return forward_propagation.get_outputs();
     }
 
@@ -2828,14 +2828,14 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
             return forward_propagation.get_outputs();
         }
 
-        forward_propagate(gpu_inputs, forward_propagation, false);
+        forward_propagate(gpu_inputs, forward_propagation, ForwardPropagationMode::Inference);
         return forward_propagation.get_outputs();
     }
 
     {
         device::CudaGraphWorkspaceScope workspace_measurement(
             forward_propagation.inference_graph_workspace_requirements);
-        forward_propagate(gpu_inputs, forward_propagation, false);
+        forward_propagate(gpu_inputs, forward_propagation, ForwardPropagationMode::Inference);
     }
 
     if (++forward_propagation.cuda_graph_warmup_calls < inference_graph_warmup_calls)
@@ -2865,7 +2865,7 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
             &graph_workspace_views);
         device::StreamCapture capture(compute);
 
-        forward_propagate(gpu_inputs, forward_propagation, false);
+        forward_propagate(gpu_inputs, forward_propagation, ForwardPropagationMode::Inference);
 
         capture.end(forward_propagation.inference_graph_exec);
 

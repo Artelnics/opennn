@@ -25,7 +25,7 @@ struct ClampingOperator : Operator
     TensorView lower;
     TensorView upper;
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
 };
 
 class Clamping final : public Layer
