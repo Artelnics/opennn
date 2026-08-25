@@ -20,25 +20,6 @@ enum class StoppingCondition {MinimumLossDecrease,
                               MaximumEpochsNumber,
                               MaximumTime};
 
-struct OptimizerData
-{
-    void set(const vector<Shape>&, Device device = Device::CPU);
-
-    Buffer data;
-    vector<TensorView> views;
-
-    VectorR potential_parameters;
-    VectorR training_direction;
-    float initial_learning_rate = 0.0f;
-    Index iteration = 0;
-
-    float current_learning_rate = 0.0f;
-    float training_slope = 0.0f;
-    float learning_rate = 0.0f;
-    float old_learning_rate = 0.0f;
-    float damping_parameter = 0.0f;
-};
-
 struct TrainingResult
 {
     TrainingResult(const Index = 0);

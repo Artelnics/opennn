@@ -79,6 +79,10 @@ private:
                          const ForwardPropagation&,
                          BackPropagationLM&) const;
 
+   VectorR potential_parameters;
+
+   float damping_parameter = 0.0f;
+
    float initial_damping_parameter = 1.0e-3f;
 
    float minimum_damping_parameter = 1.0e-6f;

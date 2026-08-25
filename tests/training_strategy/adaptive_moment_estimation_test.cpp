@@ -798,3 +798,34 @@ TEST_F(AdaptiveMomentEstimationTest, Determinism)
 
     EXPECT_FLOAT_EQ(error_first, error_second);
 }
+
+TEST_F(AdaptiveMomentEstimationTest, RepeatedTrainingResetsState)
+{
+    set_threads_number(1);
+    set_seed(17);
+
+    TabularDataset dataset(16, {2}, {1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    ApproximationNetwork network({2}, {6}, {1});
+    const VectorR initial_parameters = network.get_parameters_map();
+
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    AdaptiveMomentEstimation adam(&loss);
+    adam.set_batch_size(16);
+    adam.set_workers_number(1);
+    adam.set_maximum_epochs(20);
+    adam.set_display(false);
+
+    set_seed(19);
+    const float first_error = adam.train().get_training_error();
+
+    network.set_parameters(initial_parameters);
+    set_seed(19);
+    const float second_error = adam.train().get_training_error();
+
+    EXPECT_FLOAT_EQ(first_error, second_error);
+}

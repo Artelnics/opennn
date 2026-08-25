@@ -121,16 +121,16 @@ The signals worth scanning for:
 - **A name that was true once.** The type still carries the name of what it did
   before the code moved on.
 
-Two real ones from this repo, one still open and one now fixed:
+Two real ones from this repo, both now fixed:
 
-**`OptimizerData` — [training_result.h:23](../opennn/training_strategy/training_result.h#L23), 11 fields.**
-Three unrelated things in one struct: a scratch arena (`data`, `views`),
-line-search state (`training_direction`, `training_slope`, four separate
-learning-rate fields), and `damping_parameter`, which only Levenberg-Marquardt
-uses. Different optimizers touch disjoint subsets — stochastic gradient descent
-uses none of the line-search fields. The name says only that an optimizer owns
-it, which the reader already knew. It also lives in `training_result.h`, which
-is not where anyone would look for it.
+**Fixed — optimizer workspace versus algorithm state —
+[optimizer.h:32](../opennn/training_strategy/optimizer.h#L32).**
+The former `OptimizerData` mixed a shared aligned tensor workspace with fields
+used by only one algorithm. It now contains only `data`, `views`, and `set()` and
+lives with `Optimizer`. Adam owns its update step, SGD owns its current learning
+rate, quasi-Newton owns a `LineSearchState`, and Levenberg-Marquardt owns its
+damping parameter and candidate parameters. Each state resets at the same
+training-run boundary as before.
 
 **Fixed — augmentation policy versus sampled transform —
 [image_dataset.h:19](../opennn/dataset/image_dataset.h#L19),
@@ -252,7 +252,7 @@ Then, and only if asked:
 - **Both builds must pass, both suites at baseline.** `build-cpu-verification`
   and `build-resnet-capacity`. The CUDA build compiles `.cu` paths the CPU build
   never sees, so a green CPU build proves little on its own.
-- **Current baseline: CPU 975 passed / 28 skipped, GPU 1096 passed / 6 skipped,
+- **Current baseline: CPU 979 passed / 28 skipped, GPU 1100 passed / 6 skipped,
   zero failures, one disabled test.** Update this line if the count legitimately
   changes, and say why in the commit.
 
@@ -276,6 +276,7 @@ build directories are in [../AGENTS.md](../AGENTS.md). Read it first.
 | Augmentation policies separated from sampled transforms | `dataset/image_dataset.h`, `dataset/yolo_dataset.h`, `dataset/yolo_dataset.cpp` |
 | `Transpose { No, Yes }` replacing the two adjacent `multiply` flags | `core/tensor_operations.h` and 16 call sites |
 | Dataset role-count overloads remain visible on derived datasets | `dataset/tabular_dataset.h`, `dataset/yolo_dataset.h` |
+| Optimizer workspace separated from algorithm-specific state | `training_strategy/optimizer.h`, four optimizer implementations |
 
 Deliberately **not** merged, with reasons in the commit messages: `SampleRole`
 and `FillMode` into `ForwardPropagationMode`; the `Rung` family in
@@ -286,8 +287,6 @@ through `template<typename Rung> rung()`).
 
 These are leads, not a work queue. Each still needs the audit in step 2 before it
 becomes a plan, and the counts below are from an earlier scan — re-derive them.
-
-- The `OptimizerData` false concept above is still open.
 
 - 29 further declarations taking a bare unnamed `bool`. Most only need the
   parameter named; `get_batches`'s shuffle flag and `Layer(LayerType, bool

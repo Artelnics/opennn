@@ -29,6 +29,14 @@ class NeuralNetwork;
 struct Buffer;
 struct BackPropagation;
 
+struct OptimizerData
+{
+    void set(const vector<Shape>&, Device device = Device::CPU);
+
+    Buffer data;
+    vector<TensorView> views;
+};
+
 class Optimizer
 {
 

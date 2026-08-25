@@ -46,11 +46,32 @@ private:
 
     void calculate_inverse_hessian(OptimizerData&) const;
 
+    struct LineSearchState
+    {
+        void reset(Index parameters_number)
+        {
+            direction.resize(parameters_number);
+            potential.resize(parameters_number);
+            initial = 0.0f;
+            learning_rate = 0.0f;
+            old_learning_rate = 0.0f;
+            slope = 0.0f;
+        }
+
+        VectorR direction;
+        VectorR potential;
+        float initial = 0.0f;
+        float learning_rate = 0.0f;
+        float old_learning_rate = 0.0f;
+        float slope = 0.0f;
+    };
+
     pair<float, float> calculate_directional_point(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagation&,
-                                                 OptimizerData&,
-                                                 float) const;
+                                                 float);
+
+    LineSearchState line_search;
 
     float first_learning_rate = 0.01f;
 

@@ -97,7 +97,7 @@ void QuasiNewtonMethod::update_full_batch_parameters(const Batch& batch,
     VectorMap old_gradient = optimization_data.views[OldGradient].as_vector();
     VectorMap gradient_difference = optimization_data.views[GradientDifference].as_vector();
 
-    VectorR& training_direction = optimization_data.training_direction;
+    VectorR& training_direction = line_search.direction;
     MatrixMap inverse_hessian = optimization_data.views[InverseHessian].as_matrix();
 
     parameter_differences = parameters - old_parameters;
@@ -112,52 +112,50 @@ void QuasiNewtonMethod::update_full_batch_parameters(const Batch& batch,
 
     training_direction.noalias() = -(inverse_hessian.selfadjointView<Lower>() * gradient);
 
-    optimization_data.training_slope = gradient.dot(training_direction);
+    line_search.slope = gradient.dot(training_direction);
 
     bool is_gradient_direction = false;
 
-    if (optimization_data.training_slope >= 0.0f)
+    if (line_search.slope >= 0.0f)
     {
         training_direction = -gradient;
-        optimization_data.training_slope = gradient.dot(training_direction);
+        line_search.slope = gradient.dot(training_direction);
         is_gradient_direction = true;
     }
 
-    optimization_data.initial_learning_rate = is_gradient_direction
-        ? ((optimization_data.old_learning_rate > 0.0f)
-            ? optimization_data.old_learning_rate : first_learning_rate)
+    line_search.initial = is_gradient_direction
+        ? ((line_search.old_learning_rate > 0.0f)
+            ? line_search.old_learning_rate : first_learning_rate)
         : 1.0f;
 
-    tie(optimization_data.learning_rate, back_propagation.metrics.loss_value) = calculate_directional_point(
+    tie(line_search.learning_rate, back_propagation.metrics.loss_value) = calculate_directional_point(
         batch,
         forward_propagation,
         back_propagation,
-        optimization_data,
         back_propagation.metrics.loss_value);
 
-    if (optimization_data.learning_rate == 0.0f && !is_gradient_direction)
+    if (line_search.learning_rate == 0.0f && !is_gradient_direction)
     {
         inverse_hessian.setIdentity();
         optimization_data.views[OldInverseHessian].as_matrix().setIdentity();
 
         training_direction = -gradient;
-        optimization_data.training_slope = gradient.dot(training_direction);
+        line_search.slope = gradient.dot(training_direction);
 
-        optimization_data.initial_learning_rate = (optimization_data.old_learning_rate > 0.0f)
-            ? optimization_data.old_learning_rate
+        line_search.initial = (line_search.old_learning_rate > 0.0f)
+            ? line_search.old_learning_rate
             : first_learning_rate;
 
-        tie(optimization_data.learning_rate, back_propagation.metrics.loss_value) = calculate_directional_point(
+        tie(line_search.learning_rate, back_propagation.metrics.loss_value) = calculate_directional_point(
             batch,
             forward_propagation,
             back_propagation,
-            optimization_data,
             back_propagation.metrics.loss_value);
     }
 
-    if (abs(optimization_data.learning_rate) > 0.0f)
+    if (abs(line_search.learning_rate) > 0.0f)
     {
-        parameter_updates = training_direction * optimization_data.learning_rate;
+        parameter_updates = training_direction * line_search.learning_rate;
     }
     else
     {
@@ -169,8 +167,8 @@ void QuasiNewtonMethod::update_full_batch_parameters(const Batch& batch,
     old_gradient = gradient;
     swap(optimization_data.views[InverseHessian], optimization_data.views[OldInverseHessian]);
 
-    if (optimization_data.learning_rate > 0.0f)
-        optimization_data.old_learning_rate = optimization_data.learning_rate;
+    if (line_search.learning_rate > 0.0f)
+        line_search.old_learning_rate = line_search.learning_rate;
 }
 
 TrainingResult QuasiNewtonMethod::train()
@@ -211,8 +209,7 @@ TrainingResult QuasiNewtonMethod::train()
             Shape{parameters_number, parameters_number}
         });
 
-        optimization_data.potential_parameters.resize(parameters_number);
-        optimization_data.training_direction.resize(parameters_number);
+        line_search.reset(parameters_number);
 
         optimization_data.views[OldParameters].as_vector() = neural_network->get_parameters_map();
 
@@ -261,7 +258,7 @@ TrainingResult QuasiNewtonMethod::train()
         return validation_back_propagation.metrics.error;
     };
 
-    hooks.display_extra = [&]{ cout << "Learning rate: " << optimization_data.learning_rate << "\n"; };
+    hooks.display_extra = [&]{ cout << "Learning rate: " << line_search.learning_rate << "\n"; };
 
     return train_full_batch(context, hooks);
 }
@@ -288,13 +285,12 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
     const Batch& batch,
     ForwardPropagation& forward_propagation,
     BackPropagation& back_propagation,
-    OptimizerData& optimization_data,
-    float current_loss) const
+    float current_loss)
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    float alpha = (optimization_data.initial_learning_rate > 0.0f)
-        ? optimization_data.initial_learning_rate
+    float alpha = (line_search.initial > 0.0f)
+        ? line_search.initial
         : 1.0f;
     const float rho = 0.5f;
     const float armijo_constant = 1e-4f;
@@ -302,8 +298,8 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
     const float previous_regularization = back_propagation.metrics.regularization;
 
     const VectorMap parameters = neural_network->get_parameters_map();
-    const VectorR& training_direction = optimization_data.training_direction;
-    VectorR& potential_parameters = optimization_data.potential_parameters;
+    const VectorR& training_direction = line_search.direction;
+    VectorR& potential_parameters = line_search.potential;
 
     for (int i = 0; i < 20; ++i)
     {
@@ -314,7 +310,7 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
         const float candidate_regularization = loss->calculate_regularization(potential_parameters);
         const float new_loss = evaluation_result.error + candidate_regularization;
 
-        if (new_loss <= current_loss + armijo_constant * alpha * optimization_data.training_slope)
+        if (new_loss <= current_loss + armijo_constant * alpha * line_search.slope)
         {
             back_propagation.metrics.error = evaluation_result.error;
             back_propagation.metrics.regularization = candidate_regularization;

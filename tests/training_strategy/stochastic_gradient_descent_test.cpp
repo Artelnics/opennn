@@ -769,6 +769,40 @@ TEST_F(StochasticGradientDescentTest, Determinism)
     EXPECT_FLOAT_EQ(error_first, error_second);
 }
 
+TEST_F(StochasticGradientDescentTest, RepeatedTrainingResetsState)
+{
+    set_threads_number(1);
+    set_seed(23);
+
+    TabularDataset dataset(16, {2}, {1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    ApproximationNetwork network({2}, {6}, {1});
+    const VectorR initial_parameters = network.get_parameters_map();
+
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    StochasticGradientDescent sgd(&loss);
+    sgd.set_initial_learning_rate(0.05f);
+    sgd.set_initial_decay(0.01f);
+    sgd.set_momentum(0.9f);
+    sgd.set_batch_size(16);
+    sgd.set_workers_number(1);
+    sgd.set_maximum_epochs(20);
+    sgd.set_display(false);
+
+    set_seed(29);
+    const float first_error = sgd.train().get_training_error();
+
+    network.set_parameters(initial_parameters);
+    set_seed(29);
+    const float second_error = sgd.train().get_training_error();
+
+    EXPECT_FLOAT_EQ(first_error, second_error);
+}
+
 
 // initial_learning_rate and initial_decay used to be declared without an
 // initialiser and filled in by set_default(). They now carry their values in

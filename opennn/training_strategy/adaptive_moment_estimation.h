@@ -53,6 +53,8 @@ private:
     float beta_1 = 0.9f;
 
     float beta_2 = 0.999f;
+
+    Index update_step = 0;
 };
 
 }

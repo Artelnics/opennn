@@ -266,7 +266,7 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
     const Index parameters_number = neural_network->get_parameters_buffer_size();
 
     OptimizerData optimization_data;
-    optimization_data.damping_parameter = initial_damping_parameter;
+    damping_parameter = initial_damping_parameter;
 
     FullBatchHooks hooks;
     hooks.minimum_loss_decrease = minimum_loss_decrease;
@@ -274,7 +274,7 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
     hooks.setup_state = [&]
     {
         optimization_data.set({Shape{parameters_number}});
-        optimization_data.potential_parameters.resize(parameters_number);
+        potential_parameters.resize(parameters_number);
     };
 
     hooks.train_step = [&]() -> FullBatchStep
@@ -299,7 +299,7 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
 
     hooks.display_extra = [&]
     {
-        cout << "Damping parameter: " << optimization_data.damping_parameter << "\n";
+        cout << "Damping parameter: " << damping_parameter << "\n";
     };
 
     hooks.post_step = [&]
@@ -319,7 +319,6 @@ void LevenbergMarquardtAlgorithm::update_full_batch_parameters(const Batch& batc
                                                                OptimizerData& optimization_data)
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
-    float& damping_parameter = optimization_data.damping_parameter;
     if (damping_parameter <= 0.0f)
         damping_parameter = initial_damping_parameter;
 
@@ -334,7 +333,6 @@ void LevenbergMarquardtAlgorithm::update_full_batch_parameters(const Batch& batc
     const VectorR& gradient = back_propagation_lm.gradient;
     MatrixR& hessian = back_propagation_lm.hessian;
 
-    VectorR& potential_parameters = optimization_data.potential_parameters;
     VectorMap parameter_updates = optimization_data.views[ParameterUpdate].as_vector();
 
     bool success = false;

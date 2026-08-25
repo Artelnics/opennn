@@ -71,7 +71,6 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 #endif
     }
 
-    const float current_learning_rate = optimizer_data.current_learning_rate;
     if (current_learning_rate == 0.0f)
         return;
 
@@ -139,19 +138,18 @@ void StochasticGradientDescent::setup_optimizer_data(OptimizerData& optimizer_da
         optimizer_data.set({momentum > 0.0f ? Shape{parameters_number} : Shape{},
                             use_graph ? Shape{1} : Shape{}}, device);
 
-    optimizer_data.current_learning_rate = initial_learning_rate;
+    current_learning_rate = initial_learning_rate;
 
 }
 
 void StochasticGradientDescent::on_epoch_begin(Index epoch, OptimizerData& optimizer_data)
 {
-    optimizer_data.current_learning_rate =
-        initial_learning_rate / (1.0f + float(epoch) * initial_decay);
+    current_learning_rate = initial_learning_rate / (1.0f + float(epoch) * initial_decay);
 
 #ifdef OPENNN_HAS_CUDA
     if (can_use_cuda_graph())
         set_scalar_device_cuda(optimizer_data.views[GraphLearningRate].as<float>(),
-                               optimizer_data.current_learning_rate,
+                               current_learning_rate,
                                device::get_compute_stream());
 #endif
 }

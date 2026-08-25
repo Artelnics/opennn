@@ -199,3 +199,33 @@ TEST_F(LevenbergMarquardtAlgorithmTest, Determinism)
 
     EXPECT_FLOAT_EQ(error_first, error_second);
 }
+
+TEST_F(LevenbergMarquardtAlgorithmTest, RepeatedTrainingResetsState)
+{
+    set_threads_number(1);
+    set_seed(37);
+
+    TabularDataset dataset(16, {2}, {1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    ApproximationNetwork network({2}, {6}, {1});
+    const VectorR initial_parameters = network.get_parameters_map();
+
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+    loss.set_regularization("None");
+
+    LevenbergMarquardtAlgorithm levenberg_marquardt(&loss);
+    levenberg_marquardt.set_workers_number(1);
+    levenberg_marquardt.set_maximum_epochs(20);
+    levenberg_marquardt.set_minimum_loss_decrease(0.0f);
+    levenberg_marquardt.set_display(false);
+
+    const float first_error = levenberg_marquardt.train().get_training_error();
+
+    network.set_parameters(initial_parameters);
+    const float second_error = levenberg_marquardt.train().get_training_error();
+
+    EXPECT_FLOAT_EQ(first_error, second_error);
+}

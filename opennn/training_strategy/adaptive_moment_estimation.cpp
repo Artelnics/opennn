@@ -70,7 +70,7 @@ void AdaptiveMomentEstimation::setup_optimizer_data(OptimizerData& optimization_
     optimization_data.set({Shape{parameters_number},
                            Shape{parameters_number},
                            use_graph ? Shape{4} : Shape{}}, device);
-    optimization_data.iteration = 0;
+    update_step = 0;
 
 #ifdef OPENNN_HAS_CUDA
     if (use_graph)
@@ -131,17 +131,17 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 #endif
     }
 
-    optimization_data.iteration++;
+    update_step++;
 
     {
         PROFILE_SCOPE("optim:clip_gradient_norm");
         clip_gradient_norm(back_propagation, gradient_clip_norm);
     }
 
-    const float iteration = static_cast<float>(optimization_data.iteration);
+    const float step = static_cast<float>(update_step);
 
-    const float bias_correction_1 = 1.0f - pow(beta_1, iteration);
-    const float bias_correction_2 = 1.0f - pow(beta_2, iteration);
+    const float bias_correction_1 = 1.0f - pow(beta_1, step);
+    const float bias_correction_2 = 1.0f - pow(beta_2, step);
 
     if (neural_network->is_gpu())
     {

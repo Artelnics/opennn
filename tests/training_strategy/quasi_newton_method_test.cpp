@@ -268,6 +268,35 @@ TEST_F(QuasiNewtonMethodTest, Determinism)
     EXPECT_FLOAT_EQ(error_first, error_second);
 }
 
+TEST_F(QuasiNewtonMethodTest, RepeatedTrainingResetsState)
+{
+    set_threads_number(1);
+    set_seed(31);
+
+    TabularDataset dataset(16, {2}, {1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    ApproximationNetwork network({2}, {6}, {1});
+    const VectorR initial_parameters = network.get_parameters_map();
+
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    QuasiNewtonMethod quasi_newton(&loss);
+    quasi_newton.set_workers_number(1);
+    quasi_newton.set_maximum_epochs(20);
+    quasi_newton.set_minimum_loss_decrease(0.0f);
+    quasi_newton.set_display(false);
+
+    const float first_error = quasi_newton.train().get_training_error();
+
+    network.set_parameters(initial_parameters);
+    const float second_error = quasi_newton.train().get_training_error();
+
+    EXPECT_FLOAT_EQ(first_error, second_error);
+}
+
 
 // Loss::back_propagate deliberately leaves metrics.regularization at zero: on
 // GPU the penalty is a cuBLAS reduction with a host result pointer, so paying
@@ -298,13 +327,11 @@ TEST_F(QuasiNewtonMethodTest, BackPropagateLeavesRegularizationToTheOptimizer)
     // The configuration is not degenerate: there is a penalty to be had.
     EXPECT_GT(loss.calculate_regularization(parameters), 0.0f);
 
-    // Through the base class: TabularDataset hides the role-taking overloads.
-    Dataset& base_dataset = dataset;
-    const Index samples_number = base_dataset.get_samples_number("Training");
+    const Index samples_number = dataset.get_samples_number("Training");
 
     Batch batch(samples_number, &dataset, network.get_config());
-    batch.fill(base_dataset.get_sample_indices("Training"),
-               base_dataset.get_feature_selection());
+    batch.fill(dataset.get_sample_indices("Training"),
+               dataset.get_feature_selection());
 
     ForwardPropagation forward_propagation(samples_number, &network);
     BackPropagation back_propagation(samples_number, loss);

@@ -52,6 +52,8 @@ private:
 
     float momentum = 0.0f;
 
+    float current_learning_rate = 0.0f;
+
     bool nesterov = false;
 };
 
