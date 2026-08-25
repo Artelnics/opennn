@@ -117,7 +117,38 @@ is not wired up, and the GPU's draw during a CPU run is an idle card. The
 artifact says `energy_measurable: false` rather than reporting that idle draw
 as though it were the workload's.
 
-## 6. Sessions
+## 6. CPU cells
+
+The CPU has three sources of variance where the GPU has one, and only one of
+them can be removed without root.
+
+**Removed, by the runner.** This is a hybrid part: 8 performance cores at
+5,400 MHz and 12 efficiency cores at 4,200, and the scheduler decides which a
+thread gets. That is worse than clock drift — it is discrete and per-thread, so
+two identical runs can differ by ~22% purely on placement, with nothing in the
+result to say so. Every CPU launch is therefore `taskset`-pinned to the P-cores,
+with a thread count set identically for both engines at one per *physical*
+core, since SMT siblings share execution units. The artifact records the core
+span, the thread count and the excluded E-cores.
+
+**Not removed, and recorded instead.** The governor and turbo state need root:
+
+```bash
+sudo cpupower frequency-set -g performance
+echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
+```
+
+Until those are set, cores scale between 800 and 5,400 MHz and turbo boosts
+until the package hits a limit and then drops — so the first seconds of a run
+are faster than the rest, and which engine gets them depends on ordering. Each
+artifact carries `cpu.governor` and `cpu.turbo_enabled` so a reader can tell an
+opportunistic run from a pinned-down one.
+
+**No energy figure on CPU.** It needs a RAPL counter, which is not wired up.
+The artifact says `energy_measurable: false` rather than reporting the idle
+GPU's draw.
+
+## 7. Sessions
 
 **Lock the clock before measuring anything published:**
 

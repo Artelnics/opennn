@@ -435,6 +435,81 @@ class Monitor:
         }
 
 # --------------------------------------------------------------------------
+# CPU: which cores, and what state they are in
+# --------------------------------------------------------------------------
+
+def core_layout() -> dict[str, list[int]]:
+    """Split the CPUs into performance and efficiency cores by peak frequency.
+
+    A hybrid Intel part runs its E-cores materially slower than its P-cores --
+    4,200 MHz against 5,400 on this machine, about 22% -- and the scheduler
+    decides which a thread gets. That is worse than clock drift for a
+    benchmark, because it is discrete and per-thread: two identical runs can
+    differ by a fifth purely on placement, and nothing in the result would say
+    so. Pinning to P-cores removes the variable rather than averaging it.
+    """
+    frequencies: dict[int, int] = {}
+
+    for path in Path("/sys/devices/system/cpu").glob("cpu[0-9]*/cpufreq/cpuinfo_max_freq"):
+        try:
+            frequencies[int(path.parent.parent.name[3:])] = int(path.read_text())
+        except (OSError, ValueError):
+            continue
+
+    if not frequencies:
+        return {"performance": [], "efficiency": []}
+
+    fastest = max(frequencies.values())
+
+    # 100 MHz of slack: P-cores in one package differ slightly from each other
+    # (5,400 and 5,300 here), and that is not the split being looked for.
+    return {
+        "performance": sorted(c for c, f in frequencies.items() if f >= fastest - 100_000),
+        "efficiency": sorted(c for c, f in frequencies.items() if f < fastest - 100_000),
+    }
+
+def physical_cores(cpus: list[int]) -> int:
+    """How many distinct physical cores `cpus` covers.
+
+    SMT siblings share execution units, so for compute-bound work the useful
+    thread count is the physical core count, not the logical one.
+    """
+    groups = set()
+
+    for cpu in cpus:
+        path = Path(f"/sys/devices/system/cpu/cpu{cpu}/topology/thread_siblings_list")
+        groups.add(path.read_text().strip() if path.exists() else str(cpu))
+
+    return len(groups) or len(cpus)
+
+def cpu_state() -> dict[str, Any]:
+    """Governor, turbo and core layout, recorded beside a CPU measurement.
+
+    None of these can be set without root, so the artifact records what they
+    were rather than asserting what they should be. A reader can then tell a
+    locked-down run from an opportunistic one.
+    """
+    def read(path: str) -> str | None:
+        try:
+            return Path(path).read_text().strip()
+        except OSError:
+            return None
+
+    layout = core_layout()
+    no_turbo = read("/sys/devices/system/cpu/intel_pstate/no_turbo")
+
+    return {
+        "model": next((line.split(":", 1)[1].strip()
+                       for line in Path("/proc/cpuinfo").read_text().splitlines()
+                       if line.startswith("model name")), ""),
+        "governor": read("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"),
+        "scaling_driver": read("/sys/devices/system/cpu/cpu0/cpufreq/scaling_driver"),
+        "turbo_enabled": None if no_turbo is None else no_turbo == "0",
+        "performance_cores": layout["performance"],
+        "efficiency_cores": layout["efficiency"],
+    }
+
+# --------------------------------------------------------------------------
 # Metrics: one scoring, every engine
 # --------------------------------------------------------------------------
 

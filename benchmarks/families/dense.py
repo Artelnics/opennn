@@ -79,6 +79,13 @@ def parse_opts(argv: list[str], first: int) -> dict:
     if device == "cuda" and not torch.cuda.is_available():
         raise SystemExit("cuda requested but not available")
 
+    # The runner pins CPU work to performance cores and sets a matched thread
+    # count for both engines; honour it, or this side quietly takes every
+    # logical CPU and the comparison becomes a thread-count comparison.
+    threads = os.environ.get("TORCH_NUM_THREADS") or os.environ.get("OMP_NUM_THREADS")
+    if threads:
+        torch.set_num_threads(int(threads))
+
     allow_tf32 = precision != "strict"
     torch.backends.cuda.matmul.allow_tf32 = allow_tf32
     torch.backends.cudnn.allow_tf32 = allow_tf32

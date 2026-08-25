@@ -45,6 +45,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (  # noqa: E402
     BENCHMARKS,
+    core_layout,
+    cpu_state,
+    physical_cores,
     Monitor,
     agrees,
     file_info,
@@ -123,7 +126,41 @@ def rungs(spec: str) -> tuple[list[int], bool]:
         return [int(spec[:-4])], True
     return [int(part) for part in spec.split(",") if part], False
 
-def launch(command: list[str], quiet_wait: bool, device: str = "cuda") -> dict:
+def cpu_pinning(threads: int | None) -> tuple[list[str], dict[str, str], dict]:
+    """Prefix and environment that pin a CPU run to performance cores.
+
+    Two variables removed at once. `taskset` keeps every thread off the
+    E-cores, which run ~22% slower here and which the scheduler would
+    otherwise hand out arbitrarily. The thread count is then set identically
+    for both engines, because otherwise one may quietly take 28 threads while
+    the other takes 8 -- and the comparison becomes a thread-count comparison.
+
+    Defaults to one thread per *physical* P-core: SMT siblings share execution
+    units, so counting logical CPUs oversubscribes compute-bound work.
+    """
+    layout = core_layout()
+    cores = layout["performance"]
+
+    if not cores:
+        return [], {}, {"pinned": False, "reason": "no per-core frequency data"}
+
+    count = threads or physical_cores(cores)
+    span = f"{cores[0]}-{cores[-1]}" if cores == list(range(cores[0], cores[-1] + 1)) \
+        else ",".join(str(c) for c in cores)
+
+    environment = {
+        "OMP_NUM_THREADS": str(count),
+        "MKL_NUM_THREADS": str(count),
+        "OPENNN_THREADS": str(count),
+        "TORCH_NUM_THREADS": str(count),
+    }
+
+    return (["taskset", "-c", span], environment,
+            {"pinned": True, "cores": span, "threads": count,
+             "excluded_efficiency_cores": layout["efficiency"]})
+
+def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
+           threads: int | None = None) -> dict:
     """One execution, fully instrumented.
 
     The monitor samples for the whole process; energy is integrated only
@@ -134,14 +171,23 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda") -> dict:
     if quiet_wait and device == "cuda":
         wait_for_idle(seconds=30.0)
 
+    prefix: list[str] = []
+    environment = dict(os.environ)
+    pinning: dict = {"pinned": False}
+
+    if device != "cuda":
+        prefix, extra, pinning = cpu_pinning(threads)
+        environment.update(extra)
+
     with Monitor(device=device) as monitor:
         started = time.time()
 
         # Popen rather than run(), so a CPU launch can be watched for its peak
         # resident set while it is alive -- there is nothing to read once it
         # has exited.
-        process = subprocess.Popen(command, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE, text=True)
+        process = subprocess.Popen(prefix + command, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, text=True,
+                                   env=environment)
         if device != "cuda":
             while process.poll() is None:
                 monitor.watch_rss(process.pid)
@@ -167,7 +213,8 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda") -> dict:
                        if k.endswith("_samples_per_sec")), 0)
 
     return {
-        "command": command,
+        "command": prefix + command,
+        "pinning": pinning,
         "returncode": completed.returncode,
         "wall_seconds": round(wall, 3),
         "samples_per_sec": throughput,
@@ -223,6 +270,8 @@ def main() -> int:
     parser.add_argument("--tolerance", type=float, default=0.02,
                         help="cross-engine quality agreement band")
     parser.add_argument("--label", default="")
+    parser.add_argument("--threads", type=int, default=None,
+                        help="CPU threads; default is one per physical P-core")
     parser.add_argument("--no-wait", action="store_true",
                         help="skip the cooldown between launches")
     args = parser.parse_args()
@@ -263,6 +312,7 @@ def main() -> int:
             "configuration": vars(args) | {"data_root": str(BENCH_DATA)},
             "git": git,
             "machine": gpu_state(),
+        "cpu": cpu_state(),
             "frameworks": framework_versions(),
             "launches": launches,
         }
@@ -285,7 +335,7 @@ def main() -> int:
                 print(f"  {engine:<8} batch {batch:>9,} ... ", end="", flush=True)
                 outcome = launch(engine_command(args.family, engine)
                                  + engine_arguments(args.mode, data, batch, args),
-                                 not args.no_wait, args.device)
+                                 not args.no_wait, args.device, args.threads)
                 outcome.update(engine=engine, batch=batch, round=1)
                 launches.append(outcome)
 
@@ -311,7 +361,7 @@ def main() -> int:
                 for batch in start_batch:
                     outcome = launch(engine_command(args.family, engine)
                                      + engine_arguments(args.mode, data, batch, args),
-                                     not args.no_wait, args.device)
+                                     not args.no_wait, args.device, args.threads)
                     outcome.update(engine=engine, batch=batch, round=index + 1)
                     launches.append(outcome)
 
@@ -398,6 +448,7 @@ def main() -> int:
         "configuration": vars(args) | {"data_root": str(BENCH_DATA)},
         "git": git,
         "machine": gpu_state(),
+        "cpu": cpu_state(),
         "frameworks": framework_versions(),
         "datasets": {name: file_info(Path(path)) for name, path in data.items()},
         "quality_gate": {"agrees": gate, "tolerance": args.tolerance,
