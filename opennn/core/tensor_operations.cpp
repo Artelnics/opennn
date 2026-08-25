@@ -833,7 +833,8 @@ static void multiply_cpu(const TensorView& input_a, bool transpose_a,
 {
     const Shape& shape = input_a.get_shape();
     const size_t rank = shape.get_rank();
-    const Index batch_count = input_a.size() / (shape[rank - 2] * shape[rank - 1]);
+
+    const Index batch_count = matrix_count(input_a);
 
     const bool parallel = output.size() >= 65536;
 

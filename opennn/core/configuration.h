@@ -51,9 +51,9 @@ private:
 
     mutable std::mutex configuration_mutex;
 
-    Device device         = Device::Auto;
-    Type   training_type  = Type::Auto;
-    unsigned generation   = 0;
+    Device device        = Device::Auto;
+    Type   training_type = Type::Auto;
+    unsigned generation  = 0;
 };
 
 }

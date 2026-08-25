@@ -76,12 +76,7 @@ namespace
 
 static int device_poison_mode()
 {
-    static const int mode = []
-    {
-        const char* const value = getenv("OPENNN_DEVICE_POISON");
-        return value ? atoi(value) : 0;
-    }();
-
+    static const int mode = int(env_int_or("OPENNN_DEVICE_POISON", 0));
     return mode;
 }
 
@@ -304,9 +299,7 @@ void set_cuda_allocation_growth_forbidden(bool forbidden) noexcept
 int64_t conv_workspace_limit_bytes() noexcept
 {
     const int64_t mode = conv_workspace_cap_mode.load(memory_order_relaxed);
-    if (mode == 0) return 0;
-    if (mode > 0)  return mode;
-    return conv_workspace_auto_bytes.load(memory_order_relaxed);
+    return mode >= 0 ? mode : conv_workspace_auto_bytes.load(memory_order_relaxed);
 }
 
 void set_conv_workspace_cap(int64_t mode) noexcept
@@ -492,8 +485,6 @@ public:
                 cudaFree(block.pointer);
                 released = true;
             }
-
-            cached.clear();
         }
 
         blocks.clear();
@@ -524,8 +515,7 @@ private:
 
     static Index read_cap_bytes()
     {
-        const char* value = getenv("OPENNN_DEVICE_CACHE_MB");
-        const Index megabytes = value ? Index(strtoll(value, nullptr, 10)) : Index(512);
+        const Index megabytes = Index(env_int_or("OPENNN_DEVICE_CACHE_MB", 512));
         return (megabytes > 0 ? megabytes : Index(512)) * 1024 * 1024;
     }
 
@@ -704,14 +694,10 @@ void copy_async(void* destination,
         default: throw runtime_error("Invalid device copy kind.");
     }
 
-    if (stream)
-        CHECK_CUDA(cudaMemcpyAsync(destination, source,
-                                   static_cast<size_t>(byte_count),
-                                   cuda_kind, stream));
-    else
-        CHECK_CUDA(cudaMemcpy(destination, source,
-                              static_cast<size_t>(byte_count),
-                              cuda_kind));
+    CHECK_CUDA(stream
+        ? cudaMemcpyAsync(destination, source, size_t(byte_count), cuda_kind, stream)
+        : cudaMemcpy(destination, source, size_t(byte_count), cuda_kind));
+
 #else
     (void)stream;
     if (kind != CopyKind::HostToHost) throw_cuda_unavailable();
@@ -740,10 +726,8 @@ void copy_async(void* destination,
 void synchronize(cudaStream_t stream)
 {
 #ifdef OPENNN_HAS_CUDA
-    if (stream)
-        CHECK_CUDA(cudaStreamSynchronize(stream));
-    else
-        CHECK_CUDA(cudaDeviceSynchronize());
+    CHECK_CUDA(stream ? cudaStreamSynchronize(stream)
+                      : cudaDeviceSynchronize());
 #else
     (void)stream;
 #endif
@@ -1084,11 +1068,9 @@ thread_local int active_lane_index = 0;
 
 int lanes_available() noexcept
 {
-    static const int lanes = []
-    {
-        const long long value = env_int_or("OPENNN_LANES", 1);
-        return int(value < 1 ? 1 : (value > MAX_LANES ? MAX_LANES : value));
-    }();
+    static const int lanes =
+        int(clamp(env_int_or("OPENNN_LANES", 1), 1LL, static_cast<long long>(MAX_LANES)));
+
     return lanes;
 }
 
@@ -1227,15 +1209,21 @@ cudnnHandle_t Backend::cudnn(int lane)
 Backend::~Backend()
 {
 #ifdef OPENNN_HAS_CUDA
-    if (op_tensor_add_descriptor) { cudnnDestroyOpTensorDescriptor(op_tensor_add_descriptor); op_tensor_add_descriptor = nullptr; }
-    if (cublas_lt_handle)        { cublasLtDestroy(cublas_lt_handle);                       cublas_lt_handle = nullptr; }
+    if (op_tensor_add_descriptor)
+        cudnnDestroyOpTensorDescriptor(op_tensor_add_descriptor);
+
+    if (cublas_lt_handle)
+        cublasLtDestroy(cublas_lt_handle);
+
     for (int lane = 0; lane < device::MAX_LANES; ++lane)
     {
-        if (cublas_handles[lane]) { cublasDestroy(cublas_handles[lane]); cublas_handles[lane] = nullptr; }
-        if (cudnn_handles[lane])  { cudnnDestroy(cudnn_handles[lane]);   cudnn_handles[lane] = nullptr; }
-        device::destroy_stream_handle(lane_streams[lane]); lane_streams[lane] = nullptr;
+        if (cublas_handles[lane]) cublasDestroy(cublas_handles[lane]);
+        if (cudnn_handles[lane])  cudnnDestroy(cudnn_handles[lane]);
+
+        device::destroy_stream_handle(lane_streams[lane]);
     }
-    device::destroy_stream_handle(transfer_stream); transfer_stream = nullptr;
+
+    device::destroy_stream_handle(transfer_stream);
 #endif
 }
 
@@ -1382,12 +1370,13 @@ namespace
     constexpr size_t cublas_lt_workspace_search_bytes = 32ull * 1024 * 1024;
     constexpr size_t cublas_lt_plan_cache_capacity = 1024;
 
-    cublasComputeType_t matmul_compute_type(cudaDataType_t a_type, cudaDataType_t b_type = CUDA_R_32F)
+    cublasComputeType_t matmul_compute_type(cudaDataType_t a_type, 
+                                            cudaDataType_t b_type = CUDA_R_32F)
     {
-        if (a_type == CUDA_R_16BF || b_type == CUDA_R_16BF)
-            return CUBLAS_COMPUTE_32F_FAST_16BF;
-        return CUBLAS_COMPUTE_DTYPE;
-    }
+        return a_type == CUDA_R_16BF || b_type == CUDA_R_16BF
+            ? CUBLAS_COMPUTE_32F_FAST_16BF
+            : CUBLAS_COMPUTE_DTYPE;
+    }    
 
     void* thread_workspace(device::GraphWorkspaceKind kind, Index minimum_bytes)
     {
@@ -1506,13 +1495,18 @@ namespace
                           const void* a_data, const void* b_data, void* c_data,
                           cudaStream_t stream)
     {
-        plan.tuned = true;
-        if (plan.candidates.size() <= 1) return;
+        if (plan.candidates.size() <= 1)
+        {
+            plan.tuned = true;
+            return;
+        }
 
         cudaStreamCaptureStatus capture_status = cudaStreamCaptureStatusNone;
         if (cudaStreamIsCapturing(stream, &capture_status) != cudaSuccess
             || capture_status != cudaStreamCaptureStatusNone)
             return device::reset_last_error();
+
+        plan.tuned = true;
 
         if (device::lanes_available() > 1) device::synchronize();
 
