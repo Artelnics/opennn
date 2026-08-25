@@ -123,7 +123,7 @@ def rungs(spec: str) -> tuple[list[int], bool]:
         return [int(spec[:-4])], True
     return [int(part) for part in spec.split(",") if part], False
 
-def launch(command: list[str], quiet_wait: bool) -> dict:
+def launch(command: list[str], quiet_wait: bool, device: str = "cuda") -> dict:
     """One execution, fully instrumented.
 
     The monitor samples for the whole process; energy is integrated only
@@ -131,13 +131,27 @@ def launch(command: list[str], quiet_wait: bool) -> dict:
     data loading are excluded from the energy figure as they are from the
     throughput one.
     """
-    if quiet_wait:
+    if quiet_wait and device == "cuda":
         wait_for_idle(seconds=30.0)
 
-    with Monitor() as monitor:
+    with Monitor(device=device) as monitor:
         started = time.time()
-        completed = subprocess.run(command, capture_output=True, text=True, timeout=14400)
+
+        # Popen rather than run(), so a CPU launch can be watched for its peak
+        # resident set while it is alive -- there is nothing to read once it
+        # has exited.
+        process = subprocess.Popen(command, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, text=True)
+        if device != "cuda":
+            while process.poll() is None:
+                monitor.watch_rss(process.pid)
+                time.sleep(0.02)
+            monitor.watch_rss(process.pid)
+
+        stdout, stderr = process.communicate(timeout=14400)
         wall = time.time() - started
+
+    completed = subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
 
     fields = dict(KEY_VALUE.findall(completed.stdout))
 
@@ -233,7 +247,7 @@ def main() -> int:
         for question in FAMILIES[args.family]["modes"]:
             for engine in engines:
                 outcome = launch(engine_command(args.family, engine) + [question],
-                                 not args.no_wait)
+                                 not args.no_wait, "cpu")
                 outcome.update(engine=engine, batch=0, round=1, question=question)
                 launches.append(outcome)
                 reported = {k: v for k, v in outcome["fields"].items()
@@ -271,7 +285,7 @@ def main() -> int:
                 print(f"  {engine:<8} batch {batch:>9,} ... ", end="", flush=True)
                 outcome = launch(engine_command(args.family, engine)
                                  + engine_arguments(args.mode, data, batch, args),
-                                 not args.no_wait)
+                                 not args.no_wait, args.device)
                 outcome.update(engine=engine, batch=batch, round=1)
                 launches.append(outcome)
 
@@ -297,7 +311,7 @@ def main() -> int:
                 for batch in start_batch:
                     outcome = launch(engine_command(args.family, engine)
                                      + engine_arguments(args.mode, data, batch, args),
-                                     not args.no_wait)
+                                     not args.no_wait, args.device)
                     outcome.update(engine=engine, batch=batch, round=index + 1)
                     launches.append(outcome)
 

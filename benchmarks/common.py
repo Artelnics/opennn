@@ -276,17 +276,43 @@ class Monitor:
     # readings is not a small energy figure, it is no energy figure.
     MIN_WINDOW_SAMPLES = 4
 
-    def __init__(self, interval_ms: int = 20, measure_idle_first: bool = True):
+    def __init__(self, interval_ms: int = 20, measure_idle_first: bool = True,
+                 device: str = "cuda"):
         self.interval_ms = interval_ms
+        self.device = device
         self.samples: list[tuple[float, float, float]] = []    # unix, MiB, watts
         self.idle_mib = 0.0
         self.idle_watts = 0.0
+        self.peak_rss_mib = 0.0
         self._measure_idle = measure_idle_first
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._process: subprocess.Popen | None = None
 
+    def watch_rss(self, pid: int) -> None:
+        """Track a child's peak resident set, for CPU runs.
+
+        VmHWM is a high-water mark the kernel maintains, so reading it once
+        before the child exits gives its true peak -- polling frequency does
+        not matter, only that we read it at all.
+        """
+        try:
+            with open(f"/proc/{pid}/status") as handle:
+                for line in handle:
+                    if line.startswith("VmHWM:"):
+                        self.peak_rss_mib = max(self.peak_rss_mib,
+                                                float(line.split()[1]) / 1024.0)
+                        return
+        except (OSError, ValueError, IndexError):
+            pass
+
     def __enter__(self) -> "Monitor":
+        # On CPU there is nothing on the card worth sampling: the GPU sits
+        # idle, and reporting its memory and draw as the run's would be a
+        # measurement of the wrong device rather than a missing one.
+        if self.device != "cuda":
+            return self
+
         if self._measure_idle:
             self.idle_mib, self.idle_watts = self._read_once()
 
@@ -371,6 +397,21 @@ class Monitor:
                    for i in range(len(window) - 1))
 
     def summary(self, start: float | None = None, end: float | None = None) -> dict[str, Any]:
+        if self.device != "cuda":
+            # Peak RSS is the CPU counterpart of device-used memory. Energy has
+            # none here: it would need RAPL, which is not wired up, and the
+            # GPU's draw during a CPU run is the idle card.
+            return {
+                "peak_mib": round(self.peak_rss_mib, 1),
+                "memory_metric": "process_peak_rss",
+                "energy_joules": None,
+                "energy_wh": None,
+                "energy_measurable": False,
+                "energy_note": "CPU run: no RAPL counter wired up",
+                "samples": 0,
+                "window_samples": 0,
+            }
+
         window = [w for t, _, w in self.samples
                   if (start is None or t >= start) and (end is None or t <= end)]
 
@@ -382,6 +423,7 @@ class Monitor:
 
         return {
             "peak_mib": round(self.peak_mib, 1),
+            "memory_metric": "device_used_minus_idle",
             "idle_mib": round(self.idle_mib, 1),
             "idle_watts": round(self.idle_watts, 1),
             "energy_joules": round(joules, 2) if measurable else None,

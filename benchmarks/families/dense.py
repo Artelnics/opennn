@@ -100,8 +100,20 @@ def autocast_ctx(opts: dict):
     return torch.autocast(device_type=opts["device"], dtype=torch.bfloat16)
 
 def compiled(fn, opts: dict):
-    """torch.compile unless PT_COMPILE_MODE=eager. reduce-overhead brings CUDA
-    graphs, which is the analogue of what OpenNN is measured with."""
+    """torch.compile on CUDA, eager on CPU -- both measured, not assumed.
+
+    On CPU, eager is PyTorch's fast path for these models, not a shortcut:
+    inductor's CPU codegen loses on a small stack of GEMMs. Measured on this
+    machine, dense CPU training, batch 4,096: eager 93,156 samples/s against
+    compiled 83,722. The previous suite measured the same thing on different
+    hardware (41,523 against 29,449), so it is the codegen and not the box.
+
+    Compiling here anyway would hand OpenNN a win against a PyTorch nobody
+    would ship, which is the mirror image of the eager-on-GPU mistake that
+    made dense training read 1.29x when it was 1.06x.
+
+    PT_COMPILE_MODE overrides either way, so the choice stays measurable.
+    """
     mode = os.environ.get("PT_COMPILE_MODE", "reduce-overhead")
     if mode == "eager" or opts["device"] != "cuda":
         return fn, "eager"

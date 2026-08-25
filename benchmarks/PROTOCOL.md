@@ -47,10 +47,18 @@ Not "as it comes". An engine measured below its own ceiling makes the other
 look good for the wrong reason, and this is the item most likely to drift
 silently.
 
-| | |
-|---|---|
-| OpenNN | captured CUDA graph, device-resident split, whole batches only |
-| PyTorch | `torch.compile`, `channels_last` for convolutions, TF32 enabled |
+| | GPU | CPU |
+|---|---|---|
+| OpenNN | captured CUDA graph, device-resident split, whole batches only | same definition, `Device::CPU` |
+| PyTorch | `torch.compile`, `channels_last`, TF32 enabled | **eager** |
+
+**PyTorch runs eager on CPU on purpose, and it is measured, not assumed.**
+Inductor's CPU codegen loses on a small stack of GEMMs: dense CPU training at
+batch 4,096 gives eager 93,156 samples/s against compiled 83,722 here, and the
+previous suite measured the same ordering on different hardware (41,523 against
+29,449). Compiling anyway would hand OpenNN a win against a PyTorch nobody
+would ship. `PT_COMPILE_MODE` overrides either way, so the choice stays
+measurable rather than baked in.
 
 This is not hypothetical. Measured against an *eager* PyTorch, dense training
 read 1.29×; against a compiled one, 1.06×. The first number was not a lie about
@@ -84,10 +92,12 @@ round kept in the artifact so a drifting session is visible rather than
 averaged into a claim. Ratios within one session are the durable output;
 absolute samples/s is provenance.
 
-**Peak memory.** `nvidia-smi` device-used, sampled at 20 ms, minus the idle
-reading taken before the run. Whole-device on purpose: it counts the CUDA
+**Peak memory.** On GPU, `nvidia-smi` device-used sampled at 20 ms, minus the
+idle reading taken before the run. Whole-device on purpose: it counts the CUDA
 context and the allocator's cached blocks, because that memory really is
-unavailable to anything else.
+unavailable to anything else. On CPU, the process's peak resident set, read
+from `VmHWM`. Each artifact records which via `memory_metric`, because the two
+are not the same quantity and must not be put in one column.
 
 > `torch.cuda.max_memory_allocated()` never appears in a comparison. It excludes
 > both, has no OpenNN equivalent, and flatters PyTorch by construction. Keep it
@@ -101,6 +111,11 @@ Wh` would be a claim rather than an absence.
 The dense family's epochs are milliseconds, so its energy cell needs `--epochs`
 raised until the window clears about a second. That is a per-family setting,
 not a matter of taste.
+
+**CPU runs have no energy figure at all.** It would need a RAPL counter, which
+is not wired up, and the GPU's draw during a CPU run is an idle card. The
+artifact says `energy_measurable: false` rather than reporting that idle draw
+as though it were the workload's.
 
 ## 6. Sessions
 
