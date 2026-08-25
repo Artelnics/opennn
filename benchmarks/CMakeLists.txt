@@ -2,6 +2,15 @@
 # OpenNN benchmark drivers. Each source lives next to its write-up in
 # benchmarks/<benchmark>/ so the code ships with the methodology;
 # binaries land in build/bin alongside the examples.
+#
+# families/ holds the consolidated definitions (REORGANIZATION_PLAN.md
+# sections 4 and 8): one program per family, driven by mode, replacing the
+# per-metric copies below as each family is migrated. Both generations build
+# during the migration so a merged definition can be diffed against the
+# programs it replaces before those are removed.
+
+add_executable(dense_opennn
+    families/dense.cpp)
 
 add_executable(opennn_memory
     footprint/memory/opennn_memory.cpp)
@@ -72,6 +81,7 @@ add_executable(recurrent_lstm_forecasting_benchmark
     quality/recurrent-lstm-forecasting/recurrent_lstm_forecasting_benchmark.cpp)
 
 set(_benchmark_targets
+        dense_opennn
         opennn_memory
         opennn_speed
         opennn_higgs_infer
