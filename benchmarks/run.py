@@ -69,7 +69,7 @@ DATASETS = {
                            "test": root / "higgs/higgs_test.csv"},
     "cnn": lambda root: {"train": root / "imagenet_subset/train"},
     "transformer": lambda root: {"train": root / "wmt14/wmt14_pairs.txt"},
-    "recurrent": lambda root: {"train": root / "beijing_pm25/beijing_pm25.csv"},
+    "recurrent": lambda root: {"train": root / "beijing_pm25/beijing_pm25_forecasting.csv"},
 }
 
 def engine_command(family: str, engine: str) -> list[str]:
