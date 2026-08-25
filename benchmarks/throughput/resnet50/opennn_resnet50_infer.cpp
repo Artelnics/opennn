@@ -99,10 +99,6 @@ int main(int argc, char* argv[])
 
         // One batch - the first effective_batch samples - gathered once and
         // held on the GPU for every pass.
-        const vector<Index> input_feature_indices = dataset.get_feature_indices("Input");
-        const vector<Index> decoder_feature_indices = dataset.get_feature_indices("Decoder");
-        const vector<Index> target_feature_indices = dataset.get_feature_indices("Target");
-
         // Braces, not parens: vector<Index> v(size_t(n)) is a function
         // declaration, which is why this file stopped compiling.
         vector<Index> sample_indices(size_t(effective_batch), Index(0));
@@ -110,9 +106,7 @@ int main(int argc, char* argv[])
 
         Batch batch_data(effective_batch, &dataset, network.get_config());
         batch_data.fill(sample_indices,
-                        input_feature_indices,
-                        decoder_feature_indices,
-                        target_feature_indices,
+                        dataset.get_feature_selection(),
                         FillMode::Inference);
 
         const vector<TensorView>& inputs = batch_data.get_inputs();

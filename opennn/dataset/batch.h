@@ -24,6 +24,14 @@ class Dataset;
 
 enum class FillMode { Training, Validation, Inference };
 
+// Constant for a whole run, where the samples a batch draws change every call.
+struct FeatureSelection
+{
+    vector<Index> inputs;
+    vector<Index> decoder;
+    vector<Index> targets;
+};
+
 struct BatchSlot
 {
     bool has_data() const noexcept { return !shape.empty() && buffer.data(); }
@@ -71,10 +79,8 @@ struct Batch
              const EffectiveConfig&,
              bool prefetch_only = false);
 
-    void fill(const vector<Index>&,
-              const vector<Index>&,
-              const vector<Index>&,
-              const vector<Index>&,
+    void fill(const vector<Index>& sample_indices,
+              const FeatureSelection&,
               FillMode mode = FillMode::Training);
 
     const vector<TensorView>& get_inputs() const

@@ -196,10 +196,7 @@ VectorR gradient_with_stamped_arena(Loss& loss, float stamp)
     const Index samples_number = dataset->get_samples_number("Training");
 
     Batch batch(samples_number, dataset, neural_network->get_config());
-    batch.fill(dataset->get_sample_indices("Training"),
-               dataset->get_feature_indices("Input"),
-               dataset->get_feature_indices("Decoder"),
-               dataset->get_feature_indices("Target"));
+    batch.fill(dataset->get_sample_indices("Training"), dataset->get_feature_selection());
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagation back_propagation(samples_number, loss);

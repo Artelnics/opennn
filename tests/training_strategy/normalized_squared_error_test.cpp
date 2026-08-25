@@ -105,16 +105,14 @@ TEST(NormalizedSquaredErrorTest, MiniBatchErrorMeanMatchesFullBatch)
     loss.set_regularization_weight(0.0f);
 
     const vector<Index> training_indices        = dataset.get_sample_indices("Training");
-    const vector<Index> input_feature_indices   = dataset.get_feature_indices("Input");
-    const vector<Index> decoder_feature_indices = dataset.get_feature_indices("Decoder");
-    const vector<Index> target_feature_indices  = dataset.get_feature_indices("Target");
+    const FeatureSelection features = dataset.get_feature_selection();
 
     const auto error_over = [&](const vector<Index>& indices)
     {
         const Index count = ssize(indices);
 
         Batch batch(count, &dataset, neural_network.get_config());
-        batch.fill(indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
+        batch.fill(indices, features);
 
         ForwardPropagation forward_propagation(count, &neural_network);
         neural_network.forward_propagate(batch.get_inputs(), forward_propagation);

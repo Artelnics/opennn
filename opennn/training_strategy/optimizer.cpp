@@ -314,9 +314,7 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
 unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
     ThreadSafeQueue<Batch*>& empty_queue,
     const vector<vector<Index>>& batches,
-    const vector<Index>& input_feature_indices,
-    const vector<Index>& decoder_feature_indices,
-    const vector<Index>& target_feature_indices,
+    const FeatureSelection& features,
     FillMode mode,
     WorkerProfileCounters* profile_counters)
 {
@@ -325,14 +323,10 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
     auto session = make_unique<BatchPrefetchSession>(empty_queue, batches_number);
     BatchPrefetchSession* const session_ptr = session.get();
     const auto* const batches_ptr = &batches;
-    const auto* const input_indices = &input_feature_indices;
-    const auto* const decoder_indices = &decoder_feature_indices;
-    const auto* const target_indices = &target_feature_indices;
+    const auto* const features_ptr = &features;
 
     auto worker_body = [batches_ptr,
-                        input_indices,
-                        decoder_indices,
-                        target_indices,
+                        features_ptr,
                         session_ptr,
                         batches_number,
                         mode,
@@ -361,11 +355,7 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
                 }
 
                 batch->wait_h2d_complete();
-                batch->fill((*batches_ptr)[size_t(it)],
-                            *input_indices,
-                            *decoder_indices,
-                            *target_indices,
-                            mode);
+                batch->fill((*batches_ptr)[size_t(it)], *features_ptr, mode);
 
                 const auto t_fill1 = chrono::steady_clock::now();
                 if (!session_ptr->publish(it, batch))
@@ -613,9 +603,7 @@ void Optimizer::warmup_device_training(
     TrainingContext& training_context,
     ThreadSafeQueue<Batch*>& training_empty_queue,
     const vector<vector<Index>>& training_batches,
-    const vector<Index>& input_feature_indices,
-    const vector<Index>& decoder_feature_indices,
-    const vector<Index>& target_feature_indices,
+    const FeatureSelection& features,
     TrainingSession& training_session,
     OptimizerData& optimizer_data,
     ForwardPropagation* validation_forward_propagation,
@@ -726,18 +714,14 @@ void Optimizer::warmup_device_training(
             evaluate_epoch(*validation_forward_propagation,
                            *validation_empty_queue,
                            validation_warmup_batch,
-                           input_feature_indices,
-                           decoder_feature_indices,
-                           target_feature_indices,
+                           features,
                            training_session);
         }
 
         train_epoch(training_context,
                     training_empty_queue,
                     training_warmup_batch,
-                    input_feature_indices,
-                    decoder_feature_indices,
-                    target_feature_indices,
+                    features,
                     training_session,
                     optimizer_data);
 
@@ -811,9 +795,7 @@ TrainingResult Optimizer::train()
 
     const bool has_validation = dataset->has_validation();
 
-    const vector<Index> input_feature_indices = dataset->get_feature_indices(VariableRole::Input);
-    const vector<Index> target_feature_indices = dataset->get_feature_indices(VariableRole::Target);
-    const vector<Index> decoder_feature_indices = dataset->get_feature_indices(VariableRole::Decoder);
+    const FeatureSelection features = dataset->get_feature_selection();
 
     const vector<Index> training_sample_indices = dataset->get_sample_indices(SampleRole::Training);
     const vector<Index> validation_sample_indices = dataset->get_sample_indices(SampleRole::Validation);
@@ -902,9 +884,7 @@ TrainingResult Optimizer::train()
         warmup_device_training(training_context,
                                batch_pools.training_empty_queue,
                                training_batches,
-                               input_feature_indices,
-                               decoder_feature_indices,
-                               target_feature_indices,
+                               features,
                                training_session,
                                optimizer_data,
                                validation_fp,
@@ -917,9 +897,7 @@ TrainingResult Optimizer::train()
             warmup_device_training(training_context,
                                    batch_pools.training_empty_queue,
                                    training_batches,
-                                   input_feature_indices,
-                                   decoder_feature_indices,
-                                   target_feature_indices,
+                                   features,
                                    training_session,
                                    optimizer_data,
                                    validation_fp,
@@ -974,9 +952,7 @@ TrainingResult Optimizer::train()
             const Loss::EvaluationResult training_evaluation_result = train_epoch(training_context,
                                                                                  batch_pools.training_empty_queue,
                                                                                  training_batches,
-                                                                                 input_feature_indices,
-                                                                                 decoder_feature_indices,
-                                                                                 target_feature_indices,
+                                                                                 features,
                                                                                  training_session,
                                                                                  optimizer_data);
 
@@ -996,9 +972,7 @@ TrainingResult Optimizer::train()
                 const Loss::EvaluationResult validation_evaluation_result = evaluate_epoch(*validation_fp,
                                                                                           batch_pools.validation_queue(),
                                                                                           validation_batches,
-                                                                                          input_feature_indices,
-                                                                                          decoder_feature_indices,
-                                                                                          target_feature_indices,
+                                                                                          features,
                                                                                           training_session);
 
                 validation_error = validation_evaluation_result.error;
@@ -1060,8 +1034,7 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
     const vector<Index> training_sample_indices = dataset->get_sample_indices(SampleRole::Training);
     const vector<Index> validation_sample_indices = dataset->get_sample_indices(SampleRole::Validation);
 
-    const vector<Index> input_feature_indices = dataset->get_feature_indices(VariableRole::Input);
-    const vector<Index> target_feature_indices = dataset->get_feature_indices(VariableRole::Target);
+    const FeatureSelection features = dataset->get_feature_selection();
 
     set_names();
     ScopeExit scaling_cleanup([dataset] { dataset->clear_training_scaling(); });
@@ -1070,14 +1043,12 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
     context.training_batch = make_unique<Batch>(context.training_samples_number,
                                                 dataset,
                                                 neural_network->get_config());
-    context.training_batch->fill(training_sample_indices, input_feature_indices, {},
-                                 target_feature_indices, FillMode::Training);
+    context.training_batch->fill(training_sample_indices, features, FillMode::Training);
 
     context.validation_batch = make_unique<Batch>(context.validation_samples_number,
                                                   dataset,
                                                   neural_network->get_config());
-    context.validation_batch->fill(validation_sample_indices, input_feature_indices, {},
-                                   target_feature_indices, FillMode::Validation);
+    context.validation_batch->fill(validation_sample_indices, features, FillMode::Validation);
 
     context.training_forward_propagation =
         make_unique<ForwardPropagation>(
@@ -1401,9 +1372,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     BackPropagation& back_propagation,
     ThreadSafeQueue<Batch*>& empty_queue,
     const vector<vector<Index>>& batches,
-    const vector<Index>& input_feature_indices,
-    const vector<Index>& decoder_feature_indices,
-    const vector<Index>& target_feature_indices)
+    const FeatureSelection& features)
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
     const Index batches_number = Index(batches.size());
@@ -1425,10 +1394,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     const auto epoch_t0 = chrono::steady_clock::now();
     WorkerProfileCounters worker_profile;
 
-    auto session = start_batch_prefetch(empty_queue, batches,
-                                        input_feature_indices,
-                                        decoder_feature_indices,
-                                        target_feature_indices,
+    auto session = start_batch_prefetch(empty_queue, batches, features,
                                         FillMode::Training,
                                         profile_this ? &worker_profile : nullptr);
 
@@ -1733,9 +1699,7 @@ struct Optimizer::EpochLoopContext
 {
     ThreadSafeQueue<Batch*>* empty_queue = nullptr;
     const vector<vector<Index>>* batches = nullptr;
-    const vector<Index>* input_feature_indices = nullptr;
-    const vector<Index>* decoder_feature_indices = nullptr;
-    const vector<Index>* target_feature_indices = nullptr;
+    const FeatureSelection* features = nullptr;
 
     FillMode fill_mode = FillMode::Training;
     bool on_gpu = false;
@@ -1757,9 +1721,7 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
 
     auto session = start_batch_prefetch(*context.empty_queue,
                                         *context.batches,
-                                        *context.input_feature_indices,
-                                        *context.decoder_feature_indices,
-                                        *context.target_feature_indices,
+                                        *context.features,
                                         context.fill_mode,
                                         context.worker_profile);
 
@@ -1870,9 +1832,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
     TrainingContext& main_context,
     ThreadSafeQueue<Batch*>& empty_queue,
     const vector<vector<Index>>& batches,
-    const vector<Index>& input_feature_indices,
-    const vector<Index>& decoder_feature_indices,
-    const vector<Index>& target_feature_indices,
+    const FeatureSelection& features,
     TrainingSession& training_session,
     OptimizerData& optimizer_data)
 {
@@ -1940,11 +1900,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
         ForwardPropagation& tail_forward_propagation = tail.context->forward;
         BackPropagation& tail_back_propagation = tail.context->backward;
 
-        batch.fill(sample_indices,
-                   input_feature_indices,
-                   decoder_feature_indices,
-                   target_feature_indices,
-                   FillMode::Training);
+        batch.fill(sample_indices, features, FillMode::Training);
 
         if(on_gpu)
         {
@@ -2065,11 +2021,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
         {
             {
                 PROFILE_SCOPE_HOST("step:fill");
-                batch->fill(epoch_batches[size_t(iteration)],
-                            input_feature_indices,
-                            decoder_feature_indices,
-                            target_feature_indices,
-                            FillMode::Training);
+                batch->fill(epoch_batches[size_t(iteration)], features, FillMode::Training);
             }
 
             {
@@ -2123,9 +2075,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
                                        back_propagation,
                                        empty_queue,
                                        epoch_batches,
-                                       input_feature_indices,
-                                       decoder_feature_indices,
-                                       target_feature_indices);
+                                       features);
 
         merge_tail(epoch_result);
         finalize_epoch(epoch_result);
@@ -2142,9 +2092,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
     EpochLoopContext context{
         &empty_queue,
         &epoch_batches,
-        &input_feature_indices,
-        &decoder_feature_indices,
-        &target_feature_indices,
+        &features,
         FillMode::Training,
         true,
         neural_network->has_recurrent_layers(),
@@ -2239,9 +2187,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     ForwardPropagation& forward_propagation,
     ThreadSafeQueue<Batch*>& empty_queue,
     const vector<vector<Index>>& batches,
-    const vector<Index>& input_feature_indices,
-    const vector<Index>& decoder_feature_indices,
-    const vector<Index>& target_feature_indices,
+    const FeatureSelection& features,
     TrainingSession& training_session)
 {
     Loss::EvaluationResult epoch_result;
@@ -2268,11 +2214,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
         const Index tail_size = Index(sample_indices.size());
 
         Batch batch(tail_size, loss->get_dataset(), neural_network->get_config());
-        batch.fill(sample_indices,
-                   input_feature_indices,
-                   decoder_feature_indices,
-                   target_feature_indices,
-                   FillMode::Validation);
+        batch.fill(sample_indices, features, FillMode::Validation);
 
         if(on_gpu)
         {
@@ -2316,11 +2258,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
         for(Index iteration = 0; iteration < batches_number; ++iteration)
         {
-            batch->fill(epoch_batches[size_t(iteration)],
-                        input_feature_indices,
-                        decoder_feature_indices,
-                        target_feature_indices,
-                        FillMode::Validation);
+            batch->fill(epoch_batches[size_t(iteration)], features, FillMode::Validation);
 
             neural_network->forward_propagate(batch->get_inputs(),
                                               forward_propagation,
@@ -2354,9 +2292,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     EpochLoopContext context{
         &empty_queue,
         &epoch_batches,
-        &input_feature_indices,
-        &decoder_feature_indices,
-        &target_feature_indices,
+        &features,
         FillMode::Validation,
         true,
         neural_network->has_recurrent_layers(),

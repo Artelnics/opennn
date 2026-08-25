@@ -1841,10 +1841,7 @@ TEST_F(GpuComparison, DenseSingleOutputBackwardFoldsProducerRelu)
     loss.set_error(Loss::Error::MeanSquaredError);
 
     Batch batch(samples_number, &dataset, network.get_config());
-    batch.fill(dataset.get_sample_indices("Training"),
-               dataset.get_feature_indices("Input"),
-               dataset.get_feature_indices("Decoder"),
-               dataset.get_feature_indices("Target"));
+    batch.fill(dataset.get_sample_indices("Training"), dataset.get_feature_selection());
     batch.upload_to_device_batch_async(batch, device::get_transfer_stream());
     batch.wait_h2d_complete();
 

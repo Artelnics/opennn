@@ -183,10 +183,7 @@ TEST(LstmFusedPath, DISABLED_BenchmarkBoundary)
         loss.set_error(Loss::Error::MeanSquaredError);
 
         Batch batch(samples_number, &dataset, neural_network.get_config());
-        batch.fill(dataset.get_sample_indices("Training"),
-                   dataset.get_feature_indices("Input"),
-                   dataset.get_feature_indices("Decoder"),
-                   dataset.get_feature_indices("Target"));
+        batch.fill(dataset.get_sample_indices("Training"), dataset.get_feature_selection());
 
         ForwardPropagation forward_propagation(samples_number, &neural_network);
         BackPropagation back_propagation(samples_number, loss);

@@ -284,11 +284,11 @@ public:
 
     virtual bool supports_bf16_inputs() const { return true; }
 
+    FeatureSelection get_feature_selection() const;
+
     virtual void fill_batch(Batch&,
-                            const vector<Index>&,
-                            const vector<Index>&,
-                            const vector<Index>&,
-                            const vector<Index>&,
+                            const vector<Index>& sample_indices,
+                            const FeatureSelection&,
                             FillMode) const;
 
 protected:
@@ -296,20 +296,15 @@ protected:
     Dataset() = default;
 
     void fill_batch_host(Batch&,
-                         const vector<Index>&,
-                         const vector<Index>&,
-                         const vector<Index>&,
-                         const vector<Index>&,
+                         const vector<Index>& sample_indices,
+                         const FeatureSelection&,
                          FillMode) const;
 
-    bool can_device_gather(const Batch&,
-                           const vector<Index>& input_indices,
-                           const vector<Index>& target_indices) const;
+    bool can_device_gather(const Batch&, const FeatureSelection&) const;
 
     DeviceGather& start_device_gather(Batch&,
                                       const vector<Index>& sample_indices,
-                                      const vector<Index>& input_indices,
-                                      const vector<Index>& target_indices) const;
+                                      const FeatureSelection&) const;
 
     void set_default_variable_roles_forecasting() { set_default_variable_roles_implementation(true); }
     void set_default_variable_roles_implementation(bool);

@@ -248,17 +248,10 @@ void Batch::set(const Index new_batch_size,
 }
 
 void Batch::fill(const vector<Index>& sample_indices,
-                 const vector<Index>& input_indices,
-                 const vector<Index>& decoder_indices,
-                 const vector<Index>& target_indices,
+                 const FeatureSelection& features,
                  FillMode mode)
 {
-    dataset->fill_batch(*this,
-                        sample_indices,
-                        input_indices,
-                        decoder_indices,
-                        target_indices,
-                        mode);
+    dataset->fill_batch(*this, sample_indices, features, mode);
 }
 
 Batch::~Batch()

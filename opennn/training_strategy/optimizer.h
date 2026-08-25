@@ -183,9 +183,7 @@ protected:
     void warmup_device_training(TrainingContext&,
                                 ThreadSafeQueue<Batch*>&,
                                 const vector<vector<Index>>&,
-                                const vector<Index>&,
-                                const vector<Index>&,
-                                const vector<Index>&,
+                                const FeatureSelection&,
                                 TrainingSession&,
                                 OptimizerData&,
                                 ForwardPropagation* validation_forward_propagation = nullptr,
@@ -218,9 +216,7 @@ protected:
     unique_ptr<BatchPrefetchSession> start_batch_prefetch(
         ThreadSafeQueue<Batch*>&,
         const vector<vector<Index>>&,
-        const vector<Index>&,
-        const vector<Index>&,
-        const vector<Index>&,
+        const FeatureSelection&,
         FillMode,
         WorkerProfileCounters* profile_counters = nullptr);
 
@@ -290,25 +286,19 @@ protected:
                                            BackPropagation&,
                                            ThreadSafeQueue<Batch*>&,
                                            const vector<vector<Index>>&,
-                                           const vector<Index>&,
-                                           const vector<Index>&,
-                                           const vector<Index>&);
+                                           const FeatureSelection&);
 
     Loss::EvaluationResult train_epoch(TrainingContext&,
                                        ThreadSafeQueue<Batch*>&,
                                        const vector<vector<Index>>&,
-                                       const vector<Index>&,
-                                       const vector<Index>&,
-                                       const vector<Index>&,
+                                       const FeatureSelection&,
                                        TrainingSession&,
                                        OptimizerData&);
 
     Loss::EvaluationResult evaluate_epoch(ForwardPropagation&,
                                           ThreadSafeQueue<Batch*>&,
                                           const vector<vector<Index>>&,
-                                          const vector<Index>&,
-                                          const vector<Index>&,
-                                          const vector<Index>&,
+                                          const FeatureSelection&,
                                           TrainingSession&);
 
     Loss* loss = nullptr;

@@ -62,10 +62,8 @@ public:
                             int contiguous = -1) const override;
 
     void fill_batch(Batch&,
-                    const vector<Index>&,
-                    const vector<Index>&,
-                    const vector<Index>&,
-                    const vector<Index>&,
+                    const vector<Index>& sample_indices,
+                    const FeatureSelection&,
                     FillMode) const override;
 
     FeatureScaling prepare_training_scaling(

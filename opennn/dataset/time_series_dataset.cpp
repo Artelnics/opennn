@@ -490,19 +490,20 @@ FeatureScaling TimeSeriesDataset::prepare_training_scaling(
 
 void TimeSeriesDataset::fill_batch(Batch& batch,
                                    const vector<Index>& sample_indices,
-                                   const vector<Index>& input_indices,
-                                   const vector<Index>& decoder_indices,
-                                   const vector<Index>& target_indices,
+                                   const FeatureSelection& features,
                                    FillMode mode) const
 {
+    const vector<Index>& input_indices = features.inputs;
+    const vector<Index>& decoder_indices = features.decoder;
+    const vector<Index>& target_indices = features.targets;
+
     throw_if(Index(sample_indices.size()) != batch.batch_size,
              "fill_batch sample count does not match the batch size.");
 
     if (batch.input.type != Type::BF16
-        && can_device_gather(batch, input_indices, target_indices))
+        && can_device_gather(batch, features))
     {
-        DeviceGather& gather = start_device_gather(batch, sample_indices,
-                                                   input_indices, target_indices);
+        DeviceGather& gather = start_device_gather(batch, sample_indices, features);
         gather.window_past = past_time_steps;
         gather.window_future = future_time_steps;
         gather.window_features = ssize(input_indices);
@@ -512,8 +513,7 @@ void TimeSeriesDataset::fill_batch(Batch& batch,
         return;
     }
 
-    fill_batch_host(batch, sample_indices, input_indices, decoder_indices,
-                    target_indices, mode);
+    fill_batch_host(batch, sample_indices, features, mode);
 }
 
 MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index lags_number) const

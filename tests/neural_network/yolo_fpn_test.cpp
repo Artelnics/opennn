@@ -67,11 +67,8 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
     {
         const Index sn = dataset.get_samples_number("Training");
         const vector<Index> ti = dataset.get_sample_indices("Training");
-        const vector<Index> ii = dataset.get_feature_indices("Input");
-        const vector<Index> di = dataset.get_feature_indices("Decoder");
-        const vector<Index> tgti = dataset.get_feature_indices("Target");
         Batch batch_diag(sn, &dataset, neural_network.get_config());
-        batch_diag.fill(ti, ii, di, tgti);
+        batch_diag.fill(ti, dataset.get_feature_selection());
         ForwardPropagation fp_diag(sn, &neural_network);
         neural_network.forward_propagate(batch_diag.get_inputs(), fp_diag, true);
         BackPropagation bp_diag(sn, loss);

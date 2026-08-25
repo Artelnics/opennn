@@ -112,9 +112,8 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
              "Number of samples is zero.\n");
 
     const vector<Index> sample_indices = dataset->get_sample_indices(sample_role);
-    const vector<Index> input_feature_indices  = dataset->get_feature_indices(VariableRole::Input);
-    const vector<Index> decoder_feature_indices = dataset->get_feature_indices(VariableRole::Decoder);
-    const vector<Index> target_feature_indices = dataset->get_feature_indices(VariableRole::Target);
+    const FeatureSelection features = dataset->get_feature_selection();
+    const vector<Index>& target_feature_indices = features.targets;
 
     const Index target_width = dataset->get_target_shape().size();
 
@@ -150,11 +149,7 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
                               FillMode::Inference);
 
         Batch batch(n, dataset, host_config);
-        batch.fill(batch_indices,
-                   input_feature_indices,
-                   decoder_feature_indices,
-                   target_feature_indices,
-                   FillMode::Inference);
+        batch.fill(batch_indices, features, FillMode::Inference);
 
         const MatrixR batch_outputs = neural_network->calculate_outputs(batch.get_inputs());
 

@@ -1017,57 +1017,61 @@ pair<Index, Index> Dataset::count_binary_targets(const string& sample_role) cons
     return {negatives, positives};
 }
 
+FeatureSelection Dataset::get_feature_selection() const
+{
+    return {get_feature_indices(VariableRole::Input),
+            get_feature_indices(VariableRole::Decoder),
+            get_feature_indices(VariableRole::Target)};
+}
+
 void Dataset::fill_batch(Batch& batch,
                          const vector<Index>& sample_indices,
-                         const vector<Index>& input_indices,
-                         const vector<Index>& decoder_indices,
-                         const vector<Index>& target_indices,
+                         const FeatureSelection& features,
                          FillMode mode) const
 {
     throw_if(Index(sample_indices.size()) != batch.batch_size,
              "fill_batch sample count does not match the batch size.");
 
-    if (can_device_gather(batch, input_indices, target_indices))
+    if (can_device_gather(batch, features))
     {
-        start_device_gather(batch, sample_indices, input_indices, target_indices);
+        start_device_gather(batch, sample_indices, features);
         return;
     }
 
-    fill_batch_host(batch, sample_indices, input_indices, decoder_indices,
-                    target_indices, mode);
+    fill_batch_host(batch, sample_indices, features, mode);
 }
 
 bool Dataset::can_device_gather(const Batch& batch,
-                                const vector<Index>& input_indices,
-                                const vector<Index>& target_indices) const
+                                const FeatureSelection& features) const
 {
     return batch.uses_cuda() && is_device_resident() && batch.decoder.shape.empty()
-        && is_contiguous(input_indices) && is_contiguous(target_indices);
+        && is_contiguous(features.inputs) && is_contiguous(features.targets);
 }
 
 DeviceGather& Dataset::start_device_gather(Batch& batch,
                                            const vector<Index>& sample_indices,
-                                           const vector<Index>& input_indices,
-                                           const vector<Index>& target_indices) const
+                                           const FeatureSelection& features) const
 {
     DeviceGather& gather = batch.device_gather.emplace();
 
     gather.row_indices.resize(sample_indices.size());
     ranges::transform(sample_indices, gather.row_indices.begin(),
                       [](Index sample_index) { return int(sample_index); });
-    gather.input_col_offset = input_indices.empty() ? 0 : input_indices.front();
-    gather.target_col_offset = target_indices.empty() ? 0 : target_indices.front();
+    gather.input_col_offset = features.inputs.empty() ? 0 : features.inputs.front();
+    gather.target_col_offset = features.targets.empty() ? 0 : features.targets.front();
 
     return gather;
 }
 
 void Dataset::fill_batch_host(Batch& batch,
                               const vector<Index>& sample_indices,
-                              const vector<Index>& input_indices,
-                              const vector<Index>& decoder_indices,
-                              const vector<Index>& target_indices,
+                              const FeatureSelection& features,
                               FillMode mode) const
 {
+    const vector<Index>& input_indices = features.inputs;
+    const vector<Index>& decoder_indices = features.decoder;
+    const vector<Index>& target_indices = features.targets;
+
     const bool on_gpu = batch.uses_cuda();
 
     batch.device_gather.reset();
