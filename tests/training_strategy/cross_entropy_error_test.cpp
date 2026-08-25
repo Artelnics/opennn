@@ -92,10 +92,11 @@ TEST(CrossEntropyError2d, CalculateError)
     Batch batch(5, &dataset, neural_network.get_config());
 
     const vector<Index> training_indices = dataset.get_sample_indices("Training");
-    batch.fill(training_indices, input_features_indices, {}, target_features_indices);
+    batch.fill(training_indices,
+               FeatureSelection{input_features_indices, {}, target_features_indices});
 
     ForwardPropagation forward_propagation(5, &neural_network);
-    neural_network.forward_propagate(batch.get_inputs(), forward_propagation, false);
+    neural_network.forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Inference);
 
     const type error = loss.calculate_error(batch, forward_propagation).error;
 

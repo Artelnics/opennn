@@ -326,7 +326,6 @@ ModelExpression::ExportNames ModelExpression::collect_names() const
     return names;
 }
 
-
 void ModelExpression::check_parameters_are_finite() const
 {
     if (neural_network->get_parameters_device() != Device::CPU)
@@ -473,10 +472,6 @@ void ModelExpression::rename_spaced_var_definitions(vector<string>& lines)
     }
 }
 
-// The embedded C backend names every activation twice: once in the generated
-// `nn_activation` enum and once at each layer's call site. Both come from here
-// so the enumerator list and the constants cannot drift apart. Softmax is
-// absent by design -- it is applied to the whole output vector, not per neuron.
 const EnumMap<ActivationFunction>& embedded_activation_map()
 {
     using enum ActivationFunction;
@@ -495,13 +490,10 @@ const EnumMap<ActivationFunction>& embedded_activation_map()
     return map;
 }
 
-
 const vector<pair<ActivationFunction, ModelExpression::ActivationBodies>>& ModelExpression::activation_table()
 {
     using enum ActivationFunction;
 
-    // c_float_literal keeps the `f` suffix C needs; the other three languages
-    // take the bare decimal.
     static const string slope_c = c_float_literal(LEAKY_RELU_SLOPE);
     static const string slope = slope_c.substr(0, slope_c.size() - 1);
 
@@ -736,9 +728,6 @@ void ModelExpression::emit_c_main(ostringstream& buffer, const ExportNames& name
               "\tprintf(\"These are your outputs:\\n\");\n";
 
     for (Index i = 0; i < outputs_number; ++i)
-        // The name travels as a %s argument rather than inside the format
-        // string: a '%' in a column name ("Humidity (%)") made the exported
-        // printf read a conversion specification that is not there.
         buffer << "\tprintf(\"%s: %f \\n\", \"" << c_string_literal(output_names[i])
                << "\", outputs[" << i << "]);\n";
 
@@ -746,9 +735,6 @@ void ModelExpression::emit_c_main(ostringstream& buffer, const ExportNames& name
               "#endif // OPENNN_EXPORT_NO_MAIN\n";
 }
 
-// Escapes a feature name for use inside a C string literal: names reach the
-// generated driver verbatim, and a quote or a backslash in one made the
-// exported program fail to compile.
 string ModelExpression::c_string_literal(string_view text)
 {
     string out;
@@ -772,10 +758,6 @@ string ModelExpression::c_float_literal(float value)
 
     return text + "f";
 }
-
-// The C runtime the embedded backend ships with the model. Kept here rather
-// than inline in get_expression_c_embedded so the generated C is one
-// searchable block per routine instead of a wall of escapes mid-function.
 
 constexpr const char* nn_dense_forward_source =
     "static void nn_dense_forward(const float* inputs, int inputs_number,\n"
@@ -1055,15 +1037,10 @@ string ModelExpression::get_expression_c_embedded() const
                 {
                     const ScalerMethod scaler = scalers[size_t(f)];
 
-                    // Same slope/offset the layer itself runs on, so an
-                    // exported model and the library cannot drift apart.
                     const auto [slope, offset] = is_unscaling
                         ? unscaling_affine(scaler, descriptives[size_t(f)], min_range, max_range)
                         : scaling_affine(scaler, descriptives[size_t(f)], min_range, max_range);
 
-                    // Logarithm is the one method that is not affine: the
-                    // tables carry {1, 0} and the emitted code takes the log
-                    // before, or the exponential after, the affine step.
                     if(scaler == ScalerMethod::Logarithm)
                     {
                         (is_unscaling ? exp_post : log_pre)[size_t(f)] = 1;
@@ -1296,8 +1273,6 @@ string ModelExpression::get_expression_c_embedded() const
                 const MatrixMap recurrent_w_map =
                     parameter_views[2].as_matrix();
 
-                // MatrixMap is row-major, so element (f, j) already sits at
-                // f * hidden + j: the tables are the parameter buffers verbatim.
                 emit_float_array(
                     table_prefix + "_biases",
                     span(biases_map.data(), size_t(hidden)));
@@ -1396,8 +1371,6 @@ string ModelExpression::get_expression_c_embedded() const
                     const MatrixMap gate_u =
                         parameter_views[size_t(8 + gate)].as_matrix();
 
-                    // Every gate's buffer is already row-major and contiguous;
-                    // the tables only lay the four of them end to end.
                     ranges::copy_n(gate_biases.data(), hidden,
                                    lstm_biases.begin() + gate * hidden);
 
@@ -1530,9 +1503,6 @@ string ModelExpression::get_expression_c_embedded() const
 
         if(uses_affine_flags)
         {
-            // The library scales with log(max(x, EPSILON)); without the same
-            // clamp the exported firmware returned -inf/NaN for an input of
-            // zero, which is exactly where a log scaler is most fragile.
             buffer << "#define NN_LOG_EPSILON " << c_float_literal(EPSILON) << "\n";
             buffer
                 << "static void nn_affine_flags_forward(const float* inputs, const unsigned char* log_pre,\n"
@@ -1604,8 +1574,6 @@ string ModelExpression::get_expression_php() const
 
     string expression = build_expression();
 
-    // PHP function names are case-insensitive, so Tanh would collide with
-    // PHP's built-in tanh function.
     replace_all_word_appearances(expression, "Tanh", "OpenNNTanh");
 
     apply_name_mapping(expression, input_names, fixed_input_names);
@@ -1723,8 +1691,6 @@ string ModelExpression::get_expression_javascript() const
     replace(expression, "[", "_");
     replace(expression, "]", "_");
 
-    // The bracket replacement above already ran over the whole expression, so
-    // this is the same input the other three emitters split.
     const vector<string> lines = prepare_body_lines(expression);
 
     const bool has_softmax = expression.find("Softmax") != string::npos;
@@ -1822,11 +1788,6 @@ void ModelExpression::emit_js_outputs_html(ostringstream& buffer, bool use_categ
                << "<td class=\"neural-cell\">\n"
                << "<select id=\"category_select\" onchange=\"updateSelectedCategory()\">\n";
         for (Index i = 0; i < outputs_number; ++i)
-            // The value carries the sanitized id, because that is what
-            // updateSelectedCategory compares against and what the hidden
-            // input is keyed by; the label keeps the readable name. With the
-            // raw name in both places any output whose name is not already an
-            // identifier never matched and the Value box stayed empty.
             buffer << "<option value=\"" << fixes_output_names[i] << "\">"
                    << output_names[i] << "</option>\n";
         buffer << "</select>\n"
@@ -1905,8 +1866,6 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
         buffer << "\tvar " << fixes_feature_names[i] << " = +inputs[" << to_string(i) << "];\n";
     buffer << "\n";
 
-    // "log" belongs here: a Logarithm scaler emits a bare log(x), which is not
-    // a global in JavaScript, so the exported page threw a ReferenceError.
     static const char* const math_keywords[] = {"exp", "log", "tanh", "max", "min"};
 
     const LanguageSyntax syntax = language_syntax(ProgrammingLanguage::JavaScript);
@@ -2010,10 +1969,6 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
 
     buffer << "\tdef calculate_outputs(self, inputs):\n";
 
-    // fix_names, not replace_reserved_keywords: an empty name becomes the
-    // literal "variable" through the latter, while build_expression named that
-    // same input input_{i} - so the body referred to one identifier and the
-    // unpacking defined another, and every unnamed input raised NameError.
     const vector<string> python_mapped = fix_names(input_names, "input_");
 
     for (size_t i = 0; i < input_names.size(); ++i)
@@ -2109,7 +2064,6 @@ string ModelExpression::replace_reserved_keywords(const string& input)
     };
 
     static const unordered_set<string> reserved_words = {
-        // C / C++
         "alignas", "alignof", "asm", "auto", "bitand", "bitor", "bool", "case", "catch",
         "char", "char8_t", "char16_t", "char32_t", "compl", "concept", "const", "consteval",
         "constexpr", "constinit", "const_cast", "decltype", "default", "delete", "do",
@@ -2120,21 +2074,17 @@ string ModelExpression::replace_reserved_keywords(const string& input)
         "static_assert", "static_cast", "struct", "switch", "template", "this",
         "thread_local", "throw", "typedef", "typeid", "typename", "union", "unsigned",
         "using", "virtual", "void", "volatile", "wchar_t", "xor",
-        // Python
         "False", "None", "True", "and", "as", "assert", "async", "await", "break", "class",
         "continue", "def", "del", "elif", "else", "except", "finally", "for", "from",
         "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass",
         "print", "raise", "return", "try", "while", "with", "yield",
-        // JavaScript
         "Infinity", "NaN", "arguments", "debugger", "eval", "extends", "function",
         "implements", "instanceof", "interface", "let", "null", "package", "super",
         "typeof", "undefined", "var",
-        // PHP
         "array", "clone", "die", "echo", "elseif", "empty", "enddeclare", "endfor",
         "endforeach", "endif", "endswitch", "endwhile", "exit", "final", "fn", "foreach",
         "include", "include_once", "isset", "list", "match", "readonly", "require",
         "require_once", "trait", "unset", "use",
-        // Identifiers emitted by the exporters themselves
         "abs", "calculate_batch_output", "calculate_outputs", "exp", "input_batch",
         "inputs", "log", "main", "max", "max_out", "min", "nn", "np", "out",
         "output_batch", "outputs", "params", "pd", "pow", "self", "sum", "sum_val", "tanh"
@@ -2142,10 +2092,6 @@ string ModelExpression::replace_reserved_keywords(const string& input)
 
     string out;
 
-    // No '$' special case: it used to seed `out` with the whole raw name and
-    // then append every character again, so "$price" came out as "$priceprice"
-    // - not an identifier in any target language. The loop below already drops
-    // the '$' and leaves a clean name.
     for (const char character : input)
     {
         const auto it = char_replacements.find(character);
@@ -2246,10 +2192,6 @@ vector<string> ModelExpression::fix_names(const vector<string>& names, const str
 {
     vector<string> fixed(names.size());
 
-    // Uniqueness matters as much as validity: replace_reserved_keywords drops
-    // every character it does not recognise, so "Temp (C)" and "Temp [C]" both
-    // collapse to TempC and the second assignment silently shadowed the first
-    // in the exported code.
     unordered_set<string> emitted;
 
     for (size_t i = 0; i < names.size(); ++i)

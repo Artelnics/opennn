@@ -21,21 +21,6 @@ class NeuralNetwork;
 
 struct BackPropagation
 {
-    // The deltas either live in memory somebody else planned - pass that arena
-    // and the byte offsets for this layout - or in an arena of our own. This is
-    // the same choice ForwardPropagation::set offers through its external_storage,
-    // and deliberately not spelled as a ForwardPropagation: what is wanted here is
-    // a region and a list of offsets, not a forward pass.
-    // The Loss is retained, mirroring the NeuralNetwork that ForwardPropagation
-    // keeps, so holders of a BackPropagation can reach the network without being
-    // handed it separately. It is a borrowed pointer: a BackPropagation must not
-    // outlive the Loss it was built from, and must be re-set if that Loss is
-    // pointed at a different network.
-    // external_gradient lets a second context (the remainder batch) write its
-    // parameter gradients into the main context's buffer instead of owning a
-    // parameters-sized one of its own. Safe because the two never run at the
-    // same time and each step's weight gradient is an overwrite, not an
-    // accumulation - the tail runs after the whole batches have been consumed.
     BackPropagation(Index, Loss&,
                     Buffer* external_arena = nullptr,
                     span<const Index> arena_offsets = {},
@@ -51,16 +36,10 @@ struct BackPropagation
     Loss* get_loss() const noexcept { return loss; }
     NeuralNetwork* get_neural_network() const;
 
-    // Delta lifetimes expressed on the forward timeline, so ForwardPropagation can
-    // co-plan them without knowing what they are.
     static vector<MemoryPoolEntry> make_co_planned_lifetimes(Loss&, Index batch_size);
 
     void accumulate_output_deltas(size_t);
 
-    // The delta a layer's backward must add into the input delta it writes for
-    // the given input (empty when there is none): the other consumer's delta of
-    // a producer that two layers read, folded into this layer's dgrad epilogue
-    // instead of a separate add over the whole tensor. See plan_delta_addends.
     const TensorView& input_delta_addend(size_t layer, size_t input) const noexcept;
 
     TensorView& get_output_delta();
@@ -69,19 +48,13 @@ struct BackPropagation
     Buffer gradient;
 
     Buffer arena;
-    // Opaque backend scratch kept with this backward execution, never a layer.
     vector<Buffer> layer_scratch_storage;
-    // Scratch shared by non-overlapping stages of this backward execution,
-    // such as YOLO target assembly and optimizer reductions.
     Buffer execution_workspace{Device::CUDA};
     vector<TensorView> output_deltas;
     vector<vector<TensorView>> slots;
 
     Index batch_size = 0;
 
-    // What the last batch produced. Nothing here describes the delta layout or
-    // the arena: these are outputs of running a batch, reset before each one,
-    // and they are grouped so that is visible from the declaration.
     struct Metrics
     {
         float error = 0.0f;
@@ -100,8 +73,6 @@ private:
     struct DeltaEntry
     {
         Index layer;
-        // Slot 0 is the layer's output delta; slot 1+i is the delta for its i-th
-        // input. That offset is why slots[] is sized backward_specs[i].size() + 1.
         size_t slot;
         TensorSpec spec;
         Index first_step;
@@ -123,11 +94,6 @@ private:
         DeltaLayout layout;
     };
 
-    // Planning-only instance: make_co_planned_lifetimes must produce the delta
-    // layout before any BackPropagation is built into the arena that layout sizes,
-    // so it borrows a Loss and a batch size into an object that allocates nothing.
-    // TrainingContext holds one as a member and sets it once the forward arena
-    // it binds into exists.
     BackPropagation() = default;
 
     friend struct TrainingContext;
@@ -149,15 +115,8 @@ private:
                      uint8_t* base, Device device,
                      const vector<vector<TensorSpec>>&);
 
-    // For each layer, the (consumer layer, input position) pairs that read its
-    // output. Built by build_delta_plan, then read while binding the deltas and
-    // again by accumulate_output_deltas on every backward pass, so it outlives the
-    // plan that produced it and is stored here rather than passed around.
     vector<vector<pair<size_t, size_t>>> consumer_edges;
 
-    // Per (layer, input): the addend view, if that layer folds another
-    // consumer's delta; per producer: the (consumer, input) edge that was folded
-    // and must not be accumulated again. Both filled by plan_delta_addends.
     vector<vector<TensorView>> input_delta_addends;
     vector<pair<size_t, size_t>> folded_consumer_edge;
 

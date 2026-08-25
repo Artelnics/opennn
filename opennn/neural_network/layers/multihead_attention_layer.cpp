@@ -227,10 +227,6 @@ void MultiHeadAttention::apply_input_shape(const Shape& new_input_shape)
         return;
     }
 
-    // The incoming shape describes the QUERY sequence; a configured
-    // cross-attention layer keeps its own source length, which used to be
-    // overwritten with the query length here and silently turned the layer into
-    // self-attention.
     const Index new_source_sequence_length =
         source_sequence_length > 0 ? source_sequence_length : new_input_shape[0];
 

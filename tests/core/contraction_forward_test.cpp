@@ -34,7 +34,7 @@ TEST(ContractionForwardTest, LargeBatchDenseForwardMatchesTheDefinition)
                                 Shape{batch, inputs_number}, Type::FP32);
 
     ForwardPropagation forward_propagation(batch, &network);
-    network.forward_propagate({input_view}, forward_propagation, false);
+    network.forward_propagate({input_view}, forward_propagation, ForwardPropagationMode::Inference);
 
     const MatrixMap outputs = forward_propagation.get_outputs().as_matrix();
 

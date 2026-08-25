@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
         {
             TensorView view(const_cast<float*>(inputs.data()) + i * inputs_number,
                             Shape{batch, inputs_number}, Type::FP32);
-            network.forward_propagate({view}, forward_propagation, false);
+            network.forward_propagate({view}, forward_propagation, ForwardPropagationMode::Inference);
             const MatrixMap outputs = forward_propagation.get_outputs().as_matrix();
 
             for (Index r = 0; r < batch; ++r)

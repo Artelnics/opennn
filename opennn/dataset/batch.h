@@ -24,10 +24,16 @@ class Dataset;
 
 enum class FillMode { Training, Validation, Inference };
 
+// Constant for a whole run, where the samples a batch draws change every call.
+struct FeatureSelection
+{
+    vector<Index> inputs;
+    vector<Index> decoder;
+    vector<Index> targets;
+};
+
 struct BatchSlot
 {
-    // A slot carries data once it has both a shape and a buffer behind it;
-    // an unused slot (a network with no decoder input, say) has neither.
     bool has_data() const noexcept { return !shape.empty() && buffer.data(); }
 
     Buffer buffer;
@@ -73,10 +79,8 @@ struct Batch
              const EffectiveConfig&,
              bool prefetch_only = false);
 
-    void fill(const vector<Index>&,
-              const vector<Index>&,
-              const vector<Index>&,
-              const vector<Index>&,
+    void fill(const vector<Index>& sample_indices,
+              const FeatureSelection&,
               FillMode mode = FillMode::Training);
 
     const vector<TensorView>& get_inputs() const
@@ -125,9 +129,6 @@ struct Batch
     TensorView target_view_cache;
 
     optional<DeviceGather> device_gather;
-    // Pinned, like every other host staging buffer here: the per-step index
-    // upload behind the device gather is a cudaMemcpyAsync, and from pageable
-    // memory that goes through a driver bounce buffer and blocks the host.
     device::PinnedBuffer gather_indices_host;
     Buffer gather_indices_device{Device::CUDA};
 };

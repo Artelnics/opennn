@@ -196,10 +196,7 @@ VectorR gradient_with_stamped_arena(Loss& loss, float stamp)
     const Index samples_number = dataset->get_samples_number("Training");
 
     Batch batch(samples_number, dataset, neural_network->get_config());
-    batch.fill(dataset->get_sample_indices("Training"),
-               dataset->get_feature_indices("Input"),
-               dataset->get_feature_indices("Decoder"),
-               dataset->get_feature_indices("Target"));
+    batch.fill(dataset->get_sample_indices("Training"), dataset->get_feature_selection());
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagation back_propagation(samples_number, loss);
@@ -210,7 +207,7 @@ VectorR gradient_with_stamped_arena(Loss& loss, float stamp)
         fill_n(back_propagation.arena.as<float>(),
                size_t(back_propagation.arena.size_in_floats()), stamp);
 
-    neural_network->forward_propagate(batch.get_inputs(), forward_propagation, true);
+    neural_network->forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Training);
     loss.back_propagate(batch, forward_propagation, back_propagation);
 
     back_propagation.gradient.migrate_to(Device::CPU);

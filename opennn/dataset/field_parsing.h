@@ -16,11 +16,6 @@
 namespace opennn
 {
 
-// Reading delimited text files and deciding what their fields mean. The type
-// detection below is what turns a raw CSV column into a Numeric, Binary or
-// DateTime variable, so it lives with the datasets that make that decision
-// rather than with the generic file machinery in core/io_utilities.
-
 class CsvReader
 {
 public:

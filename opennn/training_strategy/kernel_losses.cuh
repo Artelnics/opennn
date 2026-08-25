@@ -9,8 +9,6 @@ template<typename TIn, typename TOut>
 void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target,
                             float scale, TOut* output);
 
-// One-pass MSE training operation: accumulate sum(diff^2)/(2*batch) directly
-// into the epoch metric while writing diff/batch to the output delta.
 template<typename TIn, typename TOut>
 void mean_squared_error_metrics_gradient_cuda(const Index n, const Index batch,
                                               const TIn* input, const float* target,
@@ -40,12 +38,9 @@ void weighted_squared_error_gradient_cuda(const Index, T*, const float*, const T
 template<typename T>
 void cross_entropy_3d_multiple_forward_cuda(const Index, const int, const T*, const float*, float*, float*, float*, const float);
 
-// sums[0..2] += (loss, active tokens, argmax hits) over the batch; sums zeroed by the caller.
 template<typename T>
 void cross_entropy_3d_metrics_cuda(const Index, const int, const T*, const float*, const float, float*);
 
-// The scale is 1 / active_count_device[0] when that pointer is given (0 for an
-// empty count), the host scale otherwise.
 template<typename T>
 void cross_entropy_3d_multiple_backward_cuda(const Index, const int, const T*, const float*, T*, const float scale,
                                              const float* active_count_device = nullptr);

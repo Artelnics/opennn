@@ -229,7 +229,7 @@ TEST(Qwen3NetworkTest, CompactOutputWindowMatchesSelectedFullRowsCpu)
     vector<TensorView> inputs = {
         TensorView(window.data(), {1, Index(ids.size())})
     };
-    network->forward_propagate(inputs, selected, false);
+    network->forward_propagate(inputs, selected, ForwardPropagationMode::Inference);
 
     ASSERT_EQ(selected.get_outputs().get_shape()[1], 4);
     for (Index row = 0; row < 4; ++row)
@@ -406,7 +406,7 @@ TEST(Qwen3NetworkTest, DecodeGraphSurvivesFiveSuffixPrefillsGpu)
 
         --position;
         decode.past_length = position;
-        network.forward_propagate(decode_inputs, decode, false);
+        network.forward_propagate(decode_inputs, decode, ForwardPropagationMode::Inference);
         ++position;
         const vector<float> eager_logits = logits_row(decode, 0);
 

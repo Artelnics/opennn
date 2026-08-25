@@ -1201,7 +1201,7 @@ int main(int argc, char* argv[])
                                {1, input.dimension(1), input.dimension(2), input.dimension(3)},
                                Type::FP32)
                 };
-                yolo_network.forward_propagate(input_views, forward_propagation, false);
+                yolo_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
                 vector<vector<float>> fpn_cpu_buffers;
                 const vector<YoloFpnHead> fpn_heads =
@@ -1662,7 +1662,7 @@ input_shape[1],
                                    {1, input.dimension(1), input.dimension(2), input.dimension(3)},
                                    Type::FP32)
                     };
-                    yolo_network.forward_propagate(iv, fp_m, false);
+                    yolo_network.forward_propagate(iv, fp_m, ForwardPropagationMode::Inference);
 
                     vector<vector<float>> cpu_bufs;
                     const bool is_v8_map = (head_style == YoloNetwork::HeadStyle::FPNv8);

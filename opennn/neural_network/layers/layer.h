@@ -57,17 +57,8 @@ public:
 
     LayerType get_type() const noexcept { return layer_type; }
 
-    // Which input ranks this layer can represent. Callers that build a shape
-    // rather than receive one - neuron selection, for instance - must ask before
-    // setting it, because set_input_shape below throws on a rank a layer cannot
-    // take. The base refuses everything so a layer that forgets to declare its
-    // ranks fails loudly the first time one is set, instead of accepting a shape
-    // it cannot honour.
     virtual bool accepts_input_rank(Index) const { return false; }
 
-    // Validation lives here and nowhere else, so no layer can omit it. What a
-    // layer does with an accepted shape is its own business - apply_input_shape
-    // below - but whether the shape is acceptable at all is answered uniformly.
     void set_input_shape(const Shape& new_input_shape)
     {
         throw_if(!new_input_shape.empty() && !accepts_input_rank(new_input_shape.get_rank()),
@@ -106,9 +97,6 @@ public:
     virtual bool preserves_output_delta_during_backward() const noexcept { return false; }
     virtual bool allows_input_delta_alias() const noexcept { return false; }
 
-    // True if this layer's backward can add a second delta into the input delta
-    // it writes for the given input (BackPropagation::input_delta_addend), so a
-    // producer read by two layers gets its summed delta without a separate add.
     virtual bool folds_input_delta_addend(size_t) const noexcept { return false; }
 
     virtual Shape get_input_shape() const noexcept { return input_shape; }
@@ -124,19 +112,16 @@ public:
     virtual bool skip_for_pre_scaled_input() const noexcept { return false; }
     virtual bool uses_sequence_position() const noexcept { return false; }
 
-    // Whether an FP32 input may be narrowed to BF16 while it is staged for
-    // this input slot. Layers that interpret values as exact identifiers must
-    // reject the cast even when the network uses BF16 activations.
     virtual bool allows_bf16_input_cast(size_t) const noexcept { return true; }
 
     Index get_inputs_number() const noexcept { return get_input_shape().size(); }
 
     Index get_outputs_number() const { return get_output_shape().size(); }
 
-    virtual void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+    virtual void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
     {
         for (Operator* op : get_operators())
-            op->forward_propagate(forward_propagation, layer, is_training);
+            op->forward_propagate(forward_propagation, layer, pass);
     }
 
     virtual void back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t i) const
@@ -207,14 +192,10 @@ private:
 
 protected:
 
-    // The layer's own reaction to an input shape that has already been
-    // accepted. Assigning input_shape suits most layers; those that decompose
-    // the shape or rebuild operators from it override this.
     virtual void apply_input_shape(const Shape& new_input_shape)
     {
         input_shape = new_input_shape;
     }
-
 
     static bool refresh_feature_storage(Buffer& storage, bool& dirty, Device device,
                                         Index features, Index columns,

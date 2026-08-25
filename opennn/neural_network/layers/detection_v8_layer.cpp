@@ -35,7 +35,7 @@ void DetectionV8Operator::set(const Shape& input_shape, Index new_reg_max)
     classes_number = input_shape[2] - box_ch;
 }
 
-void DetectionV8Operator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void DetectionV8Operator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
 {
     const TensorView& input  = get_input(forward_propagation, layer);
     TensorView&       output = get_output(forward_propagation, layer);

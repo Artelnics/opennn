@@ -148,7 +148,6 @@ public:
     Index count_rows_with_nan() const { return data.array().isNaN().rowwise().any().count(); }
     Index count_nan() const { return data.array().isNaN().count(); }
 
-
     void set_data_random();
     void set_data_integer(const Index);
     void set_data_binary_classification();

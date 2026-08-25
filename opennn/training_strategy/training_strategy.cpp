@@ -122,9 +122,6 @@ TrainingResult TrainingStrategy::train()
 
 void TrainingStrategy::to_JSON(JsonWriter& printer) const
 {
-    // Both are reset whenever the network is cleared, and a default-constructed
-    // strategy has neither, so save() used to dereference null instead of
-    // reporting the state - train() in this class already guards the same way.
     throw_if(!loss || !optimizer,
              "TrainingStrategy::to_JSON: the loss and the optimizer must be set.");
 

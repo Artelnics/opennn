@@ -37,10 +37,6 @@ class NeuralNetwork
 
 public:
 
-    // Stages the parameters on the host for as long as it lives, and puts them
-    // back on the device when it dies - however it dies. Anything that reads
-    // parameter values directly (expression export, reporting) needs this;
-    // doing it by hand leaves them stranded on the host when a read throws.
     struct HostParametersGuard
     {
         explicit HostParametersGuard(NeuralNetwork& n)
@@ -49,10 +45,6 @@ public:
             if (was_on_device) network.copy_parameters_host();
         }
 
-        // A destructor is noexcept: an upload that throws here - a sticky CUDA
-        // error, or an out-of-memory - would terminate instead of letting the
-        // original failure propagate. The state is already inconsistent at that
-        // point; losing the diagnostic on top of it helps nobody.
         ~HostParametersGuard()
         {
             if (!was_on_device) return;
@@ -75,7 +67,6 @@ public:
     NetworkTask get_task() const noexcept { return task; }
     void set_task(NetworkTask new_task) noexcept { task = new_task; }
 
-    // Returns the new layer's index, which is what every builder needs next.
     Index add_layer(unique_ptr<Layer>,
                     const vector<Index>& = {});
 
@@ -132,10 +123,7 @@ public:
     bool is_empty() const noexcept { return layers.empty(); }
 
     float* get_parameters_data() { return parameters.as<float>(); }
-    // Not noexcept: Buffer::as validates its state and throws on an
-    // inconsistent one, and declaring otherwise turned that into a terminate.
     const float* get_parameters_data() const { return parameters.as<float>(); }
-    // Non-owning Eigen views over the full aligned parameter buffer.
     VectorMap get_parameters_map() &
     {
         return parameters.as_vector();
@@ -144,9 +132,6 @@ public:
     {
         return parameters.as_vector();
     }
-    // Floats in the parameter buffer, including the per-layer alignment padding.
-    // This is >= get_parameters_number(), which is the logical sum over layers;
-    // index buffers with this one, count parameters with that one.
     Index get_parameters_buffer_size() const noexcept { return parameters.size_in_floats(); }
     Device get_parameters_device() const noexcept { return parameters.get_device(); }
     float* get_states_data() { return states.as<float>(); }
@@ -199,7 +184,6 @@ public:
     Shape get_output_shape() const;
 
     ActivationFunction get_output_activation() const;
-    // Logical parameter count, summed over layers, without alignment padding.
     Index get_parameters_number() const;
 
     void set_parameters(const VectorR&);
@@ -209,29 +193,48 @@ public:
     void set_parameters_pytorch() { initialize_parameters(&Operator::set_parameters_pytorch); }
     void link_parameters();
 
-    // True once release_bf16_fp32_parameter_master_for_inference() has handed
-    // the fp32 master back to the allocator: the CUDA parameter view is alive
-    // but non-owning, and only the quantized mirror holds real weights.
-    bool fp32_master_released() const noexcept
+    enum class ParameterStorage
     {
-        return parameters.get_device() == Device::CUDA && !parameters.owns_memory();
+        Host,
+        DeviceMaster,
+        DeviceMasterWithMirror,
+        DeviceCompact
+    };
+
+    ParameterStorage get_parameter_storage() const noexcept
+    {
+        if (parameters.get_device() != Device::CUDA)
+            return ParameterStorage::Host;
+
+        if (!parameters.owns_memory())
+            return ParameterStorage::DeviceCompact;
+
+        return parameters_bf16_mirror.empty() && parameters_int8_storage.empty()
+            ? ParameterStorage::DeviceMaster
+            : ParameterStorage::DeviceMasterWithMirror;
     }
 
-    // Points every layer's gradient views at this buffer, and does nothing when
-    // they already point there. Training alternates between propagation contexts
-    // - the full batch and the remainder batch - so the link belongs to the
-    // backward pass being run, not to whichever BackPropagation was built last.
+    bool fp32_master_released() const noexcept
+    {
+        return get_parameter_storage() == ParameterStorage::DeviceCompact;
+    }
+
+    // Whether the derived storage this precision needs has been built yet. A
+    // separate question from where the master lives: FP32 needs nothing derived,
+    // so it is always ready.
+    bool low_precision_storage_ready() const noexcept
+    {
+        if (config.training_type == Type::BF16) return !parameters_bf16_mirror.empty();
+        if (config.training_type == Type::INT8) return !parameters_int8_storage.empty();
+        return true;
+    }
+
     void link_gradients(const Buffer&) const;
 
     void link_states();
     void link_states(Device);
     MatrixR calculate_outputs(const vector<TensorView>&);
 
-    // Writes the result into outputs, reusing its storage when the shape
-    // already matches. Allocating a fresh result per call dominates GPU
-    // inference once the output is large, so prefer this overload when calling
-    // repeatedly. When the result can stay on the device,
-    // calculate_outputs_resident avoids the device-to-host copy entirely.
     void calculate_outputs(const vector<TensorView>&, MatrixR& outputs);
 
     TensorView calculate_outputs_resident(const vector<TensorView>&,
@@ -244,10 +247,6 @@ public:
 
     MatrixR calculate_outputs(const Tensor4&);
 
-    // Buffer-reusing counterparts of the three overloads above. Prefer these
-    // when calling repeatedly: the by-value versions must allocate a result
-    // every call, which costs more than the device-to-host copy itself once
-    // outputs are large.
     void calculate_outputs(const MatrixR&, MatrixR& outputs);
 
     void calculate_outputs(const Tensor3&, MatrixR& outputs);
@@ -274,11 +273,11 @@ public:
 
     void forward_propagate(const vector<TensorView>&,
                           ForwardPropagation&,
-                          bool = false) const;
+                          ForwardPropagationMode = ForwardPropagationMode::Inference) const;
 
     void forward_propagate(const vector<TensorView>&,
                           ForwardPropagation&,
-                          bool,
+                          ForwardPropagationMode,
                           Index,
                           Index) const;
 
@@ -323,6 +322,19 @@ protected:
 
     vector<vector<Index>> source_layers;
 
+    struct DeviceResidency
+    {
+        const void* parameters = nullptr;
+        const void* bf16_mirror = nullptr;
+        const void* fp32_inference = nullptr;
+        const void* int8_storage = nullptr;
+        const void* states = nullptr;
+
+        friend bool operator==(const DeviceResidency&, const DeviceResidency&) = default;
+    };
+
+    DeviceResidency get_device_residency() const noexcept;
+
     Buffer parameters;
     Buffer parameters_bf16_mirror{Device::CUDA};
     Buffer parameters_fp32_inference_storage{Device::CUDA};
@@ -341,9 +353,6 @@ protected:
     mutable Index first_trainable_cache_ = -1;
     mutable Index last_trainable_cache_  = -1;
 
-    // Base address the layers' gradient views were last linked to. Reset
-    // wherever the layer set changes, since the same address can come back from
-    // the allocator for a different parameter layout.
     mutable const void* linked_gradient_base = nullptr;
 
 private:

@@ -6,10 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// The call into FlashAttention-2's kernels: fill its parameter struct from the
-// tensors attention already holds, and pick the instantiation for the head
-// dimension and the mask. Everything FA2 declares stays inside this file.
-
 #include "opennn/core/cuda/flash_attention.cuh"
 
 #ifdef OPENNN_HAS_CUDA
@@ -34,9 +30,6 @@ static int round_multiple(Index value, int multiple)
     return int((value + multiple - 1) / multiple * multiple);
 }
 
-// The head dimensions this build has kernels for; the build sets one macro per
-// entry of OpenNN_FLASH_ATTENTION_HEAD_DIMS, and the ones left out are not
-// merely refused here, they are not linked in at all.
 static bool head_dimension_built(Index head_dimension)
 {
     switch (head_dimension)
@@ -54,9 +47,6 @@ static bool head_dimension_built(Index head_dimension)
     }
 }
 
-// Whether a kernel image on this device exists: a cubin built for a capability
-// runs on any later minor revision of the same major one, so a build for sm_80
-// covers sm_86 and sm_89, and nothing covers a different major.
 static bool architecture_built()
 {
     static const bool built = []
@@ -89,7 +79,6 @@ static bool architecture_built()
     return built;
 }
 
-// Everything the two directions set the same way.
 static void set_parameters(FLASH_NAMESPACE::Flash_fwd_params& parameters, const Problem& problem,
                            const void* query, const void* key, const void* value, void* output,
                            float* softmax_lse)
@@ -133,8 +122,6 @@ static void set_parameters(FLASH_NAMESPACE::Flash_fwd_params& parameters, const 
     parameters.scale_softmax = problem.scale;
     parameters.scale_softmax_log2 = problem.scale * 1.44269504088896340736f;
 
-    // No dropout: the kernels are compiled without it, and the rung refuses a
-    // layer that asks for it.
     parameters.p_dropout = 1.0f;
     parameters.p_dropout_in_uint8_t = 255;
     parameters.rp_dropout = 1.0f;
@@ -148,13 +135,6 @@ static void set_parameters(FLASH_NAMESPACE::Flash_fwd_params& parameters, const 
     parameters.unpadded_lse = false;
     parameters.seqlenq_ngroups_swapped = false;
 
-    // A padded batch, without packing the tokens: the tensors keep one
-    // sequence-length slot per sample, and cu_seqlens_k carries how many keys
-    // of each slot are real rather than where each sample starts, which is what
-    // is_seqlens_k_cumulative == false means. That combination is the only one
-    // that leaves the offsets dense and still clamps the key range, and it also
-    // takes the launch off the even-shape fast path, which is what makes the
-    // last block of keys mask itself.
     if (problem.source_lengths)
     {
         parameters.cu_seqlens_k = const_cast<int*>(problem.source_lengths);
@@ -176,8 +156,6 @@ static void run_backward(FLASH_NAMESPACE::Flash_bwd_params& parameters, bool cau
     else        FLASH_NAMESPACE::run_mha_bwd_<cutlass::bfloat16_t, HeadDimension, false>(parameters, stream);
 }
 
-// One case per head dimension the build has, and a throw for anything else:
-// applies() answered false for it, so reaching here is a caller's mistake.
 #define OPENNN_FLASH_ATTENTION_DISPATCH(run, head_dimension, ...)                        \
     switch (head_dimension)                                                              \
     {                                                                                    \
@@ -210,7 +188,6 @@ bool applies(const Problem& problem)
     if (!head_dimension_built(problem.head_dimension)) return false;
     if (!architecture_built()) return false;
 
-    // See the header: FA2 would anchor this to the wrong corner.
     if (problem.causal && problem.source_lengths) return false;
 
     return problem.batch > 0 && problem.heads > 0

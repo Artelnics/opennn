@@ -119,12 +119,12 @@ void ImageDataset::set_input_scaling(const vector<Descriptives>& descriptives,
 
     for (Index i = 0; i < channels; ++i)
     {
-        const auto [scale, offset] = scaling_affine(scalers[size_t(i)],
+        const AffineMap affine = scaling_affine(scalers[size_t(i)],
                                                     descriptives[size_t(i)],
                                                     min_range,
                                                     max_range);
-        input_scale[size_t(i)] = scale;
-        input_offset[size_t(i)] = offset;
+        input_scale[size_t(i)] = affine.slope;
+        input_offset[size_t(i)] = affine.offset;
     }
 }
 
@@ -282,12 +282,6 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
                          ? read_json_bool(data_source_element, "RandomAugmentation")
                          : has_augmentation_transform(augmentation);
 
-    // A deployment folder ships the model without the images it was trained on,
-    // and inference does not need them: the shape of the input and the names of
-    // the classes are already in the model file. Rebuild the dataset from it
-    // instead of failing, and leave it with no samples - training and analysis
-    // need the images and report their own errors without them.
-
     if (!data_path.empty() && !filesystem::exists(data_path)
      && image_dataset_element->has("Variables")
      && requested_input_shape.get_rank() == 3)
@@ -346,8 +340,6 @@ void ImageDataset::read_images()
 
     for (const filesystem::path& folder : candidate_folders)
     {
-        // Not list_files: this pass also folds newest_write_time, and splitting it
-        // would cost a second last_write_time() stat per image.
         vector<filesystem::path> folder_files;
         for (const filesystem::directory_entry& current_directory : filesystem::directory_iterator(folder))
             if (current_directory.is_regular_file() && is_supported_image_file(current_directory.path()))

@@ -35,7 +35,7 @@ vector<float> forward_once(NeuralNetwork& neural_network,
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(input_data, input_shape) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView outputs = forward_propagation.get_outputs();
     const float* data = outputs.as<float>();

@@ -65,7 +65,7 @@ TEST(Pool3dOperatoreratorTest, ForwardMaxValuesAndShape)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(input_data.data(), {batch_size, seq, feat}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
 
@@ -95,7 +95,7 @@ TEST(Pool3dOperatoreratorTest, ForwardAverageValuesWithPadding)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(input_data.data(), {batch_size, seq, feat}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
 
@@ -125,7 +125,7 @@ TEST(Pool3dOperatoreratorTest, ForwardAverageAllPaddingIsZero)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(input_data.data(), {batch_size, seq, feat}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
 
@@ -264,7 +264,7 @@ TEST(Pool3dOperatoreratorTest, AverageIgnoresPaddingBehindANonzeroShift)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(token_ids.data(), {batch_size, padded_sequence_length}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     // The reference is built from what pooling actually receives, so it states
     // the averaging rule alone and does not reimplement the normalization.

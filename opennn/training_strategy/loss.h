@@ -109,7 +109,6 @@ public:
 
     Error get_error() const noexcept { return error; }
 
-    // Layer outputs whose deltas are written directly by this loss.
     vector<Index> get_output_delta_layer_indices() const;
 
     bool output_delta_overwrites_outputs() const;
@@ -184,21 +183,16 @@ private:
         throw_if(!neural_network, "Loss error: neural network is not set.");
     }
 
-    // The device paths need a CUDA build as well as a CUDA-configured network:
-    // is_gpu() alone only says what the configuration asked for.
     bool runs_on_gpu() const noexcept
     {
         return device::is_cuda_build() && neural_network && neural_network->is_gpu();
     }
 
-    // A zero weight is as good as no regularization, and skipping it here keeps
-    // the four regularization entry points asking the same question.
     bool has_regularization() const noexcept
     {
         return regularization_method != Regularization::NoRegularization
             && regularization_weight != 0.0f;
     }
-
 
     Index error_workspace_floats(const TensorView&) const;
     float* ensure_error_workspace(Buffer&, const TensorView&,
@@ -207,11 +201,6 @@ private:
 
     float get_weighted_coefficient(const Batch& batch) const { return get_batch_scale(batch) / (normalization_coefficient + EPSILON); }
 
-    // training_samples / batch_samples. The optimizer averages the per-batch
-    // errors, so an error normalized by a whole-training-set constant has to
-    // carry this factor or the epoch value comes out divided by the batch
-    // count. get_weighted_coefficient is this same factor over the
-    // normalization coefficient.
     float get_batch_scale(const Batch&) const;
 
     void calculate_layers_error_gradient(const Batch&,

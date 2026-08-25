@@ -196,7 +196,6 @@ FeatureScaling Dataset::prepare_training_scaling(
         variable_role_to_string(role)));
 }
 
-
 FeatureScaling Dataset::calculate_used_feature_scaling(VariableRole role) const
 {
     throw runtime_error(format(
@@ -230,9 +229,6 @@ void Dataset::set_sample_roles(SampleRole role_type)
 
 void Dataset::set_sample_role(const Index index, SampleRole new_role)
 {
-    // Bounds-checked like the variable-side siblings: samples_from_JSON feeds
-    // these setters straight from file text, so a role list longer than
-    // SamplesNumber wrote past the end of the vector.
     throw_if(index < 0 || index >= ssize(sample_roles),
              "Dataset::set_sample_role: sample index {} is out of range for {} samples.",
              index, ssize(sample_roles));
@@ -537,9 +533,6 @@ vector<Variable> Dataset::get_variables(VariableRole role_type) const
 
 Index Dataset::get_features_number() const
 {
-    // Index(0), not 0: accumulate takes its accumulator type from the initial
-    // value, so every partial sum was narrowed to int. The role overload below
-    // already gets this right.
     return accumulate(variables.begin(), variables.end(), Index(0),
                       [](Index sum, const Variable& var) { return sum + var.get_feature_count(); });
 }
@@ -794,10 +787,6 @@ void Dataset::preview_data_to_JSON(JsonWriter &printer) const
     for (Index i = 0; i < ssize(data_file_preview); ++i)
     {
         printer.begin_array_object();
-        // "Text" stays for readers that already expect it, but it joins the
-        // cells with a comma and so cannot survive a cell that contains one -
-        // a decimal comma, or any quoted field in a semicolon file. "Cells"
-        // carries them separately and is what the reader below prefers.
         add_json_field(printer, "Text", vector_data_file_preview[size_t(i)]);
         add_json_field(printer, "Cells", json_array(data_file_preview[size_t(i)]));
         printer.end_array_object();
@@ -850,8 +839,6 @@ void Dataset::preview_data_from_JSON(const Json *preview_data_element)
 
     for_json_items(preview_data_element, "Row", size_t(preview_size), [&](Index i, const Json* row)
     {
-        // Prefer the cell array; fall back to splitting the legacy joined text
-        // so files written before it existed still load.
         if (row && row->find("Cells"))
         {
             data_file_preview[i] = read_json_strings(row, "Cells");
@@ -997,7 +984,6 @@ void Dataset::check_separators(string_view line) const
                     found_other_name, found_other, data_path.string(), separator_name, separator_string);
 }
 
-
 void Dataset::fill_inputs(const vector<Index>&, const vector<Index>&, float*, FillMode, int) const
 {
     throw runtime_error("Dataset::fill_inputs must be implemented by a concrete dataset.");
@@ -1031,57 +1017,61 @@ pair<Index, Index> Dataset::count_binary_targets(const string& sample_role) cons
     return {negatives, positives};
 }
 
+FeatureSelection Dataset::get_feature_selection() const
+{
+    return {get_feature_indices(VariableRole::Input),
+            get_feature_indices(VariableRole::Decoder),
+            get_feature_indices(VariableRole::Target)};
+}
+
 void Dataset::fill_batch(Batch& batch,
                          const vector<Index>& sample_indices,
-                         const vector<Index>& input_indices,
-                         const vector<Index>& decoder_indices,
-                         const vector<Index>& target_indices,
+                         const FeatureSelection& features,
                          FillMode mode) const
 {
     throw_if(Index(sample_indices.size()) != batch.batch_size,
              "fill_batch sample count does not match the batch size.");
 
-    if (can_device_gather(batch, input_indices, target_indices))
+    if (can_device_gather(batch, features))
     {
-        start_device_gather(batch, sample_indices, input_indices, target_indices);
+        start_device_gather(batch, sample_indices, features);
         return;
     }
 
-    fill_batch_host(batch, sample_indices, input_indices, decoder_indices,
-                    target_indices, mode);
+    fill_batch_host(batch, sample_indices, features, mode);
 }
 
 bool Dataset::can_device_gather(const Batch& batch,
-                                const vector<Index>& input_indices,
-                                const vector<Index>& target_indices) const
+                                const FeatureSelection& features) const
 {
     return batch.uses_cuda() && is_device_resident() && batch.decoder.shape.empty()
-        && is_contiguous(input_indices) && is_contiguous(target_indices);
+        && is_contiguous(features.inputs) && is_contiguous(features.targets);
 }
 
 DeviceGather& Dataset::start_device_gather(Batch& batch,
                                            const vector<Index>& sample_indices,
-                                           const vector<Index>& input_indices,
-                                           const vector<Index>& target_indices) const
+                                           const FeatureSelection& features) const
 {
     DeviceGather& gather = batch.device_gather.emplace();
 
     gather.row_indices.resize(sample_indices.size());
     ranges::transform(sample_indices, gather.row_indices.begin(),
                       [](Index sample_index) { return int(sample_index); });
-    gather.input_col_offset = input_indices.empty() ? 0 : input_indices.front();
-    gather.target_col_offset = target_indices.empty() ? 0 : target_indices.front();
+    gather.input_col_offset = features.inputs.empty() ? 0 : features.inputs.front();
+    gather.target_col_offset = features.targets.empty() ? 0 : features.targets.front();
 
     return gather;
 }
 
 void Dataset::fill_batch_host(Batch& batch,
                               const vector<Index>& sample_indices,
-                              const vector<Index>& input_indices,
-                              const vector<Index>& decoder_indices,
-                              const vector<Index>& target_indices,
+                              const FeatureSelection& features,
                               FillMode mode) const
 {
+    const vector<Index>& input_indices = features.inputs;
+    const vector<Index>& decoder_indices = features.decoder;
+    const vector<Index>& target_indices = features.targets;
+
     const bool on_gpu = batch.uses_cuda();
 
     batch.device_gather.reset();

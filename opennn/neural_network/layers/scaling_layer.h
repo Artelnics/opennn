@@ -42,7 +42,7 @@ struct ScaleOperator : Operator
     TensorView standard_deviations;
     TensorView scalers;
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
 };
 
 class Scaling : public Layer, public FeatureScalingEndpoint
@@ -88,7 +88,7 @@ public:
     bool is_passthrough() const;
 
     vector<TensorSpec> get_forward_specs(Index) const override;
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
 
     float* link_states(float*, Device) override;
 
@@ -107,8 +107,6 @@ protected:
     float min_range = -1.0f;
     float max_range = 1.0f;
 
-    // Device mirror of the configured feature statistics and scaler methods.
-    // It belongs to the model; propagation contexts own only transient data.
     Buffer op_storage;
     bool   op_storage_dirty = true;
 

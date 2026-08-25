@@ -304,14 +304,12 @@ TEST_F(QuasiNewtonMethodTest, BackPropagateLeavesRegularizationToTheOptimizer)
 
     Batch batch(samples_number, &dataset, network.get_config());
     batch.fill(base_dataset.get_sample_indices("Training"),
-               base_dataset.get_feature_indices("Input"),
-               base_dataset.get_feature_indices("Decoder"),
-               base_dataset.get_feature_indices("Target"));
+               base_dataset.get_feature_selection());
 
     ForwardPropagation forward_propagation(samples_number, &network);
     BackPropagation back_propagation(samples_number, loss);
 
-    network.forward_propagate(batch.get_inputs(), forward_propagation, true);
+    network.forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Training);
     loss.back_propagate(batch, forward_propagation, back_propagation);
 
     EXPECT_FLOAT_EQ(back_propagation.metrics.regularization, 0.0f);

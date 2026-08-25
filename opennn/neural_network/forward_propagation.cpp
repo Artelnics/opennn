@@ -289,12 +289,9 @@ void ForwardPropagation::set(
         output_spec.shape.set_dimension(1, final_output_capacity);
     }
 
-    const bool is_training =
-        mode == ForwardPropagationMode::Training;
-
     recomputable_slots.assign(layers_number, SIZE_MAX);
 
-    if(is_training
+    if(is_training(mode)
        && neural_network->get_training_activation_recomputation())
     {
         ranges::transform(
@@ -302,17 +299,18 @@ void ForwardPropagation::set(
             recomputable_slots.begin(),
             [](const auto& layer)
             {
-                return layer->get_recomputable_forward_slot();
+                const size_t slot = layer->get_recomputable_forward_slot();
+                return slot == SIZE_MAX ? SIZE_MAX : slot - 1;
             });
     }
 
-    if(!is_training)
+    if(!is_training(mode))
     {
         for(size_t i = 0; i < layers_number; ++i)
         {
             for(size_t j = 0; j < forward_specs[i].size(); ++j)
             {
-                if(layers[i]->get_forward_slot_kind(j)
+                if(layers[i]->get_forward_slot_kind(j + 1)
                    == ForwardSlotKind::TrainingOnly)
                 {
                     forward_specs[i][j] = {};
@@ -324,8 +322,8 @@ void ForwardPropagation::set(
     const auto is_transient_slot =
         [&](const size_t layer, const size_t slot)
     {
-        return is_training
-            && (layers[layer]->get_forward_slot_kind(slot)
+        return is_training(mode)
+            && (layers[layer]->get_forward_slot_kind(slot + 1)
                     == ForwardSlotKind::Transient
                 || recomputable_slots[layer] == slot);
     };
@@ -333,7 +331,7 @@ void ForwardPropagation::set(
     Index early_release_logical_bytes = 0;
 
     const vector<Index> output_release_steps =
-        is_training
+        is_training(mode)
         ? find_early_output_release_steps(
               layers,
               source_layers,
@@ -473,7 +471,7 @@ void ForwardPropagation::set(
         fragmentation_bytes = plan.fragmentation_bytes();
     };
 
-    if(is_training)
+    if(is_training(mode))
     {
         const Index backward_base =
             backward_step(Index(layers_number), 0);
@@ -500,17 +498,6 @@ void ForwardPropagation::set(
             pooled_lifetimes.end(),
             co_planned_lifetimes.begin(),
             co_planned_lifetimes.end());
-
-        // Chronological is load-bearing here, not a default. Activation
-        // recomputation relies on a scratch slot landing on top of a future
-        // activation, which first_step ordering produces and largest-first does
-        // not. Forcing Compact was measured: the joint arena gets strictly smaller
-        // (an MLP drops batch * outputs * sizeof(float); ResNet-50 and Transformer
-        // are byte-identical, already taking that branch), but it breaks the
-        // recompute aliasing pinned by
-        // ForwardPropagationMemoryTest.TrainingRecomputeScratchUsesFutureActivations
-        // and YoloOverfit.CSPGradientFlowsAndLossDecreases then stops learning.
-        // Do not simplify this to always-Compact.
 
         const MemoryPoolPlan persistent_plan = [&]
         {
@@ -750,7 +737,7 @@ void ForwardPropagation::set(
         arena.owns_memory() ? total_bytes : 0,
         format("batch={},mode={}",
                batch_size,
-               is_training ? "training" : "inference"));
+               is_training(mode) ? "training" : "inference"));
 
     if(transient_block_bytes > 0)
     {
@@ -780,7 +767,7 @@ void ForwardPropagation::set(
                 return slot != SIZE_MAX;
             });
 
-    if(!is_training)
+    if(!is_training(mode))
     {
         memory_debug::record(
             "forward.inference_pool_analysis",
@@ -1108,9 +1095,6 @@ TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
         : TensorView{};
 }
 
-// The layer whose record feeds one of `layer`'s inputs, or -1 when that input
-// is one of the network's own inputs: raw token ids that nothing has had the
-// chance to describe yet.
 Index ForwardPropagation::valid_lengths_source(const size_t layer, const size_t input_ordinal) const
 {
     if (!neural_network) return -1;
@@ -1166,19 +1150,10 @@ void ForwardPropagation::inherit_valid_lengths(const size_t layer)
 {
     if (layer >= valid_lengths.size()) return;
 
-    // Re-inherited on every pass. The copy used to be taken once and then kept
-    // forever, so a second batch with different padding left every layer below
-    // the first consumer masking against the first batch's lengths. An
-    // Embedding overwrites its own entry as it runs, and its source is a
-    // network input, so it is unaffected by re-inheriting here.
-
     const vector<Index>* source_lengths = input_valid_lengths(layer, 0);
     const int* device_source_lengths = input_device_valid_lengths(layer, 0);
     if (!source_lengths && !device_source_lengths) return;
 
-    // The record travels only as far as the sequence it describes. A layer that
-    // pools the sequence away, or reshapes it, ends the record here rather than
-    // handing on lengths for something that no longer exists.
     const auto& layers = neural_network->get_layers();
     const Index source = neural_network->get_source_layers()[layer][0];
 

@@ -44,9 +44,6 @@ private:
 
     vector<string> get_flat_input_names() const;
 
-    // Every emitter needs the same four vectors, and each used to rebuild them
-    // from the network -- sixteen times for the inputs alone, once per loop
-    // iteration in the Python driver. Collected once per export instead.
     struct ExportNames
     {
         vector<string> inputs;
@@ -106,8 +103,6 @@ private:
     static void emit_body_lines(ostringstream&, const vector<string>&, const LanguageSyntax&, const function<string(const string&)>&);
     static void emit_softmax_block(ostringstream&, const LanguageSyntax&);
 
-    // string, not const char*: the LeakyReLU bodies interpolate LEAKY_RELU_SLOPE
-    // so the exported code cannot drift from the library's own constant.
     struct ActivationBodies
     {
         string c;
@@ -116,8 +111,6 @@ private:
         string php;
     };
 
-    // The four language emitters differ only in which ActivationBodies member
-    // they take and which activations they define unconditionally.
     static void emit_activations(ostringstream&,
                                  const string& expression,
                                  string ActivationBodies::* body,

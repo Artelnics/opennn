@@ -35,9 +35,6 @@ namespace opennn
 namespace
 {
 
-// Binary snapshots written by OpenNN carry this fixed-width little-endian
-// header. The loaders also accept their historical headerless FP32 payloads
-// when the byte count matches exactly.
 using SnapshotMagic = array<unsigned char, 8>;
 constexpr SnapshotMagic PARAMETER_FILE_MAGIC = {
     'O', 'P', 'E', 'N', 'N', 'N', 'P', 0
@@ -177,8 +174,6 @@ void recover_model_save_transaction(const filesystem::path& model_path)
         return;
     }
 
-    // A missing marker means that no replacement started, or that both new
-    // files committed. Any remaining siblings are therefore stale.
     remove_transaction_artifacts({model_temporary, parameter_temporary,
                                   model_backup, parameter_backup,
                                   marker_temporary});
@@ -275,10 +270,6 @@ uint64_t load_uint64_le(const unsigned char* source)
          | uint64_t{source[7]} << 56;
 }
 
-// Sequential little-endian cursors over the snapshot header. Fields are laid out
-// in the order they are appended, so writer and reader cannot disagree about an
-// offset, and SNAPSHOT_FILE_HEADER_SIZE is whatever the writer ends up having
-// written rather than a total kept by hand.
 class HeaderWriter
 {
 public:
@@ -388,7 +379,7 @@ uint64_t read_snapshot_header(ifstream& file, uintmax_t file_bytes,
              caller, file_name.string());
 
     HeaderReader read(header);
-    read.skip(Index(magic.size()));                 // matched above
+    read.skip(Index(magic.size()));
 
     const uint32_t version = read.u32();
     const uint32_t header_size = read.u32();
@@ -478,8 +469,6 @@ void wire_drelu_fusions(vector<unique_ptr<Layer>>& layers,
     if (device != Device::CUDA || !is_one_of(training_type, Type::FP32, Type::BF16))
         return;
 
-    // Only the DReLU epilogue is opt-in; the single-output fold below needs no
-    // epilogue and measured a straight gain, so it is always wired.
     const bool drelu_enabled = env_flag_enabled("OPENNN_DRELU_FUSION");
 
     vector<Index> consumer_count(layers.size(), 0);
@@ -498,8 +487,6 @@ void wire_drelu_fusions(vector<unique_ptr<Layer>>& layers,
 
         if (!consumer || !producer) continue;
 
-        // The single-output fold is tried first; the DReLU epilogue only
-        // applies where it did not, and only when asked for.
         if (!consumer->try_wire_single_output_relu_fusion(*producer, sources[0]) && drelu_enabled)
             consumer->try_wire_drelu_fusion(*producer, sources[0]);
     }
@@ -597,9 +584,6 @@ void NeuralNetwork::compile(EffectiveConfig new_config)
 
     link_states();
 
-    // A zeroed running variance would scale a fresh network's inference by
-    // 1/sqrt(epsilon) until training has moved it; the operators know their
-    // resting values.
     for (auto& layer : layers)
         for (Operator* op : layer->get_operators())
             op->initialize_states();
@@ -818,9 +802,6 @@ void NeuralNetwork::steal_from(NeuralNetwork& src)
     last_trainable_cache_  = src.last_trainable_cache_;
     src.first_trainable_cache_ = -1;
     src.last_trainable_cache_  = -1;
-    // Conservative on both sides: the layers moved, so neither network may claim
-    // its gradient views are still linked. Re-linking costs one pass; skipping a
-    // needed one writes gradients through dangling views.
     linked_gradient_base       = nullptr;
     src.linked_gradient_base   = nullptr;
     link_parameters();
@@ -922,10 +903,6 @@ Index NeuralNetwork::get_first_trainable_layer_index() const
     auto it = ranges::find_if(layers,
                               [](const unique_ptr<Layer>& layer) { return layer->get_is_trainable(); });
 
-    // No trainable layers yet: return the -1 sentinel instead of throwing.
-    // Callers guard with < 0 (e.g. get_output_activation here, and the Neural
-    // Designer engine's resync); throwing turned that guard into dead code and
-    // broke TrainingStrategy::set_default() on a not-yet-built network.
     if (it == layers.end()) return -1;
 
     first_trainable_cache_ = distance(layers.begin(), it);
@@ -941,8 +918,6 @@ Index NeuralNetwork::get_last_trainable_layer_index() const
         if (layers[i]->get_is_trainable())
             return last_trainable_cache_ = i;
 
-    // No trainable layers yet: return the -1 sentinel instead of throwing.
-    // Callers guard with < 0 (get_output_activation, the ND engine's resync).
     return -1;
 }
 
@@ -983,11 +958,6 @@ static bool upload_host_vector(Buffer& buffer, const VectorR& values)
 
 void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 {
-    // Once the fp32 master has been released for quantized inference the
-    // parameter buffer is a non-owning view over a compact bf16 mirror that is
-    // smaller than size_in_floats(): writing through it reallocated an owning
-    // fp32 buffer and then cast past the end of the mirror. save_parameters_binary
-    // and copy_parameters_host refuse the same state.
     throw_if(fp32_master_released(),
              "NeuralNetwork::set_parameters: the fp32 parameter master was released for "
              "quantized inference; reload the model before replacing parameters.");
@@ -1027,9 +997,6 @@ void NeuralNetwork::set_states(const VectorR& new_states)
 
 void NeuralNetwork::initialize_parameters(void (Operator::*initializer)())
 {
-    // The states are staged too: batch norm re-initializes its running
-    // statistics from here, and after any GPU forward those live on the device,
-    // where as_vector() refuses to touch them.
     const HostParametersGuard guard(*this);
     const HostStatesGuard states_guard(*this);
 
@@ -1041,15 +1008,11 @@ void NeuralNetwork::initialize_parameters(void (Operator::*initializer)())
 namespace
 {
 
-// Every calculate_outputs overload wraps a single Eigen input in one view.
-// Kept in one place so each shape is written once.
-
 TensorView single_input_view(const MatrixR& inputs)
 {
     return TensorView(const_cast<float*>(inputs.data()),
                       {inputs.rows(), inputs.cols()}, Type::FP32);
 }
-
 
 TensorView single_input_view(const Tensor3& inputs)
 {
@@ -1057,7 +1020,6 @@ TensorView single_input_view(const Tensor3& inputs)
                       {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)},
                       Type::FP32);
 }
-
 
 TensorView single_input_view(const Tensor4& inputs)
 {
@@ -1068,7 +1030,6 @@ TensorView single_input_view(const Tensor4& inputs)
 }
 
 }
-
 
 void NeuralNetwork::calculate_outputs(const MatrixR& inputs, MatrixR& outputs)
 {
@@ -1104,7 +1065,7 @@ void NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& in
     const vector<TensorView> input_views = {single_input_view(inputs_1),
                                             single_input_view(inputs_2)};
 
-    forward_propagate(input_views, forward_propagation, false);
+    forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     if (!is_gpu())
     {
@@ -1120,9 +1081,6 @@ void NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& in
 
     const Shape& shape = out.get_shape();
 
-    // Copy straight into the caller's tensor. Going through an intermediate
-    // MatrixR meant a second allocation of the same size plus a memcpy, and at
-    // inference sizes the allocation costs more than the transfer itself.
     if (outputs.dimension(0) != shape[0]
         || outputs.dimension(1) != shape[1]
         || outputs.dimension(2) != shape[2])
@@ -1175,7 +1133,7 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
     {
         ForwardPropagation forward_propagation(batch_size, this,
                                                ForwardPropagationMode::Inference);
-        forward_propagate(input_views, forward_propagation, false);
+        forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
         return forward_propagation.get_outputs().as_matrix();
     }
 
@@ -1208,7 +1166,7 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
                                     tile_shape, Type::FP32);
         }
 
-        forward_propagate(tile_views, *propagation, false);
+        forward_propagate(tile_views, *propagation, ForwardPropagationMode::Inference);
 
         const TensorView tile_outputs = propagation->get_outputs();
         const Index output_columns = tile_outputs.size() / rows;
@@ -1233,8 +1191,6 @@ void NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views,
 
     warn_if_stale_configuration();
 
-    // The CPU path tiles and sizes its own result; reuse only pays on the GPU
-    // path, where the per-call allocation is what costs.
     if (!is_gpu())
     {
         outputs = calculate_outputs(input_views);
@@ -1266,7 +1222,7 @@ MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs)
 
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       ForwardPropagation& forward_propagation,
-                                      bool is_training) const
+                                      ForwardPropagationMode pass) const
 {
     throw_if(parameters.size_in_floats() != get_aligned_size(get_parameter_specs()),
              "Network shapes changed since compile(); call compile() again.");
@@ -1281,9 +1237,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
         const bool needs_parameter_device_copy =
             parameters.get_device() != Device::CUDA
-            || (!parameters.empty()
-                && ((config.training_type == Type::BF16 && parameters_bf16_mirror.empty())
-                    || (config.training_type == Type::INT8 && parameters_int8_storage.empty())));
+            || (!parameters.empty() && !low_precision_storage_ready());
 
         if (needs_parameter_device_copy)
             self->copy_parameters_device();
@@ -1375,7 +1329,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
             inputs_staged = true;
         }
 
-        forward_propagate(device_inputs, forward_propagation, is_training, first_layer_index, last_layer_index);
+        forward_propagate(device_inputs, forward_propagation, pass, first_layer_index, last_layer_index);
 
         if (inputs_staged)
             device::synchronize(stream);
@@ -1384,16 +1338,16 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
     }
 #endif
 
-    forward_propagate(input_view, forward_propagation, is_training, first_layer_index, last_layer_index);
+    forward_propagate(input_view, forward_propagation, pass, first_layer_index, last_layer_index);
 }
 
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       ForwardPropagation& forward_propagation,
-                                      bool is_training,
+                                      ForwardPropagationMode pass,
                                       Index first_layer_index,
                                       Index last_layer_index) const
 {
-    throw_if(is_training
+    throw_if(pass == ForwardPropagationMode::Training
              && forward_propagation.mode != ForwardPropagationMode::Training,
              "NeuralNetwork::forward_propagate: an inference ForwardPropagation "
              "cannot be used for training.");
@@ -1435,7 +1389,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
             forward_propagation.gather_output_window();
 
         PROFILE_SCOPE("fwd:" + layers[i]->get_name());
-        layers[i]->forward_propagate(forward_propagation, i, is_training);
+        layers[i]->forward_propagate(forward_propagation, i, pass);
 
         forward_propagation.inherit_valid_lengths(size_t(i));
     }
@@ -1462,7 +1416,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                size_t(parameters_size) * sizeof(float));
 
     set_parameters(new_parameters);
-    forward_propagate(input_view, forward_propagation, true);
+    forward_propagate(input_view, forward_propagation, ForwardPropagationMode::Training);
     set_parameters(saved_parameters);
 
     if (parameters.get_device() != original_parameters_device)
@@ -1477,10 +1431,6 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 void NeuralNetwork::to_JSON(JsonWriter& printer) const
 {
 
-    // The guard moves the states, so it has to test where the states are.
-    // Keyed on the parameters it did nothing for a network whose parameters had
-    // been staged to the host while a GPU forward left the states on the
-    // device, and BatchNorm's to_JSON then threw from inside save().
     const HostStatesGuard guard(*const_cast<NeuralNetwork*>(this));
 
     const Index inputs_number = get_inputs_number();
@@ -1685,11 +1635,6 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
         }
     }
 
-    // add_layer resolves an omitted source list to the preceding layer and then
-    // validates arity; a file with a missing or empty SourceLayer entry used to
-    // skip both, leaving an empty source list that the operators later treated
-    // as a wired input. The same defaulting and the same checks are applied here
-    // so a loaded graph carries the invariants a built one does.
     for (Index i = 0; i < ssize(layers); ++i)
     {
         if (!source_layers[size_t(i)].empty()) continue;
@@ -1762,7 +1707,6 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     const Index elements_to_copy = min(parameters.size_in_floats(), json_parameters.size());
 
     const HostParametersGuard guard(*this);
-    // Qualified: opennn::copy is the tensor-view overload.
     std::copy(json_parameters.data(), json_parameters.data() + elements_to_copy, parameters.as<float>());
 }
 
@@ -1796,8 +1740,6 @@ void NeuralNetwork::save(const filesystem::path& file_name) const
         filesystem::rename(temporary_binary, binary_path);
         filesystem::rename(temporary_model, file_name);
 
-        // Removing the marker is the commit point. Recovery before this
-        // operation restores the backups; after it, the new pair is complete.
         filesystem::remove(marker_path);
         remove_transaction_artifacts({model_backup, binary_backup});
     }
@@ -2354,24 +2296,28 @@ vector<string> NeuralNetwork::get_layer_labels() const
 
 void NeuralNetwork::link_parameters()
 {
-    // Every parameter-layout change comes through here, and the gradient views
-    // are laid out from the same specs. Forget the recorded gradient base so the
-    // next backward re-links: an allocator can hand the same address back for a
-    // different layout, and then a matching pointer would prove nothing.
     linked_gradient_base = nullptr;
 
+    const ParameterStorage storage = get_parameter_storage();
+
+    const bool low_precision_live = storage == ParameterStorage::DeviceMasterWithMirror
+                                 || storage == ParameterStorage::DeviceCompact;
+
     float* fp32_base = parameters.as<float>();
+
+    // The compact fp32 storage only exists once the master has gone; before
+    // that the master is the fp32 source and this buffer is empty.
     float* fp32_inference_base =
-        fp32_master_released()
+        storage == ParameterStorage::DeviceCompact
         && !parameters_fp32_inference_storage.empty()
         ? parameters_fp32_inference_storage.as<float>()
         : nullptr;
 
-    bfloat16* bf16_mirror_base = (parameters.get_device() == Device::CUDA && !parameters_bf16_mirror.empty())
+    bfloat16* bf16_mirror_base = low_precision_live && !parameters_bf16_mirror.empty()
         ? parameters_bf16_mirror.as<bfloat16>()
         : nullptr;
 
-    int8_t* int8_base = (parameters.get_device() == Device::CUDA && !parameters_int8_storage.empty())
+    int8_t* int8_base = low_precision_live && !parameters_int8_storage.empty()
         ? parameters_int8_storage.as<int8_t>()
         : nullptr;
 
@@ -2472,12 +2418,6 @@ void NeuralNetwork::link_parameters()
     if (current_layer) current_layer->redistribute_parameters_to_operators();
 }
 
-// A layer writes its parameter gradients through views into a BackPropagation's
-// gradient buffer, so exactly one buffer is reachable at a time. Training with a
-// remainder batch alternates between two contexts every epoch, which used to
-// mean re-running BackPropagation::set on each switch - re-planning the deltas
-// and memsetting the gradient just to move pointers. Linking here instead, from
-// the backward pass that is about to run, makes the switch a pointer comparison.
 void NeuralNetwork::link_gradients(const Buffer& gradient) const
 {
     void* const base = gradient.data();
@@ -2573,13 +2513,6 @@ void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
 
     if (!can_release_parameter_master) return;
 
-    // This walks the specs itself rather than reusing for_each_parameter_slot's
-    // slot.fp32_offset, and the two are not interchangeable: fp32_offset skips
-    // tied slots and counts INT8 scale channels, while the layout written below
-    // counts every non-BF16 slot and no scales. They agree today only because a
-    // tied slot is bias-free, so its one spec carries weights_dtype - BF16 in a
-    // BF16 run - and INT8 never appears in training. Substituting one for the
-    // other would misplace every parameter after the first tied FP32 slot.
     const auto specs = get_parameter_specs();
 
     Index fp32_keep_floats = 0;
@@ -2787,6 +2720,15 @@ void NeuralNetwork::copy_parameters_host()
     link_parameters();
 }
 
+NeuralNetwork::DeviceResidency NeuralNetwork::get_device_residency() const noexcept
+{
+    return {parameters.data(),
+            parameters_bf16_mirror.data(),
+            parameters_fp32_inference_storage.data(),
+            parameters_int8_storage.data(),
+            states.data()};
+}
+
 void NeuralNetwork::copy_states_device()
 {
     if (!states.empty())
@@ -2807,7 +2749,7 @@ void NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_vie
                                              ForwardPropagation& forward_propagation,
                                              MatrixR& outputs)
 {
-    forward_propagate(input_views_cpu, forward_propagation, false);
+    forward_propagate(input_views_cpu, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView out_view = forward_propagation.get_outputs();
 
@@ -2856,15 +2798,18 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
 
     if (upload_parameters)
     {
+        const DeviceResidency before = get_device_residency();
+
         copy_parameters_device();
         copy_states_device();
 
-        forward_propagation.reset_cuda_graph();
+        if (get_device_residency() != before)
+            forward_propagation.reset_cuda_graph();
     }
 
     if (!forward_propagation.use_cuda_graph || forward_propagation.cuda_graph_failed)
     {
-        forward_propagate(gpu_inputs, forward_propagation, false);
+        forward_propagate(gpu_inputs, forward_propagation, ForwardPropagationMode::Inference);
         return forward_propagation.get_outputs();
     }
 
@@ -2883,14 +2828,14 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
             return forward_propagation.get_outputs();
         }
 
-        forward_propagate(gpu_inputs, forward_propagation, false);
+        forward_propagate(gpu_inputs, forward_propagation, ForwardPropagationMode::Inference);
         return forward_propagation.get_outputs();
     }
 
     {
         device::CudaGraphWorkspaceScope workspace_measurement(
             forward_propagation.inference_graph_workspace_requirements);
-        forward_propagate(gpu_inputs, forward_propagation, false);
+        forward_propagate(gpu_inputs, forward_propagation, ForwardPropagationMode::Inference);
     }
 
     if (++forward_propagation.cuda_graph_warmup_calls < inference_graph_warmup_calls)
@@ -2920,7 +2865,7 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
             &graph_workspace_views);
         device::StreamCapture capture(compute);
 
-        forward_propagate(gpu_inputs, forward_propagation, false);
+        forward_propagate(gpu_inputs, forward_propagation, ForwardPropagationMode::Inference);
 
         capture.end(forward_propagation.inference_graph_exec);
 

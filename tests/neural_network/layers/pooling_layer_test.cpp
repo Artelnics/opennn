@@ -158,7 +158,7 @@ TEST(PoolingLayerTest, UnitWindowIsPassthrough)
     neural_network.forward_propagate(
         {TensorView(inputs.data(), Shape{batch_size}.append(input_shape))},
         forward_propagation,
-        true);
+        ForwardPropagationMode::Training);
 
     const TensorView outputs = forward_propagation.get_outputs();
     EXPECT_EQ(outputs.get_data(), inputs.data());
@@ -211,7 +211,7 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
         const_cast<type*>(parameters.input_data.data()),
         { batch_size, parameters.input_shape[0], parameters.input_shape[1], parameters.input_shape[2] }) };
 
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
 
@@ -245,7 +245,7 @@ TEST(PoolingLayerTest, StridePaddingForwardValues)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(input_data.data(), {batch_size, 3, 3, 1}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
     ASSERT_EQ(output_view.size(), 4);
@@ -262,7 +262,7 @@ TEST(PoolingLayerTest, StridePaddingForwardValues)
 
     ForwardPropagation average_forward(batch_size, &average_network);
     vector<TensorView> average_views = { TensorView(input_data.data(), {batch_size, 3, 3, 1}) };
-    average_network.forward_propagate(average_views, average_forward, false);
+    average_network.forward_propagate(average_views, average_forward, ForwardPropagationMode::Inference);
 
     TensorView average_view = average_forward.get_outputs();
     ASSERT_EQ(average_view.size(), 4);
@@ -315,7 +315,7 @@ TEST_P(Pooling3dLayerTest, ForwardPropagate)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> input_views = { TensorView(input_data.data(), {batch_size, seq, feat}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
     ASSERT_EQ(output_view.get_shape()[0], batch_size);

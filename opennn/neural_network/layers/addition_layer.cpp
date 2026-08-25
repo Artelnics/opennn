@@ -15,14 +15,11 @@
 namespace opennn
 {
 
-void AdditionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void AdditionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
 {
     const vector<TensorView>& inputs = get_inputs(forward_propagation, layer);
     TensorView& output               = get_output(forward_propagation, layer);
 
-    // Straight into the first add rather than copy-then-add: Addition::set
-    // already requires at least two inputs, so the copy pass was pure overhead
-    // on a memory-bound op (two per transformer block).
     add(inputs[0], inputs[1], output);
 
     for (size_t i = 2; i < inputs.size(); ++i)

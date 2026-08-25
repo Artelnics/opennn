@@ -67,9 +67,6 @@ void AdaptiveMomentEstimation::setup_optimizer_data(OptimizerData& optimization_
 {
     const bool use_graph = can_use_cuda_graph();
 
-    // Graph scalars: [step (int bits), effective lr, effective eps, base lr].
-    // The base learning rate lives on the device so the captured update reads
-    // the current schedule instead of the value it was captured with.
     optimization_data.set({Shape{parameters_number},
                            Shape{parameters_number},
                            use_graph ? Shape{4} : Shape{}}, device);
@@ -101,13 +98,6 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    // The device step counter is the single source of truth whenever the graph
-    // scalars exist, not only inside a capture. The whole batches of a
-    // graph-enabled epoch advance that counter while the remainder batch used
-    // to take the Standard path and its own host counter, which therefore
-    // counted one step per epoch: the tail update got a bias correction for a
-    // step number many times too small, and its effective learning rate was
-    // correspondingly wrong for the first epochs of every run.
     const bool has_graph_scalars =
         optimization_data.views.size() > size_t(GraphScalars)
         && optimization_data.views[GraphScalars].size() >= 4;
@@ -190,8 +180,6 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     {
         PROFILE_SCOPE_HOST("optim:adam_update_cpu");
 
-        // Starting an OpenMP team is substantially more expensive than this
-        // element-wise update for small recurrent forecasting models.
         #pragma omp parallel for if(parameters_size > 65536)
         for (Index i = 0; i < parameters_size; ++i)
         {

@@ -25,7 +25,6 @@
 namespace opennn
 {
 
-// The softmax scale; a zero head dimension (operator not set) gets 1/sqrt(16).
 static float attention_scale(Index head_dim)
 {
     return head_dim == 0 ? 0.25f : 1.0f / sqrt(float(head_dim));
@@ -53,7 +52,6 @@ void AttentionOperator::set(Index new_heads_number, Index new_head_dimension,
     else
         causal_mask.resize(0, 0);
 }
-
 
 static bool row_nonzero(const float* row, Index dim)
 {
@@ -109,9 +107,6 @@ void AttentionOperator::softmax_rows_prefix(float* matrix, Index rows, Index col
 
 vector<TensorSpec> AttentionOperator::forward_scratch_specs(Index batch_size) const
 {
-    // SDPA never touches these buffers: dropout runs inside the cuDNN graph
-    // (seed/offset in apply_sdpa_forward), and padding is a mask on the graph
-    // rather than a scratch matrix to write the mask into.
     if (use_sdpa)
         return vector<TensorSpec>(2, {Shape{}, compute_dtype});
 
@@ -244,9 +239,6 @@ struct AttentionOperator::SDPACache
 
     Entry& get_or_create_entry(const CacheKey& key)
     {
-        // Entries contain descriptors only. Tensor and workspace addresses
-        // are owned by propagation state, so evicting a descriptor cannot
-        // invalidate a captured CUDA graph.
         return detail::bounded_cache_entry(
             entries, key, cudnn_frontend::graph_cache_capacity);
     }
@@ -260,14 +252,6 @@ constexpr size_t sdpa_query_lengths_state = 1;
 constexpr size_t sdpa_source_lengths_state = 2;
 constexpr size_t sdpa_dropout_state = 3;
 
-// A (B, H, S, D) tensor as the graph sees it, over memory that is either
-// (B, H, S, D) or, interleaved, (B, S, H, D): the layout the projections'
-// GEMMs write and the output projection reads.
-// The same problem both directions run, or nothing when the rung does not take
-// it. Both directions must answer this the same way for one layer: the forward
-// leaves FA2's log-sum-exp where the backward reads it, and cuDNN's statistics
-// are not the same number. They do agree, because the answer is a function of
-// the cache key alone, which is what keys the graph the other rung would build.
 static optional<flash_attention::Problem>
 flash_attention_problem(const AttentionOperator::SDPACache::CacheKey& k,
                         const int32_t* source_lengths)
@@ -275,15 +259,8 @@ flash_attention_problem(const AttentionOperator::SDPACache::CacheKey& k,
     if (device::rung<device::AttentionRung>() == device::AttentionRung::CudnnGraph)
         return nullopt;
 
-    // Dropout lives inside cuDNN's graph, and FA2's kernels are compiled
-    // without it.
     if (k.dropout_active) return nullopt;
 
-    // Heads interleaved, (B, S, H, D), is what the projections' GEMMs write and
-    // what FA2 reads with no repacking at all. Heads separated keeps cuDNN: the
-    // attention output is concatenated either way, so on that layout the output and
-    // the queries would need strides of their own, for a case this library's
-    // fused attention does not reach.
     if (!k.interleaved) return nullopt;
 
     const Index row  = k.heads * k.head_dim;
@@ -397,8 +374,6 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
     entry.bwd_SeqLenQ  = cudnn_frontend::seq_len_scalar(*graph, "SeqLenQ_bwd",  k.batch_size);
     entry.bwd_SeqLenKV = cudnn_frontend::seq_len_scalar(*graph, "SeqLenKV_bwd", k.batch_size);
 
-    // O is read from the concatenated (B, S, H*D) attention output whichever layout
-    // the head tensors use.
     entry.bwd_O = cudnn_frontend::bhsd_tensor(*graph, "O_bwd", k.batch_size, k.heads, k.q_seq, k.head_dim, true);
 
     entry.bwd_Stats = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
@@ -454,7 +429,7 @@ AttentionOperator::~AttentionOperator() = default;
 AttentionOperator::AttentionOperator(AttentionOperator&&) noexcept = default;
 AttentionOperator& AttentionOperator::operator=(AttentionOperator&&) noexcept = default;
 
-void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
     PROFILE_SCOPE("op:attention_fwd");
     auto& forward_slots = forward_propagation.slots[layer];
@@ -465,7 +440,6 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
     const TensorView& query = get_input(forward_propagation, layer);
     const Shape& query_shape = query.get_shape();
 
-    // Interleaved heads: SDPA writes the concatenated (B, S, H*D) output directly.
     const bool sdpa_interleaved = use_sdpa && interleaved_heads && query.is_cuda();
 
     TensorView attention_out = sdpa_interleaved
@@ -473,10 +447,6 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
         : forward_slots[scratch_slot].reshape_prefix(
               {forward_propagation.batch_size, query_shape[1], query_shape[2], query_shape[3]});
 
-    // Keys and values come from the last of the layer's inputs: its own, for
-    // self-attention, and the encoder's for cross-attention. That is the
-    // sequence the mask has to describe, and in an encoder-decoder it is not
-    // the one the queries came from.
     const SequenceLengths explicit_lengths =
         forward_propagation.input_sequence_lengths(layer, forward_propagation.inputs[layer].size() - 1);
 
@@ -490,7 +460,7 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
                            attention_out, forward_slots[sdpa_qkv_pack_slot],
                            span<const TensorView>(forward_slots.data() + sdpa_state_slot,
                                                   sdpa_state_slots_count),
-                           is_training,
+                           is_training(pass),
                            explicit_lengths.device);
     }
     else
@@ -498,7 +468,7 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
     apply_unfused(query, get_input(forward_propagation, layer, 1), get_input(forward_propagation, layer, 2), source_input,
                   get_output(forward_propagation, layer), get_output(forward_propagation, layer, 1),
                   attention_out, forward_slots[dropout_mask_slot],
-                  forward_slots[scratch_slot].as<float>(), is_training,
+                  forward_slots[scratch_slot].as<float>(), is_training(pass),
                   explicit_lengths);
 
     if (!sdpa_interleaved) concatenate_output_heads(forward_propagation, layer);
@@ -544,7 +514,6 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
     const TensorView& attention_weights_dropped = get_output(forward_propagation, layer, 1);
     const TensorView& dropout_mask = forward_slots[dropout_mask_slot];
 
-    // Interleaved heads: the concatenated (B, S, H*D) output delta is dO as it is.
     const bool sdpa_interleaved = use_sdpa && interleaved_heads && query.is_cuda();
     if (!sdpa_interleaved) split_output_delta(forward_propagation, back_propagation, layer);
 
@@ -561,8 +530,6 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
 
 #ifdef OPENNN_HAS_CUDA
 
-    // The backward graph reuses the length tensors the forward filled, so it
-    // masks with whatever the forward masked with, derived or exported alike.
     if (output_delta.is_cuda() && use_sdpa)
     {
         throw_if(sdpa_gradient_slot == 0,
@@ -728,12 +695,6 @@ void AttentionOperator::apply_unfused(const TensorView& query,
     {
         const Index att_rows_per_batch = heads_number * query_length;
 
-        // The exported lengths, when the Embedding recorded them, exactly as the
-        // CUDA branch above uses them. The all-zero-row scan below can only
-        // recognise padding in the FIRST attention layer: one normalization
-        // later a padded row is no longer zero, so every deeper layer on the CPU
-        // masked nothing while CUDA masked correctly, and the two devices
-        // diverged after layer 1.
         const bool use_exported_lengths =
             explicit_lengths.host && Index(explicit_lengths.host->size()) == batch_size;
 
@@ -855,13 +816,6 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
     int32_t* const query_length_data = query_lengths.as<int32_t>();
     int32_t* const source_length_data = source_lengths.as<int32_t>();
 
-    // Where the lengths come from decides whether padding is visible at all.
-    // The scan reads them back out of the activations, which works only while a
-    // padded row is still the zero row the Embedding wrote: one normalization
-    // downstream turns that row into the normalization's own shift, and every
-    // attention layer past the first sees padding it cannot distinguish from
-    // data. Lengths an Embedding exports are exact and stay exact, so they are
-    // preferred wherever they are available.
     if (explicit_lengths)
         attention_sdpa_lengths_cuda(to_int(cache_key.batch_size), to_int(cache_key.q_seq),
                                     to_int(cache_key.src_seq), explicit_lengths,
@@ -918,16 +872,6 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
         v_ptr = value_bf16;
         o_ptr = output_bf16;
     }
-    // Whatever produced them, the four pointers are bf16 by here, which is the
-    // only dtype FA2 has kernels for: a fp32 layer reaches this through the same
-    // pack the graph would have read, and casts back below either way.
-    // An empty statistics slot means inference: that slot is training-only, and
-    // its absence is the cheapest way to tell the two apart here. Auto keeps
-    // inference on cuDNN, because FA2 measured parity to 3% slower there on
-    // Ampere - a forward-only step, where cuDNN's graph generates no statistics
-    // while FA2 writes its log-sum-exp regardless, and where attention is a
-    // small share of a 6+6-layer step anyway. Asking for the rung by name still
-    // runs it, so the A/B stays available on hardware that may disagree.
     const bool inference = statistics.empty();
     const bool inference_allowed =
         device::rung<device::AttentionRung>() == device::AttentionRung::FlashAttention;
@@ -935,9 +879,6 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
     if (const auto problem = inference && !inference_allowed
                            ? nullopt : flash_attention_problem(cache_key, source_length_data))
     {
-        // In training the log-sum-exp goes to the statistics state, which is
-        // where the backward reads it; in inference nothing reads it, and it
-        // goes to the scratch the kernels already share.
         float* const softmax_lse = inference
             ? ensure_flash_attention_workspace(flash_attention::softmax_lse_elements(*problem))
             : statistics.as<float>();
@@ -1043,11 +984,6 @@ void AttentionOperator::apply_delta_cpu(const TensorView& query,
         bool has_padding = false;
         bool valid_prefixes = false;
 
-        // The lengths the forward actually masked with. Counting trailing zeros
-        // of head 0, query 0 - what this used to do - cannot tell padding from a
-        // sharply peaked head whose tail underflowed to exactly zero, and when
-        // it guessed wrong the fast path zeroed real key and value gradients for
-        // every head in that batch element.
         if (forward_valid_lengths && Index(forward_valid_lengths->size()) == batch_size)
         {
             valid_lengths = *forward_valid_lengths;
@@ -1174,8 +1110,6 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
     void* bdv = value_delta.get_data();
     const bool fp32_via_bf16 = query.is_fp32();
 
-    // Indexed positionally below, so the count is a precondition rather than
-    // something the caller can get away with shortening.
     throw_if(bf16_scratch.size() < sdpa_scratch_slots_count,
              "SDPA backward: {} BF16 scratch slots were passed, the layout needs {}.",
              bf16_scratch.size(), sdpa_scratch_slots_count);
@@ -1217,8 +1151,6 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
     }
     if (const auto problem = flash_attention_problem(cache_key, source_lengths.as<int32_t>()))
     {
-        // One buffer for both accumulators: FA2 clears them itself, and no two
-        // attention layers are inside their backward at the same time.
         const Index accumulator_elements = flash_attention::query_delta_accumulator_elements(*problem);
         const Index sum_elements = flash_attention::softmax_delta_sum_elements(*problem);
         float* const workspace = ensure_flash_attention_workspace(accumulator_elements + sum_elements);

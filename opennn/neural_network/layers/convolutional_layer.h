@@ -60,17 +60,14 @@ public:
     vector<TensorSpec> get_backward_specs(Index) const override;
     bool backward_uses_forward_output() const noexcept override { return get_output_activation() != ActivationFunction::Identity; }
     bool backward_uses_input(size_t input) const noexcept override { return input != 1 || !residual; }
-    // The packed ReLU mask only feeds the backward.
-    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    ForwardSlotKind get_forward_slot_kind(size_t slot) const override
     {
-        return spec == size_t(ReluMask) - 1 ? ForwardSlotKind::TrainingOnly : ForwardSlotKind::Pooled;
+        return slot == ReluMask ? ForwardSlotKind::TrainingOnly : ForwardSlotKind::Pooled;
     }
-    // The convolution's own input delta comes out of one dgrad graph, which can
-    // carry an ADD epilogue; the residual input's delta is the batch-norm fork.
     bool folds_input_delta_addend(size_t input) const noexcept override { return input == 0; }
     size_t get_recomputable_forward_slot() const noexcept override
     {
-        return batch_norm.active() ? size_t(0) : SIZE_MAX;
+        return batch_norm.active() ? size_t(ConvolutionView) : SIZE_MAX;
     }
     void recompute_forward_slot(ForwardPropagation&, size_t) override;
 
@@ -97,7 +94,7 @@ public:
     void write_JSON_body(JsonWriter&) const override;
     void on_loaded() override { update_convolution_operator(); }
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
 
 private:
 
@@ -108,8 +105,6 @@ private:
     bool forward_propagate_folded(ForwardPropagation&, size_t);
 #endif
 
-    // The geometry lives in the operator, not in a second copy here; only the
-    // input channel count and the two policy flags are the layer's own.
     Index input_channels = 0;
 
     bool use_padding = false;
@@ -119,7 +114,6 @@ private:
     ActivationOperator  activation_operator;
     BatchNormalizationOperator   batch_norm;
 
-    // The layer output is the last forward slot (consumers are wired to it).
     enum Forward {Input, ConvolutionView, BatchNormMean, BatchNormInverseVariance, ReluMask, Output};
 
     void update_convolution_operator();

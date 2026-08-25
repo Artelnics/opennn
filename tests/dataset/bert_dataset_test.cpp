@@ -113,7 +113,7 @@ TEST(BertDatasetTest, FeedsBertClassifierForward)
         TensorView(input_ids.data(),  {batch, seq}),
         TensorView(token_type.data(), {batch, seq})
     };
-    model.forward_propagate(inputs, forward_propagation, false);
+    model.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView output = forward_propagation.get_outputs();
     ASSERT_EQ(output.get_shape().get_rank(), 2);

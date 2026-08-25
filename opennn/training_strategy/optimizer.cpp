@@ -314,9 +314,7 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
 unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
     ThreadSafeQueue<Batch*>& empty_queue,
     const vector<vector<Index>>& batches,
-    const vector<Index>& input_feature_indices,
-    const vector<Index>& decoder_feature_indices,
-    const vector<Index>& target_feature_indices,
+    const FeatureSelection& features,
     FillMode mode,
     WorkerProfileCounters* profile_counters)
 {
@@ -325,14 +323,10 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
     auto session = make_unique<BatchPrefetchSession>(empty_queue, batches_number);
     BatchPrefetchSession* const session_ptr = session.get();
     const auto* const batches_ptr = &batches;
-    const auto* const input_indices = &input_feature_indices;
-    const auto* const decoder_indices = &decoder_feature_indices;
-    const auto* const target_indices = &target_feature_indices;
+    const auto* const features_ptr = &features;
 
     auto worker_body = [batches_ptr,
-                        input_indices,
-                        decoder_indices,
-                        target_indices,
+                        features_ptr,
                         session_ptr,
                         batches_number,
                         mode,
@@ -361,11 +355,7 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
                 }
 
                 batch->wait_h2d_complete();
-                batch->fill((*batches_ptr)[size_t(it)],
-                            *input_indices,
-                            *decoder_indices,
-                            *target_indices,
-                            mode);
+                batch->fill((*batches_ptr)[size_t(it)], *features_ptr, mode);
 
                 const auto t_fill1 = chrono::steady_clock::now();
                 if (!session_ptr->publish(it, batch))
@@ -613,9 +603,7 @@ void Optimizer::warmup_device_training(
     TrainingContext& training_context,
     ThreadSafeQueue<Batch*>& training_empty_queue,
     const vector<vector<Index>>& training_batches,
-    const vector<Index>& input_feature_indices,
-    const vector<Index>& decoder_feature_indices,
-    const vector<Index>& target_feature_indices,
+    const FeatureSelection& features,
     TrainingSession& training_session,
     OptimizerData& optimizer_data,
     ForwardPropagation* validation_forward_propagation,
@@ -663,13 +651,6 @@ void Optimizer::warmup_device_training(
                            stream);
     }
 
-    // The warmup runs a real training step, so undoing it means the optimizer
-    // state as well as the model: train_epoch advances Adam's moments and its
-    // bias-correction counter, and SGD's momentum buffer. setup_optimizer_data
-    // clears all of them -- it zeroes the slot buffer unconditionally, not only
-    // when the buffer is resized. Resetting here rather than after the call
-    // keeps the invariant on the throwing path too, and stops a future optimizer
-    // from silently opting out.
     const auto restore_pre_warmup_state = [&]()
     {
         if(parameters_bytes > 0)
@@ -699,9 +680,6 @@ void Optimizer::warmup_device_training(
                              neural_network->get_device());
     };
 
-    // Capture both graph pipelines at their production group size before the
-    // measured epoch loop. The parameter and optimizer snapshots below make
-    // these real steps a semantics-neutral warm-up.
     const Index warmup_group_size = recurrent_graph_group_size(
         neural_network, training_context.forward.batch_size);
     const Index full_batches = training_batches.back().size() == training_batches.front().size()
@@ -714,20 +692,9 @@ void Optimizer::warmup_device_training(
     if (training_batches.size() > 1
         && training_batches.back().size() != training_batches.front().size())
         training_warmup_batch.push_back(training_batches.back());
-    // A no-op rather than an empty callback: post_batch_callback does not only
-    // get invoked, it also SELECTS control flow - the tail picks its
-    // device-metrics or host-metrics branch from it, and run_graph_epoch decides
-    // whether it may group batches. Clearing it made the warm-up exercise the
-    // device-metrics tail while the measured epoch took the host-metrics one, so
-    // that path's lazy allocations were still pending when the steady-state
-    // allocation guard armed and the first real tail threw. Keeping a callable
-    // here makes the warm-up walk exactly the branches the epoch will, while
-    // still not calling back into the user's code.
     const function<void(NeuralNetwork*)> saved_post_batch_callback = post_batch_callback;
     if (post_batch_callback) post_batch_callback = [](NeuralNetwork*) {};
 
-    // However the warm-up ends, the pre-warm-up state and the caller's callback
-    // come back.
     ScopeExit warmup_cleanup([&]
     {
         restore_pre_warmup_state();
@@ -747,18 +714,14 @@ void Optimizer::warmup_device_training(
             evaluate_epoch(*validation_forward_propagation,
                            *validation_empty_queue,
                            validation_warmup_batch,
-                           input_feature_indices,
-                           decoder_feature_indices,
-                           target_feature_indices,
+                           features,
                            training_session);
         }
 
         train_epoch(training_context,
                     training_empty_queue,
                     training_warmup_batch,
-                    input_feature_indices,
-                    decoder_feature_indices,
-                    target_feature_indices,
+                    features,
                     training_session,
                     optimizer_data);
 
@@ -832,9 +795,7 @@ TrainingResult Optimizer::train()
 
     const bool has_validation = dataset->has_validation();
 
-    const vector<Index> input_feature_indices = dataset->get_feature_indices(VariableRole::Input);
-    const vector<Index> target_feature_indices = dataset->get_feature_indices(VariableRole::Target);
-    const vector<Index> decoder_feature_indices = dataset->get_feature_indices(VariableRole::Decoder);
+    const FeatureSelection features = dataset->get_feature_selection();
 
     const vector<Index> training_sample_indices = dataset->get_sample_indices(SampleRole::Training);
     const vector<Index> validation_sample_indices = dataset->get_sample_indices(SampleRole::Validation);
@@ -923,27 +884,20 @@ TrainingResult Optimizer::train()
         warmup_device_training(training_context,
                                batch_pools.training_empty_queue,
                                training_batches,
-                               input_feature_indices,
-                               decoder_feature_indices,
-                               target_feature_indices,
+                               features,
                                training_session,
                                optimizer_data,
                                validation_fp,
                                has_validation ? &batch_pools.validation_queue() : nullptr,
                                has_validation ? &validation_batches : nullptr);
 
-        // The eager pass above materializes every lazy cuDNN/workspace/optimizer
-        // allocation. A second, state-neutral pass can then capture both full
-        // pipelines and the remainder without cudaMalloc invalidating capture.
         if (training_session.has_graph_batches())
         {
             training_session.cuda_graph_capture_allowed = true;
             warmup_device_training(training_context,
                                    batch_pools.training_empty_queue,
                                    training_batches,
-                                   input_feature_indices,
-                                   decoder_feature_indices,
-                                   target_feature_indices,
+                                   features,
                                    training_session,
                                    optimizer_data,
                                    validation_fp,
@@ -956,9 +910,6 @@ TrainingResult Optimizer::train()
         && validation_batch_size > 0
         && validation_samples_number % validation_batch_size != 0;
 
-    // The tail trains eagerly after the graph epoch in persistent contexts of
-    // its own (TrainingSession::tail), so it neither enters the captured graph
-    // nor moves a pointer the graph baked in: the whole batches keep their graph.
     time_t beginning_time;
     time(&beginning_time);
     const auto measured_training_start = chrono::steady_clock::now();
@@ -969,13 +920,6 @@ TrainingResult Optimizer::train()
         device::CudaAllocationGrowthGuard steady_state_guard(
             needs_cuda_warmup && !has_validation_tail);
 
-        // Shuffling and slicing 10M+ sample indices costs a visible fraction of a
-        // fast GPU epoch, so the next epoch's batches are built on a helper thread
-        // while the GPU trains the current one. The permutation's seed is drawn
-        // on this thread and the helper shuffles with a generator of its own:
-        // drawing from the shared generator off-thread interleaved with the
-        // per-call dropout seeds, so two seeded runs of the same network took
-        // different batch orders and different masks from epoch 1 on.
         vector<vector<Index>> next_training_batches;
         future<void> next_training_batches_ready;
 
@@ -1008,9 +952,7 @@ TrainingResult Optimizer::train()
             const Loss::EvaluationResult training_evaluation_result = train_epoch(training_context,
                                                                                  batch_pools.training_empty_queue,
                                                                                  training_batches,
-                                                                                 input_feature_indices,
-                                                                                 decoder_feature_indices,
-                                                                                 target_feature_indices,
+                                                                                 features,
                                                                                  training_session,
                                                                                  optimizer_data);
 
@@ -1018,18 +960,10 @@ TrainingResult Optimizer::train()
             training_accuracy = training_evaluation_result.accuracy;
             results.training_error_history(epoch) = training_error;
 
-            // validation_period, not display_period: this gate decides whether validation
-            // is *computed*, and everything downstream reads the result. Gating it on the
-            // printing cadence left validation_error_history at its -1 sentinel on every
-            // epoch that was not a multiple of display_period, which get_validation_error()
-            // and the minimal_index() best-epoch search then consumed as real values.
             const bool val_fresh = has_validation && (epoch % validation_period == 0);
 
             if (val_fresh)
             {
-                // TrainingResult::training_seconds is a training-throughput
-                // measurement. Keep validation in the stopping/quality protocol,
-                // but account for its data preparation and kernels separately.
                 if (on_gpu) device::synchronize(device::get_compute_stream());
                 const auto measured_validation_start = chrono::steady_clock::now();
 
@@ -1038,9 +972,7 @@ TrainingResult Optimizer::train()
                 const Loss::EvaluationResult validation_evaluation_result = evaluate_epoch(*validation_fp,
                                                                                           batch_pools.validation_queue(),
                                                                                           validation_batches,
-                                                                                          input_feature_indices,
-                                                                                          decoder_feature_indices,
-                                                                                          target_feature_indices,
+                                                                                          features,
                                                                                           training_session);
 
                 validation_error = validation_evaluation_result.error;
@@ -1102,8 +1034,7 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
     const vector<Index> training_sample_indices = dataset->get_sample_indices(SampleRole::Training);
     const vector<Index> validation_sample_indices = dataset->get_sample_indices(SampleRole::Validation);
 
-    const vector<Index> input_feature_indices = dataset->get_feature_indices(VariableRole::Input);
-    const vector<Index> target_feature_indices = dataset->get_feature_indices(VariableRole::Target);
+    const FeatureSelection features = dataset->get_feature_selection();
 
     set_names();
     ScopeExit scaling_cleanup([dataset] { dataset->clear_training_scaling(); });
@@ -1112,14 +1043,12 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
     context.training_batch = make_unique<Batch>(context.training_samples_number,
                                                 dataset,
                                                 neural_network->get_config());
-    context.training_batch->fill(training_sample_indices, input_feature_indices, {},
-                                 target_feature_indices, FillMode::Training);
+    context.training_batch->fill(training_sample_indices, features, FillMode::Training);
 
     context.validation_batch = make_unique<Batch>(context.validation_samples_number,
                                                   dataset,
                                                   neural_network->get_config());
-    context.validation_batch->fill(validation_sample_indices, input_feature_indices, {},
-                                   target_feature_indices, FillMode::Validation);
+    context.validation_batch->fill(validation_sample_indices, features, FillMode::Validation);
 
     context.training_forward_propagation =
         make_unique<ForwardPropagation>(
@@ -1164,7 +1093,7 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
 
         neural_network->forward_propagate(context.training_batch->get_inputs(),
                                           *context.training_forward_propagation,
-                                          true);
+                                          ForwardPropagationMode::Training);
 
         const FullBatchStep step = hooks.train_step();
 
@@ -1176,7 +1105,7 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
         {
             neural_network->forward_propagate(context.validation_batch->get_inputs(),
                                               *context.validation_forward_propagation,
-                                              false);
+                                              ForwardPropagationMode::Inference);
 
             validation_error = hooks.validation_error();
 
@@ -1443,9 +1372,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     BackPropagation& back_propagation,
     ThreadSafeQueue<Batch*>& empty_queue,
     const vector<vector<Index>>& batches,
-    const vector<Index>& input_feature_indices,
-    const vector<Index>& decoder_feature_indices,
-    const vector<Index>& target_feature_indices)
+    const FeatureSelection& features)
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
     const Index batches_number = Index(batches.size());
@@ -1467,10 +1394,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     const auto epoch_t0 = chrono::steady_clock::now();
     WorkerProfileCounters worker_profile;
 
-    auto session = start_batch_prefetch(empty_queue, batches,
-                                        input_feature_indices,
-                                        decoder_feature_indices,
-                                        target_feature_indices,
+    auto session = start_batch_prefetch(empty_queue, batches, features,
                                         FillMode::Training,
                                         profile_this ? &worker_profile : nullptr);
 
@@ -1512,7 +1436,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     const auto run_compute_step = [&](Batch& slot)
     {
         neural_network->forward_propagate(slot.get_inputs(),
-                                          forward_propagation, true);
+                                          forward_propagation, ForwardPropagationMode::Training);
         if (!loss->back_propagate_device_metrics(slot,
                                                  forward_propagation, back_propagation,
                                                  device_metrics.error_sum(),
@@ -1556,9 +1480,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
 
     const bool resident_gather = loss->get_dataset()->is_device_resident();
 
-    // Short graph groups avoid the synchronized remainder path for the simple
-    // RNN benchmark shapes. LSTM amortizes graph launches better with the full
-    // staging group, so retain the larger capture there.
     const Index M = recurrent_graph_group_size(neural_network,
                                                 forward_propagation.batch_size);
     Batch* host_batch = nullptr;
@@ -1569,11 +1490,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     {
         const Index groups = batches_number / M;
 
-        // setup_batch_pools fills pipelines[1] only when the epoch has at least
-        // slots_count batches; with a group size below TrainingSession::group_size
-        // the loop below runs more groups than there are batches per pipeline and
-        // alternated onto slots that were never created. Only pipelines whose
-        // whole group exists may be used.
         const size_t usable_pipelines =
             pipelines.size() > 1 && pipelines[1].slots[size_t(M) - 1]
                 ? pipelines.size()
@@ -1616,8 +1532,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         }
     };
 
-    // Grouped graphs hide the individual parameter updates from callbacks.
-    // Keep one graph replay per batch when a callback must observe every update.
     const bool can_group_batches = !post_batch_callback
                                 && batches_number >= M;
 
@@ -1700,11 +1614,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         }
         else
         {
-            // Only pipelines whose first slot exists may be alternated between.
-            // setup_batch_pools creates pipelines[1].slots[0] on the ungrouped
-            // path only, so a run with enough batches to group but a
-            // post_batch_callback installed - which sends the epoch here rather
-            // than to the grouped loop - alternated onto a null slot.
             const size_t usable_pipelines =
                 pipelines.size() > 1 && pipelines[1].slots[0] ? pipelines.size() : 1;
 
@@ -1790,9 +1699,7 @@ struct Optimizer::EpochLoopContext
 {
     ThreadSafeQueue<Batch*>* empty_queue = nullptr;
     const vector<vector<Index>>* batches = nullptr;
-    const vector<Index>* input_feature_indices = nullptr;
-    const vector<Index>* decoder_feature_indices = nullptr;
-    const vector<Index>* target_feature_indices = nullptr;
+    const FeatureSelection* features = nullptr;
 
     FillMode fill_mode = FillMode::Training;
     bool on_gpu = false;
@@ -1814,9 +1721,7 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
 
     auto session = start_batch_prefetch(*context.empty_queue,
                                         *context.batches,
-                                        *context.input_feature_indices,
-                                        *context.decoder_feature_indices,
-                                        *context.target_feature_indices,
+                                        *context.features,
                                         context.fill_mode,
                                         context.worker_profile);
 
@@ -1882,10 +1787,6 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
     return epoch_result;
 }
 
-// An epoch's batches minus the remainder. The tail is the last batch and only
-// exists when its size differs from the context's -- a rule train_epoch and
-// evaluate_epoch each spelled out for themselves, including the copy that has
-// to be owned somewhere because `whole` points into it.
 struct EpochBatches
 {
     vector<vector<Index>> trimmed;
@@ -1894,7 +1795,6 @@ struct EpochBatches
 
     Index number() const { return Index(whole->size()); }
 };
-
 
 static EpochBatches split_off_tail(const vector<vector<Index>>& batches, Index batch_size)
 {
@@ -1910,12 +1810,6 @@ static EpochBatches split_off_tail(const vector<vector<Index>>& batches, Index b
     return split;
 }
 
-
-// Both epoch drivers run the whole batches and then, if the last batch is
-// short, that tail on its own -- and both then have to put the two numbers
-// back together. error and accuracy are per-sample means over different sample
-// counts, so they weight; active_tokens_count is a total, so it adds. Getting
-// that wrong is silent, and it was written out twice.
 static void merge_tail_result(Loss::EvaluationResult& result,
                               const Loss::EvaluationResult& tail_result,
                               const Index complete_samples,
@@ -1934,14 +1828,11 @@ static void merge_tail_result(Loss::EvaluationResult& result,
     result.active_tokens_count += tail_result.active_tokens_count;
 }
 
-
 Loss::EvaluationResult Optimizer::train_epoch(
     TrainingContext& main_context,
     ThreadSafeQueue<Batch*>& empty_queue,
     const vector<vector<Index>>& batches,
-    const vector<Index>& input_feature_indices,
-    const vector<Index>& decoder_feature_indices,
-    const vector<Index>& target_feature_indices,
+    const FeatureSelection& features,
     TrainingSession& training_session,
     OptimizerData& optimizer_data)
 {
@@ -1998,28 +1889,18 @@ Loss::EvaluationResult Optimizer::train_epoch(
         TrainingSession::TailContext& tail = training_session.tail;
         if (!tail.context || tail.size != tail_size)
         {
-            // First tail of the run (the warm-up pass, before the allocation
-            // guard arms); a different remainder can only come from a new
-            // dataset or batch size, which restarts the session anyway.
             tail.batch = make_unique<Batch>(tail_size, loss->get_dataset(),
                                             neural_network->get_config());
             tail.context = make_unique<TrainingContext>(tail_size, *loss, true, &main_context);
             tail.size = tail_size;
             tail.capture_failed = false;
         }
-        // No re-set on the reused path: Loss::back_propagate links the layers'
-        // gradient views to whichever context it is handed, so the tail keeps its
-        // delta layout and its gradient buffer from one epoch to the next.
 
         Batch& batch = *tail.batch;
         ForwardPropagation& tail_forward_propagation = tail.context->forward;
         BackPropagation& tail_back_propagation = tail.context->backward;
 
-        batch.fill(sample_indices,
-                   input_feature_indices,
-                   decoder_feature_indices,
-                   target_feature_indices,
-                   FillMode::Training);
+        batch.fill(sample_indices, features, FillMode::Training);
 
         if(on_gpu)
         {
@@ -2043,7 +1924,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
             {
                 neural_network->forward_propagate(batch.get_inputs(),
                                                   tail_forward_propagation,
-                                                  true);
+                                                  ForwardPropagationMode::Training);
                 if (!loss->back_propagate_device_metrics(
                         batch,
                         tail_forward_propagation,
@@ -2092,7 +1973,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
         {
             neural_network->forward_propagate(batch.get_inputs(),
                                               tail_forward_propagation,
-                                              true);
+                                              ForwardPropagationMode::Training);
             loss->back_propagate(batch,
                                  tail_forward_propagation,
                                  tail_back_propagation);
@@ -2140,18 +2021,14 @@ Loss::EvaluationResult Optimizer::train_epoch(
         {
             {
                 PROFILE_SCOPE_HOST("step:fill");
-                batch->fill(epoch_batches[size_t(iteration)],
-                            input_feature_indices,
-                            decoder_feature_indices,
-                            target_feature_indices,
-                            FillMode::Training);
+                batch->fill(epoch_batches[size_t(iteration)], features, FillMode::Training);
             }
 
             {
                 PROFILE_SCOPE("step:fwd_total");
                 neural_network->forward_propagate(batch->get_inputs(),
                                                   forward_propagation,
-                                                  true);
+                                                  ForwardPropagationMode::Training);
             }
 
             {
@@ -2198,9 +2075,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
                                        back_propagation,
                                        empty_queue,
                                        epoch_batches,
-                                       input_feature_indices,
-                                       decoder_feature_indices,
-                                       target_feature_indices);
+                                       features);
 
         merge_tail(epoch_result);
         finalize_epoch(epoch_result);
@@ -2217,9 +2092,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
     EpochLoopContext context{
         &empty_queue,
         &epoch_batches,
-        &input_feature_indices,
-        &decoder_feature_indices,
-        &target_feature_indices,
+        &features,
         FillMode::Training,
         true,
         neural_network->has_recurrent_layers(),
@@ -2235,7 +2108,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
             PROFILE_SCOPE("step:fwd_total");
             neural_network->forward_propagate(batch.get_inputs(),
                                               forward_propagation,
-                                              true);
+                                              ForwardPropagationMode::Training);
         }
 
         {
@@ -2314,9 +2187,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     ForwardPropagation& forward_propagation,
     ThreadSafeQueue<Batch*>& empty_queue,
     const vector<vector<Index>>& batches,
-    const vector<Index>& input_feature_indices,
-    const vector<Index>& decoder_feature_indices,
-    const vector<Index>& target_feature_indices,
+    const FeatureSelection& features,
     TrainingSession& training_session)
 {
     Loss::EvaluationResult epoch_result;
@@ -2343,11 +2214,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
         const Index tail_size = Index(sample_indices.size());
 
         Batch batch(tail_size, loss->get_dataset(), neural_network->get_config());
-        batch.fill(sample_indices,
-                   input_feature_indices,
-                   decoder_feature_indices,
-                   target_feature_indices,
-                   FillMode::Validation);
+        batch.fill(sample_indices, features, FillMode::Validation);
 
         if(on_gpu)
         {
@@ -2363,7 +2230,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
             true);
         neural_network->forward_propagate(batch.get_inputs(),
                                           tail_forward_propagation,
-                                          false);
+                                          ForwardPropagationMode::Inference);
         result = loss->calculate_error(batch, tail_forward_propagation);
 
         if(on_gpu)
@@ -2391,15 +2258,11 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
         for(Index iteration = 0; iteration < batches_number; ++iteration)
         {
-            batch->fill(epoch_batches[size_t(iteration)],
-                        input_feature_indices,
-                        decoder_feature_indices,
-                        target_feature_indices,
-                        FillMode::Validation);
+            batch->fill(epoch_batches[size_t(iteration)], features, FillMode::Validation);
 
             neural_network->forward_propagate(batch->get_inputs(),
                                               forward_propagation,
-                                              false);
+                                              ForwardPropagationMode::Inference);
 
             const Loss::EvaluationResult result =
                 loss->calculate_error(*batch, forward_propagation);
@@ -2429,9 +2292,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     EpochLoopContext context{
         &empty_queue,
         &epoch_batches,
-        &input_feature_indices,
-        &decoder_feature_indices,
-        &target_feature_indices,
+        &features,
         FillMode::Validation,
         true,
         neural_network->has_recurrent_layers(),
@@ -2445,7 +2306,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     {
         neural_network->forward_propagate(batch.get_inputs(),
                                           forward_propagation,
-                                          false);
+                                          ForwardPropagationMode::Inference);
 
         if(use_device_metrics)
         {

@@ -16,20 +16,12 @@
 namespace opennn
 {
 
-void ActivationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void ActivationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
 {
     PROFILE_SCOPE("op:activation_fwd");
 
     TensorView& output = get_output(forward_propagation, layer);
 
-    // forward_fused means the combination already applied this activation in its
-    // epilogue, on either device: the flag is set from the layer's activation
-    // and its batch norm, neither of which is device-specific, and the CPU
-    // epilogue applies the ReLU in add_bias exactly as cuBLASLt's does. The
-    // is_cuda() that used to be part of this condition therefore bought nothing
-    // but a second full pass over the output on CPU - invisible because a ReLU
-    // applied twice is a ReLU, and worth 0.38 ms of a 6.65 ms HIGGS inference
-    // batch.
     if (output.empty() || forward_fused)
         return;
 

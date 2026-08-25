@@ -18,6 +18,18 @@ from pathlib import Path
 from typing import Any
 
 HERE = Path(__file__).resolve().parent
+
+# Shared provenance helpers: benchmarks/common. See DUPLICATION_LEDGER.md
+# for what these looked like when every runner had its own.
+sys.path.insert(0, str(HERE.parents[1]))
+from common import (  # noqa: E402
+    REPO_ROOT,
+    file_info,
+    framework_versions,
+    git_metadata,
+    repo_root,
+    run_text,
+)
 RESULTS_DIR = (HERE.parent.parent / "results").resolve()
 DEFAULT_BENCH_DATA = Path(
     os.environ.get("OPENNN_BENCH_DATA", str(Path.home() / "opennn-benchmark-data"))
@@ -26,23 +38,8 @@ DEFAULT_HIGGS_DIR = DEFAULT_BENCH_DATA / "higgs"
 KEY_VALUE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)=(.+)$")
 PY = os.environ.get("BENCH_PYTHON", "python3")
 
-def run_text(cmd: list[str], cwd: Path | None = None) -> str:
-    try:
-        return subprocess.run(
-            cmd,
-            cwd=str(cwd) if cwd else None,
-            capture_output=True,
-            text=True,
-            check=False,
-        ).stdout.strip()
-    except Exception:
-        return ""
 
-def repo_root() -> Path:
-    root = run_text(["git", "-C", str(HERE), "rev-parse", "--show-toplevel"])
-    return Path(root).resolve() if root else HERE.parents[2]
 
-REPO_ROOT = repo_root()
 
 def parse_scalar(text: str) -> Any:
     value = text.strip()
@@ -84,52 +81,8 @@ def parse_metrics(raw: str) -> dict[str, Any]:
 
     return metrics
 
-def file_info(path: Path) -> dict[str, Any]:
-    info: dict[str, Any] = {"path": str(path)}
-    if path.exists():
-        stat = path.stat()
-        info.update({"exists": True, "bytes": stat.st_size, "mtime": stat.st_mtime})
-    else:
-        info["exists"] = False
-    return info
 
-def git_metadata() -> dict[str, Any]:
-    commit = run_text(["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"])
-    branch = run_text(["git", "-C", str(REPO_ROOT), "rev-parse", "--abbrev-ref", "HEAD"])
-    status = run_text(["git", "-C", str(REPO_ROOT), "status", "--short", "--untracked-files=no"])
-    status_lines = status.splitlines()
-    return {
-        "commit": commit or "unknown",
-        "branch": branch or "unknown",
-        "dirty": bool(status_lines),
-        "status_short_count": len(status_lines),
-        "status_short_sample": status_lines[:50],
-        "status_short_truncated": len(status_lines) > 50,
-    }
 
-def framework_versions() -> dict[str, Any]:
-    code = r"""
-import json, platform, sys
-info = {"python": sys.version.split()[0], "python_executable": sys.executable,
-        "platform": platform.platform()}
-try:
-    import torch
-    info["torch"] = torch.__version__
-except Exception as exc:
-    info["torch_error"] = str(exc)
-try:
-    import tensorflow as tf
-    info["tensorflow"] = tf.__version__
-except Exception as exc:
-    info["tensorflow_error"] = str(exc)
-print(json.dumps(info))
-"""
-    try:
-        out = subprocess.run([PY, "-c", code], capture_output=True, text=True, check=False)
-        lines = [line for line in out.stdout.splitlines() if line.strip()]
-        return json.loads(lines[-1]) if lines else {}
-    except Exception as exc:
-        return {"version_error": str(exc), "python": PY, "platform": platform.platform()}
 
 def candidate_names(base: str) -> list[str]:
     return [base, base + ".exe"] if os.name != "nt" else [base + ".exe", base]

@@ -19,10 +19,6 @@ enum class MemoryPoolStrategy
     Compact
 };
 
-// The propagation timeline: layer i runs forward at step i and backward at
-// backward_step(L, i), so a lifetime spanning both is [i, backward_step(L, i)].
-// Forward activations and backward deltas are planned against the same scale,
-// which is what lets them share one arena.
 constexpr Index backward_step(Index layers_number, Index layer) noexcept
 {
     return 2 * layers_number - 1 - layer;

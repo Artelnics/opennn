@@ -208,13 +208,6 @@ void cross_entropy_3d_multiple_forward_cuda(const Index n,
                        vocab_size, outputs, targets, errors, valid_mask, correct_mask, epsilon);
 }
 
-
-// The device-metrics form of the forward above: one warp per token (lanes
-// stride over the vocabulary, coalesced), the per-token loss, validity and
-// argmax-hit block-reduced and added into sums[0..2] (loss, active, correct).
-// Replaces the per-token error/mask arrays and their three cublasSasum passes;
-// sums must be zero on entry. Ties in the argmax go to the lowest class, as in
-// the serial scan.
 template<typename T>
 __global__ void cross_entropy_3d_metrics_kernel(const int total_tokens, const int vocab_size,
                                                 const T* __restrict__ outputs,
@@ -299,10 +292,6 @@ void cross_entropy_3d_metrics_cuda(const Index total_tokens, const int vocab_siz
 }
 
 template<typename T>
-// outputs and output_deltas are deliberately not __restrict__: the loss aliases
-// the delta view onto the outputs when it can overwrite them in place
-// (output_delta_overwrites_outputs), so promising the compiler they do not
-// overlap would be a lie it is entitled to act on.
 __global__ void cross_entropy_3d_multiple_backward_kernel(const int n,
                                                           const int vocab_size,
                                                           const T* outputs,
@@ -435,19 +424,16 @@ static constexpr float YOLO_GRAD_CLIP     = 10.0f;
 
 static constexpr float YOLO_INV_PI2       = 4.0f / (3.14159265f * 3.14159265f);
 
-// Everything the CIoU loss and its gradient share for one (pred, gt) pair of
-// (cx, cy, w, h) boxes: corners, intersection, union, enclosure and the centre
-// distance / aspect-ratio penalties.
 struct CiouTerms
 {
-    float pl, pr, pt, pb;      // predicted box corners
-    float gl, gr, gt_, gb;     // ground-truth box corners
-    float iw_raw, ih_raw;      // signed intersection extents
-    float iw, ih, inter;       // clamped intersection
+    float pl, pr, pt, pb;
+    float gl, gr, gt_, gb;
+    float iw_raw, ih_raw;
+    float iw, ih, inter;
     float uni, iou;
-    float ew, eh, enc, giou;   // enclosing box and GIoU
-    float dx, dy, rho2, c2;    // centre offset and enclosing diagonal
-    float v_diff, v, alpha;    // aspect-ratio penalty
+    float ew, eh, enc, giou;
+    float dx, dy, rho2, c2;
+    float v_diff, v, alpha;
 };
 
 __device__ __forceinline__ CiouTerms ciou_terms(const float* pred, const float* gt)
@@ -489,7 +475,6 @@ __device__ __forceinline__ CiouTerms ciou_terms(const float* pred, const float* 
 
     t.v_diff = atan2f(gt[2], gt[3]) - atan2f(pred[2], pred[3]);
     t.v      = YOLO_INV_PI2 * t.v_diff * t.v_diff;
-    // Guard on uni (not iou) so the loss and its gradient agree for disjoint boxes.
     t.alpha  = (t.uni > 0.0f) ? t.v / (1.0f - t.iou + t.v + YOLO_EPSILON) : 0.0f;
 
     return t;
@@ -580,8 +565,6 @@ __device__ __forceinline__ void yolo_ciou_grad(
     h_grad += coeff * (pw / wh2);
 }
 
-// Box i's cell-relative (x, y) offsets to grid-normalized centres, for both
-// the prediction and its ground truth; returns 1 / grid_size.
 __device__ __forceinline__ float yolo_decode_cell_boxes(const int i, const int boxes_per_cell, const int grid_size,
                                                         const float* pred_raw, const float* gt_raw,
                                                         float* pred, float* gt)
@@ -818,7 +801,6 @@ OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 
 template void l1_gradient_cuda<float>(const Index, float*, const float*, const float);
 
-// Scaled elementwise difference, the shared front half of the squared-error family.
 template<typename TIn, typename TOut>
 __global__ void scaled_diff_kernel(const int n,
                                    const TIn* __restrict__ input,

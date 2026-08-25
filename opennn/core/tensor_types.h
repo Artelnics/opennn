@@ -71,9 +71,6 @@ void visit_type_pair(Type t_in, Type t_out, F&& f)
     });
 }
 
-// The lookups below differ only in which TypeInfo member they read, so the
-// walk over the concrete types lives here once. Adding a Type means adding a
-// case here rather than in each of them.
 template<typename F>
 inline auto with_type_info(Type type, const char* caller, F&& f)
 {
@@ -181,9 +178,6 @@ struct Shape
 
     Shape() noexcept = default;
 
-    // Named, because Shape(3, 128) next to Shape{3, 128} reads as the same
-    // thing and means the opposite: this is {128, 128, 128}. The constructor
-    // form was the vector(n, v) trap and is gone; say filled() instead.
     static Shape filled(size_t rank, Index value)
     {
         throw_if(rank > MaxRank, "Shape::filled: rank {} exceeds MaxRank={}.", rank, MaxRank);
@@ -502,7 +496,6 @@ struct Buffer
 
     void swap(Buffer& other) noexcept
     {
-        // std:: is required: the member `swap` hides the namespace-scope one.
         std::swap(pointer, other.pointer);
         std::swap(allocated_bytes, other.allocated_bytes);
         std::swap(allocation_device, other.allocation_device);
@@ -572,8 +565,6 @@ struct TensorView
                                               "TensorView::byte_size");
     }
 
-    // The tensor seen as a matrix of last-dimension rows: the shape
-    // as_flat_matrix() builds and every row-wise kernel works in.
     Index flat_columns() const noexcept { return shape.get_rank() == 0 ? 0 : shape[shape.get_rank() - 1]; }
     Index flat_rows() const noexcept
     {
@@ -715,8 +706,6 @@ private:
                  "{} requires CPU FP32 storage.", accessor);
     }
 
-    // Every host accessor wants the same two things, and named the accessor
-    // twice to say so.
     void require_host_fp32_data(string_view accessor) const
     {
         require_host_fp32(accessor);

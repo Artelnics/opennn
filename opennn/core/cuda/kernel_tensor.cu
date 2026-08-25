@@ -6,10 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// Shape- and reduction-level kernels that belong to no single layer family:
-// a 2D transpose used when materializing transposed weights, and the bias
-// gradient reduction behind linear_backward.
-
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/cuda/kernel_tensor.cuh"
@@ -69,23 +65,6 @@ void bias_grad_sum_cuda(const Index batch, const Index features, const T* delta,
         checked_int(batch), f, chunk, delta, bias_grad));
 }
 
-
-// One warp per row. Each lane walks the row in 16-byte steps holding its share
-// of the weight vector, and a shuffle tree folds the 32 partial sums; lane 0
-// adds the bias on the way out. Accumulation is fp32 whatever T is and the
-// reduction order is fixed, so the result is deterministic.
-//
-// Two rewrites were measured against this and neither is kept, both recorded
-// because the reasoning for them was sound and the machine disagreed. Splitting
-// the lane's accumulator into one chain per vector slot: 23,424 ns against
-// 23,456 at fp32 batch 8,192, so the kernel is not latency-bound on that chain.
-// Loading the weight slice once per warp and reusing it across a group of rows,
-// which halves the load traffic the profile shows (33 MB of input arrives as
-// 67 MB of loads because every warp re-reads the whole weight vector): fp32
-// 24.1 -> 29.8 us at a group of four and 28.6 at a group of two, because at
-// 8,192 rows a group of four leaves 64 blocks for 70 SMs and the occupancy
-// costs more than the traffic saves. It helps bf16 slightly (7.44 -> 6.62 us)
-// and that is not worth a kernel whose behaviour inverts with the dtype.
 template<typename T>
 __global__ void linear_forward_single_output_kernel(const int rows,
                                                     const int features,
@@ -123,10 +102,6 @@ __global__ void linear_forward_single_output_kernel(const int rows,
 
     if (bias) sum += element_to_float(bias[0]);
 
-    // The activation rides here rather than in a kernel of its own. The value
-    // is already in a register and this layer produces one element per row, so
-    // a separate pass is a whole launch - about a microsecond of the eighteen a
-    // batch of 256 costs - to read and write one number per row.
     if (activation != activation_identity) sum = opennn_activation_value(sum, activation);
 
     element_from_float(sum, output[row]);
@@ -145,19 +120,6 @@ void linear_forward_single_output_cuda(const Index rows,
                      checked_int(features), input, weights, bias, activation, output);
 }
 
-
-// Backward of the same single-output layer. The three operations it needs -
-// the input delta (a rank-1 product of the output delta and the weight
-// vector), the weight gradient (the input's columns weighted by the output
-// delta) and the bias gradient (the output delta's sum) - all walk the same
-// rows, so one pass over the input does all three: cuBLAS runs them as two
-// GEMVs that read the input twice and reach a third of the bandwidth.
-//
-// One warp per row, each lane holding its slice of the weight vector and of
-// the weight-gradient accumulator across the rows the warp visits. The block
-// folds its warps in warp order through shared memory and writes one row of
-// partials; single_output_gradient_finalize_kernel sums those in block order,
-// so the result does not depend on how the rows were scheduled.
 template<typename T, int CHUNKS>
 __global__ void linear_backward_single_output_kernel(const int rows,
                                                      const int features,
@@ -214,7 +176,7 @@ __global__ void linear_backward_single_output_kernel(const int rows,
         }
     }
 
-    extern __shared__ float block_gradient[];   // features + 1
+    extern __shared__ float block_gradient[];
     for (int i = int(threadIdx.x); i <= features; i += int(blockDim.x)) block_gradient[i] = 0.0f;
     __syncthreads();
 
@@ -240,8 +202,6 @@ __global__ void linear_backward_single_output_kernel(const int rows,
         bias_gradient_partials[blockIdx.x] = block_gradient[features];
 }
 
-// features first: launch_elementwise_on hands the launch count to the kernel
-// as its first parameter.
 __global__ void single_output_gradient_finalize_kernel(const int features,
                                                        const int blocks,
                                                        const float* __restrict__ weight_partials,
@@ -267,8 +227,6 @@ __global__ void single_output_gradient_finalize_kernel(const int features,
     }
 }
 
-// Rows per warp beyond which more blocks stop paying: enough warps to fill the
-// device several times, few enough that the finalize sum stays short.
 static constexpr int single_output_maximum_blocks = 240;
 
 template<typename T>
@@ -338,7 +296,6 @@ OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
 
 template void transpose_2d_cuda<int8_t>(const Index, const Index, const int8_t*, int8_t*);
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence, SL.

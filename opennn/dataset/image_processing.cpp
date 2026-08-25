@@ -129,10 +129,6 @@ BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str
         throw_if(num_palette_colors > 256,
                  "Invalid palette size for 8-bit BMP.");
 
-        // Always 256 entries, of which only num_palette_colors are read from
-        // the file: the pixel byte that indexes this is not bounded by
-        // biClrUsed, so an image declaring 16 colours and using index 200 read
-        // past the vector. Unused entries decode as black.
         h.palette.assign(256, RGBQuad{});
         h.is_grayscale = true;
 
@@ -457,8 +453,6 @@ void decode_jpeg_pixels(const vector<uint8_t>& buffer,
     volatile bool header_read = false;
 
 #ifdef _MSC_VER
-    // libjpeg reports fatal errors through longjmp. No destructible automatic
-    // objects are kept live across this boundary.
 #pragma warning(push)
 #pragma warning(disable: 4611)
 #endif

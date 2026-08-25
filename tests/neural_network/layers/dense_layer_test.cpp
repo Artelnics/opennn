@@ -142,7 +142,7 @@ TEST(Dense3dTest, SequenceForwardValuesMatchHandComputed)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> inputs = { TensorView(input_data.data(), {batch_size, sequence_length, input_embedding}) };
-    neural_network.forward_propagate(inputs, forward_propagation, false);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView output_view = forward_propagation.get_outputs();
 

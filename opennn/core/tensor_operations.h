@@ -125,31 +125,17 @@ void softmax_backward(const TensorView&, TensorView&, float alpha = 1.0f);
 void activation_forward(TensorView&, ActivationFunction);
 void activation_backward(const TensorView&, TensorView&, ActivationFunction);
 
-// `fused_activation` is applied to the output after the bias. It exists for the
-// activations cuBLASLt has no epilogue for: the single-output forward folds it
-// into its own store, and every other path runs it as the separate pass it
-// would have been anyway - so a caller may always ask, and asking is only ever
-// a performance decision, never a correctness one.
 void linear_forward(const TensorView&, const TensorView&, const TensorView&,
                     TensorView&, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS,
                     TensorView* pre_activation = nullptr,
                     const TensorView& weight_scale = {},
                     ActivationFunction fused_activation = ActivationFunction::Identity);
-// What a caller can ask the backward to fold into the input-delta GEMM instead
-// of paying for it in a pass of its own.
 struct LinearBackwardOptions
 {
-    // The ReLU derivative as a bitmask from a cuBLASLt auxiliary epilogue.
     const TensorView* drelu_mask = nullptr;
 
-    // Another consumer's delta for the same input, summed by the GEMM:
-    // input_delta = output_delta * W^T + addend.
     const TensorView* addend = nullptr;
 
-    // Ask for the input delta to be masked by the derivative of the ReLU that
-    // produced the input, and learn whether it happened: only the single-output
-    // path can, so a caller that reads back false must run the activation
-    // backward itself.
     bool* fused_input_relu = nullptr;
 };
 
@@ -158,16 +144,8 @@ void linear_backward(const TensorView&, const TensorView&, const TensorView&,
                      TensorView&, bool accumulate_input_delta = false,
                      const LinearBackwardOptions& options = {});
 
-
-
-
-
-
-
-
 void linear_forward_transposed(const TensorView& input, const TensorView& embed_weight, TensorView& output,
                           const TensorView& weight_scale = {});
-
 
 }
 

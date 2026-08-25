@@ -84,7 +84,7 @@ TEST_F(ConcatenationLayerTest, ForwardPropagateConcatenatesAlongChannels)
         TensorView(inputs_a.data(), { batch_size, height, width, channels_a }),
         TensorView(inputs_b.data(), { batch_size, height, width, channels_b })
     };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
     const Shape& output_dims = output_view.get_shape();
@@ -143,7 +143,7 @@ TEST_F(ConcatenationLayerTest, ForwardPropagateThreeInputs)
         TensorView(in1.data(), { batch_size, height, width, c1 }),
         TensorView(in2.data(), { batch_size, height, width, c2 })
     };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
 
@@ -188,7 +188,7 @@ TEST_F(ConcatenationLayerTest, LegacyConcatenateTagLoads)
 
     ForwardPropagation forward_before(batch_size, &neural_network);
     vector<TensorView> inputs_before = make_inputs();
-    neural_network.forward_propagate(inputs_before, forward_before, false);
+    neural_network.forward_propagate(inputs_before, forward_before, ForwardPropagationMode::Inference);
     const TensorView out_before = forward_before.get_outputs();
     const vector<float> expected(out_before.as<float>(), out_before.as<float>() + out_before.size());
 
@@ -217,7 +217,7 @@ TEST_F(ConcatenationLayerTest, LegacyConcatenateTagLoads)
 
     ForwardPropagation forward_after(batch_size, &loaded);
     vector<TensorView> inputs_after = make_inputs();
-    loaded.forward_propagate(inputs_after, forward_after, false);
+    loaded.forward_propagate(inputs_after, forward_after, ForwardPropagationMode::Inference);
     const TensorView out_after = forward_after.get_outputs();
 
     ASSERT_EQ(out_after.size(), Index(expected.size()));

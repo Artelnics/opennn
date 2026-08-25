@@ -33,7 +33,7 @@ TEST(SiLUTest, ActivationForwardMatchesSilu)
 
     ForwardPropagation forward_propagation(1, &neural_network);
     vector<TensorView> input_views = { TensorView(inputs.data(), {1, features}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     const float* output = forward_propagation.get_outputs().as<type>();
     EXPECT_NEAR(output[0], silu(-1.0f), 1.0e-5f);
@@ -99,7 +99,7 @@ TEST(GatedDenseTest, ForwardMatchesHandComputed)
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<float> input_values = x;
     vector<TensorView> input_views = { TensorView(input_values.data(), {batch_size, features}) };
-    neural_network.forward_propagate(input_views, forward_propagation, false);
+    neural_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
     const float* output = forward_propagation.get_outputs().as<type>();
 
@@ -193,7 +193,7 @@ TEST(GatedDenseTest, SaveLoadRoundTrip)
 
     ForwardPropagation forward_before(batch_size, &neural_network);
     vector<TensorView> inputs_before = make_inputs();
-    neural_network.forward_propagate(inputs_before, forward_before, false);
+    neural_network.forward_propagate(inputs_before, forward_before, ForwardPropagationMode::Inference);
     const TensorView out_before = forward_before.get_outputs();
     const vector<float> expected(out_before.as<float>(), out_before.as<float>() + out_before.size());
 
@@ -210,7 +210,7 @@ TEST(GatedDenseTest, SaveLoadRoundTrip)
 
     ForwardPropagation forward_after(batch_size, &loaded);
     vector<TensorView> inputs_after = make_inputs();
-    loaded.forward_propagate(inputs_after, forward_after, false);
+    loaded.forward_propagate(inputs_after, forward_after, ForwardPropagationMode::Inference);
     const TensorView out_after = forward_after.get_outputs();
 
     ASSERT_EQ(out_after.size(), Index(expected.size()));

@@ -44,9 +44,6 @@ struct Operator
     virtual void link_states    (span<const TensorView>) {}
     virtual void link_parameter_scales(span<const TensorView>) {}
 
-    // Default values of the operator's states (batch-norm running statistics),
-    // applied when the network is compiled: a fresh network must infer sanely
-    // before its first training step, whatever initializer the parameters get.
     virtual void initialize_states() {}
 
     virtual void set_weights_dtype(Type new_weights_dtype) { weights_dtype = new_weights_dtype; }
@@ -56,7 +53,7 @@ struct Operator
 
     virtual void set_parameters_pytorch() { set_parameters_glorot(); }
 
-    virtual void forward_propagate(ForwardPropagation&, size_t, bool) {}
+    virtual void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) {}
     virtual void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const {}
 
     virtual void to_JSON  (JsonWriter&) const {}

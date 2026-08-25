@@ -41,7 +41,6 @@ static pair<void*, void*> prepare_kv_cache(Buffer& storage,
     return {base, base + cache_bytes};
 }
 
-// Defined below under OPENNN_HAS_CUDA.
 static void grouped_attention_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, float, Index, float*, const int*, GroupedQueryAttentionOperator::GraphCache*);
 static void qk_norm_gpu(const TensorView&, const TensorView&, TensorView&, Index, float);
 static void rope_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index);
@@ -120,8 +119,6 @@ void grouped_attention_forward(const TensorView& query, const TensorView& key, c
 {
     if (query.is_cuda())
     {
-        // This free helper is stateless. Persistent frontend plans belong to
-        // GroupedQueryAttentionOperator, which passes its cache directly.
         return grouped_attention_gpu(query, key, value, output, n_query_heads, n_kv_heads, head_dim,
                                      causal, scale, query_position_offset, decode_partials,
                                      position_device, nullptr);
@@ -373,13 +370,6 @@ static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, con
     return true;
 }
 
-// cuDNN's fused attention, which replaces the path above rather than accelerating
-// it: it never forms the batch*query_heads*query_seq*key_seq score matrix, and it
-// runs on tensor cores that the default-math materialized fallback turns off.
-// Grouped
-// shapes are native to it — K and V simply carry fewer heads than Q. Measured on
-// sm_120 at batch 8, 16:4 heads, head_dim 64: 0.88 ms against 9.03 ms for the
-// materialized path at sequence 2048, with no workspace against 2 GiB of scores.
 struct GroupedQueryAttentionOperator::GraphCache
 {
     mutex access_mutex;
@@ -429,9 +419,6 @@ struct GroupedQueryAttentionOperator::GraphCache
 
     Entry& get_or_create(const Key& key)
     {
-        // Entries contain host graph descriptors only. Execution memory comes
-        // from the caller or graph workspace, so descriptor eviction cannot
-        // invalidate an address captured by CUDA.
         return detail::bounded_cache_entry(
             entries, key, cudnn_frontend::graph_cache_capacity);
     }
@@ -444,17 +431,13 @@ static bool grouped_attention_sdpa_gpu(const int batch, const int query_seq, con
                                        const T* Q, const T* K, const T* V, T* O,
                                        GroupedQueryAttentionOperator::GraphCache* cache)
 {
-    // cuDNN's fused attention is BF16-only, so FP32 keeps the path below.
     if constexpr (!is_same_v<T, bfloat16>)
         return false;
     else
     {
-        // Escape hatch for A/B-ing the fused path against the materialized one.
         static const bool disabled = env_flag_enabled("OPENNN_GQA_DISABLE_SDPA");
         if (disabled || !cache) return false;
 
-        // The fused mask places query i at absolute position i, so a decode offset
-        // would have it mask against the wrong positions.
         if (query_position_offset != 0) return false;
         if (n_kv_heads <= 0 || n_query_heads % n_kv_heads != 0) return false;
 
@@ -477,10 +460,6 @@ static bool grouped_attention_sdpa_gpu(const int batch, const int query_seq, con
                 const auto dims = [&](int64_t heads, int64_t seq)
                     { return vector<int64_t>{batch_size, heads, seq, depth}; };
 
-                // Q, K and V arrive as [batch][seq][heads][dim], so the head stride is
-                // just depth and the sequence stride steps over every head. Addressing
-                // that layout directly is what makes the split_heads/concatenate_heads copies
-                // the materialized path needs unnecessary here.
                 const auto strides = [&](int64_t heads, int64_t seq)
                     { return vector<int64_t>{seq * heads * depth, depth, heads * depth, 1}; };
 
@@ -496,7 +475,6 @@ static bool grouped_attention_sdpa_gpu(const int batch, const int query_seq, con
                 entry.K = bshd("K", n_kv_heads,    key_seq);
                 entry.V = bshd("V", n_kv_heads,    key_seq);
 
-                // Stats are only produced for training, which this layer does not do.
                 auto [out, stats] = graph->sdpa(entry.Q, entry.K, entry.V,
                                                 cudnn_frontend::graph::SDPA_attributes()
                                                 .set_name("gqa_flash_fwd")
@@ -533,9 +511,6 @@ static void grouped_attention_gpu(const TensorView& query, const TensorView& key
                                   float* decode_partials, const int* kv_length_device,
                                   GroupedQueryAttentionOperator::GraphCache* cache)
 {
-    // Narrow once: to_int range-checks, and every one of these was inside the
-    // dispatch lambda, so each was checked twice over - once per instantiated
-    // element type - on every call.
     const int batch      = to_int(query.get_shape()[0]);
     const int query_seq  = to_int(query.get_shape()[1]);
     const int key_seq    = to_int(key.get_shape()[1]);
@@ -552,8 +527,6 @@ static void grouped_attention_gpu(const TensorView& query, const TensorView& key
 
     output.dispatch([&]<typename T>() {
 
-        // Variable key lengths would need the padding-mask plumbing the fused path
-        // does not carry here, so those shapes stay on the materialized path.
         if (has_work && !decode && !kv_length_device
             && grouped_attention_sdpa_gpu<T>(batch, query_seq, key_seq,
                                              q_heads, kv_heads, dim,
@@ -653,7 +626,6 @@ void GroupedQueryAttentionOperator::apply_attention(
         causal, scale, query_position_offset, decode_partials,
         position_device);
 }
-
 
 void GroupedQueryAttentionOperator::set(Index new_sequence_length, Index new_hidden,
                                         Index new_q_heads, Index new_kv_heads, Index new_head_dim,
@@ -823,8 +795,7 @@ void GroupedQueryAttentionOperator::attend_sequence_cpu(
     linear_forward_transposed(attn_v, o_proj, o_b);
 }
 
-
-void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
+void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode  )
 {
     TensorView& input  = get_input(forward_propagation, layer);
     TensorView& output = get_output(forward_propagation, layer);
@@ -890,8 +861,6 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
         TensorView attn_v(attn, {1, seq, qd});
         TensorView o_b(o_all, {1, seq, hidden});
 
-        // K and V go straight into the cache slot, and attention reads the
-        // whole cache back.
         return attend_sequence_cpu(x_b, q_v, k_v, v_slot, k_slot, qr_v,
                                    key_all, val_all, attn_v, o_b,
                                    cos_v, sin_v, scale, past);
@@ -916,7 +885,6 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
         TensorView attn_v(attn, {1, seq, qd});
         TensorView o_b(o_all + size_t(b) * seq * hidden, {1, seq, hidden});
 
-        // No cache: attention reads the rotated K and the V it just wrote.
         attend_sequence_cpu(x_b, q_v, k_v, v_v, kr_v, qr_v,
                             kr_v, v_v, attn_v, o_b,
                             cos_v, sin_v, scale, 0);
@@ -1100,7 +1068,6 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                 auto& sdpa = gqa_sdpa(*graph_cache, query_capacity, table_len,
                                       q_heads, kv_heads, head_dim);
 
-                // The entry is keyed on this geometry, so a built graph fits.
                 if (!sdpa.graph && !sdpa.failed)
                 {
                     try

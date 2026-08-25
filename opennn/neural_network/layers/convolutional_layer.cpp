@@ -116,9 +116,6 @@ Index Convolutional::get_padding_height() const
 {
     if (!use_padding) return 0;
 
-    // Clamped at zero: with a stride wider than the kernel the total is
-    // negative and integer truncation turned it into -1, which then reached the
-    // im2col loops and the cuDNN descriptor as a negative padding.
     const Index total_padding =
         max(Index(0), (get_output_height() - 1) * convolution.row_stride + convolution.kernel_height - convolution.input_height);
 
@@ -143,10 +140,6 @@ vector<TensorSpec> Convolutional::get_forward_specs(Index batch_size) const
     const Shape convolution_view_shape = batch_norm.active() ? output_shape          : Shape{};
     const Shape bn_stat_shape          = batch_norm.active() ? Shape{convolution.kernels_number} : Shape{};
 
-    // Packed ReLU mask of the BN output, one bit per element, written by the
-    // library's own BN forward and read by its backward in place of Y (see
-    // BatchNormForwardRung). Eight channels per byte, so only for channel
-    // counts that pack.
     const bool relu_mask = batch_norm.active() && batch_norm.fuse_relu && convolution.kernels_number % 8 == 0;
     const Shape relu_mask_shape = relu_mask
         ? Shape{batch_size, get_output_height(), get_output_width(), convolution.kernels_number / 8}
@@ -185,8 +178,6 @@ void Convolutional::update_convolution_operator()
 {
     convolution.use_bias = !batch_norm.active();
 
-    // The geometry already lives in the operator -- the layer writes straight
-    // into it -- so only the derived padding and the dtype are set here.
     convolution.padding_height = get_padding_height();
     convolution.padding_width  = get_padding_width();
     convolution.compute_dtype  = compute_dtype;
@@ -248,13 +239,6 @@ void Convolutional::set(const Shape& new_input_shape,
 
     set_label(new_label);
 
-    // One policy, shared with set_activation_function below: refuse what the
-    // layer cannot represent. This used to substitute Identity and warn on
-    // cerr, so a network asking for SiLU trained, saved and exported as a
-    // mostly linear model with nothing in its results to say so - and a library
-    // writing to stderr from a constructor is a diagnostic no caller can catch
-    // or silence. Saved models are unaffected: JSON restores the activation
-    // through ActivationOperator::from_JSON, not through this function.
     set_activation_function(new_activation_function);
 
     batch_norm.features = new_batch_normalization ? convolution.kernels_number : 0;
@@ -368,9 +352,6 @@ void Convolutional::load_darknet_weights(FILE* f)
         read_bn(batch_norm.gamma);
         read_bn(batch_norm.running_mean);
         read_bn(batch_norm.running_variance);
-        // Reset running stats to neutral: COCO-pretrained statistics don't match
-        // the target domain and cause inference NaN on the first validation pass.
-        // gamma/beta remain as loaded. EMA adapts running_mean/var from first epoch.
         batch_norm.running_mean.as_vector().setZero();
         batch_norm.running_variance.as_vector().setOnes();
         batch_norm.invalidate_inference_cache();
@@ -403,16 +384,16 @@ void Convolutional::load_darknet_weights(FILE* f)
 #endif
 }
 
-void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
 #ifdef OPENNN_HAS_CUDA
-    if (is_training)
+    if (is_training(pass))
         folded_dirty = true;
     else if (forward_propagate_folded(forward_propagation, layer))
         return;
 #endif
 
-    Layer::forward_propagate(forward_propagation, layer, is_training);
+    Layer::forward_propagate(forward_propagation, layer, pass);
 }
 
 void Convolutional::recompute_forward_slot(ForwardPropagation& forward_propagation,
@@ -420,7 +401,7 @@ void Convolutional::recompute_forward_slot(ForwardPropagation& forward_propagati
 {
     throw_if(!batch_norm.active(),
              "Convolutional::recompute_forward_slot requires batch normalization.");
-    convolution.forward_propagate(forward_propagation, layer, true);
+    convolution.forward_propagate(forward_propagation, layer, ForwardPropagationMode::Training);
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -479,7 +460,7 @@ bool Convolutional::forward_propagate_folded(ForwardPropagation& forward_propaga
     else
         convolution.apply_gpu_folded(input, folded_weights, folded_bias, relu, output);
 
-    activation_operator.forward_propagate(forward_propagation, layer, false);
+    activation_operator.forward_propagate(forward_propagation, layer, ForwardPropagationMode::Inference);
 
     return true;
 }

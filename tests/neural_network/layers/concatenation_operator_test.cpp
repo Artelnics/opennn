@@ -62,7 +62,7 @@ TEST(ConcatenationOperatoreratorTest, ForwardConcatenatesChannels)
     fp.slots[0].resize(2);
     fp.slots[0][1] = TensorView(output.data(), {batch_size, height, width, total_channels});
 
-    op.forward_propagate(fp, 0, false);
+    op.forward_propagate(fp, 0, ForwardPropagationMode::Inference);
 
     EXPECT_NEAR(output.data()[0], input_a.data()[0], 1e-6f);
     EXPECT_NEAR(output.data()[1], input_a.data()[1], 1e-6f);
@@ -108,7 +108,7 @@ TEST(ConcatenationOperatoreratorTest, ForwardSpatialLayout)
     fp.slots[0].resize(2);
     fp.slots[0][1] = TensorView(output.data(), {batch_size, height, width, total_channels});
 
-    op.forward_propagate(fp, 0, false);
+    op.forward_propagate(fp, 0, ForwardPropagationMode::Inference);
 
     for (Index spatial = 0; spatial < height * width; ++spatial)
     {

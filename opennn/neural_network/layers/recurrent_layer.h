@@ -20,7 +20,8 @@ struct RecurrentOperator : Operator, CudnnRnnState
 {
     enum ForwardScratchSlot
     {
-        StepInputForwardSlot = 3,
+        PreviousStateHistoryForwardSlot = 2,
+        StepInputForwardSlot,
         StepHiddenForwardSlot,
         PreviousHiddenForwardSlot,
         StepDerivativesForwardSlot,
@@ -70,7 +71,7 @@ struct RecurrentOperator : Operator, CudnnRnnState
     void set_parameters_glorot() override;
     void set_parameters_pytorch() override;
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
 private:
@@ -151,11 +152,15 @@ public:
 
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
-    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    ForwardSlotKind get_forward_slot_kind(size_t slot) const override
     {
-        if (spec == 1) return ForwardSlotKind::TrainingOnly;
-        if (spec >= 2 && spec <= 5) return ForwardSlotKind::Transient;
-        return ForwardSlotKind::Pooled;
+        if (slot == RecurrentOperator::PreviousStateHistoryForwardSlot)
+            return ForwardSlotKind::TrainingOnly;
+
+        return slot >= RecurrentOperator::StepInputForwardSlot
+            && slot <= RecurrentOperator::StepDerivativesForwardSlot
+            ? ForwardSlotKind::Transient
+            : ForwardSlotKind::Pooled;
     }
 
     void set(const Shape& = {},
@@ -194,8 +199,6 @@ private:
         Output
     };
 
-    // Shape lives in Layer::input_shape, as it does for LongShortTermMemory;
-    // the two copies here had to be assigned in step with it by hand.
     Index output_features = 0;
     bool  return_sequences = false;
 

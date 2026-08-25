@@ -21,7 +21,6 @@
 namespace opennn
 {
 
-// Defined below: against the CUDA kernels, or as throwing stubs.
 static void embedding_lookup_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, bool, const TensorView&);
 static void embedding_lookup_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, Index, Index, Index, bool);
 
@@ -224,7 +223,6 @@ OPENNN_CUDA_STUB(void, embedding_lookup_backward_gpu, (const TensorView&, const 
 
 #endif
 
-
 void EmbeddingLookupOperator::set(Index new_vocabulary_size, Index new_sequence_length, Index new_embedding_dimension)
 {
     vocabulary_size     = new_vocabulary_size;
@@ -278,10 +276,6 @@ void EmbeddingLookupOperator::link_gradients(span<const TensorView> views)
 
 void EmbeddingLookupOperator::link_states(span<const TensorView> views)
 {
-    // Linking only binds the view. Filling the table is initialize_states'
-    // job, which compile() calls after zeroing the state buffer - the table
-    // used to be written only on the first link, so a second compile() left it
-    // all zeros and the model silently lost its positional information.
     if (positional_trainable || views.empty()) return;
     positional_encoding = views[0];
 }
@@ -341,7 +335,7 @@ void EmbeddingLookupOperator::init_positional_encoding()
     }
 }
 
-void EmbeddingLookupOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
+void EmbeddingLookupOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode  )
 {
     const TensorView& indices = get_input(forward_propagation, layer);
     TensorView& output        = get_output(forward_propagation, layer);

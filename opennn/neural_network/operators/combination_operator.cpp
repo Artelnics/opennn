@@ -85,7 +85,7 @@ void CombinationOperator::set_parameters_pytorch()
     if (!bias.empty()) set_random_uniform(bias.as_vector(), -limit, limit);
 }
 
-void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
     PROFILE_SCOPE("op:combination_fwd");
     TensorView& output = get_output(forward_propagation, layer);
@@ -116,7 +116,7 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
     if (relu_mask_fused) *relu_mask_fused = 0;
 
     if (relu && emit_relu_mask && !relu_mask_fusion_disabled
-        && is_training && output.is_cuda()
+        && is_training(pass) && output.is_cuda()
         && (output.is_fp32() || output.is_bf16()))
     {
         try
@@ -139,12 +139,6 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
         }
     }
 
-    // A layer with one output does not go through cuBLASLt at all on CUDA - it
-    // takes the row-wise reduction, which has no epilogue vocabulary - so its
-    // activation travels as an argument instead of as an epilogue, and covers
-    // the ones cuBLASLt has no epilogue for either. linear_forward runs it as a
-    // separate pass wherever it cannot fold it, so this is only ever a speed
-    // decision.
     if (output_features == 1 && fused_activation != ActivationFunction::Identity)
         return linear_forward(get_input(forward_propagation, layer), weights, bias, output,
                               use_bias ? CUBLASLT_EPILOGUE_BIAS : CUBLASLT_EPILOGUE_DEFAULT,
@@ -195,9 +189,6 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
         }
     }
 
-    // A residual read of this layer's input by another consumer: its delta is
-    // summed by the same GEMM (BackPropagation::plan_delta_addends) instead of
-    // an accumulate pass afterwards.
     static const TensorView no_addend;
     const TensorView& addend = folds_input_delta_addend && !accumulate_input_delta && !recover_unfused
         ? back_propagation.input_delta_addend(layer, 0)

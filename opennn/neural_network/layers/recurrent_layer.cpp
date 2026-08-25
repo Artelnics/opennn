@@ -82,7 +82,7 @@ void RecurrentOperator::set_parameters_pytorch()
     if (!bias.empty())              set_random_uniform(bias.as_vector(), -limit, limit);
 }
 
-void RecurrentOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void RecurrentOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
     auto& forward_slots = forward_propagation.slots[layer];
     const TensorView& input             = get_input(forward_propagation, layer);
@@ -99,8 +99,8 @@ void RecurrentOperator::forward_propagate(ForwardPropagation& forward_propagatio
                          forward_slots[CudnnInputSequenceForwardSlot],
                          forward_slots[CudnnOutputSequenceForwardSlot],
                          forward_propagation.layer_state_storage[layer],
-                         is_training);
-    apply(input, hidden_states, activation_derivatives, output, is_training);
+                         is_training(pass));
+    apply(input, hidden_states, activation_derivatives, output, is_training(pass));
 }
 
 void RecurrentOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
@@ -108,10 +108,6 @@ void RecurrentOperator::back_propagate(ForwardPropagation& forward_propagation, 
     auto& forward_slots = forward_propagation.slots[layer];
     auto& backward_slots = back_propagation.slots[layer];
 
-    // A frozen layer gets no backward specs, so only the input-delta slot
-    // exists. Loss still walks every layer between the first and last trainable
-    // one, and the scratch indices below then ran off the end of the vector.
-    // LongShortTermMemoryOperator::back_propagate has the same guard.
     if (backward_slots.size() <= size_t(CudnnInputDeltaScratchSlot)) return;
 
     const TensorView& input                    = get_input(forward_propagation, layer);
@@ -244,8 +240,6 @@ void RecurrentOperator::apply(const TensorView& input,
     {
         PROFILE_SCOPE_HOST("rnn_cpu:fwd_recurrence");
 
-        // Each time step performs a small, latency-bound GEMM. A full Eigen
-        // thread team costs more than the multiply at forecasting cell sizes.
         const EigenThreadCountScope single_thread(1);
 
         for (Index t = 0; t < time_steps; ++t)
@@ -351,9 +345,6 @@ void RecurrentOperator::apply_delta(const TensorView& input,
         fill_n(scratch, thread_values, 0.0f);
         float* const next_all = scratch + thread_values;
 
-        // A sequence is an independent dependency chain. Parallelizing across
-        // sequences creates one worker team for the whole BPTT pass and fuses
-        // delta propagation with all three parameter-gradient reductions.
         #pragma omp parallel for schedule(static)
         for (Index b = 0; b < batch_size; ++b)
         {

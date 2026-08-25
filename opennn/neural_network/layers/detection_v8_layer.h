@@ -24,7 +24,7 @@ struct DetectionV8Operator : Operator
 
     void set(const Shape&, Index reg_max);
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 };
 
@@ -51,17 +51,12 @@ public:
     void set(const Shape&, Index reg_max, const string&);
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 3); }
 
-    // FP32 only: this layer's kernels reinterpret their slots as float, so a
-    // BF16 compute dtype - which compile() applies to every layer with no
-    // capability check - handed them half-width buffers to read as full-width
-    // ones. Refusing is the difference between a message and silent corruption.
     void on_compute_dtype_changed() override
     {
         throw_if(get_compute_dtype() != Type::FP32,
                  "{} layer supports FP32 activations only; compile the network with Type::FP32.",
                  get_name());
     }
-
 
     void apply_input_shape(const Shape& new_input_shape) override { set(new_input_shape, detection.reg_max, label); }
 

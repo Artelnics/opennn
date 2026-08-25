@@ -14,8 +14,6 @@
 namespace opennn
 {
 
-// Attention, rotary embedding and QK normalisation. This layer is the
-// only caller; the tests reach them through this header.
 void rotary_build_tables(TensorView&, TensorView&, Index sequence_length, Index rotary_dim, float base);
 void rotary_forward(const TensorView&, const TensorView&, const TensorView&,
                     TensorView&, Index head_dim, Index rotary_dim, Index position_offset);
@@ -52,7 +50,7 @@ struct GroupedQueryAttentionOperator : Operator
     void link_parameter_scales(span<const TensorView>) override;
     void set_parameters_random() override;
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
 private:
@@ -81,10 +79,6 @@ private:
                          bool causal, float scale, Index query_position_offset,
                          float* decode_partials = nullptr,
                          const int* position_device = nullptr);
-    // One CPU sequence through the pipeline: three projections, optional
-    // qk_norm, rope, attention, output projection. The cached-decode path and
-    // the plain path differ only in where K and V land and what attention
-    // reads back, so those are parameters rather than two copies.
     void attend_sequence_cpu(const TensorView& x_b,
                              TensorView& q_v, TensorView& k_v,
                              TensorView& v_target, TensorView& k_target,
@@ -138,9 +132,10 @@ public:
 
     vector<TensorSpec> get_forward_specs(Index) const override;
 
-    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    ForwardSlotKind get_forward_slot_kind(size_t slot) const override
     {
-        return spec < GroupedQueryAttentionOperator::forward_scratch_slots_count
+        return slot != Input
+            && slot <= GroupedQueryAttentionOperator::forward_scratch_slots_count
             ? ForwardSlotKind::Transient
             : ForwardSlotKind::Pooled;
     }

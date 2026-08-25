@@ -27,7 +27,6 @@ void Variable::set(const string& new_name, const string& new_variable_role, cons
     categories = new_categories;
 }
 
-
 void Variable::to_JSON(JsonWriter& printer) const
 {
     write_json(printer, {

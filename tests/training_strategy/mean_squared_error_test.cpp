@@ -76,13 +76,13 @@ TEST(MeanSquaredErrorTest, GpuWorkspaceIsForwardPropagationOwned)
     loss.set_error(Loss::Error::MeanSquaredError);
 
     Batch batch(samples_number, &dataset, neural_network.get_config());
-    batch.fill({0, 1}, {0}, {}, {1});
+    batch.fill({0, 1}, FeatureSelection{{0}, {}, {1}});
     batch.wait_h2d_on_compute_stream();
 
     ForwardPropagation first(samples_number, &neural_network);
     ForwardPropagation second(samples_number, &neural_network);
-    neural_network.forward_propagate(batch.get_inputs(), first, false);
-    neural_network.forward_propagate(batch.get_inputs(), second, false);
+    neural_network.forward_propagate(batch.get_inputs(), first, ForwardPropagationMode::Inference);
+    neural_network.forward_propagate(batch.get_inputs(), second, ForwardPropagationMode::Inference);
 
     const Loss::EvaluationResult first_result = loss.calculate_error(batch, first);
     const Loss::EvaluationResult second_result = loss.calculate_error(batch, second);

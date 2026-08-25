@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// embedding lookup forward and backward
-
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/neural_network/operators/kernel_embedding.cuh"
 
@@ -74,9 +72,6 @@ void embedding_backward_cuda(const Index n, const float* inputs, const T* output
                        sequence_length, embedding_dimension, vocabulary_size, scale_embedding);
 }
 
-// One warp per sample: how many of its tokens are not padding (id 0). Same
-// count the CPU path makes, kept on the device so the record can feed the
-// attention masks without a host round trip (and inside a CUDA graph).
 __global__ void token_valid_lengths_kernel(const int batch_size, const int sequence_length,
                                            const float* __restrict__ token_ids, int* __restrict__ lengths)
 {
@@ -113,7 +108,6 @@ OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 
 OPENNN_INSTANTIATE_FLOAT_BF16_2(INSTANTIATE)
 #undef INSTANTIATE
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence, SL.

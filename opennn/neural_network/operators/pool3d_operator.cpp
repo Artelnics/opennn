@@ -19,7 +19,6 @@
 namespace opennn
 {
 
-// Defined below: against the CUDA kernels, or as throwing stubs.
 static void max_pooling_3d_forward_gpu(const TensorView&, TensorView&, TensorView&, bool, const int*);
 static void average_pooling_3d_forward_gpu(const TensorView&, TensorView&, const int*);
 static void max_pooling_3d_backward_gpu(const TensorView&, const TensorView&, TensorView&);
@@ -27,9 +26,6 @@ static void average_pooling_3d_backward_gpu(const TensorView&, const TensorView&
 static void first_token_3d_forward_gpu(const TensorView&, TensorView&);
 static void first_token_3d_backward_gpu(const TensorView&, TensorView&);
 
-// Where a sequence ends, from the exported lengths. Clamped because the record
-// is written for the batch, not for this tensor: a shorter view of the same
-// batch must not read past its own rows.
 static Index valid_length_of(const vector<Index>* valid_lengths, Index batch_index, Index sequence_length)
 {
     const Index length = (*valid_lengths)[size_t(batch_index)];
@@ -52,10 +48,6 @@ static void max_pooling_3d_forward_cpu(const TensorView& input, TensorView& outp
     #pragma omp parallel for schedule(static)
     for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
-        // Without lengths the maximum runs over the padding too. That is the
-        // behaviour this path has always had, and it is wrong the moment a
-        // padded row can hold anything above the real maximum -- which is why
-        // the lengths are worth having here and not only in the average.
         const Index steps = valid_lengths
             ? valid_length_of(valid_lengths, batch_index, sequence_length)
             : sequence_length;
@@ -102,10 +94,6 @@ static void average_pooling_3d_forward_cpu(const TensorView& input, TensorView& 
     {
         const Map<const MatrixR> seq_matrix(&inputs(batch_index, 0, 0), sequence_length, features);
 
-        // The scan reads the length off the data, and can only do so while a
-        // padded row is still the zero row the Embedding wrote. Summing the
-        // whole matrix is the same thing as summing its valid rows exactly
-        // then, and stops being so the moment anything shifts those rows.
         if (!valid_lengths)
         {
             const Index valid_count = ((seq_matrix.array() != 0.0f).rowwise().any()).count();
@@ -174,9 +162,6 @@ static void average_pooling_3d_backward_cpu(const TensorView& input,
     {
         const Map<const MatrixR> seq_matrix(&inputs(batch_index, 0, 0), sequence_length, features);
 
-        // The divisor has to be the one the forward pass used, or this stops
-        // being the gradient of that forward pass. Both read it from the same
-        // place for that reason.
         if (valid_lengths)
         {
             const Index valid_count = valid_length_of(valid_lengths, batch_index, sequence_length);
@@ -299,8 +284,6 @@ static void max_pooling_3d_backward_gpu(const TensorView& maximal_indices, const
     const Shape& output_shape = output_delta.get_shape();
     const Shape& input_shape = input_delta.get_shape();
 
-    // Zeroing does not depend on T, and the kernel below writes only the
-    // argmax positions, so it must happen once before either instantiation.
     input_delta.set_zero_async();
 
     input_delta.dispatch([&]<typename T>() {
@@ -319,7 +302,6 @@ static void average_pooling_3d_backward_gpu(const TensorView& input,
 {
     const Shape& shape = input.get_shape();
     input_delta.dispatch([&]<typename T>() {
-        // No pre-zeroing: the kernel writes every element of input_delta.
         average_pooling_3d_backward_cuda<T>(to_int(shape[0]) * to_int(shape[2]),
                                             input.as<T>(), output_delta.as<T>(),
                                             input_delta.as<T>(),
@@ -329,7 +311,6 @@ static void average_pooling_3d_backward_gpu(const TensorView& input,
     });
 }
 
-// The first token of every sequence is the t = 0 time slice of the (B, S, F) tensor.
 static void first_token_3d_forward_gpu(const TensorView& input, TensorView& output)
 {
     const Shape& shape = input.get_shape();
@@ -362,12 +343,6 @@ OPENNN_CUDA_STUB(void, first_token_3d_backward_gpu, (const TensorView&, TensorVi
 
 #endif
 
-
-// The Embedding exports one length per sequence when it knows them, and every
-// layer that has to tell padding from data reads them from here. The alternative
-// -- recovering the lengths by looking for the zero rows the Embedding wrote --
-// only survives while nothing in between has touched those rows, and a single
-// normalization with a nonzero shift is enough to end that.
 static SequenceLengths exported_valid_lengths(const ForwardPropagation& forward_propagation,
                                               const TensorView& input,
                                               size_t layer)
@@ -380,7 +355,7 @@ static SequenceLengths exported_valid_lengths(const ForwardPropagation& forward_
     return lengths;
 }
 
-void Pool3dOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void Pool3dOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);
@@ -389,7 +364,7 @@ void Pool3dOperator::forward_propagate(ForwardPropagation& forward_propagation, 
     const SequenceLengths valid_lengths = exported_valid_lengths(forward_propagation, input, layer);
 
     if (method == Max)
-        max_pooling_3d_forward(input, output, indices, is_training, valid_lengths);
+        max_pooling_3d_forward(input, output, indices, is_training(pass), valid_lengths);
     else if (method == First)
         first_token_3d_forward(input, output);
     else

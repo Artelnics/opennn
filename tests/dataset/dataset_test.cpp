@@ -178,7 +178,8 @@ TEST(Dataset, BatchFill)
     const vector<Index> target_variables_indices = { 2 };
 
     Batch batch(samples_number, &dataset, EffectiveConfig{});
-    batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
+    batch.fill(training_samples_indices,
+               FeatureSelection{input_variables_indices, {}, target_variables_indices});
 
     MatrixR input_data(3, 2);
     input_data << type(1),type(4),

@@ -28,10 +28,6 @@ public:
 
     Shape get_input_shape() const noexcept override { return {sequence_length}; }
 
-    // Without this the base default writes the unused input_shape member and
-    // the layer keeps its old sequence length, so resizing a Tokenizer ->
-    // Embedding network changed nothing here and the mismatch only surfaced
-    // later, in propagation, far from the call that caused it.
     void apply_input_shape(const Shape& new_input_shape) override
     {
         set(vocabulary_size, new_input_shape.dim_or_zero(0), embedding_dimension, label);
@@ -44,9 +40,9 @@ public:
 
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override { return {}; }
-    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    ForwardSlotKind get_forward_slot_kind(size_t slot) const override
     {
-        return spec == size_t(DropoutMask) - 1
+        return slot == DropoutMask
             ? ForwardSlotKind::TrainingOnly
             : ForwardSlotKind::Pooled;
     }

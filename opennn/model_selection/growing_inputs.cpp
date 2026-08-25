@@ -71,9 +71,6 @@ void GrowingInputs::set_default()
 
 void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_number)
 {
-    // Reachable before a training strategy is set - ModelSelection::load() ->
-    // from_JSON goes straight here - so the dataset is looked up the way the
-    // GeneticAlgorithm twin does, and the clamp keeps the same lower bound.
     const Dataset* dataset = training_strategy ? training_strategy->get_dataset() : nullptr;
     const Index inputs_number = dataset ? dataset->get_variables_number(VariableRole::Input) : 0;
 
@@ -95,9 +92,6 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     InputsSelectionResult input_selection_results(original_input_variables_number);
 
-    // Quiet for the duration of the search, not for the rest of the caller's
-    // session: the flag used to be switched off and never put back, so a later
-    // train() printed nothing with no way to tell why.
     Optimizer* optimizer = training_strategy->get_optimization_algorithm();
     const bool optimizer_display = optimizer->get_display();
     optimizer->set_display(false);
@@ -112,9 +106,6 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     if (display) cout << "Calculating correlations...\n";
 
-    // Averaged over every target, as the GeneticAlgorithm does: ranking by the
-    // first target alone buried the inputs that matter to the others at the end
-    // of the queue, where the validation-failure limit cuts the search off.
     const VectorR total_correlations =
         dataset->calculate_input_target_correlation_values().array().abs().rowwise().mean();
 

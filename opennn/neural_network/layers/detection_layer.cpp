@@ -47,7 +47,7 @@ void DetectionOperator::set(const Shape& input_shape, const vector<array<float, 
 
 void DetectionOperator::forward_propagate(ForwardPropagation& forward_propagation,
                                           size_t layer,
-                                          bool)
+                                          ForwardPropagationMode)
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output = get_output(forward_propagation, layer);
@@ -69,10 +69,6 @@ void DetectionOperator::forward_propagate(ForwardPropagation& forward_propagatio
             flat.reserve(anchors.size() * 2);
             ranges::copy(anchors | views::join, back_inserter(flat));
 
-            // Through the checked helper, like every other upload in the layer
-            // code. The raw call discarded its status, so a failed copy left the
-            // anchors zero-filled - every decoded box then had width and height
-            // zero - and the size check above made sure it was never retried.
             device::copy_async(device_anchors.as<float>(),
                                flat.data(),
                                anchor_bytes,

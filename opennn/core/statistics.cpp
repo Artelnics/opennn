@@ -208,9 +208,6 @@ float variance(const VectorR& vector)
     const double sum = new_vector_d.sum();
     const double squared_sum = new_vector_d.squaredNorm();
 
-    // Clamped like the descriptives path: on a near-constant column the
-    // cancellation in this one-pass form lands slightly below zero, and the
-    // negative went on to standard_deviation() as a NaN.
     return float(max(0.0, (squared_sum - (sum * sum) / count) / (count - 1)));
 }
 
@@ -515,9 +512,6 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
 
     vector<Descriptives> descriptives_results(column_indices_size);
 
-    // One pass, one loop, no scratch: each column is independent, so its four
-    // statistics can be written straight into the result. This used to run two
-    // OMP loops over five parallel vectors to carry the moments between them.
     #pragma omp parallel for
     for (Index j = 0; j < column_indices_size; ++j)
     {
@@ -612,9 +606,6 @@ VectorR median(const MatrixR& matrix,
     return medians;
 }
 
-// PropagateNumbers so NaN entries are skipped rather than compared against. Callers use
-// NaN to mark "no value here" (an unevaluated epoch, a missing sample), and plain
-// minCoeff/maxCoeff give implementation-defined results once a NaN is in the range.
 Index minimal_index(const VectorR& vector)
 {
     Index index = 0;
@@ -661,11 +652,6 @@ VectorI calculate_rank(const VectorR& vector, bool ascending)
     VectorI rank(size);
     iota(rank.data(), rank.data() + rank.size(), 0);
 
-    // NaN compares false against everything, which is not a strict weak
-    // ordering and is undefined behaviour for sort. NaNs do reach here: a
-    // correlation over a constant column is quiet NaN by design. Sorting them
-    // to the end keeps the order total, and the index tie-break keeps it stable
-    // across the parallel and serial paths.
     const auto key = [&](Index i)
     {
         return isnan(vector[i]) ? (ascending ? POS_INFINITY : NEG_INFINITY) : vector[i];

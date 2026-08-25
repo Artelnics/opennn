@@ -110,7 +110,7 @@ public:
     Shape get_output_shape() const override { return input_shape; }
     vector<TensorSpec> get_forward_specs(Index) const override { return {}; }
 
-    void forward_propagate(ForwardPropagation& propagation, size_t layer, bool) override
+    void forward_propagate(ForwardPropagation& propagation, size_t layer, ForwardPropagationMode) override
     {
         called = true;
         observed_input = propagation.inputs[layer].front();
@@ -141,7 +141,8 @@ TEST_F(GpuComparison, LayerContractPreservesExactExternalInput)
     input(0, 0) = 257.0f; // BF16 rounds this identifier to 256.
 
     ForwardPropagation propagation(1, &network, ForwardPropagationMode::Inference);
-    network.forward_propagate({TensorView(input.data(), {1, 1})}, propagation, false);
+    network.forward_propagate({TensorView(input.data(), {1, 1})}, propagation,
+                              ForwardPropagationMode::Inference);
 
     ASSERT_TRUE(probe_ptr->called);
     ASSERT_EQ(probe_ptr->observed_input.get_type(), Type::FP32);
@@ -342,8 +343,8 @@ TEST_F(GpuComparison, DenseDreluFusedGradient)
     };
     ForwardPropagation first_forward(samples_number, &gpu_network);
     ForwardPropagation second_forward(samples_number, &gpu_network);
-    gpu_network.forward_propagate(fusion_input_views, first_forward, true);
-    gpu_network.forward_propagate(fusion_input_views, second_forward, true);
+    gpu_network.forward_propagate(fusion_input_views, first_forward, ForwardPropagationMode::Training);
+    gpu_network.forward_propagate(fusion_input_views, second_forward, ForwardPropagationMode::Training);
 
     ASSERT_EQ(first_forward.drelu_fused_by_layer[0], 1);
     ASSERT_EQ(first_forward.drelu_fused_by_layer[1], 1);
@@ -1110,6 +1111,68 @@ TEST_F(GpuComparison, ResidentInferenceGraphReplay)
 
 }
 
+TEST_F(GpuComparison, ResidentInferenceKeepsTheGraphWhenParametersDidNotMove)
+{
+    const Index samples_number = 4;
+    const Index height = 32;
+    const Index width = 32;
+    const Index channels = 3;
+    const Index classes_number = 5;
+
+    Tensor4 inputs(samples_number, height, width, channels);
+    inputs.setRandom();
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    ResNet network({height, width, channels}, {1, 1, 1, 1}, Shape{8, 16, 32, 64},
+                   Shape{classes_number}, true);
+    network.set_parameters_random();
+
+    const Index input_bytes = inputs.size() * Index(sizeof(float));
+    Buffer input_buffer;
+    input_buffer.resize_bytes(input_bytes, Device::CUDA);
+    device::copy_async(input_buffer.data(), inputs.data(), input_bytes,
+                       device::CopyKind::HostToDevice);
+    device::synchronize();
+
+    const TensorView input_view(input_buffer.data(),
+                                Shape{samples_number, height, width, channels},
+                                Type::FP32, Device::CUDA);
+
+    ForwardPropagation forward_propagation(samples_number, &network);
+    forward_propagation.set_cuda_graph(true);
+
+    network.calculate_outputs_resident({input_view}, forward_propagation, true);
+    network.calculate_outputs_resident({input_view}, forward_propagation, false);
+    ASSERT_TRUE(static_cast<bool>(forward_propagation.inference_graph_exec));
+
+    const auto read_outputs = [](const TensorView& outputs)
+    {
+        vector<float> host(size_t(outputs.size()));
+        device::synchronize();
+        copy_device_to_host_float(outputs.get_data(), outputs.get_type(), outputs.size(),
+                                  host.data(), device::get_compute_stream());
+        device::synchronize();
+        return host;
+    };
+
+    const vector<float> reference =
+        read_outputs(network.calculate_outputs_resident({input_view}, forward_propagation, false));
+
+    // upload_parameters = true re-uploads into the buffers the graph already
+    // captured, so the addresses do not move and the graph stays valid. It used
+    // to be reset unconditionally here, which discarded the graph on every call
+    // and left the argument's default -- true -- as the slow path.
+    const vector<float> uploaded =
+        read_outputs(network.calculate_outputs_resident({input_view}, forward_propagation, true));
+
+    EXPECT_TRUE(static_cast<bool>(forward_propagation.inference_graph_exec))
+        << "re-uploading unchanged parameters discarded the captured CUDA graph";
+
+    ASSERT_EQ(reference.size(), uploaded.size());
+    for (size_t i = 0; i < reference.size(); ++i)
+        EXPECT_NEAR(reference[i], uploaded[i], 1.0e-6f);
+}
+
 TEST_F(GpuComparison, ResidentInferenceGraphInvalidation)
 {
     const Index samples_number = 4;
@@ -1173,22 +1236,34 @@ TEST_F(GpuComparison, ResidentInferenceGraphInvalidation)
         ASSERT_NEAR(first_outputs[j], mismatch_outputs[j], 1.0e-6f);
 
     network.set_parameters(shifted_parameters);
+
+    // set_parameters copies into the device buffer the graph already captured,
+    // so the addresses do not move and a replay reads the new values. This used
+    // to discard the graph unconditionally, which made upload_parameters = true
+    // -- the argument's default -- recapture on every single call.
     network.calculate_outputs_resident({input_view}, forward_propagation, true);
-    ASSERT_FALSE(static_cast<bool>(forward_propagation.inference_graph_exec));
-    const TensorView second_eager_view =
-        network.calculate_outputs_resident({input_view}, forward_propagation, false);
-    const vector<float> second_reference = read_outputs(second_eager_view);
     ASSERT_TRUE(static_cast<bool>(forward_propagation.inference_graph_exec));
+
+    // The reference comes from a propagation of its own with no graph, so it is
+    // independent of whatever the graph under test does.
+    ForwardPropagation eager_propagation(samples_number, &network);
+    const vector<float> second_reference =
+        read_outputs(network.calculate_outputs_resident({input_view}, eager_propagation, true));
 
     const TensorView replay_view =
         network.calculate_outputs_resident({input_view}, forward_propagation, false);
     const vector<float> replayed = read_outputs(replay_view);
+
+    ASSERT_TRUE(static_cast<bool>(forward_propagation.inference_graph_exec));
 
     float max_change = 0.0f;
     for (size_t j = 0; j < first_outputs.size(); ++j)
         max_change = max(max_change, abs(first_outputs[j] - second_reference[j]));
     EXPECT_GT(max_change, 1.0e-4f);
 
+    // The point of the test: the graph that survived the parameter change still
+    // produces the values that change implies, rather than the ones it was
+    // captured with.
     for (size_t j = 0; j < second_reference.size(); ++j)
         ASSERT_NEAR(second_reference[j], replayed[j], 1.0e-6f);
 
@@ -1237,8 +1312,8 @@ TEST_F(GpuComparison, RecurrentExecutionStateIsPropagationOwned)
     ForwardPropagation first(2, &network);
     ForwardPropagation second(2, &network);
 
-    network.forward_propagate(input_views, first, true);
-    network.forward_propagate(input_views, second, true);
+    network.forward_propagate(input_views, first, ForwardPropagationMode::Training);
+    network.forward_propagate(input_views, second, ForwardPropagationMode::Training);
 
     ASSERT_EQ(first.layer_state_storage.size(), 1);
     ASSERT_EQ(second.layer_state_storage.size(), 1);
@@ -1767,17 +1842,14 @@ TEST_F(GpuComparison, DenseSingleOutputBackwardFoldsProducerRelu)
     loss.set_error(Loss::Error::MeanSquaredError);
 
     Batch batch(samples_number, &dataset, network.get_config());
-    batch.fill(dataset.get_sample_indices("Training"),
-               dataset.get_feature_indices("Input"),
-               dataset.get_feature_indices("Decoder"),
-               dataset.get_feature_indices("Target"));
+    batch.fill(dataset.get_sample_indices("Training"), dataset.get_feature_selection());
     batch.upload_to_device_batch_async(batch, device::get_transfer_stream());
     batch.wait_h2d_complete();
 
     ForwardPropagation forward_propagation(samples_number, &network);
     BackPropagation back_propagation(samples_number, loss);
 
-    network.forward_propagate(batch.get_inputs(), forward_propagation, true);
+    network.forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Training);
     loss.back_propagate(batch, forward_propagation, back_propagation);
 
     // The consumer reports through the same per-layer flag the DReLU epilogue
@@ -1886,7 +1958,7 @@ TEST_F(GpuComparison, SdpaAttentionRefreshesPaddingBetweenBatches)
     {
         vector<TensorView> inputs = {
             TensorView(batch.data(), {batch_size, sequence_length, embedding_dimension})};
-        network.forward_propagate(inputs, forward_propagation, true);
+        network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Training);
 
         const TensorView outputs = forward_propagation.get_outputs();
         VectorR host(outputs.size());

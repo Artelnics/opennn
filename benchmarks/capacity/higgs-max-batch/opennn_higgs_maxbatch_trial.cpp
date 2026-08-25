@@ -240,11 +240,11 @@ int main(int argc, char* argv[])
                 Shape{batch, inputs_number}, Type::FP32);
 
             // Warmup pages workspaces and BLAS scratch in; excluded from timing.
-            network.forward_propagate({input_view}, propagation, false);
+            network.forward_propagate({input_view}, propagation, ForwardPropagationMode::Inference);
 
             const auto t0 = chrono::high_resolution_clock::now();
             for (Index i = 0; i < iterations; ++i)
-                network.forward_propagate({input_view}, propagation, false);
+                network.forward_propagate({input_view}, propagation, ForwardPropagationMode::Inference);
             const auto t1 = chrono::high_resolution_clock::now();
 
             const TensorView outputs = propagation.get_outputs();

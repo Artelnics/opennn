@@ -74,7 +74,7 @@ TEST(Transformer, EveryAttentionLayerKnowsWhereItsSourceSequenceEnds)
         TensorView(decoder_ids.data(), {batch, decoder_sequence_length}),
         TensorView(encoder_ids.data(), {batch, input_sequence_length})};
 
-    transformer.forward_propagate(inputs, forward_propagation, false);
+    transformer.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     Index attention_layers = 0;
 
@@ -177,7 +177,7 @@ TEST(Transformer, EncoderPaddingDoesNotChangeTheOutput)
             TensorView(decoder_ids.data(), {batch, decoder_sequence_length}),
             TensorView(encoder_ids.data(), {batch, length})};
 
-        network.forward_propagate(inputs, forward_propagation, false);
+        network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
         const TensorView output = forward_propagation.get_outputs();
         return VectorR(Map<const VectorR>(output.as<type>(), output.size()));
@@ -293,7 +293,7 @@ TEST(Transformer, TrainingArenaReusesResidualBranchOutputs)
         {
             if (specs[i][j].shape.empty()) continue;
             const Index bytes = get_aligned_bytes(specs[i][j]);
-            if (layers[i]->get_forward_slot_kind(j) == ForwardSlotKind::Transient)
+            if (layers[i]->get_forward_slot_kind(j + 1) == ForwardSlotKind::Transient)
                 maximum_transient_bytes =
                     max(maximum_transient_bytes, bytes);
             else

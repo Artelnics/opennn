@@ -48,10 +48,7 @@ struct TrainingSetup
           forward_propagation(samples_number, neural_network),
           back_propagation(samples_number, loss)
     {
-        batch.fill(dataset->get_sample_indices("Training"),
-                   dataset->get_feature_indices("Input"),
-                   dataset->get_feature_indices("Decoder"),
-                   dataset->get_feature_indices("Target"));
+        batch.fill(dataset->get_sample_indices("Training"), dataset->get_feature_selection());
 
 #ifdef OPENNN_HAS_CUDA
         if (neural_network->is_gpu())
@@ -117,7 +114,7 @@ VectorR calculate_gradient(Loss& loss)
 
     require_live_parameters(*setup.neural_network);
 
-    setup.neural_network->forward_propagate(setup.batch.get_inputs(), setup.forward_propagation, true);
+    setup.neural_network->forward_propagate(setup.batch.get_inputs(), setup.forward_propagation, ForwardPropagationMode::Training);
 
     loss.back_propagate(setup.batch, setup.forward_propagation, setup.back_propagation);
 

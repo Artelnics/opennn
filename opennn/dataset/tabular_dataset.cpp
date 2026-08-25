@@ -84,7 +84,6 @@ MatrixR TabularDataset::get_feature_data(const string& variable_role) const
     return get_data_from_indices(indices, get_feature_indices(variable_role));
 }
 
-
 MatrixR TabularDataset::get_data_from_indices(const vector<Index>& sample_indices, const vector<Index>& feature_indices) const
 {
     MatrixR this_data(sample_indices.size(), feature_indices.size());
@@ -116,11 +115,6 @@ bool TabularDataset::has_nan() const
     return false;
 }
 
-// One entry per variable, matching what read_csv counts and what
-// missing_values_to_JSON writes. The per-feature-column sum this used to
-// return gave a categorical variable one entry per one-hot column - so the same
-// missing value was counted once per category, and the vector changed length
-// depending on which of the two writers had run last.
 VectorI TabularDataset::count_nans_per_variable() const
 {
     const VectorI per_column = data.array().isNaN().cast<Index>().colwise().sum();
@@ -133,8 +127,6 @@ VectorI TabularDataset::count_nans_per_variable() const
     {
         const Index feature_count = variables[size_t(i)].get_feature_count();
 
-        // Every one-hot column of a categorical is NaN together, so the first
-        // column of the variable already carries its count.
         if (feature_count > 0 && column < per_column.size())
             per_variable(i) = per_column(column);
 
@@ -662,10 +654,6 @@ vector<string> TabularDataset::unuse_collinear_variables(const float maximum_cor
         unused_variables.push_back(variable.name);
     }
 
-    // The cached input/target shapes are separate from the roles, and every
-    // other unuse_* resyncs them here. Skipping it left get_shape("Input")
-    // reporting more features than get_feature_indices returns, so Batch::set
-    // sized the input slot for a width fill_inputs no longer writes.
     resize_input_shape(get_features_number(VariableRole::Input));
     set_shape(VariableRole::Target, { get_features_number(VariableRole::Target) });
 
@@ -855,8 +843,6 @@ vector<Descriptives> TabularDataset::calculate_variable_descriptives_samples(boo
                         get_feature_indices(VariableRole::Input));
 }
 
-
-
 vector<Descriptives> TabularDataset::calculate_variable_descriptives_categories(Index class_index) const
 {
     return descriptives(data,
@@ -897,9 +883,6 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_target_variable_correlati
     return correlations;
 }
 
-
-
-
 Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
     Correlation (*correlation_function)(const MatrixR&, const MatrixR&),
     Correlation::Method method,
@@ -918,10 +901,6 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
     {
         if (display) cout << "Correlation " << i + 1 << " of " << input_variables_number << "\n";
 
-        // Restricted to the used samples, as the input-target twin already is.
-        // Reading every row meant samples excluded by filtering, Tukey cleaning
-        // or the user still steered the collinearity analysis while being
-        // absent from the relevance one.
         const MatrixR input_i = get_variable_data(input_variable_indices[i], used_sample_indices);
 
         if (is_constant(input_i)) continue;
@@ -944,8 +923,6 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
 
     return correlations;
 }
-
-
 
 FeatureScaling TabularDataset::calculate_used_feature_scaling(VariableRole role) const
 {
@@ -1434,9 +1411,6 @@ void TabularDataset::set_data_binary_classification()
 
     set_data_random();
 
-    // Serial on purpose: random_bool() draws from one mutex-guarded generator,
-    // so a parallel loop both contends on the lock and makes the draw order -
-    // and therefore a seeded run - depend on thread scheduling.
     for (Index i = 0; i < samples_number; ++i)
         data(i, features_number - 1) = float(random_bool());
 
@@ -1786,11 +1760,6 @@ void TabularDataset::read_csv()
         variable.scaler = previous->scaler;
     }
 
-    // assign, not resize: re-reading a file into a live dataset is supported
-    // (the variable roles and scalers are restored by name just above), but
-    // resize keeps the existing elements, so rows another file had marked None
-    // stayed None here and never trained. Binary mode re-marks incomplete rows
-    // below as it always did.
     sample_roles.assign(size_t(samples_number), SampleRole::Training);
     sample_ids.assign(size_t(samples_number), {});
 
@@ -2492,12 +2461,6 @@ void TabularDataset::impute_missing_values_interpolate()
 
             if (!isnan(data(current_sample, current_variable))) continue;
 
-            // "No neighbour" and "the neighbour is sample 0 holding 0.0" used
-            // to be the same state, so a leading NaN was interpolated against a
-            // phantom point at the origin and a trailing one was extrapolated
-            // towards zero. Optional keeps them apart: two neighbours
-            // interpolate, one is carried across, none leaves the NaN for
-            // unuse_samples_with_missing_targets to deal with.
             optional<pair<Index, float>> left;
             optional<pair<Index, float>> right;
 
@@ -2680,9 +2643,6 @@ DateFormat TabularDataset::infer_column_types(
         }
     }
 
-    // infer_dataset_date_format already stops at the first parseable DateTime
-    // token, scanning rows then columns, and returns Auto when no variable is
-    // a DateTime. A sampled pass ahead of it can only reach the same answer.
     const DateFormat date_format = infer_dataset_date_format(variables,
                                                              sample_lines,
                                                              file_separator,

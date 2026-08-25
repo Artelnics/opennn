@@ -54,8 +54,6 @@ protected:
         mutex access_mutex;
         CudnnDescriptor<cudnnRNNDescriptor_t> rnn_desc;
         CudnnDescriptor<cudnnDropoutDescriptor_t> dropout_desc;
-        // Reserved for non-zero recurrent dropout; zero-rate descriptors use
-        // no RNG state.
         Buffer dropout_states{Device::CUDA};
         CudnnRnnShapeSlot shape_slots[RNN_SHAPE_SLOTS];
         int shape_stamp = 0;
@@ -68,9 +66,6 @@ protected:
         bool double_bias = false;
         bool packed_layout = false;
 
-        // Which weight space the padding and recurrent-bias holes were last
-        // zeroed in, and for which layout. Anything else and they have to be
-        // zeroed again -- see cudnn_pack_weights_.
         const void* zeroed_weight_space = nullptr;
         Index zeroed_weight_space_bytes = 0;
         Index zeroed_input_features = -1;
@@ -104,8 +99,6 @@ protected:
                                             Index input_features, Index output_features,
                                             Index time_steps, Index batch_size,
                                             bool for_training) const;
-    // Weights and biases between the library's per-linear-layer tensors and
-    // cuDNN's packed weight space (to_cudnn) or the gradients back (!to_cudnn).
     void cudnn_copy_weight_regions_(int num_linear_layers,
                                     Index input_features,
                                     Index output_features,

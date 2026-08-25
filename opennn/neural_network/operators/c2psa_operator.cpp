@@ -67,7 +67,7 @@ void C2PSAOperator::set_parameters_glorot()
     set_random_uniform(Wout.as_vector(), -lout, lout);
 }
 
-void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
+void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, ForwardPropagationMode)
 {
     const TensorView& x = get_input(fp, layer);
     TensorView& output  = get_output(fp, layer);

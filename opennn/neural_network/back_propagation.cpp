@@ -117,14 +117,6 @@ void BackPropagation::set(const Index new_batch_size,
     plan_delta_addends();
 }
 
-// A producer read by two consumers gets its delta as the sum of both consumers'
-// input deltas. The planner already lets one consumer (A) write straight into
-// the producer's delta buffer; the other's (B) was then added in a separate
-// pass over the whole tensor. When A runs after B in the backward sweep (lower
-// layer index) and A's backward can fold an addend into the delta it writes,
-// hand it B's delta instead: A's dgrad epilogue adds it, and
-// accumulate_output_deltas skips that edge. ResNet's block input is exactly
-// this: conv1 (A) and the residual read (B) of the block-end batch norm.
 void BackPropagation::plan_delta_addends()
 {
     const NeuralNetwork& neural_network = require_network();
@@ -153,8 +145,6 @@ void BackPropagation::plan_delta_addends()
             return view.get_data() && view.size() == destination.size() ? &view : nullptr;
         };
 
-        // A: the consumer whose slot is the destination; B: the other one, whose
-        // slot becomes A's addend. Exactly one of the two must alias.
         const TensorView* first  = slot_of(edges[0]);
         const TensorView* second = slot_of(edges[1]);
         const bool first_is_destination  = first  && first->get_data() == destination.get_data();
@@ -167,7 +157,7 @@ void BackPropagation::plan_delta_addends()
         const auto [layer_a, input_a] = edge_a;
 
         if (!addend
-            || layer_a >= edge_b.first                  // A must run after B
+            || layer_a >= edge_b.first
             || !layers[layer_a]->folds_input_delta_addend(input_a)
             || input_a >= input_delta_addends[layer_a].size())
             continue;
@@ -202,8 +192,6 @@ void BackPropagation::setup_gradient(Buffer* external_gradient)
         gradient.set_view(external_gradient->data(), gradient_bytes, device);
     else
     {
-        // Not throw_if: its arguments are evaluated whatever the condition, and
-        // there is nothing to dereference when no buffer was offered.
         if (external_gradient)
             throw runtime_error(
                 format("BackPropagation::setup_gradient: the gradient buffer offered "
@@ -272,7 +260,6 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_layout(
         return Shape{batch_size}.append(layers[layer]->get_output_shape());
     };
 
-    // Residual delta aliases
     for (Index layer = first_layer; layer <= last_layer; ++layer)
     {
         const size_t i = size_t(layer);
@@ -296,7 +283,6 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_layout(
         layout.aliased_residual_delta_bytes += get_aligned_bytes(specs[1]);
     }
 
-    // Loss output delta
     const Shape output_delta_shape = make_delta_shape(last_layer);
     const Index loss_consumer = resolve_source(last_layer);
 
@@ -311,7 +297,6 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_layout(
         });
     }
 
-    // Layer input deltas
     for (Index layer = first_layer; layer <= last_layer; ++layer)
     {
         const size_t i = size_t(layer);
@@ -351,7 +336,6 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_layout(
         }
     }
 
-    // Reuse consumer deltas where possible
     for (Index layer = first_layer; layer < last_layer; ++layer)
     {
         const size_t i = size_t(layer);
@@ -610,7 +594,6 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
         return s.get_data() && s.size() == destination.size();
     };
 
-    // Prefer destination itself as the initial accumulated value.
     auto first = std::ranges::find_if(edges, [&](const auto& edge)
     {
         const TensorView& s = source(edge);

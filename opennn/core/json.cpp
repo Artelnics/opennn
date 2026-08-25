@@ -59,7 +59,6 @@ const Json::Object& Json::as_object() const
     return std::get<Object>(value);
 }
 
-
 const Json* Json::find(std::string_view key) const
 {
     if (!is_object()) return nullptr;
@@ -223,14 +222,8 @@ static void dump_value(std::string& out, const Json& v, int indent, int depth)
         const double number = v.as_double();
         char buf[32];
 
-        // Before the cast, not after: converting a NaN, an infinity or anything
-        // past 2^63 to long long is undefined, and to_chars would then write
-        // "nan"/"inf", which this parser rejects on the way back in.
         if (!std::isfinite(number)) { out += "null"; return; }
 
-        // The integrality test is a trunc comparison rather than a round trip
-        // through long long, so the cast happens only where 1e15 has already
-        // proved it is in range.
         if (std::abs(number) < 1e15 && number == std::trunc(number))
             std::snprintf(buf, sizeof(buf), "%lld", static_cast<long long>(number));
         else
@@ -379,10 +372,6 @@ struct Parser
 
                 unsigned code = read_four_hex();
 
-                // A non-BMP character is written as a surrogate pair, which is
-                // how json.dumps escapes every emoji in a vocabulary file. Each
-                // half encoded on its own produced six bytes of CESU-8 that no
-                // tokenizer could match against the real four-byte character.
                 if (code >= 0xD800 && code <= 0xDBFF
                     && position + 1 < s.size() && s[position] == '\\' && s[position + 1] == 'u')
                 {
@@ -480,9 +469,6 @@ struct Parser
 
 Json Json::parse(std::string_view text)
 {
-    // RFC 8259 lets a parser ignore a leading byte-order mark, and PowerShell
-    // writes one on every redirect, so a model file merely touched by a Windows
-    // tool stopped loading with "unexpected character" at position 0.
     if (text.starts_with("\xEF\xBB\xBF")) text.remove_prefix(3);
 
     Parser p(text);

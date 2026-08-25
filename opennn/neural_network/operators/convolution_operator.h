@@ -60,7 +60,6 @@ struct ConvolutionOperator : Operator
                           bool relu, TensorView& output) const;
 #endif
 
-
     vector<TensorSpec> parameter_specs() const override;
     vector<SlotQuantization> parameter_quantization() const override;
     void link_parameters(span<const TensorView>) override;
@@ -76,7 +75,7 @@ struct ConvolutionOperator : Operator
     ConvolutionOperator(const ConvolutionOperator&) = delete;
     ConvolutionOperator& operator=(const ConvolutionOperator&) = delete;
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
 private:
@@ -85,8 +84,6 @@ private:
 
     void apply_delta_cpu(const TensorView&, const TensorView&,
                          TensorView&) const;
-    // The last argument is a delta to add into the input delta (see
-    // BackPropagation::input_delta_addend); empty when there is none.
     void apply_delta_gpu(const TensorView&, const TensorView&,
                          TensorView&, const TensorView&) const;
 };

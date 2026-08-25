@@ -23,7 +23,6 @@
 namespace opennn
 {
 
-// Defined below: against the CUDA kernel, or as a throwing stub.
 static void apply_clamping_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&);
 
 static void apply_clamping_cpu(const TensorView& input,
@@ -39,8 +38,6 @@ static void apply_clamping_cpu(const TensorView& input,
 
     MatrixMap output_matrix = output.as_flat_matrix();
 
-    // Write every flattened column, cycling the per-feature bounds, so no column
-    // is left uninitialized when the flattened width exceeds the feature count.
     const Index columns = output_matrix.cols();
 
     for (Index column_index = 0; column_index < columns; ++column_index)
@@ -84,7 +81,7 @@ OPENNN_CUDA_STUB(void, apply_clamping_gpu,
 
 #endif
 
-void ClampingOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void ClampingOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);
@@ -120,11 +117,6 @@ void Clamping::set(const Shape& new_output_shape, const string& new_label)
 
     set_label(new_label);
 
-    // The last dimension is the feature axis: apply_clamping_cpu cycles the
-    // bounds over as_flat_matrix's columns, which are the last dimension. Sizing
-    // from dimension 0 meant a rank-2 or rank-3 input - both of which this layer
-    // accepts - silently reused the wrong feature's bounds for every column past
-    // the first few. Scaling already keys on back().
     const Index features = output_shape.empty() ? 0 : output_shape.back();
     clamping.method = ClampingMethod::Clamping;
 

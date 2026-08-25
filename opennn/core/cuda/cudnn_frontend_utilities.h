@@ -88,7 +88,6 @@ inline void execute_graph(graph::Graph& graph,
     if (timing_label.empty())
         return check_status(graph.execute(device::get_cudnn_handle(), tensors, workspace), what);
 
-    // Timing is a diagnostic; the two events live for the thread.
     thread_local device::CudaEvent begin(cudaEventDefault);
     thread_local device::CudaEvent end(cudaEventDefault);
     device::record_event(begin.get(), device::get_compute_stream());
@@ -128,10 +127,6 @@ bool run_frontend(GraphCache& cache, const char* label, Body&& body)
     }
 }
 
-// The frontend path can be unavailable for two unrelated reasons: the GPU really
-// lacks the required compute capability, or a plan, workspace or autotune
-// allocation failed at runtime. Reporting the former when it is the latter sends
-// the reader after a hardware problem that does not exist.
 [[noreturn]] inline void throw_frontend_unavailable(const string& what)
 {
     if (!frontend_enabled())
@@ -144,8 +139,6 @@ bool run_frontend(GraphCache& cache, const char* label, Body&& body)
         "with device::set_conv_workspace_cap().");
 }
 
-// Bytes per element for a cudnn-frontend tensor's dtype. NOT_SET falls back to
-// four, which is what the scratch sizing assumed for everything before this.
 inline int64_t element_bytes(DataType_t dtype)
 {
     switch (dtype)
@@ -159,7 +152,6 @@ inline int64_t element_bytes(DataType_t dtype)
         default:                    return 4;
     }
 }
-
 
 inline DataType_t to_dtype(Type t)
 {
@@ -206,12 +198,8 @@ inline void set_nhwc_output(shared_ptr<graph::Tensor_attributes>& tensor,
            .set_stride(nhwc_strides(c, h, w));
 }
 
-// The pointer bindings a graph execution consumes: one device pointer per
-// Tensor_attributes the graph declared.
 using VariantPack = unordered_map<shared_ptr<graph::Tensor_attributes>, void*>;
 
-// A (B, H, S, D) tensor over memory that is laid out either that way or,
-// interleaved, as (B, S, H, D) - the layout the projection GEMMs write.
 inline vector<int64_t> bhsd_strides(int64_t h, int64_t s, int64_t d, bool interleaved)
 {
     return interleaved ? vector<int64_t>{s * h * d, d, h * d, 1}
@@ -236,9 +224,6 @@ inline void set_bhsd_output(shared_ptr<graph::Tensor_attributes>& tensor,
            .set_stride(bhsd_strides(h, s, d, interleaved));
 }
 
-// A (1, C, 1, 1) FP32 tensor: the per-channel parameters and statistics batch
-// normalization and a convolution bias work in. The strides are the NHWC ones
-// for a 1x1 image, which is what the layout amounts to.
 inline shared_ptr<graph::Tensor_attributes>
 per_channel_tensor(graph::Graph& graph, const char* name, int64_t channels)
 {
@@ -257,9 +242,6 @@ inline void set_per_channel_output(shared_ptr<graph::Tensor_attributes>& tensor,
            .set_stride(nhwc_strides(channels, 1, 1));
 }
 
-// Empty unless graph timing is on, and execute_graph reads an empty label as
-// "do not time" - so the format cost is not paid when timing is off, and a
-// non-empty constant would silently turn timing on.
 template <typename... Args>
 inline string timing_label(format_string<Args...> fmt, Args&&... args)
 {
@@ -267,8 +249,6 @@ inline string timing_label(format_string<Args...> fmt, Args&&... args)
     return format(fmt, std::forward<Args>(args)...);
 }
 
-// A one-element tensor. Pass by value for a host scalar the graph reads
-// directly; leave it false for a device pointer.
 inline shared_ptr<graph::Tensor_attributes>
 scalar_tensor(graph::Graph& graph, const char* name, DataType_t dtype,
               bool pass_by_value = false, int64_t batch = 1)
@@ -281,24 +261,6 @@ scalar_tensor(graph::Graph& graph, const char* name, DataType_t dtype,
                         .set_is_pass_by_value(pass_by_value));
 }
 
-// Execution-plan disk cache. Building plans dominates process startup: on
-// ResNet-50 at batch 2048 the fixed cost is ~9 s, of which CUDA context and cuDNN
-// handle creation are only ~0.22 s, so nearly all of it is plan building — about
-// eight times one training epoch, paid again on every run. Serializing the chosen
-// plan turns that into a file read (measured 9.42 s -> 6.23 s, 192 plans).
-//
-// A plan is only valid for the GPU, cuDNN build and workspace budget it was
-// chosen under, so those name the directory while a shape-aware structural hash
-// of the graph names the file. A miss, a stale file or a failed deserialize all
-// fall through to the normal build, so a bad cache costs time, never correctness.
-// Autotune measures only the plans that were built. Building every candidate
-// (BuildPlanPolicy_t::ALL) compiles dozens of engines per graph and costs
-// minutes of warmup per shape set - measured ~5 min per batch point for
-// ResNet-50 - while the heuristics already rank the candidates and the winner
-// is nearly always among the first few. So build the first K viable candidates
-// in heuristic order and let autotune() skip the unbuilt slots.
-// OPENNN_AUTOTUNE_CANDIDATES overrides K; 0 or a negative count means "build
-// all" (the old behaviour).
 inline int64_t candidate_limit_from(long long value)
 {
     return value <= 0 ? numeric_limits<int64_t>::max() : int64_t(value);
@@ -310,10 +272,6 @@ inline int64_t autotune_candidate_limit()
     return limit;
 }
 
-// Per-kind candidate count: OPENNN_AUTOTUNE_CANDIDATES_<KIND> (KIND = FORWARD,
-// WGRAD, DGRAD, from the graph tag) overrides the global count for that graph
-// kind - the weight gradient is the largest single component of a ResNet step
-// and may deserve a wider search than the rest.
 inline int64_t autotune_candidate_limit(const string& tag)
 {
     static const auto per_kind = []
@@ -333,9 +291,6 @@ inline int64_t autotune_candidate_limit(const string& tag)
     return found == per_kind.end() ? autotune_candidate_limit() : found->second;
 }
 
-// Which heuristic list seeds the candidates: OPENNN_CUDNN_HEURISTICS = A
-// (default), B, or AB (A's list followed by B's). Modes rank engines
-// differently; which is right is a per-GPU measurement.
 inline vector<HeurMode_t> heuristic_modes()
 {
     static const vector<HeurMode_t> modes = []
@@ -349,13 +304,6 @@ inline vector<HeurMode_t> heuristic_modes()
     return modes;
 }
 
-// Restrict a convolution graph's candidates to engines carrying the given
-// numerical notes: OPENNN_CONV_ENGINE_NOTES = WINOGRAD, FFT, or WINOGRAD,FFT.
-// Those engines rank low in the heuristics and need workspace, so a top-K
-// search over the default order never reaches them; this lets an A/B ask
-// whether they beat implicit GEMM on a given GPU (fp32 3x3 layers, mostly).
-// Empty when unset. Applied to conv graphs only - batch-norm graphs have no
-// such engines and would lose every candidate.
 inline const vector<NumericalNote_t>& conv_engine_notes()
 {
     static const vector<NumericalNote_t> notes = []
@@ -370,8 +318,6 @@ inline const vector<NumericalNote_t>& conv_engine_notes()
     return notes;
 }
 
-// Builds candidates in heuristic order until `limit` of them exist; plans the
-// workspace budget bars fail fast and do not count. True if at least one built.
 inline bool build_top_candidates(graph::Graph& graph, int64_t limit)
 {
     const int64_t count = graph.get_execution_plan_count();
@@ -385,13 +331,10 @@ inline bool build_top_candidates(graph::Graph& graph, int64_t limit)
 
 inline bool plan_cache_enabled()
 {
-    // On by default: a miss only costs the build that would have happened anyway.
     static const bool enabled = env_flag_enabled("OPENNN_CUDNN_PLAN_CACHE", true);
     return enabled;
 }
 
-// Defined below, next to the attention path it belongs to; declared here
-// because the cache key has to account for it.
 inline bool sdpa_autotune_enabled();
 
 inline const std::filesystem::path& plan_cache_directory()
@@ -406,19 +349,12 @@ inline const std::filesystem::path& plan_cache_directory()
             root = std::filesystem::path(override_path);
         else
         {
-            // The error_code overload, like every other filesystem call on this
-            // path. The throwing one propagated out of a static initializer,
-            // through GraphSlot::build, into run_frontend's catch, which
-            // disabled the cudnn-frontend for the rest of the process and then
-            // blamed a missing plan - all because TMP pointed somewhere unusable.
             std::error_code error;
             const std::filesystem::path temporary = std::filesystem::temp_directory_path(error);
             if (error) return std::filesystem::path{};
             root = temporary / "opennn-cudnn-plans";
         }
 
-        // cuDNN picks engines per architecture and revises them between releases,
-        // so a plan may only be reloaded by the exact pair that produced it.
         return root / format("sm{}-cudnn{}", device_sm_version(), CUDNN_VERSION);
     }();
 
@@ -427,26 +363,16 @@ inline const std::filesystem::path& plan_cache_directory()
 
 inline std::filesystem::path plan_cache_file(const graph::Graph& graph)
 {
-    // Graph::key() is private, so hash the structural json the same way it does.
-    // "gid" is a per-process graph counter, not part of the shape or topology, so
-    // leaving it in would make every run miss its own cache.
     json structure;
     graph.serialize(structure);
     structure.erase("gid");
 
-    // The workspace cap changes which plans survive selection, and autotune
-    // changes which survivor wins, so runs that differ in either must not share
-    // a cached plan for the same graph.
     size_t selection = size_t(autotune_candidate_limit());
     for (const char* kind : {"forward", "wgrad", "dgrad"})
         selection = selection * 31 + size_t(autotune_candidate_limit(kind));
     for (const HeurMode_t mode : heuristic_modes()) selection = selection * 31 + size_t(mode) + 1;
     for (const NumericalNote_t note : conv_engine_notes()) selection = selection * 31 + size_t(note) + 7;
 
-    // The attention autotune knob belongs in the key for the same reason the
-    // conv one does. Without it, a warm cache written with OPENNN_SDPA_AUTOTUNE
-    // unset was reloaded under the identical key on the next run with it set,
-    // so autotune never ran and the A/B the knob exists for measured nothing.
     selection = selection * 31 + (sdpa_autotune_enabled() ? 3u : 0u);
 
     const size_t key = std::hash<json>{}(structure)
@@ -460,8 +386,6 @@ inline std::filesystem::path plan_cache_file(const graph::Graph& graph)
 inline bool load_cached_plan(graph::Graph& graph, const cudnnHandle_t handle,
                              int64_t& workspace_bytes)
 {
-    // An empty directory means temp_directory_path failed: no cache, but the
-    // frontend itself carries on building plans normally.
     if (!plan_cache_enabled() || plan_cache_directory().empty()) return false;
 
     std::error_code failed;
@@ -475,11 +399,6 @@ inline bool load_cached_plan(graph::Graph& graph, const cudnnHandle_t handle,
                                 std::istreambuf_iterator<char>());
     if (blob.empty()) return false;
 
-    // A plan from another GPU or cuDNN build lands in a different directory, but a
-    // truncated file can still reach here; deserialize reports that rather than
-    // throwing, and the caller then builds the plan normally. The warmup capture
-    // is skipped because every graph here runs many times, so the first real call
-    // primes it just as well (measured neutral: same wall clock, same final loss).
     constexpr bool enforce_precompiled = false;
     constexpr bool run_warmup = false;
 
@@ -494,17 +413,12 @@ inline void store_cached_plan(graph::Graph& graph)
 
     vector<uint8_t> blob;
 
-    // Plan-only payload: the structure is rebuilt by our own graph construction,
-    // so serializing it again would only make the file bigger.
     if (graph.serialize(blob, false).is_bad() || blob.empty()) return;
 
     std::error_code failed;
     std::filesystem::create_directories(plan_cache_directory(), failed);
     if (failed) return;
 
-    // Write-then-rename so a concurrent reader never observes a half-written plan.
-    // The temporary name only has to be unique among the writers racing for this
-    // file; if two ever collide the write fails and the plan is simply rebuilt.
     static atomic<uint64_t> sequence{0};
 
     const std::filesystem::path file = plan_cache_file(graph);
@@ -522,8 +436,6 @@ inline void store_cached_plan(graph::Graph& graph)
     if (failed) std::filesystem::remove(pending, failed);
 }
 
-// Attention finalizes separately from the layer graphs: no workspace budget,
-// no autotune; it reports the workspace the built plan needs.
 inline int64_t autotune_workspace_bytes(const graph::Graph& graph)
 {
     int64_t maximum = 0;
@@ -539,12 +451,6 @@ inline int64_t autotune_workspace_bytes(const graph::Graph& graph)
     return maximum;
 }
 
-// Attention graphs (SDPA forward/backward): the heuristics' first plan, or,
-// when the caller allows it and OPENNN_SDPA_AUTOTUNE=1, the top candidates of
-// the A and B heuristic lists built for autotune_now() to time on the first
-// real execution (returns true in that case: the caller must run autotune_now
-// before executing). Measured neutral on an RTX 3060 (cuDNN 9.24 has one
-// engine for that shape); kept for GPUs where cuDNN offers more.
 inline bool sdpa_autotune_enabled()
 {
     static const bool enabled = env_flag_enabled("OPENNN_SDPA_AUTOTUNE", false);
@@ -587,9 +493,6 @@ seq_len_scalar(graph::Graph& graph, const char* name, int64_t batch = 1)
     return scalar_tensor(graph, name, DataType_t::INT32, false, batch);
 }
 
-// Builds the plan(s) of a graph. Returns true when the plan choice is left to
-// the first real execution (device::conv_autotune_enabled(): the top-K
-// candidates are built and timed on real tensors by autotune()).
 inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string& tag)
 {
     const cudnnHandle_t handle = device::get_cudnn_handle();
@@ -602,20 +505,8 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
     if (load_cached_plan(graph, handle, workspace_bytes)) return false;
 
     check_status(graph.build_operation_graph(handle), tag + " build_operation_graph");
-    // The workspace budget is applied in every mode, autotune included. Left
-    // unbounded, cuDNN's first heuristic choice for these NHWC shapes needs a
-    // scratch that grows with the batch (~4 MiB per sample on sm_86: 2 GiB at
-    // batch 512, 16 GiB at 4096) and is not even the fastest engine: capping to
-    // the auto budget picks a plan needing ~16 KiB per sample and measured
-    // 1.5-2x faster at every batch on an RTX 3060, while the unbounded plan
-    // collapsed throughput 5-30x once its scratch spilled and then OOMed.
     const int64_t conv_workspace_cap = device::conv_workspace_limit_bytes();
 
-    // Candidate list: the heuristic modes' engines under the workspace budget,
-    // optionally restricted to the requested numeric notes for convolution
-    // graphs (see conv_engine_notes). A restricted list can be empty for a
-    // shape - 1x1 convolutions have no Winograd engine - so the build below
-    // falls back to the unrestricted list rather than leaving it without a plan.
     const bool convolution_graph = tag == "forward" || tag == "wgrad" || tag == "dgrad";
     const auto prepare_candidates = [&](bool restrict_notes)
     {
@@ -626,12 +517,6 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
             graph.select_numeric_notes(conv_engine_notes());
     };
 
-    // Plans over budget are barred and left unbuilt (nullptr), as are the
-    // candidates past the top-K; autotune() skips those slots. The access
-    // violation once attributed to "cap + ALL" is
-    // Graph::get_autotune_workspace_size(), which dereferences every slot
-    // including the unbuilt ones — see autotune_workspace_bytes() below, which
-    // is why that accessor is not used.
     const auto build_candidates = [&]() -> bool
     {
         if (request_autotune)
@@ -648,12 +533,9 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
         prepare_candidates(false);
         built = build_candidates();
     }
-    // Still nothing: report it the way build_plans does, and let the caller decide.
     if (!built)
         check_status(graph.build_plans(handle, BuildPlanPolicy_t::HEURISTICS_CHOICE), tag + " build_plans");
 
-    // An autotuned graph is measured against real data by the caller before a plan
-    // is pinned, so caching here would store a plan the tuning has not chosen yet.
     if (request_autotune && built) return true;
 
     check_status(graph.get_workspace_size(workspace_bytes), tag + " get_workspace_size");
@@ -663,21 +545,11 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
     return false;
 }
 
-// Autotuning is best-effort: on failure the graph keeps the plan the heuristics
-// already chose. The attempt is made once per graph, so reporting a failure here
-// costs at most one line per shape and is the only signal that a slower plan is
-// now pinned for the rest of the process.
 inline void report_autotune_skipped(const char* tag, const char* reason)
 {
     cerr << (tag ? tag : "autotune")
          << ": autotune skipped, keeping the heuristic plan (" << reason << ").\n";
 }
-
-// Largest workspace any *executable* candidate needs. Graph::get_autotune_workspace_size()
-// computes the same maximum but dereferences every plan slot, and a workspace cap
-// leaves the barred plans as nullptr — that is the crash that used to force
-// autotune to run unbounded. The per-index query goes through
-// is_plan_index_executable() first, so it is safe under a cap.
 
 template<typename TensorMap>
 inline void autotune_now(bool& pending, graph::Graph& graph,
@@ -686,9 +558,6 @@ inline void autotune_now(bool& pending, graph::Graph& graph,
 {
     if (!pending) return;
     pending = false;
-    // Candidates are timed: with several lanes another lane may be running
-    // now and would skew the timing (measured: a mistuned plan cost 2-9% for
-    // the whole step), so the device is idle before the first measurement.
     if (device::lanes_available() > 1) device::synchronize();
 
     Buffer tune_workspace{Device::CUDA};
@@ -698,9 +567,6 @@ inline void autotune_now(bool& pending, graph::Graph& graph,
         if (tune_bytes > 0) tune_workspace.resize_bytes(Index(tune_bytes), Device::CUDA);
         check_status(graph.autotune(device::get_cudnn_handle(), tensors, tune_workspace.data()), "autotune");
 
-        // The winner is now the candidate; persist it so the next process loads
-        // the tuned plan instead of re-tuning (or, worse, settling for the
-        // heuristic one under the same key).
         store_cached_plan(graph);
     }
     catch (const exception& e)
@@ -729,10 +595,6 @@ inline void autotune_with_scratch(bool& pending, graph::Graph& graph,
     vector<Buffer> buffers;
     buffers.reserve(scratch.size());
 
-    // The scratch duplicates every tensor in the graph, so it is the largest
-    // transient allocation the conv path makes. Failing to get it must not take
-    // the whole cudnn-frontend path down with it: drop back to the heuristic
-    // plan and keep training.
     try
     {
         for (auto& [tensor, pointer] : scratch)
@@ -743,9 +605,6 @@ inline void autotune_with_scratch(bool& pending, graph::Graph& graph,
             for (const int64_t dimension : tensor->get_dim()) elements *= dimension;
 
             Buffer& buffer = buffers.emplace_back(Device::CUDA);
-            // By the tensor's own dtype, not fp32 for everything: this scratch
-            // duplicates every tensor in the graph, so on a bf16 graph the old
-            // sizing reserved twice the transient the autotune actually needs.
             buffer.resize_bytes(Index(elements * element_bytes(tensor->get_data_type())),
                                 Device::CUDA);
             pointer = buffer.data();
@@ -764,8 +623,6 @@ inline void autotune_with_scratch(bool& pending, graph::Graph& graph,
     autotune_now(pending, graph, scratch, workspace_bytes, tag);
 }
 
-// A built graph with what running it needs: the plan's workspace and whether
-// finalize() left the plan choice to the first real execution (autotune).
 struct GraphSlot
 {
     shared_ptr<graph::Graph> graph;
@@ -775,8 +632,6 @@ struct GraphSlot
     explicit operator bool() const noexcept { return graph != nullptr; }
     graph::Graph& operator*() const noexcept { return *graph; }
 
-    // finalize() a freshly assembled graph and take it; on a throw the slot is
-    // left empty (finalize reports the failure).
     void build(shared_ptr<graph::Graph> built, const string& tag)
     {
         graph.reset();
@@ -785,9 +640,6 @@ struct GraphSlot
     }
 };
 
-// Autotune once on real tensors, then execute. `scratch_autotune` times the
-// candidates on scratch copies of the outputs (graphs whose outputs feed the
-// step, or accumulate); the plain form times them in place.
 template<typename TensorMap>
 inline void run_slot(GraphSlot& slot, TensorMap& tensors, const char* what,
                      const string& timing_label, bool scratch_autotune)

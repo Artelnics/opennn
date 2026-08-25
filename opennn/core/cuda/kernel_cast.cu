@@ -9,10 +9,6 @@
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/core/cuda/kernel_cast.cuh"
 
-// Widening or narrowing cast, four elements per thread (one 16-byte or 8-byte
-// load, one 8-byte or 16-byte store) over the aligned prefix and scalar for
-// the tail. In BF16 training this is the per-step widening of every
-// convolution weight gradient cuDNN stores in BF16.
 template<typename Src, typename Dst>
 __global__ void cast_kernel(const int n_vec, const int n,
                             const Src* __restrict__ src, Dst* __restrict__ dst)

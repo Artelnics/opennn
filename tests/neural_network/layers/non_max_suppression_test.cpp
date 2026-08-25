@@ -87,7 +87,7 @@ TEST(NonMaxSuppression, DecodesBoxCoordinatesToImageRelative)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> inputs = { TensorView(input.data(), {batch_size, grid, grid, channels}) };
-    neural_network.forward_propagate(inputs, forward_propagation, false);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     const float* out = forward_propagation.get_outputs().as<float>();
 
@@ -141,7 +141,7 @@ TEST(NonMaxSuppression, SuppressesSameClassOverlapKeepsDifferentClassOverlap)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> inputs = { TensorView(input.data(), {batch_size, grid, grid, channels}) };
-    neural_network.forward_propagate(inputs, forward_propagation, false);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
     const float* out = output_view.as<float>();
@@ -193,7 +193,7 @@ TEST(NonMaxSuppression, DropsBoxesBelowConfidenceThreshold)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> inputs = { TensorView(input.data(), {batch_size, grid, grid, channels}) };
-    neural_network.forward_propagate(inputs, forward_propagation, false);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     const float* out = forward_propagation.get_outputs().as<float>();
 
@@ -235,8 +235,8 @@ TEST(NonMaxSuppression, GpuStagingIsPropagationOwned)
         TensorView(device_input.data(), {batch_size, grid, grid, channels},
                    Type::FP32, Device::CUDA)};
 
-    neural_network.forward_propagate(inputs, first, false);
-    neural_network.forward_propagate(inputs, second, false);
+    neural_network.forward_propagate(inputs, first, ForwardPropagationMode::Inference);
+    neural_network.forward_propagate(inputs, second, ForwardPropagationMode::Inference);
     device::synchronize(device::get_compute_stream());
 
     ASSERT_FALSE(first.layer_pinned_storage[0].empty());

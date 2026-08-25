@@ -23,8 +23,6 @@
 namespace opennn
 {
 
-// Defined below: against the CUDA kernels, or as a throwing stub. Both directions
-// share one entry point so the forward and inverse paths cannot drift apart.
 static void scale_gpu(const TensorView&, const TensorView&, const TensorView&,
                       const TensorView&, const TensorView&, const TensorView&,
                       float, float, TensorView&, bool);
@@ -78,7 +76,6 @@ static void unscale_column_cpu(Column& column, ScalerMethod method,
     {
     case MinimumMaximum:
         throw_if(max_range - min_range < EPSILON, "The range values are not valid.");
-        // Constant feature: the forward scaling produced zeros, so invert to the constant.
         if (descriptives.maximum - descriptives.minimum < EPSILON)
             column.setConstant(descriptives.minimum);
         else
@@ -208,7 +205,7 @@ OPENNN_CUDA_STUB(void, scale_gpu,
 
 #endif
 
-void ScaleOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void ScaleOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);
@@ -257,11 +254,6 @@ void Scaling::set(const Shape& new_input_shape)
 
 void Scaling::apply_input_shape(const Shape& new_input_shape)
 {
-    // set() is the full reset a constructor wants; propagating a shape through
-    // the graph is not. It used to take the label back to the class default and
-    // discard the fitted statistics, so resizing a network silently unfitted its
-    // scaling. The label always survives, and the statistics survive whenever the
-    // feature count is unchanged.
 
     const string previous_label = get_label();
     const vector<Descriptives> previous_descriptives = descriptives;
@@ -342,11 +334,11 @@ vector<TensorSpec> Scaling::get_forward_specs(Index batch_size) const
     return Layer::get_forward_specs(batch_size);
 }
 
-void Scaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void Scaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
     if (is_passthrough())
         return;
-    Layer::forward_propagate(forward_propagation, layer, is_training);
+    Layer::forward_propagate(forward_propagation, layer, pass);
 }
 
 float* Scaling::link_states(float* pointer, Device device)
@@ -451,14 +443,6 @@ void Scaling::write_JSON_body(JsonWriter& printer) const
 namespace
 {
 
-// Emitted numbers always carry a decimal point, and constants are folded before
-// they are written rather than left as arithmetic over literals.
-//
-// The expression body is shared by every target language, so the same text has
-// to mean the same thing in all of them. It did not: this layer used to emit
-// the min-max offset as "-2*(1+1)/(6+2)", which Python and JavaScript evaluate
-// to 0.5 but C evaluates as integer division to 0, silently shifting every
-// exported C model whose inputs were min-max scaled.
 string expression_literal(float value)
 {
     ostringstream stream;
@@ -491,9 +475,6 @@ string Scaling::write_expression(const vector<string>& input_names,
         const size_t feature = size_t(i % ssize(scalers));
         const ScalerMethod scaler = scalers[feature];
 
-        // Logarithm is the one method that is not affine. max() first, as the
-        // layer itself does: an input of zero or below otherwise evaluates to
-        // -inf in every exported language.
         if (scaler == ScalerMethod::Logarithm)
         {
             buffer << "scaled_" << input_names[i] << " = log(max(" << input_names[i]
@@ -501,23 +482,20 @@ string Scaling::write_expression(const vector<string>& input_names,
             continue;
         }
 
-        // Same slope and offset forward_propagate runs on, degenerate rules
-        // included, so the exported text cannot drift from the layer it
-        // mirrors. Written out the way Unscaling already does it.
-        const auto [slope, offset] =
+        const AffineMap affine =
             scaling_affine(scaler, descriptives[feature], min_range, max_range);
 
         buffer << "scaled_" << input_names[i] << " = ";
 
-        if (slope == 0.0f)                          // the feature was constant
-            buffer << expression_literal(offset);
-        else if (slope == 1.0f && offset == 0.0f)
+        if (affine.slope == 0.0f)
+            buffer << expression_literal(affine.offset);
+        else if (affine.slope == 1.0f && affine.offset == 0.0f)
             buffer << input_names[i];
-        else if (offset == 0.0f)
-            buffer << input_names[i] << "*" << expression_literal(slope);
+        else if (affine.offset == 0.0f)
+            buffer << input_names[i] << "*" << expression_literal(affine.slope);
         else
-            buffer << input_names[i] << "*" << expression_literal(slope)
-                   << "+" << expression_literal(offset);
+            buffer << input_names[i] << "*" << expression_literal(affine.slope)
+                   << "+" << expression_literal(affine.offset);
 
         buffer << ";\n";
     }

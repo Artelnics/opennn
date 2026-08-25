@@ -6,11 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// Public core every OpenNN header rests on: Eigen configuration and tensor
-// aliases, the CUDA types (real or stubbed), and the common std surface.
-// Heavy TU-only includes (<execution>, <regex>, <omp.h>, json.h) live in
-// pch.h, which is private to the library build.
-
 #pragma once
 #ifndef OPENNN_TYPES_H_
 #define OPENNN_TYPES_H_
@@ -133,9 +128,6 @@ using cudnnRNNDataDescriptor_t     = void*;
 #define OPENNN_CUDA_STUB_BODY(name) { throw runtime_error(#name " requires CUDA support."); }
 #define OPENNN_CUDA_STUB(ret, name, sig) static ret name sig OPENNN_CUDA_STUB_BODY(name)
 
-// The same, for a stub that is called with explicit template arguments. Those
-// bind to Ts; the call arguments deduce into As, so one line replaces a
-// signature that has to be kept in step with the real CUDA overload by hand.
 #define OPENNN_CUDA_TEMPLATE_STUB(name)                        template<typename... Ts, typename... As>                   static void name(As&&...) OPENNN_CUDA_STUB_BODY(name)
 
 using namespace std;
@@ -198,7 +190,6 @@ template<typename Message, typename... Args>
                                     message, loc.file_name(), loc.line()));
 }
 
-
 template<typename... Args>
 [[noreturn]] inline void throw_formatted(format_string<Args...> message, Args&&... args)
 {
@@ -209,11 +200,6 @@ template<typename... Args>
 
 }
 
-
-// A macro, so the message arguments are evaluated only when the condition
-// holds. As a function it evaluated them unconditionally, which turned
-//     throw_if(!buffer, "... {} ...", buffer->byte_size());
-// -- a guard -- into the crash it was written to prevent.
 #define throw_if(condition, ...)                                           do                                                                     {                                                                          if (condition)                                                             ::opennn::detail::throw_formatted(__VA_ARGS__);                }                                                                      while (false)
 
 namespace detail
@@ -243,18 +229,12 @@ typename Map::mapped_type& bounded_cache_entry(Map& entries,
 
 }
 
-
-
 template <typename T, typename... Candidates>
 constexpr bool is_one_of(const T& value, const Candidates&... candidates)
 {
     return ((value == candidates) || ...);
 }
 
-// Runs its cleanup when the scope ends, however it ends. The destructor
-// swallows: cleanup runs while an exception may already be in flight, and a
-// second one leaving a destructor would terminate. release() disarms it for the
-// paths that hand ownership on instead.
 template <typename F>
 class ScopeExit
 {

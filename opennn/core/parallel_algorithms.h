@@ -12,8 +12,6 @@
 
 #include "opennn/core/opennn_types.h"
 
-// Only pulled in when the toolchain can actually link the parallel
-// backend; see the OPENNN_HAS_PARALLEL_ALGORITHMS block in CMakeLists.
 #if defined(OPENNN_HAS_PARALLEL_ALGORITHMS)
 #include <execution>
 #endif

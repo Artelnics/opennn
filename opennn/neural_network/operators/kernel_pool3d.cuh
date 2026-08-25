@@ -5,18 +5,10 @@
 
 #include "opennn/core/cuda/kernel_prelude.cuh"
 
-// valid_lengths, where it appears, is a device array of one int per sequence or
-// nullptr. Given, it says where each sequence ends and the padding begins.
-// Absent, the average path reads that off the data by treating an all-zero
-// token row as padding; the max path counts every row. The caller stages it:
-// these are kernels, and the lengths start life on the host.
-
 template<typename T>
 void max_pooling_3d_forward_cuda(const Index n, const T* in, T* out, float* indices, const int S, const int F,
                                  const int* valid_lengths);
 
-// Writes only the arg-max row of every (sequence, feature); the caller
-// pre-zeroes in_grad.
 template<typename T>
 void max_pooling_3d_backward_cuda(const Index n, const T* delta, T* in_grad, const float* indices, const int S, const int F);
 

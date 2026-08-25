@@ -5,13 +5,11 @@
 
 #include "opennn/core/cuda/kernel_prelude.cuh"
 
-// out points to __nv_bfloat16 when out_bf16 is set, to float otherwise.
 void gather_rows_cuda(const float* matrix, const int* row_indices, void* out, const bool out_bf16,
                       const Index n_rows, const Index n_cols,
                       const Index matrix_cols, const Index col_offset,
                       cudaStream_t stream = nullptr);
 
-// Source matrix shape and the window over it, shared by both window gathers.
 struct WindowLayout
 {
     Index batch = 0;

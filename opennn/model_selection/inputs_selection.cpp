@@ -46,7 +46,6 @@ void InputsSelection::install_optimal_inputs(NeuralNetwork* neural_network,
     apply_input_scaling(neural_network, capture_input_scaling(dataset));
 }
 
-
 InputsSelectionResult::InputsSelectionResult(const Index maximum_epochs)
 {
     set(maximum_epochs);

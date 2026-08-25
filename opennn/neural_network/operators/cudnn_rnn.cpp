@@ -17,9 +17,6 @@
 namespace opennn
 {
 
-// cuDNN's small-hidden-state persistent algorithm is the fastest FP32 path for
-// the forecasting topology (H=64). Unsupported topologies fall back to the
-// standard algorithm in cudnn_setup_().
 static bool persist_env_enabled()
 {
     static const bool enabled = env_flag_enabled("OPENNN_RNN_PERSIST", true);
@@ -93,9 +90,6 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& con
              "cuDNN RNN supports FP32 or BF16 data.");
     const cudnnDataType_t cudnn_data_type = bf16 ? CUDNN_DATA_BFLOAT16
                                                  : CUDNN_DATA_FLOAT;
-    // PERSIST_STATIC_SMALL_H is an FP32-specific cuDNN specialization. Keep
-    // BF16 on the standard tensor-core path and cap the hidden size so larger
-    // models do not repeatedly probe an ineligible algorithm.
     state.persist_algo_active = !state.persist_algo_failed
                              && persist_env_enabled()
                              && !bf16 && H <= 128
@@ -111,10 +105,6 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& con
 
     if (topology_changed)
     {
-        // cuDNN's double-bias/default-math kernel is decisively faster for
-        // small LSTMs (and slower for the simple RNN and larger batches).
-        // Environment variables remain explicit overrides for reproducible
-        // tuning runs.
         const bool small_lstm = is_lstm && batch_size <= 64;
         const bool large_lstm = is_lstm && batch_size >= 512 && !bf16;
         state.double_bias = env_flag_enabled(
@@ -133,9 +123,6 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& con
             CHECK_CUDNN(cudnnCreateDropoutDescriptor(&state.dropout_desc.handle));
             state.dropout_desc.deleter = &cudnnDestroyDropoutDescriptor;
         }
-        // A zero-rate descriptor has no RNG state. Supplying a null/zero state
-        // avoids allocating and initializing cuDNN's otherwise large dropout
-        // buffer during recurrent setup.
         state.dropout_states.resize_bytes(0, Device::CUDA);
         CHECK_CUDNN(cudnnSetDropoutDescriptor(
             state.dropout_desc, device::get_cudnn_handle(),
@@ -231,9 +218,6 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& con
                            device::CopyKind::HostToDevice,
                            device::get_compute_stream());
 
-        // Every sequence in an OpenNN batch has the full logical length, so
-        // there are no padded positions to fill. A null fill matches cuDNN's
-        // fastest full-sequence path (and PyTorch's descriptor setup).
         void* const padding_fill = nullptr;
         const cudnnRNNDataLayout_t layout = state.packed_layout
             ? CUDNN_RNN_DATA_LAYOUT_SEQ_MAJOR_PACKED
@@ -259,9 +243,6 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& con
             CHECK_CUDNN(cudnnCreateTensorDescriptor(&slot.c_desc.handle));
             slot.c_desc.deleter = &cudnnDestroyTensorDescriptor;
         }
-        // Keep the two singleton spatial dimensions used by cuDNN's native
-        // framework integrations. They select the same logical tensor but
-        // avoid an internal descriptor normalization on recurrent entry.
         const int dimA[5]    = {1, int(batch_size), int(H), 1, 1};
         const int strideA[5] = {int(batch_size * H), int(H), 1, 1, 1};
         CHECK_CUDNN(cudnnSetTensorNdDescriptor(slot.h_desc, cudnn_data_type, 5, dimA, strideA));
@@ -368,18 +349,6 @@ void CudnnRnnState::cudnn_pack_weights_(int num_linear_layers,
     const Index weight_space_bytes = backend_state.weight_space_bytes;
     forward_state.grow_to(get_aligned_bytes(weight_space_bytes));
 
-    // Double-bias mode has recurrent bias regions that OpenNN intentionally
-    // leaves at zero, and feature padding has unused matrix rows. Nothing
-    // below writes those holes -- only the live regions are copied, on every
-    // step -- so they have to be zeroed whenever this weight space has not
-    // already been zeroed for this exact layout.
-    //
-    // This used to be conditioned on the buffer having grown, which is not the
-    // same question: a buffer handed back by the device pool already large
-    // enough skipped the zeroing and left a previous tenant's bytes sitting in
-    // the recurrent bias. The RNN then trained and inferred against garbage
-    // biases, a few percent off, and only when some earlier work had dirtied
-    // the pool -- so it reproduced in a full suite run and never in isolation.
     const bool has_holes = backend_state.double_bias
                         || backend_state.cached_input_features != input_features;
 

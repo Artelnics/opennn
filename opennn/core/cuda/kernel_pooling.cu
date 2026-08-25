@@ -12,8 +12,6 @@
 namespace
 {
 
-// One thread per output pixel and VEC channels: the window maximum and its
-// position.
 template<typename T, int VEC>
 __global__ void max_pooling_forward_kernel(const Index groups, const MaxPoolGeometry s,
                                            const T* __restrict__ x,
@@ -54,9 +52,6 @@ __global__ void max_pooling_forward_kernel(const Index groups, const MaxPoolGeom
     }
 }
 
-// One thread per input pixel and VEC channels: gathers dY from the outputs
-// whose window covers (hi, wi) - at most ceil(pool / stride)^2 of them - and
-// whose argmax lands on it.
 template<typename T, int VEC>
 __global__ void max_pooling_backward_kernel(const Index groups, const MaxPoolGeometry s,
                                             const T* __restrict__ dy,
@@ -69,7 +64,6 @@ __global__ void max_pooling_backward_kernel(const Index groups, const MaxPoolGeo
         Index n; int hi, wi, c0;
         s.decompose(gi, s.height, s.width, VEC, n, hi, wi, c0);
 
-        // ho * stride - pad <= hi < ho * stride - pad + pool, clipped to the output.
         const int ho_begin = max(0, (hi + s.pad_h - s.pool_height + s.stride_h) / s.stride_h);
         const int ho_end   = min(s.out_height - 1, (hi + s.pad_h) / s.stride_h);
         const int wo_begin = max(0, (wi + s.pad_w - s.pool_width + s.stride_w) / s.stride_w);
@@ -105,7 +99,6 @@ __global__ void max_pooling_backward_kernel(const Index groups, const MaxPoolGeo
     }
 }
 
-// 16-byte channel groups where the channel count allows it, else scalar.
 template<typename T, typename F>
 void with_vector_width(Index channels, F&& launch)
 {

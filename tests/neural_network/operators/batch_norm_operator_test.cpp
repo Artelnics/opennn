@@ -127,7 +127,7 @@ TEST(BatchNormalizationOperatoreratorTest, ForwardTrainingNormalizesPerFeature)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> inputs = { TensorView(input_data.data(), {batch_size, inputs_number}) };
-    neural_network.forward_propagate(inputs, forward_propagation, true);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Training);
 
     TensorView output_view = forward_propagation.get_outputs();
 
@@ -168,7 +168,7 @@ TEST(BatchNormalizationOperatoreratorTest, ForwardInferenceUsesRunningStatistics
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> inputs = { TensorView(input_data.data(), {batch_size, inputs_number}) };
-    neural_network.forward_propagate(inputs, forward_propagation, false);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     TensorView output_view = forward_propagation.get_outputs();
 
@@ -206,11 +206,11 @@ TEST(BatchNormalizationOperatoreratorTest, InferenceMatchesTrainingOnConvergedSt
     vector<TensorView> inputs = { TensorView(input_data.data(), {batch_size, inputs_number}) };
 
     for (int i = 0; i < 2000; ++i)
-        neural_network.forward_propagate(inputs, forward_propagation, true);
+        neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Training);
 
     const MatrixR training_output = forward_propagation.get_outputs().as_flat_matrix();
 
-    neural_network.forward_propagate(inputs, forward_propagation, false);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
     const MatrixR inference_output = forward_propagation.get_outputs().as_flat_matrix();
 
     const float scale = training_output.cwiseAbs().maxCoeff();
@@ -242,7 +242,7 @@ TEST(BatchNormalizationOperatoreratorTest, InferenceIsDeterministicAcrossRows)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> inputs = { TensorView(input_data.data(), {batch_size, inputs_number}) };
-    neural_network.forward_propagate(inputs, forward_propagation, false);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     const MatrixMap output = forward_propagation.get_outputs().as_flat_matrix();
 
@@ -292,7 +292,7 @@ TEST(BatchNormalizationOperatoreratorTest, RunningVarianceUsesSampleEstimate)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> inputs = { TensorView(input_data.data(), {batch_size, features}) };
-    neural_network.forward_propagate(inputs, forward_propagation, true);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Training);
 
     // Recover the variance the forward pass actually normalized by, rather than
     // recomputing it from the inputs: slot 2 holds inverse_variance, which is

@@ -8,7 +8,6 @@
 
 #include "opennn/neural_network/operators/batch_norm_operator.h"
 
-
 #include "opennn/core/cuda/cudnn_frontend_utilities.h"
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/cuda/kernel_cast.cuh"
@@ -30,11 +29,6 @@ namespace opennn
 namespace
 {
 
-// Fallback staging for the backward pass: when cuDNN has no engine config for a
-// BF16-IO batchnorm *backward* graph, X/DY go through an FP32 workspace. The
-// backward prefers a native BF16 graph and only stages when that finds no plan.
-// The forward always runs with native BF16 IO (stats and scale/bias stay FP32
-// either way).
 struct Fp32Staging
 {
     Fp32Staging(Index count, Index slices)
@@ -76,10 +70,6 @@ void store_as_bfloat16(const Fp32Staging& staging,
 
 #endif
 
-// One epsilon for both paths. Batch norm is only meaningful if inference
-// reproduces what training computed, and that identity holds only when the two
-// use the same epsilon; a larger one at inference silently rescales every
-// channel whose variance is near or below it.
 static constexpr float BN_EPSILON = 1e-5f;
 
 void BatchNormalizationOperator::set(Index new_features, float new_momentum)
@@ -180,7 +170,7 @@ void BatchNormalizationOperator::update_inference_cache()
     inference_cache_dirty = false;
 }
 
-void BatchNormalizationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+void BatchNormalizationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
     if (!active()) return;
 
@@ -190,7 +180,7 @@ void BatchNormalizationOperator::forward_propagate(ForwardPropagation& forward_p
     TensorView& output         = get_output(forward_propagation, layer);
     const TensorView& residual = fuse_add ? forward_propagation.inputs[layer][1] : empty;
 
-    if (!is_training)
+    if (!is_training(pass))
     {
         if (input.is_cuda()) apply_inference_gpu(input, output, residual);
         else
@@ -231,7 +221,6 @@ bool BatchNormalizationOperator::own_forward_kernel(const TensorView& mask) cons
     case device::BatchNormForwardRung::OwnKernel:  return features % 8 == 0;
     case device::BatchNormForwardRung::Auto:       break;
     }
-    // Where the mask pays: the backward reads it in place of Y.
     return fuse_relu && !mask.empty();
 }
 
@@ -291,12 +280,6 @@ void BatchNormalizationOperator::apply_training_cpu(const TensorView& input,
 
     inverse_variances.noalias() = output_matrix.array().square().colwise().mean().matrix();
 
-    // The running variance keeps the SAMPLE (Bessel-corrected) variance, which
-    // is what cuDNN stores and what batchnorm_forward_finalize_kernel applies
-    // on the GPU. The CPU folded in the population variance instead, so the
-    // same model trained on the two devices inferred differently - by M/(M-1),
-    // about 3% of the variance at batch 32. cuDNN's convention cannot be
-    // changed, so the CPU is the side that moves.
     const float batch_rows = float(output_matrix.rows());
     const float unbias = batch_rows > 1.0f ? batch_rows / (batch_rows - 1.0f) : 1.0f;
 
@@ -387,8 +370,6 @@ struct BatchNormalizationOperator::BatchNormalizationGraphCache
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_DY, bwd_Y, bwd_X, bwd_Scale,
             bwd_Bias, bwd_Mean, bwd_InvVar, bwd_DPre, bwd_DX, bwd_DScale, bwd_DBias;
 
-        // The backward attempt that won (see apply_delta_gpu); nullopt until
-        // the first backward, and, with no cuDNN engine, own_kernel.
         struct BackwardChoice { Type dtype; bool fuse_relu; bool fork; bool own_kernel; };
         optional<BackwardChoice> bwd_choice;
     };
@@ -825,7 +806,6 @@ void BatchNormalizationOperator::apply_delta_gpu(
     }))
         return;
 
-    // Legacy cuDNN fallback.
     if (fuse_relu)
         activation_backward(output, delta, ActivationFunction::ReLU);
 

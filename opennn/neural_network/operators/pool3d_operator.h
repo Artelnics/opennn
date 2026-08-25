@@ -13,16 +13,6 @@
 namespace opennn
 {
 
-// The pooling kernels themselves. Pool3dOperator selects one per Method;
-// they live here rather than in core because it is their only caller.
-//
-// The trailing valid_lengths is one length per sequence, or nullptr for a batch
-// that carries no padding record. Given, it is where each sequence ends; absent,
-// the sequence length is read off the data by treating an all-zero token row as
-// padding, which is only true of a row nothing downstream of the Embedding has
-// touched. It is deliberately not defaulted: a caller that has the lengths and
-// forgets to pass them gets the guess, silently, and that is the failure this
-// parameter exists to end.
 void max_pooling_3d_forward(const TensorView&, TensorView&, TensorView&, bool, SequenceLengths);
 void average_pooling_3d_forward(const TensorView&, TensorView&, SequenceLengths);
 void max_pooling_3d_backward(const TensorView&, const TensorView&, TensorView&);
@@ -35,7 +25,7 @@ struct Pool3dOperator : Operator
     enum Method { Max, Average, First };
     Method method = Average;
 
-    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 };
 

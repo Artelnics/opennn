@@ -32,24 +32,6 @@ namespace opennn
 
 #ifdef EIGEN_USE_MKL_ALL
 
-// The GEMM's epilogue over the rows [first, last): one bias per column added to
-// every row, and the ReLU where the layer fuses it.
-//
-// This pass reads and writes the output, so it should run at memory bandwidth.
-// It did not, and the history is worth keeping because two of the three causes
-// are invisible in the code. The ReLU was a branch inside the inner loop, which
-// kept the loop from vectorizing - it is chosen once, outside, now. The row loop
-// went through cblas_sger, which allocated a vector of ones per call to express
-// a broadcast. And spreading these rows over cores never paid at this size:
-// against a serial pass at 0.121 ms per call, an OpenMP region per layer per
-// batch measured 1.550 and the library's thread pool 0.173 (96,589 / 143,090 /
-// 154,219 samples/s). It is not spread at all now - it runs inside the block
-// whose GEMM just wrote those rows, while they are still in cache.
-//
-// There is exactly one caller of this function, and deliberately so: when a
-// second one appeared, GCC left the original call site on an out-of-line copy
-// that ran at about 2 GB/s against 60, and the pass went from 0.128 ms per call
-// to 3.4 - a 28x regression from adding a caller, with no other change.
 template<bool FuseRelu>
 static void add_bias_span(float* const __restrict__ y, const float* const __restrict__ b,
                           Index first, Index last, Index columns)
@@ -79,9 +61,6 @@ static bool try_activation_forward(TensorView& output, ActivationFunction functi
     return true;
 }
 
-// OPENNN_MKL_REPORT=1 prints, at exit, how many dense forwards went to MKL and
-// how many were refused. A path that silently stops applying is otherwise
-// invisible: every result stays correct and only the throughput moves.
 static atomic<long long> mkl_linear_calls{0};
 static atomic<long long> mkl_linear_refusals{0};
 
@@ -97,25 +76,6 @@ struct MklLinearReport
 
 static MklLinearReport mkl_linear_report;
 
-// How the GEMM's rows are spread over the cores. MKL spreads them itself, and
-// that is what to take away from it here. It runs at most ten threads whatever
-// MKL_NUM_THREADS asks for - one per core it can see, and this twenty-thread
-// laptop presents as a synthetic 10x2 under WSL2 - and it splits the rows evenly
-// across them, so its barrier waits on the slowest slice. Blocks of rows handed
-// out of an atomic counter, single-threaded MKL inside each, have neither limit:
-// twenty workers rather than ten, and a worker that finishes early takes the
-// next block instead of waiting.
-//
-// Measured on the HIGGS inference benchmark at batch 1024, alternated three
-// rounds:
-//
-//   MKL's own threading   172,792  162,733  170,537 samples/s
-//   blocks                216,761  212,332  214,211
-//
-// The team matters as much as the blocking: the same blocks on the library's
-// Eigen pool measured *below* MKL (179,350 against 187,395), so `pool` stays
-// only as the A/B. OPENNN_GEMM_MODE=mkl|pool, OPENNN_GEMM_BLOCK the block
-// height, OPENNN_GEMM_MIN_OUTPUT the size below which a layer is left whole.
 enum class GemmParallelism { Mkl, Pool, Omp, Contract };
 
 static GemmParallelism gemm_parallelism()
@@ -133,36 +93,11 @@ static GemmParallelism gemm_parallelism()
     return mode;
 }
 
-// Eigen's tensor contraction, which is the kernel XLA:CPU calls for a dot, and
-// on this machine it beats every arrangement of MKL we could find - at
-// 1024x1024x1024 with twenty threads, 749 and 655 GFLOP/s over two rounds
-// against the row-blocked MKL schedule's 490 and 401. It is never behind:
-//
-//   m        256   512  1024  2048  4096  8192  16384
-//   blocked  523   484   490   652   704   744    726 GFLOP/s
-//   contract 598   854   749   746   703   747    719
-//
-// That is standalone, where one shape is timed in a loop and the pool never
-// sleeps. It does not transfer whole - see the gate at the call site, which is
-// what the same comparison measures inside a forward pass.
-//
-// EIGEN_USE_MKL_ALL does not divert it - Eigen routes Matrix products to BLAS
-// and keeps its own kernels for tensor contractions - so this really is a
-// different kernel and not MKL under another name.
-//
-// The epilogue rides along in the contraction's output kernel, which Eigen
-// calls on each output block as it is produced, so the bias and the ReLU land
-// while that block is still in cache. It is free, and then some: 790 against
-// 723 GFLOP/s at 1024 cubed, fused against not, and bitwise identical to doing
-// it in a separate pass.
 struct BiasRelu
 {
     const float* bias = nullptr;
     bool relu = true;
 
-    // A row-major contraction is evaluated with the operands swapped, so this
-    // mapper's first index runs over the output columns - which is the axis the
-    // bias is indexed by. Verified against a separate pass: zero difference.
     template<typename Index, typename Scalar>
     void operator()(const Eigen::internal::blas_data_mapper<Scalar, Index, Eigen::ColMajor>& output,
                     const Eigen::TensorContractionParams& params,
@@ -180,12 +115,6 @@ struct BiasRelu
     }
 };
 
-// The contraction asks its device for the buffers it packs the operands into,
-// on every call. A dense forward in steady state must not be asking the system
-// for memory - LinearForwardMemoryTest caps the process and requires exactly
-// that, and it caught this - so the device handed to the contraction keeps the
-// blocks it is given and hands the same ones back. Sizes repeat call after call
-// for a fixed shape, so the free list settles at the first call's peak.
 class ContractionScratch final : public Eigen::Allocator
 {
 public:
@@ -233,12 +162,6 @@ private:
     mutable vector<void*> free_list;
 };
 
-// The same worker threads as everything else; only the allocator differs.
-//
-// Rebuilt per call rather than cached: ThreadPoolDevice is a three-pointer
-// handle, and set_threads_number() destroys the pool it points at. A cached
-// static went on referring to the freed pool and the next contraction enqueued
-// work into it. The scratch allocator, which is what this exists for, stays.
 static Eigen::ThreadPoolDevice contraction_device()
 {
     static ContractionScratch scratch;
@@ -261,11 +184,6 @@ static void contract_linear_forward(int m, int n, int k, const float* a, const f
     out.device(contraction_device()) = left.contract(right, dimensions, BiasRelu{bias, fuse_relu});
 }
 
-// The block height is not a constant: it is whatever gives every worker a few
-// blocks to take. Fixing it at sixteen rows was right at batch 1024 with sixteen
-// workers - sixty-four blocks, four each - and wrong on both sides of that, too
-// few blocks to balance at batch 256 and a thousand of them at batch 16384, each
-// re-entering MKL with the same weight panel to walk.
 static Index gemm_block_rows(Index rows, Index threads)
 {
     static const Index requested_rows = []
@@ -296,9 +214,6 @@ static double gemm_contract_flops()
     return flops;
 }
 
-// Below this much arithmetic a GEMM is a fraction of a millisecond whole and
-// every way of spreading it costs more than it takes. 64 Mi multiply-adds leaves
-// the 28->1024 and 1024->1 layers of a classifier whole and blocks the wide one.
 static double gemm_min_flops()
 {
     static const double flops = []
@@ -325,33 +240,6 @@ static Index gemm_min_output()
     return elements;
 }
 
-// How many MKL threads each worker gets, trading workers for threads inside a
-// block at a fixed total. One is the default and is what measured best here -
-// twenty workers of one against ten of two and five of four, batches 1024/4096/
-// 16384, two rounds:
-//
-//   1   197,439  208,157  207,427   |   207,095  204,903  223,168
-//   2   194,689  197,289  219,575   |   197,551  207,980  218,102
-//   4   147,882  161,331  181,857   |   151,362  157,553  177,228
-//
-// Two is within the noise at the largest batch and four is far behind, so the
-// knob stays for a machine with more cores than this one, where MKL's own
-// blocking of a wider GEMM may yet be worth the workers it costs.
-// Guided hands out a share of the rows that remain instead of a fixed block, so
-// the tail goes out in small pieces and a worker running slow cannot hold the
-// barrier with a full-size block. It costs the packed panel, which is prepared
-// for one block height, and that trade decides where each is used: guided
-// exactly where the panel is not packed, which is the tall blocks of a large
-// batch. Measured against fixed blocks, three rounds:
-//
-//   batch     256      1024     4096     16384
-//            -9%      -14%      -4%       -2%
-//           -13%       -1%      +4.7%     +7.7%
-//           -15%      -10%      +4.9%     +1.5%
-//
-// The two small batches are where packing pays, and losing it costs more than
-// the balance gains - hence the rule rather than a preference. -1 is that rule,
-// 0 and 1 force it either way.
 static int gemm_guided_setting()
 {
     static const int setting = []
@@ -383,12 +271,6 @@ static void sgemm_rows(int m, int n, int k, const float* a, const float* b, floa
                 m, n, k, 1.0f, a, k, b, n, 0.0f, c, n);
 }
 
-// MKL rearranges the weight panel into its kernel's order inside every sgemm
-// call, so blocking the rows means walking the same panel once per block. The
-// rearranged copy can be made once for the whole layer and read by the whole
-// team, which is what cblas_sgemm_pack is for. It is per call, not cached across
-// calls: in training the weights change under us every step, and a stale panel
-// would be wrong rather than slow. OPENNN_GEMM_PACK=0 turns it off.
 struct PackedWeights
 {
     float* data = nullptr;
@@ -408,16 +290,6 @@ struct PackedWeights
     }
 };
 
-// Worth it only while the blocks are short. Measured across the batch sizes,
-// three rounds each, packed against not (block height in brackets):
-//
-//   batch    256 [8]    1024 [16]   4096 [64]   16384 [256]
-//            -0.5%      -2.5%       +1.8%       -6.7%
-//           +5.9%      +1.1%       +2.5%       -2.7%
-//          +14.3%      +2.6%       +2.9%       -7.9%
-//
-// Once a block is 256 rows deep, MKL's own rearrangement inside the call is
-// amortised over enough arithmetic that ours only adds a pass.
 static bool gemm_pack_weights(Index block_rows)
 {
     static const int requested = []
@@ -432,18 +304,6 @@ static bool gemm_pack_weights(Index block_rows)
     return block_rows <= 64;
 }
 
-// Hand `rows` out in blocks to an OpenMP team, single-threaded MKL inside each
-// block, and call `work(first, count)` for each. This is the schedule the whole
-// dense CPU path runs on, forward and backward: MKL threads a GEMM itself, but
-// it runs at most one thread per core it can see - ten here - and splits the
-// rows evenly across them, so its barrier waits on the slowest slice.
-//
-// Returns false when the team would not be worth opening, in which case the
-// caller does the whole thing in one call and lets MKL thread it.
-//
-// The forward keeps a loop of its own rather than calling this: it also carries
-// the epilogue, the packed weight panel and the guided variant, none of which
-// the backward has any use for.
 template<typename Work>
 static bool blocked_rows(Index rows, double work_flops, Work&& work)
 {
@@ -451,16 +311,11 @@ static bool blocked_rows(Index rows, double work_flops, Work&& work)
     const Index block_rows = gemm_block_rows(rows, threads);
     const Index blocks = (rows + block_rows - 1) / block_rows;
 
-    // Never open a team so wide that a worker has only one block: the point of
-    // handing blocks out is that a worker which finishes early takes another,
-    // and a worker with nothing to take is a barrier wait. Measured at twenty
-    // threads, batch 256 (32 blocks): 169,463 with a worker per thread against
-    // 189,815 at sixteen, which is what half the block count gives.
     const Index workers = max<Index>(1, min<Index>(threads / gemm_mkl_threads(), blocks / 2));
 
     if (gemm_parallelism() == GemmParallelism::Mkl
         || workers < 2
-        || omp_in_parallel()                 // a nested team would be one thread
+        || omp_in_parallel()
         || work_flops < gemm_min_flops())
         return false;
 
@@ -478,19 +333,11 @@ static bool blocked_rows(Index rows, double work_flops, Work&& work)
         }
     }
 
-    // The team runs one share on the calling thread, so the caller is one of the
-    // threads just pinned to a single MKL thread; 0 puts it back on the global
-    // setting for whatever follows.
     mkl_set_num_threads_local(0);
 
     return true;
 }
 
-// The two GEMMs of the dense backward. Both are blocked over the rows of their
-// OWN output, which is what keeps this safe: the weight gradient reduces over
-// the batch, and splitting a reduction would need partial buffers and would
-// change the summation order, but splitting its output rows does not touch the
-// reduction at all - each block still sums the whole batch inside one MKL call.
 static bool backward_input_delta(int rows, int in_features, int out_features,
                                  const float* delta, const float* weights, float* input_delta,
                                  float beta)
@@ -538,23 +385,11 @@ static bool backward_weight_gradient(int rows, int in_features, int out_features
     return true;
 }
 
-// The dense forward on the CPU: the GEMM and the epilogue that belongs to it.
-// The epilogue goes in with the blocks, which is the point of blocking this way
-// - a block's rows are still in cache when its bias and ReLU run, so the pass
-// over the whole output disappears rather than moving.
 static void blocked_linear_forward(int m, int n, int k, const float* a, const float* b, float* c,
                                    const float* bias, bool fuse_relu)
 {
     const bool has_bias = bias != nullptr;
 
-    // Where the contraction is taken. It is not a straight win in the app the
-    // way it is standalone: its advantage needs a call long enough to absorb
-    // waking the pool, and it is poor when k is small - at the 28->1024 layer it
-    // measured 0.464 ms against the blocked schedule's 0.188 at batch 1024, and
-    // 9.512 against 4.315 at 16384. On the wide layer at batch 16384 it is 57.98
-    // against 63.25. So: a wide enough contraction dimension, and enough
-    // arithmetic to be worth the wake-up. OPENNN_GEMM_CONTRACT_FLOPS moves the
-    // second threshold, OPENNN_GEMM_MODE=omp|mkl|pool leaves it entirely.
     if (gemm_parallelism() == GemmParallelism::Contract
         && has_bias
         && Index(k) >= 64
@@ -566,18 +401,6 @@ static void blocked_linear_forward(int m, int n, int k, const float* a, const fl
     const Index block_rows = gemm_block_rows(Index(m), threads);
     const Index blocks = (Index(m) + block_rows - 1) / block_rows;
 
-    // Rows only. Sharding the columns as well - which is what XLA's contraction
-    // does, and the one structural difference left between the two schedules -
-    // was implemented and measured, and it is much worse here: two column blocks
-    // took batch 1024 from 224,379 to 101,856 samples/s. A column slice leaves
-    // both the weight panel and the output strided, and MKL's kernel would
-    // rather have them contiguous than have a narrower panel to keep.
-    //
-    // Never open a team so wide that a worker has only one block: the point of
-    // handing blocks out is that a worker which finishes early takes another,
-    // and a worker with nothing to take is a barrier wait. Measured at twenty
-    // threads, batch 256 (32 blocks): 169,463 with a worker per thread against
-    // 189,815 at sixteen, which is what half the block count gives.
     const Index workers = max<Index>(1, min<Index>(threads / gemm_mkl_threads(), blocks / 2));
 
     const auto epilogue = [&](Index first, Index last)
@@ -588,18 +411,6 @@ static void blocked_linear_forward(int m, int n, int k, const float* a, const fl
         else           add_bias_span<false>(c, bias, first, last, n);
     };
 
-    // A layer small enough is a fraction of a millisecond whole, and spreading
-    // it costs more than it takes; the threshold is on the output rather than on
-    // the arithmetic because the epilogue rides along with it. Sizing it instead
-    // by the wider of n and k - so that a 1024->1 output layer, which reads 64 MB
-    // to write 64 KB at batch 16384, would be blocked too - was measured and is
-    // not worth it: that layer is bound by the read, which MKL's ten threads
-    // already saturate (1.868 ms against 1.797), and blocking it costs 3-5% at
-    // batch 256.
-    // A team opened inside someone else's parallel region is one thread by
-    // default, which would leave every block to that thread with MKL kept
-    // sequential inside it - an order of magnitude slower, and silent. Hand the
-    // whole layer to MKL instead and let it decide what it can do from there.
     if (gemm_parallelism() == GemmParallelism::Mkl
         || workers < 2
         || omp_in_parallel()
@@ -611,10 +422,6 @@ static void blocked_linear_forward(int m, int n, int k, const float* a, const fl
 
     atomic<Index> next_block{0};
 
-    // One rearranged copy of the weights for the whole team. Only the blocks of
-    // the full height can use it - the tail is a different problem size - and
-    // only if MKL gives us the buffer. A column split would need one panel per
-    // column block, which is not worth it where the split pays.
     thread_local PackedWeights panel;
     const float* packed = nullptr;
 
@@ -651,10 +458,6 @@ static void blocked_linear_forward(int m, int n, int k, const float* a, const fl
         }
     };
 
-    // The guided variant: take a share of whatever is left rather than a fixed
-    // block, so the last rows are handed out in small pieces and a worker that
-    // is running slow cannot hold up the barrier with a full-size block. Costs
-    // the packed panel, which is prepared for one block height.
     atomic<Index> next_row{0};
 
     const auto take_share = [&]
@@ -702,9 +505,6 @@ static void blocked_linear_forward(int m, int n, int k, const float* a, const fl
         get_device().parallelFor(workers, cost, [&](Index, Index) { take_blocks(); });
     }
 
-    // Both spreads run one share on the calling thread, so the caller is one of
-    // the threads just pinned to a single MKL thread; 0 puts it back on the
-    // global setting for the thin GEMMs that follow.
     mkl_set_num_threads_local(0);
 }
 
@@ -754,13 +554,6 @@ static bool try_linear_forward(const TensorView& input,
     return true;
 }
 
-// True when this backward's two GEMMs went through the blocked schedule. The
-// forward was moved off Eigen's Matrix products - which EIGEN_USE_MKL_ALL sends
-// to BLAS, where MKL threads them itself - and this is the same move for the
-// backward, which is roughly two thirds of a training step.
-//
-// The addend variant stays on Eigen: it is a fused add that a GEMM cannot
-// express with beta alone, and it is not on this benchmark's path.
 static bool try_linear_backward(const TensorView& output_delta, const TensorView& input,
                                 const TensorView& weights, const TensorView& weight_gradient,
                                 TensorView& input_delta, bool accumulate, const TensorView* addend)
@@ -792,10 +585,6 @@ static bool try_linear_backward(const TensorView& output_delta, const TensorView
 
     if (rows <= 0 || input.size() != rows * in_features) return false;
 
-    // Everything is checked before anything is written: a refusal after the
-    // weight gradient had been computed would send the caller into the fallback,
-    // which computes it again - harmless while both assign, wrong the day either
-    // accumulates.
     const bool wants_input_delta = input_delta.get_data() && !input_delta.empty();
 
     if (wants_input_delta
@@ -812,7 +601,6 @@ static bool try_linear_backward(const TensorView& output_delta, const TensorView
 
     return true;
 }
-
 
 #else
 
@@ -924,9 +712,6 @@ static void require_fp32_or_bf16(const TensorView& tensor, string_view operation
              "{}: {} must use FP32 or BF16 storage.", operation, role);
 }
 
-// INT8 weights are an inference-only path: the activations must already be the
-// BF16-on-CUDA pair the quantized kernels expect, and each output feature needs
-// its own FP32 dequantization scale.
 static void require_int8_linear(const TensorView& input, const TensorView& output,
                                 const TensorView& weight_scale, string_view operation)
 {
@@ -1193,10 +978,6 @@ static void softmax_backward_cpu(const TensorView& outputs, TensorView& delta, f
     }
 }
 
-// The backward of softmax over the last axis, in place: given the softmax
-// outputs y and the incoming delta dy, dy becomes alpha * y * (dy - <y, dy>)
-// row by row. alpha folds in whatever scale the caller would otherwise apply
-// afterwards, which is free here and a second pass over the tensor there.
 void softmax_backward(const TensorView& outputs, TensorView& delta, float alpha)
 {
     if (delta.empty()) return;
@@ -1215,10 +996,6 @@ void softmax_backward(const TensorView& outputs, TensorView& delta, float alpha)
     softmax_backward_cpu(outputs, delta, alpha);
 }
 
-// Elementwise activations, run one contiguous chunk at a time so the pass can
-// use more than one core. Every kernel below reads and writes only its own
-// element, so chunking is bitwise identical to one flat expression. The 65536
-// threshold and schedule(static) match softmax_cpu and multiply_cpu above.
 template <typename Apply>
 static void for_each_activation_chunk(Index size, Apply apply)
 {
@@ -1240,7 +1017,6 @@ static void for_each_activation_chunk(Index size, Apply apply)
         apply(begin, min(chunk_size, size - begin));
     }
 }
-
 
 static void activation_forward_cpu(TensorView& output, ActivationFunction function)
 {
@@ -1369,9 +1145,6 @@ static void linear_forward_cpu(const TensorView& input, const TensorView& weight
 {
     PROFILE_SCOPE_HOST("cpu:linear_fwd");
 
-    // RELU without BIAS is what a bias-free Dense asks for; honouring only the
-    // BIAS pair left that layer with no activation at all, because the
-    // activation operator skips its pass whenever the layer says "fused".
     const bool fuse_relu = epilogue == CUBLASLT_EPILOGUE_RELU_BIAS
                         || epilogue == CUBLASLT_EPILOGUE_RELU;
 
@@ -1396,7 +1169,6 @@ static void linear_backward_cpu(const TensorView& output_delta, const TensorView
         bias_gradient.as_vector().noalias() = output_delta.as_flat_matrix().colwise().sum();
     }
 
-    // One scope over both paths, so the A/B compares like with like.
     PROFILE_SCOPE_HOST("cpu:bwd_gemms");
 
     if (try_linear_backward(output_delta, input, weights, weight_gradient,
@@ -1518,8 +1290,6 @@ void linear_backward(const TensorView& output_delta, const TensorView& input, co
         require_cpu_fp32(weights, operation, "weights");
     }
 
-    // The mask was written by the producer's ReLU epilogue over this layer's
-    // input, so it is (rows, input_features / 8) bytes.
     if (drelu_mask)
     {
         require_tensor(*drelu_mask, operation, "DReLU mask");
@@ -1552,7 +1322,6 @@ void linear_backward(const TensorView& output_delta, const TensorView& input, co
     linear_backward_cpu(output_delta, input, weights, weight_gradient, bias_gradient,
                         input_delta, accumulate_input_delta, addend);
 }
-
 
 #ifdef OPENNN_HAS_CUDA
 
@@ -1624,7 +1393,6 @@ void linear_forward_transposed(const TensorView& input, const TensorView& embed_
         input.as_flat_matrix() * embed_weight.as_matrix().transpose();
 }
 
-
 #ifdef OPENNN_HAS_CUDA
 
 static void copy_gpu(const TensorView& source, TensorView& destination)
@@ -1673,9 +1441,6 @@ static void multiply_gpu(const TensorView& input_a, bool transpose_a,
     const cublasOperation_t operation_b = transpose_b ? CUBLAS_OP_T : CUBLAS_OP_N;
     const cublasOperation_t operation_a = transpose_a ? CUBLAS_OP_T : CUBLAS_OP_N;
 
-    // Widened before the multiply, not after: rows_a * cols_a is the whole
-    // flattened activation, which reaches 2^31 elements on a large BF16 batch
-    // and wrapped negative while still in int - taking batch_count with it.
     const long long stride_a = 1LL * rows_a * cols_a;
     const long long stride_b = 1LL * rows_b * cols_b;
     const int batch_count = to_int(input_a.size() / stride_a);
@@ -1691,9 +1456,6 @@ static void multiply_gpu(const TensorView& input_a, bool transpose_a,
                               alpha, beta);
 }
 
-// cuDNN 4d descriptors hold at most INT32_MAX elements, so a softmax over a
-// larger tensor has to run in row chunks. apply() is called with the row range
-// of each chunk; a tensor that already fits is one chunk covering all of it.
 template<typename Apply>
 static void for_each_softmax_chunk(const TensorView& reference, Apply apply)
 {
@@ -1705,9 +1467,6 @@ static void for_each_softmax_chunk(const TensorView& reference, Apply apply)
         apply(row, min(max_rows, rows - row));
 }
 
-// The rows [first, first + count) of view as a flat 2d view -- or the view
-// itself when that is all of it, so the common single-chunk case reuses the
-// descriptor it already has instead of building one per call.
 static TensorView softmax_chunk(const TensorView& view, Index first, Index count)
 {
     const Index channels = view.get_shape().back();
@@ -1772,17 +1531,6 @@ static void activation_backward_gpu(const TensorView& outputs, TensorView& delta
     device::check_last_error();
 }
 
-// Above this many rows the forward GEMM is issued in chunks of
-// `gemm_row_chunk()` rows rather than as one call. cuBLASLt loses throughput on
-// a very tall B: measured on the HIGGS hidden layer (1024x1024) with the top-8
-// heuristics timed for each shape, TFLOP/s one-call against best-chunked -
-// fp32 41.5 -> 44.3 at 65,536 rows and 41.5 -> 44.5 at 32,768; bf16 82.3 ->
-// 88.5 and 81.1 -> 86.6. At 16,384 rows and below one call is already best,
-// which is where the gate sits. The chunks re-read the weight panel, but it is
-// four megabytes and stays in L2, and the extra launches are inside the
-// measurement above. `gemm_chunk_probe.cu` is the probe.
-//
-// OPENNN_GEMM_ROW_CHUNK sets the chunk (0 disables chunking entirely).
 static Index gemm_row_chunk()
 {
     static const Index rows = []
@@ -1811,23 +1559,9 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
         ? bias_for_gemm_bf16(bias)
         : bias.get_data();
 
-    // An auxiliary epilogue writes a second tensor whose leading dimension is
-    // the whole call's, so chunking would have to slice that too; it is a
-    // training path and not what this is for.
     const Index chunk = pre_activation ? Index(0) : gemm_row_chunk();
     const bool chunked = chunk > 0 && Index(total_rows) > chunk;
 
-    // A narrow contraction is the one shape cuBLASLt is measurably poor at, and
-    // a CUTLASS kernel instantiated for it is 1.03x to 1.48x faster with
-    // bit-identical output. It declines anything it does not cover - including
-    // every build without CUTLASS, where it is a stub - so this is a fast path
-    // and never a behaviour change.
-    //
-    // Chunking goes first when both apply. CUTLASS's margin over cuBLASLt is
-    // widest at 16,384 rows (1.48x) and narrowest at 65,536 (1.06x), so running
-    // the whole call would take the worse of the two: the chunk loop below asks
-    // per chunk instead, and every large batch then meets this layer at the row
-    // count where the kernel is strongest.
     const bool narrow_k_applies = !pre_activation
         && (epilogue == CUBLASLT_EPILOGUE_RELU_BIAS || epilogue == CUBLASLT_EPILOGUE_BIAS)
         && input.is_bf16() && weights.is_bf16() && output.is_bf16()
@@ -1901,20 +1635,11 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
     }
 }
 
-// A dense layer with one output - a classifier head, a regression output, a
-// critic - contracts a whole activation row down to a single value. cuBLASLt
-// falls back to a general GEMV there, which on the HIGGS head measured 0.0113
-// ms against 0.0058 ms for the traffic alone at batch 8192: the operation only
-// reads the activation, so a streaming reduction is close to twice as fast.
 static bool aligned_for_vectors(const void* pointer)
 {
     return reinterpret_cast<uintptr_t>(pointer) % 16 == 0;
 }
 
-// The shape both single-output kernels need: one output column, one dtype
-// across the tensors they read, and a row that divides into whole 16-byte
-// vectors - one per lane for the forward reduction, one per lane and chunk for
-// the backward, which is what `lanes` says.
 static bool single_output_layer_shape(const TensorView& input, const TensorView& weights, Index lanes)
 {
     if (weights.get_shape().back() != 1) return false;
@@ -1927,8 +1652,6 @@ static bool single_output_layer_shape(const TensorView& input, const TensorView&
     return aligned_for_vectors(input.get_data()) && aligned_for_vectors(weights.get_data());
 }
 
-// The forward reduction also needs no epilogue beyond the bias; anything else
-// stays on cuBLAS. OPENNN_LINEAR_SINGLE_OUTPUT=0 pins the cuBLAS path for A/B.
 static bool single_output_reduction_applies(const TensorView& input, const TensorView& weights,
                                             const TensorView& bias, const TensorView& output,
                                             cublasLtEpilogue_t epilogue, const TensorView* pre_activation)
@@ -1967,9 +1690,6 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
         return;
     }
 
-    // Everything below produces the output through a kernel that cannot carry
-    // the activation, so it runs afterwards as its own pass - the same pass the
-    // caller would have run, which is what makes asking for the fusion safe.
     const auto run_fused_activation = [&]
     {
         if (fused_activation != ActivationFunction::Identity)
@@ -2014,10 +1734,6 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     run_fused_activation();
 }
 
-// The backward twin: the same layer shape, one warp's worth of vectors per row,
-// and none of the variants the one-pass kernel does not cover (an accumulated
-// input delta, a folded addend, a mask from an epilogue).
-// OPENNN_SINGLE_OUTPUT_KERNEL=0 pins the cuBLAS path for A/B.
 static bool single_output_backward_applies(const TensorView& output_delta, const TensorView& input,
                                            const TensorView& weights, const TensorView& weight_gradient,
                                            const TensorView& bias_gradient, const TensorView& input_delta,
@@ -2082,17 +1798,8 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 
     const bool has_bias = bias_gradient.size() > 0;
 
-    // The weight gradient is FP32 and accumulated in FP32 whatever the IO type,
-    // so the GEMM stores it as FP32 directly (BF16 A/B, FP32 D) with the bias
-    // gradient in the same epilogue - for BF16 that replaces a BF16 store, a
-    // widening cast and a separate zero + column reduction, and stops rounding
-    // the gradient to 8 mantissa bits on the way to the optimizer. cuBLASLt
-    // support for that BF16-in/FP32-out epilogue is checked once; the first
-    // failure pins the old staged path for the rest of the process.
     static atomic<bool> bf16_fp32_store_supported{true};
 
-    // OPENNN_WGRAD_STAGED=1 forces the staged path (BF16 store + cast + separate
-    // bias reduction) for A/B measurement of the epilogue's kernel choice.
     static const bool force_staged = env_flag_enabled("OPENNN_WGRAD_STAGED", false);
 
     const bool direct_fp32_store = !output_delta.is_bf16()
@@ -2102,11 +1809,6 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
     {
     PROFILE_SCOPE("op:linear_bwd_wgrad " + to_string(output_columns) + "x" + to_string(input_columns) + "x" + to_string(total_rows));
 
-    // A weight gradient with a small output and a long reduction (a first
-    // layer's 28 x 1024 over 7,000 rows) is a split-K job cuBLASLt's heuristics
-    // handle badly here - measured 17x the time cuBLAS's GEMM takes for the same
-    // shape - so those go through cublasGemmEx (multiply), the bias gradient
-    // reduced by its own kernel.
     const bool skinny_wgrad = Index(output_columns) * Index(input_columns) <= Index(64) * 1024
                            && Index(total_rows) >= 4 * Index(max(output_columns, input_columns));
     if (skinny_wgrad)
@@ -2195,13 +1897,11 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
              accumulate_input_delta ? 1.0f : 0.0f);
 }
 
-
 #else
 
 #define OPENNN_STUB_GPU_OP(name, sig) OPENNN_CUDA_STUB(void, name, sig)
 OPENNN_GPU_OPS(OPENNN_STUB_GPU_OP)
 #undef OPENNN_STUB_GPU_OP
-
 
 #endif
 

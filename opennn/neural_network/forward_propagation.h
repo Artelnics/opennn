@@ -17,8 +17,6 @@
 namespace opennn
 {
 
-// One length per sample of a batch, as an Embedding exports it: on the host for
-// CPU runs, as int32 on the device for CUDA runs. Either side may be absent.
 struct SequenceLengths
 {
     const vector<Index>* host = nullptr;
@@ -27,9 +25,6 @@ struct SequenceLengths
     explicit operator bool() const noexcept { return host || device; }
 };
 
-// One device buffer per GraphWorkspaceKind. Filled by index rather than written
-// out as a list of initializers, which was a list to lengthen every time a kind
-// was added and, forgotten, left the new workspace's buffer on the host.
 template<size_t... Kind>
 array<Buffer, sizeof...(Kind)> cuda_workspace_buffers(index_sequence<Kind...>)
 {
@@ -43,6 +38,11 @@ enum class ForwardPropagationMode
     Training,
     Inference
 };
+
+inline bool is_training(ForwardPropagationMode pass) noexcept
+{
+    return pass == ForwardPropagationMode::Training;
+}
 
 struct InferenceShapePolicy
 {
@@ -72,17 +72,12 @@ struct ForwardPropagation
              bool inputs_pre_scaled = false,
              span<const MemoryPoolEntry> co_planned_lifetimes = {});
 
-    // Byte offsets inside `arena` for lifetimes planned alongside the forward
-    // activations. An empty vector means that no joint plan is active.
     vector<Index> co_planned_offsets;
 
     void stage_position(cudaStream_t stream);
 
     void set_active_sequence_length(Index length);
 
-    // Reuse persistent session state (such as an autoregressive KV cache)
-    // across propagation shapes that belong to the same inference session.
-    // The source and destination must execute the same network.
     void share_session_state_from(const ForwardPropagation& source);
 
     void set_output_sequence_window(Index start, Index count);
@@ -112,22 +107,12 @@ struct ForwardPropagation
     Index past_length = 0;
 
     Buffer arena;
-    // Opaque execution-local storage whose size is known only after a backend
-    // configures an operation (for example, cuDNN RNN state).
     vector<Buffer> layer_state_storage;
-    // Persistent state shared by the propagation shapes of one inference
-    // session (for example, an autoregressive KV cache).
     shared_ptr<vector<Buffer>> layer_session_state_storage;
-    // Host mirrors used only while an execution stages data across a device
-    // boundary. Kept per layer so independent propagation contexts never share
-    // staging addresses.
     vector<device::PinnedBuffer> layer_pinned_storage;
     vector<Buffer> staged_input_storage;
     vector<TensorView> staged_inputs;
 
-    // Loss evaluation scratch belongs to this execution, not to the reusable
-    // Loss configuration. YOLO keeps its assembled targets separate because
-    // the target and reduction buffers are live at the same time.
     mutable Buffer loss_workspace{Device::CUDA};
     mutable Buffer loss_target_workspace{Device::CUDA};
 
@@ -142,37 +127,16 @@ struct ForwardPropagation
     vector<uint8_t> drelu_fused_by_layer;
     vector<tuple<size_t, size_t, size_t>> passthrough_overrides;
 
-    // Where each sequence in the batch ends, one record per layer, describing
-    // the sequence that layer outputs. Empty means no record: the Embedding
-    // behind that sequence exported none, and whoever needs to tell padding
-    // from data falls back to reading it off the data.
-    //
-    // Per layer rather than one for the whole pass, because a network can carry
-    // more than one sequence at a time. An encoder-decoder holds two, of
-    // different lengths and padded differently, and cross-attention reads the
-    // encoder's while decoder self-attention reads the decoder's. A single
-    // record cannot say which is which, and the two would overwrite each other.
-    //
-    // A CPU run keeps the record on the host; a CUDA run keeps it on the device
-    // (one int32 per sample) so the masks that read it never wait on a host
-    // round trip and the step can be captured into a CUDA graph.
     vector<vector<Index>> valid_lengths;
     vector<const int*> device_valid_lengths;
     vector<Buffer> device_valid_length_storage;
 
-    // The record for whatever feeds one of a layer's inputs. Null when that
-    // input carries no record.
     const vector<Index>* input_valid_lengths(size_t layer, size_t input_ordinal) const;
     const int* input_device_valid_lengths(size_t layer, size_t input_ordinal) const;
     SequenceLengths input_sequence_lengths(size_t layer, size_t input_ordinal) const;
 
-    // The device record a layer is about to write for the sequence it outputs
-    // (`batch_size` int32 values), owned here so a graph replay reads the same
-    // addresses.
     int* device_valid_lengths_slot(size_t layer, Index batch_size);
 
-    // Carries a record forward: a layer that keeps the sequence dimension keeps
-    // its first input's record. Called once per layer, after it has run.
     void inherit_valid_lengths(size_t layer);
 
     Index valid_lengths_source(size_t layer, size_t input_ordinal) const;

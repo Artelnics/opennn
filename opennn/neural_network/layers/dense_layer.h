@@ -47,11 +47,11 @@ public:
             && !combination.accumulate_input_delta && !combination.drelu_source;
     }
 
-    ForwardSlotKind get_forward_slot_kind(size_t spec) const override
+    ForwardSlotKind get_forward_slot_kind(size_t slot) const override
     {
-        if ((!gated && spec == size_t(ActivationView) - 1)
-            || spec == size_t(DreluMask) - 1
-            || spec == size_t(DropoutMask) - 1)
+        if ((!gated && slot == ActivationView)
+            || slot == DreluMask
+            || slot == DropoutMask)
             return ForwardSlotKind::TrainingOnly;
         return ForwardSlotKind::Pooled;
     }
@@ -97,19 +97,12 @@ public:
 
     bool try_wire_drelu_fusion(Dense& producer, Index producer_layer);
 
-    // A single-output layer absorbs the ReLU backward of the layer feeding it:
-    // its own backward already reads that ReLU's output, so the mask costs
-    // nothing, where a separate pass costs a read and a write of the whole
-    // activation. Unrelated to the DReLU epilogue above, which needs cuBLASLt's
-    // auxiliary epilogues and measured slower.
     bool try_wire_single_output_relu_fusion(Dense& producer, Index producer_layer);
     void reset_single_output_relu_fusion();
     bool single_output_relu_fusion_wired() const { return combination.fuse_input_relu; }
     void reset_drelu_fusion();
     bool drelu_fusion_wired() const { return combination.drelu_source != nullptr; }
 
-    // The producer this layer's DReLU fusion made changes to, so that
-    // reset_drelu_fusion can undo both halves rather than only its own.
     Dense* drelu_producer = nullptr;
 
     void read_JSON_body(const Json*) override;

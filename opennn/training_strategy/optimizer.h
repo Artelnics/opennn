@@ -47,9 +47,6 @@ public:
 
     virtual void set_display(bool new_display) { display = new_display; }
 
-    // Positive: should_display() and train() take `epoch % period`, so a zero
-    // from a setter or a saved file was an integer division by zero on the
-    // first epoch.
     void set_display_period(const Index new_display_period)
     {
         throw_if(new_display_period <= 0, "Optimizer::set_display_period: period must be positive.");
@@ -60,9 +57,6 @@ public:
 
     void set_cuda_graph(bool enabled) { use_cuda_graph = enabled; }
 
-    // True once a CUDA graph capture of the training step failed and the run
-    // fell back to eager launches (the step contained a host sync or another
-    // uncapturable call). Reset by train().
     bool get_cuda_graph_capture_failed() const noexcept { return cuda_graph_capture_failed; }
 
     void set_shuffle(bool enabled) { shuffle_samples = enabled; }
@@ -139,11 +133,6 @@ protected:
             cuda_graph_capture_allowed = false;
         }
 
-        // The remainder batch (samples % batch_size) trains eagerly after the
-        // whole batches, in contexts of its own size. They are built once - on
-        // the warm-up pass, before the steady-state allocation guard arms - and
-        // re-linked each epoch, so a tail neither allocates inside the guarded
-        // epoch loop nor forces CUDA graph capture off for the whole batches.
         struct TailContext
         {
             unique_ptr<Batch> batch;
@@ -194,9 +183,7 @@ protected:
     void warmup_device_training(TrainingContext&,
                                 ThreadSafeQueue<Batch*>&,
                                 const vector<vector<Index>>&,
-                                const vector<Index>&,
-                                const vector<Index>&,
-                                const vector<Index>&,
+                                const FeatureSelection&,
                                 TrainingSession&,
                                 OptimizerData&,
                                 ForwardPropagation* validation_forward_propagation = nullptr,
@@ -229,9 +216,7 @@ protected:
     unique_ptr<BatchPrefetchSession> start_batch_prefetch(
         ThreadSafeQueue<Batch*>&,
         const vector<vector<Index>>&,
-        const vector<Index>&,
-        const vector<Index>&,
-        const vector<Index>&,
+        const FeatureSelection&,
         FillMode,
         WorkerProfileCounters* profile_counters = nullptr);
 
@@ -282,11 +267,6 @@ protected:
 
     virtual bool supports_cuda_graph() const noexcept { return false; }
 
-    // A dropout mask is drawn from a seed the host passes by value, so capturing
-    // the step bakes that seed into the graph and every replay reuses the same
-    // mask - the regulariser degenerates into one fixed sparse sub-network for
-    // the whole run. Until the seed lives in device memory and is advanced
-    // inside the captured step, a network with dropout trains eagerly.
     bool network_has_active_dropout() const;
 
     bool can_use_cuda_graph() const
@@ -306,25 +286,19 @@ protected:
                                            BackPropagation&,
                                            ThreadSafeQueue<Batch*>&,
                                            const vector<vector<Index>>&,
-                                           const vector<Index>&,
-                                           const vector<Index>&,
-                                           const vector<Index>&);
+                                           const FeatureSelection&);
 
     Loss::EvaluationResult train_epoch(TrainingContext&,
                                        ThreadSafeQueue<Batch*>&,
                                        const vector<vector<Index>>&,
-                                       const vector<Index>&,
-                                       const vector<Index>&,
-                                       const vector<Index>&,
+                                       const FeatureSelection&,
                                        TrainingSession&,
                                        OptimizerData&);
 
     Loss::EvaluationResult evaluate_epoch(ForwardPropagation&,
                                           ThreadSafeQueue<Batch*>&,
                                           const vector<vector<Index>>&,
-                                          const vector<Index>&,
-                                          const vector<Index>&,
-                                          const vector<Index>&,
+                                          const FeatureSelection&,
                                           TrainingSession&);
 
     Loss* loss = nullptr;

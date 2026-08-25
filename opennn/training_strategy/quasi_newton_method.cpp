@@ -143,8 +143,6 @@ void QuasiNewtonMethod::update_full_batch_parameters(const Batch& batch,
         training_direction = -gradient;
         optimization_data.training_slope = gradient.dot(training_direction);
 
-        // The retry follows the negative gradient, whose natural trial rate is the
-        // previously accepted one (or the small first rate), not the unit step.
         optimization_data.initial_learning_rate = (optimization_data.old_learning_rate > 0.0f)
             ? optimization_data.old_learning_rate
             : first_learning_rate;
@@ -171,7 +169,6 @@ void QuasiNewtonMethod::update_full_batch_parameters(const Batch& batch,
     old_gradient = gradient;
     swap(optimization_data.views[InverseHessian], optimization_data.views[OldInverseHessian]);
 
-    // Record only genuinely accepted rates; the epsilon fallback keeps the previous one.
     if (optimization_data.learning_rate > 0.0f)
         optimization_data.old_learning_rate = optimization_data.learning_rate;
 }
@@ -229,10 +226,6 @@ TrainingResult QuasiNewtonMethod::train()
                              *context.training_forward_propagation,
                              training_back_propagation);
 
-        // back_propagate leaves this at zero: the mini-batch optimizers get it
-        // once per epoch, but the line search below reads loss_value on every
-        // step, so full-batch training pays for it here. One reduction per
-        // step, not per batch -- and this optimizer has one batch per step.
         NeuralNetwork* const network = loss->get_neural_network();
 
         const TensorView parameters(network->get_parameters_data(),
@@ -240,8 +233,6 @@ TrainingResult QuasiNewtonMethod::train()
                                     Type::FP32,
                                     network->get_device());
 
-        // Returns zero without touching the parameters when regularization is
-        // off, so there is no guard here.
         training_back_propagation.metrics.regularization =
             loss->calculate_regularization(parameters);
 

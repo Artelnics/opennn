@@ -5,7 +5,6 @@
 
 #include "opennn/core/cuda/kernel_prelude.cuh"
 
-// Anchor-based head over a (B, S, S, boxes_per_cell * (5 + classes_number)) tensor.
 void detection_forward_cuda(const Index batch_size,
                             const Index grid_size,
                             const Index boxes_per_cell,

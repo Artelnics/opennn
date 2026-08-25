@@ -103,7 +103,7 @@ TEST(Detection, ForwardPropagateMatchesHandComputedValuesForKnownLogits)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> inputs = { TensorView(input.data(), {batch_size, grid, grid, channels}) };
-    neural_network.forward_propagate(inputs, forward_propagation, false);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     const float* out = forward_propagation.get_outputs().as<float>();
 
@@ -150,7 +150,7 @@ TEST(Detection, ForwardPropagateSigmoidClassActivation)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> inputs = { TensorView(input.data(), {batch_size, grid, grid, channels}) };
-    neural_network.forward_propagate(inputs, forward_propagation, false);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     const float* out = forward_propagation.get_outputs().as<float>();
 
@@ -206,7 +206,7 @@ TEST(Detection, GpuAnchorsRefreshAfterSameSizeReconfiguration)
 
     const auto forward_and_read = [&]
     {
-        neural_network.forward_propagate(inputs, forward_propagation, false);
+        neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
         vector<float> output(static_cast<size_t>(channels), 0.0f);
         device::copy_async(output.data(),

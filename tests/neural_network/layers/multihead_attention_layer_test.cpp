@@ -133,7 +133,7 @@ TEST(MultiHeadAttentionTest, ForwardSelfAttentionMatchesHandComputed)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> inputs = { TensorView(input_data.data(), { batch_size, sequence_length, embedding_dimension }) };
-    neural_network.forward_propagate(inputs, forward_propagation, false);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView output_view = forward_propagation.get_outputs();
 
@@ -177,7 +177,7 @@ TEST(MultiHeadAttentionTest, CausalMaskForward)
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> inputs = { TensorView(input_data.data(), { batch_size, sequence_length, embedding_dimension }) };
-    neural_network.forward_propagate(inputs, forward_propagation, false);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView output_view = forward_propagation.get_outputs();
     const float* output_data = output_view.as<type>();
@@ -225,7 +225,7 @@ TEST(MultiHeadAttentionTest, CrossAttentionForwardOrGradient)
         TensorView(query_data.data(),  { batch_size, query_sequence_length, embedding_dimension }),
         TensorView(source_data.data(), { batch_size, source_sequence_length, embedding_dimension })
     };
-    neural_network.forward_propagate(inputs, forward_propagation, false);
+    neural_network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView output_view = forward_propagation.get_outputs();
 

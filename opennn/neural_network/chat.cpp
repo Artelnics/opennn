@@ -34,9 +34,6 @@ namespace
 
 #ifdef OPENNN_HAS_CUDA
 
-// Draws one token from a logits row entirely on the device, so the sampled id
-// never has to round-trip through the host. Only the CUDA path uses it; the
-// callers below are guarded, so there is no host fallback to keep in sync.
 void sample_logits_row(const TensorView& logits_row, float temperature, Index top_k, float top_p,
                        unsigned long long seed, unsigned long long step,
                        void* candidates_scratch, int* id_device, float* token_device)
@@ -163,11 +160,6 @@ Index sample_token_with_workspace(VectorR& probabilities,
             if (token >= 0 && token < vocabulary_size)
                 probabilities(token) /= config.repetition_penalty;
 
-    // The greedy exit comes after the penalty, not before it. Returning the raw
-    // argmax first meant temperature 0 ignored repetition_penalty entirely and
-    // looped on the same token, while DecoderSampler - the other sampler in
-    // this file, used by the generic sessions - penalised first and then took
-    // the argmax. Same config, two behaviours.
     if (config.temperature == 0.0f)
         return maximal_index(probabilities);
 
@@ -1122,7 +1114,7 @@ struct ChatSession::Impl
             propagation.set_output_sequence_window(block - 1, 1);
             inputs[0] =
                 TensorView(token_window.data() + offset, {1, block});
-            propagated.forward_propagate(inputs, propagation, false);
+            propagated.forward_propagate(inputs, propagation, ForwardPropagationMode::Inference);
         }
     }
 
@@ -1161,7 +1153,7 @@ struct ChatSession::Impl
         draft->target_verify_inputs[0] =
             TensorView(token_window.data(), {1, count});
         network->forward_propagate(
-            draft->target_verify_inputs, draft->target_verify, false);
+            draft->target_verify_inputs, draft->target_verify, ForwardPropagationMode::Inference);
         return draft->target_verify;
     }
 
@@ -1405,7 +1397,7 @@ ChatResponse send_sequence_to_sequence(
 
     const auto prefill_start = Clock::now();
     state.transformer->forward_propagate(
-        state.inputs, *state.propagation, false,
+        state.inputs, *state.propagation, ForwardPropagationMode::Inference,
         state.encoder_embedding, state.encoder_last);
     device::synchronize(device::get_compute_stream());
     const auto prefill_end = Clock::now();
@@ -1425,10 +1417,10 @@ ChatResponse send_sequence_to_sequence(
     for (Index position = 1; position < limit; ++position)
     {
         state.transformer->forward_propagate(
-            state.inputs, *state.propagation, false,
+            state.inputs, *state.propagation, ForwardPropagationMode::Inference,
             state.decoder_embedding, state.decoder_embedding);
         state.transformer->forward_propagate(
-            state.inputs, *state.propagation, false,
+            state.inputs, *state.propagation, ForwardPropagationMode::Inference,
             state.decoder_first, state.output_projection);
 
         const Index next = loop.sample_at(position - 1);
@@ -1492,7 +1484,7 @@ ChatResponse send_classic_decoder(
 
         const auto step_start = Clock::now();
         state.decoder->forward_propagate(
-            state.inputs, *state.propagation, false);
+            state.inputs, *state.propagation, ForwardPropagationMode::Inference);
         const Index next = loop.sample_at(window_length - 1);
         const auto step_end = Clock::now();
         const double elapsed =

@@ -253,7 +253,7 @@ TEST(DropoutLayerTest, TrainingPassDiffersFromInference)
     EXPECT_NE(training_mask->get_data(), second_mask->get_data());
 
     vector<TensorView> training_views = { TensorView(input.data(), {batch_size, inputs_number}) };
-    neural_network.forward_propagate(training_views, training_propagation, true);
+    neural_network.forward_propagate(training_views, training_propagation, ForwardPropagationMode::Training);
 
     const TensorView training_output = training_propagation.get_outputs();
 

@@ -42,7 +42,7 @@ namespace
 
         ForwardPropagation forward_before(batch, &net);
         vector<TensorView> inputs_before = make_inputs();
-        net.forward_propagate(inputs_before, forward_before, false);
+        net.forward_propagate(inputs_before, forward_before, ForwardPropagationMode::Inference);
         const TensorView out_before = forward_before.get_outputs();
         const vector<float> expected(out_before.as<float>(), out_before.as<float>() + out_before.size());
 
@@ -54,7 +54,7 @@ namespace
 
         ForwardPropagation forward_after(batch, &loaded);
         vector<TensorView> inputs_after = make_inputs();
-        loaded.forward_propagate(inputs_after, forward_after, false);
+        loaded.forward_propagate(inputs_after, forward_after, ForwardPropagationMode::Inference);
         const TensorView out_after = forward_after.get_outputs();
 
         Index mismatches = 0;
@@ -101,7 +101,7 @@ TEST(BertTest, SaveLoadRoundTripSegmentZero)
 
     ForwardPropagation forward_before(batch, &bert);
     vector<TensorView> inputs_before = make_inputs();
-    bert.forward_propagate(inputs_before, forward_before, false);
+    bert.forward_propagate(inputs_before, forward_before, ForwardPropagationMode::Inference);
     const TensorView out_before = forward_before.get_outputs();
     const vector<float> expected(out_before.as<float>(), out_before.as<float>() + out_before.size());
 
@@ -113,7 +113,7 @@ TEST(BertTest, SaveLoadRoundTripSegmentZero)
 
     ForwardPropagation forward_after(batch, &loaded);
     vector<TensorView> inputs_after = make_inputs();
-    loaded.forward_propagate(inputs_after, forward_after, false);
+    loaded.forward_propagate(inputs_after, forward_after, ForwardPropagationMode::Inference);
     const TensorView out_after = forward_after.get_outputs();
 
     ASSERT_EQ(out_after.size(), out_before.size());
@@ -146,7 +146,7 @@ TEST(BertTest, AttentionSaveLoad)
 
     ForwardPropagation forward_before(batch, &net);
     vector<TensorView> inputs_before = make_inputs();
-    net.forward_propagate(inputs_before, forward_before, false);
+    net.forward_propagate(inputs_before, forward_before, ForwardPropagationMode::Inference);
     const TensorView out_before = forward_before.get_outputs();
     const vector<float> expected(out_before.as<float>(), out_before.as<float>() + out_before.size());
 
@@ -158,7 +158,7 @@ TEST(BertTest, AttentionSaveLoad)
 
     ForwardPropagation forward_after(batch, &loaded);
     vector<TensorView> inputs_after = make_inputs();
-    loaded.forward_propagate(inputs_after, forward_after, false);
+    loaded.forward_propagate(inputs_after, forward_after, ForwardPropagationMode::Inference);
     const TensorView out_after = forward_after.get_outputs();
 
     ASSERT_EQ(out_after.size(), out_before.size());
@@ -199,7 +199,7 @@ TEST(BertTest, ForwardShapeAndFinite)
         TensorView(input_ids.data(),      {batch, seq}),
         TensorView(token_type_ids.data(), {batch, seq})
     };
-    bert.forward_propagate(inputs, forward_propagation, false);
+    bert.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView output = forward_propagation.get_outputs();
     ASSERT_EQ(output.get_shape().get_rank(), 3);
@@ -233,7 +233,7 @@ TEST(BertTest, ForSequenceClassificationForward)
         TensorView(input_ids.data(),      {batch, seq}),
         TensorView(token_type_ids.data(), {batch, seq})
     };
-    model.forward_propagate(inputs, forward_propagation, false);
+    model.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
 
     const TensorView output = forward_propagation.get_outputs();
     ASSERT_EQ(output.get_shape().get_rank(), 2);
@@ -310,7 +310,7 @@ TEST(BertTest, SaveLoadRoundTrip)
 
     ForwardPropagation forward_before(batch, &bert);
     vector<TensorView> inputs_before = make_inputs();
-    bert.forward_propagate(inputs_before, forward_before, false);
+    bert.forward_propagate(inputs_before, forward_before, ForwardPropagationMode::Inference);
     const TensorView output_before = forward_before.get_outputs();
     const vector<float> expected(output_before.as<float>(),
                                       output_before.as<float>() + output_before.size());
@@ -318,7 +318,7 @@ TEST(BertTest, SaveLoadRoundTrip)
     {
         ForwardPropagation forward_again(batch, &bert);
         vector<TensorView> inputs_again = make_inputs();
-        bert.forward_propagate(inputs_again, forward_again, false);
+        bert.forward_propagate(inputs_again, forward_again, ForwardPropagationMode::Inference);
         const TensorView output_again = forward_again.get_outputs();
         ASSERT_EQ(output_again.size(), output_before.size());
         const float* again = output_again.as<float>();
@@ -341,7 +341,7 @@ TEST(BertTest, SaveLoadRoundTrip)
 
     ForwardPropagation forward_after(batch, &loaded);
     vector<TensorView> inputs_after = make_inputs();
-    loaded.forward_propagate(inputs_after, forward_after, false);
+    loaded.forward_propagate(inputs_after, forward_after, ForwardPropagationMode::Inference);
     const TensorView output_after = forward_after.get_outputs();
 
     ASSERT_EQ(output_after.size(), output_before.size());

@@ -32,7 +32,6 @@ void attention_sequence_lengths_cuda(const int batch_size,
                                      int32_t* query_lengths,
                                      int32_t* source_lengths);
 
-// SDPA length tensors from an exported record (see kernel).
 void attention_sdpa_lengths_cuda(const int batch_size, const int query_sequence_length,
                                  const int source_sequence_length, const int* record,
                                  int32_t* query_lengths, int32_t* source_lengths);
@@ -70,11 +69,6 @@ void qk_rope_cache_append_cuda(const int n_q_heads, const int n_kv_heads, const 
 
 inline constexpr int LOGITS_SAMPLE_BLOCKS = 128;
 
-// Each of the 128x256 threads keeps at most 8 candidates while striding the
-// row, so the sampler can only see this many logits. Every shipped vocabulary
-// is far below it (Qwen3 is 151,936), but a larger one would silently drop its
-// tail - including, sometimes, the argmax - so the entry point refuses it and
-// the caller can fall back to the host sampler.
 inline constexpr int LOGITS_SAMPLE_CAPACITY = LOGITS_SAMPLE_BLOCKS * 256 * 8;
 
 template<typename T>

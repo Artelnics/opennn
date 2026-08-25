@@ -123,9 +123,6 @@ public:
     Shape get_shape(VariableRole) const;
     Shape get_shape(string_view role) const { return get_shape(string_to_variable_role(role)); }
 
-    // The last parameter, when given, shuffles with a generator seeded from it
-    // instead of the shared global one - required when the call runs on a
-    // helper thread (see Optimizer::train's next-epoch prefetch).
     void get_batches(const vector<Index>&, Index, bool, vector<vector<Index>>&,
                      optional<unsigned> shuffle_seed = nullopt) const;
 
@@ -165,13 +162,10 @@ public:
     const float* get_device_data() const { return data_device.as<float>(); }
     Index get_device_data_columns() const noexcept { return device_data_columns; }
 
-    // Fits or installs the requested transform and returns the effective
-    // configuration that the corresponding Scaling layer must use.
     virtual FeatureScaling prepare_training_scaling(
         VariableRole,
         const FeatureScaling&,
         Index);
-    // Removes transient batch transforms without modifying source data.
     virtual void clear_training_scaling() noexcept {}
 
     void set_sample_roles(SampleRole);
@@ -202,7 +196,6 @@ public:
     {
         set_variable_role(name, string_to_variable_role(role));
     }
-
 
     void set_variable_names(const vector<string>&);
 
@@ -291,11 +284,11 @@ public:
 
     virtual bool supports_bf16_inputs() const { return true; }
 
+    FeatureSelection get_feature_selection() const;
+
     virtual void fill_batch(Batch&,
-                            const vector<Index>&,
-                            const vector<Index>&,
-                            const vector<Index>&,
-                            const vector<Index>&,
+                            const vector<Index>& sample_indices,
+                            const FeatureSelection&,
                             FillMode) const;
 
 protected:
@@ -303,20 +296,15 @@ protected:
     Dataset() = default;
 
     void fill_batch_host(Batch&,
-                         const vector<Index>&,
-                         const vector<Index>&,
-                         const vector<Index>&,
-                         const vector<Index>&,
+                         const vector<Index>& sample_indices,
+                         const FeatureSelection&,
                          FillMode) const;
 
-    bool can_device_gather(const Batch&,
-                           const vector<Index>& input_indices,
-                           const vector<Index>& target_indices) const;
+    bool can_device_gather(const Batch&, const FeatureSelection&) const;
 
     DeviceGather& start_device_gather(Batch&,
                                       const vector<Index>& sample_indices,
-                                      const vector<Index>& input_indices,
-                                      const vector<Index>& target_indices) const;
+                                      const FeatureSelection&) const;
 
     void set_default_variable_roles_forecasting() { set_default_variable_roles_implementation(true); }
     void set_default_variable_roles_implementation(bool);
@@ -327,11 +315,6 @@ protected:
     virtual void resize_data_from_JSON(Index) {}
     virtual void on_used_samples_changed() {}
 
-    // BinaryFile storage empties `data` and streams rows from the cache
-    // instead, but get_samples_number() still reports the full count, so an
-    // analysis method that loops the samples and indexes `data` dereferenced a
-    // null Eigen buffer - silently, since eigen_assert is compiled out in
-    // release. Anything that reads the matrix directly says so here first.
     void require_in_memory_data(string_view what) const
     {
         throw_if(storage_mode == StorageMode::BinaryFile,

@@ -28,7 +28,6 @@ public:
     void set(const Shape&, const string&, const string&);
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 1, 2, 3); }
 
-
 private:
 
     ActivationOperator activation_operator;
