@@ -254,7 +254,7 @@ TEST(Detection, SigmoidClassBackwardGradientMatchesNumerical)
                                                                                  "Identity",
                                                                                  Shape{1, 1},
                                                                                  "Same",
-                                                                                 false,
+                                                                                 BatchNormalization::No,
                                                                                  "logits"),
                                                       {-1});
 

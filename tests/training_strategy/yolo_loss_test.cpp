@@ -56,7 +56,7 @@ void build_yolo_network(NeuralNetwork& net, const YoloLossFixture& f)
                                              "Identity",
                                              Shape{1, 1},
                                              "Same",
-                                             false,
+                                             BatchNormalization::No,
                                              "yolo_logits"));
     net.add_layer(make_unique<Detection>(Shape{f.grid, f.grid, f.channels}, f.anchors, "detection"));
     net.compile();
@@ -80,13 +80,13 @@ TEST(YoloLoss, OutputDeltaLayersFollowSelectedLoss)
         NeuralNetwork network;
         const Index stem = network.add_layer(make_unique<Convolutional>(
                                Shape{height, width, 3}, Shape{1, 1, 3, features},
-                               "Identity", Shape{1, 1}, "Same", false, "stem"));
+                               "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "stem"));
 
         const auto add_head = [&](const string& suffix)
         {
             const Index logits = network.add_layer(make_unique<Convolutional>(
                                      Shape{height, width, features}, Shape{1, 1, features, head_channels},
-                                     "Identity", Shape{1, 1}, "Same", false, "logits_" + suffix), {stem});
+                                     "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "logits_" + suffix), {stem});
 
             if (v8)
                 network.add_layer(make_unique<DetectionV8>(
@@ -149,11 +149,11 @@ TEST(YoloLoss, InferencePolicyRetainsConsumedHead)
     NeuralNetwork network;
     const Index stem = network.add_layer(make_unique<Convolutional>(
                            Shape{height, width, 3}, Shape{1, 1, 3, features},
-                           "Identity", Shape{1, 1}, "Same", false, "stem"));
+                           "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "stem"));
 
     const Index logits = network.add_layer(make_unique<Convolutional>(
                              Shape{height, width, features}, Shape{1, 1, features, head_channels},
-                             "Identity", Shape{1, 1}, "Same", false, "logits"), {stem});
+                             "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "logits"), {stem});
 
     const Index detection = network.add_layer(make_unique<Detection>(
                                 Shape{height, width, head_channels}, anchors, "detection"), {logits});
@@ -163,7 +163,7 @@ TEST(YoloLoss, InferencePolicyRetainsConsumedHead)
 
     const Index tail = network.add_layer(make_unique<Convolutional>(
                            Shape{height, width, features}, Shape{1, 1, features, features},
-                           "Identity", Shape{1, 1}, "Same", false, "tail"), {stem});
+                           "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "tail"), {stem});
     network.compile();
 
     Loss yolo_loss(&network);
@@ -279,7 +279,7 @@ void build_yolo_v8_network(NeuralNetwork& net, const YoloLossV8Fixture& f)
                                              "Identity",
                                              Shape{1, 1},
                                              "Same",
-                                             false,
+                                             BatchNormalization::No,
                                              "v8_logits"));
     net.add_layer(make_unique<DetectionV8>(Shape{f.grid, f.grid, f.ch}, "detection_v8"));
     net.compile();
@@ -367,13 +367,13 @@ TEST(YoloLoss, V8DecoupledHeadGradientMatchesNumericalGradient)
 
     const Index stem = net.add_layer(make_unique<Convolutional>(Shape{f.H, f.W, 3},
                                                                 Shape{1, 1, 3, head_ch},
-                                                                "Identity", Shape{1, 1}, "Same", false, "stem"));
+                                                                "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "stem"));
 
     const Index box_out = net.add_layer(make_unique<Convolutional>(feat, Shape{1, 1, head_ch, 4},
-                                                                   "Identity", Shape{1, 1}, "Same", false, "box_out"), {stem});
+                                                                   "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "box_out"), {stem});
 
     const Index cls_out = net.add_layer(make_unique<Convolutional>(feat, Shape{1, 1, head_ch, f.C},
-                                                                   "Identity", Shape{1, 1}, "Same", false, "cls_out"), {stem});
+                                                                   "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "cls_out"), {stem});
 
     const Shape box_shape{f.grid, f.grid, 4};
     const Index cat = net.add_layer(make_unique<Concatenation>(box_shape, vector<Index>{4, f.C}, "cat"),
@@ -448,7 +448,7 @@ TEST(YoloLoss, V8DFLGradientMatchesNumerical)
     NeuralNetwork net;
     net.add_layer(make_unique<Convolutional>(Shape{f.H, f.W, 3},
                                              Shape{1, 1, 3, dfl_ch},
-                                             "Identity", Shape{1, 1}, "Same", false, "v8_logits"));
+                                             "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "v8_logits"));
     net.add_layer(make_unique<DetectionV8>(Shape{grid, grid, dfl_ch}, rm, "detection_v8"));
     net.compile();
     net.get_parameters_map().setConstant(0.1f);

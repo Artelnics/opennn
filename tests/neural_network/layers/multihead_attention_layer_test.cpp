@@ -163,7 +163,7 @@ TEST(MultiHeadAttentionTest, CausalMaskForward)
     const Index heads_number = 1;
 
     auto mha = make_unique<MultiHeadAttention>(Shape{ sequence_length, embedding_dimension }, heads_number);
-    mha->set(sequence_length, sequence_length, embedding_dimension, heads_number, true);
+    mha->set(sequence_length, sequence_length, embedding_dimension, heads_number, CausalMask::Yes);
 
     NeuralNetwork neural_network;
     neural_network.add_layer(std::move(mha));

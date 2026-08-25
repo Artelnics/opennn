@@ -46,7 +46,8 @@ void configure_snapshot_network(NeuralNetwork& network, const Shape& input_shape
                                 const Shape& output_shape, SnapshotKind kind)
 {
     network.add_layer(make_unique<opennn::Dense>(
-        input_shape, output_shape, "Identity", kind == SnapshotKind::States));
+        input_shape, output_shape, "Identity",
+        kind == SnapshotKind::States ? BatchNormalization::Yes : BatchNormalization::No));
     network.compile();
 }
 
@@ -397,7 +398,7 @@ TEST(NeuralNetworkTest, SerializesTiedWeightRelationships)
     Layer* embedding_source = embedding.get();
     neural_network.add_layer(std::move(embedding));
 
-    auto output = make_unique<opennn::Dense>(Shape{4, 6}, Shape{11}, "Identity", false, "output");
+    auto output = make_unique<opennn::Dense>(Shape{4, 6}, Shape{11}, "Identity", BatchNormalization::No, "output");
     output->set_use_bias(false);
     output->set_tied_weight_source(embedding_source);
     neural_network.add_layer(std::move(output));
@@ -449,7 +450,7 @@ TEST(NeuralNetworkTest, CompleteSaveLoadPreservesModelOwnedState)
     scaling->set_scalers({"MeanStandardDeviation", "MinimumMaximum", "StandardDeviation"});
     network.add_layer(std::move(scaling));
 
-    auto dense = make_unique<opennn::Dense>(Shape{3}, Shape{2}, "ReLU", true, "output");
+    auto dense = make_unique<opennn::Dense>(Shape{3}, Shape{2}, "ReLU", BatchNormalization::Yes, "output");
     dense->set_momentum(0.234567895f);
     network.add_layer(std::move(dense));
 

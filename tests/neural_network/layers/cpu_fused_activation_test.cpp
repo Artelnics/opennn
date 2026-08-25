@@ -108,7 +108,7 @@ TEST(CpuFusedActivationTest, ConvolutionAppliesReluWithoutBatchNorm)
 {
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Convolutional>(
-        Shape{3, 3, 1}, Shape{3, 3, 1, 2}, "ReLU", Shape{1, 1}, "Valid", false));
+        Shape{3, 3, 1}, Shape{3, 3, 1, 2}, "ReLU", Shape{1, 1}, "Valid", BatchNormalization::No));
     neural_network.compile();
 
     neural_network.get_parameters_map().setConstant(1.0f);
@@ -133,7 +133,7 @@ TEST(CpuFusedActivationTest, ConvolutionAppliesReluWithBatchNorm)
 {
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Convolutional>(
-        Shape{3, 3, 1}, Shape{3, 3, 1, 2}, "ReLU", Shape{1, 1}, "Valid", true));
+        Shape{3, 3, 1}, Shape{3, 3, 1, 2}, "ReLU", Shape{1, 1}, "Valid", BatchNormalization::Yes));
     neural_network.compile();
 
     neural_network.get_parameters_map().setConstant(1.0f);

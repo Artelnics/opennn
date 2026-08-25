@@ -99,7 +99,7 @@ TEST(BatchNormalizationOperatoreratorTest, LinkAndInitDefaults)
 
 TEST(BatchNormalizationOperatoreratorTest, DenseEnablesBatchNormalization)
 {
-    opennn::Dense dense({6}, {4}, "Identity", true);
+    opennn::Dense dense({6}, {4}, "Identity", BatchNormalization::Yes);
 
     EXPECT_TRUE(dense.get_batch_normalization());
 }
@@ -118,7 +118,7 @@ TEST(BatchNormalizationOperatoreratorTest, ForwardTrainingNormalizesPerFeature)
     const Index outputs_number = 3;
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{outputs_number}, "Identity", true));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{outputs_number}, "Identity", BatchNormalization::Yes));
     neural_network.compile();
     neural_network.set_parameters_random();
 
@@ -159,7 +159,7 @@ TEST(BatchNormalizationOperatoreratorTest, ForwardInferenceUsesRunningStatistics
     const Index outputs_number = 3;
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{outputs_number}, "Identity", true));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{outputs_number}, "Identity", BatchNormalization::Yes));
     neural_network.compile();
     neural_network.set_parameters_random();
 
@@ -195,7 +195,7 @@ TEST(BatchNormalizationOperatoreratorTest, InferenceMatchesTrainingOnConvergedSt
 
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<opennn::Dense>(
-        Shape{inputs_number}, Shape{outputs_number}, "Identity", true));
+        Shape{inputs_number}, Shape{outputs_number}, "Identity", BatchNormalization::Yes));
     neural_network.compile();
     neural_network.set_parameters_random();
 
@@ -233,7 +233,7 @@ TEST(BatchNormalizationOperatoreratorTest, InferenceIsDeterministicAcrossRows)
     const Index outputs_number = 2;
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{outputs_number}, "Identity", true));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{outputs_number}, "Identity", BatchNormalization::Yes));
     neural_network.compile();
     neural_network.set_parameters_random();
 
@@ -268,7 +268,7 @@ TEST(BatchNormalizationOperatoreratorTest, RunningVarianceUsesSampleEstimate)
     const float momentum   = 0.1f;   // Dense's batch-norm default.
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{features}, Shape{features}, "Identity", true));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{features}, Shape{features}, "Identity", BatchNormalization::Yes));
     neural_network.compile();
     neural_network.set_parameters_random();
 
@@ -341,7 +341,7 @@ TEST(BatchNormalizationOperatoreratorTest, GradientMatchesFiniteDifferences)
     neural_network.add_layer(make_unique<opennn::Dense>(Shape{ inputs_number },
                                                         dataset.get_target_shape(),
                                                         "Identity",
-                                                        true));
+                                                        BatchNormalization::Yes));
     neural_network.compile();
     neural_network.set_parameters_random();
 

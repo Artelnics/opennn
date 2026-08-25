@@ -251,8 +251,8 @@ static void expect_dense_fanout_gradient(Device device)
 
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<opennn::Dense>(input_shape, Shape{4}, "Tanh"), {-1});
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{2, 4}, Shape{4}, "Tanh", false, "branch_a"), {0});
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{2, 4}, Shape{4}, "Identity", false, "branch_b"), {0});
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{2, 4}, Shape{4}, "Tanh", BatchNormalization::No, "branch_a"), {0});
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{2, 4}, Shape{4}, "Identity", BatchNormalization::No, "branch_b"), {0});
     neural_network.add_layer(make_unique<Addition>(Shape{2, 4}, "merge", 2), {1, 2});
     neural_network.add_layer(make_unique<Flatten>(Shape{2, 4}), {3});
     neural_network.add_layer(make_unique<opennn::Dense>(Shape{8}, Shape{3}, "Identity"), {4});
@@ -461,7 +461,7 @@ TEST(ActivationsTest, GeluDenseFusedGradientCheck)
 
 TEST(ActivationsTest, GeluDenseFusedRejectsBatchNorm)
 {
-    EXPECT_THROW(opennn::Dense(Shape{4}, Shape{5}, "GELU", true), exception);
+    EXPECT_THROW(opennn::Dense(Shape{4}, Shape{5}, "GELU", BatchNormalization::Yes), exception);
 }
 
 TEST(ActivationsTest, ConvolutionalRejectsInputDerivativeActivations)

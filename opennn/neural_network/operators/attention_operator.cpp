@@ -37,13 +37,13 @@ float AttentionOperator::scaling_factor() const
 
 void AttentionOperator::set(Index new_heads_number, Index new_head_dimension,
                     Index new_query_sequence_length, Index new_source_sequence_length,
-                    bool new_use_causal_mask, Type new_compute_dtype)
+                    CausalMask new_use_causal_mask, Type new_compute_dtype)
 {
     heads_number = new_heads_number;
     head_dimension = new_head_dimension;
     query_sequence_length = new_query_sequence_length;
     source_sequence_length = new_source_sequence_length;
-    use_causal_mask = new_use_causal_mask;
+    use_causal_mask = new_use_causal_mask == CausalMask::Yes;
     compute_dtype = new_compute_dtype;
 
     if (use_causal_mask && query_sequence_length > 0 && source_sequence_length > 0)

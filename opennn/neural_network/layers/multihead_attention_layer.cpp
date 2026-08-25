@@ -38,7 +38,7 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
         new_source_dimensions[0],
         new_query_dimensions[1],
         new_heads_number,
-        false,
+        CausalMask::No,
         new_name);
 }
 
@@ -99,7 +99,7 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
                              Index new_source_sequence_length,
                              Index new_embedding_dimension,
                              Index new_heads_number,
-                             bool new_use_causal_mask,
+                             CausalMask new_use_causal_mask,
                              const string& new_label)
 {
     query_sequence_length  = new_query_sequence_length;
@@ -234,7 +234,7 @@ void MultiHeadAttention::apply_input_shape(const Shape& new_input_shape)
         new_source_sequence_length,
         new_input_shape[1],
         heads_number,
-        attention.use_causal_mask,
+        attention.use_causal_mask ? CausalMask::Yes : CausalMask::No,
         label);
 }
 
@@ -246,7 +246,7 @@ void MultiHeadAttention::on_compute_dtype_changed()
         source_sequence_length,
         embedding_dimension,
         heads_number,
-        attention.use_causal_mask,
+        attention.use_causal_mask ? CausalMask::Yes : CausalMask::No,
         label);
 }
 
@@ -255,7 +255,9 @@ void MultiHeadAttention::read_JSON_body(const Json* root_element)
     const Shape new_input_shape = string_to_shape(read_json_string(root_element, "InputDimensions"));
     const Index new_source_sequence_length = read_json_index(root_element, "SourceSequenceLength");
     const Index new_heads_number = read_json_index(root_element, "HeadsNumber");
-    const bool  new_use_causal_mask = read_json_bool(root_element, "CausalMask");
+    const CausalMask new_use_causal_mask = read_json_bool(root_element, "CausalMask")
+        ? CausalMask::Yes
+        : CausalMask::No;
 
     cross_attention = root_element->has("CrossAttention")
         ? read_json_bool(root_element, "CrossAttention")

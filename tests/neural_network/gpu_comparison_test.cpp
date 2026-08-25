@@ -464,7 +464,7 @@ TEST_F(GpuComparison, ConvolutionGraphCacheSupportsConcurrentFirstUse)
     {
         network.add_layer(make_unique<Convolutional>(
                               input_shape, Shape{3, 3, 3, 8}, "ReLU",
-                              Shape{1, 1}, "Same", false, "conv"),
+                              Shape{1, 1}, "Same", BatchNormalization::No, "conv"),
                           {-1});
         network.compile();
     };
@@ -593,26 +593,26 @@ TEST_F(GpuComparison, ProjectionResidualGradient)
     {
         network.add_layer(make_unique<Convolutional>(
                               input_shape, Shape{1, 1, 8, 64}, "ReLU",
-                              Shape{1, 1}, "Same", true, "stem"),
+                              Shape{1, 1}, "Same", BatchNormalization::Yes, "stem"),
                           {-1});
         network.add_layer(make_unique<Convolutional>(
                               Shape{2, 2, 64}, Shape{1, 1, 64, 64}, "ReLU",
-                              Shape{1, 1}, "Same", true, "main"),
+                              Shape{1, 1}, "Same", BatchNormalization::Yes, "main"),
                           {0});
         network.add_layer(make_unique<Convolutional>(
                               Shape{2, 2, 64}, Shape{1, 1, 64, 64}, "Identity",
-                              Shape{1, 1}, "Same", true, "projection"),
+                              Shape{1, 1}, "Same", BatchNormalization::Yes, "projection"),
                           {0});
 
         auto residual = make_unique<Convolutional>(
             Shape{2, 2, 64}, Shape{1, 1, 64, 64}, "ReLU",
-            Shape{1, 1}, "Same", true, "residual");
+            Shape{1, 1}, "Same", BatchNormalization::Yes, "residual");
         residual->set_residual(true);
         network.add_layer(std::move(residual), {1, 2});
 
         network.add_layer(make_unique<Convolutional>(
                               Shape{2, 2, 64}, Shape{1, 1, 64, 8}, "ReLU",
-                              Shape{1, 1}, "Same", true, "later"),
+                              Shape{1, 1}, "Same", BatchNormalization::Yes, "later"),
                           {3});
         network.add_layer(make_unique<Flatten>(Shape{2, 2, 8}), {4});
         network.add_layer(make_unique<opennn::Dense>(
@@ -659,15 +659,15 @@ static void build_residual_block(NeuralNetwork& network, const Shape& input_shap
 {
     network.add_layer(make_unique<Convolutional>(
                           input_shape, Shape{1, 1, input_shape[2], 64}, "ReLU",
-                          Shape{1, 1}, "Same", true, "stem"),
+                          Shape{1, 1}, "Same", BatchNormalization::Yes, "stem"),
                       {-1});
     network.add_layer(make_unique<Convolutional>(
                           Shape{4, 4, 64}, Shape{3, 3, 64, 64}, "ReLU",
-                          Shape{1, 1}, "Same", true, "main"),
+                          Shape{1, 1}, "Same", BatchNormalization::Yes, "main"),
                       {0});
     auto residual = make_unique<Convolutional>(
         Shape{4, 4, 64}, Shape{1, 1, 64, 64}, "ReLU",
-        Shape{1, 1}, "Same", true, "residual");
+        Shape{1, 1}, "Same", BatchNormalization::Yes, "residual");
     residual->set_residual(true);
     network.add_layer(std::move(residual), {1, 0});
     network.add_layer(make_unique<Flatten>(Shape{4, 4, 64}), {2});
@@ -886,7 +886,7 @@ TEST_F(GpuComparison, MaxPoolingGradientPerRung)
     {
         network.add_layer(make_unique<Convolutional>(
                               input_shape, Shape{3, 3, 16, 32}, "ReLU",
-                              Shape{1, 1}, "Same", false, "conv"),
+                              Shape{1, 1}, "Same", BatchNormalization::No, "conv"),
                           {-1});
         network.add_layer(make_unique<Pooling>(Shape{4, 4, 32}, Shape{3, 3}, Shape{2, 2}, Shape{1, 1},
                                                "MaxPooling", "pool"),

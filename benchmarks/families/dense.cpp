@@ -107,12 +107,12 @@ unique_ptr<NeuralNetwork> build(const Shape& inputs, const Shape& targets, const
     for (Index i = 0; i < options.layers; ++i)
     {
         network->add_layer(make_unique<opennn::Dense>(current, Shape{options.hidden},
-                                                     options.activation, false,
+                                                     options.activation, BatchNormalization::No,
                                                      "dense_" + to_string(i + 1)));
         current = network->get_output_shape();
     }
 
-    network->add_layer(make_unique<opennn::Dense>(current, targets, "Sigmoid", false, "output"));
+    network->add_layer(make_unique<opennn::Dense>(current, targets, "Sigmoid", BatchNormalization::No, "output"));
     network->compile();
     network->set_parameters_glorot();
 

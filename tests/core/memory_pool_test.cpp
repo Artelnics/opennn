@@ -125,18 +125,18 @@ TEST(BackPropagationMemoryTest, FanoutAccumulationReusesConsumerDelta)
 
     NeuralNetwork network;
     network.add_layer(make_unique<opennn::Dense>(sequence_shape, feature_shape, "Identity",
-                                                 false, "stem"),
+                                                 BatchNormalization::No, "stem"),
                       {-1});
     network.add_layer(make_unique<opennn::Dense>(sequence_shape, feature_shape, "Identity",
-                                                 false, "branch_a"),
+                                                 BatchNormalization::No, "branch_a"),
                       {0});
     network.add_layer(make_unique<opennn::Dense>(sequence_shape, feature_shape, "Identity",
-                                                 false, "branch_b"),
+                                                 BatchNormalization::No, "branch_b"),
                       {0});
     network.add_layer(make_unique<Addition>(sequence_shape, "merge", 2), {1, 2});
     network.add_layer(make_unique<Flatten>(sequence_shape), {3});
     network.add_layer(make_unique<opennn::Dense>(Shape{8}, Shape{2}, "Identity",
-                                                 false, "output"),
+                                                 BatchNormalization::No, "output"),
                       {4});
     network.compile();
 
@@ -183,22 +183,22 @@ TEST(ForwardPropagationMemoryTest, InferenceReusesResidualAndPassthroughOutputs)
 
     NeuralNetwork network;
     network.add_layer(make_unique<opennn::Dense>(sequence_shape, Shape{4}, "Tanh",
-                                                 false, "stem"),
+                                                 BatchNormalization::No, "stem"),
                       {-1});
     network.add_layer(make_unique<opennn::Dense>(sequence_shape, Shape{4}, "Tanh",
-                                                 false, "branch_a"),
+                                                 BatchNormalization::No, "branch_a"),
                       {0});
     network.add_layer(make_unique<opennn::Dense>(sequence_shape, Shape{4}, "Tanh",
-                                                 false, "branch_b"),
+                                                 BatchNormalization::No, "branch_b"),
                       {0});
     network.add_layer(make_unique<opennn::Dense>(sequence_shape, Shape{4}, "Tanh",
-                                                 false, "detached_leaf"),
+                                                 BatchNormalization::No, "detached_leaf"),
                       {0});
     network.add_layer(make_unique<Addition>(sequence_shape, "residual_add", 2),
                       {1, 2});
     network.add_layer(make_unique<Flatten>(sequence_shape), {4});
     network.add_layer(make_unique<opennn::Dense>(Shape{8}, Shape{3}, "Identity",
-                                                 false, "output"),
+                                                 BatchNormalization::No, "output"),
                       {5});
     network.compile();
     network.set_parameters_random();
@@ -241,7 +241,7 @@ TEST(ForwardPropagationMemoryTest, SameLayerAuxiliariesNeverAlias)
 {
     NeuralNetwork network;
     auto gated = make_unique<opennn::Dense>(Shape{2, 4}, Shape{8}, "Identity",
-                                            false, "gated");
+                                            BatchNormalization::No, "gated");
     gated->set_gated(true);
     network.add_layer(std::move(gated), {-1});
     network.compile();
@@ -269,15 +269,15 @@ TEST(ForwardPropagationMemoryTest, TrainingRecomputeScratchUsesFutureActivations
     NeuralNetwork network;
     network.add_layer(make_unique<Convolutional>(
                           Shape{4, 4, 2}, Shape{1, 1, 2, 4}, "Identity",
-                          Shape{1, 1}, "Same", true, "conv_1"),
+                          Shape{1, 1}, "Same", BatchNormalization::Yes, "conv_1"),
                       {-1});
     network.add_layer(make_unique<Convolutional>(
                           feature_shape, Shape{1, 1, 4, 4}, "Identity",
-                          Shape{1, 1}, "Same", true, "conv_2"),
+                          Shape{1, 1}, "Same", BatchNormalization::Yes, "conv_2"),
                       {0});
     network.add_layer(make_unique<Convolutional>(
                           feature_shape, Shape{1, 1, 4, 4}, "Identity",
-                          Shape{1, 1}, "Same", false, "output"),
+                          Shape{1, 1}, "Same", BatchNormalization::No, "output"),
                       {1});
     network.compile();
     network.set_training_activation_recomputation(true);
@@ -309,15 +309,15 @@ TEST(ForwardPropagationMemoryTest, RecomputeOverlayUsesLifetimesAcrossLayerTypes
     NeuralNetwork network;
     network.add_layer(make_unique<Convolutional>(
                           Shape{4, 4, 2}, Shape{1, 1, 2, 4}, "Identity",
-                          Shape{1, 1}, "Same", true, "conv_1"),
+                          Shape{1, 1}, "Same", BatchNormalization::Yes, "conv_1"),
                       {-1});
     network.add_layer(make_unique<Convolutional>(
                           feature_shape, Shape{1, 1, 4, 4}, "Identity",
-                          Shape{1, 1}, "Same", true, "conv_2"),
+                          Shape{1, 1}, "Same", BatchNormalization::Yes, "conv_2"),
                       {0});
     network.add_layer(make_unique<Convolutional>(
                           feature_shape, Shape{1, 1, 4, 4}, "Identity",
-                          Shape{1, 1}, "Same", false, "conv_3"),
+                          Shape{1, 1}, "Same", BatchNormalization::No, "conv_3"),
                       {1});
     network.add_layer(make_unique<Addition>(feature_shape, "addition", 2),
                       {2, 2});
@@ -339,7 +339,7 @@ TEST(ForwardPropagationMemoryTest, TrainingDoesNotAllocateSkippedLeadingScaling)
     network.add_layer(make_unique<Scaling>(feature_shape), {-1});
     network.add_layer(make_unique<opennn::Dense>(
                           feature_shape, Shape{2}, "Identity",
-                          false, "output"),
+                          BatchNormalization::No, "output"),
                       {0});
     network.compile();
 
@@ -374,26 +374,26 @@ TEST(ForwardPropagationMemoryTest, TrainingReusesProjectionResidualOutput)
     NeuralNetwork network;
     network.add_layer(make_unique<Convolutional>(
                           input_shape, Shape{1, 1, 2, 4}, "ReLU",
-                          Shape{1, 1}, "Same", true, "stem"),
+                          Shape{1, 1}, "Same", BatchNormalization::Yes, "stem"),
                       {-1});
     network.add_layer(make_unique<Convolutional>(
                           Shape{4, 4, 4}, Shape{1, 1, 4, 8}, "ReLU",
-                          Shape{1, 1}, "Same", true, "main"),
+                          Shape{1, 1}, "Same", BatchNormalization::Yes, "main"),
                       {0});
     network.add_layer(make_unique<Convolutional>(
                           Shape{4, 4, 4}, Shape{1, 1, 4, 8}, "Identity",
-                          Shape{1, 1}, "Same", true, "projection"),
+                          Shape{1, 1}, "Same", BatchNormalization::Yes, "projection"),
                       {0});
 
     auto residual = make_unique<Convolutional>(
         stage_shape, Shape{1, 1, 8, 8}, "ReLU",
-        Shape{1, 1}, "Same", true, "residual");
+        Shape{1, 1}, "Same", BatchNormalization::Yes, "residual");
     residual->set_residual(true);
     network.add_layer(std::move(residual), {1, 2});
 
     network.add_layer(make_unique<Convolutional>(
                           stage_shape, Shape{1, 1, 8, 8}, "ReLU",
-                          Shape{1, 1}, "Same", true, "later"),
+                          Shape{1, 1}, "Same", BatchNormalization::Yes, "later"),
                       {3});
     network.compile();
     network.set_training_activation_recomputation(true);

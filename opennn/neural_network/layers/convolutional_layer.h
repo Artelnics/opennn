@@ -26,7 +26,7 @@ public:
                   const string& = "Identity",
                   const Shape& = {1, 1},
                   const string& = "Valid",
-                  bool = false,
+                  BatchNormalization = BatchNormalization::No,
                   const string& = "convolutional_layer");
 
     Shape get_input_shape() const noexcept override
@@ -76,7 +76,7 @@ public:
              const string& = "Identity",
              const Shape& = {1, 1},
              const string& = "Valid",
-             bool = false,
+             BatchNormalization = BatchNormalization::No,
              const string& = "convolutional_layer");
 
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 3); }

@@ -21,6 +21,7 @@ namespace opennn
 {
 
 enum class ForwardSlotKind { Pooled, Transient, TrainingOnly };
+enum class BatchNormalization { No, Yes };
 enum class Trainability { Frozen, Trainable };
 enum class LayerType;
 

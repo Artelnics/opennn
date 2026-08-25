@@ -168,12 +168,12 @@ TEST(Normalization3dTest, FusedResidualAddAliasesSafeBranchDelta)
 
     NeuralNetwork neural_network;
     const Index residual_index = neural_network.add_layer(
-                                     make_unique<opennn::Dense>(input_shape, Shape{3}, "Identity", false,
+                                     make_unique<opennn::Dense>(input_shape, Shape{3}, "Identity", BatchNormalization::No,
                                                                 "residual"),
                                      {-1});
 
     const Index branch_index = neural_network.add_layer(
-                                   make_unique<opennn::Dense>(input_shape, Shape{3}, "Identity", false,
+                                   make_unique<opennn::Dense>(input_shape, Shape{3}, "Identity", BatchNormalization::No,
                                                               "branch"),
                                    {residual_index});
 
@@ -209,11 +209,11 @@ TEST(Normalization3dTest, FusedResidualAddAliasesSafeBranchDelta)
 
     NeuralNetwork reference_network;
     reference_network.add_layer(
-        make_unique<opennn::Dense>(input_shape, Shape{3}, "Identity", false,
+        make_unique<opennn::Dense>(input_shape, Shape{3}, "Identity", BatchNormalization::No,
                                    "residual"),
         {-1});
     reference_network.add_layer(
-        make_unique<opennn::Dense>(input_shape, Shape{3}, "Identity", false,
+        make_unique<opennn::Dense>(input_shape, Shape{3}, "Identity", BatchNormalization::No,
                                    "branch"),
         {residual_index});
     reference_network.add_layer(make_unique<Addition>(input_shape),

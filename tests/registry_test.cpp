@@ -62,7 +62,7 @@ unique_ptr<Layer> make_serializable_layer(LayerType type)
     {
         auto layer = make_unique<opennn::Convolutional>(
             Shape{6, 6, 2}, Shape{3, 3, 2, 2}, "LeakyReLU", Shape{2, 2},
-            "Same", true, "convolutional_roundtrip");
+            "Same", BatchNormalization::Yes, "convolutional_roundtrip");
         layer->set_residual(true);
         return layer;
     }
@@ -70,7 +70,7 @@ unique_ptr<Layer> make_serializable_layer(LayerType type)
     case Dense:
     {
         auto layer = make_unique<opennn::Dense>(
-            Shape{3}, Shape{2}, "ReLU", true, "dense_roundtrip");
+            Shape{3}, Shape{2}, "ReLU", BatchNormalization::Yes, "dense_roundtrip");
         layer->set_use_bias(false);
         layer->set_transposed_inference(true);
         layer->set_dropout_rate(0.125f);

@@ -78,7 +78,7 @@ Convolutional::Convolutional(const Shape& new_input_shape,
                              const string& new_activation_function,
                              const Shape& new_stride_shape,
                              const string& new_convolution_type,
-                             bool new_batch_normalization,
+                             BatchNormalization new_batch_normalization,
                              const string& new_label)
     : Layer(LayerType::Convolutional)
 {
@@ -212,14 +212,16 @@ void Convolutional::set(const Shape& new_input_shape,
                         const string& new_activation_function,
                         const Shape& new_stride_shape,
                         const string& new_convolution_type,
-                        bool new_batch_normalization,
+                        BatchNormalization new_batch_normalization,
                         const string& new_label)
 {
+    const bool use_batch_normalization = new_batch_normalization == BatchNormalization::Yes;
+
     validate_convolution_configuration(new_input_shape,
                                        new_kernel_shape,
                                        new_stride_shape,
                                        new_convolution_type,
-                                       new_batch_normalization,
+                                       use_batch_normalization,
                                        residual,
                                        new_label);
 
@@ -241,7 +243,7 @@ void Convolutional::set(const Shape& new_input_shape,
 
     set_activation_function(new_activation_function);
 
-    batch_norm.features = new_batch_normalization ? convolution.kernels_number : 0;
+    batch_norm.features = use_batch_normalization ? convolution.kernels_number : 0;
 
     update_convolution_operator();
 }

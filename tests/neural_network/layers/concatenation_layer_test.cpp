@@ -250,13 +250,13 @@ TEST_F(ConcatenationLayerTest, ConcatBackwardGradientMatchesNumerical)
 
     const Index branch_a_index = neural_network.add_layer(make_unique<Convolutional>(data_input_shape,
                                                                                      Shape{ 1, 1, in_channels, branch_a_channels },
-                                                                                     "Identity", Shape{ 1, 1 }, "Same", true,
+                                                                                     "Identity", Shape{ 1, 1 }, "Same", BatchNormalization::Yes,
                                                                                      "branch_a"),
                                                           vector<Index>{ -1 });
 
     const Index branch_b_index = neural_network.add_layer(make_unique<Convolutional>(data_input_shape,
                                                                                      Shape{ 1, 1, in_channels, branch_b_channels },
-                                                                                     "Identity", Shape{ 1, 1 }, "Same", true,
+                                                                                     "Identity", Shape{ 1, 1 }, "Same", BatchNormalization::Yes,
                                                                                      "branch_b"),
                                                           vector<Index>{ -1 });
 

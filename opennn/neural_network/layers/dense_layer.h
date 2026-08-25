@@ -25,7 +25,7 @@ public:
     Dense(const Shape& = {},
           const Shape& = {},
           const string& = "Tanh",
-          bool = false,
+          BatchNormalization = BatchNormalization::No,
           const string& = "dense_layer");
 
     Shape get_output_shape() const override;
@@ -59,7 +59,7 @@ public:
     void set(const Shape& = {},
              const Shape& = {},
              const string& = "Tanh",
-             bool = false,
+             BatchNormalization = BatchNormalization::No,
              const string& = "dense_layer");
 
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 1, 2); }

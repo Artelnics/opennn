@@ -52,7 +52,7 @@ static void add_dense_stack(NeuralNetwork& network,
         network.add_layer(make_unique<Dense>(network.get_output_shape(),
                                              Shape{ complexity_dimensions[i] },
                                              hidden_activation,
-                                             false,
+                                             BatchNormalization::No,
                                              format("dense_layer_{}", i + 1)));
 }
 
@@ -83,7 +83,7 @@ static void add_regression_output(NeuralNetwork& network,
     network.add_layer(make_unique<Dense>(network.get_output_shape(),
                                          output_shape,
                                          "Identity",
-                                         false,
+                                         BatchNormalization::No,
                                          output_label));
 
     network.add_layer(make_unique<Unscaling>(output_shape));
@@ -121,7 +121,7 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
     add_layer(make_unique<Dense>(get_output_shape(),
                                    output_shape,
                                    output_shape[0] == 1 ? "Sigmoid" : "Softmax",
-                                   false,
+                                   BatchNormalization::No,
                                    "classification_layer"));
 
     finalize_build(*this);
@@ -177,25 +177,25 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
     add_layer(make_unique<Dense>(input_shape,
                                  mapping_shape,
                                  "Tanh",
-                                 false,
+                                 BatchNormalization::No,
                                  "mapping_layer"));
 
     add_layer(make_unique<Dense>(mapping_shape,
                                  bottleneck_shape,
                                  "Identity",
-                                 false,
+                                 BatchNormalization::No,
                                  "bottleneck_layer"));
 
     add_layer(make_unique<Dense>(bottleneck_shape,
                                  mapping_shape,
                                  "Tanh",
-                                 false,
+                                 BatchNormalization::No,
                                  "demapping_layer"));
 
     add_layer(make_unique<Dense>(mapping_shape,
                                  Shape{ output_shape },
                                  "Identity",
-                                 false,
+                                 BatchNormalization::No,
                                  "output_layer"));
 
     add_layer(make_unique<Unscaling>(output_shape));
@@ -225,7 +225,7 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
         add_layer(make_unique<Dense>(get_output_shape(),
                                      Shape{encoder_dimensions[i]},
                                      hidden_activation,
-                                     false,
+                                     BatchNormalization::No,
                                      bottleneck ? "bottleneck_layer"
                                                 : format("encoder_layer_{}", i + 1)));
     }
@@ -235,13 +235,13 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
         add_layer(make_unique<Dense>(get_output_shape(),
                                      Shape{encoder_dimensions[i]},
                                      hidden_activation,
-                                     false,
+                                     BatchNormalization::No,
                                      format("decoder_layer_{}", decoder)));
 
     add_layer(make_unique<Dense>(get_output_shape(),
                                  input_shape,
                                  output_activation,
-                                 false,
+                                 BatchNormalization::No,
                                  "output_layer"));
 
     add_layer(make_unique<Unscaling>(input_shape));

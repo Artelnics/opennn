@@ -66,7 +66,7 @@ public:
              Index = 0,
              Index = 0,
              Index = 0,
-             bool = false,
+             CausalMask = CausalMask::No,
              const string& = "multihead_attention_layer");
 
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 2); }

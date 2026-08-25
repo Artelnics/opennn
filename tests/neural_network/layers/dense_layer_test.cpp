@@ -176,7 +176,7 @@ TEST(Dense, BatchNormForwardOrGradient)
 
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{targets_number},
-                                                        "Identity", true));
+                                                        "Identity", BatchNormalization::Yes));
     neural_network.compile();
     neural_network.set_parameters_random();
 

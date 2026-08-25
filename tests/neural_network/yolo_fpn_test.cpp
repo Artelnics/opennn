@@ -51,10 +51,10 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Convolutional>(
         Shape{input_H, input_W, 3}, Shape{3, 3, 3, 4},
-        "Identity", Shape{1, 1}, "Same", false, "conv1"));
+        "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "conv1"));
     neural_network.add_layer(make_unique<Convolutional>(
         Shape{input_H, input_W, 4}, Shape{1, 1, 4, head_channels},
-        "Identity", Shape{1, 1}, "Same", false, "logits"));
+        "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "logits"));
     neural_network.add_layer(make_unique<Detection>(
         Shape{input_H, input_W, head_channels}, anchors, "detection"));
     neural_network.compile();
@@ -195,31 +195,31 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
 
     const Index s1 = neural_network.add_layer(make_unique<Convolutional>(
                          Shape{input_H, input_W, 3}, Shape{3, 3, 3, 4},
-                         "Identity", Shape{1, 1}, "Same", false, "stage1"));
+                         "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "stage1"));
 
     const Index s2 = neural_network.add_layer(make_unique<Convolutional>(
                          Shape{input_H, input_W, 4}, Shape{3, 3, 4, 4},
-                         "Identity", Shape{2, 2}, "Same", false, "stage2"));
+                         "Identity", Shape{2, 2}, "Same", BatchNormalization::No, "stage2"));
 
     const Index s3 = neural_network.add_layer(make_unique<Convolutional>(
                          Shape{4, 4, 4}, Shape{3, 3, 4, 4},
-                         "Identity", Shape{2, 2}, "Same", false, "stage3"));
+                         "Identity", Shape{2, 2}, "Same", BatchNormalization::No, "stage3"));
 
     neural_network.add_layer(make_unique<Convolutional>(
         Shape{2, 2, 4}, Shape{1, 1, 4, head_channels},
-        "Identity", Shape{1, 1}, "Same", false, "logits_large"), {s3});
+        "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "logits_large"), {s3});
     neural_network.add_layer(make_unique<Detection>(
         Shape{2, 2, head_channels}, anchors_large, "detection_large"));
 
     neural_network.add_layer(make_unique<Convolutional>(
         Shape{4, 4, 4}, Shape{1, 1, 4, head_channels},
-        "Identity", Shape{1, 1}, "Same", false, "logits_medium"), {s2});
+        "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "logits_medium"), {s2});
     neural_network.add_layer(make_unique<Detection>(
         Shape{4, 4, head_channels}, anchors_medium, "detection_medium"));
 
     neural_network.add_layer(make_unique<Convolutional>(
         Shape{input_H, input_W, 4}, Shape{1, 1, 4, head_channels},
-        "Identity", Shape{1, 1}, "Same", false, "logits_small"), {s1});
+        "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "logits_small"), {s1});
     neural_network.add_layer(make_unique<Detection>(
         Shape{input_H, input_W, head_channels}, anchors_small, "detection_small"));
 

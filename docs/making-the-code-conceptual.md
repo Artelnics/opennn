@@ -278,6 +278,8 @@ build directories are in [../AGENTS.md](../AGENTS.md). Read it first.
 | Dataset role-count overloads remain visible on derived datasets | `dataset/tabular_dataset.h`, `dataset/yolo_dataset.h` |
 | Optimizer workspace separated from algorithm-specific state | `training_strategy/optimizer.h`, four optimizer implementations |
 | `Shuffle { No, Yes }` for batch ordering and `Trainability { Frozen, Trainable }` for layer construction | `dataset/dataset.h`, `neural_network/layers/layer.h` |
+| `BatchNormalization { No, Yes }` replacing constructor and vision-builder flags | `neural_network/layers/layer.h`, dense and convolutional layers |
+| `CausalMask { No, Yes }` replacing attention setup flags | `neural_network/operators/attention_operator.h`, multi-head attention |
 
 Deliberately **not** merged, with reasons in the commit messages: `SampleRole`
 and `FillMode` into `ForwardPropagationMode`; the `Rung` family in

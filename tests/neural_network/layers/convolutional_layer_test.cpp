@@ -22,7 +22,7 @@ struct ConvolutionalLayerConfig {
     Shape stride_shape;
     string activation_function;
     string convolution_type;
-    bool batch_normalization;
+    BatchNormalization batch_normalization;
     string test_name;
 };
 
@@ -87,7 +87,7 @@ INSTANTIATE_TEST_SUITE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::test
                                                                                   {1, 1},
                                                                                   "Identity",
                                                                                   "Valid",
-                                                                                  false,
+                                                                                  BatchNormalization::No,
                                                                                   "ValidPaddingWithoutBN"
                                                                               },
 
@@ -97,7 +97,7 @@ INSTANTIATE_TEST_SUITE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::test
                                                                                   {1, 1},
                                                                                   "ReLU",
                                                                                   "Same",
-                                                                                  false,
+                                                                                  BatchNormalization::No,
                                                                                   "SamePaddingWithoutBN"
                                                                               },
 
@@ -107,7 +107,7 @@ INSTANTIATE_TEST_SUITE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::test
                                                                                   {1, 1},
                                                                                   "ReLU",
                                                                                   "Same",
-                                                                                  true,
+                                                                                  BatchNormalization::Yes,
                                                                                   "SamePaddingWithBN"
                                                                               }
                                                                               ));
@@ -132,7 +132,8 @@ TEST_P(ConvolutionalLayerTest, Constructor) {
     EXPECT_EQ(convolutional_layer.get_row_stride(), parameters.stride_shape[0]);
     EXPECT_EQ(convolutional_layer.get_column_stride(), parameters.stride_shape[1]);
     EXPECT_EQ(convolutional_layer.get_activation_function(), ActivationOperator::from_string(parameters.activation_function));
-    EXPECT_EQ(convolutional_layer.get_batch_normalization(), parameters.batch_normalization);
+    EXPECT_EQ(convolutional_layer.get_batch_normalization(),
+              parameters.batch_normalization == BatchNormalization::Yes);
 }
 
 TEST_P(ConvolutionalLayerTest, OutputShapeDerivedFromConfig) {
@@ -257,12 +258,14 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
 
     const type* output_data = output_view.as<type>();
 
-    if (!parameters.batch_normalization && parameters.activation_function == "Identity")
+    if (parameters.batch_normalization == BatchNormalization::No
+        && parameters.activation_function == "Identity")
     {
         for (Index i = 0; i < output_view.size(); ++i)
             EXPECT_NEAR(output_data[i], full_sum, 1e-5);
     }
-    else if (!parameters.batch_normalization && parameters.activation_function == "ReLU"
+    else if (parameters.batch_normalization == BatchNormalization::No
+             && parameters.activation_function == "ReLU"
              && parameters.convolution_type == "Same")
     {
         const Index output_height = output_view.get_shape()[1];
@@ -380,27 +383,27 @@ TEST(ConvolutionalLayerTest, ProjectionResidualReuseGradientMatchesNumerical)
     NeuralNetwork network;
     network.add_layer(make_unique<Convolutional>(
                           input_shape, Shape{1, 1, 2, 3}, "ReLU",
-                          Shape{1, 1}, "Same", true, "stem"),
+                          Shape{1, 1}, "Same", BatchNormalization::Yes, "stem"),
                       {-1});
     network.add_layer(make_unique<Convolutional>(
                           Shape{2, 2, 3}, Shape{1, 1, 3, 4}, "ReLU",
-                          Shape{1, 1}, "Same", true, "main"),
+                          Shape{1, 1}, "Same", BatchNormalization::Yes, "main"),
                       {0});
     network.add_layer(make_unique<Convolutional>(
                           Shape{2, 2, 3}, Shape{1, 1, 3, 4}, "Identity",
-                          Shape{1, 1}, "Same", true, "projection"),
+                          Shape{1, 1}, "Same", BatchNormalization::Yes, "projection"),
                       {0});
 
     auto residual = make_unique<Convolutional>(
         Shape{2, 2, 4}, Shape{1, 1, 4, 4}, "ReLU",
-        Shape{1, 1}, "Same", true, "residual");
+        Shape{1, 1}, "Same", BatchNormalization::Yes, "residual");
     residual->set_residual(true);
     EXPECT_EQ(residual->get_sources_number(), 2);
     network.add_layer(std::move(residual), {1, 2});
 
     network.add_layer(make_unique<Convolutional>(
                           Shape{2, 2, 4}, Shape{1, 1, 4, 2}, "ReLU",
-                          Shape{1, 1}, "Same", true, "later"),
+                          Shape{1, 1}, "Same", BatchNormalization::Yes, "later"),
                       {3});
     network.add_layer(make_unique<Flatten>(Shape{2, 2, 2}), {4});
     network.add_layer(make_unique<opennn::Dense>(

@@ -14,6 +14,8 @@
 namespace opennn
 {
 
+enum class CausalMask { No, Yes };
+
 struct AttentionOperator : Operator
 {
     Index heads_number = 0;
@@ -33,7 +35,7 @@ struct AttentionOperator : Operator
 
     void set(Index, Index,
              Index, Index,
-             bool, Type);
+             CausalMask, Type);
 
     static bool sdpa_supported(Type, Device);
 

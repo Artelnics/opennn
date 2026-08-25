@@ -101,7 +101,7 @@ TEST(AttentionOperatorTest, Bf16PackSlotsAreAligned)
 TEST(AttentionOperatorTest, CausalMaskLetsAQueryReadOnlyItselfAndThePast)
 {
     AttentionOperator attention;
-    attention.set(heads, head_dimension, query_length, source_length, true, Type::FP32);
+    attention.set(heads, head_dimension, query_length, source_length, CausalMask::Yes, Type::FP32);
 
     ASSERT_EQ(attention.causal_mask.rows(), query_length);
     ASSERT_EQ(attention.causal_mask.cols(), source_length);
@@ -124,7 +124,7 @@ TEST(AttentionOperatorTest, CausalMaskLetsAQueryReadOnlyItselfAndThePast)
 TEST(AttentionOperatorTest, WithoutCausalMaskingEveryQuerySeesEverySource)
 {
     AttentionOperator attention;
-    attention.set(heads, head_dimension, query_length, source_length, false, Type::FP32);
+    attention.set(heads, head_dimension, query_length, source_length, CausalMask::No, Type::FP32);
 
     for (Index i = 0; i < attention.causal_mask.size(); ++i)
         EXPECT_FLOAT_EQ(attention.causal_mask.data()[i], 0.0f) << "at index " << i;

@@ -16,7 +16,7 @@ namespace opennn
 Dense::Dense(const Shape& new_input_shape,
              const Shape& new_output_shape,
              const string& new_activation_function,
-             bool new_batch_normalization,
+             BatchNormalization new_batch_normalization,
              const string& new_label)
     : Layer(LayerType::Dense)
 {
@@ -324,7 +324,7 @@ void Dense::set_tied_weight(const TiedWeight& tied_weight)
 void Dense::set(const Shape& new_input_shape,
                 const Shape& new_output_shape,
                 const string& new_activation_function,
-                bool new_batch_normalization,
+                BatchNormalization new_batch_normalization,
                 const string& new_label)
 {
     if (new_input_shape.empty() && new_output_shape.empty())
@@ -345,7 +345,7 @@ void Dense::set(const Shape& new_input_shape,
         function = ActivationFunction::Sigmoid;
     activation_operator.set_activation_function(function);
 
-    batch_norm.features = new_batch_normalization ? output_features : 0;
+    batch_norm.features = new_batch_normalization == BatchNormalization::Yes ? output_features : 0;
 
     set_label(new_label);
     configure_operators();

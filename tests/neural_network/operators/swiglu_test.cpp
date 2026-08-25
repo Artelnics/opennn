@@ -76,7 +76,7 @@ TEST(GatedDenseTest, ForwardMatchesHandComputed)
     const Index features = 2;
     const Index outputs = 3;
 
-    auto dense = make_unique<opennn::Dense>(Shape{features}, Shape{outputs}, "Identity", false, "gate_up");
+    auto dense = make_unique<opennn::Dense>(Shape{features}, Shape{outputs}, "Identity", BatchNormalization::No, "gate_up");
     dense->set_use_bias(false);
     dense->set_gated(true);
 
@@ -134,7 +134,7 @@ float gated_dense_max_gradient_error(bool use_bias)
 
     NeuralNetwork neural_network;
 
-    auto gate_up = make_unique<opennn::Dense>(input_shape, Shape{intermediate}, "Identity", false, "gate_up");
+    auto gate_up = make_unique<opennn::Dense>(input_shape, Shape{intermediate}, "Identity", BatchNormalization::No, "gate_up");
     gate_up->set_use_bias(use_bias);
     gate_up->set_gated(true);
     const Index gated_index = neural_network.add_layer(std::move(gate_up), {-1});
@@ -174,7 +174,7 @@ TEST(GatedDenseTest, SaveLoadRoundTrip)
     const Index intermediate = 5;
 
     auto gate_up = make_unique<opennn::Dense>(Shape{sequence_length, hidden}, Shape{intermediate},
-                                              "Identity", false, "gate_up");
+                                              "Identity", BatchNormalization::No, "gate_up");
     gate_up->set_use_bias(false);
     gate_up->set_gated(true);
 

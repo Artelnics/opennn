@@ -195,7 +195,7 @@ void make_tiny_decoder(NeuralNetwork& network,
             Shape{sequence_length, 2},
             Shape{vocabulary_size},
             "Identity",
-            false,
+            BatchNormalization::No,
             "lm_head"),
         {0});
     network.compile();

@@ -106,12 +106,12 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Pooling3d>(get_output_shape(), pooling_method));
 
-    add_layer(make_unique<Dense>(get_output_shape(), Shape({hidden_neurons}), "ReLU", false, "dense_layer_1"));
+    add_layer(make_unique<Dense>(get_output_shape(), Shape({hidden_neurons}), "ReLU", BatchNormalization::No, "dense_layer_1"));
 
     add_layer(make_unique<Dense>(get_output_shape(),
                                  output_shape,
                                  output_shape[0] == 1 ? "Sigmoid" : "Softmax",
-                                 false,
+                                 BatchNormalization::No,
                                  "classification_layer"));
 
     finalize_build(*this);
@@ -136,9 +136,9 @@ static Index add_feed_forward(NeuralNetwork& network,
     const Index seq_len = input_shape[0];
     const Index emb_dim = input_shape[1];
     network.add_layer(make_unique<Dense>(input_shape, Shape{ff_dim},
-                                         internal_activation, false, internal_label));
+                                         internal_activation, BatchNormalization::No, internal_label));
     return network.add_layer(make_unique<Dense>(Shape{seq_len, ff_dim}, Shape{emb_dim},
-                                                "Identity", false, external_label));
+                                                "Identity", BatchNormalization::No, external_label));
 }
 
 Transformer::Transformer()
@@ -224,7 +224,7 @@ Transformer::Transformer(Index input_sequence_length,
             decoder_shape, heads_number, "decoder_self_attention" + suffix);
         decoder_self_attention->set(decoder_sequence_length, decoder_sequence_length,
                                     embedding_dimension, heads_number,
-                                    true,
+                                    CausalMask::Yes,
                                     "decoder_self_attention" + suffix);
         const Index self_attn_index = add_layer(std::move(decoder_self_attention), {current_decoder_index});
 
@@ -251,7 +251,7 @@ Transformer::Transformer(Index input_sequence_length,
     }
 
     add_layer(make_unique<Dense>(decoder_shape, Shape{output_vocabulary_size},
-                                 "Softmax", false, "output_projection"));
+                                 "Softmax", BatchNormalization::No, "output_projection"));
 
     finalize_build(*this);
 }
@@ -356,7 +356,7 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
             block_shape, heads_number, "self_attention" + suffix);
         self_attention->set(sequence_length, sequence_length,
                             embedding_dimension, heads_number,
-                            true,
+                            CausalMask::Yes,
                             "self_attention" + suffix);
         const Index attn_index = add_layer(std::move(self_attention), {attention_input_index});
 
@@ -399,7 +399,7 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
                   {current_index});
 
     add_layer(make_unique<Dense>(block_shape, Shape{vocabulary_size},
-                                 "Softmax", false, "output_projection"));
+                                 "Softmax", BatchNormalization::No, "output_projection"));
 
     finalize_build(*this);
 }
@@ -511,7 +511,7 @@ Qwen3::Qwen3(Index sequence_length,
 
     auto add_linear = [&](const Shape& in_shape, Index out_features, const string& name, Index source)
     {
-        auto dense = make_unique<Dense>(in_shape, Shape{out_features}, "Identity", false, name);
+        auto dense = make_unique<Dense>(in_shape, Shape{out_features}, "Identity", BatchNormalization::No, name);
         dense->set_use_bias(false);
         return add_layer(std::move(dense), {source});
     };
@@ -528,7 +528,7 @@ Qwen3::Qwen3(Index sequence_length,
 
         const Index post_norm = add_norm("post_norm" + suffix, residual);
 
-        auto gate_up = make_unique<Dense>(block, Shape{intermediate_size}, "Identity", false, "gate_up" + suffix);
+        auto gate_up = make_unique<Dense>(block, Shape{intermediate_size}, "Identity", BatchNormalization::No, "gate_up" + suffix);
         gate_up->set_use_bias(false);
         gate_up->set_gated(true);
         const Index ffn = add_layer(std::move(gate_up), {post_norm});
@@ -711,10 +711,10 @@ BertForSequenceClassification::BertForSequenceClassification(Index sequence_leng
                                      PoolingMethod::FirstToken, "cls_pooling"),
               {encoder_index});
 
-    add_layer(make_unique<Dense>(Shape{hidden_size}, Shape{hidden_size}, "Tanh", false, "pooler"));
+    add_layer(make_unique<Dense>(Shape{hidden_size}, Shape{hidden_size}, "Tanh", BatchNormalization::No, "pooler"));
 
     add_layer(make_unique<Dense>(Shape{hidden_size}, Shape{labels_number},
-                                 labels_number == 1 ? "Sigmoid" : "Softmax", false, "classifier"));
+                                 labels_number == 1 ? "Sigmoid" : "Softmax", BatchNormalization::No, "classifier"));
 
     finalize_build(*this);
 }
