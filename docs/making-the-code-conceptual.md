@@ -1,16 +1,28 @@
 # Making the code conceptual
 
 A standing task prompt. Hand this to an agent as-is, or paste the "Your task"
-section into a fresh session.
+section into a fresh session. It asks for a **plan**, not an implementation.
 
 ---
 
 ## Your task
 
 Find places in OpenNN where the code makes the reader reconstruct a concept that
-the code should have named, give that concept a name, and apply it everywhere it
-occurs. Report what you found **before** you implement it. Do not lose
+the code should have named, and **produce a plan** for naming it. Do not lose
 performance. Do not add comments.
+
+**Deliver a plan, not an implementation.** Stop when the plan is written and wait
+for approval. Do not edit source files, do not start with "the small obvious one
+first", and do not implement a finding merely because it looks safe. The audit is
+the deliverable; the edit is a separate, later decision that is not yours to make.
+
+This is not caution for its own sake. Several findings in this repo look
+obviously correct and are wrong — the rejected list below is longer than the
+accepted one — and the cost of catching that in a plan is a paragraph, where the
+cost of catching it after a tree-wide mechanical rewrite is a day. The plan is
+also where scope gets decided: a change touching 175 call sites is a different
+conversation from one touching six, and only the reader of the plan can say which
+is wanted right now.
 
 ---
 
@@ -113,18 +125,45 @@ A concept that costs throughput is not an improvement. The rules:
 
 ## Method
 
+Steps 1 to 3 are your task. Steps 4 onward happen only after the plan is approved.
+
 1. **Scan, don't guess.** Write a throwaway script that counts instances across
    the whole tree. Rank candidates by how many sites they touch. A hand-picked
-   example is usually the weakest case.
+   example is usually the weakest case. Reading files to confirm what a scan
+   found is expected; editing them is not.
 2. **Verify the premise before designing.** Read what the code actually branches
    on and what the lifetimes are. Several obvious-looking consolidations in this
-   repo are wrong, and the audit is what catches them.
-3. **Report findings and wait.** Give counts, file references, the recommendation,
-   and what you deliberately excluded and why.
+   repo are wrong, and this is the step that catches them. A plan that skipped
+   this is worth nothing, because the pattern that survives a count is not
+   necessarily the pattern that survives a reading.
+3. **Write the plan. Then stop.**
+
+Then, and only if asked:
+
 4. **Implement mechanically.** Prefer a script over hand edits for a change with
    many sites, and assert that each replacement matched exactly once.
 5. **Verify against the baseline.** Both builds, both suites. See below.
 6. **Commit with the reasoning**, including what you chose *not* to merge.
+
+### What the plan must contain
+
+- **The finding**, as a count: how many declarations, how many call sites, how
+  many files. Numbers decide whether it is a pattern or an anecdote.
+- **File and line references** for a representative sample, enough that the
+  reader can check your reading without repeating your scan.
+- **The concept you propose**, written out as the actual type or signature it
+  would become — not a description of one.
+- **A before and after** at one real call site, copied from the tree.
+- **The blast radius**: which files change, whether public signatures move,
+  whether Neural Designer is affected, whether tests need updating.
+- **The performance argument**: which of the rules above the change touches, and
+  why it costs nothing. If it touches a hot path, say which benchmark would show
+  it.
+- **What you rejected and why.** This is not padding. A plan that only lists what
+  to do hides the judgement that matters most, and the reasons for rejection are
+  what stop the next agent re-proposing the same wrong thing.
+- **A recommendation.** Rank the findings and say which one you would do. Do not
+  present a menu and leave the choice unmade.
 
 ---
 
@@ -165,6 +204,9 @@ and `FillMode` into `ForwardPropagationMode`; the `Rung` family in
 through `template<typename Rung> rung()`).
 
 ## Open candidates
+
+These are leads, not a work queue. Each still needs the audit in step 2 before it
+becomes a plan, and the counts below are from an earlier scan — re-derive them.
 
 - `multiply(a, bool, b, bool, out, alpha, beta)` in `core/tensor_operations.h` —
   two adjacent unnamed transpose flags, 16 unreadable call sites. Wants
