@@ -159,7 +159,38 @@ def clocks_locked() -> bool:
     return run_text(["nvidia-smi", "--query-gpu=persistence_mode",
                      "--format=csv,noheader"], timeout=10).strip() == "Enabled"
 
-def result_destination(dirty: bool | None = None, device: str = "cuda") -> Path:
+def cpu_busy_fraction(seconds: float = 1.0) -> float:
+    """How much of the machine is already working, sampled now.
+
+    Not the load average, which is useless here: it decays over minutes, so
+    after the suite's own previous launch it reads 21 on a machine that is
+    idle. This is the instantaneous non-idle fraction across all hardware
+    threads -- quiet measures under 0.01, one saturated core measures about
+    one over the thread count.
+    """
+    def snapshot() -> tuple[int, int]:
+        values = [int(v) for v in
+                  Path("/proc/stat").read_text().split("\n")[0].split()[1:]]
+        return sum(values), values[3] + values[4]        # total, idle + iowait
+
+    total_before, idle_before = snapshot()
+    time.sleep(seconds)
+    total_after, idle_after = snapshot()
+
+    elapsed = total_after - total_before
+    if elapsed <= 0:
+        return 0.0
+
+    return max(0.0, 1.0 - (idle_after - idle_before) / elapsed)
+
+
+# One busy core on this 28-thread part is about 0.036, and a quiet machine
+# measures under 0.01, so this trips on roughly a single competing process.
+BUSY_THRESHOLD = float(os.environ.get("OPENNN_BENCH_BUSY_THRESHOLD", "0.03"))
+
+
+def result_destination(dirty: bool | None = None, device: str = "cuda",
+                       busy: bool = False) -> Path:
     """The evidence store, or `scratch/` when the run cannot be evidence.
 
     Two conditions, both enforced here rather than asked for in prose.
@@ -168,6 +199,11 @@ def result_destination(dirty: bool | None = None, device: str = "cuda") -> Path:
     The suite this replaces stated that rule and checked it nowhere, which is
     how 39 of its 107 artifacts came to be dirty-tree results filed as
     reproducible ones.
+
+    And a machine that was not quiet, because a competing process does not
+    slow both engines equally -- a single browser tab at one core cost 35% of
+    achievable memory bandwidth here, which moved a bandwidth-bound GEMM step
+    by that much while leaving cache-resident ones untouched.
 
     And an unlocked GPU clock, for the same reason at one remove: this card
     drifts about 8% across a day, so margins under ~2% are not resolvable while
@@ -181,7 +217,8 @@ def result_destination(dirty: bool | None = None, device: str = "cuda") -> Path:
         dirty = bool(git_metadata().get("dirty", True))
 
     unlocked = device == "cuda" and not clocks_locked()
-    destination = RESULTS / "scratch" if (dirty or unlocked) else RESULTS
+    destination = (RESULTS / "scratch"
+                   if (dirty or unlocked or bool(busy)) else RESULTS)
     destination.mkdir(parents=True, exist_ok=True)
     return destination
 

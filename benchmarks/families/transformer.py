@@ -26,6 +26,7 @@ import collections
 import contextlib
 import math
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -78,6 +79,19 @@ class Seq2Seq(nn.Module):
         s = self.positions(self.source_embedding(source) * self.scale)
         t = self.positions(self.target_embedding(target) * self.scale)
         return self.output(self.decoder(t, self.encoder(s)))
+
+def report_blas() -> None:
+    """Which BLAS this engine dispatches to, printed like OpenNN prints it.
+
+    PyTorch's is fixed at build time -- the wheels are MKL-backed -- while
+    OpenNN's is chosen at runtime. Recording both is what stops a comparison
+    quietly turning into Eigen against MKL.
+    """
+    settings = torch.__config__.show()
+    match = re.search(r"BLAS_INFO=(\w+)", settings)
+
+    print(f"blas={match.group(1) if match else 'unknown'}")
+
 
 def build(vocab: int, sequence: int, opts: dict) -> nn.Module:
     """The transformer family. Nothing else here constructs the network."""
@@ -214,6 +228,7 @@ def train_like(argv: list[str], mode: str) -> int:
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode={mode}\ndevice={opts['device']}")
+    report_blas()
     source, target, vocab, sequence = load_corpus(argv[2])
     print(f"samples={source.shape[0]} sequence={sequence} "
           f"input_vocab={vocab} target_vocab={vocab} "
@@ -272,6 +287,7 @@ def infer(argv: list[str]) -> int:
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode=infer\ndevice={opts['device']}")
+    report_blas()
     source, target, vocab, sequence = load_corpus(argv[2])
     print(f"samples={source.shape[0]} sequence={sequence} "
           f"input_vocab={vocab} target_vocab={vocab}")
@@ -315,6 +331,7 @@ def capacity(argv: list[str]) -> int:
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode=capacity\ndevice={opts['device']}\nbatch={batch}")
+    report_blas()
 
     try:
         source, target, vocab, sequence = load_corpus(argv[2])

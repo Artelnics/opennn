@@ -25,6 +25,7 @@ from __future__ import annotations
 import contextlib
 import csv
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -46,6 +47,19 @@ class Forecaster(nn.Module):
     def forward(self, x):
         output, _ = self.lstm(x)
         return self.head(output[:, -1, :])
+
+def report_blas() -> None:
+    """Which BLAS this engine dispatches to, printed like OpenNN prints it.
+
+    PyTorch's is fixed at build time -- the wheels are MKL-backed -- while
+    OpenNN's is chosen at runtime. Recording both is what stops a comparison
+    quietly turning into Eigen against MKL.
+    """
+    settings = torch.__config__.show()
+    match = re.search(r"BLAS_INFO=(\w+)", settings)
+
+    print(f"blas={match.group(1) if match else 'unknown'}")
+
 
 def build(features: int, opts: dict) -> nn.Module:
     """The LSTM family. Nothing else here constructs the network."""
@@ -164,6 +178,7 @@ def train_like(argv: list[str], mode: str) -> int:
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode={mode}\ndevice={opts['device']}")
+    report_blas()
 
     windows, targets = load_series(argv[2], opts["past"])
     x = torch.from_numpy(windows).to(opts["device"])
@@ -223,6 +238,7 @@ def infer(argv: list[str]) -> int:
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode=infer\ndevice={opts['device']}")
+    report_blas()
 
     windows, _ = load_series(argv[2], opts["past"])
     x = torch.from_numpy(windows).to(opts["device"])
@@ -266,6 +282,7 @@ def capacity(argv: list[str]) -> int:
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode=capacity\ndevice={opts['device']}\nbatch={batch}")
+    report_blas()
 
     try:
         windows, targets = load_series(argv[2], opts["past"])

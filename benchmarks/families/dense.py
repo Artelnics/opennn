@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -42,6 +43,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common import binary_metrics  # noqa: E402
 
 SEED = 42
+
+def report_blas() -> None:
+    """Which BLAS this engine dispatches to, printed like OpenNN prints it.
+
+    PyTorch's is fixed at build time -- the wheels are MKL-backed -- while
+    OpenNN's is chosen at runtime. Recording both is what stops a comparison
+    quietly turning into Eigen against MKL.
+    """
+    settings = torch.__config__.show()
+    match = re.search(r"BLAS_INFO=(\w+)", settings)
+
+    print(f"blas={match.group(1) if match else 'unknown'}")
+
 
 def report_opened(path: str, role: str) -> None:
     """Announce the file actually opened, not the one passed in.
@@ -186,6 +200,7 @@ def train_like(argv: list[str], mode: str) -> int:
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode={mode}\ndevice={opts['device']}")
+    report_blas()
 
     x = torch.from_numpy(x_np).to(opts["device"]).contiguous()
     y = torch.from_numpy(y_np).to(opts["device"]).contiguous()
@@ -265,6 +280,7 @@ def infer(argv: list[str]) -> int:
     x_np, _ = load_csv(argv[2], "test")
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode=infer\ndevice={opts['device']}")
+    report_blas()
 
     x = torch.from_numpy(x_np).to(opts["device"]).contiguous()
     samples = x.shape[0]
@@ -314,6 +330,7 @@ def capacity(argv: list[str]) -> int:
     x_np, y_np = load_csv(argv[2])
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode=capacity\ndevice={opts['device']}\nbatch={batch}")
+    report_blas()
 
     try:
         x = torch.from_numpy(x_np).to(opts["device"]).contiguous()
