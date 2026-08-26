@@ -44,6 +44,7 @@
 #endif
 
 #include "opennn/core/configuration.h"
+#include "opennn/core/memory_debug.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/dataset.h"
@@ -189,7 +190,7 @@ int main(int argc, char* argv[])
         cout << "engine=opennn\nmode=" << mode
              << "\ndevice=" << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
 
-        cout << "dataset_opened=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
+        cout << "dataset_train=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
         TabularDataset dataset(argv[2], ",", false, false);
 
         // Contract item 3 again: the training split lives on the device, so an
@@ -201,6 +202,7 @@ int main(int argc, char* argv[])
         dataset.set_sample_roles("Training");
         dataset.set_variable_scalers("None");     // prepare_higgs.py already normalised
 
+        cout << "dataset_test=" << filesystem::absolute(argv[3]).string() << "\n" << flush;
         TabularDataset test_dataset(argv[3], ",", false, false);
         test_dataset.set_sample_roles("Testing");
 
@@ -324,7 +326,7 @@ int main(int argc, char* argv[])
         cout << "engine=opennn\nmode=infer\ndevice="
              << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
 
-        cout << "dataset_opened=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
+        cout << "dataset_test=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
         TabularDataset dataset(argv[2], ",", false, false);
         dataset.set_sample_roles("Testing");
 
@@ -339,7 +341,12 @@ int main(int argc, char* argv[])
         for (const Index batch : batches)
         {
             const Index processed = (samples / batch) * batch;
-            ForwardPropagation forward_propagation(batch, network.get());
+            // Inference mode, not the default. A training arena keeps every
+            // layer's activations alive for the backward pass that never
+            // comes; inference can reuse buffers between layers. Measured on
+            // this cell the difference is 32 MiB against 16.
+            ForwardPropagation forward_propagation(batch, network.get(),
+                                                   ForwardPropagationMode::Inference);
 
             // Touching the output keeps LTO from deleting the forward pass.
             // Only CPU can read a scalar out of it: `as_matrix` requires CPU
@@ -421,7 +428,7 @@ int main(int argc, char* argv[])
         // of the first. The runner re-launches and reads the exit code.
         try
         {
-            cout << "dataset_opened=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
+            cout << "dataset_train=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
         TabularDataset dataset(argv[2], ",", false, false);
             dataset.set_sample_roles("Training");
             dataset.set_variable_scalers("None");
@@ -445,6 +452,9 @@ int main(int argc, char* argv[])
     {
         return usage();
     }
+
+    // OPENNN_MEMORY_DEBUG=1 attributes the resident set member by member.
+    if (memory_debug::enabled()) memory_debug::print(cout);
 
     cout << "RESULT=OK\n";
 

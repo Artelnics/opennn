@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/dataset/dataset.h"
+#include "opennn/core/memory_debug.h"
 
 #include <utility>
 
@@ -64,6 +65,44 @@ vector<Index> Dataset::get_sample_indices(SampleRole role_type) const
 {
     return filter_indices(active_sample_roles(), get_samples_number(role_type),
                           [role_type](SampleRole role) { return role == role_type; });
+}
+
+void Dataset::record_memory(const string& stage) const
+{
+    if (!memory_debug::enabled()) return;
+
+    const Index samples = data.rows();
+
+    memory_debug::record("dataset", "data", Index(data.size()) * Index(sizeof(float)),
+                         stage + ": " + to_string(data.rows()) + "x" + to_string(data.cols()));
+
+    memory_debug::record("dataset", "sample_roles",
+                         Index(sample_roles.capacity() * sizeof(SampleRole)), stage);
+
+    // std::string is 32 bytes here even when empty, so a per-sample vector of
+    // them costs 32 bytes a row before holding a single character.
+    Index ids_bytes = Index(sample_ids.capacity() * sizeof(string));
+    for (const string& id : sample_ids)
+        if (id.capacity() >= 16) ids_bytes += Index(id.capacity() + 1);
+    memory_debug::record("dataset", "sample_ids", ids_bytes,
+                         stage + ": " + to_string(sample_ids.size()) + " entries");
+
+    Index preview_bytes = Index(data_file_preview.capacity() * sizeof(vector<string>));
+    for (const vector<string>& row : data_file_preview)
+    {
+        preview_bytes += Index(row.capacity() * sizeof(string));
+        for (const string& cell : row)
+            if (cell.capacity() >= 16) preview_bytes += Index(cell.capacity() + 1);
+    }
+    memory_debug::record("dataset", "data_file_preview", preview_bytes, stage);
+
+    Index variables_bytes = Index(variables.capacity() * sizeof(Variable));
+    for (const Variable& variable : variables)
+        variables_bytes += Index(variable.categories.capacity() * sizeof(string));
+    memory_debug::record("dataset", "variables", variables_bytes,
+                         stage + ": " + to_string(variables.size()) + " variables");
+
+    (void)samples;
 }
 
 void Dataset::set_fold_split(const vector<Index>& training, const vector<Index>& validation)

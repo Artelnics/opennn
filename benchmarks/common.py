@@ -309,25 +309,38 @@ class Monitor:
         self.idle_mib = 0.0
         self.idle_watts = 0.0
         self.peak_rss_mib = 0.0
+        self.peak_file_mib = 0.0
         self._measure_idle = measure_idle_first
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._process: subprocess.Popen | None = None
 
     def watch_rss(self, pid: int) -> None:
-        """Track a child's peak resident set, for CPU runs.
+        """Track a child's peak *anonymous* resident set, for CPU runs.
 
-        VmHWM is a high-water mark the kernel maintains, so reading it once
-        before the child exits gives its true peak -- polling frequency does
-        not matter, only that we read it at all.
+        Anonymous, not total. RssFile counts pages backed by a mapped file,
+        and OpenNN's CSV reader mmaps its input rather than copying it -- so
+        total RSS charges it ~150 MiB for a 151 MB file it never allocated,
+        while an engine that reads the same file into heap is charged the same
+        amount for memory the kernel cannot reclaim. Counting mapped pages
+        penalises the cheaper strategy.
+
+        Measured on the same 500k-row cell: by total RSS, OpenNN 428 MiB and
+        PyTorch 875; by anonymous, 270 and 563. Same runs, and only the second
+        pair answers "how much memory does this demand".
+
+        RssAnon has no kernel-maintained high-water mark, so unlike VmHWM this
+        has to be sampled -- hence polling rather than one read at the end.
         """
         try:
             with open(f"/proc/{pid}/status") as handle:
                 for line in handle:
-                    if line.startswith("VmHWM:"):
+                    if line.startswith("RssAnon:"):
                         self.peak_rss_mib = max(self.peak_rss_mib,
                                                 float(line.split()[1]) / 1024.0)
-                        return
+                    elif line.startswith("RssFile:"):
+                        self.peak_file_mib = max(self.peak_file_mib,
+                                                 float(line.split()[1]) / 1024.0)
         except (OSError, ValueError, IndexError):
             pass
 
@@ -428,7 +441,8 @@ class Monitor:
             # GPU's draw during a CPU run is the idle card.
             return {
                 "peak_mib": round(self.peak_rss_mib, 1),
-                "memory_metric": "process_peak_rss",
+                "peak_file_backed_mib": round(self.peak_file_mib, 1),
+                "memory_metric": "process_peak_anonymous_rss",
                 "energy_joules": None,
                 "energy_wh": None,
                 "energy_measurable": False,

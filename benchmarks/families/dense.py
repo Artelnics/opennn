@@ -43,16 +43,20 @@ from common import binary_metrics  # noqa: E402
 
 SEED = 42
 
-def report_opened(path: str) -> None:
+def report_opened(path: str, role: str) -> None:
     """Announce the file actually opened, not the one passed in.
 
-    The gate that compares these across engines exists because of the bug
-    below: an engine substituting its own input is invisible in every other
-    field an artifact records.
-    """
-    print(f"dataset_opened={Path(path).resolve()}", flush=True)
+    Keyed by role, because train mode opens two and a single key would let the
+    second overwrite the first -- which looked like the engines disagreeing
+    when they did not.
 
-def load_csv(path: str) -> tuple[np.ndarray, np.ndarray]:
+    The gate that compares these exists because of the bug below: an engine
+    substituting its own input is invisible in every other field an artifact
+    records.
+    """
+    print(f"dataset_{role}={Path(path).resolve()}", flush=True)
+
+def load_csv(path: str, role: str = "input") -> tuple[np.ndarray, np.ndarray]:
     """Inputs and target, float32, parsed from the CSV both engines are given.
 
     This used to prefer a `.npy` cache sitting beside the CSV, inherited from a
@@ -68,7 +72,7 @@ def load_csv(path: str) -> tuple[np.ndarray, np.ndarray]:
     """
     import pandas as pd
 
-    report_opened(path)
+    report_opened(path, role)
     frame = pd.read_csv(path, header=None, dtype=np.float32)
 
     data = np.ascontiguousarray(frame.to_numpy(dtype=np.float32))
@@ -177,8 +181,8 @@ def train_like(argv: list[str], mode: str) -> int:
     batches = batches_of(argv[5] if len(argv) > 5 else "1024")
     opts = parse_opts(argv, 6)
 
-    x_np, y_np = load_csv(argv[2])
-    xt_np, yt_np = load_csv(argv[3])
+    x_np, y_np = load_csv(argv[2], "train")
+    xt_np, yt_np = load_csv(argv[3], "test")
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode={mode}\ndevice={opts['device']}")
@@ -258,7 +262,7 @@ def infer(argv: list[str]) -> int:
     batches = batches_of(argv[4] if len(argv) > 4 else "1024")
     opts = parse_opts(argv, 5)
 
-    x_np, _ = load_csv(argv[2])
+    x_np, _ = load_csv(argv[2], "test")
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode=infer\ndevice={opts['device']}")
 
