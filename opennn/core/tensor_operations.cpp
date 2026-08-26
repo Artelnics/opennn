@@ -30,8 +30,6 @@
 namespace opennn
 {
 
-#ifdef EIGEN_USE_MKL_ALL
-
 template<bool FuseRelu>
 static void add_bias_span(float* const __restrict__ y, const float* const __restrict__ b,
                           Index first, Index last, Index columns)
@@ -48,6 +46,58 @@ static void add_bias_span(float* const __restrict__ y, const float* const __rest
         }
     }
 }
+
+// Column sums, threaded. The serial `colwise().sum()` Eigen gives you reads
+// the whole delta -- 16 MiB at batch 4096 by 1024 -- at one core's bandwidth,
+// about 6.7 GB/s here, which made the bias gradient 9.5% of a training step
+// for arithmetic that is pure streaming. Each block reduces into its own
+// scratch row and one serial pass adds those up: `columns` is a layer width,
+// so both the scratch and the final reduction are negligible beside the read
+// they parallelise.
+static void column_sums(const float* const __restrict__ values, float* const __restrict__ sums,
+                        Index rows, Index columns, Index first, Index last)
+{
+    for (Index j = 0; j < columns; j++) sums[j] = 0.0f;
+
+    for (Index i = first; i < last; i++)
+    {
+        const float* const row = values + i * columns;
+
+        for (Index j = 0; j < columns; j++) sums[j] += row[j];
+    }
+}
+
+static Index gemm_block_rows(Index rows, Index threads)
+{
+    static const Index requested_rows = []
+    {
+        const char* const requested = getenv("OPENNN_GEMM_BLOCK");
+
+        return requested ? Index(atoll(requested)) : 0;
+    }();
+
+    if (requested_rows > 0) return requested_rows;
+
+    // What matters is the block *count*, not the block height. Sweeping both
+    // across batch 1024 to 8192, the optimum sits at two blocks per thread
+    // every time -- 32 rows at batch 1024, 64 at 2048, 128 at 4096. Fixing the
+    // height instead costs 42% at batch 1024 and 36% at 2048, which is what
+    // tuning the constant against a single batch size buys you.
+    //
+    // Powers of two on purpose. Batch sizes are powers of two, so these divide
+    // the batch evenly, and a ragged final block costs far more than the
+    // imbalance it saves: 192 rows on a 4096-row batch loses 20% against 128.
+    const Index wanted = max<Index>(8, rows / max<Index>(1, threads * 2));
+
+    Index height = 8;
+
+    while (height * 2 <= wanted) height *= 2;
+
+    return max<Index>(8, min(height, rows));
+}
+
+#ifdef EIGEN_USE_MKL_ALL
+
 
 static bool try_activation_forward(TensorView& output, ActivationFunction function)
 {
@@ -184,22 +234,6 @@ static void contract_linear_forward(int m, int n, int k, const float* a, const f
     out.device(contraction_device()) = left.contract(right, dimensions, BiasRelu{bias, fuse_relu});
 }
 
-static Index gemm_block_rows(Index rows, Index threads)
-{
-    static const Index requested_rows = []
-    {
-        const char* const requested = getenv("OPENNN_GEMM_BLOCK");
-
-        return requested ? Index(atoll(requested)) : 0;
-    }();
-
-    if (requested_rows > 0) return requested_rows;
-
-    const Index blocks_wanted = max<Index>(1, threads * 4);
-    const Index height = (rows + blocks_wanted - 1) / blocks_wanted;
-
-    return max<Index>(8, (height + 7) / 8 * 8);
-}
 
 static double gemm_contract_flops()
 {
@@ -290,7 +324,7 @@ struct PackedWeights
     }
 };
 
-static bool gemm_pack_weights(Index block_rows)
+static bool gemm_pack_weights(Index)
 {
     static const int requested = []
     {
@@ -301,7 +335,12 @@ static bool gemm_pack_weights(Index block_rows)
 
     if (requested >= 0) return requested != 0;
 
-    return block_rows <= 64;
+    // Off. Packing B once per call and running `cblas_sgemm_compute` per block
+    // measures slower than letting each block call `sgemm_rows` on the
+    // unpacked weights, at every block height tried -- 4.9% slower at 64 rows.
+    // The weights here are small enough that MKL's own copy costs less than
+    // the pack it would replace. `OPENNN_GEMM_PACK=1` brings it back.
+    return false;
 }
 
 template<typename Work>
@@ -367,20 +406,76 @@ static bool backward_weight_gradient(int rows, int in_features, int out_features
 {
     PROFILE_SCOPE_HOST("cpu:bwd_weight_gradient");
 
-    const auto slice = [&](Index first, Index count)
+    const auto tile = [&](Index m_first, Index m_count, Index n_first, Index n_count)
     {
         cblas_sgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
-                    to_int(count), out_features, rows, 1.0f,
-                    input + first, in_features,
-                    delta, out_features,
-                    0.0f, weight_gradient + first * Index(out_features), out_features);
+                    to_int(m_count), to_int(n_count), rows, 1.0f,
+                    input + m_first, in_features,
+                    delta + n_first, out_features,
+                    0.0f, weight_gradient + m_first * Index(out_features) + n_first, out_features);
     };
 
     const double flops = double(rows) * double(in_features) * double(out_features);
+    const Index threads = get_device().numThreads();
+    const Index workers = max<Index>(1, threads / gemm_mkl_threads());
 
-    if (blocked_rows(Index(in_features), flops, slice)) return true;
+    // The batch is this product's reduction axis, so unlike the forward GEMM
+    // it cannot be the axis we split. Splitting only `in_features` -- what this
+    // did before -- hands every block the whole delta as B, so the work grows
+    // with the block count instead of dividing by it. Splitting both output
+    // axes keeps the tile count while shrinking what each tile reads: for a
+    // 1024x1024 gradient over a 4096-row batch, an 8x4 grid touches 201 MiB
+    // where 32x1 touched 554 MiB.
+    constexpr Index smallest_tile = 32;
+    const Index tiles_wanted = max<Index>(1, workers * 2);
 
-    slice(0, Index(in_features));
+    Index m_blocks = 1;
+    Index n_blocks = 1;
+
+    while (m_blocks * n_blocks < tiles_wanted)
+    {
+        const bool m_has_room = Index(in_features) / (m_blocks * 2) >= smallest_tile;
+        const bool n_has_room = Index(out_features) / (n_blocks * 2) >= smallest_tile;
+
+        if (m_has_room && (m_blocks <= n_blocks || !n_has_room)) m_blocks *= 2;
+        else if (n_has_room)                                     n_blocks *= 2;
+        else break;
+    }
+
+    const Index tiles = m_blocks * n_blocks;
+
+    if (gemm_parallelism() == GemmParallelism::Mkl
+        || omp_in_parallel()
+        || tiles < 2
+        || flops < gemm_min_flops())
+    {
+        tile(0, Index(in_features), 0, Index(out_features));
+
+        return true;
+    }
+
+    const Index m_block = (Index(in_features) + m_blocks - 1) / m_blocks;
+    const Index n_block = (Index(out_features) + n_blocks - 1) / n_blocks;
+
+    atomic<Index> next_tile{0};
+
+    #pragma omp parallel num_threads(to_int(min<Index>(workers, tiles)))
+    {
+        mkl_set_num_threads_local(to_int(gemm_mkl_threads()));
+
+        for (Index index = next_tile++; index < tiles; index = next_tile++)
+        {
+            const Index m_first = (index / n_blocks) * m_block;
+            const Index n_first = (index % n_blocks) * n_block;
+
+            if (m_first >= Index(in_features) || n_first >= Index(out_features)) continue;
+
+            tile(m_first, min<Index>(m_block, Index(in_features) - m_first),
+                 n_first, min<Index>(n_block, Index(out_features) - n_first));
+        }
+    }
+
+    mkl_set_num_threads_local(0);
 
     return true;
 }
@@ -1154,12 +1249,29 @@ static void linear_forward_cpu(const TensorView& input, const TensorView& weight
     if (try_linear_forward(input, weights, bias, output, fuse_relu)) return;
 
     auto output_matrix = output.as_flat_matrix();
-    output_matrix.noalias() = input.as_flat_matrix() * weights.as_matrix();
-    if (!bias.empty())
-        output_matrix.rowwise() += bias.as_vector().transpose();
 
-    if (fuse_relu)
+    {
+        PROFILE_SCOPE_HOST("cpu:eigen_gemm");
+        output_matrix.noalias() = input.as_flat_matrix() * weights.as_matrix();
+    }
+
+    const bool has_bias = !bias.empty();
+
+    if (!has_bias && !fuse_relu) return;
+
+    PROFILE_SCOPE_HOST("cpu:eigen_epilogue");
+
+    if (!has_bias)
+    {
         output.as_vector().array() = output.as_vector().array().cwiseMax(0.0f);
+        return;
+    }
+
+    const Index rows = Index(output_matrix.rows());
+    const Index columns = Index(output_matrix.cols());
+
+    if (fuse_relu) add_bias_span<true>(output.as<float>(), bias.as<float>(), 0, rows, columns);
+    else           add_bias_span<false>(output.as<float>(), bias.as<float>(), 0, rows, columns);
 }
 
 static void linear_backward_cpu(const TensorView& output_delta, const TensorView& input, const TensorView& weights,
@@ -1169,7 +1281,43 @@ static void linear_backward_cpu(const TensorView& output_delta, const TensorView
     {
     PROFILE_SCOPE_HOST("cpu:bwd_bias");
     if (!bias_gradient.empty())
-        bias_gradient.as_vector().noalias() = output_delta.as_flat_matrix().colwise().sum();
+    {
+        const auto delta_matrix = output_delta.as_flat_matrix();
+        const Index rows = Index(delta_matrix.rows());
+        const Index columns = Index(delta_matrix.cols());
+        const Index block_rows = gemm_block_rows(rows, get_device().numThreads());
+        const Index blocks = (rows + block_rows - 1) / block_rows;
+
+        if (blocks < 2 || omp_in_parallel() || !output_delta.is_fp32() || !bias_gradient.is_fp32())
+        {
+            bias_gradient.as_vector().noalias() = delta_matrix.colwise().sum();
+        }
+        else
+        {
+            const float* const values = output_delta.as<float>();
+            vector<float> partials(size_t(blocks) * size_t(columns));
+
+            #pragma omp parallel for schedule(static)
+            for (Index block = 0; block < blocks; block++)
+            {
+                const Index first = block * block_rows;
+
+                column_sums(values, partials.data() + size_t(block) * size_t(columns),
+                            rows, columns, first, min<Index>(rows, first + block_rows));
+            }
+
+            float* const sums = bias_gradient.as<float>();
+
+            for (Index j = 0; j < columns; j++) sums[j] = partials[size_t(j)];
+
+            for (Index block = 1; block < blocks; block++)
+            {
+                const float* const partial = partials.data() + size_t(block) * size_t(columns);
+
+                for (Index j = 0; j < columns; j++) sums[j] += partial[j];
+            }
+        }
+    }
     }
 
     PROFILE_SCOPE_HOST("cpu:bwd_gemms");
