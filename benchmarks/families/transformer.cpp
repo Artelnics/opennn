@@ -31,6 +31,7 @@
 #endif
 
 #include "opennn/core/configuration.h"
+#include "opennn/core/tensor_operations.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/language_dataset.h"
@@ -149,6 +150,12 @@ void report(Index batch, const vector<double>& seconds, Index sequences, Index t
 
 int main(int argc, char* argv[])
 {
+    // Each engine at its best, as PROTOCOL.md requires. The library defaults to
+    // Eigen so a plain build behaves like a plain build; a build that has the
+    // MKL kernels is told to use them here rather than inheriting them.
+    Configuration::instance().set_blas(Blas::Mkl);
+    cout << "blas=" << (blas_mkl_available() ? "mkl" : "eigen") << "\n";
+
     const string mode = argc > 1 ? argv[1] : "";
 
     if (mode == "train" || mode == "quality")

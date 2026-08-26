@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <mutex>
 
 namespace opennn
@@ -15,6 +16,12 @@ namespace opennn
 
 enum class Device { Auto, CPU, CUDA };
 enum class Type { Auto, FP32, BF16, INT8 };
+
+// Which BLAS the CPU kernels dispatch to. Eigen is the default because it is
+// what a plain build has: MKL is compiled in only when the build asks for it,
+// and even then an application opts in rather than inheriting it. Read on
+// every GEMM, so it is atomic rather than guarded by the configuration mutex.
+enum class Blas { Eigen, Mkl };
 
 enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReLU, GELU, GELUTanh, SiLU };
 
@@ -38,6 +45,11 @@ public:
     void set(Device new_device        = Device::Auto,
              Type   new_training_type = Type::Auto);
 
+    // Selecting Mkl on a build without it is not an error -- the MKL paths
+    // simply are not there to dispatch to, and `blas_mkl_available()` says so.
+    void set_blas(Blas new_blas);
+    [[nodiscard]] Blas get_blas() const;
+
     [[nodiscard]] EffectiveConfig resolve() const;
     [[nodiscard]] EffectiveConfig resolve_for(Device) const;
 
@@ -45,7 +57,7 @@ public:
 
 private:
 
-    Configuration() = default;
+    Configuration();
 
     EffectiveConfig resolve_effective(Device) const;
 
@@ -54,6 +66,8 @@ private:
     Device device        = Device::Auto;
     Type   training_type = Type::Auto;
     unsigned generation  = 0;
+
+    std::atomic<Blas> blas;
 };
 
 }

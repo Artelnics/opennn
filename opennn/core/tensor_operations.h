@@ -63,6 +63,11 @@ ActivationFunction activation_function_from_string(const string&);
 
 bool activation_needs_input(ActivationFunction function);
 
+// Whether this build has the MKL CPU kernels at all. `Configuration::set_blas`
+// accepts `Blas::Mkl` either way; this is how a caller finds out whether that
+// request has anywhere to go.
+bool blas_mkl_available();
+
 inline float activation_forward_value(ActivationFunction function, float x)
 {
     using enum ActivationFunction;

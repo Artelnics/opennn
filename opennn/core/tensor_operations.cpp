@@ -67,6 +67,13 @@ static void column_sums(const float* const __restrict__ values, float* const __r
     }
 }
 
+// Eigen unless the application asked for MKL. A plain build has no MKL paths
+// to reach, and a build that does have them still waits to be told.
+static bool mkl_dispatch_enabled()
+{
+    return Configuration::instance().get_blas() == Blas::Mkl;
+}
+
 static Index gemm_block_rows(Index rows, Index threads)
 {
     static const Index requested_rows = []
@@ -101,6 +108,8 @@ static Index gemm_block_rows(Index rows, Index threads)
 
 static bool try_activation_forward(TensorView& output, ActivationFunction function)
 {
+    if (!mkl_dispatch_enabled()) return false;
+
     if (function != ActivationFunction::Tanh || !output.is_fp32()) return false;
 
     float* values = output.as<float>();
@@ -609,6 +618,8 @@ static bool try_linear_forward(const TensorView& input,
                                 TensorView& output,
                                 bool fuse_relu)
 {
+    if (!mkl_dispatch_enabled()) return false;
+
     ++mkl_linear_refusals;
     if (!input.is_fp32()
         || !weights.is_fp32()
@@ -653,6 +664,8 @@ static bool try_linear_backward(const TensorView& output_delta, const TensorView
                                 const TensorView& weights, const TensorView& weight_gradient,
                                 TensorView& input_delta, bool accumulate, const TensorView* addend)
 {
+    if (!mkl_dispatch_enabled()) return false;
+
     static const bool eigen_backward = []
     {
         const char* const requested = getenv("OPENNN_BACKWARD");
@@ -706,6 +719,15 @@ static bool try_linear_backward(const TensorView&, const TensorView&, const Tens
                                 const TensorView&, TensorView&, bool, const TensorView*) { return false; }
 
 #endif
+
+bool blas_mkl_available()
+{
+#ifdef EIGEN_USE_MKL_ALL
+    return true;
+#else
+    return false;
+#endif
+}
 
 const EnumMap<ActivationFunction>& activation_function_map()
 {
