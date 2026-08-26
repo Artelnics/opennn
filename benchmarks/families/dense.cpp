@@ -297,6 +297,13 @@ int main(int argc, char* argv[])
 
             TestingAnalysis analysis(network.get(), &test_dataset);
 
+            // Evaluate at the training batch, which is what the PyTorch driver
+            // does. Left alone, TestingAnalysis defaults to the whole split in
+            // one batch on CPU, so a 500,000-row test set built a 1,024 MiB
+            // activation arena against PyTorch's 64 MiB -- a 16x difference in
+            // the memory column that had nothing to do with training.
+            analysis.set_batch_size(batch);
+
             cout << "batch_" << batch << "_samples_per_sec="
                  << long(double(samples_per_epoch) / median_epoch_s)
                  << " median_epoch_s=" << median_epoch_s << "\n"
