@@ -145,19 +145,35 @@ def cpu_pinning(threads: int | None) -> tuple[list[str], dict[str, str], dict]:
     if not cores:
         return [], {}, {"pinned": False, "reason": "no per-core frequency data"}
 
-    count = threads or physical_cores(cores)
     span = f"{cores[0]}-{cores[-1]}" if cores == list(range(cores[0], cores[-1] + 1)) \
         else ",".join(str(c) for c in cores)
 
-    environment = {
-        "OMP_NUM_THREADS": str(count),
-        "MKL_NUM_THREADS": str(count),
-        "OPENNN_THREADS": str(count),
-        "TORCH_NUM_THREADS": str(count),
-    }
+    # Cores are pinned; the thread count is not, unless asked for.
+    #
+    # Forcing one looked like fairness and was the opposite. Measured on dense
+    # CPU training, samples/s:
+    #
+    #                 unset     4        8       16
+    #     OpenNN     96,204  62,309   84,057  86,296
+    #     PyTorch    93,417  60,855   89,378  83,490
+    #
+    # Every fixed count is worse than letting each engine choose, and the
+    # penalty is uneven -- 13% for OpenNN against 4% for PyTorch at eight
+    # threads, which inverted the result. Contract item 3 asks for each engine
+    # at its best, and each engine's own default is what that means here.
+    #
+    # --threads still overrides, so the choice stays measurable.
+    environment: dict[str, str] = {}
+    count = threads
+
+    if count:
+        environment = {name: str(count) for name in
+                       ("OMP_NUM_THREADS", "MKL_NUM_THREADS",
+                        "OPENNN_THREADS", "TORCH_NUM_THREADS")}
 
     return (["taskset", "-c", span], environment,
-            {"pinned": True, "cores": span, "threads": count,
+            {"pinned": True, "cores": span,
+             "threads": count or "engine default",
              "excluded_efficiency_cores": layout["efficiency"]})
 
 def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
@@ -169,8 +185,17 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
     data loading are excluded from the energy figure as they are from the
     throughput one.
     """
-    if quiet_wait and device == "cuda":
-        wait_for_idle(seconds=30.0)
+    if quiet_wait:
+        if device == "cuda":
+            wait_for_idle(seconds=30.0)
+        else:
+            # CPU needs settling too, and skipping it was not free. Without
+            # this, dense training read 94,279 samples/s when OpenNN ran first
+            # and 85,150 when it ran straight after PyTorch -- a 10% swing
+            # decided by launch order, while PyTorch itself stayed flat. The
+            # rotation exposed it; a pause is what fixes it. There is no
+            # nvidia-smi equivalent to poll here, so it is a fixed wait.
+            time.sleep(float(os.environ.get("OPENNN_BENCH_CPU_SETTLE", "8")))
 
     prefix: list[str] = []
     environment = dict(os.environ)
