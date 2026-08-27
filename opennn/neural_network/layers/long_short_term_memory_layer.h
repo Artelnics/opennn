@@ -113,7 +113,8 @@ private:
                TensorView&,
                TensorView&,
                TensorView&,
-               TensorView&) const;
+               TensorView&,
+               bool training) const;
 
     void apply_delta(const TensorView&,
                      const TensorView&,
