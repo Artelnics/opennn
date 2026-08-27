@@ -363,8 +363,26 @@ inline const std::filesystem::path& plan_cache_directory()
 
 inline std::filesystem::path plan_cache_file(const graph::Graph& graph)
 {
+    // The cache key is the serialised graph, and serialising asks cuDNN for
+    // CUDNN_ATTR_EXECUTION_PLAN_JSON_REPRESENTATION -- an attribute the
+    // Windows builds of cuDNN 9 do not implement. store_cached_plan() already
+    // treats a failed serialise as "do not cache"; this path did not, so the
+    // throw escaped through load_cached_plan(), the frontend disabled itself,
+    // and every convolution became fatal. A machine that cannot serialise a
+    // plan should lose the cache, not the GPU.
     json structure;
-    graph.serialize(structure);
+    try
+    {
+        graph.serialize(structure);
+    }
+    catch (const std::exception&)
+    {
+        static std::once_flag reported;
+        std::call_once(reported, []{
+            std::cerr << "cudnn plan cache: this cuDNN build cannot serialise "
+                         "execution plans; continuing without the cache.\n"; });
+        return {};
+    }
     structure.erase("gid");
 
     size_t selection = size_t(autotune_candidate_limit());
@@ -390,6 +408,7 @@ inline bool load_cached_plan(graph::Graph& graph, const cudnnHandle_t handle,
 
     std::error_code failed;
     const std::filesystem::path file = plan_cache_file(graph);
+    if (file.empty()) return false;
     if (!std::filesystem::exists(file, failed) || failed) return false;
 
     std::ifstream stream(file, std::ios::binary);
@@ -413,7 +432,18 @@ inline void store_cached_plan(graph::Graph& graph)
 
     vector<uint8_t> blob;
 
-    if (graph.serialize(blob, false).is_bad() || blob.empty()) return;
+    // Status-checking this is not enough: cudnn-frontend throws out of
+    // serialize() rather than returning when the backend refuses the JSON
+    // attribute, which is what Windows cuDNN does. The status check stays for
+    // the builds that report it politely.
+    try
+    {
+        if (graph.serialize(blob, false).is_bad() || blob.empty()) return;
+    }
+    catch (const std::exception&)
+    {
+        return;
+    }
 
     std::error_code failed;
     std::filesystem::create_directories(plan_cache_directory(), failed);
@@ -422,6 +452,7 @@ inline void store_cached_plan(graph::Graph& graph)
     static atomic<uint64_t> sequence{0};
 
     const std::filesystem::path file = plan_cache_file(graph);
+    if (file.empty()) return;
     const std::filesystem::path pending = file.string()
         + format(".{:x}-{}.tmp", std::hash<thread::id>{}(this_thread::get_id()), sequence++);
 

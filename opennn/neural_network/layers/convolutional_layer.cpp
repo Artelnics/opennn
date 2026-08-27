@@ -410,12 +410,17 @@ void Convolutional::recompute_forward_slot(ForwardPropagation& forward_propagati
 
 bool Convolutional::forward_propagate_folded(ForwardPropagation& forward_propagation, size_t layer)
 {
-    if (!batch_norm.active() || !convolution.is_pointwise())
+    // No longer restricted to 1x1: the fold rescales weights, and the cuDNN
+    // forward graph it now feeds convolves any shape. The restriction existed
+    // because the old folded path was a GEMM, which only expresses a pointwise
+    // convolution.
+    if (!batch_norm.active())
         return false;
 
     const TensorView& input = convolution.get_input(forward_propagation, layer);
 
-    if (!input.is_cuda() || !input.is_fp32() || !convolution.weights.is_fp32())
+    if (!input.is_cuda() || !(input.is_fp32() || input.is_bf16())
+        || !(convolution.weights.is_fp32() || convolution.weights.is_bf16()))
         return false;
 
     if (convolution.weights_relinked)
@@ -427,37 +432,49 @@ bool Convolutional::forward_propagate_folded(ForwardPropagation& forward_propaga
     const Index weight_count = convolution.weights.size();
     const Index kernel_size  = convolution.kernel_height * convolution.kernel_width * convolution.kernel_channels;
 
+    // The folded parameters carry the network's own precision. Emitting fp32
+    // into a bf16 network sent linear_forward down data_for_gemm_dtype(input,
+    // weights.get_type()), which upcasts the activations to match the weights.
+    const Type folded_type = convolution.weights.get_type();
+    const Index folded_element = convolution.weights.is_bf16()
+        ? Index(sizeof(bfloat16)) : Index(sizeof(float));
+
     if (folded_dirty)
     {
-        folded_parameters.resize_bytes((weight_count + convolution.kernels_number) * Index(sizeof(float)),
+        folded_parameters.resize_bytes((weight_count + convolution.kernels_number) * folded_element,
                                        Device::CUDA);
-        conv_bn_fold_cuda(convolution.kernels_number, kernel_size,
-                          convolution.weights.as<float>(),
-                          batch_norm.gamma.as<float>(), batch_norm.beta.as<float>(),
-                          batch_norm.running_mean.as<float>(),
-                          batch_norm.running_variance.as<float>(),
-                          EPSILON,
-                          folded_parameters.as<float>(),
-                          folded_parameters.as<float>() + weight_count);
+        convolution.weights.dispatch([&]<typename W>()
+        {
+            conv_bn_fold_cuda(convolution.kernels_number, kernel_size,
+                              convolution.weights.as<W>(),
+                              batch_norm.gamma.as<float>(), batch_norm.beta.as<float>(),
+                              batch_norm.running_mean.as<float>(),
+                              batch_norm.running_variance.as<float>(),
+                              EPSILON,
+                              folded_parameters.as<W>(),
+                              folded_parameters.as<W>() + weight_count);
+        });
         folded_dirty = false;
     }
 
     const TensorView folded_weights(folded_parameters.data(),
-        Shape{convolution.kernel_channels, convolution.kernels_number}, Type::FP32, Device::CUDA);
+        convolution.weights.get_shape(), folded_type, Device::CUDA);
 
-    const TensorView folded_bias(folded_parameters.as<float>() + weight_count,
-                                 Shape{convolution.kernels_number}, Type::FP32, Device::CUDA);
+    const TensorView folded_bias(
+        static_cast<char*>(folded_parameters.data()) + weight_count * folded_element,
+        Shape{convolution.kernels_number}, folded_type, Device::CUDA);
 
     const bool relu = batch_norm.fuse_relu;
     TensorView& output = batch_norm.get_output(forward_propagation, layer);
 
     if (batch_norm.fuse_add)
     {
-        convolution.apply_gpu_folded(input, folded_weights, folded_bias, false, output);
-
+        // One graph: convolution, folded bias, residual, activation. The add
+        // used to be its own pass over the block output and became the largest
+        // kernel in the network once the fold removed batch norm.
         const TensorView& residual_view = forward_propagation.inputs[layer][1];
-        add_relu_cuda(output.size(), output.as<float>(), residual_view.as<float>(),
-                      relu, output.as<float>());
+        convolution.apply_gpu_folded(input, folded_weights, folded_bias, relu, output,
+                                     &residual_view);
     }
     else
         convolution.apply_gpu_folded(input, folded_weights, folded_bias, relu, output);

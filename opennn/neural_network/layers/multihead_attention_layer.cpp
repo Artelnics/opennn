@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "opennn/core/string_utilities.h"
 #include "opennn/neural_network/layers/multihead_attention_layer.h"
 #include "opennn/registry.h"
 
@@ -175,6 +176,9 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     output_projection.input_delta_slots  = {ConcatenatedOutputDelta};
 
 }
+
+const Index MultiHeadAttention::default_sdpa_min_sequence_length =
+    Index(env_int_or("OPENNN_SDPA_MIN_SEQUENCE", 192));
 
 bool MultiHeadAttention::should_use_sdpa() const
 {

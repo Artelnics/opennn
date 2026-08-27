@@ -33,15 +33,17 @@ void batchnorm_backward_fused_cuda(const Index rows, const Index channels,
                                    T* dpre, float* dgamma, float* dbeta,
                                    float* partials);
 
+template<typename W>
 void conv_bn_fold_cuda(const Index kernels, const Index kernel_size,
-                       const float* weights,
+                       const W* weights,
                        const float* gamma, const float* beta,
                        const float* mean, const float* variance,
                        const float epsilon,
-                       float* folded_weights, float* folded_bias);
+                       W* folded_weights, W* folded_bias);
 
-void add_relu_cuda(const Index total, const float* a, const float* b,
-                   const bool apply_relu, float* y);
+template<typename T>
+void add_relu_cuda(const Index total, const T* a, const T* b,
+                   const bool apply_relu, T* y);
 
 template<typename T>
 void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps);

@@ -84,6 +84,20 @@ __global__ void norm_forward_kernel(const int N, const int D, const T* __restric
     }
 }
 
+// Batch norm at inference is a per-channel affine map, so gamma, beta, mean
+// and variance are loop invariants: the arithmetic that turns them into a
+// scale and a shift does not depend on the element. Computing it per element
+// cost an rsqrt and four loads on every one of the ~100M elements a
+// ResNet-50 layer touches, on a kernel whose whole job is streaming bytes.
+// Channels is a layer width -- 2048 at the widest here -- so one pass fills
+// shared memory and the stream that follows reads two floats per element
+// from it.
+//
+// The modulo is the other half. `Index` is 64-bit and the launcher already
+// bounds the element count to int, so `i % channels` was asking for a 64-bit
+// division per element to answer a question that fits in 32 bits.
+constexpr int BN_MAX_SHARED_CHANNELS = 4096;
+
 template<typename T>
 __global__ void batchnorm_inference_kernel(const Index total, const int channels,
                                            const T* __restrict__ x,
@@ -96,12 +110,43 @@ __global__ void batchnorm_inference_kernel(const Index total, const int channels
                                            const int apply_relu,
                                            T* __restrict__ y)
 {
+    extern __shared__ float bn_cache[];
+    const bool cached = channels <= BN_MAX_SHARED_CHANNELS;
+    float* const scale_cache = bn_cache;
+    float* const shift_cache = bn_cache + channels;
+
+    if (cached)
+    {
+        for (int c = int(threadIdx.x); c < channels; c += int(blockDim.x))
+        {
+            const float scale = gamma[c] * rsqrtf(variance[c] + epsilon);
+            scale_cache[c] = scale;
+            shift_cache[c] = beta[c] - mean[c] * scale;
+        }
+        __syncthreads();
+    }
+
+    const unsigned int channel_count = static_cast<unsigned int>(channels);
+
     for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < total;
          i += Index(blockDim.x) * gridDim.x)
     {
-        const int c = int(i % channels);
-        const float scale = gamma[c] * rsqrtf(variance[c] + epsilon);
-        float value = (static_cast<float>(x[i]) - mean[c]) * scale + beta[c];
+        const int c = int(static_cast<unsigned int>(i) % channel_count);
+
+        float scale;
+        float shift;
+        if (cached)
+        {
+            scale = scale_cache[c];
+            shift = shift_cache[c];
+        }
+        else
+        {
+            scale = gamma[c] * rsqrtf(variance[c] + epsilon);
+            shift = beta[c] - mean[c] * scale;
+        }
+
+        float value = static_cast<float>(x[i]) * scale + shift;
         if (residual) value += static_cast<float>(residual[i]);
         if (apply_relu) value = fmaxf(value, 0.0f);
         y[i] = static_cast<T>(value);
@@ -115,10 +160,20 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
                               const float* mean, const float* variance,
                               const float epsilon, const bool apply_relu, T* y)
 {
-    if (channels == 0) return;
-    launch_elementwise_strided(total, batchnorm_inference_kernel<T>, checked_int(channels),
-                       x, residual, gamma, beta, mean, variance,
-                       epsilon, apply_relu ? 1 : 0, y);
+    if (channels == 0 || total == 0) return;
+
+    const int channel_count = checked_int(channels);
+    const int element_count = checked_int(total);
+    const size_t shared_bytes = channel_count <= BN_MAX_SHARED_CHANNELS
+        ? size_t(2) * size_t(channel_count) * sizeof(float)
+        : size_t(0);
+
+
+    OPENNN_CUDA_LAUNCH(batchnorm_inference_kernel<T>
+        <<<grid_size_strided_for(element_count), block_size, shared_bytes,
+           opennn::device::get_compute_stream()>>>(
+            element_count, channel_count, x, residual, gamma, beta, mean, variance,
+            epsilon, apply_relu ? 1 : 0, y));
 }
 
 constexpr int BN_THREADS = 256;
@@ -535,15 +590,16 @@ void batchnorm_backward_fused_cuda(const Index rows, const Index channels,
     else           launch.template operator()<1>();
 }
 
+template<typename W>
 __global__ void conv_bn_fold_kernel(const Index total, const int kernel_size, const int kernels,
-                                    const float* __restrict__ weights,
+                                    const W* __restrict__ weights,
                                     const float* __restrict__ gamma,
                                     const float* __restrict__ beta,
                                     const float* __restrict__ mean,
                                     const float* __restrict__ variance,
                                     const float epsilon,
-                                    float* __restrict__ folded_weights,
-                                    float* __restrict__ folded_bias)
+                                    W* __restrict__ folded_weights,
+                                    W* __restrict__ folded_bias)
 {
     for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < total;
          i += Index(blockDim.x) * gridDim.x)
@@ -551,44 +607,60 @@ __global__ void conv_bn_fold_kernel(const Index total, const int kernel_size, co
         const int k = int(i / kernel_size);
         const int r = int(i % kernel_size);
         const float scale = gamma[k] * rsqrtf(variance[k] + epsilon);
-        folded_weights[Index(r) * kernels + k] = weights[i] * scale;
+        folded_weights[Index(r) * kernels + k] =
+            static_cast<W>(static_cast<float>(weights[i]) * scale);
         if (r == 0)
-            folded_bias[k] = beta[k] - mean[k] * scale;
+            folded_bias[k] = static_cast<W>(beta[k] - mean[k] * scale);
     }
 }
 
+template<typename W>
 void conv_bn_fold_cuda(const Index kernels, const Index kernel_size,
-                       const float* weights,
+                       const W* weights,
                        const float* gamma, const float* beta,
                        const float* mean, const float* variance,
                        const float epsilon,
-                       float* folded_weights, float* folded_bias)
+                       W* folded_weights, W* folded_bias)
 {
-    launch_elementwise_strided(kernels * kernel_size, conv_bn_fold_kernel,
+    launch_elementwise_strided(kernels * kernel_size, conv_bn_fold_kernel<W>,
                        checked_int(kernel_size), checked_int(kernels), weights,
                        gamma, beta, mean, variance, epsilon,
                        folded_weights, folded_bias);
 }
 
+template void conv_bn_fold_cuda<float>(const Index, const Index, const float*, const float*,
+                                       const float*, const float*, const float*, const float,
+                                       float*, float*);
+template void conv_bn_fold_cuda<__nv_bfloat16>(const Index, const Index, const __nv_bfloat16*,
+                                               const float*, const float*, const float*,
+                                               const float*, const float,
+                                               __nv_bfloat16*, __nv_bfloat16*);
+
+template<typename T>
 __global__ void add_relu_kernel(const Index total,
-                                const float* __restrict__ a,
-                                const float* __restrict__ b,
+                                const T* __restrict__ a,
+                                const T* __restrict__ b,
                                 const int apply_relu,
-                                float* __restrict__ y)
+                                T* __restrict__ y)
 {
     for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < total;
          i += Index(blockDim.x) * gridDim.x)
     {
-        const float value = a[i] + b[i];
-        y[i] = apply_relu ? fmaxf(value, 0.0f) : value;
+        const float value = static_cast<float>(a[i]) + static_cast<float>(b[i]);
+        y[i] = static_cast<T>(apply_relu ? fmaxf(value, 0.0f) : value);
     }
 }
 
-void add_relu_cuda(const Index total, const float* a, const float* b,
-                   const bool apply_relu, float* y)
+template<typename T>
+void add_relu_cuda(const Index total, const T* a, const T* b,
+                   const bool apply_relu, T* y)
 {
-    launch_elementwise_strided(total, add_relu_kernel, a, b, apply_relu ? 1 : 0, y);
+    launch_elementwise_strided(total, add_relu_kernel<T>, a, b, apply_relu ? 1 : 0, y);
 }
+
+template void add_relu_cuda<float>(const Index, const float*, const float*, const bool, float*);
+template void add_relu_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*,
+                                           const __nv_bfloat16*, const bool, __nv_bfloat16*);
 
 static constexpr int norm_warp_rows_per_block = 8;
 

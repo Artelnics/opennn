@@ -78,7 +78,13 @@ public:
 
     void set_zero_padded_queries(bool);
 
-    static constexpr Index default_sdpa_min_sequence_length = 192;
+    // 192 kept the fused attention path off for every sequence the transformer
+    // benchmark runs (max_tokens caps them at 128), so attention ran as three
+    // kernels -- QK^T, a softmax pass, then PV -- while PyTorch's
+    // TransformerEncoderLayer dispatches to fused scaled_dot_product_attention
+    // by default. OPENNN_SDPA_MIN_SEQUENCE overrides it so the threshold is
+    // measurable rather than assumed.
+    static const Index default_sdpa_min_sequence_length;
 
     void set_sdpa_auto(bool);
     void set_sdpa_min_sequence_length(Index);

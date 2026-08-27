@@ -57,7 +57,8 @@ struct ConvolutionOperator : Operator
     void apply_gpu_folded(const TensorView& input,
                           const TensorView& folded_weights,
                           const TensorView& folded_bias,
-                          bool relu, TensorView& output) const;
+                          bool relu, TensorView& output,
+                          const TensorView* residual = nullptr) const;
 #endif
 
     vector<TensorSpec> parameter_specs() const override;

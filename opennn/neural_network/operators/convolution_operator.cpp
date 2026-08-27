@@ -41,7 +41,7 @@ struct ConvolutionOperator::ConvGraphCache
     struct Entry
     {
         cudnn_frontend::GraphSlot fwd, wgrad, bgrad, dgrad;
-        shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_X, fwd_W, fwd_B, fwd_Y;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_X, fwd_W, fwd_B, fwd_R, fwd_Y;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> wgrad_X, wgrad_DY, wgrad_DW;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bgrad_DY, bgrad_DB;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> dgrad_W, dgrad_DY, dgrad_DX, dgrad_R;
@@ -107,7 +107,7 @@ krsc_tensor(graph::Graph& graph, const char* name, const Dims& d)
 }
 
 void build_forward(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& d,
-                   bool fuse_relu, bool use_bias, Type dtype)
+                   bool fuse_relu, bool use_bias, Type dtype, bool fuse_residual = false)
 {
     auto graph = new_graph(dtype);
 
@@ -125,6 +125,19 @@ void build_forward(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims
                                     .set_stride({d.kernels, 1, d.kernels, d.kernels}));
 
         entry.fwd_Y = graph->pointwise(entry.fwd_Y, entry.fwd_B,
+                                       graph::Pointwise_attributes()
+                                       .set_mode(PointwiseMode_t::ADD));
+    }
+
+    // The residual add belongs in the graph, not after it. Left outside, it
+    // was a separate streaming pass over the block output -- 26% of GPU time
+    // once batch norm stopped being the headline -- reading two tensors and
+    // writing a third that the convolution had just written.
+    if (fuse_residual)
+    {
+        entry.fwd_R = nhwc_tensor(*graph, "R", d.batch, d.kernels,
+                                  d.output_height, d.output_width);
+        entry.fwd_Y = graph->pointwise(entry.fwd_Y, entry.fwd_R,
                                        graph::Pointwise_attributes()
                                        .set_mode(PointwiseMode_t::ADD));
     }
@@ -591,12 +604,54 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
 void ConvolutionOperator::apply_gpu_folded(const TensorView& input,
                                            const TensorView& folded_weights,
                                            const TensorView& folded_bias,
-                                           bool relu, TensorView& output) const
+                                           bool relu, TensorView& output,
+                                           const TensorView* residual) const
 {
     PROFILE_SCOPE("op:conv_fwd");
 
-    linear_forward(input, folded_weights, folded_bias, output,
-                   relu ? CUBLASLT_EPILOGUE_RELU_BIAS : CUBLASLT_EPILOGUE_BIAS);
+    // Folding batch norm into the weights is only a win if the convolution it
+    // feeds is still cuDNN's. Routing it through a GEMM instead measured 9.9 ms
+    // a call against cuDNN's 1.6 ms: a 1x1 convolution becomes an extremely
+    // skinny matrix product (M ~ 400k, K = N = 64) and cuBLASLt has nothing
+    // good for that shape. The forward graph already ends in ADD and RELU
+    // pointwises, so the folded weights and bias drop straight into it and the
+    // batch norm pass disappears with no kernel downgrade.
+    //
+    // The folded graph is a second entry in the same cache, keyed by the
+    // negated batch so it cannot collide with the unfolded one, and built with
+    // bias on regardless of what the bare convolution was configured for.
+    const bool ran = cudnn_frontend::frontend_enabled()
+        && cudnn_frontend::run_frontend(*conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
+    {
+        const Index batch = input.get_shape()[0];
+        const bool with_residual = residual && residual->get_data();
+
+        // Two folded variants share the cache: with and without the residual.
+        // Keyed off the negated batch so neither collides with the unfolded
+        // entry, and separated by a large stride so they do not collide with
+        // each other.
+        const Index key = with_residual ? -batch - (Index(1) << 20) : -batch;
+
+        auto& entry = detail::bounded_cache_entry(
+            cache.entries, key, cudnn_frontend::graph_cache_capacity);
+        if (!entry.fwd.graph)
+            cudnn_frontend::build_forward(entry, cudnn_frontend::make_dims(*this, batch),
+                                          relu, true, input.get_type(), with_residual);
+
+        cudnn_frontend::VariantPack tensors;
+        tensors[entry.fwd_X] = input.get_data();
+        tensors[entry.fwd_W] = folded_weights.get_data();
+        tensors[entry.fwd_B] = folded_bias.get_data();
+        if (with_residual) tensors[entry.fwd_R] = residual->get_data();
+        tensors[entry.fwd_Y] = output.get_data();
+
+        cudnn_frontend::run_slot(entry.fwd, tensors, "ConvolutionOperator fwd folded",
+                                 cudnn_frontend::conv_timing_label(*this, "conv_fwd_folded"), true);
+    });
+
+    if (!ran)
+        linear_forward(input, folded_weights, folded_bias, output,
+                       relu ? CUBLASLT_EPILOGUE_RELU_BIAS : CUBLASLT_EPILOGUE_BIAS);
 }
 
 void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
