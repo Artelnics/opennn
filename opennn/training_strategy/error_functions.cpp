@@ -393,6 +393,14 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
     Index active_tokens = 0;
     Index correct_tokens = 0;
 
+    // The input is LOGITS, not probabilities: the softmax is fused in here rather than
+    // applied by the output layer, which is what torch.nn.CrossEntropyLoss does and what
+    // lets inference skip a vocabulary-wide softmax per token entirely.
+    //
+    //     loss = logsumexp(row) - row[target]
+    //
+    // The max subtraction is what makes that stable, and it is the same max the accuracy
+    // count needs, so it costs nothing extra.
     #pragma omp parallel for reduction(+:total_log_loss, active_tokens, correct_tokens)
     for (Index token_index = 0; token_index < token_count; ++token_index)
     {
@@ -400,11 +408,15 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
 
         if (target_index <= 0 || target_index >= vocabulary_size) continue;
 
-        total_log_loss -= log(outputs_flat(token_index, target_index) + EPSILON);
-        ++active_tokens;
+        const auto row = outputs_flat.row(token_index);
 
         Index best_index;
-        outputs_flat.row(token_index).maxCoeff(&best_index);
+        const float max_logit = row.maxCoeff(&best_index);
+        const float sum_exp = (row.array() - max_logit).exp().sum();
+
+        total_log_loss += log(sum_exp) + max_logit - row(target_index);
+        ++active_tokens;
+
         if (best_index == target_index) ++correct_tokens;
     }
 
@@ -433,13 +445,23 @@ void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target
 
     const float scale = active_tokens_count > 0 ? 1.0f / to_type(active_tokens_count) : 0.0f;
 
+    // d(loss)/d(logits) = softmax(logits) - onehot(target), scaled. The softmax is computed
+    // here because the output layer no longer applies one; the delta is the same quantity
+    // the probability-input version produced, so nothing downstream changes.
+    //
+    // Written to tolerate gradients_flat aliasing outputs_flat: every element of a row is
+    // read into the exponentials before any of that row is written.
     #pragma omp parallel for
     for (Index token_index = 0; token_index < token_count; ++token_index)
     {
         const Index target_index = static_cast<Index>(targets_flat(token_index));
         if (target_index > 0 && target_index < vocabulary_size)
         {
-            gradients_flat.row(token_index).noalias() = scale * outputs_flat.row(token_index);
+            const auto row = outputs_flat.row(token_index);
+            const float max_logit = row.maxCoeff();
+            const ArrayXf exponentials = (row.array() - max_logit).exp();
+
+            gradients_flat.row(token_index) = (scale / exponentials.sum()) * exponentials.matrix();
             gradients_flat(token_index, target_index) -= scale;
         }
         else

@@ -250,8 +250,14 @@ Transformer::Transformer(Index input_sequence_length,
             norm2_index, ff_index);
     }
 
+    // Logits, not probabilities. CrossEntropyError3d fuses the softmax into the loss the
+    // way torch.nn.CrossEntropyLoss does, which is both numerically better (a stable
+    // logsumexp instead of log of an already-normalized value) and strictly less work at
+    // inference, where a vocabulary-wide softmax per token would otherwise be computed and
+    // then thrown away. Callers that need a distribution - token sampling - apply the
+    // softmax themselves.
     add_layer(make_unique<Dense>(decoder_shape, Shape{output_vocabulary_size},
-                                 "Softmax", BatchNormalization::No, "output_projection"));
+                                 "Identity", BatchNormalization::No, "output_projection"));
 
     finalize_build(*this);
 }
@@ -399,7 +405,7 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
                   {current_index});
 
     add_layer(make_unique<Dense>(block_shape, Shape{vocabulary_size},
-                                 "Softmax", BatchNormalization::No, "output_projection"));
+                                 "Identity", BatchNormalization::No, "output_projection"));
 
     finalize_build(*this);
 }

@@ -1666,12 +1666,16 @@ bool Loss::back_propagate_device_metrics(const Batch&,
 
 bool Loss::output_delta_overwrites_outputs() const
 {
-    if (error != Error::CrossEntropy3d || !neural_network || !neural_network->is_gpu())
-        return false;
-
-    const auto& layers = neural_network->get_layers();
-    return layers[neural_network->get_last_trainable_layer_index()]->get_output_activation()
-        == ActivationFunction::Softmax;
+    // The 3-D cross-entropy backward writes softmax(logits) - onehot(target) over the very
+    // row it reads, so the output delta can alias the outputs and the separate delta tensor
+    // need never be allocated (see back_propagation.cpp:289).
+    //
+    // This used to require a Softmax output layer, back when the loss consumed probabilities.
+    // The softmax is now fused into the loss and the head emits logits, so the activation is
+    // Identity and that predicate would silently switch the optimization off. What the
+    // aliasing actually needs is only that this loss owns the whole output row, which
+    // CrossEntropy3d does.
+    return error == Error::CrossEntropy3d && neural_network && neural_network->is_gpu();
 }
 
 void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const

@@ -171,26 +171,34 @@ __global__ void cross_entropy_3d_multiple_forward_kernel(const int total_tokens,
         const int target_class = static_cast<int>(targets[idx]);
         const bool valid = target_class > 0 && target_class < vocab_size;
 
-        errors[idx] = valid ? -logf(static_cast<float>(outputs[idx * vocab_size + target_class]) + epsilon) : 0.0f;
-        if (valid_mask) valid_mask[idx] = valid ? 1.0f : 0.0f;
+        // Logits in, so the loss is logsumexp(row) - row[target]. One pass finds the max
+        // (which the accuracy count needs anyway), a second sums the exponentials.
+        float error = 0.0f;
+        float best_match = 0.0f;
 
-        if (correct_mask)
+        if (valid)
         {
-            float best_match = 0.0f;
-            if (valid)
+            const T* row = outputs + idx * vocab_size;
+
+            float best_value = static_cast<float>(row[0]);
+            int best_index = 0;
+            for (int k = 1; k < vocab_size; ++k)
             {
-                const T* row = outputs + idx * vocab_size;
-                float best_value = static_cast<float>(row[0]);
-                int best_index = 0;
-                for (int k = 1; k < vocab_size; ++k)
-                {
-                    const float value = static_cast<float>(row[k]);
-                    if (value > best_value) { best_value = value; best_index = k; }
-                }
-                best_match = (best_index == target_class) ? 1.0f : 0.0f;
+                const float value = static_cast<float>(row[k]);
+                if (value > best_value) { best_value = value; best_index = k; }
             }
-            correct_mask[idx] = best_match;
+
+            float sum_exp = 0.0f;
+            for (int k = 0; k < vocab_size; ++k)
+                sum_exp += __expf(static_cast<float>(row[k]) - best_value);
+
+            error = logf(sum_exp) + best_value - static_cast<float>(row[target_class]);
+            best_match = (best_index == target_class) ? 1.0f : 0.0f;
         }
+
+        errors[idx] = error;
+        if (valid_mask) valid_mask[idx] = valid ? 1.0f : 0.0f;
+        if (correct_mask) correct_mask[idx] = best_match;
     }
 }
 
@@ -245,11 +253,22 @@ __global__ void cross_entropy_3d_metrics_kernel(const int total_tokens, const in
                 best_index = other_index;
             }
         }
+        // The argmax reduction leaves the winner in lane 0 only, so broadcast before use.
+        const float row_max = __shfl_sync(0xffffffffu, best_value, 0);
+        const int   arg_max = __shfl_sync(0xffffffffu, best_index, 0);
+
+        float sum_exp = 0.0f;
+        for (int k = lane; k < vocab_size; k += 32)
+            sum_exp += __expf(static_cast<float>(row[k]) - row_max);
+        #pragma unroll
+        for (int offset = 16; offset > 0; offset >>= 1)
+            sum_exp += __shfl_down_sync(0xffffffffu, sum_exp, offset);
+
         if (lane == 0)
         {
-            loss += -logf(static_cast<float>(row[target_class]) + epsilon);
+            loss += logf(sum_exp) + row_max - static_cast<float>(row[target_class]);
             active += 1.0f;
-            correct += best_index == target_class ? 1.0f : 0.0f;
+            correct += arg_max == target_class ? 1.0f : 0.0f;
         }
     }
 
@@ -291,8 +310,15 @@ void cross_entropy_3d_metrics_cuda(const Index total_tokens, const int vocab_siz
         int(total_tokens), vocab_size, outputs, targets, epsilon, sums));
 }
 
+// One warp per token. The inputs are logits, so the softmax denominator is a per-row
+// reduction and this can no longer be a flat elementwise kernel.
+//
+// Safe when output_deltas aliases outputs, which it does whenever
+// Loss::output_delta_overwrites_outputs() is on: the max and sum reductions are complete
+// (and broadcast) before any store, and in the final loop each lane writes only the
+// element it just read.
 template<typename T>
-__global__ void cross_entropy_3d_multiple_backward_kernel(const int n,
+__global__ void cross_entropy_3d_multiple_backward_kernel(const int total_tokens,
                                                           const int vocab_size,
                                                           const T* outputs,
                                                           const float* __restrict__ targets,
@@ -306,19 +332,48 @@ __global__ void cross_entropy_3d_multiple_backward_kernel(const int n,
         scale_factor = active_count > 0.0f ? 1.0f / active_count : 0.0f;
     }
 
-    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
+    const int lane  = threadIdx.x & 31;
+    const int warp  = threadIdx.x >> 5;
+    const int warps = blockDim.x >> 5;
+
+    for (int token = blockIdx.x * warps + warp; token < total_tokens; token += gridDim.x * warps)
     {
-        const int token_index = idx / vocab_size;
-        const int class_index = idx % vocab_size;
-        const int target_class = static_cast<int>(targets[token_index]);
+        const T* row = outputs + Index(token) * vocab_size;
+        T* delta_row = output_deltas + Index(token) * vocab_size;
+
+        const int target_class = static_cast<int>(targets[token]);
 
         if (target_class <= 0 || target_class >= vocab_size)
         {
-            output_deltas[idx] = static_cast<T>(0.0f);
+            for (int k = lane; k < vocab_size; k += 32)
+                delta_row[k] = static_cast<T>(0.0f);
             continue;
         }
 
-        output_deltas[idx] = static_cast<T>((static_cast<float>(outputs[idx]) - (class_index == target_class ? 1.0f : 0.0f)) * scale_factor);
+        float row_max = -INFINITY;
+        for (int k = lane; k < vocab_size; k += 32)
+            row_max = fmaxf(row_max, static_cast<float>(row[k]));
+        #pragma unroll
+        for (int offset = 16; offset > 0; offset >>= 1)
+            row_max = fmaxf(row_max, __shfl_down_sync(0xffffffffu, row_max, offset));
+        row_max = __shfl_sync(0xffffffffu, row_max, 0);
+
+        float sum_exp = 0.0f;
+        for (int k = lane; k < vocab_size; k += 32)
+            sum_exp += __expf(static_cast<float>(row[k]) - row_max);
+        #pragma unroll
+        for (int offset = 16; offset > 0; offset >>= 1)
+            sum_exp += __shfl_down_sync(0xffffffffu, sum_exp, offset);
+        sum_exp = __shfl_sync(0xffffffffu, sum_exp, 0);
+
+        const float normalization = scale_factor / sum_exp;
+
+        for (int k = lane; k < vocab_size; k += 32)
+        {
+            const float scaled_probability = __expf(static_cast<float>(row[k]) - row_max) * normalization;
+            delta_row[k] = static_cast<T>(scaled_probability
+                                          - (k == target_class ? scale_factor : 0.0f));
+        }
     }
 }
 
@@ -331,8 +386,17 @@ void cross_entropy_3d_multiple_backward_cuda(const Index n,
                                              const float scale_factor,
                                              const float* active_count_device)
 {
-    launch_elementwise(n, cross_entropy_3d_multiple_backward_kernel<T>,
-                       vocab_size, outputs, targets, output_deltas, scale_factor, active_count_device);
+    if (n <= 0 || vocab_size <= 0) return;
+
+    const Index total_tokens = n / vocab_size;
+    const int warps_per_block = block_size / 32;
+    const Index needed = (total_tokens + warps_per_block - 1) / warps_per_block;
+    const int blocks = int(needed < 4096 ? needed : 4096);
+
+    OPENNN_CUDA_LAUNCH(cross_entropy_3d_multiple_backward_kernel<T><<<blocks, block_size, 0,
+        opennn::device::get_compute_stream()>>>(
+            int(total_tokens), vocab_size, outputs, targets, output_deltas,
+            scale_factor, active_count_device));
 }
 
 __global__ void accumulate_scaled_metric_kernel(const float* __restrict__ value,

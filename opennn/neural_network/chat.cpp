@@ -925,6 +925,25 @@ void copy_classic_input(const TensorView& destination,
                        device::get_compute_stream());
 }
 
+// The text networks emit logits - the softmax is fused into CrossEntropyError3d - so the
+// distribution the sampler works on has to be normalized here. sample_token_with_workspace
+// genuinely needs probabilities: it divides by a repetition penalty, raises to 1/temperature
+// and accumulates a top-p mass, none of which mean anything on raw logits.
+//
+// The GPU fast path in generate() does not come through here; sample_logits_row_cuda takes
+// logits directly and normalizes internally, so it needs no change.
+void softmax_in_place(VectorR& values, const Index count)
+{
+    if (count <= 0) return;
+
+    auto row = values.head(count).array();
+    const float maximum = row.maxCoeff();
+
+    row = (row - maximum).exp();
+    const float total = row.sum();
+    if (total > 0.0f) row /= total;
+}
+
 void read_classic_distribution(ClassicGenerationState& state,
                                const Index position)
 {
@@ -943,6 +962,7 @@ void read_classic_distribution(ClassicGenerationState& state,
         device::synchronize(stream);
         ranges::transform(state.bf16_staging | views::take(vocabulary),
                           state.distribution.data(), bfloat16_to_float_host);
+        softmax_in_place(state.distribution, vocabulary);
         return;
     }
 
@@ -954,6 +974,7 @@ void read_classic_distribution(ClassicGenerationState& state,
                        device::CopyKind::DeviceToHost,
                        stream);
     device::synchronize(stream);
+    softmax_in_place(state.distribution, vocabulary);
 }
 
 }
