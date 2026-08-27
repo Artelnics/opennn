@@ -117,9 +117,22 @@ absolute samples/s is provenance.
 **Peak memory.** On GPU, `nvidia-smi` device-used sampled at 20 ms, minus the
 idle reading taken before the run. Whole-device on purpose: it counts the CUDA
 context and the allocator's cached blocks, because that memory really is
-unavailable to anything else. On CPU, the process's peak resident set, read
-from `VmHWM`. Each artifact records which via `memory_metric`, because the two
-are not the same quantity and must not be put in one column.
+unavailable to anything else. On CPU, the process's peak *anonymous*
+resident set, sampled from `RssAnon`, with `RssFile` recorded beside it.
+
+Anonymous, not total, and the distinction decides the result. `RssFile` counts
+pages backed by a mapped file, and OpenNN's reader mmaps its CSV rather than
+copying it -- so total RSS charges it ~150 MiB for a file it never allocated,
+while an engine that reads the same file onto the heap is charged the same for
+memory the kernel cannot reclaim. Counting mapped pages penalises the cheaper
+strategy. On one 500k-row cell: by total RSS, OpenNN 428 MiB and PyTorch 875;
+by anonymous, 270 and 563. Same runs; only the second pair answers "how much
+memory does this demand".
+
+`RssAnon` has no kernel-maintained high-water mark, so unlike `VmHWM` it is
+sampled rather than read once at exit. Each artifact records which metric was
+used via `memory_metric`, because the CPU and GPU quantities are not the same
+thing and must not share a column.
 
 > `torch.cuda.max_memory_allocated()` never appears in a comparison. It excludes
 > both, has no OpenNN equivalent, and flatters PyTorch by construction. Keep it
