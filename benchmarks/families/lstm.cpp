@@ -293,7 +293,13 @@ int main(int argc, char* argv[])
                     network->calculate_outputs_resident(inputs, forward_propagation, false);
             };
 
-            network->calculate_outputs_resident(inputs, forward_propagation, true);
+            // Uploading parameters is a device operation -- a CPU-compiled
+            // network has no device copy and `copy_parameters_device` throws,
+            // which aborted every CPU inference cell in this family. The
+            // warm-up pass still has to happen, so it is the upload that is
+            // conditional, not the pass.
+            network->calculate_outputs_resident(inputs, forward_propagation,
+                                                options.device == Device::CUDA);
             run_pass();
 
             const auto unix_now = []

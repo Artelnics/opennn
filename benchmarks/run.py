@@ -339,11 +339,11 @@ def main() -> int:
     # memory bandwidth here, which moves bandwidth-bound steps and leaves
     # cache-resident ones alone. Measured, recorded, and allowed to decide
     # where the artifact lands, because the rule is worthless as prose.
-    busy_fraction = cpu_busy_fraction()
-    machine_busy = busy_fraction > BUSY_THRESHOLD
+    busy_before = cpu_busy_fraction()
+    machine_busy = busy_before > BUSY_THRESHOLD
 
     if machine_busy:
-        print(f"  machine not quiet: {busy_fraction:.1%} busy before launch "
+        print(f"  machine not quiet: {busy_before:.1%} busy before launch "
               f"(threshold {BUSY_THRESHOLD:.1%}) -> results/scratch/")
 
     launches: list[dict] = []
@@ -361,6 +361,17 @@ def main() -> int:
                             if k not in ("engine", "mode", "RESULT")}
                 print(f"  {question:<8} {engine:<8} {reported}")
 
+    # Again, now the work is done. The reading that mattered was never the one
+        # up front: a sync client woke mid-cell and cost OpenNN 4.6x while leaving
+        # PyTorch alone, and the sample before the first launch saw 4% and called
+        # the machine quiet.
+        busy_after = cpu_busy_fraction()
+
+        if busy_after > BUSY_THRESHOLD:
+            print(f"\n  machine became busy during the run: {busy_after:.1%}")
+
+        machine_busy = machine_busy or busy_after > BUSY_THRESHOLD
+
         artifact = {
             "schema_version": 1,
             "benchmark_id": f"{args.device}-{args.family}",
@@ -372,7 +383,8 @@ def main() -> int:
             "machine": gpu_state(),
         "cpu": cpu_state(),
             "frameworks": framework_versions(),
-            "machine_quiet": {"busy_fraction": round(busy_fraction, 4),
+            "machine_quiet": {"busy_before": round(busy_before, 4),
+                              "busy_after": round(busy_after, 4),
                               "threshold": BUSY_THRESHOLD,
                               "quiet": not machine_busy},
             "launches": launches,
@@ -503,6 +515,17 @@ def main() -> int:
 
     shape_agrees = len({tuple(sorted(v.items())) for v in shapes.values()}) <= 1
 
+    # Again, now the work is done. The reading that mattered was never the one
+    # up front: a sync client woke mid-cell and cost OpenNN 4.6x while leaving
+    # PyTorch alone, and the sample before the first launch saw 4% and called
+    # the machine quiet.
+    busy_after = cpu_busy_fraction()
+
+    if busy_after > BUSY_THRESHOLD:
+        print(f"\n  machine became busy during the run: {busy_after:.1%}")
+
+    machine_busy = machine_busy or busy_after > BUSY_THRESHOLD
+
     artifact = {
         "schema_version": 1,
         "benchmark_id": f"{args.device}-{args.family}-{args.mode}",
@@ -516,7 +539,8 @@ def main() -> int:
         "frameworks": framework_versions(),
         "datasets": {name: file_info(Path(path)) for name, path in data.items()},
         "clocks_locked": clocks_locked(),
-        "machine_quiet": {"busy_fraction": round(busy_fraction, 4),
+        "machine_quiet": {"busy_before": round(busy_before, 4),
+                          "busy_after": round(busy_after, 4),
                           "threshold": BUSY_THRESHOLD,
                           "quiet": not machine_busy},
         "quality_gate": {"agrees": gate, "tolerance": args.tolerance,
