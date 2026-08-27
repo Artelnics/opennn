@@ -159,7 +159,38 @@ def clocks_locked() -> bool:
     return run_text(["nvidia-smi", "--query-gpu=persistence_mode",
                      "--format=csv,noheader"], timeout=10).strip() == "Enabled"
 
-def result_destination(dirty: bool | None = None, device: str = "cuda") -> Path:
+def cpu_busy_fraction(seconds: float = 1.0) -> float:
+    """How much of the machine is already working, sampled now.
+
+    Not the load average, which is useless here: it decays over minutes, so
+    after the suite's own previous launch it reads 21 on a machine that is
+    idle. This is the instantaneous non-idle fraction across all hardware
+    threads -- quiet measures under 0.01, one saturated core measures about
+    one over the thread count.
+    """
+    def snapshot() -> tuple[int, int]:
+        values = [int(v) for v in
+                  Path("/proc/stat").read_text().split("\n")[0].split()[1:]]
+        return sum(values), values[3] + values[4]        # total, idle + iowait
+
+    total_before, idle_before = snapshot()
+    time.sleep(seconds)
+    total_after, idle_after = snapshot()
+
+    elapsed = total_after - total_before
+    if elapsed <= 0:
+        return 0.0
+
+    return max(0.0, 1.0 - (idle_after - idle_before) / elapsed)
+
+
+# One busy core on this 28-thread part is about 0.036, and a quiet machine
+# measures under 0.01, so this trips on roughly a single competing process.
+BUSY_THRESHOLD = float(os.environ.get("OPENNN_BENCH_BUSY_THRESHOLD", "0.03"))
+
+
+def result_destination(dirty: bool | None = None, device: str = "cuda",
+                       busy: bool = False) -> Path:
     """The evidence store, or `scratch/` when the run cannot be evidence.
 
     Two conditions, both enforced here rather than asked for in prose.
@@ -168,6 +199,11 @@ def result_destination(dirty: bool | None = None, device: str = "cuda") -> Path:
     The suite this replaces stated that rule and checked it nowhere, which is
     how 39 of its 107 artifacts came to be dirty-tree results filed as
     reproducible ones.
+
+    And a machine that was not quiet, because a competing process does not
+    slow both engines equally -- a single browser tab at one core cost 35% of
+    achievable memory bandwidth here, which moved a bandwidth-bound GEMM step
+    by that much while leaving cache-resident ones untouched.
 
     And an unlocked GPU clock, for the same reason at one remove: this card
     drifts about 8% across a day, so margins under ~2% are not resolvable while
@@ -181,7 +217,8 @@ def result_destination(dirty: bool | None = None, device: str = "cuda") -> Path:
         dirty = bool(git_metadata().get("dirty", True))
 
     unlocked = device == "cuda" and not clocks_locked()
-    destination = RESULTS / "scratch" if (dirty or unlocked) else RESULTS
+    destination = (RESULTS / "scratch"
+                   if (dirty or unlocked or bool(busy)) else RESULTS)
     destination.mkdir(parents=True, exist_ok=True)
     return destination
 
@@ -309,25 +346,38 @@ class Monitor:
         self.idle_mib = 0.0
         self.idle_watts = 0.0
         self.peak_rss_mib = 0.0
+        self.peak_file_mib = 0.0
         self._measure_idle = measure_idle_first
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._process: subprocess.Popen | None = None
 
     def watch_rss(self, pid: int) -> None:
-        """Track a child's peak resident set, for CPU runs.
+        """Track a child's peak *anonymous* resident set, for CPU runs.
 
-        VmHWM is a high-water mark the kernel maintains, so reading it once
-        before the child exits gives its true peak -- polling frequency does
-        not matter, only that we read it at all.
+        Anonymous, not total. RssFile counts pages backed by a mapped file,
+        and OpenNN's CSV reader mmaps its input rather than copying it -- so
+        total RSS charges it ~150 MiB for a 151 MB file it never allocated,
+        while an engine that reads the same file into heap is charged the same
+        amount for memory the kernel cannot reclaim. Counting mapped pages
+        penalises the cheaper strategy.
+
+        Measured on the same 500k-row cell: by total RSS, OpenNN 428 MiB and
+        PyTorch 875; by anonymous, 270 and 563. Same runs, and only the second
+        pair answers "how much memory does this demand".
+
+        RssAnon has no kernel-maintained high-water mark, so unlike VmHWM this
+        has to be sampled -- hence polling rather than one read at the end.
         """
         try:
             with open(f"/proc/{pid}/status") as handle:
                 for line in handle:
-                    if line.startswith("VmHWM:"):
+                    if line.startswith("RssAnon:"):
                         self.peak_rss_mib = max(self.peak_rss_mib,
                                                 float(line.split()[1]) / 1024.0)
-                        return
+                    elif line.startswith("RssFile:"):
+                        self.peak_file_mib = max(self.peak_file_mib,
+                                                 float(line.split()[1]) / 1024.0)
         except (OSError, ValueError, IndexError):
             pass
 
@@ -428,7 +478,8 @@ class Monitor:
             # GPU's draw during a CPU run is the idle card.
             return {
                 "peak_mib": round(self.peak_rss_mib, 1),
-                "memory_metric": "process_peak_rss",
+                "peak_file_backed_mib": round(self.peak_file_mib, 1),
+                "memory_metric": "process_peak_anonymous_rss",
                 "energy_joules": None,
                 "energy_wh": None,
                 "energy_measurable": False,

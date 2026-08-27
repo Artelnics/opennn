@@ -57,6 +57,8 @@ from common import (  # noqa: E402
     git_metadata,
     gpu_state,
     result_destination,
+    cpu_busy_fraction,
+    BUSY_THRESHOLD,
     session_id,
     wait_for_idle,
 )
@@ -145,19 +147,35 @@ def cpu_pinning(threads: int | None) -> tuple[list[str], dict[str, str], dict]:
     if not cores:
         return [], {}, {"pinned": False, "reason": "no per-core frequency data"}
 
-    count = threads or physical_cores(cores)
     span = f"{cores[0]}-{cores[-1]}" if cores == list(range(cores[0], cores[-1] + 1)) \
         else ",".join(str(c) for c in cores)
 
-    environment = {
-        "OMP_NUM_THREADS": str(count),
-        "MKL_NUM_THREADS": str(count),
-        "OPENNN_THREADS": str(count),
-        "TORCH_NUM_THREADS": str(count),
-    }
+    # Cores are pinned; the thread count is not, unless asked for.
+    #
+    # Forcing one looked like fairness and was the opposite. Measured on dense
+    # CPU training, samples/s:
+    #
+    #                 unset     4        8       16
+    #     OpenNN     96,204  62,309   84,057  86,296
+    #     PyTorch    93,417  60,855   89,378  83,490
+    #
+    # Every fixed count is worse than letting each engine choose, and the
+    # penalty is uneven -- 13% for OpenNN against 4% for PyTorch at eight
+    # threads, which inverted the result. Contract item 3 asks for each engine
+    # at its best, and each engine's own default is what that means here.
+    #
+    # --threads still overrides, so the choice stays measurable.
+    environment: dict[str, str] = {}
+    count = threads
+
+    if count:
+        environment = {name: str(count) for name in
+                       ("OMP_NUM_THREADS", "MKL_NUM_THREADS",
+                        "OPENNN_THREADS", "TORCH_NUM_THREADS")}
 
     return (["taskset", "-c", span], environment,
-            {"pinned": True, "cores": span, "threads": count,
+            {"pinned": True, "cores": span,
+             "threads": count or "engine default",
              "excluded_efficiency_cores": layout["efficiency"]})
 
 def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
@@ -169,8 +187,17 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
     data loading are excluded from the energy figure as they are from the
     throughput one.
     """
-    if quiet_wait and device == "cuda":
-        wait_for_idle(seconds=30.0)
+    if quiet_wait:
+        if device == "cuda":
+            wait_for_idle(seconds=30.0)
+        else:
+            # CPU needs settling too, and skipping it was not free. Without
+            # this, dense training read 94,279 samples/s when OpenNN ran first
+            # and 85,150 when it ran straight after PyTorch -- a 10% swing
+            # decided by launch order, while PyTorch itself stayed flat. The
+            # rotation exposed it; a pause is what fixes it. There is no
+            # nvidia-smi equivalent to poll here, so it is a fixed wait.
+            time.sleep(float(os.environ.get("OPENNN_BENCH_CPU_SETTLE", "8")))
 
     prefix: list[str] = []
     environment = dict(os.environ)
@@ -237,6 +264,11 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
                     and _is_number(v)},
         "instruments": instruments,
         "timed_window": {"start_unix": start, "end_unix": end},
+        # Which BLAS the engine dispatched to. OpenNN defaults to Eigen and its
+        # driver opts into MKL, so this is a property of the run rather than of
+        # the binary, and comparing an Eigen number against an MKL one measures
+        # the BLAS instead of the engine.
+        "blas": fields.get("blas"),
         "fields": fields,
         "stderr_tail": completed.stderr[-1500:] if completed.returncode else "",
     }
@@ -301,6 +333,19 @@ def main() -> int:
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
     print(f"=== {args.family} {args.mode} {args.precision} {args.device} ===")
+
+    # Is anything else using this machine? A competing process does not slow
+    # both engines equally -- one browser tab at a core cost 35% of achievable
+    # memory bandwidth here, which moves bandwidth-bound steps and leaves
+    # cache-resident ones alone. Measured, recorded, and allowed to decide
+    # where the artifact lands, because the rule is worthless as prose.
+    busy_before = cpu_busy_fraction()
+    machine_busy = busy_before > BUSY_THRESHOLD
+
+    if machine_busy:
+        print(f"  machine not quiet: {busy_before:.1%} busy before launch "
+              f"(threshold {BUSY_THRESHOLD:.1%}) -> results/scratch/")
+
     launches: list[dict] = []
 
     if "modes" in FAMILIES[args.family]:
@@ -316,6 +361,17 @@ def main() -> int:
                             if k not in ("engine", "mode", "RESULT")}
                 print(f"  {question:<8} {engine:<8} {reported}")
 
+    # Again, now the work is done. The reading that mattered was never the one
+        # up front: a sync client woke mid-cell and cost OpenNN 4.6x while leaving
+        # PyTorch alone, and the sample before the first launch saw 4% and called
+        # the machine quiet.
+        busy_after = cpu_busy_fraction()
+
+        if busy_after > BUSY_THRESHOLD:
+            print(f"\n  machine became busy during the run: {busy_after:.1%}")
+
+        machine_busy = machine_busy or busy_after > BUSY_THRESHOLD
+
         artifact = {
             "schema_version": 1,
             "benchmark_id": f"{args.device}-{args.family}",
@@ -327,11 +383,15 @@ def main() -> int:
             "machine": gpu_state(),
         "cpu": cpu_state(),
             "frameworks": framework_versions(),
+            "machine_quiet": {"busy_before": round(busy_before, 4),
+                              "busy_after": round(busy_after, 4),
+                              "threshold": BUSY_THRESHOLD,
+                              "quiet": not machine_busy},
             "launches": launches,
         }
         name = (f"{artifact['benchmark_id']}"
                 f"{'-' + args.label if args.label else ''}-{run_id}.json")
-        path = result_destination(git.get("dirty"), "cpu") / name
+        path = result_destination(git.get("dirty"), "cpu", machine_busy) / name
         path.write_text(json.dumps(artifact, indent=2, default=str))
         if git.get("dirty"):
             print("\n  dirty tree -> results/scratch/, not the evidence store")
@@ -448,11 +508,23 @@ def main() -> int:
             continue
         reported = {k: v for k, v in launch_result["fields"].items()
                     if k in ("sequence", "input_vocab", "target_vocab", "samples",
-                             "parameters", "hidden", "inputs", "past")}
+                             "parameters", "hidden", "inputs", "past",
+                             "dataset_train", "dataset_test")}
         if reported:
             shapes.setdefault(launch_result["engine"], reported)
 
     shape_agrees = len({tuple(sorted(v.items())) for v in shapes.values()}) <= 1
+
+    # Again, now the work is done. The reading that mattered was never the one
+    # up front: a sync client woke mid-cell and cost OpenNN 4.6x while leaving
+    # PyTorch alone, and the sample before the first launch saw 4% and called
+    # the machine quiet.
+    busy_after = cpu_busy_fraction()
+
+    if busy_after > BUSY_THRESHOLD:
+        print(f"\n  machine became busy during the run: {busy_after:.1%}")
+
+    machine_busy = machine_busy or busy_after > BUSY_THRESHOLD
 
     artifact = {
         "schema_version": 1,
@@ -467,6 +539,10 @@ def main() -> int:
         "frameworks": framework_versions(),
         "datasets": {name: file_info(Path(path)) for name, path in data.items()},
         "clocks_locked": clocks_locked(),
+        "machine_quiet": {"busy_before": round(busy_before, 4),
+                          "busy_after": round(busy_after, 4),
+                          "threshold": BUSY_THRESHOLD,
+                          "quiet": not machine_busy},
         "quality_gate": {"agrees": gate, "tolerance": args.tolerance,
                          "accuracies": accuracies},
         "shape_gate": {"agrees": shape_agrees, "reported": shapes},
@@ -475,7 +551,7 @@ def main() -> int:
     }
 
     name = f"{artifact['benchmark_id']}{'-' + args.label if args.label else ''}-{run_id}.json"
-    path = result_destination(git.get("dirty"), args.device) / name
+    path = result_destination(git.get("dirty"), args.device, machine_busy) / name
     path.write_text(json.dumps(artifact, indent=2, default=str))
 
     print()
@@ -504,6 +580,9 @@ def main() -> int:
               f" -- the speed numbers above are not a like-for-like comparison")
     if git.get("dirty"):
         print("\n  dirty tree -> results/scratch/, not the evidence store")
+    elif machine_busy:
+        print(f"\n  machine was {busy_fraction:.1%} busy -> results/scratch/, "
+              "not the evidence store")
     elif args.device == "cuda" and not clocks_locked():
         print("\n  clocks unlocked -> results/scratch/. Provisional: margins under"
               "\n  ~2% are not resolvable while the clock floats.")

@@ -9,8 +9,32 @@
 #include "opennn/core/configuration.h"
 #include "opennn/core/device_backend.h"
 
+#include <cstdlib>
+#include <string>
+
 namespace opennn
 {
+
+Configuration::Configuration()
+    : blas(Blas::Eigen)
+{
+    const char* const requested = getenv("OPENNN_BLAS");
+
+    if (requested && string(requested) == "mkl") blas.store(Blas::Mkl);
+}
+
+void Configuration::set_blas(const Blas new_blas)
+{
+    // Deliberately outside `configuration_mutex`, and deliberately not bumping
+    // `generation`: nothing caches a kernel choice, so a change takes effect on
+    // the next GEMM without anything needing to be rebuilt.
+    blas.store(new_blas, memory_order_relaxed);
+}
+
+Blas Configuration::get_blas() const
+{
+    return blas.load(memory_order_relaxed);
+}
 
 Configuration& Configuration::instance()
 {

@@ -1,18 +1,104 @@
 
-project(opennn_library VERSION 8.0.1 LANGUAGES CXX)
+option(OpenNN_BUILD_VISION "Build vision/seq layers, networks, and datasets" ON)
+option(OpenNN_BUILD_SHARED "Build OpenNN as a shared library (DLL) instead of static" OFF)
+option(OpenNN_INSTALL "Generate install rules for the OpenNN library" ON)
+if(MSVC)
+    set(_opennn_lto_default OFF)
+else()
+    set(_opennn_lto_default ON)
+endif()
+option(OpenNN_ENABLE_LTO "Enable interprocedural optimization/LTO for release builds"
+    ${_opennn_lto_default})
+option(OpenNN_ENABLE_MKL "Use Intel MKL as Eigen BLAS/LAPACK backend" OFF)
+set(OpenNN_MKL_ROOT "" CACHE PATH "Intel MKL root prefix (e.g. /opt/intel/oneapi/mkl/latest or extracted /usr prefix)")
+option(OpenNN_ENABLE_ONEDNN "Use oneDNN optimized CPU recurrent primitives" OFF)
+set(OpenNN_ONEDNN_ROOT "" CACHE PATH "oneDNN prefix (for example /usr or an extracted package root/usr)")
+option(OpenNN_DISABLE_CUDA "Disable CUDA even if the toolkit is found" OFF)
 
-include(GNUInstallDirs)
+list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/core/cuda")
+
+include(FetchContent)
+include(CheckLanguage)
+
+if(NOT OpenNN_DISABLE_CUDA)
+    check_language(CUDA)
+endif()
+
+if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
+    if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+        set(CMAKE_CUDA_ARCHITECTURES "native" CACHE STRING
+            "CUDA compute capabilities to target (default: native)")
+    endif()
+
+    enable_language(CUDA)
+    find_package(CUDAToolkit REQUIRED)
+    find_package(CUDNN 9.0 REQUIRED)
+    set(OPENNN_HAS_CUDA ON)
+
+    FetchContent_Declare(
+        cudnn_frontend
+        GIT_REPOSITORY https://github.com/NVIDIA/cudnn-frontend.git
+        GIT_TAG v1.27.0
+        GIT_SHALLOW TRUE)
+    set(CUDNN_FRONTEND_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
+    set(CUDNN_FRONTEND_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(CUDNN_FRONTEND_BUILD_PYTHON_BINDINGS OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(cudnn_frontend)
+    set(CUDNN_FRONTEND_INCLUDE_DIR "${cudnn_frontend_SOURCE_DIR}/include")
+
+    option(OpenNN_WITH_FLASH_ATTENTION "Build FlashAttention-2 kernels" OFF)
+    set(OpenNN_FLASH_ATTENTION_HEAD_DIMS "32;64;128" CACHE STRING
+        "Head dimensions to build FlashAttention-2 kernels for")
+    set(OpenNN_FLASH_ATTENTION_SOURCE_DIR "" CACHE PATH
+        "Existing flash-attention checkout (empty: fetch it)")
+
+    if(OpenNN_WITH_FLASH_ATTENTION)
+        add_subdirectory(core/cuda)
+    endif()
+else()
+    set(OPENNN_HAS_CUDA OFF)
+endif()
+
+FetchContent_Declare(
+    eigen
+    GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+    GIT_TAG 5.0.1
+    GIT_SHALLOW TRUE)
+set(EIGEN_BUILD_DOC OFF CACHE BOOL "" FORCE)
+set(EIGEN_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(EIGEN_BUILD_CMAKE_PACKAGE ON CACHE BOOL "" FORCE)
+
+find_package(Eigen3 5.0 CONFIG QUIET)
+if(NOT Eigen3_FOUND)
+    FetchContent_MakeAvailable(eigen)
+endif()
+
+if(OpenNN_CHECK_HEADERS AND NOT MSVC)
+    add_test(NAME opennn_header_isolation
+        COMMAND "${PROJECT_SOURCE_DIR}/tools/check_headers.sh"
+                "${CMAKE_CXX_COMPILER}"
+                "${PROJECT_SOURCE_DIR}"
+                "$<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>")
+endif()
+
+if(APPLE)
+    find_path(LIBOMP_INCLUDE_DIR omp.h
+        PATHS /opt/homebrew/opt/libomp/include /usr/local/opt/libomp/include)
+    find_library(LIBOMP_LIBRARY NAMES omp libomp.dylib
+        PATHS /opt/homebrew/opt/libomp/lib /usr/local/opt/libomp/lib)
+    if(NOT LIBOMP_INCLUDE_DIR OR NOT LIBOMP_LIBRARY)
+        message(WARNING "OpenMP not found. Continuing without OpenMP support.")
+    endif()
+else()
+    find_package(OpenMP)
+endif()
 
 file(GLOB_RECURSE CPP_SOURCES CONFIGURE_DEPENDS "*.cpp")
 file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
 list(FILTER CPP_SOURCES EXCLUDE REGEX "-DESKTOP-[^/\\\\]*\\.cpp$")
 list(FILTER HEADER_FILES EXCLUDE REGEX "-DESKTOP-[^/\\\\]*\\.h$")
-
-option(OpenNN_BUILD_VISION "Build vision/seq layers, networks, and datasets" ON)
-option(OpenNN_ENABLE_MKL "Use Intel MKL as Eigen BLAS/LAPACK backend" OFF)
-set(OpenNN_MKL_ROOT "" CACHE PATH "Intel MKL root prefix (e.g. /opt/intel/oneapi/mkl/latest or extracted /usr prefix)")
-option(OpenNN_ENABLE_ONEDNN "Use oneDNN optimized CPU recurrent primitives" OFF)
-set(OpenNN_ONEDNN_ROOT "" CACHE PATH "oneDNN prefix (for example /usr or an extracted package root/usr)")
+list(FILTER HEADER_FILES EXCLUDE REGEX "/core/cuda/flash_attention_shim/")
 
 if(NOT OpenNN_BUILD_VISION)
     set(_opennn_vision_pattern
@@ -20,8 +106,6 @@ if(NOT OpenNN_BUILD_VISION)
     list(FILTER CPP_SOURCES EXCLUDE REGEX "${_opennn_vision_pattern}")
 endif()
 
-option(OpenNN_BUILD_SHARED "Build OpenNN as a shared library (DLL) instead of static" OFF)
-option(OpenNN_INSTALL "Generate install rules for the OpenNN library" ON)
 if(OpenNN_BUILD_SHARED)
     set(_opennn_lib_type SHARED)
 
@@ -32,6 +116,16 @@ endif()
 
 add_library(opennn ${_opennn_lib_type} ${CPP_SOURCES} ${HEADER_FILES})
 add_library(OpenNN::opennn ALIAS opennn)
+
+if(OpenNN_ENABLE_LTO)
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT OPENNN_LTO_OK LANGUAGES CXX)
+    if(OPENNN_LTO_OK)
+        set_property(TARGET opennn PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+    else()
+        message(STATUS "OpenNN: IPO/LTO is not supported by this toolchain.")
+    endif()
+endif()
 
 if(OpenNN_BUILD_SHARED)
     set_target_properties(opennn PROPERTIES
@@ -50,8 +144,6 @@ if(NOT OpenNN_BUILD_VISION)
 endif()
 
 target_compile_features(opennn PUBLIC cxx_std_20)
-
-include(FetchContent)
 
 set(ZLIB_BUILD_SHARED OFF CACHE BOOL "" FORCE)
 set(ZLIB_BUILD_STATIC ON CACHE BOOL "" FORCE)
@@ -191,7 +283,15 @@ if(OpenNN_ENABLE_ONEDNN)
 endif()
 
 if(APPLE)
-    target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
+    target_compile_options(opennn PUBLIC
+        $<BUILD_INTERFACE:-fexperimental-library>)
+    target_link_options(opennn PUBLIC
+        $<BUILD_INTERFACE:-fexperimental-library>)
+    if(LIBOMP_INCLUDE_DIR AND LIBOMP_LIBRARY)
+        target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
+        target_include_directories(opennn SYSTEM PRIVATE "${LIBOMP_INCLUDE_DIR}")
+        target_link_libraries(opennn PUBLIC "${LIBOMP_LIBRARY}")
+    endif()
 elseif(OpenMP_FOUND)
     # MSVC's plain -openmp is OpenMP 2.0 and rejects `#pragma omp simd` with
     # C7660, which stops the whole build the first time a kernel uses one.
@@ -222,13 +322,15 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_G
 endif()
 
 target_compile_options(opennn PRIVATE
-    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic -Wswitch-enum>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic -Wswitch-enum -Wno-unused-parameter>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-deprecated-declarations -Wno-global-constructors -Wno-exit-time-destructors>
     $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /w14061>
 )
 
 if(OPENNN_HAS_CUDA)
     target_compile_definitions(opennn PUBLIC OPENNN_HAS_CUDA)
     file(GLOB_RECURSE CUDA_SOURCES CONFIGURE_DEPENDS "*.cu" "*.cuh")
+    list(FILTER CUDA_SOURCES EXCLUDE REGEX "/flash_attention_shim/")
     target_sources(opennn PRIVATE ${CUDA_SOURCES})
     target_link_libraries(opennn PUBLIC
         CUDA::cudart CUDA::cublas CUDA::cublasLt CUDA::nvrtc CUDA::cuda_driver
@@ -269,8 +371,8 @@ if(OPENNN_HAS_CUDA)
         SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/neural_network/operators/attention_operator.cpp
         APPEND PROPERTY COMPILE_DEFINITIONS HAVE_CUDNN_FRONTEND)
 
-    if(OPENNN_FLASH_ATTENTION_TARGET)
-        target_link_libraries(opennn PRIVATE ${OPENNN_FLASH_ATTENTION_TARGET})
+    if(TARGET opennn_flash_attention)
+        target_link_libraries(opennn PRIVATE opennn_flash_attention)
         target_compile_definitions(opennn PUBLIC
             $<BUILD_INTERFACE:OPENNN_HAS_FLASH_ATTENTION>)
     endif()
@@ -337,21 +439,21 @@ if(OpenNN_INSTALL)
 
     # The FlashAttention-2 kernels go with it: a static opennn carries the calls
     # into them, so an installed one needs the archive that defines them.
-    install(TARGETS opennn ${OPENNN_FLASH_ATTENTION_TARGET}
+    set(_opennn_install_targets opennn)
+    if(TARGET opennn_flash_attention)
+        list(APPEND _opennn_install_targets opennn_flash_attention)
+    endif()
+    install(TARGETS ${_opennn_install_targets}
         EXPORT OpenNNTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-    # Headers live in folders now, and every #include spells that folder out, so
-    # the installed tree has to mirror the source tree instead of being flattened.
-    foreach(_opennn_header IN LISTS HEADER_FILES)
-        file(RELATIVE_PATH _opennn_header_relative
-            ${CMAKE_CURRENT_SOURCE_DIR} ${_opennn_header})
-        get_filename_component(_opennn_header_folder ${_opennn_header_relative} DIRECTORY)
-        install(FILES ${_opennn_header}
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/opennn/${_opennn_header_folder})
-    endforeach()
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/opennn
+        FILES_MATCHING PATTERN "*.h"
+        PATTERN "*-DESKTOP-*.h" EXCLUDE
+        PATTERN "flash_attention_shim" EXCLUDE)
 
     install(DIRECTORY ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_INCLUDEDIR}/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
@@ -368,7 +470,7 @@ if(OpenNN_INSTALL)
         set(_opennn_needs_openmp ON)
     endif()
     set(_opennn_needs_cudnn OFF)
-    if(OPENNN_HAS_CUDA AND HAVE_CUDNN)
+    if(OPENNN_HAS_CUDA AND CUDNN_FOUND)
         set(_opennn_needs_cudnn ON)
     endif()
 
@@ -378,7 +480,7 @@ if(OpenNN_INSTALL)
     endif()
 
     configure_package_config_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/OpenNNConfig.cmake.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/OpenNNConfig.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/OpenNNConfig.cmake
         INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenNN)
 
@@ -390,6 +492,6 @@ if(OpenNN_INSTALL)
     install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/OpenNNConfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/OpenNNConfigVersion.cmake
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindCUDNN.cmake
+        ${CMAKE_CURRENT_SOURCE_DIR}/core/cuda/FindCUDNN.cmake
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenNN)
 endif()

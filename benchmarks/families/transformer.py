@@ -26,6 +26,7 @@ import collections
 import contextlib
 import math
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -79,6 +80,19 @@ class Seq2Seq(nn.Module):
         t = self.positions(self.target_embedding(target) * self.scale)
         return self.output(self.decoder(t, self.encoder(s)))
 
+def report_blas() -> None:
+    """Which BLAS this engine dispatches to, printed like OpenNN prints it.
+
+    PyTorch's is fixed at build time -- the wheels are MKL-backed -- while
+    OpenNN's is chosen at runtime. Recording both is what stops a comparison
+    quietly turning into Eigen against MKL.
+    """
+    settings = torch.__config__.show()
+    match = re.search(r"BLAS_INFO=(\w+)", settings)
+
+    print(f"blas={match.group(1) if match else 'unknown'}")
+
+
 def build(vocab: int, sequence: int, opts: dict) -> nn.Module:
     """The transformer family. Nothing else here constructs the network."""
     torch.manual_seed(SEED)
@@ -93,6 +107,8 @@ def load_corpus(path: str, sequence: int | None = None) -> tuple[torch.Tensor, t
     """
     sources, targets = [], []
     counter: collections.Counter = collections.Counter()
+
+    report_opened(path)
 
     with open(path, encoding="utf-8") as handle:
         for line in handle:
@@ -135,6 +151,10 @@ def resident_mib() -> float:
             return int(handle.read().split()[1]) * os.sysconf("SC_PAGE_SIZE") / (1024.0 * 1024.0)
     except Exception:
         return 0.0
+
+def report_opened(path: str) -> None:
+    """Announce the file actually opened, not the one passed in."""
+    print(f"dataset_opened={Path(path).resolve()}", flush=True)
 
 def parse_opts(argv: list[str], first: int) -> dict:
     def at(index: int, default: str) -> str:
@@ -208,6 +228,7 @@ def train_like(argv: list[str], mode: str) -> int:
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode={mode}\ndevice={opts['device']}")
+    report_blas()
     source, target, vocab, sequence = load_corpus(argv[2])
     print(f"samples={source.shape[0]} sequence={sequence} "
           f"input_vocab={vocab} target_vocab={vocab} "
@@ -266,6 +287,7 @@ def infer(argv: list[str]) -> int:
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode=infer\ndevice={opts['device']}")
+    report_blas()
     source, target, vocab, sequence = load_corpus(argv[2])
     print(f"samples={source.shape[0]} sequence={sequence} "
           f"input_vocab={vocab} target_vocab={vocab}")
@@ -309,6 +331,7 @@ def capacity(argv: list[str]) -> int:
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode=capacity\ndevice={opts['device']}\nbatch={batch}")
+    report_blas()
 
     try:
         source, target, vocab, sequence = load_corpus(argv[2])

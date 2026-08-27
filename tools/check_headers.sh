@@ -18,7 +18,7 @@ export CHK_CXX=$cxx
 export CHK_ROOT=$root
 export CHK_FLAGS="-std=c++20 -fsyntax-only -fopenmp -Wno-interference-size ${inc[*]}"
 
-find "$root/opennn" -name '*.h' -print0 |
+find "$root/opennn" -path '*/flash_attention_shim' -prune -o -name '*.h' -print0 |
 xargs -0 -P "$(nproc)" -I{} bash -c '
     rel=${0#"$CHK_ROOT"/}
     out=$(echo "#include \"$rel\"" | $CHK_CXX $CHK_FLAGS -x c++ - 2>&1) ||

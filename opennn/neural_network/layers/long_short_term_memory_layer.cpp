@@ -212,7 +212,7 @@ void LongShortTermMemoryOperator::forward_propagate(ForwardPropagation& forward_
                          return_sequences, is_training(pass));
 
     apply(input, output, forget_gate, input_gate, candidate_gate, output_gate,
-          cell_state, hidden_state, cell_activation);
+          cell_state, hidden_state, cell_activation, is_training(pass));
 }
 
 void LongShortTermMemoryOperator::apply(const TensorView& input,
@@ -223,7 +223,8 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
                                       TensorView& output_gate,
                                       TensorView& cell_state,
                                       TensorView& hidden_state,
-                                      TensorView& cell_activation) const
+                                      TensorView& cell_activation,
+                                      const bool training) const
 {
     if (!input.get_data() || output_features == 0 || time_steps == 0) return;
 
@@ -272,6 +273,8 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
         Zin.rowwise() += bcat.transpose();
 
         using StridedZ = Eigen::Map<const MatrixR, 0, Eigen::OuterStride<>>;
+        using Row = Eigen::Map<Eigen::ArrayXf>;
+        using ConstRow = Eigen::Map<const Eigen::ArrayXf>;
 
         const bool standard_gates =
             recurrent_activation_function == ActivationFunction::Sigmoid
@@ -280,22 +283,91 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
         MatrixR Z_c(batch_size, 4 * H);
         MatrixR h_c(batch_size, H);
 
-        const int eigen_threads = Eigen::nbThreads();
-        Eigen::setNbThreads(1);
-
-        #pragma omp parallel
+        // Two different shapes of parallelism, one per phase.
+        //
+        // The recurrent GEMM is one 256x512x128 product per step and Eigen
+        // threads it well, so it is left whole: splitting the batch across
+        // threads first made every thread re-pack the 256 KiB Ucat, 384 times
+        // a call. The elementwise tail is row-independent and transcendental
+        // heavy, so that gets the batch split instead.
+        //
+        // Both used to be serial -- the GEMM sat in an `omp single` with Eigen
+        // pinned to one thread, and it is the layer: 805 Mflop per call at
+        // batch 256 and H 128.
         for (Index t = 0; t < T; ++t)
         {
-            #pragma omp single
             {
-                Z_c = StridedZ(Zin.data() + t * 4 * H, batch_size, 4 * H,
-                               Eigen::OuterStride<>(T * 4 * H));
-
-                if (t > 0)
-                    Z_c.noalias() += h_c * Ucat;
+            PROFILE_SCOPE("rnn:strided_copy");
+            Z_c = StridedZ(Zin.data() + t * 4 * H, batch_size, 4 * H,
+                           Eigen::OuterStride<>(T * 4 * H));
+            }
+            {
+            PROFILE_SCOPE("rnn:recurrent_gemm");
+            if (t > 0)
+                Z_c.noalias() += h_c * Ucat;
             }
 
-            #pragma omp for
+            PROFILE_SCOPE("rnn:gates");
+
+            if (standard_gates)
+            {
+                // Parallel over the batch, vectorised over hidden units.
+                //
+                // Both matter and neither is enough alone. The scalar form
+                // called libm five times per element -- 3.9M transcendentals a
+                // call at batch 256, T 24, H 128 -- and a scalar loop
+                // vectorises neither `exp` nor `tanh`. But hoisting the whole
+                // step into Eigen array expressions over the batch-by-H block
+                // gave up the thread split and cost 7x more than it saved.
+                //
+                // A row of a step is contiguous in all four gates and in the
+                // outputs, so each thread can take rows and let Eigen vectorise
+                // along H. Written as two assignments rather than six named
+                // temporaries, so Eigen fuses each into one pass and allocates
+                // nothing.
+                #pragma omp parallel for schedule(static)
+                for (Index b = 0; b < batch_size; ++b)
+                {
+                    const Index step = (b * T + t) * H;
+                    const float* Zrow = Z_c.data() + b * 4 * H;
+
+                    const ConstRow zf(Zrow, H);
+                    const ConstRow zi(Zrow + H, H);
+                    const ConstRow zg(Zrow + 2 * H, H);
+                    const ConstRow zo(Zrow + 3 * H, H);
+
+                    Row cell_now(cells + step, H);
+                    Row hidden_now(hidden + step, H);
+
+                    const auto f = 1.0f / (1.0f + (-zf).exp());
+                    const auto i = 1.0f / (1.0f + (-zi).exp());
+                    const auto g = zg.tanh();
+                    const auto o = 1.0f / (1.0f + (-zo).exp());
+
+                    if (t > 0)
+                        cell_now = f * ConstRow(cells + step - H, H) + i * g;
+                    else
+                        cell_now = i * g;
+
+                    hidden_now = o * cell_now.tanh();
+
+                    Row(h_c.data() + b * H, H) = hidden_now;
+
+                    if (training)
+                    {
+                        Row(f_gate + step, H) = f;
+                        Row(i_gate + step, H) = i;
+                        Row(g_gate + step, H) = g;
+                        Row(o_gate + step, H) = o;
+                        Row(cell_act + step, H) = cell_now.tanh();
+                    }
+
+                    if (return_sequences) Row(y + step, H) = hidden_now;
+                }
+            }
+            else
+            {
+            #pragma omp parallel for schedule(static)
             for (Index b = 0; b < batch_size; ++b)
             {
                 const Index step = (b * T + t) * H;
@@ -305,45 +377,35 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
 
                 for (Index h = 0; h < H; ++h)
                 {
-                    float f, i, g, o, a, c;
-                    if (standard_gates)
-                    {
-                        f = 1.0f / (1.0f + exp(-Zrow[h]));
-                        i = 1.0f / (1.0f + exp(-Zrow[H + h]));
-                        g = tanh(Zrow[2 * H + h]);
-                        o = 1.0f / (1.0f + exp(-Zrow[3 * H + h]));
-                        c = f * (c_prev ? c_prev[h] : 0.0f) + i * g;
-                        a = tanh(c);
-                    }
-                    else
-                    {
-                        f = activation_forward_value(
-                            recurrent_activation_function, Zrow[h]);
-                        i = activation_forward_value(
-                            recurrent_activation_function, Zrow[H + h]);
-                        g = activation_forward_value(
-                            activation_function, Zrow[2 * H + h]);
-                        o = activation_forward_value(
-                            recurrent_activation_function, Zrow[3 * H + h]);
-                        c = f * (c_prev ? c_prev[h] : 0.0f) + i * g;
-                        a = activation_forward_value(activation_function, c);
-                    }
+                    const float f = activation_forward_value(
+                        recurrent_activation_function, Zrow[h]);
+                    const float i = activation_forward_value(
+                        recurrent_activation_function, Zrow[H + h]);
+                    const float g = activation_forward_value(
+                        activation_function, Zrow[2 * H + h]);
+                    const float o = activation_forward_value(
+                        recurrent_activation_function, Zrow[3 * H + h]);
+                    const float c = f * (c_prev ? c_prev[h] : 0.0f) + i * g;
+                    const float a = activation_forward_value(activation_function, c);
                     const float h_value = o * a;
 
-                    f_gate[step + h] = f;
-                    i_gate[step + h] = i;
-                    g_gate[step + h] = g;
-                    o_gate[step + h] = o;
+                    if (training)
+                    {
+                        f_gate[step + h] = f;
+                        i_gate[step + h] = i;
+                        g_gate[step + h] = g;
+                        o_gate[step + h] = o;
+                        cell_act[step + h] = a;
+                    }
+
                     cells[step + h] = c;
-                    cell_act[step + h] = a;
                     hidden[step + h] = h_value;
                     h_next[h] = h_value;
                     if (return_sequences) y[step + h] = h_value;
                 }
             }
+            }
         }
-
-        Eigen::setNbThreads(eigen_threads);
 
         if (!return_sequences)
             for (Index b = 0; b < batch_size; ++b)

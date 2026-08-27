@@ -57,7 +57,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build/_deps
-          key: deps-${{ runner.os }}-${{ hashFiles('CMakeLists.txt') }}
+          key: deps-${{ runner.os }}-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake', '**/*.cmake.in') }}
           restore-keys: deps-${{ runner.os }}-
 
       - name: Configure (CPU-only, examples on)

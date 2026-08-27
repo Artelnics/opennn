@@ -1,56 +1,42 @@
-
-if(NOT DEFINED OpenNN_BUILD_EXAMPLES)
-    option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" ON)
-endif()
-
-option(OpenNN_BUILD_BLANK "Build OpenNN blank examples" ON)
+option(OpenNN_BUILD_BLANK "Build the blank OpenNN example" ON)
 
 function(opennn_example name)
-    set(options COPY_DATA)
-    cmake_parse_arguments(EXAMPLE "${options}" "" "" ${ARGN})
-
-    add_executable(${name} "${CMAKE_CURRENT_SOURCE_DIR}/${name}/main.cpp")
+    add_executable(${name} "${name}/main.cpp")
     target_link_libraries(${name} PRIVATE opennn)
 
-    if(EXAMPLE_COPY_DATA)
+    if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${name}/data")
         add_custom_command(TARGET ${name} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory
                 "${CMAKE_CURRENT_SOURCE_DIR}/${name}/data"
-                "${CMAKE_BINARY_DIR}/data/${name}"
-        )
+                "${CMAKE_BINARY_DIR}/data/${name}")
     endif()
 endfunction()
 
-if(OpenNN_BUILD_EXAMPLES)
-    if(OpenNN_BUILD_BLANK)
-        opennn_example(blank)
-    endif()
+if(OpenNN_BUILD_BLANK)
+    opennn_example(blank)
+endif()
 
-    set(examples_with_data
-        airfoil_self_noise amazon_reviews bert breast_cancer emotion_analysis
-        ecg5000_anomaly_detection iris_plant melanoma_cancer mnist translation
-    )
+foreach(example
+    airfoil_self_noise
+    amazon_reviews
+    bert
+    breast_cancer
+    ecg5000_anomaly_detection
+    emotion_analysis
+    forecasting_tinyml
+    gpt2
+    iris_plant
+    melanoma_cancer
+    mnist
+    qwen3
+    translation
+    yolo)
+    opennn_example(${example})
+endforeach()
 
-    foreach(example IN ITEMS
-        airfoil_self_noise amazon_reviews bert breast_cancer emotion_analysis
-        ecg5000_anomaly_detection forecasting_tinyml gpt2 iris_plant
-        melanoma_cancer mnist qwen3 translation yolo
-    )
-        if(example IN_LIST examples_with_data)
-            opennn_example(${example} COPY_DATA)
-        else()
-            opennn_example(${example})
-        endif()
-    endforeach()
-
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/beijing_pm25_forecasting/CMakeLists.txt")
-        add_subdirectory(beijing_pm25_forecasting)
-    endif()
-
-    if(MSVC)
-        target_compile_options(yolo PRIVATE /W4 /w14061)
-        target_precompile_headers(yolo REUSE_FROM opennn)
-    else()
-        target_precompile_headers(yolo PRIVATE "${CMAKE_SOURCE_DIR}/opennn/pch.h")
-    endif()
+if(MSVC)
+    target_compile_options(yolo PRIVATE /W4 /w14061)
+    target_precompile_headers(yolo REUSE_FROM opennn)
+else()
+    target_precompile_headers(yolo PRIVATE "${PROJECT_SOURCE_DIR}/opennn/pch.h")
 endif()

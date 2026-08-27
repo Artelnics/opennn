@@ -496,6 +496,8 @@ void TabularDataset::set(const filesystem::path& new_data_path,
 
     input_shape = { get_features_number(VariableRole::Input) };
     target_shape = { get_features_number(VariableRole::Target) };
+
+    record_memory("after read_csv");
 }
 
 void TabularDataset::set(const filesystem::path& file_name)
@@ -1761,7 +1763,17 @@ void TabularDataset::read_csv()
     }
 
     sample_roles.assign(size_t(samples_number), SampleRole::Training);
-    sample_ids.assign(size_t(samples_number), {});
+
+    // Only when the file actually carries ids. std::string is 32 bytes here
+    // even when empty, so one per sample costs 32 bytes a row before holding
+    // a single character -- 15.3 MiB on a 500,000-row file whose ids are never
+    // written and never read. Every use of sample_ids is already guarded by
+    // has_sample_ids, so an empty vector is the correct representation of
+    // "this file has none".
+    if (has_sample_ids)
+        sample_ids.assign(size_t(samples_number), {});
+    else
+        sample_ids.clear();
 
     const vector<vector<Index>> all_feature_indices =
         get_feature_indices();

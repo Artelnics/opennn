@@ -149,6 +149,8 @@ public:
     Shape get_input_shape() const noexcept { return input_shape; }
     Shape get_target_shape() const noexcept { return target_shape; }
 
+    void record_memory(const string& stage) const;
+
     const MatrixR& get_data() const noexcept { return data; }
     void set_data(const MatrixR&);
     void set_data(MatrixR&&);

@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -43,12 +44,52 @@ from common import binary_metrics  # noqa: E402
 
 SEED = 42
 
-def load_csv(path: str) -> tuple[np.ndarray, np.ndarray]:
-    """Inputs and target, float32. `.npy` beside the CSV wins -- same content,
-    and parsing 3 GB of text per trial would dominate a capacity sweep."""
-    cached = Path(str(path) + ".npy")
-    data = np.load(cached) if cached.exists() else np.loadtxt(path, delimiter=",", dtype=np.float32)
-    data = np.ascontiguousarray(data, dtype=np.float32)
+def report_blas() -> None:
+    """Which BLAS this engine dispatches to, printed like OpenNN prints it.
+
+    PyTorch's is fixed at build time -- the wheels are MKL-backed -- while
+    OpenNN's is chosen at runtime. Recording both is what stops a comparison
+    quietly turning into Eigen against MKL.
+    """
+    settings = torch.__config__.show()
+    match = re.search(r"BLAS_INFO=(\w+)", settings)
+
+    print(f"blas={match.group(1) if match else 'unknown'}")
+
+
+def report_opened(path: str, role: str) -> None:
+    """Announce the file actually opened, not the one passed in.
+
+    Keyed by role, because train mode opens two and a single key would let the
+    second overwrite the first -- which looked like the engines disagreeing
+    when they did not.
+
+    The gate that compares these exists because of the bug below: an engine
+    substituting its own input is invisible in every other field an artifact
+    records.
+    """
+    print(f"dataset_{role}={Path(path).resolve()}", flush=True)
+
+def load_csv(path: str, role: str = "input") -> tuple[np.ndarray, np.ndarray]:
+    """Inputs and target, float32, parsed from the CSV both engines are given.
+
+    This used to prefer a `.npy` cache sitting beside the CSV, inherited from a
+    driver where it kept minutes of np.loadtxt out of the *timed* window.
+    Harmless for timing, which excludes loading either way. Fatal for memory:
+    OpenNN parsed 151 MB of text while this side was handed a 55 MB
+    pre-digested binary, and that single difference inverted the result --
+    OpenNN measured 1.8x worse with the cache and 2.6x better without it on
+    the same data.
+
+    pandas rather than np.loadtxt because the parse has to be fast enough to
+    do honestly rather than fast enough to skip.
+    """
+    import pandas as pd
+
+    report_opened(path, role)
+    frame = pd.read_csv(path, header=None, dtype=np.float32)
+
+    data = np.ascontiguousarray(frame.to_numpy(dtype=np.float32))
     return data[:, :-1], data[:, -1:]
 
 def build(features: int, opts: dict) -> torch.nn.Module:
@@ -154,11 +195,12 @@ def train_like(argv: list[str], mode: str) -> int:
     batches = batches_of(argv[5] if len(argv) > 5 else "1024")
     opts = parse_opts(argv, 6)
 
-    x_np, y_np = load_csv(argv[2])
-    xt_np, yt_np = load_csv(argv[3])
+    x_np, y_np = load_csv(argv[2], "train")
+    xt_np, yt_np = load_csv(argv[3], "test")
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode={mode}\ndevice={opts['device']}")
+    report_blas()
 
     x = torch.from_numpy(x_np).to(opts["device"]).contiguous()
     y = torch.from_numpy(y_np).to(opts["device"]).contiguous()
@@ -235,9 +277,10 @@ def infer(argv: list[str]) -> int:
     batches = batches_of(argv[4] if len(argv) > 4 else "1024")
     opts = parse_opts(argv, 5)
 
-    x_np, _ = load_csv(argv[2])
+    x_np, _ = load_csv(argv[2], "test")
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode=infer\ndevice={opts['device']}")
+    report_blas()
 
     x = torch.from_numpy(x_np).to(opts["device"]).contiguous()
     samples = x.shape[0]
@@ -287,6 +330,7 @@ def capacity(argv: list[str]) -> int:
     x_np, y_np = load_csv(argv[2])
     print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode=capacity\ndevice={opts['device']}\nbatch={batch}")
+    report_blas()
 
     try:
         x = torch.from_numpy(x_np).to(opts["device"]).contiguous()

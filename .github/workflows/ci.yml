@@ -33,7 +33,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build/_deps
-          key: deps-${{ runner.os }}-${{ hashFiles('CMakeLists.txt') }}
+          key: deps-${{ runner.os }}-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake', '**/*.cmake.in') }}
           restore-keys: deps-${{ runner.os }}-
 
       - name: Configure (CPU-only, tests on)
@@ -104,7 +104,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build-cuda-compile/_deps
-          key: deps-cuda-${{ runner.os }}-${{ hashFiles('CMakeLists.txt') }}
+          key: deps-cuda-${{ runner.os }}-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake', '**/*.cmake.in') }}
           restore-keys: deps-cuda-${{ runner.os }}-
 
       # Tests and benchmarks both on: the point is to compile everything the

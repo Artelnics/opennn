@@ -16,6 +16,10 @@
 #include <cstdlib>
 #include <mutex>
 #include <utility>
+
+#ifdef __linux__
+#include <sched.h>
+#endif
 #include "opennn/core/cuda/kernel_cast.cuh"
 
 namespace opennn
@@ -1231,7 +1235,18 @@ void Backend::set_threads_number(int num_threads)
 {
     if (num_threads <= 0)
     {
-        num_threads = thread::hardware_concurrency();
+        // Affinity first, machine size second. `hardware_concurrency` counts
+        // the cores the machine has, not the ones this process may run on, so
+        // under `taskset` or a cgroup CPU limit it oversubscribes -- 28
+        // threads onto 16 permitted CPUs in the benchmark harness, which also
+        // makes every per-thread sizing decision downstream come out wrong.
+#ifdef __linux__
+        cpu_set_t permitted;
+
+        if (sched_getaffinity(0, sizeof(permitted), &permitted) == 0)
+            num_threads = CPU_COUNT(&permitted);
+#endif
+        if (num_threads <= 0) num_threads = thread::hardware_concurrency();
         if (num_threads <= 0) num_threads = omp_get_max_threads();
         if (num_threads <= 0) num_threads = 1;
     }

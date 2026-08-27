@@ -117,8 +117,17 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
 
     const Index target_width = dataset->get_target_shape().size();
 
+    // Bounded on both devices. The CPU default used to be samples_number --
+    // the whole split in one batch -- which builds an activation arena
+    // proportional to the test set: 500,000 rows of a 1024-wide model reached
+    // 1,024 MiB, sixteen times what training the same model used, and would
+    // simply fail on a larger split. Evaluation is batch-invariant for a
+    // feedforward network, so bounding it changes memory and not results.
+    constexpr Index maximum_cpu_batch_size = 4096;
+
     const Index default_batch_size =
-        neural_network->is_gpu() ? Index(256) : samples_number;
+        neural_network->is_gpu() ? Index(256)
+                                 : min<Index>(maximum_cpu_batch_size, samples_number);
     const Index current_batch_size =
         (batch_size <= 0) ? default_batch_size
                           : min<Index>(batch_size, samples_number);
@@ -138,6 +147,21 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
     host_config.device = Device::CPU;
     host_config.training_type = Type::FP32;
 
+    // The batch and the activation arena are reused across chunks, rebuilt
+    // only when the chunk size changes -- which happens at most once, for a
+    // short final chunk. Allocating them per chunk meant a 500,000-row split
+    // at batch 4,096 built and destroyed the same 32 MiB arena 122 times per
+    // pass, which costs time rather than memory but costs it for nothing.
+    //
+    // Only on the host path. calculate_outputs owns device residency and
+    // graph capture for a GPU network, and its evaluation batch is 256, so
+    // there is little to reclaim and a great deal to get wrong.
+    const bool reuse_arena = !neural_network->is_gpu();
+
+    unique_ptr<Batch> batch;
+    unique_ptr<ForwardPropagation> propagation;
+    Index built_for = 0;
+
     Index row_cursor = 0;
     for (const vector<Index>& batch_indices : testing_batches)
     {
@@ -148,10 +172,29 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
                               target_data.data() + row_cursor * target_width,
                               FillMode::Inference);
 
-        Batch batch(n, dataset, host_config);
-        batch.fill(batch_indices, features, FillMode::Inference);
+        if (!batch || built_for != n)
+        {
+            batch = make_unique<Batch>(n, dataset, host_config);
+            if (reuse_arena)
+                propagation = make_unique<ForwardPropagation>(
+                    n, neural_network, ForwardPropagationMode::Inference);
+            built_for = n;
+        }
 
-        const MatrixR batch_outputs = neural_network->calculate_outputs(batch.get_inputs());
+        batch->fill(batch_indices, features, FillMode::Inference);
+
+        MatrixR batch_outputs;
+
+        if (reuse_arena)
+        {
+            neural_network->forward_propagate(batch->get_inputs(), *propagation,
+                                              ForwardPropagationMode::Inference);
+            batch_outputs = propagation->get_outputs().as_matrix();
+        }
+        else
+        {
+            batch_outputs = neural_network->calculate_outputs(batch->get_inputs());
+        }
 
         if (output_data.size() == 0)
             output_data.resize(samples_number, batch_outputs.cols());
