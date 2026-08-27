@@ -450,7 +450,7 @@ bool Convolutional::forward_propagate_folded(ForwardPropagation& forward_propaga
                               batch_norm.gamma.as<float>(), batch_norm.beta.as<float>(),
                               batch_norm.running_mean.as<float>(),
                               batch_norm.running_variance.as<float>(),
-                              EPSILON,
+                              BN_EPSILON,
                               folded_parameters.as<W>(),
                               folded_parameters.as<W>() + weight_count);
         });

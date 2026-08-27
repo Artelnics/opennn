@@ -596,8 +596,13 @@ void batchnorm_backward_fused_cuda(const Index rows, const Index channels,
     else           launch.template operator()<1>();
 }
 
+// The folded weights are bound to the very tensor the unfolded forward binds the
+// bare convolution weights to, so they must keep that layout: [kernels][kernel_size],
+// scaled in place. This used to transpose to [kernel_size][kernels], which was right
+// while the folded path fed a GEMM but silently wrong once it fed the cuDNN forward
+// graph - every folded layer then convolved with permuted weights.
 template<typename W>
-__global__ void conv_bn_fold_kernel(const Index total, const int kernel_size, const int kernels,
+__global__ void conv_bn_fold_kernel(const Index total, const int kernel_size,
                                     const W* __restrict__ weights,
                                     const float* __restrict__ gamma,
                                     const float* __restrict__ beta,
@@ -613,8 +618,7 @@ __global__ void conv_bn_fold_kernel(const Index total, const int kernel_size, co
         const int k = int(i / kernel_size);
         const int r = int(i % kernel_size);
         const float scale = gamma[k] * rsqrtf(variance[k] + epsilon);
-        folded_weights[Index(r) * kernels + k] =
-            static_cast<W>(static_cast<float>(weights[i]) * scale);
+        folded_weights[i] = static_cast<W>(static_cast<float>(weights[i]) * scale);
         if (r == 0)
             folded_bias[k] = static_cast<W>(beta[k] - mean[k] * scale);
     }
@@ -629,7 +633,7 @@ void conv_bn_fold_cuda(const Index kernels, const Index kernel_size,
                        W* folded_weights, W* folded_bias)
 {
     launch_elementwise_strided(kernels * kernel_size, conv_bn_fold_kernel<W>,
-                       checked_int(kernel_size), checked_int(kernels), weights,
+                       checked_int(kernel_size), weights,
                        gamma, beta, mean, variance, epsilon,
                        folded_weights, folded_bias);
 }

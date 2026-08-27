@@ -13,6 +13,14 @@
 namespace opennn
 {
 
+// Every path that normalizes - the operator's own forward, the cuDNN graphs, and the
+// fold of batch norm into convolution weights for inference - must use this same value.
+// It lived as a file-local constant in batch_norm_operator.cpp, so the fold in
+// convolutional_layer.cpp could not see it and reached for the generic EPSILON
+// (numeric_limits<float>::epsilon(), ~84x smaller), which made folded inference
+// disagree with every other path.
+inline constexpr float BN_EPSILON = 1e-5f;
+
 struct BatchNormalizationOperator : Operator
 {
     Index features = 0;

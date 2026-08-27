@@ -70,7 +70,6 @@ void store_as_bfloat16(const Fp32Staging& staging,
 
 #endif
 
-static constexpr float BN_EPSILON = 1e-5f;
 
 void BatchNormalizationOperator::set(Index new_features, float new_momentum)
 {

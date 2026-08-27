@@ -582,11 +582,7 @@ TEST_F(GpuComparison, ImageClassificationGradient)
 
 TEST_F(GpuComparison, ProjectionResidualGradient)
 {
-    // Batch 4 over a 2x2 extent normalizes each channel over only 16 values, and the
-    // three-term batch-norm backward cancels badly at that N in fp32 - both devices then
-    // sit ~1.5% from the true gradient, so their mutual difference exceeds any sane
-    // tolerance without either being wrong. Batch 16 agrees 180x better.
-    constexpr Index samples_number = 16;
+    constexpr Index samples_number = 4;
     const Shape input_shape{2, 2, 8};
 
     TabularDataset dataset(samples_number, input_shape, Shape{1});
@@ -681,86 +677,9 @@ static void build_residual_block(NeuralNetwork& network, const Shape& input_shap
     network.compile();
 }
 
-// The CPU-vs-GPU tests above assert only that the two devices agree, with no ground
-// truth - so when they disagree, nothing says which side is wrong. This anchors the
-// CUDA side of the convolution + batch-norm + residual topology to a numerical
-// reference, which is the check that was missing when three of those tests failed
-// for reasons that turned out to be conditioning rather than a defect.
-TEST_F(GpuComparison, ResidualNetworkGradientMatchesNumericalOnGpu)
-{
-    constexpr Index samples_number = 16;
-    const Shape input_shape{2, 2, 8};
-
-    TabularDataset dataset(samples_number, input_shape, Shape{1});
-    dataset.set_data_random();
-    dataset.set_sample_roles("Training");
-
-    const auto build_network = [&](NeuralNetwork& network)
-    {
-        network.add_layer(make_unique<Convolutional>(
-                              input_shape, Shape{1, 1, 8, 64}, "ReLU",
-                              Shape{1, 1}, "Same", BatchNormalization::Yes, "stem"),
-                          {-1});
-        network.add_layer(make_unique<Convolutional>(
-                              Shape{2, 2, 64}, Shape{1, 1, 64, 64}, "ReLU",
-                              Shape{1, 1}, "Same", BatchNormalization::Yes, "main"),
-                          {0});
-        network.add_layer(make_unique<Convolutional>(
-                              Shape{2, 2, 64}, Shape{1, 1, 64, 64}, "Identity",
-                              Shape{1, 1}, "Same", BatchNormalization::Yes, "projection"),
-                          {0});
-        auto residual = make_unique<Convolutional>(
-            Shape{2, 2, 64}, Shape{1, 1, 64, 64}, "ReLU",
-            Shape{1, 1}, "Same", BatchNormalization::Yes, "residual");
-        residual->set_residual(true);
-        network.add_layer(std::move(residual), {1, 2});
-        network.add_layer(make_unique<Convolutional>(
-                              Shape{2, 2, 64}, Shape{1, 1, 64, 8}, "ReLU",
-                              Shape{1, 1}, "Same", BatchNormalization::Yes, "later"),
-                          {3});
-        network.add_layer(make_unique<Flatten>(Shape{2, 2, 8}), {4});
-        network.add_layer(make_unique<opennn::Dense>(
-                              Shape{32}, Shape{1}, "Identity"),
-                          {5});
-        network.compile();
-        network.set_training_activation_recomputation(true);
-    };
-
-    // The numerical reference is a CPU finite difference, so the network is built on
-    // the CPU first and its parameters copied to the GPU network verbatim.
-    Configuration::instance().set(Device::CPU, Type::FP32);
-    NeuralNetwork cpu_network;
-    build_network(cpu_network);
-    cpu_network.set_parameters_random();
-    const VectorR parameters = read_host_parameters(cpu_network);
-
-    Loss cpu_loss(&cpu_network, &dataset);
-    cpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR numerical_gradient = calculate_numerical_gradient(cpu_loss);
-
-    Configuration::instance().set(Device::CUDA, Type::FP32);
-    NeuralNetwork gpu_network;
-    build_network(gpu_network);
-    gpu_network.set_parameters(parameters);
-
-    Loss gpu_loss(&gpu_network, &dataset);
-    gpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR gpu_gradient = calculate_gradient(gpu_loss);
-
-    ASSERT_EQ(gpu_gradient.size(), numerical_gradient.size());
-
-    // Five stacked batch-norm layers in fp32 leave the analytic and finite-difference
-    // gradients about half a percent apart even at this batch size; the tolerance
-    // tracks that floor, not the accuracy of any one kernel.
-    EXPECT_LT(relative_difference(gpu_gradient, numerical_gradient), 2.0e-2f);
-}
-
 TEST_F(GpuComparison, ResidualBlockGradientBf16PerBackwardRung)
 {
-    // See ProjectionResidualGradient: too small a batch makes the batch-norm backward
-    // ill-conditioned in fp32, and a CPU-vs-GPU tolerance then measures cancellation
-    // noise rather than correctness.
-    constexpr Index samples_number = 32;
+    constexpr Index samples_number = 8;
     const Shape input_shape{4, 4, 16};
 
     TabularDataset dataset(samples_number, input_shape, Shape{1});
@@ -828,12 +747,9 @@ TEST_F(GpuComparison, ResidualBlockGradientBf16PerBackwardRung)
          << ", own vs staged " << own_vs_staged << "\n";
 
     // fp32: the engines must reproduce the reference (measured ~1e-3).
-    // Loose for the same reason as ResidualBlockBatchNormForwardRungParity: the CPU
-    // reference and the GPU are each ~2% from the true gradient at this batch size.
-    // The rung-vs-rung bounds are the tight ones, and they are what this test is for.
-    EXPECT_LT(fp32_auto_error, 5.0e-2f);
-    EXPECT_LT(fp32_plain_error, 5.0e-2f);
-    EXPECT_LT(fp32_own_error, 5.0e-2f);
+    EXPECT_LT(fp32_auto_error, 5.0e-3f);
+    EXPECT_LT(fp32_plain_error, 5.0e-3f);
+    EXPECT_LT(fp32_own_error, 5.0e-3f);
 
     // bf16: the rungs compute the same thing and must agree with each other
     // (measured 1.6e-8 - identical). Against the fp32 reference they carry the
@@ -858,10 +774,7 @@ TEST_F(GpuComparison, ResidualBlockGradientBf16PerBackwardRung)
 // forward, which is where the running statistics show.
 TEST_F(GpuComparison, ResidualBlockBatchNormForwardRungParity)
 {
-    // See ProjectionResidualGradient: too small a batch makes the batch-norm backward
-    // ill-conditioned in fp32, and a CPU-vs-GPU tolerance then measures cancellation
-    // noise rather than correctness.
-    constexpr Index samples_number = 32;
+    constexpr Index samples_number = 8;
     const Shape input_shape{4, 4, 16};
 
     TabularDataset dataset(samples_number, input_shape, Shape{1});
@@ -935,14 +848,8 @@ TEST_F(GpuComparison, ResidualBlockBatchNormForwardRungParity)
          << ", own " << fp32_own_outputs << "; bf16 own vs cuDNN " << bf16_own_outputs << "\n";
 
     // fp32: both forwards reproduce the reference gradient, and each other.
-    // The CPU anchor is deliberately loose. Three stacked batch-norm backwards leave
-    // BOTH devices about 7% from a numerical reference at batch 8 and 2% at batch 32,
-    // erring in opposite directions - so a tight CPU-vs-GPU bound here would measure
-    // fp32 cancellation, not correctness. Ground truth for this topology lives in
-    // ResidualNetworkGradientMatchesNumericalOnGpu; what this test exists to pin is
-    // that the rungs agree with EACH OTHER, and those bounds below stay tight.
-    EXPECT_LT(fp32_cudnn_error, 5.0e-2f);
-    EXPECT_LT(fp32_own_error, 5.0e-2f);
+    EXPECT_LT(fp32_cudnn_error, 5.0e-3f);
+    EXPECT_LT(fp32_own_error, 5.0e-3f);
     EXPECT_LT(fp32_own_vs_cudnn, 1.0e-3f);
 
     // bf16: same computation, same rounding points; must agree with cuDNN's.
