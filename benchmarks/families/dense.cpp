@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <iomanip>
 #include <fstream>
 #include <iostream>
@@ -43,8 +44,12 @@
 #endif
 
 #include "opennn/core/configuration.h"
+#include "opennn/core/device_backend.h"
+#include "opennn/core/tensor_operations.h"
+#include "opennn/core/memory_debug.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/tensor_types.h"
+#include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/neural_network/forward_propagation.h"
@@ -173,6 +178,12 @@ int usage()
 
 int main(int argc, char* argv[])
 {
+    // Each engine at its best, as PROTOCOL.md requires. The library defaults to
+    // Eigen so a plain build behaves like a plain build; a build that has the
+    // MKL kernels is told to use them here rather than inheriting them.
+    Configuration::instance().set_blas(Blas::Mkl);
+    cout << "blas=" << (blas_mkl_available() ? "mkl" : "eigen") << "\n";
+
     const string mode = argc > 1 ? argv[1] : "";
 
     if (mode == "train" || mode == "quality")
@@ -188,6 +199,7 @@ int main(int argc, char* argv[])
         cout << "engine=opennn\nmode=" << mode
              << "\ndevice=" << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
 
+        cout << "dataset_train=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
         TabularDataset dataset(argv[2], ",", false, false);
 
         // Contract item 3 again: the training split lives on the device, so an
@@ -199,6 +211,7 @@ int main(int argc, char* argv[])
         dataset.set_sample_roles("Training");
         dataset.set_variable_scalers("None");     // prepare_higgs.py already normalised
 
+        cout << "dataset_test=" << filesystem::absolute(argv[3]).string() << "\n" << flush;
         TabularDataset test_dataset(argv[3], ",", false, false);
         test_dataset.set_sample_roles("Testing");
 
@@ -293,6 +306,13 @@ int main(int argc, char* argv[])
 
             TestingAnalysis analysis(network.get(), &test_dataset);
 
+            // Evaluate at the training batch, which is what the PyTorch driver
+            // does. Left alone, TestingAnalysis defaults to the whole split in
+            // one batch on CPU, so a 500,000-row test set built a 1,024 MiB
+            // activation arena against PyTorch's 64 MiB -- a 16x difference in
+            // the memory column that had nothing to do with training.
+            analysis.set_batch_size(batch);
+
             cout << "batch_" << batch << "_samples_per_sec="
                  << long(double(samples_per_epoch) / median_epoch_s)
                  << " median_epoch_s=" << median_epoch_s << "\n"
@@ -322,7 +342,19 @@ int main(int argc, char* argv[])
         cout << "engine=opennn\nmode=infer\ndevice="
              << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
 
+        cout << "dataset_test=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
         TabularDataset dataset(argv[2], ",", false, false);
+
+        // The PyTorch driver uploads the whole test split once, before the
+        // timed window, and slices it on the device; streaming it per batch
+        // instead times PCIe rather than the network. Profiled on this cell
+        // the per-batch copy and the synchronisation behind it left the GPU
+        // idle for 39% of the pass -- 12.9 ms of kernels inside a 21.3 ms
+        // pass. The training path above already keeps its split resident for
+        // exactly this reason, and so does the recurrent family.
+        if (options.device == Device::CUDA)
+            dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+
         dataset.set_sample_roles("Testing");
 
         const MatrixR& data = dataset.get_data();
@@ -336,7 +368,12 @@ int main(int argc, char* argv[])
         for (const Index batch : batches)
         {
             const Index processed = (samples / batch) * batch;
-            ForwardPropagation forward_propagation(batch, network.get());
+            // Inference mode, not the default. A training arena keeps every
+            // layer's activations alive for the backward pass that never
+            // comes; inference can reuse buffers between layers. Measured on
+            // this cell the difference is 32 MiB against 16.
+            ForwardPropagation forward_propagation(batch, network.get(),
+                                                   ForwardPropagationMode::Inference);
 
             // Touching the output keeps LTO from deleting the forward pass.
             // Only CPU can read a scalar out of it: `as_matrix` requires CPU
@@ -346,18 +383,41 @@ int main(int argc, char* argv[])
             const bool on_cpu = options.device == Device::CPU;
             double sink = 0.0;
 
+            // Device-resident batches on CUDA, host views on CPU: the same
+            // slices either way, differing only in which side of the bus they
+            // are already on when the clock starts.
+            Batch device_batch(batch, &dataset, network->get_config());
+            vector<Index> indices(size_t(batch), Index(0));
+
             const auto run_pass = [&]
             {
                 for (Index i = 0; i + batch <= samples; i += batch)
                 {
-                    TensorView view(const_cast<float*>(inputs.data()) + i * inputs_number,
-                                    Shape{batch, inputs_number}, Type::FP32);
-                    network->forward_propagate({view}, forward_propagation,
-                                               ForwardPropagationMode::Inference);
+                    if (on_cpu)
+                    {
+                        TensorView view(const_cast<float*>(inputs.data()) + i * inputs_number,
+                                        Shape{batch, inputs_number}, Type::FP32);
+                        network->forward_propagate({view}, forward_propagation,
+                                                   ForwardPropagationMode::Inference);
+                        sink += forward_propagation.get_outputs().as_matrix()(0, 0);
+                        continue;
+                    }
 
-                    if (on_cpu) sink += forward_propagation.get_outputs().as_matrix()(0, 0);
-                    else        (void)forward_propagation.get_outputs();
+                    for (Index k = 0; k < batch; ++k) indices[size_t(k)] = i + k;
+                    device_batch.fill(indices, dataset.get_feature_selection(),
+                                      FillMode::Inference);
+                    network->forward_propagate(device_batch.get_inputs(), forward_propagation,
+                                               ForwardPropagationMode::Inference);
+                    (void)forward_propagation.get_outputs();
                 }
+
+                // The clock stops when the work is done, not when it is
+                // queued. The PyTorch driver ends every pass with
+                // torch.cuda.synchronize(); without the same barrier here a
+                // pass that no longer copies per batch reports launch
+                // throughput -- 72.5M samples/s against a kernel time that
+                // cannot exceed 30M.
+                if (!on_cpu) device::synchronize(device::get_compute_stream());
             };
 
             run_pass();
@@ -418,7 +478,8 @@ int main(int argc, char* argv[])
         // of the first. The runner re-launches and reads the exit code.
         try
         {
-            TabularDataset dataset(argv[2], ",", false, false);
+            cout << "dataset_train=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
+        TabularDataset dataset(argv[2], ",", false, false);
             dataset.set_sample_roles("Training");
             dataset.set_variable_scalers("None");
 
@@ -441,6 +502,9 @@ int main(int argc, char* argv[])
     {
         return usage();
     }
+
+    // OPENNN_MEMORY_DEBUG=1 attributes the resident set member by member.
+    if (memory_debug::enabled()) memory_debug::print(cout);
 
     cout << "RESULT=OK\n";
 

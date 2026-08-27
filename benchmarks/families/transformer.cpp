@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <iomanip>
 #include <fstream>
 #include <iostream>
@@ -30,7 +31,9 @@
 #endif
 
 #include "opennn/core/configuration.h"
+#include "opennn/core/tensor_operations.h"
 #include "opennn/core/random_utilities.h"
+#include "opennn/core/device_backend.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/language_dataset.h"
 #include "opennn/neural_network/forward_propagation.h"
@@ -148,6 +151,12 @@ void report(Index batch, const vector<double>& seconds, Index sequences, Index t
 
 int main(int argc, char* argv[])
 {
+    // Each engine at its best, as PROTOCOL.md requires. The library defaults to
+    // Eigen so a plain build behaves like a plain build; a build that has the
+    // MKL kernels is told to use them here rather than inheriting them.
+    Configuration::instance().set_blas(Blas::Mkl);
+    cout << "blas=" << (blas_mkl_available() ? "mkl" : "eigen") << "\n";
+
     const string mode = argc > 1 ? argv[1] : "";
 
     if (mode == "train" || mode == "quality")
@@ -163,7 +172,16 @@ int main(int argc, char* argv[])
         cout << "engine=opennn\nmode=" << mode
              << "\ndevice=" << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
 
+        cout << "dataset_opened=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
         LanguageDataset dataset(argv[2]);
+
+        // The same contract item the dense and recurrent families already
+        // keep: the training split lives on the device, so an epoch is not
+        // timing the host-to-device copy of every batch. This family was the
+        // one that never asked for it.
+        if (options.device == Device::CUDA)
+            dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+
         dataset.set_sample_roles("Training");
 
         const Index samples = dataset.get_samples_number();
@@ -278,9 +296,25 @@ int main(int argc, char* argv[])
             {
                 for (Index i = 0; i + batch <= samples; i += batch)
                     network->calculate_outputs_resident(inputs, forward_propagation, false);
+
+                // The clock stops when the work is done, not when it is
+                // queued, matching torch.cuda.synchronize() in the PyTorch
+                // driver. At this pass length the queue saturates and the
+                // host blocks anyway, so this is worth about one graph
+                // launch -- but a pass short enough to fit the async queue
+                // would otherwise report launch throughput, which is how the
+                // dense inference cell read 72.5M samples/s.
+                if (options.device == Device::CUDA)
+                    device::synchronize(device::get_compute_stream());
             };
 
-            network->calculate_outputs_resident(inputs, forward_propagation, true);
+            // Uploading parameters is a device operation -- a CPU-compiled
+            // network has no device copy and `copy_parameters_device` throws,
+            // which aborted every CPU inference cell in this family. The
+            // warm-up pass still has to happen, so it is the upload that is
+            // conditional, not the pass.
+            network->calculate_outputs_resident(inputs, forward_propagation,
+                                                options.device == Device::CUDA);
             run_pass();
 
             const auto unix_now = []

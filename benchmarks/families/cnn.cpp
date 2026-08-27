@@ -30,7 +30,9 @@
 #endif
 
 #include "opennn/core/configuration.h"
+#include "opennn/core/tensor_operations.h"
 #include "opennn/core/random_utilities.h"
+#include "opennn/core/device_backend.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/image_dataset.h"
 #include "opennn/neural_network/forward_propagation.h"
@@ -132,6 +134,12 @@ int usage()
 
 int main(int argc, char* argv[])
 {
+    // Each engine at its best, as PROTOCOL.md requires. The library defaults to
+    // Eigen so a plain build behaves like a plain build; a build that has the
+    // MKL kernels is told to use them here rather than inheriting them.
+    Configuration::instance().set_blas(Blas::Mkl);
+    cout << "blas=" << (blas_mkl_available() ? "mkl" : "eigen") << "\n";
+
     const string mode = argc > 1 ? argv[1] : "";
 
     if (mode == "train" || mode == "quality")
@@ -274,6 +282,14 @@ int main(int argc, char* argv[])
             {
                 for (Index i = 0; i + batch <= samples; i += batch)
                     network->calculate_outputs_resident(inputs, forward_propagation, false);
+
+                // The clock stops when the work is done, not when it is
+                // queued, matching torch.cuda.synchronize() in the PyTorch
+                // driver. Without it this cell reported passes of 0.0019 s,
+                // 9.69 s and 25.3 s for identical work: the first pass timed
+                // the launches and the ones after it paid for the backlog.
+                if (options.device == Device::CUDA)
+                    device::synchronize(device::get_compute_stream());
             };
 
             network->calculate_outputs_resident(inputs, forward_propagation, true);
