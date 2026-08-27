@@ -16,6 +16,8 @@ namespace opennn
 
 class Normalization3d final : public Layer
 {
+    enum Forward {Input, Means, StandardDeviations, NormalizedInput, Output};
+
 public:
 
     Normalization3d(const Shape& = Shape({0,0}),
@@ -45,6 +47,20 @@ public:
 
     void set_fuse_add(bool);
 
+    // With fuse_add the forward writes x + residual to NormalizedInput, and only
+    // back_propagate reads it. Inference plans the same slots as training, so
+    // that store cost a full tensor's write per norm for a pass that never runs.
+    // CUDA only: the CPU path uses the slot as a real intermediate, normalising
+    // out of it rather than out of the input.
+    ForwardSlotKind get_forward_slot_kind(size_t slot) const override
+    {
+        return slot == NormalizedInput
+            && layer_normalization.fuse_add
+            && get_compute_device() == Device::CUDA
+                ? ForwardSlotKind::TrainingOnly
+                : ForwardSlotKind::Pooled;
+    }
+
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 2, 3); }
 
     void apply_input_shape(const Shape&) override;
@@ -58,8 +74,6 @@ private:
     Index embedding_dimension = 0;
 
     LayerNormalizationOperator layer_normalization;
-
-    enum Forward {Input, Means, StandardDeviations, NormalizedInput, Output};
 };
 
 }

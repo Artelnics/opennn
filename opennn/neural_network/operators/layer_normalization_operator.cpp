@@ -135,9 +135,11 @@ void layer_normalization_add_forward(const TensorView& input, const TensorView& 
         const int rows = to_int(input.flat_rows());
         const int cols = to_int(input.flat_columns());
         output.dispatch([&]<typename T>() {
+            // The slot is absent in inference: nothing reads x + residual once
+            // there is no backward pass to read it.
             layernorm_add_forward_cuda<T>(rows, cols,
                                           input.as<T>(), residual.as<T>(),
-                                          sum.as<T>(), output.as<T>(),
+                                          sum.empty() ? nullptr : sum.as<T>(), output.as<T>(),
                                           means.as<float>(), standard_deviations.as<float>(),
                                           gamma.as<float>(), beta.as<float>(), epsilon);
         });

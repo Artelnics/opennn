@@ -19,7 +19,9 @@ __global__ void norm_forward_kernel(const int N, const int D, const T* __restric
 
     const T* x_row = X + row_base;
     T* y_row = Y + row_base;
-    T* s_row = FuseResidual ? sum + row_base : nullptr;
+    // sum is absent in inference: only the backward reads x + residual, so the
+    // second pass recomputes it rather than reading a tensor nobody stored.
+    T* s_row = (FuseResidual && sum) ? sum + row_base : nullptr;
 
     float local_sum = 0.0f;
     float local_sum_sq = 0.0f;
@@ -29,7 +31,7 @@ __global__ void norm_forward_kernel(const int N, const int D, const T* __restric
         if constexpr (FuseResidual)
         {
             x = static_cast<float>(x_row[i]) + static_cast<float>(R[idx * D + i]);
-            s_row[i] = static_cast<T>(x);
+            if (s_row) s_row[i] = static_cast<T>(x);
         }
         else
             x = static_cast<float>(x_row[i]);
@@ -71,14 +73,18 @@ __global__ void norm_forward_kernel(const int N, const int D, const T* __restric
     const T* src_row = FuseResidual ? s_row : x_row;
     for (int i = threadIdx.x; i < D; i += blockDim.x)
     {
+        const float src = src_row
+            ? static_cast<float>(src_row[i])
+            : static_cast<float>(x_row[i]) + static_cast<float>(R[idx * D + i]);
+
         if constexpr (HasMean)
         {
-            const float x_hat = (static_cast<float>(src_row[i]) - mean) * inv_var;
+            const float x_hat = (src - mean) * inv_var;
             y_row[i] = static_cast<T>(fmaf(gamma[i], x_hat, beta[i]));
         }
         else
         {
-            const float x_hat = static_cast<float>(src_row[i]) * inv_var;
+            const float x_hat = src * inv_var;
             y_row[i] = static_cast<T>(gamma[i] * x_hat);
         }
     }
@@ -699,7 +705,11 @@ norm_forward_warp_kernel(const int N, const int D, const T* __restrict__ X, cons
                 VecIO<T, VEC>::load_float(R + base + col, r);
                 #pragma unroll
                 for (int k = 0; k < VEC; ++k) x[it][k] += r[k];
-                VecIO<T, VEC>::store_float(sum + base + col, x[it]);
+
+                // The row is already in registers, so the sum store buys the
+                // backward its input and nothing else. Inference does not plan
+                // the slot, and this branch is warp-uniform.
+                if (sum) VecIO<T, VEC>::store_float(sum + base + col, x[it]);
             }
             #pragma unroll
             for (int k = 0; k < VEC; ++k)
