@@ -23,14 +23,14 @@ void pooling_2d_forward(const TensorView&, TensorView&, TensorView&,
                         Index, Index,
                         Index, Index,
                         Index, Index,
-                        bool);
+                        bool max_pooling);
 void pooling_2d_backward(const TensorView&, const TensorView&,
                          TensorView&,
                          Index, Index, Index,
                          Index, Index,
                          Index, Index,
                          Index, Index,
-                         bool);
+                         bool max_pooling);
 
 struct PoolOperator : Operator
 {

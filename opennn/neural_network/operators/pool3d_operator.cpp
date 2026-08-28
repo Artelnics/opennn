@@ -19,7 +19,7 @@
 namespace opennn
 {
 
-static void max_pooling_3d_forward_gpu(const TensorView&, TensorView&, TensorView&, bool, const int*);
+static void max_pooling_3d_forward_gpu(const TensorView&, TensorView&, TensorView&, bool is_training, const int*);
 static void average_pooling_3d_forward_gpu(const TensorView&, TensorView&, const int*);
 static void max_pooling_3d_backward_gpu(const TensorView&, const TensorView&, TensorView&);
 static void average_pooling_3d_backward_gpu(const TensorView&, const TensorView&, TensorView&, const int*);
@@ -252,7 +252,8 @@ void first_token_3d_backward(const TensorView& output_delta, TensorView& input_d
 
 #ifdef OPENNN_HAS_CUDA
 
-static void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool  ,
+static void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& output, TensorView& maximal_indices,
+                                       [[maybe_unused]] bool is_training,
                                        const int* valid_lengths)
 {
     const Shape& shape = input.get_shape();

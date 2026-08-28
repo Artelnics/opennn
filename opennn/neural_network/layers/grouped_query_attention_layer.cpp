@@ -41,7 +41,7 @@ static pair<void*, void*> prepare_kv_cache(Buffer& storage,
     return {base, base + cache_bytes};
 }
 
-static void grouped_attention_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, float, Index, float*, const int*, GroupedQueryAttentionOperator::GraphCache*);
+static void grouped_attention_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool causal, float, Index, float*, const int*, GroupedQueryAttentionOperator::GraphCache*);
 static void qk_norm_gpu(const TensorView&, const TensorView&, TensorView&, Index, float);
 static void rope_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index);
 

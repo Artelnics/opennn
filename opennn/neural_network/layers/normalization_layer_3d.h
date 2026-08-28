@@ -45,7 +45,7 @@ public:
 
     void set(Index = 0, Index = 0, const string& = "normalization_layer_3d");
 
-    void set_fuse_add(bool);
+    void set_fuse_add(bool on);
 
     // With fuse_add the forward writes x + residual to NormalizedInput, and only
     // back_propagate reads it. Inference plans the same slots as training, so

@@ -32,8 +32,8 @@ public:
 
     TabularDataset(const filesystem::path&,
                    const string&,
-                   bool = true,
-                   bool = false,
+                   bool has_header = true,
+                   bool has_sample_ids = false,
                    const Codification& = Codification::UTF8);
 
     Index get_samples_number() const noexcept override
@@ -56,8 +56,8 @@ public:
     void set(Index = 0, const Shape& = {}, const Shape& = {});
     void set(const filesystem::path&,
              const string&,
-             bool = true,
-             bool = false,
+             bool new_has_header = true,
+             bool new_has_ids = false,
              const Codification& = Codification::UTF8);
     void set(const filesystem::path&);
 
@@ -139,7 +139,7 @@ public:
     void enable_device_residency() override;
 
     VectorI calculate_target_distribution() const override;
-    vector<vector<Index>> calculate_Tukey_outliers(const float = 1.5f, bool = false);
+    vector<vector<Index>> calculate_Tukey_outliers(float cleaning_parameter = 1.5f, bool replace_with_nan = false);
     vector<vector<Index>> replace_Tukey_outliers_with_NaN(const float = 1.5f);
 
     bool has_nan() const override;
@@ -208,7 +208,7 @@ protected:
                                 float*,
                                 Index) const;
 
-    vector<Index> filter_used_samples_by_column(Index, bool) const;
+    vector<Index> filter_used_samples_by_column(Index column, bool positive) const;
 
     vector<Descriptives> calculate_variable_descriptives_samples(bool positive) const;
 
@@ -249,7 +249,7 @@ protected:
 
     DateFormat infer_column_types(const vector<string_view>&, char, bool has_quotes = false);
 
-    void apply_scaler(Index, const string&, const Descriptives&, bool);
+    void apply_scaler(Index feature_index, const string& scaler, const Descriptives& descriptives, bool unscale);
 };
 
 }

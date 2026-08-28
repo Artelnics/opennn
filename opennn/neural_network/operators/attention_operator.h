@@ -114,7 +114,7 @@ private:
                        TensorView&,
                        TensorView&,
                        void*,
-                       bool,
+                       bool is_training,
                        SequenceLengths explicit_lengths = {});
 
 #ifdef OPENNN_HAS_CUDA
@@ -125,7 +125,7 @@ private:
                             TensorView&,
                             const TensorView&,
                             span<const TensorView>,
-                            bool,
+                            bool is_training,
                             const int* explicit_lengths = nullptr);
 #endif
 

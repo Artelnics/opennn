@@ -195,7 +195,7 @@ public:
     Index get_sequence_length() const { return get_layer("embedding")->get_input_shape()[0]; }
 
     void set_dropout_rate(const float);
-    void set_attention_sdpa_auto(bool);
+    void set_attention_sdpa_auto(bool new_sdpa_auto);
 
     void set_tokenizer(unique_ptr<TokenizerOperator>);
     void set_vocabulary(const vector<string>&);

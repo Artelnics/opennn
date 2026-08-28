@@ -13,7 +13,7 @@
 namespace opennn
 {
 
-void max_pooling_3d_forward(const TensorView&, TensorView&, TensorView&, bool, SequenceLengths);
+void max_pooling_3d_forward(const TensorView&, TensorView&, TensorView&, bool is_training, SequenceLengths);
 void average_pooling_3d_forward(const TensorView&, TensorView&, SequenceLengths);
 void max_pooling_3d_backward(const TensorView&, const TensorView&, TensorView&);
 void average_pooling_3d_backward(const TensorView&, const TensorView&, TensorView&, SequenceLengths);

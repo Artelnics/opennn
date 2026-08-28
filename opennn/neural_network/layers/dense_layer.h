@@ -69,12 +69,12 @@ public:
     void on_compute_dtype_changed() override { configure_operators(); }
 
     void set_activation_function(const string&);
-    void set_batch_normalization(bool);
+    void set_batch_normalization(bool enable);
 
     void set_use_bias(bool use_bias) { combination.use_bias = use_bias; up_combination.use_bias = use_bias; }
     bool get_use_bias() const { return combination.use_bias; }
 
-    void set_gated(bool);
+    void set_gated(bool new_gated);
     bool get_gated() const { return gated; }
 
     void set_transposed_inference(bool v) { combination.transposed_inference_preferred = v; }

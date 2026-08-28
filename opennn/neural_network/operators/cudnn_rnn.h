@@ -117,7 +117,7 @@ protected:
                                  const TensorView* const* bias_gradients,
                                  Buffer& backward_scratch) const;
 
-    void prepare_cudnn_forward_state_(Buffer&, bool,
+    void prepare_cudnn_forward_state_(Buffer&, bool is_training,
                                       const CudnnRnnShapeSlot&) const;
 #endif
 

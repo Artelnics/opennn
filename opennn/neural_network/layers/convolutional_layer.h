@@ -54,7 +54,7 @@ public:
 
     bool get_residual() const noexcept { return residual; }
     Index get_sources_number() const noexcept override { return residual ? 2 : 1; }
-    void set_residual(bool);
+    void set_residual(bool new_residual);
 
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
@@ -86,7 +86,7 @@ public:
     void on_compute_dtype_changed() override { update_convolution_operator(); }
 
     void set_activation_function(const string&);
-    void set_batch_normalization(bool);
+    void set_batch_normalization(bool new_batch_normalization);
 
     void load_darknet_weights(FILE*);
 

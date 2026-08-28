@@ -16,12 +16,12 @@ namespace opennn
 void embedding_lookup_forward(const TensorView&, const TensorView&,
                               const TensorView&, TensorView&,
                               Index, Index, Index,
-                              bool, bool,
+                              bool scale_embedding, bool add_positional_encoding,
                               const TensorView& weight_scale = {});
 void embedding_lookup_backward(const TensorView&, const TensorView&,
                                const TensorView&, const TensorView&,
                                Index, Index, Index,
-                               bool);
+                               bool scale_embedding);
 void compute_token_valid_lengths(const TensorView&, Index, vector<Index>&);
 
 struct EmbeddingLookupOperator : Operator

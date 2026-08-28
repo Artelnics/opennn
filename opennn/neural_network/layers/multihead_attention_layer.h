@@ -76,7 +76,7 @@ public:
 
     void set_dropout_rate(float new_dropout_rate) { attention.dropout.set_rate(new_dropout_rate); }
 
-    void set_zero_padded_queries(bool);
+    void set_zero_padded_queries(bool new_zero_padded_queries);
 
     // 192 kept the fused attention path off for every sequence the transformer
     // benchmark runs (max_tokens caps them at 128), so attention ran as three
@@ -86,7 +86,7 @@ public:
     // measurable rather than assumed.
     static const Index default_sdpa_min_sequence_length;
 
-    void set_sdpa_auto(bool);
+    void set_sdpa_auto(bool new_sdpa_auto);
     void set_sdpa_min_sequence_length(Index);
 
     bool should_use_sdpa() const;

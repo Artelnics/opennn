@@ -139,8 +139,8 @@ private:
                    TensorView&,
                    TensorView&,
                    Buffer&,
-                   bool,
-                   bool) const;
+                   bool return_seq,
+                   bool is_training) const;
 
     void apply_delta_gpu(const TensorView&,
                          const TensorView&,
@@ -152,9 +152,9 @@ private:
                          TensorView&,
                          const Buffer&,
                          Buffer&,
-                         bool) const;
+                         bool return_seq) const;
 
-    CudnnRnnShapeSlot& ensure_cudnn_setup_(Index, bool) const;
+    CudnnRnnShapeSlot& ensure_cudnn_setup_(Index batch_size, bool for_training) const;
     void pack_weights_to_cudnn_(Buffer&) const;
     void unpack_gradients_from_cudnn_(Buffer&) const;
 
@@ -182,7 +182,7 @@ public:
     Index get_output_features() const noexcept { return output_features; }
 
     bool get_return_sequences() const noexcept { return return_sequences; }
-    void set_return_sequences(bool);
+    void set_return_sequences(bool value);
 
     const TensorView& get_forget_bias()    const noexcept { return lstm_op.forget_bias; }
 

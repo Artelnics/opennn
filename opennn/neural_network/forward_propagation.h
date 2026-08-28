@@ -95,7 +95,7 @@ struct ForwardPropagation
 
     void recompute_for_backward(Index layer_index);
 
-    void set_cuda_graph(bool);
+    void set_cuda_graph(bool enabled);
     void reset_cuda_graph() noexcept;
     void prepare_cuda_graph_workspaces();
     bool cuda_graph_workspaces_need_growth() const noexcept;

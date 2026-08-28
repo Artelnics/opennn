@@ -79,7 +79,7 @@ private:
                TensorView&,
                TensorView&,
                TensorView&,
-               bool) const;
+               bool is_training) const;
     void apply_gpu(const TensorView&,
                    TensorView&,
                    TensorView&,
@@ -91,7 +91,7 @@ private:
                    TensorView&,
                    TensorView&,
                    Buffer&,
-                   bool) const;
+                   bool is_training) const;
 
     void apply_delta(const TensorView&,
                      const TensorView&,
@@ -118,11 +118,11 @@ private:
                          Buffer&) const;
 
     bool cudnn_rnn_eligible_(const TensorView&) const;
-    CudnnRnnShapeSlot& ensure_cudnn_setup_(Index, bool) const;
+    CudnnRnnShapeSlot& ensure_cudnn_setup_(Index batch_size, bool for_training) const;
     void pack_weights_to_cudnn_(Buffer&) const;
     void unpack_gradients_from_cudnn_(Buffer&) const;
     void apply_gpu_cudnn_(const TensorView&, TensorView&, TensorView&,
-                          TensorView&, TensorView&, Buffer&, bool) const;
+                          TensorView&, TensorView&, Buffer&, bool is_training) const;
     void apply_delta_gpu_cudnn_(const TensorView&, const TensorView&,
                                 const TensorView&, const TensorView&,
                                 const TensorView&, TensorView&, TensorView&,
@@ -145,7 +145,7 @@ public:
                                 : Shape{output_features};
     }
 
-    void set_return_sequences(bool);
+    void set_return_sequences(bool value);
 
     string get_activation_function() const { return ActivationOperator::to_string(recurrent_op.activation); }
     ActivationFunction get_output_activation() const override { return recurrent_op.activation; }

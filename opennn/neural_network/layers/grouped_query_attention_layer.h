@@ -140,7 +140,7 @@ public:
             : ForwardSlotKind::Pooled;
     }
 
-    void set(const Shape&, Index, Index, Index, float, float, bool, const string&);
+    void set(const Shape&, Index, Index, Index, float, float, bool new_use_qk_norm, const string&);
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 2, 3); }
     bool uses_sequence_position() const noexcept override { return true; }
 

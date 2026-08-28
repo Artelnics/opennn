@@ -25,7 +25,7 @@ namespace opennn
 
 static void scale_gpu(const TensorView&, const TensorView&, const TensorView&,
                       const TensorView&, const TensorView&, const TensorView&,
-                      float, float, TensorView&, bool);
+                      float, float, TensorView&, bool unscale);
 
 template<typename Column>
 static void scale_column_cpu(Column& column, ScalerMethod method,

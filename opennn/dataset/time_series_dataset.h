@@ -24,8 +24,8 @@ public:
 
     TimeSeriesDataset(const filesystem::path&,
                       const string&,
-                      bool = true,
-                      bool = false,
+                      bool has_header = true,
+                      bool has_sample_ids = false,
                       const Codification& = Codification::UTF8);
 
     Index get_past_time_steps() const { return past_time_steps; }
@@ -36,7 +36,7 @@ public:
 
     void set_past_time_steps(const Index);
     void set_future_time_steps(const Index);
-    void set_multi_target(const bool);
+    void set_multi_target(bool new_multi_target);
 
     MatrixR calculate_autocorrelations(const Index = 10) const;
     Tensor3 calculate_cross_correlations(const Index = 10) const;

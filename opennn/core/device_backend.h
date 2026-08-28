@@ -91,7 +91,7 @@ int cuda_compute_capability() noexcept;
 size_t available_memory();
 string gpu_info_string() noexcept;
 bool cuda_allocation_growth_forbidden() noexcept;
-void set_cuda_allocation_growth_forbidden(bool) noexcept;
+void set_cuda_allocation_growth_forbidden(bool forbidden) noexcept;
 
 enum class GraphWorkspaceKind
 {
@@ -143,7 +143,7 @@ void    set_conv_workspace_cap(int64_t mode) noexcept;
 void    set_conv_workspace_auto_limit_bytes(int64_t) noexcept;
 
 bool conv_autotune_enabled() noexcept;
-void set_conv_autotune(bool) noexcept;
+void set_conv_autotune(bool enabled) noexcept;
 
 enum class BatchNormBackwardRung { Auto, StagedFp32, PlainNative, OwnKernel };
 enum class BatchNormForwardRung { Auto, CudnnGraph, OwnKernel };
@@ -157,7 +157,7 @@ class CudaAllocationGrowthGuard
 {
 public:
 
-    explicit CudaAllocationGrowthGuard(bool,
+    explicit CudaAllocationGrowthGuard(bool enabled,
                                        bool forbid_matmul_plan_creation = true);
 
     CudaAllocationGrowthGuard(const CudaAllocationGrowthGuard&) = delete;

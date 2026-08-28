@@ -21,8 +21,8 @@
 namespace opennn
 {
 
-static void embedding_lookup_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, bool, const TensorView&);
-static void embedding_lookup_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, Index, Index, Index, bool);
+static void embedding_lookup_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool scale_embedding, bool add_positional_encoding, const TensorView&);
+static void embedding_lookup_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, Index, Index, Index, bool scale_embedding);
 
 static void embedding_lookup_forward_cpu(const TensorView& indices, const TensorView& weights,
                                   const TensorView& positional_encoding, TensorView& output,

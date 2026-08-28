@@ -161,8 +161,9 @@ protected:
     void set_names();
     void prepare_training_scaling();
 
-    bool check_stopping_condition(TrainingResult&, 
-        Index, float, float, Index, float, bool) const;
+    bool check_stopping_condition(TrainingResult& results,
+        Index epoch, float elapsed_time, float training_error,
+        Index validation_failures, float training_loss, bool has_validation) const;
 
     struct BestModelSnapshot
     {
@@ -206,18 +207,18 @@ protected:
 
     bool should_display(Index epoch) const noexcept { return display && epoch % display_period == 0; }
 
-    void display_epoch_results(Index, float, float,
-                               float, float,
-                               bool, bool, bool,
-                               float) const;
+    void display_epoch_results(Index epoch, float training_error, float training_accuracy,
+                               float validation_error, float validation_accuracy,
+                               bool has_validation, bool validation_fresh, bool is_token_cross_entropy,
+                               float elapsed_time) const;
 
-    void setup_batch_pools(BatchPools&,
-                           Dataset&,
-                           NeuralNetwork&,
-                           Index,
-                           Index,
-                           bool,
-                           TrainingSession&);
+    void setup_batch_pools(BatchPools& pools,
+                           Dataset& dataset,
+                           NeuralNetwork& neural_network,
+                           Index training_batch_size,
+                           Index validation_batch_size,
+                           bool has_validation,
+                           TrainingSession& training_session);
 
     struct WorkerProfileCounters;
 

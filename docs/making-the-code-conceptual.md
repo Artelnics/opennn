@@ -270,6 +270,7 @@ build directories are in [../AGENTS.md](../AGENTS.md). Read it first.
 | `ForwardPropagationMode` on the pass, replacing `bool is_training` | `neural_network/forward_propagation.h` |
 | `DetectionClassActivation` absorbing `YoloNetwork::ClassActivation` | `neural_network/detection_head.h` |
 | `DeviceResidency`, `ParameterStorage` | `neural_network/neural_network.h` |
+| Named Boolean declaration intent (`has_header`, `is_training`, `has_validation`, and related parameters) | dataset, export, optimizer, and operator interfaces |
 | `AffineMap` | `core/scaling.h` |
 | `ConfusionCell` | `testing_analysis/testing_analysis.h` |
 | Slot virtuals speaking slot ids, not spec indices | `neural_network/layers/*.h` |
@@ -291,6 +292,6 @@ through `template<typename Rung> rung()`).
 These are leads, not a work queue. Each still needs the audit in step 2 before it
 becomes a plan, and the counts below are from an earlier scan — re-derive them.
 
-- Remaining declarations taking a bare unnamed `bool`. Most only need the
-  parameter named; re-derive the count and audit literal call sites before
-  introducing another enum.
+- Remaining bare `bool` occurrences are type-only callback signatures,
+  Boolean container element types, or generated CUDA-stub parameter lists;
+  they do not expose nameable function parameters.

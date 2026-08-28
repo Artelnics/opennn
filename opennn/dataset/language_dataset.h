@@ -79,9 +79,9 @@ public:
 
 private:
 
-    void configure(Index, bool);
+    void configure(Index samples_number, bool has_decoder);
     bool load_cache_metadata(const filesystem::path&);
-    void save_cache_metadata(const filesystem::path&, Index, bool) const;
+    void save_cache_metadata(const filesystem::path& metadata_path, Index samples_number, bool has_decoder) const;
 
     void fill_sequences(const vector<Index>&,
                         const vector<Index>&,

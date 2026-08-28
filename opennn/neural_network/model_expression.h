@@ -60,23 +60,23 @@ private:
     void check_parameters_are_finite() const;
 
     void emit_c_prelude(ostringstream&, const ExportNames&) const;
-    void emit_c_calculate_outputs(ostringstream&, const string&, const vector<string>&, bool, const ExportNames&) const;
+    void emit_c_calculate_outputs(ostringstream&, const string&, const vector<string>&, bool has_softmax, const ExportNames&) const;
     void emit_c_main(ostringstream&, const ExportNames&) const;
 
     void emit_php_prelude(ostringstream&, const ExportNames&) const;
     void emit_php_inputs_setup(ostringstream&, const ExportNames&) const;
-    void emit_php_body(ostringstream&, const vector<string>&, bool, const ExportNames&) const;
+    void emit_php_body(ostringstream&, const vector<string>&, bool has_softmax, const ExportNames&) const;
     void emit_php_response(ostringstream&, const ExportNames&) const;
 
     void emit_python_prelude(ostringstream&, const ExportNames&) const;
     void emit_python_class_header(ostringstream&, const ExportNames&) const;
-    void emit_python_calculate_outputs(ostringstream&, const string&, const vector<string>&, bool, const ExportNames&) const;
+    void emit_python_calculate_outputs(ostringstream&, const string&, const vector<string>&, bool has_softmax, const ExportNames&) const;
     void emit_python_batch_and_main(ostringstream&, const ExportNames&) const;
 
     void emit_js_prelude(ostringstream&, const ExportNames&) const;
     void emit_js_inputs_html(ostringstream&, const ExportNames&) const;
-    void emit_js_outputs_html(ostringstream&, bool, const ExportNames&) const;
-    void emit_js_runtime(ostringstream&, const string&, const vector<string>&, bool, bool, const ExportNames&) const;
+    void emit_js_outputs_html(ostringstream&, bool use_category_select, const ExportNames&) const;
+    void emit_js_runtime(ostringstream&, const string&, const vector<string>&, bool has_softmax, bool use_category_select, const ExportNames&) const;
 
     static vector<string> split_expression_lines(const string&);
     static void rename_spaced_var_definitions(vector<string>&);

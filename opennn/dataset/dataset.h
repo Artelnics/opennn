@@ -311,7 +311,7 @@ protected:
                                       const FeatureSelection&) const;
 
     void set_default_variable_roles_forecasting() { set_default_variable_roles_implementation(true); }
-    void set_default_variable_roles_implementation(bool);
+    void set_default_variable_roles_implementation(bool forecasting);
 
     void read_data_file_preview(const vector<string_view>&, char, bool has_quotes = false);
     void check_separators(string_view) const;
