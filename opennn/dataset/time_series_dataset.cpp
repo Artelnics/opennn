@@ -309,7 +309,7 @@ void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
                                     const vector<Index>& input_indices,
                                     float* input_data,
                                     FillMode,
-                                    int) const
+                                    ColumnContiguity) const
 {
     if (sample_indices.empty() || input_indices.empty()) return;
 
@@ -405,7 +405,7 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
                                      const vector<Index>& target_indices,
                                      float* target_data,
                                      FillMode,
-                                     int) const
+                                     ColumnContiguity) const
 {
     if (sample_indices.empty() || target_indices.empty()) return;
 

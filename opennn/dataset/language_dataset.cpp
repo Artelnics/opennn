@@ -589,7 +589,7 @@ void LanguageDataset::write_binary_cache(const vector<vector<Index>>& input_indi
 void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
                                      const vector<Index>& variable_indices,
                                      float* output_data,
-                                     int contiguous,
+                                     ColumnContiguity column_contiguity,
                                      Index sequence_length,
                                      Index record_offset,
                                      Index shift,
@@ -598,7 +598,7 @@ void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
     const span<float> output(output_data, size_t(ssize(sample_indices) * sequence_length));
 
     if (storage_mode == StorageMode::Matrix)
-        return fill_tensor_data(data, sample_indices, variable_indices, output, contiguous);
+        return fill_tensor_data(data, sample_indices, variable_indices, output, column_contiguity);
 
     const uint64_t record_tokens = uint64_t(maximum_input_sequence_length + maximum_target_sequence_length);
     const Index n = sequence_length - shift;
@@ -623,9 +623,9 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
                                   const vector<Index>& input_indices,
                                   float* input_data,
                                   FillMode,
-                                  int contiguous) const
+                                  ColumnContiguity column_contiguity) const
 {
-    fill_sequences(sample_indices, input_indices, input_data, contiguous,
+    fill_sequences(sample_indices, input_indices, input_data, column_contiguity,
                    maximum_input_sequence_length, 0, 0, "input");
 }
 
@@ -633,9 +633,9 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
                                    const vector<Index>& target_indices,
                                    float* target_data,
                                    FillMode,
-                                   int contiguous) const
+                                   ColumnContiguity column_contiguity) const
 {
-    fill_sequences(sample_indices, target_indices, target_data, contiguous,
+    fill_sequences(sample_indices, target_indices, target_data, column_contiguity,
                    maximum_target_sequence_length, maximum_input_sequence_length, 0, "target");
 }
 
@@ -643,9 +643,9 @@ void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
                                    const vector<Index>& decoder_indices,
                                    float* decoder_data,
                                    FillMode,
-                                   int contiguous) const
+                                   ColumnContiguity column_contiguity) const
 {
-    fill_sequences(sample_indices, decoder_indices, decoder_data, contiguous,
+    fill_sequences(sample_indices, decoder_indices, decoder_data, column_contiguity,
                    maximum_target_sequence_length, maximum_input_sequence_length, 1, "decoder");
 }
 

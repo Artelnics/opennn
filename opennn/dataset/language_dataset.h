@@ -50,19 +50,19 @@ public:
                      const vector<Index>&,
                      float*,
                      FillMode,
-                     int = -1) const override;
+                     ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
                       FillMode,
-                      int = -1) const override;
+                      ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const override;
 
     void fill_decoder(const vector<Index>&,
                       const vector<Index>&,
                       float*,
                       FillMode,
-                      int = -1) const override;
+                      ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const override;
 
     bool supports_bf16_inputs() const override { return false; }
 
@@ -86,7 +86,7 @@ private:
     void fill_sequences(const vector<Index>&,
                         const vector<Index>&,
                         float*,
-                        int,
+                        ColumnContiguity column_contiguity,
                         Index,
                         Index,
                         Index,

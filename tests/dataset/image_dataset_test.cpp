@@ -174,7 +174,8 @@ TEST(ImageDataset, FillTargetsBinary)
     ASSERT_EQ(ssize(target_indices), 1);
 
     vector<float> targets(sample_indices.size(), -1.0f);
-    image_dataset.fill_targets(sample_indices, target_indices, targets.data(), FillMode::Inference, -1);
+    image_dataset.fill_targets(sample_indices, target_indices, targets.data(), FillMode::Inference,
+                               ColumnContiguity::Unknown);
 
     EXPECT_FLOAT_EQ(targets[0], 0.0f);
     EXPECT_FLOAT_EQ(targets[1], 0.0f);
@@ -194,7 +195,8 @@ TEST(ImageDataset, FillTargetsOneHotThreeClasses)
     ASSERT_EQ(ssize(target_indices), 3);
 
     vector<float> targets(sample_indices.size() * 3, -1.0f);
-    image_dataset.fill_targets(sample_indices, target_indices, targets.data(), FillMode::Inference, -1);
+    image_dataset.fill_targets(sample_indices, target_indices, targets.data(), FillMode::Inference,
+                               ColumnContiguity::Unknown);
 
     EXPECT_FLOAT_EQ(targets[0], 1.0f);
     EXPECT_FLOAT_EQ(targets[1], 0.0f);
@@ -223,7 +225,8 @@ TEST(ImageDataset, FillInputsDefaultScalingFromCache)
     const vector<Index> sample_indices = { 0 };
 
     vector<float> inputs(size_t(pixels), -7.0f);
-    image_dataset.fill_inputs(sample_indices, input_indices, inputs.data(), FillMode::Training, -1);
+    image_dataset.fill_inputs(sample_indices, input_indices, inputs.data(), FillMode::Training,
+                              ColumnContiguity::Unknown);
 
     for (Index i = 0; i < pixels; ++i)
     {
@@ -252,7 +255,8 @@ TEST(ImageDataset, FillInputsRawWhenNotTraining)
     const vector<Index> sample_indices = { 0 };
 
     vector<float> inputs(size_t(pixels), -1.0f);
-    image_dataset.fill_inputs(sample_indices, input_indices, inputs.data(), FillMode::Inference, -1);
+    image_dataset.fill_inputs(sample_indices, input_indices, inputs.data(), FillMode::Inference,
+                              ColumnContiguity::Unknown);
 
     float maximum = 0.0f;
     for (Index i = 0; i < pixels; ++i)
@@ -339,7 +343,8 @@ TEST(ImageDataset, SetInputScalingMinimumMaximum)
     const vector<Index> sample_indices = { 0 };
 
     vector<float> inputs(size_t(pixels), 0.0f);
-    image_dataset.fill_inputs(sample_indices, input_indices, inputs.data(), FillMode::Training, -1);
+    image_dataset.fill_inputs(sample_indices, input_indices, inputs.data(), FillMode::Training,
+                              ColumnContiguity::Unknown);
 
     for (Index i = 0; i < pixels; ++i)
     {

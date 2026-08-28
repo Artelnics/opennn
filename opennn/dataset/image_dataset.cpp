@@ -104,10 +104,12 @@ void ImageDataset::enable_device_residency()
     iota(all_samples.begin(), all_samples.end(), 0);
 
     MatrixR inputs(samples_number, inputs_number);
-    fill_inputs(all_samples, input_indices, inputs.data(), FillMode::Training, 1);
+    fill_inputs(all_samples, input_indices, inputs.data(), FillMode::Training,
+                ColumnContiguity::Contiguous);
 
     MatrixR targets(samples_number, targets_number);
-    fill_targets(all_samples, target_indices, targets.data(), FillMode::Training, 1);
+    fill_targets(all_samples, target_indices, targets.data(), FillMode::Training,
+                 ColumnContiguity::Contiguous);
 
     MatrixR staged(samples_number, inputs_number + targets_number);
     staged.leftCols(inputs_number) = inputs;
@@ -547,7 +549,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
                                const vector<Index>& input_indices,
                                float* input_data,
                                FillMode mode,
-                               int contiguous) const
+                               ColumnContiguity column_contiguity) const
 {
     const Index batch_size = ssize(sample_indices);
     const Index channels = input_shape[2];
@@ -583,7 +585,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
 
     if (storage_mode == StorageMode::Matrix)
     {
-        fill_tensor_data(data, sample_indices, input_indices, input_span, contiguous);
+        fill_tensor_data(data, sample_indices, input_indices, input_span, column_contiguity);
     }
     else
     {
@@ -642,7 +644,7 @@ void ImageDataset::fill_targets(const vector<Index>& sample_indices,
                                 const vector<Index>& target_indices,
                                 float* target_data,
                                 FillMode,
-                                int) const
+                                ColumnContiguity) const
 {
     const Index batch_size = ssize(sample_indices);
     const Index targets_number = ssize(target_indices);

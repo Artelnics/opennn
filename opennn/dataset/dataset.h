@@ -272,19 +272,19 @@ public:
                              const vector<Index>&,
                              float*,
                              FillMode,
-                             int contiguous = -1) const;
+                             ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const;
 
     virtual void fill_decoder(const vector<Index>&,
                               const vector<Index>&,
                               float*,
                               FillMode,
-                              int contiguous = -1) const;
+                              ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const;
 
     virtual void fill_targets(const vector<Index>&,
                               const vector<Index>&,
                               float*,
                               FillMode,
-                              int contiguous = -1) const;
+                              ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const;
 
     virtual bool supports_bf16_inputs() const { return true; }
 

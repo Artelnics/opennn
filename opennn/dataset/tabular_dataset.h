@@ -162,19 +162,19 @@ public:
                      const vector<Index>&,
                      float*,
                      FillMode,
-                     int contiguous = -1) const override;
+                     ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const override;
 
     void fill_decoder(const vector<Index>&,
                       const vector<Index>&,
                       float*,
                       FillMode,
-                      int contiguous = -1) const override;
+                      ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
                       FillMode,
-                      int contiguous = -1) const override;
+                      ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const override;
 
 protected:
 
@@ -196,12 +196,12 @@ protected:
     void fill_features(const vector<Index>&,
                        const vector<Index>&,
                        float*,
-                       int contiguous = -1) const;
+                       ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const;
 
     void fill_from_binary_cache(const vector<Index>&,
                                 const vector<Index>&,
                                 float*,
-                                int contiguous = -1) const;
+                                ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const;
 
     float apply_training_scaling(Index, float) const;
     void apply_training_scaling(const vector<Index>&,

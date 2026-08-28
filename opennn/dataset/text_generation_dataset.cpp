@@ -310,14 +310,14 @@ void TextGenerationDataset::write_binary_cache(const vector<Index>& token_indice
 void TextGenerationDataset::fill_blocks(const vector<Index>& sample_indices,
                                         const vector<Index>& variable_indices,
                                         float* output_data,
-                                        int contiguous,
+                                        ColumnContiguity column_contiguity,
                                         Index record_offset,
                                         const char* context) const
 {
     const span<float> output(output_data, size_t(ssize(sample_indices) * sequence_length));
 
     if (storage_mode == StorageMode::Matrix)
-        return fill_tensor_data(data, sample_indices, variable_indices, output, contiguous);
+        return fill_tensor_data(data, sample_indices, variable_indices, output, column_contiguity);
 
     read_int32_batch(cache_reader,
                      sample_indices,
@@ -335,18 +335,18 @@ void TextGenerationDataset::fill_inputs(const vector<Index>& sample_indices,
                                         const vector<Index>& input_indices,
                                         float* input_data,
                                         FillMode,
-                                        int contiguous) const
+                                        ColumnContiguity column_contiguity) const
 {
-    fill_blocks(sample_indices, input_indices, input_data, contiguous, 0, "input");
+    fill_blocks(sample_indices, input_indices, input_data, column_contiguity, 0, "input");
 }
 
 void TextGenerationDataset::fill_targets(const vector<Index>& sample_indices,
                                          const vector<Index>& target_indices,
                                          float* target_data,
                                          FillMode,
-                                         int contiguous) const
+                                         ColumnContiguity column_contiguity) const
 {
-    fill_blocks(sample_indices, target_indices, target_data, contiguous, 1, "target");
+    fill_blocks(sample_indices, target_indices, target_data, column_contiguity, 1, "target");
 }
 
 void TextGenerationDataset::to_JSON(JsonWriter& printer) const

@@ -48,9 +48,9 @@ void Batch::set(const Index new_batch_size,
     decoder.shape.clear();
     target.shape.clear();
 
-    input.contiguous.reset();
-    decoder.contiguous.reset();
-    target.contiguous.reset();
+    input.column_contiguity = ColumnContiguity::Unknown;
+    decoder.column_contiguity = ColumnContiguity::Unknown;
+    target.column_contiguity = ColumnContiguity::Unknown;
 
     device_gather.reset();
 

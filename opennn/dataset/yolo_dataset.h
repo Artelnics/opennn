@@ -122,13 +122,13 @@ public:
                      const vector<Index>&,
                      float*,
                      FillMode,
-                     int contiguous = -1) const override;
+                     ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
                       FillMode,
-                      int contiguous = -1) const override;
+                      ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const override;
 
     struct AugmentationPolicy
     {

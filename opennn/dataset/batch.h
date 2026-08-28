@@ -40,7 +40,7 @@ struct BatchSlot
     Shape  shape;
     Type   type = Type::FP32;
     
-    optional<bool> contiguous;
+    ColumnContiguity column_contiguity = ColumnContiguity::Unknown;
 
     device::PinnedBuffer host;
 };

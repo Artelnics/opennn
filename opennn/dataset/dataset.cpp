@@ -1023,17 +1023,17 @@ void Dataset::check_separators(string_view line) const
                     found_other_name, found_other, data_path.string(), separator_name, separator_string);
 }
 
-void Dataset::fill_inputs(const vector<Index>&, const vector<Index>&, float*, FillMode, int) const
+void Dataset::fill_inputs(const vector<Index>&, const vector<Index>&, float*, FillMode, ColumnContiguity) const
 {
     throw runtime_error("Dataset::fill_inputs must be implemented by a concrete dataset.");
 }
 
-void Dataset::fill_decoder(const vector<Index>&, const vector<Index>&, float*, FillMode, int) const
+void Dataset::fill_decoder(const vector<Index>&, const vector<Index>&, float*, FillMode, ColumnContiguity) const
 {
     throw runtime_error("Dataset::fill_decoder must be implemented by a concrete dataset.");
 }
 
-void Dataset::fill_targets(const vector<Index>&, const vector<Index>&, float*, FillMode, int) const
+void Dataset::fill_targets(const vector<Index>&, const vector<Index>&, float*, FillMode, ColumnContiguity) const
 {
     throw runtime_error("Dataset::fill_targets must be implemented by a concrete dataset.");
 }
@@ -1125,24 +1125,19 @@ void Dataset::fill_batch_host(Batch& batch,
         ? batch.target.host.as<float>()
         : batch.target.buffer.as<float>();
 
-    if (!batch.input.contiguous && !input_indices.empty())
-        batch.input.contiguous = is_contiguous(input_indices);
-    if (!batch.decoder.contiguous && !decoder_indices.empty())
-        batch.decoder.contiguous = is_contiguous(decoder_indices);
-    if (!batch.target.contiguous && !target_indices.empty())
-        batch.target.contiguous = is_contiguous(target_indices);
+    if (batch.input.column_contiguity == ColumnContiguity::Unknown && !input_indices.empty())
+        batch.input.column_contiguity = classify_column_contiguity(input_indices);
+    if (batch.decoder.column_contiguity == ColumnContiguity::Unknown && !decoder_indices.empty())
+        batch.decoder.column_contiguity = classify_column_contiguity(decoder_indices);
+    if (batch.target.column_contiguity == ColumnContiguity::Unknown && !target_indices.empty())
+        batch.target.column_contiguity = classify_column_contiguity(target_indices);
 
-    const auto hint = [](const optional<bool>& contiguous)
-    {
-        return contiguous ? int(*contiguous) : -1;
-    };
-
-    fill_inputs(sample_indices, input_indices, input_buffer, mode, hint(batch.input.contiguous));
+    fill_inputs(sample_indices, input_indices, input_buffer, mode, batch.input.column_contiguity);
 
     if (!batch.decoder.shape.empty())
-        fill_decoder(sample_indices, decoder_indices, decoder_buffer, mode, hint(batch.decoder.contiguous));
+        fill_decoder(sample_indices, decoder_indices, decoder_buffer, mode, batch.decoder.column_contiguity);
 
-    fill_targets(sample_indices, target_indices, target_buffer, mode, hint(batch.target.contiguous));
+    fill_targets(sample_indices, target_indices, target_buffer, mode, batch.target.column_contiguity);
 
 }
 

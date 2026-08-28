@@ -128,10 +128,12 @@ TEST(Tensors, FillContiguousHintSelectsPath)
     const vector<Index> columns = { 1, 2 };
 
     MatrixR memcpy_path(3, 2);
-    fill_tensor_data(matrix, rows, columns, span<float>(memcpy_path.data(), size_t(memcpy_path.size())), 1);
+    fill_tensor_data(matrix, rows, columns, span<float>(memcpy_path.data(), size_t(memcpy_path.size())),
+                     ColumnContiguity::Contiguous);
 
     MatrixR gather_path(3, 2);
-    fill_tensor_data(matrix, rows, columns, span<float>(gather_path.data(), size_t(gather_path.size())), 0);
+    fill_tensor_data(matrix, rows, columns, span<float>(gather_path.data(), size_t(gather_path.size())),
+                     ColumnContiguity::NonContiguous);
 
     EXPECT_LT((memcpy_path - gather_path).array().abs().maxCoeff(), type(1e-6));
 

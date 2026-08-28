@@ -1863,7 +1863,7 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                               const vector<Index>&,
                               float* input_data,
                               FillMode mode,
-                              int) const
+                              ColumnContiguity) const
 {
     const Index batch_size = ssize(sample_indices);
     const float scale = 1.0f / 255.0f;
@@ -1989,7 +1989,7 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                                const vector<Index>&,
                                float* target_data,
                                FillMode mode,
-                               int) const
+                               ColumnContiguity) const
 {
     const Index batch_size = ssize(sample_indices);
 

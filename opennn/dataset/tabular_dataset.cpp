@@ -235,16 +235,14 @@ void TabularDataset::on_used_samples_changed()
 void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
                                             const vector<Index>& feature_indices,
                                             float* output,
-                                            int contiguous_hint) const
+                                            ColumnContiguity column_contiguity) const
 {
     if (sample_indices.empty() || feature_indices.empty()) return;
 
     const Index columns_number = cache_columns_number;
     const Index rows_number = get_samples_number();
     const Index features_number = ssize(feature_indices);
-    const bool contiguous = contiguous_hint >= 0
-                          ? static_cast<bool>(contiguous_hint)
-                          : is_contiguous(feature_indices);
+    const bool contiguous = resolve_column_contiguity(column_contiguity, feature_indices);
 
     throw_if(ssize(cache_feature_replacement) != columns_number,
              "TabularDataset: binary-cache statistics are not initialized.");
@@ -382,14 +380,14 @@ vector<Descriptives> TabularDataset::compute_descriptives_streaming(const vector
 }
 
 void TabularDataset::fill_features(const vector<Index>& sample_indices, const vector<Index>& feature_indices,
-                                   float* output, int contiguous) const
+                                   float* output, ColumnContiguity column_contiguity) const
 {
     if (storage_mode == StorageMode::BinaryFile)
-        fill_from_binary_cache(sample_indices, feature_indices, output, contiguous);
+        fill_from_binary_cache(sample_indices, feature_indices, output, column_contiguity);
     else
         fill_tensor_data(data, sample_indices, feature_indices,
                          span<float>(output, size_t(ssize(sample_indices) * ssize(feature_indices))),
-                         contiguous);
+                         column_contiguity);
 
     apply_training_scaling(feature_indices, output, ssize(sample_indices));
 }
@@ -429,21 +427,21 @@ void TabularDataset::apply_training_scaling(const vector<Index>& feature_indices
 }
 
 void TabularDataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices,
-                                 float* input_data, FillMode, int contiguous) const
+                                 float* input_data, FillMode, ColumnContiguity column_contiguity) const
 {
-    fill_features(sample_indices, input_indices, input_data, contiguous);
+    fill_features(sample_indices, input_indices, input_data, column_contiguity);
 }
 
 void TabularDataset::fill_decoder(const vector<Index>& sample_indices, const vector<Index>& decoder_indices,
-                                  float* decoder_data, FillMode, int contiguous) const
+                                  float* decoder_data, FillMode, ColumnContiguity column_contiguity) const
 {
-    fill_features(sample_indices, decoder_indices, decoder_data, contiguous);
+    fill_features(sample_indices, decoder_indices, decoder_data, column_contiguity);
 }
 
 void TabularDataset::fill_targets(const vector<Index>& sample_indices, const vector<Index>& target_indices,
-                                  float* target_data, FillMode, int contiguous) const
+                                  float* target_data, FillMode, ColumnContiguity column_contiguity) const
 {
-    fill_features(sample_indices, target_indices, target_data, contiguous);
+    fill_features(sample_indices, target_indices, target_data, column_contiguity);
 }
 
 void TabularDataset::resize_data_from_JSON(Index samples_number)

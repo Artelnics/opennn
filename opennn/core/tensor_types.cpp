@@ -113,7 +113,7 @@ void fill_tensor_data(const MatrixR& matrix,
                       const vector<Index>& row_indices,
                       const vector<Index>& column_indices,
                       const span<float> tensor_span,
-                      int contiguous_hint)
+                      ColumnContiguity column_contiguity)
 {
     const Index rows_number = row_indices.size();
     const Index columns_number = column_indices.size();
@@ -130,7 +130,7 @@ void fill_tensor_data(const MatrixR& matrix,
 
     const Index matrix_cols_number = matrix.cols();
 
-    const bool contiguous = (contiguous_hint >= 0) ? static_cast<bool>(contiguous_hint) : is_contiguous(column_indices);
+    const bool contiguous = resolve_column_contiguity(column_contiguity, column_indices);
 
     const bool parallel_fill = rows_number * columns_number >= 65536;
 

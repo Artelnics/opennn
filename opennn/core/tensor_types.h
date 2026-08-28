@@ -743,7 +743,24 @@ inline bool is_contiguous(const vector<Index>& indices)
         [](Index a, Index b) { return b != a + 1; }) == indices.end();
 }
 
-void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, span<float>, int contiguous = -1);
+enum class ColumnContiguity { Unknown, NonContiguous, Contiguous };
+
+inline ColumnContiguity classify_column_contiguity(const vector<Index>& indices)
+{
+    return is_contiguous(indices) ? ColumnContiguity::Contiguous
+                                  : ColumnContiguity::NonContiguous;
+}
+
+inline bool resolve_column_contiguity(ColumnContiguity column_contiguity,
+                                      const vector<Index>& indices)
+{
+    return column_contiguity == ColumnContiguity::Unknown
+        ? is_contiguous(indices)
+        : column_contiguity == ColumnContiguity::Contiguous;
+}
+
+void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&,
+                      span<float>, ColumnContiguity = ColumnContiguity::Unknown);
 
 template<typename... Vs>
 size_t hash_combine(const Vs&... values)
