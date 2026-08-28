@@ -36,10 +36,10 @@ template<typename T>
 void weighted_squared_error_gradient_cuda(const Index, T*, const float*, const T*, const float, const float, const float);
 
 template<typename T>
-void cross_entropy_3d_multiple_forward_cuda(const Index, const int, const T*, const float*, float*, float*, float*, const float);
+void cross_entropy_3d_multiple_forward_cuda(const Index, const int, const T*, const float*, float*, float*, float*);
 
 template<typename T>
-void cross_entropy_3d_metrics_cuda(const Index, const int, const T*, const float*, const float, float*);
+void cross_entropy_3d_metrics_cuda(const Index, const int, const T*, const float*, float*);
 
 template<typename T>
 void cross_entropy_3d_multiple_backward_cuda(const Index, const int, const T*, const float*, T*, const float scale,

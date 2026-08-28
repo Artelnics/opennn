@@ -163,8 +163,7 @@ __global__ void cross_entropy_3d_multiple_forward_kernel(const int total_tokens,
                                                          const float* __restrict__ targets,
                                                          float* __restrict__ errors,
                                                          float* __restrict__ valid_mask,
-                                                         float* __restrict__ correct_mask,
-                                                         const float epsilon)
+                                                         float* __restrict__ correct_mask)
 {
     for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < total_tokens; idx += Index(blockDim.x) * gridDim.x)
     {
@@ -209,18 +208,16 @@ void cross_entropy_3d_multiple_forward_cuda(const Index n,
                                             const float* targets,
                                             float* errors,
                                             float* valid_mask,
-                                            float* correct_mask,
-                                            const float epsilon)
+                                            float* correct_mask)
 {
     launch_elementwise(n, cross_entropy_3d_multiple_forward_kernel<T>,
-                       vocab_size, outputs, targets, errors, valid_mask, correct_mask, epsilon);
+                       vocab_size, outputs, targets, errors, valid_mask, correct_mask);
 }
 
 template<typename T>
 __global__ void cross_entropy_3d_metrics_kernel(const int total_tokens, const int vocab_size,
                                                 const T* __restrict__ outputs,
                                                 const float* __restrict__ targets,
-                                                const float epsilon,
                                                 float* __restrict__ sums)
 {
     const int lane  = threadIdx.x & 31;
@@ -299,15 +296,14 @@ __global__ void cross_entropy_3d_metrics_kernel(const int total_tokens, const in
 
 template<typename T>
 void cross_entropy_3d_metrics_cuda(const Index total_tokens, const int vocab_size,
-                                   const T* outputs, const float* targets,
-                                   const float epsilon, float* sums)
+                                   const T* outputs, const float* targets, float* sums)
 {
     if (total_tokens <= 0) return;
     const int warps_per_block = block_size / 32;
     const Index needed = (total_tokens + warps_per_block - 1) / warps_per_block;
     const int blocks = int(needed < 4096 ? needed : 4096);
     OPENNN_CUDA_LAUNCH(cross_entropy_3d_metrics_kernel<T><<<blocks, block_size, 0, opennn::device::get_compute_stream()>>>(
-        int(total_tokens), vocab_size, outputs, targets, epsilon, sums));
+        int(total_tokens), vocab_size, outputs, targets, sums));
 }
 
 // One warp per token. The inputs are logits, so the softmax denominator is a per-row
@@ -855,8 +851,8 @@ void yolo_gradient_cuda(const float* output, const float* target, float* delta,
     template void categorical_cross_entropy_gradient_cuda<T>(const Index, T*, const float*, const T*, const float); \
     template void weighted_squared_error_cuda<T>(const Index, float*, const float*, const T*, const float, const float); \
     template void weighted_squared_error_gradient_cuda<T>(const Index, T*, const float*, const T*, const float, const float, const float); \
-    template void cross_entropy_3d_multiple_forward_cuda<T>(const Index, const int, const T*, const float*, float*, float*, float*, const float); \
-    template void cross_entropy_3d_metrics_cuda<T>(const Index, const int, const T*, const float*, const float, float*); \
+    template void cross_entropy_3d_multiple_forward_cuda<T>(const Index, const int, const T*, const float*, float*, float*, float*); \
+    template void cross_entropy_3d_metrics_cuda<T>(const Index, const int, const T*, const float*, float*); \
     template void cross_entropy_3d_multiple_backward_cuda<T>(const Index, const int, const T*, const float*, T*, const float, const float*); \
     template void mean_absolute_error_gradient_cuda<T>(const Index, T*, const float*, const T*, float);
 

@@ -1564,7 +1564,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         input.dispatch([&]<typename T>()
         {
             cross_entropy_3d_metrics_cuda<T>(token_count, to_int(vocabulary_size),
-                input.as<T>(), target.as<float>(), EPSILON, results_device);
+                input.as<T>(), target.as<float>(), results_device);
         });
 
         accumulate_cross_entropy_3d_metrics_cuda(results_device, error_sum_device, accuracy_sum_device);
@@ -1672,10 +1672,20 @@ bool Loss::output_delta_overwrites_outputs() const
     //
     // This used to require a Softmax output layer, back when the loss consumed probabilities.
     // The softmax is now fused into the loss and the head emits logits, so the activation is
-    // Identity and that predicate would silently switch the optimization off. What the
-    // aliasing actually needs is only that this loss owns the whole output row, which
-    // CrossEntropy3d does.
-    return error == Error::CrossEntropy3d && neural_network && neural_network->is_gpu();
+    // Identity and that predicate would silently switch the optimization off.
+    //
+    // But that Softmax test was doing a second job: it also guaranteed the last layer's
+    // backward never reads its own forward output, since activation_backward returns early
+    // for both Identity and Softmax. Dropping it outright would let the aliasing fire on a
+    // head whose backward DOES need its forward output - Tanh, Sigmoid, GELU, a gated or
+    // batch-normalized Dense - which would then read p - y where it expected y, on GPU only
+    // and with no error. backward_uses_forward_output() is that condition stated directly,
+    // and it covers the gated and batch-norm cases an activation test would miss.
+    if (error != Error::CrossEntropy3d || !neural_network || !neural_network->is_gpu())
+        return false;
+
+    const auto& layers = neural_network->get_layers();
+    return !layers[neural_network->get_last_trainable_layer_index()]->backward_uses_forward_output();
 }
 
 void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const

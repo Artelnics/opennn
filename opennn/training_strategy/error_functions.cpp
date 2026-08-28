@@ -352,7 +352,7 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
 
             cross_entropy_3d_multiple_forward_cuda<T>(token_count, to_int(vocabulary_size),
                 input.as<T>(), target.as<float>(),
-                errors_device, valid_mask_device, correct_mask_device, EPSILON);
+                errors_device, valid_mask_device, correct_mask_device);
 
             cublasHandle_t handle = device::get_cublas_handle();
             {
