@@ -134,8 +134,25 @@ public:
 
                 if (peak > 0.0)
                 {
-                    if (measured)
+                    // Nothing beats the memory system, so a rate above peak
+                    // means the scope and its byte count disagree about what
+                    // happened. Two ways to get here. The scope may be timing
+                    // less work than it is charged for, which is what an
+                    // operator fused into its predecessor looks like: the call
+                    // returns almost immediately while the model still charges
+                    // it a full pass. Or the byte model is simply wrong. Either
+                    // way the number is not a bandwidth, so refuse to print one.
+                    //
+                    // A scope on a CUDA-graph path is a different problem and
+                    // does not land here: it reports honestly, but only for the
+                    // eager warmup calls, since capture disables the profiler
+                    // and the replays never enter the scope at all. Set
+                    // OPENNN_GRAPH_TIMING to keep the run eager when what you
+                    // want is bandwidth rather than throughput.
+                    if (measured && gbps <= peak)
                         os << setw(7) << fixed << setprecision(1) << (gbps / peak * 100.0) << "%";
+                    else if (measured)
+                        os << setw(8) << ">peak";
                     else
                         os << setw(8) << "-";
                 }

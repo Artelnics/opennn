@@ -107,7 +107,7 @@ void MultiHeadProjectionOperator::set(Index new_input_features, Index new_heads_
 
 void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
 {
-    PROFILE_SCOPE("op:projection_fwd");
+    PROFILE_SCOPE_NAMED(projection_timer, "op:projection_fwd");
 
     throw_if(tied_transposed || transposed_inference_active
              || fused_activation != ActivationFunction::Identity,
@@ -127,12 +127,39 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
 
     const TensorView  input_2d    = input.reshape({rows, input_features});
 
+    // The GEMM reads the input and the weights and writes the projected heads.
+    // Whether that write is the last pass over the result is the difference
+    // between the two branches below, and it is the only thing worth measuring
+    // here: the arithmetic is the same either way. Without interleaved heads the
+    // GEMM lands in scratch and split_heads reads it back and writes it out
+    // permuted, so the result crosses memory twice more than it has to.
+    //
+    // This is the most-called operator in a transformer forward pass, so the
+    // count stays behind the profiler check rather than being computed and
+    // thrown away on every call.
+    const auto record_bytes = [&](const double extra_passes)
+    {
+        if (!profiler::is_enabled()) return;
+
+        const double projected = double(rows) * double(heads_number) * double(head_dimension);
+
+        projection_timer.set_bytes(
+            double(type_bytes(input.get_type()))
+            * (double(rows) * double(input_features)
+               + double(input_features) * double(heads_number) * double(head_dimension)
+               + projected * (1.0 + extra_passes)));
+    };
+
     if (interleaved_heads && input.is_cuda())
     {
+        record_bytes(0.0);
+
         TensorView head_output_2d = head_output.reshape({rows, heads_number * head_dimension});
         return linear_forward(input_2d, weights, bias, head_output_2d,
                               CUBLASLT_EPILOGUE_BIAS, nullptr, weight_scale);
     }
+
+    record_bytes(2.0);
 
     TensorView&       scratch     = forward_slots[scratch_slot];
     TensorView        scratch_2d  = scratch.reshape_prefix({rows, heads_number * head_dimension});

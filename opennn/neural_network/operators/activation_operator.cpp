@@ -29,7 +29,13 @@ void ActivationOperator::forward_propagate(ForwardPropagation& forward_propagati
     // story. Every pass counted here is one a fused epilogue would not make:
     // the copy when input and output are distinct slots, the read-modify-write
     // of the activation itself, and the read plus write of the saved copy.
-    double passes = 2.0;
+    //
+    // Identity is the exception and has to be excluded rather than counted at
+    // zero cost by accident: activation_forward returns before touching the
+    // tensor, so charging it a pass reports traffic that never happened. Left
+    // in, it put this scope above the memory system's peak, since the bytes
+    // were fictional while the time was real.
+    double passes = activation_function == ActivationFunction::Identity ? 0.0 : 2.0;
 
     if (input_slots.empty() || input_slots[0] != output_slots[0])
     {

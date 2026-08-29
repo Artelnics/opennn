@@ -60,7 +60,7 @@ double resident_mb()
 }
 
 constexpr Index SEED = 42;
-constexpr Index BF16_TRAINING_SDPA_MIN_SEQUENCE = 128;
+constexpr Index BF16_SDPA_MIN_SEQUENCE = 128;
 
 struct Options
 {
@@ -73,7 +73,7 @@ struct Options
     Index feed_forward() const { return 4 * d_model; }
 };
 
-bool use_bf16_training_sdpa(const Options& options)
+bool use_bf16_sdpa(const Options& options)
 {
 #if defined(OPENNN_HAS_CUDA) && CUDNN_VERSION >= 92500
     return options.device == Device::CUDA && options.precision == Type::BF16;
@@ -83,8 +83,7 @@ bool use_bf16_training_sdpa(const Options& options)
 #endif
 }
 
-unique_ptr<Transformer> build(LanguageDataset& dataset, const Options& options,
-                              const bool training)
+unique_ptr<Transformer> build(LanguageDataset& dataset, const Options& options)
 {
     set_seed(SEED);
 
@@ -98,19 +97,37 @@ unique_ptr<Transformer> build(LanguageDataset& dataset, const Options& options,
         options.feed_forward(),
         options.layers);
 
-    // WMT14 rows are 130 tokens after START/END are added. The library-wide
-    // 192-token crossover deliberately keeps small generic workloads on the
-    // materialized path, but it also retains a full attention matrix per
-    // encoder/decoder attention layer in this BF16 training cell. PyTorch uses
-    // fused scaled-dot-product attention here. Select the same representation
-    // for this measured training workload without changing inference or the
-    // other benchmark families. The reference cuDNN 9.25 supports this graph;
-    // older runtimes stay on the materialized path because some reject the
-    // 130-token training plan outright.
-    if(training && use_bf16_training_sdpa(options))
+    // WMT14 rows are 130 tokens after START/END are added, so the library-wide
+    // 192-token crossover puts them on the materialized path, which keeps a
+    // full attention matrix per encoder/decoder attention layer. PyTorch uses
+    // fused scaled-dot-product attention at this length, so leaving OpenNN
+    // materialized compares one engine's guarded path against the other's fast
+    // one. Both measured cells here run many iterations over the corpus, which
+    // is the regime the fused path is for.
+    //
+    // Measured on this suite, sweeping sequence length with everything else
+    // fixed, fused throughput beat materialized at every length tried, by
+    // roughly 6% at 32 tokens rising to about 30% by 192 and 256. Those sweep
+    // points are one launch each and the fused path varies by about 6% between
+    // launches while the materialized one holds to 0.5%, so read them as a
+    // trend rather than as figures. Five launches each way at 128 tokens give
+    // medians of 4674 against 3643 samples/s, a 28% gain whose distributions do
+    // not overlap at all -- 4231 slowest fused against 3653 fastest
+    // materialized. The library default
+    // stays at 192 regardless, and deliberately: the same sweep run as a single
+    // pass reverses the result, because cuDNN plan construction costs 0.3-2.0 s
+    // with nothing to amortize it against, leaving fused 1.6x slower at 256 and
+    // 5x slower at 32. Sequence length is only a proxy for the thing that
+    // actually decides this, which is how often the plan gets reused; a
+    // benchmark cell reusing it across every batch of 4,096 samples sits firmly
+    // on the fused side of that, and a caller doing one forward pass does not.
+    //
+    // The reference cuDNN 9.25 supports this graph; older runtimes stay on the
+    // materialized path because some reject the 130-token plan outright.
+    if(use_bf16_sdpa(options))
     {
         transformer->set_attention_sdpa_min_sequence_length(
-            BF16_TRAINING_SDPA_MIN_SEQUENCE);
+            BF16_SDPA_MIN_SEQUENCE);
     }
 
     return transformer;
@@ -222,14 +239,14 @@ int main(int argc, char* argv[])
 
         for (const Index batch : batches)
         {
-            auto network = build(dataset, options, true);
+            auto network = build(dataset, options);
             if (batch == batches.front())
             {
                 cout << "parameters=" << network->get_parameters_number() << "\n" << flush;
-                if (use_bf16_training_sdpa(options))
+                if (use_bf16_sdpa(options))
                 {
                     cout << "sdpa_min_sequence_length="
-                         << BF16_TRAINING_SDPA_MIN_SEQUENCE << "\n" << flush;
+                         << BF16_SDPA_MIN_SEQUENCE << "\n" << flush;
                 }
             }
 
@@ -307,7 +324,7 @@ int main(int argc, char* argv[])
 
         for (const Index batch : batches)
         {
-            auto network = build(dataset, options, false);
+            auto network = build(dataset, options);
             if (batch == batches.front())
                 cout << "parameters=" << network->get_parameters_number() << "\n" << flush;
             const Index processed = (samples / batch) * batch;
@@ -397,7 +414,7 @@ int main(int argc, char* argv[])
             LanguageDataset dataset(argv[2]);
             dataset.set_sample_roles("Training");
 
-            auto network = build(dataset, options, true);
+            auto network = build(dataset, options);
             cout << "parameters=" << network->get_parameters_number() << "\n" << flush;
 
             TrainingStrategy strategy(network.get(), &dataset);
