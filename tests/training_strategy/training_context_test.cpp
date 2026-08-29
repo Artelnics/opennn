@@ -51,6 +51,11 @@ TEST_F(TrainingContextTest, AStandaloneContextOwnsItsArena)
 
     EXPECT_FALSE(context.shares_memory());
     EXPECT_EQ(context.forward.batch_size, 8);
+    EXPECT_FALSE(context.backward.has_joint_gradient_arena());
+    ASSERT_EQ(context.backward.get_gradient_slices().size(), 1);
+    EXPECT_EQ(context.backward.get_gradient_slices()[0].values.get_data(),
+              context.backward.gradient.data());
+    EXPECT_EQ(context.backward.get_gradient_slices()[0].parameter_offset, 0);
 }
 
 
@@ -88,6 +93,36 @@ TEST_F(TrainingContextTest, AnEqualSizedBorrowFits)
     const TrainingContext second(8, *loss, false, &first);
 
     EXPECT_TRUE(second.shares_memory());
+}
+
+
+TEST_F(TrainingContextTest, JointGradientSlicesLiveInsideTheTrainingArena)
+{
+    const TrainingContext context(8, *loss, false, nullptr,
+                                  /*joint_gradient_arena*/ true);
+
+    ASSERT_TRUE(context.backward.has_joint_gradient_arena());
+    EXPECT_TRUE(context.backward.gradient.empty());
+    EXPECT_EQ(context.backward.gradient_logical_bytes(),
+              network->get_parameters_buffer_size() * Index(sizeof(float)));
+
+    const auto* arena_begin =
+        static_cast<const uint8_t*>(context.forward.arena.data());
+    const auto* arena_end = arena_begin + context.forward.arena.byte_size();
+
+    Index covered_elements = 0;
+    for(const BackPropagation::GradientSlice& slice :
+        context.backward.get_gradient_slices())
+    {
+        const auto* begin =
+            static_cast<const uint8_t*>(slice.values.get_data());
+        const auto* end = begin + slice.values.byte_size();
+        EXPECT_GE(begin, arena_begin);
+        EXPECT_LE(end, arena_end);
+        covered_elements += slice.values.size();
+    }
+
+    EXPECT_EQ(covered_elements, network->get_parameters_buffer_size());
 }
 
 // OpenNN: Open Neural Networks Library.

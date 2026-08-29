@@ -423,9 +423,19 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
 
     set_confidence_interval(correlation, sample_count);
 
-    const VectorMap coefficients = neural_network.get_parameters_map();
-    correlation.intercept = coefficients(0);
-    correlation.slope = coefficients(1);
+    // The flat parameter vector is alignment-padded, so the Dense layer's bias
+    // and weight do not sit at indices 0 and 1: for this one-input network they
+    // are 16 floats apart, with untouched padding in between. Reading index 1 as
+    // the slope only ever worked because that padding happened to be exactly
+    // zero, so the test below never fired. Under MKL it holds a few parts in a
+    // million of noise, which is negative about half the time and silently
+    // inverted the sign of an otherwise correct correlation. Ask the layer for
+    // its own parameters rather than assuming how they are laid out.
+    const vector<TensorView>& regression_parameters =
+        neural_network.get_layer(1)->get_parameter_views();
+
+    correlation.intercept = *regression_parameters[0].as<float>();
+    correlation.slope     = *regression_parameters[1].as<float>();
 
     if (correlation.slope < 0.0f)
     {

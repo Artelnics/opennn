@@ -59,7 +59,8 @@ struct ForwardPropagation
                        ForwardPropagationMode = ForwardPropagationMode::Training,
                        InferenceShapePolicy = {},
                        bool inputs_pre_scaled = false,
-                       span<const MemoryPoolEntry> co_planned_lifetimes = {});
+                       span<const MemoryPoolEntry> co_planned_lifetimes = {},
+                       bool exhaustive_training_plan = false);
 
     ~ForwardPropagation();
 
@@ -70,7 +71,8 @@ struct ForwardPropagation
              ForwardPropagationMode = ForwardPropagationMode::Training,
              InferenceShapePolicy = {},
              bool inputs_pre_scaled = false,
-             span<const MemoryPoolEntry> co_planned_lifetimes = {});
+             span<const MemoryPoolEntry> co_planned_lifetimes = {},
+             bool exhaustive_training_plan = false);
 
     vector<Index> co_planned_offsets;
 

@@ -133,6 +133,25 @@ private:
                      const TensorView&,
                      const TensorView&) const;
 
+    bool apply_onednn(const TensorView&,
+                      TensorView&,
+                      TensorView&,
+                      TensorView&,
+                      TensorView&,
+                      Buffer&,
+                      bool is_training) const;
+
+    bool apply_delta_onednn(const TensorView&,
+                            const TensorView&,
+                            const TensorView&,
+                            const TensorView&,
+                            TensorView&,
+                            TensorView&,
+                            TensorView&,
+                            const Buffer&,
+                            Buffer&,
+                            bool return_seq) const;
+
     void apply_gpu(const TensorView&,
                    TensorView&,
                    TensorView&,

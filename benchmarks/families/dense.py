@@ -289,7 +289,7 @@ def infer(argv: list[str]) -> int:
         model = build(x.shape[1], opts).eval()
         if batch == batches[0]:
             print(f"parameters={sum(p.numel() for p in model.parameters())}", flush=True)
-        forward, _ = compiled(model, opts)
+        forward, how = compiled(model, opts)
         processed = (samples // batch) * batch
 
         def run_pass():
@@ -316,6 +316,7 @@ def infer(argv: list[str]) -> int:
         median = times[len(times) // 2]
         print(f"batch_{batch}_samples_per_sec={int(processed / median)}"
               f" median_pass_s={median:.6g}", flush=True)
+        print(f"batch_{batch}_mode={how}", flush=True)
 
     print("RESULT=OK")
     return 0

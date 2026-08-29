@@ -15,9 +15,9 @@ identical, so what is measured is the surrounding machinery -- data movement,
 launch overhead, the optimiser -- rather than two hand-written kernels.
 
 `nn.LSTM(features, hidden) + nn.Linear(hidden, 1)` is what lstm.cpp's
-ForecastingLstmNetwork builds, and the parameter counts are printed by both so
-the claim is checkable rather than asserted: 4*(hidden*features + hidden^2 +
-2*hidden) + hidden + 1, which is 73,857 at the defaults.
+ForecastingLstmNetwork builds. OpenNN has one LSTM bias, while PyTorch exposes
+two whose sum is used; the second PyTorch bias is therefore fixed at zero so
+the effective trainable parameterization is identical.
 """
 
 from __future__ import annotations
@@ -42,6 +42,9 @@ class Forecaster(nn.Module):
     def __init__(self, features: int, hidden: int):
         super().__init__()
         self.lstm = nn.LSTM(features, hidden, batch_first=True)
+        with torch.no_grad():
+            self.lstm.bias_hh_l0.zero_()
+        self.lstm.bias_hh_l0.requires_grad_(False)
         self.head = nn.Linear(hidden, 1)
 
     def forward(self, x):
@@ -79,7 +82,11 @@ def load_series(path: str, past: int) -> tuple[np.ndarray, np.ndarray]:
         rows = list(csv.reader(handle))
 
     values = np.asarray(rows[1:], dtype=np.float32)
-    features, target = values[:, :-1], values[:, -1:]
+    # Forecasting uses the target's history as an input too. OpenNN marks the
+    # last column InputTarget, so excluding it here silently benchmarked 14
+    # channels against 15 (the parameter totals happened to collide because
+    # PyTorch owns a second bias vector).
+    features, target = values, values[:, -1:]
 
     mean, std = features.mean(axis=0), features.std(axis=0)
     features = (features - mean) / np.where(std > 1.0e-12, std, 1.0)
@@ -167,9 +174,9 @@ def describe(samples: int, features: int, model: nn.Module, opts: dict) -> None:
     """`features` stays in the signature as documentation of the call site;
     it is not reported, because the OpenNN side has no unambiguous
     counterpart and `parameters` pins the model exactly."""
-    print(f"samples={samples} past={opts['past']} "
+    print(f"samples={samples} inputs={features} past={opts['past']} "
           f"hidden={opts['hidden']} "
-          f"parameters={sum(p.numel() for p in model.parameters())}", flush=True)
+          f"parameters={sum(p.numel() for p in model.parameters() if p.requires_grad)}", flush=True)
 
 def train_like(argv: list[str], mode: str) -> int:
     epochs = int(argv[4]) if len(argv) > 4 else 1

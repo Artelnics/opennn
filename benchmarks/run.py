@@ -141,11 +141,21 @@ def cpu_pinning(threads: int | None) -> tuple[list[str], dict[str, str], dict]:
     Defaults to one thread per *physical* P-core: SMT siblings share execution
     units, so counting logical CPUs oversubscribes compute-bound work.
     """
+    environment: dict[str, str] = {}
+    if threads:
+        environment = {name: str(threads) for name in
+                       ("OMP_NUM_THREADS", "MKL_NUM_THREADS",
+                        "OPENNN_THREADS", "TORCH_NUM_THREADS")}
+
     layout = core_layout()
     cores = layout["performance"]
 
     if not cores:
-        return [], {}, {"pinned": False, "reason": "no per-core frequency data"}
+        return [], environment, {
+            "pinned": False,
+            "reason": "no per-core frequency data",
+            "threads": threads or "engine default",
+        }
 
     span = f"{cores[0]}-{cores[-1]}" if cores == list(range(cores[0], cores[-1] + 1)) \
         else ",".join(str(c) for c in cores)
@@ -165,13 +175,7 @@ def cpu_pinning(threads: int | None) -> tuple[list[str], dict[str, str], dict]:
     # at its best, and each engine's own default is what that means here.
     #
     # --threads still overrides, so the choice stays measurable.
-    environment: dict[str, str] = {}
     count = threads
-
-    if count:
-        environment = {name: str(count) for name in
-                       ("OMP_NUM_THREADS", "MKL_NUM_THREADS",
-                        "OPENNN_THREADS", "TORCH_NUM_THREADS")}
 
     return (["taskset", "-c", span], environment,
             {"pinned": True, "cores": span,
@@ -506,10 +510,14 @@ def main() -> int:
     for launch_result in launches:
         if launch_result["returncode"] != 0:
             continue
+        # Dataset identity is recorded once from the runner's authoritative
+        # paths in artifact["datasets"].  It is not a tensor shape, and the
+        # key/value log parser intentionally stops at whitespace, so putting a
+        # Windows path here made two launches of the same file disagree at the
+        # first space in its resolved name.
         reported = {k: v for k, v in launch_result["fields"].items()
                     if k in ("sequence", "input_vocab", "target_vocab", "samples",
-                             "parameters", "hidden", "inputs", "past",
-                             "dataset_train", "dataset_test")}
+                             "parameters", "hidden", "inputs", "past")}
         if reported:
             shapes.setdefault(launch_result["engine"], reported)
 

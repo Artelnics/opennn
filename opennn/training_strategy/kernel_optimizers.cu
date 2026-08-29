@@ -150,21 +150,38 @@ __global__ void adam_prepare_kernel(int* __restrict__ step,
     *effective_eps = epsilon * sqrt_bc2;
 }
 
-void adam_update_capturable_cuda(
-    const Index n,
-    float* parameters, float* m, float* v, const float* gradients,
-    const float beta_1, const float beta_2,
-    const float* learning_rate_device, const float epsilon,
-    int* step_device, float* effective_lr_device, float* effective_eps_device,
-    __nv_bfloat16* parameters_bf16_mirror,
+void adam_prepare_capturable_cuda(
+    const float beta_1,
+    const float beta_2,
+    const float* learning_rate_device,
+    const float epsilon,
+    int* step_device,
+    float* effective_lr_device,
+    float* effective_eps_device,
     cudaStream_t stream)
 {
-    if (n == 0) return;
     if (stream == nullptr) stream = opennn::device::get_compute_stream();
 
     launch_single(stream, adam_prepare_kernel,
                   step_device, beta_1, beta_2, learning_rate_device, epsilon,
                   effective_lr_device, effective_eps_device);
+}
+
+void adam_update_prepared_cuda(
+    const Index n,
+    float* parameters,
+    float* m,
+    float* v,
+    const float* gradients,
+    const float beta_1,
+    const float beta_2,
+    const float* effective_lr_device,
+    const float* effective_eps_device,
+    __nv_bfloat16* parameters_bf16_mirror,
+    cudaStream_t stream)
+{
+    if (n == 0) return;
+    if (stream == nullptr) stream = opennn::device::get_compute_stream();
 
     const bool aligned = adam_vector_aligned(parameters, m, v, gradients, parameters_bf16_mirror);
 

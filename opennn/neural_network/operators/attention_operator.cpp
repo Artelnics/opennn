@@ -431,7 +431,7 @@ AttentionOperator& AttentionOperator::operator=(AttentionOperator&&) noexcept = 
 
 void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
-    PROFILE_SCOPE("op:attention_fwd");
+    PROFILE_SCOPE_NAMED(attention_timer, "op:attention_fwd");
     auto& forward_slots = forward_propagation.slots[layer];
 
     const auto& src_views = get_inputs(forward_propagation, layer);
@@ -450,9 +450,13 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
     const SequenceLengths explicit_lengths =
         forward_propagation.input_sequence_lengths(layer, forward_propagation.inputs[layer].size() - 1);
 
+    bool fused_attention = false;
+
 #ifdef OPENNN_HAS_CUDA
     if (use_sdpa && query.is_cuda())
     {
+        fused_attention = true;
+
         throw_if(sdpa_state_slot == 0,
                  "AttentionOperator: use_sdpa is set but the owning layer did not "
                  "assign sdpa_state_slot.");
@@ -472,6 +476,40 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
                   explicit_lengths);
 
     if (!sdpa_interleaved) concatenate_output_heads(forward_propagation, layer);
+
+    if (profiler::is_enabled())
+        attention_timer.set_bytes(forward_bytes(forward_propagation, layer,
+                                                attention_out, fused_attention));
+}
+
+double AttentionOperator::forward_bytes(ForwardPropagation& forward_propagation,
+                                        size_t layer,
+                                        const TensorView& attention_out,
+                                        bool fused) const
+{
+    const TensorView& query = get_input(forward_propagation, layer);
+
+    const double element_bytes = double(type_bytes(query.get_type()));
+
+    // What both paths have to move regardless: read Q, K and V, write the
+    // attention output.
+    double elements = double(query.size())
+                    + double(get_input(forward_propagation, layer, 1).size())
+                    + double(get_input(forward_propagation, layer, 2).size())
+                    + double(attention_out.size());
+
+    // The materialized path additionally lands a batch x heads x query x source
+    // score matrix in memory and walks it four times: the first GEMM writes it,
+    // softmax reads and rewrites it, the second GEMM reads it again. Fused
+    // attention never stores it at all, which is the whole reason the SDPA
+    // sequence-length threshold is worth arguing about.
+    if (!fused)
+        elements += 4.0 * double(forward_propagation.batch_size)
+                        * double(heads_number)
+                        * double(query_sequence_length)
+                        * double(source_sequence_length);
+
+    return element_bytes * elements;
 }
 
 void AttentionOperator::concatenate_output_heads(ForwardPropagation& forward_propagation, size_t layer) const

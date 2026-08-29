@@ -46,6 +46,8 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
                                                   UpdateMode mode)
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
+    const vector<BackPropagation::GradientSlice>& gradient_slices =
+        back_propagation.get_gradient_slices();
 
     if (mode == UpdateMode::Capturable)
     {
@@ -55,17 +57,26 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         float* const velocity_ptr = momentum > 0.0f
             ? optimizer_data.views[Velocity].as<float>()
             : nullptr;
+        float* const parameters = neural_network->get_parameters_data();
+        bfloat16* const mirror =
+            neural_network->get_parameters_bf16_mirror_data();
+        cudaStream_t stream = device::get_compute_stream();
 
-        return sgd_update_capturable_cuda(
-                   neural_network->get_parameters_buffer_size(),
-                   neural_network->get_parameters_data(),
-                   velocity_ptr,
-                   back_propagation.gradient.as<float>(),
-                   optimizer_data.views[GraphLearningRate].as<float>(),
-                   momentum,
-                   nesterov,
-                   neural_network->get_parameters_bf16_mirror_data(),
-                   device::get_compute_stream());
+        for(const BackPropagation::GradientSlice& slice : gradient_slices)
+        {
+            const Index offset = slice.parameter_offset;
+            sgd_update_capturable_cuda(
+                slice.values.size(),
+                parameters + offset,
+                velocity_ptr ? velocity_ptr + offset : nullptr,
+                slice.values.as<float>(),
+                optimizer_data.views[GraphLearningRate].as<float>(),
+                momentum,
+                nesterov,
+                mirror ? mirror + offset : nullptr,
+                stream);
+        }
+        return;
 #else
         throw runtime_error("Capturable SGD parameter updates require CUDA support.");
 #endif
@@ -85,16 +96,24 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         float* const velocity_ptr = momentum > 0.0f
             ? optimizer_data.views[Velocity].as<float>()
             : nullptr;
+        float* const parameters = neural_network->get_parameters_data();
+        bfloat16* const mirror =
+            neural_network->get_parameters_bf16_mirror_data();
 
         PROFILE_SCOPE("optim:sgd_update_cuda");
 
-        return sgd_update_cuda(
-                   neural_network->get_parameters_buffer_size(),
-                   neural_network->get_parameters_data(),
-                   velocity_ptr,
-                   back_propagation.gradient.as<float>(),
-                   current_learning_rate, momentum, nesterov,
-                   neural_network->get_parameters_bf16_mirror_data());
+        for(const BackPropagation::GradientSlice& slice : gradient_slices)
+        {
+            const Index offset = slice.parameter_offset;
+            sgd_update_cuda(
+                slice.values.size(),
+                parameters + offset,
+                velocity_ptr ? velocity_ptr + offset : nullptr,
+                slice.values.as<float>(),
+                current_learning_rate, momentum, nesterov,
+                mirror ? mirror + offset : nullptr);
+        }
+        return;
 #else
         throw runtime_error("SGD parameter updates on GPU require CUDA support.");
 #endif
@@ -102,30 +121,43 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
     VectorMap parameters = neural_network->get_parameters_map();
 
-    VectorMap gradient = back_propagation.gradient.as_vector();
+    float* const velocity = momentum > 0.0f
+        ? optimizer_data.views[Velocity].as<float>()
+        : nullptr;
 
-    const Index parameters_size = parameters.size();
-
-    if (momentum <= 0.0f)
+    const auto update_range = [&](const Index offset,
+                                  const VectorMap& gradient)
     {
-        #pragma omp parallel for
-        for (Index i = 0; i < parameters_size; ++i)
-        {
-            parameters(i) -= current_learning_rate * gradient(i);
-        }
-    }
-    else
-    {
-        VectorMap velocity = optimizer_data.views[Velocity].as_vector();
+        const Index range_size = gradient.size();
 
-        #pragma omp parallel for
-        for (Index i = 0; i < parameters_size; ++i)
+        if (momentum <= 0.0f)
         {
-            const float learning_rate_gradient = current_learning_rate * gradient(i);
-            const float new_velocity = momentum * velocity(i) - learning_rate_gradient;
-            velocity(i) = new_velocity;
-            parameters(i) += nesterov ? momentum * new_velocity - learning_rate_gradient : new_velocity;
+            #pragma omp parallel for if(range_size > 65536)
+            for (Index i = 0; i < range_size; ++i)
+                parameters(offset + i) -= current_learning_rate * gradient(i);
         }
+        else
+        {
+            #pragma omp parallel for if(range_size > 65536)
+            for (Index i = 0; i < range_size; ++i)
+            {
+                const Index parameter = offset + i;
+                const float learning_rate_gradient =
+                    current_learning_rate * gradient(i);
+                const float new_velocity =
+                    momentum * velocity[parameter] - learning_rate_gradient;
+                velocity[parameter] = new_velocity;
+                parameters(parameter) += nesterov
+                    ? momentum * new_velocity - learning_rate_gradient
+                    : new_velocity;
+            }
+        }
+    };
+
+    for(const BackPropagation::GradientSlice& slice : gradient_slices)
+    {
+        update_range(slice.parameter_offset,
+                     slice.values.as_vector());
     }
 }
 

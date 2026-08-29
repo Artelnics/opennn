@@ -19,7 +19,8 @@ class Loss;
 struct TrainingContext
 {
     TrainingContext(Index batch_size, Loss&, bool inputs_pre_scaled = false,
-                    TrainingContext* share_memory_with = nullptr);
+                    TrainingContext* share_memory_with = nullptr,
+                    bool joint_gradient_arena = false);
 
     TrainingContext(const TrainingContext&) = delete;
     TrainingContext& operator=(const TrainingContext&) = delete;

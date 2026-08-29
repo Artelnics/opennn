@@ -13,8 +13,37 @@
 #include <initializer_list>
 #include <string_view>
 
+#include "opennn/core/tensor_types.h"
+
 namespace opennn_test
 {
+
+inline bool logical_parameters_are_approx(
+    const std::vector<std::vector<opennn::TensorSpec>>& specs,
+    const VectorR& left,
+    const VectorR& right,
+    const float tolerance)
+{
+    if(left.size() != right.size()) return false;
+
+    Index offset = 0;
+    for(const auto& layer_specs : specs)
+        for(const opennn::TensorSpec& spec : layer_specs)
+        {
+            const Index size = spec.shape.size();
+            if(size > 0
+               && !left.segment(offset, size).isApprox(
+                      right.segment(offset, size), tolerance))
+            {
+                return false;
+            }
+            offset += opennn::get_aligned_size(size);
+        }
+
+    // Alignment padding is deliberately excluded: it is not linked to an
+    // operator and therefore is not part of the model's numerical state.
+    return offset == left.size();
+}
 
 // A solid-colour 24-bit BMP, the fixture image every dataset suite needs.
 //

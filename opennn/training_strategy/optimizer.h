@@ -87,6 +87,11 @@ public:
 
     void set_gradient_clip_norm(const float new_clip) { gradient_clip_norm = new_clip; }
 
+    void set_joint_gradient_arena(bool enabled) noexcept
+    {
+        joint_gradient_arena = enabled;
+    }
+
     Index get_batch_size() const noexcept { return batch_size; }
     void set_batch_size(const Index new_batch_size) { batch_size = new_batch_size; }
 
@@ -289,6 +294,8 @@ protected:
     }
     virtual void on_epoch_begin(Index, OptimizerData&) {}
 
+    bool uses_joint_gradient_arena() const noexcept;
+
     Loss::EvaluationResult run_graph_epoch(TrainingSession&,
                                            OptimizerData&,
                                            ForwardPropagation&,
@@ -318,6 +325,8 @@ protected:
     Index validation_period = 1;
 
     float gradient_clip_norm = 0.0f;
+
+    bool joint_gradient_arena = false;
 
     bool restore_best = true;
 

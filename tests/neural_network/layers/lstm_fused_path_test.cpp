@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <cstdio>
 
 using namespace opennn;
@@ -131,6 +132,52 @@ void check_gradient(const Index neurons, const bool return_sequences)
         << "H=" << neurons << " return_sequences=" << return_sequences;
 }
 
+void set_onednn_lstm_disabled(const bool disabled)
+{
+#ifdef _WIN32
+    _putenv_s("OPENNN_NO_ONEDNN_LSTM", disabled ? "1" : "");
+#else
+    if (disabled) setenv("OPENNN_NO_ONEDNN_LSTM", "1", 1);
+    else unsetenv("OPENNN_NO_ONEDNN_LSTM");
+#endif
+}
+
+void check_onednn_gradient_against_scalar(const bool return_sequences)
+{
+    const Index samples_number = 4;
+    const Index inputs_number  = 3;
+    const Index time_steps     = 3;
+    const Index neurons        = 128;
+
+    Shape target_shape{neurons};
+    if (return_sequences) target_shape = Shape{time_steps, neurons};
+
+    TabularDataset dataset(samples_number, {time_steps, inputs_number}, target_shape);
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    NeuralNetwork neural_network;
+    auto layer = make_unique<LongShortTermMemory>(
+        Shape{time_steps, inputs_number}, Shape{neurons});
+    layer->set_return_sequences(return_sequences);
+    neural_network.add_layer(std::move(layer));
+    neural_network.compile();
+    set_varied_parameters(neural_network);
+
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    set_onednn_lstm_disabled(false);
+    const VectorR onednn_gradient = calculate_gradient(loss);
+    set_onednn_lstm_disabled(true);
+    const VectorR scalar_gradient = calculate_gradient(loss);
+    set_onednn_lstm_disabled(false);
+
+    EXPECT_LT((onednn_gradient - scalar_gradient).array().abs().maxCoeff(),
+              type(1.0e-3))
+        << "return_sequences=" << return_sequences;
+}
+
 }
 
 TEST(LstmFusedPath, ForwardMatchesAcrossBoundary)
@@ -152,6 +199,13 @@ TEST(LstmFusedPath, ScalarAndFusedAgree)
 
     check_gradient(95, false);
     check_gradient(96, false);
+}
+
+TEST(LstmFusedPath, OneDnnAnalyticGradientMatchesScalar)
+{
+    check_constant_forward(128, "Tanh");
+    check_onednn_gradient_against_scalar(false);
+    check_onednn_gradient_against_scalar(true);
 }
 
 TEST(LstmFusedPath, DISABLED_BenchmarkBoundary)

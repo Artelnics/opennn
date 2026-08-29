@@ -75,22 +75,84 @@ MemoryPoolPlan plan_memory_pool(const vector<MemoryPoolEntry>& entries,
 
     ranges::sort(allocation_order, [&](const size_t left, const size_t right)
     {
+        const MemoryPoolEntry& left_entry = entries[left];
+        const MemoryPoolEntry& right_entry = entries[right];
+
         if(strategy == MemoryPoolStrategy::Chronological)
         {
-            if(entries[left].first_step != entries[right].first_step)
-                return entries[left].first_step < entries[right].first_step;
+            if(left_entry.first_step != right_entry.first_step)
+                return left_entry.first_step < right_entry.first_step;
 
             return left < right;
         }
 
-        if(entries[left].bytes != entries[right].bytes)
-            return entries[left].bytes > entries[right].bytes;
+        if(strategy == MemoryPoolStrategy::Compact)
+        {
+            if(left_entry.bytes != right_entry.bytes)
+                return left_entry.bytes > right_entry.bytes;
 
-        if(entries[left].first_step != entries[right].first_step)
-            return entries[left].first_step < entries[right].first_step;
+            if(left_entry.first_step != right_entry.first_step)
+                return left_entry.first_step < right_entry.first_step;
 
-        if(entries[left].last_step != entries[right].last_step)
-            return entries[left].last_step > entries[right].last_step;
+            if(left_entry.last_step != right_entry.last_step)
+                return left_entry.last_step > right_entry.last_step;
+
+            return left < right;
+        }
+
+        if(strategy == MemoryPoolStrategy::ChronologicalLargestFirst)
+        {
+            if(left_entry.first_step != right_entry.first_step)
+                return left_entry.first_step < right_entry.first_step;
+
+            if(left_entry.bytes != right_entry.bytes)
+                return left_entry.bytes > right_entry.bytes;
+
+            if(left_entry.last_step != right_entry.last_step)
+                return left_entry.last_step > right_entry.last_step;
+
+            return left < right;
+        }
+
+        if(strategy == MemoryPoolStrategy::EarliestEndFirst
+           || strategy == MemoryPoolStrategy::LatestEndFirst)
+        {
+            if(left_entry.last_step != right_entry.last_step)
+                return strategy == MemoryPoolStrategy::EarliestEndFirst
+                    ? left_entry.last_step < right_entry.last_step
+                    : left_entry.last_step > right_entry.last_step;
+
+            // Ending-soon entries define the low-address holes that later
+            // allocations can reuse.  Put the smaller equal-end entries at
+            // the bottom so those holes coalesce instead of stranding a
+            // large-object-sized gap between them.
+            if(left_entry.bytes != right_entry.bytes)
+                return strategy == MemoryPoolStrategy::EarliestEndFirst
+                    ? left_entry.bytes < right_entry.bytes
+                    : left_entry.bytes > right_entry.bytes;
+
+            if(left_entry.first_step != right_entry.first_step)
+                return left_entry.first_step < right_entry.first_step;
+
+            return left < right;
+        }
+
+        const Index left_lifetime = left_entry.last_step - left_entry.first_step;
+        const Index right_lifetime = right_entry.last_step - right_entry.first_step;
+
+        if(left_lifetime != right_lifetime)
+            return strategy == MemoryPoolStrategy::LongestLifetimeFirst
+                ? left_lifetime > right_lifetime
+                : left_lifetime < right_lifetime;
+
+        if(left_entry.bytes != right_entry.bytes)
+            return left_entry.bytes > right_entry.bytes;
+
+        if(left_entry.first_step != right_entry.first_step)
+            return left_entry.first_step < right_entry.first_step;
+
+        if(left_entry.last_step != right_entry.last_step)
+            return left_entry.last_step > right_entry.last_step;
 
         return left < right;
     });
@@ -132,6 +194,30 @@ MemoryPoolPlan plan_memory_pool(const vector<MemoryPoolEntry>& entries,
     }
 
     return plan;
+}
+
+MemoryPoolPlan plan_memory_pool_best(const vector<MemoryPoolEntry>& entries)
+{
+    constexpr std::array strategies{
+        MemoryPoolStrategy::Chronological,
+        MemoryPoolStrategy::Compact,
+        MemoryPoolStrategy::ChronologicalLargestFirst,
+        MemoryPoolStrategy::EarliestEndFirst,
+        MemoryPoolStrategy::LatestEndFirst,
+        MemoryPoolStrategy::LongestLifetimeFirst,
+        MemoryPoolStrategy::ShortestLifetimeFirst
+    };
+
+    MemoryPoolPlan best = plan_memory_pool(entries, strategies.front());
+
+    for(const MemoryPoolStrategy strategy : strategies | views::drop(1))
+    {
+        MemoryPoolPlan candidate = plan_memory_pool(entries, strategy);
+        if(candidate.peak_bytes < best.peak_bytes)
+            best = std::move(candidate);
+    }
+
+    return best;
 }
 
 Index find_memory_pool_overlay(const vector<MemoryPoolEntry>& entries,

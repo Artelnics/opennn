@@ -16,7 +16,12 @@ namespace opennn
 enum class MemoryPoolStrategy
 {
     Chronological,
-    Compact
+    Compact,
+    ChronologicalLargestFirst,
+    EarliestEndFirst,
+    LatestEndFirst,
+    LongestLifetimeFirst,
+    ShortestLifetimeFirst
 };
 
 constexpr Index backward_step(Index layers_number, Index layer) noexcept
@@ -46,6 +51,8 @@ struct MemoryPoolPlan
 MemoryPoolPlan plan_memory_pool(
     const vector<MemoryPoolEntry>&,
     MemoryPoolStrategy = MemoryPoolStrategy::Chronological);
+
+MemoryPoolPlan plan_memory_pool_best(const vector<MemoryPoolEntry>&);
 
 Index find_memory_pool_overlay(
     const vector<MemoryPoolEntry>&,

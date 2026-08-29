@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <numeric>
 #include <chrono>
+#include <cstdlib>
 #include <iomanip>
 #include <fstream>
 #include <iostream>
@@ -162,8 +163,6 @@ int main(int argc, char* argv[])
         const bool timing = mode == "train";
         const Index warmup = timing ? 2 : 0;
 
-        cout << "samples=" << all_samples << "\n";
-
         for (const Index batch : batches)
         {
             // Whole batches only, matching the PyTorch driver's
@@ -173,6 +172,8 @@ int main(int argc, char* argv[])
             dataset->set_sample_roles("Training");
             for (Index sample = (all_samples / batch) * batch; sample < all_samples; ++sample)
                 dataset->set_sample_role(sample, SampleRole::None);
+            const Index samples_per_epoch = (all_samples / batch) * batch;
+            cout << "samples=" << samples_per_epoch << "\n";
 
             auto network = build(*dataset);
             if (batch == batches.front())
@@ -222,7 +223,6 @@ int main(int argc, char* argv[])
 
             sort(epoch_seconds.begin(), epoch_seconds.end());
             const double median_epoch_s = epoch_seconds[epoch_seconds.size() / 2];
-            const Index samples_per_epoch = (all_samples / batch) * batch;
 
             cout << "batch_" << batch << "_samples_per_sec="
                  << long(double(samples_per_epoch) / median_epoch_s)
@@ -246,9 +246,23 @@ int main(int argc, char* argv[])
         const Options options = parse_options(argc, argv, 5);
 
         Configuration::instance().set(options.device, options.precision);
+        if (options.device == Device::CUDA)
+        {
+            device::set_conv_autotune(true);
+            // The winning ResNet-50 plans fit below 16 MiB on the benchmark
+            // GPUs. Excluding larger candidates before autotuning keeps the
+            // same measured throughput while removing their cold-start peak.
+            const char* workspace_mb = getenv("OPENNN_CONV_WORKSPACE_MB");
+            device::set_conv_workspace_cap(stoll(workspace_mb ? workspace_mb : "16")
+                                           * 1024 * 1024);
+        }
         cout << "baseline_rss_mib=" << resident_mb() << "\n";
         cout << "engine=opennn\nmode=infer\ndevice="
              << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
+        cout << "conv_autotune=" << (device::conv_autotune_enabled() ? "on" : "off") << "\n";
+        if (options.device == Device::CUDA)
+            cout << "conv_workspace_mib="
+                 << device::conv_workspace_limit_bytes() / (1024 * 1024) << "\n";
 
         auto dataset = open_dataset(argv[2], options);
         dataset->set_sample_roles("Testing");
@@ -256,12 +270,12 @@ int main(int argc, char* argv[])
         const Index samples = dataset->get_samples_number();
         auto network = build(*dataset);
 
-        cout << "samples=" << samples
-             << " parameters=" << network->get_parameters_number() << "\n" << flush;
+        cout << "parameters=" << network->get_parameters_number() << "\n" << flush;
 
         for (const Index batch : batches)
         {
             const Index processed = (samples / batch) * batch;
+            cout << "samples=" << processed << "\n" << flush;
             ForwardPropagation forward_propagation(batch, network.get(),
                                                   ForwardPropagationMode::Inference);
             forward_propagation.set_cuda_graph(options.device == Device::CUDA);

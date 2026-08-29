@@ -19,6 +19,7 @@
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/models/models.h"
 #include "opennn/training_strategy/loss.h"
+#include "opennn/training_strategy/training_context.h"
 
 using namespace opennn;
 
@@ -31,23 +32,18 @@ void audit(const string& label, NeuralNetwork& network, Loss& loss, const Index 
 {
     memory_debug::reset();
 
-    const vector<MemoryPoolEntry> delta_lifetimes =
-        BackPropagation::make_co_planned_lifetimes(loss, batch_size);
-
-    ForwardPropagation forward_propagation(batch_size, &network,
-                                           ForwardPropagationMode::Training,
-                                           {}, false, delta_lifetimes);
-
-    BackPropagation back_propagation(batch_size, loss,
-                                     &forward_propagation.arena,
-                                     forward_propagation.co_planned_offsets);
+    TrainingContext context(batch_size, loss, false, nullptr,
+                            /*joint_gradient_arena*/ true);
+    ForwardPropagation& forward_propagation = context.forward;
+    BackPropagation& back_propagation = context.backward;
 
     const double mib = 1024.0 * 1024.0;
     cout << "\n[AUDIT] ===== " << label << " =====\n"
          << "[AUDIT] batch=" << batch_size
          << " fp_arena_mib=" << fixed << setprecision(2) << double(forward_propagation.arena.byte_size()) / mib
          << " bp_arena_mib=" << double(back_propagation.arena.byte_size()) / mib
-         << " gradient_mib=" << double(back_propagation.gradient.byte_size()) / mib
+         << " gradient_allocation_mib=" << double(back_propagation.gradient.byte_size()) / mib
+         << " gradient_logical_mib=" << double(back_propagation.gradient_logical_bytes()) / mib
          << " parameters=" << network.get_parameters_number() << "\n";
 
     memory_debug::print(cout);
@@ -75,6 +71,31 @@ void audit_transformer(const string& label, const float dropout_rate)
     audit(label + format(" seq={} embed={} heads={} ffn={} layers={} dropout={}",
                          sequence_length, embedding_dimension, heads_number,
                          feed_forward_dimension, layers_number, dropout_rate),
+          transformer, loss, batch_size);
+}
+
+void audit_transformer_benchmark(const string& label)
+{
+    constexpr Index sequence_length = 130;
+    constexpr Index vocabulary_size = 20000;
+    constexpr Index embedding_dimension = 1024;
+    constexpr Index heads_number = 16;
+    constexpr Index feed_forward_dimension = 4096;
+    constexpr Index layers_number = 2;
+    constexpr Index batch_size = 32;
+
+    Transformer transformer(sequence_length, sequence_length,
+                            vocabulary_size, vocabulary_size,
+                            embedding_dimension, heads_number,
+                            feed_forward_dimension, layers_number);
+    transformer.set_attention_sdpa_min_sequence_length(128);
+
+    Loss loss(&transformer, nullptr);
+    loss.set_error(Loss::Error::CrossEntropy3d);
+
+    audit(label + format(" seq={} embed={} heads={} ffn={} layers={} sdpa_min={}",
+                         sequence_length, embedding_dimension, heads_number,
+                         feed_forward_dimension, layers_number, 128),
           transformer, loss, batch_size);
 }
 
@@ -135,6 +156,12 @@ TEST(MemoryAudit, TransformerCudaBf16DropoutOn)
 {
     Configuration::instance().set(Device::CUDA, Type::BF16);
     audit_transformer("transformer cuda bf16", 0.1f);
+}
+
+TEST(MemoryAudit, TransformerBenchmarkCudaBf16)
+{
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+    audit_transformer_benchmark("transformer benchmark cuda bf16");
 }
 
 TEST(MemoryAudit, LstmCudaFp32)

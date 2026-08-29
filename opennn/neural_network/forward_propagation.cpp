@@ -91,10 +91,12 @@ ForwardPropagation::ForwardPropagation(const Index new_batch_size,
                                        const ForwardPropagationMode new_mode,
                                        const InferenceShapePolicy new_shape_policy,
                                        const bool new_inputs_pre_scaled,
-                                       const span<const MemoryPoolEntry> co_planned_lifetimes)
+                                       const span<const MemoryPoolEntry> co_planned_lifetimes,
+                                       const bool exhaustive_training_plan)
 {
     set(new_batch_size, new_neural_network, nullptr, new_mode,
-        new_shape_policy, new_inputs_pre_scaled, co_planned_lifetimes);
+        new_shape_policy, new_inputs_pre_scaled, co_planned_lifetimes,
+        exhaustive_training_plan);
 }
 
 ForwardPropagation::~ForwardPropagation()
@@ -128,7 +130,8 @@ void ForwardPropagation::set(
     const ForwardPropagationMode new_mode,
     const InferenceShapePolicy new_shape_policy,
     const bool new_inputs_pre_scaled,
-    const span<const MemoryPoolEntry> co_planned_lifetimes)
+    const span<const MemoryPoolEntry> co_planned_lifetimes,
+    const bool exhaustive_training_plan)
 {
     throw_if(!new_neural_network,
              "neural network is not set.");
@@ -430,7 +433,9 @@ void ForwardPropagation::set(
     };
 
     vector<pair<size_t, size_t>> pooled_slots;
+    vector<pair<size_t, size_t>> pooled_transient_slots;
     vector<MemoryPoolEntry> pooled_lifetimes;
+    Index pooled_transient_bytes = 0;
 
     const auto collect_pooled_slots = [&](auto&& last_step_for)
     {
@@ -456,6 +461,37 @@ void ForwardPropagation::set(
         }
     };
 
+    const auto collect_pooled_transient_slots = [&]
+    {
+        for(size_t i = 0; i < layers_number; ++i)
+        {
+            for(size_t j = 0; j < forward_specs[i].size(); ++j)
+            {
+                const TensorSpec& spec = forward_specs[i][j];
+
+                // A recomputed activation has a disjoint two-point lifetime:
+                // once in the forward layer and once in its backward layer.
+                // MemoryPoolEntry represents an interval, so those continue
+                // through find_memory_pool_overlay below. Ordinary transient
+                // scratch is live only while this layer executes and belongs
+                // directly in the joint plan instead of in an appended block.
+                if(spec.shape.empty()
+                   || !is_transient_slot(i, j)
+                   || recomputable_slots[i] == j)
+                {
+                    continue;
+                }
+
+                const Index bytes = get_aligned_bytes(spec);
+
+                pooled_transient_slots.emplace_back(i, j);
+                pooled_lifetimes.push_back(
+                    {bytes, Index(i), Index(i)});
+                pooled_transient_bytes += bytes;
+            }
+        }
+    };
+
     const auto apply_pool_plan =
         [&](const MemoryPoolPlan& plan)
     {
@@ -464,6 +500,14 @@ void ForwardPropagation::set(
             slot_offsets[pooled_slots[i].first]
                         [pooled_slots[i].second] =
                 plan.byte_offsets[i];
+        }
+
+        const size_t transient_base = pooled_slots.size();
+        for(size_t i = 0; i < pooled_transient_slots.size(); ++i)
+        {
+            transient_slot_offsets[pooled_transient_slots[i].first]
+                                  [pooled_transient_slots[i].second] =
+                plan.byte_offsets[transient_base + i];
         }
 
         activation_pool_bytes = plan.peak_bytes;
@@ -484,6 +528,8 @@ void ForwardPropagation::set(
                     : backward_base - Index(i);
             });
 
+        collect_pooled_transient_slots();
+
         memory_debug::record_pool_lifetimes(
             "forward",
             pooled_lifetimes,
@@ -502,11 +548,19 @@ void ForwardPropagation::set(
         const MemoryPoolPlan persistent_plan = [&]
         {
             PROFILE_SCOPE_HOST("fp:set:plan");
-            return plan_memory_pool(
-                pooled_lifetimes,
-                early_release_outputs > 0
-                    ? MemoryPoolStrategy::Compact
-                    : MemoryPoolStrategy::Chronological);
+
+            // Keep the established layout for ordinary training.  Some
+            // multi-branch graphs accumulate into propagation-owned storage
+            // whose complete lifetime is intentionally more conservative than
+            // the generic interval model.  The joint-gradient layout is a
+            // separately audited, explicit opt-in used by language training.
+            return exhaustive_training_plan
+                ? plan_memory_pool_best(pooled_lifetimes)
+                : plan_memory_pool(
+                    pooled_lifetimes,
+                    early_release_outputs > 0
+                        ? MemoryPoolStrategy::Compact
+                        : MemoryPoolStrategy::Chronological);
         }();
 
         apply_pool_plan(persistent_plan);
@@ -524,11 +578,22 @@ void ForwardPropagation::set(
 
             memory_debug::record(
                 "forward.joint_plan",
-                "delta_entries_in_arena",
+                "co_planned_entries_in_arena",
                 co_planned_bytes,
                 format("batch={},entries={}",
                        batch_size,
                        co_planned_lifetimes.size()));
+        }
+
+        if(pooled_transient_bytes > 0)
+        {
+            memory_debug::record(
+                "forward.transient_pool",
+                "lifetime_planned_scratch",
+                pooled_transient_bytes,
+                format("batch={},entries={}",
+                       batch_size,
+                       pooled_transient_slots.size()));
         }
 
         for(size_t i = 0; i < layers_number; ++i)

@@ -246,6 +246,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainsRemainderBatchGPU)
     AdaptiveMomentEstimation adam(&loss);
     adam.set_batch_size(2);
     adam.set_cuda_graph(true);
+    adam.set_joint_gradient_arena(true);
     adam.set_maximum_epochs(0);
     adam.set_display(false);
 
@@ -254,6 +255,47 @@ TEST_F(AdaptiveMomentEstimationTest, TrainsRemainderBatchGPU)
 
     EXPECT_TRUE(isfinite(adam.train().get_training_error()));
     EXPECT_EQ(batches_processed, 3);
+}
+
+TEST_F(AdaptiveMomentEstimationTest, JointGradientArenaMatchesContiguousAdamGPU)
+{
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+
+    set_seed(17);
+    TabularDataset dataset(8, {3}, {2});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    ApproximationNetwork joint_network({3}, {7}, {2});
+    ApproximationNetwork contiguous_network({3}, {7}, {2});
+    const VectorR initial_parameters = joint_network.get_parameters_map();
+    contiguous_network.set_parameters(initial_parameters);
+
+    const auto train_once = [&](ApproximationNetwork& network,
+                                const bool joint_gradient_arena)
+    {
+        Loss loss(&network, &dataset);
+        loss.set_error(Loss::Error::MeanSquaredError);
+
+        AdaptiveMomentEstimation adam(&loss);
+        adam.set_batch_size(8);
+        adam.set_maximum_epochs(0);
+        adam.set_display(false);
+        adam.set_shuffle(false);
+        adam.set_cuda_graph(false);
+        adam.set_joint_gradient_arena(joint_gradient_arena);
+        EXPECT_TRUE(isfinite(adam.train().get_training_error()));
+
+        return VectorR(network.get_parameters_map());
+    };
+
+    const VectorR joint_parameters = train_once(joint_network, true);
+    const VectorR contiguous_parameters = train_once(contiguous_network, false);
+
+    ASSERT_EQ(joint_parameters.size(), contiguous_parameters.size());
+    EXPECT_TRUE(logical_parameters_are_approx(
+        joint_network.get_parameter_specs(),
+        joint_parameters, contiguous_parameters, 1.0e-7f));
 }
 
 TEST_F(AdaptiveMomentEstimationTest, CudaGraphGroupedHostStagingReplay)
@@ -317,6 +359,7 @@ static void expect_transformer_step_captures(Type dtype, Index sdpa_min_sequence
     AdaptiveMomentEstimation adam(&loss);
     adam.set_batch_size(2);           // 8 whole batches: one grouped graph
     adam.set_cuda_graph(true);
+    adam.set_joint_gradient_arena(true);
     adam.set_maximum_epochs(1);
     adam.set_display(false);
 
@@ -359,6 +402,35 @@ TEST_F(AdaptiveMomentEstimationTest, CudaGraphGroupedResidentBf16Replay)
 
     EXPECT_TRUE(isfinite(adam.train().get_training_error()));
     EXPECT_TRUE(dataset.get_data().isApprox(raw, 0.0f));
+    EXPECT_TRUE(dataset.requests_device_residency());
+    EXPECT_FALSE(dataset.is_device_resident());
+}
+
+TEST_F(AdaptiveMomentEstimationTest, ResidentDatasetCleanupSurvivesCallbackException)
+{
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    TabularDataset dataset(4, {2}, {1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+    dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+
+    ApproximationNetwork network({2}, {4}, {1});
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    AdaptiveMomentEstimation adam(&loss);
+    adam.set_batch_size(2);
+    adam.set_maximum_epochs(0);
+    adam.set_display(false);
+    adam.post_batch_callback = [](NeuralNetwork*)
+    {
+        throw runtime_error("intentional callback failure");
+    };
+
+    EXPECT_THROW(adam.train(), runtime_error);
+    EXPECT_TRUE(dataset.requests_device_residency());
+    EXPECT_FALSE(dataset.is_device_resident());
 }
 #endif
 

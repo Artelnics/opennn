@@ -257,6 +257,81 @@ TEST_F(StochasticGradientDescentTest, TrainApproximationGPU)
 
     EXPECT_LT(error_long, error_short);
 }
+
+TEST_F(StochasticGradientDescentTest, JointGradientArenaMatchesContiguousSgdGPU)
+{
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+
+    set_seed(19);
+    TabularDataset dataset(8, {3}, {2});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    ApproximationNetwork joint_network({3}, {7}, {2});
+    ApproximationNetwork contiguous_network({3}, {7}, {2});
+    const VectorR initial_parameters = joint_network.get_parameters_map();
+    contiguous_network.set_parameters(initial_parameters);
+
+    const auto train_once = [&](ApproximationNetwork& network,
+                                const bool joint_gradient_arena)
+    {
+        Loss loss(&network, &dataset);
+        loss.set_error(Loss::Error::MeanSquaredError);
+
+        StochasticGradientDescent sgd(&loss);
+        sgd.set_initial_learning_rate(0.01f);
+        sgd.set_momentum(0.9f);
+        sgd.set_nesterov(true);
+        sgd.set_batch_size(8);
+        sgd.set_maximum_epochs(0);
+        sgd.set_display(false);
+        sgd.set_shuffle(false);
+        sgd.set_cuda_graph(false);
+        sgd.set_joint_gradient_arena(joint_gradient_arena);
+        EXPECT_TRUE(isfinite(sgd.train().get_training_error()));
+
+        return VectorR(network.get_parameters_map());
+    };
+
+    const VectorR joint_parameters = train_once(joint_network, true);
+    const VectorR contiguous_parameters = train_once(contiguous_network, false);
+
+    ASSERT_EQ(joint_parameters.size(), contiguous_parameters.size());
+    EXPECT_TRUE(logical_parameters_are_approx(
+        joint_network.get_parameter_specs(),
+        joint_parameters, contiguous_parameters, 1.0e-7f));
+}
+
+TEST_F(StochasticGradientDescentTest, JointGradientArenaSupportsCudaGraphRemainderGPU)
+{
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+
+    set_seed(23);
+    TabularDataset dataset(10, {3}, {2});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    ApproximationNetwork network({3}, {7}, {2});
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    StochasticGradientDescent sgd(&loss);
+    sgd.set_initial_learning_rate(0.01f);
+    sgd.set_momentum(0.9f);
+    sgd.set_nesterov(true);
+    sgd.set_batch_size(4);
+    sgd.set_maximum_epochs(0);
+    sgd.set_display(false);
+    sgd.set_cuda_graph(true);
+    sgd.set_joint_gradient_arena(true);
+
+    Index batches_processed = 0;
+    sgd.post_batch_callback = [&](NeuralNetwork*) { ++batches_processed; };
+
+    EXPECT_TRUE(isfinite(sgd.train().get_training_error()));
+    EXPECT_EQ(batches_processed, 3);
+    EXPECT_FALSE(sgd.get_cuda_graph_capture_failed());
+}
 #endif
 
 TEST_F(StochasticGradientDescentTest, TrainClassificationCPU)

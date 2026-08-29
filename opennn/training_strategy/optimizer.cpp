@@ -209,11 +209,25 @@ void Optimizer::configure_for_task(NetworkTask task)
 {
     static constexpr Index classification_epochs = 100;
 
+    if(task == NetworkTask::LanguageModeling)
+        joint_gradient_arena = true;
+
     if (is_one_of(task,
                   NetworkTask::ImageClassification,
                   NetworkTask::ObjectDetection,
                   NetworkTask::TextClassification))
         maximum_epochs = classification_epochs;
+}
+
+bool Optimizer::uses_joint_gradient_arena() const noexcept
+{
+    const NeuralNetwork* const neural_network =
+        loss ? loss->get_neural_network() : nullptr;
+
+    return joint_gradient_arena
+        && gradient_clip_norm <= 0.0f
+        && neural_network
+        && neural_network->is_gpu();
 }
 
 void Optimizer::to_JSON(JsonWriter& printer) const
@@ -285,8 +299,10 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
             const Index training_batches = training_batch_size > 0
                 ? dataset.get_samples_number(SampleRole::Training) / training_batch_size
                 : 0;
+            const Index graph_group_size = recurrent_graph_group_size(
+                &neural_network, training_batch_size);
             const bool grouped_batches =
-                training_batches >= TrainingSession::group_size
+                training_batches >= graph_group_size
                 && (dataset.uses_device_residency()
                     || training_session.fixed_batch()->input.type != Type::BF16);
 
@@ -294,12 +310,12 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
                 training_session.pipelines[1].slots[0] = make_unique<Batch>(training_batch_size, &dataset, config);
 
             if (grouped_batches)
-                for (int i = 1; i < TrainingSession::group_size; ++i)
+                for (Index i = 1; i < graph_group_size; ++i)
                     training_session.pipelines[0].slots[size_t(i)] = make_unique<Batch>(training_batch_size, &dataset, config);
 
             if (grouped_batches
-                && training_batches >= TrainingSession::slots_count)
-                for (int i = 0; i < TrainingSession::group_size; ++i)
+                && training_batches >= Index(TrainingSession::pipelines_count) * graph_group_size)
+                for (Index i = 0; i < graph_group_size; ++i)
                     training_session.pipelines[1].slots[size_t(i)] = make_unique<Batch>(training_batch_size, &dataset, config);
         }
     }
@@ -793,6 +809,15 @@ TrainingResult Optimizer::train()
 
     Dataset* dataset = loss->get_dataset();
 
+    ScopeExit dataset_device_cleanup([dataset, on_gpu]
+    {
+        if (on_gpu && dataset->is_device_resident())
+            dataset->disable_device_residency();
+    });
+
+    if (on_gpu && dataset->requests_device_residency())
+        dataset->enable_device_residency();
+
     const bool has_validation = dataset->has_validation();
 
     const FeatureSelection features = dataset->get_feature_selection();
@@ -836,7 +861,10 @@ TrainingResult Optimizer::train()
                       has_validation,
                       training_session);
 
-    TrainingContext training_context(training_batch_size, *loss, /*inputs_pre_scaled*/ true);
+    TrainingContext training_context(training_batch_size, *loss,
+                                     /*inputs_pre_scaled*/ true,
+                                     nullptr,
+                                     uses_joint_gradient_arena());
 
     ForwardPropagation& training_forward_propagation = training_context.forward;
     BackPropagation& training_back_propagation = training_context.backward;
@@ -1277,6 +1305,7 @@ void Optimizer::write_common_json(JsonWriter& printer) const
         {"MaximumEpochsNumber", maximum_epochs},
         {"MaximumTime", maximum_time},
         {"GradientClipNorm", gradient_clip_norm},
+        {"JointGradientArena", joint_gradient_arena},
         {"DisplayPeriod", display_period}
     });
 }
@@ -1290,6 +1319,8 @@ void Optimizer::read_common_json(const Json* root_element)
     set_maximum_time(read_json_float(root_element, "MaximumTime"));
 
     set_gradient_clip_norm(read_json_float(root_element, "GradientClipNorm", gradient_clip_norm));
+    set_joint_gradient_arena(read_json_bool(root_element, "JointGradientArena",
+                                            joint_gradient_arena));
 
     set_display_period(Index(read_json_index(root_element, "DisplayPeriod", display_period)));
 }
@@ -1301,9 +1332,6 @@ void Optimizer::setup_device_training()
 
     neural_network->copy_parameters_device();
     neural_network->copy_states_device();
-
-    if (loss->get_dataset()->uses_device_residency())
-        loss->get_dataset()->enable_device_residency();
 }
 
 void Optimizer::teardown_device_training()
@@ -1312,9 +1340,6 @@ void Optimizer::teardown_device_training()
     if (!neural_network->is_gpu()) return;
 
     device::synchronize(device::get_compute_stream());
-
-    if (loss->get_dataset()->is_device_resident())
-        loss->get_dataset()->disable_device_residency();
 
     neural_network->copy_parameters_host();
     neural_network->copy_states_host();
@@ -1350,9 +1375,15 @@ void Optimizer::sync_device(const bool on_gpu,
 void Optimizer::clip_gradient_norm(BackPropagation& back_propagation,
                                    float max_norm)
 {
+    if(max_norm <= 0.0f) return;
+
+    throw_if(back_propagation.has_joint_gradient_arena(),
+             "Joint-gradient arenas require gradient clipping to be disabled; "
+             "use the contiguous-gradient fallback when clipping is enabled.");
+
     Buffer& gradient = back_propagation.gradient;
     const Index gradient_size = gradient.size_in_floats();
-    if (max_norm <= 0.0f || gradient_size <= 0) return;
+    if (gradient_size <= 0) return;
 
     if (gradient.get_device() == Device::CUDA)
         clip_gradient_norm_device(gradient,
@@ -1897,7 +1928,9 @@ Loss::EvaluationResult Optimizer::train_epoch(
         {
             tail.batch = make_unique<Batch>(tail_size, loss->get_dataset(),
                                             neural_network->get_config());
-            tail.context = make_unique<TrainingContext>(tail_size, *loss, true, &main_context);
+            tail.context = make_unique<TrainingContext>(
+                tail_size, *loss, true, &main_context,
+                main_context.backward.has_joint_gradient_arena());
             tail.size = tail_size;
             tail.capture_failed = false;
         }

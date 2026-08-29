@@ -37,9 +37,11 @@ BackPropagation::BackPropagation(const Index new_batch_size,
                                  Loss& new_loss,
                                  Buffer* external_arena,
                                  span<const Index> arena_offsets,
-                                 Buffer* external_gradient)
+                                 Buffer* external_gradient,
+                                 span<const Index> gradient_arena_offsets)
 {
-    set(new_batch_size, new_loss, external_arena, arena_offsets, external_gradient);
+    set(new_batch_size, new_loss, external_arena, arena_offsets,
+        external_gradient, gradient_arena_offsets);
 }
 
 NeuralNetwork* BackPropagation::get_neural_network() const
@@ -80,7 +82,8 @@ void BackPropagation::set(const Index new_batch_size,
                           Loss& new_loss,
                           Buffer* external_arena,
                           span<const Index> arena_offsets,
-                          Buffer* external_gradient)
+                          Buffer* external_gradient,
+                          span<const Index> gradient_arena_offsets)
 {
     batch_size = new_batch_size;
     loss = &new_loss;
@@ -99,7 +102,8 @@ void BackPropagation::set(const Index new_batch_size,
 
     metrics.reset();
 
-    setup_gradient(external_gradient);
+    setup_gradient(external_gradient, external_arena,
+                   gradient_arena_offsets);
 
     DeltaPlan plan = build_delta_plan();
 
@@ -175,14 +179,92 @@ const TensorView& BackPropagation::input_delta_addend(size_t layer, size_t input
     return input_delta_addends[layer][input];
 }
 
-void BackPropagation::setup_gradient(Buffer* external_gradient)
+void BackPropagation::setup_gradient(
+    Buffer* external_gradient,
+    Buffer* external_arena,
+    span<const Index> gradient_arena_offsets)
 {
     const NeuralNetwork& neural_network = require_network();
 
     const auto parameter_specs = neural_network.get_parameter_specs();
 
-    const Index gradient_bytes = get_aligned_bytes(parameter_specs, Type::FP32);
+    gradient_bytes = get_aligned_bytes(parameter_specs, Type::FP32);
     const Device device = neural_network.get_device();
+
+    gradient_slices.clear();
+    layer_gradient_views.assign(parameter_specs.size(), TensorView{});
+    joint_gradient_arena = !gradient_arena_offsets.empty();
+
+    if(joint_gradient_arena)
+    {
+        throw_if(!external_arena,
+                 "BackPropagation::setup_gradient: joint gradient offsets require "
+                 "an external arena.");
+
+        throw_if(external_arena->get_device() != device,
+                 "BackPropagation::setup_gradient: joint gradient arena is on "
+                 "device {}, expected {}.",
+                 int(external_arena->get_device()), int(device));
+
+        const size_t expected_slices = ranges::count_if(
+            parameter_specs,
+            [](const vector<TensorSpec>& specs)
+            {
+                return get_aligned_bytes(specs, Type::FP32) > 0;
+            });
+
+        throw_if(gradient_arena_offsets.size() != expected_slices,
+                 "BackPropagation::setup_gradient: got {} joint gradient offsets "
+                 "for {} parameterized layers.",
+                 gradient_arena_offsets.size(), expected_slices);
+
+        gradient.resize_bytes(0, device);
+
+        uint8_t* const arena_base = external_arena->as<uint8_t>();
+        Index parameter_offset = 0;
+        size_t slice_index = 0;
+
+        for(size_t layer = 0; layer < parameter_specs.size(); ++layer)
+        {
+            const Index layer_bytes =
+                get_aligned_bytes(parameter_specs[layer], Type::FP32);
+
+            if(layer_bytes > 0)
+            {
+                const Index arena_offset = gradient_arena_offsets[slice_index++];
+                throw_if(arena_offset < 0
+                         || arena_offset + layer_bytes > external_arena->byte_size(),
+                         "BackPropagation::setup_gradient: layer {} gradient range "
+                         "[{}, {}) is outside the {}-byte arena.",
+                         layer, arena_offset, arena_offset + layer_bytes,
+                         external_arena->byte_size());
+
+                TensorView values(arena_base + arena_offset,
+                                  Shape{layer_bytes / Index(sizeof(float))},
+                                  Type::FP32, device);
+
+                layer_gradient_views[layer] = values;
+                gradient_slices.push_back({values, parameter_offset});
+            }
+
+            parameter_offset += layer_bytes / Index(sizeof(float));
+        }
+
+        throw_if(parameter_offset != neural_network.get_parameters_buffer_size(),
+                 "BackPropagation::setup_gradient: planned {} parameter-gradient "
+                 "elements, expected {}.",
+                 parameter_offset,
+                 neural_network.get_parameters_buffer_size());
+
+        memory_debug::record("backward.aliased",
+                             "BackPropagation::gradient", 0,
+                             format("batch={},logical_mib={:.2f},slices={}",
+                                    batch_size,
+                                    double(gradient_bytes) / (1024.0 * 1024.0),
+                                    gradient_slices.size()));
+
+        return link_parameter_gradients();
+    }
 
     const bool share = external_gradient
                     && external_gradient->get_device() == device
@@ -203,11 +285,31 @@ void BackPropagation::setup_gradient(Buffer* external_gradient)
     }
 
     gradient.setZero();
+
+    if(gradient_bytes > 0)
+    {
+        gradient_slices.push_back(
+            {TensorView(gradient.as<float>(),
+                        Shape{gradient_bytes / Index(sizeof(float))},
+                        Type::FP32, device),
+             0});
+    }
+
     memory_debug::record(share ? "backward.aliased" : "backward",
                          "BackPropagation::gradient", share ? 0 : gradient_bytes,
                          format("batch={}", batch_size));
 
-    neural_network.link_gradients(gradient);
+    link_parameter_gradients();
+}
+
+void BackPropagation::link_parameter_gradients()
+{
+    const NeuralNetwork& neural_network = require_network();
+
+    if(has_joint_gradient_arena())
+        neural_network.link_gradients(layer_gradient_views);
+    else
+        neural_network.link_gradients(gradient);
 }
 
 BackPropagation::DeltaLayout BackPropagation::build_delta_layout(
@@ -420,6 +522,45 @@ vector<MemoryPoolEntry> BackPropagation::make_co_planned_lifetimes(
     return to_pool_entries(plan.layout.entries, step_offset);
 }
 
+vector<MemoryPoolEntry> BackPropagation::make_gradient_co_planned_lifetimes(
+    Loss& new_loss)
+{
+    NeuralNetwork* const neural_network = new_loss.get_neural_network();
+    throw_if(!neural_network,
+             "BackPropagation::make_gradient_co_planned_lifetimes: the loss "
+             "has no neural network.");
+
+    const auto parameter_specs = neural_network->get_parameter_specs();
+    const Index layers_number = neural_network->get_layers_number();
+    const Index first_layer = neural_network->get_first_trainable_layer_index();
+    const Index last_layer = neural_network->get_last_trainable_layer_index();
+    const Index optimizer_step = 2 * layers_number;
+
+    vector<MemoryPoolEntry> entries;
+    entries.reserve(parameter_specs.size());
+
+    for(size_t layer = 0; layer < parameter_specs.size(); ++layer)
+    {
+        const Index bytes =
+            get_aligned_bytes(parameter_specs[layer], Type::FP32);
+        if(bytes <= 0) continue;
+
+        const Index layer_index = Index(layer);
+        const bool participates_in_backward =
+            layer_index >= first_layer && layer_index <= last_layer;
+
+        entries.push_back({
+            bytes,
+            participates_in_backward
+                ? backward_step(layers_number, layer_index)
+                : optimizer_step,
+            optimizer_step
+        });
+    }
+
+    return entries;
+}
+
 BackPropagation::DeltaPlan BackPropagation::build_delta_plan()
 {
     const NeuralNetwork& neural_network = require_network();
@@ -453,21 +594,12 @@ void BackPropagation::setup_arena(const vector<vector<TensorSpec>>& backward_spe
                last_trainable_layer_index,
                layers_number));
 
-    MemoryPoolPlan chronological_plan = plan_memory_pool(
-        lifetime_entries, MemoryPoolStrategy::Chronological);
-    MemoryPoolPlan compact_plan = plan_memory_pool(
-        lifetime_entries, MemoryPoolStrategy::Compact);
-    const bool use_compact = compact_plan.peak_bytes < chronological_plan.peak_bytes;
-    const MemoryPoolPlan pool_plan = use_compact
-        ? std::move(compact_plan)
-        : std::move(chronological_plan);
+    const MemoryPoolPlan pool_plan = plan_memory_pool_best(lifetime_entries);
 
     arena.resize_bytes(pool_plan.peak_bytes, neural_network.get_device());
     arena.setZero();
     memory_debug::record("backward", "BackPropagation::arena", pool_plan.peak_bytes,
-                         format("batch={},planner={}",
-                                batch_size,
-                                use_compact ? "compact" : "chronological"));
+                         format("batch={},planner=best", batch_size));
     memory_debug::record("backward.arena_analysis", "live_bytes_lower_bound",
                          pool_plan.lower_bound_live_bytes,
                          format("batch={},entries={}", batch_size, delta_entries.size()));

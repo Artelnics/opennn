@@ -105,6 +105,11 @@ struct AttentionOperator : Operator
 private:
     float scaling_factor() const;
 
+    // Bytes the forward pass moves, for the achieved-bandwidth column of
+    // OPENNN_PROFILE. Separates the fused and materialized paths, which is
+    // where the two differ most.
+    double forward_bytes(ForwardPropagation&, size_t, const TensorView&, bool) const;
+
     void apply_unfused(const TensorView&,
                        const TensorView&,
                        const TensorView&,

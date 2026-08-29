@@ -21,22 +21,48 @@ class NeuralNetwork;
 
 struct BackPropagation
 {
+    struct GradientSlice
+    {
+        TensorView values;
+        Index parameter_offset = 0;
+    };
+
     BackPropagation(Index, Loss&,
                     Buffer* external_arena = nullptr,
                     span<const Index> arena_offsets = {},
-                    Buffer* external_gradient = nullptr);
+                    Buffer* external_gradient = nullptr,
+                    span<const Index> gradient_arena_offsets = {});
 
     virtual ~BackPropagation() = default;
 
     void set(Index, Loss&,
              Buffer* external_arena = nullptr,
              span<const Index> arena_offsets = {},
-             Buffer* external_gradient = nullptr);
+             Buffer* external_gradient = nullptr,
+             span<const Index> gradient_arena_offsets = {});
 
     Loss* get_loss() const noexcept { return loss; }
     NeuralNetwork* get_neural_network() const;
 
     static vector<MemoryPoolEntry> make_co_planned_lifetimes(Loss&, Index batch_size);
+    static vector<MemoryPoolEntry> make_gradient_co_planned_lifetimes(Loss&);
+
+    bool has_joint_gradient_arena() const noexcept
+    {
+        return joint_gradient_arena;
+    }
+
+    Index gradient_logical_bytes() const noexcept
+    {
+        return gradient_bytes;
+    }
+
+    const vector<GradientSlice>& get_gradient_slices() const noexcept
+    {
+        return gradient_slices;
+    }
+
+    void link_parameter_gradients();
 
     void accumulate_output_deltas(size_t);
 
@@ -106,7 +132,9 @@ private:
 
     const NeuralNetwork& require_network() const;
 
-    void setup_gradient(Buffer* external_gradient);
+    void setup_gradient(Buffer* external_gradient,
+                        Buffer* external_arena,
+                        span<const Index> gradient_arena_offsets);
 
     void setup_arena(const vector<vector<TensorSpec>>&,
                      const DeltaLayout&);
@@ -119,6 +147,11 @@ private:
 
     vector<vector<TensorView>> input_delta_addends;
     vector<pair<size_t, size_t>> folded_consumer_edge;
+
+    vector<GradientSlice> gradient_slices;
+    vector<TensorView> layer_gradient_views;
+    Index gradient_bytes = 0;
+    bool joint_gradient_arena = false;
 
     void plan_delta_addends();
 

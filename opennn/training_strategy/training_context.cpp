@@ -15,15 +15,36 @@ namespace opennn
 
 TrainingContext::TrainingContext(const Index batch_size, Loss& loss,
                                  const bool inputs_pre_scaled,
-                                 TrainingContext* share_memory_with)
+                                 TrainingContext* share_memory_with,
+                                 const bool joint_gradient_arena)
 {
     NeuralNetwork* const neural_network = loss.get_neural_network();
 
     throw_if(!neural_network, "TrainingContext: the loss has no neural network.");
     throw_if(share_memory_with == this, "TrainingContext: a context cannot share with itself.");
 
+    const bool use_joint_gradient_arena =
+        joint_gradient_arena
+        || (share_memory_with
+            && share_memory_with->backward.has_joint_gradient_arena());
+
     const vector<MemoryPoolEntry> delta_lifetimes =
         BackPropagation::make_co_planned_lifetimes(loss, batch_size);
+
+    const vector<MemoryPoolEntry> gradient_lifetimes =
+        use_joint_gradient_arena
+        ? BackPropagation::make_gradient_co_planned_lifetimes(loss)
+        : vector<MemoryPoolEntry>{};
+
+    vector<MemoryPoolEntry> joint_lifetimes;
+    joint_lifetimes.reserve(delta_lifetimes.size()
+                            + gradient_lifetimes.size());
+    joint_lifetimes.insert(joint_lifetimes.end(),
+                           delta_lifetimes.begin(),
+                           delta_lifetimes.end());
+    joint_lifetimes.insert(joint_lifetimes.end(),
+                           gradient_lifetimes.begin(),
+                           gradient_lifetimes.end());
 
     forward.set(batch_size,
                 neural_network,
@@ -31,7 +52,8 @@ TrainingContext::TrainingContext(const Index batch_size, Loss& loss,
                 ForwardPropagationMode::Training,
                 InferenceShapePolicy{},
                 inputs_pre_scaled,
-                delta_lifetimes);
+                joint_lifetimes,
+                use_joint_gradient_arena);
 
     throw_if(share_memory_with && forward.arena.owns_memory(),
              "TrainingContext: {} samples did not fit in the arena of the {}-sample "
@@ -39,11 +61,21 @@ TrainingContext::TrainingContext(const Index batch_size, Loss& loss,
              "allocation guard forbids.",
              batch_size, share_memory_with->forward.batch_size);
 
-    backward.set(batch_size,
-                 loss,
-                 &forward.arena,
-                 forward.co_planned_offsets,
-                 share_memory_with ? &share_memory_with->backward.gradient : nullptr);
+    const span<const Index> joint_offsets(forward.co_planned_offsets);
+    const span<const Index> delta_offsets =
+        joint_offsets.first(delta_lifetimes.size());
+    const span<const Index> gradient_offsets =
+        joint_offsets.subspan(delta_lifetimes.size());
+
+    backward.set(
+        batch_size,
+        loss,
+        &forward.arena,
+        delta_offsets,
+        share_memory_with && !use_joint_gradient_arena
+            ? &share_memory_with->backward.gradient
+            : nullptr,
+        gradient_offsets);
 }
 
 }

@@ -24,6 +24,7 @@
 #include <iomanip>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -95,6 +96,24 @@ unique_ptr<TimeSeriesDataset> open_dataset(const string& path, const Options& op
     return dataset;
 }
 
+Index use_all_valid_windows(TimeSeriesDataset& dataset, SampleRole role,
+                            const Options& options)
+{
+    const Index windows = max(Index(0), dataset.get_samples_number()
+                                      - options.past
+                                      - dataset.get_future_time_steps() + 1);
+    vector<Index> valid(static_cast<size_t>(windows));
+    iota(valid.begin(), valid.end(), Index(0));
+
+    // TimeSeriesDataset normally installs a chronological 60/20/20 split.
+    // This benchmark, like the PyTorch driver, uses the complete CSV. Keep
+    // only starts whose full input window and target are in range; marking
+    // every raw row used to append `past` zero-padded pseudo-windows.
+    dataset.set_sample_roles(SampleRole::None);
+    dataset.set_sample_roles(valid, role);
+    return windows;
+}
+
 vector<Index> parse_batches(const string& text)
 {
     vector<Index> batches;
@@ -135,18 +154,8 @@ AdaptiveMomentEstimation* configure(TrainingStrategy& strategy, Index batch)
 
 void describe(const TimeSeriesDataset& dataset, const NeuralNetwork& network, const Options& options)
 {
-    // No "inputs" here on purpose. The dataset's Input shape is
-    // (past, columns) and counts the target column, so it is not the LSTM's
-    // input width -- reporting it made the gate fire on a model that was
-    // provably identical. `parameters` is the check that actually binds: it
-    // pins width, depth and gate count in one number.
-
-    // Whole windows only. A window needs `past` prior readings, so the first
-    // `past` rows cannot start one -- counting them would inflate throughput
-    // by their share and disagree with the other engine.
-    const Index windows = dataset.get_samples_number() - options.past;
-
-    cout << "samples=" << windows
+    cout << "samples=" << dataset.get_used_samples_number()
+         << " inputs=" << dataset.get_shape("Input").back()
          << " past=" << options.past
          << " hidden=" << options.hidden
          << " parameters=" << network.get_parameters_number() << "\n" << flush;
@@ -186,9 +195,8 @@ int main(int argc, char* argv[])
              << "\ndevice=" << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
 
         auto dataset = open_dataset(argv[2], options);
-        dataset->set_sample_roles("Training");
+        const Index samples = use_all_valid_windows(*dataset, SampleRole::Training, options);
 
-        const Index samples = dataset->get_samples_number();
         const bool timing = mode == "train";
         const Index warmup = timing ? 2 : 0;
 
@@ -265,9 +273,7 @@ int main(int argc, char* argv[])
              << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
 
         auto dataset = open_dataset(argv[2], options);
-        dataset->set_sample_roles("Testing");
-
-        const Index samples = dataset->get_samples_number();
+        const Index samples = use_all_valid_windows(*dataset, SampleRole::Testing, options);
 
         for (const Index batch : batches)
         {
@@ -278,6 +284,9 @@ int main(int argc, char* argv[])
 
             ForwardPropagation forward_propagation(batch, network.get(),
                                                    ForwardPropagationMode::Inference);
+            const bool graph = options.device == Device::CUDA
+                               && getenv("OPENNN_NO_CUDA_GRAPH") == nullptr;
+            forward_propagation.set_cuda_graph(graph);
 
             vector<Index> indices(size_t(batch), Index(0));
             for (Index k = 0; k < batch; ++k) indices[size_t(k)] = k;
@@ -291,6 +300,12 @@ int main(int argc, char* argv[])
             {
                 for (Index i = 0; i + batch <= samples; i += batch)
                     network->calculate_outputs_resident(inputs, forward_propagation, false);
+
+                // CUDA calls are asynchronous. End the pass at completion so
+                // this measures kernel execution, as the PyTorch benchmark's
+                // torch.cuda.synchronize() does, rather than launch latency.
+                if (options.device == Device::CUDA)
+                    device::synchronize(device::get_compute_stream());
             };
 
             // Uploading parameters is a device operation -- a CPU-compiled
@@ -327,7 +342,12 @@ int main(int argc, char* argv[])
 
             cout << "batch_" << batch << "_samples_per_sec="
                  << long(double(processed) / median_pass_s)
-                 << " median_pass_s=" << median_pass_s << "\n" << flush;
+                 << " median_pass_s=" << median_pass_s << "\n"
+                 << "batch_" << batch << "_cuda_graph="
+                 << (!graph ? "off"
+                     : forward_propagation.cuda_graph_failed ? "failed"
+                     : forward_propagation.inference_graph_exec ? "captured" : "warming")
+                 << "\n" << flush;
         }
     }
     else if (mode == "capacity")
@@ -346,7 +366,7 @@ int main(int argc, char* argv[])
         try
         {
             auto dataset = open_dataset(argv[2], options);
-            dataset->set_sample_roles("Training");
+            use_all_valid_windows(*dataset, SampleRole::Training, options);
 
             auto network = build(*dataset, options);
             describe(*dataset, *network, options);

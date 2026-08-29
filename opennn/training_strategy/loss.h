@@ -178,6 +178,9 @@ protected:
 
 private:
 
+    void add_regularization_gradient(const TensorView&,
+                                     Index parameter_offset) const;
+
     void check_neural_network() const
     {
         throw_if(!neural_network, "Loss error: neural network is not set.");

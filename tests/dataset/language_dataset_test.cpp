@@ -188,6 +188,26 @@ TEST(LanguageDataset, ConstructorWithPathReadsFile)
     remove_language_file(file_path);
 }
 
+TEST(LanguageDataset, BinaryStorageDoesNotPretendDeviceResidency)
+{
+    const string file_path = temp_language_file(
+        "opennn_language_residency.txt", sentiment_content);
+
+    LanguageDataset dataset(file_path);
+    ASSERT_EQ(dataset.get_storage_mode(), Dataset::StorageMode::BinaryFile);
+    ASSERT_EQ(dataset.get_data().size(), 0);
+
+    dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+    EXPECT_TRUE(dataset.requests_device_residency());
+    EXPECT_FALSE(dataset.uses_device_residency());
+
+    dataset.enable_device_residency();
+    EXPECT_FALSE(dataset.is_device_resident());
+    EXPECT_FALSE(dataset.uses_device_residency());
+
+    remove_language_file(file_path);
+}
+
 TEST(LanguageDataset, CsvReaderPreservesQuotedSeparators)
 {
     const string file_path = temp_language_file(

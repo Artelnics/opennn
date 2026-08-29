@@ -18,15 +18,24 @@ namespace opennn
 
 void ActivationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
 {
-    PROFILE_SCOPE("op:activation_fwd");
+    PROFILE_SCOPE_NAMED(activation_timer, "op:activation_fwd");
 
     TensorView& output = get_output(forward_propagation, layer);
 
     if (output.empty() || forward_fused)
         return;
 
+    // An unfused activation is pure streaming, so its bandwidth is the whole
+    // story. Every pass counted here is one a fused epilogue would not make:
+    // the copy when input and output are distinct slots, the read-modify-write
+    // of the activation itself, and the read plus write of the saved copy.
+    double passes = 2.0;
+
     if (input_slots.empty() || input_slots[0] != output_slots[0])
+    {
+        passes += 2.0;
         copy(get_input(forward_propagation, layer), output);
+    }
 
     activation_forward(output, activation_function);
 
@@ -34,8 +43,16 @@ void ActivationOperator::forward_propagate(ForwardPropagation& forward_propagati
     {
 
         TensorView& saved = forward_propagation.slots[layer][save_slot];
-        if (!saved.empty()) copy(output, saved);
+        if (!saved.empty())
+        {
+            passes += 2.0;
+            copy(output, saved);
+        }
     }
+
+    if (profiler::is_enabled())
+        activation_timer.set_bytes(passes * double(output.size())
+                                          * double(type_bytes(output.get_type())));
 }
 
 void ActivationOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const

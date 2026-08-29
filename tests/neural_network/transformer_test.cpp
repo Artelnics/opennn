@@ -305,6 +305,39 @@ TEST(Transformer, TrainingArenaReusesResidualBranchOutputs)
     ForwardPropagation forward_propagation(batch_size, &transformer);
 
     EXPECT_LT(forward_propagation.arena.byte_size(), chronological_bytes);
+
+    vector<TensorView> transient_views;
+    vector<TensorView> persistent_views;
+    for (size_t layer = 0; layer < specs.size(); ++layer)
+        for (size_t spec = 0; spec < specs[layer].size(); ++spec)
+        {
+            const TensorView& view = forward_propagation.slots[layer][spec + 1];
+            if (view.empty()) continue;
+
+            if (layers[layer]->get_forward_slot_kind(spec + 1)
+                == ForwardSlotKind::Transient)
+                transient_views.push_back(view);
+            else
+                persistent_views.push_back(view);
+        }
+
+    const auto overlaps = [](const TensorView& left, const TensorView& right)
+    {
+        const auto* left_begin = static_cast<const uint8_t*>(left.get_data());
+        const auto* right_begin = static_cast<const uint8_t*>(right.get_data());
+        return left_begin < right_begin + right.byte_size()
+            && right_begin < left_begin + left.byte_size();
+    };
+
+    ASSERT_FALSE(transient_views.empty());
+    EXPECT_TRUE(ranges::any_of(transient_views, [&](const TensorView& transient)
+    {
+        return ranges::any_of(persistent_views, [&](const TensorView& persistent)
+        {
+            return overlaps(transient, persistent);
+        });
+    })) << "per-layer transient scratch was appended after the persistent arena "
+           "instead of being placed in a non-overlapping lifetime hole";
 }
 
 // OpenNN: Open Neural Networks Library.

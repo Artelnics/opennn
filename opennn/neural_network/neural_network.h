@@ -230,6 +230,7 @@ public:
     }
 
     void link_gradients(const Buffer&) const;
+    void link_gradients(span<const TensorView> layer_gradients) const;
 
     void link_states();
     void link_states(Device);

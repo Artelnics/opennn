@@ -2432,6 +2432,45 @@ void NeuralNetwork::link_gradients(const Buffer& gradient) const
     linked_gradient_base = base;
 }
 
+void NeuralNetwork::link_gradients(
+    const span<const TensorView> layer_gradients) const
+{
+    throw_if(layer_gradients.size() != layers.size(),
+             "NeuralNetwork::link_gradients: got {} layer-gradient views for "
+             "{} layers.",
+             layer_gradients.size(), layers.size());
+
+    for(size_t i = 0; i < layers.size(); ++i)
+    {
+        const TensorView& storage = layer_gradients[i];
+        const Index expected_elements =
+            get_aligned_size(layers[i]->get_parameter_specs());
+
+        throw_if(storage.size() != expected_elements,
+                 "NeuralNetwork::link_gradients: layer {} has {} gradient "
+                 "elements, expected {}.",
+                 i, storage.size(), expected_elements);
+
+        float* const begin = storage.empty()
+            ? nullptr
+            : storage.as<float>();
+        float* const end = layers[i]->link_gradients(
+            begin, storage.empty() ? parameters.get_device()
+                                   : storage.get_device());
+
+        const float* const expected_end = expected_elements > 0
+            ? begin + expected_elements
+            : begin;
+        throw_if(end != expected_end,
+                 "NeuralNetwork::link_gradients: layer {} linked an unexpected "
+                 "gradient extent.", i);
+    }
+
+    // A later contiguous layout must relink even if its base happens to equal
+    // one of the arena-backed layer slices.
+    linked_gradient_base = nullptr;
+}
+
 void NeuralNetwork::link_states()
 {
     const Device state_device = states.empty()

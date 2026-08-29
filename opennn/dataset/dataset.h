@@ -159,9 +159,13 @@ public:
     virtual void enable_device_residency();
     void disable_device_residency() { data_device.resize_bytes(0, Device::CUDA); }
     bool is_device_resident() const noexcept { return data_device.data() != nullptr; }
+    bool requests_device_residency() const noexcept
+    {
+        return storage_mode == StorageMode::GPUPersistantData;
+    }
     bool uses_device_residency() const noexcept
     {
-        return is_device_resident() || storage_mode == StorageMode::GPUPersistantData;
+        return is_device_resident();
     }
     const float* get_device_data() const { return data_device.as<float>(); }
     Index get_device_data_columns() const noexcept { return device_data_columns; }

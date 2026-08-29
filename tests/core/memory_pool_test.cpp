@@ -117,6 +117,47 @@ TEST(MemoryPoolTest, BothStrategiesRespectRecordedLifetimes)
     }
 }
 
+TEST(MemoryPoolTest, BestPlanNeverExceedsExistingStrategies)
+{
+    const vector<MemoryPoolEntry> entries = {
+        {32, 0, 5},
+        {64, 1, 2},
+        {48, 3, 7},
+        {24, 6, 8},
+        {80, 4, 4}
+    };
+
+    const MemoryPoolPlan chronological = plan_memory_pool(
+        entries, MemoryPoolStrategy::Chronological);
+    const MemoryPoolPlan compact = plan_memory_pool(
+        entries, MemoryPoolStrategy::Compact);
+    const MemoryPoolPlan best = plan_memory_pool_best(entries);
+
+    EXPECT_LE(best.peak_bytes, chronological.peak_bytes);
+    EXPECT_LE(best.peak_bytes, compact.peak_bytes);
+    EXPECT_EQ(best.lower_bound_live_bytes,
+              chronological.lower_bound_live_bytes);
+}
+
+TEST(MemoryPoolTest, EarliestEndPlacementCoalescesEqualEndHoles)
+{
+    const vector<MemoryPoolEntry> entries = {
+        {64, 2, 2},
+        {32, 3, 5},
+        {24, 4, 5},
+        {64, 5, 6},
+        {56, 5, 5},
+        {16, 1, 4}
+    };
+
+    const MemoryPoolPlan plan = plan_memory_pool(
+        entries, MemoryPoolStrategy::EarliestEndFirst);
+
+    EXPECT_EQ(plan.lower_bound_live_bytes, 176);
+    EXPECT_EQ(plan.peak_bytes, plan.lower_bound_live_bytes);
+    EXPECT_EQ(plan.fragmentation_bytes(), 0);
+}
+
 TEST(BackPropagationMemoryTest, FanoutAccumulationReusesConsumerDelta)
 {
     constexpr Index batch = 3;

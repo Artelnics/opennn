@@ -21,12 +21,18 @@ void sgd_update_capturable_cuda(
 
 void set_scalar_device_cuda(float* dst, const float value, cudaStream_t stream = nullptr);
 
-void adam_update_capturable_cuda(
-    const Index n, float* parameters, float* m, float* v, const float* gradients,
+void adam_prepare_capturable_cuda(
     const float beta_1, const float beta_2,
     const float* learning_rate_device, const float epsilon,
     int* step_device, float* effective_lr_device, float* effective_eps_device,
-    __nv_bfloat16* parameters_bf16_mirror = nullptr, cudaStream_t stream = nullptr);
+    cudaStream_t stream = nullptr);
+
+void adam_update_prepared_cuda(
+    const Index n, float* parameters, float* m, float* v,
+    const float* gradients, const float beta_1, const float beta_2,
+    const float* effective_lr_device, const float* effective_eps_device,
+    __nv_bfloat16* parameters_bf16_mirror = nullptr,
+    cudaStream_t stream = nullptr);
 
 void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm, const float eps);
 

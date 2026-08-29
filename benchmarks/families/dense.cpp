@@ -35,6 +35,7 @@
 #include <iomanip>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -374,6 +375,7 @@ int main(int argc, char* argv[])
             // this cell the difference is 32 MiB against 16.
             ForwardPropagation forward_propagation(batch, network.get(),
                                                    ForwardPropagationMode::Inference);
+            forward_propagation.set_cuda_graph(options.device == Device::CUDA);
 
             // Touching the output keeps LTO from deleting the forward pass.
             // Only CPU can read a scalar out of it: `as_matrix` requires CPU
@@ -388,6 +390,15 @@ int main(int argc, char* argv[])
             // are already on when the clock starts.
             Batch device_batch(batch, &dataset, network->get_config());
             vector<Index> indices(size_t(batch), Index(0));
+
+            if (!on_cpu)
+            {
+                iota(indices.begin(), indices.end(), Index(0));
+                device_batch.fill(indices, dataset.get_feature_selection(),
+                                  FillMode::Inference);
+                network->calculate_outputs_resident(device_batch.get_inputs(),
+                                                    forward_propagation, true);
+            }
 
             const auto run_pass = [&]
             {
@@ -406,8 +417,8 @@ int main(int argc, char* argv[])
                     for (Index k = 0; k < batch; ++k) indices[size_t(k)] = i + k;
                     device_batch.fill(indices, dataset.get_feature_selection(),
                                       FillMode::Inference);
-                    network->forward_propagate(device_batch.get_inputs(), forward_propagation,
-                                               ForwardPropagationMode::Inference);
+                    network->calculate_outputs_resident(device_batch.get_inputs(),
+                                                       forward_propagation, false);
                     (void)forward_propagation.get_outputs();
                 }
 
@@ -457,7 +468,12 @@ int main(int argc, char* argv[])
             const double median_pass_s = times[times.size() / 2];
 
             cout << "batch_" << batch << "_samples_per_sec=" << long(double(processed) / median_pass_s)
-                 << " median_pass_s=" << median_pass_s << "\n" << flush;
+                 << " median_pass_s=" << median_pass_s << "\n"
+                 << "batch_" << batch << "_cuda_graph="
+                 << (on_cpu ? "off"
+                     : forward_propagation.cuda_graph_failed ? "failed"
+                     : forward_propagation.inference_graph_exec ? "captured" : "warming")
+                 << "\n" << flush;
         }
     }
     else if (mode == "capacity")

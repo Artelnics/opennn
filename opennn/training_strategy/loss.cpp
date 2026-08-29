@@ -1297,7 +1297,7 @@ void Loss::back_propagate(const Batch& batch,
 {
     if (batch.is_empty()) return;
 
-    neural_network->link_gradients(back_propagation.gradient);
+    back_propagation.link_parameter_gradients();
 
     {
         PROFILE_SCOPE("loss:calculate_error");
@@ -1482,12 +1482,28 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     const TensorView target = batch.get_targets();
     if (input.empty() || target.empty()) return false;
 
-    const Index workspace_floats = error_workspace_floats(input);
-    float* const workspace = ensure_error_workspace(
-        forward_propagation.loss_workspace,
-        input,
-        batch.get_batch_size(),
-        3);
+    // The fused 3-D cross-entropy metrics kernel reduces directly into three
+    // scalars.  Its per-token scratch was left in this allocation from the
+    // generic error path, but is neither read nor written here.
+    const Index workspace_floats =
+        error == Error::CrossEntropy3d ? 0 : error_workspace_floats(input);
+    float* workspace = nullptr;
+    if(error == Error::CrossEntropy3d)
+    {
+        forward_propagation.loss_workspace.grow_to(3 * Index(sizeof(float)));
+        workspace = forward_propagation.loss_workspace.as<float>();
+        memory_debug::record("loss", "ForwardPropagation::loss_workspace",
+                             3 * Index(sizeof(float)),
+                             format("batch={}", batch.get_batch_size()));
+    }
+    else
+    {
+        workspace = ensure_error_workspace(
+            forward_propagation.loss_workspace,
+            input,
+            batch.get_batch_size(),
+            3);
+    }
     float* const results_device = workspace + workspace_floats;
     cublasHandle_t handle = device::get_cublas_handle();
 
@@ -1612,7 +1628,7 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
                                               accuracy_sum_device))
         return false;
 
-    neural_network->link_gradients(back_propagation.gradient);
+    back_propagation.link_parameter_gradients();
 
     if (error == Error::CrossEntropy3d)
     {
@@ -1625,8 +1641,7 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
         TensorView& input_delta = back_propagation.get_output_delta();
 
         const float* const results_device =
-            forward_propagation.loss_workspace.as<float>()
-            + error_workspace_floats(input);
+            forward_propagation.loss_workspace.as<float>();
         cross_entropy_3d_gradient_device_count(input, target, input_delta,
                                                results_device + 1);
     }
@@ -1818,6 +1833,12 @@ void Loss::set_error(const string& new_name)
 
 void Loss::add_regularization_gradient(const TensorView& gradient) const
 {
+    add_regularization_gradient(gradient, 0);
+}
+
+void Loss::add_regularization_gradient(const TensorView& gradient,
+                                       const Index parameter_offset) const
+{
     if (!has_regularization()) return;
 
     check_neural_network();
@@ -1829,8 +1850,17 @@ void Loss::add_regularization_gradient(const TensorView& gradient) const
     else if (gradient_device == Device::CPU && neural_network->get_parameters_device() == Device::CUDA)
         neural_network->copy_parameters_host();
 
-    const TensorView parameters(neural_network->get_parameters_data(),
-                                { neural_network->get_parameters_buffer_size() },
+    throw_if(parameter_offset < 0
+             || parameter_offset + gradient.size()
+                    > neural_network->get_parameters_buffer_size(),
+             "Loss::add_regularization_gradient: parameter range [{}, {}) "
+             "exceeds the {}-element parameter buffer.",
+             parameter_offset, parameter_offset + gradient.size(),
+             neural_network->get_parameters_buffer_size());
+
+    const TensorView parameters(neural_network->get_parameters_data()
+                                    + parameter_offset,
+                                { gradient.size() },
                                 Type::FP32,
                                 gradient_device);
 
@@ -1846,10 +1876,12 @@ void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
 
     check_neural_network();
 
-    add_regularization_gradient(TensorView(back_propagation.gradient.as<float>(),
-                                           { neural_network->get_parameters_buffer_size() },
-                                           Type::FP32,
-                                           back_propagation.gradient.get_device()));
+    for(const BackPropagation::GradientSlice& slice :
+        back_propagation.get_gradient_slices())
+    {
+        add_regularization_gradient(slice.values,
+                                    slice.parameter_offset);
+    }
 }
 
 void Loss::regularization_from_JSON(const JsonDocument& document)

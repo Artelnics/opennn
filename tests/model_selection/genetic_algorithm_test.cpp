@@ -102,8 +102,25 @@ TEST(GeneticAlgorithmTest, SelectsParsimoniousSubset)
 
     const Index selected_count = results.optimal_inputs.count();
 
+    // The count of surviving inputs is deliberately not asserted beyond "not all
+    // of them". GeneticAlgorithm ranks individuals purely on validation error --
+    // assign_fitness gives rank order and nothing else -- so no part of the
+    // search prefers a smaller subset, and asking for one here was asserting a
+    // property the algorithm does not implement.
+    //
+    // The budget cannot support it either. Column 0 is the target, yet with 20
+    // individuals over 5 generations, each scored by a 2-neuron network trained
+    // for 10 epochs, no individual gets near fitting it: validation errors sit
+    // between 0.478 and 0.506 across the whole population. The winner is then
+    // picked by margins of about 2e-4, and the surviving gene count wanders --
+    // 24, 17, 39, 39, 20 in one BLAS backend against 24, 27, 17, 18, 27 in
+    // another, from bit-identical first generations. `< 30` passed on one
+    // implementation of a matrix multiply and failed on another, which makes it
+    // a coin toss rather than a check.
+    //
+    // What the algorithm does deliver, in every backend, is finding the input
+    // that carries the signal. That is what is asserted.
     EXPECT_LT(selected_count, inputs_number);
-    EXPECT_LT(selected_count, Index(30));
     EXPECT_TRUE(results.optimal_inputs(0));
 }
 
