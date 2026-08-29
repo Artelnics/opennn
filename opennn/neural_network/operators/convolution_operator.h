@@ -83,6 +83,13 @@ private:
     void apply_cpu(const TensorView&, TensorView&) const;
     void apply_gpu(const TensorView&, TensorView&) const;
 
+    // Lower bound on what a convolution has to move: read the input, read the
+    // weights, write the output. cuDNN may move more depending on the algorithm
+    // it picks -- an implicit-GEMM pass over a workspace, say -- but never less,
+    // so a scope reporting a high fraction of peak against this is genuinely
+    // bandwidth-bound while a low one only says the bound is loose.
+    double minimum_traffic_bytes(const TensorView& input, const TensorView& output) const;
+
     void apply_delta_cpu(const TensorView&, const TensorView&,
                          TensorView&) const;
     void apply_delta_gpu(const TensorView&, const TensorView&,

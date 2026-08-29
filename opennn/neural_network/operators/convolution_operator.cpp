@@ -560,9 +560,19 @@ void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
 
 #ifdef OPENNN_HAS_CUDA
 
+double ConvolutionOperator::minimum_traffic_bytes(const TensorView& input,
+                                                  const TensorView& output) const
+{
+    if (!profiler::is_enabled()) return 0.0;
+
+    return double(type_bytes(input.get_type())) * double(input.size())
+         + double(type_bytes(weights.get_type())) * double(weights.size())
+         + double(type_bytes(output.get_type())) * double(output.size());
+}
+
 void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output) const
 {
-    PROFILE_SCOPE("op:conv_fwd");
+    PROFILE_SCOPE_BYTES("op:conv_fwd", minimum_traffic_bytes(input, output));
 
     throw_if(!input.is_fp32() && !input.is_bf16(),
              "ConvolutionOperator: GPU convolution requires FP32 or BF16 input.");
@@ -607,7 +617,7 @@ void ConvolutionOperator::apply_gpu_folded(const TensorView& input,
                                            bool relu, TensorView& output,
                                            const TensorView* residual) const
 {
-    PROFILE_SCOPE("op:conv_fwd");
+    PROFILE_SCOPE_BYTES("op:conv_fwd", minimum_traffic_bytes(input, output));
 
     // Folding batch norm into the weights is only a win if the convolution it
     // feeds is still cuDNN's. Routing it through a GEMM instead measured 9.9 ms
