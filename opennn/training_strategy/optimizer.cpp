@@ -313,10 +313,19 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
                 for (Index i = 1; i < graph_group_size; ++i)
                     training_session.pipelines[0].slots[size_t(i)] = make_unique<Batch>(training_batch_size, &dataset, config);
 
-            if (grouped_batches
-                && training_batches >= Index(TrainingSession::pipelines_count) * graph_group_size)
-                for (Index i = 0; i < graph_group_size; ++i)
-                    training_session.pipelines[1].slots[size_t(i)] = make_unique<Batch>(training_batch_size, &dataset, config);
+            // Every pipeline past the first is allocated only when there are
+            // enough batches to keep it fed. This used to fill pipelines[1] and
+            // stop, so raising pipelines_count selected a pipeline whose slots
+            // were null.
+            if (grouped_batches)
+                for (size_t p = 1; p < training_session.pipelines.size(); ++p)
+                {
+                    if (training_batches < Index(p + 1) * graph_group_size) break;
+
+                    for (Index i = 0; i < graph_group_size; ++i)
+                        training_session.pipelines[p].slots[size_t(i)] =
+                            make_unique<Batch>(training_batch_size, &dataset, config);
+                }
         }
     }
 
@@ -1523,10 +1532,13 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     {
         const Index groups = batches_number / M;
 
-        const size_t usable_pipelines =
-            pipelines.size() > 1 && pipelines[1].slots[size_t(M) - 1]
-                ? pipelines.size()
-                : 1;
+        // Count the pipelines that were actually populated rather than assuming
+        // all of them were: the allocation above stops early when the batch
+        // count cannot keep another one fed.
+        size_t usable_pipelines = 1;
+        while (usable_pipelines < pipelines.size()
+               && pipelines[usable_pipelines].slots[size_t(M) - 1])
+            ++usable_pipelines;
 
         for (Index group = 0; group < groups; ++group)
         {
