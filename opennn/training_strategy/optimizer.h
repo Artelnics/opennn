@@ -344,7 +344,20 @@ protected:
 
     int batch_pool_size_override = 0;
 
-    int workers_number = 2;
+    // How many threads prepare batches ahead of the device. Two was a bare
+    // literal that nothing outside the tests ever changed, so it is measured
+    // here rather than left to look arbitrary: on the CNN family, whose fill
+    // decodes and resizes an image per sample and is the most expensive one in
+    // the suite, six workers were slower than two in every run and in both
+    // orders -- medians 378 against 406 samples/s, 7% down. The fills are not
+    // waiting on anything the extra threads could overlap with, so the workers
+    // only take the cores the main thread wants.
+    //
+    // OPENNN_BATCH_WORKERS overrides it, which is how the above was run. The
+    // batch pool sizes itself from this, so raising it widens the queue too.
+    static const int default_workers_number;
+
+    int workers_number = default_workers_number;
 
     bool use_cuda_graph = false;
     bool cuda_graph_capture_failed = false;

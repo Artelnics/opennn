@@ -408,6 +408,9 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
     return session;
 }
 
+const int Optimizer::default_workers_number =
+    int(max(1LL, env_int_or("OPENNN_BATCH_WORKERS", 2)));
+
 int Optimizer::get_batch_pool_size(const NeuralNetwork& neural_network) const
 {
 
@@ -1520,6 +1523,11 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         profiler::set_enabled(profiler_enabled);
     };
 
+    // Residency is not what selects the device path -- fill_batch also demands
+    // that there be no decoder and that the input and target columns each be
+    // contiguous. The branch below hands the host batch back to the empty queue
+    // and uploads from a slot that only a device gather would have filled, so
+    // asking the weaker question trains on whatever the slot happened to hold.
     const bool resident_gather = loss->get_dataset()->is_device_resident();
 
     const Index M = recurrent_graph_group_size(neural_network,
