@@ -10,6 +10,7 @@ is linked from here.
 | Current engineering status, audit findings, YOLO roadmap | [docs/status/engineering-audit.md](docs/status/engineering-audit.md) |
 | YOLO implementation notes, session by session | [docs/status/yolo-session-log.md](docs/status/yolo-session-log.md) |
 | CUDA-graph topology dumps (training) | [docs/uml/cuda-graph/](docs/uml/cuda-graph/) |
+| Fast CPU/CUDA edit and final-verification workflow | [docs/fast-verification.md](docs/fast-verification.md) |
 | Project-local skills | [.agents/skills/](.agents/skills/) |
 | Making the code conceptual and self-explanatory (standing task prompt) | [docs/making-the-code-conceptual.md](docs/making-the-code-conceptual.md) |
 
@@ -42,7 +43,29 @@ with the MSVC toolset (14.44.35207), but the Windows SDK resource tools are miss
 fails, so CMake cannot get past its own compiler probe. Install the Windows SDK
 component before expecting a local build here.
 
-### Creating the two build directories
+### Fast verification (preferred)
+
+Use the cross-platform wrappers while editing. They keep persistent CPU and CUDA
+builds outside the OneDrive checkout, build only `opennn_tests`, and accept a
+GoogleTest filter for fast feedback:
+
+```powershell
+.\tools\verify.ps1 quick -Filter 'Dense.*:DenseNoBiasTest.*'
+.\tools\verify.ps1 quick -Backend cuda -Filter '*Gpu*:*CUDA*'
+.\tools\verify.ps1 full
+```
+
+```bash
+./tools/verify.sh quick --filter 'Dense.*:DenseNoBiasTest.*'
+./tools/verify.sh quick --backend cuda --filter '*Gpu*:*CUDA*'
+./tools/verify.sh full
+```
+
+Focused checks are the edit loop; `full` remains the final gate and runs both
+complete suites once. See [docs/fast-verification.md](docs/fast-verification.md)
+for cache locations, options, and `sccache` integration.
+
+### Creating the two build directories manually
 
 No build directory is checked in, and they are all gitignored — expect to create
 these yourself. Two configurations cover the work; both are Ninja + Release +
@@ -91,6 +114,7 @@ whichever CUDA decision the directory made first**. To flip a tree between CPU a
 CUDA, delete it and configure again rather than re-running `cmake` over it.
 
 A library change should be built and run in **both** before you call it done.
+That requirement applies to the completed batch, not to every intermediate edit.
 
 Directory names referred to in older notes (`build-ninja`, `build-fresh`,
 `build-cpu-audit`, `build-std-cleanup`, `build_cmake`, `build-benchmarks`,

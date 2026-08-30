@@ -249,9 +249,11 @@ Then, and only if asked:
   public signature, grep ND for it. Symbols that look dead from inside this repo
   are routinely live there. If you change a signature ND uses, update ND's call
   sites too, and say so — do not commit in that repo without being asked.
-- **Both builds must pass, both suites at baseline.** `build-cpu-verification`
-  and `build-resnet-capacity`. The CUDA build compiles `.cu` paths the CPU build
-  never sees, so a green CPU build proves little on its own.
+- **Both builds must pass, both suites at baseline.** Use
+  `tools/verify.ps1 full` on Windows or `tools/verify.sh full` on Linux once the
+  batch is complete. Focused `quick` checks are encouraged between edits. The
+  CUDA build compiles `.cu` paths the CPU build never sees, so a green CPU build
+  proves little on its own.
 - **Current baseline: CPU 1017 tests (989 passed / 28 skipped), GPU 1122 tests
   (1116 passed / 6 skipped), zero failures, one disabled test.** If Python is
   unavailable, the two expression-execution checks skip instead: CPU 987 / 30

@@ -101,6 +101,25 @@ cmake --build ../opennn-build --config Release
 
 When using a multi-config generator such as Visual Studio, the test binary may be under `../opennn-build/bin/Release/`.
 
+### Fast developer verification
+
+The repository includes CPU/CUDA verification wrappers that keep incremental
+builds outside the checkout and run focused tests during editing:
+
+```powershell
+.\tools\verify.ps1 quick -Filter 'Dense.*:DenseNoBiasTest.*'
+.\tools\verify.ps1 full
+```
+
+```bash
+./tools/verify.sh quick --filter 'Dense.*:DenseNoBiasTest.*'
+./tools/verify.sh full
+```
+
+Use `quick` after edits and `full` once before completing a batch. See
+[Fast local verification](docs/fast-verification.md) for CUDA selection, cache
+locations, and compiler-cache support.
+
 ## CMake options
 
 | Option | Default | Description |

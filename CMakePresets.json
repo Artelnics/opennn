@@ -1,0 +1,54 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 24,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "verify-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "OpenNN_BUILD_TESTS": true,
+        "OpenNN_BUILD_EXAMPLES": false,
+        "OpenNN_BUILD_BENCHMARKS": false
+      }
+    },
+    {
+      "name": "verify-cpu",
+      "displayName": "OpenNN CPU verification",
+      "inherits": "verify-base",
+      "cacheVariables": {
+        "OpenNN_DISABLE_CUDA": true
+      }
+    },
+    {
+      "name": "verify-cuda",
+      "displayName": "OpenNN CUDA verification",
+      "inherits": "verify-base",
+      "cacheVariables": {
+        "OpenNN_DISABLE_CUDA": false
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "verify-cpu",
+      "configurePreset": "verify-cpu",
+      "targets": [
+        "opennn_tests"
+      ]
+    },
+    {
+      "name": "verify-cuda",
+      "configurePreset": "verify-cuda",
+      "targets": [
+        "opennn_tests"
+      ]
+    }
+  ]
+}
