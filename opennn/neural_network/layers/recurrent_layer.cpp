@@ -914,7 +914,8 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
 
 void RecurrentOperator::apply_gpu(const TensorView&, TensorView&, TensorView&, TensorView&,
                                   TensorView&, TensorView&, TensorView&, TensorView&,
-                                  TensorView&, TensorView&, Buffer&, bool) const OPENNN_CUDA_STUB_BODY(apply_gpu)
+                                  TensorView&, TensorView&, Buffer&, bool,
+                                  uint64_t) const OPENNN_CUDA_STUB_BODY(apply_gpu)
 
 void RecurrentOperator::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&,
                                   const TensorView&, TensorView&,
