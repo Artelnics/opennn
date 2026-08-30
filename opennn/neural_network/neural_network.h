@@ -73,8 +73,6 @@ public:
     const EffectiveConfig& get_config() const noexcept { return config; }
     Device get_device() const noexcept { return config.device; }
     bool is_gpu() const noexcept { return config.device == Device::CUDA; }
-    bool is_cpu() const noexcept { return config.device == Device::CPU; }
-
     Type get_training_type()  const noexcept { return config.training_type; }
 
     void set_training_activation_recomputation(bool enabled) noexcept

@@ -39,6 +39,11 @@ struct BatchNormalizationOperator : Operator
 
     bool active() const { return features > 0; }
 
+    // features carries two facts at once: how many channels to normalize, and
+    // whether to normalize at all. Six call sites spelled the encoding out as
+    // `features = enabled ? count : 0`, so it lives here instead.
+    void set_enabled(bool enabled, Index feature_count) { features = enabled ? feature_count : 0; }
+
     BatchNormalizationOperator();
     ~BatchNormalizationOperator() override;
 

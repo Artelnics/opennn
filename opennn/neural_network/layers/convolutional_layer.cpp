@@ -243,7 +243,7 @@ void Convolutional::set(const Shape& new_input_shape,
 
     set_activation_function(new_activation_function);
 
-    batch_norm.features = use_batch_normalization ? convolution.kernels_number : 0;
+    batch_norm.set_enabled(use_batch_normalization, convolution.kernels_number);
 
     update_convolution_operator();
 }
@@ -275,7 +275,7 @@ void Convolutional::set_activation_function(const string& new_activation_functio
 
 void Convolutional::set_batch_normalization(bool new_batch_normalization)
 {
-    batch_norm.features = new_batch_normalization ? convolution.kernels_number : 0;
+    batch_norm.set_enabled(new_batch_normalization, convolution.kernels_number);
     update_convolution_operator();
 }
 
@@ -314,7 +314,7 @@ void Convolutional::read_JSON_body(const Json* convolutional_layer_element)
     convolution.row_stride      = stride_shape[0];
     convolution.column_stride   = stride_shape[1];
     use_padding     = (convolution_type == "Same");
-    batch_norm.features = new_batch_normalization ? convolution.kernels_number : 0;
+    batch_norm.set_enabled(new_batch_normalization, convolution.kernels_number);
     residual = new_residual;
 }
 

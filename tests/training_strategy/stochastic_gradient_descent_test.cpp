@@ -891,3 +891,51 @@ TEST_F(StochasticGradientDescentTest, HeaderDefaultsMatchWhatSetDefaultUsedToAss
     EXPECT_EQ(stochastic_gradient_descent.get_batch_size(), 0);
     EXPECT_EQ(stochastic_gradient_descent.get_maximum_epochs(), 1000);
 }
+
+// Optimizer::set_validation_period had no caller anywhere in opennn, its tests,
+// its examples or Neural Designer, so the branch it controls -- epoch %
+// validation_period == 0 -- had only ever run with the default period of 1,
+// where it is always true. validation_error_history starts as NaN and is
+// written only on an epoch that validates, which is what makes the period
+// observable.
+TEST(OptimizerKnobsTest, ValidationPeriodSkipsTheEpochsInBetween)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    const auto train_with_period = [](const Index period)
+    {
+        set_seed(1);
+        TabularDataset dataset(32, {2}, {1});
+        dataset.set_data_random();
+        dataset.split_samples_sequential(0.75f, 0.25f, 0.0f);
+
+        ApproximationNetwork network({2}, {4}, {1});
+        Loss loss(&network, &dataset);
+        loss.set_error(Loss::Error::MeanSquaredError);
+
+        StochasticGradientDescent optimizer(&loss);
+        optimizer.set_initial_learning_rate(0.01f);
+        optimizer.set_maximum_epochs(6);
+        optimizer.set_validation_period(period);
+        optimizer.set_display(false);
+
+        return optimizer.train();
+    };
+
+    const TrainingResult every_epoch = train_with_period(1);
+    const TrainingResult every_other = train_with_period(2);
+
+    const auto skipped = [](const TrainingResult& result)
+    {
+        Index count = 0;
+        for (Index i = 0; i < result.validation_error_history.size(); ++i)
+            if (std::isnan(result.validation_error_history(i))) ++count;
+        return count;
+    };
+
+    ASSERT_GT(every_epoch.validation_error_history.size(), 2);
+    EXPECT_EQ(skipped(every_epoch), 0)
+        << "a period of one should validate on every epoch";
+    EXPECT_GT(skipped(every_other), 0)
+        << "a period of two should leave the epochs in between unvalidated";
+}

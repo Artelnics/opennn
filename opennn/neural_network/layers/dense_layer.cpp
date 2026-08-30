@@ -234,7 +234,7 @@ void Dense::configure_operators()
 
 void Dense::set_batch_normalization(bool enable)
 {
-    batch_norm.features = enable ? output_features : 0;
+    batch_norm.set_enabled(enable, output_features);
     configure_operators();
 }
 
@@ -347,7 +347,7 @@ void Dense::set(const Shape& new_input_shape,
         function = ActivationFunction::Sigmoid;
     activation_operator.set_activation_function(function);
 
-    batch_norm.features = new_batch_normalization == BatchNormalization::Yes ? output_features : 0;
+    batch_norm.set_enabled(new_batch_normalization == BatchNormalization::Yes, output_features);
 
     set_label(new_label);
     configure_operators();
@@ -431,7 +431,7 @@ string Dense::write_expression(const vector<string>& input_names,
 
 void Dense::read_JSON_body(const Json* dense_layer_element)
 {
-    batch_norm.features = read_json_bool(dense_layer_element, "BatchNormalization") ? output_features : 0;
+    batch_norm.set_enabled(read_json_bool(dense_layer_element, "BatchNormalization"), output_features);
 
     set_use_bias(read_json_bool(dense_layer_element, "UseBias", get_use_bias()));
 

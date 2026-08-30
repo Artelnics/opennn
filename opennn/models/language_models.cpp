@@ -570,8 +570,12 @@ void TextGenerationNetwork::set_attention_sdpa_auto(bool new_sdpa_auto)
 namespace
 {
 
+// The caller's identity comes from source_location rather than a string each
+// call site spells out. Eleven of them passed their own name by hand, which a
+// rename would have left quietly lying.
 template <typename Network>
-auto& get_tokenizer_layer(Network& network, const char* label, const char* method)
+auto& get_tokenizer_layer(Network& network, const char* label,
+                          const source_location location = source_location::current())
 {
     using TokenizerType = conditional_t<is_const_v<Network>, const Tokenizer, Tokenizer>;
     TokenizerType* tokenizer_layer = nullptr;
@@ -588,7 +592,7 @@ auto& get_tokenizer_layer(Network& network, const char* label, const char* metho
     throw_if(!tokenizer_layer,
              format("{}: network has no '{}' layer. Rebuild the network or "
                     "re-save the model with a tokenizer.",
-                    method, label));
+                    location.function_name(), label));
 
     return *tokenizer_layer;
 }
@@ -602,34 +606,34 @@ Transformer::Transformer(const filesystem::path& path)
 
 void Transformer::set_input_vocabulary(const vector<string>& new_vocabulary)
 {
-    get_tokenizer_layer(*this, "encoder_tokenizer", "Transformer::set_input_vocabulary")
+    get_tokenizer_layer(*this, "encoder_tokenizer")
         .set_vocabulary(new_vocabulary);
 }
 
 void Transformer::set_target_vocabulary(const vector<string>& new_vocabulary)
 {
-    get_tokenizer_layer(*this, "decoder_tokenizer", "Transformer::set_target_vocabulary")
+    get_tokenizer_layer(*this, "decoder_tokenizer")
         .set_vocabulary(new_vocabulary);
 }
 
 const TokenizerOperator* Transformer::get_input_tokenizer() const
 {
-    return get_tokenizer_layer(*this, "encoder_tokenizer", "Transformer::get_input_tokenizer").get_tokenizer();
+    return get_tokenizer_layer(*this, "encoder_tokenizer").get_tokenizer();
 }
 
 const TokenizerOperator* Transformer::get_target_tokenizer() const
 {
-    return get_tokenizer_layer(*this, "decoder_tokenizer", "Transformer::get_target_tokenizer").get_tokenizer();
+    return get_tokenizer_layer(*this, "decoder_tokenizer").get_tokenizer();
 }
 
 const vector<string>& Transformer::get_input_vocabulary() const
 {
-    return get_tokenizer_layer(*this, "encoder_tokenizer", "Transformer::get_input_vocabulary").get_vocabulary();
+    return get_tokenizer_layer(*this, "encoder_tokenizer").get_vocabulary();
 }
 
 const vector<string>& Transformer::get_target_vocabulary() const
 {
-    return get_tokenizer_layer(*this, "decoder_tokenizer", "Transformer::get_target_vocabulary").get_vocabulary();
+    return get_tokenizer_layer(*this, "decoder_tokenizer").get_vocabulary();
 }
 
 TextGenerationNetwork::TextGenerationNetwork(const filesystem::path& path)
@@ -639,37 +643,37 @@ TextGenerationNetwork::TextGenerationNetwork(const filesystem::path& path)
 
 void TextGenerationNetwork::set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
 {
-    get_tokenizer_layer(*this, "tokenizer", "TextGenerationNetwork::set_tokenizer")
+    get_tokenizer_layer(*this, "tokenizer")
         .set_tokenizer(std::move(new_tokenizer));
 }
 
 void TextGenerationNetwork::set_vocabulary(const vector<string>& new_vocabulary)
 {
-    get_tokenizer_layer(*this, "tokenizer", "TextGenerationNetwork::set_vocabulary")
+    get_tokenizer_layer(*this, "tokenizer")
         .set_vocabulary(new_vocabulary);
 }
 
 const TokenizerOperator* TextGenerationNetwork::get_tokenizer() const
 {
-    return get_tokenizer_layer(*this, "tokenizer", "TextGenerationNetwork::get_tokenizer").get_tokenizer();
+    return get_tokenizer_layer(*this, "tokenizer").get_tokenizer();
 }
 
 void TextClassificationNetwork::set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
 {
-    get_tokenizer_layer(*this, "tokenizer", "TextClassificationNetwork::set_tokenizer")
+    get_tokenizer_layer(*this, "tokenizer")
         .set_tokenizer(std::move(new_tokenizer));
 }
 
 const TokenizerOperator* TextClassificationNetwork::get_tokenizer() const
 {
-    return get_tokenizer_layer(*this, "tokenizer", "TextClassificationNetwork::get_tokenizer").get_tokenizer();
+    return get_tokenizer_layer(*this, "tokenizer").get_tokenizer();
 }
 
 MatrixR TextClassificationNetwork::calculate_text_outputs(
     const Tensor<string, 1>& input_documents)
 {
     const Tokenizer& tokenizer_layer = get_tokenizer_layer(
-        *this, "tokenizer", "TextClassificationNetwork::calculate_text_outputs");
+        *this, "tokenizer");
     const TokenizerOperator* tokenizer = tokenizer_layer.get_tokenizer();
 
     throw_if(!tokenizer || tokenizer->get_vocabulary_size() == 0,

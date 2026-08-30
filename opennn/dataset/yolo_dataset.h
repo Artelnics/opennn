@@ -101,9 +101,7 @@ public:
 
     static constexpr Index MAX_GT_BOXES = 100;
 
-    bool is_v8_mode() const noexcept { return v8_mode; }
     void set_v8_mode(bool enabled);
-    Index get_target_record_floats() const noexcept { return target_record_floats; }
 
     void set(const filesystem::path&,
              const filesystem::path&,
@@ -142,7 +140,6 @@ public:
     };
 
     void set_augmentation_policy(const AugmentationPolicy&);
-    const AugmentationPolicy& get_augmentation_policy() const { return augmentation_policy; }
 
     static Index convert_voc_to_yolo(const filesystem::path&,
                                      const string&,

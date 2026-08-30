@@ -151,7 +151,6 @@ struct Variable
     void to_JSON(JsonWriter&) const;
 
     bool is_binary() const noexcept { return type == VariableType::Binary; }
-    bool is_integer() const noexcept { return type == VariableType::Integer; }
     bool is_categorical() const noexcept { return type == VariableType::Categorical; }
     bool is_used() const noexcept { return role != VariableRole::None && role != VariableRole::Time; }
 

@@ -41,13 +41,6 @@ struct ConvolutionOperator : Operator
 
     bool weights_relinked = true;
 
-    bool is_pointwise() const noexcept
-    {
-        return kernel_height == 1 && kernel_width == 1
-            && row_stride == 1 && column_stride == 1
-            && padding_height == 0 && padding_width == 0;
-    }
-
     struct ConvGraphCache;
 
     unique_ptr<ConvGraphCache> conv_graph_cache;

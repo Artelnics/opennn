@@ -37,7 +37,6 @@ public:
 
     Shape get_output_shape() const override { return input_shape; }
     Index get_classes_number() const { return detection.classes_number; }
-    Index get_reg_max() const { return detection.reg_max; }
     DetectionHeadMetadata get_detection_head_metadata() const noexcept override
     {
         return {DetectionHeadKind::AnchorFree,
