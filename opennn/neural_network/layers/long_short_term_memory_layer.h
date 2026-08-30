@@ -159,7 +159,8 @@ private:
                    TensorView&,
                    Buffer&,
                    bool return_seq,
-                   bool is_training) const;
+                   bool is_training,
+                   uint64_t parameters_version) const;
 
     void apply_delta_gpu(const TensorView&,
                          const TensorView&,
@@ -174,7 +175,7 @@ private:
                          bool return_seq) const;
 
     CudnnRnnShapeSlot& ensure_cudnn_setup_(Index batch_size, bool for_training) const;
-    void pack_weights_to_cudnn_(Buffer&) const;
+    void pack_weights_to_cudnn_(Buffer&, uint64_t) const;
     void unpack_gradients_from_cudnn_(Buffer&) const;
 
 };

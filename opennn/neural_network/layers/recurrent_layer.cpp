@@ -99,7 +99,8 @@ void RecurrentOperator::forward_propagate(ForwardPropagation& forward_propagatio
                          forward_slots[CudnnInputSequenceForwardSlot],
                          forward_slots[CudnnOutputSequenceForwardSlot],
                          forward_propagation.layer_state_storage[layer],
-                         is_training(pass));
+                         is_training(pass),
+                         forward_propagation.get_parameters_version());
     apply(input, hidden_states, activation_derivatives, output, is_training(pass));
 }
 
@@ -538,12 +539,13 @@ CudnnRnnShapeSlot& RecurrentOperator::ensure_cudnn_setup_(Index batch_size,
                         batch_size, for_training);
 }
 
-void RecurrentOperator::pack_weights_to_cudnn_(Buffer& forward_state) const
+void RecurrentOperator::pack_weights_to_cudnn_(Buffer& forward_state,
+                                               uint64_t parameters_version) const
 {
     const TensorView* weights[2] = {&input_weights, &recurrent_weights};
     const TensorView* biases[2]  = {&bias, nullptr};
     cudnn_pack_weights_(2, input_features, output_features,
-                        weights, biases, forward_state);
+                        weights, biases, forward_state, parameters_version);
 }
 
 void RecurrentOperator::unpack_gradients_from_cudnn_(Buffer& backward_scratch) const
@@ -561,14 +563,15 @@ void RecurrentOperator::apply_gpu_cudnn_(const TensorView& input,
                                          TensorView& cudnn_input_sequence,
                                          TensorView& cudnn_output_sequence,
                                          Buffer& forward_state,
-                                         bool is_training) const
+                                         bool is_training,
+                                         uint64_t parameters_version) const
 {
     const Index batch_size = input.get_shape()[0];
     const auto backend_lock = lock_backend_state();
 
     CudnnRnnShapeSlot& shape = ensure_cudnn_setup_(batch_size, is_training);
     prepare_cudnn_forward_state_(forward_state, is_training, shape);
-    pack_weights_to_cudnn_(forward_state);
+    pack_weights_to_cudnn_(forward_state, parameters_version);
 
     const void* x_data = input.get_data();
     void* y_data = hidden_states.get_data();
@@ -594,7 +597,7 @@ void RecurrentOperator::apply_gpu_cudnn_(const TensorView& input,
                                ensure_cudnn_setup_(batch_size, is_training);
                            prepare_cudnn_forward_state_(forward_state, is_training,
                                                         retry_shape);
-                           pack_weights_to_cudnn_(forward_state);
+                           pack_weights_to_cudnn_(forward_state, parameters_version);
                            return retry_shape;
                        });
 
@@ -714,14 +717,15 @@ void RecurrentOperator::apply_gpu(const TensorView& input,
                                   TensorView& cudnn_input_sequence,
                                   TensorView& cudnn_output_sequence,
                                   Buffer& forward_state,
-                            bool is_training) const
+                            bool is_training,
+                            uint64_t parameters_version) const
 {
     if (!input.get_data() || output_features == 0 || time_steps == 0) return;
 
     if (cudnn_rnn_eligible_(output))
         return apply_gpu_cudnn_(input, hidden_states, output,
                                 cudnn_input_sequence, cudnn_output_sequence,
-                                forward_state, is_training);
+                                forward_state, is_training, parameters_version);
 
     require_same_recurrent_dtype(output, {
         {&input, "input"},

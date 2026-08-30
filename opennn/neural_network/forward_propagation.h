@@ -153,6 +153,12 @@ struct ForwardPropagation
     array<Buffer, size_t(device::GraphWorkspaceKind::Count)> inference_graph_workspaces
         = cuda_workspace_buffers(make_index_sequence<size_t(device::GraphWorkspaceKind::Count)>{});
 
+    // The network's parameter version, for operators holding a cache derived
+    // from the weights. Defined out of line so callers do not need the full
+    // NeuralNetwork definition. Returns 0 when there is no network, which every
+    // cache must read as "cannot vouch for this, do not reuse".
+    uint64_t get_parameters_version() const;
+
 private:
 
     struct OutputWindow

@@ -70,6 +70,17 @@ protected:
         Index zeroed_weight_space_bytes = 0;
         Index zeroed_input_features = -1;
         bool zeroed_double_bias = false;
+
+        // What the packed weight space currently holds. cuDNN wants the weights
+        // in its own layout, and copying them there is pure data movement that
+        // repeats every forward pass even when nothing has moved: measured at
+        // 3.4% of the LSTM layer. Packing is skipped when the destination
+        // buffer, the shape and the network's parameter version all still
+        // match. Version 0 means nothing has been packed yet.
+        const void* packed_weight_space = nullptr;
+        uint64_t packed_parameters_version = 0;
+        Index packed_input_features = -1;
+        Index packed_output_features = -1;
     };
 
     unique_lock<mutex> lock_backend_state() const
@@ -110,7 +121,8 @@ protected:
                              Index input_features, Index output_features,
                              const TensorView* const* weights,
                              const TensorView* const* biases,
-                             Buffer& forward_state) const;
+                             Buffer& forward_state,
+                             uint64_t parameters_version) const;
     void cudnn_unpack_gradients_(int num_linear_layers,
                                  Index input_features, Index output_features,
                                  const TensorView* const* weight_gradients,

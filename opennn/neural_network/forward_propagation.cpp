@@ -975,6 +975,11 @@ Index ForwardPropagation::bind_slots(
     return max_layer_bytes;
 }
 
+uint64_t ForwardPropagation::get_parameters_version() const
+{
+    return neural_network ? neural_network->get_parameters_version() : 0;
+}
+
 void ForwardPropagation::recompute_for_backward(Index layer_index)
 {
     if (layer_index < 0

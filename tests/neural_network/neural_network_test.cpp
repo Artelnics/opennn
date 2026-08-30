@@ -201,6 +201,44 @@ TEST(NeuralNetworkTest, DefaultConstructor)
     EXPECT_EQ(neural_network.get_task(), NetworkTask::Generic);
 }
 
+// Caches derived from the weights -- cuDNN's packed RNN weight space, folded
+// batch norm, quantized copies -- are only safe if every way of changing the
+// parameters moves the version they compare against. A path that mutates
+// without bumping is not a slow cache, it is a cache that serves stale weights,
+// so each of them is pinned here rather than left to inspection.
+TEST(NeuralNetworkTest, ParametersVersionMovesOnEveryMutation)
+{
+    NeuralNetwork network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{4}, Shape{2}, "Identity"), {-1});
+    network.compile();
+
+    const uint64_t after_compile = network.get_parameters_version();
+
+    network.set_parameters_random();
+    const uint64_t after_random = network.get_parameters_version();
+    EXPECT_NE(after_random, after_compile);
+
+    network.set_parameters_glorot();
+    const uint64_t after_glorot = network.get_parameters_version();
+    EXPECT_NE(after_glorot, after_random);
+
+    VectorR replacement = VectorR::Zero(network.get_parameters_buffer_size());
+    network.set_parameters(replacement);
+    const uint64_t after_set = network.get_parameters_version();
+    EXPECT_NE(after_set, after_glorot);
+
+    // Handing out a mutable view counts as a change: the optimizers write
+    // straight through this and cannot be observed doing it.
+    (void)network.get_parameters_map();
+    const uint64_t after_handle = network.get_parameters_version();
+    EXPECT_NE(after_handle, after_set);
+
+    // Reading through the const overload is not a change.
+    const NeuralNetwork& readable = network;
+    (void)readable.get_parameters_map();
+    EXPECT_EQ(network.get_parameters_version(), after_handle);
+}
+
 TEST(NeuralNetworkTest, RejectsWrongSourceCount)
 {
     NeuralNetwork neural_network;

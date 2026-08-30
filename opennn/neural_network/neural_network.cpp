@@ -958,6 +958,8 @@ static bool upload_host_vector(Buffer& buffer, const VectorR& values)
 
 void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 {
+    mark_parameters_changed();
+
     throw_if(fp32_master_released(),
              "NeuralNetwork::set_parameters: the fp32 parameter master was released for "
              "quantized inference; reload the model before replacing parameters.");
@@ -997,6 +999,8 @@ void NeuralNetwork::set_states(const VectorR& new_states)
 
 void NeuralNetwork::initialize_parameters(void (Operator::*initializer)())
 {
+    mark_parameters_changed();
+
     const HostParametersGuard guard(*this);
     const HostStatesGuard states_guard(*this);
 
@@ -2742,6 +2746,8 @@ void NeuralNetwork::activate_transposed_inference_weights()
 
 void NeuralNetwork::copy_parameters_host()
 {
+    mark_parameters_changed();
+
     if (parameters.empty())
         return clear_low_precision_parameter_storage();
 

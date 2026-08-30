@@ -122,10 +122,26 @@ public:
 
     bool is_empty() const noexcept { return layers.empty(); }
 
-    float* get_parameters_data() { return parameters.as<float>(); }
+    // Anything derived from the parameters -- a packed cuDNN weight space, a
+    // batch-norm fold, a quantized copy -- has to know when they change. There
+    // is no way to observe that passively, because callers write straight
+    // through the mutable handles below, so handing one out counts as a change.
+    // That over-counts the few readers that take a mutable handle and only read,
+    // which costs those callers a recompute and cannot make a cache stale. The
+    // reverse policy, trusting writers to announce themselves, is one missed
+    // call site away from silently wrong weights.
+    //
+    // Cache holders should store the version they were built at and compare, not
+    // assume any particular increment.
+    uint64_t get_parameters_version() const noexcept { return parameters_version; }
+
+    void mark_parameters_changed() noexcept { ++parameters_version; }
+
+    float* get_parameters_data() { mark_parameters_changed(); return parameters.as<float>(); }
     const float* get_parameters_data() const { return parameters.as<float>(); }
     VectorMap get_parameters_map() &
     {
+        mark_parameters_changed();
         return parameters.as_vector();
     }
     ConstVectorMap get_parameters_map() const &
@@ -335,6 +351,10 @@ protected:
     };
 
     DeviceResidency get_device_residency() const noexcept;
+
+    // Bumped whenever a mutable handle to the parameters is handed out, so a
+    // derived cache can tell that what it was built from has moved on.
+    uint64_t parameters_version = 1;
 
     Buffer parameters;
     Buffer parameters_bf16_mirror{Device::CUDA};

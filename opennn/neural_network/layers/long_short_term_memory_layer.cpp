@@ -870,7 +870,8 @@ void LongShortTermMemoryOperator::forward_propagate(ForwardPropagation& forward_
                          forward_slots[CudnnInputSequenceSlot],
                          forward_slots[CudnnOutputSequenceSlot],
                          forward_propagation.layer_state_storage[layer],
-                         return_sequences, is_training(pass));
+                         return_sequences, is_training(pass),
+                         forward_propagation.get_parameters_version());
 
     if (apply_onednn(input, output,
                      return_sequences ? output : hidden_state,
@@ -1679,7 +1680,8 @@ CudnnRnnShapeSlot& LongShortTermMemoryOperator::ensure_cudnn_setup_(
                         batch_size, for_training);
 }
 
-void LongShortTermMemoryOperator::pack_weights_to_cudnn_(Buffer& forward_state) const
+void LongShortTermMemoryOperator::pack_weights_to_cudnn_(Buffer& forward_state,
+                                                        uint64_t parameters_version) const
 {
     const TensorView* weights[8] = {
         &input_weights,
@@ -1699,7 +1701,7 @@ void LongShortTermMemoryOperator::pack_weights_to_cudnn_(Buffer& forward_state) 
         nullptr, nullptr, nullptr, nullptr
     };
     cudnn_pack_weights_(8, input_features, output_features,
-                        weights, biases, forward_state);
+                        weights, biases, forward_state, parameters_version);
 }
 
 void LongShortTermMemoryOperator::unpack_gradients_from_cudnn_(Buffer& backward_scratch) const
@@ -1733,7 +1735,8 @@ void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
                                       TensorView& cudnn_output_sequence,
                                       Buffer& forward_state,
                                       bool return_seq,
-                                      bool is_training) const
+                                      bool is_training,
+                                      uint64_t parameters_version) const
 {
     const Index batch_size = input.get_shape()[0];
     if (!input.get_data() || output_features == 0 || time_steps == 0 || batch_size == 0) return;
@@ -1742,7 +1745,7 @@ void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
 
     CudnnRnnShapeSlot& shape = ensure_cudnn_setup_(batch_size, is_training);
     prepare_cudnn_forward_state_(forward_state, is_training, shape);
-    pack_weights_to_cudnn_(forward_state);
+    pack_weights_to_cudnn_(forward_state, parameters_version);
 
     const void* x_data = input.get_data();
     void* y_data = sequence_output_scratch.get_data();
@@ -1768,7 +1771,7 @@ void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
                                ensure_cudnn_setup_(batch_size, is_training);
                            prepare_cudnn_forward_state_(forward_state, is_training,
                                                         retry_shape);
-                           pack_weights_to_cudnn_(forward_state);
+                           pack_weights_to_cudnn_(forward_state, parameters_version);
                            return retry_shape;
                        });
 
@@ -1883,7 +1886,8 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
 #else
 
 void LongShortTermMemoryOperator::apply_gpu(const TensorView&, TensorView&, TensorView&,
-                                            TensorView&, TensorView&, Buffer&, bool, bool) const OPENNN_CUDA_STUB_BODY(apply_gpu)
+                                            TensorView&, TensorView&, Buffer&, bool, bool,
+                                            uint64_t) const OPENNN_CUDA_STUB_BODY(apply_gpu)
 
 void LongShortTermMemoryOperator::apply_delta_gpu(
     const TensorView&, const TensorView&, const TensorView&, const TensorView&,

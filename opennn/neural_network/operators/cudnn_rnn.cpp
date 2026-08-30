@@ -343,11 +343,26 @@ void CudnnRnnState::cudnn_pack_weights_(int num_linear_layers,
                                         Index output_features,
                                         const TensorView* const* weights,
                                         const TensorView* const* biases,
-                                        Buffer& forward_state) const
+                                        Buffer& forward_state,
+                                        uint64_t parameters_version) const
 {
     PROFILE_SCOPE("rnn:pack_weights");
     const Index weight_space_bytes = backend_state.weight_space_bytes;
     forward_state.grow_to(get_aligned_bytes(weight_space_bytes));
+
+    // Copying the weights into cuDNN's layout is pure data movement, and it
+    // repeats on every forward pass even when nothing changed. Skip it when the
+    // destination buffer, the shape and the network's parameter version all
+    // still match what was packed last time. A version of 0 means the caller
+    // could not tell us, so never trust the cache in that case.
+    const bool packed_is_current =
+        parameters_version != 0
+        && backend_state.packed_parameters_version == parameters_version
+        && backend_state.packed_weight_space == forward_state.data()
+        && backend_state.packed_input_features == input_features
+        && backend_state.packed_output_features == output_features;
+
+    if (packed_is_current) return;
 
     const bool has_holes = backend_state.double_bias
                         || backend_state.cached_input_features != input_features;
@@ -370,6 +385,11 @@ void CudnnRnnState::cudnn_pack_weights_(int num_linear_layers,
     }
     cudnn_copy_weight_regions_(num_linear_layers, input_features, output_features,
                                weights, biases, forward_state, true);
+
+    backend_state.packed_parameters_version = parameters_version;
+    backend_state.packed_weight_space = forward_state.data();
+    backend_state.packed_input_features = input_features;
+    backend_state.packed_output_features = output_features;
 }
 
 void CudnnRnnState::cudnn_unpack_gradients_(int num_linear_layers,
