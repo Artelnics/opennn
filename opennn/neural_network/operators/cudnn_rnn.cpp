@@ -507,6 +507,154 @@ void CudnnRnnState::cudnn_rnn_backward_(const CudnnRnnShapeSlot& shape,
         size_t(shape.reserve_space_bytes), reserve));
 }
 
+void CudnnRnnState::drive_cudnn_forward_(const CudnnRnnDims& dims,
+                                         const TensorView& input,
+                                         TensorView& sequence_output,
+                                         TensorView& output,
+                                         TensorView& cudnn_input_sequence,
+                                         TensorView& cudnn_output_sequence,
+                                         Buffer& forward_state,
+                                         bool is_training,
+                                         uint64_t parameters_version) const
+{
+    const Index batch_size = input.get_shape()[0];
+    const auto backend_lock = lock_backend_state();
+
+    CudnnRnnShapeSlot& shape = ensure_cudnn_setup_(batch_size, is_training);
+    prepare_cudnn_forward_state_(forward_state, is_training, shape);
+    pack_weights_to_cudnn_(forward_state, parameters_version);
+
+    const void* x_data = input.get_data();
+    void* y_data = sequence_output.get_data();
+    if (shape.time_major)
+    {
+        PROFILE_SCOPE("rnn:transpose_input");
+        const Index cudnn_input_features = shape.input_features;
+        input.dispatch([&]<typename Scalar>()
+        {
+            batch_time_to_time_batch_padded_cuda<Scalar>(
+                batch_size, dims.time_steps, dims.input_features, cudnn_input_features,
+                input.as<Scalar>(), cudnn_input_sequence.as<Scalar>());
+        });
+        x_data = cudnn_input_sequence.get_data();
+        y_data = cudnn_output_sequence.get_data();
+    }
+
+    cudnn_rnn_forward_(shape, is_training, dims.has_cell_state,
+                       x_data, y_data,
+                       forward_state,
+                       [&]() -> CudnnRnnShapeSlot& {
+                           CudnnRnnShapeSlot& retry_shape =
+                               ensure_cudnn_setup_(batch_size, is_training);
+                           prepare_cudnn_forward_state_(forward_state, is_training,
+                                                        retry_shape);
+                           pack_weights_to_cudnn_(forward_state, parameters_version);
+                           return retry_shape;
+                       });
+
+    if (dims.return_sequences && shape.time_major)
+    {
+        PROFILE_SCOPE("rnn:transpose_output");
+        output.dispatch([&]<typename Scalar>()
+        {
+            time_batch_to_batch_time_cuda<Scalar>(
+                batch_size, dims.time_steps, dims.output_features,
+                cudnn_output_sequence.as<Scalar>(), output.as<Scalar>());
+        });
+    }
+    else if (dims.return_sequences)
+        copy(sequence_output, output);
+    else if (shape.time_major)
+        output.dispatch([&]<typename Scalar>()
+        {
+            gather_time_major_slice_cuda<Scalar>(
+                batch_size, dims.time_steps, dims.output_features, dims.time_steps - 1,
+                cudnn_output_sequence.as<Scalar>(), output.as<Scalar>());
+        });
+    else
+        output.dispatch([&]<typename Scalar>()
+        {
+            gather_time_slice_cuda<Scalar>(
+                batch_size, dims.time_steps, dims.output_features, dims.time_steps - 1,
+                sequence_output.as<Scalar>(), output.as<Scalar>());
+        });
+}
+
+void CudnnRnnState::drive_cudnn_backward_(const CudnnRnnDims& dims,
+                                          const TensorView& input,
+                                          const TensorView& sequence_output,
+                                          const TensorView& output_delta,
+                                          const TensorView& cudnn_input_sequence,
+                                          const TensorView& cudnn_output_sequence,
+                                          TensorView& input_delta,
+                                          TensorView& sequence_delta_scratch,
+                                          TensorView& input_delta_scratch,
+                                          const Buffer& forward_state,
+                                          Buffer& backward_scratch) const
+{
+    const Index batch_size = input.get_shape()[0];
+    const Index H = dims.output_features;
+    const Index T = dims.time_steps;
+    const auto backend_lock = lock_backend_state();
+
+    CudnnRnnShapeSlot& shape = ensure_cudnn_setup_(batch_size, true);
+
+    const void* dy_data = output_delta.get_data();
+    if (dims.return_sequences && shape.time_major)
+    {
+        PROFILE_SCOPE("rnn:transpose_delta");
+        output_delta.dispatch([&]<typename Scalar>()
+        {
+            batch_time_to_time_batch_cuda<Scalar>(
+                batch_size, T, H,
+                output_delta.as<Scalar>(), sequence_delta_scratch.as<Scalar>());
+        });
+        dy_data = sequence_delta_scratch.get_data();
+    }
+    else if (!dims.return_sequences)
+    {
+        device::set_zero_async(sequence_delta_scratch.get_data(),
+                               sequence_delta_scratch.byte_size(),
+                               device::get_compute_stream());
+        output_delta.dispatch([&]<typename Scalar>()
+        {
+            if (shape.time_major)
+                scatter_time_major_slice_cuda<Scalar>(
+                    batch_size, T, H, T - 1,
+                    output_delta.as<Scalar>(), sequence_delta_scratch.as<Scalar>());
+            else
+                scatter_time_slice_cuda<Scalar>(
+                    batch_size, T, H, T - 1,
+                    output_delta.as<Scalar>(), sequence_delta_scratch.as<Scalar>());
+        });
+        dy_data = sequence_delta_scratch.get_data();
+    }
+
+    const void* x_data = shape.time_major
+        ? cudnn_input_sequence.get_data() : input.get_data();
+    const void* y_data = shape.time_major
+        ? cudnn_output_sequence.get_data() : sequence_output.get_data();
+    void* dx_data = shape.time_major || !input_delta.get_data()
+        ? input_delta_scratch.get_data() : input_delta.get_data();
+
+    cudnn_rnn_backward_(shape, dims.has_cell_state,
+                        x_data, y_data, dy_data, dx_data,
+                        forward_state, backward_scratch);
+
+    if (shape.time_major && input_delta.get_data())
+    {
+        PROFILE_SCOPE("rnn:transpose_input_delta");
+        input_delta.dispatch([&]<typename Scalar>()
+        {
+            time_batch_to_batch_time_cropped_cuda<Scalar>(
+                batch_size, T, dims.input_features, shape.input_features,
+                input_delta_scratch.as<Scalar>(), input_delta.as<Scalar>());
+        });
+    }
+
+    unpack_gradients_from_cudnn_(backward_scratch);
+}
+
 }
 
 #endif

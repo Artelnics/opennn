@@ -131,6 +131,47 @@ protected:
 
     void prepare_cudnn_forward_state_(Buffer&, bool is_training,
                                       const CudnnRnnShapeSlot&) const;
+
+    // What the two recurrent layers do not share: the shape they configure
+    // cuDNN with, and how their weights pack into cuDNN's layout.
+    virtual CudnnRnnShapeSlot& ensure_cudnn_setup_(Index batch_size, bool for_training) const = 0;
+    virtual void pack_weights_to_cudnn_(Buffer&, uint64_t parameters_version) const = 0;
+    virtual void unpack_gradients_from_cudnn_(Buffer&) const = 0;
+
+    // What they do share. Driving cuDNN is the same sequence either way --
+    // configure, pack, transpose into time-major, run, transpose back -- and
+    // both layers had written it out, ~150 lines apiece, differing only in the
+    // cell state the LSTM carries and the plain RNN does not.
+    struct CudnnRnnDims
+    {
+        Index input_features  = 0;
+        Index output_features = 0;
+        Index time_steps      = 0;
+        bool  return_sequences = false;
+        bool  has_cell_state   = false;
+    };
+
+    void drive_cudnn_forward_(const CudnnRnnDims&,
+                              const TensorView& input,
+                              TensorView& sequence_output,
+                              TensorView& output,
+                              TensorView& cudnn_input_sequence,
+                              TensorView& cudnn_output_sequence,
+                              Buffer& forward_state,
+                              bool is_training,
+                              uint64_t parameters_version) const;
+
+    void drive_cudnn_backward_(const CudnnRnnDims&,
+                               const TensorView& input,
+                               const TensorView& sequence_output,
+                               const TensorView& output_delta,
+                               const TensorView& cudnn_input_sequence,
+                               const TensorView& cudnn_output_sequence,
+                               TensorView& input_delta,
+                               TensorView& sequence_delta_scratch,
+                               TensorView& input_delta_scratch,
+                               const Buffer& forward_state,
+                               Buffer& backward_scratch) const;
 #endif
 
     mutable BackendState backend_state;

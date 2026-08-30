@@ -64,8 +64,7 @@ struct RecurrentOperator : Operator, CudnnRnnState
              Type = Type::FP32);
 
     vector<TensorSpec> parameter_specs() const override;
-    void link_parameters(span<const TensorView>) override;
-    void link_gradients (span<const TensorView>) override;
+    vector<ParameterSlot> parameter_slots() override;
 
     void set_parameters_random() override;
     void set_parameters_glorot() override;

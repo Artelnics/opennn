@@ -23,7 +23,27 @@
 namespace opennn
 {
 
-static void apply_clamping_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&);
+#ifdef OPENNN_HAS_CUDA
+
+static void apply_clamping_gpu(const TensorView& input,
+               const TensorView& lower_bounds,
+               const TensorView& upper_bounds,
+               TensorView& output)
+{
+    visit_type_pair<Type::FP32, Type::BF16>(input.get_type(), output.get_type(), [&]<typename TIn, typename TOut>() {
+        clamping_cuda<TIn, TOut>(output.size(), to_int(lower_bounds.size()),
+                                 input.as<TIn>(),
+                                 lower_bounds.as_float(),
+                                 upper_bounds.as_float(),
+                                 output.as<TOut>());
+    });
+}
+
+#else
+
+OPENNN_CUDA_TEMPLATE_STUB(apply_clamping_gpu)
+
+#endif
 
 static void apply_clamping_cpu(const TensorView& input,
                const TensorView& lower_bounds,
@@ -57,29 +77,6 @@ void apply_clamping(const TensorView& input,
     if (input.is_cuda()) { apply_clamping_gpu(input, lower_bounds, upper_bounds, output); return; }
     apply_clamping_cpu(input, lower_bounds, upper_bounds, output);
 }
-
-#ifdef OPENNN_HAS_CUDA
-
-static void apply_clamping_gpu(const TensorView& input,
-               const TensorView& lower_bounds,
-               const TensorView& upper_bounds,
-               TensorView& output)
-{
-    visit_type_pair<Type::FP32, Type::BF16>(input.get_type(), output.get_type(), [&]<typename TIn, typename TOut>() {
-        clamping_cuda<TIn, TOut>(output.size(), to_int(lower_bounds.size()),
-                                 input.as<TIn>(),
-                                 lower_bounds.as_float(),
-                                 upper_bounds.as_float(),
-                                 output.as<TOut>());
-    });
-}
-
-#else
-
-OPENNN_CUDA_STUB(void, apply_clamping_gpu,
-                 (const TensorView&, const TensorView&, const TensorView&, TensorView&))
-
-#endif
 
 void ClampingOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
 {

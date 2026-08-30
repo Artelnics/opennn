@@ -93,9 +93,32 @@ struct LongShortTermMemoryOperator : Operator, CudnnRnnState
              ActivationFunction new_recurrent_activation_function = ActivationFunction::Sigmoid,
              Type new_compute_dtype = Type::FP32);
 
+    // The four gates are always taken in this order, and every site that
+    // touches them -- specs, linking, initialization, the cuDNN pack -- used to
+    // spell the quartet out by hand. That was 34 copies of the same four names.
+    enum Gate { Forget, Input, Candidate, Output, GateCount };
+
+    // A TensorView is itself a view, so reading the quartet never needs a
+    // mutable pointer; only parameter_slots does, and it pairs the members up
+    // by hand so a parameter can never drift away from its gradient.
+    using GateViews = array<const TensorView*, GateCount>;
+
+    GateViews gate_biases() const            { return {&forget_bias, &input_bias, &candidate_bias, &output_bias}; }
+    GateViews gate_weights() const           { return {&forget_weights, &input_weights, &candidate_weights, &output_weights}; }
+    GateViews gate_recurrent_weights() const { return {&forget_recurrent_weights, &input_recurrent_weights,
+                                                       &candidate_recurrent_weights, &output_recurrent_weights}; }
+
+    GateViews gate_bias_gradients() const    { return {&forget_bias_gradient, &input_bias_gradient,
+                                                       &candidate_bias_gradient, &output_bias_gradient}; }
+    GateViews gate_weight_gradients() const  { return {&forget_weight_gradient, &input_weight_gradient,
+                                                       &candidate_weight_gradient, &output_weight_gradient}; }
+    GateViews gate_recurrent_weight_gradients() const { return {&forget_recurrent_weight_gradient,
+                                                                &input_recurrent_weight_gradient,
+                                                                &candidate_recurrent_weight_gradient,
+                                                                &output_recurrent_weight_gradient}; }
+
     vector<TensorSpec> parameter_specs() const override;
-    void link_parameters(span<const TensorView>) override;
-    void link_gradients (span<const TensorView>) override;
+    vector<ParameterSlot> parameter_slots() override;
 
     void set_parameters_random() override;
     void set_parameters_glorot() override;

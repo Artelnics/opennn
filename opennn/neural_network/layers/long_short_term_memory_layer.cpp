@@ -59,39 +59,28 @@ namespace opennn
 namespace
 {
 
-MatrixR concat_gate_columns(const TensorView& forget,
-                            const TensorView& input,
-                            const TensorView& candidate,
-                            const TensorView& output)
+MatrixR concat_gate_columns(span<const TensorView* const> gates)
 {
-    const MatrixMap forget_matrix = forget.as_matrix();
-    const Index rows = forget_matrix.rows();
-    const Index columns = forget_matrix.cols();
+    const MatrixMap first = gates[0]->as_matrix();
+    const Index rows = first.rows();
+    const Index columns = first.cols();
 
-    MatrixR concatenated(rows, 4 * columns);
+    MatrixR concatenated(rows, Index(gates.size()) * columns);
 
-    concatenated.leftCols(columns)                 = forget_matrix;
-    concatenated.middleCols(columns, columns)      = input.as_matrix();
-    concatenated.middleCols(2 * columns, columns)  = candidate.as_matrix();
-    concatenated.rightCols(columns)                = output.as_matrix();
+    for (size_t gate = 0; gate < gates.size(); ++gate)
+        concatenated.middleCols(Index(gate) * columns, columns) = gates[gate]->as_matrix();
 
     return concatenated;
 }
 
-VectorR concat_gate_biases(const TensorView& forget,
-                           const TensorView& input,
-                           const TensorView& candidate,
-                           const TensorView& output)
+VectorR concat_gate_biases(span<const TensorView* const> gates)
 {
-    const VectorMap forget_vector = forget.as_vector();
-    const Index size = forget_vector.size();
+    const Index size = gates[0]->as_vector().size();
 
-    VectorR concatenated(4 * size);
+    VectorR concatenated(Index(gates.size()) * size);
 
-    concatenated.segment(0, size)        = forget_vector;
-    concatenated.segment(size, size)     = input.as_vector();
-    concatenated.segment(2 * size, size) = candidate.as_vector();
-    concatenated.segment(3 * size, size) = output.as_vector();
+    for (size_t gate = 0; gate < gates.size(); ++gate)
+        concatenated.segment(Index(gate) * size, size) = gates[gate]->as_vector();
 
     return concatenated;
 }
@@ -101,12 +90,12 @@ void zero_if_linked(const TensorView& view)
     if (view.get_data()) view.setZero();
 }
 
-void zero_linked(initializer_list<const TensorView*> views)
+void zero_linked(span<const TensorView* const> views)
 {
     for (const TensorView* view : views) zero_if_linked(*view);
 }
 
-void set_random_uniform_linked(initializer_list<const TensorView*> views, float min, float max)
+void set_random_uniform_linked(span<const TensorView* const> views, float min, float max)
 {
     for (const TensorView* view : views) set_random_uniform(view->as_vector(), min, max);
 }
@@ -133,73 +122,67 @@ vector<TensorSpec> LongShortTermMemoryOperator::parameter_specs() const
     if (output_features == 0)
         return {};
 
-    const Shape bias_shape{output_features};
-    const Shape input_weight_shape{input_features, output_features};
-    const Shape recurrent_weight_shape{output_features, output_features};
+    // Four gates each, in the order the gate accessors report: biases, then
+    // input weights, then recurrent weights.
+    vector<TensorSpec> specs;
+    specs.reserve(3 * GateCount);
 
+    for (const Shape& shape : {Shape{output_features},
+                               Shape{input_features, output_features},
+                               Shape{output_features, output_features}})
+        specs.insert(specs.end(), GateCount, {shape, compute_dtype});
+
+    return specs;
+}
+
+vector<Operator::ParameterSlot> LongShortTermMemoryOperator::parameter_slots()
+{
     return {
-        {bias_shape, compute_dtype},
-        {bias_shape, compute_dtype},
-        {bias_shape, compute_dtype},
-        {bias_shape, compute_dtype},
-        {input_weight_shape, compute_dtype},
-        {input_weight_shape, compute_dtype},
-        {input_weight_shape, compute_dtype},
-        {input_weight_shape, compute_dtype},
-        {recurrent_weight_shape, compute_dtype},
-        {recurrent_weight_shape, compute_dtype},
-        {recurrent_weight_shape, compute_dtype},
-        {recurrent_weight_shape, compute_dtype},
+        {&forget_bias,    &forget_bias_gradient},
+        {&input_bias,     &input_bias_gradient},
+        {&candidate_bias, &candidate_bias_gradient},
+        {&output_bias,    &output_bias_gradient},
+
+        {&forget_weights,    &forget_weight_gradient},
+        {&input_weights,     &input_weight_gradient},
+        {&candidate_weights, &candidate_weight_gradient},
+        {&output_weights,    &output_weight_gradient},
+
+        {&forget_recurrent_weights,    &forget_recurrent_weight_gradient},
+        {&input_recurrent_weights,     &input_recurrent_weight_gradient},
+        {&candidate_recurrent_weights, &candidate_recurrent_weight_gradient},
+        {&output_recurrent_weights,    &output_recurrent_weight_gradient},
     };
-}
-
-void LongShortTermMemoryOperator::link_parameters(span<const TensorView> views)
-{
-    link_views(views, {&forget_bias, &input_bias, &candidate_bias, &output_bias,
-                       &forget_weights, &input_weights, &candidate_weights, &output_weights,
-                       &forget_recurrent_weights, &input_recurrent_weights,
-                       &candidate_recurrent_weights, &output_recurrent_weights});
-}
-
-void LongShortTermMemoryOperator::link_gradients(span<const TensorView> views)
-{
-    link_views(views, {&forget_bias_gradient, &input_bias_gradient,
-                       &candidate_bias_gradient, &output_bias_gradient,
-                       &forget_weight_gradient, &input_weight_gradient,
-                       &candidate_weight_gradient, &output_weight_gradient,
-                       &forget_recurrent_weight_gradient, &input_recurrent_weight_gradient,
-                       &candidate_recurrent_weight_gradient, &output_recurrent_weight_gradient});
 }
 
 void LongShortTermMemoryOperator::set_parameters_random()
 {
+    // The forget gate starts biased open; the other three start at zero.
     if (forget_bias.get_data()) forget_bias.fill(1.0f);
-    zero_linked({&input_bias, &candidate_bias, &output_bias});
+    const GateViews biases = gate_biases();
+    zero_linked(span(biases).subspan(1));
 
     if (forget_weights.get_data())
-        set_random_uniform_linked({&forget_weights, &input_weights,
-                                   &candidate_weights, &output_weights}, -0.1f, 0.1f);
+        set_random_uniform_linked(gate_weights(), -0.1f, 0.1f);
 
     if (forget_recurrent_weights.get_data())
-        set_random_uniform_linked({&forget_recurrent_weights, &input_recurrent_weights,
-                                   &candidate_recurrent_weights, &output_recurrent_weights}, -0.1f, 0.1f);
+        set_random_uniform_linked(gate_recurrent_weights(), -0.1f, 0.1f);
 }
 
 void LongShortTermMemoryOperator::set_parameters_glorot()
 {
     if (forget_bias.get_data()) forget_bias.fill(1.0f);
-    zero_linked({&input_bias, &candidate_bias, &output_bias});
+    const GateViews biases = gate_biases();
+    zero_linked(span(biases).subspan(1));
 
     if (forget_weights.get_data())
     {
         const float limit = glorot_limit(input_features, output_features);
-        set_random_uniform_linked({&forget_weights, &input_weights,
-                                   &candidate_weights, &output_weights}, -limit, limit);
+        set_random_uniform_linked(gate_weights(), -limit, limit);
     }
 
     if (forget_recurrent_weights.get_data())
-        for (TensorView* recurrent : {&forget_recurrent_weights, &input_recurrent_weights,
-                                      &candidate_recurrent_weights, &output_recurrent_weights})
+        for (const TensorView* recurrent : gate_recurrent_weights())
             set_random_orthogonal(recurrent->as_matrix());
 }
 
@@ -208,16 +191,13 @@ void LongShortTermMemoryOperator::set_parameters_pytorch()
     const float limit = 1.0f / sqrt(float(output_features > 0 ? output_features : 1));
 
     if (forget_bias.get_data())
-        set_random_uniform_linked({&forget_bias, &input_bias,
-                                   &candidate_bias, &output_bias}, -limit, limit);
+        set_random_uniform_linked(gate_biases(), -limit, limit);
 
     if (forget_weights.get_data())
-        set_random_uniform_linked({&forget_weights, &input_weights,
-                                   &candidate_weights, &output_weights}, -limit, limit);
+        set_random_uniform_linked(gate_weights(), -limit, limit);
 
     if (forget_recurrent_weights.get_data())
-        set_random_uniform_linked({&forget_recurrent_weights, &input_recurrent_weights,
-                                   &candidate_recurrent_weights, &output_recurrent_weights}, -limit, limit);
+        set_random_uniform_linked(gate_recurrent_weights(), -limit, limit);
 }
 
 #ifdef OPENNN_HAS_ONEDNN
@@ -930,12 +910,9 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
 
     if (H >= 96)
     {
-        const MatrixR Wcat = concat_gate_columns(forget_weights, input_weights,
-                                                 candidate_weights, output_weights);
-        const MatrixR Ucat = concat_gate_columns(forget_recurrent_weights, input_recurrent_weights,
-                                                 candidate_recurrent_weights, output_recurrent_weights);
-        const VectorR bcat = concat_gate_biases(forget_bias, input_bias,
-                                                candidate_bias, output_bias);
+        const MatrixR Wcat = concat_gate_columns(gate_weights());
+        const MatrixR Ucat = concat_gate_columns(gate_recurrent_weights());
+        const VectorR bcat = concat_gate_biases(gate_biases());
 
         const Index BT = batch_size * T;
         MatrixR Zin(BT, 4 * H);
@@ -1300,12 +1277,9 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
 {
     if (!input.get_data() || !output_delta.get_data() || output_features == 0 || time_steps == 0) return;
 
-    zero_linked({&forget_bias_gradient, &input_bias_gradient,
-                 &candidate_bias_gradient, &output_bias_gradient,
-                 &forget_weight_gradient, &input_weight_gradient,
-                 &candidate_weight_gradient, &output_weight_gradient,
-                 &forget_recurrent_weight_gradient, &input_recurrent_weight_gradient,
-                 &candidate_recurrent_weight_gradient, &output_recurrent_weight_gradient});
+    zero_linked(gate_bias_gradients());
+    zero_linked(gate_weight_gradients());
+    zero_linked(gate_recurrent_weight_gradients());
 
     const Index batch_size = input.get_shape()[0];
     const Index F = input_features;
@@ -1365,10 +1339,8 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
         VectorMap gbg_v = candidate_bias_gradient.as_vector();
         VectorMap gbo_v = output_bias_gradient.as_vector();
 
-        const MatrixR Wcat = concat_gate_columns(forget_weights, input_weights,
-                                                 candidate_weights, output_weights);
-        const MatrixR Ucat = concat_gate_columns(forget_recurrent_weights, input_recurrent_weights,
-                                                 candidate_recurrent_weights, output_recurrent_weights);
+        const MatrixR Wcat = concat_gate_columns(gate_weights());
+        const MatrixR Ucat = concat_gate_columns(gate_recurrent_weights());
 
         MatrixR gWcat = MatrixR::Zero(F, 4 * H);
         MatrixR gUcat = MatrixR::Zero(H, 4 * H);
@@ -1727,7 +1699,6 @@ void LongShortTermMemoryOperator::unpack_gradients_from_cudnn_(Buffer& backward_
                             weight_gradients, bias_gradients,
                             backward_scratch);
 }
-
 void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
                                       TensorView& output,
                                       TensorView& sequence_output_scratch,
@@ -1741,66 +1712,10 @@ void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
     const Index batch_size = input.get_shape()[0];
     if (!input.get_data() || output_features == 0 || time_steps == 0 || batch_size == 0) return;
 
-    const auto backend_lock = lock_backend_state();
-
-    CudnnRnnShapeSlot& shape = ensure_cudnn_setup_(batch_size, is_training);
-    prepare_cudnn_forward_state_(forward_state, is_training, shape);
-    pack_weights_to_cudnn_(forward_state, parameters_version);
-
-    const void* x_data = input.get_data();
-    void* y_data = sequence_output_scratch.get_data();
-    if (shape.time_major)
-    {
-        PROFILE_SCOPE("rnn:transpose_input");
-        const Index cudnn_input_features = shape.input_features;
-        input.dispatch([&]<typename Scalar>()
-        {
-            batch_time_to_time_batch_padded_cuda<Scalar>(
-                batch_size, time_steps, input_features, cudnn_input_features,
-                input.as<Scalar>(), cudnn_input_sequence.as<Scalar>());
-        });
-        x_data = cudnn_input_sequence.get_data();
-        y_data = cudnn_output_sequence.get_data();
-    }
-
-    cudnn_rnn_forward_(shape, is_training, true,
-                       x_data, y_data,
-                       forward_state,
-                       [&]() -> CudnnRnnShapeSlot& {
-                           CudnnRnnShapeSlot& retry_shape =
-                               ensure_cudnn_setup_(batch_size, is_training);
-                           prepare_cudnn_forward_state_(forward_state, is_training,
-                                                        retry_shape);
-                           pack_weights_to_cudnn_(forward_state, parameters_version);
-                           return retry_shape;
-                       });
-
-    if (return_seq && shape.time_major)
-    {
-        PROFILE_SCOPE("rnn:transpose_output");
-        output.dispatch([&]<typename Scalar>()
-        {
-            time_batch_to_batch_time_cuda<Scalar>(
-                batch_size, time_steps, output_features,
-                cudnn_output_sequence.as<Scalar>(), output.as<Scalar>());
-        });
-    }
-    else if (return_seq)
-        copy(sequence_output_scratch, output);
-    else if (shape.time_major)
-        output.dispatch([&]<typename Scalar>()
-        {
-            gather_time_major_slice_cuda<Scalar>(
-                batch_size, time_steps, output_features, time_steps - 1,
-                cudnn_output_sequence.as<Scalar>(), output.as<Scalar>());
-        });
-    else
-        output.dispatch([&]<typename Scalar>()
-        {
-            gather_time_slice_cuda<Scalar>(
-                batch_size, time_steps, output_features, time_steps - 1,
-                sequence_output_scratch.as<Scalar>(), output.as<Scalar>());
-        });
+    drive_cudnn_forward_({input_features, output_features, time_steps, return_seq, true},
+                         input, sequence_output_scratch, output,
+                         cudnn_input_sequence, cudnn_output_sequence,
+                         forward_state, is_training, parameters_version);
 }
 
 void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
@@ -1818,69 +1733,13 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
     if (!input.get_data() || !output_delta.get_data()
         || output_features == 0 || time_steps == 0) return;
 
-    const Index batch_size = input.get_shape()[0];
-    if (batch_size == 0) return;
-    const auto backend_lock = lock_backend_state();
+    if (input.get_shape()[0] == 0) return;
 
-    CudnnRnnShapeSlot& shape = ensure_cudnn_setup_(batch_size, true);
-
-    const Index H = output_features;
-    const Index T = time_steps;
-
-    const void* dy_data = output_delta.get_data();
-    if (return_seq && shape.time_major)
-    {
-        PROFILE_SCOPE("rnn:transpose_delta");
-        output_delta.dispatch([&]<typename Scalar>()
-        {
-            batch_time_to_time_batch_cuda<Scalar>(
-                batch_size, T, H,
-                output_delta.as<Scalar>(), sequence_delta_scratch.as<Scalar>());
-        });
-        dy_data = sequence_delta_scratch.get_data();
-    }
-    else if (!return_seq)
-    {
-        device::set_zero_async(sequence_delta_scratch.get_data(),
-                               sequence_delta_scratch.byte_size(),
-                               device::get_compute_stream());
-        output_delta.dispatch([&]<typename Scalar>()
-        {
-            if (shape.time_major)
-                scatter_time_major_slice_cuda<Scalar>(
-                    batch_size, T, H, T - 1,
-                    output_delta.as<Scalar>(), sequence_delta_scratch.as<Scalar>());
-            else
-                scatter_time_slice_cuda<Scalar>(
-                    batch_size, T, H, T - 1,
-                    output_delta.as<Scalar>(), sequence_delta_scratch.as<Scalar>());
-        });
-        dy_data = sequence_delta_scratch.get_data();
-    }
-
-    const void* x_data = shape.time_major
-        ? cudnn_input_sequence.get_data() : input.get_data();
-    const void* y_data = shape.time_major
-        ? cudnn_output_sequence.get_data() : sequence_output.get_data();
-    void* dx_data = shape.time_major || !input_delta.get_data()
-        ? input_delta_scratch.get_data() : input_delta.get_data();
-
-    cudnn_rnn_backward_(shape, true,
-                        x_data, y_data, dy_data, dx_data,
-                        forward_state, backward_scratch);
-
-    if (shape.time_major && input_delta.get_data())
-    {
-        PROFILE_SCOPE("rnn:transpose_input_delta");
-        input_delta.dispatch([&]<typename Scalar>()
-        {
-            time_batch_to_batch_time_cropped_cuda<Scalar>(
-                batch_size, T, input_features, shape.input_features,
-                input_delta_scratch.as<Scalar>(), input_delta.as<Scalar>());
-        });
-    }
-
-    unpack_gradients_from_cudnn_(backward_scratch);
+    drive_cudnn_backward_({input_features, output_features, time_steps, return_seq, true},
+                          input, sequence_output, output_delta,
+                          cudnn_input_sequence, cudnn_output_sequence,
+                          input_delta, sequence_delta_scratch, input_delta_scratch,
+                          forward_state, backward_scratch);
 }
 
 #else

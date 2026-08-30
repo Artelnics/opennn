@@ -45,14 +45,13 @@ vector<TensorSpec> RecurrentOperator::parameter_specs() const
     };
 }
 
-void RecurrentOperator::link_parameters(span<const TensorView> views)
+vector<Operator::ParameterSlot> RecurrentOperator::parameter_slots()
 {
-    link_views(views, {&bias, &input_weights, &recurrent_weights});
-}
-
-void RecurrentOperator::link_gradients(span<const TensorView> views)
-{
-    link_views(views, {&bias_gradient, &input_weight_gradient, &recurrent_weight_gradient});
+    return {
+        {&bias,              &bias_gradient},
+        {&input_weights,     &input_weight_gradient},
+        {&recurrent_weights, &recurrent_weight_gradient},
+    };
 }
 
 void RecurrentOperator::set_parameters_random()
@@ -556,7 +555,6 @@ void RecurrentOperator::unpack_gradients_from_cudnn_(Buffer& backward_scratch) c
                             weight_gradients, bias_gradients,
                             backward_scratch);
 }
-
 void RecurrentOperator::apply_gpu_cudnn_(const TensorView& input,
                                          TensorView& hidden_states,
                                          TensorView& output,
@@ -566,67 +564,10 @@ void RecurrentOperator::apply_gpu_cudnn_(const TensorView& input,
                                          bool is_training,
                                          uint64_t parameters_version) const
 {
-    const Index batch_size = input.get_shape()[0];
-    const auto backend_lock = lock_backend_state();
-
-    CudnnRnnShapeSlot& shape = ensure_cudnn_setup_(batch_size, is_training);
-    prepare_cudnn_forward_state_(forward_state, is_training, shape);
-    pack_weights_to_cudnn_(forward_state, parameters_version);
-
-    const void* x_data = input.get_data();
-    void* y_data = hidden_states.get_data();
-    if (shape.time_major)
-    {
-        PROFILE_SCOPE("rnn:transpose_input");
-        const Index cudnn_input_features = shape.input_features;
-        input.dispatch([&]<typename Scalar>()
-        {
-            batch_time_to_time_batch_padded_cuda<Scalar>(
-                batch_size, time_steps, input_features, cudnn_input_features,
-                input.as<Scalar>(), cudnn_input_sequence.as<Scalar>());
-        });
-        x_data = cudnn_input_sequence.get_data();
-        y_data = cudnn_output_sequence.get_data();
-    }
-
-    cudnn_rnn_forward_(shape, is_training, false,
-                       x_data, y_data,
-                       forward_state,
-                       [&]() -> CudnnRnnShapeSlot& {
-                           CudnnRnnShapeSlot& retry_shape =
-                               ensure_cudnn_setup_(batch_size, is_training);
-                           prepare_cudnn_forward_state_(forward_state, is_training,
-                                                        retry_shape);
-                           pack_weights_to_cudnn_(forward_state, parameters_version);
-                           return retry_shape;
-                       });
-
-    if (return_sequences && shape.time_major)
-    {
-        PROFILE_SCOPE("rnn:transpose_output");
-        output.dispatch([&]<typename Scalar>()
-        {
-            time_batch_to_batch_time_cuda<Scalar>(
-                batch_size, time_steps, output_features,
-                cudnn_output_sequence.as<Scalar>(), output.as<Scalar>());
-        });
-    }
-    else if (return_sequences)
-        copy(hidden_states, output);
-    else if (shape.time_major)
-        output.dispatch([&]<typename Scalar>()
-        {
-            gather_time_major_slice_cuda<Scalar>(
-                batch_size, time_steps, output_features, time_steps - 1,
-                cudnn_output_sequence.as<Scalar>(), output.as<Scalar>());
-        });
-    else
-        output.dispatch([&]<typename Scalar>()
-        {
-            gather_time_slice_cuda<Scalar>(
-                batch_size, time_steps, output_features, time_steps - 1,
-                hidden_states.as<Scalar>(), output.as<Scalar>());
-        });
+    drive_cudnn_forward_({input_features, output_features, time_steps, return_sequences, false},
+                         input, hidden_states, output,
+                         cudnn_input_sequence, cudnn_output_sequence,
+                         forward_state, is_training, parameters_version);
 }
 
 void RecurrentOperator::apply_delta_gpu_cudnn_(const TensorView& input,
@@ -640,70 +581,11 @@ void RecurrentOperator::apply_delta_gpu_cudnn_(const TensorView& input,
                                                const Buffer& forward_state,
                                                Buffer& backward_scratch) const
 {
-    const Index batch_size = input.get_shape()[0];
-    const Index H = output_features;
-    const Index T = time_steps;
-    const auto backend_lock = lock_backend_state();
-
-    CudnnRnnShapeSlot& shape = ensure_cudnn_setup_(batch_size, true);
-
-    const void* dy_data = output_delta.get_data();
-    if (return_sequences && shape.time_major)
-    {
-        PROFILE_SCOPE("rnn:transpose_delta");
-        output_delta.dispatch([&]<typename Scalar>()
-        {
-            batch_time_to_time_batch_cuda<Scalar>(
-                batch_size, T, H,
-                output_delta.as<Scalar>(), sequence_delta_scratch.as<Scalar>());
-        });
-        dy_data = sequence_delta_scratch.get_data();
-    }
-    else if (!return_sequences)
-    {
-        device::set_zero_async(sequence_delta_scratch.get_data(),
-                               sequence_delta_scratch.byte_size(),
-                               device::get_compute_stream());
-        if (shape.time_major)
-            output_delta.dispatch([&]<typename Scalar>()
-            {
-                scatter_time_major_slice_cuda<Scalar>(
-                    batch_size, T, H, T - 1,
-                    output_delta.as<Scalar>(), sequence_delta_scratch.as<Scalar>());
-            });
-        else
-            output_delta.dispatch([&]<typename Scalar>()
-            {
-                scatter_time_slice_cuda<Scalar>(
-                    batch_size, T, H, T - 1,
-                    output_delta.as<Scalar>(), sequence_delta_scratch.as<Scalar>());
-            });
-        dy_data = sequence_delta_scratch.get_data();
-    }
-
-    const void* x_data = shape.time_major
-        ? cudnn_input_sequence.get_data() : input.get_data();
-    const void* y_data = shape.time_major
-        ? cudnn_output_sequence.get_data() : hidden_states.get_data();
-    void* dx_data = shape.time_major || !input_delta.get_data()
-        ? input_delta_scratch.get_data() : input_delta.get_data();
-
-    cudnn_rnn_backward_(shape, false,
-                        x_data, y_data, dy_data, dx_data,
-                        forward_state, backward_scratch);
-
-    if (shape.time_major && input_delta.get_data())
-    {
-        PROFILE_SCOPE("rnn:transpose_input_delta");
-        input_delta.dispatch([&]<typename Scalar>()
-        {
-            time_batch_to_batch_time_cropped_cuda<Scalar>(
-                batch_size, T, input_features, shape.input_features,
-                input_delta_scratch.as<Scalar>(), input_delta.as<Scalar>());
-        });
-    }
-
-    unpack_gradients_from_cudnn_(backward_scratch);
+    drive_cudnn_backward_({input_features, output_features, time_steps, return_sequences, false},
+                          input, hidden_states, output_delta,
+                          cudnn_input_sequence, cudnn_output_sequence,
+                          input_delta, sequence_delta_scratch, input_delta_scratch,
+                          forward_state, backward_scratch);
 }
 
 void RecurrentOperator::apply_gpu(const TensorView& input,

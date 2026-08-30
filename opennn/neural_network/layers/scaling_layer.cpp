@@ -23,9 +23,36 @@
 namespace opennn
 {
 
-static void scale_gpu(const TensorView&, const TensorView&, const TensorView&,
-                      const TensorView&, const TensorView&, const TensorView&,
-                      float, float, TensorView&, bool unscale);
+#ifdef OPENNN_HAS_CUDA
+
+static void scale_gpu(const TensorView& input,
+               const TensorView& minimums, const TensorView& maximums,
+               const TensorView& means, const TensorView& standard_deviations,
+               const TensorView& scalers,
+               float min_range, float max_range,
+               TensorView& output, bool inverse)
+{
+    const Index features = scalers.size();
+
+    visit_type_pair<Type::FP32, Type::BF16>(input.get_type(), output.get_type(), [&]<typename TIn, typename TOut>() {
+        scale_cuda<TIn, TOut>(output.size(), to_int(features),
+                              input.as<TIn>(),
+                              minimums.as_float(),
+                              maximums.as_float(),
+                              means.as_float(),
+                              standard_deviations.as_float(),
+                              scalers.as_float(),
+                              min_range, max_range,
+                              output.as<TOut>(),
+                              inverse);
+    });
+}
+
+#else
+
+OPENNN_CUDA_TEMPLATE_STUB(scale_gpu)
+
+#endif
 
 template<typename Column>
 static void scale_column_cpu(Column& column, ScalerMethod method,
@@ -170,40 +197,6 @@ void unscale(const TensorView& input,
     scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
               min_range, max_range, output, true);
 }
-
-#ifdef OPENNN_HAS_CUDA
-
-static void scale_gpu(const TensorView& input,
-               const TensorView& minimums, const TensorView& maximums,
-               const TensorView& means, const TensorView& standard_deviations,
-               const TensorView& scalers,
-               float min_range, float max_range,
-               TensorView& output, bool inverse)
-{
-    const Index features = scalers.size();
-
-    visit_type_pair<Type::FP32, Type::BF16>(input.get_type(), output.get_type(), [&]<typename TIn, typename TOut>() {
-        scale_cuda<TIn, TOut>(output.size(), to_int(features),
-                              input.as<TIn>(),
-                              minimums.as_float(),
-                              maximums.as_float(),
-                              means.as_float(),
-                              standard_deviations.as_float(),
-                              scalers.as_float(),
-                              min_range, max_range,
-                              output.as<TOut>(),
-                              inverse);
-    });
-}
-
-#else
-
-OPENNN_CUDA_STUB(void, scale_gpu,
-                 (const TensorView&, const TensorView&, const TensorView&,
-                  const TensorView&, const TensorView&, const TensorView&,
-                  float, float, TensorView&, bool))
-
-#endif
 
 void ScaleOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
 {
