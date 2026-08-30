@@ -8,6 +8,8 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/layers/grouped_query_attention_layer.h"
 #include "opennn/neural_network/neural_network.h"
+#include "opennn/core/configuration.h"
+#include "opennn/core/device_backend.h"
 
 using namespace opennn;
 
@@ -215,4 +217,89 @@ TEST(GroupedQueryAttentionTest, KvCacheIsIsolatedUntilExplicitlyShared)
 
     EXPECT_EQ(shared.layer_session_state_storage,
               first.layer_session_state_storage);
+}
+
+// The batched cuDNN SDPA graph -- the one grouped_attention_sdpa_gpu builds --
+// is reached only with a batch above one, which skips the KV-cache path, and
+// only in BF16, the sole dtype it accepts. Nothing exercised it: a probe on
+// that call site counted zero executions across the whole suite, while the
+// prefill graph ran 74 times.
+TEST(GroupedQueryAttentionTest, Bf16BatchedAttentionMatchesCpu)
+{
+    if (!device::has_cuda_device())
+        GTEST_SKIP() << "No CUDA device.";
+
+    const Index batch = 2, seq = 6, hidden = 32;
+    const Index q_heads = 4, kv_heads = 2, head_dim = 16;
+    const Index qd = q_heads * head_dim, kd = kv_heads * head_dim;
+
+    const auto build = [&]
+    {
+        auto network = make_unique<NeuralNetwork>();
+        network->add_layer(make_unique<GroupedQueryAttention>(
+            Shape{seq, hidden}, q_heads, kv_heads, head_dim,
+            1000000.0f, 1.0e-6f, false, "attn"));
+        network->compile();
+        return network;
+    };
+
+    mt19937 rng(4242);
+    normal_distribution<float> distribution(0.0f, 0.15f);
+    const auto sample = [&](size_t count)
+    {
+        vector<float> values(count);
+        for (auto& value : values) value = distribution(rng);
+        return values;
+    };
+
+    const vector<float> wq = sample(size_t(qd) * hidden);
+    const vector<float> wk = sample(size_t(kd) * hidden);
+    const vector<float> wv = sample(size_t(kd) * hidden);
+    const vector<float> wo = sample(size_t(hidden) * qd);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    const auto cpu_network = build();
+
+    // GroupedQueryAttention is inference-only: set_parameters_random sets the
+    // QK-norm vectors and leaves the four projections at zero, which would make
+    // this compare zeros against zeros. The weights have to be written in.
+    {
+        auto& views = cpu_network->get_layer(Index(0))->get_parameter_views();
+        ASSERT_EQ(views.size(), size_t(4));
+        const auto put = [](TensorView& view, const vector<float>& source)
+            { copy(source.begin(), source.end(), view.as<float>()); };
+        put(views[0], wq); put(views[1], wk); put(views[2], wv); put(views[3], wo);
+    }
+
+    const VectorR parameters = cpu_network->get_parameters_map();
+
+    Tensor3 inputs(batch, seq, hidden);
+    for (Index i = 0; i < inputs.size(); ++i)
+        inputs.data()[i] = distribution(rng);
+
+    const MatrixR cpu_outputs = cpu_network->calculate_outputs(inputs);
+
+    // Guards the comparison below against being vacuously satisfied.
+    ASSERT_GT(cpu_outputs.array().abs().maxCoeff(), 1.0e-6f);
+
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+
+    const auto gpu_network = build();
+    gpu_network->set_parameters(parameters);
+    const MatrixR gpu_outputs = gpu_network->calculate_outputs(inputs);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
+    ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
+    ASSERT_GT(gpu_outputs.array().abs().maxCoeff(), 1.0e-6f);
+
+    const float max_difference =
+        (cpu_outputs - gpu_outputs).array().abs().maxCoeff();
+
+    // Measured 1.9e-3 on an RTX 3060; the bound leaves about five times that.
+    EXPECT_LT(max_difference, 1.0e-2f)
+        << "Max FP32 CPU vs BF16 GPU forward output difference: "
+        << max_difference;
 }
