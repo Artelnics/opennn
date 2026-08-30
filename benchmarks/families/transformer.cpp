@@ -62,6 +62,9 @@ double resident_mb()
 constexpr Index SEED = 42;
 constexpr Index BF16_SDPA_MIN_SEQUENCE = 128;
 
+// A threshold no corpus reaches, which is how the materialized path is selected.
+constexpr Index SDPA_MATERIALIZED_ONLY = numeric_limits<Index>::max();
+
 struct Options
 {
     Index d_model = 512;
@@ -124,11 +127,23 @@ unique_ptr<Transformer> build(LanguageDataset& dataset, const Options& options)
     //
     // The reference cuDNN 9.25 supports this graph; older runtimes stay on the
     // materialized path because some reject the 130-token plan outright.
-    if(use_bf16_sdpa(options))
-    {
-        transformer->set_attention_sdpa_min_sequence_length(
-            BF16_SDPA_MIN_SEQUENCE);
-    }
+    //
+    // Saying that was not enough to make it happen. This only ever lowered the
+    // threshold, so on a runtime below 9.25 the library default of 192 still
+    // put a 256-token corpus on the fused path -- the one this comment says to
+    // avoid there. Measured on cuDNN 9.10 with an RTX 3060, three interleaved
+    // pairs to cancel the thermal drift a laptop shows across a sequential
+    // sweep: 44,523 tokens/s fused against 47,064 materialized, fused losing
+    // every pair. In the attention scope alone fused was 6.2x slower forward
+    // and 5.5x slower backward, at 4.1 GB/s against 126.3, while Adam in the
+    // same run held 303.7 GB/s of a ~336 GB/s card. So the fused kernel is
+    // picking a poor engine for this shape on this architecture, not competing
+    // for bandwidth.
+    //
+    // Both branches are stated now, so the runtime decides the path rather than
+    // the library default deciding it by omission.
+    transformer->set_attention_sdpa_min_sequence_length(
+        use_bf16_sdpa(options) ? BF16_SDPA_MIN_SEQUENCE : SDPA_MATERIALIZED_ONLY);
 
     return transformer;
 }
