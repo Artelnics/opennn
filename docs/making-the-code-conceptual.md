@@ -252,7 +252,7 @@ Then, and only if asked:
 - **Both builds must pass, both suites at baseline.** `build-cpu-verification`
   and `build-resnet-capacity`. The CUDA build compiles `.cu` paths the CPU build
   never sees, so a green CPU build proves little on its own.
-- **Current baseline: CPU 983 passed / 28 skipped, GPU 1105 passed / 6 skipped,
+- **Current baseline: CPU 988 passed / 28 skipped, GPU 1115 passed / 6 skipped,
   zero failures, one disabled test.** Update this line if the count legitimately
   changes, and say why in the commit.
 
