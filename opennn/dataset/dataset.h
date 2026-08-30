@@ -299,6 +299,11 @@ public:
                             const FeatureSelection&,
                             FillMode) const;
 
+    // Whether fill_batch will gather this batch on the device rather than on
+    // the host. Residency alone does not decide it, so anything that plans
+    // around the device path has to ask this and not is_device_resident().
+    bool can_device_gather(const Batch&, const FeatureSelection&) const;
+
 protected:
 
     Dataset() = default;
@@ -307,8 +312,6 @@ protected:
                          const vector<Index>& sample_indices,
                          const FeatureSelection&,
                          FillMode) const;
-
-    bool can_device_gather(const Batch&, const FeatureSelection&) const;
 
     DeviceGather& start_device_gather(Batch&,
                                       const vector<Index>& sample_indices,

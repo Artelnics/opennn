@@ -379,6 +379,51 @@ TEST_F(AdaptiveMomentEstimationTest, CudaGraphCapturesTransformerStepUnfusedFp32
     expect_transformer_step_captures(Type::FP32, 1 << 20);
 }
 
+// A device-resident dataset only takes the gathered fill when the columns are
+// also contiguous. Dropping a middle input column leaves it resident but not
+// gatherable, and the epoch has to notice: the gathered branch hands the host
+// batch back before uploading, so choosing it here uploads a slot nobody
+// filled. Both runs train the same model on the same data and must agree.
+static float error_with_gap_column(bool resident)
+{
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    set_seed(1);
+    TabularDataset dataset(32, {2}, {1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    // Put the target between the two inputs. The counts do not change, so the
+    // model is identical; only features.inputs stops being contiguous.
+    dataset.set_variable_role(Index(1), VariableRole::Target);
+    dataset.set_variable_role(Index(2), VariableRole::Input);
+
+    if (resident)
+        dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+
+    ApproximationNetwork network({2}, {6}, {1});
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    AdaptiveMomentEstimation adam(&loss);
+    adam.set_batch_size(4);
+    adam.set_cuda_graph(true);
+    adam.set_maximum_epochs(1);
+    adam.set_display(false);
+
+    return adam.train().get_training_error();
+}
+
+TEST_F(AdaptiveMomentEstimationTest, ResidentNonContiguousInputsTrainOnTheirOwnData)
+{
+    const float host_error = error_with_gap_column(false);
+    const float resident_error = error_with_gap_column(true);
+
+    ASSERT_TRUE(isfinite(host_error));
+    EXPECT_TRUE(isfinite(resident_error));
+    EXPECT_NEAR(resident_error, host_error, 1.0e-4f * max(1.0f, abs(host_error)));
+}
+
 TEST_F(AdaptiveMomentEstimationTest, CudaGraphGroupedResidentBf16Replay)
 {
     Configuration::instance().set(Device::CUDA, Type::BF16);

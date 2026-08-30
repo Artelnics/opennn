@@ -1528,7 +1528,14 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     // contiguous. The branch below hands the host batch back to the empty queue
     // and uploads from a slot that only a device gather would have filled, so
     // asking the weaker question trains on whatever the slot happened to hold.
-    const bool resident_gather = loss->get_dataset()->is_device_resident();
+    // Residency is not what selects the device path -- fill_batch also demands
+    // that there be no decoder and that the input and target columns each be
+    // contiguous. The branch below hands the host batch back to the empty queue
+    // and uploads from a slot that only a device gather would have filled, so
+    // asking the weaker question trains on whatever the slot happened to hold,
+    // which for a fresh arena is zeros and a training error of exactly 0.
+    const bool resident_gather =
+        loss->get_dataset()->can_device_gather(*training_session.fixed_batch(), features);
 
     const Index M = recurrent_graph_group_size(neural_network,
                                                 forward_propagation.batch_size);
