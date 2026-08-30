@@ -525,6 +525,14 @@ double AttentionOperator::forward_bytes(ForwardPropagation& forward_propagation,
                         * double(query_sequence_length)
                         * double(source_sequence_length);
 
+    // concatenate_output_heads runs whenever the heads were not written
+    // interleaved -- which is not the same condition as being unfused, since a
+    // fused pass without interleaved heads still permutes -- and it reads the
+    // result back to write it out. Leaving it out understated both paths that
+    // pay it against the one that does not.
+    if (!(fused && interleaved_heads))
+        elements += 2.0 * double(attention_out.size());
+
     return element_bytes * elements;
 }
 
