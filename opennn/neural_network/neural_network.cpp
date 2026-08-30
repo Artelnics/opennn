@@ -541,8 +541,6 @@ Index NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& sou
 
     source_layers.push_back(resolved_sources);
 
-    first_trainable_cache_ = -1;
-    last_trainable_cache_  = -1;
     linked_gradient_base   = nullptr;
 
     return ssize(layers) - 1;
@@ -787,8 +785,6 @@ void NeuralNetwork::clear()
 
     output_variables.clear();
 
-    first_trainable_cache_ = -1;
-    last_trainable_cache_  = -1;
     linked_gradient_base   = nullptr;
 }
 
@@ -802,10 +798,6 @@ void NeuralNetwork::steal_from(NeuralNetwork& src)
     source_layers    = std::move(src.source_layers);
     input_variables  = std::move(src.input_variables);
     output_variables = std::move(src.output_variables);
-    first_trainable_cache_ = src.first_trainable_cache_;
-    last_trainable_cache_  = src.last_trainable_cache_;
-    src.first_trainable_cache_ = -1;
-    src.last_trainable_cache_  = -1;
     linked_gradient_base       = nullptr;
     src.linked_gradient_base   = nullptr;
     link_parameters();
@@ -900,27 +892,26 @@ uint64_t NeuralNetwork::state_layout_fingerprint() const
     return hash;
 }
 
+// Scanned rather than cached. Every caller is setup -- BackPropagation::set,
+// the delta layout, the two lifetime planners and setup_arena -- so the scan
+// runs a handful of times per training run over a few dozen layers. The cache
+// this replaces was invalidated on add_layer, clear, steal_from and from_JSON,
+// all structural changes, and so missed Layer::set_is_trainable: freezing a
+// layer after any query left the stale range in place, and a fine-tune that
+// froze, trained, unfroze and trained again kept back-propagating over the
+// frozen range.
 Index NeuralNetwork::get_first_trainable_layer_index() const
 {
-    if (first_trainable_cache_ >= 0) return first_trainable_cache_;
+    const auto trainable = ranges::find_if(
+        layers, [](const unique_ptr<Layer>& layer) { return layer->get_is_trainable(); });
 
-    auto it = ranges::find_if(layers,
-                              [](const unique_ptr<Layer>& layer) { return layer->get_is_trainable(); });
-
-    if (it == layers.end()) return -1;
-
-    first_trainable_cache_ = distance(layers.begin(), it);
-    return first_trainable_cache_;
+    return trainable == layers.end() ? -1 : distance(layers.begin(), trainable);
 }
 
 Index NeuralNetwork::get_last_trainable_layer_index() const
 {
-    if (last_trainable_cache_ >= 0) return last_trainable_cache_;
-
-    const Index layers_number = get_layers_number();
-    for (Index i = layers_number - 1; i >= 0; --i)
-        if (layers[i]->get_is_trainable())
-            return last_trainable_cache_ = i;
+    for (Index i = get_layers_number() - 1; i >= 0; --i)
+        if (layers[i]->get_is_trainable()) return i;
 
     return -1;
 }
@@ -1596,8 +1587,6 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     layers.clear();
     source_layers.clear();
     layers.reserve(layers_number);
-    first_trainable_cache_ = -1;
-    last_trainable_cache_  = -1;
     linked_gradient_base   = nullptr;
 
     const Json* items_array = layers_container->find("Items");

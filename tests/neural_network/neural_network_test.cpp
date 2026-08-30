@@ -894,3 +894,37 @@ TEST(NeuralNetworkTest, CalculateOutputsEmpty)
 
     EXPECT_EQ(outputs.size(), 0);
 }
+
+// NeuralNetwork caches the first and last trainable layer indices and
+// invalidates them only on structural change: add_layer, clear, steal_from and
+// from_JSON. Layer::set_is_trainable is a public mutator that changes what
+// those caches hold and invalidates neither, so freezing or unfreezing after
+// any query leaves the stale range in place. BackPropagation plans the backward
+// arena and decides which layers get gradients from exactly that range, and a
+// fine-tune freezes, trains, unfreezes and trains again.
+TEST(NeuralNetworkTest, TrainableRangeFollowsFreezingAfterItHasBeenQueried)
+{
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{4}, Shape{8}, "ReLU"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{8}, Shape{8}, "ReLU"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{8}, Shape{2}, "ReLU"));
+    neural_network.compile();
+
+    ASSERT_EQ(neural_network.get_layers_number(), 3);
+
+    // Warm the caches, exactly as constructing a BackPropagation does.
+    ASSERT_EQ(neural_network.get_first_trainable_layer_index(), 0);
+    ASSERT_EQ(neural_network.get_last_trainable_layer_index(), 2);
+
+    neural_network.get_layer(Index(0))->set_is_trainable(false);
+    EXPECT_EQ(neural_network.get_first_trainable_layer_index(), 1)
+        << "freezing the first layer left the trainable range where it was";
+
+    neural_network.get_layer(Index(2))->set_is_trainable(false);
+    EXPECT_EQ(neural_network.get_last_trainable_layer_index(), 1)
+        << "freezing the last layer left the trainable range where it was";
+
+    neural_network.get_layer(Index(0))->set_is_trainable(true);
+    EXPECT_EQ(neural_network.get_first_trainable_layer_index(), 0)
+        << "unfreezing the first layer left the trainable range where it was";
+}

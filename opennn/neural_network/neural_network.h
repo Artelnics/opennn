@@ -194,7 +194,6 @@ public:
     Index get_first_trainable_layer_index() const;
     Index get_last_trainable_layer_index() const;
 
-    void invalidate_trainable_layer_cache() { first_trainable_cache_ = -1; last_trainable_cache_ = -1; }
 
     Index get_inputs_number() const { return get_input_shape().size(); }
     Index get_outputs_number() const { return get_output_shape().size(); }
@@ -373,9 +372,6 @@ protected:
     bool training_activation_recomputation = false;
 
     mutable bool stale_configuration_warned = false;
-
-    mutable Index first_trainable_cache_ = -1;
-    mutable Index last_trainable_cache_  = -1;
 
     mutable const void* linked_gradient_base = nullptr;
 
