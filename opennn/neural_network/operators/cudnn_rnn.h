@@ -44,6 +44,11 @@ struct CudnnRnnConfig
     Type data_type = Type::FP32;
 };
 
+// cuDNN's RNN API took BFLOAT16 later than the rest of the library did, and it
+// answers NOT_SUPPORTED for every math type and precision when it cannot. The
+// answer is a property of the linked runtime, so it is asked once by asking.
+bool cudnn_rnn_supports_bf16();
+
 #endif
 
 struct CudnnRnnState

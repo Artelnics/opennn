@@ -13,6 +13,7 @@
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/dataset/language_dataset.h"
 #include "opennn/dataset/time_series_dataset.h"
+#include "opennn/neural_network/operators/cudnn_rnn.h"
 #include "opennn/neural_network/layers/convolutional_layer.h"
 #include "opennn/neural_network/layers/dense_layer.h"
 #include "opennn/neural_network/layers/embedding_layer.h"
@@ -1482,6 +1483,13 @@ TEST_F(GpuComparison, ForecastingLstmForward)
 
 TEST_F(GpuComparison, ForecastingRecurrentAndLstmBf16Forward)
 {
+    // cuDNN took BFLOAT16 in its RNN API later than elsewhere; on a runtime
+    // without it every math type and precision is rejected, and there is no
+    // FP32 fallback inside the driver to degrade to.
+    if (!cudnn_rnn_supports_bf16())
+        GTEST_SKIP() << "cuDNN " << cudnnGetVersion()
+                     << " has no BFLOAT16 recurrent support";
+
     constexpr Index samples_number = 7;
     constexpr Index past = 5;
     constexpr Index features = 3;
@@ -1647,6 +1655,13 @@ TEST_F(GpuComparison, ForecastingLstmGradient)
 
 TEST_F(GpuComparison, ForecastingRecurrentAndLstmBf16Gradient)
 {
+    // cuDNN took BFLOAT16 in its RNN API later than elsewhere; on a runtime
+    // without it every math type and precision is rejected, and there is no
+    // FP32 fallback inside the driver to degrade to.
+    if (!cudnn_rnn_supports_bf16())
+        GTEST_SKIP() << "cuDNN " << cudnnGetVersion()
+                     << " has no BFLOAT16 recurrent support";
+
     set_seed(17);
     TimeSeriesDataset dataset(30, {2}, {1});
     dataset.set_data_random();

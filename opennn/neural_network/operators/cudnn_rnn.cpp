@@ -17,6 +17,39 @@
 namespace opennn
 {
 
+bool cudnn_rnn_supports_bf16()
+{
+    static const bool supported = []
+    {
+        CudnnDescriptor<cudnnRNNDescriptor_t> rnn_desc;
+        CudnnDescriptor<cudnnDropoutDescriptor_t> dropout_desc;
+
+        if (cudnnCreateRNNDescriptor(&rnn_desc.handle) != CUDNN_STATUS_SUCCESS)
+            return false;
+        rnn_desc.deleter = &cudnnDestroyRNNDescriptor;
+
+        if (cudnnCreateDropoutDescriptor(&dropout_desc.handle) != CUDNN_STATUS_SUCCESS)
+            return false;
+        dropout_desc.deleter = &cudnnDestroyDropoutDescriptor;
+
+        cudnnSetDropoutDescriptor(dropout_desc, device::get_cudnn_handle(),
+                                  0.0f, nullptr, 0, 0ULL);
+
+        // Smallest descriptor that still exercises the dtype: whatever the
+        // shape, an unsupported data type is rejected here.
+        const cudnnStatus_t status = cudnnSetRNNDescriptor_v8(
+            rnn_desc, CUDNN_RNN_ALGO_STANDARD, CUDNN_LSTM,
+            CUDNN_RNN_SINGLE_INP_BIAS, CUDNN_UNIDIRECTIONAL, CUDNN_LINEAR_INPUT,
+            CUDNN_DATA_BFLOAT16, CUDNN_DATA_FLOAT, CUDNN_TENSOR_OP_MATH,
+            1, 1, 1, 1, dropout_desc, CUDNN_RNN_PADDED_IO_ENABLED);
+
+        device::reset_last_error();
+        return status == CUDNN_STATUS_SUCCESS;
+    }();
+
+    return supported;
+}
+
 static bool persist_env_enabled()
 {
     static const bool enabled = env_flag_enabled("OPENNN_RNN_PERSIST", true);
@@ -88,6 +121,14 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& con
     const bool bf16 = config.data_type == Type::BF16;
     throw_if(!is_one_of(config.data_type, Type::FP32, Type::BF16),
              "cuDNN RNN supports FP32 or BF16 data.");
+
+    // Answering here rather than at cudnnSetRNNDescriptor_v8, which reports a
+    // bare NOT_SUPPORTED that names neither the dtype nor the runtime.
+    throw_if(bf16 && !cudnn_rnn_supports_bf16(),
+             "cuDNN {} does not implement BFLOAT16 recurrent layers; every math "
+             "type and precision is rejected. Train this network in FP32, or "
+             "link a cuDNN that supports it.",
+             cudnnGetVersion());
     const cudnnDataType_t cudnn_data_type = bf16 ? CUDNN_DATA_BFLOAT16
                                                  : CUDNN_DATA_FLOAT;
     state.persist_algo_active = !state.persist_algo_failed
