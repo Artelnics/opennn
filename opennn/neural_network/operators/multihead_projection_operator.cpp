@@ -18,8 +18,44 @@
 namespace opennn
 {
 
-static void split_heads_gpu(const TensorView&, TensorView&);
-static void concatenate_heads_gpu(const TensorView&, TensorView&);
+#ifdef OPENNN_HAS_CUDA
+
+static void split_heads_gpu(const TensorView& source, TensorView& destination)
+{
+    const Shape& shape = source.get_shape();
+    const Index sequence_length = shape[1];
+    const Index heads_number = shape[2];
+    const Index head_dimension = shape[3];
+
+    destination.dispatch([&]<typename T>() {
+        split_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
+                            to_int(sequence_length),
+                            to_int(heads_number),
+                            to_int(head_dimension));
+    });
+}
+
+static void concatenate_heads_gpu(const TensorView& source, TensorView& destination)
+{
+    const Shape& shape = source.get_shape();
+    const Index heads_number = shape[1];
+    const Index sequence_length = shape[2];
+    const Index head_dimension = shape[3];
+
+    destination.dispatch([&]<typename T>() {
+        concatenate_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
+                            to_int(sequence_length),
+                            to_int(heads_number),
+                            to_int(head_dimension));
+    });
+}
+
+#else
+
+OPENNN_CUDA_TEMPLATE_STUB(split_heads_gpu)
+OPENNN_CUDA_TEMPLATE_STUB(concatenate_heads_gpu)
+
+#endif
 
 static void transpose_middle_axes(const float* src, float* dst,
                                   Index batch_size, Index src_m1, Index src_m2, Index D)
@@ -57,45 +93,6 @@ void concatenate_heads(const TensorView& source, TensorView& destination)
     transpose_middle_axes(source.as<float>(), destination.as<float>(),
                           shape[0], shape[1], shape[2], shape[3]);
 }
-
-#ifdef OPENNN_HAS_CUDA
-
-static void split_heads_gpu(const TensorView& source, TensorView& destination)
-{
-    const Shape& shape = source.get_shape();
-    const Index sequence_length = shape[1];
-    const Index heads_number = shape[2];
-    const Index head_dimension = shape[3];
-
-    destination.dispatch([&]<typename T>() {
-        split_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
-                            to_int(sequence_length),
-                            to_int(heads_number),
-                            to_int(head_dimension));
-    });
-}
-
-static void concatenate_heads_gpu(const TensorView& source, TensorView& destination)
-{
-    const Shape& shape = source.get_shape();
-    const Index heads_number = shape[1];
-    const Index sequence_length = shape[2];
-    const Index head_dimension = shape[3];
-
-    destination.dispatch([&]<typename T>() {
-        concatenate_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
-                            to_int(sequence_length),
-                            to_int(heads_number),
-                            to_int(head_dimension));
-    });
-}
-
-#else
-
-OPENNN_CUDA_STUB(void, split_heads_gpu, (const TensorView&, TensorView&))
-OPENNN_CUDA_STUB(void, concatenate_heads_gpu, (const TensorView&, TensorView&))
-
-#endif
 
 void MultiHeadProjectionOperator::set(Index new_input_features, Index new_heads_number,
                               Index new_head_dimension, Type new_compute_dtype)

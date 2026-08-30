@@ -85,15 +85,18 @@ vector<TensorSpec> BatchNormalizationOperator::parameter_specs() const
     return vector<TensorSpec>(2, {Shape{features}, Type::FP32});
 }
 
-void BatchNormalizationOperator::link_parameters(span<const TensorView> views)
+vector<Operator::ParameterSlot> BatchNormalizationOperator::parameter_slots()
 {
-    if (link_views(views, {&gamma, &beta}))
-        invalidate_inference_cache();
+    return {
+        {&gamma, &gamma_gradient},
+        {&beta,  &beta_gradient},
+    };
 }
 
-void BatchNormalizationOperator::link_gradients(span<const TensorView> views)
+void BatchNormalizationOperator::link_parameters(span<const TensorView> views)
 {
-    link_views(views, {&gamma_gradient, &beta_gradient});
+    if (link_slots(views, &ParameterSlot::parameter))
+        invalidate_inference_cache();
 }
 
 void BatchNormalizationOperator::link_states(span<const TensorView> views)

@@ -50,8 +50,8 @@ struct BatchNormalizationOperator : Operator
 
     vector<TensorSpec> parameter_specs() const override;
     vector<TensorSpec> state_specs() const override { return parameter_specs(); }
+    vector<ParameterSlot> parameter_slots() override;
     void link_parameters(span<const TensorView>) override;
-    void link_gradients (span<const TensorView>) override;
     void link_states    (span<const TensorView>) override;
 
     void set_parameters_random() override { init_defaults(); }

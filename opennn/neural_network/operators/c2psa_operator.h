@@ -15,6 +15,22 @@ namespace opennn
 
 struct C2PSAOperator : Operator
 {
+    // The forward slot layout. The layer plans these and the operator reads
+    // them, so it lives where both can see it; the operator used to reach into
+    // slots[layer][1] .. [6] by ordinal and agree with the layer by accident.
+    enum Slot
+    {
+        Input,
+        Split,
+        Query,
+        Key,
+        AttentionWeights,
+        Value,
+        Concatenated,
+        ForwardScratch,
+        Output
+    };
+
     Index h = 0, w = 0, channels = 0;
 
     TensorView Wq, Wk, Wv, Wout;
@@ -23,8 +39,7 @@ struct C2PSAOperator : Operator
     void set(Index new_h, Index new_w, Index new_channels);
 
     vector<TensorSpec> parameter_specs() const override;
-    void link_parameters(span<const TensorView>) override;
-    void link_gradients (span<const TensorView>) override;
+    vector<ParameterSlot> parameter_slots() override;
     void set_parameters_random() override { set_parameters_glorot(); }
     void set_parameters_glorot() override;
 

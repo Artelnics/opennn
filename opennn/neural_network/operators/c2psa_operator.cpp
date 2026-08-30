@@ -21,10 +21,11 @@
 namespace opennn
 {
 
-using Eigen::Dynamic;
-using MatF = Eigen::Matrix<float, Dynamic, Dynamic, Eigen::RowMajor>;
-using MapC = Eigen::Map<const MatF>;
-using MapM = Eigen::Map<MatF>;
+// MatrixR was character-for-character core's MatrixR. The maps stay separate from
+// core's MatrixMap, which is 64-byte aligned: these views start at arbitrary
+// per-batch offsets inside the slot buffers and so have to be unaligned.
+using ConstBlockMap = Eigen::Map<const MatrixR>;
+using BlockMap      = Eigen::Map<MatrixR>;
 
 void C2PSAOperator::set(Index new_h, Index new_w, Index new_channels)
 {
@@ -45,14 +46,9 @@ vector<TensorSpec> C2PSAOperator::parameter_specs() const
     };
 }
 
-void C2PSAOperator::link_parameters(span<const TensorView> views)
+vector<Operator::ParameterSlot> C2PSAOperator::parameter_slots()
 {
-    link_views(views, {&Wq, &Wk, &Wv, &Wout});
-}
-
-void C2PSAOperator::link_gradients(span<const TensorView> views)
-{
-    link_views(views, {&dWq, &dWk, &dWv, &dWout});
+    return {{&Wq, &dWq}, {&Wk, &dWk}, {&Wv, &dWv}, {&Wout, &dWout}};
 }
 
 void C2PSAOperator::set_parameters_glorot()
@@ -86,12 +82,12 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, Forw
         const int T      = int(tokens);
         const int C_int  = int(C);
         const cudaDataType_t dtype = x.cuda_dtype();
-        void* xa_gpu   = fp.slots[layer][1].get_data();
-        void* Q_gpu    = fp.slots[layer][2].get_data();
-        void* K_gpu    = fp.slots[layer][3].get_data();
-        void* Attn_gpu = fp.slots[layer][4].get_data();
-        void* V_gpu    = fp.slots[layer][5].get_data();
-        void* cat_gpu  = fp.slots[layer][6].get_data();
+        void* xa_gpu   = fp.slots[layer][Split].get_data();
+        void* Q_gpu    = fp.slots[layer][Query].get_data();
+        void* K_gpu    = fp.slots[layer][Key].get_data();
+        void* Attn_gpu = fp.slots[layer][AttentionWeights].get_data();
+        void* V_gpu    = fp.slots[layer][Value].get_data();
+        void* cat_gpu  = fp.slots[layer][Concatenated].get_data();
         void* out_gpu  = output.get_data();
 
         throw_if(!forward_scratch_slot,
@@ -100,23 +96,20 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, Forw
 
         c2psa_split_cuda(x.get_data(), xa_gpu, cat_gpu, BT, C_int, H, dtype);
 
-        gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-            H, BT, H,
-            Wq.get_data(), dtype, H, 0LL,
-            xa_gpu,  dtype, H, 0LL,
-            Q_gpu,   dtype, H, 0LL, 1);
+        // One half-width square weight applied to every token. The three
+        // projections differ only in the weight and the destination.
+        const auto project = [&](const void* weight, void* destination)
+        {
+            gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
+                H, BT, H,
+                weight,      dtype, H, 0LL,
+                xa_gpu,      dtype, H, 0LL,
+                destination, dtype, H, 0LL, 1);
+        };
 
-        gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-            H, BT, H,
-            Wk.get_data(), dtype, H, 0LL,
-            xa_gpu,  dtype, H, 0LL,
-            K_gpu,   dtype, H, 0LL, 1);
-
-        gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
-            H, BT, H,
-            Wv.get_data(), dtype, H, 0LL,
-            xa_gpu,  dtype, H, 0LL,
-            V_gpu,   dtype, H, 0LL, 1);
+        project(Wq.get_data(), Q_gpu);
+        project(Wk.get_data(), K_gpu);
+        project(Wv.get_data(), V_gpu);
 
         gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
             T, T, H,
@@ -125,7 +118,7 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, Forw
             Attn_gpu, dtype, T, (long long)T * T,
             int(B), scale);
 
-        softmax(fp.slots[layer][4]);
+        softmax(fp.slots[layer][AttentionWeights]);
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, T, T,
@@ -145,12 +138,12 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, Forw
 #endif
 
     const float* x_ptr = x.as<float>();
-    float* xa  = fp.slots[layer][1].as<float>();
-    float* Q   = fp.slots[layer][2].as<float>();
-    float* K   = fp.slots[layer][3].as<float>();
-    float* A   = fp.slots[layer][4].as<float>();
-    float* V   = fp.slots[layer][5].as<float>();
-    float* cat = fp.slots[layer][6].as<float>();
+    float* xa  = fp.slots[layer][Split].as<float>();
+    float* Q   = fp.slots[layer][Query].as<float>();
+    float* K   = fp.slots[layer][Key].as<float>();
+    float* A   = fp.slots[layer][AttentionWeights].as<float>();
+    float* V   = fp.slots[layer][Value].as<float>();
+    float* cat = fp.slots[layer][Concatenated].as<float>();
 
     const MatrixMap Wq_m   = Wq.as_matrix();
     const MatrixMap Wk_m   = Wk.as_matrix();
@@ -159,35 +152,32 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, Forw
 
     for (Index b = 0; b < B; ++b)
     {
-        MapC x_b (x_ptr + b * tokens * C,     tokens, C);
-        MapM xa_b(xa   + b * tokens * half_c, tokens, half_c);
+        ConstBlockMap x_b (x_ptr + b * tokens * C,     tokens, C);
+        BlockMap xa_b(xa   + b * tokens * half_c, tokens, half_c);
         xa_b = x_b.leftCols(half_c);
 
-        MapM Q_b(Q + b * tokens * half_c, tokens, half_c);
-        MapM K_b(K + b * tokens * half_c, tokens, half_c);
-        MapM V_b(V + b * tokens * half_c, tokens, half_c);
+        BlockMap Q_b(Q + b * tokens * half_c, tokens, half_c);
+        BlockMap K_b(K + b * tokens * half_c, tokens, half_c);
+        BlockMap V_b(V + b * tokens * half_c, tokens, half_c);
         Q_b.noalias() = xa_b * Wq_m;
         K_b.noalias() = xa_b * Wk_m;
         V_b.noalias() = xa_b * Wv_m;
 
         float* A_b_ptr = A + b * tokens * tokens;
-        MapM   A_b(A_b_ptr, tokens, tokens);
+        BlockMap   A_b(A_b_ptr, tokens, tokens);
         A_b.noalias() = Q_b * K_b.transpose() * scale;
 
-        for (Index i = 0; i < tokens; ++i)
-        {
-            Eigen::Map<Eigen::ArrayXf> row(A_b_ptr + i * tokens, tokens);
-            row -= row.maxCoeff();
-            row  = row.exp();
-            row /= row.sum();
-        }
+        // The GPU path normalizes through the shared softmax; this was an
+        // inlined row loop doing the same max-subtract, exp, divide.
+        TensorView scores(A_b_ptr, Shape{tokens, tokens}, x.get_type(), Device::CPU);
+        softmax(scores);
 
-        MapM cat_b(cat + b * tokens * C, tokens, C);
+        BlockMap cat_b(cat + b * tokens * C, tokens, C);
         cat_b.leftCols(half_c).noalias() = A_b * V_b;
         cat_b.rightCols(half_c) = x_b.rightCols(half_c);
     }
 
-    MapC cat_m(cat, B * tokens, C);
+    ConstBlockMap cat_m(cat, B * tokens, C);
     MatrixMap out_m = output.as_flat_matrix();
     out_m.noalias() = cat_m * Wout_m;
 }
@@ -214,12 +204,12 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
         const cudaDataType_t dtype = x.cuda_dtype();
         const Index esz  = (dtype == CUDA_R_32F) ? sizeof(float) : sizeof(uint16_t);
 
-        const void* xa_gpu   = fp.slots[layer][1].get_data();
-        const void* Q_gpu    = fp.slots[layer][2].get_data();
-        const void* K_gpu    = fp.slots[layer][3].get_data();
-        const void* Attn_gpu = fp.slots[layer][4].get_data();
-        const void* V_gpu    = fp.slots[layer][5].get_data();
-        const void* cat_gpu  = fp.slots[layer][6].get_data();
+        const void* xa_gpu   = fp.slots[layer][Split].get_data();
+        const void* Q_gpu    = fp.slots[layer][Query].get_data();
+        const void* K_gpu    = fp.slots[layer][Key].get_data();
+        const void* Attn_gpu = fp.slots[layer][AttentionWeights].get_data();
+        const void* V_gpu    = fp.slots[layer][Value].get_data();
+        const void* cat_gpu  = fp.slots[layer][Concatenated].get_data();
 
         throw_if(!backward_scratch_slot,
                  "C2PSAOperator: backward scratch slot was not planned.");
@@ -267,7 +257,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
 
         TensorView attention_delta(d_A_gpu, Shape{B, tokens, tokens},
                                    x.get_type(), Device::CUDA);
-        softmax_backward(fp.slots[layer][4], attention_delta, scale);
+        softmax_backward(fp.slots[layer][AttentionWeights], attention_delta, scale);
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, T, T,
@@ -283,48 +273,39 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             dK_gpu,  dtype, H, (long long)T * H,
             int(B));
 
-        gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
-            H, H, BT,
-            dQ_gpu,   dtype, H, 0LL,
-            xa_gpu,   dtype, H, 0LL,
-            dWq.get_data(), dtype, H, 0LL,
-            1, 1.0f, 1.0f);
+        // Each weight gradient accumulates its head delta against the shared
+        // split input; the three calls differ only in those two pointers.
+        const auto accumulate_weight_gradient = [&](const void* head_delta, void* weight_gradient)
+        {
+            gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
+                H, H, BT,
+                head_delta,      dtype, H, 0LL,
+                xa_gpu,          dtype, H, 0LL,
+                weight_gradient, dtype, H, 0LL,
+                1, 1.0f, 1.0f);
+        };
 
-        gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
-            H, H, BT,
-            dK_gpu,   dtype, H, 0LL,
-            xa_gpu,   dtype, H, 0LL,
-            dWk.get_data(), dtype, H, 0LL,
-            1, 1.0f, 1.0f);
-
-        gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
-            H, H, BT,
-            dV_gpu,   dtype, H, 0LL,
-            xa_gpu,   dtype, H, 0LL,
-            dWv.get_data(), dtype, H, 0LL,
-            1, 1.0f, 1.0f);
+        accumulate_weight_gradient(dQ_gpu, dWq.get_data());
+        accumulate_weight_gradient(dK_gpu, dWk.get_data());
+        accumulate_weight_gradient(dV_gpu, dWv.get_data());
 
         if (din_gpu)
         {
+            // The three head deltas fold back through their weights into one
+            // accumulator, so only the first call overwrites it.
+            const auto accumulate_split_delta = [&](const void* weight, const void* head_delta, float beta)
+            {
+                gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
+                    H, BT, H,
+                    weight,     dtype, H, 0LL,
+                    head_delta, dtype, H, 0LL,
+                    d_xa_gpu,   dtype, H, 0LL,
+                    1, 1.0f, beta);
+            };
 
-            gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
-                H, BT, H,
-                Wq.get_data(), dtype, H, 0LL,
-                dQ_gpu,  dtype, H, 0LL,
-                d_xa_gpu, dtype, H, 0LL,
-                1, 1.0f, 0.0f);
-            gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
-                H, BT, H,
-                Wk.get_data(), dtype, H, 0LL,
-                dK_gpu,  dtype, H, 0LL,
-                d_xa_gpu, dtype, H, 0LL,
-                1, 1.0f, 1.0f);
-            gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
-                H, BT, H,
-                Wv.get_data(), dtype, H, 0LL,
-                dV_gpu,  dtype, H, 0LL,
-                d_xa_gpu, dtype, H, 0LL,
-                1, 1.0f, 1.0f);
+            accumulate_split_delta(Wq.get_data(), dQ_gpu, 0.0f);
+            accumulate_split_delta(Wk.get_data(), dK_gpu, 1.0f);
+            accumulate_split_delta(Wv.get_data(), dV_gpu, 1.0f);
 
             c2psa_scatter_dx_cuda(d_xa_gpu, d_cat_gpu, din_gpu, BT, C_int, H, dtype);
         }
@@ -332,12 +313,12 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
     }
 #endif
 
-    const float* xa  = fp.slots[layer][1].as<float>();
-    const float* Q   = fp.slots[layer][2].as<float>();
-    const float* K   = fp.slots[layer][3].as<float>();
-    const float* A   = fp.slots[layer][4].as<float>();
-    const float* V   = fp.slots[layer][5].as<float>();
-    const float* cat = fp.slots[layer][6].as<float>();
+    const float* xa  = fp.slots[layer][Split].as<float>();
+    const float* Q   = fp.slots[layer][Query].as<float>();
+    const float* K   = fp.slots[layer][Key].as<float>();
+    const float* A   = fp.slots[layer][AttentionWeights].as<float>();
+    const float* V   = fp.slots[layer][Value].as<float>();
+    const float* cat = fp.slots[layer][Concatenated].as<float>();
 
     const float* dout = delta_out.as<float>();
     float*       din  = delta_in.get_data() ? delta_in.as<float>() : nullptr;
@@ -351,28 +332,34 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
     MatrixMap dWv_m        = dWv.as_matrix();
     MatrixMap dWout_m      = dWout.as_matrix();
 
-    MapC cat_m (cat,  B * tokens, C);
-    MapC dout_m(dout, B * tokens, C);
+    ConstBlockMap cat_m (cat,  B * tokens, C);
+    ConstBlockMap dout_m(dout, B * tokens, C);
 
     dWout_m.noalias() += cat_m.transpose() * dout_m;
 
-    MatF d_concat(B * tokens, C);
+    MatrixR d_concat(B * tokens, C);
     d_concat.noalias() = dout_m * Wout_m.transpose();
+
+    // These were declared inside the loop: five heap allocations per image on
+    // every backward pass, all of them the same shape every time round.
+    MatrixR d_ao(tokens, half_c);
+    MatrixR dV(tokens, half_c);
+    MatrixR dA(tokens, tokens);
+    MatrixR dQ(tokens, half_c);
+    MatrixR dK(tokens, half_c);
 
     for (Index b = 0; b < B; ++b)
     {
-        MapC Q_b (Q  + b * tokens * half_c, tokens, half_c);
-        MapC K_b (K  + b * tokens * half_c, tokens, half_c);
-        MapC V_b (V  + b * tokens * half_c, tokens, half_c);
-        MapC A_b (A  + b * tokens * tokens, tokens, tokens);
-        MapC xa_b(xa + b * tokens * half_c, tokens, half_c);
+        ConstBlockMap Q_b (Q  + b * tokens * half_c, tokens, half_c);
+        ConstBlockMap K_b (K  + b * tokens * half_c, tokens, half_c);
+        ConstBlockMap V_b (V  + b * tokens * half_c, tokens, half_c);
+        ConstBlockMap A_b (A  + b * tokens * tokens, tokens, tokens);
+        ConstBlockMap xa_b(xa + b * tokens * half_c, tokens, half_c);
 
-        MatF d_ao = d_concat.block(b * tokens, 0, tokens, half_c);
+        d_ao = d_concat.block(b * tokens, 0, tokens, half_c);
 
-        MatF dV(tokens, half_c);
         dV.noalias() = A_b.transpose() * d_ao;
 
-        MatF dA(tokens, tokens);
         dA.noalias() = d_ao * V_b.transpose();
 
         for (Index i = 0; i < tokens; ++i)
@@ -382,7 +369,6 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
         }
         dA *= scale;
 
-        MatF dQ(tokens, half_c), dK(tokens, half_c);
         dQ.noalias() = dA            * K_b;
         dK.noalias() = dA.transpose() * Q_b;
 
@@ -392,7 +378,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
 
         if (din)
         {
-            MapM din_m(din, B * tokens, C);
+            BlockMap din_m(din, B * tokens, C);
             din_m.block(b * tokens, 0, tokens, half_c).noalias() =
                 dQ * Wq_m.transpose() + dK * Wk_m.transpose() + dV * Wv_m.transpose();
             din_m.block(b * tokens, half_c, tokens, half_c) =

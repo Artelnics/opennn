@@ -49,8 +49,7 @@ struct EmbeddingLookupOperator : Operator
     vector<TensorSpec> parameter_specs() const override;
     vector<SlotQuantization> parameter_quantization() const override;
     vector<TensorSpec> state_specs()     const override;
-    void link_parameters(span<const TensorView>) override;
-    void link_gradients (span<const TensorView>) override;
+    vector<ParameterSlot> parameter_slots() override;
     void link_states    (span<const TensorView>) override;
     void initialize_states() override;
     void link_parameter_scales(span<const TensorView>) override;

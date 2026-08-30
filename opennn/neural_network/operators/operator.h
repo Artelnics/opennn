@@ -39,10 +39,52 @@ struct Operator
     struct SlotQuantization { Index channels = 0; int axis = 0; };
     virtual vector<SlotQuantization> parameter_quantization() const { return {}; }
 
-    virtual void link_parameters(span<const TensorView>) {}
-    virtual void link_gradients (span<const TensorView>) {}
+    // One trainable tensor and the gradient that shadows it, in the order the
+    // layout hands the views over. An operator that declares its slots here
+    // gets both link_parameters and link_gradients from the base. The two used
+    // to be written as a matched pair per operator, each restating the same
+    // use_bias / RMS / positional condition, so the pair could drift.
+    struct ParameterSlot
+    {
+        TensorView* parameter = nullptr;
+        TensorView* gradient  = nullptr;
+
+        // Whether the layout supplies this slot at all. An absent slot is
+        // reset so a projection that drops its bias, or an RMS norm that has
+        // no beta, cannot keep a stale view. The exception is a view another
+        // link step owns: the embedding's positional table is a state when it
+        // is not a trained parameter, and link_states has already filled it.
+        bool present = true;
+        bool retain_when_absent = false;
+    };
+
+    virtual vector<ParameterSlot> parameter_slots() { return {}; }
+
+    virtual void link_parameters(span<const TensorView> views) { link_slots(views, &ParameterSlot::parameter); }
+    virtual void link_gradients (span<const TensorView> views) { link_slots(views, &ParameterSlot::gradient); }
     virtual void link_states    (span<const TensorView>) {}
     virtual void link_parameter_scales(span<const TensorView>) {}
+
+    // Returns whether the layout supplied a view for every present slot, which
+    // is what the old link_views reported and what two operators still act on.
+    bool link_slots(span<const TensorView> views, TensorView* ParameterSlot::* member)
+    {
+        const vector<ParameterSlot> slots = parameter_slots();
+
+        size_t needed = 0;
+        for (const ParameterSlot& slot : slots) needed += slot.present ? 1 : 0;
+        if (views.size() < needed) return false;
+
+        size_t index = 0;
+        for (const ParameterSlot& slot : slots)
+        {
+            TensorView* const target = slot.*member;
+            if (slot.present)                 *target = views[index++];
+            else if (!slot.retain_when_absent) *target = {};
+        }
+
+        return true;
+    }
 
     virtual void initialize_states() {}
 

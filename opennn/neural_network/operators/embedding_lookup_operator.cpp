@@ -21,8 +21,73 @@
 namespace opennn
 {
 
-static void embedding_lookup_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool scale_embedding, bool add_positional_encoding, const TensorView&);
-static void embedding_lookup_backward_gpu(const TensorView&, const TensorView&, const TensorView&, const TensorView&, Index, Index, Index, bool scale_embedding);
+#ifdef OPENNN_HAS_CUDA
+
+static void embedding_lookup_forward_gpu(const TensorView& indices, const TensorView& weights,
+                                  const TensorView& positional_encoding, TensorView& output,
+                                  Index sequence_length, Index embedding_dimension, Index vocabulary_size,
+                                  bool scale_embedding, bool add_positional_encoding,
+                                  const TensorView& weight_scale)
+{
+    if (weights.is_int8())
+    {
+        throw_if(weight_scale.empty(),
+                 "embedding_lookup_forward: INT8 weights require a per-row scale vector.");
+        output.dispatch([&]<typename T>() {
+            embedding_forward_w8_cuda<T>(
+                output.size(),
+                indices.as<float>(),
+                weights.as<int8_t>(),
+                weight_scale.as<float>(),
+                add_positional_encoding ? positional_encoding.as<float>() : nullptr,
+                output.as<T>(),
+                to_int(sequence_length), to_int(embedding_dimension), to_int(vocabulary_size),
+                scale_embedding);
+        });
+        return;
+    }
+
+    output.dispatch([&]<typename T>() {
+        weights.dispatch([&]<typename TW>() {
+            embedding_forward_cuda<TW, T>(
+                output.size(),
+                indices.as<float>(),
+                weights.as<TW>(),
+                add_positional_encoding ? positional_encoding.as<float>() : nullptr,
+                output.as<T>(),
+                to_int(sequence_length), to_int(embedding_dimension), to_int(vocabulary_size),
+                scale_embedding);
+        });
+    });
+}
+
+static void embedding_lookup_backward_gpu(const TensorView& indices, const TensorView& output_delta,
+                                   const TensorView& weight_gradient, const TensorView& positional_gradient,
+                                   Index sequence_length, Index embedding_dimension, Index vocabulary_size,
+                                   bool scale_embedding)
+{
+    weight_gradient.set_zero_async();
+
+    const bool accumulate_positional = !positional_gradient.empty() && positional_gradient.get_data() != nullptr;
+    if (accumulate_positional) positional_gradient.set_zero_async();
+
+    output_delta.dispatch([&]<typename T>() {
+        embedding_backward_cuda<T>(
+            output_delta.size(),
+            indices.as<float>(),
+            output_delta.as<T>(),
+            weight_gradient.as<float>(),
+            accumulate_positional ? positional_gradient.as<float>() : nullptr,
+            to_int(sequence_length), to_int(embedding_dimension), to_int(vocabulary_size), scale_embedding);
+    });
+}
+
+#else
+
+OPENNN_CUDA_TEMPLATE_STUB(embedding_lookup_forward_gpu)
+OPENNN_CUDA_TEMPLATE_STUB(embedding_lookup_backward_gpu)
+
+#endif
 
 static void embedding_lookup_forward_cpu(const TensorView& indices, const TensorView& weights,
                                   const TensorView& positional_encoding, TensorView& output,
@@ -155,74 +220,6 @@ void compute_token_valid_lengths(const TensorView& indices, Index sequence_lengt
     }
 }
 
-#ifdef OPENNN_HAS_CUDA
-
-static void embedding_lookup_forward_gpu(const TensorView& indices, const TensorView& weights,
-                                  const TensorView& positional_encoding, TensorView& output,
-                                  Index sequence_length, Index embedding_dimension, Index vocabulary_size,
-                                  bool scale_embedding, bool add_positional_encoding,
-                                  const TensorView& weight_scale)
-{
-    if (weights.is_int8())
-    {
-        throw_if(weight_scale.empty(),
-                 "embedding_lookup_forward: INT8 weights require a per-row scale vector.");
-        output.dispatch([&]<typename T>() {
-            embedding_forward_w8_cuda<T>(
-                output.size(),
-                indices.as<float>(),
-                weights.as<int8_t>(),
-                weight_scale.as<float>(),
-                add_positional_encoding ? positional_encoding.as<float>() : nullptr,
-                output.as<T>(),
-                to_int(sequence_length), to_int(embedding_dimension), to_int(vocabulary_size),
-                scale_embedding);
-        });
-        return;
-    }
-
-    output.dispatch([&]<typename T>() {
-        weights.dispatch([&]<typename TW>() {
-            embedding_forward_cuda<TW, T>(
-                output.size(),
-                indices.as<float>(),
-                weights.as<TW>(),
-                add_positional_encoding ? positional_encoding.as<float>() : nullptr,
-                output.as<T>(),
-                to_int(sequence_length), to_int(embedding_dimension), to_int(vocabulary_size),
-                scale_embedding);
-        });
-    });
-}
-
-static void embedding_lookup_backward_gpu(const TensorView& indices, const TensorView& output_delta,
-                                   const TensorView& weight_gradient, const TensorView& positional_gradient,
-                                   Index sequence_length, Index embedding_dimension, Index vocabulary_size,
-                                   bool scale_embedding)
-{
-    weight_gradient.set_zero_async();
-
-    const bool accumulate_positional = !positional_gradient.empty() && positional_gradient.get_data() != nullptr;
-    if (accumulate_positional) positional_gradient.set_zero_async();
-
-    output_delta.dispatch([&]<typename T>() {
-        embedding_backward_cuda<T>(
-            output_delta.size(),
-            indices.as<float>(),
-            output_delta.as<T>(),
-            weight_gradient.as<float>(),
-            accumulate_positional ? positional_gradient.as<float>() : nullptr,
-            to_int(sequence_length), to_int(embedding_dimension), to_int(vocabulary_size), scale_embedding);
-    });
-}
-
-#else
-
-OPENNN_CUDA_STUB(void, embedding_lookup_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, bool, const TensorView&))
-OPENNN_CUDA_STUB(void, embedding_lookup_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, Index, Index, Index, bool))
-
-#endif
-
 void EmbeddingLookupOperator::set(Index new_vocabulary_size, Index new_sequence_length, Index new_embedding_dimension)
 {
     vocabulary_size     = new_vocabulary_size;
@@ -252,26 +249,20 @@ vector<TensorSpec> EmbeddingLookupOperator::state_specs() const
     return {{{sequence_length, embedding_dimension}, Type::FP32}};
 }
 
-void EmbeddingLookupOperator::link_parameters(span<const TensorView> views)
+vector<Operator::ParameterSlot> EmbeddingLookupOperator::parameter_slots()
 {
-    if (positional_trainable && views.size() > 1)
-        link_views(views, {&weights, &positional_encoding});
-    else
-        link_views(views, {&weights});
+    // When the table is not trained it is a state, and link_states has already
+    // pointed positional_encoding at it -- so this slot must not reset it.
+    return {
+        {&weights,             &weight_gradient},
+        {&positional_encoding, &positional_gradient, positional_trainable, true},
+    };
 }
 
 void EmbeddingLookupOperator::link_parameter_scales(span<const TensorView> views)
 {
     if (views.empty()) return;
     weight_scale = views[0];
-}
-
-void EmbeddingLookupOperator::link_gradients(span<const TensorView> views)
-{
-    if (positional_trainable && views.size() > 1)
-        link_views(views, {&weight_gradient, &positional_gradient});
-    else
-        link_views(views, {&weight_gradient});
 }
 
 void EmbeddingLookupOperator::link_states(span<const TensorView> views)

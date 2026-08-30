@@ -669,6 +669,18 @@ struct GraphSlot
         autotune_pending = finalize(*built, workspace_bytes, tag);
         graph = std::move(built);
     }
+
+    // Attention finalizes under its own policy -- its own autotune switch and
+    // its own heuristic modes -- so it cannot share build()'s convolution one.
+    // Keeping it a named second entry point makes that difference visible
+    // instead of hiding it behind a slot that looks interchangeable.
+    void build_attention(shared_ptr<graph::Graph> built, const string& tag,
+                         bool allow_autotune = true)
+    {
+        graph.reset();
+        autotune_pending = finalize_attention(*built, tag, workspace_bytes, allow_autotune);
+        graph = std::move(built);
+    }
 };
 
 template<typename TensorMap>

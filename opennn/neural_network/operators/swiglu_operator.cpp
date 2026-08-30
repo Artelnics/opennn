@@ -17,8 +17,34 @@
 namespace opennn
 {
 
-static void swiglu_forward_gpu(const TensorView&, const TensorView&, TensorView&);
-static void swiglu_backward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&);
+#ifdef OPENNN_HAS_CUDA
+
+static void swiglu_forward_gpu(const TensorView& gate, const TensorView& up, TensorView& output)
+{
+    const int n = to_int(gate.size());
+    output.dispatch([&]<typename T>() {
+        swiglu_forward_cuda<T>(n, gate.as<T>(), up.as<T>(), output.as<T>());
+    });
+}
+
+static void swiglu_backward_gpu(const TensorView& output_delta, const TensorView& gate, const TensorView& up,
+                                TensorView& gate_delta, TensorView& up_delta)
+{
+    const int n = to_int(output_delta.size());
+    output_delta.dispatch([&]<typename T>() {
+        T* gate_delta_data = gate_delta.empty() ? nullptr : gate_delta.as<T>();
+        T* up_delta_data   = up_delta.empty()   ? nullptr : up_delta.as<T>();
+        swiglu_backward_cuda<T>(n, output_delta.as<T>(), gate.as<T>(), up.as<T>(),
+                                gate_delta_data, up_delta_data);
+    });
+}
+
+#else
+
+OPENNN_CUDA_TEMPLATE_STUB(swiglu_forward_gpu)
+OPENNN_CUDA_TEMPLATE_STUB(swiglu_backward_gpu)
+
+#endif
 
 static void swiglu_forward_cpu(const TensorView& gate, const TensorView& up, TensorView& output)
 {
@@ -74,35 +100,6 @@ void swiglu_backward(const TensorView& output_delta, const TensorView& gate, con
     if (output_delta.is_cuda()) { swiglu_backward_gpu(output_delta, gate, up, gate_delta, up_delta); return; }
     swiglu_backward_cpu(output_delta, gate, up, gate_delta, up_delta);
 }
-
-#ifdef OPENNN_HAS_CUDA
-
-static void swiglu_forward_gpu(const TensorView& gate, const TensorView& up, TensorView& output)
-{
-    const int n = to_int(gate.size());
-    output.dispatch([&]<typename T>() {
-        swiglu_forward_cuda<T>(n, gate.as<T>(), up.as<T>(), output.as<T>());
-    });
-}
-
-static void swiglu_backward_gpu(const TensorView& output_delta, const TensorView& gate, const TensorView& up,
-                                TensorView& gate_delta, TensorView& up_delta)
-{
-    const int n = to_int(output_delta.size());
-    output_delta.dispatch([&]<typename T>() {
-        T* gate_delta_data = gate_delta.empty() ? nullptr : gate_delta.as<T>();
-        T* up_delta_data   = up_delta.empty()   ? nullptr : up_delta.as<T>();
-        swiglu_backward_cuda<T>(n, output_delta.as<T>(), gate.as<T>(), up.as<T>(),
-                                gate_delta_data, up_delta_data);
-    });
-}
-
-#else
-
-OPENNN_CUDA_STUB(void, swiglu_forward_gpu, (const TensorView&, const TensorView&, TensorView&))
-OPENNN_CUDA_STUB(void, swiglu_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&))
-
-#endif
 
 void SwiGLUOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode  )
 {

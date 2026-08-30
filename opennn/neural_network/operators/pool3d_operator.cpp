@@ -19,12 +19,99 @@
 namespace opennn
 {
 
-static void max_pooling_3d_forward_gpu(const TensorView&, TensorView&, TensorView&, bool is_training, const int*);
-static void average_pooling_3d_forward_gpu(const TensorView&, TensorView&, const int*);
-static void max_pooling_3d_backward_gpu(const TensorView&, const TensorView&, TensorView&);
-static void average_pooling_3d_backward_gpu(const TensorView&, const TensorView&, TensorView&, const int*);
-static void first_token_3d_forward_gpu(const TensorView&, TensorView&);
-static void first_token_3d_backward_gpu(const TensorView&, TensorView&);
+#ifdef OPENNN_HAS_CUDA
+
+static void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& output, TensorView& maximal_indices,
+                                       [[maybe_unused]] bool is_training,
+                                       const int* valid_lengths)
+{
+    const Shape& shape = input.get_shape();
+    output.dispatch([&]<typename T>() {
+        max_pooling_3d_forward_cuda<T>(to_int(shape[0]) * to_int(shape[2]),
+                                       input.as<T>(), output.as<T>(),
+                                       maximal_indices.as<float>(),
+                                       to_int(shape[1]),
+                                       to_int(shape[2]),
+                                       valid_lengths);
+    });
+}
+
+static void average_pooling_3d_forward_gpu(const TensorView& input, TensorView& output,
+                                           const int* valid_lengths)
+{
+    const Shape& shape = input.get_shape();
+    output.dispatch([&]<typename T>() {
+        average_pooling_3d_forward_cuda<T>(to_int(shape[0]) * to_int(shape[2]),
+                                           input.as<T>(), output.as<T>(),
+                                           to_int(shape[1]),
+                                           to_int(shape[2]),
+                                           valid_lengths);
+    });
+}
+
+static void max_pooling_3d_backward_gpu(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta)
+{
+    const Shape& output_shape = output_delta.get_shape();
+    const Shape& input_shape = input_delta.get_shape();
+
+    input_delta.set_zero_async();
+
+    input_delta.dispatch([&]<typename T>() {
+        max_pooling_3d_backward_cuda<T>(to_int(output_shape[0]) * to_int(output_shape[1]),
+                                        output_delta.as<T>(), input_delta.as<T>(),
+                                        maximal_indices.as<float>(),
+                                        to_int(input_shape[1]),
+                                        to_int(output_shape[1]));
+    });
+}
+
+static void average_pooling_3d_backward_gpu(const TensorView& input,
+                                     const TensorView& output_delta,
+                                     TensorView& input_delta,
+                                     const int* valid_lengths)
+{
+    const Shape& shape = input.get_shape();
+    input_delta.dispatch([&]<typename T>() {
+        average_pooling_3d_backward_cuda<T>(to_int(shape[0]) * to_int(shape[2]),
+                                            input.as<T>(), output_delta.as<T>(),
+                                            input_delta.as<T>(),
+                                            to_int(shape[1]),
+                                            to_int(shape[2]),
+                                            valid_lengths);
+    });
+}
+
+static void first_token_3d_forward_gpu(const TensorView& input, TensorView& output)
+{
+    const Shape& shape = input.get_shape();
+    output.dispatch([&]<typename T>() {
+        gather_time_slice_cuda<T>(shape[0], shape[1], shape[2], 0,
+                                  input.as<T>(), output.as<T>());
+    });
+}
+
+static void first_token_3d_backward_gpu(const TensorView& output_delta, TensorView& input_delta)
+{
+    const Shape& shape = input_delta.get_shape();
+
+    input_delta.set_zero_async();
+
+    input_delta.dispatch([&]<typename T>() {
+        scatter_time_slice_cuda<T>(shape[0], shape[1], shape[2], 0,
+                                   output_delta.as<T>(), input_delta.as<T>());
+    });
+}
+
+#else
+
+OPENNN_CUDA_TEMPLATE_STUB(max_pooling_3d_forward_gpu)
+OPENNN_CUDA_TEMPLATE_STUB(average_pooling_3d_forward_gpu)
+OPENNN_CUDA_TEMPLATE_STUB(max_pooling_3d_backward_gpu)
+OPENNN_CUDA_TEMPLATE_STUB(average_pooling_3d_backward_gpu)
+OPENNN_CUDA_TEMPLATE_STUB(first_token_3d_forward_gpu)
+OPENNN_CUDA_TEMPLATE_STUB(first_token_3d_backward_gpu)
+
+#endif
 
 static Index valid_length_of(const vector<Index>* valid_lengths, Index batch_index, Index sequence_length)
 {
@@ -249,100 +336,6 @@ void first_token_3d_backward(const TensorView& output_delta, TensorView& input_d
     if (output_delta.is_cuda()) { first_token_3d_backward_gpu(output_delta, input_delta); return; }
     first_token_3d_backward_cpu(output_delta, input_delta);
 }
-
-#ifdef OPENNN_HAS_CUDA
-
-static void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& output, TensorView& maximal_indices,
-                                       [[maybe_unused]] bool is_training,
-                                       const int* valid_lengths)
-{
-    const Shape& shape = input.get_shape();
-    output.dispatch([&]<typename T>() {
-        max_pooling_3d_forward_cuda<T>(to_int(shape[0]) * to_int(shape[2]),
-                                       input.as<T>(), output.as<T>(),
-                                       maximal_indices.as<float>(),
-                                       to_int(shape[1]),
-                                       to_int(shape[2]),
-                                       valid_lengths);
-    });
-}
-
-static void average_pooling_3d_forward_gpu(const TensorView& input, TensorView& output,
-                                           const int* valid_lengths)
-{
-    const Shape& shape = input.get_shape();
-    output.dispatch([&]<typename T>() {
-        average_pooling_3d_forward_cuda<T>(to_int(shape[0]) * to_int(shape[2]),
-                                           input.as<T>(), output.as<T>(),
-                                           to_int(shape[1]),
-                                           to_int(shape[2]),
-                                           valid_lengths);
-    });
-}
-
-static void max_pooling_3d_backward_gpu(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta)
-{
-    const Shape& output_shape = output_delta.get_shape();
-    const Shape& input_shape = input_delta.get_shape();
-
-    input_delta.set_zero_async();
-
-    input_delta.dispatch([&]<typename T>() {
-        max_pooling_3d_backward_cuda<T>(to_int(output_shape[0]) * to_int(output_shape[1]),
-                                        output_delta.as<T>(), input_delta.as<T>(),
-                                        maximal_indices.as<float>(),
-                                        to_int(input_shape[1]),
-                                        to_int(output_shape[1]));
-    });
-}
-
-static void average_pooling_3d_backward_gpu(const TensorView& input,
-                                     const TensorView& output_delta,
-                                     TensorView& input_delta,
-                                     const int* valid_lengths)
-{
-    const Shape& shape = input.get_shape();
-    input_delta.dispatch([&]<typename T>() {
-        average_pooling_3d_backward_cuda<T>(to_int(shape[0]) * to_int(shape[2]),
-                                            input.as<T>(), output_delta.as<T>(),
-                                            input_delta.as<T>(),
-                                            to_int(shape[1]),
-                                            to_int(shape[2]),
-                                            valid_lengths);
-    });
-}
-
-static void first_token_3d_forward_gpu(const TensorView& input, TensorView& output)
-{
-    const Shape& shape = input.get_shape();
-    output.dispatch([&]<typename T>() {
-        gather_time_slice_cuda<T>(shape[0], shape[1], shape[2], 0,
-                                  input.as<T>(), output.as<T>());
-    });
-}
-
-static void first_token_3d_backward_gpu(const TensorView& output_delta, TensorView& input_delta)
-{
-    const Shape& shape = input_delta.get_shape();
-
-    input_delta.set_zero_async();
-
-    input_delta.dispatch([&]<typename T>() {
-        scatter_time_slice_cuda<T>(shape[0], shape[1], shape[2], 0,
-                                   output_delta.as<T>(), input_delta.as<T>());
-    });
-}
-
-#else
-
-OPENNN_CUDA_STUB(void, max_pooling_3d_forward_gpu, (const TensorView&, TensorView&, TensorView&, bool, const int*))
-OPENNN_CUDA_STUB(void, average_pooling_3d_forward_gpu, (const TensorView&, TensorView&, const int*))
-OPENNN_CUDA_STUB(void, max_pooling_3d_backward_gpu, (const TensorView&, const TensorView&, TensorView&))
-OPENNN_CUDA_STUB(void, average_pooling_3d_backward_gpu, (const TensorView&, const TensorView&, TensorView&, const int*))
-OPENNN_CUDA_STUB(void, first_token_3d_forward_gpu, (const TensorView&, TensorView&))
-OPENNN_CUDA_STUB(void, first_token_3d_backward_gpu, (const TensorView&, TensorView&))
-
-#endif
 
 static SequenceLengths exported_valid_lengths(const ForwardPropagation& forward_propagation,
                                               const TensorView& input,

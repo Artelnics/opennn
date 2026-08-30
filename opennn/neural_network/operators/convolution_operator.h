@@ -63,8 +63,8 @@ struct ConvolutionOperator : Operator
 
     vector<TensorSpec> parameter_specs() const override;
     vector<SlotQuantization> parameter_quantization() const override;
+    vector<ParameterSlot> parameter_slots() override;
     void link_parameters(span<const TensorView>) override;
-    void link_gradients (span<const TensorView>) override;
     void link_parameter_scales(span<const TensorView>) override;
 
     void set_parameters_random() override;

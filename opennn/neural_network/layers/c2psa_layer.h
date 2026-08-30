@@ -32,7 +32,7 @@ public:
 
     ForwardSlotKind get_forward_slot_kind(size_t slot) const override
     {
-        return slot == ForwardScratch
+        return slot == C2PSAOperator::ForwardScratch
             ? ForwardSlotKind::Transient
             : ForwardSlotKind::Pooled;
     }
@@ -43,18 +43,7 @@ private:
 
     C2PSAOperator c2psa;
 
-    enum Forward
-    {
-        Input,
-        Split,
-        Query,
-        Key,
-        AttentionWeights,
-        Value,
-        Concatenated,
-        ForwardScratch,
-        Output
-    };
+    using enum C2PSAOperator::Slot;
 
     enum Backward {OutputDelta, InputDelta, BackwardScratch};
 

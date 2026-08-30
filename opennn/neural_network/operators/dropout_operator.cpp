@@ -19,8 +19,57 @@
 namespace opennn
 {
 
-static void dropout_forward_gpu(TensorView&, TensorView&, float);
-static void dropout_backward_gpu(TensorView&, const TensorView&, float);
+#ifdef OPENNN_HAS_CUDA
+
+static unsigned long long* dropout_seed_state()
+{
+    static Buffer state = []
+    {
+        Buffer buffer(Device::CUDA);
+        buffer.resize_bytes(Index(sizeof(unsigned long long)), Device::CUDA);
+
+        const unsigned long long initial =
+            static_cast<unsigned long long>(random_integer(0, 1 << 30));
+
+        device::copy_async(buffer.data(), &initial, Index(sizeof(initial)),
+                           device::CopyKind::HostToDevice,
+                           device::get_compute_stream());
+        device::synchronize(device::get_compute_stream());
+
+        return buffer;
+    }();
+
+    return state.as<unsigned long long>();
+}
+
+static void dropout_forward_gpu(TensorView& output, TensorView& mask, float rate)
+{
+    const Index element_count = output.size();
+
+    unsigned long long* const seed_state = dropout_seed_state();
+
+    advance_dropout_seed_cuda(seed_state);
+
+    output.dispatch([&]<typename T>()
+    {
+        dropout_forward_cuda<T>(element_count, output.as<T>(), mask.as<uint8_t>(), rate, seed_state);
+    });
+}
+
+static void dropout_backward_gpu(TensorView& delta, const TensorView& mask, float rate)
+{
+    delta.dispatch([&]<typename T>()
+    {
+        dropout_backward_cuda<T>(delta.size(), delta.as<T>(), delta.as<T>(), mask.as<uint8_t>(), rate);
+    });
+}
+
+#else
+
+OPENNN_CUDA_TEMPLATE_STUB(dropout_forward_gpu)
+OPENNN_CUDA_TEMPLATE_STUB(dropout_backward_gpu)
+
+#endif
 
 static void validate_dropout_mask(const TensorView& values,
                                   const TensorView& mask)
@@ -71,58 +120,6 @@ void dropout_backward(TensorView& delta, const TensorView& mask, float rate)
     for (Index i = 0; i < delta.size(); ++i)
         delta_values[i] *= mask_values[i] ? keep_scale : 0.0f;
 }
-
-#ifdef OPENNN_HAS_CUDA
-
-static unsigned long long* dropout_seed_state()
-{
-    static Buffer state = []
-    {
-        Buffer buffer(Device::CUDA);
-        buffer.resize_bytes(Index(sizeof(unsigned long long)), Device::CUDA);
-
-        const unsigned long long initial =
-            static_cast<unsigned long long>(random_integer(0, 1 << 30));
-
-        device::copy_async(buffer.data(), &initial, Index(sizeof(initial)),
-                           device::CopyKind::HostToDevice,
-                           device::get_compute_stream());
-        device::synchronize(device::get_compute_stream());
-
-        return buffer;
-    }();
-
-    return state.as<unsigned long long>();
-}
-
-static void dropout_forward_gpu(TensorView& output, TensorView& mask, float rate)
-{
-    const Index element_count = output.size();
-
-    unsigned long long* const seed_state = dropout_seed_state();
-
-    advance_dropout_seed_cuda(seed_state);
-
-    output.dispatch([&]<typename T>()
-    {
-        dropout_forward_cuda<T>(element_count, output.as<T>(), mask.as<uint8_t>(), rate, seed_state);
-    });
-}
-
-static void dropout_backward_gpu(TensorView& delta, const TensorView& mask, float rate)
-{
-    delta.dispatch([&]<typename T>()
-    {
-        dropout_backward_cuda<T>(delta.size(), delta.as<T>(), delta.as<T>(), mask.as<uint8_t>(), rate);
-    });
-}
-
-#else
-
-OPENNN_CUDA_STUB(void, dropout_forward_gpu, (TensorView&, TensorView&, float))
-OPENNN_CUDA_STUB(void, dropout_backward_gpu, (TensorView&, const TensorView&, float))
-
-#endif
 
 void DropoutOperator::set_rate(float new_rate)
 {

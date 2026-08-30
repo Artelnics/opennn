@@ -275,25 +275,23 @@ vector<Operator::SlotQuantization> ConvolutionOperator::parameter_quantization()
     return {{}, {kernels_number, 0}};
 }
 
+vector<Operator::ParameterSlot> ConvolutionOperator::parameter_slots()
+{
+    return {
+        {&bias,    &bias_gradient,   use_bias},
+        {&weights, &weight_gradient},
+    };
+}
+
 void ConvolutionOperator::link_parameters(span<const TensorView> views)
 {
-    bias = {};
-    const bool linked = use_bias ? link_views(views, {&bias, &weights})
-                                 : link_views(views, {&weights});
-    if (linked) weights_relinked = true;
+    if (link_slots(views, &ParameterSlot::parameter)) weights_relinked = true;
 }
 
 void ConvolutionOperator::link_parameter_scales(span<const TensorView> views)
 {
     if (views.empty()) return;
     weight_scale = views[use_bias && views.size() >= 2 ? 1 : 0];
-}
-
-void ConvolutionOperator::link_gradients(span<const TensorView> views)
-{
-    bias_gradient = {};
-    if (use_bias) link_views(views, {&bias_gradient, &weight_gradient});
-    else          link_views(views, {&weight_gradient});
 }
 
 void ConvolutionOperator::set_parameters_random()

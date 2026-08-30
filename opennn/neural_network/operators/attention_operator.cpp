@@ -219,20 +219,19 @@ struct AttentionOperator::SDPACache
 
     struct Entry
     {
-        shared_ptr<cudnn_frontend::graph::Graph> fwd_graph;
+        // The graph, its workspace size and its pending-autotune flag travel
+        // together, so they are one slot each -- the same one convolution and
+        // batch normalization use, built through build_attention.
+        cudnn_frontend::GraphSlot fwd, bwd;
+
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_Q, fwd_K, fwd_V, fwd_O, fwd_Stats;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_SeqLenQ, fwd_SeqLenKV;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_Seed, fwd_Offset;
-        int64_t fwd_workspace_bytes = 0;
-        bool fwd_autotune_pending = false;
 
-        shared_ptr<cudnn_frontend::graph::Graph> bwd_graph;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_Q, bwd_K, bwd_V, bwd_O, bwd_dO, bwd_Stats;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_dQ, bwd_dK, bwd_dV;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_SeqLenQ, bwd_SeqLenKV;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_Seed, bwd_Offset;
-        int64_t bwd_workspace_bytes = 0;
-        bool bwd_autotune_pending = false;
     };
 
     unordered_map<CacheKey, Entry, CacheKeyHash> entries;
@@ -315,6 +314,29 @@ void refresh_sdpa_sequence_lengths(const AttentionOperator::SDPACache::CacheKey&
 
 }
 
+// Forward and backward key the cache on the same shape and mask, and differ
+// only in what they know about training and dropout. Spelling the aggregate out
+// at both call sites let the two drift; a field added to CacheKey now reaches
+// both.
+static AttentionOperator::SDPACache::CacheKey
+sdpa_cache_key(const AttentionOperator& op,
+               const TensorView& query, const TensorView& key,
+               bool dropout_in_graph, float dropout_rate, bool is_training)
+{
+    return {
+        query.get_shape()[0],
+        query.get_shape()[2],
+        key.get_shape()[2],
+        op.heads_number,
+        op.head_dimension,
+        dropout_in_graph,
+        dropout_in_graph ? dropout_rate : 0.0f,
+        op.use_causal_mask,
+        is_training,
+        op.interleaved_heads
+    };
+}
+
 static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
                                       const AttentionOperator::SDPACache::CacheKey& k)
 {
@@ -356,10 +378,7 @@ static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
         entry.fwd_Stats = Stats;
     }
 
-    entry.fwd_autotune_pending = cudnn_frontend::finalize_attention(
-        *graph, "sdpa fwd", entry.fwd_workspace_bytes, true);
-
-    entry.fwd_graph = graph;
+    entry.fwd.build_attention(graph, "sdpa fwd");
 }
 
 static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry,
@@ -409,10 +428,7 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
     entry.bwd_dK = dK;
     entry.bwd_dV = dV;
 
-    entry.bwd_autotune_pending = cudnn_frontend::finalize_attention(
-        *graph, "sdpa bwd", entry.bwd_workspace_bytes, true);
-
-    entry.bwd_graph = graph;
+    entry.bwd.build_attention(graph, "sdpa bwd");
 }
 
 #else
@@ -822,18 +838,8 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
 
     const bool dropout_in_graph = dropout.active() && is_training;
 
-    SDPACache::CacheKey cache_key{
-        query.get_shape()[0],
-        query.get_shape()[2],
-        key.get_shape()[2],
-        heads_number,
-        head_dimension,
-        dropout_in_graph,
-        dropout_in_graph ? dropout.rate : 0.0f,
-        use_causal_mask,
-        is_training,
-        interleaved_heads
-    };
+    const SDPACache::CacheKey cache_key =
+        sdpa_cache_key(*this, query, key, dropout_in_graph, dropout.rate, is_training);
 
     throw_if(state.size() < sdpa_state_slots_count,
              "SDPA forward: {} state slots were passed, the layout needs {}.",
@@ -931,7 +937,7 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
     }
 
     auto& entry = sdpa_cache->get_or_create_entry(cache_key);
-    if (!entry.fwd_graph)
+    if (!entry.fwd)
         build_sdpa_forward_graph(entry, cache_key);
 
     cudnn_frontend::VariantPack tensor_map;
@@ -949,15 +955,8 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
         tensor_map[entry.fwd_Offset] = dropout_state.as<int64_t>() + 1;
     }
 
-    if (entry.fwd_autotune_pending)
-        cudnn_frontend::autotune_now(entry.fwd_autotune_pending,
-                                     *entry.fwd_graph, tensor_map,
-                                     entry.fwd_workspace_bytes, "sdpa fwd");
-    cudnn_frontend::execute_graph(*entry.fwd_graph,
-                                  tensor_map,
-                                  cudnn_frontend::shared_workspace(entry.fwd_workspace_bytes),
-                                  "SDPA forward execute",
-                                  cudnn_frontend::timing_label("sdpa_fwd"));
+    cudnn_frontend::run_slot(entry.fwd, tensor_map, "SDPA forward execute",
+                             cudnn_frontend::timing_label("sdpa_fwd"), false);
     if (fp32_via_bf16)
         cast_bf16_to_fp32(output.size(), output_bf16, output.as<float>());
 }
@@ -1110,18 +1109,8 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
 
     const bool dropout_in_graph = dropout.active();
 
-    SDPACache::CacheKey cache_key{
-        query.get_shape()[0],
-        query.get_shape()[2],
-        key.get_shape()[2],
-        heads_number,
-        head_dimension,
-        dropout_in_graph,
-        dropout_in_graph ? dropout.rate : 0.0f,
-        use_causal_mask,
-        true,
-        interleaved_heads
-    };
+    const SDPACache::CacheKey cache_key =
+        sdpa_cache_key(*this, query, key, dropout_in_graph, dropout.rate, true);
 
     throw_if(state.size() < sdpa_state_slots_count,
              "SDPA backward: {} state slots were passed, the layout needs {}.",
@@ -1187,6 +1176,16 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
         bdk = key_gradient_bf16.get_data();
         bdv = value_gradient_bf16.get_data();
     }
+    // Whichever backend runs leaves dQ/dK/dV in the BF16 scratch, so both
+    // exits widen the same three views. They were written out at both.
+    const auto widen_gradients = [&]
+    {
+        if (!fp32_via_bf16) return;
+        cast_bf16_to_fp32(query.size(), query_gradient_bf16.as<bfloat16>(), query_delta.as<float>());
+        cast_bf16_to_fp32(key.size(),   key_gradient_bf16.as<bfloat16>(), key_delta.as<float>());
+        cast_bf16_to_fp32(value.size(), value_gradient_bf16.as<bfloat16>(), value_delta.as<float>());
+    };
+
     if (const auto problem = flash_attention_problem(cache_key, source_lengths.as<int32_t>()))
     {
         const Index accumulator_elements = flash_attention::query_delta_accumulator_elements(*problem);
@@ -1198,18 +1197,13 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
                                   workspace, workspace + accumulator_elements,
                                   device::get_compute_stream());
 
-        if (fp32_via_bf16)
-        {
-            cast_bf16_to_fp32(query.size(), query_gradient_bf16.as<bfloat16>(), query_delta.as<float>());
-            cast_bf16_to_fp32(key.size(),   key_gradient_bf16.as<bfloat16>(), key_delta.as<float>());
-            cast_bf16_to_fp32(value.size(), value_gradient_bf16.as<bfloat16>(), value_delta.as<float>());
-        }
+        widen_gradients();
 
         return;
     }
 
     auto& entry = sdpa_cache->get_or_create_entry(cache_key);
-    if (!entry.bwd_graph)
+    if (!entry.bwd)
         build_sdpa_backward_graph(entry, cache_key);
 
     cudnn_frontend::VariantPack tensor_map;
@@ -1230,21 +1224,9 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
         tensor_map[entry.bwd_Offset] = dropout_state.as<int64_t>() + 1;
     }
 
-    if (entry.bwd_autotune_pending)
-        cudnn_frontend::autotune_now(entry.bwd_autotune_pending,
-                                     *entry.bwd_graph, tensor_map,
-                                     entry.bwd_workspace_bytes, "sdpa bwd");
-    cudnn_frontend::execute_graph(*entry.bwd_graph,
-                                  tensor_map,
-                                  cudnn_frontend::shared_workspace(entry.bwd_workspace_bytes),
-                                  "SDPA backward execute",
-                                  cudnn_frontend::timing_label("sdpa_bwd"));
-    if (fp32_via_bf16)
-    {
-        cast_bf16_to_fp32(query.size(), query_gradient_bf16.as<bfloat16>(), query_delta.as<float>());
-        cast_bf16_to_fp32(key.size(),   key_gradient_bf16.as<bfloat16>(), key_delta.as<float>());
-        cast_bf16_to_fp32(value.size(), value_gradient_bf16.as<bfloat16>(), value_delta.as<float>());
-    }
+    cudnn_frontend::run_slot(entry.bwd, tensor_map, "SDPA backward execute",
+                             cudnn_frontend::timing_label("sdpa_bwd"), false);
+    widen_gradients();
 }
 
 #endif
