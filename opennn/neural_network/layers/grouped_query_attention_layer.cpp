@@ -374,6 +374,10 @@ struct GroupedQueryAttentionOperator::GraphCache
 {
     mutex access_mutex;
 
+    // Both cached graphs are an SDPA forward over the same BSHD layout, so they
+    // share one key and one entry. They were a struct-keyed unordered_map with
+    // a hand-rolled FNV hash and a tuple-keyed map, each with its own copy of
+    // the graph/workspace pair the shared GraphSlot now holds.
     struct Key
     {
         int batch = 0, query_seq = 0, key_seq = 0;
@@ -387,42 +391,57 @@ struct GroupedQueryAttentionOperator::GraphCache
     {
         size_t operator()(const Key& key) const
         {
-            size_t hash = 1469598103934665603ull;
-            for (const int field : {key.batch, key.query_seq, key.key_seq,
-                                    key.query_heads, key.kv_heads, key.head_dim, int(key.causal)})
-                hash = (hash ^ size_t(field)) * 1099511628211ull;
-            return hash;
+            return hash_combine(key.batch, key.query_seq, key.key_seq,
+                                key.query_heads, key.kv_heads, key.head_dim,
+                                key.causal);
         }
     };
 
     struct Entry
     {
-        shared_ptr<cudnn_frontend::graph::Graph> graph;
+        cudnn_frontend::GraphSlot slot;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> Q, K, V, O;
-        int64_t workspace_bytes = 0;
-    };
 
-    unordered_map<Key, Entry, KeyHash> entries;
-
-    struct PrefillEntry
-    {
-        shared_ptr<cudnn_frontend::graph::Graph> graph;
-        shared_ptr<cudnn_frontend::graph::Tensor_attributes>
-            Q, K, V, O, SeqQ, SeqKV;
-        int64_t workspace_bytes = 0;
+        // The prefill graph alone takes its sequence lengths as tensors, and it
+        // alone remembers a build that threw rather than retrying every call.
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> SeqQ, SeqKV;
         bool failed = false;
     };
 
-    using PrefillKey = tuple<Index, Index, Index, Index, Index>;
-    map<PrefillKey, PrefillEntry> prefill_entries;
+    using Entries = unordered_map<Key, Entry, KeyHash>;
+
+    // Two maps rather than one: graph_cache_capacity is 8, and a single map
+    // would let the prefill and batched graphs evict each other.
+    Entries entries;
+    Entries prefill_entries;
     bool disabled = false;
 
-    Entry& get_or_create(const Key& key)
+    static Entry& get_or_create(Entries& cache_entries, const Key& key)
     {
         return detail::bounded_cache_entry(
-            entries, key, cudnn_frontend::graph_cache_capacity);
+            cache_entries, key, cudnn_frontend::graph_cache_capacity);
     }
 };
+
+// Both graphs lay Q, K and V out the same way: batch-major, then sequence, with
+// the heads interleaved inside a row. The prefill graph is the batch == 1 case.
+static shared_ptr<cudnn_frontend::graph::Tensor_attributes>
+gqa_bshd_tensor(cudnn_frontend::graph::Graph& graph, const char* name,
+                int64_t batch, int64_t heads, int64_t seq, int64_t head_dim)
+{
+    return graph.tensor(cudnn_frontend::graph::Tensor_attributes()
+                        .set_name(name)
+                        .set_dim   ({batch, heads, seq, head_dim})
+                        .set_stride({seq * heads * head_dim, head_dim, heads * head_dim, 1}));
+}
+
+static void gqa_set_bshd_output(const shared_ptr<cudnn_frontend::graph::Tensor_attributes>& tensor,
+                                int64_t batch, int64_t heads, int64_t seq, int64_t head_dim)
+{
+    tensor->set_output(true)
+           .set_dim   ({batch, heads, seq, head_dim})
+           .set_stride({seq * heads * head_dim, head_dim, heads * head_dim, 1});
+}
 
 template<typename T>
 static bool grouped_attention_sdpa_gpu(const int batch, const int query_seq, const int key_seq,
@@ -448,32 +467,16 @@ static bool grouped_attention_sdpa_gpu(const int batch, const int query_seq, con
         return cudnn_frontend::run_frontend(*cache, "GroupedQueryAttention",
                                             [&](GroupedQueryAttentionOperator::GraphCache& graph_cache)
         {
-            auto& entry = graph_cache.get_or_create(key);
+            auto& entry = GroupedQueryAttentionOperator::GraphCache::get_or_create(
+                graph_cache.entries, key);
 
-            if (!entry.graph)
+            if (!entry.slot)
             {
                 const auto graph = cudnn_frontend::new_graph(Type::BF16);
 
-                const int64_t batch_size = batch;
-                const int64_t depth      = head_dim;
-
-                const auto dims = [&](int64_t heads, int64_t seq)
-                    { return vector<int64_t>{batch_size, heads, seq, depth}; };
-
-                const auto strides = [&](int64_t heads, int64_t seq)
-                    { return vector<int64_t>{seq * heads * depth, depth, heads * depth, 1}; };
-
-                const auto bshd = [&](const char* name, int64_t heads, int64_t seq)
-                {
-                    return graph->tensor(cudnn_frontend::graph::Tensor_attributes()
-                                         .set_name(name)
-                                         .set_dim(dims(heads, seq))
-                                         .set_stride(strides(heads, seq)));
-                };
-
-                entry.Q = bshd("Q", n_query_heads, query_seq);
-                entry.K = bshd("K", n_kv_heads,    key_seq);
-                entry.V = bshd("V", n_kv_heads,    key_seq);
+                entry.Q = gqa_bshd_tensor(*graph, "Q", batch, n_query_heads, query_seq, head_dim);
+                entry.K = gqa_bshd_tensor(*graph, "K", batch, n_kv_heads,    key_seq,   head_dim);
+                entry.V = gqa_bshd_tensor(*graph, "V", batch, n_kv_heads,    key_seq,   head_dim);
 
                 auto [out, stats] = graph->sdpa(entry.Q, entry.K, entry.V,
                                                 cudnn_frontend::graph::SDPA_attributes()
@@ -483,13 +486,10 @@ static bool grouped_attention_sdpa_gpu(const int batch, const int query_seq, con
                                                 .set_attn_scale(scale));
                 (void)stats;
 
-                out->set_output(true)
-                   .set_dim(dims(n_query_heads, query_seq))
-                   .set_stride(strides(n_query_heads, query_seq));
+                gqa_set_bshd_output(out, batch, n_query_heads, query_seq, head_dim);
                 entry.O = out;
 
-                cudnn_frontend::finalize_attention(*graph, "gqa sdpa fwd", entry.workspace_bytes);
-                entry.graph = graph;
+                entry.slot.build_attention(graph, "gqa sdpa fwd", false);
             }
 
             cudnn_frontend::VariantPack tensors;
@@ -498,9 +498,7 @@ static bool grouped_attention_sdpa_gpu(const int batch, const int query_seq, con
             tensors[entry.V] = const_cast<T*>(V);
             tensors[entry.O] = O;
 
-            cudnn_frontend::execute_graph(*entry.graph, tensors,
-                                          cudnn_frontend::shared_workspace(entry.workspace_bytes),
-                                          "gqa sdpa execute", string());
+            cudnn_frontend::run_slot(entry.slot, tensors, "gqa sdpa execute", string(), false);
         });
     }
 }
@@ -896,38 +894,30 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
 namespace
 {
 
-GroupedQueryAttentionOperator::GraphCache::PrefillEntry& gqa_sdpa(
+GroupedQueryAttentionOperator::GraphCache::Entry& gqa_sdpa(
     GroupedQueryAttentionOperator::GraphCache& cache,
     Index max_q, Index max_kv,
     Index q_heads, Index kv_heads, Index head_dim)
 {
-    const GroupedQueryAttentionOperator::GraphCache::PrefillKey key{
-        max_q, max_kv, q_heads, kv_heads, head_dim};
+    // The prefill graph is built once per capacity, for a single sequence, and
+    // is always bottom-right causal -- hence the fixed batch and causal fields.
+    const GroupedQueryAttentionOperator::GraphCache::Key key{
+        1, to_int(max_q), to_int(max_kv),
+        to_int(q_heads), to_int(kv_heads), to_int(head_dim), true};
 
-    return detail::bounded_cache_entry(
-        cache.prefill_entries, key,
-        cudnn_frontend::graph_cache_capacity);
+    return GroupedQueryAttentionOperator::GraphCache::get_or_create(
+        cache.prefill_entries, key);
 }
 
-shared_ptr<cudnn_frontend::graph::Tensor_attributes>
-gqa_bshd_tensor(cudnn_frontend::graph::Graph& graph, const char* name,
-                int64_t heads, int64_t max_seq, int64_t head_dim)
-{
-    return graph.tensor(cudnn_frontend::graph::Tensor_attributes()
-                        .set_name(name)
-                        .set_dim   ({1, heads, max_seq, head_dim})
-                        .set_stride({heads * max_seq * head_dim, head_dim, heads * head_dim, 1}));
-}
-
-void gqa_sdpa_build(GroupedQueryAttentionOperator::GraphCache::PrefillEntry& s,
+void gqa_sdpa_build(GroupedQueryAttentionOperator::GraphCache::Entry& s,
                     Index max_q, Index max_kv,
                     Index q_heads, Index kv_heads, Index head_dim, float scale)
 {
     auto graph = cudnn_frontend::new_graph(Type::BF16);
 
-    s.Q = gqa_bshd_tensor(*graph, "Q", q_heads,  max_q,  head_dim);
-    s.K = gqa_bshd_tensor(*graph, "K", kv_heads, max_kv, head_dim);
-    s.V = gqa_bshd_tensor(*graph, "V", kv_heads, max_kv, head_dim);
+    s.Q = gqa_bshd_tensor(*graph, "Q", 1, q_heads,  max_q,  head_dim);
+    s.K = gqa_bshd_tensor(*graph, "K", 1, kv_heads, max_kv, head_dim);
+    s.V = gqa_bshd_tensor(*graph, "V", 1, kv_heads, max_kv, head_dim);
 
     s.SeqQ  = cudnn_frontend::seq_len_scalar(*graph, "SeqQ");
     s.SeqKV = cudnn_frontend::seq_len_scalar(*graph, "SeqKV");
@@ -943,14 +933,10 @@ void gqa_sdpa_build(GroupedQueryAttentionOperator::GraphCache::PrefillEntry& s,
 
     auto [O, stats] = graph->sdpa(s.Q, s.K, s.V, options);
     (void)stats;
-    O->set_output(true)
-      .set_dim   ({1, q_heads, max_q, head_dim})
-      .set_stride({q_heads * max_q * head_dim, head_dim, q_heads * head_dim, 1});
+    gqa_set_bshd_output(O, 1, q_heads, max_q, head_dim);
     s.O = O;
 
-    cudnn_frontend::finalize_attention(*graph, "gqa sdpa", s.workspace_bytes);
-
-    s.graph = std::move(graph);
+    s.slot.build_attention(std::move(graph), "gqa sdpa", false);
 }
 
 }
@@ -1068,7 +1054,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                 auto& sdpa = gqa_sdpa(*graph_cache, query_capacity, table_len,
                                       q_heads, kv_heads, head_dim);
 
-                if (!sdpa.graph && !sdpa.failed)
+                if (!sdpa.slot && !sdpa.failed)
                 {
                     try
                     {
@@ -1083,7 +1069,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                     }
                 }
 
-                if (sdpa.graph)
+                if (sdpa.slot)
                 {
                     pinned_storage.resize_bytes(Index(2 * sizeof(int32_t)));
                     TensorView& sequence_lengths_device = forward_slots[SequenceLengths];
@@ -1102,11 +1088,8 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                     tensors[sdpa.O]     = attn_v.get_data();
                     tensors[sdpa.SeqQ]  = sequence_lengths_device.as<int32_t>();
                     tensors[sdpa.SeqKV] = sequence_lengths_device.as<int32_t>() + 1;
-                    cudnn_frontend::execute_graph(*sdpa.graph,
-                                                  tensors,
-                                                  cudnn_frontend::shared_workspace(sdpa.workspace_bytes),
-                                                  "gqa sdpa execute",
-                                                  cudnn_frontend::timing_label("gqa_sdpa"));
+                    cudnn_frontend::run_slot(sdpa.slot, tensors, "gqa sdpa execute",
+                                             cudnn_frontend::timing_label("gqa_sdpa"), false);
                     ran_sdpa = true;
                 }
             }
