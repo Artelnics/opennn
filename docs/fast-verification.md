@@ -68,6 +68,11 @@ selects a cuDNN installation built for the same CUDA major version. It fails wit
 a diagnostic instead of mixing incompatible runtime families. Set both
 `OPENNN_CUDNN_INCLUDE_DIR` and `OPENNN_CUDNN_LIBRARY` to override discovery.
 
+On Linux, the first CUDA configuration compiles a small C++20 `<format>` probe.
+This catches incompatible CUDA and host-compiler combinations before a cold
+OpenNN build is started. Upgrade or select a compatible toolchain and rerun with
+`--reconfigure` if this preflight fails.
+
 ## Compiler cache
 
 If `sccache` is on `PATH` when a verification directory is first configured, the

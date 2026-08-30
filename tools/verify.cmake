@@ -75,7 +75,7 @@ function(_prepend_path path)
     endif()
 endfunction()
 
-function(_prepare_cuda configure_args_out)
+function(_prepare_cuda configure_args_out run_preflight)
     set(_cuda_args)
     set(_cuda_toolkit_major)
 
@@ -88,6 +88,42 @@ function(_prepare_cuda configure_args_out)
     if(_sccache_program)
         list(APPEND _cuda_args
             "-DCMAKE_CUDA_COMPILER_LAUNCHER=${_sccache_program}")
+    endif()
+
+    if(run_preflight AND NOT WIN32)
+        find_program(_nvcc_program nvcc)
+        if(NOT _nvcc_program)
+            message(FATAL_ERROR
+                "Linux CUDA verification requires nvcc on PATH")
+        endif()
+
+        set(_probe_dir "${_build_root}/cuda-preflight")
+        set(_probe_source "${_probe_dir}/cuda_cxx20.cu")
+        set(_probe_object "${_probe_dir}/cuda_cxx20.o")
+        file(MAKE_DIRECTORY "${_probe_dir}")
+        file(WRITE "${_probe_source}"
+            "#include <format>\n"
+            "int main() { return std::format(\"{}\", 1).empty(); }\n")
+        execute_process(
+            COMMAND "${_nvcc_program}" -std=c++20 -c "${_probe_source}"
+                -o "${_probe_object}"
+            RESULT_VARIABLE _probe_result
+            OUTPUT_VARIABLE _probe_output
+            ERROR_VARIABLE _probe_error)
+        if(NOT _probe_result EQUAL 0)
+            set(_probe_diagnostic "${_probe_output}${_probe_error}")
+            string(LENGTH "${_probe_diagnostic}" _probe_diagnostic_length)
+            if(_probe_diagnostic_length GREATER 2000)
+                string(SUBSTRING "${_probe_diagnostic}" 0 2000 _probe_diagnostic)
+                string(APPEND _probe_diagnostic "\n... output shortened")
+            endif()
+            message(FATAL_ERROR
+                "Linux CUDA C++20 preflight failed with ${_nvcc_program}. "
+                "Use a CUDA toolkit and host compiler combination that can compile "
+                "C++20 <format>, then rerun with --reconfigure.\n"
+                "${_probe_diagnostic}")
+        endif()
+        message(STATUS "Linux CUDA C++20 preflight: passed")
     endif()
 
     if(WIN32)
@@ -181,16 +217,20 @@ endfunction()
 function(_configure backend build_dir_out)
     set(_build_dir "${_build_root}/${backend}")
     set(_cache_file "${_build_dir}/CMakeCache.txt")
+    set(_needs_configure FALSE)
+    if(OPENNN_VERIFY_RECONFIGURE OR NOT EXISTS "${_cache_file}")
+        set(_needs_configure TRUE)
+    endif()
 
     if(backend STREQUAL "cpu")
         set(_preset verify-cpu)
         set(_backend_args)
     else()
         set(_preset verify-cuda)
-        _prepare_cuda(_backend_args)
+        _prepare_cuda(_backend_args "${_needs_configure}")
     endif()
 
-    if(OPENNN_VERIFY_RECONFIGURE OR NOT EXISTS "${_cache_file}")
+    if(_needs_configure)
         message(STATUS "Configuring ${backend}: ${_build_dir}")
         execute_process(
             COMMAND "${CMAKE_COMMAND}" --preset "${_preset}"
