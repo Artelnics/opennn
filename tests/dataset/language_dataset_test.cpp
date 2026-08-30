@@ -208,6 +208,25 @@ TEST(LanguageDataset, BinaryStorageDoesNotPretendDeviceResidency)
     remove_language_file(file_path);
 }
 
+TEST(LanguageDataset, MatrixStorageAfterReadingIsRefused)
+{
+    const string file_path = temp_language_file(
+        "opennn_language_late_matrix.txt", sentiment_content);
+
+    LanguageDataset dataset(file_path);
+    ASSERT_EQ(dataset.get_storage_mode(), Dataset::StorageMode::BinaryFile);
+    ASSERT_EQ(dataset.get_data().size(), 0);
+
+    // The Matrix fill paths index the data matrix, which read_txt only fills
+    // when the mode was already Matrix. Switching now used to segfault on the
+    // first batch rather than say anything.
+    EXPECT_THROW(dataset.set_storage_mode(Dataset::StorageMode::Matrix),
+                 runtime_error);
+    EXPECT_EQ(dataset.get_storage_mode(), Dataset::StorageMode::BinaryFile);
+
+    remove_language_file(file_path);
+}
+
 TEST(LanguageDataset, CsvReaderPreservesQuotedSeparators)
 {
     const string file_path = temp_language_file(

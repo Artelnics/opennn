@@ -20,6 +20,13 @@ class LanguageDataset final : public Dataset
 
 public:
 
+    // read_txt only fills the data matrix when the mode is already Matrix, and
+    // the constructor sets BinaryFile before reading, so switching afterwards
+    // leaves the Matrix paths indexing an empty matrix.
+    using Dataset::set_storage_mode;
+    void set_storage_mode(StorageMode) override;
+
+
     LanguageDataset(const filesystem::path& = "",
                     Index maximum_vocabulary_size = 20000,
                     Index minimum_token_frequency = 1);

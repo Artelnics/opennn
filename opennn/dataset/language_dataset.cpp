@@ -32,6 +32,19 @@ LanguageDataset::LanguageDataset(const filesystem::path& new_data_path,
         read_txt();
 }
 
+void LanguageDataset::set_storage_mode(StorageMode new_storage_mode)
+{
+    throw_if(new_storage_mode == StorageMode::Matrix
+             && get_samples_number() > 0
+             && data.size() == 0,
+             "LanguageDataset: the corpus was read in {} mode, so the data "
+             "matrix is empty and Matrix mode would read past it. Set the "
+             "storage mode before the corpus is read.",
+             get_storage_mode_string());
+
+    Dataset::set_storage_mode(new_storage_mode);
+}
+
 VectorI LanguageDataset::calculate_target_distribution() const
 {
     if (!decoder_shape.empty()) return {};
