@@ -662,6 +662,30 @@ static TalResult tal_assign_head(const TensorView& output,
     return res;
 }
 
+// The DFL targets a cell owes its assigned box: the four distances from the
+// cell centre to the box edges, in grid units, clamped to the bin range. The
+// loss and its gradient both need them, and each derived them itself -- eleven
+// identical lines that had to stay identical, or the gradient would descend a
+// different objective than the one being reported.
+struct DflTargets { float distance[4]; };
+
+static DflTargets dfl_targets(const float* box, Index col, Index row,
+                              Index G, float inv_g, Index reg_max)
+{
+    const float gt_cx = box[0], gt_cy = box[1];
+    const float gt_w  = box[2], gt_h  = box[3];
+    const float cell_cx = (float(col) + 0.5f) * inv_g;
+    const float cell_cy = (float(row) + 0.5f) * inv_g;
+    const float rm1     = float(reg_max - 1);
+
+    return {{
+        clamp((cell_cx - (gt_cx - gt_w*0.5f)) * float(G), 0.0f, rm1),
+        clamp((cell_cy - (gt_cy - gt_h*0.5f)) * float(G), 0.0f, rm1),
+        clamp(((gt_cx + gt_w*0.5f) - cell_cx) * float(G), 0.0f, rm1),
+        clamp(((gt_cy + gt_h*0.5f) - cell_cy) * float(G), 0.0f, rm1)
+    }};
+}
+
 static float yolo_v8_error_kernel_tal(const TensorView& output,
                                        const float* gt_list,
                                        Index batch_size, Index G, Index C,
@@ -705,17 +729,9 @@ static float yolo_v8_error_kernel_tal(const TensorView& output,
 
                     if (reg_max > 1)
                     {
-                        const float gt_cx = gr[0], gt_cy = gr[1];
-                        const float gt_w  = gr[2], gt_h  = gr[3];
-                        const float cell_cx = (float(col) + 0.5f) * inv_g;
-                        const float cell_cy = (float(row) + 0.5f) * inv_g;
-                        const float rm1     = float(reg_max - 1);
-                        const float d_tgts[4] = {
-                            clamp((cell_cx - (gt_cx - gt_w*0.5f)) * float(G), 0.0f, rm1),
-                            clamp((cell_cy - (gt_cy - gt_h*0.5f)) * float(G), 0.0f, rm1),
-                            clamp(((gt_cx + gt_w*0.5f) - cell_cx) * float(G), 0.0f, rm1),
-                            clamp(((gt_cy + gt_h*0.5f) - cell_cy) * float(G), 0.0f, rm1)
-                        };
+                        const DflTargets targets =
+                            dfl_targets(gr, col, row, G, inv_g, reg_max);
+                        const float* const d_tgts = targets.distance;
                         for (Index g = 0; g < 4; ++g)
                         {
                             const float* logits = out + base_o + g * reg_max;
@@ -806,17 +822,9 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                     if (reg_max > 1)
                     {
 
-                        const float gt_cx = gr[0], gt_cy = gr[1];
-                        const float gt_w  = gr[2], gt_h  = gr[3];
-                        const float cell_cx = (float(col) + 0.5f) * inv_g;
-                        const float cell_cy = (float(row) + 0.5f) * inv_g;
-                        const float rm1     = float(reg_max - 1);
-                        const float d_tgts[4] = {
-                            clamp((cell_cx - (gt_cx - gt_w*0.5f)) * float(G), 0.0f, rm1),
-                            clamp((cell_cy - (gt_cy - gt_h*0.5f)) * float(G), 0.0f, rm1),
-                            clamp(((gt_cx + gt_w*0.5f) - cell_cx) * float(G), 0.0f, rm1),
-                            clamp(((gt_cy + gt_h*0.5f) - cell_cy) * float(G), 0.0f, rm1)
-                        };
+                        const DflTargets targets =
+                            dfl_targets(gr, col, row, G, inv_g, reg_max);
+                        const float* const d_tgts = targets.distance;
 
                         const float cx_g = clamp(gr_res.cx_gradient, -grad_clip, grad_clip);
                         const float cy_g = clamp(gr_res.cy_gradient, -grad_clip, grad_clip);

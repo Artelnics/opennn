@@ -188,6 +188,29 @@ uint64_t hash_anchors(const vector<array<float, 2>>& anchors)
     return hash_value;
 }
 
+// Both target-cache writers stamp the same header; they differed only in where
+// the sample count and the anchor set came from, and the two copies had already
+// drifted apart in spacing.
+YoloTargetCacheHeader make_target_cache_header(Index grid_size, Index boxes_per_cell,
+                                               Index classes_number, uint64_t samples,
+                                               Index target_record_floats,
+                                               const vector<array<float, 2>>& anchors)
+{
+    YoloTargetCacheHeader header{};
+    memcpy(header.magic, YOLO_TARGET_MAGIC, 8);
+    header.version        = YOLO_CACHE_VERSION;
+    header.grid_size      = uint32_t(grid_size);
+    header.boxes_per_cell = uint32_t(boxes_per_cell);
+    header.classes_number = uint32_t(classes_number);
+    header.samples        = samples;
+    header.target_floats  = uint64_t(target_record_floats);
+    header.anchors_hash   = hash_anchors(anchors);
+    header.anchors_offset = sizeof(YoloTargetCacheHeader);
+    header.targets_offset = header.anchors_offset
+        + uint64_t(anchors.size() * sizeof(array<float, 2>));
+    return header;
+}
+
 uint64_t hash_sources(const filesystem::path& images_dir,
                       const filesystem::path& labels_dir)
 {
@@ -1388,18 +1411,9 @@ bool YoloDataset::try_rebuild_target_from_boxes(const vector<array<float, 2>>& r
         FileWriter target_writer;
         target_writer.open(target_tmp_path);
 
-        YoloTargetCacheHeader target_header{};
-        memcpy(target_header.magic, YOLO_TARGET_MAGIC, 8);
-        target_header.version        = YOLO_CACHE_VERSION;
-        target_header.grid_size      = uint32_t(grid_size);
-        target_header.boxes_per_cell = uint32_t(boxes_per_cell);
-        target_header.classes_number = uint32_t(classes_number);
-        target_header.samples        = uint64_t(n_samples);
-        target_header.target_floats  = uint64_t(target_record_floats);
-        target_header.anchors_hash   = hash_anchors(new_anchors);
-        target_header.anchors_offset = sizeof(YoloTargetCacheHeader);
-        target_header.targets_offset = target_header.anchors_offset
-            + uint64_t(new_anchors.size() * sizeof(array<float, 2>));
+        const YoloTargetCacheHeader target_header = make_target_cache_header(
+            grid_size, boxes_per_cell, classes_number, uint64_t(n_samples),
+            target_record_floats, new_anchors);
 
         target_writer.write(span(&target_header, 1));
         target_writer.write(span(new_anchors));
@@ -1636,18 +1650,9 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     FileWriter target_writer;
     target_writer.open(target_tmp_path);
 
-    YoloTargetCacheHeader target_header{};
-    memcpy(target_header.magic, YOLO_TARGET_MAGIC, 8);
-    target_header.version = YOLO_CACHE_VERSION;
-    target_header.grid_size = uint32_t(grid_size);
-    target_header.boxes_per_cell = uint32_t(boxes_per_cell);
-    target_header.classes_number = uint32_t(classes_number);
-    target_header.samples = uint64_t(image_paths.size());
-    target_header.target_floats = uint64_t(target_record_floats);
-    target_header.anchors_hash = hash_anchors(anchors);
-    target_header.anchors_offset = sizeof(YoloTargetCacheHeader);
-    target_header.targets_offset = target_header.anchors_offset
-        + uint64_t(anchors.size() * sizeof(array<float, 2>));
+    const YoloTargetCacheHeader target_header = make_target_cache_header(
+        grid_size, boxes_per_cell, classes_number, uint64_t(image_paths.size()),
+        target_record_floats, anchors);
 
     target_writer.write(span(&target_header, 1));
     target_writer.write(span(anchors));

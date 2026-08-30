@@ -910,19 +910,8 @@ TrainingResult Optimizer::train()
         if (has_validation)
             dataset->get_batches(validation_sample_indices, validation_batch_size, Shuffle::No, validation_batches);
 
-        warmup_device_training(training_context,
-                               batch_pools.training_empty_queue,
-                               training_batches,
-                               features,
-                               training_session,
-                               optimizer_data,
-                               validation_fp,
-                               has_validation ? &batch_pools.validation_queue() : nullptr,
-                               has_validation ? &validation_batches : nullptr);
-
-        if (training_session.has_graph_batches())
+        const auto warm_up = [&]
         {
-            training_session.cuda_graph_capture_allowed = true;
             warmup_device_training(training_context,
                                    batch_pools.training_empty_queue,
                                    training_batches,
@@ -932,6 +921,16 @@ TrainingResult Optimizer::train()
                                    validation_fp,
                                    has_validation ? &batch_pools.validation_queue() : nullptr,
                                    has_validation ? &validation_batches : nullptr);
+        };
+
+        warm_up();
+
+        // A second pass, now that capture is allowed, so the graph is recorded
+        // against already-warm allocations.
+        if (training_session.has_graph_batches())
+        {
+            training_session.cuda_graph_capture_allowed = true;
+            warm_up();
         }
     }
 
