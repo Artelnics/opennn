@@ -252,9 +252,11 @@ Then, and only if asked:
 - **Both builds must pass, both suites at baseline.** `build-cpu-verification`
   and `build-resnet-capacity`. The CUDA build compiles `.cu` paths the CPU build
   never sees, so a green CPU build proves little on its own.
-- **Current baseline: CPU 988 passed / 28 skipped, GPU 1115 passed / 6 skipped,
-  zero failures, one disabled test.** Update this line if the count legitimately
-  changes, and say why in the commit.
+- **Current baseline: CPU 1017 tests (989 passed / 28 skipped), GPU 1122 tests
+  (1116 passed / 6 skipped), zero failures, one disabled test.** If Python is
+  unavailable, the two expression-execution checks skip instead: CPU 987 / 30
+  and GPU 1114 / 8. Update this line if the count legitimately changes, and say
+  why in the commit.
 
 Build recipe, environment traps (the cuDNN configure flags and the `PATH`
 ordering hazard that kills the GPU suite mid-run), and how to create the two
