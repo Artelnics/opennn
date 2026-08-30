@@ -146,6 +146,11 @@ def cpu_pinning(threads: int | None) -> tuple[list[str], dict[str, str], dict]:
         environment = {name: str(threads) for name in
                        ("OMP_NUM_THREADS", "MKL_NUM_THREADS",
                         "OPENNN_THREADS", "TORCH_NUM_THREADS")}
+        environment.update({
+            "OMP_DYNAMIC": "FALSE",
+            "MKL_DYNAMIC": "FALSE",
+            "OPENNN_OMP_DYNAMIC": "0",
+        })
 
     layout = core_layout()
     cores = layout["performance"]

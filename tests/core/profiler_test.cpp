@@ -26,6 +26,8 @@ TEST(ProfilerTest, ConcurrentAddsPreserveEverySample)
     for (thread& worker : threads) worker.join();
 
     EXPECT_DOUBLE_EQ(stats.total_ms(), double(threads_number * samples_per_thread));
+    EXPECT_EQ(stats.call_count("parallel"), threads_number * samples_per_thread);
+    EXPECT_EQ(stats.call_count("missing"), 0);
 
     ostringstream output;
     stats.print(output,

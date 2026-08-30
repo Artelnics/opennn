@@ -22,8 +22,11 @@ add_executable(opennn_tests ${TEST_SOURCES})
 
 target_link_libraries(opennn_tests gtest gtest_main opennn)
 
+if(OpenNN_ENABLE_ONEDNN)
+  target_compile_definitions(opennn_tests PRIVATE OPENNN_TEST_HAS_ONEDNN)
+endif()
+
 target_precompile_headers(opennn_tests PRIVATE pch.h)
 
 add_test(NAME run_tests COMMAND opennn_tests)
 set_tests_properties(run_tests PROPERTIES TIMEOUT 600)
-

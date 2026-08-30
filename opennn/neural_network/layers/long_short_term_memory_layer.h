@@ -162,7 +162,8 @@ private:
                       TensorView&,
                       TensorView&,
                       Buffer&,
-                      bool is_training) const;
+                      bool is_training,
+                      uint64_t parameters_version) const;
 
     bool apply_delta_onednn(const TensorView&,
                             const TensorView&,

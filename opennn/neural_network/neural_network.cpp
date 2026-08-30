@@ -562,6 +562,8 @@ void NeuralNetwork::compile(const Device device)
 
 void NeuralNetwork::compile(EffectiveConfig new_config)
 {
+    mark_parameters_changed();
+
     config = new_config;
 
     stale_configuration_warned = false;
@@ -792,6 +794,8 @@ void NeuralNetwork::clear()
 
 void NeuralNetwork::steal_from(NeuralNetwork& src)
 {
+    mark_parameters_changed();
+
     clear();
     task             = src.task;
     layers           = std::move(src.layers);
@@ -2067,6 +2071,8 @@ void NeuralNetwork::load(const filesystem::path& file_name)
 
 void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 {
+    mark_parameters_changed();
+
     throw_if(fp32_master_released(),
              "NeuralNetwork::load_parameters_binary: the fp32 parameter master was released "
              "for quantized inference; reload the model before loading parameters.");
@@ -2084,6 +2090,8 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 void NeuralNetwork::load_parameters_bf16_inference_binary(
     const filesystem::path& file_name)
 {
+    mark_parameters_changed();
+
     throw_if(parameters.empty() || !parameters.owns_memory(),
              "NeuralNetwork::load_parameters_bf16_inference_binary: "
              "the network must own its compiled parameter storage.");

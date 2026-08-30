@@ -130,6 +130,9 @@ public:
     // which costs those callers a recompute and cannot make a cache stale. The
     // reverse policy, trusting writers to announce themselves, is one missed
     // call site away from silently wrong weights.
+    // A handle retained across an execution has already consumed that one
+    // invalidation; call mark_parameters_changed() before executing after any
+    // later writes through the retained handle.
     //
     // Cache holders should store the version they were built at and compare, not
     // assume any particular increment.

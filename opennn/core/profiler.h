@@ -74,6 +74,13 @@ public:
         return total;
     }
 
+    long call_count(const string& key) const
+    {
+        const std::lock_guard lock(entries_mutex);
+        const auto found = entries.find(key);
+        return found == entries.end() ? 0 : found->second.calls;
+    }
+
     void print(ostream& os,
                const string& title,
                double total_ms = 0.0,

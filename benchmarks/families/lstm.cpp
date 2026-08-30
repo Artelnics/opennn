@@ -29,6 +29,10 @@
 #include <string>
 #include <vector>
 
+#if defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64)
+#include <immintrin.h>
+#endif
+
 #ifdef __linux__
 #include <unistd.h>
 #endif
@@ -39,6 +43,8 @@
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/time_series_dataset.h"
 #include "opennn/neural_network/forward_propagation.h"
+#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/neural_network/layers/long_short_term_memory_layer.h"
 #include "opennn/models/models.h"
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/training_strategy/training_strategy.h"
@@ -63,6 +69,20 @@ double resident_mb()
 
 constexpr Index SEED = 42;
 
+bool enable_flush_denormals()
+{
+#if defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64)
+    // MXCSR bit 15 is flush-to-zero and bit 6 is denormals-are-zero. They are
+    // thread-local, so set them before any OpenMP team is created; workers then
+    // inherit the same policy. PyTorch's driver calls set_flush_denormal(true).
+    constexpr unsigned int ftz_and_daz = (1U << 15U) | (1U << 6U);
+    _mm_setcsr(_mm_getcsr() | ftz_and_daz);
+    return (_mm_getcsr() & ftz_and_daz) == ftz_and_daz;
+#else
+    return false;
+#endif
+}
+
 struct Options
 {
     Index hidden = 128;
@@ -78,6 +98,33 @@ unique_ptr<ForecastingLstmNetwork> build(TimeSeriesDataset& dataset, const Optio
     auto network = make_unique<ForecastingLstmNetwork>(dataset.get_shape("Input"),
                                                        Shape{options.hidden},
                                                        dataset.get_shape("Target"));
+    network->set_parameters_pytorch();
+
+    return network;
+}
+
+unique_ptr<NeuralNetwork> build_inference(const TimeSeriesDataset& dataset,
+                                          const Options& options)
+{
+    set_seed(SEED);
+
+    auto network = make_unique<NeuralNetwork>();
+    network->set_task(NetworkTask::Forecasting);
+
+    auto recurrent = make_unique<LongShortTermMemory>(dataset.get_shape("Input"),
+                                                       Shape{options.hidden},
+                                                       "Tanh", "Sigmoid",
+                                                       "long_short_term_memory_layer");
+    recurrent->set_return_sequences(false);
+    network->add_layer(std::move(recurrent));
+
+    network->add_layer(make_unique<opennn::Dense>(network->get_output_shape(),
+                                                  dataset.get_shape("Target"),
+                                                  "Identity",
+                                                  BatchNormalization::No,
+                                                  "forecasting_layer"));
+
+    network->compile();
     network->set_parameters_pytorch();
 
     return network;
@@ -173,6 +220,9 @@ int usage()
 
 int main(int argc, char* argv[])
 {
+    cout << "flush_denormals="
+         << (enable_flush_denormals() ? "on" : "unsupported") << "\n";
+
     // Each engine at its best, as PROTOCOL.md requires. The library defaults to
     // Eigen so a plain build behaves like a plain build; a build that has the
     // MKL kernels is told to use them here rather than inheriting them.
@@ -277,7 +327,11 @@ int main(int argc, char* argv[])
 
         for (const Index batch : batches)
         {
-            auto network = build(*dataset, options);
+            // Match PyTorch's timed nn.LSTM + nn.Linear exactly. The full
+            // ForecastingLstmNetwork remains the train/quality/capacity model;
+            // its Scaling, Unscaling, and Clamping endpoints are deliberately
+            // absent from the inference throughput graph.
+            auto network = build_inference(*dataset, options);
             if (batch == batches.front()) describe(*dataset, *network, options);
 
             const Index processed = (samples / batch) * batch;
@@ -296,10 +350,20 @@ int main(int argc, char* argv[])
 
             const vector<TensorView>& inputs = data.get_inputs();
 
+            const auto run_once = [&](bool upload_parameters)
+            {
+                if (options.device == Device::CUDA)
+                    network->calculate_outputs_resident(inputs, forward_propagation,
+                                                        upload_parameters);
+                else
+                    network->forward_propagate(inputs, forward_propagation,
+                                               ForwardPropagationMode::Inference);
+            };
+
             const auto run_pass = [&]
             {
                 for (Index i = 0; i + batch <= samples; i += batch)
-                    network->calculate_outputs_resident(inputs, forward_propagation, false);
+                    run_once(false);
 
                 // CUDA calls are asynchronous. End the pass at completion so
                 // this measures kernel execution, as the PyTorch benchmark's
@@ -313,8 +377,7 @@ int main(int argc, char* argv[])
             // which aborted every CPU inference cell in this family. The
             // warm-up pass still has to happen, so it is the upload that is
             // conditional, not the pass.
-            network->calculate_outputs_resident(inputs, forward_propagation,
-                                                options.device == Device::CUDA);
+            run_once(options.device == Device::CUDA);
             run_pass();
 
             const auto unix_now = []

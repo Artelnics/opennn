@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "opennn/core/tensor_types.h"
+#include "opennn/core/profiler.h"
 #include "opennn/neural_network/layers/long_short_term_memory_layer.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/neural_network/neural_network.h"
@@ -14,8 +15,10 @@
 
 #include <chrono>
 #include <cmath>
+#include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include <string>
 
 using namespace opennn;
 
@@ -132,15 +135,58 @@ void check_gradient(const Index neurons, const bool return_sequences)
         << "H=" << neurons << " return_sequences=" << return_sequences;
 }
 
-void set_onednn_lstm_disabled(const bool disabled)
+void set_environment_variable(const char* name, const char* value)
 {
 #ifdef _WIN32
-    _putenv_s("OPENNN_NO_ONEDNN_LSTM", disabled ? "1" : "");
+    _putenv_s(name, value ? value : "");
 #else
-    if (disabled) setenv("OPENNN_NO_ONEDNN_LSTM", "1", 1);
-    else unsetenv("OPENNN_NO_ONEDNN_LSTM");
+    if (value) setenv(name, value, 1);
+    else unsetenv(name);
 #endif
 }
+
+class ScopedEnvironmentVariable
+{
+public:
+    ScopedEnvironmentVariable(const char* new_name, const char* value)
+        : name(new_name)
+    {
+        if (const char* existing = getenv(name.c_str()))
+        {
+            had_original = true;
+            original = existing;
+        }
+        set_environment_variable(name.c_str(), value);
+    }
+
+    ~ScopedEnvironmentVariable()
+    {
+        set_environment_variable(name.c_str(),
+                                 had_original ? original.c_str() : nullptr);
+    }
+
+private:
+    string name;
+    string original;
+    bool had_original = false;
+};
+
+class ScopedProfiler
+{
+public:
+    ScopedProfiler() : was_enabled(profiler::is_enabled())
+    {
+        profiler::set_enabled(true);
+    }
+
+    ~ScopedProfiler()
+    {
+        profiler::set_enabled(was_enabled);
+    }
+
+private:
+    bool was_enabled;
+};
 
 void check_onednn_gradient_against_scalar(const bool return_sequences)
 {
@@ -167,14 +213,145 @@ void check_onednn_gradient_against_scalar(const bool return_sequences)
     Loss loss(&neural_network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    set_onednn_lstm_disabled(false);
-    const VectorR onednn_gradient = calculate_gradient(loss);
-    set_onednn_lstm_disabled(true);
-    const VectorR scalar_gradient = calculate_gradient(loss);
-    set_onednn_lstm_disabled(false);
+    ScopedProfiler profile;
+    const long forward_calls =
+        profiler::stats().call_count("rnn:onednn_forward");
+    const long backward_calls =
+        profiler::stats().call_count("rnn:onednn_backward");
+
+    VectorR onednn_gradient;
+    {
+        const ScopedEnvironmentVariable enable_onednn(
+            "OPENNN_NO_ONEDNN_LSTM", nullptr);
+        onednn_gradient = calculate_gradient(loss);
+    }
+
+    EXPECT_GT(profiler::stats().call_count("rnn:onednn_forward"),
+              forward_calls);
+    EXPECT_GT(profiler::stats().call_count("rnn:onednn_backward"),
+              backward_calls);
+
+    VectorR scalar_gradient;
+    {
+        const ScopedEnvironmentVariable disable_onednn(
+            "OPENNN_NO_ONEDNN_LSTM", "1");
+        scalar_gradient = calculate_gradient(loss);
+    }
 
     EXPECT_LT((onednn_gradient - scalar_gradient).array().abs().maxCoeff(),
               type(1.0e-3))
+        << "return_sequences=" << return_sequences;
+}
+
+void check_onednn_inference_cache(const bool return_sequences)
+{
+    const Index samples_number = 3;
+    const Index inputs_number  = 4;
+    const Index time_steps     = 5;
+    const Index neurons        = 128;
+
+    NeuralNetwork neural_network;
+    auto layer = make_unique<LongShortTermMemory>(
+        Shape{time_steps, inputs_number}, Shape{neurons});
+    layer->set_return_sequences(return_sequences);
+    neural_network.add_layer(std::move(layer));
+    neural_network.compile();
+    set_varied_parameters(neural_network);
+
+    Tensor3 inputs(samples_number, time_steps, inputs_number);
+    for (Index i = 0; i < inputs.size(); ++i)
+        inputs.data()[i] = 0.1f * sin(0.13f * float(i) - 0.2f);
+
+    const vector<TensorView> input_views{
+        TensorView(inputs.data(), {samples_number, time_steps, inputs_number})};
+    ForwardPropagation first(samples_number, &neural_network,
+                             ForwardPropagationMode::Inference);
+    ForwardPropagation second(samples_number, &neural_network,
+                              ForwardPropagationMode::Inference);
+
+    const auto run = [&](ForwardPropagation& forward_propagation)
+    {
+        neural_network.forward_propagate(
+            input_views, forward_propagation, ForwardPropagationMode::Inference);
+        const TensorView output = forward_propagation.get_outputs();
+        VectorR snapshot(output.size());
+        memcpy(snapshot.data(), output.get_data(),
+               size_t(output.byte_size()));
+        return snapshot;
+    };
+
+    ScopedProfiler profile;
+    const long forward_calls =
+        profiler::stats().call_count("rnn:onednn_forward");
+    const long pack_calls =
+        profiler::stats().call_count("rnn:onednn_pack_weights");
+
+    VectorR original;
+    VectorR repeated;
+    VectorR second_original;
+    VectorR updated;
+    VectorR second_updated;
+    {
+        const ScopedEnvironmentVariable enable_onednn(
+            "OPENNN_NO_ONEDNN_LSTM", nullptr);
+
+        original = run(first);
+        EXPECT_EQ(profiler::stats().call_count("rnn:onednn_forward")
+                      - forward_calls, 1);
+        EXPECT_EQ(profiler::stats().call_count("rnn:onednn_pack_weights")
+                      - pack_calls, 1);
+
+        repeated = run(first);
+        EXPECT_EQ(profiler::stats().call_count("rnn:onednn_forward")
+                      - forward_calls, 2);
+        EXPECT_EQ(profiler::stats().call_count("rnn:onednn_pack_weights")
+                      - pack_calls, 1);
+
+        second_original = run(second);
+        EXPECT_EQ(profiler::stats().call_count("rnn:onednn_forward")
+                      - forward_calls, 3);
+        EXPECT_EQ(profiler::stats().call_count("rnn:onednn_pack_weights")
+                      - pack_calls, 2);
+
+        {
+            VectorMap parameters = neural_network.get_parameters_map();
+            // Leave the four gate biases unchanged so a stale matrix cache
+            // cannot be masked by the bias vector, which is packed every call.
+            const Index biases_number = 4 * neurons;
+            parameters.tail(parameters.size() - biases_number) =
+                parameters.tail(parameters.size() - biases_number).array()
+                    * -0.5f + 0.003f;
+        }
+
+        updated = run(first);
+        EXPECT_EQ(profiler::stats().call_count("rnn:onednn_forward")
+                      - forward_calls, 4);
+        EXPECT_EQ(profiler::stats().call_count("rnn:onednn_pack_weights")
+                      - pack_calls, 3);
+
+        second_updated = run(second);
+        EXPECT_EQ(profiler::stats().call_count("rnn:onednn_forward")
+                      - forward_calls, 5);
+        EXPECT_EQ(profiler::stats().call_count("rnn:onednn_pack_weights")
+                      - pack_calls, 4);
+    }
+
+    EXPECT_LT((original - repeated).array().abs().maxCoeff(), 1.0e-7f);
+    EXPECT_LT((original - second_original).array().abs().maxCoeff(), 1.0e-7f);
+
+    EXPECT_GT((original - updated).array().abs().maxCoeff(), 1.0e-4f);
+    EXPECT_LT((updated - second_updated).array().abs().maxCoeff(), 1.0e-7f);
+
+    ForwardPropagation scalar(samples_number, &neural_network,
+                              ForwardPropagationMode::Inference);
+    VectorR scalar_updated;
+    {
+        const ScopedEnvironmentVariable disable_onednn(
+            "OPENNN_NO_ONEDNN_LSTM", "1");
+        scalar_updated = run(scalar);
+    }
+
+    EXPECT_LT((updated - scalar_updated).array().abs().maxCoeff(), 2.0e-4f)
         << "return_sequences=" << return_sequences;
 }
 
@@ -203,9 +380,23 @@ TEST(LstmFusedPath, ScalarAndFusedAgree)
 
 TEST(LstmFusedPath, OneDnnAnalyticGradientMatchesScalar)
 {
+#ifndef OPENNN_TEST_HAS_ONEDNN
+    GTEST_SKIP() << "oneDNN support is disabled in this build";
+#else
     check_constant_forward(128, "Tanh");
     check_onednn_gradient_against_scalar(false);
     check_onednn_gradient_against_scalar(true);
+#endif
+}
+
+TEST(LstmFusedPath, OneDnnInferenceCacheTracksParameters)
+{
+#ifndef OPENNN_TEST_HAS_ONEDNN
+    GTEST_SKIP() << "oneDNN support is disabled in this build";
+#else
+    check_onednn_inference_cache(false);
+    check_onednn_inference_cache(true);
+#endif
 }
 
 TEST(LstmFusedPath, DISABLED_BenchmarkBoundary)

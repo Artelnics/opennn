@@ -22,6 +22,7 @@
 #include <map>
 #include <mutex>
 #include <tuple>
+#include <type_traits>
 #include "opennn/neural_network/layers/kernel_recurrent.cuh"
 
 #ifdef EIGEN_USE_MKL_ALL
@@ -207,8 +208,19 @@ namespace
 
 using namespace dnnl;
 
-constexpr uint64_t ONEDNN_LSTM_STATE_MAGIC = 0x4f4e4e4c53544d31ULL;
+constexpr uint64_t ONEDNN_LSTM_INFERENCE_MAGIC = 0x4f4e4e4c53544d31ULL;
+constexpr uint64_t ONEDNN_LSTM_TRAINING_MAGIC  = 0x4f4e4e4c53544d32ULL;
 constexpr size_t ONEDNN_LSTM_STATE_HEADER = 64;
+
+struct OneDnnLstmStateHeader
+{
+    uint64_t magic;
+    uint64_t packed_parameters_version;
+    uintptr_t packed_plan_identity;
+};
+
+static_assert(std::is_trivially_copyable_v<OneDnnLstmStateHeader>);
+static_assert(sizeof(OneDnnLstmStateHeader) <= ONEDNN_LSTM_STATE_HEADER);
 
 size_t align_onednn_offset(size_t value)
 {
@@ -253,20 +265,27 @@ struct OneDnnLstmPlan
     size_t iter_state_offset = 0;
     size_t iter_state_bytes = 0;
     size_t state_bytes = 0;
+    bool batch_major_sequences = false;
 
     OneDnnLstmPlan(Index batch, Index time, Index inputs, Index hidden, bool training)
     {
         const memory::dims src_dims{time, batch, inputs};
         const memory::dims dst_dims{time, batch, hidden};
 
-        // oneDNN 2.x drops to its reference RNN for batch-time-channel
-        // strides. Feed its native time-major layout so the JIT recurrent
-        // kernel is selected; the explicit input transpose is small beside
-        // the hidden-state traffic it removes.
+        // oneDNN 3.x accepts physical NTC in its JIT RNN. Inference tensors are
+        // already contiguous NTC, so describe that storage directly. oneDNN
+        // 2.x drops to its reference RNN for this layout, and training retains
+        // TNC until the backward layout and workspace contract change together.
+#if DNNL_VERSION_MAJOR >= 3
+        batch_major_sequences = !training;
+#endif
+        const memory::format_tag sequence_layout =
+            batch_major_sequences ? memory::format_tag::ntc
+                                  : memory::format_tag::tnc;
         src_layer_desc = memory::desc(src_dims, memory::data_type::f32,
-                                      memory::format_tag::tnc);
+                                      sequence_layout);
         dst_layer_desc = memory::desc(dst_dims, memory::data_type::f32,
-                                      memory::format_tag::tnc);
+                                      sequence_layout);
         if (!training)
             iter_desc = memory::desc({1, 1, batch, hidden},
                                      memory::data_type::f32,
@@ -300,7 +319,7 @@ struct OneDnnLstmPlan
             cpu_engine,
             training ? prop_kind::forward_training : prop_kind::forward_inference,
             rnn_direction::unidirectional_left2right,
-            src_layer_desc, iter_desc, iter_desc,
+            src_layer_desc, none, none,
             forward_weights_layer_desc, forward_weights_iter_desc, bias_desc,
             dst_layer_desc, iter_desc, iter_desc,
             attributes);
@@ -308,7 +327,7 @@ struct OneDnnLstmPlan
         const lstm_forward::desc descriptor(
             training ? prop_kind::forward_training : prop_kind::forward_inference,
             rnn_direction::unidirectional_left2right,
-            src_layer_desc, iter_desc, iter_desc,
+            src_layer_desc, none, none,
             forward_weights_layer_desc, forward_weights_iter_desc, bias_desc,
             dst_layer_desc, iter_desc, iter_desc);
 
@@ -328,7 +347,7 @@ struct OneDnnLstmPlan
             scratchpad_offset + forward_desc.scratchpad_desc().get_size());
         iter_state_bytes = training ? 0 : iter_desc.get_size();
         state_bytes = align_onednn_offset(
-            iter_state_offset + 4 * iter_state_bytes);
+            iter_state_offset + 2 * iter_state_bytes);
 
         if (!training) return;
 
@@ -485,7 +504,8 @@ bool LongShortTermMemoryOperator::apply_onednn(
     TensorView& input_sequence_scratch,
     TensorView& output_sequence_scratch,
     Buffer& forward_state,
-    bool is_training) const
+    bool is_training,
+    uint64_t parameters_version) const
 {
 #ifdef OPENNN_HAS_ONEDNN
     if (!onednn_lstm_supported(input, output_features, compute_dtype, activation_function,
@@ -497,31 +517,62 @@ bool LongShortTermMemoryOperator::apply_onednn(
 
     try
     {
-        shared_ptr<OneDnnLstmPlan> plan = onednn_lstm_plan(
-            batch, time_steps, input_features, output_features, is_training);
+        shared_ptr<OneDnnLstmPlan> plan;
+        {
+            PROFILE_SCOPE_HOST("rnn:onednn_plan");
+            plan = onednn_lstm_plan(
+                batch, time_steps, input_features, output_features,
+                is_training);
+        }
 
+        const bool retained_state = forward_state.owns_memory()
+            && forward_state.get_device() == Device::CPU
+            && forward_state.byte_size() == Index(plan->state_bytes);
         forward_state.resize_bytes(Index(plan->state_bytes), Device::CPU);
-        *forward_state.as<uint64_t>() = 0;
         char* const state = forward_state.as<char>();
+        auto* const header = reinterpret_cast<OneDnnLstmStateHeader*>(state);
+
+        if (!retained_state)
+            memset(header, 0, ONEDNN_LSTM_STATE_HEADER);
+
+        const uintptr_t plan_identity = reinterpret_cast<uintptr_t>(plan.get());
+        const bool packed_weights_current = !is_training
+            && parameters_version != 0
+            && header->magic == ONEDNN_LSTM_INFERENCE_MAGIC
+            && header->packed_parameters_version == parameters_version
+            && header->packed_plan_identity == plan_identity;
+
+        if (!packed_weights_current)
+            memset(header, 0, ONEDNN_LSTM_STATE_HEADER);
 
         vector<float> layer_weights;
         vector<float> iter_weights;
         vector<float> bias;
-        pack_onednn_gate_matrix(layer_weights,
-                                {&input_weights, &forget_weights,
-                                 &candidate_weights, &output_weights},
-                                input_features, output_features);
-        pack_onednn_gate_matrix(iter_weights,
-                                {&input_recurrent_weights, &forget_recurrent_weights,
-                                 &candidate_recurrent_weights, &output_recurrent_weights},
-                                output_features, output_features);
-        pack_onednn_bias(bias,
-                         {&input_bias, &forget_bias, &candidate_bias, &output_bias},
-                         output_features);
+
+        if (!packed_weights_current)
+        {
+            PROFILE_SCOPE_HOST("rnn:onednn_pack_weights");
+            pack_onednn_gate_matrix(layer_weights,
+                                    {&input_weights, &forget_weights,
+                                     &candidate_weights, &output_weights},
+                                    input_features, output_features);
+            pack_onednn_gate_matrix(iter_weights,
+                                    {&input_recurrent_weights, &forget_recurrent_weights,
+                                     &candidate_recurrent_weights, &output_recurrent_weights},
+                                    output_features, output_features);
+        }
+
+        {
+            PROFILE_SCOPE_HOST("rnn:onednn_pack_bias");
+            pack_onednn_bias(bias,
+                             {&input_bias, &forget_bias, &candidate_bias, &output_bias},
+                             output_features);
+        }
 
         const float* batch_major_input = input.as<float>();
         float* time_major_input = input_sequence_scratch.as<float>();
 
+        if (!plan->batch_major_sequences)
         {
             PROFILE_SCOPE_HOST("rnn:onednn_transpose_input");
             #pragma omp parallel for schedule(static)
@@ -533,50 +584,63 @@ bool LongShortTermMemoryOperator::apply_onednn(
         }
 
         stream execution_stream(plan->cpu_engine);
-        memory user_layer(plan->user_weights_layer_desc, plan->cpu_engine,
-                          layer_weights.data());
         memory packed_layer(plan->forward_desc.weights_layer_desc(), plan->cpu_engine,
                             state + plan->weights_layer_offset);
-        memory user_iter(plan->user_weights_iter_desc, plan->cpu_engine,
-                         iter_weights.data());
         memory packed_iter(plan->forward_desc.weights_iter_desc(), plan->cpu_engine,
                            state + plan->weights_iter_offset);
+        memory user_layer;
+        memory user_iter;
 
-        reorder(user_layer, packed_layer).execute(execution_stream, user_layer, packed_layer);
-        reorder(user_iter, packed_iter).execute(execution_stream, user_iter, packed_iter);
+        if (!packed_weights_current)
+        {
+            PROFILE_SCOPE_HOST("rnn:onednn_reorder_weights");
+            user_layer = memory(plan->user_weights_layer_desc, plan->cpu_engine,
+                                layer_weights.data());
+            user_iter = memory(plan->user_weights_iter_desc, plan->cpu_engine,
+                               iter_weights.data());
+            reorder(user_layer, packed_layer).execute(
+                execution_stream, user_layer, packed_layer);
+            reorder(user_iter, packed_iter).execute(
+                execution_stream, user_iter, packed_iter);
+        }
 
-        unordered_map<int, memory> arguments{
-            {DNNL_ARG_SRC_LAYER,
-             memory(plan->src_layer_desc, plan->cpu_engine,
-                    time_major_input)},
-            {DNNL_ARG_WEIGHTS_LAYER, packed_layer},
-            {DNNL_ARG_WEIGHTS_ITER, packed_iter},
-            {DNNL_ARG_BIAS,
-             memory(plan->bias_desc, plan->cpu_engine, bias.data())},
-            {DNNL_ARG_DST_LAYER,
-             memory(plan->dst_layer_desc, plan->cpu_engine,
-                    output_sequence_scratch.get_data())},
-            {DNNL_ARG_SCRATCHPAD,
-             memory(plan->forward_desc.scratchpad_desc(), plan->cpu_engine,
-                    state + plan->scratchpad_offset)}
-        };
+        unordered_map<int, memory> arguments;
+        {
+            PROFILE_SCOPE_HOST("rnn:onednn_arguments");
+            void* const source_layer_data = plan->batch_major_sequences
+                ? static_cast<void*>(const_cast<float*>(batch_major_input))
+                : static_cast<void*>(time_major_input);
+            arguments = {
+                {DNNL_ARG_SRC_LAYER,
+                 memory(plan->src_layer_desc, plan->cpu_engine,
+                        source_layer_data)},
+                {DNNL_ARG_WEIGHTS_LAYER, packed_layer},
+                {DNNL_ARG_WEIGHTS_ITER, packed_iter},
+                {DNNL_ARG_BIAS,
+                 memory(plan->bias_desc, plan->cpu_engine, bias.data())},
+                {DNNL_ARG_DST_LAYER,
+                 memory(plan->dst_layer_desc, plan->cpu_engine,
+                        plan->batch_major_sequences && return_sequences
+                            ? sequence_output.get_data()
+                            : output_sequence_scratch.get_data())},
+                {DNNL_ARG_SCRATCHPAD,
+                 memory(plan->forward_desc.scratchpad_desc(), plan->cpu_engine,
+                        state + plan->scratchpad_offset)}
+            };
+        }
 
         if (!is_training)
         {
-            void* const initial_hidden = state + plan->iter_state_offset;
-            void* const initial_cell = state + plan->iter_state_offset
-                                     + plan->iter_state_bytes;
-            memset(initial_hidden, 0, 2 * plan->iter_state_bytes);
-            arguments.emplace(DNNL_ARG_SRC_ITER,
-                memory(plan->iter_desc, plan->cpu_engine, initial_hidden));
-            arguments.emplace(DNNL_ARG_SRC_ITER_C,
-                memory(plan->iter_desc, plan->cpu_engine, initial_cell));
+            PROFILE_SCOPE_HOST("rnn:onednn_final_state");
+            void* const final_hidden = return_sequences
+                ? state + plan->iter_state_offset
+                : output.get_data();
+            void* const final_cell = state + plan->iter_state_offset
+                                   + plan->iter_state_bytes;
             arguments.emplace(DNNL_ARG_DST_ITER,
-                memory(plan->iter_desc, plan->cpu_engine,
-                       state + plan->iter_state_offset + 2 * plan->iter_state_bytes));
+                memory(plan->iter_desc, plan->cpu_engine, final_hidden));
             arguments.emplace(DNNL_ARG_DST_ITER_C,
-                memory(plan->iter_desc, plan->cpu_engine,
-                       state + plan->iter_state_offset + 3 * plan->iter_state_bytes));
+                memory(plan->iter_desc, plan->cpu_engine, final_cell));
         }
 
         if (is_training)
@@ -591,15 +655,17 @@ bool LongShortTermMemoryOperator::apply_onednn(
             execution_stream.wait();
         }
 
-        if (!return_sequences)
+        if (!return_sequences && is_training)
         {
+            PROFILE_SCOPE_HOST("rnn:onednn_output_copy");
             const float* sequence = output_sequence_scratch.as<float>();
             float* result = output.as<float>();
+
             memcpy(result,
                    sequence + (time_steps - 1) * batch * output_features,
                    size_t(batch * output_features) * sizeof(float));
         }
-        else
+        else if (return_sequences && !plan->batch_major_sequences)
         {
             const float* time_major_output = output_sequence_scratch.as<float>();
             float* batch_major_output = sequence_output.as<float>();
@@ -613,12 +679,19 @@ bool LongShortTermMemoryOperator::apply_onednn(
                            size_t(output_features) * sizeof(float));
         }
 
-        *forward_state.as<uint64_t>() = ONEDNN_LSTM_STATE_MAGIC;
+        header->packed_parameters_version =
+            !is_training && parameters_version != 0 ? parameters_version : 0;
+        header->packed_plan_identity =
+            !is_training && parameters_version != 0 ? plan_identity : 0;
+        header->magic = is_training
+            ? ONEDNN_LSTM_TRAINING_MAGIC
+            : ONEDNN_LSTM_INFERENCE_MAGIC;
         return true;
     }
     catch (const dnnl::error& error)
     {
-        if (!forward_state.empty()) *forward_state.as<uint64_t>() = 0;
+        if (forward_state.byte_size() >= Index(ONEDNN_LSTM_STATE_HEADER))
+            memset(forward_state.data(), 0, ONEDNN_LSTM_STATE_HEADER);
         if (getenv("OPENNN_ONEDNN_REPORT"))
             cerr << "oneDNN LSTM forward unavailable: " << error.what() << '\n';
         return false;
@@ -626,7 +699,7 @@ bool LongShortTermMemoryOperator::apply_onednn(
 #else
     (void)input; (void)output; (void)sequence_output;
     (void)input_sequence_scratch; (void)output_sequence_scratch;
-    (void)forward_state; (void)is_training;
+    (void)forward_state; (void)is_training; (void)parameters_version;
     return false;
 #endif
 }
@@ -647,7 +720,7 @@ bool LongShortTermMemoryOperator::apply_delta_onednn(
     if (!onednn_lstm_supported(input, output_features, compute_dtype, activation_function,
                                recurrent_activation_function)
         || forward_state.byte_size() < Index(ONEDNN_LSTM_STATE_HEADER)
-        || *forward_state.as<uint64_t>() != ONEDNN_LSTM_STATE_MAGIC)
+        || *forward_state.as<uint64_t>() != ONEDNN_LSTM_TRAINING_MAGIC)
         return false;
 
     const Index batch = input.get_shape()[0];
@@ -858,7 +931,8 @@ void LongShortTermMemoryOperator::forward_propagate(ForwardPropagation& forward_
                      forward_slots[CudnnInputSequenceSlot],
                      forward_slots[CudnnOutputSequenceSlot],
                      forward_propagation.layer_state_storage[layer],
-                     is_training(pass)))
+                     is_training(pass),
+                     forward_propagation.get_parameters_version()))
         return;
 
     apply(input, output, forget_gate, input_gate, candidate_gate, output_gate,

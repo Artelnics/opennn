@@ -14,10 +14,11 @@ kernel*, which makes this the cleanest cell in the matrix: the arithmetic is
 identical, so what is measured is the surrounding machinery -- data movement,
 launch overhead, the optimiser -- rather than two hand-written kernels.
 
-`nn.LSTM(features, hidden) + nn.Linear(hidden, 1)` is what lstm.cpp's
-ForecastingLstmNetwork builds. OpenNN has one LSTM bias, while PyTorch exposes
-two whose sum is used; the second PyTorch bias is therefore fixed at zero so
-the effective trainable parameterization is identical.
+Inference times `nn.LSTM(features, hidden) + nn.Linear(hidden, 1)` directly on
+both sides. Training, quality, and capacity retain OpenNN's full
+ForecastingLstmNetwork. OpenNN has one LSTM bias, while PyTorch exposes two
+whose sum is used; the second PyTorch bias is therefore fixed at zero so the
+effective trainable parameterization is identical.
 """
 
 from __future__ import annotations
@@ -69,12 +70,14 @@ def build(features: int, opts: dict) -> nn.Module:
     torch.manual_seed(SEED)
     return Forecaster(features, opts["hidden"]).to(opts["device"])
 
-def load_series(path: str, past: int) -> tuple[np.ndarray, np.ndarray]:
+def load_series(path: str, past: int, *,
+                standardize: bool = True) -> tuple[np.ndarray, np.ndarray]:
     """Windows of `past` hourly rows, predicting the next target.
 
     The last column is the target, matching what the tabular loader on the
-    OpenNN side treats as such, and it is standardised on training statistics
-    so neither engine pays a scaling stage the other does not.
+    OpenNN side treats as such. Train-like modes retain their existing
+    standardisation; inference uses raw float32 values on both engines and
+    keeps preprocessing outside the timed region.
     """
     report_opened(path)
 
@@ -88,8 +91,9 @@ def load_series(path: str, past: int) -> tuple[np.ndarray, np.ndarray]:
     # PyTorch owns a second bias vector).
     features, target = values, values[:, -1:]
 
-    mean, std = features.mean(axis=0), features.std(axis=0)
-    features = (features - mean) / np.where(std > 1.0e-12, std, 1.0)
+    if standardize:
+        mean, std = features.mean(axis=0), features.std(axis=0)
+        features = (features - mean) / np.where(std > 1.0e-12, std, 1.0)
 
     count = len(values) - past
     windows = np.lib.stride_tricks.sliding_window_view(features, past, axis=0)
@@ -128,6 +132,9 @@ def parse_opts(argv: list[str], first: int) -> dict:
     threads = os.environ.get("TORCH_NUM_THREADS") or os.environ.get("OMP_NUM_THREADS")
     if threads:
         torch.set_num_threads(int(threads))
+    if device == "cpu":
+        print("flush_denormals=" +
+              ("on" if torch.set_flush_denormal(True) else "unsupported"))
 
     allow_tf32 = precision != "strict"
     torch.backends.cuda.matmul.allow_tf32 = allow_tf32
@@ -247,7 +254,7 @@ def infer(argv: list[str]) -> int:
     print(f"engine=pytorch\nmode=infer\ndevice={opts['device']}")
     report_blas()
 
-    windows, _ = load_series(argv[2], opts["past"])
+    windows, _ = load_series(argv[2], opts["past"], standardize=False)
     x = torch.from_numpy(windows).to(opts["device"])
 
     for batch in batches:
@@ -265,6 +272,11 @@ def infer(argv: list[str]) -> int:
                     forward(window)
             sync(opts)
 
+        # Both drivers warm one call (including lazy primitive setup), then a
+        # complete pass before collecting samples.
+        with torch.no_grad(), autocast_ctx(opts):
+            forward(window)
+        sync(opts)
         run_pass()
 
         print(f"TIMED_START_UNIX={time.time():.3f}", flush=True)
