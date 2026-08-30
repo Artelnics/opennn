@@ -45,10 +45,10 @@ void ActivationOperator::forward_propagate(ForwardPropagation& forward_propagati
 
     activation_forward(output, activation_function);
 
-    if (save_slot != SIZE_MAX)
+    if (saved_output_slot)
     {
 
-        TensorView& saved = forward_propagation.slots[layer][save_slot];
+        TensorView& saved = forward_propagation.slots[layer][*saved_output_slot];
         if (!saved.empty())
         {
             passes += 2.0;
@@ -73,7 +73,7 @@ void ActivationOperator::back_propagate(ForwardPropagation& forward_propagation,
         return;
 
     const bool needs_input = activation_needs_input(activation_function);
-    const size_t read_slot = (save_slot != SIZE_MAX) ? save_slot : output_slots[0];
+    const size_t read_slot = saved_output_slot.value_or(output_slots[0]);
 
     const TensorView& outputs = needs_input
         ? get_input(forward_propagation, layer)

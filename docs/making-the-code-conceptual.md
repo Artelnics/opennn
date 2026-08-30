@@ -252,7 +252,7 @@ Then, and only if asked:
 - **Both builds must pass, both suites at baseline.** `build-cpu-verification`
   and `build-resnet-capacity`. The CUDA build compiles `.cu` paths the CPU build
   never sees, so a green CPU build proves little on its own.
-- **Current baseline: CPU 981 passed / 28 skipped, GPU 1103 passed / 6 skipped,
+- **Current baseline: CPU 983 passed / 28 skipped, GPU 1105 passed / 6 skipped,
   zero failures, one disabled test.** Update this line if the count legitimately
   changes, and say why in the commit.
 
@@ -282,13 +282,15 @@ build directories are in [../AGENTS.md](../AGENTS.md). Read it first.
 | `BatchNormalization { No, Yes }` replacing constructor and vision-builder flags | `neural_network/layers/layer.h`, dense and convolutional layers |
 | `CausalMask { No, Yes }` replacing attention setup flags | `neural_network/operators/attention_operator.h`, multi-head attention |
 | `ColumnContiguity { Unknown, NonContiguous, Contiguous }` replacing the dataset fill-path `-1`/`0`/`1` sentinel and `optional<bool>` bridge | `core/tensor_types.h`, `dataset/batch.h`, dataset fill interfaces |
+| Optional operator-owned slot assignments replacing five `SIZE_MAX` configuration sentinels, with active-path validation for required mask and scratch slots | activation, dropout, combination, and C2PSA operators |
 
 Deliberately **not** merged, with reasons in the commit messages: `SampleRole`
 and `FillMode` into `ForwardPropagationMode`; the `Rung` family in
 `core/device_backend.h` (different members, and the mechanism is already shared
 through `template<typename Rung> rung()`); remaining `SIZE_MAX` and negative
-sentinels (they represent unrelated operator slots, graph-relative indices,
-cache invalidation, file descriptors, and local search state).
+sentinels (they represent graph recomputation and consumer-edge absence,
+graph-relative indices, cache invalidation, file descriptors, and local search
+state).
 
 ## Open candidates
 

@@ -36,7 +36,7 @@ struct CombinationOperator : Operator
 
     bool emit_relu_mask = false;
     mutable bool relu_mask_fusion_disabled = false;
-    size_t relu_mask_slot = SIZE_MAX;
+    optional<size_t> relu_mask_slot;
     const CombinationOperator* drelu_source = nullptr;
     Index drelu_source_layer = -1;
 

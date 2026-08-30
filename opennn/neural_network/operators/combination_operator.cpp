@@ -121,7 +121,9 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
     {
         try
         {
-            TensorView& relu_mask = forward_propagation.slots[layer][relu_mask_slot];
+            throw_if(!relu_mask_slot,
+                     "CombinationOperator: fused ReLU mask slot was not planned.");
+            TensorView& relu_mask = forward_propagation.slots[layer][*relu_mask_slot];
             throw_if(relu_mask.empty(),
                      "CombinationOperator: fused ReLU mask slot was not planned.");
             linear_forward(get_input(forward_propagation, layer), weights, bias, output,
@@ -172,8 +174,10 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
     {
         try
         {
+            throw_if(!drelu_source->relu_mask_slot,
+                     "CombinationOperator: fused DReLU mask slot was not planned.");
             const TensorView& relu_mask =
-                forward_propagation.slots[size_t(drelu_source_layer)][drelu_source->relu_mask_slot];
+                forward_propagation.slots[size_t(drelu_source_layer)][*drelu_source->relu_mask_slot];
             return linear_backward(output_delta, input, weights, weight_gradient, bias_gradient,
                                    input_delta, accumulate_input_delta, {.drelu_mask = &relu_mask});
         }

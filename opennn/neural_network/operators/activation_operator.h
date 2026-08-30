@@ -20,7 +20,7 @@ struct ActivationOperator : Operator
 
     ActivationFunction activation_function = ActivationFunction::Identity;
 
-    size_t save_slot = SIZE_MAX;
+    optional<size_t> saved_output_slot;
 
     bool forward_fused = false;
     bool backward_fused = false;

@@ -19,7 +19,7 @@ void dropout_backward(TensorView&, const TensorView&, float);
 struct DropoutOperator : Operator
 {
     float rate = 0.0f;
-    size_t mask_slot = SIZE_MAX;
+    optional<size_t> mask_slot;
 
     bool active() const { return rate > 0.0f; }
 

@@ -136,8 +136,9 @@ void DropoutOperator::forward_propagate(ForwardPropagation& forward_propagation,
 {
     if (!is_training(pass) || !active()) return;
 
+    throw_if(!mask_slot, "DropoutOperator: mask slot was not planned.");
     TensorView& output = get_output(forward_propagation, layer);
-    dropout_forward(output, forward_propagation.slots[layer][mask_slot], rate);
+    dropout_forward(output, forward_propagation.slots[layer][*mask_slot], rate);
 }
 
 void DropoutOperator::back_propagate(ForwardPropagation& forward_propagation,
@@ -145,8 +146,9 @@ void DropoutOperator::back_propagate(ForwardPropagation& forward_propagation,
                                      size_t layer) const
 {
     if (!active()) return;
+    throw_if(!mask_slot, "DropoutOperator: mask slot was not planned.");
     dropout_backward(get_output_delta(back_propagation, layer),
-                     forward_propagation.slots[layer][mask_slot], rate);
+                     forward_propagation.slots[layer][*mask_slot], rate);
 }
 
 void DropoutOperator::to_JSON(JsonWriter& w) const

@@ -94,7 +94,9 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, Forw
         void* cat_gpu  = fp.slots[layer][6].get_data();
         void* out_gpu  = output.get_data();
 
-        void* attn_v_gpu = fp.slots[layer][forward_scratch_slot].get_data();
+        throw_if(!forward_scratch_slot,
+                 "C2PSAOperator: forward scratch slot was not planned.");
+        void* attn_v_gpu = fp.slots[layer][*forward_scratch_slot].get_data();
 
         c2psa_split_cuda(x.get_data(), xa_gpu, cat_gpu, BT, C_int, H, dtype);
 
@@ -219,8 +221,10 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
         const void* V_gpu    = fp.slots[layer][5].get_data();
         const void* cat_gpu  = fp.slots[layer][6].get_data();
 
+        throw_if(!backward_scratch_slot,
+                 "C2PSAOperator: backward scratch slot was not planned.");
         uint8_t* scratch = static_cast<uint8_t*>(
-            bp.slots[layer][backward_scratch_slot].get_data());
+            bp.slots[layer][*backward_scratch_slot].get_data());
         void* compact_d_ao = scratch;
         void* d_cat_gpu    = scratch + (size_t)BT * H    * esz;
         void* d_A_gpu      = scratch + (size_t)BT * (H + C_int) * esz;

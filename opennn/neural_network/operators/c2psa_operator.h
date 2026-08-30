@@ -31,8 +31,8 @@ struct C2PSAOperator : Operator
     void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
-    size_t forward_scratch_slot = SIZE_MAX;
-    size_t backward_scratch_slot = SIZE_MAX;
+    optional<size_t> forward_scratch_slot;
+    optional<size_t> backward_scratch_slot;
 };
 
 }

@@ -146,7 +146,7 @@ void Dense::configure_operators()
         combination.relu_mask_slot = DreluMask;
 
         activation_operator.forward_fused = false;
-        activation_operator.save_slot = SIZE_MAX;
+        activation_operator.saved_output_slot.reset();
         return;
     }
 
@@ -227,7 +227,9 @@ void Dense::configure_operators()
     dropout.mask_slot = DropoutMask;
     combination.relu_mask_slot = DreluMask;
 
-    activation_operator.save_slot = saves_pre_dropout_activation() ? ActivationView : SIZE_MAX;
+    activation_operator.saved_output_slot = saves_pre_dropout_activation()
+        ? optional<size_t>{ActivationView}
+        : nullopt;
 }
 
 void Dense::set_batch_normalization(bool enable)
