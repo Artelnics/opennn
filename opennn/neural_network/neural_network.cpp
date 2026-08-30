@@ -2098,6 +2098,25 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
         size_t(min(chunk_elements, max(Index(1), parameters_number))));
     vector<float> fp32_chunk(bf16_chunk.size());
 
+    // Every reader below walks the file in the same fixed-size BF16 chunks and
+    // reports the same error; only what each does with a chunk differs. The
+    // loop was written out five times, once per reader.
+    const auto for_each_bf16_chunk = [&](const Index count, auto&& consume)
+    {
+        Index done = 0;
+        while (done < count)
+        {
+            const Index chunk = min(chunk_elements, count - done);
+            file.read(reinterpret_cast<char*>(bf16_chunk.data()),
+                      streamsize(chunk * Index(sizeof(uint16_t))));
+            throw_if(!file,
+                     "Error reading BF16 parameter file: {}",
+                     file_name.string());
+            consume(chunk, done);
+            done += chunk;
+        }
+    };
+
 #ifdef OPENNN_HAS_CUDA
     if (config.device == Device::CUDA)
     {
@@ -2126,40 +2145,21 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
         const auto read_bf16_to_device =
             [&](uint16_t* destination, const Index count)
         {
-            Index copied = 0;
-            while (copied < count)
+            for_each_bf16_chunk(count, [&](const Index chunk, const Index copied)
             {
-                const Index chunk =
-                    min(chunk_elements, count - copied);
-                file.read(
-                    reinterpret_cast<char*>(bf16_chunk.data()),
-                    streamsize(chunk * Index(sizeof(uint16_t))));
-                throw_if(!file,
-                         "Error reading BF16 parameter file: {}",
-                         file_name.string());
                 device::copy_async(
                     destination + copied, bf16_chunk.data(),
                     chunk * Index(sizeof(uint16_t)),
                     Device::CPU, Device::CUDA, stream);
                 device::synchronize(stream);
-                copied += chunk;
-            }
+            });
         };
 
         const auto read_bf16_as_fp32_to_device =
             [&](float* destination, const Index count)
         {
-            Index copied = 0;
-            while (copied < count)
+            for_each_bf16_chunk(count, [&](const Index chunk, const Index copied)
             {
-                const Index chunk =
-                    min(chunk_elements, count - copied);
-                file.read(
-                    reinterpret_cast<char*>(bf16_chunk.data()),
-                    streamsize(chunk * Index(sizeof(uint16_t))));
-                throw_if(!file,
-                         "Error reading BF16 parameter file: {}",
-                         file_name.string());
                 ranges::transform(bf16_chunk | views::take(chunk), fp32_chunk.begin(),
                                   bfloat16_to_float_host);
                 device::copy_async(
@@ -2167,8 +2167,7 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
                     chunk * Index(sizeof(float)),
                     Device::CPU, Device::CUDA, stream);
                 device::synchronize(stream);
-                copied += chunk;
-            }
+            });
         };
 
         vector<int8_t> int8_chunk(bf16_chunk.size());
@@ -2181,14 +2180,8 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
             const streampos slot_start = file.tellg();
 
             vector<float> scales(size_t(channels), 0.0f);
-            Index processed = 0;
-            while (processed < count)
+            for_each_bf16_chunk(count, [&](const Index chunk, const Index processed)
             {
-                const Index chunk = min(chunk_elements, count - processed);
-                file.read(reinterpret_cast<char*>(bf16_chunk.data()),
-                          streamsize(chunk * Index(sizeof(uint16_t))));
-                throw_if(!file, "Error reading BF16 parameter file: {}",
-                         file_name.string());
                 for (Index i = 0; i < chunk; ++i)
                 {
                     const Index channel = quantization_channel(
@@ -2196,22 +2189,15 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
                     scales[size_t(channel)] = max(scales[size_t(channel)],
                         abs(bfloat16_to_float_host(bf16_chunk[size_t(i)])));
                 }
-                processed += chunk;
-            }
+            });
             finalize_int8_scales(scales);
 
             file.seekg(slot_start);
             throw_if(!file, "Error seeking through BF16 parameter file: {}",
                      file_name.string());
 
-            processed = 0;
-            while (processed < count)
+            for_each_bf16_chunk(count, [&](const Index chunk, const Index processed)
             {
-                const Index chunk = min(chunk_elements, count - processed);
-                file.read(reinterpret_cast<char*>(bf16_chunk.data()),
-                          streamsize(chunk * Index(sizeof(uint16_t))));
-                throw_if(!file, "Error reading BF16 parameter file: {}",
-                         file_name.string());
                 ranges::transform(bf16_chunk | views::take(chunk), fp32_chunk.begin(),
                                   bfloat16_to_float_host);
                 quantize_int8_host(fp32_chunk.data(), chunk, processed,
@@ -2221,8 +2207,7 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
                     destination + processed, int8_chunk.data(),
                     chunk, Device::CPU, Device::CUDA, stream);
                 device::synchronize(stream);
-                processed += chunk;
-            }
+            });
 
             device::copy_async(
                 scale_destination, scales.data(),
@@ -2264,20 +2249,13 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
 #endif
 
     float* const host_parameters = parameters.as<float>();
-    Index converted = 0;
-    while (converted < parameters_number)
+
+    for_each_bf16_chunk(parameters_number, [&](const Index chunk, const Index converted)
     {
-        const Index chunk =
-            min(chunk_elements, parameters_number - converted);
-        file.read(reinterpret_cast<char*>(bf16_chunk.data()),
-                  streamsize(chunk * Index(sizeof(uint16_t))));
-        throw_if(!file,
-                 "Error reading BF16 parameter file: {}",
-                 file_name.string());
         ranges::transform(bf16_chunk | views::take(chunk), host_parameters + converted,
                           bfloat16_to_float_host);
-        converted += chunk;
-    }
+    });
+
     link_parameters();
 }
 
