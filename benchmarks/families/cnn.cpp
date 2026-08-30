@@ -152,6 +152,21 @@ int main(int argc, char* argv[])
         const Options options = parse_options(argc, argv, 6);
 
         Configuration::instance().set(options.device, options.precision);
+
+        // Inference autotunes its convolution plans a few lines below; training
+        // never did, so the 69% of the training step that is convolution ran on
+        // whatever cuDNN's heuristic picked first. The cold-start cost amortizes
+        // here for the same reason it does there: a training cell reuses the
+        // plan across every batch of the corpus.
+        //
+        // No workspace cap is set. The 16 MiB one on the inference path is
+        // justified by the winning ResNet-50 inference plans fitting under it,
+        // and wgrad and dgrad have no such measurement behind them.
+        if (options.device == Device::CUDA)
+        {
+            const char* const autotune = getenv("OPENNN_CONV_AUTOTUNE");
+            device::set_conv_autotune(!autotune || string(autotune) != "0");
+        }
         cout << "baseline_rss_mib=" << resident_mb() << "\n";
         cout << "engine=opennn\nmode=" << mode
              << "\ndevice=" << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
