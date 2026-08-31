@@ -9,6 +9,7 @@
 #include "opennn/core/statistics.h"
 #include "opennn/core/parallel_algorithms.h"
 #include "opennn/core/tensor_types.h"
+#include "opennn/core/tensor_operations.h"
 #include "opennn/core/random_utilities.h"
 
 #include <utility>
@@ -679,6 +680,190 @@ VectorR filter_missing_values(const VectorR& x)
         if (isfinite(x(i))) valid.push_back(i);
 
     return x(valid);
+}
+
+
+vector<VectorI> nearest_neighbors(const MatrixR& distances, Index neighbors_number)
+{
+    const Index points_number = distances.rows();
+
+    neighbors_number = min(neighbors_number, points_number - 1);
+
+    vector<VectorI> neighbors(points_number);
+
+    for (Index i = 0; i < points_number; i++)
+    {
+        VectorR point_distances = distances.row(i).transpose();
+
+        point_distances(i) = MAX;
+
+        neighbors[i] = maximal_indices(-point_distances, neighbors_number);
+    }
+
+    return neighbors;
+}
+
+
+VectorR neighbor_distances(const MatrixR& points, const Index neighbors_number)
+{
+    const Index points_number = points.rows();
+
+    if (points_number < 2 || neighbors_number < 1)
+        return VectorR::Constant(points_number, MAX);
+
+    const MatrixR distances = calculate_distances(points);
+
+    const vector<VectorI> neighbors = nearest_neighbors(distances, neighbors_number);
+
+    VectorR farthest_neighbor_distances(points_number);
+
+    for (Index i = 0; i < points_number; i++)
+        farthest_neighbor_distances(i) = distances(i, neighbors[i](neighbors[i].size() - 1));
+
+    return farthest_neighbor_distances;
+}
+
+
+VectorR local_outlier_factor(const MatrixR& points, Index neighbors_number)
+{
+    const Index points_number = points.rows();
+
+    if (points_number <= 1 || neighbors_number <= 0)
+        return VectorR::Ones(points_number);
+
+    neighbors_number = min(neighbors_number, points_number - 1);
+
+    const MatrixR distances = calculate_distances(points);
+
+    vector<vector<Index>> neighbors(points_number);
+    VectorR neighbor_distance(points_number);
+
+    for (Index i = 0; i < points_number; i++)
+    {
+        VectorR row = distances.row(i).transpose();
+        row(i) = MAX;
+        const VectorI nearest = maximal_indices(-row, neighbors_number);
+        neighbor_distance(i) = row(nearest(neighbors_number - 1));
+
+        const float tie_tolerance = EPSILON * max(1.0f, abs(neighbor_distance(i)));
+        neighbors[i].reserve(static_cast<size_t>(neighbors_number));
+        for (Index j = 0; j < points_number; ++j)
+            if (j != i && distances(i, j) <= neighbor_distance(i) + tie_tolerance)
+                neighbors[i].push_back(j);
+    }
+
+    VectorR reachability_density(points_number);
+
+    for (Index i = 0; i < points_number; i++)
+    {
+        float reachability_sum = 0.0f;
+        for (const Index neighbor : neighbors[i])
+            reachability_sum += max(neighbor_distance(neighbor), distances(i, neighbor));
+        reachability_density(i) = reachability_sum > EPSILON
+            ? float(neighbors[i].size()) / reachability_sum
+            : MAX;
+    }
+
+    VectorR outlier_factor(points_number);
+
+    for (Index i = 0; i < points_number; i++)
+    {
+        float density_sum = 0.0f;
+        for (const Index neighbor : neighbors[i])
+            density_sum += reachability_density(neighbor);
+        outlier_factor(i) = reachability_density(i) > EPSILON
+            ? density_sum / (float(neighbors[i].size()) * reachability_density(i))
+            : 1.0f;
+    }
+
+    return outlier_factor;
+}
+
+
+void farthest_point_fill(const MatrixR& distances, vector<Index>& selection, const Index quota)
+{
+    const Index points_number = distances.rows();
+
+    vector<char> chosen(points_number, 0);
+
+    for (const Index point : selection)
+        chosen[point] = 1;
+
+    VectorR minimum_distance = VectorR::Constant(points_number, MAX);
+
+    for (const Index point : selection)
+        minimum_distance = minimum_distance.cwiseMin(distances.col(point));
+
+    for (Index i = 0; i < points_number; i++)
+        if (chosen[i]) minimum_distance(i) = -MAX;
+
+    while (ssize(selection) < quota)
+    {
+        Index farthest = 0;
+        minimum_distance.maxCoeff(&farthest);
+
+        if (minimum_distance(farthest) < 0.0f) break;
+
+        selection.push_back(farthest);
+        minimum_distance = minimum_distance.cwiseMin(distances.col(farthest));
+        minimum_distance(farthest) = -MAX;
+    }
+}
+
+
+vector<Index> ranked_indices(const VectorR& data)
+{
+    vector<Index> indices(data.size());
+    iota(indices.begin(), indices.end(), 0);
+
+    sort(indices.begin(), indices.end(),
+         [&data](Index i, Index j) {
+             if (data(i) == data(j)) return i < j;
+             return data(i) > data(j);
+         });
+
+    return indices;
+}
+
+
+VectorR minmax_score(const VectorR& values, const bool invert)
+{
+    const float smallest = values.minCoeff();
+    const float range = values.maxCoeff() - smallest;
+
+    if (range < EPSILON)
+        return VectorR::Constant(values.size(), invert ? 1.0f : 0.0f);
+
+    const VectorR normalized = (values.array() - smallest) / range;
+
+    return VectorR(invert ? (1.0f - normalized.array()).matrix() : normalized);
+}
+
+
+MatrixR minmax_score(const MatrixR& values)
+{
+    MatrixR scores(values.rows(), values.cols());
+
+    for (Index j = 0; j < values.cols(); j++)
+        scores.col(j) = minmax_score(VectorR(values.col(j)));
+
+    return scores;
+}
+
+
+vector<Index> extreme_indices(const MatrixR& values)
+{
+    vector<Index> extremes;
+
+    extremes.reserve(size_t(2*values.cols()));
+
+    for (Index j = 0; j < values.cols(); j++)
+    {
+        extremes.push_back(maximal_index(values.col(j)));
+        extremes.push_back(minimal_index(values.col(j)));
+    }
+
+    return extremes;
 }
 
 }

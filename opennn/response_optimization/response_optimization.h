@@ -14,33 +14,6 @@
 namespace opennn
 {
 
-// Constraint bounds are compared with a relative slack, so a point that lands on a
-// bound is not rejected by the rounding of the arithmetic that produced it.
-inline float bound_tolerance(const float bound) { return max(EPSILON, abs(bound) * 1e-4f); }
-
-// Matrix shaping and point-geometry helpers shared by the response solvers.
-
-MatrixR append_rows(const MatrixR&, const MatrixR&);
-MatrixR append_columns(const MatrixR&, const MatrixR&);
-VectorR slice_rows(const VectorR&, const vector<Index>&);
-MatrixR slice_rows(const MatrixR&, const vector<Index>&);
-pair<MatrixR, MatrixR> slice_rows(const pair<MatrixR, MatrixR>&, const vector<Index>&);
-pair<MatrixR, MatrixR> append_rows(const pair<MatrixR, MatrixR>&, const pair<MatrixR, MatrixR>&);
-MatrixR append_columns(const pair<MatrixR, MatrixR>&);
-
-MatrixR calculate_distances(const MatrixR&);
-VectorI get_nearest_points(const MatrixR&, const VectorR&, Index = 1);
-vector<VectorI> nearest_neighbors(const MatrixR&, Index);
-VectorR neighbor_distances(const MatrixR&, Index);
-VectorR local_outlier_factor(const MatrixR&, Index);
-void farthest_point_fill(const MatrixR& distances, vector<Index>& selection, Index quota);
-
-vector<Index> ranked_indices(const VectorR&);
-VectorR minmax_score(const VectorR&, bool invert = false);
-MatrixR minmax_score(const MatrixR&);
-vector<Index> extreme_indices(const MatrixR&);
-bool row_dominates(const MatrixR&, Index, Index);
-
 bool gauss_newton_step(const MatrixR& jacobian,
                        const VectorR& residuals,
                        const VectorR& inferior,
@@ -92,7 +65,7 @@ public:
     void add_constraint(const string&, Constraint::Condition, const vector<float>& values = {});
 
     MatrixR perform_response_optimization();
-	
+
 protected:
 
     NeuralNetwork* neural_network = nullptr;
@@ -124,6 +97,10 @@ protected:
 private:
 
     VectorR assign_categories(const VectorR&) const;
+
+    static float bound_tolerance(float bound) { return max(EPSILON, abs(bound) * bound_tolerance_factor); }
+
+    static constexpr float bound_tolerance_factor = 1e-4f;
 
     Index maximum_adjustment_passes = 16;
 

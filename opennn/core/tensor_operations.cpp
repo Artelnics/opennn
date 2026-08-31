@@ -2078,6 +2078,126 @@ OPENNN_GPU_OPS(OPENNN_STUB_GPU_OP)
 
 #endif
 
+
+MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
+{
+    if (starting_matrix.size() == 0)
+        return block;
+    if (block.size() == 0)
+        return starting_matrix;
+
+    throw_if(starting_matrix.cols() != block.cols(),
+             "append_rows: Column mismatch ({} vs {})",
+             starting_matrix.cols(), block.cols());
+
+    MatrixR final_matrix(starting_matrix.rows() + block.rows(), starting_matrix.cols());
+
+    final_matrix.topRows(starting_matrix.rows()) = starting_matrix;
+    final_matrix.bottomRows(block.rows()) = block;
+
+    return final_matrix;
+}
+
+
+MatrixR append_columns(const MatrixR& first_matrix, const MatrixR& second_matrix)
+{
+    MatrixR result(first_matrix.rows(), first_matrix.cols() + second_matrix.cols());
+    result.leftCols(first_matrix.cols()) = first_matrix;
+    result.rightCols(second_matrix.cols()) = second_matrix;
+    return result;
+}
+
+
+VectorR slice_rows(const VectorR& values, const vector<Index>& indices)
+{
+    VectorR result(ssize(indices));
+
+    for (Index i = 0; i < ssize(indices); ++i)
+        result(i) = values(indices[i]);
+
+    return result;
+}
+
+
+MatrixR slice_rows(const MatrixR& matrix, const vector<Index>& indices)
+{
+    MatrixR result(ssize(indices), matrix.cols());
+
+    for (Index i = 0; i < ssize(indices); ++i)
+        result.row(i) = matrix.row(indices[i]);
+
+    return result;
+}
+
+
+pair<MatrixR, MatrixR> slice_rows(const pair<MatrixR, MatrixR>& matrices, const vector<Index>& indices)
+{
+    return {slice_rows(matrices.first, indices), slice_rows(matrices.second, indices)};
+}
+
+
+pair<MatrixR, MatrixR> append_rows(const pair<MatrixR, MatrixR>& matrices, const pair<MatrixR, MatrixR>& blocks)
+{
+    return {append_rows(matrices.first, blocks.first), append_rows(matrices.second, blocks.second)};
+}
+
+
+MatrixR append_columns(const pair<MatrixR, MatrixR>& matrices)
+{
+    return append_columns(matrices.first, matrices.second);
+}
+
+
+MatrixR calculate_distances(const MatrixR& points)
+{
+    const VectorR squared_norms = points.rowwise().squaredNorm();
+
+    MatrixR squared_distances = -2.0f * points * points.transpose();
+    squared_distances.colwise() += squared_norms;
+    squared_distances.rowwise() += squared_norms.transpose();
+
+    return squared_distances.cwiseMax(0.0f).cwiseSqrt();
+}
+
+
+VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, Index neighbors_number)
+{
+    const Index rows = matrix.rows();
+
+    const VectorR distances = (matrix.rowwise() - point.transpose()).rowwise().norm();
+
+    vector<pair<float, Index>> pairs(rows);
+
+    for (Index i = 0; i < rows; ++i)
+        pairs[i] = {distances(i), i};
+
+    if (neighbors_number > rows)
+        neighbors_number = rows;
+
+    partial_sort(pairs.begin(), pairs.begin() + neighbors_number, pairs.end());
+
+    VectorI result(neighbors_number);
+    transform(pairs.begin(), pairs.begin() + neighbors_number, result.data(),
+              [](const auto& p) { return p.second; });
+    return result;
+}
+
+
+bool row_dominates(const MatrixR& values, const Index a, const Index b)
+{
+    bool strictly_better = false;
+
+    for (Index j = 0; j < values.cols(); ++j)
+    {
+        const float difference = values(a, j) - values(b, j);
+
+        if (difference < 0.0f) return false;
+        if (difference > 0.0f) strictly_better = true;
+    }
+
+    return strictly_better;
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

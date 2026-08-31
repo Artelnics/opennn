@@ -155,6 +155,20 @@ void linear_backward(const TensorView&, const TensorView&, const TensorView&,
 void linear_forward_transposed(const TensorView& input, const TensorView& embed_weight, TensorView& output,
                           const TensorView& weight_scale = {});
 
+MatrixR append_rows(const MatrixR&, const MatrixR&);
+MatrixR append_columns(const MatrixR&, const MatrixR&);
+pair<MatrixR, MatrixR> append_rows(const pair<MatrixR, MatrixR>&, const pair<MatrixR, MatrixR>&);
+MatrixR append_columns(const pair<MatrixR, MatrixR>&);
+
+VectorR slice_rows(const VectorR&, const vector<Index>&);
+MatrixR slice_rows(const MatrixR&, const vector<Index>&);
+pair<MatrixR, MatrixR> slice_rows(const pair<MatrixR, MatrixR>&, const vector<Index>&);
+
+MatrixR calculate_distances(const MatrixR&);
+VectorI get_nearest_points(const MatrixR&, const VectorR&, Index = 1);
+
+bool row_dominates(const MatrixR&, Index, Index);
+
 }
 
 // OpenNN: Open Neural Networks Library.

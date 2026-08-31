@@ -1078,9 +1078,6 @@ CompiledExpression compile_expression(const string& expression,
 }
 
 
-// Whatever goes wrong below is a problem with the text itself, so every message names the role the
-// text was given ("Objective", "Constraint") and quotes it back.
-
 CompiledExpression compile_expression(const string& expression,
                                       const NeuralNetwork* neural_network,
                                       const string& role)
@@ -1125,9 +1122,6 @@ float ExpressionEvaluator::evaluate(const map<string, float>& variables) const
     return compiled.evaluate(values, VectorR());
 }
 
-
-// The interval version of satisfies_bounds: what the expression is allowed to take, as one interval.
-// An allowed set is reported by its hull, which is all a single interval can say about it.
 
 bool same_expression(const CompiledExpression& first, const CompiledExpression& second)
 {

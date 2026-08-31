@@ -88,7 +88,6 @@ pair<VectorR, VectorR> GeneticResponse::initialize_individual(const pair<VectorR
 
         const VectorR output = neural_network->calculate_outputs(input.transpose()).row(0).transpose();
 
-        //get_feasible_point
 
         if (ranges::none_of(constraints,
                             [&](const Constraint& constraint)

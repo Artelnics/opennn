@@ -21,310 +21,6 @@
 namespace opennn
 {
 
-MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
-{
-    if (starting_matrix.size() == 0)
-        return block;
-    if (block.size() == 0)
-        return starting_matrix;
-
-    throw_if(starting_matrix.cols() != block.cols(),
-             "append_rows: Column mismatch ({} vs {})",
-             starting_matrix.cols(), block.cols());
-
-    MatrixR final_matrix(starting_matrix.rows() + block.rows(), starting_matrix.cols());
-
-    final_matrix.topRows(starting_matrix.rows()) = starting_matrix;
-    final_matrix.bottomRows(block.rows()) = block;
-
-    return final_matrix;
-}
-
-
-MatrixR append_columns(const MatrixR& first_matrix, const MatrixR& second_matrix)
-{
-    MatrixR result(first_matrix.rows(), first_matrix.cols() + second_matrix.cols());
-    result.leftCols(first_matrix.cols()) = first_matrix;
-    result.rightCols(second_matrix.cols()) = second_matrix;
-    return result;
-}
-
-
-VectorR slice_rows(const VectorR& values, const vector<Index>& indices)
-{
-    VectorR result(ssize(indices));
-
-    for (Index i = 0; i < ssize(indices); ++i)
-        result(i) = values(indices[i]);
-
-    return result;
-}
-
-
-MatrixR slice_rows(const MatrixR& matrix, const vector<Index>& indices)
-{
-    MatrixR result(ssize(indices), matrix.cols());
-
-    for (Index i = 0; i < ssize(indices); ++i)
-        result.row(i) = matrix.row(indices[i]);
-
-    return result;
-}
-
-
-pair<MatrixR, MatrixR> slice_rows(const pair<MatrixR, MatrixR>& matrices, const vector<Index>& indices)
-{
-    return {slice_rows(matrices.first, indices), slice_rows(matrices.second, indices)};
-}
-
-
-pair<MatrixR, MatrixR> append_rows(const pair<MatrixR, MatrixR>& matrices, const pair<MatrixR, MatrixR>& blocks)
-{
-    return {append_rows(matrices.first, blocks.first), append_rows(matrices.second, blocks.second)};
-}
-
-
-MatrixR append_columns(const pair<MatrixR, MatrixR>& matrices)
-{
-    return append_columns(matrices.first, matrices.second);
-}
-
-
-MatrixR calculate_distances(const MatrixR& points)
-{
-    const VectorR squared_norms = points.rowwise().squaredNorm();
-
-    MatrixR squared_distances = -2.0f * points * points.transpose();
-    squared_distances.colwise() += squared_norms;
-    squared_distances.rowwise() += squared_norms.transpose();
-
-    return squared_distances.cwiseMax(0.0f).cwiseSqrt();
-}
-
-
-VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, Index neighbors_number)
-{
-    const Index rows = matrix.rows();
-
-    const VectorR distances = (matrix.rowwise() - point.transpose()).rowwise().norm();
-
-    vector<pair<float, Index>> pairs(rows);
-
-    for (Index i = 0; i < rows; ++i)
-        pairs[i] = {distances(i), i};
-
-    if (neighbors_number > rows)
-        neighbors_number = rows;
-
-    partial_sort(pairs.begin(), pairs.begin() + neighbors_number, pairs.end());
-
-    VectorI result(neighbors_number);
-    transform(pairs.begin(), pairs.begin() + neighbors_number, result.data(),
-              [](const auto& p) { return p.second; });
-    return result;
-}
-
-
-vector<VectorI> nearest_neighbors(const MatrixR& distances, Index neighbors_number)
-{
-    const Index points_number = distances.rows();
-
-    neighbors_number = min(neighbors_number, points_number - 1);
-
-    vector<VectorI> neighbors(points_number);
-
-    for (Index i = 0; i < points_number; i++)
-    {
-        VectorR point_distances = distances.row(i).transpose();
-
-        point_distances(i) = MAX;
-
-        neighbors[i] = maximal_indices(-point_distances, neighbors_number);
-    }
-
-    return neighbors;
-}
-
-
-VectorR neighbor_distances(const MatrixR& points, const Index neighbors_number)
-{
-    const Index points_number = points.rows();
-
-    if (points_number < 2 || neighbors_number < 1)
-        return VectorR::Constant(points_number, MAX);
-
-    const MatrixR distances = calculate_distances(points);
-
-    const vector<VectorI> neighbors = nearest_neighbors(distances, neighbors_number);
-
-    VectorR farthest_neighbor_distances(points_number);
-
-    for (Index i = 0; i < points_number; i++)
-        farthest_neighbor_distances(i) = distances(i, neighbors[i](neighbors[i].size() - 1));
-
-    return farthest_neighbor_distances;
-}
-
-
-VectorR local_outlier_factor(const MatrixR& points, Index neighbors_number)
-{
-    const Index points_number = points.rows();
-
-    if (points_number <= 1 || neighbors_number <= 0)
-        return VectorR::Ones(points_number);
-
-    neighbors_number = min(neighbors_number, points_number - 1);
-
-    const MatrixR distances = calculate_distances(points);
-
-    vector<vector<Index>> neighbors(points_number);
-    VectorR neighbor_distance(points_number);
-
-    for (Index i = 0; i < points_number; i++)
-    {
-        VectorR row = distances.row(i).transpose();
-        row(i) = MAX;
-        const VectorI nearest = maximal_indices(-row, neighbors_number);
-        neighbor_distance(i) = row(nearest(neighbors_number - 1));
-
-        const float tie_tolerance = EPSILON * max(1.0f, abs(neighbor_distance(i)));
-        neighbors[i].reserve(static_cast<size_t>(neighbors_number));
-        for (Index j = 0; j < points_number; ++j)
-            if (j != i && distances(i, j) <= neighbor_distance(i) + tie_tolerance)
-                neighbors[i].push_back(j);
-    }
-
-    VectorR reachability_density(points_number);
-
-    for (Index i = 0; i < points_number; i++)
-    {
-        float reachability_sum = 0.0f;
-        for (const Index neighbor : neighbors[i])
-            reachability_sum += max(neighbor_distance(neighbor), distances(i, neighbor));
-        reachability_density(i) = reachability_sum > EPSILON
-            ? float(neighbors[i].size()) / reachability_sum
-            : MAX;
-    }
-
-    VectorR outlier_factor(points_number);
-
-    for (Index i = 0; i < points_number; i++)
-    {
-        float density_sum = 0.0f;
-        for (const Index neighbor : neighbors[i])
-            density_sum += reachability_density(neighbor);
-        outlier_factor(i) = reachability_density(i) > EPSILON
-            ? density_sum / (float(neighbors[i].size()) * reachability_density(i))
-            : 1.0f;
-    }
-
-    return outlier_factor;
-}
-
-
-void farthest_point_fill(const MatrixR& distances, vector<Index>& selection, const Index quota)
-{
-    const Index points_number = distances.rows();
-
-    vector<char> chosen(points_number, 0);
-
-    for (const Index point : selection)
-        chosen[point] = 1;
-
-    VectorR minimum_distance = VectorR::Constant(points_number, MAX);
-
-    for (const Index point : selection)
-        minimum_distance = minimum_distance.cwiseMin(distances.col(point));
-
-    for (Index i = 0; i < points_number; i++)
-        if (chosen[i]) minimum_distance(i) = -MAX;
-
-    while (ssize(selection) < quota)
-    {
-        Index farthest = 0;
-        minimum_distance.maxCoeff(&farthest);
-
-        if (minimum_distance(farthest) < 0.0f) break;
-
-        selection.push_back(farthest);
-        minimum_distance = minimum_distance.cwiseMin(distances.col(farthest));
-        minimum_distance(farthest) = -MAX;
-    }
-}
-
-
-vector<Index> ranked_indices(const VectorR& data)
-{
-    vector<Index> indices(data.size());
-    iota(indices.begin(), indices.end(), 0);
-
-    sort(indices.begin(), indices.end(),
-         [&data](Index i, Index j) {
-             if (data(i) == data(j)) return i < j;
-             return data(i) > data(j);
-         });
-
-    return indices;
-}
-
-
-VectorR minmax_score(const VectorR& values, const bool invert)
-{
-    const float smallest = values.minCoeff();
-    const float range = values.maxCoeff() - smallest;
-
-    if (range < EPSILON)
-        return VectorR::Constant(values.size(), invert ? 1.0f : 0.0f);
-
-    const VectorR normalized = (values.array() - smallest) / range;
-
-    return VectorR(invert ? (1.0f - normalized.array()).matrix() : normalized);
-}
-
-
-MatrixR minmax_score(const MatrixR& values)
-{
-    MatrixR scores(values.rows(), values.cols());
-
-    for (Index j = 0; j < values.cols(); j++)
-        scores.col(j) = minmax_score(VectorR(values.col(j)));
-
-    return scores;
-}
-
-
-vector<Index> extreme_indices(const MatrixR& values)
-{
-    vector<Index> extremes;
-
-    extremes.reserve(size_t(2*values.cols()));
-
-    for (Index j = 0; j < values.cols(); j++)
-    {
-        extremes.push_back(maximal_index(values.col(j)));
-        extremes.push_back(minimal_index(values.col(j)));
-    }
-
-    return extremes;
-}
-
-
-bool row_dominates(const MatrixR& values, const Index a, const Index b)
-{
-    bool strictly_better = false;
-
-    for (Index j = 0; j < values.cols(); ++j)
-    {
-        const float difference = values(a, j) - values(b, j);
-
-        if (difference < 0.0f) return false;
-        if (difference > 0.0f) strictly_better = true;
-    }
-
-    return strictly_better;
-}
-
-
 bool gauss_newton_step(const MatrixR& jacobian,
                        const VectorR& residuals,
                        const VectorR& inferior,
@@ -443,9 +139,6 @@ VectorR ResponseOptimization::get_feasible_input(VectorR input, const pair<Vecto
 
         for (const Constraint& constraint : constraints)
         {
-            // This pass repairs the input point on its own, with no network evaluation
-            // behind it, so a constraint that reads an output has nothing to be measured
-            // against here. Those are enforced by filtering the sampled points instead.
             if (is_output_coupled(constraint.expression))
                 continue;
 
@@ -467,11 +160,9 @@ VectorR ResponseOptimization::get_feasible_input(VectorR input, const pair<Vecto
 
                 break;
 
-            // Not solved here
 
             case Constraint::Condition::Integer:
 
-            // Not solved here
 
             case Constraint::Condition::Cardinality:
 
@@ -724,7 +415,6 @@ vector<Index> ResponseOptimization::calculate_pareto_front(const MatrixR& object
     for (Index j = 0; j < objective_values.cols(); j++)
         tolerance(j) = bound_tolerance(objective_values.col(j).maxCoeff() - objective_values.col(j).minCoeff());
 
-    // A point is as good as another when no objective of its own falls short of it.
 
     const auto is_as_good_as = [&](const Index point, const Index other)
     {
@@ -735,8 +425,6 @@ vector<Index> ResponseOptimization::calculate_pareto_front(const MatrixR& object
         return true;
     };
 
-    // The front is grown one point at a time, so each point is only ever weighed
-    // against the front so far rather than against every other point.
 
     vector<Index> pareto_front;
 
@@ -776,7 +464,7 @@ vector<Index> ResponseOptimization::clean_front(const MatrixR& inputs, const Mat
 
     const auto select_point = [&](const Index point)
     {
-        if (Index(selection.size()) >= requested_front_size || chosen[size_t(point)]) 
+        if (Index(selection.size()) >= requested_front_size || chosen[size_t(point)])
             return;
 
         chosen[size_t(point)] = 1;

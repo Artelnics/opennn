@@ -60,10 +60,6 @@ vector<Descriptives> make_descriptives(const Index count, const float minimum, c
 }
 
 
-// A compiled, Glorot-initialized approximation network with named variables and a box-scaled input
-// domain. Nothing is trained: the tests that touch the network only need a smooth finite response
-// and the input box that calculate_domain() reads off the scaling layer.
-
 struct MinimalApproximation
 {
     unique_ptr<ApproximationNetwork> network;
@@ -228,9 +224,6 @@ Index read_category(const MatrixR& results,
 }
 
 
-// The median and the spread of what the untrained network actually produces over its input box, so
-// Fixed-objective and output-constraint tests aim at a value that is provably attainable.
-
 pair<float, float> sample_response(NeuralNetwork& network,
                                    const Index inputs_number,
                                    const float input_minimum,
@@ -270,8 +263,6 @@ string driver_name(const testing::TestParamInfo<Driver>& info)
 }
 
 
-// Both drivers sample at random; a fixed seed keeps the end-to-end assertions reproducible.
-
 class ResponseDriver : public testing::TestWithParam<Driver>
 {
 protected:
@@ -281,10 +272,6 @@ protected:
 
 }
 
-
-// -----------------------------------------------------------------------------
-// Expression compiler: linearity
-// -----------------------------------------------------------------------------
 
 TEST(Expression, LinearSumKeepsSignedCoefficients)
 {
@@ -373,10 +360,6 @@ TEST(Expression, SingleColumnExpressionIsUnivariate)
 }
 
 
-// -----------------------------------------------------------------------------
-// Expression compiler: involvement
-// -----------------------------------------------------------------------------
-
 TEST(Expression, InvolvementInputsOnly)
 {
     const CompiledExpression expression = compile_expression("x1 + x2",
@@ -413,10 +396,6 @@ TEST(Expression, InvolvementMixed)
     EXPECT_TRUE(is_output_coupled(expression));
 }
 
-
-// -----------------------------------------------------------------------------
-// Expression compiler: evaluation
-// -----------------------------------------------------------------------------
 
 TEST(Expression, EvaluateLinearRespectsSignedCoefficients)
 {
@@ -487,10 +466,6 @@ TEST(Expression, MinMaxAreNonSmooth)
 }
 
 
-// -----------------------------------------------------------------------------
-// Expression compiler: rejected text
-// -----------------------------------------------------------------------------
-
 TEST(Expression, UnknownIdentifierThrows)
 {
     EXPECT_THROW(compile_expression("x1 + z9", make_named_columns({"x1"}), {}), runtime_error);
@@ -544,10 +519,6 @@ TEST(Expression, CompilingWithoutANetworkThrows)
 }
 
 
-// -----------------------------------------------------------------------------
-// Expression helpers used by the feasibility gate
-// -----------------------------------------------------------------------------
-
 TEST(ConstraintResidual, SilentInsideAndSignedOutside)
 {
     ResponseOptimization::Constraint constraint;
@@ -588,8 +559,6 @@ TEST(ExpressionHelpers, SameExpressionComparesTheCompiledForm)
 {
     const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
 
-    // Spelling and spacing do not matter, and a linear expression is compared by its terms rather
-    // than by its operations.
     EXPECT_TRUE(same_expression(compile_expression("x1 + 2*x2", inputs, {}),
                                 compile_expression("x1+2*x2", inputs, {})));
 
@@ -606,9 +575,6 @@ TEST(ExpressionHelpers, SameExpressionComparesTheCompiledForm)
 
 TEST(ExpressionHelpers, SameExpressionIsSensitiveToTermOrder)
 {
-    // Known limitation, pinned so a change is deliberate: linear terms are compared as an ordered
-    // vector, so a commutative rewrite is not recognized as the same expression. The duplicate
-    // objective warning and the contradictory constraint check both miss such a pair.
     const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
 
     EXPECT_FALSE(same_expression(compile_expression("x1 + x2", inputs, {}),
@@ -640,7 +606,6 @@ TEST(ExpressionHelpers, InputGradientMatchesTheCoefficients)
     EXPECT_NEAR(linear_gradient(0), -1.0f, 1e-5f);
     EXPECT_NEAR(linear_gradient(1), 2.0f, 1e-5f);
 
-    // d(x1^2 + x2^2) = (2*x1, 2*x2)
     const VectorR nonlinear_gradient =
         evaluate_input_gradient(compile_expression("x1^2 + x2^2", inputs, {}), point, output);
 
@@ -648,10 +613,6 @@ TEST(ExpressionHelpers, InputGradientMatchesTheCoefficients)
     EXPECT_NEAR(nonlinear_gradient(1), 8.0f, 1e-4f);
 }
 
-
-// -----------------------------------------------------------------------------
-// Selector conjunctions: min/max/abs split into smooth pieces
-// -----------------------------------------------------------------------------
 
 TEST(DrawKHot, DrawsExactlyKHonouringPins)
 {
@@ -723,10 +684,6 @@ TEST(DrawKHot, ReportsInfeasiblePins)
     }
 }
 
-
-// -----------------------------------------------------------------------------
-// ResponseOptimization: what the setup refuses
-// -----------------------------------------------------------------------------
 
 TEST(ResponseOptimizationSetup, NoNeuralNetworkThrows)
 {
@@ -818,18 +775,12 @@ TEST(ResponseOptimizationSetup, ConstraintsThatEmptyAColumnThrowWhenTheDomainIsB
 
     optimization.add_objective("y", Sense::Minimize);
 
-    // Written differently, so neither is recognized as constraining the same expression as the
-    // other, yet together they leave x1 with the empty range [8, 2].
     optimization.add_constraint("x1", Condition::GreaterEqual, {8.0f});
     optimization.add_constraint("2 * x1", Condition::LessEqual, {4.0f});
 
     EXPECT_THROW(optimization.perform_response_optimization(), runtime_error);
 }
 
-
-// -----------------------------------------------------------------------------
-// ResponseOptimization: both drivers honour the feasible set
-// -----------------------------------------------------------------------------
 
 TEST_P(ResponseDriver, ResultsStayInsideTheInputBox)
 {
@@ -899,7 +850,6 @@ TEST_P(ResponseDriver, NonlinearInputConstraintHolds)
 
     optimization->add_objective("y", Sense::Minimize);
 
-    // Inside the disk of radius 2.
     optimization->add_constraint("x1^2 + x2^2", Condition::LessEqual, {4.0f});
 
     const MatrixR results = optimization->perform_response_optimization();
@@ -920,7 +870,6 @@ TEST_P(ResponseDriver, SingleVariableConstraintIsFoldedIntoTheBox)
 
     optimization->add_objective("y", Sense::Minimize);
 
-    // 2*x1 - 6 <= 0 is one linear term, so calculate_domain() turns it into x1 <= 3.
     optimization->add_constraint("2 * x1 - 6", Condition::LessEqual, {0.0f});
 
     const MatrixR results = optimization->perform_response_optimization();
@@ -936,7 +885,6 @@ TEST_P(ResponseDriver, OutputConstraintHolds)
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
 
-    // Half the box already satisfies y >= median, so the constraint is attainable by construction.
     const auto [median, span] = sample_response(*setup.network, 2, 0.0f, 10.0f);
 
     const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
@@ -1050,10 +998,6 @@ TEST_P(ResponseDriver, ConflictingObjectivesFillTheRequestedFront)
     EXPECT_GT(results.col(0).maxCoeff() - results.col(0).minCoeff(), 4.0f);
 }
 
-
-// -----------------------------------------------------------------------------
-// Categorical inputs: one-hot blocks stay on the lattice
-// -----------------------------------------------------------------------------
 
 TEST(CategoricalBlocks, ReportsOneBlockPerCategoricalVariable)
 {

@@ -8,7 +8,6 @@
 #include "opennn/core/statistics.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/response_optimization/network_differential.h"
 
 using namespace opennn;
 
@@ -424,8 +423,7 @@ TEST(ScalerDegenerateAgreement, ScalarAndTensorPathsBothCollapseToZero)
 
 // All three forward paths now agree on a constant feature. scaling_affine used to
 // add EPSILON to the denominator instead of guarding, which turned a constant image
-// channel into a ~1.7e7 multiplier -- and nothing downstream checked it, unlike the
-// NetworkDifferential surrogate, which at least has a validation gate.
+// channel into a ~1.7e7 multiplier, and nothing downstream checked it.
 TEST(ScalerDegenerateAgreement, AffinePathAgreesWithScaleValue)
 {
     const Descriptives descriptives = constant_feature();
@@ -447,26 +445,4 @@ TEST(ScalerDegenerateAgreement, AffinePathAgreesWithScaleValue)
         EXPECT_NEAR(scalar_result, type(0), 1e-6);
         EXPECT_NEAR(affine_result, scalar_result, 1e-6);
     }
-}
-
-// guarded() still floors at 1e-12, five orders of magnitude below the EPSILON
-// the forward paths use, so it must never be what decides a degenerate feature:
-// 1/1e-12 as a slope is what made the analytic Jacobian disagree with the
-// forward pass and sent every dataset with a constant column to the
-// finite-difference surrogate. NetworkDifferential now tests the span against
-// EPSILON first, like the Scaling layer, and only reaches guarded() for a span
-// it has already accepted. These bounds are pinned so the floor cannot quietly
-// drift into the range where it would start deciding again.
-TEST(ScalerDegenerateAgreement, JacobianGuardFloorStaysBelowTheForwardGuard)
-{
-    EXPECT_NEAR(NetworkDifferential::guarded(type(0)), type(1e-12), type(1e-18));
-
-    const float jacobian_slope = type(1) / NetworkDifferential::guarded(type(0));
-    EXPECT_GT(jacobian_slope, type(1e11));
-
-    const Descriptives descriptives = constant_feature();
-    EXPECT_NEAR(scale_value(ScalerMethod::MinimumMaximum, descriptives, type(4)), type(0), 1e-6);
-
-    EXPECT_LT(EPSILON / type(1e-12), type(1e6));
-    EXPECT_GT(EPSILON / type(1e-12), type(1e4));
 }

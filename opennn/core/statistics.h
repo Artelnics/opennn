@@ -168,6 +168,19 @@ inline bool is_constant(const T& tensor)
 
 VectorI calculate_rank(const VectorR&, bool ascending = true);
 
+vector<Index> ranked_indices(const VectorR&);
+
+VectorR minmax_score(const VectorR&, bool invert = false);
+MatrixR minmax_score(const MatrixR&);
+
+vector<Index> extreme_indices(const MatrixR&);
+
+vector<VectorI> nearest_neighbors(const MatrixR&, Index);
+VectorR neighbor_distances(const MatrixR&, Index);
+VectorR local_outlier_factor(const MatrixR&, Index);
+
+void farthest_point_fill(const MatrixR& distances, vector<Index>& selection, Index quota);
+
 }
 
 // OpenNN: Open Neural Networks Library.
