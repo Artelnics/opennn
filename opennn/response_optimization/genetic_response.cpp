@@ -240,22 +240,30 @@ pair<MatrixR, MatrixR> GeneticResponse::recombinate_population(const MatrixR& pa
 
     for (Index i = 0; i < attempts_number && feasible_number < points_number; i += 2)
     {
-        VectorR children[2] = {parent_inputs.row(select_parent()).transpose(),
-                               parent_inputs.row(select_parent()).transpose()};
+        VectorR first_child = parent_inputs.row(select_parent()).transpose();
+        VectorR second_child = parent_inputs.row(select_parent()).transpose();
 
         if (random_uniform(0.0f, 1.0f) < crossover_probability)
-            crossover(children[0], children[1], domain);
+            crossover(first_child, second_child, domain);
 
-        for (const VectorR& child : children)
+        const auto [first_input, first_output] = get_feasible_point(first_child, domain);
+
+        if (first_input.size() > 0)
         {
-            if (feasible_number == points_number) break;
+            inputs.row(feasible_number) = first_input.transpose();
+            outputs.row(feasible_number) = first_output.transpose();
 
-            const auto [input, output] = get_feasible_point(child, domain);
+            feasible_number++;
+        }
 
-            if (input.size() == 0) continue;
+        if (feasible_number == points_number) break;
 
-            inputs.row(feasible_number) = input.transpose();
-            outputs.row(feasible_number) = output.transpose();
+        const auto [second_input, second_output] = get_feasible_point(second_child, domain);
+
+        if (second_input.size() > 0)
+        {
+            inputs.row(feasible_number) = second_input.transpose();
+            outputs.row(feasible_number) = second_output.transpose();
 
             feasible_number++;
         }

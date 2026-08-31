@@ -80,6 +80,153 @@ unique_ptr<ResponseOptimization> make_driver(const Driver driver)
 }
 
 
+// Reaches the repair on its own, without a search around it. Both solvers are built on
+// get_feasible_point, so what it returns from a spread of starting points decides what
+// they have left to explore.
+
+class FeasibleSetProbe : public ResponseOptimization
+{
+public:
+
+    explicit FeasibleSetProbe() : ResponseOptimization(&concrete_network()) {}
+
+    using ResponseOptimization::calculate_domain;
+    using ResponseOptimization::calculate_random_input;
+    using ResponseOptimization::get_feasible_point;
+
+private:
+
+    MatrixR single_optimization() override { return {}; }
+    MatrixR multi_optimization() override { return {}; }
+};
+
+
+// What a run of repairs produced. The starting points that were already feasible are
+// counted apart from the rest: those come back untouched, so they say nothing about the
+// repair and would flatter any measure of spread they were mixed into.
+
+struct RepairedCloud
+{
+    MatrixR points;
+
+    Index drawn = 0;
+    Index already_feasible = 0;
+    Index failed = 0;
+
+    Index repaired() const { return points.rows(); }
+};
+
+
+RepairedCloud repair_from_random_starts(FeasibleSetProbe& probe, const Index draws)
+{
+    const pair<VectorR, VectorR> domain = probe.calculate_domain();
+
+    RepairedCloud cloud;
+
+    cloud.drawn = draws;
+    cloud.points = MatrixR(draws, domain.first.size());
+
+    Index kept = 0;
+
+    for (Index i = 0; i < draws; i++)
+    {
+        const VectorR start = probe.calculate_random_input(domain);
+
+        const auto [input, output] = probe.get_feasible_point(start, domain);
+
+        if (input.size() == 0)
+        {
+            cloud.failed++;
+            continue;
+        }
+
+        // An untouched return is the early out: the draw already satisfied everything.
+
+        if ((input - start).cwiseAbs().maxCoeff() <= 0.0f)
+        {
+            cloud.already_feasible++;
+            continue;
+        }
+
+        cloud.points.row(kept++) = input.transpose();
+    }
+
+    cloud.points = cloud.points.topRows(kept);
+
+    return cloud;
+}
+
+
+// Two points count as one when every variable agrees to a thousandth of its own range,
+// far below anything a search would treat as a different mix.
+
+Index count_distinct(const MatrixR& points, const VectorR& span)
+{
+    const VectorR guarded_span = span.cwiseMax(EPSILON);
+
+    Index distinct = 0;
+
+    for (Index i = 0; i < points.rows(); i++)
+    {
+        bool seen = false;
+
+        for (Index j = 0; j < i && !seen; j++)
+            seen = ((points.row(i) - points.row(j)).cwiseAbs().array()
+                    / guarded_span.transpose().array() < 1e-3f).all();
+
+        if (!seen) distinct++;
+    }
+
+    return distinct;
+}
+
+
+// How many variables the cloud actually moves in. A repair that always walked to the same
+// corner would score one, or none.
+
+Index count_spread_variables(const MatrixR& points, const VectorR& span)
+{
+    Index spread_variables = 0;
+
+    for (Index j = 0; j < points.cols(); j++)
+    {
+        if (span(j) <= EPSILON) continue;
+
+        if ((points.col(j).maxCoeff() - points.col(j).minCoeff())/span(j) > 0.05f)
+            spread_variables++;
+    }
+
+    return spread_variables;
+}
+
+
+void report_cloud(const string& name, const RepairedCloud& cloud, const VectorR& span)
+{
+    cout << "\n[ repair | " << name << " ]\n"
+         << "  drawn            " << cloud.drawn << "\n"
+         << "  already feasible " << cloud.already_feasible << "\n"
+         << "  repaired         " << cloud.repaired() << "\n"
+         << "  failed           " << cloud.failed << "\n";
+
+    if (cloud.repaired() == 0) return;
+
+    cout << "  distinct         " << count_distinct(cloud.points, span) << "\n"
+         << "  variables moved  " << count_spread_variables(cloud.points, span)
+         << " of " << span.size() << "\n";
+
+    cout << left << setw(12) << "  column" << right << setw(12) << "spread/range" << "\n";
+
+    for (Index j = 0; j < cloud.points.cols(); j++)
+    {
+        if (span(j) <= EPSILON) continue;
+
+        cout << left << setw(12) << string("  ") + column_names[j] << right
+             << fixed << setprecision(3) << setw(12)
+             << (cloud.points.col(j).maxCoeff() - cloud.points.col(j).minCoeff())/span(j) << "\n";
+    }
+}
+
+
 // What the run produced, printed rather than asserted. Reading these side by side is how
 // a scenario tells you whether the front spread out, collapsed, or hugged a bound.
 
@@ -626,6 +773,135 @@ TEST(ConcreteScenario, TheSameSeedGivesTheSameResult)
         EXPECT_LE((first - second).cwiseAbs().maxCoeff(), 1e-3f)
             << driver_name(driver) << " is not repeatable under a fixed seed";
     }
+}
+
+
+// The repair itself, without a search around it. Everything above asks whether the points
+// that come back are feasible. These ask whether there is more than one of them: a repair
+// that answered every starting point with the same mix, or that put every mix on a
+// constraint surface, would satisfy every feasibility check already made and leave both
+// solvers with nothing to search.
+
+namespace
+{
+
+constexpr Index repair_draws = 200;
+
+}
+
+
+TEST(RepairSet, DifferentStartsGiveDifferentPointsUnderFewConstraints)
+{
+    set_seed(1234);
+
+    FeasibleSetProbe probe;
+
+    probe.add_constraint("water / (cement + slag + fly_ash)", Condition::Between, {0.35f, 0.50f});
+    probe.add_constraint("fine_agg / (coarse_agg + fine_agg)", Condition::Between, {0.35f, 0.45f});
+
+    const pair<VectorR, VectorR> domain = probe.calculate_domain();
+
+    const VectorR span = domain.second - domain.first;
+
+    const RepairedCloud cloud = repair_from_random_starts(probe, repair_draws);
+
+    report_cloud("two ratio bands", cloud, span);
+
+    ASSERT_GT(cloud.repaired(), 0) << "no starting point needed repair, so nothing was measured";
+
+    EXPECT_EQ(count_distinct(cloud.points, span), cloud.repaired())
+        << "different starting points collapsed onto shared repaired points";
+
+    EXPECT_GE(count_spread_variables(cloud.points, span), 4)
+        << "the repaired set moves in too few variables to be a set rather than a point";
+}
+
+
+TEST(RepairSet, ManyConstraintsStillGiveASetNotAPoint)
+{
+    set_seed(1234);
+
+    FeasibleSetProbe probe;
+
+    // The mix design problem, whose feasible set is thin: a closed batch, three ratio
+    // bands, a response that has to earn its binder, and a fixed age.
+
+    probe.add_constraint("cement + slag + fly_ash + water + sp + coarse_agg + fine_agg",
+                         Condition::Equal,
+                         {mix_mass});
+
+    probe.add_constraint("water / (cement + slag + fly_ash)", Condition::Between, {0.35f, 0.50f});
+    probe.add_constraint("(slag + fly_ash) / (cement + slag + fly_ash)", Condition::Between, {0.20f, 0.50f});
+    probe.add_constraint("fine_agg / (coarse_agg + fine_agg)", Condition::Between, {0.35f, 0.45f});
+    probe.add_constraint("strength / (cement + slag + fly_ash)", Condition::GreaterEqual, {0.10f});
+    probe.add_constraint("age", Condition::Equal, {28.0f});
+
+    const pair<VectorR, VectorR> domain = probe.calculate_domain();
+
+    const VectorR span = domain.second - domain.first;
+
+    const RepairedCloud cloud = repair_from_random_starts(probe, repair_draws);
+
+    report_cloud("mix design", cloud, span);
+
+    ASSERT_GT(cloud.repaired(), 0) << "no starting point needed repair, so nothing was measured";
+
+    EXPECT_EQ(count_distinct(cloud.points, span), cloud.repaired())
+        << "six constraints drove different starting points onto shared repaired points";
+
+    EXPECT_GE(count_spread_variables(cloud.points, span), 4)
+        << "the repaired set collapsed towards a single mix";
+}
+
+
+TEST(RepairSet, RepairedPointsDoNotAllSitOnTheBound)
+{
+    set_seed(1234);
+
+    FeasibleSetProbe probe;
+
+    // One inequality, so every repaired point that came from outside had to cross this
+    // bound. Solving the violation to zero would leave them all on the surface; the
+    // repair aims past it by a share of the violation instead, which should leave them
+    // spread through the interior.
+
+    probe.add_constraint("water / (cement + slag + fly_ash)", Condition::GreaterEqual, {0.45f});
+
+    const pair<VectorR, VectorR> domain = probe.calculate_domain();
+
+    const VectorR span = domain.second - domain.first;
+
+    const RepairedCloud cloud = repair_from_random_starts(probe, repair_draws);
+
+    report_cloud("single lower bound", cloud, span);
+
+    ASSERT_GT(cloud.repaired(), 0);
+
+    Index on_the_bound = 0;
+
+    float deepest = 0.0f;
+
+    for (Index i = 0; i < cloud.repaired(); i++)
+    {
+        const float binder = cloud.points(i, Cement) + cloud.points(i, Slag) + cloud.points(i, FlyAsh);
+
+        const float water_binder = cloud.points(i, Water)/binder;
+
+        EXPECT_GE(water_binder, 0.45f - slack(0.45f)) << "row " << i;
+
+        if (water_binder <= 0.45f + 1e-4f) on_the_bound++;
+
+        deepest = max(deepest, water_binder - 0.45f);
+    }
+
+    cout << "  on the bound     " << on_the_bound << " of " << cloud.repaired() << "\n"
+         << "  deepest inside   " << deepest << "\n";
+
+    // Almost all of them land clear of the surface, so a majority is a wide bound. It
+    // catches the repair reverting to solving the violation to exactly zero.
+
+    EXPECT_LT(on_the_bound, cloud.repaired()/2)
+        << "the repaired points piled onto the constraint surface";
 }
 
 
