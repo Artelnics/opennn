@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   R E S P O N S E   O P T I M I Z A T I O N   C L A S S   H E A D E R
@@ -8,21 +8,44 @@
 
 #pragma once
 
-#include "opennn/core/opennn_types.h"
-#include "opennn/core/statistics.h"
-#include "opennn/core/variable.h"
-#include "opennn/response_optimization/response_constraints.h"
-#include "opennn/response_optimization/network_differential.h"
+#include "opennn/pch.h"
+#include "opennn/response_optimization/expression_evaluator.h"
 
 namespace opennn
 {
 
+// Constraint bounds are compared with a relative slack, so a point that lands on a
+// bound is not rejected by the rounding of the arithmetic that produced it.
+inline float bound_tolerance(const float bound) { return max(EPSILON, abs(bound) * 1e-4f); }
+
+// Matrix shaping and point-geometry helpers shared by the response solvers.
+
 MatrixR append_rows(const MatrixR&, const MatrixR&);
 MatrixR append_columns(const MatrixR&, const MatrixR&);
-VectorI get_nearest_points(const MatrixR&, const VectorR&, int = 1);
+VectorR slice_rows(const VectorR&, const vector<Index>&);
+MatrixR slice_rows(const MatrixR&, const vector<Index>&);
+pair<MatrixR, MatrixR> slice_rows(const pair<MatrixR, MatrixR>&, const vector<Index>&);
+pair<MatrixR, MatrixR> append_rows(const pair<MatrixR, MatrixR>&, const pair<MatrixR, MatrixR>&);
+MatrixR append_columns(const pair<MatrixR, MatrixR>&);
+
 MatrixR calculate_distances(const MatrixR&);
-vector<Index> filter_selected_indices_by_column(const MatrixR&, const vector<Index>&, Index, float, float);
+VectorI get_nearest_points(const MatrixR&, const VectorR&, Index = 1);
+vector<VectorI> nearest_neighbors(const MatrixR&, Index);
+VectorR neighbor_distances(const MatrixR&, Index);
 VectorR local_outlier_factor(const MatrixR&, Index);
+void farthest_point_fill(const MatrixR& distances, vector<Index>& selection, Index quota);
+
+vector<Index> ranked_indices(const VectorR&);
+VectorR minmax_score(const VectorR&, bool invert = false);
+MatrixR minmax_score(const MatrixR&);
+vector<Index> extreme_indices(const MatrixR&);
+bool row_dominates(const MatrixR&, Index, Index);
+
+bool gauss_newton_step(const MatrixR& jacobian,
+                       const VectorR& residuals,
+                       const VectorR& inferior,
+                       const VectorR& superior,
+                       VectorR& point);
 
 class NeuralNetwork;
 
@@ -30,228 +53,87 @@ class ResponseOptimization
 {
 public:
 
-    enum class Sense { Minimize, Maximize, Fixed };
+    void set(NeuralNetwork* = nullptr);
 
-    enum class BranchMode { Budgeted, Exhaustive };
-
-    struct ConstraintSet
+    struct Objective
     {
-        map<string, UnivariateConstraint> univariate;
-        vector<MultivariateConstraint> multivariate;
-        vector<vector<vector<MultivariateConstraint>>> disjunctive;
-        vector<CardinalityConstraint> cardinality;
+        enum class Sense { Minimize, Maximize, Fixed };
+
+        CompiledExpression expression;
+
+        Sense sense = Sense::Minimize;
+
+        float value = 0.0f;
     };
 
-    struct SamplingMemory
+    struct Constraint
     {
-        map<string, vector<Index>> category_frequencies;
-        vector<char> cardinality_preferred;
-        map<string, Index> cardinality_indicator_columns;
-        float last_feasibility_rate = 1.0f;
-    };
-
-    struct Domain
-    {
-        Domain() = default;
-        virtual ~Domain() = default;
-
-        Domain(const vector<Variable>& variables,
-               const vector<Descriptives>& descriptives,
-               const float deformation_domain_factor = 1.0f)
+        enum class Condition
         {
-            set(variables, descriptives, deformation_domain_factor);
-        }
+            Equal, Between, GreaterEqual, LessEqual, Greater, Less, AllowedSet, Integer, Cardinality
+        };
 
-        void set(const vector<Variable>&,
-                 const vector<Descriptives>&,
-                 const float deformation_domain_factor = 1.0f);
+        CompiledExpression expression;
 
-        void bound(const vector<Variable>&, const vector<UnivariateConstraint>&);
+        Condition condition = Condition::Equal;
 
-        void reshape(const float,
-                     const VectorR&,
-                     const MatrixR&,
-                     const vector<Variable>&);
+        vector<float> values;
 
-        VectorR inferior_frontier;
-        VectorR superior_frontier;
-    };
+        float calculate_residual(const VectorR&, const VectorR&) const;
 
-    struct Objectives
-    {
-        Objectives(const ResponseOptimization&);
-
-        MatrixR source_and_column;
-
-        MatrixR utopian_and_sense;
-
-        MatrixR scale_and_offset;
-
-        vector<char> closeness_mask;
-        VectorR closeness_target;
-        VectorR closeness_scale;
-
-        MatrixR extract(const MatrixR&, const MatrixR&) const;
-
-        void normalize(MatrixR&) const;
-
-        bool update_utopian_from_points(const MatrixR&);
+        pair<float, float> calculate_bounds() const;
     };
 
     explicit ResponseOptimization(NeuralNetwork* = nullptr);
 
-    ~ResponseOptimization();
+    virtual ~ResponseOptimization();
 
-    void set(NeuralNetwork* = nullptr);
-
-    void clear_objectives();
-
-    void set_constraint(const string&, const ComparisonOperator comparison = ComparisonOperator::None, float low = 0.0f, float up = 0.0f);
-
-    void set_constraint(const string&, const vector<float>&);
-
-    void set_cardinality_constraint(const vector<string>&, Index, bool force_nonzero = true);
-
-    void set_objective(const string&, const Sense, const float value = 0.0f);
-
-    void set_formula_constraint(const string&,
-                                ComparisonOperator,
-                                float low = 0.0f, float up = 0.0f);
-
-    void set_formula_constraint(function<float(const VectorR&, const VectorR&)>,
-                                ComparisonOperator,
-                                float low = 0.0f, float up = 0.0f);
-
-    void set_formula_constraint(const string&, const vector<float>&);
-
-    void set_max_oversample_factor(Index new_factor) { max_oversample_factor = new_factor; }
-    void set_exploration_ratio(float new_ratio) { exploration_ratio = new_ratio; }
-
-    void set_iterations(const int new_max_iterations) { max_iterations = new_max_iterations; }
-    void set_evaluations_number(const int new_evaluations_number) { evaluations_number = new_evaluations_number; }
-    void set_relative_tolerance(float new_relative_tolerance) { relative_tolerance = new_relative_tolerance; }
-    void set_max_total_evaluations(const Index new_max_total_evaluations) { max_total_evaluations = new_max_total_evaluations; }
-
-    void set_branch_mode(const BranchMode new_branch_mode) { branch_mode = new_branch_mode; }
-
-    vector<Descriptives> get_descriptives(const string&) const;
-
-    const pair<vector<Variable>, vector<Descriptives>>& get_variables_and_descriptives(const string&) const;
-
-    pair<Index, VectorR> get_advised_point(const MatrixR&,
-                                                         const VectorR& importance_scale = VectorR()) const;
-
-    Domain get_original_domain(string_view role) const;
-
-    MatrixR calculate_random_inputs(const Domain&, Index evaluations_count = -1) const;
-
-    Lattice build_input_lattice(const vector<Variable>&,
-                                const vector<Index>&,
-                                const Domain&,
-                                map<string, Index>&) const;
-
-    vector<vector<Index>> resolve_cardinality_columns(const Domain&,
-                                                      const map<string, Index>&,
-                                                      const vector<char>&,
-                                                      float,
-                                                      MatrixR&) const;
-
-    MatrixR calculate_outputs(const MatrixR&) const;
-
-    pair<MatrixR, MatrixR> filter_feasible_points(const MatrixR&,
-                                                                const MatrixR&,
-                                                                const Domain&) const;
-
-    pair<MatrixR, MatrixR> sample_feasible_points(const Domain&,
-                                                                const Domain&,
-                                                                const Index evaluations_multiplier = 1) const;
-
-    pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR&,
-                                                                  const MatrixR&,
-                                                                  const Objectives&) const;
-
-    pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR&,
-                                                                  const MatrixR&,
-                                                                  const Objectives&,
-                                                                  const MatrixR&) const;
-
-    pair<MatrixR, MatrixR> calculate_pareto(const MatrixR&, const MatrixR&, const MatrixR&) const;
-
-    pair<float, float> calculate_quality_metrics(const MatrixR&,
-                                                               const MatrixR&,
-                                                               const Objectives&) const;
-
-    MatrixR perform_single_objective_optimization() const;
-
-    MatrixR perform_multiobjective_optimization() const;
-
-    MatrixR solve_once() const;
+    void add_objective(const string&, Objective::Sense, float value = 0.0f);
+    void add_constraint(const string&, Constraint::Condition, const vector<float>& values = {});
 
     MatrixR perform_response_optimization();
-
-    Index get_objectives_number() const;
-
-    Index get_optimizing_objectives_number() const;
-
-    vector<NamedColumn> build_input_columns(const vector<Variable>&) const;
-    vector<NamedColumn> build_output_columns(const vector<Variable>&) const;
-
-    UnivariateConstraint get_constraint(const string&) const;
-    bool is_objective(const string& name) const { return objectives.contains(name); }
-    Sense get_sense(const string& name) const { return objectives.at(name); }
-
-    bool row_satisfies_formula_constraints(const VectorR&,
-                                                         const VectorR&) const;
-
-    pair<MatrixR, MatrixR> generate_feasible_points(const Domain&,
-                                                                  const Domain&,
-                                                                  Index) const;
-
-    void initialize_network_differential() const;
-
-    void restore_cardinality_columns(Domain&, const Domain&) const;
-
-    void promote_single_variable_constraints();
-
-    void expand_fixed_objectives();
-
-    vector<char> discrete_column_mask(const vector<Variable>&) const;
-
-private:
+	
+protected:
 
     NeuralNetwork* neural_network = nullptr;
 
-    ConstraintSet constraint_set;
+    vector<Objective> objectives;
+    vector<Constraint> constraints;
 
-    map<string, Sense> objectives;
+    virtual MatrixR single_optimization() = 0;
 
-    map<string, float> fixed_values;
+	virtual MatrixR multi_optimization() = 0;
 
-    Index evaluations_number = 2000;
-    Index max_iterations = 20;
-    Index min_iterations = 4;
-    Index initial_sampling_factor = 1;
-    Index max_pareto_number = 2000;
-    Index max_total_evaluations = 0;
-    Index max_oversample_factor = 8;
-    float zoom_factor = 0.85f;
-    float relative_tolerance = 1e-6f;
-    float min_feasible_ratio = 0.01f;
-    float exploration_ratio = 0.1f;
-    float deformation_domain_factor = 1.0f;
-    BranchMode branch_mode = BranchMode::Budgeted;
+    pair<VectorR, VectorR> calculate_domain() const;
 
-    mutable map<string, pair<vector<Variable>, vector<Descriptives>>> variables_descriptives;
+    VectorR calculate_random_input(const pair<VectorR, VectorR>&) const;
 
-    mutable NetworkJacobian network_jacobian;
+    VectorR get_feasible_input(VectorR, const pair<VectorR, VectorR>&) const;
 
-    mutable SamplingMemory sampling_memory;
+    MatrixR evaluate_objectives(const MatrixR&, const MatrixR&) const;
 
-    mutable Index evaluations_used = 0;
+    vector<Index> calculate_pareto_front(const MatrixR&) const;
+
+    vector<Index> clean_front(const MatrixR&, const MatrixR&) const;
+
+    Index iterations_number = 20;
+    Index points_number = 1000;
+
+    Index requested_front_size = 100;
+
+private:
+
+    VectorR assign_categories(const VectorR&) const;
+
+    Index maximum_adjustment_passes = 16;
+
+    Index density_neighbors_number = 20;
+
+    float diversity_factor = 0.2f;
 };
 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

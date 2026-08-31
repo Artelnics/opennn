@@ -8,36 +8,61 @@
 
 #include "tests/pch.h"
 
-#include "opennn/response_optimization/response_optimization.h"
-#include "opennn/response_optimization/response_constraints.h"
+#include "opennn/response_optimization/domain_contraction.h"
+#include "opennn/response_optimization/expression_evaluator.h"
+#include "opennn/response_optimization/genetic_response.h"
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/core/random_utilities.h"
+#include "opennn/response_optimization/response_optimization.h"
 #include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/models/models.h"
+#include "opennn/neural_network/standard_networks.h"
 #include "opennn/core/statistics.h"
 #include "opennn/neural_network/layers/unscaling_layer.h"
 #include "opennn/core/variable.h"
 
 using namespace opennn;
 
+using Sense = ResponseOptimization::Objective::Sense;
+using Condition = ResponseOptimization::Constraint::Condition;
+
 namespace
 {
 
-vector<NamedColumn> make_named_columns(const vector<string>& names)
+vector<pair<string, Index>> make_named_columns(const vector<string>& names)
 {
-    vector<NamedColumn> out;
-    out.reserve(names.size());
-    for (Index i = 0; i < static_cast<Index>(names.size()); ++i)
-        out.push_back({ names[i], i });
-    return out;
+    vector<pair<string, Index>> columns;
+
+    columns.reserve(names.size());
+
+    for (Index i = 0; i < Index(names.size()); i++)
+        columns.emplace_back(names[size_t(i)], i);
+
+    return columns;
 }
 
-float lookup_coeff(const vector<pair<Index, float>>& terms, Index column)
+
+float lookup_coefficient(const vector<pair<Index, float>>& terms, const Index column)
 {
-    for (const auto& [col, coeff] : terms)
-        if (col == column) return coeff;
-    return float(0);
+    for (const auto& [term_column, coefficient] : terms)
+        if (term_column == column) return coefficient;
+
+    return 0.0f;
 }
+
+
+vector<Descriptives> make_descriptives(const Index count, const float minimum, const float maximum)
+{
+    return vector<Descriptives>(size_t(count),
+                                Descriptives(minimum,
+                                             maximum,
+                                             0.5f*(minimum + maximum),
+                                             0.25f*(maximum - minimum)));
+}
+
+
+// A compiled, Glorot-initialized approximation network with named variables and a box-scaled input
+// domain. Nothing is trained: the tests that touch the network only need a smooth finite response
+// and the input box that calculate_domain() reads off the scaling layer.
 
 struct MinimalApproximation
 {
@@ -45,1608 +70,1106 @@ struct MinimalApproximation
 
     MinimalApproximation(const vector<string>& input_names,
                          const vector<string>& output_names,
-                         float input_min = float(0),
-                         float input_max = float(10),
-                         float output_min = float(-1),
-                         float output_max = float(1))
+                         const float input_minimum = 0.0f,
+                         const float input_maximum = 10.0f,
+                         const float output_minimum = -1.0f,
+                         const float output_maximum = 1.0f)
     {
-        const Index n_inputs = static_cast<Index>(input_names.size());
-        const Index n_outputs = static_cast<Index>(output_names.size());
+        const Index inputs_number = Index(input_names.size());
+        const Index outputs_number = Index(output_names.size());
 
-        network = make_unique<ApproximationNetwork>(Shape{ n_inputs },
-                                                    Shape{ 4 },
-                                                    Shape{ n_outputs });
+        network = make_unique<ApproximationNetwork>(Shape{inputs_number}, Shape{4}, Shape{outputs_number});
 
-        vector<Variable> input_vars(n_inputs);
-        for (Index i = 0; i < n_inputs; ++i)
+        vector<Variable> input_variables(static_cast<size_t>(inputs_number));
+
+        for (Index i = 0; i < inputs_number; i++)
         {
-            input_vars[i].name = input_names[i];
-            input_vars[i].set_role("Input");
-            input_vars[i].type = VariableType::Numeric;
+            input_variables[size_t(i)].name = input_names[size_t(i)];
+            input_variables[size_t(i)].set_role("Input");
+            input_variables[size_t(i)].type = VariableType::Numeric;
         }
-        network->set_input_variables(input_vars);
 
-        vector<Variable> output_vars(n_outputs);
-        for (Index i = 0; i < n_outputs; ++i)
-        {
-            output_vars[i].name = output_names[i];
-            output_vars[i].set_role("Target");
-            output_vars[i].type = VariableType::Numeric;
-        }
-        network->set_output_variables(output_vars);
+        network->set_input_variables(input_variables);
 
-        vector<Descriptives> in_desc(n_inputs);
-        for (Descriptives& d : in_desc)
-        {
-            d.minimum = input_min;
-            d.maximum = input_max;
-            d.mean = (input_min + input_max) * float(0.5);
-            d.standard_deviation = (input_max - input_min) * float(0.25);
-        }
-        auto* scaling = static_cast<Scaling*>(network->get_first("Scaling"));
-        scaling->set_descriptives(in_desc);
+        vector<Variable> output_variables(static_cast<size_t>(outputs_number));
 
-        vector<Descriptives> out_desc(n_outputs);
-        for (Descriptives& d : out_desc)
+        for (Index i = 0; i < outputs_number; i++)
         {
-            d.minimum = output_min;
-            d.maximum = output_max;
-            d.mean = (output_min + output_max) * float(0.5);
-            d.standard_deviation = (output_max - output_min) * float(0.25);
+            output_variables[size_t(i)].name = output_names[size_t(i)];
+            output_variables[size_t(i)].set_role("Target");
+            output_variables[size_t(i)].type = VariableType::Numeric;
         }
-        auto* unscaling = static_cast<Unscaling*>(network->get_first("Unscaling"));
-        unscaling->set_descriptives(out_desc);
+
+        network->set_output_variables(output_variables);
+
+        static_cast<Scaling*>(network->get_first("Scaling"))
+            ->set_descriptives(make_descriptives(inputs_number, input_minimum, input_maximum));
+
+        static_cast<Unscaling*>(network->get_first("Unscaling"))
+            ->set_descriptives(make_descriptives(outputs_number, output_minimum, output_maximum));
     }
+};
+
+
+struct CategoricalApproximation
+{
+    unique_ptr<ApproximationNetwork> network;
+
+    CategoricalApproximation(const vector<string>& numeric_names,
+                             const string& categorical_name,
+                             const vector<string>& categories,
+                             const Index outputs_number = 1,
+                             const float input_minimum = 0.0f,
+                             const float input_maximum = 10.0f)
+    {
+        const Index numeric_number = Index(numeric_names.size());
+        const Index categories_number = Index(categories.size());
+
+        network = make_unique<ApproximationNetwork>(Shape{numeric_number + categories_number},
+                                                    Shape{4},
+                                                    Shape{outputs_number});
+
+        vector<Variable> input_variables(size_t(numeric_number) + 1);
+
+        for (Index i = 0; i < numeric_number; i++)
+        {
+            input_variables[size_t(i)].name = numeric_names[size_t(i)];
+            input_variables[size_t(i)].set_role("Input");
+            input_variables[size_t(i)].type = VariableType::Numeric;
+        }
+
+        input_variables.back().name = categorical_name;
+        input_variables.back().set_role("Input");
+        input_variables.back().type = VariableType::Categorical;
+        input_variables.back().set_categories(categories);
+
+        network->set_input_variables(input_variables);
+
+        vector<Variable> output_variables(static_cast<size_t>(outputs_number));
+
+        for (Index i = 0; i < outputs_number; i++)
+        {
+            output_variables[size_t(i)].name = "y" + to_string(i + 1);
+            output_variables[size_t(i)].set_role("Target");
+            output_variables[size_t(i)].type = VariableType::Numeric;
+        }
+
+        network->set_output_variables(output_variables);
+
+        vector<Descriptives> input_descriptives = make_descriptives(numeric_number,
+                                                                    input_minimum,
+                                                                    input_maximum);
+
+        const vector<Descriptives> category_descriptives = make_descriptives(categories_number,
+                                                                             0.0f,
+                                                                             1.0f);
+
+        input_descriptives.insert(input_descriptives.end(),
+                                  category_descriptives.begin(),
+                                  category_descriptives.end());
+
+        static_cast<Scaling*>(network->get_first("Scaling"))->set_descriptives(input_descriptives);
+
+        static_cast<Unscaling*>(network->get_first("Unscaling"))
+            ->set_descriptives(make_descriptives(outputs_number, -1.0f, 1.0f));
+    }
+};
+
+
+vector<float> scan_categories(NeuralNetwork& network,
+                              const Index numeric_number,
+                              const Index categories_number,
+                              const float input_minimum,
+                              const float input_maximum,
+                              const Index samples_number = 4096)
+{
+    const Index features_number = numeric_number + categories_number;
+
+    vector<float> best_values(size_t(categories_number), -numeric_limits<float>::max());
+
+    MatrixR inputs(samples_number, features_number);
+
+    for (Index category = 0; category < categories_number; category++)
+    {
+        set_random_uniform(inputs, input_minimum, input_maximum);
+
+        inputs.rightCols(categories_number).setZero();
+        inputs.col(numeric_number + category).setOnes();
+
+        const MatrixR outputs = network.calculate_outputs(inputs);
+
+        for (Index i = 0; i < samples_number; i++)
+            best_values[size_t(category)] = max(best_values[size_t(category)], -outputs(i, 0));
+    }
+
+    return best_values;
+}
+
+
+Index read_category(const MatrixR& results,
+                    const Index row,
+                    const Index numeric_number,
+                    const Index categories_number)
+{
+    Index category = -1;
+
+    for (Index j = 0; j < categories_number; j++)
+    {
+        const float value = results(row, numeric_number + j);
+
+        if (value == 0.0f) continue;
+
+        if (value != 1.0f || category >= 0) return -1;
+
+        category = j;
+    }
+
+    return category;
+}
+
+
+// The median and the spread of what the untrained network actually produces over its input box, so
+// Fixed-objective and output-constraint tests aim at a value that is provably attainable.
+
+pair<float, float> sample_response(NeuralNetwork& network,
+                                   const Index inputs_number,
+                                   const float input_minimum,
+                                   const float input_maximum,
+                                   const Index samples_number = 512)
+{
+    MatrixR inputs(samples_number, inputs_number);
+
+    set_random_uniform(inputs, input_minimum, input_maximum);
+
+    const MatrixR outputs = network.calculate_outputs(inputs);
+
+    vector<float> values(static_cast<size_t>(samples_number));
+
+    for (Index i = 0; i < samples_number; i++)
+        values[size_t(i)] = outputs(i, 0);
+
+    ranges::sort(values);
+
+    return {values[values.size()/2], values.back() - values.front()};
+}
+
+
+enum class Driver { Contraction, Genetic };
+
+unique_ptr<ResponseOptimization> make_driver(const Driver driver, NeuralNetwork* network)
+{
+    if (driver == Driver::Genetic) return make_unique<GeneticResponse>(network);
+
+    return make_unique<DomainContraction>(network);
+}
+
+
+string driver_name(const testing::TestParamInfo<Driver>& info)
+{
+    return info.param == Driver::Genetic ? "Genetic" : "Contraction";
+}
+
+
+// Both drivers sample at random; a fixed seed keeps the end-to-end assertions reproducible.
+
+class ResponseDriver : public testing::TestWithParam<Driver>
+{
+protected:
+
+    void SetUp() override { set_seed(1234); }
 };
 
 }
 
-TEST(FormulaExpression, LinearSumIsAffine)
+
+// -----------------------------------------------------------------------------
+// Expression compiler: linearity
+// -----------------------------------------------------------------------------
+
+TEST(Expression, LinearSumKeepsSignedCoefficients)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
-    const vector<NamedColumn> outputs = make_named_columns({});
+    const CompiledExpression expression =
+        compile_expression("x1 + 2*x2 - 3", make_named_columns({"x1", "x2"}), {});
 
-    const CompiledFormula f = compile_formula("x1 + 2*x2 - 3", inputs, outputs);
-
-    EXPECT_EQ(f.shape, FormulaShape::Affine);
-    EXPECT_EQ(f.scope, FormulaScope::InputsOnly);
-    EXPECT_NEAR(lookup_coeff(f.affine_input_terms, 0), float(1), float(1e-6));
-    EXPECT_NEAR(lookup_coeff(f.affine_input_terms, 1), float(2), float(1e-6));
-    EXPECT_NEAR(f.affine_constant, float(-3), float(1e-6));
+    EXPECT_EQ(expression.linearity, ExpressionLinearity::Linear);
+    EXPECT_EQ(expression.involvement, ExpressionInvolvement::InputsOnly);
+    EXPECT_NEAR(lookup_coefficient(expression.linear_input_terms, 0), 1.0f, 1e-6f);
+    EXPECT_NEAR(lookup_coefficient(expression.linear_input_terms, 1), 2.0f, 1e-6f);
+    EXPECT_NEAR(expression.linear_constant, -3.0f, 1e-6f);
 }
 
-TEST(FormulaExpression, UnaryNegationFlipsCoefficients)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
-    const CompiledFormula f = compile_formula("-x1 + x2", inputs, {});
 
-    EXPECT_EQ(f.shape, FormulaShape::Affine);
-    EXPECT_NEAR(lookup_coeff(f.affine_input_terms, 0), float(-1), float(1e-6));
-    EXPECT_NEAR(lookup_coeff(f.affine_input_terms, 1), float(1), float(1e-6));
+TEST(Expression, UnaryNegationFlipsCoefficients)
+{
+    const CompiledExpression expression =
+        compile_expression("-x1 + x2", make_named_columns({"x1", "x2"}), {});
+
+    EXPECT_EQ(expression.linearity, ExpressionLinearity::Linear);
+    EXPECT_NEAR(lookup_coefficient(expression.linear_input_terms, 0), -1.0f, 1e-6f);
+    EXPECT_NEAR(lookup_coefficient(expression.linear_input_terms, 1), 1.0f, 1e-6f);
 }
 
-TEST(FormulaExpression, ConstantScalingDistributesOverSum)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
-    const CompiledFormula f = compile_formula("3*(x1 + x2)", inputs, {});
 
-    EXPECT_EQ(f.shape, FormulaShape::Affine);
-    EXPECT_NEAR(lookup_coeff(f.affine_input_terms, 0), float(3), float(1e-6));
-    EXPECT_NEAR(lookup_coeff(f.affine_input_terms, 1), float(3), float(1e-6));
+TEST(Expression, ConstantScalingDistributesOverSum)
+{
+    const CompiledExpression expression =
+        compile_expression("3*(x1 + x2)", make_named_columns({"x1", "x2"}), {});
+
+    EXPECT_EQ(expression.linearity, ExpressionLinearity::Linear);
+    EXPECT_NEAR(lookup_coefficient(expression.linear_input_terms, 0), 3.0f, 1e-6f);
+    EXPECT_NEAR(lookup_coefficient(expression.linear_input_terms, 1), 3.0f, 1e-6f);
 }
 
-TEST(FormulaExpression, DivisionByConstantIsAffine)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "x1" });
-    const CompiledFormula f = compile_formula("x1 / 4", inputs, {});
 
-    EXPECT_EQ(f.shape, FormulaShape::Affine);
-    EXPECT_NEAR(lookup_coeff(f.affine_input_terms, 0), float(0.25), float(1e-6));
+TEST(Expression, DivisionByConstantIsLinear)
+{
+    const CompiledExpression expression = compile_expression("x1 / 4", make_named_columns({"x1"}), {});
+
+    EXPECT_EQ(expression.linearity, ExpressionLinearity::Linear);
+    EXPECT_NEAR(lookup_coefficient(expression.linear_input_terms, 0), 0.25f, 1e-6f);
 }
 
-TEST(FormulaExpression, ProductOfVariablesIsNonlinear)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
-    const CompiledFormula f = compile_formula("x1 * x2", inputs, {});
 
-    EXPECT_EQ(f.shape, FormulaShape::Nonlinear);
+TEST(Expression, ProductOfVariablesIsNonlinear)
+{
+    const CompiledExpression expression =
+        compile_expression("x1 * x2", make_named_columns({"x1", "x2"}), {});
+
+    EXPECT_EQ(expression.linearity, ExpressionLinearity::Nonlinear);
 }
 
-TEST(FormulaExpression, DivisionByVariableIsNonlinear)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
-    const CompiledFormula f = compile_formula("x1 / x2", inputs, {});
 
-    EXPECT_EQ(f.shape, FormulaShape::Nonlinear);
+TEST(Expression, DivisionByVariableIsNonlinear)
+{
+    const CompiledExpression expression =
+        compile_expression("x1 / x2", make_named_columns({"x1", "x2"}), {});
+
+    EXPECT_EQ(expression.linearity, ExpressionLinearity::Nonlinear);
 }
 
-TEST(FormulaExpression, SqrtFunctionIsNonlinear)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "x1" });
-    const CompiledFormula f = compile_formula("sqrt(x1) + 1", inputs, {});
 
-    EXPECT_EQ(f.shape, FormulaShape::Nonlinear);
+TEST(Expression, SqrtIsNonlinear)
+{
+    const CompiledExpression expression = compile_expression("sqrt(x1) + 1", make_named_columns({"x1"}), {});
+
+    EXPECT_EQ(expression.linearity, ExpressionLinearity::Nonlinear);
 }
 
-TEST(FormulaExpression, PowerWithNonUnitExponentIsNonlinear)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "x1" });
-    const CompiledFormula f = compile_formula("x1 ^ 2", inputs, {});
 
-    EXPECT_EQ(f.shape, FormulaShape::Nonlinear);
+TEST(Expression, PowerWithNonUnitExponentIsNonlinear)
+{
+    const CompiledExpression expression = compile_expression("x1 ^ 2", make_named_columns({"x1"}), {});
+
+    EXPECT_EQ(expression.linearity, ExpressionLinearity::Nonlinear);
 }
 
-TEST(FormulaExpression, ScopeInputsOnly)
-{
-    const CompiledFormula f = compile_formula("x1 + x2",
-                                              make_named_columns({ "x1", "x2" }),
-                                              make_named_columns({ "y1" }));
 
-    EXPECT_EQ(f.scope, FormulaScope::InputsOnly);
-    EXPECT_EQ(f.input_indices.size(), 2u);
-    EXPECT_TRUE(f.output_indices.empty());
+TEST(Expression, SingleColumnExpressionIsUnivariate)
+{
+    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
+
+    EXPECT_EQ(compile_expression("2*x1", inputs, {}).complexity, ExpressionComplexity::Univariate);
+    EXPECT_EQ(compile_expression("x1 + x2", inputs, {}).complexity, ExpressionComplexity::Multivariate);
 }
 
-TEST(FormulaExpression, ScopeOutputsOnly)
-{
-    const CompiledFormula f = compile_formula("y1",
-                                              make_named_columns({ "x1" }),
-                                              make_named_columns({ "y1" }));
 
-    EXPECT_EQ(f.scope, FormulaScope::OutputsOnly);
-    EXPECT_TRUE(f.input_indices.empty());
-    EXPECT_EQ(f.output_indices.size(), 1u);
+// -----------------------------------------------------------------------------
+// Expression compiler: involvement
+// -----------------------------------------------------------------------------
+
+TEST(Expression, InvolvementInputsOnly)
+{
+    const CompiledExpression expression = compile_expression("x1 + x2",
+                                                             make_named_columns({"x1", "x2"}),
+                                                             make_named_columns({"y1"}));
+
+    EXPECT_EQ(expression.involvement, ExpressionInvolvement::InputsOnly);
+    EXPECT_FALSE(is_output_coupled(expression));
+    EXPECT_EQ(expression.input_indices.size(), 2u);
+    EXPECT_TRUE(expression.output_indices.empty());
 }
 
-TEST(FormulaExpression, ScopeMixed)
-{
-    const CompiledFormula f = compile_formula("x1 + y1",
-                                              make_named_columns({ "x1" }),
-                                              make_named_columns({ "y1" }));
 
-    EXPECT_EQ(f.scope, FormulaScope::Mixed);
+TEST(Expression, InvolvementOutputsOnly)
+{
+    const CompiledExpression expression = compile_expression("y1",
+                                                             make_named_columns({"x1"}),
+                                                             make_named_columns({"y1"}));
+
+    EXPECT_EQ(expression.involvement, ExpressionInvolvement::OutputsOnly);
+    EXPECT_TRUE(is_output_coupled(expression));
+    EXPECT_TRUE(expression.input_indices.empty());
+    EXPECT_EQ(expression.output_indices.size(), 1u);
 }
 
-TEST(FormulaExpression, EvaluateAffineRespectsSignedCoefficients)
+
+TEST(Expression, InvolvementMixed)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
-    const CompiledFormula f = compile_formula("-x1 + 2*x2 + 1", inputs, {});
+    const CompiledExpression expression = compile_expression("x1 + y1",
+                                                             make_named_columns({"x1"}),
+                                                             make_named_columns({"y1"}));
 
-    VectorR in(2); in << float(3), float(5);
-    VectorR out(0);
-
-    EXPECT_NEAR(f.evaluate(in, out), float(8), float(1e-5));
+    EXPECT_EQ(expression.involvement, ExpressionInvolvement::Mixed);
+    EXPECT_TRUE(is_output_coupled(expression));
 }
 
-TEST(FormulaExpression, EvaluateNonlinearExpression)
+
+// -----------------------------------------------------------------------------
+// Expression compiler: evaluation
+// -----------------------------------------------------------------------------
+
+TEST(Expression, EvaluateLinearRespectsSignedCoefficients)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
-    const CompiledFormula f = compile_formula("sqrt(x1) + x2^2", inputs, {});
+    const CompiledExpression expression =
+        compile_expression("-x1 + 2*x2 + 1", make_named_columns({"x1", "x2"}), {});
 
-    VectorR in(2); in << float(9), float(3);
-    VectorR out(0);
+    VectorR input(2); input << 3.0f, 5.0f;
+    const VectorR output(0);
 
-    EXPECT_NEAR(f.evaluate(in, out), float(12), float(1e-5));
+    EXPECT_NEAR(expression.evaluate(input, output), 8.0f, 1e-5f);
 }
 
-TEST(FormulaExpression, EvaluateUsesOutputsForMixedScope)
+
+TEST(Expression, EvaluateNonlinearExpression)
 {
-    const CompiledFormula f = compile_formula("x1 + 2*y1",
-                                              make_named_columns({ "x1" }),
-                                              make_named_columns({ "y1" }));
+    const CompiledExpression expression =
+        compile_expression("sqrt(x1) + x2^2", make_named_columns({"x1", "x2"}), {});
 
-    VectorR in(1); in << float(1);
-    VectorR out(1); out << float(4);
+    VectorR input(2); input << 9.0f, 3.0f;
+    const VectorR output(0);
 
-    EXPECT_NEAR(f.evaluate(in, out), float(9), float(1e-5));
+    EXPECT_NEAR(expression.evaluate(input, output), 12.0f, 1e-5f);
 }
 
-TEST(FormulaExpression, ParenthesesOverridePrecedence)
+
+TEST(Expression, EvaluateUsesOutputsWhenMixed)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const CompiledExpression expression = compile_expression("x1 + 2*y1",
+                                                             make_named_columns({"x1"}),
+                                                             make_named_columns({"y1"}));
 
-    const CompiledFormula a = compile_formula("2 * x1 + x2", inputs, {});
-    const CompiledFormula b = compile_formula("2 * (x1 + x2)", inputs, {});
+    VectorR input(1); input << 1.0f;
+    VectorR output(1); output << 4.0f;
 
-    VectorR in(2); in << float(3), float(5);
-    VectorR out(0);
-
-    EXPECT_NEAR(a.evaluate(in, out), float(11), float(1e-5));
-    EXPECT_NEAR(b.evaluate(in, out), float(16), float(1e-5));
+    EXPECT_NEAR(expression.evaluate(input, output), 9.0f, 1e-5f);
 }
 
-TEST(FormulaExpression, MinMaxFunctions)
+
+TEST(Expression, ParenthesesOverridePrecedence)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
-    const CompiledFormula fmin = compile_formula("min(x1, x2)", inputs, {});
-    const CompiledFormula fmax = compile_formula("max(x1, x2)", inputs, {});
+    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
 
-    VectorR in(2); in << float(2), float(7);
-    VectorR out(0);
+    const CompiledExpression without = compile_expression("2 * x1 + x2", inputs, {});
+    const CompiledExpression with = compile_expression("2 * (x1 + x2)", inputs, {});
 
-    EXPECT_NEAR(fmin.evaluate(in, out), float(2), float(1e-5));
-    EXPECT_NEAR(fmax.evaluate(in, out), float(7), float(1e-5));
-    EXPECT_EQ(fmin.shape, FormulaShape::Nonlinear);
+    VectorR input(2); input << 3.0f, 5.0f;
+    const VectorR output(0);
+
+    EXPECT_NEAR(without.evaluate(input, output), 11.0f, 1e-5f);
+    EXPECT_NEAR(with.evaluate(input, output), 16.0f, 1e-5f);
 }
 
-TEST(FormulaExpression, UnknownIdentifierThrows)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "x1" });
 
-    EXPECT_THROW(compile_formula("x1 + z9", inputs, {}), runtime_error);
+TEST(Expression, MinMaxAreNonSmooth)
+{
+    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
+
+    const CompiledExpression smallest = compile_expression("min(x1, x2)", inputs, {});
+    const CompiledExpression largest = compile_expression("max(x1, x2)", inputs, {});
+
+    VectorR input(2); input << 2.0f, 7.0f;
+    const VectorR output(0);
+
+    EXPECT_NEAR(smallest.evaluate(input, output), 2.0f, 1e-5f);
+    EXPECT_NEAR(largest.evaluate(input, output), 7.0f, 1e-5f);
+    EXPECT_EQ(smallest.smoothness, ExpressionSmoothness::NonSmooth);
+    EXPECT_EQ(smallest.linearity, ExpressionLinearity::Nonlinear);
 }
 
-TEST(FormulaExpression, UnknownFunctionThrows)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "x1" });
 
-    EXPECT_THROW(compile_formula("bogus(x1)", inputs, {}), runtime_error);
+// -----------------------------------------------------------------------------
+// Expression compiler: rejected text
+// -----------------------------------------------------------------------------
+
+TEST(Expression, UnknownIdentifierThrows)
+{
+    EXPECT_THROW(compile_expression("x1 + z9", make_named_columns({"x1"}), {}), runtime_error);
 }
 
-TEST(FormulaExpression, EmptyExpressionThrows)
+
+TEST(Expression, UnknownFunctionThrows)
 {
-    EXPECT_THROW(compile_formula("", {}, {}), runtime_error);
+    EXPECT_THROW(compile_expression("bogus(x1)", make_named_columns({"x1"}), {}), runtime_error);
 }
 
-TEST(FormulaExpression, ExpressionWithoutVariablesThrows)
+
+TEST(Expression, EmptyExpressionThrows)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1" });
-    EXPECT_THROW(compile_formula("1 + 2", inputs, {}), runtime_error);
+    EXPECT_THROW(compile_expression("", {}, {}), runtime_error);
 }
 
-TEST(FormulaExpression, WrongFunctionArityThrows)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
 
-    EXPECT_THROW(compile_formula("sqrt(x1, x2)", inputs, {}), runtime_error);
-    EXPECT_THROW(compile_formula("min(x1)", inputs, {}), runtime_error);
+TEST(Expression, ExpressionWithoutVariablesThrows)
+{
+    EXPECT_THROW(compile_expression("1 + 2", make_named_columns({"x1"}), {}), runtime_error);
 }
 
-TEST(FormulaExpression, MismatchedParenthesesThrow)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "x1" });
 
-    EXPECT_THROW(compile_formula("(x1 + 1", inputs, {}), runtime_error);
+TEST(Expression, WrongFunctionArityThrows)
+{
+    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
+
+    EXPECT_THROW(compile_expression("sqrt(x1, x2)", inputs, {}), runtime_error);
+    EXPECT_THROW(compile_expression("min(x1)", inputs, {}), runtime_error);
 }
 
-TEST(ResponseOptimizationFormula, AffineInputConstraintFiltersResults)
+
+TEST(Expression, MismatchedParenthesesThrow)
 {
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(10),
-                                float(-1), float(1));
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-
-    opt.set_formula_constraint("x1 + x2",
-                               ComparisonOperator::LessEqualTo,
-                               float(0), float(1));
-
-    opt.set_iterations(3);
-    opt.set_evaluations_number(600);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-    {
-        const float sum = results(i, 0) + results(i, 1);
-        EXPECT_LE(sum, float(1) + float(1e-3))
-            << "row " << i << " x1=" << results(i,0) << " x2=" << results(i,1);
-    }
+    EXPECT_THROW(compile_expression("(x1 + 1", make_named_columns({"x1"}), {}), runtime_error);
 }
 
-TEST(ResponseOptimizationFormula, AffineEqualityLandsOnHyperplane)
+
+TEST(Expression, ComparisonSymbolsAreRejectedAgainstANetwork)
 {
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(10),
-                                float(-1), float(1));
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
 
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-
-    opt.set_formula_constraint("x1 + x2",
-                               ComparisonOperator::EqualTo,
-                               float(5));
-
-    opt.set_iterations(3);
-    opt.set_evaluations_number(600);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-    {
-        const float sum = results(i, 0) + results(i, 1);
-        EXPECT_NEAR(sum, float(5), float(5e-2))
-            << "row " << i << " x1=" << results(i,0) << " x2=" << results(i,1);
-    }
+    EXPECT_THROW(compile_expression("x1 <= 3", setup.network.get(), "Constraint"), runtime_error);
 }
 
-TEST(ResponseOptimizationFormula, NonlinearInputConstraintFilters)
+
+TEST(Expression, CompilingWithoutANetworkThrows)
 {
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(-5), float(5),
-                                float(-1), float(1));
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-
-    opt.set_formula_constraint("x1^2 + x2^2",
-                               ComparisonOperator::LessEqualTo,
-                               float(0), float(4));
-
-    opt.set_iterations(3);
-    opt.set_evaluations_number(1000);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-    {
-        const float r2 = results(i, 0) * results(i, 0) + results(i, 1) * results(i, 1);
-        EXPECT_LE(r2, float(4) + float(1e-2));
-    }
+    EXPECT_THROW(compile_expression("x1", nullptr, "Objective"), runtime_error);
 }
 
-TEST(RepairBlockDecomposition, DisjointAffineBlockStaysExactBesideNonlinearBlock)
+
+// -----------------------------------------------------------------------------
+// Expression helpers used by the feasibility gate
+// -----------------------------------------------------------------------------
+
+TEST(ConstraintResidual, SilentInsideAndSignedOutside)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x0", "x1", "x2", "x3" });
+    ResponseOptimization::Constraint constraint;
 
-    auto make_fc = [&](const string& expression, ComparisonOperator op, float low, float up)
-    {
-        MultivariateConstraint constraint;
-        constraint.expression = expression;
-        constraint.comparison_operator = op;
-        constraint.low_bound = low;
-        constraint.up_bound = up;
-        constraint.compiled = compile_formula(expression, inputs, {});
-        constraint.kind = classify(constraint);
-        return constraint;
-    };
+    constraint.expression = compile_expression("x1", make_named_columns({"x1"}), {});
 
-    vector<MultivariateConstraint> constraints;
-    constraints.push_back(make_fc("x0 + x1", ComparisonOperator::EqualTo, float(5), float(5)));
-    constraints.push_back(make_fc("x2^2 + x3^2", ComparisonOperator::LessEqualTo, float(0), float(1)));
+    constraint.condition = Condition::Between;
+    constraint.values = {2.0f, 6.0f};
 
-    ASSERT_EQ(constraints[0].kind, ConstraintKind::AffineInput);
-    ASSERT_EQ(constraints[1].kind, ConstraintKind::NonlinearInput);
+    const VectorR output;
 
-    const Index n = 4;
-    const VectorR inferior = VectorR::Constant(n, float(-5));
-    const VectorR superior = VectorR::Constant(n, float(5));
+    EXPECT_FALSE(isfinite(constraint.calculate_residual(VectorR::Constant(1, 4.0f), output)));
 
-    const Index rows = 200;
-    MatrixR points(rows, n);
-    set_random_uniform(points, float(-5), float(5));
+    EXPECT_NEAR(constraint.calculate_residual(VectorR::Constant(1, 1.0f), output), -1.0f, 1e-6f);
 
-    repair_inputs(points, inferior, superior, constraints);
-
-    for (Index r = 0; r < rows; ++r)
-        EXPECT_NEAR(points(r, 0) + points(r, 1), float(5), float(5e-3))
-            << "affine equality block not met exactly at row " << r
-            << " (it must be projected, not dragged through Gauss-Newton)";
+    EXPECT_NEAR(constraint.calculate_residual(VectorR::Constant(1, 8.0f), output), 2.0f, 1e-6f);
 }
 
-TEST(ResponseOptimizationFormula, DisjointAffineAndNonlinearBlocksCoexist)
+
+TEST(ConstraintResidual, EqualityIsSilentOnTargetAndSignedOutside)
 {
-    MinimalApproximation setup({ "x0", "x1", "x2", "x3" }, { "y" },
-                                float(-5), float(5),
-                                float(-1), float(1));
+    ResponseOptimization::Constraint constraint;
 
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_formula_constraint("x0 + x1", ComparisonOperator::EqualTo, float(5));
-    opt.set_formula_constraint("x2^2 + x3^2", ComparisonOperator::LessEqualTo, float(0), float(1));
+    constraint.expression = compile_expression("x1", make_named_columns({"x1"}), {});
 
-    opt.set_iterations(3);
-    opt.set_evaluations_number(1500);
+    constraint.condition = Condition::Equal;
+    constraint.values = {5.0f};
 
-    const MatrixR results = opt.perform_response_optimization();
+    const VectorR output;
 
-    ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-    {
-        EXPECT_NEAR(results(i, 0) + results(i, 1), float(5), float(5e-2))
-            << "affine block violated at row " << i;
-        EXPECT_LE(results(i, 2) * results(i, 2) + results(i, 3) * results(i, 3), float(1) + float(2e-2))
-            << "nonlinear block violated at row " << i;
-    }
+    EXPECT_FALSE(isfinite(constraint.calculate_residual(VectorR::Constant(1, 5.0f), output)));
+
+    EXPECT_NEAR(constraint.calculate_residual(VectorR::Constant(1, 7.0f), output), 2.0f, 1e-6f);
 }
 
-TEST(ResponseOptimizationFormula, CallbackConstraintFilters)
+
+TEST(ExpressionHelpers, SameExpressionComparesTheCompiledForm)
 {
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(10),
-                                float(-1), float(1));
+    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
 
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    // Spelling and spacing do not matter, and a linear expression is compared by its terms rather
+    // than by its operations.
+    EXPECT_TRUE(same_expression(compile_expression("x1 + 2*x2", inputs, {}),
+                                compile_expression("x1+2*x2", inputs, {})));
 
-    opt.set_formula_constraint(
-        [](const VectorR& in, const VectorR&) { return abs(in(0) - in(1)); },
-        ComparisonOperator::LessEqualTo,
-        float(0), float(1));
+    EXPECT_TRUE(same_expression(compile_expression("2*(x1 + x2)", inputs, {}),
+                                compile_expression("2*x1 + 2*x2", inputs, {})));
 
-    opt.set_iterations(3);
-    opt.set_evaluations_number(800);
+    EXPECT_FALSE(same_expression(compile_expression("x1", inputs, {}),
+                                 compile_expression("2*x1", inputs, {})));
 
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-        EXPECT_LE(abs(results(i, 0) - results(i, 1)), float(1) + float(1e-3));
+    EXPECT_FALSE(same_expression(compile_expression("x1 + x2", inputs, {}),
+                                 compile_expression("x1 * x2", inputs, {})));
 }
 
-TEST(NonSmoothExpand, SmoothExpressionIsSingleBranch)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
-    const auto branches = expand_constraint("x1 + x2", ComparisonOperator::LessEqualTo, float(0), float(3), inputs, {});
 
-    ASSERT_EQ(branches.size(), size_t(1));
-    ASSERT_EQ(branches[0].size(), size_t(1));
-    EXPECT_EQ(branches[0][0].compiled.shape, FormulaShape::Affine);
+TEST(ExpressionHelpers, SameExpressionIsSensitiveToTermOrder)
+{
+    // Known limitation, pinned so a change is deliberate: linear terms are compared as an ordered
+    // vector, so a commutative rewrite is not recognized as the same expression. The duplicate
+    // objective warning and the contradictory constraint check both miss such a pair.
+    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
+
+    EXPECT_FALSE(same_expression(compile_expression("x1 + x2", inputs, {}),
+                                 compile_expression("x2 + x1", inputs, {})));
 }
 
-TEST(NonSmoothExpand, MinGreaterEqualIsAndIntersection)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
-    const auto branches = expand_constraint("min(x1, x2)", ComparisonOperator::GreaterEqualTo, float(1), float(0), inputs, {});
 
-    ASSERT_EQ(branches.size(), size_t(1));
-    EXPECT_EQ(branches[0].size(), size_t(2));
-    for (const auto& c : branches[0])
-        EXPECT_EQ(c.comparison_operator, ComparisonOperator::GreaterEqualTo);
+TEST(ExpressionHelpers, BareVariableIsAPlainUnscaledColumn)
+{
+    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
+
+    EXPECT_TRUE(is_bare_variable(compile_expression("x1", inputs, {})));
+    EXPECT_FALSE(is_bare_variable(compile_expression("2*x1", inputs, {})));
+    EXPECT_FALSE(is_bare_variable(compile_expression("x1 + 1", inputs, {})));
+    EXPECT_FALSE(is_bare_variable(compile_expression("x1 + x2", inputs, {})));
 }
 
-TEST(NonSmoothExpand, MaxLessEqualIsAndIntersection)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
-    const auto branches = expand_constraint("max(x1, x2)", ComparisonOperator::LessEqualTo, float(0), float(2), inputs, {});
 
-    ASSERT_EQ(branches.size(), size_t(1));
-    EXPECT_EQ(branches[0].size(), size_t(2));
+TEST(ExpressionHelpers, InputGradientMatchesTheCoefficients)
+{
+    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
+
+    VectorR point(2); point << 3.0f, 4.0f;
+    const VectorR output(0);
+
+    const VectorR linear_gradient =
+        evaluate_input_gradient(compile_expression("-x1 + 2*x2", inputs, {}), point, output);
+
+    EXPECT_NEAR(linear_gradient(0), -1.0f, 1e-5f);
+    EXPECT_NEAR(linear_gradient(1), 2.0f, 1e-5f);
+
+    // d(x1^2 + x2^2) = (2*x1, 2*x2)
+    const VectorR nonlinear_gradient =
+        evaluate_input_gradient(compile_expression("x1^2 + x2^2", inputs, {}), point, output);
+
+    EXPECT_NEAR(nonlinear_gradient(0), 6.0f, 1e-4f);
+    EXPECT_NEAR(nonlinear_gradient(1), 8.0f, 1e-4f);
 }
 
-TEST(NonSmoothExpand, AbsLessEqualIsInterval)
+
+// -----------------------------------------------------------------------------
+// Selector conjunctions: min/max/abs split into smooth pieces
+// -----------------------------------------------------------------------------
+
+TEST(DrawKHot, DrawsExactlyKHonouringPins)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
-    const auto branches = expand_constraint("abs(x1 - x2)", ComparisonOperator::LessEqualTo, float(0), float(1), inputs, {});
+    const Index count = 8;
+    const Index k = 3;
 
-    ASSERT_EQ(branches.size(), size_t(1));
-    ASSERT_EQ(branches[0].size(), size_t(1));
-    EXPECT_EQ(branches[0][0].comparison_operator, ComparisonOperator::Between);
-    EXPECT_NEAR(branches[0][0].low_bound, float(-1), float(1e-6));
-    EXPECT_NEAR(branches[0][0].up_bound, float(1), float(1e-6));
-}
+    vector<char> force_on(size_t(count), 0);
+    vector<char> force_off(size_t(count), 0);
 
-TEST(NonSmoothExpand, OrCasesBranch)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
-
-    EXPECT_EQ(expand_constraint("min(x1, x2)", ComparisonOperator::LessEqualTo, float(0), float(1), inputs, {}).size(), size_t(2));
-    EXPECT_EQ(expand_constraint("max(x1, x2)", ComparisonOperator::GreaterEqualTo, float(1), float(0), inputs, {}).size(), size_t(2));
-    EXPECT_EQ(expand_constraint("abs(x1 - x2)", ComparisonOperator::GreaterEqualTo, float(1), float(0), inputs, {}).size(), size_t(2));
-}
-
-TEST(NonSmoothExpand, NestedYieldsRegionProduct)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
-    const auto branches = expand_constraint("max(x1, abs(x2))", ComparisonOperator::LessEqualTo, float(0), float(1), inputs, {});
-    EXPECT_EQ(branches.size(), size_t(4));
-}
-
-TEST(ResponseOptimizationNonSmooth, MinGreaterEqualKeepsBothAboveBound)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(-5), float(5), float(-1), float(1));
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_formula_constraint("min(x1, x2)", ComparisonOperator::GreaterEqualTo, float(1), float(0));
-    opt.set_iterations(3);
-    opt.set_evaluations_number(1000);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-    {
-        EXPECT_GE(results(i, 0), float(1) - float(1e-2));
-        EXPECT_GE(results(i, 1), float(1) - float(1e-2));
-    }
-}
-
-TEST(ResponseOptimizationNonSmooth, MaxGreaterEqualBranchesIntoUnion)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(-5), float(5), float(-1), float(1));
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_formula_constraint("max(x1, x2)", ComparisonOperator::GreaterEqualTo, float(3), float(0));
-    opt.set_iterations(3);
-    opt.set_evaluations_number(1000);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-        EXPECT_TRUE(results(i, 0) >= float(3) - float(1e-2) || results(i, 1) >= float(3) - float(1e-2));
-}
-
-TEST(ResponseOptimizationNonSmooth, AbsGreaterEqualBranchesBySign)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(-5), float(5), float(-1), float(1));
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_formula_constraint("abs(x1 - x2)", ComparisonOperator::GreaterEqualTo, float(2), float(0));
-    opt.set_iterations(3);
-    opt.set_evaluations_number(1000);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-        EXPECT_GE(abs(results(i, 0) - results(i, 1)), float(2) - float(1e-2));
-}
-
-TEST(ResponseOptimizationNonSmooth, NestedMaxAbsStaysInsideBox)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(-5), float(5), float(-1), float(1));
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_formula_constraint("max(x1, abs(x2))", ComparisonOperator::LessEqualTo, float(0), float(1));
-    opt.set_iterations(3);
-    opt.set_evaluations_number(1000);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-    {
-        EXPECT_LE(results(i, 0), float(1) + float(1e-2));
-        EXPECT_LE(abs(results(i, 1)), float(1) + float(1e-2));
-    }
-}
-
-TEST(ResponseOptimizationFormula, InfeasibleConstraintThrows)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(1),
-                                float(-1), float(1));
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-
-    opt.set_formula_constraint("x1 + x2",
-                               ComparisonOperator::Between,
-                               float(90), float(100));
-
-    opt.set_iterations(2);
-    opt.set_evaluations_number(200);
-    opt.set_max_oversample_factor(2);
-
-    EXPECT_THROW(opt.perform_response_optimization(), runtime_error);
-}
-
-TEST(ResponseOptimizationFormula, NoFormulaConstraintsPreservesBaseline)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(10),
-                                float(-1), float(1));
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-
-    opt.set_iterations(2);
-    opt.set_evaluations_number(300);
-
-    const MatrixR results = opt.perform_response_optimization();
-    ASSERT_GT(results.rows(), 0);
-
-    for (Index i = 0; i < results.rows(); ++i)
-    {
-        EXPECT_GE(results(i, 0), float(0) - float(1e-3));
-        EXPECT_LE(results(i, 0), float(10) + float(1e-3));
-        EXPECT_GE(results(i, 1), float(0) - float(1e-3));
-        EXPECT_LE(results(i, 1), float(10) + float(1e-3));
-    }
-}
-
-TEST(ResponseOptimizationFormula, ConstraintAndObjectiveOnSameVariable)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(10),
-                                float(-1), float(1));
-
-    ResponseOptimization opt(setup.network.get());
-
-    opt.set_objective("x1", ResponseOptimization::Sense::Minimize);
-    opt.set_constraint("x1", ComparisonOperator::Between, float(2), float(4));
-
-    EXPECT_EQ(opt.get_objectives_number(), 1);
-
-    opt.set_iterations(5);
-    opt.set_evaluations_number(600);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-    {
-        EXPECT_GE(results(i, 0), float(2) - float(1e-2));
-        EXPECT_LE(results(i, 0), float(4) + float(1e-2));
-    }
-
-    EXPECT_LT(results(0, 0), float(3))
-        << "best x1 = " << results(0, 0) << " (should approach the lower bound 2)";
-}
-
-TEST(ResponseOptimizationClear, ClearObjectivesResetsObjectivesAndFixedValues)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y" });
-
-    ResponseOptimization opt(setup.network.get());
-
-    opt.set_objective("y", ResponseOptimization::Sense::Fixed, float(0.25));
-    opt.set_objective("x1", ResponseOptimization::Sense::Maximize);
-    EXPECT_EQ(opt.get_objectives_number(), 1);
-
-    opt.clear_objectives();
-    EXPECT_EQ(opt.get_objectives_number(), 0);
-
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    EXPECT_EQ(opt.get_objectives_number(), 1);
-}
-
-namespace
-{
-
-float reachable_output_median(ResponseOptimization& opt, Index output_column, Index samples = 512)
-{
-    const MatrixR inputs = opt.calculate_random_inputs(opt.get_original_domain("Input"), samples);
-
-    const MatrixR outputs = opt.calculate_outputs(inputs);
-
-    vector<float> values(outputs.rows());
-    for (Index i = 0; i < outputs.rows(); ++i)
-        values[static_cast<size_t>(i)] = outputs(i, output_column);
-
-    ranges::sort(values);
-    return values[values.size() / 2];
-}
-
-}
-
-TEST(ResponseOptimizationFixed, FixedInputIsConvertedToBox)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(10),
-                                float(-1), float(1));
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_objective("x1", ResponseOptimization::Sense::Fixed, float(3));
-
-    EXPECT_EQ(opt.get_objectives_number(), 1);
-
-    opt.set_iterations(4);
-    opt.set_evaluations_number(600);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-        EXPECT_NEAR(results(i, 0), float(3), float(1e-2))
-            << "row " << i << " x1=" << results(i, 0) << " (should be pinned to 3)";
-}
-
-TEST(ResponseOptimizationFixed, FixedOutputPureInverseSolve)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(10),
-                                float(-1), float(1));
-
-    ResponseOptimization opt(setup.network.get());
-
-    const float target = reachable_output_median(opt, 0);
-
-    opt.set_objective("y", ResponseOptimization::Sense::Fixed, target);
-
-    EXPECT_EQ(opt.get_objectives_number(), 1);
-
-    opt.set_relative_tolerance(float(1e-2));
-    opt.set_iterations(6);
-    opt.set_evaluations_number(1200);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-
-    for (Index i = 0; i < results.rows(); ++i)
-        EXPECT_NEAR(results(i, 2), target, float(5e-2))
-            << "row " << i << " y=" << results(i, 2) << " target=" << target;
-}
-
-TEST(ResponseOptimizationFixed, FixedMixedWithOptimizingStaysSingleObjective)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y1", "y2" },
-                                float(0), float(10),
-                                float(-1), float(1));
-
-    ResponseOptimization opt(setup.network.get());
-
-    const float target = reachable_output_median(opt, 1);
-
-    opt.set_objective("y1", ResponseOptimization::Sense::Minimize);
-    opt.set_objective("y2", ResponseOptimization::Sense::Fixed, target);
-
-    EXPECT_EQ(opt.get_objectives_number(), 1);
-
-    opt.set_relative_tolerance(float(1e-2));
-    opt.set_iterations(6);
-    opt.set_evaluations_number(1200);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-
-    for (Index i = 0; i < results.rows(); ++i)
-        EXPECT_NEAR(results(i, 3), target, float(5e-2))
-            << "row " << i << " y2=" << results(i, 3) << " target=" << target;
-}
-
-TEST(ResponseOptimizationFixed, MultipleFixedOutputsRemainSingleObjective)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y1", "y2" },
-                                float(0), float(10),
-                                float(-1), float(1));
-
-    ResponseOptimization opt(setup.network.get());
-
-    const MatrixR reachable_inputs =
-        opt.calculate_random_inputs(opt.get_original_domain("Input"), 1);
-    const MatrixR reachable_outputs = opt.calculate_outputs(reachable_inputs);
-    const float target1 = reachable_outputs(0, 0);
-    const float target2 = reachable_outputs(0, 1);
-
-    opt.set_objective("y1", ResponseOptimization::Sense::Fixed, target1);
-    opt.set_objective("y2", ResponseOptimization::Sense::Fixed, target2);
-
-    EXPECT_EQ(opt.get_objectives_number(), 2);
-
-    opt.set_relative_tolerance(float(2e-2));
-    opt.set_iterations(6);
-    opt.set_evaluations_number(1500);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-    {
-        EXPECT_NEAR(results(i, 2), target1, float(8e-2)) << "row " << i << " y1";
-        EXPECT_NEAR(results(i, 3), target2, float(8e-2)) << "row " << i << " y2";
-    }
-}
-
-TEST(ResponseOptimizationInteger, IntegerVariableYieldsIntegralResults)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(10),
-                                float(-1), float(1));
-
-    vector<Variable> input_variables = setup.network->get_input_variables();
-    input_variables[0].type = VariableType::Integer;
-    setup.network->set_input_variables(input_variables);
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-
-    opt.set_iterations(3);
-    opt.set_evaluations_number(600);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-    {
-        EXPECT_NEAR(results(i, 0), round(results(i, 0)), float(1e-3))
-            << "integer x1 must be integral, got " << results(i, 0);
-        EXPECT_GE(results(i, 0), float(0) - float(1e-3));
-        EXPECT_LE(results(i, 0), float(10) + float(1e-3));
-    }
-}
-
-TEST(ResponseOptimizationInteger, IntegerBoxConstraintStaysIntegral)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(10),
-                                float(-1), float(1));
-
-    vector<Variable> input_variables = setup.network->get_input_variables();
-    input_variables[0].type = VariableType::Integer;
-    setup.network->set_input_variables(input_variables);
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_constraint("x1", ComparisonOperator::Between, float(2), float(8));
-
-    opt.set_iterations(3);
-    opt.set_evaluations_number(800);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-    {
-        EXPECT_NEAR(results(i, 0), round(results(i, 0)), float(1e-3));
-        EXPECT_GE(results(i, 0), float(2) - float(1e-3));
-        EXPECT_LE(results(i, 0), float(8) + float(1e-3));
-    }
-}
-
-TEST(ResponseOptimizationInteger, IntegerStaysIntegralAfterAffineRepair)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(10),
-                                float(-1), float(1));
-
-    vector<Variable> input_variables = setup.network->get_input_variables();
-    input_variables[0].type = VariableType::Integer;
-    setup.network->set_input_variables(input_variables);
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-
-    opt.set_formula_constraint("x1 + x2",
-                               ComparisonOperator::LessEqualTo,
-                               float(0), float(5));
-
-    opt.set_iterations(3);
-    opt.set_evaluations_number(1000);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-    {
-        EXPECT_NEAR(results(i, 0), round(results(i, 0)), float(1e-3))
-            << "integer x1 not integral after repair at row " << i;
-        EXPECT_LE(results(i, 0) + results(i, 1), float(5) + float(1e-2));
-    }
-}
-
-TEST(ResponseOptimizationInteger, IntegerStaysIntegralAfterOutputRepair)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(10),
-                                float(-1), float(1));
-
-    vector<Variable> input_variables = setup.network->get_input_variables();
-    input_variables[0].type = VariableType::Integer;
-    setup.network->set_input_variables(input_variables);
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-
-    opt.set_formula_constraint("y + 0.1*x2",
-                               ComparisonOperator::LessEqualTo,
-                               float(0), float(1));
-
-    opt.set_iterations(3);
-    opt.set_evaluations_number(1000);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-        EXPECT_NEAR(results(i, 0), round(results(i, 0)), float(1e-3))
-            << "integer x1 not integral after output repair at row " << i;
-}
-
-TEST(MixedIntegerProjector, FixedBinariesHoldWhileContinuousReproject)
-{
-    const vector<NamedColumn> inputs =
-        make_named_columns({ "w0", "w1", "w2", "w3", "z0", "z1", "z2", "z3" });
-    const vector<NamedColumn> outputs;
-
-    auto make_fc = [&](const string& expression, ComparisonOperator op, float low, float up)
-    {
-        MultivariateConstraint constraint;
-        constraint.expression = expression;
-        constraint.comparison_operator = op;
-        constraint.low_bound = low;
-        constraint.up_bound = up;
-        constraint.compiled = compile_formula(expression, inputs, outputs);
-        constraint.kind = classify(constraint);
-        return constraint;
-    };
-
-    vector<MultivariateConstraint> constraints;
-    constraints.push_back(make_fc("w0 + w1 + w2 + w3", ComparisonOperator::EqualTo, float(1), float(1)));
-    for (int i = 0; i < 4; ++i)
-    {
-        const string w = "w" + to_string(i);
-        const string z = "z" + to_string(i);
-        constraints.push_back(make_fc(w + " - " + z,        ComparisonOperator::LessEqualTo,    float(0), float(0)));
-        constraints.push_back(make_fc(w + " - 0.01 * " + z, ComparisonOperator::GreaterEqualTo, float(0), float(0)));
-    }
-
-    const Index n = 8;
-    const VectorR inferior = VectorR::Zero(n);
-    const VectorR superior = VectorR::Ones(n);
-
-    const Index rows = 200;
-    MatrixR points(rows, n);
-    set_random_uniform(points, float(0), float(1));
-    for (Index r = 0; r < rows; ++r)
-    {
-        points(r, 4) = float(1); points(r, 5) = float(1);
-        points(r, 6) = float(0); points(r, 7) = float(0);
-    }
-
-    vector<char> fixed(n, 0);
-    fixed[4] = fixed[5] = fixed[6] = fixed[7] = 1;
-
-    repair_affine_inputs_with_fixed(points, inferior, superior, constraints, fixed);
-
-    for (Index r = 0; r < rows; ++r)
-    {
-        EXPECT_EQ(points(r, 4), float(1)); EXPECT_EQ(points(r, 5), float(1));
-        EXPECT_EQ(points(r, 6), float(0)); EXPECT_EQ(points(r, 7), float(0));
-
-        const float budget = points(r, 0) + points(r, 1) + points(r, 2) + points(r, 3);
-        EXPECT_NEAR(budget, float(1), float(1e-3)) << "budget violated at row " << r;
-
-        for (int i = 0; i < 4; ++i)
-        {
-            EXPECT_LE(points(r, i), points(r, 4 + i) + float(1e-3))
-                << "buy-in upper violated at row " << r << " col " << i;
-            EXPECT_GE(points(r, i), float(0.01) * points(r, 4 + i) - float(1e-3))
-                << "buy-in lower violated at row " << r << " col " << i;
-        }
-
-        EXPECT_NEAR(points(r, 2), float(0), float(1e-3)) << "w2 not zeroed at row " << r;
-        EXPECT_NEAR(points(r, 3), float(0), float(1e-3)) << "w3 not zeroed at row " << r;
-    }
-}
-
-namespace
-{
-    MultivariateConstraint make_integer_constraint(const string& expression,
-                                              const vector<NamedColumn>& inputs,
-                                              ComparisonOperator op, float low, float up)
-    {
-        MultivariateConstraint constraint;
-        constraint.expression = expression;
-        constraint.comparison_operator = op;
-        constraint.low_bound = low;
-        constraint.up_bound = up;
-        constraint.compiled = compile_formula(expression, inputs,             {});
-        constraint.kind = classify(constraint);
-        return constraint;
-    }
-}
-
-TEST(MixedIntegerCarry, SingleBudgetStaysOnLatticeAndFeasible)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "n0", "n1", "n2" });
-    const MultivariateConstraint budget =
-        make_integer_constraint("n0 + n1 + n2", inputs, ComparisonOperator::LessEqualTo, float(0), float(4));
-
-    const Index n = 3;
-    const VectorR inferior = VectorR::Zero(n);
-    const VectorR superior = VectorR::Constant(n, float(5));
-
-    const Index rows = 300;
-    MatrixR points(rows, n);
-    set_random_uniform(points, float(0), float(5));
-
-    repair_single_affine_integer(points, inferior, superior, budget);
-
-    for (Index r = 0; r < rows; ++r)
-    {
-        for (Index j = 0; j < n; ++j)
-        {
-            EXPECT_NEAR(points(r, j), round(points(r, j)), float(1e-4)) << "not integral at " << r << "," << j;
-            EXPECT_GE(points(r, j), float(0));
-            EXPECT_LE(points(r, j), float(5));
-        }
-        EXPECT_LE(points(r, 0) + points(r, 1) + points(r, 2), float(4) + float(1e-3))
-            << "budget violated at row " << r;
-    }
-}
-
-TEST(MixedIntegerCarry, SingleEqualityLandsExactlyOnLattice)
-{
-    const vector<NamedColumn> inputs = make_named_columns({ "n0", "n1", "n2" });
-    const MultivariateConstraint exact =
-        make_integer_constraint("n0 + n1 + n2", inputs, ComparisonOperator::EqualTo, float(3), float(3));
-
-    const Index n = 3;
-    const VectorR inferior = VectorR::Zero(n);
-    const VectorR superior = VectorR::Constant(n, float(5));
-
-    const Index rows = 300;
-    MatrixR points(rows, n);
-    set_random_uniform(points, float(0), float(5));
-
-    repair_single_affine_integer(points, inferior, superior, exact);
-
-    for (Index r = 0; r < rows; ++r)
-    {
-        for (Index j = 0; j < n; ++j)
-            EXPECT_NEAR(points(r, j), round(points(r, j)), float(1e-4)) << "not integral at " << r << "," << j;
-        EXPECT_NEAR(points(r, 0) + points(r, 1) + points(r, 2), float(3), float(1e-3))
-            << "equality not met at row " << r;
-    }
-}
-
-TEST(MixedIntegerCarry, PureIntegerKnapsackWiredIntoSolve)
-{
-    MinimalApproximation setup({ "n0", "n1", "n2" }, { "y" }, float(0), float(5), float(-1), float(1));
-    vector<Variable> input_variables = setup.network->get_input_variables();
-    for (int i = 0; i < 3; ++i) input_variables[i].type = VariableType::Integer;
-    setup.network->set_input_variables(input_variables);
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_formula_constraint("n0 + n1 + n2", ComparisonOperator::LessEqualTo, float(0), float(4));
-
-    opt.set_iterations(3);
-    opt.set_evaluations_number(600);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-    for (Index r = 0; r < results.rows(); ++r)
-    {
-        for (int j = 0; j < 3; ++j)
-            EXPECT_NEAR(results(r, j), round(results(r, j)), float(1e-3)) << "n" << j << " not integral at row " << r;
-        EXPECT_LE(results(r, 0) + results(r, 1) + results(r, 2), float(4) + float(1e-2)) << "knapsack violated at row " << r;
-    }
-}
-
-TEST(MixedIntegerKHot, DrawsExactlyKHonoringPins)
-{
-    const Index count = 8, k = 3;
-    vector<char> force_on(count, 0), force_off(count, 0);
     force_on[1] = 1;
-    force_off[5] = 1; force_off[6] = 1;
+    force_off[5] = 1;
+    force_off[6] = 1;
 
-    for (int trial = 0; trial < 200; ++trial)
+    for (Index trial = 0; trial < 200; trial++)
     {
-        vector<float> out;
-        ASSERT_TRUE(draw_k_hot(count, k, force_on, force_off, out));
-        ASSERT_EQ(static_cast<Index>(out.size()), count);
+        vector<float> selection;
 
-        float sum = 0;
-        for (const float v : out) { EXPECT_TRUE(v == float(0) || v == float(1)); sum += v; }
-        EXPECT_EQ(sum, float(k));
-        EXPECT_EQ(out[1], float(1));
-        EXPECT_EQ(out[5], float(0));
-        EXPECT_EQ(out[6], float(0));
+        ASSERT_TRUE(draw_k_hot(count, k, force_on, force_off, selection));
+        ASSERT_EQ(Index(selection.size()), count);
+
+        float ones = 0.0f;
+
+        for (const float value : selection)
+        {
+            EXPECT_TRUE(value == 0.0f || value == 1.0f);
+            ones += value;
+        }
+
+        EXPECT_EQ(ones, float(k));
+        EXPECT_EQ(selection[1], 1.0f);
+        EXPECT_EQ(selection[5], 0.0f);
+        EXPECT_EQ(selection[6], 0.0f);
     }
 }
 
-TEST(MixedIntegerKHot, ReportsInfeasiblePins)
+
+TEST(DrawKHot, ReportsInfeasiblePins)
 {
     const Index count = 4;
-    vector<float> out;
+
+    vector<float> selection;
 
     {
-        vector<char> force_on(count, 0), force_off(count, 0);
+        vector<char> force_on(size_t(count), 0);
+        vector<char> force_off(size_t(count), 0);
+
         force_on[0] = force_on[1] = force_on[2] = 1;
-        EXPECT_FALSE(draw_k_hot(count, 2, force_on, force_off, out));
+
+        EXPECT_FALSE(draw_k_hot(count, 2, force_on, force_off, selection));
     }
+
     {
-        vector<char> force_on(count, 0), force_off(count, 0);
+        vector<char> force_on(size_t(count), 0);
+        vector<char> force_off(size_t(count), 0);
+
         force_off[0] = force_off[1] = force_off[2] = 1;
-        EXPECT_FALSE(draw_k_hot(count, 2, force_on, force_off, out));
+
+        EXPECT_FALSE(draw_k_hot(count, 2, force_on, force_off, selection));
     }
+
     {
-        vector<char> force_on(count, 0), force_off(count, 0);
-        force_on[0] = 1; force_off[0] = 1;
-        EXPECT_FALSE(draw_k_hot(count, 1, force_on, force_off, out));
+        vector<char> force_on(size_t(count), 0);
+        vector<char> force_off(size_t(count), 0);
+
+        force_on[0] = 1;
+        force_off[0] = 1;
+
+        EXPECT_FALSE(draw_k_hot(count, 1, force_on, force_off, selection));
     }
 }
 
-TEST(MixedIntegerPortfolio, BuyInBudgetCardinalityYieldsFeasiblePoints)
+
+// -----------------------------------------------------------------------------
+// ResponseOptimization: what the setup refuses
+// -----------------------------------------------------------------------------
+
+TEST(ResponseOptimizationSetup, NoNeuralNetworkThrows)
 {
-    const int A = 8;
-    const int K = 3;
+    DomainContraction optimization;
 
-    vector<string> indicator_names;
-    vector<string> input_names;
-    for (int i = 0; i < A; ++i) input_names.push_back("w" + to_string(i));
-    for (int i = 0; i < A; ++i) { indicator_names.push_back("z" + to_string(i)); input_names.push_back("z" + to_string(i)); }
-
-    MinimalApproximation setup(input_names, { "y" }, float(0), float(1), float(-1), float(1));
-
-    vector<Variable> input_variables = setup.network->get_input_variables();
-    for (int i = 0; i < A; ++i) input_variables[A + i].type = VariableType::Binary;
-    setup.network->set_input_variables(input_variables);
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-
-    string budget;
-    for (int i = 0; i < A; ++i) budget += (i ? " + " : "") + ("w" + to_string(i));
-    opt.set_formula_constraint(budget, ComparisonOperator::EqualTo, float(1), float(1));
-
-    for (int i = 0; i < A; ++i)
-    {
-        const string w = "w" + to_string(i);
-        const string z = "z" + to_string(i);
-        opt.set_formula_constraint(w + " - " + z,        ComparisonOperator::LessEqualTo,    float(0), float(0));
-        opt.set_formula_constraint(w + " - 0.01 * " + z, ComparisonOperator::GreaterEqualTo, float(0), float(0));
-    }
-
-    opt.set_cardinality_constraint(indicator_names, K);
-
-    opt.set_iterations(3);
-    opt.set_evaluations_number(1500);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0) << "no feasible point for buy-in + budget + cardinality";
-
-    for (Index r = 0; r < results.rows(); ++r)
-    {
-        float weight_sum = 0, indicator_sum = 0;
-        for (int i = 0; i < A; ++i)
-        {
-            const float w = results(r, i);
-            const float z = results(r, A + i);
-            weight_sum += w;
-            indicator_sum += z;
-
-            EXPECT_NEAR(z, round(z), float(1e-3)) << "indicator z" << i << " not binary at row " << r;
-            EXPECT_LE(w, z + float(1e-2))         << "buy-in upper w" << i << " <= z" << i << " at row " << r;
-            EXPECT_GE(w, float(0.01) * z - float(1e-2)) << "buy-in lower at row " << r << " asset " << i;
-        }
-        EXPECT_NEAR(weight_sum, float(1), float(2e-2))    << "budget violated at row " << r;
-        EXPECT_NEAR(indicator_sum, float(K), float(1e-2)) << "cardinality violated at row " << r;
-    }
+    EXPECT_THROW(optimization.add_objective("y", Sense::Minimize), runtime_error);
 }
 
-TEST(MixedIntegerPortfolio, Port1ScaleBuyInBudgetCardinalityIsFeasible)
+
+TEST(ResponseOptimizationSetup, NoObjectiveThrows)
 {
-    const int A = 31;
-    const int K = 10;
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
 
-    vector<string> indicator_names, input_names;
-    for (int i = 0; i < A; ++i) input_names.push_back("w" + to_string(i));
-    for (int i = 0; i < A; ++i) { indicator_names.push_back("z" + to_string(i)); input_names.push_back("z" + to_string(i)); }
+    DomainContraction optimization(setup.network.get());
 
-    MinimalApproximation setup(input_names, { "y" }, float(0), float(1), float(-1), float(1));
-    vector<Variable> input_variables = setup.network->get_input_variables();
-    for (int i = 0; i < A; ++i) input_variables[A + i].type = VariableType::Binary;
-    setup.network->set_input_variables(input_variables);
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-
-    string budget;
-    for (int i = 0; i < A; ++i) budget += (i ? " + " : "") + ("w" + to_string(i));
-    opt.set_formula_constraint(budget, ComparisonOperator::EqualTo, float(1), float(1));
-    for (int i = 0; i < A; ++i)
-    {
-        const string w = "w" + to_string(i), z = "z" + to_string(i);
-        opt.set_formula_constraint(w + " - " + z,        ComparisonOperator::LessEqualTo,    float(0), float(0));
-        opt.set_formula_constraint(w + " - 0.01 * " + z, ComparisonOperator::GreaterEqualTo, float(0), float(0));
-    }
-    opt.set_cardinality_constraint(indicator_names, K);
-
-    opt.set_iterations(3);
-    opt.set_evaluations_number(2000);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0) << "no feasible point for port1-scale buy-in + budget + cardinality";
-
-    for (Index r = 0; r < results.rows(); ++r)
-    {
-        float weight_sum = 0, indicator_sum = 0;
-        for (int i = 0; i < A; ++i)
-        {
-            const float w = results(r, i), z = results(r, A + i);
-            weight_sum += w; indicator_sum += z;
-            EXPECT_NEAR(z, round(z), float(1e-3))       << "indicator z" << i << " not binary at row " << r;
-            EXPECT_LE(w, z + float(1e-2))               << "buy-in upper at row " << r << " asset " << i;
-            EXPECT_GE(w, float(0.01) * z - float(1e-2)) << "buy-in lower at row " << r << " asset " << i;
-        }
-        EXPECT_NEAR(weight_sum, float(1), float(2e-2))    << "budget violated at row " << r;
-        EXPECT_NEAR(indicator_sum, float(K), float(1e-2)) << "cardinality violated at row " << r;
-    }
+    EXPECT_THROW(optimization.perform_response_optimization(), runtime_error);
 }
 
-TEST(MixedIntegerPortfolio, ExploreExploitRatioPreservesFeasibility)
+
+TEST(ResponseOptimizationSetup, CardinalityConditionIsRefused)
 {
-    const int A = 6;
-    const int K = 2;
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
 
-    vector<string> indicator_names, input_names;
-    for (int i = 0; i < A; ++i) input_names.push_back("w" + to_string(i));
-    for (int i = 0; i < A; ++i) { indicator_names.push_back("z" + to_string(i)); input_names.push_back("z" + to_string(i)); }
+    DomainContraction optimization(setup.network.get());
 
-    MinimalApproximation setup(input_names, { "y" }, float(0), float(1), float(-1), float(1));
-    vector<Variable> input_variables = setup.network->get_input_variables();
-    for (int i = 0; i < A; ++i) input_variables[A + i].type = VariableType::Binary;
-    setup.network->set_input_variables(input_variables);
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-
-    string budget;
-    for (int i = 0; i < A; ++i) budget += (i ? " + " : "") + ("w" + to_string(i));
-    opt.set_formula_constraint(budget, ComparisonOperator::EqualTo, float(1), float(1));
-    for (int i = 0; i < A; ++i)
-    {
-        const string w = "w" + to_string(i), z = "z" + to_string(i);
-        opt.set_formula_constraint(w + " - " + z,        ComparisonOperator::LessEqualTo,    float(0), float(0));
-        opt.set_formula_constraint(w + " - 0.01 * " + z, ComparisonOperator::GreaterEqualTo, float(0), float(0));
-    }
-    opt.set_cardinality_constraint(indicator_names, K);
-
-    opt.set_exploration_ratio(float(0.5));
-    opt.set_iterations(4);
-    opt.set_evaluations_number(1200);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0) << "explore/exploit split lost feasibility";
-    for (Index r = 0; r < results.rows(); ++r)
-    {
-        float weight_sum = 0, indicator_sum = 0;
-        for (int i = 0; i < A; ++i)
-        {
-            const float w = results(r, i), z = results(r, A + i);
-            weight_sum += w; indicator_sum += z;
-            EXPECT_LE(w, z + float(1e-2)) << "buy-in upper at row " << r << " asset " << i;
-            EXPECT_GE(w, float(0.01) * z - float(1e-2)) << "buy-in lower at row " << r << " asset " << i;
-        }
-        EXPECT_NEAR(weight_sum, float(1), float(2e-2))    << "budget at row " << r;
-        EXPECT_NEAR(indicator_sum, float(K), float(1e-2)) << "cardinality at row " << r;
-    }
+    EXPECT_THROW(optimization.add_constraint("x1", Condition::Cardinality, {2.0f}), runtime_error);
 }
 
-TEST(ContinuousCardinality, SelectsExactlyKNonzeroRestZero)
+
+TEST(ResponseOptimizationSetup, NonFiniteConstraintValueThrows)
 {
-    const int A = 6;
-    const int K = 2;
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
 
-    vector<string> input_names;
-    for (int i = 0; i < A; ++i) input_names.push_back("x" + to_string(i));
+    DomainContraction optimization(setup.network.get());
 
-    MinimalApproximation setup(input_names, { "y" }, float(0), float(10), float(-1), float(1));
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_cardinality_constraint(input_names, K);
-
-    opt.set_iterations(2);
-    opt.set_evaluations_number(800);
-
-    const MatrixR results = opt.perform_response_optimization();
-    ASSERT_GT(results.rows(), 0) << "no feasible point for continuous cardinality";
-
-    for (Index r = 0; r < results.rows(); ++r)
-    {
-        int nonzero = 0, zero = 0;
-        for (int i = 0; i < A; ++i)
-        {
-            const float x = results(r, i);
-            EXPECT_GE(x, float(-1e-4))          << "x" << i << " below box at row " << r;
-            EXPECT_LE(x, float(10) + float(1e-3)) << "x" << i << " above box at row " << r;
-            if (abs(x) > float(1e-6)) ++nonzero; else ++zero;
-        }
-        EXPECT_LE(nonzero, K)     << "more than K active variables at row " << r;
-        EXPECT_GE(zero, A - K)    << "fewer than A-K zeroed variables at row " << r;
-    }
+    EXPECT_THROW(optimization.add_constraint("x1", Condition::LessEqual,
+                                             {numeric_limits<float>::infinity()}),
+                 runtime_error);
 }
 
-TEST(IntegerCardinality, ExactlyKActiveIntegersRestZero)
+
+TEST(ResponseOptimizationSetup, AllowedSetNeedsAtLeastOneValue)
 {
-    const int A = 5;
-    const int K = 3;
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
 
-    vector<string> input_names;
-    for (int i = 0; i < A; ++i) input_names.push_back("n" + to_string(i));
+    DomainContraction optimization(setup.network.get());
 
-    MinimalApproximation setup(input_names, { "y" }, float(0), float(5), float(-1), float(1));
-
-    vector<Variable> input_variables = setup.network->get_input_variables();
-    for (Variable& variable : input_variables) variable.type = VariableType::Integer;
-    setup.network->set_input_variables(input_variables);
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_cardinality_constraint(input_names, K);
-
-    opt.set_iterations(2);
-    opt.set_evaluations_number(1000);
-
-    const MatrixR results = opt.perform_response_optimization();
-    ASSERT_GT(results.rows(), 0) << "no feasible point for integer cardinality";
-
-    for (Index r = 0; r < results.rows(); ++r)
-    {
-        int nonzero = 0;
-        for (int i = 0; i < A; ++i)
-        {
-            const float n = results(r, i);
-            EXPECT_NEAR(n, round(n), float(1e-3)) << "n" << i << " not integer at row " << r;
-            EXPECT_GE(n, float(-1e-3))            << "n" << i << " below box at row " << r;
-            EXPECT_LE(n, float(5) + float(1e-3))  << "n" << i << " above box at row " << r;
-            if (abs(n) > float(0.5)) ++nonzero;
-        }
-        EXPECT_EQ(nonzero, K) << "active integer count != K at row " << r;
-    }
+    EXPECT_THROW(optimization.add_constraint("x1", Condition::AllowedSet, {}), runtime_error);
 }
 
-TEST(BinaryCardinality, FreeModeIsAtMostK)
+
+TEST(ResponseOptimizationSetup, IntegerConditionOnlyAppliesToASingleVariable)
 {
-    const int A = 6;
-    const int K = 3;
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
 
-    vector<string> input_names;
-    for (int i = 0; i < A; ++i) input_names.push_back("b" + to_string(i));
+    DomainContraction optimization(setup.network.get());
 
-    MinimalApproximation setup(input_names, { "y" }, float(0), float(1), float(-1), float(1));
-
-    vector<Variable> input_variables = setup.network->get_input_variables();
-    for (Variable& variable : input_variables) variable.type = VariableType::Binary;
-    setup.network->set_input_variables(input_variables);
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_cardinality_constraint(input_names, K,                   false);
-
-    opt.set_iterations(2);
-    opt.set_evaluations_number(800);
-
-    const MatrixR results = opt.perform_response_optimization();
-    ASSERT_GT(results.rows(), 0) << "no feasible point for free-mode binary cardinality";
-
-    for (Index r = 0; r < results.rows(); ++r)
-    {
-        int ones = 0;
-        for (int i = 0; i < A; ++i)
-        {
-            const float b = results(r, i);
-            EXPECT_NEAR(b, round(b), float(1e-3)) << "b" << i << " not binary at row " << r;
-            if (b > float(0.5)) ++ones;
-        }
-        EXPECT_LE(ones, K) << "more than K ones under free/at-most-K mode at row " << r;
-    }
+    EXPECT_THROW(optimization.add_constraint("x1 + x2", Condition::Integer), runtime_error);
+    EXPECT_NO_THROW(optimization.add_constraint("x1", Condition::Integer));
 }
 
-TEST(SingleVariablePromotion, AffineConstraintBecomesBox)
+
+TEST(ResponseOptimizationSetup, MissingConditionValuesThrow)
 {
-    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(0), float(10), float(-1), float(1));
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_formula_constraint("2 * x1 - 6", ComparisonOperator::LessEqualTo, float(0), float(0));
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
 
-    opt.set_iterations(3);
-    opt.set_evaluations_number(500);
+    DomainContraction optimization(setup.network.get());
 
-    const MatrixR results = opt.perform_response_optimization();
+    EXPECT_THROW(optimization.add_constraint("x1", Condition::Between, {5.0f}), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("x1", Condition::LessEqual, {}), runtime_error);
+}
+
+
+TEST(ResponseOptimizationSetup, EmptyBetweenIntervalThrows)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
+
+    DomainContraction optimization(setup.network.get());
+
+    EXPECT_THROW(optimization.add_constraint("x1", Condition::Between, {5.0f, 2.0f}), runtime_error);
+}
+
+
+TEST(ResponseOptimizationSetup, ConstraintsThatEmptyAColumnThrowWhenTheDomainIsBuilt)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
+
+    DomainContraction optimization(setup.network.get());
+
+    optimization.add_objective("y", Sense::Minimize);
+
+    // Written differently, so neither is recognized as constraining the same expression as the
+    // other, yet together they leave x1 with the empty range [8, 2].
+    optimization.add_constraint("x1", Condition::GreaterEqual, {8.0f});
+    optimization.add_constraint("2 * x1", Condition::LessEqual, {4.0f});
+
+    EXPECT_THROW(optimization.perform_response_optimization(), runtime_error);
+}
+
+
+// -----------------------------------------------------------------------------
+// ResponseOptimization: both drivers honour the feasible set
+// -----------------------------------------------------------------------------
+
+TEST_P(ResponseDriver, ResultsStayInsideTheInputBox)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("y", Sense::Minimize);
+
+    const MatrixR results = optimization->perform_response_optimization();
 
     ASSERT_GT(results.rows(), 0);
-    for (Index r = 0; r < results.rows(); ++r)
-        EXPECT_LE(results(r, 0), float(3) + float(1e-3)) << "x1 not boxed to <= 3 at row " << r;
+    ASSERT_EQ(results.cols(), 3);
+
+    for (Index i = 0; i < results.rows(); i++)
+        for (Index j = 0; j < 2; j++)
+        {
+            EXPECT_GE(results(i, j), -1e-3f);
+            EXPECT_LE(results(i, j), 10.0f + 1e-3f);
+        }
 }
 
-TEST(SingleVariablePromotion, EmptyIntersectionThrows)
+
+TEST_P(ResponseDriver, LinearInputConstraintHolds)
 {
-    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(0), float(10), float(-1), float(1));
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_constraint("x1", ComparisonOperator::Between, float(5), float(10));
-    opt.set_formula_constraint("x1", ComparisonOperator::LessEqualTo, float(0), float(3));
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
 
-    opt.set_iterations(2);
-    opt.set_evaluations_number(200);
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
 
-    EXPECT_ANY_THROW(opt.perform_response_optimization());
-}
+    optimization->add_objective("y", Sense::Minimize);
+    optimization->add_constraint("x1 + x2", Condition::LessEqual, {4.0f});
 
-TEST(SingleVariablePromotion, IntegerPromotionRespectsLattice)
-{
-    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(0), float(10), float(-1), float(1));
-    vector<Variable> input_variables = setup.network->get_input_variables();
-    input_variables[0].type = VariableType::Integer;
-    setup.network->set_input_variables(input_variables);
-
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_formula_constraint("x1", ComparisonOperator::LessEqualTo, float(0), float(5));
-
-    opt.set_iterations(3);
-    opt.set_evaluations_number(500);
-
-    const MatrixR results = opt.perform_response_optimization();
+    const MatrixR results = optimization->perform_response_optimization();
 
     ASSERT_GT(results.rows(), 0);
-    for (Index r = 0; r < results.rows(); ++r)
-    {
-        EXPECT_NEAR(results(r, 0), round(results(r, 0)), float(1e-3)) << "x1 not integral at row " << r;
-        EXPECT_LE(results(r, 0), float(5) + float(1e-3)) << "x1 not boxed at row " << r;
-    }
+
+    for (Index i = 0; i < results.rows(); i++)
+        EXPECT_LE(results(i, 0) + results(i, 1), 4.0f + 1e-2f)
+            << "row " << i << " x1=" << results(i, 0) << " x2=" << results(i, 1);
 }
 
-TEST(ResponseOptimizationAllowedSet, FreeInputIsDrawnFromTheSet)
+
+TEST_P(ResponseDriver, EqualityLandsOnTheHyperplane)
 {
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(10),
-                                float(-1), float(1));
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
 
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_constraint("x1", vector<float>{ float(1), float(5), float(9) });
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
 
-    opt.set_iterations(3);
-    opt.set_evaluations_number(600);
+    optimization->add_objective("y", Sense::Minimize);
+    optimization->add_constraint("x1 + x2", Condition::Equal, {5.0f});
 
-    const MatrixR results = opt.perform_response_optimization();
+    const MatrixR results = optimization->perform_response_optimization();
 
     ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
+
+    for (Index i = 0; i < results.rows(); i++)
+        EXPECT_NEAR(results(i, 0) + results(i, 1), 5.0f, 5e-2f)
+            << "row " << i << " x1=" << results(i, 0) << " x2=" << results(i, 1);
+}
+
+
+TEST_P(ResponseDriver, NonlinearInputConstraintHolds)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, -5.0f, 5.0f);
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("y", Sense::Minimize);
+
+    // Inside the disk of radius 2.
+    optimization->add_constraint("x1^2 + x2^2", Condition::LessEqual, {4.0f});
+
+    const MatrixR results = optimization->perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+
+    for (Index i = 0; i < results.rows(); i++)
+        EXPECT_LE(results(i, 0)*results(i, 0) + results(i, 1)*results(i, 1), 4.0f + 5e-2f)
+            << "row " << i;
+}
+
+
+TEST_P(ResponseDriver, SingleVariableConstraintIsFoldedIntoTheBox)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("y", Sense::Minimize);
+
+    // 2*x1 - 6 <= 0 is one linear term, so calculate_domain() turns it into x1 <= 3.
+    optimization->add_constraint("2 * x1 - 6", Condition::LessEqual, {0.0f});
+
+    const MatrixR results = optimization->perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+
+    for (Index i = 0; i < results.rows(); i++)
+        EXPECT_LE(results(i, 0), 3.0f + 1e-3f) << "row " << i;
+}
+
+
+TEST_P(ResponseDriver, OutputConstraintHolds)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
+
+    // Half the box already satisfies y >= median, so the constraint is attainable by construction.
+    const auto [median, span] = sample_response(*setup.network, 2, 0.0f, 10.0f);
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("x1", Sense::Minimize);
+    optimization->add_constraint("y", Condition::GreaterEqual, {median});
+
+    const MatrixR results = optimization->perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+
+    for (Index i = 0; i < results.rows(); i++)
+        EXPECT_GE(results(i, 2), median - 1e-2f*span) << "row " << i << " y=" << results(i, 2);
+}
+
+
+TEST_P(ResponseDriver, AllowedSetKeepsResultsOnTheListedValues)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("y", Sense::Minimize);
+    optimization->add_constraint("x1", Condition::AllowedSet, {1.0f, 5.0f, 9.0f});
+
+    const MatrixR results = optimization->perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+
+    for (Index i = 0; i < results.rows(); i++)
     {
         const float x1 = results(i, 0);
-        const float distance = min(min(abs(x1 - float(1)), abs(x1 - float(5))), abs(x1 - float(9)));
-        EXPECT_LT(distance, float(1e-2)) << "x1 = " << x1 << " is not in {1,5,9}";
+
+        EXPECT_LT(min(min(abs(x1 - 1.0f), abs(x1 - 5.0f)), abs(x1 - 9.0f)), 1e-2f)
+            << "row " << i << " x1=" << x1 << " is not in {1, 5, 9}";
     }
 }
 
-TEST(ResponseOptimizationAllowedSet, FormulaMembershipBranchesToEachValue)
+
+TEST_P(ResponseDriver, FixedObjectiveApproachesAReachableTarget)
 {
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(10),
-                                float(-1), float(1));
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
 
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_formula_constraint("x1 + x2", vector<float>{ float(3), float(7) });
+    const auto [target, span] = sample_response(*setup.network, 2, 0.0f, 10.0f);
 
-    opt.set_iterations(3);
-    opt.set_evaluations_number(600);
+    ASSERT_GT(span, 0.0f);
 
-    const MatrixR results = opt.perform_response_optimization();
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("y", Sense::Fixed, target);
+
+    const MatrixR results = optimization->perform_response_optimization();
 
     ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-    {
-        const float sum = results(i, 0) + results(i, 1);
-        const float distance = min(abs(sum - float(3)), abs(sum - float(7)));
-        EXPECT_LT(distance, float(5e-2)) << "x1+x2 = " << sum << " is not in {3,7}";
-    }
+
+    EXPECT_LE(abs(results(0, 2) - target), 0.1f*span)
+        << "y=" << results(0, 2) << " target=" << target << " span=" << span;
 }
 
-TEST(ResponseOptimizationAllowedSet, EntangledInputBranchesAndSkipsInfeasibleValue)
+
+TEST_P(ResponseDriver, MultipleObjectivesReturnAFeasibleFront)
 {
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(10),
-                                float(-1), float(1));
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
 
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_constraint("x1", vector<float>{ float(2), float(8) });
-    opt.set_formula_constraint("x1 + x2",
-                               ComparisonOperator::LessEqualTo,
-                               float(0), float(5));
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
 
-    opt.set_iterations(3);
-    opt.set_evaluations_number(800);
+    optimization->add_objective("y", Sense::Maximize);
+    optimization->add_objective("x1", Sense::Minimize);
+    optimization->add_constraint("x1 + x2", Condition::LessEqual, {8.0f});
 
-    const MatrixR results = opt.perform_response_optimization();
+    const MatrixR results = optimization->perform_response_optimization();
 
     ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
+    ASSERT_EQ(results.cols(), 3);
+
+    for (Index i = 0; i < results.rows(); i++)
     {
-        EXPECT_NEAR(results(i, 0), float(2), float(1e-2)) << "row " << i << " x1 not on the feasible branch";
-        EXPECT_LE(results(i, 0) + results(i, 1), float(5) + float(1e-2));
+        EXPECT_LE(results(i, 0) + results(i, 1), 8.0f + 1e-2f) << "row " << i;
+
+        for (Index j = 0; j < 2; j++)
+        {
+            EXPECT_GE(results(i, j), -1e-3f);
+            EXPECT_LE(results(i, j), 10.0f + 1e-3f);
+        }
     }
 }
 
-TEST(ResponseOptimizationAllowedSet, BudgetedPruningPreservesMembershipWithinBudget)
+
+TEST_P(ResponseDriver, ConflictingObjectivesFillTheRequestedFront)
 {
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(10),
-                                float(-1), float(1));
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
 
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_formula_constraint("x1 + x2", vector<float>{ float(2), float(4), float(6), float(8) });
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
 
-    opt.set_iterations(3);
-    opt.set_evaluations_number(500);
-    const Index budget = 8000;
-    opt.set_max_total_evaluations(budget);
+    optimization->add_objective("x1", Sense::Maximize);
+    optimization->add_objective("x2", Sense::Maximize);
+    optimization->add_constraint("x1 + x2", Condition::LessEqual, {8.0f});
 
-    const MatrixR results = opt.perform_response_optimization();
+    const MatrixR results = optimization->perform_response_optimization();
+
+    EXPECT_EQ(results.rows(), 100);
+
+    for (Index i = 0; i < results.rows(); i++)
+    {
+        EXPECT_LE(results(i, 0) + results(i, 1), 8.0f + 1e-2f) << "row " << i << " is not feasible";
+
+        EXPECT_GE(results(i, 0) + results(i, 1), 8.0f - 0.15f)
+            << "row " << i << " sits behind the front: x1=" << results(i, 0) << " x2=" << results(i, 1);
+    }
+
+    EXPECT_GT(results.col(0).maxCoeff() - results.col(0).minCoeff(), 4.0f);
+}
+
+
+// -----------------------------------------------------------------------------
+// Categorical inputs: one-hot blocks stay on the lattice
+// -----------------------------------------------------------------------------
+
+TEST(CategoricalBlocks, ReportsOneBlockPerCategoricalVariable)
+{
+    vector<Variable> variables(3);
+
+    variables[0].name = "x1";
+    variables[0].type = VariableType::Numeric;
+
+    variables[1].name = "material";
+    variables[1].type = VariableType::Categorical;
+    variables[1].set_categories({"steel", "copper", "brass"});
+
+    variables[2].name = "x2";
+    variables[2].type = VariableType::Numeric;
+
+    const vector<pair<Index, Index>> blocks = get_categorical_blocks(variables);
+
+    ASSERT_EQ(blocks.size(), size_t(1));
+    EXPECT_EQ(blocks[0].first, 1);
+    EXPECT_EQ(blocks[0].second, 3);
+
+    EXPECT_TRUE(get_categorical_blocks({variables[0], variables[2]}).empty());
+}
+
+
+TEST_P(ResponseDriver, CategoricalResultsAreOneHot)
+{
+    CategoricalApproximation setup({"x1", "x2"}, "material", {"steel", "copper", "brass"});
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("y1", Sense::Minimize);
+
+    const MatrixR results = optimization->perform_response_optimization();
 
     ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
-    {
-        const float sum = results(i, 0) + results(i, 1);
-        const float distance = min(min(abs(sum - float(2)), abs(sum - float(4))),
-                                   min(abs(sum - float(6)), abs(sum - float(8))));
-        EXPECT_LT(distance, float(5e-2)) << "x1+x2 = " << sum << " is not in {2,4,6,8}";
-    }
+
+    for (Index i = 0; i < results.rows(); i++)
+        EXPECT_GE(read_category(results, i, 2, 3), 0)
+            << "row " << i << " holds "
+            << results(i, 2) << ", " << results(i, 3) << ", " << results(i, 4);
 }
 
-TEST(ResponseOptimizationAllowedSet, ExhaustiveSwitchPreservesMembership)
+
+TEST_P(ResponseDriver, CategoricalResultsSurviveAConstraint)
 {
-    MinimalApproximation setup({ "x1", "x2" }, { "y" },
-                                float(0), float(10),
-                                float(-1), float(1));
+    CategoricalApproximation setup({"x1", "x2"}, "material", {"steel", "copper", "brass"});
 
-    ResponseOptimization opt(setup.network.get());
-    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_formula_constraint("x1 + x2", vector<float>{ float(2), float(4), float(6), float(8) });
-    opt.set_branch_mode(ResponseOptimization::BranchMode::Exhaustive);
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
 
-    opt.set_iterations(3);
-    opt.set_evaluations_number(400);
+    optimization->add_objective("y1", Sense::Minimize);
+    optimization->add_constraint("x1 + x2", Condition::Equal, {5.0f});
 
-    const MatrixR results = opt.perform_response_optimization();
+    const MatrixR results = optimization->perform_response_optimization();
 
     ASSERT_GT(results.rows(), 0);
-    for (Index i = 0; i < results.rows(); ++i)
+
+    for (Index i = 0; i < results.rows(); i++)
     {
-        const float sum = results(i, 0) + results(i, 1);
-        const float distance = min(min(abs(sum - float(2)), abs(sum - float(4))),
-                                   min(abs(sum - float(6)), abs(sum - float(8))));
-        EXPECT_LT(distance, float(5e-2)) << "x1+x2 = " << sum << " is not in {2,4,6,8}";
+        EXPECT_GE(read_category(results, i, 2, 3), 0) << "row " << i;
+
+        EXPECT_NEAR(results(i, 0) + results(i, 1), 5.0f, 5e-2f) << "row " << i;
     }
 }
 
-TEST(ResponseOptimizationCategory, OneHotForwardRespectsAllowedSet)
+
+TEST_P(ResponseDriver, CategoricalMultiObjectiveResultsAreOneHot)
 {
-    ApproximationNetwork network(Shape{ 4 }, Shape{ 4 }, Shape{ 1 });
+    CategoricalApproximation setup({"x1", "x2"}, "material", {"steel", "copper", "brass"}, 2);
 
-    Variable x; x.name = "x"; x.set_role("Input"); x.type = VariableType::Numeric;
-    Variable cat; cat.name = "cat"; cat.set_role("Input"); cat.type = VariableType::Categorical;
-    cat.set_categories({ "A", "B", "C" });
-    network.set_input_variables({ x, cat });
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
 
-    Variable y; y.name = "y"; y.set_role("Target"); y.type = VariableType::Numeric;
-    network.set_output_variables({ y });
+    optimization->add_objective("y1", Sense::Minimize);
+    optimization->add_objective("y2", Sense::Maximize);
 
-    vector<Descriptives> in_desc(4);
-    in_desc[0] = Descriptives(float(0), float(10), float(5), float(2.5));
-    for (Index j = 1; j < 4; ++j)
-        in_desc[j] = Descriptives(float(0), float(1), float(0.5), float(0.5));
-    static_cast<Scaling*>(network.get_first("Scaling"))->set_descriptives(in_desc);
-
-    static_cast<Unscaling*>(network.get_first("Unscaling"))
-        ->set_descriptives({ Descriptives(float(-1), float(1), float(0), float(0.5)) });
-
-    ResponseOptimization opt(&network);
-    opt.set_objective("y", ResponseOptimization::Sense::Maximize);
-    opt.set_constraint("cat", vector<float>{ float(0), float(2) });
-
-    opt.set_iterations(3);
-    opt.set_evaluations_number(600);
-
-    const MatrixR results = opt.perform_response_optimization();
+    const MatrixR results = optimization->perform_response_optimization();
 
     ASSERT_GT(results.rows(), 0);
-    ASSERT_EQ(results.cols(), 5);
-    for (Index i = 0; i < results.rows(); ++i)
-    {
-        const float a = results(i, 1), b = results(i, 2), c = results(i, 3);
-        EXPECT_NEAR(a + b + c, float(1), float(1e-3)) << "row " << i << " not one-hot";
-        EXPECT_LT(b, float(1e-3)) << "row " << i << " category B should be excluded";
-        const bool one_hot = (a > float(0.99) && c < float(0.01))
-                          || (c > float(0.99) && a < float(0.01));
-        EXPECT_TRUE(one_hot) << "row " << i << " a=" << a << " c=" << c;
-    }
+
+    for (Index i = 0; i < results.rows(); i++)
+        EXPECT_GE(read_category(results, i, 2, 3), 0) << "row " << i;
 }
+
+
+TEST_P(ResponseDriver, CategoricalSearchMatchesAScanOverCategories)
+{
+    CategoricalApproximation setup({"x1", "x2"}, "material", {"steel", "copper", "brass"});
+
+    const vector<float> scan_values = scan_categories(*setup.network, 2, 3, 0.0f, 10.0f);
+
+    const float best_scan_value = ranges::max(scan_values);
+
+    ASSERT_GT(best_scan_value - ranges::min(scan_values), 0.5f);
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("y1", Sense::Minimize);
+
+    const MatrixR results = optimization->perform_response_optimization();
+
+    ASSERT_EQ(results.rows(), 1);
+
+    const Index category = read_category(results, 0, 2, 3);
+
+    ASSERT_GE(category, 0);
+
+    EXPECT_GE(-results(0, 5), best_scan_value - 1e-2f)
+        << "kept category " << category << " worth " << -results(0, 5)
+        << " against a scan best of " << best_scan_value;
+}
+
+
+INSTANTIATE_TEST_SUITE_P(Drivers,
+                         ResponseDriver,
+                         testing::Values(Driver::Contraction, Driver::Genetic),
+                         driver_name);
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

@@ -17,6 +17,12 @@ namespace opennn
 
 class NeuralNetwork;
 
+// @todo this re-implements the network's own forward pass, and the reverse pass it does
+// not have, against a snapshot of its layers taken at build(). It exists because
+// NeuralNetwork exposes calculate_outputs but no vector-Jacobian product, so the snapshot
+// is the only way to differentiate a trained model with respect to its inputs. It also
+// means every new layer type has to be taught here a second time -- build() throws on the
+// ones that are not. Delete it once NeuralNetwork can be asked for a vjp directly.
 struct NetworkDifferential
 {
     enum class Kind { Scale, Dense, Unscale, Clamp, Activate };
@@ -191,12 +197,6 @@ struct NetworkDifferential
         }
         return carried;
     }
-};
-
-struct NetworkJacobian
-{
-    unique_ptr<NetworkDifferential> differential;
-    bool ready = false;
 };
 
 }
