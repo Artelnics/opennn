@@ -1020,14 +1020,6 @@ CompiledExpression compile_ast(const ExpressionNode& ast)
             result.input_gradient.emplace_back(input_column, move(program));
         }
 
-        result.output_gradient.reserve(result.output_indices.size());
-        for (const Index output_column : result.output_indices)
-        {
-            const ExpressionNodePtr partial = differentiate(ast, true, output_column);
-            vector<ExpressionOp> program;
-            emit_operations(*partial, program);
-            result.output_gradient.emplace_back(output_column, move(program));
-        }
     }
 
     result.smoothness = is_smooth(ast) ? ExpressionSmoothness::Smooth : ExpressionSmoothness::NonSmooth;
@@ -1100,29 +1092,6 @@ CompiledExpression compile_expression(const string& expression,
 }
 
 
-ExpressionEvaluator::ExpressionEvaluator(const string& expression)
-    : source(expression)
-{
-    throw_if(expression.empty(), "ExpressionEvaluator: empty expression");
-}
-
-float ExpressionEvaluator::evaluate(const map<string, float>& variables) const
-{
-    vector<pair<string, Index>> input_columns;
-    input_columns.reserve(variables.size());
-    VectorR values(Index(variables.size()));
-    Index index = 0;
-    for (const auto& [name, value] : variables)
-    {
-        input_columns.emplace_back(name, index);
-        values(index) = value;
-        ++index;
-    }
-    const CompiledExpression compiled = compile_expression(source, input_columns, {});
-    return compiled.evaluate(values, VectorR());
-}
-
-
 bool same_expression(const CompiledExpression& first, const CompiledExpression& second)
 {
     if (first.linearity != second.linearity) return false;
@@ -1157,20 +1126,6 @@ VectorR evaluate_input_gradient(const CompiledExpression& expression, const Vect
     return gradient;
 }
 
-
-VectorR evaluate_output_cotangent(const CompiledExpression& expression, const VectorR& point, const VectorR& output)
-{
-    VectorR cotangent = VectorR::Zero(output.size());
-
-    if (expression.linearity == ExpressionLinearity::Linear)
-        for (const auto& [column, coefficient] : expression.linear_output_terms)
-            cotangent(column) = coefficient;
-    else
-        for (const auto& [column, program] : expression.output_gradient)
-            cotangent(column) = evaluate_operations(program, point, output);
-
-    return cotangent;
-}
 
 }
 

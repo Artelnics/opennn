@@ -24,8 +24,6 @@ private:
     MatrixR single_optimization() override;
     MatrixR multi_optimization() override;
 
-    pair<VectorR, VectorR> initialize_individual(const pair<VectorR, VectorR>&) const;
-
     pair<MatrixR, MatrixR> initialize_population(const pair<VectorR, VectorR>&) const;
 
     vector<Index> calculate_fitness(const MatrixR&, const MatrixR&) const;

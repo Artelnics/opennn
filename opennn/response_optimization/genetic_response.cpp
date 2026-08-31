@@ -80,44 +80,33 @@ GeneticResponse::GeneticResponse(NeuralNetwork* new_neural_network)
 }
 
 
-pair<VectorR, VectorR> GeneticResponse::initialize_individual(const pair<VectorR, VectorR>& domain) const
-{
-    for (Index i = 0; i < iterations_number; i++)
-    {
-        const VectorR input = get_feasible_input(calculate_random_input(domain), domain);
-
-        const VectorR output = neural_network->calculate_outputs(input.transpose()).row(0).transpose();
-
-
-        if (ranges::none_of(constraints,
-                            [&](const Constraint& constraint)
-                            { return isfinite(constraint.calculate_residual(input, output)); }))
-            return {input, output};
-    }
-
-    return {};
-}
-
-
 pair<MatrixR, MatrixR> GeneticResponse::initialize_population(const pair<VectorR, VectorR>& domain) const
 {
-    pair<MatrixR, MatrixR> population(MatrixR(points_number, domain.first.size()),
-                                      MatrixR(points_number, neural_network->get_outputs_number()));
+    const Index attempts_number = iterations_number*points_number;
 
-    for (Index i = 0; i < points_number; i++)
+    MatrixR inputs(points_number, domain.first.size());
+    MatrixR outputs(points_number, neural_network->get_outputs_number());
+
+    Index feasible_number = 0;
+
+    for (Index attempt = 0; attempt < attempts_number && feasible_number < points_number; attempt++)
     {
-        const auto [input, output] = initialize_individual(domain);
+        const auto [input, output] = get_feasible_point(calculate_random_input(domain), domain);
 
-        throw_if(input.size() == 0,
-                 "Only " + to_string(i) + " of " + to_string(points_number)
-                 + " individuals could be made feasible in " + to_string(iterations_number)
-                 + " attempts. The constraints may be impossible to satisfy.");
+        if (input.size() == 0) continue;
 
-        population.first.row(i) = input.transpose();
-        population.second.row(i) = output.transpose();
+        inputs.row(feasible_number) = input.transpose();
+        outputs.row(feasible_number) = output.transpose();
+
+        feasible_number++;
     }
 
-    return population;
+    throw_if(feasible_number < points_number,
+             "Only " + to_string(feasible_number) + " of " + to_string(points_number)
+             + " individuals could be made feasible in " + to_string(attempts_number)
+             + " attempts. The constraints may be impossible to satisfy.");
+
+    return {inputs, outputs};
 }
 
 
@@ -144,9 +133,7 @@ MatrixR GeneticResponse::multi_optimization()
 
     vector<Index> front = clean_front(population.first, population.second);
 
-    for (Index attempt_front = 0;
-         attempt_front < iterations_number && Index(front.size()) < requested_front_size;
-         attempt_front++)
+    for (Index i = 0; i < iterations_number && Index(front.size()) < requested_front_size; i++)
     {
         const vector<Index> parents =
             calculate_pareto_front(evaluate_objectives(population.first, population.second));
@@ -244,104 +231,79 @@ pair<MatrixR, MatrixR> GeneticResponse::recombinate_population(const MatrixR& pa
                                   random_integer(0, individuals_number - 1)))];
     };
 
-    pair<MatrixR, MatrixR> offspring;
+    const Index attempts_number = iterations_number*points_number;
 
-    for (Index i = 0; i < iterations_number && offspring.first.rows() < points_number; i++)
+    MatrixR inputs(points_number, parent_inputs.cols());
+    MatrixR outputs(points_number, neural_network->get_outputs_number());
+
+    Index feasible_number = 0;
+
+    for (Index i = 0; i < attempts_number && feasible_number < points_number; i += 2)
     {
-        const Index children_number = points_number - offspring.first.rows();
+        VectorR children[2] = {parent_inputs.row(select_parent()).transpose(),
+                               parent_inputs.row(select_parent()).transpose()};
 
-        MatrixR children(children_number, parent_inputs.cols());
+        if (random_uniform(0.0f, 1.0f) < crossover_probability)
+            crossover(children[0], children[1], domain);
 
-        for (Index j = 0; j < children_number; j += 2)
+        for (const VectorR& child : children)
         {
-            VectorR first_child = parent_inputs.row(select_parent()).transpose();
-            VectorR second_child = parent_inputs.row(select_parent()).transpose();
+            if (feasible_number == points_number) break;
 
-            if (random_uniform(0.0f, 1.0f) < crossover_probability)
-                crossover(first_child, second_child, domain);
+            const auto [input, output] = get_feasible_point(child, domain);
 
-            children.row(j) = first_child.transpose();
+            if (input.size() == 0) continue;
 
-            if (j + 1 < children_number)
-                children.row(j + 1) = second_child.transpose();
+            inputs.row(feasible_number) = input.transpose();
+            outputs.row(feasible_number) = output.transpose();
+
+            feasible_number++;
         }
-
-        for (Index j = 0; j < children_number; j++)
-            children.row(j) = get_feasible_input(children.row(j).transpose(), domain).transpose();
-
-        const MatrixR outputs = neural_network->calculate_outputs(children);
-
-        vector<Index> feasible_points;
-
-        for (Index j = 0; j < children_number; j++)
-        {
-            const VectorR child = children.row(j).transpose();
-            const VectorR output = outputs.row(j).transpose();
-
-            if (ranges::none_of(constraints,
-                                [&](const Constraint& constraint)
-                                { return isfinite(constraint.calculate_residual(child, output)); }))
-                feasible_points.push_back(j);
-        }
-
-        offspring = append_rows(offspring, {slice_rows(children, feasible_points),
-                                            slice_rows(outputs, feasible_points)});
     }
 
-    throw_if(offspring.first.rows() < points_number,
-             "Only " + to_string(offspring.first.rows()) + " of " + to_string(points_number)
-             + " children could be recombined into feasible points in " + to_string(iterations_number)
+    throw_if(feasible_number < points_number,
+             "Only " + to_string(feasible_number) + " of " + to_string(points_number)
+             + " children could be recombined into feasible points in " + to_string(attempts_number)
              + " attempts. The constraints may be impossible to satisfy.");
 
-    return offspring;
+    return {inputs, outputs};
 }
 
 
 pair<MatrixR, MatrixR> GeneticResponse::mutate_population(const MatrixR& offspring_inputs,
                                                           const pair<VectorR, VectorR>& domain) const
 {
-    pair<MatrixR, MatrixR> mutants;
+    if (offspring_inputs.rows() == 0) return {};
 
-    for (Index i = 0; i < iterations_number && mutants.first.rows() < points_number; i++)
+    const Index attempts_number = iterations_number*points_number;
+
+    MatrixR inputs(points_number, offspring_inputs.cols());
+    MatrixR outputs(points_number, neural_network->get_outputs_number());
+
+    Index feasible_number = 0;
+
+    for (Index attempt = 0; attempt < attempts_number && feasible_number < points_number; attempt++)
     {
-        const Index children_number = min(points_number - mutants.first.rows(), offspring_inputs.rows());
+        VectorR child = offspring_inputs.row(attempt % offspring_inputs.rows()).transpose();
 
-        MatrixR children = offspring_inputs.topRows(children_number);
+        mutate_individual(child, domain);
 
-        for (Index j = 0; j < children_number; j++)
-        {
-            VectorR child = children.row(j).transpose();
+        const auto [input, output] = get_feasible_point(child, domain);
 
-            mutate_individual(child, domain);
+        if (input.size() == 0) continue;
 
-            children.row(j) = get_feasible_input(child, domain).transpose();
-        }
+        inputs.row(feasible_number) = input.transpose();
+        outputs.row(feasible_number) = output.transpose();
 
-        const MatrixR outputs = neural_network->calculate_outputs(children);
-
-        vector<Index> feasible_points;
-
-        for (Index j = 0; j < children_number; j++)
-        {
-            const VectorR child = children.row(j).transpose();
-            const VectorR output = outputs.row(j).transpose();
-
-            if (ranges::none_of(constraints,
-                                [&](const Constraint& constraint)
-                                { return isfinite(constraint.calculate_residual(child, output)); }))
-                feasible_points.push_back(j);
-        }
-
-        mutants = append_rows(mutants, {slice_rows(children, feasible_points),
-                                        slice_rows(outputs, feasible_points)});
+        feasible_number++;
     }
 
-    throw_if(mutants.first.rows() < points_number,
-             "Only " + to_string(mutants.first.rows()) + " of " + to_string(points_number)
-             + " children survived mutation feasibly in " + to_string(iterations_number)
+    throw_if(feasible_number < points_number,
+             "Only " + to_string(feasible_number) + " of " + to_string(points_number)
+             + " children survived mutation feasibly in " + to_string(attempts_number)
              + " attempts. The constraints may be impossible to satisfy.");
 
-    return mutants;
+    return {inputs, outputs};
 }
 
 

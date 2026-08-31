@@ -54,7 +54,6 @@ struct CompiledExpression
     float linear_constant = 0.0f;
 
     vector<pair<Index, vector<ExpressionOp>>> input_gradient;
-    vector<pair<Index, vector<ExpressionOp>>> output_gradient;
 
     float evaluate(const VectorR&, const VectorR&) const;
 };
@@ -110,8 +109,6 @@ bool same_expression(const CompiledExpression&, const CompiledExpression&);
 
 VectorR evaluate_input_gradient(const CompiledExpression&, const VectorR& point, const VectorR& output);
 
-VectorR evaluate_output_cotangent(const CompiledExpression&, const VectorR& point, const VectorR& output);
-
 ExpressionNodePtr parse_expression_tree(const string&,
                                         const vector<pair<string, Index>>&,
                                         const vector<pair<string, Index>>&);
@@ -124,15 +121,6 @@ ExpressionNodePtr make_neg(ExpressionNodePtr);
 
 ExpressionNodePtr make_sub(ExpressionNodePtr, ExpressionNodePtr);
 
-
-class ExpressionEvaluator
-{
-public:
-    explicit ExpressionEvaluator(const string&);
-    float evaluate(const map<string, float>& = {}) const;
-private:
-    string source;
-};
 
 }
 

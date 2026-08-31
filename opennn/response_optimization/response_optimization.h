@@ -14,12 +14,6 @@
 namespace opennn
 {
 
-bool gauss_newton_step(const MatrixR& jacobian,
-                       const VectorR& residuals,
-                       const VectorR& inferior,
-                       const VectorR& superior,
-                       VectorR& point);
-
 class NeuralNetwork;
 
 class ResponseOptimization
@@ -55,6 +49,8 @@ public:
         float calculate_residual(const VectorR&, const VectorR&) const;
 
         pair<float, float> calculate_bounds() const;
+
+        float calculate_inset(float residual, float margin) const;
     };
 
     explicit ResponseOptimization(NeuralNetwork* = nullptr);
@@ -75,13 +71,13 @@ protected:
 
     virtual MatrixR single_optimization() = 0;
 
-	virtual MatrixR multi_optimization() = 0;
+    virtual MatrixR multi_optimization() = 0;
 
     pair<VectorR, VectorR> calculate_domain() const;
 
     VectorR calculate_random_input(const pair<VectorR, VectorR>&) const;
 
-    VectorR get_feasible_input(VectorR, const pair<VectorR, VectorR>&) const;
+    pair<VectorR, VectorR> get_feasible_point(VectorR, const pair<VectorR, VectorR>&) const;
 
     MatrixR evaluate_objectives(const MatrixR&, const MatrixR&) const;
 
@@ -98,13 +94,17 @@ private:
 
     VectorR assign_categories(const VectorR&) const;
 
+    MatrixR estimate_jacobian(const VectorR&, const VectorR&, const pair<VectorR, VectorR>&) const;
+
     static float bound_tolerance(float bound) { return max(EPSILON, abs(bound) * bound_tolerance_factor); }
 
     static constexpr float bound_tolerance_factor = 1e-4f;
 
-    Index maximum_adjustment_passes = 16;
+    static constexpr float difference_step = 1e-3f;
 
-    Index density_neighbors_number = 20;
+    Index repair_passes = 8;
+
+    float feasibility_margin = 0.1f;
 
     float diversity_factor = 0.2f;
 };

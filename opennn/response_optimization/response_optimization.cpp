@@ -21,35 +21,6 @@
 namespace opennn
 {
 
-bool gauss_newton_step(const MatrixR& jacobian,
-                       const VectorR& residuals,
-                       const VectorR& inferior,
-                       const VectorR& superior,
-                       VectorR& point)
-{
-    vector<Index> projectable;
-    projectable.reserve(jacobian.rows());
-
-    for (Index i = 0; i < jacobian.rows(); ++i)
-        if (jacobian.row(i).cwiseAbs().maxCoeff() > 0.0f)
-            projectable.push_back(i);
-
-    if (projectable.empty())
-        return false;
-
-    const MatrixR reduced_jacobian = slice_rows(jacobian, projectable);
-    const VectorR reduced_residuals = slice_rows(residuals, projectable);
-
-    MatrixR gram = reduced_jacobian * reduced_jacobian.transpose();
-    gram.diagonal().array() += EPSILON;
-
-    point -= reduced_jacobian.transpose() * gram.ldlt().solve(reduced_residuals);
-    point = point.cwiseMax(inferior).cwiseMin(superior);
-
-    return true;
-}
-
-
 ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
 {
     set(new_neural_network);
@@ -120,96 +91,180 @@ float ResponseOptimization::Constraint::calculate_residual(const VectorR& input,
 }
 
 
-VectorR ResponseOptimization::get_feasible_input(VectorR input, const pair<VectorR, VectorR>& domain) const
+float ResponseOptimization::Constraint::calculate_inset(const float residual, const float margin) const
 {
-    input = assign_categories(input);
+    if (condition == Condition::Equal || condition == Condition::AllowedSet)
+        return 0.0f;
 
-    const VectorR no_output;
+    const auto [lower_bound, upper_bound] = calculate_bounds();
 
-    vector<const Constraint*> violated_constraints;
-    vector<float> residuals;
+    const float inset = min(margin*abs(residual), 0.5f*(upper_bound - lower_bound));
 
-    violated_constraints.reserve(constraints.size());
-    residuals.reserve(constraints.size());
+    return (residual > 0.0f) ? inset : -inset;
+}
 
-    for (Index pass = 0; pass < maximum_adjustment_passes; pass++)
+
+MatrixR ResponseOptimization::estimate_jacobian(const VectorR& input,
+                                                const VectorR& values,
+                                                const pair<VectorR, VectorR>& domain) const
+{
+    MatrixR jacobian = MatrixR::Zero(values.size(), input.size());
+
+    vector<char> categorical_columns(size_t(input.size()), 0);
+
+    for (const auto& [first_column, categories_number] :
+         get_categorical_blocks(neural_network->get_input_variables()))
+        fill_n(categorical_columns.begin() + first_column, categories_number, 1);
+
+    VectorR probe = input;
+
+    for (Index j = 0; j < input.size(); j++)
     {
-        violated_constraints.clear();
-        residuals.clear();
+        if (categorical_columns[size_t(j)]) continue;
 
-        for (const Constraint& constraint : constraints)
-        {
-            if (is_output_coupled(constraint.expression))
-                continue;
+        const float span = domain.second(j) - domain.first(j);
 
-            bool holds_when_met = false;
+        if (span <= 0.0f) continue;
 
-            switch (constraint.condition)
-            {
-            case Constraint::Condition::Equal:
-            case Constraint::Condition::AllowedSet:
+        float step = difference_step*max(span, abs(input(j)));
 
-                holds_when_met = true;
-                break;
+        if (step <= EPSILON) continue;
 
-            case Constraint::Condition::Between:
-            case Constraint::Condition::GreaterEqual:
-            case Constraint::Condition::LessEqual:
-            case Constraint::Condition::Greater:
-            case Constraint::Condition::Less:
+        if (input(j) + step > domain.second(j)) step = -step;
 
-                break;
+        if (input(j) + step < domain.first(j)) continue;
 
+        probe(j) = input(j) + step;
 
-            case Constraint::Condition::Integer:
+        const VectorR probe_output = neural_network->calculate_outputs(probe.transpose()).row(0).transpose();
 
+        VectorR probe_values(values.size());
 
-            case Constraint::Condition::Cardinality:
+        for (Index i = 0; i < values.size(); i++)
+            probe_values(i) = constraints[size_t(i)].expression.evaluate(probe, probe_output);
 
-                continue;
-            }
+        probe(j) = input(j);
 
-            const float residual = constraint.calculate_residual(input, no_output);
+        if (!probe_values.allFinite()) continue;
 
-            if (!isfinite(residual) && !holds_when_met)
-                continue;
-
-            violated_constraints.push_back(&constraint);
-            residuals.push_back(isfinite(residual) ? residual : 0.0f);
-        }
-
-        if (violated_constraints.empty())
-            break;
-
-        if (VectorR::Map(residuals.data(), Index(residuals.size())).cwiseAbs().maxCoeff() <= EPSILON)
-            break;
-
-        MatrixR constraints_jacobian(Index(violated_constraints.size()), input.size());
-        VectorR scaled_residuals(Index(violated_constraints.size()));
-
-        for (Index i = 0; i < Index(violated_constraints.size()); i++)
-        {
-            VectorR gradient = evaluate_input_gradient(violated_constraints[size_t(i)]->expression, input, no_output);
-
-            if (!gradient.allFinite())
-                gradient = VectorR::Zero(input.size());
-
-            const float norm = gradient.norm();
-
-            constraints_jacobian.row(i) = (norm > 0.0f ? VectorR(gradient/norm) : gradient).transpose();
-            scaled_residuals(i) = (norm > 0.0f) ? residuals[size_t(i)]/norm : 0.0f;
-        }
-
-        const VectorR previous_input = input;
-
-        if (!gauss_newton_step(constraints_jacobian, scaled_residuals, domain.first, domain.second, input))
-            break;
-
-        if ((input - previous_input).cwiseAbs().maxCoeff() <= EPSILON)
-            break;
+        jacobian.col(j) = (probe_values - values)/step;
     }
 
-    return input;
+    return jacobian;
+}
+
+
+pair<VectorR, VectorR> ResponseOptimization::get_feasible_point(VectorR input,
+                                                               const pair<VectorR, VectorR>& domain) const
+{
+    const Index constraints_number = Index(constraints.size());
+
+    const auto evaluate = [&](const VectorR& point, VectorR& point_values, VectorR& point_residuals)
+    {
+        const VectorR point_output = neural_network->calculate_outputs(point.transpose()).row(0).transpose();
+
+        for (Index i = 0; i < constraints_number; i++)
+        {
+            const Constraint& constraint = constraints[size_t(i)];
+
+            point_values(i) = constraint.expression.evaluate(point, point_output);
+
+            const float residual = constraint.calculate_residual(point, point_output);
+
+            point_residuals(i) = isfinite(residual)
+                               ? residual + constraint.calculate_inset(residual, feasibility_margin)
+                               : 0.0f;
+        }
+
+        return point_output;
+    };
+
+    input = assign_categories(input.cwiseMax(domain.first).cwiseMin(domain.second));
+
+    VectorR values(constraints_number);
+    VectorR residuals(constraints_number);
+
+    VectorR output = evaluate(input, values, residuals);
+
+    if ((residuals.array() == 0.0f).all())
+        return {input, output};
+
+    MatrixR jacobian = estimate_jacobian(input, values, domain);
+
+    VectorR trial_values(constraints_number);
+    VectorR trial_residuals(constraints_number);
+
+    for (Index pass = 0; pass < repair_passes; pass++)
+    {
+        MatrixR system = MatrixR::Zero(constraints_number, input.size());
+        VectorR scaled_residuals = VectorR::Zero(constraints_number);
+
+        for (Index i = 0; i < constraints_number; i++)
+        {
+            const auto [lower_bound, upper_bound] = constraints[size_t(i)].calculate_bounds();
+
+            if (!isfinite(lower_bound) && !isfinite(upper_bound)) continue;
+
+            if (!jacobian.row(i).allFinite()) continue;
+
+            const float norm = jacobian.row(i).norm();
+
+            if (norm <= 0.0f) continue;
+
+            system.row(i) = jacobian.row(i)/norm;
+            scaled_residuals(i) = residuals(i)/norm;
+        }
+
+        MatrixR gram = system*system.transpose();
+
+        gram.diagonal().array() += EPSILON;
+
+        const VectorR direction = -(system.transpose()*gram.ldlt().solve(scaled_residuals));
+
+        if (direction.squaredNorm() <= EPSILON) break;
+
+        VectorR trial, trial_output;
+
+        float length = 1.0f;
+
+        bool improved = false;
+
+        for (Index attempt = 0; attempt < repair_passes; attempt++)
+        {
+            trial = assign_categories((input + length*direction).cwiseMax(domain.first).cwiseMin(domain.second));
+
+            trial_output = evaluate(trial, trial_values, trial_residuals);
+
+            if (trial_residuals.cwiseAbs().maxCoeff() < residuals.cwiseAbs().maxCoeff())
+            {
+                improved = true;
+                break;
+            }
+
+            length *= 0.5f;
+        }
+
+        if (!improved) break;
+
+        const VectorR step = trial - input;
+
+        const float squared_length = step.squaredNorm();
+
+        if (squared_length <= EPSILON) break;
+
+        if (trial_values.allFinite() && values.allFinite())
+            jacobian += (trial_values - values - jacobian*step)*step.transpose()/squared_length;
+
+        input = trial;
+        output = trial_output;
+        values = trial_values;
+        residuals = trial_residuals;
+
+        if ((residuals.array() == 0.0f).all())
+            return {input, output};
+    }
+
+    return {};
 }
 
 
@@ -454,7 +509,10 @@ vector<Index> ResponseOptimization::clean_front(const MatrixR& inputs, const Mat
 
     const MatrixR point_values = minmax_score(slice_rows(objective_values, pareto_front));
 
-    const MatrixR distances = calculate_distances(point_values);
+    const vector<Index> extremes = extreme_indices(point_values);
+
+    const Index cluster_size = max(Index(1),
+                                   Index(diversity_factor*float(requested_front_size))/Index(extremes.size()));
 
     vector<char> chosen(pareto_front.size(), 0);
 
@@ -462,55 +520,23 @@ vector<Index> ResponseOptimization::clean_front(const MatrixR& inputs, const Mat
 
     selection.reserve(size_t(requested_front_size));
 
-    const auto select_point = [&](const Index point)
-    {
-        if (Index(selection.size()) >= requested_front_size || chosen[size_t(point)])
-            return;
-
-        chosen[size_t(point)] = 1;
-
-        selection.push_back(point);
-    };
-
-    const auto select_ranked = [&](const VectorI& ranking, const Index ranked_quota)
-    {
-        for (Index i = 0, taken = 0; i < ranking.size() && taken < ranked_quota; i++)
-            if (!chosen[size_t(ranking(i))])
-            {
-                select_point(ranking(i));
-
-                taken++;
-            }
-    };
-
-    const Index diversity_quota = Index(diversity_factor*float(requested_front_size));
-
-    const vector<Index> extremes = extreme_indices(point_values);
-
-    const Index extreme_cluster_size = max(Index(1), diversity_quota/Index(extremes.size()));
-
     for (const Index extreme : extremes)
     {
         const VectorI cluster = get_nearest_points(point_values,
                                                    point_values.row(extreme).transpose(),
-                                                   extreme_cluster_size);
+                                                   cluster_size);
 
-        for (Index i = 0; i < cluster.size(); i++)
-            select_point(cluster(i));
+        for (Index i = 0; i < cluster.size() && Index(selection.size()) < requested_front_size; i++)
+        {
+            if (chosen[size_t(cluster(i))]) continue;
+
+            chosen[size_t(cluster(i))] = 1;
+
+            selection.push_back(cluster(i));
+        }
     }
 
-    select_ranked(maximal_indices(local_outlier_factor(point_values, density_neighbors_number),
-                                  Index(pareto_front.size())),
-                  diversity_quota);
-
-    MatrixR gap_distances = distances;
-
-    gap_distances.diagonal().setConstant(MAX);
-
-    select_ranked(maximal_indices(gap_distances.rowwise().minCoeff(), Index(pareto_front.size())),
-                  diversity_quota);
-
-    farthest_point_fill(distances, selection, requested_front_size);
+    farthest_point_fill(calculate_distances(point_values), selection, requested_front_size);
 
     for (Index& point : selection)
         point = pareto_front[size_t(point)];

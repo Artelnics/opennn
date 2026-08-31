@@ -101,29 +101,26 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
             const Index batch = sample_size - sampled;
 
             MatrixR inputs(batch, domain.first.size());
+            MatrixR outputs(batch, neural_network->get_outputs_number());
 
-            for (Index i = 0; i < batch; i++)
-                inputs.row(i) = get_feasible_input(calculate_random_input(domain), domain).transpose();
-
-            const MatrixR outputs = neural_network->calculate_outputs(inputs);
-
-            vector<Index> feasible_points;
+            Index feasible_number = 0;
 
             for (Index i = 0; i < batch; i++)
             {
-                const VectorR input = inputs.row(i).transpose();
-                const VectorR output = outputs.row(i).transpose();
+                const auto [input, output] = get_feasible_point(calculate_random_input(domain), domain);
 
-                if (ranges::none_of(constraints,
-                                    [&](const Constraint& constraint)
-                                    { return isfinite(constraint.calculate_residual(input, output)); }))
-                    feasible_points.push_back(i);
+                if (input.size() == 0) continue;
+
+                inputs.row(feasible_number) = input.transpose();
+                outputs.row(feasible_number) = output.transpose();
+
+                feasible_number++;
             }
 
-            sampled += Index(feasible_points.size());
+            sampled += feasible_number;
 
-            points = append_rows(points, {slice_rows(inputs, feasible_points),
-                                          slice_rows(outputs, feasible_points)});
+            points = append_rows(points, {inputs.topRows(feasible_number),
+                                          outputs.topRows(feasible_number)});
         }
 
         if (sampled < sample_size) starved_domains++;
