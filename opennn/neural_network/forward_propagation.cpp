@@ -314,7 +314,10 @@ void ForwardPropagation::set(
             for(size_t j = 0; j < forward_specs[i].size(); ++j)
             {
                 if(layers[i]->get_forward_slot_kind(j + 1)
-                   == ForwardSlotKind::TrainingOnly)
+                       == ForwardSlotKind::TrainingOnly
+                   || layers[i]->is_forward_slot_inference_elidable(
+                          j + 1,
+                          neural_network->get_device()))
                 {
                     forward_specs[i][j] = {};
                 }

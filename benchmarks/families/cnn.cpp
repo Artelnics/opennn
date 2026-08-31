@@ -34,6 +34,7 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/device_backend.h"
+#include "opennn/core/memory_debug.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/image_dataset.h"
 #include "opennn/neural_network/forward_propagation.h"
@@ -159,9 +160,20 @@ int main(int argc, char* argv[])
         // here for the same reason it does there: a training cell reuses the
         // plan across every batch of the corpus.
         //
-        // No workspace cap is set. The 16 MiB one on the inference path is
-        // justified by the winning ResNet-50 inference plans fitting under it,
-        // and wgrad and dgrad have no such measurement behind them.
+        // No workspace cap is set, and now for a measured reason rather than
+        // an absent one. The sweep below is indicative, not evidence: it was
+        // taken under WSL on floating clocks, which PROTOCOL 1 and 7 both
+        // exclude, so it is recorded to show the shape of the trade and wants
+        // repeating on the reference machine before anything is claimed from
+        // it. Swept at batch 128 on the 5070 Ti, samples/s against
+        // steady device MiB: uncapped 1660/7578, 256 MiB 1660/7569, 128 MiB
+        // 1658/7569, 64 MiB 1610/7474, 16 MiB 1610/7934. Memory only falls
+        // once throughput does -- every cap that keeps full speed also keeps
+        // the same footprint, because training memory is activations, not
+        // workspace: the arena is 5,335 MiB against a lifetime lower bound of
+        // 5,335 MiB, so there is nothing for a cap to reclaim. The 16 MiB rung
+        // is the warning: it costs 3% throughput and raises the peak, cuDNN
+        // having fallen back to plans that want more scratch elsewhere.
         if (options.device == Device::CUDA)
         {
             const char* const autotune = getenv("OPENNN_CONV_AUTOTUNE");
@@ -263,7 +275,10 @@ int main(int argc, char* argv[])
         Configuration::instance().set(options.device, options.precision);
         if (options.device == Device::CUDA)
         {
-            device::set_conv_autotune(true);
+            // Overridable like the training path's, so the choice stays
+            // measurable rather than baked in.
+            const char* const autotune = getenv("OPENNN_CONV_AUTOTUNE");
+            device::set_conv_autotune(!autotune || string(autotune) != "0");
             // The winning ResNet-50 plans fit below 16 MiB on the benchmark
             // GPUs. Excluding larger candidates before autotuning keeps the
             // same measured throughput while removing their cold-start peak.
@@ -397,6 +412,9 @@ int main(int argc, char* argv[])
     {
         return usage();
     }
+
+    // OPENNN_MEMORY_DEBUG=1 attributes the resident set member by member.
+    if (memory_debug::enabled()) memory_debug::print(cout);
 
     cout << "RESULT=OK\n";
 

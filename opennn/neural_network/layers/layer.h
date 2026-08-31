@@ -92,6 +92,15 @@ public:
     {
         return ForwardSlotKind::Pooled;
     }
+    // A slot the inference pass provably never writes, so the arena need not
+    // hold it. Distinct from TrainingOnly, which is a property of the slot
+    // alone: this one depends on which kernel inference will actually dispatch
+    // to, and that follows from the device the activations live on. The layer
+    // answers for its own fused paths; the default keeps every slot.
+    virtual bool is_forward_slot_inference_elidable(size_t, Device) const noexcept
+    {
+        return false;
+    }
     virtual size_t get_recomputable_forward_slot() const noexcept { return SIZE_MAX; }
     virtual void recompute_forward_slot(ForwardPropagation&, size_t) {}
     virtual bool backward_uses_forward_output() const noexcept { return true; }

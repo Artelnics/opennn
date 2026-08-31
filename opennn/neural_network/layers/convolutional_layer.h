@@ -64,6 +64,24 @@ public:
     {
         return slot == ReluMask ? ForwardSlotKind::TrainingOnly : ForwardSlotKind::Pooled;
     }
+    // With batch normalization folded into the weights, inference convolves
+    // straight into the output slot and never writes ConvolutionView -- so the
+    // arena was reserving a second full activation per layer that nothing
+    // touched. The guard mirrors forward_propagate_folded's own, because the
+    // unfolded fallback still writes the slot: no CUDA build, activations off
+    // the device, or weights outside fp32/bf16 all keep it.
+    bool is_forward_slot_inference_elidable(size_t slot, Device device) const noexcept override
+    {
+#ifdef OPENNN_HAS_CUDA
+        return slot == ConvolutionView
+            && batch_norm.active()
+            && device == Device::CUDA
+            && (weights_dtype == Type::FP32 || weights_dtype == Type::BF16);
+#else
+        (void)slot; (void)device;
+        return false;
+#endif
+    }
     bool folds_input_delta_addend(size_t input) const noexcept override { return input == 0; }
     size_t get_recomputable_forward_slot() const noexcept override
     {
