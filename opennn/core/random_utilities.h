@@ -15,6 +15,7 @@ namespace opennn
     void set_seed(unsigned seed);
 
     float random_uniform(float = -1, float = 1);
+    float random_normal(float = 0, float = 1);
     Index random_integer(Index, Index);
     bool random_bool(float = 0.5);
 

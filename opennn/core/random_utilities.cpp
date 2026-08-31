@@ -36,6 +36,13 @@ float random_uniform(float min, float max)
     return distribution(generator);
 }
 
+float random_normal(float mean, float standard_deviation)
+{
+    lock_guard<mutex> lock(rng_mutex);
+    normal_distribution<float> distribution(mean, standard_deviation);
+    return distribution(generator);
+}
+
 Index random_integer(Index min, Index max)
 {
     lock_guard<mutex> lock(rng_mutex);

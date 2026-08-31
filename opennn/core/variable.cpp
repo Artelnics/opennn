@@ -75,4 +75,42 @@ vector<string> get_variable_feature_names(const vector<Variable>& variables)
 
     return feature_names;
 }
+
+vector<pair<string, Index>> get_variable_columns(const vector<Variable>& variables)
+{
+    vector<pair<string, Index>> columns;
+
+    Index feature_index = 0;
+
+    for (const Variable& variable : variables)
+    {
+        const Index span = variable.get_feature_count();
+
+        if (span == 1)
+            columns.emplace_back(variable.name, feature_index);
+
+        feature_index += span;
+    }
+
+    return columns;
+}
+
+vector<pair<Index, Index>> get_categorical_blocks(const vector<Variable>& variables)
+{
+    vector<pair<Index, Index>> blocks;
+
+    Index feature_index = 0;
+
+    for (const Variable& variable : variables)
+    {
+        const Index span = variable.get_feature_count();
+
+        if (variable.is_categorical() && span > 1)
+            blocks.emplace_back(feature_index, span);
+
+        feature_index += span;
+    }
+
+    return blocks;
+}
 }

@@ -162,6 +162,12 @@ struct Variable
 
 vector<string> get_variable_feature_names(const vector<Variable>&);
 
+// Name and first feature index of every single-feature variable.
+vector<pair<string, Index>> get_variable_columns(const vector<Variable>&);
+
+// First feature index and width of every multi-feature categorical variable.
+vector<pair<Index, Index>> get_categorical_blocks(const vector<Variable>&);
+
 inline vector<Index> get_feature_dimensions(const vector<Variable>& variables)
 {
     vector<Index> dimensions(variables.size());
