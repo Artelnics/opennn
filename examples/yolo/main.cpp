@@ -918,7 +918,7 @@ int main(int argc, char* argv[])
                 }
                 cout << "Loaded " << loaded
                           << " backbone layers from " << darknet_weights << "\n";
-                backbone_pretrained_loaded = true;
+                backbone_pretrained_loaded = (loaded > 0);
             }
             else
             {
@@ -1022,7 +1022,7 @@ int main(int argc, char* argv[])
         
         csv_log << "epoch,train_error,val_error\n";
 
-        adam->post_epoch_callback = [&](Index epoch, float train_err, float val_err, NeuralNetwork*) 
+        adam->post_epoch_callback = [&](Index epoch, float train_err, float val_err, NeuralNetwork*)
         {
             csv_log << (epochs_done + static_cast<int>(epoch)) << ","
                     << train_err << "," << val_err << "\n";
