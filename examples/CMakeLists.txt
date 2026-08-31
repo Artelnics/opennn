@@ -21,6 +21,7 @@ foreach(example
     amazon_reviews
     bert
     breast_cancer
+    concrete
     ecg5000_anomaly_detection
     emotion_analysis
     forecasting_tinyml
@@ -33,6 +34,11 @@ foreach(example
     yolo)
     opennn_example(${example})
 endforeach()
+
+# The concrete example loads its pre-trained network from the source tree rather
+# than from the copied data folder, so it is given the directory to read from.
+target_compile_definitions(concrete PRIVATE
+    CONCRETE_EXAMPLE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/concrete")
 
 if(MSVC)
     target_compile_options(yolo PRIVATE /W4 /w14061)

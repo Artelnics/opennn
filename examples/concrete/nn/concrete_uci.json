@@ -1,0 +1,132 @@
+{
+  "NeuralNetwork": {
+    "Inputs": {
+      "InputsNumber": "8",
+      "Input": [
+        {
+          "Index": "1",
+          "Text": "cement"
+        },
+        {
+          "Index": "2",
+          "Text": "slag"
+        },
+        {
+          "Index": "3",
+          "Text": "fly_ash"
+        },
+        {
+          "Index": "4",
+          "Text": "water"
+        },
+        {
+          "Index": "5",
+          "Text": "sp"
+        },
+        {
+          "Index": "6",
+          "Text": "coarse_agg"
+        },
+        {
+          "Index": "7",
+          "Text": "fine_agg"
+        },
+        {
+          "Index": "8",
+          "Text": "age"
+        }
+      ]
+    },
+    "Layers": {
+      "LayersNumber": "5",
+      "Items": [
+        {
+          "Scaling": {
+            "Label": "",
+            "InputDimensions": "8",
+            "OutputDimensions": "8",
+            "Means": "281.1656188964844 73.89548492431641 54.1871337890625 181.5663604736328 6.20311164855957 972.9185791015625 773.578857421875 45.66213607788086",
+            "StandardDeviations": "104.5071411132812 86.27910614013672 63.99646759033203 21.35556793212891 5.973491668701172 77.75382232666016 80.17543029785156 63.1699104309082",
+            "Minimums": "102 0 0 121.75 -4.76837158203125e-07 801 594 1",
+            "Maximums": "540 359.3999938964844 200.1000061035156 247 32.19999694824219 1145 992.5999755859375 365",
+            "Scalers": "MeanStandardDeviation MeanStandardDeviation MeanStandardDeviation MeanStandardDeviation MeanStandardDeviation MeanStandardDeviation MeanStandardDeviation MeanStandardDeviation",
+            "MinRange": "-1",
+            "MaxRange": "1"
+          }
+        },
+        {
+          "Dense": {
+            "Label": "dense2d_layer_1",
+            "InputDimensions": "8",
+            "OutputDimensions": "52",
+            "Activation": "Tanh"
+          }
+        },
+        {
+          "Dense": {
+            "Label": "approximation_layer",
+            "InputDimensions": "52",
+            "OutputDimensions": "1",
+            "Activation": "Identity"
+          }
+        },
+        {
+          "Unscaling": {
+            "Label": "",
+            "InputDimensions": "1",
+            "OutputDimensions": "1",
+            "MinRange": "-1",
+            "MaxRange": "1",
+            "Neurons": [
+              {
+                "Descriptives": "2.331806182861328 82.59922790527344 35.81783676147461 16.70567893981934",
+                "Scaler": "MeanStandardDeviation"
+              }
+            ]
+          }
+        },
+        {
+          "Bounding": {
+            "Label": "",
+            "InputDimensions": "1",
+            "OutputDimensions": "1",
+            "BoundingMethod": "NoBounding"
+          }
+        }
+      ],
+      "SourceLayers": {
+        "SourceLayer": [
+          {
+            "LayerIndex": "0",
+            "Text": "-1"
+          },
+          {
+            "LayerIndex": "1",
+            "Text": "0"
+          },
+          {
+            "LayerIndex": "2",
+            "Text": "1"
+          },
+          {
+            "LayerIndex": "3",
+            "Text": "2"
+          },
+          {
+            "LayerIndex": "4",
+            "Text": "3"
+          }
+        ]
+      }
+    },
+    "Outputs": {
+      "OutputsNumber": "1",
+      "Output": [
+        {
+          "Index": "1",
+          "Text": "strength"
+        }
+      ]
+    }
+  }
+}

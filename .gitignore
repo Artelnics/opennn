@@ -127,6 +127,9 @@ build-wrapper-dump.json
 *.weights
 *.conv.*
 *.bin
+# The concrete example ships a trained network; NeuralNetwork::load needs this
+# sibling of concrete_uci.json, so it is not a regenerable cache.
+!examples/concrete/nn/concrete_uci.bin
 **/.cache/
 
 # Generated test data
