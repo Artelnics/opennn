@@ -316,6 +316,48 @@ def wait_for_idle(seconds: float = 30.0, mib_threshold: float = 1200.0,
 
     return False
 
+# --------------------------------------------------------------------------
+# CPU: the RAPL energy counter
+# --------------------------------------------------------------------------
+
+RAPL_ROOT = Path("/sys/class/powercap")
+
+def rapl_domain() -> dict[str, Any] | None:
+    """The CPU package energy counter, or None when it cannot be read.
+
+    `package-0` and not `core`: the package domain covers the cores *and* the
+    uncore -- the memory controller, the ring, the caches -- and a benchmark
+    that moves data pays for those as surely as it pays for the multipliers.
+    Reporting the core domain alone would flatter a bandwidth-bound run by
+    charging it only for arithmetic. Both are listed here so the artifact can
+    say which was used rather than leaving the reader to guess.
+
+    Returns None rather than raising when the counter is absent (AMD without
+    the module, a VM) or unreadable, which is its state on a stock kernel:
+    `energy_uj` is 0400 root-only after CVE-2020-8694, the PLATYPUS
+    side-channel. Making it readable is a deliberate act by whoever set the
+    machine up, and a run on a machine where nobody did should say the figure
+    is missing, not invent one.
+    """
+    for entry in sorted(RAPL_ROOT.glob("intel-rapl:*")):
+        name_file, energy_file = entry / "name", entry / "energy_uj"
+        try:
+            if name_file.read_text().strip() != "package-0":
+                continue
+            energy_file.read_text()                     # readable, not just present
+            wrap = int((entry / "max_energy_range_uj").read_text().strip())
+        except (OSError, ValueError):
+            continue
+        return {"path": energy_file, "name": "package-0", "wrap_uj": wrap}
+
+    return None
+
+def read_rapl_uj(domain: dict[str, Any]) -> int | None:
+    try:
+        return int(domain["path"].read_text().strip())
+    except (OSError, ValueError):
+        return None
+
 class Monitor:
     """Samples memory and power for the life of a run.
 
@@ -351,6 +393,9 @@ class Monitor:
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._process: subprocess.Popen | None = None
+        # (unix, cumulative joules) from the RAPL package counter, CPU runs only.
+        self.rapl_samples: list[tuple[float, float]] = []
+        self.rapl: dict[str, Any] | None = None
 
     def watch_rss(self, pid: int) -> None:
         """Track a child's peak *anonymous* resident set, for CPU runs.
@@ -384,8 +429,14 @@ class Monitor:
     def __enter__(self) -> "Monitor":
         # On CPU there is nothing on the card worth sampling: the GPU sits
         # idle, and reporting its memory and draw as the run's would be a
-        # measurement of the wrong device rather than a missing one.
+        # measurement of the wrong device rather than a missing one. The CPU's
+        # own package counter is worth sampling, and is where its energy
+        # figure comes from.
         if self.device != "cuda":
+            self.rapl = rapl_domain()
+            if self.rapl:
+                self._thread = threading.Thread(target=self._rapl_loop, daemon=True)
+                self._thread.start()
             return self
 
         if self._measure_idle:
@@ -431,6 +482,67 @@ class Monitor:
         except (ValueError, IndexError):
             return 0.0, 0.0
 
+    def _rapl_loop(self) -> None:
+        """Accumulate the package energy counter into monotonic joules.
+
+        RAPL reports energy consumed, not power, and the register is narrow
+        enough to wrap during a run -- `max_energy_range_uj` is about 65 kJ on
+        this part, which at a 60 W package is roughly 18 minutes, well inside a
+        transformer cell. Each step is therefore taken modulo the wrap point
+        before it is accumulated, so a wrap reads as a small positive step
+        rather than as a large negative one that would silently cancel out
+        most of the run's energy.
+        """
+        assert self.rapl
+        wrap = self.rapl["wrap_uj"]
+        previous = read_rapl_uj(self.rapl)
+        total_uj = 0
+
+        if previous is None:
+            return
+
+        self.rapl_samples.append((time.time(), 0.0))
+
+        while not self._stop.wait(self.interval_ms / 1000.0):
+            current = read_rapl_uj(self.rapl)
+            if current is None:
+                continue
+            total_uj += (current - previous) % (wrap + 1)
+            previous = current
+            self.rapl_samples.append((time.time(), total_uj / 1e6))
+
+    def rapl_joules(self, start: float | None = None,
+                    end: float | None = None) -> float | None:
+        """Package energy over [start, end], by difference of the counter.
+
+        A counter is differenced, not integrated: the trapezoid rule the GPU
+        path uses is for power samples, and applying it to cumulative energy
+        would be wrong. Endpoints are interpolated linearly so the window is
+        the engine's own timed region rather than the nearest sample to it.
+        """
+        if len(self.rapl_samples) < 2:
+            return None
+
+        def at(when: float | None, default_index: int) -> float:
+            if when is None:
+                return self.rapl_samples[default_index][1]
+            if when <= self.rapl_samples[0][0]:
+                return self.rapl_samples[0][1]
+            if when >= self.rapl_samples[-1][0]:
+                return self.rapl_samples[-1][1]
+            for i in range(len(self.rapl_samples) - 1):
+                (t0, j0), (t1, j1) = self.rapl_samples[i], self.rapl_samples[i + 1]
+                if t0 <= when <= t1:
+                    span = t1 - t0
+                    return j0 if span <= 0 else j0 + (j1 - j0) * (when - t0) / span
+            return self.rapl_samples[-1][1]
+
+        return max(at(end, -1) - at(start, 0), 0.0)
+
+    def rapl_window_samples(self, start: float | None, end: float | None) -> int:
+        return len([t for t, _ in self.rapl_samples
+                    if (start is None or t >= start) and (end is None or t <= end)])
+
     def _loop(self) -> None:
         assert self._process and self._process.stdout
         for line in self._process.stdout:
@@ -473,19 +585,38 @@ class Monitor:
 
     def summary(self, start: float | None = None, end: float | None = None) -> dict[str, Any]:
         if self.device != "cuda":
-            # Peak RSS is the CPU counterpart of device-used memory. Energy has
-            # none here: it would need RAPL, which is not wired up, and the
-            # GPU's draw during a CPU run is the idle card.
+            # Peak RSS is the CPU counterpart of device-used memory. Energy is
+            # the RAPL package counter over the same timed window the GPU path
+            # integrates board power over -- never the GPU's draw, which during
+            # a CPU run is an idle card.
+            window_samples = self.rapl_window_samples(start, end)
+            measurable = self.rapl is not None and window_samples >= self.MIN_WINDOW_SAMPLES
+            joules = self.rapl_joules(start, end) if measurable else None
+
+            if self.rapl is None:
+                note = ("CPU run: no readable RAPL counter. energy_uj is root-only "
+                        "after CVE-2020-8694; grant read access to measure it")
+            elif not measurable:
+                note = (f"CPU run: timed window held {window_samples} RAPL samples, "
+                        f"fewer than the {self.MIN_WINDOW_SAMPLES} required")
+            else:
+                note = None
+
             return {
                 "peak_mib": round(self.peak_rss_mib, 1),
                 "peak_file_backed_mib": round(self.peak_file_mib, 1),
                 "memory_metric": "process_peak_anonymous_rss",
-                "energy_joules": None,
-                "energy_wh": None,
-                "energy_measurable": False,
-                "energy_note": "CPU run: no RAPL counter wired up",
-                "samples": 0,
-                "window_samples": 0,
+                "energy_joules": round(joules, 4) if joules is not None else None,
+                "energy_wh": round(joules / 3600.0, 6) if joules is not None else None,
+                "energy_measurable": bool(measurable),
+                "energy_note": note,
+                # Package, not core: the uncore is part of what a run costs.
+                # Recorded per run so a CPU figure is never silently compared
+                # against the GPU's whole-board one.
+                "energy_domain": self.rapl["name"] if self.rapl else None,
+                "energy_metric": "rapl_package_energy" if self.rapl else None,
+                "samples": len(self.rapl_samples),
+                "window_samples": window_samples,
             }
 
         window = [w for t, _, w in self.samples

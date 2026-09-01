@@ -147,10 +147,36 @@ The dense family's epochs are milliseconds, so its energy cell needs `--epochs`
 raised until the window clears about a second. That is a per-family setting,
 not a matter of taste.
 
-**CPU runs have no energy figure at all.** It would need a RAPL counter, which
-is not wired up, and the GPU's draw during a CPU run is an idle card. The
-artifact says `energy_measurable: false` rather than reporting that idle draw
-as though it were the workload's.
+**CPU energy is the RAPL package counter,** integrated over the same timed
+window, and never the GPU's draw -- which during a CPU run is an idle card.
+
+`package-0`, not `core`. The package domain covers the cores *and* the uncore:
+the memory controller, the ring, the last-level cache. A bandwidth-bound run
+pays for those as surely as it pays for the multipliers, so charging it only
+for arithmetic would flatter exactly the workloads that move the most data.
+Each artifact records `energy_domain` and `energy_metric`, so a CPU figure is
+never silently read as the GPU's whole-board one -- they are different
+quantities and must not share a column.
+
+RAPL reports cumulative energy, not power, so the window is taken by
+*differencing* the counter with interpolated endpoints, not by the trapezoid
+rule the GPU path applies to power samples. Steps are accumulated modulo
+`max_energy_range_uj`, because the register wraps -- 262 kJ on this part -- and
+an unhandled wrap reads as one large negative step that would cancel most of a
+long run's energy.
+
+On a stock kernel `energy_uj` is `0400` root-only, hardened after CVE-2020-8694
+(PLATYPUS). Where nobody has granted read access the artifact says
+`energy_measurable: false` and gives the reason, rather than inventing a figure:
+
+```bash
+sudo chmod a+r /sys/class/powercap/intel-rapl:*/energy_uj
+```
+
+That permission does not survive a reboot, so a CPU energy cell taken after one
+will report the counter as unreadable until it is granted again. Machines
+without the counter at all -- AMD without the module, most VMs -- report the
+same absence.
 
 ## 6. CPU cells
 
@@ -179,9 +205,8 @@ are faster than the rest, and which engine gets them depends on ordering. Each
 artifact carries `cpu.governor` and `cpu.turbo_enabled` so a reader can tell an
 opportunistic run from a pinned-down one.
 
-**No energy figure on CPU.** It needs a RAPL counter, which is not wired up.
-The artifact says `energy_measurable: false` rather than reporting the idle
-GPU's draw.
+**Energy on CPU is RAPL `package-0`,** not the idle GPU's draw. See item 5 for
+the domain, the wrap handling and the permission it needs.
 
 ## 7. Sessions
 
