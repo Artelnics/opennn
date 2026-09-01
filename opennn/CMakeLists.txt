@@ -11,7 +11,15 @@ option(OpenNN_ENABLE_LTO "Enable interprocedural optimization/LTO for release bu
     ${_opennn_lto_default})
 option(OpenNN_ENABLE_MKL "Use Intel MKL as Eigen BLAS/LAPACK backend" OFF)
 set(OpenNN_MKL_ROOT "" CACHE PATH "Intel MKL root prefix (e.g. /opt/intel/oneapi/mkl/latest or extracted /usr prefix)")
-option(OpenNN_ENABLE_ONEDNN "Use oneDNN optimized CPU recurrent primitives" OFF)
+# AUTO, ON or OFF. AUTO uses oneDNN when it can be found and says so either way;
+# ON fails the configure if it cannot; OFF never looks. Defaulting to AUTO
+# rather than OFF because forgetting the flag is expensive and silent: the CPU
+# recurrent layers fall back to the built-in path, which measured 2.9x slower
+# on the benchmark LSTM(15->128) training cell and 1.9x on inference, against a
+# PyTorch whose wheel bundles oneDNN either way.
+set(OpenNN_ENABLE_ONEDNN "AUTO" CACHE STRING
+    "Use oneDNN optimized CPU recurrent primitives: AUTO, ON or OFF")
+set_property(CACHE OpenNN_ENABLE_ONEDNN PROPERTY STRINGS AUTO ON OFF)
 set(OpenNN_ONEDNN_ROOT "" CACHE PATH "oneDNN prefix (for example /usr or an extracted package root/usr)")
 option(OpenNN_DISABLE_CUDA "Disable CUDA even if the toolkit is found" OFF)
 
@@ -260,26 +268,62 @@ if(OpenNN_ENABLE_MKL)
     message(STATUS "OpenNN: MKL backend via MKLConfig.cmake (${MKL_ROOT})")
 endif()
 
-if(OpenNN_ENABLE_ONEDNN)
+set(OpenNN_ONEDNN_FOUND OFF CACHE INTERNAL "oneDNN was found and linked")
+
+if(NOT OpenNN_ENABLE_ONEDNN STREQUAL "OFF")
+    # $ENV{ONEDNN_ROOT} and $ENV{DNNLROOT} are what oneDNN's own vars scripts
+    # export, so a machine that has sourced one is already findable. A prefix
+    # in neither a standard location nor those variables still needs
+    # OpenNN_ONEDNN_ROOT or CMAKE_PREFIX_PATH -- AUTO finds an installed
+    # oneDNN, it does not go looking through home directories.
     find_path(OpenNN_ONEDNN_INCLUDE_DIR
         NAMES oneapi/dnnl/dnnl.hpp
-        HINTS "${OpenNN_ONEDNN_ROOT}/include")
+        HINTS
+            "${OpenNN_ONEDNN_ROOT}/include"
+            "$ENV{ONEDNN_ROOT}/include"
+            "$ENV{DNNLROOT}/include")
     find_library(OpenNN_ONEDNN_LIBRARY
         NAMES dnnl
         HINTS
             "${OpenNN_ONEDNN_ROOT}/lib"
             "${OpenNN_ONEDNN_ROOT}/lib64"
-            "${OpenNN_ONEDNN_ROOT}/lib/x86_64-linux-gnu")
-    if(NOT OpenNN_ONEDNN_INCLUDE_DIR OR NOT OpenNN_ONEDNN_LIBRARY)
+            "${OpenNN_ONEDNN_ROOT}/lib/x86_64-linux-gnu"
+            "$ENV{ONEDNN_ROOT}/lib"
+            "$ENV{DNNLROOT}/lib")
+
+    if(OpenNN_ONEDNN_INCLUDE_DIR AND OpenNN_ONEDNN_LIBRARY)
+        target_compile_definitions(opennn PRIVATE OPENNN_HAS_ONEDNN)
+        target_include_directories(opennn SYSTEM PRIVATE "${OpenNN_ONEDNN_INCLUDE_DIR}")
+        target_link_libraries(opennn PUBLIC "${OpenNN_ONEDNN_LIBRARY}")
+        set(OpenNN_ONEDNN_FOUND ON CACHE INTERNAL "oneDNN was found and linked")
+        message(STATUS "OpenNN: oneDNN CPU recurrent backend (${OpenNN_ONEDNN_LIBRARY})")
+
+        # Two OpenMP runtimes in one process is a different measurement, not a
+        # faster one: a TBB-threaded oneDNN beside OpenNN's libgomp gives each
+        # its own pool over the same cores. The library that ships beside an
+        # MKL install is usually the TBB one, so this is worth saying out loud
+        # rather than leaving to whoever reads a profile later.
+        if(UNIX AND NOT APPLE)
+            execute_process(
+                COMMAND ldd "${OpenNN_ONEDNN_LIBRARY}"
+                OUTPUT_VARIABLE _opennn_onednn_deps
+                ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+            if(_opennn_onednn_deps MATCHES "libtbb")
+                message(WARNING
+                    "OpenNN: this oneDNN is TBB-threaded while OpenNN uses OpenMP. "
+                    "Both will size a thread pool to the same cores. Prefer an "
+                    "OpenMP build of oneDNN, or set OpenNN_ONEDNN_ROOT to one.")
+            endif()
+        endif()
+    elseif(OpenNN_ENABLE_ONEDNN STREQUAL "ON")
         message(FATAL_ERROR
             "OpenNN_ENABLE_ONEDNN=ON but oneDNN headers or library were not found. "
             "Set OpenNN_ONEDNN_ROOT to the oneDNN installation prefix.")
+    else()
+        message(STATUS
+            "OpenNN: oneDNN not found; CPU recurrent layers use the built-in path. "
+            "Set OpenNN_ONEDNN_ROOT to enable it.")
     endif()
-
-    target_compile_definitions(opennn PRIVATE OPENNN_HAS_ONEDNN)
-    target_include_directories(opennn SYSTEM PRIVATE "${OpenNN_ONEDNN_INCLUDE_DIR}")
-    target_link_libraries(opennn PUBLIC "${OpenNN_ONEDNN_LIBRARY}")
-    message(STATUS "OpenNN: oneDNN CPU recurrent backend (${OpenNN_ONEDNN_LIBRARY})")
 endif()
 
 if(APPLE)

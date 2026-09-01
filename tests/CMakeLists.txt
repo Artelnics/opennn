@@ -47,7 +47,11 @@ target_precompile_headers(opennn_response_tests PRIVATE pch.h)
 target_compile_definitions(opennn_response_tests PRIVATE
     CONCRETE_NETWORK_DIR="${PROJECT_SOURCE_DIR}/examples/concrete")
 
-if(OpenNN_ENABLE_ONEDNN)
+# OpenNN_ONEDNN_FOUND, not OpenNN_ENABLE_ONEDNN: the latter is a tri-state
+# whose default is the string AUTO, and if("AUTO") is true in CMake -- so
+# branching on the request would define this on every machine, including the
+# ones where oneDNN was looked for and not found.
+if(OpenNN_ONEDNN_FOUND)
   target_compile_definitions(opennn_tests PRIVATE OPENNN_TEST_HAS_ONEDNN)
 endif()
 
