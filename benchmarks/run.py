@@ -594,8 +594,13 @@ def main() -> int:
     if git.get("dirty"):
         print("\n  dirty tree -> results/scratch/, not the evidence store")
     elif machine_busy:
-        print(f"\n  machine was {busy_fraction:.1%} busy -> results/scratch/, "
-              "not the evidence store")
+        # The larger of the two samples, because either can be what tripped
+        # the threshold: `busy_before` catches a machine that was already
+        # working, `busy_after` a sync client that woke mid-cell. Naming
+        # neither was a NameError on the one path where the warning matters,
+        # so a busy clean-tree run printed a traceback instead of its reason.
+        print(f"\n  machine was {max(busy_before, busy_after):.1%} busy -> "
+              "results/scratch/, not the evidence store")
     elif args.device == "cuda" and not clocks_locked():
         print("\n  clocks unlocked -> results/scratch/. Provisional: margins under"
               "\n  ~2% are not resolvable while the clock floats.")
