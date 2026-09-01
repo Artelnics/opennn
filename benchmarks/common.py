@@ -159,19 +159,43 @@ def clocks_locked() -> bool:
     return run_text(["nvidia-smi", "--query-gpu=persistence_mode",
                      "--format=csv,noheader"], timeout=10).strip() == "Enabled"
 
-def cpu_busy_fraction(seconds: float = 1.0) -> float:
+def cpu_busy_fraction(seconds: float = 1.0,
+                     cores: list[int] | None = None) -> float:
     """How much of the machine is already working, sampled now.
 
     Not the load average, which is useless here: it decays over minutes, so
     after the suite's own previous launch it reads 21 on a machine that is
-    idle. This is the instantaneous non-idle fraction across all hardware
-    threads -- quiet measures under 0.01, one saturated core measures about
-    one over the thread count.
+    idle. This is the instantaneous non-idle fraction, quiet measuring under
+    0.01 and one saturated core about one over the thread count.
+
+    `cores` narrows it to the ones the run can actually be disturbed by. A CPU
+    cell is `taskset`-pinned to the P-cores, so work stranded on an E-core
+    cannot touch it -- but the aggregate line counts that work anyway, and the
+    cell is then filed as scratch for interference it was structurally immune
+    to. That is not hypothetical: a browser parked on the E-cores sent
+    cpu-lstm-infer and cuda-transformer-infer to scratch on 2026-09-01 at 6.0%
+    and 3.7%, with every other gate passing.
+
+    Left as the whole machine when `cores` is None, which is right for a CUDA
+    cell: nothing pins those, and their input pipeline can use any core.
     """
+    wanted = None if cores is None else {f"cpu{index}" for index in cores}
+
     def snapshot() -> tuple[int, int]:
-        values = [int(v) for v in
-                  Path("/proc/stat").read_text().split("\n")[0].split()[1:]]
-        return sum(values), values[3] + values[4]        # total, idle + iowait
+        total = idle = 0
+        for line in Path("/proc/stat").read_text().split("\n"):
+            fields = line.split()
+            if not fields or not fields[0].startswith("cpu"):
+                continue
+            if wanted is None:
+                if fields[0] != "cpu":                   # the aggregate line
+                    continue
+            elif fields[0] not in wanted:
+                continue
+            values = [int(v) for v in fields[1:]]
+            total += sum(values)
+            idle += values[3] + values[4]                # idle + iowait
+        return total, idle
 
     total_before, idle_before = snapshot()
     time.sleep(seconds)

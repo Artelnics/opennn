@@ -348,7 +348,13 @@ def main() -> int:
     # memory bandwidth here, which moves bandwidth-bound steps and leaves
     # cache-resident ones alone. Measured, recorded, and allowed to decide
     # where the artifact lands, because the rule is worthless as prose.
-    busy_before = cpu_busy_fraction()
+    # A pinned CPU cell can only be disturbed by the cores it was pinned to.
+    # Watching the whole machine files it as scratch for work stranded on an
+    # E-core that could never have touched it -- which is how a parked browser
+    # cost two otherwise-clean cells their evidence status on 2026-09-01.
+    # A CUDA cell pins nothing, so it still watches everything.
+    watched_cores = core_layout()["performance"] if args.device != "cuda" else None
+    busy_before = cpu_busy_fraction(cores=watched_cores)
     machine_busy = busy_before > BUSY_THRESHOLD
 
     if machine_busy:
@@ -374,7 +380,7 @@ def main() -> int:
         # one up front: a sync client woke mid-cell and cost OpenNN 4.6x while
         # leaving PyTorch alone, and the sample before the first launch saw 4%
         # and called the machine quiet.
-        busy_after = cpu_busy_fraction()
+        busy_after = cpu_busy_fraction(cores=watched_cores)
 
         if busy_after > BUSY_THRESHOLD:
             print(f"\n  machine became busy during the run: {busy_after:.1%}")
@@ -532,7 +538,7 @@ def main() -> int:
     # up front: a sync client woke mid-cell and cost OpenNN 4.6x while leaving
     # PyTorch alone, and the sample before the first launch saw 4% and called
     # the machine quiet.
-    busy_after = cpu_busy_fraction()
+    busy_after = cpu_busy_fraction(cores=watched_cores)
 
     if busy_after > BUSY_THRESHOLD:
         print(f"\n  machine became busy during the run: {busy_after:.1%}")
