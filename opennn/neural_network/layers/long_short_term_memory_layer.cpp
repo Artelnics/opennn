@@ -265,19 +265,38 @@ struct OneDnnLstmPlan
     size_t iter_state_offset = 0;
     size_t iter_state_bytes = 0;
     size_t state_bytes = 0;
+    size_t zero_iter_offset = 0;
     bool batch_major_sequences = false;
+    bool provide_src_iter = false;
 
     OneDnnLstmPlan(Index batch, Index time, Index inputs, Index hidden, bool training)
     {
         const memory::dims src_dims{time, batch, inputs};
         const memory::dims dst_dims{time, batch, hidden};
 
-        // oneDNN 3.x accepts physical NTC in its JIT RNN. Inference tensors are
-        // already contiguous NTC, so describe that storage directly. oneDNN
-        // 2.x drops to its reference RNN for this layout, and training retains
-        // TNC until the backward layout and workspace contract change together.
+        // oneDNN 3.x accepts physical NTC in its JIT RNN, but accepting it and
+        // running it well are different things: brgemm dispatches either way,
+        // and on NTC it strides across the batch for every timestep instead of
+        // walking one contiguous plane. Describing the storage directly saves a
+        // transpose and costs more than the transpose is worth.
+        //
+        // Measured on LSTM(15->128), 24 steps, batch 256, as the median oneDNN
+        // primitive time over 685 executions -- not end-to-end throughput,
+        // which is too noisy at this margin to see it:
+        //
+        //     NTC  3.860 / 3.866 ms      TNC  3.672 / 3.673 ms
+        //
+        // two independent passes each. The transpose it now pays for is
+        // batch*time*inputs, 368 KiB here, one parallel memcpy loop against a
+        // 3.7 ms primitive. PyTorch reaches the same brgemm:avx2 kernel through
+        // TNC, which is what prompted comparing them.
+        //
+        // OPENNN_RNN_ONEDNN_BATCH_MAJOR=1 restores the NTC description so the
+        // choice stays measurable. oneDNN 2.x never took this path: it drops to
+        // its reference RNN on NTC, so it keeps TNC as it always did.
 #if DNNL_VERSION_MAJOR >= 3
-        batch_major_sequences = !training;
+        batch_major_sequences = !training
+            && env_flag_enabled("OPENNN_RNN_ONEDNN_BATCH_MAJOR", false);
 #endif
         const memory::format_tag sequence_layout =
             batch_major_sequences ? memory::format_tag::ntc
@@ -311,6 +330,19 @@ struct OneDnnLstmPlan
         const memory::desc& forward_weights_iter_desc =
             training ? user_weights_iter_desc : any_weights_iter;
         const memory::desc none;
+        // An explicit zeroed src_iter, rather than none. Passing none asks
+        // oneDNN to synthesise the zero initial state itself, and it charges
+        // more for that than the 128 KiB memset below costs. Median primitive
+        // time over 685 executions, two passes each:
+        //
+        //     none  3.732 / 3.731 ms      zeroed src_iter  3.692 / 3.692 ms
+        //
+        // It is also what PyTorch passes for the same cell, which is how the
+        // difference was found: with this and TNC the two engines' primitive
+        // descriptors are byte-identical.
+        provide_src_iter = !training
+            && env_flag_enabled("OPENNN_RNN_ONEDNN_SRC_ITER", true);
+        const memory::desc& src_iter_desc = provide_src_iter ? iter_desc : none;
         primitive_attr attributes;
         attributes.set_scratchpad_mode(scratchpad_mode::user);
 
@@ -319,7 +351,7 @@ struct OneDnnLstmPlan
             cpu_engine,
             training ? prop_kind::forward_training : prop_kind::forward_inference,
             rnn_direction::unidirectional_left2right,
-            src_layer_desc, none, none,
+            src_layer_desc, src_iter_desc, src_iter_desc,
             forward_weights_layer_desc, forward_weights_iter_desc, bias_desc,
             dst_layer_desc, iter_desc, iter_desc,
             attributes);
@@ -346,8 +378,10 @@ struct OneDnnLstmPlan
         iter_state_offset = align_onednn_offset(
             scratchpad_offset + forward_desc.scratchpad_desc().get_size());
         iter_state_bytes = training ? 0 : iter_desc.get_size();
-        state_bytes = align_onednn_offset(
+        zero_iter_offset = align_onednn_offset(
             iter_state_offset + 2 * iter_state_bytes);
+        state_bytes = align_onednn_offset(
+            zero_iter_offset + (provide_src_iter ? iter_state_bytes : 0));
 
         if (!training) return;
 
@@ -627,6 +661,19 @@ bool LongShortTermMemoryOperator::apply_onednn(
                  memory(plan->forward_desc.scratchpad_desc(), plan->cpu_engine,
                         state + plan->scratchpad_offset)}
             };
+        }
+
+        if (plan->provide_src_iter)
+        {
+            // Zeroed every call rather than once: 128 KiB of memset against a
+            // 3.7 ms primitive is 0.1%, and it cannot go stale behind the
+            // packed-weight cache the way a write-once buffer could.
+            void* const zero_iter = state + plan->zero_iter_offset;
+            memset(zero_iter, 0, plan->iter_state_bytes);
+            arguments.emplace(DNNL_ARG_SRC_ITER,
+                memory(plan->iter_desc, plan->cpu_engine, zero_iter));
+            arguments.emplace(DNNL_ARG_SRC_ITER_C,
+                memory(plan->iter_desc, plan->cpu_engine, zero_iter));
         }
 
         if (!is_training)
