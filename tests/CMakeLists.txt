@@ -26,7 +26,8 @@ list(FILTER TEST_SOURCES EXCLUDE REGEX "-DESKTOP-[^/\\\\]*\\.cpp$")
 #     build-ninja/bin/opennn_response_tests --gtest_filter=ConcreteScenario.*
 
 set(RESPONSE_SCENARIO_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/response_optimization/concrete_scenarios_test.cpp")
+    "${CMAKE_CURRENT_SOURCE_DIR}/response_optimization/concrete_scenarios_test.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/response_optimization/feasibility_test.cpp")
 
 list(REMOVE_ITEM TEST_SOURCES ${RESPONSE_SCENARIO_SOURCES})
 
