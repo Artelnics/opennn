@@ -46,11 +46,9 @@ public:
 
         vector<float> values;
 
-        float calculate_residual(const VectorR&, const VectorR&) const;
+        float calculate_residual(const VectorR&, const VectorR&, float margin = 0.0f) const;
 
         pair<float, float> calculate_bounds() const;
-
-        float calculate_inset(float residual, float margin) const;
     };
 
     explicit ResponseOptimization(NeuralNetwork* = nullptr);

@@ -64,7 +64,9 @@ pair<float, float> ResponseOptimization::Constraint::calculate_bounds() const
 }
 
 
-float ResponseOptimization::Constraint::calculate_residual(const VectorR& input, const VectorR& output) const
+float ResponseOptimization::Constraint::calculate_residual(const VectorR& input,
+                                                           const VectorR& output,
+                                                           const float margin) const
 {
     if (values.empty())
         return NAN;
@@ -81,26 +83,18 @@ float ResponseOptimization::Constraint::calculate_residual(const VectorR& input,
 
     const auto [lower_bound, upper_bound] = calculate_bounds();
 
+    float residual = 0.0f;
+
     if (value < lower_bound - bound_tolerance(lower_bound))
-        return value - lower_bound;
-
-    if (value > upper_bound + bound_tolerance(upper_bound))
-        return value - upper_bound;
-
-    return NAN;
-}
-
-
-float ResponseOptimization::Constraint::calculate_inset(const float residual, const float margin) const
-{
-    if (condition == Condition::Equal || condition == Condition::AllowedSet)
-        return 0.0f;
-
-    const auto [lower_bound, upper_bound] = calculate_bounds();
+        residual = value - lower_bound;
+    else if (value > upper_bound + bound_tolerance(upper_bound))
+        residual = value - upper_bound;
+    else
+        return NAN;
 
     const float inset = min(margin*abs(residual), 0.5f*(upper_bound - lower_bound));
 
-    return (residual > 0.0f) ? inset : -inset;
+    return residual + ((residual > 0.0f) ? inset : -inset);
 }
 
 
@@ -169,11 +163,9 @@ pair<VectorR, VectorR> ResponseOptimization::get_feasible_point(VectorR input,
 
             point_values(i) = constraint.expression.evaluate(point, point_output);
 
-            const float residual = constraint.calculate_residual(point, point_output);
+            const float residual = constraint.calculate_residual(point, point_output, feasibility_margin);
 
-            point_residuals(i) = isfinite(residual)
-                               ? residual + constraint.calculate_inset(residual, feasibility_margin)
-                               : 0.0f;
+            point_residuals(i) = isfinite(residual) ? residual : 0.0f;
         }
 
         return point_output;
