@@ -135,26 +135,21 @@ build-wrapper-dump.json
 # Generated test data
 /tests/data/*.xml
 
-# Benchmark binaries and generated outputs
-/benchmarks/inference-speed/opennn_inference
-/benchmarks/inference-speed/opennn_inference_mkl
-/benchmarks/inference-speed/opennn_inference_mkl_auto
-/benchmarks/inference-speed/rosenbrock_infer.csv
-/benchmarks/accuracy/opennn_accuracy
-/benchmarks/export/opennn_export
-/benchmarks/export/model.c
-/benchmarks/export/model.py
-/benchmarks/export/sum.csv
-/benchmarks/memory/opennn_memory
-/benchmarks/memory/opennn_memory_cpu
-/benchmarks/memory/sum.csv
-/benchmarks/startup/opennn_startup
-/benchmarks/startup/opennn_startup_cpu
-/benchmarks/training-speed/opennn_speed
+# Benchmark generated outputs.
+#
+# The per-binary lines that used to be here named one executable at a time in
+# /benchmarks/inference-speed, /accuracy, /export, /memory, /startup and
+# /training-speed. Those six directories no longer exist -- the suite is one
+# entry point and one definition per engine per family -- so the lines ignored
+# nothing and read as though that layout were still current. Benchmark binaries
+# now build into the build directory, which is already ignored.
 /benchmarks/**/*.onnx
 /benchmarks/**/*.onnx.data
 /benchmarks/**/*.csv
 /benchmarks/**/pred_*.txt
+
+# Result artifacts are never committed; a claim cites a run_id, and the JSON
+# stays on disk. Only the README explaining the store is tracked.
 /benchmarks/results/*
 !/benchmarks/results/README.md
 

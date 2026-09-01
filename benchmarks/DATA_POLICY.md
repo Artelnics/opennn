@@ -1,66 +1,75 @@
-# Benchmark Data Policy
+# Where the data lives
 
-Large datasets and generated benchmark caches must stay outside the git
-working tree. The repository should contain benchmark code, small metadata,
-result JSON artifacts, and documentation only.
+Datasets never enter the repository. The tree holds benchmark code, the two
+documents that define the measurement, and one manifest; everything a run reads
+comes from outside it.
 
-## Data Root
+## The data root
 
-Set `OPENNN_BENCH_DATA` to a local directory outside the repository:
-
-```powershell
-$env:OPENNN_BENCH_DATA = "C:\OpenNNBenchmarks\data"
-```
+`$OPENNN_BENCH_DATA`, defaulting to `~/opennn-benchmark-data`:
 
 ```bash
 export OPENNN_BENCH_DATA="$HOME/opennn-benchmark-data"
 ```
 
-If the variable is not set, benchmark helpers default to:
+Both [`prepare.py`](prepare.py) and [`run.py`](run.py) read that one variable,
+so a machine with its data elsewhere sets it once and nothing else changes. No
+benchmark resolves a dataset by a path relative to itself, and none carries a
+machine-specific absolute path.
 
-```text
-~/opennn-benchmark-data
+## One preparer, one subcommand per family
+
+```bash
+python prepare.py dense cnn transformer lstm     # or: all
 ```
 
-## Layout
+| family | subcommand | lands in | read as |
+|---|---|---|---|
+| dense | `dense` | `higgs/` | `higgs_train_250k.csv`, `higgs_test.csv` |
+| cnn | `cnn` | `imagenet_subset/` | `train/` — 1000 classes |
+| transformer | `transformer` | `wmt14/` | `wmt14_pairs.txt` |
+| lstm | `lstm` | `beijing_pm25/` | `beijing_pm25_forecasting.csv` |
+| footprint | — | — | measures the framework before any data exists |
 
-Use one subdirectory per dataset:
+The subcommand names match `run.py --family` exactly. They did not always: the
+preparer called the recurrent family `recurrent` while the runner called it
+`lstm`, so `prepare.py lstm` — the command the README tells you to run — failed
+with an argparse error.
 
-```text
-$OPENNN_BENCH_DATA/
-  higgs/                     # prepare_higgs.py  (throughput/higgs)
-    raw/
-    higgs_train.csv
-    higgs_test.csv
-    higgs_metadata.json
-  cifar10/                   # prepare_cifar10.py  (throughput/resnet50)
-  cifar100/                  # prepare_cifar100.py
-  imagenet_like/             # prepare_imagenet_like.py
-  chat/                      # prepare_chat.py  (energy/transformer-energy)
-    chat_pairs.txt
-    chat_metadata.json
-  beijing_pm25/              # prepare_beijing_pm25.py  (quality/recurrent-lstm-forecasting)
-    beijing_pm25_forecasting.csv
-  wmt14/                     # prepare_wmt14.py  (capacity/transformer-max-batch)
-    wmt14_en_de_pairs.txt
-```
+Every step is skipped when its output exists, so re-running is cheap and an
+interrupted download resumes.
 
-Every dataset has exactly ONE `prepare_<dataset>.py` that downloads/normalizes it
-into its `$OPENNN_BENCH_DATA/<dataset>/` subdirectory; benchmarks read it from
-there via `$OPENNN_BENCH_DATA`, never from a benchmark folder or a machine-specific
-absolute path.
+## The one committed artefact
+
+`imagenet_subset.manifest` (5 MB) pins exactly which 50,000 images the CNN
+family measures on. It is committed so a subset can be *verified* rather than
+trusted: the preparer picks deterministically from sorted synsets with a seeded
+draw, so the same arguments reproduce the same subset on any machine, and the
+manifest is what proves it did.
 
 ## Rules
 
-- Do not commit raw datasets, prepared CSVs, image folders, binary caches, or
+- Do not commit datasets, prepared CSVs, image folders, binary caches, or
   downloaded archives.
-- Do commit scripts that can recreate prepared data from documented sources.
-- Do commit small metadata and result JSON artifacts when they support published
-  benchmark numbers.
-- Result JSON should record the dataset path, row counts, command line, git
-  commit, dirty status, machine metadata, and raw benchmark output.
-- Tiny synthetic fixtures are allowed only when they are intentionally small and
-  used for tests or smoke checks.
-- Do not commit compiled binaries, ONNX files, or generated CSVs. Regenerate
-  them outside the repo, or replace them with a documented result JSON. The
-  `tools/validate_benchmarks.py` check fails if any such artifact is committed.
+- Do commit the code that recreates them from documented sources.
+- Do not commit compiled binaries, ONNX files, or generated CSVs.
+- Result artifacts are **not** committed either. `.gitignore` keeps
+  `results/*` out and admits only `results/README.md`; the artifacts live on
+  disk and a claim cites their `run_id`. See
+  [`results/README.md`](results/README.md).
+
+These rules are not currently enforced by a script. An earlier version of this
+file said a `tools/validate_benchmarks.py` check would fail a commit that broke
+them; no such file exists, and saying otherwise was worse than saying nothing,
+because it invited trusting a gate that was never there. The `.gitignore`
+patterns are the actual enforcement, and they only cover what someone thought
+to list.
+
+## Stale data is not this repository's problem, but it is someone's
+
+The data root accumulates. `cifar10/` is still there from the suite this one
+replaced and no current family reads it; so are several HIGGS variants
+(`higgs_train_1m`, `_2m`, `_dup32`, `_pad32`) left from capacity experiments.
+Nothing here deletes them, because a benchmark tool that deletes data is a
+benchmark tool nobody runs twice. Check `du -sh $OPENNN_BENCH_DATA/*` when disk
+matters.

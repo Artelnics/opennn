@@ -9,7 +9,7 @@ to need it.
     prepare.py dense         HIGGS, normalised, label last
     prepare.py cnn           ImageNet subset, 1000 classes x N, 224x224
     prepare.py transformer   WMT14 English-German sentence pairs
-    prepare.py recurrent     Beijing PM2.5 hourly
+    prepare.py lstm          Beijing PM2.5 hourly
 
 Nothing lands in the repository. Everything goes under $OPENNN_BENCH_DATA
 (default ~/opennn-benchmark-data); the only committed artefact is the ImageNet
@@ -346,7 +346,7 @@ def prepare_transformer(root: Path, args) -> None:
     print(f"  wrote {kept:,} pairs to {pairs}")
 
 # --------------------------------------------------------------------------
-# recurrent -- Beijing PM2.5
+# lstm -- Beijing PM2.5
 # --------------------------------------------------------------------------
 
 PM25_URL = "https://archive.ics.uci.edu/static/public/381/beijing+pm2+5+data.zip"
@@ -354,7 +354,7 @@ PM25_URL = "https://archive.ics.uci.edu/static/public/381/beijing+pm2+5+data.zip
 PM25_COLUMNS = ("year", "month", "day", "hour", "DEWP", "TEMP", "PRES",
                 "Iws", "Is", "Ir", "cbwd_NE", "cbwd_NW", "cbwd_SE", "cbwd_cv", "pm2_5")
 
-def prepare_recurrent(root: Path, args) -> None:
+def prepare_lstm(root: Path, args) -> None:
     """Hourly Beijing PM2.5, one-hot wind direction, target last.
 
     The raw series has gaps in pm2.5, which are linearly interpolated rather
@@ -410,7 +410,7 @@ FAMILIES = {
     "dense": prepare_dense,
     "cnn": prepare_cnn,
     "transformer": prepare_transformer,
-    "recurrent": prepare_recurrent,
+    "lstm": prepare_lstm,
 }
 
 def main() -> int:
