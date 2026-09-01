@@ -14,10 +14,19 @@ numbers are never compared against these.
 | Driver | 610.43.02 |
 | CPU | Intel i7-14700F |
 | OS | Linux, native — not WSL |
-| CUDA · cuDNN | 13.3.73 · 9.25.0 |
-| PyTorch | 2.13.0+cu130, arch list includes `sm_120` |
+| CUDA · cuDNN | 13.3.73 · 9.25.1 system, which OpenNN links |
+| PyTorch | 2.13.0+cu130, arch list includes `sm_120`; bundles its own cuDNN 9.23.2 |
 | MKL | 2026.0.1 for OpenNN; PyTorch's wheel bundles its own |
 | Python | 3.12.3 |
+
+**The two engines do not share a cuDNN.** OpenNN links the system
+`libcudnn.so.9` at 9.25.1; PyTorch loads the 9.23.2 its wheel ships. Two minor
+versions apart, and the CNN and transformer families are cuDNN-bound, so this
+is an asymmetry in the same class as the oneDNN one that decided the CPU LSTM
+cell. It is recorded rather than corrected: neither engine can be moved to the
+other's cuDNN without building it from source, and the effect here is
+unmeasured. Do not attribute a CNN or transformer margin under a few percent to
+the framework without checking it.
 
 Native Linux is deliberate. The CNN family lazy-loads images per batch, so it
 measures convolution throughput *plus* input-pipeline efficiency, and WSL's
@@ -102,7 +111,13 @@ agree across engines. Two findings that arrived this way:
   directly with `norm=None`.
 
 Current parameter counts, matching exactly: dense 1,080,321 · CNN 25,557,032 ·
-transformer 74,878,496 · LSTM 73,857.
+transformer 120,245,792 · LSTM 73,857.
+
+The transformer figure read 74,878,496 here until 2026-09-01, which no run has
+ever reported: every artifact in the store records 120,245,792, and the gate
+passed all along because it compares the engines against *each other*, not
+against this document. A stale number in the contract is worse than none --
+anyone checking the gate by hand would have concluded it was broken.
 
 **Quality.** Accuracies must agree within tolerance, per batch, across engines.
 A speed win bought by computing something different is not a speed win.

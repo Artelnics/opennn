@@ -81,9 +81,11 @@ enforced in code.
 | [`common.py`](common.py) | provenance, binaries, GPU sampling, metrics |
 | [`families/`](families/) | one definition per engine per family |
 | [`PROTOCOL.md`](PROTOCOL.md) | the contract |
-| [`PLAN.md`](PLAN.md) | how the suite got this shape, and what is left |
+| [`DESIGN.md`](DESIGN.md) | why the suite has this shape |
 | [`DATA_POLICY.md`](DATA_POLICY.md) | where datasets live; what stays out of git |
 | [`gpu_clocks.sh`](gpu_clocks.sh) | lock the clock before measuring |
+| [`CMakeLists.txt`](CMakeLists.txt) | builds one `<family>_opennn` per family |
+| [`results/`](results/) | artifacts; `scratch/` for anything that failed a gate |
 
 Datasets never enter the repository. The one committed artefact is
 `imagenet_subset.manifest`, which pins exactly which images the CNN family

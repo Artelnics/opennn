@@ -370,10 +370,10 @@ def main() -> int:
                             if k not in ("engine", "mode", "RESULT")}
                 print(f"  {question:<8} {engine:<8} {reported}")
 
-    # Again, now the work is done. The reading that mattered was never the one
-        # up front: a sync client woke mid-cell and cost OpenNN 4.6x while leaving
-        # PyTorch alone, and the sample before the first launch saw 4% and called
-        # the machine quiet.
+        # Again, now the work is done. The reading that mattered was never the
+        # one up front: a sync client woke mid-cell and cost OpenNN 4.6x while
+        # leaving PyTorch alone, and the sample before the first launch saw 4%
+        # and called the machine quiet.
         busy_after = cpu_busy_fraction()
 
         if busy_after > BUSY_THRESHOLD:
