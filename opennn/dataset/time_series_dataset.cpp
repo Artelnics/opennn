@@ -309,7 +309,7 @@ void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
                                     const vector<Index>& input_indices,
                                     float* input_data,
                                     FillMode,
-                                    ColumnContiguity) const
+                                    ColumnContiguity column_contiguity) const
 {
     if (sample_indices.empty() || input_indices.empty()) return;
 
@@ -326,9 +326,7 @@ void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
                  "TimeSeriesDataset input feature index is out of range.");
 
     const bool contiguous_features =
-        adjacent_find(input_indices.begin(), input_indices.end(),
-                      [](Index left, Index right) { return right != left + 1; })
-        == input_indices.end();
+        resolve_column_contiguity(column_contiguity, input_indices);
 
     if (contiguous_features)
     {
@@ -494,7 +492,6 @@ void TimeSeriesDataset::fill_batch(Batch& batch,
                                    FillMode mode) const
 {
     const vector<Index>& input_indices = features.inputs;
-    const vector<Index>& decoder_indices = features.decoder;
     const vector<Index>& target_indices = features.targets;
 
     throw_if(Index(sample_indices.size()) != batch.batch_size,

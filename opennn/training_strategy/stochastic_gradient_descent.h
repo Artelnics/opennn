@@ -24,8 +24,6 @@ public:
 
     explicit StochasticGradientDescent(Loss* = nullptr);
 
-    void set_default();
-
     void set_initial_learning_rate(const float new_learning_rate) { initial_learning_rate = new_learning_rate; }
     float get_initial_learning_rate() const { return initial_learning_rate; }
     void set_initial_decay(const float new_decay) { initial_decay = new_decay; }

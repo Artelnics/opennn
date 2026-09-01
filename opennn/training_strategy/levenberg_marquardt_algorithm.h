@@ -19,18 +19,12 @@ struct ForwardPropagation;
 struct BackPropagationLM
 {
     explicit BackPropagationLM(const Index = 0, Loss* = nullptr);
-    virtual ~BackPropagationLM() = default;
 
-    void set(const Index = 0, Loss* = nullptr);
-
-    Index samples_number = 0;
-
-    float error;
+    float error = 0.0f;
     float regularization = 0.0f;
     float loss = 0.0f;
 
     VectorR errors;
-    VectorR squared_errors;
     MatrixR squared_errors_jacobian;
 
     VectorR gradient;
@@ -50,7 +44,6 @@ public:
    enum DataSlot { ParameterUpdate };
 
    explicit LevenbergMarquardtAlgorithm(Loss* = nullptr);
-   void set_default();
 
    void set_damping_parameter_factor(const float new_damping_parameter_factor) { damping_parameter_factor = new_damping_parameter_factor; }
 
@@ -70,10 +63,6 @@ private:
                                      OptimizerData&);
 
    void calculate_errors(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
-   void calculate_squared_errors(const Batch&,
-                                                           const ForwardPropagation&,
-                                                           BackPropagationLM& back_propagation_lm) const { back_propagation_lm.squared_errors = back_propagation_lm.errors.array().square(); }
-   void calculate_error(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
 
    void compute_jacobian(const Batch&,
                          const ForwardPropagation&,

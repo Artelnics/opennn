@@ -290,8 +290,7 @@ void ConvolutionOperator::link_parameters(span<const TensorView> views)
 
 void ConvolutionOperator::link_parameter_scales(span<const TensorView> views)
 {
-    if (views.empty()) return;
-    weight_scale = views[use_bias && views.size() >= 2 ? 1 : 0];
+    weight_scale = views.empty() ? TensorView{} : views.back();
 }
 
 void ConvolutionOperator::set_parameters_random()

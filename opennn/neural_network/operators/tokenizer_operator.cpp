@@ -175,33 +175,11 @@ vector<Index> TokenizerOperator::encode(string_view text) const
     return ids;
 }
 
-vector<Index> TokenizerOperator::encode_sequence(const vector<string>& tokens, Index sequence_length) const
+vector<Index> TokenizerOperator::frame_sequence(span<const Index> encoded,
+                                                Index sequence_length) const
 {
     if (sequence_length <= 0) return {};
 
-    vector<Index> ids;
-    const size_t framing_tokens = size_t(start_id >= 0) + size_t(end_id >= 0);
-    ids.reserve(min(size_t(sequence_length), tokens.size() + framing_tokens));
-
-    if (start_id >= 0) ids.push_back(start_id);
-
-    for (const string& token : tokens)
-    {
-        if (ssize(ids) >= sequence_length) break;
-        ids.push_back(token_to_id(token));
-    }
-
-    if (end_id >= 0 && ssize(ids) < sequence_length)
-        ids.push_back(end_id);
-
-    return ids;
-}
-
-vector<Index> TokenizerOperator::encode_sequence(string_view text, Index sequence_length) const
-{
-    if (sequence_length <= 0) return {};
-
-    const vector<Index> encoded = encode(text);
     vector<Index> ids;
     const size_t framing_tokens = size_t(start_id >= 0) + size_t(end_id >= 0);
     ids.reserve(min(size_t(sequence_length), encoded.size() + framing_tokens));
@@ -218,6 +196,27 @@ vector<Index> TokenizerOperator::encode_sequence(string_view text, Index sequenc
         ids.push_back(end_id);
 
     return ids;
+}
+
+vector<Index> TokenizerOperator::encode_sequence(const vector<string>& tokens,
+                                                 Index sequence_length) const
+{
+    if (sequence_length <= 0) return {};
+
+    const size_t content_size = min(tokens.size(),
+        size_t(sequence_length - Index(start_id >= 0)));
+    vector<Index> encoded(content_size);
+    ranges::transform(tokens.begin(), tokens.begin() + content_size, encoded.begin(),
+                      [this](const string& token) { return token_to_id(token); });
+
+    return frame_sequence(encoded, sequence_length);
+}
+
+vector<Index> TokenizerOperator::encode_sequence(string_view text,
+                                                 Index sequence_length) const
+{
+    const vector<Index> encoded = encode(text);
+    return frame_sequence(encoded, sequence_length);
 }
 
 string TokenizerOperator::decode(const vector<Index>& ids) const

@@ -124,7 +124,6 @@ private:
 
     friend struct TrainingContext;
 
-    vector<vector<pair<size_t, size_t>>> make_consumer_edges() const;
     DeltaLayout build_delta_layout(const vector<vector<TensorSpec>>&) const;
     DeltaPlan build_delta_plan();
     static vector<MemoryPoolEntry> to_pool_entries(const vector<DeltaEntry>&,

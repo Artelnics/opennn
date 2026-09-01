@@ -164,12 +164,13 @@ void LanguageDataset::read_txt()
     const bool has_decoder = !is_single_token_target;
     configure(samples_number, has_decoder);
 
+    vector<vector<Index>> input_indices;
+    vector<vector<Index>> target_indices;
+    encode_streaming(input_document_tokens, target_document_tokens,
+                     input_indices, target_indices);
+
     if (storage_mode == StorageMode::Matrix)
     {
-        vector<vector<Index>> input_indices;
-        vector<vector<Index>> target_indices;
-        encode_streaming(input_document_tokens, target_document_tokens, input_indices, target_indices);
-
         const Index decoder_offset = maximum_input_sequence_length;
         const Index target_offset = has_decoder
             ? decoder_offset + maximum_target_sequence_length
@@ -201,9 +202,6 @@ void LanguageDataset::read_txt()
     }
     else
     {
-        vector<vector<Index>> input_indices;
-        vector<vector<Index>> target_indices;
-        encode_streaming(input_document_tokens, target_document_tokens, input_indices, target_indices);
         write_binary_cache(input_indices, target_indices);
         save_cache_metadata(metadata_path, samples_number, has_decoder);
     }
@@ -253,7 +251,7 @@ void LanguageDataset::configure(Index samples_number, bool has_decoder)
             target_vocabulary.end());
     }
 
-    sample_roles.resize(size_t(samples_number));
+    sample_roles.assign(size_t(samples_number), SampleRole::Training);
 }
 
 bool LanguageDataset::load_cache_metadata(const filesystem::path& metadata_path)
@@ -343,7 +341,7 @@ void LanguageDataset::load_documents(vector<vector<string>>& input_documents,
     const string separator_string = get_separator_string();
     const char field_separator = separator_string.empty() ? '\t' : separator_string[0];
 
-    const CsvReader reader(field_separator);
+    const CsvReader reader;
     const CsvReader::Result result = reader.read(data_path);
 
     const size_t first_line = has_header ? 1 : 0;

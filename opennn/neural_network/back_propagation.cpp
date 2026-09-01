@@ -59,25 +59,6 @@ const NeuralNetwork& BackPropagation::require_network() const
     return *network;
 }
 
-vector<vector<pair<size_t, size_t>>> BackPropagation::make_consumer_edges() const
-{
-    const NeuralNetwork& network = require_network();
-
-    const auto& source_layers = network.get_source_layers();
-    const size_t layers_number = network.get_layers().size();
-
-    vector<vector<pair<size_t, size_t>>> edges(layers_number);
-    for (size_t i = 0; i < layers_number; ++i)
-    {
-        const vector<Index>& sources = source_layers[i];
-        for (size_t j = 0; j < sources.size(); ++j)
-            if (const Index source_layer = sources[j]; source_layer >= 0
-            && size_t(source_layer) < layers_number)
-                edges[source_layer].push_back({i, j});
-    }
-    return edges;
-}
-
 void BackPropagation::set(const Index new_batch_size, 
                           Loss& new_loss,
                           Buffer* external_arena,
@@ -565,7 +546,7 @@ BackPropagation::DeltaPlan BackPropagation::build_delta_plan()
 {
     const NeuralNetwork& neural_network = require_network();
 
-    consumer_edges = make_consumer_edges();
+    consumer_edges = neural_network.get_consumer_edges();
 
     DeltaPlan plan;
     plan.backward_specs = neural_network.get_backward_specs(batch_size);

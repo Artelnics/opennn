@@ -113,6 +113,7 @@ protected:
     ScaleOperator scale_op;
 
     void refresh_op_storage(Device);
+    static string affine_expression(string_view input, const AffineMap&);
 };
 
 }

@@ -123,7 +123,6 @@ string Unscaling::write_expression(const vector<string>& input_names,
              "Unscaling::write_expression: layer not configured.");
 
     ostringstream buffer;
-    buffer.precision(10);
 
     for (Index i = 0; i < outputs_number; ++i)
     {
@@ -136,27 +135,13 @@ string Unscaling::write_expression(const vector<string>& input_names,
             continue;
         }
 
-        const AffineMap affine = unscaling_affine(scaler, descriptives[feature], min_range, max_range);
-
-        buffer << output_names[i] << "=";
-
-        if (affine.slope == 0.0f)
-            buffer << affine.offset;
-        else if (affine.slope == 1.0f && affine.offset == 0.0f)
-            buffer << input_names[i];
-        else if (affine.offset == 0.0f)
-            buffer << input_names[i] << "*" << affine.slope;
-        else
-            buffer << input_names[i] << "*" << affine.slope << "+" << affine.offset;
-
-        buffer << ";\n";
+        buffer << output_names[i] << "="
+               << affine_expression(input_names[i], unscaling_affine(
+                      scaler, descriptives[feature], min_range, max_range))
+               << ";\n";
     }
 
-    string expression = buffer.str();
-    replace(expression, "+-", "-");
-    replace(expression, "--", "+");
-
-    return expression;
+    return buffer.str();
 }
 
 }

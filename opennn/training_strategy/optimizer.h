@@ -234,7 +234,6 @@ protected:
         FillMode,
         WorkerProfileCounters* profile_counters = nullptr);
 
-    int get_batch_workers_number() const { return workers_number; }
     int get_batch_pool_size(const NeuralNetwork&) const;
 
     struct EpochLoopContext;

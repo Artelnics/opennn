@@ -15,7 +15,6 @@
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/neural_network.h"
-#include "opennn/training_strategy/error_functions.h"
 #include "opennn/training_strategy/kernel_optimizers.cuh"
 #include "opennn/training_strategy/loss.h"
 
@@ -25,19 +24,9 @@ namespace opennn
 StochasticGradientDescent::StochasticGradientDescent(Loss* new_loss)
     : Optimizer(new_loss)
 {
-    set_default();
-}
-
-void StochasticGradientDescent::set_default()
-{
     name = "StochasticGradientDescent";
-
-    batch_size = 0;
-
-    training_loss_goal = 0.0f;
     maximum_time = 3600.0f;
     maximum_epochs = 1000;
-
     display_period = 100;
 }
 

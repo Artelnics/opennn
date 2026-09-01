@@ -60,6 +60,27 @@ TEST_F(QuasiNewtonMethodTest, GeneralConstructor)
     EXPECT_TRUE(quasi_newton_method.get_loss() != nullptr);
 }
 
+TEST_F(QuasiNewtonMethodTest, RecordsValidationErrorWithoutBackwardState)
+{
+    set_seed(31);
+    TabularDataset dataset(16, {2}, {1});
+    dataset.set_data_random();
+    dataset.split_samples_sequential(0.75f, 0.25f, 0.0f);
+
+    ApproximationNetwork network({2}, {6}, {1});
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    QuasiNewtonMethod optimizer(&loss);
+    optimizer.set_maximum_epochs(1);
+    optimizer.set_display(false);
+
+    const TrainingResult result = optimizer.train();
+
+    ASSERT_EQ(result.validation_error_history.size(), 1);
+    EXPECT_TRUE(isfinite(result.validation_error_history(0)));
+}
+
 TEST_F(QuasiNewtonMethodTest, BFGS_Update)
 {
     const Index inputs_number = 1;

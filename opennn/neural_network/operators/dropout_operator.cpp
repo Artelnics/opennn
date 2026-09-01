@@ -79,25 +79,29 @@ static void validate_dropout_mask(const TensorView& values,
              "Dropout mask must provide one INT8 value per element on the same device.");
 }
 
+static void apply_dropout_mask_cpu(TensorView& values,
+                                   const TensorView& mask,
+                                   float rate)
+{
+    const Index element_count = values.size();
+    const float keep_scale = 1.0f / (1.0f - rate);
+    float* data = values.as<float>();
+    const uint8_t* mask_values = mask.as<uint8_t>();
+    const bool parallel = element_count >= 65536;
+
+    #pragma omp parallel for schedule(static) if(parallel)
+    for (Index i = 0; i < element_count; ++i)
+        data[i] *= mask_values[i] ? keep_scale : 0.0f;
+}
+
 static void dropout_forward_cpu(TensorView& output, TensorView& mask, float rate)
 {
     const Index element_count = output.size();
     if (element_count == 0) return;
 
-    const float keep_scale = 1.0f / (1.0f - rate);
-    float* output_data = output.as<float>();
-    uint8_t* mask_values = mask.as<uint8_t>();
-
-    set_random_bernoulli(span<uint8_t>(mask_values, size_t(element_count)),
+    set_random_bernoulli(span<uint8_t>(mask.as<uint8_t>(), size_t(element_count)),
                          1.0f - rate);
-
-    const bool parallel = element_count >= 65536;
-
-    #pragma omp parallel for schedule(static) if(parallel)
-    for (Index i = 0; i < element_count; ++i)
-    {
-        output_data[i] *= mask_values[i] ? keep_scale : 0.0f;
-    }
+    apply_dropout_mask_cpu(output, mask, rate);
 }
 
 void dropout_forward(TensorView& output, TensorView& mask, float rate)
@@ -113,12 +117,7 @@ void dropout_backward(TensorView& delta, const TensorView& mask, float rate)
     if (rate <= 0.0f) return;
     validate_dropout_mask(delta, mask);
     if (delta.is_cuda()) { dropout_backward_gpu(delta, mask, rate); return; }
-
-    const float keep_scale = 1.0f / (1.0f - rate);
-    float* delta_values = delta.as<float>();
-    const uint8_t* mask_values = mask.as<uint8_t>();
-    for (Index i = 0; i < delta.size(); ++i)
-        delta_values[i] *= mask_values[i] ? keep_scale : 0.0f;
+    apply_dropout_mask_cpu(delta, mask, rate);
 }
 
 void DropoutOperator::set_rate(float new_rate)

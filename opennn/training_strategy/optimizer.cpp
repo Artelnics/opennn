@@ -399,8 +399,7 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
         }
     };
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
-    const int batch_workers_number = get_batch_workers_number();
+    const int batch_workers_number = workers_number;
 
     for (int i = 0; i < batch_workers_number; ++i)
         session->add_worker(worker_body);
@@ -417,7 +416,7 @@ int Optimizer::get_batch_pool_size(const NeuralNetwork& neural_network) const
     if (batch_pool_size_override > 0)
         return max(1, batch_pool_size_override);
     return neural_network.is_gpu()
-        ? max(get_batch_workers_number() + 1, 3)
+        ? max(workers_number + 1, 3)
         : 1;
 }
 
@@ -1527,11 +1526,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     // that there be no decoder and that the input and target columns each be
     // contiguous. The branch below hands the host batch back to the empty queue
     // and uploads from a slot that only a device gather would have filled, so
-    // asking the weaker question trains on whatever the slot happened to hold.
-    // Residency is not what selects the device path -- fill_batch also demands
-    // that there be no decoder and that the input and target columns each be
-    // contiguous. The branch below hands the host batch back to the empty queue
-    // and uploads from a slot that only a device gather would have filled, so
     // asking the weaker question trains on whatever the slot happened to hold,
     // which for a fresh arena is zeros and a training error of exactly 0.
     const bool resident_gather =
@@ -1753,7 +1747,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
 
     if (profile_this)
         worker_profile.print_epoch(epoch_t0, "Epoch breakdown (graph training)",
-                                   get_batch_workers_number());
+                                   workers_number);
 
     return epoch_result;
 }
@@ -2242,7 +2236,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
     {
         worker_profile.print_epoch(epoch_t0,
                                    "Epoch breakdown (training)",
-                                   get_batch_workers_number());
+                                   workers_number);
     }
 
     return epoch_result;

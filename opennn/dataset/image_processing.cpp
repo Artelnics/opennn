@@ -528,13 +528,13 @@ void copy_image_to_expected_shape(const Tensor3& source,
     const Index source_height = source.dimension(0);
     const Index source_width = source.dimension(1);
 
-    unique_ptr<Tensor3> resized;
+    Tensor3 resized;
     const Tensor3* image = &source;
 
     if (source_height != expected_height || source_width != expected_width)
     {
-        resized = make_unique<Tensor3>(resize_image(source, expected_height, expected_width));
-        image = resized.get();
+        resized = resize_image(source, expected_height, expected_width);
+        image = &resized;
     }
 
     const Index channels = image->dimension(2);

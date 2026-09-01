@@ -49,6 +49,26 @@ TEST(ScalingLayerTest, ImplementsFeatureScalingEndpoint)
     EXPECT_FLOAT_EQ(actual.max_range, 1.0f);
 }
 
+TEST(ScalingLayerTest, ScalingAndUnscalingExpressionsShareAffineFormatting)
+{
+    const vector<Descriptives> descriptives = {
+        Descriptives(1.0f, 9.0f, 5.0f, 2.0f)
+    };
+
+    Scaling scaling({1});
+    scaling.set_descriptives(descriptives);
+    scaling.set_scalers("MeanStandardDeviation");
+
+    Unscaling unscaling({1});
+    unscaling.set_descriptives(descriptives);
+    unscaling.set_scalers("MeanStandardDeviation");
+
+    EXPECT_EQ(scaling.write_expression({"x"}, {}),
+              "scaled_x = x*0.5-2.5;\n");
+    EXPECT_EQ(unscaling.write_expression({"x"}, {"y"}),
+              "y=x*2.0+5.0;\n");
+}
+
 TEST(ScalingLayerTest, ForwardPropagate)
 {
     Index inputs_number = 3;

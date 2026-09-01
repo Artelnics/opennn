@@ -38,19 +38,10 @@ static Index resolve_producer(const vector<vector<TensorSpec>>& forward_specs,
 
 static vector<Index> find_early_output_release_steps(
     const vector<unique_ptr<Layer>>& layers,
-    const vector<vector<Index>>& source_layers,
+    const vector<vector<pair<size_t, size_t>>>& consumers,
     const vector<vector<TensorSpec>>& forward_specs,
     Index& released_bytes)
 {
-    vector<vector<pair<size_t, size_t>>> consumers(layers.size());
-    for (size_t consumer = 0; consumer < source_layers.size(); ++consumer)
-        for (size_t input = 0; input < source_layers[consumer].size(); ++input)
-        {
-            const Index source = source_layers[consumer][input];
-            if (source >= 0)
-                consumers[size_t(source)].push_back({consumer, input});
-        }
-
     vector<Index> release_steps(layers.size(), Index(-1));
     released_bytes = 0;
 
@@ -172,13 +163,11 @@ void ForwardPropagation::set(
     staged_inputs.clear();
     host_bf16_input_scratch.clear();
     passthrough_overrides.clear();
-    valid_lengths.clear();
-    device_valid_lengths.clear();
     device_valid_length_storage.clear();
     output_window.reset();
 
-    inputs.resize(layers_number);
-    slots.resize(layers_number);
+    inputs.assign(layers_number, {});
+    slots.assign(layers_number, {});
     drelu_fused_by_layer.assign(layers_number, uint8_t{0});
     layer_state_storage.reserve(layers_number);
     layer_session_state_storage->reserve(layers_number);
@@ -189,7 +178,7 @@ void ForwardPropagation::set(
             neural_network->get_device());
     }
     layer_pinned_storage.resize(layers_number);
-    valid_lengths.resize(layers_number);
+    valid_lengths.assign(layers_number, {});
     device_valid_lengths.assign(layers_number, nullptr);
     device_valid_length_storage.resize(layers_number);
 
@@ -340,7 +329,7 @@ void ForwardPropagation::set(
         is_training(mode)
         ? find_early_output_release_steps(
               layers,
-              source_layers,
+              neural_network->get_consumer_edges(),
               forward_specs,
               early_release_logical_bytes)
         : vector<Index>(layers_number, Index(-1));
@@ -945,7 +934,7 @@ Index ForwardPropagation::bind_slots(
                                  format("batch={}", batch_size));
 
         const vector<Index>& sources = source_layers[i];
-        inputs[i].resize(sources.size());
+        inputs[i].assign(sources.size(), TensorView{});
 
         for (size_t j = 0; j < sources.size(); ++j)
         {

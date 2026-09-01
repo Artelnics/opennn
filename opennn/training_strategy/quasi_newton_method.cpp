@@ -19,22 +19,10 @@ namespace opennn
 QuasiNewtonMethod::QuasiNewtonMethod(Loss* new_loss)
     : Optimizer(new_loss)
 {
-    set_default();
-}
-
-void QuasiNewtonMethod::set_default()
-{
     name = "QuasiNewtonMethod";
-
-    minimum_loss_decrease = 1.0e-6f;
-    training_loss_goal = 0.0f;
     maximum_validation_failures = 1000;
-
     maximum_epochs = 1000;
     maximum_time = 3600.0f;
-
-    display = true;
-    display_period = 10;
 }
 
 void QuasiNewtonMethod::calculate_inverse_hessian(OptimizerData& optimization_data) const
@@ -184,8 +172,6 @@ TrainingResult QuasiNewtonMethod::train()
     FullBatchContext context;
     prepare_full_batch_training(context, "Training with quasi-Newton method...");
 
-    BackPropagation validation_back_propagation(context.validation_samples_number, *loss);
-
     BackPropagation training_back_propagation(context.training_samples_number, *loss);
 
     const Index parameters_number = neural_network->get_parameters_buffer_size();
@@ -248,14 +234,8 @@ TrainingResult QuasiNewtonMethod::train()
 
     hooks.validation_error = [&]
     {
-        const Loss::EvaluationResult evaluation_result =
-            loss->calculate_error(*context.validation_batch,
-                                  *context.validation_forward_propagation);
-        validation_back_propagation.metrics.error = evaluation_result.error;
-        validation_back_propagation.metrics.accuracy = evaluation_result.accuracy;
-        validation_back_propagation.metrics.active_tokens_count = evaluation_result.active_tokens_count;
-
-        return validation_back_propagation.metrics.error;
+        return loss->calculate_error(*context.validation_batch,
+                                     *context.validation_forward_propagation).error;
     };
 
     hooks.display_extra = [&]{ cout << "Learning rate: " << line_search.learning_rate << "\n"; };

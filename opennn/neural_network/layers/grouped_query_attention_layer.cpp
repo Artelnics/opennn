@@ -1200,16 +1200,15 @@ void GroupedQueryAttention::apply_input_shape(const Shape& new_input_shape)
 
 void GroupedQueryAttention::read_JSON_body(const Json* element)
 {
-    const Shape new_input_shape = string_to_shape(read_json_string(element, "InputDimensions"));
     const Index new_q_heads  = read_json_index(element, "QueryHeads");
     const Index new_kv_heads = read_json_index(element, "KeyValueHeads");
     const Index new_head_dim = read_json_index(element, "HeadDim");
     const float new_rope_theta  = read_json_float(element, "RopeTheta");
     const float new_rms_epsilon = read_json_float(element, "RmsEpsilon");
 
-    const bool new_use_qk_norm = element->has("QKNorm") ? read_json_bool(element, "QKNorm") : true;
+    const bool new_use_qk_norm = read_json_bool(element, "QKNorm", true);
 
-    set(new_input_shape, new_q_heads, new_kv_heads, new_head_dim,
+    set(get_input_shape(), new_q_heads, new_kv_heads, new_head_dim,
         new_rope_theta, new_rms_epsilon, new_use_qk_norm, get_label());
 }
 

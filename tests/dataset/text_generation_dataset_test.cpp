@@ -53,6 +53,10 @@ TEST(TextGenerationDataset, OwnsVocabularyThroughTokenizer)
             EXPECT_FLOAT_EQ(data(sample, sequence_length + token),
                             data(sample, token + 1));
 
+    dataset.set_sample_role(0, SampleRole::None);
+    dataset.read_txt();
+    EXPECT_EQ(dataset.get_samples_number(SampleRole::None), 0);
+
     remove_text_generation_files(path);
 }
 

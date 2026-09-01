@@ -104,10 +104,6 @@ void Normalization3d::apply_input_shape(const Shape& new_input_shape)
 
 void Normalization3d::read_JSON_body(const Json* element)
 {
-    const Shape new_input_shape = string_to_shape(read_json_string(element, "InputDimensions"));
-
-    set(new_input_shape.dim_or_zero(0), new_input_shape.dim_or_zero(1), get_label());
-
     if (element->has("Method"))
     {
         const string method = read_json_string(element, "Method");

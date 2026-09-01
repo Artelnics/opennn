@@ -83,6 +83,10 @@ TEST(LanguageDataset, ReadTxtBuildsVocabularyAndSequences)
     EXPECT_GT(dataset.get_maximum_input_sequence_length(), 0);
     EXPECT_EQ(dataset.get_maximum_target_sequence_length(), 1);
 
+    dataset.set_sample_role(0, SampleRole::None);
+    ASSERT_NO_THROW(dataset.read_txt());
+    EXPECT_EQ(dataset.get_samples_number(SampleRole::None), 0);
+
     remove_language_file(file_path);
 }
 

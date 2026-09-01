@@ -87,6 +87,7 @@ protected:
     VocabularyMap vocabulary_map;
 
     void rebuild_map();
+    vector<Index> frame_sequence(span<const Index>, Index sequence_length) const;
 };
 
 unique_ptr<TokenizerOperator> make_tokenizer_operator(string_view kind);

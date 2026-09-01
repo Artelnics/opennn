@@ -456,6 +456,7 @@ vector<CombinationOperator*> get_combination_operators(Layer& layer)
 
 void wire_drelu_fusions(vector<unique_ptr<Layer>>& layers,
                         const vector<vector<Index>>& source_layers,
+                        const vector<vector<pair<size_t, size_t>>>& consumer_edges,
                         Device device,
                         Type training_type)
 {
@@ -471,16 +472,11 @@ void wire_drelu_fusions(vector<unique_ptr<Layer>>& layers,
 
     const bool drelu_enabled = env_flag_enabled("OPENNN_DRELU_FUSION");
 
-    vector<Index> consumer_count(layers.size(), 0);
-    for (const auto& layer_sources : source_layers)
-        for (Index source : layer_sources)
-            if (source >= 0) ++consumer_count[size_t(source)];
-
     for (size_t i = 0; i < source_layers.size(); ++i)
     {
         const auto& sources = source_layers[i];
         if (sources.size() != 1 || sources[0] < 0) continue;
-        if (consumer_count[size_t(sources[0])] != 1) continue;
+        if (consumer_edges[size_t(sources[0])].size() != 1) continue;
 
         auto* consumer = dynamic_cast<Dense*>(layers[i].get());
         auto* producer = dynamic_cast<Dense*>(layers[size_t(sources[0])].get());
@@ -588,7 +584,8 @@ void NeuralNetwork::compile(EffectiveConfig new_config)
         for (Operator* op : layer->get_operators())
             op->initialize_states();
 
-    wire_drelu_fusions(layers, source_layers, get_device(), get_training_type());
+    wire_drelu_fusions(layers, source_layers, get_consumer_edges(),
+                       get_device(), get_training_type());
 }
 
 void NeuralNetwork::clear_low_precision_parameter_storage()
@@ -657,6 +654,18 @@ Index NeuralNetwork::get_layer_index(const string& new_label) const
         return distance(layers.begin(), it);
 
     throw runtime_error(format("Layer not found: {}", new_label));
+}
+
+vector<vector<pair<size_t, size_t>>> NeuralNetwork::get_consumer_edges() const
+{
+    vector<vector<pair<size_t, size_t>>> edges(layers.size());
+
+    for (size_t consumer = 0; consumer < source_layers.size(); ++consumer)
+        for (size_t input = 0; input < source_layers[consumer].size(); ++input)
+            if (const Index source = source_layers[consumer][input]; source >= 0)
+                edges[size_t(source)].push_back({consumer, input});
+
+    return edges;
 }
 
 const Layer* NeuralNetwork::get_first(const string& name) const

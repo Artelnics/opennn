@@ -8,14 +8,12 @@
 
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
 
-#include "opennn/core/configuration.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/profiler.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/neural_network/forward_propagation.h"
-#include "opennn/training_strategy/error_functions.h"
 #include "opennn/training_strategy/kernel_optimizers.cuh"
 #include "opennn/training_strategy/loss.h"
 
@@ -25,6 +23,7 @@ namespace opennn
 namespace
 {
 
+#ifdef OPENNN_HAS_CUDA
 // Adam does no arithmetic worth counting; it streams. Per parameter it reads the
 // gradient, reads and rewrites both moments and the parameter itself, and writes
 // a BF16 mirror when one exists. Counting those passes is what puts the
@@ -46,13 +45,15 @@ double adam_bytes(const vector<BackPropagation::GradientSlice>& slices, bool has
 
     return per_parameter * parameters;
 }
+#endif
 
 }
 
 AdaptiveMomentEstimation::AdaptiveMomentEstimation(Loss* new_loss)
     : Optimizer(new_loss)
 {
-    set_default();
+    display_period = 100;
+    name = "AdaptiveMomentEstimation";
 }
 
 void AdaptiveMomentEstimation::set_beta_1(const float new_beta_1)
@@ -69,13 +70,6 @@ void AdaptiveMomentEstimation::set_beta_2(const float new_beta_2)
              "AdaptiveMomentEstimation::set_beta_2: beta_2 must be in [0, 1).");
 
     beta_2 = new_beta_2;
-}
-
-void AdaptiveMomentEstimation::set_default()
-{
-    batch_size = 0;
-    display_period = 100;
-    name = "AdaptiveMomentEstimation";
 }
 
 void AdaptiveMomentEstimation::configure_for_task(NetworkTask task)

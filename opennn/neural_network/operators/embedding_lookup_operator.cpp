@@ -261,8 +261,7 @@ vector<Operator::ParameterSlot> EmbeddingLookupOperator::parameter_slots()
 
 void EmbeddingLookupOperator::link_parameter_scales(span<const TensorView> views)
 {
-    if (views.empty()) return;
-    weight_scale = views[0];
+    weight_scale = views.empty() ? TensorView{} : views.back();
 }
 
 void EmbeddingLookupOperator::link_states(span<const TensorView> views)

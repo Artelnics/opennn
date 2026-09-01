@@ -452,6 +452,19 @@ string expression_literal(float value)
 
 }
 
+string Scaling::affine_expression(string_view input, const AffineMap& affine)
+{
+    if (affine.slope == 0.0f)
+        return expression_literal(affine.offset);
+    if (affine.slope == 1.0f && affine.offset == 0.0f)
+        return string(input);
+
+    string expression = string(input) + "*" + expression_literal(affine.slope);
+    if (affine.offset > 0.0f) expression += "+";
+    if (affine.offset != 0.0f) expression += expression_literal(affine.offset);
+    return expression;
+}
+
 string Scaling::write_expression(const vector<string>& input_names,
                                  const vector<string>&) const
 {
@@ -461,7 +474,6 @@ string Scaling::write_expression(const vector<string>& input_names,
              "Scaling::write_expression: layer not configured.");
 
     ostringstream buffer;
-    buffer.precision(10);
 
     for (Index i = 0; i < outputs_number; ++i)
     {
@@ -475,29 +487,13 @@ string Scaling::write_expression(const vector<string>& input_names,
             continue;
         }
 
-        const AffineMap affine =
-            scaling_affine(scaler, descriptives[feature], min_range, max_range);
-
-        buffer << "scaled_" << input_names[i] << " = ";
-
-        if (affine.slope == 0.0f)
-            buffer << expression_literal(affine.offset);
-        else if (affine.slope == 1.0f && affine.offset == 0.0f)
-            buffer << input_names[i];
-        else if (affine.offset == 0.0f)
-            buffer << input_names[i] << "*" << expression_literal(affine.slope);
-        else
-            buffer << input_names[i] << "*" << expression_literal(affine.slope)
-                   << "+" << expression_literal(affine.offset);
-
-        buffer << ";\n";
+        buffer << "scaled_" << input_names[i] << " = "
+               << affine_expression(input_names[i], scaling_affine(
+                      scaler, descriptives[feature], min_range, max_range))
+               << ";\n";
     }
 
-    string expression = buffer.str();
-    replace(expression, "+-", "-");
-    replace(expression, "--", "+");
-
-    return expression;
+    return buffer.str();
 }
 
 }

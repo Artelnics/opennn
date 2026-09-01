@@ -28,10 +28,8 @@ public:
         bool                has_quotes = false;
     };
 
-    explicit CsvReader(char new_separator = ',',
-                       function<void(string_view)> new_line_validator = {})
-        : separator(new_separator),
-          line_validator(std::move(new_line_validator))
+    explicit CsvReader(function<void(string_view)> new_line_validator = {})
+        : line_validator(std::move(new_line_validator))
     {
     }
 
@@ -39,7 +37,6 @@ public:
 
 private:
 
-    char separator;
     function<void(string_view)> line_validator;
 
     void parse(Result&, string_view) const;

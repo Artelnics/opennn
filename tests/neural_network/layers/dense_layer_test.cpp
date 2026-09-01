@@ -17,6 +17,16 @@ TEST(Dense2dTest, DefaultConstructor)
     EXPECT_EQ(dense_layer.get_name(), "Dense");
 }
 
+TEST(Dense2dTest, EmptyShapesKeepRequestedConfiguration)
+{
+    opennn::Dense dense_layer({}, {}, "ReLU", BatchNormalization::No, "hidden");
+
+    EXPECT_TRUE(dense_layer.get_input_shape().empty());
+    EXPECT_EQ(dense_layer.get_output_shape(), Shape{0});
+    EXPECT_EQ(dense_layer.get_activation_function(), ActivationFunction::ReLU);
+    EXPECT_EQ(dense_layer.get_label(), "hidden");
+}
+
 TEST(Dense2dTest, GeneralConstructor)
 {
     opennn::Dense dense_layer({10}, {3}, "Identity");

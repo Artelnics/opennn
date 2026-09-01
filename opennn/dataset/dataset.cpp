@@ -71,8 +71,6 @@ void Dataset::record_memory(const string& stage) const
 {
     if (!memory_debug::enabled()) return;
 
-    const Index samples = data.rows();
-
     memory_debug::record("dataset", "data", Index(data.size()) * Index(sizeof(float)),
                          stage + ": " + to_string(data.rows()) + "x" + to_string(data.cols()));
 
@@ -102,7 +100,6 @@ void Dataset::record_memory(const string& stage) const
     memory_debug::record("dataset", "variables", variables_bytes,
                          stage + ": " + to_string(variables.size()) + " variables");
 
-    (void)samples;
 }
 
 void Dataset::set_fold_split(const vector<Index>& training, const vector<Index>& validation)
@@ -115,16 +112,8 @@ void Dataset::set_fold_split(const vector<Index>& training, const vector<Index>&
 
 vector<Index> Dataset::get_used_sample_indices() const
 {
-    const Index samples_number = get_samples_number();
-
-    vector<Index> used_indices;
-    used_indices.reserve(samples_number - get_samples_number(SampleRole::None));
-
-    for (Index i = 0; i < samples_number; ++i)
-        if (sample_roles[i] != SampleRole::None)
-            used_indices.push_back(i);
-
-    return used_indices;
+    return filter_indices(active_sample_roles(), get_used_samples_number(),
+                          [](SampleRole role) { return role != SampleRole::None; });
 }
 
 void Dataset::get_batches(const vector<Index>& sample_indices,
@@ -467,9 +456,7 @@ void Dataset::set_default_variable_roles_implementation(bool forecasting)
 
 void Dataset::set_default_variable_names()
 {
-    const Index variables_number = variables.size();
-
-    for (Index i = 0; i < variables_number; ++i)
+    for (Index i = 0; i < ssize(variables); ++i)
         variables[i].name = format("variable_{}", 1 + i);
 }
 
@@ -553,10 +540,7 @@ Index Dataset::get_variables_number(VariableRole role_type) const
 
 Index Dataset::get_used_variables_number() const
 {
-    return ranges::count_if(variables,
-                            [](const Variable& var) {
-                                  return var.is_used();
-                            });
+    return ranges::count_if(variables, [](const Variable& variable) { return variable.is_used(); });
 }
 
 vector<Variable> Dataset::get_variables(VariableRole role_type) const
@@ -621,9 +605,7 @@ void Dataset::set_variable_indices(const vector<Index>& input_variables,
 
 void Dataset::set_input_variables_unused()
 {
-    const Index variables_number = get_variables_number();
-
-    for (Index i = 0; i < variables_number; ++i)
+    for (Index i = 0; i < get_variables_number(); ++i)
         if (variables[i].role == VariableRole::Input)
             set_variable_role(i, VariableRole::None);
 }
@@ -713,11 +695,9 @@ Index Dataset::get_variable_index(const string& variable_name) const
 
 Index Dataset::get_variable_index(const Index feature_index) const
 {
-    const Index variables_number = get_variables_number();
-
     Index features_seen = 0;
 
-    for (Index i = 0; i < variables_number; ++i)
+    for (Index i = 0; i < get_variables_number(); ++i)
     {
         features_seen += variables[i].get_feature_count();
 
@@ -1091,7 +1071,9 @@ DeviceGather& Dataset::start_device_gather(Batch& batch,
                                            const vector<Index>& sample_indices,
                                            const FeatureSelection& features) const
 {
-    DeviceGather& gather = batch.device_gather.emplace();
+    DeviceGather& gather = batch.device_gather
+        ? *batch.device_gather
+        : batch.device_gather.emplace();
 
     gather.row_indices.resize(sample_indices.size());
     ranges::transform(sample_indices, gather.row_indices.begin(),
@@ -1151,7 +1133,7 @@ void Dataset::samples_from_JSON(const Json *samples_element)
     if (has_sample_ids)
         sample_ids = get_tokens(read_json_string(samples_element, "SamplesId"), get_separator_string());
 
-    sample_roles.resize(samples_number, SampleRole::Training);
+    sample_roles.assign(size_t(samples_number), SampleRole::Training);
 
     if (!variables.empty())
         set_sample_roles(get_tokens(read_json_string(samples_element, "SampleRoles"), " "));
