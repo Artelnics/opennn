@@ -1029,6 +1029,37 @@ TEST_P(ResponseDriver, AnAllowedSetOfTwoValuesActsAsABinaryVariable)
 }
 
 
+TEST_P(ResponseDriver, TwoLatticeConditionsOnOneVariableAgreeInEitherOrder)
+{
+    for (const bool integer_first : {true, false})
+    {
+        MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
+
+        const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+        optimization->add_objective("y", Sense::Minimize);
+
+        if (integer_first) optimization->add_constraint("x1", Condition::Integer);
+
+        optimization->add_constraint("x1", Condition::AllowedSet, {2.0f, 4.0f, 6.0f});
+
+        if (!integer_first) optimization->add_constraint("x1", Condition::Integer);
+
+        const MatrixR results = optimization->perform_response_optimization();
+
+        ASSERT_GT(results.rows(), 0);
+
+        for (Index i = 0; i < results.rows(); i++)
+        {
+            const float x1 = results(i, 0);
+
+            EXPECT_LT(min(min(abs(x1 - 2.0f), abs(x1 - 4.0f)), abs(x1 - 6.0f)), 1e-5f)
+                << "integer first " << integer_first << ", row " << i << " x1=" << x1;
+        }
+    }
+}
+
+
 TEST_P(ResponseDriver, CardinalityLeavesAtMostTheBudgetInPlay)
 {
     MinimalApproximation setup({"x1", "x2", "x3", "x4"}, {"y"}, 0.0f, 10.0f);
