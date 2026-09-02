@@ -215,6 +215,106 @@ def cpu_busy_fraction(seconds: float = 1.0,
 BUSY_THRESHOLD = float(os.environ.get("OPENNN_BENCH_BUSY_THRESHOLD", "0.03"))
 
 
+class ForeignActivity:
+    """CPU time spent by everything that is not the launch, second by second.
+
+    `cpu_busy_fraction` reads the machine before the first launch and after
+    the last, and nothing in between -- the one place a long window can be
+    hurt. That was found the expensive way: on 2026-09-02 an editor drawing a
+    conversation on the E-cores, while a 2.4 s dense-training window ran on
+    the P-cores, cost the launch-bound step 4-12% on both engines and left
+    both edge samples quiet. This watches every second of a launch and keeps
+    the worst one.
+
+    Foreign means outside the launch: not the runner, not the launched
+    process, not its descendants (PyTorch's compile workers are children of
+    its driver), and not kernel threads, whose time under a CNN cell is the
+    driver's interrupt work for the launch itself. Charging by process rather
+    than reading /proc/stat is what makes that separation possible. Only
+    live processes are charged, so one that starts and exits between two
+    samples is missed -- at a second per sample that is under 1/28 of the
+    machine for under a second, well below the threshold. For a pinned CPU
+    cell only work last seen on the watched cores counts, as with the edge
+    samples. The cost is one pass over /proc a second, a few milliseconds.
+    """
+
+    KERNEL_THREAD = 0x00200000                           # PF_KTHREAD
+
+    def __init__(self, launched_pid: int, cores: list[int] | None = None,
+                 interval: float = 1.0):
+        self.own = {os.getpid(), launched_pid}
+        self.cores = None if cores is None else set(cores)
+        self.interval = interval
+        self.samples: list[tuple[float, float, float]] = []   # start, end, fraction
+        self.ncpus = os.cpu_count() or 1
+        self.clk_tck = os.sysconf("SC_CLK_TCK")
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._loop, daemon=True)
+
+    @staticmethod
+    def _processes() -> dict[int, tuple[int, int, int, int]]:
+        """pid -> (ppid, flags, cpu ticks, last cpu)."""
+        out = {}
+        for entry in os.scandir("/proc"):
+            if not entry.name.isdigit():
+                continue
+            try:
+                with open(f"/proc/{entry.name}/stat") as handle:
+                    text = handle.read()
+            except OSError:
+                continue
+            rest = text[text.rindex(")") + 2:].split()
+            # fields after the command name: state ppid ... flags(6) utime(11)
+            # stime(12) ... processor(36)
+            ticks = int(rest[11]) + int(rest[12])
+            out[int(entry.name)] = (int(rest[1]), int(rest[6]), ticks, int(rest[36]))
+        return out
+
+    def _foreign_ticks(self, procs: dict) -> dict[int, int]:
+        tree = set(self.own)
+        grew = True
+        while grew:                                      # descendants, to any depth
+            grew = False
+            for pid, (ppid, _, _, _) in procs.items():
+                if ppid in tree and pid not in tree:
+                    tree.add(pid)
+                    grew = True
+        return {pid: ticks for pid, (_, flags, ticks, cpu) in procs.items()
+                if pid not in tree and not flags & self.KERNEL_THREAD
+                and (self.cores is None or cpu in self.cores)}
+
+    def _loop(self) -> None:
+        previous = self._foreign_ticks(self._processes())
+        mark = time.time()
+        while not self._stop.wait(self.interval):
+            current = self._foreign_ticks(self._processes())
+            now = time.time()
+            used = sum(max(0, ticks - previous.get(pid, ticks)) for pid, ticks in current.items())
+            watched = self.ncpus if self.cores is None else len(self.cores)
+            self.samples.append((mark, now, used / (self.clk_tck * (now - mark) * watched)))
+            previous, mark = current, now
+
+    def __enter__(self) -> "ForeignActivity":
+        self._thread.start()
+        return self
+
+    def __exit__(self, *_) -> None:
+        self._stop.set()
+        self._thread.join()
+
+    def worst(self, start: float | None = None, end: float | None = None) -> dict:
+        """The busiest foreign second overlapping [start, end] (unix), or the
+        whole launch when a mark is missing."""
+        inside = [s for s in self.samples
+                  if start is None or end is None or (s[1] > start and s[0] < end)]
+        if not inside:
+            return {"max": 0.0, "at": None, "seconds": 0,
+                    "window": "timed" if start and end else "whole"}
+        peak = max(inside, key=lambda s: s[2])
+        return {"max": round(peak[2], 4), "at": round(peak[0], 3), "seconds": len(inside),
+                "window": "timed" if start and end else "whole"}
+
+
 def result_destination(dirty: bool | None = None, device: str = "cuda",
                        busy: bool = False) -> Path:
     """The evidence store, or `scratch/` when the run cannot be evidence.
@@ -494,7 +594,14 @@ class Monitor:
 
     def __init__(self, interval_ms: int = 20, measure_idle_first: bool = True,
                  device: str = "cuda"):
-        self.interval_ms = interval_ms
+        # Memory is polled every `interval_ms`; the driver's power ring is
+        # drained every `power_drain_ms`. The ring keeps ~2.4 s of 20 ms
+        # samples, so one drain a second loses nothing and costs a fiftieth
+        # of the calls. Neither rate moves a result: drained at 20 ms, at
+        # 1 s and not at all, a launch-bound dense cell read the same
+        # throughput (interleaved, 2026-09-02).
+        self.interval_ms = int(os.environ.get("OPENNN_BENCH_MONITOR_MS", interval_ms))
+        self.power_drain_ms = int(os.environ.get("OPENNN_BENCH_POWER_DRAIN_MS", 1000))
         self.device = device
         self.memory_samples: list[tuple[float, float]] = []    # unix, MiB
         self.power_samples: list[tuple[float, float]] = []     # unix, watts
@@ -641,11 +748,14 @@ class Monitor:
                 newest_us = fresh[-1][0]
                 self.power_samples.extend((us / 1e6, watts) for us, watts in fresh)
 
+        last_drain = time.monotonic()
         while not self._stop.wait(self.interval_ms / 1000.0):
             mib = self._nvml.memory_used_mib()
             if mib is not None:
                 self.memory_samples.append((time.time(), mib))
-            drain()
+            if time.monotonic() - last_drain >= self.power_drain_ms / 1000.0:
+                drain()
+                last_drain = time.monotonic()
         drain()
 
     def _rapl_loop(self) -> None:

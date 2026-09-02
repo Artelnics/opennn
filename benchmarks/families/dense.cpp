@@ -298,6 +298,12 @@ int main(int argc, char* argv[])
                 return 1;
             }
 
+            // Chronological first, so a slow epoch can be placed in time
+            // against the runner's per-second activity samples.
+            cout << "batch_" << batch << "_epoch_order=";
+            for (size_t i = 0; i < epoch_seconds.size(); ++i)
+                cout << (i ? "," : "") << epoch_seconds[i];
+            cout << "\n";
             sort(epoch_seconds.begin(), epoch_seconds.end());
             const double median_epoch_s = epoch_seconds[epoch_seconds.size() / 2];
 

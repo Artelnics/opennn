@@ -157,10 +157,12 @@ thing and must not share a column.
 **Energy.** Board power integrated over the engine's own timed window, between
 the marks it prints. The power is the driver's own sampling of the board -- one
 instantaneous reading every 20 ms, timestamped by the driver and drained from
-its ring through NVML (`nvmlDeviceGetSamples`) -- and the figure is reported
-only when the window held at least fifty of them, one second; otherwise the
-artifact says so. A short run has no energy figure, and `0.0000 Wh` would be a
-claim rather than an absence.
+its ring through NVML (`nvmlDeviceGetSamples`) once a second; the ring holds
+about 2.4 s, so nothing is lost, and the drain rate does not touch the result
+(20 ms, 1 s and no draining at all read the same throughput on a launch-bound
+cell, interleaved). The figure is reported only when the window held at least
+fifty samples, one second; otherwise the artifact says so. A short run has no
+energy figure, and `0.0000 Wh` would be a claim rather than an absence.
 
 Why not `nvidia-smi --query-gpu=power.draw`, which the suite used until
 2026-09-02: on Ampere and later that field is the driver's *one-second moving
@@ -299,12 +301,26 @@ a real finding. In the session that found it, it cost two measurement windows
 and presented as a 24% regression in a binary that had not changed.
 
 The runner samples the non-idle fraction across all hardware threads before the
-first launch, records it as `machine_quiet`, and files the artifact in
-`results/scratch/` above 3%. Deliberately not the load average, which decays
-over minutes and reads 21 on an idle machine that was busy a moment ago. Quiet
-measures under 1% here and one saturated core is about 3.6%, so the threshold
-trips on roughly a single competing process. `OPENNN_BENCH_BUSY_THRESHOLD`
-moves it.
+first launch and after the last, and in between it watches every second of
+every launch: the CPU time of everything that is not the launch -- not the
+runner, not the launched process or its children, not kernel threads --
+charged from `/proc/<pid>/stat` once a second and judged over the engine's
+timed window. All three readings go into `machine_quiet` (`busy_before`,
+`busy_after`, `busy_during_max` with the second it happened), and the artifact
+is filed in `results/scratch/` when any of them is above 3%. Deliberately not
+the load average, which decays over minutes and reads 21 on an idle machine
+that was busy a moment ago. Quiet measures under 1% here and one saturated core
+is about 3.6%, so the threshold trips on roughly a single competing process.
+`OPENNN_BENCH_BUSY_THRESHOLD` moves it.
+
+The per-second watch exists because the edge samples were not enough. On
+2026-09-02 an editor drawing a conversation on the E-cores, while 2.4 s
+dense-training windows ran on the P-cores, cost the launch-bound step 4-12%
+on both engines -- and three foreign cores took PyTorch's from 10.2M to 4.7M
+samples/s while OpenNN's lost 1% -- with both edge samples reading quiet. A
+disturbance that starts after the first launch and ends before the last is
+exactly the one a long cell is exposed to, and it does not slow both engines
+equally.
 
 The check is necessary, not sufficient: it sees CPU time, not memory bandwidth.
 When a number moves and nothing in the tree explains it, re-run a fixed

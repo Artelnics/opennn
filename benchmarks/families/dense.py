@@ -267,6 +267,9 @@ def train_like(argv: list[str], mode: str) -> int:
             times.append(time.perf_counter() - mark)
         print(f"TIMED_END_UNIX={time.time():.3f}", flush=True)
 
+        # Chronological first, so a slow epoch can be placed in time against
+        # the runner's per-second activity samples; the sorted list follows.
+        print(f"batch_{batch}_epoch_order={','.join(f'{t:.6g}' for t in times)}")
         times.sort()
         median = times[len(times) // 2]
         samples_per_epoch = len(list(starts)) * batch

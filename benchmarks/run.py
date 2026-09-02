@@ -58,6 +58,7 @@ from common import (  # noqa: E402
     gpu_state,
     result_destination,
     cpu_busy_fraction,
+    ForeignActivity,
     BUSY_THRESHOLD,
     session_id,
     wait_for_idle,
@@ -204,13 +205,16 @@ def cpu_pinning(threads: int | None) -> tuple[list[str], dict[str, str], dict]:
              "excluded_efficiency_cores": layout["efficiency"]})
 
 def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
-           threads: int | None = None) -> dict:
+           threads: int | None = None,
+           watched_cores: list[int] | None = None) -> dict:
     """One execution, fully instrumented.
 
     The monitor samples for the whole process; energy is integrated only
     between the marks the engine prints around its timed region, so warmup and
     data loading are excluded from the energy figure as they are from the
-    throughput one.
+    throughput one. Foreign CPU activity is watched the same way -- every
+    second of the process, judged over the timed window -- and reported in
+    `foreign_activity` for the caller's quiet gate.
     """
     if quiet_wait:
         if device == "cuda":
@@ -241,13 +245,14 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
         process = subprocess.Popen(prefix + command, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE, text=True,
                                    env=environment)
-        if device != "cuda":
-            while process.poll() is None:
+        with ForeignActivity(process.pid, watched_cores) as foreign:
+            if device != "cuda":
+                while process.poll() is None:
+                    monitor.watch_rss(process.pid)
+                    time.sleep(0.02)
                 monitor.watch_rss(process.pid)
-                time.sleep(0.02)
-            monitor.watch_rss(process.pid)
 
-        stdout, stderr = process.communicate(timeout=14400)
+            stdout, stderr = process.communicate(timeout=14400)
         wall = time.time() - started
 
     completed = subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
@@ -263,6 +268,7 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
     start, end = mark("TIMED_START_UNIX"), mark("TIMED_END_UNIX")
 
     instruments = monitor.summary(start, end)
+    activity = foreign.worst(start, end)
 
     # Workload memory: peak minus the engine's own framework baseline. On CPU a
     # raw resident set compares which framework is bigger, not which run costs
@@ -288,6 +294,7 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
                     if k.endswith(("_test_accuracy", "test_roc_auc", "test_log_loss"))
                     and _is_number(v)},
         "instruments": instruments,
+        "foreign_activity": activity,
         "timed_window": {"start_unix": start, "end_unix": end},
         # Which BLAS the engine dispatched to. OpenNN defaults to Eigen and its
         # driver opts into MKL, so this is a property of the run rather than of
@@ -310,6 +317,23 @@ def median_energy(launches: list[dict]) -> float | None:
     values = sorted(l["instruments"]["energy_wh"] for l in launches
                     if l["instruments"].get("energy_wh") is not None)
     return values[len(values) // 2] if values else None
+
+def note_activity(outcome: dict) -> None:
+    """Say so at once when a launch was disturbed; the artifact records it
+    either way and the gate below files the cell."""
+    activity = outcome["foreign_activity"]
+    if activity["max"] > BUSY_THRESHOLD:
+        print(f"    foreign activity {activity['max']:.1%} during the "
+              f"{activity['window']} window of {outcome.get('engine', '?')}")
+
+def busiest_second(launches: list[dict]) -> tuple[float, float | None]:
+    """The worst foreign second over every launch's timed window."""
+    peak, at = 0.0, None
+    for outcome in launches:
+        activity = outcome.get("foreign_activity") or {}
+        if activity.get("max", 0.0) > peak:
+            peak, at = activity["max"], activity.get("at")
+    return peak, at
 
 def _is_number(text: str) -> bool:
     try:
@@ -388,23 +412,26 @@ def main() -> int:
         for question in FAMILIES[args.family]["modes"]:
             for engine in engines:
                 outcome = launch(engine_command(args.family, engine) + [question],
-                                 not args.no_wait, "cpu")
+                                 not args.no_wait, "cpu", watched_cores=watched_cores)
                 outcome.update(engine=engine, batch=0, round=1, question=question)
                 launches.append(outcome)
                 reported = {k: v for k, v in outcome["fields"].items()
                             if k not in ("engine", "mode", "RESULT")}
                 print(f"  {question:<8} {engine:<8} {reported}")
+                note_activity(outcome)
 
         # Again, now the work is done. The reading that mattered was never the
         # one up front: a sync client woke mid-cell and cost OpenNN 4.6x while
         # leaving PyTorch alone, and the sample before the first launch saw 4%
         # and called the machine quiet.
         busy_after = cpu_busy_fraction(cores=watched_cores)
+        busy_during, busy_during_at = busiest_second(launches)
 
         if busy_after > BUSY_THRESHOLD:
             print(f"\n  machine became busy during the run: {busy_after:.1%}")
 
-        machine_busy = machine_busy or busy_after > BUSY_THRESHOLD
+        machine_busy = (machine_busy or busy_after > BUSY_THRESHOLD
+                        or busy_during > BUSY_THRESHOLD)
 
         artifact = {
             "schema_version": 1,
@@ -419,6 +446,8 @@ def main() -> int:
             "frameworks": framework_versions(),
             "machine_quiet": {"busy_before": round(busy_before, 4),
                               "busy_after": round(busy_after, 4),
+                              "busy_during_max": round(busy_during, 4),
+                              "busy_during_at": busy_during_at,
                               "threshold": BUSY_THRESHOLD,
                               "quiet": not machine_busy},
             "launches": launches,
@@ -442,7 +471,8 @@ def main() -> int:
                 print(f"  {engine:<8} batch {batch:>9,} ... ", end="", flush=True)
                 outcome = launch(engine_command(args.family, engine)
                                  + engine_arguments(args.mode, data, batch, args),
-                                 not args.no_wait, args.device, args.threads)
+                                 not args.no_wait, args.device, args.threads,
+                                 watched_cores)
                 outcome.update(engine=engine, batch=batch, round=1)
                 launches.append(outcome)
 
@@ -456,6 +486,7 @@ def main() -> int:
                       else "does not fit")
                 if crashed:
                     outcome["crashed"] = True
+                note_activity(outcome)
                 if not outcome["fits"]:
                     break
                 batch *= 2
@@ -468,7 +499,8 @@ def main() -> int:
                 for batch in start_batch:
                     outcome = launch(engine_command(args.family, engine)
                                      + engine_arguments(args.mode, data, batch, args),
-                                     not args.no_wait, args.device, args.threads)
+                                     not args.no_wait, args.device, args.threads,
+                                     watched_cores)
                     outcome.update(engine=engine, batch=batch, round=index + 1)
                     launches.append(outcome)
 
@@ -478,6 +510,7 @@ def main() -> int:
                           f"{outcome['samples_per_sec']:>12,}/s  "
                           f"{instruments.get('workload_mib', instruments['peak_mib']):>7.0f} MiB  "
                           f"{watt_hours(instruments):>9}  {status}")
+                    note_activity(outcome)
 
     summary: dict = {}
     for engine in engines:
@@ -558,11 +591,17 @@ def main() -> int:
     # PyTorch alone, and the sample before the first launch saw 4% and called
     # the machine quiet.
     busy_after = cpu_busy_fraction(cores=watched_cores)
+    # And every second in between, judged over each launch's timed window.
+    # The edge samples cannot see a disturbance that starts after the first
+    # launch and ends before the last; on 2026-09-02 that shape cost three
+    # dense cells 4-12% and was filed as evidence.
+    busy_during, busy_during_at = busiest_second(launches)
 
     if busy_after > BUSY_THRESHOLD:
         print(f"\n  machine became busy during the run: {busy_after:.1%}")
 
-    machine_busy = machine_busy or busy_after > BUSY_THRESHOLD
+    machine_busy = (machine_busy or busy_after > BUSY_THRESHOLD
+                    or busy_during > BUSY_THRESHOLD)
 
     artifact = {
         "schema_version": 1,
@@ -579,6 +618,8 @@ def main() -> int:
         "clocks_locked": clocks_locked(),
         "machine_quiet": {"busy_before": round(busy_before, 4),
                           "busy_after": round(busy_after, 4),
+                          "busy_during_max": round(busy_during, 4),
+                          "busy_during_at": busy_during_at,
                           "threshold": BUSY_THRESHOLD,
                           "quiet": not machine_busy},
         "quality_gate": {"agrees": gate, "tolerance": args.tolerance,
@@ -619,13 +660,14 @@ def main() -> int:
     if git.get("dirty"):
         print("\n  dirty tree -> results/scratch/, not the evidence store")
     elif machine_busy:
-        # The larger of the two samples, because either can be what tripped
+        # The largest of the three readings, because any can be what tripped
         # the threshold: `busy_before` catches a machine that was already
-        # working, `busy_after` a sync client that woke mid-cell. Naming
-        # neither was a NameError on the one path where the warning matters,
-        # so a busy clean-tree run printed a traceback instead of its reason.
-        print(f"\n  machine was {max(busy_before, busy_after):.1%} busy -> "
-              "results/scratch/, not the evidence store")
+        # working, `busy_after` a sync client that woke mid-cell, and the
+        # per-second watch anything in between. Naming none was a NameError
+        # on the one path where the warning matters, so a busy clean-tree run
+        # printed a traceback instead of its reason.
+        print(f"\n  machine was {max(busy_before, busy_after, busy_during):.1%} "
+              "busy -> results/scratch/, not the evidence store")
     elif args.device == "cuda" and not clocks_locked():
         print("\n  clocks unlocked -> results/scratch/. Provisional: margins under"
               "\n  ~2% are not resolvable while the clock floats.")
