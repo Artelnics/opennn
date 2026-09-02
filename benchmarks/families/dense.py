@@ -19,8 +19,10 @@ normalises the CSV beforehand.
 
 Contract item 3 -- each engine at its best -- means `torch.compile` here, the
 way it means captured CUDA graphs and a device-resident split for OpenNN.
-`reduce-overhead` is the default because it adds CUDA graphs, which is the
-closest analogue to what OpenNN is doing; PT_COMPILE_MODE=eager opts out.
+Training compiles with `reduce-overhead` (Inductor plus CUDA graphs, the
+closest analogue to what OpenNN does) and inference with
+`max-autotune-no-cudagraphs`; both were measured against the other modes and
+the numbers are in compiled(). PT_COMPILE_MODE overrides either.
 
 `fp32` allows TF32 tensor cores, as it does in every engine of this suite --
 OpenNN's fp32 GEMMs are CUBLAS_COMPUTE_32F_FAST_TF32. `strict` is the escape
@@ -46,8 +48,8 @@ SEED = 42
 # Inference in bf16 can keep autocast on (weights re-cast on every call, which
 # torch.compile does not fold without freezing) or store the weights in bf16
 # once, the way OpenNN keeps a bf16 mirror of its parameters. PT_INFER_CAST
-# selects it; the published cell uses whichever measured faster.
-INFER_CAST = os.environ.get("PT_INFER_CAST", "autocast")
+# selects it; bf16 weights measured faster in every family (see compiled()).
+INFER_CAST = os.environ.get("PT_INFER_CAST", "weights")
 
 def report_blas() -> None:
     """Which BLAS this engine dispatches to, printed like OpenNN prints it.
@@ -163,7 +165,7 @@ def autocast_ctx(opts: dict):
         return contextlib.nullcontext()
     return torch.autocast(device_type=opts["device"], dtype=torch.bfloat16)
 
-def compiled(fn, opts: dict):
+def compiled(fn, opts: dict, default: str):
     """torch.compile on CUDA, eager on CPU -- both measured, not assumed.
 
     On CPU, eager is PyTorch's fast path for these models, not a shortcut:
@@ -176,13 +178,25 @@ def compiled(fn, opts: dict):
     would ship, which is the mirror image of the eager-on-GPU mistake that
     made dense training read 1.29x when it was 1.06x.
 
+    **The mode is per cell, and each was measured (session
+    2026-09-02-variants, batch 8,192, bf16, samples/s).** Training:
+    reduce-overhead 9,903,911, max-autotune 9,032,884,
+    max-autotune-no-cudagraphs 7,967,271, default 7,031,465, eager
+    4,770,607 -- the step is launch-bound and CUDA graphs are what it needs.
+    Inference: max-autotune-no-cudagraphs 37,131,220 (with bf16 weights;
+    35,903,250 under autocast), max-autotune 33,740,951, default 29,761,490,
+    reduce-overhead 27,939,975. Here CUDA graphs *cost* 25%: cudagraph-tree
+    replay copies the input slice into its static placeholder and runs its
+    bookkeeping in Python before every 0.2 ms batch, and Inductor's autotuned
+    GEMM for the 28-wide first layer beats cuBLAS's.
+
     PT_COMPILE_MODE overrides either way, so the choice stays measurable.
     """
     # dynamic=False: every batch size gets its own specialised graph rather
     # than a symbolic batch dimension. It is not enough for an in-process
     # sweep: batch 8192 still read 15-16M samples/s after 1024/2048/4096 in
     # the same process, 37.1M alone, so run.py measures one batch per process.
-    mode = os.environ.get("PT_COMPILE_MODE", "reduce-overhead")
+    mode = os.environ.get("PT_COMPILE_MODE", default)
     if mode == "eager" or opts["device"] != "cuda":
         return fn, "eager"
     return torch.compile(fn, mode=None if mode == "default" else mode, dynamic=False), f"compile:{mode}"
@@ -230,7 +244,7 @@ def train_like(argv: list[str], mode: str) -> int:
             loss.backward()
             optimizer.step()
 
-        step_fn, how = compiled(step, opts)
+        step_fn, how = compiled(step, opts, "reduce-overhead")
 
         # Whole batches only, the same rule model_opennn.cpp applies by
         # dropping the tail: the remainder is not trained.
@@ -302,7 +316,7 @@ def infer(argv: list[str]) -> int:
             opts = dict(opts, autocast=False)
         if batch == batches[0]:
             print(f"parameters={sum(p.numel() for p in model.parameters())}", flush=True)
-        forward, how = compiled(model, opts)
+        forward, how = compiled(model, opts, "max-autotune-no-cudagraphs")
         processed = (samples // batch) * batch
         x_in = x.to(torch.bfloat16) if weights_bf16 else x
 

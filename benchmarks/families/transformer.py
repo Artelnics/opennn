@@ -46,8 +46,8 @@ DROPOUT = float(os.environ.get("PT_DROPOUT", "0.1"))
 # Inference in bf16 can keep autocast on (weights re-cast on every call, which
 # torch.compile does not fold without freezing) or store the weights in bf16
 # once, the way OpenNN keeps a bf16 mirror of its parameters. PT_INFER_CAST
-# selects it; the published cell uses whichever measured faster.
-INFER_CAST = os.environ.get("PT_INFER_CAST", "autocast")
+# selects it; bf16 weights measured faster in every family (see compiled()).
+INFER_CAST = os.environ.get("PT_INFER_CAST", "weights")
 
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model: int, max_len: int):
@@ -196,7 +196,7 @@ def autocast_ctx(opts: dict):
         return contextlib.nullcontext()
     return torch.autocast(device_type=opts["device"], dtype=torch.bfloat16)
 
-def compiled(fn, opts: dict):
+def compiled(fn, opts: dict, default: str):
     """torch.compile on CUDA, eager on CPU -- both measured, not assumed.
 
     On CPU, eager is PyTorch's fast path for these models, not a shortcut:
@@ -209,9 +209,18 @@ def compiled(fn, opts: dict):
     would ship, which is the mirror image of the eager-on-GPU mistake that
     made dense training read 1.29x when it was 1.06x.
 
+    **The mode is per cell, and each was measured (session
+    2026-09-02-variants, batch 32, bf16, samples/s).** Training:
+    max-autotune-no-cudagraphs 1,150, reduce-overhead 1,132, default 1,124.
+    Inference with bf16 weights: max-autotune-no-cudagraphs 4,657,
+    reduce-overhead 4,574, default 4,499, eager 4,275; under autocast every
+    mode is slower (default 3,537, reduce-overhead 3,567,
+    max-autotune-no-cudagraphs 3,641) because the weights are re-cast on
+    every call.
+
     PT_COMPILE_MODE overrides either way, so the choice stays measurable.
     """
-    mode = os.environ.get("PT_COMPILE_MODE", "default")
+    mode = os.environ.get("PT_COMPILE_MODE", default)
     if mode == "eager" or opts["device"] != "cuda":
         return fn, "eager"
     return torch.compile(fn, mode=None if mode == "default" else mode, dynamic=False), f"compile:{mode}"
@@ -264,7 +273,7 @@ def train_like(argv: list[str], mode: str) -> int:
             loss.backward()
             optimizer.step()
 
-        step_fn, how = compiled(step, opts)
+        step_fn, how = compiled(step, opts, "max-autotune-no-cudagraphs")
         starts = range(0, source.shape[0] - batch + 1, batch)
 
         def run_epoch():
@@ -313,7 +322,7 @@ def infer(argv: list[str]) -> int:
             opts = dict(opts, autocast=False)
         if batch == batches[0]:
             print(f"parameters={sum(p.numel() for p in model.parameters())}", flush=True)
-        forward, _ = compiled(model, opts)
+        forward, _ = compiled(model, opts, "max-autotune-no-cudagraphs")
         processed = (source.shape[0] // batch) * batch
 
         s, t = source[:batch], target[:batch]

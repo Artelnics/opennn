@@ -48,8 +48,8 @@ INPUT = os.environ.get("PT_INPUT", "jpeg")
 # Inference in bf16 can keep autocast on (weights re-cast on every call, which
 # torch.compile does not fold without freezing) or store the weights in bf16
 # once, the way OpenNN keeps a bf16 mirror of its parameters. PT_INFER_CAST
-# selects it; the published cell uses whichever measured faster.
-INFER_CAST = os.environ.get("PT_INFER_CAST", "autocast")
+# selects it; bf16 weights measured faster in every family (see compiled()).
+INFER_CAST = os.environ.get("PT_INFER_CAST", "weights")
 
 def report_blas() -> None:
     """Which BLAS this engine dispatches to, printed like OpenNN prints it.
@@ -184,7 +184,7 @@ def autocast_ctx(opts: dict):
         return contextlib.nullcontext()
     return torch.autocast(device_type=opts["device"], dtype=torch.bfloat16)
 
-def compiled(fn, opts: dict):
+def compiled(fn, opts: dict, default: str):
     """torch.compile on CUDA, eager on CPU -- both measured, not assumed.
 
     On CPU, eager is PyTorch's fast path for these models, not a shortcut:
@@ -197,9 +197,17 @@ def compiled(fn, opts: dict):
     would ship, which is the mirror image of the eager-on-GPU mistake that
     made dense training read 1.29x when it was 1.06x.
 
+    **The mode is per cell, and each was measured (session
+    2026-09-02-variants, batch 128, bf16, samples/s).** Training:
+    max-autotune-no-cudagraphs 1,398, reduce-overhead 1,366, default 1,364.
+    Inference with bf16 weights: default 5,604, max-autotune-no-cudagraphs
+    5,597 (for 940 MiB more), reduce-overhead 5,574, eager 3,625; under
+    autocast, default 5,498. The convolutions are cuDNN's either way and
+    Inductor's own kernels only sit between them.
+
     PT_COMPILE_MODE overrides either way, so the choice stays measurable.
     """
-    mode = os.environ.get("PT_COMPILE_MODE", "default")
+    mode = os.environ.get("PT_COMPILE_MODE", default)
     if mode == "eager" or opts["device"] != "cuda":
         return fn, "eager"
     return torch.compile(fn, mode=None if mode == "default" else mode, dynamic=False), f"compile:{mode}"
@@ -244,7 +252,7 @@ def train_like(argv: list[str], mode: str) -> int:
             loss.backward()
             optimizer.step()
 
-        step_fn, how = compiled(step, opts)
+        step_fn, how = compiled(step, opts, "max-autotune-no-cudagraphs")
 
         def run_epoch():
             model.train()
@@ -295,7 +303,7 @@ def infer(argv: list[str]) -> int:
             opts = dict(opts, autocast=False)
         if batch == batches[0]:
             print(f"parameters={sum(p.numel() for p in model.parameters())}", flush=True)
-        forward, _ = compiled(model, opts)
+        forward, _ = compiled(model, opts, "default")
 
         # One batch, filled once and replayed, matching cnn.cpp: this times the
         # resident forward pass rather than the image decode, which the
