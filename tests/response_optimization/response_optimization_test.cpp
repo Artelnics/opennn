@@ -703,13 +703,42 @@ TEST(ResponseOptimizationSetup, NoObjectiveThrows)
 }
 
 
-TEST(ResponseOptimizationSetup, CardinalityConditionIsRefused)
+TEST(ResponseOptimizationSetup, CardinalityNeedsASumOfAtLeastTwoInputs)
 {
-    MinimalApproximation setup({"x1", "x2"}, {"y"});
+    MinimalApproximation setup({"x1", "x2", "x3"}, {"y"});
 
     DomainContraction optimization(setup.network.get());
 
-    EXPECT_THROW(optimization.add_constraint("x1", Condition::Cardinality, {2.0f}), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("x1", Condition::Cardinality, {1.0f}), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("x1 * x2", Condition::Cardinality, {1.0f}), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("x1 + y", Condition::Cardinality, {1.0f}), runtime_error);
+    EXPECT_NO_THROW(optimization.add_constraint("x1 + x2 + x3", Condition::Cardinality, {2.0f}));
+}
+
+
+TEST(ResponseOptimizationSetup, CardinalityNeedsAWholeBudgetInsideItsGroup)
+{
+    MinimalApproximation setup({"x1", "x2", "x3"}, {"y"});
+
+    DomainContraction optimization(setup.network.get());
+
+    EXPECT_THROW(optimization.add_constraint("x1 + x2 + x3", Condition::Cardinality, {}), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("x1 + x2 + x3", Condition::Cardinality, {-1.0f}), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("x1 + x2 + x3", Condition::Cardinality, {4.0f}), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("x1 + x2 + x3", Condition::Cardinality, {1.5f}), runtime_error);
+}
+
+
+TEST(ResponseOptimizationSetup, CardinalityOverAVariableThatCannotReachZeroThrows)
+{
+    MinimalApproximation setup({"x1", "x2", "x3"}, {"y"}, 2.0f, 10.0f);
+
+    DomainContraction optimization(setup.network.get());
+
+    optimization.add_objective("y", Sense::Minimize);
+    optimization.add_constraint("x1 + x2 + x3", Condition::Cardinality, {2.0f});
+
+    EXPECT_THROW(optimization.perform_response_optimization(), runtime_error);
 }
 
 
@@ -743,6 +772,34 @@ TEST(ResponseOptimizationSetup, IntegerConditionOnlyAppliesToASingleVariable)
 
     EXPECT_THROW(optimization.add_constraint("x1 + x2", Condition::Integer), runtime_error);
     EXPECT_NO_THROW(optimization.add_constraint("x1", Condition::Integer));
+}
+
+
+TEST(ResponseOptimizationSetup, AnIntegerWithNoWholeNumberInItsRangeThrows)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
+
+    DomainContraction optimization(setup.network.get());
+
+    optimization.add_objective("y", Sense::Minimize);
+    optimization.add_constraint("x1", Condition::Integer);
+    optimization.add_constraint("x1", Condition::Between, {1.2f, 1.8f});
+
+    EXPECT_THROW(optimization.perform_response_optimization(), runtime_error);
+}
+
+
+TEST(ResponseOptimizationSetup, AnAllowedSetWithNoValueInItsRangeThrows)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
+
+    DomainContraction optimization(setup.network.get());
+
+    optimization.add_objective("y", Sense::Minimize);
+    optimization.add_constraint("x1", Condition::AllowedSet, {1.0f, 9.0f});
+    optimization.add_constraint("x1", Condition::Between, {4.0f, 6.0f});
+
+    EXPECT_THROW(optimization.perform_response_optimization(), runtime_error);
 }
 
 
@@ -918,8 +975,126 @@ TEST_P(ResponseDriver, AllowedSetKeepsResultsOnTheListedValues)
     {
         const float x1 = results(i, 0);
 
-        EXPECT_LT(min(min(abs(x1 - 1.0f), abs(x1 - 5.0f)), abs(x1 - 9.0f)), 1e-2f)
+        EXPECT_LT(min(min(abs(x1 - 1.0f), abs(x1 - 5.0f)), abs(x1 - 9.0f)), 1e-5f)
             << "row " << i << " x1=" << x1 << " is not in {1, 5, 9}";
+    }
+}
+
+
+TEST_P(ResponseDriver, IntegerKeepsResultsOnWholeNumbers)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("y", Sense::Minimize);
+    optimization->add_constraint("x1", Condition::Integer);
+
+    const MatrixR results = optimization->perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+
+    for (Index i = 0; i < results.rows(); i++)
+    {
+        const float x1 = results(i, 0);
+
+        EXPECT_LT(abs(x1 - round(x1)), 1e-5f) << "row " << i << " x1=" << x1 << " is not a whole number";
+
+        EXPECT_GE(x1, 0.0f) << "row " << i;
+        EXPECT_LE(x1, 10.0f) << "row " << i;
+    }
+}
+
+
+TEST_P(ResponseDriver, AnAllowedSetOfTwoValuesActsAsABinaryVariable)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("y", Sense::Minimize);
+    optimization->add_constraint("x1", Condition::AllowedSet, {0.0f, 1.0f});
+
+    const MatrixR results = optimization->perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+
+    for (Index i = 0; i < results.rows(); i++)
+    {
+        const float x1 = results(i, 0);
+
+        EXPECT_LT(min(abs(x1), abs(x1 - 1.0f)), 1e-5f)
+            << "row " << i << " x1=" << x1 << " is neither 0 nor 1";
+    }
+}
+
+
+TEST_P(ResponseDriver, CardinalityLeavesAtMostTheBudgetInPlay)
+{
+    MinimalApproximation setup({"x1", "x2", "x3", "x4"}, {"y"}, 0.0f, 10.0f);
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("x1 + x2 + x3 + x4", Sense::Maximize);
+    optimization->add_constraint("x1 + x2 + x3 + x4", Condition::Cardinality, {2.0f});
+
+    const MatrixR results = optimization->perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+
+    for (Index i = 0; i < results.rows(); i++)
+    {
+        Index in_play = 0;
+
+        for (Index j = 0; j < 4; j++)
+            if (abs(results(i, j)) > 1e-2f) in_play++;
+
+        EXPECT_LE(in_play, 2) << "row " << i << " keeps " << in_play << " of the 4 variables in play";
+    }
+}
+
+
+TEST_P(ResponseDriver, CardinalityWithARoomyBudgetRestrictsNothing)
+{
+    MinimalApproximation setup({"x1", "x2", "x3"}, {"y"}, 0.0f, 10.0f);
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("x1 + x2 + x3", Sense::Maximize);
+    optimization->add_constraint("x1 + x2 + x3", Condition::Cardinality, {3.0f});
+
+    const MatrixR results = optimization->perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+
+    for (Index i = 0; i < results.rows(); i++)
+        for (Index j = 0; j < 3; j++)
+            EXPECT_GT(results(i, j), 1e-2f) << "row " << i << " switched off x" << j + 1 << " for nothing";
+}
+
+
+TEST_P(ResponseDriver, IntegerHoldsAlongsideABandOnTheSameVariable)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("y", Sense::Minimize);
+    optimization->add_constraint("x1", Condition::Integer);
+    optimization->add_constraint("x1", Condition::Between, {2.5f, 7.5f});
+
+    const MatrixR results = optimization->perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+
+    for (Index i = 0; i < results.rows(); i++)
+    {
+        const float x1 = results(i, 0);
+
+        EXPECT_LT(abs(x1 - round(x1)), 1e-5f) << "row " << i << " x1=" << x1 << " is not a whole number";
+
+        EXPECT_GE(x1, 3.0f - 1e-5f) << "row " << i << " x1=" << x1;
+        EXPECT_LE(x1, 7.0f + 1e-5f) << "row " << i << " x1=" << x1;
     }
 }
 

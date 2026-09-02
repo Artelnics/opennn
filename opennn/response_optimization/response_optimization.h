@@ -46,9 +46,13 @@ public:
 
         vector<float> values;
 
+        float calculate_measure(const VectorR&, const VectorR&) const;
+
         float calculate_residual(const VectorR&, const VectorR&, float margin = 0.0f) const;
 
         pair<float, float> calculate_bounds() const;
+
+        bool is_enforced() const;
     };
 
     explicit ResponseOptimization(NeuralNetwork* = nullptr);
@@ -92,15 +96,36 @@ private:
 
     VectorR assign_categories(const VectorR&) const;
 
-    MatrixR estimate_jacobian(const VectorR&, const VectorR&, const pair<VectorR, VectorR>&) const;
+    VectorR round_lattice(const VectorR&) const;
+
+    VectorR evaluate_constraints(const VectorR&, VectorR& values, VectorR& residuals) const;
+
+    MatrixR estimate_jacobian(const VectorR&, const VectorR&, const VectorR&,
+                              const pair<VectorR, VectorR>&) const;
+
+    void expand_cardinality(const Constraint&);
+
+    pair<VectorR, VectorR> augment_domain(const pair<VectorR, VectorR>&) const;
+
+    VectorR augment_point(const VectorR&) const;
 
     static float bound_tolerance(float bound) { return max(EPSILON, abs(bound) * bound_tolerance_factor); }
 
     static constexpr float bound_tolerance_factor = 1e-4f;
 
+    static constexpr float lattice_tolerance = 1e-3f;
+
+    static constexpr float activation_tolerance = 0.5f*lattice_tolerance;
+
+    static constexpr size_t lattice_values_warning = 8;
+
     static constexpr float difference_step = 1e-3f;
 
-    Index repair_passes = 8;
+    static constexpr float integer_difference_step = 0.25f;
+
+    Index activation_variables = 0;
+
+    Index repair_passes = 16;
 
     float feasibility_margin = 0.1f;
 

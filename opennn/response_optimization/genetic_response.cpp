@@ -61,6 +61,15 @@ vector<vector<Index>> non_dominated_sort(const MatrixR& objective_values)
 }
 
 
+Index select_parent(const vector<Index>& ranking)
+{
+    const Index individuals_number = Index(ranking.size());
+
+    return ranking[size_t(min(random_integer(0, individuals_number - 1),
+                              random_integer(0, individuals_number - 1)))];
+}
+
+
 VectorR calculate_crowding_distances(const MatrixR& front_values)
 {
     const Index points_number = front_values.rows();
@@ -223,14 +232,6 @@ pair<MatrixR, MatrixR> GeneticResponse::recombinate_population(const MatrixR& pa
                                                                const vector<Index>& ranking,
                                                                const pair<VectorR, VectorR>& domain) const
 {
-    const auto select_parent = [&ranking]()
-    {
-        const Index individuals_number = Index(ranking.size());
-
-        return ranking[size_t(min(random_integer(0, individuals_number - 1),
-                                  random_integer(0, individuals_number - 1)))];
-    };
-
     const Index attempts_number = iterations_number*points_number;
 
     MatrixR inputs(points_number, parent_inputs.cols());
@@ -240,8 +241,8 @@ pair<MatrixR, MatrixR> GeneticResponse::recombinate_population(const MatrixR& pa
 
     for (Index i = 0; i < attempts_number && feasible_number < points_number; i += 2)
     {
-        VectorR first_child = parent_inputs.row(select_parent()).transpose();
-        VectorR second_child = parent_inputs.row(select_parent()).transpose();
+        VectorR first_child = parent_inputs.row(select_parent(ranking)).transpose();
+        VectorR second_child = parent_inputs.row(select_parent(ranking)).transpose();
 
         if (random_uniform(0.0f, 1.0f) < crossover_probability)
             crossover(first_child, second_child, domain);
@@ -290,9 +291,9 @@ pair<MatrixR, MatrixR> GeneticResponse::mutate_population(const MatrixR& offspri
 
     Index feasible_number = 0;
 
-    for (Index attempt = 0; attempt < attempts_number && feasible_number < points_number; attempt++)
+    for (Index i = 0; i < attempts_number && feasible_number < points_number; i++)
     {
-        VectorR child = offspring_inputs.row(attempt % offspring_inputs.rows()).transpose();
+        VectorR child = offspring_inputs.row(i % offspring_inputs.rows()).transpose();
 
         mutate_individual(child, domain);
 

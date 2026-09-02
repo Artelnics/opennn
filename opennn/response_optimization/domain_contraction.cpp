@@ -46,6 +46,34 @@ Index category_column(const VectorR& input, const pair<Index, Index>& block)
     return block.first + category;
 }
 
+
+vector<pair<Index, Index>> category_columns(const MatrixR& inputs,
+                                            const vector<pair<Index, Index>>& blocks)
+{
+    vector<pair<Index, Index>> columns;
+
+    columns.reserve(size_t(inputs.rows())*blocks.size());
+
+    for (Index i = 0; i < inputs.rows(); i++)
+        for (const pair<Index, Index>& block : blocks)
+            columns.emplace_back(i, category_column(inputs.row(i).transpose(), block));
+
+    return columns;
+}
+
+
+vector<pair<VectorR, VectorR>> local_domains_around(const MatrixR& centers,
+                                                    const VectorR& half_interval,
+                                                    const pair<VectorR, VectorR>& initial_domain)
+{
+    vector<pair<VectorR, VectorR>> domains(size_t(centers.rows()));
+
+    for (Index i = 0; i < centers.rows(); i++)
+        domains[size_t(i)] = local_domain(centers.row(i).transpose(), half_interval, initial_domain);
+
+    return domains;
+}
+
 }
 
 
@@ -160,28 +188,19 @@ MatrixR DomainContraction::single_optimization()
     {
         const auto [feasible_inputs, feasible_outputs] = sample_local_domains({domain});
 
-        const MatrixR objective_values = evaluate_objectives(feasible_inputs, feasible_outputs);
+        const VectorR values = evaluate_objectives(feasible_inputs, feasible_outputs).col(0);
 
-        for (Index i = 0; i < feasible_inputs.rows(); i++)
+        for (const auto [row, column] : category_columns(feasible_inputs, blocks))
+            category_scores(column) = max(category_scores(column), values(row));
+
+        Index best_row = 0;
+
+        if (values.maxCoeff(&best_row) > best_value)
         {
-            const VectorR input = feasible_inputs.row(i).transpose();
-            const VectorR output = feasible_outputs.row(i).transpose();
+            best_value = values(best_row);
 
-            const float value = objective_values(i, 0);
-
-            for (const pair<Index, Index>& block : blocks)
-            {
-                const Index column = category_column(input, block);
-
-                category_scores(column) = max(category_scores(column), value);
-            }
-
-            if (value <= best_value) continue;
-
-            best_value = value;
-
-            best_input = input;
-            best_output = output;
+            best_input = feasible_inputs.row(best_row).transpose();
+            best_output = feasible_outputs.row(best_row).transpose();
         }
 
         if (best_input.size() == 0) continue;
@@ -223,23 +242,14 @@ MatrixR DomainContraction::multi_optimization()
 
         VectorR category_scores = VectorR::Zero(allowed_domain.first.size());
 
-        for (Index i = 0; i < candidates.first.rows(); i++)
-        {
-            const VectorR input = candidates.first.row(i).transpose();
-
-            for (const pair<Index, Index>& block : blocks)
-                category_scores(category_column(input, block)) += 1.0f;
-        }
+        for (const auto [row, column] : category_columns(candidates.first, blocks))
+            category_scores(column) += 1.0f;
 
         half_interval *= contraction_factor;
 
         allowed_domain = contract_categories(allowed_domain, category_scores, iteration);
 
-        local_domains.resize(size_t(candidates.first.rows()));
-
-        for (Index i = 0; i < candidates.first.rows(); i++)
-            local_domains[size_t(i)] =
-                local_domain(candidates.first.row(i).transpose(), half_interval, allowed_domain);
+        local_domains = local_domains_around(candidates.first, half_interval, allowed_domain);
     }
 
     vector<Index> front = clean_front(candidates.first, candidates.second);
@@ -254,11 +264,7 @@ MatrixR DomainContraction::multi_optimization()
 
         allowed_domain.second = initial_superior;
 
-        local_domains.resize(size_t(candidates.first.rows()));
-
-        for (Index i = 0; i < candidates.first.rows(); i++)
-            local_domains[size_t(i)] =
-                local_domain(candidates.first.row(i).transpose(), half_interval, allowed_domain);
+        local_domains = local_domains_around(candidates.first, half_interval, allowed_domain);
 
         candidates = append_rows(candidates, sample_local_domains(local_domains));
 
