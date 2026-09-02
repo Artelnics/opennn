@@ -24,6 +24,36 @@ namespace opennn
 namespace
 {
 
+// How far from a bound still counts as satisfying it. Relative, because the float noise a forward
+// pass carries grows with the magnitude of what it computed, and floored so that a bound of zero
+// still gets a band of its own.
+
+constexpr float bound_tolerance_factor = 1e-4f;
+
+float bound_tolerance(const float bound)
+{
+    return max(EPSILON, abs(bound)*bound_tolerance_factor);
+}
+
+
+// The same question asked on a lattice, where the spacing sets the scale instead of the magnitude:
+// the gap between integers is one whether the value is three or three thousand, so the band is
+// absolute where the one above is relative.
+
+constexpr float lattice_tolerance = 1e-3f;
+constexpr float activation_tolerance = 0.5f*lattice_tolerance;
+
+constexpr size_t lattice_values_warning = 8;
+
+
+// Probe steps for the numerical jacobian. The first is an infinitesimal, as a derivative of a
+// smooth expression wants. The second is not one at all: it is a quarter of a lattice cell, which
+// is as far as a probe can reach before the periodic measure it reads starts sloping back.
+
+constexpr float difference_step = 1e-3f;
+constexpr float integer_difference_step = 0.25f;
+
+
 // The trust region the repair steps inside, as a damping on the solve. The rows of the system
 // below are normalized, so its gram matrix has a unit diagonal and the damping is read against
 // that scale rather than against the units the constraints happen to be written in.
@@ -345,7 +375,8 @@ pair<VectorR, VectorR> ResponseOptimization::get_feasible_point(VectorR input,
 
     const auto clamp_to_domain = [&](const VectorR& point)
     {
-        return assign_categories(point.cwiseMax(search_domain.first).cwiseMin(search_domain.second));
+        return assign_feasible_categories(point.cwiseMax(search_domain.first).cwiseMin(search_domain.second),
+                                         search_domain);
     };
 
     const auto finish = [&](const VectorR& point, const VectorR& point_output) -> pair<VectorR, VectorR>
@@ -754,12 +785,26 @@ VectorR ResponseOptimization::calculate_random_input(const pair<VectorR, VectorR
     for (Index i = 0; i < input.size(); i++)
         input(i) = random_uniform(domain.first(i), domain.second(i));
 
+    return set_random_categories(input, domain);
+}
+
+
+// A category is open while the domain still allows it. Closed ones keep an upper bound of zero,
+// which is how the contraction narrows a block, so both operations below read the domain rather
+// than a separate list of survivors. A block with nothing open is left as it stands.
+
+VectorR ResponseOptimization::set_random_categories(VectorR point,
+                                                    const pair<VectorR, VectorR>& domain,
+                                                    const float probability) const
+{
     vector<char> closed_categories;
     vector<float> block;
 
     for (const auto& [first_column, categories_number] :
          get_categorical_blocks(neural_network->get_input_variables()))
     {
+        if (probability < 1.0f && random_uniform(0.0f, 1.0f) >= probability) continue;
+
         closed_categories.resize(size_t(categories_number));
 
         for (Index j = 0; j < categories_number; j++)
@@ -768,23 +813,30 @@ VectorR ResponseOptimization::calculate_random_input(const pair<VectorR, VectorR
         if (!draw_k_hot(categories_number, 1, {}, closed_categories, block)) continue;
 
         for (Index j = 0; j < categories_number; j++)
-            input(first_column + j) = block[size_t(j)];
+            point(first_column + j) = block[size_t(j)];
     }
 
-    return input;
+    return point;
 }
 
 
-VectorR ResponseOptimization::assign_categories(const VectorR& input) const
+VectorR ResponseOptimization::assign_feasible_categories(VectorR point,
+                                                         const pair<VectorR, VectorR>& domain) const
 {
-    VectorR point = input;
-
     for (const auto& [first_column, categories_number] :
          get_categorical_blocks(neural_network->get_input_variables()))
     {
-        Index category = 0;
+        Index category = -1;
 
-        point.segment(first_column, categories_number).maxCoeff(&category);
+        for (Index j = 0; j < categories_number; j++)
+        {
+            if (domain.second(first_column + j) <= 0.0f) continue;
+
+            if (category == -1 || point(first_column + j) > point(first_column + category))
+                category = j;
+        }
+
+        if (category == -1) continue;
 
         point.segment(first_column, categories_number).setZero();
 

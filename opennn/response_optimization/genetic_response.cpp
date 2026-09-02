@@ -343,13 +343,12 @@ void GeneticResponse::crossover(VectorR& first_child,
 
 void GeneticResponse::mutate_individual(VectorR& candidate, const pair<VectorR, VectorR>& domain) const
 {
-    const vector<pair<Index, Index>> categorical_blocks = get_categorical_blocks(neural_network->get_input_variables());
-
     vector<char> categorical_columns(size_t(candidate.size()), 0);
 
     Index variables_number = candidate.size();
 
-    for (const auto& [first_column, categories_number] : categorical_blocks)
+    for (const auto& [first_column, categories_number] :
+         get_categorical_blocks(neural_network->get_input_variables()))
     {
         fill_n(categorical_columns.begin() + first_column, categories_number, 1);
 
@@ -371,23 +370,9 @@ void GeneticResponse::mutate_individual(VectorR& candidate, const pair<VectorR, 
                              domain.second(j));
     }
 
-    vector<char> closed_categories;
-    vector<float> block;
+    // A whole block mutates at once, with the same per-variable probability as a single column.
 
-    for (const auto& [first_column, categories_number] : categorical_blocks)
-    {
-        if (random_uniform(0.0f, 1.0f) >= probability) continue;
-
-        closed_categories.resize(size_t(categories_number));
-
-        for (Index j = 0; j < categories_number; j++)
-            closed_categories[size_t(j)] = (domain.second(first_column + j) <= 0.0f) ? 1 : 0;
-
-        if (!draw_k_hot(categories_number, 1, {}, closed_categories, block)) continue;
-
-        for (Index j = 0; j < categories_number; j++)
-            candidate(first_column + j) = block[size_t(j)];
-    }
+    candidate = set_random_categories(candidate, domain, probability);
 }
 
 }

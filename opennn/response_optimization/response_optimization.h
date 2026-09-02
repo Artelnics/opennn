@@ -87,14 +87,20 @@ protected:
 
     vector<Index> clean_front(const MatrixR&, const MatrixR&) const;
 
+    // The only two operations that touch the one-hot blocks of a point: drawing a category at
+    // random, and folding an arbitrary point back onto one. Both leave out the categories the
+    // domain has closed.
+
+    VectorR set_random_categories(VectorR, const pair<VectorR, VectorR>&, float probability = 1.0f) const;
+
+    VectorR assign_feasible_categories(VectorR, const pair<VectorR, VectorR>&) const;
+
     Index iterations_number = 20;
     Index points_number = 1000;
 
     Index requested_front_size = 100;
 
 private:
-
-    VectorR assign_categories(const VectorR&) const;
 
     VectorR round_lattice(const VectorR&) const;
 
@@ -108,20 +114,6 @@ private:
     pair<VectorR, VectorR> augment_domain(const pair<VectorR, VectorR>&) const;
 
     VectorR augment_point(const VectorR&) const;
-
-    static float bound_tolerance(float bound) { return max(EPSILON, abs(bound) * bound_tolerance_factor); }
-
-    static constexpr float bound_tolerance_factor = 1e-4f;
-
-    static constexpr float lattice_tolerance = 1e-3f;
-
-    static constexpr float activation_tolerance = 0.5f*lattice_tolerance;
-
-    static constexpr size_t lattice_values_warning = 8;
-
-    static constexpr float difference_step = 1e-3f;
-
-    static constexpr float integer_difference_step = 0.25f;
 
     Index activation_variables = 0;
 
