@@ -83,9 +83,12 @@ FAMILIES = {
         "data": lambda root: {"train": root / "imagenet_subset/train"},
         "options": lambda a: [str(a.image_size)],
     },
+    # --hidden and --layers are the dense family's knobs. The transformer has
+    # its own, defaulting to the base model both drivers document, because
+    # sharing them silently benchmarked d_model 1024 with two layers.
     "transformer": {
         "data": lambda root: {"train": root / "wmt14/wmt14_pairs.txt"},
-        "options": lambda a: [str(a.hidden), str(a.layers)],
+        "options": lambda a: [str(a.d_model), str(a.transformer_layers)],
     },
     # footprint has no dataset and no batch: it measures what the framework
     # costs before any of that exists. Its "modes" are its three questions.
@@ -328,9 +331,12 @@ def main() -> int:
     parser.add_argument("--epochs", type=int, default=5, help="timed epochs per launch")
     parser.add_argument("--repeats", type=int, default=5, help="timed passes, infer")
     parser.add_argument("--rounds", type=int, default=3, help="launches per engine, order rotated")
-    parser.add_argument("--hidden", type=int, default=1024)
-    parser.add_argument("--layers", type=int, default=2)
+    parser.add_argument("--hidden", type=int, default=1024, help="dense")
+    parser.add_argument("--layers", type=int, default=2, help="dense")
     parser.add_argument("--activation", default="relu", choices=("relu", "tanh"))
+    parser.add_argument("--d-model", type=int, default=512,
+                        help="transformer; heads and feed-forward follow it")
+    parser.add_argument("--transformer-layers", type=int, default=6, help="transformer")
     parser.add_argument("--image-size", type=int, default=224, help="cnn")
     parser.add_argument("--lstm-hidden", type=int, default=128, help="lstm")
     parser.add_argument("--past", type=int, default=24, help="lstm window")
