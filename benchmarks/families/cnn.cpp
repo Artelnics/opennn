@@ -325,6 +325,15 @@ int main(int argc, char* argv[])
             Batch data(batch, dataset.get(), network->get_config());
             data.fill(indices, dataset->get_feature_selection(), FillMode::Inference);
 
+            // fill() stages a CUDA batch on the host; the transfer is a
+            // separate stream operation, issued here once, before the clock,
+            // so the replayed pass runs on the samples it was filled with.
+            if (options.device == Device::CUDA)
+            {
+                data.upload_to_device_batch_async(data, device::get_transfer_stream());
+                data.wait_h2d_on_compute_stream();
+            }
+
             const vector<TensorView>& inputs = data.get_inputs();
 
             const auto run_pass = [&]

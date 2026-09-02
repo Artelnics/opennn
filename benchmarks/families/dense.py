@@ -178,10 +178,14 @@ def compiled(fn, opts: dict):
 
     PT_COMPILE_MODE overrides either way, so the choice stays measurable.
     """
+    # dynamic=False: every batch size gets its own specialised graph rather
+    # than a symbolic batch dimension. It is not enough for an in-process
+    # sweep: batch 8192 still read 15-16M samples/s after 1024/2048/4096 in
+    # the same process, 37.1M alone, so run.py measures one batch per process.
     mode = os.environ.get("PT_COMPILE_MODE", "reduce-overhead")
     if mode == "eager" or opts["device"] != "cuda":
         return fn, "eager"
-    return torch.compile(fn, mode=None if mode == "default" else mode), f"compile:{mode}"
+    return torch.compile(fn, mode=None if mode == "default" else mode, dynamic=False), f"compile:{mode}"
 
 def batches_of(text: str) -> list[int]:
     return [int(part) for part in text.split(",") if part]

@@ -190,7 +190,7 @@ def compiled(fn, opts: dict):
     mode = os.environ.get("PT_COMPILE_MODE", "default")
     if mode == "eager" or opts["device"] != "cuda" or mode == "default":
         return fn, "eager"
-    return torch.compile(fn, mode=mode), f"compile:{mode}"
+    return torch.compile(fn, mode=mode, dynamic=False), f"compile:{mode}"
 
 def batches_of(text: str) -> list[int]:
     return [int(part) for part in text.split(",") if part]
