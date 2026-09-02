@@ -147,9 +147,11 @@ def prepare_cnn(root: Path, args) -> None:
     own ILSVRC2012_ID order; meta.mat maps those to WNIDs.
 
     A subset cannot carry an accuracy claim -- at 50 images per class
-    ResNet-50 will not reach a meaningful top-1 -- so the CNN quality gate is
-    cross-engine loss agreement, which still catches a precision or fusion
-    difference wearing a speed win as a disguise.
+    ResNet-50 will not reach a meaningful top-1 -- so the CNN cells carry no
+    accuracy gate: run.py's quality gate only sees a `test_accuracy` field,
+    which today only the dense training drivers print, and the CNN family is
+    held to the shape gate (parameter count, samples per epoch) alone. The
+    drivers' `quality` mode exists for longer runs that can compare loss.
     """
     from PIL import Image
     from scipy.io import loadmat

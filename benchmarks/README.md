@@ -58,8 +58,10 @@ sequences against PyTorch's 128, and `nn.Transformer` carried 2,048 parameters
 of final `LayerNorm` that OpenNN's had no counterpart for. Neither is visible
 in a samples-per-second figure.
 
-**The quality gate** compares accuracy across engines at each batch. A speed
-win bought by computing something different is not a speed win.
+**The quality gate** compares test accuracy across engines at each batch
+wherever a driver reports one — today that is dense training only; the other
+families are held to the shape gate. A speed win bought by computing something
+different is not a speed win.
 
 ## Reading a result
 

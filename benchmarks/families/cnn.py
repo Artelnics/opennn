@@ -17,9 +17,12 @@ than hand-rolling one keeps the comparison against the citable network instead
 of against our transcription of it.
 
 Images are lazy-loaded per batch from class folders by a DataLoader with
-worker processes, the fair counterpart to OpenNN's per-batch image cache: at
-50,000 x 224x224x3 the split cannot be resident, so this measures convolution
-throughput *plus* input-pipeline efficiency in both engines.
+worker processes that decode the JPEGs every epoch, against OpenNN's
+per-batch reads of its pre-decoded image cache: at 50,000 x 224x224x3 the
+split cannot be resident, so this measures convolution throughput *plus*
+input-pipeline efficiency in both engines. The two pipelines are not the same
+work -- PT_INPUT=cache feeds PyTorch from OpenNN's cache file to measure how
+much of the training margin is the decode.
 """
 
 from __future__ import annotations
@@ -41,6 +44,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 SEED = 42
 WORKERS = int(os.environ.get("PT_WORKERS", "8"))
+INPUT = os.environ.get("PT_INPUT", "jpeg")
 
 def report_blas() -> None:
     """Which BLAS this engine dispatches to, printed like OpenNN prints it.
@@ -118,13 +122,54 @@ class Folders(ImageFolder):
                        if e.is_dir() and not e.name.startswith("."))
         return names, {name: index for index, name in enumerate(names)}
 
+class CachedImages(torch.utils.data.Dataset):
+    """OpenNN's pre-decoded image cache, read the way OpenNN reads it.
+
+    A controlled variant (`PT_INPUT=cache`), not the published cell. The
+    published training cell has PyTorch decode JPEGs per epoch while OpenNN
+    reads `.cache/images.bin` -- uint8 HxWxC per image, sorted-folder /
+    sorted-file order, a signature trailer -- which OpenNN's ImageDataset
+    writes beside the class folders on its first pass at a given size. Feeding
+    PyTorch from the same file isolates the input-pipeline asymmetry from the
+    convolution throughput; it requires OpenNN to have opened the folder at
+    this size once. Labels still come from ImageFolder, whose class and file
+    order the cache shares.
+    """
+
+    def __init__(self, path: str, size: int):
+        folder = Folders(path)
+        self.targets = folder.targets
+        self.shape = (size, size, 3)
+        self.bytes = size * size * 3
+        self.cache = os.path.join(path, ".cache", "images.bin")
+        expected = len(self.targets) * self.bytes
+        actual = os.path.getsize(self.cache) if os.path.exists(self.cache) else 0
+        if actual < expected:
+            raise SystemExit(f"{self.cache}: {actual} bytes, at least {expected} expected "
+                             f"for {len(self.targets)} images at {size}x{size}")
+        self.fd = None
+
+    def __len__(self) -> int:
+        return len(self.targets)
+
+    def __getitem__(self, index: int):
+        if self.fd is None:                        # one descriptor per worker process
+            self.fd = os.open(self.cache, os.O_RDONLY)
+        raw = os.pread(self.fd, self.bytes, index * self.bytes)
+        pixels = torch.frombuffer(bytearray(raw), dtype=torch.uint8).view(self.shape)
+        return pixels.permute(2, 0, 1).float().div_(255.0), self.targets[index]
+
 def loader_for(path: str, batch: int, opts: dict, shuffle: bool) -> DataLoader:
-    """Class folders, decoded per batch by worker processes."""
-    dataset = Folders(path, transforms.Compose([
-        transforms.Resize(opts["size"]),
-        transforms.CenterCrop(opts["size"]),
-        transforms.ToTensor(),
-    ]))
+    """Class folders, decoded per batch by worker processes -- or, with
+    PT_INPUT=cache, OpenNN's pre-decoded cache read by the same workers."""
+    if INPUT == "cache":
+        dataset = CachedImages(path, opts["size"])
+    else:
+        dataset = Folders(path, transforms.Compose([
+            transforms.Resize(opts["size"]),
+            transforms.CenterCrop(opts["size"]),
+            transforms.ToTensor(),
+        ]))
     return DataLoader(dataset, batch_size=batch, shuffle=shuffle,
                       num_workers=WORKERS, pin_memory=True, drop_last=True,
                       persistent_workers=WORKERS > 0)

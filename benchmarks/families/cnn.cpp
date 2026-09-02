@@ -10,10 +10,15 @@
 //   cnn capacity <train_dir>            [batch]              [size] [dev] [prec]
 //   cnn quality  <train_dir> <test_dir> [epochs] [batch]      [size] [dev] [prec]
 //
-// Images are lazy-loaded per batch from class folders, which both engines do,
-// so this measures convolution throughput *plus* input-pipeline efficiency.
-// That is deliberate: at 50,000 x 224x224x3 the split cannot be resident, so
-// pretending otherwise would measure a workload nobody runs.
+// Images are read per batch rather than held resident, in both engines, so
+// this measures convolution throughput *plus* input-pipeline efficiency. That
+// is deliberate: at 50,000 x 224x224x3 the split cannot be resident, so
+// pretending otherwise would measure a workload nobody runs. The pipelines
+// differ: ImageDataset decodes each JPEG once into `.cache/images.bin` (uint8
+// HWC, sorted-folder/sorted-file order) and every epoch reads batches from
+// that file, while the PyTorch driver decodes the JPEGs every epoch in worker
+// processes -- its PT_INPUT=cache variant reads this file instead, which is
+// how the size of that asymmetry is measured.
 
 #include <algorithm>
 #include <numeric>

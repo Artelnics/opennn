@@ -38,6 +38,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 SEED = 42
 VOCAB_CAP = 20_000          # LanguageDataset's own cap, so both sides agree
+# nn.TransformerEncoderLayer/DecoderLayer default to dropout 0.1, and that is
+# what the published cell runs. OpenNN's Transformer has dropout 0 unless set,
+# so PT_DROPOUT=0 is the controlled variant that measures what the dropout
+# masks cost PyTorch's training step.
+DROPOUT = float(os.environ.get("PT_DROPOUT", "0.1"))
 
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model: int, max_len: int):
@@ -68,9 +73,9 @@ class Seq2Seq(nn.Module):
         # forward pass over every position. norm=None drops them, so the two
         # engines run the same graph rather than merely a similar one.
         encoder_layer = nn.TransformerEncoderLayer(d_model, heads, 4 * d_model,
-                                                   batch_first=True)
+                                                   dropout=DROPOUT, batch_first=True)
         decoder_layer = nn.TransformerDecoderLayer(d_model, heads, 4 * d_model,
-                                                   batch_first=True)
+                                                   dropout=DROPOUT, batch_first=True)
         self.encoder = nn.TransformerEncoder(encoder_layer, layers, norm=None)
         self.decoder = nn.TransformerDecoder(decoder_layer, layers, norm=None)
         self.output = nn.Linear(d_model, vocab)
