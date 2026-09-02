@@ -137,16 +137,32 @@ static MklLinearReport mkl_linear_report;
 
 enum class GemmParallelism { Mkl, Pool, Omp, Contract };
 
+// Which threads run the row blocks of a GEMM. The process has two pools --
+// Eigen's, for tensor expressions, and libgomp's, for `#pragma omp`, MKL's
+// threaded calls and oneDNN -- and the blocks go to libgomp's on purpose.
+//
+// The two pools share the cores, and libgomp's workers spin at a barrier
+// after every region (300,000 iterations by default, several milliseconds).
+// With the GEMM on Eigen's pool the last dense layer's MKL `sgemv`, the one
+// OpenMP region in a dense inference batch, wakes fifteen workers that then
+// spin through the next batch's GEMM on the same logical CPUs: 62% of the
+// process's samples were `do_spin`, and the cell read 117k samples/s
+// against 222k with the spin disabled. On libgomp's pool the spinners and
+// the workers are the same threads, so the GEMM reads 221k spinning and
+// 217k not spinning, and training 70.0k against 69.2k -- while the Eigen
+// pool would have read 55.9k spinning. `OPENNN_GEMM_MODE=contract` (Eigen
+// contraction, fused bias) and `pool` (Eigen pool, MKL blocks) remain for
+// measuring against.
 static GemmParallelism gemm_parallelism()
 {
     static const GemmParallelism mode = []
     {
         const char* const requested = getenv("OPENNN_GEMM_MODE");
-        if (!requested) return GemmParallelism::Contract;
+        if (!requested) return GemmParallelism::Omp;
         if (string(requested) == "pool") return GemmParallelism::Pool;
         if (string(requested) == "mkl") return GemmParallelism::Mkl;
-        if (string(requested) == "omp") return GemmParallelism::Omp;
-        return GemmParallelism::Contract;
+        if (string(requested) == "contract") return GemmParallelism::Contract;
+        return GemmParallelism::Omp;
     }();
 
     return mode;

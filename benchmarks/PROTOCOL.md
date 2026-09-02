@@ -22,11 +22,11 @@ numbers are never compared against these.
 **The two engines do not share a cuDNN.** OpenNN links the system
 `libcudnn.so.9` at 9.25.1; PyTorch loads the 9.23.2 its wheel ships. Two minor
 versions apart, and the CNN and transformer families are cuDNN-bound, so this
-is an asymmetry in the same class as the oneDNN one that decided the CPU LSTM
-cell. It is recorded rather than corrected: neither engine can be moved to the
-other's cuDNN without building it from source, and the effect here is
-unmeasured. Do not attribute a CNN or transformer margin under a few percent to
-the framework without checking it.
+is an asymmetry in the same class as the OpenMP-runtime one that inverted the
+CPU LSTM cell twice before item 6 pinned it down. It is recorded rather than
+corrected: neither engine can be moved to the other's cuDNN without building it
+from source, and the effect here is unmeasured. Do not attribute a CNN or
+transformer margin under a few percent to the framework without checking it.
 
 Native Linux is deliberate. The CNN family lazy-loads images per batch, so it
 measures convolution throughput *plus* input-pipeline efficiency, and WSL's
@@ -233,6 +233,22 @@ default — for both engines; measured, it is a no-op for PyTorch (69.0k →
 field says so in every CPU artifact. Intel's runtime (`libiomp5`) preloaded
 under both engines gives the same ordering with a wider margin; it is not the
 protocol default because neither engine ships it.
+
+**Spinning has a cost of its own, and OpenNN pays it on one pool.** The
+process holds two pools on the same sixteen CPUs: Eigen's, for tensor
+expressions, and libgomp's, for `#pragma omp`, MKL's threaded calls and
+oneDNN. A libgomp worker that has just finished a region spins for those
+300,000 iterations — several milliseconds — on a logical CPU an Eigen thread
+may need next. The first run under the wait policy above showed exactly that:
+the dense forward GEMM ran on Eigen's pool, the one OpenMP region per batch
+(MKL's `sgemv` for the 1024→1 layer) released fifteen spinners into it, 62% of
+the process's samples were libgomp's `do_spin`, and cpu-dense-infer read 117k
+samples/s against 222k with the spin disabled — 0.70× of PyTorch instead of
+1.29×. OpenNN now runs its blocked GEMM on the libgomp pool by default
+(`OPENNN_GEMM_MODE`, in `tensor_operations.cpp`), so the threads that spin are
+the threads that work: 221k spinning, 217k not. The rule this leaves behind is
+that no cell may keep steady work on Eigen's pool while libgomp spins; a
+profile with `libgomp.so` above a few percent means it has crept back.
 
 **Energy on CPU is RAPL `package-0`,** not the idle GPU's draw. See item 5 for
 the domain, the wrap handling and the permission it needs.
