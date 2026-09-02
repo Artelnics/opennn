@@ -43,6 +43,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common import binary_metrics  # noqa: E402
 
 SEED = 42
+# Inference in bf16 can keep autocast on (weights re-cast on every call, which
+# torch.compile does not fold without freezing) or store the weights in bf16
+# once, the way OpenNN keeps a bf16 mirror of its parameters. PT_INFER_CAST
+# selects it; the published cell uses whichever measured faster.
+INFER_CAST = os.environ.get("PT_INFER_CAST", "autocast")
 
 def report_blas() -> None:
     """Which BLAS this engine dispatches to, printed like OpenNN prints it.
@@ -287,15 +292,20 @@ def infer(argv: list[str]) -> int:
 
     for batch in batches:
         model = build(x.shape[1], opts).eval()
+        weights_bf16 = opts["autocast"] and INFER_CAST == "weights"
+        if weights_bf16:
+            model = model.to(torch.bfloat16)
+            opts = dict(opts, autocast=False)
         if batch == batches[0]:
             print(f"parameters={sum(p.numel() for p in model.parameters())}", flush=True)
         forward, how = compiled(model, opts)
         processed = (samples // batch) * batch
+        x_in = x.to(torch.bfloat16) if weights_bf16 else x
 
         def run_pass():
             with torch.no_grad(), autocast_ctx(opts):
                 for start in range(0, processed, batch):
-                    forward(x[start:start + batch])
+                    forward(x_in[start:start + batch])
             sync(opts)
 
         run_pass()
