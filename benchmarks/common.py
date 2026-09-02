@@ -12,6 +12,8 @@ directory the instructions told you to create.
 
 from __future__ import annotations
 
+import bisect
+import ctypes
 import math
 import os
 import platform
@@ -382,6 +384,89 @@ def read_rapl_uj(domain: dict[str, Any]) -> int | None:
     except (OSError, ValueError):
         return None
 
+# --------------------------------------------------------------------------
+# GPU: the driver's own power samples
+# --------------------------------------------------------------------------
+
+class Nvml:
+    """The NVML calls the monitor needs, bound with ctypes.
+
+    This replaces `nvidia-smi --query-gpu=power.draw -lms 20`, and the reason
+    is what `power.draw` is: on Ampere and later it is the driver's
+    *one-second moving average* (`power.draw.average`; nvidia-smi documents
+    it). Polled at 20 ms it still cannot see inside a second, so a 70 ms
+    burst of GEMMs in an otherwise idle second reads as 45 W however finely
+    it is sampled -- which is what every sub-second cell in the store had
+    been reporting as its energy, memory-bound bursts at 200+ W included.
+
+    The driver keeps its own ring of about 120 instantaneous board-power
+    samples, one every 20 ms, timestamped by it (`nvmlDeviceGetSamples`,
+    `NVML_TOTAL_POWER_SAMPLES`). Draining that ring is the one user-space
+    source of sub-second power on this driver, and it is what the monitor
+    integrates. The alternatives were measured and rejected on the
+    reference machine, driver 610.43:
+
+    - `power.draw.instant` (`NVML_FI_DEV_POWER_INSTANT`) refreshes every
+      500 ms, as does `nvmlDeviceGetPowerUsage`.
+    - `nvmlDeviceGetTotalEnergyConsumption` is a synchronous firmware query
+      (~4 ms) that stalls the accumulator it reads: polled every 10 ms it
+      under-counts a steady 233 W load by 60%, every 100 ms by 10%, every
+      500 ms by 1%. Read once at each end of a run it is right, and that is
+      the only way it is used here -- as a whole-run cross-check.
+    """
+
+    TOTAL_POWER_SAMPLES = 0          # nvmlSamplingType_t
+    NOT_FOUND = 6                    # nvmlReturn_t: nothing newer than the timestamp
+
+    class Sample(ctypes.Structure):  # nvmlSample_t
+        _fields_ = [("timestamp_us", ctypes.c_ulonglong), ("value", ctypes.c_ulonglong)]
+
+    class Memory(ctypes.Structure):  # nvmlMemory_v2_t
+        _fields_ = [("version", ctypes.c_uint), ("total", ctypes.c_ulonglong),
+                    ("reserved", ctypes.c_ulonglong), ("free", ctypes.c_ulonglong),
+                    ("used", ctypes.c_ulonglong)]
+
+    def __init__(self, index: int = 0):
+        self.lib = ctypes.CDLL("libnvidia-ml.so.1")
+        if self.lib.nvmlInit_v2() != 0:
+            raise OSError("nvmlInit failed")
+        self.handle = ctypes.c_void_p()
+        if self.lib.nvmlDeviceGetHandleByIndex_v2(index, ctypes.byref(self.handle)) != 0:
+            self.lib.nvmlShutdown()
+            raise OSError(f"NVML has no device {index}")
+        self._ring = (self.Sample * 256)()          # the driver's ring holds ~120
+        self._memory = self.Memory()
+        self._memory.version = (2 << 24) | ctypes.sizeof(self.Memory)
+
+    def close(self) -> None:
+        self.lib.nvmlShutdown()
+
+    def memory_used_mib(self) -> float | None:
+        if self.lib.nvmlDeviceGetMemoryInfo_v2(self.handle, ctypes.byref(self._memory)) != 0:
+            return None
+        return self._memory.used / 2**20
+
+    def power_samples(self, newer_than_us: int) -> list[tuple[int, float]]:
+        """(driver timestamp in unix microseconds, watts), oldest first, for
+        every sample the driver took after `newer_than_us`."""
+        value_type, count = ctypes.c_uint(), ctypes.c_uint(len(self._ring))
+        rc = self.lib.nvmlDeviceGetSamples(
+            self.handle, self.TOTAL_POWER_SAMPLES, ctypes.c_ulonglong(newer_than_us),
+            ctypes.byref(value_type), ctypes.byref(count), self._ring)
+        if rc != 0:
+            return []
+        # nvmlValue_t is a union; a power sample is a 32-bit milliwatt count
+        # and the upper half of the word is left uncleared.
+        return [(s.timestamp_us, (s.value & 0xFFFFFFFF) / 1e3)
+                for s in self._ring[:count.value]]
+
+    def energy_mj(self) -> int | None:
+        """The firmware energy counter. Read sparingly -- see the class note."""
+        value = ctypes.c_ulonglong()
+        if self.lib.nvmlDeviceGetTotalEnergyConsumption(self.handle, ctypes.byref(value)) != 0:
+            return None
+        return value.value
+
 class Monitor:
     """Samples memory and power for the life of a run.
 
@@ -391,32 +476,43 @@ class Monitor:
     two folders, in two thermal states, as two numbers that could not be
     cross-referenced.
 
-    Sampling always runs, because the cost is one subprocess and the
-    alternative is how the separate energy benchmark came to exist.
+    Sampling always runs, because the cost is one thread and the alternative
+    is how the separate energy benchmark came to exist.
 
         with Monitor() as monitor:
             ... run the engine ...
         monitor.peak_mib, monitor.energy_joules(start, end)
     """
 
-    # Below this many samples inside the window, energy is reported as
-    # unmeasured rather than as a number. A short run integrated from two
-    # readings is not a small energy figure, it is no energy figure.
-    MIN_WINDOW_SAMPLES = 4
+    # Below this many power samples inside the window, energy is reported as
+    # unmeasured rather than as a number. The driver samples every 20 ms, so
+    # this is a one-second window, which keeps the two partial intervals at
+    # its edges under 2% of it. A shorter run has no energy figure: a burst
+    # of GEMMs integrated from three readings is not a small energy figure,
+    # it is no energy figure. Lengthen the run -- more epochs or repeats.
+    MIN_WINDOW_SAMPLES = 50
 
     def __init__(self, interval_ms: int = 20, measure_idle_first: bool = True,
                  device: str = "cuda"):
         self.interval_ms = interval_ms
         self.device = device
-        self.samples: list[tuple[float, float, float]] = []    # unix, MiB, watts
+        self.memory_samples: list[tuple[float, float]] = []    # unix, MiB
+        self.power_samples: list[tuple[float, float]] = []     # unix, watts
+        self.power_metric: str | None = None
         self.idle_mib = 0.0
         self.idle_watts = 0.0
         self.peak_rss_mib = 0.0
         self.peak_file_mib = 0.0
+        # The firmware energy counter differenced over the monitor's whole
+        # life: warmup, load and teardown included, so never the window's
+        # figure -- but a bound on it, from an independent instrument.
+        self.run_energy_joules: float | None = None
         self._measure_idle = measure_idle_first
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._process: subprocess.Popen | None = None
+        self._nvml: Nvml | None = None
+        self._counter_start_mj: int | None = None
         # (unix, cumulative joules) from the RAPL package counter, CPU runs only.
         self.rapl_samples: list[tuple[float, float]] = []
         self.rapl: dict[str, Any] | None = None
@@ -466,10 +562,26 @@ class Monitor:
         if self._measure_idle:
             self.idle_mib, self.idle_watts = self._read_once()
 
-        # One long-lived nvidia-smi streaming with -lms, not a subprocess per
-        # sample. Spawning one costs 20-50 ms, which was slower than the
-        # interval it was supposedly honouring, so short runs landed no
-        # samples inside their own timed window at all.
+        # The driver's own 20 ms power samples, drained in-process. See Nvml
+        # for why nothing nvidia-smi prints can replace them.
+        try:
+            self._nvml = Nvml()
+        except OSError:
+            self._nvml = None
+
+        if self._nvml:
+            self.power_metric = "nvml_power_samples"
+            self._counter_start_mj = self._nvml.energy_mj()
+            self._thread = threading.Thread(target=self._nvml_loop, daemon=True)
+            self._thread.start()
+            return self
+
+        # Without libnvidia-ml: one long-lived nvidia-smi streaming with -lms,
+        # not a subprocess per sample -- spawning one costs 20-50 ms. What it
+        # streams is the one-second average, so a figure from this path is
+        # only meaningful for a window many seconds long, and the artifact
+        # names the path so the two are never read as the same instrument.
+        self.power_metric = "nvidia_smi_power_draw_1s_average"
         try:
             self._process = subprocess.Popen(
                 ["nvidia-smi", "--query-gpu=memory.used,power.draw",
@@ -493,6 +605,12 @@ class Monitor:
                 self._process.kill()
         if self._thread:
             self._thread.join(timeout=5)
+        if self._nvml:
+            end_mj = self._nvml.energy_mj()
+            if self._counter_start_mj is not None and end_mj is not None:
+                self.run_energy_joules = (end_mj - self._counter_start_mj) / 1e3
+            self._nvml.close()
+            self._nvml = None
 
     @staticmethod
     def _read_once() -> tuple[float, float]:
@@ -505,6 +623,30 @@ class Monitor:
             return float(parts[0]), float(parts[1])
         except (ValueError, IndexError):
             return 0.0, 0.0
+
+    def _nvml_loop(self) -> None:
+        """Memory at the interval; power as the driver sampled it.
+
+        The ring holds about 2.4 s, so draining it at the memory interval
+        leaves two orders of magnitude of slack. Timestamps are the driver's,
+        not the drain's: a sample is filed at the moment it was taken.
+        """
+        assert self._nvml
+        newest_us = int(time.time() * 1e6)
+
+        def drain() -> None:
+            nonlocal newest_us
+            fresh = self._nvml.power_samples(newest_us)
+            if fresh:
+                newest_us = fresh[-1][0]
+                self.power_samples.extend((us / 1e6, watts) for us, watts in fresh)
+
+        while not self._stop.wait(self.interval_ms / 1000.0):
+            mib = self._nvml.memory_used_mib()
+            if mib is not None:
+                self.memory_samples.append((time.time(), mib))
+            drain()
+        drain()
 
     def _rapl_loop(self) -> None:
         """Accumulate the package energy counter into monotonic joules.
@@ -576,7 +718,9 @@ class Monitor:
                 mib, watts = (float(x) for x in line.split(","))
             except ValueError:
                 continue
-            self.samples.append((time.time(), mib, watts))
+            now = time.time()
+            self.memory_samples.append((now, mib))
+            self.power_samples.append((now, watts))
 
     @property
     def peak_mib(self) -> float:
@@ -587,25 +731,50 @@ class Monitor:
         to anything else. `torch.cuda.max_memory_allocated()` excludes both
         and has no OpenNN equivalent, so it never appears in a comparison.
         """
-        if not self.samples:
+        if not self.memory_samples:
             return 0.0
-        return max(mib for _, mib, _ in self.samples) - self.idle_mib
+        return max(mib for _, mib in self.memory_samples) - self.idle_mib
+
+    def window_power(self, start: float | None, end: float | None) -> list[float]:
+        return [w for t, w in self.power_samples
+                if (start is None or t >= start) and (end is None or t <= end)]
 
     def energy_joules(self, start: float | None = None, end: float | None = None) -> float:
         """Board energy over [start, end], trapezoid-integrated.
 
         The window is the engine's own timed region, taken from the marks it
-        prints, so warmup and data loading are outside it. Idle draw is not
+        prints, so warmup and data loading are outside it. The samples inside
+        the window are integrated as they are; the partial interval at each
+        edge is integrated too, with the power at the edge interpolated
+        between the two samples that straddle it, so the figure covers the
+        window and not the nearest samples to it. Idle draw is not
         subtracted: the question is what the run costs to perform, and the
         card being on is part of that.
         """
-        window = [(t, w) for t, _, w in self.samples
-                  if (start is None or t >= start) and (end is None or t <= end)]
-        if len(window) < 2:
+        samples = self.power_samples
+        if len(samples) < 2:
+            return 0.0
+        lo = samples[0][0] if start is None else max(start, samples[0][0])
+        hi = samples[-1][0] if end is None else min(end, samples[-1][0])
+        if hi <= lo:
             return 0.0
 
-        return sum((window[i + 1][0] - window[i][0]) * (window[i + 1][1] + window[i][1]) / 2.0
-                   for i in range(len(window) - 1))
+        times = [t for t, _ in samples]
+
+        def power_at(when: float) -> float:
+            i = bisect.bisect_left(times, when)
+            if i == 0:
+                return samples[0][1]
+            if i >= len(samples):
+                return samples[-1][1]
+            (t0, w0), (t1, w1) = samples[i - 1], samples[i]
+            return w0 if t1 <= t0 else w0 + (w1 - w0) * (when - t0) / (t1 - t0)
+
+        points = ([(lo, power_at(lo))]
+                  + [(t, w) for t, w in samples if lo < t < hi]
+                  + [(hi, power_at(hi))])
+        return sum((t1 - t0) * (w1 + w0) / 2.0
+                   for (t0, w0), (t1, w1) in zip(points, points[1:]))
 
     def summary(self, start: float | None = None, end: float | None = None) -> dict[str, Any]:
         if self.device != "cuda":
@@ -643,14 +812,21 @@ class Monitor:
                 "window_samples": window_samples,
             }
 
-        window = [w for t, _, w in self.samples
-                  if (start is None or t >= start) and (end is None or t <= end)]
+        window = self.window_power(start, end)
 
         # A window too short to sample has no energy figure, and saying 0.0 Wh
         # would be a claim rather than an absence. Lengthen the run -- more
         # epochs or repeats -- if the energy cell matters.
         measurable = len(window) >= self.MIN_WINDOW_SAMPLES
         joules = self.energy_joules(start, end) if measurable else None
+
+        notes = []
+        if not measurable:
+            notes.append(f"timed window held {len(window)} power samples, fewer than "
+                         f"the {self.MIN_WINDOW_SAMPLES} required at the driver's 20 ms")
+        if self.power_metric != "nvml_power_samples":
+            notes.append("power is nvidia-smi's one-second average: libnvidia-ml "
+                         "could not be loaded")
 
         return {
             "peak_mib": round(self.peak_mib, 1),
@@ -660,9 +836,18 @@ class Monitor:
             "energy_joules": round(joules, 2) if measurable else None,
             "energy_wh": round(joules / 3600.0, 5) if measurable else None,
             "mean_watts": round(sum(window) / len(window), 1) if window else None,
-            "samples": len(self.samples),
+            "samples": len(self.power_samples),
             "window_samples": len(window),
             "energy_measurable": measurable,
+            "energy_note": "; ".join(notes) or None,
+            # Board, and which reading of it: the driver's own 20 ms samples
+            # or nvidia-smi's one-second average. They are not the same
+            # instrument below a window of many seconds, and the artifact
+            # says which one a figure came from.
+            "energy_domain": "board",
+            "energy_metric": self.power_metric,
+            "run_energy_joules": (round(self.run_energy_joules, 1)
+                                  if self.run_energy_joules is not None else None),
         }
 
 # --------------------------------------------------------------------------

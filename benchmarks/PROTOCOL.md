@@ -129,8 +129,9 @@ round kept in the artifact so a drifting session is visible rather than
 averaged into a claim. Ratios within one session are the durable output;
 absolute samples/s is provenance.
 
-**Peak memory.** On GPU, `nvidia-smi` device-used sampled at 20 ms, minus the
-idle reading taken before the run. Whole-device on purpose: it counts the CUDA
+**Peak memory.** On GPU, device-used memory (`nvmlDeviceGetMemoryInfo`, the
+figure `nvidia-smi` prints) sampled at 20 ms, minus the idle reading taken
+before the run. Whole-device on purpose: it counts the CUDA
 context and the allocator's cached blocks, because that memory really is
 unavailable to anything else. On CPU, the process's peak *anonymous*
 resident set, sampled from `RssAnon`, with `RssFile` recorded beside it.
@@ -154,13 +155,36 @@ thing and must not share a column.
 > as a labelled PyTorch diagnostic if wanted.
 
 **Energy.** Board power integrated over the engine's own timed window, between
-the marks it prints. Reported only when the window held at least four samples;
-otherwise the artifact says so. A short run has no energy figure, and `0.0000
-Wh` would be a claim rather than an absence.
+the marks it prints. The power is the driver's own sampling of the board -- one
+instantaneous reading every 20 ms, timestamped by the driver and drained from
+its ring through NVML (`nvmlDeviceGetSamples`) -- and the figure is reported
+only when the window held at least fifty of them, one second; otherwise the
+artifact says so. A short run has no energy figure, and `0.0000 Wh` would be a
+claim rather than an absence.
 
-The dense family's epochs are milliseconds, so its energy cell needs `--epochs`
-raised until the window clears about a second. That is a per-family setting,
-not a matter of taste.
+Why not `nvidia-smi --query-gpu=power.draw`, which the suite used until
+2026-09-02: on Ampere and later that field is the driver's *one-second moving
+average*, so polling it at 20 ms cannot see inside a second. Every sub-second
+cell taken with it -- the dense and LSTM CUDA cells, windows of 70 ms to 1.3 s
+-- reported a mean of about 45 W, which is an idle card with a burst of GEMMs
+averaged into it, not the 200 W and more the burst draws, and the old rule of
+four samples let those through as figures. The other readings were measured
+and rejected too: `power.draw.instant` refreshes every 500 ms, and
+`nvmlDeviceGetTotalEnergyConsumption` is a synchronous firmware query that
+stalls the accumulator it reads -- polled every 10 ms it under-counts a steady
+233 W by 60%, every 100 ms by 10%. That counter is read exactly twice per run,
+once at each end, and the whole-run difference is filed beside the window's
+figure as `run_energy_joules`: an independent instrument that agrees with the
+integral to 0.1% on a steady load, and a bound the window can never exceed.
+
+The window is a per-cell setting, not a matter of taste: a cell whose timed
+window would fall under two seconds runs more epochs or repeats until it clears
+them. On the reference machine that is cuda-dense-train at 100 epochs,
+cuda-dense-infer at 200 repeats, cuda-lstm-train at 20 epochs and
+cuda-lstm-infer at 50 repeats; every other cell clears two seconds at its
+default. The footprint family prints no marks: its process is the operation
+being timed, its figure is the whole process, and a process that lives under a
+second reports none.
 
 **CPU energy is the RAPL package counter,** integrated over the same timed
 window, and never the GPU's draw -- which during a CPU run is an idle card.

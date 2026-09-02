@@ -65,9 +65,10 @@ different is not a speed win.
 
 ## Reading a result
 
-Energy is reported only when the timed window was long enough to sample — a
-short run says so rather than reporting `0.0000 Wh`, which is a claim and not a
-measurement. Peak memory is whole-device, minus the idle reading;
+Energy is reported only when the timed window held a second of the driver's
+20 ms power samples — a short run says so rather than reporting `0.0000 Wh`,
+which is a claim and not a measurement. Peak memory is whole-device, minus the
+idle reading;
 `torch.cuda.max_memory_allocated()` never appears, because it excludes the CUDA
 context and cached blocks and so flatters PyTorch by construction.
 
