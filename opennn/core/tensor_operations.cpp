@@ -16,6 +16,7 @@
 #include "opennn/core/cuda/kernel_cast.cuh"
 #include "opennn/core/cuda/kernel_quantization.cuh"
 #include "opennn/core/cuda/kernel_tensor.cuh"
+#include "opennn/core/cuda/kernel_small_k_linear.cuh"
 
 #include <atomic>
 #include <mutex>
@@ -1749,6 +1750,27 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
 
     const void* input_for_gemm = data_for_gemm_dtype(input, weights.get_type());
     const cudaDataType_t io_type = output.cuda_dtype();
+
+    // A bf16 contraction of at most 32 is an output write, not a GEMM; the
+    // small-K kernel keeps it at the write floor where cuBLASLt's align2
+    // kernel for a 28-wide input does not (kernel_small_k_linear.cu).
+    const bool bias_epilogue = epilogue == CUBLASLT_EPILOGUE_BIAS
+                            || epilogue == CUBLASLT_EPILOGUE_RELU_BIAS;
+    const bool relu_epilogue = epilogue == CUBLASLT_EPILOGUE_RELU
+                            || epilogue == CUBLASLT_EPILOGUE_RELU_BIAS;
+    const bool plain_epilogue = epilogue == CUBLASLT_EPILOGUE_DEFAULT
+                             || bias_epilogue || relu_epilogue;
+
+    if (!pre_activation && plain_epilogue
+        && input.is_bf16() && weights.is_bf16() && output.is_bf16()
+        && (!bias_epilogue || (bias.get_data() && (bias.is_bf16() || bias.is_fp32())))
+        && small_k_linear_forward_cuda(total_rows, input_columns, output_columns,
+                                       input_for_gemm, weights.get_data(),
+                                       bias_epilogue ? bias.get_data() : nullptr,
+                                       bias_epilogue && bias.is_fp32(),
+                                       output.get_data(), relu_epilogue,
+                                       device::get_compute_stream()))
+        return;
 
     const void* bias_for_gemm = (bias.get_data() && output.is_bf16() && bias.is_fp32())
         ? bias_for_gemm_bf16(bias)
