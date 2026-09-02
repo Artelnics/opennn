@@ -133,6 +133,23 @@ locations, and compiler-cache support.
 | `OpenNN_ENABLE_MKL` | `OFF` | Use Intel MKL as Eigen's BLAS/LAPACK backend. |
 | `OpenNN_ENABLE_LTO` | platform-dependent | Enable interprocedural optimization for release builds. |
 
+## CPU threads
+
+OpenNN sizes one thread per CPU the process may run on (`sched_getaffinity`,
+so `taskset` is honoured) and gives that count to Eigen, OpenMP and MKL alike.
+`OPENNN_THREADS=n` overrides it. Every parallel region asks for the same team
+on purpose: libgomp keeps a single pool sized to the last region, and a region
+that wants fewer threads makes the surplus exit and the next full one recreate
+them, which cost an LSTM forward pass 10% of its throughput before MKL was
+pinned to the team. `OPENNN_OMP_DYNAMIC=1` re-enables dynamic teams.
+
+One setting stays outside the library. GCC 14's libgomp detects hybrid Intel
+CPUs (P- and E-cores) and stops spinning at barriers, so every fork/join
+sleeps in the kernel; on such a machine set `GOMP_SPINCOUNT=300000` (libgomp's
+own default elsewhere) or `OMP_WAIT_POLICY=active` before running anything
+latency-sensitive. It is an environment variable the runtime reads before
+`main`, which is why OpenNN cannot set it for you.
+
 ## Examples
 
 The repository includes example apps for quick validation and experimentation.

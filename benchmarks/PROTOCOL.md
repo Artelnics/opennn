@@ -220,6 +220,20 @@ are faster than the rest, and which engine gets them depends on ordering. Each
 artifact carries `cpu.governor` and `cpu.turbo_enabled` so a reader can tell an
 opportunistic run from a pinned-down one.
 
+**One OpenMP wait policy for both engines, and the artifact records it.** The
+two engines do not share an OpenMP runtime: OpenNN links the system libgomp,
+PyTorch's wheel carries its own. GCC 14's libgomp recognises a hybrid CPU and
+stops spinning at barriers (`GOMP_SPINCOUNT` falls to 1; every fork/join
+sleeps in the kernel), while PyTorch's older copy still spins 300,000 times.
+oneDNN's LSTM opens about thirty regions per batch, so this alone moved the
+identical primitive from 3.14 ms to 3.45 ms and turned a won cell into a lost
+one. The runner sets `GOMP_SPINCOUNT=300000` — libgomp's own documented
+default — for both engines; measured, it is a no-op for PyTorch (69.0k →
+69.3k samples/s) and restores OpenNN (62.6k → 72.3k). The `pinning.omp_wait`
+field says so in every CPU artifact. Intel's runtime (`libiomp5`) preloaded
+under both engines gives the same ordering with a wider margin; it is not the
+protocol default because neither engine ships it.
+
 **Energy on CPU is RAPL `package-0`,** not the idle GPU's draw. See item 5 for
 the domain, the wrap handling and the permission it needs.
 

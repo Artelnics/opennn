@@ -182,9 +182,22 @@ def cpu_pinning(threads: int | None) -> tuple[list[str], dict[str, str], dict]:
     # --threads still overrides, so the choice stays measurable.
     count = threads
 
+    # One OpenMP wait policy for both engines. GCC 14's libgomp (the system
+    # runtime OpenNN links) detects a hybrid CPU and stops spinning at
+    # barriers -- `GOMP_SPINCOUNT` becomes 1 and every fork/join sleeps in the
+    # kernel (libgomp/config/linux/x86/spincount.h). PyTorch ships its own,
+    # older libgomp that still spins 300,000 times. oneDNN's LSTM opens ~30
+    # regions per batch, so the difference is the runtime, not the engine:
+    # the same oneDNN primitive under each libgomp measured 3.45 ms against
+    # 3.14 ms. Setting the documented libgomp default for both makes the
+    # setting a no-op for PyTorch (69.0k -> 69.3k samples/s) and restores
+    # OpenNN's (62.6k -> 72.3k). Contract item 3, each engine at its best.
+    environment.setdefault("GOMP_SPINCOUNT", "300000")
+
     return (["taskset", "-c", span], environment,
             {"pinned": True, "cores": span,
              "threads": count or "engine default",
+             "omp_wait": "GOMP_SPINCOUNT=" + environment["GOMP_SPINCOUNT"],
              "excluded_efficiency_cores": layout["efficiency"]})
 
 def launch(command: list[str], quiet_wait: bool, device: str = "cuda",

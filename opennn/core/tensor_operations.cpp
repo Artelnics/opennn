@@ -308,6 +308,20 @@ static Index gemm_mkl_threads()
     return threads;
 }
 
+// Runs `body` on `workers` threads of a full-size team. Asking for a smaller
+// team (`num_threads(workers)`) would make libgomp shrink its pool to that size
+// and grow it back with `pthread_create` at the next full region -- see
+// Backend::set_threads_number. The threads left over go straight to the
+// barrier.
+template<typename Body>
+static void parallel_workers(Index workers, Body&& body)
+{
+    #pragma omp parallel
+    {
+        if (Index(omp_get_thread_num()) < workers) body();
+    }
+}
+
 static void sgemm_rows(int m, int n, int k, const float* a, const float* b, float* c)
 {
     cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
@@ -369,7 +383,7 @@ static bool blocked_rows(Index rows, double work_flops, Work&& work)
 
     atomic<Index> next_block{0};
 
-    #pragma omp parallel num_threads(to_int(workers))
+    parallel_workers(workers, [&]
     {
         mkl_set_num_threads_local(to_int(gemm_mkl_threads()));
 
@@ -379,7 +393,7 @@ static bool blocked_rows(Index rows, double work_flops, Work&& work)
 
             work(first, min<Index>(block_rows, rows - first));
         }
-    }
+    });
 
     mkl_set_num_threads_local(0);
 
@@ -468,7 +482,7 @@ static bool backward_weight_gradient(int rows, int in_features, int out_features
 
     atomic<Index> next_tile{0};
 
-    #pragma omp parallel num_threads(to_int(min<Index>(workers, tiles)))
+    parallel_workers(min<Index>(workers, tiles), [&]
     {
         mkl_set_num_threads_local(to_int(gemm_mkl_threads()));
 
@@ -482,7 +496,7 @@ static bool backward_weight_gradient(int rows, int in_features, int out_features
             tile(m_first, min<Index>(m_block, Index(in_features) - m_first),
                  n_first, min<Index>(n_block, Index(out_features) - n_first));
         }
-    }
+    });
 
     mkl_set_num_threads_local(0);
 
@@ -591,16 +605,8 @@ static void blocked_linear_forward(int m, int n, int k, const float* a, const fl
 
     if (gemm_parallelism() == GemmParallelism::Omp)
     {
-        if (guided)
-        {
-            #pragma omp parallel num_threads(to_int(workers))
-            take_share();
-        }
-        else
-        {
-            #pragma omp parallel num_threads(to_int(workers))
-            take_blocks();
-        }
+        if (guided) parallel_workers(workers, take_share);
+        else        parallel_workers(workers, take_blocks);
     }
     else
     {

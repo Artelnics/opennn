@@ -12,6 +12,10 @@
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/memory_debug.h"
 
+#ifdef EIGEN_USE_MKL_ALL
+#include <mkl_service.h>
+#endif
+
 #include <atomic>
 #include <cstdlib>
 #include <mutex>
@@ -1256,10 +1260,32 @@ void Backend::set_threads_number(int num_threads)
 
     Eigen::setNbThreads(num_threads);
     omp_set_num_threads(num_threads);
+
+    // Every parallel region must ask for the same team. libgomp keeps exactly
+    // one pool of workers, sized to the last region: a region that wants fewer
+    // threads makes the surplus exit, and the next full-size region creates
+    // them again with `pthread_create` -- fresh stacks, cold caches, and a
+    // barrier that waits for the kernel to schedule them. The LSTM forward
+    // pass was paying six thread births and deaths per batch, 10% of its
+    // throughput, from two sources that each looked harmless alone:
+    //
+    //  - `omp_set_dynamic(1)`, which lets libgomp size a team as the CPU
+    //    count minus the fifteen-minute load average, so a desktop with a
+    //    browser open gave OpenNN's own regions 10 of 16 threads while
+    //    oneDNN, which pins dynamic off, asked for all 16;
+    //  - MKL's own thread heuristic (`MKL_DYNAMIC`), which chose 10 threads
+    //    for a 256x128 `sgemv` between two 16-thread oneDNN regions.
+    //
+    // Dynamic teams are opt-in (`OPENNN_OMP_DYNAMIC=1`) and MKL is told to use
+    // this team, exactly as PyTorch's ATen does for the same reason.
     const char* const omp_dynamic = getenv("OPENNN_OMP_DYNAMIC");
-    omp_set_dynamic(omp_dynamic ? atoi(omp_dynamic) : 1);
+    omp_set_dynamic(omp_dynamic ? atoi(omp_dynamic) : 0);
 #if defined(_OPENMP) && _OPENMP >= 200805
     omp_set_max_active_levels(1);
+#endif
+#ifdef EIGEN_USE_MKL_ALL
+    mkl_set_dynamic(0);
+    mkl_set_num_threads(num_threads);
 #endif
 }
 
