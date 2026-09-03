@@ -95,6 +95,7 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
     embedding_layer->set_scale_embedding(true);
     embedding_layer->set_add_positional_encoding(true);
     embedding_layer->set_export_valid_lengths(true);
+
     add_layer(std::move(embedding_layer));
 
     auto attention_layer = make_unique<MultiHeadAttention>(
@@ -352,11 +353,9 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
         Index attention_input_index = current_index;
 
         if (pre_normalization)
-        {
             attention_input_index = add_layer(make_unique<Normalization3d>(block_shape,
                                                                            "attention_normalization" + suffix),
                                               {current_index});
-        }
 
         auto self_attention = make_unique<MultiHeadAttention>(
             block_shape, heads_number, "self_attention" + suffix);
@@ -404,15 +403,22 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
         add_layer(make_unique<Normalization3d>(block_shape, "final_normalization"),
                   {current_index});
 
-    add_layer(make_unique<Dense>(block_shape, Shape{vocabulary_size},
-                                 "Identity", BatchNormalization::No, "output_projection"));
+    add_layer(make_unique<Dense>(block_shape, 
+                                 Shape{vocabulary_size},
+                                 "Identity", 
+                                 BatchNormalization::No, 
+                                 "output_projection"));
 
     finalize_build(*this);
 }
 
 static Index add_bert_encoder(NeuralNetwork& net,
-                              Index sequence_length, Index vocabulary_size, Index hidden_size,
-                              Index heads_number, Index intermediate_size, Index layers_number,
+                              Index sequence_length, 
+                              Index vocabulary_size, 
+                              Index hidden_size,
+                              Index heads_number, 
+                              Index intermediate_size, 
+                              Index layers_number,
                               Index type_vocabulary_size)
 {
     throw_if(sequence_length == 0 || vocabulary_size == 0 || hidden_size == 0 ||
