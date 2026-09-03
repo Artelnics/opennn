@@ -89,11 +89,13 @@ void ClampingOperator::forward_propagate(ForwardPropagation& forward_propagation
     apply_clamping(input, lower, upper, output);
 }
 
-Clamping::Clamping(const Shape& new_output_shape, const string& new_name)
+Clamping::Clamping(const Shape& new_output_shape,
+                   ClampingMethod new_clamping_method,
+                   const string& new_name)
     : Layer(LayerType::Clamping, Trainability::Frozen)
 {
     operators = {&clamping};
-    set(new_output_shape, new_name);
+    set(new_output_shape, new_clamping_method, new_name);
 }
 
 const EnumMap<Clamping::ClampingMethod>& Clamping::clamping_method_map()
@@ -111,18 +113,36 @@ const EnumMap<Clamping::ClampingMethod>& Clamping::clamping_method_map()
     return map;
 }
 
-void Clamping::set(const Shape& new_output_shape, const string& new_label)
+void Clamping::set(const Shape& new_output_shape,
+                   ClampingMethod new_clamping_method,
+                   const string& new_label)
 {
     output_shape = new_output_shape;
 
     set_label(new_label);
 
     const Index features = output_shape.empty() ? 0 : output_shape.back();
-    clamping.method = ClampingMethod::Clamping;
+    clamping.method = new_clamping_method;
 
     lower_bounds.assign(size_t(features), -MAX);
     upper_bounds.assign(size_t(features),  MAX);
     op_storage_dirty = true;
+}
+
+void Clamping::apply_input_shape(const Shape& new_input_shape)
+{
+    const vector<float> previous_lower_bounds = lower_bounds;
+    const vector<float> previous_upper_bounds = upper_bounds;
+
+    set(new_input_shape, clamping.method, get_label());
+
+    if (previous_lower_bounds.size() == lower_bounds.size())
+    {
+        lower_bounds = previous_lower_bounds;
+        upper_bounds = previous_upper_bounds;
+        op_storage_dirty = true;
+        refresh_op_storage(op_storage.get_device());
+    }
 }
 
 void Clamping::set_clamping_method(const ClampingMethod& new_method)
