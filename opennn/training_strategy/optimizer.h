@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   O P T I M I Z E R   C L A S S   H E A D E R
@@ -164,7 +164,7 @@ protected:
     };
 
     void set_names();
-    void prepare_training_scaling();
+    void prepare_training_artifacts();
 
     bool check_stopping_condition(TrainingResult& results,
         Index epoch, float elapsed_time, float training_error,

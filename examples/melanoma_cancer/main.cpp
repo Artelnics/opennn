@@ -23,13 +23,11 @@ int main()
     {
         cout << "OpenNN. Melanoma cancer example." << endl;
 
-        set_seed(42);
+        set_seed(0);
 
         Configuration::instance().set(Device::Auto, Type::Auto);
 
         ImageDataset image_dataset("../data/melanoma_cancer");
-
-        image_dataset.split_samples_random(0.8, 0.0, 0.2);
 
         ImageClassificationNetwork image_classification_network(
             image_dataset.get_shape("Input"),
@@ -37,11 +35,6 @@ int main()
             image_dataset.get_shape("Target"));
 
         TrainingStrategy training_strategy(&image_classification_network, &image_dataset);
-
-        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_display_period(10);
-        adam->set_batch_size(10);
-        adam->set_maximum_epochs(50);
 
         training_strategy.train();
 

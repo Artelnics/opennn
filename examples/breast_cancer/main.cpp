@@ -25,8 +25,6 @@ int main()
     {
         cout << "OpenNN. Breast Cancer Example." << endl;
 
-        Configuration::instance().set(Device::CPU, Type::FP32);
-
         TabularDataset dataset("../data/breast_cancer/breast_cancer.csv", ";", true, false);
 
         const Index neurons_number = 3;
@@ -34,14 +32,6 @@ int main()
         ClassificationNetwork classification_network(dataset.get_input_shape(), { neurons_number}, dataset.get_target_shape());
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
-
-        training_strategy.set_loss("WeightedSquaredError");
-        training_strategy.get_loss()->set_regularization("L1");
-        training_strategy.get_loss()->set_regularization_weight(float(0.001));
-
-        training_strategy.set_optimization_algorithm("StochasticGradientDescent");
-        StochasticGradientDescent* sgd = dynamic_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());
-        sgd->set_maximum_epochs(1000);
 
         training_strategy.train();
 

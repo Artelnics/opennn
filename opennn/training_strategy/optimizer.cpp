@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   O P T I M I Z E R   C L A S S
@@ -35,7 +35,9 @@
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/neural_network.h"
+#include "opennn/neural_network/layers/tokenizer_layer.h"
 #include "opennn/neural_network/operators/dropout_operator.h"
+#include "opennn/neural_network/operators/tokenizer_operator.h"
 #include "opennn/training_strategy/kernel_optimizers.cuh"
 #include "opennn/training_strategy/loss.h"
 
@@ -91,6 +93,15 @@ FeatureScalingEndpoint* find_scaling_endpoint(NeuralNetwork& neural_network,
         if (auto* endpoint = dynamic_cast<FeatureScalingEndpoint*>(layer.get());
             endpoint && endpoint->get_scaling_role() == role)
             return endpoint;
+
+    return nullptr;
+}
+
+Tokenizer* find_tokenizer_layer(NeuralNetwork& neural_network)
+{
+    for (const unique_ptr<Layer>& layer : neural_network.get_layers())
+        if (auto* tokenizer_layer = dynamic_cast<Tokenizer*>(layer.get()))
+            return tokenizer_layer;
 
     return nullptr;
 }
@@ -606,7 +617,7 @@ void Optimizer::set_names()
     neural_network->set_output_variables(target_variables);
 }
 
-void Optimizer::prepare_training_scaling()
+void Optimizer::prepare_training_artifacts()
 {
     Dataset* const dataset = loss->get_dataset();
     NeuralNetwork* const neural_network = loss->get_neural_network();
@@ -624,6 +635,10 @@ void Optimizer::prepare_training_scaling()
 
     prepare_endpoint(VariableRole::Input);
     prepare_endpoint(VariableRole::Target);
+
+    if (const TokenizerOperator* const fitted_tokenizer = dataset->get_training_tokenizer())
+        if (Tokenizer* const tokenizer_layer = find_tokenizer_layer(*neural_network))
+            tokenizer_layer->set_tokenizer(fitted_tokenizer->clone());
 }
 
 void Optimizer::warmup_device_training(
@@ -858,7 +873,7 @@ TrainingResult Optimizer::train()
 
     set_names();
     ScopeExit scaling_cleanup([dataset] { dataset->clear_training_scaling(); });
-    prepare_training_scaling();
+    prepare_training_artifacts();
 
     BatchPools batch_pools;
     OptimizerData optimizer_data;
@@ -1079,7 +1094,7 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
 
     set_names();
     ScopeExit scaling_cleanup([dataset] { dataset->clear_training_scaling(); });
-    prepare_training_scaling();
+    prepare_training_artifacts();
 
     context.training_batch = make_unique<Batch>(context.training_samples_number,
                                                 dataset,
@@ -2406,3 +2421,4 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.
+
