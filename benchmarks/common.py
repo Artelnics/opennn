@@ -567,6 +567,32 @@ class Nvml:
             return None
         return value.value
 
+# The name the CPU path files its memory reading under. It lives here, and
+# run.py imports it, because it is a gate as well as a label: it says which
+# peak a host baseline may be subtracted from, and the GPU path's
+# `device_used_minus_idle` is not one -- that reading has already had the idle
+# card taken off it. Keeping the literal in two files is what let it drift: the
+# metric was renamed when the reading moved from total to anonymous RSS (see
+# Monitor.watch_rss), run.py's gate went on asking for the old
+# "process_peak_rss", and from that rename until now no CPU cell had a baseline
+# subtracted at all.
+HOST_MEMORY_METRIC = "process_peak_anonymous_rss"
+
+# The stdout field a driver has to print for `workload_mib` to be computable:
+# the framework baseline in the *same* quantity the peak is read in, anonymous
+# resident pages, sampled once before the framework does any work.
+#
+# Deliberately not `baseline_rss_mib`, which the eight family drivers print
+# today from /proc/self/statm's resident field (footprint's pair prints the
+# same reading as `baseline_ram_mb`) -- that is total RSS, and total-minus-
+# anonymous is not a workload figure but a negative number. On the 2026-09-03
+# publish round it is negative for at least one engine on every cpu-* cell
+# (cpu-lstm-infer: OpenNN 189.2 MiB peak against a 218.6 MiB baseline, PyTorch
+# 458.7 against 671.9), so subtracting it would clamp the published workload to
+# zero rather than correct it. Until a driver emits this field the runner says
+# so in the artifact instead of subtracting the wrong one.
+HOST_BASELINE_FIELD = "baseline_anonymous_rss_mib"
+
 class Monitor:
     """Samples memory and power for the life of a run.
 
@@ -908,7 +934,7 @@ class Monitor:
             return {
                 "peak_mib": round(self.peak_rss_mib, 1),
                 "peak_file_backed_mib": round(self.peak_file_mib, 1),
-                "memory_metric": "process_peak_anonymous_rss",
+                "memory_metric": HOST_MEMORY_METRIC,
                 "energy_joules": round(joules, 4) if joules is not None else None,
                 "energy_wh": round(joules / 3600.0, 6) if joules is not None else None,
                 "energy_measurable": bool(measurable),

@@ -1970,6 +1970,30 @@ static bool single_output_backward_applies(const TensorView& output_delta, const
     return single_output_layer_shape(input, weights, 32);
 }
 
+// bias_grad_sum_cuda accumulates with atomicAdd across grid.y, so its output has
+// to arrive zeroed; and no grid.y row can do the zeroing itself, because nothing
+// orders the rows against each other. Doing it with cudaMemsetAsync is what
+// costs: inside a stream capture a memset becomes a memset node, which the
+// driver schedules on an internal stream of its own, so the step forks and
+// joins across engines once per iteration. On cuda-dense-train the resulting
+// splitKreduce -> bias_grad_sum gap is 3.68 us x 3,000 steps = 11.03 ms, 32% of
+// all GPU idle in that cell, for 0.845 us of actual memset. cudnnSetTensor
+// writes the same zeros from a kernel, which captures as an ordinary kernel node
+// on the step's own stream. It only writes, so the uninitialised destination is
+// never read. That lowering is cuDNN's choice and has not been read back off a
+// trace here: if this cuDNN version turns a zero fill into cudaMemsetAsync of
+// its own accord the gap stays and this is a no-op rather than a regression, so
+// confirm it by looking for a memset node beside bias_grad_sum_kernel in the
+// captured dense-train graph before crediting the change with anything.
+// The cheaper form is a store-instead-of-add flag on bias_grad_sum_cuda itself
+// (core/cuda/kernel_tensor.cu), which would drop this launch entirely.
+static void zero_bias_gradient_async(const TensorView& bias_gradient)
+{
+    CHECK_CUDNN(cudnnSetTensor(device::get_cudnn_handle(),
+                               bias_gradient.get_descriptor(), bias_gradient.get_data(), &zero));
+}
+
+
 static void linear_backward_gpu(const TensorView& output_delta, const TensorView& input, const TensorView& weights,
                          const TensorView& weight_gradient, const TensorView& bias_gradient,
                          TensorView& input_delta, bool accumulate_input_delta,
@@ -2040,9 +2064,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 
         if (has_bias)
         {
-            device::set_zero_async(bias_gradient.get_data(),
-                                   bias_gradient.size() * Index(sizeof(float)),
-                                   device::get_compute_stream());
+            zero_bias_gradient_async(bias_gradient);
             output_delta.dispatch([&]<typename T>() {
                 bias_grad_sum_cuda<T>(total_rows, output_columns,
                                       output_delta.as<T>(), bias_gradient.as<float>());
@@ -2088,9 +2110,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 
         if (has_bias)
         {
-            device::set_zero_async(bias_gradient.get_data(),
-                                   bias_gradient.size() * Index(sizeof(float)),
-                                   device::get_compute_stream());
+            zero_bias_gradient_async(bias_gradient);
             bias_grad_sum_cuda<bfloat16>(total_rows, output_columns,
                                          output_delta.as<bfloat16>(), bias_gradient.as<float>());
         }
@@ -2100,7 +2120,28 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
     if (!input_delta.get_data() || input_delta.empty()) return;
 
     PROFILE_SCOPE("op:linear_bwd_dx " + to_string(output_columns) + "x" + to_string(input_columns) + "x" + to_string(total_rows));
-    if (drelu_mask || addend)
+    // multiply() reaches cublasGemmStridedBatchedEx with CUBLAS_GEMM_DEFAULT:
+    // no plan cache, no candidate timing, no known-tile injection and no traffic
+    // tie-break. run_lt_matmul_cached has all four, and dX is the same product
+    // the dW call above already sends through it. On cuda-dense-train the
+    // default picks nvjet_sm120_tst_mma_80x192x64_2 at 202.31 us, 25.7% of the
+    // step and on the critical path, where the tie-break's 256x160 does the same
+    // m,n,k in 200.4 us at 172 W against 193.1 us at 271 W.
+    //
+    // The split below is the seam. run_lt_matmul_cached takes neither a batch
+    // count nor a beta, so it is the same product as multiply() only for a
+    // single, non-accumulating matrix product in one input dtype. multiply_gpu
+    // folds a rank>2 left operand into one product whenever the right operand is
+    // rank 2, so the genuinely batched case left behind is a rank>2 weight
+    // tensor. Closing the seam means giving the Lt entry point a batch count and
+    // a beta; until then the batched and accumulating shapes stay on the old
+    // call. (The drelu/addend branch has always assumed the same equivalence,
+    // and reaches Lt with beta folded into the addend.)
+    const bool single_matrix_product = weights.get_rank() == 2
+                                    && !accumulate_input_delta
+                                    && weights.get_type() == output_delta.get_type();
+
+    if (drelu_mask || addend || single_matrix_product)
         return run_lt_matmul_cached(
                    input_columns, total_rows, output_columns,
                    CUBLAS_OP_T, CUBLAS_OP_N,

@@ -16,8 +16,8 @@ inference OpenNN folds every batch normalisation into the weights of the
 convolution in front of it and runs conv → bias → residual → ReLU as one
 cuDNN graph, the whole pass replayed as one CUDA graph per batch
 (1.19×); in training it fuses the batch-norm forward and backward
-with the residual and the ReLU in cuDNN graphs and captures the whole Adam
-step (1.17×). PyTorch's Inductor keeps the convolutions as external
+with the residual and the ReLU in its own kernels for 49 of the 53
+normalisations, and captures the whole Adam step (1.17×). PyTorch's Inductor keeps the convolutions as external
 cuDNN calls and lowers the normalisations, adds and activations to Triton
 passes over activations of up to 25 MB each, issued one by one.
 
@@ -146,10 +146,9 @@ Session `2026-09-03-publish`, the last run of every cell, median of three rounds
 ## Why
 
 ResNet-50 is 53 convolutions, and both engines run every one of them in
-cuDNN. The convolution kernels are the same family on both sides (each
-engine's autotuner picks from the same `sm100`/`sm120` implicit-GEMM
-kernels, and the profile below lists which), and they are about 79% of OpenNN's GPU time in the inference cell, spread over eleven distinct cuDNN kernels rather than one
-of the batch. The margins in this family are what happens between the
+cuDNN. Both draw on the same cuDNN engine pool — implicit-GEMM `sm80_xmma`
+and `sm100`/`sm120` CUTLASS kernels, and the profile below lists which each
+one was given — and they are 97% of OpenNN's GPU time in the inference cell, spread over fifteen distinct cuDNN kernels rather than one. The margins in this family are what happens between the
 convolutions: batch normalisation, the residual adds and the ReLUs — 53
 convolutions carry 53 normalisations, 49 ReLUs and 16 residual adds — and
 each one of those, run as its own kernel, is a full read and write of an
@@ -235,19 +234,36 @@ Per batch, GPU time by kernel class (`nsys`, the timed window of one launch, ker
 | kernel class | OpenNN launches / batch | OpenNN µs / batch | PyTorch launches / batch | PyTorch µs / batch |
 |---|---|---|---|---|
 | copy/memset | 3.0 | 1.2 | 0.0 | 0.0 |
-| convolution | 39.1 | 7,786.1 | 44.0 | 7,445.2 |
-| attention | 1.0 | 2.2 | 0.0 | 0.0 |
-| gemm | 13.0 | 1,285.2 | 11.0 | 924.0 |
+| convolution | 53.1 | 9,286.0 | 53.0 | 8,358.4 |
+| gemm | 2.0 | 9.2 | 2.0 | 10.8 |
 | normalisation | 0.0 | 0.0 | 50.0 | 3,269.4 |
 | pooling | 2.0 | 183.3 | 0.0 | 0.0 |
-| elementwise | 4.0 | 294.6 | 0.0 | 0.0 |
+| reduction | 1.0 | 2.2 | 0.0 | 0.0 |
+| elementwise | 1.0 | 70.7 | 0.0 | 0.0 |
 | **total** | **62.1** | **9,552.6** | **105.0** | **11,638.6** |
 
-The convolution time is close on both sides (7,786 against
-7,445 µs per batch): both engines are dispatched to the same `sm80_xmma_fprop_implicit_gemm` and `cudnn_generated_fort_native_sm80_convFwd` families, so the convolutions themselves are not what separates them What separates the
-engines is the 3,269 µs of pointwise kernels on PyTorch's
-side against 295 on OpenNN's, plus the difference in
-launch overhead — one graph launch against 105 eager-issued
+The convolution row counts 53 launches on each side because 53 is what
+ResNet-50 has. Several of its thirty-six 1×1 convolutions are handed by
+cuDNN to a GEMM engine on both engines' side — a 1×1 convolution over NHWC
+*is* a matrix product — and they are counted here as the convolutions they
+are rather than by the name of the kernel that ran them. The `gemm` row is
+what actually remains: the 2,048 → 1,000 classifier head and its split-k
+reduce.
+
+Both engines run those 53 convolutions in 9,286 against
+8,358 µs per batch, and the 928 µs OpenNN spends more is the
+epilogue rather than the arithmetic. Its graph asks cuDNN for conv → bias →
+[+ residual] → ReLU and gets engines whose names carry that epilogue —
+`cudnn_generated_fort_native_sm80_convFwd_pointwise_pointwise_pointwise`,
+`cutlass_80_tensorop_..._gemm_relu_...`, `nvjet_..._biast_relu_...` — for
+42% of its convolution time; PyTorch asks for a bare convolution and gets
+`cutlass__5x_cudnn` `fprop_optimized` instantiations for 66% of its own,
+which a fused graph reaches for none of its 53. Only three kernel names
+appear on both sides, one of them the 7×7 stem. That 11% is bought back
+several times over by what the fusion removes: 3,269 µs of
+pointwise kernels on PyTorch's side against 71 on OpenNN's,
+plus the difference in launch overhead — one graph launch against
+105 eager-issued
 kernels (Inductor's default mode does not use CUDA graphs; its
 `reduce-overhead` mode does and measured slower here, 5,574 against 5,604,
 because the graph's input copy and Python-side bookkeeping cost more than the
@@ -256,13 +272,20 @@ launches they save at this batch).
 ### `cuda-cnn-train`, 1.17×: the same fusions in the backward pass, and the input pipeline is not the story
 
 The training step is the forward with batch statistics, the backward through
-every block, and Adam over 161 parameter tensors. OpenNN runs the batch
-normalisation as cuDNN graphs too: forward `batchnorm → [+ residual] → ReLU`
-with the running statistics updated in the same kernel
-(`batch_norm_operator.cpp`, `build_bn_forward`), backward `ReLU' → batchnorm
-backward` with the residual's delta forked out of the same graph
-(`build_bn_backward`), and the data gradient of a convolution with the
-residual delta added in the `dgrad` graph. The whole step — the gather of the
+every block, and Adam over 161 parameter tensors. The batch normalisation is
+fused with the residual add and the ReLU here too, but — unlike inference —
+mostly not by cuDNN. `own_forward_kernel` (`batch_norm_operator.cpp`) sends a
+normalisation to OpenNN's own kernels whenever a ReLU follows it and a mask
+slot exists, which is 49 of the 53: forward `batchnorm → [+ residual] → ReLU`
+with the running statistics updated in the same pass and the ReLU's mask
+written out, backward `ReLU' → batchnorm backward` reading that mask back and
+forking the residual's delta. Each direction is three launches — a reduce
+over the rows, a finalize over the per-block partials, and one apply pass
+over the tensor. Only the 4 normalisations with no ReLU after them take the
+cuDNN graph (`build_bn_forward` / `build_bn_backward`; in the profile they
+are `nhwc_batch_norm_fwd` and `nhwc_batch_norm_bwd` at 4 launches per batch,
+against 49 for each of OpenNN's own). The data gradient of a convolution
+still carries the residual delta inside its `dgrad` graph. The whole step — the gather of the
 shuffled batch, forward, loss, backward, Adam as one kernel over the
 contiguous gradient buffer — is one captured CUDA graph, *[pending the final measurement round]* kernels per batch.
 

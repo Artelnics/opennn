@@ -56,6 +56,8 @@ from common import (  # noqa: E402
     framework_versions,
     git_metadata,
     gpu_state,
+    HOST_BASELINE_FIELD,
+    HOST_MEMORY_METRIC,
     result_destination,
     cpu_busy_fraction,
     ForeignActivity,
@@ -204,6 +206,29 @@ def cpu_pinning(threads: int | None) -> tuple[list[str], dict[str, str], dict]:
              "omp_wait": "GOMP_SPINCOUNT=" + environment["GOMP_SPINCOUNT"],
              "excluded_efficiency_cores": layout["efficiency"]})
 
+# What a launch wrote to stderr is kept whether or not it failed. The text
+# worth having is printed by runs that succeed: both graph-capture paths report
+# why capture was refused and then carry on eagerly (neural_network.cpp,
+# optimizer.cpp), so gating this on a nonzero return code threw away the reason
+# behind every `cuda_graph="failed"` the artifacts record.
+#
+# Head *and* tail, not the tail alone. Those messages are printed at the first
+# capture attempt, inside warmup, so on a run that goes on to say anything else
+# -- a torch warning per epoch -- a tail-only excerpt would push the one line
+# that matters out. Both ends are bounded, so a chatty engine cannot grow the
+# artifact: the cost is at most ~4 kB per launch either way.
+STDERR_HEAD_BYTES = 2000
+STDERR_TAIL_BYTES = 2000
+
+def stderr_excerpt(text: str) -> str:
+    """Bounded excerpt of a launch's stderr, keeping both ends."""
+    if len(text) <= STDERR_HEAD_BYTES + STDERR_TAIL_BYTES:
+        return text
+    elided = len(text) - STDERR_HEAD_BYTES - STDERR_TAIL_BYTES
+    return (text[:STDERR_HEAD_BYTES]
+            + f"\n... [{elided:,} bytes elided] ...\n"
+            + text[-STDERR_TAIL_BYTES:])
+
 def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
            threads: int | None = None,
            watched_cores: list[int] | None = None) -> dict:
@@ -275,10 +300,32 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
     # more -- torch's import alone is ~730 MiB against OpenNN's ~209, so the
     # answer flips with dataset size. Subtracting the baseline is the same
     # correction the GPU path already makes by subtracting idle.
-    baseline = mark("baseline_rss_mib")
-    if baseline is not None and instruments.get("memory_metric") == "process_peak_rss":
-        instruments["baseline_mib"] = round(baseline, 1)
-        instruments["workload_mib"] = round(max(instruments["peak_mib"] - baseline, 0.0), 1)
+    #
+    # Metric and field name both come from common.py rather than being spelled
+    # again here, because spelling them here is how this broke: the gate asked
+    # for "process_peak_rss" while the CPU path has reported
+    # `process_peak_anonymous_rss` ever since the reading moved from total to
+    # anonymous pages, so no CPU launch ever reached the subtraction and
+    # `workload_mib` fell back to `peak_mib` without saying so.
+    #
+    # It stays unsubtracted for now, but says so. The drivers' existing
+    # `baseline_rss_mib` is /proc/self/statm's resident field -- total RSS,
+    # counting ~98 MiB of mapped libraries and, for OpenNN, its mmapped CSV --
+    # against an anonymous-only peak. That difference is larger than the
+    # workload on every published cpu-* cell, so simply letting the old field
+    # through the fixed gate would publish a clamped zero, not a correction.
+    # What is missing is a commensurable baseline, not a subtraction.
+    if instruments.get("memory_metric") == HOST_MEMORY_METRIC:
+        baseline = mark(HOST_BASELINE_FIELD)
+        if baseline is not None:
+            instruments["baseline_mib"] = round(baseline, 1)
+            instruments["workload_mib"] = round(max(instruments["peak_mib"] - baseline, 0.0), 1)
+        else:
+            instruments["workload_note"] = (
+                f"no {HOST_BASELINE_FIELD}: peak_mib is the whole process, "
+                "framework baseline included. The baseline the drivers do "
+                "print is a total-RSS reading, which is not commensurable "
+                f"with {HOST_MEMORY_METRIC}")
 
     throughput = next((int(v) for k, v in fields.items()
                        if k.endswith("_samples_per_sec")), 0)
@@ -302,7 +349,7 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
         # the BLAS instead of the engine.
         "blas": fields.get("blas"),
         "fields": fields,
-        "stderr_tail": completed.stderr[-1500:] if completed.returncode else "",
+        "stderr_excerpt": stderr_excerpt(completed.stderr),
     }
 
 def format_wh(value: float | None) -> str:

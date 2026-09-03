@@ -1330,7 +1330,8 @@ namespace
     //     80x512  0.0145 -> 182 W      256x160  0.0102 -> 169 W
     //
     // The arithmetic is identical in every one of them; the 96 W is traffic.
-    // Listed lowest-traffic first, which is the order they are tried in.
+    // Listed lowest-traffic first, which is the order they are tried in --
+    // from probed_tiles_begin on; see below.
     struct LtTile { int id; int rows; int columns; };
 
     constexpr LtTile lt_known_tiles[] = {
@@ -1345,14 +1346,46 @@ namespace
         {CUBLASLT_MATMUL_TILE_64x128,   64, 128}, {CUBLASLT_MATMUL_TILE_64x64,    64,  64},
     };
 
+    // The first three rows -- 256x256, 192x256 and 256x192 -- are priced but
+    // never probed: AlgoCheck refused every one of them in all 14,708
+    // measured configurations, and the candidate scan below has no early
+    // exit, so probing them is a wasted sweep over every algorithm and stage
+    // on every new plan. They stay in the table because the driver's own
+    // heuristic may still return one and tile_traffic has to price it.
+    constexpr size_t probed_tiles_begin = 3;
+
     // Unknown tiles report infinite traffic: they are never preferred over a
     // tile whose cost is known, only kept when they are the fastest.
-    float tile_traffic(int tile_id)
+    float tile_traffic(int tile_id, int splitk_number = 1)
     {
         for (const LtTile& tile : lt_known_tiles)
             if (tile.id == tile_id)
-                return 1.0f / float(tile.rows) + 1.0f / float(tile.columns);
+                // A split-k kernel writes fp32 partials for every split and
+                // reads them all back to reduce; that traffic is invisible to
+                // 1/rows + 1/columns, so charge one extra pass per split
+                // rather than let a split-k kernel look cheap. It can still be
+                // selected on time, only never preferred on traffic.
+                return float(max(splitk_number, 1))
+                     * (1.0f / float(tile.rows) + 1.0f / float(tile.columns));
         return numeric_limits<float>::infinity();
+    }
+
+    // Board power is close to linear in traffic over the tiles above -- 169 W
+    // at 0.0102, 265 W at 0.0312 -- so a two-point fit is enough to compare
+    // candidates by energy instead of by time alone. It overstates the
+    // interior points by at most 6% (0.0172 models at 201 W against 189 W
+    // measured), always in the direction of the thirstier tile. An unknown
+    // tile has infinite traffic and so is priced at the top of the range,
+    // the same worst-case assumption tile_traffic already makes about it.
+    float tile_power_watts(float traffic)
+    {
+        constexpr float lowest_traffic  = 0.0102f, lowest_watts  = 169.0f;
+        constexpr float highest_traffic = 0.0312f, highest_watts = 265.0f;
+        constexpr float watts_per_traffic =
+            (highest_watts - lowest_watts) / (highest_traffic - lowest_traffic);
+
+        return lowest_watts
+             + watts_per_traffic * (clamp(traffic, lowest_traffic, highest_traffic) - lowest_traffic);
     }
 
     struct LtMatmulCandidate
@@ -1499,7 +1532,20 @@ namespace
                                   cudaDataType_t io_dtype,
                                   cudaDataType_t out_dtype)
     {
+        // Every candidate kept here costs four timed matmuls in
+        // autotune_lt_plan, so the overall cap stays where it was and the
+        // wider option sweep is paid for out of it: 96 / 16 is six tiles,
+        // each given four options over four stages instead of one option
+        // over sixteen. Budget is charged on candidates kept, not on checks
+        // attempted, so a tile the driver refuses outright costs nothing and
+        // the next one gets the slots. Six is enough because the six probed
+        // rows -- 256x160 through 128x240 -- already contain every tile at
+        // or under the default OPENNN_LT_TRAFFIC_BUDGET of 0.0120, and a
+        // tile above the budget can only ever be picked for being fastest,
+        // which is what the driver's own heuristic already searches for.
         constexpr size_t most_added_candidates = 96;
+        constexpr size_t most_candidates_per_tile = 16;
+        constexpr int most_options_per_stage = 4;
         constexpr int most_custom_options = 256;
 
         vector<int> algorithm_ids;
@@ -1515,13 +1561,26 @@ namespace
         }
 
         const size_t before = plan.candidates.size();
+        size_t tile_before = before;
 
+        const auto candidate_budget_spent = [&]
+        {
+            return plan.candidates.size() - before >= most_added_candidates
+                || plan.candidates.size() - tile_before >= most_candidates_per_tile;
+        };
+
+        size_t tile_index = 0;
         for (const LtTile& tile : lt_known_tiles)
         {
+            if (tile_index++ < probed_tiles_begin) continue;
             if (plan.candidates.size() - before >= most_added_candidates) break;
+
+            tile_before = plan.candidates.size();
 
             for (const int id : algorithm_ids)
             {
+                if (candidate_budget_spent()) break;
+
                 cublasLtMatmulAlgo_t algorithm{};
                 if (cublasLtMatmulAlgoInit(Backend::get_cublas_lt_handle(),
                                            matmul_compute_type(io_dtype), CUDA_R_32F,
@@ -1558,13 +1617,26 @@ namespace
                 set_config(CUBLASLT_ALGO_CONFIG_REDUCTION_SCHEME, CUBLASLT_REDUCTION_SCHEME_NONE);
                 set_config(CUBLASLT_ALGO_CONFIG_CTA_SWIZZLING, 0);
 
-                // One survivor per stage count is enough: the custom options
-                // that share a tile differ by well under a percent.
+                // Sweep the custom options rather than keep the first that
+                // checks out. They do not "differ by well under a percent" as
+                // this once claimed: over the timed configurations the first
+                // valid option is 55.0% slower than the best one of the same
+                // tile on 128x160, 31.1% on 128x192, 30.0% on 128x240 and
+                // 29.9% on 256x96. Which one wins has to be timed, so keep
+                // them all -- up to most_options_per_stage -- and let
+                // autotune_lt_plan decide.
                 for (const int stage : stages)
                 {
+                    if (candidate_budget_spent()) break;
+
                     set_config(CUBLASLT_ALGO_CONFIG_STAGES_ID, stage);
 
-                    for (int custom = 0; custom <= custom_maximum; ++custom)
+                    int kept_options = 0;
+                    for (int custom = 0;
+                         custom <= custom_maximum
+                         && kept_options < most_options_per_stage
+                         && !candidate_budget_spent();
+                         ++custom)
                     {
                         set_config(CUBLASLT_ALGO_CONFIG_CUSTOM_OPTION, custom);
 
@@ -1586,7 +1658,7 @@ namespace
                         plan.candidates.push_back(
                             {algorithm, check.workspaceSize,
                              1.0f / float(tile.rows) + 1.0f / float(tile.columns)});
-                        break;
+                        ++kept_options;
                     }
                 }
             }
@@ -1674,10 +1746,14 @@ namespace
         for (const cublasLtMatmulHeuristicResult_t& heuristic : heuristics)
         {
             int tile_id = CUBLASLT_MATMUL_TILE_UNDEFINED;
+            int splitk_number = 1;
             size_t written = 0;
             cublasLtMatmulAlgoConfigGetAttribute(&heuristic.algo, CUBLASLT_ALGO_CONFIG_TILE_ID,
                                                  &tile_id, sizeof(tile_id), &written);
-            plan.candidates.push_back({heuristic.algo, heuristic.workspaceSize, tile_traffic(tile_id)});
+            cublasLtMatmulAlgoConfigGetAttribute(&heuristic.algo, CUBLASLT_ALGO_CONFIG_SPLITK_NUM,
+                                                 &splitk_number, sizeof(splitk_number), &written);
+            plan.candidates.push_back({heuristic.algo, heuristic.workspaceSize,
+                                       tile_traffic(tile_id, splitk_number)});
         }
 
         add_wide_tile_candidates(plan, heuristics, io_dtype, out_dtype);
@@ -1746,27 +1822,77 @@ namespace
             if (ms < best_ms) { best_ms = ms; best = index; }
         }
 
-        // Two kernels that take the same time need not cost the same energy.
-        // Among the candidates within OPENNN_LT_TILE_TOLERANCE percent of the
-        // fastest, take the one whose tile moves the least data: on the
-        // reference machine that is 34% less energy for 4% more time on the
-        // dense benchmark's inference GEMM, which is the difference between
-        // that cell costing 9% more than PyTorch's and costing 25% less.
-        // A tolerance of 0 restores the pick by time alone.
+        // Two kernels that take the same time need not cost the same energy:
+        // on the dense benchmark's inference GEMM a 256x160 tile costs 34%
+        // less energy for 4% more time than the 64x64 the heuristic ranks
+        // first, which is the difference between that cell costing 9% more
+        // than PyTorch's and costing 25% less. So among the candidates take
+        // the one whose tile moves the least data -- but bound what may be
+        // taken by traffic, not by a window around whatever the fastest
+        // candidate happens to be.
+        //
+        // That distinction is the whole point of the rewrite. The old rule
+        // kept anything within best_ms * 1.05, and the 256x160 sits at
+        // 201.4 us against a 192.0 fastest -- 4.9%, one tenth of a point
+        // inside the window. Any newly timed candidate at 191.8 us or less
+        // pushed it back out and handed the cell to a 265 W kernel at 0.919x
+        // energy, silently: no cell reports which tile it ran. Three
+        // conditions now, and only the last one mentions best_ms.
+        //
+        //   * Traffic at or below OPENNN_LT_TRAFFIC_BUDGET, in units of 1e-4,
+        //     default 120 = 0.0120. Every tile at or below 0.0120 measured
+        //     within 10 W of the 169 W floor; the 64x64 is 0.0312 and 265 W.
+        //     Nothing above the budget is ever preferred over the fastest, so
+        //     a faster high-traffic kernel appearing cannot change the pick.
+        //   * Lower modelled energy (time x tile_power_watts) than the
+        //     fastest candidate, so time is only ever traded for a tile that
+        //     is really cheaper: 8% slower for 2% less power is now refused,
+        //     where a flat window took it. This is also what keeps a shape
+        //     whose only low-traffic candidate is far slower on the fastest
+        //     kernel -- the model breaks even at 265/169 = 1.57x.
+        //   * At most OPENNN_LT_TILE_TOLERANCE percent slower than the
+        //     fastest candidate, which bounds what any of this can cost
+        //     throughput. The default is 10, not the old 5: 5 is under the
+        //     4.9% the measured choice already spends, which is exactly what
+        //     made it fragile. It is not higher because tile_power_watts is
+        //     fitted on one L2-resident compute-bound GEMM and this rule now
+        //     steers every matmul in the library; 10 leaves the measured
+        //     choice a full point of headroom while bounding what an
+        //     extrapolated power model can cost a shape nobody has measured.
+        //
+        // OPENNN_LT_TILE_TOLERANCE=0 still switches the rule off entirely and
+        // restores the pick by time alone, which is the A/B.
         const float tolerance =
-            float(clamp(env_int_or("OPENNN_LT_TILE_TOLERANCE", 5), 0LL, 100LL)) / 100.0f;
+            float(clamp(env_int_or("OPENNN_LT_TILE_TOLERANCE", 10), 0LL, 100LL)) / 100.0f;
+        const float traffic_budget =
+            float(clamp(env_int_or("OPENNN_LT_TRAFFIC_BUDGET", 120), 1LL, 10000LL)) / 10000.0f;
 
         if (tolerance > 0.0f && best_ms < numeric_limits<float>::infinity())
         {
-            const float allowed = best_ms * (1.0f + tolerance);
+            const float allowed_ms = best_ms * (1.0f + tolerance);
+            const float allowed_energy = best_ms * tile_power_watts(plan.candidates[best].traffic);
             float least_traffic = plan.candidates[best].traffic;
 
             for (size_t index = 0; index < plan.candidates.size(); ++index)
-                if (times[index] <= allowed && plan.candidates[index].traffic < least_traffic)
-                {
-                    least_traffic = plan.candidates[index].traffic;
-                    best = index;
-                }
+            {
+                const LtMatmulCandidate& candidate = plan.candidates[index];
+
+                if (candidate.traffic > traffic_budget) continue;
+                if (candidate.traffic > least_traffic) continue;
+                // Same tile, so same traffic: take the faster of the two.
+                // The custom-option sweep above emits several candidates per
+                // tile precisely because the first valid option is up to 55%
+                // slower than the best one, so selecting the lowest-traffic
+                // tile is not enough -- without this the pick would be the
+                // first option in scan order, which is the one the sweep was
+                // added to stop using.
+                if (candidate.traffic == least_traffic && times[index] >= times[best]) continue;
+                if (times[index] > allowed_ms) continue;
+                if (times[index] * tile_power_watts(candidate.traffic) >= allowed_energy) continue;
+
+                least_traffic = candidate.traffic;
+                best = index;
+            }
         }
 
         plan.algorithm = plan.candidates[best].algorithm;

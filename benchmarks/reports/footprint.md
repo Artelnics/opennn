@@ -79,8 +79,21 @@ cuBLAS, cuBLASLt, NVRTC and cuDNN (`ldd` lists fifteen objects in all). The
 dynamic loader maps them, but a mapped library costs resident memory only for
 the pages that are touched, and constructing an empty `NeuralNetwork`, an
 empty `TabularDataset` and a `TrainingStrategy` touches very few of them:
-219 MB of anonymous memory, 117 MiB resident in all,
-in 0.124 s. *[pending the final measurement round]*
+219 MB resident in all, 117 MiB of it anonymous,
+in 0.124 s. None of that is a CUDA
+context. `Configuration::set` only records the requested device and bumps a
+generation counter; `has_cuda_device()` is a cached `cudaGetDeviceCount`; and
+the `Backend` that actually creates the streams, the cuBLASLt handle and
+the cuDNN op descriptor — the cuBLAS and cuDNN handles themselves are
+built lazily, per lane, later still — is a function-local static in
+`device_backend.cpp`, reached the first time something runs, which empty
+objects never do. The `export` cell bounds whatever eager CUDA state a
+process on this machine does pay: it runs `Device::CPU`, trains for 50 epochs
+and therefore certainly builds the `Backend`, and it peaks at 156.3 MiB
+against this cell's 117.4 MiB — at most 38.9 MiB for the CUDA state and
+everything 50 epochs of Adam allocates together, not the few hundred
+megabytes an initialised context costs. `startup`, which does initialise one,
+is what that looks like: 325 MiB.
 
 The PyTorch process is the CPython interpreter, which is 11 MiB
 and 0.021 s before it does anything, plus `import torch`, which is
@@ -90,7 +103,7 @@ heap — and loads `libtorch_cpu.so`, `libtorch_cuda.so`, `libc10.so` and the
 bundled cuDNN, cuBLAS and NCCL objects, running their static initialisers and
 the operator-registration code that populates PyTorch's dispatcher with every
 kernel it ships. That is 1.55 s of the 3.24 s
-the process takes and most of its 816 MB of anonymous memory;
+the process takes and most of its 816 MB resident;
 the empty `nn.Sequential` and the `Adam` over one tensor that follow are
 negligible. The ratio is a property of the delivery, not of the empty model:
 a C++ program linking libtorch would skip the interpreter and the module
@@ -145,11 +158,20 @@ side and none on PyTorch's.
 
 ## Asymmetries and caveats
 
-- **`memory` may include a CUDA context on OpenNN's side.** The OpenNN
-  process constructs its objects with `Device::Auto`, and on a machine with a
-  GPU that can initialise the CUDA runtime, whose context is a few hundred
-  megabytes of resident memory that the PyTorch process — which imports
-  `torch` but never touches `torch.cuda` — does not pay. *[pending the final measurement round]*
+- **`memory` does not include a CUDA context on OpenNN's side.** The OpenNN
+  process constructs its objects with `Device::Auto`, which invites the
+  suspicion that it initialises the CUDA runtime and carries a context the
+  PyTorch process — which imports `torch` but never touches `torch.cuda` —
+  does not pay. It does not. `Configuration::set` only records the device;
+  the streams, the cuBLASLt handle and the cuDNN op descriptor are built by
+  `Backend`, a function-local static reached on first use (the cuBLAS and
+  cuDNN handles are lazier still, one per lane), and
+  constructing three empty objects reaches nothing. The `export` cell bounds
+  the residue from the other side: `Device::CPU`, 50 epochs of Adam, so it
+  certainly builds `Backend`, and it peaks at 156.3 MiB against `memory`'s
+  117.4 MiB — leaving at most 38.9 MiB for any eager CUDA state *and* the
+  training allocations together, against the 325 MiB `startup` reaches when a
+  context really is created.
 - **The two `startup` timers do not start at the same place.** The
   in-process reading starts after the dynamic loader has finished, which
   for a process that maps hundreds of megabytes of shared objects is where

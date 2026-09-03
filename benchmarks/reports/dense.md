@@ -21,7 +21,7 @@ first layer and its single-kernel output layer against Inductor's — and the
 training cell (1.065×) by how the step is issued: one captured CUDA
 graph against Inductor's cudagraph-tree replay. On the CPU the same MKL
 kernels run on both sides, and OpenNN's row-blocked layers — which apply the
-bias, the activation and its derivative to each block while it is still in
+bias and the activation to each block while it is still in
 that core's cache, on the same thread pool as the GEMM — reach
 89% of the eight P-cores' fp32 peak at inference against
 PyTorch's 68%, and 84% against 66% in
@@ -538,9 +538,19 @@ Training is the forward GEMMs plus two more per layer in the backward pass —
 26.5 GFLOP per batch, 49.3 ms at peak — and the Adam update over
 1.08 M parameters, which is memory traffic and small. OpenNN takes
 58.5 ms per batch (84% of peak), PyTorch 74.2 ms
-(66%). The same mechanisms as inference: OpenNN's backward GEMMs
-are row-blocked single-threaded MKL calls on the OpenMP pool with the ReLU
-derivative applied per block (`try_linear_backward`), PyTorch's are threaded
+(66%). The same pool and the same blocking as inference:
+OpenNN's backward GEMMs are single-threaded MKL calls on the OpenMP pool
+(`try_linear_backward`, `tensor_operations.cpp`), the input delta split into
+row blocks of the batch and the weight gradient tiled over *both* of its
+output axes — the batch is that product's reduction axis, so it is the one
+axis that cannot be split — and the bias gradient is a blocked column sum
+over the same delta with per-block partials. The epilogue is where the
+similarity to inference stops: there is no fused ReLU derivative on this
+path. `try_linear_backward` computes the two GEMMs and nothing else, and the
+DReLU epilogue that fuses the ReLU backward into the input-delta GEMM is
+CUDA-only — `linear_backward` refuses a mask on a host tensor and reports
+`fused_input_relu` false — so OpenNN's ReLU backward is its own pass over the
+activation, exactly as PyTorch's is. PyTorch's backward GEMMs are threaded
 `sgemm` calls with the elementwise work — the ReLU backward, the bias
 reduction, the Adam step (`torch.optim.Adam` in its default *foreach*
 implementation) — as separate passes. *[pending the final measurement round]* The contract variant costs
