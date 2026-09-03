@@ -144,7 +144,7 @@ unique_ptr<Layer> make_serializable_layer(LayerType type)
     case Pooling:
         return make_unique<opennn::Pooling>(
             Shape{6, 6, 2}, Shape{2, 3}, Shape{2, 1}, Shape{1, 0},
-            "AveragePooling", "pooling_roundtrip");
+            PoolingMethod::AveragePooling, "pooling_roundtrip");
 
     case Pooling3d:
         return make_unique<opennn::Pooling3d>(

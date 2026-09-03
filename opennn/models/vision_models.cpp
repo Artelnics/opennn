@@ -102,7 +102,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                        pool_dimensions,
                                        pooling_stride_shape,
                                        padding_dimensions,
-                                       "MaxPooling",
+                                       PoolingMethod::MaxPooling,
                                        format("pooling_layer_{}", i + 1)));
     }
 
@@ -219,7 +219,7 @@ ResNet::ResNet(const Shape& input_shape,
 
     last_index = add_layer(make_unique<Pooling>(get_layer(last_index)->get_output_shape(),
                                                 Shape{3, 3}, Shape{2, 2}, Shape{1, 1},
-                                                "MaxPooling", "stem_pool"),
+                                                PoolingMethod::MaxPooling, "stem_pool"),
                            {last_index});
 
     for (size_t i = 0; i < blocks_per_stage.size(); ++i)
@@ -232,7 +232,7 @@ ResNet::ResNet(const Shape& input_shape,
     last_index = add_layer(make_unique<Pooling>(pre_pool,
                                                 Shape{pre_pool[0], pre_pool[1]},
                                                 Shape{1, 1}, Shape{0, 0},
-                                                "AveragePooling", "global_avg_pool"),
+                                                PoolingMethod::AveragePooling, "global_avg_pool"),
                            {last_index});
 
     last_index = add_layer(make_unique<Flatten>(get_layer(last_index)->get_output_shape()),
@@ -300,7 +300,7 @@ struct YoloBuilder
 
             last_index = add_layer(make_unique<Pooling>(
                 get_layer(last_index)->get_output_shape(), pool, pool_stride,
-                no_padding, "MaxPooling", format("yolo_pool_{}", i + 1)), {});
+                no_padding, PoolingMethod::MaxPooling, format("yolo_pool_{}", i + 1)), {});
         }
 
         last_index = add_layer(make_unique<Convolutional>(
@@ -349,7 +349,7 @@ struct YoloBuilder
             if (stage.pool)
                 last_index = add_layer(make_unique<Pooling>(
                     get_layer(last_index)->get_output_shape(),
-                    pool, pool_stride, no_padding, "MaxPooling",
+                    pool, pool_stride, no_padding, PoolingMethod::MaxPooling,
                     format("dntv3_pool_{}", i + 1)), {});
 
             if (i == 4)
@@ -370,11 +370,11 @@ struct YoloBuilder
         const Shape shape = get_layer(projected)->get_output_shape();
 
         const Index pool_1 = add_layer(make_unique<Pooling>(
-            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", prefix + "_p1"), {projected});
+            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, PoolingMethod::MaxPooling, prefix + "_p1"), {projected});
         const Index pool_2 = add_layer(make_unique<Pooling>(
-            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", prefix + "_p2"), {pool_1});
+            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, PoolingMethod::MaxPooling, prefix + "_p2"), {pool_1});
         const Index pool_3 = add_layer(make_unique<Pooling>(
-            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", prefix + "_p3"), {pool_2});
+            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, PoolingMethod::MaxPooling, prefix + "_p3"), {pool_2});
 
         const Index concatenated = add_layer(make_unique<Concatenation>(
             shape, vector<Index>{half, half, half, half}, prefix + "_cat"),

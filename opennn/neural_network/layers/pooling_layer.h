@@ -97,7 +97,7 @@ public:
             const Shape& = { 2, 2 },
             const Shape& = { 2, 2 },
             const Shape& = { 0, 0 },
-            const string& = "MaxPooling",
+            PoolingMethod = PoolingMethod::MaxPooling,
             const string& = "pooling_layer");
 
     Shape get_input_shape() const noexcept override
@@ -131,12 +131,13 @@ public:
              const Shape& = { 1, 1 },
              const Shape& = { 1, 1 },
              const Shape& = { 0, 0 },
-             const string & = "MaxPooling",
-             const string & = "pooling_layer");
+             PoolingMethod = PoolingMethod::MaxPooling,
+             const string& = "pooling_layer");
 
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 3); }
 
     void apply_input_shape(const Shape&) override;
+    void set_pooling_method(PoolingMethod);
     void set_pooling_method(const string&);
 
     void read_JSON_body(const Json*) override;
