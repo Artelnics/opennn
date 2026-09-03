@@ -1319,6 +1319,49 @@ namespace opennn
 
 namespace
 {
+    // Tiles whose shape is known, so that a candidate kernel's data movement
+    // can be compared: a tile of rows x columns reads (1/rows + 1/columns)
+    // bytes through L2 and shared memory per multiply-add, and board power
+    // follows that ratio closely. Measured on an RTX 5070 Ti, one
+    // 1024x8192x1024 bf16 GEMM with bias and ReLU:
+    //
+    //     64x64   0.0312 -> 265 W      128x240  0.0120 -> 179 W
+    //     64x640  0.0172 -> 189 W      128x320  0.0109 -> 172 W
+    //     80x512  0.0145 -> 182 W      256x160  0.0102 -> 169 W
+    //
+    // The arithmetic is identical in every one of them; the 96 W is traffic.
+    // Listed lowest-traffic first, which is the order they are tried in.
+    struct LtTile { int id; int rows; int columns; };
+
+    constexpr LtTile lt_known_tiles[] = {
+        {CUBLASLT_MATMUL_TILE_256x256, 256, 256}, {CUBLASLT_MATMUL_TILE_192x256, 192, 256},
+        {CUBLASLT_MATMUL_TILE_256x192, 256, 192}, {CUBLASLT_MATMUL_TILE_256x160, 256, 160},
+        {CUBLASLT_MATMUL_TILE_128x320, 128, 320}, {CUBLASLT_MATMUL_TILE_192x128, 192, 128},
+        {CUBLASLT_MATMUL_TILE_128x256, 128, 256}, {CUBLASLT_MATMUL_TILE_256x128, 256, 128},
+        {CUBLASLT_MATMUL_TILE_128x240, 128, 240}, {CUBLASLT_MATMUL_TILE_256x96,  256,  96},
+        {CUBLASLT_MATMUL_TILE_128x192, 128, 192}, {CUBLASLT_MATMUL_TILE_128x160, 128, 160},
+        {CUBLASLT_MATMUL_TILE_80x512,   80, 512}, {CUBLASLT_MATMUL_TILE_128x128, 128, 128},
+        {CUBLASLT_MATMUL_TILE_64x640,   64, 640}, {CUBLASLT_MATMUL_TILE_128x64,  128,  64},
+        {CUBLASLT_MATMUL_TILE_64x128,   64, 128}, {CUBLASLT_MATMUL_TILE_64x64,    64,  64},
+    };
+
+    // Unknown tiles report infinite traffic: they are never preferred over a
+    // tile whose cost is known, only kept when they are the fastest.
+    float tile_traffic(int tile_id)
+    {
+        for (const LtTile& tile : lt_known_tiles)
+            if (tile.id == tile_id)
+                return 1.0f / float(tile.rows) + 1.0f / float(tile.columns);
+        return numeric_limits<float>::infinity();
+    }
+
+    struct LtMatmulCandidate
+    {
+        cublasLtMatmulAlgo_t algorithm{};
+        size_t               workspace_bytes = 0;
+        float                traffic = numeric_limits<float>::infinity();
+    };
+
     struct LtMatmulPlan
     {
         cublasLtMatmulDesc_t   matmul_descriptor = nullptr;
@@ -1329,7 +1372,7 @@ namespace
         bool                   has_algorithm = false;
         size_t                 workspace_bytes = 0;
 
-        vector<cublasLtMatmulHeuristicResult_t> candidates;
+        vector<LtMatmulCandidate> candidates;
         bool                   tuned = true;
 
         LtMatmulPlan() = default;
@@ -1442,6 +1485,114 @@ namespace
         return pointer;
     }
 
+    // cuBLASLt's heuristic returns a handful of candidates and ranks them by
+    // expected speed, so the low-traffic kernels never appear: for the dense
+    // benchmark's 1024x8192x1024 GEMM it offers eight, of which the fastest
+    // (64x64) draws 96 W more than a 256x160 that is 4% slower and that the
+    // heuristic does not offer at all. This adds the tiles of
+    // `lt_known_tiles` as extra candidates -- lowest-traffic first, over every
+    // stage and custom option each algorithm advertises -- so that
+    // `autotune_lt_plan` has something to choose between. A check costs under
+    // 2 us and only the survivors are ever timed.
+    void add_wide_tile_candidates(LtMatmulPlan& plan,
+                                  const vector<cublasLtMatmulHeuristicResult_t>& heuristics,
+                                  cudaDataType_t io_dtype,
+                                  cudaDataType_t out_dtype)
+    {
+        constexpr size_t most_added_candidates = 96;
+        constexpr int most_custom_options = 256;
+
+        vector<int> algorithm_ids;
+        for (const cublasLtMatmulHeuristicResult_t& heuristic : heuristics)
+        {
+            int id = 0;
+            size_t written = 0;
+            if (cublasLtMatmulAlgoConfigGetAttribute(&heuristic.algo, CUBLASLT_ALGO_CONFIG_ID,
+                                                     &id, sizeof(id), &written) != CUBLAS_STATUS_SUCCESS)
+                continue;
+            if (find(algorithm_ids.begin(), algorithm_ids.end(), id) == algorithm_ids.end())
+                algorithm_ids.push_back(id);
+        }
+
+        const size_t before = plan.candidates.size();
+
+        for (const LtTile& tile : lt_known_tiles)
+        {
+            if (plan.candidates.size() - before >= most_added_candidates) break;
+
+            for (const int id : algorithm_ids)
+            {
+                cublasLtMatmulAlgo_t algorithm{};
+                if (cublasLtMatmulAlgoInit(Backend::get_cublas_lt_handle(),
+                                           matmul_compute_type(io_dtype), CUDA_R_32F,
+                                           io_dtype, io_dtype, out_dtype, out_dtype,
+                                           id, &algorithm) != CUBLAS_STATUS_SUCCESS)
+                {
+                    device::reset_last_error();
+                    continue;
+                }
+
+                size_t written = 0;
+                vector<int> stages;
+                if (cublasLtMatmulAlgoCapGetAttribute(&algorithm, CUBLASLT_ALGO_CAP_STAGES_IDS,
+                                                      nullptr, 0, &written) == CUBLAS_STATUS_SUCCESS
+                    && written > 0)
+                {
+                    stages.resize(written / sizeof(int));
+                    cublasLtMatmulAlgoCapGetAttribute(&algorithm, CUBLASLT_ALGO_CAP_STAGES_IDS,
+                                                      stages.data(), written, &written);
+                }
+                if (stages.empty()) stages.push_back(CUBLASLT_MATMUL_STAGES_UNDEFINED);
+
+                int custom_maximum = 0;
+                cublasLtMatmulAlgoCapGetAttribute(&algorithm, CUBLASLT_ALGO_CAP_CUSTOM_OPTION_MAX,
+                                                  &custom_maximum, sizeof(custom_maximum), &written);
+                custom_maximum = min(custom_maximum, most_custom_options);
+
+                const auto set_config = [&](cublasLtMatmulAlgoConfigAttributes_t attribute, int value)
+                {
+                    cublasLtMatmulAlgoConfigSetAttribute(&algorithm, attribute, &value, sizeof(value));
+                };
+                set_config(CUBLASLT_ALGO_CONFIG_TILE_ID, tile.id);
+                set_config(CUBLASLT_ALGO_CONFIG_SPLITK_NUM, 1);
+                set_config(CUBLASLT_ALGO_CONFIG_REDUCTION_SCHEME, CUBLASLT_REDUCTION_SCHEME_NONE);
+                set_config(CUBLASLT_ALGO_CONFIG_CTA_SWIZZLING, 0);
+
+                // One survivor per stage count is enough: the custom options
+                // that share a tile differ by well under a percent.
+                for (const int stage : stages)
+                {
+                    set_config(CUBLASLT_ALGO_CONFIG_STAGES_ID, stage);
+
+                    for (int custom = 0; custom <= custom_maximum; ++custom)
+                    {
+                        set_config(CUBLASLT_ALGO_CONFIG_CUSTOM_OPTION, custom);
+
+                        cublasLtMatmulHeuristicResult_t check{};
+                        if (cublasLtMatmulAlgoCheck(Backend::get_cublas_lt_handle(),
+                                                    plan.matmul_descriptor,
+                                                    plan.a_matrix_layout,
+                                                    plan.b_matrix_layout,
+                                                    plan.output_matrix_layout,
+                                                    plan.output_matrix_layout,
+                                                    &algorithm, &check) != CUBLAS_STATUS_SUCCESS
+                            || check.state != CUBLAS_STATUS_SUCCESS
+                            || check.workspaceSize > cublas_lt_workspace_search_bytes)
+                        {
+                            device::reset_last_error();
+                            continue;
+                        }
+
+                        plan.candidates.push_back(
+                            {algorithm, check.workspaceSize,
+                             1.0f / float(tile.rows) + 1.0f / float(tile.columns)});
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     LtMatmulPlan& get_lt_matmul_plan(
         int m, int n, int k,
         cublasOperation_t transA,
@@ -1520,12 +1671,22 @@ namespace
         heuristics.resize(static_cast<size_t>(max(returned_results, 0)));
         erase_if(heuristics, [](const cublasLtMatmulHeuristicResult_t& h) { return h.state != CUBLAS_STATUS_SUCCESS; });
 
-        if (!heuristics.empty())
+        for (const cublasLtMatmulHeuristicResult_t& heuristic : heuristics)
         {
-            plan.algorithm = heuristics.front().algo;
+            int tile_id = CUBLASLT_MATMUL_TILE_UNDEFINED;
+            size_t written = 0;
+            cublasLtMatmulAlgoConfigGetAttribute(&heuristic.algo, CUBLASLT_ALGO_CONFIG_TILE_ID,
+                                                 &tile_id, sizeof(tile_id), &written);
+            plan.candidates.push_back({heuristic.algo, heuristic.workspaceSize, tile_traffic(tile_id)});
+        }
+
+        add_wide_tile_candidates(plan, heuristics, io_dtype, out_dtype);
+
+        if (!plan.candidates.empty())
+        {
+            plan.algorithm = plan.candidates.front().algorithm;
             plan.has_algorithm = true;
-            plan.workspace_bytes = heuristics.front().workspaceSize;
-            plan.candidates = std::move(heuristics);
+            plan.workspace_bytes = plan.candidates.front().workspace_bytes;
             plan.tuned = plan.candidates.size() <= 1;
         }
 
@@ -1553,12 +1714,13 @@ namespace
 
         size_t largest_workspace = 0;
         for (const auto& candidate : plan.candidates)
-            largest_workspace = max(largest_workspace, candidate.workspaceSize);
+            largest_workspace = max(largest_workspace, candidate.workspace_bytes);
         void* const workspace = ensure_shared_scratch(largest_workspace);
 
         const device::CudaEvent start(cudaEventDefault), stop(cudaEventDefault);
         constexpr int timed_runs = 3;
 
+        vector<float> times(plan.candidates.size(), numeric_limits<float>::infinity());
         float best_ms = numeric_limits<float>::infinity();
         size_t best = 0;
         for (size_t index = 0; index < plan.candidates.size(); ++index)
@@ -1569,7 +1731,7 @@ namespace
                 return cublasLtMatmul(Backend::get_cublas_lt_handle(), plan.matmul_descriptor,
                                       &one, a_data, plan.a_matrix_layout, b_data, plan.b_matrix_layout,
                                       &zero, c_data, plan.output_matrix_layout, c_data, plan.output_matrix_layout,
-                                      &candidate.algo, workspace, candidate.workspaceSize, stream);
+                                      &candidate.algorithm, workspace, candidate.workspace_bytes, stream);
             };
             if (run() != CUBLAS_STATUS_SUCCESS) { device::reset_last_error(); continue; }
             device::record_event(start.get(), stream);
@@ -1580,11 +1742,35 @@ namespace
             if (!ok) { device::reset_last_error(); continue; }
             float ms = 0.0f;
             CHECK_CUDA(cudaEventElapsedTime(&ms, start.get(), stop.get()));
+            times[index] = ms;
             if (ms < best_ms) { best_ms = ms; best = index; }
         }
 
-        plan.algorithm = plan.candidates[best].algo;
-        plan.workspace_bytes = plan.candidates[best].workspaceSize;
+        // Two kernels that take the same time need not cost the same energy.
+        // Among the candidates within OPENNN_LT_TILE_TOLERANCE percent of the
+        // fastest, take the one whose tile moves the least data: on the
+        // reference machine that is 34% less energy for 4% more time on the
+        // dense benchmark's inference GEMM, which is the difference between
+        // that cell costing 9% more than PyTorch's and costing 25% less.
+        // A tolerance of 0 restores the pick by time alone.
+        const float tolerance =
+            float(clamp(env_int_or("OPENNN_LT_TILE_TOLERANCE", 5), 0LL, 100LL)) / 100.0f;
+
+        if (tolerance > 0.0f && best_ms < numeric_limits<float>::infinity())
+        {
+            const float allowed = best_ms * (1.0f + tolerance);
+            float least_traffic = plan.candidates[best].traffic;
+
+            for (size_t index = 0; index < plan.candidates.size(); ++index)
+                if (times[index] <= allowed && plan.candidates[index].traffic < least_traffic)
+                {
+                    least_traffic = plan.candidates[index].traffic;
+                    best = index;
+                }
+        }
+
+        plan.algorithm = plan.candidates[best].algorithm;
+        plan.workspace_bytes = plan.candidates[best].workspace_bytes;
         plan.candidates.clear();
     }
 }
