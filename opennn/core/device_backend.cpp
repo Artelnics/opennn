@@ -1434,6 +1434,19 @@ namespace
         }
     };
 
+    // Everything a plan's descriptor and layouts are built from, and nothing
+    // else. alpha never enters -- it is a call-time pointer that changes no
+    // kernel -- and beta enters only as beta_is_zero, because a nonzero beta
+    // makes the kernel read C, which changes which algorithm is valid and
+    // which is fastest, while its value does not.
+    //
+    // Every field added here canonicalises to what the call sites already
+    // implied: dtype_b equals dtype_a unless the operands genuinely differ,
+    // and the three leading dimensions are stored as 0 when derived from m, n
+    // and k. That is not tidiness. get_lt_matmul_plan throws on a miss and
+    // optimizer.cpp holds cuda_matmul_plan_creation_forbidden across the whole
+    // epoch loop, so a field that split one of today's keys in two would take
+    // out training in steady state, not merely cost a plan.
     struct LtMatmulPlanKey
     {
         int m;
@@ -1442,8 +1455,13 @@ namespace
         int transA;
         int transB;
         int epilogue;
-        int io_dtype;
+        int dtype_a;
+        int dtype_b;
         int out_dtype;
+        int lda;
+        int ldb;
+        int ldd;
+        int beta_is_zero;
 
         bool operator==(const LtMatmulPlanKey&) const noexcept = default;
     };
@@ -1454,7 +1472,9 @@ namespace
         {
             return hash_combine(key.m, key.n, key.k,
                                 key.transA, key.transB, key.epilogue,
-                                key.io_dtype, key.out_dtype);
+                                key.dtype_a, key.dtype_b, key.out_dtype,
+                                key.lda, key.ldb, key.ldd,
+                                key.beta_is_zero);
         }
     };
 
@@ -1495,6 +1515,20 @@ namespace
             : CUBLAS_COMPUTE_DTYPE;
     }    
 
+    // Only used to size the tuner's scratch destination, so an unrecognised
+    // type is rounded up rather than guessed: too large wastes a few bytes of
+    // a block that is already megabytes, too small is a write past its end.
+    size_t matmul_dtype_bytes(cudaDataType_t type)
+    {
+        switch (type)
+        {
+        case CUDA_R_8I:   return 1;
+        case CUDA_R_16F:
+        case CUDA_R_16BF: return 2;
+        default:          return 4;
+        }
+    }
+
     void* thread_workspace(device::GraphWorkspaceKind kind, Index minimum_bytes)
     {
         if (device::active_lane() == 0)
@@ -1529,7 +1563,9 @@ namespace
     // 2 us and only the survivors are ever timed.
     void add_wide_tile_candidates(LtMatmulPlan& plan,
                                   const vector<cublasLtMatmulHeuristicResult_t>& heuristics,
-                                  cudaDataType_t io_dtype,
+                                  int m, int n,
+                                  cudaDataType_t dtype_a,
+                                  cudaDataType_t dtype_b,
                                   cudaDataType_t out_dtype)
     {
         // Every candidate kept here costs four timed matmuls in
@@ -1575,6 +1611,16 @@ namespace
             if (tile_index++ < probed_tiles_begin) continue;
             if (plan.candidates.size() - before >= most_added_candidates) break;
 
+            // A tile larger than the product is priced for an output that is
+            // not there -- 1/rows + 1/columns charged over rows x columns of
+            // which the shape has fewer -- so the traffic the tie-break reads
+            // for it is a fiction. Skip it before the sweep rather than after,
+            // because the budgets above count candidates kept, not checks
+            // attempted: a shape no wide tile fits otherwise pays the whole
+            // enumeration (13,460 configurations in 0.86 s on this card) and
+            // keeps nothing. An attention QK^T at n = 64 is exactly that.
+            if (tile.rows > m || tile.columns > n) continue;
+
             tile_before = plan.candidates.size();
 
             for (const int id : algorithm_ids)
@@ -1583,8 +1629,8 @@ namespace
 
                 cublasLtMatmulAlgo_t algorithm{};
                 if (cublasLtMatmulAlgoInit(Backend::get_cublas_lt_handle(),
-                                           matmul_compute_type(io_dtype), CUDA_R_32F,
-                                           io_dtype, io_dtype, out_dtype, out_dtype,
+                                           matmul_compute_type(dtype_a, dtype_b), CUDA_R_32F,
+                                           dtype_a, dtype_b, out_dtype, out_dtype,
                                            id, &algorithm) != CUBLAS_STATUS_SUCCESS)
                 {
                     device::reset_last_error();
@@ -1670,12 +1716,16 @@ namespace
         cublasOperation_t transA,
         cublasOperation_t transB,
         cublasLtEpilogue_t epilogue,
-        cudaDataType_t io_dtype,
-        cudaDataType_t out_dtype)
+        cudaDataType_t dtype_a,
+        cudaDataType_t dtype_b,
+        cudaDataType_t out_dtype,
+        int lda, int ldb, int ldd,
+        bool beta_is_zero)
     {
         const LtMatmulPlanKey key{m, n, k,
                                   int(transA), int(transB), int(epilogue),
-                                  int(io_dtype), int(out_dtype)};
+                                  int(dtype_a), int(dtype_b), int(out_dtype),
+                                  lda, ldb, ldd, int(beta_is_zero)};
         auto& plans = thread_state().lt_matmul_plans;
         auto it = plans.find(key);
         if (it != plans.end()) return it->second;
@@ -1687,7 +1737,7 @@ namespace
 
         LtMatmulPlan plan;
 
-        CHECK_CUBLAS(cublasLtMatmulDescCreate(&plan.matmul_descriptor, matmul_compute_type(io_dtype), CUDA_R_32F));
+        CHECK_CUBLAS(cublasLtMatmulDescCreate(&plan.matmul_descriptor, matmul_compute_type(dtype_a, dtype_b), CUDA_R_32F));
 
         auto set_desc = [&](cublasLtMatmulDescAttributes_t attr, const auto& value)
         {
@@ -1717,9 +1767,9 @@ namespace
         const int b_rows = (transB == CUBLAS_OP_N) ? k : n;
         const int b_cols = (transB == CUBLAS_OP_N) ? n : k;
 
-        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.a_matrix_layout,  io_dtype,  a_rows, a_cols, a_rows));
-        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.b_matrix_layout,  io_dtype,  b_rows, b_cols, b_rows));
-        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.output_matrix_layout, out_dtype, m, n, m));
+        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.a_matrix_layout,  dtype_a,  a_rows, a_cols, lda ? lda : a_rows));
+        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.b_matrix_layout,  dtype_b,  b_rows, b_cols, ldb ? ldb : b_rows));
+        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.output_matrix_layout, out_dtype, m, n, ldd ? ldd : m));
 
         cublasLtMatmulPreference_t pref = nullptr;
         CHECK_CUBLAS(cublasLtMatmulPreferenceCreate(&pref));
@@ -1756,7 +1806,7 @@ namespace
                                        tile_traffic(tile_id, splitk_number)});
         }
 
-        add_wide_tile_candidates(plan, heuristics, io_dtype, out_dtype);
+        add_wide_tile_candidates(plan, heuristics, m, n, dtype_a, dtype_b, out_dtype);
 
         if (!plan.candidates.empty())
         {
@@ -1770,7 +1820,9 @@ namespace
     }
 
     void autotune_lt_plan(LtMatmulPlan& plan,
-                          const void* a_data, const void* b_data, void* c_data,
+                          const void* a_data, const void* b_data,
+                          const void* c_data, void* d_data,
+                          float alpha, float beta, size_t destination_bytes,
                           cudaStream_t stream)
     {
         if (plan.candidates.size() <= 1)
@@ -1791,7 +1843,56 @@ namespace
         size_t largest_workspace = 0;
         for (const auto& candidate : plan.candidates)
             largest_workspace = max(largest_workspace, candidate.workspace_bytes);
-        void* const workspace = ensure_shared_scratch(largest_workspace);
+
+        // The tuner runs on the caller's own pointers and used to force beta
+        // to zero for one reason: it launches each candidate four times, and a
+        // destination the kernel also reads would be accumulated into four
+        // times over -- a recurrent layer sums one weight gradient per
+        // timestep into the same tensor, which is precisely that. So when D is
+        // an operand, time into scratch and throw the result away.
+        //
+        // The test is aliasing, not beta alone. With C separate from D the
+        // real call overwrites every element of D whatever beta is, so timing
+        // there costs nothing and destroys nothing; making it scratch anyway
+        // would add the whole destination -- an input delta, tens of MB on the
+        // transformer -- to a shared-scratch high-water that is never returned.
+        //
+        // That scratch is taken out of the same shared block the algorithm
+        // workspace comes from, at an offset past it, rather than from a
+        // GraphWorkspaceKind of its own. Reusing SharedScratch does not dodge
+        // the high water -- ensure_shared_scratch goes through
+        // graph_workspace_override like every other kind and records one --
+        // but it raises a buffer that already exists instead of adding a
+        // second permanent Buffer to every lane of every thread's workspace
+        // array and a second entry to the captured graph's workspace set.
+        // thread_workspace throws when that raise falls under the growth
+        // guard; that is the steady-state case, and it is caught here rather
+        // than propagated -- a plan first seen after warmup keeps the
+        // heuristic's candidate untimed, which is the one thing that must not
+        // become an exception inside a training step.
+        const bool destination_is_operand = beta != 0.0f && c_data == static_cast<const void*>(d_data);
+
+        constexpr size_t destination_alignment = 256;
+        const size_t destination_offset =
+            (largest_workspace + destination_alignment - 1)
+            / destination_alignment * destination_alignment;
+
+        void* workspace = nullptr;
+        try
+        {
+            workspace = ensure_shared_scratch(destination_is_operand
+                                              ? destination_offset + destination_bytes
+                                              : largest_workspace);
+        }
+        catch (const exception&)
+        {
+            plan.candidates.clear();
+            return;
+        }
+
+        void* const destination = destination_is_operand
+            ? static_cast<char*>(workspace) + destination_offset
+            : d_data;
 
         const device::CudaEvent start(cudaEventDefault), stop(cudaEventDefault);
         constexpr int timed_runs = 3;
@@ -1805,8 +1906,9 @@ namespace
             const auto run = [&]
             {
                 return cublasLtMatmul(Backend::get_cublas_lt_handle(), plan.matmul_descriptor,
-                                      &one, a_data, plan.a_matrix_layout, b_data, plan.b_matrix_layout,
-                                      &zero, c_data, plan.output_matrix_layout, c_data, plan.output_matrix_layout,
+                                      &alpha, a_data, plan.a_matrix_layout, b_data, plan.b_matrix_layout,
+                                      &beta, c_data, plan.output_matrix_layout,
+                                      destination, plan.output_matrix_layout,
                                       &candidate.algorithm, workspace, candidate.workspace_bytes, stream);
             };
             if (run() != CUBLAS_STATUS_SUCCESS) { device::reset_last_error(); continue; }
@@ -1948,14 +2050,27 @@ void run_lt_matmul_cached(
     cublasOperation_t transA,
     cublasOperation_t transB,
     cublasLtEpilogue_t epilogue,
-    const void* a_data, const void* b_data, void* c_data,
+    const void* a_data, const void* b_data, void* d_data,
     const void* bias_pointer,
-    cudaDataType_t io_dtype,
+    cudaDataType_t dtype_a,
+    cudaDataType_t dtype_b,
     cudaDataType_t out_dtype,
     const void* aux_pointer,
-    const void* addend)
+    const void* addend,
+    float alpha,
+    float beta,
+    int lda, int ldb, int ldd)
 {
-    LtMatmulPlan& plan = get_lt_matmul_plan(m, n, k, transA, transB, epilogue, io_dtype, out_dtype);
+    // beta used to be derived from this pointer, so the combination could not
+    // be asked for; now that it is a parameter, an addend at beta 0 is an
+    // operand the kernel reads and discards. Say so rather than compute the
+    // wrong sum quietly.
+    throw_if(addend && beta == 0.0f,
+             "run_lt_matmul_cached: an addend with beta 0 is a discarded operand.");
+
+    LtMatmulPlan& plan = get_lt_matmul_plan(m, n, k, transA, transB, epilogue,
+                                            dtype_a, dtype_b, out_dtype,
+                                            lda, ldb, ldd, beta == 0.0f);
 
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor,
         CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_pointer, sizeof(bias_pointer)));
@@ -1964,17 +2079,24 @@ void run_lt_matmul_cached(
         CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor,
             CUBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER, &aux_pointer, sizeof(aux_pointer)));
 
+    // C is the addend when there is one and the destination otherwise; at
+    // beta 0 the kernel reads neither, which is why aliasing it to D was
+    // always safe and still is.
+    const void* const c_data = addend ? addend : d_data;
+
     if (!plan.tuned)
-        autotune_lt_plan(plan, a_data, b_data, c_data, device::get_compute_stream());
+        autotune_lt_plan(plan, a_data, b_data, c_data, d_data, alpha, beta,
+                         size_t(ldd ? ldd : m) * size_t(n) * matmul_dtype_bytes(out_dtype),
+                         device::get_compute_stream());
 
     CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(),
                                 plan.matmul_descriptor,
-                                &one,
+                                &alpha,
                                 a_data, plan.a_matrix_layout,
                                 b_data, plan.b_matrix_layout,
-                                addend ? &one : &zero,
-                                addend ? addend : c_data, plan.output_matrix_layout,
+                                &beta,
                                 c_data, plan.output_matrix_layout,
+                                d_data, plan.output_matrix_layout,
                                 plan.has_algorithm ? &plan.algorithm : nullptr,
                                 ensure_shared_scratch(plan.workspace_bytes), 
                                 plan.workspace_bytes,
@@ -2026,8 +2148,12 @@ void run_lt_matmul_cached(int, int, int,
                           const void*,
                           cudaDataType_t,
                           cudaDataType_t,
+                          cudaDataType_t,
                           const void*,
-                          const void*) OPENNN_CUDA_STUB_BODY(run_lt_matmul_cached)
+                          const void*,
+                          float,
+                          float,
+                          int, int, int) OPENNN_CUDA_STUB_BODY(run_lt_matmul_cached)
 
 void gemm_strided_batched_cuda(cublasOperation_t, cublasOperation_t,
                                int, int, int,

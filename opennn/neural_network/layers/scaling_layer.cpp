@@ -220,6 +220,12 @@ Scaling::Scaling(const Shape& new_input_shape)
     set(new_input_shape);
 }
 
+Scaling::Scaling(const Shape& new_input_shape, const ScalerMethod method)
+    : Scaling(new_input_shape)
+{
+    set_scalers(method);
+}
+
 Scaling::Scaling(LayerType type, bool invert)
     : Layer(type, Trainability::Frozen)
 {
@@ -288,12 +294,16 @@ void Scaling::set_scalers(const vector<string>& scalers_str)
     refresh_op_storage(op_storage.get_device());
 }
 
-void Scaling::set_scalers(const string& scaler)
+void Scaling::set_scalers(const ScalerMethod method)
 {
-    const ScalerMethod method = string_to_scaler_method(scaler);
     ranges::fill(scalers, method);
     op_storage_dirty = true;
     refresh_op_storage(op_storage.get_device());
+}
+
+void Scaling::set_scalers(const string& scaler)
+{
+    set_scalers(string_to_scaler_method(scaler));
 }
 
 void Scaling::set_feature_scaling(const FeatureScaling& scaling)

@@ -1823,7 +1823,7 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
                     input_base + start * input_row_bytes,
                     output_base + start * output_row_bytes,
                     bias_for_gemm,
-                    io_type, io_type,
+                    io_type, io_type, io_type,
                     nullptr);
             }
         }
@@ -1833,7 +1833,7 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
             CUBLAS_OP_N, CUBLAS_OP_N,
             epilogue,
             weights.get_data(), input_for_gemm, output.get_data(), bias_for_gemm,
-            io_type, io_type,
+            io_type, io_type, io_type,
             pre_activation ? pre_activation->get_data() : nullptr);
     }
     catch (const runtime_error& e)
@@ -1987,6 +1987,40 @@ static bool single_output_backward_applies(const TensorView& output_delta, const
 // captured dense-train graph before crediting the change with anything.
 // The cheaper form is a store-instead-of-add flag on bias_grad_sum_cuda itself
 // (core/cuda/kernel_tensor.cu), which would drop this launch entirely.
+// Whether cuBLASLt will take a BF16-in/FP32-out weight gradient is a property
+// of the shape, the epilogue and the operand types, not of the process. It
+// used to be one atomic bool: the first product the driver refused sent every
+// other product in the process down the staged BF16 store and cast for the
+// rest of the run, including the 1024x1024 dW that the BGRADA epilogue serves
+// in a single 204.84 us kernel with the bias gradient fused into it. Keyed
+// like the plan it shadows, and thread-local for the same reason that cache is
+// -- one GPU thread creates and declines both -- so it needs no lock.
+struct WgradStoreKey
+{
+    int m;
+    int n;
+    int k;
+    int epilogue;
+    int dtype_a;
+    int dtype_b;
+
+    bool operator==(const WgradStoreKey&) const noexcept = default;
+};
+
+struct WgradStoreKeyHash
+{
+    size_t operator()(const WgradStoreKey& key) const noexcept
+    {
+        return hash_combine(key.m, key.n, key.k, key.epilogue, key.dtype_a, key.dtype_b);
+    }
+};
+
+static bool& wgrad_direct_store_declined(const WgradStoreKey& key)
+{
+    thread_local unordered_map<WgradStoreKey, bool, WgradStoreKeyHash> declined;
+    return declined[key];
+}
+
 static void zero_bias_gradient_async(const TensorView& bias_gradient)
 {
     CHECK_CUDNN(cudnnSetTensor(device::get_cudnn_handle(),
@@ -2039,59 +2073,68 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 
     const bool has_bias = bias_gradient.size() > 0;
 
-    static atomic<bool> bf16_fp32_store_supported{true};
-
     static const bool force_staged = env_flag_enabled("OPENNN_WGRAD_STAGED", false);
 
+    // Two constants used to stand here -- output_columns * input_columns <=
+    // 64*1024, and total_rows >= 4 * max(output_columns, input_columns) --
+    // diverting the shapes they matched to cublasGemmStridedBatchedEx, which
+    // has no plan cache, no timed candidate, no known-tile injection and no
+    // traffic tie-break, and which leaves the bias gradient to a separate
+    // 5.78 us pass. Nothing about the Lt entry point excluded those shapes:
+    // the call below is the same bf16-operand, fp32-destination weight
+    // gradient every other shape already took through it. The constants chose
+    // the library by arithmetic on the shape, and the plan cache exists to
+    // choose it by measurement instead. OPENNN_WGRAD_STAGED remains the A/B,
+    // and now covers these shapes too.
+    //
+    // The two operand types are named separately because A is the delta and B
+    // is the input cast to the weights' type, not because they can differ:
+    // linear_backward throws unless the weights and the delta share a dtype,
+    // so every existing shape keys exactly as it did with one io_dtype.
+    const cudaDataType_t delta_dtype = output_delta.cuda_dtype();
+    const cudaDataType_t input_dtype = weights.cuda_dtype();
+    const cublasLtEpilogue_t wgrad_epilogue =
+        has_bias ? CUBLASLT_EPILOGUE_BGRADA : CUBLASLT_EPILOGUE_DEFAULT;
+
+    bool& store_declined = wgrad_direct_store_declined(
+        {output_columns, input_columns, total_rows,
+         int(wgrad_epilogue), int(delta_dtype), int(input_dtype)});
+
     const bool direct_fp32_store = !output_delta.is_bf16()
-        || (bf16_fp32_store_supported.load(memory_order_relaxed) && !force_staged);
+        || (!store_declined && !force_staged);
 
     bool stored = false;
+    bool bias_stored = false;
     {
     PROFILE_SCOPE("op:linear_bwd_wgrad " + to_string(output_columns) + "x" + to_string(input_columns) + "x" + to_string(total_rows));
 
-    const bool skinny_wgrad = Index(output_columns) * Index(input_columns) <= Index(64) * 1024
-                           && Index(total_rows) >= 4 * Index(max(output_columns, input_columns));
-    if (skinny_wgrad)
-    {
-        const TensorView input_2d(const_cast<void*>(input_for_gemm), Shape{total_rows, input_columns},
-                                  weights.get_type(), Device::CUDA);
-        const TensorView output_delta_2d(output_delta.get_data(), Shape{total_rows, output_columns},
-                                         output_delta.get_type(), Device::CUDA);
-        TensorView weight_gradient_2d(weight_gradient.get_data(), Shape{input_columns, output_columns},
-                                      Type::FP32, Device::CUDA);
-        multiply(input_2d, Transpose::Yes, output_delta_2d, Transpose::No, weight_gradient_2d, 1.0f, 0.0f);
-
-        if (has_bias)
-        {
-            zero_bias_gradient_async(bias_gradient);
-            output_delta.dispatch([&]<typename T>() {
-                bias_grad_sum_cuda<T>(total_rows, output_columns,
-                                      output_delta.as<T>(), bias_gradient.as<float>());
-            });
-        }
-        stored = true;
-    }
-    else if (direct_fp32_store)
+    if (direct_fp32_store)
     {
         try
         {
             run_lt_matmul_cached(
                 output_columns, input_columns, total_rows,
                 CUBLAS_OP_N, CUBLAS_OP_T,
-                has_bias ? CUBLASLT_EPILOGUE_BGRADA : CUBLASLT_EPILOGUE_DEFAULT,
+                wgrad_epilogue,
                 output_delta.get_data(), input_for_gemm, weight_gradient.get_data(),
                 has_bias ? bias_gradient.as<float>() : nullptr,
-                output_delta.cuda_dtype(),
+                delta_dtype, input_dtype,
                 CUDA_R_32F);
             stored = true;
+            // BGRADA is the only path here that produces the bias gradient, so
+            // it reports having done it and every other path falls through to
+            // the reduction below -- the same "the kernel says what it did"
+            // contract as fused_input_relu, and the reason the epilogue can
+            // stay Lt-only without the caller having to guess.
+            bias_stored = has_bias;
         }
         catch (const exception&)
         {
             if (!output_delta.is_bf16()) throw;
-            bf16_fp32_store_supported.store(false, memory_order_relaxed);
+            store_declined = true;
             cerr << "linear_backward: cuBLASLt has no BF16-in/FP32-out weight-gradient "
-                    "epilogue here; using BF16 store + cast for the rest of the process.\n";
+                    "epilogue for " << output_columns << "x" << input_columns << "x"
+                 << total_rows << "; that shape uses a BF16 store + cast.\n";
             device::reset_last_error();
         }
     }
@@ -2104,16 +2147,18 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
             CUBLAS_OP_N, CUBLAS_OP_T,
             CUBLASLT_EPILOGUE_DEFAULT,
             output_delta.get_data(), input_for_gemm, dw_bf16, nullptr,
-            output_delta.cuda_dtype(),
+            delta_dtype, input_dtype,
             CUDA_R_16BF);
         cast_bf16_to_fp32(weight_gradient.size(), dw_bf16, weight_gradient.as<float>());
+    }
 
-        if (has_bias)
-        {
-            zero_bias_gradient_async(bias_gradient);
-            bias_grad_sum_cuda<bfloat16>(total_rows, output_columns,
-                                         output_delta.as<bfloat16>(), bias_gradient.as<float>());
-        }
+    if (has_bias && !bias_stored)
+    {
+        zero_bias_gradient_async(bias_gradient);
+        output_delta.dispatch([&]<typename T>() {
+            bias_grad_sum_cuda<T>(total_rows, output_columns,
+                                  output_delta.as<T>(), bias_gradient.as<float>());
+        });
     }
     }
 
@@ -2128,28 +2173,36 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
     // step and on the critical path, where the tie-break's 256x160 does the same
     // m,n,k in 200.4 us at 172 W against 193.1 us at 271 W.
     //
-    // The split below is the seam. run_lt_matmul_cached takes neither a batch
-    // count nor a beta, so it is the same product as multiply() only for a
-    // single, non-accumulating matrix product in one input dtype. multiply_gpu
-    // folds a rank>2 left operand into one product whenever the right operand is
-    // rank 2, so the genuinely batched case left behind is a rank>2 weight
-    // tensor. Closing the seam means giving the Lt entry point a batch count and
-    // a beta; until then the batched and accumulating shapes stay on the old
-    // call. (The drelu/addend branch has always assumed the same equivalence,
-    // and reaches Lt with beta folded into the addend.)
+    // The split below is what is left of the seam. The Lt entry point now
+    // takes an alpha, a beta and an operand type each, so an accumulating or
+    // mixed-type product is no longer inexpressible there; what it still
+    // lacks is a batch count. multiply_gpu folds a rank>2 left operand into one
+    // product whenever the right operand is rank 2, so the batched case left
+    // behind is a rank>2 weight tensor, and it stays on the old call until the
+    // key carries a batch count and the sequence-length bucketing that keeps a
+    // decode loop from minting one plan per token. accumulate_input_delta is
+    // held back with it rather than switched over here: beta 1 into the
+    // caller's own destination is the shape the tuner now has to route to
+    // scratch, and that pairing wants measuring in the commit that adds it,
+    // not as a side effect of this one.
     const bool single_matrix_product = weights.get_rank() == 2
                                     && !accumulate_input_delta
                                     && weights.get_type() == output_delta.get_type();
 
+    // A is the weight tensor and B the delta, and each is now named with its
+    // own type rather than with the one the caller happened to pass for both.
+    // That cannot split a key: linear_backward throws unless the weights and
+    // the output delta share a dtype, so the two are equal here by validation.
     if (drelu_mask || addend || single_matrix_product)
         return run_lt_matmul_cached(
                    input_columns, total_rows, output_columns,
                    CUBLAS_OP_T, CUBLAS_OP_N,
                    drelu_mask ? CUBLASLT_EPILOGUE_DRELU : CUBLASLT_EPILOGUE_DEFAULT,
                    weights.get_data(), output_delta.get_data(), input_delta.get_data(), nullptr,
-                   output_delta.cuda_dtype(), input_delta.cuda_dtype(),
+                   weights.cuda_dtype(), output_delta.cuda_dtype(), input_delta.cuda_dtype(),
                    drelu_mask ? drelu_mask->get_data() : nullptr,
-                   addend ? addend->get_data() : nullptr);
+                   addend ? addend->get_data() : nullptr,
+                   1.0f, addend ? 1.0f : 0.0f);
 
     multiply(output_delta, Transpose::No, weights, Transpose::Yes, input_delta, 1.0f,
              accumulate_input_delta ? 1.0f : 0.0f);

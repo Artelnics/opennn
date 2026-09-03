@@ -10,6 +10,7 @@
 
 #include <utility>
 
+#include "opennn/core/io_utilities.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/neural_network/layers/activation_layer.h"
 #include "opennn/neural_network/layers/addition_layer.h"
@@ -68,6 +69,19 @@ static void bias_v8_class_logits(NeuralNetwork& network)
 
 #ifndef OPENNN_NO_VISION
 
+unique_ptr<ResNet> ResNet::from_pretrained(
+    const filesystem::path& weights_path)
+{
+    auto model = make_unique<ResNet>(
+        Shape{224, 224, 3},
+        vector<Index>{3, 4, 6, 3},
+        Shape{64, 128, 256, 512},
+        Shape{1000},
+        true);
+    model->load_parameters_binary(weights_path);
+    return model;
+}
+
 ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                                        const Shape& complexity_dimensions,
                                                        const Shape& output_shape)
@@ -75,9 +89,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
 {
     throw_if(input_shape.get_rank() != 3, "Input shape size is not 3.");
 
-    auto scaling_layer = make_unique<Scaling>(input_shape);
-    scaling_layer->set_scalers("ImageMinMax");
-    add_layer(std::move(scaling_layer));
+    add_layer(make_unique<Scaling>(input_shape, ScalerMethod::ImageMinMax));
 
     const Index complexity_size = complexity_dimensions.get_rank();
 
@@ -209,9 +221,7 @@ ResNet::ResNet(const Shape& input_shape,
             Shape{1, 1, filters, output_channels}, prefix + "_conv3");
     };
 
-    auto scaling_layer = make_unique<Scaling>(input_shape);
-    scaling_layer->set_scalers("ImageMinMax");
-    add_layer(std::move(scaling_layer));
+    add_layer(make_unique<Scaling>(input_shape, ScalerMethod::ImageMinMax));
 
     Index last_index = add_conv(0,
         Shape{7, 7, input_shape[2], initial_filters[0]}, "ReLU",
@@ -760,7 +770,8 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                          bool use_sppf,
                          Index reg_max,
                          ModelSize model_size)
-    : NeuralNetwork(NetworkTask::ObjectDetection)
+    : NeuralNetwork(NetworkTask::ObjectDetection),
+      backbone(backbone)
 {
     throw_if(input_shape.get_rank() != 3, "YoloNetwork: input shape must be rank 3 (H, W, C).");
     throw_if(classes_number <= 0 || anchors.empty(),
@@ -1083,6 +1094,57 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                                              "non_max_suppression_layer"));
 
     builder.finish_yolo_network();
+}
+
+Index YoloNetwork::load_pretrained_backbone(
+    const filesystem::path& data_directory)
+{
+    const auto download_weights = [&](const string_view filename,
+                                      const string_view url)
+    {
+        const filesystem::path path = data_directory / filename;
+        download_if_missing(path, string(url));
+        return path;
+    };
+
+    constexpr string_view YOLO_V4_URL =
+        "https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.conv.137";
+
+    switch (backbone)
+    {
+        case Backbone::DarknetTinyV3:
+            return load_darknet_backbone(
+                *this,
+                download_weights("yolov3-tiny.weights",
+                                 "https://pjreddie.com/media/files/yolov3-tiny.weights"),
+                8);
+
+        case Backbone::Darknet53:
+            return load_darknet_backbone(
+                *this,
+                download_weights("darknet53.conv.74",
+                                 "https://pjreddie.com/media/files/darknet53.conv.74"),
+                52);
+
+        case Backbone::CSPDarknet53:
+            return load_darknet_backbone(
+                *this,
+                download_weights("yolov4.conv.137", YOLO_V4_URL),
+                72);
+
+        case Backbone::CSPDarknet53v11:
+            return load_darknet_backbone_v11(
+                *this,
+                download_weights("yolov4.conv.137", YOLO_V4_URL));
+
+        case Backbone::Vgg:
+        case Backbone::DarknetTiny:
+            throw runtime_error(
+                "YoloNetwork::load_pretrained_backbone: the selected backbone has no pretrained weights.");
+    }
+
+    throw runtime_error(
+        "YoloNetwork::load_pretrained_backbone: unsupported backbone.");
 }
 
 #endif

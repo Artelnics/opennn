@@ -179,6 +179,10 @@ public:
     virtual void clear_training_scaling() noexcept {}
 
     virtual const TokenizerOperator* get_training_tokenizer() const { return nullptr; }
+    virtual const TokenizerOperator* get_training_tokenizer(VariableRole role) const
+    {
+        return role == VariableRole::Input ? get_training_tokenizer() : nullptr;
+    }
 
     void set_sample_roles(SampleRole);
     void set_sample_roles(string_view role) { set_sample_roles(string_to_sample_role(role)); }

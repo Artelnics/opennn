@@ -32,6 +32,7 @@ struct BackPropagation;
 struct OptimizerData
 {
     void set(const vector<Shape>&, Device device = Device::CPU);
+    void set(const vector<Shape>&, const vector<Type>& slot_types, Device device = Device::CPU);
 
     Buffer data;
     vector<TensorView> views;

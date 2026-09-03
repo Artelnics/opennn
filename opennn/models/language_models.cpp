@@ -10,6 +10,7 @@
 
 #include <utility>
 
+#include "opennn/core/io_utilities.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/neural_network/layers/activation_layer.h"
 #include "opennn/neural_network/layers/addition_layer.h"
@@ -170,7 +171,8 @@ Transformer::Transformer(Index input_sequence_length,
     throw_if(embedding_dimension % heads_number != 0,
              "Transformer: embedding_dimension must be divisible by heads_number.");
 
-    const Index decoder_tokenizer_index = add_layer(make_unique<Tokenizer>(Shape{decoder_sequence_length}, "decoder_tokenizer"), {-1});
+    const Index decoder_tokenizer_index = add_layer(make_unique<Tokenizer>(
+        Shape{decoder_sequence_length}, "decoder_tokenizer", VariableRole::Decoder), {-1});
 
     auto decoder_embedding = make_unique<Embedding>(
         Shape{output_vocabulary_size, decoder_sequence_length},
@@ -463,6 +465,31 @@ static Index add_bert_encoder(NeuralNetwork& net,
     return current;
 }
 
+constexpr string_view BERT_BASE_URL =
+    "https://github.com/Artelnics/opennn/releases/download/bert-weights-v1/";
+constexpr string_view BERT_WEIGHTS_FILE = "bert-base-uncased-seq64.bin";
+constexpr string_view BERT_VOCABULARY_FILE = "bert-base-uncased-vocab.txt";
+
+BertForSequenceClassification::Pretrained
+BertForSequenceClassification::from_pretrained(
+    const filesystem::path& data_directory)
+{
+    download_files_if_missing(
+        data_directory,
+        BERT_BASE_URL,
+        {BERT_WEIGHTS_FILE, BERT_VOCABULARY_FILE});
+
+    const filesystem::path weights_path = data_directory / BERT_WEIGHTS_FILE;
+    const filesystem::path vocabulary_path = data_directory / BERT_VOCABULARY_FILE;
+
+    constexpr Index sequence_length = 64;
+    auto model = make_unique<BertForSequenceClassification>(
+        sequence_length, 30522, 768, 12, 3072, 12, 1);
+    model->load_parameters_binary(weights_path);
+
+    return {std::move(model), vocabulary_path, sequence_length};
+}
+
 Bert::Bert()
     : NeuralNetwork(NetworkTask::LanguageModeling)
 {
@@ -480,6 +507,71 @@ Bert::Bert(Index sequence_length,
     add_bert_encoder(*this, sequence_length, vocabulary_size, hidden_size, heads_number,
                      intermediate_size, layers_number, type_vocabulary_size);
     finalize_build(*this);
+}
+
+namespace
+{
+
+struct Qwen3Definition
+{
+    string_view repository;
+    string_view weights_filename;
+    Index vocabulary_size;
+    Index hidden_size;
+    Index layers_number;
+    Index query_heads;
+    Index key_value_heads;
+    Index head_dimension;
+    Index intermediate_size;
+};
+
+Qwen3Definition get_qwen3_definition(const Qwen3::Variant variant)
+{
+    switch (variant)
+    {
+        case Qwen3::Variant::B0_6:
+            return {"https://huggingface.co/Artelnics/qwen3-0.6b-opennn/resolve/main/",
+                    "qwen3_draft_bf16.bin", 151936, 1024, 28, 16, 8, 128, 3072};
+
+        case Qwen3::Variant::B4:
+            return {"https://huggingface.co/Artelnics/qwen3-4b-opennn/resolve/main/",
+                    "qwen3_bf16.bin", 151936, 2560, 36, 32, 8, 128, 9728};
+    }
+
+    throw runtime_error("Qwen3::from_pretrained: unsupported variant.");
+}
+
+}
+
+unique_ptr<Qwen3> Qwen3::from_pretrained(
+    const Variant variant,
+    const filesystem::path& data_directory,
+    const Index sequence_length)
+{
+    const Qwen3Definition definition = get_qwen3_definition(variant);
+
+    download_files_if_missing(
+        data_directory,
+        definition.repository,
+        {"vocab.json", "merges.txt", "qwen3_special.tsv"});
+
+    const filesystem::path weights_path =
+        data_directory / definition.weights_filename;
+    download_if_missing(
+        weights_path,
+        string(definition.repository) + "qwen3_bf16.bin");
+
+    auto model = make_unique<Qwen3>(
+        sequence_length,
+        definition.vocabulary_size,
+        definition.hidden_size,
+        definition.layers_number,
+        definition.query_heads,
+        definition.key_value_heads,
+        definition.head_dimension,
+        definition.intermediate_size);
+    model->load_parameters_bf16_inference_binary(weights_path);
+    return model;
 }
 
 Qwen3::Qwen3()
@@ -515,10 +607,7 @@ Qwen3::Qwen3(Index sequence_length,
 
     auto add_norm = [&](const string& name, Index source)
     {
-        auto norm = make_unique<Normalization3d>(block, name);
-        norm->set_method(NormalizationMethod::RMS);
-        norm->set_epsilon(rms_epsilon);
-        return add_layer(std::move(norm), {source});
+        return add_layer(make_unique<Normalization3d>(block, NormalizationMethod::RMS, rms_epsilon, name), {source});
     };
 
     auto add_linear = [&](const Shape& in_shape, Index out_features, const string& name, Index source)
@@ -673,6 +762,44 @@ void TextClassificationNetwork::set_tokenizer(unique_ptr<TokenizerOperator> new_
 const TokenizerOperator* TextClassificationNetwork::get_tokenizer() const
 {
     return get_tokenizer_layer(*this, "tokenizer").get_tokenizer();
+}
+
+TextClassificationNetwork::Prediction TextClassificationNetwork::classify(
+    const string_view document)
+{
+    Tensor<string, 1> documents(1);
+    documents(0) = document;
+
+    const MatrixR outputs = calculate_text_outputs(documents);
+    const vector<Variable>& variables = get_output_variables();
+
+    throw_if(variables.size() != 1 || variables[0].categories.empty(),
+             "TextClassificationNetwork::classify: output categories are not configured.");
+
+    const vector<string>& categories = variables[0].categories;
+    Index category_index = 0;
+    float confidence = 0.0f;
+
+    if (outputs.cols() == 1)
+    {
+        throw_if(categories.size() != 2,
+                 "TextClassificationNetwork::classify: a binary output requires two categories.");
+
+        const float positive_probability = outputs(0, 0);
+        category_index = positive_probability >= 0.5f ? 1 : 0;
+        confidence = category_index == 1
+                   ? positive_probability
+                   : 1.0f - positive_probability;
+    }
+    else
+    {
+        throw_if(ssize(categories) != outputs.cols(),
+                 "TextClassificationNetwork::classify: expected {} categories, got {}.",
+                 outputs.cols(), categories.size());
+        confidence = outputs.row(0).maxCoeff(&category_index);
+    }
+
+    return {categories[size_t(category_index)], confidence};
 }
 
 MatrixR TextClassificationNetwork::calculate_text_outputs(

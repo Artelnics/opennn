@@ -6,20 +6,15 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
-// System includes
-
 #include <iostream>
 #include <string>
-#include <cstring>
 
-#include "opennn/neural_network/chat.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/core/configuration.h"
 #include "opennn/dataset/language_dataset.h"
 #include "opennn/models/models.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
-#include "opennn/core/random_utilities.h"
+#include "opennn/neural_network/chat.h"
+#include "opennn/training_strategy/training_strategy.h"
 
-using namespace std;
 using namespace opennn;
 
 int main()
@@ -28,78 +23,30 @@ int main()
     {
         cout << "OpenNN. Translation Example." << endl;
 
-        Configuration::instance().set(Device::Auto, Type::FP32);
+        // Autoregressive generation currently requires CUDA.
+        Configuration::instance().set(Device::CUDA, Type::FP32);
 
-        LanguageDataset language_dataset("../data/translation/ES-EN-small.txt");
+        LanguageDataset dataset("../data/translation/ES-EN-small.txt");
 
-        const Index input_vocabulary_size  = language_dataset.get_input_vocabulary_size();
-        const Index output_vocabulary_size = language_dataset.get_target_vocabulary_size();
+        Transformer transformer(dataset.get_input_shape()[0],
+                                dataset.get_shape(VariableRole::Decoder)[0],
+                                dataset.get_input_vocabulary_size(),
+                                dataset.get_target_vocabulary_size(),
+                                256, 8, 1024, 1);
 
-        const Index input_sequence_length   = language_dataset.get_shape("Input")[0];
-        const Index decoder_sequence_length = language_dataset.get_shape("Decoder")[0];
-        const Index target_sequence_length  = language_dataset.get_shape("Target")[0];
+        TrainingStrategy training_strategy(&transformer, &dataset);
+        auto& optimizer = *training_strategy.get_optimization_algorithm();
+        optimizer.set_batch_size(16);
+        optimizer.set_maximum_epochs(50);
 
-        if(decoder_sequence_length != target_sequence_length)
-            throw runtime_error("Decoder and target sequence lengths must match.");
-
-        const Index embedding_dimension = 256;
-        const Index heads_number = 8;
-        const Index feed_forward_dimension = 1024;
-        const Index layers_number = 1;
-
-        Transformer transformer(input_sequence_length,
-                                decoder_sequence_length,
-                                input_vocabulary_size,
-                                output_vocabulary_size,
-                                embedding_dimension,
-                                heads_number,
-                                feed_forward_dimension,
-                                layers_number);
-
-        TrainingStrategy training_strategy(&transformer, &language_dataset);
-
-        training_strategy.set_loss("CrossEntropyError3d");
-        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-
-        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-
-        if(!adam)
-            throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
-
-        adam->set_batch_size(16);
-        adam->set_learning_rate(0.0005);
-        adam->set_maximum_epochs(50);
-        adam->set_display_period(5);
-
-        cout << "\nTraining on GPU..." << endl;
         training_strategy.train();
 
-        cout << "\n================ TRANSFORMER PREDICTIONS ================\n";
-
-        const vector<string> test_sources =
-            {
-                "yo tengo hambre",
-                "tu estas feliz",
-                "el esta cansado",
-                "yo veo el gato"
-            };
-
-        transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
-        transformer.set_target_vocabulary(language_dataset.get_target_vocabulary());
         ChatSession session(transformer);
+        const string source = "yo tengo hambre";
 
-        for(Index i = 0; i < static_cast<Index>(test_sources.size()); i++)
-        {
-            const string prediction =
-                session.send(test_sources[i]).content;
+        cout << "Translation of '" << source << "': "
+             << session.send(source).content << endl;
 
-            cout << "Sample " << i << endl;
-            cout << "  Source:    " << test_sources[i] << endl;
-            cout << "  Predicted: " << prediction << endl;
-            cout << endl;
-        }
-
-        cout << "=========================================================\n";
         cout << "Bye!" << endl;
 
         return 0;

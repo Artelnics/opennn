@@ -116,6 +116,7 @@ public:
     VectorI calculate_anomaly_predictions(const VectorR&, float) const;
 
     void print_binary_classification_tests() const;
+    void print_multiple_classification_tests() const;
     MatrixI calculate_confusion(const MatrixR&, const MatrixR&, float = 0.50) const;
     MatrixI calculate_confusion(const float = 0.50) const;
 

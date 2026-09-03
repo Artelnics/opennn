@@ -6,16 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <cstring>
 #include <iostream>
 
 #include "opennn/dataset/language_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/training_strategy/training_strategy.h"
 #include "opennn/testing_analysis/testing_analysis.h"
-#include "opennn/training_strategy/loss.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
-#include "opennn/core/random_utilities.h"
 
 using namespace opennn;
 
@@ -31,7 +27,7 @@ int main()
         const Index heads_number = 4;
 
         LanguageDataset language_dataset("../data/amazon_reviews/amazon_cells_labelled.txt");
-        
+
         const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
         const Index input_sequence_length = language_dataset.get_maximum_input_sequence_length();
         const Index targets_number = language_dataset.get_features_number("Target");
@@ -49,11 +45,11 @@ int main()
 
         testing_analysis.print_binary_classification_tests();
 
-        Tensor<string, 1> documents(1);
-        documents[0] = "This product is amazing and I love it!";
-        MatrixR outputs = text_classification_network.calculate_text_outputs(documents);
+        const string document = "This product is amazing and I love it!";
+        const auto prediction = text_classification_network.classify(document);
 
-        cout << "Prediction for '" << documents[0] << "': " << outputs(0,0) << endl;
+        cout << "Prediction for '" << document << "': "
+             << prediction.category << " (" << prediction.confidence << ')' << endl;
 
         cout << "Good bye!" << endl;
         return 0;

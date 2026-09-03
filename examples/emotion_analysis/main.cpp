@@ -12,8 +12,6 @@
 #include "opennn/models/models.h"
 #include "opennn/training_strategy/training_strategy.h"
 #include "opennn/testing_analysis/testing_analysis.h"
-#include "opennn/training_strategy/loss.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
 
 using namespace opennn;
 
@@ -40,37 +38,18 @@ int main()
             {targets_number});
 
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
-        training_strategy.set_loss("CrossEntropy");
-        training_strategy.get_loss()->set_regularization("L2");
 
-        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs(200);
-        adam->set_batch_size(1000);
-        adam->set_learning_rate(float(0.0001));
-        adam->set_display_period(20);
-
-        cout << "Training with "
-             << (text_classification_network.is_gpu() ? "GPU" : "CPU")
-             << ", it might take some time: " << endl;
         training_strategy.train();
 
         const TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
 
-        cout << "Confusion matrix:\n"
-             << testing_analysis.calculate_confusion() << endl;
+        testing_analysis.print_multiple_classification_tests();
 
-        const vector<string>& emotions = text_classification_network.get_output_variables()[0].categories;
+        const string document = "I feel so sad and lonely today";
+        const auto prediction = text_classification_network.classify(document);
 
-        Tensor<string, 1> documents(1);
-        documents[0] = "I feel so sad and lonely today";
-
-        MatrixR outputs = text_classification_network.calculate_text_outputs(documents);
-
-        Index predicted_class = 0;
-        const float max_value = outputs.row(0).maxCoeff(&predicted_class);
-
-        cout << "Prediction for '" << documents[0] << "': "
-             << emotions[predicted_class] << " (" << max_value << ")" << endl;
+        cout << "Prediction for '" << document << "': "
+             << prediction.category << " (" << prediction.confidence << ')' << endl;
 
         cout << "Good bye!" << endl;
 

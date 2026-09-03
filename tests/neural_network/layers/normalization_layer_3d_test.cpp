@@ -42,6 +42,16 @@ TEST(Normalization3dTest, GeneralConstructor)
     EXPECT_EQ(normalization_3d.get_input_shape()[1], embedding_dimension);
     EXPECT_EQ(normalization_3d.get_output_shape()[0], sequence_length);
     EXPECT_EQ(normalization_3d.get_output_shape()[1], embedding_dimension);
+
+    Normalization3d rms_normalization(
+        {sequence_length, embedding_dimension},
+        NormalizationMethod::RMS,
+        1.0e-5f,
+        "rms_norm");
+
+    EXPECT_EQ(rms_normalization.get_method(), NormalizationMethod::RMS);
+    EXPECT_FLOAT_EQ(rms_normalization.get_epsilon(), 1.0e-5f);
+    EXPECT_EQ(rms_normalization.get_label(), "rms_norm");
 }
 
 TEST(Normalization3dTest, ForwardMatchesHandComputedLayerNorm)

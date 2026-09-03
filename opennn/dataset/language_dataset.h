@@ -39,6 +39,13 @@ public:
 
     const TokenizerOperator& get_input_tokenizer() const noexcept { return *input_tokenizer; }
     const TokenizerOperator* get_training_tokenizer() const override { return input_tokenizer.get(); }
+    const TokenizerOperator* get_training_tokenizer(VariableRole role) const override
+    {
+        if (role == VariableRole::Input) return input_tokenizer.get();
+        if (is_one_of(role, VariableRole::Decoder, VariableRole::Target))
+            return target_tokenizer.get();
+        return nullptr;
+    }
 
     Index get_maximum_input_sequence_length() const noexcept { return maximum_input_sequence_length; }
     Index get_maximum_target_sequence_length() const noexcept { return maximum_target_sequence_length; }

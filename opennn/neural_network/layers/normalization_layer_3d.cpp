@@ -25,6 +25,16 @@ Normalization3d::Normalization3d(const Shape& new_input_shape,
     layer_normalization.output_slots = {Means, StandardDeviations, NormalizedInput, Output};
 }
 
+Normalization3d::Normalization3d(const Shape& new_input_shape,
+                                 const NormalizationMethod method,
+                                 const float epsilon,
+                                 const string& new_name)
+    : Normalization3d(new_input_shape, new_name)
+{
+    set_method(method);
+    set_epsilon(epsilon);
+}
+
 Shape Normalization3d::get_input_shape() const noexcept
 {
     return { sequence_length, embedding_dimension };

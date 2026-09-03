@@ -97,15 +97,6 @@ FeatureScalingEndpoint* find_scaling_endpoint(NeuralNetwork& neural_network,
     return nullptr;
 }
 
-Tokenizer* find_tokenizer_layer(NeuralNetwork& neural_network)
-{
-    for (const unique_ptr<Layer>& layer : neural_network.get_layers())
-        if (auto* tokenizer_layer = dynamic_cast<Tokenizer*>(layer.get()))
-            return tokenizer_layer;
-
-    return nullptr;
-}
-
 InferenceShapePolicy loss_inference_policy(const Loss& loss)
 {
     InferenceShapePolicy policy;
@@ -636,9 +627,16 @@ void Optimizer::prepare_training_artifacts()
     prepare_endpoint(VariableRole::Input);
     prepare_endpoint(VariableRole::Target);
 
-    if (const TokenizerOperator* const fitted_tokenizer = dataset->get_training_tokenizer())
-        if (Tokenizer* const tokenizer_layer = find_tokenizer_layer(*neural_network))
+    for (const unique_ptr<Layer>& layer : neural_network->get_layers())
+    {
+        auto* const tokenizer_layer = dynamic_cast<Tokenizer*>(layer.get());
+        if (!tokenizer_layer) continue;
+
+        const TokenizerOperator* const fitted_tokenizer =
+            dataset->get_training_tokenizer(tokenizer_layer->get_variable_role());
+        if (fitted_tokenizer)
             tokenizer_layer->set_tokenizer(fitted_tokenizer->clone());
+    }
 }
 
 void Optimizer::warmup_device_training(
@@ -2421,4 +2419,3 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.
-

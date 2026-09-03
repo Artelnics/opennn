@@ -50,6 +50,7 @@ class Scaling : public Layer, public FeatureScalingEndpoint
 public:
 
     Scaling(const Shape& = {});
+    Scaling(const Shape&, ScalerMethod);
 
     Shape get_output_shape() const noexcept override { return input_shape; }
 
@@ -81,6 +82,7 @@ public:
     void apply_input_shape(const Shape&) override;
 
     void set_descriptives(const vector<Descriptives>&);
+    void set_scalers(ScalerMethod);
     void set_scalers(const vector<string>&);
     void set_scalers(const string&);
     void set_feature_scaling(const FeatureScaling&) override;

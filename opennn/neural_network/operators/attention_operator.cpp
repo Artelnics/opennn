@@ -337,6 +337,18 @@ sdpa_cache_key(const AttentionOperator& op,
     };
 }
 
+// The bound an SDPA autotune selects candidates within, so a plan cannot be
+// chosen on time alone and drag its workspace into the shared scratch and the
+// tuning buffer with it. Forward and backward share the extents, so they share
+// the bound: the backward is the graph with the fp32 accumulators the bound is
+// sized from, and holding the forward to the same number costs nothing, its own
+// workspace being the softmax statistics and a few counters.
+static int64_t sdpa_workspace_cap(const AttentionOperator::SDPACache::CacheKey& k)
+{
+    return cudnn_frontend::sdpa_workspace_cap_bytes(k.batch_size, k.heads,
+                                                    k.q_seq, k.src_seq, k.head_dim);
+}
+
 static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
                                       const AttentionOperator::SDPACache::CacheKey& k)
 {
@@ -378,7 +390,7 @@ static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
         entry.fwd_Stats = Stats;
     }
 
-    entry.fwd.build_attention(graph, "sdpa fwd");
+    entry.fwd.build_attention(graph, "sdpa fwd", true, sdpa_workspace_cap(k));
 }
 
 static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry,
@@ -428,7 +440,7 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
     entry.bwd_dK = dK;
     entry.bwd_dV = dV;
 
-    entry.bwd.build_attention(graph, "sdpa bwd");
+    entry.bwd.build_attention(graph, "sdpa bwd", true, sdpa_workspace_cap(k));
 }
 
 #else

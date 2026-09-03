@@ -168,7 +168,8 @@ unique_ptr<Layer> make_serializable_layer(LayerType type)
 
     case Tokenizer:
     {
-        auto layer = make_unique<opennn::Tokenizer>(Shape{4}, "tokenizer_roundtrip");
+        auto layer = make_unique<opennn::Tokenizer>(
+            Shape{4}, "tokenizer_roundtrip", VariableRole::Decoder);
         layer->set_vocabulary({"<unk>", "alpha", "beta", "gamma"});
         return layer;
     }
@@ -233,6 +234,10 @@ void expect_nondefault_fields(const LayerType type, const JsonDocument& document
 
     case Clamping:
         EXPECT_EQ(read_json_string(root, "ClampingMethod"), "NoClamping");
+        break;
+
+    case Tokenizer:
+        EXPECT_EQ(read_json_string(root, "Role"), "Decoder");
         break;
 
     default:

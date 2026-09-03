@@ -22,6 +22,10 @@ TEST(ScalingLayerTest, GeneralConstructor)
     EXPECT_EQ(scaling_layer_2d.get_input_shape(), Shape{ 1 });
     EXPECT_EQ(scaling_layer_2d.get_output_shape(), Shape{ 1 });
     EXPECT_EQ(scaling_layer_2d.get_name(), "Scaling");
+
+    Scaling image_scaling({2, 3, 4}, ScalerMethod::ImageMinMax);
+    EXPECT_EQ(image_scaling.get_scalers(),
+              vector<ScalerMethod>(4, ScalerMethod::ImageMinMax));
 }
 
 TEST(ScalingLayerTest, ImplementsFeatureScalingEndpoint)
