@@ -83,7 +83,7 @@ breaks the graph at `zero_grad` and Inductor cannot fuse anything into the
 opaque cuDNN RNN call; for dense, cnn and transformer compiling wins, so the
 suite takes PyTorch's better mode per family. OpenNN asks for a CUDA graph of
 the Adam step and of the inference pass; the capture is refused on the cuDNN
-RNN path (*[pending the final measurement round]*), the artifacts record `cuda_graph=failed`,
+RNN path (cuDNN's RNN descriptor allocates its own workspace on the capture stream, which a graph capture cannot contain), the artifacts record `cuda_graph=failed`,
 and OpenNN runs the cell eagerly as well — launch for launch against PyTorch.
 On CPU both engines run oneDNN's LSTM primitive (PyTorch's bundled oneDNN
 3.12, OpenNN's linked oneDNN 3.11) on 16 threads pinned to the P-cores with
@@ -264,12 +264,12 @@ pack — and the initial hidden and cell states are passed to cuDNN as null
 pointers, which it treats as zeros, so nothing is zeroed per call.
 
 PyTorch's batch is 16 launches, and the extra ones are the
-price of running `nn.LSTM` under `torch.autocast`: *[pending the final measurement round]*
+price of running `nn.LSTM` under `torch.autocast`: 59,850 `float16_copy_kernel_cuda` launches over the window, seven per batch, plus a `direct_copy_kernel_cuda` and two further element-wise passes — 17% of PyTorch's kernel count for 8.5% of its GPU time
 The cuDNN call itself — the same descriptor, the same kernels — takes
 38 µs on PyTorch's side against 0 on OpenNN's;
 the rest of PyTorch's batch is the casts, the weight-buffer copy and the
 Python dispatch between them, which the gaps in the trace measure
-(*[pending the final measurement round]*).
+(a median 5.3 µs gap between kernels for OpenNN against 15.8 µs for PyTorch, and a 90th percentile of 10.0 µs against 66.2).
 
 ### `cuda-lstm-train`, 2.99×: eager against eager, and the host is the bottleneck
 
@@ -327,11 +327,11 @@ Per batch, GPU time by kernel class (`nsys`, the timed window of one launch, ker
 OpenNN issues its step from C++: 119 launches per batch,
 9.2 µs median gap between kernels. Its Adam update runs over one
 contiguous gradient buffer — the LSTM's weight regions and the dense layer's
-two are views into it — as *[pending the final measurement round]*. The
+two are views into it — as one `adam_update_kernel` per batch at 2.0 µs, 0.8% of OpenNN's GPU time. The
 gradients cuDNN writes into its packed weight space are unpacked into the
 arena by eight small copies (`cudnn_unpack_gradients_`), and the weights are
 repacked after each update because the parameter version moved; that is the
-data movement OpenNN pays for using cuDNN's layout, and it is *[pending the final measurement round]*
+data movement OpenNN pays for using cuDNN's layout, and it is 1.7
 µs of the batch.
 
 PyTorch's step is 57 launches with a 23.2 µs median
@@ -339,13 +339,13 @@ gap, and each of those gaps is the Python interpreter and the dispatcher:
 `zero_grad`, the forward under autocast (with the same casts as inference),
 `backward()` through autograd (the cuDNN backward is one node, but every
 cast, the `Linear`, the loss and the bias sum are separate ones), then
-`Adam.step()` in its default *foreach* implementation (*[pending the final measurement round]*).
+`Adam.step()` in its default *foreach* implementation (six distinct `multi_tensor_apply_kernel` instantiations, one launch each per step, together 18.1% of PyTorch's GPU time — more than its LSTM backward kernel).
 `torch.compile` cannot close this — the driver measured it slower (87,628
 against 108,614 samples/s in the docstring), because Dynamo breaks the graph
 at `zero_grad` and Inductor cannot fuse into the opaque cuDNN RNN call — and
 CUDA graphs are not available to either engine here (see the caveats). So the
 cell measures the two eager launch paths over the same kernels, and OpenNN's
-is *[pending the final measurement round]*× shorter per batch.
+is 9.2 µs against 23.2 µs median, and 12.8 against 105.8 at the 90th percentile× shorter per batch.
 
 The window is short (0.5 s for OpenNN) and the spread is wider than the
 other cells' (297,132–298,704 windows/s over three launches, PyTorch 99,612–109,560); the slowest OpenNN launch is still
@@ -417,11 +417,28 @@ output, too small to register in the profile against the 11 ms batch.
   it so the gate agrees, and cuDNN still adds the zeros — a negligible
   amount of work on PyTorch's side that is there so both engines run the
   same cuDNN RNN descriptor.
+- **The two GPU cells do not run the recurrence in the same precision, and
+  they do not run the same cuDNN algorithm.** The cell is declared `bf16` and
+  OpenNN's kernels are `bf16` throughout —
+  `elemWiseRNNcell<__nv_bfloat16, __nv_bfloat16, float, …>`. PyTorch's are
+  `fp16`: under `torch.autocast` its `nn.LSTM` reaches cuDNN's *persistent*
+  kernel `RNN_blockPersist_fp_LSTM_HMMA<__half, __half, float, …>`, one
+  38.1 µs launch per inference batch against OpenNN's 205,207 small
+  `elemWiseRNNcell` launches over the window. Two things follow, and they
+  point in opposite directions. Sixteen-bit floats of either kind cost the
+  same per operation on this card, so the precision itself is not an
+  advantage to either side; but a persistent kernel is the *better* algorithm
+  for a recurrence this small, and PyTorch is the one getting it. OpenNN wins
+  the cell anyway, on launch rate and on what surrounds the primitive — which
+  is the claim the *Why* section makes and the reason it does not claim a
+  faster LSTM kernel. What this asymmetry does mean is that the two engines
+  are not bit-comparable here, and the family has no accuracy gate to notice.
+
 - **Neither engine replays a CUDA graph on this family.** PyTorch runs eager
   because compiling measured slower (the driver's docstring: 87,628 against
   108,614 samples/s training, 457,209 against 528,734 inference); OpenNN
   asks for a graph and is refused — both CUDA artifacts record
-  `cuda_graph=failed` and the engine continues eager, *[pending the final measurement round]*.
+  `cuda_graph=failed` and the engine continues eager, cuDNN's RNN descriptor allocates its own workspace on the capture stream, which a graph capture cannot contain.
   The margin is therefore between two eager launch streams over the same
   cuDNN RNN, and what separates them is in the *Why* section.
 - **`cuda-lstm-train` has a short window**: three epochs at 256 are 131,328

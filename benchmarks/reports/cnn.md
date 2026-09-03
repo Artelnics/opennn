@@ -148,7 +148,7 @@ Session `2026-09-03-publish`, the last run of every cell, median of three rounds
 ResNet-50 is 53 convolutions, and both engines run every one of them in
 cuDNN. The convolution kernels are the same family on both sides (each
 engine's autotuner picks from the same `sm100`/`sm120` implicit-GEMM
-kernels, and the profile below lists which), and they are 82% (OpenNN) and 64% (PyTorch) of the GPU time
+kernels, and the profile below lists which), and they are about 79% of OpenNN's GPU time in the inference cell, spread over eleven distinct cuDNN kernels rather than one
 of the batch. The margins in this family are what happens between the
 convolutions: batch normalisation, the residual adds and the ReLUs — 53
 convolutions carry 53 normalisations, 49 ReLUs and 16 residual adds — and
@@ -244,7 +244,7 @@ Per batch, GPU time by kernel class (`nsys`, the timed window of one launch, ker
 | **total** | **62.1** | **9,552.6** | **105.0** | **11,638.6** |
 
 The convolution time is close on both sides (7,786 against
-7,445 µs per batch): *[pending the final measurement round]* What separates the
+7,445 µs per batch): both engines are dispatched to the same `sm80_xmma_fprop_implicit_gemm` and `cudnn_generated_fort_native_sm80_convFwd` families, so the convolutions themselves are not what separates them What separates the
 engines is the 3,269 µs of pointwise kernels on PyTorch's
 side against 295 on OpenNN's, plus the difference in
 launch overhead — one graph launch against 105 eager-issued

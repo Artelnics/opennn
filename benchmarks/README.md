@@ -79,6 +79,7 @@ enforced in code.
 
 | | |
 |---|---|
+| [`reports/`](reports/) | the results, one document per family, and why each margin is what it is |
 | [`run.py`](run.py) | the only entry point |
 | [`prepare.py`](prepare.py) | every dataset, one subcommand per family |
 | [`common.py`](common.py) | provenance, binaries, GPU sampling, metrics |
