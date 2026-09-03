@@ -87,7 +87,16 @@ vector<pair<string, Index>> get_variable_columns(const vector<Variable>& variabl
         const Index span = variable.get_feature_count();
 
         if (span == 1)
+        {
             columns.emplace_back(variable.name, feature_index);
+        }
+        else
+        {
+            const vector<string> feature_names = variable.get_names();
+
+            for (Index feature = 0; feature < span; ++feature)
+                columns.emplace_back(feature_names[size_t(feature)], feature_index + feature);
+        }
 
         feature_index += span;
     }

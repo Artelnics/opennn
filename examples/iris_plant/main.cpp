@@ -27,20 +27,12 @@ int main()
 
         TabularDataset dataset("../data/iris_plant/iris_plant_original.csv", ";", true, false);
 
-        const Index inputs_number = dataset.get_features_number("Input");
-        const Index targets_number = dataset.get_features_number("Target");
-
         const Index neurons_number = 16;
 
-        ClassificationNetwork classification_network({inputs_number}, {neurons_number}, {targets_number});
+        ClassificationNetwork classification_network({dataset.get_features_number("Input")}, {neurons_number}, {dataset.get_features_number("Target")});
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
-
-        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-
-        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs(500);
-
+        
         training_strategy.train();
 
         TestingAnalysis testing_analysis(&classification_network, &dataset);

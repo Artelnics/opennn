@@ -11,12 +11,9 @@
 
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/neural_network/standard_networks.h"
-#include "opennn/neural_network/layers/clamping_layer.h"
 #include "opennn/training_strategy/training_strategy.h"
 #include "opennn/testing_analysis/testing_analysis.h"
 #include "opennn/model_selection/model_selection.h"
-#include "opennn/training_strategy/optimizer.h"
-#include "opennn/training_strategy/stochastic_gradient_descent.h"
 #include "opennn/core/random_utilities.h"
 
 using namespace opennn;
@@ -25,40 +22,24 @@ int main()
 {
     try
     {
-        cout << "Airfoil self noise" << endl;
+        cout << "OpenNN. Airfoil self noise Example." << endl;
 
-        set_seed(42);
-
-        Configuration::instance().set(Device::Auto, Type::FP32);
+        set_seed(0);
 
         const Index neurons_number = 12;
-        const float regularization_weight = float(0.001);
 
         TabularDataset dataset("../data/airfoil_self_noise/airfoil_self_noise.csv", ";", true, false);
 
-        dataset.split_samples_random(float(0.8), float(0.0), float(0.2));
-
-        ApproximationNetwork approximation_network(dataset.get_input_shape(), {neurons_number}, dataset.get_target_shape());
-
-        Clamping* clamping_layer = (Clamping*)approximation_network.get_first("Clamping");
-
-        if(clamping_layer)
-            clamping_layer->set_clamping_method("NoClamping");
+        ApproximationNetwork approximation_network(dataset.get_input_shape(), 
+                                                   {neurons_number}, 
+                                                   dataset.get_target_shape());
 
         TrainingStrategy training_strategy(&approximation_network, &dataset);
-
-        training_strategy.set_loss("MeanSquaredError");
-        training_strategy.get_loss()->set_regularization("L2");
-        training_strategy.get_loss()->set_regularization_weight(regularization_weight);
-
-        training_strategy.set_optimization_algorithm("StochasticGradientDescent");
-        StochasticGradientDescent* sgd = dynamic_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());
-        sgd->set_initial_learning_rate(float(0.3));
-        sgd->set_display_period(50);
 
         TrainingResult training_results = training_strategy.train();
 
         TestingAnalysis testing_analysis(&approximation_network, &dataset);
+
         testing_analysis.print_goodness_of_fit_analysis();
 
         cout << "Good bye!" << endl;

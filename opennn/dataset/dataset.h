@@ -47,6 +47,8 @@ inline SampleRole string_to_sample_role(string_view name)
 
 enum class Shuffle { No, Yes };
 
+class TokenizerOperator;
+
 class Dataset
 {
 
@@ -175,6 +177,8 @@ public:
         const FeatureScaling&,
         Index);
     virtual void clear_training_scaling() noexcept {}
+
+    virtual const TokenizerOperator* get_training_tokenizer() const { return nullptr; }
 
     void set_sample_roles(SampleRole);
     void set_sample_roles(string_view role) { set_sample_roles(string_to_sample_role(role)); }

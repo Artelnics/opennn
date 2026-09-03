@@ -140,6 +140,7 @@ public:
     };
 
     void set_augmentation_policy(const AugmentationPolicy&);
+    const AugmentationPolicy& get_augmentation_policy() const noexcept { return augmentation_policy; }
 
     static Index convert_voc_to_yolo(const filesystem::path&,
                                      const string&,

@@ -39,8 +39,6 @@ int main()
             {heads_number},
             {targets_number});
 
-        text_classification_network.set_tokenizer(language_dataset.get_input_tokenizer().clone());
-
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
         training_strategy.set_loss("CrossEntropy");
         training_strategy.get_loss()->set_regularization("L2");

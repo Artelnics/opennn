@@ -1064,6 +1064,24 @@ TEST_P(ResponseDriver, CategoricalResultsSurviveAConstraint)
 }
 
 
+TEST_P(ResponseDriver, CategoricalConstraintSelectsRequestedCategory)
+{
+    CategoricalApproximation setup({"x1", "x2"}, "material", {"steel", "copper", "brass"});
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("y1", Sense::Minimize);
+    optimization->add_constraint("copper", Condition::Equal, {1.0f});
+
+    const MatrixR results = optimization->perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+
+    for (Index i = 0; i < results.rows(); i++)
+        EXPECT_EQ(read_category(results, i, 2, 3), 1) << "row " << i;
+}
+
+
 TEST_P(ResponseDriver, CategoricalMultiObjectiveResultsAreOneHot)
 {
     CategoricalApproximation setup({"x1", "x2"}, "material", {"steel", "copper", "brass"}, 2);
