@@ -32,6 +32,10 @@ public:
     {
         set(vocabulary_size, new_input_shape.dim_or_zero(0), embedding_dimension, label);
     }
+    void set_output_shape(const Shape& shape) override
+    {
+        set(vocabulary_size, shape.dim_or_zero(0), shape.dim_or_zero(1), label);
+    }
     Shape get_output_shape() const override;
 
     Index get_vocabulary_size() const { return vocabulary_size; }

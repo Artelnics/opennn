@@ -30,7 +30,6 @@ public:
     };
 
     explicit QuasiNewtonMethod(Loss* = nullptr);
-    void set_default();
     void set_minimum_loss_decrease(const float new_minimum_loss_decrease) { minimum_loss_decrease = new_minimum_loss_decrease; }
     TrainingResult train() override;
     void from_JSON(const JsonDocument&) override;

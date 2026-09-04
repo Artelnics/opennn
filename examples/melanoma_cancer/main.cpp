@@ -12,7 +12,6 @@
 #include "opennn/models/models.h"
 #include "opennn/training_strategy/training_strategy.h"
 #include "opennn/testing_analysis/testing_analysis.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/core/random_utilities.h"
 
 using namespace opennn;
@@ -23,32 +22,19 @@ int main()
     {
         cout << "OpenNN. Melanoma cancer example." << endl;
 
-        set_seed(42);
+        set_seed(0);
 
-        Configuration::instance().set(Device::Auto, Type::Auto);
+        ImageDataset dataset("../data/melanoma_cancer");
 
-        ImageDataset image_dataset("../data/melanoma_cancer");
+        ImageClassificationNetwork network(dataset.get_input_shape(),
+                                           {32, 64, 16},
+                                           dataset.get_target_shape());
 
-        image_dataset.split_samples_random(0.8, 0.0, 0.2);
-
-        ImageClassificationNetwork image_classification_network(
-            image_dataset.get_shape("Input"),
-            { 32, 64, 16 },
-            image_dataset.get_shape("Target"));
-
-        TrainingStrategy training_strategy(&image_classification_network, &image_dataset);
-
-        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_display_period(10);
-        adam->set_batch_size(10);
-        adam->set_maximum_epochs(50);
+        TrainingStrategy training_strategy(&network, &dataset);
 
         training_strategy.train();
 
-        TestingAnalysis testing_analysis(&image_classification_network, &image_dataset);
-
-        cout << "Confusion matrix:\n"
-             << testing_analysis.calculate_confusion() << endl;
+        TestingAnalysis testing_analysis(&network, &dataset);
 
         testing_analysis.print_binary_classification_tests();
 

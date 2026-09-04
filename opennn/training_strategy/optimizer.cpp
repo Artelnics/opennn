@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   O P T I M I Z E R   C L A S S
@@ -35,7 +35,9 @@
 #include "opennn/neural_network/back_propagation.h"
 #include "opennn/neural_network/forward_propagation.h"
 #include "opennn/neural_network/neural_network.h"
+#include "opennn/neural_network/layers/tokenizer_layer.h"
 #include "opennn/neural_network/operators/dropout_operator.h"
+#include "opennn/neural_network/operators/tokenizer_operator.h"
 #include "opennn/training_strategy/kernel_optimizers.cuh"
 #include "opennn/training_strategy/loss.h"
 
@@ -399,8 +401,7 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
         }
     };
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
-    const int batch_workers_number = get_batch_workers_number();
+    const int batch_workers_number = workers_number;
 
     for (int i = 0; i < batch_workers_number; ++i)
         session->add_worker(worker_body);
@@ -417,7 +418,7 @@ int Optimizer::get_batch_pool_size(const NeuralNetwork& neural_network) const
     if (batch_pool_size_override > 0)
         return max(1, batch_pool_size_override);
     return neural_network.is_gpu()
-        ? max(get_batch_workers_number() + 1, 3)
+        ? max(workers_number + 1, 3)
         : 1;
 }
 
@@ -607,7 +608,7 @@ void Optimizer::set_names()
     neural_network->set_output_variables(target_variables);
 }
 
-void Optimizer::prepare_training_scaling()
+void Optimizer::prepare_training_artifacts()
 {
     Dataset* const dataset = loss->get_dataset();
     NeuralNetwork* const neural_network = loss->get_neural_network();
@@ -625,6 +626,17 @@ void Optimizer::prepare_training_scaling()
 
     prepare_endpoint(VariableRole::Input);
     prepare_endpoint(VariableRole::Target);
+
+    for (const unique_ptr<Layer>& layer : neural_network->get_layers())
+    {
+        auto* const tokenizer_layer = dynamic_cast<Tokenizer*>(layer.get());
+        if (!tokenizer_layer) continue;
+
+        const TokenizerOperator* const fitted_tokenizer =
+            dataset->get_training_tokenizer(tokenizer_layer->get_variable_role());
+        if (fitted_tokenizer)
+            tokenizer_layer->set_tokenizer(fitted_tokenizer->clone());
+    }
 }
 
 void Optimizer::warmup_device_training(
@@ -859,7 +871,7 @@ TrainingResult Optimizer::train()
 
     set_names();
     ScopeExit scaling_cleanup([dataset] { dataset->clear_training_scaling(); });
-    prepare_training_scaling();
+    prepare_training_artifacts();
 
     BatchPools batch_pools;
     OptimizerData optimizer_data;
@@ -1080,7 +1092,7 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
 
     set_names();
     ScopeExit scaling_cleanup([dataset] { dataset->clear_training_scaling(); });
-    prepare_training_scaling();
+    prepare_training_artifacts();
 
     context.training_batch = make_unique<Batch>(context.training_samples_number,
                                                 dataset,
@@ -1527,11 +1539,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     // that there be no decoder and that the input and target columns each be
     // contiguous. The branch below hands the host batch back to the empty queue
     // and uploads from a slot that only a device gather would have filled, so
-    // asking the weaker question trains on whatever the slot happened to hold.
-    // Residency is not what selects the device path -- fill_batch also demands
-    // that there be no decoder and that the input and target columns each be
-    // contiguous. The branch below hands the host batch back to the empty queue
-    // and uploads from a slot that only a device gather would have filled, so
     // asking the weaker question trains on whatever the slot happened to hold,
     // which for a fresh arena is zeros and a training error of exactly 0.
     const bool resident_gather =
@@ -1753,7 +1760,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
 
     if (profile_this)
         worker_profile.print_epoch(epoch_t0, "Epoch breakdown (graph training)",
-                                   get_batch_workers_number());
+                                   workers_number);
 
     return epoch_result;
 }
@@ -2242,7 +2249,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
     {
         worker_profile.print_epoch(epoch_t0,
                                    "Epoch breakdown (training)",
-                                   get_batch_workers_number());
+                                   workers_number);
     }
 
     return epoch_result;

@@ -101,10 +101,8 @@ void BatchNormalizationOperator::link_parameters(span<const TensorView> views)
 
 void BatchNormalizationOperator::link_states(span<const TensorView> views)
 {
-    if (views.size() < 2) return;
-    running_mean     = views[0];
-    running_variance = views[1];
-    invalidate_inference_cache();
+    if (link_views(views, {&running_mean, &running_variance}))
+        invalidate_inference_cache();
 }
 
 void BatchNormalizationOperator::init_defaults()

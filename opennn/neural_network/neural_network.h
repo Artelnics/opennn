@@ -168,6 +168,7 @@ public:
     Index get_layer_index(const string&) const;
 
     const vector<vector<Index>>& get_source_layers() const noexcept { return source_layers; }
+    vector<vector<pair<size_t, size_t>>> get_consumer_edges() const;
 
     Layer* get_first(const string&);
     Layer* get_first(LayerType);

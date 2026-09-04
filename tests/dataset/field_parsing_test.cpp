@@ -241,7 +241,7 @@ TEST(FieldParsingTest, CsvReaderCommaSeparated)
 
     write_text_file(path, "a,b,c\n1,2,3\n4,5,6\n");
 
-    CsvReader reader(',');
+    CsvReader reader;
     const CsvReader::Result result = reader.read(path);
 
     ASSERT_EQ(result.lines.size(), size_t(3));
@@ -271,7 +271,7 @@ TEST(FieldParsingTest, CsvReaderSkipsBlankLinesAndCarriageReturns)
 
     write_text_file(path, "x,y\r\n\r\n1,2\r\n   \n3,4\r\n");
 
-    CsvReader reader(',');
+    CsvReader reader;
     const CsvReader::Result result = reader.read(path);
 
     ASSERT_EQ(result.lines.size(), size_t(3));
@@ -289,7 +289,7 @@ TEST(FieldParsingTest, CsvReaderPreservesQuotedFieldsForTokenizer)
 
     write_text_file(path, "name,note\n\"hello, world\",ok\n\"a;b\",plain\n");
 
-    CsvReader reader(',');
+    CsvReader reader;
     const CsvReader::Result result = reader.read(path);
 
     ASSERT_EQ(result.lines.size(), size_t(3));
@@ -307,7 +307,7 @@ TEST(FieldParsingTest, CsvReaderStripsBom)
 
     write_text_file(path, "\xEF\xBB\xBF" "h1,h2\n10,20\n");
 
-    CsvReader reader(',');
+    CsvReader reader;
     const CsvReader::Result result = reader.read(path);
 
     ASSERT_EQ(result.lines.size(), size_t(2));
@@ -317,14 +317,14 @@ TEST(FieldParsingTest, CsvReaderStripsBom)
     remove_quietly(path);
 }
 
-TEST(FieldParsingTest, CsvReaderSemicolonSeparator)
+TEST(FieldParsingTest, CsvReaderPreservesSemicolonLines)
 {
     const filesystem::path path = make_temp_path("semicolon.csv");
     remove_quietly(path);
 
     write_text_file(path, "a;b;c\n7;8;9\n");
 
-    CsvReader reader(';');
+    CsvReader reader;
     const CsvReader::Result result = reader.read(path);
 
     ASSERT_EQ(result.lines.size(), size_t(2));
@@ -343,7 +343,7 @@ TEST(FieldParsingTest, CsvReaderLineValidatorRuns)
 
     Index validated_count = 0;
 
-    CsvReader reader(',', [&validated_count](string_view) { ++validated_count; });
+    CsvReader reader([&validated_count](string_view) { ++validated_count; });
     const CsvReader::Result result = reader.read(path);
 
     ASSERT_EQ(result.lines.size(), size_t(3));

@@ -76,6 +76,65 @@ static bool tensor_math_env_enabled()
     return enabled;
 }
 
+// Which capture state the compute stream is in, asked after a call has already
+// failed. cuDNN answers CUDNN_STATUS_INTERNAL_ERROR -- 4000 -- both when it
+// declines a configuration and when the driver has torn the capture down under
+// it, and those have different fixes: still Active means cuDNN refused on its
+// own terms, Invalidated means something in the captured region did what
+// capture forbids. Nothing samples the status before the call, so Invalidated
+// narrows the cause to the captured region, not to one call inside it.
+static cudaStreamCaptureStatus stream_capture_status()
+{
+    // Asked on the cold paths only -- a failed status, a topology change, a
+    // shape-slot miss -- so the driver query never lands on the steady-state
+    // forward. Do not gate it on CudaAllocationGrowthGuard: the two training
+    // capture sites (optimizer.cpp:1521, :2021) open no such guard.
+    cudaStreamCaptureStatus status = cudaStreamCaptureStatusNone;
+    if (cudaStreamIsCapturing(device::get_compute_stream(), &status) != cudaSuccess)
+    {
+        device::reset_last_error();
+        return cudaStreamCaptureStatusNone;
+    }
+    return status;
+}
+
+static bool stream_is_capturing()
+{
+    return stream_capture_status() != cudaStreamCaptureStatusNone;
+}
+
+// Says what a cuDNN failure under capture actually means; reached only once a
+// call has already failed, so the configuration string costs nothing. The code
+// alone cost a full round of guesswork once -- the published reason for this
+// family's missing graph was a hand-written string, and the first real error,
+// 4000 from cudnnRNNForward, named nothing -- so the three readings are
+// separated here and the descriptor set that produced them is printed too.
+static void throw_cudnn_capture_failure(cudnnStatus_t status,
+                                        const char* call,
+                                        const string& configuration)
+{
+    const cudaStreamCaptureStatus capture = stream_capture_status();
+
+    throw_if(capture == cudaStreamCaptureStatusActive,
+             "{} returned cuDNN status {} while the compute stream was capturing a "
+             "CUDA graph, and the capture is still valid -- cuDNN declined this "
+             "configuration under capture rather than being poisoned by an earlier "
+             "call. No amount of pre-warming changes that: what is left is a "
+             "descriptor set cuDNN will capture -- OPENNN_RNN_PACKED_LAYOUT=1 and "
+             "OPENNN_RNN_TIME_MAJOR=0 are the two that reach a different engine -- "
+             "or no graph on this family. [{}]",
+             call, int(status), configuration);
+
+    throw_if(capture == cudaStreamCaptureStatusInvalidated,
+             "{} returned cuDNN status {} and the CUDA graph capture is invalidated: "
+             "something in the captured region did what capture forbids -- an "
+             "allocation, a synchronization, or an event query. OpenNN's own launches "
+             "in that region are status-checked at the launch site and did not throw, "
+             "so {} itself is the first place to look. Run again with "
+             "CUDNN_LOGLEVEL_DBG=3 CUDNN_LOGDEST_DBG=stderr to see which one. [{}]",
+             call, int(status), call, configuration);
+}
+
 CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_(const CudnnRnnConfig& config,
                                                Index input_features,
                                                Index output_features,
@@ -93,6 +152,12 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_(const CudnnRnnConfig& config,
         }
         catch (const exception& error)
         {
+            // While capturing there is nowhere to put a reconfiguration: the
+            // rebuild below drops the RNN descriptor the capture is halfway
+            // through using. Let the error reach the capture site, which falls
+            // back to eager and re-runs this call with the state untouched.
+            if (stream_is_capturing()) throw;
+
             if (env_flag_enabled("OPENNN_RNN_DEBUG", false))
                 cerr << "OpenNN cuDNN RNN: persistent algorithm unavailable: "
                      << error.what() << '\n';
@@ -143,6 +208,17 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& con
         state.cached_output_features != H ||
         state.cached_data_type       != config.data_type ||
         state.rnn_desc == nullptr;
+
+    // Reconfiguring inside a stream capture is not an option: the rebuild drops
+    // and recreates the RNN descriptor the capture is recording against, and the
+    // shape-slot branch below stages the sequence lengths with a pageable H2D
+    // copy, which capture forbids outright. Everything here is meant to be warm
+    // before cudaStreamBeginCapture; when it is not, say which half was cold.
+    throw_if(topology_changed && stream_is_capturing(),
+             "cuDNN RNN topology (F={}, H={}, {}) was not configured before the CUDA "
+             "graph capture began, and reconfiguring inside a capture is illegal. "
+             "Run one eager forward with this shape and dtype first.",
+             F, H, bf16 ? "BF16" : "FP32");
 
     if (topology_changed)
     {
@@ -228,6 +304,13 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& con
 
     if (slot_index < 0)
     {
+        throw_if(stream_is_capturing(),
+                 "cuDNN RNN shape (batch={}, T={}) has no warm descriptor slot, and "
+                 "building one inside a CUDA graph capture is illegal -- it uploads "
+                 "the sequence lengths from pageable host memory. Run one eager "
+                 "forward at this shape first, or raise RNN_SHAPE_SLOTS above {}.",
+                 batch_size, T, RNN_SHAPE_SLOTS);
+
         slot_index = 0;
         for (int s = 1; s < RNN_SHAPE_SLOTS; ++s)
         {
@@ -456,6 +539,25 @@ void CudnnRnnState::prepare_cudnn_forward_state_(Buffer& forward_state,
         reserve_offset, reserve_bytes, "cuDNN RNN forward state"));
 }
 
+string CudnnRnnState::cudnn_rnn_configuration_(const CudnnRnnShapeSlot& shape,
+                                               const char* mode) const
+{
+    const BackendState& state = backend_state;
+
+    return format("algo={}, dtype={}, layout={}, bias={}, mode={}, T={}, N={}, F={}, "
+                  "H={}, workspace={} B, reserve={} B, cuDNN {}",
+                  state.persist_algo_active ? "PERSIST_STATIC_SMALL_H" : "STANDARD",
+                  state.cached_data_type == Type::BF16 ? "BFLOAT16" : "FLOAT",
+                  state.packed_layout ? "SEQ_MAJOR_PACKED"
+                                      : shape.time_major ? "SEQ_MAJOR_UNPACKED"
+                                                         : "BATCH_MAJOR_UNPACKED",
+                  state.double_bias ? "DOUBLE" : "SINGLE_INP",
+                  mode, shape.time, shape.batch, shape.input_features,
+                  state.cached_output_features,
+                  shape.workspace_bytes, shape.reserve_space_bytes,
+                  cudnnGetVersion());
+}
+
 void CudnnRnnState::cudnn_rnn_forward_(const CudnnRnnShapeSlot& initial_shape,
                                        bool is_training, bool has_cell_state,
                                        const void* x, void* y,
@@ -489,7 +591,12 @@ void CudnnRnnState::cudnn_rnn_forward_(const CudnnRnnShapeSlot& initial_shape,
     };
 
     cudnnStatus_t forward_status = run_forward();
-    if (forward_status == CUDNN_STATUS_NOT_SUPPORTED && state.persist_algo_active)
+
+    // The persistent-algorithm fallback rebuilds the descriptor and re-packs the
+    // weights, which a capture cannot hold; declining it there leaves the state
+    // exactly as the eager path will find it on the fallback pass.
+    if (forward_status == CUDNN_STATUS_NOT_SUPPORTED && state.persist_algo_active
+        && !stream_is_capturing())
     {
         state.persist_algo_failed = true;
         state.rnn_desc.reset();
@@ -498,6 +605,12 @@ void CudnnRnnState::cudnn_rnn_forward_(const CudnnRnnShapeSlot& initial_shape,
         selected_shape = &reconfigure();
         forward_status = run_forward();
     }
+
+    if (forward_status != CUDNN_STATUS_SUCCESS)
+        throw_cudnn_capture_failure(forward_status, "cudnnRNNForward",
+                                    cudnn_rnn_configuration_(*selected_shape,
+                                                             is_training ? "TRAINING"
+                                                                         : "INFERENCE"));
     CHECK_CUDNN(forward_status);
 }
 
@@ -519,7 +632,7 @@ void CudnnRnnState::cudnn_rnn_backward_(const CudnnRnnShapeSlot& shape,
         ? static_cast<uint8_t*>(forward_state.data()) + get_aligned_bytes(state.weight_space_bytes)
         : nullptr;
 
-    CHECK_CUDNN(cudnnRNNBackwardData_v8(
+    const cudnnStatus_t backward_data_status = cudnnRNNBackwardData_v8(
         device::get_cudnn_handle(),
         state.rnn_desc,
         shape.seq_dev.as<int32_t>(),
@@ -529,13 +642,18 @@ void CudnnRnnState::cudnn_rnn_backward_(const CudnnRnnShapeSlot& shape,
         second_state_desc, nullptr, nullptr, nullptr,
         size_t(state.weight_space_bytes), forward_state.data(),
         size_t(shape.workspace_bytes), workspace,
-        size_t(shape.reserve_space_bytes), reserve));
+        size_t(shape.reserve_space_bytes), reserve);
+
+    if (backward_data_status != CUDNN_STATUS_SUCCESS)
+        throw_cudnn_capture_failure(backward_data_status, "cudnnRNNBackwardData_v8",
+                                    cudnn_rnn_configuration_(shape, "BACKWARD_DATA"));
+    CHECK_CUDNN(backward_data_status);
 
     backward_scratch.grow_to(state.weight_space_bytes);
     device::set_zero_async(backward_scratch.data(), state.weight_space_bytes,
                            device::get_compute_stream());
 
-    CHECK_CUDNN(cudnnRNNBackwardWeights_v8(
+    const cudnnStatus_t backward_weights_status = cudnnRNNBackwardWeights_v8(
         device::get_cudnn_handle(),
         state.rnn_desc,
         CUDNN_WGRAD_MODE_ADD,
@@ -545,7 +663,13 @@ void CudnnRnnState::cudnn_rnn_backward_(const CudnnRnnShapeSlot& shape,
         shape.y_desc, y,
         size_t(state.weight_space_bytes), backward_scratch.data(),
         size_t(shape.workspace_bytes), workspace,
-        size_t(shape.reserve_space_bytes), reserve));
+        size_t(shape.reserve_space_bytes), reserve);
+
+    if (backward_weights_status != CUDNN_STATUS_SUCCESS)
+        throw_cudnn_capture_failure(backward_weights_status,
+                                    "cudnnRNNBackwardWeights_v8",
+                                    cudnn_rnn_configuration_(shape, "BACKWARD_WEIGHTS"));
+    CHECK_CUDNN(backward_weights_status);
 }
 
 void CudnnRnnState::drive_cudnn_forward_(const CudnnRnnDims& dims,

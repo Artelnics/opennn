@@ -78,7 +78,8 @@ static void add_recurrent_stack(NeuralNetwork& network,
 static void add_regression_output(NeuralNetwork& network,
                                   const Shape& output_shape,
                                   const string& output_label,
-                                  const char* clamping_method)
+                                  Clamping::ClampingMethod clamping_method
+                                      = Clamping::ClampingMethod::Clamping)
 {
     network.add_layer(make_unique<Dense>(network.get_output_shape(),
                                          output_shape,
@@ -88,9 +89,7 @@ static void add_regression_output(NeuralNetwork& network,
 
     network.add_layer(make_unique<Unscaling>(output_shape));
 
-    auto clamping = make_unique<Clamping>(output_shape);
-    if (clamping_method) clamping->set_clamping_method(clamping_method);
-    network.add_layer(std::move(clamping));
+    network.add_layer(make_unique<Clamping>(output_shape, clamping_method));
 }
 
 ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
@@ -103,7 +102,7 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
 
     add_dense_stack(*this, complexity_dimensions, hidden_activation);
 
-    add_regression_output(*this, output_shape, "approximation_layer", nullptr);
+    add_regression_output(*this, output_shape, "approximation_layer");
 
     finalize_build(*this);
 }
@@ -138,7 +137,8 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
                         [](const Shape& in, const Shape& out, const string& label)
                         { return make_unique<Recurrent>(in, out, "Tanh", label); });
 
-    add_regression_output(*this, output_shape, "forecasting_layer", "NoClamping");
+    add_regression_output(*this, output_shape, "forecasting_layer",
+                          Clamping::ClampingMethod::NoClamping);
 
     finalize_build(*this);
 }
@@ -154,7 +154,8 @@ ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
                         [](const Shape& in, const Shape& out, const string& label)
                         { return make_unique<LongShortTermMemory>(in, out, "Tanh", "Sigmoid", label); });
 
-    add_regression_output(*this, output_shape, "forecasting_layer", "NoClamping");
+    add_regression_output(*this, output_shape, "forecasting_layer",
+                          Clamping::ClampingMethod::NoClamping);
 
     finalize_build(*this);
 }

@@ -112,11 +112,7 @@ void DetectionV8Operator::back_propagate(ForwardPropagation& forward_propagation
 }
 
 DetectionV8::DetectionV8(const Shape& new_input_shape, const string& new_label)
-    : Layer(LayerType::DetectionV8)
-{
-    operators = {&detection};
-    set(new_input_shape, new_label);
-}
+    : DetectionV8(new_input_shape, 1, new_label) {}
 
 DetectionV8::DetectionV8(const Shape& new_input_shape, Index reg_max, const string& new_label)
     : Layer(LayerType::DetectionV8)
@@ -149,14 +145,7 @@ void DetectionV8::configure_operator()
 
 void DetectionV8::read_JSON_body(const Json* root)
 {
-    const Index classes  = read_json_index(root, "ClassesNumber");
-    const Index gs       = read_json_index(root, "GridSize");
-    const Index gw       = read_json_index(root, "GridWidth");
-    const Json* rm_node  = root ? root->find("RegMax") : nullptr;
-    const Index rm       = rm_node ? Index(read_json_index(root, "RegMax")) : Index(1);
-    detection.reg_max    = max(Index(1), rm);
-    const Index box_ch   = 4 * detection.reg_max;
-    input_shape          = Shape{gs, gw, box_ch + classes};
+    detection.reg_max = max(Index(1), Index(read_json_index(root, "RegMax", 1)));
     configure_operator();
 }
 

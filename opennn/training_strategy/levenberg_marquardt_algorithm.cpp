@@ -25,21 +25,10 @@ namespace opennn
 LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(Loss* new_loss)
     : Optimizer(new_loss)
 {
-    set_default();
-}
-
-void LevenbergMarquardtAlgorithm::set_default()
-{
     name = "LevenbergMarquardt";
-
-    minimum_loss_decrease = 0.0f;
-    training_loss_goal = 0.0f;
     maximum_validation_failures = 1000;
-
     maximum_epochs = 1000;
     maximum_time = 3600.0f;
-
-    display_period = 10;
 }
 
 void LevenbergMarquardtAlgorithm::back_propagate(const Batch& batch,
@@ -49,10 +38,6 @@ void LevenbergMarquardtAlgorithm::back_propagate(const Batch& batch,
     if (batch.is_empty()) return;
 
     calculate_errors(batch, forward_propagation, back_propagation_lm);
-
-    calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
-
-    calculate_error(batch, forward_propagation, back_propagation_lm);
 
     compute_jacobian(batch, forward_propagation, back_propagation_lm);
 
@@ -88,14 +73,8 @@ void LevenbergMarquardtAlgorithm::calculate_errors(const Batch& batch,
              "LevenbergMarquardtAlgorithm: outputs ({}), targets ({}) and errors ({}) sizes do not match. The dataset target count does not match the network outputs.", output.size(), target.size(), back_propagation_lm.errors.size());
 
     back_propagation_lm.errors.noalias() = output - target;
-}
-
-void LevenbergMarquardtAlgorithm::calculate_error(const Batch&,
-                                                   const ForwardPropagation&,
-                                                   BackPropagationLM& back_propagation_lm) const
-{
-    back_propagation_lm.error = back_propagation_lm.squared_errors.sum()
-                              / float(back_propagation_lm.squared_errors.size());
+    back_propagation_lm.error = back_propagation_lm.errors.squaredNorm()
+                              / float(back_propagation_lm.errors.size());
 }
 
 static void lm_activation_derivative(ActivationFunction activation_function, const MatrixMap& outputs, MatrixR& result)
@@ -261,7 +240,6 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
     prepare_full_batch_training(context, "Training with Levenberg-Marquardt algorithm...");
 
     BackPropagationLM training_back_propagation_lm(context.training_samples_number, loss);
-    BackPropagationLM validation_back_propagation_lm(context.validation_samples_number, loss);
 
     const Index parameters_number = neural_network->get_parameters_buffer_size();
 
@@ -290,11 +268,15 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
 
     hooks.validation_error = [&]
     {
-        calculate_errors(*context.validation_batch, *context.validation_forward_propagation, validation_back_propagation_lm);
-        calculate_squared_errors(*context.validation_batch, *context.validation_forward_propagation, validation_back_propagation_lm);
-        calculate_error(*context.validation_batch, *context.validation_forward_propagation, validation_back_propagation_lm);
+        const VectorMap output = context.validation_forward_propagation
+            ->get_last_trainable_layer_outputs().as_vector();
+        const VectorMap target = context.validation_batch->get_targets().as_vector();
 
-        return validation_back_propagation_lm.error;
+        throw_if(output.size() != target.size(),
+                 "LevenbergMarquardtAlgorithm: validation outputs ({}) and targets ({}) sizes do not match.",
+                 output.size(), target.size());
+
+        return (output - target).squaredNorm() / float(output.size());
     };
 
     hooks.display_extra = [&]
@@ -352,10 +334,6 @@ void LevenbergMarquardtAlgorithm::update_full_batch_parameters(const Batch& batc
                                           forward_propagation);
 
         calculate_errors(batch, forward_propagation, back_propagation_lm);
-
-        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
-
-        calculate_error(batch, forward_propagation, back_propagation_lm);
 
         const float candidate_regularization = loss->calculate_regularization(potential_parameters);
         float new_loss = error + candidate_regularization;
@@ -422,16 +400,6 @@ void LevenbergMarquardtAlgorithm::from_JSON(const JsonDocument& document)
 
 BackPropagationLM::BackPropagationLM(const Index new_samples_number, Loss* new_loss)
 {
-    set(new_samples_number, new_loss);
-}
-
-void BackPropagationLM::set(const Index new_samples_number, Loss* new_loss)
-{
-    samples_number = new_samples_number;
-    error = 0.0f;
-    regularization = 0.0f;
-    loss = 0.0f;
-
     if (!new_loss || !new_loss->get_neural_network() || new_samples_number == 0) return;
 
     const NeuralNetwork* neural_network = new_loss->get_neural_network();
@@ -441,7 +409,6 @@ void BackPropagationLM::set(const Index new_samples_number, Loss* new_loss)
     const Index total_error_terms = new_samples_number * outputs_number;
 
     errors                  = VectorR::Zero(total_error_terms);
-    squared_errors          = VectorR::Zero(total_error_terms);
     squared_errors_jacobian = MatrixR::Zero(total_error_terms, parameters_number);
     gradient                = VectorR::Zero(parameters_number);
     hessian                 = MatrixR::Zero(parameters_number, parameters_number);

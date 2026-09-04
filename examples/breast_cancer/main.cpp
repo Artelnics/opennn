@@ -8,14 +8,11 @@
 
 #include <iostream>
 
+#include "opennn/core/configuration.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/neural_network/neural_network.h"
 #include "opennn/models/models.h"
 #include "opennn/training_strategy/training_strategy.h"
 #include "opennn/testing_analysis/testing_analysis.h"
-#include "opennn/training_strategy/optimizer.h"
-#include "opennn/training_strategy/stochastic_gradient_descent.h"
-#include "opennn/core/random_utilities.h"
 
 using namespace opennn;
 
@@ -29,27 +26,15 @@ int main()
 
         TabularDataset dataset("../data/breast_cancer/breast_cancer.csv", ";", true, false);
 
-        const Index neurons_number = 3;
+        ClassificationNetwork network(dataset.get_input_shape(), {3}, dataset.get_target_shape());
 
-        ClassificationNetwork classification_network(dataset.get_input_shape(), { neurons_number}, dataset.get_target_shape());
-
-        TrainingStrategy training_strategy(&classification_network, &dataset);
-
-        training_strategy.set_loss("WeightedSquaredError");
-        training_strategy.get_loss()->set_regularization("L1");
-        training_strategy.get_loss()->set_regularization_weight(float(0.001));
-
-        training_strategy.set_optimization_algorithm("StochasticGradientDescent");
-        StochasticGradientDescent* sgd = dynamic_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());
-        sgd->set_maximum_epochs(1000);
+        TrainingStrategy training_strategy(&network, &dataset);
 
         training_strategy.train();
 
-        TestingAnalysis testing_analysis(&classification_network, &dataset);
+        TestingAnalysis testing_analysis(&network, &dataset);
 
         testing_analysis.print_binary_classification_tests();
-
-        TestingAnalysis::RocAnalysis roc = testing_analysis.perform_roc_analysis();
 
         cout << "Good bye!" << endl;
 

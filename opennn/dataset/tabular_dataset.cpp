@@ -61,7 +61,7 @@ void TabularDataset::set(const Index new_samples_number,
     target_shape = { new_targets_number };
     data.resize(new_samples_number, new_features_number);
     set_storage_mode(StorageMode::Matrix);
-    variables.resize(new_features_number);
+    variables.assign(size_t(new_features_number), Variable{});
 
     for (Index i = 0; i < new_features_number; ++i)
     {
@@ -72,7 +72,7 @@ void TabularDataset::set(const Index new_samples_number,
         variable.role = (i < new_inputs_number) ? VariableRole::Input : VariableRole::Target;
     }
 
-    sample_roles.resize(new_samples_number, SampleRole::Training);
+    sample_roles.assign(size_t(new_samples_number), SampleRole::Training);
     split_samples_random();
 }
 
@@ -100,8 +100,9 @@ MatrixR TabularDataset::get_variable_data(Index variable_index) const
 
 MatrixR TabularDataset::get_variable_data(Index variable_index, const vector<Index>& row_indices) const
 {
-    MatrixR variable_data(row_indices.size(), get_feature_indices(variable_index).size());
-    fill_tensor_data(data, row_indices, get_feature_indices(variable_index),
+    const vector<Index> feature_indices = get_feature_indices(variable_index);
+    MatrixR variable_data(row_indices.size(), feature_indices.size());
+    fill_tensor_data(data, row_indices, feature_indices,
                      span<float>(variable_data.data(), size_t(variable_data.size())));
     return variable_data;
 }
@@ -926,21 +927,16 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
 
 FeatureScaling TabularDataset::calculate_used_feature_scaling(VariableRole role) const
 {
-    const string role_name = variable_role_to_string(role);
     FeatureScaling scaling;
-    scaling.descriptives = calculate_feature_descriptives(role_name);
-
-    const vector<string> scaler_names = get_feature_scalers(role_name);
-    scaling.scalers.resize(scaler_names.size());
-    ranges::transform(scaler_names, scaling.scalers.begin(), string_to_scaler_method);
+    scaling.descriptives = calculate_feature_descriptives(variable_role_to_string(role));
+    scaling.scalers = get_feature_scaler_methods(role);
 
     return scaling;
 }
 
-void TabularDataset::apply_scaler(Index feature_index, const string& scaler, const Descriptives& desc, bool unscale)
+void TabularDataset::apply_scaler(Index feature_index, ScalerMethod method,
+                                  const Descriptives& desc, bool unscale)
 {
-    const ScalerMethod method = string_to_scaler_method(scaler);
-
     if (method == ScalerMethod::None)
         return;
 
@@ -1012,10 +1008,11 @@ vector<Descriptives> TabularDataset::scale_data()
     const Index features_number = get_features_number();
 
     const vector<Descriptives> feature_descriptives = calculate_feature_descriptives();
+    const vector<ScalerMethod> feature_scalers = get_feature_scaler_methods();
 
     #pragma omp parallel for
     for (Index i = 0; i < features_number; ++i)
-        apply_scaler(i, scaler_method_to_string(variables[get_variable_index(i)].scaler), feature_descriptives[i], false);
+        apply_scaler(i, feature_scalers[size_t(i)], feature_descriptives[i], false);
 
     return feature_descriptives;
 }
@@ -1023,27 +1020,24 @@ vector<Descriptives> TabularDataset::scale_data()
 vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
 {
     const vector<Index> feature_indices = get_feature_indices(variable_role);
-    const vector<string> scalers = get_feature_scalers(variable_role);
+    const vector<ScalerMethod> scalers =
+        get_feature_scaler_methods(string_to_variable_role(variable_role));
 
-    const auto statistic_sample_indices = [this]
-    {
-        vector<Index> indices = get_sample_indices(SampleRole::Training);
-        if (indices.empty())
-            indices = get_used_sample_indices();
-        return indices;
-    };
+    vector<Index> statistic_sample_indices = get_sample_indices(SampleRole::Training);
+    if (statistic_sample_indices.empty())
+        statistic_sample_indices = get_used_sample_indices();
 
     if (storage_mode == StorageMode::BinaryFile)
     {
 
         if (cache_transform_descriptives.empty())
-            cache_transform_descriptives = compute_descriptives_streaming(statistic_sample_indices());
+            cache_transform_descriptives = compute_descriptives_streaming(statistic_sample_indices);
 
         if (cache_feature_transforms.empty())
             cache_feature_transforms.assign(size_t(cache_columns_number), ScalerMethod::None);
 
         for (size_t i = 0; i < feature_indices.size(); ++i)
-            cache_feature_transforms[size_t(feature_indices[i])] = string_to_scaler_method(scalers[i]);
+            cache_feature_transforms[size_t(feature_indices[i])] = scalers[i];
 
         vector<Descriptives> feature_descriptives(feature_indices.size());
         ranges::transform(feature_indices, feature_descriptives.begin(),
@@ -1053,7 +1047,7 @@ vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
     }
 
     const vector<Descriptives> feature_descriptives =
-        calculate_feature_descriptives(variable_role, statistic_sample_indices());
+        calculate_feature_descriptives(variable_role, statistic_sample_indices);
 
     #pragma omp parallel for
     for (Index i = 0; i < Index(feature_indices.size()); ++i)
@@ -1105,10 +1099,7 @@ FeatureScaling TabularDataset::prepare_training_scaling(
                                             statistic_sample_indices);
     }
 
-    const vector<string> scaler_names =
-        get_feature_scalers(variable_role_to_string(role));
-    vector<ScalerMethod> feature_scalers(scaler_names.size());
-    ranges::transform(scaler_names, feature_scalers.begin(), string_to_scaler_method);
+    const vector<ScalerMethod> feature_scalers = get_feature_scaler_methods(role);
 
     const Index columns_number = storage_mode == StorageMode::BinaryFile
                                ? cache_columns_number
@@ -1182,7 +1173,8 @@ void TabularDataset::unscale_features(const string& variable_role,
                                             const vector<Descriptives>& feature_descriptives)
 {
     const vector<Index> feature_indices = get_feature_indices(variable_role);
-    const vector<string> scalers = get_feature_scalers(variable_role);
+    const vector<ScalerMethod> scalers =
+        get_feature_scaler_methods(string_to_variable_role(variable_role));
 
     if (storage_mode == StorageMode::BinaryFile)
     {
@@ -1563,7 +1555,6 @@ void TabularDataset::read_csv()
 
     CsvReader::Result parsed =
         CsvReader(
-            file_separator,
             [this](const string_view line)
             {
                 check_separators(line);
@@ -1573,13 +1564,23 @@ void TabularDataset::read_csv()
     const bool has_quotes = parsed.has_quotes;
     vector<string_view>& lines = parsed.lines;
 
-    string header_scratch;
-
     throw_if(lines.empty(),
              "File {} is empty or contains no valid data rows.",
              data_path.string());
 
     read_data_file_preview(lines, file_separator, has_quotes);
+
+    const DateFormat date_format =
+        configure_csv_columns(lines, file_separator, has_quotes);
+
+    load_csv_data(lines, file_separator, has_quotes, date_format);
+}
+
+DateFormat TabularDataset::configure_csv_columns(vector<string_view>& lines,
+                                                  const char file_separator,
+                                                  const bool has_quotes)
+{
+    string header_scratch;
 
     const vector<string_view> header_tokens =
         get_token_views_maybe_quoted(
@@ -1681,9 +1682,9 @@ void TabularDataset::read_csv()
 
     const vector<Variable> previous_variables = variables;
 
-    Index variables_number = columns_number - id_offset;
+    const Index variables_number = columns_number - id_offset;
 
-    variables.resize(size_t(variables_number));
+    variables.assign(size_t(variables_number), Variable{});
 
     if(has_header)
     {
@@ -1709,40 +1710,6 @@ void TabularDataset::read_csv()
         }
     }
 
-    vector<Index> variable_token_indices(variables.size());
-
-    iota(variable_token_indices.begin(),
-         variable_token_indices.end(),
-         id_offset);
-
-    for(const size_t i :
-        views::iota(size_t(0), variables.size()) | views::reverse)
-    {
-        if(!looks_like_id_variable(
-               variables[i],
-               samples_number))
-        {
-            continue;
-        }
-
-        cout << "Excluding identifier column: "
-             << variables[i].name
-             << endl;
-
-        variables.erase(variables.begin() + Index(i));
-
-        variable_token_indices.erase(
-            variable_token_indices.begin() + Index(i));
-    }
-
-    throw_if(variables.empty(),
-             "Data file contains no variables (all columns are identifiers).");
-
-    variables_number = ssize(variables);
-
-    const Index required_tokens =
-        variable_token_indices.back() + 1;
-
     for(Variable& variable : variables)
     {
         const vector<Variable>::const_iterator previous =
@@ -1759,6 +1726,36 @@ void TabularDataset::read_csv()
         variable.role = previous->role;
         variable.scaler = previous->scaler;
     }
+
+    return date_format;
+}
+
+void TabularDataset::load_csv_data(const vector<string_view>& lines,
+                                   const char file_separator,
+                                   const bool has_quotes,
+                                   const DateFormat date_format)
+{
+    const Index samples_number = ssize(lines);
+    const Index id_offset = has_sample_ids ? 1 : 0;
+
+    vector<Index> variable_token_indices(variables.size());
+    iota(variable_token_indices.begin(), variable_token_indices.end(), id_offset);
+
+    for(const size_t i : views::iota(size_t(0), variables.size()) | views::reverse)
+    {
+        if(!looks_like_id_variable(variables[i], samples_number)) continue;
+
+        cout << "Excluding identifier column: " << variables[i].name << endl;
+
+        variables.erase(variables.begin() + Index(i));
+        variable_token_indices.erase(variable_token_indices.begin() + Index(i));
+    }
+
+    throw_if(variables.empty(),
+             "Data file contains no variables (all columns are identifiers).");
+
+    const Index variables_number = ssize(variables);
+    const Index required_tokens = variable_token_indices.back() + 1;
 
     sample_roles.assign(size_t(samples_number), SampleRole::Training);
 
@@ -2758,13 +2755,35 @@ DateFormat TabularDataset::infer_column_types(
 
 vector<string> TabularDataset::get_feature_scalers(const string& variable_role) const
 {
-    const vector<Variable> role_variables = get_variables(variable_role);
+    const vector<ScalerMethod> methods =
+        get_feature_scaler_methods(string_to_variable_role(variable_role));
 
-    vector<string> scalers;
-    scalers.reserve(get_features_number(variable_role));
+    vector<string> scalers(methods.size());
+    ranges::transform(methods, scalers.begin(),
+                      [](ScalerMethod method) { return scaler_method_to_string(method); });
 
-    for (const Variable& var : role_variables)
-        scalers.insert(scalers.end(), var.get_feature_count(), scaler_method_to_string(var.scaler));
+    return scalers;
+}
+
+vector<ScalerMethod> TabularDataset::get_feature_scaler_methods() const
+{
+    vector<ScalerMethod> scalers;
+    scalers.reserve(size_t(get_features_number()));
+
+    for (const Variable& variable : variables)
+        scalers.insert(scalers.end(), size_t(variable.get_feature_count()), variable.scaler);
+
+    return scalers;
+}
+
+vector<ScalerMethod> TabularDataset::get_feature_scaler_methods(VariableRole role) const
+{
+    vector<ScalerMethod> scalers;
+    scalers.reserve(size_t(get_features_number(role)));
+
+    for (const Variable& variable : variables)
+        if (role_applies_to(variable.role, role))
+            scalers.insert(scalers.end(), size_t(variable.get_feature_count()), variable.scaler);
 
     return scalers;
 }

@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "opennn/core/variable.h"
 #include "opennn/neural_network/layers/layer.h"
 #include "opennn/neural_network/operators/tokenizer_operator.h"
 
@@ -18,7 +19,9 @@ class Tokenizer final : public Layer
 {
 public:
 
-    Tokenizer(const Shape& = {}, const string& = "tokenizer");
+    Tokenizer(const Shape& = {},
+              const string& = "tokenizer",
+              VariableRole = VariableRole::Input);
 
     Shape get_output_shape() const noexcept override { return input_shape; }
 
@@ -29,6 +32,7 @@ public:
 
     void set_tokenizer(unique_ptr<TokenizerOperator>);
     const TokenizerOperator* get_tokenizer() const noexcept { return tokenizer.get(); }
+    VariableRole get_variable_role() const noexcept { return variable_role; }
 
     void set_vocabulary(const vector<string>&);
     const vector<string>& get_vocabulary() const;
@@ -41,6 +45,7 @@ public:
 private:
 
     unique_ptr<TokenizerOperator> tokenizer;
+    VariableRole variable_role = VariableRole::Input;
 };
 
 }

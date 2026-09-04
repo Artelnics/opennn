@@ -40,11 +40,19 @@ __device__ __forceinline__ void adam_update_one(
     p -= lr * m / (sqrtf(v) + eps);
 }
 
+// Only the first moment is narrowable. At beta_1 = 0.9 its per-step increment is
+// 0.1 relative, far above BF16's 3.9e-3 half-ULP, so it still integrates; at
+// beta_2 = 0.999 the second moment's increment is ~1e-3 relative, below half a
+// ULP, so a BF16 v would freeze under round-to-nearest and the update would
+// divide by a stale denominator for the rest of the run. v and p stay FP32.
+// Moment is storage only: it is widened on load and rounded on store, so the
+// arithmetic in adam_update_one is the same in both instantiations.
+template<typename Moment>
 __global__ void adam_update_kernel(
     const int n_vec,
     const int n,
     float* __restrict__ parameters,
-    float* __restrict__ m,
+    Moment* __restrict__ m,
     float* __restrict__ v,
     const float* __restrict__ gradients,
     __nv_bfloat16* __restrict__ parameters_bf16_mirror,
@@ -64,7 +72,6 @@ __global__ void adam_update_kernel(
     const Index stride = Index(blockDim.x) * gridDim.x;
 
     float4* __restrict__ const       p4 = reinterpret_cast<float4*>(parameters);
-    float4* __restrict__ const       m4 = reinterpret_cast<float4*>(m);
     float4* __restrict__ const       v4 = reinterpret_cast<float4*>(v);
     const float4* __restrict__ const g4 = reinterpret_cast<const float4*>(gradients);
     __nv_bfloat162* __restrict__ const bf2 = reinterpret_cast<__nv_bfloat162*>(parameters_bf16_mirror);
@@ -72,18 +79,20 @@ __global__ void adam_update_kernel(
     for (Index i = tid; i < n_vec; i += stride)
     {
         float4 P = p4[i];
-        float4 M = m4[i];
         float4 V = v4[i];
         const float4 G = g4[i];
 
-        adam_update_one(P.x, M.x, V.x, G.x, beta_1, one_minus_beta_1, beta_2, one_minus_beta_2, lr, eps);
-        adam_update_one(P.y, M.y, V.y, G.y, beta_1, one_minus_beta_1, beta_2, one_minus_beta_2, lr, eps);
-        adam_update_one(P.z, M.z, V.z, G.z, beta_1, one_minus_beta_1, beta_2, one_minus_beta_2, lr, eps);
-        adam_update_one(P.w, M.w, V.w, G.w, beta_1, one_minus_beta_1, beta_2, one_minus_beta_2, lr, eps);
+        float M[4];
+        VecIO<Moment, 4>::load_float(m + i * 4, M);
+
+        adam_update_one(P.x, M[0], V.x, G.x, beta_1, one_minus_beta_1, beta_2, one_minus_beta_2, lr, eps);
+        adam_update_one(P.y, M[1], V.y, G.y, beta_1, one_minus_beta_1, beta_2, one_minus_beta_2, lr, eps);
+        adam_update_one(P.z, M[2], V.z, G.z, beta_1, one_minus_beta_1, beta_2, one_minus_beta_2, lr, eps);
+        adam_update_one(P.w, M[3], V.w, G.w, beta_1, one_minus_beta_1, beta_2, one_minus_beta_2, lr, eps);
 
         p4[i] = P;
-        m4[i] = M;
         v4[i] = V;
+        VecIO<Moment, 4>::store_float(m + i * 4, M);
 
         store_bf16_mirror4(bf2, i, P);
     }
@@ -91,23 +100,52 @@ __global__ void adam_update_kernel(
     const int tail_start = n_vec * 4;
     for (Index i = tail_start + tid; i < n; i += stride)
     {
-        adam_update_one(parameters[i], m[i], v[i], gradients[i],
+        float moment = element_to_float(m[i]);
+
+        adam_update_one(parameters[i], moment, v[i], gradients[i],
                         beta_1, one_minus_beta_1, beta_2, one_minus_beta_2,
                         lr, eps);
+
+        element_from_float(moment, m[i]);
         store_bf16_mirror(parameters_bf16_mirror, i, parameters[i]);
     }
 }
 
-static bool adam_vector_aligned(const float* parameters, const float* m, const float* v,
-                                const float* gradients, const __nv_bfloat16* mirror)
+template<typename Moment>
+static void launch_adam_update(cudaStream_t stream,
+                               const Index n,
+                               float* parameters,
+                               Moment* m,
+                               float* v,
+                               const float* gradients,
+                               __nv_bfloat16* parameters_bf16_mirror,
+                               const float beta_1,
+                               const float beta_2,
+                               const float effective_lr,
+                               const float effective_eps,
+                               const float* effective_lr_device,
+                               const float* effective_eps_device)
 {
-    return are_aligned<16>(parameters, m, v, gradients) && is_aligned<4>(mirror);
+    // A four-wide moment access is 16 B in FP32 but only 8 B in BF16. Every slot
+    // starts ALIGN_BYTES-aligned, so a slice offset that clears the 16 B check on
+    // the FP32 pointers is already a multiple of four elements and clears the 8 B
+    // one on m too: narrowing m never pushes a slice onto the scalar tail.
+    const bool aligned = are_aligned<16>(parameters, v, gradients)
+                      && is_aligned<int(sizeof(Moment)) * 4>(m)
+                      && is_aligned<4>(parameters_bf16_mirror);
+
+    launch_vec_on<4>(stream, n, aligned, adam_update_kernel<Moment>,
+                   parameters, m, v, gradients, parameters_bf16_mirror,
+                   beta_1, 1.0f - beta_1, beta_2, 1.0f - beta_2,
+                   effective_lr, effective_eps,
+                   effective_lr_device, effective_eps_device);
 }
 
 void adam_update_cuda(
     const Index n,
     float* parameters,
-    float* m,
+    void* m,
+    const bool m_is_bf16,
     float* v,
     const float* gradients,
     const float beta_1,
@@ -123,13 +161,14 @@ void adam_update_cuda(
     const float effective_lr = learning_rate * sqrt_bias_correction_2 / bias_correction_1;
     const float effective_eps = epsilon * sqrt_bias_correction_2;
 
-    const bool aligned = adam_vector_aligned(parameters, m, v, gradients, parameters_bf16_mirror);
-
-    launch_vec_on<4>(opennn::device::get_compute_stream(), n, aligned, adam_update_kernel,
-                   parameters, m, v, gradients, parameters_bf16_mirror,
-                   beta_1, 1.0f - beta_1, beta_2, 1.0f - beta_2,
-                   effective_lr, effective_eps,
-                   static_cast<const float*>(nullptr), static_cast<const float*>(nullptr));
+    dispatch_float_bf16(m_is_bf16, [&]<typename Moment>()
+    {
+        launch_adam_update<Moment>(opennn::device::get_compute_stream(), n,
+                                   parameters, static_cast<Moment*>(m), v, gradients,
+                                   parameters_bf16_mirror,
+                                   beta_1, beta_2, effective_lr, effective_eps,
+                                   nullptr, nullptr);
+    });
 }
 
 __global__ void adam_prepare_kernel(int* __restrict__ step,
@@ -170,7 +209,8 @@ void adam_prepare_capturable_cuda(
 void adam_update_prepared_cuda(
     const Index n,
     float* parameters,
-    float* m,
+    void* m,
+    const bool m_is_bf16,
     float* v,
     const float* gradients,
     const float beta_1,
@@ -183,14 +223,14 @@ void adam_update_prepared_cuda(
     if (n == 0) return;
     if (stream == nullptr) stream = opennn::device::get_compute_stream();
 
-    const bool aligned = adam_vector_aligned(parameters, m, v, gradients, parameters_bf16_mirror);
-
-    launch_vec_on<4>(stream, n, aligned, adam_update_kernel,
-                   parameters, m, v, gradients, parameters_bf16_mirror,
-                   beta_1, 1.0f - beta_1, beta_2, 1.0f - beta_2,
-                   0.0f, 0.0f,
-                   static_cast<const float*>(effective_lr_device),
-                   static_cast<const float*>(effective_eps_device));
+    dispatch_float_bf16(m_is_bf16, [&]<typename Moment>()
+    {
+        launch_adam_update<Moment>(stream, n,
+                                   parameters, static_cast<Moment*>(m), v, gradients,
+                                   parameters_bf16_mirror,
+                                   beta_1, beta_2, 0.0f, 0.0f,
+                                   effective_lr_device, effective_eps_device);
+    });
 }
 
 __device__ __forceinline__ void sgd_update_one(

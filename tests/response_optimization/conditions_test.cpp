@@ -730,6 +730,45 @@ TEST_P(ResponseDriver, CategoricalResultsSurviveAConstraint)
 }
 
 
+TEST_P(ResponseDriver, CategoricalConstraintSelectsRequestedCategory)
+{
+    CategoricalApproximation setup({"x1", "x2"}, "material", {"steel", "copper", "brass"});
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("y1", Sense::Minimize);
+    optimization->add_constraint("copper", Condition::Equal, {1.0f});
+
+    const MatrixR results = optimization->perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+
+    for (Index i = 0; i < results.rows(); i++)
+        EXPECT_EQ(read_category(results, i, 2, 3), 1) << "row " << i;
+}
+
+
+// The same level, named through the block it belongs to. Two blocks may share a level name,
+// and only the qualified form says which of them was meant.
+
+TEST_P(ResponseDriver, QualifiedCategoricalConstraintSelectsRequestedCategory)
+{
+    CategoricalApproximation setup({"x1", "x2"}, "material", {"steel", "copper", "brass"});
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("y1", Sense::Minimize);
+    optimization->add_constraint("material.copper", Condition::Equal, {1.0f});
+
+    const MatrixR results = optimization->perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+
+    for (Index i = 0; i < results.rows(); i++)
+        EXPECT_EQ(read_category(results, i, 2, 3), 1) << "row " << i;
+}
+
+
 TEST_P(ResponseDriver, CategoricalMultiObjectiveResultsAreOneHot)
 {
     CategoricalApproximation setup({"x1", "x2"}, "material", {"steel", "copper", "brass"}, 2);

@@ -179,11 +179,15 @@ void grouped_attention_forward(const TensorView& query, const TensorView& key, c
         }
     };
 
+    // Scratch for the whole team rather than `min(threads, heads)`: a smaller
+    // team would make libgomp shrink its pool and rebuild it at the next full
+    // region (see Backend::set_threads_number). Threads past the last head
+    // draw no iterations.
     const Index heads_count = batch * n_query_heads;
-    const int workers = max(1, min(omp_get_max_threads(), to_int(heads_count)));
+    const int workers = max(1, omp_get_max_threads());
     vector<float> score_storage(size_t(workers) * size_t(key_seq));
 
-    #pragma omp parallel num_threads(workers)
+    #pragma omp parallel
     {
         float* const scores = score_storage.data()
             + size_t(omp_get_thread_num()) * size_t(key_seq);
@@ -1200,16 +1204,15 @@ void GroupedQueryAttention::apply_input_shape(const Shape& new_input_shape)
 
 void GroupedQueryAttention::read_JSON_body(const Json* element)
 {
-    const Shape new_input_shape = string_to_shape(read_json_string(element, "InputDimensions"));
     const Index new_q_heads  = read_json_index(element, "QueryHeads");
     const Index new_kv_heads = read_json_index(element, "KeyValueHeads");
     const Index new_head_dim = read_json_index(element, "HeadDim");
     const float new_rope_theta  = read_json_float(element, "RopeTheta");
     const float new_rms_epsilon = read_json_float(element, "RmsEpsilon");
 
-    const bool new_use_qk_norm = element->has("QKNorm") ? read_json_bool(element, "QKNorm") : true;
+    const bool new_use_qk_norm = read_json_bool(element, "QKNorm", true);
 
-    set(new_input_shape, new_q_heads, new_kv_heads, new_head_dim,
+    set(get_input_shape(), new_q_heads, new_kv_heads, new_head_dim,
         new_rope_theta, new_rms_epsilon, new_use_qk_norm, get_label());
 }
 

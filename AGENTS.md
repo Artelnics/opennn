@@ -109,6 +109,24 @@ to `native`, which is right whenever the GPU is visible at configure time — if
 not, CMake falls back to a value that cannot compile the packed-bf16 kernels, so pass
 it explicitly (`-DCMAKE_CUDA_ARCHITECTURES=89` for Ada, `86` for Ampere).
 
+`OpenNN_ENABLE_ONEDNN` is `AUTO`: oneDNN is used when found, skipped with a status
+line when not, and `ON` turns a missing one into a configure error. It matters more
+than most flags — without it the CPU recurrent layers fall back to the built-in path,
+which measured **2.9x slower** on the benchmark's LSTM training cell and 1.9x on
+inference, against a PyTorch whose wheel bundles oneDNN regardless. `AUTO` finds an
+*installed* oneDNN; a prefix outside the standard paths and outside `$ONEDNN_ROOT`
+still needs `-DOpenNN_ONEDNN_ROOT=...`:
+
+```sh
+      -DOpenNN_ONEDNN_ROOT=/home/artelnics/onednn-omp
+```
+
+Prefer an **OpenMP** build of oneDNN. A TBB-threaded one works but gives oneDNN its
+own thread pool beside OpenNN's OpenMP one over the same cores; the configure warns
+when it detects that. Downstream code must branch on `OpenNN_ONEDNN_FOUND`, never on
+`OpenNN_ENABLE_ONEDNN` — the latter is a tri-state whose default is the string `AUTO`,
+and `if("AUTO")` is true in CMake.
+
 `OPENNN_HAS_CUDA` is set from a non-FORCE cache entry, so **a reconfigure keeps
 whichever CUDA decision the directory made first**. To flip a tree between CPU and
 CUDA, delete it and configure again rather than re-running `cmake` over it.

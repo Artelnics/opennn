@@ -220,6 +220,12 @@ Scaling::Scaling(const Shape& new_input_shape)
     set(new_input_shape);
 }
 
+Scaling::Scaling(const Shape& new_input_shape, const ScalerMethod method)
+    : Scaling(new_input_shape)
+{
+    set_scalers(method);
+}
+
 Scaling::Scaling(LayerType type, bool invert)
     : Layer(type, Trainability::Frozen)
 {
@@ -288,12 +294,16 @@ void Scaling::set_scalers(const vector<string>& scalers_str)
     refresh_op_storage(op_storage.get_device());
 }
 
-void Scaling::set_scalers(const string& scaler)
+void Scaling::set_scalers(const ScalerMethod method)
 {
-    const ScalerMethod method = string_to_scaler_method(scaler);
     ranges::fill(scalers, method);
     op_storage_dirty = true;
     refresh_op_storage(op_storage.get_device());
+}
+
+void Scaling::set_scalers(const string& scaler)
+{
+    set_scalers(string_to_scaler_method(scaler));
 }
 
 void Scaling::set_feature_scaling(const FeatureScaling& scaling)
@@ -452,6 +462,19 @@ string expression_literal(float value)
 
 }
 
+string Scaling::affine_expression(string_view input, const AffineMap& affine)
+{
+    if (affine.slope == 0.0f)
+        return expression_literal(affine.offset);
+    if (affine.slope == 1.0f && affine.offset == 0.0f)
+        return string(input);
+
+    string expression = string(input) + "*" + expression_literal(affine.slope);
+    if (affine.offset > 0.0f) expression += "+";
+    if (affine.offset != 0.0f) expression += expression_literal(affine.offset);
+    return expression;
+}
+
 string Scaling::write_expression(const vector<string>& input_names,
                                  const vector<string>&) const
 {
@@ -461,7 +484,6 @@ string Scaling::write_expression(const vector<string>& input_names,
              "Scaling::write_expression: layer not configured.");
 
     ostringstream buffer;
-    buffer.precision(10);
 
     for (Index i = 0; i < outputs_number; ++i)
     {
@@ -475,29 +497,13 @@ string Scaling::write_expression(const vector<string>& input_names,
             continue;
         }
 
-        const AffineMap affine =
-            scaling_affine(scaler, descriptives[feature], min_range, max_range);
-
-        buffer << "scaled_" << input_names[i] << " = ";
-
-        if (affine.slope == 0.0f)
-            buffer << expression_literal(affine.offset);
-        else if (affine.slope == 1.0f && affine.offset == 0.0f)
-            buffer << input_names[i];
-        else if (affine.offset == 0.0f)
-            buffer << input_names[i] << "*" << expression_literal(affine.slope);
-        else
-            buffer << input_names[i] << "*" << expression_literal(affine.slope)
-                   << "+" << expression_literal(affine.offset);
-
-        buffer << ";\n";
+        buffer << "scaled_" << input_names[i] << " = "
+               << affine_expression(input_names[i], scaling_affine(
+                      scaler, descriptives[feature], min_range, max_range))
+               << ";\n";
     }
 
-    string expression = buffer.str();
-    replace(expression, "+-", "-");
-    replace(expression, "--", "+");
-
-    return expression;
+    return buffer.str();
 }
 
 }

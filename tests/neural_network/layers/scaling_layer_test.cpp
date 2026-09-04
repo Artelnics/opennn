@@ -22,6 +22,10 @@ TEST(ScalingLayerTest, GeneralConstructor)
     EXPECT_EQ(scaling_layer_2d.get_input_shape(), Shape{ 1 });
     EXPECT_EQ(scaling_layer_2d.get_output_shape(), Shape{ 1 });
     EXPECT_EQ(scaling_layer_2d.get_name(), "Scaling");
+
+    Scaling image_scaling({2, 3, 4}, ScalerMethod::ImageMinMax);
+    EXPECT_EQ(image_scaling.get_scalers(),
+              vector<ScalerMethod>(4, ScalerMethod::ImageMinMax));
 }
 
 TEST(ScalingLayerTest, ImplementsFeatureScalingEndpoint)
@@ -47,6 +51,26 @@ TEST(ScalingLayerTest, ImplementsFeatureScalingEndpoint)
     EXPECT_FLOAT_EQ(actual.descriptives[0].minimum, 1.0f);
     EXPECT_FLOAT_EQ(actual.min_range, 0.0f);
     EXPECT_FLOAT_EQ(actual.max_range, 1.0f);
+}
+
+TEST(ScalingLayerTest, ScalingAndUnscalingExpressionsShareAffineFormatting)
+{
+    const vector<Descriptives> descriptives = {
+        Descriptives(1.0f, 9.0f, 5.0f, 2.0f)
+    };
+
+    Scaling scaling({1});
+    scaling.set_descriptives(descriptives);
+    scaling.set_scalers("MeanStandardDeviation");
+
+    Unscaling unscaling({1});
+    unscaling.set_descriptives(descriptives);
+    unscaling.set_scalers("MeanStandardDeviation");
+
+    EXPECT_EQ(scaling.write_expression({"x"}, {}),
+              "scaled_x = x*0.5-2.5;\n");
+    EXPECT_EQ(unscaling.write_expression({"x"}, {"y"}),
+              "y=x*2.0+5.0;\n");
 }
 
 TEST(ScalingLayerTest, ForwardPropagate)

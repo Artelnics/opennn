@@ -303,3 +303,46 @@ TEST(TextClassificationNetworkTest, CalculatesOutputsFromDocuments)
     EXPECT_EQ(outputs.cols(), 2);
     EXPECT_TRUE(outputs.allFinite());
 }
+
+TEST(TextClassificationNetworkTest, ClassifiesDocument)
+{
+    TextClassificationNetwork network(Shape{4, 3, 2}, Shape{1, 2}, Shape{2});
+
+    auto tokenizer = make_unique<WordLevelTokenizer>();
+    tokenizer->set_vocabulary({"[PAD]", "[UNK]", "alpha", "beta"});
+    network.set_tokenizer(std::move(tokenizer));
+
+    Variable emotion("emotion", "Target", VariableType::Categorical,
+                     "None", {"sadness", "joy"});
+    network.set_output_variables({emotion});
+    network.set_parameters(VectorR::Zero(network.get_parameters_buffer_size()));
+
+    const TextClassificationNetwork::Prediction prediction = network.classify("alpha beta");
+
+    EXPECT_EQ(prediction.category, "sadness");
+    EXPECT_FLOAT_EQ(prediction.confidence, 0.5f);
+}
+
+TEST(TextClassificationNetworkTest, ClassifiesBinaryDocument)
+{
+    TextClassificationNetwork network(Shape{4, 3, 2}, Shape{1, 2}, Shape{1});
+
+    auto tokenizer = make_unique<WordLevelTokenizer>();
+    tokenizer->set_vocabulary({"[PAD]", "[UNK]", "alpha", "beta"});
+    network.set_tokenizer(std::move(tokenizer));
+
+    Variable sentiment("sentiment", "Target", VariableType::Binary,
+                       "None", {"negative", "positive"});
+    network.set_output_variables({sentiment});
+    network.set_parameters(VectorR::Zero(network.get_parameters_buffer_size()));
+
+    Tensor<string, 1> documents(1);
+    documents(0) = "alpha beta";
+    const float positive_probability = network.calculate_text_outputs(documents)(0, 0);
+    const TextClassificationNetwork::Prediction prediction = network.classify("alpha beta");
+
+    EXPECT_EQ(prediction.category,
+              positive_probability >= 0.5f ? "positive" : "negative");
+    EXPECT_FLOAT_EQ(prediction.confidence,
+                    max(positive_probability, 1.0f - positive_probability));
+}

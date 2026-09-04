@@ -212,12 +212,18 @@ protected:
 
     vector<Descriptives> calculate_variable_descriptives_samples(bool positive) const;
 
+    vector<ScalerMethod> get_feature_scaler_methods() const;
+    vector<ScalerMethod> get_feature_scaler_methods(VariableRole) const;
+
     void unuse_samples_with_missing_targets(const vector<Index>&, const vector<Index>&);
 
     void on_used_samples_changed() override;
     void clear_cache_derived_state();
     void refresh_cache_statistics();
     vector<Descriptives> compute_descriptives_streaming(const vector<Index>&) const;
+
+    DateFormat configure_csv_columns(vector<string_view>&, char, bool);
+    void load_csv_data(const vector<string_view>&, char, bool, DateFormat);
 
     filesystem::path cache_path;
     filesystem::path cache_path_override;
@@ -249,7 +255,7 @@ protected:
 
     DateFormat infer_column_types(const vector<string_view>&, char, bool has_quotes = false);
 
-    void apply_scaler(Index feature_index, const string& scaler, const Descriptives& descriptives, bool unscale);
+    void apply_scaler(Index feature_index, ScalerMethod scaler, const Descriptives& descriptives, bool unscale);
 };
 
 }

@@ -137,6 +137,11 @@ protected:
     void prepare_cudnn_forward_state_(Buffer&, bool is_training,
                                       const CudnnRnnShapeSlot&) const;
 
+    // The descriptor set a failing cuDNN call was given, printed with the
+    // failure so a capture refusal names a configuration and not just a code.
+    string cudnn_rnn_configuration_(const CudnnRnnShapeSlot&,
+                                    const char* mode) const;
+
     // What the two recurrent layers do not share: the shape they configure
     // cuDNN with, and how their weights pack into cuDNN's layout.
     virtual CudnnRnnShapeSlot& ensure_cudnn_setup_(Index batch_size, bool for_training) const = 0;

@@ -38,7 +38,7 @@ is already paid by anything sharing a process with it.
 | `dense` | 28 → 1024 × 2 → 1 classifier | HIGGS | the shape a tabular workload actually has |
 | `cnn` | ResNet-50 v1.5 | ImageNet subset, 1000 classes × 50 | the citable convolution benchmark |
 | `transformer` | d512 · h8 · ff2048 · 6L | WMT14 English-German | the *Attention Is All You Need* base model, on its own corpus |
-| `lstm` | LSTM(14→128) → Linear | Beijing PM2.5, hourly | both engines reach the same cuDNN kernel here |
+| `lstm` | LSTM(15→128) → Linear | Beijing PM2.5, hourly | both engines reach the same cuDNN kernel here |
 | `footprint` | — | — | what a framework costs *before* it runs anything |
 
 Each family is two files in [`families/`](families/) — one definition per
@@ -58,14 +58,17 @@ sequences against PyTorch's 128, and `nn.Transformer` carried 2,048 parameters
 of final `LayerNorm` that OpenNN's had no counterpart for. Neither is visible
 in a samples-per-second figure.
 
-**The quality gate** compares accuracy across engines at each batch. A speed
-win bought by computing something different is not a speed win.
+**The quality gate** compares test accuracy across engines at each batch
+wherever a driver reports one — today that is dense training only; the other
+families are held to the shape gate. A speed win bought by computing something
+different is not a speed win.
 
 ## Reading a result
 
-Energy is reported only when the timed window was long enough to sample — a
-short run says so rather than reporting `0.0000 Wh`, which is a claim and not a
-measurement. Peak memory is whole-device, minus the idle reading;
+Energy is reported only when the timed window held a second of the driver's
+20 ms power samples — a short run says so rather than reporting `0.0000 Wh`,
+which is a claim and not a measurement. Peak memory is whole-device, minus the
+idle reading;
 `torch.cuda.max_memory_allocated()` never appears, because it excludes the CUDA
 context and cached blocks and so flatters PyTorch by construction.
 
@@ -76,14 +79,17 @@ enforced in code.
 
 | | |
 |---|---|
+| [`reports/`](reports/) | the results, one document per family, and why each margin is what it is |
 | [`run.py`](run.py) | the only entry point |
 | [`prepare.py`](prepare.py) | every dataset, one subcommand per family |
 | [`common.py`](common.py) | provenance, binaries, GPU sampling, metrics |
 | [`families/`](families/) | one definition per engine per family |
 | [`PROTOCOL.md`](PROTOCOL.md) | the contract |
-| [`PLAN.md`](PLAN.md) | how the suite got this shape, and what is left |
+| [`DESIGN.md`](DESIGN.md) | why the suite has this shape |
 | [`DATA_POLICY.md`](DATA_POLICY.md) | where datasets live; what stays out of git |
 | [`gpu_clocks.sh`](gpu_clocks.sh) | lock the clock before measuring |
+| [`CMakeLists.txt`](CMakeLists.txt) | builds one `<family>_opennn` per family |
+| [`results/`](results/) | artifacts; `scratch/` for anything that failed a gate |
 
 Datasets never enter the repository. The one committed artefact is
 `imagenet_subset.manifest`, which pins exactly which images the CNN family

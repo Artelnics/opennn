@@ -7,19 +7,12 @@
 //   artelnics@artelnics.com
 
 #include <iostream>
-#include <string>
-#include <vector>
-#include <exception>
 
 #include "opennn/dataset/image_dataset.h"
-#include "opennn/neural_network/neural_network.h"
 #include "opennn/models/models.h"
 #include "opennn/training_strategy/training_strategy.h"
 #include "opennn/testing_analysis/testing_analysis.h"
-#include "opennn/training_strategy/optimizer.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/core/random_utilities.h"
-#include "opennn/neural_network/layers/dense_layer.h"
 
 using namespace opennn;
 
@@ -27,41 +20,28 @@ int main()
 {
     try
     {
-
-        cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
+        cout << "OpenNN. MNIST example." << endl;
 
         set_seed(42);
-        Configuration::instance().set(Device::Auto, Type::Auto);
 
-        ImageDataset image_dataset("../data/mnist");
+        ImageDataset dataset("../data/mnist");
 
-        ImageClassificationNetwork image_classification_network(image_dataset.get_shape("Input"),
-            {4},
-            image_dataset.get_shape("Target"));
+        ImageClassificationNetwork network(dataset.get_input_shape(),
+                                           {4},
+                                           dataset.get_target_shape());
 
-        opennn::Dense* hidden_dense = dynamic_cast<opennn::Dense*>(image_classification_network.get_first("Dense"));
-        if (hidden_dense) hidden_dense->set_dropout_rate(float(0.0));
-
-        TrainingStrategy training_strategy(&image_classification_network, &image_dataset);
-
-        training_strategy.set_loss("CrossEntropy");
-        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-        training_strategy.get_loss()->set_regularization("None");
-
-        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs(20);
-        adam->set_display_period(5);
+        TrainingStrategy training_strategy(&network, &dataset);
+        training_strategy.get_optimization_algorithm()->set_maximum_epochs(20);
 
         training_strategy.train();
 
-        const TestingAnalysis testing_analysis(&image_classification_network, &image_dataset);
+        const TestingAnalysis testing_analysis(&network, &dataset);
 
-        cout << "Calculating confusion..." << endl;
-        cout << "\nConfusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
+        testing_analysis.print_multiple_classification_tests();
 
         return 0;
     }
-    catch(exception& e)
+    catch(const exception& e)
     {
         cerr << e.what() << endl;
 

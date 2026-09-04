@@ -58,12 +58,9 @@ static string image_cache_signature(Index samples, Index height, Index width, In
     return signature;
 }
 
-ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()
+ImageDataset::ImageDataset(const filesystem::path& new_data_path)
+    : ImageDataset(new_data_path, {})
 {
-    data_path = new_data_path;
-    storage_mode = StorageMode::BinaryFile;
-
-    read_images();
 }
 
 ImageDataset::ImageDataset(const filesystem::path& new_data_path,
@@ -214,7 +211,7 @@ void ImageDataset::augment_inputs(const span<float> input_data, Index batch_size
     const bool use_vertical_translation = augmentation_policy.vertical_translation_minimum != 0.0f
                                        || augmentation_policy.vertical_translation_maximum != 0.0f;
 
-    const auto augment_sample = [&](Index i, Tensor3* scratch_storage)
+    const auto augment_sample = [&](Index i, Tensor3& scratch_storage)
     {
         float* sample = input_values + i * pixels;
         TensorMap3 image(sample, height, width, channels);
@@ -227,8 +224,8 @@ void ImageDataset::augment_inputs(const span<float> input_data, Index batch_size
 
         if (use_rotation)
         {
-            copy_n(sample, pixels, scratch_storage->data());
-            const TensorMap3 scratch(scratch_storage->data(), height, width, channels);
+            copy_n(sample, pixels, scratch_storage.data());
+            const TensorMap3 scratch(scratch_storage.data(), height, width, channels);
             rotate_image(scratch, image, sample_augmentation_value(augmentation_policy.rotation_minimum,
                                                                    augmentation_policy.rotation_maximum));
         }
@@ -244,13 +241,13 @@ void ImageDataset::augment_inputs(const span<float> input_data, Index batch_size
 
     #pragma omp parallel
     {
-        unique_ptr<Tensor3> scratch_storage;
+        Tensor3 scratch_storage;
         if (use_rotation)
-            scratch_storage = make_unique<Tensor3>(height, width, channels);
+            scratch_storage.resize(height, width, channels);
 
         #pragma omp for schedule(static)
         for (Index i = 0; i < batch_size; ++i)
-            augment_sample(i, scratch_storage.get());
+            augment_sample(i, scratch_storage);
     }
 }
 

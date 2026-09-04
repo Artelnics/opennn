@@ -53,8 +53,7 @@ vector<Operator::ParameterSlot> CombinationOperator::parameter_slots()
 
 void CombinationOperator::link_parameter_scales(span<const TensorView> views)
 {
-    if (views.empty()) return;
-    weight_scale = use_bias && views.size() >= 2 ? views[1] : views[0];
+    weight_scale = views.empty() ? TensorView{} : views.back();
 }
 
 void CombinationOperator::set_parameters_random()

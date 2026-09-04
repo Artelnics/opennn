@@ -362,6 +362,13 @@ const void* data_for_gemm_dtype(const TensorView&, Type);
 
 const void* bias_for_gemm_bf16(const TensorView&);
 
+// D = alpha * op(A) * op(B) + beta * C, with C the addend when one is given
+// and D itself otherwise -- the two scalars the wrapper used to hardcode as
+// &one and &zero. lda, ldb and ldd are 0 for "derive from m, n and k", which
+// is what it did before they were parameters. The operands carry a type each
+// because gemm_strided_batched_cuda below already takes an Atype and a Btype:
+// nothing can move off that call and onto this one until this one can say the
+// same thing.
 void run_lt_matmul_cached(
     int, int, int,
     cublasOperation_t transA,
@@ -369,10 +376,14 @@ void run_lt_matmul_cached(
     cublasLtEpilogue_t epilogue,
     const void*, const void*, void*,
     const void*,
-    cudaDataType_t io_dtype  = CUDA_R_32F,
+    cudaDataType_t dtype_a   = CUDA_R_32F,
+    cudaDataType_t dtype_b   = CUDA_R_32F,
     cudaDataType_t out_dtype = CUDA_R_32F,
     const void* aux_pointer  = nullptr,
-    const void* addend       = nullptr);
+    const void* addend       = nullptr,
+    float alpha              = 1.0f,
+    float beta               = 0.0f,
+    int lda = 0, int ldb = 0, int ldd = 0);
 
 void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
                                int, int, int,

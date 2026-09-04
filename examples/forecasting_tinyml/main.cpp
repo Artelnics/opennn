@@ -5,27 +5,19 @@
 //
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
-//
-//   Builds small forecasting networks (LSTM and simple recurrent), exports
-//   them to C (expression and CEmbedded backends) and writes reference
-//   input/output vectors for the TinyML parity pipeline
-//   (examples/forecasting_tinyml/run_forecasting_test.sh).
-//
-//   Training quality is irrelevant here: the networks keep their Glorot
-//   initialization. What the pipeline verifies is that the exported C code
-//   reproduces OpenNN outputs exactly on another target (emulated MCU).
-
-#include "opennn/registry.h"
-#include "opennn/models/models.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/neural_network/layers/unscaling_layer.h"
-#include "opennn/neural_network/model_expression.h"
-#include "opennn/core/configuration.h"
-#include "opennn/core/variable.h"
+//   Exports recurrent models and reference outputs for the TinyML parity pipeline.
 
 #include <cmath>
 #include <fstream>
 #include <iostream>
+
+#include "opennn/core/configuration.h"
+#include "opennn/core/variable.h"
+#include "opennn/models/models.h"
+#include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/neural_network/layers/unscaling_layer.h"
+#include "opennn/neural_network/model_expression.h"
+#include "opennn/registry.h"
 
 using namespace opennn;
 
@@ -91,17 +83,13 @@ int main()
 
         Configuration::instance().set(Device::CPU, Type::FP32);
 
-        {
-            ForecastingLstmNetwork network({TIME_STEPS, FEATURES}, {HIDDEN}, {1});
-            configure_network(network);
-            export_model(network, "lstm");
-        }
+        ForecastingLstmNetwork lstm({TIME_STEPS, FEATURES}, {HIDDEN}, {1});
+        configure_network(lstm);
+        export_model(lstm, "lstm");
 
-        {
-            ForecastingNetwork network({TIME_STEPS, FEATURES}, {HIDDEN}, {1});
-            configure_network(network);
-            export_model(network, "rnn");
-        }
+        ForecastingNetwork recurrent({TIME_STEPS, FEATURES}, {HIDDEN}, {1});
+        configure_network(recurrent);
+        export_model(recurrent, "rnn");
 
         return 0;
     }

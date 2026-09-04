@@ -231,6 +231,42 @@ TEST(TestingAnalysis, BinaryClassificationTests)
 
 }
 
+TEST(TestingAnalysis, PrintsMultipleClassificationTests)
+{
+    TabularDataset dataset(3, {1}, {3});
+    MatrixR data(3, 4);
+    data << 0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f;
+    dataset.set_data(data);
+    dataset.set_sample_roles("Testing");
+
+    ClassificationNetwork neural_network({1}, {}, {3});
+    neural_network.set_parameters(VectorR::Zero(
+        neural_network.get_parameters_buffer_size()));
+
+    TestingAnalysis testing_analysis(&neural_network, &dataset);
+
+    testing::internal::CaptureStdout();
+    testing_analysis.print_multiple_classification_tests();
+    const string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.find("Classification accuracy : 0.333333"), string::npos);
+    EXPECT_NE(output.find("Confusion matrix"), string::npos);
+}
+
+TEST(TestingAnalysis, RejectsBinaryNetworkForMultipleClassificationTests)
+{
+    TabularDataset dataset(1, {1}, {1});
+    dataset.set_data_constant(0.0f);
+    dataset.set_sample_roles("Testing");
+
+    ClassificationNetwork neural_network({1}, {}, {1});
+    TestingAnalysis testing_analysis(&neural_network, &dataset);
+
+    EXPECT_THROW(testing_analysis.print_multiple_classification_tests(), runtime_error);
+}
+
 TEST(TestingAnalysis, RocCurve)
 {
     MatrixR targets;

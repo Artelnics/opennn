@@ -42,6 +42,21 @@ TEST(TabularDataset, DimensionsConstructor)
     EXPECT_EQ(dataset.get_variables_number("Target"), 1);
 }
 
+TEST(TabularDataset, SetResetsPreviousRolesAndScalers)
+{
+    TabularDataset dataset(4, {1}, {1});
+    dataset.set_sample_role(0, SampleRole::None);
+    dataset.set_variable_scalers("Logarithm");
+
+    dataset.set(4, {1}, {1});
+
+    EXPECT_EQ(dataset.get_samples_number(SampleRole::None), 0);
+    EXPECT_EQ(dataset.get_feature_scalers("Input"),
+              vector<string>{"MeanStandardDeviation"});
+    EXPECT_EQ(dataset.get_feature_scalers("Target"),
+              vector<string>{"MeanStandardDeviation"});
+}
+
 TEST(TabularDataset, VariableDescriptivesZero)
 {
     TabularDataset dataset(1, { 1 }, { 1 });
@@ -407,6 +422,40 @@ TEST(TabularDataset, ReadCSV_Basic)
     }
 
     remove(temp_csv_file_path.c_str());
+}
+
+TEST(TabularDataset, ReadCSV_ReplacesStaleColumnMetadata)
+{
+    const string file_path = "temp_data_readcsv_reuse.csv";
+
+    create_temp_csv_file(file_path,
+        "feature,target\n"
+        "red,0\n"
+        "blue,1\n"
+        "green,0\n"
+        "red,1\n");
+
+    TabularDataset dataset;
+    dataset.set_data_path(file_path);
+    dataset.set_separator(Dataset::Separator::Comma);
+    dataset.set_has_header(true);
+    dataset.set_display(false);
+    ASSERT_NO_THROW(dataset.read_csv());
+    ASSERT_EQ(dataset.get_variable_type(0), VariableType::Categorical);
+    ASSERT_FALSE(dataset.get_variables()[0].categories.empty());
+
+    create_temp_csv_file(file_path,
+        "feature,target\n"
+        "1,0\n"
+        "2,1\n"
+        "3,0\n"
+        "4,1\n");
+
+    ASSERT_NO_THROW(dataset.read_csv());
+    EXPECT_EQ(dataset.get_variable_type(0), VariableType::Numeric);
+    EXPECT_TRUE(dataset.get_variables()[0].categories.empty());
+
+    filesystem::remove(file_path);
 }
 
 TEST(TabularDataset, ReadCSV_DecimalComma)

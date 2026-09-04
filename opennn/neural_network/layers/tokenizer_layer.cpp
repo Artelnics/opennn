@@ -17,11 +17,14 @@
 namespace opennn
 {
 
-Tokenizer::Tokenizer(const Shape& new_input_shape, const string& new_label)
+Tokenizer::Tokenizer(const Shape& new_input_shape,
+                     const string& new_label,
+                     const VariableRole new_variable_role)
     : Layer(LayerType::Tokenizer, Trainability::Frozen)
 {
     input_shape = new_input_shape;
     set_label(new_label);
+    variable_role = new_variable_role;
 
     check_rank(input_shape, {1}, "Tokenizer", "input");
 }
@@ -57,6 +60,13 @@ const TokenizerOperator::VocabularyMap& Tokenizer::get_vocabulary_map() const
 
 void Tokenizer::read_JSON_body(const Json* tokenizer_layer_element)
 {
+    const VariableRole fallback_role = label == "decoder_tokenizer"
+                                     ? VariableRole::Decoder
+                                     : VariableRole::Input;
+    variable_role = string_to_variable_role(
+        read_json_string(tokenizer_layer_element, "Role",
+                         variable_role_to_string(fallback_role)));
+
     if (!tokenizer_layer_element->has("TokenizerKind")) return;
 
     set_tokenizer(make_tokenizer_operator(
@@ -65,9 +75,10 @@ void Tokenizer::read_JSON_body(const Json* tokenizer_layer_element)
 
 void Tokenizer::write_JSON_body(JsonWriter& printer) const
 {
-    if (!tokenizer) return;
+    write_json(printer, {{"Role", variable_role_to_string(variable_role)}});
 
-    write_json(printer, {{"TokenizerKind", tokenizer->get_kind()}});
+    if (tokenizer)
+        write_json(printer, {{"TokenizerKind", tokenizer->get_kind()}});
 }
 
 }

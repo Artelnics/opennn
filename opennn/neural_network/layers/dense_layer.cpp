@@ -329,28 +329,15 @@ void Dense::set(const Shape& new_input_shape,
                 BatchNormalization new_batch_normalization,
                 const string& new_label)
 {
-    if (new_input_shape.empty() && new_output_shape.empty())
-    {
-        input_shape = {};
-        output_features = 0;
-        return;
-    }
-
     check_rank(new_input_shape, {1, 2}, "Dense", "input");
     check_rank(new_output_shape, {1}, "Dense", "output");
 
     input_shape = new_input_shape;
-    output_features = new_output_shape.back();
-
-    ActivationFunction function = ActivationOperator::from_string(new_activation_function);
-    if (function == ActivationFunction::Softmax && get_outputs_number() == 1)
-        function = ActivationFunction::Sigmoid;
-    activation_operator.set_activation_function(function);
+    output_features = new_output_shape.empty() ? 0 : new_output_shape.back();
 
     batch_norm.set_enabled(new_batch_normalization == BatchNormalization::Yes, output_features);
-
     set_label(new_label);
-    configure_operators();
+    set_activation_function(new_activation_function);
 }
 
 void Dense::apply_input_shape(const Shape& new_input_shape)

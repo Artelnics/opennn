@@ -439,6 +439,19 @@ uint64_t splitmix64(uint64_t x)
     return x ^ (x >> 31);
 }
 
+uint64_t batch_augmentation_seed(const vector<Index>& sample_indices, bool augment)
+{
+    if (!augment) return 0;
+
+    uint64_t seed = 14695981039346656037ULL;
+    for (const Index sample_index : sample_indices)
+    {
+        seed ^= uint64_t(sample_index);
+        seed *= 1099511628211ULL;
+    }
+    return seed ? seed : 1;
+}
+
 AugmentationTransform sample_augmentation_transform(uint64_t epoch_counter,
                                                     uint64_t sample_index,
                                                     const YoloDataset::AugmentationPolicy& policy)
@@ -1560,7 +1573,7 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
 
 void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
 {
-    const vector<filesystem::path> image_paths = list_files(images_directory, is_supported_image_file);
+    const vector<filesystem::path>& image_paths = image_filenames;
     throw_if(image_paths.empty(),
              "YoloDataset: no images found in {}", images_directory.string());
 
@@ -1875,12 +1888,7 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
 
     const bool augment = mode == FillMode::Training && augmentation_policy.enabled;
     const bool matrix_storage = storage_mode == StorageMode::Matrix;
-    const uint64_t epoch_seed = [&]() -> uint64_t {
-        if (!augment) return 0;
-        uint64_t h = 14695981039346656037ULL;
-        for (Index si : sample_indices) { h ^= uint64_t(si); h *= 1099511628211ULL; }
-        return h ? h : 1;
-    }();
+    const uint64_t epoch_seed = batch_augmentation_seed(sample_indices, augment);
 
     const AugmentationPolicy policy = augmentation_policy;
     const bool mosaic = augment && policy.mosaic;
@@ -2000,12 +2008,7 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
 
     const bool augment = mode == FillMode::Training && augmentation_policy.enabled;
     const bool matrix_storage = storage_mode == StorageMode::Matrix;
-    const uint64_t epoch_seed = [&]() -> uint64_t {
-        if (!augment) return 0;
-        uint64_t h = 14695981039346656037ULL;
-        for (Index si : sample_indices) { h ^= uint64_t(si); h *= 1099511628211ULL; }
-        return h ? h : 1;
-    }();
+    const uint64_t epoch_seed = batch_augmentation_seed(sample_indices, augment);
 
     const AugmentationPolicy policy = augmentation_policy;
     const bool mosaic = augment && policy.mosaic;

@@ -34,7 +34,7 @@ struct PoolingLayerConfig {
     Shape pool_dimensions;
     Shape stride_shape;
     Shape padding_dimensions;
-    string pooling_method;
+    PoolingMethod pooling_method;
     string test_name;
     Tensor4 input_data;
     Tensor4 expected_output;
@@ -66,7 +66,7 @@ Json pooling_json_body(const Shape& pool_shape,
 INSTANTIATE_TEST_SUITE_P(PoolingLayerTests, PoolingLayerTest, ::testing::Values(
                                                                   PoolingLayerConfig
                                                                   {
-                                                                      {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, "MaxPooling", "MaxPoolingNoPadding1Channel",
+                                                                      {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, PoolingMethod::MaxPooling, "MaxPoolingNoPadding1Channel",
                                                                       ([] {
                                                                           MatrixR data(4, 16);
                                                                           data << 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
@@ -85,7 +85,7 @@ INSTANTIATE_TEST_SUITE_P(PoolingLayerTests, PoolingLayerTest, ::testing::Values(
                                                                   },
                                                                   PoolingLayerConfig
                                                                   {
-                                                                      {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, "AveragePooling", "AveragePoolingNoPadding1Channel",
+                                                                      {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, PoolingMethod::AveragePooling, "AveragePoolingNoPadding1Channel",
                                                                       ([] {
                                                                           MatrixR data(4, 16);
                                                                           data << 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
@@ -112,7 +112,7 @@ TEST_P(PoolingLayerTest, Constructor)
     EXPECT_EQ(pooling_layer.get_name(), "Pooling");
     EXPECT_EQ(pooling_layer.get_label(), parameters.test_name);
     EXPECT_EQ(pooling_layer.get_input_shape(), parameters.input_shape);
-    EXPECT_EQ(pooling_layer.get_pooling_method(), string_to_pooling_method(parameters.pooling_method));
+    EXPECT_EQ(pooling_layer.get_pooling_method(), parameters.pooling_method);
 
     const Index expected_output_height = (parameters.input_shape[0] - parameters.pool_dimensions[0] + 2 * parameters.padding_dimensions[0]) / parameters.stride_shape[0] + 1;
     const Index expected_output_width  = (parameters.input_shape[1] - parameters.pool_dimensions[1] + 2 * parameters.padding_dimensions[1]) / parameters.stride_shape[1] + 1;
@@ -138,7 +138,7 @@ TEST(PoolingLayerTest, UnitWindowIsPassthrough)
 
     Pooling pooling_layer(
         input_shape, {1, 1}, {1, 1}, {0, 0},
-        "AveragePooling", "identity_pool");
+        PoolingMethod::AveragePooling, "identity_pool");
 
     EXPECT_TRUE(pooling_layer.is_passthrough());
     EXPECT_TRUE(pooling_layer.get_forward_specs(batch_size).empty());
@@ -147,7 +147,7 @@ TEST(PoolingLayerTest, UnitWindowIsPassthrough)
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Pooling>(
         input_shape, Shape{1, 1}, Shape{1, 1}, Shape{0, 0},
-        "AveragePooling", "identity_pool"));
+        PoolingMethod::AveragePooling, "identity_pool"));
     neural_network.compile();
 
     Tensor4 inputs(batch_size, input_shape[0], input_shape[1], input_shape[2]);
@@ -238,7 +238,7 @@ TEST(PoolingLayerTest, StridePaddingForwardValues)
 
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Pooling>(
-        input_shape, pool_dimensions, stride_shape, padding_dimensions, "MaxPooling", "overlap_max"));
+        input_shape, pool_dimensions, stride_shape, padding_dimensions, PoolingMethod::MaxPooling, "overlap_max"));
     neural_network.compile();
 
     EXPECT_EQ(neural_network.get_layer(0)->get_output_shape(), (Shape{2, 2, 1}));
@@ -257,7 +257,7 @@ TEST(PoolingLayerTest, StridePaddingForwardValues)
 
     NeuralNetwork average_network;
     average_network.add_layer(make_unique<Pooling>(
-        input_shape, pool_dimensions, stride_shape, padding_dimensions, "AveragePooling", "overlap_average"));
+        input_shape, pool_dimensions, stride_shape, padding_dimensions, PoolingMethod::AveragePooling, "overlap_average"));
     average_network.compile();
 
     ForwardPropagation average_forward(batch_size, &average_network);

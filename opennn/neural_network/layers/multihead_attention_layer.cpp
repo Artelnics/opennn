@@ -256,20 +256,18 @@ void MultiHeadAttention::on_compute_dtype_changed()
 
 void MultiHeadAttention::read_JSON_body(const Json* root_element)
 {
-    const Shape new_input_shape = string_to_shape(read_json_string(root_element, "InputDimensions"));
     const Index new_source_sequence_length = read_json_index(root_element, "SourceSequenceLength");
     const Index new_heads_number = read_json_index(root_element, "HeadsNumber");
     const CausalMask new_use_causal_mask = read_json_bool(root_element, "CausalMask")
         ? CausalMask::Yes
         : CausalMask::No;
 
-    cross_attention = root_element->has("CrossAttention")
-        ? read_json_bool(root_element, "CrossAttention")
-        : new_source_sequence_length != new_input_shape.dim_or_zero(0);
+    cross_attention = read_json_bool(root_element, "CrossAttention",
+                                     new_source_sequence_length != query_sequence_length);
 
-    set(new_input_shape.dim_or_zero(0),
+    set(query_sequence_length,
         new_source_sequence_length,
-        new_input_shape.dim_or_zero(1),
+        embedding_dimension,
         new_heads_number, new_use_causal_mask, get_label());
 
     set_zero_padded_queries(read_json_bool(root_element, "ZeroPaddedQueries", attention.zero_padded_queries));

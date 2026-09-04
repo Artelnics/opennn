@@ -143,11 +143,11 @@ TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
         const Index stem_idx = net->get_layers_number() - 1;
 
         const Index p1_idx = net->add_layer(make_unique<Pooling>(feat, Shape{5,5}, Shape{1,1}, Shape{2,2},
-                                                                       "MaxPooling", "sppf_p1"), {stem_idx});
+                                                                       PoolingMethod::MaxPooling, "sppf_p1"), {stem_idx});
         const Index p2_idx = net->add_layer(make_unique<Pooling>(feat, Shape{5,5}, Shape{1,1}, Shape{2,2},
-                                                                       "MaxPooling", "sppf_p2"), {p1_idx});
+                                                                       PoolingMethod::MaxPooling, "sppf_p2"), {p1_idx});
         const Index p3_idx = net->add_layer(make_unique<Pooling>(feat, Shape{5,5}, Shape{1,1}, Shape{2,2},
-                                                                       "MaxPooling", "sppf_p3"), {p2_idx});
+                                                                       PoolingMethod::MaxPooling, "sppf_p3"), {p2_idx});
 
         const Index cat_idx = net->add_layer(make_unique<Concatenation>(feat,
                                                                               vector<Index>{ch, ch, ch, ch}, "sppf_cat"),

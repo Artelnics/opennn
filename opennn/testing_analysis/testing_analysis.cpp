@@ -7,6 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "opennn/testing_analysis/testing_analysis.h"
+
+#include <sstream>
+
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/correlations.h"
 #include "opennn/core/parallel_algorithms.h"
@@ -923,6 +926,34 @@ void TestingAnalysis::print_binary_classification_tests() const
          << "Error rate              : " << binary_classification_tests[1] << "\n"
          << "Sensitivity             : " << binary_classification_tests[2] << "\n"
          << "Specificity             : " << binary_classification_tests[3] << "\n";
+}
+
+void TestingAnalysis::print_multiple_classification_tests() const
+{
+    const auto [targets, outputs] = get_targets_and_outputs("Testing");
+    const Index classes_number = targets.cols();
+
+    throw_if(classes_number < 2 || outputs.cols() != classes_number,
+             "TestingAnalysis::print_multiple_classification_tests requires one column per class "
+             "(got {} target and {} output columns); use print_binary_classification_tests for a single output.",
+             classes_number, outputs.cols());
+
+    const MatrixI confusion = calculate_confusion(targets, outputs);
+    const Index samples_number = confusion(classes_number, classes_number);
+
+    Index correct = 0;
+    for (Index i = 0; i < classes_number; ++i)
+        correct += confusion(i, i);
+
+    const float accuracy = samples_number == 0
+                         ? 0.0f
+                         : float(correct) / float(samples_number);
+
+    ostringstream report;
+    report << "Multiple classification tests: \n"
+           << "Classification accuracy : " << accuracy << "\n"
+           << "Confusion matrix:\n" << confusion << "\n";
+    cout << report.str();
 }
 
 void TestingAnalysis::GoodnessOfFitAnalysis::set(const VectorR& new_targets,

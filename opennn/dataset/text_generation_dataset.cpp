@@ -108,10 +108,8 @@ void TextGenerationDataset::read_txt()
 
     string buffer = read_text_file(data_path);
 
-    const bool subword = fixed_vocabulary;
-
     vector<Index> token_ids;
-    if (subword)
+    if (fixed_vocabulary)
     {
         cout << "Tokenizing corpus (subword)..." << "\n";
         token_ids = tokenizer->encode(buffer);
@@ -195,7 +193,7 @@ void TextGenerationDataset::configure(Index samples_number)
     target_variable.type = VariableType::Numeric;
     target_variable.features = sequence_length;
 
-    sample_roles.resize(size_t(samples_number));
+    sample_roles.assign(size_t(samples_number), SampleRole::Training);
 }
 
 bool TextGenerationDataset::load_cache_metadata(const filesystem::path& metadata_path,

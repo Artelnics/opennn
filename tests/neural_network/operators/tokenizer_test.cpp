@@ -142,6 +142,8 @@ TEST(WordLevelTokenizer, EncodeSequenceAddsConfiguredFraming)
     tokenizer.set_vocabulary({"[PAD]", "[UNK]", "[START]", "[END]", "hello"});
 
     EXPECT_EQ(tokenizer.encode_sequence("hello", 4), (vector<Index>{2, 4, 3}));
+    EXPECT_EQ(tokenizer.encode_sequence(vector<string>{"hello", "hello"}, 2),
+              (vector<Index>{2, 4}));
 }
 
 TEST(WordPieceTokenizer, GreedyLongestMatchSubwords)

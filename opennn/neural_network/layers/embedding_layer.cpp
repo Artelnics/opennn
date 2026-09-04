@@ -58,12 +58,9 @@ void Embedding::set(Index new_vocabulary_size,
 
 void Embedding::read_JSON_body(const Json* embedding_layer_element)
 {
-    const Index new_vocabulary_size = read_json_index(embedding_layer_element, "VocabularySize");
-    const Shape new_output_shape = string_to_shape(read_json_string(embedding_layer_element, "OutputDimensions"));
-
-    set(new_vocabulary_size,
-        new_output_shape.dim_or_zero(0),
-        new_output_shape.dim_or_zero(1),
+    set(read_json_index(embedding_layer_element, "VocabularySize"),
+        sequence_length,
+        embedding_dimension,
         get_label());
 
     set_learned_positional(read_json_bool(embedding_layer_element, "LearnedPositional", get_learned_positional()));
@@ -77,7 +74,6 @@ void Embedding::write_JSON_body(JsonWriter& printer) const
 {
     write_json(printer, {
         {"VocabularySize", get_vocabulary_size()},
-        {"OutputDimensions", shape_to_string(get_output_shape())},
         {"ScaleEmbedding", embedding_lookup.scale_embedding},
         {"AddPositionalEncoding", embedding_lookup.add_positional_encoding},
         {"LearnedPositional", embedding_lookup.positional_trainable},
