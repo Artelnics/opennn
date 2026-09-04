@@ -156,6 +156,7 @@ build-wrapper-dump.json
 # document to benchmarks/, add it below or it will never be committed.
 /benchmarks/*.md
 !/benchmarks/README.md
+!/benchmarks/PROTOCOL.md
 
 # OneDrive leaves these when it syncs the repo between machines.
 *-DESKTOP-*.cpp
