@@ -109,6 +109,20 @@ vector<pair<string, Index>> get_variable_columns(const vector<Variable>& variabl
         feature_index += span;
     }
 
+    // A name that reaches two different columns names neither of them. Two categorical blocks
+    // may each hold a level called Other, and a level may go by the name of a variable that is
+    // already a column of its own. Dropping such a name leaves the qualified form, which always
+    // says which block was meant, and turns a silent bind to whichever column happens to come
+    // first into a name the parser reports as unknown.
+
+    unordered_map<string, Index> occurrences;
+
+    for (const auto& [name, column] : columns)
+        occurrences[name]++;
+
+    erase_if(columns,
+             [&occurrences](const pair<string, Index>& column) { return occurrences.at(column.first) > 1; });
+
     return columns;
 }
 
