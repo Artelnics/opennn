@@ -148,20 +148,14 @@ build-wrapper-dump.json
 /benchmarks/**/*.csv
 /benchmarks/**/pred_*.txt
 
-# Result artifacts are never committed; a claim cites a run_id, and the JSON
-# stays on disk. Only the README explaining the store is tracked.
-/benchmarks/results/*
-!/benchmarks/results/README.md
+# All benchmark result artifacts are local and must never be committed.
+/benchmarks/results/
 
 # Session-generated benchmark reports. The suite's own documents are allowed
-# back by name, so a new one is invisible until it is listed here -- DESIGN.md
-# was ignored on the day it was written for exactly that reason. If you add a
+# back by name, so a new one is invisible until it is listed here. If you add a
 # document to benchmarks/, add it below or it will never be committed.
 /benchmarks/*.md
 !/benchmarks/README.md
-!/benchmarks/DATA_POLICY.md
-!/benchmarks/DESIGN.md
-!/benchmarks/PROTOCOL.md
 
 # OneDrive leaves these when it syncs the repo between machines.
 *-DESKTOP-*.cpp

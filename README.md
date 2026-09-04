@@ -116,9 +116,9 @@ builds outside the checkout and run focused tests during editing:
 ./tools/verify.sh full
 ```
 
-Use `quick` after edits and `full` once before completing a batch. See
-[Fast local verification](docs/fast-verification.md) for CUDA selection, cache
-locations, and compiler-cache support.
+Use `quick` after edits and `full` once before completing a batch. Run either
+wrapper with its help option for CUDA selection, cache locations and
+compiler-cache support.
 
 ## CMake options
 
@@ -161,9 +161,10 @@ microcontroller-oriented AVR and ARM Cortex-M flows.
 ## Benchmarks
 
 Reproducible benchmark recipes live in `benchmarks/`. They compare OpenNN with
-PyTorch and TensorFlow across quality, throughput, capacity, energy, and footprint
-metrics. Large benchmark datasets and generated result artifacts are kept outside
-the repository; see `benchmarks/DATA_POLICY.md`.
+reference engines across quality, throughput, capacity, energy and footprint
+metrics. Large datasets and model files stay outside the repository; generated
+results remain local under `benchmarks/results/` and are ignored by Git. See
+`benchmarks/README.md` for the complete usage and measurement contract.
 
 ## Documentation
 

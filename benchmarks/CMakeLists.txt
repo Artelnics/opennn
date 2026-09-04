@@ -1,7 +1,7 @@
 # run.py depends on the <family>_opennn executable names.
 set(_benchmark_targets "")
 
-foreach(family dense cnn transformer lstm footprint)
+foreach(family dense cnn transformer lstm footprint qwen)
     set(target "${family}_opennn")
     add_executable(${target} "families/${family}.cpp")
     target_link_libraries(${target} PRIVATE opennn)

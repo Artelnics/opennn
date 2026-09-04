@@ -10,6 +10,7 @@ to need it.
     prepare.py cnn           ImageNet subset, 1000 classes x N, 224x224
     prepare.py transformer   WMT14 English-German sentence pairs
     prepare.py lstm          Beijing PM2.5 hourly
+    prepare.py qwen          Pinned Qwen3-4B weights and runtimes
 
 Nothing lands in the repository. Everything goes under $OPENNN_BENCH_DATA
 (default ~/opennn-benchmark-data); the only committed artefact is the ImageNet
@@ -26,9 +27,12 @@ import csv
 import gzip
 import hashlib
 import io
+import json
 import math
 import os
 import random
+import shutil
+import subprocess
 import sys
 import tarfile
 import urllib.request
@@ -57,6 +61,87 @@ def fetch(url: str, target: Path) -> Path:
 
     partial.rename(target)
     return target
+
+
+def fetch_pinned(url: str, target: Path, specification: dict) -> Path:
+    """Fetch an immutable benchmark asset and verify it before accepting it."""
+    expected_bytes = specification.get("bytes")
+    expected_hash = specification["sha256"].lower()
+
+    def valid() -> bool:
+        if not target.is_file():
+            return False
+        if expected_bytes is not None and target.stat().st_size != expected_bytes:
+            return False
+        digest = hashlib.sha256()
+        with target.open("rb") as handle:
+            while chunk := handle.read(8 << 20):
+                digest.update(chunk)
+        return digest.hexdigest() == expected_hash
+
+    if valid():
+        print(f"  have verified {target.name}")
+        return target
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    partial = target.with_suffix(target.suffix + ".part")
+    offset = partial.stat().st_size if partial.exists() else 0
+    headers = {"User-Agent": "OpenNN reproducible benchmark/1"}
+    if offset:
+        headers["Range"] = f"bytes={offset}-"
+        print(f"  resuming {target.name} at {offset:,} bytes")
+    else:
+        print(f"  downloading {url}")
+
+    request = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(request, timeout=180) as response:
+        resumed = offset > 0 and getattr(response, "status", None) == 206
+        mode = "ab" if resumed else "wb"
+        with partial.open(mode) as output:
+            copied = offset if resumed else 0
+            while chunk := response.read(8 << 20):
+                output.write(chunk)
+                copied += len(chunk)
+                if expected_bytes and copied % (512 << 20) < len(chunk):
+                    print(f"    {copied / (1 << 30):.1f}/{expected_bytes / (1 << 30):.1f} GiB")
+
+    partial.replace(target)
+    if not valid():
+        raise SystemExit(f"downloaded asset failed size/SHA-256 validation: {target}")
+    return target
+
+
+def fetch_huggingface_pinned(repository: str, revision: str, filename: str,
+                             target_directory: Path, specification: dict) -> Path:
+    """Use Hugging Face's chunked/Xet client for multi-gigabyte model files."""
+    target = target_directory / filename
+    if target.is_file() and target.stat().st_size == specification["bytes"]:
+        digest = hashlib.sha256()
+        with target.open("rb") as handle:
+            while chunk := handle.read(8 << 20):
+                digest.update(chunk)
+        if digest.hexdigest() == specification["sha256"]:
+            print(f"  have verified {target.name}")
+            return target
+
+    try:
+        from huggingface_hub import hf_hub_download
+    except ImportError:
+        base = f"https://huggingface.co/{repository}/resolve/{revision}"
+        return fetch_pinned(f"{base}/{filename}?download=true", target, specification)
+
+    # This exact .part name belongs to fetch_pinned above.  Leaving it would
+    # waste space; hf_hub_download has its own chunk cache and cannot reuse it.
+    target.with_suffix(target.suffix + ".part").unlink(missing_ok=True)
+    target_directory.mkdir(parents=True, exist_ok=True)
+    print(f"  downloading {repository}/{filename} via Hugging Face Xet")
+    downloaded = Path(hf_hub_download(
+        repo_id=repository, filename=filename, revision=revision,
+        local_dir=target_directory,
+    ))
+    if downloaded.resolve() != target.resolve():
+        shutil.copy2(downloaded, target)
+    return fetch_pinned("", target, specification)
 
 # --------------------------------------------------------------------------
 # dense -- UCI HIGGS
@@ -134,7 +219,7 @@ def prepare_dense(root: Path, args) -> None:
 
 VAL_URL = "https://image-net.org/data/ILSVRC/2012/ILSVRC2012_img_val.tar"
 DEVKIT_URL = "https://image-net.org/data/ILSVRC/2012/ILSVRC2012_devkit_t12.tar.gz"
-MANIFEST = HERE / "imagenet_subset.manifest"
+MANIFEST = HERE / "manifests" / "imagenet_subset.manifest"
 
 def prepare_cnn(root: Path, args) -> None:
     """ResNet-50 keeps its true 2048x1000 head, so the subset keeps all 1000
@@ -406,11 +491,126 @@ def prepare_lstm(root: Path, args) -> None:
 
     print(f"  wrote {len(raw_rows):,} hourly rows to {prepared}")
 
+
+# --------------------------------------------------------------------------
+# qwen -- one canonical BF16 model, two serializations, pinned runtimes
+# --------------------------------------------------------------------------
+
+QWEN_TOOLS = HERE / "tools"
+QWEN_MANIFEST = HERE / "manifests" / "qwen_manifest.json"
+
+
+def _clone_llama(destination: Path, specification: dict) -> None:
+    commit = specification["commit"]
+    if (destination / ".git").is_dir():
+        current = subprocess.run(
+            ["git", "-C", str(destination), "rev-parse", "HEAD"],
+            capture_output=True, text=True).stdout.strip()
+        if current == commit:
+            print(f"  have llama.cpp {commit[:12]}")
+            return
+        subprocess.check_call(["git", "-C", str(destination), "fetch", "origin", commit])
+    else:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.check_call(["git", "clone", "--filter=blob:none", "--no-checkout",
+                               specification["repository"], str(destination)])
+    subprocess.check_call(["git", "-C", str(destination), "checkout", "--detach", commit])
+    current = subprocess.check_output(
+        ["git", "-C", str(destination), "rev-parse", "HEAD"], text=True).strip()
+    if current != commit:
+        raise SystemExit(f"llama.cpp checkout is {current}, expected {commit}")
+
+
+def _apply_llama_benchmark_patch(llama: Path, specification: dict) -> None:
+    patch_spec = specification["benchmark_patch"]
+    patch = QWEN_TOOLS / patch_spec["path"]
+    digest = hashlib.sha256(patch.read_bytes()).hexdigest()
+    if digest != patch_spec["sha256"]:
+        raise SystemExit(f"llama-bench patch hash is {digest}, expected {patch_spec['sha256']}")
+    reverse = subprocess.run(["git", "-C", str(llama), "apply", "--reverse",
+                              "--check", str(patch)], capture_output=True, text=True)
+    if reverse.returncode == 0:
+        print("  have llama-bench fixed-context instrumentation")
+        return
+    check = subprocess.run(["git", "-C", str(llama), "apply", "--check", str(patch)],
+                           capture_output=True, text=True)
+    if check.returncode:
+        raise SystemExit(f"llama-bench patch does not apply cleanly:\n{check.stderr}")
+    subprocess.check_call(["git", "-C", str(llama), "apply", str(patch)])
+    print("  applied llama-bench fixed-context instrumentation")
+
+
+def _install_converter_requirements(llama: Path) -> None:
+    candidates = [
+        llama / "requirements" / "requirements-convert_hf_to_gguf.txt",
+        llama / "requirements.txt",
+    ]
+    requirements = next((path for path in candidates if path.is_file()), None)
+    if requirements is None:
+        raise SystemExit("llama.cpp has no converter requirements file")
+
+    uv = os.environ.get("OPENNN_BENCH_UV")
+    if uv:
+        command = [uv, "pip", "install", "--python", sys.executable,
+                   "-r", str(requirements), "safetensors"]
+    else:
+        command = [sys.executable, "-m", "pip", "install", "-r", str(requirements),
+                   "safetensors"]
+    subprocess.check_call(command)
+
+
+def prepare_qwen(root: Path, args) -> None:
+    manifest = json.loads(QWEN_MANIFEST.read_text(encoding="utf-8"))
+    qwen_root = root / "qwen3"
+    opennn_dir = qwen_root / "models" / "opennn"
+    canonical_dir = qwen_root / "models" / "canonical"
+    tool_root = qwen_root / "tools"
+
+    for key, destination in (("opennn_model", opennn_dir),
+                             ("canonical_model", canonical_dir)):
+        model = manifest[key]
+        for name, specification in model["files"].items():
+            fetch_huggingface_pinned(model["repository"], model["revision"],
+                                     name, destination, specification)
+
+    llama = tool_root / "llama.cpp"
+    _clone_llama(llama, manifest["llama_cpp"])
+    _apply_llama_benchmark_patch(llama, manifest["llama_cpp"])
+
+    ollama_archive = tool_root / "downloads" / "ollama-windows-amd64.zip"
+    fetch_pinned(manifest["ollama"]["url"], ollama_archive,
+                 {"sha256": manifest["ollama"]["sha256"]})
+    ollama_dir = tool_root / "ollama" / manifest["ollama"]["version"]
+    if not (ollama_dir / "ollama.exe").is_file():
+        print(f"  extracting Ollama to {ollama_dir}")
+        ollama_dir.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(ollama_archive) as archive:
+            archive.extractall(ollama_dir)
+    if not (ollama_dir / "ollama.exe").is_file():
+        raise SystemExit(f"Ollama archive did not contain ollama.exe: {ollama_archive}")
+
+    gguf = qwen_root / "models" / "qwen3-4b-bf16.gguf"
+    if not gguf.is_file() or args.force:
+        _install_converter_requirements(llama)
+        converter = llama / "convert_hf_to_gguf.py"
+        print(f"  converting canonical BF16 weights to {gguf.name}")
+        subprocess.check_call([
+            sys.executable, str(converter), str(canonical_dir),
+            "--outfile", str(gguf), "--outtype", "bf16",
+        ])
+
+    validator = QWEN_TOOLS / "validate_qwen.py"
+    subprocess.check_call([
+        sys.executable, str(validator), "--data-root", str(root),
+        "--write-report", str(qwen_root / "validation.json"),
+    ])
+
 FAMILIES = {
     "dense": prepare_dense,
     "cnn": prepare_cnn,
     "transformer": prepare_transformer,
     "lstm": prepare_lstm,
+    "qwen": prepare_qwen,
 }
 
 def main() -> int:

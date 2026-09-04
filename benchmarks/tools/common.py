@@ -20,6 +20,7 @@ import subprocess
 import sys
 import threading
 import time
+import ctypes
 from pathlib import Path
 from typing import Any
 
@@ -42,10 +43,10 @@ def run_text(command: list[str], cwd: Path | None = None, timeout: int = 120) ->
 def repo_root(start: Path | None = None) -> Path:
     here = (start or Path(__file__)).resolve().parent
     root = run_text(["git", "-C", str(here), "rev-parse", "--show-toplevel"])
-    return Path(root).resolve() if root else here.parent
+    return Path(root).resolve() if root else here.parents[1]
 
 REPO_ROOT = repo_root()
-BENCHMARKS = Path(__file__).resolve().parent
+BENCHMARKS = Path(__file__).resolve().parent.parent
 RESULTS = BENCHMARKS / "results"
 
 def git_metadata(root: Path | None = None) -> dict[str, Any]:
@@ -156,6 +157,12 @@ def clocks_locked() -> bool:
     persistence by hand and not lock the clock, which is not an accident
     anyone has.
     """
+    # WDDM does not expose persistence mode.  The Windows wrapper sets this
+    # marker only after both -lgc and -lmc succeed, and removes it again when
+    # the clocks are restored.  It is deliberately process-local: a random
+    # lock left behind by another shell must not certify this run.
+    if os.name == "nt":
+        return os.environ.get("OPENNN_BENCH_CLOCKS_LOCKED") == "1"
     return run_text(["nvidia-smi", "--query-gpu=persistence_mode",
                      "--format=csv,noheader"], timeout=10).strip() == "Enabled"
 
@@ -168,6 +175,28 @@ def cpu_busy_fraction(seconds: float = 1.0) -> float:
     threads -- quiet measures under 0.01, one saturated core measures about
     one over the thread count.
     """
+    if os.name == "nt":
+        class FileTime(ctypes.Structure):
+            _fields_ = [("low", ctypes.c_uint32), ("high", ctypes.c_uint32)]
+
+        def value(item: FileTime) -> int:
+            return (int(item.high) << 32) | int(item.low)
+
+        def windows_snapshot() -> tuple[int, int]:
+            idle, kernel, user = FileTime(), FileTime(), FileTime()
+            if not ctypes.windll.kernel32.GetSystemTimes(  # type: ignore[attr-defined]
+                    ctypes.byref(idle), ctypes.byref(kernel), ctypes.byref(user)):
+                return 0, 0
+            # Kernel time includes idle time on Windows.
+            return value(kernel) + value(user), value(idle)
+
+        total_before, idle_before = windows_snapshot()
+        time.sleep(seconds)
+        total_after, idle_after = windows_snapshot()
+        elapsed = total_after - total_before
+        return (0.0 if elapsed <= 0 else
+                max(0.0, min(1.0, 1.0 - (idle_after - idle_before) / elapsed)))
+
     def snapshot() -> tuple[int, int]:
         values = [int(v) for v in
                   Path("/proc/stat").read_text().split("\n")[0].split()[1:]]
@@ -261,11 +290,17 @@ def find_binary(base: str, root: Path | None = None) -> tuple[str, bool]:
 # GPU: state, and the sampler every run carries
 # --------------------------------------------------------------------------
 
-_STATE_FIELDS = ("clocks.current.sm,clocks.max.sm,clocks.current.memory,"
-                 "temperature.gpu,power.limit,power.draw,clocks_throttle_reasons.active")
+_STATE_FIELDS = ("name,driver_version,clocks.current.sm,clocks.max.sm,clocks.current.memory,"
+                 "temperature.gpu,power.limit,power.draw,"
+                 "clocks_throttle_reasons.sw_power_cap,"
+                 "clocks_throttle_reasons.sw_thermal_slowdown,"
+                 "clocks_throttle_reasons.hw_thermal_slowdown,"
+                 "clocks_throttle_reasons.hw_power_brake_slowdown")
 
-_STATE_KEYS = ("sm_clock_mhz", "sm_clock_max_mhz", "mem_clock_mhz",
-               "temp_c", "power_limit_w", "power_draw_w", "throttle_reasons")
+_STATE_KEYS = ("name", "driver_version", "sm_clock_mhz", "sm_clock_max_mhz",
+               "mem_clock_mhz", "temp_c", "power_limit_w", "power_draw_w",
+               "software_power_cap", "software_thermal_slowdown",
+               "hardware_thermal_slowdown", "hardware_power_brake_slowdown")
 
 def gpu_state() -> dict[str, Any]:
     """Clocks, temperature, power and any active throttle reason, so a number
@@ -385,6 +420,7 @@ class Monitor:
         self.interval_ms = interval_ms
         self.device = device
         self.samples: list[tuple[float, float, float]] = []    # unix, MiB, watts
+        self.telemetry_samples: list[dict[str, float]] = []
         self.idle_mib = 0.0
         self.idle_watts = 0.0
         self.peak_rss_mib = 0.0
@@ -448,7 +484,12 @@ class Monitor:
         # samples inside their own timed window at all.
         try:
             self._process = subprocess.Popen(
-                ["nvidia-smi", "--query-gpu=memory.used,power.draw",
+                ["nvidia-smi", "--query-gpu=memory.used,power.draw,temperature.gpu,"
+                 "utilization.gpu,clocks.current.sm,clocks.current.memory,"
+                 "clocks_throttle_reasons.sw_power_cap,"
+                 "clocks_throttle_reasons.sw_thermal_slowdown,"
+                 "clocks_throttle_reasons.hw_thermal_slowdown,"
+                 "clocks_throttle_reasons.hw_power_brake_slowdown",
                  "--format=csv,noheader,nounits", "-lms", str(self.interval_ms)],
                 stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
         except Exception:
@@ -549,10 +590,28 @@ class Monitor:
             if self._stop.is_set():
                 break
             try:
-                mib, watts = (float(x) for x in line.split(","))
+                parts = [x.strip() for x in line.split(",")]
+                values = [float(x) for x in parts[:6]]
+                if len(values) < 2:
+                    continue
+                mib, watts = values[:2]
             except ValueError:
                 continue
-            self.samples.append((time.time(), mib, watts))
+            now = time.time()
+            self.samples.append((now, mib, watts))
+            if len(values) >= 6:
+                self.telemetry_samples.append({
+                    "unix": now,
+                    "memory_mib": mib,
+                    "power_w": watts,
+                    "temperature_c": values[2],
+                    "utilization_percent": values[3],
+                    "sm_clock_mhz": values[4],
+                    "memory_clock_mhz": values[5],
+                    "power_throttled": float(len(parts) > 6 and parts[6].lower() == "active"),
+                    "thermal_throttled": float(any(
+                        part.lower() == "active" for part in parts[7:10])),
+                })
 
     @property
     def peak_mib(self) -> float:
@@ -621,6 +680,9 @@ class Monitor:
 
         window = [w for t, _, w in self.samples
                   if (start is None or t >= start) and (end is None or t <= end)]
+        telemetry = [sample for sample in self.telemetry_samples
+                     if (start is None or sample["unix"] >= start)
+                     and (end is None or sample["unix"] <= end)]
 
         # A window too short to sample has no energy figure, and saying 0.0 Wh
         # would be a claim rather than an absence. Lengthen the run -- more
@@ -639,6 +701,16 @@ class Monitor:
             "samples": len(self.samples),
             "window_samples": len(window),
             "energy_measurable": measurable,
+            "telemetry": {
+                "max_temperature_c": max((s["temperature_c"] for s in telemetry), default=None),
+                "max_utilization_percent": max((s["utilization_percent"] for s in telemetry), default=None),
+                "min_sm_clock_mhz": min((s["sm_clock_mhz"] for s in telemetry), default=None),
+                "max_sm_clock_mhz": max((s["sm_clock_mhz"] for s in telemetry), default=None),
+                "min_memory_clock_mhz": min((s["memory_clock_mhz"] for s in telemetry), default=None),
+                "max_memory_clock_mhz": max((s["memory_clock_mhz"] for s in telemetry), default=None),
+                "power_throttled": any(bool(s.get("power_throttled")) for s in telemetry),
+                "thermal_throttled": any(bool(s.get("thermal_throttled")) for s in telemetry),
+            },
         }
 
 # --------------------------------------------------------------------------
@@ -701,6 +773,26 @@ def cpu_state() -> dict[str, Any]:
             return Path(path).read_text().strip()
         except OSError:
             return None
+
+    if os.name == "nt":
+        name = platform.processor()
+        try:
+            import winreg
+            with winreg.OpenKey(
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"HARDWARE\DESCRIPTION\System\CentralProcessor\0") as key:
+                name = str(winreg.QueryValueEx(key, "ProcessorNameString")[0]).strip()
+        except (OSError, ImportError):
+            pass
+        return {
+            "model": name,
+            "logical_processors": os.cpu_count(),
+            "governor": None,
+            "scaling_driver": "Windows scheduler",
+            "turbo_enabled": None,
+            "performance_cores": [],
+            "efficiency_cores": [],
+        }
 
     layout = core_layout()
     no_turbo = read("/sys/devices/system/cpu/intel_pstate/no_turbo")

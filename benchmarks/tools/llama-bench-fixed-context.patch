@@ -1,0 +1,84 @@
+diff --git a/tools/llama-bench/llama-bench.cpp b/tools/llama-bench/llama-bench.cpp
+index a2da93b9a..068624823 100644
+--- a/tools/llama-bench/llama-bench.cpp
++++ b/tools/llama-bench/llama-bench.cpp
+@@ -42,6 +42,11 @@ static uint64_t get_time_ns() {
+     return std::chrono::nanoseconds(clock::now().time_since_epoch()).count();
+ }
+ 
++static double get_unix_seconds() {
++    return std::chrono::duration<double>(
++        std::chrono::system_clock::now().time_since_epoch()).count();
++}
++
+ static bool tensor_buft_override_equal(const llama_model_tensor_buft_override& a, const llama_model_tensor_buft_override& b) {
+     if (a.pattern != b.pattern) {
+         // cString comparison that may be null
+@@ -1279,6 +1284,13 @@ struct cmd_params_instance {
+         llama_context_params cparams = llama_context_default_params();
+ 
+         cparams.n_ctx           = n_prompt + n_gen + n_depth;
++        // OpenNN benchmark-only instrumentation: keep independent pp/tg
++        // measurements at the same per-cell context capacity.
++        if (const char * fixed_ctx = std::getenv("OPENNN_BENCH_CTX_SIZE")) {
++            const int parsed = std::atoi(fixed_ctx);
++            GGML_ASSERT(parsed >= n_prompt + n_gen + n_depth);
++            cparams.n_ctx = parsed;
++        }
+         cparams.n_batch         = n_batch;
+         cparams.n_ubatch        = n_ubatch;
+         cparams.type_k          = type_k;
+@@ -1472,6 +1484,8 @@ struct test {
+     int                      n_gen;
+     int                      n_depth;
+     std::string              test_time;
++    double                   timed_start_unix = 0.0;
++    double                   timed_end_unix   = 0.0;
+     std::vector<uint64_t>    samples_ns;
+ 
+     test(const cmd_params_instance & inst, const llama_model * lmodel, const llama_context * ctx) :
+@@ -1566,7 +1580,8 @@ struct test {
+             "tensor_buft_overrides",            "load_mode",     "embeddings",
+             "no_op_offload",  "no_host",        "fit_target",    "fit_min_ctx",
+             "n_prompt",       "n_gen",          "n_depth",
+-            "test_time",      "avg_ns",         "stddev_ns",     "avg_ts",         "stddev_ts"
++            "test_time",      "timed_start_unix", "timed_end_unix",
++            "avg_ns",         "stddev_ns",       "avg_ts",         "stddev_ts"
+         };
+         return fields;
+     }
+@@ -1585,7 +1600,8 @@ struct test {
+             field == "embeddings" || field == "no_host") {
+             return BOOL;
+         }
+-        if (field == "avg_ts" || field == "stddev_ts") {
++        if (field == "avg_ts" || field == "stddev_ts" ||
++            field == "timed_start_unix" || field == "timed_end_unix") {
+             return FLOAT;
+         }
+         if (field == "load_mode") {
+@@ -1667,6 +1683,8 @@ struct test {
+                                             std::to_string(n_gen),
+                                             std::to_string(n_depth),
+                                             test_time,
++                                            std::to_string(timed_start_unix),
++                                            std::to_string(timed_end_unix),
+                                             std::to_string(avg_ns()),
+                                             std::to_string(stdev_ns()),
+                                             std::to_string(avg_ts()),
+@@ -2378,6 +2396,7 @@ int llama_bench(int argc, char ** argv) {
+             }
+         }
+ 
++        t.timed_start_unix = get_unix_seconds();
+         for (int i = 0; i < params.reps; i++) {
+             llama_memory_clear(llama_get_memory(ctx), false);
+ 
+@@ -2450,6 +2469,7 @@ int llama_bench(int argc, char ** argv) {
+             uint64_t t_ns = get_time_ns() - t_start;
+             t.samples_ns.push_back(t_ns);
+         }
++        t.timed_end_unix = get_unix_seconds();
+ 
+         if (p) {
+             p->print_test(t);

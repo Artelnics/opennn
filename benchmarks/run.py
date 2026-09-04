@@ -42,7 +42,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "tools"))
 from common import (  # noqa: E402
     BENCHMARKS,
     clocks_locked,
@@ -303,6 +303,14 @@ def _is_number(text: str) -> bool:
         return False
 
 def main() -> int:
+    # Qwen is a token-length/runtime matrix rather than the batch/epoch matrix
+    # used by the supervised families.  Keep one public entry point while
+    # letting the family own its materially different command-line contract.
+    if any(argument == "qwen" or argument == "--family=qwen"
+           for argument in sys.argv[1:]):
+        from families.qwen import main as qwen_main
+        return qwen_main(sys.argv[1:])
+
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--family", default="dense", choices=sorted(FAMILIES))

@@ -1,23 +1,12 @@
 # OpenNN — instructions for coding agents
 
 See [README.md](README.md) for what this project is and generic build instructions.
-This file is the single entry point for agent-facing documentation; everything else
-is linked from here.
+Project-local skills live in [.agents/skills/](.agents/skills/).
 
-| Topic | Where |
-| --- | --- |
-| Code organization, header layout, class member order, `std::` caveats | [docs/architecture.md](docs/architecture.md) |
-| Current engineering status, audit findings, YOLO roadmap | [docs/status/engineering-audit.md](docs/status/engineering-audit.md) |
-| YOLO implementation notes, session by session | [docs/status/yolo-session-log.md](docs/status/yolo-session-log.md) |
-| CUDA-graph topology dumps (training) | [docs/uml/cuda-graph/](docs/uml/cuda-graph/) |
-| Fast CPU/CUDA edit and final-verification workflow | [docs/fast-verification.md](docs/fast-verification.md) |
-| Project-local skills | [.agents/skills/](.agents/skills/) |
-| Making the code conceptual and self-explanatory (standing task prompt) | [docs/making-the-code-conceptual.md](docs/making-the-code-conceptual.md) |
-
-Before deleting anything that looks unused, read
-[Before deleting anything: Neural Designer](docs/status/engineering-audit.md#before-deleting-anything-neural-designer).
-Neural Designer links against this library and uses many symbols that look orphaned
-from inside this repo, so dead-code analysis run only here produces false positives.
+Before deleting anything that looks unused, remember that Neural Designer links
+against this library and uses many symbols that look orphaned from inside this
+repository. Dead-code analysis performed only here therefore produces false
+positives.
 
 ## Build environment on this machine (Windows)
 
@@ -62,8 +51,8 @@ GoogleTest filter for fast feedback:
 ```
 
 Focused checks are the edit loop; `full` remains the final gate and runs both
-complete suites once. See [docs/fast-verification.md](docs/fast-verification.md)
-for cache locations, options, and `sccache` integration.
+complete suites once. The wrappers expose their cache, backend and compiler-cache
+options through their command-line help.
 
 ### Creating the two build directories manually
 
@@ -145,8 +134,7 @@ Directory names referred to in older notes (`build-ninja`, `build-fresh`,
 
 ## Code organization
 
-Moved to [docs/architecture.md](docs/architecture.md) — folder layout and the
-dependency order between folders, header layout, class member order, the two
-deliberate upward includes, and the places where `std::` qualification is
-load-bearing. Read it before moving a file, hoisting an enum, or reordering data
-members.
+Follow the organization and naming of neighboring files before moving code,
+hoisting an enum or reordering data members. Some `std::` qualifications and
+include directions are load-bearing, so validate structural changes in both CPU
+and CUDA builds.
