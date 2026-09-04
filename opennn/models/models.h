@@ -207,6 +207,8 @@ public:
 
     explicit TextGenerationNetwork(const filesystem::path&);
 
+    void load_pretrained(const filesystem::path& data_directory);
+
     Index get_sequence_length() const { return get_layer("embedding")->get_input_shape()[0]; }
 
     void set_dropout_rate(const float);

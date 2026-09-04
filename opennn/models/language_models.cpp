@@ -736,6 +736,23 @@ TextGenerationNetwork::TextGenerationNetwork(const filesystem::path& path)
 {
 }
 
+void TextGenerationNetwork::load_pretrained(const filesystem::path& data_directory)
+{
+    constexpr string_view GPT2_BASE_URL =
+        "https://github.com/Artelnics/opennn/releases/download/gpt2-weights-v1/";
+    constexpr string_view GPT2_WEIGHTS_FILE = "gpt2-small-seq256.bin";
+
+    download_files_if_missing(
+        data_directory,
+        GPT2_BASE_URL,
+        {GPT2_WEIGHTS_FILE, "vocab.json", "merges.txt"});
+
+    set_tokenizer(make_unique<BytePairTokenizer>(
+        data_directory / "vocab.json", data_directory / "merges.txt"));
+
+    load_parameters_binary(data_directory / GPT2_WEIGHTS_FILE);
+}
+
 void TextGenerationNetwork::set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
 {
     get_tokenizer_layer(*this, "tokenizer")
