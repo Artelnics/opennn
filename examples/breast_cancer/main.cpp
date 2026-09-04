@@ -8,6 +8,7 @@
 
 #include <iostream>
 
+#include "opennn/core/configuration.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/training_strategy/training_strategy.h"
@@ -20,6 +21,8 @@ int main()
     try
     {
         cout << "OpenNN. Breast Cancer Example." << endl;
+
+        Configuration::instance().set(Device::CPU, Type::FP32);
 
         TabularDataset dataset("../data/breast_cancer/breast_cancer.csv", ";", true, false);
 
