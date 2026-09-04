@@ -88,6 +88,12 @@ vector<pair<string, Index>> get_variable_columns(const vector<Variable>& variabl
 
         if (span == 1)
             columns.emplace_back(variable.name, feature_index);
+        else if (variable.is_categorical())
+            // A level is a 0/1 column like any other, so a constraint should be able to read one.
+            // Qualified by the block it belongs to, because two blocks may share a level name.
+            for (Index level = 0; level < span; level++)
+                columns.emplace_back(variable.name + "." + variable.categories[size_t(level)],
+                                     feature_index + level);
 
         feature_index += span;
     }
