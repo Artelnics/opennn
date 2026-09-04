@@ -21,9 +21,6 @@ using namespace opennn;
 namespace
 {
 
-using Constraint = ResponseOptimization::Constraint;
-using Condition = Constraint::Condition;
-
 enum Mix { Cement, Water, BinderA, BinderB, BinderC, VariablesNumber };
 
 const vector<pair<string, Index>> mix_columns = {{"cement", Cement}, {"water", Water},
@@ -40,17 +37,17 @@ constexpr float margin_factor = 0.1f;
 constexpr float binder_span = 60.0f;
 
 
-VectorR fake_output(const VectorR& mix)
+VectorR fake_output(const VectorR& point)
 {
     VectorR strength(1);
 
-    strength(0) = 100.0f/pow(4.0f, mix(Water)/mix(Cement));
+    strength(0) = 100.0f/pow(4.0f, point(Water)/point(Cement));
 
     return strength;
 }
 
 
-CompiledExpression compile_group(const string& text)
+vector<Index> get_group_members(const string& text)
 {
     vector<Index> members;
 
@@ -62,89 +59,67 @@ CompiledExpression compile_group(const string& text)
         members.push_back(member.linear_input_terms.front().first);
     }
 
-    CompiledExpression group = compile_sum(members);
-
-    group.text = text;
-
-    return group;
+    return members;
 }
 
 
-vector<Constraint> expand_cardinality(const Constraint& cardinality, const Index first_activation)
+VectorR seed_switches(const VectorR& point, const vector<Index>& members, const Index budget)
 {
-    vector<Constraint> expanded;
+    VectorR unknowns = VectorR::Zero(VariablesNumber + Index(members.size()));
 
-    vector<Index> activations;
+    unknowns.head(VariablesNumber) = point;
 
-    for (const auto& [member, coefficient] : cardinality.expression.linear_input_terms)
-    {
-        const Index activation = first_activation + Index(activations.size());
-
-        activations.push_back(activation);
-
-        expanded.push_back(Constraint{compile_coupling(member, activation, binder_span),
-                                      Condition::Between, {-tolerance, tolerance}});
-
-        expanded.push_back(Constraint{compile_binarity(activation),
-                                      Condition::Between, {-0.5f*tolerance, 0.5f*tolerance}});
-    }
-
-    expanded.push_back(Constraint{compile_sum(activations),
-                                  Condition::Equal, {cardinality.values[0]}});
-
-    return expanded;
-}
-
-
-VectorR seed_activations(const VectorR& mix, const Constraint& cardinality)
-{
-    const auto& counted = cardinality.expression.linear_input_terms;
-
-    VectorR point = VectorR::Zero(VariablesNumber + Index(counted.size()));
-
-    point.head(VariablesNumber) = mix;
-
-    vector<Index> positions(counted.size());
+    vector<Index> positions(members.size());
 
     iota(positions.begin(), positions.end(), Index(0));
 
-    ranges::sort(positions, {},
-                 [&](const Index position) { return -abs(mix(counted[size_t(position)].first)); });
+    ranges::sort(positions, {}, [&](const Index position) { return -abs(point(members[size_t(position)])); });
 
-    for (Index i = 0; i < Index(cardinality.values[0]); i++)
-        point(VariablesNumber + positions[size_t(i)]) = 1.0f;
+    for (Index i = 0; i < budget; i++)
+        unknowns(VariablesNumber + positions[size_t(i)]) = 1.0f;
 
-    return point;
+    return unknowns;
 }
 
 
 struct ToySystem : Eigen::DenseFunctor<float>
 {
-    ToySystem(const vector<Constraint>& new_constraints, const Index unknowns_number)
-        : Eigen::DenseFunctor<float>(int(unknowns_number), int(new_constraints.size())),
-          constraints(new_constraints) {}
+    ToySystem(vector<CompiledExpression> new_equations,
+              vector<pair<float, float>> new_bands,
+              const Index unknowns_number)
+        : Eigen::DenseFunctor<float>(int(unknowns_number), int(new_equations.size())),
+          equations(move(new_equations)),
+          bands(move(new_bands)) {}
 
-    int operator()(const VectorR& mix, VectorR& residuals) const
+    int operator()(const VectorR& point, VectorR& residuals) const
     {
-        const VectorR strength = fake_output(mix);
+        const VectorR strength = fake_output(point);
 
-        residuals.resize(Index(constraints.size()));
+        residuals.resize(Index(equations.size()));
 
-        for (Index i = 0; i < Index(constraints.size()); i++)
+        for (Index i = 0; i < Index(equations.size()); i++)
         {
-            const Constraint& constraint = constraints[size_t(i)];
+            const auto [lower, upper] = bands[size_t(i)];
 
-            const float value = constraint.expression.evaluate(mix, strength);
+            const float value = equations[size_t(i)].evaluate(point, strength);
 
-            const float residual = constraint.calculate_residual(value, tolerance, margin_factor);
+            const float residual = (value < lower) ? value - lower
+                                 : (value > upper) ? value - upper
+                                                   : 0.0f;
 
-            residuals(i) = isfinite(residual) ? residual : 0.0f;
+            const float inset = min(margin_factor*max(abs(residual),
+                                                      margin_factor*((residual < 0.0f) ? abs(lower) : abs(upper))),
+                                    0.5f*(upper - lower));
+
+            residuals(i) = residual + ((residual > 0.0f) ? inset : (residual < 0.0f) ? -inset : 0.0f);
         }
 
         return 0;
     }
 
-    vector<Constraint> constraints;
+    vector<CompiledExpression> equations;
+
+    vector<pair<float, float>> bands;
 };
 
 }
@@ -152,33 +127,46 @@ struct ToySystem : Eigen::DenseFunctor<float>
 
 TEST(ToyNonlinearSystem, LevenbergMarquardtReachesTheRoot)
 {
-    const Constraint expression_1{compile_expression("cement + water", mix_columns, response_columns),
-                                  Condition::Equal, {400.0f}};
+    const float unbounded = numeric_limits<float>::infinity();
 
-    const Constraint expression_2{compile_expression("water / cement", mix_columns, response_columns),
-                                  Condition::Between, {0.35f, 0.60f}};
+    const vector<Index> members = get_group_members("binder_a; binder_b; binder_c");
 
-    const Constraint expression_3{compile_expression("strength - 0.20 * cement", mix_columns, response_columns),
-                                  Condition::GreaterEqual, {0.0f}};
+    constexpr Index budget = 2;
 
-    const Constraint expression_4{compile_group("binder_a; binder_b; binder_c"),
-                                  Condition::Cardinality, {2.0f}};
+    vector<CompiledExpression> equations;
+    vector<pair<float, float>> bands;
 
-    const Constraint expression_5{compile_expression("binder_a + binder_b + binder_c", mix_columns, response_columns),
-                                  Condition::Equal, {60.0f}};
+    const auto add = [&](CompiledExpression equation, const float lower, const float upper)
+    {
+        equations.push_back(move(equation));
+        bands.emplace_back(lower, upper);
+    };
 
-    vector<Constraint> constraints_expressions =
-        {expression_1, expression_2, expression_3, expression_5};
+    add(compile_expression("cement + water", mix_columns, response_columns), 400.0f, 400.0f);
+    add(compile_expression("water / cement", mix_columns, response_columns), 0.35f, 0.60f);
+    add(compile_expression("strength - 0.20 * cement", mix_columns, response_columns), 0.0f, unbounded);
+    add(compile_expression("binder_a + binder_b + binder_c", mix_columns, response_columns), 60.0f, 60.0f);
 
-    for (const Constraint& expanded : expand_cardinality(expression_4, VariablesNumber))
-        constraints_expressions.push_back(expanded);
+    vector<Index> switches;
 
-    VectorR mix(VariablesNumber);
-    mix << 200.0f, 260.0f, 30.0f, 25.0f, 15.0f;
+    for (const Index member : members)
+    {
+        const Index switch_column = VariablesNumber + Index(switches.size());
 
-    VectorR point = seed_activations(mix, expression_4);
+        switches.push_back(switch_column);
 
-    ToySystem system(constraints_expressions, point.size());
+        add(compile_coupling(member, switch_column, binder_span), -tolerance, tolerance);
+        add(compile_binarity(switch_column), -0.5f*tolerance, 0.5f*tolerance);
+    }
+
+    add(compile_sum(switches), float(budget), float(budget));
+
+    VectorR point(VariablesNumber);
+    point << 200.0f, 260.0f, 30.0f, 25.0f, 15.0f;
+
+    VectorR unknowns = seed_switches(point, members, budget);
+
+    ToySystem system(move(equations), move(bands), unknowns.size());
 
     Eigen::NumericalDiff<ToySystem, Eigen::Central> numerical_diff(system);
 
@@ -187,30 +175,30 @@ TEST(ToyNonlinearSystem, LevenbergMarquardtReachesTheRoot)
 
     VectorR start_residuals;
 
-    system(point, start_residuals);
+    system(unknowns, start_residuals);
 
-    ASSERT_NE(levenberg_marquardt.minimize(point),
+    ASSERT_NE(levenberg_marquardt.minimize(unknowns),
               Eigen::LevenbergMarquardtSpace::ImproperInputParameters);
 
     VectorR residuals;
 
-    system(point, residuals);
+    system(unknowns, residuals);
 
     EXPECT_LT(residuals.norm(), 1e-3f);
 
-    const float cement = point(Cement);
-    const float water = point(Water);
+    const float cement = unknowns(Cement);
+    const float water = unknowns(Water);
 
-    const float binder_a = point(BinderA);
-    const float binder_b = point(BinderB);
-    const float binder_c = point(BinderC);
+    const float binder_a = unknowns(BinderA);
+    const float binder_b = unknowns(BinderB);
+    const float binder_c = unknowns(BinderC);
 
-    const float switch_a = point(VariablesNumber);
-    const float switch_b = point(VariablesNumber + 1);
-    const float switch_c = point(VariablesNumber + 2);
+    const float switch_a = unknowns(VariablesNumber);
+    const float switch_b = unknowns(VariablesNumber + 1);
+    const float switch_c = unknowns(VariablesNumber + 2);
 
     const float water_cement = water/cement;
-    const float strength = fake_output(point)(0);
+    const float strength = fake_output(unknowns)(0);
 
     const Index binders_used = Index(switch_a > 0.5f)
                              + Index(switch_b > 0.5f)

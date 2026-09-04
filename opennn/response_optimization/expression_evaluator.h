@@ -76,6 +76,10 @@ CompiledExpression compile_coupling(Index variable, Index switch_variable, float
 
 CompiledExpression compile_binarity(Index variable);
 
+CompiledExpression compile_integrality(const string&, const NeuralNetwork*);
+
+CompiledExpression compile_membership(const string&, const NeuralNetwork*, const vector<float>& allowed);
+
 bool is_output_coupled(const CompiledExpression&);
 
 bool is_univariate(const CompiledExpression&);

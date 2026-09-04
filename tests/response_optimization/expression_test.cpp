@@ -363,35 +363,53 @@ TEST(Expression, CompilingWithoutANetworkThrows)
 }
 
 
-TEST(ConstraintResidual, SilentInsideAndSignedOutside)
+TEST(ConstraintCompilation, AnIntervalConditionBecomesOneEquationAndItsBand)
 {
-    ResponseOptimization::Constraint constraint;
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
 
-    constraint.expression = compile_expression("x1", make_named_columns({"x1"}), {});
+    ResponseOptimization::Constraint between{"x1", Condition::Between, {2.0f, 6.0f}};
+    ResponseOptimization::Constraint equal{"x1", Condition::Equal, {5.0f}};
 
-    constraint.condition = Condition::Between;
-    constraint.values = {2.0f, 6.0f};
+    between.compile_equations(setup.network.get(), {}, 0, 1e-3f);
+    equal.compile_equations(setup.network.get(), {}, 0, 1e-3f);
 
-    EXPECT_FALSE(isfinite(constraint.calculate_residual(4.0f)));
+    ASSERT_EQ(between.equations.size(), 1u);
+    ASSERT_EQ(equal.equations.size(), 1u);
 
-    EXPECT_NEAR(constraint.calculate_residual(1.0f), -1.0f, 1e-6f);
+    EXPECT_NEAR(between.equation_limits.front().first, 2.0f, 1e-6f);
+    EXPECT_NEAR(between.equation_limits.front().second, 6.0f, 1e-6f);
 
-    EXPECT_NEAR(constraint.calculate_residual(8.0f), 2.0f, 1e-6f);
+    EXPECT_NEAR(equal.equation_limits.front().first, 5.0f, 1e-6f);
+    EXPECT_NEAR(equal.equation_limits.front().second, 5.0f, 1e-6f);
 }
 
 
-TEST(ConstraintResidual, EqualityIsSilentOnTargetAndSignedOutside)
+TEST(ConstraintCompilation, ADiscreteConditionAddsAMeasureThatVanishesOnItsValues)
 {
-    ResponseOptimization::Constraint constraint;
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
 
-    constraint.expression = compile_expression("x1", make_named_columns({"x1"}), {});
+    ResponseOptimization::Constraint whole{"x1", Condition::Integer, {}};
+    ResponseOptimization::Constraint listed{"x1", Condition::AllowedSet, {1.0f, 5.0f, 9.0f}};
 
-    constraint.condition = Condition::Equal;
-    constraint.values = {5.0f};
+    whole.compile_equations(setup.network.get(), {}, 0, 1e-3f);
+    listed.compile_equations(setup.network.get(), {}, 0, 1e-3f);
 
-    EXPECT_FALSE(isfinite(constraint.calculate_residual(5.0f)));
+    ASSERT_EQ(whole.equations.size(), 2u);
+    ASSERT_EQ(listed.equations.size(), 2u);
 
-    EXPECT_NEAR(constraint.calculate_residual(7.0f), 2.0f, 1e-6f);
+    VectorR point(2);
+    point << 3.0f, 0.0f;
+
+    EXPECT_NEAR(whole.equations.back().evaluate(point, {}), 0.0f, 1e-6f);
+    EXPECT_GT(abs(listed.equations.back().evaluate(point, {})), 1e-3f);
+
+    point(0) = 3.5f;
+
+    EXPECT_GT(abs(whole.equations.back().evaluate(point, {})), 0.1f);
+
+    point(0) = 5.0f;
+
+    EXPECT_NEAR(listed.equations.back().evaluate(point, {}), 0.0f, 1e-6f);
 }
 
 

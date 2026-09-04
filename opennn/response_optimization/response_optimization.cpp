@@ -48,125 +48,114 @@ float bound_tolerance(const float bound)
 }
 
 
-float nearest_discrete(const Constraint& constraint, const float value)
+float band_residual(const pair<float, float>& band, const float value, const float margin_factor)
 {
-    if (constraint.condition == Condition::Integer)
-        return round(value);
+    const auto [lower, upper] = band;
 
-    return *ranges::min_element(constraint.values, {},
-                                [value](const float allowed) { return abs(allowed - value); });
+    float residual = 0.0f;
+    float crossed_bound = 0.0f;
+
+    if (value < lower - bound_tolerance(lower))
+    {
+        residual = value - lower;
+        crossed_bound = lower;
+    }
+    else if (value > upper + bound_tolerance(upper))
+    {
+        residual = value - upper;
+        crossed_bound = upper;
+    }
+    else
+        return 0.0f;
+
+    const float inset = min(margin_factor*max(abs(residual), margin_factor*abs(crossed_bound)),
+                            0.5f*(upper - lower));
+
+    return residual + ((residual > 0.0f) ? inset : -inset);
 }
 
 
-float discrete_measure(const Constraint& constraint, const float value)
+pair<float, float> interval_band(const Condition condition, const vector<float>& values)
 {
-    if (constraint.condition == Condition::Integer)
-        return sin(numbers::pi_v<float>*value)/numbers::pi_v<float>;
+    const float unbounded = numeric_limits<float>::infinity();
 
-    if (constraint.condition != Condition::AllowedSet)
-        return value;
+    const float strict_offset = 2.0f*bound_tolerance(values[0]);
 
-    const auto [smallest, largest] = ranges::minmax(constraint.values);
+    switch (condition)
+    {
+    case Condition::Between:      return {values[0], values[1]};
+
+    case Condition::Equal:        return {values[0], values[0]};
+
+    case Condition::GreaterEqual: return {values[0], unbounded};
+
+    case Condition::Greater:      return {values[0] + strict_offset, unbounded};
+
+    case Condition::LessEqual:    return {-unbounded, values[0]};
+
+    case Condition::Less:         return {-unbounded, values[0] - strict_offset};
+
+    case Condition::AllowedSet:
+    case Condition::Integer:
+    case Condition::Cardinality:  break;
+    }
+
+    return {-unbounded, unbounded};
+}
+
+
+float membership_scale(const vector<float>& values)
+{
+    const auto [smallest, largest] = ranges::minmax(values);
 
     const float span = max(largest - smallest, EPSILON);
 
-    float measure = span;
+    float scale = numeric_limits<float>::infinity();
 
-    for (const float allowed : constraint.values)
-        measure *= (value - allowed)/span;
+    for (const float root : values)
+    {
+        float slope = 1.0f;
 
-    return measure;
+        for (const float other : values)
+            if (other != root)
+                slope *= (root - other)/span;
+
+        scale = min(scale, abs(slope));
+    }
+
+    return scale;
 }
 
 
-Index count_activations(const vector<Constraint>& constraints)
-{
-    Index activations_number = 0;
-
-    for (const Constraint& constraint : constraints)
-        if (constraint.condition == Condition::Cardinality)
-            activations_number += Index(constraint.expression.linear_input_terms.size());
-
-    return activations_number;
-}
-
-
-// The variables a cardinality condition counts, written as a list: "x1; x2; x3".
-
-CompiledExpression compile_group(const string& text, const NeuralNetwork* neural_network)
+vector<Index> get_group_members(const string& expression, const NeuralNetwork* neural_network)
 {
     vector<Index> members;
 
-    for (const string_view entry : get_token_views(text, ';'))
+    for (const string_view entry : get_token_views(expression, ';'))
     {
         const string name(trim_view(entry));
 
-        throw_if(name.empty(), "Constraint on '" + text + "' leaves an empty entry in its list of variables.");
+        throw_if(name.empty(), "Constraint on '" + expression + "' leaves an empty entry in its list of variables.");
 
         const CompiledExpression member = compile_expression(name, neural_network, "Constraint");
 
         throw_if(is_output_coupled(member) || !is_bare_variable(member),
-                 "Constraint on '" + text + "' lists '" + name + "', which is not a single input variable. "
+                 "Constraint on '" + expression + "' lists '" + name + "', which is not a single input variable. "
                  "The Cardinality condition takes a list of input variables, as in 'x1; x2; x3'.");
 
         const Index column = member.linear_input_terms.front().first;
 
         throw_if(ranges::find(members, column) != members.end(),
-                 "Constraint on '" + text + "' lists '" + name + "' twice.");
+                 "Constraint on '" + expression + "' lists '" + name + "' twice.");
 
         members.push_back(column);
     }
 
     throw_if(members.size() < 2,
-             "Constraint on '" + text + "' counts how many variables are in play. "
+             "Constraint on '" + expression + "' counts how many variables are in play. "
              "The Cardinality condition applies to a list of at least two input variables, as in 'x1; x2; x3'.");
 
-    CompiledExpression group = compile_sum(members);
-
-    group.text = text;
-
-    return group;
-}
-
-
-void convert_cardinality(vector<Constraint>& constraints,
-                         const Constraint& cardinality,
-                         const VectorR& spans,
-                         const float tolerance)
-{
-    const string& text = cardinality.expression.text;
-
-    const Index first_activation = spans.size() + count_activations(constraints);
-
-    const float activation_tolerance = 0.5f*tolerance;
-
-    vector<Index> activations;
-
-    for (const auto& [member, coefficient] : cardinality.expression.linear_input_terms)
-    {
-        const Index activation = first_activation + Index(activations.size());
-
-        activations.push_back(activation);
-
-        CompiledExpression coupling = compile_coupling(member, activation, spans(member));
-
-        coupling.text = "coupling of " + text;
-
-        constraints.push_back(Constraint{move(coupling), Condition::Between, {-tolerance, tolerance}});
-
-        CompiledExpression binarity = compile_binarity(activation);
-
-        binarity.text = "activation of " + text;
-
-        constraints.push_back(Constraint{move(binarity), Condition::Between,
-                                         {-activation_tolerance, activation_tolerance}});
-    }
-
-    CompiledExpression total = compile_sum(activations);
-
-    total.text = "activations of " + text;
-
-    constraints.push_back(Constraint{move(total), Condition::Equal, {cardinality.values[0]}});
+    return members;
 }
 
 
@@ -175,18 +164,21 @@ Index get_discrete_column(const Constraint& constraint)
     if (constraint.condition != Condition::Integer && constraint.condition != Condition::AllowedSet)
         return -1;
 
-    if (constraint.expression.linear_input_terms.size() != 1 || !is_bare_variable(constraint.expression))
+    const CompiledExpression& expression = constraint.equations.front();
+
+    if (expression.linear_input_terms.size() != 1 || !is_bare_variable(expression))
         return -1;
 
-    return constraint.expression.linear_input_terms.front().first;
+    return expression.linear_input_terms.front().first;
 }
 
 
-pair<VectorR, VectorR> narrow_domain(pair<VectorR, VectorR> domain, const vector<const Constraint*>& rows)
+pair<VectorR, VectorR> narrow_domain(pair<VectorR, VectorR> domain,
+                                     const vector<pair<const Constraint*, Index>>& rows)
 {
-    for (const Constraint* row : rows)
+    for (const auto& [constraint, row] : rows)
     {
-        const CompiledExpression& expression = row->expression;
+        const CompiledExpression& expression = constraint->equations[size_t(row)];
 
         if (is_output_coupled(expression)
          || expression.linearity != ExpressionLinearity::Linear
@@ -197,7 +189,7 @@ pair<VectorR, VectorR> narrow_domain(pair<VectorR, VectorR> domain, const vector
 
         if (abs(coefficient) <= EPSILON) continue;
 
-        const auto [lower, upper] = row->calculate_bounds();
+        const auto [lower, upper] = constraint->equation_limits[size_t(row)];
 
         const float at_lower = (lower - expression.linear_constant)/coefficient;
         const float at_upper = (upper - expression.linear_constant)/coefficient;
@@ -214,37 +206,33 @@ pair<VectorR, VectorR> narrow_domain(pair<VectorR, VectorR> domain, const vector
 }
 
 
-void check_domain(const pair<VectorR, VectorR>& domain,
-                  const vector<const Constraint*>& rows,
-                  const vector<Constraint>& constraints)
+void check_domain(const pair<VectorR, VectorR>& domain, const vector<Constraint>& constraints)
 {
     for (const Constraint& constraint : constraints)
-        if (constraint.condition == Condition::Cardinality)
-            for (const auto& [column, coefficient] : constraint.expression.linear_input_terms)
-                throw_if(domain.first(column) > bound_tolerance(domain.first(column))
-                      || domain.second(column) < -bound_tolerance(domain.second(column)),
-                         "Constraint on '" + constraint.expression.text + "' counts input column "
-                         + to_string(column) + ", whose range [" + to_string(domain.first(column)) + ", "
-                         + to_string(domain.second(column)) + "] excludes zero, so it can never be switched off.");
-
-    for (const Constraint* row : rows)
     {
-        const Index column = get_discrete_column(*row);
+        for (const auto& [counted, switch_column] : constraint.involved_variables)
+            throw_if(domain.first(counted) > bound_tolerance(domain.first(counted))
+                  || domain.second(counted) < -bound_tolerance(domain.second(counted)),
+                     "Constraint on '" + constraint.string_expression + "' counts input column "
+                     + to_string(counted) + ", whose range [" + to_string(domain.first(counted)) + ", "
+                     + to_string(domain.second(counted)) + "] excludes zero, so it can never be switched off.");
+
+        const Index column = get_discrete_column(constraint);
 
         if (column < 0) continue;
 
         const float lower = domain.first(column) - bound_tolerance(domain.first(column));
         const float upper = domain.second(column) + bound_tolerance(domain.second(column));
 
-        if (row->condition == Condition::Integer)
+        if (constraint.condition == Condition::Integer)
             throw_if(ceil(lower) > floor(upper),
-                     "Constraint on '" + row->expression.text + "' asks for a whole number in ["
+                     "Constraint on '" + constraint.string_expression + "' asks for a whole number in ["
                      + to_string(lower) + ", " + to_string(upper) + "], which holds none.");
         else
-            throw_if(ranges::none_of(row->values,
+            throw_if(ranges::none_of(constraint.values,
                                      [&](const float allowed)
                                      { return allowed >= lower && allowed <= upper; }),
-                     "Constraint on '" + row->expression.text + "' has no allowed value inside ["
+                     "Constraint on '" + constraint.string_expression + "' has no allowed value inside ["
                      + to_string(lower) + ", " + to_string(upper) + "].");
     }
 }
@@ -254,7 +242,7 @@ void check_domain(const pair<VectorR, VectorR>& domain,
 
 ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
 {
-    system.problem = this;
+    feasibility_system.problem = this;
 
     set(new_neural_network);
 }
@@ -263,75 +251,113 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
 ResponseOptimization::~ResponseOptimization() = default;
 
 
-pair<float, float> ResponseOptimization::Constraint::calculate_bounds() const
+void ResponseOptimization::Constraint::compile_equations(const NeuralNetwork* neural_network,
+                                                         const VectorR& spans,
+                                                         const Index first_switch,
+                                                         const float tolerance)
 {
-    const float unbounded = numeric_limits<float>::infinity();
+    throw_if(ranges::any_of(values, [](const float value) { return !isfinite(value); }),
+             "Constraint on '" + string_expression + "' has a value that is not a finite number.");
 
-    if (values.empty())
-        return {-unbounded, unbounded};
-
-    const float strict_offset = 2.0f*bound_tolerance(values[0]);
-
-    switch (condition)
+    if (condition == Condition::Cardinality)
     {
-    case Condition::AllowedSet:
-    {
-        const auto [smallest, largest] = ranges::minmax(values);
+        const vector<Index> members = get_group_members(string_expression, neural_network);
 
-        return {smallest, largest};
+        throw_if(values.empty() || values[0] < 0.0f || values[0] > float(members.size())
+              || values[0] != round(values[0]),
+                 "Constraint on '" + string_expression + "' needs one whole number between 0 and the "
+                 + to_string(members.size()) + " variables it counts.");
+
+        if (values[0] == float(members.size()))
+            cerr << "Warning: constraint on '" << string_expression << "' allows all "
+                 << members.size() << " of the variables it counts, so it restricts nothing.\n";
+
+        vector<Index> switch_columns;
+
+        for (const Index member : members)
+        {
+            const Index switch_column = first_switch + Index(involved_variables.size());
+
+            involved_variables.emplace_back(member, switch_column);
+            switch_columns.push_back(switch_column);
+
+            equations.push_back(compile_coupling(member, switch_column, spans(member)));
+            equation_limits.emplace_back(-tolerance, tolerance);
+
+            equations.push_back(compile_binarity(switch_column));
+            equation_limits.emplace_back(-0.5f*tolerance, 0.5f*tolerance);
+        }
+
+        equations.push_back(compile_sum(switch_columns));
+        equation_limits.emplace_back(values[0], values[0]);
+
+        return;
     }
 
-    case Condition::Between:      return {values[0], values[1]};
+    equations.push_back(compile_expression(string_expression, neural_network, "Constraint"));
 
-    case Condition::Equal:        return {values[0], values[0]};
-
-    case Condition::GreaterEqual: return {values[0], unbounded};
-
-    case Condition::Greater:      return {values[0] + strict_offset, unbounded};
-
-    case Condition::LessEqual:    return {-unbounded, values[0]};
-
-    case Condition::Less:         return {-unbounded, values[0] - strict_offset};
-
-    case Condition::Integer:
-    case Condition::Cardinality:  break;
-    }
-
-    return {-unbounded, unbounded};
-}
-
-
-float ResponseOptimization::Constraint::calculate_residual(const float value,
-                                                           const float tolerance,
-                                                           const float margin_factor) const
-{
-    if (condition == Condition::Integer || condition == Condition::AllowedSet)
-        return abs(value - nearest_discrete(*this, value)) <= tolerance
-             ? NAN
-             : discrete_measure(*this, value);
-
-    const auto [lower_bound, upper_bound] = calculate_bounds();
-
-    float residual = 0.0f;
-    float crossed_bound = 0.0f;
-
-    if (value < lower_bound - bound_tolerance(lower_bound))
+    if (condition == Condition::Integer)
     {
-        residual = value - lower_bound;
-        crossed_bound = lower_bound;
+        throw_if(is_output_coupled(equations.front()) || !is_bare_variable(equations.front()),
+                 "Constraint on '" + string_expression + "' asks for integer values of an expression. "
+                 "The Integer condition applies to a single input variable.");
+
+        const float unbounded = numeric_limits<float>::infinity();
+
+        equation_limits.emplace_back(-unbounded, unbounded);
+
+        equations.push_back(compile_integrality(string_expression, neural_network));
+        equation_limits.emplace_back(-tolerance, tolerance);
     }
-    else if (value > upper_bound + bound_tolerance(upper_bound))
+    else if (condition == Condition::AllowedSet)
     {
-        residual = value - upper_bound;
-        crossed_bound = upper_bound;
+        throw_if(values.empty(),
+                 "Constraint on '" + string_expression + "' needs at least one allowed value.");
+
+        ranges::sort(values);
+
+        if (ranges::adjacent_find(values) != values.end())
+            cerr << "Warning: constraint on '" << string_expression << "' repeats allowed values.\n";
+
+        values.erase(ranges::unique(values).begin(), values.end());
+
+        if (values.size() > discrete_values_warning)
+            cerr << "Warning: constraint on '" << string_expression << "' lists " << values.size()
+                 << " allowed values. The repair drives a polynomial of that degree, which loses "
+                    "precision as the degree grows.\n";
+
+        equation_limits.emplace_back(values.front(), values.back());
+
+        const float band = tolerance*membership_scale(values);
+
+        equations.push_back(compile_membership(string_expression, neural_network, values));
+        equation_limits.emplace_back(-band, band);
     }
     else
-        return NAN;
+    {
+        const size_t values_number = (condition == Condition::Between) ? 2 : 1;
 
-    const float inset = min(margin_factor*max(abs(residual), margin_factor*abs(crossed_bound)),
-                            0.5f*(upper_bound - lower_bound));
+        throw_if(values.size() < values_number,
+                 "Constraint on '" + string_expression + "' needs "
+                 + to_string(values_number) + " value(s).");
 
-    return residual + ((residual > 0.0f) ? inset : -inset);
+        if (values.size() > values_number)
+            cerr << "Warning: constraint on '" << string_expression << "' only uses "
+                 << values_number << " of the " << values.size() << " values given.\n";
+
+        if (condition == Condition::Between)
+        {
+            throw_if(values[0] > values[1],
+                     "Constraint on '" + string_expression + "' is between " + to_string(values[0])
+                     + " and " + to_string(values[1]) + ", an empty interval.");
+
+            if (values[0] == values[1])
+                cerr << "Warning: constraint on '" << string_expression << "' is between two equal values. "
+                     << "Use the Equal condition instead.\n";
+        }
+
+        equation_limits.push_back(interval_band(condition, values));
+    }
 }
 
 
@@ -340,13 +366,12 @@ void ResponseOptimization::FeasibilitySystem::initialize()
     rows.clear();
 
     for (const Constraint& constraint : problem->constraints)
-        if (constraint.condition == Condition::Integer
-         || (constraint.condition != Condition::Cardinality && !constraint.values.empty()))
-            rows.push_back(&constraint);
+        for (Index row = 0; row < Index(constraint.equations.size()); row++)
+            rows.emplace_back(&constraint, row);
 
     const pair<VectorR, VectorR> domain = narrow_domain(problem->get_unconstrained_domain(), rows);
 
-    check_domain(domain, rows, problem->constraints);
+    check_domain(domain, problem->constraints);
 
     reshape_borders(domain);
 }
@@ -356,7 +381,10 @@ void ResponseOptimization::FeasibilitySystem::reshape_borders(const pair<VectorR
 {
     const Index inputs_number = domain.first.size();
 
-    const Index columns_number = inputs_number + count_activations(problem->constraints);
+    Index columns_number = inputs_number;
+
+    for (const Constraint& constraint : problem->constraints)
+        columns_number += Index(constraint.involved_variables.size());
 
     borders = {VectorR::Zero(columns_number), VectorR::Ones(columns_number)};
 
@@ -375,13 +403,11 @@ VectorR ResponseOptimization::FeasibilitySystem::force_into_borders(const Vector
 
         forced.head(point.size()) = point;
 
-        Index first_activation = point.size();
-
         for (const Constraint& budget : problem->constraints)
         {
-            if (budget.condition != Condition::Cardinality) continue;
+            const auto& counted = budget.involved_variables;
 
-            const auto& counted = budget.expression.linear_input_terms;
+            if (counted.empty()) continue;
 
             vector<Index> positions(counted.size());
 
@@ -391,9 +417,7 @@ VectorR ResponseOptimization::FeasibilitySystem::force_into_borders(const Vector
                          [&](const Index position) { return -abs(point(counted[size_t(position)].first)); });
 
             for (Index j = 0; j < Index(budget.values[0]); j++)
-                forced(first_activation + positions[size_t(j)]) = 1.0f;
-
-            first_activation += Index(counted.size());
+                forced(counted[size_t(positions[size_t(j)])].second) = 1.0f;
         }
     }
 
@@ -437,17 +461,13 @@ VectorR ResponseOptimization::FeasibilitySystem::evaluate(const VectorR& point,
 
     for (Index i = 0; i < Index(rows.size()); i++)
     {
-        const Constraint& row = *rows[size_t(i)];
+        const auto& [constraint, row] = rows[size_t(i)];
 
-        const float value = row.expression.evaluate(point, response);
+        values(i) = constraint->equations[size_t(row)].evaluate(point, response);
 
-        const float residual = row.calculate_residual(value,
-                                                      problem->constraint_tolerance,
-                                                      problem->feasibility_margin_factor);
-
-        values(i) = discrete_measure(row, value);
-
-        residuals(i) = isfinite(residual) ? residual : 0.0f;
+        residuals(i) = band_residual(constraint->equation_limits[size_t(row)],
+                                     values(i),
+                                     problem->feasibility_margin_factor);
     }
 
     return response;
@@ -474,8 +494,8 @@ MatrixR ResponseOptimization::FeasibilitySystem::calculate_jacobian(const Vector
     for (Index j = 0; j < steps.size(); j++)
         steps(j) = (steps(j) > EPSILON) ? max(steps(j), difference_step*abs(point(j))) : 0.0f;
 
-    for (const Constraint* row : rows)
-        if (const Index column = get_discrete_column(*row); column >= 0)
+    for (const Constraint& constraint : problem->constraints)
+        if (const Index column = get_discrete_column(constraint); column >= 0)
             steps(column) = min(steps(column), discrete_difference_step);
 
     MatrixR jacobian = MatrixR::Zero(values.size(), point.size());
@@ -490,13 +510,13 @@ MatrixR ResponseOptimization::FeasibilitySystem::calculate_jacobian(const Vector
     {
         if (!every_row && residuals(i) == 0.0f) continue;
 
-        const Constraint& row = *rows[size_t(i)];
+        const auto& [constraint, row] = rows[size_t(i)];
 
-        if (!is_output_coupled(row.expression)
-         && row.condition != Condition::Integer
-         && row.condition != Condition::AllowedSet)
+        const CompiledExpression& expression = constraint->equations[size_t(row)];
+
+        if (!is_output_coupled(expression))
         {
-            evaluate_input_gradient(row.expression, point, output, gradient);
+            evaluate_input_gradient(expression, point, output, gradient);
 
             if (gradient.allFinite())
             {
@@ -508,7 +528,7 @@ MatrixR ResponseOptimization::FeasibilitySystem::calculate_jacobian(const Vector
 
         probed_rows.push_back(i);
 
-        probe_reads_output = probe_reads_output || is_output_coupled(row.expression);
+        probe_reads_output = probe_reads_output || is_output_coupled(expression);
     }
 
     for (Index j = 0; j < point.size(); j++)
@@ -554,51 +574,53 @@ MatrixR ResponseOptimization::FeasibilitySystem::calculate_jacobian(const Vector
 namespace
 {
 
-pair<VectorR, VectorR> place_discrete_variables(const FeasibilitySystem& system,
-                                                const VectorR& point,
-                                                const VectorR& output,
-                                                const Index inputs_number)
+pair<VectorR, VectorR> settle_discrete_variables(const FeasibilitySystem& feasibility_system,
+                                                 const vector<Constraint>& constraints,
+                                                 const VectorR& point,
+                                                 const VectorR& output,
+                                                 const Index inputs_number)
 {
     VectorR placed = point;
 
-    for (const Constraint* row : system.rows)
-        if (const Index column = get_discrete_column(*row); column >= 0)
-            placed(column) = nearest_discrete(*row, placed(column));
+    for (const Constraint& constraint : constraints)
+    {
+        const Index column = get_discrete_column(constraint);
 
-    // Exactly, because the question here is whether a coordinate is on its lattice and not
-    // whether an iteration converged. The default precision of isZero is 1e-5 for float, which
-    // would return the point this function declined to place.
+        if (column < 0) continue;
+
+        const float value = placed(column);
+
+        placed(column) = (constraint.condition == Condition::Integer)
+                       ? round(value)
+                       : *ranges::min_element(constraint.values, {},
+                                              [value](const float allowed)
+                                              { return abs(allowed - value); });
+    }
+
     if ((placed - point).isZero(0.0f))
         return {point.head(inputs_number), output};
 
     VectorR placed_values;
     VectorR placed_residuals;
 
-    const VectorR placed_output = system.evaluate(placed, placed_values, placed_residuals);
+    const VectorR placed_output = feasibility_system.evaluate(placed, placed_values, placed_residuals);
 
     if (placed_values.allFinite() && (placed_residuals.array() == 0.0f).all())
         return {placed.head(inputs_number), placed_output};
 
-    // Placing one variable on its lattice can move another row off its bound. Rather than lose
-    // a point the search has already paid for, hold the discrete columns where they were placed
-    // and let the repair work on what is left.
-    FeasibilitySystem pinned = system;
+    FeasibilitySystem pinned = feasibility_system;
 
     bool discrete_columns_already_pinned = true;
 
-    for (const Constraint* row : system.rows)
-        if (const Index column = get_discrete_column(*row); column >= 0)
+    for (const Constraint& constraint : constraints)
+        if (const Index column = get_discrete_column(constraint); column >= 0)
         {
             discrete_columns_already_pinned = discrete_columns_already_pinned
-                && system.borders.first(column) == system.borders.second(column);
+                && feasibility_system.borders.first(column) == feasibility_system.borders.second(column);
 
             pinned.borders.first(column) = pinned.borders.second(column) = placed(column);
         }
 
-    // Reached when this call is itself the re-solve: the columns are pinned already, so there
-    // is nothing left to hold fixed and a second attempt would repeat the first. Stating it as
-    // a property of the system rather than as a depth counter keeps it true however it is
-    // reached, including when a caller pins a discrete variable by its own constraints.
     if (discrete_columns_already_pinned) return {};
 
     return pinned.solve(placed);
@@ -607,13 +629,13 @@ pair<VectorR, VectorR> place_discrete_variables(const FeasibilitySystem& system,
 
 struct FeasibilityFunctor : Eigen::DenseFunctor<float>
 {
-    FeasibilityFunctor(const FeasibilitySystem& new_system,
+    FeasibilityFunctor(const FeasibilitySystem& new_feasibility_system,
                        const VectorR& point,
                        const VectorR& values,
                        const VectorR& output)
         : Eigen::DenseFunctor<float>(int(point.size()), int(values.size() + point.size())),
-          system(new_system),
-          row_scales(new_system.calculate_jacobian(point, values, output).rowwise().norm())
+          feasibility_system(new_feasibility_system),
+          row_scales(new_feasibility_system.calculate_jacobian(point, values, output).rowwise().norm())
     {
         for (Index i = 0; i < row_scales.size(); i++)
             if (!isfinite(row_scales(i)) || row_scales(i) <= EPSILON)
@@ -623,22 +645,20 @@ struct FeasibilityFunctor : Eigen::DenseFunctor<float>
 
     VectorR calculate_box_scales() const
     {
-        return (system.borders.second - system.borders.first).cwiseMax(EPSILON)/box_weight;
+        return (feasibility_system.borders.second - feasibility_system.borders.first).cwiseMax(EPSILON)/box_weight;
     }
 
 
     VectorR calculate_box_violations(const VectorR& point) const
     {
-        return ((point - system.borders.second).cwiseMax(0.0f)
-              + (point - system.borders.first).cwiseMin(0.0f)).cwiseQuotient(calculate_box_scales());
+        return ((point - feasibility_system.borders.second).cwiseMax(0.0f)
+              + (point - feasibility_system.borders.first).cwiseMin(0.0f)).cwiseQuotient(calculate_box_scales());
     }
 
 
-    // calculate_violations: Eigen names it operator().
-
     int operator()(const VectorR& point, VectorR& violations) const
     {
-        system.evaluate(point, row_values, row_residuals);
+        feasibility_system.evaluate(point, row_values, row_residuals);
 
         violations.resize(row_values.size() + point.size());
 
@@ -651,13 +671,12 @@ struct FeasibilityFunctor : Eigen::DenseFunctor<float>
     }
 
 
-    // calculate_violations_jacobian: Eigen names it df.
-
     int df(const VectorR& point, JacobianType& jacobian) const
     {
-        const VectorR output = system.evaluate(point, row_values, row_residuals);
+        const VectorR output = feasibility_system.evaluate(point, row_values, row_residuals);
 
-        const MatrixR value_jacobian = system.calculate_jacobian(point, row_values, output, row_residuals);
+        const MatrixR value_jacobian =
+            feasibility_system.calculate_jacobian(point, row_values, output, row_residuals);
 
         jacobian.setZero(row_values.size() + point.size(), point.size());
 
@@ -675,12 +694,9 @@ struct FeasibilityFunctor : Eigen::DenseFunctor<float>
         return 0;
     }
 
-    const FeasibilitySystem& system;
+    const FeasibilitySystem& feasibility_system;
 
     VectorR row_scales;
-
-    // The system writes one value and one residual per row on every call. Kept here so that
-    // the solver reuses the two vectors instead of sizing them again at each step.
 
     mutable VectorR row_values;
     mutable VectorR row_residuals;
@@ -703,7 +719,7 @@ pair<VectorR, VectorR> ResponseOptimization::FeasibilitySystem::solve(VectorR po
     if (!values.allFinite()) return {};
 
     if ((residuals.array() == 0.0f).all())
-        return place_discrete_variables(*this, point, output, inputs_number);
+        return settle_discrete_variables(*this, problem->constraints, point, output, inputs_number);
 
     FeasibilityFunctor functor(*this, point, values, output);
 
@@ -721,7 +737,7 @@ pair<VectorR, VectorR> ResponseOptimization::FeasibilitySystem::solve(VectorR po
     output = evaluate(point, values, residuals);
 
     return values.allFinite() && (residuals.array() == 0.0f).all()
-         ? place_discrete_variables(*this, point, output, inputs_number)
+         ? settle_discrete_variables(*this, problem->constraints, point, output, inputs_number)
          : pair<VectorR, VectorR>();
 }
 
@@ -772,76 +788,25 @@ void ResponseOptimization::add_constraint(const string& expression,
                                           const Constraint::Condition condition,
                                           const vector<float>& values)
 {
-    throw_if(ranges::any_of(values, [](const float value) { return !isfinite(value); }),
-             "Constraint on '" + expression + "' has a value that is not a finite number.");
+    Constraint constraint{expression, condition, values};
 
-    Constraint constraint{condition == Condition::Cardinality
-                          ? compile_group(expression, neural_network)
-                          : compile_expression(expression, neural_network, "Constraint"),
-                          condition,
-                          values};
+    VectorR spans;
 
-    if (condition == Condition::AllowedSet)
+    Index first_switch = 0;
+
+    if (condition == Condition::Cardinality)
     {
-        throw_if(values.empty(), "Constraint on '" + expression + "' needs at least one allowed value.");
-
-        vector<float> sorted_values = values;
-
-        ranges::sort(sorted_values);
-
-        if (ranges::adjacent_find(sorted_values) != sorted_values.end())
-            cerr << "Warning: constraint on '" << expression << "' repeats allowed values.\n";
-
-        if (values.size() > discrete_values_warning)
-            cerr << "Warning: constraint on '" << expression << "' lists " << values.size()
-                 << " allowed values. The repair drives a polynomial of that degree, which loses "
-                    "precision as the degree grows.\n";
-    }
-    else if (condition == Condition::Integer)
-    {
-        throw_if(is_output_coupled(constraint.expression) || !is_bare_variable(constraint.expression),
-                 "Constraint on '" + expression + "' asks for integer values of an expression. "
-                 "The Integer condition applies to a single input variable.");
-    }
-    else if (condition == Condition::Cardinality)
-    {
-        const size_t members_number = constraint.expression.linear_input_terms.size();
-
-        throw_if(values.empty() || values[0] < 0.0f || values[0] > float(members_number)
-              || values[0] != round(values[0]),
-                 "Constraint on '" + expression + "' needs one whole number between 0 and the "
-                 + to_string(members_number) + " variables it counts.");
-
-        if (values[0] == float(members_number))
-            cerr << "Warning: constraint on '" << expression << "' allows all "
-                 << members_number << " of the variables it counts, so it restricts nothing.\n";
-
         const auto [minimums, maximums] = get_unconstrained_domain();
 
-        convert_cardinality(constraints, constraint, maximums - minimums, constraint_tolerance);
+        spans = maximums - minimums;
+
+        first_switch = spans.size();
+
+        for (const Constraint& other : constraints)
+            first_switch += Index(other.involved_variables.size());
     }
-    else
-    {
-        const size_t values_number = (condition == Condition::Between) ? 2 : 1;
 
-        throw_if(values.size() < values_number,
-                 "Constraint on '" + expression + "' needs " + to_string(values_number) + " value(s).");
-
-        if (values.size() > values_number)
-            cerr << "Warning: constraint on '" << expression << "' only uses "
-                 << values_number << " of the " << values.size() << " values given.\n";
-
-        if (condition == Condition::Between)
-        {
-            throw_if(values[0] > values[1],
-                     "Constraint on '" + expression + "' is between " + to_string(values[0])
-                     + " and " + to_string(values[1]) + ", an empty interval.");
-
-            if (values[0] == values[1])
-                cerr << "Warning: constraint on '" << expression << "' is between two equal values. "
-                     << "Use the Equal condition instead.\n";
-        }
-    }
+    constraint.compile_equations(neural_network, spans, first_switch, constraint_tolerance);
 
     constraints.push_back(move(constraint));
 }
@@ -857,11 +822,12 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
 pair<VectorR, VectorR> ResponseOptimization::calculate_domain()
 {
-    system.initialize();
+    feasibility_system.initialize();
 
     const Index inputs_number = neural_network->get_inputs_number();
 
-    return {system.borders.first.head(inputs_number), system.borders.second.head(inputs_number)};
+    return {feasibility_system.borders.first.head(inputs_number),
+            feasibility_system.borders.second.head(inputs_number)};
 }
 
 
@@ -891,7 +857,7 @@ void ResponseOptimization::assign_random_categories(VectorR& point, const float 
         closed_categories.resize(size_t(categories_number));
 
         for (Index j = 0; j < categories_number; j++)
-            closed_categories[size_t(j)] = (system.borders.second(first_column + j) <= 0.0f) ? 1 : 0;
+            closed_categories[size_t(j)] = (feasibility_system.borders.second(first_column + j) <= 0.0f) ? 1 : 0;
 
         if (!draw_k_hot(categories_number, 1, {}, closed_categories, block)) continue;
 

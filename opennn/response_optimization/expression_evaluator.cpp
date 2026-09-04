@@ -1153,6 +1153,57 @@ CompiledExpression compile_binarity(const Index variable)
 }
 
 
+namespace
+{
+
+ExpressionNodePtr parse_for_network(const string& expression, const NeuralNetwork* neural_network)
+{
+    throw_if(!neural_network, "The neural network has not been set.");
+
+    return parse_expression_tree(expression,
+                                 get_variable_columns(neural_network->get_input_variables()),
+                                 get_variable_columns(neural_network->get_output_variables()));
+}
+
+}
+
+
+// sin(pi*e)/pi: zero exactly where the expression takes a whole number, with unit slope there.
+
+CompiledExpression compile_integrality(const string& expression, const NeuralNetwork* neural_network)
+{
+    const float pi = numbers::pi_v<float>;
+
+    return compile_ast(*make_div(make_call(ExpressionOp::Kind::Sin,
+                                           make_mul(make_const(pi),
+                                                    parse_for_network(expression, neural_network))),
+                                 make_const(pi)));
+}
+
+
+// prod(e - a)/span^(n-1): zero exactly where the expression takes one of the allowed values.
+
+CompiledExpression compile_membership(const string& expression,
+                                      const NeuralNetwork* neural_network,
+                                      const vector<float>& allowed)
+{
+    const auto [smallest, largest] = ranges::minmax(allowed);
+
+    const float span = max(largest - smallest, EPSILON);
+
+    const ExpressionNodePtr value = parse_for_network(expression, neural_network);
+
+    ExpressionNodePtr product = make_const(span);
+
+    for (const float allowed_value : allowed)
+        product = make_mul(move(product),
+                           make_div(make_sub(clone(*value), make_const(allowed_value)),
+                                    make_const(span)));
+
+    return compile_ast(*product);
+}
+
+
 CompiledExpression compile_expression(const string& expression,
                                       const vector<pair<string, Index>>& inputs,
                                       const vector<pair<string, Index>>& outputs)

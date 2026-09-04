@@ -100,7 +100,7 @@ pair<MatrixR, MatrixR> GeneticResponse::initialize_population(const pair<VectorR
 
     for (Index attempt = 0; attempt < attempts_number && feasible_number < points_number; attempt++)
     {
-        const auto [input, output] = system.solve(calculate_random_input(domain));
+        const auto [input, output] = feasibility_system.solve(calculate_random_input(domain));
 
         if (input.size() == 0) continue;
 
@@ -247,7 +247,7 @@ pair<MatrixR, MatrixR> GeneticResponse::recombinate_population(const MatrixR& pa
         if (random_uniform(0.0f, 1.0f) < crossover_probability)
             crossover(first_child, second_child, domain);
 
-        const auto [first_input, first_output] = system.solve(first_child);
+        const auto [first_input, first_output] = feasibility_system.solve(first_child);
 
         if (first_input.size() > 0)
         {
@@ -259,7 +259,7 @@ pair<MatrixR, MatrixR> GeneticResponse::recombinate_population(const MatrixR& pa
 
         if (feasible_number == points_number) break;
 
-        const auto [second_input, second_output] = system.solve(second_child);
+        const auto [second_input, second_output] = feasibility_system.solve(second_child);
 
         if (second_input.size() > 0)
         {
@@ -297,7 +297,7 @@ pair<MatrixR, MatrixR> GeneticResponse::mutate_population(const MatrixR& offspri
 
         mutate_individual(child, domain);
 
-        const auto [input, output] = system.solve(child);
+        const auto [input, output] = feasibility_system.solve(child);
 
         if (input.size() == 0) continue;
 

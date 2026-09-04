@@ -40,15 +40,19 @@ public:
             Equal, Between, GreaterEqual, LessEqual, Greater, Less, AllowedSet, Integer, Cardinality
         };
 
-        CompiledExpression expression;
+        string string_expression;
 
         Condition condition = Condition::Equal;
 
         vector<float> values;
 
-        pair<float, float> calculate_bounds() const;
+        vector<CompiledExpression> equations;
 
-        float calculate_residual(float value, float tolerance = 0.0f, float margin_factor = 0.0f) const;
+        vector<pair<float, float>> equation_limits;
+
+        vector<pair<Index, Index>> involved_variables;
+
+        void compile_equations(const NeuralNetwork*, const VectorR& spans, Index first_switch, float tolerance);
     };
 
     struct FeasibilitySystem
@@ -67,7 +71,7 @@ public:
 
         const ResponseOptimization* problem = nullptr;
 
-        vector<const Constraint*> rows;
+        vector<pair<const Constraint*, Index>> rows;
 
         pair<VectorR, VectorR> borders;
     };
@@ -93,7 +97,7 @@ protected:
     vector<Objective> objectives;
     vector<Constraint> constraints;
 
-    FeasibilitySystem system;
+    FeasibilitySystem feasibility_system;
 
     virtual MatrixR single_optimization() = 0;
 
