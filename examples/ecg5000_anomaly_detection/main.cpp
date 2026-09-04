@@ -64,13 +64,49 @@ int main()
             testing_analysis.calculate_reconstruction_error_statistics(training_errors);
         const float anomaly_threshold =
             testing_analysis.calculate_anomaly_threshold(error_statistics);
+        const VectorR testing_errors =
+            testing_analysis.calculate_reconstruction_errors("Testing");
+        const auto testing_error_statistics =
+            testing_analysis.calculate_reconstruction_error_statistics(testing_errors);
         const VectorI anomalies = testing_analysis.calculate_anomaly_predictions(
-            testing_analysis.calculate_reconstruction_errors("Testing"),
-            anomaly_threshold);
+            testing_errors, anomaly_threshold);
 
-        cout << "Anomaly threshold: " << anomaly_threshold << endl
+        const vector<Index> testing_indices =
+            dataset.get_sample_indices(SampleRole::Testing);
+        MatrixR anomaly_targets(testing_errors.size(), 1);
+        MatrixR anomaly_outputs(testing_errors.size(), 1);
+
+        for(Index i = 0; i < testing_errors.size(); ++i)
+        {
+            // ECG5000 uses label 1 for normal beats and label 0 for anomalies.
+            anomaly_targets(i, 0) =
+                dataset.get_data()(testing_indices[static_cast<size_t>(i)], label_index) < 0.5f
+                    ? 1.0f
+                    : 0.0f;
+            anomaly_outputs(i, 0) = static_cast<float>(anomalies(i));
+        }
+
+        const VectorR anomaly_tests =
+            testing_analysis.calculate_binary_classification_tests(
+                anomaly_targets, anomaly_outputs);
+        const MatrixI confusion = testing_analysis.calculate_confusion(
+            anomaly_targets, anomaly_outputs);
+
+        cout << "Training reconstruction MAE: " << error_statistics.mean
+             << " +/- " << error_statistics.population_standard_deviation << endl
+             << "Testing reconstruction MAE: " << testing_error_statistics.mean
+             << " +/- " << testing_error_statistics.population_standard_deviation << endl
+             << "Anomaly threshold: " << anomaly_threshold << endl
              << "Detected " << anomalies.sum() << " anomalies in "
              << anomalies.size() << " testing samples." << endl
+             << "Anomaly detection tests:" << endl
+             << "Accuracy    : " << anomaly_tests(0) << endl
+             << "Recall      : " << anomaly_tests(2) << endl
+             << "Specificity : " << anomaly_tests(3) << endl
+             << "Precision   : " << anomaly_tests(4) << endl
+             << "F1 score    : " << anomaly_tests(7) << endl
+             << "Confusion matrix (rows: actual, columns: predicted):" << endl
+             << confusion << endl
              << "Good bye!" << endl;
 
         return 0;
