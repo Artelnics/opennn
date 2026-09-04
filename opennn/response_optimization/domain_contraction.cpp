@@ -83,6 +83,12 @@ DomainContraction::DomainContraction(NeuralNetwork* new_neural_network)
 }
 
 
+void DomainContraction::set_contraction_factor(const float new_contraction_factor)
+{
+    contraction_factor = clamp(new_contraction_factor, EPSILON, 1.0f);
+}
+
+
 pair<VectorR, VectorR> DomainContraction::contract_categories(pair<VectorR, VectorR> domain,
                                                               const VectorR& category_scores,
                                                               const Index iteration) const
@@ -110,7 +116,7 @@ pair<VectorR, VectorR> DomainContraction::contract_categories(pair<VectorR, Vect
 
 
 pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
-    const vector<pair<VectorR, VectorR>>& local_domains) const
+    const vector<pair<VectorR, VectorR>>& local_domains)
 {
     const Index sample_size = max(Index(1), points_number/Index(local_domains.size()));
 
@@ -120,6 +126,8 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
 
     for (const pair<VectorR, VectorR>& domain : local_domains)
     {
+        system.reshape_borders(domain);
+
         Index sampled = 0;
 
         for (Index attempt_feasibility = 0;
@@ -135,7 +143,7 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
 
             for (Index i = 0; i < batch; i++)
             {
-                const auto [input, output] = get_feasible_point(calculate_random_input(domain), domain);
+                const auto [input, output] = system.solve(calculate_random_input(domain));
 
                 if (input.size() == 0) continue;
 
@@ -168,10 +176,9 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
 
 MatrixR DomainContraction::single_optimization()
 {
-    const vector<pair<Index, Index>> blocks =
-        get_categorical_blocks(neural_network->get_input_variables());
-
     pair<VectorR, VectorR> allowed_domain = calculate_domain();
+
+    const vector<pair<Index, Index>> blocks = get_categorical_blocks(neural_network->get_input_variables());
 
     VectorR half_interval = initial_half_interval(allowed_domain, blocks);
 
@@ -220,10 +227,9 @@ MatrixR DomainContraction::single_optimization()
 
 MatrixR DomainContraction::multi_optimization()
 {
-    const vector<pair<Index, Index>> blocks =
-        get_categorical_blocks(neural_network->get_input_variables());
-
     pair<VectorR, VectorR> allowed_domain = calculate_domain();
+
+    const vector<pair<Index, Index>> blocks = get_categorical_blocks(neural_network->get_input_variables());
 
     const VectorR initial_superior = allowed_domain.second;
 

@@ -15,14 +15,11 @@ namespace opennn
 
 class NeuralNetwork;
 
-enum class ExpressionLinearity   { Linear, Nonlinear };
-enum class ExpressionInvolvement { InputsOnly, OutputsOnly, Mixed };
-enum class ExpressionComplexity  { Univariate, Multivariate };
-enum class ExpressionSmoothness  { Smooth, NonSmooth };
+enum class ExpressionLinearity { Linear, Nonlinear };
 
 struct ExpressionOp
 {
-    enum class Kind
+    enum class Kind : unsigned char
     {
         PushConst, PushInput, PushOutput,
         Add, Sub, Mul, Div, Pow, Neg,
@@ -30,20 +27,26 @@ struct ExpressionOp
     };
 
     Kind kind = Kind::PushConst;
-    Index index = 0;
+    int index = 0;
     float constant = 0.0f;
+
+    bool operator==(const ExpressionOp&) const = default;
 };
+
+
+struct ExpressionProgram
+{
+    vector<ExpressionOp> operations;
+
+    int stack_depth = 0;
+};
+
 
 struct CompiledExpression
 {
     string text;
 
-    vector<ExpressionOp> operations;
-
-    ExpressionLinearity   linearity   = ExpressionLinearity::Nonlinear;
-    ExpressionInvolvement involvement = ExpressionInvolvement::InputsOnly;
-    ExpressionComplexity  complexity  = ExpressionComplexity::Multivariate;
-    ExpressionSmoothness  smoothness  = ExpressionSmoothness::Smooth;
+    ExpressionLinearity linearity = ExpressionLinearity::Nonlinear;
 
     vector<Index> input_indices;
     vector<Index> output_indices;
@@ -53,74 +56,40 @@ struct CompiledExpression
 
     float linear_constant = 0.0f;
 
-    vector<pair<Index, vector<ExpressionOp>>> input_gradient;
+    ExpressionProgram program;
+
+    vector<pair<Index, ExpressionProgram>> input_gradient;
 
     float evaluate(const VectorR&, const VectorR&) const;
 };
 
-struct ExpressionNode;
-using ExpressionNodePtr = unique_ptr<ExpressionNode>;
-
-struct ExpressionNode
-{
-    enum class Kind { Const, Input, Output, UnaryNeg, Add, Sub, Mul, Div, Pow, Func };
-
-    Kind kind = Kind::Const;
-    float constant = 0.0f;
-    Index index = 0;
-    string function_name;
-    vector<ExpressionNodePtr> children;
-};
-
-float evaluate_operations(const vector<ExpressionOp>&,
-                   const VectorR&,
-                   const VectorR&);
 
 CompiledExpression compile_expression(const string&,
-                                const vector<pair<string, Index>>&,
-                            const vector<pair<string, Index>>&);
+                                      const vector<pair<string, Index>>&,
+                                      const vector<pair<string, Index>>&);
 
 CompiledExpression compile_expression(const string&, const NeuralNetwork*, const string& role = "Expression");
 
-CompiledExpression compile_ast(const ExpressionNode&);
+CompiledExpression compile_sum(const vector<Index>&);
 
+CompiledExpression compile_coupling(Index variable, Index switch_variable, float span);
 
-inline bool is_bare_variable(const CompiledExpression& expression)
-{
-    if (expression.linearity != ExpressionLinearity::Linear
-     || expression.complexity != ExpressionComplexity::Univariate
-     || abs(expression.linear_constant) > EPSILON)
-        return false;
+CompiledExpression compile_binarity(Index variable);
 
-    const auto& terms = expression.linear_input_terms.empty() ? expression.linear_output_terms
-                                                              : expression.linear_input_terms;
+bool is_output_coupled(const CompiledExpression&);
 
-    return abs(terms.front().second - 1.0f) <= EPSILON;
-}
+bool is_univariate(const CompiledExpression&);
 
-
-inline bool is_output_coupled(const CompiledExpression& expression)
-{
-    return expression.involvement != ExpressionInvolvement::InputsOnly;
-}
-
+bool is_bare_variable(const CompiledExpression&);
 
 bool same_expression(const CompiledExpression&, const CompiledExpression&);
 
+void evaluate_input_gradient(const CompiledExpression&,
+                             const VectorR& point,
+                             const VectorR& output,
+                             VectorR& gradient);
+
 VectorR evaluate_input_gradient(const CompiledExpression&, const VectorR& point, const VectorR& output);
-
-ExpressionNodePtr parse_expression_tree(const string&,
-                                        const vector<pair<string, Index>>&,
-                                        const vector<pair<string, Index>>&);
-
-ExpressionNodePtr differentiate(const ExpressionNode&, bool wrt_is_output, Index wrt_index);
-
-ExpressionNodePtr clone(const ExpressionNode&);
-
-ExpressionNodePtr make_neg(ExpressionNodePtr);
-
-ExpressionNodePtr make_sub(ExpressionNodePtr, ExpressionNodePtr);
-
 
 }
 

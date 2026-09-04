@@ -24,15 +24,15 @@ private:
     MatrixR single_optimization() override;
     MatrixR multi_optimization() override;
 
-    pair<MatrixR, MatrixR> initialize_population(const pair<VectorR, VectorR>&) const;
+    pair<MatrixR, MatrixR> initialize_population(const pair<VectorR, VectorR>&);
 
     vector<Index> calculate_fitness(const MatrixR&, const MatrixR&) const;
 
     pair<MatrixR, MatrixR> recombinate_population(const MatrixR&,
                                                   const vector<Index>&,
-                                                  const pair<VectorR, VectorR>&) const;
+                                                  const pair<VectorR, VectorR>&);
 
-    pair<MatrixR, MatrixR> mutate_population(const MatrixR&, const pair<VectorR, VectorR>&) const;
+    pair<MatrixR, MatrixR> mutate_population(const MatrixR&, const pair<VectorR, VectorR>&);
 
     void crossover(VectorR&, VectorR&, const pair<VectorR, VectorR>&) const;
 

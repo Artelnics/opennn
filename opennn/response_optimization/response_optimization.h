@@ -46,13 +46,30 @@ public:
 
         vector<float> values;
 
-        float calculate_measure(const VectorR&, const VectorR&) const;
-
-        float calculate_residual(const VectorR&, const VectorR&, float margin = 0.0f) const;
-
         pair<float, float> calculate_bounds() const;
 
-        bool is_enforced() const;
+        float calculate_residual(float value, float tolerance = 0.0f, float margin_factor = 0.0f) const;
+    };
+
+    struct FeasibilitySystem
+    {
+        void initialize();
+
+        void reshape_borders(const pair<VectorR, VectorR>&);
+
+        VectorR force_into_borders(const VectorR&) const;
+
+        VectorR evaluate(const VectorR&, VectorR&, VectorR&, const VectorR& = {}) const;
+
+        MatrixR calculate_jacobian(const VectorR&, const VectorR&, const VectorR&, const VectorR& = {}) const;
+
+        pair<VectorR, VectorR> solve(VectorR) const;
+
+        const ResponseOptimization* problem = nullptr;
+
+        vector<const Constraint*> rows;
+
+        pair<VectorR, VectorR> borders;
     };
 
     explicit ResponseOptimization(NeuralNetwork* = nullptr);
@@ -61,6 +78,11 @@ public:
 
     void add_objective(const string&, Objective::Sense, float value = 0.0f);
     void add_constraint(const string&, Constraint::Condition, const vector<float>& values = {});
+
+    void set_iterations_number(Index);
+    void set_points_number(Index);
+
+    void set_feasibility_margin_factor(float);
 
     MatrixR perform_response_optimization();
 
@@ -71,29 +93,23 @@ protected:
     vector<Objective> objectives;
     vector<Constraint> constraints;
 
+    FeasibilitySystem system;
+
     virtual MatrixR single_optimization() = 0;
 
     virtual MatrixR multi_optimization() = 0;
 
-    pair<VectorR, VectorR> calculate_domain() const;
+    pair<VectorR, VectorR> calculate_domain();
 
     VectorR calculate_random_input(const pair<VectorR, VectorR>&) const;
 
-    pair<VectorR, VectorR> get_feasible_point(VectorR, const pair<VectorR, VectorR>&) const;
+    void assign_random_categories(VectorR&, float probability = 1.0f) const;
 
     MatrixR evaluate_objectives(const MatrixR&, const MatrixR&) const;
 
     vector<Index> calculate_pareto_front(const MatrixR&) const;
 
     vector<Index> clean_front(const MatrixR&, const MatrixR&) const;
-
-    // The only two operations that touch the one-hot blocks of a point: drawing a category at
-    // random, and folding an arbitrary point back onto one. Both leave out the categories the
-    // domain has closed.
-
-    VectorR set_random_categories(VectorR, const pair<VectorR, VectorR>&, float probability = 1.0f) const;
-
-    VectorR assign_feasible_categories(VectorR, const pair<VectorR, VectorR>&) const;
 
     Index iterations_number = 20;
     Index points_number = 1000;
@@ -102,24 +118,13 @@ protected:
 
 private:
 
-    VectorR round_lattice(const VectorR&) const;
+    pair<VectorR, VectorR> get_unconstrained_domain() const;
 
-    VectorR evaluate_constraints(const VectorR&, VectorR& values, VectorR& residuals) const;
+    float constraint_tolerance = 1e-3f;
 
-    MatrixR estimate_jacobian(const VectorR&, const VectorR&, const VectorR&,
-                              const pair<VectorR, VectorR>&) const;
+    float feasibility_margin_factor = 0.1f;
 
-    void expand_cardinality(const Constraint&);
-
-    pair<VectorR, VectorR> augment_domain(const pair<VectorR, VectorR>&) const;
-
-    VectorR augment_point(const VectorR&) const;
-
-    Index activation_variables = 0;
-
-    Index repair_passes = 16;
-
-    float feasibility_margin = 0.1f;
+    Index feasibility_evaluations = 50;
 
     float diversity_factor = 0.2f;
 };

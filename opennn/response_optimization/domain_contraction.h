@@ -19,12 +19,14 @@ public:
 
     explicit DomainContraction(NeuralNetwork* = nullptr);
 
+    void set_contraction_factor(float);
+
 private:
 
     MatrixR single_optimization() override;
     MatrixR multi_optimization() override;
 
-    pair<MatrixR, MatrixR> sample_local_domains(const vector<pair<VectorR, VectorR>>&) const;
+    pair<MatrixR, MatrixR> sample_local_domains(const vector<pair<VectorR, VectorR>>&);
 
     pair<VectorR, VectorR> contract_categories(pair<VectorR, VectorR>, const VectorR&, Index) const;
 

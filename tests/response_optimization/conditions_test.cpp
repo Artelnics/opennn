@@ -1,251 +1,35 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   R E S P O N S E   O P T I M I Z A T I O N   T E S T S
+//   C O N D I T I O N   T E S T S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+// Every condition and objective sense a response optimization understands, stated against
+// a small untrained network and run through both solvers.
+//
+// The networks carry no training, so no case asks what response comes back. Each one asks
+// only where the result may sit: inside the box, on a hyperplane, on a lattice, one hot
+// across a categorical block. That holds whatever the weights are.
+//
+// Cases that are refused before any search starts are grouped first, under
+// ResponseOptimizationSetup. The ones that run are parameterised over both solvers, so a
+// condition that only one of them honours fails here.
+//
+// The same conditions against the trained concrete network are in
+// concrete_scenarios_test.cpp; the expression language they are written in is in
+// expression_test.cpp.
+
 #include "tests/pch.h"
 
+#include "tests/response_optimization/synthetic_fixture.h"
+
 #include "opennn/response_optimization/domain_contraction.h"
-#include "opennn/response_optimization/expression_evaluator.h"
 #include "opennn/response_optimization/genetic_response.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/core/random_utilities.h"
-#include "opennn/response_optimization/response_optimization.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/neural_network/standard_networks.h"
-#include "opennn/core/statistics.h"
-#include "opennn/neural_network/layers/unscaling_layer.h"
-#include "opennn/core/variable.h"
-
-using namespace opennn;
-
-using Sense = ResponseOptimization::Objective::Sense;
-using Condition = ResponseOptimization::Constraint::Condition;
 
 namespace
 {
-
-vector<pair<string, Index>> make_named_columns(const vector<string>& names)
-{
-    vector<pair<string, Index>> columns;
-
-    columns.reserve(names.size());
-
-    for (Index i = 0; i < Index(names.size()); i++)
-        columns.emplace_back(names[size_t(i)], i);
-
-    return columns;
-}
-
-
-float lookup_coefficient(const vector<pair<Index, float>>& terms, const Index column)
-{
-    for (const auto& [term_column, coefficient] : terms)
-        if (term_column == column) return coefficient;
-
-    return 0.0f;
-}
-
-
-vector<Descriptives> make_descriptives(const Index count, const float minimum, const float maximum)
-{
-    return vector<Descriptives>(size_t(count),
-                                Descriptives(minimum,
-                                             maximum,
-                                             0.5f*(minimum + maximum),
-                                             0.25f*(maximum - minimum)));
-}
-
-
-struct MinimalApproximation
-{
-    unique_ptr<ApproximationNetwork> network;
-
-    MinimalApproximation(const vector<string>& input_names,
-                         const vector<string>& output_names,
-                         const float input_minimum = 0.0f,
-                         const float input_maximum = 10.0f,
-                         const float output_minimum = -1.0f,
-                         const float output_maximum = 1.0f)
-    {
-        const Index inputs_number = Index(input_names.size());
-        const Index outputs_number = Index(output_names.size());
-
-        network = make_unique<ApproximationNetwork>(Shape{inputs_number}, Shape{4}, Shape{outputs_number});
-
-        vector<Variable> input_variables(static_cast<size_t>(inputs_number));
-
-        for (Index i = 0; i < inputs_number; i++)
-        {
-            input_variables[size_t(i)].name = input_names[size_t(i)];
-            input_variables[size_t(i)].set_role("Input");
-            input_variables[size_t(i)].type = VariableType::Numeric;
-        }
-
-        network->set_input_variables(input_variables);
-
-        vector<Variable> output_variables(static_cast<size_t>(outputs_number));
-
-        for (Index i = 0; i < outputs_number; i++)
-        {
-            output_variables[size_t(i)].name = output_names[size_t(i)];
-            output_variables[size_t(i)].set_role("Target");
-            output_variables[size_t(i)].type = VariableType::Numeric;
-        }
-
-        network->set_output_variables(output_variables);
-
-        static_cast<Scaling*>(network->get_first("Scaling"))
-            ->set_descriptives(make_descriptives(inputs_number, input_minimum, input_maximum));
-
-        static_cast<Unscaling*>(network->get_first("Unscaling"))
-            ->set_descriptives(make_descriptives(outputs_number, output_minimum, output_maximum));
-    }
-};
-
-
-struct CategoricalApproximation
-{
-    unique_ptr<ApproximationNetwork> network;
-
-    CategoricalApproximation(const vector<string>& numeric_names,
-                             const string& categorical_name,
-                             const vector<string>& categories,
-                             const Index outputs_number = 1,
-                             const float input_minimum = 0.0f,
-                             const float input_maximum = 10.0f)
-    {
-        const Index numeric_number = Index(numeric_names.size());
-        const Index categories_number = Index(categories.size());
-
-        network = make_unique<ApproximationNetwork>(Shape{numeric_number + categories_number},
-                                                    Shape{4},
-                                                    Shape{outputs_number});
-
-        vector<Variable> input_variables(size_t(numeric_number) + 1);
-
-        for (Index i = 0; i < numeric_number; i++)
-        {
-            input_variables[size_t(i)].name = numeric_names[size_t(i)];
-            input_variables[size_t(i)].set_role("Input");
-            input_variables[size_t(i)].type = VariableType::Numeric;
-        }
-
-        input_variables.back().name = categorical_name;
-        input_variables.back().set_role("Input");
-        input_variables.back().type = VariableType::Categorical;
-        input_variables.back().set_categories(categories);
-
-        network->set_input_variables(input_variables);
-
-        vector<Variable> output_variables(static_cast<size_t>(outputs_number));
-
-        for (Index i = 0; i < outputs_number; i++)
-        {
-            output_variables[size_t(i)].name = "y" + to_string(i + 1);
-            output_variables[size_t(i)].set_role("Target");
-            output_variables[size_t(i)].type = VariableType::Numeric;
-        }
-
-        network->set_output_variables(output_variables);
-
-        vector<Descriptives> input_descriptives = make_descriptives(numeric_number,
-                                                                    input_minimum,
-                                                                    input_maximum);
-
-        const vector<Descriptives> category_descriptives = make_descriptives(categories_number,
-                                                                             0.0f,
-                                                                             1.0f);
-
-        input_descriptives.insert(input_descriptives.end(),
-                                  category_descriptives.begin(),
-                                  category_descriptives.end());
-
-        static_cast<Scaling*>(network->get_first("Scaling"))->set_descriptives(input_descriptives);
-
-        static_cast<Unscaling*>(network->get_first("Unscaling"))
-            ->set_descriptives(make_descriptives(outputs_number, -1.0f, 1.0f));
-    }
-};
-
-
-vector<float> scan_categories(NeuralNetwork& network,
-                              const Index numeric_number,
-                              const Index categories_number,
-                              const float input_minimum,
-                              const float input_maximum,
-                              const Index samples_number = 4096)
-{
-    const Index features_number = numeric_number + categories_number;
-
-    vector<float> best_values(size_t(categories_number), -numeric_limits<float>::max());
-
-    MatrixR inputs(samples_number, features_number);
-
-    for (Index category = 0; category < categories_number; category++)
-    {
-        set_random_uniform(inputs, input_minimum, input_maximum);
-
-        inputs.rightCols(categories_number).setZero();
-        inputs.col(numeric_number + category).setOnes();
-
-        const MatrixR outputs = network.calculate_outputs(inputs);
-
-        for (Index i = 0; i < samples_number; i++)
-            best_values[size_t(category)] = max(best_values[size_t(category)], -outputs(i, 0));
-    }
-
-    return best_values;
-}
-
-
-Index read_category(const MatrixR& results,
-                    const Index row,
-                    const Index numeric_number,
-                    const Index categories_number)
-{
-    Index category = -1;
-
-    for (Index j = 0; j < categories_number; j++)
-    {
-        const float value = results(row, numeric_number + j);
-
-        if (value == 0.0f) continue;
-
-        if (value != 1.0f || category >= 0) return -1;
-
-        category = j;
-    }
-
-    return category;
-}
-
-
-pair<float, float> sample_response(NeuralNetwork& network,
-                                   const Index inputs_number,
-                                   const float input_minimum,
-                                   const float input_maximum,
-                                   const Index samples_number = 512)
-{
-    MatrixR inputs(samples_number, inputs_number);
-
-    set_random_uniform(inputs, input_minimum, input_maximum);
-
-    const MatrixR outputs = network.calculate_outputs(inputs);
-
-    vector<float> values(static_cast<size_t>(samples_number));
-
-    for (Index i = 0; i < samples_number; i++)
-        values[size_t(i)] = outputs(i, 0);
-
-    ranges::sort(values);
-
-    return {values[values.size()/2], values.back() - values.front()};
-}
-
 
 enum class Driver { Contraction, Genetic };
 
@@ -270,347 +54,6 @@ protected:
     void SetUp() override { set_seed(1234); }
 };
 
-}
-
-
-TEST(Expression, LinearSumKeepsSignedCoefficients)
-{
-    const CompiledExpression expression =
-        compile_expression("x1 + 2*x2 - 3", make_named_columns({"x1", "x2"}), {});
-
-    EXPECT_EQ(expression.linearity, ExpressionLinearity::Linear);
-    EXPECT_EQ(expression.involvement, ExpressionInvolvement::InputsOnly);
-    EXPECT_NEAR(lookup_coefficient(expression.linear_input_terms, 0), 1.0f, 1e-6f);
-    EXPECT_NEAR(lookup_coefficient(expression.linear_input_terms, 1), 2.0f, 1e-6f);
-    EXPECT_NEAR(expression.linear_constant, -3.0f, 1e-6f);
-}
-
-
-TEST(Expression, UnaryNegationFlipsCoefficients)
-{
-    const CompiledExpression expression =
-        compile_expression("-x1 + x2", make_named_columns({"x1", "x2"}), {});
-
-    EXPECT_EQ(expression.linearity, ExpressionLinearity::Linear);
-    EXPECT_NEAR(lookup_coefficient(expression.linear_input_terms, 0), -1.0f, 1e-6f);
-    EXPECT_NEAR(lookup_coefficient(expression.linear_input_terms, 1), 1.0f, 1e-6f);
-}
-
-
-TEST(Expression, ConstantScalingDistributesOverSum)
-{
-    const CompiledExpression expression =
-        compile_expression("3*(x1 + x2)", make_named_columns({"x1", "x2"}), {});
-
-    EXPECT_EQ(expression.linearity, ExpressionLinearity::Linear);
-    EXPECT_NEAR(lookup_coefficient(expression.linear_input_terms, 0), 3.0f, 1e-6f);
-    EXPECT_NEAR(lookup_coefficient(expression.linear_input_terms, 1), 3.0f, 1e-6f);
-}
-
-
-TEST(Expression, DivisionByConstantIsLinear)
-{
-    const CompiledExpression expression = compile_expression("x1 / 4", make_named_columns({"x1"}), {});
-
-    EXPECT_EQ(expression.linearity, ExpressionLinearity::Linear);
-    EXPECT_NEAR(lookup_coefficient(expression.linear_input_terms, 0), 0.25f, 1e-6f);
-}
-
-
-TEST(Expression, ProductOfVariablesIsNonlinear)
-{
-    const CompiledExpression expression =
-        compile_expression("x1 * x2", make_named_columns({"x1", "x2"}), {});
-
-    EXPECT_EQ(expression.linearity, ExpressionLinearity::Nonlinear);
-}
-
-
-TEST(Expression, DivisionByVariableIsNonlinear)
-{
-    const CompiledExpression expression =
-        compile_expression("x1 / x2", make_named_columns({"x1", "x2"}), {});
-
-    EXPECT_EQ(expression.linearity, ExpressionLinearity::Nonlinear);
-}
-
-
-TEST(Expression, SqrtIsNonlinear)
-{
-    const CompiledExpression expression = compile_expression("sqrt(x1) + 1", make_named_columns({"x1"}), {});
-
-    EXPECT_EQ(expression.linearity, ExpressionLinearity::Nonlinear);
-}
-
-
-TEST(Expression, PowerWithNonUnitExponentIsNonlinear)
-{
-    const CompiledExpression expression = compile_expression("x1 ^ 2", make_named_columns({"x1"}), {});
-
-    EXPECT_EQ(expression.linearity, ExpressionLinearity::Nonlinear);
-}
-
-
-TEST(Expression, SingleColumnExpressionIsUnivariate)
-{
-    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
-
-    EXPECT_EQ(compile_expression("2*x1", inputs, {}).complexity, ExpressionComplexity::Univariate);
-    EXPECT_EQ(compile_expression("x1 + x2", inputs, {}).complexity, ExpressionComplexity::Multivariate);
-}
-
-
-TEST(Expression, InvolvementInputsOnly)
-{
-    const CompiledExpression expression = compile_expression("x1 + x2",
-                                                             make_named_columns({"x1", "x2"}),
-                                                             make_named_columns({"y1"}));
-
-    EXPECT_EQ(expression.involvement, ExpressionInvolvement::InputsOnly);
-    EXPECT_FALSE(is_output_coupled(expression));
-    EXPECT_EQ(expression.input_indices.size(), 2u);
-    EXPECT_TRUE(expression.output_indices.empty());
-}
-
-
-TEST(Expression, InvolvementOutputsOnly)
-{
-    const CompiledExpression expression = compile_expression("y1",
-                                                             make_named_columns({"x1"}),
-                                                             make_named_columns({"y1"}));
-
-    EXPECT_EQ(expression.involvement, ExpressionInvolvement::OutputsOnly);
-    EXPECT_TRUE(is_output_coupled(expression));
-    EXPECT_TRUE(expression.input_indices.empty());
-    EXPECT_EQ(expression.output_indices.size(), 1u);
-}
-
-
-TEST(Expression, InvolvementMixed)
-{
-    const CompiledExpression expression = compile_expression("x1 + y1",
-                                                             make_named_columns({"x1"}),
-                                                             make_named_columns({"y1"}));
-
-    EXPECT_EQ(expression.involvement, ExpressionInvolvement::Mixed);
-    EXPECT_TRUE(is_output_coupled(expression));
-}
-
-
-TEST(Expression, EvaluateLinearRespectsSignedCoefficients)
-{
-    const CompiledExpression expression =
-        compile_expression("-x1 + 2*x2 + 1", make_named_columns({"x1", "x2"}), {});
-
-    VectorR input(2); input << 3.0f, 5.0f;
-    const VectorR output(0);
-
-    EXPECT_NEAR(expression.evaluate(input, output), 8.0f, 1e-5f);
-}
-
-
-TEST(Expression, EvaluateNonlinearExpression)
-{
-    const CompiledExpression expression =
-        compile_expression("sqrt(x1) + x2^2", make_named_columns({"x1", "x2"}), {});
-
-    VectorR input(2); input << 9.0f, 3.0f;
-    const VectorR output(0);
-
-    EXPECT_NEAR(expression.evaluate(input, output), 12.0f, 1e-5f);
-}
-
-
-TEST(Expression, EvaluateUsesOutputsWhenMixed)
-{
-    const CompiledExpression expression = compile_expression("x1 + 2*y1",
-                                                             make_named_columns({"x1"}),
-                                                             make_named_columns({"y1"}));
-
-    VectorR input(1); input << 1.0f;
-    VectorR output(1); output << 4.0f;
-
-    EXPECT_NEAR(expression.evaluate(input, output), 9.0f, 1e-5f);
-}
-
-
-TEST(Expression, ParenthesesOverridePrecedence)
-{
-    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
-
-    const CompiledExpression without = compile_expression("2 * x1 + x2", inputs, {});
-    const CompiledExpression with = compile_expression("2 * (x1 + x2)", inputs, {});
-
-    VectorR input(2); input << 3.0f, 5.0f;
-    const VectorR output(0);
-
-    EXPECT_NEAR(without.evaluate(input, output), 11.0f, 1e-5f);
-    EXPECT_NEAR(with.evaluate(input, output), 16.0f, 1e-5f);
-}
-
-
-TEST(Expression, MinMaxAreNonSmooth)
-{
-    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
-
-    const CompiledExpression smallest = compile_expression("min(x1, x2)", inputs, {});
-    const CompiledExpression largest = compile_expression("max(x1, x2)", inputs, {});
-
-    VectorR input(2); input << 2.0f, 7.0f;
-    const VectorR output(0);
-
-    EXPECT_NEAR(smallest.evaluate(input, output), 2.0f, 1e-5f);
-    EXPECT_NEAR(largest.evaluate(input, output), 7.0f, 1e-5f);
-    EXPECT_EQ(smallest.smoothness, ExpressionSmoothness::NonSmooth);
-    EXPECT_EQ(smallest.linearity, ExpressionLinearity::Nonlinear);
-}
-
-
-TEST(Expression, UnknownIdentifierThrows)
-{
-    EXPECT_THROW(compile_expression("x1 + z9", make_named_columns({"x1"}), {}), runtime_error);
-}
-
-
-TEST(Expression, UnknownFunctionThrows)
-{
-    EXPECT_THROW(compile_expression("bogus(x1)", make_named_columns({"x1"}), {}), runtime_error);
-}
-
-
-TEST(Expression, EmptyExpressionThrows)
-{
-    EXPECT_THROW(compile_expression("", {}, {}), runtime_error);
-}
-
-
-TEST(Expression, ExpressionWithoutVariablesThrows)
-{
-    EXPECT_THROW(compile_expression("1 + 2", make_named_columns({"x1"}), {}), runtime_error);
-}
-
-
-TEST(Expression, WrongFunctionArityThrows)
-{
-    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
-
-    EXPECT_THROW(compile_expression("sqrt(x1, x2)", inputs, {}), runtime_error);
-    EXPECT_THROW(compile_expression("min(x1)", inputs, {}), runtime_error);
-}
-
-
-TEST(Expression, MismatchedParenthesesThrow)
-{
-    EXPECT_THROW(compile_expression("(x1 + 1", make_named_columns({"x1"}), {}), runtime_error);
-}
-
-
-TEST(Expression, ComparisonSymbolsAreRejectedAgainstANetwork)
-{
-    MinimalApproximation setup({"x1", "x2"}, {"y"});
-
-    EXPECT_THROW(compile_expression("x1 <= 3", setup.network.get(), "Constraint"), runtime_error);
-}
-
-
-TEST(Expression, CompilingWithoutANetworkThrows)
-{
-    EXPECT_THROW(compile_expression("x1", nullptr, "Objective"), runtime_error);
-}
-
-
-TEST(ConstraintResidual, SilentInsideAndSignedOutside)
-{
-    ResponseOptimization::Constraint constraint;
-
-    constraint.expression = compile_expression("x1", make_named_columns({"x1"}), {});
-
-    constraint.condition = Condition::Between;
-    constraint.values = {2.0f, 6.0f};
-
-    const VectorR output;
-
-    EXPECT_FALSE(isfinite(constraint.calculate_residual(VectorR::Constant(1, 4.0f), output)));
-
-    EXPECT_NEAR(constraint.calculate_residual(VectorR::Constant(1, 1.0f), output), -1.0f, 1e-6f);
-
-    EXPECT_NEAR(constraint.calculate_residual(VectorR::Constant(1, 8.0f), output), 2.0f, 1e-6f);
-}
-
-
-TEST(ConstraintResidual, EqualityIsSilentOnTargetAndSignedOutside)
-{
-    ResponseOptimization::Constraint constraint;
-
-    constraint.expression = compile_expression("x1", make_named_columns({"x1"}), {});
-
-    constraint.condition = Condition::Equal;
-    constraint.values = {5.0f};
-
-    const VectorR output;
-
-    EXPECT_FALSE(isfinite(constraint.calculate_residual(VectorR::Constant(1, 5.0f), output)));
-
-    EXPECT_NEAR(constraint.calculate_residual(VectorR::Constant(1, 7.0f), output), 2.0f, 1e-6f);
-}
-
-
-TEST(ExpressionHelpers, SameExpressionComparesTheCompiledForm)
-{
-    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
-
-    EXPECT_TRUE(same_expression(compile_expression("x1 + 2*x2", inputs, {}),
-                                compile_expression("x1+2*x2", inputs, {})));
-
-    EXPECT_TRUE(same_expression(compile_expression("2*(x1 + x2)", inputs, {}),
-                                compile_expression("2*x1 + 2*x2", inputs, {})));
-
-    EXPECT_FALSE(same_expression(compile_expression("x1", inputs, {}),
-                                 compile_expression("2*x1", inputs, {})));
-
-    EXPECT_FALSE(same_expression(compile_expression("x1 + x2", inputs, {}),
-                                 compile_expression("x1 * x2", inputs, {})));
-}
-
-
-TEST(ExpressionHelpers, SameExpressionIsSensitiveToTermOrder)
-{
-    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
-
-    EXPECT_FALSE(same_expression(compile_expression("x1 + x2", inputs, {}),
-                                 compile_expression("x2 + x1", inputs, {})));
-}
-
-
-TEST(ExpressionHelpers, BareVariableIsAPlainUnscaledColumn)
-{
-    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
-
-    EXPECT_TRUE(is_bare_variable(compile_expression("x1", inputs, {})));
-    EXPECT_FALSE(is_bare_variable(compile_expression("2*x1", inputs, {})));
-    EXPECT_FALSE(is_bare_variable(compile_expression("x1 + 1", inputs, {})));
-    EXPECT_FALSE(is_bare_variable(compile_expression("x1 + x2", inputs, {})));
-}
-
-
-TEST(ExpressionHelpers, InputGradientMatchesTheCoefficients)
-{
-    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
-
-    VectorR point(2); point << 3.0f, 4.0f;
-    const VectorR output(0);
-
-    const VectorR linear_gradient =
-        evaluate_input_gradient(compile_expression("-x1 + 2*x2", inputs, {}), point, output);
-
-    EXPECT_NEAR(linear_gradient(0), -1.0f, 1e-5f);
-    EXPECT_NEAR(linear_gradient(1), 2.0f, 1e-5f);
-
-    const VectorR nonlinear_gradient =
-        evaluate_input_gradient(compile_expression("x1^2 + x2^2", inputs, {}), point, output);
-
-    EXPECT_NEAR(nonlinear_gradient(0), 6.0f, 1e-4f);
-    EXPECT_NEAR(nonlinear_gradient(1), 8.0f, 1e-4f);
 }
 
 
@@ -703,16 +146,33 @@ TEST(ResponseOptimizationSetup, NoObjectiveThrows)
 }
 
 
-TEST(ResponseOptimizationSetup, CardinalityNeedsASumOfAtLeastTwoInputs)
+TEST(ResponseOptimizationSetup, CardinalityNeedsAListOfAtLeastTwoInputs)
 {
     MinimalApproximation setup({"x1", "x2", "x3"}, {"y"});
 
     DomainContraction optimization(setup.network.get());
 
     EXPECT_THROW(optimization.add_constraint("x1", Condition::Cardinality, {1.0f}), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("x1; ", Condition::Cardinality, {1.0f}), runtime_error);
     EXPECT_THROW(optimization.add_constraint("x1 * x2", Condition::Cardinality, {1.0f}), runtime_error);
-    EXPECT_THROW(optimization.add_constraint("x1 + y", Condition::Cardinality, {1.0f}), runtime_error);
-    EXPECT_NO_THROW(optimization.add_constraint("x1 + x2 + x3", Condition::Cardinality, {2.0f}));
+    EXPECT_THROW(optimization.add_constraint("x1; y", Condition::Cardinality, {1.0f}), runtime_error);
+    EXPECT_NO_THROW(optimization.add_constraint("x1; x2; x3", Condition::Cardinality, {2.0f}));
+}
+
+
+// The list used to be read as a sum, which quietly dropped coefficients and repeated members.
+
+TEST(ResponseOptimizationSetup, CardinalityRejectsArithmeticInItsList)
+{
+    MinimalApproximation setup({"x1", "x2", "x3"}, {"y"});
+
+    DomainContraction optimization(setup.network.get());
+
+    EXPECT_THROW(optimization.add_constraint("x1 + x2 + x3", Condition::Cardinality, {2.0f}), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("2*x1; x2", Condition::Cardinality, {1.0f}), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("x1 - x2; x3", Condition::Cardinality, {1.0f}), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("x1; x2 + 5", Condition::Cardinality, {1.0f}), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("x1; x1; x2", Condition::Cardinality, {1.0f}), runtime_error);
 }
 
 
@@ -722,10 +182,10 @@ TEST(ResponseOptimizationSetup, CardinalityNeedsAWholeBudgetInsideItsGroup)
 
     DomainContraction optimization(setup.network.get());
 
-    EXPECT_THROW(optimization.add_constraint("x1 + x2 + x3", Condition::Cardinality, {}), runtime_error);
-    EXPECT_THROW(optimization.add_constraint("x1 + x2 + x3", Condition::Cardinality, {-1.0f}), runtime_error);
-    EXPECT_THROW(optimization.add_constraint("x1 + x2 + x3", Condition::Cardinality, {4.0f}), runtime_error);
-    EXPECT_THROW(optimization.add_constraint("x1 + x2 + x3", Condition::Cardinality, {1.5f}), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("x1; x2; x3", Condition::Cardinality, {}), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("x1; x2; x3", Condition::Cardinality, {-1.0f}), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("x1; x2; x3", Condition::Cardinality, {4.0f}), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("x1; x2; x3", Condition::Cardinality, {1.5f}), runtime_error);
 }
 
 
@@ -736,7 +196,7 @@ TEST(ResponseOptimizationSetup, CardinalityOverAVariableThatCannotReachZeroThrow
     DomainContraction optimization(setup.network.get());
 
     optimization.add_objective("y", Sense::Minimize);
-    optimization.add_constraint("x1 + x2 + x3", Condition::Cardinality, {2.0f});
+    optimization.add_constraint("x1; x2; x3", Condition::Cardinality, {2.0f});
 
     EXPECT_THROW(optimization.perform_response_optimization(), runtime_error);
 }
@@ -1067,7 +527,7 @@ TEST_P(ResponseDriver, CardinalityLeavesAtMostTheBudgetInPlay)
     const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
 
     optimization->add_objective("x1 + x2 + x3 + x4", Sense::Maximize);
-    optimization->add_constraint("x1 + x2 + x3 + x4", Condition::Cardinality, {2.0f});
+    optimization->add_constraint("x1; x2; x3; x4", Condition::Cardinality, {2.0f});
 
     const MatrixR results = optimization->perform_response_optimization();
 
@@ -1092,7 +552,7 @@ TEST_P(ResponseDriver, CardinalityWithARoomyBudgetRestrictsNothing)
     const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
 
     optimization->add_objective("x1 + x2 + x3", Sense::Maximize);
-    optimization->add_constraint("x1 + x2 + x3", Condition::Cardinality, {3.0f});
+    optimization->add_constraint("x1; x2; x3", Condition::Cardinality, {3.0f});
 
     const MatrixR results = optimization->perform_response_optimization();
 
