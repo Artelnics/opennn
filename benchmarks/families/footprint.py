@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """What PyTorch costs before it does any work.
 
-PLAN.md; the counterpart of footprint.cpp.
+The counterpart of footprint.cpp.
 
   footprint.py memory    resident set after importing and declaring intent
   footprint.py startup   time to first prediction

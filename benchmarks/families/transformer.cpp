@@ -1,6 +1,6 @@
 // The transformer family, defined once, driven four ways.
 //
-// PLAN.md. The "Attention Is All You Need" base model -- d_model 512, 8
+// The "Attention Is All You Need" base model -- d_model 512, 8
 // heads, feed-forward 2048, 6 layers -- on WMT14 English-German, which is the
 // corpus that paper trained and reported on and therefore the citable one.
 // Heads and feed-forward width follow d_model by the paper's own ratios
@@ -355,6 +355,15 @@ int main(int argc, char* argv[])
 
             Batch data(batch, &dataset, network->get_config());
             data.fill(indices, dataset.get_feature_selection(), FillMode::Inference);
+
+            // fill() stages a CUDA batch on the host; the transfer is a
+            // separate stream operation, issued here once, before the clock,
+            // so the replayed pass runs on the sentences it was filled with.
+            if (options.device == Device::CUDA)
+            {
+                data.upload_to_device_batch_async(data, device::get_transfer_stream());
+                data.wait_h2d_on_compute_stream();
+            }
 
             const vector<TensorView>& inputs = data.get_inputs();
 

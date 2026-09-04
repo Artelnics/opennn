@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The LSTM family in PyTorch, defined once, driven four ways.
 
-PLAN.md; the counterpart of lstm.cpp. LSTM forecasting on UCI Beijing PM2.5,
+The counterpart of lstm.cpp. LSTM forecasting on UCI Beijing PM2.5,
 predicting the next hourly reading from a window of past ones.
 
   lstm.py train    <csv> <csv> [epochs] [batch,...] [hidden] [past] [dev] [prec]
@@ -163,12 +163,34 @@ def compiled(fn, opts: dict):
     would ship, which is the mirror image of the eager-on-GPU mistake that
     made dense training read 1.29x when it was 1.06x.
 
+    **On CUDA this family is eager too, and that is the unusual case.** For
+    dense, cnn and transformer, compiling the training step wins on this box --
+    +13%, +19% and +33% respectively. For the LSTM it loses:
+
+        cuda train    compiled 87,628/s     eager 108,614/s    eager +24%
+        cuda infer    compiled 457,209/s    eager 528,734/s    eager +13%
+                      compiled 461,970/s    eager 514,318/s
+
+    Two reasons, and both are about what Dynamo can keep in one graph. The
+    step this suite compiles contains zero_grad, backward and optimizer.step,
+    and Dynamo breaks the graph at `Optimizer.zero_grad`
+    (TORCH_LOGS=graph_breaks names it). Every family pays that break; only this
+    one cannot earn it back, because `nn.LSTM` lowers to an opaque cuDNN RNN
+    call that Inductor cannot fuse into anything. So compilation buys a
+    recompile and some dispatch, and fuses nothing that matters.
+
+    Contract item 3 asks for each engine at its best, and this is the same rule
+    that already sends CPU to eager: measure both, take PyTorch's. Leaving it
+    compiled would have published cuda-lstm-train at 3.194x when PyTorch's own
+    best makes it 2.85x -- the mirror image of the eager-on-GPU mistake that
+    made dense training read 1.29x when it was 1.06x.
+
     PT_COMPILE_MODE overrides either way, so the choice stays measurable.
     """
     mode = os.environ.get("PT_COMPILE_MODE", "default")
-    if mode == "eager" or opts["device"] != "cuda":
+    if mode == "eager" or opts["device"] != "cuda" or mode == "default":
         return fn, "eager"
-    return torch.compile(fn, mode=None if mode == "default" else mode), f"compile:{mode}"
+    return torch.compile(fn, mode=mode, dynamic=False), f"compile:{mode}"
 
 def batches_of(text: str) -> list[int]:
     return [int(part) for part in text.split(",") if part]

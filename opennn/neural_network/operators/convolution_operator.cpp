@@ -447,11 +447,15 @@ void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output)
     const Map<const Matrix<float, 1, Dynamic>> bias_row(use_bias ? bias.as<float>() : nullptr,
                                                         use_bias ? kernels_number : 0);
 
+    // Scratch for the whole team rather than `min(threads, batch)`: a smaller
+    // team would make libgomp shrink its pool and rebuild it at the next full
+    // region (see Backend::set_threads_number). Threads past the batch draw
+    // no iterations.
     const Index col_size = output_positions * patch_size;
-    const int workers = max(1, min(omp_get_max_threads(), to_int(batch_size)));
+    const int workers = max(1, omp_get_max_threads());
     vector<float> scratch(size_t(workers) * size_t(col_size));
 
-    #pragma omp parallel num_threads(workers)
+    #pragma omp parallel
     {
         float* const col_data =
             scratch.data() + size_t(omp_get_thread_num()) * size_t(col_size);
@@ -495,7 +499,7 @@ void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
 
     const bool write_input_delta = !input_delta.empty();
 
-    const int workers = max(1, min(omp_get_max_threads(), to_int(batch_size)));
+    const int workers = max(1, omp_get_max_threads()); // whole team, as in the forward pass
     MatrixR weight_gradient_partials = MatrixR::Zero(workers, kernels_number * patch_size);
     MatrixR bias_gradient_partials = MatrixR::Zero(use_bias ? workers : 0,
                                                    use_bias ? kernels_number : 0);
@@ -504,7 +508,7 @@ void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
     const Index scratch_stride = write_input_delta ? 2 * col_size : col_size;
     vector<float> scratch(size_t(workers) * size_t(scratch_stride));
 
-    #pragma omp parallel num_threads(workers)
+    #pragma omp parallel
     {
         const int thread = omp_get_thread_num();
         float* const col_data =

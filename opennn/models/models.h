@@ -91,6 +91,8 @@ class ResNet : public NeuralNetwork
 
 public:
 
+    static unique_ptr<ResNet> from_pretrained(const filesystem::path&);
+
     ResNet(const Shape&,
            const vector<Index>&,
            const Shape&,
@@ -123,6 +125,12 @@ public:
                 bool use_sppf = false,
                 Index reg_max = 1,
                 ModelSize model_size = ModelSize::l);
+
+    Index load_pretrained_backbone(const filesystem::path&);
+
+private:
+
+    Backbone backbone;
 };
 
 class TextClassificationNetwork : public NeuralNetwork
@@ -130,11 +138,18 @@ class TextClassificationNetwork : public NeuralNetwork
 
 public:
 
+    struct Prediction
+    {
+        string category;
+        float confidence = 0.0f;
+    };
+
     TextClassificationNetwork(const Shape&,
                               const Shape&,
                               const Shape&,
                               PoolingMethod pooling_method = PoolingMethod::AveragePooling);
 
+    Prediction classify(string_view);
     MatrixR calculate_text_outputs(const Tensor<string, 1>&);
 
     void set_tokenizer(unique_ptr<TokenizerOperator>);
@@ -192,6 +207,8 @@ public:
 
     explicit TextGenerationNetwork(const filesystem::path&);
 
+    void load_pretrained(const filesystem::path& data_directory);
+
     Index get_sequence_length() const { return get_layer("embedding")->get_input_shape()[0]; }
 
     void set_dropout_rate(const float);
@@ -206,6 +223,13 @@ public:
 class Qwen3 final : public NeuralNetwork
 {
 public:
+
+    enum class Variant { B0_6, B4 };
+
+    static unique_ptr<Qwen3> from_pretrained(
+        Variant,
+        const filesystem::path&,
+        Index sequence_length = 32768);
 
     Qwen3();
 
@@ -239,6 +263,15 @@ public:
 class BertForSequenceClassification final : public NeuralNetwork
 {
 public:
+
+    struct Pretrained
+    {
+        unique_ptr<BertForSequenceClassification> model;
+        filesystem::path vocabulary_path;
+        Index sequence_length;
+    };
+
+    static Pretrained from_pretrained(const filesystem::path&);
 
     BertForSequenceClassification();
 

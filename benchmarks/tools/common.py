@@ -1,6 +1,6 @@
 """Everything the suite needs that is not a model definition.
 
-PLAN.md step 1. One file, four concerns: where a result came from, where the
+Shared support for the contract in PROTOCOL.md: where a result came from, where the
 binaries are, what the GPU was doing, and how a prediction is scored.
 
 It is one file because the alternative was five, and because none of these is
@@ -12,6 +12,8 @@ directory the instructions told you to create.
 
 from __future__ import annotations
 
+import bisect
+import ctypes
 import math
 import os
 import platform
@@ -20,7 +22,6 @@ import subprocess
 import sys
 import threading
 import time
-import ctypes
 from pathlib import Path
 from typing import Any
 
@@ -157,50 +158,73 @@ def clocks_locked() -> bool:
     persistence by hand and not lock the clock, which is not an accident
     anyone has.
     """
-    # WDDM does not expose persistence mode.  The Windows wrapper sets this
-    # marker only after both -lgc and -lmc succeed, and removes it again when
-    # the clocks are restored.  It is deliberately process-local: a random
-    # lock left behind by another shell must not certify this run.
     if os.name == "nt":
         return os.environ.get("OPENNN_BENCH_CLOCKS_LOCKED") == "1"
+
     return run_text(["nvidia-smi", "--query-gpu=persistence_mode",
                      "--format=csv,noheader"], timeout=10).strip() == "Enabled"
 
-def cpu_busy_fraction(seconds: float = 1.0) -> float:
+def cpu_busy_fraction(seconds: float = 1.0,
+                     cores: list[int] | None = None) -> float:
     """How much of the machine is already working, sampled now.
 
     Not the load average, which is useless here: it decays over minutes, so
     after the suite's own previous launch it reads 21 on a machine that is
-    idle. This is the instantaneous non-idle fraction across all hardware
-    threads -- quiet measures under 0.01, one saturated core measures about
-    one over the thread count.
+    idle. This is the instantaneous non-idle fraction, quiet measuring under
+    0.01 and one saturated core about one over the thread count.
+
+    `cores` narrows it to the ones the run can actually be disturbed by. A CPU
+    cell is `taskset`-pinned to the P-cores, so work stranded on an E-core
+    cannot touch it -- but the aggregate line counts that work anyway, and the
+    cell is then filed as scratch for interference it was structurally immune
+    to. That is not hypothetical: a browser parked on the E-cores sent
+    cpu-lstm-infer and cuda-transformer-infer to scratch on 2026-09-01 at 6.0%
+    and 3.7%, with every other gate passing.
+
+    Left as the whole machine when `cores` is None, which is right for a CUDA
+    cell: nothing pins those, and their input pipeline can use any core.
     """
     if os.name == "nt":
         class FileTime(ctypes.Structure):
             _fields_ = [("low", ctypes.c_uint32), ("high", ctypes.c_uint32)]
 
-        def value(item: FileTime) -> int:
-            return (int(item.high) << 32) | int(item.low)
+        def value(file_time: FileTime) -> int:
+            return (file_time.high << 32) | file_time.low
 
         def windows_snapshot() -> tuple[int, int]:
-            idle, kernel, user = FileTime(), FileTime(), FileTime()
-            if not ctypes.windll.kernel32.GetSystemTimes(  # type: ignore[attr-defined]
+            idle = FileTime()
+            kernel = FileTime()
+            user = FileTime()
+            if not ctypes.windll.kernel32.GetSystemTimes(
                     ctypes.byref(idle), ctypes.byref(kernel), ctypes.byref(user)):
                 return 0, 0
-            # Kernel time includes idle time on Windows.
             return value(kernel) + value(user), value(idle)
 
         total_before, idle_before = windows_snapshot()
         time.sleep(seconds)
         total_after, idle_after = windows_snapshot()
         elapsed = total_after - total_before
-        return (0.0 if elapsed <= 0 else
-                max(0.0, min(1.0, 1.0 - (idle_after - idle_before) / elapsed)))
+        if elapsed <= 0:
+            return 0.0
+        return max(0.0, 1.0 - (idle_after - idle_before) / elapsed)
+
+    wanted = None if cores is None else {f"cpu{index}" for index in cores}
 
     def snapshot() -> tuple[int, int]:
-        values = [int(v) for v in
-                  Path("/proc/stat").read_text().split("\n")[0].split()[1:]]
-        return sum(values), values[3] + values[4]        # total, idle + iowait
+        total = idle = 0
+        for line in Path("/proc/stat").read_text().split("\n"):
+            fields = line.split()
+            if not fields or not fields[0].startswith("cpu"):
+                continue
+            if wanted is None:
+                if fields[0] != "cpu":                   # the aggregate line
+                    continue
+            elif fields[0] not in wanted:
+                continue
+            values = [int(v) for v in fields[1:]]
+            total += sum(values)
+            idle += values[3] + values[4]                # idle + iowait
+        return total, idle
 
     total_before, idle_before = snapshot()
     time.sleep(seconds)
@@ -216,6 +240,106 @@ def cpu_busy_fraction(seconds: float = 1.0) -> float:
 # One busy core on this 28-thread part is about 0.036, and a quiet machine
 # measures under 0.01, so this trips on roughly a single competing process.
 BUSY_THRESHOLD = float(os.environ.get("OPENNN_BENCH_BUSY_THRESHOLD", "0.03"))
+
+
+class ForeignActivity:
+    """CPU time spent by everything that is not the launch, second by second.
+
+    `cpu_busy_fraction` reads the machine before the first launch and after
+    the last, and nothing in between -- the one place a long window can be
+    hurt. That was found the expensive way: on 2026-09-02 an editor drawing a
+    conversation on the E-cores, while a 2.4 s dense-training window ran on
+    the P-cores, cost the launch-bound step 4-12% on both engines and left
+    both edge samples quiet. This watches every second of a launch and keeps
+    the worst one.
+
+    Foreign means outside the launch: not the runner, not the launched
+    process, not its descendants (PyTorch's compile workers are children of
+    its driver), and not kernel threads, whose time under a CNN cell is the
+    driver's interrupt work for the launch itself. Charging by process rather
+    than reading /proc/stat is what makes that separation possible. Only
+    live processes are charged, so one that starts and exits between two
+    samples is missed -- at a second per sample that is under 1/28 of the
+    machine for under a second, well below the threshold. For a pinned CPU
+    cell only work last seen on the watched cores counts, as with the edge
+    samples. The cost is one pass over /proc a second, a few milliseconds.
+    """
+
+    KERNEL_THREAD = 0x00200000                           # PF_KTHREAD
+
+    def __init__(self, launched_pid: int, cores: list[int] | None = None,
+                 interval: float = 1.0):
+        self.own = {os.getpid(), launched_pid}
+        self.cores = None if cores is None else set(cores)
+        self.interval = interval
+        self.samples: list[tuple[float, float, float]] = []   # start, end, fraction
+        self.ncpus = os.cpu_count() or 1
+        self.clk_tck = os.sysconf("SC_CLK_TCK")
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._loop, daemon=True)
+
+    @staticmethod
+    def _processes() -> dict[int, tuple[int, int, int, int]]:
+        """pid -> (ppid, flags, cpu ticks, last cpu)."""
+        out = {}
+        for entry in os.scandir("/proc"):
+            if not entry.name.isdigit():
+                continue
+            try:
+                with open(f"/proc/{entry.name}/stat") as handle:
+                    text = handle.read()
+            except OSError:
+                continue
+            rest = text[text.rindex(")") + 2:].split()
+            # fields after the command name: state ppid ... flags(6) utime(11)
+            # stime(12) ... processor(36)
+            ticks = int(rest[11]) + int(rest[12])
+            out[int(entry.name)] = (int(rest[1]), int(rest[6]), ticks, int(rest[36]))
+        return out
+
+    def _foreign_ticks(self, procs: dict) -> dict[int, int]:
+        tree = set(self.own)
+        grew = True
+        while grew:                                      # descendants, to any depth
+            grew = False
+            for pid, (ppid, _, _, _) in procs.items():
+                if ppid in tree and pid not in tree:
+                    tree.add(pid)
+                    grew = True
+        return {pid: ticks for pid, (_, flags, ticks, cpu) in procs.items()
+                if pid not in tree and not flags & self.KERNEL_THREAD
+                and (self.cores is None or cpu in self.cores)}
+
+    def _loop(self) -> None:
+        previous = self._foreign_ticks(self._processes())
+        mark = time.time()
+        while not self._stop.wait(self.interval):
+            current = self._foreign_ticks(self._processes())
+            now = time.time()
+            used = sum(max(0, ticks - previous.get(pid, ticks)) for pid, ticks in current.items())
+            watched = self.ncpus if self.cores is None else len(self.cores)
+            self.samples.append((mark, now, used / (self.clk_tck * (now - mark) * watched)))
+            previous, mark = current, now
+
+    def __enter__(self) -> "ForeignActivity":
+        self._thread.start()
+        return self
+
+    def __exit__(self, *_) -> None:
+        self._stop.set()
+        self._thread.join()
+
+    def worst(self, start: float | None = None, end: float | None = None) -> dict:
+        """The busiest foreign second overlapping [start, end] (unix), or the
+        whole launch when a mark is missing."""
+        inside = [s for s in self.samples
+                  if start is None or end is None or (s[1] > start and s[0] < end)]
+        if not inside:
+            return {"max": 0.0, "at": None, "seconds": 0,
+                    "window": "timed" if start and end else "whole"}
+        peak = max(inside, key=lambda s: s[2])
+        return {"max": round(peak[2], 4), "at": round(peak[0], 3), "seconds": len(inside),
+                "window": "timed" if start and end else "whole"}
 
 
 def result_destination(dirty: bool | None = None, device: str = "cuda",
@@ -290,8 +414,8 @@ def find_binary(base: str, root: Path | None = None) -> tuple[str, bool]:
 # GPU: state, and the sampler every run carries
 # --------------------------------------------------------------------------
 
-_STATE_FIELDS = ("name,driver_version,clocks.current.sm,clocks.max.sm,clocks.current.memory,"
-                 "temperature.gpu,power.limit,power.draw,"
+_STATE_FIELDS = ("name,driver_version,clocks.current.sm,clocks.max.sm,"
+                 "clocks.current.memory,temperature.gpu,power.limit,power.draw,"
                  "clocks_throttle_reasons.sw_power_cap,"
                  "clocks_throttle_reasons.sw_thermal_slowdown,"
                  "clocks_throttle_reasons.hw_thermal_slowdown,"
@@ -393,6 +517,115 @@ def read_rapl_uj(domain: dict[str, Any]) -> int | None:
     except (OSError, ValueError):
         return None
 
+# --------------------------------------------------------------------------
+# GPU: the driver's own power samples
+# --------------------------------------------------------------------------
+
+class Nvml:
+    """The NVML calls the monitor needs, bound with ctypes.
+
+    This replaces `nvidia-smi --query-gpu=power.draw -lms 20`, and the reason
+    is what `power.draw` is: on Ampere and later it is the driver's
+    *one-second moving average* (`power.draw.average`; nvidia-smi documents
+    it). Polled at 20 ms it still cannot see inside a second, so a 70 ms
+    burst of GEMMs in an otherwise idle second reads as 45 W however finely
+    it is sampled -- which is what every sub-second cell in the store had
+    been reporting as its energy, memory-bound bursts at 200+ W included.
+
+    The driver keeps its own ring of about 120 instantaneous board-power
+    samples, one every 20 ms, timestamped by it (`nvmlDeviceGetSamples`,
+    `NVML_TOTAL_POWER_SAMPLES`). Draining that ring is the one user-space
+    source of sub-second power on this driver, and it is what the monitor
+    integrates. The alternatives were measured and rejected on the
+    reference machine, driver 610.43:
+
+    - `power.draw.instant` (`NVML_FI_DEV_POWER_INSTANT`) refreshes every
+      500 ms, as does `nvmlDeviceGetPowerUsage`.
+    - `nvmlDeviceGetTotalEnergyConsumption` is a synchronous firmware query
+      (~4 ms) that stalls the accumulator it reads: polled every 10 ms it
+      under-counts a steady 233 W load by 60%, every 100 ms by 10%, every
+      500 ms by 1%. Read once at each end of a run it is right, and that is
+      the only way it is used here -- as a whole-run cross-check.
+    """
+
+    TOTAL_POWER_SAMPLES = 0          # nvmlSamplingType_t
+    NOT_FOUND = 6                    # nvmlReturn_t: nothing newer than the timestamp
+
+    class Sample(ctypes.Structure):  # nvmlSample_t
+        _fields_ = [("timestamp_us", ctypes.c_ulonglong), ("value", ctypes.c_ulonglong)]
+
+    class Memory(ctypes.Structure):  # nvmlMemory_v2_t
+        _fields_ = [("version", ctypes.c_uint), ("total", ctypes.c_ulonglong),
+                    ("reserved", ctypes.c_ulonglong), ("free", ctypes.c_ulonglong),
+                    ("used", ctypes.c_ulonglong)]
+
+    def __init__(self, index: int = 0):
+        self.lib = ctypes.CDLL("libnvidia-ml.so.1")
+        if self.lib.nvmlInit_v2() != 0:
+            raise OSError("nvmlInit failed")
+        self.handle = ctypes.c_void_p()
+        if self.lib.nvmlDeviceGetHandleByIndex_v2(index, ctypes.byref(self.handle)) != 0:
+            self.lib.nvmlShutdown()
+            raise OSError(f"NVML has no device {index}")
+        self._ring = (self.Sample * 256)()          # the driver's ring holds ~120
+        self._memory = self.Memory()
+        self._memory.version = (2 << 24) | ctypes.sizeof(self.Memory)
+
+    def close(self) -> None:
+        self.lib.nvmlShutdown()
+
+    def memory_used_mib(self) -> float | None:
+        if self.lib.nvmlDeviceGetMemoryInfo_v2(self.handle, ctypes.byref(self._memory)) != 0:
+            return None
+        return self._memory.used / 2**20
+
+    def power_samples(self, newer_than_us: int) -> list[tuple[int, float]]:
+        """(driver timestamp in unix microseconds, watts), oldest first, for
+        every sample the driver took after `newer_than_us`."""
+        value_type, count = ctypes.c_uint(), ctypes.c_uint(len(self._ring))
+        rc = self.lib.nvmlDeviceGetSamples(
+            self.handle, self.TOTAL_POWER_SAMPLES, ctypes.c_ulonglong(newer_than_us),
+            ctypes.byref(value_type), ctypes.byref(count), self._ring)
+        if rc != 0:
+            return []
+        # nvmlValue_t is a union; a power sample is a 32-bit milliwatt count
+        # and the upper half of the word is left uncleared.
+        return [(s.timestamp_us, (s.value & 0xFFFFFFFF) / 1e3)
+                for s in self._ring[:count.value]]
+
+    def energy_mj(self) -> int | None:
+        """The firmware energy counter. Read sparingly -- see the class note."""
+        value = ctypes.c_ulonglong()
+        if self.lib.nvmlDeviceGetTotalEnergyConsumption(self.handle, ctypes.byref(value)) != 0:
+            return None
+        return value.value
+
+# The name the CPU path files its memory reading under. It lives here, and
+# run.py imports it, because it is a gate as well as a label: it says which
+# peak a host baseline may be subtracted from, and the GPU path's
+# `device_used_minus_idle` is not one -- that reading has already had the idle
+# card taken off it. Keeping the literal in two files is what let it drift: the
+# metric was renamed when the reading moved from total to anonymous RSS (see
+# Monitor.watch_rss), run.py's gate went on asking for the old
+# "process_peak_rss", and from that rename until now no CPU cell had a baseline
+# subtracted at all.
+HOST_MEMORY_METRIC = "process_peak_anonymous_rss"
+
+# The stdout field a driver has to print for `workload_mib` to be computable:
+# the framework baseline in the *same* quantity the peak is read in, anonymous
+# resident pages, sampled once before the framework does any work.
+#
+# Deliberately not `baseline_rss_mib`, which the eight family drivers print
+# today from /proc/self/statm's resident field (footprint's pair prints the
+# same reading as `baseline_ram_mb`) -- that is total RSS, and total-minus-
+# anonymous is not a workload figure but a negative number. On the 2026-09-03
+# publish round it is negative for at least one engine on every cpu-* cell
+# (cpu-lstm-infer: OpenNN 189.2 MiB peak against a 218.6 MiB baseline, PyTorch
+# 458.7 against 671.9), so subtracting it would clamp the published workload to
+# zero rather than correct it. Until a driver emits this field the runner says
+# so in the artifact instead of subtracting the wrong one.
+HOST_BASELINE_FIELD = "baseline_anonymous_rss_mib"
+
 class Monitor:
     """Samples memory and power for the life of a run.
 
@@ -402,33 +635,51 @@ class Monitor:
     two folders, in two thermal states, as two numbers that could not be
     cross-referenced.
 
-    Sampling always runs, because the cost is one subprocess and the
-    alternative is how the separate energy benchmark came to exist.
+    Sampling always runs, because the cost is one thread and the alternative
+    is how the separate energy benchmark came to exist.
 
         with Monitor() as monitor:
             ... run the engine ...
         monitor.peak_mib, monitor.energy_joules(start, end)
     """
 
-    # Below this many samples inside the window, energy is reported as
-    # unmeasured rather than as a number. A short run integrated from two
-    # readings is not a small energy figure, it is no energy figure.
-    MIN_WINDOW_SAMPLES = 4
+    # Below this many power samples inside the window, energy is reported as
+    # unmeasured rather than as a number. The driver samples every 20 ms, so
+    # this is a one-second window, which keeps the two partial intervals at
+    # its edges under 2% of it. A shorter run has no energy figure: a burst
+    # of GEMMs integrated from three readings is not a small energy figure,
+    # it is no energy figure. Lengthen the run -- more epochs or repeats.
+    MIN_WINDOW_SAMPLES = 50
 
     def __init__(self, interval_ms: int = 20, measure_idle_first: bool = True,
                  device: str = "cuda"):
-        self.interval_ms = interval_ms
+        # Memory is polled every `interval_ms`; the driver's power ring is
+        # drained every `power_drain_ms`. The ring keeps ~2.4 s of 20 ms
+        # samples, so one drain a second loses nothing and costs a fiftieth
+        # of the calls. Neither rate moves a result: drained at 20 ms, at
+        # 1 s and not at all, a launch-bound dense cell read the same
+        # throughput (interleaved, 2026-09-02).
+        self.interval_ms = int(os.environ.get("OPENNN_BENCH_MONITOR_MS", interval_ms))
+        self.power_drain_ms = int(os.environ.get("OPENNN_BENCH_POWER_DRAIN_MS", 1000))
         self.device = device
-        self.samples: list[tuple[float, float, float]] = []    # unix, MiB, watts
-        self.telemetry_samples: list[dict[str, float]] = []
+        self.memory_samples: list[tuple[float, float]] = []    # unix, MiB
+        self.power_samples: list[tuple[float, float]] = []     # unix, watts
+        self.telemetry_samples: list[dict[str, float | bool]] = []
+        self.power_metric: str | None = None
         self.idle_mib = 0.0
         self.idle_watts = 0.0
         self.peak_rss_mib = 0.0
         self.peak_file_mib = 0.0
+        # The firmware energy counter differenced over the monitor's whole
+        # life: warmup, load and teardown included, so never the window's
+        # figure -- but a bound on it, from an independent instrument.
+        self.run_energy_joules: float | None = None
         self._measure_idle = measure_idle_first
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._process: subprocess.Popen | None = None
+        self._nvml: Nvml | None = None
+        self._counter_start_mj: int | None = None
         # (unix, cumulative joules) from the RAPL package counter, CPU runs only.
         self.rapl_samples: list[tuple[float, float]] = []
         self.rapl: dict[str, Any] | None = None
@@ -478,10 +729,26 @@ class Monitor:
         if self._measure_idle:
             self.idle_mib, self.idle_watts = self._read_once()
 
-        # One long-lived nvidia-smi streaming with -lms, not a subprocess per
-        # sample. Spawning one costs 20-50 ms, which was slower than the
-        # interval it was supposedly honouring, so short runs landed no
-        # samples inside their own timed window at all.
+        # The driver's own 20 ms power samples, drained in-process. See Nvml
+        # for why nothing nvidia-smi prints can replace them.
+        try:
+            self._nvml = Nvml()
+        except OSError:
+            self._nvml = None
+
+        if self._nvml:
+            self.power_metric = "nvml_power_samples"
+            self._counter_start_mj = self._nvml.energy_mj()
+            self._thread = threading.Thread(target=self._nvml_loop, daemon=True)
+            self._thread.start()
+            return self
+
+        # Without libnvidia-ml: one long-lived nvidia-smi streaming with -lms,
+        # not a subprocess per sample -- spawning one costs 20-50 ms. What it
+        # streams is the one-second average, so a figure from this path is
+        # only meaningful for a window many seconds long, and the artifact
+        # names the path so the two are never read as the same instrument.
+        self.power_metric = "nvidia_smi_power_draw_1s_average"
         try:
             self._process = subprocess.Popen(
                 ["nvidia-smi", "--query-gpu=memory.used,power.draw,temperature.gpu,"
@@ -510,6 +777,12 @@ class Monitor:
                 self._process.kill()
         if self._thread:
             self._thread.join(timeout=5)
+        if self._nvml:
+            end_mj = self._nvml.energy_mj()
+            if self._counter_start_mj is not None and end_mj is not None:
+                self.run_energy_joules = (end_mj - self._counter_start_mj) / 1e3
+            self._nvml.close()
+            self._nvml = None
 
     @staticmethod
     def _read_once() -> tuple[float, float]:
@@ -522,6 +795,33 @@ class Monitor:
             return float(parts[0]), float(parts[1])
         except (ValueError, IndexError):
             return 0.0, 0.0
+
+    def _nvml_loop(self) -> None:
+        """Memory at the interval; power as the driver sampled it.
+
+        The ring holds about 2.4 s, so draining it at the memory interval
+        leaves two orders of magnitude of slack. Timestamps are the driver's,
+        not the drain's: a sample is filed at the moment it was taken.
+        """
+        assert self._nvml
+        newest_us = int(time.time() * 1e6)
+
+        def drain() -> None:
+            nonlocal newest_us
+            fresh = self._nvml.power_samples(newest_us)
+            if fresh:
+                newest_us = fresh[-1][0]
+                self.power_samples.extend((us / 1e6, watts) for us, watts in fresh)
+
+        last_drain = time.monotonic()
+        while not self._stop.wait(self.interval_ms / 1000.0):
+            mib = self._nvml.memory_used_mib()
+            if mib is not None:
+                self.memory_samples.append((time.time(), mib))
+            if time.monotonic() - last_drain >= self.power_drain_ms / 1000.0:
+                drain()
+                last_drain = time.monotonic()
+        drain()
 
     def _rapl_loop(self) -> None:
         """Accumulate the package energy counter into monotonic joules.
@@ -590,28 +890,28 @@ class Monitor:
             if self._stop.is_set():
                 break
             try:
-                parts = [x.strip() for x in line.split(",")]
-                values = [float(x) for x in parts[:6]]
-                if len(values) < 2:
-                    continue
-                mib, watts = values[:2]
-            except ValueError:
+                parts = [value.strip() for value in line.split(",")]
+                mib, watts, temperature, utilization, sm_clock, memory_clock = (
+                    float(value) for value in parts[:6])
+            except (ValueError, IndexError):
                 continue
             now = time.time()
-            self.samples.append((now, mib, watts))
-            if len(values) >= 6:
-                self.telemetry_samples.append({
-                    "unix": now,
-                    "memory_mib": mib,
-                    "power_w": watts,
-                    "temperature_c": values[2],
-                    "utilization_percent": values[3],
-                    "sm_clock_mhz": values[4],
-                    "memory_clock_mhz": values[5],
-                    "power_throttled": float(len(parts) > 6 and parts[6].lower() == "active"),
-                    "thermal_throttled": float(any(
-                        part.lower() == "active" for part in parts[7:10])),
-                })
+            self.memory_samples.append((now, mib))
+            self.power_samples.append((now, watts))
+            active = lambda value: value.lower() == "active"
+            self.telemetry_samples.append({
+                "unix": now,
+                "memory_mib": mib,
+                "power_watts": watts,
+                "temperature_c": temperature,
+                "utilization_percent": utilization,
+                "sm_clock_mhz": sm_clock,
+                "memory_clock_mhz": memory_clock,
+                "power_throttled": ((len(parts) > 6 and active(parts[6]))
+                                     or (len(parts) > 9 and active(parts[9]))),
+                "thermal_throttled": ((len(parts) > 7 and active(parts[7]))
+                                       or (len(parts) > 8 and active(parts[8]))),
+            })
 
     @property
     def peak_mib(self) -> float:
@@ -622,25 +922,50 @@ class Monitor:
         to anything else. `torch.cuda.max_memory_allocated()` excludes both
         and has no OpenNN equivalent, so it never appears in a comparison.
         """
-        if not self.samples:
+        if not self.memory_samples:
             return 0.0
-        return max(mib for _, mib, _ in self.samples) - self.idle_mib
+        return max(mib for _, mib in self.memory_samples) - self.idle_mib
+
+    def window_power(self, start: float | None, end: float | None) -> list[float]:
+        return [w for t, w in self.power_samples
+                if (start is None or t >= start) and (end is None or t <= end)]
 
     def energy_joules(self, start: float | None = None, end: float | None = None) -> float:
         """Board energy over [start, end], trapezoid-integrated.
 
         The window is the engine's own timed region, taken from the marks it
-        prints, so warmup and data loading are outside it. Idle draw is not
+        prints, so warmup and data loading are outside it. The samples inside
+        the window are integrated as they are; the partial interval at each
+        edge is integrated too, with the power at the edge interpolated
+        between the two samples that straddle it, so the figure covers the
+        window and not the nearest samples to it. Idle draw is not
         subtracted: the question is what the run costs to perform, and the
         card being on is part of that.
         """
-        window = [(t, w) for t, _, w in self.samples
-                  if (start is None or t >= start) and (end is None or t <= end)]
-        if len(window) < 2:
+        samples = self.power_samples
+        if len(samples) < 2:
+            return 0.0
+        lo = samples[0][0] if start is None else max(start, samples[0][0])
+        hi = samples[-1][0] if end is None else min(end, samples[-1][0])
+        if hi <= lo:
             return 0.0
 
-        return sum((window[i + 1][0] - window[i][0]) * (window[i + 1][1] + window[i][1]) / 2.0
-                   for i in range(len(window) - 1))
+        times = [t for t, _ in samples]
+
+        def power_at(when: float) -> float:
+            i = bisect.bisect_left(times, when)
+            if i == 0:
+                return samples[0][1]
+            if i >= len(samples):
+                return samples[-1][1]
+            (t0, w0), (t1, w1) = samples[i - 1], samples[i]
+            return w0 if t1 <= t0 else w0 + (w1 - w0) * (when - t0) / (t1 - t0)
+
+        points = ([(lo, power_at(lo))]
+                  + [(t, w) for t, w in samples if lo < t < hi]
+                  + [(hi, power_at(hi))])
+        return sum((t1 - t0) * (w1 + w0) / 2.0
+                   for (t0, w0), (t1, w1) in zip(points, points[1:]))
 
     def summary(self, start: float | None = None, end: float | None = None) -> dict[str, Any]:
         if self.device != "cuda":
@@ -664,7 +989,7 @@ class Monitor:
             return {
                 "peak_mib": round(self.peak_rss_mib, 1),
                 "peak_file_backed_mib": round(self.peak_file_mib, 1),
-                "memory_metric": "process_peak_anonymous_rss",
+                "memory_metric": HOST_MEMORY_METRIC,
                 "energy_joules": round(joules, 4) if joules is not None else None,
                 "energy_wh": round(joules / 3600.0, 6) if joules is not None else None,
                 "energy_measurable": bool(measurable),
@@ -678,8 +1003,7 @@ class Monitor:
                 "window_samples": window_samples,
             }
 
-        window = [w for t, _, w in self.samples
-                  if (start is None or t >= start) and (end is None or t <= end)]
+        window = self.window_power(start, end)
         telemetry = [sample for sample in self.telemetry_samples
                      if (start is None or sample["unix"] >= start)
                      and (end is None or sample["unix"] <= end)]
@@ -690,6 +1014,14 @@ class Monitor:
         measurable = len(window) >= self.MIN_WINDOW_SAMPLES
         joules = self.energy_joules(start, end) if measurable else None
 
+        notes = []
+        if not measurable:
+            notes.append(f"timed window held {len(window)} power samples, fewer than "
+                         f"the {self.MIN_WINDOW_SAMPLES} required at the driver's 20 ms")
+        if self.power_metric != "nvml_power_samples":
+            notes.append("power is nvidia-smi's one-second average: libnvidia-ml "
+                         "could not be loaded")
+
         return {
             "peak_mib": round(self.peak_mib, 1),
             "memory_metric": "device_used_minus_idle",
@@ -698,18 +1030,38 @@ class Monitor:
             "energy_joules": round(joules, 2) if measurable else None,
             "energy_wh": round(joules / 3600.0, 5) if measurable else None,
             "mean_watts": round(sum(window) / len(window), 1) if window else None,
-            "samples": len(self.samples),
+            "samples": len(self.power_samples),
             "window_samples": len(window),
             "energy_measurable": measurable,
+            "energy_note": "; ".join(notes) or None,
+            # Board, and which reading of it: the driver's own 20 ms samples
+            # or nvidia-smi's one-second average. They are not the same
+            # instrument below a window of many seconds, and the artifact
+            # says which one a figure came from.
+            "energy_domain": "board",
+            "energy_metric": self.power_metric,
+            "run_energy_joules": (round(self.run_energy_joules, 1)
+                                  if self.run_energy_joules is not None else None),
             "telemetry": {
-                "max_temperature_c": max((s["temperature_c"] for s in telemetry), default=None),
-                "max_utilization_percent": max((s["utilization_percent"] for s in telemetry), default=None),
-                "min_sm_clock_mhz": min((s["sm_clock_mhz"] for s in telemetry), default=None),
-                "max_sm_clock_mhz": max((s["sm_clock_mhz"] for s in telemetry), default=None),
-                "min_memory_clock_mhz": min((s["memory_clock_mhz"] for s in telemetry), default=None),
-                "max_memory_clock_mhz": max((s["memory_clock_mhz"] for s in telemetry), default=None),
-                "power_throttled": any(bool(s.get("power_throttled")) for s in telemetry),
-                "thermal_throttled": any(bool(s.get("thermal_throttled")) for s in telemetry),
+                "max_temperature_c": (max(sample["temperature_c"] for sample in telemetry)
+                                      if telemetry else None),
+                "max_utilization_percent": (max(sample["utilization_percent"]
+                                                for sample in telemetry)
+                                            if telemetry else None),
+                "min_sm_clock_mhz": (min(sample["sm_clock_mhz"] for sample in telemetry)
+                                     if telemetry else None),
+                "max_sm_clock_mhz": (max(sample["sm_clock_mhz"] for sample in telemetry)
+                                     if telemetry else None),
+                "min_memory_clock_mhz": (min(sample["memory_clock_mhz"]
+                                             for sample in telemetry)
+                                         if telemetry else None),
+                "max_memory_clock_mhz": (max(sample["memory_clock_mhz"]
+                                             for sample in telemetry)
+                                         if telemetry else None),
+                "power_throttled": any(sample["power_throttled"]
+                                       for sample in telemetry),
+                "thermal_throttled": any(sample["thermal_throttled"]
+                                         for sample in telemetry),
             },
         }
 
@@ -775,17 +1127,17 @@ def cpu_state() -> dict[str, Any]:
             return None
 
     if os.name == "nt":
-        name = platform.processor()
+        model = platform.processor()
         try:
             import winreg
             with winreg.OpenKey(
                     winreg.HKEY_LOCAL_MACHINE,
                     r"HARDWARE\DESCRIPTION\System\CentralProcessor\0") as key:
-                name = str(winreg.QueryValueEx(key, "ProcessorNameString")[0]).strip()
-        except (OSError, ImportError):
+                model = str(winreg.QueryValueEx(key, "ProcessorNameString")[0]).strip()
+        except (ImportError, OSError):
             pass
         return {
-            "model": name,
+            "model": model,
             "logical_processors": os.cpu_count(),
             "governor": None,
             "scaling_driver": "Windows scheduler",

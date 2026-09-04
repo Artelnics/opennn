@@ -1,6 +1,6 @@
 // The dense family, defined once, driven four ways.
 //
-// REORGANIZATION_PLAN.md sections 4 and 8. This replaces the model
+// This replaces the model
 // construction that stood in six programs -- opennn_speed, opennn_higgs_cpu,
 // opennn_higgs_infer, opennn_higgs_maxbatch_trial, opennn_accuracy and
 // opennn_convergence, 1,717 lines between them. Only ~100 of those lines were
@@ -8,7 +8,7 @@
 // than disappearing.
 //
 // The point of one definition is that the definitions had already drifted.
-// DUPLICATION_LEDGER.md records the capacity site seeding with 0 while the
+// The old capacity site seeded with 0 while the
 // other five seeded with 42, so the capacity benchmark had never measured the
 // same initialised network as the speed and quality ones. Here `build` is the
 // only way to make the network, so that cannot recur.
@@ -51,6 +51,7 @@
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/batch.h"
+#include "opennn/dataset/kernel_gather.cuh"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/neural_network/forward_propagation.h"
@@ -297,6 +298,12 @@ int main(int argc, char* argv[])
                 return 1;
             }
 
+            // Chronological first, so a slow epoch can be placed in time
+            // against the runner's per-second activity samples.
+            cout << "batch_" << batch << "_epoch_order=";
+            for (size_t i = 0; i < epoch_seconds.size(); ++i)
+                cout << (i ? "," : "") << epoch_seconds[i];
+            cout << "\n";
             sort(epoch_seconds.begin(), epoch_seconds.end());
             const double median_epoch_s = epoch_seconds[epoch_seconds.size() / 2];
 
@@ -353,10 +360,17 @@ int main(int argc, char* argv[])
         // idle for 39% of the pass -- 12.9 ms of kernels inside a 21.3 ms
         // pass. The training path above already keeps its split resident for
         // exactly this reason, and so does the recurrent family.
+        //
+        // set_storage_mode only requests residency; the optimizer is what
+        // enables it for training, and drops it when it returns. Inference
+        // has no optimizer, so it asks here, after the roles are set.
         if (options.device == Device::CUDA)
             dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
 
         dataset.set_sample_roles("Testing");
+
+        if (options.device == Device::CUDA)
+            dataset.enable_device_residency();
 
         const MatrixR& data = dataset.get_data();
         const Index samples = dataset.get_samples_number();
@@ -375,7 +389,6 @@ int main(int argc, char* argv[])
             // this cell the difference is 32 MiB against 16.
             ForwardPropagation forward_propagation(batch, network.get(),
                                                    ForwardPropagationMode::Inference);
-            forward_propagation.set_cuda_graph(options.device == Device::CUDA);
 
             // Touching the output keeps LTO from deleting the forward pass.
             // Only CPU can read a scalar out of it: `as_matrix` requires CPU
@@ -388,16 +401,59 @@ int main(int argc, char* argv[])
             // Device-resident batches on CUDA, host views on CPU: the same
             // slices either way, differing only in which side of the bus they
             // are already on when the clock starts.
+            //
+            // The CUDA split is resident in fp32 with the target beside the
+            // inputs (set_storage_mode above). The network wants the inputs
+            // alone, in its own precision, so they are gathered once here,
+            // outside the clock, into one buffer that every batch is a view
+            // into -- what the PyTorch driver does with x.to(bfloat16) and
+            // x[start:start + batch]. The alternative, kept behind
+            // OPENNN_DENSE_INFER_GATHER=1, is the training-style path: fill()
+            // stages a batch's row indices, upload_to_device_batch_async()
+            // copies them and gathers the rows into the batch's fixed buffer,
+            // and a CUDA graph replays the forward pass on that buffer. Fixed
+            // addresses are what a graph needs and the only thing this pass
+            // gets from it: an index copy and a gather kernel per batch, for
+            // three launches that a 0.2 ms GEMM hides anyway.
+            const bool per_batch_gather = getenv("OPENNN_DENSE_INFER_GATHER") != nullptr;
+            forward_propagation.set_cuda_graph(!on_cpu && per_batch_gather);
+
             Batch device_batch(batch, &dataset, network->get_config());
             vector<Index> indices(size_t(batch), Index(0));
+
+            const Type input_type = on_cpu ? Type::FP32
+                                           : device_batch.get_inputs().front().get_type();
+            const Index row_bytes = inputs_number * type_bytes(input_type);
+            Buffer resident(Device::CUDA);
 
             if (!on_cpu)
             {
                 iota(indices.begin(), indices.end(), Index(0));
                 device_batch.fill(indices, dataset.get_feature_selection(),
                                   FillMode::Inference);
+                device_batch.upload_to_device_batch_async(device_batch,
+                                                          device::get_compute_stream());
                 network->calculate_outputs_resident(device_batch.get_inputs(),
                                                     forward_propagation, true);
+
+                const FeatureSelection features = dataset.get_feature_selection();
+                throw_if(!is_contiguous(features.inputs),
+                         "dense infer: the resident gather needs contiguous input columns.");
+
+                vector<int> rows(static_cast<size_t>(samples), 0);
+                iota(rows.begin(), rows.end(), 0);
+                Buffer rows_device(Device::CUDA);
+                rows_device.resize_bytes(samples * Index(sizeof(int)), Device::CUDA);
+                resident.resize_bytes(samples * row_bytes, Device::CUDA);
+
+                const cudaStream_t stream = device::get_compute_stream();
+                device::copy_async(rows_device.data(), rows.data(), samples * Index(sizeof(int)),
+                                   device::CopyKind::HostToDevice, stream);
+                gather_rows_cuda(dataset.get_device_data(), rows_device.as<int>(), resident.data(),
+                                 input_type == Type::BF16, samples, inputs_number,
+                                 dataset.get_device_data_columns(), features.inputs.front(),
+                                 stream);
+                device::synchronize(stream);
             }
 
             const auto run_pass = [&]
@@ -414,11 +470,25 @@ int main(int argc, char* argv[])
                         continue;
                     }
 
-                    for (Index k = 0; k < batch; ++k) indices[size_t(k)] = i + k;
-                    device_batch.fill(indices, dataset.get_feature_selection(),
-                                      FillMode::Inference);
-                    network->calculate_outputs_resident(device_batch.get_inputs(),
-                                                       forward_propagation, false);
+                    if (per_batch_gather)
+                    {
+                        for (Index k = 0; k < batch; ++k) indices[size_t(k)] = i + k;
+                        device_batch.fill(indices, dataset.get_feature_selection(),
+                                          FillMode::Inference);
+                        // On the compute stream, so the gather orders after
+                        // the previous forward pass that reads the same buffer.
+                        device_batch.upload_to_device_batch_async(device_batch,
+                                                                  device::get_compute_stream());
+                        network->calculate_outputs_resident(device_batch.get_inputs(),
+                                                           forward_propagation, false);
+                    }
+                    else
+                    {
+                        TensorView view(static_cast<char*>(resident.data()) + i * row_bytes,
+                                        Shape{batch, inputs_number}, input_type, Device::CUDA);
+                        network->calculate_outputs_resident({view}, forward_propagation, false);
+                    }
+
                     (void)forward_propagation.get_outputs();
                 }
 
@@ -470,7 +540,7 @@ int main(int argc, char* argv[])
             cout << "batch_" << batch << "_samples_per_sec=" << long(double(processed) / median_pass_s)
                  << " median_pass_s=" << median_pass_s << "\n"
                  << "batch_" << batch << "_cuda_graph="
-                 << (on_cpu ? "off"
+                 << (on_cpu || !per_batch_gather ? "off"
                      : forward_propagation.cuda_graph_failed ? "failed"
                      : forward_propagation.inference_graph_exec ? "captured" : "warming")
                  << "\n" << flush;

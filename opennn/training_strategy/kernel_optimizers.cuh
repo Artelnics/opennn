@@ -5,7 +5,10 @@
 
 #include "opennn/core/cuda/kernel_prelude.cuh"
 
-void adam_update_cuda(const Index, float*, float*, float*, const float*,
+// The first moment is untyped here because its slot is FP32 or BF16 depending on
+// OPENNN_ADAM_BF16_MOMENT; m_is_bf16 selects the instantiation, and the caller
+// must have taken any per-slice offset in that same element type.
+void adam_update_cuda(const Index, float*, void*, const bool, float*, const float*,
                       const float, const float, const float, const float,
                       const float, const float,
                       __nv_bfloat16* parameters_bf16_mirror = nullptr);
@@ -28,7 +31,7 @@ void adam_prepare_capturable_cuda(
     cudaStream_t stream = nullptr);
 
 void adam_update_prepared_cuda(
-    const Index n, float* parameters, float* m, float* v,
+    const Index n, float* parameters, void* m, const bool m_is_bf16, float* v,
     const float* gradients, const float beta_1, const float beta_2,
     const float* effective_lr_device, const float* effective_eps_device,
     __nv_bfloat16* parameters_bf16_mirror = nullptr,

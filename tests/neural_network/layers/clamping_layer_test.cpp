@@ -14,19 +14,52 @@ TEST(ClampingTest, Constructor)
     Clamping clamping_layer;
 
     EXPECT_EQ(clamping_layer.get_output_shape(), Shape{0});
+    EXPECT_EQ(clamping_layer.get_clamping_method(), Clamping::ClampingMethod::Clamping);
 }
 
 TEST(ClampingTest, GeneralConstructor)
 {
     const Index features = 4;
 
-    Clamping clamping_layer(Shape{features}, "my_clamping");
+    Clamping clamping_layer(Shape{features},
+                            Clamping::ClampingMethod::NoClamping,
+                            "my_clamping");
 
     EXPECT_EQ(clamping_layer.get_name(), "Clamping");
     EXPECT_EQ(clamping_layer.get_label(), "my_clamping");
     EXPECT_EQ(clamping_layer.get_input_shape(), Shape{features});
     EXPECT_EQ(clamping_layer.get_output_shape(), Shape{features});
-    EXPECT_EQ(clamping_layer.get_clamping_method(), Clamping::ClampingMethod::Clamping);
+    EXPECT_EQ(clamping_layer.get_clamping_method(), Clamping::ClampingMethod::NoClamping);
+}
+
+TEST(ClampingTest, InputShapeChangeKeepsMethodAndBounds)
+{
+    const Index features = 3;
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<Clamping>(Shape{features},
+                                                   Clamping::ClampingMethod::NoClamping,
+                                                   "my_clamping"));
+    neural_network.compile();
+
+    Clamping* layer = static_cast<Clamping*>(neural_network.get_layer(0).get());
+
+    for (Index j = 0; j < features; ++j)
+    {
+        layer->set_lower_bound(j, type(-1.0));
+        layer->set_upper_bound(j, type(1.0));
+    }
+
+    neural_network.set_input_shape(Shape{features});
+
+    EXPECT_EQ(layer->get_label(), "my_clamping");
+    EXPECT_EQ(layer->get_clamping_method(), Clamping::ClampingMethod::NoClamping);
+
+    for (Index j = 0; j < features; ++j)
+    {
+        EXPECT_NEAR(layer->get_lower_bounds()(j), type(-1.0), tolerance);
+        EXPECT_NEAR(layer->get_upper_bounds()(j), type(1.0), tolerance);
+    }
 }
 
 TEST(ClampingTest, RejectsSuccessors)

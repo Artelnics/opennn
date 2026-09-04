@@ -1,6 +1,6 @@
 // What OpenNN costs before it does any work.
 //
-// PLAN.md. The one part of the suite that cannot ride along on a training run:
+// The one part of the suite that cannot ride along on a training run:
 // speed, peak memory and energy are all readings of a run in progress, whereas
 // these three ask what the framework costs merely by existing.
 //

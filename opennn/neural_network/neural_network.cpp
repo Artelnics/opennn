@@ -2892,6 +2892,19 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
         device::CudaGraphWorkspaceScope stable_workspaces(
             forward_propagation.inference_graph_workspace_requirements,
             &graph_workspace_views);
+
+        // One eager pass with the stable workspaces already installed, so the
+        // captured pass is the second time every library sees these exact
+        // pointers. The two warmup calls above ran against the thread-local
+        // workspaces, so a vendor call that initialises something lazily on
+        // first sight of a buffer -- cuDNN's RNN engine was the suspect -- was
+        // still doing it inside the capture, where an allocation is illegal and
+        // surfaces as an opaque status from whichever call triggered it. This
+        // also decides that question for good: if capture still fails after an
+        // identical eager call succeeded, first touch was not the cause.
+        forward_propagate(gpu_inputs, forward_propagation, ForwardPropagationMode::Inference);
+        device::synchronize(compute);
+
         device::StreamCapture capture(compute);
 
         forward_propagate(gpu_inputs, forward_propagation, ForwardPropagationMode::Inference);

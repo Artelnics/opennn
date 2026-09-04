@@ -31,6 +31,9 @@ public:
     void set_beta_1(const float);
     void set_beta_2(const float);
 
+    void set_bf16_first_moment(const bool enabled) { bf16_first_moment = enabled; }
+    bool get_bf16_first_moment() const noexcept { return bf16_first_moment; }
+
     void update_parameters(BackPropagation&, OptimizerData&,
                            UpdateMode = UpdateMode::Standard) override;
 
@@ -51,6 +54,12 @@ private:
     float beta_1 = 0.9f;
 
     float beta_2 = 0.999f;
+
+    // Storage precision of the device first-moment slot: BF16 halves it to 2 bytes
+    // per parameter, taking Adam's resident state from 8 to 6 bytes per parameter.
+    // Defaulted from OPENNN_ADAM_BF16_MOMENT in the constructor; see the note
+    // there for why the second moment stays FP32.
+    bool bf16_first_moment = true;
 
     Index update_step = 0;
 };

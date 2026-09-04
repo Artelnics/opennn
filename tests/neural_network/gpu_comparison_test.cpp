@@ -491,7 +491,7 @@ TEST_F(GpuComparison, PoolingDescriptorSupportsConcurrentFirstUse)
     {
         network.add_layer(make_unique<Pooling>(
                               input_shape, Shape{3, 3}, Shape{2, 2}, Shape{1, 1},
-                              "MaxPooling", "pool"),
+                              PoolingMethod::MaxPooling, "pool"),
                           {-1});
         network.compile();
     };
@@ -983,7 +983,7 @@ TEST_F(GpuComparison, MaxPoolingGradientPerRung)
                               Shape{1, 1}, "Same", BatchNormalization::No, "conv"),
                           {-1});
         network.add_layer(make_unique<Pooling>(Shape{4, 4, 32}, Shape{3, 3}, Shape{2, 2}, Shape{1, 1},
-                                               "MaxPooling", "pool"),
+                                               PoolingMethod::MaxPooling, "pool"),
                           {0});
         network.add_layer(make_unique<Flatten>(Shape{2, 2, 32}), {1});
         network.add_layer(make_unique<opennn::Dense>(Shape{128}, Shape{1}, "Identity"), {2});

@@ -185,6 +185,39 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
 constexpr int BN_THREADS = 256;
 constexpr Index BN_MAX_ROW_BLOCKS = 128;
 
+// On the vec16 paths a reduce block reads lanes * 16 B out of every row it
+// visits, so eight lanes is the narrowest channel split that still asks each row
+// for a whole 128 B line instead of part of one. The channels % 8 != 0 fallbacks
+// run VEC 2 or 1 and read less than that per row whatever the split.
+constexpr Index BN_MIN_REDUCE_LANES = 8;
+
+// Blocks the reduce wants per multiprocessor. The CNN's 256-channel layers used
+// to launch 128 of them -- 1.8 per SM on a 70 SM card, against the six that
+// batchnorm_store_partials' 16 KB of shared memory leaves room for on a 100 KB
+// SM -- because the channel axis fit in a single block and the row axis stopped
+// at BN_MAX_ROW_BLOCKS. Four per SM covers that limit with a wave of slack; the
+// register ceiling is not measured, and the backward reduce holds s1/s2/m/iv
+// live across its row loop, so it may well sit below six.
+constexpr Index BN_REDUCE_BLOCKS_PER_SM = 4;
+
+// Queried once: the count is a property of the card, so the geometry below --
+// and with it the order the partial sums are added in -- is the same on every
+// step of every run, which a gradient depends on.
+static Index batchnorm_target_blocks()
+{
+    static const Index target = []() -> Index
+    {
+        int device = 0, sm_count = 0;
+        if (cudaGetDevice(&device) == cudaSuccess
+            && cudaDeviceGetAttribute(&sm_count, cudaDevAttrMultiProcessorCount, device) == cudaSuccess
+            && sm_count > 0)
+            return Index(sm_count) * BN_REDUCE_BLOCKS_PER_SM;
+        cudaGetLastError();
+        return BN_MAX_ROW_BLOCKS;
+    }();
+    return target;
+}
+
 __device__ static inline unsigned batchnorm_mask_bits(const uint8_t* mask, const Index i, const int c0)
 {
     return mask ? unsigned(mask[i / 8]) >> (c0 & 4) : 0xFFu;
@@ -195,15 +228,14 @@ Index batchnorm_partial_rows(const Index rows)
     return rows < BN_MAX_ROW_BLOCKS ? (rows <= 0 ? 1 : rows) : BN_MAX_ROW_BLOCKS;
 }
 
-static dim3 batchnorm_reduce_block(const Index channel_groups)
+static Index batchnorm_block_rows(const Index lanes)
 {
-    const int lanes = int(channel_groups < 32 ? channel_groups : 32);
-    return dim3(unsigned(lanes), unsigned(BN_THREADS / lanes));
+    return Index(BN_THREADS) / lanes;
 }
 
-static Index batchnorm_row_blocks(const Index rows, const dim3& reduce_block)
+static Index batchnorm_row_blocks(const Index rows, const Index block_rows)
 {
-    const Index wanted = rows / (Index(reduce_block.y) * 4);
+    const Index wanted = rows / (block_rows * 4);
     const Index cap = batchnorm_partial_rows(rows);
     return wanted < 1 ? 1 : (wanted > cap ? cap : wanted);
 }
@@ -255,16 +287,25 @@ __device__ static void batchnorm_store_partials(const int channels, const int c0
     }
     __syncthreads();
 
-    if (threadIdx.y != 0) return;
-    #pragma unroll
-    for (int k = 0; k < VEC; ++k)
+    // The cross-row sum used to run on row 0 of the block alone -- blockDim.x
+    // threads walking VEC * blockDim.y shared slots each -- while the other
+    // seven eighths of the block waited. The block covers blockDim.x * VEC
+    // channels and has at least that many threads, so give each thread one
+    // channel: same addends, same order, bit-for-bit the same partial, but the
+    // tail shortens from VEC * blockDim.y iterations to blockDim.y, which is
+    // what lets the grid below afford four times as many blocks.
+    const int width = int(blockDim.x) * VEC;
+    const int threads = int(blockDim.x * blockDim.y);
+    const int c_base = c0 - int(threadIdx.x) * VEC;
+
+    for (int j = int(threadIdx.y * blockDim.x + threadIdx.x); j < width; j += threads)
     {
-        const int c = c0 + k;
+        const int c = c_base + j;
         if (c >= channels) continue;
         float t1 = 0.0f, t2 = 0.0f;
-        for (unsigned j = 0; j < blockDim.y; ++j)
+        for (unsigned y = 0; y < blockDim.y; ++y)
         {
-            const int idx = (j * blockDim.x + threadIdx.x) * VEC + k;
+            const int idx = int(y) * width + j;
             t1 += sh1[idx];
             t2 += sh2[idx];
         }
@@ -281,14 +322,40 @@ struct BnReduceLaunch
     dim3 finalize_grid, finalize_block;
 };
 
+// Rows and channels are both grid axes here, but they do not cost the same. A
+// second block along x reduces channels no other block touches; a second block
+// along y writes another 2 * channels floats that the finalize pass then has to
+// read back, and widens the partial buffer the caller allocates. So the machine
+// is filled along x first, down to a 128 B sector per row, and only what x
+// cannot reach is asked of y -- which leaves batchnorm_partial_rows, and every
+// workspace sized from it, untouched.
 static BnReduceLaunch batchnorm_reduce_launch(const Index rows, const Index channels, const int vec)
 {
-    BnReduceLaunch launch;
     const Index channel_groups = channels / vec;
-    launch.reduce_block = batchnorm_reduce_block(channel_groups);
-    launch.row_blocks = batchnorm_row_blocks(rows, launch.reduce_block);
-    launch.rows_per_block = ceil_div(rows, launch.row_blocks);
-    launch.reduce_grid = dim3(unsigned(ceil_div(channel_groups, Index(launch.reduce_block.x))), unsigned(launch.row_blocks));
+    const Index target = batchnorm_target_blocks();
+
+    Index lanes = channel_groups < 32 ? channel_groups : 32;
+    Index row_blocks = batchnorm_row_blocks(rows, batchnorm_block_rows(lanes));
+    Index blocks = ceil_div(channel_groups, lanes) * row_blocks;
+
+    while (lanes >= 2 * BN_MIN_REDUCE_LANES && blocks < target)
+    {
+        // Halving the lanes doubles the rows a block walks, so on a shape whose
+        // row count already limits the y axis the split only trades y for x.
+        const Index split_row_blocks = batchnorm_row_blocks(rows, batchnorm_block_rows(lanes / 2));
+        const Index split_blocks = ceil_div(channel_groups, lanes / 2) * split_row_blocks;
+        if (split_blocks <= blocks) break;
+
+        lanes = lanes / 2;
+        row_blocks = split_row_blocks;
+        blocks = split_blocks;
+    }
+
+    BnReduceLaunch launch;
+    launch.reduce_block = dim3(unsigned(lanes), unsigned(batchnorm_block_rows(lanes)));
+    launch.row_blocks = row_blocks;
+    launch.rows_per_block = ceil_div(rows, row_blocks);
+    launch.reduce_grid = dim3(unsigned(ceil_div(channel_groups, lanes)), unsigned(row_blocks));
     launch.finalize_grid = dim3(unsigned(ceil_div(channels, Index(32))));
     launch.finalize_block = dim3(32, BN_FINALIZE_LANES);
     return launch;

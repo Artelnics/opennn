@@ -179,11 +179,15 @@ void grouped_attention_forward(const TensorView& query, const TensorView& key, c
         }
     };
 
+    // Scratch for the whole team rather than `min(threads, heads)`: a smaller
+    // team would make libgomp shrink its pool and rebuild it at the next full
+    // region (see Backend::set_threads_number). Threads past the last head
+    // draw no iterations.
     const Index heads_count = batch * n_query_heads;
-    const int workers = max(1, min(omp_get_max_threads(), to_int(heads_count)));
+    const int workers = max(1, omp_get_max_threads());
     vector<float> score_storage(size_t(workers) * size_t(key_seq));
 
-    #pragma omp parallel num_threads(workers)
+    #pragma omp parallel
     {
         float* const scores = score_storage.data()
             + size_t(omp_get_thread_num()) * size_t(key_seq);

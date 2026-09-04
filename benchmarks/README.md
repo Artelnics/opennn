@@ -5,9 +5,11 @@ memory and energy **from the same execution**.
 
 There are no numbers in this file. Results are generated locally under
 `results/`, with each artifact naming the commit, machine and session it came
-from. That directory is ignored completely by Git. This README is the complete
-usage and measurement contract; changing a measurement rule means rerunning
-the affected cells.
+from. That directory is ignored completely by Git. Reviewed official results
+are versioned under [`reports/`](reports/). This README is the quick entry
+point; [`PROTOCOL.md`](PROTOCOL.md) contains the complete, machine-neutral
+measurement contract. Changing a measurement rule means rerunning the affected
+cells.
 
 ## Running one
 
@@ -57,7 +59,7 @@ presented as RTX 5070 Ti results without rerunning the protocol on that card.
 | `dense` | 28 → 1024 × 2 → 1 classifier | HIGGS | the shape a tabular workload actually has |
 | `cnn` | ResNet-50 v1.5 | ImageNet subset, 1000 classes × 50 | the citable convolution benchmark |
 | `transformer` | d512 · h8 · ff2048 · 6L | WMT14 English-German | the *Attention Is All You Need* base model, on its own corpus |
-| `lstm` | LSTM(14→128) → Linear | Beijing PM2.5, hourly | both engines reach the same cuDNN kernel here |
+| `lstm` | LSTM(15→128) → Linear | Beijing PM2.5, hourly | both engines reach the same cuDNN kernel here |
 | `footprint` | — | — | what a framework costs *before* it runs anything |
 | `qwen` | Qwen3-4B BF16 | pinned Hugging Face weights | engine and end-user runtime comparison |
 
@@ -77,8 +79,10 @@ sequences against PyTorch's 128, and `nn.Transformer` carried 2,048 parameters
 of final `LayerNorm` that OpenNN's had no counterpart for. Neither is visible
 in a samples-per-second figure.
 
-**The quality gate** compares accuracy across engines at each batch. A speed
-win bought by computing something different is not a speed win.
+**The quality gate** compares test accuracy across engines at each batch
+wherever a driver reports one — today that is dense training only; the other
+families are held to the shape gate. A speed win bought by computing something
+different is not a speed win.
 
 Qwen additionally validates the OpenNN and GGUF tensors against the pinned
 canonical weights, verifies exact prompt-token counts and records whether each
@@ -88,9 +92,10 @@ path.
 
 ## Reading a result
 
-Energy is reported only when the timed window was long enough to sample — a
-short run says so rather than reporting `0.0000 Wh`, which is a claim and not a
-measurement. Peak memory is whole-device, minus the idle reading;
+Energy is reported only when the timed window held a second of the driver's
+20 ms power samples — a short run says so rather than reporting `0.0000 Wh`,
+which is a claim and not a measurement. Peak memory is whole-device, minus the
+idle reading;
 `torch.cuda.max_memory_allocated()` never appears, because it excludes the CUDA
 context and cached blocks and so flatters PyTorch by construction.
 
@@ -104,6 +109,8 @@ That is enforced in code. Neither location is committed.
 | [`run.py`](run.py) | common benchmark runner and Qwen dispatcher |
 | [`prepare.py`](prepare.py) | dataset, model and external-runtime preparation by family |
 | [`families/`](families/) | C++ and Python implementations for each benchmark family |
+| [`PROTOCOL.md`](PROTOCOL.md) | detailed, machine-neutral measurement contract |
+| [`reports/`](reports/) | reviewed, versioned source of truth for official results |
 | [`tools/common.py`](tools/common.py) | provenance, binaries, sampling and metrics |
 | [`tools/gpu_clocks.sh`](tools/gpu_clocks.sh) | lock the GPU clock on Linux |
 | [`tools/qwen_benchmark.ps1`](tools/qwen_benchmark.ps1) | prepare, build, smoke-test and run Qwen on Windows |
@@ -113,7 +120,7 @@ That is enforced in code. Neither location is committed.
 | [`manifests/imagenet_subset.manifest`](manifests/imagenet_subset.manifest) | exact, hashed CNN image subset |
 | [`manifests/qwen_manifest.json`](manifests/qwen_manifest.json) | Qwen revisions, asset hashes and protocol defaults |
 | [`CMakeLists.txt`](CMakeLists.txt) | builds one `<family>_opennn` per family |
-| `results/` | generated local artifacts; ignored completely by Git |
+| `results/` | generated raw local artifacts; ignored completely by Git |
 
 Datasets, model weights and external runtimes never enter the repository. The
 committed manifests pin the exact CNN image subset and every Qwen asset needed

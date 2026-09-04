@@ -336,6 +336,7 @@ inline bool plan_cache_enabled()
 }
 
 inline bool sdpa_autotune_enabled();
+inline int64_t sdpa_workspace_cap_override_bytes();
 
 inline const std::filesystem::path& plan_cache_directory()
 {
@@ -392,6 +393,13 @@ inline std::filesystem::path plan_cache_file(const graph::Graph& graph)
     for (const NumericalNote_t note : conv_engine_notes()) selection = selection * 31 + size_t(note) + 7;
 
     selection = selection * 31 + (sdpa_autotune_enabled() ? 3u : 0u);
+
+    // The cached entry is the plan that won an autotune, and the SDPA workspace
+    // cap changes which plan that is, so a capped build must not load an
+    // uncapped winner from the same directory. Only the override belongs here:
+    // the shape half of the cap is a function of the extents, which the
+    // serialised graph already carries.
+    selection = selection * 31 + size_t(sdpa_workspace_cap_override_bytes() + 2);
 
     const size_t key = std::hash<json>{}(structure)
         ^ (std::hash<int64_t>{}(device::conv_workspace_limit_bytes()) << 1)
@@ -488,8 +496,55 @@ inline bool sdpa_autotune_enabled()
     return enabled;
 }
 
+// Megabytes, mirroring OPENNN_CONV_WORKSPACE_MB: 0 removes the cap and restores
+// pick-by-time over every candidate, a positive value pins it, and unset leaves
+// the shape-derived bound below. It exists so the cap stays measurable rather
+// than baked in -- the transformer cell has to be re-measured before SDPA
+// autotune can be turned on by default, and this is the knob that sweep varies.
+inline int64_t sdpa_workspace_cap_override_bytes()
+{
+    static const int64_t bytes = []
+    {
+        const long long megabytes = env_int_or("OPENNN_SDPA_WORKSPACE_MB", -1);
+        return megabytes < 0 ? int64_t(-1) : int64_t(megabytes) * 1024 * 1024;
+    }();
+    return bytes;
+}
+
+// A plan may not ask for more scratch than an fp32 copy of the node's own
+// Q, K and V. That is the same rule the convolution path applies -- bound the
+// workspace by the tensors the layer already pays for -- but it has to be
+// re-derived here rather than reused, because
+// device::conv_workspace_limit_bytes() is the largest *convolution* activation
+// slot (forward_propagation.cpp) and the cnn benchmark pins it flat at 16 MiB.
+// Neither number is a statement about an attention node, and 16 MiB would bar
+// every plan the transformer cell needs.
+//
+// The bound is exactly the size of the fp32 dQ/dK/dV accumulators a flash
+// engine legitimately keeps, so it excludes no flash plan, while an engine that
+// materialises the B*H*Sq*Skv score matrix in fp32 is admitted for at most one
+// such buffer and excluded outright once Sq passes 3*head_dim, where that
+// matrix overtakes the accumulators and then keeps growing quadratically. At
+// the transformer cell's 32 x 8 x 130 x 64 that is a 24.5 MiB cap against a
+// 16.5 MiB score matrix and 12.2 MiB of bf16 Q/K/V.
+inline int64_t sdpa_workspace_cap_bytes(int64_t batch, int64_t heads,
+                                        int64_t q_seq, int64_t src_seq, int64_t head_dim)
+{
+    if (const int64_t override_bytes = sdpa_workspace_cap_override_bytes(); override_bytes >= 0)
+        return override_bytes;
+
+    const int64_t operands   = 4 * batch * heads * head_dim * (q_seq + 2 * src_seq);
+    const int64_t statistics = 4 * batch * heads * q_seq;
+
+    // The floor keeps a small shape -- a unit test, a short prompt -- from being
+    // capped below a plan's fixed scratch (tile counters, semaphores, the
+    // frontend's own node workspace), where every candidate is small anyway and
+    // there is nothing to exclude.
+    return max(operands + statistics, int64_t(4) * 1024 * 1024);
+}
+
 inline bool finalize_attention(graph::Graph& graph, const string& tag, int64_t& workspace_bytes,
-                               bool allow_autotune = false)
+                               bool allow_autotune = false, int64_t workspace_cap = 0)
 {
     const cudnnHandle_t handle = device::get_cudnn_handle();
 
@@ -503,11 +558,27 @@ inline bool finalize_attention(graph::Graph& graph, const string& tag, int64_t& 
     {
         check_status(graph.create_execution_plans({HeurMode_t::A, HeurMode_t::B, HeurMode_t::FALLBACK}),
                      tag + " create_execution_plans");
+
+        if (workspace_cap > 0)
+            graph.deselect_workspace_greater_than(workspace_cap);
+
         if (build_top_candidates(graph, autotune_candidate_limit()))
         {
-            workspace_bytes = autotune_workspace_bytes(graph);
+            // What the slot carries is the workspace the graph would execute
+            // with, which is the candidate plan's; autotune_now() overwrites it
+            // with the winner's and sizes its own tuning scratch from
+            // autotune_workspace_bytes(). Parking that max-over-candidates here
+            // instead left the slot's persistent size at the largest built
+            // candidate's, and that is the size shared_workspace() grows to on
+            // any path where the tuning run does not happen.
+            check_status(graph.get_workspace_size(workspace_bytes), tag + " workspace");
             return true;
         }
+
+        // Nothing survived the cap, so the heuristic plan below has to be chosen
+        // without it. The cap narrows an autotune; it must never be the reason
+        // attention is left with no plan at all.
+        graph.deselect_workspace_greater_than(numeric_limits<int64_t>::max());
     }
 
     check_status(graph.create_execution_plans({HeurMode_t::A}), tag + " create_execution_plans");
@@ -670,15 +741,20 @@ struct GraphSlot
         graph = std::move(built);
     }
 
-    // Attention finalizes under its own policy -- its own autotune switch and
-    // its own heuristic modes -- so it cannot share build()'s convolution one.
-    // Keeping it a named second entry point makes that difference visible
-    // instead of hiding it behind a slot that looks interchangeable.
+    // Attention finalizes under its own policy -- its own autotune switch, its
+    // own heuristic modes and its own workspace cap -- so it cannot share
+    // build()'s convolution one. Keeping it a named second entry point makes
+    // that difference visible instead of hiding it behind a slot that looks
+    // interchangeable. The cap comes from the caller because it is a function
+    // of the node's extents, and the graph exposes those only through a full
+    // serialise, not an accessor; sdpa_workspace_cap_bytes() derives it from
+    // the cache key instead, and 0 leaves the candidates uncapped.
     void build_attention(shared_ptr<graph::Graph> built, const string& tag,
-                         bool allow_autotune = true)
+                         bool allow_autotune = true, int64_t workspace_cap = 0)
     {
         graph.reset();
-        autotune_pending = finalize_attention(*built, tag, workspace_bytes, allow_autotune);
+        autotune_pending = finalize_attention(*built, tag, workspace_bytes,
+                                              allow_autotune, workspace_cap);
         graph = std::move(built);
     }
 };

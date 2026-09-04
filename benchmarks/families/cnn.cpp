@@ -1,6 +1,6 @@
 // The CNN family, defined once, driven four ways.
 //
-// PLAN.md. ResNet-50 v1.5: bottleneck blocks [3,4,6,3], widths
+// ResNet-50 v1.5: bottleneck blocks [3,4,6,3], widths
 // [64,128,256,512], on the pinned ImageNet subset -- 1000 classes at 50
 // images each, 224x224. All 1000 classes are kept so the head is the real
 // 2048x1000; a ten-class subset would be a different network.
@@ -10,10 +10,15 @@
 //   cnn capacity <train_dir>            [batch]              [size] [dev] [prec]
 //   cnn quality  <train_dir> <test_dir> [epochs] [batch]      [size] [dev] [prec]
 //
-// Images are lazy-loaded per batch from class folders, which both engines do,
-// so this measures convolution throughput *plus* input-pipeline efficiency.
-// That is deliberate: at 50,000 x 224x224x3 the split cannot be resident, so
-// pretending otherwise would measure a workload nobody runs.
+// Images are read per batch rather than held resident, in both engines, so
+// this measures convolution throughput *plus* input-pipeline efficiency. That
+// is deliberate: at 50,000 x 224x224x3 the split cannot be resident, so
+// pretending otherwise would measure a workload nobody runs. The pipelines
+// differ: ImageDataset decodes each JPEG once into `.cache/images.bin` (uint8
+// HWC, sorted-folder/sorted-file order) and every epoch reads batches from
+// that file, while the PyTorch driver decodes the JPEGs every epoch in worker
+// processes -- its PT_INPUT=cache variant reads this file instead, which is
+// how the size of that asymmetry is measured.
 
 #include <algorithm>
 #include <numeric>
@@ -319,6 +324,15 @@ int main(int argc, char* argv[])
 
             Batch data(batch, dataset.get(), network->get_config());
             data.fill(indices, dataset->get_feature_selection(), FillMode::Inference);
+
+            // fill() stages a CUDA batch on the host; the transfer is a
+            // separate stream operation, issued here once, before the clock,
+            // so the replayed pass runs on the samples it was filled with.
+            if (options.device == Device::CUDA)
+            {
+                data.upload_to_device_batch_async(data, device::get_transfer_stream());
+                data.wait_h2d_on_compute_stream();
+            }
 
             const vector<TensorView>& inputs = data.get_inputs();
 

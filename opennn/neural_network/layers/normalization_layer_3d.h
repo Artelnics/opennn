@@ -23,6 +23,11 @@ public:
     Normalization3d(const Shape& = Shape({0,0}),
                     const string& = "normalization_layer_3d");
 
+    Normalization3d(const Shape&,
+                    NormalizationMethod,
+                    float epsilon = 1.0e-6f,
+                    const string& = "normalization_layer_3d");
+
     Shape get_input_shape() const noexcept override;
     Shape get_output_shape() const override;
 

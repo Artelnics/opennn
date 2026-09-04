@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   O P T I M I Z E R   C L A S S   H E A D E R
@@ -32,6 +32,7 @@ struct BackPropagation;
 struct OptimizerData
 {
     void set(const vector<Shape>&, Device device = Device::CPU);
+    void set(const vector<Shape>&, const vector<Type>& slot_types, Device device = Device::CPU);
 
     Buffer data;
     vector<TensorView> views;
@@ -164,7 +165,7 @@ protected:
     };
 
     void set_names();
-    void prepare_training_scaling();
+    void prepare_training_artifacts();
 
     bool check_stopping_condition(TrainingResult& results,
         Index epoch, float elapsed_time, float training_error,

@@ -426,7 +426,7 @@ Pooling::Pooling(const Shape& new_input_shape,
                  const Shape& new_pool_dimensions,
                  const Shape& new_stride_shape,
                  const Shape& new_padding_dimensions,
-                 const string& new_pooling_method,
+                 PoolingMethod new_pooling_method,
                  const string& new_name)
     : Layer(LayerType::Pooling)
 {
@@ -520,7 +520,7 @@ void Pooling::set(const Shape& new_input_shape,
                   const Shape& new_pool_dimensions,
                   const Shape& new_stride_shape,
                   const Shape& new_padding_dimensions,
-                  const string& new_pooling_method,
+                  PoolingMethod new_pooling_method,
                   const string& new_label)
 {
     validate_pooling_configuration(new_input_shape,
@@ -542,7 +542,7 @@ void Pooling::set(const Shape& new_input_shape,
     pool.padding_height  = new_padding_dimensions[0];
     pool.padding_width   = new_padding_dimensions[1];
 
-    pool.method = string_to_pooling_method(new_pooling_method) == PoolingMethod::MaxPooling
+    pool.method = new_pooling_method == PoolingMethod::MaxPooling
                 ? PoolOperator::Max
                 : PoolOperator::Average;
 
@@ -566,13 +566,18 @@ void Pooling::apply_input_shape(const Shape& new_input_shape)
     update_pool_operator();
 }
 
-void Pooling::set_pooling_method(const string& new_pooling_method)
+void Pooling::set_pooling_method(PoolingMethod new_pooling_method)
 {
-    pool.method = string_to_pooling_method(new_pooling_method) == PoolingMethod::MaxPooling
+    pool.method = new_pooling_method == PoolingMethod::MaxPooling
                 ? PoolOperator::Max
                 : PoolOperator::Average;
 
     update_pool_operator();
+}
+
+void Pooling::set_pooling_method(const string& new_pooling_method)
+{
+    set_pooling_method(string_to_pooling_method(new_pooling_method));
 }
 
 void Pooling::read_JSON_body(const Json* pooling_layer_element)

@@ -12,6 +12,10 @@
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/memory_debug.h"
 
+#ifdef EIGEN_USE_MKL_ALL
+#include <mkl_service.h>
+#endif
+
 #include <atomic>
 #include <cstdlib>
 #include <mutex>
@@ -1256,10 +1260,32 @@ void Backend::set_threads_number(int num_threads)
 
     Eigen::setNbThreads(num_threads);
     omp_set_num_threads(num_threads);
+
+    // Every parallel region must ask for the same team. libgomp keeps exactly
+    // one pool of workers, sized to the last region: a region that wants fewer
+    // threads makes the surplus exit, and the next full-size region creates
+    // them again with `pthread_create` -- fresh stacks, cold caches, and a
+    // barrier that waits for the kernel to schedule them. The LSTM forward
+    // pass was paying six thread births and deaths per batch, 10% of its
+    // throughput, from two sources that each looked harmless alone:
+    //
+    //  - `omp_set_dynamic(1)`, which lets libgomp size a team as the CPU
+    //    count minus the fifteen-minute load average, so a desktop with a
+    //    browser open gave OpenNN's own regions 10 of 16 threads while
+    //    oneDNN, which pins dynamic off, asked for all 16;
+    //  - MKL's own thread heuristic (`MKL_DYNAMIC`), which chose 10 threads
+    //    for a 256x128 `sgemv` between two 16-thread oneDNN regions.
+    //
+    // Dynamic teams are opt-in (`OPENNN_OMP_DYNAMIC=1`) and MKL is told to use
+    // this team, exactly as PyTorch's ATen does for the same reason.
     const char* const omp_dynamic = getenv("OPENNN_OMP_DYNAMIC");
-    omp_set_dynamic(omp_dynamic ? atoi(omp_dynamic) : 1);
+    omp_set_dynamic(omp_dynamic ? atoi(omp_dynamic) : 0);
 #if defined(_OPENMP) && _OPENMP >= 200805
     omp_set_max_active_levels(1);
+#endif
+#ifdef EIGEN_USE_MKL_ALL
+    mkl_set_dynamic(0);
+    mkl_set_num_threads(num_threads);
 #endif
 }
 
@@ -1293,6 +1319,92 @@ namespace opennn
 
 namespace
 {
+    // Tiles whose shape is known, so that a candidate kernel's data movement
+    // can be compared: a tile of rows x columns reads (1/rows + 1/columns)
+    // bytes through L2 and shared memory per multiply-add, and board power
+    // follows that ratio closely. Measured on an RTX 5070 Ti, one
+    // 1024x8192x1024 bf16 GEMM with bias and ReLU:
+    //
+    //     64x64   0.0312 -> 265 W      128x240  0.0120 -> 179 W
+    //     64x640  0.0172 -> 189 W      128x320  0.0109 -> 172 W
+    //     80x512  0.0145 -> 182 W      256x160  0.0102 -> 169 W
+    //
+    // The arithmetic is identical in every one of them; the 96 W is traffic.
+    // Listed lowest-traffic first, which is the order they are tried in --
+    // from probed_tiles_begin on; see below.
+    struct LtTile { int id; int rows; int columns; };
+
+    constexpr LtTile lt_known_tiles[] = {
+#if CUBLAS_VER_MAJOR >= 13
+        {CUBLASLT_MATMUL_TILE_256x256, 256, 256}, {CUBLASLT_MATMUL_TILE_192x256, 192, 256},
+        {CUBLASLT_MATMUL_TILE_256x192, 256, 192}, {CUBLASLT_MATMUL_TILE_256x160, 256, 160},
+        {CUBLASLT_MATMUL_TILE_128x320, 128, 320},
+#endif
+        {CUBLASLT_MATMUL_TILE_192x128, 192, 128},
+        {CUBLASLT_MATMUL_TILE_128x256, 128, 256}, {CUBLASLT_MATMUL_TILE_256x128, 256, 128},
+#if CUBLAS_VER_MAJOR >= 13
+        {CUBLASLT_MATMUL_TILE_128x240, 128, 240}, {CUBLASLT_MATMUL_TILE_256x96,  256,  96},
+#endif
+        {CUBLASLT_MATMUL_TILE_128x192, 128, 192}, {CUBLASLT_MATMUL_TILE_128x160, 128, 160},
+#if CUBLAS_VER_MAJOR >= 13
+        {CUBLASLT_MATMUL_TILE_80x512,   80, 512},
+#endif
+        {CUBLASLT_MATMUL_TILE_128x128, 128, 128},
+#if CUBLAS_VER_MAJOR >= 13
+        {CUBLASLT_MATMUL_TILE_64x640,   64, 640},
+#endif
+        {CUBLASLT_MATMUL_TILE_128x64,  128,  64},
+        {CUBLASLT_MATMUL_TILE_64x128,   64, 128}, {CUBLASLT_MATMUL_TILE_64x64,    64,  64},
+    };
+
+    // With cuBLAS 13 or newer, the first three rows -- 256x256, 192x256 and
+    // 256x192 -- are priced but never probed: AlgoCheck refused every one of
+    // them in all 14,708 measured configurations, and the candidate scan below
+    // has no early exit. Older cuBLAS headers do not define the wider tiles;
+    // every tile present in their reduced table remains eligible for probing.
+    constexpr size_t probed_tiles_begin = CUBLAS_VER_MAJOR >= 13 ? 3 : 0;
+
+    // Unknown tiles report infinite traffic: they are never preferred over a
+    // tile whose cost is known, only kept when they are the fastest.
+    float tile_traffic(int tile_id, int splitk_number = 1)
+    {
+        for (const LtTile& tile : lt_known_tiles)
+            if (tile.id == tile_id)
+                // A split-k kernel writes fp32 partials for every split and
+                // reads them all back to reduce; that traffic is invisible to
+                // 1/rows + 1/columns, so charge one extra pass per split
+                // rather than let a split-k kernel look cheap. It can still be
+                // selected on time, only never preferred on traffic.
+                return float(max(splitk_number, 1))
+                     * (1.0f / float(tile.rows) + 1.0f / float(tile.columns));
+        return numeric_limits<float>::infinity();
+    }
+
+    // Board power is close to linear in traffic over the tiles above -- 169 W
+    // at 0.0102, 265 W at 0.0312 -- so a two-point fit is enough to compare
+    // candidates by energy instead of by time alone. It overstates the
+    // interior points by at most 6% (0.0172 models at 201 W against 189 W
+    // measured), always in the direction of the thirstier tile. An unknown
+    // tile has infinite traffic and so is priced at the top of the range,
+    // the same worst-case assumption tile_traffic already makes about it.
+    float tile_power_watts(float traffic)
+    {
+        constexpr float lowest_traffic  = 0.0102f, lowest_watts  = 169.0f;
+        constexpr float highest_traffic = 0.0312f, highest_watts = 265.0f;
+        constexpr float watts_per_traffic =
+            (highest_watts - lowest_watts) / (highest_traffic - lowest_traffic);
+
+        return lowest_watts
+             + watts_per_traffic * (clamp(traffic, lowest_traffic, highest_traffic) - lowest_traffic);
+    }
+
+    struct LtMatmulCandidate
+    {
+        cublasLtMatmulAlgo_t algorithm{};
+        size_t               workspace_bytes = 0;
+        float                traffic = numeric_limits<float>::infinity();
+    };
+
     struct LtMatmulPlan
     {
         cublasLtMatmulDesc_t   matmul_descriptor = nullptr;
@@ -1303,7 +1415,7 @@ namespace
         bool                   has_algorithm = false;
         size_t                 workspace_bytes = 0;
 
-        vector<cublasLtMatmulHeuristicResult_t> candidates;
+        vector<LtMatmulCandidate> candidates;
         bool                   tuned = true;
 
         LtMatmulPlan() = default;
@@ -1332,6 +1444,19 @@ namespace
         }
     };
 
+    // Everything a plan's descriptor and layouts are built from, and nothing
+    // else. alpha never enters -- it is a call-time pointer that changes no
+    // kernel -- and beta enters only as beta_is_zero, because a nonzero beta
+    // makes the kernel read C, which changes which algorithm is valid and
+    // which is fastest, while its value does not.
+    //
+    // Every field added here canonicalises to what the call sites already
+    // implied: dtype_b equals dtype_a unless the operands genuinely differ,
+    // and the three leading dimensions are stored as 0 when derived from m, n
+    // and k. That is not tidiness. get_lt_matmul_plan throws on a miss and
+    // optimizer.cpp holds cuda_matmul_plan_creation_forbidden across the whole
+    // epoch loop, so a field that split one of today's keys in two would take
+    // out training in steady state, not merely cost a plan.
     struct LtMatmulPlanKey
     {
         int m;
@@ -1340,8 +1465,13 @@ namespace
         int transA;
         int transB;
         int epilogue;
-        int io_dtype;
+        int dtype_a;
+        int dtype_b;
         int out_dtype;
+        int lda;
+        int ldb;
+        int ldd;
+        int beta_is_zero;
 
         bool operator==(const LtMatmulPlanKey&) const noexcept = default;
     };
@@ -1352,7 +1482,9 @@ namespace
         {
             return hash_combine(key.m, key.n, key.k,
                                 key.transA, key.transB, key.epilogue,
-                                key.io_dtype, key.out_dtype);
+                                key.dtype_a, key.dtype_b, key.out_dtype,
+                                key.lda, key.ldb, key.ldd,
+                                key.beta_is_zero);
         }
     };
 
@@ -1393,6 +1525,20 @@ namespace
             : CUBLAS_COMPUTE_DTYPE;
     }    
 
+    // Only used to size the tuner's scratch destination, so an unrecognised
+    // type is rounded up rather than guessed: too large wastes a few bytes of
+    // a block that is already megabytes, too small is a write past its end.
+    size_t matmul_dtype_bytes(cudaDataType_t type)
+    {
+        switch (type)
+        {
+        case CUDA_R_8I:   return 1;
+        case CUDA_R_16F:
+        case CUDA_R_16BF: return 2;
+        default:          return 4;
+        }
+    }
+
     void* thread_workspace(device::GraphWorkspaceKind kind, Index minimum_bytes)
     {
         if (device::active_lane() == 0)
@@ -1416,17 +1562,180 @@ namespace
         return pointer;
     }
 
+    // cuBLASLt's heuristic returns a handful of candidates and ranks them by
+    // expected speed, so the low-traffic kernels never appear: for the dense
+    // benchmark's 1024x8192x1024 GEMM it offers eight, of which the fastest
+    // (64x64) draws 96 W more than a 256x160 that is 4% slower and that the
+    // heuristic does not offer at all. This adds the tiles of
+    // `lt_known_tiles` as extra candidates -- lowest-traffic first, over every
+    // stage and custom option each algorithm advertises -- so that
+    // `autotune_lt_plan` has something to choose between. A check costs under
+    // 2 us and only the survivors are ever timed.
+    void add_wide_tile_candidates(LtMatmulPlan& plan,
+                                  const vector<cublasLtMatmulHeuristicResult_t>& heuristics,
+                                  int m, int n,
+                                  cudaDataType_t dtype_a,
+                                  cudaDataType_t dtype_b,
+                                  cudaDataType_t out_dtype)
+    {
+        // Every candidate kept here costs four timed matmuls in
+        // autotune_lt_plan, so the overall cap stays where it was and the
+        // wider option sweep is paid for out of it: 96 / 16 is six tiles,
+        // each given four options over four stages instead of one option
+        // over sixteen. Budget is charged on candidates kept, not on checks
+        // attempted, so a tile the driver refuses outright costs nothing and
+        // the next one gets the slots. Six is enough because the six probed
+        // rows -- 256x160 through 128x240 -- already contain every tile at
+        // or under the default OPENNN_LT_TRAFFIC_BUDGET of 0.0120, and a
+        // tile above the budget can only ever be picked for being fastest,
+        // which is what the driver's own heuristic already searches for.
+        constexpr size_t most_added_candidates = 96;
+        constexpr size_t most_candidates_per_tile = 16;
+        constexpr int most_options_per_stage = 4;
+        constexpr int most_custom_options = 256;
+
+        vector<int> algorithm_ids;
+        for (const cublasLtMatmulHeuristicResult_t& heuristic : heuristics)
+        {
+            int id = 0;
+            size_t written = 0;
+            if (cublasLtMatmulAlgoConfigGetAttribute(&heuristic.algo, CUBLASLT_ALGO_CONFIG_ID,
+                                                     &id, sizeof(id), &written) != CUBLAS_STATUS_SUCCESS)
+                continue;
+            if (find(algorithm_ids.begin(), algorithm_ids.end(), id) == algorithm_ids.end())
+                algorithm_ids.push_back(id);
+        }
+
+        const size_t before = plan.candidates.size();
+        size_t tile_before = before;
+
+        const auto candidate_budget_spent = [&]
+        {
+            return plan.candidates.size() - before >= most_added_candidates
+                || plan.candidates.size() - tile_before >= most_candidates_per_tile;
+        };
+
+        size_t tile_index = 0;
+        for (const LtTile& tile : lt_known_tiles)
+        {
+            if (tile_index++ < probed_tiles_begin) continue;
+            if (plan.candidates.size() - before >= most_added_candidates) break;
+
+            // A tile larger than the product is priced for an output that is
+            // not there -- 1/rows + 1/columns charged over rows x columns of
+            // which the shape has fewer -- so the traffic the tie-break reads
+            // for it is a fiction. Skip it before the sweep rather than after,
+            // because the budgets above count candidates kept, not checks
+            // attempted: a shape no wide tile fits otherwise pays the whole
+            // enumeration (13,460 configurations in 0.86 s on this card) and
+            // keeps nothing. An attention QK^T at n = 64 is exactly that.
+            if (tile.rows > m || tile.columns > n) continue;
+
+            tile_before = plan.candidates.size();
+
+            for (const int id : algorithm_ids)
+            {
+                if (candidate_budget_spent()) break;
+
+                cublasLtMatmulAlgo_t algorithm{};
+                if (cublasLtMatmulAlgoInit(Backend::get_cublas_lt_handle(),
+                                           matmul_compute_type(dtype_a, dtype_b), CUDA_R_32F,
+                                           dtype_a, dtype_b, out_dtype, out_dtype,
+                                           id, &algorithm) != CUBLAS_STATUS_SUCCESS)
+                {
+                    device::reset_last_error();
+                    continue;
+                }
+
+                size_t written = 0;
+                vector<int> stages;
+                if (cublasLtMatmulAlgoCapGetAttribute(&algorithm, CUBLASLT_ALGO_CAP_STAGES_IDS,
+                                                      nullptr, 0, &written) == CUBLAS_STATUS_SUCCESS
+                    && written > 0)
+                {
+                    stages.resize(written / sizeof(int));
+                    cublasLtMatmulAlgoCapGetAttribute(&algorithm, CUBLASLT_ALGO_CAP_STAGES_IDS,
+                                                      stages.data(), written, &written);
+                }
+                if (stages.empty()) stages.push_back(CUBLASLT_MATMUL_STAGES_UNDEFINED);
+
+                int custom_maximum = 0;
+                cublasLtMatmulAlgoCapGetAttribute(&algorithm, CUBLASLT_ALGO_CAP_CUSTOM_OPTION_MAX,
+                                                  &custom_maximum, sizeof(custom_maximum), &written);
+                custom_maximum = min(custom_maximum, most_custom_options);
+
+                const auto set_config = [&](cublasLtMatmulAlgoConfigAttributes_t attribute, int value)
+                {
+                    cublasLtMatmulAlgoConfigSetAttribute(&algorithm, attribute, &value, sizeof(value));
+                };
+                set_config(CUBLASLT_ALGO_CONFIG_TILE_ID, tile.id);
+                set_config(CUBLASLT_ALGO_CONFIG_SPLITK_NUM, 1);
+                set_config(CUBLASLT_ALGO_CONFIG_REDUCTION_SCHEME, CUBLASLT_REDUCTION_SCHEME_NONE);
+                set_config(CUBLASLT_ALGO_CONFIG_CTA_SWIZZLING, 0);
+
+                // Sweep the custom options rather than keep the first that
+                // checks out. They do not "differ by well under a percent" as
+                // this once claimed: over the timed configurations the first
+                // valid option is 55.0% slower than the best one of the same
+                // tile on 128x160, 31.1% on 128x192, 30.0% on 128x240 and
+                // 29.9% on 256x96. Which one wins has to be timed, so keep
+                // them all -- up to most_options_per_stage -- and let
+                // autotune_lt_plan decide.
+                for (const int stage : stages)
+                {
+                    if (candidate_budget_spent()) break;
+
+                    set_config(CUBLASLT_ALGO_CONFIG_STAGES_ID, stage);
+
+                    int kept_options = 0;
+                    for (int custom = 0;
+                         custom <= custom_maximum
+                         && kept_options < most_options_per_stage
+                         && !candidate_budget_spent();
+                         ++custom)
+                    {
+                        set_config(CUBLASLT_ALGO_CONFIG_CUSTOM_OPTION, custom);
+
+                        cublasLtMatmulHeuristicResult_t check{};
+                        if (cublasLtMatmulAlgoCheck(Backend::get_cublas_lt_handle(),
+                                                    plan.matmul_descriptor,
+                                                    plan.a_matrix_layout,
+                                                    plan.b_matrix_layout,
+                                                    plan.output_matrix_layout,
+                                                    plan.output_matrix_layout,
+                                                    &algorithm, &check) != CUBLAS_STATUS_SUCCESS
+                            || check.state != CUBLAS_STATUS_SUCCESS
+                            || check.workspaceSize > cublas_lt_workspace_search_bytes)
+                        {
+                            device::reset_last_error();
+                            continue;
+                        }
+
+                        plan.candidates.push_back(
+                            {algorithm, check.workspaceSize,
+                             1.0f / float(tile.rows) + 1.0f / float(tile.columns)});
+                        ++kept_options;
+                    }
+                }
+            }
+        }
+    }
+
     LtMatmulPlan& get_lt_matmul_plan(
         int m, int n, int k,
         cublasOperation_t transA,
         cublasOperation_t transB,
         cublasLtEpilogue_t epilogue,
-        cudaDataType_t io_dtype,
-        cudaDataType_t out_dtype)
+        cudaDataType_t dtype_a,
+        cudaDataType_t dtype_b,
+        cudaDataType_t out_dtype,
+        int lda, int ldb, int ldd,
+        bool beta_is_zero)
     {
         const LtMatmulPlanKey key{m, n, k,
                                   int(transA), int(transB), int(epilogue),
-                                  int(io_dtype), int(out_dtype)};
+                                  int(dtype_a), int(dtype_b), int(out_dtype),
+                                  lda, ldb, ldd, int(beta_is_zero)};
         auto& plans = thread_state().lt_matmul_plans;
         auto it = plans.find(key);
         if (it != plans.end()) return it->second;
@@ -1438,7 +1747,7 @@ namespace
 
         LtMatmulPlan plan;
 
-        CHECK_CUBLAS(cublasLtMatmulDescCreate(&plan.matmul_descriptor, matmul_compute_type(io_dtype), CUDA_R_32F));
+        CHECK_CUBLAS(cublasLtMatmulDescCreate(&plan.matmul_descriptor, matmul_compute_type(dtype_a, dtype_b), CUDA_R_32F));
 
         auto set_desc = [&](cublasLtMatmulDescAttributes_t attr, const auto& value)
         {
@@ -1468,9 +1777,9 @@ namespace
         const int b_rows = (transB == CUBLAS_OP_N) ? k : n;
         const int b_cols = (transB == CUBLAS_OP_N) ? n : k;
 
-        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.a_matrix_layout,  io_dtype,  a_rows, a_cols, a_rows));
-        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.b_matrix_layout,  io_dtype,  b_rows, b_cols, b_rows));
-        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.output_matrix_layout, out_dtype, m, n, m));
+        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.a_matrix_layout,  dtype_a,  a_rows, a_cols, lda ? lda : a_rows));
+        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.b_matrix_layout,  dtype_b,  b_rows, b_cols, ldb ? ldb : b_rows));
+        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.output_matrix_layout, out_dtype, m, n, ldd ? ldd : m));
 
         cublasLtMatmulPreference_t pref = nullptr;
         CHECK_CUBLAS(cublasLtMatmulPreferenceCreate(&pref));
@@ -1494,12 +1803,26 @@ namespace
         heuristics.resize(static_cast<size_t>(max(returned_results, 0)));
         erase_if(heuristics, [](const cublasLtMatmulHeuristicResult_t& h) { return h.state != CUBLAS_STATUS_SUCCESS; });
 
-        if (!heuristics.empty())
+        for (const cublasLtMatmulHeuristicResult_t& heuristic : heuristics)
         {
-            plan.algorithm = heuristics.front().algo;
+            int tile_id = CUBLASLT_MATMUL_TILE_UNDEFINED;
+            int splitk_number = 1;
+            size_t written = 0;
+            cublasLtMatmulAlgoConfigGetAttribute(&heuristic.algo, CUBLASLT_ALGO_CONFIG_TILE_ID,
+                                                 &tile_id, sizeof(tile_id), &written);
+            cublasLtMatmulAlgoConfigGetAttribute(&heuristic.algo, CUBLASLT_ALGO_CONFIG_SPLITK_NUM,
+                                                 &splitk_number, sizeof(splitk_number), &written);
+            plan.candidates.push_back({heuristic.algo, heuristic.workspaceSize,
+                                       tile_traffic(tile_id, splitk_number)});
+        }
+
+        add_wide_tile_candidates(plan, heuristics, m, n, dtype_a, dtype_b, out_dtype);
+
+        if (!plan.candidates.empty())
+        {
+            plan.algorithm = plan.candidates.front().algorithm;
             plan.has_algorithm = true;
-            plan.workspace_bytes = heuristics.front().workspaceSize;
-            plan.candidates = std::move(heuristics);
+            plan.workspace_bytes = plan.candidates.front().workspace_bytes;
             plan.tuned = plan.candidates.size() <= 1;
         }
 
@@ -1507,7 +1830,9 @@ namespace
     }
 
     void autotune_lt_plan(LtMatmulPlan& plan,
-                          const void* a_data, const void* b_data, void* c_data,
+                          const void* a_data, const void* b_data,
+                          const void* c_data, void* d_data,
+                          float alpha, float beta, size_t destination_bytes,
                           cudaStream_t stream)
     {
         if (plan.candidates.size() <= 1)
@@ -1527,12 +1852,62 @@ namespace
 
         size_t largest_workspace = 0;
         for (const auto& candidate : plan.candidates)
-            largest_workspace = max(largest_workspace, candidate.workspaceSize);
-        void* const workspace = ensure_shared_scratch(largest_workspace);
+            largest_workspace = max(largest_workspace, candidate.workspace_bytes);
+
+        // The tuner runs on the caller's own pointers and used to force beta
+        // to zero for one reason: it launches each candidate four times, and a
+        // destination the kernel also reads would be accumulated into four
+        // times over -- a recurrent layer sums one weight gradient per
+        // timestep into the same tensor, which is precisely that. So when D is
+        // an operand, time into scratch and throw the result away.
+        //
+        // The test is aliasing, not beta alone. With C separate from D the
+        // real call overwrites every element of D whatever beta is, so timing
+        // there costs nothing and destroys nothing; making it scratch anyway
+        // would add the whole destination -- an input delta, tens of MB on the
+        // transformer -- to a shared-scratch high-water that is never returned.
+        //
+        // That scratch is taken out of the same shared block the algorithm
+        // workspace comes from, at an offset past it, rather than from a
+        // GraphWorkspaceKind of its own. Reusing SharedScratch does not dodge
+        // the high water -- ensure_shared_scratch goes through
+        // graph_workspace_override like every other kind and records one --
+        // but it raises a buffer that already exists instead of adding a
+        // second permanent Buffer to every lane of every thread's workspace
+        // array and a second entry to the captured graph's workspace set.
+        // thread_workspace throws when that raise falls under the growth
+        // guard; that is the steady-state case, and it is caught here rather
+        // than propagated -- a plan first seen after warmup keeps the
+        // heuristic's candidate untimed, which is the one thing that must not
+        // become an exception inside a training step.
+        const bool destination_is_operand = beta != 0.0f && c_data == static_cast<const void*>(d_data);
+
+        constexpr size_t destination_alignment = 256;
+        const size_t destination_offset =
+            (largest_workspace + destination_alignment - 1)
+            / destination_alignment * destination_alignment;
+
+        void* workspace = nullptr;
+        try
+        {
+            workspace = ensure_shared_scratch(destination_is_operand
+                                              ? destination_offset + destination_bytes
+                                              : largest_workspace);
+        }
+        catch (const exception&)
+        {
+            plan.candidates.clear();
+            return;
+        }
+
+        void* const destination = destination_is_operand
+            ? static_cast<char*>(workspace) + destination_offset
+            : d_data;
 
         const device::CudaEvent start(cudaEventDefault), stop(cudaEventDefault);
         constexpr int timed_runs = 3;
 
+        vector<float> times(plan.candidates.size(), numeric_limits<float>::infinity());
         float best_ms = numeric_limits<float>::infinity();
         size_t best = 0;
         for (size_t index = 0; index < plan.candidates.size(); ++index)
@@ -1541,9 +1916,10 @@ namespace
             const auto run = [&]
             {
                 return cublasLtMatmul(Backend::get_cublas_lt_handle(), plan.matmul_descriptor,
-                                      &one, a_data, plan.a_matrix_layout, b_data, plan.b_matrix_layout,
-                                      &zero, c_data, plan.output_matrix_layout, c_data, plan.output_matrix_layout,
-                                      &candidate.algo, workspace, candidate.workspaceSize, stream);
+                                      &alpha, a_data, plan.a_matrix_layout, b_data, plan.b_matrix_layout,
+                                      &beta, c_data, plan.output_matrix_layout,
+                                      destination, plan.output_matrix_layout,
+                                      &candidate.algorithm, workspace, candidate.workspace_bytes, stream);
             };
             if (run() != CUBLAS_STATUS_SUCCESS) { device::reset_last_error(); continue; }
             device::record_event(start.get(), stream);
@@ -1554,11 +1930,85 @@ namespace
             if (!ok) { device::reset_last_error(); continue; }
             float ms = 0.0f;
             CHECK_CUDA(cudaEventElapsedTime(&ms, start.get(), stop.get()));
+            times[index] = ms;
             if (ms < best_ms) { best_ms = ms; best = index; }
         }
 
-        plan.algorithm = plan.candidates[best].algo;
-        plan.workspace_bytes = plan.candidates[best].workspaceSize;
+        // Two kernels that take the same time need not cost the same energy:
+        // on the dense benchmark's inference GEMM a 256x160 tile costs 34%
+        // less energy for 4% more time than the 64x64 the heuristic ranks
+        // first, which is the difference between that cell costing 9% more
+        // than PyTorch's and costing 25% less. So among the candidates take
+        // the one whose tile moves the least data -- but bound what may be
+        // taken by traffic, not by a window around whatever the fastest
+        // candidate happens to be.
+        //
+        // That distinction is the whole point of the rewrite. The old rule
+        // kept anything within best_ms * 1.05, and the 256x160 sits at
+        // 201.4 us against a 192.0 fastest -- 4.9%, one tenth of a point
+        // inside the window. Any newly timed candidate at 191.8 us or less
+        // pushed it back out and handed the cell to a 265 W kernel at 0.919x
+        // energy, silently: no cell reports which tile it ran. Three
+        // conditions now, and only the last one mentions best_ms.
+        //
+        //   * Traffic at or below OPENNN_LT_TRAFFIC_BUDGET, in units of 1e-4,
+        //     default 120 = 0.0120. Every tile at or below 0.0120 measured
+        //     within 10 W of the 169 W floor; the 64x64 is 0.0312 and 265 W.
+        //     Nothing above the budget is ever preferred over the fastest, so
+        //     a faster high-traffic kernel appearing cannot change the pick.
+        //   * Lower modelled energy (time x tile_power_watts) than the
+        //     fastest candidate, so time is only ever traded for a tile that
+        //     is really cheaper: 8% slower for 2% less power is now refused,
+        //     where a flat window took it. This is also what keeps a shape
+        //     whose only low-traffic candidate is far slower on the fastest
+        //     kernel -- the model breaks even at 265/169 = 1.57x.
+        //   * At most OPENNN_LT_TILE_TOLERANCE percent slower than the
+        //     fastest candidate, which bounds what any of this can cost
+        //     throughput. The default is 10, not the old 5: 5 is under the
+        //     4.9% the measured choice already spends, which is exactly what
+        //     made it fragile. It is not higher because tile_power_watts is
+        //     fitted on one L2-resident compute-bound GEMM and this rule now
+        //     steers every matmul in the library; 10 leaves the measured
+        //     choice a full point of headroom while bounding what an
+        //     extrapolated power model can cost a shape nobody has measured.
+        //
+        // OPENNN_LT_TILE_TOLERANCE=0 still switches the rule off entirely and
+        // restores the pick by time alone, which is the A/B.
+        const float tolerance =
+            float(clamp(env_int_or("OPENNN_LT_TILE_TOLERANCE", 10), 0LL, 100LL)) / 100.0f;
+        const float traffic_budget =
+            float(clamp(env_int_or("OPENNN_LT_TRAFFIC_BUDGET", 120), 1LL, 10000LL)) / 10000.0f;
+
+        if (tolerance > 0.0f && best_ms < numeric_limits<float>::infinity())
+        {
+            const float allowed_ms = best_ms * (1.0f + tolerance);
+            const float allowed_energy = best_ms * tile_power_watts(plan.candidates[best].traffic);
+            float least_traffic = plan.candidates[best].traffic;
+
+            for (size_t index = 0; index < plan.candidates.size(); ++index)
+            {
+                const LtMatmulCandidate& candidate = plan.candidates[index];
+
+                if (candidate.traffic > traffic_budget) continue;
+                if (candidate.traffic > least_traffic) continue;
+                // Same tile, so same traffic: take the faster of the two.
+                // The custom-option sweep above emits several candidates per
+                // tile precisely because the first valid option is up to 55%
+                // slower than the best one, so selecting the lowest-traffic
+                // tile is not enough -- without this the pick would be the
+                // first option in scan order, which is the one the sweep was
+                // added to stop using.
+                if (candidate.traffic == least_traffic && times[index] >= times[best]) continue;
+                if (times[index] > allowed_ms) continue;
+                if (times[index] * tile_power_watts(candidate.traffic) >= allowed_energy) continue;
+
+                least_traffic = candidate.traffic;
+                best = index;
+            }
+        }
+
+        plan.algorithm = plan.candidates[best].algorithm;
+        plan.workspace_bytes = plan.candidates[best].workspace_bytes;
         plan.candidates.clear();
     }
 }
@@ -1610,14 +2060,27 @@ void run_lt_matmul_cached(
     cublasOperation_t transA,
     cublasOperation_t transB,
     cublasLtEpilogue_t epilogue,
-    const void* a_data, const void* b_data, void* c_data,
+    const void* a_data, const void* b_data, void* d_data,
     const void* bias_pointer,
-    cudaDataType_t io_dtype,
+    cudaDataType_t dtype_a,
+    cudaDataType_t dtype_b,
     cudaDataType_t out_dtype,
     const void* aux_pointer,
-    const void* addend)
+    const void* addend,
+    float alpha,
+    float beta,
+    int lda, int ldb, int ldd)
 {
-    LtMatmulPlan& plan = get_lt_matmul_plan(m, n, k, transA, transB, epilogue, io_dtype, out_dtype);
+    // beta used to be derived from this pointer, so the combination could not
+    // be asked for; now that it is a parameter, an addend at beta 0 is an
+    // operand the kernel reads and discards. Say so rather than compute the
+    // wrong sum quietly.
+    throw_if(addend && beta == 0.0f,
+             "run_lt_matmul_cached: an addend with beta 0 is a discarded operand.");
+
+    LtMatmulPlan& plan = get_lt_matmul_plan(m, n, k, transA, transB, epilogue,
+                                            dtype_a, dtype_b, out_dtype,
+                                            lda, ldb, ldd, beta == 0.0f);
 
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor,
         CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_pointer, sizeof(bias_pointer)));
@@ -1626,17 +2089,24 @@ void run_lt_matmul_cached(
         CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor,
             CUBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER, &aux_pointer, sizeof(aux_pointer)));
 
+    // C is the addend when there is one and the destination otherwise; at
+    // beta 0 the kernel reads neither, which is why aliasing it to D was
+    // always safe and still is.
+    const void* const c_data = addend ? addend : d_data;
+
     if (!plan.tuned)
-        autotune_lt_plan(plan, a_data, b_data, c_data, device::get_compute_stream());
+        autotune_lt_plan(plan, a_data, b_data, c_data, d_data, alpha, beta,
+                         size_t(ldd ? ldd : m) * size_t(n) * matmul_dtype_bytes(out_dtype),
+                         device::get_compute_stream());
 
     CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(),
                                 plan.matmul_descriptor,
-                                &one,
+                                &alpha,
                                 a_data, plan.a_matrix_layout,
                                 b_data, plan.b_matrix_layout,
-                                addend ? &one : &zero,
-                                addend ? addend : c_data, plan.output_matrix_layout,
+                                &beta,
                                 c_data, plan.output_matrix_layout,
+                                d_data, plan.output_matrix_layout,
                                 plan.has_algorithm ? &plan.algorithm : nullptr,
                                 ensure_shared_scratch(plan.workspace_bytes), 
                                 plan.workspace_bytes,
@@ -1688,8 +2158,12 @@ void run_lt_matmul_cached(int, int, int,
                           const void*,
                           cudaDataType_t,
                           cudaDataType_t,
+                          cudaDataType_t,
                           const void*,
-                          const void*) OPENNN_CUDA_STUB_BODY(run_lt_matmul_cached)
+                          const void*,
+                          float,
+                          float,
+                          int, int, int) OPENNN_CUDA_STUB_BODY(run_lt_matmul_cached)
 
 void gemm_strided_batched_cuda(cublasOperation_t, cublasOperation_t,
                                int, int, int,

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The CNN family in PyTorch, defined once, driven four ways.
 
-PLAN.md; the counterpart of cnn.cpp and deliberately its mirror image. Same
+The counterpart of cnn.cpp and deliberately its mirror image. Same
 modes, same positional arguments, same `key=value` output, so run.py drives
 either engine by swapping the command prefix.
 
@@ -17,9 +17,12 @@ than hand-rolling one keeps the comparison against the citable network instead
 of against our transcription of it.
 
 Images are lazy-loaded per batch from class folders by a DataLoader with
-worker processes, the fair counterpart to OpenNN's per-batch image cache: at
-50,000 x 224x224x3 the split cannot be resident, so this measures convolution
-throughput *plus* input-pipeline efficiency in both engines.
+worker processes that decode the JPEGs every epoch, against OpenNN's
+per-batch reads of its pre-decoded image cache: at 50,000 x 224x224x3 the
+split cannot be resident, so this measures convolution throughput *plus*
+input-pipeline efficiency in both engines. The two pipelines are not the same
+work -- PT_INPUT=cache feeds PyTorch from OpenNN's cache file to measure how
+much of the training margin is the decode.
 """
 
 from __future__ import annotations
@@ -41,6 +44,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 SEED = 42
 WORKERS = int(os.environ.get("PT_WORKERS", "8"))
+INPUT = os.environ.get("PT_INPUT", "jpeg")
+# Inference in bf16 can keep autocast on (weights re-cast on every call, which
+# torch.compile does not fold without freezing) or store the weights in bf16
+# once, the way OpenNN keeps a bf16 mirror of its parameters. PT_INFER_CAST
+# selects it; bf16 weights measured faster in every family (see compiled()).
+INFER_CAST = os.environ.get("PT_INFER_CAST", "weights")
 
 def report_blas() -> None:
     """Which BLAS this engine dispatches to, printed like OpenNN prints it.
@@ -118,13 +127,54 @@ class Folders(ImageFolder):
                        if e.is_dir() and not e.name.startswith("."))
         return names, {name: index for index, name in enumerate(names)}
 
+class CachedImages(torch.utils.data.Dataset):
+    """OpenNN's pre-decoded image cache, read the way OpenNN reads it.
+
+    A controlled variant (`PT_INPUT=cache`), not the published cell. The
+    published training cell has PyTorch decode JPEGs per epoch while OpenNN
+    reads `.cache/images.bin` -- uint8 HxWxC per image, sorted-folder /
+    sorted-file order, a signature trailer -- which OpenNN's ImageDataset
+    writes beside the class folders on its first pass at a given size. Feeding
+    PyTorch from the same file isolates the input-pipeline asymmetry from the
+    convolution throughput; it requires OpenNN to have opened the folder at
+    this size once. Labels still come from ImageFolder, whose class and file
+    order the cache shares.
+    """
+
+    def __init__(self, path: str, size: int):
+        folder = Folders(path)
+        self.targets = folder.targets
+        self.shape = (size, size, 3)
+        self.bytes = size * size * 3
+        self.cache = os.path.join(path, ".cache", "images.bin")
+        expected = len(self.targets) * self.bytes
+        actual = os.path.getsize(self.cache) if os.path.exists(self.cache) else 0
+        if actual < expected:
+            raise SystemExit(f"{self.cache}: {actual} bytes, at least {expected} expected "
+                             f"for {len(self.targets)} images at {size}x{size}")
+        self.fd = None
+
+    def __len__(self) -> int:
+        return len(self.targets)
+
+    def __getitem__(self, index: int):
+        if self.fd is None:                        # one descriptor per worker process
+            self.fd = os.open(self.cache, os.O_RDONLY)
+        raw = os.pread(self.fd, self.bytes, index * self.bytes)
+        pixels = torch.frombuffer(bytearray(raw), dtype=torch.uint8).view(self.shape)
+        return pixels.permute(2, 0, 1).float().div_(255.0), self.targets[index]
+
 def loader_for(path: str, batch: int, opts: dict, shuffle: bool) -> DataLoader:
-    """Class folders, decoded per batch by worker processes."""
-    dataset = Folders(path, transforms.Compose([
-        transforms.Resize(opts["size"]),
-        transforms.CenterCrop(opts["size"]),
-        transforms.ToTensor(),
-    ]))
+    """Class folders, decoded per batch by worker processes -- or, with
+    PT_INPUT=cache, OpenNN's pre-decoded cache read by the same workers."""
+    if INPUT == "cache":
+        dataset = CachedImages(path, opts["size"])
+    else:
+        dataset = Folders(path, transforms.Compose([
+            transforms.Resize(opts["size"]),
+            transforms.CenterCrop(opts["size"]),
+            transforms.ToTensor(),
+        ]))
     return DataLoader(dataset, batch_size=batch, shuffle=shuffle,
                       num_workers=WORKERS, pin_memory=True, drop_last=True,
                       persistent_workers=WORKERS > 0)
@@ -134,7 +184,7 @@ def autocast_ctx(opts: dict):
         return contextlib.nullcontext()
     return torch.autocast(device_type=opts["device"], dtype=torch.bfloat16)
 
-def compiled(fn, opts: dict):
+def compiled(fn, opts: dict, default: str):
     """torch.compile on CUDA, eager on CPU -- both measured, not assumed.
 
     On CPU, eager is PyTorch's fast path for these models, not a shortcut:
@@ -147,12 +197,20 @@ def compiled(fn, opts: dict):
     would ship, which is the mirror image of the eager-on-GPU mistake that
     made dense training read 1.29x when it was 1.06x.
 
+    **The mode is per cell, and each was measured (session
+    2026-09-02-variants, batch 128, bf16, samples/s).** Training:
+    max-autotune-no-cudagraphs 1,398, reduce-overhead 1,366, default 1,364.
+    Inference with bf16 weights: default 5,604, max-autotune-no-cudagraphs
+    5,597 (for 940 MiB more), reduce-overhead 5,574, eager 3,625; under
+    autocast, default 5,498. The convolutions are cuDNN's either way and
+    Inductor's own kernels only sit between them.
+
     PT_COMPILE_MODE overrides either way, so the choice stays measurable.
     """
-    mode = os.environ.get("PT_COMPILE_MODE", "default")
+    mode = os.environ.get("PT_COMPILE_MODE", default)
     if mode == "eager" or opts["device"] != "cuda":
         return fn, "eager"
-    return torch.compile(fn, mode=None if mode == "default" else mode), f"compile:{mode}"
+    return torch.compile(fn, mode=None if mode == "default" else mode, dynamic=False), f"compile:{mode}"
 
 def batches_of(text: str) -> list[int]:
     return [int(part) for part in text.split(",") if part]
@@ -194,7 +252,7 @@ def train_like(argv: list[str], mode: str) -> int:
             loss.backward()
             optimizer.step()
 
-        step_fn, how = compiled(step, opts)
+        step_fn, how = compiled(step, opts, "max-autotune-no-cudagraphs")
 
         def run_epoch():
             model.train()
@@ -239,14 +297,20 @@ def infer(argv: list[str]) -> int:
         print(f"samples={samples}")
 
         model = build(opts).eval()
+        weights_bf16 = opts["autocast"] and INFER_CAST == "weights"
+        if weights_bf16:
+            model = model.to(torch.bfloat16)
+            opts = dict(opts, autocast=False)
         if batch == batches[0]:
             print(f"parameters={sum(p.numel() for p in model.parameters())}", flush=True)
-        forward, _ = compiled(model, opts)
+        forward, _ = compiled(model, opts, "default")
 
         # One batch, filled once and replayed, matching cnn.cpp: this times the
         # resident forward pass rather than the image decode, which the
         # training cell already accounts for.
         images = to_device(next(iter(loader))[0], opts)
+        if weights_bf16:
+            images = images.to(torch.bfloat16)
 
         def run_pass():
             with torch.no_grad(), autocast_ctx(opts):

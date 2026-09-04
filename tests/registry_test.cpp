@@ -48,7 +48,8 @@ unique_ptr<Layer> make_serializable_layer(LayerType type)
 
     case Clamping:
     {
-        auto layer = make_unique<opennn::Clamping>(Shape{3}, "clamping_roundtrip");
+        auto layer = make_unique<opennn::Clamping>(
+            Shape{3}, opennn::Clamping::ClampingMethod::NoClamping, "clamping_roundtrip");
         layer->set_lower_bound(0, -2.0f);
         layer->set_upper_bound(1, 3.0f);
         return layer;
@@ -101,11 +102,7 @@ unique_ptr<Layer> make_serializable_layer(LayerType type)
     }
 
     case Flatten:
-    {
-        auto layer = make_unique<opennn::Flatten>(Shape{2, 3, 4});
-        layer->set_label("flatten_roundtrip");
-        return layer;
-    }
+        return make_unique<opennn::Flatten>(Shape{2, 3, 4}, "flatten_roundtrip");
 
     case LongShortTermMemory:
     {
@@ -144,7 +141,7 @@ unique_ptr<Layer> make_serializable_layer(LayerType type)
     case Pooling:
         return make_unique<opennn::Pooling>(
             Shape{6, 6, 2}, Shape{2, 3}, Shape{2, 1}, Shape{1, 0},
-            "AveragePooling", "pooling_roundtrip");
+            PoolingMethod::AveragePooling, "pooling_roundtrip");
 
     case Pooling3d:
         return make_unique<opennn::Pooling3d>(
@@ -171,7 +168,8 @@ unique_ptr<Layer> make_serializable_layer(LayerType type)
 
     case Tokenizer:
     {
-        auto layer = make_unique<opennn::Tokenizer>(Shape{4}, "tokenizer_roundtrip");
+        auto layer = make_unique<opennn::Tokenizer>(
+            Shape{4}, "tokenizer_roundtrip", VariableRole::Decoder);
         layer->set_vocabulary({"<unk>", "alpha", "beta", "gamma"});
         return layer;
     }
@@ -232,6 +230,14 @@ void expect_nondefault_fields(const LayerType type, const JsonDocument& document
         EXPECT_FLOAT_EQ(read_json_float(root, "DropoutRate"), 0.125f);
         EXPECT_FALSE(read_json_bool(root, "SdpaAuto"));
         EXPECT_EQ(read_json_index(root, "SdpaMinSequenceLength"), 37);
+        break;
+
+    case Clamping:
+        EXPECT_EQ(read_json_string(root, "ClampingMethod"), "NoClamping");
+        break;
+
+    case Tokenizer:
+        EXPECT_EQ(read_json_string(root, "Role"), "Decoder");
         break;
 
     default:
@@ -362,6 +368,24 @@ TEST(RegistryTest, AliasesConstructConfiguredComponents)
         dynamic_cast<const Normalization3d*>(legacy_restored.get());
     ASSERT_NE(legacy_normalization, nullptr);
     EXPECT_EQ(legacy_normalization->get_method(), NormalizationMethod::RMS);
+}
+
+TEST(RegistryTest, EveryLayerKeepsItsStateAcrossAnInputShapeChange)
+{
+    for (const auto& [type, name] : layer_type_map().get_entries())
+    {
+        SCOPED_TRACE(name);
+
+        const unique_ptr<Layer> layer = make_serializable_layer(type);
+        if (layer->get_is_trainable()) layer->set_is_trainable(false);
+
+        const Shape input_shape = layer->get_input_shape();
+        const string before = serialize_layer(*layer);
+
+        layer->set_input_shape(input_shape);
+
+        EXPECT_EQ(serialize_layer(*layer), before);
+    }
 }
 
 TEST(RegistryTest, EveryLayerStateRoundTripsThroughJSONAndTheFactory)

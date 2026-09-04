@@ -75,9 +75,8 @@ constexpr auto construct_layer = construct<Layer, Class>;
 
 unique_ptr<Layer> construct_rms_normalization()
 {
-    auto layer = make_unique<Normalization3d>();
-    layer->set_method(NormalizationMethod::RMS);
-    return layer;
+    return make_unique<Normalization3d>(
+        Shape({0,0}), NormalizationMethod::RMS);
 }
 
 #define OPENNN_VISION_FACTORY(factory) factory

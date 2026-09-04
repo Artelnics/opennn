@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The benchmark suite. One entry point, one execution, every observation.
 
-PLAN.md step 2.
+See PROTOCOL.md for the measurement and validity contract.
 
     run.py --family dense --mode train  --batch 8192
     run.py --family dense --mode infer  --batch 8192 --precision fp32
@@ -56,8 +56,11 @@ from common import (  # noqa: E402
     framework_versions,
     git_metadata,
     gpu_state,
+    HOST_BASELINE_FIELD,
+    HOST_MEMORY_METRIC,
     result_destination,
     cpu_busy_fraction,
+    ForeignActivity,
     BUSY_THRESHOLD,
     session_id,
     wait_for_idle,
@@ -83,9 +86,12 @@ FAMILIES = {
         "data": lambda root: {"train": root / "imagenet_subset/train"},
         "options": lambda a: [str(a.image_size)],
     },
+    # --hidden and --layers are the dense family's knobs. The transformer has
+    # its own, defaulting to the base model both drivers document, because
+    # sharing them silently benchmarked d_model 1024 with two layers.
     "transformer": {
         "data": lambda root: {"train": root / "wmt14/wmt14_pairs.txt"},
-        "options": lambda a: [str(a.hidden), str(a.layers)],
+        "options": lambda a: [str(a.d_model), str(a.transformer_layers)],
     },
     # footprint has no dataset and no batch: it measures what the framework
     # costs before any of that exists. Its "modes" are its three questions.
@@ -182,19 +188,58 @@ def cpu_pinning(threads: int | None) -> tuple[list[str], dict[str, str], dict]:
     # --threads still overrides, so the choice stays measurable.
     count = threads
 
+    # One OpenMP wait policy for both engines. GCC 14's libgomp (the system
+    # runtime OpenNN links) detects a hybrid CPU and stops spinning at
+    # barriers -- `GOMP_SPINCOUNT` becomes 1 and every fork/join sleeps in the
+    # kernel (libgomp/config/linux/x86/spincount.h). PyTorch ships its own,
+    # older libgomp that still spins 300,000 times. oneDNN's LSTM opens ~30
+    # regions per batch, so the difference is the runtime, not the engine:
+    # the same oneDNN primitive under each libgomp measured 3.45 ms against
+    # 3.14 ms. Setting the documented libgomp default for both makes the
+    # setting a no-op for PyTorch (69.0k -> 69.3k samples/s) and restores
+    # OpenNN's (62.6k -> 72.3k). Contract item 3, each engine at its best.
+    environment.setdefault("GOMP_SPINCOUNT", "300000")
+
     return (["taskset", "-c", span], environment,
             {"pinned": True, "cores": span,
              "threads": count or "engine default",
+             "omp_wait": "GOMP_SPINCOUNT=" + environment["GOMP_SPINCOUNT"],
              "excluded_efficiency_cores": layout["efficiency"]})
 
+# What a launch wrote to stderr is kept whether or not it failed. The text
+# worth having is printed by runs that succeed: both graph-capture paths report
+# why capture was refused and then carry on eagerly (neural_network.cpp,
+# optimizer.cpp), so gating this on a nonzero return code threw away the reason
+# behind every `cuda_graph="failed"` the artifacts record.
+#
+# Head *and* tail, not the tail alone. Those messages are printed at the first
+# capture attempt, inside warmup, so on a run that goes on to say anything else
+# -- a torch warning per epoch -- a tail-only excerpt would push the one line
+# that matters out. Both ends are bounded, so a chatty engine cannot grow the
+# artifact: the cost is at most ~4 kB per launch either way.
+STDERR_HEAD_BYTES = 2000
+STDERR_TAIL_BYTES = 2000
+
+def stderr_excerpt(text: str) -> str:
+    """Bounded excerpt of a launch's stderr, keeping both ends."""
+    if len(text) <= STDERR_HEAD_BYTES + STDERR_TAIL_BYTES:
+        return text
+    elided = len(text) - STDERR_HEAD_BYTES - STDERR_TAIL_BYTES
+    return (text[:STDERR_HEAD_BYTES]
+            + f"\n... [{elided:,} bytes elided] ...\n"
+            + text[-STDERR_TAIL_BYTES:])
+
 def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
-           threads: int | None = None) -> dict:
+           threads: int | None = None,
+           watched_cores: list[int] | None = None) -> dict:
     """One execution, fully instrumented.
 
     The monitor samples for the whole process; energy is integrated only
     between the marks the engine prints around its timed region, so warmup and
     data loading are excluded from the energy figure as they are from the
-    throughput one.
+    throughput one. Foreign CPU activity is watched the same way -- every
+    second of the process, judged over the timed window -- and reported in
+    `foreign_activity` for the caller's quiet gate.
     """
     if quiet_wait:
         if device == "cuda":
@@ -225,13 +270,14 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
         process = subprocess.Popen(prefix + command, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE, text=True,
                                    env=environment)
-        if device != "cuda":
-            while process.poll() is None:
+        with ForeignActivity(process.pid, watched_cores) as foreign:
+            if device != "cuda":
+                while process.poll() is None:
+                    monitor.watch_rss(process.pid)
+                    time.sleep(0.02)
                 monitor.watch_rss(process.pid)
-                time.sleep(0.02)
-            monitor.watch_rss(process.pid)
 
-        stdout, stderr = process.communicate(timeout=14400)
+            stdout, stderr = process.communicate(timeout=14400)
         wall = time.time() - started
 
     completed = subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
@@ -247,16 +293,39 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
     start, end = mark("TIMED_START_UNIX"), mark("TIMED_END_UNIX")
 
     instruments = monitor.summary(start, end)
+    activity = foreign.worst(start, end)
 
     # Workload memory: peak minus the engine's own framework baseline. On CPU a
     # raw resident set compares which framework is bigger, not which run costs
     # more -- torch's import alone is ~730 MiB against OpenNN's ~209, so the
     # answer flips with dataset size. Subtracting the baseline is the same
     # correction the GPU path already makes by subtracting idle.
-    baseline = mark("baseline_rss_mib")
-    if baseline is not None and instruments.get("memory_metric") == "process_peak_rss":
-        instruments["baseline_mib"] = round(baseline, 1)
-        instruments["workload_mib"] = round(max(instruments["peak_mib"] - baseline, 0.0), 1)
+    #
+    # Metric and field name both come from common.py rather than being spelled
+    # again here, because spelling them here is how this broke: the gate asked
+    # for "process_peak_rss" while the CPU path has reported
+    # `process_peak_anonymous_rss` ever since the reading moved from total to
+    # anonymous pages, so no CPU launch ever reached the subtraction and
+    # `workload_mib` fell back to `peak_mib` without saying so.
+    #
+    # It stays unsubtracted for now, but says so. The drivers' existing
+    # `baseline_rss_mib` is /proc/self/statm's resident field -- total RSS,
+    # counting ~98 MiB of mapped libraries and, for OpenNN, its mmapped CSV --
+    # against an anonymous-only peak. That difference is larger than the
+    # workload on every published cpu-* cell, so simply letting the old field
+    # through the fixed gate would publish a clamped zero, not a correction.
+    # What is missing is a commensurable baseline, not a subtraction.
+    if instruments.get("memory_metric") == HOST_MEMORY_METRIC:
+        baseline = mark(HOST_BASELINE_FIELD)
+        if baseline is not None:
+            instruments["baseline_mib"] = round(baseline, 1)
+            instruments["workload_mib"] = round(max(instruments["peak_mib"] - baseline, 0.0), 1)
+        else:
+            instruments["workload_note"] = (
+                f"no {HOST_BASELINE_FIELD}: peak_mib is the whole process, "
+                "framework baseline included. The baseline the drivers do "
+                "print is a total-RSS reading, which is not commensurable "
+                f"with {HOST_MEMORY_METRIC}")
 
     throughput = next((int(v) for k, v in fields.items()
                        if k.endswith("_samples_per_sec")), 0)
@@ -272,6 +341,7 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
                     if k.endswith(("_test_accuracy", "test_roc_auc", "test_log_loss"))
                     and _is_number(v)},
         "instruments": instruments,
+        "foreign_activity": activity,
         "timed_window": {"start_unix": start, "end_unix": end},
         # Which BLAS the engine dispatched to. OpenNN defaults to Eigen and its
         # driver opts into MKL, so this is a property of the run rather than of
@@ -279,7 +349,7 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
         # the BLAS instead of the engine.
         "blas": fields.get("blas"),
         "fields": fields,
-        "stderr_tail": completed.stderr[-1500:] if completed.returncode else "",
+        "stderr_excerpt": stderr_excerpt(completed.stderr),
     }
 
 def format_wh(value: float | None) -> str:
@@ -294,6 +364,23 @@ def median_energy(launches: list[dict]) -> float | None:
     values = sorted(l["instruments"]["energy_wh"] for l in launches
                     if l["instruments"].get("energy_wh") is not None)
     return values[len(values) // 2] if values else None
+
+def note_activity(outcome: dict) -> None:
+    """Say so at once when a launch was disturbed; the artifact records it
+    either way and the gate below files the cell."""
+    activity = outcome["foreign_activity"]
+    if activity["max"] > BUSY_THRESHOLD:
+        print(f"    foreign activity {activity['max']:.1%} during the "
+              f"{activity['window']} window of {outcome.get('engine', '?')}")
+
+def busiest_second(launches: list[dict]) -> tuple[float, float | None]:
+    """The worst foreign second over every launch's timed window."""
+    peak, at = 0.0, None
+    for outcome in launches:
+        activity = outcome.get("foreign_activity") or {}
+        if activity.get("max", 0.0) > peak:
+            peak, at = activity["max"], activity.get("at")
+    return peak, at
 
 def _is_number(text: str) -> bool:
     try:
@@ -323,9 +410,12 @@ def main() -> int:
     parser.add_argument("--epochs", type=int, default=5, help="timed epochs per launch")
     parser.add_argument("--repeats", type=int, default=5, help="timed passes, infer")
     parser.add_argument("--rounds", type=int, default=3, help="launches per engine, order rotated")
-    parser.add_argument("--hidden", type=int, default=1024)
-    parser.add_argument("--layers", type=int, default=2)
+    parser.add_argument("--hidden", type=int, default=1024, help="dense")
+    parser.add_argument("--layers", type=int, default=2, help="dense")
     parser.add_argument("--activation", default="relu", choices=("relu", "tanh"))
+    parser.add_argument("--d-model", type=int, default=512,
+                        help="transformer; heads and feed-forward follow it")
+    parser.add_argument("--transformer-layers", type=int, default=6, help="transformer")
     parser.add_argument("--image-size", type=int, default=224, help="cnn")
     parser.add_argument("--lstm-hidden", type=int, default=128, help="lstm")
     parser.add_argument("--past", type=int, default=24, help="lstm window")
@@ -356,7 +446,13 @@ def main() -> int:
     # memory bandwidth here, which moves bandwidth-bound steps and leaves
     # cache-resident ones alone. Measured, recorded, and allowed to decide
     # where the artifact lands, because the rule is worthless as prose.
-    busy_before = cpu_busy_fraction()
+    # A pinned CPU cell can only be disturbed by the cores it was pinned to.
+    # Watching the whole machine files it as scratch for work stranded on an
+    # E-core that could never have touched it -- which is how a parked browser
+    # cost two otherwise-clean cells their evidence status on 2026-09-01.
+    # A CUDA cell pins nothing, so it still watches everything.
+    watched_cores = core_layout()["performance"] if args.device != "cuda" else None
+    busy_before = cpu_busy_fraction(cores=watched_cores)
     machine_busy = busy_before > BUSY_THRESHOLD
 
     if machine_busy:
@@ -371,23 +467,26 @@ def main() -> int:
         for question in FAMILIES[args.family]["modes"]:
             for engine in engines:
                 outcome = launch(engine_command(args.family, engine) + [question],
-                                 not args.no_wait, "cpu")
+                                 not args.no_wait, "cpu", watched_cores=watched_cores)
                 outcome.update(engine=engine, batch=0, round=1, question=question)
                 launches.append(outcome)
                 reported = {k: v for k, v in outcome["fields"].items()
                             if k not in ("engine", "mode", "RESULT")}
                 print(f"  {question:<8} {engine:<8} {reported}")
+                note_activity(outcome)
 
         # Again, now the work is done. The reading that mattered was never the
         # one up front: a sync client woke mid-cell and cost OpenNN 4.6x while
         # leaving PyTorch alone, and the sample before the first launch saw 4%
         # and called the machine quiet.
-        busy_after = cpu_busy_fraction()
+        busy_after = cpu_busy_fraction(cores=watched_cores)
+        busy_during, busy_during_at = busiest_second(launches)
 
         if busy_after > BUSY_THRESHOLD:
             print(f"\n  machine became busy during the run: {busy_after:.1%}")
 
-        machine_busy = machine_busy or busy_after > BUSY_THRESHOLD
+        machine_busy = (machine_busy or busy_after > BUSY_THRESHOLD
+                        or busy_during > BUSY_THRESHOLD)
 
         artifact = {
             "schema_version": 1,
@@ -402,6 +501,8 @@ def main() -> int:
             "frameworks": framework_versions(),
             "machine_quiet": {"busy_before": round(busy_before, 4),
                               "busy_after": round(busy_after, 4),
+                              "busy_during_max": round(busy_during, 4),
+                              "busy_during_at": busy_during_at,
                               "threshold": BUSY_THRESHOLD,
                               "quiet": not machine_busy},
             "launches": launches,
@@ -425,7 +526,8 @@ def main() -> int:
                 print(f"  {engine:<8} batch {batch:>9,} ... ", end="", flush=True)
                 outcome = launch(engine_command(args.family, engine)
                                  + engine_arguments(args.mode, data, batch, args),
-                                 not args.no_wait, args.device, args.threads)
+                                 not args.no_wait, args.device, args.threads,
+                                 watched_cores)
                 outcome.update(engine=engine, batch=batch, round=1)
                 launches.append(outcome)
 
@@ -439,6 +541,7 @@ def main() -> int:
                       else "does not fit")
                 if crashed:
                     outcome["crashed"] = True
+                note_activity(outcome)
                 if not outcome["fits"]:
                     break
                 batch *= 2
@@ -451,7 +554,8 @@ def main() -> int:
                 for batch in start_batch:
                     outcome = launch(engine_command(args.family, engine)
                                      + engine_arguments(args.mode, data, batch, args),
-                                     not args.no_wait, args.device, args.threads)
+                                     not args.no_wait, args.device, args.threads,
+                                     watched_cores)
                     outcome.update(engine=engine, batch=batch, round=index + 1)
                     launches.append(outcome)
 
@@ -461,6 +565,7 @@ def main() -> int:
                           f"{outcome['samples_per_sec']:>12,}/s  "
                           f"{instruments.get('workload_mib', instruments['peak_mib']):>7.0f} MiB  "
                           f"{watt_hours(instruments):>9}  {status}")
+                    note_activity(outcome)
 
     summary: dict = {}
     for engine in engines:
@@ -540,12 +645,18 @@ def main() -> int:
     # up front: a sync client woke mid-cell and cost OpenNN 4.6x while leaving
     # PyTorch alone, and the sample before the first launch saw 4% and called
     # the machine quiet.
-    busy_after = cpu_busy_fraction()
+    busy_after = cpu_busy_fraction(cores=watched_cores)
+    # And every second in between, judged over each launch's timed window.
+    # The edge samples cannot see a disturbance that starts after the first
+    # launch and ends before the last; on 2026-09-02 that shape cost three
+    # dense cells 4-12% and was filed as evidence.
+    busy_during, busy_during_at = busiest_second(launches)
 
     if busy_after > BUSY_THRESHOLD:
         print(f"\n  machine became busy during the run: {busy_after:.1%}")
 
-    machine_busy = machine_busy or busy_after > BUSY_THRESHOLD
+    machine_busy = (machine_busy or busy_after > BUSY_THRESHOLD
+                    or busy_during > BUSY_THRESHOLD)
 
     artifact = {
         "schema_version": 1,
@@ -562,6 +673,8 @@ def main() -> int:
         "clocks_locked": clocks_locked(),
         "machine_quiet": {"busy_before": round(busy_before, 4),
                           "busy_after": round(busy_after, 4),
+                          "busy_during_max": round(busy_during, 4),
+                          "busy_during_at": busy_during_at,
                           "threshold": BUSY_THRESHOLD,
                           "quiet": not machine_busy},
         "quality_gate": {"agrees": gate, "tolerance": args.tolerance,
@@ -602,13 +715,14 @@ def main() -> int:
     if git.get("dirty"):
         print("\n  dirty tree -> results/scratch/, not the evidence store")
     elif machine_busy:
-        # The larger of the two samples, because either can be what tripped
+        # The largest of the three readings, because any can be what tripped
         # the threshold: `busy_before` catches a machine that was already
-        # working, `busy_after` a sync client that woke mid-cell. Naming
-        # neither was a NameError on the one path where the warning matters,
-        # so a busy clean-tree run printed a traceback instead of its reason.
-        print(f"\n  machine was {max(busy_before, busy_after):.1%} busy -> "
-              "results/scratch/, not the evidence store")
+        # working, `busy_after` a sync client that woke mid-cell, and the
+        # per-second watch anything in between. Naming none was a NameError
+        # on the one path where the warning matters, so a busy clean-tree run
+        # printed a traceback instead of its reason.
+        print(f"\n  machine was {max(busy_before, busy_after, busy_during):.1%} "
+              "busy -> results/scratch/, not the evidence store")
     elif args.device == "cuda" and not clocks_locked():
         print("\n  clocks unlocked -> results/scratch/. Provisional: margins under"
               "\n  ~2% are not resolvable while the clock floats.")
