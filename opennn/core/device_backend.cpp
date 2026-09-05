@@ -25,6 +25,7 @@
 #include <sched.h>
 #endif
 #include "opennn/core/cuda/kernel_cast.cuh"
+#include "opennn/core/cuda/cudnn_matmul.h"
 
 namespace opennn
 {
@@ -1388,11 +1389,19 @@ namespace
              + watts_per_traffic * (clamp(traffic, lowest_traffic, highest_traffic) - lowest_traffic);
     }
 
+    // Where a candidate kernel comes from. This matters to the selection rule
+    // below and nowhere else: tile_traffic and tile_power_watts are a model of
+    // cuBLASLt's nvjet tiles, fitted on cuBLASLt's nvjet tiles, and they have
+    // nothing to say about an engine from another library.
+    enum class MatmulSource { CublasLt, Cudnn };
+
     struct LtMatmulCandidate
     {
         cublasLtMatmulAlgo_t algorithm{};
         size_t               workspace_bytes = 0;
         float                traffic = numeric_limits<float>::infinity();
+        MatmulSource         source = MatmulSource::CublasLt;
+        int                  cudnn_candidate = -1;
     };
 
     struct LtMatmulPlan
@@ -1404,6 +1413,17 @@ namespace
         cublasLtMatmulAlgo_t   algorithm{};
         bool                   has_algorithm = false;
         size_t                 workspace_bytes = 0;
+
+        // The cuDNN engine set for this same shape, when there is one, and the
+        // configuration the tuner chose out of it. These are an OVERLAY on the
+        // cuBLASLt fields above, never a replacement: algorithm and
+        // workspace_bytes always hold a usable cuBLASLt kernel, so "fall back
+        // to cuBLASLt" is a one-line branch at the call site and stays true
+        // even if a cuDNN execution fails at run time, years from now, on a
+        // driver nobody here has seen.
+        cudnn_matmul::Plan*    cudnn_plan = nullptr;
+        int                    cudnn_candidate = -1;
+        size_t                 cudnn_workspace_bytes = 0;
 
         vector<LtMatmulCandidate> candidates;
         bool                   tuned = true;
@@ -1421,16 +1441,32 @@ namespace
             swap(algorithm, other.algorithm);
             swap(has_algorithm, other.has_algorithm);
             swap(workspace_bytes, other.workspace_bytes);
+            swap(cudnn_plan, other.cudnn_plan);
+            swap(cudnn_candidate, other.cudnn_candidate);
+            swap(cudnn_workspace_bytes, other.cudnn_workspace_bytes);
             swap(candidates, other.candidates);
             swap(tuned, other.tuned);
         }
 
         ~LtMatmulPlan()
         {
+            cudnn_matmul::destroy(cudnn_plan);
             cublasLtMatrixLayoutDestroy(output_matrix_layout);
             cublasLtMatrixLayoutDestroy(b_matrix_layout);
             cublasLtMatrixLayoutDestroy(a_matrix_layout);
             cublasLtMatmulDescDestroy(matmul_descriptor);
+        }
+
+        // Called when the tuner has decided against cuDNN, or could not tune
+        // at all. The graph and its built plans are the only thing on this
+        // path that holds device memory of its own, and the benchmark reports
+        // peak memory, so an unused engine set is released rather than parked.
+        void release_cudnn() noexcept
+        {
+            cudnn_matmul::destroy(cudnn_plan);
+            cudnn_plan = nullptr;
+            cudnn_candidate = -1;
+            cudnn_workspace_bytes = 0;
         }
     };
 
@@ -1711,6 +1747,61 @@ namespace
         }
     }
 
+    // cuDNN ships a matmul engine set of its own, and for the dense
+    // benchmark's 8192x1024x1024 bf16 hidden layer it contains a kernel
+    // cuBLASLt does not expose: 189.6 us at 235 W against cuBLASLt's choice
+    // between 201.2 us at 169 W and 192.4 us at 265 W. An exhaustive sweep of
+    // all 13,460 cuBLASLt configurations for that shape has nothing
+    // comparable. cudnn_matmul::create() declines everything it has no
+    // measured reason to serve -- see the guards there -- so on most shapes
+    // this is one function call that returns nullptr and costs nothing.
+    //
+    // The candidates are appended to the SAME list the cuBLASLt algorithms
+    // are in, so there is one timing loop and one selection rule rather than
+    // two competing ones. They carry infinite traffic, which is not a
+    // pessimistic estimate but an admission: a cuDNN engine has no tile id,
+    // so tile_traffic cannot price it at all.
+    void add_cudnn_candidates(LtMatmulPlan& plan,
+                              int m, int n, int k,
+                              cublasOperation_t transA,
+                              cublasOperation_t transB,
+                              cublasLtEpilogue_t epilogue,
+                              cudaDataType_t dtype_a,
+                              cudaDataType_t dtype_b,
+                              cudaDataType_t out_dtype,
+                              int lda, int ldb, int ldd,
+                              bool beta_is_zero)
+    {
+        cudnn_matmul::Problem problem;
+        problem.m = m;
+        problem.n = n;
+        problem.k = k;
+        problem.transA = transA;
+        problem.transB = transB;
+        problem.epilogue = epilogue;
+        problem.dtype_a = dtype_a;
+        problem.dtype_b = dtype_b;
+        problem.out_dtype = out_dtype;
+        problem.lda = lda;
+        problem.ldb = ldb;
+        problem.ldd = ldd;
+        problem.beta_is_zero = beta_is_zero;
+
+        plan.cudnn_plan = cudnn_matmul::create(problem);
+        if (!plan.cudnn_plan) return;
+
+        const int count = cudnn_matmul::candidate_count(plan.cudnn_plan);
+        for (int candidate = 0; candidate < count; ++candidate)
+        {
+            LtMatmulCandidate entry;
+            entry.workspace_bytes = cudnn_matmul::candidate_workspace_bytes(plan.cudnn_plan, candidate);
+            entry.traffic = numeric_limits<float>::infinity();
+            entry.source = MatmulSource::Cudnn;
+            entry.cudnn_candidate = candidate;
+            plan.candidates.push_back(entry);
+        }
+    }
+
     LtMatmulPlan& get_lt_matmul_plan(
         int m, int n, int k,
         cublasOperation_t transA,
@@ -1808,25 +1899,126 @@ namespace
 
         add_wide_tile_candidates(plan, heuristics, m, n, dtype_a, dtype_b, out_dtype);
 
+        // The untuned default is the heuristic's first cuBLASLt algorithm,
+        // exactly as before. cuDNN candidates are appended after it and are
+        // never the default: cuDNN's own heuristic puts a 226 us engine first
+        // for the shape this path was added for, where the best configuration
+        // runs at 189.6, so an untimed cuDNN pick would be a downgrade. They
+        // are only ever selected by autotune_lt_plan, on measured time.
         if (!plan.candidates.empty())
         {
             plan.algorithm = plan.candidates.front().algorithm;
             plan.has_algorithm = true;
             plan.workspace_bytes = plan.candidates.front().workspace_bytes;
-            plan.tuned = plan.candidates.size() <= 1;
         }
 
+        add_cudnn_candidates(plan, m, n, k, transA, transB, epilogue,
+                             dtype_a, dtype_b, out_dtype, lda, ldb, ldd, beta_is_zero);
+
+        plan.tuned = plan.candidates.size() <= 1;
+
         return plans.emplace(key, std::move(plan)).first->second;
+    }
+
+    // --- verifying a candidate from another library -----------------------
+    //
+    // A cuBLASLt candidate is the same kernel family answering the same
+    // descriptor, so the tuner has never had to ask whether a candidate is
+    // CORRECT, only which is fastest. A cuDNN candidate is a different
+    // library reading the same memory through strides this file derived by
+    // hand, and a stride derived wrongly does not fail: it returns a
+    // confidently wrong tensor. So every cuDNN candidate is checked against
+    // the cuBLASLt answer on the caller's own data before it is timed, and a
+    // candidate that disagrees is dropped rather than ranked.
+    //
+    // The check reads three windows of the destination -- head, middle and
+    // tail -- rather than all of it. That is not a sample of a random
+    // process: an operand read through a wrong stride, or a bias broadcast
+    // along the wrong axis, is wrong in nearly every element, so a few
+    // thousand elements settle it, while the windows at the two ends are
+    // where a tail-handling bug would hide. It costs three 8 KB copies per
+    // candidate and no device memory at all, because it reuses the
+    // destination the tuner is already writing into -- run_lt_matmul_cached
+    // overwrites it with the real call the moment the tuner returns.
+    constexpr size_t verification_window_elements = 4096;
+
+    float bf16_bits_to_float(uint16_t bits)
+    {
+        const uint32_t widened = uint32_t(bits) << 16;
+        float value = 0.0f;
+        memcpy(&value, &widened, sizeof(value));
+        return value;
+    }
+
+    bool read_verification_windows(const void* source, size_t elements,
+                                   vector<uint16_t>& windows, cudaStream_t stream)
+    {
+        if (elements == 0) return false;
+
+        const size_t window = min(elements, verification_window_elements);
+        const size_t offsets[3] = {0, (elements - window) / 2, elements - window};
+
+        windows.resize(window * 3);
+
+        for (size_t index = 0; index < 3; ++index)
+            if (cudaMemcpyAsync(windows.data() + index * window,
+                                static_cast<const uint16_t*>(source) + offsets[index],
+                                window * sizeof(uint16_t),
+                                cudaMemcpyDeviceToHost, stream) != cudaSuccess)
+            {
+                device::reset_last_error();
+                return false;
+            }
+
+        if (cudaStreamSynchronize(stream) != cudaSuccess)
+        {
+            device::reset_last_error();
+            return false;
+        }
+
+        return true;
+    }
+
+    bool verification_windows_agree(const vector<uint16_t>& reference,
+                                    const vector<uint16_t>& candidate)
+    {
+        if (reference.empty() || reference.size() != candidate.size()) return false;
+
+        double sum_of_squares = 0.0;
+        for (const uint16_t bits : reference)
+        {
+            const double value = bf16_bits_to_float(bits);
+            sum_of_squares += value * value;
+        }
+        const double root_mean_square = sqrt(sum_of_squares / double(reference.size()));
+
+        // bf16 carries about three decimal digits, so 2e-2 is the gate the
+        // probe used against the same reference. Dividing by the tensor's own
+        // RMS rather than by each element keeps a sample that landed on a
+        // ReLU zero from manufacturing a failure.
+        const double floor_value = max(1e-6, 0.01 * root_mean_square);
+
+        for (size_t index = 0; index < reference.size(); ++index)
+        {
+            const double want = bf16_bits_to_float(reference[index]);
+            const double got  = bf16_bits_to_float(candidate[index]);
+            if (fabs(want - got) / max(floor_value, fabs(want)) > 2e-2) return false;
+        }
+
+        return true;
     }
 
     void autotune_lt_plan(LtMatmulPlan& plan,
                           const void* a_data, const void* b_data,
                           const void* c_data, void* d_data,
+                          const void* bias_data,
                           float alpha, float beta, size_t destination_bytes,
                           cudaStream_t stream)
     {
         if (plan.candidates.size() <= 1)
         {
+            plan.release_cudnn();
+            plan.candidates.clear();
             plan.tuned = true;
             return;
         }
@@ -1837,6 +2029,26 @@ namespace
             return device::reset_last_error();
 
         plan.tuned = true;
+
+        // alpha is deliberately absent from LtMatmulPlanKey: it is a call-time
+        // scalar that changes no cuBLASLt kernel. The cuDNN graph has no alpha
+        // node at all, so it can only ever serve alpha == 1, and a plan tuned
+        // under one alpha may be reached later under another. Drop the cuDNN
+        // candidates here rather than time them against a reference they
+        // cannot reproduce; run_lt_matmul_cached repeats the same test on
+        // every call, which is where the guarantee actually lives.
+        if (plan.cudnn_plan && alpha != 1.0f)
+        {
+            plan.release_cudnn();
+            erase_if(plan.candidates, [](const LtMatmulCandidate& candidate)
+                     { return candidate.source == MatmulSource::Cudnn; });
+
+            if (plan.candidates.size() <= 1)
+            {
+                plan.candidates.clear();
+                return;
+            }
+        }
 
         if (device::lanes_available() > 1) device::synchronize();
 
@@ -1886,6 +2098,9 @@ namespace
         }
         catch (const exception&)
         {
+            // No scratch, so nothing can be timed, so nothing can be verified
+            // either: the cuDNN engine set goes with the candidate list.
+            plan.release_cudnn();
             plan.candidates.clear();
             return;
         }
@@ -1895,33 +2110,143 @@ namespace
             : d_data;
 
         const device::CudaEvent start(cudaEventDefault), stop(cudaEventDefault);
-        constexpr int timed_runs = 3;
+        // Seven, not three. The custom-option sweep can emit a dozen
+        // candidates that share a tile and differ by less than the noise of
+        // three launches, and the pick below then varies between processes:
+        // measured, cuda-dense-infer moved over a 1.9% range run to run where
+        // the published build's spread was 0.04%. A benchmark that reports a
+        // different kernel each run is not reporting the library.
+        constexpr int timed_runs = 7;
 
         vector<float> times(plan.candidates.size(), numeric_limits<float>::infinity());
-        float best_ms = numeric_limits<float>::infinity();
-        size_t best = 0;
+
+        // Two anchors, because the selection below happens in two stages and
+        // the stages are ordered by the quality of the evidence behind them.
+        // best_lt is the fastest cuBLASLt candidate and is the ONLY anchor the
+        // traffic and modelled-energy rule ever sees; best_any is the fastest
+        // candidate whatever its source.
+        //
+        // Keeping them apart is what makes stage 1 safe: a cuDNN candidate
+        // cannot move the anchor the cuBLASLt rule is written against, so
+        // stage 1 selects exactly the kernel it selected before this file had
+        // heard of cuDNN, on every shape.
+        //
+        // It is NOT, on its own, what keeps the dense-train energy win. Stage
+        // 2 below can still override stage 1's pick, and stage 2 has no energy
+        // term, so on any shape where stage 1 traded time for modelled energy
+        // AND cuDNN qualifies, the trade can be handed back for a 2% gain.
+        // Two of cuda-dense-train's three GEMMs do qualify -- the input-delta
+        // product (m=inputs, n=rows, k=neurons, OP_T/OP_N, DEFAULT epilogue,
+        // bf16 in and out, beta 0) and the bf16-store weight gradient
+        // (DEFAULT epilogue, bf16 out) -- and the input-delta product is
+        // precisely the shape whose comment in tensor_operations.cpp records
+        // the tie-break buying 200.4 us at 172 W over 193.1 us at 271 W. So
+        // the 1.339x figure is at risk here and has to be re-measured, not
+        // assumed; OPENNN_MATMUL_CROSS_SOURCE_ANCHOR_FASTEST=1 below is the
+        // A/B for it.
+        size_t best_lt = plan.candidates.size();
+        float  best_lt_ms = numeric_limits<float>::infinity();
+        size_t best_any = plan.candidates.size();
+        float  best_any_ms = numeric_limits<float>::infinity();
+
+        const auto launch_lt = [&](size_t index)
+        {
+            const LtMatmulCandidate& candidate = plan.candidates[index];
+            return cublasLtMatmul(Backend::get_cublas_lt_handle(), plan.matmul_descriptor,
+                                  &alpha, a_data, plan.a_matrix_layout, b_data, plan.b_matrix_layout,
+                                  &beta, c_data, plan.output_matrix_layout,
+                                  destination, plan.output_matrix_layout,
+                                  &candidate.algorithm, workspace, candidate.workspace_bytes, stream);
+        };
+
         for (size_t index = 0; index < plan.candidates.size(); ++index)
         {
-            const auto& candidate = plan.candidates[index];
-            const auto run = [&]
-            {
-                return cublasLtMatmul(Backend::get_cublas_lt_handle(), plan.matmul_descriptor,
-                                      &alpha, a_data, plan.a_matrix_layout, b_data, plan.b_matrix_layout,
-                                      &beta, c_data, plan.output_matrix_layout,
-                                      destination, plan.output_matrix_layout,
-                                      &candidate.algorithm, workspace, candidate.workspace_bytes, stream);
-            };
-            if (run() != CUBLAS_STATUS_SUCCESS) { device::reset_last_error(); continue; }
+            if (plan.candidates[index].source != MatmulSource::CublasLt) continue;
+
+            if (launch_lt(index) != CUBLAS_STATUS_SUCCESS) { device::reset_last_error(); continue; }
             device::record_event(start.get(), stream);
             bool ok = true;
-            for (int i = 0; i < timed_runs && ok; ++i) ok = run() == CUBLAS_STATUS_SUCCESS;
+            for (int i = 0; i < timed_runs && ok; ++i) ok = launch_lt(index) == CUBLAS_STATUS_SUCCESS;
             device::record_event(stop.get(), stream);
             device::synchronize_event(stop.get());
             if (!ok) { device::reset_last_error(); continue; }
             float ms = 0.0f;
             CHECK_CUDA(cudaEventElapsedTime(&ms, start.get(), stop.get()));
             times[index] = ms;
-            if (ms < best_ms) { best_ms = ms; best = index; }
+            if (ms < best_lt_ms) { best_lt_ms = ms; best_lt = index; }
+        }
+
+        best_any = best_lt;
+        best_any_ms = best_lt_ms;
+
+        // --- the cuDNN candidates: verified against cuBLASLt, then timed ----
+        //
+        // The reference is whichever cuBLASLt kernel proved fastest, run once
+        // into the same destination and read back. If there is no cuBLASLt
+        // candidate that ran, there is no reference, and a cuDNN candidate is
+        // dropped unmeasured: this path exists to beat cuBLASLt on a shape
+        // cuBLASLt already serves, so "cuBLASLt could not run it" is not the
+        // case it was built for, and taking an unchecked answer there would
+        // trade a benchmark cell for the possibility of a silent wrong result.
+        if (plan.cudnn_plan)
+        {
+            const size_t destination_elements = destination_bytes / sizeof(uint16_t);
+
+            vector<uint16_t> reference_windows;
+            vector<uint16_t> candidate_windows;
+
+            const bool comparable =
+                best_lt < plan.candidates.size()
+                && !destination_is_operand
+                && destination_elements > 0
+                && launch_lt(best_lt) == CUBLAS_STATUS_SUCCESS
+                && read_verification_windows(d_data, destination_elements, reference_windows, stream);
+
+            if (!comparable) device::reset_last_error();
+
+            for (size_t index = 0; comparable && index < plan.candidates.size(); ++index)
+            {
+                const LtMatmulCandidate& candidate = plan.candidates[index];
+                if (candidate.source != MatmulSource::Cudnn) continue;
+
+                const auto launch_cudnn = [&]
+                {
+                    return cudnn_matmul::run(plan.cudnn_plan, candidate.cudnn_candidate,
+                                             a_data, b_data, bias_data, d_data, workspace);
+                };
+
+                if (!launch_cudnn()) continue;
+                if (cudaStreamSynchronize(stream) != cudaSuccess) { device::reset_last_error(); continue; }
+
+                if (!read_verification_windows(d_data, destination_elements, candidate_windows, stream))
+                    continue;
+
+                if (!verification_windows_agree(reference_windows, candidate_windows))
+                {
+                    // Loud, once per candidate, because this should never
+                    // happen: it means the strides cudnn_matmul::create()
+                    // derived do not describe the memory cuBLASLt was handed.
+                    // The candidate is dropped either way, so the library is
+                    // still correct -- but a reader who sees this line has a
+                    // layout bug to find, not a slow kernel.
+                    cerr << "cudnn matmul: candidate "
+                         << cudnn_matmul::candidate_name(plan.cudnn_plan, candidate.cudnn_candidate)
+                         << " disagreed with cuBLASLt and was dropped.\n";
+                    continue;
+                }
+
+                device::record_event(start.get(), stream);
+                bool ok = true;
+                for (int i = 0; i < timed_runs && ok; ++i) ok = launch_cudnn();
+                device::record_event(stop.get(), stream);
+                device::synchronize_event(stop.get());
+                if (!ok) { device::reset_last_error(); continue; }
+
+                float ms = 0.0f;
+                CHECK_CUDA(cudaEventElapsedTime(&ms, start.get(), stop.get()));
+                times[index] = ms;
+                if (ms < best_any_ms) { best_any_ms = ms; best_any = index; }
+            }
         }
 
         // Two kernels that take the same time need not cost the same energy:
@@ -1939,7 +2264,7 @@ namespace
         // inside the window. Any newly timed candidate at 191.8 us or less
         // pushed it back out and handed the cell to a 265 W kernel at 0.919x
         // energy, silently: no cell reports which tile it ran. Three
-        // conditions now, and only the last one mentions best_ms.
+        // conditions now, and only the last one mentions best_lt_ms.
         //
         //   * Traffic at or below OPENNN_LT_TRAFFIC_BUDGET, in units of 1e-4,
         //     default 120 = 0.0120. Every tile at or below 0.0120 measured
@@ -1963,32 +2288,59 @@ namespace
         //     extrapolated power model can cost a shape nobody has measured.
         //
         // OPENNN_LT_TILE_TOLERANCE=0 still switches the rule off entirely and
-        // restores the pick by time alone, which is the A/B.
+        // restores the pick by time alone -- now across BOTH sources, which is
+        // what that A/B has always meant: whatever measured fastest, run it.
         const float tolerance =
             float(clamp(env_int_or("OPENNN_LT_TILE_TOLERANCE", 10), 0LL, 100LL)) / 100.0f;
         const float traffic_budget =
             float(clamp(env_int_or("OPENNN_LT_TRAFFIC_BUDGET", 120), 1LL, 10000LL)) / 10000.0f;
 
-        if (tolerance > 0.0f && best_ms < numeric_limits<float>::infinity())
+        // ------------------------------------------------------------------
+        // STAGE 1 -- inside cuBLASLt, unchanged.
+        //
+        // Exactly the rule above, anchored on best_lt and looking only at
+        // cuBLASLt candidates. A cuDNN candidate has infinite traffic, so the
+        // `traffic > traffic_budget` test would have excluded it anyway; it is
+        // skipped explicitly so that the reason is stated rather than
+        // implied. The reason matters: it is not that a cuDNN engine moves too
+        // much data. It is that nobody knows how much data it moves.
+        // tile_traffic reads a cuBLASLt tile id and tile_power_watts is a
+        // two-point fit over cuBLASLt nvjet tiles; asking either of them about
+        // a cuDNN engine does not produce a conservative estimate, it produces
+        // a fabricated measurement -- and this rule then uses that fabrication
+        // to overrule a real one. The measured cuDNN engine draws 235 W. The
+        // model would price it at 265 W and reject it on that basis.
+        // ------------------------------------------------------------------
+        size_t best = best_lt;
+
+        if (tolerance > 0.0f && best_lt < plan.candidates.size())
         {
-            const float allowed_ms = best_ms * (1.0f + tolerance);
-            const float allowed_energy = best_ms * tile_power_watts(plan.candidates[best].traffic);
-            float least_traffic = plan.candidates[best].traffic;
+            const float allowed_ms = best_lt_ms * (1.0f + tolerance);
+            const float allowed_energy = best_lt_ms * tile_power_watts(plan.candidates[best_lt].traffic);
+            float least_traffic = plan.candidates[best_lt].traffic;
 
             for (size_t index = 0; index < plan.candidates.size(); ++index)
             {
                 const LtMatmulCandidate& candidate = plan.candidates[index];
 
+                if (candidate.source != MatmulSource::CublasLt) continue;
                 if (candidate.traffic > traffic_budget) continue;
                 if (candidate.traffic > least_traffic) continue;
-                // Same tile, so same traffic: take the faster of the two.
-                // The custom-option sweep above emits several candidates per
-                // tile precisely because the first valid option is up to 55%
-                // slower than the best one, so selecting the lowest-traffic
-                // tile is not enough -- without this the pick would be the
-                // first option in scan order, which is the one the sweep was
-                // added to stop using.
-                if (candidate.traffic == least_traffic && times[index] >= times[best]) continue;
+                // Same tile, so same traffic: prefer the faster option,
+                // but only when it is faster by more than the measurement can
+                // resolve. The custom-option sweep above emits several
+                // candidates per tile precisely because the first valid option
+                // is up to 55% slower than the best one, so selecting the
+                // lowest-traffic tile is not enough -- without this the pick
+                // would be the first option in scan order, which is the one
+                // the sweep was added to stop using.
+                // Without the margin this comparison is decided by noise and
+                // the chosen kernel stops being a property of the shape.
+                // Candidates are enumerated in a fixed order, so ties keep the
+                // first and the pick is reproducible across processes.
+                constexpr float resolvable = 0.02f;
+                if (candidate.traffic == least_traffic
+                    && times[index] >= times[best] * (1.0f - resolvable)) continue;
                 if (times[index] > allowed_ms) continue;
                 if (times[index] * tile_power_watts(candidate.traffic) >= allowed_energy) continue;
 
@@ -1997,8 +2349,133 @@ namespace
             }
         }
 
-        plan.algorithm = plan.candidates[best].algorithm;
-        plan.workspace_bytes = plan.candidates[best].workspace_bytes;
+        // The cuBLASLt kernel the library would run if cuDNN did not exist.
+        // It is stored unconditionally, so plan.algorithm is always a valid
+        // fallback no matter what stage 2 decides or what happens at run time.
+        if (best < plan.candidates.size())
+        {
+            plan.algorithm = plan.candidates[best].algorithm;
+            plan.workspace_bytes = plan.candidates[best].workspace_bytes;
+            plan.has_algorithm = true;
+        }
+
+        // ------------------------------------------------------------------
+        // STAGE 2 -- between kernel libraries, on measured time alone.
+        //
+        // THE PROBLEM THIS SOLVES, stated plainly, because it is the hard part
+        // of the change and it must not be papered over. On the dense
+        // inference GEMM the cuDNN engine is FASTER than the cuBLASLt kernel
+        // stage 1 chose -- 189.6 us against 201.2 -- and uses MORE energy per
+        // GEMM -- 44.6 mJ against 34.0. Feeding it into stage 1 as one more
+        // candidate therefore changes nothing: the rule prefers the lean tile,
+        // the cell keeps losing throughput, and the whole cuDNN path is dead
+        // code. Something has to decide, explicitly, what six percent of
+        // throughput is worth.
+        //
+        // WHAT THIS DOES NOT PRETEND TO DO. It does not price the trade. It
+        // cannot: pricing it needs the candidate's energy, and energy is not
+        // measurable here. NVML's board power is a one-second average and its
+        // sample ring needs about a second of window with the ends discarded;
+        // the probe spent 1.5 s per configuration to get a watt figure it
+        // could stand behind. Sixty configurations at 1.5 s is ninety seconds
+        // per shape, inside a plan cache that fills at warmup. A library
+        // cannot spend that, and a modelled substitute is exactly the
+        // fabrication stage 1's comment refuses.
+        //
+        // WHAT IT DOES INSTEAD. It asks the one question the tuner has real
+        // evidence for -- is the difference in time REAL? -- and defers to the
+        // kernel it understands whenever the answer is no.
+        //
+        //   * A cuDNN candidate is taken only when it beats the cuBLASLt
+        //     choice by more than OPENNN_MATMUL_CROSS_SOURCE_GAIN percent,
+        //     default 2. Two is not a trade rate, it is a noise floor: the
+        //     comment on timed_runs above records that near-tied candidates
+        //     moved this cell over a 1.9% range run to run. Below that margin
+        //     the two kernels are the same speed and the library keeps the
+        //     cuBLASLt one -- the one whose energy behaviour is modelled, whose
+        //     tile is known, and whose selection has measured evidence behind
+        //     it. Above it the difference is real and the library has no basis
+        //     on which to spend it.
+        //   * Nothing else. In particular, no modelled energy term: see above.
+        //
+        // WHAT THE MARGIN IS, AND WHAT IT IS NOT. The margin never mentions
+        // this shape, this card or this margin of victory: it is a statement
+        // about evidence, and any value under the 6.1% this cell offers gives
+        // the same answer here. But the margin is not the load-bearing part of
+        // the rule -- the ANCHOR is, and it is worth being blunt about that
+        // rather than letting the 2% carry a claim it does not support.
+        //
+        // The anchor is times[best]: the kernel stage 1 chose. Stage 1 is
+        // allowed to spend up to OPENNN_LT_TILE_TOLERANCE (10%) of time to buy
+        // modelled energy, so measuring the cross-source gain against its pick
+        // means a cuDNN engine has to beat a deliberately slowed-down kernel by
+        // 2%, not the fastest cuBLASLt kernel by 2%. On the dense inference
+        // GEMM that is the difference between a 6.1% margin (against the lean
+        // 201.2 us tile stage 1 picked) and a 1.5% one (against cuBLASLt's
+        // fastest at 192.4 us) -- and 1.5% is below the noise floor the margin
+        // is set to, so the anchor, not the margin, is why cuDNN is taken here.
+        //
+        // That anchor is defensible -- "is there a measurably faster kernel
+        // than the one we would actually run" is the question a caller cares
+        // about -- but its consequence must be stated: where stage 1 traded
+        // time for energy, stage 2 can hand the trade back without pricing it.
+        // OPENNN_MATMUL_CROSS_SOURCE_ANCHOR_FASTEST=1 anchors on the fastest
+        // cuBLASLt candidate instead, so cuDNN must beat ANY cuBLASLt kernel
+        // by the margin; that is the stricter reading of "cuDNN reaches a
+        // kernel cuBLASLt does not expose", and it is the A/B that says what
+        // the loose anchor costs in energy on the training cells.
+        //
+        // WHAT IT COSTS, HONESTLY. On a shape where a cuDNN engine is, say, 4%
+        // faster and 40% hotter, this takes the throughput and loses the
+        // energy, and nothing in the library will notice. That gap is real and
+        // it closes only with a per-candidate energy measurement the tuner
+        // cannot afford. Until then it is a visible default with three knobs
+        // rather than a decision buried in a tie-break:
+        // OPENNN_MATMUL_CROSS_SOURCE_GAIN raises the bar,
+        // OPENNN_MATMUL_CROSS_SOURCE_ANCHOR_FASTEST moves what the bar is
+        // measured against, and OPENNN_CUDNN_MATMUL=0 removes cuDNN from the
+        // candidate set outright and restores the previous behaviour exactly.
+        // ------------------------------------------------------------------
+        const float cross_source_gain =
+            float(clamp(env_int_or("OPENNN_MATMUL_CROSS_SOURCE_GAIN", 2), 0LL, 1000LL)) / 100.0f;
+
+        const bool anchor_on_fastest_lt =
+            env_flag_enabled("OPENNN_MATMUL_CROSS_SOURCE_ANCHOR_FASTEST", false);
+
+        size_t chosen = best;
+
+        if (tolerance <= 0.0f)
+        {
+            // The A/B: pick by time alone, across every source.
+            chosen = best_any;
+        }
+        else if (best_any < plan.candidates.size()
+                 && plan.candidates[best_any].source == MatmulSource::Cudnn
+                 && best < plan.candidates.size()
+                 && best_any_ms * (1.0f + cross_source_gain)
+                        < (anchor_on_fastest_lt ? best_lt_ms : times[best]))
+        {
+            chosen = best_any;
+        }
+
+        if (chosen < plan.candidates.size()
+            && plan.candidates[chosen].source == MatmulSource::Cudnn)
+        {
+            plan.cudnn_candidate = plan.candidates[chosen].cudnn_candidate;
+            plan.cudnn_workspace_bytes = plan.candidates[chosen].workspace_bytes;
+
+            if (cudnn_matmul::verbose())
+                cerr << "cudnn matmul: chose "
+                     << cudnn_matmul::candidate_name(plan.cudnn_plan, plan.cudnn_candidate)
+                     << " at " << times[chosen] * 1000.0f / timed_runs << " us against cuBLASLt's "
+                     << (best < plan.candidates.size() ? times[best] * 1000.0f / timed_runs : 0.0f)
+                     << " us\n";
+        }
+        else
+        {
+            plan.release_cudnn();
+        }
+
         plan.candidates.clear();
     }
 }
@@ -2085,9 +2562,47 @@ void run_lt_matmul_cached(
     const void* const c_data = addend ? addend : d_data;
 
     if (!plan.tuned)
-        autotune_lt_plan(plan, a_data, b_data, c_data, d_data, alpha, beta,
+        autotune_lt_plan(plan, a_data, b_data, c_data, d_data, bias_pointer, alpha, beta,
                          size_t(ldd ? ldd : m) * size_t(n) * matmul_dtype_bytes(out_dtype),
                          device::get_compute_stream());
+
+    // The cuDNN overlay, when the tuner chose one. Three things are checked
+    // here rather than trusted from the plan, because none of them is part of
+    // LtMatmulPlanKey and so none of them is guaranteed to match the call that
+    // tuned this plan: the cuDNN graph has no alpha node, no beta node and no
+    // second output, so alpha must be 1, the epilogue must not be writing an
+    // auxiliary tensor, and beta is already pinned by the key. A plan reached
+    // with any other combination silently falls through to cuBLASLt below,
+    // which is the same kernel it would have run yesterday.
+    //
+    // cudnn_matmul::run returns false instead of throwing, so an engine that
+    // stops working -- a driver change, a workspace that could not be raised
+    // -- costs one wasted launch attempt and then the cuBLASLt kernel, not an
+    // exception in the middle of a training step.
+    if (plan.cudnn_plan && plan.cudnn_candidate >= 0
+        && alpha == 1.0f && beta == 0.0f && !aux_pointer)
+    {
+        void* cudnn_workspace = nullptr;
+        bool have_workspace = true;
+        try
+        {
+            cudnn_workspace = ensure_shared_scratch(plan.cudnn_workspace_bytes);
+        }
+        catch (const exception&)
+        {
+            have_workspace = false;
+        }
+
+        if (have_workspace
+            && cudnn_matmul::run(plan.cudnn_plan, plan.cudnn_candidate,
+                                 a_data, b_data, bias_pointer, d_data, cudnn_workspace))
+            return;
+
+        // It declined once; it will decline again. Give the shape back to
+        // cuBLASLt for the life of the plan rather than pay the failed launch
+        // on every forward pass.
+        plan.release_cudnn();
+    }
 
     CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(),
                                 plan.matmul_descriptor,

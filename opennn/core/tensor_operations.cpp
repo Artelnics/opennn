@@ -1776,6 +1776,15 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
         ? bias_for_gemm_bf16(bias)
         : bias.get_data();
 
+    // Everything below reaches the GPU through run_lt_matmul_cached, and that
+    // is now a choice between two kernel libraries rather than one: a large
+    // bf16 GEMM with a bias and ReLU epilogue also gets cuDNN's matmul engine
+    // set offered to it, timed against cuBLASLt's and verified against
+    // cuBLASLt's answer before it can be selected. Nothing about this function
+    // changes -- the operands, the epilogue and the layouts are the same
+    // either way, and cuDNN is declined for every shape it was not measured
+    // on. See device_backend.cpp's autotune_lt_plan for the selection rule and
+    // core/cuda/cudnn_matmul.cpp for the graph.
     const Index chunk = pre_activation ? Index(0) : gemm_row_chunk();
     const bool chunked = chunk > 0 && Index(total_rows) > chunk;
 
@@ -2100,8 +2109,24 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
         {output_columns, input_columns, total_rows,
          int(wgrad_epilogue), int(delta_dtype), int(input_dtype)});
 
+    // ... except that the constants were not arithmetic, they were a
+    // measurement, and deleting them cost 27% of cuda-dense-train: 7.76 M
+    // samples/s against 10.78 M, reproduced across four interleaved arms with
+    // the tile tie-break both on and off, so the cause is this branch and not
+    // the selection rule. For a weight gradient this shape, cuBLASLt's
+    // BGRADA epilogue writing an fp32 destination is far slower than storing
+    // bf16 and casting, whatever it saves on the separate bias reduction.
+    // They are restored with the number attached. Choosing between the two by
+    // measurement rather than by shape needs the store to be a candidate the
+    // tuner can time, which the plan cache cannot express today: it selects
+    // among cuBLASLt algorithms for one call, not between two different call
+    // shapes. That is the candidate abstraction in the consolidation plan,
+    // and until it exists this predicate is the honest form of the choice.
+    const bool skinny_wgrad = Index(output_columns) * Index(input_columns) <= Index(64) * 1024
+                           && Index(total_rows) >= 4 * Index(max(output_columns, input_columns));
+
     const bool direct_fp32_store = !output_delta.is_bf16()
-        || (!store_declined && !force_staged);
+        || (!store_declined && !force_staged && !skinny_wgrad);
 
     bool stored = false;
     bool bias_stored = false;
