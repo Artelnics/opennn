@@ -218,6 +218,48 @@ static Index batchnorm_target_blocks()
     return target;
 }
 
+// Blocks the backward reduce is compiled to fit per multiprocessor. This is a
+// register cap, not a grid heuristic, so it is deliberately a literal rather
+// than a second use of BN_REDUCE_BLOCKS_PER_SM: retuning the grid must not
+// silently retune ptxas. At BN_THREADS = 256 it caps the kernel at
+// 65536 / (256 * 4) = 64 registers per thread. Shared memory is not the binding
+// term -- batchnorm_store_partials takes 16 KB per block at VEC = 8 and the card
+// reports 100 KB per SM, so four blocks fit with room to spare.
+//
+// Measured from cnn-train-opennn.sqlite (registersPerThread, so no build needed):
+// the backward reduce compiles to 77 registers today, which rounds to 80 and
+// yields floor(65536 / (256 * 80)) = 3 resident blocks. Dropping the y vector
+// below returns 8 of those, landing near 69 -- still above 64, so this pragma is
+// asking ptxas for roughly five more registers than the source change frees. It
+// is a bet, and it is numerically free either way (a spill stores exact bits),
+// but it must be checked rather than assumed.
+//
+// Two caveats the grid imposes, both measured over the same capture:
+//   - Only 65.3% of this kernel's time runs on grids that offer four or more
+//     blocks per SM. The other 34.7% is the narrow-channel layers, where lanes
+//     bottom out at BN_MIN_REDUCE_LANES and row_blocks tops out at
+//     BN_MAX_ROW_BLOCKS, giving 128 blocks on a 70 SM card -- 1.83 per SM. No
+//     register cap can help those; they are short of blocks, not of occupancy.
+//   - So the upside here is bounded by that 65.3%, not by the whole kernel.
+//
+// Check `nvcc -Xptxas -v` after building: if the backward reduce reports any
+// spill stores, set this to 3 -- a spill in that row loop costs more than the
+// wave, and 3 is what the kernel already achieves, so 3 makes this a no-op.
+constexpr int BN_REDUCE_MIN_BLOCKS = 4;
+static_assert(BN_REDUCE_MIN_BLOCKS <= int(BN_REDUCE_BLOCKS_PER_SM),
+              "The register cap must not ask for more resident blocks than the grid is sized to supply.");
+
+// Which source the fused ReLU's backward consults to decide whether an element
+// was clamped. This was a pair of runtime pointers -- `mask ? bit : (y && ...)`
+// -- tested once per element, which is a branch the compiler cannot hoist and
+// which forces the y vector to stay live on every path even when y is null.
+// In this network mask is always set and y is always null (the wrapper nulls y
+// as soon as a mask exists), so every launch paid for a branch it never took
+// and for VEC registers it never read. As a template parameter the unused arm
+// disappears at compile time; the three cases below reproduce the runtime
+// ternary exactly, so the arithmetic is unchanged bit for bit.
+enum BnReluSource { BN_RELU_NONE = 0, BN_RELU_MASK = 1, BN_RELU_Y = 2 };
+
 __device__ static inline unsigned batchnorm_mask_bits(const uint8_t* mask, const Index i, const int c0)
 {
     return mask ? unsigned(mask[i / 8]) >> (c0 & 4) : 0xFFu;
@@ -503,8 +545,9 @@ void batchnorm_forward_fused_cuda(const Index rows, const Index channels,
     else                   launch_elementwise_strided(groups, batchnorm_forward_apply_kernel<T, VEC, false, false>, checked_int(channels), x, residual, scale_shift, y, mask);
 }
 
-template<typename T, int VEC, bool XHAT_FROM_Y>
-__global__ void batchnorm_backward_reduce_kernel(const Index rows, const int channels,
+template<typename T, int VEC, bool XHAT_FROM_Y, int RELU_SRC>
+__global__ void __launch_bounds__(BN_THREADS, BN_REDUCE_MIN_BLOCKS)
+batchnorm_backward_reduce_kernel(const Index rows, const int channels,
                                                  const Index rows_per_block,
                                                  const T* __restrict__ x,
                                                  const T* __restrict__ dy,
@@ -520,6 +563,11 @@ __global__ void batchnorm_backward_reduce_kernel(const Index rows, const int cha
     const Index row_begin = Index(blockIdx.y) * rows_per_block;
     const Index row_end = min(rows, row_begin + rows_per_block);
 
+    // These are the only per-channel values the row loop needs, and the thread's
+    // channel is fixed for the whole kernel, so they are loaded once here rather
+    // than once per row. b and ig exist only on the reconstruct-from-y path; the
+    // guard below keeps them out of the register file on the path this network
+    // actually takes, where they held a constant 0 and 1.
     float s1[VEC], s2[VEC], m[VEC], iv[VEC], b[VEC], ig[VEC];
     #pragma unroll
     for (int k = 0; k < VEC; ++k)
@@ -529,27 +577,47 @@ __global__ void batchnorm_backward_reduce_kernel(const Index rows, const int cha
         const bool ok = c < channels;
         m[k]  = ok ? mean[c] : 0.0f;
         iv[k] = ok ? inv_var[c] : 0.0f;
-        b[k]  = (ok && XHAT_FROM_Y) ? beta[c] : 0.0f;
-        const float g = (ok && XHAT_FROM_Y) ? gamma[c] : 1.0f;
-        ig[k] = fabsf(g) > 1e-30f ? 1.0f / g : 0.0f;
+        if constexpr (XHAT_FROM_Y)
+        {
+            b[k] = ok ? beta[c] : 0.0f;
+            const float g = ok ? gamma[c] : 1.0f;
+            ig[k] = fabsf(g) > 1e-30f ? 1.0f / g : 0.0f;
+        }
+        else
+        {
+            b[k] = 0.0f;
+            ig[k] = 1.0f;
+        }
     }
 
     if (c0 < channels)
     {
-        float vdy[VEC], vy[VEC], vx[VEC];
+        // y is read only to rebuild x_hat from it, or to recover the ReLU sign
+        // when no mask was stored. Both are compile-time facts now, so on the
+        // mask path the load, the branch and the vector all vanish and the loop
+        // body is two 16 B loads, one byte load and VEC fused multiply-adds --
+        // which is what lets the compiler software-pipeline it.
+        constexpr bool NEEDS_Y = (RELU_SRC == BN_RELU_Y) || XHAT_FROM_Y;
+        float vdy[VEC];
+        [[maybe_unused]] float vy[VEC];
+        [[maybe_unused]] float vx[VEC];
         for (Index r = row_begin + threadIdx.y; r < row_end; r += blockDim.y)
         {
             const Index i = r * channels + c0;
             VecIO<T, VEC>::load_float(dy + i, vdy);
-            if (y) VecIO<T, VEC>::load_float(y + i, vy);
-            if (!XHAT_FROM_Y) VecIO<T, VEC>::load_float(x + i, vx);
-            const unsigned bits = batchnorm_mask_bits(mask, i, c0);
+            if constexpr (NEEDS_Y) VecIO<T, VEC>::load_float(y + i, vy);
+            if constexpr (!XHAT_FROM_Y) VecIO<T, VEC>::load_float(x + i, vx);
+            unsigned bits = 0xFFu;
+            if constexpr (RELU_SRC == BN_RELU_MASK) bits = batchnorm_mask_bits(mask, i, c0);
             #pragma unroll
             for (int k = 0; k < VEC; ++k)
             {
                 float g = vdy[k];
-                if (mask ? !((bits >> k) & 1u) : (y && vy[k] <= 0.0f)) g = 0.0f;
-                const float x_hat = XHAT_FROM_Y ? (vy[k] - b[k]) * ig[k] : (vx[k] - m[k]) * iv[k];
+                if constexpr (RELU_SRC == BN_RELU_MASK) { if (!((bits >> k) & 1u)) g = 0.0f; }
+                else if constexpr (RELU_SRC == BN_RELU_Y) { if (vy[k] <= 0.0f) g = 0.0f; }
+                float x_hat;
+                if constexpr (XHAT_FROM_Y) x_hat = (vy[k] - b[k]) * ig[k];
+                else                       x_hat = (vx[k] - m[k]) * iv[k];
                 s1[k] += g;
                 s2[k] += g * x_hat;
             }
@@ -571,7 +639,7 @@ __global__ void batchnorm_backward_finalize_kernel(const int channels, const int
     dgamma[c] = s2;
 }
 
-template<typename T, int VEC>
+template<typename T, int VEC, int RELU_SRC, bool HAS_DPRE>
 __global__ void batchnorm_backward_apply_kernel(const Index groups, const int channels,
                                                 const float inv_rows,
                                                 const T* __restrict__ x,
@@ -592,29 +660,36 @@ __global__ void batchnorm_backward_apply_kernel(const Index groups, const int ch
         const int c0 = int(gi % channel_groups) * VEC;
         const Index i = (gi / channel_groups) * channels + c0;
 
-        float vdy[VEC], vy[VEC], vx[VEC], out[VEC], pre[VEC];
+        // dpre is the residual branch's gradient and exists on 16 of this
+        // network's 49 fused normalisations. It was a runtime pointer, so the
+        // other 33 still carried pre[VEC] live to a store they never made.
+        float vdy[VEC], vx[VEC], out[VEC];
+        [[maybe_unused]] float vy[VEC];
+        [[maybe_unused]] float pre[VEC];
         VecIO<T, VEC>::load_float(dy_dx + i, vdy);
-        if (y) VecIO<T, VEC>::load_float(y + i, vy);
+        if constexpr (RELU_SRC == BN_RELU_Y) VecIO<T, VEC>::load_float(y + i, vy);
         VecIO<T, VEC>::load_float(x + i, vx);
-        const unsigned bits = batchnorm_mask_bits(mask, i, c0);
+        unsigned bits = 0xFFu;
+        if constexpr (RELU_SRC == BN_RELU_MASK) bits = batchnorm_mask_bits(mask, i, c0);
 
         #pragma unroll
         for (int k = 0; k < VEC; ++k)
         {
             const int c = c0 + k;
             float g = vdy[k];
-            if (mask ? !((bits >> k) & 1u) : (y && vy[k] <= 0.0f)) g = 0.0f;
-            pre[k] = g;
+            if constexpr (RELU_SRC == BN_RELU_MASK) { if (!((bits >> k) & 1u)) g = 0.0f; }
+            else if constexpr (RELU_SRC == BN_RELU_Y) { if (vy[k] <= 0.0f) g = 0.0f; }
+            if constexpr (HAS_DPRE) pre[k] = g;
             const float gm = gamma[c], iv = inv_var[c];
             const float x_hat = (vx[k] - mean[c]) * iv;
             out[k] = gm * iv * (g - dbeta[c] * inv_rows - x_hat * dgamma[c] * inv_rows);
         }
-        if (dpre) VecIO<T, VEC>::store_float(dpre + i, pre);
+        if constexpr (HAS_DPRE) VecIO<T, VEC>::store_float(dpre + i, pre);
         VecIO<T, VEC>::store_float(dy_dx + i, out);
     }
 }
 
-template<typename T, int VEC, bool XHAT_FROM_Y>
+template<typename T, int VEC, bool XHAT_FROM_Y, int RELU_SRC>
 static void batchnorm_backward_launch(const Index rows, const Index channels,
                                       const T* x, T* dy_dx, const T* y, const uint8_t* mask,
                                       const float* gamma, const float* beta,
@@ -623,15 +698,25 @@ static void batchnorm_backward_launch(const Index rows, const Index channels,
                                       float* partials, cudaStream_t stream)
 {
     const BnReduceLaunch g = batchnorm_reduce_launch(rows, channels, VEC);
-    OPENNN_CUDA_LAUNCH((batchnorm_backward_reduce_kernel<T, VEC, XHAT_FROM_Y><<<g.reduce_grid, g.reduce_block, 0, stream>>>(
+    OPENNN_CUDA_LAUNCH((batchnorm_backward_reduce_kernel<T, VEC, XHAT_FROM_Y, RELU_SRC><<<g.reduce_grid, g.reduce_block, 0, stream>>>(
         rows, checked_int(channels), g.rows_per_block, x, dy_dx, y, mask, gamma, beta, mean, inv_var, partials)));
 
     OPENNN_CUDA_LAUNCH((batchnorm_backward_finalize_kernel<<<g.finalize_grid, g.finalize_block, 0, stream>>>(
         checked_int(channels), checked_int(g.row_blocks), partials, dgamma, dbeta)));
 
-    launch_elementwise_strided(rows * (channels / VEC), batchnorm_backward_apply_kernel<T, VEC>,
-                               checked_int(channels), 1.0f / static_cast<float>(rows),
-                               x, dy_dx, y, mask, gamma, mean, inv_var, dgamma, dbeta, dpre);
+    // The geometry, and with it the order the partials are summed in, does not
+    // depend on RELU_SRC or on whether dpre is written: both only select which
+    // arms of the same expression survive compilation, so every instantiation
+    // reduces the same addends in the same order.
+    const Index groups = rows * (channels / VEC);
+    if (dpre)
+        launch_elementwise_strided(groups, batchnorm_backward_apply_kernel<T, VEC, RELU_SRC, true>,
+                                   checked_int(channels), 1.0f / static_cast<float>(rows),
+                                   x, dy_dx, y, mask, gamma, mean, inv_var, dgamma, dbeta, dpre);
+    else
+        launch_elementwise_strided(groups, batchnorm_backward_apply_kernel<T, VEC, RELU_SRC, false>,
+                                   checked_int(channels), 1.0f / static_cast<float>(rows),
+                                   x, dy_dx, y, mask, gamma, mean, inv_var, dgamma, dbeta, dpre);
 }
 
 template<typename T>
@@ -653,10 +738,22 @@ void batchnorm_backward_fused_cuda(const Index rows, const Index channels,
 
     const bool from_y = xhat_from_y && y != nullptr && beta != nullptr;
 
+    // Exactly the runtime ternary the two kernels used to evaluate per element,
+    // hoisted to the launch. mask and y are mutually exclusive by the line
+    // above, so from_y (which needs y) can only occur on the BN_RELU_Y arm and
+    // the other three combinations are never instantiated.
+    const int relu_src = mask ? BN_RELU_MASK : (y ? BN_RELU_Y : BN_RELU_NONE);
+
     const auto launch = [&]<int VEC>()
     {
-        if (from_y) batchnorm_backward_launch<T, VEC, true >(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
-        else        batchnorm_backward_launch<T, VEC, false>(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
+        if (from_y)
+            batchnorm_backward_launch<T, VEC, true, BN_RELU_Y>(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
+        else if (relu_src == BN_RELU_MASK)
+            batchnorm_backward_launch<T, VEC, false, BN_RELU_MASK>(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
+        else if (relu_src == BN_RELU_Y)
+            batchnorm_backward_launch<T, VEC, false, BN_RELU_Y>(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
+        else
+            batchnorm_backward_launch<T, VEC, false, BN_RELU_NONE>(rows, channels, x, dy_dx, y, mask, gamma, beta, mean, inv_var, dpre, dgamma, dbeta, partials, stream);
     };
     if (wide)      launch.template operator()<vec16<T>>();
     else if (vec2) launch.template operator()<2>();
