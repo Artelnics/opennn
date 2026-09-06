@@ -59,10 +59,11 @@ that captured its batch would not lose this cell by 5×.
 On the CPU both engines run the same oneDNN LSTM primitive, and there the
 cell is almost nothing but that primitive: 3.185 ms of a 3.290 ms
 instrumented batch, 98.4% of OpenNN's LSTM layer. Inference (1.158×) is the
-0.5 ms by which PyTorch's batch is longer, and where that time goes is not
-measured; training (1.774×) is 11.0 ms against 19.5 ms, and the 8.5 ms
-difference is unattributed too. Both are in the *Why* section as arithmetic,
-not as attribution.
+0.5 ms by which PyTorch's batch is longer: 0.2 ms more inside the oneDNN
+call itself and 0.3 ms of copies and concatenations around it; training
+(1.774×) is 11.0 ms against 19.5 ms, and the 8.5 ms is mostly inside
+PyTorch's two oneDNN calls, with 3 ms of autograd's own time around the
+backward node. Both are in the *Why* section with the profiles.
 
 ## What is measured
 
@@ -532,12 +533,17 @@ around the primitive, the 128 → 1 output layer included, is about 0.10 ms.
 That residual is the size of the instrument's own cost, so it bounds any
 runtime effect on OpenNN's side at roughly 3% of the batch, not at zero.
 
-PyTorch's batch is 3.696 ms — 0.512 ms longer. Where that half-millisecond
-goes is *not* measured: no PyTorch-side CPU profile exists for this cell, so
-this document cannot attribute it, and it cannot rule out that PyTorch's
-oneDNN build executes the primitive faster or slower than OpenNN's, or with
-a different thread count (see the caveats). What can be said is that it is
-not in OpenNN.
+PyTorch's batch is 3.696 ms — 0.512 ms longer, and this round it was
+profiled (`torch.profiler`, CPU activities, the driver's own model replaying
+its resident window, 200 batches after 20 warm; 3.683 ms of self CPU time
+per batch, within 0.4% of the published batch): `aten::mkldnn_rnn_layer`
+3.329 ms, 90.4%, against OpenNN's 3.124 ms in the same primitive; two
+`aten::copy_` per batch, 0.186 ms; `aten::cat`, `aten::fill_`,
+`aten::lstm` and the output `aten::addmm` together 0.10 ms. So 0.2 ms of the
+half-millisecond is inside the primitive as PyTorch's oneDNN build reaches
+it (a different build from OpenNN's, see the caveats, so not a statement
+about either engine's call), and 0.3 ms is the copies and concatenations
+`nn.LSTM` wraps around it, which OpenNN does not make.
 
 Two runtime effects were found while this cell was being tuned; both are now
 neutralised for both engines by the runner, so neither is inside the
@@ -558,36 +564,64 @@ Both drivers print `flush_denormals=on`.
 ### `cpu-lstm-train`, 1.774×: measured, not attributed
 
 Training runs oneDNN's LSTM forward (training mode, with its workspace) and
-backward primitives on both sides. OpenNN's batch is 11.06 ms against
-PyTorch's 19.67 ms, a difference of 8.61 ms.
+backward primitives on both sides. OpenNN's batch is 11.01 ms against
+PyTorch's 19.54 ms, a difference of 8.5 ms.
 
-*[pending the final measurement round]* — **that 8.61 ms is unattributed.**
-The profiling round did cover this cell, twice at this commit
-(`results/scratch/cpu-lstm-train-cpuprofile-20260906T062648Z` and
-`-prof-20260906T063214Z`, 20,932 and 20,570 windows/s against 23,147
-published), and both returned a section table holding only
-`device:deallocate` (15 calls) and `fp:dtor` (2 calls): OpenNN's training
-path carries no profile sections, so the instrument has nothing to report
-there. No PyTorch-side CPU profile exists in this session either. Until
-sections are added, this document cannot say which of the two backward
-primitives, the loss, the optimiser or the extra layers accounts for the
-8.61 ms, and the inference profile above does not transfer: it covers a
-forward pass with no workspace, no backward and no optimiser.
+Both sides were profiled this round, on the P-cores with the harness's
+`GOMP_SPINCOUNT`. OpenNN under `OPENNN_PROFILE=1` (three epochs, the last
+one's table, 171 batches of 256; the profiled epoch ran at 22,891 windows/s
+against 23,251 published, so the instrument costs about 1.5%):
 
-What can be said without a profile: OpenNN's extra layers — the scaling
-layer in front of the LSTM and the unscaling and clamping layers behind the
-output, which the inference network does not have and the PyTorch network
-does not carry at all — are three element-wise passes over a 256 × 24 × 15
-batch and a 256 × 1 output, and they run in OpenNN's 11.06 ms batch, not
-PyTorch's 19.67 ms one. Whatever their cost, it counts against OpenNN.
+| section | ms / batch | share of the 11.5 ms batch |
+|---|---|---|
+| `step:bwd_total` | 7.497 | 65.2% |
+| — `rnn:onednn_backward` (the primitive) | 6.222 | 54.4% |
+| — the rest of `bwd:LongShortTermMemory` (unpacking the packed gradients, transposes) | 1.195 | 10.4% |
+| `step:fwd_total` | 3.711 | 32.3% |
+| — `rnn:onednn_forward` | 3.496 | 30.6% |
+| — packing and reordering the weights, transposing the input | 0.118 | 1.0% |
+| `step:fill` (the window batch, gathered on the host) | 0.238 | 2.1% |
+| `step:optim_total` (Adam over the 73,857 parameters) | 0.039 | 0.3% |
+| the dense output layer, forward and backward | 0.051 | 0.4% |
+| scaling, unscaling, clamping, loss | 0.005 | 0.0% |
+
+PyTorch under `torch.profiler` (CPU activities, the driver's own model and
+step, 200 steps after 20 warm; 20.86 ms of self CPU time per batch against
+the 19.54 ms published batch, the difference being the profiler):
+
+| op | ms / batch | share |
+|---|---|---|
+| `aten::mkldnn_rnn_layer_backward` | 10.083 | 48.3% |
+| `aten::mkldnn_rnn_layer` (forward) | 5.112 | 24.5% |
+| `autograd::engine::evaluate_function: MkldnnRnnLayerBackward0` (self time, the engine around that node) | 3.007 | 14.4% |
+| `Optimizer.step#Adam.step` plus its *foreach* element-wise kernels | 0.81 | 3.9% |
+| `aten::fill_`, `aten::copy_`, `aten::_to_copy`, `aten::empty` | 0.94 | 4.5% |
+| `aten::mm` (the output layer) and `aten::cat` | 0.27 | 1.3% |
+
+So the 8.5 ms is, in order: about 3.9 ms inside the backward primitive
+(10.08 against 6.22 — the same oneDNN LSTM backward, called through
+PyTorch's `mkldnn_rnn_layer_backward` operator with whatever that operator
+does around the primitive counted in its self time); about 1.6 ms inside the
+forward primitive (5.11 against 3.50); 3.0 ms that PyTorch's autograd engine
+spends on the backward node itself, outside the primitive, which has no
+counterpart in OpenNN's 1.2 ms of gradient unpacking; and about 1.5 ms of
+fills, copies and the *foreach* Adam against OpenNN's 0.3 ms of fill and
+update. The two engines link different oneDNN builds (the caveats), so the
+first two figures are "the primitive as each engine reaches it", not a
+statement that OpenNN calls it better; the last two are framework, and are
+OpenNN's to claim.
+
+OpenNN's extra layers — the scaling layer in front of the LSTM and the
+unscaling and clamping layers behind the output, which the PyTorch network
+does not carry — are 0.005 ms of the batch, measured, and count against it.
 
 ## Asymmetries and caveats
 
 - **PyTorch reaches the better recurrent kernel on the GPU and OpenNN does
   not.** PyTorch's `nn.LSTM` gets cuDNN's persistent LSTM kernel; OpenNN's
   own persistent path is gated on `!bf16` and this cell is bf16, so it calls
-  `cudnnRNNForward` with `algo=STANDARD` and gets the unrolled path — 87.0
-  µs of GPU time for the layer against PyTorch's 46.4, and 90.6 against 58.5
+  `cudnnRNNForward` with `algo=STANDARD` and gets the unrolled path — 83.1
+  µs of GPU time for the layer against PyTorch's 46.4, and 86.6 against 62.4
   across the whole batch (the *Why* section has the kernels). **OpenNN wins
   these cells on issue rate, not on kernels**, and any reader who wants a
   claim about kernel quality should read that sentence the other way round.

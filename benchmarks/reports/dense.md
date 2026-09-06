@@ -74,9 +74,12 @@ replays it per batch. For inference OpenNN slices the resident test split as
 device views and launches the three layers directly, with no graph, because
 three launches per 0.2 ms batch are already inside what one host thread queues
 ahead of the GPU. The A/B against the graphed path
-(`OPENNN_DENSE_INFER_GATHER=1`, an index copy and a gather kernel per batch) is
-*[pending the final measurement round]*: no artifact for that variable exists
-in the store at any commit.
+(`OPENNN_DENSE_INFER_GATHER=1`, an index copy and a gather kernel per batch,
+replayed as one graph) was measured this round: 36,657,201 samples/s against
+the published 39,387,890 — 0.948× of PyTorch instead of 1.018× — over three
+rounds (session `2026-09-06-dense-variants`,
+`cuda-dense-infer-gather-20260906T192735Z`), so the graph is worth less than
+nothing here and the resident views are the right path.
 PyTorch's mode is chosen per cell and each was measured (the driver's
 `compiled()` docstring has every mode): training runs
 `torch.compile(mode="reduce-overhead")` — Inductor's fused Triton kernels plus
@@ -351,10 +354,12 @@ weights staged once through shared memory into fragments that stay in
 registers for the block's lifetime, bias and ReLU in the epilogue, and the
 bf16 output staged through shared memory so that every store writes four full
 128-byte rows. It takes 12.8 µs — 80% of the memset floor's bandwidth. The
-controlled comparison, `OPENNN_SMALL_K_LINEAR=0`, is
-*[pending the final measurement round]*: no artifact for that variable exists
-in the store at any commit, so the kernel's contribution to the cell is
-inferred from the trace above and not from an A/B.
+controlled comparison, `OPENNN_SMALL_K_LINEAR=0`, reads 37,750,841 samples/s
+against the published 39,387,890 — 0.975× of PyTorch instead of 1.018× — over
+three rounds each way (session `2026-09-06-dense-variants`,
+`cuda-dense-infer-smallk0-20260906T192919Z`; energy 0.17415 against 0.17313
+Wh, memory 374 against 371 MiB). The kernel is worth 4.3% of the cell, and it
+is the 4.3% that turns the cell.
 
 *The last layer is one kernel.* OpenNN's single-output path
 (`linear_forward_single_output_kernel`, one warp per row, the sigmoid fused)
@@ -648,19 +653,38 @@ per-candidate energy is measurable at warmup cost.
 is the one that saturates the GEMM, so it is the batch at which the two
 engines have the least room to differ; below it the batch is mostly issue
 cost, where OpenNN's three launches from C++ compete against Inductor's
-kernels plus their Python guards. The batch-size sweep that would show this —
-each batch size in its own process, because an in-process sweep under-reads
-the large batches — is *[pending the final measurement round]*: no sweep
-artifact exists at this commit, so the shape of the curve is asserted from the
-mechanism and not measured. A reader deploying this network at a small batch
-should not assume 1.019×, in either direction.
+kernels plus their Python guards. The batch curve, each batch in its own
+process (session `2026-09-06-dense-variants`,
+`cuda-dense-infer-sweep-20260906T193102Z`, one round per rung, 200 passes,
+quiet, at `bfd4e58fb`):
+
+| batch | OpenNN samples/s | PyTorch samples/s | OpenNN / PyTorch | peak MiB ON / PT | Wh ON / PT |
+|---|---|---|---|---|---|
+| 512 | 26,556,660 | 4,561,814 | **5.82×** | 334 / 472 | 0.1928 / 0.4214 |
+| 1,024 | 31,376,476 | 10,168,077 | **3.09×** | 332 / 470 | 0.1483 / 0.2599 |
+| 2,048 | 33,970,788 | 19,435,814 | **1.75×** | 338 / 470 | 0.1370 / 0.1939 |
+| 4,096 | 38,104,246 | 36,339,617 | **1.05×** | 356 / 518 | 0.1822 / 0.1822 |
+| 8,192 (published) | 39,429,162 | 38,711,898 | **1.02×** | 368 / 412 | 0.1708 / 0.1810 |
+| 16,384 | 37,596,397 | 38,220,735 | **0.98×** | 404 / 584 | 0.2019 / 0.2096 |
+
+The shape is the one the mechanism predicts: below the published batch the
+margin opens fast — 5.8× at 512, where PyTorch's compiled kernels plus their
+guards cost more per batch than the batch's arithmetic — and at the published
+batch the GEMM saturates and the two engines meet. One rung above it PyTorch
+is ahead: at 16,384 OpenNN reads 37.6M against 38.2M, 0.984×, because its
+three-layer pass falls off the L2-resident regime (the 16,384 × 1,024 bf16
+hidden activation is 32 MiB, two of them no longer fit the 48 MB L2) while
+Inductor's autotuned GEMM for that shape does not care. A reader deploying
+this network at 16,384 or above should expect PyTorch to be marginally faster
+on time and OpenNN to remain ahead on memory and energy; below 4,096 the
+margin is not marginal at all.
 
 CUDA graphs should be worth nothing to OpenNN on this cell: the published
 launch runs the resident split as views with the graph off, and three launches
 per 0.21 ms batch are well inside what one host thread queues ahead of the GPU.
-That is the mechanism and not a measurement — the
-`OPENNN_DENSE_INFER_GATHER=1` A/B is *[pending the final measurement round]*
-and no artifact for it exists at any commit. They are worth less than nothing
+The measurement agrees: the `OPENNN_DENSE_INFER_GATHER=1` A/B above reads
+0.948× against 1.018×, the gather kernel and index copy costing more than the
+launches they replace save. They are worth less than nothing
 to PyTorch here: `reduce-overhead` costs it 25% against
 `max-autotune-no-cudagraphs`, because cudagraph-tree replay copies each input
 slice into its static placeholder and runs its bookkeeping in Python before
@@ -826,10 +850,19 @@ block while it is still in that core's cache. PyTorch's eager `Linear` is
 `addmm` — MKL's threaded `sgemm` over the whole matrix — followed by a separate
 `torch.nn.ReLU()` pass, which the driver builds out of place (`inplace` left at
 its default), so each hidden activation is read once and a fresh 16 MiB tensor
-written. The matching PyTorch-side profile is
-*[pending the final measurement round]*: only OpenNN was profiled this session,
-so the count of PyTorch's passes over the activation is read from its source,
-not from a measurement of this machine.
+written. The PyTorch-side profile confirms the count (`torch.profiler`, CPU
+activities, on the driver's own model and step, pinned to CPUs 0–15 with the
+harness's `GOMP_SPINCOUNT`, 100 batches after 20 warm; per batch of 4,096):
+`aten::addmm` 18.57 ms, 87.1% of self CPU time, three calls; `aten::copy_`
+1.21 ms, 5.7%, three calls — `addmm` writing the broadcast bias into the
+output before the GEMM, a full write pass per layer; `aten::clamp_min` 1.45
+ms, 6.8%, two calls — the out-of-place ReLU, a read and a write pass per
+hidden layer; everything else under 0.2%. So each hidden activation is
+written by the bias copy, overwritten by the GEMM and read and rewritten by
+the ReLU — three passes where OpenNN's blocked path makes one, in cache —
+and those passes are 12.5% of PyTorch's batch. The profiler's per-batch
+total, 21.3 ms, sits between the two engines' published batches (18.6 and
+24.0 ms), as a profiled run does.
 
 The variant shows what the pool choice is worth: with the same MKL kernels
 running the row blocks on Eigen's thread pool (`OPENNN_GEMM_MODE=contract`),
@@ -871,8 +904,17 @@ mask on a host tensor and reports `fused_input_relu` false — so OpenNN's ReLU
 backward is its own pass over the activation, exactly as PyTorch's is.
 PyTorch's backward GEMMs are threaded `sgemm` calls with the elementwise work
 — the ReLU backward, the bias reduction, the Adam step (`torch.optim.Adam` in
-the default *foreach* implementation we did not override) — as separate passes. As with inference,
-the PyTorch-side profile is *[pending the final measurement round]*. The
+the default *foreach* implementation we did not override) — as separate
+passes. The PyTorch-side profile (same method as for inference, 100 steps
+after 20 warm, per batch of 4,096, 61.9 ms of self CPU time): `aten::mm`
+36.71 ms, 59.3%, five calls — the backward data and weight GEMMs — and
+`aten::addmm` 18.50 ms, 29.9%, the three forward ones, so the GEMMs are 89.2%
+of the step; `aten::threshold_backward` 1.91 ms, 3.1%, the ReLU backward as
+two separate passes; `aten::clamp_min` 0.97 ms; `aten::sum` 0.56 ms for the
+bias gradients; the Adam step 0.52 ms plus its *foreach* element-wise
+kernels (`addcdiv_`, `lerp_`, `mul_`, `div`, `sqrt`, `add_`, `addcmul_`)
+1.22 ms, together 2.8%; 29 `copy_` calls 0.62 ms. Nothing outside the GEMMs
+is large on either side; the margin is the GEMMs' threading, below. The
 contract variant costs OpenNN 20% here (56,308, `20260902T044716Z`) rather
 than 46%, because the backward GEMMs on Eigen's pool are longer than the spin
 they collide with.

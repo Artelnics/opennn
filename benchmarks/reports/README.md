@@ -85,7 +85,13 @@ margin, against launches far tighter than that: OpenNN's three read
 39,388,828, 39,387,890 and 39,386,263, PyTorch's 38,697,811, 38,689,107 and
 38,679,908, spreads of 0.007% and 0.046%. It is positive only because of one
 intervention, isolated at `93cc90e07` by a single variable (the matmul policy
-has not changed since, and the cell re-measured within 0.1% of those rows):
+has not changed since, and the cell re-measured within 0.1% of those rows).
+It is also a point on a curve: measured with each batch in its own process
+(`dense.md`, *Why the margin is small at 8,192 and large below it*), OpenNN
+reads 5.8× at batch 512, 1.75× at 2,048, 1.05× at 4,096, 1.02× at the
+published 8,192 — and 0.98× at 16,384, where PyTorch's autotuned GEMM is
+marginally ahead on time while OpenNN stays ahead on memory and energy. The
+isolation of the matmul policy:
 
 | configuration | throughput | energy |
 |---|---|---|
