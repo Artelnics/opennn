@@ -39,7 +39,12 @@ public:
     void set_threads_number(int);
 
     static cublasHandle_t get_cublas_handle()      { return instance().cublas(device::active_lane()); }
-    static cublasLtHandle_t get_cublas_lt_handle() { return instance().cublas_lt_handle; }
+    static cublasLtHandle_t get_cublas_lt_handle()
+    {
+        Backend& backend = instance();
+        backend.ensure_cuda();
+        return backend.cublas_lt_handle;
+    }
     static cudnnHandle_t get_cudnn_handle()        { return instance().cudnn(device::active_lane()); }
     static cudnnOpTensorDescriptor_t get_op_tensor_add_descriptor()
     {
@@ -56,6 +61,16 @@ private:
     cublasHandle_t cublas(int lane);
     cudnnHandle_t cudnn(int lane);
     cudaStream_t stream(int lane);
+
+    // The CUDA side of the backend -- the compute and transfer streams, the
+    // cuBLASLt handle, the shared cuDNN descriptor -- is created on first use,
+    // not in the constructor. Creating it is what creates the CUDA context,
+    // and the constructor also runs for CPU-only work: the Eigen thread pool
+    // lives here too, so a CPU forward pass used to pay for a context it never
+    // touched (226 MiB of device memory, plus the driver's host-side state in
+    // the process' resident set).
+    void ensure_cuda();
+    std::once_flag cuda_once;
 
     unique_ptr<ThreadPool> thread_pool;
     unique_ptr<ThreadPoolDevice> thread_pool_device;
@@ -1107,7 +1122,9 @@ cudaStream_t get_compute_stream()
 
 cudaStream_t get_transfer_stream()
 {
-    return Backend::instance().transfer_stream;
+    Backend& backend = Backend::instance();
+    backend.ensure_cuda();
+    return backend.transfer_stream;
 }
 
 cublasHandle_t get_cublas_handle()
@@ -1139,33 +1156,40 @@ Backend::Backend()
 {
     const char* const threads_env = getenv("OPENNN_THREADS");
     set_threads_number(threads_env ? atoi(threads_env) : 0);
+}
 
+void Backend::ensure_cuda()
+{
 #ifdef OPENNN_HAS_CUDA
-    int device_count = 0;
-    const cudaError_t status = cudaGetDeviceCount(&device_count);
-    if (status != cudaSuccess || device_count == 0)
+    std::call_once(cuda_once, [this]
     {
-        cudaGetLastError();
-        cerr << "OpenNN: no CUDA device available (" << cudaGetErrorString(status)
-             << "); running on CPU.\n";
-        return;
-    }
+        int device_count = 0;
+        const cudaError_t status = cudaGetDeviceCount(&device_count);
+        if (status != cudaSuccess || device_count == 0)
+        {
+            cudaGetLastError();
+            cerr << "OpenNN: no CUDA device available (" << cudaGetErrorString(status)
+                 << "); running on CPU.\n";
+            return;
+        }
 
-    lane_streams[0] = device::create_stream_handle(cudaStreamNonBlocking);
-    transfer_stream = device::create_stream_handle(cudaStreamNonBlocking);
+        lane_streams[0] = device::create_stream_handle(cudaStreamNonBlocking);
+        transfer_stream = device::create_stream_handle(cudaStreamNonBlocking);
 
-    CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
-    CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&op_tensor_add_descriptor));
-    CHECK_CUDNN(cudnnSetOpTensorDescriptor(op_tensor_add_descriptor,
-                                           CUDNN_OP_TENSOR_ADD,
-                                           CUDNN_DATA_FLOAT,
-                                           CUDNN_NOT_PROPAGATE_NAN));
+        CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
+        CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&op_tensor_add_descriptor));
+        CHECK_CUDNN(cudnnSetOpTensorDescriptor(op_tensor_add_descriptor,
+                                               CUDNN_OP_TENSOR_ADD,
+                                               CUDNN_DATA_FLOAT,
+                                               CUDNN_NOT_PROPAGATE_NAN));
+    });
 #endif
 }
 
 cudaStream_t Backend::stream(int lane)
 {
 #ifdef OPENNN_HAS_CUDA
+    ensure_cuda();
     if (!lane_streams[0]) return nullptr;
     if (lane == 0) return lane_streams[0];
     std::lock_guard<std::mutex> lock(lane_mutex);

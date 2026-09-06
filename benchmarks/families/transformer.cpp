@@ -31,6 +31,7 @@
 #endif
 
 #include "opennn/core/configuration.h"
+#include "opennn/core/memory_debug.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/device_backend.h"
@@ -388,6 +389,16 @@ int main(int argc, char* argv[])
             // which aborted every CPU inference cell in this family. The
             // warm-up pass still has to happen, so it is the upload that is
             // conditional, not the pass.
+            // Deploy the parameters for inference before the warm-up: the
+            // forward pass reads the bf16 mirror (and compact fp32 for the
+            // slots that stay fp32), so the fp32 master is released rather
+            // than kept resident beside it -- the footprint the PyTorch driver
+            // reaches with model.to(torch.bfloat16). The library does not do
+            // this inside calculate_outputs_resident because training after
+            // it needs the master back; here it is an explicit deployment step.
+            if (options.device == Device::CUDA)
+                network->upload_parameters_bf16_inference();
+
             network->calculate_outputs_resident(inputs, forward_propagation,
                                                 options.device == Device::CUDA);
             run_pass();
@@ -458,6 +469,9 @@ int main(int argc, char* argv[])
     {
         return usage();
     }
+
+    // OPENNN_MEMORY_DEBUG=1 attributes the resident set member by member.
+    if (memory_debug::enabled()) memory_debug::print(cout);
 
     cout << "RESULT=OK\n";
 

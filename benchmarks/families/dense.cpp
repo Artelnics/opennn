@@ -433,6 +433,12 @@ int main(int argc, char* argv[])
                                   FillMode::Inference);
                 device_batch.upload_to_device_batch_async(device_batch,
                                                           device::get_compute_stream());
+                // Deploy the parameters for inference before the warm-up: the
+                // forward pass reads the bf16 mirror, so the fp32 master is
+                // released rather than kept resident beside it -- the
+                // footprint the PyTorch driver reaches with
+                // model.to(torch.bfloat16).
+                network->upload_parameters_bf16_inference();
                 network->calculate_outputs_resident(device_batch.get_inputs(),
                                                     forward_propagation, true);
 

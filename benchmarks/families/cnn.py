@@ -47,7 +47,7 @@ WORKERS = int(os.environ.get("PT_WORKERS", "8"))
 INPUT = os.environ.get("PT_INPUT", "jpeg")
 # Inference in bf16 can keep autocast on (weights re-cast on every call, which
 # torch.compile does not fold without freezing) or store the weights in bf16
-# once, the way OpenNN keeps a bf16 mirror of its parameters. PT_INFER_CAST
+# once, the way OpenNN's inference deployment holds its parameters. PT_INFER_CAST
 # selects it; bf16 weights measured faster in every family (see compiled()).
 INFER_CAST = os.environ.get("PT_INFER_CAST", "weights")
 
