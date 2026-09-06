@@ -401,10 +401,15 @@ inline std::filesystem::path plan_cache_file(const graph::Graph& graph)
     // serialised graph already carries.
     selection = selection * 31 + size_t(sdpa_workspace_cap_override_bytes() + 2);
 
+    // Whether the attention plan was autotuned belongs in the key for the
+    // same reason the workspace cap does: a heuristic plan stored by a run
+    // with the autotune off must not be handed to a run that asked for the
+    // measured one, or the knob measures nothing once the cache is warm.
     const size_t key = std::hash<json>{}(structure)
         ^ (std::hash<int64_t>{}(device::conv_workspace_limit_bytes()) << 1)
         ^ (std::hash<bool>{}(device::conv_autotune_enabled()) << 2)
-        ^ (std::hash<size_t>{}(selection) << 3);
+        ^ (std::hash<size_t>{}(selection) << 3)
+        ^ (std::hash<bool>{}(sdpa_autotune_enabled()) << 4);
 
     return plan_cache_directory() / format("{:016x}.plan", key);
 }
@@ -490,17 +495,23 @@ inline int64_t autotune_workspace_bytes(const graph::Graph& graph)
     return maximum;
 }
 
+// On by default since the transformer cells were re-measured with it
+// (2026-09-06, RTX 5070 Ti, cuDNN 9.25.1): timing cuDNN's attention engines
+// under the workspace cap below instead of taking heuristic A's first pick
+// read 5,413 against 5,335 sequences/s on inference and 1,353 against 1,330
+// on training, repeatable to the unit on launches that otherwise do not move.
+// OPENNN_SDPA_AUTOTUNE=0 restores the heuristic plan.
 inline bool sdpa_autotune_enabled()
 {
-    static const bool enabled = env_flag_enabled("OPENNN_SDPA_AUTOTUNE", false);
+    static const bool enabled = env_flag_enabled("OPENNN_SDPA_AUTOTUNE", true);
     return enabled;
 }
 
 // Megabytes, mirroring OPENNN_CONV_WORKSPACE_MB: 0 removes the cap and restores
 // pick-by-time over every candidate, a positive value pins it, and unset leaves
 // the shape-derived bound below. It exists so the cap stays measurable rather
-// than baked in -- the transformer cell has to be re-measured before SDPA
-// autotune can be turned on by default, and this is the knob that sweep varies.
+// than baked in -- it is the knob a sweep varies now that the autotune is on
+// by default (see sdpa_autotune_enabled()).
 inline int64_t sdpa_workspace_cap_override_bytes()
 {
     static const int64_t bytes = []
