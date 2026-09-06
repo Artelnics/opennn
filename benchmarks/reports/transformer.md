@@ -5,21 +5,26 @@ configuration — 6 encoder and 6 decoder layers, d_model 512, 8 heads,
 feed-forward 2,048, a 20,000-token vocabulary on each side, 74,878,496
 parameters — over 199,575 English–German sentence pairs from WMT14 News
 Commentary v9 at 130 tokens per sequence, batch 32, bf16, on the RTX 5070 Ti.
-Session `2026-09-03-publish`:
+Session `2026-09-05-publish`, commit `93cc90e07`:
 
 | cell | OpenNN | PyTorch | OpenNN / PyTorch |
 |---|---|---|---|
-| `cuda-transformer-infer` | 5,302 sequences/s | 4,707 | **1.13×** |
+| `cuda-transformer-infer` | 5,335 sequences/s | 4,695 | **1.136×** |
+| `cuda-transformer-train` | 1,329 sequences/s | 1,145 | **1.161×** |
 
-The matrix products — about 450 GFLOP per forward batch, run by cuBLASLt on
-one side and by Inductor's autotuned templates on the other — take about the
-same time on both engines; the margins are around them. OpenNN replays the
-whole inference pass (1.13×) and the whole Adam step (1.13×)
-as one CUDA graph each, keeps its parameters in bf16 from the start, and
-streams the Adam update over one joint gradient buffer; PyTorch's compiled
-step is issued kernel by kernel from the generated code, and its training
-step also carries the dropout that `nn.TransformerEncoderLayer` applies by
-default — a real but small (1.4%) part of the difference.
+Both cells now have an `nsys` kernel trace, and it changes what this document
+can claim. The matrix products dominate both engines — 90.9% of OpenNN's
+kernel time on inference against 77.3% of PyTorch's — and the margin is in
+those kernels, not around them. The launch-cost explanation the previous
+version of this document offered is **withdrawn**: over each engine's own
+timed window the GPU is 99.4% busy on both engines on inference, and 98.7% on
+OpenNN against 99.1% on PyTorch on training. PyTorch is, if anything, the
+busier of the two; neither engine is host-starved. What separates them on
+training is that PyTorch launches four times as many standalone pointwise and
+reduction kernels as OpenNN — 20.8% of its kernel time against 8.1%. On
+inference the larger part of the margin is one kernel: PyTorch's attention
+takes 56.24 µs per launch against OpenNN's 17.63, and that gap is a backend
+default, a library version and a mask asymmetry rather than engine work.
 
 ## What is measured
 
@@ -36,21 +41,19 @@ embeddings, 6 × 3,152,384 encoder, 6 × 4,204,032 decoder, 10,260,000 output
 projection), which the runner checks. Training is cross-entropy over the
 vocabulary with Adam at learning rate 1e-4.
 
-Three things differ inside that identical shape and are stated here rather
-than hidden. (1) *Masks.* OpenNN's decoder self-attention is causal and both
-of its attentions honour the padding lengths the embedding exports; the
-PyTorch driver passes no masks at all, so it attends over every position.
-The attention matrices are the same size either way, so the arithmetic is
-the same; a causal mask can let a fused kernel skip blocks, which if anything
-favours the masked side. (2) *Dropout.* `nn.TransformerEncoderLayer` and
-`nn.TransformerDecoderLayer` default to dropout 0.1 in every sub-layer and the
-driver keeps that default, so the PyTorch training step generates and applies
-dropout masks that OpenNN's `Transformer` (dropout 0 unless set) does not —
-extra element-wise work and random numbers on the PyTorch side. Section
-"Why" quantifies it with the `PT_DROPOUT=0` variant. (3) *Loss reduction.*
-OpenNN's `CrossEntropyError3d` averages over the non-padding tokens; PyTorch's
-`CrossEntropyLoss` averages over all positions, padding included. Same
-kernels, different denominator; no effect on throughput.
+There are **18 attention blocks** in a forward pass — 6 encoder
+self-attention, 6 decoder self-attention, 6 decoder cross-attention — and the
+profiles confirm it: in the timed window of the inference profile OpenNN
+launches its fused SDPA kernel and PyTorch launches
+`pytorch_flash::flash_fwd_kernel` 336,744 times each over 18,708 batches,
+exactly 18 per batch on both sides. (Earlier versions of this document said
+12. That was wrong.)
+
+Three things differ inside that identical shape — the masks, the dropout
+PyTorch's layers apply by default, and the loss denominator. All three run in
+OpenNN's favour to some degree and all three are set out in full under
+"Asymmetries and caveats" below, with what the profile and the variant runs
+price them at.
 
 **Data.** WMT14 English–German, the corpus the paper reports on, through its
 News Commentary v9 training file. `prepare.py transformer` tokenises both
@@ -78,31 +81,47 @@ the resident forward pass alone.
 | `cuda-transformer-infer` | RTX 5070 Ti | 32 | bf16 | 5 passes after 1 untimed |
 
 Throughput is compared per sequence; both drivers also print
-`tokens_per_sec` (× 130), the figure the literature quotes.
+`tokens_per_sec` (× 130), the figure the literature quotes. The traces
+corroborate the untimed epoch: the profiled inference run's timed window
+covers 3 passes, 18,708 batches, inside a trace that runs longer; the
+profiled training run's covers 1 epoch, 6,236 steps.
 
 **Each engine at its best.** bf16 autocast on both sides. PyTorch runs
 `torch.compile(mode="max-autotune-no-cudagraphs")` for the training step and
 the inference forward — Inductor with its GEMM and pointwise templates
-benchmarked per shape and no CUDA graphs, the fastest of its modes on both
-cells (training 1,150 sequences/s against 1,132 under `reduce-overhead` and
-1,124 in the default mode; inference 4,657 against 4,574 and 4,499, all with
-the weights stored in bf16 once, `PT_INFER_CAST=weights`; under autocast,
-which re-casts the 74.9 M parameters on every call, the best mode reads
-3,641 and the default 3,537 — the driver's `compiled()` docstring has every
-number, and the driver measured compiling the step at +33% over eager when
-it was written); attention goes through `scaled_dot_product_attention`'s fused
-kernels. OpenNN captures the Adam step and the inference pass as CUDA graphs
-and, on cuDNN ≥ 9.25 with bf16, uses cuDNN's fused scaled-dot-product
-attention for sequences of 128 tokens and more
-(`sdpa_min_sequence_length=128` is printed and recorded) — the driver's comment
-records the measurement behind that threshold: fused beat the materialised
-attention by 28% at 128 tokens over five launches each way, while the
-library-wide default stays at 192 because a single pass cannot amortise the
-0.3–2 s of plan construction. Adam runs over a joint gradient arena
-(`set_joint_gradient_arena(true)`): each layer's gradient is planned into
-the forward arena by lifetime, beside the deltas, so the 300 MB gradient of
-a 75 M-parameter model reuses memory whose lifetime has ended; the update is
-then one streaming launch per parameterised layer.
+benchmarked per shape and no CUDA graphs. That mode was chosen by measurement
+in the `2026-09-02-variants` session: training read 1,150 sequences/s at
+`8e47e7662` against 1,132 under `reduce-overhead` at `918805ce1`; inference
+read 4,657 at `d3acd71b5` against 4,574 under `reduce-overhead` and 4,499 in
+the default mode, both at `8e47e7662`, all three with the weights stored in
+bf16 once (`PT_INFER_CAST=weights`). Under autocast the same best mode read
+3,641, at `8e47e7662`. Only the 4,574/4,499 pair is same-commit; the ranking
+rests on three commits, and the runs establish that ranking rather than
+today's levels — PyTorch's inference number at `93cc90e07` is 4,695, above
+the best of them. Attention goes through `scaled_dot_product_attention`, and
+the trace shows which backend it selects: `pytorch_flash::flash_fwd_kernel`,
+the FlashAttention path, 14.9% of its inference kernel time. The driver does
+not choose that backend, and does not choose against cuDNN's; it sets only
+`allow_tf32`. The *Why* section prices what that default costs PyTorch.
+
+OpenNN captures the Adam step and the inference pass as CUDA graphs and, on
+cuDNN ≥ 9.25 with bf16, uses cuDNN's fused scaled-dot-product attention for
+sequences of 128 tokens and more. The training driver prints
+`sdpa_min_sequence_length=128`; the inference driver does not print the
+field, but the trace settles it: the kernel
+`cudnn_generated_fort_native_sdpa_sm80_flash_fprop_wmma_f16` runs 336,744
+times in the timed window, 18 per batch, so the fused path is what ran on
+both cells. The
+driver's comment records the measurement behind that threshold: fused beat
+the materialised attention by 28% at 128 tokens over five launches each way,
+while the library-wide default stays at 192 because a single pass cannot
+amortise the 0.3–2 s of plan construction. Adam runs over a joint gradient
+arena (`set_joint_gradient_arena(true)`): each layer's gradient is planned
+into the forward arena by lifetime, beside the deltas, so the 300 MB
+gradient of a 75 M-parameter model reuses memory whose lifetime has ended;
+the update is then one streaming launch per parameterised layer, which the
+trace confirms as 467,774 `adam_update_kernel` launches over the 6,236 steps
+of the timed window — 75 per step.
 
 **Gates.** Samples (199,575), sequence (130), input and target vocabulary
 (20,000) and parameters (74,878,496) must agree between the engines. There is
@@ -111,156 +130,322 @@ measurement, not a translation result.
 
 ## Results
 
-Session `2026-09-03-publish`, the last run of every cell, median of three rounds.
+Session `2026-09-05-publish`, commit `93cc90e07`, clean tree, clocks locked at
+2692/810 MHz, turbo off, governor `performance`. Both cells are
+evidence-grade: the training run that the previous version of this document
+had to file under `results/scratch/` for foreign CPU activity has been
+replaced by a quiet one.
 
 | cell | batch | precision | OpenNN samples/s | PyTorch samples/s | OpenNN / PyTorch | peak memory MiB (OpenNN / PyTorch) | energy Wh (OpenNN / PyTorch) |
 |---|---|---|---|---|---|---|---|
-| `cuda-transformer-infer` | 32 | bf16 | 5,302 | 4,707 | **1.13×** | 844 / 1,210 | 11.9895 / 14.9908 |
+| `cuda-transformer-infer` | 32 | bf16 | 5,335 | 4,695 | **1.136×** | 863 / 1,161 | 11.5286 / 14.9475 |
+| `cuda-transformer-train` | 32 | bf16 | 1,329 | 1,145 | **1.161×** | 2,217 / 3,349 | 16.3427 / 22.6253 |
 
+Both cells win all three axes, as every cell in the twelve-cell matrix now
+does.
 
-`cuda-transformer-train` — batch 32, bf16, epochs 2 per launch, 3 rounds. Artifact `cuda-transformer-train-publish-20260903T122006Z.json`, commit `6b7179dde`, quiet False (busy 0.1% before, 0.1% after), clocks locked True, shape gate True, quality gate True.
+`cuda-transformer-train` — batch 32, bf16, epochs 2 per launch, 3 rounds. Artifact `cuda-transformer-train-publish-20260905T091329Z.json`, commit `93cc90e07`, quiet True (busy 0.5% before, 0.2% after, 1.6% peak during a timed window against a 3% threshold), clocks locked True, shape gate True.
 
-> **Not evidence-grade.** This run is filed under `results/scratch/`: foreign CPU activity reached 9.7% during a timed window against a 3% threshold, so the runner refused to publish it. The figures below are what it measured; they agree with the other attempts at this cell to within a percent, but the claim waits on a quiet window.
-
-| engine | median samples/s | min | max | peak device MiB | Wh (board) |
-|---|---|---|---|---|---|
-| OpenNN | 1,301 | 1,301 | 1,301 | 2316 | 16.44613 |
-| PyTorch | 1,151 | 1,151 | 1,151 | 3452 | 22.73194 |
-| **ratio** | **1.130×** | | | 1.49× less | 1.38× less |
-
-| round | order | OpenNN samples/s | PyTorch samples/s |
-|---|---|---|---|
-| 1 | opennn → pytorch | 1,301 | 1,151 |
-| 2 | pytorch → opennn | 1,301 | 1,151 |
-| 3 | opennn → pytorch | 1,301 | 1,151 |
-
-
-`cuda-transformer-infer` — batch 32, bf16, passes 5 per launch, 3 rounds. Artifact `cuda-transformer-infer-publish-20260903T131144Z.json`, commit `6b7179dde`, quiet True (busy 0.1% before, 0.3% after), clocks locked True, shape gate True, quality gate True.
-
-| engine | median samples/s | min | max | peak device MiB | Wh (board) |
-|---|---|---|---|---|---|
-| OpenNN | 5,302 | 5,302 | 5,302 | 844 | 11.98950 |
-| PyTorch | 4,707 | 4,704 | 4,708 | 1210 | 14.99075 |
-| **ratio** | **1.126×** | | | 1.43× less | 1.25× less |
+| engine | median samples/s | min | max | peak device MiB | Wh (board) | mean W |
+|---|---|---|---|---|---|---|
+| OpenNN | 1,329 | 1,328 | 1,330 | 2,217 | 16.34268 | 196.2 |
+| PyTorch | 1,145 | 1,145 | 1,145 | 3,349 | 22.62525 | 233.8 |
+| **ratio** | **1.161×** | | | 1.51× less | 1.384× less | |
 
 | round | order | OpenNN samples/s | PyTorch samples/s |
 |---|---|---|---|
-| 1 | opennn → pytorch | 5,302 | 4,704 |
-| 2 | pytorch → opennn | 5,302 | 4,707 |
-| 3 | opennn → pytorch | 5,302 | 4,708 |
+| 1 | opennn → pytorch | 1,330 | 1,145 |
+| 2 | pytorch → opennn | 1,329 | 1,145 |
+| 3 | opennn → pytorch | 1,328 | 1,145 |
+
+OpenNN's median epoch is 150.0 s and PyTorch's 174.13 s; in tokens, 172,780
+against 148,978 per second.
+
+`cuda-transformer-infer` — batch 32, bf16, passes 5 per launch, 3 rounds. Artifact `cuda-transformer-infer-publish-20260905T100855Z.json`, commit `93cc90e07`, quiet True (busy 0.3% before, 0.1% after, 0.5% peak during), clocks locked True, shape gate True.
+
+| engine | median samples/s | min | max | peak device MiB | Wh (board) | mean W |
+|---|---|---|---|---|---|---|
+| OpenNN | 5,335 | 5,335 | 5,335 | 863 | 11.52856 | 221.9 |
+| PyTorch | 4,695 | 4,695 | 4,695 | 1,161 | 14.94753 | 253.2 |
+| **ratio** | **1.136×** | | | 1.35× less | 1.297× less | |
+
+| round | order | OpenNN samples/s | PyTorch samples/s |
+|---|---|---|---|
+| 1 | opennn → pytorch | 5,335 | 4,695 |
+| 2 | pytorch → opennn | 5,335 | 4,695 |
+| 3 | opennn → pytorch | 5,335 | 4,695 |
+
+Per-pass times are 37.4 s on OpenNN against 42.50 s on PyTorch; in tokens,
+693,569 against 610,389 per second.
 
 ## Why
 
-The base transformer is 74.9 M parameters, and at batch 32 × 130 tokens a
-forward pass is about 450 GFLOP of matrix products — the
-projections, the feed-forward layers and the 20,000-way output projection —
-plus attention over 130 keys in 12 attention blocks (6 self-attention in the
-encoder, 6 self- and 6 cross-attention in the decoder). Both engines run the
-products in tensor-core GEMMs (cuBLASLt for OpenNN, Inductor's autotuned
-choice of Triton templates and cuBLAS for PyTorch) and the attention in a
-fused kernel (cuDNN's scaled-dot-product attention for OpenNN, the backend
-`F.scaled_dot_product_attention` picks — *[pending the final measurement round]* in the
-profile — for PyTorch). The GEMM time is close; the margins are the kernels
-around the GEMMs, and how the step is issued.
+Both cells were profiled with `nsys` in this session. The traces are **not
+committed** — the four SQLite exports total 3.8 GB — and the `Reproduce`
+section gives the command that regenerates them. Every figure below is taken
+over each engine's own timed window, the interval its driver prints as
+`TIMED_START_UNIX`–`TIMED_END_UNIX`, which excludes the untimed warmup and
+with it, on PyTorch's side, Inductor's max-autotune benchmarking; whole-trace
+averages are contaminated by that phase and are not used. The profiled runs
+reproduce the published throughputs to within a count — 1,328 against 1,329
+for OpenNN on training and 1,144 against 1,145 for PyTorch, 5,331 against
+5,335 and 4,691 against 4,695 on inference — so the profiler is not
+distorting what it measures here.
 
-### Where the energy goes
+### The step, by kernel
 
-Both cells in this family win energy on **power**, which makes them the
-clearest counterpart to the dense inference cell: OpenNN draws 229.4 W
-against PyTorch's 254.7 W on inference and 193.0 W against 236.2 W on
-training. Combined with margins of 1.13× and 1.130× on time, that
-compounds to 1.25× and 1.38× on energy — the widest energy
-margins in the matrix outside the LSTM family.
+Share of each engine's kernel time inside its own timed window: one epoch,
+6,236 steps, on training; three passes, 18,708 batches, on inference. Launch
+counts are for the same window.
 
-Part of that is measured to be the GEMM tile-selection rule described in the
-dense document: this model is a stack of large matrix products, they go
-through the same cuBLASLt path, and running the identical cell with the rule
-disabled (`OPENNN_LT_TILE_TOLERANCE=0`) costs 13.349 Wh on inference against
-11.893 with it, and 17.338 Wh on training against 16.405 — 10.9% and 5.4% of
-each cell's energy, for 1.7% and 0.5% of its throughput.
+`cuda-transformer-infer`, OpenNN:
 
-Part of it is that PyTorch is doing extra element-wise work: its
-`TransformerEncoderLayer` and `DecoderLayer` default to dropout 0.1 and the
-driver does not override it, which is a random mask and a multiply on every
-attention and feed-forward output in the training pass. And part of it cuts
-the other way and is the more important thing to say: **OpenNN is computing
-more than PyTorch here and still drawing less power.** OpenNN's decoder
-self-attention is causal and every attention block sees the padding mask;
-PyTorch's model applies no mask at all. The caveats below list this in full.
+| kernel | share | launches |
+|---|---|---|
+| `cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_256x128_32x3_nn` | 35.11% | 1,346,976 |
+| `nvjet_sm120_tst_mma_128x256x32_4_64x64x32` | 20.83% | 224,496 |
+| `cudnn_generated_matMul_pointwise_pointwise_cutlass_sm80_knob_41` | 19.51% | 224,496 |
+| `cudnn_generated_matMul_pointwise_cutlass_sm80_knob_41` | 15.41% | 18,707 |
+| `cudnn_generated_fort_native_sdpa_sm80_flash_fprop_wmma_f16` | 5.32% | 336,744 |
+| `norm_forward_warp_kernel` | 3.14% | 561,240 |
+| `embedding_forward_kernel` | 0.44% | 37,416 |
+| masking (`attention_sdpa_lengths`, `token_valid_lengths`) | 0.24% | 374,160 |
 
-What cannot yet be said is which kernels account for the 25 W. This family
-has no `nsys` profile in this round, so the decomposition that the dense and
-LSTM documents give per kernel is not available here, and the paragraphs
-above rest on the artifacts, the drivers and the tolerance comparison rather
-than on a kernel table.
+`cuda-transformer-infer`, PyTorch, aggregated by kind:
 
-### `cuda-transformer-infer`, 1.13×: launches, casts and the layer-norm passes
+| kind | share | launches |
+|---|---|---|
+| Inductor GEMM templates (`triton_tem_*`) | 40.89% | 692,196 |
+| CUTLASS GEMMs | 36.44% | 561,240 |
+| `pytorch_flash::flash_fwd_kernel` | 14.93% | 336,744 |
+| Inductor pointwise/reduction (`triton_poi/per/red_*`) | 4.88% | 1,047,648 |
+| ATen elementwise and layer-norm | 2.86% | 448,992 |
 
-Per batch of 32 sequences: OpenNN 6,035 µs, PyTorch 6,798 µs,
-and 844 MiB of device memory against 1,210.
+Matrix products are 90.9% of OpenNN's inference kernel time and 77.3% of
+PyTorch's. One honest note on that: the family
+`cutlass_80_tensorop_bf16_s16816gemm_relu_bf16` appears on *both* sides — it
+is 35.11% of OpenNN's step in one instantiation, `256x128_32x3_nn`, and
+36.44% of PyTorch's in two, `128x256_32x3_tn` and `64x64_32x6_tn`. Both
+libraries select from the same CUTLASS family and land on different tiles and
+different layouts. About a third of each engine's inference step is the same
+vendor kernel, and where that kernel is the work neither engine has an
+advantage.
 
-The forward pass is deep — 6 encoder layers of (attention, feed-forward) and
-6 decoder layers of (self-attention, cross-attention, feed-forward), each
-sub-layer with its residual add and layer normalisation. OpenNN captures the
-whole of it once and replays it as a single CUDA graph; PyTorch issues it
-from Inductor's generated code without graphs, because on this model
-`reduce-overhead` is *slower* for it than the mode the table uses (4,574
-against 4,657 sequences/s), so the launches are paid one at a time. That
-difference in issue cost is the mechanism the margin is attributed to, and
-it is consistent with the 1.25× energy ratio being larger than
-the 1.13× throughput one — a host-starved GPU spends part of the
-window drawing power without retiring work.
+`cuda-transformer-train`, OpenNN:
 
-It is only consistent with it, not demonstrated by it: **this cell has no
-kernel trace in this round.** The per-kernel table and the idle-percentage
-comparison that the dense and LSTM documents give are not available here,
-so the paragraph above rests on the artifacts, the two drivers and the
-compile-mode comparison. The final round profiles this cell.
+| kernel | share | launches |
+|---|---|---|
+| `cutlass_80_tensorop_s16816gemm_bgrada_bf16_64x64_32x6_nt` | 12.52% | 455,265 |
+| `adam_update_kernel<__nv_bfloat16>` | 10.52% | 467,774 |
+| `cudnn_generated_fort_native_sdpa_sm80_flash_bprop_wmma_f16` | 9.08% | 112,266 |
+| `cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_256x128_32x3_nn` | 8.90% | 448,992 |
+| `cutlass_80_tensorop_s16816gemm_bgrada_bf16_128x128_64x3_nt` | 8.03% | 112,260 |
+| `cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_256x128_32x3_tn` | 6.29% | 299,328 |
 
-The bf16-weights choice matters on PyTorch's side more than in any other
-family — 4,657 against 3,641 sequences/s for the same compile mode under
-autocast — because autocast re-casts the 74.9 M parameters, 150 MB of fp32
-weights, on every call; storing them in bf16 once removes that traffic, and
-it is the mode the table uses. OpenNN's parameters are bf16 from the start.
+`cuda-transformer-train`, PyTorch, aggregated by kind:
 
-### `cuda-transformer-train`, 1.13×: one graph against Inductor's step, and dropout
+| kind | share | launches |
+|---|---|---|
+| Inductor GEMM templates (`triton_tem_*`, `triton_mm`) | 42.26% | 910,456 |
+| Inductor pointwise/reduction (`triton_poi/per/red_*`) | 19.83% | 3,336,260 |
+| CUTLASS GEMMs | 14.83% | 342,980 |
+| `pytorch_flash` forward and backward | 12.28% | 448,992 |
+| Inductor *foreach* Adam (`triton_for_*`) | 9.85% | 81,066 |
+| ATen elementwise, plus the RNG kernel | 0.96% | 236,968 |
 
-Per batch: OpenNN 24,242 µs against PyTorch's 27,394, from the throughputs
-above. As with inference, there is no kernel trace for this cell in this
-round, so what follows names the three things that differ in the step and
-what each is worth where that has been measured separately — not a
-per-kernel decomposition.
+The same buckets on OpenNN's training step: matrix products 69.44%,
+attention including its cuDNN helpers 11.97%, Adam 10.52%, everything else
+8.07% in 841,995 launches.
 
-Three things in the step differ:
+### `cuda-transformer-train`, 1.161×: what still spills into its own kernel
 
-*How it is issued.* OpenNN captures the whole Adam step as one CUDA graph —
-the batch gather, forward, cross-entropy, backward, and the update over the
-joint gradient arena (`set_joint_gradient_arena(true)`: each layer's
-gradient is planned into the forward arena by lifetime, beside the deltas,
-so the 300 MB gradient of a 75 M-parameter model reuses memory whose
-lifetime has ended, and the Adam update is one streaming kernel per
-parameterised layer) — and replays the whole step behind one launch.
-PyTorch's step under `max-autotune-no-cudagraphs` is issued kernel by kernel
-from the generated Python, with `torch.optim.Adam`'s *foreach* update as
-multi-tensor kernels on top. The arena is also why the memory column reads
-2,316 MiB against 3,452: it is the same forward allocation serving the
-backward, not a second one.
+Per batch: OpenNN 24,078 µs against PyTorch's 27,948 µs, from the
+throughputs above. In the timed window OpenNN issues **573 kernels per step**
+taking 23.77 ms of GPU time; PyTorch issues **859** taking 27.71 ms. The
+kernel-time ratio, 1.166×, accounts for the measured 1.161× on its own, and
+neither figure exceeds its own engine's wall clock.
+
+The mechanism is what those kernels are. With the optimiser and the
+attention-internal helpers excluded on both sides, PyTorch spends **20.8%**
+of its training step in standalone pointwise and reduction kernels, in
+3,573,228 launches over the window, against OpenNN's **8.1%** in 841,995 —
+normalisation 4.41%, cross-entropy and generic tensor 2.52%, ReLU backward
+0.74%, embedding 0.31%, masking 0.07%. OpenNN's bias and ReLU ride in the
+epilogue of the GEMM that produced the tensor: `combination_operator.cpp` passes
+`CUBLASLT_EPILOGUE_RELU_BIAS` and `RELU_AUX_BIAS`, and no standalone bias or
+forward-activation kernel appears anywhere in the inference trace. The
+residual add does *not* ride there — it is fused into the normalisation
+kernel instead, which the trace names as
+`norm_forward_warp_kernel<__nv_bfloat16, (bool)1, ...>`, the first template
+parameter being `FuseResidual`.
+
+Inductor fuses into its templates as well, and the trace is unambiguous about
+it: 37.2% of PyTorch's training kernel time is in `triton_tem_*` GEMM
+templates whose fused names carry dropout, layer norm or threshold. The
+difference is not fusion against no fusion; it is how much still spills into
+kernels of its own.
+
+Issue cost is real on this cell and it is small. OpenNN's step is
+graph-captured, and evidence for that is in the trace: the 74 gaps between
+its 75 per-step Adam launches are 160 or 192 ns for 99.8% of them and never
+above 800 ns. Over the timed windows the GPU is busy 98.7% of the time on
+OpenNN and 99.1% on PyTorch — PyTorch is marginally the *busier* of the two,
+so it is not host-starved and issue cost cannot be the explanation. The
+direct isolation agrees: `OPENNN_NO_CUDA_GRAPH=1` read 1,293 sequences/s at
+commit `918805ce1` against 1,297 in the nearest publish round at `38ad27e16`,
+and 5,254 against 5,274 on inference — graph replay is worth well under 1%,
+on a cross-commit pair. The previous version of this document was wrong to
+lead with launch cost.
+
+Three further things belong here, and the first two cut against the result:
+
+*Adam is not a differentiator.* OpenNN's Adam is 10.52% of its step, in 75
+launches per step. PyTorch's compiled *foreach* Adam appears as twelve
+`triton_for_fused_*` kernels — `for` is Inductor's foreach codegen — ten of
+which carry the time, totalling 9.85%. Slightly cheaper. OpenNN's update was
+examined this session and deliberately left alone: it runs at
+778.9 GB/s, 86.9% of the pin bandwidth, and the launch-count hypothesis died
+on the graph capture. There is no margin to take here.
 
 *Dropout.* `nn.TransformerEncoderLayer` and `DecoderLayer` default to dropout
 0.1 in every sub-layer and the driver keeps that; OpenNN's model has none.
-Each dropout is a random mask generated and applied in the forward and
-re-applied in the backward. Turning it off (`PT_DROPOUT=0`) reads
-1,140 against 1,124 sequences/s,
-a 1.4% effect: real, small, and recorded rather than removed because dropout
-0.1 is what the library's layer does by default.
+Inductor fuses the mask into its GEMM templates rather than emitting separate
+kernels for it — four of the five largest `triton_tem_*` kernels carry
+`native_dropout_backward` in their names — but those same kernels also do the
+matrix products, so no share read off the profile is what dropout costs. The
+RNG itself is negligible: `distribution_elementwise_grid_stride_kernel`,
+0.006% of the step, one launch per step. What prices it is the variant:
+`PT_DROPOUT=0` read 1,140 sequences/s at commit `918805ce1` against 1,124
+with dropout on at commit `38ad27e16`, a 1.4% effect — but both of those runs
+are `compile:default`, not the max-autotune mode the cell publishes and in
+which the fusion above happens. Cross-commit and out of mode: read it as an
+order of magnitude, not a measurement. It is recorded rather than removed,
+because dropout 0.1 is what the library's layer does by default.
 
-*Masks.* OpenNN's decoder attention is causal and both attentions honour the
-padding lengths; PyTorch's driver applies no masks. The fused attention
-kernels are handed the same 130 keys either way, so the asymmetry does not
-buy OpenNN its margin; it means OpenNN trains the model the paper describes
-and PyTorch trains one that can see the future. This is the single most
-important caveat in the family, and it runs *against* the result being
-reported: the engine doing more work is the one that wins.
+*Memory.* 2,217 MiB against 3,349. The joint gradient arena plans each
+layer's gradient into the forward arena by lifetime
+(`families/transformer.cpp:185`), which is a mechanism for spending less; but
+no run with it disabled exists, no allocation breakdown was taken, and the
+cell read between 2,302 and 2,693 MiB across earlier commits with the arena
+already on. How much of the 1,132 MiB gap it accounts for is an attribution
+from the design, not a measurement.
+
+### `cuda-transformer-infer`, 1.136×: mostly one attention kernel
+
+Per batch: OpenNN 5,998 µs, PyTorch 6,816 µs, and 863 MiB of device memory
+against 1,161.
+
+The launch-count story does not apply to this cell at all. In the timed
+window OpenNN issues **167 kernels per batch** and PyTorch **165** — PyTorch
+issues slightly fewer, which cuts against us — and both engines keep the GPU
+99.4% busy. OpenNN replays the whole forward pass as one CUDA graph and
+PyTorch issues it from Inductor's generated code, and on this workload that
+makes almost no difference: the kernels are large enough that the host keeps
+ahead either way. The margin is 5.97 ms of OpenNN kernel time per batch
+against 6.78 ms of PyTorch's, a ratio of 1.136 that lands on the measured
+1.136.
+
+Most of that 0.81 ms is one kernel. Both engines run 18 attention launches
+per batch on identical grids — 2 × 8 × 32 blocks of 128 threads — and
+OpenNN's `cudnn_generated_fort_native_sdpa_sm80_flash_fprop` takes **17.63 µs**
+against **56.24 µs** for PyTorch's `pytorch_flash::flash_fwd_kernel`. That is
+0.317 ms per batch against 1.012 ms: **0.695 ms of the 0.814 ms kernel-time
+gap, 85% of this cell's whole margin.**
+
+Little of that is to our credit, and it belongs here rather than buried in
+the caveats. Two things could produce it and the trace separates neither.
+First, a backend default: PyTorch exposes a cuDNN attention backend and the
+driver never selects it — `families/transformer.py` sets only `allow_tf32` —
+so `scaled_dot_product_attention` falls to its own FlashAttention path, and
+that path is built against the cuDNN 9.23.2 the artifact reports where OpenNN
+runs 9.25.1. Second, a mask asymmetry: OpenNN's attention honours the padding
+lengths and the decoder's causal mask, PyTorch's attends over every position,
+so OpenNN's blocks may be exiting early on work PyTorch performs in full. The
+grids are identical, so the profile cannot tell the two apart, and no run
+exists with PyTorch's cuDNN backend forced or with OpenNN's masks removed.
+Either way the largest single component of this cell's margin is a backend
+default, a library version or a model asymmetry rather than engine work.
+
+Training is not this. There OpenNN's attention and its cuDNN helpers are
+11.97% of the step against PyTorch's 12.28% — near parity, because the
+backward dominates and the two backward kernels cost 119.94 µs and 127.02 µs
+per launch. In milliseconds that is 2.85 against 3.40 per step, 14% of the
+training margin against 85% of the inference one.
+
+The other thing that moved this cell is not work done on it either. The two
+`cudnn_generated_matMul_pointwise*` kernels in the table above, **19.51% +
+15.41% = 34.9% of the step**, are the cuDNN matmul plan that was found for
+`cuda-dense-infer` by enumerating cuDNN's engine set, where all 13,460 valid
+cuBLASLt configurations, five CUTLASS 3.8 tile shapes and six hand-written
+mma.sync kernels had failed. OpenNN's matmul dispatcher selects it here on
+shape, without anyone having considered this cell. Scaled to what it moved:
+between the `2026-09-03-publish` round (commit `6b7179dde`) and this one,
+OpenNN's inference throughput went 5,302 → 5,335 samples/s, **+0.62%**, while
+PyTorch's went 4,707 → 4,695; peak memory went the other way, 844 → 863 MiB.
+
+Energy over the same two rounds fell from 11.9895 Wh to 11.5286 and mean
+board power from 229.4 W to 221.9, while PyTorch's barely moved (14.9908 →
+14.9475 Wh, 254.7 → 253.2 W), and the energy ratio went from 1.250× to
+1.297×. That fall is **not** attributed to the plan. On the dense cell the
+same plan is the fast, *hot* option — 227.7 W against 169 W for the lean
+cuBLASLt nvjet tile it displaces — so a 7.5 W drop is the opposite of what it
+predicts. There `cuda-dense-infer` publishes 1.019× throughput and 1.058×
+energy where the variant with the plan disabled reads 0.966× and 1.315×:
+winning its throughput axis cost it energy, deliberately, its energy ratio
+falling from 1.339× to 1.058×, and the throughput it now wins there is
+measured against a faster PyTorch than the previously published 1.004× faced,
+whose autotune cache a reboot had cleared and which re-tuned. `dense.md`
+carries both. No `OPENNN_CUDNN_MATMUL=0` run exists for *this* cell, so what
+lowered its power between those two commits is not established by any
+measurement available.
+
+*Memory.* 863 MiB against 1,161. `PT_INFER_CAST=weights` is the published
+mode, so PyTorch's weights are already bf16 and the 298 MiB gap is not a
+dtype difference. No allocation breakdown was measured for this cell and the
+column is device-used-minus-idle rather than live tensors, so what the gap
+consists of is not established here.
+
+The bf16-weights choice matters on PyTorch's side more than in any other
+family — 4,657 sequences/s at `d3acd71b5` against 3,641 for the same compile
+mode under autocast at `8e47e7662` — because autocast reads the 74.9 M
+parameters as 300 MB of fp32 weights and writes a 150 MB bf16 copy on every
+call; storing them in bf16 once removes that traffic, and it is the mode the
+table uses. OpenNN's parameters are bf16 from the start.
+
+### Where the energy goes
+
+Both cells win energy on **power**: OpenNN draws 221.9 W against PyTorch's
+253.2 W on inference and 196.2 W against 233.8 W on training. Combined with
+margins of 1.136× and 1.161× on time, that compounds to 1.297× and 1.384× on
+energy — the widest energy margins in the matrix outside the LSTM family.
+
+Part of that is the GEMM tile-selection rule described in the dense document,
+which prefers a tile shape that moves less memory when the throughput cost is
+within tolerance. On training the rule was isolated in the
+`2026-09-02-gemmenergy` session at commit `bc6f4c2d0`: tolerance 0 read
+17.338 Wh at 1,305 sequences/s, the rule read 16.405 Wh at 1,298 — **5.4% of
+the cell's energy for 0.5% of its throughput.** The same caution that
+withdraws the inference split applies here at smaller scale: the cuDNN plan
+now serves 8.8% of the training step too, on shapes the tile rule would
+otherwise govern, and the cell has moved from that commit's 1,298 sequences/s
+at 16.405 Wh to 1,329 at 16.343. The 5.4%-for-0.5% split is the best
+available measurement of the rule, not a measurement of today's cell.
+
+The same isolation on inference is **not carried forward**. The paired run
+there was taken before the cuDNN plan existed, and the run with the rule
+enabled did not pass the quiet gate. Since the plan now covers a third of the
+inference step, the old split no longer describes the current cell, and no
+tolerance-0 rerun exists at `93cc90e07`. The figure the previous version of
+this document quoted for inference has been removed rather than restated.
+
+Part of the power gap is that PyTorch is doing extra element-wise work — on
+training the 20.8% against 8.1% above, of which the dropout its layers apply
+by default is one component; on inference the same split is narrower, 7.7%
+against 3.8%, and dropout does not run at all under `model.eval()`. The
+element-wise ledger does not run entirely our way, though: OpenNN's masking
+kernels are extra work PyTorch does not do, 0.24% of its inference kernel
+time, while the mask they compute may be what makes OpenNN's attention kernel
+cheap. Neither effect is isolated.
 
 ## Asymmetries and caveats
 
@@ -271,18 +456,24 @@ one engine's model:
 - **Masks.** OpenNN's decoder self-attention is causal and every attention
   block sees the padding mask that the embedding layer exports with its valid
   lengths; the PyTorch model applies no mask at all — no causal mask in the
-  decoder, no key-padding mask anywhere. Same tensor shapes, same FLOPs in
-  the attention matrices; OpenNN does slightly more work (the masking) and
-  trains the correct model, PyTorch trains a model that can see the future.
-  A masked PyTorch model would be the fairer comparison and would not be
-  faster.
+  decoder, no key-padding mask anywhere. Same tensor shapes; OpenNN pays
+  0.24% of its inference kernel time and
+  0.07% of its training step to build the masks, and trains the correct
+  model, where PyTorch trains a model that can see the future. But the mask
+  is also a candidate explanation for OpenNN's attention kernel running
+  17.63 µs against PyTorch's 56.24 — blocks that can exit early on padding
+  and causality. A masked PyTorch model is the fairer comparison, and on this
+  evidence it might well be *faster*, not slower.
 - **Dropout.** `nn.TransformerEncoderLayer` and `DecoderLayer` default to
   dropout 0.1 and the driver does not override it; OpenNN's dropout operator
   defaults to 0 and the model builder leaves it there. Dropout in training
-  is extra element-wise kernels (a random mask, a multiply) on every
-  attention and feed-forward output on PyTorch's side; `PT_DROPOUT=0` runs
-  the PyTorch model without it, and the *Why* section gives what it is worth
-  (1,140 against 1,124 sequences/s). Inference is unaffected (`model.eval()`).
+  is extra element-wise work (a random mask, a multiply) on every attention
+  and feed-forward output on PyTorch's side, fused by Inductor into its GEMM
+  templates rather than emitted separately. `PT_DROPOUT=0` runs the PyTorch
+  model without it, and the *Why* section gives what it is worth (1,140
+  against 1,124 sequences/s, across two commits and both under
+  `compile:default` rather than the published mode). Inference is unaffected
+  (`model.eval()`).
 - **The loss denominator.** PyTorch's `CrossEntropyLoss` averages over every
   position, padding included; OpenNN's `CrossEntropyError3d` averages over
   the valid tokens. Identical work, different scale of the gradient — the
@@ -292,14 +483,56 @@ one engine's model:
 
 And the ones that are about the build rather than the model:
 
-- **Attention kernels.** With bf16 on this cuDNN, OpenNN hands sequences of
-  128 tokens or more to cuDNN's fused scaled-dot-product attention and
-  materialises the scores below that; at 130 tokens the fused path is what
-  ran (`sdpa_min_sequence_length=128` is printed). PyTorch's
-  `F.scaled_dot_product_attention` picks its own backend at run time. Both
-  are the fused attention that each framework ships; which kernel each ran
-  is in the profile.
-- **Different cuDNN builds**, 9.25.1 against 9.23.2, as in the CNN family.
+- **PyTorch's attention backend is a default we did not override.** The
+  driver never calls `torch.backends.cuda.enable_cudnn_sdp` or selects a
+  backend at all, so `scaled_dot_product_attention` runs its FlashAttention
+  path while OpenNN runs cuDNN's fused SDPA. That single kernel is 85% of the
+  inference margin. No run exists with PyTorch's cuDNN backend forced, so how
+  much of the cell would survive one is not known.
+- **A shared vendor kernel.** The GEMM family
+  `cutlass_80_tensorop_bf16_s16816gemm_relu_bf16` runs on both sides — 35.1%
+  of OpenNN's inference step in one instantiation, 36.4% of PyTorch's in two.
+  Where that kernel is the work, neither engine has an advantage; the margin
+  comes from the shapes each library routes to it and from what surrounds it.
+- **The cuDNN plan is not isolated on this cell.** The 34.9% attribution
+  above rests on the profile and on two rounds' worth of dates, not on a
+  variant run with the plan disabled. Only `cuda-dense-infer` has that run,
+  and the energy half of the attribution is withdrawn above.
+- **Different cuDNN builds**, 9.25.1 against 9.23.2 (`torch_built_cudnn`
+  reads 92302 in the artifact), as in the CNN family. Some of OpenNN's
+  attention and matmul advantage may be the newer library rather than the
+  engine, and nothing here separates the two.
+- **Different cuBLAS builds.** `ldd` on `transformer_opennn` resolves
+  `libcublasLt.so.13` to CUDA 13.3; the benchmark environment ships
+  `nvidia_cublas 13.1.1.3` for PyTorch. This is visible, not theoretical:
+  `nvjet_sm120_*` kernels, cuBLASLt's sm120-native path, are 20.8% of
+  OpenNN's inference kernel time and 17.3% of its training step, and a query
+  for `nvjet` or `sm120` over either PyTorch trace returns nothing — its
+  GEMMs land on sm80 CUTLASS kernels and Triton templates throughout. How
+  much of the GEMM margin is the newer library rather than the dispatcher is
+  not separated here.
+- **The memory column is occupancy, not live footprint.** The artifacts
+  record `memory_metric = device_used_minus_idle`: NVML device-used less a
+  per-launch idle baseline (251 MiB for OpenNN, 241 for PyTorch on the
+  inference run). That counts PyTorch's caching allocator's reserved pool,
+  including blocks it holds but is not using, so part of the 1.35× and 1.51×
+  is allocator policy rather than a smaller working set.
+- **Compile-mode and cast variants are dated.** The 1,150/1,132 and
+  4,657/4,574/4,499/3,641 figures come from the `2026-09-02-variants` session
+  at commits `918805ce1`, `8e47e7662` and `d3acd71b5`; only the 4,574/4,499
+  pair is same-commit. They establish which mode is fastest, which is what
+  "each engine at its best" needs; they are not current absolute levels, and
+  PyTorch's inference number has since risen above the best of them.
+- **Both cells' PyTorch figures are a draw from an autotune cache.**
+  `max-autotune-no-cudagraphs` benchmarks 22 kernel choices per GEMM and
+  caches the winner on disk. That cache is not fixed: on `cuda-dense-infer` a
+  reboot cleared it, PyTorch re-tuned and found a kernel about 4% faster than
+  the one behind the previously published number. This family's PyTorch
+  readings have held to 4,695–4,708 on inference and 1,145–1,151 on training
+  across the last three commits' rounds, so no such shift is visible here,
+  but a re-draw could
+  move PyTorch's side of these two cells by a percent or more in either
+  direction.
 - **No accuracy gate.** Both drivers print tokens per second alongside
   samples per second and the runner compares the sample count, sequence
   length, vocabulary and parameter count (74,878,496); neither reports a
@@ -319,12 +552,12 @@ And the ones that are about the build rather than the model:
   mattered: the embedding exports the number of non-zero token ids as each
   sequence's valid length (`compute_token_valid_lengths`), so every sequence
   reached the attention kernels as all padding — no valid keys instead of 130.
-  Attention is a small share of this model's time (the GEMMs are the rest, and
-  they do not care what they multiply), so the cell moved by about 1%. The
-  rows above are from the fixed drivers, which upload the batch
-  (`upload_to_device_batch_async()`) after filling it and, where the split is
-  resident, take the batch as a device view; the previous session's rows read
-  5,274 sequences/s for OpenNN.
+  Attention is a small share of this model's time (5.3% on inference in the
+  profile), so the cell moved by about 1%. The rows above are from the fixed
+  drivers, which upload the batch (`upload_to_device_batch_async()`) after
+  filling it and, where the split is resident, take the batch as a device
+  view; the session before the fix read 5,274 sequences/s for OpenNN
+  (`cuda-transformer-infer-publish-20260902T041233Z.json`).
 
 ## Reproduce
 
@@ -340,4 +573,19 @@ alphanumeric runs and single punctuation marks, `--max-tokens 128`,
 `--max-pairs 200000`) and writes the 199,575 pairs both engines load.
 `PT_DROPOUT=0`, `PT_COMPILE_MODE=default|reduce-overhead|max-autotune-no-cudagraphs|eager`
 and `PT_INFER_CAST=autocast` are the PyTorch knobs; `OPENNN_NO_CUDA_GRAPH=1`
-runs OpenNN without graph replay.
+runs OpenNN without graph replay, and `OPENNN_LT_TILE_TOLERANCE=0` disables
+the GEMM tile-selection rule.
+
+The four traces the *Why* section rests on are not committed — 3.8 GB of
+SQLite between them. They were taken this session with
+
+```bash
+nsys profile --trace=cuda --sample=none --cpuctxsw=none \
+  --cuda-graph-trace=node --force-overwrite true -o <name> <driver>
+nsys stats --report cuda_gpu_kern_sum --format csv --force-export=true <name>
+```
+
+run against the family drivers directly, one epoch of training and three
+passes of inference. Every share above is computed over the interval the
+driver prints as `TIMED_START_UNIX`–`TIMED_END_UNIX`, so a re-profiled run
+is comparable to these numbers without matching the trace length.
