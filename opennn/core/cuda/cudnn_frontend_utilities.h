@@ -12,10 +12,13 @@
 
 #include <cudnn_frontend.h>
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <string_view>
 
 #include "opennn/core/device_backend.h"
+#include "opennn/core/cuda/energy_meter.h"
 #include "opennn/core/profiler.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/tensor_types.h"
@@ -52,6 +55,49 @@ inline bool frontend_enabled()
 inline bool bn_frontend_enabled()
 {
     return frontend_enabled() && device_sm_version() >= 800;
+}
+
+// The convolution autotune's second stage. cuDNN's engines for one shape
+// differ in power the way cuBLASLt's tiles do -- occupancy, split-K, tile
+// shape -- and the frontend's autotune ranks them by time alone. With the
+// meter available, every candidate within OPENNN_CONV_ENERGY_TOLERANCE
+// percent of the fastest is run for OPENNN_CONV_ENERGY_WINDOW_MS against the
+// board's energy counter, and the one that costs the least energy per run is
+// taken -- the rule the GEMM tile chooser applies with a modelled power, here
+// with a measured one, because a convolution engine has no tile model to
+// stand on. A candidate must beat the fastest by more than 2% of energy to
+// displace it, so that two readings inside the meter's noise do not flip the
+// choice between runs. 0 percent turns the stage off; so does a machine
+// without NVML.
+inline bool conv_energy_autotune_enabled()
+{
+    static const bool enabled = env_flag_enabled("OPENNN_CONV_ENERGY_AUTOTUNE", true);
+    return enabled;
+}
+
+inline float conv_energy_tolerance()
+{
+    static const float tolerance =
+        float(std::clamp(env_int_or("OPENNN_CONV_ENERGY_TOLERANCE", 10), 0LL, 100LL)) / 100.0f;
+    return tolerance;
+}
+
+inline int64_t conv_energy_window_ms()
+{
+    static const int64_t window = std::clamp(env_int_or("OPENNN_CONV_ENERGY_WINDOW_MS", 300), 100LL, 5000LL);
+    return window;
+}
+
+inline bool conv_energy_verbose()
+{
+    static const bool verbose = env_flag_enabled("OPENNN_CONV_ENERGY_VERBOSE");
+    return verbose;
+}
+
+inline bool conv_energy_stage_active()
+{
+    return conv_energy_autotune_enabled() && conv_energy_tolerance() > 0.0f
+        && device::energy_meter_available();
 }
 
 inline bool graph_timing_enabled()
@@ -409,7 +455,10 @@ inline std::filesystem::path plan_cache_file(const graph::Graph& graph)
         ^ (std::hash<int64_t>{}(device::conv_workspace_limit_bytes()) << 1)
         ^ (std::hash<bool>{}(device::conv_autotune_enabled()) << 2)
         ^ (std::hash<size_t>{}(selection) << 3)
-        ^ (std::hash<bool>{}(sdpa_autotune_enabled()) << 4);
+        ^ (std::hash<bool>{}(sdpa_autotune_enabled()) << 4)
+        ^ (std::hash<size_t>{}(conv_energy_stage_active()
+                                   ? size_t(1000 + int(conv_energy_tolerance() * 100.0f + 0.5f))
+                                   : size_t(0)) << 5);
 
     return plan_cache_directory() / format("{:016x}.plan", key);
 }
@@ -664,6 +713,136 @@ inline void report_autotune_skipped(const char* tag, const char* reason)
          << ": autotune skipped, keeping the heuristic plan (" << reason << ").\n";
 }
 
+// run_slot() labels its calls "ConvolutionOperator fwd", "... wgrad",
+// "... dgrad", "... bgrad" and "... fwd folded"; attention's are "sdpa fwd"
+// and "sdpa bwd". The stage applies to the convolution family only.
+inline bool is_convolution_tag(const char* tag)
+{
+    return tag && std::string_view(tag).find("ConvolutionOperator") != std::string_view::npos;
+}
+
+// Runs after graph.autotune() has ranked the built plans by time, winner at
+// index 0. Re-times each plan briefly (the frontend keeps its timings
+// private), meters the energy of every plan inside the tolerance, and makes
+// the cheapest of them the candidate. build_plan_at_index() on an already
+// built plan is the frontend's way of selecting it: it skips the build and
+// sets the candidate, which is what execute() and serialize() then use.
+template<typename TensorMap>
+inline void select_plan_by_energy(graph::Graph& graph, TensorMap& tensors, void* workspace, const char* tag)
+{
+    const int64_t count = graph.get_execution_plan_count();
+    if (count < 2) return;
+
+    const cudnnHandle_t handle = device::get_cudnn_handle();
+    cudaStream_t stream = nullptr;
+    cudnnGetStream(handle, &stream);
+    cudaEvent_t start = nullptr, stop = nullptr;
+    if (cudaEventCreate(&start) != cudaSuccess || cudaEventCreate(&stop) != cudaSuccess) return;
+
+    struct Reading { int64_t index; float microseconds; double millijoules; };
+    vector<Reading> timed;
+
+    // Time: the median of five back-to-back runs, after one warm-up, on the
+    // same stream the plan will execute on.
+    for (int64_t index = 0; index < count; ++index)
+    {
+        if (graph.execute_plan_at_index(handle, tensors, workspace, index).is_bad()) continue;
+        float samples[5] = {};  // microseconds
+        bool ok = true;
+        for (float& sample : samples)
+        {
+            cudaEventRecord(start, stream);
+            ok = graph.execute_plan_at_index(handle, tensors, workspace, index).is_good();
+            cudaEventRecord(stop, stream);
+            cudaEventSynchronize(stop);
+            if (!ok) break;
+            float milliseconds = 0.0f;
+            cudaEventElapsedTime(&milliseconds, start, stop);
+            sample = milliseconds * 1000.0f;
+        }
+        if (!ok) continue;
+        std::sort(samples, samples + 5);
+        timed.push_back({index, samples[2], 0.0});
+    }
+    if (timed.size() < 2) { cudaEventDestroy(start); cudaEventDestroy(stop); device::reset_last_error(); return; }
+
+    const auto fastest = std::min_element(timed.begin(), timed.end(),
+        [](const Reading& a, const Reading& b) { return a.microseconds < b.microseconds; });
+    const float budget = fastest->microseconds * (1.0f + conv_energy_tolerance());
+
+    // Energy: each admissible plan runs back to back for the window while
+    // the driver's power ring samples the board every ~20 ms; the mean of
+    // the samples inside the window times the window is the energy, divided
+    // by the runs. A 300 ms window holds about fifteen samples, enough to
+    // put the mean well inside the 2% margin below; a window that turns out
+    // to hold fewer than five is not trusted and leaves the time-ranked
+    // choice alone.
+    vector<Reading*> admissible;
+    for (Reading& reading : timed)
+        if (reading.microseconds <= budget) admissible.push_back(&reading);
+    if (admissible.size() < 2) { cudaEventDestroy(start); cudaEventDestroy(stop); device::reset_last_error(); return; }
+
+    for (Reading* reading : admissible)
+    {
+        const int64_t runs = std::max<int64_t>(10, int64_t(double(conv_energy_window_ms()) * 1000.0
+                                                           / double(std::max(reading->microseconds, 1.0f))));
+        (void)graph.execute_plan_at_index(handle, tensors, workspace, reading->index);
+        cudaStreamSynchronize(stream);
+        const unsigned long long window_begin = device::energy_meter_begin();
+        cudaEventRecord(start, stream);
+        for (int64_t run = 0; run < runs; ++run)
+            (void)graph.execute_plan_at_index(handle, tensors, workspace, reading->index);
+        cudaEventRecord(stop, stream);
+        cudaEventSynchronize(stop);
+        float milliseconds = 0.0f;
+        cudaEventElapsedTime(&milliseconds, start, stop);
+        int samples = 0;
+        const double watts = device::energy_meter_window_watts(window_begin, samples);
+        reading->millijoules = samples >= 5 && watts > 0.0
+            ? watts * double(milliseconds) / double(runs)      // W * ms = mJ
+            : 0.0;
+        // The window's own timing is the better time figure -- many runs, not
+        // five -- so it replaces the short one for the decision below.
+        reading->microseconds = milliseconds * 1000.0f / float(runs);
+    }
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+    device::reset_last_error();
+
+    Reading* baseline = nullptr;
+    for (Reading* reading : admissible)
+        if (reading->millijoules > 0.0 && (!baseline || reading->microseconds < baseline->microseconds))
+            baseline = reading;
+    if (!baseline) return;
+
+    Reading* chosen = baseline;
+    for (Reading* reading : admissible)
+        if (reading->millijoules > 0.0 && reading->millijoules < chosen->millijoules * 0.98
+            && reading->microseconds <= baseline->microseconds * (1.0f + conv_energy_tolerance()))
+            chosen = reading;
+
+    if (conv_energy_verbose())
+    {
+        string chosen_name, fastest_name;
+        (void)graph.get_plan_name_at_index(chosen->index, chosen_name);
+        (void)graph.get_plan_name_at_index(baseline->index, fastest_name);
+        cerr << (tag ? tag : "conv") << ": energy autotune over " << admissible.size() << " of "
+             << timed.size() << " plans: "
+             << (chosen == baseline ? "kept the fastest " : "chose ") << chosen_name
+             << " (" << chosen->microseconds << " us, " << chosen->millijoules << " mJ)";
+        if (chosen != baseline)
+            cerr << " over " << fastest_name << " (" << baseline->microseconds << " us, "
+                 << baseline->millijoules << " mJ)";
+        cerr << "\n";
+    }
+
+    if (chosen != baseline)
+    {
+        const auto selected = graph.build_plan_at_index(handle, chosen->index);
+        (void)selected;
+    }
+}
+
 template<typename TensorMap>
 inline void autotune_now(bool& pending, graph::Graph& graph,
                          TensorMap& tensors, int64_t& workspace_bytes,
@@ -679,6 +858,9 @@ inline void autotune_now(bool& pending, graph::Graph& graph,
         const int64_t tune_bytes = autotune_workspace_bytes(graph);
         if (tune_bytes > 0) tune_workspace.resize_bytes(Index(tune_bytes), Device::CUDA);
         check_status(graph.autotune(device::get_cudnn_handle(), tensors, tune_workspace.data()), "autotune");
+
+        if (is_convolution_tag(tag) && conv_energy_stage_active())
+            select_plan_by_energy(graph, tensors, tune_workspace.data(), tag);
 
         store_cached_plan(graph);
     }
