@@ -232,7 +232,7 @@ the JPEGs every epoch through worker processes; OpenNN reads its own
 pre-decoded image cache. `PT_INPUT=cache` feeds PyTorch the same cache, but
 the only run of it is at batch 128 under `compile:default` at commit
 `918805ce1`, where the published cell is batch 64 under
-`max-autotune-no-cudagraphs`, so the decode's share of the 1.200× is
+`max-autotune-no-cudagraphs`, so the decode's share of the 1.190× is
 unmeasured at the published configuration.
 
 **OpenNN gets one more warmup than PyTorch on the CNN.** Training warms two
