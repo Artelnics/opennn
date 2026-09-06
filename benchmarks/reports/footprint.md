@@ -6,7 +6,7 @@ takes to make a first prediction, and what a trained model exports to. The
 family sits outside the twelve-cell table and its geomeans — there is no
 throughput here and no round structure, and each question is a single
 unrepeated launch per engine, against the twelve cells' median of rounds.
-Session `2026-09-05-publish`, commit `93cc90e07`, both engines pinned to the
+Session `2026-09-06-publish`, commit `e76425bd3`, both engines pinned to the
 P-cores; the three rows are in Results below.
 
 None of the three is about a kernel. OpenNN is one executable that links
@@ -76,23 +76,22 @@ throughput here and nothing to agree on across engines.
 
 ## Results
 
-Session `2026-09-05-publish`, commit `93cc90e07`, torch 2.13.0+cu130. The
+Session `2026-09-06-publish`, commit `e76425bd3`, torch 2.13.0+cu130. The
 family ran twice in that session; the table is the second run, and the first
-is quoted below it because one of its six launches differs materially.
+is quoted below it.
 
 | footprint question | OpenNN (wall, peak anon RSS) | PyTorch (wall, peak anon RSS) | PyTorch / OpenNN |
 |---|---|---|---|
-| memory | 0.123 s, 118.2 MiB | 3.182 s, 449.4 MiB | **25.9×** the time, 3.8× the memory |
-| startup | 0.568 s, 324.5 MiB | 1.885 s, 374.8 MiB | **3.3×** the time, 1.16× the memory |
-| export | 0.448 s, 156.3 MiB | 1.905 s, 375.6 MiB | **4.3×** the time, 2.4× the memory |
+| memory | 0.123 s, 118.3 MiB | 3.201 s, 449.4 MiB | **26.0×** the time, 3.8× the memory |
+| startup | 0.569 s, 320.5 MiB | 1.886 s, 374.8 MiB | **3.3×** the time, 1.17× the memory |
+| export | 0.184 s, 124.3 MiB | 1.909 s, 375.6 MiB | **10.4×** the time, 3.0× the memory |
 
-The session's other launch reads 0.123 s / 118.1 MiB, 0.588 s / 325.4 MiB and
-**1.300 s** / 156.4 MiB on OpenNN's side, and 3.222 s, 1.924 s, 1.929 s on
-PyTorch's. Everything is within a few per cent except OpenNN's `export` wall,
-which read 1.300 s there against 0.448 s here and 0.428–0.486 s in the six
-earlier publish launches; that one number is a single cold launch and the
-`export` row would read 1.5× rather than 4.3× if it were the one tabulated.
-The caveats say what that means for a family with no round structure.
+The session's other launch reads 0.123 s / 118.4 MiB, 0.569 s / 321.0 MiB and
+0.184 s / 124.3 MiB on OpenNN's side, and 3.200 s, 1.905 s, 1.908 s on
+PyTorch's — everything within a per cent of the table. The `export` row is
+the one that moved since the previous table, where it read 0.448 s and
+156.3 MiB: the reason is a library fix described under *Why*, and it is the
+same fix that took 33–35 MiB off every CPU cell of the main matrix.
 
 ## Why
 
@@ -117,18 +116,23 @@ in 0.123 s.
 
 None of that is a CUDA context. `Configuration::set` only records the
 requested device and bumps a generation counter; `has_cuda_device()` is a
-cached `cudaGetDeviceCount`; and the `Backend` that creates the streams, the
-cuBLASLt handle and the cuDNN op descriptor — the cuBLAS and cuDNN handles
-themselves are built lazily, per lane, later still — is a function-local
-static in `device_backend.cpp`, reached the first time something runs, which
-empty objects never do. The `export` cell bounds whatever eager CUDA state a
-process on this machine does pay: it runs `Device::CPU`, trains for 50 epochs
-and therefore certainly builds the `Backend` — whose constructor creates the
-streams and both handles whenever `cudaGetDeviceCount` finds a device,
-`Device` setting notwithstanding (`device_backend.cpp:1138-1163`) — and it
-peaks at 156.3 MiB against this cell's 118.2 MiB. That is at most 38.1 MiB
-for the CUDA state and everything 50 epochs of Adam allocates, together;
-across the eight publish launches the same subtraction runs 37.4–39.7 MiB.
+cached `cudaGetDeviceCount`; and the `Backend` that owns the streams, the
+cuBLASLt handle and the cuDNN op descriptor is a function-local static in
+`device_backend.cpp`, reached the first time something runs, which empty
+objects never do. Until this round, reaching it was enough: its constructor
+created the streams and both handles whenever `cudaGetDeviceCount` found a
+device, `Device` setting notwithstanding, so a CPU-only process that trained
+anything held a CUDA context. The `export` cell measured exactly that cost.
+It runs `Device::CPU`, trains for 50 epochs and therefore certainly builds
+the `Backend`; at `93cc90e07` it peaked at 156.3 MiB against this cell's
+118.2 and took 0.448 s, and the previous version of this document bounded
+"the CUDA state and everything 50 epochs of Adam allocates, together" at
+38.1 MiB. `e76425bd3` creates the CUDA side on first CUDA use instead
+(`Backend::ensure_cuda`), and the same cell now peaks at 124.3 MiB in
+0.184 s: the context was 32 MiB of the 38 and 0.26 s of the 0.45, and 50
+epochs of Adam on a network this size are the remaining 6 MiB. A process
+that never touches the GPU no longer maps `/dev/nvidia*` at all, which the
+runner can see in `/proc/<pid>/maps`.
 
 The PyTorch process is the CPython interpreter plus `import torch`, and the
 import is where the size goes: it loads `libtorch_cpu.so`, `libtorch_cuda.so`,
@@ -174,16 +178,17 @@ matters for the export sizes below.
 For OpenNN the in-process time to the prediction is 0.343 s (0.373 s in the
 session's other launch). The `memory` cell is the same binary, the same
 `Device::Auto`, the same loader work, and stops just short of running
-anything: 0.123 s at 118.2 MiB. The difference between the two cells —
-0.445 s of wall and 206 MiB — is what first use costs, and most of it is not
-context creation. `export` bounds `Backend`'s constructor, CUDA context
-included, at 38.1 MiB, so at least ~168 MiB of the 206 is first *GPU use*:
+anything: 0.123 s at 118.3 MiB. The difference between the two cells —
+0.446 s of wall and 202 MiB — is what first use costs, and most of it is not
+context creation. The `export` cell measured the context itself this round,
+by losing it: 32 MiB and 0.26 s (see below), so about 170 MiB of the 202 is
+first *GPU use*:
 `Device::Auto` resolves to CUDA whenever a device is present
 (`configuration.cpp`, `resolve_effective`), `ApproximationNetwork`'s
 constructor compiles the network (`models.cpp:41-45`), and `calculate_outputs`
 then takes the `is_gpu()` branch (`neural_network.cpp:1117`), which loads CUDA
 modules, builds the per-lane cuBLAS and cuDNN handles and allocates on the
-device. How the 206 MiB and the 0.445 s divide between the context and the
+device. How the 202 MiB and the 0.446 s divide between the context and the
 rest of first use was not measured: the run that would separate them is the
 same binary with the GPU hidden (`CUDA_VISIBLE_DEVICES=`), and no artifact
 under `results/` contains it, so the split is left unmeasured rather than
@@ -197,7 +202,7 @@ its first line of model code — but the row means something narrower than it
 looks. The 3.3× is "import torch" against "initialise CUDA and run on it",
 and the PyTorch process never touches `torch.cuda`, so it never pays for a
 context at all. The memory axis is that same trade read backwards: 1.16× is
-not two comparable processes but OpenNN paying 206 MiB to reach the GPU and
+not two comparable processes but OpenNN paying 202 MiB to reach the GPU and
 still landing below a PyTorch process that pays none. Put either engine on the
 other's footing — a CPU-only OpenNN, a PyTorch process that initialises CUDA —
 and the row moves, in opposite directions.
@@ -212,7 +217,7 @@ emitted source rather than tested — `model.c` includes `<math.h>`, and
 `<stdio.h>` unless `OPENNN_EXPORT_NO_MAIN` is defined, so it needs a C
 standard library and no framework; no launch compiles or runs it. The process
 also trains the model it exports (50 epochs of Adam at batch 32 on 512
-synthetic rows), which is inside its 0.448 s. PyTorch's process scripts an
+synthetic rows), which is inside its 0.184 s. PyTorch's process scripts an
 untrained model with `torch.jit.script` and saves it: 7,747 bytes of
 TorchScript, a zip archive holding a serialised graph and the weights, which
 runs only where libtorch is installed. The driver labels it
@@ -223,15 +228,17 @@ different graphs, five OpenNN layers against three PyTorch modules. ONNX
 export would give a third kind, a graph for onnxruntime, and would not change
 the finding.
 
-The memory ratio on this row, 2.4×, is two floors plus what each process then
-does: OpenNN's 156.3 MiB is the 118.2 MiB `memory` floor plus at most
-38.1 MiB for `Backend` and every allocation 50 epochs of training makes;
-PyTorch's 375.6 MiB is its import floor without the `Adam` construction that
-carries its own `memory` cell to 449.4 MiB. The wall times (0.448 s against
-1.905 s) are once more the import against a small amount of real work, with
-the training on OpenNN's side and none on PyTorch's — and with the 1.300 s the
-same launch read in this session's other run as a reminder of how little a
-single unrepeated wall time is worth.
+The memory ratio on this row, 3.0×, is two floors plus what each process then
+does: OpenNN's 124.3 MiB is the 118.3 MiB `memory` floor plus 6 MiB for
+every allocation 50 epochs of training makes, now that no CUDA context sits
+between the two; PyTorch's 375.6 MiB is its import floor without the `Adam`
+construction that carries its own `memory` cell to 449.4 MiB. The wall times
+(0.184 s against 1.909 s) are once more the import against a small amount of
+real work, with the training on OpenNN's side and none on PyTorch's. The
+previous table's 0.448 s on this row was 0.26 s of CUDA context creation
+plus the work; one launch in that session read 1.300 s, a reminder of how
+little a single unrepeated wall time is worth, and the two launches of this
+session agree to the millisecond.
 
 ## Asymmetries and caveats
 
@@ -239,11 +246,11 @@ single unrepeated wall time is worth.
   `Device::Auto` invites the suspicion that the OpenNN process initialises
   the CUDA runtime and carries a context the PyTorch process — which imports
   `torch` but never touches `torch.cuda` — does not pay. The `memory` section
-  gives the code path and the bound: `Backend` is a function-local static
-  reached on first use, three empty objects never reach it, and the `export`
-  cell caps any eager CUDA state *and* 50 epochs of training allocations
-  together at 38.1 MiB here, 38.3 MiB in the session's other launch, and
-  37.4–39.7 MiB across the eight publish launches.
+  gives the code path: `Backend` is a function-local static reached on
+  first use, three empty objects never reach it, and since `e76425bd3` even
+  reaching it creates no CUDA state until a CUDA device is used — the
+  `export` cell, which trains on the CPU for 50 epochs, now peaks 6 MiB
+  above the `memory` cell where it peaked 38 MiB above it at `93cc90e07`.
 - **The two `memory` processes do not construct equivalent objects.** OpenNN's
   `NeuralNetwork` has no layers, so `compile()` returns immediately
   (`neural_network.cpp:546-548`): no device is resolved and no parameter
@@ -257,7 +264,7 @@ single unrepeated wall time is worth.
   high-water mark, so the runner polls `/proc/<pid>/status` every 20 ms and
   keeps the maximum. OpenNN's `memory` process lives 0.123 s — about six
   samples — against PyTorch's 3.182 s and about 159, and OpenNN's process is
-  the shorter on every row (0.568 s against 1.885, 0.448 against 1.905). A
+  the shorter on every row (0.569 s against 1.886, 0.184 against 1.909). A
   sampled peak can be missed but never overstated, so the bias runs in
   OpenNN's favour by an unknown amount. `VmHWM` would settle it and is not
   recorded; the driver's own unsampled total-RSS print, 209.4 MiB, is a
@@ -308,7 +315,8 @@ single unrepeated wall time is worth.
   and 116.6–118.9 MiB on OpenNN and 3.182–3.241 s and 449.4–449.5 MiB on
   PyTorch; `startup` 0.568–0.610 s and 319.6–325.6 MiB against 1.885–1.946 s
   and 374.8–374.9 MiB; `export` 0.428–1.300 s and 156.3–156.4 MiB against
-  1.888–1.964 s and 375.5–375.6 MiB. File-backed resident is far wider and has
+  1.888–1.964 s and 375.5–375.6 MiB (the two `2026-09-06-publish` launches,
+  after the context fix, read 0.184 s and 124.3 MiB on that row). File-backed resident is far wider and has
   its own caveat above. Every reading is inside a few per cent of its median
   except one: OpenNN's `export` wall, 0.428–0.486 s in seven launches and
   1.300 s in the eighth. Those eight launches span five different commits, so
@@ -320,11 +328,11 @@ single unrepeated wall time is worth.
 
 ```bash
 export OPENNN_BENCH_SESSION=$(date +%F)-mine
-python run.py --family footprint       # commit 93cc90e07 for the table above
-# The family ran twice in 2026-09-05-publish. The table is the second launch,
-#   results/cuda-footprint-publish-20260905T110326Z.json
+python run.py --family footprint       # commit e76425bd3 for the table above
+# The family ran twice in 2026-09-06-publish. The table is the second launch,
+#   results/cuda-footprint-publish-20260906T133830Z.json
 # and the readings quoted beside it are the first,
-#   results/cuda-footprint-publish-20260905T110200Z.json
+#   results/cuda-footprint-publish-20260906T133706Z.json
 # Not yet run, and the way to split CUDA init from first GPU use:
 CUDA_VISIBLE_DEVICES= build-bench/bin/footprint_opennn startup
 ```

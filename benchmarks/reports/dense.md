@@ -3,29 +3,29 @@
 OpenNN against PyTorch 2.13 on the UCI HIGGS binary classifier, a
 28 → 1,024 → 1,024 → 1 multilayer perceptron with 1,080,321 parameters,
 trained with Adam and run for inference, on the GPU at batch 8,192 in bf16 and
-on the CPU at batch 4,096 in fp32. Session `2026-09-05-publish`, commit
-`93cc90e07`:
+on the CPU at batch 4,096 in fp32. Session `2026-09-06-publish`, commit
+`e76425bd3`:
 
 | cell | OpenNN | PyTorch | throughput | memory | energy |
 |---|---|---|---|---|---|
-| `cuda-dense-train` | 11,396,057 samples/s | 10,091,130 | **1.129×** | 1.244× | 1.149× |
-| `cuda-dense-infer` | 39,412,929 samples/s | 38,681,438 | **1.019×** | 1.090× | 1.058× |
-| `cpu-dense-train` | 70,140 samples/s | 55,788 | **1.257×** | 2.33× | 1.111× |
-| `cpu-dense-infer` | 220,647 samples/s | 171,867 | **1.284×** | 1.82× | 1.079× |
+| `cuda-dense-train` | 11,406,741 samples/s | 10,048,603 | **1.135×** | 1.244× | 1.154× |
+| `cuda-dense-infer` | 39,387,890 samples/s | 38,689,107 | **1.018×** | 1.108× | 1.057× |
+| `cpu-dense-train` | 70,120 samples/s | 54,520 | **1.286×** | 2.58× | 1.130× |
+| `cpu-dense-infer` | 220,512 samples/s | 170,329 | **1.295×** | 2.03× | 1.086× |
 
 All four cells win all three axes. `cuda-dense-infer` won all three a session
 ago too, but against a slower draw of PyTorch's autotuner; the section on it
 below is about what winning against the faster draw cost. One number in that
 table should not be read as a point estimate: `cuda-dense-train`'s throughput
 ratio is 1.13× to 1.26× depending on which draw of PyTorch it is measured
-against. 1.129× is the published session's median and the conservative end.
+against. 1.135× is the published session's median and the conservative end.
 
 The *Why* section argues each margin from a measured ceiling. On the GPU at
 batch 8,192 the network is one large matrix product plus two small layers, and
 both engines now run that product at essentially the same speed — OpenNN
 through a cuDNN engine at 189.8 µs, PyTorch through an autotuned Triton kernel
-at 189.6 µs — so the inference cell (1.019×) is decided by the two small
-layers around it, and the training cell (1.129×) by how the step is issued:
+at 189.6 µs — so the inference cell (1.018×) is decided by the two small
+layers around it, and the training cell (1.135×) by how the step is issued:
 one captured CUDA graph against Inductor's cudagraph-tree replay. On the CPU
 the same MKL kernels run on both sides, and OpenNN's row-blocked layers —
 which apply the bias and the activation to each block while it is still in
@@ -90,7 +90,7 @@ the 28-wide first layer and which is 1.33× faster than `reduce-overhead` here
 where cudagraph-tree replay copies and bookkeeping cost more than three
 launches. Inference also stores the weights
 in bf16 once (`PT_INFER_CAST=weights`, the default) instead of re-casting them
-under autocast on every call, the way OpenNN keeps a bf16 mirror of its
+under autocast on every call, the way OpenNN's inference deployment holds its
 parameters; that is worth 3.4% on this cell (37,131,220 against 35,903,250)
 and more on the larger networks. Those mode figures predate the autotuner
 re-tune described below and are the basis for the *choice* of mode, not for
@@ -115,82 +115,82 @@ file.
 
 ## Results
 
-Session `2026-09-05-publish`, commit `93cc90e07`, median of three rounds.
+Session `2026-09-06-publish`, commit `e76425bd3`, median of three rounds.
 
 | cell | batch | precision | OpenNN samples/s | PyTorch samples/s | OpenNN / PyTorch | peak memory MiB (OpenNN / PyTorch) | energy Wh (OpenNN / PyTorch) |
 |---|---|---|---|---|---|---|---|
-| `cuda-dense-train` | 8,192 | bf16 | 11,396,057 | 10,091,130 | **1.129×** | 507.9 / 631.9 | 0.13201 / 0.15169 |
-| `cuda-dense-infer` | 8,192 | bf16 | 39,412,929 | 38,681,438 | **1.019×** | 377.9 / 411.9 | 0.17289 / 0.18289 |
-| `cpu-dense-train` | 4,096 | fp32 | 70,140 | 55,788 | **1.257×** | 339.2 / 789.6 | 0.086424 / 0.095986 |
-| `cpu-dense-infer` | 4,096 | fp32 | 220,647 | 171,867 | **1.284×** | 315.7 / 574.7 | 0.097836 / 0.105568 |
+| `cuda-dense-train` | 8,192 | bf16 | 11,406,741 | 10,048,603 | **1.135×** | 507.6 / 631.6 | 0.13174 / 0.15197 |
+| `cuda-dense-infer` | 8,192 | bf16 | 39,387,890 | 38,689,107 | **1.018×** | 371.3 / 411.3 | 0.17313 / 0.18301 |
+| `cpu-dense-train` | 4,096 | fp32 | 70,120 | 54,520 | **1.286×** | 305.2 / 787.3 | 0.08623 / 0.09742 |
+| `cpu-dense-infer` | 4,096 | fp32 | 220,512 | 170,329 | **1.295×** | 280.4 / 568.7 | 0.09791 / 0.10630 |
 
 
-`cuda-dense-train` — batch 8192, bf16, 100 epochs per launch, 3 rounds. Artifact `cuda-dense-train-publish-20260905T105719Z.json`, commit `93cc90e07`, quiet True (busy 0.5% before, 0.4% after), clocks locked True, shape gate True, quality gate True.
+`cuda-dense-train` — batch 8,192, bf16, epochs 100 per launch, 3 rounds. Artifact `cuda-dense-train-publish-20260906T133020Z.json`, commit `e76425bd3`, clean tree, quiet True (busy 0.8% before, 0.2% after, 0.3% max during, threshold 3%), clocks locked True, shape gate True, quality gate True.
 
 | engine | median samples/s | min | max | peak device MiB | Wh (board) |
 |---|---|---|---|---|---|
-| OpenNN | 11,396,057 | 11,395,417 | 11,396,145 | 507.9 | 0.13201 |
-| PyTorch | 10,091,130 | 9,526,841 | 10,163,656 | 631.9 | 0.15169 |
-| **ratio** | **1.129×** | | | 1.24× less | 1.15× less |
+| OpenNN | 11,406,741 | 11,406,056 | 11,436,759 | 507.6 | 0.13174 |
+| PyTorch | 10,048,603 | 9,521,984 | 10,144,606 | 631.6 | 0.15197 |
+| **ratio** | **1.135×** | | | 1.24× less | 1.154× less |
 
 | round | order | OpenNN samples/s | PyTorch samples/s |
 |---|---|---|---|
-| 1 | opennn → pytorch | 11,395,417 | 10,163,656 |
-| 2 | pytorch → opennn | 11,396,145 | 9,526,841 |
-| 3 | opennn → pytorch | 11,396,057 | 10,091,130 |
+| 1 | opennn → pytorch | 11,406,056 | 10,048,603 |
+| 2 | pytorch → opennn | 11,406,741 | 10,144,606 |
+| 3 | opennn → pytorch | 11,436,759 | 9,521,984 |
 
-OpenNN's three launches span 0.006%; PyTorch's span 6.7%, and its median has
-read four different values across runs, an 11% band. The cell reads
-**1.13× to 1.26×** depending on the draw; the section below lists the four
+OpenNN's three launches span 0.27%; PyTorch's span 6.5%, and its median has
+read five different values across publish runs, an 11% band. The cell reads
+**1.13× to 1.26×** depending on the draw; the section below lists the
 draws and says which of them are evidence-grade.
 
 
-`cuda-dense-infer` — batch 8192, bf16, 200 passes per launch, 3 rounds. Artifact `cuda-dense-infer-publish-20260905T105536Z.json`, commit `93cc90e07`, quiet True (busy 0.9% before, 0.3% after), clocks locked True, shape gate True, quality gate True (no metric).
+`cuda-dense-infer` — batch 8,192, bf16, passes 200 per launch, 3 rounds. Artifact `cuda-dense-infer-publish-20260906T132837Z.json`, commit `e76425bd3`, clean tree, quiet True (busy 0.2% before, 0.5% after, 0.5% max during, threshold 3%), clocks locked True, shape gate True, quality gate True (no metric).
 
 | engine | median samples/s | min | max | peak device MiB | Wh (board) |
 |---|---|---|---|---|---|
-| OpenNN | 39,412,929 | 39,412,612 | 39,413,370 | 377.9 | 0.17289 |
-| PyTorch | 38,681,438 | 38,680,896 | 38,690,821 | 411.9 | 0.18289 |
-| **ratio** | **1.019×** | | | 1.09× less | 1.06× less |
+| OpenNN | 39,387,890 | 39,386,263 | 39,388,828 | 371.3 | 0.17313 |
+| PyTorch | 38,689,107 | 38,679,908 | 38,697,811 | 411.3 | 0.18301 |
+| **ratio** | **1.018×** | | | 1.11× less | 1.057× less |
 
 | round | order | OpenNN samples/s | PyTorch samples/s |
 |---|---|---|---|
-| 1 | opennn → pytorch | 39,412,929 | 38,690,821 |
-| 2 | pytorch → opennn | 39,413,370 | 38,680,896 |
-| 3 | opennn → pytorch | 39,412,612 | 38,681,438 |
+| 1 | opennn → pytorch | 39,388,828 | 38,697,811 |
+| 2 | pytorch → opennn | 39,387,890 | 38,689,107 |
+| 3 | opennn → pytorch | 39,386,263 | 38,679,908 |
 
-Both engines are steady here to better than 0.03%, which is why a 1.9% margin
+Both engines are steady here to better than 0.05%, which is why a 1.8% margin
 is reportable at all.
 
 
-`cpu-dense-train` — batch 4096, fp32, 3 epochs per launch, 3 rounds. Artifact `cpu-dense-train-publish-20260905T113143Z.json`, commit `93cc90e07`, quiet True (busy 0.8% before, 0.1% after), clocks locked True, shape gate True, quality gate True.
+`cpu-dense-train` — batch 4,096, fp32, epochs 3 per launch, 3 rounds. Artifact `cpu-dense-train-publish-20260906T134749Z.json`, commit `e76425bd3`, clean tree, quiet True (busy 0.0% before, 0.1% after, 0.1% max during, threshold 3%), clocks locked True, shape gate True, quality gate True.
 
 | engine | median samples/s | min | max | peak RssAnon MiB | Wh (RAPL package-0) |
 |---|---|---|---|---|---|
-| OpenNN | 70,140 | 70,121 | 70,157 | 339.2 | 0.086424 |
-| PyTorch | 55,788 | 54,644 | 57,789 | 789.6 | 0.095986 |
-| **ratio** | **1.257×** | | | 2.33× less | 1.11× less |
+| OpenNN | 70,120 | 69,954 | 70,126 | 305.2 | 0.08623 |
+| PyTorch | 54,520 | 53,035 | 54,953 | 787.3 | 0.09742 |
+| **ratio** | **1.286×** | | | 2.58× less | 1.130× less |
 
 | round | order | OpenNN samples/s | PyTorch samples/s |
 |---|---|---|---|
-| 1 | opennn → pytorch | 70,157 | 54,644 |
-| 2 | pytorch → opennn | 70,140 | 55,788 |
-| 3 | opennn → pytorch | 70,121 | 57,789 |
+| 1 | opennn → pytorch | 70,120 | 54,520 |
+| 2 | pytorch → opennn | 70,126 | 53,035 |
+| 3 | opennn → pytorch | 69,954 | 54,953 |
 
 
-`cpu-dense-infer` — batch 4096, fp32, 5 passes per launch, 3 rounds. Artifact `cpu-dense-infer-publish-20260905T112820Z.json`, commit `93cc90e07`, quiet True (busy 0.0% before, 0.0% after), clocks locked True, shape gate True, quality gate True (no metric).
+`cpu-dense-infer` — batch 4,096, fp32, passes 5 per launch, 3 rounds. Artifact `cpu-dense-infer-publish-20260906T134425Z.json`, commit `e76425bd3`, clean tree, quiet True (busy 0.1% before, 0.0% after, 0.1% max during, threshold 3%), clocks locked True, shape gate True, quality gate True (no metric).
 
 | engine | median samples/s | min | max | peak RssAnon MiB | Wh (RAPL package-0) |
 |---|---|---|---|---|---|
-| OpenNN | 220,647 | 220,639 | 220,718 | 315.7 | 0.097836 |
-| PyTorch | 171,867 | 170,296 | 173,227 | 574.7 | 0.105568 |
-| **ratio** | **1.284×** | | | 1.82× less | 1.08× less |
+| OpenNN | 220,512 | 220,493 | 220,647 | 280.4 | 0.09791 |
+| PyTorch | 170,329 | 169,852 | 170,765 | 568.7 | 0.10630 |
+| **ratio** | **1.295×** | | | 2.03× less | 1.086× less |
 
 | round | order | OpenNN samples/s | PyTorch samples/s |
 |---|---|---|---|
-| 1 | opennn → pytorch | 220,718 | 173,227 |
-| 2 | pytorch → opennn | 220,639 | 170,296 |
-| 3 | opennn → pytorch | 220,647 | 171,867 |
+| 1 | opennn → pytorch | 220,493 | 170,329 |
+| 2 | pytorch → opennn | 220,647 | 169,852 |
+| 3 | opennn → pytorch | 220,512 | 170,765 |
 
 ## Why
 
@@ -208,7 +208,7 @@ proportions than they did a session ago.
 against 248.6 W in `2026-09-03-publish`, for an energy margin of 1.339× on a
 throughput margin of 1.004×. It is not that cell any more. The published
 launches read 245.1 W against 254.5 W, and the energy margin decomposes almost
-exactly: 1.019× on time times 1.038× on power gives the 1.058× measured. That
+exactly: 1.018× on time times 1.039× on power gives the 1.057× measured. That
 fall from 1.339× to 1.058× was chosen, not suffered, and the section below
 gives the variant table that prices it.
 
@@ -227,7 +227,7 @@ The two CPU cells win on **time while drawing more power**, and the honest
 statement is that OpenNN is not the more frugal engine here. Over the same
 window OpenNN pulls 31.1 W of package power against PyTorch's 26.1 W on
 inference, and 29.1 W against 25.7 W on training — 19% and 13% more. It wins
-1.079× and 1.111× anyway because it finishes 1.284× and 1.257× sooner. The
+1.086× and 1.130× anyway because it finishes 1.295× and 1.286× sooner. The
 extra watts are the point, not a defect: the RAPL counter is measuring cores
 held closer to their sgemm peak (88.5% against 68.9%), and a core at higher
 occupancy costs more per second and less per sample.
@@ -236,33 +236,48 @@ occupancy costs more per second and less per sample.
 
 The two devices report different metrics and neither is a workload figure. On
 CUDA `peak_mib` is `device_used_minus_idle`: NVML's device-used at peak, minus
-a pre-launch idle reading of 251.0 MiB taken the same way for both engines. It
-therefore contains each process's CUDA context, its loaded kernel images and,
-on PyTorch's side, caching-allocator blocks that are reserved and free. On CPU
-it is `process_peak_anonymous_rss`, the whole process including its framework
-baseline.
+a pre-launch idle reading of 243–255 MiB taken the same way for both engines.
+It therefore contains each process's CUDA context, its loaded kernel images
+and, on PyTorch's side, caching-allocator blocks that are reserved and free.
+On CPU it is `process_peak_anonymous_rss`, the whole process including its
+framework baseline.
 
-The CUDA margins are small and mechanical: both engines hold the same resident
-split and the same 1,080,321 parameters, so the 124 MiB of the training cell
-(507.9 against 631.9) and the 34 of the inference cell (377.9 against 411.9)
-are context and allocator rather than workload, and nothing this session was
-instrumented to separate the two.
+The CUDA margins are small and mostly context. Both engines hold the same
+resident split and the same 1,080,321 parameters — 4 MiB of fp32, 2 MiB of
+bf16 — so the 124 MiB of the training cell (507.6 against 631.6) and the 40
+of the inference cell (371.3 against 411.3) are allocator and context rather
+than workload. The inference figure fell from 377.9 to 371.3 this round
+because the driver now deploys the parameters through
+`upload_parameters_bf16_inference()`, which releases the fp32 master the
+forward pass never reads (see `transformer.md`, where the same change is
+worth 245 MiB); on a 1 M-parameter network it is worth 6.
 
 The CPU margins are not workload figures at all, and they are the largest
 numbers in the table. Both drivers print a baseline: OpenNN 208.5 MiB against
-PyTorch 758.7 on inference and 829.8 on training. Those gaps, 550 and 621 MiB,
-are each larger than the whole peak difference being reported as the win (259
-and 450 MiB). On top of that the two sides hold the data in different kinds of
+PyTorch 761.7 on inference and 833.0 on training. Those gaps, 553 and 624 MiB,
+are each larger than the whole peak difference being reported as the win (288
+and 482 MiB). On top of that the two sides hold the data in different kinds of
 memory: OpenNN's reader `mmap`s the CSV read-only (`io_utilities.cpp`), so the
 158 MB test file lands in `RssFile` and outside the metric entirely, while the
 PyTorch driver materialises it anonymously two to three times over — a pandas
 frame, an `np.ascontiguousarray` copy of it, then
 `torch.from_numpy(...).contiguous()`. That is the driver's construction, not
-PyTorch's, and it is ours. Both effects push the same way, so read the 2.33×
-and the 1.82× as process-footprint ratios bounded above by those two
+PyTorch's, and it is ours. Both effects push the same way, so read the 2.58×
+and the 2.03× as process-footprint ratios bounded above by those two
 asymmetries and not as what the two engines cost to run.
 
-### `cuda-dense-infer`, 1.019×: the cell that was losing
+One part of the CPU figures did change this round, and it was OpenNN's to
+fix: both cells read 34–35 MiB less than at `93cc90e07` (315.7 → 280.4 and
+339.2 → 305.2) because a CPU-only process no longer creates a CUDA context.
+The device backend used to create its streams and cuBLASLt/cuDNN handles in
+its constructor, and the CPU GEMM path reaches that singleton for its thread
+pool — so every CPU cell was holding a 226 MiB context on the GPU and the
+driver's host-side state for it in its own resident set. `e76425bd3`
+initialises the CUDA side on first CUDA use; a CPU process no longer maps
+`/dev/nvidia*` at all. This is a library fix, not a benchmark one, and it
+applies to every CPU-only user of a CUDA build.
+
+### `cuda-dense-infer`, 1.018×: the cell that was losing
 
 **Start with what changed, because the previous revision of this document was
 measured against a PyTorch that no longer exists.** In `2026-09-03-publish`
@@ -524,7 +539,7 @@ other three are the `2026-09-05-variants` session.
 
 | configuration | throughput | energy | artifact |
 |---|---|---|---|
-| **default (published)** | 39,412,929/s, **1.019×** | 0.17289 Wh, **1.058×** | `...publish-20260905T105536Z` |
+| **default (published at `93cc90e07`)** | 39,412,929/s, **1.019×** | 0.17289 Wh, **1.058×** | `...publish-20260905T105536Z` |
 | `OPENNN_CUDNN_MATMUL=0` | 37,387,210/s, **0.966×** | 0.13732 Wh, **1.315×** | `...20260905T112041Z` |
 | `OPENNN_MATMUL_CROSS_SOURCE_GAIN=100` | 37,392,713/s, **0.966×** | 0.13676 Wh, **1.321×** | `...20260905T112201Z` |
 | `OPENNN_LT_TILE_TOLERANCE=0` | 39,412,842/s, **1.019×** | 0.17190 Wh, **1.057×** | `...20260905T111857Z` |
@@ -678,7 +693,7 @@ OpenNN's published median the four give 1.127× to 1.263×, so the cell reads
 1.13× to 1.26× depending on the draw, with the upper end resting on a
 dirty-tree run. The 1.267× quoted at the commit that introduced the cuDNN work
 pairs the 9,021,160 draw with that same scratch run's OpenNN launch rather than
-the published one. 1.129× is the published session's median and the
+the published one. 1.135× is the published session's median and the
 conservative end.
 
 **What moved since `6b7179dde`**, where this cell read 10,768,761 samples/s at
@@ -760,7 +775,7 @@ still reads 7,943,400 — against 11.1 M for runs at the same commit forty
 minutes later. Whatever depressed that cluster was never established, so none
 of it is quotable, and no A/B for this variable exists at `93cc90e07` at all.
 
-### `cpu-dense-infer`, 1.284×: a layer at 89% of the cores' peak
+### `cpu-dense-infer`, 1.295×: a layer at 89% of the cores' peak
 
 On the CPU the arithmetic is fixed and large: 8.83 GFLOP per batch of 4,096,
 of which 8.59 are the 1,024 × 1,024 layer. The eight P-cores at their locked
@@ -826,7 +841,7 @@ pool makes the spinners and the workers the same threads. This was a loss
 (0.70×) until it was found, and it is the reason the runner pins the OpenMP
 wait policy for both engines (PROTOCOL §6).
 
-### `cpu-dense-train`, 1.257×: the same GEMM, three times
+### `cpu-dense-train`, 1.286×: the same GEMM, three times
 
 Training is the forward GEMMs plus two more products of the same shape per
 layer in the backward pass — 26.3 GFLOP per batch, 48.9 ms at peak — and the

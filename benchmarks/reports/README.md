@@ -23,7 +23,7 @@ it (PROTOCOL §2).
 ## The results
 
 Twelve cells. Every cell wins every axis: throughput, peak memory, energy.
-Session `2026-09-05-publish`, commit `93cc90e07`, clean tree, GPU clock locked
+Session `2026-09-06-publish`, commit `e76425bd3`, clean tree, GPU clock locked
 at 2,692 MHz, turbo off, every gate passing in every row.
 
 Throughput is OpenNN / PyTorch; memory and energy are PyTorch / OpenNN, so
@@ -31,19 +31,19 @@ that above 1 always means OpenNN is ahead.
 
 | cell | batch | precision | OpenNN /s | PyTorch /s | thr | peak MiB ON/PT | mem | Wh ON/PT | energy |
 |---|---|---|---|---|---|---|---|---|---|
-| `cpu-dense-infer` | 4,096 | fp32 | 220,647 | 171,867 | **1.284×** | 316 / 575 | 1.82× | 0.0978 / 0.1056 | 1.079× |
-| `cpu-dense-train` | 4,096 | fp32 | 70,140 | 55,788 | **1.257×** | 339 / 790 | 2.33× | 0.0864 / 0.0960 | 1.111× |
-| `cpu-lstm-infer` | 256 | fp32 | 80,394 | 69,269 | **1.161×** | 189 / 463 | 2.45× | 0.0217 / 0.0234 | 1.081× |
-| `cpu-lstm-train` | 256 | fp32 | 23,147 | 13,016 | **1.778×** | 242 / 592 | 2.44× | 0.0429 / 0.0609 | 1.420× |
-| `cuda-cnn-infer` | 128 | bf16 | 7,077 | 5,635 | **1.256×** | 944 / 1,268 | 1.34× | 2.4739 / 3.1247 | 1.263× |
-| `cuda-cnn-train` | 64 | bf16 | 1,682 | 1,399 | **1.202×** | 3,557 / 4,235 | 1.19× | 3.8509 / 4.2685 | 1.108× |
-| `cuda-dense-infer` | 8,192 | bf16 | 39,412,929 | 38,681,438 | **1.019×** | 378 / 412 | 1.09× | 0.1729 / 0.1829 | 1.058× |
-| `cuda-dense-train` | 8,192 | bf16 | 11,396,057 | 10,091,130 | **1.129×** | 508 / 632 | 1.24× | 0.1320 / 0.1517 | 1.149× |
-| `cuda-lstm-infer` | 256 | bf16 | 918,696 | 524,191 | **1.753×** | 294 / 442 | 1.50× | 0.0459 / 0.0633 | 1.377× |
-| `cuda-lstm-train` | 256 | bf16 | 290,819 | 104,815 | **2.775×** | 326 / 532 | 1.63× | 0.0561 / 0.1212 | 2.160× |
-| `cuda-transformer-infer` | 32 | bf16 | 5,335 | 4,695 | **1.136×** | 863 / 1,161 | 1.35× | 11.5286 / 14.9475 | 1.297× |
-| `cuda-transformer-train` | 32 | bf16 | 1,329 | 1,145 | **1.161×** | 2,217 / 3,349 | 1.51× | 16.3427 / 22.6253 | 1.384× |
-| **geomean** | | | | | **1.351×** | | **1.60×** | | **1.265×** |
+| `cpu-dense-infer` | 4,096 | fp32 | 220,512 | 170,329 | **1.295×** | 280 / 569 | 2.03× | 0.0979 / 0.1063 | 1.086× |
+| `cpu-dense-train` | 4,096 | fp32 | 70,120 | 54,520 | **1.286×** | 305 / 787 | 2.58× | 0.0862 / 0.0974 | 1.130× |
+| `cpu-lstm-infer` | 256 | fp32 | 80,285 | 69,304 | **1.158×** | 156 / 459 | 2.93× | 0.0216 / 0.0233 | 1.082× |
+| `cpu-lstm-train` | 256 | fp32 | 23,251 | 13,103 | **1.774×** | 210 / 591 | 2.82× | 0.0431 / 0.0608 | 1.412× |
+| `cuda-cnn-infer` | 128 | bf16 | 7,075 | 5,578 | **1.268×** | 848 / 1,268 | 1.49× | 2.4819 / 3.1411 | 1.266× |
+| `cuda-cnn-train` | 64 | bf16 | 1,682 | 1,402 | **1.200×** | 3,558 / 4,218 | 1.19× | 3.8449 / 4.2432 | 1.104× |
+| `cuda-dense-infer` | 8,192 | bf16 | 39,387,890 | 38,689,107 | **1.018×** | 371 / 411 | 1.11× | 0.1731 / 0.1830 | 1.057× |
+| `cuda-dense-train` | 8,192 | bf16 | 11,406,741 | 10,048,603 | **1.135×** | 508 / 632 | 1.24× | 0.1317 / 0.1520 | 1.154× |
+| `cuda-lstm-infer` | 256 | bf16 | 2,716,548 | 513,813 | **5.287×** | 294 / 442 | 1.50× | 0.2575 / 0.6478 | 2.515× |
+| `cuda-lstm-train` | 256 | bf16 | 823,255 | 95,842 | **8.590×** | 316 / 512 | 1.62× | 0.0292 / 0.1320 | 4.521× |
+| `cuda-transformer-infer` | 32 | bf16 | 5,335 | 4,694 | **1.137×** | 618 / 1,162 | 1.88× | 11.5532 / 14.9660 | 1.295× |
+| `cuda-transformer-train` | 32 | bf16 | 1,329 | 1,145 | **1.161×** | 2,233 / 3,373 | 1.51× | 16.3292 / 22.6620 | 1.388× |
+| **geomean** | | | | | **1.633×** | | **1.73×** | | **1.416×** |
 
 Throughput and energy are the median of the three launches an engine makes in
 a cell; peak memory is the highest of the three, so the memory column is the
@@ -56,9 +56,9 @@ twelve ratios rather than of any physical quantity.
 
 | footprint question | OpenNN | PyTorch | PyTorch / OpenNN |
 |---|---|---|---|
-| memory | 0.123 s, 118 MiB | 3.182 s, 449 MiB | **25.9×** the time, 3.8× the memory |
-| startup | 0.568 s, 325 MiB | 1.885 s, 375 MiB | **3.3×** the time, 1.2× the memory |
-| export | 0.448 s, 156 MiB | 1.905 s, 376 MiB | **4.3×** the time, 2.4× the memory |
+| memory | 0.123 s, 118 MiB | 3.201 s, 449 MiB | **26.0×** the time, 3.8× the memory |
+| startup | 0.569 s, 321 MiB | 1.886 s, 375 MiB | **3.3×** the time, 1.2× the memory |
+| export | 0.184 s, 124 MiB | 1.909 s, 376 MiB | **10.4×** the time, 3.0× the memory |
 
 ## What a sceptical reader should know before believing the table
 
@@ -77,21 +77,22 @@ should not be cited. Against the kernel PyTorch now finds, the matmul path we
 published last round, reproduced here with `OPENNN_CUDNN_MATMUL=0`, reads
 0.966×.
 
-**`cuda-dense-infer` is the cell that changed, and it is the narrowest.** It
-reads 1.019× — a 1.9% margin, against launches far tighter than that: OpenNN's
-three read 39,412,929, 39,413,370 and 39,412,612, PyTorch's 38,690,821,
-38,680,896 and 38,681,438, spreads of 0.002% and 0.026%. It reads 1.019× only
-because of one intervention, isolated here by a single variable:
+**`cuda-dense-infer` is the narrowest cell.** It reads 1.018× — a 1.8%
+margin, against launches far tighter than that: OpenNN's three read
+39,388,828, 39,387,890 and 39,386,263, PyTorch's 38,697,811, 38,689,107 and
+38,679,908, spreads of 0.007% and 0.046%. It is positive only because of one
+intervention, isolated at `93cc90e07` by a single variable (the matmul policy
+has not changed since, and the cell re-measured within 0.1% of those rows):
 
 | configuration | throughput | energy |
 |---|---|---|
-| published cell | 39,412,929/s, 1.019× | 0.17289 Wh, 1.058× |
+| default (published at `93cc90e07`) | 39,412,929/s, 1.019× | 0.17289 Wh, 1.058× |
 | `OPENNN_CUDNN_MATMUL=0` | 37,387,210/s, 0.966× | 0.13732 Wh, 1.315× |
 | `OPENNN_MATMUL_CROSS_SOURCE_GAIN=100` | 37,392,713/s, 0.966× | 0.13676 Wh, 1.321× |
 | `OPENNN_LT_TILE_TOLERANCE=0` | 39,412,842/s, 1.019× | 0.17190 Wh, 1.057× |
 
-Row one is the published run itself; the three variant rows are session
-`2026-09-05-variants` at the same commit, each carrying its own three PyTorch
+Row one is the `93cc90e07` publish run; the three variant rows are session
+`2026-09-05-variants` at that commit, each carrying its own three PyTorch
 launches, which is why their ratios are internally valid.
 
 Disabling the cuDNN plan returns the cell to within 0.2% of the throughput it
@@ -123,7 +124,7 @@ It was not measured this round, and it is the open control on this cell.
 
 **The energy on that cell was traded down deliberately, and is not an
 improvement.** Winning the throughput axis required the faster kernel, and the
-faster kernel is the hotter one: 1.019× throughput comes with 1.058× energy,
+faster kernel is the hotter one: 1.018× throughput comes with 1.057× energy,
 where the slower kernel gave 0.966× throughput at 1.315× energy. The rule
 applied was to clear the constraint on every axis first and maximise
 afterwards, so a cell that wins energy by 1.3× while losing throughput was not
@@ -132,16 +133,16 @@ there so the price is visible: roughly 0.26× of energy ratio bought 0.053× of
 throughput ratio. Anyone who cares more about joules than about samples per
 second should set `OPENNN_CUDNN_MATMUL=0` and read row two.
 
-**Two cells are noisier than their own third digit.** `cuda-dense-train` is
+**One cell is noisier than its own third digit.** `cuda-dense-train` is
 noisy on PyTorch's side: its three launches inside the published run read
-10,163,656, 9,526,841 and 10,091,130, a 6.7% band, so against OpenNN's
-11,396,057 the cell reads between 1.12× and 1.20× depending on the draw and
-the 1.129× in the table sits near the low end. `cuda-lstm-train` varies 3.1%
-on OpenNN's own side inside the published run — 298,968, 290,819, 290,028 —
-and 1.7% across the three gate-passing medians at this commit (289,372,
-290,819, 294,210); PyTorch's three launches in the same run spanned 97,006 to
-106,586, so that cell's 2.775× is a point on a band of 2.7× to 3.1×. Neither
-cell's ordering is in doubt; their third digit is.
+10,048,603, 10,144,606 and 9,521,984, a 6.5% band, so against OpenNN's
+11,406,741 the cell reads between 1.12× and 1.20× depending on the draw and
+the 1.135× in the table sits in the middle. `cuda-lstm-train`, which was the
+noisiest cell of the previous table (a 3% band on OpenNN's own side and two
+publish runs reading 2.775× and 3.016×), is now ordinary: 811,863–828,105
+on OpenNN's side, 95,839–96,827 on PyTorch's, 8.4×–8.6× on any pairing. A
+host-bound batch moves with everything else the host does; a captured one
+does not.
 
 ## Where a win is not to OpenNN's credit
 
@@ -168,18 +169,19 @@ not win `cuda-dense-infer` with a faster matmul — the 1.9% is what remains
 after a matmul of equal speed, and no in-situ profile of this cell exists this
 round to attribute it further.
 
-**On `cuda-lstm-infer`, PyTorch has the better algorithm, and both engines are
-on cuDNN.** PyTorch reaches cuDNN's persistent kernel,
-`RNN_blockPersist_fp_LSTM_HMMA`, 65.2% of its GPU time in 1,882 launches of
-38.12 us. OpenNN asks for the same persistent algorithm —
-`CUDNN_RNN_ALGO_PERSIST_STATIC_SMALL_H` is its default (`cudnn_rnn.cpp`) — and
-falls back to `CUDNN_RNN_ALGO_STANDARD` when cuDNN answers `NOT_SUPPORTED` for
-its descriptor. What it runs is that standard path: `elemWiseRNNcell` at 34.2%
-in 45,192 launches, plus the cuBLAS `nvjet` GEMMs the standard algorithm calls
-at 52.1%. That is consistent with the cuDNN version asymmetry running against
-OpenNN here, though the two descriptors were not compared. OpenNN still wins
-the cell 1.753×; no measurement taken this round says why, and the launch
-counts say it is not kernel quality.
+**On both CUDA LSTM cells, PyTorch has the better kernels and loses by 5×
+and 8.6×; both engines are on cuDNN.** PyTorch reaches cuDNN's persistent
+kernel, `RNN_blockPersist_fp_LSTM_HMMA`, 65.1% of its GPU time in 1,882
+launches of 38.1 us, and its whole inference batch is 62.4 us of GPU work
+against OpenNN's 86.6 on the standard path (`elemWiseRNNcell` plus the
+cuBLAS `nvjet` GEMMs the standard algorithm calls). The margins are the
+issue path: OpenNN's batch is one captured CUDA graph, PyTorch's is sixteen
+(inference) or fifty-eight (training) launches from Python, and the capture
+became possible this round when a blocking stream in OpenNN's own backend
+was found to be what cuDNN was refusing (`lstm.md`). A PyTorch path that
+captured its batch — `compile:reduce-overhead` was measured and lost, because
+Dynamo breaks the graph at the cuDNN call — would not lose these cells by
+5×; the kernel budgets say it would win the inference cell.
 
 **The CPU memory column is a whole-process peak.** The artifacts say so
 explicitly: on CPU cells `peak_mib` is the process's peak anonymous RSS with
@@ -187,11 +189,13 @@ the framework baseline included, so much of the 1.8×–2.4× CPU memory margin 
 a Python interpreter with `import torch` measured against a C++ binary, not an
 allocator difference — a real cost to a user, but not an engineering result.
 How much cannot be quantified from these runs. The baselines the drivers print
-(758.7 MiB for PyTorch, 208.5 for OpenNN on `cpu-dense-infer`) are total-RSS
+(761.7 MiB for PyTorch, 208.5 for OpenNN on `cpu-dense-infer`) are total-RSS
 readings, which the artifact's own `workload_note` says are "not commensurable
 with process_peak_anonymous_rss", and no anonymous-RSS baseline was captured.
-The commensurable figures beside the column are the file-backed peaks: 455–527
-MiB for PyTorch against 241.5–241.6 for OpenNN across the published launches.
+One part of the column did change this round and is OpenNN's: every CPU
+cell reads 33–35 MiB less than at `93cc90e07` because a CPU-only process no
+longer creates a CUDA context (`dense.md`, *Where the memory goes*), a
+library fix that applies to every CPU-only user of a CUDA build.
 
 **The four CPU cells are mostly not OpenNN's code.** This round's profiles put
 95.7% of the dense inference layer and 95.4% of the dense training layer inside
@@ -199,8 +203,8 @@ one MKL call, `cpu:sgemm_wide`, and 98.4% of `cpu-lstm-infer` inside one oneDNN
 call, `rnn:onednn_forward`. The two engines link different MKL builds
 (PROTOCOL §1) and the oneDNN builds are not recorded per run at all; PyTorch's
 CPU side was not profiled this round. A cell that is 98% one vendor primitive
-cannot have its 1.161× attributed to the 1.6% of framework around it, and the
-same holds for 1.284×, 1.257× and 1.778×. That is the argument this document
+cannot have its 1.158× attributed to the 1.6% of framework around it, and the
+same holds for 1.295×, 1.286× and 1.774×. That is the argument this document
 already accepts for cuDNN, applied to a third of the table.
 
 **A harness setting moves one engine and not the other.** The runner exports
@@ -217,7 +221,7 @@ the JPEGs every epoch through worker processes; OpenNN reads its own
 pre-decoded image cache. `PT_INPUT=cache` feeds PyTorch the same cache, but
 the only run of it is at batch 128 under `compile:default` at commit
 `918805ce1`, where the published cell is batch 64 under
-`max-autotune-no-cudagraphs`, so the decode's share of the 1.202× is
+`max-autotune-no-cudagraphs`, so the decode's share of the 1.200× is
 unmeasured at the published configuration.
 
 **OpenNN gets one more warmup than PyTorch on the CNN.** Training warms two
@@ -229,48 +233,62 @@ warm away. It is an asymmetry all the same, and it favours OpenNN.
 
 ## The state of this round
 
-All twelve cells are evidence-grade. `cuda-transformer-train`, which the
-previous round could not publish because every attempt tripped the runner's
-foreign-activity gate, was re-measured cleanly: `busy_during_max` 0.0156
-against the 0.03 threshold. `cuda-lstm-train` was run twice under this session
-id at this commit: the 5 September run passed every gate and read 3.016×
-(289,372 against 95,954), and the 6 September re-run is published because it is
-the later one, which puts the lower of the two valid readings in the table.
-Every other row is that cell's publish run on 5 September.
+All twelve cells are evidence-grade at `e76425bd3`, session
+`2026-09-06-publish`: clean tree, clocks locked, three rounds each, every
+gate passing, one cell (`cuda-cnn-train`) re-measured by the runner's own
+safety-net pass after a third round tripped the foreign-activity gate at
+5.5%. The footprint family ran twice in the same session.
 
-Kernel-level evidence covers less than every cell. Profiles exist on OpenNN's
-side for `cuda-cnn-train` (batch normalisation 31.5% of the step, convolutions
-about 13%), `cuda-transformer-train`, `cuda-transformer-infer`, and the three
-CPU cells a single vendor primitive dominates — `cpu:sgemm_wide` at 95.7% of
-the dense inference layer and 95.4% of the dense training layer,
-`rnn:onednn_forward` at 98.4% of `cpu-lstm-infer`. On both engines there is
-`cuda-lstm-infer`; on PyTorch's side there is `cuda-cnn-train`, whose largest
-single kernel is 19.9%. There is no profile of `cuda-dense-infer`,
-`cuda-dense-train`, `cuda-cnn-infer` or `cuda-lstm-train` on either side this
-round, and the GEMM timings quoted above are a standalone microbenchmark rather
-than a trace. `cpu-lstm-train` was profiled twice on 6 September; both runs
-were filed to scratch on the pre-launch quiet reading (0.065 and 0.064 against
-the 0.03 threshold) and neither covered the training path, so that cell's
-margin is unattributed. The traces themselves are not in `results/`, which
-holds one JSON per cell and no kernel data, so a profile share is checkable
-only against the document that quotes it. Where a family document still carries
-*[pending the final measurement round]*, the measurement named there does not
-exist and the document says what is missing rather than guessing.
+Two things changed between the previous table (`93cc90e07`) and this one,
+and both are library changes rather than measurement changes:
 
-Two interventions were measured and rejected, and belong here beside the one
-that was adopted. Fusing the CNN's batch-normalisation backward would have
-recovered a layer only where the re-read fits in the 48 MB L2, true for 114.0M
-of 615.0M elements — about 1.3% of the step, against a grid-wide barrier inside
-a captured graph; removing dead branches and registers instead was
-bit-identical and moved the cell from 1.171× to 1.197× on the commit's own
-two-round measurement (`cnn.md`). Adam was examined in the same pass and left
-alone at 778.9 GB/s, 86.9% of pin; the launch-count hypothesis died because the
-step is graph-captured, so its 74 inter-kernel gaps are 160-192 ns of graph-node
-latency rather than the 3-8 us of a real launch (`transformer.md`).
+- **cuDNN's RNN now captures into OpenNN's CUDA graphs** (`8cb810339`). The
+  refusal the previous round reported as cuDNN status 4000 was OpenNN's own
+  backend creating one blocking stream; with it non-blocking the whole LSTM
+  step replays as one graph and the two CUDA LSTM cells move from 1.753× and
+  2.775× to 5.287× and 8.590× on throughput, and from 1.38× and 2.16× to
+  2.52× and 4.52× on energy. The throughput geomean's move from 1.351× to
+  1.633× is almost entirely this.
+- **Peak memory was attributed cell by cell and two things were wrong**
+  (`e76425bd3`). The CUDA inference drivers held the fp32 master parameters
+  on the device beside the bf16 mirror the forward pass reads, because the
+  library's release path was only reached through its model-loading
+  functions; they now deploy through `upload_parameters_bf16_inference()`,
+  the same step PyTorch's `model.to(bfloat16)` is. And CPU-only processes
+  were creating a CUDA context, because the backend built its streams and
+  handles in its constructor and the CPU GEMM path reaches that singleton for
+  its thread pool. The memory geomean's move from 1.60× to 1.73× is these
+  two: `cuda-transformer-infer` 1.35× → 1.88×, `cuda-cnn-infer` 1.34× →
+  1.49×, and 33–35 MiB off every CPU cell. Throughput and energy on those
+  cells did not move.
 
-The controlled variants measured at this commit are the three
-`cuda-dense-infer` rows above. Any other variant a family document quotes was
-taken at an earlier commit and is dated there.
+What was tried and did not pay, in the same round: the persistent cuDNN RNN
+algorithm at bf16 (granted only with the double-bias layout, worth 0.6%);
+pruning the cuDNN matmul plan cache (its 30 built configurations cost 3.4 MiB
+and destroying them returns none of it); and cuDNN's fused batch-norm
+patterns for the CNN — convolution with fused statistics, data-gradient with
+fused BN-weight reduction — which cuDNN 9.25 offers no engine for on this
+`sm_120` card in bf16 (`No valid engine configs` for every ResNet-50 shape
+probed). Training memory was left where it is on purpose: both training
+arenas are at their planner's lower bound in bf16, the same saved set PyTorch
+keeps, and the Adam state is already a bf16 first moment over an fp32 second.
+
+Kernel-level evidence now covers the two CUDA LSTM cells on the captured path
+(`lstm.md`), `cuda-cnn-train`, `cuda-transformer-train`,
+`cuda-transformer-infer`, and the three CPU cells a single vendor primitive
+dominates. There is still no in-situ profile of `cuda-dense-infer`,
+`cuda-dense-train` or `cuda-cnn-infer` on either side, and the GEMM timings
+quoted for the dense cell are a standalone microbenchmark. The library's own
+memory attribution (`OPENNN_MEMORY_DEBUG=1`) exists for every CUDA cell and
+is quoted in each family document; PyTorch's side was not traced for memory.
+The traces themselves are not in `results/`, which holds one JSON per cell
+and no kernel data, so a profile share is checkable only against the
+document that quotes it.
+
+The controlled variants the dense document argues from — the three
+`cuda-dense-infer` knob rows — were measured at `93cc90e07`; the matmul
+policy has not changed since and the cell re-measured within 0.1% of them,
+so they are quoted with that commit rather than repeated.
 
 ## What "same work" means here
 

@@ -5,11 +5,11 @@ configuration — 6 encoder and 6 decoder layers, d_model 512, 8 heads,
 feed-forward 2,048, a 20,000-token vocabulary on each side, 74,878,496
 parameters — over 199,575 English–German sentence pairs from WMT14 News
 Commentary v9 at 130 tokens per sequence, batch 32, bf16, on the RTX 5070 Ti.
-Session `2026-09-05-publish`, commit `93cc90e07`:
+Session `2026-09-06-publish`, commit `e76425bd3`:
 
 | cell | OpenNN | PyTorch | OpenNN / PyTorch |
 |---|---|---|---|
-| `cuda-transformer-infer` | 5,335 sequences/s | 4,695 | **1.136×** |
+| `cuda-transformer-infer` | 5,335 sequences/s | 4,694 | **1.137×** |
 | `cuda-transformer-train` | 1,329 sequences/s | 1,145 | **1.161×** |
 
 Both cells now have an `nsys` kernel trace, and it changes what this document
@@ -130,7 +130,7 @@ measurement, not a translation result.
 
 ## Results
 
-Session `2026-09-05-publish`, commit `93cc90e07`, clean tree, clocks locked at
+Session `2026-09-06-publish`, commit `e76425bd3`, clean tree, clocks locked at
 2692/810 MHz, turbo off, governor `performance`. Both cells are
 evidence-grade: the training run that the previous version of this document
 had to file under `results/scratch/` for foreign CPU activity has been
@@ -138,45 +138,45 @@ replaced by a quiet one.
 
 | cell | batch | precision | OpenNN samples/s | PyTorch samples/s | OpenNN / PyTorch | peak memory MiB (OpenNN / PyTorch) | energy Wh (OpenNN / PyTorch) |
 |---|---|---|---|---|---|---|---|
-| `cuda-transformer-infer` | 32 | bf16 | 5,335 | 4,695 | **1.136×** | 863 / 1,161 | 11.5286 / 14.9475 |
-| `cuda-transformer-train` | 32 | bf16 | 1,329 | 1,145 | **1.161×** | 2,217 / 3,349 | 16.3427 / 22.6253 |
+| `cuda-transformer-infer` | 32 | bf16 | 5,335 | 4,694 | **1.137×** | 618 / 1,162 | 11.5532 / 14.9660 |
+| `cuda-transformer-train` | 32 | bf16 | 1,329 | 1,145 | **1.161×** | 2,233 / 3,373 | 16.3292 / 22.6620 |
 
 Both cells win all three axes, as every cell in the twelve-cell matrix now
 does.
 
-`cuda-transformer-train` — batch 32, bf16, epochs 2 per launch, 3 rounds. Artifact `cuda-transformer-train-publish-20260905T091329Z.json`, commit `93cc90e07`, quiet True (busy 0.5% before, 0.2% after, 1.6% peak during a timed window against a 3% threshold), clocks locked True, shape gate True.
+`cuda-transformer-train` — batch 32, bf16, epochs 2 per launch, 3 rounds. Artifact `cuda-transformer-train-publish-20260906T114619Z.json`, commit `e76425bd3`, clean tree, quiet True (busy 0.6% before, 0.4% after, 1.6% max during, threshold 3%), clocks locked True, shape gate True.
 
 | engine | median samples/s | min | max | peak device MiB | Wh (board) | mean W |
 |---|---|---|---|---|---|---|
-| OpenNN | 1,329 | 1,328 | 1,330 | 2,217 | 16.34268 | 196.2 |
-| PyTorch | 1,145 | 1,145 | 1,145 | 3,349 | 22.62525 | 233.8 |
-| **ratio** | **1.161×** | | | 1.51× less | 1.384× less | |
+| OpenNN | 1,329 | 1,329 | 1,330 | 2,232.9 | 16.32924 | 195.8 |
+| PyTorch | 1,145 | 1,144 | 1,145 | 3,373.2 | 22.66202 | 234.1 |
+| **ratio** | **1.161×** | | | 1.51× less | 1.388× less | 1.20× less |
 
 | round | order | OpenNN samples/s | PyTorch samples/s |
 |---|---|---|---|
 | 1 | opennn → pytorch | 1,330 | 1,145 |
 | 2 | pytorch → opennn | 1,329 | 1,145 |
-| 3 | opennn → pytorch | 1,328 | 1,145 |
+| 3 | opennn → pytorch | 1,329 | 1,144 |
 
-OpenNN's median epoch is 150.0 s and PyTorch's 174.13 s; in tokens, 172,780
-against 148,978 per second.
+OpenNN's median epoch is 150.0 s and PyTorch's 174.24 s; in tokens, 172,867
+against 148,883 per second.
 
-`cuda-transformer-infer` — batch 32, bf16, passes 5 per launch, 3 rounds. Artifact `cuda-transformer-infer-publish-20260905T100855Z.json`, commit `93cc90e07`, quiet True (busy 0.3% before, 0.1% after, 0.5% peak during), clocks locked True, shape gate True.
+`cuda-transformer-infer` — batch 32, bf16, passes 5 per launch, 3 rounds. Artifact `cuda-transformer-infer-publish-20260906T124146Z.json`, commit `e76425bd3`, clean tree, quiet True (busy 1.6% before, 0.4% after, 1.7% max during, threshold 3%), clocks locked True, shape gate True.
 
 | engine | median samples/s | min | max | peak device MiB | Wh (board) | mean W |
 |---|---|---|---|---|---|---|
-| OpenNN | 5,335 | 5,335 | 5,335 | 863 | 11.52856 | 221.9 |
-| PyTorch | 4,695 | 4,695 | 4,695 | 1,161 | 14.94753 | 253.2 |
-| **ratio** | **1.136×** | | | 1.35× less | 1.297× less | |
+| OpenNN | 5,335 | 5,335 | 5,335 | 617.6 | 11.55320 | 222.4 |
+| PyTorch | 4,694 | 4,694 | 4,694 | 1,161.6 | 14.96601 | 253.6 |
+| **ratio** | **1.137×** | | | 1.88× less | 1.295× less | 1.14× less |
 
 | round | order | OpenNN samples/s | PyTorch samples/s |
 |---|---|---|---|
-| 1 | opennn → pytorch | 5,335 | 4,695 |
-| 2 | pytorch → opennn | 5,335 | 4,695 |
-| 3 | opennn → pytorch | 5,335 | 4,695 |
+| 1 | opennn → pytorch | 5,335 | 4,694 |
+| 2 | pytorch → opennn | 5,335 | 4,694 |
+| 3 | opennn → pytorch | 5,335 | 4,694 |
 
-Per-pass times are 37.4 s on OpenNN against 42.50 s on PyTorch; in tokens,
-693,569 against 610,389 per second.
+Per-pass times are 37.4 s on OpenNN against 42.51 s on PyTorch; in tokens,
+693,600 against 610,321 per second.
 
 ## Why
 
@@ -322,17 +322,25 @@ which the fusion above happens. Cross-commit and out of mode: read it as an
 order of magnitude, not a measurement. It is recorded rather than removed,
 because dropout 0.1 is what the library's layer does by default.
 
-*Memory.* 2,217 MiB against 3,349. The joint gradient arena plans each
-layer's gradient into the forward arena by lifetime
-(`families/transformer.cpp:185`), which is a mechanism for spending less; but
-no run with it disabled exists, no allocation breakdown was taken, and the
-cell read between 2,302 and 2,693 MiB across earlier commits with the arena
-already on. How much of the 1,132 MiB gap it accounts for is an attribution
-from the design, not a measurement.
+*Memory.* 2,233 MiB against 3,373. This round the library's own attribution
+was taken for the cell (`OPENNN_MEMORY_DEBUG=1`, one epoch at batch 32,
+device figures): the forward arena is 940 MiB, and that is its planner's
+lower bound — the 238 gradient entries of the backward pass are co-planned
+into the same arena by lifetime, so no separate gradient arena exists;
+Adam's state is 428 MiB, a bf16 first moment and an fp32 second moment over
+74.9 M parameters; the fp32 master is 286 MiB and its bf16 mirror 143; the
+transient pool 73 MiB and the shared scratch 17. That is 1,887 MiB of
+buffers under a 2,233 MiB reading, and the remainder is the CUDA context
+and the kernel images cuDNN and cuBLASLt load, which the metric charges to
+both engines alike. Nothing in the list shrinks without changing what the
+optimiser computes: the arena is the saved-activation set in bf16, the same
+set PyTorch keeps, and the second moment is fp32 on both sides. PyTorch's
+extra 1,140 MiB is not decomposed here — no allocator trace was taken on its
+side — so the 1.51× is measured, and only OpenNN's half of it is explained.
 
-### `cuda-transformer-infer`, 1.136×: mostly one attention kernel
+### `cuda-transformer-infer`, 1.137×: mostly one attention kernel
 
-Per batch: OpenNN 5,998 µs, PyTorch 6,816 µs, and 863 MiB of device memory
+Per batch: OpenNN 5,998 µs, PyTorch 6,816 µs, and 618 MiB of device memory
 against 1,161.
 
 The launch-count story does not apply to this cell at all. In the timed
@@ -381,7 +389,8 @@ mma.sync kernels had failed. OpenNN's matmul dispatcher selects it here on
 shape, without anyone having considered this cell. Scaled to what it moved:
 between the `2026-09-03-publish` round (commit `6b7179dde`) and this one,
 OpenNN's inference throughput went 5,302 → 5,335 samples/s, **+0.62%**, while
-PyTorch's went 4,707 → 4,695; peak memory went the other way, 844 → 863 MiB.
+PyTorch's went 4,707 → 4,695; peak memory went the other way, 844 → 863 MiB
+(and to 618 this round, for the reason given under *Memory* below).
 
 Energy over the same two rounds fell from 11.9895 Wh to 11.5286 and mean
 board power from 229.4 W to 221.9, while PyTorch's barely moved (14.9908 →
@@ -399,24 +408,43 @@ carries both. No `OPENNN_CUDNN_MATMUL=0` run exists for *this* cell, so what
 lowered its power between those two commits is not established by any
 measurement available.
 
-*Memory.* 863 MiB against 1,161. `PT_INFER_CAST=weights` is the published
-mode, so PyTorch's weights are already bf16 and the 298 MiB gap is not a
-dtype difference. No allocation breakdown was measured for this cell and the
-column is device-used-minus-idle rather than live tensors, so what the gap
-consists of is not established here.
+*Memory.* 618 MiB against 1,162, where the previous table read 863. The
+245 MiB that left is the fp32 master copy of the parameters, which the
+inference driver was keeping on the device beside the bf16 mirror the
+forward pass actually reads. The library has always had a path that
+releases it — `upload_parameters_bf16_inference()`, which casts each
+parameter slot on the host, uploads the bf16 (and the few fp32) slots into
+compact device storage and drops the master — but it was reached only
+through the model-loading functions, and the benchmark driver uploaded
+through `copy_parameters_device()`, which migrates the master and builds
+the mirror beside it. The driver now deploys through the public API before
+its warm-up pass (`families/transformer.cpp`), which is the same step the
+PyTorch driver takes with `model.to(torch.bfloat16)` under the published
+`PT_INFER_CAST=weights` mode: both engines now hold the 74.9 M parameters
+once, in bf16. Throughput and energy did not move (5,335 → 5,335 samples/s;
+11.53 → 11.55 Wh, inside the launch-to-launch spread) and the quality gate
+agrees, as it should — the same bf16 bits are read either way.
+
+What the 618 MiB is: the library's attribution rows for the cell give a
+161.5 MiB inference arena (its planner's lower bound; the output projection
+onto the 20,000-word vocabulary is 157 MiB of it), the 143 MiB bf16
+mirror, and under 1 MiB of batch buffers; the remaining ~310 MiB is the
+CUDA context with cuDNN's and cuBLASLt's kernel images, including the fused
+attention plan. PyTorch's 1,162 MiB is not decomposed here.
 
 The bf16-weights choice matters on PyTorch's side more than in any other
 family — 4,657 sequences/s at `d3acd71b5` against 3,641 for the same compile
 mode under autocast at `8e47e7662` — because autocast reads the 74.9 M
 parameters as 300 MB of fp32 weights and writes a 150 MB bf16 copy on every
 call; storing them in bf16 once removes that traffic, and it is the mode the
-table uses. OpenNN's parameters are bf16 from the start.
+table uses. OpenNN's forward pass reads its bf16 mirror from the start; what
+changed this round is that the fp32 master no longer sits beside it.
 
 ### Where the energy goes
 
 Both cells win energy on **power**: OpenNN draws 221.9 W against PyTorch's
 253.2 W on inference and 196.2 W against 233.8 W on training. Combined with
-margins of 1.136× and 1.161× on time, that compounds to 1.297× and 1.384× on
+margins of 1.137× and 1.161× on time, that compounds to 1.295× and 1.388× on
 energy — the widest energy margins in the matrix outside the LSTM family.
 
 Part of that is the GEMM tile-selection rule described in the dense document,
