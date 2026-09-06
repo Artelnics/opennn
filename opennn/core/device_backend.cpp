@@ -1151,7 +1151,7 @@ Backend::Backend()
         return;
     }
 
-    lane_streams[0] = device::create_stream_handle(cudaStreamDefault);
+    lane_streams[0] = device::create_stream_handle(cudaStreamNonBlocking);
     transfer_stream = device::create_stream_handle(cudaStreamNonBlocking);
 
     CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
