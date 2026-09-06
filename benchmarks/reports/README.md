@@ -23,8 +23,11 @@ it (PROTOCOL §2).
 ## The results
 
 Twelve cells. Every cell wins every axis: throughput, peak memory, energy.
-Session `2026-09-06-publish`, commit `e76425bd3`, clean tree, GPU clock locked
-at 2,692 MHz, turbo off, every gate passing in every row.
+Eight rows are session `2026-09-06-publish` at commit `e76425bd3`; the four
+CUDA CNN and transformer rows are session `2026-09-06-energy-publish` at
+`520f0f2f8`, two commits later, which changed only what those four cells
+run (*The state of this round*). Clean tree, GPU clock locked at 2,692 MHz,
+turbo off, every gate passing in every row.
 
 Throughput is OpenNN / PyTorch; memory and energy are PyTorch / OpenNN, so
 that above 1 always means OpenNN is ahead.
@@ -35,15 +38,15 @@ that above 1 always means OpenNN is ahead.
 | `cpu-dense-train` | 4,096 | fp32 | 70,120 | 54,520 | **1.286×** | 305 / 787 | 2.58× | 0.0862 / 0.0974 | 1.130× |
 | `cpu-lstm-infer` | 256 | fp32 | 80,285 | 69,304 | **1.158×** | 156 / 459 | 2.93× | 0.0216 / 0.0233 | 1.082× |
 | `cpu-lstm-train` | 256 | fp32 | 23,251 | 13,103 | **1.774×** | 210 / 591 | 2.82× | 0.0431 / 0.0608 | 1.412× |
-| `cuda-cnn-infer` | 128 | bf16 | 7,075 | 5,578 | **1.268×** | 848 / 1,268 | 1.49× | 2.4819 / 3.1411 | 1.266× |
-| `cuda-cnn-train` | 64 | bf16 | 1,682 | 1,402 | **1.200×** | 3,558 / 4,218 | 1.19× | 3.8449 / 4.2432 | 1.104× |
+| `cuda-cnn-infer` | 128 | bf16 | 7,060 | 5,634 | **1.253×** | 846 / 1,267 | 1.50× | 2.3976 / 3.1327 | 1.307× |
+| `cuda-cnn-train` | 64 | bf16 | 1,667 | 1,401 | **1.190×** | 3,573 / 4,228 | 1.18× | 3.7574 / 4.2545 | 1.132× |
 | `cuda-dense-infer` | 8,192 | bf16 | 39,387,890 | 38,689,107 | **1.018×** | 371 / 411 | 1.11× | 0.1731 / 0.1830 | 1.057× |
 | `cuda-dense-train` | 8,192 | bf16 | 11,406,741 | 10,048,603 | **1.135×** | 508 / 632 | 1.24× | 0.1317 / 0.1520 | 1.154× |
 | `cuda-lstm-infer` | 256 | bf16 | 2,716,548 | 513,813 | **5.287×** | 294 / 442 | 1.50× | 0.2575 / 0.6478 | 2.515× |
 | `cuda-lstm-train` | 256 | bf16 | 823,255 | 95,842 | **8.590×** | 316 / 512 | 1.62× | 0.0292 / 0.1320 | 4.521× |
-| `cuda-transformer-infer` | 32 | bf16 | 5,335 | 4,694 | **1.137×** | 618 / 1,162 | 1.88× | 11.5532 / 14.9660 | 1.295× |
-| `cuda-transformer-train` | 32 | bf16 | 1,329 | 1,145 | **1.161×** | 2,233 / 3,373 | 1.51× | 16.3292 / 22.6620 | 1.388× |
-| **geomean** | | | | | **1.633×** | | **1.73×** | | **1.416×** |
+| `cuda-transformer-infer` | 32 | bf16 | 5,413 | 4,694 | **1.153×** | 627 / 1,161 | 1.85× | 11.4501 / 15.0000 | 1.310× |
+| `cuda-transformer-train` | 32 | bf16 | 1,352 | 1,145 | **1.181×** | 2,321 / 3,350 | 1.44× | 16.2770 / 22.7057 | 1.395× |
+| **geomean** | | | | | **1.635×** | | **1.72×** | | **1.425×** |
 
 Throughput and energy are the median of the three launches an engine makes in
 a cell; peak memory is the highest of the three, so the memory column is the
@@ -132,6 +135,14 @@ acceptable and a cell that wins both narrowly was. The variant table above is
 there so the price is visible: roughly 0.26× of energy ratio bought 0.053× of
 throughput ratio. Anyone who cares more about joules than about samples per
 second should set `OPENNN_CUDNN_MATMUL=0` and read row two.
+
+**The CNN cells trade the other way, on purpose.** Since `520f0f2f8` the
+convolution autotune takes a cheaper engine when one is within 10% of the
+fastest, so both CNN rows read about 1% lower on throughput than they would
+by time alone (7,060 against 7,086 samples/s and 1,667 against 1,681 in the
+one-round A/B) and 2.5-3% better on energy. That is the GEMM tile rule
+applied to convolutions, and `OPENNN_CONV_ENERGY_AUTOTUNE=0` gives the time-
+only choice back.
 
 **One cell is noisier than its own third digit.** `cuda-dense-train` is
 noisy on PyTorch's side: its three launches inside the published run read
@@ -233,14 +244,17 @@ warm away. It is an asymmetry all the same, and it favours OpenNN.
 
 ## The state of this round
 
-All twelve cells are evidence-grade at `e76425bd3`, session
-`2026-09-06-publish`: clean tree, clocks locked, three rounds each, every
-gate passing, one cell (`cuda-cnn-train`) re-measured by the runner's own
-safety-net pass after a third round tripped the foreign-activity gate at
-5.5%. The footprint family ran twice in the same session.
+All twelve cells are evidence-grade: clean tree, clocks locked, three rounds
+each, every gate passing. Eight are at `e76425bd3` (session
+`2026-09-06-publish`; `cuda-cnn-train` there was re-measured by the runner's
+own safety-net pass after a third round tripped the foreign-activity gate at
+5.5%), and the four CUDA CNN and transformer cells are at `520f0f2f8`
+(session `2026-09-06-energy-publish`), re-published because the two commits
+in between change what they run and nothing the other eight run. The
+footprint family ran twice in the first session.
 
-Two things changed between the previous table (`93cc90e07`) and this one,
-and both are library changes rather than measurement changes:
+Four things changed between the previous table (`93cc90e07`) and this one,
+all of them library changes rather than measurement changes:
 
 - **cuDNN's RNN now captures into OpenNN's CUDA graphs** (`8cb810339`). The
   refusal the previous round reported as cuDNN status 4000 was OpenNN's own
@@ -248,7 +262,7 @@ and both are library changes rather than measurement changes:
   step replays as one graph and the two CUDA LSTM cells move from 1.753× and
   2.775× to 5.287× and 8.590× on throughput, and from 1.38× and 2.16× to
   2.52× and 4.52× on energy. The throughput geomean's move from 1.351× to
-  1.633× is almost entirely this.
+  1.63× is almost entirely this.
 - **Peak memory was attributed cell by cell and two things were wrong**
   (`e76425bd3`). The CUDA inference drivers held the fp32 master parameters
   on the device beside the bf16 mirror the forward pass reads, because the
@@ -257,10 +271,32 @@ and both are library changes rather than measurement changes:
   the same step PyTorch's `model.to(bfloat16)` is. And CPU-only processes
   were creating a CUDA context, because the backend built its streams and
   handles in its constructor and the CPU GEMM path reaches that singleton for
-  its thread pool. The memory geomean's move from 1.60× to 1.73× is these
+  its thread pool. The memory geomean's move from 1.60× to 1.73× (1.72× in
+  the final table, after the attention plans' workspace below) is these
   two: `cuda-transformer-infer` 1.35× → 1.88×, `cuda-cnn-infer` 1.34× →
   1.49×, and 33–35 MiB off every CPU cell. Throughput and energy on those
   cells did not move.
+- **cuDNN's attention plan is autotuned** (`84790b7da`). The knob existed,
+  off, pending a re-measurement of the transformer cell; measured, timing
+  the engines instead of taking the heuristic's first pick is worth +1.5%
+  on inference and +1.7% on training (`transformer.md`), for 9 and 88 MiB
+  of plan workspace. It is on by default.
+- **Convolution engines are chosen by measured energy inside a time
+  tolerance** (`520f0f2f8`). The frontend's autotune ranks cuDNN's engines
+  by time; a second stage now meters every candidate within 10% of the
+  fastest against the board's power samples and takes the cheapest, the
+  rule the GEMM tiles already follow with a modelled power. On the CNN
+  cells it is worth 2.3-3.4% of energy for 0.2-0.9% of throughput, publish
+  row against publish row (`cnn.md`, *Where the energy goes*); the
+  throughput axis stays won by 19% and 25%.
+
+The four re-published rows are warm-cache figures, as every earlier publish
+row was: cuDNN plans are autotuned once per shape and cached on disk, and a
+cold cache makes the first run autotune at warm-up, where the frontend
+allocates the largest candidate's workspace transiently — `cuda-cnn-train`
+reads about 4,080 MiB cold against 3,573 warm. The commits above changed
+every cache key, which is how that was noticed; the publish script now warms
+the cache with one untimed run, and `cnn.md` states both figures.
 
 What was tried and did not pay, in the same round: the persistent cuDNN RNN
 algorithm at bf16 (granted only with the double-bias layout, worth 0.6%);
@@ -288,7 +324,12 @@ document that quotes it.
 The controlled variants the dense document argues from — the three
 `cuda-dense-infer` knob rows — were measured at `93cc90e07`; the matmul
 policy has not changed since and the cell re-measured within 0.1% of them,
-so they are quoted with that commit rather than repeated.
+so they are quoted with that commit rather than repeated. Two unit tests
+(`GpuComparison.ProjectionResidualGradient`, `C2PSA.CpuAndGpuGradientsMatch`)
+miss a 5e-3 CPU-against-GPU tolerance by 0.001 at this commit and did so with
+every knob of this round switched off; they are bf16 tolerance misses that
+move with whichever engine the autotune happens to pick, not a result of the
+changes, and they are left for the test owner.
 
 ## What "same work" means here
 

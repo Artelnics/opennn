@@ -3,15 +3,15 @@
 OpenNN against PyTorch 2.13 on ResNet-50 v1.5 (25,557,032 parameters) over
 the 50,000-image ILSVRC2012 validation set laid out as 1,000 class folders,
 224×224, bf16 with TF32 GEMMs, on the RTX 5070 Ti. Session
-`2026-09-06-publish`, commit `e76425bd3`:
+`2026-09-06-energy-publish`, commit `520f0f2f8`:
 
 | cell | batch | OpenNN | PyTorch | OpenNN / PyTorch |
 |---|---|---|---|---|
-| `cuda-cnn-train` | 64 | 1,682 samples/s | 1,402 | **1.200×** |
-| `cuda-cnn-infer` | 128 | 7,075 samples/s | 5,578 | **1.268×** |
+| `cuda-cnn-train` | 64 | 1,667 samples/s | 1,401 | **1.190×** |
+| `cuda-cnn-infer` | 128 | 7,060 samples/s | 5,634 | **1.253×** |
 
-Both cells also win on memory (1.19× and 1.49×) and on energy (1.104× and
-1.266×).
+Both cells also win on memory (1.18× and 1.50×) and on energy (1.132× and
+1.307×).
 
 The margin is not in the convolutions. Per batch OpenNN spends *more* GPU
 time on them than PyTorch does — 23,246 µs against 23,039 µs in training,
@@ -97,7 +97,11 @@ measure the input pipeline twice.
 the PyTorch side against cuDNN plan autotuning on the OpenNN side
 (`OPENNN_CONV_AUTOTUNE`, on by default, with a 16 MiB workspace cap for
 inference that the driver's comment explains: the winning ResNet-50 plans fit
-under it and larger candidates only added a cold-start memory peak). PyTorch's
+under it and larger candidates only added a cold-start memory peak — and,
+since `520f0f2f8`, a second stage that meters every candidate within 10% of
+the fastest against the board's power samples and takes the one that costs
+the least energy per run, `OPENNN_CONV_ENERGY_AUTOTUNE`; *Where the energy
+goes* prices it). PyTorch's
 `torch.compile` mode is chosen per cell and each was measured (the driver's
 `compiled()` docstring has every mode). Those comparisons were all run at
 batch 128, before the training cell moved to batch 64, so they establish the
@@ -137,42 +141,42 @@ part of the published matrix.
 
 ## Results
 
-Session `2026-09-06-publish`, commit `e76425bd3`, median of three rounds.
+Session `2026-09-06-energy-publish`, commit `520f0f2f8`, median of three rounds.
 
 | cell | batch | precision | OpenNN samples/s | PyTorch samples/s | OpenNN / PyTorch | peak memory MiB (OpenNN / PyTorch) | energy Wh (OpenNN / PyTorch) |
 |---|---|---|---|---|---|---|---|
-| `cuda-cnn-train` | 64 | bf16 | 1,682 | 1,402 | **1.200×** | 3,558 / 4,218 | 3.8449 / 4.2432 |
-| `cuda-cnn-infer` | 128 | bf16 | 7,075 | 5,578 | **1.268×** | 848 / 1,268 | 2.4819 / 3.1411 |
+| `cuda-cnn-train` | 64 | bf16 | 1,667 | 1,401 | **1.190×** | 3,573 / 4,228 | 3.7574 / 4.2545 |
+| `cuda-cnn-infer` | 128 | bf16 | 7,060 | 5,634 | **1.253×** | 846 / 1,267 | 2.3976 / 3.1327 |
 
 
-`cuda-cnn-train` — batch 64, bf16, epochs 2 per launch, 3 rounds. Artifact `cuda-cnn-train-publish-20260906T135258Z.json`, commit `e76425bd3`, clean tree, quiet True (busy 0.9% before, 0.2% after, 0.6% max during, threshold 3%), clocks locked True, shape gate True, quality gate vacuously True.
-
-| engine | median samples/s | min | max | peak device MiB | Wh (board) | mean W |
-|---|---|---|---|---|---|---|
-| OpenNN | 1,682 | 1,682 | 1,682 | 3,557.6 | 3.84495 | 232.5 |
-| PyTorch | 1,402 | 1,401 | 1,402 | 4,217.8 | 4.24323 | 214.4 |
-| **ratio** | **1.200×** | | | 1.19× less | 1.104× less | 1.08× more |
-
-| round | order | OpenNN samples/s | PyTorch samples/s |
-|---|---|---|---|
-| 1 | opennn → pytorch | 1,682 | 1,402 |
-| 2 | pytorch → opennn | 1,682 | 1,402 |
-| 3 | opennn → pytorch | 1,682 | 1,401 |
-
-
-`cuda-cnn-infer` — batch 128, bf16, passes 5 per launch, 3 rounds. Artifact `cuda-cnn-infer-publish-20260906T132237Z.json`, commit `e76425bd3`, clean tree, quiet True (busy 0.9% before, 0.1% after, 1.9% max during, threshold 3%), clocks locked True, shape gate True, quality gate vacuously True.
+`cuda-cnn-train` — batch 64, bf16, epochs 2 per launch, 3 rounds. Artifact `cuda-cnn-train-publish-20260906T172254Z.json`, commit `520f0f2f8`, clean tree, quiet True (busy 0.1% before, 0.2% after, 2.7% max during, threshold 3%), clocks locked True, shape gate True, quality gate vacuously True.
 
 | engine | median samples/s | min | max | peak device MiB | Wh (board) | mean W |
 |---|---|---|---|---|---|---|
-| OpenNN | 7,075 | 6,991 | 7,078 | 848.4 | 2.48190 | 252.0 |
-| PyTorch | 5,578 | 5,573 | 5,631 | 1,268.1 | 3.14110 | 253.4 |
-| **ratio** | **1.268×** | | | 1.49× less | 1.266× less | equal |
+| OpenNN | 1,667 | 1,664 | 1,667 | 3,572.9 | 3.75744 | 225.5 |
+| PyTorch | 1,401 | 1,399 | 1,402 | 4,227.9 | 4.25447 | 214.9 |
+| **ratio** | **1.190×** | | | 1.18× less | 1.132× less | 1.05× more |
 
 | round | order | OpenNN samples/s | PyTorch samples/s |
 |---|---|---|---|
-| 1 | opennn → pytorch | 6,991 | 5,573 |
-| 2 | pytorch → opennn | 7,078 | 5,578 |
-| 3 | opennn → pytorch | 7,075 | 5,631 |
+| 1 | opennn → pytorch | 1,664 | 1,401 |
+| 2 | pytorch → opennn | 1,667 | 1,402 |
+| 3 | opennn → pytorch | 1,667 | 1,399 |
+
+
+`cuda-cnn-infer` — batch 128, bf16, passes 5 per launch, 3 rounds. Artifact `cuda-cnn-infer-publish-20260906T171646Z.json`, commit `520f0f2f8`, clean tree, quiet True (busy 0.3% before, 0.1% after, 0.5% max during, threshold 3%), clocks locked True, shape gate True, quality gate vacuously True.
+
+| engine | median samples/s | min | max | peak device MiB | Wh (board) | mean W |
+|---|---|---|---|---|---|---|
+| OpenNN | 7,060 | 7,060 | 7,060 | 845.8 | 2.39758 | 243.5 |
+| PyTorch | 5,634 | 5,633 | 5,642 | 1,267.2 | 3.13269 | 254.4 |
+| **ratio** | **1.253×** | | | 1.50× less | 1.307× less | 1.04× less |
+
+| round | order | OpenNN samples/s | PyTorch samples/s |
+|---|---|---|---|
+| 1 | opennn → pytorch | 7,060 | 5,642 |
+| 2 | pytorch → opennn | 7,060 | 5,633 |
+| 3 | opennn → pytorch | 7,060 | 5,634 |
 
 OpenNN's throughput is identical across all three rounds in both cells; the
 run-to-run spread is on PyTorch's side, 1.2% in training and 0.2% in
@@ -204,23 +208,54 @@ the arithmetic, is what the two engines organise differently.
 ### Where the energy goes
 
 This is the family where the two engines draw close to the *same* power, so
-the energy margin tracks the throughput margin. On inference OpenNN reads
-252.6 W against PyTorch's 254.3 W — inside the sampling spread of the three
-launches on each side — and both hold the card busy with kernels 99.9% of
-the window; the 1.26× energy win is the 1.26× throughput win and nothing
-else. On training OpenNN draws 233.3 W against 214.4 W, 8.8% more, and wins
-1.11× on energy against 1.20× on time. Occupancy is part of that and not all
-of it: OpenNN's training window is 99.0% occupied by kernels against
-PyTorch's 94.3%, 5.0 points where the power differs by 8.8%, so at most about
-half of the power gap is the card being kept busy and the rest is that the
-two engines run different kernels. PyTorch's 5.7 points of non-kernel window
+the energy margin tracks the throughput margin — with one deliberate
+exception, new this round. On inference OpenNN reads 243.5 W against
+PyTorch's 254.4 W, 4.3% less, and both hold the card busy with kernels
+99.9% of the window; the cell wins 1.253× on time and 1.307× on energy, the
+4% between them being the power. On training OpenNN draws 225.5 W against
+214.9 W, 4.9% more, and wins 1.132× on energy against 1.190× on time.
+Occupancy is part of that and not all of it: OpenNN's training window is
+99.0% occupied by kernels against PyTorch's 94.3%, so at most about half of
+the power gap is the card being kept busy and the rest is that the two
+engines run different kernels. PyTorch's 5.7 points of non-kernel window
 are also not idle in the power sense — 85% of that time is a 38.5 MB
 host-to-device copy, which draws board power.
+
+The exception is the convolution engine choice. cuDNN's engines for one
+shape differ in power the way cuBLASLt's tiles do — tile shape, split-K,
+occupancy — and the frontend's autotune ranks them by time alone. Since
+`520f0f2f8` the library adds a second stage: every built plan within 10%
+of the fastest runs back to back for 300 ms while the driver's power ring
+samples the board (NVML's 20 ms samples, read through a runtime-loaded
+`libnvidia-ml`; the cumulative energy counter reads zero on this GeForce),
+and the plan that costs the least energy per run becomes the candidate,
+provided it beats the fastest by more than 2% so that meter noise cannot
+flip the choice between runs. It is the GEMM tile rule with a measured
+power in place of a modelled one. On this network at batch 128 it swaps
+about half of the forward plans (`OPENNN_CONV_ENERGY_VERBOSE=1` prints each
+decision): typical swaps are 5-23% less energy for 0.5-5% more time per
+convolution — 65.2 mJ at 382.5 µs over 84.6 mJ at 365.6 µs on one stem-sized
+plan, 25.7 mJ at 156.2 µs over 33.1 mJ at 147.5 µs on a 1×1 — and the
+fastest is kept where nothing cheaper is within tolerance.
+
+What it is worth on the cells, publish row against publish row
+(`520f0f2f8` against `e76425bd3`, both warm-cache, three rounds): inference
+2.482 → 2.398 Wh, 3.4% less energy, for 7,075 → 7,060 samples/s, 0.2% less
+throughput; training 3.845 → 3.757 Wh, 2.3% less, for 1,682 → 1,667, 0.9%
+less. The one-round A/B at the commit itself, stage on against
+`OPENNN_CONV_ENERGY_AUTOTUNE=0` in the same session, reads the same trade
+with more throughput cost — 2.376 against 2.437 Wh at 6,992 against 7,086
+on inference, 3.746 against 3.858 Wh at 1,667 against 1,681 on training —
+so the price is between 0.2% and 1.3% of throughput for 2.3-3.4% of energy.
+It is on by default because it is the rule this suite already applies to
+GEMMs and the throughput axis stays won by 19% and 25%; a reader who wants
+the last percent of throughput back sets the knob to 0.
 
 Two consequences worth stating. First, a fully saturated convolution workload
 is the case where OpenNN has the least energy advantage available to it:
 there is no idle time to reclaim and, once the step is a captured graph, no
-launch overhead to remove either. ResNet-50's only true matrix product is its
+launch overhead to remove either — which is why the engine choice above is
+the lever that was left, and why it is worth what it is worth. ResNet-50's only true matrix product is its
 2,048 → 1,000 classifier head — one 11.3 µs `nvjet` kernel out of 18,117 µs
 of GPU time per inference batch — so which GEMM kernel runs it cannot move
 the cell. Second, and consistent with that, the GEMM tile-selection rule that
@@ -244,7 +279,7 @@ This round both cells have the library's own attribution behind them
 (`OPENNN_MEMORY_DEBUG=1`, device figures; PyTorch's side was not traced, so
 its half of each gap is measured and not decomposed).
 
-*Training, 3,558 against 4,218 MiB.* OpenNN's forward arena is 2,667 MiB and
+*Training, 3,573 against 4,228 MiB.* OpenNN's forward arena is 2,667 MiB and
 that is its planner's lower bound: the live set at the peak — the boundary
 between forward and backward — is 261 saved tensors, 2,640 MiB, all in bf16,
 the 72 backward entries co-planned into the same arena by lifetime. The
@@ -253,22 +288,38 @@ stem's 112×112×64), eleven of 49 MiB and twenty-eight of 24.5 MiB — the
 same set of activations PyTorch's autograd saves for the same network, at the
 same dtype. Around the arena: the fp32 master 97.5 MiB, its bf16 mirror 49,
 the gradient 97.5, Adam's state 146 (bf16 first moment, fp32 second), cuDNN
-and cuBLASLt scratch 64, batch buffers 37; the remainder of the 3,558 is the
+and cuBLASLt scratch 64, batch buffers 37; the remainder of the 3,573 is the
 CUDA context and kernel images. Nothing here shrinks without changing the
-algorithm — recompute, which costs throughput on a 1.200× cell, or a bf16
-second moment, which changes what Adam computes — so the 1.19× is where the
+algorithm — recompute, which costs throughput on a 1.190× cell, or a bf16
+second moment, which changes what Adam computes — so the 1.18× is where the
 standard algorithm in bf16 lands against PyTorch's caching allocator, and
 this document does not claim more for it.
 
-*Inference, 848 against 1,268 MiB, where the previous table read 944.* The
+The row is a warm-cache figure, and it has to be said because the cold one
+is 500 MiB higher. cuDNN plans are autotuned once per shape and kept in a
+plan cache on disk; a run whose cache is cold autotunes at warm-up, and the
+frontend's autotune allocates the largest candidate's workspace — the
+training path caps candidates at the largest activation slot, not at 16 MiB
+— transiently while it times them. The harness reads the peak over the whole
+process, so a cold run reads it: 4,066-4,086 MiB in the one-round A/B of
+2026-09-06, whose cache was cold because the commit before had changed every
+cache key, against 3,558-3,573 in every publish run, all of which were warm.
+The publish protocol now warms the cache with one untimed run before the
+measured one, which is the state a model runs in after its first session and
+the state every earlier publish row was in; PyTorch's `cudnn.benchmark`
+autotune is per process and runs inside every one of its launches, so its
+rows are cold-cache by construction and would not move.
+
+*Inference, 846 against 1,267 MiB, where the table before last read 944.* The
 96 MiB that left is the fp32 master copy of the 25.6 M parameters, which
 the driver had been keeping on the device beside the bf16 mirror the forward
 pass reads. The library's release path, `upload_parameters_bf16_inference()`,
 was only reached through the model-loading functions; the driver now calls
 it before its warm-up pass (`families/cnn.cpp`), the same deployment step
 the PyTorch driver takes with `model.to(torch.bfloat16)`. Throughput and
-energy did not move (7,077 → 7,075 samples/s, 2.474 → 2.482 Wh, both inside
-the launch spread) and the quality gate is unchanged. What remains is the
+energy did not move with the release (7,077 → 7,075 samples/s, 2.474 → 2.482
+Wh at `e76425bd3`, both inside the launch spread) and the quality gate is
+unchanged; the energy that moved since is the engine choice, above. What remains is the
 49 MiB bf16 mirror, the inference arena, cuDNN's convolution plans and the
 CUDA context.
 
@@ -288,7 +339,7 @@ inference cell reads 1,266 MiB in the default mode and 2,207 under
 `max-autotune-no-cudagraphs`, a 941 MiB swing on a knob the reader did not
 set.
 
-### `cuda-cnn-infer`, 1.268×: a convolution is one kernel
+### `cuda-cnn-infer`, 1.253×: a convolution is one kernel
 
 At inference OpenNN folds each batch normalisation into the weights of the
 convolution in front of it (`Convolutional::forward_propagate_folded`: the
@@ -371,7 +422,7 @@ measured slower here (5,574 against 5,604 at batch 128), because the graph's
 input copy and Python-side bookkeeping cost more than the launches they
 save.
 
-### `cuda-cnn-train`, 1.200×: the normalisation is the step
+### `cuda-cnn-train`, 1.190×: the normalisation is the step
 
 The training step is the forward with batch statistics, the backward through
 every block, and Adam over 161 parameter tensors. The batch normalisation is
