@@ -28,13 +28,10 @@ int main()
         set_seed(21);
         Configuration::instance().set(Device::Auto, Type::FP32);
 
-        TabularDataset dataset("../data/ecg5000_anomaly_detection/ecg.csv",
-                               ",", false, false);
+        TabularDataset dataset("../data/ecg5000_anomaly_detection/ecg.csv", ",", false, false);
 
         const Index signal_size = dataset.get_variables_number() - 1;
         const Index label_index = signal_size;
-
-        dataset.split_samples_random(0.8f, 0.0f, 0.2f);
 
         for(const Index sample : dataset.get_sample_indices(SampleRole::Training))
             if(dataset.get_data()(sample, label_index) < 0.5f)
@@ -42,18 +39,15 @@ int main()
 
         vector<Index> signal_indices(signal_size);
         iota(signal_indices.begin(), signal_indices.end(), Index(0));
+
         dataset.set_variable_indices(signal_indices, signal_indices);
 
-        AutoAssociationNetwork autoencoder(dataset.get_input_shape(),
-                                            {32, 16, 8},
-                                            "ReLU",
-                                            "Identity");
+        AutoencoderNetwork autoencoder(dataset.get_input_shape(), 
+                                           {32, 16, 8},
+                                           "ReLU",
+                                           "Identity");
 
         TrainingStrategy training_strategy(&autoencoder, &dataset);
-        training_strategy.set_loss("MeanAbsoluteError");
-        training_strategy.get_optimization_algorithm()->set_batch_size(512);
-        training_strategy.get_optimization_algorithm()->set_maximum_epochs(20);
-
         training_strategy.train();
 
         TestingAnalysis testing_analysis(&autoencoder, &dataset);
@@ -71,8 +65,7 @@ int main()
         const VectorI anomalies = testing_analysis.calculate_anomaly_predictions(
             testing_errors, anomaly_threshold);
 
-        const vector<Index> testing_indices =
-            dataset.get_sample_indices(SampleRole::Testing);
+        const vector<Index> testing_indices = dataset.get_sample_indices(SampleRole::Testing);
         MatrixR anomaly_targets(testing_errors.size(), 1);
         MatrixR anomaly_outputs(testing_errors.size(), 1);
 

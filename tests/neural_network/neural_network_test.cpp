@@ -777,9 +777,9 @@ TEST(NeuralNetworkTest, ForecastingConstructor)
     EXPECT_EQ(neural_network.get_task(), NetworkTask::Forecasting);
 }
 
-TEST(NeuralNetworkTest, AutoAssociationConstructor)
+TEST(NeuralNetworkTest, AnomalyDetectionConstructor)
 {
-    AutoAssociationNetwork neural_network({ 1 }, { 4 }, { 2 });
+    AutoencoderNetwork neural_network({ 1 }, { 4 }, { 2 });
 
     EXPECT_EQ(neural_network.get_layers_number(), 6);
     EXPECT_EQ(neural_network.get_layer(0)->get_name(), "Scaling");
@@ -788,12 +788,12 @@ TEST(NeuralNetworkTest, AutoAssociationConstructor)
     EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Dense");
     EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Dense");
     EXPECT_EQ(neural_network.get_layer(5)->get_name(), "Unscaling");
-    EXPECT_EQ(neural_network.get_task(), NetworkTask::AutoAssociation);
+    EXPECT_EQ(neural_network.get_task(), NetworkTask::AnomalyDetection);
 }
 
-TEST(NeuralNetworkTest, AutoAssociationSymmetricEncoderConstructor)
+TEST(NeuralNetworkTest, AnomalyDetectionSymmetricEncoderConstructor)
 {
-    AutoAssociationNetwork neural_network({140}, {32, 16, 8}, "ReLU", "Sigmoid");
+    AutoencoderNetwork neural_network({140}, {32, 16, 8}, "ReLU", "Sigmoid");
 
     ASSERT_EQ(neural_network.get_layers_number(), 8);
     EXPECT_EQ(neural_network.get_input_shape(), Shape({140}));
@@ -825,9 +825,9 @@ TEST(NeuralNetworkTest, AutoAssociationSymmetricEncoderConstructor)
     EXPECT_TRUE(output->get_use_bias());
 }
 
-TEST(NeuralNetworkTest, AutoAssociationSymmetricEncoderRejectsEmptyEncoder)
+TEST(NeuralNetworkTest, AnomalyDetectionSymmetricEncoderRejectsEmptyEncoder)
 {
-    EXPECT_THROW(AutoAssociationNetwork({140}, {}, "ReLU", "Sigmoid"), runtime_error);
+    EXPECT_THROW(AutoencoderNetwork({140}, {}, "ReLU", "Sigmoid"), runtime_error);
 }
 
 TEST(NeuralNetworkTest, ImageClassificationConstructor)

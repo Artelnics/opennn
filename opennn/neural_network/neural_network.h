@@ -25,7 +25,7 @@ enum class NetworkTask
     Approximation,
     Classification,
     Forecasting,
-    AutoAssociation,
+    AnomalyDetection,
     ImageClassification,
     ObjectDetection,
     TextClassification,

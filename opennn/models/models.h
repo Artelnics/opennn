@@ -59,16 +59,16 @@ public:
                            const Shape&);
 };
 
-class AutoAssociationNetwork : public NeuralNetwork
+class AutoencoderNetwork : public NeuralNetwork
 {
 
 public:
 
-    AutoAssociationNetwork(const Shape&,
+    AutoencoderNetwork(const Shape&,
                            const Shape&,
                            const Shape&);
 
-    AutoAssociationNetwork(const Shape&,
+    AutoencoderNetwork(const Shape&,
                            const Shape&,
                            const string&,
                            const string&);

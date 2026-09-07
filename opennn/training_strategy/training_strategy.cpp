@@ -98,7 +98,7 @@ void TrainingStrategy::set_default()
         case NetworkTask::Generic:
         case NetworkTask::Approximation:
         case NetworkTask::Forecasting:
-        case NetworkTask::AutoAssociation:
+        case NetworkTask::AnomalyDetection:
             break;
     }
 

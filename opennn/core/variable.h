@@ -80,7 +80,8 @@ enum class VariableRole
     Target,
     Decoder,
     InputTarget,
-    Time
+    Time,
+    Evaluation
 };
 
 inline const EnumMap<VariableRole>& variable_role_map()
@@ -91,7 +92,8 @@ inline const EnumMap<VariableRole>& variable_role_map()
         {VariableRole::Target,      "Target"},
         {VariableRole::Decoder,     "Decoder"},
         {VariableRole::InputTarget, "InputTarget"},
-        {VariableRole::Time,        "Time"}
+        {VariableRole::Time,        "Time"},
+        {VariableRole::Evaluation,  "Evaluation"}
     };
     return map;
 }
@@ -152,7 +154,12 @@ struct Variable
 
     bool is_binary() const noexcept { return type == VariableType::Binary; }
     bool is_categorical() const noexcept { return type == VariableType::Categorical; }
-    bool is_used() const noexcept { return role != VariableRole::None && role != VariableRole::Time; }
+    bool is_used() const noexcept
+    {
+        return role != VariableRole::None
+            && role != VariableRole::Time
+            && role != VariableRole::Evaluation;
+    }
 
     Index get_feature_count() const { return is_categorical() ? get_categories_number() : features; }
 

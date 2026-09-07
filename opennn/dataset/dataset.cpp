@@ -569,9 +569,10 @@ Index Dataset::get_features_number(VariableRole role_type) const
 vector<Index> Dataset::get_used_feature_indices() const
 {
     return collect_feature_indices(variables,
-        get_features_number() - get_features_number(VariableRole::None) - get_features_number(VariableRole::Time),
-        [](const Variable& variable)
-        { return variable.role != VariableRole::None && variable.role != VariableRole::Time; });
+        get_features_number() - get_features_number(VariableRole::None)
+                              - get_features_number(VariableRole::Time)
+                              - get_features_number(VariableRole::Evaluation),
+        [](const Variable& variable) { return variable.is_used(); });
 }
 
 void Dataset::set_variable_roles(const vector<string>& new_variables_roles)

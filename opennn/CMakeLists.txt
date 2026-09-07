@@ -448,6 +448,12 @@ else()
     target_compile_options(opennn PUBLIC
         $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:-march=native>>
     )
+
+    if(WIN32)
+        target_compile_options(opennn PUBLIC
+            $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:-mno-avx>>
+        )
+    endif()
 endif()
 
 target_compile_definitions(opennn PUBLIC

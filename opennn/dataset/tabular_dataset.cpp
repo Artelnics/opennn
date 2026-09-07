@@ -665,17 +665,17 @@ vector<Histogram> TabularDataset::calculate_variable_distributions(const Index b
 {
     require_in_memory_data("TabularDataset::calculate_variable_distributions");
 
-    const Index used_variables_number = get_used_variables_number();
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const Index used_samples_number = used_sample_indices.size();
 
-    vector<Histogram> histograms(used_variables_number);
+    vector<Histogram> histograms(variables.size());
 
     Index feature_index = 0;
-    Index used_variable_index = 0;
 
-    for (const Variable& variable : variables)
+    for (Index i = 0; i < ssize(variables); ++i)
     {
+        const Variable& variable = variables[i];
+
         if (variable.role == VariableRole::None)
         {
             feature_index += variable.get_feature_count();
@@ -692,7 +692,7 @@ vector<Histogram> TabularDataset::calculate_variable_distributions(const Index b
         {
             const VectorR variable_data = data(used_sample_indices, feature_index);
 
-            histograms[used_variable_index++] = histogram(variable_data, bins_number);
+            histograms[i] = histogram(variable_data, bins_number);
 
             ++feature_index;
         }
@@ -716,10 +716,8 @@ vector<Histogram> TabularDataset::calculate_variable_distributions(const Index b
                 ++feature_index;
             }
 
-            histograms[used_variable_index].frequencies = categories_frequencies;
-            histograms[used_variable_index].centers = centers;
-
-            ++used_variable_index;
+            histograms[i].frequencies = categories_frequencies;
+            histograms[i].centers = centers;
         }
         break;
 
@@ -732,9 +730,9 @@ vector<Histogram> TabularDataset::calculate_variable_distributions(const Index b
                    ? 1
                    : 0)++;
 
-            histograms[used_variable_index].frequencies = binary_frequencies;
+            histograms[i].frequencies = binary_frequencies;
+
             ++feature_index;
-            ++used_variable_index;
         }
         break;
 
@@ -812,6 +810,18 @@ vector<Descriptives> TabularDataset::calculate_feature_descriptives(const string
                                                                     const vector<Index>& sample_indices) const
 {
     const vector<Index> input_feature_indices = get_feature_indices(variable_role);
+
+    if (storage_mode == StorageMode::BinaryFile)
+    {
+        if (sample_indices.empty() || input_feature_indices.empty())
+            return vector<Descriptives>(input_feature_indices.size());
+
+        MatrixR block(ssize(sample_indices), ssize(input_feature_indices));
+
+        fill_from_binary_cache(sample_indices, input_feature_indices, block.data());
+
+        return descriptives(block);
+    }
 
     return descriptives(data, sample_indices, input_feature_indices);
 }

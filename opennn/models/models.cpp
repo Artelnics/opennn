@@ -160,40 +160,40 @@ ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
     finalize_build(*this);
 }
 
-AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
+AutoencoderNetwork::AutoencoderNetwork(const Shape& input_shape,
                                                const Shape& complexity_dimensions,
                                                const Shape& output_shape)
-    : NeuralNetwork(NetworkTask::AutoAssociation)
+    : NeuralNetwork(NetworkTask::AnomalyDetection)
 {
     throw_if(input_shape.empty(),
-             "AutoAssociationNetwork: input shape cannot be empty.");
+             "AutoencoderNetwork: input shape cannot be empty.");
     throw_if(complexity_dimensions.empty(),
-             "AutoAssociationNetwork: complexity dimensions cannot be empty.");
+             "AutoencoderNetwork: complexity dimensions cannot be empty.");
 
     add_layer(make_unique<Scaling>(input_shape));
 
-    const Shape mapping_shape{ 10 };
+    const Shape encoder_shape{ 10 };
     const Shape bottleneck_shape{ complexity_dimensions[0] };
 
     add_layer(make_unique<Dense>(input_shape,
-                                 mapping_shape,
+                                 encoder_shape,
                                  "Tanh",
                                  BatchNormalization::No,
-                                 "mapping_layer"));
+                                 "encoder_layer_1"));
 
-    add_layer(make_unique<Dense>(mapping_shape,
+    add_layer(make_unique<Dense>(encoder_shape,
                                  bottleneck_shape,
                                  "Identity",
                                  BatchNormalization::No,
                                  "bottleneck_layer"));
 
     add_layer(make_unique<Dense>(bottleneck_shape,
-                                 mapping_shape,
+                                 encoder_shape,
                                  "Tanh",
                                  BatchNormalization::No,
-                                 "demapping_layer"));
+                                 "decoder_layer_1"));
 
-    add_layer(make_unique<Dense>(mapping_shape,
+    add_layer(make_unique<Dense>(encoder_shape,
                                  Shape{ output_shape },
                                  "Identity",
                                  BatchNormalization::No,
@@ -204,23 +204,23 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
     finalize_build(*this);
 }
 
-AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
+AutoencoderNetwork::AutoencoderNetwork(const Shape& input_shape,
                                                const Shape& encoder_dimensions,
                                                const string& hidden_activation,
                                                const string& output_activation)
-    : NeuralNetwork(NetworkTask::AutoAssociation)
+    : NeuralNetwork(NetworkTask::AnomalyDetection)
 {
     throw_if(input_shape.empty(),
-             "AutoAssociationNetwork: input shape cannot be empty.");
+             "AutoencoderNetwork: input shape cannot be empty.");
     throw_if(encoder_dimensions.empty(),
-             "AutoAssociationNetwork: encoder dimensions cannot be empty.");
+             "AutoencoderNetwork: encoder dimensions cannot be empty.");
 
     add_layer(make_unique<Scaling>(input_shape));
 
     for (size_t i = 0; i < encoder_dimensions.get_rank(); ++i)
     {
         throw_if(encoder_dimensions[i] <= 0,
-                 "AutoAssociationNetwork: encoder dimensions must be positive.");
+                 "AutoencoderNetwork: encoder dimensions must be positive.");
 
         const bool bottleneck = i == encoder_dimensions.get_rank() - 1;
         add_layer(make_unique<Dense>(get_output_shape(),
