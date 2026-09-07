@@ -56,7 +56,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install model export test dependency
-        run: python -m pip install numpy==2.4.4
+        run: python -m pip install numpy==2.4.4 pandas==2.3.3
 
       - name: Configure (CPU only, Eigen BLAS)
         run: >
@@ -102,7 +102,9 @@ jobs:
           sudo apt-get install -y --no-install-recommends ninja-build g++-13 \
             cuda-minimal-build-12-9 cuda-driver-dev-12-9 cuda-nvml-dev-12-9 \
             cuda-nvrtc-dev-12-9 libcublas-dev-12-9 libcurand-dev-12-9 \
-            libcudnn9-dev-cuda-12=9.10.2.21-1
+            libcudnn9-dev-cuda-12=9.10.2.21-1 \
+            libcudnn9-headers-cuda-12=9.10.2.21-1 \
+            libcudnn9-cuda-12=9.10.2.21-1
           echo "/usr/local/cuda-12.9/bin" >> "$GITHUB_PATH"
 
       - name: Configure CUDA without a GPU
@@ -130,7 +132,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install model export test dependency
-        run: python -m pip install numpy==2.4.4
+        run: python -m pip install numpy==2.4.4 pandas==2.3.3
 
       - name: Configure (CPU only, Eigen BLAS)
         run: >

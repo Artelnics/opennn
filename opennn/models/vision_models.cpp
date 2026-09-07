@@ -325,7 +325,7 @@ struct YoloBuilder
     {
         struct DarknetStage { Index channels = 0; bool pool = false; bool one_by_one = false; };
 
-        static constexpr array stages = {
+        static constexpr array<DarknetStage, 8> stages = {
             DarknetStage{.channels =   16, .pool = true},
             DarknetStage{.channels =   32, .pool = true},
             DarknetStage{.channels =   64, .pool = true},
