@@ -136,6 +136,26 @@ runs on pushes to `dev` and `master`, by manual dispatch, and nightly on the def
 branch. It needs an online self-hosted runner labeled `linux` and `cuda` with the
 GPU toolchain installed; otherwise the job remains queued.
 
+For Python export execution tests, install both NumPy and pandas:
+`python -m pip install numpy==2.4.4 pandas==2.3.3`.
+
+Linux CI also runs AddressSanitizer (including leak detection) and
+UndefinedBehaviorSanitizer. To reproduce that configuration with Clang 17:
+
+```bash
+CXX=clang++-17 cmake --preset verify-sanitizers -B ../opennn-sanitizers
+cmake --build ../opennn-sanitizers --target opennn_tests opennn_response_tests --parallel 2
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+  OPENNN_THREADS=4 ctest --test-dir ../opennn-sanitizers --output-on-failure
+```
+
+After ordinary CUDA verification, run NVIDIA Compute Sanitizer against that
+build with `bash tools/check_cuda_memory.sh /path/to/cuda-build`. The command
+fails on detected memory errors or leaks. It excludes the process-exit death
+test because child-process instrumentation hangs on the tested WSL setup;
+ordinary CUDA verification includes that test. See [runner operations](tools/CI_RUNNER.md)
+for the Linux GPU runner's requirements and availability.
+
 ## CMake options
 
 | Option | Default | Description |

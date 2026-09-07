@@ -84,6 +84,39 @@ jobs:
           cmake --build build/package
           ./build/package/opennn_package_smoke
 
+  sanitizers:
+    name: Linux Clang (ASan, UBSan)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CC: clang-17
+      CXX: clang++-17
+      ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+      UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build clang-17 libomp-17-dev
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install model export test dependencies
+        run: python -m pip install numpy==2.4.4 pandas==2.3.3
+      - name: Configure sanitizers
+        run: cmake --preset verify-sanitizers -B build-sanitizers
+      - name: Build both test executables
+        run: cmake --build build-sanitizers --target opennn_tests opennn_response_tests --parallel 2
+      - name: Check memory and undefined behavior
+        run: ctest --test-dir build-sanitizers --output-on-failure
+      - name: Preserve test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanitizer-test-log
+          path: build-sanitizers/Testing/Temporary/LastTest.log
+
   cuda-compile:
     name: Linux CUDA 12.9 (compile)
     runs-on: ubuntu-24.04

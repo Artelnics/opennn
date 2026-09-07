@@ -84,6 +84,8 @@ private:
     // touched (226 MiB of device memory, plus the driver's host-side state in
     // the process' resident set).
     void ensure_cuda();
+    void release_cuda();
+    static void register_cuda_cleanup();
     std::once_flag cuda_once;
 
     unique_ptr<ThreadPool> thread_pool;
@@ -1253,6 +1255,7 @@ void Backend::ensure_cuda()
                                                CUDNN_OP_TENSOR_ADD,
                                                CUDNN_DATA_FLOAT,
                                                CUDNN_NOT_PROPAGATE_NAN));
+        register_cuda_cleanup();
     });
 #endif
 }
@@ -1285,6 +1288,7 @@ cublasHandle_t Backend::cublas(int lane)
         CHECK_CUBLAS(cublasSetMathMode(cublas_handles[lane],
                                        device::allow_tf32() ? CUBLAS_TF32_TENSOR_OP_MATH : CUBLAS_DEFAULT_MATH));
         CHECK_CUBLAS(cublasSetStream(cublas_handles[lane], lane_stream));
+        register_cuda_cleanup();
     }
     return cublas_handles[lane];
 #else
@@ -1314,6 +1318,7 @@ cudnnHandle_t Backend::cudnn(int lane)
     {
         CHECK_CUDNN(cudnnCreate(&cudnn_handles[lane]));
         CHECK_CUDNN(cudnnSetStream(cudnn_handles[lane], lane_stream));
+        register_cuda_cleanup();
     }
     return cudnn_handles[lane];
 #else
@@ -1324,24 +1329,39 @@ cudnnHandle_t Backend::cudnn(int lane)
 
 Backend::~Backend()
 {
+    release_cuda();
+}
+
+void Backend::register_cuda_cleanup()
+{
+#ifdef OPENNN_HAS_CUDA
+    // The backend can predate CUDA: CPU work constructs it without a context.
+    // Register after each lazy library initialization so our handles are freed
+    // before that library's own process-exit callbacks tear down its runtime.
+    std::atexit([] { Backend::instance().release_cuda(); });
+#endif
+}
+
+void Backend::release_cuda()
+{
 #ifdef OPENNN_HAS_CUDA
     cuda_resources_shutting_down.store(true, memory_order_relaxed);
 
     if (op_tensor_add_descriptor)
-        cudnnDestroyOpTensorDescriptor(op_tensor_add_descriptor);
+        cudnnDestroyOpTensorDescriptor(std::exchange(op_tensor_add_descriptor, nullptr));
 
     if (cublas_lt_handle)
-        cublasLtDestroy(cublas_lt_handle);
+        cublasLtDestroy(std::exchange(cublas_lt_handle, nullptr));
 
     for (int lane = 0; lane < device::MAX_LANES; ++lane)
     {
-        if (cublas_handles[lane]) cublasDestroy(cublas_handles[lane]);
-        if (cudnn_handles[lane])  cudnnDestroy(cudnn_handles[lane]);
+        if (cublas_handles[lane]) cublasDestroy(std::exchange(cublas_handles[lane], nullptr));
+        if (cudnn_handles[lane])  cudnnDestroy(std::exchange(cudnn_handles[lane], nullptr));
 
-        device::destroy_stream_handle(lane_streams[lane]);
+        device::destroy_stream_handle(std::exchange(lane_streams[lane], nullptr));
     }
 
-    device::destroy_stream_handle(transfer_stream);
+    device::destroy_stream_handle(std::exchange(transfer_stream, nullptr));
 #endif
 }
 

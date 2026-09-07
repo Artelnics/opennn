@@ -985,7 +985,7 @@ void ForwardPropagation::set(
     active_sequence_length = sequence_capacity;
 
     if(new_shape_policy.final_output_capacity > 0)
-        output_window.emplace();
+        output_window.emplace(OutputWindow{Buffer{}, 0, 0});
 
     if(new_shape_policy.sequence_capacity > 0)
         set_active_sequence_length(sequence_capacity);
