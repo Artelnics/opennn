@@ -125,6 +125,12 @@ return null so the existing impossible-allocation regression can verify
 Current hosted results are available in the repository's
 [Actions runs](https://github.com/Artelnics/opennn/actions).
 
+UBSan also found a histogram bin estimate converting NaN to an integer for a
+zero-width range. The estimate is now bounded before conversion, retaining the
+subsequent boundary refinement. New zero-width and subnormal-width regressions
+are included. The 36 statistics/testing-analysis checks pass under ASan/UBSan
+and in the Windows CPU build after this fix.
+
 Publication also requires the compatibility and merge review described in
 `RELEASE_READINESS.md`; these hardening checks do not constitute publication of
 a master release.

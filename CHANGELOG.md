@@ -14,6 +14,8 @@ remaining limitations.
 - Preserve thread settings between optimizer tests and retained matrix rows
   in response-optimization test helpers.
 - Build the vision stage table and output-window storage with Clang 17.
+- Avoid undefined floating-point-to-integer conversion when histogram bin
+  widths are zero or subnormal.
 - Provide configurable library logging, including concurrent callback changes.
 
 ### Packaging and verification

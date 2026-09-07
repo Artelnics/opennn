@@ -416,6 +416,29 @@ TEST(StatisticsTest, Histogram)
     EXPECT_EQ(sum_frec_2, 20);
 }
 
+TEST(StatisticsTest, CenteredHistogramHandlesZeroWidth)
+{
+    for (const float value : {0.0f, 12.0f})
+    {
+        const VectorR data = VectorR::Constant(3, value);
+        const Histogram result = histogram_centered(data, 0.0f, 5);
+        EXPECT_EQ(result.frequencies.sum(), 3.0f);
+        EXPECT_TRUE(result.frequencies.allFinite());
+        EXPECT_TRUE(result.centers.allFinite());
+    }
+}
+
+TEST(StatisticsTest, HistogramHandlesSubnormalBinWidth)
+{
+    VectorR data(5);
+    data << 0.0f, 1.0e-40f, 2.0e-40f, 3.0e-40f, 4.0e-40f;
+    const Histogram result = histogram(data, 3);
+    ASSERT_EQ(result.frequencies.size(), 3);
+    EXPECT_EQ(result.frequencies(0), 2.0f);
+    EXPECT_EQ(result.frequencies(1), 1.0f);
+    EXPECT_EQ(result.frequencies(2), 2.0f);
+}
+
 TEST(StatisticsTest, Histograms)
 {
     MatrixR matrix(3, 3);
@@ -557,4 +580,3 @@ TEST(StatisticsTest, BoxPlot)
     EXPECT_NEAR(box_plot.maximum, solution.maximum, EPSILON);
     
 }
-

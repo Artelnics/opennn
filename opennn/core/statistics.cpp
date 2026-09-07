@@ -63,7 +63,13 @@ MaskedMoments<Sum> masked_moments(Index size,
 
 Index clamped_bin(float value, float origin, float inv_length, Index bins_number)
 {
-    return clamp(Index((value - origin) * inv_length), Index(0), bins_number - 1);
+    const float estimate = (value - origin) * inv_length;
+    // Clamp before converting: degenerate or subnormal bin widths can produce
+    // NaN/infinity, whose conversion to Index is undefined. refined_bin still
+    // checks the actual boundaries after choosing this initial estimate.
+    if (!(estimate > 0)) return 0;
+    if (estimate >= float(bins_number - 1)) return bins_number - 1;
+    return Index(estimate);
 }
 
 Index refined_bin(float value, float origin, float inv_length,
