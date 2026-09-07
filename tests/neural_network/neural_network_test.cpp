@@ -713,6 +713,7 @@ TEST(NeuralNetworkTest, StateSnapshotsValidateVersionIntegrityAndLayout)
 #ifdef OPENNN_HAS_CUDA
 TEST(NeuralNetworkTest, VersionedParameterSnapshotRoundTripsCudaStorage)
 {
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
     Configuration::instance().set(Device::CUDA, Type::FP32);
     validate_cuda_snapshot_roundtrip(
         SnapshotKind::Parameters, "opennn_parameter_format_cuda.bin",
@@ -721,6 +722,7 @@ TEST(NeuralNetworkTest, VersionedParameterSnapshotRoundTripsCudaStorage)
 
 TEST(NeuralNetworkTest, VersionedStateSnapshotRoundTripsCudaStorage)
 {
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
     Configuration::instance().set(Device::CUDA, Type::FP32);
     validate_cuda_snapshot_roundtrip(
         SnapshotKind::States, "opennn_state_format_cuda.bin",

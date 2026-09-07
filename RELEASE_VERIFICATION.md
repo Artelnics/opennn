@@ -138,6 +138,11 @@ recovers that existing boundary value explicitly and rejects nonfinite or larger
 values before casting. Boundary regressions and the optimizer settings round-trip
 assertion pass in the focused ASan/UBSan and Windows CPU checks (nine tests).
 
+A CUDA-enabled Windows build was also exercised with `CUDA_VISIBLE_DEVICES=-1`.
+The network and device-query checks passed 33 tests and skipped two GPU snapshot
+round trips. Those two tests now check device availability before requesting
+CUDA; both still execute and pass with the GPU visible (31 network tests pass).
+
 Publication also requires the compatibility and merge review described in
 `RELEASE_READINESS.md`; these hardening checks do not constitute publication of
 a master release.
