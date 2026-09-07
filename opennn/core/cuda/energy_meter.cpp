@@ -8,8 +8,6 @@
 #ifdef OPENNN_HAS_CUDA
 #include <cuda_runtime.h>
 #include <nvml.h>
-#include <chrono>
-#include <vector>
 #ifdef _WIN32
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -21,6 +19,8 @@
 #else
 #include <dlfcn.h>
 #endif
+#include <chrono>
+#include <vector>
 #endif
 
 namespace opennn::device
@@ -31,30 +31,34 @@ namespace opennn::device
 namespace
 {
 
-// NVML is loaded at run time rather than linked, so a machine without the
-// driver library still links and simply reports no meter. The driver ships it
-// as libnvidia-ml.so.1 on Linux and nvml.dll (in System32) on Windows.
-void* open_nvml_library() noexcept
+#ifdef _WIN32
+using LibraryHandle = HMODULE;
+#else
+using LibraryHandle = void*;
+#endif
+
+LibraryHandle open_nvml_library()
 {
 #ifdef _WIN32
-    return static_cast<void*>(LoadLibraryA("nvml.dll"));
+    return LoadLibraryA("nvml.dll");
 #else
     return dlopen("libnvidia-ml.so.1", RTLD_NOW | RTLD_LOCAL);
 #endif
 }
 
-void* nvml_symbol(void* library, const char* name) noexcept
+template <typename Function>
+Function load_nvml_symbol(const LibraryHandle library, const char* name)
 {
 #ifdef _WIN32
-    return reinterpret_cast<void*>(GetProcAddress(static_cast<HMODULE>(library), name));
+    return reinterpret_cast<Function>(GetProcAddress(library, name));
 #else
-    return dlsym(library, name);
+    return reinterpret_cast<Function>(dlsym(library, name));
 #endif
 }
 
 struct Nvml
 {
-    void* library = nullptr;
+    LibraryHandle library = nullptr;
     nvmlDevice_t device = nullptr;
     decltype(&nvmlDeviceGetSamples) get_samples = nullptr;
     bool ready = false;
@@ -64,10 +68,11 @@ struct Nvml
         library = open_nvml_library();
         if (!library) return;
 
-        const auto init = reinterpret_cast<decltype(&nvmlInit_v2)>(nvml_symbol(library, "nvmlInit_v2"));
-        const auto by_bus = reinterpret_cast<decltype(&nvmlDeviceGetHandleByPciBusId_v2)>(
-            nvml_symbol(library, "nvmlDeviceGetHandleByPciBusId_v2"));
-        get_samples = reinterpret_cast<decltype(&nvmlDeviceGetSamples)>(nvml_symbol(library, "nvmlDeviceGetSamples"));
+        const auto init = load_nvml_symbol<decltype(&nvmlInit_v2)>(library, "nvmlInit_v2");
+        const auto by_bus = load_nvml_symbol<decltype(&nvmlDeviceGetHandleByPciBusId_v2)>(
+            library, "nvmlDeviceGetHandleByPciBusId_v2");
+        get_samples = load_nvml_symbol<decltype(&nvmlDeviceGetSamples)>(
+            library, "nvmlDeviceGetSamples");
         if (!init || !by_bus || !get_samples) return;
         if (init() != NVML_SUCCESS) return;
 
