@@ -20,6 +20,8 @@ remaining limitations.
 
 - Support consuming the installed CMake package after moving its prefix,
   including the JPEG dependency.
+- Propagate Clang static-library LTO requirements to downstream linkers,
+  including Debug consumers of a Release installation.
 - Restore hosted Windows/Linux CPU checks and Linux CUDA compilation.
 - Add a Linux GPU runner and CPU address/undefined-behavior sanitizer CI.
 - Run response-optimization integration scenarios in full verification.

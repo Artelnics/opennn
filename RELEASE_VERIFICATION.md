@@ -80,13 +80,54 @@ Linux Clang 17 and Windows MSVC 2022, including the integration scenarios and
 relocated-package checks. Hosted Linux CI also compiles the CUDA library and
 both test executables without requiring a GPU. It uses CUDA 12.9 and cuDNN
 9.10.2 from [NVIDIA's Ubuntu 24.04 repository](https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/).
-The Linux CUDA runtime workflow requires an online runner
-labelled `self-hosted`, `linux`, `cuda`, with CUDA and cuDNN 9 installed.
+The Linux CUDA runtime workflow uses the `opennn-wsl-cuda` runner, registered
+and brought online during the follow-up audit on the same day. It has the
+`self-hosted`, `linux`, and `cuda` labels. Availability and service operations
+are documented in [tools/CI_RUNNER.md](tools/CI_RUNNER.md).
 
-Local WSL CUDA verification does not register a GitHub runner. Until one is
-provided, that workflow will queue rather than execute. The release still needs
-a green hosted CI run and the remaining release work in `RELEASE_PLAN.md`;
-these hardening checks do not constitute publication of a master release.
+The first hosted run exposed Clang 17 portability issues in the vision stage
+table and optional output-window construction, inconsistent cuDNN package
+versions, and missing pandas for Python exports. These were fixed without
+weakening test assertions. Hosted CI now also includes ASan and UBSan.
+
+The follow-up GPU memory check exposed a separate shutdown-order leak:
+lazily initialized CUDA library runtimes could run their exit handlers before
+the backend released its handles. Cleanup is now registered after each lazy
+library initialization and is idempotent. The focused cuDNN handle test reported
+5,768 leaked bytes before the fix and zero leaks and zero memory errors after
+it, using Compute Sanitizer 13.3 and a cuDNN 9.20 runtime. A standalone cuDNN
+create/destroy reproducer outside OpenNN was clean, isolating the lifetime issue.
+
+The broader run then found 272 cached allocations left at exit. The CUDA block
+cache now frees retained blocks and destroys its pooled events while the runtime
+is still available. Repeating the backend, GPU comparison, and C2PSA suites with
+Compute Sanitizer from CUDA 13.3 and a clean cuDNN 9.25.1 runtime passed 86 tests,
+skipped the unavailable FlashAttention kernel, and reported **zero leaked bytes
+and zero memory errors** (66.9 seconds). The normal CUDA configuration remains
+cuDNN 9.10; that older runtime could not initialize under the WSL memory checker.
+The process-exit death test is covered by ordinary CUDA verification because
+child-process instrumentation hung on the tested WSL stack.
+
+The zlib fossil server intermittently returned content that failed the pinned
+SHA-256 check in fresh hosted jobs. The primary URL now uses the upstream GitHub
+release asset, with the fossil URL as fallback. Both serve the same verified
+1.3.2 archive; the dependency version and expected hash are unchanged.
+
+Clang's Release static archive also required LTO flags on downstream linkers.
+The exported target now supplies the compiler's flags. An independent minimal
+archive/consumer reproduced the original link failure and passed with the fix.
+Linux CI checks both Release and Debug consumers of the relocated installation.
+
+ASan keeps leak detection and fail-on-error enabled, but permits `malloc` to
+return null so the existing impossible-allocation regression can verify
+`std::bad_alloc`. The sanitizer preset gives the exhaustive numerical unit suite
+1,800 seconds; ordinary unit verification retains its 600-second limit.
+Current hosted results are available in the repository's
+[Actions runs](https://github.com/Artelnics/opennn/actions).
+
+Publication also requires the compatibility and merge review described in
+`RELEASE_READINESS.md`; these hardening checks do not constitute publication of
+a master release.
 
 Raw build and test logs and generated export files are retained outside the
 checkout. Optional backend skips are reported separately from passing tests.

@@ -58,7 +58,8 @@ endif()
 target_precompile_headers(opennn_tests PRIVATE pch.h)
 
 add_test(NAME run_tests COMMAND opennn_tests)
-set_tests_properties(run_tests PROPERTIES TIMEOUT 600)
+set(OpenNN_UNIT_TEST_TIMEOUT 600 CACHE STRING "Unit-suite timeout in seconds")
+set_tests_properties(run_tests PROPERTIES TIMEOUT ${OpenNN_UNIT_TEST_TIMEOUT})
 
 add_test(NAME response_scenarios COMMAND opennn_response_tests)
 set_tests_properties(response_scenarios PROPERTIES TIMEOUT 1800 LABELS integration)

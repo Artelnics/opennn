@@ -145,7 +145,7 @@ UndefinedBehaviorSanitizer. To reproduce that configuration with Clang 17:
 ```bash
 CXX=clang++-17 cmake --preset verify-sanitizers -B ../opennn-sanitizers
 cmake --build ../opennn-sanitizers --target opennn_tests opennn_response_tests --parallel 2
-ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:allocator_may_return_null=1 UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
   OPENNN_THREADS=4 ctest --test-dir ../opennn-sanitizers --output-on-failure
 ```
 
@@ -169,6 +169,11 @@ for the Linux GPU runner's requirements and availability.
 | `OpenNN_BUILD_SHARED` | `OFF` | Build OpenNN as a shared library instead of a static library. |
 | `OpenNN_ENABLE_MKL` | `OFF` | Use Intel MKL as Eigen's BLAS/LAPACK backend. |
 | `OpenNN_ENABLE_LTO` | platform-dependent | Enable interprocedural optimization for release builds. |
+
+Clang static libraries built with LTO require a compatible Clang/LLVM toolchain
+in their consumers. Their CMake target carries the required linker flags.
+Set `OpenNN_ENABLE_LTO=OFF` when distributing native static objects across
+compiler toolchains.
 
 ## CPU threads
 

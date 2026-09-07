@@ -80,18 +80,22 @@ jobs:
         run: |
           cmake --install build --prefix "$PWD/prefix"
           cmake -E rename "$PWD/prefix" "$PWD/relocated-prefix"
-          cmake -S tools/package_smoke -B build/package -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/relocated-prefix" -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF
-          cmake --build build/package
-          ./build/package/opennn_package_smoke
+          for configuration in Release Debug; do
+            cmake -S tools/package_smoke -B "build/package-$configuration" -G Ninja -DCMAKE_BUILD_TYPE="$configuration" -DCMAKE_PREFIX_PATH="$PWD/relocated-prefix" -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF
+            cmake --build "build/package-$configuration"
+            "./build/package-$configuration/opennn_package_smoke"
+          done
 
   sanitizers:
     name: Linux Clang (ASan, UBSan)
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       CC: clang-17
       CXX: clang++-17
-      ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+      # Buffer tests deliberately request impossible allocations and verify
+      # std::bad_alloc preserves the old buffer. Let malloc fail normally.
+      ASAN_OPTIONS: detect_leaks=1:halt_on_error=1:allocator_may_return_null=1
       UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
     steps:
       - uses: actions/checkout@v4

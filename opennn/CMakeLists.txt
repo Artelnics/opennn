@@ -135,6 +135,13 @@ if(OpenNN_ENABLE_LTO)
     check_ipo_supported(RESULT OPENNN_LTO_OK LANGUAGES CXX)
     if(OPENNN_LTO_OK)
         set_property(TARGET opennn PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+        if(NOT OpenNN_BUILD_SHARED AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            # A Clang LTO archive contains LLVM bitcode. Consumers need the
+            # compiler's LTO link flags even when their own objects are native,
+            # including a Debug consumer of an installed Release archive.
+            target_link_options(opennn INTERFACE
+                ${CMAKE_CXX_COMPILE_OPTIONS_IPO} ${CMAKE_CXX_LINK_OPTIONS_IPO})
+        endif()
     else()
         message(STATUS "OpenNN: IPO/LTO is not supported by this toolchain.")
     endif()
