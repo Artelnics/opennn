@@ -34,7 +34,7 @@
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O1 -g1 -DNDEBUG -fsanitize=address,undefined -fno-omit-frame-pointer",
         "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address,undefined",
-        "OpenNN_UNIT_TEST_TIMEOUT": 1800,
+        "OpenNN_UNIT_TEST_TIMEOUT": "1800",
         "OpenNN_ENABLE_LTO": false,
         "OpenNN_ENABLE_MKL": false
       }
