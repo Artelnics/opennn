@@ -959,6 +959,8 @@ struct GraphSlot
     void build_attention(shared_ptr<graph::Graph> built, const string& tag,
                          bool allow_autotune = true, int64_t workspace_cap = 0)
     {
+        PROFILE_SCOPE_HOST("cudnn:build " + tag);
+
         graph.reset();
         autotune_pending = finalize_attention(*built, tag, workspace_bytes,
                                               allow_autotune, workspace_cap);

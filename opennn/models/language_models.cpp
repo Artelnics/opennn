@@ -561,7 +561,8 @@ unique_ptr<Qwen3> Qwen3::from_pretrained(
         weights_path,
         string(definition.repository) + "qwen3_bf16.bin");
 
-    auto model = make_unique<Qwen3>(
+    return from_binary(
+        weights_path,
         sequence_length,
         definition.vocabulary_size,
         definition.hidden_size,
@@ -570,7 +571,30 @@ unique_ptr<Qwen3> Qwen3::from_pretrained(
         definition.key_value_heads,
         definition.head_dimension,
         definition.intermediate_size);
-    model->load_parameters_bf16_inference_binary(weights_path);
+}
+
+unique_ptr<Qwen3> Qwen3::from_binary(
+    const filesystem::path& weights_path,
+    const Index sequence_length,
+    const Index vocabulary_size,
+    const Index hidden_size,
+    const Index layers_number,
+    const Index query_heads,
+    const Index key_value_heads,
+    const Index head_dimension,
+    const Index intermediate_size,
+    const float rope_theta,
+    const float rms_epsilon)
+{
+    // The public constructor compiles with an fp32 master and initialises it
+    // at random, both of which the loader discards: for the 4B model that is
+    // 16 GiB of host memory and seconds of work. The network leaves this
+    // function only once it is fully loaded.
+    auto model = make_unique<Qwen3>();
+    model->build(sequence_length, vocabulary_size, hidden_size, layers_number,
+                 query_heads, key_value_heads, head_dimension, intermediate_size,
+                 rope_theta, rms_epsilon);
+    model->compile_and_load_parameters_bf16_inference_binary(weights_path);
     return model;
 }
 
@@ -590,6 +614,25 @@ Qwen3::Qwen3(Index sequence_length,
              float rope_theta,
              float rms_epsilon)
     : NeuralNetwork(NetworkTask::LanguageModeling)
+{
+    build(sequence_length, vocabulary_size, hidden_size, layers_number,
+          query_heads, key_value_heads, head_dimension, intermediate_size,
+          rope_theta, rms_epsilon);
+
+    compile();
+    set_parameters_random();
+}
+
+void Qwen3::build(const Index sequence_length,
+                  const Index vocabulary_size,
+                  const Index hidden_size,
+                  const Index layers_number,
+                  const Index query_heads,
+                  const Index key_value_heads,
+                  const Index head_dimension,
+                  const Index intermediate_size,
+                  const float rope_theta,
+                  const float rms_epsilon)
 {
     throw_if(sequence_length == 0 || vocabulary_size == 0 || hidden_size == 0 ||
              layers_number == 0 || query_heads == 0 || key_value_heads == 0 ||
@@ -622,9 +665,11 @@ Qwen3::Qwen3(Index sequence_length,
         const string suffix = "_" + to_string(i);
 
         const Index input_norm = add_norm("input_norm" + suffix, current);
-        const Index attention = add_layer(make_unique<GroupedQueryAttention>(block, query_heads, key_value_heads, head_dimension,
-                                                                             rope_theta, rms_epsilon,   true,
-                                                                             "attn" + suffix), {input_norm});
+        auto attention_layer = make_unique<GroupedQueryAttention>(
+            block, query_heads, key_value_heads, head_dimension,
+            rope_theta, rms_epsilon, true, "attn" + suffix);
+        attention_layer->enable_compact_inference();
+        const Index attention = add_layer(std::move(attention_layer), {input_norm});
         const Index residual = add_layer(make_unique<Addition>(block, "attn_add" + suffix), {current, attention});
 
         const Index post_norm = add_norm("post_norm" + suffix, residual);
@@ -642,9 +687,6 @@ Qwen3::Qwen3(Index sequence_length,
 
     const Index lm_head = add_linear(block, vocabulary_size + 1, "lm_head", current);
     static_cast<Dense*>(layers[size_t(lm_head)].get())->set_tied_weight_source(layers.front().get());
-
-    compile();
-    set_parameters_random();
 }
 
 void TextGenerationNetwork::set_dropout_rate(const float new_dropout_rate)

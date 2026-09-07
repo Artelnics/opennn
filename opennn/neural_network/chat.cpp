@@ -472,13 +472,11 @@ public:
                    Buffer* new_token_device)
         : output_vocabulary(new_output_vocabulary),
           vocabulary(new_sample_vocabulary),
-          generator(new_seed),
+          generator(new_seed)
 #ifdef OPENNN_HAS_CUDA
-          seed(new_seed),
-          token_device(new_token_device),
+          , seed(new_seed),
+          token_device(new_token_device)
 #endif
-          logits(size_t(new_sample_vocabulary)),
-          bf16_logits(size_t(new_sample_vocabulary))
     {
         throw_if(vocabulary <= 1,
                  "ChatSession: output vocabulary must contain at least two tokens.");
@@ -522,6 +520,9 @@ public:
 
         if (fast_gpu)
         {
+            pinned_id.resize_bytes(Index(sizeof(int)));
+            gpu_candidates.grow_to(sample_logits_scratch_floats() * Index(sizeof(float)));
+            gpu_id.grow_to(Index(sizeof(int)));
             const TensorView row_view(row, {vocabulary},
                                       output.get_type(), Device::CUDA);
             sample_logits_row(row_view,
@@ -564,9 +565,24 @@ public:
         return sampled;
     }
 
+    void trim()
+    {
+        vector<float>{}.swap(logits);
+        vector<uint16_t>{}.swap(bf16_logits);
+        vector<float>{}.swap(adjusted);
+        vector<pair<float, Index>>{}.swap(candidates);
+#ifdef OPENNN_HAS_CUDA
+        pinned_id = {};
+        gpu_candidates.resize_bytes(0, Device::CUDA);
+        gpu_id.resize_bytes(0, Device::CUDA);
+#endif
+    }
+
 private:
     void read_logits(const TensorView& row)
     {
+        logits.resize(size_t(vocabulary));
+        if (row.is_bf16()) bf16_logits.resize(size_t(vocabulary));
         if (row.is_cuda())
         {
             if (row.is_fp32())
@@ -1014,12 +1030,7 @@ struct ChatSession::Impl
                              : new_network.get_input_shape()[0]),
           vocabulary(new_network.get_output_shape().empty()
                          ? Index(0)
-                         : new_network.get_output_shape().back()),
-          prefill(1, &new_network, ForwardPropagationMode::Inference,
-                  {.sequence_capacity =
-                       min(context_length, ChatSession::PREFILL_BLOCK_SIZE),
-                   .final_output_capacity = 1,
-                   .retained_output_layers = {}})
+                         : new_network.get_output_shape().back())
     {
         throw_if(!chat_template,
                  "ChatSession: chat template is not set.");
@@ -1032,6 +1043,22 @@ struct ChatSession::Impl
                         "network output ({}).",
                         tokenizer->get_vocabulary_size(), vocabulary));
 
+        initialize_execution();
+        const unsigned long long effective_seed = new_seed == 0
+            ? (static_cast<unsigned long long>(random_device{}()) << 32)
+                ^ static_cast<unsigned long long>(random_device{}())
+            : new_seed;
+        sampler = make_unique<DecoderSampler>(
+            vocabulary, tokenizer->get_vocabulary_size(),
+            effective_seed, gpu ? &token_device : nullptr);
+        warm_up();
+    }
+
+    void initialize_execution()
+    {
+        prefill.set(1, network, nullptr, ForwardPropagationMode::Inference,
+                    {.sequence_capacity = min(context_length, ChatSession::PREFILL_BLOCK_SIZE),
+                     .final_output_capacity = 1, .retained_output_layers = {}});
         token_window.assign(size_t(context_length), 0.0f);
         cached_tokens.reserve(size_t(context_length));
         prefill_inputs.resize(1);
@@ -1056,17 +1083,14 @@ struct ChatSession::Impl
                 TensorView(token_device.data(), {1, 1},
                            Type::FP32, Device::CUDA)
             };
+            prefill.reserve_kv_cache(prefill.get_sequence_capacity(), 0);
         }
 #endif
+        execution_trimmed = false;
+    }
 
-        const unsigned long long effective_seed = new_seed == 0
-            ? (static_cast<unsigned long long>(random_device{}()) << 32)
-                ^ static_cast<unsigned long long>(random_device{}())
-            : new_seed;
-        sampler = make_unique<DecoderSampler>(
-            vocabulary, tokenizer->get_vocabulary_size(),
-            effective_seed, gpu ? &token_device : nullptr);
-
+    void warm_up()
+    {
 #ifdef OPENNN_HAS_CUDA
         if (gpu)
         {
@@ -1190,6 +1214,8 @@ struct ChatSession::Impl
 #ifdef OPENNN_HAS_CUDA
         if (gpu)
         {
+            if (!draft && prefill.reserve_kv_cache(past + 1, past))
+                decode.reset_cuda_graph();
             decode.past_length = past;
             network->calculate_outputs_resident(
                 decode_inputs, decode, false);
@@ -1207,6 +1233,7 @@ struct ChatSession::Impl
     unique_ptr<ChatTemplate> chat_template;
     unique_ptr<ClassicGenerationState> classic;
     bool gpu = false;
+    bool execution_trimmed = false;
     Index context_length = 0;
     Index vocabulary = 0;
 
@@ -1265,6 +1292,13 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
              "ChatSession::attach_draft_model: draft compute dtype does not match the main network.");
 
 #ifdef OPENNN_HAS_CUDA
+    if (impl->execution_trimmed)
+    {
+        impl->initialize_execution();
+        impl->warm_up();
+    }
+    if (impl->prefill.reserve_kv_cache(impl->context_length, ssize(impl->cached_tokens)))
+        impl->decode.reset_cuda_graph();
     auto draft = make_unique<Impl::SpeculativeDraft>();
     draft->network = &draft_network;
     draft->propose_count = draft_tokens;
@@ -1543,7 +1577,15 @@ ChatResponse ChatSession::send(
             ? send_sequence_to_sequence(
                   *impl->classic, user_message, sampling, callback)
             : send_classic_decoder(
-                  *impl->classic, user_message, sampling, callback);
+                *impl->classic, user_message, sampling, callback);
+
+    if (impl->execution_trimmed)
+    {
+        impl->initialize_execution();
+        impl->warm_up();
+        if (impl->draft)
+            attach_draft_model(*impl->draft->network, impl->draft->propose_count);
+    }
 
     const Index maximum_tokens = sampling.maximum_tokens > 0
         ? sampling.maximum_tokens
@@ -1571,11 +1613,24 @@ ChatResponse ChatSession::send(
         && sampling.temperature == 0.0f
         && sampling.repetition_penalty == 1.0f;
 
+    if (impl->gpu && !impl->draft)
+    {
+        const Index reserve = min(impl->context_length,
+                                 ssize(prompt) + min(maximum_tokens, Index(256)));
+        if (impl->prefill.reserve_kv_cache(reserve, past))
+            impl->decode.reset_cuda_graph();
+    }
+
     using Clock = chrono::steady_clock;
     const auto prefill_start = Clock::now();
-    vector<Index> sampling_history = prompt;
-    sampling_history.reserve(size_t(min(impl->context_length,
-                                        ssize(prompt) + maximum_tokens)));
+    const bool needs_sampling_history = sampling.repetition_penalty != 1.0f;
+    vector<Index> sampling_history;
+    if (needs_sampling_history)
+    {
+        sampling_history = prompt;
+        sampling_history.reserve(size_t(min(impl->context_length,
+                                            ssize(prompt) + maximum_tokens)));
+    }
     Index next = -1;
     {
         impl->run_prefill(impl->prefill, impl->prefill_inputs,
@@ -1611,7 +1666,7 @@ ChatResponse ChatSession::send(
     const auto emit = [&](Index token)
     {
         ++response.generated_tokens;
-        sampling_history.push_back(token);
+        if (needs_sampling_history) sampling_history.push_back(token);
 
         if (parser.push(token, callback))
         {
@@ -1835,6 +1890,36 @@ void ChatSession::clear()
     }
     impl->prefill.past_length = 0;
     impl->decode.past_length = 0;
+}
+
+void ChatSession::trim()
+{
+    if (impl->classic || !impl->gpu || impl->execution_trimmed) return;
+    device::synchronize(device::get_compute_stream());
+    device::synchronize(device::get_transfer_stream());
+    const device::CudaBlockCacheBypass release_blocks;
+    if (impl->draft)
+    {
+        auto& draft = *impl->draft;
+        draft.decode.release_inference_storage();
+        draft.target_verify.release_inference_storage();
+        draft.prefill.release_inference_storage();
+        draft.token_device.resize_bytes(0, Device::CUDA);
+        draft.sampler->trim();
+        draft.prefill_inputs.clear();
+        draft.decode_inputs.clear();
+        draft.target_verify_inputs.clear();
+        vector<Index>{}.swap(draft.proposals);
+    }
+    impl->decode.release_inference_storage();
+    impl->prefill.release_inference_storage();
+    impl->token_device.resize_bytes(0, Device::CUDA);
+    impl->sampler->trim();
+    impl->prefill_inputs.clear();
+    impl->decode_inputs.clear();
+    vector<float>{}.swap(impl->token_window);
+    vector<Index>{}.swap(impl->cached_tokens);
+    impl->execution_trimmed = true;
 }
 
 ReasoningMode ChatSession::resolve_reasoning_mode(

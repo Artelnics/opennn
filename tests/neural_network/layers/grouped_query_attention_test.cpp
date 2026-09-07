@@ -1,7 +1,9 @@
 #include "tests/pch.h"
 
 #include <cmath>
+#include <memory>
 #include <random>
+#include <thread>
 #include <vector>
 
 #include "opennn/core/tensor_types.h"
@@ -10,6 +12,7 @@
 #include "opennn/neural_network/neural_network.h"
 #include "opennn/core/configuration.h"
 #include "opennn/core/device_backend.h"
+#include "opennn/core/profiler.h"
 
 using namespace opennn;
 
@@ -302,4 +305,215 @@ TEST(GroupedQueryAttentionTest, Bf16BatchedAttentionMatchesCpu)
     EXPECT_LT(max_difference, 1.0e-2f)
         << "Max FP32 CPU vs BF16 GPU forward output difference: "
         << max_difference;
+}
+
+namespace
+{
+
+const GroupedQueryAttentionOperator& attention_operator(const NeuralNetwork& network)
+{
+    return *static_cast<const GroupedQueryAttentionOperator*>(
+        network.get_layer(Index(0))->get_operators().front());
+}
+
+// A one-layer network whose first forward pass makes the operator fetch its
+// RoPE tables from the shared registry.
+struct RopeProbe
+{
+    Index seq, hidden, head_dim;
+    float theta;
+    unique_ptr<NeuralNetwork> network;
+    MatrixR outputs;
+
+    RopeProbe(Index new_seq, Index new_head_dim, float new_theta)
+        : seq(new_seq), hidden(2 * new_head_dim), head_dim(new_head_dim), theta(new_theta),
+          network(make_unique<NeuralNetwork>())
+    {
+        network->add_layer(make_unique<GroupedQueryAttention>(
+            Shape{seq, hidden}, 2, 1, head_dim, theta, 1.0e-6f, true, "attn"));
+        network->compile();
+        network->set_parameters_random();
+    }
+
+    void forward()
+    {
+        Tensor3 inputs(1, seq, hidden);
+        for (Index i = 0; i < inputs.size(); ++i)
+            inputs.data()[i] = 0.01f * float(i % 7);
+        outputs = network->calculate_outputs(inputs);
+    }
+
+    const Buffer* tables() const { return attention_operator(*network).get_rope_tables(); }
+};
+
+}
+
+TEST(GroupedQueryAttentionTest, RopeTablesAreSharedByEqualConfigurations)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    RopeProbe first(16, 8, 1000000.0f);
+    RopeProbe second(16, 8, 1000000.0f);
+    RopeProbe longer(32, 8, 1000000.0f);
+    RopeProbe other_theta(16, 8, 10000.0f);
+
+    EXPECT_EQ(first.tables(), nullptr);
+
+    first.forward();
+    second.forward();
+    longer.forward();
+    other_theta.forward();
+
+    ASSERT_NE(first.tables(), nullptr);
+    EXPECT_EQ(first.tables(), second.tables());
+    EXPECT_EQ(first.tables()->get_device(), Device::CPU);
+    EXPECT_EQ(first.tables()->byte_size(), 2 * 16 * 8 * Index(sizeof(float)));
+    EXPECT_NE(first.tables(), longer.tables());
+    EXPECT_NE(first.tables(), other_theta.tables());
+    EXPECT_EQ(longer.tables()->byte_size(), 2 * 32 * 8 * Index(sizeof(float)));
+    EXPECT_EQ((first.outputs - second.outputs).array().abs().maxCoeff(), 0.0f);
+}
+
+TEST(GroupedQueryAttentionTest, RopeTablesOutliveTheirFirstOwner)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    auto first = make_unique<RopeProbe>(16, 8, 1000000.0f);
+    RopeProbe second(16, 8, 1000000.0f);
+    first->forward();
+    second.forward();
+    const Buffer* shared = second.tables();
+    ASSERT_NE(shared, nullptr);
+    ASSERT_EQ(first->tables(), shared);
+    const MatrixR before = second.outputs;
+
+    first.reset();
+
+    second.forward();
+    EXPECT_EQ(second.tables(), shared);
+    EXPECT_EQ((before - second.outputs).array().abs().maxCoeff(), 0.0f);
+}
+
+TEST(GroupedQueryAttentionTest, RopeTablesFollowOperatorReconfiguration)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    RopeProbe probe(16, 8, 1000000.0f);
+    RopeProbe keeper(16, 8, 1000000.0f);
+    probe.forward();
+    keeper.forward();
+    const Buffer* shared = keeper.tables();
+    ASSERT_EQ(probe.tables(), shared);
+
+    auto& reconfigured = *static_cast<GroupedQueryAttentionOperator*>(
+        probe.network->get_layer(Index(0))->get_operators().front());
+    reconfigured.set(16, 16, 2, 1, 8, 1000000.0f, 1.0e-6f, true);
+    EXPECT_EQ(probe.tables(), nullptr);
+
+    probe.forward();
+    EXPECT_EQ(probe.tables(), shared);
+}
+
+TEST(GroupedQueryAttentionTest, RopeTablesConcurrentConstructionYieldsOneTable)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    constexpr int probes_count = 8;
+    vector<unique_ptr<RopeProbe>> probes;
+    for (int i = 0; i < probes_count; ++i)
+        probes.push_back(make_unique<RopeProbe>(48, 8, 1000000.0f));
+
+    vector<thread> threads;
+    for (auto& probe : probes)
+        threads.emplace_back([&probe] { probe->forward(); });
+    for (thread& worker : threads) worker.join();
+
+    ASSERT_NE(probes.front()->tables(), nullptr);
+    for (const auto& probe : probes)
+    {
+        EXPECT_EQ(probe->tables(), probes.front()->tables());
+        EXPECT_EQ((probe->outputs - probes.front()->outputs).array().abs().maxCoeff(), 0.0f);
+    }
+}
+
+TEST(GroupedQueryAttentionTest, RopeTablesAreSharedPerDeviceGpu)
+{
+    if (!device::has_cuda_device())
+        GTEST_SKIP() << "No CUDA device.";
+
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+    RopeProbe first(16, 16, 1000000.0f);
+    RopeProbe second(16, 16, 1000000.0f);
+    first.forward();
+    second.forward();
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    RopeProbe host(16, 16, 1000000.0f);
+    host.forward();
+
+    ASSERT_NE(first.tables(), nullptr);
+    EXPECT_EQ(first.tables(), second.tables());
+    EXPECT_EQ(first.tables()->get_device(), Device::CUDA);
+    ASSERT_NE(host.tables(), nullptr);
+    EXPECT_NE(first.tables(), host.tables());
+    EXPECT_EQ(host.tables()->get_device(), Device::CPU);
+}
+
+// Every attention layer with the same prefill shape shares one built cuDNN
+// plan: two networks of two layers each must cost one build, and the shared
+// plan must give both the same answer.
+TEST(GroupedQueryAttentionTest, PrefillSdpaPlanIsBuiltOncePerShapeGpu)
+{
+    if (!device::has_cuda_device())
+        GTEST_SKIP() << "No CUDA device.";
+
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+
+    // A shape no other test uses, so the registry cannot already hold it.
+    const Index seq = 24, hidden = 128, q_heads = 2, kv_heads = 1, head_dim = 64;
+
+    const auto build = [&]
+    {
+        auto network = make_unique<NeuralNetwork>();
+        network->add_layer(make_unique<GroupedQueryAttention>(
+            Shape{seq, hidden}, q_heads, kv_heads, head_dim, 1000000.0f, 1.0e-6f, true, "attn_0"));
+        network->add_layer(make_unique<GroupedQueryAttention>(
+            Shape{seq, hidden}, q_heads, kv_heads, head_dim, 1000000.0f, 1.0e-6f, true, "attn_1"), {0});
+        network->compile();
+        return network;
+    };
+
+    const auto first = build();
+    const auto second = build();
+    {
+        mt19937 rng(77);
+        normal_distribution<float> distribution(0.0f, 0.1f);
+        VectorR parameters(first->get_parameters_number());
+        for (Index i = 0; i < parameters.size(); ++i) parameters[i] = distribution(rng);
+        first->set_parameters(parameters);
+        second->set_parameters(parameters);
+    }
+
+    Tensor3 inputs(1, seq, hidden);
+    for (Index i = 0; i < inputs.size(); ++i)
+        inputs.data()[i] = 0.05f * float(i % 11) - 0.25f;
+
+    const bool profiler_was_enabled = profiler::is_enabled();
+    profiler::stats().clear();
+    profiler::set_enabled(true);
+    const MatrixR first_outputs = first->calculate_outputs(inputs);
+    const MatrixR second_outputs = second->calculate_outputs(inputs);
+    profiler::set_enabled(profiler_was_enabled);
+
+    const long builds = profiler::stats().call_count("gqa:sdpa_build");
+    const long prefills = profiler::stats().call_count("gqa:prefill_sdpa");
+    profiler::stats().clear();
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    EXPECT_EQ(prefills, 4);
+    EXPECT_EQ(builds, 1);
+    ASSERT_EQ(first_outputs.rows(), second_outputs.rows());
+    ASSERT_GT(first_outputs.array().abs().maxCoeff(), 1.0e-6f);
+    EXPECT_EQ((first_outputs - second_outputs).array().abs().maxCoeff(), 0.0f);
 }

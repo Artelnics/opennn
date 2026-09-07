@@ -8,9 +8,19 @@
 #ifdef OPENNN_HAS_CUDA
 #include <cuda_runtime.h>
 #include <nvml.h>
-#include <dlfcn.h>
 #include <chrono>
 #include <vector>
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#else
+#include <dlfcn.h>
+#endif
 #endif
 
 namespace opennn::device
@@ -21,6 +31,27 @@ namespace opennn::device
 namespace
 {
 
+// NVML is loaded at run time rather than linked, so a machine without the
+// driver library still links and simply reports no meter. The driver ships it
+// as libnvidia-ml.so.1 on Linux and nvml.dll (in System32) on Windows.
+void* open_nvml_library() noexcept
+{
+#ifdef _WIN32
+    return static_cast<void*>(LoadLibraryA("nvml.dll"));
+#else
+    return dlopen("libnvidia-ml.so.1", RTLD_NOW | RTLD_LOCAL);
+#endif
+}
+
+void* nvml_symbol(void* library, const char* name) noexcept
+{
+#ifdef _WIN32
+    return reinterpret_cast<void*>(GetProcAddress(static_cast<HMODULE>(library), name));
+#else
+    return dlsym(library, name);
+#endif
+}
+
 struct Nvml
 {
     void* library = nullptr;
@@ -30,13 +61,13 @@ struct Nvml
 
     Nvml()
     {
-        library = dlopen("libnvidia-ml.so.1", RTLD_NOW | RTLD_LOCAL);
+        library = open_nvml_library();
         if (!library) return;
 
-        const auto init = reinterpret_cast<decltype(&nvmlInit_v2)>(dlsym(library, "nvmlInit_v2"));
+        const auto init = reinterpret_cast<decltype(&nvmlInit_v2)>(nvml_symbol(library, "nvmlInit_v2"));
         const auto by_bus = reinterpret_cast<decltype(&nvmlDeviceGetHandleByPciBusId_v2)>(
-            dlsym(library, "nvmlDeviceGetHandleByPciBusId_v2"));
-        get_samples = reinterpret_cast<decltype(&nvmlDeviceGetSamples)>(dlsym(library, "nvmlDeviceGetSamples"));
+            nvml_symbol(library, "nvmlDeviceGetHandleByPciBusId_v2"));
+        get_samples = reinterpret_cast<decltype(&nvmlDeviceGetSamples)>(nvml_symbol(library, "nvmlDeviceGetSamples"));
         if (!init || !by_bus || !get_samples) return;
         if (init() != NVML_SUCCESS) return;
 

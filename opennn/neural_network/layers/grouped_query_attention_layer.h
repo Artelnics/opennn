@@ -50,10 +50,14 @@ struct GroupedQueryAttentionOperator : Operator
     void link_parameter_scales(span<const TensorView>) override;
     void set_parameters_random() override;
 
+    const Buffer* get_rope_tables() const noexcept { return rope_tables.get(); }
+
     void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
 private:
+
+    friend class GroupedQueryAttention;
 
     enum ForwardSlot : size_t
     {
@@ -106,7 +110,7 @@ private:
     TensorView q_scale, k_scale, v_scale, o_scale, qkv_scale;
     bool qkv_fused = false;
 
-    Buffer rope_tables;
+    shared_ptr<const Buffer> rope_tables;
     unique_ptr<GraphCache> graph_cache;
 };
 
@@ -132,6 +136,10 @@ public:
 
     vector<TensorSpec> get_forward_specs(Index) const override;
 
+    using Layer::is_forward_slot_inference_elidable;
+    bool is_forward_slot_inference_elidable(size_t, Device, Index) const noexcept;
+    bool uses_compact_inference() const noexcept;
+
     ForwardSlotKind get_forward_slot_kind(size_t slot) const override
     {
         return slot != Input
@@ -152,6 +160,9 @@ public:
     void write_JSON_body(JsonWriter&) const override;
 
 private:
+
+    friend class Qwen3;
+    void enable_compact_inference();
 
     Index sequence_length = 0;
     Index hidden          = 0;

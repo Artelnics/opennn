@@ -82,6 +82,10 @@ struct ForwardPropagation
 
     void share_session_state_from(const ForwardPropagation& source);
 
+    // Grows explicitly enabled Qwen BF16 caches; other models are unchanged.
+    // Shared propagations must invalidate their graph when this returns true.
+    bool reserve_kv_cache(Index required, Index preserved_tokens);
+
     void set_output_sequence_window(Index start, Index count);
     void gather_output_window();
 
@@ -160,6 +164,9 @@ struct ForwardPropagation
     uint64_t get_parameters_version() const;
 
 private:
+
+    friend class ChatSession;
+    void release_inference_storage();
 
     struct OutputWindow
     {

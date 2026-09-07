@@ -21,6 +21,7 @@
 
 #include "opennn/core/configuration.h"
 #include "opennn/core/device_backend.h"
+#include "opennn/core/profiler.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/models/models.h"
 #include "opennn/neural_network/chat.h"
@@ -84,6 +85,24 @@ void synchronize()
 #ifdef OPENNN_HAS_CUDA
     device::synchronize(device::get_compute_stream());
 #endif
+}
+
+string inference_memory_json(const ForwardPropagation& propagation, const ModelConfig& config)
+{
+    Index kv_bytes = 0, workspace_bytes = 0;
+    if (propagation.layer_session_state_storage)
+        for (const Buffer& buffer : *propagation.layer_session_state_storage)
+            kv_bytes += buffer.byte_size();
+    for (const Buffer& buffer : propagation.inference_graph_workspaces)
+        workspace_bytes += buffer.byte_size();
+    const Index kv_row_bytes = config.layers * 2 * config.key_value_heads
+        * config.head_dim * Index(sizeof(uint16_t));
+    ostringstream out;
+    out << "{\"kv_bytes\":" << kv_bytes
+        << ",\"kv_capacity_tokens\":" << (kv_row_bytes ? kv_bytes / kv_row_bytes : 0)
+        << ",\"decode_arena_view_bytes\":" << propagation.arena.byte_size()
+        << ",\"graph_workspace_bytes\":" << workspace_bytes << '}';
+    return out.str();
 }
 
 uint64_t fnv1a(const void* data, const size_t bytes)
@@ -167,14 +186,43 @@ unique_ptr<Qwen3> load_model(const filesystem::path& directory,
 {
     const ModelConfig config = read_config(directory);
     const auto begin = Clock::now();
-    auto model = make_unique<Qwen3>(
+    auto model = Qwen3::from_binary(
+        directory / "qwen3_bf16.bin",
         context, config.vocabulary, config.hidden, config.layers,
         config.query_heads, config.key_value_heads, config.head_dim,
         config.intermediate, config.rope_theta, config.rms_epsilon);
-    model->load_parameters_bf16_inference_binary(directory / "qwen3_bf16.bin");
     synchronize();
     load_ms = milliseconds(begin, Clock::now());
     return model;
+}
+
+// The attention layer counts which backend each launch took while the
+// profiler is on. Only the prefill matters here: the decode kernel is fixed
+// by shape, and its launches are graph replays the counters never see.
+struct AttentionBackends
+{
+    long prefill_sdpa = 0;
+    long prefill_fallback = 0;
+    long sdpa_batched = 0;
+    long gemm = 0;
+    long kernel = 0;
+    long decode_split = 0;
+
+    bool prefill_valid() const
+    {
+        return prefill_sdpa > 0 && prefill_fallback == 0 && gemm == 0 && kernel == 0;
+    }
+};
+
+AttentionBackends read_attention_backends()
+{
+    const profiler::Stats& stats = profiler::stats();
+    return {stats.call_count("gqa:prefill_sdpa"),
+            stats.call_count("gqa:prefill_fallback"),
+            stats.call_count("gqa:sdpa_batched"),
+            stats.call_count("gqa:gemm"),
+            stats.call_count("gqa:kernel"),
+            stats.call_count("gqa:decode_split")};
 }
 
 class LlamaBenchRandom
@@ -367,6 +415,7 @@ int core_mode(const filesystem::path& directory, const Index prompt_tokens,
          << ",\"batch\":1,\"logical_parameters\":" << LOGICAL_PARAMETERS
          << ",\"serialized_elements\":" << model->get_parameters_buffer_size()
          << ",\"load_ms\":" << load_ms
+         << ",\"inference_memory\":" << inference_memory_json(decode, config)
          << ",\"synthetic_sequence\":\"llama-bench-msvc-rand-seed-1-plus-openNN-sentinel\""
          << ",\"timed_start_unix\":" << timed_start
          << ",\"timed_end_unix\":" << timed_end
@@ -413,9 +462,20 @@ int runtime_mode(const filesystem::path& directory,
     options.reasoning_mode = ReasoningMode::Disabled;
     options.sampling = sampling;
 
-    // One unreported request stabilizes allocations and graph capture.
+    // One unreported request stabilizes allocations and graph capture. The
+    // profiler is on for it alone, so the attention counters say which backend
+    // the prefill really took; a run that fell back to the materialized or
+    // generic path is reported as such and rejected by the runner. A run with
+    // OPENNN_PROFILE set keeps its statistics -- including the load and
+    // warm-up scopes recorded before this point -- for the dump at exit.
+    const bool profiler_was_enabled = profiler::is_enabled();
+    if (!profiler_was_enabled) profiler::stats().clear();
+    profiler::set_enabled(true);
     session.send(content, options);
+    profiler::set_enabled(profiler_was_enabled);
     session.clear();
+    const AttentionBackends attention = read_attention_backends();
+    if (!profiler_was_enabled) profiler::stats().clear();
 
     vector<RuntimeSample> samples;
     samples.reserve(size_t(repeats));
@@ -473,6 +533,14 @@ int runtime_mode(const filesystem::path& directory,
          << ",\"serialized_elements\":" << model->get_parameters_buffer_size()
          << ",\"model_load_ms\":" << load_ms
          << ",\"runtime_ready_ms\":" << ready_ms
+         << ",\"inference_memory\":" << inference_memory_json(session.get_decode_propagation(), read_config(directory))
+         << ",\"attention_backends\":{\"prefill_sdpa\":" << attention.prefill_sdpa
+         << ",\"prefill_fallback\":" << attention.prefill_fallback
+         << ",\"sdpa_batched\":" << attention.sdpa_batched
+         << ",\"gemm\":" << attention.gemm
+         << ",\"kernel\":" << attention.kernel
+         << ",\"decode_split\":" << attention.decode_split
+         << ",\"prefill_valid\":" << (attention.prefill_valid() ? "true" : "false") << '}'
          << ",\"timed_start_unix\":" << timed_start
          << ",\"timed_end_unix\":" << timed_end
          << ",\"samples\":[";

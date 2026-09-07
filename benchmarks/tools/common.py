@@ -559,8 +559,12 @@ class Nvml:
                     ("reserved", ctypes.c_ulonglong), ("free", ctypes.c_ulonglong),
                     ("used", ctypes.c_ulonglong)]
 
+    class Utilization(ctypes.Structure):
+        _fields_ = [("gpu", ctypes.c_uint), ("memory", ctypes.c_uint)]
+
     def __init__(self, index: int = 0):
-        self.lib = ctypes.CDLL("libnvidia-ml.so.1")
+        self.lib = (ctypes.WinDLL("nvml.dll") if os.name == "nt"
+                    else ctypes.CDLL("libnvidia-ml.so.1"))
         if self.lib.nvmlInit_v2() != 0:
             raise OSError("nvmlInit failed")
         self.handle = ctypes.c_void_p()
@@ -592,6 +596,25 @@ class Nvml:
         # and the upper half of the word is left uncleared.
         return [(s.timestamp_us, (s.value & 0xFFFFFFFF) / 1e3)
                 for s in self._ring[:count.value]]
+
+    def telemetry(self, memory_mib: float) -> dict[str, float | bool] | None:
+        temperature, sm_clock, memory_clock = ctypes.c_uint(), ctypes.c_uint(), ctypes.c_uint()
+        utilization, throttle = self.Utilization(), ctypes.c_ulonglong()
+        statuses = (
+            self.lib.nvmlDeviceGetTemperature(self.handle, 0, ctypes.byref(temperature)),
+            self.lib.nvmlDeviceGetClockInfo(self.handle, 1, ctypes.byref(sm_clock)),
+            self.lib.nvmlDeviceGetClockInfo(self.handle, 2, ctypes.byref(memory_clock)),
+            self.lib.nvmlDeviceGetUtilizationRates(self.handle, ctypes.byref(utilization)),
+            self.lib.nvmlDeviceGetCurrentClocksThrottleReasons(self.handle, ctypes.byref(throttle)),
+        )
+        if any(statuses):
+            return None
+        return {"unix": time.time(), "memory_mib": memory_mib,
+                "temperature_c": float(temperature.value),
+                "utilization_percent": float(utilization.gpu),
+                "sm_clock_mhz": float(sm_clock.value), "memory_clock_mhz": float(memory_clock.value),
+                "power_throttled": bool(throttle.value & (0x4 | 0x80)),
+                "thermal_throttled": bool(throttle.value & (0x20 | 0x40))}
 
     def energy_mj(self) -> int | None:
         """The firmware energy counter. Read sparingly -- see the class note."""
@@ -818,6 +841,9 @@ class Monitor:
             mib = self._nvml.memory_used_mib()
             if mib is not None:
                 self.memory_samples.append((time.time(), mib))
+                sample = self._nvml.telemetry(mib)
+                if sample is not None:
+                    self.telemetry_samples.append(sample)
             if time.monotonic() - last_drain >= self.power_drain_ms / 1000.0:
                 drain()
                 last_drain = time.monotonic()

@@ -554,7 +554,7 @@ void NeuralNetwork::compile(const Device device)
     compile(Configuration::instance().resolve_for(device));
 }
 
-void NeuralNetwork::compile(EffectiveConfig new_config)
+void NeuralNetwork::compile(EffectiveConfig new_config, const bool allocate_parameter_master)
 {
     mark_parameters_changed();
 
@@ -568,12 +568,20 @@ void NeuralNetwork::compile(EffectiveConfig new_config)
         layer->set_compute_dtype(get_training_type());
     }
 
-    parameters.resize_bytes(get_aligned_bytes(get_parameter_specs(), Type::FP32), Device::CPU);
+    // The BF16 inference loader writes compact device storage and releases the
+    // fp32 master without reading it, so a network compiled for that loader
+    // skips the master: for a 4B model it is 16 GiB of host memory that would
+    // only be zeroed and freed. With no master there is nothing to link; the
+    // loader links the operators once its storage exists.
+    parameters.resize_bytes(allocate_parameter_master
+                            ? get_aligned_bytes(get_parameter_specs(), Type::FP32)
+                            : Index(0),
+                            Device::CPU);
     parameters.setZero();
 
     clear_low_precision_parameter_storage();
 
-    link_parameters();
+    if (allocate_parameter_master) link_parameters();
 
     states.resize_bytes(get_states_size() * Index(sizeof(float)), Device::CPU);
     states.setZero();
@@ -2027,7 +2035,10 @@ void NeuralNetwork::use_compact_parameter_storage()
     throw_if(!compact_storage,
              "NeuralNetwork: compact inference parameter storage is empty.");
 
-    const Index master_bytes = parameters.byte_size();
+    // The view keeps the master's logical size, which forward_propagate checks
+    // against the layer specs; it is computed from the specs here because a
+    // network compiled for the loader never had the master.
+    const Index master_bytes = get_aligned_bytes(get_parameter_specs(), Type::FP32);
     parameters.resize_bytes(0, Device::CPU);
     parameters.set_view(compact_storage, master_bytes, Device::CUDA);
     link_parameters();
@@ -2088,13 +2099,33 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 void NeuralNetwork::load_parameters_bf16_inference_binary(
     const filesystem::path& file_name)
 {
-    mark_parameters_changed();
-
     throw_if(parameters.empty() || !parameters.owns_memory(),
              "NeuralNetwork::load_parameters_bf16_inference_binary: "
              "the network must own its compiled parameter storage.");
 
-    const Index parameters_number = parameters.size_in_floats();
+    read_parameters_bf16_inference_binary(file_name, parameters.size_in_floats());
+}
+
+void NeuralNetwork::compile_and_load_parameters_bf16_inference_binary(
+    const filesystem::path& file_name)
+{
+    throw_if(get_layers_number() == 0,
+             "NeuralNetwork::compile_and_load_parameters_bf16_inference_binary: "
+             "the network has no layers.");
+
+    compile(Configuration::instance().resolve(), false);
+
+    read_parameters_bf16_inference_binary(
+        file_name, get_aligned_size(get_parameter_specs()));
+}
+
+void NeuralNetwork::read_parameters_bf16_inference_binary(
+    const filesystem::path& file_name, const Index parameters_number)
+{
+    PROFILE_SCOPE_HOST("load:bf16_inference_binary");
+
+    mark_parameters_changed();
+
     ifstream file = open_binary_input(
         file_name, uintmax_t(parameters_number) * sizeof(uint16_t),
         "load_parameters_bf16_inference_binary");
@@ -2148,17 +2179,54 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
                      file_name.string());
         };
 
+        // Two pinned slots let the read of one chunk overlap the transfer of
+        // the previous one: a slot is refilled only once the event recorded
+        // behind its copy has fired, and the stream is drained once at the
+        // end rather than after every chunk. Only the BF16 reader stages this
+        // way -- it moves nearly every byte of a BF16 model -- so it has its
+        // own loop instead of the shared one, whose buffer is fixed and whose
+        // consumers wait per chunk. The slots outlive the try below because
+        // the catch must drain the stream before they are released.
+        struct StagingSlot
+        {
+            device::PinnedBuffer host;
+            device::CudaEvent copied;
+            bool pending = false;
+        };
+
+        array<StagingSlot, 2> staging;
+        for (StagingSlot& slot : staging)
+        {
+            slot.host.resize_bytes(Index(bf16_chunk.size() * sizeof(uint16_t)));
+            slot.copied.create();
+        }
+        size_t next_slot = 0;
+
         const auto read_bf16_to_device =
             [&](uint16_t* destination, const Index count)
         {
-            for_each_bf16_chunk(count, [&](const Index chunk, const Index copied)
+            Index done = 0;
+            while (done < count)
             {
+                StagingSlot& slot = staging[next_slot];
+                next_slot = (next_slot + 1) % staging.size();
+                if (slot.pending) device::synchronize_event(slot.copied.get());
+                slot.pending = false;
+
+                const Index chunk = min(chunk_elements, count - done);
+                file.read(slot.host.as<char>(),
+                          streamsize(chunk * Index(sizeof(uint16_t))));
+                throw_if(!file,
+                         "Error reading BF16 parameter file: {}",
+                         file_name.string());
                 device::copy_async(
-                    destination + copied, bf16_chunk.data(),
+                    destination + done, slot.host.data(),
                     chunk * Index(sizeof(uint16_t)),
                     Device::CPU, Device::CUDA, stream);
-                device::synchronize(stream);
-            });
+                device::record_event(slot.copied.get(), stream);
+                slot.pending = true;
+                done += chunk;
+            }
         };
 
         const auto read_bf16_as_fp32_to_device =
@@ -2222,37 +2290,52 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
             device::synchronize(stream);
         };
 
-        for_each_parameter_slot([&](const ParameterSlot& slot)
+        try
         {
-            if (slot.shape.empty()) return;
+            for_each_parameter_slot([&](const ParameterSlot& slot)
+            {
+                if (slot.shape.empty()) return;
 
-            const Index size = slot.shape.size();
-            const Index aligned = get_aligned_size(size);
-            if (slot.tied)
-                return skip(aligned);
+                const Index size = slot.shape.size();
+                const Index aligned = get_aligned_size(size);
+                if (slot.tied)
+                    return skip(aligned);
 
-            if (slot.dtype == Type::INT8)
-                read_bf16_quantize_int8_to_device(
-                    int8_storage + slot.int8_offset,
-                    fp32_compact + slot.fp32_offset,
-                    size, slot.scale_channels, slot.scale_axis);
-            else if (slot.dtype == Type::BF16)
-                read_bf16_to_device(mirror + slot.bf16_offset, size);
-            else
-                read_bf16_as_fp32_to_device(
-                    fp32_compact + slot.fp32_offset, size);
+                if (slot.dtype == Type::INT8)
+                    read_bf16_quantize_int8_to_device(
+                        int8_storage + slot.int8_offset,
+                        fp32_compact + slot.fp32_offset,
+                        size, slot.scale_channels, slot.scale_axis);
+                else if (slot.dtype == Type::BF16)
+                    read_bf16_to_device(mirror + slot.bf16_offset, size);
+                else
+                    read_bf16_as_fp32_to_device(
+                        fp32_compact + slot.fp32_offset, size);
 
-            skip(aligned - size);
-        });
+                skip(aligned - size);
+            });
 
-        throw_if(file.peek() != ifstream::traits_type::eof(),
-                 "NeuralNetwork::load_parameters_bf16_inference_binary: "
-                 "unconsumed data remains in {}.",
-                 file_name.string());
+            throw_if(file.peek() != ifstream::traits_type::eof(),
+                     "NeuralNetwork::load_parameters_bf16_inference_binary: "
+                     "unconsumed data remains in {}.",
+                     file_name.string());
+        }
+        catch (...)
+        {
+            device::synchronize(stream);
+            throw;
+        }
+
+        device::synchronize(stream);
 
         return use_compact_parameter_storage();
     }
 #endif
+
+    // A network compiled without its master gets one here: every aligned float
+    // of it, padding included, is overwritten by the chunks below.
+    if (parameters.empty())
+        parameters.resize_bytes(parameters_number * Index(sizeof(float)), Device::CPU);
 
     float* const host_parameters = parameters.as<float>();
 
@@ -2679,28 +2762,14 @@ void NeuralNetwork::upload_parameters_int8_inference()
 
 void NeuralNetwork::activate_transposed_inference_weights()
 {
-    cudaStream_t stream = device::get_compute_stream();
-
-    const auto transpose_in_place = [&](const TensorView& weight)
-    {
-        Buffer scratch{Device::CUDA};
-        scratch.resize_bytes(weight.byte_size(), Device::CUDA);
-        const Shape& shape = weight.get_shape();
-        if (weight.is_int8())
-            transpose_2d_cuda<int8_t>(shape[0], shape[1],
-                                      weight.as<int8_t>(), scratch.as<int8_t>());
-        else
-            weight.dispatch([&]<typename T>()
-            {
-                transpose_2d_cuda<T>(shape[0], shape[1],
-                                     weight.as<T>(), scratch.as<T>());
-            });
-        device::copy_async(weight.get_data(), scratch.data(), weight.byte_size(),
-                           device::CopyKind::DeviceToDevice, stream);
-        device::synchronize(stream);
-    };
+    PROFILE_SCOPE_HOST("load:transpose_inference_weights");
 
     const bool int8_training = get_training_type() == Type::INT8;
+
+    // The weights are chosen before anything is enqueued so that one scratch,
+    // sized for the largest of them, serves every transpose.
+    vector<CombinationOperator*> pending;
+    Index scratch_bytes = 0;
 
     for (const auto& layer : layers)
     {
@@ -2722,10 +2791,50 @@ void NeuralNetwork::activate_transposed_inference_weights()
                 || !weight.is_cuda() || weight.get_rank() != 2)
                 continue;
 
-            transpose_in_place(weight);
+            pending.push_back(combination);
+            scratch_bytes = max(scratch_bytes, weight.byte_size());
+        }
+    }
+
+    if (pending.empty()) return;
+
+    cudaStream_t stream = device::get_compute_stream();
+
+    Buffer scratch{Device::CUDA};
+    scratch.resize_bytes(scratch_bytes, Device::CUDA);
+
+    // The stream orders each transpose after the copy that drained the scratch
+    // for the previous weight, so one wait at the end replaces the one per
+    // weight that put 36 host round trips into a Qwen3 load. The wait also
+    // runs on the way out of an exception: the scratch must not be released
+    // with a kernel still reading it.
+    try
+    {
+        for (CombinationOperator* combination : pending)
+        {
+            const TensorView& weight = combination->weights;
+            const Shape& shape = weight.get_shape();
+            if (weight.is_int8())
+                transpose_2d_cuda<int8_t>(shape[0], shape[1],
+                                          weight.as<int8_t>(), scratch.as<int8_t>());
+            else
+                weight.dispatch([&]<typename T>()
+                {
+                    transpose_2d_cuda<T>(shape[0], shape[1],
+                                         weight.as<T>(), scratch.as<T>());
+                });
+            device::copy_async(weight.get_data(), scratch.data(), weight.byte_size(),
+                               device::CopyKind::DeviceToDevice, stream);
             combination->transposed_inference_active = true;
         }
     }
+    catch (...)
+    {
+        device::synchronize(stream);
+        throw;
+    }
+
+    device::synchronize(stream);
 }
 
 void NeuralNetwork::copy_parameters_host()

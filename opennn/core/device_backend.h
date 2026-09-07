@@ -90,6 +90,10 @@ bool has_cuda_device() noexcept;
 int cuda_compute_capability() noexcept;
 size_t available_memory();
 string gpu_info_string() noexcept;
+
+// Where tuned cuBLASLt plans persist for this card and library, or empty when
+// the cache is disabled, there is no CUDA device, or the build has no CUDA.
+string lt_plan_cache_directory() noexcept;
 bool cuda_allocation_growth_forbidden() noexcept;
 void set_cuda_allocation_growth_forbidden(bool forbidden) noexcept;
 
@@ -185,6 +189,18 @@ private:
 
 void* allocate(Device, Index);
 void deallocate(Device, void*, Index) noexcept;
+
+// Explicit session trimming returns only the caller's released blocks to CUDA.
+class CudaBlockCacheBypass
+{
+public:
+    CudaBlockCacheBypass() noexcept;
+    ~CudaBlockCacheBypass() noexcept;
+    CudaBlockCacheBypass(const CudaBlockCacheBypass&) = delete;
+    CudaBlockCacheBypass& operator=(const CudaBlockCacheBypass&) = delete;
+private:
+    bool previous;
+};
 
 void set_zero(void*, Index, Device);
 void set_zero_async(void*, Index, cudaStream_t = nullptr);

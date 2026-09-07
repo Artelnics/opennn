@@ -231,6 +231,21 @@ public:
         const filesystem::path&,
         Index sequence_length = 32768);
 
+    // Builds the network and loads a BF16 inference binary without ever
+    // allocating or initialising the fp32 parameter master.
+    static unique_ptr<Qwen3> from_binary(
+        const filesystem::path& weights_path,
+        Index sequence_length,
+        Index vocabulary_size,
+        Index hidden_size,
+        Index layers_number,
+        Index query_heads,
+        Index key_value_heads,
+        Index head_dimension,
+        Index intermediate_size,
+        float rope_theta = 1000000.0f,
+        float rms_epsilon = 1.0e-6f);
+
     Qwen3();
 
     Qwen3(Index sequence_length,
@@ -243,6 +258,19 @@ public:
           Index intermediate_size,
           float rope_theta = 1000000.0f,
           float rms_epsilon = 1.0e-6f);
+
+private:
+
+    void build(Index sequence_length,
+               Index vocabulary_size,
+               Index hidden_size,
+               Index layers_number,
+               Index query_heads,
+               Index key_value_heads,
+               Index head_dimension,
+               Index intermediate_size,
+               float rope_theta,
+               float rms_epsilon);
 };
 
 class Bert final : public NeuralNetwork

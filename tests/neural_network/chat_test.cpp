@@ -729,6 +729,124 @@ TEST(ChatSessionTest, NoCudaBufferGrowthFromFirstSend)
     }
 }
 
+TEST(ChatSessionTest, SamplerCanSwitchBetweenGpuAndLazyHostStorage)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP();
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+    const TemplateTokenizer tokenizer;
+    NeuralNetwork network;
+    make_constant_tiny_decoder(network, 64, tokenizer.get_vocabulary_size(), tokenizer.id("A"));
+    network.upload_parameters_bf16_inference();
+    ChatSession used(network, tokenizer, make_unique<PlainChatTemplate>(), 42);
+    ChatSession fresh(network, tokenizer, make_unique<PlainChatTemplate>(), 42);
+    const ChatOptions greedy = greedy_options(3);
+    expect_same_response(used.send("prompt", greedy), fresh.send("prompt", greedy));
+    used.clear();
+    fresh.clear();
+    ChatOptions penalized = greedy;
+    penalized.sampling->repetition_penalty = 1.1f;
+    expect_same_response(used.send("prompt", penalized), fresh.send("prompt", penalized));
+    used.clear();
+    fresh.clear();
+    expect_same_response(used.send("prompt", greedy), fresh.send("prompt", greedy));
+}
+
+TEST(ChatSessionTest, TrimPreservesConversationAndOtherSession)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP();
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+    set_seed(42);
+    const TemplateTokenizer tokenizer;
+    Qwen3 network(2304, tokenizer.get_vocabulary_size() - 1, 32, 1, 4, 2, 8, 64);
+    network.set_parameters_random();
+    network.upload_parameters_bf16_inference();
+    ChatSession used(network, tokenizer, make_unique<Qwen3ChatTemplate>(), 42);
+    ChatSession reference(network, tokenizer, make_unique<Qwen3ChatTemplate>(), 42);
+    const ChatOptions options = greedy_options(3);
+    const auto cache_bytes = [](const ChatSession& session)
+    {
+        Index bytes = 0;
+        const auto& storage = session.get_decode_propagation().layer_session_state_storage;
+        if (storage) for (const auto& buffer : *storage) bytes += buffer.byte_size();
+        return bytes;
+    };
+    EXPECT_EQ(cache_bytes(used), 2 * 1024 * 16 * Index(sizeof(uint16_t)));
+    for (int turn = 0; turn < 5; ++turn)
+    {
+        const string prompt = turn == 0 ? string(1100, 'a') : "next";
+        const ChatResponse actual = used.send(prompt, options);
+        const ChatResponse expected = reference.send(prompt, options);
+        EXPECT_GT(actual.prompt_tokens, 1024);
+        EXPECT_EQ(cache_bytes(used), 2 * 2048 * 16 * Index(sizeof(uint16_t)));
+        EXPECT_EQ(actual.content, expected.content);
+        EXPECT_EQ(actual.reasoning, expected.reasoning);
+        EXPECT_EQ(actual.generated_tokens, expected.generated_tokens);
+        EXPECT_EQ(actual.finish_reason, expected.finish_reason);
+        // trim intentionally re-prefills the conversation instead of reusing KV.
+        EXPECT_GE(actual.prefill_tokens, expected.prefill_tokens);
+        const size_t messages = used.get_messages().size();
+        const Index reference_bytes = cache_bytes(reference);
+        used.trim();
+        EXPECT_EQ(used.get_messages().size(), messages);
+        EXPECT_EQ(cache_bytes(used), 0);
+        EXPECT_EQ(cache_bytes(reference), reference_bytes);
+        EXPECT_FALSE(used.get_decode_propagation().inference_graph_exec);
+        for (const Buffer& workspace : used.get_decode_propagation().inference_graph_workspaces)
+            EXPECT_TRUE(workspace.empty());
+        EXPECT_NO_THROW(used.trim());
+    }
+    used.clear();
+    reference.clear();
+    const Index retained = cache_bytes(reference);
+    EXPECT_GT(retained, 0);
+    expect_same_response(used.send("again", options), reference.send("again", options));
+}
+
+TEST(ChatSessionTest, TrimRetainsCpuAndGpuSamplerRng)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP();
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+    const TemplateTokenizer tokenizer;
+    NeuralNetwork network;
+    make_constant_tiny_decoder(network, 64, tokenizer.get_vocabulary_size(), tokenizer.id("A"));
+    network.upload_parameters_bf16_inference();
+    ChatSession used(network, tokenizer, make_unique<PlainChatTemplate>(), 42);
+    ChatSession reference(network, tokenizer, make_unique<PlainChatTemplate>(), 42);
+    ChatOptions options = greedy_options(6);
+    options.sampling->temperature = 100.0f;
+    for (const int top_k : {8, 0, 8, 0})
+    {
+        options.sampling->top_k = top_k;
+        const auto actual = used.send("next", options);
+        const auto expected = reference.send("next", options);
+        EXPECT_EQ(actual.content, expected.content);
+        EXPECT_EQ(actual.generated_tokens, expected.generated_tokens);
+        EXPECT_EQ(actual.finish_reason, expected.finish_reason);
+        used.trim();
+    }
+}
+
+TEST(ChatSessionTest, TrimReleasesDraftAndAllowsReattachment)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP();
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+    const TemplateTokenizer tokenizer;
+    NeuralNetwork network, draft;
+    for (NeuralNetwork* model : {&network, &draft})
+    {
+        make_constant_tiny_decoder(*model, 32, tokenizer.get_vocabulary_size(), tokenizer.id("A"));
+        model->upload_parameters_bf16_inference();
+    }
+    ChatSession session(network, tokenizer, make_unique<PlainChatTemplate>(), 42);
+    session.attach_draft_model(draft, 3);
+    EXPECT_EQ(session.send("first", greedy_options(6)).content, string(6, 'A'));
+    session.trim();
+    EXPECT_EQ(session.send("second", greedy_options(6)).content, string(6, 'A'));
+    session.trim();
+    EXPECT_NO_THROW(session.attach_draft_model(draft, 3));
+    EXPECT_EQ(session.send("third", greedy_options(6)).content, string(6, 'A'));
+}
+
 TEST(ChatSessionTest, SpeculativeGreedyFullAcceptanceMatchesBaseline)
 {
     if (!device::has_cuda_device()) GTEST_SKIP();

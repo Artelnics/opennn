@@ -8,10 +8,16 @@
 
 #include "opennn/neural_network/layers/grouped_query_attention_layer.h"
 
+#include <bit>
 #include <cmath>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <tuple>
 #include <utility>
 #include <vector>
 
+#include "opennn/core/profiler.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/neural_network/forward_propagation.h"
@@ -42,6 +48,15 @@ static pair<void*, void*> prepare_kv_cache(Buffer& storage,
 }
 
 static void grouped_attention_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool causal, float, Index, float*, const int*, GroupedQueryAttentionOperator::GraphCache*);
+
+// Which backend an attention launch took is otherwise invisible from outside:
+// a benchmark could publish a number from the materialized fallback without
+// knowing. The counters cost nothing unless the profiler is on, and they count
+// launches, so a replayed CUDA graph adds nothing after its capture.
+static void note_attention_backend(const char* key)
+{
+    if (profiler::is_enabled()) profiler::stats().add(key, 0.0);
+}
 static void qk_norm_gpu(const TensorView&, const TensorView&, TensorView&, Index, float);
 static void rope_forward_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index);
 
@@ -376,6 +391,7 @@ static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, con
 
 struct GroupedQueryAttentionOperator::GraphCache
 {
+    bool compact_inference = false;
     mutex access_mutex;
 
     // Both cached graphs are an SDPA forward over the same BSHD layout, so they
@@ -401,6 +417,16 @@ struct GroupedQueryAttentionOperator::GraphCache
         }
     };
 
+    // A built prefill plan. It is immutable once built, which is what lets
+    // operators share one (see gqa_sdpa_acquire); the mutex only serializes
+    // launches of the same plan from different threads.
+    struct PrefillPlan
+    {
+        cudnn_frontend::GraphSlot slot;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> Q, K, V, O, SeqQ, SeqKV;
+        mutable mutex execute_mutex;
+    };
+
     struct Entry
     {
         cudnn_frontend::GraphSlot slot;
@@ -410,6 +436,10 @@ struct GroupedQueryAttentionOperator::GraphCache
         // alone remembers a build that threw rather than retrying every call.
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> SeqQ, SeqKV;
         bool failed = false;
+
+        // The prefill fields above are copies of this shared plan's; the
+        // reference keeps the plan alive for as long as this entry exists.
+        shared_ptr<const PrefillPlan> shared_prefill;
     };
 
     using Entries = unordered_map<Key, Entry, KeyHash>;
@@ -535,15 +565,22 @@ static void grouped_attention_gpu(const TensorView& query, const TensorView& key
                                              scale, pos_offset, causal,
                                              query.as<T>(), key.as<T>(), value.as<T>(), output.as<T>(),
                                              cache))
+        {
+            note_attention_backend("gqa:sdpa_batched");
             return;
+        }
 
         if (has_work && !decode
             && grouped_attention_gemm_gpu<T>(batch, query_seq, key_seq,
                                              q_heads, kv_heads, dim,
                                              scale, pos_offset, causal,
                                              query.as<T>(), key.as<T>(), value.as<T>(), output.as<T>()))
+        {
+            note_attention_backend("gqa:gemm");
             return;
+        }
 
+        note_attention_backend(decode ? "gqa:decode_split" : "gqa:kernel");
         grouped_attention_cuda<T>(batch, query_seq, key_seq, q_heads, kv_heads,
                                   dim, scale, pos_offset, causal,
                                   kv_length_device, decode_partials,
@@ -582,7 +619,7 @@ static void qk_norm_gpu(const TensorView& input, const TensorView& weight, Tenso
 
 #else
 
-struct GroupedQueryAttentionOperator::GraphCache {};
+struct GroupedQueryAttentionOperator::GraphCache { bool compact_inference = false; };
 
 Index grouped_attention_decode_scratch_floats(Index, Index)
 {
@@ -608,6 +645,25 @@ GroupedQueryAttentionOperator::GroupedQueryAttentionOperator()
 }
 
 GroupedQueryAttentionOperator::~GroupedQueryAttentionOperator() = default;
+
+void GroupedQueryAttention::enable_compact_inference()
+{
+    attention.graph_cache->compact_inference = true;
+}
+
+bool GroupedQueryAttention::uses_compact_inference() const noexcept
+{
+    return attention.graph_cache->compact_inference;
+}
+
+bool GroupedQueryAttention::is_forward_slot_inference_elidable(
+    const size_t slot, const Device device, const Index batch) const noexcept
+{
+    return uses_compact_inference() && device == Device::CUDA && batch == 1
+        && get_compute_dtype() == Type::BF16 && weights_dtype == Type::BF16
+        && (slot == GroupedQueryAttentionOperator::Value
+            || slot == GroupedQueryAttentionOperator::RotatedKey);
+}
 
 void GroupedQueryAttentionOperator::apply_attention(
     const TensorView& query, const TensorView& key, const TensorView& value,
@@ -644,7 +700,7 @@ void GroupedQueryAttentionOperator::set(Index new_sequence_length, Index new_hid
 
     output_slots = {Output};
 
-    rope_tables = Buffer{};
+    rope_tables.reset();
 }
 
 vector<TensorSpec> GroupedQueryAttentionOperator::parameter_specs() const
@@ -684,30 +740,54 @@ vector<TensorSpec> GroupedQueryAttentionOperator::forward_scratch_specs() const
     };
 }
 
-void GroupedQueryAttentionOperator::prepare_rope_tables(const Device target_device)
+// Every attention layer of a model builds the same table -- it depends only on
+// the context capacity, the head size and theta -- so the layers share one: at
+// a 32k context that is 32 MiB of fp32 once instead of once per layer. The
+// registry holds weak references, so a table lives exactly as long as its last
+// user and no device memory is left to static destruction.
+static shared_ptr<const Buffer> shared_rope_tables(const Index sequence_length,
+                                                   const Index head_dim,
+                                                   const float rope_theta,
+                                                   const Device target_device)
 {
+    using Key = tuple<Index, Index, uint32_t, Device>;
+    static map<Key, weak_ptr<const Buffer>> tables;
+    static mutex tables_mutex;
+
+    const Key key{sequence_length, head_dim, bit_cast<uint32_t>(rope_theta), target_device};
+    const lock_guard lock(tables_mutex);
+
+    if (const auto found = tables.find(key); found != tables.end())
+        if (shared_ptr<const Buffer> alive = found->second.lock()) return alive;
+
+    erase_if(tables, [](const auto& entry) { return entry.second.expired(); });
+
     const Index table_bytes = sequence_length * head_dim * Index(sizeof(float));
-    if (rope_tables.byte_size() == 2 * table_bytes
-        && rope_tables.get_device() == target_device)
-        return;
+    auto built = make_shared<Buffer>(Device::CPU);
+    built->resize_bytes(2 * table_bytes, Device::CPU);
 
-    Buffer tables(Device::CPU);
-    tables.resize_bytes(2 * table_bytes, Device::CPU);
-
-    TensorView cos_view(tables.data(), {sequence_length, head_dim});
-    TensorView sin_view(tables.as<char>() + table_bytes,
+    TensorView cos_view(built->data(), {sequence_length, head_dim});
+    TensorView sin_view(built->as<char>() + table_bytes,
                         {sequence_length, head_dim});
     rotary_build_tables(cos_view, sin_view, sequence_length, head_dim, rope_theta);
 
 #ifdef OPENNN_HAS_CUDA
     if (target_device == Device::CUDA)
-    {
-        const cudaStream_t stream = device::get_compute_stream();
-        tables.migrate_to(Device::CUDA, stream);
-    }
+        built->migrate_to(Device::CUDA, device::get_compute_stream());
 #endif
 
-    rope_tables = std::move(tables);
+    tables[key] = built;
+    return built;
+}
+
+void GroupedQueryAttentionOperator::prepare_rope_tables(const Device target_device)
+{
+    const Index table_bytes = sequence_length * head_dim * Index(sizeof(float));
+    if (rope_tables && rope_tables->byte_size() == 2 * table_bytes
+        && rope_tables->get_device() == target_device)
+        return;
+
+    rope_tables = shared_rope_tables(sequence_length, head_dim, rope_theta, target_device);
 }
 
 vector<Operator::SlotQuantization> GroupedQueryAttentionOperator::parameter_quantization() const
@@ -829,8 +909,8 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
              forward_propagation.past_length + seq, table_len);
     prepare_rope_tables(Device::CPU);
     const Index rope_table_bytes = table_len * head_dim * Index(sizeof(float));
-    TensorView cos_v(rope_tables.data(), {table_len, head_dim});
-    TensorView sin_v(rope_tables.as<char>() + rope_table_bytes,
+    TensorView cos_v(rope_tables->data(), {table_len, head_dim});
+    TensorView sin_v(static_cast<char*>(rope_tables->data()) + rope_table_bytes,
                      {table_len, head_dim});
 
     float* x_all = input.as<float>();
@@ -913,10 +993,12 @@ GroupedQueryAttentionOperator::GraphCache::Entry& gqa_sdpa(
         cache.prefill_entries, key);
 }
 
-void gqa_sdpa_build(GroupedQueryAttentionOperator::GraphCache::Entry& s,
+void gqa_sdpa_build(GroupedQueryAttentionOperator::GraphCache::PrefillPlan& s,
                     Index max_q, Index max_kv,
                     Index q_heads, Index kv_heads, Index head_dim, float scale)
 {
+    PROFILE_SCOPE_HOST("gqa:sdpa_build");
+
     auto graph = cudnn_frontend::new_graph(Type::BF16);
 
     s.Q = gqa_bshd_tensor(*graph, "Q", 1, q_heads,  max_q,  head_dim);
@@ -941,6 +1023,51 @@ void gqa_sdpa_build(GroupedQueryAttentionOperator::GraphCache::Entry& s,
     s.O = O;
 
     s.slot.build_attention(std::move(graph), "gqa sdpa", false);
+}
+
+// The prefill plan has nothing per layer in it -- its key is capacities,
+// heads, head size and scale -- yet every attention layer of a model built
+// its own: for Qwen3-4B, 36 builds of about 280 ms each on an RTX 4080, most
+// of a session's warm-up. Built plans are therefore shared through a
+// process-wide registry of weak references. Only a plan that built is
+// registered; the failure flag and the bounded cache stay per operator; and
+// a plan lives exactly as long as some operator's entry holds it.
+void gqa_sdpa_acquire(GroupedQueryAttentionOperator::GraphCache::Entry& s,
+                      Index max_q, Index max_kv,
+                      Index q_heads, Index kv_heads, Index head_dim, float scale)
+{
+    using Plan = GroupedQueryAttentionOperator::GraphCache::PrefillPlan;
+    using Key = tuple<Index, Index, Index, Index, Index, uint32_t>;
+    static map<Key, weak_ptr<const Plan>> plans;
+    static mutex plans_mutex;
+
+    const Key key{max_q, max_kv, q_heads, kv_heads, head_dim, bit_cast<uint32_t>(scale)};
+    shared_ptr<const Plan> plan;
+    {
+        const lock_guard lock(plans_mutex);
+
+        if (const auto found = plans.find(key); found != plans.end())
+            plan = found->second.lock();
+
+        if (!plan)
+        {
+            erase_if(plans, [](const auto& entry) { return entry.second.expired(); });
+
+            auto built = make_shared<Plan>();
+            gqa_sdpa_build(*built, max_q, max_kv, q_heads, kv_heads, head_dim, scale);
+            plans[key] = built;
+            plan = built;
+        }
+    }
+
+    s.slot  = plan->slot;
+    s.Q     = plan->Q;
+    s.K     = plan->K;
+    s.V     = plan->V;
+    s.O     = plan->O;
+    s.SeqQ  = plan->SeqQ;
+    s.SeqKV = plan->SeqKV;
+    s.shared_prefill = plan;
 }
 
 }
@@ -970,13 +1097,19 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
              "{}-token KV cache.", past, past + seq, table_len);
     prepare_rope_tables(Device::CUDA);
 
-    const Index cache_bytes = table_len * kd * elem;
+    const Index cache_capacity = graph_cache->compact_inference && batch == 1
+        && act == Type::BF16 && weights_dtype == Type::BF16 && !kv_cache.empty()
+        ? kv_cache.byte_size() / (2 * kd * elem) : table_len;
+    throw_if(past + seq > cache_capacity,
+             "GroupedQueryAttentionOperator: reserve KV before extending past {} tokens.",
+             cache_capacity);
+    const Index cache_bytes = cache_capacity * kd * elem;
     const auto [key_cache, value_cache] =
         prepare_kv_cache(kv_cache, cache_bytes, Device::CUDA);
 
     const Index rope_table_bytes = table_len * head_dim * Index(sizeof(float));
-    TensorView cos_v(rope_tables.data(), {table_len, head_dim}, Type::FP32, Device::CUDA);
-    TensorView sin_v(rope_tables.as<char>() + rope_table_bytes,
+    TensorView cos_v(rope_tables->data(), {table_len, head_dim}, Type::FP32, Device::CUDA);
+    TensorView sin_v(static_cast<char*>(rope_tables->data()) + rope_table_bytes,
                      {table_len, head_dim}, Type::FP32, Device::CUDA);
 
     if (batch == 1)
@@ -1002,8 +1135,8 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                 linear_forward_transposed(x_b, qkv_w, qkv_row, qkv_scale);
             }
 
-            TensorView key_cache_view(key_cache,   {1, table_len, kd}, act, Device::CUDA);
-            TensorView val_cache_view(value_cache, {1, table_len, kd}, act, Device::CUDA);
+            TensorView key_cache_view(key_cache,   {1, cache_capacity, kd}, act, Device::CUDA);
+            TensorView val_cache_view(value_cache, {1, cache_capacity, kd}, act, Device::CUDA);
             {
                 qk_rope_cache_append(qkv_row, q_norm, k_norm, cos_v, sin_v, qr_v,
                                      key_cache_view, val_cache_view,
@@ -1055,15 +1188,15 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
             bool ran_sdpa = false;
             {
                 const lock_guard cache_lock(graph_cache->access_mutex);
-                auto& sdpa = gqa_sdpa(*graph_cache, query_capacity, table_len,
+                auto& sdpa = gqa_sdpa(*graph_cache, query_capacity, cache_capacity,
                                       q_heads, kv_heads, head_dim);
 
                 if (!sdpa.slot && !sdpa.failed)
                 {
                     try
                     {
-                        gqa_sdpa_build(sdpa, query_capacity, table_len,
-                                       q_heads, kv_heads, head_dim, scale);
+                        gqa_sdpa_acquire(sdpa, query_capacity, cache_capacity,
+                                         q_heads, kv_heads, head_dim, scale);
                     }
                     catch (const exception& e)
                     {
@@ -1092,6 +1225,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                     tensors[sdpa.O]     = attn_v.get_data();
                     tensors[sdpa.SeqQ]  = sequence_lengths_device.as<int32_t>();
                     tensors[sdpa.SeqKV] = sequence_lengths_device.as<int32_t>() + 1;
+                    const lock_guard plan_lock(sdpa.shared_prefill->execute_mutex);
                     cudnn_frontend::run_slot(sdpa.slot, tensors, "gqa sdpa execute",
                                              cudnn_frontend::timing_label("gqa_sdpa"), false);
                     ran_sdpa = true;
@@ -1100,9 +1234,12 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
             if (ran_sdpa)
             {
+                note_attention_backend("gqa:prefill_sdpa");
                 linear_forward_transposed(attn_v, o_proj, o_b, o_scale);
                 return;
             }
+
+            note_attention_backend("gqa:prefill_fallback");
         }
 
         TensorView key_all(key_cache,   {1, total, kd}, act, Device::CUDA);

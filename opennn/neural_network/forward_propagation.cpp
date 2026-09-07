@@ -14,9 +14,107 @@
 #include "opennn/core/memory_pool.h"
 #include "opennn/core/profiler.h"
 #include "opennn/core/string_utilities.h"
+#include "opennn/neural_network/layers/grouped_query_attention_layer.h"
 
 namespace opennn
 {
+
+bool ForwardPropagation::reserve_kv_cache(const Index required, const Index preserved_tokens)
+{
+    if (!neural_network || mode != ForwardPropagationMode::Inference
+        || batch_size != 1 || !neural_network->is_gpu()
+        || neural_network->get_training_type() != Type::BF16) return false;
+
+    const Index limit = neural_network->get_input_shape()[0];
+    throw_if(required < 1 || required > limit || preserved_tokens < 0
+             || preserved_tokens > required,
+             "ForwardPropagation::reserve_kv_cache: invalid capacity/prefix {}/{} (limit {}).",
+             required, preserved_tokens, limit);
+    Index capacity = min(Index(256), limit);
+    while (capacity < required) capacity = min(capacity * 2, limit);
+
+    struct Replacement { size_t layer; Buffer storage{Device::CUDA}; };
+    vector<Replacement> replacements;
+    const auto& layers = neural_network->get_layers();
+    const cudaStream_t stream = device::get_compute_stream();
+    try
+    {
+        for (size_t i = 0; i < layers.size(); ++i)
+        {
+            const auto* attention = dynamic_cast<const GroupedQueryAttention*>(layers[i].get());
+            if (!attention || !attention->uses_compact_inference()
+                || attention->get_compute_dtype() != Type::BF16) continue;
+
+            const Index row_bytes = attention->get_kv_heads() * attention->get_head_dim()
+                * Index(sizeof(uint16_t));
+            Buffer& old = (*layer_session_state_storage)[i];
+            const Index old_half = old.byte_size() / 2;
+            throw_if(old.byte_size() % (2 * row_bytes) != 0
+                     || preserved_tokens * row_bytes > old_half,
+                     "ForwardPropagation::reserve_kv_cache: invalid preserved prefix at layer {}.", i);
+            if (old_half >= capacity * row_bytes) continue;
+
+            replacements.push_back({i, Buffer{Device::CUDA}});
+            Buffer& next = replacements.back().storage;
+            next.resize_bytes(2 * capacity * row_bytes, Device::CUDA);
+            device::set_zero_async(next.data(), next.byte_size(), stream);
+            if (preserved_tokens > 0)
+            {
+                device::copy_async(next.data(), old.data(), preserved_tokens * row_bytes,
+                                   device::CopyKind::DeviceToDevice, stream);
+                device::copy_async(next.as<char>() + capacity * row_bytes,
+                                   old.as<char>() + old_half, preserved_tokens * row_bytes,
+                                   device::CopyKind::DeviceToDevice, stream);
+            }
+        }
+        if (replacements.empty()) return false;
+        device::synchronize(stream);
+    }
+    catch (const exception& error)
+    {
+        device::synchronize(stream);
+        const device::CudaBlockCacheBypass release_failed_growth;
+        replacements.clear();
+        throw runtime_error(format("Qwen KV growth to {} tokens failed; previous cache retained: {}",
+                                   capacity, error.what()));
+    }
+    reset_cuda_graph();
+    for (auto& replacement : replacements)
+        (*layer_session_state_storage)[replacement.layer].swap(replacement.storage);
+    // Superseded buckets cannot be reused while this session keeps growing.
+    // Return them instead of retaining another KV cache in the block pool.
+    const device::CudaBlockCacheBypass release_old_buckets;
+    replacements.clear();
+    return true;
+}
+
+void ForwardPropagation::release_inference_storage()
+{
+    throw_if(mode != ForwardPropagationMode::Inference,
+             "ForwardPropagation: cannot trim training storage.");
+    reset_cuda_graph();
+    inputs.clear();
+    slots.clear();
+    capacity_inputs.clear();
+    capacity_slots.clear();
+    staged_inputs.clear();
+    staged_input_storage.clear();
+    layer_state_storage.clear();
+    layer_session_state_storage.reset();
+    layer_pinned_storage.clear();
+    device_valid_length_storage.clear();
+    output_window.reset();
+    for (Buffer& buffer : inference_graph_workspaces)
+        buffer.resize_bytes(0, Device::CUDA);
+    position_device.resize_bytes(0, Device::CUDA);
+    position_pinned = {};
+    loss_workspace.resize_bytes(0, Device::CUDA);
+    loss_target_workspace.resize_bytes(0, Device::CUDA);
+    arena.resize_bytes(0, arena.get_device());
+    vector<vector<uint16_t>>{}.swap(host_bf16_input_scratch);
+    vector<uint16_t>{}.swap(host_bf16_output_scratch);
+    past_length = 0;
+}
 
 static Index resolve_producer(const vector<vector<TensorSpec>>& forward_specs,
                               const vector<vector<Index>>& source_layers,
@@ -300,13 +398,16 @@ void ForwardPropagation::set(
     {
         for(size_t i = 0; i < layers_number; ++i)
         {
+            const auto* attention = dynamic_cast<const GroupedQueryAttention*>(layers[i].get());
             for(size_t j = 0; j < forward_specs[i].size(); ++j)
             {
                 if(layers[i]->get_forward_slot_kind(j + 1)
                        == ForwardSlotKind::TrainingOnly
                    || layers[i]->is_forward_slot_inference_elidable(
                           j + 1,
-                          neural_network->get_device()))
+                          neural_network->get_device())
+                   || (attention && attention->is_forward_slot_inference_elidable(
+                          j + 1, neural_network->get_device(), batch_size)))
                 {
                     forward_specs[i][j] = {};
                 }

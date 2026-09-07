@@ -331,6 +331,13 @@ protected:
     explicit NeuralNetwork(NetworkTask);
     NeuralNetwork(const filesystem::path&, NetworkTask);
 
+    // For a model factory that builds the layers and loads a BF16 inference
+    // binary in one step: compiles without the fp32 master the loader would
+    // discard. The network has no parameter storage of any kind until the
+    // load completes, so nothing may observe it in between; a factory keeps
+    // it private until then and drops it if the load throws.
+    void compile_and_load_parameters_bf16_inference_binary(const filesystem::path&);
+
     NetworkTask task = NetworkTask::Generic;
 
     vector<Variable> input_variables;
@@ -376,7 +383,9 @@ protected:
 
 private:
 
-    void compile(EffectiveConfig);
+    void compile(EffectiveConfig, bool allocate_parameter_master = true);
+
+    void read_parameters_bf16_inference_binary(const filesystem::path&, Index parameters_number);
 
     MatrixR calculate_outputs_device(const vector<TensorView>&, ForwardPropagation&);
 

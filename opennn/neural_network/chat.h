@@ -216,6 +216,9 @@ public:
     void set_messages(const vector<ChatMessage>&);
     const vector<ChatMessage>& get_messages() const noexcept;
     void clear();
+    // Release GPU execution storage without discarding conversation or RNG.
+    // Classic sessions retain their existing allocation policy.
+    void trim();
 
     ReasoningMode resolve_reasoning_mode(ReasoningMode) const;
     SamplingConfig default_sampling(ReasoningMode) const;

@@ -65,12 +65,19 @@ class Plan;
 // every problem asked for while the compute stream is capturing a CUDA graph.
 // Never throws; a caller that gets nullptr simply keeps cuBLASLt.
 Plan* create(const Problem&) noexcept;
+
+// Builds only the engine configuration at that cuDNN enumeration index -- the
+// identity candidate_plan_index() reports -- as a plan with one candidate, so a
+// winner recorded by an earlier process comes back without the whole set being
+// built again. The index is stable for one cuDNN build on one card.
+Plan* create(const Problem&, int64_t plan_index) noexcept;
 void  destroy(Plan*) noexcept;
 
 // Candidates are cuDNN engine configurations that built and fit the workspace
 // cap. They are NOT ranked: cuDNN's own heuristic puts a 226 us engine first
 // where the best is 189.6 us, so the caller must time them.
 int    candidate_count(const Plan*) noexcept;
+int64_t candidate_plan_index(const Plan*, int candidate) noexcept;
 size_t candidate_workspace_bytes(const Plan*, int candidate) noexcept;
 
 // cuDNN's own engine tag ("eng1_k2=3_k5=1"), which is the label that can be

@@ -3,6 +3,9 @@
 #include "opennn/core/configuration.h"
 #include "opennn/core/device_backend.h"
 
+#include <filesystem>
+#include <format>
+
 using namespace opennn;
 
 TEST(DeviceBackendTest, IsCudaBuildMatchesBuild)
@@ -425,3 +428,51 @@ TEST(DeviceBackendTest, GetDeviceReturnsStableThreadPoolDevice)
 
     EXPECT_EQ(&first, &second);
 }
+
+#ifdef OPENNN_HAS_CUDA
+// The cuBLASLt tuner times its candidates and the timings overlap, so two
+// processes could pick different kernels -- and different bf16 rounding -- for
+// the same GEMM. The plan cache is what makes the second process take the
+// first one's verdict. Whether it does is a cross-process property, checked by
+// the Qwen benchmark's within_engine_deterministic gate; what a unit test can
+// hold is that a tuned shape leaves a plan on disk under a directory that
+// names the card and the library, so a driver or cuBLASLt update cannot serve
+// a stale kernel.
+TEST(DeviceBackendTest, LtPlanCacheNamesCardAndLibraryAndStoresTunedShape)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "CUDA device unavailable.";
+
+    const string directory = device::lt_plan_cache_directory();
+    if (directory.empty()) GTEST_SKIP() << "cuBLASLt plan cache disabled or without a directory.";
+
+    const string name = std::filesystem::path(directory).filename().string();
+    EXPECT_NE(name.find(format("-sm{}-", device::cuda_compute_capability())), string::npos) << name;
+    EXPECT_NE(name.find("-cublaslt"), string::npos) << name;
+
+    // Qwen3-4B's gate projection at decode: eight heuristic candidates on every
+    // card measured, so the tuner has to choose and its choice is persisted.
+    const int m = 9728, n = 1, k = 2560;
+    const Index bf16 = Index(sizeof(uint16_t));
+    void* a = device::allocate(Device::CUDA, Index(m) * k * bf16);
+    void* b = device::allocate(Device::CUDA, Index(k) * n * bf16);
+    void* d = device::allocate(Device::CUDA, Index(m) * n * bf16);
+    device::set_zero(a, Index(m) * k * bf16, Device::CUDA);
+    device::set_zero(b, Index(k) * n * bf16, Device::CUDA);
+
+    run_lt_matmul_cached(m, n, k, CUBLAS_OP_N, CUBLAS_OP_N, CUBLASLT_EPILOGUE_DEFAULT,
+                         a, b, d, nullptr, CUDA_R_16BF, CUDA_R_16BF, CUDA_R_16BF);
+    device::synchronize(device::get_compute_stream());
+
+    device::deallocate(Device::CUDA, d, Index(m) * n * bf16);
+    device::deallocate(Device::CUDA, b, Index(k) * n * bf16);
+    device::deallocate(Device::CUDA, a, Index(m) * k * bf16);
+
+    size_t plans = 0;
+    std::error_code failed;
+    for (const auto& entry : std::filesystem::directory_iterator(directory, failed))
+        if (entry.path().extension() == ".ltplan") ++plans;
+
+    EXPECT_FALSE(failed) << directory;
+    EXPECT_GE(plans, 1u) << directory;
+}
+#endif

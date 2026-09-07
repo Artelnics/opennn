@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import ctypes
 import hashlib
 import json
 import os
@@ -238,17 +239,65 @@ def combine_phase_instruments(phases: dict[str, dict[str, Any]]) -> dict[str, An
 
 def process_json(command: list[str], environment: dict[str, str] | None = None,
                  timeout: int = 14400) -> tuple[dict[str, Any], dict[str, Any], str]:
+    private_samples: list[tuple[float, float]] = []
     with Monitor(device="cuda") as monitor:
-        process = subprocess.run(command, capture_output=True, text=True,
-                                 env=environment, timeout=timeout,
-                                 creationflags=CREATE_NO_WINDOW)
+        with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                              text=True, env=environment,
+                              creationflags=CREATE_NO_WINDOW) as process:
+            deadline = time.monotonic() + timeout
+            while True:
+                memory = private_memory_mib(process.pid)
+                if memory is not None:
+                    private_samples.append((time.time(), memory))
+                try:
+                    stdout, stderr = process.communicate(timeout=0.02)
+                    break
+                except subprocess.TimeoutExpired:
+                    if time.monotonic() >= deadline:
+                        process.kill()
+                        process.communicate()
+                        raise TimeoutError(f"benchmark process exceeded {timeout}s")
     if process.returncode:
         raise RuntimeError(f"{' '.join(command)} failed ({process.returncode}):\n"
-                           f"{process.stderr[-3000:]}")
-    payload = last_json(process.stdout)
+                           f"{stderr[-3000:]}")
+    payload = last_json(stdout)
     start = payload.get("timed_start_unix") if isinstance(payload, dict) else None
     end = payload.get("timed_end_unix") if isinstance(payload, dict) else None
-    return payload, monitor_window(monitor, start, end), process.stderr[-3000:]
+    instruments = monitor_window(monitor, start, end)
+    instruments["peak_private_mib"] = max((value for _, value in private_samples), default=None)
+    instruments["private_memory_metric"] = "windows_process_private_commit_sampled" if private_samples else None
+    instruments["private_memory_note"] = None if private_samples else "Windows private-commit query unavailable on this process/platform"
+    instruments["private_memory_samples"] = private_samples
+    instruments["telemetry_samples"] = monitor.telemetry_samples
+    instruments["power_samples"] = monitor.power_samples
+    return payload, instruments, stderr[-3000:]
+
+
+def private_memory_mib(pid: int) -> float | None:
+    """Process private commit, not working set or whole-device VRAM."""
+    if os.name != "nt":
+        return None
+    class Counters(ctypes.Structure):
+        _fields_ = [("cb", ctypes.c_ulong), ("faults", ctypes.c_ulong)] + [
+            (name, ctypes.c_size_t) for name in (
+                "peak_working_set", "working_set", "peak_paged_pool", "paged_pool",
+                "peak_nonpaged_pool", "nonpaged_pool", "pagefile", "peak_pagefile", "private")]
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.OpenProcess.argtypes = [ctypes.c_ulong, ctypes.c_int, ctypes.c_ulong]
+    kernel.OpenProcess.restype = ctypes.c_void_p
+    kernel.CloseHandle.argtypes = [ctypes.c_void_p]
+    kernel.K32GetProcessMemoryInfo.argtypes = [ctypes.c_void_p, ctypes.POINTER(Counters), ctypes.c_ulong]
+    handle = kernel.OpenProcess(0x1000, False, pid)
+    if not handle:
+        return None
+    try:
+        counters = Counters()
+        counters.cb = ctypes.sizeof(counters)
+        if not kernel.K32GetProcessMemoryInfo(handle, ctypes.byref(counters), counters.cb):
+            return None
+        return counters.private / (1024 * 1024)
+    finally:
+        kernel.CloseHandle(handle)
 
 
 def tokenize(opennn: Path, model_dir: Path, content_file: Path) -> dict[str, Any]:
@@ -731,6 +780,12 @@ def launch_valid(result: dict[str, Any], instruments: dict[str, Any],
             if sample.get("generated_tokens") != generated:
                 reasons.append("runtime stopped before the requested token count")
                 break
+        # The engine counts which attention backend its prefill took; a number
+        # from the materialized or generic fallback is not a valid measurement.
+        backends = result.get("attention_backends")
+        if result.get("engine") == "opennn" and backends is not None \
+                and not backends.get("prefill_valid"):
+            reasons.append("OpenNN prefill attention fell back from the cuDNN SDPA path")
     if result.get("track") == "core" and result.get("engine") == "opennn":
         if not result.get("cuda_graph"):
             reasons.append("OpenNN CUDA graph was not captured")
@@ -778,7 +833,7 @@ def aggregate(launches: list[dict[str, Any]]) -> dict[str, Any]:
                           if isinstance(sample.get(metric), (int, float))]
             if values:
                 entry[metric] = sample_statistics(values)
-        for metric in ("peak_mib", "steady_mib", "mean_watts", "energy_joules"):
+        for metric in ("peak_mib", "steady_mib", "peak_private_mib", "mean_watts", "energy_joules"):
             values = [launch["instruments"][metric] for launch in selected
                       if isinstance(launch.get("instruments", {}).get(metric), (int, float))]
             if values:
@@ -845,7 +900,7 @@ def write_csv(path: Path, launches: list[dict[str, Any]]) -> None:
     fields = ["track", "engine", "prompt_tokens", "generated_tokens", "round",
               "sample", "valid", "prefill_tokens_per_second",
               "decode_tokens_per_second", "ttft_ms", "end_to_end_tokens_per_second",
-              "model_load_ms", "peak_mib", "steady_mib", "mean_watts", "energy_joules"]
+              "model_load_ms", "peak_mib", "steady_mib", "peak_private_mib", "mean_watts", "energy_joules"]
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
@@ -860,7 +915,7 @@ def write_csv(path: Path, launches: list[dict[str, Any]]) -> None:
                     **{name: sample.get(name) for name in fields if name in sample},
                     "model_load_ms": launch["result"].get("model_load_ms"),
                     **{name: launch["instruments"].get(name)
-                       for name in ("peak_mib", "steady_mib", "mean_watts", "energy_joules")},
+                       for name in ("peak_mib", "steady_mib", "peak_private_mib", "mean_watts", "energy_joules")},
                 })
 
 
@@ -1062,6 +1117,30 @@ def rotated_order(values: list[str], round_index: int) -> list[str]:
     return values[offset:] + values[:offset]
 
 
+def warm_lt_plan_cache(executable: Path, models: dict[str, Path],
+                       fixture_data: dict[int, tuple[Path, Any]], prompts: list[int],
+                       generated: int) -> None:
+    """One throwaway OpenNN launch per prompt length before the timed rounds.
+
+    OpenNN picks each cuBLASLt kernel by timing candidates and persists the
+    winner on disk, so the first process to meet a shape tunes and every later
+    one loads. Without this the first timed launch of a session tunes under
+    whatever load the machine has at that moment and can settle on a kernel
+    that rounds bf16 differently from the rest, which shows up as
+    within_engine_deterministic = false. OPENNN_LT_PLAN_CACHE=0 turns the
+    cache off; then this warm-up changes nothing and is skipped.
+    """
+    if os.environ.get("OPENNN_LT_PLAN_CACHE", "1").strip().lower() in ("0", "false", "off", "no"):
+        return
+    for prompt in prompts:
+        print(f"warming cuBLASLt plan cache for {prompt}+{generated} ... ", end="", flush=True)
+        completed = subprocess.run([
+            str(executable), "runtime", str(models["opennn"]), str(fixture_data[prompt][0]),
+            "1", "1", str(prompt + generated),
+        ], capture_output=True, text=True)
+        print("OK" if completed.returncode == 0 else f"FAILED ({completed.returncode})", flush=True)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--family", default="qwen", choices=("qwen",), help=argparse.SUPPRESS)
@@ -1092,6 +1171,8 @@ def main(argv: list[str] | None = None) -> int:
 
     fixture_data = {prompt: fixture(tools["opennn"], models["opennn"], prompt)
                     for prompt in prompts}
+    if "opennn" in requested:
+        warm_lt_plan_cache(tools["opennn"], models, fixture_data, prompts, args.generate_tokens)
     git = git_metadata()
     initial = query_gpu_baseline()
     initial_memory = initial.get("memory_mib")

@@ -2,12 +2,15 @@
 
 #include "tests/neural_network/llm_test_helpers.h"
 
+#include <fstream>
+#include <iterator>
 #include <random>
 #include <vector>
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/models/models.h"
 #include "opennn/neural_network/neural_network.h"
+#include "opennn/neural_network/layers/grouped_query_attention_layer.h"
 #include "opennn/core/configuration.h"
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/device_backend.h"
@@ -17,8 +20,118 @@
 using namespace opennn;
 using namespace opennn_test;
 
+TEST(Qwen3NetworkTest, CompactScratchIsLimitedToBf16CudaInference)
+{
+#ifdef OPENNN_HAS_CUDA
+    if (!device::has_cuda_device()) GTEST_SKIP();
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+    Qwen3 network(64, 96, 32, 1, 4, 2, 8, 64);
+
+    ForwardPropagation compact(1, &network, ForwardPropagationMode::Inference);
+    ForwardPropagation training(1, &network, ForwardPropagationMode::Training);
+    ForwardPropagation batched(2, &network, ForwardPropagationMode::Inference);
+    bool found = false;
+    for (size_t i = 0; i < network.get_layers().size(); ++i)
+    {
+        const auto* attention = dynamic_cast<const GroupedQueryAttention*>(network.get_layers()[i].get());
+        if (!attention) continue;
+        found = true;
+        EXPECT_TRUE(attention->uses_compact_inference());
+        for (const size_t slot : {size_t(3), size_t(5)})
+        {
+            EXPECT_EQ(compact.slots[i][slot].size(), 0);
+            EXPECT_GT(training.slots[i][slot].size(), 0);
+            EXPECT_GT(batched.slots[i][slot].size(), 0);
+            EXPECT_FALSE(attention->is_forward_slot_inference_elidable(slot, Device::CPU, 1));
+        }
+    }
+    EXPECT_TRUE(found);
+    GroupedQueryAttention generic({64, 32}, 4, 2, 8);
+    EXPECT_FALSE(generic.uses_compact_inference());
+    EXPECT_FALSE(generic.is_forward_slot_inference_elidable(3, Device::CUDA, 1));
+    Configuration::instance().set(Device::CUDA, Type::INT8);
+    Qwen3 quantized(64, 96, 32, 1, 4, 2, 8, 64);
+    ForwardPropagation int8_inference(1, &quantized, ForwardPropagationMode::Inference);
+    EXPECT_FALSE(int8_inference.reserve_kv_cache(32, 0));
+    for (size_t i = 0; i < quantized.get_layers().size(); ++i)
+        if (dynamic_cast<GroupedQueryAttention*>(quantized.get_layers()[i].get()))
+        {
+            EXPECT_GT(int8_inference.slots[i][3].size(), 0);
+            EXPECT_GT(int8_inference.slots[i][5].size(), 0);
+        }
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+#else
+    GTEST_SKIP() << "Requires CUDA.";
+#endif
+}
+
 namespace
 {
+
+#ifdef OPENNN_HAS_CUDA
+TEST(Qwen3NetworkTest, KvBucketsPreserveBothHalvesAndFailedGrowth)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP();
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+    Qwen3 network(2304, 96, 32, 2, 4, 2, 8, 64);
+    ForwardPropagation propagation(1, &network, ForwardPropagationMode::Inference, {256, 1});
+    ASSERT_TRUE(propagation.reserve_kv_cache(128, 0));
+    vector<size_t> attention_layers;
+    vector<vector<uint16_t>> originals;
+    for (size_t i = 0; i < network.get_layers().size(); ++i)
+    {
+        if (!dynamic_cast<GroupedQueryAttention*>(network.get_layers()[i].get())) continue;
+        attention_layers.push_back(i);
+        Buffer& buffer = (*propagation.layer_session_state_storage)[i];
+        ASSERT_EQ(buffer.byte_size(), 2 * 256 * 16 * Index(sizeof(uint16_t)));
+        originals.emplace_back(size_t(buffer.byte_size() / 2));
+        for (size_t j = 0; j < originals.back().size(); ++j)
+            originals.back()[j] = uint16_t(j + i);
+        device::copy_async(buffer.data(), originals.back().data(), buffer.byte_size(),
+                           device::CopyKind::HostToDevice, device::get_compute_stream());
+    }
+    device::synchronize(device::get_compute_stream());
+    const void* old_pointer = (*propagation.layer_session_state_storage)[attention_layers[0]].data();
+    EXPECT_FALSE(propagation.reserve_kv_cache(256, 200));
+    EXPECT_EQ((*propagation.layer_session_state_storage)[attention_layers[0]].data(), old_pointer);
+    {
+        const device::CudaBlockCacheBypass bypass;
+        const device::CudaAllocationGrowthGuard no_growth(true, false);
+        EXPECT_THROW(propagation.reserve_kv_cache(257, 200), runtime_error);
+    }
+    EXPECT_EQ((*propagation.layer_session_state_storage)[attention_layers[0]].data(), old_pointer);
+    {
+        // Fail on the second layer, after the first replacement was copied.
+        // The failure must not commit a partially grown multi-layer cache.
+        Buffer& second = (*propagation.layer_session_state_storage)[attention_layers[1]];
+        Buffer original;
+        original.swap(second);
+        second.set_view(original.data(), original.byte_size() - 2, Device::CUDA);
+        EXPECT_THROW(propagation.reserve_kv_cache(257, 200), runtime_error);
+        EXPECT_EQ((*propagation.layer_session_state_storage)[attention_layers[0]].data(), old_pointer);
+        second.swap(original);
+    }
+    ASSERT_TRUE(propagation.reserve_kv_cache(257, 200));
+    for (size_t n = 0; n < attention_layers.size(); ++n)
+    {
+        Buffer& buffer = (*propagation.layer_session_state_storage)[attention_layers[n]];
+        ASSERT_EQ(buffer.byte_size(), 2 * 512 * 16 * Index(sizeof(uint16_t)));
+        vector<uint16_t> actual(size_t(buffer.byte_size() / 2));
+        device::copy_async(actual.data(), buffer.data(), buffer.byte_size(),
+                           device::CopyKind::DeviceToHost, device::get_compute_stream());
+        device::synchronize(device::get_compute_stream());
+        for (size_t j = 0; j < 200 * 16; ++j)
+        {
+            ASSERT_EQ(actual[j], originals[n][j]);
+            ASSERT_EQ(actual[512 * 16 + j], originals[n][256 * 16 + j]);
+        }
+    }
+    EXPECT_TRUE(propagation.reserve_kv_cache(2304, 200));
+    EXPECT_EQ((*propagation.layer_session_state_storage)[attention_layers[0]].byte_size(),
+              2 * 2304 * 16 * Index(sizeof(uint16_t)));
+    EXPECT_THROW(propagation.reserve_kv_cache(2305, 200), runtime_error);
+}
+#endif
 
 float multi_turn_max_logit_diff(const Dims& d, bool bf16_upload = false)
 {
@@ -423,5 +536,132 @@ TEST(Qwen3NetworkTest, DecodeGraphSurvivesFiveSuffixPrefillsGpu)
         EXPECT_EQ(decode.inference_graph_exec.get(), graph_identity);
         EXPECT_FALSE(decode.cuda_graph_workspaces_need_growth());
     }
+}
+#endif
+
+namespace
+{
+
+unique_ptr<Qwen3> qwen_from_binary(const filesystem::path& path)
+{
+    return Qwen3::from_binary(
+        path, TINY.seq, TINY.vocab, TINY.hidden, TINY.layers,
+        TINY.q_heads, TINY.kv_heads, TINY.head_dim, TINY.intermediate,
+        1000000.0f, 1.0e-6f);
+}
+
+filesystem::path write_tiny_bf16_binary(const string& name)
+{
+    Qwen3 source(
+        TINY.seq, TINY.vocab, TINY.hidden, TINY.layers,
+        TINY.q_heads, TINY.kv_heads, TINY.head_dim, TINY.intermediate,
+        1000000.0f, 1.0e-6f);
+    fill_parameters(source);
+    round_parameters_to_bf16(source);
+
+    const filesystem::path path = filesystem::temp_directory_path() / name;
+    write_logical_bf16_parameters(source, path);
+    return path;
+}
+
+float last_logits_max_difference(NeuralNetwork& a, NeuralNetwork& b)
+{
+    vector<float> a_window(size_t(TINY.seq), 0.0f);
+    vector<float> b_window(size_t(TINY.seq), 0.0f);
+    const vector<Index> ids = {2, 3, 5, 7, 11};
+    ForwardPropagation a_fp(1, &a);
+    ForwardPropagation b_fp(1, &b);
+    run(a, a_fp, a_window, ids, 0);
+    run(b, b_fp, b_window, ids, 0);
+    return max_difference(logits_row(a_fp, ssize(ids) - 1),
+                          logits_row(b_fp, ssize(ids) - 1));
+}
+
+}
+
+// The factory route compiles without the fp32 master; on a host
+// configuration the loader materializes it, so the two networks must be
+// bitwise the same object as far as parameters and logits go.
+TEST(Qwen3NetworkTest, FromBinaryMatchesConstructorLoadCpu)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    const filesystem::path path = write_tiny_bf16_binary("opennn_qwen3_from_binary_cpu.bin");
+
+    Qwen3 loaded(
+        TINY.seq, TINY.vocab, TINY.hidden, TINY.layers,
+        TINY.q_heads, TINY.kv_heads, TINY.head_dim, TINY.intermediate,
+        1000000.0f, 1.0e-6f);
+    loaded.load_parameters_bf16_inference_binary(path);
+    const unique_ptr<Qwen3> built = qwen_from_binary(path);
+
+    ASSERT_EQ(built->get_parameters_buffer_size(), loaded.get_parameters_buffer_size());
+    EXPECT_EQ(built->get_parameters_device(), Device::CPU);
+    EXPECT_TRUE(equal(loaded.get_parameters_data(),
+                      loaded.get_parameters_data() + loaded.get_parameters_buffer_size(),
+                      built->get_parameters_data()));
+    EXPECT_EQ(last_logits_max_difference(loaded, *built), 0.0f);
+    filesystem::remove(path);
+}
+
+TEST(Qwen3NetworkTest, FromBinaryRejectsTruncatedFileAndRecovers)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    const filesystem::path good = write_tiny_bf16_binary("opennn_qwen3_from_binary_good.bin");
+    const filesystem::path truncated =
+        filesystem::temp_directory_path() / "opennn_qwen3_from_binary_truncated.bin";
+    {
+        ifstream input(good, ios::binary);
+        vector<char> bytes((istreambuf_iterator<char>(input)), istreambuf_iterator<char>());
+        bytes.resize(bytes.size() / 2);
+        ofstream output(truncated, ios::binary | ios::trunc);
+        output.write(bytes.data(), streamsize(bytes.size()));
+    }
+
+    EXPECT_THROW(qwen_from_binary(truncated), runtime_error);
+    EXPECT_NO_THROW(qwen_from_binary(good));
+
+    filesystem::remove(good);
+    filesystem::remove(truncated);
+}
+
+#ifdef OPENNN_HAS_CUDA
+TEST(Qwen3NetworkTest, FromBinaryMatchesDirectLoadGpuBf16)
+{
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+    const filesystem::path path = write_tiny_bf16_binary("opennn_qwen3_from_binary_gpu.bin");
+
+    Qwen3 direct(
+        TINY.seq, TINY.vocab, TINY.hidden, TINY.layers,
+        TINY.q_heads, TINY.kv_heads, TINY.head_dim, TINY.intermediate,
+        1000000.0f, 1.0e-6f);
+    direct.load_parameters_bf16_inference_binary(path);
+    const unique_ptr<Qwen3> built = qwen_from_binary(path);
+
+    EXPECT_TRUE(direct.fp32_master_released());
+    EXPECT_TRUE(built->fp32_master_released());
+    EXPECT_EQ(built->get_parameters_buffer_size(), direct.get_parameters_buffer_size());
+    EXPECT_EQ(last_logits_max_difference(direct, *built), 0.0f);
+    filesystem::remove(path);
+}
+
+TEST(Qwen3NetworkTest, FromBinaryRejectsTruncatedFileAndRecoversGpu)
+{
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+    const filesystem::path good = write_tiny_bf16_binary("opennn_qwen3_from_binary_good_gpu.bin");
+    const filesystem::path truncated =
+        filesystem::temp_directory_path() / "opennn_qwen3_from_binary_truncated_gpu.bin";
+    {
+        ifstream input(good, ios::binary);
+        vector<char> bytes((istreambuf_iterator<char>(input)), istreambuf_iterator<char>());
+        bytes.resize(bytes.size() / 2);
+        ofstream output(truncated, ios::binary | ios::trunc);
+        output.write(bytes.data(), streamsize(bytes.size()));
+    }
+
+    EXPECT_THROW(qwen_from_binary(truncated), runtime_error);
+    EXPECT_NO_THROW(qwen_from_binary(good));
+
+    filesystem::remove(good);
+    filesystem::remove(truncated);
 }
 #endif

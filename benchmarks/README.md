@@ -44,6 +44,21 @@ generated tokens and prompt lengths 128/512/2048/8192. Its primary cell is
 Current Qwen results are internal RTX 4080/Windows measurements and must not be
 presented as RTX 5070 Ti results without rerunning the protocol on that card.
 
+Greedy output is bit-reproducible across processes only if every process runs
+the same cuBLASLt kernel for every shape, and the tuner in
+`opennn/core/device_backend.cpp` picks kernels by timing them. OpenNN persists
+each winner below `%TEMP%\opennn-lt-plans\<card>-sm<cc>-cublaslt<version>`
+(`OPENNN_LT_PLAN_CACHE_DIR` moves it, `OPENNN_LT_PLAN_CACHE=0` disables it), so
+the first process on a card tunes and every later one loads. Warm that cache
+with one throwaway launch before a timed round; a cold first process may pick a
+different kernel than the rest. `OPENNN_LT_DETERMINISTIC=1` skips the tuner
+altogether and takes the heuristic's first candidate -- reproducible with no
+cache at all, about 26% slower on the gate projection, so it is a CI gate, not
+a benchmark configuration. A record names a cuDNN winner by its position in
+cuDNN's own enumeration, so loading it builds that one engine rather than the
+whole set; the format change (record version 3) means one re-tune per shape
+the first time a new build meets an old cache.
+
 `--batch` is the only sweep axis:
 
 | | |
@@ -90,6 +105,16 @@ engine generated the requested number of tokens. Its `core` track excludes
 tokenization and sampling; its `runtime` track includes the complete serving
 path.
 
+**The attention-backend gate** applies to OpenNN's `runtime` track. The
+attention layer counts which backend each launch took while the profiler is
+on, and the driver turns the profiler on for its one unreported warm request
+only. The result carries them as `attention_backends` — `prefill_sdpa`,
+`prefill_fallback`, `sdpa_batched`, `gemm`, `kernel`, `decode_split` — and a
+run whose prefill did not go entirely through the cuDNN SDPA graph is marked
+invalid: a number from the materialized or generic path is not the number the
+engine is meant to publish. Decode launches are CUDA-graph replays, which the
+counters never see, so `decode_split` only reflects the capture.
+
 ## Reading a result
 
 Energy is reported only when the timed window held a second of the driver's
@@ -101,6 +126,19 @@ context and cached blocks and so flatters PyTorch by construction.
 
 A dirty tree writes to `results/scratch/`, never to the valid-results area.
 That is enforced in code. Neither location is committed.
+
+OpenNN Qwen results also include `inference_memory`: reserved KV capacity and
+bytes, the decode arena **view** size (not the complete shared prefill arena),
+and graph workspace bytes. These diagnostics are not substitutes for measured
+device memory. On Windows, process launches record sampled private commit as
+`peak_private_mib`, separately from VRAM and working set. Raw process-memory,
+GPU telemetry and timestamped power samples accompany these launches. Windows
+uses `nvml.dll` when available; the labeled `nvidia-smi` fallback remains in
+place when NVML is unavailable.
+
+The OpenNN runtime currently computes `output_token_hash` by retokenizing the
+decoded response. It is not a trace of the original sampler IDs; strict
+token-by-token optimization acceptance needs that additional validation.
 
 ## Files
 

@@ -136,6 +136,11 @@ bool verbose() noexcept
 
 Plan* create(const Problem& problem) noexcept
 {
+    return create(problem, -1);
+}
+
+Plan* create(const Problem& problem, const int64_t plan_index) noexcept
+{
     try
     {
         if (!enabled()) return nullptr;
@@ -361,7 +366,12 @@ Plan* create(const Problem& problem) noexcept
         const int64_t offered = graph->get_execution_plan_count();
         const int64_t limit = candidate_limit();
 
-        for (int64_t index = 0; index < offered; ++index)
+        // A recorded winner is rebuilt alone: building every configuration
+        // cuDNN offers is the search, and the search has been done.
+        const int64_t first = plan_index < 0 ? 0 : plan_index;
+        const int64_t last  = plan_index < 0 ? offered : min(offered, plan_index + 1);
+
+        for (int64_t index = first; index < last; ++index)
         {
             if (limit > 0 && int64_t(plan->candidates.size()) >= limit) break;
 
@@ -435,6 +445,12 @@ void destroy(Plan* plan) noexcept
 int candidate_count(const Plan* plan) noexcept
 {
     return plan ? int(plan->candidates.size()) : 0;
+}
+
+int64_t candidate_plan_index(const Plan* plan, int candidate) noexcept
+{
+    if (!plan || candidate < 0 || candidate >= int(plan->candidates.size())) return -1;
+    return plan->candidates[size_t(candidate)].index;
 }
 
 size_t candidate_workspace_bytes(const Plan* plan, int candidate) noexcept

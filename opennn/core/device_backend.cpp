@@ -18,7 +18,10 @@
 
 #include <atomic>
 #include <cstdlib>
+#include <filesystem>
+#include <fstream>
 #include <mutex>
+#include <thread>
 #include <utility>
 
 #ifdef __linux__
@@ -131,6 +134,7 @@ static void poison_device_memory(void* pointer, Index byte_count)
 
 atomic_bool cuda_allocation_growth_forbidden_runtime{false};
 atomic_bool cuda_matmul_plan_creation_forbidden_runtime{false};
+thread_local bool cuda_block_cache_bypassed = false;
 
 cudaEvent_t create_event_handle(unsigned);
 cudaEvent_t create_event_handle();
@@ -640,8 +644,9 @@ void* allocate(Device device_type, Index byte_count)
     if (device_type == Device::CUDA)
     {
 #ifdef OPENNN_HAS_CUDA
-        if (void* recycled = CudaBlockCache::instance().take(byte_count))
-            return recycled;
+        if (!cuda_block_cache_bypassed)
+            if (void* recycled = CudaBlockCache::instance().take(byte_count))
+                return recycled;
 
         throw_if(cuda_allocation_growth_forbidden(),
                  "CUDA alloc of {} bytes forbidden (warmup incomplete).", byte_count);
@@ -665,6 +670,17 @@ void* allocate(Device device_type, Index byte_count)
     return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
 }
 
+CudaBlockCacheBypass::CudaBlockCacheBypass() noexcept
+    : previous(cuda_block_cache_bypassed)
+{
+    cuda_block_cache_bypassed = true;
+}
+
+CudaBlockCacheBypass::~CudaBlockCacheBypass() noexcept
+{
+    cuda_block_cache_bypassed = previous;
+}
+
 void deallocate(Device device_type, void* pointer, Index byte_count) noexcept
 {
     if (!pointer) return;
@@ -674,7 +690,7 @@ void deallocate(Device device_type, void* pointer, Index byte_count) noexcept
     if (device_type == Device::CUDA)
     {
 #ifdef OPENNN_HAS_CUDA
-        if (!CudaBlockCache::instance().give(pointer, byte_count))
+        if (cuda_block_cache_bypassed || !CudaBlockCache::instance().give(pointer, byte_count))
             cudaFree(pointer);
 #endif
         return;
@@ -1472,72 +1488,6 @@ namespace
         int                  cudnn_candidate = -1;
     };
 
-    struct LtMatmulPlan
-    {
-        cublasLtMatmulDesc_t   matmul_descriptor = nullptr;
-        cublasLtMatrixLayout_t a_matrix_layout = nullptr;
-        cublasLtMatrixLayout_t b_matrix_layout = nullptr;
-        cublasLtMatrixLayout_t output_matrix_layout = nullptr;
-        cublasLtMatmulAlgo_t   algorithm{};
-        bool                   has_algorithm = false;
-        size_t                 workspace_bytes = 0;
-
-        // The cuDNN engine set for this same shape, when there is one, and the
-        // configuration the tuner chose out of it. These are an OVERLAY on the
-        // cuBLASLt fields above, never a replacement: algorithm and
-        // workspace_bytes always hold a usable cuBLASLt kernel, so "fall back
-        // to cuBLASLt" is a one-line branch at the call site and stays true
-        // even if a cuDNN execution fails at run time, years from now, on a
-        // driver nobody here has seen.
-        cudnn_matmul::Plan*    cudnn_plan = nullptr;
-        int                    cudnn_candidate = -1;
-        size_t                 cudnn_workspace_bytes = 0;
-
-        vector<LtMatmulCandidate> candidates;
-        bool                   tuned = true;
-
-        LtMatmulPlan() = default;
-        LtMatmulPlan(const LtMatmulPlan&) = delete;
-        LtMatmulPlan& operator=(const LtMatmulPlan&) = delete;
-        LtMatmulPlan& operator=(LtMatmulPlan&&) = delete;
-        LtMatmulPlan(LtMatmulPlan&& other) noexcept
-        {
-            swap(matmul_descriptor, other.matmul_descriptor);
-            swap(a_matrix_layout, other.a_matrix_layout);
-            swap(b_matrix_layout, other.b_matrix_layout);
-            swap(output_matrix_layout, other.output_matrix_layout);
-            swap(algorithm, other.algorithm);
-            swap(has_algorithm, other.has_algorithm);
-            swap(workspace_bytes, other.workspace_bytes);
-            swap(cudnn_plan, other.cudnn_plan);
-            swap(cudnn_candidate, other.cudnn_candidate);
-            swap(cudnn_workspace_bytes, other.cudnn_workspace_bytes);
-            swap(candidates, other.candidates);
-            swap(tuned, other.tuned);
-        }
-
-        ~LtMatmulPlan()
-        {
-            cudnn_matmul::destroy(cudnn_plan);
-            cublasLtMatrixLayoutDestroy(output_matrix_layout);
-            cublasLtMatrixLayoutDestroy(b_matrix_layout);
-            cublasLtMatrixLayoutDestroy(a_matrix_layout);
-            cublasLtMatmulDescDestroy(matmul_descriptor);
-        }
-
-        // Called when the tuner has decided against cuDNN, or could not tune
-        // at all. The graph and its built plans are the only thing on this
-        // path that holds device memory of its own, and the benchmark reports
-        // peak memory, so an unused engine set is released rather than parked.
-        void release_cudnn() noexcept
-        {
-            cudnn_matmul::destroy(cudnn_plan);
-            cudnn_plan = nullptr;
-            cudnn_candidate = -1;
-            cudnn_workspace_bytes = 0;
-        }
-    };
-
     // Everything a plan's descriptor and layouts are built from, and nothing
     // else. alpha never enters -- it is a call-time pointer that changes no
     // kernel -- and beta enters only as beta_is_zero, because a nonzero beta
@@ -1583,6 +1533,74 @@ namespace
         }
     };
 
+    struct LtMatmulPlan
+    {
+        LtMatmulPlanKey        key{};
+        cublasLtMatmulDesc_t   matmul_descriptor = nullptr;
+        cublasLtMatrixLayout_t a_matrix_layout = nullptr;
+        cublasLtMatrixLayout_t b_matrix_layout = nullptr;
+        cublasLtMatrixLayout_t output_matrix_layout = nullptr;
+        cublasLtMatmulAlgo_t   algorithm{};
+        bool                   has_algorithm = false;
+        size_t                 workspace_bytes = 0;
+
+        // The cuDNN engine set for this same shape, when there is one, and the
+        // configuration the tuner chose out of it. These are an OVERLAY on the
+        // cuBLASLt fields above, never a replacement: algorithm and
+        // workspace_bytes always hold a usable cuBLASLt kernel, so "fall back
+        // to cuBLASLt" is a one-line branch at the call site and stays true
+        // even if a cuDNN execution fails at run time, years from now, on a
+        // driver nobody here has seen.
+        cudnn_matmul::Plan*    cudnn_plan = nullptr;
+        int                    cudnn_candidate = -1;
+        size_t                 cudnn_workspace_bytes = 0;
+
+        vector<LtMatmulCandidate> candidates;
+        bool                   tuned = true;
+
+        LtMatmulPlan() = default;
+        LtMatmulPlan(const LtMatmulPlan&) = delete;
+        LtMatmulPlan& operator=(const LtMatmulPlan&) = delete;
+        LtMatmulPlan& operator=(LtMatmulPlan&&) = delete;
+        LtMatmulPlan(LtMatmulPlan&& other) noexcept
+        {
+            swap(key, other.key);
+            swap(matmul_descriptor, other.matmul_descriptor);
+            swap(a_matrix_layout, other.a_matrix_layout);
+            swap(b_matrix_layout, other.b_matrix_layout);
+            swap(output_matrix_layout, other.output_matrix_layout);
+            swap(algorithm, other.algorithm);
+            swap(has_algorithm, other.has_algorithm);
+            swap(workspace_bytes, other.workspace_bytes);
+            swap(cudnn_plan, other.cudnn_plan);
+            swap(cudnn_candidate, other.cudnn_candidate);
+            swap(cudnn_workspace_bytes, other.cudnn_workspace_bytes);
+            swap(candidates, other.candidates);
+            swap(tuned, other.tuned);
+        }
+
+        ~LtMatmulPlan()
+        {
+            cudnn_matmul::destroy(cudnn_plan);
+            cublasLtMatrixLayoutDestroy(output_matrix_layout);
+            cublasLtMatrixLayoutDestroy(b_matrix_layout);
+            cublasLtMatrixLayoutDestroy(a_matrix_layout);
+            cublasLtMatmulDescDestroy(matmul_descriptor);
+        }
+
+        // Called when the tuner has decided against cuDNN, or could not tune
+        // at all. The graph and its built plans are the only thing on this
+        // path that holds device memory of its own, and the benchmark reports
+        // peak memory, so an unused engine set is released rather than parked.
+        void release_cudnn() noexcept
+        {
+            cudnn_matmul::destroy(cudnn_plan);
+            cudnn_plan = nullptr;
+            cudnn_candidate = -1;
+            cudnn_workspace_bytes = 0;
+        }
+    };
+
     struct CudaMatmulThreadState
     {
         using LaneWorkspaces = std::array<Buffer, static_cast<size_t>(device::GraphWorkspaceKind::Count)>;
@@ -1611,6 +1629,286 @@ namespace
 
     constexpr size_t cublas_lt_workspace_search_bytes = 32ull * 1024 * 1024;
     constexpr size_t cublas_lt_plan_cache_capacity = 1024;
+
+    // autotune_lt_plan picks the fastest of up to eight heuristic candidates
+    // by timing each of them, and the timings overlap: on Qwen3-4B's
+    // gate projection at decode (9728x1x2560 bf16) the split-K=1 kernels swing
+    // 2.3x between processes while the winner moves 2%, so 30% of processes
+    // under GPU contention picked a different kernel, and three of the eight
+    // candidates round bf16 differently. Same operands, three output bit
+    // patterns, and a greedy decode that disagreed with itself across runs.
+    //
+    // OPENNN_LT_DETERMINISTIC=1 takes the heuristic's first candidate for
+    // every shape and never times anything -- 40 of 40 contended processes
+    // gave one hash. It costs 26% on that GEMM (0.109 ms against 0.086), so
+    // it is for tests and CI gates, not for the numbers that get published.
+    bool lt_deterministic_selection()
+    {
+        static const bool deterministic = env_flag_enabled("OPENNN_LT_DETERMINISTIC", false);
+        return deterministic;
+    }
+
+    // The default keeps the tuner and makes its verdict outlive the process:
+    // the first process to see a shape times the candidates and writes the
+    // winner below the temp directory, every later one loads it and skips the
+    // timing. Mirrors the cuDNN plan cache in cudnn_frontend_utilities.h --
+    // OPENNN_LT_PLAN_CACHE=0 turns it off, OPENNN_LT_PLAN_CACHE_DIR moves it.
+    // The directory names the card, its architecture and the cuBLASLt build,
+    // because a serialised cublasLtMatmulAlgo_t is only promised to mean the
+    // same thing under the library that produced it.
+    bool lt_plan_cache_enabled()
+    {
+        static const bool enabled = env_flag_enabled("OPENNN_LT_PLAN_CACHE", true);
+        return enabled;
+    }
+
+    const filesystem::path& lt_plan_cache_path()
+    {
+        static const filesystem::path directory = []
+        {
+            const char* override_path = getenv("OPENNN_LT_PLAN_CACHE_DIR");
+
+            filesystem::path root;
+
+            if (override_path && *override_path)
+                root = filesystem::path(override_path);
+            else
+            {
+                error_code error;
+                const filesystem::path temporary = filesystem::temp_directory_path(error);
+                if (error) return filesystem::path{};
+                root = temporary / "opennn-lt-plans";
+            }
+
+            cudaDeviceProp properties{};
+            if (cudaGetDeviceProperties(&properties, 0) != cudaSuccess)
+            {
+                cudaGetLastError();
+                return filesystem::path{};
+            }
+
+            string card(properties.name);
+            for (char& character : card)
+                if (!isalnum(static_cast<unsigned char>(character))) character = '-';
+
+            // cuDNN is in the name too: a cached plan may name a cuDNN matmul
+            // engine by its position in that library's heuristic list.
+            return root / format("{}-sm{}{}-cublaslt{}-cudnn{}", card, properties.major, properties.minor,
+                                 cublasLtGetVersion(), CUDNN_VERSION);
+        }();
+
+        return directory;
+    }
+
+    // One cached plan: the key it was tuned for, every knob that steered the
+    // tuner, and the winner. The knobs are stored and compared, not merely
+    // hashed into the file name, so a name collision cannot hand a plan tuned
+    // under one OPENNN_LT_TILE_TOLERANCE to a process running another.
+    struct LtPlanCacheRecord
+    {
+        uint32_t magic = 0x4c50544fu;   // "OTPL"
+        uint32_t version = 3;
+        LtMatmulPlanKey key{};
+
+        // Every knob the tuner reads, in the order it reads them: the cuBLASLt
+        // candidate set and tie-break, then the cross-source rule, then what
+        // cudnn_matmul::create() admits into the candidate list at all.
+        long long candidates = 0;
+        long long tile_tolerance = 0;
+        long long traffic_budget = 0;
+        long long cross_source_gain = 0;
+        long long anchor_on_fastest = 0;
+        long long cudnn_enabled = 0;
+        long long cudnn_workspace_mb = 0;
+        long long cudnn_min_gflop = 0;
+        long long cudnn_min_dim = 0;
+        long long cudnn_candidates = 0;
+        uint64_t workspace_search_bytes = 0;
+
+        // The winner: always a cuBLASLt kernel, plus the cuDNN engine the
+        // tuner preferred over it when it did, as the same overlay the plan
+        // carries. The engine is named by its index in cuDNN's own
+        // enumeration, which is a stable identity for one cuDNN build on one
+        // card -- both are in the directory name -- and nothing else; the
+        // position it held in the tuner's candidate list is kept for the
+        // record only. Version 3 added the enumeration index: rebuilding the
+        // whole set to find the winner again cost a Qwen3-4B session about
+        // twelve seconds of warm-up.
+        cublasLtMatmulAlgo_t algorithm{};
+        uint64_t workspace_bytes = 0;
+        int cudnn_candidate = -1;
+        uint64_t cudnn_workspace_bytes = 0;
+        int64_t cudnn_plan_index = -1;
+
+        bool same_tuning(const LtPlanCacheRecord& other) const noexcept
+        {
+            return magic == other.magic && version == other.version && key == other.key
+                && candidates == other.candidates && tile_tolerance == other.tile_tolerance
+                && traffic_budget == other.traffic_budget
+                && cross_source_gain == other.cross_source_gain
+                && anchor_on_fastest == other.anchor_on_fastest
+                && cudnn_enabled == other.cudnn_enabled
+                && cudnn_workspace_mb == other.cudnn_workspace_mb
+                && cudnn_min_gflop == other.cudnn_min_gflop
+                && cudnn_min_dim == other.cudnn_min_dim
+                && cudnn_candidates == other.cudnn_candidates
+                && workspace_search_bytes == other.workspace_search_bytes;
+        }
+    };
+
+    static_assert(is_trivially_copyable_v<LtPlanCacheRecord>,
+                  "LtPlanCacheRecord is written to disk as raw bytes.");
+
+    LtPlanCacheRecord lt_plan_cache_record(const LtMatmulPlanKey& key)
+    {
+        LtPlanCacheRecord record;
+        record.key = key;
+        record.candidates = clamp(env_int_or("OPENNN_LT_AUTOTUNE_CANDIDATES", 8), 1LL, 32LL);
+        record.tile_tolerance = clamp(env_int_or("OPENNN_LT_TILE_TOLERANCE", 10), 0LL, 100LL);
+        record.traffic_budget = clamp(env_int_or("OPENNN_LT_TRAFFIC_BUDGET", 120), 1LL, 10000LL);
+        record.cross_source_gain = clamp(env_int_or("OPENNN_MATMUL_CROSS_SOURCE_GAIN", 2), 0LL, 1000LL);
+        record.anchor_on_fastest = env_flag_enabled("OPENNN_MATMUL_CROSS_SOURCE_ANCHOR_FASTEST", false);
+        // The same defaults and clamps as cudnn_matmul.cpp applies to them.
+        record.cudnn_enabled = env_flag_enabled("OPENNN_CUDNN_MATMUL", true);
+        record.cudnn_workspace_mb = clamp(env_int_or("OPENNN_CUDNN_MATMUL_WORKSPACE_MB", 32), 0LL, 4096LL);
+        record.cudnn_min_gflop = clamp(env_int_or("OPENNN_CUDNN_MATMUL_MIN_GFLOP", 8), 0LL, 1000000LL);
+        record.cudnn_min_dim = clamp(env_int_or("OPENNN_CUDNN_MATMUL_MIN_DIM", 128), 1LL, 1000000LL);
+        record.cudnn_candidates = clamp(env_int_or("OPENNN_CUDNN_MATMUL_CANDIDATES", 0), 0LL, 4096LL);
+        record.workspace_search_bytes = cublas_lt_workspace_search_bytes;
+        return record;
+    }
+
+    filesystem::path lt_plan_cache_file(const LtPlanCacheRecord& record)
+    {
+        // The record version is part of the name, so builds that write
+        // different versions keep separate files instead of each rejecting
+        // and re-tuning the other's on every launch.
+        size_t name = LtMatmulPlanKeyHash{}(record.key);
+        for (const long long knob : {static_cast<long long>(record.version),
+                                     record.candidates, record.tile_tolerance, record.traffic_budget,
+                                     record.cross_source_gain, record.anchor_on_fastest,
+                                     record.cudnn_enabled, record.cudnn_workspace_mb,
+                                     record.cudnn_min_gflop, record.cudnn_min_dim, record.cudnn_candidates,
+                                     static_cast<long long>(record.workspace_search_bytes)})
+            name ^= std::hash<long long>{}(knob) + 0x9e3779b9u + (name << 6) + (name >> 2);
+
+        return lt_plan_cache_path() / format("{:016x}.ltplan", name);
+    }
+
+    // The plan already has its descriptor and layouts, which is what the
+    // library needs to say whether the stored algorithm still applies. A file
+    // from another driver, a truncated write, or an algorithm the check
+    // refuses all fall through to the tuner rather than into the matmul.
+    bool load_cached_lt_plan(LtMatmulPlan& plan)
+    {
+        if (!lt_plan_cache_enabled() || lt_plan_cache_path().empty()) return false;
+
+        PROFILE_SCOPE_HOST("lt:plan_cache_load");
+
+        const LtPlanCacheRecord expected = lt_plan_cache_record(plan.key);
+        const filesystem::path file = lt_plan_cache_file(expected);
+
+        error_code failed;
+        if (!filesystem::exists(file, failed) || failed) return false;
+
+        ifstream stream(file, ios::binary);
+        LtPlanCacheRecord record;
+        if (!stream.read(reinterpret_cast<char*>(&record), streamsize(sizeof(record)))) return false;
+        if (!record.same_tuning(expected)) return false;
+
+        cublasLtMatmulHeuristicResult_t check{};
+        if (cublasLtMatmulAlgoCheck(Backend::get_cublas_lt_handle(),
+                                    plan.matmul_descriptor,
+                                    plan.a_matrix_layout,
+                                    plan.b_matrix_layout,
+                                    plan.output_matrix_layout,
+                                    plan.output_matrix_layout,
+                                    &record.algorithm, &check) != CUBLAS_STATUS_SUCCESS
+            || check.state != CUBLAS_STATUS_SUCCESS
+            || check.workspaceSize > cublas_lt_workspace_search_bytes)
+        {
+            device::reset_last_error();
+            return false;
+        }
+
+        plan.algorithm = record.algorithm;
+        plan.has_algorithm = true;
+        plan.workspace_bytes = check.workspaceSize;
+        plan.tuned = true;
+
+        // The tuner preferred a cuDNN engine: rebuild that one engine, which
+        // becomes the plan's only cuDNN candidate. If cuDNN no longer offers
+        // it -- which the directory name says cannot happen, but the check is
+        // cheaper than the argument -- the cuBLASLt kernel just loaded serves
+        // instead, exactly as run_lt_matmul_cached would fall back at run time.
+        if (record.cudnn_candidate >= 0 && record.cudnn_plan_index >= 0)
+        {
+            cudnn_matmul::Problem problem;
+            problem.m = plan.key.m;
+            problem.n = plan.key.n;
+            problem.k = plan.key.k;
+            problem.transA = cublasOperation_t(plan.key.transA);
+            problem.transB = cublasOperation_t(plan.key.transB);
+            problem.epilogue = cublasLtEpilogue_t(plan.key.epilogue);
+            problem.dtype_a = cudaDataType_t(plan.key.dtype_a);
+            problem.dtype_b = cudaDataType_t(plan.key.dtype_b);
+            problem.out_dtype = cudaDataType_t(plan.key.out_dtype);
+            problem.lda = plan.key.lda;
+            problem.ldb = plan.key.ldb;
+            problem.ldd = plan.key.ldd;
+            problem.beta_is_zero = plan.key.beta_is_zero != 0;
+
+            {
+                PROFILE_SCOPE_HOST("lt:plan_cache_cudnn_rebuild");
+                plan.cudnn_plan = cudnn_matmul::create(problem, record.cudnn_plan_index);
+            }
+            if (plan.cudnn_plan && cudnn_matmul::candidate_count(plan.cudnn_plan) == 1)
+            {
+                plan.cudnn_candidate = 0;
+                plan.cudnn_workspace_bytes =
+                    cudnn_matmul::candidate_workspace_bytes(plan.cudnn_plan, 0);
+            }
+            else
+            {
+                plan.release_cudnn();
+            }
+        }
+
+        return true;
+    }
+
+    void store_cached_lt_plan(const LtMatmulPlan& plan)
+    {
+        if (!lt_plan_cache_enabled() || lt_plan_cache_path().empty()) return;
+
+        LtPlanCacheRecord record = lt_plan_cache_record(plan.key);
+        record.algorithm = plan.algorithm;
+        record.workspace_bytes = plan.workspace_bytes;
+        record.cudnn_candidate = plan.cudnn_candidate;
+        record.cudnn_workspace_bytes = plan.cudnn_workspace_bytes;
+        record.cudnn_plan_index =
+            cudnn_matmul::candidate_plan_index(plan.cudnn_plan, plan.cudnn_candidate);
+
+        error_code failed;
+        filesystem::create_directories(lt_plan_cache_path(), failed);
+        if (failed) return;
+
+        static atomic<uint64_t> sequence{0};
+
+        const filesystem::path file = lt_plan_cache_file(record);
+        const filesystem::path pending = file.string()
+            + format(".{:x}-{}.tmp", std::hash<thread::id>{}(this_thread::get_id()), sequence++);
+
+        {
+            ofstream stream(pending, ios::binary | ios::trunc);
+            if (!stream) return;
+            stream.write(reinterpret_cast<const char*>(&record), streamsize(sizeof(record)));
+            if (!stream) { filesystem::remove(pending, failed); return; }
+        }
+
+        filesystem::rename(pending, file, failed);
+        if (failed) filesystem::remove(pending, failed);
+    }
 
     cublasComputeType_t matmul_compute_type(cudaDataType_t a_type, 
                                             cudaDataType_t b_type = CUDA_R_32F)
@@ -1896,6 +2194,7 @@ namespace
         detail::make_bounded_cache_room(plans, cublas_lt_plan_cache_capacity);
 
         LtMatmulPlan plan;
+        plan.key = key;
 
         CHECK_CUBLAS(cublasLtMatmulDescCreate(&plan.matmul_descriptor, matmul_compute_type(dtype_a, dtype_b), CUDA_R_32F));
 
@@ -1930,6 +2229,12 @@ namespace
         CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.a_matrix_layout,  dtype_a,  a_rows, a_cols, lda ? lda : a_rows));
         CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.b_matrix_layout,  dtype_b,  b_rows, b_cols, ldb ? ldb : b_rows));
         CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.output_matrix_layout, out_dtype, m, n, ldd ? ldd : m));
+
+        // A winner another process already timed is taken as it stands, so
+        // every process on this card runs the same kernel for this shape and
+        // the heuristic query below is not even made.
+        if (!lt_deterministic_selection() && load_cached_lt_plan(plan))
+            return plans.emplace(key, std::move(plan)).first->second;
 
         cublasLtMatmulPreference_t pref = nullptr;
         CHECK_CUBLAS(cublasLtMatmulPreferenceCreate(&pref));
@@ -1966,7 +2271,10 @@ namespace
                                        tile_traffic(tile_id, splitk_number)});
         }
 
-        add_wide_tile_candidates(plan, heuristics, m, n, dtype_a, dtype_b, out_dtype);
+        // The wide tiles exist to give the tuner something to time; with the
+        // tuner off they would only be enumerated to be discarded.
+        if (!lt_deterministic_selection())
+            add_wide_tile_candidates(plan, heuristics, m, n, dtype_a, dtype_b, out_dtype);
 
         // The untuned default is the heuristic's first cuBLASLt algorithm,
         // exactly as before. cuDNN candidates are appended after it and are
@@ -1981,10 +2289,18 @@ namespace
             plan.workspace_bytes = plan.candidates.front().workspace_bytes;
         }
 
-        add_cudnn_candidates(plan, m, n, k, transA, transB, epilogue,
-                             dtype_a, dtype_b, out_dtype, lda, ldb, ldd, beta_is_zero);
+        // cuDNN engines, like the wide tiles, are only ever chosen on measured
+        // time, so with the tuner off there is nothing for them to be.
+        if (!lt_deterministic_selection())
+            add_cudnn_candidates(plan, m, n, k, transA, transB, epilogue,
+                                 dtype_a, dtype_b, out_dtype, lda, ldb, ldd, beta_is_zero);
 
-        plan.tuned = plan.candidates.size() <= 1;
+        plan.tuned = plan.candidates.size() <= 1 || lt_deterministic_selection();
+        if (plan.tuned)
+        {
+            plan.release_cudnn();
+            plan.candidates.clear();
+        }
 
         return plans.emplace(key, std::move(plan)).first->second;
     }
@@ -2084,6 +2400,8 @@ namespace
                           float alpha, float beta, size_t destination_bytes,
                           cudaStream_t stream)
     {
+        PROFILE_SCOPE_HOST("lt:autotune");
+
         if (plan.candidates.size() <= 1)
         {
             plan.release_cudnn();
@@ -2546,6 +2864,12 @@ namespace
         }
 
         plan.candidates.clear();
+
+        // Only a verdict the timer actually reached is worth keeping: with
+        // every cuBLASLt candidate failing to run there was nothing to choose
+        // between, and the plan holds the untimed heuristic front.
+        if (best_lt_ms < numeric_limits<float>::infinity())
+            store_cached_lt_plan(plan);
     }
 }
 
@@ -2560,6 +2884,19 @@ void release_thread_workspaces()
     for (auto& lane : thread_state().workspaces)
         for (Buffer& buffer : lane)
             buffer.resize_bytes(0, Device::CUDA);
+}
+
+string device::lt_plan_cache_directory() noexcept
+{
+    try
+    {
+        if (!lt_plan_cache_enabled()) return {};
+        return lt_plan_cache_path().string();
+    }
+    catch (const exception&)
+    {
+        return {};
+    }
 }
 
 const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
@@ -2719,6 +3056,8 @@ namespace opennn
 void* ensure_workspace_bytes(device::GraphWorkspaceKind, Index) OPENNN_CUDA_STUB_BODY(ensure_workspace_bytes)
 
 void release_thread_workspaces() OPENNN_CUDA_STUB_BODY(release_thread_workspaces)
+
+string device::lt_plan_cache_directory() noexcept { return {}; }
 
 const void* data_for_gemm_dtype(const TensorView&, Type) OPENNN_CUDA_STUB_BODY(data_for_gemm_dtype)
 
