@@ -8,7 +8,14 @@
 #ifdef OPENNN_HAS_CUDA
 #include <cuda_runtime.h>
 #include <nvml.h>
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#else
 #include <dlfcn.h>
+#endif
 #include <chrono>
 #include <vector>
 #endif
@@ -21,22 +28,48 @@ namespace opennn::device
 namespace
 {
 
+#ifdef _WIN32
+using LibraryHandle = HMODULE;
+#else
+using LibraryHandle = void*;
+#endif
+
+LibraryHandle open_nvml_library()
+{
+#ifdef _WIN32
+    return LoadLibraryA("nvml.dll");
+#else
+    return dlopen("libnvidia-ml.so.1", RTLD_NOW | RTLD_LOCAL);
+#endif
+}
+
+template <typename Function>
+Function load_nvml_symbol(const LibraryHandle library, const char* name)
+{
+#ifdef _WIN32
+    return reinterpret_cast<Function>(GetProcAddress(library, name));
+#else
+    return reinterpret_cast<Function>(dlsym(library, name));
+#endif
+}
+
 struct Nvml
 {
-    void* library = nullptr;
+    LibraryHandle library = nullptr;
     nvmlDevice_t device = nullptr;
     decltype(&nvmlDeviceGetSamples) get_samples = nullptr;
     bool ready = false;
 
     Nvml()
     {
-        library = dlopen("libnvidia-ml.so.1", RTLD_NOW | RTLD_LOCAL);
+        library = open_nvml_library();
         if (!library) return;
 
-        const auto init = reinterpret_cast<decltype(&nvmlInit_v2)>(dlsym(library, "nvmlInit_v2"));
-        const auto by_bus = reinterpret_cast<decltype(&nvmlDeviceGetHandleByPciBusId_v2)>(
-            dlsym(library, "nvmlDeviceGetHandleByPciBusId_v2"));
-        get_samples = reinterpret_cast<decltype(&nvmlDeviceGetSamples)>(dlsym(library, "nvmlDeviceGetSamples"));
+        const auto init = load_nvml_symbol<decltype(&nvmlInit_v2)>(library, "nvmlInit_v2");
+        const auto by_bus = load_nvml_symbol<decltype(&nvmlDeviceGetHandleByPciBusId_v2)>(
+            library, "nvmlDeviceGetHandleByPciBusId_v2");
+        get_samples = load_nvml_symbol<decltype(&nvmlDeviceGetSamples)>(
+            library, "nvmlDeviceGetSamples");
         if (!init || !by_bus || !get_samples) return;
         if (init() != NVML_SUCCESS) return;
 
