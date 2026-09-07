@@ -51,12 +51,19 @@ jobs:
           sudo apt-get install -y ninja-build ${{ matrix.compiler }} ${{ matrix.openmp }}
           cmake --version
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install model export test dependency
         run: python -m pip install numpy==2.4.4 pandas==2.3.3
+
+      - name: Check dataset inventory
+        run: python tools/check_dataset_manifest.py
 
       - name: Configure (CPU only, Eigen BLAS)
         run: >
@@ -103,6 +110,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build clang-17 libomp-17-dev
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -164,12 +175,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install model export test dependency
         run: python -m pip install numpy==2.4.4 pandas==2.3.3
+
+      - name: Check dataset inventory
+        run: python tools/check_dataset_manifest.py
 
       - name: Configure (CPU only, Eigen BLAS)
         run: >

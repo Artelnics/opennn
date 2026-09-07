@@ -246,3 +246,10 @@ Contributions are welcome. If you want to help improve OpenNN, please follow the
 ## License
 
 OpenNN is distributed under the terms of the GNU Lesser General Public License. See [LICENSE.txt](LICENSE.txt) and the per-file license notices for details.
+
+## 9.0 release preparation
+
+This checkout prepares **9.0.0**; no final release is implied. See
+[MIGRATION.md](MIGRATION.md) for 8.x source/model migration,
+[DATASETS.md](DATASETS.md) for dataset attribution and unresolved permissions,
+and [RELEASE_READINESS.md](RELEASE_READINESS.md) for publication gates.

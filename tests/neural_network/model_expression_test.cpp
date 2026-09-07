@@ -68,6 +68,25 @@ TEST_F(ModelExpressionTest, BuildExpressionNotEmpty)
     EXPECT_FALSE(expression.empty());
 }
 
+TEST_F(ModelExpressionTest, JavaScriptCategoricalInputUsesOneHotDropdownAndEscapesLabels)
+{
+    neural_network->set_input_variables({Variable("kind <&>\"", "Input",
+        VariableType::Categorical, "None", {"first <choice>", "second & choice"})});
+    neural_network->set_output_names({"result <&>"});
+    const auto path = unique_model_expression_path("categorical.html");
+    ModelExpression(neural_network.get()).save(path, ModelExpression::ProgrammingLanguage::JavaScript);
+    const string html = read_whole_file(path);
+    EXPECT_TRUE(contains_token(html, "kind &lt;&amp;&gt;&quot;"));
+    EXPECT_TRUE(contains_token(html, "first &lt;choice&gt;"));
+    EXPECT_TRUE(contains_token(html, "second &amp; choice"));
+    EXPECT_TRUE(contains_token(html, "result &lt;&amp;&gt;"));
+    EXPECT_TRUE(contains_token(html, "this.selectedIndex===0?1:0"));
+    EXPECT_TRUE(contains_token(html, "this.selectedIndex===1?1:0"));
+    EXPECT_FALSE(contains_token(html, "<input type=\"range\""));
+    EXPECT_TRUE(contains_token(html, "type=\"hidden\""));
+    filesystem::remove(path);
+}
+
 TEST_F(ModelExpressionTest, BuildExpressionContainsVariableNames)
 {
     const ModelExpression model_expression(neural_network.get());

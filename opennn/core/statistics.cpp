@@ -378,6 +378,15 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     }
 
     const Index unique_values_number = ssize(unique_values);
+    if (unique_values_number == 0)
+    {
+        Histogram result(bins_number);
+        result.minimums = VectorR::Constant(bins_number, QUIET_NAN);
+        result.maximums = VectorR::Constant(bins_number, QUIET_NAN);
+        result.centers = VectorR::Constant(bins_number, QUIET_NAN);
+        result.frequencies = VectorR::Zero(bins_number);
+        return result;
+    }
     if (unique_values_number <= bins_number)
     {
         ranges::sort(unique_values);

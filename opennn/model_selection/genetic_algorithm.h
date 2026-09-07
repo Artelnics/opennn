@@ -24,6 +24,8 @@ public:
     Index get_genes_number() const { return original_input_indices.size(); }
 
     void set_default();
+    const string& get_initialization_method() const noexcept { return initialization_method; }
+    void set_initialization_method(const string&);
 
     Index get_minimum_inputs_number() const override { return minimum_inputs_number; }
     Index get_maximum_inputs_number() const override { return maximum_inputs_number; }
@@ -80,7 +82,7 @@ private:
 
     Index elitism_size = 10;
 
-    string initialization_method = "Correlations";
+    string initialization_method = "Random";
 };
 
 }

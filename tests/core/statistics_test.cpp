@@ -416,6 +416,16 @@ TEST(StatisticsTest, Histogram)
     EXPECT_EQ(sum_frec_2, 20);
 }
 
+TEST(StatisticsTest, HistogramPreservesBinsForAllMissingData)
+{
+    const Histogram result = histogram(VectorR::Constant(8, QUIET_NAN), 3);
+    ASSERT_EQ(result.frequencies.size(), 3);
+    EXPECT_EQ(result.frequencies.sum(), 0);
+    EXPECT_TRUE(result.centers.array().isNaN().all());
+    EXPECT_TRUE(result.minimums.array().isNaN().all());
+    EXPECT_TRUE(result.maximums.array().isNaN().all());
+}
+
 TEST(StatisticsTest, CenteredHistogramHandlesZeroWidth)
 {
     for (const float value : {0.0f, 12.0f})

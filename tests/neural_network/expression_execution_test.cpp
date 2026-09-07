@@ -325,15 +325,24 @@ MatrixR degenerate_inputs()
 
 // The targets differ only in how the export is run, so every check below is
 // written once and pointed at any of them.
-enum class Target { Python, C, CEmbedded };
+enum class Target { Python, C, CEmbedded, JavaScript };
 
 bool target_available(Target target)
 {
+    if (target == Target::JavaScript)
+    {
+#ifdef _WIN32
+        return system("node --version >NUL 2>&1") == 0;
+#else
+        return system("node --version >/dev/null 2>&1") == 0;
+#endif
+    }
     return target == Target::Python ? python_is_available() : !find_c_compiler().empty();
 }
 
 const char* target_missing(Target target)
 {
+    if (target == Target::JavaScript) return "node is not on PATH.";
     return target == Target::Python ? "python is not on PATH." : "no C compiler on PATH.";
 }
 
@@ -344,6 +353,7 @@ const char* target_name(Target target)
     case Target::Python:    return "python";
     case Target::C:         return "c";
     case Target::CEmbedded: return "embedded";
+    case Target::JavaScript: return "javascript";
     }
     return "unknown";
 }
@@ -356,6 +366,7 @@ ModelExpression::ProgrammingLanguage target_language(Target target)
     case Target::Python:    return Python;
     case Target::C:         return C;
     case Target::CEmbedded: return CEmbedded;
+    case Target::JavaScript: return JavaScript;
     }
     return C;
 }
@@ -375,7 +386,30 @@ void expect_export_matches(Target target, const string& directory_name,
         / (directory_name + "_" + to_string(timestamp) + "_" + to_string(random_suffix));
     filesystem::create_directories(directory);
 
-    const string output = target == Target::Python
+    string output;
+    if (target == Target::JavaScript)
+    {
+        const filesystem::path html_path = directory / "model.html";
+        model_expression.save(html_path, ModelExpression::ProgrammingLanguage::JavaScript);
+        const string html = read_file(html_path);
+        const size_t begin = html.find("<script>\n");
+        ASSERT_NE(begin, string::npos);
+        const size_t end = html.find("</script>", begin);
+        ASSERT_NE(end, string::npos);
+        ostringstream script;
+        script << html.substr(begin + 9, end - begin - 9) << '\n';
+        for (Index row = 0; row < inputs.rows(); ++row)
+        {
+            script << "console.log(calculate_outputs([";
+            for (Index col = 0; col < inputs.cols(); ++col)
+                script << (col ? "," : "") << inputs(row, col);
+            script << "]).join(' '));\n";
+        }
+        const filesystem::path script_path = directory / "model.js";
+        write_file(script_path, script.str());
+        output = run_capturing("node " + quoted_path(script_path), directory / "output.txt", "RUN FAILED");
+    }
+    else output = target == Target::Python
         ? run_exported_python_model(directory, model_expression, inputs)
         : run_exported_c_model(directory, model_expression, inputs, expected.cols(),
                                target_language(target));
@@ -408,7 +442,7 @@ TEST(ExpressionExecution, EveryDenseActivationMatchesEveryExecutableTarget)
         "Identity", "Sigmoid", "Tanh", "ReLU", "Softmax",
         "LeakyReLU", "GELU", "GELUTanh", "SiLU"
     };
-    constexpr std::array<Target, 3> targets = {Target::Python, Target::C, Target::CEmbedded};
+    constexpr std::array<Target, 4> targets = {Target::Python, Target::C, Target::CEmbedded, Target::JavaScript};
 
     MatrixR inputs(4, 2);
     inputs << -2.0f,  1.0f,
@@ -458,6 +492,74 @@ TEST(ExpressionExecution, PythonModelMatchesTheNetworkItCameFrom)
 
     expect_export_matches(Target::Python, "opennn_expression_python",
                           *network, inputs, network->calculate_outputs(inputs));
+}
+
+TEST(ExpressionExecution, JavaScriptPreservesNumericAndOverlappingFeatureLabels)
+{
+    if (!target_available(Target::JavaScript)) GTEST_SKIP() << target_missing(Target::JavaScript);
+    auto network = build_network();
+    const MatrixR inputs = sample_inputs();
+    for (const vector<string> names : {vector<string>{"1", "ER+/HER2- 1 Prolif", "third", "fourth"},
+                                      vector<string>{"examined", "inferred", "third", "fourth"},
+                                      vector<string>{"x", "xx", "third", "fourth"}})
+    {
+        network->set_input_names(names);
+        network->set_output_names({"result 1", "result 2"});
+        expect_export_matches(Target::JavaScript, "opennn_js_labels", *network,
+                              inputs, network->calculate_outputs(inputs));
+        EXPECT_EQ(network->get_input_feature_names(), names);
+        EXPECT_EQ(network->get_output_feature_names(), (vector<string>{"result 1", "result 2"}));
+    }
+}
+
+TEST(ExpressionExecution, JavaScriptCategoricalControlsUpdateDisplayedOutputs)
+{
+    if (!target_available(Target::JavaScript)) GTEST_SKIP() << target_missing(Target::JavaScript);
+    NeuralNetwork network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{6}, "Identity"));
+    network.compile();
+    network.set_input_variables({Variable("kind", "Input", VariableType::Categorical,
+                                         "None", {"red", "blue"})});
+    network.set_output_variables(vector<Variable>(6));
+    network.set_output_names({"a", "b", "c", "d", "e", "f"});
+    network.set_parameters(VectorR::LinSpaced(network.get_parameters_buffer_size(), -0.8f, 0.9f));
+    const auto directory = filesystem::temp_directory_path()
+        / ("opennn_js_controls_" + to_string(random_device{}()));
+    filesystem::create_directories(directory);
+    ModelExpression(&network).save(directory / "model.html", ModelExpression::ProgrammingLanguage::JavaScript);
+    const string driver = R"JS(
+const fs = require('fs'), vm = require('vm'), assert = require('assert');
+const html = fs.readFileSync(process.argv[2], 'utf8');
+const nodes = {};
+for (const match of html.matchAll(/id="([^"]+)"/g)) nodes[match[1]] = {value: ''};
+for (const match of html.matchAll(/type="hidden" id="([^"]+)" value="([^"]+)"/g))
+    nodes[match[1]].value = match[2];
+global.document = {getElementById: id => { assert(nodes[id], id); return nodes[id]; }};
+nodes.category_select.value = 'f';
+vm.runInThisContext(html.match(/<script>\r?\n([\s\S]*?)<\/script>/)[1]);
+const change = html.match(/<select style="text-align:left" onchange="([^"]+)"/)[1];
+for (let choice = 0; choice < 2; ++choice) {
+    new Function(change).call({selectedIndex: choice});
+    const inputs = Object.keys(nodes).filter(id => id.endsWith('_text')).map(id => +nodes[id].value);
+    assert.deepStrictEqual(inputs, choice ? [0, 1] : [1, 0]);
+    neuralNetwork();
+    assert.strictEqual(nodes.selected_value.value, nodes.f.value);
+    console.log(['a','b','c','d','e','f'].map(id => nodes[id].value).join(' '));
+}
+)JS";
+    write_file(directory / "driver.js", driver);
+    const string output = run_capturing("node " + quoted_path(directory / "driver.js")
+        + " " + quoted_path(directory / "model.html"), directory / "output.txt", "RUN FAILED");
+    ASSERT_EQ(output.find("RUN FAILED"), string::npos) << output;
+    MatrixR inputs(2, 2);
+    inputs << 1, 0, 0, 1;
+    const MatrixR expected = network.calculate_outputs(inputs);
+    const MatrixR actual = parse_output(output, 2, 6);
+    for (Index row = 0; row < 2; ++row)
+        for (Index col = 0; col < 6; ++col)
+            EXPECT_NEAR(actual(row, col), expected(row, col), 1e-3f);
+    error_code error;
+    filesystem::remove_all(directory, error);
 }
 
 // C is the language customers embed, and it does not share the Python emitter's

@@ -63,6 +63,9 @@ files.
 ## Pending repository hygiene
 
 The bundled datasets under `examples/` are intentionally retained for now.
-Their provenance, licensing and possible replacement with verified download
-manifests still need a dedicated review. Do not remove them until each affected
-example has a reproducible replacement.
+Their provenance and unresolved licensing records are documented in
+`DATASETS.md`, with indexed content inventories in `datasets.manifest.json`.
+Do not remove them until each affected example has a reproducible replacement.
+Stage reviewed asset changes before running `python tools/check_dataset_manifest.py`.
+The `--release` check additionally requires every bundle's redistribution
+clearance; do not mark an unknown source as cleared merely to pass that gate.

@@ -9,7 +9,7 @@
 cmake_minimum_required(VERSION 3.24)
 project(OpenNNPackageSmoke LANGUAGES CXX)
 
-find_package(OpenNN 8.0 CONFIG REQUIRED)
+find_package(OpenNN 9.0 CONFIG REQUIRED)
 
 add_executable(opennn_package_smoke main.cpp)
 target_link_libraries(opennn_package_smoke PRIVATE OpenNN::opennn)

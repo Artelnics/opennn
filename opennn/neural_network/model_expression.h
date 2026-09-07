@@ -56,6 +56,7 @@ private:
     };
 
     ExportNames collect_names() const;
+    string build_expression(const vector<string>&, const vector<string>&) const;
 
     void check_parameters_are_finite() const;
 

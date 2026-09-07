@@ -63,7 +63,14 @@ void GeneticAlgorithm::set_default()
 
     elitism_size = (individuals_number + 3) / 4;
 
-    initialization_method = "Correlations";
+    initialization_method = "Random";
+}
+
+void GeneticAlgorithm::set_initialization_method(const string& method)
+{
+    throw_if(method != "Random" && method != "Correlations",
+             "Unknown genetic algorithm initialization method: {}", method);
+    initialization_method = method;
 }
 
 void GeneticAlgorithm::set_maximum_inputs_number(const Index new_maximum_inputs_number)
@@ -95,6 +102,10 @@ void GeneticAlgorithm::set_individuals_number(const Index new_individuals_number
 
 void GeneticAlgorithm::initialize_population()
 {
+    throw_if(get_genes_number() <= 0 || get_individuals_number() <= 0
+             || minimum_inputs_number < 1 || maximum_inputs_number < minimum_inputs_number
+             || maximum_inputs_number > get_genes_number(),
+             "Genetic algorithm population and input bounds must be valid and nonempty.");
     population.resize(get_individuals_number(), get_genes_number());
 
     if (initialization_method == "Random")
@@ -109,16 +120,28 @@ void GeneticAlgorithm::initialize_population_random()
     const Index genes_number = get_genes_number();
 
     VectorB individual_genes(genes_number);
+    const float probability = (float(minimum_inputs_number) + float(maximum_inputs_number))
+                              / (2.0f * float(genes_number));
 
     for (Index i = 0; i < individuals_number; ++i)
     {
-        individual_genes.setConstant(false);
-
-        const Index true_count = random_integer(minimum_inputs_number, maximum_inputs_number);
-
-        individual_genes.head(true_count).setConstant(true);
-
-        shuffle(individual_genes);
+        for (Index gene = 0; gene < genes_number; ++gene)
+            individual_genes(gene) = random_bool(probability);
+        Index active = individual_genes.count();
+        while (active < minimum_inputs_number || active > maximum_inputs_number)
+        {
+            const Index gene = random_integer(0, genes_number - 1);
+            if (active < minimum_inputs_number && !individual_genes(gene))
+            {
+                individual_genes(gene) = true;
+                ++active;
+            }
+            else if (active > maximum_inputs_number && individual_genes(gene))
+            {
+                individual_genes(gene) = false;
+                --active;
+            }
+        }
 
         population.row(i) = individual_genes;
     }
@@ -593,6 +616,7 @@ void GeneticAlgorithm::to_JSON(JsonWriter& printer) const
 
     write_json(printer, {
         {"PopulationSize", get_individuals_number()},
+        {"InitializationMethod", initialization_method},
         {"ElitismSize", elitism_size},
         {"MutationRate", mutation_rate},
         {"ValidationErrorGoal", validation_error_goal},
@@ -608,6 +632,8 @@ void GeneticAlgorithm::to_JSON(JsonWriter& printer) const
 void GeneticAlgorithm::from_JSON(const JsonDocument& document)
 {
     const Json* root = get_json_root(document, "GeneticAlgorithm");
+    // Older development snapshots used correlation initialization implicitly.
+    set_initialization_method(read_json_string(root, "InitializationMethod", "Correlations"));
     set_individuals_number(read_json_index(root, "PopulationSize"));
     set_mutation_rate(read_json_float(root, "MutationRate"));
     set_elitism_size(read_json_index(root, "ElitismSize"));

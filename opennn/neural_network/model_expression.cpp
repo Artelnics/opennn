@@ -340,6 +340,12 @@ void ModelExpression::check_parameters_are_finite() const
 
 string ModelExpression::build_expression() const
 {
+    return build_expression(get_flat_input_names(), neural_network->get_output_feature_names());
+}
+
+string ModelExpression::build_expression(const vector<string>& input_names,
+                                         const vector<string>& output_names) const
+{
     const NeuralNetwork::HostParametersGuard host_parameters(
         *const_cast<NeuralNetwork*>(neural_network));
 
@@ -351,13 +357,13 @@ string ModelExpression::build_expression() const
     const Index inputs_number = neural_network->get_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
-    vector<string> new_input_names = get_flat_input_names();
+    vector<string> new_input_names = input_names;
     new_input_names.resize(inputs_number);
     for (Index i = 0; i < inputs_number; ++i)
         if (new_input_names[i].empty())
             new_input_names[i] = format("input_{}", i);
 
-    vector<string> new_output_names = neural_network->get_output_feature_names();
+    vector<string> new_output_names = output_names;
     new_output_names.resize(outputs_number);
     for (Index i = 0; i < outputs_number; ++i)
         if (new_output_names[i].empty())
@@ -1686,8 +1692,7 @@ string ModelExpression::get_expression_javascript() const
     const vector<string>& output_names = names.outputs;
     const vector<string>& fixes_output_names = names.fixed_outputs;
 
-    string expression = build_expression();
-    apply_name_mapping(expression, output_names, fixes_output_names);
+    string expression = build_expression(names.fixed_inputs, fixes_output_names);
     replace(expression, "[", "_");
     replace(expression, "]", "_");
 
@@ -1704,13 +1709,29 @@ string ModelExpression::get_expression_javascript() const
     return buffer.str();
 }
 
+static string escape_html(string_view text)
+{
+    string escaped;
+    for (char c : text)
+        switch (c)
+        {
+        case '&': escaped += "&amp;"; break;
+        case '<': escaped += "&lt;"; break;
+        case '>': escaped += "&gt;"; break;
+        case '\"': escaped += "&quot;"; break;
+        case '\'': escaped += "&#39;"; break;
+        default: escaped += c;
+        }
+    return escaped;
+}
+
 void ModelExpression::emit_js_prelude(ostringstream& buffer, const ExportNames& names) const
 {
     const vector<string>& input_names = names.inputs;
 
     buffer << javascript_header;
     for (size_t i = 0; i < input_names.size(); ++i)
-        buffer << "\n\t " << i + 1 << ")  " << input_names[i];
+        buffer << "\n\t " << i + 1 << ")  " << escape_html(input_names[i]);
     buffer << javascript_subheader;
 }
 
@@ -1728,8 +1749,43 @@ void ModelExpression::emit_js_inputs_html(ostringstream& buffer, const ExportNam
 
     const Index inputs_number = input_names.size();
 
+    vector<const Variable*> categorical_inputs(size_t(inputs_number), nullptr);
+    const auto& variables = neural_network->get_input_variables();
+    Index feature_count = 0;
+    for (const Variable& variable : variables) feature_count += variable.get_feature_count();
+    if (feature_count == inputs_number)
+    {
+        Index feature = 0;
+        for (const Variable& variable : variables)
+        {
+            if (variable.is_categorical() && !variable.categories.empty())
+                categorical_inputs[size_t(feature)] = &variable;
+            feature += variable.get_feature_count();
+        }
+    }
+
     for (Index i = 0; i < inputs_number; ++i)
     {
+        if (const Variable* variable = categorical_inputs[size_t(i)])
+        {
+            const Index count = variable->get_categories_number();
+            buffer << "<tr><td>" << escape_html(variable->name)
+                   << "</td><td class=\"neural-cell\"><select style=\"text-align:left\" onchange=\"";
+            for (Index k = 0; k < count; ++k)
+                buffer << "document.getElementById('" << fixes_feature_names[i + k]
+                       << "_text').value=(this.selectedIndex===" << k << "?1:0);";
+            buffer << "\">\n";
+            for (Index k = 0; k < count; ++k)
+                buffer << "<option value=\"" << k << "\">"
+                       << escape_html(variable->categories[size_t(k)]) << "</option>\n";
+            buffer << "</select>\n";
+            for (Index k = 0; k < count; ++k)
+                buffer << "<input type=\"hidden\" id=\"" << fixes_feature_names[i + k]
+                       << "_text\" value=\"" << (k == 0 ? 1 : 0) << "\">\n";
+            buffer << "</td></tr>\n";
+            i += count - 1;
+            continue;
+        }
         float min_value = -1.0f;
         float max_value = 1.0f;
         if (has_scaling
@@ -1749,7 +1805,7 @@ void ModelExpression::emit_js_inputs_html(ostringstream& buffer, const ExportNam
 
         buffer << "<!-- "<< to_string(i) << marker << " -->\n"
                << "<tr style=\"height:3.5em\">\n"
-               << "<td> " << input_names[i] << " </td>\n"
+               << "<td> " << escape_html(input_names[i]) << " </td>\n"
                << "<td class=\"neural-cell\">\n"
                << "<input type=\"range\" id=\"" << id << "\" value=\"" << initial_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << step << "\" onchange=\"updateTextInput1(this.value, '" << id << "_text')\" />\n"
                << "<input" << (has_scaling ? " class=\"tabla\"" : "") << " type=\"number\" id=\"" << id << "_text\" value=\"" << initial_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"any\" onchange=\"updateTextInput1(this.value, '" << id << "')\">\n"
@@ -1789,7 +1845,7 @@ void ModelExpression::emit_js_outputs_html(ostringstream& buffer, bool use_categ
                << "<select id=\"category_select\" onchange=\"updateSelectedCategory()\">\n";
         for (Index i = 0; i < outputs_number; ++i)
             buffer << "<option value=\"" << fixes_output_names[i] << "\">"
-                   << output_names[i] << "</option>\n";
+                   << escape_html(output_names[i]) << "</option>\n";
         buffer << "</select>\n"
                << "</td>\n"
                << "</tr>\n\n"
@@ -1804,7 +1860,7 @@ void ModelExpression::emit_js_outputs_html(ostringstream& buffer, bool use_categ
     {
         for (Index i = 0; i < outputs_number; ++i)
             buffer << "<tr style=\"height:3.5em\">\n"
-                   << "<td> " << output_names[i] << " </td>\n"
+                   << "<td> " << escape_html(output_names[i]) << " </td>\n"
                    << "<td class=\"neural-cell\">\n"
                    << "<input style=\"text-align:right; padding-right:20px;\" id=\"" << fixes_output_names[i] << "\" value=\"\" type=\"text\"  disabled/>\n"
                    << "</td>\n"
@@ -1854,12 +1910,11 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
     }
     buffer << "\n\tvar outputs = calculate_outputs(inputs); \n";
 
+    for (Index i = 0; i < outputs_number; ++i)
+        buffer << "\tvar " << fixes_output_names[i] << " = document.getElementById(\"" << fixes_output_names[i] << "\");\n"
+               << "\t" << fixes_output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);\n";
     if (use_category_select)
         buffer << "\tupdateSelectedCategory();\n";
-    else
-        for (Index i = 0; i < outputs_number; ++i)
-            buffer << "\tvar " << fixes_output_names[i] << " = document.getElementById(\"" << fixes_output_names[i] << "\");\n"
-                   << "\t" << fixes_output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);\n";
 
     buffer << "}\nfunction calculate_outputs(inputs)\n{\n";
     for (Index i = 0; i < inputs_number; ++i)
@@ -1874,16 +1929,13 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
         [&](const string& raw_line)
         {
             string line = raw_line;
-            for (Index j = 0; j < inputs_number; ++j)
-                replace_all_word_appearances(line, input_names[j], fixes_feature_names[j]);
-
             for (const char* kw : math_keywords)
                 replace_all_word_appearances(line, kw, string("Math.") + kw);
 
             return line;
         });
 
-    const vector<string> fixed_outputs = fix_output_names(expression, output_names, ProgrammingLanguage::JavaScript);
+    const vector<string> fixed_outputs = fix_output_names(expression, fixes_output_names, ProgrammingLanguage::JavaScript);
     for (const string& l : fixed_outputs)
         buffer << l << "\n";
 

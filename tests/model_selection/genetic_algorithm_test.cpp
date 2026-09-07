@@ -12,6 +12,31 @@ using namespace opennn;
 TEST(GeneticAlgorithmTest, DefaultConstructor)
 {
     GeneticAlgorithm genetic_algorithm;
+    EXPECT_EQ(genetic_algorithm.get_initialization_method(), "Random");
+}
+
+TEST(GeneticAlgorithmTest, InitializationMethodRoundTripAndLegacyDefault)
+{
+    TabularDataset dataset(10, {2}, {1});
+    ApproximationNetwork network({2}, {2}, {1});
+    TrainingStrategy strategy(&network, &dataset);
+    GeneticAlgorithm algorithm(&strategy);
+    for (const string method : {"Random", "Correlations"})
+    {
+        algorithm.set_initialization_method(method);
+        JsonWriter writer;
+        algorithm.to_JSON(writer);
+        JsonDocument document;
+        document.set_root(Json::parse(writer.c_str()));
+        GeneticAlgorithm restored(&strategy);
+        restored.from_JSON(document);
+        EXPECT_EQ(restored.get_initialization_method(), method);
+    }
+    EXPECT_THROW(algorithm.set_initialization_method("Unknown"), runtime_error);
+    JsonDocument legacy;
+    legacy.set_root(Json::parse(R"({"GeneticAlgorithm":{"PopulationSize":40,"ElitismSize":10,"MutationRate":0.1,"ValidationErrorGoal":0,"MinimumInputsNumber":1,"MaximumInputsNumber":1,"MaximumGenerationsNumber":10,"MaximumTime":3600}})"));
+    algorithm.from_JSON(legacy);
+    EXPECT_EQ(algorithm.get_initialization_method(), "Correlations");
 }
 
 TEST(GeneticAlgorithmTest, GeneralConstructor)

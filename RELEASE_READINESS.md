@@ -1,53 +1,44 @@
-# Master release preparation
+# OpenNN 9.0.0 release candidate
 
-## Version and compatibility
+The CMake project, shared-library major version, package compatibility and
+consumer smoke project now target **9.0.0**. The changelog labels it an
+unreleased candidate. No final release or tag is implied.
 
-Prepare this development line as **9.0.0**, rather than an 8.0.x patch. It moves
-public headers into module directories and changes the model/dataset API from
-the 8.x line. For example, the former `opennn/neural_network.h` is now
-`opennn/neural_network/neural_network.h`. Downstream applications need a source
-migration review. Existing serialized models need loading, inference, saving,
-and reloading checks using representative real 8.x artifacts.
+## Reconciliation and migration
 
-The current CMake version remains 8.0.1 until the release branch is reconciled;
-no 9.0.0 tag or release has been published. `CHANGELOG.md` records the unreleased
-hardening work. Do not interpret its entries as completed compatibility tests.
+Master through `efd566b38` is reconciled with development `5840396e9`.
+`MERGE_RECONCILIATION.md` records all 98 conflicted paths and behavioral
+choices. `MIGRATION.md` documents header/API changes, JSON and parameter
+migration limitations, time-series indexing and genetic initialization.
+Master-only legacy applications are preserved and clearly marked as 8.x
+reference material; they are not supported 9.x build targets.
 
-## Merge review
-
-On 2026-09-07, `origin/master` was `efd566b38`. It contains 64 commits absent
-from the development branch by ancestry. A read-only trial merge against
-`dev` produced 99 conflict messages. Many involve files moved into module
-directories or superseded build files, but those conflicts must be reviewed
-before discarding historical changes.
-
-The review must account for the master-only fixes in these areas:
-
-- Genetic-algorithm ranking, elitism, and per-individual scaling restoration.
-- Growing-neuron selection using best-epoch validation error.
-- Image scaling and honoring dataset display settings.
-- Text classification labels and maximum input sequence length.
-- Exported JavaScript escaping and variable names.
-- Response optimization with empty inputs and affine constraints.
-- Forecasting timestamps, training, and binary model parameters.
-- CUDA fallback when no usable device is present.
-
-Use an isolated release checkout to reconcile these against their current
-implementations. Preserve dataset files until the provenance/replacement review
-required by `AGENTS.md` is complete. Re-run all release gates on the resolved
-merge, not only on its `dev` parent.
+Neural Designer validation is **deferred at the owner's request**, because
+the current application is unavailable here. It is not a gate for completing
+this repository reconciliation and is not claimed as verified compatibility.
+No public API was removed based on absence of local callers.
 
 ## Publication gates
 
-- All hosted CPU, CUDA compilation, and sanitizer jobs pass on the candidate.
-- The Linux GPU runner completes both unit and integration suites.
-- Targeted NVIDIA memory checks pass; exclusions and toolchain limitations are
-  stated in the verification report.
-- Neural Designer builds against the candidate and representative saved models
-  retain their outputs through a load/save round trip.
-- Public documentation, example-data provenance, migration notes, the CMake
-  version, and the final changelog agree with the release contents.
-- The resolved merge is reviewed before merging into `master` and tagging 9.0.0.
+- Hosted GCC, Clang and Windows CPU tests, package-consumer checks, CUDA
+  compilation and ASan/UBSan must pass on the candidate commit.
+- Linux GPU verification must pass unit and response-optimization integration
+  suites. Historical results are not substitutes for the candidate's results.
+- `python tools/check_dataset_manifest.py` must pass. The stronger `--release`
+  check must also pass before publishing an archive containing all data.
+- Resolve the data/derivative permission records listed in `DATASETS.md`, or
+  provide reviewed reproducible replacements. Existing data is retained.
+- Convert and validate representative production 8.x models using the migration
+  procedure. There is no general XML/NDM converter or blanket model-compatibility
+  certification.
+- Confirm the changelog describes the final contents, then create an annotated
+  `v9.0.0` tag on the reviewed master commit and publish matching artifacts.
 
-The current validation evidence is in `RELEASE_VERIFICATION.md`. This checklist
-prepares the release review; it does not certify or publish a release.
+The provenance inventory is implemented; dataset clearance remains incomplete.
+In particular, identified upstream licences do not establish undocumented
+local image sources, model-generation records or derivative transformations.
+GitHub automatic source archives contain the tracked datasets even though
+CMake's installed library package excludes them.
+
+See `RELEASE_VERIFICATION.md` for actual validation evidence. Engineering
+verification and publication clearance are separate statuses.

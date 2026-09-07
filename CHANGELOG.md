@@ -1,10 +1,21 @@
 # Changelog
 
-## Unreleased
+## 9.0.0 (unreleased candidate)
 
 This development line is being prepared for a major release. It is not a
 published release, and the verification report records the tested scope and
 remaining limitations.
+
+### Reconciliation and release preparation
+
+- Reconcile master through `efd566b38` with the current module layout.
+- Restore all-missing histogram bins and bounded random genetic initialization.
+- Fix JavaScript feature identifiers, categorical controls and HTML labels;
+  execute generated JavaScript in the export regression suite.
+- Add migration notes, a dataset inventory and explicit provenance gaps.
+- Preserve unported master examples in `examples/legacy_8`.
+- Set CMake/package compatibility to major version 9. Neural Designer
+  validation is deferred at the owner's request.
 
 ### Reliability and portability
 
@@ -37,6 +48,7 @@ remaining limitations.
 
 The development tree reorganizes public headers and changes model/dataset
 interfaces compared with the published 8.x line. Existing applications,
-especially Neural Designer, need an explicit source-compatibility review and
+need an explicit source-compatibility review and
 saved-model round trips before release. A green development test suite alone
-does not establish compatibility with historical model files.
+does not establish compatibility with historical model files. See MIGRATION.md;
+Neural Designer validation is outside the current scope.
