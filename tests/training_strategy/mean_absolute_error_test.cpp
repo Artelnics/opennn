@@ -2,10 +2,12 @@
 #include "tests/numerical_derivatives.h"
 
 #include "opennn/core/tensor_types.h"
+#include "opennn/core/json.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/training_strategy/error_functions.h"
 #include "opennn/training_strategy/loss.h"
+#include "opennn/training_strategy/optimizer.h"
 #include "opennn/training_strategy/training_strategy.h"
 
 using namespace opennn;
@@ -95,6 +97,10 @@ TEST(MeanAbsoluteErrorTest, TrainingStrategySerialization)
 
     ASSERT_NE(loaded.get_loss(), nullptr);
     EXPECT_EQ(loaded.get_loss()->get_error(), Loss::Error::MeanAbsoluteError);
+    JsonWriter original_optimizer, restored_optimizer;
+    strategy.get_optimization_algorithm()->to_JSON(original_optimizer);
+    loaded.get_optimization_algorithm()->to_JSON(restored_optimizer);
+    EXPECT_EQ(restored_optimizer.c_str(), original_optimizer.c_str());
 
     error_code error;
     filesystem::remove(path, error);

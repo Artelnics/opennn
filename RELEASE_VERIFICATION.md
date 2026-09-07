@@ -131,6 +131,13 @@ subsequent boundary refinement. New zero-width and subnormal-width regressions
 are included. The 36 statistics/testing-analysis checks pass under ASan/UBSan
 and in the Windows CPU build after this fix.
 
+The next sanitizer pass reached optimizer serialization and exposed another
+out-of-range cast. JSON stores numbers as doubles, so the maximum signed integer
+used for unlimited validation failures rounds to 2^63. Integer conversion now
+recovers that existing boundary value explicitly and rejects nonfinite or larger
+values before casting. Boundary regressions and the optimizer settings round-trip
+assertion pass in the focused ASan/UBSan and Windows CPU checks (nine tests).
+
 Publication also requires the compatibility and merge review described in
 `RELEASE_READINESS.md`; these hardening checks do not constitute publication of
 a master release.

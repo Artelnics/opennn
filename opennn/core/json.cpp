@@ -17,6 +17,7 @@
 #include <cstdio>
 #include <cstring>
 #include <fstream>
+#include <limits>
 
 namespace opennn
 {
@@ -118,7 +119,19 @@ long long Json::as_long() const
     using enum Kind;
     switch (get_kind())
     {
-    case Number: return (long long)(std::get<double>(value));
+    case Number:
+    {
+        const double number = std::get<double>(value);
+        constexpr long long minimum = std::numeric_limits<long long>::min();
+        constexpr long long maximum = std::numeric_limits<long long>::max();
+        throw_if(!std::isfinite(number) || number < double(minimum) || number > double(maximum),
+                 "JSON: numeric value is outside the integer range");
+        // JSON numbers use double storage. The maximum integer rounds up to
+        // 2^63, including existing saved optimizer 'unlimited' settings.
+        // Recover that boundary without an out-of-range floating-point cast.
+        if (number == double(maximum)) return maximum;
+        return static_cast<long long>(number);
+    }
     case Bool:   return std::get<bool>(value) ? 1 : 0;
     case String:
     {

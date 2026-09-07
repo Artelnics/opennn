@@ -76,6 +76,28 @@ TEST(JsonTest, NestedValueRoundTrips)
     EXPECT_EQ(value.dump(0), text);
 }
 
+TEST(JsonTest, IntegerBoundaryRoundTrips)
+{
+    for (const long long value : {numeric_limits<long long>::min(),
+                                 numeric_limits<long long>::max()})
+    {
+        EXPECT_EQ(Json(value).as_long(), value);
+        EXPECT_EQ(Json::parse(Json(value).dump()).as_long(), value);
+        EXPECT_EQ(Json(to_string(value)).as_long(), value);
+    }
+    EXPECT_EQ(Json(3.75).as_long(), 3);
+    EXPECT_EQ(Json(-3.75).as_long(), -3);
+}
+
+TEST(JsonTest, IntegerConversionRejectsNonfiniteAndOutOfRangeNumbers)
+{
+    const double infinity = numeric_limits<double>::infinity();
+    for (const double value : {infinity, -infinity, numeric_limits<double>::quiet_NaN(),
+                              nextafter(double(numeric_limits<long long>::max()), infinity),
+                              nextafter(double(numeric_limits<long long>::min()), -infinity)})
+        EXPECT_THROW(Json(value).as_long(), runtime_error);
+}
+
 TEST(IoUtilitiesTest, FileWriterReaderRoundTrip)
 {
     const filesystem::path tmp = make_temp_path("rw.tmp");

@@ -16,6 +16,8 @@ remaining limitations.
 - Build the vision stage table and output-window storage with Clang 17.
 - Avoid undefined floating-point-to-integer conversion when histogram bin
   widths are zero or subnormal.
+- Restore JSON's rounded maximum-integer sentinel without an out-of-range
+  cast; reject nonfinite and larger values during integer conversion.
 - Provide configurable library logging, including concurrent callback changes.
 
 ### Packaging and verification
