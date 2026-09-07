@@ -444,6 +444,8 @@ public:
     ~CudaBlockCache()
     {
         cuda_resources_shutting_down.store(true, memory_order_relaxed);
+        flush();
+        for (cudaEvent_t event : event_pool) cudaEventDestroy(event);
     }
 
     static CudaBlockCache& instance()
@@ -577,6 +579,10 @@ private:
           poison_on_reuse(device_poison_mode() != 0),
           byte_cap(read_cap_bytes())
     {
+        // This cache is reached only for GPU storage. Initialize the runtime
+        // before its destructor is registered, so cached blocks and events
+        // can still be released during process shutdown.
+        CHECK_CUDA(cudaFree(nullptr));
     }
 
     static Index read_cap_bytes()
