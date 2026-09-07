@@ -1,0 +1,159 @@
+# Hosted CPU tests and CUDA compilation. The CUDA runtime suite runs on a
+# self-hosted runner (see cuda-nightly.yml); nothing here needs a GPU.
+#
+# Every job builds the library and the tests from a clean checkout with the
+# dependencies CMake fetches itself (Eigen, libjpeg-turbo, zlib, GoogleTest),
+# so a green run means "a user with a compiler and CMake can build this".
+name: CI
+
+on:
+  push:
+    branches: [dev, master]
+  pull_request:
+    branches: [dev, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  OPENNN_THREADS: "4"
+
+jobs:
+  linux:
+    name: Linux ${{ matrix.compiler }} (CPU, Eigen)
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - compiler: gcc-13
+            cc: gcc-13
+            cxx: g++-13
+            openmp: libgomp1
+          - compiler: clang-17
+            cc: clang-17
+            cxx: clang++-17
+            openmp: libomp-17-dev
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build ${{ matrix.compiler }} ${{ matrix.openmp }}
+          cmake --version
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install model export test dependency
+        run: python -m pip install numpy==2.4.4
+
+      - name: Configure (CPU only, Eigen BLAS)
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DOpenNN_DISABLE_CUDA=ON
+          -DOpenNN_ENABLE_MKL=OFF
+          -DOpenNN_BUILD_EXAMPLES=OFF
+          -DOpenNN_BUILD_BENCHMARKS=OFF
+
+      - name: Build library and tests
+        run: cmake --build build --target opennn opennn_tests opennn_response_tests --parallel
+
+      - name: Unit tests
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Headers compile in isolation
+        run: bash tools/check_headers.sh ${{ matrix.cxx }} "$PWD" "$(ls -d build/_deps/eigen-src 2>/dev/null || echo /usr/include/eigen3)"
+
+      - name: Install and consume the package
+        run: |
+          cmake --install build --prefix "$PWD/prefix"
+          cmake -E rename "$PWD/prefix" "$PWD/relocated-prefix"
+          cmake -S tools/package_smoke -B build/package -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/relocated-prefix" -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF
+          cmake --build build/package
+          ./build/package/opennn_package_smoke
+
+  cuda-compile:
+    name: Linux CUDA 12.9 (compile)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      CC: gcc-13
+      CXX: g++-13
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install CUDA build dependencies
+        run: |
+          wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
+          sudo dpkg -i cuda-keyring_1.1-1_all.deb
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build g++-13 \
+            cuda-minimal-build-12-9 cuda-driver-dev-12-9 cuda-nvml-dev-12-9 \
+            cuda-nvrtc-dev-12-9 libcublas-dev-12-9 libcurand-dev-12-9 \
+            libcudnn9-dev-cuda-12=9.10.2.21-1
+          echo "/usr/local/cuda-12.9/bin" >> "$GITHUB_PATH"
+
+      - name: Configure CUDA without a GPU
+        run: >
+          cmake -S . -B build-cuda -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_CUDA_ARCHITECTURES=86
+          -DCUDAToolkit_ROOT=/usr/local/cuda-12.9
+          -DOpenNN_REQUIRE_CUDA=ON
+          -DOpenNN_ENABLE_LTO=OFF
+          -DOpenNN_BUILD_EXAMPLES=OFF
+          -DOpenNN_BUILD_BENCHMARKS=OFF
+
+      - name: Compile library and both test executables
+        run: cmake --build build-cuda --target opennn_tests opennn_response_tests --parallel 2
+
+  windows:
+    name: Windows MSVC 2022 (CPU, Eigen)
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install model export test dependency
+        run: python -m pip install numpy==2.4.4
+
+      - name: Configure (CPU only, Eigen BLAS)
+        run: >
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+          -DOpenNN_DISABLE_CUDA=ON
+          -DOpenNN_ENABLE_MKL=OFF
+          -DOpenNN_BUILD_EXAMPLES=OFF
+          -DOpenNN_BUILD_BENCHMARKS=OFF
+
+      - name: Build library and tests
+        run: cmake --build build --config Release --target opennn opennn_tests opennn_response_tests --parallel
+
+      - name: Unit tests
+        run: ctest --test-dir build -C Release --output-on-failure
+
+      - name: Install and consume the relocated package
+        run: |
+          cmake --install build --config Release --prefix "$pwd/prefix"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake -E rename "$pwd/prefix" "$pwd/relocated-prefix"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake -S tools/package_smoke -B build/package -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="$pwd/relocated-prefix" -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build build/package --config Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./build/package/Release/opennn_package_smoke.exe

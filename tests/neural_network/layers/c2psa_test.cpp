@@ -124,7 +124,8 @@ TEST(C2PSA, CpuAndGpuForwardOutputsMatch)
 
     vector<float> gpu_out(n);
 #ifdef OPENNN_HAS_CUDA
-    cudaMemcpy(gpu_out.data(), out_gpu.as<float>(), n * sizeof(float), cudaMemcpyDeviceToHost);
+    device::copy_async(gpu_out.data(), out_gpu.as<float>(), n * Index(sizeof(float)),
+                       device::CopyKind::DeviceToHost);
 #endif
     Configuration::instance().set(Device::CPU, Type::FP32);
 

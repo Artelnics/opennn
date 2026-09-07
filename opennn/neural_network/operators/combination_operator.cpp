@@ -130,7 +130,7 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
         {
             static once_flag reported;
             call_once(reported, [&]{
-                cerr << "linear_forward: ReLU-mask epilogue unavailable ("
+                logging::warning() << "linear_forward: ReLU-mask epilogue unavailable ("
                      << error.what() << "); ReLU backward runs unfused.\n"; });
             relu_mask_fusion_disabled = true;
         }
@@ -180,7 +180,7 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
         {
             static once_flag reported;
             call_once(reported, [&]{
-                cerr << "linear_backward: DReLU epilogue unavailable ("
+                logging::warning() << "linear_backward: DReLU epilogue unavailable ("
                      << error.what() << "); ReLU backward runs unfused.\n"; });
             drelu_source->relu_mask_fusion_disabled = true;
             forward_propagation.drelu_fused_by_layer[size_t(drelu_source_layer)] = 0;

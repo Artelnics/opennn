@@ -906,15 +906,11 @@ float evaluate_operations(const vector<ExpressionOp>& operations,
                         const float right_operand = evaluation_stack.back();
                         evaluation_stack.pop_back();
                         float &left_operand = evaluation_stack.back();
-                        switch (operation.kind)
-                        {
-                                case ExpressionOp::Kind::Add: left_operand += right_operand; break;
-                                case ExpressionOp::Kind::Sub: left_operand -= right_operand; break;
-                                case ExpressionOp::Kind::Mul: left_operand *= right_operand; break;
-                                case ExpressionOp::Kind::Div: left_operand /= right_operand; break;
-                                case ExpressionOp::Kind::Pow: left_operand = pow(left_operand, right_operand); break;
-                                default: break;
-                        }
+                        if      (operation.kind == Add) left_operand += right_operand;
+                        else if (operation.kind == Sub) left_operand -= right_operand;
+                        else if (operation.kind == Mul) left_operand *= right_operand;
+                        else if (operation.kind == Div) left_operand /= right_operand;
+                        else                            left_operand = pow(left_operand, right_operand);
                         break;
                 }
 

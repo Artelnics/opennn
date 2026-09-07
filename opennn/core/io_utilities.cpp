@@ -36,7 +36,7 @@ void download_if_missing(const filesystem::path& path, const string& url)
     if (path.has_parent_path())
         filesystem::create_directories(path.parent_path());
 
-    cout << "Downloading " << url << " -> " << path.string() << " ..." << endl;
+    logging::info() << "Downloading " << url << " -> " << path.string() << " ..." << endl;
 
 #if defined(_WIN32)
     const string curl = "curl.exe";

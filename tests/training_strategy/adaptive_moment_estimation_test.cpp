@@ -92,10 +92,17 @@ namespace
 class AdaptiveMomentEstimationTest : public ::testing::Test
 {
 protected:
+    int previous_threads = 0;
+
+    void SetUp() override
+    {
+        previous_threads = get_device().numThreads();
+    }
+
     void TearDown() override
     {
         Configuration::instance().set(Device::CPU, Type::FP32);
-        set_threads_number(0);
+        set_threads_number(previous_threads);
     }
 };
 

@@ -22,6 +22,7 @@ set(OpenNN_ENABLE_ONEDNN "AUTO" CACHE STRING
 set_property(CACHE OpenNN_ENABLE_ONEDNN PROPERTY STRINGS AUTO ON OFF)
 set(OpenNN_ONEDNN_ROOT "" CACHE PATH "oneDNN prefix (for example /usr or an extracted package root/usr)")
 option(OpenNN_DISABLE_CUDA "Disable CUDA even if the toolkit is found" OFF)
+option(OpenNN_REQUIRE_CUDA "Fail configuration unless CUDA is enabled" OFF)
 
 list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/core/cuda")
 
@@ -65,6 +66,10 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
     endif()
 else()
     set(OPENNN_HAS_CUDA OFF)
+endif()
+
+if(OpenNN_REQUIRE_CUDA AND NOT OPENNN_HAS_CUDA)
+    message(FATAL_ERROR "OpenNN_REQUIRE_CUDA requires a CUDA compiler and OpenNN_DISABLE_CUDA=OFF")
 endif()
 
 FetchContent_Declare(
@@ -183,6 +188,7 @@ endif()
 file(MAKE_DIRECTORY ${_opennn_jpeg_include_dir} ${_opennn_jpeg_lib_dir})
 
 set(_opennn_jpeg_cmake_args
+    -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
     -DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_INSTALL_INCLUDEDIR}
     -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
@@ -195,6 +201,10 @@ set(_opennn_jpeg_cmake_args
     -DWITH_TURBOJPEG=OFF)
 if(MSVC)
     list(APPEND _opennn_jpeg_cmake_args -DWITH_CRT_DLL=ON)
+    if(DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
+        list(APPEND _opennn_jpeg_cmake_args
+            "-DCMAKE_MSVC_RUNTIME_LIBRARY:STRING=${CMAKE_MSVC_RUNTIME_LIBRARY}")
+    endif()
 endif()
 if(OpenNN_BUILD_SHARED)
     list(APPEND _opennn_jpeg_cmake_args -DCMAKE_POSITION_INDEPENDENT_CODE=ON)
@@ -220,7 +230,7 @@ set_target_properties(opennn_jpeg PROPERTIES
 add_dependencies(opennn opennn_libjpeg_turbo_ep)
 target_link_libraries(opennn PUBLIC
     $<BUILD_INTERFACE:opennn_jpeg>
-    $<INSTALL_INTERFACE:libjpeg-turbo::jpeg-static>)
+    $<INSTALL_INTERFACE:OpenNN::jpeg>)
 
 target_include_directories(opennn PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
@@ -507,8 +517,11 @@ if(OpenNN_INSTALL)
 
     install(DIRECTORY ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_INCLUDEDIR}/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-    install(DIRECTORY ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_LIBDIR}/
+    # Upstream JPEG exports contain absolute build-machine paths. Ship the
+    # archive with our own relocatable imported target instead of those exports.
+    install(FILES ${_opennn_jpeg_library}
         DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    get_filename_component(_opennn_jpeg_filename "${_opennn_jpeg_library}" NAME)
 
     install(EXPORT OpenNNTargets
         FILE OpenNNTargets.cmake
@@ -532,7 +545,8 @@ if(OpenNN_INSTALL)
     configure_package_config_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/OpenNNConfig.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/OpenNNConfig.cmake
-        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenNN)
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenNN
+        PATH_VARS CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_INCLUDEDIR)
 
     write_basic_package_version_file(
         ${CMAKE_CURRENT_BINARY_DIR}/OpenNNConfigVersion.cmake

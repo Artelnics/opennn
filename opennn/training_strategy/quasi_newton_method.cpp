@@ -238,7 +238,7 @@ TrainingResult QuasiNewtonMethod::train()
                                      *context.validation_forward_propagation).error;
     };
 
-    hooks.display_extra = [&]{ cout << "Learning rate: " << line_search.learning_rate << "\n"; };
+    hooks.display_extra = [&]{ logging::info() << "Learning rate: " << line_search.learning_rate << "\n"; };
 
     return train_full_batch(context, hooks);
 }

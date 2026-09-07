@@ -185,18 +185,15 @@ bool run_frontend(GraphCache& cache, const char* label, Body&& body)
         "with device::set_conv_workspace_cap().");
 }
 
+// Not a switch: the enumeration gains a member with every cuDNN release and
+// -Wswitch-enum would name each one; every type this library does not use is
+// sized as four bytes, which is the largest it allocates for.
 inline int64_t element_bytes(DataType_t dtype)
 {
-    switch (dtype)
-    {
-        case DataType_t::BFLOAT16:
-        case DataType_t::HALF:      return 2;
-        case DataType_t::INT8:
-        case DataType_t::UINT8:
-        case DataType_t::FP8_E4M3:
-        case DataType_t::FP8_E5M2:  return 1;
-        default:                    return 4;
-    }
+    if (dtype == DataType_t::BFLOAT16 || dtype == DataType_t::HALF) return 2;
+    if (dtype == DataType_t::INT8 || dtype == DataType_t::UINT8
+        || dtype == DataType_t::FP8_E4M3 || dtype == DataType_t::FP8_E5M2) return 1;
+    return 4;
 }
 
 inline DataType_t to_dtype(Type t)

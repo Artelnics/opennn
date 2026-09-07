@@ -1819,12 +1819,12 @@ ChatResponse ChatSession::send(
 
 void ChatSession::chat(const ChatOptions& options)
 {
-    cout << "Enter prompts. Empty line, 'exit' or 'quit' finishes.\n";
+    logging::info() << "Enter prompts. Empty line, 'exit' or 'quit' finishes.\n";
 
     string prompt;
     while (true)
     {
-        cout << "\n> " << flush;
+        logging::info() << "\n> " << flush;
         if (!getline(cin, prompt) || contains({"", "exit", "quit"}, prompt))
             break;
 
@@ -1838,27 +1838,27 @@ void ChatSession::chat(const ChatOptions& options)
                 {
                     if (!reasoning_started)
                     {
-                        cout << "Thinking: ";
+                        logging::info() << "Thinking: ";
                         reasoning_started = true;
                     }
                 }
                 else if (!content_started)
                 {
-                    if (reasoning_started) cout << "\n";
-                    cout << "Response: ";
+                    if (reasoning_started) logging::info() << "\n";
+                    logging::info() << "Response: ";
                     content_started = true;
                 }
-                cout << delta.text << flush;
+                logging::info() << delta.text << flush;
             });
 
         if (!content_started)
         {
-            if (reasoning_started) cout << "\n";
-            cout << "Response: " << response.content;
+            if (reasoning_started) logging::info() << "\n";
+            logging::info() << "Response: " << response.content;
         }
-        cout << "\n";
+        logging::info() << "\n";
     }
-    cout << "Bye!\n";
+    logging::info() << "Bye!\n";
 }
 
 void ChatSession::set_messages(

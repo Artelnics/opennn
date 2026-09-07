@@ -20,8 +20,8 @@ list(FILTER TEST_SOURCES EXCLUDE REGEX "-DESKTOP-[^/\\\\]*\\.cpp$")
 
 # The concrete response scenarios drive a real trained network through both solvers, so
 # they are far slower than a unit test and report on the results as much as they assert.
-# They build with everything else, so an API change still breaks the build, but they are
-# kept out of opennn_tests and run on demand:
+# They stay in a separate executable and CTest integration label; full verification
+# runs both executables. They can also be selected directly:
 #
 #     build-ninja/bin/opennn_response_tests --gtest_filter=ConcreteScenario.*
 
@@ -59,3 +59,6 @@ target_precompile_headers(opennn_tests PRIVATE pch.h)
 
 add_test(NAME run_tests COMMAND opennn_tests)
 set_tests_properties(run_tests PROPERTIES TIMEOUT 600)
+
+add_test(NAME response_scenarios COMMAND opennn_response_tests)
+set_tests_properties(response_scenarios PROPERTIES TIMEOUT 1800 LABELS integration)

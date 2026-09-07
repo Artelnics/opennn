@@ -740,7 +740,7 @@ bool LongShortTermMemoryOperator::apply_onednn(
         if (forward_state.byte_size() >= Index(ONEDNN_LSTM_STATE_HEADER))
             memset(forward_state.data(), 0, ONEDNN_LSTM_STATE_HEADER);
         if (getenv("OPENNN_ONEDNN_REPORT"))
-            cerr << "oneDNN LSTM forward unavailable: " << error.what() << '\n';
+            logging::warning() << "oneDNN LSTM forward unavailable: " << error.what() << '\n';
         return false;
     }
 #else

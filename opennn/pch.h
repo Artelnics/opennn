@@ -23,6 +23,7 @@
 #include <omp.h>
 
 #include "opennn/core/json.h"
+#include "opennn/core/log.h"
 
 #endif
 

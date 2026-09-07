@@ -281,7 +281,7 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
 
     hooks.display_extra = [&]
     {
-        cout << "Damping parameter: " << damping_parameter << "\n";
+        logging::info() << "Damping parameter: " << damping_parameter << "\n";
     };
 
     hooks.post_step = [&]

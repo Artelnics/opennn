@@ -75,25 +75,25 @@ void TrainingResult::print(const string &message) const
 
     const Index reported_epoch = restored_best_epoch ? *restored_epoch : final_epoch;
 
-    cout << message << "\n"
+    logging::info() << message << "\n"
          << "Training results" << "\n"
          << "Epochs number: " << epochs_number << "\n"
          << "Training error: " << training_error_history(reported_epoch) << "\n";
     if (validation_error_history.size() > 0)
     {
-        cout << "Validation error: " << validation_error_history(reported_epoch) << "\n";
+        logging::info() << "Validation error: " << validation_error_history(reported_epoch) << "\n";
 
         if (best_epoch != final_epoch)
         {
             if (restored_best_epoch)
-                cout << "Best epoch: " << *restored_epoch
+                logging::info() << "Best epoch: " << *restored_epoch
                      << " (restored parameters and states correspond to this epoch)\n";
             else
-                cout << "Best validation epoch: " << best_epoch
+                logging::info() << "Best validation epoch: " << best_epoch
                      << " (final parameters correspond to epoch " << final_epoch << ")\n";
         }
     }
-    cout << "Stopping condition: " << write_stopping_condition() << "\n";
+    logging::info() << "Stopping condition: " << write_stopping_condition() << "\n";
 }
 
 Tensor<string, 2> TrainingResult::write_override_results(const Index precision) const

@@ -5,23 +5,20 @@
 set -u
 cxx=$1
 root=$2
-IFS=';' read -ra eigen_dirs <<< "${3:-}"
-
-# Only the repo root goes on the include path: headers name their folder, so a
-# stale bare include has to fail here rather than resolve against its neighbours.
-inc=(-I"$root")
-for d in "${eigen_dirs[@]}"; do
-    [ -n "$d" ] && inc+=(-I"$d")
-done
-
 export CHK_CXX=$cxx
 export CHK_ROOT=$root
-export CHK_FLAGS="-std=c++20 -fsyntax-only -fopenmp -Wno-interference-size ${inc[*]}"
+export CHK_EIGEN_DIRS="${3:-}"
 
 find "$root/opennn" -path '*/flash_attention_shim' -prune -o -name '*.h' -print0 |
-xargs -0 -P "$(nproc)" -I{} bash -c '
+xargs -0 -P "${OPENNN_HEADER_JOBS:-$(nproc)}" -I{} bash -c '
+    # Keep each include path as one argument, including checkouts with spaces.
+    flags=(-std=c++20 -fsyntax-only -fopenmp -Wno-interference-size -I"$CHK_ROOT")
+    IFS=";" read -ra eigen_dirs <<< "$CHK_EIGEN_DIRS"
+    for directory in "${eigen_dirs[@]}"; do
+        [ -n "$directory" ] && flags+=(-I"$directory")
+    done
     rel=${0#"$CHK_ROOT"/}
-    out=$(echo "#include \"$rel\"" | $CHK_CXX $CHK_FLAGS -x c++ - 2>&1) ||
+    out=$(echo "#include \"$rel\"" | "$CHK_CXX" "${flags[@]}" -x c++ - 2>&1) ||
         { printf "FAIL: %s\n%s\n" "$rel" "$(head -c 2000 <<< "$out")"; exit 1; }
 ' {}
 status=$?

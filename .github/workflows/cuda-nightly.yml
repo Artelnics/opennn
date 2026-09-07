@@ -1,0 +1,53 @@
+# Requires a registered runner with these labels, a C++20 toolchain, CUDA
+# and cuDNN 9. Without a matching online runner, GitHub queues the job.
+name: Linux CUDA
+
+on:
+  push:
+    branches: [dev, master]
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-cuda-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cuda:
+    name: Linux GCC (CUDA)
+    runs-on: [self-hosted, linux, cuda]
+    timeout-minutes: 120
+    env:
+      OPENNN_THREADS: "4"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install model export test dependency
+        run: python -m pip install numpy==2.4.4
+
+      - name: Check GPU and toolchain
+        run: |
+          nvidia-smi
+          nvcc --version
+          cmake --version
+
+      - name: Full CPU and CUDA verification
+        shell: bash
+        run: |
+          set -o pipefail
+          bash tools/verify.sh full --reconfigure --jobs 4 2>&1 | tee verification.log
+
+      - name: Preserve verification log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-cuda-verification
+          path: verification.log

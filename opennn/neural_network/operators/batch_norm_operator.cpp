@@ -15,6 +15,7 @@
 #endif
 #include "opennn/core/device_backend.h"
 #include "opennn/core/json.h"
+#include "opennn/core/log.h"
 #include "opennn/core/profiler.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/tensor_operations.h"
@@ -705,7 +706,7 @@ void BatchNormalizationOperator::apply_delta_gpu(
                 && (chosen.fork || !has_residual);
 
             if (!fully_fused)
-                cerr << "BatchNormalizationOperator backward c" << features
+                logging::warning() << "BatchNormalizationOperator backward c" << features
                      << " r" << input.size() / features
                      << " batch " << batch << ": "
                      << (chosen.own_kernel

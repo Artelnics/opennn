@@ -116,7 +116,7 @@ static void embedding_lookup_forward_cpu(const TensorView& indices, const Tensor
         if (token_id < 0 || token_id >= vocabulary_size)
         {
             if (!out_of_range_warned.exchange(true))
-                cerr << format("EmbeddingLookup warning: token id {} out of range [0, {}); zeroing row. Further warnings suppressed.\n", token_id, vocabulary_size);
+                logging::warning() << format("EmbeddingLookup warning: token id {} out of range [0, {}); zeroing row. Further warnings suppressed.\n", token_id, vocabulary_size);
             output_mat.row(i).setZero();
             continue;
         }

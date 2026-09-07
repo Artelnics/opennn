@@ -88,7 +88,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     if (dataset->has_nan())
         dataset->scrub_missing_values();
 
-    if (display) cout << "Performing growing input selection...\n";
+    if (display) logging::info() << "Performing growing input selection...\n";
 
     InputsSelectionResult input_selection_results(original_input_variables_number);
 
@@ -104,7 +104,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     const vector<Index> time_variable_indices = dataset->get_variable_indices(VariableRole::Time);
     const vector<string> variable_names = dataset->get_variable_names();
 
-    if (display) cout << "Calculating correlations...\n";
+    if (display) logging::info() << "Calculating correlations...\n";
 
     const VectorR total_correlations =
         dataset->calculate_input_target_correlation_values().array().abs().rowwise().mean();
@@ -148,7 +148,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     {
         if (variable_index >= correlations_rank_descending.size())
         {
-            if (display) cout << "\nAll the variables has been used.\n";
+            if (display) logging::info() << "\nAll the variables has been used.\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
             continue;
         }
@@ -173,7 +173,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
         const string& candidate_name = variable_names[current_variable_index];
 
         if (display)
-            cout << "\nTrying to add \"" << candidate_name << "\"  ->  "
+            logging::info() << "\nTrying to add \"" << candidate_name << "\"  ->  "
                  << input_variables_number << " inputs\n";
 
         const vector<Index> warm_row_map = warm_start && !warm_snapshot.empty() && folds_number == 1
@@ -198,7 +198,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
                 }
 
                 if (display)
-                    cout << (trials_number > 1 ? "   Trial " + to_string(trial + 1) + ": " : "   ")
+                    logging::info() << (trials_number > 1 ? "   Trial " + to_string(trial + 1) + ": " : "   ")
                          << "training error " << training_error
                          << ", validation error " << validation_error << "\n";
             },
@@ -225,7 +225,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             }
 
             if (display)
-                cout << "   " << folds_number << "-fold CV validation error " << minimum_validation_error << "\n";
+                logging::info() << "   " << folds_number << "-fold CV validation error " << minimum_validation_error << "\n";
         }
 
         if (previous_validation_error < minimum_validation_error)
@@ -233,7 +233,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             ++validation_failures;
 
             if (display)
-                cout << "   Rejected: validation error " << minimum_validation_error
+                logging::info() << "   Rejected: validation error " << minimum_validation_error
                      << " did not beat the best so far (" << previous_validation_error
                      << "). Removing \"" << candidate_name << "\". Validation failures: "
                      << validation_failures << "/" << maximum_validation_failures << "\n";
@@ -261,7 +261,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             ++epoch;
 
             if (display)
-                cout << "   Accepted. Epoch " << epoch << ": " << input_variables_number
+                logging::info() << "   Accepted. Epoch " << epoch << ": " << input_variables_number
                      << " inputs kept, best validation error " << minimum_validation_error << "\n"
                      << "   Inputs: " << dataset->get_variable_names(VariableRole::Input);
         }

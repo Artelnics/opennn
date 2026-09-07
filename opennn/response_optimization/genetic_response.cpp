@@ -150,7 +150,7 @@ MatrixR GeneticResponse::multi_optimization()
     }
 
     if (Index(front.size()) < requested_front_size)
-        cerr << "Warning: the front holds " << front.size() << " of the " << requested_front_size
+        logging::warning() << "Warning: the front holds " << front.size() << " of the " << requested_front_size
              << " points requested. The feasible set may be too small to spread them over.\n";
 
     return append_columns(slice_rows(population, front));

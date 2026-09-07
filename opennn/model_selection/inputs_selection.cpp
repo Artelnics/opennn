@@ -69,15 +69,15 @@ void InputsSelectionResult::resize_history(const Index new_size)
 
 void InputsSelectionResult::print() const
 {
-    cout << "\n"
+    logging::info() << "\n"
          << "Input Selection Results" << "\n"
          << "Optimal inputs number: " << optimal_input_variable_names.size() << "\n"
          << "Inputs: " << "\n";
 
     for (const string& name : optimal_input_variable_names)
-        cout << "   " << name << "\n";
+        logging::info() << "   " << name << "\n";
 
-    cout << "Optimum training error: " << optimum_training_error << "\n"
+    logging::info() << "Optimum training error: " << optimum_training_error << "\n"
          << "Optimum validation error: " << optimum_validation_error << "\n";
 }
 

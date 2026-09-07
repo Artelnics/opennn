@@ -251,6 +251,9 @@ endfunction()
 
 function(_build backend build_dir)
     set(_build_args --build "${build_dir}" --target opennn_tests)
+    if(NOT OPENNN_VERIFY_MODE STREQUAL "quick")
+        list(APPEND _build_args opennn_response_tests)
+    endif()
     if(DEFINED OPENNN_VERIFY_JOBS AND NOT OPENNN_VERIFY_JOBS STREQUAL "")
         list(APPEND _build_args --parallel "${OPENNN_VERIFY_JOBS}")
     endif()
@@ -267,6 +270,11 @@ function(_build backend build_dir)
 endfunction()
 
 function(_run_tests backend build_dir focused)
+    if(backend STREQUAL "cuda")
+        set(ENV{OPENNN_TEST_REQUIRE_CUDA} "1")
+    else()
+        set(ENV{OPENNN_TEST_REQUIRE_CUDA} "0")
+    endif()
     if(WIN32)
         set(_test_executable "${build_dir}/bin/opennn_tests.exe")
     else()
@@ -292,9 +300,20 @@ function(_run_tests backend build_dir focused)
         COMMAND "${_test_executable}" ${_test_args}
         WORKING_DIRECTORY "${_source_dir}"
         RESULT_VARIABLE _test_result
+        TIMEOUT 600
         COMMAND_ECHO STDOUT)
     if(NOT _test_result EQUAL 0)
         message(FATAL_ERROR "${backend} tests failed (${_test_result})")
+    endif()
+    if(NOT focused)
+        execute_process(
+            COMMAND "${CMAKE_CTEST_COMMAND}" --test-dir "${build_dir}"
+                --output-on-failure -R "^response_scenarios$"
+            RESULT_VARIABLE _scenario_result
+            COMMAND_ECHO STDOUT)
+        if(NOT _scenario_result EQUAL 0)
+            message(FATAL_ERROR "${backend} response scenarios failed (${_scenario_result})")
+        endif()
     endif()
 endfunction()
 

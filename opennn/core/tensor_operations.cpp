@@ -971,9 +971,6 @@ static void multiply_cpu(const TensorView& input_a, bool transpose_a,
                   TensorView& output,
                   float alpha, float beta)
 {
-    const Shape& shape = input_a.get_shape();
-    const size_t rank = shape.get_rank();
-
     const Index batch_count = matrix_count(input_a);
 
     const bool parallel = output.size() >= 65536;
@@ -2157,7 +2154,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
         {
             if (!output_delta.is_bf16()) throw;
             store_declined = true;
-            cerr << "linear_backward: cuBLASLt has no BF16-in/FP32-out weight-gradient "
+            logging::warning() << "linear_backward: cuBLASLt has no BF16-in/FP32-out weight-gradient "
                     "epilogue for " << output_columns << "x" << input_columns << "x"
                  << total_rows << "; that shape uses a BF16 store + cast.\n";
             device::reset_last_error();

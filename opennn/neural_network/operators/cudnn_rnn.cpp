@@ -159,7 +159,7 @@ CudnnRnnShapeSlot& CudnnRnnState::cudnn_setup_(const CudnnRnnConfig& config,
             if (stream_is_capturing()) throw;
 
             if (env_flag_enabled("OPENNN_RNN_DEBUG", false))
-                cerr << "OpenNN cuDNN RNN: persistent algorithm unavailable: "
+                logging::warning() << "OpenNN cuDNN RNN: persistent algorithm unavailable: "
                      << error.what() << '\n';
             state.persist_algo_failed = true;
             state.rnn_desc.reset();

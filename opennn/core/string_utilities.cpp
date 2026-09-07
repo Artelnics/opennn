@@ -356,12 +356,12 @@ void display_progress_bar(Index completed, Index total)
     const float progress = total > 0 ? static_cast<float>(completed) / total : 0.0f;
     const int position = min(static_cast<int>(width * progress), width);
 
-    cout << "\r[" << string(position, '=');
+    logging::info() << "\r[" << string(position, '=');
 
     if (position < width)
-        cout << ">" << string(width - position - 1, ' ');
+        logging::info() << ">" << string(width - position - 1, ' ');
 
-    cout << "] " << int(progress * 100.0) << " %   ";
+    logging::info() << "] " << int(progress * 100.0) << " %   ";
     cout.flush();
 }
 

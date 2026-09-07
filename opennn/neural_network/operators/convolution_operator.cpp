@@ -14,6 +14,7 @@
 #include "opennn/core/cuda/kernel_quantization.cuh"
 #endif
 #include "opennn/core/device_backend.h"
+#include "opennn/core/log.h"
 #include "opennn/core/profiler.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/tensor_operations.h"
@@ -233,7 +234,7 @@ bool build_preferred(const ConvolutionOperator& op, const char* kind, int64_t ba
     }
     catch (const exception& e)
     {
-        cerr << "ConvolutionOperator " << kind << " "
+        logging::warning() << "ConvolutionOperator " << kind << " "
              << op.input_height << "x" << op.input_width << "x" << op.kernel_channels
              << " k" << op.kernel_height << "x" << op.kernel_width << "x" << op.kernels_number
              << " batch " << batch << ": no engine (" << e.what() << "); "

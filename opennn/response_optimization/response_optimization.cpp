@@ -295,7 +295,7 @@ void ResponseOptimization::add_constraint(const string& expression,
         ranges::sort(sorted_values);
 
         if (ranges::adjacent_find(sorted_values) != sorted_values.end())
-            cerr << "Warning: constraint on '" << expression << "' repeats allowed values.\n";
+            logging::warning() << "Warning: constraint on '" << expression << "' repeats allowed values.\n";
     }
     else if (condition == Condition::Integer)
     {
@@ -303,7 +303,7 @@ void ResponseOptimization::add_constraint(const string& expression,
                  "Constraint on '" + expression + "' asks for integer values of an expression. "
                  "The Integer condition applies to a single input variable.");
 
-        cerr << "Warning: the integer condition on '" << expression
+        logging::warning() << "Warning: the integer condition on '" << expression
              << "' is recorded but not enforced by the current samplers.\n";
     }
     else
@@ -314,7 +314,7 @@ void ResponseOptimization::add_constraint(const string& expression,
                  "Constraint on '" + expression + "' needs " + to_string(values_number) + " value(s).");
 
         if (values.size() > values_number)
-            cerr << "Warning: constraint on '" << expression << "' only uses "
+            logging::warning() << "Warning: constraint on '" << expression << "' only uses "
                  << values_number << " of the " << values.size() << " values given.\n";
 
         if (condition == Condition::Between)
@@ -324,7 +324,7 @@ void ResponseOptimization::add_constraint(const string& expression,
                      + " and " + to_string(values[1]) + ", an empty interval.");
 
             if (values[0] == values[1])
-                cerr << "Warning: constraint on '" << expression << "' is between two equal values. "
+                logging::warning() << "Warning: constraint on '" << expression << "' is between two equal values. "
                      << "Use the Equal condition instead.\n";
         }
     }

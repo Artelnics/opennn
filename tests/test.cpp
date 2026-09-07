@@ -37,6 +37,12 @@ int main(int argc, char **argv)
     Configuration::instance().set(Device::CPU, Type::FP32);
 
     try {
+        const char* require_cuda = std::getenv("OPENNN_TEST_REQUIRE_CUDA");
+        if (require_cuda && string_view(require_cuda) == "1" && !device::has_cuda_device())
+        {
+            cerr << "CUDA verification requires a CUDA build and an available GPU.\n";
+            return EXIT_FAILURE;
+        }
         return RUN_ALL_TESTS();
     } catch (const exception& e) {
         cerr << "\nFATAL: Unhandled exception caught in test: " << e.what() << endl;

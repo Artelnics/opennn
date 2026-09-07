@@ -2,11 +2,85 @@
 
 #include "opennn/core/configuration.h"
 #include "opennn/core/device_backend.h"
+#include "opennn/core/tensor_types.h"
 
 #include <filesystem>
 #include <format>
+#include <chrono>
+#include <thread>
 
 using namespace opennn;
+
+#ifdef OPENNN_HAS_CUDA
+namespace
+{
+// Constructed before main initializes the backend, so destruction exercises
+// GPU storage that outlives the backend and block cache.
+Buffer static_cuda_buffer;
+
+void CUDART_CB delay_compute(void*)
+{
+    // Keep work pending on the nonblocking stream so a default-stream copy
+    // cannot accidentally pass merely because the GPU finished first.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+}
+}
+
+TEST(DeviceBackendDeathTest, StaticCudaBufferExitsCleanly)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    EXPECT_EXIT({
+        static_cuda_buffer.resize_bytes(256, Device::CUDA);
+        std::exit(EXIT_SUCCESS);
+    }, ::testing::ExitedWithCode(EXIT_SUCCESS), "");
+}
+
+TEST(DeviceBackendTest, BufferMigrationWaitsForPendingCompute)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    Buffer values(Device::CUDA);
+    values.resize_bytes(256, Device::CUDA);
+    values.setZero();
+    device::synchronize();
+    const auto stream = device::get_compute_stream();
+    ASSERT_EQ(cudaLaunchHostFunc(stream, delay_compute, nullptr), cudaSuccess);
+    ASSERT_EQ(cudaMemsetAsync(values.data(), 0x5a, 256, stream), cudaSuccess);
+    values.migrate_to(Device::CPU);
+    device::synchronize(stream);
+    EXPECT_TRUE(std::all_of(values.as<unsigned char>(), values.as<unsigned char>() + 256,
+                            [](unsigned char value) { return value == 0x5a; }));
+}
+
+TEST(DeviceBackendTest, DefaultClearFollowsPendingCompute)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    Buffer values(Device::CUDA);
+    values.resize_bytes(256, Device::CUDA);
+    const auto stream = device::get_compute_stream();
+    ASSERT_EQ(cudaLaunchHostFunc(stream, delay_compute, nullptr), cudaSuccess);
+    ASSERT_EQ(cudaMemsetAsync(values.data(), 0x5a, 256, stream), cudaSuccess);
+    values.setZero();
+    values.migrate_to(Device::CPU, stream);
+    EXPECT_TRUE(std::all_of(values.as<unsigned char>(), values.as<unsigned char>() + 256,
+                            [](unsigned char value) { return value == 0; }));
+}
+
+TEST(DeviceBackendTest, DefaultUploadFollowsPendingCompute)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    Buffer values(Device::CUDA);
+    values.resize_bytes(256, Device::CUDA);
+    const auto stream = device::get_compute_stream();
+    ASSERT_EQ(cudaLaunchHostFunc(stream, delay_compute, nullptr), cudaSuccess);
+    ASSERT_EQ(cudaMemsetAsync(values.data(), 0, 256, stream), cudaSuccess);
+    const std::vector<unsigned char> source(256, 0x5a);
+    device::copy_async(values.data(), source.data(), 256, device::CopyKind::HostToDevice);
+    values.migrate_to(Device::CPU, stream);
+    EXPECT_TRUE(std::all_of(values.as<unsigned char>(), values.as<unsigned char>() + 256,
+                            [](unsigned char value) { return value == 0x5a; }));
+}
+#endif
 
 TEST(DeviceBackendTest, IsCudaBuildMatchesBuild)
 {

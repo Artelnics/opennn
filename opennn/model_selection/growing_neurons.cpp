@@ -81,7 +81,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 {
     NeuronsSelectionResult neuron_selection_results(maximum_epochs);
 
-    if (display) cout << "Performing growing neuron selection...\n";
+    if (display) logging::info() << "Performing growing neuron selection...\n";
 
     NeuralNetwork* neural_network = training_strategy->get_neural_network();
 
@@ -110,7 +110,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
     for (Index epoch = 0; epoch < maximum_epochs; ++epoch)
     {
-        if (display) cout << "\nGrowing neurons epoch: " << epoch << "\n";
+        if (display) logging::info() << "\nGrowing neurons epoch: " << epoch << "\n";
 
         neurons_number = minimum_neurons + epoch*neurons_increment;
 
@@ -129,7 +129,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
             [&](Index trial, float training_error, float validation_error, bool improved)
             {
                 if (display)
-                    cout << "Trial: " << trial+1 << "\n"
+                    logging::info() << "Trial: " << trial+1 << "\n"
                          << "Training error: " << training_error << "\n"
                          << "Validation error: " << validation_error << "\n";
 
@@ -182,14 +182,14 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
             }
 
             if (display)
-                cout << "Neurons: " << neurons_number << ", " << folds_number
+                logging::info() << "Neurons: " << neurons_number << ", " << folds_number
                      << "-fold CV validation error " << minimum_validation_error << "\n";
         }
 
         elapsed_time = get_elapsed_time(beginning_time);
 
         if (display)
-            cout << "Neurons number: " << neurons_number << "\n"
+            logging::info() << "Neurons number: " << neurons_number << "\n"
                  << "Training error: " << minimum_training_error << "\n"
                  << "Validation error: " << minimum_validation_error << "\n"
                  << "Elapsed time: " << get_time(elapsed_time) << "\n";
@@ -227,7 +227,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
     }
 
     if (display)
-        cout << "Parameters number: " << neuron_selection_results.optimal_parameters.size() << "\n";
+        logging::info() << "Parameters number: " << neuron_selection_results.optimal_parameters.size() << "\n";
 
     require_grows_by_neurons(*neural_network->get_layer(last_trainable_layer_index));
 
@@ -304,7 +304,7 @@ void NeuronsSelectionResult::resize_history(const Index new_size)
 
 void NeuronsSelectionResult::print() const
 {
-    cout << "\n"
+    logging::info() << "\n"
          << "Neuron Selection Results" << "\n"
          << "Optimal neurons number: " << optimal_neurons_number << "\n"
          << "Optimum training error: " << optimum_training_error << "\n"

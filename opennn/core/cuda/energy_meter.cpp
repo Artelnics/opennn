@@ -40,7 +40,7 @@ using LibraryHandle = void*;
 LibraryHandle open_nvml_library()
 {
 #ifdef _WIN32
-    return LoadLibraryA("nvml.dll");
+    return LoadLibraryExW(L"nvml.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
 #else
     return dlopen("libnvidia-ml.so.1", RTLD_NOW | RTLD_LOCAL);
 #endif

@@ -131,7 +131,7 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
              + " attempts. The constraints may be impossible to satisfy.");
 
     if (starved_domains > 0)
-        cerr << "Warning: " << starved_domains << " of " << local_domains.size()
+        logging::warning() << "Warning: " << starved_domains << " of " << local_domains.size()
              << " local domains yielded fewer than " << sample_size << " feasible points.\n";
 
     return points;
@@ -266,7 +266,7 @@ MatrixR DomainContraction::multi_optimization()
     }
 
     if (Index(front.size()) < requested_front_size)
-        cerr << "Warning: the front holds " << front.size() << " of the " << requested_front_size
+        logging::warning() << "Warning: the front holds " << front.size() << " of the " << requested_front_size
              << " points requested. The feasible set may be too small to spread them over.\n";
 
     return append_columns(slice_rows(candidates, front));

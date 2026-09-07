@@ -200,7 +200,7 @@ void GeneticAlgorithm::evaluate_population()
 
     for (Index i = 0; i < individuals_number; ++i)
     {
-        if (display) cout << "\nIndividual " << i + 1 << "\n";
+        if (display) logging::info() << "\nIndividual " << i + 1 << "\n";
 
         const vector<Index> individual_variables_indices = genes_to_variable_indices(population.row(i));
 
@@ -231,7 +231,7 @@ void GeneticAlgorithm::evaluate_population()
         if (!isfinite(validation_errors(i))) validation_errors(i) = MAX;
 
         if (display)
-            cout << "Training error: " << training_errors(i) << "\n"
+            logging::info() << "Training error: " << training_errors(i) << "\n"
                  << "Validation error: " << validation_errors(i) << "\n"
                  << "Variables number: " << input_features_number << "\n"
                  << "Inputs number: " << dataset->get_variables_number(VariableRole::Input) << "\n";
@@ -476,7 +476,7 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
 
     InputsSelectionResult input_selection_results(maximum_epochs);
 
-    if (display) cout << "Performing genetic input selection...\n" << "\n";
+    if (display) logging::info() << "Performing genetic input selection...\n" << "\n";
 
     initialize_population();
 
@@ -493,7 +493,7 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
 
     for (Index epoch = 0; epoch < maximum_epochs; ++epoch)
     {
-        if (display) cout << "Generation: " << epoch + 1 << "\n";
+        if (display) logging::info() << "Generation: " << epoch + 1 << "\n";
 
         input_selection_results.resize_history(input_selection_results.mean_training_error_history.size() + 1);
 
@@ -534,7 +534,7 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
         elapsed_time = get_elapsed_time(beginning_time);
 
         if (display)
-            cout << "\n"
+            logging::info() << "\n"
                  << "Epoch number: " << epoch << "\n"
                  << "Generation mean training error: " << input_selection_results.mean_training_error_history(epoch) << "\n"
                  << "Generation mean validation error: " << input_selection_results.mean_validation_error_history(epoch) << "\n"
@@ -581,7 +581,7 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
     if (display)
     {
         input_selection_results.print();
-        cout << "Selected generation: " << best_generation << "\n";
+        logging::info() << "Selected generation: " << best_generation << "\n";
     }
 
     return input_selection_results;

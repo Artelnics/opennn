@@ -1201,7 +1201,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                     catch (const exception& e)
                     {
                         sdpa.failed = true;
-                        cerr << "GroupedQueryAttention: cuDNN flash-attention prefill unavailable ("
+                        logging::warning() << "GroupedQueryAttention: cuDNN flash-attention prefill unavailable ("
                              << e.what() << "); using the generic kernel.\n";
                     }
                 }

@@ -31,7 +31,8 @@
       "displayName": "OpenNN CUDA verification",
       "inherits": "verify-base",
       "cacheVariables": {
-        "OpenNN_DISABLE_CUDA": false
+        "OpenNN_DISABLE_CUDA": false,
+        "OpenNN_REQUIRE_CUDA": true
       }
     }
   ],

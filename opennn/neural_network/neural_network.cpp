@@ -613,7 +613,7 @@ void NeuralNetwork::warn_if_stale_configuration() const
 
     stale_configuration_warned = true;
 
-    cerr << "Warning: Configuration::set() was called after this network was compiled, "
+    logging::warning() << "Warning: Configuration::set() was called after this network was compiled, "
             "so it has no effect on it. The network keeps the settings resolved at "
             "compile() time; call Configuration::set() before constructing the network.\n";
 }
@@ -1715,7 +1715,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
     if (json_parameters.size() != parameters.size_in_floats())
     {
-        cout << "Warning: JSON parameter size (" << json_parameters.size()
+        logging::info() << "Warning: JSON parameter size (" << json_parameters.size()
              << ") differs from Compiled size (" << parameters.size_in_floats() << ").\n";
     }
 
@@ -2983,7 +2983,7 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
     if (env_flag_enabled("OPENNN_GRAPH_TIMING"))
     {
         forward_propagation.cuda_graph_failed = true;
-        cerr << "NeuralNetwork::calculate_outputs_resident: OPENNN_GRAPH_TIMING "
+        logging::warning() << "NeuralNetwork::calculate_outputs_resident: OPENNN_GRAPH_TIMING "
                 "event timing cannot be captured; continuing eager.\n";
         return forward_propagation.get_outputs();
     }
@@ -3039,7 +3039,7 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
         {
             forward_propagation.reset_cuda_graph();
             forward_propagation.cuda_graph_failed = true;
-            cerr << "NeuralNetwork::calculate_outputs_resident: cuda graph capture "
+            logging::warning() << "NeuralNetwork::calculate_outputs_resident: cuda graph capture "
                     "unavailable (" << capture_error.what() << "); continuing eager.\n";
         }
     }

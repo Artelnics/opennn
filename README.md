@@ -67,7 +67,7 @@ a dataset.
   - GCC 13+
   - Clang 17+
   - MSVC 2022+
-- CMake 3.18+
+- CMake 3.24+
 - Optional: CUDA Toolkit and **cuDNN 9.0+** for GPU builds
 
 ### Build CPU-only
@@ -82,7 +82,7 @@ cmake --build ../opennn-build --config Release
 ### Build with CUDA
 
 ```bash
-cmake -S . -B ../opennn-build -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B ../opennn-build -DCMAKE_BUILD_TYPE=Release -DOpenNN_REQUIRE_CUDA=ON
 cmake --build ../opennn-build --config Release
 ```
 
@@ -120,11 +120,28 @@ Use `quick` after edits and `full` once before completing a batch. Run either
 wrapper with its help option for CUDA selection, cache locations and
 compiler-cache support.
 
+Full verification builds and runs both the unit tests and the response-optimization
+integration scenarios on CPU and CUDA. CUDA verification requires a working GPU;
+a CPU-only build cannot pass that gate.
+
+On Linux (including WSL), put the intended CUDA toolkit's `bin` directory on
+`PATH` before running the wrapper. It checks that `nvcc` and its host compiler
+support C++20. For a custom cuDNN installation, set both
+`OPENNN_CUDNN_INCLUDE_DIR` and `OPENNN_CUDNN_LIBRARY`. Set
+`OPENNN_CUDA_ARCHITECTURES` when an explicit compute capability is needed.
+
+GitHub runs CPU CI on hosted Linux and Windows machines and compiles the CUDA
+library and test executables on a hosted Linux machine. The Linux CUDA runtime workflow
+runs on pushes to `dev` and `master`, by manual dispatch, and nightly on the default
+branch. It needs an online self-hosted runner labeled `linux` and `cuda` with the
+GPU toolchain installed; otherwise the job remains queued.
+
 ## CMake options
 
 | Option | Default | Description |
 |---|---:|---|
 | `OpenNN_DISABLE_CUDA` | `OFF` | Force a CPU-only build even when CUDA is available. |
+| `OpenNN_REQUIRE_CUDA` | `OFF` | Fail configuration if CUDA cannot be enabled. |
 | `OpenNN_BUILD_TESTS` | `ON` | Build the GoogleTest test suite. |
 | `OpenNN_BUILD_EXAMPLES` | `ON` | Build example applications. |
 | `OpenNN_BUILD_BENCHMARKS` | `OFF` | Build benchmark drivers from `benchmarks/`. |
@@ -204,4 +221,3 @@ Contributions are welcome. If you want to help improve OpenNN, please follow the
 ## License
 
 OpenNN is distributed under the terms of the GNU Lesser General Public License. See [LICENSE.txt](LICENSE.txt) and the per-file license notices for details.
-

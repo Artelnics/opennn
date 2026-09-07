@@ -979,12 +979,17 @@ static void for_each_v8_head(const ForwardPropagation& forward_propagation,
         fn(head_output, tgt, head_delta, G, reg_max);
 
 #ifdef OPENNN_HAS_CUDA
+        // Both statements belong to the device case: an unguarded
+        // synchronize would reach for the compute stream, and with it a CUDA
+        // context, from a CPU-only process.
         if (back_propagation && on_device)
+        {
             device::copy_async(back_propagation->output_deltas[size_t(detection_idx)].as<float>(),
                                delta_cpu.data(),
                                Index(head_view.size()) * Index(sizeof(float)),
                                device::CopyKind::HostToDevice, device::get_compute_stream());
             device::synchronize(device::get_compute_stream());
+        }
 #endif
     }
 }

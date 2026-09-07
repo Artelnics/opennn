@@ -194,7 +194,7 @@ struct Optimizer::WorkerProfileCounters
         const double epoch_ms =
             chrono::duration<double, milli>(chrono::steady_clock::now() - epoch_t0).count();
         profiler::stats().print(cout, banner, epoch_ms);
-        cout << "  Wall-clock epoch time: " << fixed << setprecision(2) << epoch_ms << " ms"
+        logging::info() << "  Wall-clock epoch time: " << fixed << setprecision(2) << epoch_ms << " ms"
              << " | workers_number=" << workers_number << "\n\n";
         profiler::stats().clear();
     }
@@ -780,24 +780,24 @@ void Optimizer::display_epoch_results(const Index epoch,
 {
     if (!should_display(epoch)) return;
 
-    cout << "Training error: " << training_error << "\n";
+    logging::info() << "Training error: " << training_error << "\n";
     if (is_token_cross_entropy) {
-        cout << "Training perplexity: " << exp(training_error) << "\n";
-        cout << "Training accuracy: " << training_accuracy << "\n";
+        logging::info() << "Training perplexity: " << exp(training_error) << "\n";
+        logging::info() << "Training accuracy: " << training_accuracy << "\n";
     }
     if (has_validation) {
         if (validation_fresh)
         {
-            cout << "Validation error: " << validation_error << "\n";
+            logging::info() << "Validation error: " << validation_error << "\n";
             if (is_token_cross_entropy) {
-                cout << "Validation perplexity: " << exp(validation_error) << "\n";
-                cout << "Validation accuracy: " << validation_accuracy << "\n";
+                logging::info() << "Validation perplexity: " << exp(validation_error) << "\n";
+                logging::info() << "Validation accuracy: " << validation_accuracy << "\n";
             }
         }
         else
-            cout << "Validation error: ---\n";
+            logging::info() << "Validation error: ---\n";
     }
-    cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
+    logging::info() << "Elapsed time: " << get_time(elapsed_time) << "\n";
 }
 
 bool Optimizer::network_has_active_dropout() const
@@ -828,7 +828,7 @@ TrainingResult Optimizer::train()
 
     const bool on_gpu = neural_network->is_gpu();
 
-    if (display) cout << "Training with " << get_display_name()
+    if (display) logging::info() << "Training with " << get_display_name()
                      << (on_gpu ? " CUDA" : "") << "...\n";
 
     Dataset* dataset = loss->get_dataset();
@@ -977,7 +977,7 @@ TrainingResult Optimizer::train()
 
         for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
         {
-            if (should_display(epoch)) cout << "Epoch: " << epoch << "\n";
+            if (should_display(epoch)) logging::info() << "Epoch: " << epoch << "\n";
 
             if (next_training_batches_ready.valid())
             {
@@ -1076,7 +1076,7 @@ TrainingResult Optimizer::train()
 
 void Optimizer::prepare_full_batch_training(FullBatchContext& context, const char* banner)
 {
-    if (display) cout << banner << "\n";
+    if (display) logging::info() << banner << "\n";
 
     Dataset* dataset = loss->get_dataset();
     NeuralNetwork* neural_network = loss->get_neural_network();
@@ -1143,7 +1143,7 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
 
     for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
-        if (should_display(epoch)) cout << "Epoch: " << epoch << "\n";
+        if (should_display(epoch)) logging::info() << "Epoch: " << epoch << "\n";
 
         neural_network->forward_propagate(context.training_batch->get_inputs(),
                                           *context.training_forward_propagation,
@@ -1173,10 +1173,10 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
 
         if (should_display(epoch))
         {
-            cout << "Training error: " << step.displayed_error << "\n";
-            if (has_validation) cout << "Validation error: " << validation_error << "\n";
+            logging::info() << "Training error: " << step.displayed_error << "\n";
+            if (has_validation) logging::info() << "Validation error: " << validation_error << "\n";
             if (hooks.display_extra) hooks.display_extra();
-            cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
+            logging::info() << "Elapsed time: " << get_time(elapsed_time) << "\n";
         }
 
         if (epoch != 0) loss_decrease = old_loss - step.loss;
@@ -1185,7 +1185,7 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
 
         if (loss_decrease < hooks.minimum_loss_decrease)
         {
-            if (display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << "\n";
+            if (display) logging::info() << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << "\n";
             results.stopping_condition = StoppingCondition::MinimumLossDecrease;
         }
 
@@ -1218,22 +1218,22 @@ bool Optimizer::check_stopping_condition(TrainingResult& results,
     {
         if (training_error < training_loss_goal)
         {
-            if (display) cout << "Epoch " << epoch << "\nLoss goal reached: " << training_error << "\n";
+            if (display) logging::info() << "Epoch " << epoch << "\nLoss goal reached: " << training_error << "\n";
             results.stopping_condition = StoppingCondition::LossGoal;
         }
         else if (validation_failures >= maximum_validation_failures)
         {
-            if (display) cout << "Epoch " << epoch << "\nMaximum validation failures reached: " << validation_failures << "\n";
+            if (display) logging::info() << "Epoch " << epoch << "\nMaximum validation failures reached: " << validation_failures << "\n";
             results.stopping_condition = StoppingCondition::MaximumValidationErrorIncreases;
         }
         else if (epoch + 1 >= maximum_epochs)
         {
-            if (display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch + 1 << "\n";
+            if (display) logging::info() << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch + 1 << "\n";
             results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
         }
         else if (elapsed_time >= maximum_time)
         {
-            if (display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << get_time(elapsed_time) << "\n";
+            if (display) logging::info() << "Epoch " << epoch << "\nMaximum training time reached: " << get_time(elapsed_time) << "\n";
             results.stopping_condition = StoppingCondition::MaximumTime;
         }
         else
@@ -1307,7 +1307,7 @@ void Optimizer::restore_best_parameters(NeuralNetwork* neural_network,
         return;
 
     if (display)
-        cout << "Restoring best parameters and states from epoch " << best_model.epoch
+        logging::info() << "Restoring best parameters and states from epoch " << best_model.epoch
              << " (validation error " << best_model.validation_error << ")\n";
 
     neural_network->set_parameters(Map<const VectorR>(best_model.parameters.data(),
@@ -1527,7 +1527,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         {
             training_session.disable_cuda_graph_capture();
             cuda_graph_capture_failed = true;
-            cerr << "CUDA graph capture failed (" << capture_error.what()
+            logging::warning() << "CUDA graph capture failed (" << capture_error.what()
                  << "); continuing without graphs.\n";
             profiler::set_enabled(profiler_enabled);
             return operation();
@@ -2028,7 +2028,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
                     tail.exec.reset();
                     tail.capture_failed = true;
                     cuda_graph_capture_failed = true;
-                    cerr << "Tail CUDA graph capture failed (" << capture_error.what()
+                    logging::warning() << "Tail CUDA graph capture failed (" << capture_error.what()
                          << "); continuing eagerly.\n";
                     profiler::set_enabled(profiler_enabled);
                     run_tail_step(UpdateMode::Capturable);

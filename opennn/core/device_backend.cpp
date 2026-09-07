@@ -33,6 +33,15 @@
 namespace opennn
 {
 
+#ifdef OPENNN_HAS_CUDA
+namespace
+{
+// Trivial process-lifetime state: static user buffers may be destroyed after
+// the backend or cache. They must not touch their destroyed streams or tables.
+atomic_bool cuda_resources_shutting_down{false};
+}
+#endif
+
 class Backend
 {
 public:
@@ -430,6 +439,11 @@ class CudaBlockCache
 {
 public:
 
+    ~CudaBlockCache()
+    {
+        cuda_resources_shutting_down.store(true, memory_order_relaxed);
+    }
+
     static CudaBlockCache& instance()
     {
         static CudaBlockCache cache;
@@ -685,6 +699,15 @@ void deallocate(Device device_type, void* pointer, Index byte_count) noexcept
 {
     if (!pointer) return;
 
+#ifdef OPENNN_HAS_CUDA
+    if (device_type == Device::CUDA
+        && cuda_resources_shutting_down.load(memory_order_relaxed))
+    {
+        cudaFree(pointer);
+        return;
+    }
+#endif
+
     PROFILE_SCOPE_HOST("device:deallocate");
 
     if (device_type == Device::CUDA)
@@ -710,7 +733,7 @@ void set_zero(void* data, Index byte_count, Device device_type)
     if (device_type == Device::CUDA)
     {
 #ifdef OPENNN_HAS_CUDA
-        CHECK_CUDA(cudaMemset(data, 0, static_cast<size_t>(byte_count)));
+        CHECK_CUDA(cudaMemsetAsync(data, 0, static_cast<size_t>(byte_count), get_compute_stream()));
 #else
         throw_cuda_unavailable();
 #endif
@@ -727,8 +750,8 @@ void set_zero_async(void* data, Index byte_count, cudaStream_t stream)
     if (!data || byte_count == 0) return;
 
 #ifdef OPENNN_HAS_CUDA
-    CHECK_CUDA(stream ? cudaMemsetAsync(data, 0, static_cast<size_t>(byte_count), stream)
-                      : cudaMemset(data, 0, static_cast<size_t>(byte_count)));
+    CHECK_CUDA(cudaMemsetAsync(data, 0, static_cast<size_t>(byte_count),
+                              stream ? stream : get_compute_stream()));
 #else
     (void)stream;
     memset(data, 0, static_cast<size_t>(byte_count));
@@ -756,9 +779,19 @@ void copy_async(void* destination,
         default: throw runtime_error("Invalid device copy kind.");
     }
 
-    CHECK_CUDA(stream
-        ? cudaMemcpyAsync(destination, source, size_t(byte_count), cuda_kind, stream)
-        : cudaMemcpy(destination, source, size_t(byte_count), cuda_kind));
+    if (kind == CopyKind::HostToHost)
+    {
+        memcpy(destination, source, static_cast<size_t>(byte_count));
+        return;
+    }
+
+    // The compute lanes are nonblocking CUDA streams. A synchronous copy on
+    // CUDA's default stream does not wait for their pending kernels and can
+    // return partially written gradients. Preserve the blocking default-copy
+    // contract, but order it on the active compute lane.
+    const cudaStream_t copy_stream = stream ? stream : get_compute_stream();
+    CHECK_CUDA(cudaMemcpyAsync(destination, source, size_t(byte_count), cuda_kind, copy_stream));
+    if (!stream) CHECK_CUDA(cudaStreamSynchronize(copy_stream));
 
 #else
     (void)stream;
@@ -1092,7 +1125,7 @@ void StreamCapture::end(GraphExecHandle& exec)
     {
         size_t nodes = 0;
         if (cudaGraphGetNodes(graph.get(), nullptr, &nodes) == cudaSuccess)
-            cerr << "CUDA graph captured: " << nodes << " nodes" << endl;
+            logging::warning() << "CUDA graph captured: " << nodes << " nodes" << endl;
         cudaGetLastError();
     }
 
@@ -1206,7 +1239,7 @@ void Backend::ensure_cuda()
         if (status != cudaSuccess || device_count == 0)
         {
             cudaGetLastError();
-            cerr << "OpenNN: no CUDA device available (" << cudaGetErrorString(status)
+            logging::warning() << "OpenNN: no CUDA device available (" << cudaGetErrorString(status)
                  << "); running on CPU.\n";
             return;
         }
@@ -1292,6 +1325,8 @@ cudnnHandle_t Backend::cudnn(int lane)
 Backend::~Backend()
 {
 #ifdef OPENNN_HAS_CUDA
+    cuda_resources_shutting_down.store(true, memory_order_relaxed);
+
     if (op_tensor_add_descriptor)
         cudnnDestroyOpTensorDescriptor(op_tensor_add_descriptor);
 
@@ -1922,13 +1957,9 @@ namespace
     // a block that is already megabytes, too small is a write past its end.
     size_t matmul_dtype_bytes(cudaDataType_t type)
     {
-        switch (type)
-        {
-        case CUDA_R_8I:   return 1;
-        case CUDA_R_16F:
-        case CUDA_R_16BF: return 2;
-        default:          return 4;
-        }
+        if (type == CUDA_R_8I) return 1;
+        if (type == CUDA_R_16F || type == CUDA_R_16BF) return 2;
+        return 4;
     }
 
     void* thread_workspace(device::GraphWorkspaceKind kind, Index minimum_bytes)
@@ -2616,7 +2647,7 @@ namespace
                     // The candidate is dropped either way, so the library is
                     // still correct -- but a reader who sees this line has a
                     // layout bug to find, not a slow kernel.
-                    cerr << "cudnn matmul: candidate "
+                    logging::warning() << "cudnn matmul: candidate "
                          << cudnn_matmul::candidate_name(plan.cudnn_plan, candidate.cudnn_candidate)
                          << " disagreed with cuBLASLt and was dropped.\n";
                     continue;
@@ -2852,7 +2883,7 @@ namespace
             plan.cudnn_workspace_bytes = plan.candidates[chosen].workspace_bytes;
 
             if (cudnn_matmul::verbose())
-                cerr << "cudnn matmul: chose "
+                logging::warning() << "cudnn matmul: chose "
                      << cudnn_matmul::candidate_name(plan.cudnn_plan, plan.cudnn_candidate)
                      << " at " << times[chosen] * 1000.0f / timed_runs << " us against cuBLASLt's "
                      << (best < plan.candidates.size() ? times[best] * 1000.0f / timed_runs : 0.0f)

@@ -921,7 +921,7 @@ void TestingAnalysis::print_binary_classification_tests() const
 {
     const VectorR binary_classification_tests = calculate_binary_classification_tests();
 
-    cout << "Binary classification tests: " << "\n"
+    logging::info() << "Binary classification tests: " << "\n"
          << "Classification accuracy : " << binary_classification_tests[0] << "\n"
          << "Error rate              : " << binary_classification_tests[1] << "\n"
          << "Sensitivity             : " << binary_classification_tests[2] << "\n"
@@ -953,7 +953,7 @@ void TestingAnalysis::print_multiple_classification_tests() const
     report << "Multiple classification tests: \n"
            << "Classification accuracy : " << accuracy << "\n"
            << "Confusion matrix:\n" << confusion << "\n";
-    cout << report.str();
+    logging::info() << report.str();
 }
 
 void TestingAnalysis::GoodnessOfFitAnalysis::set(const VectorR& new_targets,
@@ -977,18 +977,18 @@ void TestingAnalysis::GoodnessOfFitAnalysis::save(const filesystem::path& file_n
 
 void TestingAnalysis::GoodnessOfFitAnalysis::print() const
 {
-    cout << "Goodness-of-fit analysis" << "\n"
+    logging::info() << "Goodness-of-fit analysis" << "\n"
          << "Determination: " << determination << "\n";
 
 }
 
 void TestingAnalysis::RocAnalysis::print() const
 {
-    cout << "ROC Curve analysis" << "\n";
+    logging::info() << "ROC Curve analysis" << "\n";
 
-    cout << "Area Under Curve: " << area_under_curve << "\n";
-    cout << "Confidence Limit: " << confidence_limit << "\n";
-    cout << "Optimal Threshold: " << optimal_threshold << "\n";
+    logging::info() << "Area Under Curve: " << area_under_curve << "\n";
+    logging::info() << "Confidence Limit: " << confidence_limit << "\n";
+    logging::info() << "Optimal Threshold: " << optimal_threshold << "\n";
 }
 
 }

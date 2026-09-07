@@ -173,12 +173,12 @@ void finalize_selected_model(TrainingStrategy* training_strategy,
     }
     else if (folds_number > 1)
     {
-        if (display) cout << "Refitting the final model on all development samples.\n";
+        if (display) logging::info() << "Refitting the final model on all development samples.\n";
         refit_final_model_on_development(training_strategy, folds_number);
     }
     else
     {
-        if (display) cout << "Refitting the final model on the selected " << selected_label << ".\n";
+        if (display) logging::info() << "Refitting the final model on the selected " << selected_label << ".\n";
         neural_network->set_parameters_random();
         training_strategy->train();
     }
