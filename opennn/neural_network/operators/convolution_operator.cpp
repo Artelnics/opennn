@@ -149,7 +149,7 @@ void build_forward(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims
 
     set_nhwc_output(entry.fwd_Y, d.batch, d.kernels, d.output_height, d.output_width);
 
-    entry.fwd.build(graph, "forward");
+    entry.fwd.build(graph, "forward", dtype == Type::FP32);
 }
 
 void build_wgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& d, Type dtype,
@@ -169,7 +169,7 @@ void build_wgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
     if (fp32_output)
         entry.wgrad_DW->set_data_type(DataType_t::FLOAT);
 
-    entry.wgrad.build(graph, "wgrad");
+    entry.wgrad.build(graph, "wgrad", dtype == Type::FP32);
 }
 
 void build_bgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& d, Type dtype)
@@ -184,7 +184,7 @@ void build_bgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
 
     set_per_channel_output(entry.bgrad_DB, d.kernels);
 
-    entry.bgrad.build(graph, "bgrad");
+    entry.bgrad.build(graph, "bgrad", dtype == Type::FP32);
 }
 
 void build_dgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& d, Type dtype,
@@ -211,7 +211,7 @@ void build_dgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
 
     set_nhwc_output(entry.dgrad_DX, d.batch, d.channels, d.height, d.width);
 
-    entry.dgrad.build(graph, "dgrad");
+    entry.dgrad.build(graph, "dgrad", dtype == Type::FP32);
 }
 
 string conv_timing_label(const ConvolutionOperator& op, const char* kind)

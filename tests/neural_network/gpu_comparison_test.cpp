@@ -583,11 +583,22 @@ TEST_F(GpuComparison, ImageClassificationGradient)
 
 TEST_F(GpuComparison, ProjectionResidualGradient)
 {
+    // The comparison is CPU fp32 against GPU fp32 at a tolerance TF32's 10-bit
+    // mantissa cannot meet, so the GPU runs IEEE fp32 for this test.
+    struct Fp32Guard
+    {
+        Fp32Guard()  { opennn::device::set_allow_tf32(false); }
+        ~Fp32Guard() { opennn::device::set_allow_tf32(true); }
+    } fp32_guard;
     // Batch 4 over a 2x2 extent normalizes each channel over only 16 values, and the
     // three-term batch-norm backward cancels badly at that N in fp32 - both devices then
     // sit ~1.5% from the true gradient, so their mutual difference exceeds any sane
-    // tolerance without either being wrong. Batch 16 agrees 180x better.
-    constexpr Index samples_number = 16;
+    // tolerance without either being wrong. At batch 16 (N = 64) the stem's gradient
+    // still measured 0.38% (CPU) and 0.32% (GPU) from finite differences, on opposite
+    // sides, so 0.65% apart while every other layer agreed to 1e-4; batch 64 (N = 256)
+    // conditions the stem's statistics well enough for the 5e-3 tolerance to test the
+    // kernels rather than the cancellation.
+    constexpr Index samples_number = 64;
     const Shape input_shape{2, 2, 8};
 
     TabularDataset dataset(samples_number, input_shape, Shape{1});
@@ -647,6 +658,25 @@ TEST_F(GpuComparison, ProjectionResidualGradient)
     const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
+
+    // Which layer carries the difference, so a failure names its source.
+    {
+        Index offset = 0;
+        const float scale = max(1.0f, cpu_gradient.array().abs().maxCoeff());
+        for (const auto& layer : gpu_network.get_layers())
+        {
+            const Index count = layer->get_parameters_number();
+            if (count > 0)
+            {
+                const float worst = (cpu_gradient.segment(offset, count)
+                                     - gpu_gradient.segment(offset, count)).array().abs().maxCoeff() / scale;
+                cout << "  " << layer->get_label() << ": " << count << " parameters, worst relative "
+                     << worst << "\n";
+            }
+            offset += count;
+        }
+    }
+
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 5.0e-3f);
 }
 

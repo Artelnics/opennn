@@ -456,6 +456,7 @@ inline std::filesystem::path plan_cache_file(const graph::Graph& graph)
         ^ (std::hash<bool>{}(device::conv_autotune_enabled()) << 2)
         ^ (std::hash<size_t>{}(selection) << 3)
         ^ (std::hash<bool>{}(sdpa_autotune_enabled()) << 4)
+        ^ (std::hash<bool>{}(device::allow_tf32()) << 6)
         ^ (std::hash<size_t>{}(conv_energy_stage_active()
                                    ? size_t(1000 + int(conv_energy_tolerance() * 100.0f + 0.5f))
                                    : size_t(0)) << 5);
@@ -655,10 +656,15 @@ seq_len_scalar(graph::Graph& graph, const char* name, int64_t batch = 1)
     return scalar_tensor(graph, name, DataType_t::INT32, false, batch);
 }
 
-inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string& tag)
+// fp32_graph: the graph's operands are fp32, so its tensor-core engines would
+// run TF32; when TF32 is disallowed those engines are deselected and the plan
+// is IEEE fp32 (see device::allow_tf32()).
+inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string& tag,
+                     const bool fp32_graph = false)
 {
     const cudnnHandle_t handle = device::get_cudnn_handle();
     const bool request_autotune = device::conv_autotune_enabled();
+    const bool ieee_fp32 = fp32_graph && !device::allow_tf32();
 
     workspace_bytes = 0;
 
@@ -675,6 +681,14 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
         check_status(graph.create_execution_plans(heuristic_modes()), tag + " create_execution_plans");
         if (conv_workspace_cap > 0)
             graph.deselect_workspace_greater_than(conv_workspace_cap);
+        // IEEE fp32 means no tensor-core (TF32) engine, no engine that
+        // down-converts its inputs, and no engine that reduces in a narrower
+        // type -- the three notes cuDNN uses to say "not the arithmetic the
+        // operands are declared in".
+        if (ieee_fp32)
+            graph.deselect_numeric_notes({NumericalNote_t::TENSOR_CORE,
+                                          NumericalNote_t::DOWN_CONVERT_INPUTS,
+                                          NumericalNote_t::REDUCED_PRECISION_REDUCTION});
         if (restrict_notes)
             graph.select_numeric_notes(conv_engine_notes());
     };
@@ -927,10 +941,10 @@ struct GraphSlot
     explicit operator bool() const noexcept { return graph != nullptr; }
     graph::Graph& operator*() const noexcept { return *graph; }
 
-    void build(shared_ptr<graph::Graph> built, const string& tag)
+    void build(shared_ptr<graph::Graph> built, const string& tag, const bool fp32_graph = false)
     {
         graph.reset();
-        autotune_pending = finalize(*built, workspace_bytes, tag);
+        autotune_pending = finalize(*built, workspace_bytes, tag, fp32_graph);
         graph = std::move(built);
     }
 

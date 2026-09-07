@@ -39,6 +39,7 @@ public:
     void set_threads_number(int);
 
     static cublasHandle_t get_cublas_handle()      { return instance().cublas(device::active_lane()); }
+    static void apply_math_mode()                  { instance().set_math_mode_on_handles(); }
     static cublasLtHandle_t get_cublas_lt_handle()
     {
         Backend& backend = instance();
@@ -61,6 +62,7 @@ private:
     cublasHandle_t cublas(int lane);
     cudnnHandle_t cudnn(int lane);
     cudaStream_t stream(int lane);
+    void set_math_mode_on_handles();
 
     // The CUDA side of the backend -- the compute and transfer streams, the
     // cuBLASLt handle, the shared cuDNN descriptor -- is created on first use,
@@ -147,6 +149,9 @@ constexpr int64_t conv_workspace_auto_ceiling = int64_t(256) * 1024 * 1024;
 atomic<int64_t> conv_workspace_cap_mode{-1};
 atomic<int64_t> conv_workspace_auto_bytes{conv_workspace_auto_ceiling};
 atomic_bool conv_autotune_enabled_flag{false};
+
+atomic_bool allow_tf32_flag{true};
+bool allow_tf32_flag_initialised = false;
 template<typename Rung> atomic<Rung>& rung_setting() noexcept
 {
     static atomic<Rung> setting{Rung::Auto};
@@ -345,6 +350,23 @@ bool conv_autotune_enabled() noexcept
 void set_conv_autotune(bool enabled) noexcept
 {
     conv_autotune_enabled_flag.store(enabled, memory_order_relaxed);
+}
+
+bool allow_tf32() noexcept
+{
+    if (!allow_tf32_flag_initialised)
+    {
+        allow_tf32_flag = env_flag_enabled("OPENNN_ALLOW_TF32", true);
+        allow_tf32_flag_initialised = true;
+    }
+    return allow_tf32_flag;
+}
+
+void set_allow_tf32(bool enabled) noexcept
+{
+    allow_tf32_flag = enabled;
+    allow_tf32_flag_initialised = true;
+    Backend::apply_math_mode();
 }
 
 template<typename Rung> Rung rung() noexcept
@@ -1211,13 +1233,25 @@ cublasHandle_t Backend::cublas(int lane)
     if (!cublas_handles[lane])
     {
         CHECK_CUBLAS(cublasCreate(&cublas_handles[lane]));
-        CHECK_CUBLAS(cublasSetMathMode(cublas_handles[lane], CUBLAS_TF32_TENSOR_OP_MATH));
+        CHECK_CUBLAS(cublasSetMathMode(cublas_handles[lane],
+                                       device::allow_tf32() ? CUBLAS_TF32_TENSOR_OP_MATH : CUBLAS_DEFAULT_MATH));
         CHECK_CUBLAS(cublasSetStream(cublas_handles[lane], lane_stream));
     }
     return cublas_handles[lane];
 #else
     (void)lane;
     return nullptr;
+#endif
+}
+
+void Backend::set_math_mode_on_handles()
+{
+#ifdef OPENNN_HAS_CUDA
+    std::lock_guard<std::mutex> lock(lane_mutex);
+    for (cublasHandle_t handle : cublas_handles)
+        if (handle)
+            CHECK_CUBLAS(cublasSetMathMode(handle, device::allow_tf32() ? CUBLAS_TF32_TENSOR_OP_MATH
+                                                                       : CUBLAS_DEFAULT_MATH));
 #endif
 }
 
@@ -1532,6 +1566,7 @@ namespace
         int ldb;
         int ldd;
         int beta_is_zero;
+        int tf32;   // the compute type of an fp32 plan follows allow_tf32() at build time
 
         bool operator==(const LtMatmulPlanKey&) const noexcept = default;
     };
@@ -1544,7 +1579,7 @@ namespace
                                 key.transA, key.transB, key.epilogue,
                                 key.dtype_a, key.dtype_b, key.out_dtype,
                                 key.lda, key.ldb, key.ldd,
-                                key.beta_is_zero);
+                                key.beta_is_zero, key.tf32);
         }
     };
 
@@ -1580,9 +1615,8 @@ namespace
     cublasComputeType_t matmul_compute_type(cudaDataType_t a_type, 
                                             cudaDataType_t b_type = CUDA_R_32F)
     {
-        return a_type == CUDA_R_16BF || b_type == CUDA_R_16BF
-            ? CUBLAS_COMPUTE_32F_FAST_16BF
-            : CUBLAS_COMPUTE_DTYPE;
+        if (a_type == CUDA_R_16BF || b_type == CUDA_R_16BF) return CUBLAS_COMPUTE_32F_FAST_16BF;
+        return device::allow_tf32() ? CUBLAS_COMPUTE_DTYPE : CUBLAS_COMPUTE_32F;
     }    
 
     // Only used to size the tuner's scratch destination, so an unrecognised
@@ -1850,7 +1884,8 @@ namespace
         const LtMatmulPlanKey key{m, n, k,
                                   int(transA), int(transB), int(epilogue),
                                   int(dtype_a), int(dtype_b), int(out_dtype),
-                                  lda, ldb, ldd, int(beta_is_zero)};
+                                  lda, ldb, ldd, int(beta_is_zero),
+                                   int(device::allow_tf32())};
         auto& plans = thread_state().lt_matmul_plans;
         auto it = plans.find(key);
         if (it != plans.end()) return it->second;

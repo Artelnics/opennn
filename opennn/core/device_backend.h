@@ -145,6 +145,17 @@ void    set_conv_workspace_auto_limit_bytes(int64_t) noexcept;
 bool conv_autotune_enabled() noexcept;
 void set_conv_autotune(bool enabled) noexcept;
 
+// TF32 for the fp32 paths on tensor cores: cuBLAS/cuBLASLt fp32 GEMMs and
+// cuDNN fp32 convolution engines. On by default (OPENNN_ALLOW_TF32=0 turns it
+// off), which is also PyTorch's setting in the benchmark. Off means IEEE fp32
+// arithmetic at several times the cost, and it exists for exactly one reason:
+// validating a GPU result against a CPU reference to a tolerance TF32's
+// 10-bit mantissa cannot meet. Takes effect on cuBLAS handles already created
+// and on plans built after the call; cached plans carry the setting in their
+// keys.
+bool allow_tf32() noexcept;
+void set_allow_tf32(bool enabled) noexcept;
+
 enum class BatchNormBackwardRung { Auto, StagedFp32, PlainNative, OwnKernel };
 enum class BatchNormForwardRung { Auto, CudnnGraph, OwnKernel };
 enum class MaxPoolingRung { Auto, Cudnn, OwnKernel };

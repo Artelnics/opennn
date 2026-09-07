@@ -175,6 +175,14 @@ TEST(C2PSA, CpuAndGpuGradientsMatch)
     if (!opennn::device::has_cuda_device())
         GTEST_SKIP() << "No CUDA device.";
 
+    // The comparison is CPU fp32 against GPU fp32 at a tolerance TF32's 10-bit
+    // mantissa cannot meet, so the GPU runs IEEE fp32 for this test.
+    struct Fp32Guard
+    {
+        Fp32Guard()  { opennn::device::set_allow_tf32(false); }
+        ~Fp32Guard() { opennn::device::set_allow_tf32(true); }
+    } fp32_guard;
+
     Configuration::instance().set(Device::CPU, Type::FP32);
 
     C2PSANet cpu_net;
