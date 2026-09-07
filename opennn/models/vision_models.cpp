@@ -733,20 +733,21 @@ struct YoloBuilder
 
     void add_v8_detection_head(Index feature_index,
                                const string& name,
-                               Index head_channels,
+                               Index box_head_channels,
+                               Index cls_head_channels,
                                Index box_channels,
                                const function<Index(Index, const Shape&, const string&)>& add_block) const
     {
         const Index input_channels = get_layer(feature_index)->get_output_shape()[2];
 
-        Index box = add_block(feature_index, Shape{3, 3, input_channels, head_channels}, name + "_box_c1");
-        box       = add_block(box, Shape{3, 3, head_channels, head_channels}, name + "_box_c2");
-        box       = add_conv(box, Shape{1, 1, head_channels, box_channels},
+        Index box = add_block(feature_index, Shape{3, 3, input_channels, box_head_channels}, name + "_box_c1");
+        box       = add_block(box, Shape{3, 3, box_head_channels, box_head_channels}, name + "_box_c2");
+        box       = add_conv(box, Shape{1, 1, box_head_channels, box_channels},
                              "Identity", stride, BatchNormalization::No, name + "_box_out");
 
-        Index classes = add_block(feature_index, Shape{3, 3, input_channels, head_channels}, name + "_cls_c1");
-        classes       = add_block(classes, Shape{3, 3, head_channels, head_channels}, name + "_cls_c2");
-        classes       = add_conv(classes, Shape{1, 1, head_channels, classes_number},
+        Index classes = add_block(feature_index, Shape{3, 3, input_channels, cls_head_channels}, name + "_cls_c1");
+        classes       = add_block(classes, Shape{3, 3, cls_head_channels, cls_head_channels}, name + "_cls_c2");
+        classes       = add_conv(classes, Shape{1, 1, cls_head_channels, classes_number},
                                  "Identity", stride, BatchNormalization::No, name + "_cls_out");
 
         const Shape spatial = get_layer(box)->get_output_shape();
@@ -809,9 +810,11 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
     throw_if(reg_max > 1 && head_style != HeadStyle::FPNv8,
              "YoloNetwork: reg_max applies to HeadStyle::FPNv8 only; the anchor heads ignore it.");
 
-    throw_if(use_sppf && !(is_darknet53_family
-                           && (head_style == HeadStyle::FPN || head_style == HeadStyle::PANet)),
-             "YoloNetwork: use_sppf applies to Darknet53/CSPDarknet53 with FPN or PANet only.");
+    throw_if(use_sppf && !((is_darknet53_family
+                            && (head_style == HeadStyle::FPN || head_style == HeadStyle::PANet))
+                           || (backbone == Backbone::CSPDarknet53v11 && head_style == HeadStyle::FPNv8)),
+             "YoloNetwork: use_sppf applies to Darknet53/CSPDarknet53 with FPN/PANet, "
+             "or CSPDarknet53v11 with FPNv8.");
 
     throw_if(model_size != ModelSize::l && backbone != Backbone::CSPDarknet53v11,
              "YoloNetwork: model_size applies to the CSPDarknet53v11 backbone only.");
@@ -904,15 +907,16 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                       {n18_down, p5_idx});
             const Index c8_n21 = builder.add_c2f(get_layers_number()-1, n18_ch+c5, n21_ch, nd_n, false, "c8_n21");
 
-            constexpr Index head_ch = 64;
+            constexpr Index box_head_ch = 64;
+            constexpr Index cls_head_ch = 128;  // matches official YOLOv8s cls branch width
             const Index box_ch = 4 * max(reg_max, Index(1));
 
             const auto cba_block = [&](Index in, const Shape& kernel, const string& label)
                                    { return builder.add_csp_v11_block(in, kernel, stride, label); };
 
-            builder.add_v8_detection_head(c8_n15, "c8_small",  head_ch, box_ch, cba_block);
-            builder.add_v8_detection_head(c8_n18, "c8_medium", head_ch, box_ch, cba_block);
-            builder.add_v8_detection_head(c8_n21, "c8_large",  head_ch, box_ch, cba_block);
+            builder.add_v8_detection_head(c8_n15, "c8_small",  box_head_ch, cls_head_ch, box_ch, cba_block);
+            builder.add_v8_detection_head(c8_n18, "c8_medium", box_head_ch, cls_head_ch, box_ch, cba_block);
+            builder.add_v8_detection_head(c8_n21, "c8_large",  box_head_ch, cls_head_ch, box_ch, cba_block);
 
             compile();
             set_parameters_random();
@@ -1023,11 +1027,11 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const auto [p5n, p4n, p3n] = build_fpn_trunk(c5_index, "v8_");
 
             const Index p5d = builder.add_conv(p5n, Shape{3, 3, 512, 1024}, act, stride, BatchNormalization::Yes, "v8_neck_p5_pre");
-            builder.add_v8_detection_head(p5d, "v8_large", head_ch, box_ch, conv_block);
+            builder.add_v8_detection_head(p5d, "v8_large",  head_ch, head_ch, box_ch, conv_block);
             const Index p4d = builder.add_conv(p4n, Shape{3, 3, 256, 512}, act, stride, BatchNormalization::Yes, "v8_neck_p4_pre");
-            builder.add_v8_detection_head(p4d, "v8_medium", head_ch, box_ch, conv_block);
+            builder.add_v8_detection_head(p4d, "v8_medium", head_ch, head_ch, box_ch, conv_block);
             const Index p3d = builder.add_conv(p3n, Shape{3, 3, 128, 256}, act, stride, BatchNormalization::Yes, "v8_neck_p3_pre");
-            builder.add_v8_detection_head(p3d, "v8_small", head_ch, box_ch, conv_block);
+            builder.add_v8_detection_head(p3d, "v8_small",  head_ch, head_ch, box_ch, conv_block);
 
             compile();
             set_parameters_random();
