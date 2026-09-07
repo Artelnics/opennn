@@ -1,6 +1,6 @@
 // The dense family, defined once, driven four ways.
 //
-// REORGANIZATION_PLAN.md sections 4 and 8. This replaces the model
+// This replaces the model
 // construction that stood in six programs -- opennn_speed, opennn_higgs_cpu,
 // opennn_higgs_infer, opennn_higgs_maxbatch_trial, opennn_accuracy and
 // opennn_convergence, 1,717 lines between them. Only ~100 of those lines were
@@ -8,7 +8,7 @@
 // than disappearing.
 //
 // The point of one definition is that the definitions had already drifted.
-// DUPLICATION_LEDGER.md records the capacity site seeding with 0 while the
+// The old capacity site seeded with 0 while the
 // other five seeded with 42, so the capacity benchmark had never measured the
 // same initialised network as the speed and quality ones. Here `build` is the
 // only way to make the network, so that cannot recur.

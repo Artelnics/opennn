@@ -1,343 +1,368 @@
-# The contract
+# Benchmark protocol
 
-Fixed. Changing any item here invalidates every result taken under the old
-version, so a change means a re-run, not a footnote.
+This document is the measurement contract for every benchmark family in this
+directory. It is intentionally independent of a particular computer: results
+from different machines are valid reproductions, but they are separate result
+sets and must never be combined into a direct engine comparison.
 
-## 1. The reference machine
+Changing a rule that affects the workload, engine configuration, timed region,
+instrumentation or validity gates creates a new protocol revision. Results
+affected by such a change must be rerun; a note beside old numbers is not a
+substitute for measuring them again.
 
-Every published number comes from this machine. Others may replicate; their
-numbers are never compared against these.
+## 1. What is being compared
 
-| | |
-|---|---|
-| GPU | NVIDIA GeForce RTX 5070 Ti · `sm_120` · 16,303 MiB · 300 W |
-| Driver | 610.43.02 |
-| CPU | Intel i7-14700F |
-| OS | Linux, native — not WSL |
-| CUDA · cuDNN | 13.3.73 · 9.25.1 system, which OpenNN links |
-| PyTorch | 2.13.0+cu130, arch list includes `sm_120`; bundles its own cuDNN 9.23.2 |
-| MKL | 2026.0.1 for OpenNN; PyTorch's wheel bundles its own |
-| Python | 3.12.3 |
+A benchmark cell is defined by all of the following:
 
-**The two engines do not share a cuDNN.** OpenNN links the system
-`libcudnn.so.9` at 9.25.1; PyTorch loads the 9.23.2 its wheel ships. Two minor
-versions apart, and the CNN and transformer families are cuDNN-bound, so this
-is an asymmetry in the same class as the OpenMP-runtime one that inverted the
-CPU LSTM cell twice before item 6 pinned it down. It is recorded rather than
-corrected: neither engine can be moved to the other's cuDNN without building it
-from source, and the effect here is unmeasured. Do not attribute a CNN or
-transformer margin under a few percent to the framework without checking it.
+- source revision and whether the working tree is clean;
+- benchmark family and mode;
+- model topology, parameter count and numerical precision;
+- dataset or model-weight revision and content hashes;
+- device, backend, libraries, driver and runtime versions;
+- batch size or prompt/output length;
+- engine options, warm-up policy, repeats and round count;
+- environmental controls and measurement instruments.
 
-Native Linux is deliberate. The CNN family lazy-loads images per batch, so it
-measures convolution throughput *plus* input-pipeline efficiency, and WSL's
-filesystem layer would contaminate exactly that.
+Only results with the same cell definition and taken in the same session may be
+used to calculate an engine ratio. Results from another GPU, CPU, operating
+system, driver or library stack form a new session, even if the benchmark
+arguments are identical.
 
-## 2. TensorFlow is not in the matrix
+The standard families compare OpenNN and PyTorch. Qwen has two complementary
+tracks:
 
-No TensorFlow build ships `sm_120` kernels — not 2.21.0, the current release,
-and not the nightly, which pulls CUDA 12.9 and still targets only `sm_60`
-through `sm_90`. It runs here on driver-JIT'd PTX and says so at import.
+- `core` compares the OpenNN CUDA engine with `llama-bench`, excluding
+  tokenization, sampling, transport and text output;
+- `runtime` compares OpenNN's `ChatSession`, `llama-server` and Ollama through
+  their real user-facing paths, including tokenization, sampling and transport.
 
-Measured cost: ~25% on a 4096³ matmul. That figure is *unattributable*, because
-there is no native build to difference against, and being unattributable is
-what disqualifies it — a published deficit would partly measure NVIDIA's
-release schedule and would move on a rebuild.
+Core and runtime figures answer different questions and must not be placed in
+the same performance column.
 
-Every cell records `engines: [opennn, pytorch]` until an NGC container changes
-this. Verify any candidate build by dumping its kernels, not by reading
-`build_info`, which the nightly leaves empty:
+## 2. Repository, results and reports
 
-```bash
-cuobjdump --list-elf .../tensorflow/libtensorflow_cc.so.2 | grep -oE "sm_[0-9]+" | sort -u
-```
+Benchmark source, small manifests, the protocol and reviewed reports are
+versioned. Datasets, model weights, converted models, third-party runtimes,
+build trees, logs and raw results are not.
 
-## 3. Each engine at its best
+Set `OPENNN_BENCH_DATA` to a directory outside the repository. When it is not
+set, the scripts choose a user-local default. Preparation must place every
+download and generated asset below that directory and must not reuse a personal
+framework cache or a globally running model server.
 
-Not "as it comes". An engine measured below its own ceiling makes the other
-look good for the wrong reason, and this is the item most likely to drift
-silently.
+Committed manifests are inputs, not generated results. They pin revisions,
+hashes and deterministic subsets so another machine can retrieve the same
+material. If a downloaded or converted file does not match its manifest, stop
+before measurement. Never update a manifest merely to accept an unexplained
+hash difference.
 
-| | GPU | CPU |
-|---|---|---|
-| OpenNN | captured CUDA graph, device-resident split, whole batches only | same definition, `Device::CPU`, **MKL** |
-| PyTorch | `torch.compile`, `channels_last`, TF32 enabled | **eager**, MKL |
+Raw artifacts are written below `benchmarks/results/`. That directory is
+ignored by Git and is never committed. A run that is provisional or fails a
+validity gate is written below `benchmarks/results/scratch/`; it is retained for
+diagnosis but is not a publishable result.
 
-**PyTorch runs eager on CPU on purpose, and it is measured, not assumed.**
-Inductor's CPU codegen loses on a small stack of GEMMs: dense CPU training at
-batch 4,096 gives eager 93,156 samples/s against compiled 83,722 here, and the
-previous suite measured the same ordering on different hardware (41,523 against
-29,449). Compiling anyway would hand OpenNN a win against a PyTorch nobody
-would ship. `PT_COMPILE_MODE` overrides either way, so the choice stays
-measurable rather than baked in.
+Reviewed project results live in `benchmarks/reports/`. These committed reports
+are the source of truth for benchmarks officially performed by the project.
+Every reported value must be traceable to an unedited raw artifact, state its
+machine and protocol, show relevant gates, and distinguish measured facts from
+analysis. Generating a local artifact does not automatically make it an
+official report.
 
-This is not hypothetical. Measured against an *eager* PyTorch, dense training
-read 1.29×; against a compiled one, 1.06×. The first number was not a lie about
-OpenNN — it was a lie about PyTorch.
+## 3. Prepare the environment
 
-**Both engines run on MKL, and every run says which.** OpenNN's CPU kernels
-dispatch to Eigen or MKL, chosen at runtime by `Configuration::set_blas`; Eigen
-is the library default, so a plain build behaves like a plain build, and the
-benchmark drivers opt in. PyTorch's wheels are MKL-backed and report
-`BLAS_INFO=mkl`.
+Record enough provenance to reproduce the binary and explain a performance
+change:
 
-Leaving OpenNN on Eigen would measure the BLAS and call it the framework. The
-same dense CPU inference reads 169,152 samples/s on Eigen and 213,422 on MKL —
-against PyTorch's ~167,000 that is the difference between 1.02× and 1.28×, and
-neither number is wrong about OpenNN. Both engines print a `blas=` line and the
-artifact records it per launch, so the backend is a property of the *run* and
-readable from the result, rather than something inferred from which build
-directory the binary came out of.
+- operating system and architecture;
+- CPU and logical-core count;
+- GPU name, compute capability and VRAM;
+- GPU driver, CUDA and cuDNN versions;
+- compiler, build type and relevant CMake options;
+- Python and framework versions;
+- BLAS, attention, convolution and recurrent backends actually selected;
+- every non-default environment variable and engine flag.
 
-One consequence to keep in view: linking MKL also makes Eigen use it for
-BLAS/LAPACK, independently of the dispatch flag. An MKL-linked build fails
-`CorrelationsTest.LogisticCorrelation` on both paths and
-`GeneticAlgorithmTest.SelectsParsimoniousSubset` on the Eigen one; both pass
-with MKL absent. That is a linkage sensitivity, not a benchmark result, but it
-is why MKL is opted into rather than defaulted to.
+Use release builds. Do not compare a debug or sanitizer build with an optimized
+runtime. Build all engines for the actual target architecture and verify that
+GPU workloads really offload to the GPU. A fallback to CPU, PTX JIT when native
+kernels were required, or an unintended reference kernel invalidates the cell.
 
-## 4. Same work, or no comparison
+Each engine should use its best stable production configuration for the stated
+workload. Optimizations such as CUDA Graphs, Flash Attention, full GPU offload,
+`torch.compile`, memory layouts or optimized BLAS are allowed when they are
+available to normal users, deterministic enough for the test and recorded in
+the artifact. Do not deliberately handicap one engine to make internal options
+look symmetrical.
 
-Both gates run before any number is reported, and both are recorded in the
-artifact.
+Configuration is fixed before a session begins. Exploratory tuning is a
+separate scratch session; the chosen stable configuration is then rerun from
+the start. Never select per-engine options after inspecting the final result.
 
-**Shape.** Sample count, sequence length, vocabulary and parameter count must
-agree across engines. Two findings that arrived this way:
+## 4. Prepare and verify inputs
 
-- OpenNN's tokeniser emitted 158-position sequences where PyTorch's emitted
-  128 — 23% more arithmetic for the same corpus, invisible in samples/s. Fixed
-  by pre-tokenising with OpenNN's own rule, so both read the same stream.
-- `nn.Transformer` appends a final `LayerNorm` to encoder and decoder, 2,048
-  parameters OpenNN's model does not have. Fixed by building the stacks
-  directly with `norm=None`.
-
-Current parameter counts, matching exactly: dense 1,080,321 · CNN 25,557,032 ·
-transformer 120,245,792 · LSTM 73,857.
-
-The transformer figure read 74,878,496 here until 2026-09-01, which no run has
-ever reported: every artifact in the store records 120,245,792, and the gate
-passed all along because it compares the engines against *each other*, not
-against this document. A stale number in the contract is worse than none --
-anyone checking the gate by hand would have concluded it was broken.
-
-**Quality.** Accuracies must agree within tolerance, per batch, across engines.
-A speed win bought by computing something different is not a speed win.
-
-## 5. Metrics
-
-**Throughput.** Samples/s, warmup excluded, median of repeated rounds, every
-round kept in the artifact so a drifting session is visible rather than
-averaged into a claim. Ratios within one session are the durable output;
-absolute samples/s is provenance.
-
-**Peak memory.** On GPU, device-used memory (`nvmlDeviceGetMemoryInfo`, the
-figure `nvidia-smi` prints) sampled at 20 ms, minus the idle reading taken
-before the run. Whole-device on purpose: it counts the CUDA
-context and the allocator's cached blocks, because that memory really is
-unavailable to anything else. On CPU, the process's peak *anonymous*
-resident set, sampled from `RssAnon`, with `RssFile` recorded beside it.
-
-Anonymous, not total, and the distinction decides the result. `RssFile` counts
-pages backed by a mapped file, and OpenNN's reader mmaps its CSV rather than
-copying it -- so total RSS charges it ~150 MiB for a file it never allocated,
-while an engine that reads the same file onto the heap is charged the same for
-memory the kernel cannot reclaim. Counting mapped pages penalises the cheaper
-strategy. On one 500k-row cell: by total RSS, OpenNN 428 MiB and PyTorch 875;
-by anonymous, 270 and 563. Same runs; only the second pair answers "how much
-memory does this demand".
-
-`RssAnon` has no kernel-maintained high-water mark, so unlike `VmHWM` it is
-sampled rather than read once at exit. Each artifact records which metric was
-used via `memory_metric`, because the CPU and GPU quantities are not the same
-thing and must not share a column.
-
-> `torch.cuda.max_memory_allocated()` never appears in a comparison. It excludes
-> both, has no OpenNN equivalent, and flatters PyTorch by construction. Keep it
-> as a labelled PyTorch diagnostic if wanted.
-
-**Energy.** Board power integrated over the engine's own timed window, between
-the marks it prints. The power is the driver's own sampling of the board -- one
-instantaneous reading every 20 ms, timestamped by the driver and drained from
-its ring through NVML (`nvmlDeviceGetSamples`) once a second; the ring holds
-about 2.4 s, so nothing is lost, and the drain rate does not touch the result
-(20 ms, 1 s and no draining at all read the same throughput on a launch-bound
-cell, interleaved). The figure is reported only when the window held at least
-fifty samples, one second; otherwise the artifact says so. A short run has no
-energy figure, and `0.0000 Wh` would be a claim rather than an absence.
-
-Why not `nvidia-smi --query-gpu=power.draw`, which the suite used until
-2026-09-02: on Ampere and later that field is the driver's *one-second moving
-average*, so polling it at 20 ms cannot see inside a second. Every sub-second
-cell taken with it -- the dense and LSTM CUDA cells, windows of 70 ms to 1.3 s
--- reported a mean of about 45 W, which is an idle card with a burst of GEMMs
-averaged into it, not the 200 W and more the burst draws, and the old rule of
-four samples let those through as figures. The other readings were measured
-and rejected too: `power.draw.instant` refreshes every 500 ms, and
-`nvmlDeviceGetTotalEnergyConsumption` is a synchronous firmware query that
-stalls the accumulator it reads -- polled every 10 ms it under-counts a steady
-233 W by 60%, every 100 ms by 10%. That counter is read exactly twice per run,
-once at each end, and the whole-run difference is filed beside the window's
-figure as `run_energy_joules`: an independent instrument that agrees with the
-integral to 0.1% on a steady load, and a bound the window can never exceed.
-
-The window is a per-cell setting, not a matter of taste: a cell whose timed
-window would fall under two seconds runs more epochs or repeats until it clears
-them. On the reference machine that is cuda-dense-train at 100 epochs,
-cuda-dense-infer at 200 repeats, cuda-lstm-train at 20 epochs and
-cuda-lstm-infer at 50 repeats; every other cell clears two seconds at its
-default. The footprint family prints no marks: its process is the operation
-being timed, its figure is the whole process, and a process that lives under a
-second reports none.
-
-**CPU energy is the RAPL package counter,** integrated over the same timed
-window, and never the GPU's draw -- which during a CPU run is an idle card.
-
-`package-0`, not `core`. The package domain covers the cores *and* the uncore:
-the memory controller, the ring, the last-level cache. A bandwidth-bound run
-pays for those as surely as it pays for the multipliers, so charging it only
-for arithmetic would flatter exactly the workloads that move the most data.
-Each artifact records `energy_domain` and `energy_metric`, so a CPU figure is
-never silently read as the GPU's whole-board one -- they are different
-quantities and must not share a column.
-
-RAPL reports cumulative energy, not power, so the window is taken by
-*differencing* the counter with interpolated endpoints, not by the trapezoid
-rule the GPU path applies to power samples. Steps are accumulated modulo
-`max_energy_range_uj`, because the register wraps -- 262 kJ on this part -- and
-an unhandled wrap reads as one large negative step that would cancel most of a
-long run's energy.
-
-On a stock kernel `energy_uj` is `0400` root-only, hardened after CVE-2020-8694
-(PLATYPUS). Where nobody has granted read access the artifact says
-`energy_measurable: false` and gives the reason, rather than inventing a figure:
+Run preparation once for each standard family:
 
 ```bash
-sudo chmod a+r /sys/class/powercap/intel-rapl:*/energy_uj
+python benchmarks/prepare.py dense
+python benchmarks/prepare.py cnn
+python benchmarks/prepare.py transformer
+python benchmarks/prepare.py lstm
 ```
 
-That permission does not survive a reboot, so a CPU energy cell taken after one
-will report the counter as unreadable until it is granted again. Machines
-without the counter at all -- AMD without the module, most VMs -- report the
-same absence.
+Multiple families or `all` may be passed together. Preparation must be
+deterministic for a fixed manifest, seed and arguments. Record resolved paths,
+file sizes and hashes in the artifact, but never copy input data into the
+repository.
 
-## 6. CPU cells
+Before timing, verify equality of work between engines:
 
-The CPU has three sources of variance where the GPU has one, and only one of
-them can be removed without root.
+- identical train/test split and sample count;
+- identical input and target shapes;
+- identical model topology and logical parameter count;
+- identical sequence length, vocabulary and special-token handling for text;
+- identical precision policy or an explicitly reported unavoidable asymmetry;
+- identical number of warm-up and timed iterations;
+- identical stopping and error policy.
 
-**Removed, by the runner.** This is a hybrid part: 8 performance cores at
-5,400 MHz and 12 efficiency cores at 4,200, and the scheduler decides which a
-thread gets. That is worse than clock drift — it is discrete and per-thread, so
-two identical runs can differ by ~22% purely on placement, with nothing in the
-result to say so. Every CPU launch is therefore `taskset`-pinned to the P-cores,
-with a thread count set identically for both engines at one per *physical*
-core, since SMT siblings share execution units. The artifact records the core
-span, the thread count and the excluded E-cores.
+The shape gate is mandatory. The quality gate is mandatory wherever the family
+reports a comparable quality metric. A speed figure from a failed gate may be
+useful for debugging, but it is not a valid comparison.
 
-**Not removed, and recorded instead.** The governor and turbo state need root:
+## 5. Define the timed region
+
+Timing boundaries must answer the named metric and must be identical in meaning
+for every engine.
+
+For standard training and inference cells, exclude process startup, dataset
+preparation and warm-up. Include the complete repeated operation performed by
+the family driver. Synchronize asynchronous devices at both boundaries so the
+reported duration measures completed GPU work rather than command submission.
+
+For footprint startup measurements, the process lifetime is itself the work;
+do not amortize startup by placing several questions in one process.
+
+For language-model inference, report the phases separately:
+
+- **load/ready time:** runtime startup, model initialization and transfer until
+  the engine can accept the measured request;
+- **TTFT:** elapsed client time from request submission to the first generated
+  token;
+- **prefill throughput:** prompt tokens processed per second before generation;
+- **decode throughput:** generated tokens after the first, divided by the time
+  between the first and final generated token;
+- **end-to-end throughput:** the complete request, including the components
+  belonging to the selected core or runtime track.
+
+Do not describe prefill throughput as decode throughput or combine the two into
+one unlabeled tokens-per-second number. Prefill processes a prompt in parallel;
+decode is autoregressive and has a different compute and memory profile.
+
+## 6. Warm-up, rounds and ordering
+
+Warm up every engine before collecting timed samples. Warm-up should exercise
+the same shapes and important code paths as measurement, including compilation,
+kernel selection, graph capture and allocator initialization where applicable.
+Warm-up output is diagnostic and is not included in the timing summary.
+
+The default comparison uses three independent rounds. Rotate engine order each
+round so startup temperature, boost state and background drift are not assigned
+systematically to one engine. Keep every raw launch and sample in the artifact;
+the summary never replaces the raw observations.
+
+For the standard families, `--rounds` controls process launches and `--epochs`
+or `--repeats` controls work inside a launch. For Qwen, use three rounds and
+five timed repetitions per cell after warm-up. A reduced smoke test proves only
+that the pipeline works; it is never a performance result.
+
+Use the median as the primary central estimate and report minimum and maximum.
+Where the family computes coefficient of variation, a CV above 3% invalidates
+that cell. Do not hide instability by discarding an inconvenient sample unless
+there is an independently recorded machine or runtime failure.
+
+## 7. Control the machine
+
+Benchmark on an otherwise idle machine. Disable or pause scheduled work,
+updates, indexers, synchronization clients and other GPU applications where
+practical. Connect portable systems to power and select a stable performance
+profile. Record controls that cannot be enforced.
+
+The runner samples CPU activity before, during and after launches. Activity
+above `OPENNN_BENCH_BUSY_THRESHOLD` sends the result to `scratch/`. CPU cells
+may be pinned to an appropriate physical-core set; the chosen cores and thread
+count must be the same for every engine and recorded.
+
+Keep thread count, affinity and wait policy controlled across CPU engines.
+Frameworks can link different OpenMP runtimes whose default spin/sleep policies
+are not equivalent, and a model may also involve more than one thread pool.
+Record settings such as `GOMP_SPINCOUNT`, BLAS thread count and selected core
+set. If profiling shows idle workers competing with the pool doing useful work,
+resolve that runtime configuration before publishing the comparison.
+
+For CUDA comparisons, lock graphics and memory clocks when the platform and
+driver permit it. Select supported, sustainable values for the machine under
+test, document them with the result and restore default clocks even after a
+failure. An unlocked-clock run is diagnostic and belongs in `scratch/`.
+
+Linux provides [`tools/gpu_clocks.sh`](tools/gpu_clocks.sh). The Qwen Windows
+wrapper performs its own lock and always attempts `-rgc` and `-rmc` in a
+`finally` block. Clock values embedded in a platform wrapper are defaults for
+that reference setup, not universal requirements; another GPU needs values it
+supports and a separately identified result set.
+
+Before a Qwen round, the strict environmental gate requires:
+
+- CPU busy fraction at or below 3%;
+- GPU utilization at or below 2%;
+- GPU temperature at or below 45 °C;
+- launch-baseline VRAM drift no greater than 64 MiB;
+- successfully locked clocks;
+- no reported thermal or power throttling.
+
+If a machine cannot satisfy a gate, complete only diagnostic runs. Do not
+weaken a threshold after seeing a result and then treat that same run as valid.
+
+## 8. Memory, power and energy
+
+GPU memory is whole-device used memory sampled during the launch, minus a
+baseline read immediately before it. This includes contexts and allocator
+caches because that memory is unavailable to other work. Framework-private
+allocator counters may be stored as labeled diagnostics, but they are not used
+for cross-engine comparison.
+
+On WDDM, where per-process reporting is incomplete, use total device memory
+minus the per-launch baseline. For Qwen, steady memory is the median over the
+defined steady window after warm-up; peak memory is the maximum observed in the
+measured window. State the window and metric in the artifact.
+
+CPU memory is peak anonymous resident memory. File-backed pages are recorded
+separately so a memory-mapped dataset is not charged as if it were a private
+heap allocation.
+
+GPU energy is board power integrated over the engine's timed window. Prefer
+driver-timestamped NVML power samples. If only a slower averaged instrument is
+available, identify it explicitly. Energy is reported only when the timed
+window contains at least fifty 20 ms samples; otherwise it is `null` with an
+explanation, never zero.
+
+CPU energy uses a readable package-level RAPL counter where available. It is a
+different measurement domain from GPU board energy and must be labeled as such.
+An unavailable counter produces an unmeasured field, not an estimate.
+
+## 9. Standard family procedure
+
+For `dense`, `cnn`, `transformer` and `lstm`:
+
+1. Prepare the family data and verify its recorded identity.
+2. Build the OpenNN benchmark targets in Release mode.
+3. Start a session by setting a stable `OPENNN_BENCH_SESSION` value.
+4. Stabilize the machine and lock GPU clocks for CUDA runs.
+5. Run the desired family, mode, device, precision and batch cell.
+6. Confirm both engines completed and the shape and quality gates passed.
+7. Inspect raw launches for errors, background activity and instability.
+8. Restore clocks and retain the generated JSON artifact locally.
+
+Example:
 
 ```bash
-sudo cpupower frequency-set -g performance
-echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
+python benchmarks/run.py --family dense --mode train --device cuda \
+  --precision bf16 --batch 8192 --rounds 3
 ```
 
-Until those are set, cores scale between 800 and 5,400 MHz and turbo boosts
-until the package hits a limit and then drops — so the first seconds of a run
-are faster than the rest, and which engine gets them depends on ordering. Each
-artifact carries `cpu.governor` and `cpu.turbo_enabled` so a reader can tell an
-opportunistic run from a pinned-down one.
+An explicit comma-separated batch list produces a throughput curve. A value
+such as `1024:OOM` doubles the batch until a normal out-of-memory response. A
+crash or signal is not an OOM frontier and must be reported as a failure.
 
-**One OpenMP wait policy for both engines, and the artifact records it.** The
-two engines do not share an OpenMP runtime: OpenNN links the system libgomp,
-PyTorch's wheel carries its own. GCC 14's libgomp recognises a hybrid CPU and
-stops spinning at barriers (`GOMP_SPINCOUNT` falls to 1; every fork/join
-sleeps in the kernel), while PyTorch's older copy still spins 300,000 times.
-oneDNN's LSTM opens about thirty regions per batch, so this alone moved the
-identical primitive from 3.14 ms to 3.45 ms and turned a won cell into a lost
-one. The runner sets `GOMP_SPINCOUNT=300000` — libgomp's own documented
-default — for both engines; measured, it is a no-op for PyTorch (69.0k →
-69.3k samples/s) and restores OpenNN (62.6k → 72.3k). The `pinning.omp_wait`
-field says so in every CPU artifact. Intel's runtime (`libiomp5`) preloaded
-under both engines gives the same ordering with a wider margin; it is not the
-protocol default because neither engine ships it.
+## 10. Qwen3 procedure
 
-**Spinning has a cost of its own, and OpenNN pays it on one pool.** The
-process holds two pools on the same sixteen CPUs: Eigen's, for tensor
-expressions, and libgomp's, for `#pragma omp`, MKL's threaded calls and
-oneDNN. A libgomp worker that has just finished a region spins for those
-300,000 iterations — several milliseconds — on a logical CPU an Eigen thread
-may need next. The first run under the wait policy above showed exactly that:
-the dense forward GEMM ran on Eigen's pool, the one OpenMP region per batch
-(MKL's `sgemv` for the 1024→1 layer) released fifteen spinners into it, 62% of
-the process's samples were libgomp's `do_spin`, and cpu-dense-infer read 117k
-samples/s against 222k with the spin disabled — 0.70× of PyTorch instead of
-1.29×. OpenNN now runs its blocked GEMM on the libgomp pool by default
-(`OPENNN_GEMM_MODE`, in `tensor_operations.cpp`), so the threads that spin are
-the threads that work: 221k spinning, 217k not. The rule this leaves behind is
-that no cell may keep steady work on Eigen's pool while libgomp spins; a
-profile with `libgomp.so` above a few percent means it has crept back.
+On the supported Windows path, run:
 
-**Energy on CPU is RAPL `package-0`,** not the idle GPU's draw. See item 5 for
-the domain, the wrap handling and the permission it needs.
-
-## 7. Sessions
-
-**Lock the clock before measuring anything published:**
-
-```bash
-sudo ./gpu_clocks.sh lock 2700
+```powershell
+.\benchmarks\tools\qwen_benchmark.ps1 prepare
+.\benchmarks\tools\qwen_benchmark.ps1 build
+.\benchmarks\tools\qwen_benchmark.ps1 smoke
+.\benchmarks\tools\qwen_benchmark.ps1 run
 ```
 
-This card idles near 400 MHz and drifts about 8% across a day. Margins under
-~2% are not resolvable while it floats, however many rounds are taken. A
-transformer run on unlocked clocks read 986/s and 482/s for identical work
-fifteen minutes apart.
+Use `unlock` only to restore clocks explicitly after an interrupted external
+session; normal `smoke` and `run` actions restore them automatically.
 
-**The machine must be quiet, and the runner checks.** A competing process does
-not slow both engines equally, so rotation does not cancel it. One browser tab
-at a single core cost 35% of achievable memory bandwidth here: bandwidth-bound
-steps moved by that much while cache-resident ones did not move at all. That is
-worse than a uniform slowdown, because the result it produces has the shape of
-a real finding. In the session that found it, it cost two measurement windows
-and presented as a 24% regression in a binary that had not changed.
+Preparation reads `manifests/qwen_manifest.json`, downloads pinned OpenNN and
+canonical Qwen assets, builds one BF16 GGUF with the pinned converter, prepares
+an isolated Ollama store and validates weights tensor by tensor. OpenNN and
+GGUF logical tensors must match the canonical safetensors as BF16, allowing
+only exact BF16-to-F32 expansion for tensors the GGUF format requires in F32.
+Hash, shape, value, dtype, alias or layout mismatches stop the benchmark.
 
-The runner samples the non-idle fraction across all hardware threads before the
-first launch and after the last, and in between it watches every second of
-every launch: the CPU time of everything that is not the launch -- not the
-runner, not the launched process or its children, not kernel threads --
-charged from `/proc/<pid>/stat` once a second and judged over the engine's
-timed window. All three readings go into `machine_quiet` (`busy_before`,
-`busy_after`, `busy_during_max` with the second it happened), and the artifact
-is filed in `results/scratch/` when any of them is above 3%. Deliberately not
-the load average, which decays over minutes and reads 21 on an idle machine
-that was busy a moment ago. Quiet measures under 1% here and one saturated core
-is about 3.6%, so the threshold trips on roughly a single competing process.
-`OPENNN_BENCH_BUSY_THRESHOLD` moves it.
+The default workload is batch 1, greedy generation, prompt lengths 128, 512,
+2048 and 8192, and 256 output tokens. The primary cell is 2048+256. Fixtures
+are generated deterministically and must produce exactly the requested token
+IDs after applying the Qwen chat template in no-think mode. The token count and
+ID hash must agree for all engines.
 
-The per-second watch exists because the edge samples were not enough. On
-2026-09-02 an editor drawing a conversation on the E-cores, while 2.4 s
-dense-training windows ran on the P-cores, cost the launch-bound step 4-12%
-on both engines -- and three foreign cores took PyTorch's from 10.2M to 4.7M
-samples/s while OpenNN's lost 1% -- with both edge samples reading quiet. A
-disturbance that starts after the first launch and ends before the last is
-exactly the one a long cell is exposed to, and it does not slow both engines
-equally.
+For the core track:
 
-The check is necessary, not sufficient: it sees CPU time, not memory bandwidth.
-When a number moves and nothing in the tree explains it, re-run a fixed
-reference kernel whose figures are known before suspecting the code. A GEMM at
-a known shape told machine from binary in minutes, after an hour of reading
-diffs that were not the cause.
+- keep weights and KV cache resident;
+- exclude tokenization, sampling, HTTP and output formatting;
+- use full GPU offload and the recorded attention/KV precision;
+- run the same deterministic token sequence in OpenNN and `llama-bench`.
 
-**One session id per sitting**, exported so every launch under it agrees:
+For the runtime track:
 
-```bash
-export OPENNN_BENCH_SESSION=2026-08-25-baseline
-```
+- use OpenNN `ChatSession`, streaming `llama-server` and streaming Ollama;
+- use isolated free ports and stores;
+- start only harness-owned processes and stop only their recorded PIDs;
+- request greedy generation with the same prompt and output limit;
+- reject early EOS instead of silently replacing the workload.
 
-Numbers compare only within a session. An artifact whose session id nothing
-else shares is an un-anchored run, and the `adhoc-<pid>` default is deliberately
-awkward for that reason.
+Record output hashes, within-engine repeat stability, common greedy prefix and
+first cross-engine divergence. Cross-engine greedy divergence does not by
+itself invalidate timing after input, weights, shapes and within-engine
+determinism have passed, but it must remain visible in the report.
 
-**A dirty tree writes to `results/scratch/`.** Enforced in code, because the
-previous suite stated this rule in prose and checked it nowhere — 39 of its 107
-artifacts were dirty-tree results filed as reproducible ones.
+The full Qwen run emits immutable JSON, flat CSV, Markdown and SVG files under
+the selected result directory. A cell is diagnostic if it encounters OOM,
+partial CPU/GPU execution, early EOS, invalid weights, environmental failure,
+unexpected backend fallback, failed clock control or excessive variation.
+Other independent cells may remain valid.
+
+## 11. Result validity and publication
+
+A publishable artifact requires all applicable conditions:
+
+- clean Git tree and recorded source commit;
+- complete provenance and input hashes;
+- successful process exits and requested work completed;
+- matching shape/work gates;
+- passing quality or deterministic-output gates where defined;
+- acceptable environmental readings and locked GPU clocks;
+- stable repeated measurements;
+- no unexpected fallback, throttle, OOM or early termination.
+
+The raw artifact is the measurement record; the reviewed document in
+`reports/` is the project-level source of truth. A table or chart must be
+derivable from raw samples and must name the hardware, operating system,
+precision, workload, session and validity state. Ratios compare engines within
+the same session. Never relabel a result as coming from another machine, and
+never promote a scratch result to a primary number.
+
+When a gate fails, retain the observation and its reason in `scratch/`, correct
+the cause and rerun the complete affected cell. Do not edit generated JSON by
+hand, move it into the valid directory, or average it with valid samples.
+
+## 12. Final checklist
+
+Before accepting a benchmark session, verify:
+
+- [ ] source tree is clean and the intended commit is recorded;
+- [ ] all inputs and external tools match committed manifests;
+- [ ] builds are Release and use the intended device/backend;
+- [ ] engine work, shapes, precision and stopping rules match;
+- [ ] warm-up is excluded and asynchronous work is synchronized;
+- [ ] engine order rotates and all raw repetitions are retained;
+- [ ] the machine stayed within CPU, GPU, temperature and throttle gates;
+- [ ] clocks were locked and then restored;
+- [ ] memory and energy use comparable, labeled instruments;
+- [ ] quality, determinism and variation gates passed;
+- [ ] valid and diagnostic results landed in the correct local directories;
+- [ ] any official report traces back to the raw artifact and identifies the
+      actual machine.

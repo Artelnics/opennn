@@ -1,6 +1,6 @@
 // The CNN family, defined once, driven four ways.
 //
-// PLAN.md. ResNet-50 v1.5: bottleneck blocks [3,4,6,3], widths
+// ResNet-50 v1.5: bottleneck blocks [3,4,6,3], widths
 // [64,128,256,512], on the pinned ImageNet subset -- 1000 classes at 50
 // images each, 224x224. All 1000 classes are kept so the head is the real
 // 2048x1000; a ten-class subset would be a different network.

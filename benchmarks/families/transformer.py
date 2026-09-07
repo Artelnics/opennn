@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The transformer family in PyTorch, defined once, driven four ways.
 
-PLAN.md; the counterpart of transformer.cpp. Encoder-decoder, d_model 512, 8
+The counterpart of transformer.cpp. Encoder-decoder, d_model 512, 8
 heads, feed-forward 2048, 6 layers -- the "Attention Is All You Need" base
 model -- with scaled token embeddings, sinusoidal positions and a final
 projection to the vocabulary, which is what transformer.cpp builds.

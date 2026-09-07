@@ -405,21 +405,21 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
         add_layer(make_unique<Normalization3d>(block_shape, "final_normalization"),
                   {current_index});
 
-    add_layer(make_unique<Dense>(block_shape, 
+    add_layer(make_unique<Dense>(block_shape,
                                  Shape{vocabulary_size},
-                                 "Identity", 
-                                 BatchNormalization::No, 
+                                 "Identity",
+                                 BatchNormalization::No,
                                  "output_projection"));
 
     finalize_build(*this);
 }
 
 static Index add_bert_encoder(NeuralNetwork& net,
-                              Index sequence_length, 
-                              Index vocabulary_size, 
+                              Index sequence_length,
+                              Index vocabulary_size,
                               Index hidden_size,
-                              Index heads_number, 
-                              Index intermediate_size, 
+                              Index heads_number,
+                              Index intermediate_size,
                               Index layers_number,
                               Index type_vocabulary_size)
 {
@@ -734,6 +734,23 @@ const vector<string>& Transformer::get_target_vocabulary() const
 TextGenerationNetwork::TextGenerationNetwork(const filesystem::path& path)
     : NeuralNetwork(path, NetworkTask::LanguageModeling)
 {
+}
+
+void TextGenerationNetwork::load_pretrained(const filesystem::path& data_directory)
+{
+    constexpr string_view GPT2_BASE_URL =
+        "https://github.com/Artelnics/opennn/releases/download/gpt2-weights-v1/";
+    constexpr string_view GPT2_WEIGHTS_FILE = "gpt2-small-seq256.bin";
+
+    download_files_if_missing(
+        data_directory,
+        GPT2_BASE_URL,
+        {GPT2_WEIGHTS_FILE, "vocab.json", "merges.txt"});
+
+    set_tokenizer(make_unique<BytePairTokenizer>(
+        data_directory / "vocab.json", data_directory / "merges.txt"));
+
+    load_parameters_binary(data_directory / GPT2_WEIGHTS_FILE);
 }
 
 void TextGenerationNetwork::set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)

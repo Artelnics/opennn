@@ -1,6 +1,6 @@
 """Everything the suite needs that is not a model definition.
 
-PLAN.md step 1. One file, four concerns: where a result came from, where the
+Shared support for the contract in PROTOCOL.md: where a result came from, where the
 binaries are, what the GPU was doing, and how a prediction is scored.
 
 It is one file because the alternative was five, and because none of these is
@@ -44,10 +44,10 @@ def run_text(command: list[str], cwd: Path | None = None, timeout: int = 120) ->
 def repo_root(start: Path | None = None) -> Path:
     here = (start or Path(__file__)).resolve().parent
     root = run_text(["git", "-C", str(here), "rev-parse", "--show-toplevel"])
-    return Path(root).resolve() if root else here.parent
+    return Path(root).resolve() if root else here.parents[1]
 
 REPO_ROOT = repo_root()
-BENCHMARKS = Path(__file__).resolve().parent
+BENCHMARKS = Path(__file__).resolve().parent.parent
 RESULTS = BENCHMARKS / "results"
 
 def git_metadata(root: Path | None = None) -> dict[str, Any]:
@@ -158,6 +158,9 @@ def clocks_locked() -> bool:
     persistence by hand and not lock the clock, which is not an accident
     anyone has.
     """
+    if os.name == "nt":
+        return os.environ.get("OPENNN_BENCH_CLOCKS_LOCKED") == "1"
+
     return run_text(["nvidia-smi", "--query-gpu=persistence_mode",
                      "--format=csv,noheader"], timeout=10).strip() == "Enabled"
 
@@ -181,6 +184,30 @@ def cpu_busy_fraction(seconds: float = 1.0,
     Left as the whole machine when `cores` is None, which is right for a CUDA
     cell: nothing pins those, and their input pipeline can use any core.
     """
+    if os.name == "nt":
+        class FileTime(ctypes.Structure):
+            _fields_ = [("low", ctypes.c_uint32), ("high", ctypes.c_uint32)]
+
+        def value(file_time: FileTime) -> int:
+            return (file_time.high << 32) | file_time.low
+
+        def windows_snapshot() -> tuple[int, int]:
+            idle = FileTime()
+            kernel = FileTime()
+            user = FileTime()
+            if not ctypes.windll.kernel32.GetSystemTimes(
+                    ctypes.byref(idle), ctypes.byref(kernel), ctypes.byref(user)):
+                return 0, 0
+            return value(kernel) + value(user), value(idle)
+
+        total_before, idle_before = windows_snapshot()
+        time.sleep(seconds)
+        total_after, idle_after = windows_snapshot()
+        elapsed = total_after - total_before
+        if elapsed <= 0:
+            return 0.0
+        return max(0.0, 1.0 - (idle_after - idle_before) / elapsed)
+
     wanted = None if cores is None else {f"cpu{index}" for index in cores}
 
     def snapshot() -> tuple[int, int]:
@@ -387,11 +414,17 @@ def find_binary(base: str, root: Path | None = None) -> tuple[str, bool]:
 # GPU: state, and the sampler every run carries
 # --------------------------------------------------------------------------
 
-_STATE_FIELDS = ("clocks.current.sm,clocks.max.sm,clocks.current.memory,"
-                 "temperature.gpu,power.limit,power.draw,clocks_throttle_reasons.active")
+_STATE_FIELDS = ("name,driver_version,clocks.current.sm,clocks.max.sm,"
+                 "clocks.current.memory,temperature.gpu,power.limit,power.draw,"
+                 "clocks_throttle_reasons.sw_power_cap,"
+                 "clocks_throttle_reasons.sw_thermal_slowdown,"
+                 "clocks_throttle_reasons.hw_thermal_slowdown,"
+                 "clocks_throttle_reasons.hw_power_brake_slowdown")
 
-_STATE_KEYS = ("sm_clock_mhz", "sm_clock_max_mhz", "mem_clock_mhz",
-               "temp_c", "power_limit_w", "power_draw_w", "throttle_reasons")
+_STATE_KEYS = ("name", "driver_version", "sm_clock_mhz", "sm_clock_max_mhz",
+               "mem_clock_mhz", "temp_c", "power_limit_w", "power_draw_w",
+               "software_power_cap", "software_thermal_slowdown",
+               "hardware_thermal_slowdown", "hardware_power_brake_slowdown")
 
 def gpu_state() -> dict[str, Any]:
     """Clocks, temperature, power and any active throttle reason, so a number
@@ -631,6 +664,7 @@ class Monitor:
         self.device = device
         self.memory_samples: list[tuple[float, float]] = []    # unix, MiB
         self.power_samples: list[tuple[float, float]] = []     # unix, watts
+        self.telemetry_samples: list[dict[str, float | bool]] = []
         self.power_metric: str | None = None
         self.idle_mib = 0.0
         self.idle_watts = 0.0
@@ -717,7 +751,12 @@ class Monitor:
         self.power_metric = "nvidia_smi_power_draw_1s_average"
         try:
             self._process = subprocess.Popen(
-                ["nvidia-smi", "--query-gpu=memory.used,power.draw",
+                ["nvidia-smi", "--query-gpu=memory.used,power.draw,temperature.gpu,"
+                 "utilization.gpu,clocks.current.sm,clocks.current.memory,"
+                 "clocks_throttle_reasons.sw_power_cap,"
+                 "clocks_throttle_reasons.sw_thermal_slowdown,"
+                 "clocks_throttle_reasons.hw_thermal_slowdown,"
+                 "clocks_throttle_reasons.hw_power_brake_slowdown",
                  "--format=csv,noheader,nounits", "-lms", str(self.interval_ms)],
                 stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
         except Exception:
@@ -851,12 +890,28 @@ class Monitor:
             if self._stop.is_set():
                 break
             try:
-                mib, watts = (float(x) for x in line.split(","))
-            except ValueError:
+                parts = [value.strip() for value in line.split(",")]
+                mib, watts, temperature, utilization, sm_clock, memory_clock = (
+                    float(value) for value in parts[:6])
+            except (ValueError, IndexError):
                 continue
             now = time.time()
             self.memory_samples.append((now, mib))
             self.power_samples.append((now, watts))
+            active = lambda value: value.lower() == "active"
+            self.telemetry_samples.append({
+                "unix": now,
+                "memory_mib": mib,
+                "power_watts": watts,
+                "temperature_c": temperature,
+                "utilization_percent": utilization,
+                "sm_clock_mhz": sm_clock,
+                "memory_clock_mhz": memory_clock,
+                "power_throttled": ((len(parts) > 6 and active(parts[6]))
+                                     or (len(parts) > 9 and active(parts[9]))),
+                "thermal_throttled": ((len(parts) > 7 and active(parts[7]))
+                                       or (len(parts) > 8 and active(parts[8]))),
+            })
 
     @property
     def peak_mib(self) -> float:
@@ -949,6 +1004,9 @@ class Monitor:
             }
 
         window = self.window_power(start, end)
+        telemetry = [sample for sample in self.telemetry_samples
+                     if (start is None or sample["unix"] >= start)
+                     and (end is None or sample["unix"] <= end)]
 
         # A window too short to sample has no energy figure, and saying 0.0 Wh
         # would be a claim rather than an absence. Lengthen the run -- more
@@ -984,6 +1042,27 @@ class Monitor:
             "energy_metric": self.power_metric,
             "run_energy_joules": (round(self.run_energy_joules, 1)
                                   if self.run_energy_joules is not None else None),
+            "telemetry": {
+                "max_temperature_c": (max(sample["temperature_c"] for sample in telemetry)
+                                      if telemetry else None),
+                "max_utilization_percent": (max(sample["utilization_percent"]
+                                                for sample in telemetry)
+                                            if telemetry else None),
+                "min_sm_clock_mhz": (min(sample["sm_clock_mhz"] for sample in telemetry)
+                                     if telemetry else None),
+                "max_sm_clock_mhz": (max(sample["sm_clock_mhz"] for sample in telemetry)
+                                     if telemetry else None),
+                "min_memory_clock_mhz": (min(sample["memory_clock_mhz"]
+                                             for sample in telemetry)
+                                         if telemetry else None),
+                "max_memory_clock_mhz": (max(sample["memory_clock_mhz"]
+                                             for sample in telemetry)
+                                         if telemetry else None),
+                "power_throttled": any(sample["power_throttled"]
+                                       for sample in telemetry),
+                "thermal_throttled": any(sample["thermal_throttled"]
+                                         for sample in telemetry),
+            },
         }
 
 # --------------------------------------------------------------------------
@@ -1046,6 +1125,26 @@ def cpu_state() -> dict[str, Any]:
             return Path(path).read_text().strip()
         except OSError:
             return None
+
+    if os.name == "nt":
+        model = platform.processor()
+        try:
+            import winreg
+            with winreg.OpenKey(
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"HARDWARE\DESCRIPTION\System\CentralProcessor\0") as key:
+                model = str(winreg.QueryValueEx(key, "ProcessorNameString")[0]).strip()
+        except (ImportError, OSError):
+            pass
+        return {
+            "model": model,
+            "logical_processors": os.cpu_count(),
+            "governor": None,
+            "scaling_driver": "Windows scheduler",
+            "turbo_enabled": None,
+            "performance_cores": [],
+            "efficiency_cores": [],
+        }
 
     layout = core_layout()
     no_turbo = read("/sys/devices/system/cpu/intel_pstate/no_turbo")

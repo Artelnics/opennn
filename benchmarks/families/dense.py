@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The dense family in PyTorch, defined once, driven four ways.
 
-REORGANIZATION_PLAN.md sections 4 and 8; the counterpart of model_opennn.cpp
+The counterpart of dense.cpp
 and deliberately its mirror image. Same modes, same positional arguments, same
 `key=value` output, so a protocol drives either engine by swapping the command
 prefix and never learns which one it is talking to.
@@ -41,7 +41,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from common import binary_metrics  # noqa: E402
 
 SEED = 42

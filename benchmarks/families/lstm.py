@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The LSTM family in PyTorch, defined once, driven four ways.
 
-PLAN.md; the counterpart of lstm.cpp. LSTM forecasting on UCI Beijing PM2.5,
+The counterpart of lstm.cpp. LSTM forecasting on UCI Beijing PM2.5,
 predicting the next hourly reading from a window of past ones.
 
   lstm.py train    <csv> <csv> [epochs] [batch,...] [hidden] [past] [dev] [prec]

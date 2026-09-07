@@ -1,6 +1,6 @@
 // The transformer family, defined once, driven four ways.
 //
-// PLAN.md. The "Attention Is All You Need" base model -- d_model 512, 8
+// The "Attention Is All You Need" base model -- d_model 512, 8
 // heads, feed-forward 2048, 6 layers -- on WMT14 English-German, which is the
 // corpus that paper trained and reported on and therefore the citable one.
 // Heads and feed-forward width follow d_model by the paper's own ratios

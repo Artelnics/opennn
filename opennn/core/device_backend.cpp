@@ -1360,24 +1360,34 @@ namespace
     struct LtTile { int id; int rows; int columns; };
 
     constexpr LtTile lt_known_tiles[] = {
+#if CUBLAS_VER_MAJOR >= 13
         {CUBLASLT_MATMUL_TILE_256x256, 256, 256}, {CUBLASLT_MATMUL_TILE_192x256, 192, 256},
         {CUBLASLT_MATMUL_TILE_256x192, 256, 192}, {CUBLASLT_MATMUL_TILE_256x160, 256, 160},
-        {CUBLASLT_MATMUL_TILE_128x320, 128, 320}, {CUBLASLT_MATMUL_TILE_192x128, 192, 128},
+        {CUBLASLT_MATMUL_TILE_128x320, 128, 320},
+#endif
+        {CUBLASLT_MATMUL_TILE_192x128, 192, 128},
         {CUBLASLT_MATMUL_TILE_128x256, 128, 256}, {CUBLASLT_MATMUL_TILE_256x128, 256, 128},
+#if CUBLAS_VER_MAJOR >= 13
         {CUBLASLT_MATMUL_TILE_128x240, 128, 240}, {CUBLASLT_MATMUL_TILE_256x96,  256,  96},
+#endif
         {CUBLASLT_MATMUL_TILE_128x192, 128, 192}, {CUBLASLT_MATMUL_TILE_128x160, 128, 160},
-        {CUBLASLT_MATMUL_TILE_80x512,   80, 512}, {CUBLASLT_MATMUL_TILE_128x128, 128, 128},
-        {CUBLASLT_MATMUL_TILE_64x640,   64, 640}, {CUBLASLT_MATMUL_TILE_128x64,  128,  64},
+#if CUBLAS_VER_MAJOR >= 13
+        {CUBLASLT_MATMUL_TILE_80x512,   80, 512},
+#endif
+        {CUBLASLT_MATMUL_TILE_128x128, 128, 128},
+#if CUBLAS_VER_MAJOR >= 13
+        {CUBLASLT_MATMUL_TILE_64x640,   64, 640},
+#endif
+        {CUBLASLT_MATMUL_TILE_128x64,  128,  64},
         {CUBLASLT_MATMUL_TILE_64x128,   64, 128}, {CUBLASLT_MATMUL_TILE_64x64,    64,  64},
     };
 
-    // The first three rows -- 256x256, 192x256 and 256x192 -- are priced but
-    // never probed: AlgoCheck refused every one of them in all 14,708
-    // measured configurations, and the candidate scan below has no early
-    // exit, so probing them is a wasted sweep over every algorithm and stage
-    // on every new plan. They stay in the table because the driver's own
-    // heuristic may still return one and tile_traffic has to price it.
-    constexpr size_t probed_tiles_begin = 3;
+    // With cuBLAS 13 or newer, the first three rows -- 256x256, 192x256 and
+    // 256x192 -- are priced but never probed: AlgoCheck refused every one of
+    // them in all 14,708 measured configurations, and the candidate scan below
+    // has no early exit. Older cuBLAS headers do not define the wider tiles;
+    // every tile present in their reduced table remains eligible for probing.
+    constexpr size_t probed_tiles_begin = CUBLAS_VER_MAJOR >= 13 ? 3 : 0;
 
     // Unknown tiles report infinite traffic: they are never preferred over a
     // tile whose cost is known, only kept when they are the fastest.

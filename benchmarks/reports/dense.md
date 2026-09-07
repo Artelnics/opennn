@@ -868,11 +868,11 @@ The variant shows what the pool choice is worth: with the same MKL kernels
 running the row blocks on Eigen's thread pool (`OPENNN_GEMM_MODE=contract`),
 OpenNN falls to 118,188 samples/s (`20260902T044422Z`), 0.54× of itself,
 because the last layer's `sgemv` is an OpenMP region and libgomp's workers
-spin for 300,000 iterations after it — on the same logical CPUs the Eigen pool
-is trying to use for the next batch's GEMM. Running the GEMM on the OpenMP
-pool makes the spinners and the workers the same threads. This was a loss
-(0.70×) until it was found, and it is the reason the runner pins the OpenMP
-wait policy for both engines (PROTOCOL §6).
+spin for 300,000 iterations after it — on the same logical CPUs the Eigen
+pool is trying to use for the next batch's GEMM. Running the GEMM on the
+OpenMP pool makes the spinners and the workers the same threads. This was a
+loss (0.70×) until it was found, and it is the reason the runner pins the
+OpenMP wait policy for both engines (PROTOCOL §7).
 
 ### `cpu-dense-train`, 1.286×: the same GEMM, three times
 
@@ -969,17 +969,14 @@ they collide with.
   differences reported as the win. *Where the memory goes* above has the rest.
 - **The CPU cells run under `GOMP_SPINCOUNT=300000`, set by the runner for
   both engines.** PyTorch's wheel bundles a libgomp that spins that long by
-  default; the system libgomp OpenNN links (GCC 14) spins once on hybrid CPUs,
-  so without the variable the two engines would be measured under different
-  OpenMP wait policies — PROTOCOL §6 has the argument. No A/B for it exists on
-  this family at this commit: the artifacts recorded without the variable are
-  at earlier commits, before the GEMM-mode fix, and are not comparable. It
-  mattered for the LSTM.
-- **Different MKL builds.** OpenNN links MKL 2026.0.1; PyTorch's wheel bundles
-  its own (PROTOCOL §1). Both print `blas=mkl`; the
-  version is not something the runner can equalise, and the CPU cells are
-  95%+ one MKL `sgemm` call, so this is the asymmetry that matters most on
-  those two cells.
+  default; the system libgomp OpenNN links (GCC 14) spins once on hybrid
+  CPUs, so without the variable the two engines would be measured under
+  different OpenMP wait policies — PROTOCOL §7 has the argument. On this
+  family the variable is worth almost nothing to OpenNN once the GEMM runs
+  on the OpenMP pool (inference 221k against 217k samples/s with and without the spin, training 70.0k against 69.2k); it mattered for the LSTM.
+- **Different MKL builds.** OpenNN links MKL 2026.0.1; PyTorch's wheel
+  bundles its own MKL (`BLAS_INFO=mkl`, oneDNN v3.12.0). Both print `blas=mkl`; the
+  version is not something the runner can equalise.
 - **The CPU thread count is neither equalised nor recorded.** `run.py` sets
   `OMP_NUM_THREADS` and `torch.set_num_threads` only when `--threads` is
   passed, and it was not: every published CPU launch records

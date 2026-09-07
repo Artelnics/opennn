@@ -27,10 +27,14 @@
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/core/cuda/kernel_small_k_linear.cuh"
 #include "opennn/core/device_backend.h"
-#include "opennn/core/string_utilities.h"
 
 #include <algorithm>
 #include <limits>
+
+namespace opennn
+{
+bool env_flag_enabled(const char*, bool default_value) noexcept;
+}
 
 namespace
 {

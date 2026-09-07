@@ -1,6 +1,6 @@
 // The LSTM family, defined once, driven four ways.
 //
-// PLAN.md. LSTM forecasting on UCI Beijing PM2.5, hourly, predicting the next
+// LSTM forecasting on UCI Beijing PM2.5, hourly, predicting the next
 // reading from a window of past ones.
 //
 //   lstm train    <csv> <csv> [epochs] [batch,...] [hidden] [past] [dev] [prec]

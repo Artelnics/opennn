@@ -5,6 +5,10 @@ measured, what the numbers are, and *why* the margin is what it is — with the
 evidence for the why, so that a reader who distrusts a number can see what
 would have to be wrong for it to be wrong.
 
+These reviewed, versioned documents are the project's source of truth for its
+official benchmark results. Raw generated artifacts remain local under
+`../results/` and are never committed.
+
 | document | cells |
 |---|---|
 | [`dense.md`](dense.md) | HIGGS classifier: CUDA and CPU, training and inference |
@@ -228,7 +232,7 @@ already accepts for cuDNN, applied to a third of the table.
 `GOMP_SPINCOUNT=300000` for both engines, because GCC 14's libgomp stops
 spinning at barriers on a hybrid CPU while PyTorch's bundled copy still spins.
 Measured, it is a no-op for PyTorch (69.0k to 69.3k samples/s) and takes OpenNN
-from 62.6k to 72.3k, and PROTOCOL §6 records that this alone once turned a won
+from 62.6k to 72.3k, and PROTOCOL §7 records that this alone once turned a won
 cell into a lost one. The defence is that it is libgomp's own documented
 default, applied identically to both engines and recorded per launch as
 `pinning.omp_wait` — but the CPU LSTM cells would read differently without it.
@@ -459,7 +463,7 @@ not run. Several on this page are the second kind.
 ## Reproducing
 
 ```bash
-sudo ./gpu_clocks.sh lock 2700                   # PROTOCOL §7; the artifact records the clock
+sudo ./tools/gpu_clocks.sh lock 2700             # PROTOCOL §7; the artifact records the clock
 export OPENNN_BENCH_SESSION=$(date +%F)-mine
 python run.py --family dense --mode train --device cuda --batch 8192 --precision bf16 --epochs 100 --rounds 3
 python run.py --family dense --mode infer --device cuda --batch 8192 --precision bf16 --repeats 200 --rounds 3

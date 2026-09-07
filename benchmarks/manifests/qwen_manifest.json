@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "logical_parameters": 4022468096,
+  "opennn_commit": "64c2d3bccc9b4beb301b65227c920973d5726830",
+  "opennn_model": {
+    "repository": "Artelnics/qwen3-4b-opennn",
+    "revision": "5eb7e66549345aa9cae3efe931986fa4e3785322",
+    "files": {
+      "qwen3_bf16.bin": {"bytes": 8822858752, "sha256": "d56d5631358eabf9e680af310425a3f6ff4dd2032be7ca403d8215abfb4ba34b"},
+      "qwen3_meta.txt": {"bytes": 45, "sha256": "a6dd81855d1e3b2776d0d6f384bf3dc60574120c68ed7ccd2ba6149a5dfe5db6"},
+      "qwen3_special.tsv": {"bytes": 548, "sha256": "2a90265a3e6deb1254d17f73764ee1b1505be7d7a39c2175aa27818051aca268"},
+      "vocab.json": {"bytes": 3080770, "sha256": "f0f429cf2b3d0870f9b0d12b33a634ab7f4639c2b2b198bd5e9ebb4923749982"},
+      "merges.txt": {"bytes": 1671853, "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5"}
+    }
+  },
+  "canonical_model": {
+    "repository": "Qwen/Qwen3-4B",
+    "revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+    "files": {
+      "model-00001-of-00003.safetensors": {"bytes": 3957900840, "sha256": "328a91d3122359d5547f9d79521205bc0a46e1f79a792dfe650e99fc2d651223"},
+      "model-00002-of-00003.safetensors": {"bytes": 3987450520, "sha256": "6cd087b316306a68c562436b5492edbcf6e16c6dba3a1308279caa5a58e21ca5"},
+      "model-00003-of-00003.safetensors": {"bytes": 99630640, "sha256": "e4bf436957184f4eeb86a80e9db394503f1f56446b2e6b7edeac5b81470f4ca1"},
+      "model.safetensors.index.json": {"bytes": 32819, "sha256": "6dc0981b8829fead746441f68f38f24c5ca4a3a66351f652c26c6df0efc43ab2"},
+      "config.json": {"bytes": 726, "sha256": "8ba006f74fecfaaeb392872a60f4a480e7ec9860153d2e1b769ec81f9a147f8a"},
+      "generation_config.json": {"bytes": 239, "sha256": "2325da0f15bb848e018c5ae071b7943332e9f871d6b60e2ed22ca97d4cb993d2"},
+      "tokenizer.json": {"bytes": 11422654, "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4"},
+      "tokenizer_config.json": {"bytes": 9732, "sha256": "d5d09f07b48c3086c508b30d1c9114bd1189145b74e982a265350c923acd8101"},
+      "vocab.json": {"bytes": 2776833, "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"},
+      "merges.txt": {"bytes": 1671853, "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5"}
+    }
+  },
+  "llama_cpp": {
+    "tag": "v0.3.0",
+    "commit": "c1d0e7a004015f23bc0233470b747b596f29b264",
+    "repository": "https://github.com/ggml-org/llama.cpp.git",
+    "benchmark_patch": {
+      "path": "llama-bench-fixed-context.patch",
+      "sha256": "6d77b0d1d8d46b1a72e618b0c9ac11fab8c45a13b0defc7ce08155226b8e99fd",
+      "scope": "context allocation and wall-clock markers only; timed llama_decode loops are unchanged"
+    }
+  },
+  "ollama": {
+    "version": "v0.33.2",
+    "url": "https://github.com/ollama/ollama/releases/download/v0.33.2/ollama-windows-amd64.zip",
+    "sha256": "2439cbea65310b1aadf7d8fc41d7faf5d033f920d42e00a476c58bf9bff6950e"
+  },
+  "python": {"version": "3.12.3", "uv_version": "0.12.9"},
+  "protocol": {
+    "prompt_tokens": [128, 512, 2048, 8192],
+    "generated_tokens": 256,
+    "batch": 1,
+    "rounds": 3,
+    "repeats": 5,
+    "headline_prompt_tokens": 2048
+  }
+}

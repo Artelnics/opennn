@@ -157,16 +157,15 @@ default stream, which cuDNN's RNN path exercises and which capture forbids
 stream already was; nothing else changed on this family between the two
 tables.
 
-On CPU both engines run oneDNN's LSTM primitive — OpenNN links its own build
-and PyTorch's wheel bundles a different one; neither version is recorded in
-this session's artifacts — with MKL as the BLAS. Both processes are
+On CPU both engines run oneDNN's LSTM primitive — OpenNN's linked oneDNN
+3.11 and the 3.12 PyTorch's wheel bundles — with MKL as the BLAS. Both processes are
 `taskset`-pinned to CPUs 0–15, the P-cores, and each chooses its own thread
 count: the runner sets none (`pinning.threads = "engine default"` in every
 CPU artifact), OpenNN reads the affinity mask and takes 16
 (`Backend::set_threads_number`, `device_backend.cpp:1250`), and what
 PyTorch's own default resolves to is recorded nowhere (see the caveats).
 Both drivers enable flush-to-zero (`flush_denormals=on` is recorded), and
-the runner sets `GOMP_SPINCOUNT=300000` for both — PROTOCOL §6 explains why
+the runner sets `GOMP_SPINCOUNT=300000` for both — PROTOCOL §7 explains why
 the GCC 14 libgomp default would otherwise penalise the engine that links
 the system runtime.
 
@@ -551,7 +550,7 @@ published 1.158×. GCC 14's libgomp — the system runtime OpenNN links —
 sets its spin count to 1 on hybrid CPUs, so its workers futex-sleep between
 parallel regions where PyTorch's bundled libgomp spins: same primitive, same
 descriptor, 3.45 ms against 3.14 ms per batch, which the runner removes by
-setting `GOMP_SPINCOUNT=300000` for both (PROTOCOL §6). And libgomp re-sizes
+setting `GOMP_SPINCOUNT=300000` for both (PROTOCOL §7). And libgomp re-sizes
 its pool to every region's team, so `omp_set_dynamic(1)` (team = CPUs minus
 the fifteen-minute load average) and MKL's own heuristic for the 128 → 1
 output layer (10 threads for a small GEMM) were each shrinking the team
@@ -725,7 +724,7 @@ does not carry — are 0.005 ms of the batch, measured, and count against it.
   not recorded in this session's artifacts. Both CPU cells run the same
   oneDNN LSTM primitive with the same descriptor (checked with
   `DNNL_VERBOSE` when the CPU inference cell was being tuned) under the same
-  `GOMP_SPINCOUNT`, which the runner sets for both (PROTOCOL §6). But the
+  `GOMP_SPINCOUNT`, which the runner sets for both (PROTOCOL §7). But the
   runner sets **no thread count**: every CPU artifact records
   `pinning.threads = "engine default"`, OpenNN derives 16 from the `taskset`
   mask and PyTorch computes its own default from the machine, not from the

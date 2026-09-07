@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The CNN family in PyTorch, defined once, driven four ways.
 
-PLAN.md; the counterpart of cnn.cpp and deliberately its mirror image. Same
+The counterpart of cnn.cpp and deliberately its mirror image. Same
 modes, same positional arguments, same `key=value` output, so run.py drives
 either engine by swapping the command prefix.
 
