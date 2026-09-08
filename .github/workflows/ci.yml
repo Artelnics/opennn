@@ -297,6 +297,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build gcc-13 g++-13 gcovr
+          python -m pip install numpy==2.4.4 pandas==2.3.3
       - name: Configure coverage build
         run: >
           cmake -S . -B build-coverage -G Ninja

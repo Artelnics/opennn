@@ -12,6 +12,8 @@
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/tensor_types.h"
 
+#include <ranges>
+
 namespace opennn
 {
 
