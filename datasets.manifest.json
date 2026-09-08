@@ -6,9 +6,9 @@
     {
       "path": "examples/airfoil_self_noise",
       "inventory": {
-        "files": 1,
-        "normalized_bytes": 58458,
-        "sha256": "bd6b4f251b65bb4479d8ce8c459cfd78e1326c606eb4dc83967d2d7579115198"
+        "files": 2,
+        "normalized_bytes": 59123,
+        "sha256": "db06bfb5858c64f4a2e8e1e21b917e9119da8129a2d0f66886d02fc1261258b4"
       },
       "redistribution_cleared": true,
       "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
@@ -36,11 +36,11 @@
     {
       "path": "examples/breast_cancer",
       "inventory": {
-        "files": 2,
-        "normalized_bytes": 28672,
-        "sha256": "cbea441c9d709e70aad9c2c37bc84704365c443fe92cc01058dbf9a9e1e67d67"
+        "files": 3,
+        "normalized_bytes": 29694,
+        "sha256": "75de6b74dcd128763b9b08d25b18621e2756ee05ce221fb79861775482bb0849"
       },
-      "redistribution_cleared": false,
+      "redistribution_cleared": true,
       "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
     },
     {
@@ -126,11 +126,11 @@
     {
       "path": "examples/mnist",
       "inventory": {
-        "files": 10000,
-        "normalized_bytes": 18620000,
-        "sha256": "85ce2b094db7a5d572da8858b4889e68644622c398dbabf9908a2ccac7dba308"
+        "files": 10001,
+        "normalized_bytes": 18621098,
+        "sha256": "f26f35b2d7c44899bfd272dea8dea2a67519d9b32ba0e55489fcbf6d53b42056"
       },
-      "redistribution_cleared": false,
+      "redistribution_cleared": true,
       "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
     },
     {

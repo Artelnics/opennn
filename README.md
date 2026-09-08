@@ -138,6 +138,9 @@ GPU toolchain installed; otherwise the job remains queued.
 
 For Python export execution tests, install both NumPy and pandas:
 `python -m pip install numpy==2.4.4 pandas==2.3.3`.
+JavaScript export execution tests require Node.js on `PATH`; CI uses Node 24.
+Those tests report a skip when Node is unavailable locally. They compare
+generated formulas and categorical controls with native network predictions.
 
 Linux CI also runs AddressSanitizer (including leak detection) and
 UndefinedBehaviorSanitizer. To reproduce that configuration with Clang 17:
