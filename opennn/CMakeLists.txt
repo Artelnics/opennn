@@ -556,6 +556,7 @@ if(OpenNN_INSTALL)
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/opennn
         FILES_MATCHING PATTERN "*.h"
+        PATTERN "network_internal.h" EXCLUDE
         PATTERN "*-DESKTOP-*.h" EXCLUDE
         PATTERN "flash_attention_shim" EXCLUDE)
 

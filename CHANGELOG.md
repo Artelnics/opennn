@@ -8,6 +8,9 @@ remaining limitations.
 
 ### Reconciliation and release preparation
 
+- Separate network JSON, snapshots and save/load recovery into `network_io.cpp`.
+  Shared setup helpers remain private and inline; the public `Network` API,
+  file formats, execution kernels and buffer layouts are unchanged.
 - Simplify public names to `Adam`, `SGD`, `LSTM`, `Autoencoder`, `Yolo`,
   `InputSelection` and `Evaluation`, with matching headers and variable names.
   Adam/SGD optimizer and LSTM layer factory/JSON names use the new spellings.
