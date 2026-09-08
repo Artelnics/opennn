@@ -673,6 +673,87 @@ TEST(NeuralNetworkTest, ModelLoadRetainsEmbeddedJsonWeights)
     filesystem::remove(path);
 }
 
+namespace
+{
+
+void validate_embedded_parameter_counts(Device device)
+{
+    Configuration::instance().set(device, Type::FP32);
+    const filesystem::path path = filesystem::temp_directory_path()
+        / (device == Device::CPU ? "opennn_parameter_count_cpu.json"
+                                 : "opennn_parameter_count_cuda.json");
+    filesystem::path binary_path = path;
+    binary_path.replace_extension(".bin");
+    filesystem::remove(binary_path);
+
+    NeuralNetwork original;
+    original.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
+    original.compile();
+    const Index expected_count = original.get_parameters_buffer_size();
+    ASSERT_GT(expected_count, 1);
+    save_json_file(path, original);
+    JsonDocument document = load_json_file(path);
+
+    for (const Index count : {expected_count - 1, expected_count + 1, Index(0)})
+    {
+        SCOPED_TRACE(count);
+        string values = " \t\r\n";
+        for (Index i = 0; i < count; ++i) values += "1 ";
+        document.get_root()["NeuralNetwork"]["Parameters"]["Values"] = Json(values);
+
+        NeuralNetwork direct;
+        try
+        {
+            direct.from_JSON(document);
+            ADD_FAILURE() << "Wrong embedded parameter count was accepted: " << count;
+        }
+        catch (const runtime_error& error)
+        {
+            EXPECT_NE(string(error.what()).find(
+                format("got {}, expected {}", count, expected_count)), string::npos);
+        }
+        // Rejection must happen before even a prefix of the supplied ones is applied.
+        ASSERT_EQ(direct.get_parameters_buffer_size(), expected_count);
+        EXPECT_EQ(direct.get_device(), device);
+        direct.copy_parameters_host();
+        for (Index i = 0; i < expected_count; ++i)
+            EXPECT_FLOAT_EQ(direct.get_parameters_data()[i], 0.0f);
+
+        document.save(path);
+        NeuralNetwork loaded;
+        EXPECT_THROW(loaded.load(path), runtime_error);
+    }
+
+    string values;
+    for (Index i = 0; i < expected_count; ++i) values += "1 ";
+    document.get_root()["NeuralNetwork"]["Parameters"]["Values"] = Json(values);
+    const MatrixR inputs = MatrixR::Ones(1, 1);
+    NeuralNetwork direct;
+    direct.from_JSON(document);
+    EXPECT_EQ(direct.get_device(), device);
+    EXPECT_FLOAT_EQ(direct.calculate_outputs(inputs)(0, 0), 2.0f);
+    document.save(path);
+    NeuralNetwork loaded(path);
+    EXPECT_EQ(loaded.get_device(), device);
+    EXPECT_FLOAT_EQ(loaded.calculate_outputs(inputs)(0, 0), 2.0f);
+    filesystem::remove(path);
+}
+
+}
+
+TEST(NeuralNetworkTest, EmbeddedParameterCountsAreExact)
+{
+    validate_embedded_parameter_counts(Device::CPU);
+}
+
+#ifdef OPENNN_HAS_CUDA
+TEST(NeuralNetworkTest, EmbeddedParameterCountsAreExactOnCuda)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    validate_embedded_parameter_counts(Device::CUDA);
+}
+#endif
+
 TEST(NeuralNetworkTest, ModelSaveCommitsOrRecoversJsonAndParametersTogether)
 {
     const filesystem::path directory = filesystem::temp_directory_path();

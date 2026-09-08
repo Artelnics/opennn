@@ -1713,16 +1713,14 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     VectorR json_parameters;
     string_to_vector(parameters_text, json_parameters);
 
-    if (json_parameters.size() != parameters.size_in_floats())
-    {
-        logging::info() << "Warning: JSON parameter size (" << json_parameters.size()
-             << ") differs from Compiled size (" << parameters.size_in_floats() << ").\n";
-    }
-
-    const Index elements_to_copy = min(parameters.size_in_floats(), json_parameters.size());
+    throw_if(json_parameters.size() != parameters.size_in_floats(),
+             "NeuralNetwork::from_JSON: embedded parameter size mismatch "
+             "(got {}, expected {}). Supply the complete compiled parameter buffer, "
+             "including alignment padding.",
+             json_parameters.size(), parameters.size_in_floats());
 
     const HostParametersGuard guard(*this);
-    std::copy(json_parameters.data(), json_parameters.data() + elements_to_copy, parameters.as<float>());
+    std::copy_n(json_parameters.data(), json_parameters.size(), parameters.as<float>());
 }
 
 void NeuralNetwork::save(const filesystem::path& file_name) const

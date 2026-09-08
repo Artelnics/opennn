@@ -21,6 +21,8 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Reject embedded JSON parameter-count mismatches before copying weights,
+  replacing the previous warning and partial copy.
 - Reject model loading when both the matching parameter file and embedded JSON
   weights are absent, preserving the existing model on this error. Explicit
   architecture-only construction through `from_JSON` remains available.

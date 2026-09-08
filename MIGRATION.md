@@ -74,6 +74,11 @@ still do not establish that two models use the same parameter ordering.
 `NeuralNetwork::load(path)` requires the matching `.bin` file or embedded JSON
 parameter values. A missing binary with no embedded weights raises an error
 before clearing the existing network. Saved model pairs must be kept together.
+Nonempty embedded parameter text must contain exactly the compiled buffer's
+number of values, including alignment padding. Too few or too many values now
+raise an error before any embedded weights are copied; the previous warning and
+partial-copy behavior is no longer accepted. Whitespace-only text has zero values
+and is rejected for a model requiring parameters.
 For intentional architecture-only loading, use a new network explicitly:
 
 ```cpp
