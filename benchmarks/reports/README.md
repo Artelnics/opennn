@@ -16,6 +16,7 @@ official benchmark results. Raw generated artifacts remain local under
 | [`transformer.md`](transformer.md) | the *Attention Is All You Need* base model on WMT14: CUDA training and inference |
 | [`lstm.md`](lstm.md) | LSTM forecasting on Beijing PM2.5: CUDA and CPU, training and inference |
 | [`footprint.md`](footprint.md) | what each framework costs before it does any work |
+| [`deployment.md`](deployment.md) | what the library costs to adopt: size, coverage, what you write, what you install |
 
 The contract the numbers were taken under is [`../PROTOCOL.md`](../PROTOCOL.md);
 this page summarises only what a reader needs to interpret the table.
