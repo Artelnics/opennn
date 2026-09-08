@@ -317,6 +317,7 @@ jobs:
       - name: Enforce and publish baseline
         run: |
           gcovr --root "$PWD" --filter 'opennn/' --exclude 'opennn/core/cuda/' --exclude '.*\.cu$' \
+            --gcov-ignore-parse-errors=negative_hits.warn_once_per_file \
             --json-summary coverage-summary.json --json-summary-pretty \
             --html-details coverage.html \
             --fail-under-line 25 --fail-under-branch 15
