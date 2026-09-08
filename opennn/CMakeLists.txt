@@ -115,7 +115,7 @@ list(FILTER HEADER_FILES EXCLUDE REGEX "/core/cuda/flash_attention_shim/")
 
 if(NOT OpenNN_BUILD_VISION)
     set(_opennn_vision_pattern
-        ".*/(convolutional_layer|pooling_layer|pooling_layer_3d|normalization_layer_3d|grouped_query_attention_layer|flatten_layer|embedding_layer|multihead_attention_layer|detection_layer|detection_v8_layer|detection_v8_operator|yolo_dataset)\\.cpp$")
+        ".*/(convolutional_layer|pooling_layer|pooling_layer_3d|normalization_layer_3d|grouped_query_attention_layer|flatten_layer|embedding_layer|multihead_attention_layer|detection_layer|detection_v8_layer|detection_v8_operator|yolo_dataset(_io)?)\\.cpp$")
     list(FILTER CPP_SOURCES EXCLUDE REGEX "${_opennn_vision_pattern}")
 endif()
 
@@ -557,6 +557,7 @@ if(OpenNN_INSTALL)
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/opennn
         FILES_MATCHING PATTERN "*.h"
         PATTERN "network_internal.h" EXCLUDE
+        PATTERN "yolo_dataset_internal.h" EXCLUDE
         PATTERN "*-DESKTOP-*.h" EXCLUDE
         PATTERN "flash_attention_shim" EXCLUDE)
 

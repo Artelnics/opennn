@@ -8,6 +8,10 @@ remaining limitations.
 
 ### Reconciliation and release preparation
 
+- Separate YOLO discovery, annotation conversion and cache persistence into
+  `yolo_dataset_io.cpp`, with shared cache formats and target encoders kept in
+  a private internal header. Batch filling, augmentation and device residency
+  retain their existing implementations and data layouts.
 - Separate CSV parsing, column/type inference and binary-cache ingestion into
   `tabular_dataset_io.cpp`. The public `TabularDataset` API, parsing behavior,
   allocations and data layouts are unchanged.
