@@ -6,6 +6,12 @@ preserves the existing files and distinguishes identified sources from
 unresolved permission and transformation records. It does not clear every
 asset for a public release.
 
+Executable reconstruction recipes for seven verified sources and repeatable
+Iris/concrete reference-model training are documented in
+[tools/REPRODUCTION.md](tools/REPRODUCTION.md). They verify the indexed data
+and write generated artifacts outside Git. Historical models and unverified
+derivatives retain their existing clearance status.
+
 `datasets.manifest.json` records portable SHA-256 content inventories for all
 Git-tracked example `data/` and `nn/` files. Run:
 
@@ -38,6 +44,13 @@ row and one-based column, excluding the header): (10,5), (90,4), (98,4),
 (101,5), (102,7), (104,9), (105,2), (137,9), (159,3), (202,2), (209,7).
 All other cells match the verified cleaned CSV. These are synthetic missing
 values introduced by the OpenNN example, not additional upstream observations.
+
+The Amazon text derivatives are also reconstructed byte for byte after newline
+normalization: `amazon_cells_reduced.txt` uses the first ten original rows
+without the local leading apostrophe; `amazon_cells_labelled_small.txt` uses
+the first five labelled rows, changes the first sentence's final period to
+` Bad.`, and retains its trailing blank line. The numeric/tokenized `.txt`
+derivatives still lack a verified reconstruction and remain unresolved.
 
 Upstream ZIP SHA-256 values from this review:
 

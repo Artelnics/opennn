@@ -35,6 +35,9 @@ No public API was removed based on absence of local callers.
   `v9.0.0` tag on the reviewed master commit and publish matching artifacts.
 
 The provenance inventory is implemented; dataset clearance remains incomplete.
+Seven source-data reconstruction recipes and repeatable Iris/concrete reference
+model recipes are available in `tools/REPRODUCTION.md`. Candidate installation
+archives and their validation procedure are documented in `tools/PACKAGING.md`.
 In particular, identified upstream licences do not establish undocumented
 local image sources, model-generation records or derivative transformations.
 GitHub automatic source archives contain the tracked datasets even though

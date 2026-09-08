@@ -87,11 +87,30 @@ jobs:
         run: |
           cmake --install build --prefix "$PWD/prefix"
           cmake -E rename "$PWD/prefix" "$PWD/relocated-prefix"
+          python tools/check_installed_package.py "$PWD/relocated-prefix"
           for configuration in Release Debug; do
             cmake -S tools/package_smoke -B "build/package-$configuration" -G Ninja -DCMAKE_BUILD_TYPE="$configuration" -DCMAKE_PREFIX_PATH="$PWD/relocated-prefix" -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF
             cmake --build "build/package-$configuration"
             "./build/package-$configuration/opennn_package_smoke"
           done
+
+      - name: Verify reference data and model recipes
+        if: matrix.compiler == 'gcc-13'
+        run: |
+          python -m pip install xlrd==2.0.2
+          python tools/reproduce_datasets.py --datasets iris concrete --cache "$RUNNER_TEMP/dataset-sources" --output "$RUNNER_TEMP/reproduced-data"
+          cmake -S tools/reproduce_models -B build/model-generator -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/relocated-prefix" -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF
+          cmake --build build/model-generator --parallel 2
+          python tools/reproduce_models/verify.py --executable build/model-generator/opennn_reproduce_models --data-root "$RUNNER_TEMP/reproduced-data" --output "$RUNNER_TEMP/reference-models"
+
+      - name: Preserve model verification report
+        if: always() && matrix.compiler == 'gcc-13'
+        uses: actions/upload-artifact@v4
+        with:
+          name: reference-model-verification
+          path: |
+            ${{ runner.temp }}/reproduced-data/reproduction.json
+            ${{ runner.temp }}/reference-models/verification.json
 
   sanitizers:
     name: Linux Clang (ASan, UBSan)
@@ -218,6 +237,8 @@ jobs:
           cmake --install build --config Release --prefix "$pwd/prefix"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cmake -E rename "$pwd/prefix" "$pwd/relocated-prefix"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/check_installed_package.py "$pwd/relocated-prefix"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cmake -S tools/package_smoke -B build/package -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="$pwd/relocated-prefix" -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

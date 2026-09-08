@@ -65,6 +65,23 @@ Current-format round trips and malformed binary rejection are tested. Those
 tests do not certify arbitrary historical models. Real 8.x artifact conversion
 remains application-specific work; no converter is claimed by this release.
 
+### Available historical artifacts reviewed
+
+The example assets in tags `v8.0.0`, `v8.0.1` and master `efd566b38` were
+inspected during the release review. Their breast-cancer, Iris and MNIST `.bin`
+files are dataset caches. `time_series_data_set.xml` describes a dataset, not
+a neural-network topology. The Madrid `_Params.bin` has no matching saved
+network architecture, feature/scaling contract and reference predictions in
+those assets. These files do not form a complete production-model migration case.
+
+The current concrete JSON/binary pair is exercised by response-optimization
+integration tests, but that is current-format validation. The independently
+trained models in [tools/REPRODUCTION.md](tools/REPRODUCTION.md) likewise test
+training, save/reload and exported predictions, rather than 8.x conversion.
+To close production migration validation, provide a complete 8.x topology and
+weights plus representative inputs and predictions from the original environment.
+Neural Designer remains outside this review.
+
 ## Time-series indexing
 
 The reconciled master implementation treated sample `i` as a present instant:

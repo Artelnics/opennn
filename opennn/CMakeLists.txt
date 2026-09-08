@@ -505,6 +505,42 @@ endif()
 if(OpenNN_INSTALL)
     include(CMakePackageConfigHelpers)
 
+    install(FILES
+        ${PROJECT_SOURCE_DIR}/LICENSE.txt
+        ${PROJECT_SOURCE_DIR}/LICENSE-GPL-3.0.txt
+        ${PROJECT_SOURCE_DIR}/THIRD_PARTY_NOTICES.md
+        ${PROJECT_SOURCE_DIR}/CHANGELOG.md
+        ${PROJECT_SOURCE_DIR}/MIGRATION.md
+        ${PROJECT_SOURCE_DIR}/DATASETS.md
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN)
+    install(FILES ${PROJECT_SOURCE_DIR}/tools/REPRODUCTION.md
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/tools)
+    ExternalProject_Get_Property(opennn_libjpeg_turbo_ep SOURCE_DIR)
+    install(FILES ${SOURCE_DIR}/LICENSE.md ${SOURCE_DIR}/README.ijg
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/libjpeg-turbo)
+    if(eigen_SOURCE_DIR)
+        install(FILES
+            ${eigen_SOURCE_DIR}/COPYING.MPL2
+            ${eigen_SOURCE_DIR}/COPYING.APACHE
+            ${eigen_SOURCE_DIR}/COPYING.BSD
+            ${eigen_SOURCE_DIR}/COPYING.MINPACK
+            ${eigen_SOURCE_DIR}/COPYING.README
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/Eigen)
+    endif()
+    if(OPENNN_HAS_CUDA)
+        install(FILES
+            ${cudnn_frontend_SOURCE_DIR}/LICENSE.txt
+            ${cudnn_frontend_SOURCE_DIR}/LICENSE-MIT.txt
+            ${cudnn_frontend_SOURCE_DIR}/LICENSING.md
+            ${cudnn_frontend_SOURCE_DIR}/NOTICE
+            ${cudnn_frontend_SOURCE_DIR}/THIRD_PARTY_LICENSES.txt
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/cudnn-frontend)
+    endif()
+    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/build-info-$<CONFIG>.json"
+        CONTENT "{\n  \"version\": \"${PROJECT_VERSION}\",\n  \"compiler\": \"${CMAKE_CXX_COMPILER_ID}\",\n  \"compiler_version\": \"${CMAKE_CXX_COMPILER_VERSION}\",\n  \"configuration\": \"$<CONFIG>\",\n  \"cuda\": \"${OPENNN_HAS_CUDA}\",\n  \"shared\": \"${OpenNN_BUILD_SHARED}\",\n  \"lto\": \"${OpenNN_ENABLE_LTO}\"\n}\n")
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/build-info-$<CONFIG>.json"
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN RENAME build-info.json)
+
     # The FlashAttention-2 kernels go with it: a static opennn carries the calls
     # into them, so an installed one needs the archive that defines them.
     set(_opennn_install_targets opennn)

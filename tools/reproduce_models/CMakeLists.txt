@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.24)
+project(OpenNNReproduceModels LANGUAGES CXX)
+find_package(OpenNN 9.0 CONFIG REQUIRED)
+add_executable(opennn_reproduce_models main.cpp)
+target_link_libraries(opennn_reproduce_models PRIVATE OpenNN::opennn)
+target_compile_features(opennn_reproduce_models PRIVATE cxx_std_20)

@@ -8,12 +8,16 @@ components marked *optional* are used only when the corresponding CMake
 option or system library is present; nothing marked *not redistributed* is
 included in OpenNN's sources or binaries.
 
+`LICENSE-GPL-3.0.txt` supplies the GNU GPL v3 text incorporated by LGPL v3;
+it is copied verbatim from the [GCC project's COPYING3](https://github.com/gcc-mirror/gcc/blob/master/COPYING3).
+OpenNN's existing LGPL licence remains in `LICENSE.txt`.
+
 | component | version | license | how it is used |
 |---|---|---|---|
 | [Eigen](https://eigen.tuxfamily.org) | 5.0.1 (fetched if not found) | MPL-2.0 | linear algebra on the CPU; a public dependency of the `opennn` target |
 | [libjpeg-turbo](https://libjpeg-turbo.org) | 3.1.4 (fetched, SHA-256 pinned) | IJG, BSD-3-Clause and zlib licenses | JPEG decoding for image datasets; built as a static library and installed beside OpenNN |
 | [zlib](https://zlib.net) | 1.3.2 (fetched, SHA-256 pinned) | zlib license | compression for datasets and model files |
-| [cuDNN frontend](https://github.com/NVIDIA/cudnn-frontend) | v1.27.0 (fetched; CUDA builds) | MIT | graph-API access to cuDNN engines (convolution, attention, matmul) |
+| [cuDNN frontend](https://github.com/NVIDIA/cudnn-frontend/blob/v1.27.0/LICENSING.md) | v1.27.0 (fetched; CUDA builds) | Apache-2.0 and MIT, per-file SPDX tags | graph-API access to cuDNN engines (convolution, attention, matmul); upstream licensing and attribution files accompany the installation |
 | [GoogleTest](https://github.com/google/googletest) | v1.18.0 (fetched; tests only) | BSD-3-Clause | unit tests; not installed |
 | [FlashAttention](https://github.com/Dao-AILab/flash-attention) | v2.8.3 (fetched; optional, `OpenNN_WITH_FLASH_ATTENTION`) | BSD-3-Clause | FlashAttention-2 kernels, compiled against OpenNN's own minimal `ATen`/`c10` shim (`opennn/core/cuda/flash_attention_shim`, which contains no PyTorch code) |
 | [CUTLASS](https://github.com/NVIDIA/cutlass) | user-provided (optional, `OpenNN_CUTLASS_INCLUDE_DIR`) | BSD-3-Clause | one narrow-contraction GEMM kernel; header-only, not redistributed |
@@ -25,4 +29,4 @@ included in OpenNN's sources or binaries.
 
 The JSON support in `opennn/core/json.h` is OpenNN's own. Example datasets
 under `examples/*/data` carry the terms of their original publishers; see
-each example's README where one exists.
+DATASETS.md for verified sources and unresolved redistribution records.

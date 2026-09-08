@@ -13,6 +13,8 @@ remaining limitations.
 - Fix JavaScript feature identifiers, categorical controls and HTML labels;
   execute generated JavaScript in the export regression suite.
 - Add migration notes, a dataset inventory and explicit provenance gaps.
+- Add checksum-pinned reconstruction recipes for seven dataset sources and
+  repeatable Iris/concrete reference-model generation with inference checks.
 - Preserve unported master examples in `examples/legacy_8`.
 - Set CMake/package compatibility to major version 9. Neural Designer
   validation is deferred at the owner's request.
@@ -33,6 +35,10 @@ remaining limitations.
 
 ### Packaging and verification
 
+- Generate candidate ZIP/TGZ installation packages with compiler/backend
+  metadata, release/migration documentation and dependency licence notices.
+- Allow hosted sanitizer builds and both test executables to finish within
+  the overall job limit; retain timing and partial test logs for diagnosis.
 - Support consuming the installed CMake package after moving its prefix,
   including the JPEG dependency.
 - Propagate Clang static-library LTO requirements to downstream linkers,
@@ -47,7 +53,7 @@ remaining limitations.
 ### Migration review
 
 The development tree reorganizes public headers and changes model/dataset
-interfaces compared with the published 8.x line. Existing applications,
+interfaces compared with the published 8.x line. Existing applications
 need an explicit source-compatibility review and
 saved-model round trips before release. A green development test suite alone
 does not establish compatibility with historical model files. See MIGRATION.md;
