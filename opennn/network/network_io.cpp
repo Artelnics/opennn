@@ -20,6 +20,7 @@
 #include "opennn/core/cuda/kernel_cast.cuh"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/enum_map.h"
+#include "opennn/core/io_utilities.h"
 #include "opennn/core/profiler.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/registry.h"

@@ -300,8 +300,8 @@ jobs:
       - name: Configure coverage build
         run: >
           cmake -S . -B build-coverage -G Ninja
-          -DCMAKE_BUILD_TYPE=Debug
-          -DCMAKE_CXX_FLAGS=--coverage
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="--coverage -O0 -g -DNDEBUG"
           -DCMAKE_EXE_LINKER_FLAGS=--coverage
           -DOpenNN_DISABLE_CUDA=ON
           -DOpenNN_ENABLE_MKL=OFF

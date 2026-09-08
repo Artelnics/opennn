@@ -18,9 +18,35 @@
 #include <cstring>
 #include <fstream>
 #include <limits>
+#if defined(__APPLE__) && defined(_LIBCPP_VERSION)
+#include <locale>
+#include <sstream>
+#endif
 
 namespace opennn
 {
+
+namespace
+{
+
+bool parse_double_exact(std::string_view text, double& value)
+{
+#if defined(__APPLE__) && defined(_LIBCPP_VERSION)
+    // Xcode 16's libc++ declares floating-point from_chars but does not
+    // implement it. The classic locale preserves JSON's decimal grammar.
+    std::istringstream stream{std::string(text)};
+    stream.imbue(std::locale::classic());
+    stream >> std::noskipws >> value;
+    return stream.eof() && !stream.fail();
+#else
+    const char* const first = text.data();
+    const char* const last = first + text.size();
+    const auto [end, error] = std::from_chars(first, last, value);
+    return error == std::errc{} && end == last;
+#endif
+}
+
+}
 
 Json Json::make_object()
 {
@@ -158,10 +184,7 @@ double Json::as_double() const
         const std::string& string = std::get<std::string>(value);
         if (string.empty()) return 0.0;
         double number = 0.0;
-        const char* const first = string.data();
-        const char* const last = first + string.size();
-        const auto [end, error] = std::from_chars(first, last, number);
-        throw_if(error != std::errc{} || end != last,
+        throw_if(!parse_double_exact(string, number),
                  "JSON: invalid numeric value '{}'", string);
         return number;
     }
@@ -495,10 +518,7 @@ struct Parser
             while (position < s.size() && std::isdigit(static_cast<unsigned char>(s[position]))) ++position;
         }
         double value = 0.0;
-        const char* const first = s.data() + start;
-        const char* const last = s.data() + position;
-        const auto [ptr, ec] = std::from_chars(first, last, value);
-        if (ec != std::errc() || ptr != last) fail("bad number");
+        if (!parse_double_exact(s.substr(start, position - start), value)) fail("bad number");
         return Json(value);
     }
 
