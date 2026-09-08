@@ -215,3 +215,132 @@ publication work, independent of the engineering test results.
 The prior targeted CUDA memory checks apply to their recorded earlier commit;
 this reconciliation did not change CUDA memory-management code. They were not
 rerun as part of this batch. Raw logs remain outside Git.
+
+## 2026-09-08: reproducible assets and installation archives
+
+The functional follow-up is `593c69c658c22bdb96e5c523a99f6c061c3d2ee5`.
+Documentation commit `41f5d27b7` clarifies parameter-buffer padding and links the
+reproduction and packaging recipes. No OpenNN library C++ implementation changed
+in this follow-up. The final verification-record commit changes this report only.
+
+### CI and local verification
+
+The previous hosted sanitizer retry (job `101888844903`) finished compilation
+after approximately 48 minutes, then reached the job's 60-minute total timeout
+while testing. It was cancelled without a reported compiler or sanitizer error.
+Commit `ac83f0d66` raises the overall job limit to 120 minutes and retains build
+resource statistics, Ninja timing and partial CTest logs. The sanitizer checks,
+fail-on-error settings and individual test time limits are unchanged.
+
+Hosted results for `593c69c65`:
+
+| Job | Result |
+| --- | --- |
+| Linux GCC 13 CPU | Passed both CTest executables (99.80 seconds), relocated consumers and model reproduction |
+| Linux Clang 17 CPU | Passed both CTest executables (93.74 seconds) and relocated consumers |
+| Windows MSVC 2022 CPU | Passed both CTest executables (160.94 seconds) and relocated consumer |
+| Linux CUDA 12.9 compilation | Passed library and both test-executable builds |
+| Linux Clang ASan/UBSan | Passed unit tests (620.56 seconds) and integration scenarios (455.11 seconds) |
+| Linux CUDA runtime | Passed full CPU and CUDA verification, including both integration runs |
+
+The first five jobs belong to
+[main CI run 34198361151](https://github.com/Artelnics/opennn/actions/runs/34198361151).
+The GPU job belongs to
+[Linux CUDA run 34198361146](https://github.com/Artelnics/opennn/actions/runs/34198361146).
+The GPU runner recorded 1,030 CPU unit passes / 41 skips and 1,179 CUDA unit
+passes / 10 skips. Its integration executions took 26.17 seconds on CPU and
+920.03 seconds on CUDA. Skips cover unavailable optional facilities; one test
+remains explicitly disabled.
+
+Both workflows completed successfully: all six jobs are green. Hosted sanitizer
+CTest reported zero failed executables (1,075.77 seconds total), with ASan leak
+detection and both sanitizers' fail-on-error settings enabled. The complete test
+log and build diagnostics were retained as the
+[sanitizer artifact](https://github.com/Artelnics/opennn/actions/runs/34198361151/artifacts/10045871494).
+The later documentation and verification-record commits use `[skip ci]`; these
+results apply to the functional commit identified above.
+
+The local Windows MSVC 19.50 CPU verification ran 1,071 unit tests: 1,030 passed
+and 41 skipped optional/GPU facilities; one additional test remains explicitly
+disabled. All 26 response-optimization scenarios passed. This build uses the
+complete pinned Eigen 5.0.1 dependency, with the CMake package registry disabled.
+
+### Dataset and model reproduction
+
+[Dataset reproduction](tools/REPRODUCTION.md) passed for seven pinned sources:
+airfoil, breast cancer, Iris, concrete, Amazon sentiment text, MNIST test images
+and ECG. The complete run generated 10,014 files, including source notices,
+outside the checkout. Source archives and generated files have SHA-256 records.
+Iris and concrete also passed fresh-download checks. Numeric tables are compared
+with the indexed repository data to absolute tolerance 1e-12; Amazon text matches
+after line-ending normalization; all 10,000 MNIST images match decoded pixels.
+Amazon numeric/tokenized derivatives are not reconstructed by this recipe.
+
+New Iris and concrete reference models were trained against extracted installed
+packages on Windows and Linux. They record the architecture, seed, fixed splits,
+training settings, weights, source hashes, native predictions and Python exports.
+These are new reference models, not reconstructions of historical bundled models.
+
+| Toolchain | Iris accuracy (30 held-out rows) | Concrete R² (206 held-out rows) |
+| --- | ---: | ---: |
+| Windows MSVC 19.50 | 0.966667 | 0.911538 |
+| Linux GNU 13.3 | 1.000000 | 0.898462 |
+
+Each recipe produced identical model bytes and reference predictions on two runs
+within each tested environment. Reloaded native predictions had zero maximum
+absolute error. Python predictions passed `rtol=1e-4`, `atol=1e-5`. Cross-toolchain
+byte identity is not promised. The hosted GCC job independently repeats both
+recipes against the relocated installation and retains verification reports.
+
+### Candidate archives
+
+The following local candidate archives contain the functional changes above and
+installed documentation through `41f5d27b7`. Each has a companion `.sha256` file.
+They are retained outside Git under `../opennn-audit-build/candidate-packages/`.
+
+| Archive | SHA-256 |
+| --- | --- |
+| `OpenNN-9.0.0-candidate-Windows-AMD64-cpu.zip` | `974e481f609accae3f8ee671bcc163b669c5c5aaea81d327ffcea993160fdff8` |
+| `OpenNN-9.0.0-candidate-Linux-x86_64-cpu.tar.gz` | `04002e048c9d45cc86d0f281bb83aa487bcbbed1d985d6fb216ea7d051010a53` |
+| `OpenNN-9.0.0-candidate-Linux-x86_64-cuda.tar.gz` | `eff5b670c7c02aa2031d5e451d87c4471d9e2bc54e5bf96cdd401d50c976eee7` |
+
+All three are Release static libraries built without LTO. Windows uses MSVC
+19.50.35729.0; Linux uses GNU 13.3.0. The CPU Linux archive disables TBB, oneDNN
+and MKL. The CUDA archive uses CUDA 12.9.86 and cuDNN 9.10.2, and requires its
+system TBB/NVIDIA dependencies. Build metadata and the compatibility limits are
+documented in [the packaging recipe](tools/PACKAGING.md).
+
+Each archive was extracted and consumed by a separately configured CMake project
+with the package registry disabled. CPU consumers compiled and ran finite
+inference without an external Eigen package path. The CUDA consumer required
+the exported CUDA capability and a real GPU: one device was available, and its
+prediction was exactly 0.25, matching the expected value. Final archive
+include/library/executable payload hashes match those of the tested extractions
+(725 files per CPU archive, 822 for CUDA).
+
+Installed-notice checks passed for 14 CPU documents and 19 CUDA documents. The
+installation now includes the GPL v3 text referenced by the existing LGPL v3
+license, Eigen and libjpeg notices, and CUDA frontend notices when applicable.
+The CUDA frontend attribution identifies its Apache-2.0 and MIT files according
+to upstream licensing records. Optional FlashAttention packaging has notice rules
+but was not built or validated in this batch.
+
+### Remaining release limits
+
+The indexed dataset manifest still passes for 14 asset groups / 10,131 files.
+The separate `--release` gate still rejects 11 groups with unresolved
+redistribution records. Reproduction of source data and generation of new models
+do not establish the provenance of historical derivatives or clear those groups.
+Bundled assets were retained, and no unknown source was marked as cleared.
+
+The available `v8.0.0`, `v8.0.1` and prior master assets do not provide a complete
+8.x model with architecture, weights and reference predictions. The identified
+binary caches are datasets; the Madrid parameter file has no paired model.
+The owner confirmed that no complete external model is available. Consequently,
+representative production-model migration remains unverified. Current-format
+save/load tests and the new reference models do not prove 8.x compatibility.
+Neural Designer remains excluded at the owner's request.
+
+Development includes the reconciled master history. No master promotion, release
+tag or public release was created by this follow-up. The archives are tested
+candidates, subject to the remaining release limits above.
