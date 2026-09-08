@@ -5,7 +5,7 @@
 #include "opennn/network/layers/detection_layer.h"
 #include "opennn/network/layers/convolutional_layer.h"
 #include "opennn/network/network.h"
-#include "opennn/training_strategy/loss.h"
+#include "opennn/training/loss.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/models/models.h"
 

@@ -16,8 +16,8 @@
 #include "opennn/network/network.h"
 #include "opennn/models/models.h"
 #include "opennn/registry.h"
-#include "opennn/training_strategy/levenberg_marquardt_algorithm.h"
-#include "opennn/training_strategy/quasi_newton_method.h"
+#include "opennn/training/levenberg_marquardt.h"
+#include "opennn/training/quasi_newton.h"
 
 namespace opennn
 {
@@ -77,13 +77,13 @@ Correlation fit_softmax_correlation(const MatrixR& x_filter,
     loss.set_error("MeanSquaredError");
     loss.set_regularization("None");
 
-    QuasiNewtonMethod quasi_newton_method(&loss);
-    quasi_newton_method.set_maximum_epochs(maximum_epochs);
-    quasi_newton_method.set_display(false);
+    QuasiNewton quasi_newton(&loss);
+    quasi_newton.set_maximum_epochs(maximum_epochs);
+    quasi_newton.set_display(false);
 
     try
     {
-        quasi_newton_method.train();
+        quasi_newton.train();
     }
     catch (const exception&)
     {
@@ -392,7 +392,7 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     {
         if (input.size() > maximum_levenberg_marquardt_samples)
         {
-            QuasiNewtonMethod quasi_newton(&loss);
+            QuasiNewton quasi_newton(&loss);
             quasi_newton.set_display(false);
 
             quasi_newton.set_minimum_loss_decrease(1.0e-6f);
@@ -401,7 +401,7 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
         }
         else
         {
-            LevenbergMarquardtAlgorithm levenberg_marquardt(&loss);
+            LevenbergMarquardt levenberg_marquardt(&loss);
             levenberg_marquardt.set_display(false);
             levenberg_marquardt.train();
         }

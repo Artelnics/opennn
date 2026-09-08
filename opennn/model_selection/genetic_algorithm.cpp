@@ -13,13 +13,13 @@
 #include "opennn/dataset/dataset.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/model_selection/selection_utilities.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/training.h"
 
 namespace opennn
 {
 
-GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy)
-    : InputsSelection(new_training_strategy)
+GeneticAlgorithm::GeneticAlgorithm(Training* new_training)
+    : InputsSelection(new_training)
 {
     set_default();
 }
@@ -28,10 +28,10 @@ void GeneticAlgorithm::set_default()
 {
     name = "GeneticAlgorithm";
 
-    if (!training_strategy || !training_strategy->get_network() || !training_strategy->get_dataset())
+    if (!training || !training->get_network() || !training->get_dataset())
         return;
 
-    const Dataset* dataset = training_strategy->get_dataset();
+    const Dataset* dataset = training->get_dataset();
 
     const Index individuals_number = 40;
 
@@ -75,7 +75,7 @@ void GeneticAlgorithm::set_initialization_method(const string& method)
 
 void GeneticAlgorithm::set_maximum_inputs_number(const Index new_maximum_inputs_number)
 {
-    const Dataset* dataset = training_strategy ? training_strategy->get_dataset() : nullptr;
+    const Dataset* dataset = training ? training->get_dataset() : nullptr;
     const Index inputs_number = dataset ? dataset->get_variables_number(VariableRole::Input) : 0;
 
     maximum_inputs_number = (inputs_number == 0)
@@ -85,7 +85,7 @@ void GeneticAlgorithm::set_maximum_inputs_number(const Index new_maximum_inputs_
 
 void GeneticAlgorithm::set_individuals_number(const Index new_individuals_number)
 {
-    throw_if(!training_strategy || !training_strategy->get_dataset(),
+    throw_if(!training || !training->get_dataset(),
              "training strategy or dataset is not set.");
 
     const Index genes_number = get_genes_number();
@@ -149,7 +149,7 @@ void GeneticAlgorithm::initialize_population_random()
 
 void GeneticAlgorithm::initialize_population_correlations()
 {
-    const Dataset* dataset = training_strategy->get_dataset();
+    const Dataset* dataset = training->get_dataset();
 
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
@@ -207,19 +207,19 @@ vector<Index> GeneticAlgorithm::genes_to_variable_indices(const VectorB& genes) 
 
 void GeneticAlgorithm::evaluate_population()
 {
-    Loss* loss = training_strategy->get_loss();
-    Dataset* dataset = training_strategy->get_dataset();
+    Loss* loss = training->get_loss();
+    Dataset* dataset = training->get_dataset();
     Network* network = loss->get_network();
     const Index individuals_number = get_individuals_number();
 
-    Optimizer* optimizer = training_strategy->get_optimization_algorithm();
+    Optimizer* optimizer = training->get_optimization_algorithm();
     const bool optimizer_display = optimizer->get_display();
     optimizer->set_display(false);
     const ScopeExit restore_optimizer_display([optimizer, optimizer_display]
                                               { optimizer->set_display(optimizer_display); });
 
     const vector<vector<Index>> fold_partition =
-        folds_number > 1 ? build_fold_partition(training_strategy, folds_number) : vector<vector<Index>>{};
+        folds_number > 1 ? build_fold_partition(training, folds_number) : vector<vector<Index>>{};
 
     for (Index i = 0; i < individuals_number; ++i)
     {
@@ -234,7 +234,7 @@ void GeneticAlgorithm::evaluate_population()
         configure_network_inputs(network, dataset, input_features_number);
 
         const CandidateEvaluation candidate_evaluation = evaluate_candidate(
-            training_strategy, network, folds_number, fold_partition, 1, false,
+            training, network, folds_number, fold_partition, 1, false,
             [&](Index, float training_error, float validation_error, bool)
             {
                 individual_parameters(i) = network->get_parameters_map();
@@ -485,7 +485,7 @@ void GeneticAlgorithm::perform_mutation()
 
 InputsSelectionResult GeneticAlgorithm::perform_input_selection()
 {
-    Loss* loss = training_strategy->get_loss();
+    Loss* loss = training->get_loss();
 
     Dataset* dataset = loss->get_dataset();
 
@@ -598,7 +598,7 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
                            genes_to_variable_indices(input_selection_results.optimal_inputs),
                            original_target_indices, time_variable_indices);
 
-    finalize_selected_model(training_strategy, network,
+    finalize_selected_model(training, network,
                             input_selection_results.optimal_parameters, folds_number, display, "inputs");
 
     if (display)

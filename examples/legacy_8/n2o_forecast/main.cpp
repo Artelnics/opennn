@@ -27,7 +27,7 @@
 #include "../../opennn/dataset.h"
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/bounding_layer.h"
-#include "../../opennn/training_strategy.h"
+#include "../../opennn/training.h"
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/model_selection.h"
 #include "../../opennn/optimizer.h"
@@ -178,7 +178,7 @@ int main()
 
             forecasting_network->set_input_names(time_series_dataset.get_feature_names("Input"));
 
-            TrainingStrategy selection_strategy(forecasting_network, &time_series_dataset);
+            Training selection_strategy(forecasting_network, &time_series_dataset);
 
             Registry<Loss>::instance().register_component("NormalizedSquaredError",
                 [](){ return make_unique<NormalizedSquaredError>(); });
@@ -221,16 +221,16 @@ int main()
                                                           time_series_dataset.get_target_shape());
             forecasting_network->set_input_names(time_series_dataset.get_feature_names("Input"));
 
-            TrainingStrategy training_strategy(forecasting_network, &time_series_dataset);
-            training_strategy.set_loss("NormalizedSquaredError");
+            Training training(forecasting_network, &time_series_dataset);
+            training.set_loss("NormalizedSquaredError");
 
-            AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+            AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training.get_optimization_algorithm());
             adam->set_batch_size(16);
             adam->set_maximum_epochs(max_epochs);
             adam->set_display_period(32);
             adam->set_scaling();
 
-            TrainingResults final_results = training_strategy.train();
+            TrainingResults final_results = training.train();
 
             cout << "\n--- Full Training Results ---" << endl;
             cout << "Training error: "   << final_results.get_training_error()   << endl;

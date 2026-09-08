@@ -13,7 +13,7 @@
 #include "opennn/dataset/language_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/network/chat.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/training.h"
 
 using namespace opennn;
 
@@ -34,12 +34,12 @@ int main()
                                 dataset.get_target_vocabulary_size(),
                                 256, 8, 1024, 1);
 
-        TrainingStrategy training_strategy(&transformer, &dataset);
-        auto& optimizer = *training_strategy.get_optimization_algorithm();
+        Training training(&transformer, &dataset);
+        auto& optimizer = *training.get_optimization_algorithm();
         optimizer.set_batch_size(16);
         optimizer.set_maximum_epochs(50);
 
-        training_strategy.train();
+        training.train();
 
         ChatSession session(transformer);
         const string source = "yo tengo hambre";

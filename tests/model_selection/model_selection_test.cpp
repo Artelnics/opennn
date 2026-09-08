@@ -4,7 +4,7 @@
 #include "opennn/dataset/time_series_dataset.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/model_selection/selection_utilities.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/training.h"
 #include "opennn/model_selection/model_selection.h"
 #include "opennn/models/models.h"
 #include "opennn/model_selection/growing_neurons.h"
@@ -38,9 +38,9 @@ TEST(ModelSelectionTest, DefaultConstructor)
 
 TEST(ModelSelectionTest, GeneralConstructor)
 {
-    TrainingStrategy training_strategy;
+    Training training;
 
-    ModelSelection model_selection(&training_strategy);
+    ModelSelection model_selection(&training);
 }
 
 TEST(ModelSelectionTest, OrderedDatasetsProduceContiguousFolds)
@@ -49,10 +49,10 @@ TEST(ModelSelectionTest, OrderedDatasetsProduceContiguousFolds)
     dataset.set_sample_roles(SampleRole::Training);
 
     Network network;
-    TrainingStrategy training_strategy(&network, &dataset);
+    Training training(&network, &dataset);
 
     const vector<vector<Index>> folds =
-        build_fold_partition(&training_strategy, 3, 17);
+        build_fold_partition(&training, 3, 17);
 
     ASSERT_EQ(folds.size(), 3);
     EXPECT_EQ(folds[0], vector<Index>({0, 1}));

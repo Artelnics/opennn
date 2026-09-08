@@ -9,7 +9,7 @@
 #include "opennn/network/back_propagation.h"
 #include "opennn/registry.h"
 #include "opennn/core/memory_pool.h"
-#include "opennn/training_strategy/loss.h"
+#include "opennn/training/loss.h"
 #include "opennn/network/network.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/memory_debug.h"

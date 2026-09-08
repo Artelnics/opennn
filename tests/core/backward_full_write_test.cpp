@@ -32,7 +32,7 @@
 #include "opennn/network/layers/upsampling_layer.h"
 #include "opennn/network/network.h"
 #include "opennn/network/operators/pool3d_operator.h"
-#include "opennn/training_strategy/loss.h"
+#include "opennn/training/loss.h"
 
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/network/layers/kernel_upsampling.cuh"

@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class TrainingStrategy;
+class Training;
 class Network;
 class Dataset;
 
@@ -34,7 +34,7 @@ public:
         MaximumValidationFailures
     };
 
-    explicit InputsSelection(TrainingStrategy* = nullptr);
+    explicit InputsSelection(Training* = nullptr);
     virtual ~InputsSelection() = default;
 
     virtual Index get_minimum_inputs_number() const = 0;

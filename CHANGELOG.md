@@ -8,6 +8,12 @@ remaining limitations.
 
 ### Reconciliation and release preparation
 
+- Rename optimizer classes to `LevenbergMarquardt` and `QuasiNewton` without
+  aliases, including their headers. The Quasi-Newton factory and JSON name is
+  now `QuasiNewton`; the Levenberg-Marquardt factory/JSON name is unchanged.
+- Rename `TrainingStrategy` to `Training` without an alias, move training headers
+  to `opennn/training/`, and use `Training` as the configuration JSON root.
+  Model-selection accessors use `get_training` and `set_training`.
 - Rename the public class to `Network` without an alias, move the network headers
   to `opennn/network/`, and use `Network` in JSON and generated Python models.
   This breaks the former source names, binary symbols and JSON root name;

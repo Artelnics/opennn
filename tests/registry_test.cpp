@@ -26,7 +26,7 @@
 #include "opennn/network/layers/tokenizer_layer.h"
 #include "opennn/network/layers/unscaling_layer.h"
 #include "opennn/network/layers/upsampling_layer.h"
-#include "opennn/training_strategy/optimizer.h"
+#include "opennn/training/optimizer.h"
 #include "opennn/model_selection/inputs_selection.h"
 
 using namespace opennn;
@@ -252,7 +252,7 @@ TEST(RegistryTest, AllComponentNamesConstruct)
     const vector<string> optimizer_names = {
         "AdaptiveMomentEstimation",
         "LevenbergMarquardt",
-        "QuasiNewtonMethod",
+        "QuasiNewton",
         "StochasticGradientDescent"
     };
 

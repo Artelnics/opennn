@@ -14,8 +14,8 @@
 #include "opennn/dataset/dataset.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/model_selection/selection_utilities.h"
-#include "opennn/training_strategy/optimizer.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/optimizer.h"
+#include "opennn/training/training.h"
 
 namespace opennn
 {
@@ -48,8 +48,8 @@ static vector<Index> map_feature_rows(const vector<pair<Index, Index>>& old_ids,
     return row_map;
 }
 
-GrowingInputs::GrowingInputs(TrainingStrategy* new_training_strategy)
-    : InputsSelection(new_training_strategy)
+GrowingInputs::GrowingInputs(Training* new_training)
+    : InputsSelection(new_training)
 {
     set_default();
 }
@@ -64,14 +64,14 @@ void GrowingInputs::set_default()
     maximum_epochs = 1000;
     maximum_time = 3600.0f;
 
-    maximum_inputs_number = (training_strategy && training_strategy->get_network() && training_strategy->get_dataset())
-        ? training_strategy->get_dataset()->get_variables_number(VariableRole::Input)
+    maximum_inputs_number = (training && training->get_network() && training->get_dataset())
+        ? training->get_dataset()->get_variables_number(VariableRole::Input)
         : 50;
 }
 
 void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_number)
 {
-    const Dataset* dataset = training_strategy ? training_strategy->get_dataset() : nullptr;
+    const Dataset* dataset = training ? training->get_dataset() : nullptr;
     const Index inputs_number = dataset ? dataset->get_variables_number(VariableRole::Input) : 0;
 
     maximum_inputs_number = (inputs_number == 0)
@@ -82,7 +82,7 @@ void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_num
 InputsSelectionResult GrowingInputs::perform_input_selection()
 {
 
-    Dataset* dataset = training_strategy->get_dataset();
+    Dataset* dataset = training->get_dataset();
     const Index original_input_variables_number = dataset->get_variables_number(VariableRole::Input);
 
     if (dataset->has_nan())
@@ -92,7 +92,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     InputsSelectionResult input_selection_results(original_input_variables_number);
 
-    Optimizer* optimizer = training_strategy->get_optimization_algorithm();
+    Optimizer* optimizer = training->get_optimization_algorithm();
     const bool optimizer_display = optimizer->get_display();
     optimizer->set_display(false);
     const ScopeExit restore_optimizer_display([optimizer, optimizer_display]
@@ -127,7 +127,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     Index variable_index = 0;
 
-    Network* network = training_strategy->get_network();
+    Network* network = training->get_network();
 
     Index validation_failures = 0;
 
@@ -138,7 +138,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     Index epoch = 0;
 
     const vector<vector<Index>> fold_partition =
-        folds_number > 1 ? build_fold_partition(training_strategy, folds_number) : vector<vector<Index>>{};
+        folds_number > 1 ? build_fold_partition(training, folds_number) : vector<vector<Index>>{};
 
     ParameterSnapshot warm_snapshot;
     ParameterSnapshot candidate_snapshot;
@@ -181,7 +181,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             : vector<Index>{};
 
         const CandidateEvaluation candidate_evaluation = evaluate_candidate(
-            training_strategy, network, folds_number, fold_partition, trials_number, false,
+            training, network, folds_number, fold_partition, trials_number, false,
             [&](Index trial, float training_error, float validation_error, bool improved)
             {
                 if (improved && warm_start)
@@ -295,7 +295,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     set_maximum_inputs_number(dataset->get_variables_number(VariableRole::Input));
 
-    finalize_selected_model(training_strategy, network,
+    finalize_selected_model(training, network,
                             input_selection_results.optimal_parameters, folds_number, display, "inputs");
 
     if (display) input_selection_results.print();

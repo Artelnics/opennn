@@ -13,7 +13,7 @@
 #include "opennn/core/configuration.h"
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/network/forward_propagation.h"
-#include "opennn/training_strategy/loss.h"
+#include "opennn/training/loss.h"
 #include "opennn/network/network.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/core/tensor_types.h"

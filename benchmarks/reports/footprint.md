@@ -39,7 +39,7 @@ is outside every number in this document.
 
 | question | OpenNN process | PyTorch process | recorded |
 |---|---|---|---|
-| `memory` | link the library, construct an empty `Network`, `TabularDataset` and `TrainingStrategy` | `import torch`, construct an empty `nn.Sequential` and an `Adam` over one tensor | peak anonymous resident set (`RssAnon` from `/proc/<pid>/status`, polled by the runner and reported as `peak_mib`); the drivers' own `/proc/self/statm` print is total RSS and appears separately as `baseline_ram_mb` |
+| `memory` | link the library, construct an empty `Network`, `TabularDataset` and `Training` | `import torch`, construct an empty `nn.Sequential` and an `Adam` over one tensor | peak anonymous resident set (`RssAnon` from `/proc/<pid>/status`, polled by the runner and reported as `peak_mib`); the drivers' own `/proc/self/statm` print is total RSS and appears separately as `baseline_ram_mb` |
 | `startup` | construct `ApproximationNetwork({10},{64},{1})` and predict on one row of ones | construct `Linear(10,64) → Tanh → Linear(64,1)` and predict on one row of ones | seconds from process entry to the prediction, plus the whole-process wall time the runner measures around the launch |
 | `export` | train `ApproximationNetwork({3},{64},{1})` for 50 epochs on a 512-row synthetic sum and write it as `.c` and `.py` through `ModelExpression` | `torch.jit.script` a `Linear(3,64) → Tanh → Linear(64,1)` and save it | bytes of the exported files, and a driver-declared `standalone_source` flag on the PyTorch side; neither export is executed by the run |
 
@@ -104,7 +104,7 @@ The OpenNN process links `libopennn.a` statically and maps twelve shared
 libraries — MKL, oneDNN, libgomp, and the CUDA runtime, cuBLAS, cuBLASLt,
 NVRTC and cuDNN. A mapped library costs resident memory only for the pages
 that are touched, and constructing an empty `Network`, an empty
-`TabularDataset` and a `TrainingStrategy` touches very few. Three readings
+`TabularDataset` and a `Training` touches very few. Three readings
 describe the result and they do not reconcile: the runner's polling records a
 118.2 MiB anonymous peak and an 87.9 MiB file-backed peak, each an
 independent high-water mark taken over the whole process, while the driver
@@ -254,7 +254,7 @@ session agree to the millisecond.
 - **The two `memory` processes do not construct equivalent objects.** OpenNN's
   `Network` has no layers, so `compile()` returns immediately
   (`network.cpp:546-548`): no device is resolved and no parameter
-  storage is allocated, and its `TrainingStrategy` attaches a loss and an
+  storage is allocated, and its `Training` attaches a loss and an
   optimizer object to that empty network. PyTorch's process builds an empty
   `nn.Sequential` *and* a real `Adam` over a live
   `torch.zeros(1, requires_grad=True)`. By this document's own decomposition

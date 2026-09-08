@@ -19,8 +19,8 @@
 
 #include "opennn/dataset/bert_dataset.h"
 #include "opennn/models/models.h"
-#include "opennn/training_strategy/training_strategy.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
+#include "opennn/training/training.h"
+#include "opennn/training/adaptive_moment_estimation.h"
 #include "opennn/testing_analysis/testing_analysis.h"
 #include "opennn/core/configuration.h"
 
@@ -47,15 +47,15 @@ int main(int argc, char* argv[])
 
         model.set_dropout_rate(0.1f);
 
-        TrainingStrategy training_strategy(&model, &dataset);
+        Training training(&model, &dataset);
 
         auto& optimizer = dynamic_cast<AdaptiveMomentEstimation&>(
-            *training_strategy.get_optimization_algorithm());
+            *training.get_optimization_algorithm());
         optimizer.set_maximum_epochs(3);
         optimizer.set_batch_size(32);
         optimizer.set_learning_rate(2.0e-5f);
 
-        training_strategy.train();
+        training.train();
 
         TestingAnalysis testing_analysis(&model, &dataset);
         testing_analysis.set_batch_size(256);

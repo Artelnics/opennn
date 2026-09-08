@@ -49,7 +49,7 @@ folder it comes from — `#include "opennn/network/layers/dense_layer.h"`:
 - `opennn/network/` - the network, its `layers/` and `operators/`,
   forward and back propagation, expression export
 - `opennn/dataset/` - tabular, image, language, time series and YOLO datasets
-- `opennn/training_strategy/` - losses and optimization algorithms
+- `opennn/training/` - losses and optimization algorithms
 - `opennn/model_selection/` - inputs and neurons selection, genetic algorithm
 - `opennn/testing_analysis/` - testing analysis
 

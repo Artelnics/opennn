@@ -18,7 +18,7 @@ class GeneticAlgorithm final : public InputsSelection
 
 public:
 
-    explicit GeneticAlgorithm(TrainingStrategy* = nullptr);
+    explicit GeneticAlgorithm(Training* = nullptr);
     Index get_individuals_number() const { return population.rows(); }
 
     Index get_genes_number() const { return original_input_indices.size(); }

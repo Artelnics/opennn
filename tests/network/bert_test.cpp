@@ -16,7 +16,7 @@
 #include "opennn/network/layers/pooling_layer_3d.h"
 #include "opennn/network/layers/embedding_layer.h"
 #include "opennn/network/layers/multihead_attention_layer.h"
-#include "opennn/training_strategy/loss.h"
+#include "opennn/training/loss.h"
 
 using namespace opennn;
 

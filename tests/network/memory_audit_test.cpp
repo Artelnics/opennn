@@ -18,8 +18,8 @@
 #include "opennn/network/layers/long_short_term_memory_layer.h"
 #include "opennn/network/network.h"
 #include "opennn/models/models.h"
-#include "opennn/training_strategy/loss.h"
-#include "opennn/training_strategy/training_context.h"
+#include "opennn/training/loss.h"
+#include "opennn/training/training_context.h"
 
 using namespace opennn;
 

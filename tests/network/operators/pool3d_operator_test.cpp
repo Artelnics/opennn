@@ -11,7 +11,7 @@
 #include "opennn/network/layers/normalization_layer_3d.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/network/network.h"
-#include "opennn/training_strategy/loss.h"
+#include "opennn/training/loss.h"
 
 using namespace opennn;
 

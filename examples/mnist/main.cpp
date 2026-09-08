@@ -10,7 +10,7 @@
 
 #include "opennn/dataset/image_dataset.h"
 #include "opennn/models/models.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/training.h"
 #include "opennn/testing_analysis/testing_analysis.h"
 #include "opennn/core/random_utilities.h"
 
@@ -30,10 +30,10 @@ int main()
                                            {4},
                                            dataset.get_target_shape());
 
-        TrainingStrategy training_strategy(&network, &dataset);
-        training_strategy.get_optimization_algorithm()->set_maximum_epochs(20);
+        Training training(&network, &dataset);
+        training.get_optimization_algorithm()->set_maximum_epochs(20);
 
-        training_strategy.train();
+        training.train();
 
         const TestingAnalysis testing_analysis(&network, &dataset);
 

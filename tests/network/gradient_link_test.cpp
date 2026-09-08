@@ -25,7 +25,7 @@
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/network.h"
 #include "opennn/models/models.h"
-#include "opennn/training_strategy/loss.h"
+#include "opennn/training/loss.h"
 #include "opennn/core/configuration.h"
 #include "opennn/core/random_utilities.h"
 

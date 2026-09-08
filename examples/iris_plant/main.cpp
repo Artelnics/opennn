@@ -14,7 +14,7 @@
 #include "opennn/models/models.h"
 #include "opennn/network/model_expression.h"
 #include "opennn/testing_analysis/testing_analysis.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/training.h"
 
 using namespace opennn;
 
@@ -72,8 +72,8 @@ int main()
 
         ClassificationNetwork network(dataset.get_input_shape(), {16}, dataset.get_target_shape());
 
-        TrainingStrategy training_strategy(&network, &dataset);
-        training_strategy.train();
+        Training training(&network, &dataset);
+        training.train();
 
         TestingAnalysis testing_analysis(&network, &dataset);
         testing_analysis.print_multiple_classification_tests();

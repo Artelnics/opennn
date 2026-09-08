@@ -40,10 +40,10 @@
 #include "opennn/network/layers/pooling_layer.h"
 #include "opennn/network/layers/pooling_layer_3d.h"
 #endif
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
-#include "opennn/training_strategy/levenberg_marquardt_algorithm.h"
-#include "opennn/training_strategy/quasi_newton_method.h"
-#include "opennn/training_strategy/stochastic_gradient_descent.h"
+#include "opennn/training/adaptive_moment_estimation.h"
+#include "opennn/training/levenberg_marquardt.h"
+#include "opennn/training/quasi_newton.h"
+#include "opennn/training/stochastic_gradient_descent.h"
 #include "opennn/model_selection/genetic_algorithm.h"
 #include "opennn/model_selection/growing_inputs.h"
 
@@ -242,8 +242,8 @@ unique_ptr<Optimizer> create_optimizer(const string& name)
 {
     static const unordered_map<string_view, unique_ptr<Optimizer>(*)()> factories = {
         {"AdaptiveMomentEstimation", construct<Optimizer, AdaptiveMomentEstimation>},
-        {"LevenbergMarquardt", construct<Optimizer, LevenbergMarquardtAlgorithm>},
-        {"QuasiNewtonMethod", construct<Optimizer, QuasiNewtonMethod>},
+        {"LevenbergMarquardt", construct<Optimizer, LevenbergMarquardt>},
+        {"QuasiNewton", construct<Optimizer, QuasiNewton>},
         {"StochasticGradientDescent", construct<Optimizer, StochasticGradientDescent>},
     };
 

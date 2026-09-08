@@ -65,7 +65,7 @@ was written to be as short as honesty allows — no argument parsing, no logging
 no configurability, nothing the OpenNN example does not also have — because
 padding it would make the number worthless.
 
-The whole difference is two objects. `TrainingStrategy` is the epoch loop and
+The whole difference is two objects. `Training` is the epoch loop and
 `TestingAnalysis` is the report, so what is one statement each on the OpenNN
 side becomes, on the PyTorch side: the train/test split, the feature scaling,
 the loop with its `zero_grad`, `backward` and `step`, and four counted terms of
@@ -83,7 +83,7 @@ briefly used as such. `families/dense.cpp` runs 604 lines against
 `families/dense.py`'s 407, and the model definition inside them is 24 lines
 against 15 — the opposite direction. That is because the drivers hand-write the
 training loop on both engines so the two are measured doing identical work,
-which means they deliberately never touch `TrainingStrategy`. They measure
+which means they deliberately never touch `Training`. They measure
 fairness, not ergonomics.
 
 ### Library size

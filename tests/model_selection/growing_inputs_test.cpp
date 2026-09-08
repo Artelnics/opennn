@@ -2,7 +2,7 @@
 
 #include "opennn/core/random_utilities.h"
 #include "opennn/model_selection/growing_inputs.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/training.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/network/layers/dense_layer.h"
@@ -17,9 +17,9 @@ TEST(GrowingInputsTest, DefaultConstructor)
 
 TEST(GrowingInputsTest, GeneralConstructor)
 {
-    TrainingStrategy training_strategy;
+    Training training;
 
-    GrowingInputs growing_inputs(&training_strategy);
+    GrowingInputs growing_inputs(&training);
 }
 
 TEST(GrowingInputsTest, InputSelection)
@@ -31,9 +31,9 @@ TEST(GrowingInputsTest, InputSelection)
     Network network;
     network.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{1}));
 
-    TrainingStrategy training_strategy(&network, &dataset);
+    Training training(&network, &dataset);
 
-    GrowingInputs growing_inputs(&training_strategy);
+    GrowingInputs growing_inputs(&training);
     growing_inputs.set_display(false);
 
     InputsSelectionResult input_selection_results = growing_inputs.perform_input_selection();
@@ -59,9 +59,9 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
     Network network;
     network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}));
 
-    TrainingStrategy training_strategy(&network, &dataset);
+    Training training(&network, &dataset);
 
-    GrowingInputs growing_inputs(&training_strategy);
+    GrowingInputs growing_inputs(&training);
     growing_inputs.set_display(false);
 
     growing_inputs.set_maximum_inputs_number(1);
@@ -90,9 +90,9 @@ TEST(GrowingInputsTest, CrossValidationKeepsPersistentRoles)
 
     Network network;
     network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}));
-    TrainingStrategy training_strategy(&network, &dataset);
+    Training training(&network, &dataset);
 
-    GrowingInputs growing_inputs(&training_strategy);
+    GrowingInputs growing_inputs(&training);
     growing_inputs.set_display(false);
     growing_inputs.set_maximum_inputs_number(1);
     growing_inputs.set_folds_number(3);

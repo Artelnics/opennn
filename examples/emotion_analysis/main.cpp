@@ -10,7 +10,7 @@
 
 #include "opennn/dataset/language_dataset.h"
 #include "opennn/models/models.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/training.h"
 #include "opennn/testing_analysis/testing_analysis.h"
 
 using namespace opennn;
@@ -37,9 +37,9 @@ int main()
             {heads_number},
             {targets_number});
 
-        TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
+        Training training(&text_classification_network, &language_dataset);
 
-        training_strategy.train();
+        training.train();
 
         const TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
 

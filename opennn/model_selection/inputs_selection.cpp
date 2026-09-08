@@ -15,9 +15,9 @@
 namespace opennn
 {
 
-InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
+InputsSelection::InputsSelection(Training* new_training)
 {
-    set(new_training_strategy);
+    set(new_training);
 }
 
 void InputsSelection::configure_network_inputs(Network* network, Dataset* dataset, Index input_features_number) const

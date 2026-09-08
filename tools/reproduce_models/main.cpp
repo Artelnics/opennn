@@ -5,8 +5,8 @@
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/network/model_expression.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/adaptive_moment_estimation.h"
+#include "opennn/training/training.h"
 
 #include <cstdlib>
 #include <fstream>
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
         else
             network = make_unique<ApproximationNetwork>(dataset.get_input_shape(), Shape{32,16}, dataset.get_target_shape());
 
-        TrainingStrategy strategy(network.get(), &dataset);
+        Training strategy(network.get(), &dataset);
         strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
         auto* optimizer = dynamic_cast<AdaptiveMomentEstimation*>(strategy.get_optimization_algorithm());
         optimizer->set_learning_rate(0.01f);

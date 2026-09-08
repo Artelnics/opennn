@@ -14,8 +14,8 @@
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/model_selection/selection_utilities.h"
 #include "opennn/network/network.h"
-#include "opennn/training_strategy/optimizer.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/optimizer.h"
+#include "opennn/training/training.h"
 
 namespace opennn
 {
@@ -33,14 +33,14 @@ void require_grows_by_neurons(const Layer& layer)
 
 }
 
-GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy)
+GrowingNeurons::GrowingNeurons(Training* new_training)
 {
-    set(new_training_strategy);
+    set(new_training);
 }
 
-void GrowingNeurons::set(TrainingStrategy* new_training_strategy)
+void GrowingNeurons::set(Training* new_training)
 {
-    training_strategy = new_training_strategy;
+    training = new_training;
 
     set_default();
 }
@@ -57,8 +57,8 @@ void GrowingNeurons::set_default()
     maximum_time = 3600.0f;
     display = true;
 
-    const Network* network = training_strategy
-        ? training_strategy->get_network()
+    const Network* network = training
+        ? training->get_network()
         : nullptr;
 
     if (!network) return;
@@ -83,7 +83,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
     if (display) logging::info() << "Performing growing neuron selection...\n";
 
-    Network* network = training_strategy->get_network();
+    Network* network = training->get_network();
 
     const Index last_trainable_layer_index = network->get_last_trainable_layer_index();
 
@@ -103,7 +103,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
     time(&beginning_time);
 
     const vector<vector<Index>> fold_partition =
-        folds_number > 1 ? build_fold_partition(training_strategy, folds_number) : vector<vector<Index>>{};
+        folds_number > 1 ? build_fold_partition(training, folds_number) : vector<vector<Index>>{};
 
     ParameterSnapshot warm_snapshot;
     ParameterSnapshot candidate_snapshot;
@@ -125,7 +125,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
         neuron_selection_results.neurons_number_history(epoch) = neurons_number;
 
         const CandidateEvaluation candidate_evaluation = evaluate_candidate(
-            training_strategy, network, folds_number, fold_partition, trials_number, true,
+            training, network, folds_number, fold_partition, trials_number, true,
             [&](Index trial, float training_error, float validation_error, bool improved)
             {
                 if (display)
@@ -237,7 +237,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
     network->compile();
 
-    finalize_selected_model(training_strategy, network,
+    finalize_selected_model(training, network,
                             neuron_selection_results.optimal_parameters, folds_number, display, "neurons");
 
     if (display) neuron_selection_results.print();

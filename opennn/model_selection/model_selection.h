@@ -14,16 +14,16 @@
 namespace opennn
 {
 
-class TrainingStrategy;
+class Training;
 
 class ModelSelection
 {
 
 public:
 
-    explicit ModelSelection(TrainingStrategy* = nullptr);
-    const TrainingStrategy* get_training_strategy() const noexcept { return training_strategy; }
-    void set(TrainingStrategy*);
+    explicit ModelSelection(Training* = nullptr);
+    const Training* get_training() const noexcept { return training; }
+    void set(Training*);
 
     void set_default();
 
@@ -44,7 +44,7 @@ private:
 
     void set_inputs_selection(const string&);
 
-    TrainingStrategy* training_strategy = nullptr;
+    Training* training = nullptr;
 
     GrowingNeurons neurons_selection;
 

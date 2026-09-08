@@ -9,7 +9,7 @@ hardening results are recorded in `RELEASE_VERIFICATION.md`.
 
 **Code.** `opennn/` is 253 files, 83,000 lines of C++20 (GCC 13+, Clang 17+;
 `std::format`), in eight modules: core 18.9k lines, network 32.5k,
-dataset 13.1k, training_strategy 9.3k, model_selection 2.5k,
+dataset 13.1k, training 9.3k, model_selection 2.5k,
 response_optimization 2.7k, models 2.7k, testing_analysis 1.2k. CUDA is 21
 `.cu` and 24 `.cuh` files under `core/cuda`. Eight source files exceed 2,000
 lines (`network.cpp` 2,990, `tabular_dataset.cpp` 2,853,
@@ -180,7 +180,7 @@ The release is done when all of these hold and CI proves the ones it can:
 
 ### Phase 5 — Documentation (1 week, parallel with 3–4)
 - API reference: Doxygen over the 107 public headers, user-facing classes
-  first (datasets, `Network`, layers, `TrainingStrategy` and
+  first (datasets, `Network`, layers, `Training` and
   optimizers, `TestingAnalysis`, model selection, `Configuration`,
   `ModelExpression`); published with the docs site.
 - User guide: install; data → model → training → testing → export;

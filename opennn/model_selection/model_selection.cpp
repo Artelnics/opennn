@@ -13,23 +13,23 @@
 namespace opennn
 {
 
-ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy)
+ModelSelection::ModelSelection(Training* new_training)
 {
-    set(new_training_strategy);
+    set(new_training);
 
     set_default();
 }
 
-void ModelSelection::set(TrainingStrategy* new_training_strategy)
+void ModelSelection::set(Training* new_training)
 {
-    training_strategy = new_training_strategy;
-    neurons_selection.set_training_strategy(new_training_strategy);
-    if (inputs_selection) inputs_selection->set(new_training_strategy);
+    training = new_training;
+    neurons_selection.set_training(new_training);
+    if (inputs_selection) inputs_selection->set(new_training);
 }
 
 void ModelSelection::set_default()
 {
-    neurons_selection.set(training_strategy);
+    neurons_selection.set(training);
 
     set_inputs_selection("GrowingInputs");
 }
@@ -38,7 +38,7 @@ void ModelSelection::set_inputs_selection(const string& new_inputs_selection)
 {
     inputs_selection = create_inputs_selection(new_inputs_selection);
 
-    inputs_selection->set(training_strategy);
+    inputs_selection->set(training);
 }
 
 void ModelSelection::to_JSON(JsonWriter& printer) const
@@ -77,7 +77,7 @@ void ModelSelection::from_JSON(const JsonDocument& document)
     throw_if(!neurons_selection_method_element,
              "{} element is nullptr.\n", selection_method);
 
-    neurons_selection.set(training_strategy);
+    neurons_selection.set(training);
     neurons_selection.from_JSON(JsonDocument::wrap(selection_method, *neurons_selection_method_element));
 
     const Json* inputs_selection_element = require_json_field(root_element, "InputsSelection");

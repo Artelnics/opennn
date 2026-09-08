@@ -12,13 +12,13 @@
 #include "opennn/dataset/dataset.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/network/network.h"
-#include "opennn/training_strategy/training_result.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/training_result.h"
+#include "opennn/training/training.h"
 
 namespace opennn
 {
 
-CandidateEvaluation evaluate_candidate(TrainingStrategy* training_strategy,
+CandidateEvaluation evaluate_candidate(Training* training,
                                        Network* network,
                                        const Index folds_number,
                                        const vector<vector<Index>>& fold_partition,
@@ -31,7 +31,7 @@ CandidateEvaluation evaluate_candidate(TrainingStrategy* training_strategy,
 
     if (folds_number > 1)
     {
-        const FoldEvaluation fold_evaluation = evaluate_folds(training_strategy, fold_partition);
+        const FoldEvaluation fold_evaluation = evaluate_folds(training, fold_partition);
         evaluation.training_error = fold_evaluation.training_error;
         evaluation.validation_error = fold_evaluation.validation_error;
 
@@ -42,7 +42,7 @@ CandidateEvaluation evaluate_candidate(TrainingStrategy* training_strategy,
     {
         initialize_trial ? initialize_trial(trial) : network->set_parameters_random();
 
-        const TrainingResult training_results = training_strategy->train();
+        const TrainingResult training_results = training->train();
 
         const float training_error = training_results.get_training_error();
 
@@ -160,7 +160,7 @@ void seed_parameters_from_snapshot(Network* network,
     if (was_on_device) network->copy_parameters_device();
 }
 
-void finalize_selected_model(TrainingStrategy* training_strategy,
+void finalize_selected_model(Training* training,
                              Network* network,
                              const VectorR& optimal_parameters,
                              const Index folds_number,
@@ -174,13 +174,13 @@ void finalize_selected_model(TrainingStrategy* training_strategy,
     else if (folds_number > 1)
     {
         if (display) logging::info() << "Refitting the final model on all development samples.\n";
-        refit_final_model_on_development(training_strategy, folds_number);
+        refit_final_model_on_development(training, folds_number);
     }
     else
     {
         if (display) logging::info() << "Refitting the final model on the selected " << selected_label << ".\n";
         network->set_parameters_random();
-        training_strategy->train();
+        training->train();
     }
 }
 

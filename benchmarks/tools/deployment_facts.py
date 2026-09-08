@@ -248,7 +248,7 @@ def measure_application_lines(opennn_main: Path, pytorch_main: Path) -> dict[str
     both directions: it counts lone braces, `#include` lines and the try/catch
     frame as code, so the two languages are not comparable on it.
 
-    What the difference is, mechanically: `TrainingStrategy` is the epoch loop
+    What the difference is, mechanically: `Training` is the epoch loop
     and `TestingAnalysis` is the binary-classification report, so on the
     PyTorch side those become the split, the scaling, the loop with its
     zero_grad/backward/step, and four counted confusion-matrix terms.

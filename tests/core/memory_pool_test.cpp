@@ -13,7 +13,7 @@
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/network/layers/flatten_layer.h"
 #include "opennn/network/forward_propagation.h"
-#include "opennn/training_strategy/loss.h"
+#include "opennn/training/loss.h"
 #include "opennn/core/memory_pool.h"
 #include "opennn/network/network.h"
 #include "opennn/network/layers/scaling_layer.h"

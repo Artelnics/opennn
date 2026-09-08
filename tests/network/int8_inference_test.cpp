@@ -10,7 +10,7 @@
 #include "opennn/models/models.h"
 #include "opennn/network/network.h"
 #include "opennn/core/configuration.h"
-#include "opennn/training_strategy/loss.h"
+#include "opennn/training/loss.h"
 #include "opennn/network/back_propagation.h"
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/device_backend.h"

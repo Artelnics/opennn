@@ -10,7 +10,7 @@
 
 #include "opennn/dataset/image_dataset.h"
 #include "opennn/models/models.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/training.h"
 #include "opennn/testing_analysis/testing_analysis.h"
 #include "opennn/core/random_utilities.h"
 
@@ -30,9 +30,9 @@ int main()
                                            {32, 64, 16},
                                            dataset.get_target_shape());
 
-        TrainingStrategy training_strategy(&network, &dataset);
+        Training training(&network, &dataset);
 
-        training_strategy.train();
+        training.train();
 
         TestingAnalysis testing_analysis(&network, &dataset);
 

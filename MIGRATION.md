@@ -27,7 +27,8 @@ the same major version: an application requesting 8.x must migrate explicitly.
 | `opennn/neural_network/neural_network.h` (earlier 9.0 candidate) | `opennn/network/network.h` |
 | `opennn/dataset.h` | `opennn/dataset/dataset.h` and `opennn/dataset/tabular_dataset.h` |
 | `opennn/standard_networks.h` | `opennn/models/models.h` |
-| `opennn/training_strategy.h` | `opennn/training_strategy/training_strategy.h` |
+| `opennn/training_strategy.h` | `opennn/training/training.h` |
+| `opennn/training_strategy/training_strategy.h` (earlier 9.0 candidate) | `opennn/training/training.h` |
 | `opennn/dense_layer.h` | `opennn/network/layers/dense_layer.h` |
 | `opennn/bounding_layer.h` | `opennn/network/layers/clamping_layer.h` |
 | `opennn/response_optimization.h` | `opennn/response_optimization/response_optimization.h` |
@@ -55,6 +56,33 @@ top-level `"NeuralNetwork"` key to `"Network"`, retaining the contents and match
 binary file. The old root is rejected. Parameter layouts and binary snapshot
 formats are unchanged by this naming change. This root-key edit is not an 8.x
 model conversion; follow the procedure below for historical formats.
+
+## Training naming
+
+The training coordinator is now `opennn::Training`, declared in
+`opennn/training/training.h`. Replace `TrainingStrategy` with `Training` and
+change includes from `opennn/training_strategy/` to `opennn/training/`. Model
+selection accessors are now `get_training()` and `set_training()` where
+provided. There is no old-name alias or forwarding header; rebuild consumers
+for the renamed C++ symbols.
+
+Training configuration JSON uses the top-level key `"Training"`. For an earlier
+9.0 configuration, rename its `"TrainingStrategy"` root to `"Training"`. For
+Quasi-Newton configurations, also update the optimizer names described below.
+The former root is rejected. The
+training algorithms, ownership and buffer layouts are unchanged.
+
+Optimizer classes are now `LevenbergMarquardt` and `QuasiNewton`, replacing
+`LevenbergMarquardtAlgorithm` and `QuasiNewtonMethod` without aliases. Their
+headers are `opennn/training/levenberg_marquardt.h` and
+`opennn/training/quasi_newton.h`. Update constructor calls, type references and
+includes, then rebuild consumers.
+
+The optimizer factory and JSON name for `QuasiNewtonMethod` is now `QuasiNewton`.
+Update both the `OptimizationMethod` value and its nested object key in saved
+training configurations; standalone optimizer JSON uses the new root as well.
+The old factory name is rejected. The existing `LevenbergMarquardt` factory/JSON
+name stays the same.
 
 ## Models and parameters
 

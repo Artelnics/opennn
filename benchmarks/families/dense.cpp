@@ -58,8 +58,8 @@
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/network/network.h"
 #include "opennn/testing_analysis/testing_analysis.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/adaptive_moment_estimation.h"
+#include "opennn/training/training.h"
 
 using namespace opennn;
 using clock_type = chrono::steady_clock;
@@ -153,7 +153,7 @@ Options parse_options(int argc, char* argv[], int first)
     return options;
 }
 
-AdaptiveMomentEstimation* configure(TrainingStrategy& strategy, Index batch)
+AdaptiveMomentEstimation* configure(Training& strategy, Index batch)
 {
     strategy.set_loss("CrossEntropy");
     strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
@@ -252,7 +252,7 @@ int main(int argc, char* argv[])
             if (batch == batches.front())
                 cout << "parameters=" << network->get_parameters_number() << "\n" << flush;
 
-            TrainingStrategy strategy(network.get(), &dataset);
+            Training strategy(network.get(), &dataset);
             const bool graph = options.device == Device::CUDA
                                && getenv("OPENNN_NO_CUDA_GRAPH") == nullptr;
 
@@ -577,7 +577,7 @@ int main(int argc, char* argv[])
 
             auto network = build(dataset.get_input_shape(), dataset.get_target_shape(), options);
 
-            TrainingStrategy strategy(network.get(), &dataset);
+            Training strategy(network.get(), &dataset);
             configure(strategy, batch)->set_maximum_epochs(1);
             strategy.train();
         }

@@ -15,15 +15,15 @@
 
 #include "opennn/dataset/dataset.h"
 #include "opennn/network/network.h"
-#include "opennn/training_strategy/optimizer.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/optimizer.h"
+#include "opennn/training/training.h"
 
 namespace opennn
 {
 
-vector<vector<Index>> build_fold_partition(TrainingStrategy* training_strategy, Index folds_number, Index folds_seed)
+vector<vector<Index>> build_fold_partition(Training* training, Index folds_number, Index folds_seed)
 {
-    Dataset* dataset = training_strategy->get_dataset();
+    Dataset* dataset = training->get_dataset();
     const Index k = max<Index>(folds_number, Index(1));
 
     vector<Index> development = dataset->get_sample_indices(SampleRole::Training);
@@ -83,10 +83,10 @@ vector<vector<Index>> build_fold_partition(TrainingStrategy* training_strategy, 
     return folds;
 }
 
-FoldEvaluation evaluate_folds(TrainingStrategy* training_strategy, const vector<vector<Index>>& fold_partition)
+FoldEvaluation evaluate_folds(Training* training, const vector<vector<Index>>& fold_partition)
 {
-    Dataset* dataset = training_strategy->get_dataset();
-    Network* network = training_strategy->get_loss()->get_network();
+    Dataset* dataset = training->get_dataset();
+    Network* network = training->get_loss()->get_network();
     const Index k = ssize(fold_partition);
 
     vector<Index> development;
@@ -110,7 +110,7 @@ FoldEvaluation evaluate_folds(TrainingStrategy* training_strategy, const vector<
         FoldScope scope(*dataset, training_indices, validation_indices);
 
         network->set_parameters_random();
-        const TrainingResult training_results = training_strategy->train();
+        const TrainingResult training_results = training->train();
 
         float validation_error = training_results.get_validation_error();
         float training_error = training_results.get_training_error();
@@ -135,13 +135,13 @@ FoldEvaluation evaluate_folds(TrainingStrategy* training_strategy, const vector<
     return evaluation;
 }
 
-void refit_final_model_on_development(TrainingStrategy* training_strategy, Index folds_number, Index folds_seed)
+void refit_final_model_on_development(Training* training, Index folds_number, Index folds_seed)
 {
-    Dataset* dataset = training_strategy->get_dataset();
-    Network* network = training_strategy->get_loss()->get_network();
-    Optimizer* optimizer = training_strategy->get_optimization_algorithm();
+    Dataset* dataset = training->get_dataset();
+    Network* network = training->get_loss()->get_network();
+    Optimizer* optimizer = training->get_optimization_algorithm();
 
-    const Index final_epochs = evaluate_folds(training_strategy, build_fold_partition(training_strategy, folds_number, folds_seed)).epochs;
+    const Index final_epochs = evaluate_folds(training, build_fold_partition(training, folds_number, folds_seed)).epochs;
 
     vector<Index> development = dataset->get_sample_indices(SampleRole::Training);
     const vector<Index> validation = dataset->get_sample_indices(SampleRole::Validation);
@@ -154,7 +154,7 @@ void refit_final_model_on_development(TrainingStrategy* training_strategy, Index
 
     FoldScope scope(*dataset, development, {});
     network->set_parameters_random();
-    training_strategy->train();
+    training->train();
 }
 
 }

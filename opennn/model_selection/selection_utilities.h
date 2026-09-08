@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-class TrainingStrategy;
+class Training;
 class Network;
 class Dataset;
 
@@ -25,7 +25,7 @@ struct CandidateEvaluation
     float validation_error = MAX;
 };
 
-CandidateEvaluation evaluate_candidate(TrainingStrategy*,
+CandidateEvaluation evaluate_candidate(Training*,
                                        Network*,
                                        Index folds_number,
                                        const vector<vector<Index>>& fold_partition,
@@ -51,7 +51,7 @@ void seed_parameters_from_snapshot(Network*,
                                    const ParameterSnapshot&,
                                    const vector<Index>& input_row_map = {});
 
-void finalize_selected_model(TrainingStrategy*,
+void finalize_selected_model(Training*,
                              Network*,
                              const VectorR& optimal_parameters,
                              Index folds_number,

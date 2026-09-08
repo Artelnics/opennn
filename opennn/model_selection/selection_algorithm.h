@@ -13,22 +13,22 @@
 namespace opennn
 {
 
-class TrainingStrategy;
+class Training;
 
 class SelectionAlgorithm
 {
 public:
 
-    explicit SelectionAlgorithm(TrainingStrategy* new_training_strategy = nullptr)
-        : training_strategy(new_training_strategy)
+    explicit SelectionAlgorithm(Training* new_training = nullptr)
+        : training(new_training)
     {
     }
 
     virtual ~SelectionAlgorithm() = default;
 
-    const TrainingStrategy* get_training_strategy() const noexcept { return training_strategy; }
+    const Training* get_training() const noexcept { return training; }
 
-    void set(TrainingStrategy* new_training_strategy) { training_strategy = new_training_strategy; }
+    void set(Training* new_training) { training = new_training; }
 
     void set_trials_number(const Index new_trials_number) { trials_number = new_trials_number; }
 
@@ -43,7 +43,7 @@ public:
 
 protected:
 
-    TrainingStrategy* training_strategy = nullptr;
+    Training* training = nullptr;
 
     Index trials_number = 1;
 

@@ -36,8 +36,8 @@
 #include "opennn/network/model_expression.h"
 #include "opennn/network/network.h"
 #include "opennn/models/models.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/adaptive_moment_estimation.h"
+#include "opennn/training/training.h"
 
 using namespace opennn;
 using clock_type = chrono::steady_clock;
@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
 
         Network network;
         TabularDataset dataset;
-        TrainingStrategy strategy(&network, &dataset);
+        Training strategy(&network, &dataset);
 
         cout << "baseline_ram_mb=" << resident_mb() << "\n";
     }
@@ -143,7 +143,7 @@ int main(int argc, char* argv[])
         ApproximationNetwork network(dataset.get_input_shape(), {64},
                                      dataset.get_target_shape());
 
-        TrainingStrategy strategy(&network, &dataset);
+        Training strategy(&network, &dataset);
         strategy.set_loss("MeanSquaredError");
         strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
 

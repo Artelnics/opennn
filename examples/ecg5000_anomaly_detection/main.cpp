@@ -15,7 +15,7 @@
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/testing_analysis/testing_analysis.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/training.h"
 
 using namespace opennn;
 
@@ -47,8 +47,8 @@ int main()
                                            "ReLU",
                                            "Identity");
 
-        TrainingStrategy training_strategy(&autoencoder, &dataset);
-        training_strategy.train();
+        Training training(&autoencoder, &dataset);
+        training.train();
 
         TestingAnalysis testing_analysis(&autoencoder, &dataset);
 

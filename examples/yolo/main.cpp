@@ -23,15 +23,15 @@
 #endif
 #include "opennn/registry.h"
 #include "opennn/dataset/image_processing.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
+#include "opennn/training/adaptive_moment_estimation.h"
 #include "opennn/core/configuration.h"
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/layers/layer.h"
 #include "opennn/network/layers/non_max_suppression_layer.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/models/models.h"
-#include "opennn/training_strategy/loss.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/loss.h"
+#include "opennn/training/training.h"
 #include "opennn/dataset/yolo_dataset.h"
 
 using namespace opennn;
@@ -804,27 +804,27 @@ int main(int argc, char* argv[])
                                "non_max_suppression_layer");
         }
 
-        TrainingStrategy training_strategy(&yolo_network, &dataset);
-        training_strategy.set_loss("Yolo");
-        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+        Training training(&yolo_network, &dataset);
+        training.set_loss("Yolo");
+        training.set_optimization_algorithm("AdaptiveMomentEstimation");
 
-        training_strategy.get_loss()->set_regularization("L2");
+        training.get_loss()->set_regularization("L2");
 
         if (is_csp53v11 && use_voc)
-            training_strategy.get_loss()->set_regularization_weight(0.0005f);
+            training.get_loss()->set_regularization_weight(0.0005f);
         if (use_voc || use_coco || use_raccoon)
         {
             // YOLOv8 reference tuning — only for real-image datasets.
-            training_strategy.get_loss()->set_yolo_lambda_noobj(0.5f);
-            training_strategy.get_loss()->set_yolo_lambda_class(0.5f);      // YOLOv8 ref: cls_gain=0.5
-            training_strategy.get_loss()->set_yolo_lambda_giou(7.5f);       // YOLOv8 ref: box_gain=7.5
-            training_strategy.get_loss()->set_yolo_lambda_dfl(1.5f);        // YOLOv8 ref: dfl_gain=1.5
-            training_strategy.get_loss()->set_yolo_focal_gamma(0.5f);       // YOLOv8 ref: fl_gamma=0.5
-            training_strategy.get_loss()->set_yolo_obj_focal_gamma(0.0f);
+            training.get_loss()->set_yolo_lambda_noobj(0.5f);
+            training.get_loss()->set_yolo_lambda_class(0.5f);      // YOLOv8 ref: cls_gain=0.5
+            training.get_loss()->set_yolo_lambda_giou(7.5f);       // YOLOv8 ref: box_gain=7.5
+            training.get_loss()->set_yolo_lambda_dfl(1.5f);        // YOLOv8 ref: dfl_gain=1.5
+            training.get_loss()->set_yolo_focal_gamma(0.5f);       // YOLOv8 ref: fl_gamma=0.5
+            training.get_loss()->set_yolo_obj_focal_gamma(0.0f);
         }
 
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
-            training_strategy.get_optimization_algorithm());
+            training.get_optimization_algorithm());
         // Raccoon/VOC: real photos need a smaller batch (GPU memory) and more
         // patience before early stop fires (loss is noisier on small real datasets).
         // Darknet53 is 7x larger than TinyV3 — batch 4 keeps it within 7.7 GB VRAM.
@@ -1074,7 +1074,7 @@ int main(int argc, char* argv[])
 
                 cout << "\nTraining with frozen backbone: lr=" << lr_schedule.front().lr
                           << " for " << (backbone_freeze_epochs - epochs_done) << " epochs.\n";
-                const auto warmup_result = training_strategy.train();
+                const auto warmup_result = training.train();
                 epochs_done += static_cast<int>(warmup_result.get_epochs_number());
 
                 set_backbone_trainable(true);
@@ -1104,7 +1104,7 @@ int main(int argc, char* argv[])
                 cout << "\nTraining: lr=" << rnd.lr
                           << " for " << to_run << " epochs"
                           << " (target epoch " << round_end << ").\n";
-                const auto train_result = training_strategy.train();
+                const auto train_result = training.train();
                 epochs_done += static_cast<int>(train_result.get_epochs_number());
                 cumulative   = round_end;
 

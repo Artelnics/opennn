@@ -3,7 +3,7 @@
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/models/models.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/training.h"
 #include "opennn/model_selection/genetic_algorithm.h"
 #include "opennn/core/random_utilities.h"
 
@@ -19,7 +19,7 @@ TEST(GeneticAlgorithmTest, InitializationMethodRoundTripAndLegacyDefault)
 {
     TabularDataset dataset(10, {2}, {1});
     ApproximationNetwork network({2}, {2}, {1});
-    TrainingStrategy strategy(&network, &dataset);
+    Training strategy(&network, &dataset);
     GeneticAlgorithm algorithm(&strategy);
     for (const string method : {"Random", "Correlations"})
     {
@@ -41,9 +41,9 @@ TEST(GeneticAlgorithmTest, InitializationMethodRoundTripAndLegacyDefault)
 
 TEST(GeneticAlgorithmTest, GeneralConstructor)
 {
-    TrainingStrategy training_strategy;
+    Training training;
 
-    GeneticAlgorithm genetic_algorithm(&training_strategy);
+    GeneticAlgorithm genetic_algorithm(&training);
 }
 
 TEST(GeneticAlgorithmTest, InputSelection)
@@ -69,12 +69,12 @@ TEST(GeneticAlgorithmTest, InputSelection)
 
     ApproximationNetwork network(dataset.get_input_shape(), {2}, {1});
 
-    TrainingStrategy training_strategy(&network, &dataset);
-    training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-    training_strategy.get_optimization_algorithm()->set_display(false);
-    training_strategy.get_optimization_algorithm()->set_maximum_epochs(10);
+    Training training(&network, &dataset);
+    training.set_optimization_algorithm("AdaptiveMomentEstimation");
+    training.get_optimization_algorithm()->set_display(false);
+    training.get_optimization_algorithm()->set_maximum_epochs(10);
 
-    GeneticAlgorithm genetic_algorithm(&training_strategy);
+    GeneticAlgorithm genetic_algorithm(&training);
     genetic_algorithm.set_display(false);
     genetic_algorithm.set_individuals_number(6);
     genetic_algorithm.set_maximum_epochs(3);
@@ -113,12 +113,12 @@ TEST(GeneticAlgorithmTest, SelectsParsimoniousSubset)
     dataset.split_samples_random(type(0.7), type(0.15), type(0.15));
 
     ApproximationNetwork network(dataset.get_input_shape(), {2}, {1});
-    TrainingStrategy training_strategy(&network, &dataset);
-    training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-    training_strategy.get_optimization_algorithm()->set_display(false);
-    training_strategy.get_optimization_algorithm()->set_maximum_epochs(10);
+    Training training(&network, &dataset);
+    training.set_optimization_algorithm("AdaptiveMomentEstimation");
+    training.get_optimization_algorithm()->set_display(false);
+    training.get_optimization_algorithm()->set_maximum_epochs(10);
 
-    GeneticAlgorithm genetic_algorithm(&training_strategy);
+    GeneticAlgorithm genetic_algorithm(&training);
     genetic_algorithm.set_display(false);
     genetic_algorithm.set_individuals_number(20);
     genetic_algorithm.set_maximum_epochs(5);
@@ -171,12 +171,12 @@ TEST(GeneticAlgorithmTest, CrossValidationKeepsPersistentRoles)
     const vector<SampleRole> roles_before = dataset.get_sample_roles();
 
     ApproximationNetwork network(dataset.get_input_shape(), {2}, {1});
-    TrainingStrategy training_strategy(&network, &dataset);
-    training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-    training_strategy.get_optimization_algorithm()->set_display(false);
-    training_strategy.get_optimization_algorithm()->set_maximum_epochs(10);
+    Training training(&network, &dataset);
+    training.set_optimization_algorithm("AdaptiveMomentEstimation");
+    training.get_optimization_algorithm()->set_display(false);
+    training.get_optimization_algorithm()->set_maximum_epochs(10);
 
-    GeneticAlgorithm genetic_algorithm(&training_strategy);
+    GeneticAlgorithm genetic_algorithm(&training);
     genetic_algorithm.set_display(false);
     genetic_algorithm.set_individuals_number(6);
     genetic_algorithm.set_maximum_epochs(3);
@@ -200,9 +200,9 @@ TEST(GeneticAlgorithmTest, RequiresValidation)
     dataset.set_sample_roles("Training");
 
     ApproximationNetwork network({2}, {2}, {1});
-    TrainingStrategy training_strategy(&network, &dataset);
+    Training training(&network, &dataset);
 
-    GeneticAlgorithm genetic_algorithm(&training_strategy);
+    GeneticAlgorithm genetic_algorithm(&training);
     genetic_algorithm.set_display(false);
 
     EXPECT_THROW(genetic_algorithm.perform_input_selection(), runtime_error);
@@ -219,12 +219,12 @@ TEST(GeneticAlgorithmTest, CrossValidationDoesNotRequirePersistentValidation)
     dataset.set_sample_roles("Training");
 
     ApproximationNetwork network(dataset.get_input_shape(), {2}, {1});
-    TrainingStrategy training_strategy(&network, &dataset);
-    training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-    training_strategy.get_optimization_algorithm()->set_display(false);
-    training_strategy.get_optimization_algorithm()->set_maximum_epochs(10);
+    Training training(&network, &dataset);
+    training.set_optimization_algorithm("AdaptiveMomentEstimation");
+    training.get_optimization_algorithm()->set_display(false);
+    training.get_optimization_algorithm()->set_maximum_epochs(10);
 
-    GeneticAlgorithm genetic_algorithm(&training_strategy);
+    GeneticAlgorithm genetic_algorithm(&training);
     genetic_algorithm.set_display(false);
     genetic_algorithm.set_individuals_number(6);
     genetic_algorithm.set_maximum_epochs(3);

@@ -16,7 +16,7 @@
 #include "opennn/core/scaling.h"
 #include "opennn/network/network.h"
 #include "opennn/core/statistics.h"
-#include "opennn/training_strategy/error_functions.h"
+#include "opennn/training/error_functions.h"
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/back_propagation.h"
 #include "opennn/dataset/batch.h"

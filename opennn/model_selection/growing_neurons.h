@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class TrainingStrategy;
+class Training;
 struct NeuronsSelectionResult;
 
 class GrowingNeurons : public SelectionAlgorithm
@@ -30,14 +30,14 @@ public:
         MaximumNeurons
     };
 
-    explicit GrowingNeurons(TrainingStrategy* = nullptr);
+    explicit GrowingNeurons(Training* = nullptr);
 
-    const TrainingStrategy* get_training_strategy() const noexcept { return training_strategy; }
+    const Training* get_training() const noexcept { return training; }
 
-    void set(TrainingStrategy*);
-    void set_training_strategy(TrainingStrategy* new_training_strategy) noexcept
+    void set(Training*);
+    void set_training(Training* new_training) noexcept
     {
-        training_strategy = new_training_strategy;
+        training = new_training;
     }
 
     void set_default();
