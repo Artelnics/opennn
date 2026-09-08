@@ -27,6 +27,37 @@ OpenNN's existing LGPL licence remains in `LICENSE.txt`.
 | NVIDIA CUDA Toolkit, cuBLAS, cuDNN, NVML | system (CUDA builds) | NVIDIA software license agreements | GPU execution; linked (NVML loaded at run time), not redistributed |
 | OpenMP runtime (libgomp / libomp) | system | GPL-3.0 with runtime exception / Apache-2.0 with LLVM exceptions | CPU threading |
 
+libjpeg-turbo's IJG license requires the following statement to appear in
+documentation accompanying any distribution that includes it:
+
+> This software is based in part on the work of the Independent JPEG Group.
+
 The JSON support in `opennn/core/json.h` is OpenNN's own. Example datasets
 under `examples/*/data` carry the terms of their original publishers; see
 DATASETS.md for verified sources and unresolved redistribution records.
+
+## Pre-trained weights
+
+OpenNN bundles no model weights. The models below download them on first use,
+from the URL recorded in the source. Each set of weights carries the licence of
+its original release, independent of OpenNN's own. Converting weights into
+OpenNN's binary format does not change that licence, and where Artelnics hosts a
+converted copy it is the same model under the same terms as the original.
+Users are responsible for complying with the licence of any weights they
+download; Artelnics sublicenses none of them.
+
+| model | downloaded from | hosted by |
+|---|---|---|
+| GPT-2 | `github.com/Artelnics/opennn/releases/download/gpt2-weights-v1/` | Artelnics, converted from the original release |
+| BERT | `github.com/Artelnics/opennn/releases/download/bert-weights-v1/` | Artelnics, converted from the original release |
+| Qwen3 0.6B | `huggingface.co/Artelnics/qwen3-0.6b-opennn` | Artelnics, converted from the original release |
+| Qwen3 4B | `huggingface.co/Artelnics/qwen3-4b-opennn` | Artelnics, converted from the original release |
+| YOLOv4 backbone, `yolov4.conv.137` | `github.com/AlexeyAB/darknet/releases/` | the darknet project |
+| YOLOv3-tiny, `yolov3-tiny.weights` | `pjreddie.com/media/files/` | the original author |
+
+`examples/yolo/yolov8s_to_nd.py` converts an Ultralytics YOLOv8 checkpoint that
+the user supplies. The script is OpenNN's own code and contains no Ultralytics
+code, but it imports the `ultralytics` package at run time, and Ultralytics
+licenses both its package and its published checkpoints under AGPL-3.0. Neither
+the script's output nor any YOLOv8 checkpoint is distributed with OpenNN, and
+the library's own YOLO path uses the darknet backbones above.
