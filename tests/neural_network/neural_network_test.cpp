@@ -594,6 +594,85 @@ TEST(NeuralNetworkTest, CompleteSaveLoadPreservesModelOwnedState)
     filesystem::remove(states_path, error);
 }
 
+TEST(NeuralNetworkTest, ModelLoadRejectsMissingWeightsAndPreservesExistingNetwork)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    const filesystem::path path = filesystem::temp_directory_path()
+                                / "opennn_missing_model_weights_test.json";
+    filesystem::path binary_path = path;
+    binary_path.replace_extension(".bin");
+
+    NeuralNetwork network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
+    network.compile();
+    network.set_parameters(VectorR::Ones(network.get_parameters_buffer_size()));
+    const MatrixR inputs = MatrixR::Ones(1, 1);
+    ASSERT_FLOAT_EQ(network.calculate_outputs(inputs)(0, 0), 2.0f);
+
+    network.save(path);
+    ASSERT_TRUE(filesystem::remove(binary_path));
+    const float* parameter_storage = network.get_parameters_data();
+
+    try
+    {
+        network.load(path);
+        FAIL() << "A complete model must not load without its weights.";
+    }
+    catch (const runtime_error& error)
+    {
+        EXPECT_NE(string(error.what()).find("missing parameter file"), string::npos);
+        EXPECT_NE(string(error.what()).find(binary_path.string()), string::npos);
+    }
+    EXPECT_EQ(network.get_parameters_data(), parameter_storage);
+    EXPECT_FLOAT_EQ(network.calculate_outputs(inputs)(0, 0), 2.0f);
+    EXPECT_THROW(NeuralNetwork{path}, runtime_error);
+
+    // Architecture-only loading remains an explicit operation on a new network.
+    NeuralNetwork architecture;
+    architecture.from_JSON(load_json_file(path));
+    EXPECT_EQ(architecture.get_layers_number(), 1);
+    EXPECT_EQ(architecture.get_input_shape(), Shape({1}));
+    EXPECT_EQ(architecture.get_output_shape(), Shape({1}));
+
+    // An empty legacy Parameters element is not a replacement for the binary.
+    JsonDocument document = load_json_file(path);
+    document.get_root()["NeuralNetwork"]["Parameters"]["Values"] = Json("");
+    document.save(path);
+    EXPECT_THROW(network.load(path), runtime_error);
+    EXPECT_EQ(network.get_parameters_data(), parameter_storage);
+    EXPECT_FLOAT_EQ(network.calculate_outputs(inputs)(0, 0), 2.0f);
+
+    filesystem::remove(path);
+}
+
+TEST(NeuralNetworkTest, ModelLoadRetainsEmbeddedJsonWeights)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    const filesystem::path path = filesystem::temp_directory_path()
+                                / "opennn_embedded_model_weights_test.json";
+    filesystem::path binary_path = path;
+    binary_path.replace_extension(".bin");
+
+    NeuralNetwork original;
+    original.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
+    original.compile();
+    original.set_parameters(VectorR::Ones(original.get_parameters_buffer_size()));
+    original.save(path);
+    ASSERT_TRUE(filesystem::remove(binary_path));
+
+    string values;
+    for (Index i = 0; i < original.get_parameters_buffer_size(); ++i)
+        values += "1 ";
+    JsonDocument document = load_json_file(path);
+    document.get_root()["NeuralNetwork"]["Parameters"]["Values"] = Json(values);
+    document.save(path);
+
+    NeuralNetwork restored(path);
+    EXPECT_EQ(restored.get_parameters_buffer_size(), original.get_parameters_buffer_size());
+    EXPECT_FLOAT_EQ(restored.calculate_outputs(MatrixR::Ones(1, 1))(0, 0), 2.0f);
+    filesystem::remove(path);
+}
+
 TEST(NeuralNetworkTest, ModelSaveCommitsOrRecoversJsonAndParametersTogether)
 {
     const filesystem::path directory = filesystem::temp_directory_path();

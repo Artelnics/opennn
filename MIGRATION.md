@@ -71,6 +71,21 @@ padding. `get_parameters_number()` reports the logical count;
 Prefer the paired model save/load APIs for persistence. Buffer sizes alone
 still do not establish that two models use the same parameter ordering.
 
+`NeuralNetwork::load(path)` requires the matching `.bin` file or embedded JSON
+parameter values. A missing binary with no embedded weights raises an error
+before clearing the existing network. Saved model pairs must be kept together.
+For intentional architecture-only loading, use a new network explicitly:
+
+```cpp
+NeuralNetwork network;
+network.from_JSON(load_json_file(path));
+// Initialize or load matching parameters before using the model for inference.
+```
+
+This check adds no inference/training operations or parameter buffers. It does
+not provide rollback after every possible error later in model construction or
+binary loading.
+
 ### Available historical artifacts reviewed
 
 The example assets in tags `v8.0.0`, `v8.0.1` and master `efd566b38` were

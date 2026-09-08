@@ -2069,13 +2069,29 @@ void NeuralNetwork::load(const filesystem::path& file_name)
     validate_model_file_paths(file_name);
     recover_model_save_transaction(file_name);
 
-    clear();
-
-    from_JSON(load_json_file(file_name));
-
     const filesystem::path binary_path = parameter_file_path(file_name);
+    const bool has_binary = filesystem::exists(binary_path);
 
-    if (filesystem::exists(binary_path))
+    {
+        const JsonDocument document = load_json_file(file_name);
+
+        if (!has_binary)
+        {
+            const Json* root = get_json_root(document, "NeuralNetwork");
+            const Json* embedded_parameters = root->find("Parameters");
+            throw_if(!embedded_parameters
+                     || read_json_string(embedded_parameters, "Values").empty(),
+                     "NeuralNetwork::load: missing parameter file {} and no embedded "
+                     "JSON weights. Restore the matching .bin file, or use "
+                     "from_JSON(load_json_file(path)) explicitly for architecture-only loading.",
+                     binary_path.string());
+        }
+
+        clear();
+        from_JSON(document);
+    } // Release the JSON document before allocating binary snapshot staging.
+
+    if (has_binary)
         load_parameters_binary(binary_path);
 }
 

@@ -21,6 +21,9 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Reject model loading when both the matching parameter file and embedded JSON
+  weights are absent, preserving the existing model on this error. Explicit
+  architecture-only construction through `from_JSON` remains available.
 - Order CUDA buffer copies and clears with pending computation.
 - Release late static GPU buffers without accessing destroyed backend state.
 - Release lazily initialized CUDA library handles before library shutdown.
