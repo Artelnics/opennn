@@ -147,6 +147,7 @@ jobs:
 
       - name: Preserve model verification report
         if: always() && matrix.compiler == 'gcc-13'
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: reference-model-verification
